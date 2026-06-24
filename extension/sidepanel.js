@@ -2,6 +2,7 @@ import {
   DEFAULT_SETTINGS,
   HERMES_BROWSER_SYSTEM_PROMPT,
   MODEL_EFFORTS,
+  appendOpenAiChunkText,
   buildHermesModelOptions,
   buildHermesPrompt,
   clampText,
@@ -1693,13 +1694,6 @@ function textFromRunCompleted(data = {}) {
     if (message?.role === 'assistant' && message.content) return String(message.content);
   }
   return data.content ? String(data.content) : '';
-}
-
-function appendOpenAiChunkText(event, finalText) {
-  if (event.data === '[DONE]') return finalText;
-  const data = event.json || {};
-  const delta = data.choices?.[0]?.delta?.content || data.choices?.[0]?.message?.content || '';
-  return delta ? `${finalText}${delta}` : finalText;
 }
 
 async function readSseResponse(response, onDelta, onTool, { signal, onRun } = {}) {

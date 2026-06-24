@@ -795,6 +795,21 @@ export function extractAssistantText(payload) {
   return '';
 }
 
+// Accumulate text from an OpenAI-style streaming SSE chunk.
+// Incremental `delta.content` is appended; a chunk that instead carries the
+// full `message.content` REPLACES the accumulated text. Appending the full
+// message (as the previous implementation did) double-counts the answer when a
+// stream emits deltas and then a terminal full-message chunk.
+export function appendOpenAiChunkText(event = {}, finalText = '') {
+  if (event?.data === '[DONE]') return finalText;
+  const choice = (event?.json || {}).choices?.[0] || {};
+  const delta = choice.delta?.content;
+  if (delta) return `${finalText}${delta}`;
+  const message = choice.message?.content;
+  if (message) return String(message);
+  return finalText;
+}
+
 export function encodeSessionId(sessionId = DEFAULT_SETTINGS.sessionId) {
   return encodeURIComponent(String(sessionId || DEFAULT_SETTINGS.sessionId).trim() || DEFAULT_SETTINGS.sessionId);
 }
