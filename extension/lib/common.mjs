@@ -311,7 +311,7 @@ function isHorizontalRule(line = '') {
 }
 
 function isTableDivider(line = '') {
-  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+  return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line);
 }
 
 function tableCells(line = '') {

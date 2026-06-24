@@ -118,6 +118,17 @@ test('renderMarkdown produces safe rich text for headings, lists, tables, and li
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
 });
 
+test('renderMarkdown renders GFM tables whose divider uses a single dash per column', () => {
+  const html = renderMarkdown('| Name | Value |\n|-|-|\n| MiniMax | 1M |');
+  assert.match(html, /<table>/);
+  assert.match(html, /<th>Name<\/th>/);
+  assert.match(html, /<th>Value<\/th>/);
+  assert.match(html, /<td>MiniMax<\/td>/);
+  assert.match(html, /<td>1M<\/td>/);
+  // The compact divider must not leak through as a literal paragraph.
+  assert.doesNotMatch(html, /\|-\|-\|/);
+});
+
 test('normalizeHermesModels converts OpenAI-style /v1/models payload and keeps selected fallback', () => {
   const models = normalizeHermesModels({ data: [{ id: 'hermes-agent' }, { id: 'nous/nemotron', context_length: 131072 }] }, 'custom/local');
   assert.deepEqual(models.map((model) => model.id), ['hermes-agent', 'nous/nemotron', 'custom/local']);
