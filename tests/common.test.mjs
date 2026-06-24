@@ -43,6 +43,36 @@ test('redactSensitiveText masks obvious tokens and password assignments', () => 
   assert.doesNotMatch(output, /hunter2/);
 });
 
+test('redactSensitiveText masks common provider token shapes and quoted secret values', () => {
+  // Build sensitive literals at runtime so the test file itself never embeds a
+  // token shape that looks real to scanners.
+  const aws = `AKIA${'A1B2C3D4E5F6G7H8'}`;
+  const github = `ghp_${'a'.repeat(36)}`;
+  const githubPat = `github_pat_${'b'.repeat(42)}`;
+  const google = `AIza${'C'.repeat(35)}`;
+  const slack = `xoxb-${'1234567890'}-${'abcdefghij'}`;
+  const stripe = `sk_live_${'0123456789abcdefXYZ'}`;
+  const pem = `-----BEGIN RSA PRIVATE KEY-----\n${'MIIEpAIB'.repeat(3)}\n-----END RSA PRIVATE KEY-----`;
+  const samples = { aws, github, githubPat, google, slack, stripe };
+  for (const [name, secret] of Object.entries(samples)) {
+    const out = redactSensitiveText(`leaked ${name}: ${secret} trailing`);
+    assert.doesNotMatch(out, new RegExp(secret.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${name} should be redacted`);
+    assert.match(out, /\[REDACTED_SECRET\]/, `${name} should produce a redaction marker`);
+  }
+  // PEM private-key blocks collapse to a single marker.
+  const pemOut = redactSensitiveText(pem);
+  assert.match(pemOut, /\[REDACTED_PRIVATE_KEY\]/);
+  assert.doesNotMatch(pemOut, /BEGIN RSA PRIVATE KEY/);
+
+  // Secrets inside quoted JSON/config are redacted, not just bare assignments.
+  const jsonOut = redactSensitiveText('{"api_key": "abc123def456"}');
+  assert.doesNotMatch(jsonOut, /abc123def456/);
+  assert.match(jsonOut, /\[REDACTED_SECRET\]/);
+
+  // Benign prose without a secret marker is left intact.
+  assert.equal(redactSensitiveText('The quick brown fox jumps over the lazy dog.'), 'The quick brown fox jumps over the lazy dog.');
+});
+
 test('clampText preserves short text and clearly marks truncation', () => {
   assert.equal(clampText('short', 10), 'short');
   assert.equal(clampText('abcdefghijklmnop', 8), 'abcdefgh\n\n[truncated 8 chars]');
