@@ -22,6 +22,7 @@ import {
   reasoningEffortShortLabel,
   renderMarkdown,
   safeTab,
+  shouldStopSessionPaging,
   shouldSubmitComposerKey,
   skillSuggestionsForInput,
 } from './lib/common.mjs';
@@ -1143,7 +1144,7 @@ async function loadAllHermesSessions() {
     const hasMore = Boolean(payload.has_more ?? payload.hasMore ?? payload.pagination?.hasMore);
     const total = Number(payload.total || payload.pagination?.total || 0);
     offset += rows.length;
-    if (!rows.length || (!hasMore && (!total || offset >= total)) || rows.length < limit) break;
+    if (shouldStopSessionPaging({ rowCount: rows.length, offset, total, hasMore })) break;
   }
   return { data: merged };
 }

@@ -798,3 +798,15 @@ export function extractAssistantText(payload) {
 export function encodeSessionId(sessionId = DEFAULT_SETTINGS.sessionId) {
   return encodeURIComponent(String(sessionId || DEFAULT_SETTINGS.sessionId).trim() || DEFAULT_SETTINGS.sessionId);
 }
+
+// Decide whether session pagination should stop after consuming a page.
+// `offset` is the running total of rows already consumed (including this page).
+// A page shorter than `limit` is NOT a stop signal on its own: servers can
+// return short pages (e.g. when include_children expands rows) while more
+// pages remain, so we honor the explicit has_more / total signals instead.
+export function shouldStopSessionPaging({ rowCount = 0, offset = 0, total = 0, hasMore = false } = {}) {
+  if (!rowCount) return true;
+  if (hasMore) return false;
+  if (total && offset < total) return false;
+  return true;
+}

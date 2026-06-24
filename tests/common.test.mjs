@@ -20,6 +20,7 @@ import {
   normalizeHermesSkills,
   redactSensitiveText,
   renderMarkdown,
+  shouldStopSessionPaging,
   skillCommandForName,
   skillSuggestionsForInput,
   shouldSubmitComposerKey,
@@ -231,4 +232,15 @@ test('YouTube transcript helpers parse ids, providers, timedtext, and prompt tex
   const transcript = normalizeTranscriptPayload({ segments }, 'default-timedtext');
   assert.equal(transcript.ok, true);
   assert.match(formatYoutubeTranscript(transcript), /\[0:01\] hello & world/);
+});
+
+test('shouldStopSessionPaging keeps paging on a short page when more sessions remain', () => {
+  // Regression: a short page (rows < limit) must NOT end pagination while the
+  // server still reports has_more / unmet total, or sessions get dropped.
+  assert.equal(shouldStopSessionPaging({ rowCount: 300, offset: 800, total: 1200, hasMore: true }), false);
+  assert.equal(shouldStopSessionPaging({ rowCount: 300, offset: 800, total: 1200, hasMore: false }), false);
+  // Stop only when the page is empty, or no more are signalled.
+  assert.equal(shouldStopSessionPaging({ rowCount: 0, offset: 1200, total: 1200, hasMore: true }), true);
+  assert.equal(shouldStopSessionPaging({ rowCount: 200, offset: 1200, total: 1200, hasMore: false }), true);
+  assert.equal(shouldStopSessionPaging({ rowCount: 200, offset: 200, total: 0, hasMore: false }), true);
 });
