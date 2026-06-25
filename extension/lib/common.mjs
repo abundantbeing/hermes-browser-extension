@@ -311,7 +311,10 @@ function isHorizontalRule(line = '') {
 }
 
 function isTableDivider(line = '') {
-  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+  // GFM only requires one dash per column (e.g. |-|-|), not three. The
+  // pipe-separated `+` group still requires the line to actually be
+  // pipe-delimited, so this never matches a bare horizontal rule like ---.
+  return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line);
 }
 
 function tableCells(line = '') {

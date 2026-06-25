@@ -118,6 +118,23 @@ test('renderMarkdown produces safe rich text for headings, lists, tables, and li
   assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
 });
 
+test('renderMarkdown recognizes a GFM table divider with one dash per column', () => {
+  const html = renderMarkdown('| Name | Value |\n|-|-|\n| MiniMax | 1M |');
+  assert.match(html, /<table>/);
+  assert.match(html, /<th>Name<\/th>/);
+  assert.match(html, /<th>Value<\/th>/);
+  assert.match(html, /<td>MiniMax<\/td>/);
+  assert.match(html, /<td>1M<\/td>/);
+  // The compact divider row must be consumed as table syntax, not echoed
+  // back as a literal paragraph.
+  assert.doesNotMatch(html, /\|-\|-\|/);
+
+  // A bare horizontal rule must still render as <hr />, not get swallowed as
+  // a one-column table divider now that the dash count requirement dropped.
+  const ruleHtml = renderMarkdown('above\n\n---\n\nbelow');
+  assert.match(ruleHtml, /<hr \/>/);
+});
+
 test('normalizeHermesModels converts OpenAI-style /v1/models payload and keeps selected fallback', () => {
   const models = normalizeHermesModels({ data: [{ id: 'hermes-agent' }, { id: 'nous/nemotron', context_length: 131072 }] }, 'custom/local');
   assert.deepEqual(models.map((model) => model.id), ['hermes-agent', 'nous/nemotron', 'custom/local']);
