@@ -798,3 +798,16 @@ export function extractAssistantText(payload) {
 export function encodeSessionId(sessionId = DEFAULT_SETTINGS.sessionId) {
   return encodeURIComponent(String(sessionId || DEFAULT_SETTINGS.sessionId).trim() || DEFAULT_SETTINGS.sessionId);
 }
+
+// Whether a /api/sessions page fetch is the last one needed. A page shorter
+// than the requested limit is NOT on its own proof that no rows remain: a
+// server can return a short page (e.g. when include_children expands some
+// rows into more than one returned item per row) while more pages exist, so
+// this only trusts the page being empty or the server's own more/total
+// signals — never the page length relative to the requested limit.
+export function isLastSessionPage({ pageRowCount = 0, totalFetched = 0, totalAvailable = 0, serverSaysMore = false } = {}) {
+  if (pageRowCount === 0) return true;
+  if (serverSaysMore) return false;
+  if (totalAvailable > 0 && totalFetched < totalAvailable) return false;
+  return true;
+}

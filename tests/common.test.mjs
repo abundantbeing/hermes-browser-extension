@@ -13,6 +13,7 @@ import {
   formatYoutubeTranscript,
   groupModelsForMenu,
   groupSessionsForMenu,
+  isLastSessionPage,
   isRestrictedUrl,
   normalizeHermesModels,
   normalizeHermesProfiles,
@@ -231,4 +232,15 @@ test('YouTube transcript helpers parse ids, providers, timedtext, and prompt tex
   const transcript = normalizeTranscriptPayload({ segments }, 'default-timedtext');
   assert.equal(transcript.ok, true);
   assert.match(formatYoutubeTranscript(transcript), /\[0:01\] hello & world/);
+});
+
+test('isLastSessionPage keeps paging through a short page when the server reports more remain', () => {
+  // Regression: a page shorter than the requested limit must not end
+  // pagination on its own while has_more/total say otherwise, or sessions
+  // past that page get silently dropped.
+  assert.equal(isLastSessionPage({ pageRowCount: 300, totalFetched: 800, totalAvailable: 1200, serverSaysMore: true }), false);
+  assert.equal(isLastSessionPage({ pageRowCount: 300, totalFetched: 800, totalAvailable: 1200, serverSaysMore: false }), false);
+  assert.equal(isLastSessionPage({ pageRowCount: 0, totalFetched: 1200, totalAvailable: 1200, serverSaysMore: true }), true);
+  assert.equal(isLastSessionPage({ pageRowCount: 200, totalFetched: 1200, totalAvailable: 1200, serverSaysMore: false }), true);
+  assert.equal(isLastSessionPage({ pageRowCount: 200, totalFetched: 200, totalAvailable: 0, serverSaysMore: false }), true);
 });
