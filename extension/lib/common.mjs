@@ -801,9 +801,11 @@ export function encodeSessionId(sessionId = DEFAULT_SETTINGS.sessionId) {
 
 // Build the error message for a failed /api/browser-extension/pair/start call.
 // A 404 means this Hermes install has no pairing route at all — true of every
-// CLI Gateway release today; only Hermes Desktop implements pairing. Surfacing
-// that distinction (instead of a bare status code) stops users from retrying a
-// flow that can never succeed on their install and points them at Manual setup.
+// CLI Gateway release as of this writing; only Hermes Desktop implements
+// pairing. If a future Gateway release adds the route, this message and the
+// 404 branch below should be revisited. Surfacing the distinction (instead of
+// a bare status code) stops users from retrying a flow that can't succeed on
+// their install and points them at Manual setup instead.
 export function pairingFailureMessage(status, payload) {
   if (status === 404) {
     return "Automatic pairing isn't available on this Hermes installation (no Hermes Desktop pairing route found). Use Manual setup below instead.";
