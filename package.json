@@ -6,13 +6,13 @@
   "type": "module",
   "author": "Jon Komet",
   "license": "MIT",
-  "homepage": "https://github.com/abundantbeing/hermes-browser-extension#readme",
+  "homepage": "https://github.com/KeyArgo/hermes-browser-extension#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/abundantbeing/hermes-browser-extension.git"
+    "url": "https://github.com/KeyArgo/hermes-browser-extension.git"
   },
   "bugs": {
-    "url": "https://github.com/abundantbeing/hermes-browser-extension/issues"
+    "url": "https://github.com/KeyArgo/hermes-browser-extension/issues"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
