@@ -14,6 +14,7 @@ import {
   groupModelsForMenu,
   groupSessionsForMenu,
   isRestrictedUrl,
+  mergeOpenAiChunkIntoText,
   normalizeHermesModels,
   normalizeHermesProfiles,
   normalizeHermesSessions,
@@ -231,4 +232,24 @@ test('YouTube transcript helpers parse ids, providers, timedtext, and prompt tex
   const transcript = normalizeTranscriptPayload({ segments }, 'default-timedtext');
   assert.equal(transcript.ok, true);
   assert.match(formatYoutubeTranscript(transcript), /\[0:01\] hello & world/);
+});
+
+test('mergeOpenAiChunkIntoText does not duplicate a terminal full-message chunk onto streamed deltas', () => {
+  // Regression: some OpenAI-style SSE streams end with one chunk shaped like
+  // a full message (choices[0].message.content) instead of a final delta.
+  // That chunk is the whole response so far and must replace the running
+  // text, not get appended on top of the deltas already accumulated.
+  const delta = (text) => ({ json: { choices: [{ delta: { content: text } }] } });
+  const fullMessage = (text) => ({ json: { choices: [{ message: { content: text } }] } });
+
+  let text = '';
+  text = mergeOpenAiChunkIntoText(delta('Hello '), text);
+  text = mergeOpenAiChunkIntoText(delta('world'), text);
+  assert.equal(text, 'Hello world');
+
+  text = mergeOpenAiChunkIntoText(fullMessage('Hello world'), text);
+  assert.equal(text, 'Hello world');
+
+  assert.equal(mergeOpenAiChunkIntoText({ data: '[DONE]' }, text), 'Hello world');
+  assert.equal(mergeOpenAiChunkIntoText({ json: {} }, text), 'Hello world');
 });

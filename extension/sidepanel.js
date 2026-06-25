@@ -13,6 +13,7 @@ import {
   groupModelsForMenu,
   groupSessionsForMenu,
   isRestrictedUrl,
+  mergeOpenAiChunkIntoText,
   normalizeHermesModels,
   normalizeHermesProfiles,
   normalizeHermesSessions,
@@ -1695,13 +1696,6 @@ function textFromRunCompleted(data = {}) {
   return data.content ? String(data.content) : '';
 }
 
-function appendOpenAiChunkText(event, finalText) {
-  if (event.data === '[DONE]') return finalText;
-  const data = event.json || {};
-  const delta = data.choices?.[0]?.delta?.content || data.choices?.[0]?.message?.content || '';
-  return delta ? `${finalText}${delta}` : finalText;
-}
-
 async function readSseResponse(response, onDelta, onTool, { signal, onRun } = {}) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -1726,7 +1720,7 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun } = {}
         onDelta(finalText);
       }
     } else if (event.type === 'chat.completion.chunk' || event.type === 'message') {
-      const nextText = appendOpenAiChunkText(event, finalText);
+      const nextText = mergeOpenAiChunkIntoText(event, finalText);
       if (nextText !== finalText) {
         finalText = nextText;
         onDelta(finalText);

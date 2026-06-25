@@ -798,3 +798,21 @@ export function extractAssistantText(payload) {
 export function encodeSessionId(sessionId = DEFAULT_SETTINGS.sessionId) {
   return encodeURIComponent(String(sessionId || DEFAULT_SETTINGS.sessionId).trim() || DEFAULT_SETTINGS.sessionId);
 }
+
+// Fold one OpenAI-style SSE chunk into the running accumulated text.
+// choices[0].delta.content is an incremental piece and must be appended.
+// choices[0].message.content is different: some servers emit one terminal
+// chunk shaped like a full message (not a delta) containing the *entire*
+// response so far. That must REPLACE the running total, not append to it —
+// appending duplicates everything already streamed in as deltas onto the end
+// of the response.
+export function mergeOpenAiChunkIntoText(event, accumulatedText) {
+  if (event?.data === '[DONE]') return accumulatedText;
+  const choice = event?.json?.choices?.[0];
+  if (!choice) return accumulatedText;
+  const delta = choice.delta?.content;
+  if (delta) return `${accumulatedText}${delta}`;
+  const fullMessage = choice.message?.content;
+  if (fullMessage) return String(fullMessage);
+  return accumulatedText;
+}
