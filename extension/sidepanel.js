@@ -1446,12 +1446,25 @@ function collectPageContextFallback(options = {}) {
     if (text.length <= limit) return text;
     return `${text.slice(0, limit)}\n\n[truncated ${text.length - limit} chars]`;
   }
+  // Kept in sync with redactSensitiveText in lib/common.mjs by hand: this
+  // runs inside chrome.scripting.executeScript and must stay self-contained.
   function redact(value) {
-    return String(value || '')
+    let text = String(value || '')
+      .replace(/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g, '[REDACTED_PRIVATE_KEY]')
       .replace(/\bBearer\s+[^\s'"`;&]+/gi, 'Bearer [REDACTED_BEARER]')
-      .replace(new RegExp('\\bsk-[A-Za-z0-9_\\-]{12,}\\b', 'g'), '[REDACTED_SECRET]')
+      .replace(new RegExp('\\bsk-[A-Za-z0-9_\\-]{12,}\\b', 'g'), '[REDACTED_SECRET]');
+    const providerPatterns = [
+      /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g,
+      /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g,
+      /\bgithub_pat_[A-Za-z0-9_]{40,}\b/g,
+      /\bAIza[0-9A-Za-z_-]{35}\b/g,
+      /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g,
+      /\b[sr]k_(?:live|test)_[0-9A-Za-z]{16,}\b/g,
+    ];
+    for (const pattern of providerPatterns) text = text.replace(pattern, '[REDACTED_SECRET]');
+    return text
       .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[REDACTED_JWT]')
-      .replace(/\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b\s*[:=]\s*([^\s'"`;&]+)/gi, (_match, key) => `${key}=[REDACTED_SECRET]`);
+      .replace(/\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b["'`]?\s*[:=]\s*["'`]?([^\s'"`;&]+)/gi, (_match, key) => `${key}=[REDACTED_SECRET]`);
   }
   function pageMeta() {
     const description = document.querySelector('meta[name="description"], meta[property="og:description"]')?.content || '';

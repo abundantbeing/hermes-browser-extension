@@ -43,6 +43,38 @@ test('redactSensitiveText masks obvious tokens and password assignments', () => 
   assert.doesNotMatch(output, /hunter2/);
 });
 
+test('redactSensitiveText masks AWS, GitHub, Google, Slack, Stripe tokens and PEM keys', () => {
+  // Built at runtime so this file never contains a literal token shape a
+  // secret scanner could flag.
+  const samples = {
+    aws: `AKIA${'Q'.repeat(16)}`,
+    githubFine: `github_pat_${'a'.repeat(42)}`,
+    githubClassic: `ghp_${'b'.repeat(36)}`,
+    google: `AIza${'c'.repeat(35)}`,
+    slack: `xoxb-${'1'.repeat(10)}-${'d'.repeat(10)}`,
+    stripe: `sk_live_${'e'.repeat(20)}`,
+  };
+  for (const [name, token] of Object.entries(samples)) {
+    const output = redactSensitiveText(`leaked ${name} token: ${token} end`);
+    assert.doesNotMatch(output, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${name} token must not survive redaction`);
+    assert.match(output, /\[REDACTED_SECRET\]/, `${name} should produce a redaction marker`);
+  }
+
+  const pem = `-----BEGIN RSA PRIVATE KEY-----\n${'QQQQ'.repeat(10)}\n-----END RSA PRIVATE KEY-----`;
+  const pemOutput = redactSensitiveText(pem);
+  assert.match(pemOutput, /\[REDACTED_PRIVATE_KEY\]/);
+  assert.doesNotMatch(pemOutput, /BEGIN RSA PRIVATE KEY/);
+});
+
+test('redactSensitiveText masks secrets in quoted JSON, not just bare key=value', () => {
+  const output = redactSensitiveText('{"api_key": "abc123def456"}');
+  assert.doesNotMatch(output, /abc123def456/);
+  assert.match(output, /\[REDACTED_SECRET\]/);
+
+  const compact = redactSensitiveText('{"api_key":"abc123def456"}');
+  assert.doesNotMatch(compact, /abc123def456/);
+});
+
 test('clampText preserves short text and clearly marks truncation', () => {
   assert.equal(clampText('short', 10), 'short');
   assert.equal(clampText('abcdefghijklmnop', 8), 'abcdefgh\n\n[truncated 8 chars]');

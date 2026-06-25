@@ -38,10 +38,26 @@ When the active tab is a YouTube watch page and transcript text is supplied in t
 If the user message begins with a Hermes skill command such as /skill-name or @skill-name, treat that as an explicit skill invocation: use available skill tools or the listed skill name to load and follow that skill before answering.
 This v0.1 extension is read-only: answer using the active tab, selected text, page text, metadata, and tabs list included in the prompt.`;
 
-const SECRET_ASSIGNMENT_RE = /\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b\s*[:=]\s*([^\s'"`;&]+)/gi;
+// Quote-tolerant: matches both bare `key=value` and quoted JSON/config shapes
+// like {"api_key": "value"} or api_key: 'value'.
+const SECRET_ASSIGNMENT_RE = /\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b["'`]?\s*[:=]\s*["'`]?([^\s'"`;&]+)/gi;
 const BEARER_RE = /\bBearer\s+[^\s'"`;&]+/gi;
 const OPENAI_STYLE_RE = new RegExp('\\bsk-[A-Za-z0-9_\\-]{12,}\\b', 'g');
 const JWT_RE = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;
+const PEM_KEY_RE = /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g;
+
+// Common cloud/provider token shapes worth catching beyond the OpenAI/JWT/
+// Bearer cases above. Listed as [label, pattern] pairs and walked in a loop
+// (rather than one const per pattern) so adding another provider shape later
+// is a one-line addition instead of touching every call site that redacts.
+const PROVIDER_TOKEN_PATTERNS = [
+  ['aws_access_key', /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g],
+  ['github_token', /\bgh[pousr]_[A-Za-z0-9]{36,}\b/g],
+  ['github_pat', /\bgithub_pat_[A-Za-z0-9_]{40,}\b/g],
+  ['google_api_key', /\bAIza[0-9A-Za-z_-]{35}\b/g],
+  ['slack_token', /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g],
+  ['stripe_key', /\b[sr]k_(?:live|test)_[0-9A-Za-z]{16,}\b/g],
+];
 
 const RESTRICTED_SCHEMES = new Set([
   'about:',
@@ -140,9 +156,14 @@ export function collectReadablePageText(documentLike = globalThis.document, { mi
 }
 
 export function redactSensitiveText(value = '') {
-  return String(value || '')
+  let text = String(value || '')
+    .replace(PEM_KEY_RE, '[REDACTED_PRIVATE_KEY]')
     .replace(BEARER_RE, 'Bearer [REDACTED_BEARER]')
-    .replace(OPENAI_STYLE_RE, '[REDACTED_SECRET]')
+    .replace(OPENAI_STYLE_RE, '[REDACTED_SECRET]');
+  for (const [, pattern] of PROVIDER_TOKEN_PATTERNS) {
+    text = text.replace(pattern, '[REDACTED_SECRET]');
+  }
+  return text
     .replace(JWT_RE, '[REDACTED_JWT]')
     .replace(SECRET_ASSIGNMENT_RE, (_match, key) => `${key}=[REDACTED_SECRET]`);
 }
