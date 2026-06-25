@@ -42,6 +42,17 @@ import {
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
 import { buildDashboardWsUrl, createGatewayClient, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
 import { mintWsTicket, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
+import {
+  DEFAULT_AGENT_PORTS,
+  activeAgents,
+  discoverLocalAgents,
+  parseAgentPortsInput,
+  probeGatewayHealth,
+} from './lib/agent-discovery.mjs';
+import {
+  discoverModelsFromSessions,
+  mergeModelsWithRegistry,
+} from './lib/model-discovery.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -124,6 +135,11 @@ const els = {
   profileSelect: $('#profileSelect'),
   refreshProfilesButton: $('#refreshProfilesButton'),
   profileStatus: $('#profileStatus'),
+  agentList: $('#agentList'),
+  refreshAgentsButton: $('#refreshAgentsButton'),
+  addCustomAgentButton: $('#addCustomAgentButton'),
+  agentPortsInput: $('#agentPortsInput'),
+  agentPickerStatus: $('#agentPickerStatus'),
   themeGrid: $('#themeGrid'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
   template: $('#messageTemplate'),
@@ -1474,7 +1490,32 @@ async function loadModels({ quiet = false, payload = null } = {}) {
       data = await readJsonResponse(response);
       if (!response.ok) throw new Error(data?.error?.message || data?.error || `Model list failed (${response.status})`);
     }
-    availableModels = normalizeHermesModels(data, settings.model);
+    let registryModels = normalizeHermesModels(data, settings.model);
+
+    // When /v1/models returns only the synthetic `hermes-agent` alias (the
+    // default Hermes v0.17.0 contract), fall back to discovering real model
+    // names from /api/sessions. This surfaces MiniMax-M3, gpt-5.5, etc. — the
+    // models the user actually has access to via the routing chain.
+    if (registryModels.length <= 1 && registryModels[0]?.id === DEFAULT_SETTINGS.model) {
+      const sessionResult = await discoverModelsFromSessions({ apiFetch, readJsonResponse });
+      if (sessionResult.ok && sessionResult.models.length) {
+        const merged = mergeModelsWithRegistry({ registryModels, sessionModels: sessionResult.models });
+        if (merged.length > registryModels.length) {
+          registryModels = normalizeHermesModels(merged, settings.model);
+          if (!quiet) {
+            setStatus(
+              'ok',
+              'Hermes models synced',
+              `${registryModels.length} models available · ${sessionResult.models.length} discovered from session history`,
+            );
+          }
+        }
+      } else if (!sessionResult.ok && !quiet) {
+        setStatus('warn', 'Model discovery limited', `Gateway exposes only the synthetic 'hermes-agent' alias and /api/sessions was unavailable (${sessionResult.error}).`);
+      }
+    }
+
+    availableModels = registryModels;
     renderModelOptions(availableModels);
     applySelectedModel(settings.model, { persist: false });
     if (!quiet) setStatus('ok', 'Hermes models synced', `${availableModels.length} model${availableModels.length === 1 ? '' : 's'} available from local Hermes`);
@@ -1603,6 +1644,121 @@ async function applySelectedProfile(profileName = '') {
     await loadSkills({ quiet: true });
   } catch (error) {
     setStatus('warn', 'Profile switch unavailable', `${error?.message || String(error)}. Browser will use the currently running Hermes profile.`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Agent picker — multi-gateway discovery (v0.1.3 tweak)
+//
+// The /v1/profiles endpoint is not implemented on Hermes v0.17.0, so the
+// "profile switcher" inside the gateway can't enumerate the user's other
+// agents. Each agent is a separate hermes-cli process bound to its own port
+// (Jon runs 5 agents on 8642-8646). This picker probes /health across a
+// configurable port range and lets the user switch the active gateway URL
+// in one click. Replaces the dead /v1/profiles switcher with a working
+// multi-gateway picker.
+// ---------------------------------------------------------------------------
+
+let discoveredAgents = [];
+
+function getAgentPorts() {
+  const stored = settings.agentPorts;
+  if (Array.isArray(stored) && stored.length) return stored;
+  return [...DEFAULT_AGENT_PORTS];
+}
+
+async function persistAgentPorts(ports) {
+  settings = { ...settings, agentPorts: ports };
+  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+}
+
+function renderAgentList(agents = discoveredAgents) {
+  if (!els.agentList) return;
+  els.agentList.innerHTML = '';
+  if (!agents.length) {
+    const empty = document.createElement('p');
+    empty.className = 'hint';
+    empty.textContent = 'No agents scanned yet. Click "Scan local agents".';
+    els.agentList.appendChild(empty);
+    return;
+  }
+  const currentUrl = normalizeGatewayUrl(settings.gatewayUrl);
+  for (const agent of agents) {
+    const card = document.createElement('div');
+    card.className = 'agent-card';
+    card.setAttribute('role', 'listitem');
+    if (normalizeGatewayUrl(agent.url) === currentUrl) {
+      card.classList.add('agent-card-active');
+    }
+    const name = document.createElement('strong');
+    name.className = 'agent-card-name';
+    name.textContent = agent.name || `port ${agent.port}`;
+    const meta = document.createElement('span');
+    meta.className = 'agent-card-meta';
+    if (agent.ok) {
+      const bits = [`port ${agent.port}`];
+      if (agent.version) bits.push(agent.version);
+      if (agent.model && agent.model !== 'hermes-agent') bits.push(agent.model);
+      meta.textContent = bits.join(' · ');
+    } else {
+      meta.textContent = agent.error ? `port ${agent.port} · ${agent.error}` : `port ${agent.port} · offline`;
+    }
+    const status = document.createElement('span');
+    status.className = `agent-card-status ${agent.ok ? 'agent-card-status-ok' : 'agent-card-status-off'}`;
+    status.textContent = agent.ok ? 'online' : 'offline';
+    card.append(name, meta, status);
+    if (agent.ok && normalizeGatewayUrl(agent.url) !== currentUrl) {
+      const switchButton = document.createElement('button');
+      switchButton.type = 'button';
+      switchButton.className = 'secondary';
+      switchButton.textContent = 'Switch to this agent';
+      switchButton.addEventListener('click', () => switchAgentGateway(agent));
+      card.appendChild(switchButton);
+    }
+    els.agentList.appendChild(card);
+  }
+}
+
+async function loadAgents({ quiet = false } = {}) {
+  if (!els.agentList) return;
+  const ports = getAgentPorts();
+  if (!ports.length) {
+    els.agentList.innerHTML = '<p class="hint">No agent ports configured. Add a custom URL or set ports in the field below.</p>';
+    return;
+  }
+  if (els.agentPickerStatus) els.agentPickerStatus.textContent = `Scanning ${ports.length} port${ports.length === 1 ? '' : 's'}...`;
+  const key = settings.apiKey || '';
+  discoveredAgents = await discoverLocalAgents({ ports, apiKey: key });
+  const healthy = activeAgents(discoveredAgents);
+  renderAgentList(discoveredAgents);
+  if (els.agentPickerStatus) {
+    if (healthy.length === 0) {
+      els.agentPickerStatus.textContent = `Scanned ${ports.length} ports — no Hermes agents online.`;
+    } else if (healthy.length === 1) {
+      els.agentPickerStatus.textContent = `1 agent online at port ${healthy[0].port}.`;
+    } else {
+      els.agentPickerStatus.textContent = `${healthy.length} agents online across ${ports.length} ports scanned.`;
+    }
+  }
+  if (!quiet) setStatus('ok', 'Local agents scanned', `${healthy.length} of ${ports.length} ports responding to /health`);
+}
+
+async function switchAgentGateway(agent) {
+  if (!agent || !agent.url) return;
+  const nextUrl = agent.url;
+  if (normalizeGatewayUrl(nextUrl) === normalizeGatewayUrl(settings.gatewayUrl)) {
+    setStatus('ok', 'Already connected', `${agent.name} is already the active gateway.`);
+    return;
+  }
+  settings = { ...settings, gatewayUrl: nextUrl };
+  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  setStatus('ok', 'Switched gateway', `Reconnecting to ${agent.name} (${nextUrl})...`);
+  // Re-run the full connect flow against the new gateway.
+  try {
+    await testConnection();
+    await loadAgents({ quiet: true });
+  } catch (error) {
+    setStatus('warn', 'Switch partially failed', error?.message || String(error));
   }
 }
 
@@ -3008,6 +3164,20 @@ function bindEvents() {
   els.refreshModelsButton.addEventListener('click', () => loadModels());
   els.refreshProfilesButton?.addEventListener('click', () => loadProfiles());
   els.profileSelect?.addEventListener('change', () => applySelectedProfile(els.profileSelect.value));
+  els.refreshAgentsButton?.addEventListener('click', () => loadAgents());
+  els.addCustomAgentButton?.addEventListener('click', () => {
+    const ports = parseAgentPortsInput(els.agentPortsInput?.value || '');
+    if (!ports.length) {
+      setStatus('warn', 'No agent ports', 'Enter at least one port number, e.g. 8642,8643,8644,8645,8646');
+      return;
+    }
+    persistAgentPorts(ports);
+    loadAgents();
+  });
+  els.agentPortsInput?.addEventListener('change', () => {
+    const ports = parseAgentPortsInput(els.agentPortsInput.value);
+    if (ports.length) persistAgentPorts(ports);
+  });
   els.editModelsButton.addEventListener('click', () => {
     closeFloatingPanels();
     openSettingsDialog();

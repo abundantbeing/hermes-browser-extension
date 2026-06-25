@@ -183,7 +183,6 @@
           </div>
           <p id="updateStatus" class="hint">Updates are checked against the public GitHub repo.</p>
         </section>
-
         <section class="settings-section profile-settings" aria-labelledby="profileTitle">
           <div class="settings-section-head">
             <div>
@@ -191,17 +190,36 @@
               <p>Choose which Hermes agent profile the Browser should use when the local gateway exposes profiles.</p>
             </div>
           </div>
-
-          <div class="profile-row">
+          <section class="settings-section">
+            <h3>Active profile</h3>
+            <div class="settings-row">
+              <label>
+                Active profile
+                <select id="profileSelect" name="profileSelect">
+                  <option value="">Detect from Hermes gateway</option>
+                </select>
+              </label>
+              <button id="refreshProfilesButton" class="secondary" type="button">↻ Profiles</button>
+            </div>
+            <p id="profileStatus" class="hint">Profiles sync after connecting to Hermes.</p>
+          </section>
+          <section class="settings-section">
+            <h3>Connected agent</h3>
+            <p class="hint">
+              Scans your local network for running Hermes agents. Each agent is a
+              separate gateway process on its own port. Use this to switch between
+              your local agents (Max, Aria, Dex, Iris, Rex, ...) without re-pairing.
+            </p>
+            <div id="agentList" class="agent-list" role="list" aria-label="Discovered Hermes agents"></div>
+            <div class="settings-row">
+              <button id="refreshAgentsButton" class="secondary" type="button">↻ Scan local agents</button>
+            </div>
             <label>
-              Active profile
-              <select id="profileSelect" name="profileSelect">
-                <option value="">Detect from Hermes gateway</option>
-              </select>
+              Agent ports (comma-separated, default 8642-8646)
+              <input id="agentPortsInput" type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />
             </label>
-            <button id="refreshProfilesButton" class="secondary" type="button">↻ Profiles</button>
-          </div>
-          <p id="profileStatus" class="hint">Profiles sync after connecting to Hermes.</p>
+            <p id="agentPickerStatus" class="hint">Agent discovery has not run yet.</p>
+          </section>
         </section>
 
         <section class="settings-section appearance-settings" aria-labelledby="appearanceTitle">

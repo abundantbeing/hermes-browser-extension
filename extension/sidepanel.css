@@ -1683,3 +1683,64 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* --- Agent picker (v0.1.3 tweak) ----------------------------------------- */
+.agent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+}
+.agent-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "name status"
+    "meta status"
+    "action action";
+  gap: 4px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--hermes-rule, rgba(255, 255, 255, 0.12));
+  border-radius: 8px;
+  background: var(--hermes-surface-2, rgba(255, 255, 255, 0.03));
+}
+.agent-card-active {
+  border-color: var(--hermes-accent, #4f8cff);
+  background: var(--hermes-accent-soft, rgba(79, 140, 255, 0.08));
+}
+.agent-card-name {
+  grid-area: name;
+  font-family: var(--hermes-font-display, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.agent-card-meta {
+  grid-area: meta;
+  font-size: 11px;
+  color: var(--hermes-muted, rgba(255, 255, 255, 0.6));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.agent-card-status {
+  grid-area: status;
+  align-self: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.agent-card-status-ok {
+  background: rgba(64, 192, 128, 0.18);
+  color: rgb(80, 220, 140);
+}
+.agent-card-status-off {
+  background: rgba(160, 160, 160, 0.15);
+  color: rgba(200, 200, 200, 0.7);
+}
+.agent-card .secondary {
+  grid-area: action;
+  justify-self: stretch;
+  margin-top: 6px;
+}

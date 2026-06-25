@@ -488,3 +488,146 @@ test('Windows setup helper supports safe JSON dry-run without exposing secrets',
   assert.doesNotMatch(result.stdout, /API_SERVER_KEY=/);
   assert.doesNotMatch(result.stdout, /sk-[A-Za-z0-9_-]{12,}/);
 });
+
+// --- v0.1.3 model discovery + agent picker tweaks -------------------------
+
+test('discoverModelsFromSessions extracts unique model names from /api/sessions', async () => {
+  const { discoverModelsFromSessions } = await import('../extension/lib/model-discovery.mjs');
+  const apiFetch = async (path) => {
+    assert.match(path, /^\/api\/sessions\?limit=/);
+    return { ok: true, status: 200 };
+  };
+  const readJsonResponse = async () => ({
+    data: [
+      { model: 'MiniMax-M3', last_active: 100, input_tokens: 1000, output_tokens: 500 },
+      { model: 'MiniMax-M3', last_active: 50,  input_tokens: 2000, output_tokens: 1000 },
+      { model: 'gpt-5.5',    last_active: 200, input_tokens: 500,  output_tokens: 250 },
+      { model: 'hermes-agent', last_active: 300, input_tokens: 100, output_tokens: 50 },
+    ],
+  });
+  const result = await discoverModelsFromSessions({ apiFetch, readJsonResponse });
+  assert.equal(result.ok, true);
+  assert.equal(result.error, '');
+  // 3 unique model IDs
+  assert.equal(result.models.length, 3);
+  // Sorted most-recent first
+  assert.equal(result.models[0].id, 'hermes-agent');
+  assert.equal(result.models[1].id, 'gpt-5.5');
+  assert.equal(result.models[2].id, 'MiniMax-M3');
+  // Provider derived from model id
+  assert.equal(result.models[1].provider, 'openai');
+  assert.equal(result.models[2].provider, 'minimax');
+  // Session counts accumulated
+  assert.equal(result.models[2].sessionCount, 2);
+});
+
+test('discoverModelsFromSessions returns ok=false with empty list on auth failure', async () => {
+  const { discoverModelsFromSessions } = await import('../extension/lib/model-discovery.mjs');
+  const apiFetch = async () => ({ ok: false, status: 401 });
+  const readJsonResponse = async () => ({ error: { message: 'Invalid API key' } });
+  const result = await discoverModelsFromSessions({ apiFetch, readJsonResponse });
+  assert.equal(result.ok, false);
+  assert.equal(result.models.length, 0);
+  assert.match(result.error, /Invalid API key/);
+});
+
+test('deriveProviderFromModelId handles the common providers we know about', async () => {
+  const { deriveProviderFromModelId } = await import('../extension/lib/model-discovery.mjs');
+  assert.equal(deriveProviderFromModelId('MiniMax-M3'), 'minimax');
+  assert.equal(deriveProviderFromModelId('gpt-5.5'), 'openai');
+  assert.equal(deriveProviderFromModelId('openai-codex/gpt-5.4'), 'openai');
+  assert.equal(deriveProviderFromModelId('kimi-k2.6'), 'moonshot');
+  assert.equal(deriveProviderFromModelId('claude-opus-4.8'), 'anthropic');
+  assert.equal(deriveProviderFromModelId('gemini-2.5'), 'google');
+  assert.equal(deriveProviderFromModelId('qwen3-coder'), 'alibaba');
+  assert.equal(deriveProviderFromModelId('deepseek-v4'), 'deepseek');
+  assert.equal(deriveProviderFromModelId('grok-4-fast'), 'xai');
+  assert.equal(deriveProviderFromModelId('glm-5.2'), 'zhipu');
+  assert.equal(deriveProviderFromModelId('mystery-model-2026'), '');
+  assert.equal(deriveProviderFromModelId(''), '');
+});
+
+test('mergeModelsWithRegistry puts registry first, sessions second, dedupes', async () => {
+  const { mergeModelsWithRegistry } = await import('../extension/lib/model-discovery.mjs');
+  const merged = mergeModelsWithRegistry({
+    registryModels: [
+      { id: 'hermes-agent', provider: 'hermes', source: 'registry' },
+      { id: 'custom/local', provider: 'custom', source: 'registry' },
+    ],
+    sessionModels: [
+      { id: 'MiniMax-M3', provider: 'minimax', source: 'sessions' },
+      { id: 'gpt-5.5', provider: 'openai', source: 'sessions' },
+      { id: 'hermes-agent', provider: 'hermes', source: 'sessions' }, // dup
+    ],
+  });
+  assert.equal(merged.length, 4);
+  assert.equal(merged[0].id, 'hermes-agent');
+  assert.equal(merged[0].source, 'registry');
+  assert.equal(merged[1].id, 'custom/local');
+  assert.equal(merged[2].id, 'MiniMax-M3');
+  assert.equal(merged[2].source, 'sessions');
+  assert.equal(merged[3].id, 'gpt-5.5');
+  // No duplicates
+  const ids = merged.map((m) => m.id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+test('probeGatewayHealth handles ok, error, and timeout cases', async () => {
+  const { probeGatewayHealth } = await import('../extension/lib/agent-discovery.mjs');
+  const originalFetch = globalThis.fetch;
+  try {
+    // OK case
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({ version: '0.17.0', platform: 'hermes-agent' }),
+    });
+    const ok = await probeGatewayHealth('http://127.0.0.1:8642');
+    assert.equal(ok.ok, true);
+    assert.equal(ok.version, '0.17.0');
+    // Error case
+    globalThis.fetch = async () => ({ ok: false, json: async () => ({}) });
+    const err = await probeGatewayHealth('http://127.0.0.1:8642');
+    assert.equal(err.ok, false);
+    // Throw case
+    globalThis.fetch = async () => { throw new Error('ECONNREFUSED'); };
+    const thrown = await probeGatewayHealth('http://127.0.0.1:8642');
+    assert.equal(thrown.ok, false);
+    assert.match(thrown.error, /ECONNREFUSED/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('discoverLocalAgents scans the configured port range and labels healthy agents', async () => {
+  const { discoverLocalAgents, activeAgents } = await import('../extension/lib/agent-discovery.mjs');
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => {
+      if (url.includes(':8642')) return { ok: true, json: async () => ({ version: '0.17.0', platform: 'hermes-agent' }) };
+      if (url.includes(':8643')) return { ok: true, json: async () => ({ version: '0.17.0', platform: 'hermes-agent' }) };
+      if (url.includes(':8644')) return { ok: false, json: async () => ({}) };
+      return { ok: false, json: async () => ({}) };
+    };
+    const agents = await discoverLocalAgents({ ports: [8642, 8643, 8644, 8645, 8646] });
+    assert.equal(agents.length, 5);
+    assert.equal(agents[0].ok, true);
+    assert.equal(agents[0].port, 8642);
+    assert.equal(agents[0].name, 'agent-8642');
+    assert.equal(agents[2].ok, false);
+    assert.equal(agents[2].name, null);
+    const healthy = activeAgents(agents);
+    assert.equal(healthy.length, 2);
+    assert.deepEqual(healthy.map((a) => a.port), [8642, 8643]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('parseAgentPortsInput handles comma, space, and edge cases', async () => {
+  const { parseAgentPortsInput } = await import('../extension/lib/agent-discovery.mjs');
+  assert.deepEqual(parseAgentPortsInput('8642,8643,8644,8645,8646'), [8642, 8643, 8644, 8645, 8646]);
+  assert.deepEqual(parseAgentPortsInput('8642 8643 8644'), [8642, 8643, 8644]);
+  assert.deepEqual(parseAgentPortsInput('8642,8642,8642'), [8642]); // dedupe
+  assert.deepEqual(parseAgentPortsInput(''), []);
+  assert.deepEqual(parseAgentPortsInput('junk,8642,999999,0,-1'), [8642]); // only valid in range
+});
