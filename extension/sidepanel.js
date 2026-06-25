@@ -1,10 +1,14 @@
 import {
+  AUDIO_TRANSCRIBE_ENDPOINT,
   DEFAULT_SETTINGS,
   HERMES_BROWSER_SYSTEM_PROMPT,
   MODEL_EFFORTS,
+  appendOpenAiChunkText,
+  buildAudioTranscriptionBody,
   buildHermesModelOptions,
   buildHermesPrompt,
   clampText,
+  compareVersionStrings,
   encodeSessionId,
   estimateContextWindow,
   estimateTokens,
@@ -12,16 +16,22 @@ import {
   formatContextMeter,
   groupModelsForMenu,
   groupSessionsForMenu,
+  isMicrophonePermissionError,
   isRestrictedUrl,
+  microphonePermissionHelp,
+  modelDisplayName,
   normalizeHermesModels,
   normalizeHermesProfiles,
   normalizeHermesSessions,
   normalizeHermesSkills,
+  normalizeExtensionVersion,
   normalizeGatewayUrl,
   normalizeReasoningEffort,
   reasoningEffortShortLabel,
   renderMarkdown,
   safeTab,
+  shouldStopSessionPaging,
+  shouldFallbackToWebSpeechForTranscription,
   shouldSubmitComposerKey,
   skillSuggestionsForInput,
 } from './lib/common.mjs';
@@ -55,13 +65,18 @@ const els = {
   skillMenu: $('#skillMenu'),
   queueNotice: $('#queueNotice'),
   sendButton: $('#sendButton'),
+  inlineSendButton: $('#inlineSendButton'),
   stopButton: $('#stopButton'),
+  voiceButton: $('#voiceButton'),
   refreshButton: $('#refreshButton'),
   settingsButton: $('#settingsButton'),
   closeSettingsButton: $('#closeSettingsButton'),
   settingsDialog: $('#settingsDialog'),
   settingsForm: $('#settingsForm'),
   testConnectionButton: $('#testConnectionButton'),
+  versionLabel: $('#versionLabel'),
+  checkUpdatesButton: $('#checkUpdatesButton'),
+  updateStatus: $('#updateStatus'),
   activeTitle: $('#activeTitle'),
   activeUrl: $('#activeUrl'),
   statusDot: $('#statusDot'),
@@ -120,6 +135,13 @@ let queuedTurn = null;
 let activeAbortController = null;
 let activeRunId = '';
 let dragDepth = 0;
+let speechRecognition = null;
+let voiceRecorder = null;
+let voiceRecorderStream = null;
+let voiceRecorderChunks = [];
+let dictating = false;
+let dictationBaseText = '';
+let dictationFinalText = '';
 let sessionRoutesAvailable = null;
 
 function setStatus(kind, title, detail) {
@@ -133,6 +155,7 @@ function setStatus(kind, title, detail) {
 }
 
 function openSettingsDialog() {
+  renderVersionInfo();
   els.settingsDialog.hidden = false;
   els.settingsDialog.setAttribute('aria-hidden', 'false');
   els.apiKeyInput.focus();
@@ -144,11 +167,49 @@ function closeSettingsDialog() {
   els.settingsButton.focus();
 }
 
+function renderVersionInfo(statusText = '') {
+  if (els.versionLabel) els.versionLabel.textContent = `v${CURRENT_EXTENSION_VERSION}`;
+  if (els.updateStatus) {
+    els.updateStatus.textContent = statusText || 'Updates are checked against the public GitHub repo.';
+  }
+}
+
+async function checkForUpdates() {
+  if (!els.checkUpdatesButton) return;
+  els.checkUpdatesButton.disabled = true;
+  els.checkUpdatesButton.textContent = 'Checking...';
+  renderVersionInfo('Checking GitHub for the latest public version...');
+  try {
+    const response = await fetch(`${UPDATE_PACKAGE_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`GitHub version check failed (${response.status})`);
+    const payload = await response.json();
+    const latest = String(payload.version || '').trim();
+    if (!latest) throw new Error('Latest package version was missing.');
+    const comparison = compareVersionStrings(latest, CURRENT_EXTENSION_VERSION);
+    if (comparison > 0) {
+      renderVersionInfo(`Update available: v${latest}. Pull latest, run npm run build, then reload the unpacked dist/ folder.`);
+      return;
+    }
+    if (comparison < 0) {
+      renderVersionInfo(`This build is ahead of main: v${CURRENT_EXTENSION_VERSION} installed, v${latest} on GitHub.`);
+      return;
+    }
+    renderVersionInfo(`You're up to date on v${CURRENT_EXTENSION_VERSION}.`);
+  } catch (error) {
+    renderVersionInfo(`${error?.message || String(error)} Open ${REPO_URL} for manual update instructions.`);
+  } finally {
+    els.checkUpdatesButton.disabled = false;
+    els.checkUpdatesButton.textContent = 'Check updates';
+  }
+}
+
 function updateConnectionPrompt() {
   const connected = Boolean(settings.apiKey);
   els.connectPanel.hidden = connected;
-  els.connectionPill.textContent = connected ? 'CONNECTED' : 'CONNECT';
+  els.connectionPill.textContent = '●';
   els.connectionPill.className = `connection-pill ${connected ? 'ok' : 'warn'}`;
+  els.connectionPill.title = connected ? `Connected to ${normalizeGatewayUrl(settings.gatewayUrl)}` : 'Not connected to Hermes';
+  els.connectionPill.setAttribute('aria-label', connected ? 'Hermes connected' : 'Hermes not connected');
   if (!connected) {
     els.sendButton.textContent = 'Connect first';
     setStatus('warn', 'Connect Hermes Desktop', 'Click Connect to Hermes, approve locally, then start chatting.');
@@ -159,6 +220,12 @@ function updateConnectionPrompt() {
 }
 
 function updateComposerBusyState() {
+  if (els.inlineSendButton) {
+    els.inlineSendButton.hidden = sending;
+    els.inlineSendButton.disabled = sending || !settings.apiKey;
+    els.inlineSendButton.title = settings.apiKey ? 'Send message' : 'Connect to Hermes first';
+    els.inlineSendButton.setAttribute('aria-label', els.inlineSendButton.title);
+  }
   if (els.stopButton) {
     els.stopButton.hidden = !sending;
     els.stopButton.disabled = !sending;
@@ -208,6 +275,389 @@ async function stopCurrentTurn() {
   activeAbortController?.abort();
 }
 
+const VOICE_AUDIO_MIME_TYPES = Object.freeze([
+  'audio/webm;codecs=opus',
+  'audio/webm',
+  'audio/mp4',
+  'audio/ogg;codecs=opus',
+  'audio/ogg',
+  'audio/wav',
+]);
+const MICROPHONE_PERMISSION_PAGE = 'request-permissions.html';
+const VOICE_DICTATION_PAGE = 'voice-dictation.html';
+const VOICE_DRAFT_STORAGE_KEY = 'hermesVoiceDraft';
+const VOICE_DRAFT_MAX_AGE_MS = 10 * 60 * 1000;
+
+function speechRecognitionConstructor() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function canRecordVoiceAudio() {
+  return Boolean(navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined');
+}
+
+function preferredVoiceMimeType() {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') return '';
+  return VOICE_AUDIO_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+function chromeRuntimeErrorMessage() {
+  try {
+    return globalThis.chrome?.runtime?.lastError?.message || '';
+  } catch {
+    return '';
+  }
+}
+
+function chromePermissionCall(method, details) {
+  return new Promise((resolve, reject) => {
+    try {
+      method.call(globalThis.chrome.permissions, details, (value) => {
+        const runtimeError = chromeRuntimeErrorMessage();
+        if (runtimeError) reject(new Error(runtimeError));
+        else resolve(Boolean(value));
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+async function ensureExtensionAudioPermission() {
+  const permissions = globalThis.chrome?.permissions;
+  if (!permissions) return true;
+  const details = { permissions: ['audioCapture'] };
+  try {
+    if (permissions.request) return await chromePermissionCall(permissions.request, details);
+    if (permissions.contains) return await chromePermissionCall(permissions.contains, details);
+    return true;
+  } catch (error) {
+    console.warn('Hermes Browser could not request audioCapture permission', error);
+    return false;
+  }
+}
+
+function microphonePermissionError(message = microphonePermissionHelp()) {
+  const error = new Error(message);
+  error.name = 'NotAllowedError';
+  return error;
+}
+
+async function microphonePermissionState() {
+  if (!navigator.permissions?.query) return 'unknown';
+  try {
+    const permission = await navigator.permissions.query({ name: 'microphone' });
+    return permission.state || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+async function openMicrophonePermissionPage() {
+  const url = globalThis.chrome?.runtime?.getURL?.(MICROPHONE_PERMISSION_PAGE) || MICROPHONE_PERMISSION_PAGE;
+  if (globalThis.chrome?.tabs?.create) {
+    await globalThis.chrome.tabs.create({ url, active: true });
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function microphoneSettingsUrl() {
+  const runtimeId = globalThis.chrome?.runtime?.id || '';
+  const site = encodeURIComponent(`chrome-extension://${runtimeId}/`);
+  return `chrome://settings/content/siteDetails?site=${site}`;
+}
+
+async function openMicrophoneSettingsPage() {
+  const url = microphoneSettingsUrl();
+  if (globalThis.chrome?.tabs?.create) {
+    await globalThis.chrome.tabs.create({ url, active: true });
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+async function openVoiceDictationPage(detail = 'Opening a Hermes Voice Dictation tab. Record there; the transcript will return to this composer automatically.') {
+  setStatus('warn', 'Opening voice dictation tab', detail);
+  const url = globalThis.chrome?.runtime?.getURL?.(VOICE_DICTATION_PAGE) || VOICE_DICTATION_PAGE;
+  if (globalThis.chrome?.tabs?.create) {
+    await globalThis.chrome.tabs.create({ url, active: true });
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function insertExternalVoiceTranscript(transcript = '', source = 'voice dictation') {
+  const spoken = String(transcript || '').trim();
+  if (!spoken) return false;
+  const current = els.input.value.trim();
+  els.input.value = [current, spoken].filter(Boolean).join(current && spoken ? ' ' : '');
+  renderContextWindow();
+  renderSkillSuggestions();
+  els.input.focus();
+  setStatus('ok', 'Voice dictation ready', `Transcript inserted from ${source}.`);
+  return true;
+}
+
+async function consumeVoiceDraft(draft = null) {
+  if (!draft?.transcript) return false;
+  const age = Math.abs(Date.now() - Number(draft.ts || 0));
+  if (!Number.isFinite(age) || age > VOICE_DRAFT_MAX_AGE_MS) {
+    await globalThis.chrome?.storage?.local?.remove?.(VOICE_DRAFT_STORAGE_KEY);
+    return false;
+  }
+  const inserted = insertExternalVoiceTranscript(draft.transcript, draft.source || 'voice dictation tab');
+  if (inserted) await globalThis.chrome?.storage?.local?.remove?.(VOICE_DRAFT_STORAGE_KEY);
+  return inserted;
+}
+
+async function consumePendingVoiceDraft() {
+  const storage = globalThis.chrome?.storage?.local;
+  if (!storage?.get) return false;
+  const stored = await storage.get([VOICE_DRAFT_STORAGE_KEY]);
+  return consumeVoiceDraft(stored?.[VOICE_DRAFT_STORAGE_KEY]);
+}
+
+async function waitForMicrophonePermission({ timeoutMs = 60_000, intervalMs = 500 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const state = await microphonePermissionState();
+    if (state === 'granted') return true;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return false;
+}
+
+async function requestMicrophoneOriginPermissionViaPage(detail = 'Opening a temporary Hermes permission tab because Chrome can suppress mic prompts inside extension side panels.') {
+  setStatus('warn', 'Microphone permission needed', detail);
+  await openMicrophonePermissionPage();
+  const granted = await waitForMicrophonePermission();
+  if (granted) {
+    setStatus('ok', 'Microphone permission enabled', 'Starting Hermes voice recording now.');
+    return true;
+  }
+  throw microphonePermissionError('Microphone access was not granted. Use the Hermes permission tab or Chrome extension details to enable Microphone, then click the mic again.');
+}
+
+async function ensureMicrophoneOriginPermission() {
+  const state = await microphonePermissionState();
+  if (state === 'granted' || state === 'unknown') return true;
+  const error = microphonePermissionError('Microphone access is blocked or pending for this extension origin. Use the Hermes Voice Dictation tab to grant/record from a visible extension page.');
+  error.voiceDictationPageFallback = true;
+  throw error;
+}
+
+async function getMicrophoneStreamWithPermissionRetry() {
+  try {
+    return await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+  } catch (error) {
+    if (isMicrophonePermissionError(error)) error.voiceDictationPageFallback = true;
+    throw error;
+  }
+}
+
+function updateVoiceButtonState() {
+  if (!els.voiceButton) return;
+  const supported = canRecordVoiceAudio() || Boolean(speechRecognitionConstructor());
+  els.voiceButton.disabled = !supported;
+  els.voiceButton.classList.toggle('recording', dictating);
+  els.voiceButton.classList.toggle('active', dictating);
+  els.voiceButton.title = !supported
+    ? 'Voice dictation is not supported in this browser'
+    : (dictating ? 'Stop voice dictation' : 'Start voice dictation');
+  els.voiceButton.setAttribute('aria-label', els.voiceButton.title);
+}
+
+function applyDictationTranscript(transcript = '') {
+  const spoken = String(transcript || '').trim();
+  els.input.value = [dictationBaseText, spoken].filter(Boolean).join(dictationBaseText && spoken ? ' ' : '');
+  renderContextWindow();
+  renderSkillSuggestions();
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error('Could not read voice recording'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function cleanupVoiceRecorder() {
+  voiceRecorderStream?.getTracks?.().forEach((track) => track.stop());
+  voiceRecorderStream = null;
+  voiceRecorder = null;
+  voiceRecorderChunks = [];
+}
+
+async function transcribeVoiceRecording(blob) {
+  const dataUrl = await blobToDataUrl(blob);
+  const response = await apiFetch(AUDIO_TRANSCRIBE_ENDPOINT, {
+    method: 'POST',
+    body: JSON.stringify(buildAudioTranscriptionBody(dataUrl, blob.type || 'audio/webm')),
+  });
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    const error = new Error(body || `Hermes voice transcription failed (${response.status})`);
+    error.status = response.status;
+    error.fallbackToWebSpeech = shouldFallbackToWebSpeechForTranscription(response.status);
+    throw error;
+  }
+  const payload = await response.json();
+  return String(payload?.transcript || '').trim();
+}
+
+function ensureSpeechRecognition() {
+  if (speechRecognition) return speechRecognition;
+  const Recognition = speechRecognitionConstructor();
+  if (!Recognition) return null;
+  const recognition = new Recognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = navigator.language || 'en-US';
+  recognition.onresult = (event) => {
+    let interim = '';
+    for (let index = event.resultIndex; index < event.results.length; index += 1) {
+      const transcript = event.results[index]?.[0]?.transcript || '';
+      if (event.results[index]?.isFinal) dictationFinalText = `${dictationFinalText} ${transcript}`.trim();
+      else interim = `${interim} ${transcript}`.trim();
+    }
+    applyDictationTranscript([dictationFinalText, interim].filter(Boolean).join(' '));
+  };
+  recognition.onerror = (event) => {
+    if (isMicrophonePermissionError(event)) {
+      setStatus('warn', 'Microphone permission blocked', microphonePermissionHelp());
+      return;
+    }
+    setStatus('warn', 'Voice dictation stopped', event.error || 'Speech recognition error');
+  };
+  recognition.onend = () => {
+    dictating = false;
+    updateVoiceButtonState();
+  };
+  speechRecognition = recognition;
+  return speechRecognition;
+}
+
+function startWebSpeechDictation(detail = 'Speak to dictate into the Hermes composer.') {
+  const recognition = ensureSpeechRecognition();
+  if (!recognition) return false;
+  dictationFinalText = '';
+  try {
+    recognition.start();
+    dictating = true;
+    updateVoiceButtonState();
+    setStatus('ok', 'Listening', detail);
+    return true;
+  } catch (error) {
+    dictating = false;
+    updateVoiceButtonState();
+    setStatus('warn', 'Voice dictation unavailable', error?.message || String(error));
+    return false;
+  }
+}
+
+async function startRecorderDictation() {
+  const permitted = await ensureExtensionAudioPermission();
+  if (!permitted) {
+    throw microphonePermissionError();
+  }
+  await ensureMicrophoneOriginPermission();
+  const stream = await getMicrophoneStreamWithPermissionRetry();
+  const mimeType = preferredVoiceMimeType();
+  const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+  voiceRecorderStream = stream;
+  voiceRecorder = recorder;
+  voiceRecorderChunks = [];
+
+  recorder.ondataavailable = (event) => {
+    if (event.data?.size > 0) voiceRecorderChunks.push(event.data);
+  };
+  recorder.onerror = (event) => {
+    cleanupVoiceRecorder();
+    dictating = false;
+    updateVoiceButtonState();
+    setStatus('warn', 'Voice recording failed', event?.error?.message || 'Could not capture microphone audio.');
+  };
+  recorder.onstop = async () => {
+    const chunks = voiceRecorderChunks;
+    const recordingType = recorder.mimeType || mimeType || 'audio/webm';
+    cleanupVoiceRecorder();
+    dictating = false;
+    updateVoiceButtonState();
+    if (!chunks.length) {
+      setStatus('warn', 'No speech captured', 'Try recording again.');
+      return;
+    }
+    try {
+      setStatus('ok', 'Transcribing voice', 'Using Hermes speech-to-text, matching Desktop dictation.');
+      const transcript = await transcribeVoiceRecording(new Blob(chunks, { type: recordingType }));
+      if (!transcript) {
+        setStatus('warn', 'No speech detected', 'Try recording again.');
+        return;
+      }
+      applyDictationTranscript(transcript);
+      setStatus('ok', 'Voice dictation ready', 'Transcript inserted into the composer.');
+    } catch (error) {
+      if (error?.fallbackToWebSpeech && startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback; speak again.')) {
+        return;
+      }
+      setStatus('warn', 'Voice transcription failed', error?.message || String(error));
+    }
+  };
+
+  recorder.start();
+  dictating = true;
+  updateVoiceButtonState();
+  setStatus('ok', 'Recording voice', 'Click the mic again to transcribe with Hermes speech-to-text.');
+}
+
+function stopRecorderDictation() {
+  const recorder = voiceRecorder;
+  if (!recorder) return false;
+  try {
+    if (recorder.state !== 'inactive') recorder.stop();
+  } catch (error) {
+    cleanupVoiceRecorder();
+    dictating = false;
+    updateVoiceButtonState();
+    setStatus('warn', 'Voice recording failed', error?.message || String(error));
+  }
+  return true;
+}
+
+async function toggleVoiceDictation() {
+  if (dictating) {
+    if (stopRecorderDictation()) return;
+    speechRecognition?.stop?.();
+    return;
+  }
+  dictationBaseText = els.input.value.trim();
+  dictationFinalText = '';
+  if (canRecordVoiceAudio()) {
+    try {
+      await startRecorderDictation();
+      return;
+    } catch (error) {
+      console.warn('Hermes voice recorder unavailable', error);
+      cleanupVoiceRecorder();
+      dictating = false;
+      updateVoiceButtonState();
+      if (isMicrophonePermissionError(error)) {
+        await openVoiceDictationPage('Comet/Chromium blocked microphone capture inside the side panel. Use this visible Hermes Voice tab once; it will transcribe locally through Hermes and send the text back here.');
+        return;
+      }
+      if (startWebSpeechDictation('Hermes microphone capture failed. Using browser speech fallback.')) return;
+      setStatus('warn', 'Voice dictation unavailable', error?.message || String(error));
+      return;
+    }
+  }
+  if (startWebSpeechDictation()) return;
+  await openVoiceDictationPage('This side panel context cannot capture microphone audio directly. Use the Hermes Voice tab to dictate into the composer.');
+  updateVoiceButtonState();
+}
+
 function formatNumber(value = 0) {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(value || 0));
 }
@@ -227,6 +677,10 @@ function estimateLocalSessionTokens(userText = '') {
 const TEXT_ATTACHMENT_LIMIT = 12_000;
 const IMAGE_ATTACHMENT_TOKEN_ESTIMATE = 1_200;
 const BROWSER_IMAGE_UPLOAD_ENDPOINT = '/api/browser-extension/uploads/images';
+const UPDATE_PACKAGE_URL = 'https://raw.githubusercontent.com/abundantbeing/hermes-browser-extension/main/package.json';
+const REPO_URL = 'https://github.com/abundantbeing/hermes-browser-extension';
+const runtimeManifest = globalThis.chrome?.runtime?.getManifest?.() || {};
+const CURRENT_EXTENSION_VERSION = normalizeExtensionVersion(runtimeManifest, els.versionLabel?.textContent);
 
 const COLOR_MODES = new Set(['light', 'dark', 'system']);
 const APPEARANCE_THEMES = Object.freeze([
@@ -681,11 +1135,6 @@ function outboundContent(prompt = '', items = attachments) {
   ];
 }
 
-function modelDisplayName(model = {}) {
-  const raw = String(model.label || model.name || model.id || DEFAULT_SETTINGS.model);
-  return raw.includes(':') ? raw.split(':').slice(1).join(':') : raw;
-}
-
 function modelProviderLabel(model = {}) {
   return String(model.providerLabel || model.provider || model.owner || 'Models');
 }
@@ -911,6 +1360,7 @@ function applySelectedModel(selectedId, { persist = true, keepOpen = false } = {
     els.modelMenuButton.setAttribute('aria-expanded', 'false');
   }
   if (persist) chrome.storage.local.set({ hermesBrowserSettings: settings });
+  if (persist && selected) setStatus('ok', 'Hermes model selected', `${modelProviderLabel(selected)} · ${modelDisplayName(selected)}`);
 }
 
 async function loadModels({ quiet = false, payload = null } = {}) {
@@ -1143,7 +1593,7 @@ async function loadAllHermesSessions() {
     const hasMore = Boolean(payload.has_more ?? payload.hasMore ?? payload.pagination?.hasMore);
     const total = Number(payload.total || payload.pagination?.total || 0);
     offset += rows.length;
-    if (!rows.length || (!hasMore && (!total || offset >= total)) || rows.length < limit) break;
+    if (shouldStopSessionPaging({ rowCount: rows.length, offset, total, hasMore })) break;
   }
   return { data: merged };
 }
@@ -1305,6 +1755,28 @@ function setMessageContent(node, content) {
   });
 }
 
+function createStreamingMessageUpdater(node) {
+  let pending = '';
+  let frame = 0;
+  const flush = (content = pending) => {
+    pending = content || '';
+    if (frame) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+    }
+    setMessageContent(node, pending);
+  };
+  const update = (content = '') => {
+    pending = content || '';
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      setMessageContent(node, pending || 'Thinking...');
+    });
+  };
+  return { update, flush };
+}
+
 async function trimAndSaveMessages() {
   const max = Number(settings.maxLocalMessages || DEFAULT_SETTINGS.maxLocalMessages);
   if (messages.length > max) messages = messages.slice(-max);
@@ -1313,16 +1785,22 @@ async function trimAndSaveMessages() {
 
 async function loadSettings() {
   const stored = await chrome.storage.local.get(['hermesBrowserSettings', 'hermesBrowserMessages']);
-  settings = { ...DEFAULT_SETTINGS, ...(stored.hermesBrowserSettings || {}) };
+  const storedSettings = stored.hermesBrowserSettings || {};
+  const migrateDesktopOptionDefaults = !storedSettings.modelOptionsVersion && storedSettings.reasoningEffort === 'medium';
+  settings = { ...DEFAULT_SETTINGS, ...storedSettings };
   settings = {
     ...settings,
     thinkingEnabled: settings.thinkingEnabled !== false,
     fastMode: Boolean(settings.fastMode),
-    reasoningEffort: normalizeReasoningEffort(settings.reasoningEffort),
+    reasoningEffort: migrateDesktopOptionDefaults ? DEFAULT_SETTINGS.reasoningEffort : normalizeReasoningEffort(settings.reasoningEffort),
+    modelOptionsVersion: DEFAULT_SETTINGS.modelOptionsVersion,
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
   };
   applyAppearanceSettings();
+  if (migrateDesktopOptionDefaults) {
+    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  }
   messages = Array.isArray(stored.hermesBrowserMessages) ? stored.hermesBrowserMessages : [];
   syncSettingsForm();
   renderMessagesFromStorage();
@@ -1447,11 +1925,20 @@ function collectPageContextFallback(options = {}) {
     return `${text.slice(0, limit)}\n\n[truncated ${text.length - limit} chars]`;
   }
   function redact(value) {
+    // Mirror of redactSensitiveText in lib/common.mjs. Kept inline because the
+    // content script cannot import the module; the canonical version and tests
+    // live in lib/common.mjs and prompt-build re-redacts the same text.
     return String(value || '')
+      .replace(/-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9 ]+ )?PRIVATE KEY-----/g, '[REDACTED_PRIVATE_KEY]')
       .replace(/\bBearer\s+[^\s'"`;&]+/gi, 'Bearer [REDACTED_BEARER]')
       .replace(new RegExp('\\bsk-[A-Za-z0-9_\\-]{12,}\\b', 'g'), '[REDACTED_SECRET]')
+      .replace(/\b[sr]k_(?:live|test)_[0-9A-Za-z]{16,}\b/g, '[REDACTED_SECRET]')
+      .replace(/\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g, '[REDACTED_SECRET]')
+      .replace(/\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b/g, '[REDACTED_SECRET]')
+      .replace(/\bAIza[0-9A-Za-z_\-]{35}\b/g, '[REDACTED_SECRET]')
+      .replace(/\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, '[REDACTED_SECRET]')
       .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[REDACTED_JWT]')
-      .replace(/\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b\s*[:=]\s*([^\s'"`;&]+)/gi, (_match, key) => `${key}=[REDACTED_SECRET]`);
+      .replace(/\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b["'`]?\s*[:=]\s*["'`]?([^\s'"`;&]+)/gi, (_match, key) => `${key}=[REDACTED_SECRET]`);
   }
   function pageMeta() {
     const description = document.querySelector('meta[name="description"], meta[property="og:description"]')?.content || '';
@@ -1695,12 +2182,6 @@ function textFromRunCompleted(data = {}) {
   return data.content ? String(data.content) : '';
 }
 
-function appendOpenAiChunkText(event, finalText) {
-  if (event.data === '[DONE]') return finalText;
-  const data = event.json || {};
-  const delta = data.choices?.[0]?.delta?.content || data.choices?.[0]?.message?.content || '';
-  return delta ? `${finalText}${delta}` : finalText;
-}
 
 async function readSseResponse(response, onDelta, onTool, { signal, onRun } = {}) {
   const reader = response.body.getReader();
@@ -1980,6 +2461,7 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
 
     addMessage('user', displayUserText);
     const { node } = addMessage('assistant', 'Thinking...', { persist: false });
+    const streamView = createStreamingMessageUpdater(node);
     let answer = '';
     let liveText = '';
     try {
@@ -1987,9 +2469,9 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
         prompt,
         (partial) => {
           liveText = partial || '';
-          setMessageContent(node, liveText || 'Thinking...');
+          streamView.update(liveText || 'Thinking...');
         },
-        (tool) => setMessageContent(node, `${liveText || 'Working...'}\n\n[tool] ${tool.tool_name || tool.tool || 'Hermes tool'} ${tool.preview || ''}`.trim()),
+        (tool) => streamView.update(`${liveText || 'Working...'}\n\n[tool] ${tool.tool_name || tool.tool || 'Hermes tool'} ${tool.preview || ''}`.trim()),
         {
           signal: activeAbortController.signal,
           attachments: preparedAttachments,
@@ -2002,12 +2484,12 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
       if (isAbortError(streamError)) {
         answer = liveText ? `${liveText}\n\n[stopped by user]` : '[stopped by user]';
       } else {
-        setMessageContent(node, `Streaming failed, retrying non-streaming...\n${streamError.message}`);
+        streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
         answer = await fallbackSessionChat(prompt, preparedAttachments);
       }
     }
     const finalAnswer = answer || liveText || '(empty response)';
-    setMessageContent(node, finalAnswer);
+    streamView.flush(finalAnswer);
     messages.push({ role: 'assistant', content: finalAnswer, ts: Date.now() });
     await trimAndSaveMessages();
     await loadSessions({ quiet: true });
@@ -2158,6 +2640,8 @@ function bindEvents() {
   });
   els.refreshButton.addEventListener('click', refreshContext);
   els.stopButton?.addEventListener('click', stopCurrentTurn);
+  els.voiceButton?.addEventListener('click', toggleVoiceDictation);
+  els.checkUpdatesButton?.addEventListener('click', checkForUpdates);
   els.refreshModelsButton.addEventListener('click', () => loadModels());
   els.refreshProfilesButton?.addEventListener('click', () => loadProfiles());
   els.profileSelect?.addEventListener('change', () => applySelectedProfile(els.profileSelect.value));
@@ -2333,6 +2817,24 @@ function bindEvents() {
   chrome.tabs?.onUpdated?.addListener?.((_tabId, changeInfo) => {
     if (changeInfo.status === 'complete' || changeInfo.title || changeInfo.url) refreshContext();
   });
+  chrome.runtime?.onMessage?.addListener?.((message, _sender, sendResponse) => {
+    if (message?.type === 'HERMES_VOICE_TRANSCRIPT') {
+      consumeVoiceDraft(message).then((ok) => sendResponse?.({ ok })).catch((error) => sendResponse?.({ ok: false, error: error?.message || String(error) }));
+      return true;
+    }
+    if (message?.type === 'HERMES_VOICE_STATUS') {
+      setStatus(message.kind || 'ok', message.title || 'Voice dictation', message.detail || '');
+      sendResponse?.({ ok: true });
+      return false;
+    }
+    return false;
+  });
+  chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
+    if (areaName !== 'local' || !changes?.[VOICE_DRAFT_STORAGE_KEY]?.newValue) return;
+    consumeVoiceDraft(changes[VOICE_DRAFT_STORAGE_KEY].newValue).catch((error) => {
+      setStatus('warn', 'Voice transcript handoff failed', error?.message || String(error));
+    });
+  });
 }
 
 bindEvents();
@@ -2344,6 +2846,7 @@ try {
     await loadProfiles({ quiet: true });
     await loadSessions({ quiet: true });
     await ensureDefaultBrowserSession({ focus: false });
+    await consumePendingVoiceDraft();
   } else {
     renderModelOptions();
     renderSessionMenu();
@@ -2361,4 +2864,6 @@ try {
   setStatus('warn', 'Context refresh unavailable', error?.message || String(error));
 }
 updateConnectionPrompt();
+renderVersionInfo();
+updateVoiceButtonState();
 renderEmptyState();

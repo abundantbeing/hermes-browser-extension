@@ -17,7 +17,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   modelContextTokens: 0,
   thinkingEnabled: true,
   fastMode: false,
-  reasoningEffort: 'medium',
+  reasoningEffort: 'xhigh',
+  modelOptionsVersion: 2,
   contextDepth: 'normal',
   includeTabs: true,
   includePageText: true,
@@ -38,10 +39,18 @@ When the active tab is a YouTube watch page and transcript text is supplied in t
 If the user message begins with a Hermes skill command such as /skill-name or @skill-name, treat that as an explicit skill invocation: use available skill tools or the listed skill name to load and follow that skill before answering.
 This v0.1 extension is read-only: answer using the active tab, selected text, page text, metadata, and tabs list included in the prompt.`;
 
-const SECRET_ASSIGNMENT_RE = /\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b\s*[:=]\s*([^\s'"`;&]+)/gi;
+// Allow an optional quote after the key and before the value so secrets in
+// quoted JSON/config are redacted, not just bare key=value assignments.
+const SECRET_ASSIGNMENT_RE = /\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret|private[_-]?key)\b["'`]?\s*[:=]\s*["'`]?([^\s'"`;&]+)/gi;
 const BEARER_RE = /\bBearer\s+[^\s'"`;&]+/gi;
 const OPENAI_STYLE_RE = new RegExp('\\bsk-[A-Za-z0-9_\\-]{12,}\\b', 'g');
+const STRIPE_KEY_RE = /\b[sr]k_(?:live|test)_[0-9A-Za-z]{16,}\b/g;
+const AWS_ACCESS_KEY_RE = /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g;
+const GITHUB_TOKEN_RE = /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b/g;
+const GOOGLE_API_KEY_RE = /\bAIza[0-9A-Za-z_\-]{35}\b/g;
+const SLACK_TOKEN_RE = /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g;
 const JWT_RE = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;
+const PEM_PRIVATE_KEY_RE = /-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9 ]+ )?PRIVATE KEY-----/g;
 
 const RESTRICTED_SCHEMES = new Set([
   'about:',
@@ -141,8 +150,14 @@ export function collectReadablePageText(documentLike = globalThis.document, { mi
 
 export function redactSensitiveText(value = '') {
   return String(value || '')
+    .replace(PEM_PRIVATE_KEY_RE, '[REDACTED_PRIVATE_KEY]')
     .replace(BEARER_RE, 'Bearer [REDACTED_BEARER]')
     .replace(OPENAI_STYLE_RE, '[REDACTED_SECRET]')
+    .replace(STRIPE_KEY_RE, '[REDACTED_SECRET]')
+    .replace(AWS_ACCESS_KEY_RE, '[REDACTED_SECRET]')
+    .replace(GITHUB_TOKEN_RE, '[REDACTED_SECRET]')
+    .replace(GOOGLE_API_KEY_RE, '[REDACTED_SECRET]')
+    .replace(SLACK_TOKEN_RE, '[REDACTED_SECRET]')
     .replace(JWT_RE, '[REDACTED_JWT]')
     .replace(SECRET_ASSIGNMENT_RE, (_match, key) => `${key}=[REDACTED_SECRET]`);
 }
@@ -187,6 +202,33 @@ export function formatContextMeter({ estimatedTokens = 0, modelContextTokens = 0
     limitLabel: hasLimit ? formatCompactTokenCount(limit) : '∞',
     compactLabel: hasLimit ? `${formatCompactTokenCount(used)}/${formatCompactTokenCount(limit)}` : `${formatCompactTokenCount(used)} tok`,
   };
+}
+
+export function normalizeExtensionVersion(runtimeManifest = {}, fallbackLabel = '') {
+  const manifestVersion = String(runtimeManifest?.version || '').trim();
+  if (manifestVersion) return manifestVersion;
+  const fallbackVersion = String(fallbackLabel || '').trim().replace(/^v/i, '').trim();
+  return fallbackVersion || '0.0.0';
+}
+
+export function compareVersionStrings(a = '0.0.0', b = '0.0.0') {
+  const parse = (value) => String(value || '0.0.0')
+    .split(/[.+-]/)
+    .slice(0, 3)
+    .map((part) => Number.parseInt(part, 10))
+    .map((part) => (Number.isFinite(part) ? part : 0));
+  const left = parse(a);
+  const right = parse(b);
+  for (let index = 0; index < 3; index += 1) {
+    const diff = (left[index] || 0) - (right[index] || 0);
+    if (diff > 0) return 1;
+    if (diff < 0) return -1;
+  }
+  return 0;
+}
+
+export function isNewerVersion(candidate = '0.0.0', current = '0.0.0') {
+  return compareVersionStrings(candidate, current) > 0;
 }
 
 const MODEL_CONTEXT_FALLBACKS = Object.freeze([
@@ -311,7 +353,7 @@ function isHorizontalRule(line = '') {
 }
 
 function isTableDivider(line = '') {
-  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+  return /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line);
 }
 
 function tableCells(line = '') {
@@ -464,6 +506,35 @@ export function formatYoutubeTranscript(transcript = null, maxChars = 12_000) {
   return clampText(redactSensitiveText(text), maxChars);
 }
 
+export const AUDIO_TRANSCRIBE_ENDPOINT = '/api/audio/transcribe';
+
+export function buildAudioTranscriptionBody(dataUrl = '', mimeType = 'audio/webm') {
+  return {
+    data_url: String(dataUrl || ''),
+    mime_type: String(mimeType || 'audio/webm'),
+  };
+}
+
+export function shouldFallbackToWebSpeechForTranscription(status = 0) {
+  return new Set([404, 405, 501]).has(Number(status));
+}
+
+export function isMicrophonePermissionError(error = {}) {
+  const name = String(error?.name || '').toLowerCase();
+  const message = String(error?.message || error?.error || error || '').toLowerCase();
+  return name === 'notallowederror'
+    || name === 'permissiondeniederror'
+    || message.includes('not-allowed')
+    || message.includes('permission denied')
+    || message.includes('permission dismissed')
+    || message.includes('permission blocked')
+    || message.includes('microphone access denied');
+}
+
+export function microphonePermissionHelp() {
+  return 'Chromium blocked microphone capture inside the side panel. Click the mic again to open the Hermes Voice Dictation tab, click Start dictation there to grant/record from a visible extension page, then the transcript will return to the side panel. If it is still blocked, open microphone settings for the Hermes Browser Extension origin and set Microphone to Allow.';
+}
+
 export function normalizeHermesModels(payload = {}, selectedModel = DEFAULT_SETTINGS.model) {
   const rawModels = Array.isArray(payload)
     ? payload
@@ -498,6 +569,13 @@ export function normalizeHermesModels(payload = {}, selectedModel = DEFAULT_SETT
     models.push({ id: DEFAULT_SETTINGS.model, label: DEFAULT_SETTINGS.model, owner: 'default', contextTokens: 0 });
   }
   return models;
+}
+
+export function modelDisplayName(model = {}) {
+  const raw = String(model.label || model.name || model.id || DEFAULT_SETTINGS.model);
+  const provider = String(model.provider || model.owner || model.providerLabel || '').trim();
+  if (provider && raw.startsWith(`${provider}:`)) return raw.slice(provider.length + 1);
+  return raw;
 }
 
 export function groupModelsForMenu(models = [], selectedModel = DEFAULT_SETTINGS.model, query = '') {
@@ -795,6 +873,23 @@ export function extractAssistantText(payload) {
   return '';
 }
 
+export function appendOpenAiChunkText(event = {}, finalText = '') {
+  if (event?.data === '[DONE]') return finalText;
+  const choice = (event?.json || {}).choices?.[0] || {};
+  const delta = choice.delta?.content;
+  if (delta) return `${finalText}${delta}`;
+  const message = choice.message?.content;
+  if (message) return String(message);
+  return finalText;
+}
+
 export function encodeSessionId(sessionId = DEFAULT_SETTINGS.sessionId) {
   return encodeURIComponent(String(sessionId || DEFAULT_SETTINGS.sessionId).trim() || DEFAULT_SETTINGS.sessionId);
+}
+
+export function shouldStopSessionPaging({ rowCount = 0, offset = 0, total = 0, hasMore = false } = {}) {
+  if (!rowCount) return true;
+  if (hasMore) return false;
+  if (total && offset < total) return false;
+  return true;
 }

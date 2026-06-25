@@ -19,7 +19,7 @@
         </button>
         <button id="newSessionButton" class="settings-button icon-button" type="button" title="New Hermes Browser Extension session" aria-label="New session">+</button>
         <div class="topbar-status">
-          <span id="connectionPill" class="connection-pill">LOCAL</span>
+          <span id="connectionPill" class="connection-pill" role="status" aria-label="Hermes connection status" title="Hermes connection status">●</span>
         </div>
         <button id="settingsButton" class="settings-button icon-button" type="button" title="Settings" aria-label="Open settings">
           <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
@@ -99,6 +99,13 @@
             <textarea id="promptInput" rows="3" placeholder="Ask Hermes about this page..."></textarea>
             <div id="dropOverlay" class="drop-overlay" hidden>Drop files to attach</div>
             <button id="attachMenuButton" class="attach-menu-button composer-plus" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Attach context" title="Attach context">+</button>
+            <button id="voiceButton" class="composer-icon composer-mic" type="button" aria-label="Start voice dictation" title="Start voice dictation">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
+            </button>
+            <button id="inlineSendButton" class="composer-icon composer-send" type="submit" aria-label="Send message" title="Send message">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 4 5.5 10.5l1.4 1.4L11 7.82V20h2V7.82l4.1 4.08 1.4-1.4L12 4Z"/></svg>
+            </button>
+            <button id="stopButton" class="composer-icon composer-stop" type="button" aria-label="Stop Hermes" title="Stop Hermes" hidden>■</button>
             <section id="skillMenu" class="skill-menu" role="listbox" aria-label="Hermes skill suggestions" hidden></section>
             <section id="attachMenu" class="attach-menu" role="dialog" aria-label="Attach context" hidden>
               <p class="attach-menu-heading">Attach</p>
@@ -119,7 +126,6 @@
           <p id="queueNotice" class="queue-notice" hidden></p>
           <div class="composer-actions">
             <button id="refreshButton" class="secondary icon-refresh" type="button" title="Refresh page context" aria-label="Refresh page context">↻</button>
-            <button id="stopButton" class="secondary stop-button" type="button" hidden>Stop</button>
             <button id="sendButton" type="submit">Ask Hermes</button>
           </div>
         </form>
@@ -166,6 +172,17 @@
           </div>
           <button id="closeSettingsButton" class="settings-button" type="button">CLOSE</button>
         </header>
+
+        <section class="settings-section release-settings" aria-labelledby="releaseTitle">
+          <div class="release-row">
+            <div>
+              <h3 id="releaseTitle">Extension</h3>
+              <p><span id="versionLabel">v0.1.2</span> · public alpha / load unpacked</p>
+            </div>
+            <button id="checkUpdatesButton" class="secondary" type="button">Check updates</button>
+          </div>
+          <p id="updateStatus" class="hint">Updates are checked against the public GitHub repo.</p>
+        </section>
 
         <section class="settings-section profile-settings" aria-labelledby="profileTitle">
           <div class="settings-section-head">

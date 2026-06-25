@@ -18,8 +18,10 @@ Public alpha. Load unpacked. Local-first. Read-only browser context. **Not on th
 
 - Chrome/Edge/Chromium MV3 side panel powered by the Side Panel API.
 - Connects to a local Hermes API server at `http://127.0.0.1:8642`.
+- Auto-syncs the connected Hermes runtime's providers/models, profiles, skills, and sessions after Connect/Test/Save and on side-panel startup.
 - Sends active page/browser context to a persisted Hermes session.
 - Captures active tab title/URL, open tabs, selected text, readable page text, metadata, headings, forms, links, and buttons where available.
+- Supports voice dictation through the local Hermes audio transcription API, with a visible extension voice tab fallback for Chromium side-panel microphone blocks.
 - Wraps webpage text as untrusted browser context before sending it to Hermes.
 - Streams Hermes responses and falls back to non-streaming chat when needed.
 - Uses local extension storage for the Gateway URL and API key/browser token.
@@ -102,9 +104,17 @@ In the side panel first-run screen:
    - API key / browser token: your local `API_SERVER_KEY`
    - Session ID: `hermes-browser-extension`
    - Session title: `Hermes Browser Extension`
-4. Click **Test connection**.
+4. Click **Test connection**. This probes `/health`, `/v1/models`, and session creation, then refreshes skills and profiles.
 5. Click **Save settings**.
 6. Open a normal `https://` page, then ask something like: `Summarize this page in one sentence.`
+
+After connection, the side panel automatically loads from the connected Hermes gateway:
+
+- `/v1/models` — all providers/models Hermes can enumerate, including provider-qualified IDs.
+- `/api/sessions` — recent Hermes sessions grouped by source.
+- `/v1/skills` — slash-command skill suggestions in the composer.
+- `/v1/profiles` — profile picker when the gateway exposes profile metadata.
+- `/v1/capabilities` — feature flags such as audio transcription and Browser upload support.
 
 The DOM/context chip should show a non-zero page-context count on normal readable pages. Browser internal pages such as `chrome://extensions` are intentionally restricted.
 
@@ -149,6 +159,18 @@ If `/v1/models` fails, check your local `API_SERVER_KEY` and CORS setting.
 
 Open a normal `https://` page and refresh context. Browser internal pages (`chrome://`, `edge://`, extension pages, devtools, etc.) are restricted by design.
 
+### Microphone says blocked or voice dictation does not start
+
+Chromium side panels can suppress microphone permission prompts. Hermes Browser Extension handles this with a visible extension voice page:
+
+1. Click the mic button in the side panel.
+2. If the side panel cannot capture the mic, a **Hermes Voice Dictation** tab opens.
+3. In that tab, click **Start dictation**. This click is the permission gesture Chromium expects.
+4. Speak, then click **Stop + transcribe**.
+5. The transcript is sent back to the side panel composer automatically.
+
+If Chromium still says the mic is blocked, click **Open microphone settings** in the voice tab and set Microphone to **Allow** for `chrome-extension://<the Hermes extension id>/`, then return to the voice tab and try again.
+
 ### The first-run Connect flow is unavailable
 
 Use **Manual setup** with your local Gateway URL and API key. The native Desktop approval flow is still evolving during alpha.
@@ -174,6 +196,8 @@ extension/
   sidepanel.html      side panel UI
   sidepanel.css       side panel styling
   sidepanel.js        Hermes API client + UI state
+  voice-dictation.*  visible extension voice recorder fallback for blocked side-panel mic capture
+  request-permissions.* visible extension mic-permission helper page
   sidepanel-preview.html static visual QA preview
   assets/             local Hermes fonts, icons, and imagery
   lib/common.mjs      shared prompt/context/security utilities

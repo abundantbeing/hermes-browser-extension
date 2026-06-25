@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Hermes Browser Extension",
   "short_name": "Hermes Ext",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Browser-native side panel for Hermes Agent — connect web context to your local Hermes runtime.",
   "minimum_chrome_version": "114",
   "icons": {
@@ -17,6 +17,9 @@
     "sidePanel",
     "storage",
     "tabs"
+  ],
+  "optional_permissions": [
+    "audioCapture"
   ],
   "host_permissions": [
     "http://127.0.0.1/*",
@@ -53,6 +56,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://127.0.0.1:* http://localhost:*;"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://127.0.0.1:* http://localhost:* https://raw.githubusercontent.com/* https://video.google.com/* https://www.youtube.com/* https://youtube.com/*;"
   }
 }

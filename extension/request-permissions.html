@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Allow Hermes Microphone</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+    <style>
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--bg, #080719);
+        color: var(--text, #f2eeff);
+      }
+      .permission-card {
+        width: min(520px, 100%);
+        border: 1px solid color-mix(in srgb, var(--border, #8d7cff) 50%, transparent);
+        border-radius: 24px;
+        padding: 28px;
+        background: color-mix(in srgb, var(--panel, #100d29) 92%, transparent);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      }
+      .permission-card h1 {
+        margin: 0 0 12px;
+        font-size: 28px;
+        letter-spacing: -0.04em;
+      }
+      .permission-card p {
+        margin: 0 0 18px;
+        color: var(--muted, #a9a1d7);
+        line-height: 1.5;
+      }
+      .permission-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      #permissionStatus {
+        margin-top: 18px;
+        font-size: 13px;
+        color: var(--muted, #a9a1d7);
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body data-hermes-theme="nous" data-hermes-mode="dark" data-hermes-color-mode="dark">
+    <main class="permission-card" aria-labelledby="permissionTitle">
+      <p class="eyebrow">HERMES BROWSER EXTENSION</p>
+      <h1 id="permissionTitle">Allow microphone access</h1>
+      <p>Chrome can suppress microphone prompts inside extension side panels. This temporary extension page asks Chrome for microphone access, then sends you back to the Hermes side panel.</p>
+      <p>No audio is saved here. The permission only lets Hermes Browser record your voice when you click the mic button.</p>
+      <div class="permission-actions">
+        <button id="allowMicrophoneButton" type="button">Allow microphone</button>
+        <button id="openMicrophoneSettingsButton" class="secondary" type="button">Open microphone settings</button>
+        <button id="closePermissionButton" class="secondary" type="button">Close</button>
+      </div>
+      <div id="permissionStatus" role="status" aria-live="polite">Waiting for permission request…</div>
+    </main>
+    <script type="module" src="request-permissions.js"></script>
+  </body>
+</html>

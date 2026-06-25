@@ -10,6 +10,10 @@ const requiredFiles = [
   ...(manifest.content_scripts || []).flatMap((entry) => entry.js || []),
   'sidepanel.css',
   'sidepanel.js',
+  'request-permissions.html',
+  'request-permissions.js',
+  'voice-dictation.html',
+  'voice-dictation.js',
   'lib/common.mjs',
   'assets/fonts/Sigurd-Variable.woff2',
   'assets/fonts/CourierPrime-Regular.woff2',
@@ -28,6 +32,11 @@ if (manifest.manifest_version !== 3) errors.push('manifest_version must be 3');
 if (!manifest.permissions?.includes('sidePanel')) errors.push('sidePanel permission missing');
 if (!manifest.permissions?.includes('storage')) errors.push('storage permission missing');
 if (manifest.permissions?.includes('debugger')) errors.push('debugger permission is intentionally not allowed in v0.1');
+if (!manifest.optional_permissions?.includes('audioCapture')) errors.push('audioCapture optional permission missing for runtime microphone prompt');
+if (manifest.permissions?.includes('audioCapture')) errors.push('audioCapture should be optional so dictation can request it on click');
+if (manifest.permissions?.includes('microphone') || manifest.optional_permissions?.includes('microphone')) {
+  errors.push('microphone is a Web Permission name, not a Chrome extension manifest permission; use the request-permissions page instead');
+}
 if (!manifest.host_permissions?.includes('http://127.0.0.1/*')) errors.push('localhost gateway host permission missing');
 
 for (const file of requiredFiles) {

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hermes Voice Dictation</title>
+    <link rel="stylesheet" href="sidepanel.css" />
+    <style>
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--bg, #080719);
+        color: var(--text, #f2eeff);
+      }
+      .voice-card {
+        width: min(560px, 100%);
+        border: 1px solid color-mix(in srgb, var(--border, #8d7cff) 50%, transparent);
+        border-radius: 24px;
+        padding: 28px;
+        background: color-mix(in srgb, var(--panel, #100d29) 92%, transparent);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      }
+      .voice-card h1 {
+        margin: 0 0 12px;
+        font-size: 30px;
+        letter-spacing: -0.05em;
+      }
+      .voice-card p {
+        margin: 0 0 18px;
+        color: var(--muted, #a9a1d7);
+        line-height: 1.5;
+      }
+      .voice-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .voice-meter {
+        height: 6px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--border, #8d7cff) 18%, transparent);
+        margin: 18px 0;
+      }
+      .voice-meter span {
+        display: block;
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--accent, #8d7cff);
+        transition: width 160ms ease;
+      }
+      body.recording .voice-meter span {
+        width: 100%;
+        animation: pulse-meter 1.2s ease-in-out infinite;
+      }
+      @keyframes pulse-meter {
+        0%, 100% { transform: translateX(-65%); opacity: 0.45; }
+        50% { transform: translateX(65%); opacity: 1; }
+      }
+      #voiceStatus {
+        margin-top: 18px;
+        font-size: 13px;
+        color: var(--muted, #a9a1d7);
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body data-hermes-theme="nous" data-hermes-mode="dark" data-hermes-color-mode="dark">
+    <main class="voice-card" aria-labelledby="voiceTitle">
+      <p class="eyebrow">HERMES BROWSER EXTENSION</p>
+      <h1 id="voiceTitle">Voice dictation</h1>
+      <p>Chromium can block microphone capture inside extension side panels. This visible extension tab records from the same Hermes extension origin, transcribes through your connected local Hermes gateway, then sends the transcript back to the side panel composer.</p>
+      <p>No audio is saved by this page. Audio is sent once to your local Hermes transcription endpoint when you stop recording.</p>
+      <div class="voice-meter" aria-hidden="true"><span></span></div>
+      <div class="voice-actions">
+        <button id="startVoiceButton" type="button">Start dictation</button>
+        <button id="openMicSettingsButton" class="secondary" type="button">Open microphone settings</button>
+        <button id="closeVoiceButton" class="secondary" type="button">Close</button>
+      </div>
+      <div id="voiceStatus" role="status" aria-live="polite">Click Start dictation to grant microphone access and record.</div>
+    </main>
+    <script type="module" src="voice-dictation.js"></script>
+  </body>
+</html>

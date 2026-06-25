@@ -1,6 +1,6 @@
 {
   "name": "hermes-browser-extension",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Browser-native side panel for Hermes Agent — connect web context to your local Hermes runtime.",
   "type": "module",
@@ -16,10 +16,12 @@
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check:js": "node --check extension/sidepanel.js && node --check extension/background.js && node --check extension/content.js && node --check extension/lib/common.mjs",
+    "check:js": "node --check extension/sidepanel.js && node --check extension/background.js && node --check extension/content.js && node --check extension/lib/common.mjs && node --check scripts/windows-setup.mjs",
     "check:manifest": "node scripts/check-manifest.mjs",
     "verify": "npm run test && npm run check:js && npm run check:manifest",
     "build": "node scripts/build.mjs",
+    "setup:windows": "node scripts/windows-setup.mjs",
+    "setup:windows:dry-run": "node scripts/windows-setup.mjs --dry-run --json",
     "package": "npm run build && node scripts/package.mjs"
   },
   "engines": {
