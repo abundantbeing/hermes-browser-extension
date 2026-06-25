@@ -19,6 +19,7 @@ import {
   normalizeHermesSkills,
   normalizeGatewayUrl,
   normalizeReasoningEffort,
+  pairingFailureMessage,
   reasoningEffortShortLabel,
   renderMarkdown,
   safeTab,
@@ -1874,7 +1875,7 @@ async function connectToHermes() {
       }),
     });
     const payload = await readJsonResponse(start);
-    if (!start.ok) throw new Error(payload?.error?.message || payload?.error || `Pairing failed (${start.status})`);
+    if (!start.ok) throw new Error(pairingFailureMessage(start.status, payload));
 
     if (payload.token) {
       settings.apiKey = payload.token;
@@ -1946,7 +1947,7 @@ async function fallbackChatCompletions(prompt, turnAttachments = attachments) {
 async function askHermes(userText, turnAttachments = [...attachments]) {
   if (!settings.apiKey) {
     updateConnectionPrompt();
-    addMessage('system', 'Connection setup needed: click Connect to Hermes, approve in the local Hermes approval page, then send again. Your draft is still in the composer.');
+    addMessage('system', 'Connection setup needed: click Connect to Hermes (Hermes Desktop only), or open Settings and use Manual setup with your local Gateway URL and API key, then send again. Your draft is still in the composer.');
     els.connectButton.focus();
     return false;
   }

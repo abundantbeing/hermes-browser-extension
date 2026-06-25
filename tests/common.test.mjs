@@ -18,6 +18,7 @@ import {
   normalizeHermesProfiles,
   normalizeHermesSessions,
   normalizeHermesSkills,
+  pairingFailureMessage,
   redactSensitiveText,
   renderMarkdown,
   skillCommandForName,
@@ -231,4 +232,21 @@ test('YouTube transcript helpers parse ids, providers, timedtext, and prompt tex
   const transcript = normalizeTranscriptPayload({ segments }, 'default-timedtext');
   assert.equal(transcript.ok, true);
   assert.match(formatYoutubeTranscript(transcript), /\[0:01\] hello & world/);
+});
+
+test('pairingFailureMessage explains a missing pairing route instead of a bare 404', () => {
+  // Regression: every current CLI Gateway release has no
+  // /api/browser-extension/pair/start route (only Hermes Desktop implements
+  // pairing), so a 404 here is not a transient failure — retrying Connect can
+  // never succeed. The message must say so and point at Manual setup instead
+  // of leaking the raw "404: Not Found" response body.
+  const message = pairingFailureMessage(404, { error: '404: Not Found' });
+  assert.match(message, /Manual setup/);
+  assert.doesNotMatch(message, /404: Not Found/);
+});
+
+test('pairingFailureMessage preserves the server-provided reason for other failures', () => {
+  assert.equal(pairingFailureMessage(500, { error: { message: 'pairing store unavailable' } }), 'pairing store unavailable');
+  assert.equal(pairingFailureMessage(403, { error: 'forbidden' }), 'forbidden');
+  assert.equal(pairingFailureMessage(503, {}), 'Pairing failed (503)');
 });
