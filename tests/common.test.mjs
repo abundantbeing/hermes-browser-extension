@@ -796,3 +796,15 @@ test('settings dialog render path refreshes appearance theme cards on open', () 
     'appearance controls should render before the dialog is shown'
   );
 });
+
+test('Nous dark theme uses Desktop-style dark blue surfaces instead of light boxes', () => {
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const match = css.match(/html\[data-hermes-theme="nous"\]\[data-hermes-mode="dark"\] \{([\s\S]*?)\n\}/);
+  assert.ok(match, 'Nous dark theme block should exist');
+  const block = match[1];
+  assert.doesNotMatch(block, /--hermes-paper:\s*#(?:fff|ffffff|fbfcff)\b/i, 'dark Nous paper cannot be white or off-white');
+  assert.doesNotMatch(block, /--hermes-ink:\s*#0505e8\b/i, 'dark Nous text should not use bright legacy blue on light cards');
+  assert.match(block, /--hermes-paper:\s*#0a3572\b/i, 'dark Nous cards should be deep Hermes blue');
+  assert.match(block, /--hermes-input-bg:\s*#062a60\b/i, 'dark Nous text fields should be darker blue than cards');
+  assert.match(css, /textarea, input, select \{[\s\S]*?background:\s*var\(--hermes-input-bg, var\(--hermes-paper\)\)/, 'form controls should use the input surface token');
+});

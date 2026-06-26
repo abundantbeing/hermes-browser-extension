@@ -84,6 +84,7 @@
   --hermes-control-bg: rgba(var(--hermes-fg-rgb), 0.08);
   --hermes-control-fg: var(--hermes-fg);
   --hermes-control-border: rgba(var(--hermes-fg-rgb), 0.28);
+  --hermes-input-bg: var(--hermes-paper);
   --hermes-primary-bg: var(--hermes-blue-deep);
   --hermes-primary-fg: var(--hermes-fg);
   --hermes-primary-border: var(--hermes-blue-deep);
@@ -110,19 +111,40 @@
 }
 
 html[data-hermes-theme="nous"][data-hermes-mode="dark"] {
-  --hermes-blue: #0505e8;
-  --hermes-blue-deep: #03038f;
-  --hermes-paper: #fbfcff;
-  --hermes-fg: #f8faff;
-  --hermes-ink: #0505e8;
-  --hermes-accent: #f8faff;
-  --hermes-bg-rgb: 5, 5, 232;
-  --hermes-panel-rgb: 5, 5, 232;
-  --hermes-paper-rgb: 251, 252, 255;
-  --hermes-fg-rgb: 248, 250, 255;
-  --hermes-ink-rgb: 5, 5, 232;
-  --hermes-accent-rgb: 248, 250, 255;
-  --hermes-menu-bg: #06115f;
+  --hermes-blue: #082f67;
+  --hermes-blue-deep: #061f49;
+  --hermes-paper: #0a3572;
+  --hermes-fg: #f4f8ff;
+  --hermes-ink: #edf4ff;
+  --hermes-accent: #8bb7ff;
+  --hermes-bg-rgb: 8, 47, 103;
+  --hermes-panel-rgb: 7, 41, 91;
+  --hermes-paper-rgb: 10, 53, 114;
+  --hermes-fg-rgb: 244, 248, 255;
+  --hermes-ink-rgb: 237, 244, 255;
+  --hermes-accent-rgb: 139, 183, 255;
+  --hermes-menu-bg: #092b5e;
+  --hermes-panel-bg: rgba(var(--hermes-panel-rgb), 0.96);
+  --hermes-panel-border: rgba(var(--hermes-accent-rgb), 0.28);
+  --hermes-control-bg: rgba(6, 31, 73, 0.72);
+  --hermes-control-fg: var(--hermes-fg);
+  --hermes-control-border: rgba(var(--hermes-accent-rgb), 0.34);
+  --hermes-input-bg: #062a60;
+  --hermes-primary-bg: #0d4a9f;
+  --hermes-primary-fg: #f4f8ff;
+  --hermes-primary-border: rgba(var(--hermes-accent-rgb), 0.56);
+  --hermes-user-bg: #0d4a9f;
+  --hermes-user-fg: #f8fbff;
+  --hermes-user-border: rgba(var(--hermes-accent-rgb), 0.42);
+  --hermes-system-bg: rgba(var(--hermes-accent-rgb), 0.10);
+  --hermes-system-fg: var(--hermes-fg);
+  --hermes-pill-bg: rgba(var(--hermes-accent-rgb), 0.10);
+  --hermes-pill-fg: var(--hermes-fg);
+  --hermes-pill-border: rgba(var(--hermes-accent-rgb), 0.46);
+  --hermes-pill-ok-bg: rgba(var(--hermes-accent-rgb), 0.12);
+  --hermes-pill-ok-fg: var(--hermes-fg);
+  --hermes-pill-ok-border: var(--hermes-accent);
+  --hermes-meter-fill: rgba(var(--hermes-accent-rgb), 0.62);
 }
 
 html[data-hermes-theme="nous"][data-hermes-mode="light"] {
@@ -1018,7 +1040,7 @@ textarea, input, select {
   width: 100%;
   border: 1px solid var(--hermes-line-strong);
   border-radius: var(--radius);
-  background: var(--hermes-paper);
+  background: var(--hermes-input-bg, var(--hermes-paper));
   color: var(--hermes-ink);
   outline: none;
 }
