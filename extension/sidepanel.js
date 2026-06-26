@@ -141,6 +141,8 @@ const els = {
   agentList: $('#agentList'),
   refreshAgentsButton: $('#refreshAgentsButton'),
   addCustomAgentButton: $('#addCustomAgentButton'),
+  agentHostInput: $('#agentHostInput'),
+  agentSchemeInput: $('#agentSchemeInput'),
   agentPortsInput: $('#agentPortsInput'),
   agentPickerStatus: $('#agentPickerStatus'),
   themeGrid: $('#themeGrid'),
@@ -1706,9 +1708,29 @@ function getAgentPorts() {
   return [...DEFAULT_AGENT_PORTS];
 }
 
-async function persistAgentPorts(ports) {
-  settings = { ...settings, agentPorts: ports };
+function normalizeAgentDiscoveryHost(value = '') {
+  return String(value || DEFAULT_SETTINGS.agentDiscoveryHost)
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/+$/, '') || DEFAULT_SETTINGS.agentDiscoveryHost;
+}
+
+function normalizeAgentDiscoveryScheme(value = '') {
+  return String(value || DEFAULT_SETTINGS.agentDiscoveryScheme).trim().toLowerCase() === 'https' ? 'https' : 'http';
+}
+
+async function persistAgentDiscoverySettings({ ports = getAgentPorts(), host = settings.agentDiscoveryHost, scheme = settings.agentDiscoveryScheme } = {}) {
+  settings = {
+    ...settings,
+    agentPorts: ports,
+    agentDiscoveryHost: normalizeAgentDiscoveryHost(host),
+    agentDiscoveryScheme: normalizeAgentDiscoveryScheme(scheme),
+  };
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
+}
+
+async function persistAgentPorts(ports) {
+  await persistAgentDiscoverySettings({ ports });
 }
 
 function renderAgentList(agents = discoveredAgents) {
@@ -1765,14 +1787,16 @@ async function loadAgents({ quiet = false } = {}) {
     els.agentList.innerHTML = '<p class="hint">No agent ports configured. Add a custom URL or set ports in the field below.</p>';
     return;
   }
-  if (els.agentPickerStatus) els.agentPickerStatus.textContent = `Scanning ${ports.length} port${ports.length === 1 ? '' : 's'}...`;
+  if (els.agentPickerStatus) els.agentPickerStatus.textContent = `Scanning ${ports.length} port${ports.length === 1 ? '' : 's'} on ${normalizeAgentDiscoveryHost(settings.agentDiscoveryHost)}...`;
   const key = settings.apiKey || '';
-  discoveredAgents = await discoverLocalAgents({ ports, apiKey: key });
+  const host = normalizeAgentDiscoveryHost(settings.agentDiscoveryHost);
+  const scheme = normalizeAgentDiscoveryScheme(settings.agentDiscoveryScheme);
+  discoveredAgents = await discoverLocalAgents({ ports, apiKey: key, host, scheme });
   const healthy = activeAgents(discoveredAgents);
   renderAgentList(discoveredAgents);
   if (els.agentPickerStatus) {
     if (healthy.length === 0) {
-      els.agentPickerStatus.textContent = `Scanned ${ports.length} ports — no Hermes agents online.`;
+      els.agentPickerStatus.textContent = `Scanned ${ports.length} ports on ${host} — no Hermes agents online.`;
     } else if (healthy.length === 1) {
       els.agentPickerStatus.textContent = `1 agent online at port ${healthy[0].port}.`;
     } else {
@@ -2202,6 +2226,9 @@ function syncSettingsForm() {
   els.includePageTextInput.checked = Boolean(settings.includePageText);
   els.includeSelectedTextInput.checked = Boolean(settings.includeSelectedText);
   els.transcriptProviderInput.value = settings.transcriptProvider || DEFAULT_SETTINGS.transcriptProvider;
+  if (els.agentHostInput) els.agentHostInput.value = normalizeAgentDiscoveryHost(settings.agentDiscoveryHost);
+  if (els.agentSchemeInput) els.agentSchemeInput.value = normalizeAgentDiscoveryScheme(settings.agentDiscoveryScheme);
+  if (els.agentPortsInput) els.agentPortsInput.value = getAgentPorts().join(',');
 }
 
 async function saveSettingsFromForm() {
@@ -2230,6 +2257,9 @@ async function saveSettingsFromForm() {
     includePageText: els.includePageTextInput.checked,
     includeSelectedText: els.includeSelectedTextInput.checked,
     transcriptProvider: els.transcriptProviderInput.value.trim() || DEFAULT_SETTINGS.transcriptProvider,
+    agentDiscoveryHost: normalizeAgentDiscoveryHost(els.agentHostInput?.value || settings.agentDiscoveryHost),
+    agentDiscoveryScheme: normalizeAgentDiscoveryScheme(els.agentSchemeInput?.value || settings.agentDiscoveryScheme),
+    agentPorts: parseAgentPortsInput(els.agentPortsInput?.value || '').length ? parseAgentPortsInput(els.agentPortsInput?.value || '') : getAgentPorts(),
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
   };
@@ -3234,12 +3264,22 @@ function bindEvents() {
       setStatus('warn', 'No agent ports', 'Enter at least one port number, e.g. 8642,8643,8644,8645,8646');
       return;
     }
-    persistAgentPorts(ports);
+    persistAgentDiscoverySettings({
+      ports,
+      host: els.agentHostInput?.value || settings.agentDiscoveryHost,
+      scheme: els.agentSchemeInput?.value || settings.agentDiscoveryScheme,
+    });
     loadAgents();
+  });
+  els.agentHostInput?.addEventListener('change', () => {
+    persistAgentDiscoverySettings({ host: els.agentHostInput.value });
+  });
+  els.agentSchemeInput?.addEventListener('change', () => {
+    persistAgentDiscoverySettings({ scheme: els.agentSchemeInput.value });
   });
   els.agentPortsInput?.addEventListener('change', () => {
     const ports = parseAgentPortsInput(els.agentPortsInput.value);
-    if (ports.length) persistAgentPorts(ports);
+    if (ports.length) persistAgentDiscoverySettings({ ports });
   });
   els.editModelsButton.addEventListener('click', () => {
     closeFloatingPanels();

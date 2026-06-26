@@ -206,14 +206,24 @@
           <section class="settings-section">
             <h3>Connected agent</h3>
             <p class="hint">
-              Scans localhost for running Hermes API gateways. Each agent can run
-              as a separate gateway process on its own port. Use this to switch
-              between trusted local agents that share the same browser token.
+              Scans a trusted Hermes API host for running gateways. Use localhost for
+              same-machine agents, or a Tailscale host/IP for private remote agents.
             </p>
             <div id="agentList" class="agent-list" role="list" aria-label="Discovered Hermes agents"></div>
             <div class="settings-row">
-              <button id="refreshAgentsButton" class="secondary" type="button">↻ Scan local agents</button>
+              <button id="refreshAgentsButton" class="secondary" type="button">↻ Scan agents</button>
             </div>
+            <label>
+              Agent host
+              <input id="agentHostInput" type="text" autocomplete="off" placeholder="127.0.0.1 or macbook.tailnet.ts.net" />
+            </label>
+            <label>
+              Agent scheme
+              <select id="agentSchemeInput">
+                <option value="http">http</option>
+                <option value="https">https</option>
+              </select>
+            </label>
             <label>
               Agent ports (comma-separated, default 8642-8646)
               <input id="agentPortsInput" type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />

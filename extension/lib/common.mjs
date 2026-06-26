@@ -46,6 +46,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   includePageText: true,
   includeSelectedText: true,
   transcriptProvider: 'default',
+  agentDiscoveryHost: '127.0.0.1',
+  agentDiscoveryScheme: 'http',
   colorMode: 'dark',
   appearanceTheme: 'nous',
   maxTabs: 12,

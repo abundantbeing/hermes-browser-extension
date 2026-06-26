@@ -667,17 +667,22 @@ test('discoverLocalAgents scans the configured port range and labels healthy age
   const { discoverLocalAgents, activeAgents } = await import('../extension/lib/agent-discovery.mjs');
   const originalFetch = globalThis.fetch;
   try {
+    const fetchCalls = [];
     globalThis.fetch = async (url) => {
+      fetchCalls.push(url);
+      if (url.includes(':8642') && url.endsWith('/v1/models')) return { ok: true, json: async () => ({ data: [{ id: 'alfred' }] }) };
+      if (url.includes(':8643') && url.endsWith('/v1/models')) return { ok: true, json: async () => ({ data: [{ id: 'eva' }] }) };
       if (url.includes(':8642')) return { ok: true, json: async () => ({ version: '0.17.0', platform: 'hermes-agent' }) };
       if (url.includes(':8643')) return { ok: true, json: async () => ({ version: '0.17.0', platform: 'hermes-agent' }) };
       if (url.includes(':8644')) return { ok: false, json: async () => ({}) };
       return { ok: false, json: async () => ({}) };
     };
-    const agents = await discoverLocalAgents({ ports: [8642, 8643, 8644, 8645, 8646] });
+    const agents = await discoverLocalAgents({ ports: [8642, 8643, 8644, 8645, 8646], host: 'macbook.tailnet.ts.net', scheme: 'https' });
+    assert.equal(fetchCalls[0], 'https://macbook.tailnet.ts.net:8642/health');
     assert.equal(agents.length, 5);
     assert.equal(agents[0].ok, true);
     assert.equal(agents[0].port, 8642);
-    assert.equal(agents[0].name, 'agent-8642');
+    assert.equal(agents[0].name, 'alfred');
     assert.equal(agents[2].ok, false);
     assert.equal(agents[2].name, null);
     const healthy = activeAgents(agents);

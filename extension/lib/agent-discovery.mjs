@@ -10,19 +10,24 @@ const PROBE_TIMEOUT_MS = 1500;
 
 export async function probeGatewayHealth(baseUrl, { apiKey = '', timeoutMs = PROBE_TIMEOUT_MS } = {}) {
   if (!baseUrl) return { ok: false, error: 'no-url' };
-  const url = `${normalizeGatewayUrl(baseUrl)}/health`;
+  const normalized = normalizeGatewayUrl(baseUrl);
+  const url = `${normalized}/health`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
     const response = await fetch(url, { headers, signal: controller.signal });
     const body = await response.json().catch(() => ({}));
+    let model = body.model || '';
+    if (response.ok && body.platform === 'hermes-agent' && !model) {
+      model = await probeGatewayModelName(normalized, { headers, signal: controller.signal });
+    }
     return {
       ok: response.ok,
       status: response.status,
       version: body.version || '',
       platform: body.platform || '',
-      model: body.model || '',
+      model,
     };
   } catch (error) {
     return { ok: false, error: error?.name === 'AbortError' ? 'timeout' : (error?.message || 'error') };
@@ -31,12 +36,22 @@ export async function probeGatewayHealth(baseUrl, { apiKey = '', timeoutMs = PRO
   }
 }
 
+async function probeGatewayModelName(baseUrl, { headers = {}, signal } = {}) {
+  try {
+    const response = await fetch(`${baseUrl}/v1/models`, { headers, signal });
+    if (!response.ok) return '';
+    const payload = await response.json().catch(() => ({}));
+    const first = Array.isArray(payload?.data) ? payload.data[0] : null;
+    return String(first?.id || '').trim();
+  } catch (_error) {
+    return '';
+  }
+}
+
 export function deriveAgentName(port, probe) {
   if (!probe || !probe.ok) return null;
   if (probe.platform !== 'hermes-agent') return null;
-  // Future: gateway could expose its profile name in /health/detailed.
-  // For now, port-derived name is the only reliable label.
-  return `agent-${port}`;
+  return probe.model || `agent-${port}`;
 }
 
 export async function discoverLocalAgents({
