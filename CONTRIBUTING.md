@@ -6,6 +6,8 @@ Thanks for helping improve Hermes Browser Extension.
 
 - Use Node.js 20+.
 - Run `npm run verify` before opening a PR.
+- The CI runs `verify` + `build` on every push and pull request. You can see results
+  at the bottom of your PR before a maintainer reviews it.
 - Keep v0.1 read-only unless a proposal explicitly changes the permission model.
 - Load `dist/` unpacked for manual browser testing; do not load the repo root.
 
