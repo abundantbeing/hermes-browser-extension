@@ -722,6 +722,35 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
   assert.equal(result.models[2].contextTokens, 1000000);
 });
 
+test('discoverModelsFromRegistry picks up context_length from capabilities when model entries are bare strings', async () => {
+  const { discoverModelsFromRegistry } = await import('../extension/lib/model-discovery.mjs');
+  const apiFetch = async () => ({ ok: true, status: 200 });
+  const readJsonResponse = async () => ({
+    providers: [
+      {
+        slug: 'nous',
+        name: 'Nous Portal',
+        authenticated: true,
+        models: ['xiaomi/mimo-v2.5-pro', 'anthropic/claude-sonnet-4'],
+        capabilities: {
+          'xiaomi/mimo-v2.5-pro': { fast: false, reasoning: true, context_length: 1048576 },
+          'anthropic/claude-sonnet-4': { fast: true, reasoning: true, context_length: 200000 },
+        },
+      },
+    ],
+    model: 'xiaomi/mimo-v2.5-pro',
+    provider: 'nous',
+  });
+
+  const result = await discoverModelsFromRegistry({ apiFetch, readJsonResponse });
+  assert.equal(result.ok, true);
+  assert.equal(result.models.length, 2);
+  assert.equal(result.models[0].contextTokens, 1048576);
+  assert.equal(result.models[1].contextTokens, 200000);
+  assert.equal(result.models[0].reasoning, true);
+  assert.equal(result.models[0].fast, false);
+});
+
 test('normalizeHermesModels preserves camelCase registry labels for grouping', () => {
   const models = normalizeHermesModels([
     { id: 'openai-codex::gpt-5.5', rawModelId: 'gpt-5.5', label: 'GPT-5.5', provider: 'openai-codex', providerLabel: 'OpenAI Codex', source: 'registry' },

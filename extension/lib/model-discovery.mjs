@@ -91,6 +91,8 @@ export async function discoverModelsFromRegistry({
         seen.add(dedupeKey);
         const modelCaps = caps[modelId] || {};
         const uiId = slug ? `${slug}::${modelId}` : modelId;
+        const entryContext = Number(entry?.context_length || entry?.contextTokens || 0) || 0;
+        const capsContext = Number(modelCaps?.context_length || 0) || 0;
         models.push({
           id: uiId,
           rawModelId: modelId,
@@ -98,7 +100,7 @@ export async function discoverModelsFromRegistry({
           provider: slug || deriveProviderFromModelId(modelId),
           providerLabel,
           description: provider?.warning || provider?.source || '',
-          contextTokens: Number(entry?.context_length || entry?.contextTokens || 0) || 0,
+          contextTokens: entryContext || capsContext || 0,
           fast: typeof modelCaps.fast === 'boolean' ? modelCaps.fast : undefined,
           reasoning: typeof modelCaps.reasoning === 'boolean' ? modelCaps.reasoning : undefined,
           authenticated: provider?.authenticated !== false,
