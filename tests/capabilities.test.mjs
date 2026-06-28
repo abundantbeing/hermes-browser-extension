@@ -154,6 +154,10 @@ test('v0.1.6 UI has compatibility, token hygiene, and What Hermes saw surfaces',
   const voiceJs = readFileSync(new URL('../extension/voice-dictation.js', import.meta.url), 'utf8');
 
   assert.match(html, /id="compatibilityList"/);
+  assert.match(html, /id="commandMenuButton"/);
+  assert.match(html, /id="quickMoreMenu" class="quick-more-menu"/);
+  assert.doesNotMatch(html, /class="quick-actions"/);
+  assert.doesNotMatch(html, /id="quickActionsScroll"/);
   assert.match(html, /id="connectionSecuritySummary"/);
   assert.match(html, /id="clearTokenButton"/);
   assert.match(html, /version loading/i);

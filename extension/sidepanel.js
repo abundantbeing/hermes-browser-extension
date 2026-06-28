@@ -184,7 +184,7 @@ const els = {
   themeGrid: $('#themeGrid'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
   quickMoreMenu: $('#quickMoreMenu'),
-  quickActionsScroll: $('#quickActionsScroll'),
+  commandMenuButton: $('#commandMenuButton'),
   tabPickerButton: $('#tabPickerButton'),
   tabPickerCount: $('#tabPickerCount'),
   template: $('#messageTemplate'),
@@ -2071,39 +2071,64 @@ function renderSkillSuggestions() {
   els.skillMenu.hidden = false;
 }
 
-/* ── Quick commands overflow menu ── */
+/* ── Composer quick-command menu ── */
+function setQuickCommandMenuOpen(open) {
+  if (!els.quickMoreMenu) return;
+  els.quickMoreMenu.hidden = !open;
+  els.commandMenuButton?.setAttribute('aria-expanded', String(Boolean(open)));
+}
+
+function applyQuickCommand(cmd) {
+  setQuickCommandMenuOpen(false);
+  els.input.value = `/${cmd.name} `;
+  els.input.focus();
+  if (!cmd.requiresInput) els.composer.requestSubmit();
+}
+
 function renderQuickMoreMenu(category = 'all') {
   if (!els.quickMoreMenu) return;
   const commands = category === 'all'
     ? BUILTIN_COMMANDS
     : BUILTIN_COMMANDS.filter((c) => c.category === category);
-  if (!commands.length) { els.quickMoreMenu.hidden = true; return; }
+  if (!commands.length) { setQuickCommandMenuOpen(false); return; }
 
   els.quickMoreMenu.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'quick-more-heading';
+  const headerLabel = document.createElement('span');
+  headerLabel.textContent = 'Commands';
+  const headerHint = document.createElement('small');
+  headerHint.textContent = 'Slash helpers';
+  header.append(headerLabel, headerHint);
+  els.quickMoreMenu.appendChild(header);
+
   for (const cmd of commands) {
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'quick-more-item';
     item.dataset.command = cmd.name;
-    const icon = document.createElement('span');
-    icon.className = 'qmi-icon';
-    icon.textContent = cmd.icon || '/';
-    const label = document.createElement('span');
-    label.className = 'qmi-label';
-    label.textContent = `${cmd.name} — ${cmd.description}`;
+    item.setAttribute('role', 'menuitem');
+
+    const token = document.createElement('span');
+    token.className = 'qmi-token';
+    token.textContent = `/${cmd.name}`;
+
+    const copy = document.createElement('span');
+    copy.className = 'qmi-copy';
+    const description = document.createElement('span');
+    description.className = 'qmi-description';
+    description.textContent = cmd.description;
     const categoryTag = document.createElement('span');
     categoryTag.className = 'qmi-category';
     categoryTag.textContent = cmd.category || '';
-    item.append(icon, label, categoryTag);
-    item.addEventListener('click', async () => {
-      els.quickMoreMenu.hidden = true;
-      els.input.value = `/${cmd.name} `;
-      els.input.focus();
-      if (!cmd.requiresInput) els.composer.requestSubmit();
-    });
+    copy.append(description, categoryTag);
+
+    item.append(token, copy);
+    item.addEventListener('click', () => applyQuickCommand(cmd));
     els.quickMoreMenu.appendChild(item);
   }
-  els.quickMoreMenu.hidden = false;
+  setQuickCommandMenuOpen(true);
 }
 
 /* ── Tab picker ── */
@@ -4332,29 +4357,15 @@ function bindEvents() {
     }
   });
 
-  // Wire built-in quick-command buttons (data-command)
-  document.querySelectorAll('[data-command]').forEach((button) => {
-    button.addEventListener('click', async () => {
-      const cmdName = button.dataset.command;
-      if (!cmdName) return;
-      const parsed = parseCommandInput(`/${cmdName}`);
-      if (parsed) {
-        els.input.value = `/${parsed.command.name} `;
-        els.input.focus();
-        if (!parsed.command.requiresInput) els.composer.requestSubmit();
-      }
-    });
+  els.commandMenuButton?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!els.quickMoreMenu) return;
+    if (!els.quickMoreMenu.hidden) {
+      setQuickCommandMenuOpen(false);
+      return;
+    }
+    renderQuickMoreMenu('all');
   });
-
-  // Wire overflow menu button (⋯) only
-  const moreBtn = document.querySelector('.quick-cmd-more');
-  if (moreBtn) {
-    moreBtn.addEventListener('click', (event) => {
-      if (!els.quickMoreMenu) return;
-      event.stopPropagation();
-      renderQuickMoreMenu('all');
-    });
-  }
 
   // Tab picker toggle
   els.tabPickerButton?.addEventListener('click', (event) => {
@@ -4369,7 +4380,9 @@ function bindEvents() {
 
   // Close floating menus on outside click
   document.addEventListener('click', (event) => {
-    if (els.quickMoreMenu && !els.quickMoreMenu.hidden) els.quickMoreMenu.hidden = true;
+    if (els.quickMoreMenu && !els.quickMoreMenu.hidden && !event.target.closest('#quickMoreMenu, #commandMenuButton')) {
+      setQuickCommandMenuOpen(false);
+    }
     if (els.contextScopeMenu && !els.contextScopeMenu.hidden && !event.target.closest('#contextScopeMenu, #contextScopeButton')) {
       els.contextScopeMenu.hidden = true;
       renderContextScopeControls();

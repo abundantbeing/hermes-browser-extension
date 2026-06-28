@@ -33,7 +33,7 @@ export const BUILTIN_COMMANDS = Object.freeze([
   },
   {
     name: 'tldr',
-    description: 'Too Long; Didn\'t Read — 3 bullet points max.',
+    description: 'Too Long; Didn\'t Read - 3 bullet points max.',
     category: 'Page',
     icon: '⚡',
     requiresInput: false,

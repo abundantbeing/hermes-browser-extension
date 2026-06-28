@@ -31,16 +31,17 @@
         <div class="status-label"><span class="status-dot ok"></span><span>ACTIVE TAB</span></div>
         <div class="status-copy"><strong>Hermes Agent | Nous Research</strong><span>https://hermes-agent.nousresearch.com/</span></div>
       </section>
-      <section class="quick-actions" aria-label="Quick actions">
-        <button>Current page</button><button>Summary</button><button>Compare tabs</button><button>Selection</button>
-      </section>
       <section class="messages" aria-live="polite">
         <article class="message user"><div class="message-role">user</div><div class="message-content">What am I looking at?</div></article>
         <article class="message assistant"><div class="message-role">Hermes</div><div class="message-content">You are on the Hermes Agent homepage. The page is presenting Hermes as an open-source agent that lives across platforms, remembers context, schedules work, browses the web, and runs in isolated backends.</div></article>
       </section>
       <form class="composer">
         <label class="composer-label" for="promptInput">ASK HERMES</label>
-        <textarea id="promptInput" rows="3" placeholder="Ask Hermes about this page..."></textarea>
+        <div class="composer-input-wrap">
+          <textarea id="promptInput" rows="3" placeholder="Ask Hermes about this page..."></textarea>
+          <button class="attach-menu-button composer-plus" type="button" aria-label="Attach context">+</button>
+          <button class="composer-command" type="button" aria-label="Open quick commands"><span aria-hidden="true">/</span><strong>commands</strong></button>
+        </div>
         <div class="composer-actions"><button class="secondary" type="button">Refresh</button><button type="button" id="sendButton">Ask Hermes</button></div>
       </form>
     </main>
