@@ -2081,7 +2081,7 @@ function applySelectedModel(selectedId, { persist = true, keepOpen = false } = {
   }
 }
 
-async function loadModels({ quiet = false, payload = null } = {}) {
+async function loadModels({ quiet = false, payload = null, refresh = false } = {}) {
   try {
     let data = payload;
     let registryModels = [];
@@ -2102,7 +2102,7 @@ async function loadModels({ quiet = false, payload = null } = {}) {
     if (data) {
       registryModels = normalizeHermesModels(data, settings.model);
     } else {
-      const registryResult = await discoverModelsFromRegistry({ apiFetch, readJsonResponse });
+      const registryResult = await discoverModelsFromRegistry({ apiFetch, readJsonResponse, refresh });
       if (registryResult.ok && registryResult.models.length) {
         registryModels = normalizeHermesModels(registryResult.models, settings.model);
         registrySource = 'registry';
@@ -4060,7 +4060,7 @@ async function testConnection() {
     const modelsResponse = await apiFetch('/v1/models', { method: 'GET' });
     const modelsPayload = await readJsonResponse(modelsResponse);
     if (!modelsResponse.ok) throw new Error(`Health OK, auth/model probe failed (${modelsResponse.status}): ${JSON.stringify(modelsPayload).slice(0, 500)}`);
-    await loadModels({ quiet: true, payload: modelsPayload });
+    await loadModels({ quiet: true });
     await loadSkills({ quiet: true });
     await loadProfiles({ quiet: true });
 
@@ -4182,7 +4182,7 @@ function bindEvents() {
   els.stopButton?.addEventListener('click', stopCurrentTurn);
   els.voiceButton?.addEventListener('click', toggleVoiceDictation);
   els.checkUpdatesButton?.addEventListener('click', checkForUpdates);
-  els.refreshModelsButton.addEventListener('click', () => loadModels());
+  els.refreshModelsButton.addEventListener('click', () => loadModels({ refresh: true }));
   els.refreshProfilesButton?.addEventListener('click', () => loadProfiles());
   els.profileSelect?.addEventListener('change', () => applySelectedProfile(els.profileSelect.value));
   els.refreshAgentsButton?.addEventListener('click', () => loadAgents());

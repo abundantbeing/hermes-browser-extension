@@ -347,6 +347,15 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   assert.match(source, /apiFetch\(`\/api\/sessions\?limit=\$\{limit\}&offset=\$\{offset\}&include_children=true&order=recent`/);
 });
 
+test('connection test validates auth without bypassing full model discovery', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /const modelsResponse = await apiFetch\('\/v1\/models', \{ method: 'GET' \}\);/);
+  assert.match(source, /if \(!modelsResponse\.ok\) throw new Error/);
+  assert.match(source, /await loadModels\(\{ quiet: true \}\);/);
+  assert.doesNotMatch(source, /loadModels\(\{ quiet: true, payload: modelsPayload \}\)/);
+  assert.match(source, /els\.refreshModelsButton\.addEventListener\('click', \(\) => loadModels\(\{ refresh: true \}\)\)/);
+});
+
 test('renderMarkdown produces safe rich text for headings, lists, tables, and links', () => {
   const html = renderMarkdown(`# Title\n\n**Quick read:**\n- One\n- [x] Two\n\n---\n\n| Name | Value |\n|---|---:|\n| MiniMax | 1M |\n\n[Docs](https://hermes-agent.nousresearch.com/docs) <script>alert(1)</script>`);
   assert.match(html, /<h1>Title<\/h1>/);
