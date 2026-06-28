@@ -70,8 +70,8 @@ import {
 } from './lib/model-discovery.mjs';
 import {
   BUILTIN_COMMANDS,
-  getCommand,
   parseCommandInput,
+  resolveCommandPrompt,
 } from './lib/commands.mjs';
 
 const $ = (selector) => document.querySelector(selector);
@@ -1822,16 +1822,16 @@ function renderSkillSuggestions() {
     button.type = 'button';
     button.className = 'skill-option builtin-cmd';
     button.setAttribute('role', 'option');
-    button.dataset.command = '/' + cmd.name;
+    button.dataset.command = `/${cmd.name}`;
     const name = document.createElement('span');
     name.className = 'skill-option-name';
-    name.textContent = cmd.icon + ' ' + cmd.name;
+    name.textContent = `${cmd.icon} ${cmd.name}`;
     const command = document.createElement('span');
     command.className = 'skill-option-command';
-    command.textContent = '/' + cmd.name;
+    command.textContent = `/${cmd.name}`;
     button.append(name, command);
     button.addEventListener('click', () => {
-      els.input.value = '/' + cmd.name + ' ';
+      els.input.value = `/${cmd.name} `;
       els.input.focus();
       if (!cmd.requiresInput) els.composer.requestSubmit();
     });
@@ -1877,14 +1877,14 @@ function renderQuickMoreMenu(category = 'all') {
     icon.textContent = cmd.icon || '/';
     const label = document.createElement('span');
     label.className = 'qmi-label';
-    label.textContent = cmd.name + ' — ' + cmd.description;
+    label.textContent = `${cmd.name} — ${cmd.description}`;
     const categoryTag = document.createElement('span');
     categoryTag.className = 'qmi-category';
     categoryTag.textContent = cmd.category || '';
     item.append(icon, label, categoryTag);
     item.addEventListener('click', async () => {
       els.quickMoreMenu.hidden = true;
-      els.input.value = '/' + cmd.name + ' ';
+      els.input.value = `/${cmd.name} `;
       els.input.focus();
       if (!cmd.requiresInput) els.composer.requestSubmit();
     });
@@ -3464,15 +3464,13 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
     const parsedCommand = parseCommandInput(userText);
     let promptUserText;
     if (parsedCommand) {
-      const resolved = parsedCommand.command.prompt({
+      const resolved = resolveCommandPrompt(parsedCommand.command.name, parsedCommand.userInput, {
         activeTab: context.activeTab,
         tabs: context.tabs,
         pageContext: context.pageContext,
         settings,
       });
-      promptUserText = parsedCommand.userInput
-        ? resolved + '\n\nThe user added: ' + parsedCommand.userInput
-        : resolved;
+      promptUserText = resolved?.prompt || userText;
     } else {
       promptUserText = userTextWithAttachments(userText, preparedAttachments);
     }
@@ -3960,9 +3958,9 @@ function bindEvents() {
     button.addEventListener('click', async () => {
       const cmdName = button.dataset.command;
       if (!cmdName) return;
-      const parsed = parseCommandInput('/' + cmdName);
+      const parsed = parseCommandInput(`/${cmdName}`);
       if (parsed) {
-        els.input.value = '/' + cmdName + ' ';
+        els.input.value = `/${parsed.command.name} `;
         els.input.focus();
         if (!parsed.command.requiresInput) els.composer.requestSubmit();
       }
