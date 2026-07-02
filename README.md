@@ -33,6 +33,10 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 - Connects to a configurable local or remote Hermes API server. Default: `http://127.0.0.1:8642`.
 - Supports dashboard WebSocket mode when you have a signed-in remote Hermes dashboard tab and no API key.
 - Auto-syncs connected Hermes providers/models, profiles, skills, sessions, and capabilities.
+- Keeps runtime plugins available in the same Hermes session. For example,
+  [Hermes Tweet](https://github.com/Xquik-dev/hermes-tweet) can add X/Twitter
+  account, post, and trend context while the extension supplies browser-page
+  context.
 - Shows a Hermes compatibility panel so older gateways degrade into explicit fallback/manual modes instead of broken route errors.
 - Sends active tab/browser context into a persisted Hermes session, or switches to Chat only when you do not want browser context attached.
 - Adds a composer-header context menu for Chat only, following the active tab, pinning a specific tab, and choosing which open tabs appear in the prompt.
