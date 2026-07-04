@@ -240,6 +240,23 @@
             </label>
             <p id="agentPickerStatus" class="hint">Agent discovery has not run yet.</p>
           </section>
+          <section class="settings-section">
+            <h3>Custom model sources</h3>
+            <p class="hint">
+              Additional OpenAI-compatible API endpoints to probe for models that the
+              gateway does not advertise through its own /v1/models endpoint. The
+              extension queries each URL's /v1/models and merges discovered models
+              into the picker. One URL per line.
+            </p>
+            <label>
+              <span>Endpoint URLs</span>
+              <textarea id="customModelSourcesInput"
+                rows="3"
+                placeholder="http://wimpy:8080/v1&#10;http://192.168.1.50:11434/v1"
+                autocomplete="off"
+              ></textarea>
+            </label>
+          </section>
         </section>
 
         <section class="settings-section appearance-settings" aria-labelledby="appearanceTitle">

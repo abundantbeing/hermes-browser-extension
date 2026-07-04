@@ -2793,3 +2793,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   justify-self: stretch;
   margin-top: 6px;
 }
+.settings-section label textarea {
+  font-family: var(--hermes-font-mono, monospace);
+  font-size: 12px;
+}

@@ -57,6 +57,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   panelResidencyMode: 'tab-attached',
   maxTabs: 12,
   maxLocalMessages: 40,
+  customModelSources: [],
 });
 
 export const HERMES_BROWSER_SYSTEM_PROMPT = `You are Hermes running through the Hermes Browser Extension side panel.

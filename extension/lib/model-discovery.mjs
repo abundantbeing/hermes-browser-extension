@@ -310,19 +310,48 @@ export function modelCatalogRefreshDecision({ previousSelectedModel = '', discov
   };
 }
 
+/**
+ * Merge model arrays from multiple sources, deduplicating by provider+rawModelId.
+ * Models sharing the same rawModelId but from different providers are kept;
+ * true duplicates (same provider + same rawModelId) are deduplicated.
+ * Earlier sources in the array order take priority (registry > dashboard > v1 > external).
+ */
+export function mergeModelsByRawId(arrays = []) {
+  const seen = new Set();
+  const out = [];
+  for (const models of arrays) {
+    if (!Array.isArray(models)) continue;
+    for (const m of models) {
+      if (!m) continue;
+      const rawId = m.rawModelId || m.id || '';
+      if (!rawId) continue;
+      const providerKey = String(m.provider || m.providerLabel || m.source || '').toLowerCase();
+      const key = `${providerKey}::${rawId.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(m);
+    }
+  }
+  return out;
+}
+
 export function mergeModelsWithRegistry({ registryModels = [], sessionModels = [] } = {}) {
   const out = [];
   const seen = new Set();
   // Registry first (these are the gateway-blessed models)
   for (const model of registryModels) {
-    if (!model || !model.id || seen.has(model.id)) continue;
-    seen.add(model.id);
+    if (!model) continue;
+    const key = String(model.rawModelId || model.id || '').toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
     out.push({ ...model, source: model.source || 'registry' });
   }
   // Then session-discovered models, marking them as such
   for (const model of sessionModels) {
-    if (!model || !model.id || seen.has(model.id)) continue;
-    seen.add(model.id);
+    if (!model) continue;
+    const key = String(model.rawModelId || model.id || '').toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
     out.push({ ...model, source: 'sessions' });
   }
   return out;
@@ -331,3 +360,82 @@ export function mergeModelsWithRegistry({ registryModels = [], sessionModels = [
 export const MODEL_DISCOVERY_DEFAULTS = Object.freeze({
   limit: SESSION_HISTORY_LIMIT,
 });
+
+/**
+ * Fetch /v1/models from one or more external OpenAI-compatible endpoints
+ * and merge them into a flat model list. Used to supplement models the
+ * gateway itself does not advertise (e.g. custom providers on LAN).
+ *
+ * Each source URL may be a bare host (http://wimpy:8080) or include a
+ * path prefix (http://wimpy:8080/v1). The function appends '/v1/models'
+ * and normalizes the URL.
+ */
+export async function discoverModelsFromExternalSources({
+  sourceUrls = [],
+  fetchFn = globalThis.fetch?.bind(globalThis),
+  timeoutMs = 5000,
+} = {}) {
+  if (!Array.isArray(sourceUrls) || !sourceUrls.length) {
+    return { ok: true, models: [] };
+  }
+  const results = [];
+  for (const rawUrl of sourceUrls) {
+    const base = String(rawUrl || '').trim();
+    if (!base) continue;
+    // Strip trailing /v1 if present, then append /v1/models
+    const clean = base.replace(/\/+$/, '').replace(/\/v1$/i, '');
+    const url = `${clean}/v1/models`;
+    try {
+      const response = await fetchWithTimeout(fetchFn, url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      }, timeoutMs);
+      if (!response.ok) {
+        results.push({ url, ok: false, error: `status-${response.status}`, models: [] });
+        continue;
+      }
+      const payload = await response.json();
+      const data = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload.data)
+          ? payload.data
+          : Array.isArray(payload.models)
+            ? payload.models
+            : [];
+      const models = data
+        .filter((entry) => entry && (typeof entry === 'string' || entry.id))
+        .map((entry) => {
+          const modelId = typeof entry === 'string' ? entry : (entry.id || '');
+          if (!modelId) return null;
+          // Infer a provider slug from the hostname
+          let hostLabel = 'custom';
+          try {
+            const parsed = new URL(clean);
+            hostLabel = parsed.hostname || 'custom';
+          } catch { /* fallback */ }
+          return {
+            id: `${hostLabel}::${modelId}`,
+            rawModelId: modelId,
+            label: typeof entry === 'object' ? (entry.label || entry.name || modelId) : modelId,
+            provider: hostLabel,
+            providerLabel: hostLabel,
+            description: `Probed from ${clean}`,
+            contextTokens: 0,
+            source: 'external',
+            runtimeSelectable: true,
+          };
+        })
+        .filter(Boolean);
+      results.push({ url, ok: true, models });
+    } catch (error) {
+      results.push({
+        url,
+        ok: false,
+        error: error?.name === 'AbortError' ? 'timeout' : (error?.message || 'error'),
+        models: [],
+      });
+    }
+  }
+  const allModels = results.flatMap((r) => r.models);
+  return { ok: true, models: allModels, results };
+}

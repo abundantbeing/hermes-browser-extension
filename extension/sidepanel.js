@@ -81,8 +81,10 @@ import {
 import {
   dashboardModelDiscoveryBaseUrl,
   discoverModelsFromDashboard,
+  discoverModelsFromExternalSources,
   discoverModelsFromRegistry,
   discoverModelsFromSessions,
+  mergeModelsByRawId,
   mergeModelsWithRegistry,
   modelCatalogRefreshDecision,
   shouldTrySessionModelFallback,
@@ -211,6 +213,7 @@ const els = {
   agentSchemeInput: $('#agentSchemeInput'),
   agentPortsInput: $('#agentPortsInput'),
   agentPickerStatus: $('#agentPickerStatus'),
+  customModelSourcesInput: $('#customModelSourcesInput'),
   themeGrid: $('#themeGrid'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
   quickMoreMenu: $('#quickMoreMenu'),
@@ -2592,38 +2595,100 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
     if (data) {
       registryModels = normalizeHermesModels(data, settings.model);
     } else {
+      // ------------------------------------------------------------------
+      // Aggressive multi-source model discovery
+      //
+      // Rather than a fallback chain (try A; if A fails try B; …), we
+      // gather models from every available source and merge them by
+      // rawModelId.  This ensures custom providers configured in the
+      // Hermes gateway that aren't reflected in one endpoint still appear
+      // through another (e.g. the local Dashboard /api/model/options may
+      // include providers that the API-server registry omits).
+      // ------------------------------------------------------------------
+      const batches = [];
+
+      // 1 — Gateway registry (/api/model/options)
       const registryResult = await discoverModelsFromRegistry({ apiFetch, readJsonResponse, refresh });
       if (registryResult.ok && registryResult.models.length) {
-        registryModels = normalizeHermesModels(registryResult.models, settings.model);
+        batches.push(normalizeHermesModels(registryResult.models, settings.model));
         registrySource = 'registry';
-      } else {
-        const dashboardResult = await discoverModelsFromDashboard({
-          baseUrl: dashboardModelDiscoveryBaseUrl({
-            gatewayMode: settings.gatewayMode,
-            gatewayUrl: settings.gatewayUrl,
-          }),
-          refresh,
-          profile: settings.activeProfile,
-        });
-        if (dashboardResult.ok && dashboardResult.models.length) {
-          registryModels = normalizeHermesModels(dashboardResult.models, settings.model);
-          registrySource = 'dashboard';
-        } else {
-          const response = await apiFetch('/v1/models', { method: 'GET' });
-          data = await readJsonResponse(response);
-          if (!response.ok) throw new Error(data?.error?.message || data?.error || `Model list failed (${response.status})`);
-          registryModels = normalizeHermesModels(data, settings.model);
-          registrySource = 'v1';
-          if (!quiet && registryResult.error && registryResult.error !== 'status-404') {
-            setStatus('warn', 'Model registry unavailable', `Falling back to /v1/models (${registryResult.error}).`);
+      }
+
+      // 2 — Local Dashboard (/api/model/options on port 9119 or remote)
+      //     Tried independently so a partial gateway registry doesn't
+      //     prevent us from discovering Dashboard-only providers.
+      const dashBase = dashboardModelDiscoveryBaseUrl({
+        gatewayMode: settings.gatewayMode,
+        gatewayUrl: settings.gatewayUrl,
+      });
+      if (dashBase && !isRemoteWsMode()) {
+        try {
+          const dashResult = await discoverModelsFromDashboard({
+            baseUrl: dashBase,
+            refresh,
+            profile: settings.activeProfile,
+          });
+          if (dashResult.ok && dashResult.models.length) {
+            batches.push(normalizeHermesModels(dashResult.models, settings.model));
+            if (!registrySource) registrySource = 'dashboard';
+          }
+        } catch {
+          // Dashboard supplement is best-effort.
+        }
+      }
+
+      // 3 — Gateway /v1/models (OpenAI-compatible flat list)
+      //     May cover models the structured registry misses.
+      try {
+        const v1Response = await apiFetch('/v1/models', { method: 'GET' });
+        if (v1Response.ok) {
+          const v1Payload = await readJsonResponse(v1Response);
+          const v1Models = normalizeHermesModels(v1Payload, settings.model);
+          if (v1Models.length) {
+            batches.push(v1Models);
+            if (!registrySource) registrySource = 'v1';
           }
         }
+      } catch {
+        // /v1/models supplement is best-effort.
+      }
+
+      // 4 — Custom external model sources (user-configured API endpoints)
+      //     Probed independently so models behind LAN-only OpenAI-compatible
+      //     servers (llama-swap, ollama, vLLM, etc.) appear in the picker.
+      const customSources = Array.isArray(settings.customModelSources)
+        ? settings.customModelSources.filter(Boolean)
+        : [];
+      if (customSources.length) {
+        try {
+          const extResult = await discoverModelsFromExternalSources({
+            sourceUrls: customSources,
+            timeoutMs: 10000,
+          });
+          if (extResult.ok && extResult.models.length) {
+            batches.push(extResult.models.map((m) => ({
+              ...m,
+              source: 'external',
+            })));
+          }
+        } catch {
+          // Custom source probing is best-effort.
+        }
+      }
+
+      // Merge all batches by rawModelId — keeps the first occurrence
+      // of each model (registry > dashboard > v1 > custom).
+      if (batches.length) {
+        registryModels = mergeModelsByRawId(batches);
+      } else {
+        // Last resort: nothing at all came back from any endpoint.
+        // Fall through to the session-history check with empty models;
+        // if that also fails, the error handler below will catch.
+        registrySource = '';
       }
     }
 
-    // If the gateway only exposes a single OpenAI-compatible row, keep a
-    // best-effort session-history fallback. The durable source is
-    // /api/model/options; sessions are only for older API-server gateways.
+    // 4 — Session-history fallback when the aggregated model list is sparse
     const shouldTrySessionFallback = shouldTrySessionModelFallback({
       registryModels,
       registrySource,
@@ -3703,6 +3768,11 @@ function syncSettingsForm() {
   }
   if (els.autoNameSessionsInput) els.autoNameSessionsInput.checked = settings.autoNameSessions !== false;
   if (els.agentHostInput) els.agentHostInput.value = settings.agentDiscoveryHost || DEFAULT_SETTINGS.agentDiscoveryHost;
+  if (els.customModelSourcesInput) {
+    els.customModelSourcesInput.value = Array.isArray(settings.customModelSources)
+      ? settings.customModelSources.join('\n')
+      : '';
+  }
   if (els.agentSchemeInput) els.agentSchemeInput.value = normalizeAgentDiscoveryScheme(settings.agentDiscoveryScheme || DEFAULT_SETTINGS.agentDiscoveryScheme);
   if (els.agentPortsInput) els.agentPortsInput.value = getAgentPorts().join(',');
   els.transcriptProviderInput.value = settings.transcriptProvider || DEFAULT_SETTINGS.transcriptProvider;
@@ -3744,6 +3814,9 @@ async function saveSettingsFromForm() {
     agentDiscoveryHost: normalizeAgentDiscoveryHost(els.agentHostInput?.value || settings.agentDiscoveryHost || DEFAULT_SETTINGS.agentDiscoveryHost),
     agentDiscoveryScheme: normalizeAgentDiscoveryScheme(els.agentSchemeInput?.value || settings.agentDiscoveryScheme || DEFAULT_SETTINGS.agentDiscoveryScheme),
     agentPorts: parseAgentPortsInput(els.agentPortsInput?.value || '').length ? parseAgentPortsInput(els.agentPortsInput?.value || '') : getAgentPorts(),
+    customModelSources: els.customModelSourcesInput
+      ? els.customModelSourcesInput.value.split('\n').map((s) => s.trim()).filter(Boolean)
+      : settings.customModelSources || [],
     transcriptProvider: els.transcriptProviderInput.value.trim() || DEFAULT_SETTINGS.transcriptProvider,
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
