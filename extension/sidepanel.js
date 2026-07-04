@@ -282,10 +282,6 @@ function isRemoteWsMode() {
   return normalizeGatewayMode(settings.gatewayMode) === 'remote-dashboard';
 }
 
-function isRemoteMode() {
-  return normalizeGatewayMode(settings.gatewayMode) !== 'local-api';
-}
-
 function currentConnectionState() {
   return connectionStateForGateway({
     gatewayMode: settings.gatewayMode,
@@ -1323,7 +1319,6 @@ const VOICE_AUDIO_MIME_TYPES = Object.freeze([
   'audio/ogg',
   'audio/wav',
 ]);
-const MICROPHONE_PERMISSION_PAGE = 'request-permissions.html';
 const VOICE_DICTATION_PAGE = 'voice-dictation.html';
 const VOICE_DRAFT_STORAGE_KEY = 'hermesVoiceDraft';
 const VOICE_DRAFT_MAX_AGE_MS = 10 * 60 * 1000;
@@ -1401,30 +1396,6 @@ async function microphonePermissionState() {
   }
 }
 
-async function openMicrophonePermissionPage() {
-  const url = globalThis.chrome?.runtime?.getURL?.(MICROPHONE_PERMISSION_PAGE) || MICROPHONE_PERMISSION_PAGE;
-  if (globalThis.chrome?.tabs?.create) {
-    await globalThis.chrome.tabs.create({ url, active: true });
-    return;
-  }
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
-
-function microphoneSettingsUrl() {
-  const runtimeId = globalThis.chrome?.runtime?.id || '';
-  const site = encodeURIComponent(`chrome-extension://${runtimeId}/`);
-  return `chrome://settings/content/siteDetails?site=${site}`;
-}
-
-async function openMicrophoneSettingsPage() {
-  const url = microphoneSettingsUrl();
-  if (globalThis.chrome?.tabs?.create) {
-    await globalThis.chrome.tabs.create({ url, active: true });
-    return;
-  }
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
-
 async function openVoiceDictationPage(detail = 'Opening a Hermes Voice Dictation tab. Record there; the transcript will return to this composer automatically.') {
   setStatus('warn', 'Opening voice dictation tab', detail);
   const url = globalThis.chrome?.runtime?.getURL?.(VOICE_DICTATION_PAGE) || VOICE_DICTATION_PAGE;
@@ -1464,27 +1435,6 @@ async function consumePendingVoiceDraft() {
   if (!storage?.get) return false;
   const stored = await storage.get([VOICE_DRAFT_STORAGE_KEY]);
   return consumeVoiceDraft(stored?.[VOICE_DRAFT_STORAGE_KEY]);
-}
-
-async function waitForMicrophonePermission({ timeoutMs = 60_000, intervalMs = 500 } = {}) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const state = await microphonePermissionState();
-    if (state === 'granted') return true;
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
-  return false;
-}
-
-async function requestMicrophoneOriginPermissionViaPage(detail = 'Opening a temporary Hermes permission tab because Chrome can suppress mic prompts inside extension side panels.') {
-  setStatus('warn', 'Microphone permission needed', detail);
-  await openMicrophonePermissionPage();
-  const granted = await waitForMicrophonePermission();
-  if (granted) {
-    setStatus('ok', 'Microphone permission enabled', 'Starting Hermes voice recording now.');
-    return true;
-  }
-  throw microphonePermissionError('Microphone access was not granted. Use the Hermes permission tab or Chrome extension details to enable Microphone, then click the mic again.');
 }
 
 async function ensureMicrophoneOriginPermission() {
@@ -1725,41 +1675,9 @@ function formatTokens(tokens = 0) {
   return `${formatNumber(tokens)} tokens`;
 }
 
-function estimateLocalSessionTokens(userText = '') {
-  const messageTokens = messages.reduce((total, message) => total + estimateTokens(message.content || ''), 0);
-  return messageTokens + estimateTokens(userText || '') + estimateAttachmentTokens();
-}
-
 function numericTokenField(value = 0) {
   const number = Number(value || 0);
   return Number.isFinite(number) && number > 0 ? number : 0;
-}
-
-function usageTokenTotal(usage = {}) {
-  if (!usage || typeof usage !== 'object') return 0;
-  const explicit = numericTokenField(usage.total_tokens || usage.totalTokens);
-  if (explicit) return explicit;
-  return numericTokenField(usage.input_tokens || usage.prompt_tokens || usage.inputTokens || usage.promptTokens)
-    + numericTokenField(usage.output_tokens || usage.completion_tokens || usage.outputTokens || usage.completionTokens)
-    + numericTokenField(usage.cache_read_tokens || usage.cacheReadTokens)
-    + numericTokenField(usage.cache_write_tokens || usage.cacheWriteTokens)
-    + numericTokenField(usage.reasoning_tokens || usage.reasoningTokens);
-}
-
-function sessionTokenTotal(session = {}) {
-  if (!session || typeof session !== 'object') return 0;
-  const explicit = numericTokenField(session.total_tokens || session.totalTokens);
-  if (explicit) return explicit;
-  return numericTokenField(session.input_tokens || session.inputTokens)
-    + numericTokenField(session.output_tokens || session.outputTokens)
-    + numericTokenField(session.cache_read_tokens || session.cacheReadTokens)
-    + numericTokenField(session.cache_write_tokens || session.cacheWriteTokens)
-    + numericTokenField(session.reasoning_tokens || session.reasoningTokens);
-}
-
-function runtimeContextTokens(runtime = {}) {
-  if (!runtime || typeof runtime !== 'object') return 0;
-  return numericTokenField(runtime.context_length || runtime.contextLength || runtime.context_tokens || runtime.contextTokens);
 }
 
 function applySessionRuntimeSnapshot({ session = null, usage = null, runtime = null, sessionId = settings.sessionId, source = 'session' } = {}) {
@@ -2053,15 +1971,6 @@ async function uploadImageAttachment(attachment) {
     detail: `${attachment.detail || payload.mime_type || 'image'} · local path ready`,
     uploadError: '',
   };
-}
-
-async function ensureImageAttachmentsSaved() {
-  if (!attachments.some((attachment) => attachment.kind === 'image' && attachment.dataUrl && !attachment.localPath)) return;
-  if (!settings.apiKey) return;
-  const next = await saveImageAttachmentsForTurn(attachments);
-  attachments = next;
-  renderAttachments();
-  renderContextWindow();
 }
 
 async function saveImageAttachmentsForTurn(items = []) {

@@ -43,6 +43,15 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+H",
+        "mac": "Alt+H"
+      },
+      "description": "Open the Hermes side panel"
+    }
+  },
   "content_scripts": [
     {
       "matches": [

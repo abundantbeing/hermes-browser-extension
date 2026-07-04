@@ -38,6 +38,7 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 - Sends active tab/browser context into a persisted Hermes session, or switches to Chat only when you do not want browser context attached.
 - Adds a composer-header context menu for Chat only, following the active tab, pinning a specific tab, and choosing which open tabs appear in the prompt.
 - Opens as a tab-attached side panel by default, with a setting to keep the panel global across tabs.
+- Opens with a keyboard shortcut (`Alt+H` by default, customizable at `chrome://extensions/shortcuts`).
 - Keeps pinned-tab conversations isolated with per-tab local history and Hermes session bindings.
 - Adds quick commands for common browser-context work, including `/summarize`, `/explain`, `/rewrite`, `/tabs`, and `/action-items`.
 - Adds a collapsible “What Hermes saw” receipt after each sent turn for transparent context/debugging.
