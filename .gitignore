@@ -13,6 +13,10 @@ tmp/
 .gitnexus/
 .claude/
 
+# GitHub Actions are intentionally disabled for this repo while hosted runners are unavailable.
+# Keep local verification as the release gate instead of pushing false-red workflows.
+.github/workflows/
+
 # Private backups and local secrets
 backups/
 .env
