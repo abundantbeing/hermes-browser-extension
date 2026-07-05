@@ -65,6 +65,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src http: https: wss:;"
+    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data: blob:; connect-src http: https: wss:;"
   }
 }

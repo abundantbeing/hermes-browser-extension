@@ -76,6 +76,19 @@ if (manifest.permissions?.includes('microphone') || manifest.optional_permission
 }
 if (!manifest.host_permissions?.includes('http://127.0.0.1/*')) errors.push('localhost gateway host permission missing');
 
+const sourceCsp = manifest.content_security_policy?.extension_pages || '';
+const rootCsp = rootManifest?.content_security_policy?.extension_pages || '';
+const distCsp = distManifest?.content_security_policy?.extension_pages || '';
+if (!/img-src\s+[^;]*'self'/.test(sourceCsp)) errors.push("CSP img-src must include 'self'");
+if (!/img-src\s+[^;]*data:/.test(sourceCsp)) errors.push('CSP img-src must include data: for pasted image previews');
+if (!/img-src\s+[^;]*blob:/.test(sourceCsp)) errors.push('CSP img-src must include blob: for safe local previews');
+if (rootManifest && rootCsp !== sourceCsp) {
+  errors.push('root manifest CSP must match extension/manifest.json CSP');
+}
+if (distManifest && distCsp !== sourceCsp) {
+  errors.push('dist manifest CSP must match extension/manifest.json CSP; run npm run build');
+}
+
 for (const file of requiredFiles) {
   const filePath = path.join(root, 'extension', file);
   if (!fs.existsSync(filePath)) errors.push(`Missing manifest asset: ${file}`);

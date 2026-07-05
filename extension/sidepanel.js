@@ -3291,7 +3291,14 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
     title.type = 'button';
     title.className = `session-group-title session-group-toggle ${isOpen ? 'open' : ''}`.trim();
     title.setAttribute('aria-expanded', String(isOpen));
-    title.innerHTML = `<span>${isOpen ? '▾' : '▸'} ${group.label}</span><strong>${group.sessions.length}</strong>`;
+
+    const titleLabel = document.createElement('span');
+    titleLabel.textContent = `${isOpen ? '▾' : '▸'} ${group.label}`;
+
+    const titleCount = document.createElement('strong');
+    titleCount.textContent = String(group.sessions.length);
+
+    title.append(titleLabel, titleCount);
     title.addEventListener('click', () => {
       if (openSessionGroups.has(group.label)) {
         openSessionGroups.delete(group.label);

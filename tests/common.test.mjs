@@ -406,6 +406,27 @@ test('manifest allows remote Hermes API server connections from extension pages'
   assert.ok(manifest.host_permissions.includes('https://*/*'));
 });
 
+test('extension manifests restrict image sources in extension pages CSP', () => {
+  const sourceManifest = JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
+  const rootManifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
+
+  for (const manifest of [sourceManifest, rootManifest]) {
+    const csp = manifest.content_security_policy?.extension_pages || '';
+    assert.match(csp, /img-src/);
+    assert.match(csp, /img-src[^;]*'self'/);
+    assert.match(csp, /img-src[^;]*data:/);
+    assert.match(csp, /img-src[^;]*blob:/);
+  }
+});
+
+test('session group label is rendered without gateway-derived innerHTML interpolation', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+
+  assert.doesNotMatch(source, /title\.innerHTML[\s\S]{0,200}group\.label/);
+  assert.match(source, /titleLabel\.textContent\s*=/);
+  assert.match(source, /titleCount\.textContent\s*=/);
+});
+
 test('manifests expose an Alt+H action shortcut for opening the side panel', () => {
   const sourceManifest = JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
   const rootManifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
