@@ -422,7 +422,7 @@ export async function discoverModelsFromExternalSources({
             description: `Probed from ${clean}`,
             contextTokens: 0,
             source: 'external',
-            runtimeSelectable: true,
+            runtimeSelectable: false,
           };
         })
         .filter(Boolean);

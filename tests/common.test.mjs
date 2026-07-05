@@ -1702,3 +1702,78 @@ test('Nous dark theme uses Desktop-style dark blue surfaces instead of light box
   assert.match(block, /--hermes-input-bg:\s*#062a60\b/i, 'dark Nous text fields should be darker blue than cards');
   assert.match(css, /textarea, input, select \{[\s\S]*?background:\s*var\(--hermes-input-bg, var\(--hermes-paper\)\)/, 'form controls should use the input surface token');
 });
+
+test('mergeModelsByRawId deduplicates by provider+rawModelId composite key', async () => {
+  const { mergeModelsByRawId } = await import('../extension/lib/model-discovery.mjs');
+
+  const fromGateway = [
+    { id: 'openai::gpt-4o', rawModelId: 'gpt-4o', provider: 'openai', source: 'registry' },
+  ];
+  const fromExternal = [
+    { id: 'wimpy::gpt-4o', rawModelId: 'gpt-4o', provider: 'wimpy', source: 'external' },
+  ];
+  const merged = mergeModelsByRawId([fromGateway, fromExternal]);
+  assert.equal(merged.length, 2, 'same rawModelId from different providers must both survive');
+  assert.equal(merged[0].provider, 'openai');
+  assert.equal(merged[1].provider, 'wimpy');
+
+  const deduped = mergeModelsByRawId([fromGateway, fromGateway]);
+  assert.equal(deduped.length, 1, 'same provider+model must deduplicate');
+
+  // Fall back to id when rawModelId absent
+  const byId = mergeModelsByRawId([[{ id: 'hermes-agent', provider: 'hermes' }]]);
+  assert.equal(byId.length, 1);
+  assert.equal(byId[0].id, 'hermes-agent');
+
+  assert.equal(mergeModelsByRawId([[], null, []]).length, 0);
+  assert.equal(mergeModelsByRawId([]).length, 0);
+  assert.equal(mergeModelsByRawId().length, 0);
+});
+
+test('discoverModelsFromExternalSources parses various response shapes', async () => {
+  const { discoverModelsFromExternalSources } = await import('../extension/lib/model-discovery.mjs');
+  const fetchMock = async (url) => {
+    if (url === 'http://wimpy:8080/v1/models') {
+      return { ok: true, json: async () => ({ data: [{ id: 'gemma-3-12b' }, { id: 'phi-4' }] }) };
+    }
+    if (url === 'http://ollama:11434/v1/models') {
+      return { ok: true, json: async () => ['llama3.2:3b', 'mistral:7b'] };
+    }
+    if (url === 'http://broken:8080/v1/models') {
+      return { ok: false, status: 502, json: async () => ({}) };
+    }
+    throw new Error(`unexpected url: ${url}`);
+  };
+
+  const r1 = await discoverModelsFromExternalSources({ sourceUrls: ['http://wimpy:8080/v1'], fetchFn: fetchMock });
+  assert.equal(r1.models.length, 2);
+  assert.equal(r1.models[0].id, 'wimpy::gemma-3-12b');
+  assert.equal(r1.models[0].runtimeSelectable, false, 'external models must be discovery-only');
+
+  const r2 = await discoverModelsFromExternalSources({ sourceUrls: ['http://ollama:11434/v1'], fetchFn: fetchMock });
+  assert.equal(r2.models.length, 2);
+  assert.equal(r2.models[0].provider, 'ollama');
+
+  const r3 = await discoverModelsFromExternalSources({ sourceUrls: ['http://broken:8080/v1', 'http://wimpy:8080/v1'], fetchFn: fetchMock });
+  assert.equal(r3.models.length, 2, 'good results survive bad ones');
+  assert.equal(r3.results[0].ok, false);
+  assert.equal(r3.results[1].ok, true);
+
+  const empty = await discoverModelsFromExternalSources({ sourceUrls: [], fetchFn: fetchMock });
+  assert.equal(empty.models.length, 0);
+});
+
+test('external source URL normalisation strips /v1 and appends /v1/models', async () => {
+  const { discoverModelsFromExternalSources } = await import('../extension/lib/model-discovery.mjs');
+  const seen = [];
+  const fetchMock = async (url) => { seen.push(url); return { ok: true, json: async () => ({ data: [{ id: 'm' }] }) }; };
+
+  await discoverModelsFromExternalSources({ sourceUrls: ['http://wimpy:8080/v1'], fetchFn: fetchMock });
+  assert.equal(seen[0], 'http://wimpy:8080/v1/models');
+
+  await discoverModelsFromExternalSources({ sourceUrls: ['http://ollama:11434'], fetchFn: fetchMock });
+  assert.equal(seen[1], 'http://ollama:11434/v1/models');
+
+  await discoverModelsFromExternalSources({ sourceUrls: ['http://custom:5000/api/v1'], fetchFn: fetchMock });
+  assert.equal(seen[2], 'http://custom:5000/api/v1/models');
+});
