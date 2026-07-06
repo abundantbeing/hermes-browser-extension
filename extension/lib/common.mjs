@@ -33,7 +33,6 @@ export const MODEL_EFFORTS = Object.freeze([
 ]);
 
 export const TEXT_SIZE_OPTIONS = Object.freeze([
-  { value: 'small', label: 'Small' },
   { value: 'default', label: 'Default' },
   { value: 'large', label: 'Large' },
   { value: 'extra-large', label: 'Extra large' },

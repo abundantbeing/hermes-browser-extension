@@ -111,7 +111,6 @@
   font-family: var(--hermes-font-ui);
 }
 
-html[data-hermes-text-size="small"] { --hermes-text-zoom: 0.94; }
 html[data-hermes-text-size="large"] { --hermes-text-zoom: 1.08; }
 html[data-hermes-text-size="extra-large"] { --hermes-text-zoom: 1.18; }
 
@@ -358,7 +357,7 @@ body {
   overflow: hidden;
   background: var(--hermes-app-bg);
   color: var(--hermes-fg);
-  zoom: var(--hermes-text-zoom, 1);
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
 }
 button, input, textarea, select { font: inherit; }
 button { text-transform: uppercase; letter-spacing: 0.14em; }
@@ -1440,6 +1439,10 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
   gap: 0;
   min-width: 0;
   max-width: 100%;
+  max-height: min(52vh, 320px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 8px;
   border-top: 1px solid rgba(var(--hermes-fg-rgb),0.45);
   background: rgba(var(--hermes-panel-rgb),0.97);
@@ -2773,11 +2776,16 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 .text-size-control {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 156px);
+  justify-self: end;
 }
 .text-size-choice {
   min-width: 0;
-  padding-inline: 6px;
+  padding-inline: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
 }
 .gateway-mode {
   display: grid;
@@ -2932,6 +2940,64 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   margin-bottom: 8px;
 }
 .empty-state span { position: relative; display: block; color: var(--hermes-muted); font-size: 11px; line-height: 1.4; text-transform: uppercase; letter-spacing: 0.08em; }
+
+html[data-hermes-text-size] .intro,
+html[data-hermes-text-size] .status-copy span,
+html[data-hermes-text-size] .message-content,
+html[data-hermes-text-size] textarea,
+html[data-hermes-text-size] input,
+html[data-hermes-text-size] select,
+html[data-hermes-text-size] .model-menu-button,
+html[data-hermes-text-size] .session-menu-button,
+html[data-hermes-text-size] .context-bar,
+html[data-hermes-text-size] .skill-option,
+html[data-hermes-text-size] .attach-menu button,
+html[data-hermes-text-size] .context-scope-search,
+html[data-hermes-text-size] .context-scope-menu button,
+html[data-hermes-text-size] .session-option,
+html[data-hermes-text-size] .conn-mode-title,
+html[data-hermes-text-size] .profile-row button,
+html[data-hermes-text-size] .appearance-row strong,
+html[data-hermes-text-size] .theme-card-name {
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+}
+
+html[data-hermes-text-size] .eyebrow,
+html[data-hermes-text-size] .composer-label,
+html[data-hermes-text-size] .status-label,
+html[data-hermes-text-size] .message-role,
+html[data-hermes-text-size] .hint,
+html[data-hermes-text-size] .settings-dialog label,
+html[data-hermes-text-size] .connect-panel li,
+html[data-hermes-text-size] .context-popover dt,
+html[data-hermes-text-size] .model-group-title,
+html[data-hermes-text-size] .context-chip strong,
+html[data-hermes-text-size] .composer-help,
+html[data-hermes-text-size] .queue-notice,
+html[data-hermes-text-size] .tool-activity-label,
+html[data-hermes-text-size] .tool-activity-preview,
+html[data-hermes-text-size] .model-button-copy strong,
+html[data-hermes-text-size] .skill-option-command,
+html[data-hermes-text-size] .session-option-meta,
+html[data-hermes-text-size] .context-popover header span,
+html[data-hermes-text-size] .compatibility-row strong,
+html[data-hermes-text-size] .theme-card-meta,
+html[data-hermes-text-size] .appearance-row span,
+html[data-hermes-text-size] .conn-mode-desc {
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+}
+
+html[data-hermes-text-size] h2,
+html[data-hermes-text-size] .empty-state strong {
+  font-size: calc(28px * var(--hermes-text-zoom, 1));
+}
+
+html[data-hermes-text-size] .message-content h1 { font-size: calc(28px * var(--hermes-text-zoom, 1)); }
+html[data-hermes-text-size] .message-content h2 { font-size: calc(24px * var(--hermes-text-zoom, 1)); }
+html[data-hermes-text-size] .message-content h3 { font-size: calc(20px * var(--hermes-text-zoom, 1)); }
+html[data-hermes-text-size] .message-content h4,
+html[data-hermes-text-size] .message-content h5 { font-size: calc(16px * var(--hermes-text-zoom, 1)); }
+html[data-hermes-text-size] .message-content h6 { font-size: calc(13px * var(--hermes-text-zoom, 1)); }
 
 @media (max-height: 720px) {
   .hero-card { min-height: 118px; }

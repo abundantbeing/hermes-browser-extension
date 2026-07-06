@@ -1995,13 +1995,15 @@ test('settings text-size option has defaults, normalization, storage, and root d
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
 
   assert.equal(DEFAULT_SETTINGS.textSize, 'default');
-  assert.deepEqual(TEXT_SIZE_OPTIONS.map((option) => option.value), ['small', 'default', 'large', 'extra-large']);
+  assert.deepEqual(TEXT_SIZE_OPTIONS.map((option) => option.value), ['default', 'large', 'extra-large']);
   assert.equal(normalizeTextSize('large'), 'large');
   assert.equal(normalizeTextSize('Extra Large'), 'extra-large');
+  assert.equal(normalizeTextSize('small'), 'default');
   assert.equal(normalizeTextSize('bogus'), 'default');
 
   assert.match(html, /aria-label="Text size"/);
-  assert.match(html, /data-text-size="small"/);
+  assert.doesNotMatch(html, /data-text-size="small"/);
+  assert.doesNotMatch(html, />Small<|\bSmall\s*<\/button>/);
   assert.match(html, /data-text-size="default"/);
   assert.match(html, /data-text-size="large"/);
   assert.match(html, /data-text-size="extra-large"/);
@@ -2011,7 +2013,16 @@ test('settings text-size option has defaults, normalization, storage, and root d
   assert.match(source, /setAppearanceOption\('textSize'/);
   assert.match(css, /--hermes-text-zoom:\s*1/);
   assert.match(css, /html\[data-hermes-text-size="extra-large"\]/);
-  assert.match(css, /zoom:\s*var\(--hermes-text-zoom/);
+  assert.doesNotMatch(css, /html\[data-hermes-text-size="small"\]/);
+  assert.doesNotMatch(css, /\bzoom:\s*var\(--hermes-text-zoom/);
+  assert.match(css, /font-size:\s*calc\(12px \* var\(--hermes-text-zoom/);
+  assert.match(css, /\.text-size-control \{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.text-size-control \{[\s\S]*?width:\s*min\(100%, 156px\)/);
+  assert.match(css, /\.text-size-choice \{[\s\S]*?font-size:\s*calc\(10px \* var\(--hermes-text-zoom/);
+  assert.match(css, /html\[data-hermes-text-size\] \.message-content/);
+  assert.match(css, /html\[data-hermes-text-size\] \.appearance-row strong/);
+  assert.match(css, /\.bottom-dock \{[\s\S]*?max-height:\s*min\(52vh, 320px\)/);
+  assert.match(css, /\.bottom-dock \{[\s\S]*?overflow-y:\s*auto/);
 });
 
 test('Hermes compatibility settings panel is native-collapsible and defaults closed', () => {
