@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.10 — 2026-07-06
+
+### Scoped element picker
+- Added a read-only page element picker in the attach menu, including picked-element prompt/receipt support inside the existing untrusted Browser Context Protocol block.
+- Scoped picked elements by tab URL and synchronized pick-in-progress state through session storage so side panel views stay aligned and stale picks clear on navigation or tab close.
+- Reused canonical redaction for picked-element prompt formatting, avoided double redaction at capture time, and kept issue-draft commands from copying picked DOM or URL text into the trusted user-request block.
+- Added open-shadow-root pointer traversal for element picking while keeping MV3 content scripts classic.
+
 ## v0.1.9 — 2026-07-05
 
 ### Browser Context Protocol

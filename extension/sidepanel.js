@@ -108,6 +108,11 @@ import {
   resolveCommandPrompt,
 } from './lib/commands.mjs';
 import {
+  ELEMENT_PICK_MESSAGES,
+  pickedElementForTab,
+  storedPickedElementRecord,
+} from './lib/element-picker.mjs';
+import {
   CONTEXT_SCOPE_MODES,
   DEFAULT_CONTEXT_SCOPE,
   compactPinnedTitle,
@@ -127,6 +132,7 @@ import {
 
 const $ = (selector) => document.querySelector(selector);
 const sidePanelParams = parseSidePanelParams(globalThis.location?.search || '');
+const PICK_STATE_STORAGE_NAME = 'hermes:elementPickInProgress';
 
 const els = {
   appScroll: $('#appScroll'),
@@ -253,6 +259,9 @@ let startupReadiness = initialStartupReadiness(settings);
 let contextScope = normalizeContextScope(DEFAULT_CONTEXT_SCOPE);
 let previousConversationScope = normalizeContextScope(DEFAULT_CONTEXT_SCOPE);
 let currentContext = { activeTab: null, tabs: [], pageContext: null, contextScope };
+const pickedElementsByTabId = new Map();
+let elementPickInProgress = false;
+let elementPickState = null;
 let selectedTabs = []; // null = all tabs; array of SafeTab = user-filtered set
 let messages = [];
 let availableModels = [];
@@ -758,7 +767,7 @@ function syncSelectedTabsToContextScope() {
 function contextScopeLabel() {
   if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return 'Chat only';
   if (contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB) {
-    if (isAttachedPanelResidency() && Number(contextScope.pinnedTabId) === Number(sidePanelParams.tabId)) {
+    if (isAttachedPanelResidency() && Object.is(Number(contextScope.pinnedTabId), Number(sidePanelParams.tabId))) {
       return contextScope.pinnedTitle ? `Attached: ${contextScope.pinnedTitle}` : 'Attached tab';
     }
     return contextScope.pinnedTitle ? `Pinned: ${contextScope.pinnedTitle}` : 'Pinned tab';
@@ -776,7 +785,7 @@ function renderContextScopeControls() {
   els.contextScopeButton.title = chatOnly
     ? 'Hermes is in Chat only mode and will not read browser context'
     : pinned
-      ? (isAttachedPanelResidency() && Number(contextScope.pinnedTabId) === Number(sidePanelParams.tabId)
+      ? (isAttachedPanelResidency() && Object.is(Number(contextScope.pinnedTabId), Number(sidePanelParams.tabId))
         ? `Hermes is attached to ${contextScope.pinnedUrl || contextScope.pinnedTitle || 'this browser tab'}`
         : `Hermes is pinned to ${contextScope.pinnedUrl || contextScope.pinnedTitle || 'this tab'}`)
       : (isGlobalPanelResidency() ? 'Hermes follows the active browser tab' : 'Hermes is attached to this browser tab');
@@ -2671,14 +2680,18 @@ function renderContextWindow(userText = els.input?.value || '') {
       currentContext.activeTab?.url || '',
       '',
       clampText(pc?.selectedText || pc?.text || pc?.reason || pc?.error || 'No readable page text captured yet.', 900),
+      pc?.pickedElement?.selector ? `\n\nPicked: ${pc.pickedElement.tag} · ${pc.pickedElement.selector}` : '',
     ].filter(Boolean).join('\n');
   }
+
+  setPickButtonState();
 
   const rows = [
     ['User draft', stats.parts.userRequest],
     ['Active tab', stats.parts.activeTab],
     ['Open tabs', stats.parts.openTabs],
     ['Selection', stats.parts.selectedText],
+    ['Picked element', stats.parts.pickedElement],
     ['Metadata', stats.parts.pageMetadata],
     ['YouTube transcript', stats.parts.youtubeTranscript],
     ['Page text', stats.parts.pageText],
@@ -4207,6 +4220,166 @@ async function getYoutubeTranscriptForTab(tab) {
   }
 }
 
+function normalizeElementPickState(value = null) {
+  if (!value || !['object'].includes(typeof value)) return null;
+  const tabId = Number(value.tabId);
+  const url = String(value.url || '');
+  if (!Number.isFinite(tabId) || !url) return null;
+  return { tabId, url, startedAt: String(value.startedAt || '') };
+}
+
+function applyElementPickState(value = null) {
+  elementPickState = normalizeElementPickState(value);
+  elementPickInProgress = Boolean(elementPickState);
+  setPickButtonState();
+}
+
+async function persistElementPickState({ tabId, url } = {}) {
+  const next = normalizeElementPickState({ tabId, url, startedAt: String(Date.now()) });
+  if (!next) return;
+  applyElementPickState(next);
+  try {
+    await chrome.storage?.session?.set?.({ [PICK_STATE_STORAGE_NAME]: next });
+  } catch (_error) {
+    // Session storage is best-effort UI sync; the active panel still tracks state locally.
+  }
+}
+
+async function loadElementPickState() {
+  try {
+    const stored = await chrome.storage?.session?.get?.(PICK_STATE_STORAGE_NAME);
+    applyElementPickState(stored?.[PICK_STATE_STORAGE_NAME] || null);
+  } catch (_error) {
+    applyElementPickState(null);
+  }
+}
+
+async function clearElementPickState({ tabId = null } = {}) {
+  if (tabId && elementPickState?.tabId && !Object.is(Number(tabId), elementPickState.tabId)) return;
+  applyElementPickState(null);
+  try {
+    await chrome.storage?.session?.remove?.(PICK_STATE_STORAGE_NAME);
+  } catch (_error) {
+    // Session storage is best-effort UI sync; the active panel still clears locally.
+  }
+}
+
+function elementPickActiveForTab(tab = currentContext?.activeTab) {
+  if (!elementPickInProgress || !elementPickState || !tab?.id) return false;
+  if (!Object.is(Number(tab.id), elementPickState.tabId)) return false;
+  const currentUrl = String(tab.url || currentContext?.pageContext?.url || '');
+  return !elementPickState.url || !currentUrl || elementPickState.url === currentUrl;
+}
+
+function isChromeSessionStorageArea(areaName = '') {
+  return ['session'].includes(areaName);
+}
+
+function mergeStoredPickIntoPageContext(tab, pageContext) {
+  if (!pageContext || !tab?.id) return pageContext;
+  const stored = pickedElementsByTabId.get(tab.id);
+  const picked = pickedElementForTab(stored, tab, pageContext);
+  if (picked) {
+    pageContext.pickedElement = picked;
+  } else {
+    delete pageContext.pickedElement;
+    if (stored) pickedElementsByTabId.delete(tab.id);
+  }
+  return pageContext;
+}
+
+function activeStoredPick() {
+  const tab = currentContext?.activeTab;
+  if (!tab?.id) return null;
+  return pickedElementForTab(pickedElementsByTabId.get(tab.id), tab, currentContext?.pageContext || {});
+}
+
+function clearPickedElementForTab(tabId, { silent = false } = {}) {
+  if (!tabId) return;
+  pickedElementsByTabId.delete(tabId);
+  if (currentContext?.activeTab?.id === tabId && currentContext.pageContext) {
+    delete currentContext.pageContext.pickedElement;
+  }
+  clearElementPickState({ tabId });
+  setPickButtonState();
+  renderContextWindow();
+  if (!silent) setStatus('ok', 'Picked element cleared', '');
+}
+
+function setPickButtonState() {
+  const hasPick = Boolean(activeStoredPick());
+  const pickingActive = elementPickActiveForTab();
+  const attachPick = document.querySelector('[data-attach="pick-element"]');
+  if (attachPick) {
+    attachPick.textContent = pickingActive
+      ? '☝ Picking element...'
+      : hasPick
+        ? '☝ Pick a different element'
+        : '☝ Pick page element';
+    attachPick.setAttribute('aria-pressed', String(pickingActive || Boolean(hasPick)));
+  }
+  const attachClear = document.getElementById('clearPickAttachButton');
+  if (attachClear) {
+    attachClear.hidden = !hasPick;
+    attachClear.disabled = !hasPick;
+  }
+}
+
+async function startElementPick() {
+  if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
+    setStatus('warn', 'Chat only', 'Enable browser context before picking an element.');
+    return;
+  }
+  const [active, tabs] = await Promise.all([activeTab(), tabsForCurrentScope()]);
+  const tab = resolveContextTargetTab({ activeTab: active, tabs, scope: contextScope });
+  if (!tab?.id) {
+    setStatus('warn', 'No tab', 'Open a normal page tab first.');
+    return;
+  }
+  if (isRestrictedUrl(tab.url)) {
+    setStatus('warn', 'Restricted page', 'Element pick is not available on this URL.');
+    return;
+  }
+  try {
+    await ensureContentScript(tab.id);
+    if (elementPickActiveForTab(tab)) {
+      await chrome.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
+      await clearElementPickState({ tabId: tab.id });
+      setStatus('ok', 'Element pick cancelled', '');
+      return;
+    }
+    const response = await chrome.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.START });
+    if (response?.ok === false) throw new Error(response.error || 'Could not start element picker');
+    await persistElementPickState({ tabId: tab.id, url: tab.url });
+    setStatus('ok', 'Pick an element', 'Click any element on the page. Press Esc to cancel.');
+  } catch (error) {
+    await clearElementPickState({ tabId: tab.id });
+    setStatus('warn', 'Element pick failed', error?.message || String(error));
+  }
+}
+
+function applyPickedElementResult(message = {}, sender = {}) {
+  const tabId = sender.tab?.id || currentContext?.activeTab?.id;
+  const pickedElement = message.pickedElement;
+  if (!pickedElement?.ok) return;
+  const pickedUrl = String(message.url || pickedElement.url || sender.tab?.url || currentContext?.activeTab?.url || '');
+  const stored = storedPickedElementRecord({ tabId, url: pickedUrl, pickedElement });
+  if (stored) pickedElementsByTabId.set(stored.tabId, stored);
+  clearElementPickState({ tabId });
+  const currentUrl = String(currentContext?.activeTab?.url || currentContext?.pageContext?.url || '');
+  if (stored && currentContext.pageContext && currentContext.activeTab?.id === stored.tabId && stored.url === currentUrl) {
+    currentContext.pageContext.pickedElement = stored.pickedElement;
+  }
+  setPickButtonState();
+  renderContextWindow();
+  const label = `${pickedElement.tag || 'element'} · ${pickedElement.selector || ''}`.trim();
+  setStatus('ok', 'Element picked', label || 'Attached to context for the next message.');
+}
+
+function clearPickedElementForActiveTab() {
+  clearPickedElementForTab(currentContext?.activeTab?.id);
+}
+
 async function refreshContext() {
   if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
     currentContext = { activeTab: null, tabs: [], selectedTabs: [], pageContext: null, contextScope };
@@ -4234,6 +4407,7 @@ async function refreshContext() {
       : null;
   const youtubeTranscript = tab ? await getYoutubeTranscriptForTab(tab) : null;
   if (pageContext && youtubeTranscript) pageContext.youtubeTranscript = youtubeTranscript;
+  if (pageContext && tab) mergeStoredPickIntoPageContext(tab, pageContext);
   syncSelectedTabsFromContextScope(tabs);
   const promptTabs = filterPromptTabs(tabs, contextScope);
   currentContext = {
@@ -5334,6 +5508,28 @@ function bindEvents() {
   els.refreshButton.addEventListener('click', () => {
     refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error)));
   });
+  chrome.runtime.onMessage.addListener((message, sender) => {
+    if (message?.type === ELEMENT_PICK_MESSAGES.RESULT) {
+      applyPickedElementResult(message, sender);
+      return;
+    }
+    if (message?.type === ELEMENT_PICK_MESSAGES.CANCELLED) {
+      clearElementPickState({ tabId: sender?.tab?.id || currentContext?.activeTab?.id });
+      setStatus('ok', 'Element pick cancelled', '');
+    }
+  });
+  chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
+    if (!isChromeSessionStorageArea(areaName)) return;
+    const pickStateChange = changes?.[PICK_STATE_STORAGE_NAME];
+    if (!pickStateChange) return;
+    applyElementPickState(pickStateChange.newValue || null);
+  });
+  chrome.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
+    if (changeInfo?.url) clearPickedElementForTab(tabId, { silent: true });
+  });
+  chrome.tabs?.onRemoved?.addListener?.((tabId) => {
+    clearPickedElementForTab(tabId, { silent: true });
+  });
   els.stopButton?.addEventListener('click', stopCurrentTurn);
   els.queueButton?.addEventListener('click', queueCurrentDraft);
   els.steerButton?.addEventListener('click', () => { steerCurrentDraft(); });
@@ -5423,6 +5619,16 @@ function bindEvents() {
     if (!attachButton) return;
     const kind = attachButton.dataset.attach;
     try {
+      if (kind === 'pick-element') {
+        els.attachMenu.hidden = true;
+        els.attachMenuButton.setAttribute('aria-expanded', 'false');
+        await startElementPick();
+        return;
+      }
+      if (kind === 'clear-pick') {
+        clearPickedElementForActiveTab();
+        return;
+      }
       if (kind === 'files') els.fileInput.click();
       if (kind === 'folder') els.folderInput.click();
       if (kind === 'images') els.imageInput.click();
@@ -5617,7 +5823,7 @@ function bindEvents() {
     if (promptToggle) {
       event.stopPropagation();
       const tabId = Number(promptToggle.dataset.promptTabToggle);
-      const tab = (currentContext.tabs || []).find((item) => Number(item.id) === tabId);
+      const tab = (currentContext.tabs || []).find((item) => Object.is(Number(item.id), tabId));
       togglePromptTabSelection(tab);
       rerenderContextScopePromptSelectionPreservingScroll(currentContextScopeSearchQuery());
       return;
@@ -5713,6 +5919,7 @@ async function runStartupReadiness() {
   try {
     setStartupReadiness({ phase: 'settings', step: 'settings', status: 'active', detail: 'Loading Browser settings…' });
     await loadSettings({ restoreMessages: false });
+    await loadElementPickState();
     startupReadiness = reduceStartupReadiness(initialStartupReadiness(settings), {
       phase: 'gateway-probe',
       step: 'settings',

@@ -526,6 +526,15 @@ test('shouldSubmitComposerKey sends on Enter while preserving Shift+Enter for ne
   assert.equal(shouldSubmitComposerKey({ key: 'Enter', shiftKey: false, isComposing: true }), false);
 });
 
+test('picked element sidepanel state clears on tab navigation and removal', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /pickedElementForTab\(pickedElementsByTabId\.get\(tab\.id\), tab, currentContext\?\.pageContext \|\| \{\}\)/);
+  assert.match(source, /storedPickedElementRecord\(\{ tabId, url: pickedUrl, pickedElement \}\)/);
+  assert.match(source, /chrome\.tabs\?\.onUpdated\?\.addListener\?\.\(\(tabId, changeInfo\) => \{/);
+  assert.match(source, /if \(changeInfo\?\.url\) clearPickedElementForTab\(tabId, \{ silent: true \}\)/);
+  assert.match(source, /chrome\.tabs\?\.onRemoved\?\.addListener\?\.\(\(tabId\) => \{/);
+});
+
 test('composer renders context scope control in the header across from Ask Hermes', () => {
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const headerIndex = html.indexOf('class="composer-header"');
@@ -1143,6 +1152,29 @@ test('normalizeHermesProfiles marks active profile and keeps useful metadata', (
   assert.equal(profiles[0].active, false);
   assert.equal(profiles[1].active, true);
   assert.equal(profiles[1].model, 'claude-sonnet-4.6');
+});
+
+test('release metadata is bumped for scoped element picker release', () => {
+  const packageText = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
+  const sourceManifestText = readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8');
+  const rootManifestText = readFileSync(new URL('../manifest.json', import.meta.url), 'utf8');
+  const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
+  assert.match(packageText, /"version":\s*"0\.1\.10"/);
+  assert.match(sourceManifestText, /"version":\s*"0\.1\.10"/);
+  assert.match(rootManifestText, /"version":\s*"0\.1\.10"/);
+  assert.match(changelog, /## v0\.1\.10/);
+  assert.match(changelog, /read-only page element picker/i);
+});
+
+test('sidepanel syncs element-pick state through session storage and clears it on navigation or tab close', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /PICK_STATE_STORAGE_NAME/);
+  assert.match(source, /chrome\.storage\?\.session/);
+  assert.match(source, /chrome\.storage\?\.onChanged\?\.addListener/);
+  assert.match(source, /persistElementPickState\(\{\s*tabId:\s*tab\.id/);
+  assert.match(source, /clearElementPickState\(\{\s*tabId/);
+  assert.match(source, /changeInfo\?\.url[\s\S]*clearPickedElementForTab\(tabId/);
+  assert.match(source, /onRemoved\?\.addListener\?\.\(\(tabId\)[\s\S]*clearPickedElementForTab\(tabId/);
 });
 
 test('version helpers compare extension update versions safely', () => {
