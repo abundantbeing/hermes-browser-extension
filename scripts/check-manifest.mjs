@@ -78,6 +78,19 @@ if (manifest.permissions?.includes('microphone') || manifest.optional_permission
   errors.push('microphone is a Web Permission name, not a Chrome extension manifest permission; use the request-permissions page instead');
 }
 if (!manifest.host_permissions?.includes('http://127.0.0.1/*')) errors.push('localhost gateway host permission missing');
+for (const [index, entry] of (manifest.content_scripts || []).entries()) {
+  if (entry.type) {
+    errors.push(`content_scripts[${index}].type is invalid for this build path; keep content scripts classic and bundle dependencies instead`);
+  }
+  for (const script of entry.js || []) {
+    const scriptPath = path.join(root, 'extension', script);
+    if (!fs.existsSync(scriptPath)) continue;
+    const source = fs.readFileSync(scriptPath, 'utf8');
+    if (/^\s*import\s/m.test(source) || /^\s*export\s/m.test(source)) {
+      errors.push(`${script} must be a classic content script without top-level import/export`);
+    }
+  }
+}
 
 const sourceCsp = manifest.content_security_policy?.extension_pages || '';
 const rootCsp = rootManifest?.content_security_policy?.extension_pages || '';

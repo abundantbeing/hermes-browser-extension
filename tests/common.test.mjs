@@ -526,6 +526,15 @@ test('shouldSubmitComposerKey sends on Enter while preserving Shift+Enter for ne
   assert.equal(shouldSubmitComposerKey({ key: 'Enter', shiftKey: false, isComposing: true }), false);
 });
 
+test('picked element sidepanel state clears on tab navigation and removal', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /pickedElementForTab\(pickedElementsByTabId\.get\(tab\.id\), tab, currentContext\?\.pageContext \|\| \{\}\)/);
+  assert.match(source, /storedPickedElementRecord\(\{ tabId, url: pickedUrl, pickedElement \}\)/);
+  assert.match(source, /chrome\.tabs\?\.onUpdated\?\.addListener\?\.\(\(tabId, changeInfo\) => \{/);
+  assert.match(source, /if \(changeInfo\?\.url\) clearPickedElementForTab\(tabId, \{ silent: true \}\)/);
+  assert.match(source, /chrome\.tabs\?\.onRemoved\?\.addListener\?\.\(\(tabId\) => \{/);
+});
+
 test('composer renders context scope control in the header across from Ask Hermes', () => {
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const headerIndex = html.indexOf('class="composer-header"');

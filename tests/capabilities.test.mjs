@@ -210,6 +210,7 @@ test('buildContextReceipt summarizes exactly what browser context was sent', () 
     'Pinned tab',
     'Context hash',
     'Selected text',
+    'Picked element',
     'Page text',
     'YouTube transcript',
     'Open tabs in window',

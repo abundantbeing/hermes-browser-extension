@@ -2,6 +2,7 @@ import {
   browserContextPayloadHash as protocolBrowserContextPayloadHash,
   buildBrowserContextPrompt,
 } from './browser-context-protocol.mjs';
+import { formatPickedElementBlock } from './element-picker.mjs';
 
 export const GATEWAY_MODES = Object.freeze([
   {
@@ -583,9 +584,10 @@ export function contextChipSummary({ pageContext = null, activeTab = null, parts
   const attachedChars = attachedParts.reduce((total, part) => total + Number(part.chars || 0), 0);
   const attachedTokens = attachedParts.reduce((total, part) => total + Number(part.estimatedTokens || 0), 0);
   const adapter = pageContext.youtubeTranscript?.ok ? 'YouTube + DOM' : 'DOM';
+  const pickMarker = pageContext.pickedElement?.selector ? '☝ ' : '';
 
   return {
-    label: `📎 ${adapter} · ${formatWholeNumber(attachedChars)} chars · ~${formatWholeNumber(attachedTokens)} tok`,
+    label: `${pickMarker}📎 ${adapter} · ${formatWholeNumber(attachedChars)} chars · ~${formatWholeNumber(attachedTokens)} tok`,
     title: activeTab?.url || '',
   };
 }
@@ -1692,12 +1694,14 @@ export function estimateContextWindow({ userText = '', activeTab, tabs = [], sel
         pageMetadata: contextPart('', false),
         youtubeTranscript: contextPart('', false),
         pageText: contextPart('', false),
+        pickedElement: contextPart('', false),
       },
     };
   }
   const limit = contextCharLimit(mergedSettings.contextDepth);
   const selectedText = mergedSettings.includeSelectedText ? redactSensitiveText(pageContext?.selectedText || '') : '';
   const pageText = mergedSettings.includePageText ? clampText(redactSensitiveText(pageContext?.text || ''), limit) : '';
+  const pickedElementText = formatPickedElementBlock(pageContext?.pickedElement);
   const activeTabs = Array.isArray(selectedTabs) ? selectedTabs : tabs;
   const tabsText = mergedSettings.includeTabs ? summarizeTabs(activeTabs || [], mergedSettings.maxTabs) : '';
   const metaText = formatMeta(pageContext?.meta || {});
@@ -1718,6 +1722,7 @@ export function estimateContextWindow({ userText = '', activeTab, tabs = [], sel
       pageMetadata: contextPart(metaText, true),
       youtubeTranscript: contextPart(transcriptText, Boolean(transcriptText)),
       pageText: contextPart(pageText, mergedSettings.includePageText),
+      pickedElement: contextPart(pickedElementText, Boolean(pickedElementText)),
     },
   };
 }
