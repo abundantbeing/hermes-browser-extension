@@ -37,6 +37,7 @@ async function refreshPanelResidencyModeFromStorage() {
 }
 
 async function setActionClickSidePanelBehavior() {
+  if (globalThis.opr?.sidebarAction || globalThis.chrome?.sidebarAction) return;
   if (!chrome.sidePanel?.setPanelBehavior) return;
   await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 }
@@ -111,6 +112,42 @@ async function openHermesPanel(tab) {
     tabId: useTabAttached ? tabId : null,
     defaultPath: defaultPanelPath,
   });
+
+  // Try Opera native sidebar Action if available
+  const sidebarAction = globalThis.opr?.sidebarAction || globalThis.chrome?.sidebarAction;
+  if (sidebarAction && typeof sidebarAction.open === 'function') {
+    try {
+      await new Promise((resolve, reject) => {
+        try {
+          const res = sidebarAction.open((result) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(result);
+            }
+          });
+          if (res && typeof res.then === 'function') {
+            res.then(resolve, reject);
+          }
+        } catch (e) {
+          try {
+            const res2 = sidebarAction.open();
+            if (res2 && typeof res2.then === 'function') {
+              res2.then(resolve, reject);
+            } else {
+              resolve();
+            }
+          } catch (innerErr) {
+            reject(innerErr);
+          }
+        }
+      });
+      return;
+    } catch (sidebarError) {
+      console.warn('[Hermes Browser] Opera sidebar action open failed:', sidebarError);
+    }
+  }
+
   const sidePanelCanOpen = Boolean(chrome.sidePanel?.open);
 
   try {

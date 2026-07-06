@@ -43,6 +43,16 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
+  "sidebar_action": {
+    "default_icon": {
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png",
+      "48": "assets/icons/icon-48.png",
+      "128": "assets/icons/icon-128.png"
+    },
+    "default_title": "Hermes Browser Extension",
+    "default_panel": "sidepanel.html"
+  },
   "commands": {
     "_execute_action": {
       "suggested_key": {
@@ -50,6 +60,13 @@
         "mac": "Alt+H"
       },
       "description": "Open Hermes Browser Extension"
+    },
+    "_execute_sidebar_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "Command+Shift+H"
+      },
+      "description": "Open Hermes Browser Sidebar"
     }
   },
   "content_scripts": [

@@ -78,6 +78,13 @@ if (manifest.permissions?.includes('microphone') || manifest.optional_permission
   errors.push('microphone is a Web Permission name, not a Chrome extension manifest permission; use the request-permissions page instead');
 }
 if (!manifest.host_permissions?.includes('http://127.0.0.1/*')) errors.push('localhost gateway host permission missing');
+if (!manifest.sidebar_action) errors.push('sidebar_action missing for Opera support');
+if (manifest.sidebar_action?.default_panel !== manifest.side_panel?.default_path) {
+  errors.push('sidebar_action default_panel must match side_panel default_path');
+}
+if (rootManifest && !rootManifest.sidebar_action) {
+  errors.push('root manifest sidebar_action missing for Opera support');
+}
 
 const sourceCsp = manifest.content_security_policy?.extension_pages || '';
 const rootCsp = rootManifest?.content_security_policy?.extension_pages || '';
