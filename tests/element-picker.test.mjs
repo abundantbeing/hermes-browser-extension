@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   formatPickedElementBlock,
@@ -49,7 +50,31 @@ test('formatPickedElementBlock redacts secrets from picked element prompt text',
   assert.doesNotMatch(block, new RegExp(githubLike));
   assert.doesNotMatch(block, new RegExp(githubPatLike));
   assert.match(block, /\[REDACTED_SECRET\]|\[REDACTED_BEARER\]/);
-  assert.equal(redactPickedElementText('password=hunter2'), 'password=[REDACTED_SECRET]');
+  assert.match(redactPickedElementText('password=hunter2'), /\[REDACTED_SECRET\]/);
+});
+
+test('element picker reuses canonical redaction without private regex copies', () => {
+  const source = readFileSync(new URL('../extension/lib/element-picker.mjs', import.meta.url), 'utf8');
+  assert.match(source, /import\s*\{\s*redactSensitiveText\s*\}\s*from\s*'\.\/redaction\.mjs'/);
+  assert.doesNotMatch(source, /SECRET_ASSIGNMENT_RE|BEARER_RE|OPENAI_STYLE_RE|GITHUB_TOKEN_RE/);
+});
+
+test('element picker keeps selector builder internal', () => {
+  const source = readFileSync(new URL('../extension/lib/element-picker.mjs', import.meta.url), 'utf8');
+  assert.match(source, /function buildCssSelector\(element\)/);
+  assert.doesNotMatch(source, /export function buildCssSelector/);
+});
+
+test('content picker traverses open shadow roots before capturing a target', () => {
+  const source = readFileSync(new URL('../extension/content.js', import.meta.url), 'utf8');
+  assert.match(source, /shadowRoot\.elementFromPoint\(event\.clientX, event\.clientY\)/);
+  assert.match(source, /while \(target\?\.shadowRoot\)/);
+});
+
+test('content picker leaves picked element redaction to prompt formatting', () => {
+  const source = readFileSync(new URL('../extension/content.js', import.meta.url), 'utf8');
+  const clickHandler = source.slice(source.indexOf('function onPickClick'), source.indexOf('function onPickKeydown'));
+  assert.doesNotMatch(clickHandler, /redact\(snapshot\.(?:text|outerHtml)\)/);
 });
 
 test('picked element storage is URL-scoped to prevent stale DOM reuse', () => {

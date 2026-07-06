@@ -400,7 +400,12 @@ function teardownPickMode({ cancelled = false, pickedElement = null } = {}) {
 }
 
 function elementUnderPointer(event) {
-  const target = document.elementFromPoint(event.clientX, event.clientY);
+  let target = document.elementFromPoint(event.clientX, event.clientY);
+  while (target?.shadowRoot) {
+    const inner = target.shadowRoot.elementFromPoint(event.clientX, event.clientY);
+    if (!inner || inner === target) break;
+    target = inner;
+  }
   if (!target || target === document.documentElement || target === document.body) return null;
   if (target.id === PICK_STYLE_ID) return null;
   return target;
@@ -420,8 +425,6 @@ function onPickClick(event) {
   if (!element) return;
   const snapshot = captureElementSnapshot(element);
   if (!snapshot.ok) return;
-  snapshot.text = redact(snapshot.text);
-  snapshot.outerHtml = redact(snapshot.outerHtml);
   teardownPickMode({ pickedElement: snapshot });
 }
 
