@@ -49,6 +49,7 @@ import {
   normalizeGatewayMode,
   normalizeGatewayUrl,
   normalizeSessionStartupMode,
+  normalizeTextSize,
   normalizeToolActivity,
   normalizeReasoningEffort,
   pairingFailureMessage,
@@ -241,6 +242,7 @@ const els = {
   customModelSourcesInput: $('#customModelSourcesInput'),
   themeGrid: $('#themeGrid'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
+  textSizeButtons: Array.from(document.querySelectorAll('[data-text-size]')),
   quickMoreMenu: $('#quickMoreMenu'),
   commandMenuButton: $('#commandMenuButton'),
   template: $('#messageTemplate'),
@@ -2037,10 +2039,12 @@ function resolvedColorMode(value = settings.colorMode) {
 function applyAppearanceSettings() {
   const theme = normalizeAppearanceTheme(settings.appearanceTheme);
   const colorMode = normalizeColorMode(settings.colorMode);
+  const textSize = normalizeTextSize(settings.textSize);
   const resolvedMode = resolvedColorMode(colorMode);
   const root = document.documentElement;
   root.dataset.hermesTheme = theme;
   root.dataset.hermesColorMode = colorMode;
+  root.dataset.hermesTextSize = textSize;
   root.dataset.hermesMode = resolvedMode;
   root.style.colorScheme = resolvedMode;
 }
@@ -2051,6 +2055,12 @@ function renderAppearanceControls() {
   const activeTheme = normalizeAppearanceTheme(settings.appearanceTheme);
   for (const button of els.colorModeButtons || []) {
     const selected = button.dataset.colorMode === colorMode;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  }
+  const textSize = normalizeTextSize(settings.textSize);
+  for (const button of els.textSizeButtons || []) {
+    const selected = button.dataset.textSize === textSize;
     button.classList.toggle('selected', selected);
     button.setAttribute('aria-checked', String(selected));
   }
@@ -2075,6 +2085,7 @@ function persistAppearanceSettings() {
 function setAppearanceOption(key, value, { persist = true } = {}) {
   if (key === 'colorMode') settings = { ...settings, colorMode: normalizeColorMode(value) };
   if (key === 'appearanceTheme') settings = { ...settings, appearanceTheme: normalizeAppearanceTheme(value) };
+  if (key === 'textSize') settings = { ...settings, textSize: normalizeTextSize(value) };
   renderAppearanceControls();
   if (persist) persistAppearanceSettings();
 }
@@ -3864,6 +3875,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     sessionStartupMode: normalizeSessionStartupMode(settings.sessionStartupMode),
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
+    textSize: normalizeTextSize(settings.textSize),
     panelResidencyMode: normalizePanelResidencyMode(settings.panelResidencyMode),
   };
   applyAppearanceSettings();
@@ -3953,6 +3965,7 @@ async function saveSettingsFromForm() {
     transcriptProvider: els.transcriptProviderInput.value.trim() || DEFAULT_SETTINGS.transcriptProvider,
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
+    textSize: normalizeTextSize(settings.textSize),
   };
   applyAppearanceSettings();
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
@@ -5476,6 +5489,9 @@ function bindEvents() {
   });
   for (const button of els.colorModeButtons || []) {
     button.addEventListener('click', () => setAppearanceOption('colorMode', button.dataset.colorMode));
+  }
+  for (const button of els.textSizeButtons || []) {
+    button.addEventListener('click', () => setAppearanceOption('textSize', button.dataset.textSize));
   }
   els.themeGrid?.addEventListener('click', (event) => {
     const card = event.target.closest('[data-theme]');

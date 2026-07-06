@@ -48,6 +48,7 @@ import {
   normalizeHermesSkills,
   normalizeFastMode,
   normalizeSessionStartupMode,
+  normalizeTextSize,
   pairingFailureMessage,
   privacySafeTabForPrompt,
   queuedMessageControlState,
@@ -77,6 +78,7 @@ import {
   toolLabelForName,
   sanitizeToolPreview,
   normalizeToolActivity,
+  TEXT_SIZE_OPTIONS,
 } from '../extension/lib/common.mjs';
 import {
   extractYouTubeVideoId,
@@ -1985,6 +1987,44 @@ test('settings dialog render path refreshes appearance theme cards on open', () 
     match[1].indexOf('syncSettingsForm()') < match[1].indexOf('settingsDialog.hidden = false'),
     'appearance controls should render before the dialog is shown'
   );
+});
+
+test('settings text-size option has defaults, normalization, storage, and root dataset wiring', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+
+  assert.equal(DEFAULT_SETTINGS.textSize, 'default');
+  assert.deepEqual(TEXT_SIZE_OPTIONS.map((option) => option.value), ['small', 'default', 'large', 'extra-large']);
+  assert.equal(normalizeTextSize('large'), 'large');
+  assert.equal(normalizeTextSize('Extra Large'), 'extra-large');
+  assert.equal(normalizeTextSize('bogus'), 'default');
+
+  assert.match(html, /aria-label="Text size"/);
+  assert.match(html, /data-text-size="small"/);
+  assert.match(html, /data-text-size="default"/);
+  assert.match(html, /data-text-size="large"/);
+  assert.match(html, /data-text-size="extra-large"/);
+  assert.match(source, /textSizeButtons:\s*Array\.from\(document\.querySelectorAll\('\[data-text-size\]'\)\)/);
+  assert.match(source, /root\.dataset\.hermesTextSize\s*=\s*textSize/);
+  assert.match(source, /textSize:\s*normalizeTextSize\(settings\.textSize\)/);
+  assert.match(source, /setAppearanceOption\('textSize'/);
+  assert.match(css, /--hermes-text-zoom:\s*1/);
+  assert.match(css, /html\[data-hermes-text-size="extra-large"\]/);
+  assert.match(css, /zoom:\s*var\(--hermes-text-zoom/);
+});
+
+test('Hermes compatibility settings panel is native-collapsible and defaults closed', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+
+  assert.match(html, /<details id="compatibilityPanel" class="compatibility-panel"/);
+  assert.doesNotMatch(html, /<details id="compatibilityPanel" class="compatibility-panel" open/);
+  assert.match(html, /<summary class="compatibility-summary" aria-controls="compatibilityList">/);
+  assert.match(html, /id="compatibilityTitle" class="compatibility-title"/);
+  assert.match(html, /id="compatibilityStatus" class="hint compatibility-status"/);
+  assert.match(css, /\.compatibility-summary/);
+  assert.match(css, /\.compatibility-panel\[open\] \.compatibility-toggle::after/);
 });
 
 test('Nous dark theme uses Desktop-style dark blue surfaces instead of light boxes', () => {

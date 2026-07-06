@@ -32,6 +32,13 @@ export const MODEL_EFFORTS = Object.freeze([
   { value: 'xhigh', label: 'Max' },
 ]);
 
+export const TEXT_SIZE_OPTIONS = Object.freeze([
+  { value: 'small', label: 'Small' },
+  { value: 'default', label: 'Default' },
+  { value: 'large', label: 'Large' },
+  { value: 'extra-large', label: 'Extra large' },
+]);
+
 export const DEFAULT_SETTINGS = Object.freeze({
   gatewayMode: 'local-api',
   gatewayUrl: 'http://127.0.0.1:8642',
@@ -59,6 +66,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   sessionStartupMode: 'new-session',
   colorMode: 'dark',
   appearanceTheme: 'nous',
+  textSize: 'default',
   panelResidencyMode: 'tab-attached',
   maxTabs: 12,
   maxLocalMessages: 40,
@@ -128,6 +136,11 @@ export function normalizeGatewayMode(value = DEFAULT_SETTINGS.gatewayMode) {
 export function normalizeSessionStartupMode(value = DEFAULT_SETTINGS.sessionStartupMode) {
   const normalized = String(value || DEFAULT_SETTINGS.sessionStartupMode).trim().toLowerCase();
   return normalized === 'resume-last' ? 'resume-last' : 'new-session';
+}
+
+export function normalizeTextSize(value = DEFAULT_SETTINGS.textSize) {
+  const normalized = String(value || DEFAULT_SETTINGS.textSize).trim().toLowerCase().replace(/\s+/g, '-');
+  return TEXT_SIZE_OPTIONS.some((option) => option.value === normalized) ? normalized : DEFAULT_SETTINGS.textSize;
 }
 
 export function shouldCreateFreshSessionOnOpen(settings = DEFAULT_SETTINGS) {

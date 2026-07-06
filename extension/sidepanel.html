@@ -282,6 +282,19 @@
             </div>
           </div>
 
+          <div class="appearance-row text-size-row">
+            <div>
+              <strong>Text size</strong>
+              <span>Adjust the side panel for readability without changing browser zoom.</span>
+            </div>
+            <div class="segmented-control text-size-control" role="radiogroup" aria-label="Text size">
+              <button class="text-size-choice" type="button" data-text-size="small" role="radio" aria-checked="false">Small</button>
+              <button class="text-size-choice" type="button" data-text-size="default" role="radio" aria-checked="true">Default</button>
+              <button class="text-size-choice" type="button" data-text-size="large" role="radio" aria-checked="false">Large</button>
+              <button class="text-size-choice" type="button" data-text-size="extra-large" role="radio" aria-checked="false">XL</button>
+            </div>
+          </div>
+
           <div class="theme-setting">
             <strong>Theme</strong>
             <span>Same Desktop palettes, minus window transparency.</span>
@@ -426,13 +439,16 @@
 
         <p class="hint">Public flow: Connect to Hermes creates a scoped browser token when the API server supports pairing. For remote hosts, set API_SERVER_CORS_ORIGINS to this extension origin and use a strong API_SERVER_KEY or scoped token.</p>
 
-        <div class="compatibility-panel" aria-labelledby="compatibilityTitle">
-          <div>
-            <h4 id="compatibilityTitle">Hermes compatibility</h4>
-            <p id="compatibilityStatus" class="hint">Connect or test your Gateway to see supported features.</p>
-          </div>
+        <details id="compatibilityPanel" class="compatibility-panel" aria-labelledby="compatibilityTitle">
+          <summary class="compatibility-summary" aria-controls="compatibilityList">
+            <span class="compatibility-summary-copy">
+              <span id="compatibilityTitle" class="compatibility-title">Hermes compatibility</span>
+              <span id="compatibilityStatus" class="hint compatibility-status">Connect or test your Gateway to see supported features.</span>
+            </span>
+            <span class="compatibility-toggle" aria-hidden="true"></span>
+          </summary>
           <ul id="compatibilityList" class="compatibility-list"></ul>
-        </div>
+        </details>
 
         <div class="connection-security" aria-labelledby="connectionSecurityTitle">
           <div class="settings-section-head">
