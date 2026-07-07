@@ -335,6 +335,8 @@ test('isRestrictedUrl blocks browser internals and sensitive account categories'
   assert.equal(isRestrictedUrl('chrome://extensions'), true);
   assert.equal(isRestrictedUrl('https://mybank.example.com/accounts'), true);
   assert.equal(isRestrictedUrl('https://github.com/NousResearch/hermes-agent'), false);
+  assert.equal(isRestrictedUrl('https://google.com/search?q=mybank'), true);
+  assert.equal(isRestrictedUrl('https://example.com/dashboard#wallet'), true);
 });
 
 test('privacySafeTabForPrompt redacts sensitive tab titles and URLs before prompt assembly', () => {

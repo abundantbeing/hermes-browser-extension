@@ -31,6 +31,18 @@ function readEnvFileValue(name) {
 function githubToken(env = process.env) {
   if (env.GITHUB_TOKEN) return env.GITHUB_TOKEN;
   try {
+    if (process.platform === 'win32') {
+      const cwd = process.cwd();
+      const extensions = ['.exe', '.cmd', '.bat', '.lnk'];
+      for (const ext of extensions) {
+        if (fs.existsSync(path.join(cwd, `gh${ext}`))) {
+          throw new Error('Refusing to execute gh from current working directory for security reasons.');
+        }
+      }
+      if (fs.existsSync(path.join(cwd, 'gh'))) {
+        throw new Error('Refusing to execute gh from current working directory for security reasons.');
+      }
+    }
     return execFileSync('gh', ['auth', 'token'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
   } catch {
     return '';

@@ -89,7 +89,7 @@ export function isRestrictedUrl(url = '') {
     return true;
   }
   if (RESTRICTED_SCHEMES.has(parsed.protocol)) return true;
-  const haystack = `${parsed.hostname}${parsed.pathname}`;
+  const haystack = `${parsed.hostname}${parsed.pathname}${parsed.search}${parsed.hash}`;
   return SENSITIVE_URL_PATTERNS.some((pattern) => pattern.test(haystack));
 }
 

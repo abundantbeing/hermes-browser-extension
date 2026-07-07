@@ -232,15 +232,25 @@ async function main() {
 
   const pairing = await probePairing();
   let copiedFallbackKey = false;
+  const useClip = args.has('--clip');
+
   if (pairing.token) {
-    copiedFallbackKey = copySecretToClipboard(pairing.token, 'copy-pairing-token-to-clipboard');
+    if (useClip) {
+      copiedFallbackKey = copySecretToClipboard(pairing.token, 'copy-pairing-token-to-clipboard');
+    } else {
+      actions.push({ id: 'copy-pairing-token-to-clipboard', skipped: true, reason: 'no-clip-flag', dryRun });
+    }
   } else if (pairing.manualSetup) {
     if (dryRun) {
       actions.push({ id: 'copy-api-server-key-fallback-to-clipboard', command: 'clip', args: ['<redacted>'], dryRun });
       pairing.fallback = { envFile: path.join(os.homedir(), '.hermes', '.env'), reason: 'dry-run', copied: false };
     } else {
       const key = readApiServerKey();
-      copiedFallbackKey = copySecretToClipboard(key.key, 'copy-api-server-key-fallback-to-clipboard');
+      if (useClip) {
+        copiedFallbackKey = copySecretToClipboard(key.key, 'copy-api-server-key-fallback-to-clipboard');
+      } else {
+        actions.push({ id: 'copy-api-server-key-fallback-to-clipboard', skipped: true, reason: 'no-clip-flag', dryRun });
+      }
       pairing.fallback = { envFile: key.envFile, reason: key.reason, copied: copiedFallbackKey };
     }
   }
@@ -272,11 +282,20 @@ async function main() {
     console.log(`- Built dist: ${distDir}`);
     console.log(`- Extensions page: ${summary.browser.extensionsUrl}`);
     if (pairing.manualSetup) {
-      console.log(copiedFallbackKey
-        ? '- Pairing endpoint unavailable; copied API_SERVER_KEY fallback to clipboard. Paste it into Settings → API key.'
-        : '- Pairing endpoint unavailable and API_SERVER_KEY fallback could not be copied. Use Copy_Hermes_Browser_API_Key.cmd manually.');
+      if (copiedFallbackKey) {
+        console.log('- Pairing endpoint unavailable; copied API_SERVER_KEY fallback to clipboard. Paste it into Settings → API key.');
+      } else {
+        const key = readApiServerKey();
+        console.log(`- Pairing endpoint unavailable. Paste this API key fallback into Settings → API key:\n  ${key.key || '(none)'}`);
+        console.log('  [SECURITY WARNING] The token/key was not copied to the clipboard. Run setup with --clip if you want to copy it automatically.');
+      }
     } else {
-      console.log('- Pairing token copied to clipboard. Paste it into Settings → API key if the extension did not auto-connect.');
+      if (copiedFallbackKey) {
+        console.log('- Pairing token copied to clipboard. Paste it into Settings → API key if the extension did not auto-connect.');
+      } else {
+        console.log(`- Pairing token: ${pairing.token || '(none)'}\n  Paste this token into Settings → API key if the extension did not auto-connect.`);
+        console.log('  [SECURITY WARNING] The token/key was not copied to the clipboard. Run setup with --clip if you want to copy it automatically.');
+      }
     }
     console.log('Load/reload the unpacked extension from dist/.');
   }
