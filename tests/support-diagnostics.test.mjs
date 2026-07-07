@@ -6,11 +6,13 @@ import {
   buildSupportDiagnostics,
   browserFamilyFromUserAgent,
   redactDiagnosticUrl,
+  redactExtensionOrigin,
 } from '../extension/lib/support-diagnostics.mjs';
 
 test('buildSupportDiagnostics creates a public-safe copy block without secrets or page content', () => {
   const diagnostics = buildSupportDiagnostics({
     extensionVersion: '0.1.9',
+    extensionOrigin: 'chrome-extension://abc123/sidepanel.html?debug=extension-origin-query',
     buildInfo: {
       commit: 'abcdef1234567890',
       shortCommit: 'abcdef1',
@@ -69,6 +71,7 @@ test('buildSupportDiagnostics creates a public-safe copy block without secrets o
 
   assert.match(diagnostics.markdown, /Hermes Browser Diagnostics/);
   assert.match(diagnostics.markdown, /Extension version: 0\.1\.9/);
+  assert.match(diagnostics.markdown, /Extension origin: chrome-extension:\/\/abc123/);
   assert.match(diagnostics.markdown, /Browser family: Chrome/);
   assert.match(diagnostics.markdown, /Gateway URL origin: https:\/\/agent\.example\.com:8642/);
   assert.match(diagnostics.markdown, /Connection state: degraded/);
@@ -79,6 +82,8 @@ test('buildSupportDiagnostics creates a public-safe copy block without secrets o
 
   for (const forbidden of [
     'demo',
+    'extension-origin-query',
+    'sidepanel.html',
     'user:pass',
     'credential=example-secret',
     'session=abc',
@@ -97,6 +102,13 @@ test('redactDiagnosticUrl returns only safe origins for support copy', () => {
   assert.equal(redactDiagnosticUrl('https://user:pass@example.com:8642/api?credential=example-secret'), 'https://example.com:8642');
   assert.equal(redactDiagnosticUrl('http://127.0.0.1:8642/v1?session=abc'), 'http://127.0.0.1:8642');
   assert.equal(redactDiagnosticUrl('not a url'), '(invalid URL)');
+});
+
+test('redactExtensionOrigin returns only extension scheme and id', () => {
+  assert.equal(redactExtensionOrigin('chrome-extension://abc123/sidepanel.html?token=secret'), 'chrome-extension://abc123');
+  assert.equal(redactExtensionOrigin('moz-extension://9b7f-uuid/sidebar.html?token=secret'), 'moz-extension://9b7f-uuid');
+  assert.equal(redactExtensionOrigin('safari-web-extension://ABCD/settings.html?token=secret'), 'safari-web-extension://ABCD');
+  assert.equal(redactExtensionOrigin('not a url'), '(invalid extension origin)');
 });
 
 test('browserFamilyFromUserAgent recognizes Chromium-family support targets', () => {

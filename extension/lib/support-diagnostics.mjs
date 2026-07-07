@@ -21,6 +21,20 @@ export function redactDiagnosticUrl(value = '') {
   }
 }
 
+export function redactExtensionOrigin(value = '') {
+  const raw = String(value || '').trim();
+  if (!raw) return '(not available)';
+  try {
+    const url = new URL(raw);
+    if (url.protocol === 'chrome-extension:' || url.protocol === 'moz-extension:' || url.protocol === 'safari-web-extension:') {
+      return `${url.protocol}//${url.host}`;
+    }
+    return url.origin;
+  } catch {
+    return '(invalid extension origin)';
+  }
+}
+
 function yesNo(value) {
   return value ? 'yes' : 'no';
 }
@@ -44,6 +58,7 @@ function bullet(label, value) {
 
 export function buildSupportDiagnostics({
   extensionVersion = '',
+  extensionOrigin = '',
   buildInfo = {},
   userAgent = '',
   platform = '',
@@ -66,6 +81,7 @@ export function buildSupportDiagnostics({
     '',
     '## Extension',
     bullet('Extension version', extensionVersion || buildInfo.version || NOT_AVAILABLE),
+    bullet('Extension origin', redactExtensionOrigin(extensionOrigin)),
     bullet('Build commit', buildInfo.shortCommit || (buildInfo.commit ? String(buildInfo.commit).slice(0, 7) : NOT_AVAILABLE)),
     bullet('Build dirty', yesNo(buildInfo.dirty)),
     bullet('Built at', buildInfo.builtAt || NOT_AVAILABLE),
@@ -93,7 +109,7 @@ export function buildSupportDiagnostics({
     bullet('Browser context upload', availability(capabilities.browserContextUpload)),
     bullet('Companion plugin', availability(capabilities.browserCompanionPlugin)),
     bullet('Plugin actions', availability(capabilities.pluginActions)),
-    bullet('Browser control', capabilities.browserControl ? 'blocked by v0.1.9 policy' : 'disabled'),
+    bullet('Browser control', capabilities.browserControl ? 'blocked by read-only policy' : 'disabled'),
     '',
     '## Request context',
     bullet('Selected model', selectedModel.label || selectedModel.id || settings.model || NOT_AVAILABLE),

@@ -1,8 +1,8 @@
 {
   "name": "hermes-browser-extension",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
-  "description": "Browser-native side panel for Hermes Agent — connect web context to your local or remote Hermes runtime.",
+  "description": "Browser-native side panel for Hermes Agent \u2014 connect web context to your local or remote Hermes runtime.",
   "type": "module",
   "author": "Jon Komet",
   "license": "MIT",

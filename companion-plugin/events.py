@@ -1,4 +1,4 @@
-"""Runtime event names for the private Browser companion prototype."""
+"""Runtime event names for the Hermes Browser companion plugin."""
 
 RUN_STARTED = "run.started"
 RUN_COMPLETED = "run.completed"
@@ -12,6 +12,7 @@ CONTROL_EVENTS_ENABLED = False
 
 
 def normalize_event_name(name: str) -> str:
+    """Normalize a raw event name to a canonical companion event name."""
     raw = str(name or "")
     if "control" in raw.lower():
         return "runtime.unknown"

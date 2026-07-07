@@ -28,6 +28,7 @@ test('built-in command registry exposes stable visible commands', () => {
   assert.ok(names.includes('translate'));
   assert.ok(names.includes('explain'));
   assert.ok(names.includes('tabs'));
+  assert.ok(names.includes('meta'));
 });
 
 test('publicly advertised quick commands are backed by the built-in registry', () => {
@@ -49,6 +50,8 @@ test('publicly advertised quick commands are backed by the built-in registry', (
 test('command lookup supports slash prefixes and aliases', () => {
   assert.equal(getCommand('/summarize')?.name, 'summarize');
   assert.equal(getCommand('summary')?.name, 'summarize');
+  assert.equal(getCommand('/metadata')?.name, 'meta');
+  assert.equal(getCommand('head')?.name, 'meta');
   assert.equal(getCommand('/missing'), undefined);
 });
 
@@ -71,6 +74,15 @@ test('suggestCommands searches names, aliases, and descriptions', () => {
   assert.equal(suggestCommands('/sum')[0].name, 'summarize');
   assert.equal(suggestCommands('/summary')[0].name, 'summarize');
   assert.ok(suggestCommands('/links').some((command) => command.name === 'extract'));
+  assert.ok(suggestCommands('/metadata').some((command) => command.name === 'meta'));
+});
+
+test('/meta command stays truthful about captured metadata limits', () => {
+  const result = resolveCommandPrompt('/meta', '', commandContext);
+  assert.equal(result.command.name, 'meta');
+  assert.match(result.prompt, /Use only data that is actually present in the Browser context/);
+  assert.match(result.prompt, /Do not imply Hermes Browser Extension captured raw <head> HTML/);
+  assert.match(result.prompt, /Not captured/);
 });
 
 test('composer command menu exposes full hover and focus descriptions', () => {
@@ -93,4 +105,13 @@ test('composer command menu exposes full hover and focus descriptions', () => {
   assert.match(css, /\.quick-more-menu\s*\{[^}]*overflow:\s*hidden/s);
   assert.match(css, /\.quick-command-list\s*\{[^}]*overflow-y:\s*auto/s);
   assert.doesNotMatch(css, /\.qmi-description\s*\{[^}]*white-space:\s*normal/s);
+});
+
+test('v0.1.10 CSS skeleton polish is additive and reduced-motion safe', () => {
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  assert.match(css, /@keyframes skeletonPulse/);
+  assert.match(css, /@keyframes skeletonShimmer/);
+  assert.match(css, /\.skeleton\s*\{[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.skeleton::after\s*\{[^}]*animation:\s*skeletonShimmer/s);
+  assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*animation-duration:\s*0\.01ms !important/);
 });

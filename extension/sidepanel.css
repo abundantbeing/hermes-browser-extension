@@ -470,10 +470,10 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
 }
 .app-scroll::-webkit-scrollbar,
 .messages::-webkit-scrollbar,
-.bottom-dock::-webkit-scrollbar,
 .settings-dialog::-webkit-scrollbar,
 textarea::-webkit-scrollbar,
 .quick-more-menu::-webkit-scrollbar,
+.quick-command-list::-webkit-scrollbar,
 .message-content pre::-webkit-scrollbar,
 .md-table-wrap::-webkit-scrollbar,
 .context-preview::-webkit-scrollbar,
@@ -488,10 +488,10 @@ textarea::-webkit-scrollbar,
 }
 .app-scroll::-webkit-scrollbar-thumb,
 .messages::-webkit-scrollbar-thumb,
-.bottom-dock::-webkit-scrollbar-thumb,
 .settings-dialog::-webkit-scrollbar-thumb,
 textarea::-webkit-scrollbar-thumb,
 .quick-more-menu::-webkit-scrollbar-thumb,
+.quick-command-list::-webkit-scrollbar-thumb,
 .message-content pre::-webkit-scrollbar-thumb,
 .md-table-wrap::-webkit-scrollbar-thumb,
 .context-preview::-webkit-scrollbar-thumb,
@@ -1433,6 +1433,8 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 .message.user .message-content th { background: rgba(var(--hermes-fg-rgb),0.12); }
 .message-content .tool { color: var(--hermes-ink); }
 
+/* Locked composer baseline: the dock is two rows, not a scroll container.
+   Keep composer growth inside the bounded textarea so send/refresh never overlap the desktop bar. */
 .bottom-dock {
   position: relative;
   z-index: 30;
@@ -1441,10 +1443,6 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
   gap: 0;
   min-width: 0;
   max-width: 100%;
-  max-height: min(52vh, 320px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
   padding: 8px;
   border-top: 1px solid rgba(var(--hermes-fg-rgb),0.45);
   background: rgba(var(--hermes-panel-rgb),0.97);
@@ -2198,6 +2196,45 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .model-option.selected,
 .session-option:hover,
 .session-option.selected { background: rgba(var(--hermes-fg-rgb),0.08); color: var(--hermes-fg); }
+.session-option-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-left: 2px solid transparent;
+}
+.session-option-row:hover,
+.session-option-row.selected {
+  border-left-color: rgba(var(--hermes-accent-rgb),0.72);
+  background: rgba(var(--hermes-fg-rgb),0.04);
+}
+.session-option-row .session-option {
+  padding-right: 4px;
+}
+.session-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.session-action-button {
+  min-height: 22px;
+  padding: 0 7px;
+  border: 1px solid rgba(var(--hermes-fg-rgb),0.14);
+  border-radius: 999px;
+  background: rgba(var(--hermes-fg-rgb),0.045);
+  color: rgba(var(--hermes-fg-rgb),0.68);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.session-action-button:hover,
+.session-action-button:focus-visible {
+  border-color: rgba(var(--hermes-accent-rgb),0.72);
+  color: var(--hermes-fg);
+  background: rgba(var(--hermes-accent-rgb),0.12);
+}
 .model-option.observed { color: rgba(var(--hermes-fg-rgb),0.72); }
 .model-option.observed .model-option-meta {
   color: rgba(var(--hermes-fg-rgb),0.62);
@@ -3078,3 +3115,33 @@ html[data-hermes-text-size] .message-content h6 { font-size: calc(13px * var(--h
   justify-self: stretch;
   margin-top: 6px;
 }
+
+/* --- Loading skeleton (v0.1.10 polish) --------------------------------- */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.18; transform: scaleX(1); }
+  50% { opacity: 0.4; transform: scaleX(1.02); }
+}
+@keyframes skeletonShimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.skeleton {
+  position: relative;
+  display: block;
+  border-radius: 4px;
+  background: rgba(var(--hermes-fg-rgb), 0.08);
+  overflow: hidden;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(var(--hermes-fg-rgb), 0.12), transparent);
+  animation: skeletonShimmer 1.8s ease-in-out infinite;
+}
+.skeleton-text {
+  height: 12px;
+  margin-bottom: 6px;
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+.skeleton-text:last-child { width: 62%; }

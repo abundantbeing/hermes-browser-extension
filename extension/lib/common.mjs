@@ -50,6 +50,9 @@ export const DEFAULT_SETTINGS = Object.freeze({
   activeProfile: '',
   model: 'hermes-agent',
   modelContextTokens: 0,
+  extensionPreferredModel: null,
+  sessionModelBindings: {},
+  modelScopeVersion: 1,
   thinkingEnabled: true,
   fastMode: false,
   reasoningEffort: 'xhigh',
@@ -764,17 +767,112 @@ export function isDefaultBrowserSessionTitle(title = '', defaultTitle = DEFAULT_
   return value === base || value.startsWith(`${base} ·`);
 }
 
-export function autoSessionTitleFromText(value = '', { maxChars = 58 } = {}) {
-  const clean = String(value || '')
+export function normalizeBrowserModelBinding(value = {}) {
+  if (!value || typeof value !== 'object') return null;
+  const modelId = String(value.modelId || value.id || value.model || value.rawModelId || value.raw_model_id || '').trim();
+  const rawModelId = String(value.rawModelId || value.raw_model_id || value.model || value.modelId || value.id || '').trim();
+  const provider = String(value.provider || value.providerId || value.provider_id || value.owner || '').trim();
+  const contextTokens = Number(value.contextTokens || value.context_tokens || value.contextLength || value.context_length || 0) || 0;
+  if (!modelId && !rawModelId) return null;
+  return {
+    modelId: modelId || rawModelId,
+    provider,
+    rawModelId: rawModelId || modelId,
+    contextTokens,
+  };
+}
+
+export function resolveBrowserEffectiveModel({
+  sessionId = '',
+  sessionModelBindings = {},
+  extensionPreferredModel = null,
+  globalDefaultModel = null,
+} = {}) {
+  const sessionBinding = sessionId ? normalizeBrowserModelBinding(sessionModelBindings?.[sessionId]) : null;
+  if (sessionBinding) return sessionBinding;
+  const preferred = normalizeBrowserModelBinding(extensionPreferredModel);
+  if (preferred) return preferred;
+  return normalizeBrowserModelBinding(globalDefaultModel);
+}
+
+export function updateBrowserModelScope({ selectedModel = null, sessionId = '', sessionModelBindings = {} } = {}) {
+  const binding = normalizeBrowserModelBinding(selectedModel);
+  const nextBindings = { ...(sessionModelBindings && typeof sessionModelBindings === 'object' ? sessionModelBindings : {}) };
+  if (binding && sessionId) nextBindings[String(sessionId)] = binding;
+  return {
+    extensionPreferredModel: binding,
+    sessionModelBindings: nextBindings,
+  };
+}
+
+const TITLE_SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'from', 'in', 'of', 'on', 'or', 'the', 'to', 'vs', 'with']);
+const TITLE_ACRONYMS = new Map([
+  ['api', 'API'],
+  ['cors', 'CORS'],
+  ['css', 'CSS'],
+  ['html', 'HTML'],
+  ['id', 'ID'],
+  ['json', 'JSON'],
+  ['seo', 'SEO'],
+  ['ui', 'UI'],
+  ['url', 'URL'],
+  ['ux', 'UX'],
+]);
+
+function titleCaseSessionPhrase(value = '') {
+  const words = String(value || '').trim().split(/\s+/).filter(Boolean);
+  return words.map((word, index) => {
+    const lower = word.toLowerCase();
+    if (TITLE_ACRONYMS.has(lower)) return TITLE_ACRONYMS.get(lower);
+    if (index > 0 && TITLE_SMALL_WORDS.has(lower)) return lower;
+    return `${lower.charAt(0).toUpperCase()}${lower.slice(1)}`;
+  }).join(' ');
+}
+
+function normalizeSessionTitleText(value = '') {
+  return String(value || '')
     .replace(/https?:\/\/\S+/gi, ' ')
+    .replace(/\blos angles\b/gi, 'los angeles')
+    .replace(/\bchatgpt\b/gi, 'ChatGPT')
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/^["'`“”‘’\s]+|["'`“”‘’\s]+$/g, '')
     .replace(/[?.!,;:]+$/g, '');
+}
+
+export function autoSessionTitleFromText(value = '', { maxChars = 58 } = {}) {
+  const clean = normalizeSessionTitleText(value);
   if (!clean) return '';
-  const lowered = clean.replace(/^(can you|could you|please|pls|hey hermes|hermes)\s+/i, '');
-  const sentence = lowered.split(/(?<=[.!?])\s+/)[0].replace(/[?.!,;:]+$/g, '').trim();
-  const clipped = sentence.length > maxChars ? `${sentence.slice(0, maxChars - 1).trimEnd()}…` : sentence;
+  const lowered = clean
+    .replace(/^(hey hermes|hermes|can you|could you|would you|please|pls)\s+/i, '')
+    .replace(/^(i\s+)?(?:wanna|want to|need to|need|would like to|am trying to|i'm trying to)\s+/i, '')
+    .trim();
+  const trivial = lowered.toLowerCase();
+  if (['hi', 'hello', 'hey', 'test', 'testing'].includes(trivial)) return titleCaseSessionPhrase(trivial);
+
+  const toFrom = lowered.match(/\bto\s+([a-z][a-z .'-]+?)\s+from\s+([a-z][a-z .'-]+?)$/i);
+  const fromTo = lowered.match(/\bfrom\s+([a-z][a-z .'-]+?)\s+to\s+([a-z][a-z .'-]+?)(?:\s+(?:travel|drive|flight|time|route|directions?))?$/i);
+  if (/\b(how long|travel|drive|flight|route|directions?|takes?)\b/i.test(lowered) && (toFrom || fromTo)) {
+    const origin = (fromTo?.[1] || toFrom?.[2] || '').replace(/\b(?:it|takes?|to|get|go|travel|drive|fly)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+    const destination = (fromTo?.[2] || toFrom?.[1] || '').replace(/\b(?:it|takes?|to|get|go|travel|drive|fly)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+    if (origin && destination) return `${titleCaseSessionPhrase(origin)} to ${titleCaseSessionPhrase(destination)} Travel Time`;
+  }
+
+  if (/\bseo\b/i.test(lowered) && /\b(issue|issues|problem|problems|audit|review|fix|improve|optimization)\b/i.test(lowered)) {
+    return 'SEO Issues Review';
+  }
+  if (/\bsummar/i.test(lowered) && /\blaunch\s+checklist\b/i.test(lowered)) {
+    return 'Page Launch Checklist Summary';
+  }
+
+  const sentence = lowered.split(/(?<=[.!?])\s+/)[0]
+    .replace(/^(what|which|where|when|why|how)\s+(?:are|is|do|does|can|could|would|should)\s+/i, '')
+    .replace(/\b(here|this page|for me)\b/gi, ' ')
+    .replace(/[?.!,;:]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim() || lowered;
+  const titled = titleCaseSessionPhrase(sentence);
+  const clipped = titled.length > maxChars ? `${titled.slice(0, maxChars - 1).trimEnd()}…` : titled;
   return clipped ? `${clipped.charAt(0).toUpperCase()}${clipped.slice(1)}` : '';
 }
 
@@ -1448,6 +1546,8 @@ export function normalizeHermesSessions(payload = {}) {
       preview: String(session.preview || ''),
       messageCount: Number(session.message_count || session.messageCount || 0),
       model: String(session.model || ''),
+      provider: String(session.provider || session.provider_id || session.providerId || ''),
+      rawModelId: String(session.rawModelId || session.raw_model_id || session.model || ''),
       inputTokens: Number(session.input_tokens || session.inputTokens || 0),
       outputTokens: Number(session.output_tokens || session.outputTokens || 0),
       cacheReadTokens: Number(session.cache_read_tokens || session.cacheReadTokens || 0),
@@ -1651,7 +1751,7 @@ function buildChatOnlyPrompt(userText = '') {
   return `[Mode: chat-only. No browser page context attached.]\n\n${String(userText || '').trim()}`;
 }
 
-export function buildHermesPrompt({ userText, activeTab, tabs = [], pageContext, selectedTabs, contextScope, settings = DEFAULT_SETTINGS }) {
+export function buildHermesPrompt({ userText, activeTab, tabs = [], pageContext, selectedTabs, contextScope, settings = DEFAULT_SETTINGS, contextHash = '' }) {
   return buildBrowserContextPrompt({
     userText,
     activeTab,
@@ -1660,6 +1760,7 @@ export function buildHermesPrompt({ userText, activeTab, tabs = [], pageContext,
     selectedTabs,
     contextScope,
     settings: { ...DEFAULT_SETTINGS, ...settings },
+    contextHash,
   });
 }
 

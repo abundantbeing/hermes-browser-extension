@@ -1,21 +1,21 @@
 name: hermes-browser-companion
-version: 0.1.0-private
-status: private-prototype
-description: Fail-soft Hermes Browser context companion skeleton. Context/status only; no page actions or route registration.
-capabilities:
-  browser_context_provider: true
-  browser_companion_plugin: true
-  browser_context_status: true
-  browser_context_upload: false
-tools:
+kind: standalone
+version: 0.1.10
+description: >-
+  Hermes Browser companion plugin — caches browser context from conversations
+  and exposes it to the agent via tools and lifecycle hooks. Fail-soft: when
+  no browser context is available, all tools gracefully report unavailable.
+author: Iruzen (iruzen-dono)
+
+provides_tools:
   - browser_context_status
   - browser_get_context
   - browser_clear_context
   - browser_event_log
-hooks:
+
+provides_skills:
+  - hermes-browser
+
+provides_hooks:
   - pre_llm_call
   - post_tool_call
-notes:
-  - Private prototype only; package manually into a Hermes profile if testing.
-  - No route declarations; the extension must keep prompt-embedded fallback behavior.
-  - No page-action channels, click, type, or navigation actions.

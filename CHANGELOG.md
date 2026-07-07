@@ -1,5 +1,42 @@
 # Changelog
 
+## v0.1.10 — 2026-07-07
+
+### Release theme
+- Supportability and integration bridge release: read-only foundation, Browser Context Protocol receipts, sanitized context cache, session control, and Browser-scoped model selection.
+- Launch ad asset prepared at `assets/readme/hermes-browser-update-ad-v010.png`.
+
+### Companion Plugin MVP
+- Activated `companion-plugin/` from skeleton into an optional functional Hermes plugin with four read-only tools: `browser_context_status`, `browser_get_context`, `browser_clear_context`, and `browser_event_log`.
+- Registered `pre_llm_call` and `post_tool_call` hooks plus the bundled `hermes-browser` skill.
+- Keeps the plugin fail-soft and supplemental: no browser control, no API-server routes, no network calls, no `nativeMessaging`, and no dependency required for normal extension use.
+
+### Browser Context Protocol + sanitized cache
+- Preserved the prompt-embedded Browser Context Protocol fallback while adding a companion cache that stores only sanitized metadata: protocol id, payload hash, scope, active-tab origin, section counts/availability, redaction count, truncation state, and bounded event diagnostics.
+- Hardened parsing so raw page text, selected text, full tab URLs, token-looking values, and private URL paths do not leak into the plugin cache or event log.
+- Kept Browser Context Protocol receipts and hashes visible for trust/debugging without introducing browser-control behavior.
+
+### Truthful `/meta` command + UI polish
+- Added `/meta` with `/metadata` and `/head` aliases for captured-page metadata analysis.
+- The command is intentionally truthful: it reports only data present in the Browser context and lists metadata classes that were not captured instead of pretending to read raw `<head>` HTML.
+- Added loading skeletons, context-meter glow states, tool-activity fade-in, and command-menu stagger polish behind reduced-motion guards.
+
+### Session control + model scope lock
+- Added compact session controls for Browser workflows: create/switch sessions, copy session IDs, rename sessions through `PATCH /api/sessions/{id}`, and smart first-message titles.
+- Added Browser-scoped model preference and per-session model bindings so Browser model switches do not mutate Hermes global defaults.
+- New Browser sessions inherit the last Browser-selected model; existing sessions keep their own model/provider binding.
+
+### Diagnostics, docs, and supportability
+- Updated Copy Diagnostics/support surfaces for extension origin redaction, selected model/provider, capability flags, and runtime warning states while excluding tokens, cookies, page text, selected text, full tab URLs, and webpage content.
+- Updated README, permissions, privacy, security, and data-flow docs for v0.1.10.
+- Bumped package/manifests/plugin metadata to v0.1.10 and prepared release packaging.
+
+### PRs and contributors
+- Credited PR #31 — `feat(companion-plugin): activate context cache from skeleton to functional plugin` by @iruzen-dono: https://github.com/abundantbeing/hermes-browser-extension/pull/31
+- Credited PR #32 — `feat(commands): /meta command + CSS polish (skeletons, animations)` by @iruzen-dono: https://github.com/abundantbeing/hermes-browser-extension/pull/32
+- Release integration, Browser-scoped session/model controls, supportability fixes, docs, packaging, and ad asset by @abundantbeing.
+- Reviewed but not shipped in v0.1.10: PR #29 (`feat: add scoped element picker context`) by @bradlishman, PR #30 (`feat: add native sidebar support for Opera browser`) by @barteqpl, and PR #33 (`Security: fix parameter evasion, CWD binary hijacking, and clipboard handling`) by @Doom-pixel-alt.
+
 ## v0.1.9 — 2026-07-05
 
 ### Browser Context Protocol

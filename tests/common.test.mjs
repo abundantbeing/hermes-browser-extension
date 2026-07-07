@@ -46,6 +46,7 @@ import {
   normalizeHermesProfiles,
   normalizeHermesSessions,
   normalizeHermesSkills,
+  normalizeBrowserModelBinding,
   normalizeFastMode,
   normalizeSessionStartupMode,
   normalizeTextSize,
@@ -63,9 +64,11 @@ import {
   shouldAutoOpenSessionGroup,
   shouldAutoFlushQueuedTurn,
   shouldCreateFreshSessionOnOpen,
+  resolveBrowserEffectiveModel,
   summarizeTabs,
   compareVersionStrings,
   autoSessionTitleFromText,
+  updateBrowserModelScope,
   connectionStateForGateway,
   formatUpdateStatus,
   isDefaultBrowserSessionTitle,
@@ -110,13 +113,48 @@ test('sidepanel startup initializes a fresh panel-open session instead of auto-r
   assert.doesNotMatch(source, /await ensureSessionForActiveScope\(\{ focus: false \}\);\s*await consumePendingVoiceDraft/);
 });
 
-test('bottom dock model and context popovers are portaled above the scroll container', () => {
+test('sidepanel wires Browser-scoped models and compact session copy/rename actions', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  assert.match(source, /extensionPreferredModel/);
+  assert.match(source, /sessionModelBindings/);
+  assert.match(source, /updateBrowserModelScope/);
+  assert.match(source, /copyTextToClipboard/);
+  assert.match(source, /navigator\.clipboard\.writeText/);
+  assert.match(source, /Copy session ID/);
+  assert.match(source, /promptRenameSession/);
+  assert.match(source, /renameHermesSessionTitle\(session\.id/);
+  assert.match(source, /Rename session/);
+  assert.doesNotMatch(source, /hermes config set/);
+  assert.doesNotMatch(source, /model\.default/);
+  assert.match(css, /\.session-option-row/);
+  assert.match(css, /\.session-action-button/);
+});
+
+test('bottom dock keeps baseline composer geometry while floating popovers remain portaled', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
   const dockRule = css.match(/\.bottom-dock\s*\{[\s\S]*?\}/)?.[0] || '';
+  const composerRule = css.match(/\.composer\s*\{[\s\S]*?\}/)?.[0] || '';
+  const textareaRule = css.match(/textarea\s*\{\s*resize:\s*vertical;[\s\S]*?\}/)?.[0] || '';
+  const commandMenuRule = css.match(/\.quick-more-menu\s*\{[\s\S]*?\}/)?.[0] || '';
+  const scrollbarRule = css.match(/\.app-scroll::-webkit-scrollbar,[\s\S]*?\{\s*width:\s*8px;\s*\}/)?.[0] || '';
+  const scrollbarThumbRule = css.match(/\.app-scroll::-webkit-scrollbar-thumb,[\s\S]*?\{[\s\S]*?border:\s*1px solid var\(--hermes-line-strong\);\s*\}/)?.[0] || '';
   const floatingRule = css.match(/\.model-menu,\s*\n\.context-popover\s*\{[\s\S]*?\}/)?.[0] || '';
 
-  assert.match(dockRule, /overflow-y:\s*auto/);
+  assert.match(dockRule, /grid-template-rows:\s*auto auto/);
+  assert.doesNotMatch(dockRule, /max-height:/);
+  assert.doesNotMatch(dockRule, /overflow-y:\s*auto/);
+  assert.doesNotMatch(dockRule, /scrollbar-gutter/);
+  assert.match(composerRule, /overflow:\s*visible/);
+  assert.match(textareaRule, /min-height:\s*76px/);
+  assert.match(textareaRule, /max-height:\s*28vh/);
+  assert.match(commandMenuRule, /position:\s*absolute/);
+  assert.match(commandMenuRule, /overflow:\s*hidden/);
+  assert.match(scrollbarRule, /\.quick-command-list::-webkit-scrollbar/, 'commands menu scroll host should use the branded Hermes scrollbar width');
+  assert.match(scrollbarThumbRule, /\.quick-command-list::-webkit-scrollbar-thumb/, 'commands menu scroll host should use the branded Hermes scrollbar thumb');
+  assert.doesNotMatch(css, /\.quick-command-list::-webkit-scrollbar-(?:track|button|corner)/, 'commands menu must not reintroduce native scrollbar track/buttons/corners');
+  assert.doesNotMatch(css, /\.quick-command-list\s*\{[\s\S]*?scrollbar-(?:width|color):/, 'commands menu must not use standard scrollbar properties that cause native chrome');
   assert.match(source, /shell:\s*\$\('\.shell'\)/);
   assert.match(source, /bottomDock:\s*\$\('\.bottom-dock'\)/);
   assert.match(source, /function portalDockFloatingPanels\(\)/);
@@ -1105,12 +1143,14 @@ test('groupModelsForMenu groups connected Hermes models by provider and filters 
 
 test('normalizeHermesSessions and groupSessionsForMenu mirror Hermes Desktop source groups', () => {
   const sessions = normalizeHermesSessions({ data: [
-    { id: 'api_1', title: 'Reply with exactly OK.', source: 'api_server', last_active: 30, message_count: 2, model: 'qwen3.7-plus', input_tokens: 1200, output_tokens: 340, cache_read_tokens: 50, reasoning_tokens: 10 },
+    { id: 'api_1', title: 'Reply with exactly OK.', source: 'api_server', last_active: 30, message_count: 2, model: 'qwen3.7-plus', provider: 'zenmux', input_tokens: 1200, output_tokens: 340, cache_read_tokens: 50, reasoning_tokens: 10 },
     { id: 'hb_1', title: 'Hermes Browser Extension', source: 'hermes_browser', last_active: 40, message_count: 1 },
     { id: 'tg_1', title: 'Telegram thread', source: 'telegram', last_active: 20, message_count: 10 },
   ] });
   assert.deepEqual(sessions.map((session) => session.id), ['hb_1', 'api_1', 'tg_1']);
   assert.equal(sessions[1].model, 'qwen3.7-plus');
+  assert.equal(sessions[1].provider, 'zenmux');
+  assert.equal(sessions[1].rawModelId, 'qwen3.7-plus');
   assert.equal(sessions[1].inputTokens, 1200);
   assert.equal(sessions[1].outputTokens, 340);
   assert.equal(sessions[1].cacheReadTokens, 50);
@@ -1136,6 +1176,36 @@ test('session source groups can stay collapsed after user closes the selected gr
   assert.equal(onlyBrowserGroup.length, 1);
   assert.equal(shouldAutoOpenSessionGroup(onlyBrowserGroup[0], onlyBrowserGroup), true);
   assert.equal(shouldAutoOpenSessionGroup(onlyBrowserGroup[0], onlyBrowserGroup, ['Hermes Browser Extension']), false);
+});
+
+test('browser model scope resolves session override before Browser preference before global default', () => {
+  const globalDefault = normalizeBrowserModelBinding({ id: 'openai-codex::gpt-5.5', rawModelId: 'gpt-5.5', provider: 'openai-codex', contextTokens: 272000 });
+  const extensionPreferred = normalizeBrowserModelBinding({ modelId: 'zenmux::z-ai/glm-5.2-free', rawModelId: 'z-ai/glm-5.2-free', provider: 'zenmux', contextTokens: 131000 });
+  const sessionBindings = {
+    session_a: normalizeBrowserModelBinding({ modelId: 'openai::gpt-5.5', rawModelId: 'gpt-5.5', provider: 'openai' }),
+    session_b: normalizeBrowserModelBinding({ modelId: 'xai::grok-4.3', rawModelId: 'grok-4.3', provider: 'xai' }),
+  };
+
+  assert.deepEqual(resolveBrowserEffectiveModel({ sessionId: 'session_b', sessionModelBindings: sessionBindings, extensionPreferredModel: extensionPreferred, globalDefaultModel: globalDefault }), sessionBindings.session_b);
+  assert.deepEqual(resolveBrowserEffectiveModel({ sessionId: 'missing', sessionModelBindings: sessionBindings, extensionPreferredModel: extensionPreferred, globalDefaultModel: globalDefault }), extensionPreferred);
+  assert.deepEqual(resolveBrowserEffectiveModel({ sessionId: 'missing', sessionModelBindings: {}, extensionPreferredModel: null, globalDefaultModel: globalDefault }), globalDefault);
+});
+
+test('browser model scope updates current session binding without losing existing session models', () => {
+  const scoped = updateBrowserModelScope({
+    selectedModel: { id: 'zenmux::z-ai/glm-5.2-free', rawModelId: 'z-ai/glm-5.2-free', provider: 'zenmux', contextTokens: 131000 },
+    sessionId: 'session_c',
+    sessionModelBindings: {
+      session_a: { modelId: 'openai::gpt-5.5', provider: 'openai' },
+      session_b: { modelId: 'xai::grok-4.3', provider: 'xai' },
+    },
+  });
+
+  assert.equal(scoped.extensionPreferredModel.modelId, 'zenmux::z-ai/glm-5.2-free');
+  assert.equal(scoped.extensionPreferredModel.provider, 'zenmux');
+  assert.equal(scoped.sessionModelBindings.session_a.modelId, 'openai::gpt-5.5');
+  assert.equal(scoped.sessionModelBindings.session_b.modelId, 'xai::grok-4.3');
+  assert.equal(scoped.sessionModelBindings.session_c.rawModelId, 'z-ai/glm-5.2-free');
 });
 
 test('skill helpers normalize slash commands and suggest matches from / or @ input', () => {
@@ -1368,8 +1438,11 @@ test('browser session auto-name helpers identify default titles and summarize fi
   assert.equal(isDefaultBrowserSessionTitle('Hermes Browser Extension'), true);
   assert.equal(isDefaultBrowserSessionTitle('Hermes Browser Extension · Jun 26, 9:03 PM'), true);
   assert.equal(isDefaultBrowserSessionTitle('Client QA notes'), false);
-  assert.equal(autoSessionTitleFromText('  can you summarize this page and pull out the launch checklist?  '), 'Summarize this page and pull out the launch checklist');
-  assert.equal(autoSessionTitleFromText('https://example.com\n\nwhat are the SEO issues here?'), 'What are the SEO issues here');
+  assert.equal(autoSessionTitleFromText('  can you summarize this page and pull out the launch checklist?  '), 'Page Launch Checklist Summary');
+  assert.equal(autoSessionTitleFromText('https://example.com\n\nwhat are the SEO issues here?'), 'SEO Issues Review');
+  assert.equal(autoSessionTitleFromText('i wanna know how long it takes to get to los angles from chicago'), 'Chicago to Los Angeles Travel Time');
+  assert.equal(autoSessionTitleFromText('hi'), 'Hi');
+  assert.equal(autoSessionTitleFromText('testing'), 'Testing');
 });
 
 test('YouTube transcript helpers parse ids, providers, timedtext, and prompt text', () => {
@@ -2003,12 +2076,23 @@ test('settings dialog render path refreshes appearance theme cards on open', () 
     match[1].indexOf('syncSettingsForm()') < match[1].indexOf('settingsDialog.hidden = false'),
     'appearance controls should render before the dialog is shown'
   );
+  assert.match(match[1], /settingsDialog\.scrollTo\(\{\s*top:\s*0,\s*left:\s*0/s, 'opening settings should reset the dialog to the top');
+  assert.ok(
+    match[1].indexOf('settingsDialog.hidden = false') < match[1].indexOf('settingsDialog.scrollTo'),
+    'settings must reset scroll after the dialog is visible'
+  );
+  assert.ok(
+    match[1].indexOf('settingsDialog.scrollTo') < match[1].indexOf('apiKeyInput.focus'),
+    'settings must reset scroll before focusing an input can move it'
+  );
 });
 
 test('settings text-size option has defaults, normalization, storage, and root dataset wiring', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const dockRule = css.match(/\.bottom-dock\s*\{[\s\S]*?\}/)?.[0] || '';
+  const textareaRule = css.match(/textarea\s*\{\s*resize:\s*vertical;[\s\S]*?\}/)?.[0] || '';
 
   assert.equal(DEFAULT_SETTINGS.textSize, 'default');
   assert.deepEqual(TEXT_SIZE_OPTIONS.map((option) => option.value), ['default', 'large', 'extra-large']);
@@ -2037,10 +2121,11 @@ test('settings text-size option has defaults, normalization, storage, and root d
   assert.match(css, /\.text-size-choice \{[\s\S]*?font-size:\s*calc\(10px \* var\(--hermes-text-zoom/);
   assert.match(css, /html\[data-hermes-text-size\] \.message-content/);
   assert.match(css, /html\[data-hermes-text-size\] \.appearance-row strong/);
-  assert.match(css, /\.bottom-dock \{[\s\S]*?max-height:\s*min\(52vh, 320px\)/);
-  assert.match(css, /\.bottom-dock \{[\s\S]*?overflow-y:\s*auto/);
-  assert.match(css, /\.bottom-dock::-webkit-scrollbar,\s*\n\.settings-dialog::-webkit-scrollbar/);
-  assert.match(css, /\.bottom-dock::-webkit-scrollbar-thumb,\s*\n\.settings-dialog::-webkit-scrollbar-thumb/);
+  assert.doesNotMatch(dockRule, /max-height:/);
+  assert.doesNotMatch(dockRule, /overflow-y:\s*auto/);
+  assert.match(textareaRule, /max-height:\s*28vh/);
+  assert.doesNotMatch(css, /\.bottom-dock::-webkit-scrollbar/);
+  assert.doesNotMatch(css, /\.composer::-webkit-scrollbar/);
 });
 
 test('Hermes compatibility settings panel is native-collapsible and defaults closed', () => {

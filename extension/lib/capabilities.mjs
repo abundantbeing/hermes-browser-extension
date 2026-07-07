@@ -159,8 +159,9 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
     browserEvents: inferredFeature(features, endpoints, ['browser_events', 'browserEvents', 'run_events_sse', 'run_events'], ['browser_events', 'run_events']),
     pluginActions: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.pluginActions, 'pluginActions'], ['browser_actions', 'plugin_actions']),
     approvalEvents: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.approvalEvents, 'approvalEvents'], ['approval_events']),
-    // v0.1.9 is support-only. Never enable browser control in the extension
-    // from capability discovery alone; action policy/approval logs come later.
+    // Browser releases are support/read-only until a separate reviewed control surface ships.
+    // Enable browser control at your own risk; do not infer it
+    // from capability discovery alone. Action policy/approval logs come later.
     browserControl: false,
     dashboardWs: inferredFeature(features, endpoints, ['dashboard_ws', 'dashboardWebSocket'], ['dashboard_ws', 'ws_ticket']),
     endpoints,

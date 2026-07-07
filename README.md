@@ -9,7 +9,7 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 </p>
 
 <p align="center">
-  <strong>Public alpha · Load unpacked · Local/remote Hermes API · Full Hermes runtime tools</strong><br />
+  <strong>Public alpha v0.1.10 · Load unpacked · Local/remote Hermes API · Full Hermes runtime tools</strong><br />
   Not on the Chrome Web Store yet.
 </p>
 
@@ -35,7 +35,11 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 - Auto-syncs connected Hermes providers/models, profiles, skills, sessions, and capabilities.
 - Keeps runtime plugins available in the same Hermes session. For example, a connected social or messaging plugin can add account, post, and trend context while the extension supplies browser-page context.
 - Shows a Hermes compatibility panel so older gateways degrade into explicit fallback/manual modes instead of broken route errors.
-- Adds **Copy Diagnostics** for v0.1.9 support reports: browser family, version/build, gateway origin, capability flags, context mode, and last visible error with tokens/page content stripped.
+- Adds **Copy Diagnostics** for v0.1.10 support reports: browser family, version/build, extension origin, gateway origin, capability flags, context mode, selected model/provider, and last visible error with tokens/page content stripped.
+- Adds an optional **Hermes Browser Companion Plugin** that passively caches sanitized Browser Context Protocol metadata for Hermes tools/hooks without browser control, network calls, or API-server routes.
+- Adds `/meta` / `/metadata` / `/head` for truthful captured-page metadata analysis: it reports only what the Browser context actually contains and explicitly calls out metadata classes that were not captured.
+- Adds session controls for Browser work: create/switch sessions, copy session IDs, rename sessions, smart first-message titles, and compact on-brand session actions.
+- Adds Browser-scoped model control: Browser model choices and per-session bindings stay inside the extension and do not mutate Hermes global defaults.
 - Sends active tab/browser context into a persisted Hermes session, or switches to Chat only when you do not want browser context attached.
 - Adds a composer-header context menu for Chat only, following the active tab, pinning a specific tab, and choosing which open tabs appear in the prompt.
 - Opens as a tab-attached side panel by default, with a setting to keep the panel global across tabs.
@@ -60,9 +64,9 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 - Node.js 20+.
 - Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 114+ baseline).
 
-## v0.1.9 compatibility matrix
+## v0.1.10 compatibility matrix
 
-| Surface | Supported in v0.1.9 | Fallback / note |
+| Surface | Supported in v0.1.10 | Fallback / note |
 | --- | --- | --- |
 | Chrome / Edge / Chromium 114+ side panel | Yes | Primary public support target. |
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API and extension clipboard permissions for Copy Diagnostics. |
@@ -71,7 +75,7 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 | Remote API server | Yes, explicit URL/token only | Use trusted LAN/Tailscale/VPN or HTTPS reverse proxy; do not expose Hermes naked to the internet. |
 | Remote dashboard WebSocket | Best-effort | Chat/session/model path only; REST-only profile/skills/image-upload surfaces remain unavailable. |
 | Browser Context Protocol | Yes | Extension emits `hermes.browser.context.v1` payloads and keeps prompt-embedded fallback. |
-| Companion plugin | Private prototype only | Optional fail-soft skeleton in `companion-plugin/`; not required for public v0.1.9. |
+| Companion plugin | Optional functional context cache | `companion-plugin/` provides read-only tools/hooks for sanitized Browser context; not required for normal extension use. |
 | Browser control / Runs UI / debugger / nativeMessaging | No | Deferred until supportability, action policy, approvals, and logs exist. |
 
 ## Quick start
@@ -224,14 +228,14 @@ Make sure you loaded `dist/`, not the repo root. The selected folder must contai
 
 ### Chrome still shows an older version after updating
 
-The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.1.9, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.1.9`.
+The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.1.10, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.1.10`.
 
 Fix:
 
-1. Extract/download the v0.1.9 release or run `npm run build` locally.
+1. Extract/download the v0.1.10 release or run `npm run build` locally.
 2. Open `chrome://extensions` or `edge://extensions`.
 3. On the Hermes Browser Extension card, click **Reload**.
-4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.1.9 `dist/` folder.
+4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.1.10 `dist/` folder.
 5. Click **service worker** / **Inspect views** only for debugging; it is not the version source.
 
 ### Filing a support issue
@@ -254,7 +258,7 @@ If `/v1/models` fails, check `API_SERVER_KEY`, the extension's stored API key/br
 
 ### The side panel shows a runtime warning but still says connected
 
-v0.1.9 separates gateway reachability from upstream Hermes runtime/tool failures. If `/health` works but Hermes raises a runtime traceback, the Browser stays connected and shows the warning instead of turning the whole connection red.
+v0.1.10 separates gateway reachability from upstream Hermes runtime/tool failures. If `/health` works but Hermes raises a runtime traceback, the Browser stays connected and shows the warning instead of turning the whole connection red.
 
 For tracebacks like `int() argument must be a string, a bytes-like object or a real number, not 'NoneType'`, check the Hermes Agent logs on the machine running the gateway. If the traceback mentions `computer_use` or `cua-driver`, run:
 
@@ -391,7 +395,7 @@ extension/
   lib/runtime-events.mjs stable runtime/tool event names for Browser UI normalization
   lib/support-diagnostics.mjs redacted Copy Diagnostics support report helpers
   lib/common.mjs      shared prompt/context/security utilities
-companion-plugin/     private fail-soft Browser companion prototype skeleton
+companion-plugin/     optional fail-soft Browser companion plugin with read-only context cache tools/hooks
 scripts/
   build.mjs           copies extension/ to dist/
   check-manifest.mjs  validates required manifest assets/permissions

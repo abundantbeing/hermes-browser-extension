@@ -122,6 +122,26 @@ export const BUILTIN_COMMANDS = Object.freeze([
     promptHint: 'Find … on this page.',
     prompt: (ctx) => `Search the page "${ctx.activeTab?.title || 'active tab'}" for the user's topic and report everything relevant. Quote specific sections. If the topic does not appear on the page, say so clearly and suggest related topics that do appear.`,
   },
+  {
+    name: 'meta',
+    aliases: ['metadata', 'head'],
+    description: 'Summarize captured page metadata and SEO signals.',
+    category: 'Page',
+    icon: '🏷',
+    requiresInput: false,
+    promptHint: 'Report captured title, description, headings, canonical/OG/JSON-LD when available.',
+    prompt: (ctx) => `Analyze the browser context for captured page metadata from "${ctx.activeTab?.title || 'active tab'}".
+
+Use only data that is actually present in the Browser context: active tab title/URL, captured page metadata, headings, visible page text, and selected text. Do not imply Hermes Browser Extension captured raw <head> HTML, Open Graph tags, Twitter Cards, JSON-LD, hreflang, canonical tags, robots meta, or favicon links unless those exact values are present in the supplied context.
+
+Return a structured, scannable report with:
+
+1. **Captured basics** — page title, URL/origin, meta description/language/headings if available.
+2. **Structured metadata observed** — OG/Twitter/JSON-LD/canonical/hreflang/robots only when explicitly present in context.
+3. **SEO/content signals** — heading structure, apparent page purpose, and any visible metadata-like content.
+4. **Not captured** — clearly list important metadata classes that are unavailable from the current Browser context.
+5. **Recommended next check** — what to inspect manually or with page-source/devtools if richer metadata is needed.`,
+  },
 ]);
 
 function normalizeCommandName(name = '') {
