@@ -95,6 +95,7 @@ import {
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import { normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
+import { classifyTurnRecovery, latestAssistantAfterUser } from './lib/turn-recovery.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
 import {
@@ -5778,56 +5779,82 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   const hasSessionRoutes = await ensureHermesSession();
   if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun });
 
-  const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat/stream`, {
-    method: 'POST',
-    signal,
-    body: JSON.stringify({
-          client_runtime_version: modelSelectionVersion,
-          model: currentModelRequestId(),
-          provider: currentModelProviderSlug() || undefined,
-          model_options: currentModelOptionsPayload(),
-          require_model_lock: shouldRequireModelLock({
-            provider: currentModelProviderSlug(),
+  let response;
+  try {
+    response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat/stream`, {
+      method: 'POST',
+      signal,
+      body: JSON.stringify({
+            client_runtime_version: modelSelectionVersion,
             model: currentModelRequestId(),
-            defaultModel: DEFAULT_SETTINGS.model,
+            provider: currentModelProviderSlug() || undefined,
+            model_options: currentModelOptionsPayload(),
+            require_model_lock: shouldRequireModelLock({
+              provider: currentModelProviderSlug(),
+              model: currentModelRequestId(),
+              defaultModel: DEFAULT_SETTINGS.model,
+            }),
+            message: outboundContent(prompt, turnAttachments),
+            system_message: HERMES_BROWSER_SYSTEM_PROMPT,
           }),
-          message: outboundContent(prompt, turnAttachments),
-          system_message: HERMES_BROWSER_SYSTEM_PROMPT,
-        }),
-  });
+    });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
 
   if (!response.ok || !response.body) {
     const text = await response.text();
-    throw new Error(`Hermes stream failed (${response.status}): ${text.slice(0, 900)}`);
+    const error = new Error(`Hermes stream failed (${response.status}): ${text.slice(0, 900)}`);
+    error.fallbackSafe = [404, 405, 501].includes(response.status);
+    throw error;
   }
-  return readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime });
+  try {
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
 }
 
 async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun } = {}) {
-  const response = await apiFetch('/v1/chat/completions', {
-    method: 'POST',
-    signal,
-    headers: {
-      'X-Hermes-Session-Id': settings.sessionId,
-      'X-Hermes-Session-Key': settings.sessionId,
-    },
-    body: JSON.stringify({
-      client_runtime_version: modelSelectionVersion,
-      model: currentModelRequestId(),
-      provider: currentModelProviderSlug() || undefined,
-      model_options: currentModelOptionsPayload(),
-      stream: true,
-      messages: [
-        { role: 'system', content: HERMES_BROWSER_SYSTEM_PROMPT },
-        { role: 'user', content: outboundContent(prompt, turnAttachments) },
-      ],
-    }),
-  });
+  let response;
+  try {
+    response = await apiFetch('/v1/chat/completions', {
+      method: 'POST',
+      signal,
+      headers: {
+        'X-Hermes-Session-Id': settings.sessionId,
+        'X-Hermes-Session-Key': settings.sessionId,
+      },
+      body: JSON.stringify({
+        client_runtime_version: modelSelectionVersion,
+        model: currentModelRequestId(),
+        provider: currentModelProviderSlug() || undefined,
+        model_options: currentModelOptionsPayload(),
+        stream: true,
+        messages: [
+          { role: 'system', content: HERMES_BROWSER_SYSTEM_PROMPT },
+          { role: 'user', content: outboundContent(prompt, turnAttachments) },
+        ],
+      }),
+    });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
   if (!response.ok || !response.body) {
     const text = await response.text();
-    throw new Error(`Hermes chat-completions stream failed (${response.status}): ${text.slice(0, 900)}`);
+    const error = new Error(`Hermes chat-completions stream failed (${response.status}): ${text.slice(0, 900)}`);
+    error.fallbackSafe = [404, 405, 501].includes(response.status);
+    throw error;
   }
-  return readSseResponse(response, onDelta, onTool, { signal, onRun });
+  try {
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
 }
 
 async function readJsonResponse(response) {
@@ -5853,6 +5880,26 @@ async function publicApiFetch(path, options = {}) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function recoverAcceptedTurn(prompt, turnAttachments = attachments, { attempts = 8, delay = 500 } = {}) {
+  if (isRemoteWsMode() || !settings.apiKey) return '';
+  const userContent = outboundContent(prompt, turnAttachments);
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/messages`, { method: 'GET' });
+      const payload = await readJsonResponse(response);
+      if (response.ok) {
+        const answer = latestAssistantAfterUser(Array.isArray(payload.data) ? payload.data : [], userContent);
+        if (answer) return answer;
+      }
+    } catch {
+      // The original turn is already accepted; recovery is best effort and
+      // must never post the user turn again.
+    }
+    if (attempt < attempts - 1) await sleep(delay);
+  }
+  return '';
 }
 
 async function openApprovalUrl(url) {
@@ -6100,8 +6147,18 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
         streamView.update(`Could not reach the Hermes dashboard.\n${streamError.message}`);
         throw streamError;
       } else {
-        streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
-        answer = await fallbackSessionChat(prompt, preparedAttachments, { onRuntime: applyTurnRuntimePayload });
+        if (classifyTurnRecovery(streamError) === 'fallback') {
+          streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
+          answer = await fallbackSessionChat(prompt, preparedAttachments, { onRuntime: applyTurnRuntimePayload });
+        } else {
+          streamView.update('Hermes accepted this turn; recovering the response without retrying it...');
+          answer = await recoverAcceptedTurn(prompt, preparedAttachments);
+          if (!answer) {
+            const recoveryError = new Error('Hermes accepted the turn, but the stream disconnected before the response could be recovered. The turn was not retried to prevent a duplicate message.');
+            recoveryError.requestAccepted = true;
+            throw recoveryError;
+          }
+        }
       }
     }
     const finalAnswer = answer || liveText || '(empty response)';
