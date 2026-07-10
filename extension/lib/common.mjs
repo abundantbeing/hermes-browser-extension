@@ -161,7 +161,10 @@ export function isUsableRemoteApiUrl(value = '') {
 
 export function isUsableRemoteDashboardUrl(value = '') {
   try {
-    return new URL(String(value || '')).protocol === 'https:';
+    const parsed = new URL(String(value || ''));
+    if (parsed.protocol === 'https:') return true;
+    const hostname = parsed.hostname.toLowerCase();
+    return parsed.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]', '::1'].includes(hostname);
   } catch {
     return false;
   }

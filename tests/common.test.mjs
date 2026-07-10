@@ -458,11 +458,14 @@ test('isUsableRemoteGatewayUrl requires a parseable https URL', () => {
   assert.equal(isUsableRemoteGatewayUrl(''), false);
 });
 
-test('remote API URL validation allows trusted HTTP while dashboard stays HTTPS-only', () => {
+test('remote dashboard URL validation allows HTTPS and loopback HTTP only', () => {
   assert.equal(isUsableRemoteApiUrl('http://host.ts.net:8642'), true);
   assert.equal(isUsableRemoteApiUrl('https://host.ts.net:8642'), true);
   assert.equal(isUsableRemoteApiUrl('ftp://host.ts.net'), false);
   assert.equal(isUsableRemoteDashboardUrl('https://dash.example.com'), true);
+  assert.equal(isUsableRemoteDashboardUrl('http://127.0.0.1:9132'), true);
+  assert.equal(isUsableRemoteDashboardUrl('http://localhost:9132'), true);
+  assert.equal(isUsableRemoteDashboardUrl('http://[::1]:9132'), true);
   assert.equal(isUsableRemoteDashboardUrl('http://dash.example.com'), false);
 });
 
