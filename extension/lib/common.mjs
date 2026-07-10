@@ -52,6 +52,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   sessionTitle: 'Hermes Browser Extension',
   sessionSource: 'hermes_browser',
   activeProfile: '',
+  remoteSessionBindings: {},
   model: 'hermes-agent',
   modelContextTokens: 0,
   extensionPreferredModel: null,
@@ -1773,6 +1774,8 @@ export function normalizeHermesSessions(payload = {}) {
       title: String(session.title || session.preview || session.id),
       source: String(session.source || 'sessions'),
       sourceLabel: normalizeSessionSourceLabel(session.source),
+      profile: String(session.profile || session.profile_name || session.profileName || ''),
+      gatewayUrl: String(session.gatewayUrl || session.gateway_url || ''),
       preview: String(session.preview || ''),
       messageCount: Number(session.message_count || session.messageCount || 0),
       model: String(session.model || ''),
@@ -1789,7 +1792,7 @@ export function normalizeHermesSessions(payload = {}) {
       thresholdTokens: Number(session.threshold_tokens || session.thresholdTokens || 0),
       usagePercent: Number(session.usage_percent || session.usagePercent || 0),
       compressionCount: Number(session.compression_count || session.compressionCount || 0),
-      lastActive: Number(session.last_active || session.started_at || session.updated_at || 0),
+      lastActive: Number(session.last_active || session.lastActive || session.started_at || session.updated_at || 0),
       parentSessionId: session.parent_session_id || null,
     }))
     .sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
@@ -1895,7 +1898,7 @@ export function normalizeHermesProfiles(payload = {}, selectedProfile = '') {
       const name = String(profile.name || profile.id);
       return {
         name,
-        active: active ? name === active : Boolean(profile.active || profile.current),
+        active: active ? name === active : Boolean(profile.active || profile.current || profile.is_active || profile.isActive),
         model: String(profile.model || ''),
         provider: String(profile.provider || ''),
         description: String(profile.description || ''),

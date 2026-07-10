@@ -31,6 +31,111 @@ export const WS_EVENTS = Object.freeze({
   error: 'error',
 });
 
+export function withGatewayProfile(params = {}, profile = '') {
+  const name = String(profile || '').trim();
+  return name ? { ...params, profile: name } : { ...params };
+}
+
+function normalizedGatewayBase(value = '') {
+  return String(value || '').trim().replace(/\/+$/, '');
+}
+
+export function resolveVerifiedGatewayProfile({ selectedProfile = '', profiles = [], verifiedBaseUrl = '', gatewayUrl = '' } = {}) {
+  const selected = String(selectedProfile || '').trim();
+  if (!selected) return '';
+  const currentBase = normalizedGatewayBase(gatewayUrl);
+  const verifiedBase = normalizedGatewayBase(verifiedBaseUrl);
+  const exists = (profiles || []).some((profile) => String(profile?.name || '').trim() === selected);
+  if (!currentBase || currentBase !== verifiedBase || !exists) {
+    throw new Error(`Selected Hermes profile "${selected}" is not verified for this dashboard. Refresh profiles or choose Detect from Hermes gateway.`);
+  }
+  return selected;
+}
+
+export function normalizeRemoteSessionBindings(bindings = {}, limit = 100) {
+  if (!bindings || typeof bindings !== 'object' || Array.isArray(bindings)) return {};
+  const rows = Object.entries(bindings)
+    .map(([sessionId, binding]) => {
+      const id = String(sessionId || '').trim();
+      const profile = String(binding?.profile || '').trim();
+      const gatewayUrl = normalizedGatewayBase(binding?.gatewayUrl);
+      if (!id || !profile || !gatewayUrl) return null;
+      return [id, {
+        profile,
+        gatewayUrl,
+        title: String(binding?.title || id),
+        source: String(binding?.source || 'hermes_browser'),
+        updatedAt: Number(binding?.updatedAt || 0),
+      }];
+    })
+    .filter(Boolean)
+    .sort((a, b) => b[1].updatedAt - a[1].updatedAt)
+    .slice(0, Math.max(1, Number(limit) || 100));
+  return Object.fromEntries(rows);
+}
+
+export function rememberRemoteSessionBinding(bindings = {}, session = {}, { profile = '', gatewayUrl = '', now = Date.now() } = {}) {
+  const normalized = normalizeRemoteSessionBindings(bindings);
+  const id = String(session?.id || '').trim();
+  const selected = String(profile || '').trim();
+  const baseUrl = normalizedGatewayBase(gatewayUrl);
+  if (!id) return normalized;
+  if (!selected || !baseUrl) {
+    delete normalized[id];
+    return normalized;
+  }
+  return normalizeRemoteSessionBindings({
+    ...normalized,
+    [id]: {
+      profile: selected,
+      gatewayUrl: baseUrl,
+      title: String(session?.title || id),
+      source: String(session?.source || 'hermes_browser'),
+      updatedAt: Number(now || Date.now()),
+    },
+  });
+}
+
+export function sessionProfileForGateway(session = {}, bindings = {}, gatewayUrl = '') {
+  const currentBase = normalizedGatewayBase(gatewayUrl);
+  const sessionBase = normalizedGatewayBase(session?.gatewayUrl || session?.gateway_url);
+  const direct = String(session?.profile || session?.profile_name || session?.profileName || '').trim();
+  if (direct && (!sessionBase || sessionBase === currentBase)) return direct;
+  if (direct) return '';
+  const id = String(session?.id || '').trim();
+  const binding = normalizeRemoteSessionBindings(bindings)[id];
+  return binding && binding.gatewayUrl === currentBase ? binding.profile : '';
+}
+
+export function mergeRemoteSessionsForProfile({ listedSessions = [], bindings = {}, gatewayUrl = '', selectedProfile = '' } = {}) {
+  const selected = String(selectedProfile || '').trim();
+  const baseUrl = normalizedGatewayBase(gatewayUrl);
+  const merged = new Map();
+
+  if (selected) {
+    for (const [id, binding] of Object.entries(normalizeRemoteSessionBindings(bindings))) {
+      if (binding.gatewayUrl !== baseUrl || binding.profile !== selected) continue;
+      merged.set(id, {
+        id,
+        title: binding.title || id,
+        source: binding.source || 'hermes_browser',
+        profile: binding.profile,
+        gatewayUrl: binding.gatewayUrl,
+        lastActive: binding.updatedAt,
+      });
+    }
+  }
+
+  for (const session of listedSessions || []) {
+    if (!session?.id) continue;
+    const profile = String(session.profile || '').trim();
+    if ((selected && profile !== selected) || (!selected && profile)) continue;
+    merged.set(String(session.id), session);
+  }
+
+  return [...merged.values()].sort((a, b) => Number(b.lastActive || 0) - Number(a.lastActive || 0));
+}
+
 export function buildDashboardWsUrl(baseUrl, ticket) {
   const parsed = new URL(String(baseUrl || ''));
   const scheme = parsed.protocol === 'https:' ? 'wss:' : 'ws:';

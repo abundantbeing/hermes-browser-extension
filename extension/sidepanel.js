@@ -79,8 +79,19 @@ import {
   updateBrowserModelOptionScope,
 } from './lib/common.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
-import { buildDashboardWsUrl, createGatewayClient, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
-import { mintWsTicket, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
+import {
+  buildDashboardWsUrl,
+  createGatewayClient,
+  mergeRemoteSessionsForProfile,
+  normalizeRemoteSessionBindings,
+  rememberRemoteSessionBinding,
+  resolveVerifiedGatewayProfile,
+  sessionProfileForGateway,
+  withGatewayProfile,
+  WS_EVENTS,
+  WS_METHODS,
+} from './lib/gateway-ws.mjs';
+import { fetchDashboardProfiles, mintWsTicket, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 import {
   deriveStartupView,
   initialStartupReadiness,
@@ -330,6 +341,7 @@ let activeSessionRuntime = {
 // /api/ws JSON-RPC socket (the api_server REST/SSE surface is unavailable
 // cross-origin). This holds the live socket + the dashboard-assigned session id.
 let remoteWsConnection = null;
+let remoteProfilesBaseUrl = '';
 let connectionProbeStatus = 'connecting';
 let connectionProbeDetail = '';
 let connectionProbeTimer = null;
@@ -784,6 +796,8 @@ async function saveSessionBindingForActiveScope(session) {
     [key]: {
       sessionId: session.id,
       sessionTitle: session.title || session.id,
+      profile: sessionProfileForGateway(session, settings.remoteSessionBindings, normalizeGatewayUrl(settings.gatewayUrl)),
+      gatewayUrl: isRemoteWsMode() ? normalizeGatewayUrl(settings.gatewayUrl) : '',
       pinnedTabId: previousConversationScope.pinnedTabId,
       pinnedTitle: previousConversationScope.pinnedTitle || '',
       pinnedUrl: previousConversationScope.pinnedUrl || '',
@@ -1061,6 +1075,8 @@ async function ensureSessionForActiveScope({ focus = false } = {}) {
       id: binding.sessionId,
       title: binding.sessionTitle || binding.sessionId,
       source: DEFAULT_SETTINGS.sessionSource,
+      profile: binding.gatewayUrl === normalizeGatewayUrl(settings.gatewayUrl) ? binding.profile || '' : '',
+      gatewayUrl: binding.gatewayUrl || '',
     };
     await openHermesSession(session);
     return;
@@ -1130,6 +1146,24 @@ function setGatewayCapabilities(caps) {
   updateVoiceButtonState();
 }
 
+function activeRemoteWsProfile() {
+  return resolveVerifiedGatewayProfile({
+    selectedProfile: settings.activeProfile,
+    profiles: availableProfiles,
+    verifiedBaseUrl: remoteProfilesBaseUrl,
+    gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+  });
+}
+
+async function ensureRemoteProfileSelection({ refresh = false } = {}) {
+  if (!String(settings.activeProfile || '').trim()) return '';
+  const baseUrl = normalizeGatewayUrl(settings.gatewayUrl);
+  if (refresh || remoteProfilesBaseUrl !== baseUrl || !gatewayCapabilities.profiles) {
+    await loadProfiles({ quiet: true });
+  }
+  return activeRemoteWsProfile();
+}
+
 async function loadGatewayCapabilities({ quiet = false, publicOnly = false, healthOk = false } = {}) {
   if (isRemoteWsMode()) {
     setGatewayCapabilities({
@@ -1142,9 +1176,10 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
       sessionChat: true,
       sessionChatStreaming: true,
       skills: true,
+      profiles: remoteProfilesBaseUrl === normalizeGatewayUrl(settings.gatewayUrl),
       dashboardWs: true,
       warnings: [
-        'Remote dashboard mode uses WebSocket session/chat APIs; REST-only browser extension APIs stay unavailable.',
+        'Remote dashboard mode uses WebSocket session/chat APIs; signed-in dashboard profile discovery is probed separately.',
         'Voice transcription unavailable — using browser speech fallback when available.',
         'Image upload unavailable — pasted images stay inline only.',
         'Automatic browser pairing unavailable — manual dashboard sign-in is required.',
@@ -1447,7 +1482,10 @@ async function sendSteerText(text) {
   if (isRemoteWsMode()) {
     const connection = await ensureRemoteWsClient();
     const sessionId = await ensureRemoteWsSession(connection);
-    await connection.client.request(WS_METHODS.sessionSteer, { session_id: sessionId, text: steerText });
+    await connection.client.request(
+      WS_METHODS.sessionSteer,
+      { session_id: sessionId, text: steerText },
+    );
     return true;
   }
   if (!canSteerActiveRun()) {
@@ -3150,7 +3188,10 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
         renderModelOptions(availableModels);
         return;
       }
-      data = await remoteWsConnection.client.request(WS_METHODS.modelOptions);
+      data = await remoteWsConnection.client.request(
+        WS_METHODS.modelOptions,
+        {},
+      );
       registrySource = 'dashboard';
     }
 
@@ -3496,7 +3537,8 @@ function renderQuickMoreMenu(category = 'all') {
 
 function renderProfiles() {
   if (!els.profileSelect) return;
-  const selected = settings.activeProfile || availableProfiles.find((profile) => profile.active)?.name || '';
+  const explicit = String(settings.activeProfile || '').trim();
+  const selected = explicit || (isRemoteWsMode() ? '' : availableProfiles.find((profile) => profile.active)?.name || '');
   els.profileSelect.innerHTML = '<option value="">Detect from Hermes gateway</option>';
   for (const profile of availableProfiles) {
     const option = document.createElement('option');
@@ -3505,8 +3547,25 @@ function renderProfiles() {
     option.selected = profile.name === selected;
     els.profileSelect.appendChild(option);
   }
+  if (explicit && !availableProfiles.some((profile) => profile.name === explicit)) {
+    const unavailable = document.createElement('option');
+    unavailable.value = explicit;
+    unavailable.textContent = `${explicit} · unavailable`;
+    unavailable.selected = true;
+    els.profileSelect.appendChild(unavailable);
+  }
   els.profileSelect.value = selected;
-  if (!settings.activeProfile && selected) settings = { ...settings, activeProfile: selected };
+  if (!isRemoteWsMode() && !settings.activeProfile && selected) settings = { ...settings, activeProfile: selected };
+  if (explicit && !availableProfiles.some((profile) => profile.name === explicit)) {
+    els.profileStatus.textContent = `Selected profile ${explicit} is unavailable. Refresh profiles or choose Detect from Hermes gateway.`;
+    return;
+  }
+  if (isRemoteWsMode() && !explicit) {
+    els.profileStatus.textContent = availableProfiles.length
+      ? `${availableProfiles.length} profiles available · using dashboard launch profile`
+      : 'Using the dashboard launch profile. Profile discovery is unavailable.';
+    return;
+  }
   if (availableProfiles.length) {
     const active = availableProfiles.find((profile) => profile.name === selected) || availableProfiles.find((profile) => profile.active);
     els.profileStatus.textContent = active
@@ -3518,13 +3577,56 @@ function renderProfiles() {
 }
 
 async function loadProfiles({ quiet = false } = {}) {
+  if (isRemoteWsMode()) {
+    try {
+      const requestedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);
+      const result = await fetchDashboardProfiles({
+        tabsApi: chrome.tabs,
+        scriptingApi: chrome.scripting,
+        baseUrl: requestedBaseUrl,
+      });
+      if (!result.ok) {
+        const error = new Error(
+          result.status === 404
+            ? 'This Hermes dashboard does not expose /api/profiles yet.'
+            : ['no_dashboard_tab', 'not_signed_in', 'bad_base_url', 'scripting_unavailable'].includes(result.reason)
+              ? ticketFailureHelp(result.reason, result.origin)
+              : `Could not read Hermes dashboard profiles (${result.reason || 'unknown'}).`,
+        );
+        error.dashboardReason = result.reason;
+        throw error;
+      }
+      if (normalizeGatewayUrl(settings.gatewayUrl) !== requestedBaseUrl) {
+        throw new Error('The dashboard URL changed while profiles were loading. Refresh profiles for the current dashboard.');
+      }
+      remoteProfilesBaseUrl = requestedBaseUrl;
+      availableProfiles = normalizeHermesProfiles({ profiles: result.profiles, active: result.active }, settings.activeProfile || result.active);
+      setGatewayCapabilities({ ...gatewayCapabilities, profiles: true });
+      renderProfiles();
+      if (settings.activeProfile && !availableProfiles.some((profile) => profile.name === settings.activeProfile)) {
+        if (!quiet) {
+          setStatus('warn', 'Selected profile unavailable', `Profile ${settings.activeProfile} was not returned by this dashboard. Choose another profile or Detect from Hermes gateway.`);
+        }
+        return false;
+      }
+      if (!quiet) setStatus('ok', 'Hermes dashboard profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
+      return true;
+    } catch (error) {
+      remoteProfilesBaseUrl = '';
+      availableProfiles = [];
+      setGatewayCapabilities({ ...gatewayCapabilities, profiles: false });
+      renderProfiles();
+      if (!quiet) setStatus('warn', 'Dashboard profile sync unavailable', error?.message || String(error));
+      return false;
+    }
+  }
   if (!settings.apiKey || gatewayCapabilities.profiles === false) {
     availableProfiles = [];
     renderProfiles();
     if (!quiet && settings.apiKey && gatewayCapabilities.profiles === false) {
       setStatus('warn', 'Profile API unavailable', 'Using the currently running Hermes gateway profile.');
     }
-    return;
+    return false;
   }
   try {
     const response = await apiFetch('/v1/profiles', { method: 'GET' });
@@ -3533,32 +3635,102 @@ async function loadProfiles({ quiet = false } = {}) {
     availableProfiles = normalizeHermesProfiles(payload, settings.activeProfile || payload.active);
     renderProfiles();
     if (!quiet) setStatus('ok', 'Hermes profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
+    return true;
   } catch (error) {
     availableProfiles = [];
     renderProfiles();
     if (!quiet) setStatus('warn', 'Profile sync unavailable', 'This Hermes gateway does not expose /v1/profiles yet. Using the currently running profile.');
+    return false;
   }
 }
 
 async function applySelectedProfile(profileName = '') {
-  settings = { ...settings, activeProfile: profileName };
+  const selected = String(profileName || '').trim();
+  if (isRemoteWsMode() && sending) {
+    renderProfiles();
+    setStatus('warn', 'Profile change paused', 'Wait for the current Hermes turn to finish or stop it before changing profiles.');
+    return false;
+  }
+  if (isRemoteWsMode() && selected) {
+    try {
+      resolveVerifiedGatewayProfile({
+        selectedProfile: selected,
+        profiles: availableProfiles,
+        verifiedBaseUrl: remoteProfilesBaseUrl,
+        gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+      });
+    } catch (error) {
+      renderProfiles();
+      setStatus('warn', 'Profile selection unavailable', error?.message || String(error));
+      return false;
+    }
+  }
+  settings = {
+    ...settings,
+    activeProfile: selected,
+    ...(isRemoteWsMode() ? {
+      sessionId: '',
+      sessionTitle: makeBrowserSessionTitle(),
+    } : {}),
+  };
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  if (isRemoteWsMode()) {
+    els.sessionIdInput.value = settings.sessionId;
+    els.sessionTitleInput.value = settings.sessionTitle;
+  }
   renderProfiles();
-  if (!profileName || !settings.apiKey) return;
+  if (isRemoteWsMode()) {
+    const label = selected || 'the dashboard launch profile';
+    if (remoteWsConnection) {
+      remoteWsConnection.wsSessionId = '';
+      remoteWsConnection.wsProfile = '';
+    }
+    availableSessions = mergeRemoteSessionsForProfile({
+      listedSessions: [],
+      bindings: settings.remoteSessionBindings,
+      gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+      selectedProfile: selected,
+    });
+    activeSessionRuntime = { ...activeSessionRuntime, sessionId: '', usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
+    messages = [];
+    await chrome.storage.local.set({ [activeMessagesStorageKey(previousConversationScope)]: [] });
+    renderMessagesFromStorage();
+    updateSessionLabel();
+    renderSessionMenu();
+    if (remoteWsConnection?.client?.readyState !== 1) {
+      setStatus('ok', 'Browser profile saved', selected
+        ? `New dashboard sessions will request ${label} after profile verification.`
+        : 'New dashboard sessions will use the dashboard launch profile.');
+      return true;
+    }
+    try {
+      const session = await createHermesBrowserSession({ title: makeBrowserSessionTitle(), focus: false });
+      setStatus('ok', 'Browser session created', selected
+        ? `Profile request: ${label} · ${session.id}`
+        : `Dashboard launch profile · ${session.id}`);
+    } catch (error) {
+      setStatus('warn', 'Profile session unavailable', error?.message || String(error));
+      return false;
+    }
+    return true;
+  }
+  if (!selected || !settings.apiKey) return true;
   try {
     const response = await apiFetch('/v1/profiles/active', {
       method: 'POST',
-      body: JSON.stringify({ name: profileName }),
+      body: JSON.stringify({ name: selected }),
     });
     const payload = await readJsonResponse(response);
     if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Profile switch failed (${response.status})`);
-    setStatus('ok', 'Hermes profile switched', payload.restart_required ? `${profileName} selected. Restart Hermes gateway if the running profile does not change immediately.` : profileName);
+    setStatus('ok', 'Hermes profile switched', payload.restart_required ? `${selected} selected. Restart Hermes gateway if the running profile does not change immediately.` : selected);
     await loadProfiles({ quiet: true });
     await loadModels({ quiet: true });
     await loadSkills({ quiet: true });
   } catch (error) {
     setStatus('warn', 'Profile switch unavailable', `${error?.message || String(error)}. Browser will use the currently running Hermes profile.`);
+    return false;
   }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -3866,14 +4038,32 @@ async function loadSessions({ quiet = false } = {}) {
   if (isRemoteWsMode()) {
     // Remote reads go over the WS; only possible once a socket is open.
     if (remoteWsConnection?.client?.readyState !== 1) {
-      availableSessions = [];
+      availableSessions = mergeRemoteSessionsForProfile({
+        listedSessions: [],
+        bindings: settings.remoteSessionBindings,
+        gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+        selectedProfile: settings.activeProfile,
+      });
       updateSessionLabel();
       renderSessionMenu();
       return;
     }
     try {
-      const result = await remoteWsConnection.client.request(WS_METHODS.sessionList, { limit: 200 });
-      availableSessions = normalizeHermesSessions(result);
+      const selectedProfile = activeRemoteWsProfile();
+      const result = await remoteWsConnection.client.request(
+        WS_METHODS.sessionList,
+        { limit: 200 },
+      );
+      const listedSessions = normalizeHermesSessions(result);
+      // Current dashboards return launch-profile rows here even when a profile
+      // parameter is supplied. Only locally bound or explicitly tagged rows
+      // belong in a selected profile's menu.
+      availableSessions = normalizeHermesSessions(mergeRemoteSessionsForProfile({
+        listedSessions,
+        bindings: settings.remoteSessionBindings,
+        gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+        selectedProfile,
+      }));
       syncActiveSessionRuntimeFromList();
       updateSessionLabel();
       renderSessionMenu();
@@ -3911,7 +4101,15 @@ async function renameHermesSessionTitle(sessionId, title, { quiet = false } = {}
   if (isRemoteWsMode()) {
     // Dashboard WS currently exposes create/resume/list/history but not rename.
     availableSessions = availableSessions.map((session) => (session.id === sessionId ? { ...session, title: nextTitle } : session));
-    settings = { ...settings, sessionTitle: nextTitle };
+    const updated = availableSessions.find((session) => session.id === sessionId) || { id: sessionId, title: nextTitle };
+    settings = {
+      ...settings,
+      sessionTitle: nextTitle,
+      remoteSessionBindings: rememberRemoteSessionBinding(settings.remoteSessionBindings, updated, {
+        profile: sessionProfileForGateway(updated, settings.remoteSessionBindings, normalizeGatewayUrl(settings.gatewayUrl)),
+        gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+      }),
+    };
     await chrome.storage.local.set({ hermesBrowserSettings: settings });
     updateSessionLabel();
     renderSessionMenu();
@@ -4000,35 +4198,57 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
   const requestModel = preferredModel?.rawModelId || preferredBinding?.rawModelId || preferredBinding?.modelId || settings.model || DEFAULT_SETTINGS.model;
   const requestProvider = preferredModel?.provider || preferredBinding?.provider || '';
   if (isRemoteWsMode()) {
+    const profile = await ensureRemoteProfileSelection({ refresh: true });
+    const verifiedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);
     const connection = await ensureRemoteWsClient();
-    const result = await connection.client.request(WS_METHODS.sessionCreate, {
+    if (connection.baseUrl !== verifiedBaseUrl) throw new Error('The dashboard changed before the profile session could be created. Try again.');
+    const result = await connection.client.request(WS_METHODS.sessionCreate, withGatewayProfile({
       title,
-      model: requestModel,
-      provider: requestProvider || undefined,
+      ...(profile ? {} : {
+        model: requestModel,
+        provider: requestProvider || undefined,
+      }),
       reasoning_effort: preferredOptions.thinkingEnabled ? preferredOptions.reasoningEffort : 'none',
       fast: preferredOptions.fastMode,
-    });
+    }, profile));
+    if (normalizeGatewayUrl(settings.gatewayUrl) !== connection.baseUrl) {
+      throw new Error('The dashboard changed while the profile session was being created. Try again on the current dashboard.');
+    }
     const id = result?.session_id;
     if (!id) throw new Error('Dashboard did not return a session id.');
     connection.wsSessionId = id;
-    const session = normalizeHermesSessions({ sessions: [{ id, title, source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource }] })[0]
+    connection.wsProfile = profile;
+    const session = normalizeHermesSessions({ sessions: [{
+      id,
+      title,
+      source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
+      profile,
+      gateway_url: connection.baseUrl,
+      last_active: Date.now(),
+    }] })[0]
       || { id, title, source: settings.sessionSource };
     availableSessions = normalizeHermesSessions({ sessions: [session, ...availableSessions.filter((item) => item.id !== id)] });
     settings = {
       ...settings,
       sessionId: id,
       sessionTitle: session.title || title,
-      model: preferredModel?.id || preferredBinding?.modelId || settings.model,
-      modelContextTokens: preferredModel?.contextTokens || preferredBinding?.contextTokens || settings.modelContextTokens || 0,
       extensionPreferredModel: preferredBinding,
-      sessionModelBindings: {
-        ...(settings.sessionModelBindings || {}),
-        [id]: preferredBinding,
-      },
+      ...(profile ? {} : {
+        model: preferredModel?.id || preferredBinding?.modelId || settings.model,
+        modelContextTokens: preferredModel?.contextTokens || preferredBinding?.contextTokens || settings.modelContextTokens || 0,
+        sessionModelBindings: {
+          ...(settings.sessionModelBindings || {}),
+          [id]: preferredBinding,
+        },
+      }),
       sessionModelOptionBindings: {
         ...(settings.sessionModelOptionBindings || {}),
         [id]: preferredOptions,
       },
+      remoteSessionBindings: rememberRemoteSessionBinding(settings.remoteSessionBindings, session, {
+        profile,
+        gatewayUrl: connection.baseUrl,
+      }),
       modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
     };
     activeSessionRuntime = { ...activeSessionRuntime, sessionId: id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
@@ -4090,35 +4310,68 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
 async function openHermesSession(session) {
   els.sessionMenu.hidden = true;
   els.sessionMenuButton.setAttribute('aria-expanded', 'false');
+  let openedSession = session;
   if (isRemoteWsMode()) {
     try {
+      const selectedProfile = await ensureRemoteProfileSelection({ refresh: true });
+      const verifiedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);
+      const sessionProfile = sessionProfileForGateway(
+        session,
+        settings.remoteSessionBindings,
+        verifiedBaseUrl,
+      );
+      if (sessionProfile !== selectedProfile) {
+        throw new Error('This session is not owned by the selected Hermes profile. Refresh sessions or choose its profile first.');
+      }
       const connection = await ensureRemoteWsClient();
-      await connection.client.request(WS_METHODS.sessionResume, { session_id: session.id });
+      if (connection.baseUrl !== verifiedBaseUrl) throw new Error('The dashboard changed before this session could be resumed. Try again.');
+      await connection.client.request(
+        WS_METHODS.sessionResume,
+        withGatewayProfile({ session_id: session.id }, sessionProfile),
+      );
+      if (normalizeGatewayUrl(settings.gatewayUrl) !== connection.baseUrl) {
+        throw new Error('The dashboard changed while this session was being resumed. Try again on the current dashboard.');
+      }
       connection.wsSessionId = session.id;
+      connection.wsProfile = sessionProfile;
+      openedSession = { ...session, profile: sessionProfile };
     } catch (error) {
       setStatus('error', 'Could not open session', error?.message || String(error));
       return;
     }
   }
-  settings = { ...settings, sessionId: session.id, sessionTitle: session.title || session.id };
-  applyModelBindingForSession(session);
-  applyModelOptionsForSession(session);
+  settings = {
+    ...settings,
+    sessionId: openedSession.id,
+    sessionTitle: openedSession.title || openedSession.id,
+    ...(isRemoteWsMode() ? {
+      remoteSessionBindings: rememberRemoteSessionBinding(settings.remoteSessionBindings, openedSession, {
+        profile: openedSession.profile,
+        gatewayUrl: openedSession.gatewayUrl || normalizeGatewayUrl(settings.gatewayUrl),
+      }),
+    } : {}),
+  };
+  applyModelBindingForSession(openedSession);
+  applyModelOptionsForSession(openedSession);
   renderModelOptions(availableModels);
-  activeSessionRuntime = { ...activeSessionRuntime, sessionId: session.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
+  activeSessionRuntime = { ...activeSessionRuntime, sessionId: openedSession.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
   sessionRoutesAvailable = true;
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
-  await saveSessionBindingForActiveScope(session);
+  await saveSessionBindingForActiveScope(openedSession);
   updateSessionLabel();
   renderSessionMenu();
-  await loadSessionMessages(session.id);
-  setStatus('ok', 'Session opened', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`);
+  await loadSessionMessages(openedSession.id);
+  setStatus('ok', 'Session opened', `${openedSession.sourceLabel || openedSession.source || 'Hermes'} · ${openedSession.id}`);
 }
 
 async function loadSessionMessages(sessionId = settings.sessionId) {
   if (isRemoteWsMode()) {
     if (remoteWsConnection?.client?.readyState !== 1) return;
     try {
-      const result = await remoteWsConnection.client.request(WS_METHODS.sessionHistory, { session_id: sessionId });
+      const result = await remoteWsConnection.client.request(
+        WS_METHODS.sessionHistory,
+        { session_id: sessionId },
+      );
       const rows = Array.isArray(result?.messages) ? result.messages : [];
       messages = rows
         .filter((message) => ['user', 'assistant', 'system'].includes(message.role))
@@ -4621,6 +4874,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     sessionModelOptionBindings: Object.fromEntries(Object.entries(settings.sessionModelOptionBindings && typeof settings.sessionModelOptionBindings === 'object' ? settings.sessionModelOptionBindings : {})
       .map(([sessionId, options]) => [sessionId, resolveAcknowledgedSessionModelOptions({ sessionOptions: options })])
       .filter(([, options]) => Boolean(options))),
+    remoteSessionBindings: normalizeRemoteSessionBindings(settings.remoteSessionBindings),
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
   };
   const effectiveBinding = resolveBrowserEffectiveModel({
@@ -4642,6 +4896,14 @@ async function loadSettings({ restoreMessages = false } = {}) {
     settings.thinkingEnabled = effectiveOptions.thinkingEnabled;
     settings.reasoningEffort = effectiveOptions.reasoningEffort;
     settings.fastMode = effectiveOptions.fastMode;
+  }
+  if (isRemoteWsMode()) {
+    availableSessions = normalizeHermesSessions(mergeRemoteSessionsForProfile({
+      listedSessions: [],
+      bindings: settings.remoteSessionBindings,
+      gatewayUrl: settings.gatewayUrl,
+      selectedProfile: settings.activeProfile,
+    }));
   }
   applyAppearanceSettings();
   if (migrateDesktopOptionDefaults || migrateModelOptionScope) {
@@ -4714,9 +4976,11 @@ async function saveSettingsFromForm() {
     tokenSource,
     model: settings.model || DEFAULT_SETTINGS.model,
     modelContextTokens: selected?.contextTokens || settings.modelContextTokens || 0,
-    sessionId: els.sessionIdInput.value.trim() || DEFAULT_SETTINGS.sessionId,
+    sessionId: gatewayMode === 'remote-dashboard'
+      ? els.sessionIdInput.value.trim()
+      : (els.sessionIdInput.value.trim() || DEFAULT_SETTINGS.sessionId),
     sessionTitle: els.sessionTitleInput.value.trim() || DEFAULT_SETTINGS.sessionTitle,
-    activeProfile: els.profileSelect?.value || settings.activeProfile || DEFAULT_SETTINGS.activeProfile,
+    activeProfile: els.profileSelect ? els.profileSelect.value : (settings.activeProfile || DEFAULT_SETTINGS.activeProfile),
     contextDepth: els.contextDepthInput.value,
     includeTabs: els.includeTabsInput.checked,
     includePageText: els.includePageTextInput.checked,
@@ -5581,6 +5845,10 @@ async function ensureRemoteWsClient() {
   if (remoteWsConnection?.client && remoteWsConnection.client.readyState === 1 && remoteWsConnection.baseUrl === baseUrl) {
     return remoteWsConnection;
   }
+  if (remoteProfilesBaseUrl && remoteProfilesBaseUrl !== baseUrl) {
+    remoteProfilesBaseUrl = '';
+    availableProfiles = [];
+  }
   try {
     remoteWsConnection?.client?.close();
   } catch {
@@ -5608,7 +5876,11 @@ async function ensureRemoteWsClient() {
     console.warn('[Hermes] remote: WebSocket connect failed:', error?.message || error);
     throw error;
   }
-  const connection = { client, baseUrl, wsSessionId: '' };
+  if (normalizeGatewayUrl(settings.gatewayUrl) !== baseUrl) {
+    client.close();
+    throw new Error('The dashboard URL changed while the WebSocket was connecting. Connect again to the current dashboard.');
+  }
+  const connection = { client, baseUrl, wsSessionId: '', wsProfile: '' };
   client.on('close', () => {
     if (remoteWsConnection === connection) {
       remoteWsConnection = null;
@@ -5620,21 +5892,57 @@ async function ensureRemoteWsClient() {
 }
 
 async function ensureRemoteWsSession(connection) {
-  if (connection.wsSessionId) return connection.wsSessionId;
+  if (connection.wsSessionId) {
+    const currentProfile = activeRemoteWsProfile();
+    if (connection.wsProfile === currentProfile) return connection.wsSessionId;
+  }
+  const profile = await ensureRemoteProfileSelection({ refresh: true });
+  const verifiedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);
+  if (connection.baseUrl !== verifiedBaseUrl) throw new Error('The dashboard changed before the profile session could be created. Try again.');
   const binding = currentEffectiveModelBinding();
-  const result = await connection.client.request(WS_METHODS.sessionCreate, {
+  const preferredOptions = preferredModelOptionsForNewSession();
+  const result = await connection.client.request(WS_METHODS.sessionCreate, withGatewayProfile({
     title: settings.sessionTitle,
-    model: currentModelRequestId(),
-    provider: currentModelProviderSlug() || binding?.provider || undefined,
-    reasoning_effort: normalizeReasoningEffort(settings.reasoningEffort),
-    fast: normalizeFastMode(settings.fastMode),
-  });
+    ...(profile ? {} : {
+      model: currentModelRequestId(),
+      provider: currentModelProviderSlug() || binding?.provider || undefined,
+    }),
+    reasoning_effort: preferredOptions.thinkingEnabled ? preferredOptions.reasoningEffort : 'none',
+    fast: preferredOptions.fastMode,
+  }, profile));
+  if (normalizeGatewayUrl(settings.gatewayUrl) !== connection.baseUrl) {
+    throw new Error('The dashboard changed while the profile session was being created. Try again on the current dashboard.');
+  }
   connection.wsSessionId = result?.session_id || '';
   if (!connection.wsSessionId) throw new Error('Dashboard did not return a session id.');
+  connection.wsProfile = profile;
+  const session = normalizeHermesSessions({ sessions: [{
+    id: connection.wsSessionId,
+    title: settings.sessionTitle,
+    source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
+    profile,
+    gateway_url: connection.baseUrl,
+    last_active: Date.now(),
+  }] })[0];
+  availableSessions = normalizeHermesSessions({ sessions: [
+    session,
+    ...availableSessions.filter((item) => item.id !== connection.wsSessionId),
+  ] });
   // Reflect the dashboard-assigned id so the session menu/label track the live
   // remote session instead of the local default placeholder.
-  settings = { ...settings, sessionId: connection.wsSessionId };
-  if (binding) {
+  settings = {
+    ...settings,
+    sessionId: connection.wsSessionId,
+    remoteSessionBindings: rememberRemoteSessionBinding(settings.remoteSessionBindings, session, {
+      profile,
+      gatewayUrl: connection.baseUrl,
+    }),
+    sessionModelOptionBindings: {
+      ...(settings.sessionModelOptionBindings || {}),
+      [connection.wsSessionId]: preferredOptions,
+    },
+  };
+  if (binding && !profile) {
     settings = {
       ...settings,
       model: modelForBinding(binding)?.id || binding.modelId || settings.model,
@@ -5648,6 +5956,7 @@ async function ensureRemoteWsSession(connection) {
   }
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   updateSessionLabel();
+  renderSessionMenu();
   return connection.wsSessionId;
 }
 
@@ -5685,7 +5994,10 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
       fn(value);
     };
     function onAbort() {
-      client.request(WS_METHODS.sessionInterrupt, { session_id: sessionId }).catch(() => {});
+      client.request(
+        WS_METHODS.sessionInterrupt,
+        { session_id: sessionId },
+      ).catch(() => {});
       finish(reject, new DOMException('Hermes turn stopped by user', 'AbortError'));
     }
 
@@ -5714,7 +6026,10 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
     }));
     offs.push(client.on('close', () => finish(reject, new Error('Dashboard connection closed mid-turn.'))));
 
-    client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt }).catch((error) => finish(reject, error));
+    client.request(
+      WS_METHODS.promptSubmit,
+      { session_id: sessionId, text: prompt },
+    ).catch((error) => finish(reject, error));
   });
 }
 
@@ -6123,14 +6438,21 @@ async function testConnection() {
       // exercise. Minting a ticket + opening the socket validates the whole
       // path: a signed-in dashboard tab, the ticket flow, and the handshake.
       const connection = await ensureRemoteWsClient();
+      await loadGatewayCapabilities({ quiet: true, healthOk: true });
+      const profilesReady = await loadProfiles({ quiet: true });
+      if (settings.activeProfile && !profilesReady) activeRemoteWsProfile();
       let modelNote = '';
       try {
-        const models = await connection.client.request(WS_METHODS.modelOptions);
+        const models = await connection.client.request(
+          WS_METHODS.modelOptions,
+          {},
+        );
         await loadModels({ quiet: true, payload: models });
         modelNote = availableModels.length ? ` · ${availableModels.length} models` : '';
       } catch {
         // model.options shape varies across gateways; the socket is already proven.
       }
+      await loadSessions({ quiet: true });
       updateConnectionPrompt();
       markGatewayReachable(`${normalizeGatewayUrl(settings.gatewayUrl)}${modelNote}`);
       lastRemoteDiagnostic = null;

@@ -933,6 +933,13 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   assert.match(source, /shouldTrySessionModelFallback\(\{\s*registryModels,\s*registrySource,\s*defaultModelId: DEFAULT_SETTINGS\.model,\s*\}\)/s);
   assert.match(source, /apiFetch\('\/v1\/skills'/);
   assert.match(source, /apiFetch\('\/v1\/profiles'/);
+  assert.match(source, /fetchDashboardProfiles\(\{/);
+  assert.match(source, /resolveVerifiedGatewayProfile\(\{/);
+  assert.match(source, /rememberRemoteSessionBinding\(/);
+  assert.match(source, /sessionProfileForGateway\(/);
+  assert.match(source, /Profile request:/);
+  assert.doesNotMatch(source, /WS_METHODS\.sessionList,\s*withGatewayProfile\(/);
+  assert.doesNotMatch(source, /WS_METHODS\.promptSubmit,\s*withGatewayProfile\(/);
   assert.match(source, /apiFetch\(`\/api\/sessions\?limit=\$\{limit\}&offset=\$\{offset\}&include_children=true&order=recent`/);
   assert.match(source, /els\.refreshModelsButton\.addEventListener\('click', refreshModelsFromMenu\)/);
 });
@@ -1255,10 +1262,11 @@ test('groupModelsForMenu groups connected Hermes models by provider and filters 
 test('normalizeHermesSessions and groupSessionsForMenu mirror Hermes Desktop source groups', () => {
   const sessions = normalizeHermesSessions({ data: [
     { id: 'api_1', title: 'Reply with exactly OK.', source: 'api_server', last_active: 30, message_count: 2, model: 'qwen3.7-plus', provider: 'zenmux', model_options: { reasoning: { enabled: true, effort: 'medium' }, reasoning_effort: 'medium', service_tier: null, fast: false }, input_tokens: 1200, output_tokens: 340, cache_read_tokens: 50, reasoning_tokens: 10, last_prompt_tokens: 29_577, context_length: 372_000, threshold_tokens: 316_200, usage_percent: 7.95, compression_count: 0 },
-    { id: 'hb_1', title: 'Hermes Browser Extension', source: 'hermes_browser', last_active: 40, message_count: 1 },
+    { id: 'hb_1', title: 'Hermes Browser Extension', source: 'hermes_browser', profile_name: 'research', last_active: 40, message_count: 1 },
     { id: 'tg_1', title: 'Telegram thread', source: 'telegram', last_active: 20, message_count: 10 },
   ] });
   assert.deepEqual(sessions.map((session) => session.id), ['hb_1', 'api_1', 'tg_1']);
+  assert.equal(sessions[0].profile, 'research');
   assert.equal(sessions[1].model, 'qwen3.7-plus');
   assert.equal(sessions[1].provider, 'zenmux');
   assert.equal(sessions[1].rawModelId, 'qwen3.7-plus');
@@ -1430,7 +1438,7 @@ test('session option-only acknowledgements persist and rerender on refresh and s
   assert.match(source, /const previousOptionsBinding = JSON\.stringify\(settings\.sessionModelOptionBindings\?\.\[session\.id\] \|\| null\)/);
   assert.match(source, /const nextOptionsBinding = JSON\.stringify\(settings\.sessionModelOptionBindings\?\.\[session\.id\] \|\| null\)/);
   assert.match(source, /nextOptionsBinding !== previousOptionsBinding/);
-  assert.match(source, /applyModelOptionsForSession\(session\);\s*renderModelOptions\(availableModels\);/);
+  assert.match(source, /applyModelOptionsForSession\(openedSession\);\s*renderModelOptions\(availableModels\);/);
 });
 
 test('model option runtime acknowledgement distinguishes pending confirmed and mismatch states', () => {
@@ -1600,6 +1608,8 @@ test('normalizeHermesProfiles marks active profile and keeps useful metadata', (
   assert.equal(profiles[0].active, false);
   assert.equal(profiles[1].active, true);
   assert.equal(profiles[1].model, 'claude-sonnet-4.6');
+  const rowActive = normalizeHermesProfiles({ profiles: [{ name: 'thanos', is_active: true }] });
+  assert.equal(rowActive[0].active, true);
 });
 
 test('version helpers compare extension update versions safely', () => {

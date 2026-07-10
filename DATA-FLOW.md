@@ -20,7 +20,7 @@ When you configure a remote Gateway URL and API key/browser token, context is se
 
 ### Remote dashboard WebSocket
 
-When remote mode has a dashboard URL and no API key, the extension uses the signed-in dashboard tab to mint a single-use WebSocket ticket and connects to the dashboard socket. In this mode, REST-only features such as profile list and image upload can be unavailable.
+When remote mode has a dashboard URL and no API key, the extension uses the signed-in dashboard tab to mint a single-use WebSocket ticket and connects to the dashboard socket. It can also perform a fixed, read-only first-party `GET /api/profiles` in that tab. Only sanitized profile metadata crosses back into the extension, and a verified selection is attached to new WebSocket session requests. Explicit selections fail closed if they cannot be reverified; Detect mode can use the dashboard launch profile on older dashboards. The extension stores a bounded local session-to-profile binding so it never resumes a known profile session against a different profile. Image upload and other REST-only features can remain unavailable.
 
 ## What can be sent to Hermes
 

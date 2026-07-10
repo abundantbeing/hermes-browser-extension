@@ -5,6 +5,12 @@ import {
   buildDashboardWsUrl,
   classifyGatewayFrame,
   createGatewayClient,
+  mergeRemoteSessionsForProfile,
+  normalizeRemoteSessionBindings,
+  rememberRemoteSessionBinding,
+  resolveVerifiedGatewayProfile,
+  sessionProfileForGateway,
+  withGatewayProfile,
   WS_METHODS,
 } from '../extension/lib/gateway-ws.mjs';
 
@@ -58,6 +64,78 @@ test('buildDashboardWsUrl upgrades scheme, keeps path prefix, encodes ticket', (
 test('WS_METHODS exposes Desktop/TUI session steering instead of slash-command injection', () => {
   assert.equal(WS_METHODS.sessionSteer, 'session.steer');
   assert.equal(WS_METHODS.promptSubmit, 'prompt.submit');
+});
+
+test('withGatewayProfile adds a trimmed profile without mutating the input', () => {
+  const params = { session_id: 's1' };
+  assert.deepEqual(withGatewayProfile(params, '  research  '), { session_id: 's1', profile: 'research' });
+  assert.deepEqual(withGatewayProfile(params, ''), { session_id: 's1' });
+  assert.deepEqual(params, { session_id: 's1' });
+});
+
+test('resolveVerifiedGatewayProfile fails closed for stale or missing profile discovery', () => {
+  const input = {
+    selectedProfile: ' research ',
+    profiles: [{ name: 'research' }],
+    verifiedBaseUrl: 'https://host.example/hermes/',
+    gatewayUrl: 'https://host.example/hermes',
+  };
+  assert.equal(resolveVerifiedGatewayProfile(input), 'research');
+  assert.equal(resolveVerifiedGatewayProfile({ ...input, selectedProfile: '' }), '');
+  assert.throws(() => resolveVerifiedGatewayProfile({ ...input, profiles: [] }), /not verified/);
+  assert.throws(() => resolveVerifiedGatewayProfile({ ...input, verifiedBaseUrl: 'https://other.example' }), /not verified/);
+});
+
+test('remote session bindings preserve profile ownership and isolate session menus', () => {
+  const bindings = rememberRemoteSessionBinding({}, {
+    id: 'profile-session',
+    title: 'Research session',
+    source: 'hermes_browser',
+  }, {
+    profile: 'research',
+    gatewayUrl: 'https://host.example/hermes/',
+    now: 20,
+  });
+  assert.deepEqual(normalizeRemoteSessionBindings(bindings), {
+    'profile-session': {
+      profile: 'research',
+      gatewayUrl: 'https://host.example/hermes',
+      title: 'Research session',
+      source: 'hermes_browser',
+      updatedAt: 20,
+    },
+  });
+  assert.equal(sessionProfileForGateway({ id: 'profile-session' }, bindings, 'https://host.example/hermes'), 'research');
+  assert.equal(sessionProfileForGateway({ id: 'profile-session' }, bindings, 'https://other.example'), '');
+  assert.equal(sessionProfileForGateway({ id: 'direct', profile: 'research', gatewayUrl: 'https://host.example/hermes' }, bindings, 'https://other.example'), '');
+  const switchedBindings = rememberRemoteSessionBinding(bindings, {
+    id: 'thanos-session',
+    title: 'Thanos session',
+  }, {
+    profile: 'thanos',
+    gatewayUrl: 'https://host.example/hermes',
+    now: 50,
+  });
+
+  const listed = [
+    { id: 'launch-session', title: 'Launch', profile: '', lastActive: 30 },
+    { id: 'future-scoped', title: 'Scoped', profile: 'research', lastActive: 40 },
+  ];
+  assert.deepEqual(
+    mergeRemoteSessionsForProfile({ listedSessions: listed, bindings, gatewayUrl: 'https://host.example/hermes', selectedProfile: '' })
+      .map((session) => session.id),
+    ['launch-session'],
+  );
+  assert.deepEqual(
+    mergeRemoteSessionsForProfile({ listedSessions: listed, bindings: switchedBindings, gatewayUrl: 'https://host.example/hermes', selectedProfile: 'research' })
+      .map((session) => session.id),
+    ['future-scoped', 'profile-session'],
+  );
+  assert.deepEqual(
+    mergeRemoteSessionsForProfile({ listedSessions: listed, bindings: switchedBindings, gatewayUrl: 'https://host.example/hermes', selectedProfile: 'thanos' })
+      .map((session) => session.id),
+    ['thanos-session'],
+  );
 });
 
 test('classifyGatewayFrame distinguishes responses, errors, events, and noise', () => {

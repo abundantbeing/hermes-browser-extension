@@ -183,9 +183,10 @@ Auth uses a single-use WebSocket ticket minted from a signed-in dashboard tab:
 
 - Open the dashboard URL in a normal browser tab and sign in, and keep that tab around.
 - The extension mints the ticket first-party from that tab, then opens the socket.
-- **Test connection** opens the socket and loads models, which confirms the whole path.
+- **Test connection** opens the socket, loads models, and reads the dashboard profile list when supported.
+- Choose a profile in Settings to request a new Browser session scoped to that profile. The selection is reverified before creation, and no API key is stored for this mode.
 
-Limitations in this mode: image attachments are inline-only, and the skills/profiles lists are unavailable because those are REST-only and the dashboard's REST surface is not reachable cross-origin.
+The extension reads `/api/profiles` first-party inside the signed-in dashboard tab, just as it mints the WebSocket ticket there. An explicit profile selection blocks if that route is missing or the profile disappears; choose **Detect from Hermes gateway** to use the dashboard launch profile fallback. Sessions created with an explicit profile request keep a local profile binding because current dashboards list only launch-profile sessions. Image attachments remain inline-only, and skills stay unavailable because those routes are not bridged in dashboard mode.
 
 ## What syncs after connection
 
@@ -195,6 +196,7 @@ After connection, the side panel loads from the connected Hermes gateway:
 - `/api/sessions` — recent Hermes sessions grouped by source.
 - `/v1/skills` — slash-command skill suggestions in the composer.
 - `/v1/profiles` — profile picker when the gateway exposes profile metadata.
+- `/api/profiles` — profile picker in signed-in remote dashboard mode; verified selections are passed to new WebSocket sessions.
 - `/v1/capabilities` — feature flags such as audio transcription and Browser upload support.
 
 The DOM/context chip should show a non-zero page-context count on normal readable pages. Browser internal pages such as `chrome://extensions` are intentionally restricted.
