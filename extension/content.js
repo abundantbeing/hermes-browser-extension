@@ -227,6 +227,7 @@ function collectContext(options = {}) {
   const text = collectReadablePageText(document);
   return {
     ok: true,
+    pageContentTrust: 'untrusted',
     title: document.title || '',
     url: location.href,
     selectedText: clamp(redact(selection), Math.min(limit, 8_000)),
@@ -234,6 +235,112 @@ function collectContext(options = {}) {
     meta: pageMeta(),
     capturedAt: new Date().toISOString(),
   };
+}
+
+const BROWSER_ACTION_TYPES = new Set(['getSnapshot', 'screenshot', 'scroll', 'click', 'typeText', 'select', 'openUrl']);
+const MUTATING_BROWSER_ACTIONS = new Set(['click', 'typeText', 'select', 'openUrl']);
+const RESTRICTED_BROWSER_URL_TOKENS = ['bank', 'banking', 'checkout', 'payment', 'password', 'passwd', 'wallet', 'crypto', 'coinbase', 'metamask', 'health', 'medical', 'tax', 'irs', 'cra'];
+
+function restrictedBrowserActionUrl(value = '') {
+  let parsed;
+  try {
+    parsed = new URL(String(value || ''));
+  } catch {
+    return true;
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) return true;
+  const lowered = parsed.href.toLowerCase();
+  return RESTRICTED_BROWSER_URL_TOKENS.some((token) => lowered.includes(token));
+}
+
+function browserActionViewport() {
+  return {
+    scrollX: Math.round(globalThis.scrollX || 0),
+    scrollY: Math.round(globalThis.scrollY || 0),
+    width: Math.round(globalThis.innerWidth || 0),
+    height: Math.round(globalThis.innerHeight || 0),
+  };
+}
+
+function browserActionTarget(target = {}) {
+  if (target.selector) {
+    try {
+      const selected = document.querySelector(target.selector);
+      if (selected) return selected;
+    } catch {
+      return null;
+    }
+  }
+  const wanted = String(target.name || target.text || '').trim().toLowerCase();
+  if (!wanted) return null;
+  return Array.from(document.querySelectorAll('button, a[href], input, textarea, select, [role="button"], [role="link"]'))
+    .find((node) => {
+      const label = node.getAttribute?.('aria-label') || node.getAttribute?.('name') || node.innerText || node.textContent || '';
+      return String(label).trim().toLowerCase() === wanted;
+    }) || null;
+}
+
+function isSensitiveOrSubmittingControl(element) {
+  const type = String(element?.getAttribute?.('type') || '').toLowerCase();
+  return type === 'password' || type === 'submit' || type === 'image'
+    || Boolean(element?.closest?.('form')?.querySelector?.('[type="password"]'));
+}
+
+function dispatchBrowserInput(element, type) {
+  element.dispatchEvent(new Event(type, { bubbles: true }));
+}
+
+async function dispatchBrowserAction(action = {}) {
+  const actionType = String(action.type || '');
+  if (!BROWSER_ACTION_TYPES.has(actionType)) return { ok: false, reason: 'unsupported_action', actionType };
+  if (restrictedBrowserActionUrl(location.href)) return { ok: false, reason: 'restricted_url', actionType };
+  if (MUTATING_BROWSER_ACTIONS.has(actionType) && action.approvedByUser !== true) {
+    return { ok: false, reason: 'approval_required', actionType };
+  }
+  if (actionType === 'getSnapshot') {
+    return { ...collectContext(action.options || {}), actionType, viewport: browserActionViewport() };
+  }
+  if (actionType === 'scroll') {
+    const direction = String(action.direction || 'down');
+    const amount = Number(action.amount) || Math.max(120, Math.round((globalThis.innerHeight || 800) * 0.75));
+    const offsets = {
+      up: [0, -amount],
+      down: [0, amount],
+      left: [-amount, 0],
+      right: [amount, 0],
+    };
+    const [left, top] = offsets[direction] || offsets.down;
+    globalThis.scrollBy({ left, top, behavior: 'auto' });
+    return { ok: true, actionType, viewport: browserActionViewport() };
+  }
+  if (actionType === 'screenshot' || actionType === 'openUrl') {
+    return { ok: false, reason: 'background_required', actionType };
+  }
+
+  const element = browserActionTarget(action.target);
+  if (!element) return { ok: false, reason: 'target_not_found', actionType };
+  if (isSensitiveOrSubmittingControl(element)) return { ok: false, reason: 'restricted_target', actionType };
+
+  if (actionType === 'click') {
+    element.click();
+    return { ok: true, actionType };
+  }
+  if (actionType === 'typeText') {
+    if (!('value' in element)) return { ok: false, reason: 'target_not_editable', actionType };
+    element.focus?.();
+    element.value = String(action.value || '');
+    dispatchBrowserInput(element, 'input');
+    dispatchBrowserInput(element, 'change');
+    return { ok: true, actionType };
+  }
+  if (actionType === 'select') {
+    if (element.tagName?.toLowerCase() !== 'select') return { ok: false, reason: 'target_not_select', actionType };
+    element.value = String(action.value || '');
+    dispatchBrowserInput(element, 'input');
+    dispatchBrowserInput(element, 'change');
+    return { ok: true, actionType };
+  }
+  return { ok: false, reason: 'unsupported_action', actionType };
 }
 
 function findBalancedJson(source, token) {
@@ -455,6 +562,12 @@ function cancelPickMode() {
 }
 
 const messageListener = (message, _sender, sendResponse) => {
+  if (message?.type === 'HERMES_BROWSER_ACTION') {
+    dispatchBrowserAction(message.action || {})
+      .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, reason: error?.message || String(error), actionType: message.action?.type || '' }));
+    return true;
+  }
   if (message?.type === 'HERMES_GET_PAGE_CONTEXT') {
     try {
       sendResponse(collectContext(message.options || {}));

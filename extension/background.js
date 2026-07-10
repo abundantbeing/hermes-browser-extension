@@ -15,6 +15,11 @@ import {
   parseYoutubeJson3,
   providerUrlForVideo,
 } from './lib/transcript.mjs';
+import {
+  isRestrictedBrowserUrl,
+  normalizeBrowserActionRequest,
+  validateBrowserActionRequest,
+} from './lib/browser-actions.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 
@@ -52,6 +57,58 @@ async function activeBrowserTabId() {
     return Number.isFinite(tabId) && tabId > 0 ? tabId : null;
   } catch {
     return null;
+  }
+}
+
+async function activeBrowserTab() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tab?.id ? tab : null;
+  } catch {
+    return null;
+  }
+}
+
+async function runBrowserAction(message = {}) {
+  const validation = validateBrowserActionRequest(message.action);
+  if (!validation.ok) return { ok: false, reason: validation.reason };
+
+  const action = normalizeBrowserActionRequest(message.action);
+  if (action.requiresApproval && action.approvedByUser !== true) {
+    return { ok: false, reason: 'approval_required', actionType: action.type };
+  }
+
+  const tab = await activeBrowserTab();
+  if (!tab) return { ok: false, reason: 'no_active_tab', actionType: action.type };
+  if (isRestrictedBrowserUrl(tab.url || '')) {
+    return { ok: false, reason: 'restricted_url', actionType: action.type };
+  }
+
+  if (action.type === 'screenshot') {
+    try {
+      const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+      return { ok: true, actionType: action.type, mimeType: 'image/png', dataUrl };
+    } catch (error) {
+      return { ok: false, reason: error?.message || String(error), actionType: action.type };
+    }
+  }
+
+  if (action.type === 'openUrl') {
+    try {
+      await chrome.tabs.update(tab.id, { url: action.url });
+      return { ok: true, actionType: action.type };
+    } catch (error) {
+      return { ok: false, reason: error?.message || String(error), actionType: action.type };
+    }
+  }
+
+  try {
+    return await chrome.tabs.sendMessage(tab.id, {
+      type: 'HERMES_BROWSER_ACTION',
+      action,
+    });
+  } catch (error) {
+    return { ok: false, reason: error?.message || String(error), actionType: action.type };
   }
 }
 
@@ -286,6 +343,12 @@ chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
   }
 });
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === 'HERMES_RUN_BROWSER_ACTION') {
+    runBrowserAction(message)
+      .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, reason: error?.message || String(error) }));
+    return true;
+  }
   if (message?.type !== 'HERMES_GET_YOUTUBE_TRANSCRIPT') return false;
   getYoutubeTranscript(message)
     .then(sendResponse)

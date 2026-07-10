@@ -74,6 +74,8 @@ import {
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
 import { buildDashboardWsUrl, createGatewayClient, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
 import { mintWsTicket, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
+import { installBrowserActionBridge } from './lib/browser-action-bridge.mjs';
+import { browserActionReceiptCopy } from './lib/browser-actions.mjs';
 import {
   deriveStartupView,
   initialStartupReadiness,
@@ -326,6 +328,62 @@ let connectionProbeDetail = '';
 let connectionProbeTimer = null;
 let connectionProbeInFlight = false;
 let gatewayCapabilities = { ...DEFAULT_GATEWAY_CAPABILITIES };
+
+function requestBrowserActionApproval(action) {
+  return new Promise((resolve) => {
+    document.querySelector('.browser-action-approval-card')?.remove();
+    const card = document.createElement('section');
+    card.className = 'browser-action-approval-card';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    Object.assign(card.style, {
+      position: 'fixed', inset: 'auto 12px 12px 12px', zIndex: '2147483647',
+      padding: '14px', border: '1px solid rgba(245, 158, 11, .7)', borderRadius: '12px',
+      background: '#111827', color: '#f9fafb', boxShadow: '0 18px 50px rgba(0,0,0,.45)',
+    });
+    const title = document.createElement('strong');
+    title.textContent = 'Browser action approval';
+    const copy = document.createElement('p');
+    copy.textContent = browserActionReceiptCopy(action);
+    copy.style.margin = '8px 0 12px';
+    const controls = document.createElement('div');
+    controls.style.display = 'flex';
+    controls.style.gap = '8px';
+    const deny = document.createElement('button');
+    deny.type = 'button';
+    deny.textContent = 'Deny';
+    deny.className = 'browser-action-deny';
+    const approve = document.createElement('button');
+    approve.type = 'button';
+    approve.textContent = 'Approve once';
+    approve.className = 'browser-action-approve';
+    controls.append(deny, approve);
+    card.append(title, copy, controls);
+    document.body.append(card);
+    const finish = (approved) => {
+      card.remove();
+      resolve(approved);
+    };
+    deny.addEventListener('click', () => finish(false), { once: true });
+    approve.addEventListener('click', () => finish(true), { once: true });
+  });
+}
+
+function installRemoteBrowserActionBridge(connection) {
+  // Route browser.action.requested through the sidepanel card, then acknowledge
+  // only sanitized metadata over browser.action.result.
+  connection.browserActionBridge = installBrowserActionBridge({
+    client: connection.client,
+    sessionId: () => connection.wsSessionId,
+    runtime: chrome.runtime,
+    requestApproval: requestBrowserActionApproval,
+    onReceipt: ({ result }) => {
+      const detail = result.ok ? `${result.actionType || 'action'} completed` : result.reason || 'action failed';
+      setStatus(result.ok ? 'ok' : 'warn', 'Browser action receipt', detail);
+    },
+  });
+}
+
 let modelsRefreshing = false;
 let contextRefreshingFromButton = false;
 const REFRESH_BUTTON_MIN_BUSY_MS = 520;
@@ -5189,9 +5247,11 @@ async function ensureRemoteWsClient() {
     console.warn('[Hermes] remote: WebSocket connect failed:', error?.message || error);
     throw error;
   }
-  const connection = { client, baseUrl, wsSessionId: '' };
+  const connection = { client, baseUrl, wsSessionId: '', browserActionBridge: null };
+  installRemoteBrowserActionBridge(connection);
   client.on('close', () => {
     if (remoteWsConnection === connection) {
+      connection.browserActionBridge?.dispose?.();
       remoteWsConnection = null;
       markGatewayUnreachable(new Error('Remote dashboard socket closed'));
     }
