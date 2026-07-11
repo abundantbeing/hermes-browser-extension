@@ -8,6 +8,8 @@ Hermes restarts.
 
 from __future__ import annotations
 
+from typing import Any
+
 import hashlib
 import json
 import re
@@ -57,9 +59,7 @@ def _section_key(label: str) -> str:
     return label.strip().lower().replace(" ", "_").replace("/", "_")
 
 
-from typing import Any as _Any
-
-def _meaningful_text_from_content_list(parts: list[_Any]) -> str:
+def _meaningful_text_from_content_list(parts: list[Any]) -> str:
     """Flatten a content array (OpenAI format) into a single string.
 
     A content array looks like:
