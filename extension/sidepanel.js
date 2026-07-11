@@ -796,8 +796,6 @@ async function saveSessionBindingForActiveScope(session) {
     [key]: {
       sessionId: session.id,
       sessionTitle: session.title || session.id,
-      profile: sessionProfileForGateway(session, settings.remoteSessionBindings, normalizeGatewayUrl(settings.gatewayUrl)),
-      gatewayUrl: isRemoteWsMode() ? normalizeGatewayUrl(settings.gatewayUrl) : '',
       pinnedTabId: previousConversationScope.pinnedTabId,
       pinnedTitle: previousConversationScope.pinnedTitle || '',
       pinnedUrl: previousConversationScope.pinnedUrl || '',
@@ -1075,8 +1073,6 @@ async function ensureSessionForActiveScope({ focus = false } = {}) {
       id: binding.sessionId,
       title: binding.sessionTitle || binding.sessionId,
       source: DEFAULT_SETTINGS.sessionSource,
-      profile: binding.gatewayUrl === normalizeGatewayUrl(settings.gatewayUrl) ? binding.profile || '' : '',
-      gatewayUrl: binding.gatewayUrl || '',
     };
     await openHermesSession(session);
     return;
@@ -3685,12 +3681,12 @@ async function applySelectedProfile(profileName = '') {
       remoteWsConnection.wsSessionId = '';
       remoteWsConnection.wsProfile = '';
     }
-    availableSessions = mergeRemoteSessionsForProfile({
+    availableSessions = normalizeHermesSessions(mergeRemoteSessionsForProfile({
       listedSessions: [],
       bindings: settings.remoteSessionBindings,
       gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
       selectedProfile: selected,
-    });
+    }));
     activeSessionRuntime = { ...activeSessionRuntime, sessionId: '', usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
     messages = [];
     await chrome.storage.local.set({ [activeMessagesStorageKey(previousConversationScope)]: [] });
@@ -4038,12 +4034,12 @@ async function loadSessions({ quiet = false } = {}) {
   if (isRemoteWsMode()) {
     // Remote reads go over the WS; only possible once a socket is open.
     if (remoteWsConnection?.client?.readyState !== 1) {
-      availableSessions = mergeRemoteSessionsForProfile({
+      availableSessions = normalizeHermesSessions(mergeRemoteSessionsForProfile({
         listedSessions: [],
         bindings: settings.remoteSessionBindings,
         gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
         selectedProfile: settings.activeProfile,
-      });
+      }));
       updateSessionLabel();
       renderSessionMenu();
       return;
@@ -5893,8 +5889,12 @@ async function ensureRemoteWsClient() {
 
 async function ensureRemoteWsSession(connection) {
   if (connection.wsSessionId) {
-    const currentProfile = activeRemoteWsProfile();
-    if (connection.wsProfile === currentProfile) return connection.wsSessionId;
+    // The session's profile was verified when the session was created, so
+    // reuse only needs the selection to still match it. Requiring live
+    // re-discovery here would fail healthy sends whenever the dashboard tab
+    // is closed; verification stays mandatory for the create path below.
+    const selected = String(settings.activeProfile || '').trim();
+    if (connection.wsProfile === selected) return connection.wsSessionId;
   }
   const profile = await ensureRemoteProfileSelection({ refresh: true });
   const verifiedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);

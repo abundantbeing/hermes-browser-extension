@@ -938,6 +938,9 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   assert.match(source, /rememberRemoteSessionBinding\(/);
   assert.match(source, /sessionProfileForGateway\(/);
   assert.match(source, /Profile request:/);
+  // Reusing an already-verified session must not require live profile
+  // re-discovery; only the create path re-verifies.
+  assert.match(source, /if \(connection\.wsProfile === selected\) return connection\.wsSessionId;/);
   assert.doesNotMatch(source, /WS_METHODS\.sessionList,\s*withGatewayProfile\(/);
   assert.doesNotMatch(source, /WS_METHODS\.promptSubmit,\s*withGatewayProfile\(/);
   assert.match(source, /apiFetch\(`\/api\/sessions\?limit=\$\{limit\}&offset=\$\{offset\}&include_children=true&order=recent`/);
