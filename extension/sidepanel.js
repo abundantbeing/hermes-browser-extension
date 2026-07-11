@@ -80,11 +80,13 @@ import {
 } from './lib/common.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
 import {
+  assertGatewayProfileAck,
   buildDashboardWsUrl,
   createGatewayClient,
   mergeRemoteSessionsForProfile,
   normalizeRemoteSessionBindings,
   rememberRemoteSessionBinding,
+  remoteSessionIdentity,
   resolveVerifiedGatewayProfile,
   sessionProfileForGateway,
   withGatewayProfile,
@@ -3679,6 +3681,7 @@ async function applySelectedProfile(profileName = '') {
     const label = selected || 'the dashboard launch profile';
     if (remoteWsConnection) {
       remoteWsConnection.wsSessionId = '';
+      remoteWsConnection.wsStoredSessionId = '';
       remoteWsConnection.wsProfile = '';
     }
     availableSessions = normalizeHermesSessions(mergeRemoteSessionsForProfile({
@@ -4210,23 +4213,27 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
     if (normalizeGatewayUrl(settings.gatewayUrl) !== connection.baseUrl) {
       throw new Error('The dashboard changed while the profile session was being created. Try again on the current dashboard.');
     }
-    const id = result?.session_id;
-    if (!id) throw new Error('Dashboard did not return a session id.');
-    connection.wsSessionId = id;
+    // Fail closed BEFORE adopting the session: a missing or mismatched profile
+    // ack means the dashboard may have scoped it to the launch profile.
+    assertGatewayProfileAck(result, profile);
+    const { liveId, storedId } = remoteSessionIdentity(result);
+    if (!liveId || !storedId) throw new Error('Dashboard did not return a session id.');
+    connection.wsSessionId = liveId;
+    connection.wsStoredSessionId = storedId;
     connection.wsProfile = profile;
     const session = normalizeHermesSessions({ sessions: [{
-      id,
+      id: storedId,
       title,
       source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
       profile,
       gateway_url: connection.baseUrl,
       last_active: Date.now(),
     }] })[0]
-      || { id, title, source: settings.sessionSource };
-    availableSessions = normalizeHermesSessions({ sessions: [session, ...availableSessions.filter((item) => item.id !== id)] });
+      || { id: storedId, title, source: settings.sessionSource };
+    availableSessions = normalizeHermesSessions({ sessions: [session, ...availableSessions.filter((item) => item.id !== storedId)] });
     settings = {
       ...settings,
-      sessionId: id,
+      sessionId: storedId,
       sessionTitle: session.title || title,
       extensionPreferredModel: preferredBinding,
       ...(profile ? {} : {
@@ -4234,12 +4241,12 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
         modelContextTokens: preferredModel?.contextTokens || preferredBinding?.contextTokens || settings.modelContextTokens || 0,
         sessionModelBindings: {
           ...(settings.sessionModelBindings || {}),
-          [id]: preferredBinding,
+          [storedId]: preferredBinding,
         },
       }),
       sessionModelOptionBindings: {
         ...(settings.sessionModelOptionBindings || {}),
-        [id]: preferredOptions,
+        [storedId]: preferredOptions,
       },
       remoteSessionBindings: rememberRemoteSessionBinding(settings.remoteSessionBindings, session, {
         profile,
@@ -4247,7 +4254,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
       }),
       modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
     };
-    activeSessionRuntime = { ...activeSessionRuntime, sessionId: id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
+    activeSessionRuntime = { ...activeSessionRuntime, sessionId: storedId, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
     messages = [];
     await chrome.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
     await saveSessionBindingForActiveScope(session);
@@ -4321,16 +4328,24 @@ async function openHermesSession(session) {
       }
       const connection = await ensureRemoteWsClient();
       if (connection.baseUrl !== verifiedBaseUrl) throw new Error('The dashboard changed before this session could be resumed. Try again.');
-      await connection.client.request(
+      const result = await connection.client.request(
         WS_METHODS.sessionResume,
         withGatewayProfile({ session_id: session.id }, sessionProfile),
       );
       if (normalizeGatewayUrl(settings.gatewayUrl) !== connection.baseUrl) {
         throw new Error('The dashboard changed while this session was being resumed. Try again on the current dashboard.');
       }
-      connection.wsSessionId = session.id;
+      assertGatewayProfileAck(result, sessionProfile);
+      // Resume returns a FRESH live id for this socket plus the durable stored
+      // key (`resumed`/`session_key`, which may differ from the requested id
+      // after compression-chain resolution). Live RPCs need the former; menus
+      // and bindings keep the latter.
+      const { liveId, storedId } = remoteSessionIdentity(result, session.id);
+      if (!liveId) throw new Error('Dashboard did not return a live session id on resume.');
+      connection.wsSessionId = liveId;
+      connection.wsStoredSessionId = storedId;
       connection.wsProfile = sessionProfile;
-      openedSession = { ...session, profile: sessionProfile };
+      openedSession = { ...session, id: storedId, profile: sessionProfile };
     } catch (error) {
       setStatus('error', 'Could not open session', error?.message || String(error));
       return;
@@ -4363,10 +4378,14 @@ async function openHermesSession(session) {
 async function loadSessionMessages(sessionId = settings.sessionId) {
   if (isRemoteWsMode()) {
     if (remoteWsConnection?.client?.readyState !== 1) return;
+    // session.history is a live-session RPC: it takes the transport id of the
+    // session attached to THIS socket, never the durable stored id.
+    const liveId = remoteWsConnection.wsSessionId;
+    if (!liveId) return;
     try {
       const result = await remoteWsConnection.client.request(
         WS_METHODS.sessionHistory,
-        { session_id: sessionId },
+        { session_id: liveId },
       );
       const rows = Array.isArray(result?.messages) ? result.messages : [];
       messages = rows
@@ -5876,7 +5895,7 @@ async function ensureRemoteWsClient() {
     client.close();
     throw new Error('The dashboard URL changed while the WebSocket was connecting. Connect again to the current dashboard.');
   }
-  const connection = { client, baseUrl, wsSessionId: '', wsProfile: '' };
+  const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '', wsProfile: '' };
   client.on('close', () => {
     if (remoteWsConnection === connection) {
       remoteWsConnection = null;
@@ -5913,11 +5932,16 @@ async function ensureRemoteWsSession(connection) {
   if (normalizeGatewayUrl(settings.gatewayUrl) !== connection.baseUrl) {
     throw new Error('The dashboard changed while the profile session was being created. Try again on the current dashboard.');
   }
-  connection.wsSessionId = result?.session_id || '';
-  if (!connection.wsSessionId) throw new Error('Dashboard did not return a session id.');
+  // Fail closed BEFORE adopting the session: a missing or mismatched profile
+  // ack means the dashboard may have scoped it to the launch profile.
+  assertGatewayProfileAck(result, profile);
+  const { liveId, storedId } = remoteSessionIdentity(result);
+  if (!liveId || !storedId) throw new Error('Dashboard did not return a session id.');
+  connection.wsSessionId = liveId;
+  connection.wsStoredSessionId = storedId;
   connection.wsProfile = profile;
   const session = normalizeHermesSessions({ sessions: [{
-    id: connection.wsSessionId,
+    id: storedId,
     title: settings.sessionTitle,
     source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
     profile,
@@ -5926,20 +5950,21 @@ async function ensureRemoteWsSession(connection) {
   }] })[0];
   availableSessions = normalizeHermesSessions({ sessions: [
     session,
-    ...availableSessions.filter((item) => item.id !== connection.wsSessionId),
+    ...availableSessions.filter((item) => item.id !== storedId),
   ] });
-  // Reflect the dashboard-assigned id so the session menu/label track the live
-  // remote session instead of the local default placeholder.
+  // Reflect the dashboard-assigned STORED id so the session menu/label track a
+  // durable identity that survives socket replacement; the live id stays on
+  // the connection for RPCs.
   settings = {
     ...settings,
-    sessionId: connection.wsSessionId,
+    sessionId: storedId,
     remoteSessionBindings: rememberRemoteSessionBinding(settings.remoteSessionBindings, session, {
       profile,
       gatewayUrl: connection.baseUrl,
     }),
     sessionModelOptionBindings: {
       ...(settings.sessionModelOptionBindings || {}),
-      [connection.wsSessionId]: preferredOptions,
+      [storedId]: preferredOptions,
     },
   };
   if (binding && !profile) {
@@ -5949,7 +5974,7 @@ async function ensureRemoteWsSession(connection) {
       modelContextTokens: modelForBinding(binding)?.contextTokens || binding.contextTokens || settings.modelContextTokens || 0,
       sessionModelBindings: {
         ...(settings.sessionModelBindings || {}),
-        [connection.wsSessionId]: binding,
+        [storedId]: binding,
       },
       modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
     };

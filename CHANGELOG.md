@@ -4,6 +4,8 @@
 
 - Added profile discovery for signed-in remote dashboard mode through a fixed, read-only first-party `/api/profiles` request.
 - Passed a reverified Browser profile selection to new dashboard WebSocket session requests, retained that binding for safe resume, and failed closed when an explicit selection could not be reverified. Detect mode keeps the launch-profile fallback and stores no API key.
+- Tracked dashboard sessions by their durable `stored_session_id` while using the per-socket live id for history, prompt, steer, and interrupt calls, so resumed sessions keep working after the socket is replaced.
+- Required the dashboard to echo the effective profile on `session.create`/`session.resume` before adopting an explicitly scoped session, closing the discovery-to-create race where a deleted profile silently resolved to the launch scope.
 
 ## v0.1.10 — 2026-07-07
 

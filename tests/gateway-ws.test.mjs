@@ -2,12 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  assertGatewayProfileAck,
   buildDashboardWsUrl,
   classifyGatewayFrame,
   createGatewayClient,
   mergeRemoteSessionsForProfile,
   normalizeRemoteSessionBindings,
   rememberRemoteSessionBinding,
+  remoteSessionIdentity,
   resolveVerifiedGatewayProfile,
   sessionProfileForGateway,
   withGatewayProfile,
@@ -64,6 +66,49 @@ test('buildDashboardWsUrl upgrades scheme, keeps path prefix, encodes ticket', (
 test('WS_METHODS exposes Desktop/TUI session steering instead of slash-command injection', () => {
   assert.equal(WS_METHODS.sessionSteer, 'session.steer');
   assert.equal(WS_METHODS.promptSubmit, 'prompt.submit');
+});
+
+test('remoteSessionIdentity keeps live and stored session ids distinct across create, disconnect, and resume', () => {
+  // session.create returns the live transport id plus the durable state.db key.
+  const created = remoteSessionIdentity({ session_id: 'live-1', stored_session_id: 'stored-a' });
+  assert.deepEqual(created, { liveId: 'live-1', storedId: 'stored-a' });
+  assert.notEqual(created.liveId, created.storedId);
+
+  // The socket is replaced; resume is requested with the STORED id and returns
+  // a fresh live id. Live RPCs (history/prompt/interrupt) must use liveId,
+  // while menus/bindings keep storedId.
+  const resumed = remoteSessionIdentity(
+    { session_id: 'live-2', session_key: 'stored-a', resumed: 'stored-a' },
+    created.storedId,
+  );
+  assert.deepEqual(resumed, { liveId: 'live-2', storedId: 'stored-a' });
+  assert.notEqual(resumed.liveId, created.liveId);
+
+  // Compression-chain resolution: resume may re-anchor to a descendant key.
+  assert.deepEqual(
+    remoteSessionIdentity({ session_id: 'live-3', resumed: 'stored-b', session_key: 'stored-b' }, 'stored-a'),
+    { liveId: 'live-3', storedId: 'stored-b' },
+  );
+
+  // Older gateways without stored ids fall back to the requested, then live id.
+  assert.deepEqual(remoteSessionIdentity({ session_id: 'live-4' }, 'requested-x'), { liveId: 'live-4', storedId: 'requested-x' });
+  assert.deepEqual(remoteSessionIdentity({ session_id: 'live-5' }), { liveId: 'live-5', storedId: 'live-5' });
+  assert.deepEqual(remoteSessionIdentity({}), { liveId: '', storedId: '' });
+});
+
+test('assertGatewayProfileAck fails closed on missing or mismatched effective profile', () => {
+  // Detect mode needs no ack.
+  assert.equal(assertGatewayProfileAck({}, ''), '');
+  assert.equal(assertGatewayProfileAck({ profile: '' }, ''), '');
+  // Explicit selection with a matching ack passes.
+  assert.equal(assertGatewayProfileAck({ profile: 'research' }, ' research '), 'research');
+  // Missing ack (older dashboard) fails closed.
+  assert.throws(() => assertGatewayProfileAck({}, 'research'), /does not confirm profile scope/);
+  assert.throws(() => assertGatewayProfileAck({ profile: null }, 'research'), /does not confirm profile scope/);
+  // The discovery-to-create race: the profile disappeared and the gateway
+  // silently resolved the session to the launch profile.
+  assert.throws(() => assertGatewayProfileAck({ profile: '' }, 'research'), /launch profile/);
+  assert.throws(() => assertGatewayProfileAck({ profile: 'default' }, 'research'), /"default" instead of "research"/);
 });
 
 test('withGatewayProfile adds a trimmed profile without mutating the input', () => {

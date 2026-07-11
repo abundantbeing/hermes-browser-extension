@@ -52,6 +52,44 @@ export function resolveVerifiedGatewayProfile({ selectedProfile = '', profiles =
   return selected;
 }
 
+// session.create/session.resume return TWO identities: `session_id` is the
+// live transport/runtime id (valid for prompt.submit, session.steer,
+// session.history, session.interrupt on the CURRENT socket only), while
+// `stored_session_id` (create) / `resumed` / `session_key` (resume) is the
+// durable state.db key that survives socket replacement. Menus, bindings, and
+// persisted settings must use the stored id; live RPCs must use the live id.
+export function remoteSessionIdentity(result = {}, requestedId = '') {
+  const liveId = String(result?.session_id || '').trim();
+  const storedId = String(
+    result?.stored_session_id
+    || result?.resumed
+    || result?.session_key
+    || requestedId
+    || liveId
+    || '',
+  ).trim();
+  return { liveId, storedId };
+}
+
+// An explicit profile request is only trusted when the dashboard echoes the
+// effective profile back on the create/resume response. Missing ack (older
+// dashboards) and mismatched ack (profile deleted or renamed between discovery
+// and the RPC, which current gateways silently resolve to the launch profile)
+// both fail closed. Detect mode (empty request) needs no ack.
+export function assertGatewayProfileAck(result = {}, requestedProfile = '') {
+  const requested = String(requestedProfile || '').trim();
+  if (!requested) return '';
+  const ack = result?.profile;
+  if (ack === undefined || ack === null) {
+    throw new Error(`This Hermes dashboard does not confirm profile scope on sessions, so the "${requested}" selection cannot be verified. Update Hermes or choose Detect from Hermes gateway.`);
+  }
+  const effective = String(ack).trim();
+  if (effective !== requested) {
+    throw new Error(`Hermes scoped the session to ${effective ? `"${effective}"` : 'the launch profile'} instead of "${requested}". Nothing was saved; refresh profiles and try again.`);
+  }
+  return requested;
+}
+
 export function normalizeRemoteSessionBindings(bindings = {}, limit = 100) {
   if (!bindings || typeof bindings !== 'object' || Array.isArray(bindings)) return {};
   const rows = Object.entries(bindings)

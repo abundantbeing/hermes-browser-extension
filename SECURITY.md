@@ -54,7 +54,7 @@ The Hermes API key/browser token is stored in `chrome.storage.local` for the ext
 
 Do not publish screenshots or exported extension storage containing the key.
 
-Remote dashboard mode does not store an API key. It mints a single-use WebSocket ticket in a signed-in dashboard tab and may read that dashboard's profile list through a fixed first-party `GET /api/profiles`. The bridge is not a generic dashboard request proxy: local profile paths and environment-state fields are discarded before results cross into the extension. Explicit profile selections fail closed when discovery is stale or unavailable; only Detect mode may fall back to the dashboard launch profile.
+Remote dashboard mode does not store an API key. It mints a single-use WebSocket ticket in a signed-in dashboard tab and may read that dashboard's profile list through a fixed first-party `GET /api/profiles`. The bridge is not a generic dashboard request proxy: local profile paths and environment-state fields are discarded before results cross into the extension. Explicit profile selections fail closed when discovery is stale or unavailable, and again at session create/resume unless the dashboard echoes the same effective profile back; only Detect mode may fall back to the dashboard launch profile.
 
 ## Optional companion plugin
 

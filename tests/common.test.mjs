@@ -941,6 +941,15 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   // Reusing an already-verified session must not require live profile
   // re-discovery; only the create path re-verifies.
   assert.match(source, /if \(connection\.wsProfile === selected\) return connection\.wsSessionId;/);
+  // Live vs stored session identity: create/resume adopt the durable stored id
+  // into settings/menus/bindings, keep the transport id on the connection, and
+  // live RPCs (history) use the live id. The profile ack is checked BEFORE the
+  // session is adopted so an unresolved profile fails closed.
+  assert.match(source, /assertGatewayProfileAck\(result, profile\);\s*const \{ liveId, storedId \} = remoteSessionIdentity\(result\);/);
+  assert.match(source, /assertGatewayProfileAck\(result, sessionProfile\);/);
+  assert.match(source, /connection\.wsStoredSessionId = storedId;/);
+  assert.match(source, /WS_METHODS\.sessionHistory,\s*\{ session_id: liveId \}/);
+  assert.doesNotMatch(source, /connection\.wsSessionId = session\.id;/);
   assert.doesNotMatch(source, /WS_METHODS\.sessionList,\s*withGatewayProfile\(/);
   assert.doesNotMatch(source, /WS_METHODS\.promptSubmit,\s*withGatewayProfile\(/);
   assert.match(source, /apiFetch\(`\/api\/sessions\?limit=\$\{limit\}&offset=\$\{offset\}&include_children=true&order=recent`/);
@@ -1547,7 +1556,7 @@ test('new API and dashboard sessions use future-session runtime option preferenc
   assert.match(source, /reasoning_effort: preferredOptions\.thinkingEnabled \? preferredOptions\.reasoningEffort : 'none'/);
   assert.match(source, /fast: preferredOptions\.fastMode/);
   assert.match(source, /model_options: buildHermesModelOptions\(preferredOptions\)/);
-  assert.match(source, /sessionModelOptionBindings:[\s\S]*?\[id\]: preferredOptions/);
+  assert.match(source, /sessionModelOptionBindings:[\s\S]*?\[storedId\]: preferredOptions/);
   assert.match(source, /sessionModelOptionBindings:[\s\S]*?\[session\.id\]: preferredOptions/);
 });
 
