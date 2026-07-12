@@ -949,6 +949,15 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   assert.match(source, /assertGatewayProfileAck\(result, sessionProfile\);/);
   assert.match(source, /connection\.wsStoredSessionId = storedId;/);
   assert.match(source, /WS_METHODS\.sessionHistory,\s*\{ session_id: liveId \}/);
+  // Capability gate: every profile-scoped session RPC is preceded by
+  // assertRemoteProfileSessionSupport, and the gateway.ready listener is
+  // attached BEFORE the socket connects so the capability frame is never
+  // missed. Re-anchored resumes drop the stale binding.
+  assert.match(source, /await assertRemoteProfileSessionSupport\(connection, profile\);\s*const result = await connection\.client\.request\(WS_METHODS\.sessionCreate/s);
+  assert.match(source, /await assertRemoteProfileSessionSupport\(connection, sessionProfile\);\s*const result = await connection\.client\.request\(\s*WS_METHODS\.sessionResume/s);
+  assert.match(source, /await assertRemoteProfileSessionSupport\(connection, profile\);\s*const binding = currentEffectiveModelBinding\(\);/s);
+  assert.match(source, /readyListenerOff = client\.on\(WS_EVENTS\.ready,[\s\S]*?await client\.connect\(wsUrl\)/);
+  assert.match(source, /forgetRemoteSessionBinding\(settings\.remoteSessionBindings, session\.id\)/);
   assert.doesNotMatch(source, /connection\.wsSessionId = session\.id;/);
   assert.doesNotMatch(source, /WS_METHODS\.sessionList,\s*withGatewayProfile\(/);
   assert.doesNotMatch(source, /WS_METHODS\.promptSubmit,\s*withGatewayProfile\(/);

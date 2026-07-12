@@ -71,11 +71,27 @@ export function remoteSessionIdentity(result = {}, requestedId = '') {
   return { liveId, storedId };
 }
 
+// Capability gate, checked BEFORE any profile-scoped session RPC is sent.
+// Gateways that support profile-scoped sessions advertise
+// `capabilities.session_profiles` on the gateway.ready event; legacy gateways
+// (which would silently create the session in the launch scope) advertise
+// nothing, so an explicit selection is rejected without ever creating a
+// server-side session. Detect mode (empty request) is never gated.
+export function assertProfileSessionCapability(capabilities, requestedProfile = '') {
+  const requested = String(requestedProfile || '').trim();
+  if (!requested) return '';
+  if (!capabilities?.session_profiles) {
+    throw new Error(`This Hermes dashboard does not support profile-scoped sessions, so "${requested}" cannot be requested. Update Hermes or choose Detect from Hermes gateway.`);
+  }
+  return requested;
+}
+
 // An explicit profile request is only trusted when the dashboard echoes the
-// effective profile back on the create/resume response. Missing ack (older
-// dashboards) and mismatched ack (profile deleted or renamed between discovery
-// and the RPC, which current gateways silently resolve to the launch profile)
-// both fail closed. Detect mode (empty request) needs no ack.
+// effective profile back on the create/resume response. Missing ack and
+// mismatched ack (profile deleted or renamed between discovery and the RPC,
+// which would silently resolve to the launch profile) both fail closed. This
+// is the post-RPC half of the contract; assertProfileSessionCapability gates
+// the request itself. Detect mode (empty request) needs no ack.
 export function assertGatewayProfileAck(result = {}, requestedProfile = '') {
   const requested = String(requestedProfile || '').trim();
   if (!requested) return '';
@@ -110,6 +126,12 @@ export function normalizeRemoteSessionBindings(bindings = {}, limit = 100) {
     .sort((a, b) => b[1].updatedAt - a[1].updatedAt)
     .slice(0, Math.max(1, Number(limit) || 100));
   return Object.fromEntries(rows);
+}
+
+export function forgetRemoteSessionBinding(bindings = {}, sessionId = '') {
+  const normalized = normalizeRemoteSessionBindings(bindings);
+  delete normalized[String(sessionId || '').trim()];
+  return normalized;
 }
 
 export function rememberRemoteSessionBinding(bindings = {}, session = {}, { profile = '', gatewayUrl = '', now = Date.now() } = {}) {

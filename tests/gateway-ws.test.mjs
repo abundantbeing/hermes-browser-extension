@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   assertGatewayProfileAck,
+  assertProfileSessionCapability,
   buildDashboardWsUrl,
   classifyGatewayFrame,
   createGatewayClient,
+  forgetRemoteSessionBinding,
   mergeRemoteSessionsForProfile,
   normalizeRemoteSessionBindings,
   rememberRemoteSessionBinding,
@@ -109,6 +111,71 @@ test('assertGatewayProfileAck fails closed on missing or mismatched effective pr
   // silently resolved the session to the launch profile.
   assert.throws(() => assertGatewayProfileAck({ profile: '' }, 'research'), /launch profile/);
   assert.throws(() => assertGatewayProfileAck({ profile: 'default' }, 'research'), /"default" instead of "research"/);
+});
+
+test('assertProfileSessionCapability refuses explicit profiles without the gateway capability', () => {
+  // Detect mode is never gated.
+  assert.equal(assertProfileSessionCapability(null, ''), '');
+  assert.equal(assertProfileSessionCapability({}, ''), '');
+  // Supported gateway passes the trimmed selection through.
+  assert.equal(assertProfileSessionCapability({ session_profiles: true }, ' research '), 'research');
+  // Legacy gateway (no capabilities, or capabilities without the flag).
+  assert.throws(() => assertProfileSessionCapability(null, 'research'), /does not support profile-scoped sessions/);
+  assert.throws(() => assertProfileSessionCapability({}, 'research'), /does not support profile-scoped sessions/);
+  assert.throws(() => assertProfileSessionCapability({ session_profiles: false }, 'research'), /does not support profile-scoped sessions/);
+});
+
+test('legacy gateway without the capability gets NO profile-scoped session RPC at all', async () => {
+  // The reviewer's regression: an explicit selection against a dashboard that
+  // does not advertise session_profiles must not create a server-side session,
+  // not merely skip the local binding. Simulate the wire: connect, receive a
+  // legacy gateway.ready (skin only, no capabilities), gate, and assert no
+  // session.create frame was ever written to the socket.
+  const client = createGatewayClient({ WebSocketImpl: FakeWebSocket });
+  let capabilities = null;
+  client.on('gateway.ready', (event) => {
+    capabilities = (event?.payload && typeof event.payload.capabilities === 'object' && event.payload.capabilities) || {};
+  });
+  const connecting = client.connect('wss://host/api/ws?ticket=t');
+  FakeWebSocket.last._open();
+  await connecting;
+  FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: { skin: 'default' } } });
+
+  assert.deepEqual(capabilities, {});
+  assert.throws(() => {
+    assertProfileSessionCapability(capabilities, 'research');
+    client.request(WS_METHODS.sessionCreate, withGatewayProfile({ title: 't' }, 'research'));
+  }, /does not support profile-scoped sessions/);
+  const sessionFrames = FakeWebSocket.last.sent
+    .map((raw) => JSON.parse(raw))
+    .filter((frame) => String(frame.method || '').startsWith('session.'));
+  assert.deepEqual(sessionFrames, []);
+
+  // A gateway that advertises the capability lets the same flow proceed.
+  const modern = createGatewayClient({ WebSocketImpl: FakeWebSocket });
+  let modernCapabilities = null;
+  modern.on('gateway.ready', (event) => {
+    modernCapabilities = event?.payload?.capabilities || {};
+  });
+  const modernConnecting = modern.connect('wss://host/api/ws?ticket=t2');
+  FakeWebSocket.last._open();
+  await modernConnecting;
+  FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: { skin: 'default', capabilities: { session_profiles: true } } } });
+  assert.equal(assertProfileSessionCapability(modernCapabilities, 'research'), 'research');
+  modern.request(WS_METHODS.sessionCreate, withGatewayProfile({ title: 't' }, 'research')).catch(() => {});
+  const modernFrame = JSON.parse(FakeWebSocket.last.sent.at(-1));
+  assert.equal(modernFrame.method, 'session.create');
+  assert.equal(modernFrame.params.profile, 'research');
+});
+
+test('forgetRemoteSessionBinding drops a re-anchored session id', () => {
+  const bindings = rememberRemoteSessionBinding({}, { id: 'old-key', title: 'Chat' }, {
+    profile: 'research',
+    gatewayUrl: 'https://host.example/hermes',
+    now: 10,
+  });
+  assert.deepEqual(Object.keys(forgetRemoteSessionBinding(bindings, 'old-key')), []);
+  assert.deepEqual(Object.keys(forgetRemoteSessionBinding(bindings, 'other')), ['old-key']);
 });
 
 test('withGatewayProfile adds a trimmed profile without mutating the input', () => {

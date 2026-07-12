@@ -81,8 +81,10 @@ import {
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
 import {
   assertGatewayProfileAck,
+  assertProfileSessionCapability,
   buildDashboardWsUrl,
   createGatewayClient,
+  forgetRemoteSessionBinding,
   mergeRemoteSessionsForProfile,
   normalizeRemoteSessionBindings,
   rememberRemoteSessionBinding,
@@ -3558,6 +3560,15 @@ function renderProfiles() {
     els.profileStatus.textContent = `Selected profile ${explicit} is unavailable. Refresh profiles or choose Detect from Hermes gateway.`;
     return;
   }
+  // "Profiles can be listed" and "profile-scoped sessions are supported" are
+  // separate dashboard capabilities; say so instead of letting a selection
+  // fail only when the session RPC is attempted.
+  if (isRemoteWsMode() && remoteWsConnection?.capabilities && !remoteWsConnection.capabilities.session_profiles) {
+    els.profileStatus.textContent = explicit
+      ? `This dashboard lists profiles but does not support profile-scoped sessions. ${explicit} cannot be used; update Hermes or choose Detect from Hermes gateway.`
+      : `${availableProfiles.length || 'No'} profiles listed · profile-scoped sessions need a newer Hermes dashboard; using the launch profile.`;
+    return;
+  }
   if (isRemoteWsMode() && !explicit) {
     els.profileStatus.textContent = availableProfiles.length
       ? `${availableProfiles.length} profiles available · using dashboard launch profile`
@@ -3651,6 +3662,11 @@ async function applySelectedProfile(profileName = '') {
   }
   if (isRemoteWsMode() && selected) {
     try {
+      // Known-legacy dashboard: refuse the selection outright instead of
+      // persisting a choice that every session RPC would reject.
+      if (remoteWsConnection?.capabilities) {
+        assertProfileSessionCapability(remoteWsConnection.capabilities, selected);
+      }
       resolveVerifiedGatewayProfile({
         selectedProfile: selected,
         profiles: availableProfiles,
@@ -4201,6 +4217,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
     const verifiedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);
     const connection = await ensureRemoteWsClient();
     if (connection.baseUrl !== verifiedBaseUrl) throw new Error('The dashboard changed before the profile session could be created. Try again.');
+    await assertRemoteProfileSessionSupport(connection, profile);
     const result = await connection.client.request(WS_METHODS.sessionCreate, withGatewayProfile({
       title,
       ...(profile ? {} : {
@@ -4328,6 +4345,7 @@ async function openHermesSession(session) {
       }
       const connection = await ensureRemoteWsClient();
       if (connection.baseUrl !== verifiedBaseUrl) throw new Error('The dashboard changed before this session could be resumed. Try again.');
+      await assertRemoteProfileSessionSupport(connection, sessionProfile);
       const result = await connection.client.request(
         WS_METHODS.sessionResume,
         withGatewayProfile({ session_id: session.id }, sessionProfile),
@@ -4346,6 +4364,12 @@ async function openHermesSession(session) {
       connection.wsStoredSessionId = storedId;
       connection.wsProfile = sessionProfile;
       openedSession = { ...session, id: storedId, profile: sessionProfile };
+      if (storedId !== String(session.id || '')) {
+        // Compression re-anchored the conversation to a descendant key; drop
+        // the stale parent row and binding so the menu shows one entry.
+        availableSessions = availableSessions.filter((item) => item.id !== session.id);
+        settings = { ...settings, remoteSessionBindings: forgetRemoteSessionBinding(settings.remoteSessionBindings, session.id) };
+      }
     } catch (error) {
       setStatus('error', 'Could not open session', error?.message || String(error));
       return;
@@ -5885,6 +5909,16 @@ async function ensureRemoteWsClient() {
     wsUrl.replace(/ticket=[^&]+/, `ticket=<${String(ticket.ticket || '').length} chars>`),
   );
   const client = createGatewayClient();
+  // Attach BEFORE connect: the gateway emits gateway.ready immediately after
+  // accept, so a listener added after the handshake could miss the frame.
+  let readyCapabilities = null;
+  let readyListenerOff = null;
+  const readyReceived = new Promise((resolve) => {
+    readyListenerOff = client.on(WS_EVENTS.ready, (event) => {
+      readyCapabilities = (event?.payload && typeof event.payload.capabilities === 'object' && event.payload.capabilities) || {};
+      resolve();
+    });
+  });
   try {
     await client.connect(wsUrl);
   } catch (error) {
@@ -5895,7 +5929,22 @@ async function ensureRemoteWsClient() {
     client.close();
     throw new Error('The dashboard URL changed while the WebSocket was connecting. Connect again to the current dashboard.');
   }
-  const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '', wsProfile: '' };
+  const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '', wsProfile: '', capabilities: null };
+  // Gateways that support profile-scoped sessions advertise capabilities on
+  // gateway.ready; legacy gateways send only the skin, so `capabilities`
+  // resolves to {} and every profile-scoped RPC is refused before it is sent.
+  // The timeout covers a gateway that never emits ready at all (treated as
+  // legacy).
+  connection.readyPromise = Promise.race([
+    readyReceived,
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]).then(() => {
+    readyListenerOff?.();
+    connection.capabilities = readyCapabilities || {};
+    setGatewayCapabilities({ ...gatewayCapabilities, profileSessions: Boolean(connection.capabilities.session_profiles) });
+    renderProfiles();
+    return connection.capabilities;
+  });
   client.on('close', () => {
     if (remoteWsConnection === connection) {
       remoteWsConnection = null;
@@ -5904,6 +5953,15 @@ async function ensureRemoteWsClient() {
   });
   remoteWsConnection = connection;
   return connection;
+}
+
+// Refuse to send a profile-scoped session RPC to a gateway that has not
+// advertised support for it; a legacy gateway would otherwise create the
+// session in the launch scope before the client could notice.
+async function assertRemoteProfileSessionSupport(connection, profile) {
+  if (!String(profile || '').trim()) return '';
+  await connection.readyPromise;
+  return assertProfileSessionCapability(connection.capabilities, profile);
 }
 
 async function ensureRemoteWsSession(connection) {
@@ -5918,6 +5976,7 @@ async function ensureRemoteWsSession(connection) {
   const profile = await ensureRemoteProfileSelection({ refresh: true });
   const verifiedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);
   if (connection.baseUrl !== verifiedBaseUrl) throw new Error('The dashboard changed before the profile session could be created. Try again.');
+  await assertRemoteProfileSessionSupport(connection, profile);
   const binding = currentEffectiveModelBinding();
   const preferredOptions = preferredModelOptionsForNewSession();
   const result = await connection.client.request(WS_METHODS.sessionCreate, withGatewayProfile({
