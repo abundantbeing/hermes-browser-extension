@@ -429,6 +429,8 @@ test('isRestrictedUrl blocks browser internals and sensitive account categories'
   assert.equal(isRestrictedUrl('https://example.com/docs#%77allet'), true);
   assert.equal(isRestrictedUrl('https://example.com/%62ank'), true);
   assert.equal(isRestrictedUrl('https://example.com/search?q=my%62ank%'), true);
+  assert.equal(isRestrictedUrl('https://example.com/docs?api_key=browser-secret-value#token=abc'), true);
+  assert.equal(isRestrictedUrl('https://example.com/docs?next=public'), false);
 });
 
 test('privacySafeTabForPrompt redacts sensitive tab titles and URLs before prompt assembly', () => {

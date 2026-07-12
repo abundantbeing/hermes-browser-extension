@@ -51,6 +51,7 @@ const SENSITIVE_URL_PATTERNS = [
   /\/payments?/i,
   /\/medical|healthcare|patient|mychart/i,
   /\/tax|irs\.gov|ssa\.gov/i,
+  /(?:^|[?#&;\s])(?:api[_-]?key|access[_-]?token|auth[_-]?token|refresh[_-]?token|session[_-]?token|token|password|passwd|secret|private[_-]?key)=/i,
 ];
 
 export function clampText(value = '', maxChars = 12_000) {

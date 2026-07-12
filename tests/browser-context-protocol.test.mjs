@@ -31,7 +31,7 @@ test('buildBrowserContextPayload normalizes browser context into a stable protoc
       id: '7',
       active: true,
       title: '<img src=x onerror=alert(1)>',
-      url: 'https://example.com/private?api_key=browser-secret-value',
+      url: 'https://example.com/private/docs',
       favIconUrl: 'https://example.com/favicon.ico',
     },
     tabs: [
@@ -90,7 +90,8 @@ test('Browser Context Protocol restricts sensitive query and hash URL fragments'
       { id: 2, title: 'Docs Hash', url: 'https://example.com/docs#%77allet' },
       { id: 3, title: 'Encoded Path', url: 'https://example.com/%62ank' },
       { id: 4, title: 'Malformed Query', url: 'https://example.com/search?q=my%62ank%' },
-      { id: 5, title: 'Public Docs', url: 'https://example.com/docs/browser-context' },
+      { id: 5, title: 'Credential Query', url: 'https://example.com/docs?api_key=browser-secret-value#token=abc' },
+      { id: 6, title: 'Public Docs', url: 'https://example.com/docs/browser-context' },
     ],
     selectedTabs: [{ id: 2, title: 'Docs Hash', url: 'https://example.com/docs#%77allet' }],
     pageContext: { selectedText: '', text: '' },
@@ -103,7 +104,9 @@ test('Browser Context Protocol restricts sensitive query and hash URL fragments'
   assert.equal(payload.tabs[1].title, '(restricted tab)');
   assert.equal(payload.tabs[2].title, '(restricted tab)');
   assert.equal(payload.tabs[3].title, '(restricted tab)');
-  assert.equal(payload.tabs[4].title, 'Public Docs');
+  assert.equal(payload.tabs[4].title, '(restricted tab)');
+  assert.equal(payload.tabs[4].url, '(omitted by privacy guard)');
+  assert.equal(payload.tabs[5].title, 'Public Docs');
   assert.equal(payload.selectedTabs[0].url, '(omitted by privacy guard)');
 });
 
