@@ -460,6 +460,49 @@ test('privacySafeTabForPrompt redacts sensitive tab titles and URLs before promp
   assert.match(prompt, /Active tab URL: \(omitted by privacy guard\)/);
 });
 
+test('connection settings expose a three-mode product schema without removing legacy transports', () => {
+  assert.equal(DEFAULT_SETTINGS.connectionSchemaVersion, 1);
+  assert.equal(DEFAULT_SETTINGS.connectionMode, 'local');
+  assert.equal(DEFAULT_SETTINGS.connectionTransport, 'local-api');
+  assert.equal(GATEWAY_MODES.some((mode) => mode.value === 'local-api'), true);
+  assert.equal(GATEWAY_MODES.some((mode) => mode.value === 'remote-api'), true);
+  assert.equal(GATEWAY_MODES.some((mode) => mode.value === 'remote-dashboard'), true);
+});
+
+test('sidepanel hydrates and saves product mode separately from compatibility transport', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /migrateConnectionSettings\(stored\.hermesBrowserSettings\s*\|\|\s*\{\}\)/);
+  assert.match(source, /connectionMode:\s*normalizeConnectionMode/);
+  assert.match(source, /connectionTransport/);
+  assert.match(source, /legacyGatewayModeForConnection/);
+  assert.match(source, /createConnectionController/);
+});
+
+test('settings UI exposes Local gateway, Hermes Cloud, and Remote gateway cards', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(html, /data-connection-mode="local"/);
+  assert.match(html, /data-connection-mode="cloud"/);
+  assert.match(html, /data-connection-mode="remote"/);
+  assert.match(html, />Hermes Cloud</);
+  assert.match(html, /id="connectionModeInput"/);
+  assert.match(html, /id="apiKeyField"/);
+  assert.doesNotMatch(html, /data-gateway-location=/);
+  assert.match(source, /function renderConnectionModeCards/);
+  assert.match(source, /function renderConnectionModePanel/);
+});
+
+test('connection controller owns user-driven connect and test generations', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const instances = source.match(/createConnectionController\s*\(/g) || [];
+  assert.equal(instances.length, 1);
+  assert.match(source, /async function connectToHermes[\s\S]*connectionController\.begin/);
+  assert.match(source, /async function testConnection[\s\S]*connectionController\.begin/);
+  assert.match(source, /connectionController\.transition\([^,]+,\s*CONNECTION_STATES\.READY/);
+  assert.match(source, /connectionController\.transition\([^,]+,\s*CONNECTION_STATES\.ERROR/);
+  assert.match(source, /connectionController\.cancel\('connection settings changed'\)/);
+});
+
 test('gateway settings support explicit local and remote Hermes API servers', () => {
   assert.deepEqual(GATEWAY_MODES.map((mode) => mode.value), ['local-api', 'remote-api', 'remote-dashboard']);
   assert.equal(DEFAULT_SETTINGS.gatewayMode, 'local-api');
@@ -492,12 +535,16 @@ test('gateway settings support explicit local and remote Hermes API servers', ()
   assert.equal(dashboard.mode.value, 'remote-dashboard');
   assert.match(dashboard.title, /Remote Hermes dashboard/);
   assert.match(dashboard.setupHint, /WebSocket/);
-  assert.match(dashboard.setupHint, /sign in/i);
+  assert.match(dashboard.setupHint, /Trusted Dashboard Attach/);
+  assert.match(dashboard.setupHint, /active tab/);
+  assert.match(dashboard.setupHint, /Test connection/);
+  assert.match(dashboard.setupHint, /Chat-only/);
 });
 
 test('isUsableRemoteGatewayUrl requires a parseable https URL', () => {
   assert.equal(isUsableRemoteGatewayUrl('https://kurokami.example.ts.net'), true);
   assert.equal(isUsableRemoteGatewayUrl('https://host.ts.net:8643/hermes'), true);
+  assert.equal(isUsableRemoteGatewayUrl('https://user:pass@host.ts.net/hermes'), false);
   assert.equal(isUsableRemoteGatewayUrl('http://host.ts.net'), false); // non-loopback http is mixed-content blocked
   assert.equal(isUsableRemoteGatewayUrl('example.com'), false); // no scheme, fails to parse
   assert.equal(isUsableRemoteGatewayUrl(''), false);
@@ -509,6 +556,20 @@ test('remote API URL validation allows trusted HTTP while dashboard stays HTTPS-
   assert.equal(isUsableRemoteApiUrl('ftp://host.ts.net'), false);
   assert.equal(isUsableRemoteDashboardUrl('https://dash.example.com'), true);
   assert.equal(isUsableRemoteDashboardUrl('http://dash.example.com'), false);
+});
+
+test('remote dashboard turns are wired through the chat-only gateway scope policy', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(sidepanel, /contextScopeForGateway/);
+  assert.match(sidepanel, /turnContextScope\s*=\s*contextScopeForGateway\(contextScope, settings\.gatewayMode\)/);
+  assert.match(sidepanel, /turnContextScope\.mode\s*===\s*CONTEXT_SCOPE_MODES\.CHAT_ONLY/);
+  assert.match(sidepanel, /contextScope:\s*turnContextScope/);
+  assert.match(sidepanel, /requestDashboardOriginTrust\(normalizeGatewayUrl\(settings\.gatewayUrl\)\)/);
+  assert.match(sidepanel, /isTrustedDashboardOrigin\(baseUrl, settings\.trustedDashboardOrigin\)/);
+  assert.match(sidepanel, /findDashboardTab\(chrome\.tabs, origin\)/);
+  assert.match(sidepanel, /tabId:\s*trustedDashboardTabId/);
+  assert.match(sidepanel, /contextInput\.disabled\s*=\s*dashboardAttach/);
+  assert.match(sidepanel, /contextScope\s*=\s*contextScopeForGateway\(contextScope, settings\.gatewayMode\);/);
 });
 
 test('manifest allows remote Hermes API server connections from extension pages', () => {
@@ -950,13 +1011,14 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   assert.match(source, /connection\.wsStoredSessionId = storedId;/);
   assert.match(source, /WS_METHODS\.sessionHistory,\s*\{ session_id: liveId \}/);
   // Capability gate: every profile-scoped session RPC is preceded by
-  // assertRemoteProfileSessionSupport, and the gateway.ready listener is
-  // attached BEFORE the socket connects so the capability frame is never
-  // missed. Re-anchored resumes drop the stale binding.
+  // assertRemoteProfileSessionSupport, and capabilities come from the
+  // gateway.ready payload that connect() resolves with, so they are known
+  // before any RPC can run. Re-anchored resumes drop the stale binding.
   assert.match(source, /await assertRemoteProfileSessionSupport\(connection, profile\);\s*const result = await connection\.client\.request\(WS_METHODS\.sessionCreate/s);
   assert.match(source, /await assertRemoteProfileSessionSupport\(connection, sessionProfile\);\s*const result = await connection\.client\.request\(\s*WS_METHODS\.sessionResume/s);
   assert.match(source, /await assertRemoteProfileSessionSupport\(connection, profile\);\s*const binding = currentEffectiveModelBinding\(\);/s);
-  assert.match(source, /readyListenerOff = client\.on\(WS_EVENTS\.ready,[\s\S]*?await client\.connect\(wsUrl\)/);
+  assert.match(source, /readyPayload = await client\.connect\(wsUrl\);/);
+  assert.match(source, /capabilities: \(readyPayload && typeof readyPayload\.capabilities === 'object' && readyPayload\.capabilities\) \|\| \{\}/);
   assert.match(source, /forgetRemoteSessionBinding\(settings\.remoteSessionBindings, session\.id\)/);
   assert.doesNotMatch(source, /connection\.wsSessionId = session\.id;/);
   assert.doesNotMatch(source, /WS_METHODS\.sessionList,\s*withGatewayProfile\(/);

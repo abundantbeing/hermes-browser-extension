@@ -1,6 +1,6 @@
 # Hermes Browser Extension
 
-Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.com/docs) — connect active web context to your local or remote Hermes runtime.
+Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.com/docs) — connect active web context through a local gateway, Hermes Cloud, or a self-hosted remote gateway.
 
 > Created by **Jon Komet** (`@abundantbeing`). Community extension for Hermes Agent by Nous Research.
 
@@ -9,13 +9,13 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 </p>
 
 <p align="center">
-  <strong>Public alpha v0.1.10 · Load unpacked · Local/remote Hermes API · Full Hermes runtime tools</strong><br />
+  <strong>Public alpha v0.1.10 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
   Not on the Chrome Web Store yet.
 </p>
 
 ## What it is
 
-Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium side panel for the real Hermes Agent runtime. It talks to your Hermes Gateway/API server — local by default, remote when you configure a reachable URL — so it can use the models, tools, skills, sessions, memory, and MCP servers already configured in Hermes.
+Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium side panel for the real Hermes Agent runtime. Choose a local gateway, attach to a signed-in Hermes Cloud agent tab, or connect to a self-hosted remote API/dashboard. Local and remote API connections can use the models, tools, skills, sessions, memory, and MCP servers already configured in Hermes; Cloud and dashboard-ticket connections are intentionally Chat-only.
 
 This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/Chromium side-panel integration for Hermes Agent.
 
@@ -30,8 +30,10 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 ## Highlights
 
 - Chrome/Edge/Chromium MV3 side panel powered by the Side Panel API.
-- Connects to a configurable local or remote Hermes API server. Default: `http://127.0.0.1:8642`.
-- Supports dashboard WebSocket mode when you have a signed-in remote Hermes dashboard tab and no API key.
+- Matches Hermes Desktop's three connection choices: **Local gateway**, **Hermes Cloud**, and **Remote gateway**.
+- Connects to a configurable local or self-hosted remote Hermes API server. Default: `http://127.0.0.1:8642`.
+- Uses **Trusted Dashboard Attach** for Hermes Cloud: an explicitly selected, signed-in HTTPS agent tab mints a short-lived, single-use WebSocket ticket. Tickets stay memory-only and Cloud remains Chat-only.
+- Supports the same ticketed WebSocket path for a self-hosted remote dashboard when Remote gateway is selected with no API key.
 - Auto-syncs connected Hermes providers/models, profiles, skills, sessions, and capabilities.
 - Keeps runtime plugins available in the same Hermes session. For example, a connected social or messaging plugin can add account, post, and trend context while the extension supplies browser-page context.
 - Shows a Hermes compatibility panel so older gateways degrade into explicit fallback/manual modes instead of broken route errors.
@@ -60,7 +62,7 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 ## Requirements
 
 - Hermes Agent installed and working.
-- Hermes Gateway/API server enabled locally or on a reachable remote machine.
+- For Local or Remote API mode: Hermes Gateway/API server enabled locally or on a reachable remote machine. Hermes Cloud instead requires a signed-in HTTPS agent tab.
 - Node.js 20+.
 - Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 114+ baseline).
 
@@ -72,8 +74,9 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API and extension clipboard permissions for Copy Diagnostics. |
 | Firefox / Safari | Preview only | Diagnostics now report browser family, but cross-browser support is not shipped yet. |
 | Local Hermes API server | Yes | Default path: `http://127.0.0.1:8642`. |
+| Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Uses a single-use WebSocket ticket and enforces Chat-only context. This is not a general cookie import or background account-discovery flow. |
 | Remote API server | Yes, explicit URL/token only | Use trusted LAN/Tailscale/VPN or HTTPS reverse proxy; do not expose Hermes naked to the internet. |
-| Remote dashboard WebSocket | Best-effort | Chat/session/model path only; REST-only profile/skills/image-upload surfaces remain unavailable. |
+| Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard URL and no API key. Chat/session/model path only; REST-only profile/skills/image-upload surfaces remain unavailable. |
 | Browser Context Protocol | Yes | Extension emits `hermes.browser.context.v1` payloads and keeps prompt-embedded fallback. |
 | Companion plugin | Optional functional context cache | `companion-plugin/` provides read-only tools/hooks for sanitized Browser context; not required for normal extension use. |
 | Browser control / Runs UI / debugger / nativeMessaging | No | Deferred until supportability, action policy, approvals, and logs exist. |
@@ -106,6 +109,16 @@ dist/
 After code updates, run `npm run build` again and click **Reload** on the Hermes Browser Extension card in the browser extensions page.
 
 ## Connect to Hermes
+
+Settings exposes the same three product-level choices as Hermes Desktop:
+
+| Connection mode | Use it for | Transport and boundary |
+| --- | --- | --- |
+| **Local gateway** | Hermes running on this machine | Local API server, default `http://127.0.0.1:8642`, with a scoped browser token or `API_SERVER_KEY`. |
+| **Hermes Cloud** | A signed-in Hermes Cloud agent open in a normal browser tab | Trusted Dashboard Attach mints a short-lived, single-use WebSocket ticket from the active HTTPS agent tab. Chat-only; no page text, selected text, open-tab context, or attachments are sent. |
+| **Remote gateway** | A self-hosted Hermes backend on another machine or behind a trusted proxy | With a key: remote API server. Without a key: signed-in HTTPS dashboard ticket/WebSocket. |
+
+Existing installations migrate automatically: prior `local-api` settings become Local gateway, while prior `remote-api` and `remote-dashboard` settings remain Remote gateway. A legacy remote dashboard is never silently relabeled as Hermes Cloud.
 
 ### Local API server
 
@@ -175,9 +188,22 @@ In the extension side panel:
 
 With a key present, Remote means **Remote API server** and does not force HTTPS. With the key blank, Remote means **Remote dashboard WebSocket** and requires an `https://` dashboard URL.
 
-### Remote dashboard mode, no API server
+### Hermes Cloud
 
-If you run Hermes elsewhere and only expose the OAuth-gated dashboard, select **Remote**, enter the dashboard's `https://` URL, and leave the API key blank. With no key, the extension connects over the dashboard's `/api/ws` socket instead of the REST API server.
+Hermes Cloud uses **Trusted Dashboard Attach** in v0.1.10:
+
+1. Open your Hermes Cloud agent in a normal browser tab and sign in.
+2. Keep that fully loaded HTTPS agent tab active.
+3. Open extension Settings and choose **Hermes Cloud**.
+4. Click **Test connection**.
+
+The extension binds trust to that exact tab and HTTPS origin, mints a short-lived single-use WebSocket ticket in the page, and waits for Hermes' `gateway.ready` event before reporting success. The ticket is kept in memory only and is discarded if the tab navigates, is replaced, or changes origin.
+
+Hermes Cloud is **Chat-only** in this release. Browser page text, selected text, open-tab context, and attachments are disabled for this mode. The extension does not read dashboard cookies, store a Cloud password, or add `cookies` or `nativeMessaging` permissions.
+
+### Self-hosted remote dashboard mode, no API server
+
+If you run Hermes elsewhere and only expose the OAuth-gated dashboard, select **Remote gateway**, enter the dashboard's `https://` URL, and leave the API key blank. With no key, the extension connects over the dashboard's `/api/ws` socket instead of the REST API server. This remains a Remote gateway connection; it is not automatically relabeled as Hermes Cloud.
 
 Auth uses a single-use WebSocket ticket minted from a signed-in dashboard tab:
 
@@ -190,7 +216,7 @@ The extension reads `/api/profiles` first-party inside the signed-in dashboard t
 
 ## What syncs after connection
 
-After connection, the side panel loads from the connected Hermes gateway:
+After a Local or Remote API connection, the side panel loads from the connected Hermes gateway:
 
 - `/v1/models` — all providers/models Hermes can enumerate, including provider-qualified IDs.
 - `/api/sessions` — recent Hermes sessions grouped by source.
@@ -206,14 +232,16 @@ The DOM/context chip should show a non-zero page-context count on normal readabl
 You can ask Hermes to help install it:
 
 ```text
-Install Hermes Browser Extension from https://github.com/abundantbeing/hermes-browser-extension. Clone it, run npm install, run npm run build, then use computer use to open chrome://extensions, enable Developer mode, load the dist folder unpacked, and help me connect it to my local or remote Hermes Gateway API server. Do not reveal, print, screenshot, or commit my API key.
+Install Hermes Browser Extension from https://github.com/abundantbeing/hermes-browser-extension. Clone it, run npm install, run npm run build, then use computer use to open chrome://extensions, enable Developer mode, and load the dist folder unpacked. Help me choose Local gateway, Hermes Cloud through my active signed-in agent tab, or a self-hosted Remote gateway. Do not reveal, print, screenshot, or commit any API key or WebSocket ticket.
 ```
 
 ## Security model
 
 Hermes Browser Extension is intentionally conservative in v0.1:
 
-- Local API server by default; remote API server support requires an explicit URL, token, and CORS allowlist.
+- Local gateway by default; remote API server support requires an explicit URL, token, and CORS allowlist.
+- Hermes Cloud and self-hosted dashboard attach require an explicit HTTPS origin, the exact active signed-in tab, and a short-lived single-use WebSocket ticket kept only in memory.
+- Cloud/dashboard-ticket connections are Chat-only and cannot send browser page text, selected text, open-tab context, or attachments.
 - Strong bearer/API key required for API access.
 - Page content is wrapped as untrusted context before it reaches Hermes.
 - Read-only browser context capture: no click, type, form-submit, checkout, download, or browser-control behavior.
@@ -325,7 +353,7 @@ If Chromium still says the mic is blocked, click **Open microphone settings** in
 
 ### The first-run Connect flow is unavailable
 
-Use **Manual setup** with your local/remote Gateway URL and API key. The native Desktop approval flow is still evolving during alpha.
+Use **Manual setup** and choose Local gateway, Hermes Cloud, or Remote gateway. Local/Remote API connections use a Gateway URL and API key; Cloud and dashboard-ticket connections require the signed-in HTTPS dashboard tab. The native Desktop approval flow is still evolving during alpha.
 
 ## GitHub PR/Issue auto-review
 
@@ -396,6 +424,8 @@ extension/
   lib/browser-context-protocol.mjs versioned read-only browser context protocol helpers
   lib/runtime-events.mjs stable runtime/tool event names for Browser UI normalization
   lib/support-diagnostics.mjs redacted Copy Diagnostics support report helpers
+  lib/connection-modes.mjs versioned Local / Cloud / Remote schema and compatibility migration
+  lib/connection-controller.mjs generation-safe connection state controller
   lib/common.mjs      shared prompt/context/security utilities
 companion-plugin/     optional fail-soft Browser companion plugin with read-only context cache tools/hooks
 scripts/
@@ -410,7 +440,7 @@ tests/
 
 ## Relationship to Hermes Agent
 
-[Hermes Agent](https://github.com/NousResearch/hermes-agent) is an open-source project by Nous Research. Hermes Browser Extension is a community extension by Jon Komet that connects to a local or remote Hermes API server. It is designed to live at the edge of the ecosystem without adding core tool-schema footprint.
+[Hermes Agent](https://github.com/NousResearch/hermes-agent) is an open-source project by Nous Research. Hermes Browser Extension is a community extension by Jon Komet that connects through a local gateway, Hermes Cloud agent tab, or self-hosted remote gateway. It is designed to live at the edge of the ecosystem without adding core tool-schema footprint.
 
 Useful links:
 

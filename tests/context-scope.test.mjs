@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   CONTEXT_SCOPE_MODES,
   compactPinnedTitle,
+  contextScopeForGateway,
   contextScopeFromTab,
   filterPromptTabs,
   messageStorageKeyForScope,
@@ -85,4 +86,12 @@ test('chat-only mode does not refresh for tab events', () => {
   assert.equal(shouldRefreshForTabEvent({ scope, eventType: 'activated', eventTabId: 1 }), false);
   assert.equal(shouldRefreshForTabEvent({ scope, eventType: 'updated', eventTabId: 1 }), false);
   assert.equal(shouldRefreshForTabEvent({ scope, eventType: 'removed', eventTabId: 1 }), false);
+});
+
+test('remote dashboard connections enforce chat-only context', () => {
+  const pinned = normalizeContextScope({ mode: CONTEXT_SCOPE_MODES.PINNED_TAB, pinnedTabId: 2, selectedTabIds: [2] });
+  assert.equal(contextScopeForGateway(pinned, 'remote-dashboard').mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
+  assert.deepEqual(contextScopeForGateway(pinned, 'remote-dashboard').selectedTabIds, []);
+  assert.deepEqual(contextScopeForGateway(pinned, 'local-api'), pinned);
+  assert.deepEqual(contextScopeForGateway(pinned, 'remote-api'), pinned);
 });

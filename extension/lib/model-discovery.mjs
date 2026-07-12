@@ -9,6 +9,38 @@
 
 const SESSION_HISTORY_LIMIT = 100;
 const LOCAL_DASHBOARD_URL = 'http://127.0.0.1:9119';
+export const MODEL_CATALOG_CACHE_STORAGE_KEY = 'hermesBrowserModelCatalogCache';
+
+export function modelCatalogCacheKey({ gatewayMode = 'local-api', gatewayUrl = '', profile = '' } = {}) {
+  const mode = String(gatewayMode || 'local-api').trim() || 'local-api';
+  const url = String(gatewayUrl || '').trim().replace(/\/$/, '') || (mode === 'local-api' ? 'local-api' : 'unknown');
+  const activeProfile = String(profile || '').trim() || 'default';
+  return `${mode}|${url}|${activeProfile}`;
+}
+
+export function normalizeCachedModelCatalog(payload = []) {
+  const rows = Array.isArray(payload) ? payload : [];
+  return rows
+    .filter((model) => model && typeof model === 'object' && String(model.id || '').trim())
+    .map((model) => ({
+      ...model,
+      source: 'cache',
+      runtimeSelectable: model.runtimeSelectable !== false,
+    }));
+}
+
+export function selectModelCatalogFallback({ registryModels = [], cachedModels = [], sessionModels = [] } = {}) {
+  if (Array.isArray(registryModels) && registryModels.length) {
+    return { models: registryModels, source: 'registry' };
+  }
+  if (Array.isArray(cachedModels) && cachedModels.length) {
+    return { models: cachedModels, source: 'cache' };
+  }
+  if (Array.isArray(sessionModels) && sessionModels.length) {
+    return { models: sessionModels, source: 'sessions' };
+  }
+  return { models: [], source: '' };
+}
 
 const KNOWN_PROVIDER_PREFIXES = [
   // Order matters: most specific first.
@@ -309,6 +341,7 @@ export async function discoverModelsFromSessions({
 }
 
 export function shouldTrySessionModelFallback({ registryModels = [], registrySource = '', defaultModelId = 'hermes-agent' } = {}) {
+  if (registrySource === 'cache') return false;
   const advertisedModels = registryModels.filter((model) => model?.source !== 'selected');
   const includesDefaultAlias = advertisedModels.some((model) => model?.id === defaultModelId)
     || registryModels.some((model) => model?.id === defaultModelId);

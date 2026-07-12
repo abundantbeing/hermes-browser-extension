@@ -95,7 +95,15 @@ import {
   WS_EVENTS,
   WS_METHODS,
 } from './lib/gateway-ws.mjs';
-import { fetchDashboardProfiles, mintWsTicket, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
+import {
+  dashboardTrustPrompt,
+  fetchDashboardProfiles,
+  findDashboardTab,
+  isTrustedDashboardOrigin,
+  mintWsTicket,
+  originOf,
+  ticketFailureHelp,
+} from './lib/dashboard-bridge.mjs';
 import {
   deriveStartupView,
   initialStartupReadiness,
@@ -110,6 +118,7 @@ import {
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import { normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
+import { classifyTurnRecovery, latestAssistantAfterUser } from './lib/turn-recovery.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
 import {
@@ -128,10 +137,15 @@ import {
   discoverModelsFromSessions,
   mergeModelsByRawId,
   mergeModelsWithRegistry,
+  MODEL_CATALOG_CACHE_STORAGE_KEY,
+  modelCatalogCacheKey,
   modelCatalogRefreshDecision,
+  normalizeCachedModelCatalog,
   normalizeExternalModelSourceList,
+  selectModelCatalogFallback,
   shouldTrySessionModelFallback,
 } from './lib/model-discovery.mjs';
+
 import {
   BUILTIN_COMMANDS,
   parseCommandInput,
@@ -146,6 +160,7 @@ import {
   CONTEXT_SCOPE_MODES,
   DEFAULT_CONTEXT_SCOPE,
   compactPinnedTitle,
+  contextScopeForGateway,
   contextScopeFromTab,
   filterPromptTabs,
   messageStorageKeyForScope,
@@ -159,6 +174,18 @@ import {
   normalizePanelResidencyMode,
   parseSidePanelParams,
 } from './lib/panel-residency.mjs';
+import {
+  CONNECTION_TRANSPORTS,
+  connectionModePreviewUrl,
+  legacyGatewayModeForConnection,
+  migrateConnectionSettings,
+  normalizeConnectionMode,
+  resolvePhaseATransport,
+} from './lib/connection-modes.mjs';
+import {
+  CONNECTION_STATES,
+  createConnectionController,
+} from './lib/connection-controller.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const sidePanelParams = parseSidePanelParams(globalThis.location?.search || '');
@@ -244,10 +271,12 @@ const els = {
   contextBreakdown: $('#contextBreakdown'),
   contextControlStatus: $('#contextControlStatus'),
   contextCompactButton: $('#contextCompactButton'),
+  connectionModeInput: $('#connectionModeInput'),
   gatewayModeInput: $('#gatewayModeInput'),
   remoteTransportRow: $('#remoteTransportRow'),
   gatewayUrlInput: $('#gatewayUrlInput'),
   gatewayHelp: $('#gatewayHelp'),
+  apiKeyField: $('#apiKeyField'),
   apiKeyInput: $('#apiKeyInput'),
   remoteDiagnosticsPanel: $('#remoteDiagnosticsPanel'),
   remoteDiagnosticsList: $('#remoteDiagnosticsList'),
@@ -346,10 +375,12 @@ let activeSessionRuntime = {
 // cross-origin). This holds the live socket + the dashboard-assigned session id.
 let remoteWsConnection = null;
 let remoteProfilesBaseUrl = '';
+let trustedDashboardTabId = null;
 let connectionProbeStatus = 'connecting';
 let connectionProbeDetail = '';
 let connectionProbeTimer = null;
 let connectionProbeInFlight = false;
+const connectionController = createConnectionController();
 let gatewayCapabilities = { ...DEFAULT_GATEWAY_CAPABILITIES };
 let modelsRefreshing = false;
 let contextRefreshingFromButton = false;
@@ -518,12 +549,23 @@ function currentGatewaySummary(overrides = {}) {
 }
 
 function renderGatewayHelp() {
+  const connectionMode = normalizeConnectionMode(els.connectionModeInput?.value || settings.connectionMode);
   const summary = currentGatewaySummary({
     gatewayMode: els.gatewayModeInput?.value || settings.gatewayMode,
     gatewayUrl: els.gatewayUrlInput?.value || settings.gatewayUrl,
   });
-  if (els.gatewayHelp) els.gatewayHelp.textContent = summary.setupHint;
+  if (els.gatewayHelp) {
+    els.gatewayHelp.textContent = connectionMode === 'cloud'
+      ? 'Hermes Cloud uses Trusted Dashboard Attach. Open the signed-in agent dashboard in the active tab, then choose Test connection. Cloud connections are Chat-only.'
+      : summary.setupHint;
+  }
   if (els.gatewayUrlInput) els.gatewayUrlInput.placeholder = summary.mode.defaultUrl || DEFAULT_SETTINGS.gatewayUrl;
+  const dashboardAttach = connectionMode === 'cloud' || summary.mode.value === 'remote-dashboard';
+  for (const contextInput of [els.includeTabsInput, els.includePageTextInput, els.includeSelectedTextInput]) {
+    if (!contextInput) continue;
+    contextInput.disabled = dashboardAttach;
+    contextInput.title = dashboardAttach ? 'Trusted Dashboard Attach is Chat-only.' : '';
+  }
 }
 
 function remoteEnvBlockText() {
@@ -1095,7 +1137,7 @@ async function initializeSessionForPanelOpen({ focus = false } = {}) {
 }
 
 async function applyContextScope(nextScope, { ensureSession = false } = {}) {
-  contextScope = normalizeContextScope(nextScope);
+  contextScope = contextScopeForGateway(nextScope, settings.gatewayMode);
   previousConversationScope = conversationScopeForContextScope(contextScope, previousConversationScope);
   if (contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) rememberConversationScope(contextScope);
   else saveConversationScopeForInstance();
@@ -1204,35 +1246,68 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
   return gatewayCapabilities;
 }
 
-// The gateway mode is stored as a flat value (local-api/remote-api/
-// remote-dashboard) but the UI only asks one thing: Local or Remote. For
-// Remote, the transport is inferred from the API key field — a key present
-// means a remote API server, a blank key means the dashboard WebSocket. A
-// hidden <select> (#gatewayModeInput) stays the source of truth so the rest of
-// the settings code keeps reading one value.
-function gatewayLocationOf(mode) {
-  return normalizeGatewayMode(mode) === 'local-api' ? 'local' : 'remote';
-}
-
-function remoteGatewayModeForKey(apiKey) {
-  return String(apiKey || '').trim() ? 'remote-api' : 'remote-dashboard';
-}
-
-function renderGatewayModeCards() {
-  const location = gatewayLocationOf(els.gatewayModeInput?.value || settings.gatewayMode);
-  for (const card of document.querySelectorAll('[data-gateway-location]')) {
-    const selected = card.dataset.gatewayLocation === location;
+// Product mode (Local / Cloud / Remote) is separate from the compatibility
+// transport (local-api / remote-api / remote-dashboard). Existing transport
+// predicates remain authoritative until the later broker phases replace them.
+function renderConnectionModeCards() {
+  const mode = normalizeConnectionMode(els.connectionModeInput?.value || settings.connectionMode);
+  for (const card of document.querySelectorAll('[data-connection-mode]')) {
+    const selected = card.dataset.connectionMode === mode;
     card.classList.toggle('selected', selected);
     card.setAttribute('aria-checked', String(selected));
   }
 }
 
-function applyGatewayMode(mode) {
-  if (!els.gatewayModeInput) return;
-  els.gatewayModeInput.value = normalizeGatewayMode(mode);
-  // Reuse the existing change handler (URL default + help text), then repaint.
-  els.gatewayModeInput.dispatchEvent(new Event('change'));
-  renderGatewayModeCards();
+function renderConnectionModePanel() {
+  const mode = normalizeConnectionMode(els.connectionModeInput?.value || settings.connectionMode);
+  if (els.apiKeyField) els.apiKeyField.hidden = mode === 'cloud';
+  renderGatewayHelp();
+}
+
+function applyConnectionMode(value) {
+  if (!els.connectionModeInput || !els.gatewayModeInput) return;
+  const previousMode = normalizeConnectionMode(els.connectionModeInput.value || settings.connectionMode);
+  const connectionMode = normalizeConnectionMode(value);
+  const connectionTransport = resolvePhaseATransport({
+    connectionMode,
+    currentTransport: connectionMode === 'remote'
+      ? (String(els.apiKeyInput?.value || '').trim() ? CONNECTION_TRANSPORTS.REMOTE_API : CONNECTION_TRANSPORTS.REMOTE_DASHBOARD)
+      : settings.connectionTransport,
+    apiKey: els.apiKeyInput?.value || settings.apiKey,
+  });
+  const gatewayMode = legacyGatewayModeForConnection({ connectionMode, connectionTransport });
+
+  els.connectionModeInput.value = connectionMode;
+  els.gatewayModeInput.value = gatewayMode;
+  if (previousMode !== connectionMode) {
+    connectionController.cancel('connection settings changed');
+    try {
+      remoteWsConnection?.client?.close();
+    } catch {
+      /* ignore */
+    }
+    remoteWsConnection = null;
+    trustedDashboardTabId = null;
+    if (els.connectButton) {
+      els.connectButton.disabled = false;
+      els.connectButton.textContent = 'Connect to Hermes';
+    }
+    if (els.testConnectionButton) {
+      els.testConnectionButton.disabled = false;
+      els.testConnectionButton.textContent = 'Test connection';
+      els.testConnectionButton.classList.remove('success', 'error');
+    }
+  }
+
+  const summary = currentGatewaySummary({ gatewayMode, gatewayUrl: els.gatewayUrlInput?.value });
+  els.gatewayUrlInput.value = connectionModePreviewUrl({
+    connectionMode,
+    currentUrl: els.gatewayUrlInput.value,
+    localDefaultUrl: DEFAULT_SETTINGS.gatewayUrl,
+    transportDefaultUrl: summary.mode.defaultUrl,
+  });
+  renderConnectionModeCards();
+  renderConnectionModePanel();
 }
 
 async function fetchJsonNoStore(url) {
@@ -3166,6 +3241,40 @@ function renderModelRefreshState() {
   }
 }
 
+async function readCachedModelCatalog() {
+  try {
+    const stored = await chrome.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
+    const key = modelCatalogCacheKey({
+      gatewayMode: settings.gatewayMode,
+      gatewayUrl: settings.gatewayUrl,
+      profile: settings.activeProfile,
+    });
+    return normalizeCachedModelCatalog(stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY]?.[key]?.models);
+  } catch {
+    return [];
+  }
+}
+
+async function writeCachedModelCatalog(models) {
+  const canonicalModels = normalizeCachedModelCatalog(models);
+  if (!canonicalModels.length) return;
+  try {
+    const stored = await chrome.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
+    const cache = stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY] && typeof stored[MODEL_CATALOG_CACHE_STORAGE_KEY] === 'object'
+      ? stored[MODEL_CATALOG_CACHE_STORAGE_KEY]
+      : {};
+    const key = modelCatalogCacheKey({
+      gatewayMode: settings.gatewayMode,
+      gatewayUrl: settings.gatewayUrl,
+      profile: settings.activeProfile,
+    });
+    cache[key] = { savedAt: Date.now(), models: canonicalModels };
+    await chrome.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
+  } catch {
+    // Catalog caching is resilience-only; storage failures must not block sync.
+  }
+}
+
 async function loadModels({ quiet = false, payload = null, refresh = false } = {}) {
   const previousSelectedModel = settings.model;
   const trackRefresh = Boolean(refresh && !payload);
@@ -3179,6 +3288,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
     let data = payload;
     let registryModels = [];
     let registrySource = '';
+    const cachedCatalogModels = await readCachedModelCatalog();
 
     if (!data && isRemoteWsMode()) {
       // Remote reads go over the WS (REST is CORS-blocked). Only possible once
@@ -3215,16 +3325,29 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
           registryModels = normalizeHermesModels(dashboardResult.models, settings.model);
           registrySource = 'dashboard';
         } else {
-          const response = await apiFetch('/v1/models', { method: 'GET' });
-          data = await readJsonResponse(response);
-          if (!response.ok) throw new Error(data?.error?.message || data?.error || `Model list failed (${response.status})`);
-          registryModels = normalizeHermesModels(data, settings.model);
-          registrySource = 'v1';
-          if (!quiet && registryResult.error && registryResult.error !== 'status-404') {
-            setStatus('warn', 'Model registry unavailable', `Falling back to /v1/models (${registryResult.error}).`);
+          const cachedFallback = selectModelCatalogFallback({ cachedModels: cachedCatalogModels });
+          if (cachedFallback.models.length) {
+            registryModels = normalizeHermesModels(cachedFallback.models, settings.model);
+            registrySource = cachedFallback.source;
+            if (!quiet) {
+              setStatus('warn', 'Using cached Hermes catalog', 'The live model catalog is unavailable; keeping the last verified provider/model list.');
+            }
+          } else {
+            const response = await apiFetch('/v1/models', { method: 'GET' });
+            data = await readJsonResponse(response);
+            if (!response.ok) throw new Error(data?.error?.message || data?.error || `Model list failed (${response.status})`);
+            registryModels = normalizeHermesModels(data, settings.model);
+            registrySource = 'v1';
+            if (!quiet && registryResult.error && registryResult.error !== 'status-404') {
+              setStatus('warn', 'Model registry unavailable', `Falling back to /v1/models (${registryResult.error}).`);
+            }
           }
         }
       }
+    }
+
+    if (registryModels.length && ['registry', 'dashboard'].includes(registrySource)) {
+      await writeCachedModelCatalog(registryModels);
     }
 
     // If the gateway only exposes a single OpenAI-compatible row, keep a
@@ -3294,6 +3417,8 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
           ? 'from Hermes dashboard'
           : registrySource === 'sessions'
             ? 'from session history'
+            : registrySource === 'cache'
+              ? 'from the last verified Hermes catalog'
             : registrySource.includes('external')
               ? 'from Hermes plus custom model sources'
               : 'from local Hermes';
@@ -3589,10 +3714,13 @@ async function loadProfiles({ quiet = false } = {}) {
   if (isRemoteWsMode()) {
     try {
       const requestedBaseUrl = normalizeGatewayUrl(settings.gatewayUrl);
+      // Same Trusted Dashboard Attach authority as ticket minting: only the
+      // explicitly trusted tab may serve the first-party profile read.
       const result = await fetchDashboardProfiles({
         tabsApi: chrome.tabs,
         scriptingApi: chrome.scripting,
         baseUrl: requestedBaseUrl,
+        tabId: trustedDashboardTabId,
       });
       if (!result.ok) {
         const error = new Error(
@@ -4877,14 +5005,21 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   const messageKey = activeMessagesStorageKey(previousConversationScope);
   const stored = await chrome.storage.local.get(['hermesBrowserSettings', messageKey]);
-  const storedSettings = stored.hermesBrowserSettings || {};
+  const migrateConnectionSchema = stored.hermesBrowserSettings?.connectionSchemaVersion !== DEFAULT_SETTINGS.connectionSchemaVersion;
+  const storedSettings = migrateConnectionSettings(stored.hermesBrowserSettings || {});
   const migrateDesktopOptionDefaults = !storedSettings.modelOptionsVersion && storedSettings.reasoningEffort === 'medium';
   const migrateModelOptionScope = !storedSettings.extensionPreferredModelOptions || !storedSettings.sessionModelOptionBindings;
   settings = { ...DEFAULT_SETTINGS, ...storedSettings };
   settings = {
     ...settings,
     thinkingEnabled: settings.thinkingEnabled !== false,
-    gatewayMode: normalizeGatewayMode(settings.gatewayMode),
+    connectionMode: normalizeConnectionMode(settings.connectionMode),
+    connectionTransport: resolvePhaseATransport({
+      connectionMode: settings.connectionMode,
+      currentTransport: settings.connectionTransport,
+      apiKey: settings.apiKey,
+    }),
+    gatewayMode: legacyGatewayModeForConnection(settings),
     gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
     fastMode: normalizeFastMode(settings.fastMode),
     reasoningEffort: migrateDesktopOptionDefaults ? DEFAULT_SETTINGS.reasoningEffort : normalizeReasoningEffort(settings.reasoningEffort),
@@ -4916,6 +5051,8 @@ async function loadSettings({ restoreMessages = false } = {}) {
     remoteSessionBindings: normalizeRemoteSessionBindings(settings.remoteSessionBindings),
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
   };
+  contextScope = contextScopeForGateway(contextScope, settings.gatewayMode);
+  saveContextScopeForInstance();
   const effectiveBinding = resolveBrowserEffectiveModel({
     sessionId: settings.sessionId,
     sessionModelBindings: settings.sessionModelBindings,
@@ -4945,7 +5082,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     }));
   }
   applyAppearanceSettings();
-  if (migrateDesktopOptionDefaults || migrateModelOptionScope) {
+  if (migrateConnectionSchema || migrateDesktopOptionDefaults || migrateModelOptionScope) {
     await chrome.storage.local.set({ hermesBrowserSettings: settings });
   }
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
@@ -4966,10 +5103,11 @@ function syncSettingsForm() {
   renderAppearanceControls();
   renderProfiles();
   renderModelOptions(availableModels);
+  if (els.connectionModeInput) els.connectionModeInput.value = normalizeConnectionMode(settings.connectionMode);
   if (els.gatewayModeInput) els.gatewayModeInput.value = settings.gatewayMode || DEFAULT_SETTINGS.gatewayMode;
   els.gatewayUrlInput.value = settings.gatewayUrl;
-  renderGatewayHelp();
-  renderGatewayModeCards();
+  renderConnectionModeCards();
+  renderConnectionModePanel();
   els.apiKeyInput.value = settings.apiKey || '';
   els.sessionIdInput.value = settings.sessionId;
   els.sessionTitleInput.value = settings.sessionTitle;
@@ -4999,18 +5137,29 @@ async function saveSettingsFromForm() {
   const apiKey = els.apiKeyInput.value.trim();
   const previousApiKey = String(previousSettings.apiKey || '');
   const tokenSource = apiKey ? (apiKey === previousApiKey ? (previousSettings.tokenSource || settings.tokenSource || 'manual') : 'manual') : '';
-  // The UI only picks Local vs Remote; for Remote the transport is inferred
-  // from the key (present = API server, blank = dashboard WebSocket).
-  const remote = gatewayLocationOf(els.gatewayModeInput?.value || settings.gatewayMode) === 'remote';
-  const gatewayMode = remote ? remoteGatewayModeForKey(apiKey) : 'local-api';
+  const connectionMode = normalizeConnectionMode(els.connectionModeInput?.value || settings.connectionMode);
+  const connectionTransport = resolvePhaseATransport({
+    connectionMode,
+    currentTransport: connectionMode === 'remote'
+      ? (apiKey ? CONNECTION_TRANSPORTS.REMOTE_API : CONNECTION_TRANSPORTS.REMOTE_DASHBOARD)
+      : settings.connectionTransport,
+    apiKey,
+  });
+  const gatewayMode = legacyGatewayModeForConnection({ connectionMode, connectionTransport });
+  const remote = connectionMode !== 'local';
   const rawGatewayUrl = els.gatewayUrlInput.value.trim();
   // In remote mode, don't coerce an empty field to the loopback default — that
   // would persist a misleading remote+localhost config. Leave it empty.
   const gatewayUrl = rawGatewayUrl ? normalizeGatewayUrl(rawGatewayUrl) : (remote ? '' : normalizeGatewayUrl(''));
   settings = {
     ...settings,
+    connectionMode: normalizeConnectionMode(connectionMode),
+    connectionTransport,
     gatewayMode,
     gatewayUrl,
+    trustedDashboardOrigin: isTrustedDashboardOrigin(gatewayUrl, settings.trustedDashboardOrigin)
+      ? settings.trustedDashboardOrigin
+      : '',
     apiKey,
     tokenSource,
     model: settings.model || DEFAULT_SETTINGS.model,
@@ -5035,6 +5184,24 @@ async function saveSettingsFromForm() {
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
     textSize: normalizeTextSize(settings.textSize),
   };
+  const connectionChanged = previousSettings.connectionMode !== settings.connectionMode
+    || previousSettings.connectionTransport !== settings.connectionTransport
+    || normalizeGatewayUrl(previousSettings.gatewayUrl) !== normalizeGatewayUrl(settings.gatewayUrl);
+  if (connectionChanged) {
+    connectionController.cancel('connection settings changed');
+    try {
+      remoteWsConnection?.client?.close();
+    } catch {
+      /* ignore */
+    }
+    remoteWsConnection = null;
+  }
+  if (gatewayMode !== 'remote-dashboard' || !settings.trustedDashboardOrigin) {
+    trustedDashboardTabId = null;
+  }
+  if (gatewayMode === 'remote-dashboard' && contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) {
+    await applyContextScope(contextScope, { ensureSession: false });
+  }
   applyAppearanceSettings();
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   await maybeRenameCurrentSessionTitle(previousSettings, settings.sessionTitle);
@@ -5876,10 +6043,45 @@ function applyTurnRuntimePayload(payload = {}) {
   applyPendingModelRuntimeAck(runtime);
 }
 
+async function requestDashboardOriginTrust(baseUrl) {
+  const origin = originOf(baseUrl);
+  if (!origin) throw new Error('Set a remote https gateway URL without embedded credentials before connecting.');
+  const tab = await findDashboardTab(chrome.tabs, origin);
+  if (!tab?.id) {
+    const error = new Error(ticketFailureHelp('no_dashboard_tab', origin));
+    error.ticketReason = 'no_dashboard_tab';
+    throw error;
+  }
+  if (isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
+    trustedDashboardTabId = tab.id;
+    return origin;
+  }
+  const approved = globalThis.confirm?.(dashboardTrustPrompt(origin)) === true;
+  if (!approved) {
+    const error = new Error('Dashboard Attach was not approved. Open Settings → Test connection when you are ready to trust this origin.');
+    error.ticketReason = 'dashboard_origin_untrusted';
+    throw error;
+  }
+  trustedDashboardTabId = tab.id;
+  settings = { ...settings, trustedDashboardOrigin: origin };
+  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  return origin;
+}
+
 async function ensureRemoteWsClient() {
   const baseUrl = normalizeGatewayUrl(settings.gatewayUrl);
   if (!isUsableRemoteGatewayUrl(baseUrl)) {
     throw new Error('Set a remote https gateway URL in Settings before connecting.');
+  }
+  if (!isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
+    const error = new Error('This dashboard origin is not trusted yet. Open Settings → Test connection to review and approve Dashboard Attach.');
+    error.ticketReason = 'dashboard_origin_untrusted';
+    throw error;
+  }
+  if (!Number.isFinite(trustedDashboardTabId)) {
+    const error = new Error('Select the signed-in dashboard tab, then use Settings → Test connection before attaching.');
+    error.ticketReason = 'dashboard_tab_unselected';
+    throw error;
   }
   if (remoteWsConnection?.client && remoteWsConnection.client.readyState === 1 && remoteWsConnection.baseUrl === baseUrl) {
     return remoteWsConnection;
@@ -5896,7 +6098,12 @@ async function ensureRemoteWsClient() {
   remoteWsConnection = null;
 
   console.info('[Hermes] remote: minting ws-ticket via dashboard tab for', baseUrl);
-  const ticket = await mintWsTicket({ tabsApi: chrome.tabs, scriptingApi: chrome.scripting, baseUrl });
+  const ticket = await mintWsTicket({
+    tabsApi: chrome.tabs,
+    scriptingApi: chrome.scripting,
+    baseUrl,
+    tabId: trustedDashboardTabId,
+  });
   if (!ticket.ok) {
     console.warn('[Hermes] remote: ws-ticket mint failed:', ticket.reason, ticket);
     const error = new Error(ticketFailureHelp(ticket.reason, ticket.origin));
@@ -5909,18 +6116,12 @@ async function ensureRemoteWsClient() {
     wsUrl.replace(/ticket=[^&]+/, `ticket=<${String(ticket.ticket || '').length} chars>`),
   );
   const client = createGatewayClient();
-  // Attach BEFORE connect: the gateway emits gateway.ready immediately after
-  // accept, so a listener added after the handshake could miss the frame.
-  let readyCapabilities = null;
-  let readyListenerOff = null;
-  const readyReceived = new Promise((resolve) => {
-    readyListenerOff = client.on(WS_EVENTS.ready, (event) => {
-      readyCapabilities = (event?.payload && typeof event.payload.capabilities === 'object' && event.payload.capabilities) || {};
-      resolve();
-    });
-  });
+  let readyPayload = null;
   try {
-    await client.connect(wsUrl);
+    // connect() resolves with the gateway.ready payload; a legacy gateway
+    // sends only the skin there, so missing capabilities read as {} below and
+    // every profile-scoped RPC is refused before it is sent.
+    readyPayload = await client.connect(wsUrl);
   } catch (error) {
     console.warn('[Hermes] remote: WebSocket connect failed:', error?.message || error);
     throw error;
@@ -5929,22 +6130,16 @@ async function ensureRemoteWsClient() {
     client.close();
     throw new Error('The dashboard URL changed while the WebSocket was connecting. Connect again to the current dashboard.');
   }
-  const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '', wsProfile: '', capabilities: null };
-  // Gateways that support profile-scoped sessions advertise capabilities on
-  // gateway.ready; legacy gateways send only the skin, so `capabilities`
-  // resolves to {} and every profile-scoped RPC is refused before it is sent.
-  // The timeout covers a gateway that never emits ready at all (treated as
-  // legacy).
-  connection.readyPromise = Promise.race([
-    readyReceived,
-    new Promise((resolve) => setTimeout(resolve, 3000)),
-  ]).then(() => {
-    readyListenerOff?.();
-    connection.capabilities = readyCapabilities || {};
-    setGatewayCapabilities({ ...gatewayCapabilities, profileSessions: Boolean(connection.capabilities.session_profiles) });
-    renderProfiles();
-    return connection.capabilities;
-  });
+  const connection = {
+    client,
+    baseUrl,
+    wsSessionId: '',
+    wsStoredSessionId: '',
+    wsProfile: '',
+    capabilities: (readyPayload && typeof readyPayload.capabilities === 'object' && readyPayload.capabilities) || {},
+  };
+  setGatewayCapabilities({ ...gatewayCapabilities, profileSessions: Boolean(connection.capabilities.session_profiles) });
+  renderProfiles();
   client.on('close', () => {
     if (remoteWsConnection === connection) {
       remoteWsConnection = null;
@@ -5957,10 +6152,10 @@ async function ensureRemoteWsClient() {
 
 // Refuse to send a profile-scoped session RPC to a gateway that has not
 // advertised support for it; a legacy gateway would otherwise create the
-// session in the launch scope before the client could notice.
-async function assertRemoteProfileSessionSupport(connection, profile) {
-  if (!String(profile || '').trim()) return '';
-  await connection.readyPromise;
+// session in the launch scope before the client could notice. Capabilities
+// are known by the time any RPC runs because connect() resolves with the
+// gateway.ready payload.
+function assertRemoteProfileSessionSupport(connection, profile) {
   return assertProfileSessionCapability(connection.capabilities, profile);
 }
 
@@ -6122,56 +6317,82 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   const hasSessionRoutes = await ensureHermesSession();
   if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun });
 
-  const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat/stream`, {
-    method: 'POST',
-    signal,
-    body: JSON.stringify({
-          client_runtime_version: modelSelectionVersion,
-          model: currentModelRequestId(),
-          provider: currentModelProviderSlug() || undefined,
-          model_options: currentModelOptionsPayload(),
-          require_model_lock: shouldRequireModelLock({
-            provider: currentModelProviderSlug(),
+  let response;
+  try {
+    response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/chat/stream`, {
+      method: 'POST',
+      signal,
+      body: JSON.stringify({
+            client_runtime_version: modelSelectionVersion,
             model: currentModelRequestId(),
-            defaultModel: DEFAULT_SETTINGS.model,
+            provider: currentModelProviderSlug() || undefined,
+            model_options: currentModelOptionsPayload(),
+            require_model_lock: shouldRequireModelLock({
+              provider: currentModelProviderSlug(),
+              model: currentModelRequestId(),
+              defaultModel: DEFAULT_SETTINGS.model,
+            }),
+            message: outboundContent(prompt, turnAttachments),
+            system_message: HERMES_BROWSER_SYSTEM_PROMPT,
           }),
-          message: outboundContent(prompt, turnAttachments),
-          system_message: HERMES_BROWSER_SYSTEM_PROMPT,
-        }),
-  });
+    });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
 
   if (!response.ok || !response.body) {
     const text = await response.text();
-    throw new Error(`Hermes stream failed (${response.status}): ${text.slice(0, 900)}`);
+    const error = new Error(`Hermes stream failed (${response.status}): ${text.slice(0, 900)}`);
+    error.fallbackSafe = [404, 405, 501].includes(response.status);
+    throw error;
   }
-  return readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime });
+  try {
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
 }
 
 async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun } = {}) {
-  const response = await apiFetch('/v1/chat/completions', {
-    method: 'POST',
-    signal,
-    headers: {
-      'X-Hermes-Session-Id': settings.sessionId,
-      'X-Hermes-Session-Key': settings.sessionId,
-    },
-    body: JSON.stringify({
-      client_runtime_version: modelSelectionVersion,
-      model: currentModelRequestId(),
-      provider: currentModelProviderSlug() || undefined,
-      model_options: currentModelOptionsPayload(),
-      stream: true,
-      messages: [
-        { role: 'system', content: HERMES_BROWSER_SYSTEM_PROMPT },
-        { role: 'user', content: outboundContent(prompt, turnAttachments) },
-      ],
-    }),
-  });
+  let response;
+  try {
+    response = await apiFetch('/v1/chat/completions', {
+      method: 'POST',
+      signal,
+      headers: {
+        'X-Hermes-Session-Id': settings.sessionId,
+        'X-Hermes-Session-Key': settings.sessionId,
+      },
+      body: JSON.stringify({
+        client_runtime_version: modelSelectionVersion,
+        model: currentModelRequestId(),
+        provider: currentModelProviderSlug() || undefined,
+        model_options: currentModelOptionsPayload(),
+        stream: true,
+        messages: [
+          { role: 'system', content: HERMES_BROWSER_SYSTEM_PROMPT },
+          { role: 'user', content: outboundContent(prompt, turnAttachments) },
+        ],
+      }),
+    });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
   if (!response.ok || !response.body) {
     const text = await response.text();
-    throw new Error(`Hermes chat-completions stream failed (${response.status}): ${text.slice(0, 900)}`);
+    const error = new Error(`Hermes chat-completions stream failed (${response.status}): ${text.slice(0, 900)}`);
+    error.fallbackSafe = [404, 405, 501].includes(response.status);
+    throw error;
   }
-  return readSseResponse(response, onDelta, onTool, { signal, onRun });
+  try {
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun });
+  } catch (error) {
+    error.requestAccepted = true;
+    throw error;
+  }
 }
 
 async function readJsonResponse(response) {
@@ -6199,6 +6420,26 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function recoverAcceptedTurn(prompt, turnAttachments = attachments, { attempts = 8, delay = 500 } = {}) {
+  if (isRemoteWsMode() || !settings.apiKey) return '';
+  const userContent = outboundContent(prompt, turnAttachments);
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/messages`, { method: 'GET' });
+      const payload = await readJsonResponse(response);
+      if (response.ok) {
+        const answer = latestAssistantAfterUser(Array.isArray(payload.data) ? payload.data : [], userContent);
+        if (answer) return answer;
+      }
+    } catch {
+      // The original turn is already accepted; recovery is best effort and
+      // must never post the user turn again.
+    }
+    if (attempt < attempts - 1) await sleep(delay);
+  }
+  return '';
+}
+
 async function openApprovalUrl(url) {
   if (!url) return;
   try {
@@ -6224,6 +6465,10 @@ async function pollPairing(pairingId, { attempts = 90, delay = 1500 } = {}) {
 async function connectToHermes() {
   settings.gatewayUrl = normalizeGatewayUrl(settings.gatewayUrl || els.gatewayUrlInput.value || DEFAULT_SETTINGS.gatewayUrl);
   settings.gatewayMode = normalizeGatewayMode(settings.gatewayMode || els.gatewayModeInput?.value || DEFAULT_SETTINGS.gatewayMode);
+  const generation = connectionController.begin({
+    mode: normalizeConnectionMode(settings.connectionMode),
+    transport: settings.connectionTransport,
+  });
   const summary = currentGatewaySummary();
   markConnectionProbe('connecting', summary.normalizedUrl);
   els.connectButton.disabled = true;
@@ -6231,10 +6476,13 @@ async function connectToHermes() {
   els.connectStatus.textContent = `Looking for ${summary.title} at ${summary.normalizedUrl}...`;
   try {
     const health = await publicApiFetch('/health', { method: 'GET' });
+    if (!connectionController.isCurrent(generation)) return;
     if (!health.ok) throw new Error(`Hermes API server is not reachable (${health.status}).`);
 
     const capabilities = await loadGatewayCapabilities({ quiet: true, publicOnly: true, healthOk: true });
+    if (!connectionController.isCurrent(generation)) return;
     if (!capabilities.browserPairing) {
+      connectionController.transition(generation, CONNECTION_STATES.DEGRADED, { reason: 'manual-setup-required' });
       markConnectionProbe('unconfigured', 'Manual setup required; automatic browser pairing is not advertised by this Hermes runtime.');
       els.connectStatus.textContent = 'Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.';
       setStatus('warn', 'Manual setup required', 'This Hermes runtime does not advertise browser pairing yet.');
@@ -6250,15 +6498,17 @@ async function connectToHermes() {
       }),
     });
     const payload = await readJsonResponse(start);
+    if (!connectionController.isCurrent(generation)) return;
     if (!start.ok) throw new Error(pairingFailureMessage(start.status, payload));
 
-    if (payload.token) {
-      settings.apiKey = payload.token;
-    } else {
+    let pairedToken = payload.token || '';
+    if (!pairedToken) {
       els.connectStatus.textContent = 'Approval opened. Approve Hermes Browser Extension, then return here.';
       await openApprovalUrl(payload.approval_url);
-      settings.apiKey = await pollPairing(payload.pairing_id);
+      pairedToken = await pollPairing(payload.pairing_id);
     }
+    if (!connectionController.isCurrent(generation)) return;
+    settings.apiKey = pairedToken;
 
     settings.tokenSource = 'pairing';
     settings.lastConnectionTestedAt = Date.now();
@@ -6271,16 +6521,21 @@ async function connectToHermes() {
     await loadProfiles({ quiet: true });
     await loadSessions({ quiet: true });
     await initializeSessionForPanelOpen({ focus: false });
+    if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'hermes' })) return;
     els.connectStatus.textContent = 'Connected to Hermes. You can start chatting with page context.';
     markGatewayReachable(normalizeGatewayUrl(settings.gatewayUrl));
     setStatus('ok', 'Hermes Browser Extension connected', normalizeGatewayUrl(settings.gatewayUrl));
   } catch (error) {
+    const diagnostic = classifyGatewayError(error);
+    if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
     markGatewayUnreachable(error);
     els.connectStatus.textContent = `${currentConnectionTroubleshooting() || error?.message || String(error)} Manual setup is still available in settings.`;
     openSettingsDialog();
   } finally {
-    els.connectButton.disabled = false;
-    els.connectButton.textContent = 'Connect to Hermes';
+    if (connectionController.isCurrent(generation)) {
+      els.connectButton.disabled = false;
+      els.connectButton.textContent = 'Connect to Hermes';
+    }
   }
 }
 
@@ -6368,7 +6623,11 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
   let shouldFlushQueue = false;
   try {
     const preparedAttachments = await saveImageAttachmentsForTurn(turnAttachments);
-    const context = await refreshContext();
+    const turnContextScope = contextScopeForGateway(contextScope, settings.gatewayMode);
+    const capturedContext = await refreshContext();
+    const context = turnContextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY
+      ? { activeTab: null, tabs: [], pageContext: null, contextScope: turnContextScope }
+      : capturedContext;
 
     // Detect /command at the start of userText and resolve to a command prompt.
     // Attachments are appended after command expansion so /summarize + file/text
@@ -6388,9 +6647,9 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
     const displayUserText = preparedAttachments.length
       ? `${userText || 'Attachment-only turn.'}\n${preparedAttachments.map((attachment) => `${attachmentIcon(attachment.kind)} ${attachment.label}`).join('\n')}`
       : userText;
-    const promptTabs = filterPromptTabs(context.tabs, contextScope);
-    const selectedPromptTabs = Array.isArray(contextScope.selectedTabIds) ? promptTabs : undefined;
-    const contextHash = contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY ? '' : browserContextPayloadHash({
+    const promptTabs = filterPromptTabs(context.tabs, turnContextScope);
+    const selectedPromptTabs = Array.isArray(turnContextScope.selectedTabIds) ? promptTabs : undefined;
+    const contextHash = turnContextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY ? '' : browserContextPayloadHash({
       activeTab: context.activeTab,
       selectedTabs: selectedPromptTabs || promptTabs,
       pageContext: context.pageContext,
@@ -6402,7 +6661,7 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
       tabs: context.tabs,
       pageContext: context.pageContext,
       selectedTabs: selectedPromptTabs,
-      contextScope,
+      contextScope: turnContextScope,
       settings,
       contextHash,
     });
@@ -6444,8 +6703,18 @@ async function askHermes(userText, turnAttachments = [...attachments]) {
         streamView.update(`Could not reach the Hermes dashboard.\n${streamError.message}`);
         throw streamError;
       } else {
-        streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
-        answer = await fallbackSessionChat(prompt, preparedAttachments, { onRuntime: applyTurnRuntimePayload });
+        if (classifyTurnRecovery(streamError) === 'fallback') {
+          streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
+          answer = await fallbackSessionChat(prompt, preparedAttachments, { onRuntime: applyTurnRuntimePayload });
+        } else {
+          streamView.update('Hermes accepted this turn; recovering the response without retrying it...');
+          answer = await recoverAcceptedTurn(prompt, preparedAttachments);
+          if (!answer) {
+            const recoveryError = new Error('Hermes accepted the turn, but the stream disconnected before the response could be recovered. The turn was not retried to prevent a duplicate message.');
+            recoveryError.requestAccepted = true;
+            throw recoveryError;
+          }
+        }
       }
     }
     const finalAnswer = answer || liveText || '(empty response)';
@@ -6509,6 +6778,10 @@ function flashTestConnectionResult(ok) {
 
 async function testConnection() {
   await saveSettingsFromForm();
+  const generation = connectionController.begin({
+    mode: normalizeConnectionMode(settings.connectionMode),
+    transport: settings.connectionTransport,
+  });
   markConnectionProbe('connecting', normalizeGatewayUrl(settings.gatewayUrl));
   els.testConnectionButton.disabled = true;
   els.testConnectionButton.textContent = 'Testing...';
@@ -6521,10 +6794,14 @@ async function testConnection() {
       // from the extension origin, so the WebSocket is the only thing we can
       // exercise. Minting a ticket + opening the socket validates the whole
       // path: a signed-in dashboard tab, the ticket flow, and the handshake.
+      await requestDashboardOriginTrust(normalizeGatewayUrl(settings.gatewayUrl));
+      if (!connectionController.isCurrent(generation)) return;
       const connection = await ensureRemoteWsClient();
+      if (!connectionController.isCurrent(generation)) return;
       await loadGatewayCapabilities({ quiet: true, healthOk: true });
       const profilesReady = await loadProfiles({ quiet: true });
       if (settings.activeProfile && !profilesReady) activeRemoteWsProfile();
+      if (!connectionController.isCurrent(generation)) return;
       let modelNote = '';
       try {
         const models = await connection.client.request(
@@ -6537,6 +6814,7 @@ async function testConnection() {
         // model.options shape varies across gateways; the socket is already proven.
       }
       await loadSessions({ quiet: true });
+      if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'dashboard-ws' })) return;
       updateConnectionPrompt();
       markGatewayReachable(`${normalizeGatewayUrl(settings.gatewayUrl)}${modelNote}`);
       lastRemoteDiagnostic = null;
@@ -6550,6 +6828,7 @@ async function testConnection() {
     }
     const response = await apiFetch('/health', { method: 'GET' });
     const text = await response.text();
+    if (!connectionController.isCurrent(generation)) return;
     if (!response.ok) {
       if (isRemoteMode()) {
         const diagnostic = classifyRemoteGatewaySetup({
@@ -6565,9 +6844,11 @@ async function testConnection() {
       throw new Error(`${response.status}: ${text}`);
     }
     await loadGatewayCapabilities({ quiet: true, healthOk: true });
+    if (!connectionController.isCurrent(generation)) return;
 
     const modelsResponse = await apiFetch('/v1/models', { method: 'GET' });
     const modelsPayload = await readJsonResponse(modelsResponse);
+    if (!connectionController.isCurrent(generation)) return;
     let degradedDiagnostic = null;
     if (!modelsResponse.ok) {
       if (isRemoteMode()) {
@@ -6593,10 +6874,13 @@ async function testConnection() {
     await loadProfiles({ quiet: true });
 
     const hasSessionRoutes = await ensureHermesSession();
+    if (!connectionController.isCurrent(generation)) return;
     if (degradedDiagnostic) {
+      connectionController.transition(generation, CONNECTION_STATES.DEGRADED, { errorKind: degradedDiagnostic.kind });
       setStatus('warn', 'Hermes gateway connected with runtime warning', degradedDiagnostic.detail);
       markGatewayDegraded(degradedDiagnostic.detail);
     } else {
+      if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'api' })) return;
       setStatus(
         'ok',
         hasSessionRoutes ? 'Hermes gateway + session API connected' : 'Hermes gateway connected',
@@ -6613,6 +6897,8 @@ async function testConnection() {
 
     ok = true;
   } catch (error) {
+    const diagnostic = classifyGatewayError(error);
+    if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
     if (error?.remoteDiagnostic && applyRemoteDiagnostic(error.remoteDiagnostic, { statusKind: 'error' })) {
       return;
     }
@@ -6631,8 +6917,10 @@ async function testConnection() {
       setStatus('error', 'Hermes gateway test failed', currentConnectionTroubleshooting() || error?.message || String(error));
     }
   } finally {
-    els.testConnectionButton.disabled = false;
-    flashTestConnectionResult(ok);
+    if (connectionController.isCurrent(generation)) {
+      els.testConnectionButton.disabled = false;
+      flashTestConnectionResult(ok);
+    }
   }
 }
 
@@ -6955,17 +7243,16 @@ function bindEvents() {
     renderGatewayHelp();
   });
   els.gatewayUrlInput?.addEventListener('input', renderGatewayHelp);
-  for (const card of document.querySelectorAll('[data-gateway-location]')) {
+  for (const card of document.querySelectorAll('[data-connection-mode]')) {
     card.addEventListener('click', () => {
-      const local = card.dataset.gatewayLocation === 'local';
-      applyGatewayMode(local ? 'local-api' : remoteGatewayModeForKey(els.apiKeyInput?.value));
+      applyConnectionMode(card.dataset.connectionMode);
     });
   }
-  // In remote mode the key field decides the transport: a key means a remote
-  // API server, blank means the dashboard WebSocket. Re-derive as the user types.
+  // Phase A preserves the legacy Remote adapter: key present means API server,
+  // blank means dashboard WebSocket. Phase C replaces this with explicit probe UI.
   els.apiKeyInput?.addEventListener('input', () => {
-    if (gatewayLocationOf(els.gatewayModeInput?.value) === 'remote') {
-      applyGatewayMode(remoteGatewayModeForKey(els.apiKeyInput.value));
+    if (normalizeConnectionMode(els.connectionModeInput?.value) === 'remote') {
+      applyConnectionMode('remote');
     }
   });
   for (const button of els.colorModeButtons || []) {

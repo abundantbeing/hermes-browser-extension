@@ -35,11 +35,30 @@ def _ensure_store() -> BrowserContextStore:
     return _STORE
 
 
+def _text_from_content_parts(parts: list[Any]) -> str:
+    """Return meaningful text from OpenAI-style structured message content."""
+    chunks: list[str] = []
+    for part in parts:
+        if not isinstance(part, dict) or part.get("type") != "text":
+            continue
+        text = part.get("text")
+        if isinstance(text, str) and text.strip():
+            chunks.append(text)
+    return "\n".join(chunks)
+
+
 def _last_user_message(**kwargs: Any) -> str:
-    """Return the current/last user message from Hermes hook kwargs."""
+    """Return the current/last user message from Hermes hook kwargs.
+
+    Handles both plain string content and content arrays (OpenAI format
+    ``[{type: "text", text: "..."}, ...]``) used by modern Hermes
+    versions when attachments are present.
+    """
     user_message = kwargs.get("user_message")
     if isinstance(user_message, str):
         return user_message
+    if isinstance(user_message, list):
+        return _text_from_content_parts(user_message)
 
     history = kwargs.get("conversation_history") or kwargs.get("messages") or []
     if not isinstance(history, list):
@@ -48,6 +67,8 @@ def _last_user_message(**kwargs: Any) -> str:
     for msg in reversed(history):
         if isinstance(msg, dict) and msg.get("role") == "user":
             content = msg.get("content", "")
+            if isinstance(content, list):
+                return _text_from_content_parts(content)
             return str(content) if content else ""
     return ""
 

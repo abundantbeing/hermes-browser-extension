@@ -3159,15 +3159,19 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   white-space: nowrap;
   font-size: calc(10px * var(--hermes-text-zoom, 1));
 }
+.connection-settings { container-type: inline-size; }
 .gateway-mode {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 7px;
   margin-bottom: 4px;
 }
 .conn-mode-card {
   display: grid;
+  align-content: start;
   gap: 4px;
+  min-width: 0;
+  min-height: 84px;
   border: 1px solid var(--hermes-line);
   background: var(--hermes-paper);
   color: var(--hermes-ink);
@@ -3187,6 +3191,10 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .conn-mode-card.selected .conn-mode-check::after { content: "\2713"; }
 .conn-mode-desc { font-size: 9.5px; line-height: 1.3; color: var(--hermes-muted); }
 #gatewayHelp { overflow-wrap: anywhere; }
+@container (max-width: 520px) {
+  .gateway-mode { grid-template-columns: 1fr; }
+  .conn-mode-card { min-height: 0; }
+}
 .theme-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -215,6 +215,49 @@ assert store.events[-1]["data"]["result"]["authorization"] == "[REDACTED_SECRET]
   runPluginPython(script);
 });
 
+test('hooks detect browser context inside structured message content', () => {
+  const script = `${pluginImportHarness}
+from companion_plugin.context_store import BrowserContextStore
+from companion_plugin import hooks
+
+prompt = """UNTRUSTED_BROWSER_CONTEXT_START
+Context hash: abcdef1234567890
+Active tab title: Attachment docs
+Active tab URL: https://example.com/docs
+Context scope: selected tab
+
+Page text:
+Attachment-aware context
+UNTRUSTED_BROWSER_CONTEXT_END"""
+
+parts = [
+    {"type": "text", "text": "Please summarize the attachment."},
+    {"type": "image_url", "image_url": {"url": "data:image/png;base64,ignored"}},
+    {"type": "text", "text": prompt},
+    {"type": "text", "text": 42},
+    None,
+]
+
+store = BrowserContextStore()
+hooks.set_store(store)
+result = hooks.pre_llm_call(user_message=parts)
+assert isinstance(result, dict)
+assert store.status()["available"] is True
+
+store.clear()
+result = hooks.pre_llm_call(
+    conversation_history=[
+        {"role": "assistant", "content": "Earlier reply"},
+        {"role": "user", "content": parts},
+    ]
+)
+assert isinstance(result, dict)
+assert store.status()["available"] is True
+assert hooks._last_user_message(user_message=[{"type": "image_url"}, {"type": "text", "text": 42}]) == ""
+`;
+  runPluginPython(script);
+});
+
 test('context_store parses browser context blocks from prompts', () => {
   const store = readFileSync('companion-plugin/context_store.py', 'utf8');
   assert.match(store, /parse_context_block/);

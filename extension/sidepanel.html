@@ -310,19 +310,28 @@
           <div class="settings-section-head">
             <div>
               <h3 id="connectionTitle">Gateway Connection</h3>
-              <p>Connect Hermes Browser Extension to a local or remote Hermes API server.</p>
+              <p>Choose where this Browser session reaches Hermes.</p>
             </div>
           </div>
 
-        <div class="gateway-mode" role="radiogroup" aria-label="Gateway location">
-          <button class="conn-mode-card" type="button" data-gateway-location="local" role="radio" aria-checked="true">
+        <div class="gateway-mode" role="radiogroup" aria-label="Connection mode">
+          <button class="conn-mode-card" type="button" data-connection-mode="local" role="radio" aria-checked="true">
             <span class="conn-mode-head"><span class="conn-mode-title">Local gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
-            <span class="conn-mode-desc">Hermes on this machine. The default, works offline.</span>
+            <span class="conn-mode-desc">Hermes on this machine. Default and offline-capable.</span>
           </button>
-          <button class="conn-mode-card" type="button" data-gateway-location="remote" role="radio" aria-checked="false">
+          <button class="conn-mode-card" type="button" data-connection-mode="cloud" role="radio" aria-checked="false">
+            <span class="conn-mode-head"><span class="conn-mode-title">Hermes Cloud</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+            <span class="conn-mode-desc">Connect through a signed-in Hermes Cloud agent tab.</span>
+          </button>
+          <button class="conn-mode-card" type="button" data-connection-mode="remote" role="radio" aria-checked="false">
             <span class="conn-mode-head"><span class="conn-mode-title">Remote gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
-            <span class="conn-mode-desc">Hermes on another machine. API can use trusted LAN http; dashboard uses https.</span>
+            <span class="conn-mode-desc">Self-hosted API or dashboard. API can use trusted LAN http; dashboard uses https.</span>
           </button>
+          <select id="connectionModeInput" name="connectionMode" hidden>
+            <option value="local">Local gateway</option>
+            <option value="cloud">Hermes Cloud</option>
+            <option value="remote">Remote gateway</option>
+          </select>
           <select id="gatewayModeInput" name="gatewayMode" hidden>
             <option value="local-api">Local API server</option>
             <option value="remote-api">Remote API server</option>
@@ -336,7 +345,7 @@
         </label>
         <p id="gatewayHelp" class="hint">Local setup: keep Hermes Gateway/API Server running on this machine.</p>
 
-        <label>
+        <label id="apiKeyField">
           API key / browser token
           <input id="apiKeyInput" name="apiKey" type="password" autocomplete="off" placeholder="API key (blank = dashboard)" />
         </label>

@@ -237,9 +237,11 @@ export function classifyGatewayFrame(raw) {
 
 // Minimal JSON-RPC client over a WebSocket. WebSocketImpl is injectable so the
 // client can be unit-tested with a fake socket.
-export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000 } = {}) {
+export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000, readyTimeoutMs = 15_000 } = {}) {
   const SocketCtor = WebSocketImpl || (typeof WebSocket !== 'undefined' ? WebSocket : null);
   let socket = null;
+  let connectAttempt = null;
+  let readyPayload = null;
   let nextId = 1;
   const pending = new Map();
   const listeners = new Map();
@@ -273,6 +275,13 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000 }
       return;
     }
     if (frame.kind === 'event') {
+      if (frame.type === WS_EVENTS.ready && connectAttempt) {
+        const attempt = connectAttempt;
+        connectAttempt = null;
+        clearTimeout(attempt.timer);
+        readyPayload = frame.payload;
+        attempt.resolve(frame.payload);
+      }
       emit(frame.type, { type: frame.type, sessionId: frame.sessionId, payload: frame.payload });
     }
   }
@@ -287,28 +296,57 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000 }
 
   function connect(url) {
     if (!SocketCtor) return Promise.reject(new Error('WebSocket is not available in this context'));
+    if (connectAttempt) return Promise.reject(new Error('WebSocket connection already in progress'));
+    if (socket?.readyState === 1 && readyPayload) return Promise.resolve(readyPayload);
     return new Promise((resolve, reject) => {
-      let settled = false;
+      let opened = false;
+      let connectionSocket = null;
+      let attempt = null;
+      readyPayload = null;
+      const timer = setTimeout(() => {
+        if (connectAttempt !== attempt) return;
+        connectAttempt = null;
+        if (socket === connectionSocket) socket = null;
+        try {
+          connectionSocket?.close();
+        } catch {
+          /* ignore */
+        }
+        reject(new Error('Hermes gateway.ready timed out'));
+      }, readyTimeoutMs);
+      attempt = { resolve, reject, timer };
+      connectAttempt = attempt;
       try {
-        socket = new SocketCtor(url);
+        connectionSocket = new SocketCtor(url);
+        socket = connectionSocket;
       } catch (error) {
+        clearTimeout(timer);
+        connectAttempt = null;
         reject(error);
         return;
       }
-      socket.addEventListener('open', () => {
-        settled = true;
-        resolve();
+      connectionSocket.addEventListener('open', () => {
+        if (socket !== connectionSocket) return;
+        opened = true;
       });
-      socket.addEventListener('message', (event) => handleFrame(event.data));
+      connectionSocket.addEventListener('message', (event) => {
+        if (socket !== connectionSocket) return;
+        handleFrame(event.data);
+      });
       // Defer to 'close' for the rejection so the close code/reason is reported
       // (a pre-accept server rejection surfaces as code 1006 with no frame).
-      socket.addEventListener('error', () => {});
-      socket.addEventListener('close', (event) => {
-        if (!settled) {
-          settled = true;
+      connectionSocket.addEventListener('error', () => {});
+      connectionSocket.addEventListener('close', (event) => {
+        if (socket !== connectionSocket) return;
+        socket = null;
+        readyPayload = null;
+        if (connectAttempt) {
+          const attempt = connectAttempt;
+          connectAttempt = null;
+          clearTimeout(attempt.timer);
           const code = event?.code ?? '?';
           const reason = event?.reason ? `: ${event.reason}` : '';
-          reject(new Error(`WebSocket closed before open (code ${code}${reason})`));
+          attempt.reject(new Error(`WebSocket closed before gateway.ready${opened ? '' : ' and open'} (code ${code}${reason})`));
           return;
         }
         rejectAllPending(new Error('WebSocket closed'));
@@ -347,6 +385,12 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000 }
   }
 
   function close() {
+    if (connectAttempt) {
+      const attempt = connectAttempt;
+      connectAttempt = null;
+      clearTimeout(attempt.timer);
+      attempt.reject(new Error('client closed before gateway.ready'));
+    }
     rejectAllPending(new Error('client closed'));
     try {
       socket?.close();
@@ -354,6 +398,7 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000 }
       /* ignore */
     }
     socket = null;
+    readyPayload = null;
   }
 
   return {
@@ -363,6 +408,9 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000 }
     close,
     get readyState() {
       return socket?.readyState ?? -1;
+    },
+    get readyPayload() {
+      return readyPayload;
     },
   };
 }

@@ -23,6 +23,7 @@ export function compactPinnedTitle(value = '', max = MAX_PINNED_TITLE_CHARS) {
 }
 
 function finiteNumberOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
 }
@@ -55,6 +56,13 @@ export function normalizeContextScope(scope = {}) {
       ? []
       : normalizeSelectedTabIds(hasSelectedTabIds ? scope.selectedTabIds : undefined),
   };
+}
+
+export function contextScopeForGateway(scope = DEFAULT_CONTEXT_SCOPE, gatewayMode = '') {
+  if (String(gatewayMode || '').trim().toLowerCase() === 'remote-dashboard') {
+    return normalizeContextScope({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY });
+  }
+  return normalizeContextScope(scope);
 }
 
 export function tabScopeId(scope = DEFAULT_CONTEXT_SCOPE, conversationScope = scope) {

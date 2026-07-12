@@ -132,14 +132,11 @@ test('legacy gateway without the capability gets NO profile-scoped session RPC a
   // legacy gateway.ready (skin only, no capabilities), gate, and assert no
   // session.create frame was ever written to the socket.
   const client = createGatewayClient({ WebSocketImpl: FakeWebSocket });
-  let capabilities = null;
-  client.on('gateway.ready', (event) => {
-    capabilities = (event?.payload && typeof event.payload.capabilities === 'object' && event.payload.capabilities) || {};
-  });
   const connecting = client.connect('wss://host/api/ws?ticket=t');
   FakeWebSocket.last._open();
-  await connecting;
   FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: { skin: 'default' } } });
+  const readyPayload = await connecting;
+  const capabilities = (readyPayload && typeof readyPayload.capabilities === 'object' && readyPayload.capabilities) || {};
 
   assert.deepEqual(capabilities, {});
   assert.throws(() => {
@@ -153,19 +150,23 @@ test('legacy gateway without the capability gets NO profile-scoped session RPC a
 
   // A gateway that advertises the capability lets the same flow proceed.
   const modern = createGatewayClient({ WebSocketImpl: FakeWebSocket });
-  let modernCapabilities = null;
-  modern.on('gateway.ready', (event) => {
-    modernCapabilities = event?.payload?.capabilities || {};
-  });
   const modernConnecting = modern.connect('wss://host/api/ws?ticket=t2');
   FakeWebSocket.last._open();
-  await modernConnecting;
   FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: { skin: 'default', capabilities: { session_profiles: true } } } });
+  const modernCapabilities = (await modernConnecting)?.capabilities || {};
   assert.equal(assertProfileSessionCapability(modernCapabilities, 'research'), 'research');
-  modern.request(WS_METHODS.sessionCreate, withGatewayProfile({ title: 't' }, 'research')).catch(() => {});
+  const pendingCreate = modern.request(WS_METHODS.sessionCreate, withGatewayProfile({ title: 't' }, 'research'));
   const modernFrame = JSON.parse(FakeWebSocket.last.sent.at(-1));
   assert.equal(modernFrame.method, 'session.create');
   assert.equal(modernFrame.params.profile, 'research');
+
+  // A capability-advertising gateway that still answers with a mismatched
+  // effective profile (its documented behavior is to reject unresolved
+  // profiles with 4041 BEFORE creating a session, so this shape means launch
+  // fallback) must fail the ack check, and no binding may be persisted.
+  FakeWebSocket.last._message({ id: modernFrame.id, result: { session_id: 'live-9', stored_session_id: 'stored-9', profile: '' } });
+  const mismatched = await pendingCreate;
+  assert.throws(() => assertGatewayProfileAck(mismatched, 'research'), /launch profile/);
 });
 
 test('forgetRemoteSessionBinding drops a re-anchored session id', () => {
@@ -268,8 +269,14 @@ test('classifyGatewayFrame distinguishes responses, errors, events, and noise', 
 test('gateway client connects, resolves a matching RPC response, and dispatches events', async () => {
   const client = createGatewayClient({ WebSocketImpl: FakeWebSocket });
   const connecting = client.connect('wss://host/api/ws?ticket=t');
+  let connected = false;
+  connecting.then(() => { connected = true; });
   FakeWebSocket.last._open();
-  await connecting;
+  await Promise.resolve();
+  assert.equal(connected, false, 'socket open alone must not prove Hermes gateway identity');
+  FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: { protocol: 1 } } });
+  assert.deepEqual(await connecting, { protocol: 1 });
+  assert.deepEqual(client.readyPayload, { protocol: 1 });
 
   const deltas = [];
   client.on('message.delta', (event) => deltas.push(event.payload.text));
@@ -287,10 +294,47 @@ test('gateway client connects, resolves a matching RPC response, and dispatches 
   assert.deepEqual(deltas, ['hel']);
 });
 
+test('gateway client rejects a socket that never sends gateway.ready', async () => {
+  const client = createGatewayClient({ WebSocketImpl: FakeWebSocket, readyTimeoutMs: 10 });
+  const connecting = client.connect('wss://host/api/ws?ticket=t');
+  FakeWebSocket.last._open();
+  await assert.rejects(connecting, /gateway\.ready.*timed out/i);
+  assert.equal(client.readyState, -1);
+});
+
+test('gateway client ignores a late close from a timed-out socket during reconnect', async () => {
+  const sockets = [];
+  class DelayedCloseSocket extends FakeWebSocket {
+    constructor(url) {
+      super(url);
+      sockets.push(this);
+    }
+
+    close() {
+      this.readyState = 3;
+    }
+
+    flushClose() {
+      this._emit('close', { code: 1006, reason: '' });
+    }
+  }
+
+  const client = createGatewayClient({ WebSocketImpl: DelayedCloseSocket, readyTimeoutMs: 10 });
+  await assert.rejects(client.connect('wss://host/api/ws?ticket=old'), /gateway\.ready.*timed out/i);
+
+  const reconnecting = client.connect('wss://host/api/ws?ticket=new');
+  sockets[0].flushClose();
+  sockets[1]._open();
+  sockets[1]._message({ method: 'event', params: { type: 'gateway.ready', payload: { skin: 'hermes' } } });
+  await assert.doesNotReject(reconnecting);
+  assert.equal(client.readyState, 1);
+});
+
 test('gateway client rejects pending requests when the socket closes', async () => {
   const client = createGatewayClient({ WebSocketImpl: FakeWebSocket });
   const connecting = client.connect('wss://host/api/ws?ticket=t');
   FakeWebSocket.last._open();
+  FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: {} } });
   await connecting;
 
   const pending = client.request('session.list', {});
