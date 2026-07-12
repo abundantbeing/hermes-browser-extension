@@ -195,8 +195,12 @@ test('mintWsTicket injects the mint into the dashboard tab with the ticket URL',
 
 test('fetchDashboardProfiles uses the fixed read-only dashboard profiles route on the trusted tab', async () => {
   let injected = null;
+  const trustedTab = { id: 9, url: 'https://host.ts.net/hermes/profiles', status: 'complete', discarded: false };
   const result = await fetchDashboardProfiles({
-    tabsApi: { query: async () => [{ id: 9, url: 'https://host.ts.net/hermes/profiles', status: 'complete', discarded: false }] },
+    tabsApi: {
+      query: async () => [trustedTab],
+      get: async () => ({ ...trustedTab }),
+    },
     scriptingApi: {
       executeScript: async (opts) => {
         injected = opts;
@@ -210,6 +214,20 @@ test('fetchDashboardProfiles uses the fixed read-only dashboard profiles route o
   assert.deepEqual(result, { ok: true, profiles: [{ name: 'default' }] });
   assert.equal(injected.target.tabId, 9);
   assert.deepEqual(injected.args, ['https://host.ts.net/hermes/api/profiles']);
+});
+
+test('fetchDashboardProfiles discards the result when the trusted tab navigates mid-request', async () => {
+  const result = await fetchDashboardProfiles({
+    tabsApi: {
+      query: async () => [{ id: 9, url: 'https://host.ts.net/hermes/profiles', status: 'complete', discarded: false }],
+      get: async () => ({ id: 9, url: 'https://host.ts.net/hermes/login', status: 'complete', discarded: false }),
+    },
+    scriptingApi: { executeScript: async () => [{ result: { ok: true, profiles: [{ name: 'MUST_NOT_ESCAPE' }] } }] },
+    baseUrl: 'https://host.ts.net/hermes',
+    tabId: 9,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'dashboard_tab_changed', origin: 'https://host.ts.net' });
+  assert.equal(JSON.stringify(result).includes('MUST_NOT_ESCAPE'), false);
 });
 
 test('fetchDashboardProfiles refuses a tab other than the trusted one', async () => {

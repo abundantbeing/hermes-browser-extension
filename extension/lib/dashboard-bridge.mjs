@@ -199,10 +199,11 @@ export async function mintWsTicket({ tabsApi, scriptingApi, baseUrl, tabId = nul
 
 // Read the dashboard's profile list through the same signed-in, first-party tab
 // used for ws-ticket minting — including the Trusted Dashboard Attach tab
-// restriction (active tab, optionally pinned to the trusted tab id). This is a
-// fixed GET route, not a generic dashboard request proxy, and it returns only
-// sanitized metadata, so the post-injection tab re-validation that protects
-// the ticket is not repeated here.
+// restriction (active tab, optionally pinned to the trusted tab id) and the
+// same post-injection re-validation: if the tab navigated, discarded, or
+// changed origin while the request ran, the result no longer comes from the
+// trusted state and is discarded. This is a fixed GET route, not a generic
+// dashboard request proxy.
 export async function fetchDashboardProfiles({ tabsApi, scriptingApi, baseUrl, tabId = null, fetchFn = fetchProfilesInPage }) {
   const origin = originOf(baseUrl);
   if (!origin) return { ok: false, reason: 'bad_base_url' };
@@ -221,7 +222,26 @@ export async function fetchDashboardProfiles({ tabsApi, scriptingApi, baseUrl, t
   } catch (error) {
     return { ok: false, reason: 'inject_failed', detail: String(error?.message || error) };
   }
-  return injection?.result || { ok: false, reason: 'no_result' };
+  const result = injection?.result || { ok: false, reason: 'no_result' };
+  if (!result.ok) return result;
+
+  let currentTab;
+  try {
+    currentTab = await tabsApi.get(tab.id);
+  } catch {
+    return { ok: false, reason: 'dashboard_tab_changed', origin };
+  }
+  if (
+    !currentTab
+    || currentTab.discarded
+    || currentTab.status !== 'complete'
+    || currentTab.pendingUrl
+    || currentTab.url !== tab.url
+    || originOf(currentTab.url) !== origin
+  ) {
+    return { ok: false, reason: 'dashboard_tab_changed', origin };
+  }
+  return result;
 }
 
 // Human-facing message for a mint failure reason.

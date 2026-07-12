@@ -3726,7 +3726,7 @@ async function loadProfiles({ quiet = false } = {}) {
         const error = new Error(
           result.status === 404
             ? 'This Hermes dashboard does not expose /api/profiles yet.'
-            : ['no_dashboard_tab', 'not_signed_in', 'bad_base_url', 'scripting_unavailable'].includes(result.reason)
+            : ['no_dashboard_tab', 'not_signed_in', 'bad_base_url', 'scripting_unavailable', 'dashboard_tab_changed'].includes(result.reason)
               ? ticketFailureHelp(result.reason, result.origin)
               : `Could not read Hermes dashboard profiles (${result.reason || 'unknown'}).`,
         );
