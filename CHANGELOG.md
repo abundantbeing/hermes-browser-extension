@@ -5,10 +5,12 @@
 ### Fixed
 
 - Preserved remote dashboard conversations across WebSocket replacement by persisting the gateway's durable session identity, resuming it on reconnect, and routing follow-up RPCs through the fresh live session identity.
+- Added a browser-agnostic confirmation gate for side-panel opens so Chromium forks that silently no-op can fall back to a working extension tab without duplicating tabs when a native panel actually opens.
 
 ### Contributors
 
 - Folded and hardened the session-identity foundation from [PR #35](https://github.com/abundantbeing/hermes-browser-extension/pull/35) by [@mr-magaia](https://github.com/mr-magaia); the proposed profile selector remains deferred until official Hermes advertises and enforces that gateway capability.
+- Credited [@chinnsenn](https://github.com/chinnsenn) for the Arc compatibility report in [issue #37](https://github.com/abundantbeing/hermes-browser-extension/issues/37).
 
 ## [0.1.11] - 2026-07-13
 
