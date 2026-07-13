@@ -154,10 +154,27 @@ function panelScopeMatches(candidate = {}, openOptions = {}) {
   return true;
 }
 
+function extensionLocalPath(value = '') {
+  const text = String(value || '');
+  if (!text) return '';
+  try {
+    const url = new URL(text);
+    return `${url.pathname.replace(/^\/+/, '')}${url.search}${url.hash}`;
+  } catch {
+    return text.replace(/^\/+/, '');
+  }
+}
+
+function chromiumMajorVersion(userAgent = '') {
+  const match = /\b(?:HeadlessChrome|Chrome|Chromium)\/(\d+)/i.exec(String(userAgent));
+  return match ? Number.parseInt(match[1], 10) : 0;
+}
+
 /**
- * Some Chromium forks resolve sidePanel.open() without displaying or creating
- * the panel. Confirm a real open via Chrome's onOpened event when available,
- * then fall back to the MV3 context registry used by Chrome 116-140.
+ * Some Chromium forks resolve sidePanel.open() without displaying the panel.
+ * Chrome 141+'s onOpened event is authoritative; context existence alone is
+ * not proof of visible UI in modern partial implementations. Fall back to the
+ * MV3 context registry only on Chrome 116-140.
  */
 async function openSidePanelWithConfirmation({
   sidePanelApi,
@@ -165,28 +182,39 @@ async function openSidePanelWithConfirmation({
   openOptions = {},
   panelUrl = '',
   pollDelays = [0, 75, 150, 300, 500],
+  userAgent = globalThis.navigator?.userAgent || '',
   wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 } = {}) {
   if (typeof sidePanelApi?.open !== 'function') return false;
 
+  const expectedPanelPath = extensionLocalPath(panelUrl);
+  const panelPathMatches = (value) => !expectedPanelPath || extensionLocalPath(value) === expectedPanelPath;
   let openedByEvent = false;
   const onOpened = (info = {}) => {
-    if (panelScopeMatches(info, openOptions)) openedByEvent = true;
+    if (panelScopeMatches(info, openOptions) && panelPathMatches(info.path)) openedByEvent = true;
   };
   const openedEvent = sidePanelApi?.onOpened;
-  openedEvent?.addListener?.(onOpened);
+  const confirmsWithOpenedEvent = typeof openedEvent?.addListener === 'function';
+  const requiresOpenedEvent = confirmsWithOpenedEvent || chromiumMajorVersion(userAgent) >= 141;
+  if (confirmsWithOpenedEvent) openedEvent.addListener(onOpened);
 
   try {
     await sidePanelApi.open(openOptions);
     for (const delay of pollDelays) {
       if (delay > 0) await wait(delay);
       if (openedByEvent) return true;
+      if (requiresOpenedEvent) continue;
       if (typeof runtimeApi?.getContexts !== 'function') continue;
       try {
         const query = { contextTypes: ['SIDE_PANEL'] };
         if (panelUrl) query.documentUrls = [panelUrl];
         const contexts = await runtimeApi.getContexts(query);
-        if ((contexts || []).some((context) => panelScopeMatches(context, openOptions))) return true;
+        const panelOpened = (contexts || []).some((context) => (
+          context?.contextType === 'SIDE_PANEL'
+          && panelScopeMatches(context, openOptions)
+          && panelPathMatches(context.documentUrl)
+        ));
+        if (panelOpened) return true;
       } catch {
         // A partial sidePanel implementation is not proof that a panel opened.
       }

@@ -54,7 +54,95 @@ test('side-panel confirmation accepts an exact onOpened event', async () => {
   assert.equal(listener, null, 'onOpened listener must be removed after the attempt');
 });
 
-test('side-panel confirmation accepts the expected SIDE_PANEL context', async () => {
+test('side-panel confirmation rejects an onOpened event for another panel path', async () => {
+  let listener = null;
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi: {
+      onOpened: {
+        addListener(fn) { listener = fn; },
+        removeListener(fn) { if (listener === fn) listener = null; },
+      },
+      async open(options) {
+        listener?.({ tabId: options.tabId, path: 'unrelated-panel.html' });
+      },
+    },
+    runtimeApi: { getContexts: async () => [] },
+    openOptions: { tabId: 7 },
+    panelUrl: 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7',
+    pollDelays: [0],
+  });
+  assert.equal(opened, false);
+  assert.equal(listener, null, 'onOpened listener must be removed after a path mismatch');
+});
+
+test('modern side-panel confirmation ignores hidden contexts when onOpened never fires', async () => {
+  const panelUrl = 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7';
+  let listener = null;
+  let contextQueries = 0;
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi: {
+      onOpened: {
+        addListener(fn) { listener = fn; },
+        removeListener(fn) { if (listener === fn) listener = null; },
+      },
+      open: async () => {},
+    },
+    runtimeApi: {
+      getContexts: async () => {
+        contextQueries += 1;
+        return [{ contextType: 'SIDE_PANEL', documentUrl: panelUrl, tabId: 7, windowId: 2 }];
+      },
+    },
+    openOptions: { tabId: 7 },
+    panelUrl,
+    pollDelays: [0],
+  });
+  assert.equal(opened, false);
+  assert.equal(contextQueries, 0, 'modern Chromium must use the real onOpened event, not context existence');
+  assert.equal(listener, null, 'onOpened listener must be removed after the attempt');
+});
+
+test('modern Chromium ignores hidden contexts even when onOpened is missing', async () => {
+  const panelUrl = 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7';
+  let contextQueries = 0;
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi: { open: async () => {} },
+    runtimeApi: {
+      getContexts: async () => {
+        contextQueries += 1;
+        return [{ contextType: 'SIDE_PANEL', documentUrl: panelUrl, tabId: 7, windowId: 2 }];
+      },
+    },
+    openOptions: { tabId: 7 },
+    panelUrl,
+    pollDelays: [0],
+    userAgent: 'Mozilla/5.0 Chrome/150.0.0.0 Safari/537.36',
+  });
+  assert.equal(opened, false);
+  assert.equal(contextQueries, 0, 'Chrome 141+ must never use context existence as visibility proof');
+});
+
+test('HeadlessChrome 141+ ignores hidden contexts when onOpened is missing', async () => {
+  const panelUrl = 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7';
+  let contextQueries = 0;
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi: { open: async () => {} },
+    runtimeApi: {
+      getContexts: async () => {
+        contextQueries += 1;
+        return [{ contextType: 'SIDE_PANEL', documentUrl: panelUrl, tabId: 7, windowId: 2 }];
+      },
+    },
+    openOptions: { tabId: 7 },
+    panelUrl,
+    pollDelays: [0],
+    userAgent: 'Mozilla/5.0 HeadlessChrome/150.0.0.0 Safari/537.36',
+  });
+  assert.equal(opened, false);
+  assert.equal(contextQueries, 0, 'HeadlessChrome 141+ must use the modern event confirmation gate');
+});
+
+test('legacy side-panel confirmation accepts the expected SIDE_PANEL context without onOpened', async () => {
   const panelUrl = 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7';
   const opened = await openSidePanelWithConfirmation({
     sidePanelApi: { open: async () => {} },
@@ -64,8 +152,27 @@ test('side-panel confirmation accepts the expected SIDE_PANEL context', async ()
     openOptions: { tabId: 7 },
     panelUrl,
     pollDelays: [0],
+    userAgent: 'Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36',
   });
   assert.equal(opened, true);
+});
+
+test('legacy side-panel confirmation rejects contexts with the wrong type or path', async () => {
+  const panelUrl = 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7';
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi: { open: async () => {} },
+    runtimeApi: {
+      getContexts: async () => [
+        { contextType: 'OFFSCREEN_DOCUMENT', documentUrl: panelUrl, tabId: 7, windowId: 2 },
+        { contextType: 'SIDE_PANEL', documentUrl: 'chrome-extension://id/unrelated.html', tabId: 7, windowId: 2 },
+      ],
+    },
+    openOptions: { tabId: 7 },
+    panelUrl,
+    pollDelays: [0],
+    userAgent: 'Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36',
+  });
+  assert.equal(opened, false);
 });
 
 test('side-panel confirmation rejects a silent no-op so the caller can use its tab fallback', async () => {
@@ -80,6 +187,7 @@ test('side-panel confirmation rejects a silent no-op so the caller can use its t
 });
 
 function createBackgroundHarness({
+  runtimeContexts = [],
   sidePanelOpen = async () => {},
   synchronizeFallbackQueries = false,
 } = {}) {
@@ -94,7 +202,7 @@ function createBackgroundHarness({
     runtime: {
       getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
       getURL: (value) => `chrome-extension://test/${value}`,
-      getContexts: async () => [],
+      getContexts: async () => runtimeContexts,
       onInstalled: { addListener() {} },
       onStartup: { addListener() {} },
       onMessage: { addListener() {} },
@@ -192,6 +300,25 @@ test('background action coalesces concurrent silent side-panel fallbacks', async
       harness.actionHandler(harness.activeTab),
     ]);
     assert.equal(harness.createdTabs.length, 1, 'concurrent fallback clicks must share one tab open');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background action falls back when a modern browser creates a hidden side-panel context', async () => {
+  const originalChrome = globalThis.chrome;
+  const panelUrl = 'chrome-extension://test/sidepanel.html?panel=tab&tabId=7';
+  const harness = createBackgroundHarness({
+    runtimeContexts: [{ contextType: 'SIDE_PANEL', documentUrl: panelUrl, tabId: 7, windowId: 8 }],
+  });
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?hidden-side-panel-context=${Date.now()}`);
+    assert.equal(typeof harness.actionHandler, 'function');
+    await harness.actionHandler(harness.activeTab);
+    assert.deepEqual(harness.sidePanelOpenCalls, [{ tabId: 7 }, { windowId: 8 }]);
+    assert.deepEqual(harness.createdTabs, [{ url: panelUrl, active: true }]);
   } finally {
     globalThis.chrome = originalChrome;
   }

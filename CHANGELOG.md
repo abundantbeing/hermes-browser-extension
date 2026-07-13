@@ -5,7 +5,7 @@
 ### Fixed
 
 - Preserved remote dashboard conversations across WebSocket replacement by persisting the gateway's durable session identity, resuming it on reconnect, and routing follow-up RPCs through the fresh live session identity.
-- Added a browser-agnostic confirmation gate for side-panel opens so Chromium forks that silently no-op can fall back to a working extension tab without duplicating tabs when a native panel actually opens.
+- Made Chrome 141+ require a real `sidePanel.onOpened` event so Arc's hidden `SIDE_PANEL` contexts cannot suppress the reusable extension-tab fallback, while retaining context confirmation for Chrome 116-140.
 
 ### Contributors
 
