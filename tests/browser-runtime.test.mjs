@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import { openSidePanelWithConfirmation } from '../extension/lib/browser-runtime.mjs';
 
 const root = process.cwd();
 
@@ -27,6 +28,108 @@ test('background.js openHermesPanel falls back to popup window for Firefox', () 
   const source = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8');
   assert.match(source, /browserId === 'opera' \|\| browserId === 'firefox'/);
   assert.match(source, /windows\.create/);
+  assert.match(source, /openSidePanelWithConfirmation\(/);
+  assert.match(source, /if \(panelOpened\) return/);
+});
+
+test('side-panel confirmation accepts an exact onOpened event', async () => {
+  let listener = null;
+  const sidePanelApi = {
+    onOpened: {
+      addListener(fn) { listener = fn; },
+      removeListener(fn) { if (listener === fn) listener = null; },
+    },
+    async open(options) {
+      listener?.({ tabId: options.tabId, path: 'sidepanel.html?scope=tab&tabId=7' });
+    },
+  };
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi,
+    runtimeApi: { getContexts: async () => [] },
+    openOptions: { tabId: 7 },
+    panelUrl: 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7',
+    pollDelays: [0],
+  });
+  assert.equal(opened, true);
+  assert.equal(listener, null, 'onOpened listener must be removed after the attempt');
+});
+
+test('side-panel confirmation accepts the expected SIDE_PANEL context', async () => {
+  const panelUrl = 'chrome-extension://id/sidepanel.html?scope=tab&tabId=7';
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi: { open: async () => {} },
+    runtimeApi: {
+      getContexts: async () => [{ contextType: 'SIDE_PANEL', documentUrl: panelUrl, tabId: 7, windowId: 2 }],
+    },
+    openOptions: { tabId: 7 },
+    panelUrl,
+    pollDelays: [0],
+  });
+  assert.equal(opened, true);
+});
+
+test('side-panel confirmation rejects a silent no-op so the caller can use its tab fallback', async () => {
+  const opened = await openSidePanelWithConfirmation({
+    sidePanelApi: { open: async () => {} },
+    runtimeApi: { getContexts: async () => [] },
+    openOptions: { windowId: 2 },
+    panelUrl: 'chrome-extension://id/sidepanel.html?scope=global',
+    pollDelays: [0, 0],
+  });
+  assert.equal(opened, false);
+});
+
+test('background action uses the extension-tab fallback when sidePanel.open silently no-ops', async () => {
+  const originalChrome = globalThis.chrome;
+  let actionHandler = null;
+  const createdTabs = [];
+  globalThis.chrome = {
+    runtime: {
+      getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
+      getURL: (value) => `chrome-extension://test/${value}`,
+      getContexts: async () => [],
+      onInstalled: { addListener() {} },
+      onStartup: { addListener() {} },
+      onMessage: { addListener() {} },
+    },
+    storage: {
+      local: {
+        get: async () => ({
+          hermesBrowserSettings: { panelResidencyMode: 'tab-attached' },
+        }),
+      },
+      onChanged: { addListener() {} },
+    },
+    action: {
+      setPopup: async () => {},
+      onClicked: { addListener(handler) { actionHandler = handler; } },
+    },
+    tabs: {
+      query: async () => [{ id: 7, windowId: 8 }],
+      create: async (options) => { createdTabs.push(options); },
+      onActivated: { addListener() {} },
+    },
+    sidePanel: {
+      setPanelBehavior: async () => {},
+      setOptions: async () => {},
+      open: async () => {},
+      onOpened: {
+        addListener() {},
+        removeListener() {},
+      },
+    },
+    windows: { create: async () => {} },
+  };
+
+  try {
+    await import(`../extension/background.js?silent-side-panel=${Date.now()}`);
+    assert.equal(typeof actionHandler, 'function');
+    await actionHandler({ id: 7, windowId: 8 });
+    assert.equal(createdTabs.length, 1);
+    assert.equal(createdTabs[0].url, 'chrome-extension://test/sidepanel.html?panel=tab&tabId=7');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
 });
 
 test('build-firefox.mjs exists and is valid JavaScript', () => {

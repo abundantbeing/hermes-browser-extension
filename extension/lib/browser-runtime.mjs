@@ -148,6 +148,55 @@ function nativePanelMode() {
   return 'extension-tab';
 }
 
+function panelScopeMatches(candidate = {}, openOptions = {}) {
+  if (Number.isFinite(openOptions.tabId)) return Number(candidate.tabId) === Number(openOptions.tabId);
+  if (Number.isFinite(openOptions.windowId)) return Number(candidate.windowId) === Number(openOptions.windowId);
+  return true;
+}
+
+/**
+ * Some Chromium forks resolve sidePanel.open() without displaying or creating
+ * the panel. Confirm a real open via Chrome's onOpened event when available,
+ * then fall back to the MV3 context registry used by Chrome 116-140.
+ */
+async function openSidePanelWithConfirmation({
+  sidePanelApi,
+  runtimeApi,
+  openOptions = {},
+  panelUrl = '',
+  pollDelays = [0, 75, 150, 300, 500],
+  wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+} = {}) {
+  if (typeof sidePanelApi?.open !== 'function') return false;
+
+  let openedByEvent = false;
+  const onOpened = (info = {}) => {
+    if (panelScopeMatches(info, openOptions)) openedByEvent = true;
+  };
+  const openedEvent = sidePanelApi?.onOpened;
+  openedEvent?.addListener?.(onOpened);
+
+  try {
+    await sidePanelApi.open(openOptions);
+    for (const delay of pollDelays) {
+      if (delay > 0) await wait(delay);
+      if (openedByEvent) return true;
+      if (typeof runtimeApi?.getContexts !== 'function') continue;
+      try {
+        const query = { contextTypes: ['SIDE_PANEL'] };
+        if (panelUrl) query.documentUrls = [panelUrl];
+        const contexts = await runtimeApi.getContexts(query);
+        if ((contexts || []).some((context) => panelScopeMatches(context, openOptions))) return true;
+      } catch {
+        // A partial sidePanel implementation is not proof that a panel opened.
+      }
+    }
+    return false;
+  } finally {
+    openedEvent?.removeListener?.(onOpened);
+  }
+}
+
 export {
   BROWSER_IDS,
   detectBrowserId,
@@ -155,6 +204,7 @@ export {
   hasChromeSidePanel,
   hasSidebarAction,
   openNativeSidebar,
+  openSidePanelWithConfirmation,
   setActionClickPanelBehavior,
   nativePanelMode,
 };

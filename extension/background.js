@@ -7,6 +7,7 @@ import {
 import {
   detectBrowserId,
   openNativeSidebar,
+  openSidePanelWithConfirmation,
   setActionClickPanelBehavior as setPanelBehaviorForBrowser,
 } from './lib/browser-runtime.mjs';
 import {
@@ -117,6 +118,7 @@ async function openHermesPanel(tab) {
     tabId: useTabAttached ? tabId : null,
     defaultPath: defaultPanelPath,
   });
+  const panelUrl = chrome.runtime.getURL(panelPath);
 
   // Try Opera/Firefox native sidebar first.
   const opened = await openNativeSidebar({ windowId: tab?.windowId ?? null });
@@ -131,21 +133,37 @@ async function openHermesPanel(tab) {
       await applyPanelResidencyMode(panelResidencyMode, { tabId: useTabAttached ? tabId : null });
       if (useTabAttached) {
         try {
-          await chrome.sidePanel.open({ tabId });
-          return;
+          const panelOpened = await openSidePanelWithConfirmation({
+            sidePanelApi: chrome.sidePanel,
+            runtimeApi: chrome.runtime,
+            openOptions: { tabId },
+            panelUrl,
+          });
+          if (panelOpened) return;
         } catch (tabOpenError) {
           if (!tab?.windowId) throw tabOpenError;
           const { windowId } = tab;
           console.warn('[Hermes Browser] Tab side panel open failed, retrying window side panel:', tabOpenError);
-          await chrome.sidePanel.open({ windowId });
-          return;
+          const panelOpened = await openSidePanelWithConfirmation({
+            sidePanelApi: chrome.sidePanel,
+            runtimeApi: chrome.runtime,
+            openOptions: { windowId },
+            panelUrl,
+          });
+          if (panelOpened) return;
         }
       }
       if (tab?.windowId) {
         const { windowId } = tab;
-        await chrome.sidePanel.open({ windowId });
-        return;
+        const panelOpened = await openSidePanelWithConfirmation({
+          sidePanelApi: chrome.sidePanel,
+          runtimeApi: chrome.runtime,
+          openOptions: { windowId },
+          panelUrl,
+        });
+        if (panelOpened) return;
       }
+      console.warn('[Hermes Browser] Side panel open was not confirmed; using the extension fallback.');
     }
   } catch (error) {
     console.warn('[Hermes Browser] Side panel open failed:', error);

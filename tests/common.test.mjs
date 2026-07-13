@@ -1808,9 +1808,10 @@ test('background keeps action-click side panel opening while applying tab-attach
   assert.doesNotMatch(runtimeSource, /openPanelOnActionClick:\s*false/);
   assert.match(source, /setOptions\(\{\s*enabled:\s*false\s*\}\)/);
   assert.match(source, /sidePanel\.setOptions\(\{[\s\S]*tabId/);
-  assert.match(source, /sidePanel\.open\(\{\s*tabId/);
+  assert.match(source, /openSidePanelWithConfirmation\(\{/);
+  assert.match(source, /openOptions:\s*\{\s*tabId\s*\}/);
   assert.match(source, /Tab side panel open failed, retrying window side panel/);
-  assert.match(source, /sidePanel\.open\(\{\s*tabId\s*\}\);[\s\S]*catch \(tabOpenError\)[\s\S]*sidePanel\.open\(\{\s*windowId\s*\}\)/);
+  assert.match(source, /openOptions:\s*\{\s*tabId\s*\}[\s\S]*catch \(tabOpenError\)[\s\S]*openOptions:\s*\{\s*windowId\s*\}/);
   assert.match(source, /configureSidePanel[\s\S]*activeBrowserTabId\(\)[\s\S]*applyPanelResidencyMode/);
   assert.match(source, /tabs\?\.onActivated\?\.addListener\?\.[\s\S]*reapplyPanelResidencyForTab/);
   assert.match(source, /windows\.create/);
