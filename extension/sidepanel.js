@@ -36,6 +36,7 @@ import {
   isModelRuntimeSelectable,
   isRestrictedUrl,
   isUsableRemoteGatewayUrl,
+  messagesForLocalCache,
   microphonePermissionHelp,
   modelDisplayName,
   modelRefreshControlState,
@@ -872,7 +873,8 @@ async function loadMessagesForActiveScope() {
 
 async function saveMessagesForActiveScope() {
   const key = activeMessagesStorageKey(previousConversationScope);
-  await chrome.storage.local.set({ [key]: messages });
+  const cachedMessages = messagesForLocalCache(messages, settings.maxLocalMessages);
+  await chrome.storage.local.set({ [key]: cachedMessages });
 }
 
 async function loadSessionBindingForActiveScope() {
@@ -4363,9 +4365,8 @@ async function loadSessionMessages(sessionId = settings.sessionId) {
       messages = rows
         .filter((message) => ['user', 'assistant', 'system'].includes(message.role))
         .map((message) => ({ role: message.role, content: coerceWsMessageContent(message.content), ts: Number(message.timestamp || message.ts || Date.now()) }))
-        .filter((message) => message.content)
-        .slice(-settings.maxLocalMessages);
-      await chrome.storage.local.set({ [activeMessagesStorageKey(previousConversationScope)]: messages });
+        .filter((message) => message.content);
+      await saveMessagesForActiveScope();
       renderMessagesFromStorage();
     } catch (error) {
       addMessage('system', `Could not load session messages: ${error?.message || String(error)}`);
@@ -4381,9 +4382,8 @@ async function loadSessionMessages(sessionId = settings.sessionId) {
     const rows = Array.isArray(payload.data) ? payload.data : [];
     messages = rows
       .filter((message) => ['user', 'assistant', 'system'].includes(message.role) && message.content)
-      .map((message) => ({ role: message.role, content: String(message.content), ts: Number(message.timestamp || Date.now()) }))
-      .slice(-settings.maxLocalMessages);
-    await chrome.storage.local.set({ [activeMessagesStorageKey(previousConversationScope)]: messages });
+      .map((message) => ({ role: message.role, content: String(message.content), ts: Number(message.timestamp || Date.now()) }));
+    await saveMessagesForActiveScope();
     renderMessagesFromStorage();
   } catch (error) {
     addMessage('system', `Could not load session messages: ${error?.message || String(error)}`);
@@ -4887,8 +4887,6 @@ function createStreamingMessageUpdater(node) {
 }
 
 async function trimAndSaveMessages() {
-  const max = Number(settings.maxLocalMessages || DEFAULT_SETTINGS.maxLocalMessages);
-  if (messages.length > max) messages = messages.slice(-max);
   await saveMessagesForActiveScope();
 }
 

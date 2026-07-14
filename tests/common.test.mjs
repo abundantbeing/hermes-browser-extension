@@ -131,6 +131,27 @@ test('sidepanel replays stored history without emptying canonical messages betwe
   assert.doesNotMatch(renderer, /messages\s*=\s*\[\]/);
 });
 
+test('messagesForLocalCache bounds persistence without mutating the active transcript', () => {
+  const messages = Array.from({ length: 45 }, (_value, index) => ({ role: 'user', content: `row-${index + 1}` }));
+  assert.equal(typeof common.messagesForLocalCache, 'function');
+  const cached = common.messagesForLocalCache(messages, 40);
+
+  assert.equal(messages.length, 45);
+  assert.equal(cached.length, 40);
+  assert.equal(cached[0].content, 'row-6');
+  assert.notEqual(cached, messages);
+});
+
+test('sidepanel keeps Gateway history complete while bounding only the local fallback cache', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const loader = source.match(/async function loadSessionMessages\([\s\S]*?\n\}/)?.[0] || '';
+  const saver = source.match(/async function trimAndSaveMessages\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+
+  assert.doesNotMatch(loader, /slice\(-settings\.maxLocalMessages\)/);
+  assert.doesNotMatch(saver, /messages\s*=\s*messages\.slice/);
+  assert.match(saver, /await saveMessagesForActiveScope\(\);/);
+});
+
 test('sidepanel wires Browser-scoped models and compact session copy/rename actions', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
