@@ -102,6 +102,7 @@ test('side panel keeps Browser onboarding, refresh feedback, updates, and messag
   const html = read('extension/sidepanel.html');
   const css = read('extension/sidepanel.css');
   const js = read('extension/sidepanel.js');
+  const buildScript = read('scripts/build.mjs');
   const refreshModels = js.match(/async function refreshModelsFromMenu\(\)[\s\S]*?\n\}/)?.[0] || '';
   const refreshSessions = js.match(/async function refreshSessionsFromMenu\(\)[\s\S]*?\n\}/)?.[0] || '';
   const checkUpdates = js.match(/async function checkForUpdates\([^)]*\)[\s\S]*?\n\}/)?.[0] || '';
@@ -132,6 +133,17 @@ test('side panel keeps Browser onboarding, refresh feedback, updates, and messag
   assert.match(refreshSessions, /showOperationToast\(/);
   assert.match(checkUpdates, /renderVersionInfo\(status\)/);
   assert.doesNotMatch(checkUpdates, /showOperationToast\(/);
+  assert.match(buildScript, /sourceBlobs/);
+  assert.match(buildScript, /createHash\(['"]sha1['"]\)/);
+  assert.match(js, /async function fetchMainSourceBlobs/);
+  assert.match(checkUpdates, /sourceBlobMapsMatch/);
+  assert.match(checkUpdates, /buildInfo\?\.dirty/);
+  assert.match(checkUpdates, /sourceMatchesMain/);
+  assert.match(js, /payload\.behind_by/);
+  assert.match(checkUpdates, /commitsAhead:\s*comparison\.commitsAhead/);
+  assert.match(checkUpdates, /alignment:\s*comparison\.alignment/);
+  assert.match(js, /review\.emptyMessage/);
+  assert.match(js, /maybeLaterButton\.textContent\s*=\s*review\.available/);
   assert.match(refreshSessions, /sessionsRefreshing\s*=\s*true/);
   assert.match(js, /function positionOperationToast\(\)[\s\S]*?getBoundingClientRect\(\)/);
   assert.match(js, /HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY/);

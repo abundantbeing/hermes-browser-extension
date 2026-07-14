@@ -747,6 +747,25 @@ export function normalizeGitCommit(value = '') {
   return /^[0-9a-f]{7,40}$/.test(commit) ? commit : '';
 }
 
+export function sourceBlobMapsMatch(buildSourceBlobs = null, mainSourceBlobs = null) {
+  const entries = (value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+    return Object.entries(value)
+      .map(([filePath, sha]) => [
+        String(filePath || '').replace(/\\/g, '/').replace(/^\.\//, '').trim(),
+        String(sha || '').trim().toLowerCase(),
+      ])
+      .filter(([filePath, sha]) => filePath && /^[0-9a-f]{40}$/.test(sha))
+      .sort(([left], [right]) => left.localeCompare(right));
+  };
+  const buildEntries = entries(buildSourceBlobs);
+  const mainEntries = entries(mainSourceBlobs);
+  if (!buildEntries.length || buildEntries.length !== mainEntries.length) return false;
+  return buildEntries.every(([filePath, sha], index) => (
+    mainEntries[index]?.[0] === filePath && mainEntries[index]?.[1] === sha
+  ));
+}
+
 export function shortGitCommit(value = '') {
   const commit = normalizeGitCommit(value);
   return commit ? commit.slice(0, 7) : '';
@@ -762,7 +781,10 @@ export function formatUpdateStatus({
   currentCommit = '',
   latestCommit = '',
   commitsBehind = null,
+  commitsAhead = 0,
+  alignment = '',
   buildDirty = false,
+  sourceMatchesMain = false,
 } = {}) {
   const latest = String(latestVersion || '').trim().replace(/^v/i, '') || '0.0.0';
   const current = String(currentVersion || '').trim().replace(/^v/i, '') || '0.0.0';
@@ -770,7 +792,12 @@ export function formatUpdateStatus({
   const latestSha = normalizeGitCommit(latestCommit);
   const currentShort = shortGitCommit(currentSha);
   const latestShort = shortGitCommit(latestSha);
-  const behind = Number.isFinite(Number(commitsBehind)) ? Math.max(0, Number.parseInt(commitsBehind, 10) || 0) : null;
+  const hasCommitComparison = commitsBehind !== null && typeof commitsBehind !== 'undefined' && commitsBehind !== '';
+  const behind = hasCommitComparison && Number.isFinite(Number(commitsBehind))
+    ? Math.max(0, Number.parseInt(commitsBehind, 10) || 0)
+    : null;
+  const ahead = Number.isFinite(Number(commitsAhead)) ? Math.max(0, Number.parseInt(commitsAhead, 10) || 0) : 0;
+  const alignmentState = String(alignment || '').trim().toLowerCase();
   const versionComparison = compareVersionStrings(latest, current);
   const updateInstructions = 'Pull latest, run npm run build, then reload the unpacked dist/ folder.';
   const rebuildInstructions = 'Run npm run build, then reload the unpacked dist/ folder.';
@@ -786,11 +813,23 @@ export function formatUpdateStatus({
     return `This build is ahead of the public package version: v${current} installed, v${latest} on GitHub.${dirtyNote}`.trim();
   }
 
+  if (sourceMatchesMain) {
+    return `You're up to date on v${current} (main ${latestShort || 'current'}). Loaded extension files exactly match GitHub main.`;
+  }
   if (currentSha && latestSha && currentSha === latestSha) {
     return `You're up to date on v${current} (main ${currentShort}).${dirtyNote}`.trim();
   }
+  if (alignmentState === 'custom' || (buildDirty && behind === null)) {
+    return `v${current} custom local build loaded. Its exact commit distance from GitHub main cannot be verified. ${rebuildInstructions}`;
+  }
+  if (behind !== null && behind > 0 && ahead > 0 && currentShort && latestShort) {
+    return `This build diverged from GitHub main: main has ${commitsWord(behind)} not in the loaded build, and the build has ${commitsWord(ahead)} not on main (${currentShort} ↔ ${latestShort}). Pull or reconcile the checkout, run npm run build, then reload dist/.`;
+  }
   if (behind !== null && behind > 0 && currentShort && latestShort) {
     return `Source update available: v${current} installed at ${currentShort}, main is ${latestShort} — ${commitsWord(behind)} ahead. ${updateInstructions}${dirtyNote}`.trim();
+  }
+  if (behind === 0 && ahead > 0 && currentShort && latestShort) {
+    return `This build is ${commitsWord(ahead)} ahead of GitHub main (${currentShort} vs ${latestShort}). No main commits are missing.`;
   }
   if (behind === 0 && currentShort && latestShort) {
     return `You're up to date on v${current} (main ${latestShort}).${dirtyNote}`.trim();
@@ -826,12 +865,16 @@ export function updateReviewState({
   latestVersion = '0.0.0',
   currentVersion = '0.0.0',
   commitsBehind = null,
+  commitsAhead = 0,
+  alignment = '',
   commits = [],
 } = {}) {
   const hasCommitComparison = commitsBehind !== null && typeof commitsBehind !== 'undefined' && commitsBehind !== '';
   const behind = hasCommitComparison && Number.isFinite(Number(commitsBehind))
     ? Math.max(0, Number.parseInt(commitsBehind, 10) || 0)
     : null;
+  const ahead = Number.isFinite(Number(commitsAhead)) ? Math.max(0, Number.parseInt(commitsAhead, 10) || 0) : 0;
+  const alignmentState = String(alignment || '').trim().toLowerCase();
   const rows = (Array.isArray(commits) ? commits : []).map((commit) => ({
     sha: shortGitCommit(commit?.sha || ''),
     title: updateChangeTitle(commit?.message || commit?.commit?.message || ''),
@@ -841,33 +884,56 @@ export function updateReviewState({
   const groups = groupOrder
     .map((label) => ({ label, items: rows.filter((row) => row.category === label) }))
     .filter((group) => group.items.length);
-  const commitCount = behind ?? rows.length;
+  const commitCount = behind ?? (rows.length ? rows.length : null);
   const versionComparison = compareVersionStrings(latestVersion, currentVersion);
-  const verified = versionComparison !== 0 || behind !== null || rows.length > 0;
-  const available = versionComparison > 0 || commitCount > 0;
+  const verifiedAlignments = new Set(['identical', 'source-current', 'custom-current', 'main-ahead', 'build-ahead', 'diverged']);
+  const verified = versionComparison !== 0 || behind !== null || rows.length > 0 || verifiedAlignments.has(alignmentState);
+  const available = versionComparison > 0 || Number(commitCount || 0) > 0;
   const current = String(currentVersion || '').replace(/^v/i, '');
   const latest = String(latestVersion || '').replace(/^v/i, '');
-  const title = available
-    ? 'New Browser update available'
+  const title = alignmentState === 'custom-current'
+    ? 'Current main with local changes'
+    : alignmentState === 'diverged'
+      ? 'Browser build diverged from main'
+    : available
+      ? 'New Browser update available'
     : !verified
       ? 'Browser source alignment unverified'
-      : versionComparison < 0
+      : versionComparison < 0 || alignmentState === 'build-ahead'
         ? 'This Browser build is ahead'
         : 'Hermes Browser is current';
-  const summary = available
-    ? `${commitCount} commit${commitCount === 1 ? '' : 's'} ready to review · v${latest}`
+  const summary = alignmentState === 'custom-current'
+    ? '0 main commits are missing. The loaded build also contains local changes.'
+    : alignmentState === 'diverged'
+      ? `GitHub main has ${commitsWord(commitCount || 0)} not in this build; the loaded build has ${ahead} unique commit${ahead === 1 ? '' : 's'}.`
+    : available && commitCount !== null
+      ? `${commitCount} commit${commitCount === 1 ? '' : 's'} ready to review · v${latest}`
+      : available
+        ? `Version v${latest} is available · commit distance unverified.`
     : !verified
-      ? `v${current} is loaded, but this build has no commit metadata to compare with GitHub main.`
+      ? `v${current} is loaded, but this custom build cannot be placed exactly on GitHub main.`
       : versionComparison < 0
         ? `v${current} is newer than the public package version v${latest}.`
+        : alignmentState === 'build-ahead'
+          ? `The loaded build has ${ahead} unique commit${ahead === 1 ? '' : 's'} beyond GitHub main.`
         : `This Browser build is aligned with v${current}.`;
+  const emptyMessage = alignmentState === 'custom-current'
+    ? 'No GitHub main commits are missing. This loaded build includes local changes.'
+    : !verified
+    ? 'This custom build cannot be placed exactly on GitHub main. Rebuild from a clean checkout for an exact count.'
+    : alignmentState === 'build-ahead'
+      ? 'No GitHub main commits are missing from this build.'
+      : 'No newer public commits were found for this build.';
   return {
     available,
     verified,
     commitCount,
+    commitsAhead: ahead,
+    alignment: alignmentState,
     groups,
     title,
     summary,
+    emptyMessage,
   };
 }
 

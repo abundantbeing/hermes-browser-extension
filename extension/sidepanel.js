@@ -75,6 +75,7 @@ import {
   shouldAutoFlushQueuedTurn,
   shouldCreateFreshSessionOnOpen,
   shouldShowBrowserIntro,
+  sourceBlobMapsMatch,
   resolveAcknowledgedSessionModelBinding,
   resolveAcknowledgedSessionModelOptions,
   resolveBrowserEffectiveModel,
@@ -1437,17 +1438,44 @@ async function fetchLatestUpdateInfo() {
   };
 }
 
+async function fetchMainSourceBlobs(latestCommit = '') {
+  const commit = normalizeGitCommit(latestCommit);
+  if (!commit) return null;
+  const payload = await fetchJsonNoStore(`${UPDATE_MAIN_TREE_URL}/${encodeURIComponent(commit)}?recursive=1`);
+  if (payload?.truncated || !Array.isArray(payload?.tree)) return null;
+  const rows = payload.tree
+    .filter((entry) => entry?.type === 'blob' && String(entry?.path || '').startsWith('extension/'))
+    .map((entry) => [
+      String(entry.path).slice('extension/'.length),
+      normalizeGitCommit(entry.sha),
+    ])
+    .filter(([filePath, sha]) => filePath && filePath !== 'build-info.json' && sha)
+    .sort(([left], [right]) => left.localeCompare(right));
+  return rows.length ? Object.fromEntries(rows) : null;
+}
+
 async function commitsBehindMainForBuild(currentCommit = '', latestCommit = '') {
   const currentSha = normalizeGitCommit(currentCommit);
   const latestSha = normalizeGitCommit(latestCommit);
-  if (!currentSha) return { commitsBehind: null, commits: [] };
-  if (latestSha && currentSha === latestSha) return { commitsBehind: 0, commits: [] };
+  if (!currentSha) return { commitsBehind: null, commitsAhead: 0, alignment: 'unverified', commits: [] };
+  if (latestSha && currentSha === latestSha) return { commitsBehind: 0, commitsAhead: 0, alignment: 'identical', commits: [] };
   const head = latestSha || 'main';
   const response = await fetch(`${UPDATE_COMPARE_URL}/${encodeURIComponent(currentSha)}...${encodeURIComponent(head)}?t=${Date.now()}`, { cache: 'no-store' });
-  if (!response.ok) return { commitsBehind: null, commits: [] };
+  if (!response.ok) return { commitsBehind: null, commitsAhead: 0, alignment: 'unverified', commits: [] };
   const payload = await response.json().catch(() => ({}));
+  const commitsBehind = Math.max(0, Number.parseInt(payload.ahead_by, 10) || 0);
+  const commitsAhead = Math.max(0, Number.parseInt(payload.behind_by, 10) || 0);
+  const alignment = commitsBehind > 0 && commitsAhead > 0
+    ? 'diverged'
+    : commitsBehind > 0
+      ? 'main-ahead'
+      : commitsAhead > 0
+        ? 'build-ahead'
+        : 'identical';
   return {
-    commitsBehind: Math.max(0, Number.parseInt(payload.ahead_by, 10) || 0),
+    commitsBehind,
+    commitsAhead,
+    alignment,
     commits: (Array.isArray(payload.commits) ? payload.commits : [])
       .slice(-12)
       .reverse()
@@ -1474,7 +1502,9 @@ function renderUpdateDialog(review = { loading: true }) {
   if (review.error || review.loading || !review.groups?.length) {
     const empty = document.createElement('p');
     empty.className = 'update-change-empty';
-    empty.textContent = review.error || (review.loading ? 'Reading version and commit metadata…' : 'No newer public commits were found for this build.');
+    empty.textContent = review.error || (review.loading
+      ? 'Reading version and commit metadata…'
+      : (review.emptyMessage || 'No newer public commits were found for this build.'));
     els.updateChangeGroups.appendChild(empty);
   } else {
     for (const group of review.groups) {
@@ -1498,6 +1528,7 @@ function renderUpdateDialog(review = { loading: true }) {
     }
   }
   els.updateNowButton.hidden = !review.available;
+  els.maybeLaterButton.textContent = review.available ? 'MAYBE LATER' : 'CLOSE';
   els.updateInstallNote.textContent = review.available
     ? 'Update now starts a guarded Hermes agent turn. It will stop on local changes, build dist/, and reload through computer-use when available.'
     : 'This check compares the loaded build metadata with the public Hermes Browser repository.';
@@ -1541,24 +1572,44 @@ async function checkForUpdates({ openReview = false } = {}) {
       fetchLatestUpdateInfo(),
     ]);
     const currentCommit = normalizeGitCommit(buildInfo?.commit);
-    const comparison = await commitsBehindMainForBuild(currentCommit, latestInfo.latestCommit);
+    const buildDirty = Boolean(buildInfo?.dirty);
+    const commitMatchesMain = Boolean(currentCommit && latestInfo.latestCommit && currentCommit === latestInfo.latestCommit);
+    let sourceMatchesMain = false;
+    let comparison;
+    if (!buildDirty) {
+      comparison = await commitsBehindMainForBuild(currentCommit, latestInfo.latestCommit);
+    } else {
+      const mainSourceBlobs = await fetchMainSourceBlobs(latestInfo.latestCommit).catch(() => null);
+      sourceMatchesMain = sourceBlobMapsMatch(buildInfo?.sourceBlobs, mainSourceBlobs);
+      comparison = sourceMatchesMain
+        ? { commitsBehind: 0, commitsAhead: 0, alignment: 'source-current', commits: [] }
+        : commitMatchesMain
+          ? { commitsBehind: 0, commitsAhead: 0, alignment: 'custom-current', commits: [] }
+          : { commitsBehind: null, commitsAhead: 0, alignment: 'custom', commits: [] };
+    }
     const status = formatUpdateStatus({
       latestVersion: latestInfo.latestVersion,
       currentVersion: CURRENT_EXTENSION_VERSION,
       currentCommit,
       latestCommit: latestInfo.latestCommit,
       commitsBehind: comparison.commitsBehind,
-      buildDirty: Boolean(buildInfo?.dirty),
+      commitsAhead: comparison.commitsAhead,
+      alignment: comparison.alignment,
+      buildDirty,
+      sourceMatchesMain,
     });
     latestUpdateReview = {
       ...updateReviewState({
         latestVersion: latestInfo.latestVersion,
         currentVersion: CURRENT_EXTENSION_VERSION,
         commitsBehind: comparison.commitsBehind,
+        commitsAhead: comparison.commitsAhead,
+        alignment: comparison.alignment,
         commits: comparison.commits,
       }),
       currentCommit,
       latestCommit: latestInfo.latestCommit,
+      sourceMatchesMain,
     };
     renderVersionInfo(status);
     if (openReview) renderUpdateDialog(latestUpdateReview);
@@ -2339,6 +2390,7 @@ const IMAGE_ATTACHMENT_TOKEN_ESTIMATE = 1_200;
 const BROWSER_IMAGE_UPLOAD_ENDPOINT = '/api/browser-extension/uploads/images';
 const UPDATE_PACKAGE_URL = 'https://raw.githubusercontent.com/abundantbeing/hermes-browser-extension/main/package.json';
 const UPDATE_MAIN_COMMIT_URL = 'https://api.github.com/repos/abundantbeing/hermes-browser-extension/commits/main';
+const UPDATE_MAIN_TREE_URL = 'https://api.github.com/repos/abundantbeing/hermes-browser-extension/git/trees';
 const UPDATE_COMPARE_URL = 'https://api.github.com/repos/abundantbeing/hermes-browser-extension/compare';
 const REPO_URL = 'https://github.com/abundantbeing/hermes-browser-extension';
 const runtimeManifest = globalThis.chrome?.runtime?.getManifest?.() || {};

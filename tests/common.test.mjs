@@ -1905,6 +1905,99 @@ test('formatUpdateStatus uses build commit alignment instead of release-tag dist
   );
 });
 
+test('dirty Browser builds use exact source identity instead of guessing commit distance', () => {
+  assert.equal(typeof common.sourceBlobMapsMatch, 'function');
+  const currentFiles = {
+    'sidepanel.js': 'a'.repeat(40),
+    'lib/common.mjs': 'b'.repeat(40),
+  };
+  assert.equal(common.sourceBlobMapsMatch(currentFiles, { ...currentFiles }), true);
+  assert.equal(common.sourceBlobMapsMatch(currentFiles, { ...currentFiles, 'sidepanel.css': 'c'.repeat(40) }), false);
+  assert.equal(common.sourceBlobMapsMatch(currentFiles, { ...currentFiles, 'sidepanel.js': 'd'.repeat(40) }), false);
+  assert.equal(common.sourceBlobMapsMatch({}, {}), false);
+
+  const sourceCurrent = formatUpdateStatus({
+    latestVersion: '0.1.11',
+    currentVersion: '0.1.11',
+    currentCommit: 'fd287051ac6f988d411fbd911791caf60da71e7d',
+    latestCommit: 'bb38cacbe5748f40003559ad83e3649ab818d943',
+    commitsBehind: 0,
+    buildDirty: true,
+    sourceMatchesMain: true,
+  });
+  assert.equal(sourceCurrent, "You're up to date on v0.1.11 (main bb38cac). Loaded extension files exactly match GitHub main.");
+
+  const custom = formatUpdateStatus({
+    latestVersion: '0.1.11',
+    currentVersion: '0.1.11',
+    currentCommit: 'fd287051ac6f988d411fbd911791caf60da71e7d',
+    latestCommit: 'bb38cacbe5748f40003559ad83e3649ab818d943',
+    commitsBehind: null,
+    buildDirty: true,
+    sourceMatchesMain: false,
+  });
+  assert.match(custom, /custom local build/i);
+  assert.match(custom, /exact commit distance.*cannot be verified/i);
+  assert.doesNotMatch(custom, /update available|commits? ahead|commits? behind/i);
+
+  const customReview = common.updateReviewState({
+    latestVersion: '0.1.11',
+    currentVersion: '0.1.11',
+    commitsBehind: null,
+    alignment: 'custom',
+  });
+  assert.equal(customReview.available, false);
+  assert.equal(customReview.verified, false);
+  assert.match(customReview.emptyMessage, /cannot be placed exactly on GitHub main/i);
+
+  const customCurrent = common.updateReviewState({
+    latestVersion: '0.1.11',
+    currentVersion: '0.1.11',
+    commitsBehind: 0,
+    commitsAhead: 0,
+    alignment: 'custom-current',
+  });
+  assert.equal(customCurrent.available, false);
+  assert.equal(customCurrent.verified, true);
+  assert.match(customCurrent.title, /current main.*local changes/i);
+  assert.match(customCurrent.summary, /0 main commits.*missing/i);
+  assert.match(customCurrent.summary, /local changes/i);
+
+  const versionOnly = common.updateReviewState({
+    latestVersion: '0.1.12',
+    currentVersion: '0.1.11',
+    commitsBehind: null,
+    commits: [],
+  });
+  assert.equal(versionOnly.available, true);
+  assert.equal(versionOnly.commitCount, null);
+  assert.match(versionOnly.summary, /version v0\.1\.12 is available/i);
+  assert.match(versionOnly.summary, /commit distance unverified/i);
+
+  const buildAhead = common.updateReviewState({
+    latestVersion: '0.1.11',
+    currentVersion: '0.1.11',
+    commitsBehind: 0,
+    commitsAhead: 2,
+    alignment: 'build-ahead',
+  });
+  assert.equal(buildAhead.available, false);
+  assert.match(buildAhead.title, /ahead/i);
+  assert.match(buildAhead.summary, /2 unique commits/i);
+
+  const diverged = common.updateReviewState({
+    latestVersion: '0.1.11',
+    currentVersion: '0.1.11',
+    commitsBehind: 3,
+    commitsAhead: 2,
+    alignment: 'diverged',
+  });
+  assert.equal(diverged.available, true);
+  assert.equal(diverged.commitCount, 3);
+  assert.match(diverged.title, /diverged/i);
+  assert.match(diverged.summary, /main has 3 commits.*loaded build has 2 unique commits/i);
+});
+
 test('connectionStateForGateway uses live reachability instead of config presence', () => {
   assert.deepEqual(
     connectionStateForGateway({ gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', apiKey: 'token', probeStatus: 'unreachable' }),
