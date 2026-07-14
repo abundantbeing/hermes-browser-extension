@@ -25,7 +25,7 @@ test('full-tab extension surface has a dedicated shell without copied sidepanel 
   assert.match(visualCss, /Collapse-Regular\.woff2/);
   assert.match(visualCss, /Sigurd-Variable\.woff2/);
   assert.match(visualCss, /CourierPrime-Regular\.woff2/);
-  assert.match(visualCss, /ray-field\.svg/);
+  assert.match(visualCss, /hermes-browser-web-horizon-ink\.png/);
   assert.match(visualCss, /hermes-browser-mark\.svg/);
   assert.match(css, /@media \(max-width: 1023px\)/);
   assert.match(css, /\.web-shell,\s*\.web-shell\.inspector-closed\s*\{\s*grid-template-columns:\s*minmax\(0, 1fr\)/);
@@ -65,6 +65,27 @@ test('Extension Web icon opens a clean Hermes Web draft instead of restoring a B
   assert.doesNotMatch(html, /This full view is attached to the same session as the side panel\./);
 });
 
+test('Hermes Web loading stays visible across themes and does not serialize independent startup work', () => {
+  const css = read('extension/app.css');
+  const js = read('extension/app.js');
+  const loadApp = js.match(/async function loadApp\(\)\s*\{([\s\S]*?)\n\}\n\nfunction setInspectorTab/)?.[1] || '';
+  const beginDraft = js.match(/async function beginHermesWebDraft\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+
+  assert.match(css, /\.loading-rail span\s*\{[^}]*background:\s*var\(--hermes-ink\);[^}]*animation:\s*web-loading-scan/s);
+  assert.match(css, /@keyframes\s+web-loading-scan/);
+  assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)\s*\{[^}]*\.loading-rail span\s*\{[^}]*animation:\s*none;/s);
+  assert.match(loadApp, /const metadataPromise = Promise\.all\(\[/);
+  assert.ok(
+    loadApp.indexOf("if (handoff.newChat) await beginHermesWebDraft();") < loadApp.indexOf('await metadataPromise;'),
+    'a clean Web handoff should paint its draft before waiting for model, skill, and session metadata',
+  );
+  assert.match(beginDraft, /const persistDraft = chrome\.storage\.local\.set/);
+  assert.ok(
+    beginDraft.indexOf('els.loadingState.hidden = true;') < beginDraft.indexOf('await persistDraft;'),
+    'draft UI should paint before local settings persistence completes',
+  );
+});
+
 test('side-panel context chip stays compact while the menu owns accurate compaction details', () => {
   const html = read('extension/sidepanel.html');
   const js = read('extension/sidepanel.js');
@@ -99,6 +120,7 @@ test('full-tab rail centers a theme-aware spinning globe while the Nous girl liv
   assert.match(html, /autoplay muted loop playsinline/);
   assert.match(css, /\.rail-globe-viewport\s*\{[^}]*left:\s*50%;[^}]*height:\s*76px;[^}]*overflow:\s*hidden;[^}]*translateX\(-50%\)/s);
   assert.match(css, /\.rail-brand-video\s*\{[^}]*width:\s*110px;[^}]*height:\s*auto/s);
+  assert.match(css, /\.session-rail::before\s*\{[^}]*hermes-browser-web-horizon-ink\.png[^}]*mix-blend-mode:\s*normal;/s);
   assert.match(read('extension/fulltab-themes.css'), /data-hermes-theme="ember"[^}]*rail-brand-video[^}]*filter:/s);
   assert.match(manifest.content_security_policy.extension_pages, /media-src 'self'/);
 });

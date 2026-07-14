@@ -46,14 +46,16 @@
 
       <section id="appScroll" class="app-scroll" aria-label="Hermes Browser Extension conversation">
         <section id="startupScreen" class="startup-screen" aria-live="polite">
-          <div class="startup-orb" aria-hidden="true"></div>
-          <div class="startup-copy">
-            <p class="eyebrow">HERMES AGENT</p>
-            <h2 id="startupTitle">Connecting Browser Extension</h2>
-            <p id="startupDetail">Checking settings, gateway, capabilities, models, and sessions.</p>
+          <div class="startup-stage">
+            <div class="startup-brand-lockup">
+              <span class="startup-brand-icon" aria-hidden="true"></span>
+              <div class="startup-copy">
+                <p id="startupDetail">Checking settings, gateway, capabilities, models, and sessions.</p>
+              </div>
+            </div>
+            <div class="startup-progress" aria-hidden="true"><span id="startupProgress"></span></div>
+            <ol id="startupStepList" class="startup-step-list" aria-label="Startup readiness checks"></ol>
           </div>
-          <div class="startup-progress" aria-hidden="true"><span id="startupProgress"></span></div>
-          <ol id="startupStepList" class="startup-step-list" aria-label="Startup readiness checks"></ol>
         </section>
 
         <section id="connectPanel" class="connect-panel" hidden>
@@ -77,24 +79,12 @@
         <section class="hero-card" aria-label="Hermes Browser intro">
           <div class="hero-copy">
             <p class="eyebrow">LOCAL SIDECAR / CHROME PANEL</p>
-            <h1>HERMES<br />BROWSER</h1>
+            <svg class="hero-wordmark" viewBox="0 0 2918.77 1206.98" role="img" aria-label="Hermes Browser">
+              <use href="assets/img/hermes-browser-logo-left.svg#Layer_1"></use>
+            </svg>
             <p class="intro">Ask about any page. Hermes sees the active tab, selected text, page context, and open tabs.</p>
           </div>
           <img class="hero-badge" src="assets/img/hermes-badge.webp" alt="Hermes Agent badge" />
-        </section>
-
-        <section id="statusCard" class="status-card" aria-live="polite">
-          <div class="status-label">
-            <span class="status-dot" id="statusDot"></span>
-            <span>ACTIVE TAB</span>
-          </div>
-          <div class="status-copy">
-            <strong id="activeTitle">No tab detected</strong>
-            <span id="activeUrl">Open a normal http/https tab, then refresh context.</span>
-          </div>
-          <div id="statusActions" class="status-actions" hidden>
-            <button id="statusCopyDiagnosticsButton" class="secondary tiny" type="button">Copy Diagnostics</button>
-          </div>
         </section>
 
         <section id="messages" class="messages" aria-live="polite"></section>
@@ -389,6 +379,20 @@
               <p>Session naming, prompt context, and side-panel residency live together.</p>
             </div>
           </div>
+
+          <section id="statusCard" class="status-card settings-active-tab" aria-live="polite" aria-label="Active tab status">
+            <div class="status-label">
+              <span class="status-dot" id="statusDot"></span>
+              <span>ACTIVE TAB</span>
+            </div>
+            <div class="status-copy">
+              <strong id="activeTitle">No tab detected</strong>
+              <span id="activeUrl">Open a normal http/https tab, then refresh context.</span>
+            </div>
+            <div id="statusActions" class="status-actions" hidden>
+              <button id="statusCopyDiagnosticsButton" class="secondary tiny" type="button">Copy Diagnostics</button>
+            </div>
+          </section>
 
           <label class="settings-toggle-card auto-name-toggle">
             <span class="settings-toggle-copy">

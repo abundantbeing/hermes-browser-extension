@@ -102,3 +102,38 @@ test('sidepanel includes startup readiness UI, styles, and boot controller wirin
   assert.match(js, /runStartupReadiness/);
   assert.match(js, /deriveStartupView/);
 });
+
+test('sidepanel startup and conversation chrome use the compact branded shell', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+
+  assert.match(html, /assets\/img\/hermes-browser-logo-left\.svg/);
+  assert.match(html, /class="startup-brand-icon"/);
+  assert.match(css, /assets\/img\/hermes-browser-extension-icon-ink\.png/);
+  assert.match(css, /\.startup-screen\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*place-items:\s*center;[^}]*overflow:\s*hidden;/s);
+  assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*top:\s*calc\(50% \+ 258px\);[^}]*justify-content:\s*center;/s);
+  assert.match(css, /body\.startup-active\s+\.topbar\s+#settingsButton\s*\{[^}]*pointer-events:\s*auto;/s);
+  assert.match(css, /\.startup-brand-lockup\s*\{[^}]*justify-items:\s*center;/s);
+  assert.doesNotMatch(html, /Connecting Browser Extension/i);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*132px;/s);
+  assert.match(css, /assets\/img\/hermes-browser-enter-gate-ink\.png/);
+  assert.match(css, /\.shell::before\s*\{[^}]*hermes-browser-enter-gate-ink\.png[^}]*opacity:\s*0\.13;[^}]*mix-blend-mode:\s*normal;/s);
+  assert.match(css, /\.startup-screen::after\s*\{[^}]*mix-blend-mode:\s*soft-light;[^}]*animation:\s*startup-scan-refined/s);
+  assert.match(css, /@keyframes\s+startup-scan-refined/);
+  assert.doesNotMatch(css, /@keyframes\s+startup-scan-refined\s*\{[^}]*opacity:\s*0\.72/s);
+  assert.match(css, /\.hero-wordmark\s*\{[^}]*width:\s*min\(205px,/s);
+  assert.match(css, /\.app-scroll:has\(\.message\.user\)\s+\.hero-card\s*\{[^}]*display:\s*none;/s);
+
+  const heroIndex = html.indexOf('class="hero-card"');
+  const messagesIndex = html.indexOf('id="messages"');
+  const statusCardIndex = html.indexOf('id="statusCard"');
+  const browserBehaviorIndex = html.indexOf('id="browserBehaviorTitle"');
+  const contextScopeButtonIndex = html.indexOf('id="contextScopeButton"');
+  const composerStartIndex = html.indexOf('<form id="composer"');
+  const composerEndIndex = html.indexOf('</form>', composerStartIndex);
+  assert.ok(heroIndex >= 0 && messagesIndex > heroIndex, 'hero should remain an intro before messages');
+  assert.ok(statusCardIndex > browserBehaviorIndex, 'active-tab status belongs in Browser Behavior settings');
+  assert.ok(contextScopeButtonIndex > composerStartIndex && contextScopeButtonIndex < composerEndIndex, 'tab-scope control belongs in the composer header');
+  assert.ok(contextScopeButtonIndex < html.indexOf('id="contextChip"'), 'tab-scope control should render above the context chip');
+  assert.doesNotMatch(html.slice(heroIndex, messagesIndex), /<span>ACTIVE TAB<\/span>/);
+});

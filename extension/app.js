@@ -1402,7 +1402,7 @@ async function beginHermesWebDraft({ focus = true } = {}) {
   activeMessages = [];
   attachments = [];
   settings = { ...settings, webSessionId: '', webSessionTitle: 'New Hermes Web chat' };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  const persistDraft = chrome.storage.local.set({ hermesBrowserSettings: settings });
   els.sessionTitle.textContent = settings.webSessionTitle;
   els.composerSessionLabel.textContent = 'Draft · saved when sent';
   els.errorState.hidden = true;
@@ -1412,6 +1412,7 @@ async function beginHermesWebDraft({ focus = true } = {}) {
   renderSessions(els.sessionSearch.value);
   renderConnectionTruth({ status: 'online' });
   if (focus) els.prompt.focus();
+  await persistDraft;
 }
 
 async function createSession() {
@@ -1592,14 +1593,20 @@ async function loadApp() {
     const health = await client.fetch('/health', { method: 'GET', cache: 'no-store' });
     if (!health.ok) throw new Error(`Gateway health returned ${health.status}.`);
     renderConnectionTruth({ status: 'online' });
-    await loadModels().catch((error) => { els.modelLabel.textContent = requestedModelLabel(); console.warn('[Hermes Web] model discovery:', error); });
-    await loadSkills({ quiet: true });
-    const listedSessions = normalizeHermesSessions(await client.listSessions({ limit: 200, maxPages: 5 }));
-    sessions = visibleHermesWebSessions(await migrateOwnedHermesWebSessionSources(listedSessions));
-    if (activeSessionId && !sessions.some((session) => session.id === activeSessionId) && !handoff.sessionId) activeSessionId = '';
-    renderSessions();
+    const metadataPromise = Promise.all([
+      loadModels().catch((error) => { els.modelLabel.textContent = requestedModelLabel(); console.warn('[Hermes Web] model discovery:', error); }),
+      loadSkills({ quiet: true }),
+      client.listSessions({ limit: 200, maxPages: 5 }).then(async (rows) => {
+        const listedSessions = normalizeHermesSessions(rows);
+        sessions = visibleHermesWebSessions(await migrateOwnedHermesWebSessionSources(listedSessions));
+        if (activeSessionId && !sessions.some((session) => session.id === activeSessionId) && !handoff.sessionId) activeSessionId = '';
+        renderSessions();
+      }),
+    ]);
     if (handoff.newChat) await beginHermesWebDraft();
-    else if (activeSessionId) await openSession(activeSessionId);
+    await metadataPromise;
+    if (handoff.newChat) return;
+    if (activeSessionId) await openSession(activeSessionId);
     else {
       els.loadingState.hidden = true;
       els.emptyState.hidden = false;
