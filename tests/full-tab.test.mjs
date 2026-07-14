@@ -135,6 +135,9 @@ test('side panel keeps Browser onboarding, refresh feedback, updates, and messag
   assert.doesNotMatch(checkUpdates, /showOperationToast\(/);
   assert.match(buildScript, /sourceBlobs/);
   assert.match(buildScript, /createHash\(['"]sha1['"]\)/);
+  assert.match(buildScript, /hash-object/);
+  assert.match(buildScript, /--filters/);
+  assert.match(buildScript, /--path=/);
   assert.match(js, /async function fetchMainSourceBlobs/);
   assert.match(checkUpdates, /sourceBlobMapsMatch/);
   assert.match(checkUpdates, /buildInfo\?\.dirty/);

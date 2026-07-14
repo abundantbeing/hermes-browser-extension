@@ -27,7 +27,10 @@ function gitOutput(args) {
   }
 }
 
-function gitBlobSha(filePath) {
+function gitBlobSha(filePath, relativePath) {
+  const repositoryPath = path.posix.join('extension', relativePath);
+  const filteredSha = gitOutput(['hash-object', '--filters', `--path=${repositoryPath}`, filePath]);
+  if (/^[0-9a-f]{40}$/i.test(filteredSha)) return filteredSha.toLowerCase();
   const content = fs.readFileSync(filePath);
   return createHash('sha1')
     .update(`blob ${content.byteLength}\0`)
@@ -43,7 +46,7 @@ function collectSourceBlobs(directory = src, relativeDirectory = '') {
     if (relativePath === buildInfoFileName) continue;
     const absolutePath = path.join(directory, entry.name);
     if (entry.isDirectory()) rows.push(...Object.entries(collectSourceBlobs(absolutePath, relativePath)));
-    else if (entry.isFile()) rows.push([relativePath, gitBlobSha(absolutePath)]);
+    else if (entry.isFile()) rows.push([relativePath, gitBlobSha(absolutePath, relativePath)]);
   }
   return Object.fromEntries(rows.sort(([left], [right]) => left.localeCompare(right)));
 }
