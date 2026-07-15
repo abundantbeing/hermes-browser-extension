@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
+import * as fulltabRuntime from '../extension/lib/fulltab-runtime.mjs';
+
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
@@ -257,6 +259,81 @@ test('full-tab Hermes Web is writable and exposes model, stream, tool, and image
   assert.doesNotMatch(css, /\.fulltab-composer\s*\{[^}]*box-shadow:/s);
 });
 
+test('full-tab model locks distinguish accepted, legacy, mismatch, and hard failure responses', () => {
+  assert.equal(typeof fulltabRuntime.modelLockRequestOutcome, 'function');
+  const outcome = fulltabRuntime.modelLockRequestOutcome;
+
+  assert.deepEqual(outcome({
+    responseOk: true,
+    status: 200,
+    requested: { provider: 'nous', model: 'x-ai/grok-4.5' },
+    payload: { runtime: { provider: 'nous', model: 'x-ai/grok-4.5', model_lock: 'accepted' } },
+  }), {
+    ok: true,
+    state: 'accepted',
+    detail: 'nous · x-ai/grok-4.5',
+    rollback: false,
+  });
+
+  assert.equal(outcome({ responseOk: false, status: 404, payload: {} }).state, 'legacy');
+  assert.deepEqual(outcome({
+    responseOk: false,
+    status: 404,
+    payload: { error: { code: 'session_not_found', message: 'session is gone' } },
+  }), {
+    ok: false,
+    state: 'failed',
+    detail: 'session is gone',
+    rollback: true,
+  });
+  assert.equal(outcome({
+    responseOk: true,
+    status: 200,
+    requested: { provider: 'nous', model: 'x-ai/grok-4.5' },
+    payload: { runtime: { provider: 'openai-codex', model: 'gpt-5.5' } },
+  }).state, 'mismatch');
+  assert.deepEqual(outcome({
+    responseOk: false,
+    status: 409,
+    payload: { error: { message: 'provider conflict' } },
+  }), {
+    ok: false,
+    state: 'failed',
+    detail: 'provider conflict',
+    rollback: true,
+  });
+});
+
+test('full-tab run steer failures distinguish stale runs from missing gateway support', () => {
+  assert.equal(typeof fulltabRuntime.runSteerFailureState, 'function');
+  assert.deepEqual(fulltabRuntime.runSteerFailureState({
+    status: 409,
+    payload: { error: { message: 'run is no longer accepting steer' } },
+  }), {
+    staleRun: true,
+    detail: 'run is no longer accepting steer',
+  });
+  assert.match(fulltabRuntime.runSteerFailureState({ status: 404, payload: {} }).detail, /update Hermes Gateway/i);
+  assert.equal(fulltabRuntime.runSteerFailureState({
+    status: 500,
+    payload: { error: 'temporary failure' },
+  }).detail, 'temporary failure');
+});
+
+test('full-tab session creation and controls enforce the upstream runtime truth contract', () => {
+  const js = read('extension/app.js');
+  const createSession = js.match(/async function createSession\(\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  const selectModel = js.match(/async function selectModel\(model\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  const steerCurrentDraft = js.match(/async function steerCurrentDraft\(\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+
+  assert.match(createSession, /require_model_lock:\s*Boolean\(model\.provider\s*\|\|\s*model\.model\)/);
+  assert.match(selectModel, /modelLockRequestOutcome/);
+  assert.match(selectModel, /previousSettings/);
+  assert.match(selectModel, /state === 'failed'|outcome\.rollback/);
+  assert.match(steerCurrentDraft, /runSteerFailureState/);
+  assert.match(steerCurrentDraft, /activeRunId\s*=\s*''/);
+});
+
 test('full-tab chat hierarchy is compact and exposes useful Hermes controls instead of dead cards', () => {
   const html = read('extension/app.html');
   const js = read('extension/app.js');
@@ -406,6 +483,9 @@ test('full-tab keeps model and message controls readable and visibly responsive 
   assert.match(css, /\.fulltab-composer textarea::placeholder\s*\{[^}]*color:/s);
   assert.doesNotMatch(html, /<span>\s*Model\s*<\/span>/i);
   assert.match(css, /\.composer-runtime-control\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s);
+  assert.match(css, /@media \(max-width: 1023px\)[\s\S]*?\.model-picker\s*\{\s*left:\s*16px;\s*\}/);
+  assert.match(css, /\.truth-control > span:not\(\.truth-dot\)\s*\{[^}]*min-width:\s*0;/);
+  assert.match(css, /\.truth-dot\s*\{[^}]*flex:\s*0 0 auto;/);
   assert.doesNotMatch(css, /\.composer-runtime-control\s*>\s*span/);
   assert.match(css, /--fulltab-content-size:\s*19px/);
   assert.match(css, /font:\s*var\(--fulltab-content-size\)\/1\.62/);

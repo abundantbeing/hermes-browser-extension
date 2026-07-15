@@ -110,9 +110,10 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
 }
 
 .truth-control:not(.static):hover { background: rgba(var(--hermes-white-rgb), 0.1); }
+.truth-control > span:not(.truth-dot) { min-width: 0; }
 .truth-control small { display: block; color: var(--hermes-blue-muted); font: 8px/1 var(--hermes-font-mono); letter-spacing: 0.15em; }
 .truth-control strong { display: block; max-width: 240px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; letter-spacing: 0.02em; }
-.truth-dot { width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; background: transparent; }
+.truth-dot { flex: 0 0 auto; width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; background: transparent; }
 .truth-dot.online { background: var(--hermes-white); box-shadow: 0 0 0 4px rgba(var(--hermes-white-rgb), 0.12); }
 .truth-dot.error { background: var(--hermes-danger); }
 
@@ -491,6 +492,7 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
   .web-shell.nav-open .session-rail { transform: translateX(0); }
   .conversation-view { grid-column: 1; }
   .suggestion-grid { grid-template-columns: 1fr; }
+  .model-picker { left: 16px; }
 }
 
 @media (max-width: 767px) {

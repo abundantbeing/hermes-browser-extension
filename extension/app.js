@@ -23,7 +23,7 @@ import {
 } from './lib/appearance-themes.mjs';
 import { discoverModelsFromRegistry } from './lib/model-discovery.mjs';
 import { extractMediaTags, resolveImageSource, resolvedGeneratedImageSources, stripGeneratedImageEchoes } from './lib/image-render.mjs';
-import { readHermesSse } from './lib/fulltab-runtime.mjs';
+import { modelLockRequestOutcome, readHermesSse, runSteerFailureState } from './lib/fulltab-runtime.mjs';
 import { createDiffusionCanvas } from './lib/diffusion-canvas.mjs';
 import {
   MODEL_REASONING_EFFORTS,
@@ -1027,6 +1027,8 @@ function renderComposerSuggestions({ force = false } = {}) {
 
 
 async function selectModel(model) {
+  const previousSettings = settings;
+  const previousSelectedModelProvider = selectedModelProvider;
   selectedModelProvider = modelProviderName(model);
   const binding = {
     modelId: model.id,
@@ -1042,13 +1044,35 @@ async function selectModel(model) {
     extensionPreferredModel: binding,
     sessionModelBindings: { ...(settings.sessionModelBindings || {}), ...(activeSessionId ? { [activeSessionId]: binding } : {}) },
   };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
-  if (activeSessionId) {
-    const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/model`, {
-      method: 'POST',
-      body: JSON.stringify({ provider: model.provider, model: model.rawModelId, model_options: modelOptionsPayload(), require_model_lock: true }),
-    });
-    if (!response.ok) throw new Error(`Model switch failed (${response.status}).`);
+  try {
+    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    if (activeSessionId) {
+      const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/model`, {
+        method: 'POST',
+        body: JSON.stringify({ provider: model.provider, model: model.rawModelId, model_options: modelOptionsPayload(), require_model_lock: true }),
+      });
+      const payload = await client.readJson(response);
+      const outcome = modelLockRequestOutcome({
+        responseOk: response.ok,
+        status: response.status,
+        payload,
+        requested: { provider: model.provider, model: model.rawModelId },
+      });
+      if (!outcome.ok && outcome.rollback) throw new Error(outcome.detail);
+      els.composerStatus.textContent = outcome.state === 'legacy'
+        ? 'Model requested · Hermes will confirm on the next turn'
+        : outcome.state === 'pending'
+          ? 'Model lock pending · waiting for runtime confirmation'
+          : `Model lock accepted${outcome.detail ? ` · ${outcome.detail}` : ''}`;
+    }
+  } catch (error) {
+    settings = previousSettings;
+    selectedModelProvider = previousSelectedModelProvider;
+    await chrome.storage.local.set({ hermesBrowserSettings: settings }).catch(() => {});
+    renderModelPicker();
+    renderComposerRuntimeControl();
+    renderContextWindow();
+    throw error;
   }
   els.modelLabel.textContent = model.label || model.rawModelId;
   renderModelPicker();
@@ -1350,7 +1374,15 @@ async function steerCurrentDraft() {
     method: 'POST',
     body: JSON.stringify({ input: text, message: text, text }),
   });
-  if (!response.ok) throw new Error(`Hermes steer failed (${response.status}).`);
+  const payload = await client.readJson(response);
+  if (!response.ok) {
+    const failure = runSteerFailureState({ status: response.status, payload });
+    if (failure.staleRun) {
+      activeRunId = '';
+      updateBusyControls();
+    }
+    throw new Error(failure.detail);
+  }
   els.prompt.value = '';
   els.composerStatus.textContent = 'Steer sent';
   updateBusyControls();
@@ -1461,7 +1493,15 @@ async function createSession() {
   const title = `Hermes Web · ${new Date().toLocaleString()}`;
   const response = await client.fetch('/api/sessions', {
     method: 'POST',
-    body: JSON.stringify({ id, title, source: HERMES_WEB_SESSION_SOURCE, model: model.model, provider: model.provider || undefined, model_options: modelOptionsPayload() }),
+    body: JSON.stringify({
+      id,
+      title,
+      source: HERMES_WEB_SESSION_SOURCE,
+      model: model.model,
+      provider: model.provider || undefined,
+      model_options: modelOptionsPayload(),
+      require_model_lock: Boolean(model.provider || model.model),
+    }),
   });
   const payload = await client.readJson(response);
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Session creation failed (${response.status}).`);
