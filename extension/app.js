@@ -14,6 +14,14 @@ import {
   shouldAutoOpenSessionGroup,
   skillSuggestionsForInput,
 } from './lib/common.mjs';
+import {
+  assistModelRoutingSupported,
+  resolveAssistModelBindingFromCatalog,
+} from './lib/assist-model-contract.mjs';
+import {
+  DEFAULT_GATEWAY_CAPABILITIES,
+  normalizeGatewayCapabilities,
+} from './lib/capabilities.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
 import { migrateConnectionSettings, normalizeConnectionMode } from './lib/connection-modes.mjs';
 import { fullTabEntryPathForPage, parseFullTabHandoff } from './lib/surface-protocol.mjs';
@@ -26,6 +34,7 @@ import {
 import {
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   dashboardModelDiscoveryBaseUrl,
+  discoverCanonicalProviderCatalog,
   discoverModelsFromDashboard,
   discoverModelsFromRegistry,
   discoverModelsFromSessions,
@@ -34,6 +43,7 @@ import {
   modelCatalogRefreshDecision,
   normalizeCachedModelCatalog,
   selectModelCatalogFallback,
+  shouldEnrichCanonicalProviderCatalog,
   shouldTrySessionModelFallback,
 } from './lib/model-discovery.mjs';
 import { extractMediaTags, resolveImageSource, resolvedGeneratedImageSources, stripGeneratedImageEchoes } from './lib/image-render.mjs';
@@ -56,6 +66,9 @@ import { artifactActionState, describeArtifact, toFileUrl } from './lib/web-arti
 import { isRenderableAssistantMessage, shouldPreserveImageGenerationRun } from './lib/web-run-state.mjs';
 import { thinkingIndicatorMarkup } from './lib/web-thinking-indicator.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
+import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
+import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
+import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const handoff = parseFullTabHandoff(globalThis.location.search);
@@ -88,6 +101,8 @@ const els = {
   modelLabel: $('#modelLabel'),
   modelPickerButton: $('#modelPickerButton'),
   modelPicker: $('#modelPicker'),
+  modelPickerTitle: $('#modelPickerTitle'),
+  closeModelPicker: $('#closeModelPicker'),
   modelSearch: $('#modelSearch'),
   modelProviderList: $('#modelProviderList'),
   modelList: $('#modelList'),
@@ -126,6 +141,11 @@ const els = {
   composerStatus: $('#composerStatus'),
   conversationScroll: $('#conversationScroll'),
   toolActivityList: $('#toolActivityList'),
+  taskStack: $('#taskStack'),
+  taskStackToggle: $('#taskStackToggle'),
+  taskStackSummary: $('#taskStackSummary'),
+  taskStackProgress: $('#taskStackProgress'),
+  taskStackList: $('#taskStackList'),
   settingsButton: $('#settingsButton'),
   settingsDialog: $('#settingsDialog'),
   settingsForm: $('#settingsForm'),
@@ -133,6 +153,14 @@ const els = {
   settingsColorMode: $('#settingsColorMode'),
   settingsTheme: $('#settingsTheme'),
   settingsTextSize: $('#settingsTextSize'),
+  inlineAssistEnabled: $('#inlineAssistEnabled'),
+  inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
+  inlineAssistModel: $('#inlineAssistModel'),
+  inlineAssistModelButton: $('#inlineAssistModelButton'),
+  inlineAssistModelLabel: $('#inlineAssistModelLabel'),
+  assistModelCapabilityHint: $('#assistModelCapabilityHint'),
+  inlineAssistSessionRetention: $('#inlineAssistSessionRetention'),
+  contextMenuDefaultRoute: $('#contextMenuDefaultRoute'),
   settingsProfile: $('#settingsProfile'),
   settingsGatewayUrl: $('#settingsGatewayUrl'),
   settingsApiKey: $('#settingsApiKey'),
@@ -164,8 +192,12 @@ let settings = {};
 let sessions = [];
 let activeSessionId = handoff.sessionId;
 let activeMessages = [];
+let taskStackStore = {};
+let taskStackExpanded = true;
 let availableModels = [];
 let selectedModelProvider = '';
+let modelSelectionTarget = 'chat';
+const modelPickerHome = { parent: els.modelPicker?.parentElement || null, next: els.modelPicker?.nextSibling || null };
 let sending = false;
 let activeAbortController = null;
 let activeRunId = '';
@@ -175,6 +207,7 @@ let availableSkills = [];
 let modelsRefreshing = false;
 let dragDepth = 0;
 let latestRuntime = {};
+let gatewayCapabilities = { ...DEFAULT_GATEWAY_CAPABILITIES };
 let liveRun = null;
 let imageViewerState = createImageViewerState();
 let imagePanGesture = null;
@@ -184,10 +217,74 @@ const HERMES_WEB_SESSION_SOURCE = 'hermes_web';
 const openSessionGroups = new Set();
 const closedSessionGroups = new Set();
 const VOICE_DRAFT_STORAGE_KEY = 'hermesVoiceDraft';
+const TASK_STACKS_STORAGE_KEY = 'hermesBrowserTaskStacks';
 
 const client = createHermesClient({
   getConnection: () => settings,
 });
+
+async function loadGatewayCapabilities() {
+  try {
+    const response = await client.fetch('/v1/capabilities', { method: 'GET', cache: 'no-store' });
+    const payload = await client.readJson(response);
+    gatewayCapabilities = normalizeGatewayCapabilities(response.ok ? payload : null, {
+      healthOk: response.ok,
+      warning: response.ok ? '' : `GET /v1/capabilities failed (${response.status})`,
+    });
+  } catch (error) {
+    gatewayCapabilities = normalizeGatewayCapabilities(null, {
+      healthOk: false,
+      warning: error?.message || String(error),
+    });
+  }
+  renderInlineAssistModelOptions();
+  return gatewayCapabilities;
+}
+
+function currentTaskStack() {
+  return Array.isArray(taskStackStore?.[activeSessionId]?.tasks) ? taskStackStore[activeSessionId].tasks : [];
+}
+
+function renderTaskStack() {
+  if (!els.taskStack) return;
+  const tasks = currentTaskStack();
+  els.taskStack.hidden = !tasks.length;
+  if (!tasks.length) {
+    els.taskStackList.replaceChildren();
+    return;
+  }
+  const progress = taskStackProgress(tasks);
+  els.taskStack.dataset.expanded = String(taskStackExpanded);
+  els.taskStackToggle.setAttribute('aria-expanded', String(taskStackExpanded));
+  els.taskStackSummary.textContent = `${progress.completed}/${progress.total} complete · ${progress.active} active`;
+  const progressFill = els.taskStackProgress.querySelector('i');
+  if (progressFill) progressFill.style.width = `${progress.percent}%`;
+  const rows = tasks.map((task, index) => {
+    const item = document.createElement('li');
+    item.className = `task-stack-item ${task.status}`;
+    const taskIndex = document.createElement('span');
+    taskIndex.className = 'task-stack-index';
+    taskIndex.textContent = String(index + 1).padStart(2, '0');
+    const content = document.createElement('strong');
+    content.textContent = task.content;
+    content.title = task.content;
+    const status = document.createElement('span');
+    status.className = 'task-stack-status';
+    status.textContent = task.status === 'in_progress' ? 'working' : task.status;
+    item.append(taskIndex, content, status);
+    return item;
+  });
+  els.taskStackList.replaceChildren(...rows);
+}
+
+async function captureTaskToolEvent(event) {
+  const tasks = taskStackFromToolEvent(event);
+  if (!tasks || !activeSessionId) return false;
+  taskStackStore = updateTaskStackStore(taskStackStore, activeSessionId, tasks);
+  renderTaskStack();
+  await chrome.storage.local.set({ [TASK_STACKS_STORAGE_KEY]: taskStackStore });
+  return true;
+}
 
 function connectionModeLabel(mode) {
   if (mode === 'cloud') return 'Hermes Cloud';
@@ -735,7 +832,7 @@ function renderComposerRuntimeControl() {
   if (!els.composerModelControl) return;
   const model = effectiveModel();
   const options = activeModelRuntimeOptions();
-  const effort = options.reasoningEffort === 'xhigh' ? 'Max' : options.reasoningEffort;
+  const effort = MODEL_REASONING_EFFORTS.find((option) => option.value === options.reasoningEffort)?.label || options.reasoningEffort;
   els.composerModelName.textContent = model.label || 'Gateway default';
   els.composerRuntimeMeta.textContent = [
     options.thinkingEnabled ? `${effort} reasoning` : 'Thinking off',
@@ -746,13 +843,15 @@ function renderComposerRuntimeControl() {
 
 function renderModelRuntimeOptions() {
   if (!els.modelOptionsList) return;
-  const options = activeModelRuntimeOptions();
-  const capabilities = modelRuntimeCapabilities(effectiveModel());
+  const assistTarget = modelSelectionTarget === 'assist';
+  const options = assistTarget ? inlineAssistRuntimeOptions() : activeModelRuntimeOptions();
+  const selectedAssistModel = availableModels.find((model) => model.id === (settings.inlineAssistModel || settings.model));
+  const capabilities = modelRuntimeCapabilities(assistTarget ? (selectedAssistModel || {}) : effectiveModel());
   els.modelOptionsList.replaceChildren();
 
   const heading = document.createElement('p');
   heading.className = 'model-options-heading';
-  heading.textContent = 'Runtime options';
+  heading.textContent = assistTarget ? 'Hermes Assist options' : 'Runtime options';
   els.modelOptionsList.append(heading);
 
   if (capabilities.reasoning) {
@@ -816,7 +915,8 @@ async function setModelRuntimeOptions(partial = {}) {
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   renderModelRuntimeOptions();
   renderComposerRuntimeControl();
-  els.composerStatus.textContent = `Runtime options: ${options.thinkingEnabled ? options.reasoningEffort === 'xhigh' ? 'Max reasoning' : `${options.reasoningEffort} reasoning` : 'thinking off'}${options.fastMode ? ' · fast mode' : ''}`;
+  const effortLabel = MODEL_REASONING_EFFORTS.find((option) => option.value === options.reasoningEffort)?.label || options.reasoningEffort;
+  els.composerStatus.textContent = `Runtime options: ${options.thinkingEnabled ? `${effortLabel} reasoning` : 'thinking off'}${options.fastMode ? ' · fast mode' : ''}`;
 }
 
 function modelProviderName(model = {}) {
@@ -836,9 +936,119 @@ function groupModelsForPicker(query = '') {
   return [...groups.entries()].map(([provider, models]) => ({ provider, models }));
 }
 
+function inlineAssistRuntimeOptions() {
+  return normalizeModelRuntimeOptions({
+    thinkingEnabled: settings.inlineAssistThinkingEnabled,
+    reasoningEffort: settings.inlineAssistReasoningEffort || 'low',
+    fastMode: settings.inlineAssistFastMode,
+  });
+}
+
+function renderInlineAssistRuntimeOptions() {
+  if (!els.inlineAssistRuntimeOptions) return;
+  const options = inlineAssistRuntimeOptions();
+  els.inlineAssistRuntimeOptions.replaceChildren();
+  const heading = document.createElement('p');
+  heading.className = 'model-options-heading';
+  heading.textContent = 'Assist options';
+  const effort = document.createElement('div');
+  effort.className = 'model-effort-options';
+  for (const option of MODEL_REASONING_EFFORTS) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.assistEffort = option.value;
+    button.className = `model-runtime-option${options.reasoningEffort === option.value ? ' selected' : ''}`;
+    button.textContent = option.label;
+    effort.append(button);
+  }
+  const toggles = document.createElement('div');
+  toggles.className = 'model-runtime-toggles';
+  for (const [key, label, enabled] of [
+    ['thinking', 'Thinking', options.thinkingEnabled],
+    ['fast', 'Fast mode', options.fastMode],
+  ]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.assistToggle = key;
+    button.className = `model-runtime-toggle${enabled ? ' selected' : ''}`;
+    button.textContent = `${label} ${enabled ? 'On' : 'Off'}`;
+    toggles.append(button);
+  }
+  els.inlineAssistRuntimeOptions.append(heading, effort, toggles);
+}
+
+function renderInlineAssistModelOptions() {
+  if (!els.inlineAssistModel) return;
+  const selectedId = String(settings.inlineAssistModel || settings.model || '');
+  const routingSupported = assistModelRoutingSupported(gatewayCapabilities);
+  const selected = availableModels.find((model) => (model.id === selectedId || model.rawModelId === selectedId) && isModelRuntimeSelectable(model))
+    || (!selectedId ? availableModels.find(isModelRuntimeSelectable) : null)
+    || null;
+  els.inlineAssistModel.value = selected?.id || selectedId;
+  if (els.inlineAssistModelLabel) els.inlineAssistModelLabel.textContent = selected?.label || selected?.rawModelId || selected?.id || selectedId || 'Choose model';
+  if (els.inlineAssistModelButton) {
+    els.inlineAssistModelButton.disabled = false;
+    els.inlineAssistModelButton.title = selected
+      ? `${modelProviderName(selected)} · ${selected.rawModelId || selected.id}${routingSupported ? ' · Exact model routing confirmed' : ' · Falls back to the gateway default when exact routing is unavailable'}`
+      : 'Choose the model used by Hermes Assist';
+  }
+  if (els.assistModelCapabilityHint) {
+    els.assistModelCapabilityHint.textContent = routingSupported
+      ? 'Exact Assist model routing is available. The selected provider and model are verified before each draft runs.'
+      : 'Your Assist model choice stays saved. This gateway cannot enforce an exact model, so Assist uses the gateway default and labels every fallback result.';
+  }
+  renderInlineAssistRuntimeOptions();
+}
+
+async function reconcileInlineAssistModelBinding() {
+  const binding = resolveAssistModelBindingFromCatalog({ settings, models: availableModels });
+  if (!binding) return false;
+  const changed = Object.entries(binding).some(([key, value]) => settings[key] !== value);
+  if (!changed) return false;
+  settings = { ...settings, ...binding };
+  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  return true;
+}
+
+function modelForSelectionTarget(target = modelSelectionTarget) {
+  if (target === 'assist') {
+    const modelId = settings.inlineAssistModel || settings.model;
+    return availableModels.find((model) => model.id === modelId || model.rawModelId === modelId)
+      || availableModels.find(isModelRuntimeSelectable)
+      || availableModels[0]
+      || null;
+  }
+  return effectiveModel();
+}
+
+function setModelSelectionTarget(target = 'chat') {
+  modelSelectionTarget = target === 'assist' ? 'assist' : 'chat';
+  if (modelPickerHome.parent && els.modelPicker.parentElement !== modelPickerHome.parent) {
+    modelPickerHome.parent.insertBefore(els.modelPicker, modelPickerHome.next);
+  }
+  if (modelSelectionTarget === 'assist') {
+    els.modelPicker.dataset.selectionTarget = 'assist';
+    if (els.modelPickerTitle) els.modelPickerTitle.textContent = 'Choose Assist model';
+  } else {
+    delete els.modelPicker.dataset.selectionTarget;
+    if (els.modelPickerTitle) els.modelPickerTitle.textContent = 'Choose model';
+  }
+  const selected = modelForSelectionTarget(modelSelectionTarget);
+  selectedModelProvider = selected ? modelProviderName(selected) : '';
+  els.modelSearch.value = '';
+  els.modelProviderList.scrollTop = 0;
+  els.modelList.scrollTop = 0;
+  renderModelPicker('');
+  globalThis.queueMicrotask(() => {
+    els.modelProviderList.querySelector('.model-provider-option.selected')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  });
+}
+
 function renderModelPicker(query = '') {
   const needle = String(query).trim();
-  const current = effectiveModel();
+  const current = modelSelectionTarget === 'assist'
+    ? (availableModels.find((model) => model.id === (settings.inlineAssistModel || settings.model)) || effectiveModel())
+    : effectiveModel();
   const allGroups = groupModelsForPicker();
   const matchingGroups = groupModelsForPicker(needle);
   const selectedProvider = modelProviderName(availableModels.find((model) => model.id === current.id) || {});
@@ -893,11 +1103,22 @@ function renderModelPicker(query = '') {
       selected.textContent = model.id === current.id ? '✓' : '';
       copy.append(provider, label);
       button.append(copy, selected);
-      if (selectable) button.addEventListener('click', () => selectModel(model));
+      if (selectable) button.addEventListener('click', async () => {
+        if (modelSelectionTarget === 'assist') {
+          settings = { ...settings, inlineAssistModel: model.id, inlineAssistRawModel: model.rawModelId || model.id, inlineAssistProvider: model.provider || '' };
+          renderInlineAssistModelOptions();
+          await chrome.storage.local.set({ hermesBrowserSettings: settings });
+          toggleModelPicker(false);
+          els.inlineAssistModelButton?.setAttribute('aria-expanded', 'false');
+        } else {
+          selectModel(model);
+        }
+      });
       els.modelList.append(button);
     }
   }
   if (!els.modelList.childElementCount) els.modelList.textContent = 'No models found.';
+  renderInlineAssistModelOptions();
   renderModelRuntimeOptions();
 }
 
@@ -972,7 +1193,12 @@ async function loadModels({ refresh = false } = {}) {
     }
   }
 
-  if (registryModels.length && ['registry', 'dashboard'].includes(registrySource)) {
+  if (registryModels.length && shouldEnrichCanonicalProviderCatalog(registrySource)) {
+    const canonicalResult = await discoverCanonicalProviderCatalog({
+      registryModels,
+      fetchFn: globalThis.fetch?.bind(globalThis),
+    });
+    registryModels = normalizeHermesModels(canonicalResult.models, settings.model);
     await writeCachedModelCatalog(registryModels);
   }
 
@@ -1001,6 +1227,7 @@ async function loadModels({ refresh = false } = {}) {
   }
 
   availableModels = registryModels;
+  await reconcileInlineAssistModelBinding();
   const current = effectiveModel();
   els.modelLabel.textContent = current.label;
   renderModelPicker(els.modelSearch.value);
@@ -1057,7 +1284,8 @@ function applySkillSuggestion(command = '') {
 function toggleModelPicker(forceOpen = null) {
   const nextVisible = typeof forceOpen === 'boolean' ? forceOpen : els.modelPicker.hidden;
   els.modelPicker.hidden = !nextVisible;
-  els.modelPickerButton.setAttribute('aria-expanded', String(nextVisible));
+  els.modelPickerButton.setAttribute('aria-expanded', String(nextVisible && modelSelectionTarget === 'chat'));
+  els.inlineAssistModelButton?.setAttribute('aria-expanded', String(nextVisible && modelSelectionTarget === 'assist'));
   if (nextVisible) {
     renderModelPicker(els.modelSearch.value);
     els.modelSearch.focus();
@@ -1269,6 +1497,11 @@ function openSettings() {
   els.settingsColorMode.value = settings.webColorMode || 'light';
   els.settingsTheme.value = settings.webAppearanceTheme || 'nous';
   els.settingsTextSize.value = settings.webTextSize || 'default';
+  if (els.inlineAssistEnabled) els.inlineAssistEnabled.checked = settings.inlineAssistEnabled !== false;
+  if (els.inlineAssistDefaultRoute) els.inlineAssistDefaultRoute.value = normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute);
+  renderInlineAssistModelOptions();
+  if (els.inlineAssistSessionRetention) els.inlineAssistSessionRetention.value = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
+  if (els.contextMenuDefaultRoute) els.contextMenuDefaultRoute.value = settings.contextMenuDefaultRoute || 'ask';
   els.settingsProfile.value = settings.activeProfile || '';
   els.settingsGatewayUrl.value = settings.gatewayUrl || '';
   els.settingsApiKey.value = '';
@@ -1277,11 +1510,28 @@ function openSettings() {
 }
 
 async function saveSettings() {
+  const assistModelId = els.inlineAssistModel?.value || settings.inlineAssistModel || '';
+  const assistBinding = resolveAssistModelBindingFromCatalog({
+    settings: { ...settings, inlineAssistModel: assistModelId },
+    models: availableModels,
+  }) || {
+    inlineAssistModel: String(settings.inlineAssistModel || ''),
+    inlineAssistRawModel: String(settings.inlineAssistRawModel || ''),
+    inlineAssistProvider: String(settings.inlineAssistProvider || ''),
+  };
   settings = migrateConnectionSettings({
     ...settings,
     webColorMode: normalizeColorMode(els.settingsColorMode.value),
     webAppearanceTheme: normalizeAppearanceTheme(els.settingsTheme.value),
     webTextSize: els.settingsTextSize.value,
+    inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
+    inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
+    ...assistBinding,
+    inlineAssistSessionRetention: els.inlineAssistSessionRetention?.value === 'delete' ? 'delete' : 'keep',
+    inlineAssistThinkingEnabled: settings.inlineAssistThinkingEnabled !== false,
+    inlineAssistReasoningEffort: normalizeModelRuntimeOptions({ reasoningEffort: settings.inlineAssistReasoningEffort || 'low' }).reasoningEffort,
+    inlineAssistFastMode: settings.inlineAssistFastMode !== false,
+    contextMenuDefaultRoute: ['current', 'new', 'background'].includes(els.contextMenuDefaultRoute?.value) ? els.contextMenuDefaultRoute.value : 'ask',
     activeProfile: els.settingsProfile.value.trim() || settings.activeProfile,
     gatewayUrl: els.settingsGatewayUrl.value.trim() || settings.gatewayUrl,
     ...(els.settingsApiKey.value ? { apiKey: els.settingsApiKey.value } : {}),
@@ -1502,6 +1752,7 @@ async function steerCurrentDraft() {
 }
 
 function renderToolEvent(event) {
+  captureTaskToolEvent(event).catch((error) => console.warn('[Hermes Web] Task event persistence failed:', error));
   const activity = normalizeToolActivity(event);
   if (shouldPreserveImageGenerationRun(liveRun, activity)) return;
   els.toolActivityList.querySelector('.activity-empty')?.remove();
@@ -1583,6 +1834,7 @@ async function beginHermesWebDraft({ focus = true, keepLoading = false } = {}) {
   clearLiveRun();
   activeSessionId = '';
   activeMessages = [];
+  renderTaskStack();
   attachments = [];
   settings = { ...settings, webSessionId: '', webSessionTitle: 'New Hermes Web chat' };
   const persistDraft = chrome.storage.local.set({ hermesBrowserSettings: settings });
@@ -1620,6 +1872,7 @@ async function createSession() {
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Session creation failed (${response.status}).`);
   const session = payload.session || payload;
   activeSessionId = session.id || id;
+  renderTaskStack();
   settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: session.title || title };
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   activeMessages = [];
@@ -1732,6 +1985,7 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
   if (!cleanSessionId) return;
   const requestId = ++webSessionLoadRequestId;
   activeSessionId = cleanSessionId;
+  renderTaskStack();
   const session = sessions.find((row) => row.id === cleanSessionId) || { id: cleanSessionId, title: settings.webSessionTitle };
   showSessionLoadingState(session);
   latestRuntime = runtimeTelemetryForSession(session);
@@ -1759,11 +2013,27 @@ async function loadApp() {
   sessionHistoryLoading = true;
   showRuntimeLoadingState();
   renderSessions();
-  const stored = await chrome.storage.local.get(['hermesBrowserSettings']);
-  settings = migrateConnectionSettings(stored.hermesBrowserSettings || {});
+  const stored = await chrome.storage.local.get(['hermesBrowserSettings', TASK_STACKS_STORAGE_KEY]);
+  taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
+    ? stored[TASK_STACKS_STORAGE_KEY]
+    : {};
+  settings = {
+    ...migrateConnectionSettings(stored.hermesBrowserSettings || {}),
+    inlineAssistEnabled: stored.hermesBrowserSettings?.inlineAssistEnabled !== false,
+    inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(stored.hermesBrowserSettings?.inlineAssistDefaultRoute),
+    inlineAssistModel: String(stored.hermesBrowserSettings?.inlineAssistModel || ''),
+    inlineAssistRawModel: String(stored.hermesBrowserSettings?.inlineAssistRawModel || ''),
+    inlineAssistProvider: String(stored.hermesBrowserSettings?.inlineAssistProvider || ''),
+    inlineAssistSessionRetention: stored.hermesBrowserSettings?.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep',
+    inlineAssistThinkingEnabled: stored.hermesBrowserSettings?.inlineAssistThinkingEnabled !== false,
+    inlineAssistReasoningEffort: normalizeModelRuntimeOptions({ reasoningEffort: stored.hermesBrowserSettings?.inlineAssistReasoningEffort || 'low' }).reasoningEffort,
+    inlineAssistFastMode: Boolean(stored.hermesBrowserSettings?.inlineAssistFastMode),
+    contextMenuDefaultRoute: ['current', 'new', 'background'].includes(stored.hermesBrowserSettings?.contextMenuDefaultRoute) ? stored.hermesBrowserSettings.contextMenuDefaultRoute : 'ask',
+  };
   applyAppearance();
   applySessionVisibility();
   activeSessionId = handoff.newChat ? '' : (activeSessionId || settings.webSessionId || '');
+  renderTaskStack();
   const mode = normalizeConnectionMode(settings.connectionMode);
   renderConnectionTruth({ status: 'idle' });
   els.handoffDetail.textContent = handoff.sourceSurfaceId
@@ -1791,6 +2061,7 @@ async function loadApp() {
     if (!health.ok) throw new Error(`Gateway health returned ${health.status}.`);
     renderConnectionTruth({ status: 'online' });
     const metadataPromise = Promise.all([
+      loadGatewayCapabilities(),
       loadModels().catch((error) => { els.modelLabel.textContent = requestedModelLabel(); console.warn('[Hermes Web] model discovery:', error); }),
       loadSkills({ quiet: true }),
       client.listSessions({ limit: 200, maxPages: 5 }).then(async (rows) => {
@@ -1856,6 +2127,14 @@ function updateScrim() {
   els.drawerScrim.hidden = !visible;
 }
 
+els.messageList?.addEventListener('copy', (event) => {
+  writeAssistantClipboardEvent(event, {
+    selection: globalThis.getSelection?.(),
+    messagesRoot: els.messageList,
+    document,
+    assistantSelector: '.web-message.assistant',
+  });
+});
 els.navToggle.addEventListener('click', () => {
   setNavigationOpen(!els.shell.classList.contains('nav-open'));
   updateScrim();
@@ -1945,6 +2224,10 @@ els.queueDraft.addEventListener('click', queueCurrentDraft);
 els.steerDraft.addEventListener('click', () => steerCurrentDraft().catch((error) => { els.composerStatus.textContent = error?.message || String(error); }));
 els.commandMenuButton.addEventListener('click', () => renderComposerSuggestions({ force: els.skillMenu.hidden }));
 els.settingsButton.addEventListener('click', openSettings);
+els.taskStackToggle?.addEventListener('click', () => {
+  taskStackExpanded = !taskStackExpanded;
+  renderTaskStack();
+});
 els.closeSettings.addEventListener('click', () => els.settingsDialog.close());
 els.settingsDialog.addEventListener('click', (event) => {
   if (event.target === els.settingsDialog) els.settingsDialog.close();
@@ -2011,15 +2294,41 @@ els.settingsForm.addEventListener('submit', (event) => {
   saveSettings().catch((error) => { els.composerStatus.textContent = `Settings failed: ${error?.message || String(error)}`; });
 });
 els.newChatButton.addEventListener('click', () => beginHermesWebDraft().catch((error) => showError('Could not start draft', error?.message || String(error))));
-els.modelPickerButton.addEventListener('click', () => toggleModelPicker());
+els.modelPickerButton.addEventListener('click', () => {
+  const nextOpen = els.modelPicker.hidden || modelSelectionTarget !== 'chat';
+  if (!nextOpen) return toggleModelPicker(false);
+  setModelSelectionTarget('chat');
+  toggleModelPicker(true);
+});
+els.inlineAssistModelButton?.addEventListener('click', () => {
+  const nextOpen = els.modelPicker.hidden || modelSelectionTarget !== 'assist';
+  if (!nextOpen) return toggleModelPicker(false);
+  setModelSelectionTarget('assist');
+  toggleModelPicker(true);
+});
+els.closeModelPicker?.addEventListener('click', () => {
+  const focusTarget = modelSelectionTarget === 'assist' ? els.inlineAssistModelButton : els.modelPickerButton;
+  toggleModelPicker(false);
+  focusTarget?.focus();
+});
 els.modelSearch.addEventListener('input', () => renderModelPicker(els.modelSearch.value));
 els.modelOptionsList?.addEventListener('click', (event) => {
   const effort = event.target.closest('[data-runtime-effort]')?.dataset.runtimeEffort;
+  const toggle = event.target.closest('[data-runtime-toggle]')?.dataset.runtimeToggle;
+  if (modelSelectionTarget === 'assist') {
+    const options = inlineAssistRuntimeOptions();
+    if (effort) settings.inlineAssistReasoningEffort = normalizeModelRuntimeOptions({ ...options, reasoningEffort: effort }).reasoningEffort;
+    if (toggle === 'thinking') settings.inlineAssistThinkingEnabled = !options.thinkingEnabled;
+    if (toggle === 'fast') settings.inlineAssistFastMode = !options.fastMode;
+    if (!effort && !toggle) return;
+    chrome.storage.local.set({ hermesBrowserSettings: settings });
+    renderModelRuntimeOptions();
+    return;
+  }
   if (effort) {
     setModelRuntimeOptions({ reasoningEffort: effort }).catch((error) => { els.composerStatus.textContent = `Runtime option save failed: ${error?.message || String(error)}`; });
     return;
   }
-  const toggle = event.target.closest('[data-runtime-toggle]')?.dataset.runtimeToggle;
   const options = activeModelRuntimeOptions();
   if (toggle === 'thinking') {
     setModelRuntimeOptions({ thinkingEnabled: !options.thinkingEnabled }).catch((error) => { els.composerStatus.textContent = `Runtime option save failed: ${error?.message || String(error)}`; });
@@ -2076,6 +2385,12 @@ globalThis.addEventListener('resize', () => {
   updateScrim();
 });
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes[TASK_STACKS_STORAGE_KEY]) {
+    taskStackStore = changes[TASK_STACKS_STORAGE_KEY].newValue && typeof changes[TASK_STACKS_STORAGE_KEY].newValue === 'object'
+      ? changes[TASK_STACKS_STORAGE_KEY].newValue
+      : {};
+    renderTaskStack();
+  }
   if (area === 'local' && changes[VOICE_DRAFT_STORAGE_KEY]?.newValue) consumeVoiceDraft(changes[VOICE_DRAFT_STORAGE_KEY].newValue).catch(() => {});
 });
 document.addEventListener('click', (event) => {

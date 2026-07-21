@@ -7,15 +7,16 @@ import {
   normalizeModelRuntimeOptions,
 } from '../extension/lib/model-runtime-options.mjs';
 
-test('Hermes Web exposes all five reasoning effort levels and preserves the selected value', () => {
+test('Hermes surfaces expose all seven reasoning effort levels and preserve distinct Extra High, Max, and Ultra values', () => {
   assert.deepEqual(
     MODEL_REASONING_EFFORTS.map((option) => option.label),
-    ['Minimal', 'Low', 'Medium', 'High', 'Max'],
+    ['Minimal', 'Low', 'Medium', 'High', 'Extra High', 'Max', 'Ultra'],
   );
-  assert.equal(normalizeModelRuntimeOptions({ reasoningEffort: 'high' }).reasoningEffort, 'high');
-  assert.equal(normalizeModelRuntimeOptions({ reasoningEffort: 'max' }).reasoningEffort, 'xhigh');
-  assert.deepEqual(modelRuntimeOptionsPayload({ reasoningEffort: 'max', thinkingEnabled: true, fastMode: true }), {
-    reasoning: { enabled: true, effort: 'xhigh' },
+  assert.equal(normalizeModelRuntimeOptions({ reasoningEffort: 'extra-high' }).reasoningEffort, 'xhigh');
+  assert.equal(normalizeModelRuntimeOptions({ reasoningEffort: 'max' }).reasoningEffort, 'max');
+  assert.equal(normalizeModelRuntimeOptions({ reasoningEffort: 'ultra' }).reasoningEffort, 'ultra');
+  assert.deepEqual(modelRuntimeOptionsPayload({ reasoningEffort: 'ultra', thinkingEnabled: true, fastMode: true }), {
+    reasoning: { enabled: true, effort: 'ultra' },
     fast: true,
     service_tier: 'priority',
   });

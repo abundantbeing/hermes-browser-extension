@@ -1,6 +1,6 @@
 name: hermes-browser-companion
 kind: standalone
-version: 0.1.11
+version: 0.2.0
 description: >-
   Hermes Browser companion plugin — caches browser context from conversations
   and exposes it to the agent via tools and lifecycle hooks. Fail-soft: when
@@ -12,10 +12,12 @@ provides_tools:
   - browser_get_context
   - browser_clear_context
   - browser_event_log
+  - browser_text_utility
 
 provides_skills:
   - hermes-browser
 
 provides_hooks:
   - pre_llm_call
+  - pre_tool_call
   - post_tool_call

@@ -24,6 +24,39 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] {
   --hermes-ink: #0505e8; --hermes-ink-rgb: 5, 5, 232;
   --hermes-accent: #dbe6ff; --hermes-shell-fg: #f8faff; --hermes-shell-fg-rgb: 248, 250, 255;
 }
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] ::selection {
+  background: #EDFF45;
+  color: #0505e8;
+}
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .web-message {
+  position: relative;
+  z-index: 61;
+  isolation: isolate;
+  background: #ffffff;
+  opacity: 1;
+  backdrop-filter: none;
+}
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .web-message.user {
+  border-color: var(--hermes-line-strong);
+  background: #ffffff;
+  color: var(--hermes-ink);
+}
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .web-message.user .web-message-role {
+  color: var(--hermes-ink);
+}
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .fulltab-composer {
+  position: relative;
+  z-index: 61;
+  isolation: isolate;
+  background: #ffffff;
+  opacity: 1;
+  backdrop-filter: none;
+}
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .fulltab-composer-wrap,
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .attachment-list {
+  background: #ffffff;
+}
 html[data-hermes-theme="nous"][data-hermes-mode="dark"] {
   --hermes-blue: #082f67; --hermes-blue-rgb: 8, 47, 103; --hermes-blue-deep: #061f49;
   --hermes-paper: #0a3572; --hermes-paper-rgb: 10, 53, 114;

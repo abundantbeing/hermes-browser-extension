@@ -140,6 +140,22 @@ test('normalizeGatewayCapabilities degrades missing capability routes into a leg
   assert.match(caps.warnings.join('\n'), /404/);
 });
 
+test('capability aliases normalize future session model routing advertisements', () => {
+  const normalized = normalizeGatewayCapabilities({
+    features: {
+      session_chat: true,
+      session_model_routing: true,
+    },
+    endpoints: {
+      session_chat: { method: 'POST', path: '/api/sessions/{session_id}/chat' },
+      session_model: { method: 'POST', path: '/api/sessions/{session_id}/model' },
+    },
+  });
+
+  assert.equal(normalized.sessionChat, true);
+  assert.equal(normalized.sessionModelLock, true);
+});
+
 test('manual context compaction stays disabled when a gateway advertises only a feature flag with no endpoint', () => {
   const caps = normalizeGatewayCapabilities({
     object: 'hermes.api_server.capabilities',
@@ -229,6 +245,7 @@ test('buildContextReceipt summarizes exactly what browser context was sent', () 
     'Active tab',
     'Pinned tab',
     'Context hash',
+    'Delivery',
     'Selected text',
     'Picked element',
     'Page text',

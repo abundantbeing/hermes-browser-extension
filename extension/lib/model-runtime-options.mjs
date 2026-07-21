@@ -3,14 +3,16 @@ export const MODEL_REASONING_EFFORTS = Object.freeze([
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
-  { value: 'xhigh', label: 'Max' },
+  { value: 'xhigh', label: 'Extra High' },
+  { value: 'max', label: 'Max' },
+  { value: 'ultra', label: 'Ultra' },
 ]);
 
 const VALID_REASONING_EFFORTS = new Set(MODEL_REASONING_EFFORTS.map((option) => option.value));
 
 export function normalizeModelRuntimeOptions(value = {}) {
   const rawEffort = String(value?.reasoningEffort || '').trim().toLowerCase();
-  const reasoningEffort = rawEffort === 'max'
+  const reasoningEffort = ['extra-high', 'extra_high', 'extra high'].includes(rawEffort)
     ? 'xhigh'
     : (VALID_REASONING_EFFORTS.has(rawEffort) ? rawEffort : 'medium');
   const fastMode = Boolean(value?.fastMode);

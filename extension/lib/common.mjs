@@ -1,6 +1,8 @@
 import {
+  BROWSER_CONTEXT_TURN_PROTOCOL_ID,
   browserContextPayloadHash as protocolBrowserContextPayloadHash,
   buildBrowserContextPrompt,
+  buildChatOnlyPrompt as protocolBuildChatOnlyPrompt,
 } from './browser-context-protocol.mjs';
 import { formatPickedElementBlock } from './element-picker.mjs';
 import { normalizeImageAspectRatio, resolveImageSource } from './image-render.mjs';
@@ -34,7 +36,9 @@ export const MODEL_EFFORTS = Object.freeze([
   { value: 'low', label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
-  { value: 'xhigh', label: 'Max' },
+  { value: 'xhigh', label: 'Extra High' },
+  { value: 'max', label: 'Max' },
+  { value: 'ultra', label: 'Ultra' },
 ]);
 
 export const TEXT_SIZE_OPTIONS = Object.freeze([
@@ -73,9 +77,19 @@ export const DEFAULT_SETTINGS = Object.freeze({
   sessionModelOptionBindings: Object.freeze({}),
   modelOptionsVersion: 2,
   contextDepth: 'normal',
-  includeTabs: true,
+  includeTabs: false,
   includePageText: true,
   includeSelectedText: true,
+  inlineAssistEnabled: true,
+  inlineAssistDefaultRoute: 'ask',
+  inlineAssistModel: '',
+  inlineAssistRawModel: '',
+  inlineAssistProvider: '',
+  inlineAssistSessionRetention: 'keep',
+  inlineAssistThinkingEnabled: true,
+  inlineAssistReasoningEffort: 'low',
+  inlineAssistFastMode: false,
+  contextMenuDefaultRoute: 'ask',
   transcriptProvider: 'default',
   agentDiscoveryHost: '127.0.0.1',
   agentDiscoveryScheme: 'http',
@@ -102,6 +116,30 @@ export function messageDisplayText(role = '', content = '') {
   const text = String(content ?? '');
   if (String(role || '').trim().toLowerCase() !== 'user') return text;
 
+  // BCP v2 history is structured. Only a fully unambiguous typed envelope can
+  // hide its data sections; malformed lookalikes remain visible fail-closed.
+  try {
+    const envelope = JSON.parse(text);
+    const input = envelope?.human_input;
+    if (
+      envelope
+      && typeof envelope === 'object'
+      && !Array.isArray(envelope)
+      && envelope.protocol === BROWSER_CONTEXT_TURN_PROTOCOL_ID
+      && input
+      && typeof input === 'object'
+      && !Array.isArray(input)
+      && Object.keys(input).length === 2
+      && input.source === 'composer'
+      && typeof input.text === 'string'
+      && envelope.browser_context
+      && envelope.attachment_context
+      && envelope.source_receipt
+    ) return input.text;
+  } catch {
+    // Fall through to legacy v1 parsing or verbatim display.
+  }
+
   const lines = text.replaceAll(String.fromCharCode(13), '').split('\n');
   const starts = [];
   const ends = [];
@@ -114,10 +152,18 @@ export function messageDisplayText(role = '', content = '') {
   return lines.slice(starts[0] + 1, ends[0]).join('\n').trim();
 }
 
+export function isHermesBrowserOwnedSession(session = {}) {
+  const sessionId = String(session?.id || '').trim().toLowerCase();
+  const source = String(session?.source || '').trim().toLowerCase();
+  return source === DEFAULT_SETTINGS.sessionSource
+    || sessionId === DEFAULT_SETTINGS.sessionId
+    || sessionId.startsWith(`${DEFAULT_SETTINGS.sessionId}-`);
+}
+
 export function requiresForeignSessionConfirmation(session = {}, approvedSessionIds = []) {
   const sessionId = String(session?.id || '').trim();
   if (!sessionId) return false;
-  if (String(session?.source || '').trim().toLowerCase() === DEFAULT_SETTINGS.sessionSource) return false;
+  if (isHermesBrowserOwnedSession(session)) return false;
   if (approvedSessionIds instanceof Set) return !approvedSessionIds.has(sessionId);
   return !Array.from(approvedSessionIds || []).some((id) => String(id) === sessionId);
 }
@@ -181,6 +227,12 @@ export function normalizeTextSize(value = DEFAULT_SETTINGS.textSize) {
 
 export function shouldCreateFreshSessionOnOpen(settings = DEFAULT_SETTINGS) {
   return normalizeSessionStartupMode(settings?.sessionStartupMode) === 'new-session';
+}
+
+export function isUnsavedBrowserDraftSession({ sessionId = '', sessions = [] } = {}) {
+  const id = String(sessionId || '').trim();
+  if (!/^hermes-browser-extension-\d{14}-[0-9a-f]{6}$/i.test(id)) return false;
+  return !Array.isArray(sessions) || !sessions.some((session) => String(session?.id || '').trim() === id);
 }
 
 export function gatewayModeDetails(value = DEFAULT_SETTINGS.gatewayMode) {
@@ -1175,6 +1227,7 @@ const MODEL_CONTEXT_FALLBACKS = Object.freeze([
   ['grok-4.3', 1_000_000],
   ['grok-4', 256_000],
   ['grok-3', 131_072],
+  ['kimi-k3', 1_048_576],
   ['kimi', 262_144],
   ['deepseek-v4', 1_000_000],
   ['deepseek', 128_000],
@@ -1192,6 +1245,16 @@ function fallbackModelContextTokens(...values) {
     .filter(Boolean)
     .map((value) => String(value).toLowerCase())
     .join(' ');
+  const isGpt56 = /\bgpt-5\.6-(?:sol|terra|luna)\b/.test(providerHint);
+  if (isGpt56) {
+    // Mirror Hermes Agent's provider-aware metadata: ChatGPT Codex OAuth
+    // enforces 272K for these slugs, while the direct OpenAI API exposes 1.05M.
+    // Without a provider, return unknown instead of falling into the generic
+    // GPT-5 400K family fallback and presenting a guess as an exact limit.
+    if (providerHint.includes('openai-codex') || providerHint.includes('codex')) return 272_000;
+    if (values.some((value) => String(value || '').trim().toLowerCase() === 'openai')) return 1_050_000;
+    return 0;
+  }
   if (/\bgpt-5\.5\b/.test(providerHint) && providerHint.includes('openai-codex')) return 272_000;
   if (/\bgpt-5\.5\b/.test(providerHint) && (joined.includes('openai-codex') || joined.includes('codex'))) return 272_000;
   for (const [needle, tokens] of MODEL_CONTEXT_FALLBACKS) {
@@ -1204,8 +1267,8 @@ function fallbackModelContextTokens(...values) {
 
 export function normalizeReasoningEffort(value = DEFAULT_SETTINGS.reasoningEffort) {
   const raw = String(value || DEFAULT_SETTINGS.reasoningEffort).trim().toLowerCase();
-  if (raw === 'max') return 'xhigh';
-  return MODEL_EFFORTS.some((effort) => effort.value === raw) ? raw : DEFAULT_SETTINGS.reasoningEffort;
+  const normalized = ['extra-high', 'extra_high', 'extra high'].includes(raw) ? 'xhigh' : raw;
+  return MODEL_EFFORTS.some((effort) => effort.value === normalized) ? normalized : DEFAULT_SETTINGS.reasoningEffort;
 }
 
 export function reasoningEffortLabel(value = DEFAULT_SETTINGS.reasoningEffort) {
@@ -1215,7 +1278,7 @@ export function reasoningEffortLabel(value = DEFAULT_SETTINGS.reasoningEffort) {
 
 export function reasoningEffortShortLabel(value = DEFAULT_SETTINGS.reasoningEffort) {
   const normalized = normalizeReasoningEffort(value);
-  return ({ minimal: 'Min', low: 'Low', medium: 'Med', high: 'High', xhigh: 'Max' })[normalized] || 'Med';
+  return ({ minimal: 'Min', low: 'Low', medium: 'Med', high: 'High', xhigh: 'XHigh', max: 'Max', ultra: 'Ultra' })[normalized] || 'Med';
 }
 
 export function normalizeFastMode(value = DEFAULT_SETTINGS.fastMode) {
@@ -1374,6 +1437,25 @@ function positiveTokenNumber(value = 0) {
   return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
+export function estimateLocalSessionContextTokens({
+  messages = [],
+  nextPromptTokens = 0,
+  draftTokens = 0,
+  loadedContextTokens = 0,
+  loadedVisibleTokens = 0,
+} = {}) {
+  const visibleHistoryTokens = Array.from(messages || []).reduce(
+    (total, message) => total + estimateTokens(String(message?.content || '')),
+    0,
+  );
+  const loadedContext = positiveTokenNumber(loadedContextTokens);
+  const loadedVisible = positiveTokenNumber(loadedVisibleTokens);
+  const historyTokens = loadedContext
+    ? loadedContext + Math.max(0, visibleHistoryTokens - loadedVisible)
+    : visibleHistoryTokens;
+  return historyTokens + positiveTokenNumber(nextPromptTokens) + positiveTokenNumber(draftTokens);
+}
+
 function firstPositiveToken(...values) {
   for (const value of values) {
     const parsed = positiveTokenNumber(value);
@@ -1394,7 +1476,7 @@ export function contextAccountingSnapshot({
   session = {},
   modelContextTokens = 0,
 } = {}) {
-  const contextLimitTokens = firstPositiveToken(
+  const reportedContextLimitTokens = firstPositiveToken(
     runtime?.context_length,
     runtime?.contextLength,
     runtime?.context_tokens,
@@ -1404,6 +1486,17 @@ export function contextAccountingSnapshot({
     session?.modelContextTokens,
     modelContextTokens,
   );
+  const catalogContextLimitTokens = positiveTokenNumber(modelContextTokens);
+  const runtimeIdentity = [
+    runtime?.provider,
+    runtime?.model,
+    session?.provider,
+    session?.model,
+  ].filter(Boolean).join(' ').toLowerCase();
+  const staleCodexGpt56Limit = reportedContextLimitTokens === 400_000
+    && catalogContextLimitTokens === 272_000
+    && /gpt-5\.6-(?:sol|terra|luna)/.test(runtimeIdentity);
+  const contextLimitTokens = staleCodexGpt56Limit ? catalogContextLimitTokens : reportedContextLimitTokens;
 
   const runtimePromptTokens = firstPositiveToken(
     runtime?.last_prompt_tokens,
@@ -1845,8 +1938,7 @@ function modelContextTokens(model = {}) {
     model.metadata?.context_length ??
     model.metadata?.context_window;
   const number = Number(value || 0);
-  if (Number.isFinite(number) && number > 0) return number;
-  return fallbackModelContextTokens(
+  const fallback = fallbackModelContextTokens(
     model.id,
     model.name,
     model.root,
@@ -1859,6 +1951,13 @@ function modelContextTokens(model = {}) {
     model.provider_label,
     model.owned_by
   );
+  // Older Hermes registries advertised the generic GPT-5 400K fallback even
+  // for Codex OAuth's real 272K GPT-5.6 window.
+  if (Number.isFinite(number) && number > 0) {
+    if (number === 400_000 && fallback === 272_000) return fallback;
+    return number;
+  }
+  return fallback;
 }
 
 function formatTranscriptTimestamp(seconds = 0) {
@@ -2046,32 +2145,37 @@ export function normalizeHermesSessions(payload = {}) {
 
   return rawSessions
     .filter((session) => session && session.id)
-    .map((session) => ({
-      id: String(session.id),
-      title: String(session.title || session.preview || session.id),
-      source: String(session.source || 'sessions'),
-      sourceLabel: normalizeSessionSourceLabel(session.source),
-      preview: String(session.preview || ''),
-      messageCount: Number(session.message_count || session.messageCount || 0),
-      model: String(session.model || ''),
-      provider: String(session.provider || session.provider_id || session.providerId || ''),
-      rawModelId: String(session.rawModelId || session.raw_model_id || session.model || ''),
-      modelOptions: normalizeAcknowledgedModelOptions(session.model_options || session.modelOptions),
-      inputTokens: Number(session.input_tokens || session.inputTokens || 0),
-      outputTokens: Number(session.output_tokens || session.outputTokens || 0),
-      cacheReadTokens: Number(session.cache_read_tokens || session.cacheReadTokens || 0),
-      cacheWriteTokens: Number(session.cache_write_tokens || session.cacheWriteTokens || 0),
-      reasoningTokens: Number(session.reasoning_tokens || session.reasoningTokens || 0),
-      lastPromptTokens: Number(session.last_prompt_tokens || session.lastPromptTokens || 0),
-      contextLength: Number(session.context_length || session.contextLength || 0),
-      thresholdTokens: Number(session.threshold_tokens || session.thresholdTokens || 0),
-      usagePercent: Number(session.usage_percent || session.usagePercent || 0),
-      compressionCount: Number(session.compression_count || session.compressionCount || 0),
-      compressionCountKnown: (session.compression_count ?? session.compressionCount) !== undefined
-        && (session.compression_count ?? session.compressionCount) !== null,
-      lastActive: Number(session.last_active || session.started_at || session.updated_at || 0),
-      parentSessionId: session.parent_session_id || null,
-    }))
+    .map((session) => {
+      const source = isHermesBrowserOwnedSession(session)
+        ? DEFAULT_SETTINGS.sessionSource
+        : String(session.source || 'sessions');
+      return {
+        id: String(session.id),
+        title: String(session.title || session.preview || session.id),
+        source,
+        sourceLabel: normalizeSessionSourceLabel(source),
+        preview: String(session.preview || ''),
+        messageCount: Number(session.message_count || session.messageCount || 0),
+        model: String(session.model || ''),
+        provider: String(session.provider || session.provider_id || session.providerId || ''),
+        rawModelId: String(session.rawModelId || session.raw_model_id || session.model || ''),
+        modelOptions: normalizeAcknowledgedModelOptions(session.model_options || session.modelOptions),
+        inputTokens: Number(session.input_tokens || session.inputTokens || 0),
+        outputTokens: Number(session.output_tokens || session.outputTokens || 0),
+        cacheReadTokens: Number(session.cache_read_tokens || session.cacheReadTokens || 0),
+        cacheWriteTokens: Number(session.cache_write_tokens || session.cacheWriteTokens || 0),
+        reasoningTokens: Number(session.reasoning_tokens || session.reasoningTokens || 0),
+        lastPromptTokens: Number(session.last_prompt_tokens || session.lastPromptTokens || 0),
+        contextLength: Number(session.context_length || session.contextLength || 0),
+        thresholdTokens: Number(session.threshold_tokens || session.thresholdTokens || 0),
+        usagePercent: Number(session.usage_percent || session.usagePercent || 0),
+        compressionCount: Number(session.compression_count || session.compressionCount || 0),
+        compressionCountKnown: (session.compression_count ?? session.compressionCount) !== undefined
+          && (session.compression_count ?? session.compressionCount) !== null,
+        lastActive: Number(session.last_active || session.started_at || session.updated_at || 0),
+        parentSessionId: session.parent_session_id || null,
+      };
+    })
     .sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
 }
 
@@ -2279,11 +2383,7 @@ export function browserContextPayloadHash({ activeTab = {}, selectedTabs = [], p
   });
 }
 
-function buildChatOnlyPrompt(userText = '') {
-  return `[Mode: chat-only. No browser page context attached.]\n\n${String(userText || '').trim()}`;
-}
-
-export function buildHermesPrompt({ userText, activeTab, tabs = [], pageContext, selectedTabs, contextScope, settings = DEFAULT_SETTINGS, contextHash = '' }) {
+export function buildHermesPrompt({ userText, activeTab, tabs = [], pageContext, selectedTabs, contextScope, settings = DEFAULT_SETTINGS, contextHash = '', contextDelivery = 'full' }) {
   return buildBrowserContextPrompt({
     userText,
     activeTab,
@@ -2293,6 +2393,7 @@ export function buildHermesPrompt({ userText, activeTab, tabs = [], pageContext,
     contextScope,
     settings: { ...DEFAULT_SETTINGS, ...settings },
     contextHash,
+    contextDelivery,
   });
 }
 
@@ -2310,7 +2411,7 @@ export function estimateContextWindow({ userText = '', activeTab, tabs = [], sel
   const modelContext = Number(mergedSettings.modelContextTokens || 0);
   const hasModelContext = Number.isFinite(modelContext) && modelContext > 0;
   if (isChatOnlyScope(contextScope)) {
-    const prompt = buildChatOnlyPrompt(userText);
+    const prompt = protocolBuildChatOnlyPrompt(userText);
     const estimatedTokens = estimateTokens(prompt);
     return {
       promptChars: prompt.length,

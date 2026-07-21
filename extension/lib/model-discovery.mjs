@@ -9,6 +9,8 @@
 
 const SESSION_HISTORY_LIMIT = 100;
 const LOCAL_DASHBOARD_URL = 'http://127.0.0.1:9119';
+export const HERMES_CANONICAL_MODEL_CATALOG_URL = 'https://raw.githubusercontent.com/NousResearch/hermes-agent/main/website/static/api/model-catalog.json';
+export const NOUS_LIVE_MODEL_CATALOG_URL = 'https://inference-api.nousresearch.com/v1/models';
 export const MODEL_CATALOG_CACHE_STORAGE_KEY = 'hermesBrowserModelCatalogCache';
 
 export function modelCatalogCacheKey({ gatewayMode = 'local-api', gatewayUrl = '', profile = '' } = {}) {
@@ -190,15 +192,135 @@ export async function discoverModelsFromRegistry({
 async function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 5000) {
   if (typeof fetchFn !== 'function') throw new Error('no-fetch');
   if (typeof AbortController === 'undefined' || !timeoutMs) {
-    return fetchFn(url, options);
+    return fetchFn(url, { ...options, redirect: 'error' });
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetchFn(url, { ...options, signal: controller.signal });
+    return await fetchFn(url, { ...options, signal: controller.signal, redirect: 'error' });
   } finally {
     clearTimeout(timer);
   }
+}
+
+function canonicalProviderModels(payload = {}, registryModels = []) {
+  const providers = payload?.providers && typeof payload.providers === 'object' ? payload.providers : {};
+  const templates = new Map();
+  for (const model of Array.isArray(registryModels) ? registryModels : []) {
+    const provider = String(model?.provider || '').trim().toLowerCase();
+    if (!provider || model?.authenticated === false || templates.has(provider)) continue;
+    templates.set(provider, model);
+  }
+
+  const extras = [];
+  for (const [provider, template] of templates) {
+    const entries = Array.isArray(providers?.[provider]?.models) ? providers[provider].models : [];
+    for (const entry of entries) {
+      const rawModelId = String(typeof entry === 'string' ? entry : entry?.id || entry?.model || entry?.name || '').trim();
+      if (!rawModelId) continue;
+      extras.push({
+        id: `${provider}::${rawModelId}`,
+        rawModelId,
+        label: typeof entry === 'object' ? (entry.label || entry.name || rawModelId) : rawModelId,
+        provider,
+        providerLabel: template.providerLabel || template.provider_label || provider,
+        description: typeof entry === 'object' ? (entry.description || '') : '',
+        contextTokens: contextTokensFromObject(entry),
+        authenticated: template.authenticated,
+        available: true,
+        source: 'canonical',
+        runtimeSelectable: true,
+      });
+    }
+  }
+  return mergeModelsByRawId([registryModels, extras]);
+}
+
+export function shouldEnrichCanonicalProviderCatalog(source = '') {
+  return ['registry', 'dashboard', 'cache'].includes(String(source || '').trim().toLowerCase());
+}
+
+function nousProviderKeys(registryModels = []) {
+  const keys = new Set();
+  for (const model of Array.isArray(registryModels) ? registryModels : []) {
+    const provider = String(model?.provider || '').trim().toLowerCase();
+    const label = String(model?.providerLabel || model?.provider_label || model?.providerName || '').trim().toLowerCase();
+    if (provider === 'nous' || /\bnous\s+(?:portal|research)\b/.test(label)) keys.add(provider);
+  }
+  return [...keys].filter(Boolean);
+}
+
+function catalogWithNousAliases(payload = {}, providerKeys = []) {
+  const providers = payload?.providers && typeof payload.providers === 'object' ? payload.providers : {};
+  const nous = providers.nous;
+  if (!nous || !providerKeys.length) return payload;
+  return {
+    ...payload,
+    providers: {
+      ...providers,
+      ...Object.fromEntries(providerKeys.map((provider) => [provider, nous])),
+    },
+  };
+}
+
+export async function discoverCanonicalProviderCatalog({
+  registryModels = [],
+  fetchFn = globalThis.fetch?.bind(globalThis),
+  timeoutMs = 3000,
+  catalogUrl = HERMES_CANONICAL_MODEL_CATALOG_URL,
+} = {}) {
+  const currentModels = Array.isArray(registryModels) ? registryModels : [];
+  const nousProviders = nousProviderKeys(currentModels);
+  const hasCanonicalProvider = nousProviders.length > 0
+    || currentModels.some((model) => String(model?.provider || '').trim().toLowerCase() === 'openrouter');
+  if (!hasCanonicalProvider) return { ok: true, models: currentModels, error: '', source: 'not-applicable' };
+  if (typeof fetchFn !== 'function') return { ok: false, models: currentModels, error: 'no-fetch', source: 'registry' };
+
+  const errors = [];
+  let models = currentModels;
+  let liveNousLoaded = false;
+  let staticCatalogLoaded = false;
+
+  if (nousProviders.length) {
+    try {
+      const response = await fetchWithTimeout(fetchFn, NOUS_LIVE_MODEL_CATALOG_URL, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+        credentials: 'omit',
+      }, timeoutMs);
+      if (!response.ok) throw new Error(`status-${response.status}`);
+      const payload = await response.json();
+      if (!Array.isArray(payload?.data)) throw new Error('invalid-live-nous-catalog');
+      const providers = Object.fromEntries(nousProviders.map((provider) => [provider, { models: payload.data }]));
+      models = canonicalProviderModels({ providers }, models);
+      liveNousLoaded = true;
+    } catch (error) {
+      errors.push(error?.name === 'AbortError' ? 'nous-live-timeout' : (error?.message || 'nous-live-error'));
+    }
+  }
+
+  try {
+    const response = await fetchWithTimeout(fetchFn, catalogUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      credentials: 'omit',
+    }, timeoutMs);
+    if (!response.ok) throw new Error(`status-${response.status}`);
+    const payload = catalogWithNousAliases(await response.json(), nousProviders);
+    models = canonicalProviderModels(payload, models);
+    staticCatalogLoaded = true;
+  } catch (error) {
+    errors.push(error?.name === 'AbortError' ? 'canonical-timeout' : (error?.message || 'canonical-error'));
+  }
+
+  return {
+    ok: liveNousLoaded || staticCatalogLoaded,
+    models,
+    error: liveNousLoaded || staticCatalogLoaded ? '' : errors.join(' · '),
+    source: liveNousLoaded ? 'canonical-live' : (staticCatalogLoaded ? 'canonical' : 'registry'),
+  };
 }
 
 export function dashboardModelDiscoveryBaseUrl({ gatewayMode = 'local-api', gatewayUrl = '', localDashboardUrl = LOCAL_DASHBOARD_URL } = {}) {

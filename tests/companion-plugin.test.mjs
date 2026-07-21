@@ -33,6 +33,7 @@ const files = [
   'companion-plugin/events.py',
   'companion-plugin/policy.py',
   'companion-plugin/tools.py',
+  'companion-plugin/text_utilities.py',
   'companion-plugin/hooks.py',
   'companion-plugin/install.md',
   'companion-plugin/skills/hermes-browser/SKILL.md',
@@ -56,6 +57,7 @@ test('plugin.yaml uses standard Hermes plugin format', () => {
   assert.match(manifest, /browser_get_context/);
   assert.match(manifest, /browser_clear_context/);
   assert.match(manifest, /browser_event_log/);
+  assert.match(manifest, /browser_text_utility/);
   // Hooks
   assert.match(manifest, /pre_llm_call/);
   assert.match(manifest, /post_tool_call/);
@@ -74,6 +76,7 @@ test('__init__.py registers tools, hooks and bundled skill', () => {
   assert.ok(init.includes('browser_get_context'));
   assert.ok(init.includes('browser_clear_context'));
   assert.ok(init.includes('browser_event_log'));
+  assert.ok(init.includes('browser_text_utility'));
   // Hooks
   assert.ok(init.includes('pre_llm_call'));
   assert.ok(init.includes('post_tool_call'));
@@ -115,13 +118,14 @@ assert [tool["name"] for tool in ctx.tools] == [
     "browser_get_context",
     "browser_clear_context",
     "browser_event_log",
+    "browser_text_utility",
 ]
 for tool in ctx.tools:
     schema = tool["schema"]
     assert schema["name"] == tool["name"]
     assert isinstance(schema.get("description"), str) and schema["description"]
     assert schema["parameters"]["type"] == "object"
-assert [name for name, _callback in ctx.hooks] == ["pre_llm_call", "post_tool_call"]
+assert [name for name, _callback in ctx.hooks] == ["pre_llm_call", "pre_tool_call", "post_tool_call"]
 assert ctx.skills and ctx.skills[0][0] == "hermes-browser"
 `;
   runPluginPython(script);
@@ -136,6 +140,7 @@ schema_map = {
     "browser_get_context": schemas.SCHEMA_GET_CONTEXT,
     "browser_clear_context": schemas.SCHEMA_CLEAR_CONTEXT,
     "browser_event_log": schemas.SCHEMA_EVENT_LOG,
+    "browser_text_utility": schemas.SCHEMA_TEXT_UTILITY,
 }
 for name, schema in schema_map.items():
     assert schema["name"] == name
@@ -156,13 +161,13 @@ test('tools return JSON responses — status, get, clear, event_log', () => {
   assert.match(tools, /def browser_get_context/);
   assert.match(tools, /def browser_clear_context/);
   assert.match(tools, /def browser_event_log/);
-  // Every handler returns json.dumps
-  const handlerLines = tools.split('\n').filter(l => l.includes('return json.dumps'));
-  assert.equal(handlerLines.length, 4, 'All four handlers should return json.dumps');
-  // No hardcoded available:False
-  assert.doesNotMatch(tools, /available.*False/);
-  // Store integration
-  assert.match(tools, /_ensure_store\(\)/);
+  assert.match(tools, /def browser_text_utility/);
+  // Handlers consume ContextVar leases; they may not query global/latest state.
+  assert.match(tools, /ContextVar/);
+  assert.match(tools, /grant_lease/);
+  assert.match(tools, /_take_lease/);
+  assert.match(tools, /return _json/);
+  assert.doesNotMatch(tools, /(?:_STORE|store)\.get\(/);
   assert.match(tools, /set_store\(/);
   assert.match(tools, /_event_log_limit/);
   // Schemas imported
@@ -172,186 +177,119 @@ test('tools return JSON responses — status, get, clear, event_log', () => {
 test('hooks handle real Hermes **kwargs safely', () => {
   const hooks = readFileSync('companion-plugin/hooks.py', 'utf8');
   assert.match(hooks, /def pre_llm_call\(\*\*kwargs/);
+  assert.match(hooks, /def pre_tool_call\(\*\*kwargs/);
   assert.match(hooks, /def post_tool_call\(\*\*kwargs/);
   assert.match(hooks, /\{"context":/);
   assert.doesNotMatch(hooks, /def pre_llm_call\(context/);
   assert.doesNotMatch(hooks, /def post_tool_call\(event/);
 
   const script = `${pluginImportHarness}
-from companion_plugin.context_store import BrowserContextStore
-from companion_plugin import hooks
+from companion_plugin.context_store import owner_from_hook_kwargs
 
-prompt = """UNTRUSTED_BROWSER_CONTEXT_START
-Context hash: abcdef1234567890
-Active tab title: Docs
-Active tab URL: https://example.com/docs?debug=SENSITIVE_SAMPLE
-Context scope: selected tab
-
-Page text:
-Hello world
-UNTRUSTED_BROWSER_CONTEXT_END"""
-store = BrowserContextStore()
-hooks.set_store(store)
-pre = hooks.pre_llm_call(
-    user_message=prompt,
-    conversation_history=[{"role": "user", "content": prompt}],
-    session_id="session-1",
-    turn_id="turn-1",
-)
-assert isinstance(pre, dict)
-assert "context" in pre
-assert "untrusted browser context" in pre["context"]
-assert store.status()["available"] is True
-post = hooks.post_tool_call(
-    tool_name="browser_get_context",
-    args={"limit": 1},
-    result={"authorization": "AUTH_HEADER_SAMPLE_SHOULD_NOT_APPEAR"},
-    status="ok",
-    duration_ms=12,
-)
-assert post["ok"] is True
-assert store.events[-1]["data"]["result"]["authorization"] == "[REDACTED_SECRET]"
+owner = owner_from_hook_kwargs({
+    "platform": "telegram",
+    "sender_id": "sender-1",
+    "session_id": "session-1",
+    "turn_id": "turn-1",
+    "task_id": "task-1",
+})
+assert owner.principal_id == "telegram:sender-1"
+assert owner_from_hook_kwargs({"platform": "telegram", "session_id": "session-1", "turn_id": "turn-1"}).principal_id == "telegram:session:session-1"
+assert owner_from_hook_kwargs({"platform": "telegram", "session_id": "session-1"}) is None
 `;
   runPluginPython(script);
 });
 
 test('hooks detect browser context inside structured message content', () => {
   const script = `${pluginImportHarness}
-from companion_plugin.context_store import BrowserContextStore
 from companion_plugin import hooks
-
-prompt = """UNTRUSTED_BROWSER_CONTEXT_START
-Context hash: abcdef1234567890
-Active tab title: Attachment docs
-Active tab URL: https://example.com/docs
-Context scope: selected tab
-
-Page text:
-Attachment-aware context
-UNTRUSTED_BROWSER_CONTEXT_END"""
 
 parts = [
     {"type": "text", "text": "Please summarize the attachment."},
     {"type": "image_url", "image_url": {"url": "data:image/png;base64,ignored"}},
-    {"type": "text", "text": prompt},
+    {"type": "text", "text": '{"protocol":"hermes.browser.turn.v2"}'},
     {"type": "text", "text": 42},
     None,
 ]
-
-store = BrowserContextStore()
-hooks.set_store(store)
-result = hooks.pre_llm_call(user_message=parts)
-assert isinstance(result, dict)
-assert store.status()["available"] is True
-
-store.clear()
-result = hooks.pre_llm_call(
+assert hooks._last_user_message(user_message=parts).startswith("Please summarize")
+assert hooks._last_user_message(
     conversation_history=[
         {"role": "assistant", "content": "Earlier reply"},
         {"role": "user", "content": parts},
     ]
-)
-assert isinstance(result, dict)
-assert store.status()["available"] is True
+) == hooks._last_user_message(user_message=parts)
 assert hooks._last_user_message(user_message=[{"type": "image_url"}, {"type": "text", "text": 42}]) == ""
 `;
   runPluginPython(script);
 });
 
-test('context_store parses browser context blocks from prompts', () => {
+test('context_store exposes BCP v2 ownership, TTL, LRU, and consume-once primitives', () => {
   const store = readFileSync('companion-plugin/context_store.py', 'utf8');
-  assert.match(store, /parse_context_block/);
-  assert.match(store, /UNTRUSTED_BROWSER_CONTEXT_START/);
-  assert.match(store, /update_from_text/);
-  assert.match(store, /BrowserContextEnvelope/);
-  assert.match(store, /stable_context_hash/);
+  assert.match(store, /parse_bcp_v2_turn/);
+  assert.match(store, /ContextOwner/);
+  assert.match(store, /OrderedDict/);
+  assert.match(store, /threading\.RLock/);
+  assert.match(store, /expires_at/);
+  assert.match(store, /consumed_at/);
   assert.match(store, /hashlib\.sha256/);
-  assert.doesNotMatch(store, /hash\(str\(/);
-  assert.doesNotMatch(store, /body\[:2000\]/);
-  assert.doesNotMatch(store, /"raw"\s*:/);
+  assert.doesNotMatch(store, /def get\(/);
+  assert.doesNotMatch(store, /def status\(/);
 });
 
-test('context_store executable behavior keeps only sanitized metadata', () => {
+test('context_store expires and evicts only scoped BCP v2 records', () => {
   const script = `${pluginImportHarness}
-from companion_plugin.context_store import BrowserContextStore
+import json
+from companion_plugin.context_store import BrowserContextStore, owner_from_hook_kwargs
 
-prompt = """
-USER_REQUEST_START
-Summarize this page
-USER_REQUEST_END
+def owner(turn):
+    return owner_from_hook_kwargs({"platform": "telegram", "sender_id": "sender", "session_id": "session", "turn_id": turn, "task_id": "task"})
 
-UNTRUSTED_BROWSER_CONTEXT_START
-Context hash: a1b2c3d4e5f60789
-Active tab title: Secret Console
-Active tab URL: https://example.com/private/path?debug=extension-origin-query
-Context scope: pinned tab — Secret Console
+def message(label):
+    return json.dumps({
+        "protocol": "hermes.browser.turn.v2",
+        "human_input": {"source": "composer", "text": "summarize"},
+        "browser_context": {"delivery": "full", "payload": {
+            "protocol": "hermes.browser.context.v1",
+            "contextScope": {"mode": "follow-active"}, "settings": {}, "activeTab": {}, "tabs": [], "selectedTabs": [],
+            "pageContext": {"text": label},
+        }},
+        "attachment_context": {"items": []},
+        "source_receipt": {"protocol": "hermes.browser.turn.v2", "version": 2, "delivery": "full", "context_hash": "a1b2c3d4e5f60789"},
+    })
 
-Open tabs:
-- Secret Console — https://example.com/private/path?debug=SENSITIVE_SAMPLE
+now = [100.0]
+store = BrowserContextStore(ttl_seconds=5, max_entries=1, max_entries_per_principal=1, clock=lambda: now[0])
+first = store.put_bcp_v2(message("first"), owner("turn-1"))
+assert first["available"] is True
+assert "first" not in json.dumps(store.status_for_owner(owner("turn-1")))
+now[0] = 106.0
+assert store.consume_for_owner(first["context_id"], owner("turn-1")) is None
 
-Selected text:
-SENSITIVE_SELECTION_SAMPLE_6789
-
-Page metadata:
-Description: [REDACTED_API_KEY]
-
-YouTube transcript:
-(none)
-
-Page text:
-AUTH_HEADER_SAMPLE_SHOULD_NOT_APPEAR appears here
-UNTRUSTED_BROWSER_CONTEXT_END
-"""
-
-store = BrowserContextStore()
-status = store.update_from_text(prompt)
-payload = store.get()
-blob = json.dumps(payload, sort_keys=True)
-assert status["available"] is True
-assert status["payload_hash"] == "a1b2c3d4e5f60789"
-assert payload["context"]["active_tab"]["origin"] == "https://example.com"
-assert payload["context"]["summary"]["selected_text_available"] is True
-assert payload["context"]["summary"]["page_text_available"] is True
-assert payload["context"]["summary"]["redaction_count"] == 1
-for forbidden in ["SENSITIVE_SAMPLE", "AUTH_HEADER_SAMPLE", "SENSITIVE_SELECTION", "extension-origin-query", "/private/path", "?debug"]:
-    assert forbidden not in blob, forbidden
+now[0] = 200.0
+first = store.put_bcp_v2(message("first"), owner("turn-1"))
+second = store.put_bcp_v2(message("second"), owner("turn-2"))
+assert store.consume_for_owner(first["context_id"], owner("turn-1")) is None
+assert store.consume_for_owner(second["context_id"], owner("turn-2"))["payload"]["pageContext"]["text"] == "second"
 `;
   runPluginPython(script);
 });
 
-test('context_store handles missing, malformed, and oversized context blocks', () => {
+test('context_store rejects legacy, malformed, reference-only, and oversized BCP input', () => {
   const script = `${pluginImportHarness}
-from companion_plugin.context_store import BrowserContextStore, parse_context_block, stable_context_hash
+from companion_plugin.context_store import parse_bcp_v2_turn
 
-assert parse_context_block("chat only") is None
-assert parse_context_block("UNTRUSTED_BROWSER_CONTEXT_START\\nmissing end") is None
-
-huge_text = "x" * 250000
-prompt = "UNTRUSTED_BROWSER_CONTEXT_START\\nActive tab title: Big\\nActive tab URL: https://example.com/a?debug=nope\\n\\nPage text:\\n" + huge_text + "\\nUNTRUSTED_BROWSER_CONTEXT_END"
-parsed = parse_context_block(prompt)
-assert parsed is not None
-assert parsed["truncated"] is True
-assert parsed["pageTextAvailable"] is True
-assert parsed["activeTab"]["origin"] == "https://example.com"
-assert stable_context_hash(parsed) == stable_context_hash(parsed)
-
-store = BrowserContextStore()
-status = store.update_from_text("hello")
-assert status["available"] is False
+assert parse_bcp_v2_turn("chat only") is None
+assert parse_bcp_v2_turn("UNTRUSTED_BROWSER_CONTEXT_START\\nmissing end") is None
+assert parse_bcp_v2_turn('{"protocol":"hermes.browser.turn.v2"}') is None
+assert parse_bcp_v2_turn('{"protocol":"hermes.browser.turn.v2","browser_context":{"delivery":"reference"}}') is None
+assert parse_bcp_v2_turn("x" * 64001) is None
 `;
   runPluginPython(script);
 });
 
 test('browser_event_log clamps invalid limits without crashing', () => {
   const script = `${pluginImportHarness}
-import json
-from companion_plugin.context_store import BrowserContextStore
 from companion_plugin import tools
-
-store = BrowserContextStore()
-tools.set_store(store)
-for index in range(60):
-    store.record_event("tool.finished", {"index": index, "authorization": "AUTH_HEADER_SAMPLE_SHOULD_NOT_APPEAR"})
 
 cases = [
     ({"limit": "bad"}, 20),
@@ -361,10 +299,7 @@ cases = [
     (None, 20),
 ]
 for args, expected in cases:
-    result = json.loads(tools.browser_event_log(args))
-    assert result["available"] is True
-    assert len(result["events"]) == expected, (args, len(result["events"]), expected)
-    assert "AUTH_HEADER_SAMPLE" not in json.dumps(result)
+    assert tools._event_log_limit(args) == expected
 `;
   runPluginPython(script);
 });
@@ -417,4 +352,136 @@ test('install.md documents the plugin correctly', () => {
   assert.match(install, /v0\.1\.10/);
   assert.match(install, /fail-soft/i);
   assert.ok(install.length > 400);
+});
+
+test('Gate V2 companion context is owned by trusted hook context and consumed exactly once', () => {
+  const script = `${pluginImportHarness}
+import concurrent.futures
+import json
+import re
+
+from companion_plugin.context_store import BrowserContextStore
+from companion_plugin import hooks, tools
+from companion_plugin import schemas
+
+PAGE_SENTINEL = "PAGE_TEXT_SENTINEL_DO_NOT_LEAK"
+
+def envelope(page_text=PAGE_SENTINEL):
+    return {
+        "protocol": "hermes.browser.turn.v2",
+        "human_input": {"source": "composer", "text": "Summarize this page."},
+        "browser_context": {
+            "delivery": "full",
+            "payload": {
+                "protocol": "hermes.browser.context.v1",
+                "contextScope": {"mode": "follow-active"},
+                "settings": {"contextDepth": "normal", "includeTabs": False, "includePageText": True, "includeSelectedText": True, "maxTabs": 12},
+                "activeTab": {"id": 1, "active": True, "title": "Docs", "url": "https://example.com/docs", "favIconUrl": ""},
+                "tabs": [],
+                "selectedTabs": [],
+                "pageContext": {"restricted": False, "reason": "", "selectedText": "", "text": page_text, "youtubeTranscript": "", "extraction": None, "siteAdapter": None, "meta": {"description": "", "language": "", "headings": []}, "pickedElement": None},
+            },
+        },
+        "attachment_context": {"items": []},
+        "source_receipt": {"protocol": "hermes.browser.turn.v2", "version": 2, "context_hash": "a1b2c3d4e5f60789", "delivery": "full"},
+    }
+
+def trusted(**overrides):
+    values = {
+        "platform": "telegram",
+        "sender_id": "sender-1",
+        "session_id": "session-1",
+        "turn_id": "turn-1",
+        "task_id": "task-1",
+    }
+    values.update(overrides)
+    return values
+
+def context_id_from(notice):
+    match = re.search(r"context_id=([a-f0-9]{32})", notice["context"])
+    assert match, notice
+    return match.group(1)
+
+store = BrowserContextStore()
+hooks.set_store(store)
+tools.set_store(store)
+
+# Legacy prompt blocks and malformed turn envelopes cannot create a v2 record.
+legacy = "UNTRUSTED_BROWSER_CONTEXT_START\\nPage text: " + PAGE_SENTINEL + "\\nUNTRUSTED_BROWSER_CONTEXT_END"
+assert hooks.pre_llm_call(user_message=legacy, **trusted()) is None
+assert hooks.pre_llm_call(user_message='{"protocol":"hermes.browser.turn.v2"}', **trusted()) is None
+
+notice = hooks.pre_llm_call(user_message=json.dumps(envelope()), **trusted())
+assert isinstance(notice, dict) and "context_id=" in notice["context"]
+assert PAGE_SENTINEL not in notice["context"]
+context_id = context_id_from(notice)
+
+# The handler may not read the store unless the immediately preceding trusted
+# pre-tool hook granted a ContextVar lease.
+direct = json.loads(tools.browser_get_context({"context_id": context_id}))
+assert direct == {"available": False, "reason": "Browser context unavailable."}
+
+# Status is owner scoped and intentionally leaves the record available.
+assert hooks.pre_tool_call(tool_name="browser_context_status", args={}, **trusted()) is None
+status = json.loads(tools.browser_context_status({}))
+assert status["available"] is True
+assert status["context_id"] == context_id
+assert PAGE_SENTINEL not in json.dumps(status)
+
+# Tool-supplied ownership fields cannot influence authorization because schemas
+# only expose the capability id and the hook reads runtime kwargs.
+assert set(schemas.SCHEMA_GET_CONTEXT["parameters"]["properties"]) == {"context_id"}
+for schema in (schemas.SCHEMA_STATUS, schemas.SCHEMA_GET_CONTEXT, schemas.SCHEMA_CLEAR_CONTEXT, schemas.SCHEMA_EVENT_LOG):
+    assert "sender_id" not in json.dumps(schema)
+    assert "session_id" not in json.dumps(schema)
+    assert "turn_id" not in json.dumps(schema)
+    assert "task_id" not in json.dumps(schema)
+
+for wrong_owner in (
+    trusted(sender_id="sender-2"),
+    trusted(session_id="session-2"),
+    trusted(turn_id="turn-2"),
+    trusted(task_id="task-sibling"),
+):
+    blocked = hooks.pre_tool_call(
+        tool_name="browser_get_context",
+        args={"context_id": context_id, "sender_id": "forged", "session_id": "forged", "turn_id": "forged", "task_id": "forged"},
+        **wrong_owner,
+    )
+    assert blocked == {"action": "block", "message": "Browser context unavailable."}
+    assert PAGE_SENTINEL not in json.dumps(blocked)
+
+assert hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, **trusted()) is None
+claimed = json.loads(tools.browser_get_context({"context_id": context_id}))
+assert claimed["available"] is True
+assert claimed["context_id"] == context_id
+assert claimed["payload"]["pageContext"]["text"] == PAGE_SENTINEL
+
+replay = hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, **trusted())
+assert replay == {"action": "block", "message": "Browser context unavailable."}
+
+# Diagnostics are owner scoped and do not retain tool args/results, page text,
+# or raw sender identifiers.
+hooks.post_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, result={"page": PAGE_SENTINEL}, duration_ms=1, **trusted())
+assert hooks.pre_tool_call(tool_name="browser_event_log", args={"limit": 50}, **trusted()) is None
+events = json.loads(tools.browser_event_log({"limit": 50}))
+event_blob = json.dumps(events)
+assert PAGE_SENTINEL not in event_blob
+assert "sender-1" not in event_blob
+
+# A concurrent pre-tool race can grant exactly one lease for one capability.
+concurrent_notice = hooks.pre_llm_call(user_message=json.dumps(envelope("CONCURRENT_PAGE_SENTINEL")), **trusted(turn_id="turn-concurrent"))
+concurrent_id = context_id_from(concurrent_notice)
+def consume_once():
+    decision = hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": concurrent_id}, **trusted(turn_id="turn-concurrent"))
+    if decision is not None:
+        return decision
+    return json.loads(tools.browser_get_context({"context_id": concurrent_id}))
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    outcomes = list(executor.map(lambda _index: consume_once(), range(2)))
+assert sum(item.get("available") is True for item in outcomes) == 1
+assert sum(item.get("action") == "block" for item in outcomes) == 1
+`;
+  runPluginPython(script);
 });

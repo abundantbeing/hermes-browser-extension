@@ -1,6 +1,6 @@
 {
   "name": "hermes-browser-extension",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "private": true,
   "description": "Browser-native side panel for Hermes Agent — connect web context to your local or remote Hermes runtime.",
   "type": "module",
@@ -16,26 +16,30 @@
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check:js": "node --check extension/sidepanel.js && node --check extension/app.js && node --check extension/background.js && node --check extension/content.js && node --check extension/request-permissions.js && node --check extension/voice-dictation.js && node --check extension/lib/browser-runtime.mjs && node --check extension/lib/commands.mjs && node --check extension/lib/web-commands.mjs && node --check extension/lib/web-thinking-indicator.mjs && node --check extension/lib/web-artifacts.mjs && node --check extension/lib/web-run-state.mjs && node --check extension/lib/context-scope.mjs && node --check extension/lib/panel-residency.mjs && node --check extension/lib/surface-protocol.mjs && node --check extension/lib/fulltab-opener.mjs && node --check extension/lib/hermes-client.mjs && node --check extension/lib/browser-context-protocol.mjs && node --check extension/lib/runtime-events.mjs && node --check extension/lib/diffusion-canvas.mjs && node --check extension/lib/image-render.mjs && node --check extension/lib/support-diagnostics.mjs && node --check extension/lib/common.mjs && node --check extension/lib/capabilities.mjs && node --check extension/lib/readiness.mjs && node --check extension/lib/agent-discovery.mjs && node --check extension/lib/model-discovery.mjs && node --check extension/lib/gateway-ws.mjs && node --check extension/lib/dashboard-bridge.mjs && node --check extension/lib/connection-modes.mjs && node --check extension/lib/connection-dispatch.mjs && node --check extension/lib/cloud-agent-tab.mjs && node --check extension/lib/image-viewer.mjs && node --check extension/lib/connection-controller.mjs && node --check extension/lib/element-picker.mjs && node --check extension/lib/redaction.mjs && node --check scripts/windows-setup.mjs && node --check scripts/hermes-review-github-event.mjs && node --check scripts/hermes-review-watch.mjs && node --check scripts/build-firefox.mjs",
+    "check:js": "npm run check:content-runtime && node --check extension/content-extractor.js && node --check extension/sidepanel.js && node --check extension/app.js && node --check extension/background.js && node --check extension/content.js && node --check extension/content-inline-helper.js && node --check extension/lib/content-extraction-core.mjs && node --check extension/lib/site-adapters.mjs && node --check extension/lib/inline-draft-policy.mjs && node --check extension/lib/assist-model-contract.mjs && node --check extension/lib/context-delivery.mjs && node --check extension/lib/assistant-clipboard.mjs && node --check extension/request-permissions.js && node --check extension/voice-dictation.js && node --check extension/lib/browser-runtime.mjs && node --check extension/lib/commands.mjs && node --check extension/lib/web-commands.mjs && node --check extension/lib/web-thinking-indicator.mjs && node --check extension/lib/web-artifacts.mjs && node --check extension/lib/web-run-state.mjs && node --check extension/lib/context-scope.mjs && node --check extension/lib/panel-residency.mjs && node --check extension/lib/surface-protocol.mjs && node --check extension/lib/fulltab-opener.mjs && node --check extension/lib/hermes-client.mjs && node --check extension/lib/browser-context-protocol.mjs && node --check extension/lib/runtime-events.mjs && node --check extension/lib/diffusion-canvas.mjs && node --check extension/lib/image-render.mjs && node --check extension/lib/support-diagnostics.mjs && node --check extension/lib/common.mjs && node --check extension/lib/capabilities.mjs && node --check extension/lib/readiness.mjs && node --check extension/lib/agent-discovery.mjs && node --check extension/lib/model-discovery.mjs && node --check extension/lib/gateway-ws.mjs && node --check extension/lib/dashboard-bridge.mjs && node --check extension/lib/connection-modes.mjs && node --check extension/lib/connection-dispatch.mjs && node --check extension/lib/cloud-agent-tab.mjs && node --check extension/lib/image-viewer.mjs && node --check extension/lib/connection-controller.mjs && node --check extension/lib/element-picker.mjs && node --check extension/lib/redaction.mjs && node --check scripts/build-content-runtime.mjs && node --check scripts/windows-setup.mjs && node --check scripts/hermes-review-github-event.mjs && node --check scripts/hermes-review-watch.mjs && node --check scripts/build-firefox.mjs",
+    "check:content-runtime": "node scripts/build-content-runtime.mjs --check",
     "check:manifest": "node scripts/check-manifest.mjs",
     "verify": "npm run test && npm run check:js && npm run check:manifest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "build:content-runtime": "node scripts/build-content-runtime.mjs",
     "build": "node scripts/build.mjs",
     "build:firefox": "node scripts/build-firefox.mjs",
     "setup:windows": "node scripts/windows-setup.mjs",
     "setup:windows:dry-run": "node scripts/windows-setup.mjs --dry-run --json",
-    "package": "npm run build && node scripts/package.mjs",
+    "package": "npm run build && npm run build:firefox && node scripts/package.mjs",
     "review:event": "node scripts/hermes-review-github-event.mjs",
     "review:event:dry-run": "node scripts/hermes-review-github-event.mjs --dry-run",
     "review:watch": "node scripts/hermes-review-watch.mjs",
-    "review:watch:dry-run": "node scripts/hermes-review-watch.mjs --dry-run"
+    "review:watch:dry-run": "node scripts/hermes-review-watch.mjs --dry-run",
+    "test:e2e:loaded": "npm run build && node tests/e2e-loaded-extension.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "@eslint/js": "^9",
-    "eslint": "^9"
+    "eslint": "^9",
+    "linkedom": "0.18.12"
   }
 }

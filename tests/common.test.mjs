@@ -114,6 +114,23 @@ test('session startup mode defaults to fresh panel-open sessions', () => {
   assert.equal(shouldCreateFreshSessionOnOpen({ sessionStartupMode: 'resume-last' }), false);
 });
 
+test('unsaved Browser drafts restore local history instead of requesting a missing server session', () => {
+  assert.equal(typeof common.isUnsavedBrowserDraftSession, 'function');
+  const draftId = 'hermes-browser-extension-20260716054859-091478';
+
+  assert.equal(common.isUnsavedBrowserDraftSession({ sessionId: draftId, sessions: [] }), true);
+  assert.equal(common.isUnsavedBrowserDraftSession({
+    sessionId: draftId,
+    sessions: [{ id: draftId, source: 'hermes_browser' }],
+  }), false);
+  assert.equal(common.isUnsavedBrowserDraftSession({ sessionId: 'foreign-session', sessions: [] }), false);
+  assert.equal(common.isUnsavedBrowserDraftSession({ sessionId: 'hermes-browser-extension', sessions: [] }), false);
+
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /isUnsavedBrowserDraftSession\(\{ sessionId, sessions: availableSessions \}\)/);
+  assert.match(source, /await loadMessagesForActiveScope\(\);\s*return true;/);
+});
+
 test('Browser intro appears only for the first connected empty chat', () => {
   assert.equal(typeof common.shouldShowBrowserIntro, 'function');
   assert.equal(common.shouldShowBrowserIntro({ seen: false, connected: false, messageCount: 0 }), false);
@@ -222,6 +239,26 @@ test('messageDisplayText fails closed for malformed or ambiguous request boundar
   assert.equal(common.messageDisplayText('user', duplicated), duplicated);
 });
 
+test('messageDisplayText renders only typed BCP v2 human_input and rejects lookalikes', () => {
+  const v2 = JSON.stringify({
+    protocol: 'hermes.browser.turn.v2',
+    human_input: { source: 'composer', text: 'Only this composer text is history-visible.' },
+    browser_context: { delivery: 'full', payload: { pageContext: { text: 'untrusted page text' } } },
+    attachment_context: { items: [{ label: 'untrusted-file.txt', text: 'untrusted attachment' }] },
+    source_receipt: { protocol: 'hermes.browser.turn.v2', version: 2 },
+  });
+  const ambiguous = JSON.stringify({
+    protocol: 'hermes.browser.turn.v2',
+    human_input: { source: 'composer', text: 'one', other: 'two' },
+    browser_context: {},
+    attachment_context: {},
+    source_receipt: {},
+  });
+
+  assert.equal(common.messageDisplayText('user', v2), 'Only this composer text is history-visible.');
+  assert.equal(common.messageDisplayText('user', ambiguous), ambiguous);
+});
+
 test('sidepanel and Hermes Web share the display-only Browser request formatter', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
@@ -233,9 +270,23 @@ test('sidepanel and Hermes Web share the display-only Browser request formatter'
 test('requiresForeignSessionConfirmation protects only unapproved non-Browser sessions', () => {
   assert.equal(typeof common.requiresForeignSessionConfirmation, 'function');
   assert.equal(common.requiresForeignSessionConfirmation({ id: 'browser-1', source: common.DEFAULT_SETTINGS.sessionSource }), false);
+  assert.equal(common.requiresForeignSessionConfirmation({ id: 'hermes-browser-extension-20260716001945-ad9078', source: 'api_server' }), false);
   assert.equal(common.requiresForeignSessionConfirmation({ id: 'api-1', source: 'api' }), true);
   assert.equal(common.requiresForeignSessionConfirmation({ id: 'api-1', source: 'api' }, ['api-1']), false);
   assert.equal(common.requiresForeignSessionConfirmation({ source: 'api' }), false);
+});
+
+test('Browser-owned session ids keep Browser source identity when the API server reports api_server', () => {
+  const [session] = normalizeHermesSessions({ data: [{
+    id: 'hermes-browser-extension-20260716001945-ad9078',
+    title: 'Browser conversation',
+    source: 'api_server',
+    message_count: 24,
+  }] });
+
+  assert.equal(session.source, DEFAULT_SETTINGS.sessionSource);
+  assert.equal(session.sourceLabel, 'Hermes Browser Extension');
+  assert.equal(session.messageCount, 24);
 });
 
 test('sidepanel requires an on-brand source decision before sending into a foreign session', () => {
@@ -710,7 +761,7 @@ test('remote API URL validation allows trusted HTTP while dashboard stays HTTPS-
 test('remote dashboard turns are wired through the chat-only gateway scope policy', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(sidepanel, /contextScopeForGateway/);
-  assert.match(sidepanel, /turnContextScope\s*=\s*contextScopeForGateway\(contextScope, settings\.gatewayMode\)/);
+  assert.match(sidepanel, /turnOptions\.forceChatOnly/);
   assert.match(sidepanel, /turnContextScope\.mode\s*===\s*CONTEXT_SCOPE_MODES\.CHAT_ONLY/);
   assert.match(sidepanel, /contextScope:\s*turnContextScope/);
   assert.match(sidepanel, /requestDashboardOriginTrust\(normalizeGatewayUrl\(settings\.gatewayUrl\)\)/);
@@ -883,7 +934,7 @@ test('buildHermesPrompt in chat-only mode includes no browser page context', () 
     settings: { ...DEFAULT_SETTINGS, includeTabs: true, includePageText: true, includeSelectedText: true },
   });
 
-  assert.match(prompt, /^\[Mode: chat-only\. No browser page context attached\.\]/);
+  assert.equal(prompt, 'What is the best way to organize my day?');
   assert.doesNotMatch(prompt, /CHAT_ONLY_CONTEXT_START|UNTRUSTED_BROWSER_CONTEXT_START/);
   assert.doesNotMatch(prompt, /Secret Dashboard|private\.example|selected secret|page secret|private meta/);
 });
@@ -1295,12 +1346,47 @@ test('normalizeHermesModels uses provider-aware GPT-5.5 context fallbacks', () =
   assert.equal(openRouterModels[0].contextTokens, 1050000);
 });
 
+test('normalizeHermesModels mirrors Hermes provider-aware GPT-5.6 context metadata', () => {
+  for (const model of ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna']) {
+    const codexModels = normalizeHermesModels({ data: [{ id: `openai-codex::${model}`, rawModelId: model, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${model}`);
+    assert.equal(codexModels[0].contextTokens, 272_000, `${model} should use the Codex OAuth limit`);
+
+    const directModels = normalizeHermesModels({ data: [{ id: `openai::${model}`, rawModelId: model, provider: 'openai', context_length: 0 }] }, `openai::${model}`);
+    assert.equal(directModels[0].contextTokens, 1_050_000, `${model} should use the direct OpenAI limit`);
+  }
+});
+
+test('normalizeHermesModels never invents a GPT-5.6 limit without a provider and trusts explicit runtime metadata', () => {
+  const unknownProvider = normalizeHermesModels({ data: [{ id: 'gpt-5.6-sol', context_length: 0 }] }, 'gpt-5.6-sol');
+  assert.equal(unknownProvider[0].contextTokens, 0);
+
+  const authoritativeRuntime = normalizeHermesModels({ data: [{ id: 'openai-codex::gpt-5.6-sol', rawModelId: 'gpt-5.6-sol', provider: 'openai-codex', context_length: 300_000 }] }, 'openai-codex::gpt-5.6-sol');
+  assert.equal(authoritativeRuntime[0].contextTokens, 300_000);
+});
+
+test('normalizeHermesModels repairs the legacy generic 400k limit for Codex GPT-5.6 only', () => {
+  const staleCodex = normalizeHermesModels({
+    data: [{
+      id: 'openai-codex::gpt-5.6-luna',
+      rawModelId: 'gpt-5.6-luna',
+      provider: 'openai-codex',
+      context_length: 400_000,
+    }],
+  }, 'openai-codex::gpt-5.6-luna');
+  assert.equal(staleCodex[0].contextTokens, 272_000);
+
+  const unrelated = normalizeHermesModels({
+    data: [{ id: 'custom::gpt-5', rawModelId: 'gpt-5', provider: 'custom', context_length: 400_000 }],
+  }, 'custom::gpt-5');
+  assert.equal(unrelated[0].contextTokens, 400_000);
+});
+
 test('buildHermesModelOptions maps Browser thinking, effort, and fast controls to Hermes runtime options', () => {
   assert.equal(DEFAULT_SETTINGS.thinkingEnabled, true);
   assert.equal(DEFAULT_SETTINGS.fastMode, false);
   assert.equal(DEFAULT_SETTINGS.reasoningEffort, 'xhigh');
-  assert.equal(MODEL_EFFORTS.find((effort) => effort.value === 'xhigh')?.label, 'Max');
-  assert.equal(reasoningEffortShortLabel('xhigh'), 'Max');
+  assert.equal(MODEL_EFFORTS.find((effort) => effort.value === 'xhigh')?.label, 'Extra High');
+  assert.equal(reasoningEffortShortLabel('xhigh'), 'XHigh');
   assert.equal(DEFAULT_SETTINGS.modelOptionsVersion, 2);
   assert.deepEqual(buildHermesModelOptions(DEFAULT_SETTINGS), {
     reasoning: { enabled: true, effort: 'xhigh' },
@@ -1309,8 +1395,8 @@ test('buildHermesModelOptions maps Browser thinking, effort, and fast controls t
     fast: false,
   });
   assert.deepEqual(buildHermesModelOptions({ ...DEFAULT_SETTINGS, thinkingEnabled: true, reasoningEffort: 'max', fastMode: true }), {
-    reasoning: { enabled: true, effort: 'xhigh' },
-    reasoning_effort: 'xhigh',
+    reasoning: { enabled: true, effort: 'max' },
+    reasoning_effort: 'max',
     service_tier: 'priority',
     fast: true,
   });
@@ -1344,7 +1430,9 @@ test('Browser runtime selection preserves every reasoning level and gives Hermes
     ['low', 'low', 'Low'],
     ['medium', 'medium', 'Medium'],
     ['high', 'high', 'High'],
-    ['max', 'xhigh', 'Max'],
+    ['xhigh', 'xhigh', 'Extra High'],
+    ['max', 'max', 'Max'],
+    ['ultra', 'ultra', 'Ultra'],
   ];
   for (const [selected, wire, label] of levels) {
     const modelOptions = buildHermesModelOptions({
@@ -1431,7 +1519,7 @@ test('estimateContextWindow respects selected tabs and chat-only disabled browse
     settings: { ...DEFAULT_SETTINGS, includeTabs: true, includePageText: true, includeSelectedText: true },
     contextScope: { mode: 'chat-only' },
   });
-  assert.match(chatOnlyPrompt, /^\[Mode: chat-only\. No browser page context attached\.\]/);
+  assert.equal(chatOnlyPrompt, 'hello');
   assert.doesNotMatch(chatOnlyPrompt, /CHAT_ONLY_CONTEXT_START|UNTRUSTED_BROWSER_CONTEXT_START/);
   assert.doesNotMatch(chatOnlyPrompt, /Private tab|private\.example|selected secret|page secret|private meta/);
 });
@@ -2212,6 +2300,45 @@ test('context accounting falls back to local prompt estimate when runtime prompt
   assert.equal(result.source, 'local-estimate');
 });
 
+test('context accounting reconciles stale runtime 400k with the canonical Codex GPT-5.6 limit', () => {
+  const result = contextAccountingSnapshot({
+    localPromptTokens: 800,
+    runtime: {
+      provider: 'openai-codex',
+      model: 'gpt-5.6-luna',
+      context_length: 400_000,
+      last_prompt_tokens: 7_000,
+    },
+    modelContextTokens: 272_000,
+  });
+
+  assert.equal(result.liveContextTokens, 7_000);
+  assert.equal(result.contextLimitTokens, 272_000);
+});
+
+test('local context fallback includes the loaded transcript instead of showing zero for active chats', () => {
+  assert.equal(typeof common.estimateLocalSessionContextTokens, 'function');
+  const messages = [
+    { role: 'user', content: 'First Browser question with meaningful context.' },
+    { role: 'assistant', content: 'First Hermes response with useful detail.' },
+    { role: 'user', content: 'Second Browser follow-up.' },
+  ];
+  const expectedHistory = messages.reduce((total, message) => total + common.estimateTokens(message.content), 0);
+  const result = common.estimateLocalSessionContextTokens({ messages, nextPromptTokens: 120, draftTokens: 40 });
+
+  assert.equal(result, expectedHistory + 120 + 40);
+  assert.ok(result > 160);
+
+  const withLoadedToolContext = common.estimateLocalSessionContextTokens({
+    messages,
+    nextPromptTokens: 120,
+    draftTokens: 40,
+    loadedContextTokens: 35_000,
+    loadedVisibleTokens: expectedHistory - 2,
+  });
+  assert.equal(withLoadedToolContext, 35_000 + 2 + 120 + 40);
+});
+
 test('context accounting restores persisted session context when live runtime metadata is absent', () => {
   const result = contextAccountingSnapshot({
     localPromptTokens: 14,
@@ -2334,6 +2461,7 @@ test('sidepanel context meter copy does not split out cumulative token spend', (
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /last turn spend|Last turn spend|cumulative spend/i);
   assert.match(source, /contextMeterDisplay\(/);
+  assert.match(source, /estimateLocalSessionContextTokens\(\{[\s\S]*?messages,[\s\S]*?nextPromptTokens: stats\.estimatedTokens/);
 });
 
 test('browser context payload hash changes when selected prompt tabs or included text changes', () => {
@@ -2464,7 +2592,7 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
         slug: 'openai-codex',
         name: 'OpenAI Codex',
         authenticated: true,
-        models: ['gpt-5.5', 'gpt-5.4'],
+        models: ['gpt-5.5', 'gpt-5.4', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
         capabilities: { 'gpt-5.5': { reasoning: true, fast: true } },
       },
       {
@@ -2482,16 +2610,33 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
   assert.equal(result.ok, true);
   assert.equal(result.error, '');
   assert.deepEqual(calls, [['/api/model/options?refresh=true', 'GET']]);
-  assert.deepEqual(result.models.map((model) => model.id), ['openai-codex::gpt-5.5', 'openai-codex::gpt-5.4', 'minimax::MiniMax-M3']);
-  assert.deepEqual(result.models.map((model) => model.rawModelId), ['gpt-5.5', 'gpt-5.4', 'MiniMax-M3']);
+  assert.deepEqual(result.models.map((model) => model.id), [
+    'openai-codex::gpt-5.5',
+    'openai-codex::gpt-5.4',
+    'openai-codex::gpt-5.6-sol',
+    'openai-codex::gpt-5.6-terra',
+    'openai-codex::gpt-5.6-luna',
+    'minimax::MiniMax-M3',
+  ]);
+  assert.deepEqual(result.models.map((model) => model.rawModelId), [
+    'gpt-5.5',
+    'gpt-5.4',
+    'gpt-5.6-sol',
+    'gpt-5.6-terra',
+    'gpt-5.6-luna',
+    'MiniMax-M3',
+  ]);
   assert.equal(result.models[0].provider, 'openai-codex');
   assert.equal(result.models[0].providerLabel, 'OpenAI Codex');
   assert.equal(result.models[0].reasoning, true);
   assert.equal(result.models[0].fast, true);
   assert.equal(result.models[0].runtimeSelectable, true);
-  const normalized = normalizeHermesModels(result.models, 'openai-codex::gpt-5.5');
-  assert.equal(normalized[0].contextTokens, 272000);
-  assert.equal(result.models[2].contextTokens, 1000000);
+  const normalized = normalizeHermesModels(result.models, 'openai-codex::gpt-5.6-sol');
+  assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.5')?.contextTokens, 272_000);
+  for (const model of normalized.filter((item) => item.rawModelId?.startsWith('gpt-5.6-'))) {
+    assert.equal(model.contextTokens, 272_000);
+  }
+  assert.equal(result.models.at(-1).contextTokens, 1_000_000);
 });
 
 test('discoverModelsFromDashboard extracts the dashboard token and fetches model options', async () => {
@@ -2865,7 +3010,7 @@ test('normalizeAgentDiscoveryHost accepts trusted hosts and rejects URL paths/us
   assert.equal(normalizeAgentDiscoveryScheme('ftp'), 'http');
 });
 
-test('remote agent discovery does not send Authorization to non-Hermes ports before identity is verified', async () => {
+test('remote agent discovery never sends Authorization, even after a service self-identifies as Hermes', async () => {
   const { discoverLocalAgents } = await import('../extension/lib/agent-discovery.mjs');
   const originalFetch = globalThis.fetch;
   const calls = [];
@@ -2890,7 +3035,29 @@ test('remote agent discovery does not send Authorization to non-Hermes ports bef
     assert.equal(agents[1].name, 'macbook-profile');
     assert.equal(calls.find((call) => call.url.includes(':8642/health'))?.auth || '', '', 'non-Hermes health probe must not receive Authorization');
     assert.equal(calls.find((call) => call.url.includes(':8643/health'))?.auth || '', '', 'initial Hermes health probe must not receive Authorization');
-    assert.equal(calls.find((call) => call.url.includes(':8643/v1/models'))?.auth, `Bearer ${apiKey}`, 'model probe can receive Authorization after Hermes identity is verified');
+    assert.equal(calls.find((call) => call.url.includes(':8643/v1/models'))?.auth || '', '', 'remote discovery must not trust self-asserted identity with the stored bearer');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('loopback discovery may use the stored bearer after Hermes health identity succeeds', async () => {
+  const { discoverLocalAgents } = await import('../extension/lib/agent-discovery.mjs');
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  const apiKey = ['local', 'demo'].join('-');
+  try {
+    globalThis.fetch = async (url, init = {}) => {
+      calls.push({ url: String(url), auth: init.headers?.Authorization || '' });
+      if (String(url).endsWith('/health')) {
+        return { ok: true, json: async () => ({ platform: 'hermes-agent', version: '0.18.2' }) };
+      }
+      return { ok: true, json: async () => ({ data: [{ id: 'local-profile' }] }) };
+    };
+    const [agent] = await discoverLocalAgents({ ports: [8642], host: '127.0.0.1', scheme: 'http', apiKey });
+    assert.equal(agent.name, 'local-profile');
+    assert.equal(calls.find((call) => call.url.endsWith('/health'))?.auth || '', '');
+    assert.equal(calls.find((call) => call.url.endsWith('/v1/models'))?.auth, `Bearer ${apiKey}`);
   } finally {
     globalThis.fetch = originalFetch;
   }

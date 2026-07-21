@@ -1,7 +1,34 @@
 import { formatPickedElementBlock, normalizePickedElement } from './element-picker.mjs';
 import { hasCredentialBearingUrl } from './redaction.mjs';
+import { redactSensitiveTextWithCount } from './content-extraction-core.mjs';
 
 export const BROWSER_CONTEXT_PROTOCOL_ID = 'hermes.browser.context.v1';
+export const BROWSER_CONTEXT_TURN_PROTOCOL_ID = 'hermes.browser.turn.v2';
+
+// These limits apply to every Browser-origin turn before it crosses a gateway
+// boundary. Keep them in one module so receipts and transport cannot drift.
+export const BROWSER_CONTEXT_TURN_BUDGETS = Object.freeze({
+  totalSerializedChars: 48_000,
+  humanInputChars: 6_000,
+  instructionTransformChars: 6_000,
+  pageTextChars: 12_000,
+  selectedTextChars: 6_000,
+  transcriptChars: 6_000,
+  attachmentTextChars: 4_000,
+  attachmentTextTotalChars: 9_000,
+  attachmentLabelChars: 320,
+  attachmentDetailChars: 700,
+  maxAttachments: 12,
+  maxTabs: 12,
+  tabTitleChars: 240,
+  tabUrlChars: 500,
+  maxHeadings: 20,
+  headingChars: 300,
+  structuredStringChars: 2_000,
+  maxStructuredItems: 12,
+  maxStructuredKeys: 12,
+  maxStructuredDepth: 5,
+});
 
 export const BROWSER_CONTEXT_PROTOCOL_SECURITY = Object.freeze({
   untrustedUiRendering: 'All Browser Context Protocol strings are untrusted UI data; render them with textContent or a narrowly reviewed escaping renderer at every UI sink.',
@@ -9,22 +36,12 @@ export const BROWSER_CONTEXT_PROTOCOL_SECURITY = Object.freeze({
 
 export const DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS = Object.freeze({
   contextDepth: 'normal',
-  includeTabs: true,
+  includeTabs: false,
   includePageText: true,
   includeSelectedText: true,
   maxTabs: 12,
 });
 
-const SECRET_ASSIGNMENT_RE = /\b(api[_-]?key|access[_-]?token|auth[_-]?token|refresh[_-]?token|session[_-]?token|client[_-]?secret|aws[_-]?secret[_-]?access[_-]?key|secret[_-]?access[_-]?key|password|passwd|secret|private[_-]?key)\b["'`]?\s*[:=]\s*["'`]?([^\s'"`;&]+)/gi;
-const BEARER_RE = /\bBearer\s+[^\s'"`;&]+/gi;
-const OPENAI_STYLE_RE = new RegExp('\\bsk-[A-Za-z0-9_-]{12,}\\b', 'g');
-const STRIPE_KEY_RE = /\b[sr]k_(?:live|test)_[0-9A-Za-z]{16,}\b/g;
-const AWS_ACCESS_KEY_RE = /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g;
-const GITHUB_TOKEN_RE = /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{40,})\b/g;
-const GOOGLE_API_KEY_RE = /\bAIza[0-9A-Za-z_-]{35}\b/g;
-const SLACK_TOKEN_RE = /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g;
-const JWT_RE = /\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g;
-const PEM_PRIVATE_KEY_RE = /-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z0-9 ]+ )?PRIVATE KEY-----/g;
 
 const RESTRICTED_SCHEMES = new Set([
   'about:',
@@ -70,17 +87,7 @@ export function normalizeReadableWhitespace(value = '') {
 }
 
 export function redactSensitiveText(value = '') {
-  return String(value || '')
-    .replace(PEM_PRIVATE_KEY_RE, '[REDACTED_PRIVATE_KEY]')
-    .replace(BEARER_RE, 'Bearer [REDACTED_BEARER]')
-    .replace(OPENAI_STYLE_RE, '[REDACTED_SECRET]')
-    .replace(STRIPE_KEY_RE, '[REDACTED_SECRET]')
-    .replace(AWS_ACCESS_KEY_RE, '[REDACTED_SECRET]')
-    .replace(GITHUB_TOKEN_RE, '[REDACTED_SECRET]')
-    .replace(GOOGLE_API_KEY_RE, '[REDACTED_SECRET]')
-    .replace(SLACK_TOKEN_RE, '[REDACTED_SECRET]')
-    .replace(JWT_RE, '[REDACTED_JWT]')
-    .replace(SECRET_ASSIGNMENT_RE, (_match, key) => `${key}=[REDACTED_SECRET]`);
+  return redactSensitiveTextWithCount(value).text;
 }
 
 function decodedUrlPart(value = '') {
@@ -106,10 +113,15 @@ export function isRestrictedUrl(url = '') {
   } catch {
     return true;
   }
-  if (RESTRICTED_SCHEMES.has(parsed.protocol)) return true;
+  if (RESTRICTED_SCHEMES.has(parsed.protocol) || !['http:', 'https:'].includes(parsed.protocol)) return true;
   if (hasCredentialBearingUrl(parsed)) return true;
   const haystack = restrictedUrlHaystack(parsed);
   return SENSITIVE_URL_PATTERNS.some((pattern) => pattern.test(haystack));
+}
+
+/** Only ordinary, credential-free HTTP(S) documents are eligible for capture. */
+export function isEligibleBrowserContentUrl(url = '') {
+  return !isRestrictedUrl(url);
 }
 
 export function safeTab(tab = {}) {
@@ -161,6 +173,61 @@ function protocolSettings(settings = {}) {
   return { ...DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS, ...settings };
 }
 
+function normalizeExtractionMetadata(pageContext = {}) {
+  const source = pageContext?.meta?.extraction || pageContext?.extraction || {};
+  const schema = String(source?.schema || '').slice(0, 100);
+  const version = String(source?.version || '').slice(0, 40);
+  const method = String(source?.method || '').slice(0, 80);
+  const confidenceValue = Number(source?.confidence);
+  const wordCountValue = Number(source?.wordCount);
+  const redactionCountValue = Number(source?.redactionCount);
+  if (!schema && !version && !method) return null;
+  return {
+    schema,
+    version,
+    method,
+    confidence: Number.isFinite(confidenceValue) ? Math.min(1, Math.max(0, confidenceValue)) : 0,
+    wordCount: Number.isFinite(wordCountValue) ? Math.max(0, Math.floor(wordCountValue)) : 0,
+    truncated: Boolean(source?.truncated),
+    redactionCount: Number.isFinite(redactionCountValue) ? Math.max(0, Math.floor(redactionCountValue)) : 0,
+  };
+}
+
+function normalizeSiteAdapterMetadata(pageContext = {}) {
+  const source = pageContext?.meta?.siteAdapter || pageContext?.siteAdapter || {};
+  const id = String(source?.id || source?.adapterId || '').slice(0, 60);
+  if (!id) return null;
+  const routeSource = source?.route && typeof source.route === 'object' ? source.route : {};
+  const route = {};
+  for (const key of ['kind', 'owner', 'repo', 'handle', 'statusId', 'videoId']) {
+    if (routeSource[key] !== undefined && routeSource[key] !== null) route[key] = String(routeSource[key]).slice(0, 160);
+  }
+  if (Number.isFinite(Number(routeSource.number))) route.number = Number(routeSource.number);
+  const capabilities = (Array.isArray(source?.capabilities) ? source.capabilities : [])
+    .slice(0, 20)
+    .map((value) => String(value || '').slice(0, 80))
+    .filter(Boolean);
+  const actions = (Array.isArray(source?.actions) ? source.actions : [])
+    .filter((action) => action?.mode === 'draft-copy-only')
+    .slice(0, 12)
+    .map((action) => ({
+      id: String(action?.id || '').slice(0, 80),
+      label: String(action?.label || '').slice(0, 120),
+      mode: 'draft-copy-only',
+    }))
+    .filter((action) => action.id);
+  return {
+    schema: String(source?.schema || '').slice(0, 100),
+    version: String(source?.version || '').slice(0, 40),
+    id,
+    policy: String(source?.policy || '').slice(0, 80),
+    route,
+    capabilities,
+    actions,
+    suppressed: Boolean(source?.suppressed),
+  };
+}
+
 function formatTranscriptTimestamp(seconds = 0) {
   const total = Math.max(0, Math.floor(Number(seconds || 0)));
   const h = Math.floor(total / 3600);
@@ -185,6 +252,16 @@ export function formatYoutubeTranscript(transcript = null, maxChars = 12_000) {
 
 function formatMeta(meta = {}) {
   const parts = [];
+  const extraction = normalizeExtractionMetadata({ meta });
+  if (extraction) {
+    const confidence = Math.round(extraction.confidence * 100);
+    parts.push(`Extractor: ${extraction.schema || 'unknown'}@${extraction.version || 'unknown'} · ${extraction.method || 'unknown'} · ${confidence}% confidence`);
+  }
+  const siteAdapter = normalizeSiteAdapterMetadata({ meta });
+  if (siteAdapter) {
+    parts.push(`Site adapter: ${siteAdapter.id}@${siteAdapter.version || 'unknown'} · ${siteAdapter.route.kind || 'page'} · ${siteAdapter.policy || 'read-only'}`);
+    if (siteAdapter.suppressed) parts.push('Site policy: broad page text suppressed; explicit source capture required.');
+  }
   if (meta.description) parts.push(`Description: ${meta.description}`);
   if (meta.language) parts.push(`Language: ${meta.language}`);
   if (Array.isArray(meta.headings) && meta.headings.length) {
@@ -252,6 +329,8 @@ function normalizeProtocolPageContext(pageContext = {}, settings = DEFAULT_BROWS
     youtubeTranscript: pageContext?.youtubeTranscript?.ok
       ? clampText(formatYoutubeTranscript(pageContext.youtubeTranscript, normalLimit), normalLimit)
       : (pageContext?.youtubeTranscript || pageContext?.transcript || ''),
+    extraction: normalizeExtractionMetadata(pageContext),
+    siteAdapter: normalizeSiteAdapterMetadata(pageContext),
     meta: {
       description: String(pageContext?.meta?.description || ''),
       language: String(pageContext?.meta?.language || ''),
@@ -325,6 +404,8 @@ export function browserContextPayloadHash({ activeTab = {}, selectedTabs = [], p
     youtubeTranscript: pageContext?.youtubeTranscript?.ok
       ? clampText(formatYoutubeTranscript(pageContext.youtubeTranscript, 20_000), 20_000)
       : '',
+    extraction: normalizeExtractionMetadata(pageContext),
+    siteAdapter: normalizeSiteAdapterMetadata(pageContext),
     meta: {
       description: pageContext?.meta?.description || '',
       language: pageContext?.meta?.language || '',
@@ -350,12 +431,18 @@ function isChatOnlyScope(scope = {}) {
 }
 
 export function buildChatOnlyPrompt(userText = '') {
-  return `[Mode: chat-only. No browser page context attached.]\n\n${String(userText || '').trim()}`;
+  return String(userText || '').trim();
 }
 
-export function buildBrowserContextPrompt({ userText, activeTab, tabs = [], pageContext, selectedTabs, contextScope, settings = DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS, contextHash = '' } = {}) {
+export function buildBrowserContextReferencePrompt({ userText = '', contextHash = '' } = {}) {
+  const hash = String(contextHash || '').trim();
+  return `[Hermes Browser context unchanged — use the most recent full Browser Context snapshot in this Hermes session. Context hash: ${hash || 'unknown'}]\n\n${String(userText || '').trim()}`;
+}
+
+export function buildBrowserContextPrompt({ userText, activeTab, tabs = [], pageContext, selectedTabs, contextScope, settings = DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS, contextHash = '', contextDelivery = 'full' } = {}) {
   const mergedSettings = protocolSettings(settings);
   if (isChatOnlyScope(contextScope)) return buildChatOnlyPrompt(userText);
+  if (contextDelivery === 'reference') return buildBrowserContextReferencePrompt({ userText, contextHash });
   const limit = contextCharLimit(mergedSettings.contextDepth);
   const selectedText = mergedSettings.includeSelectedText ? redactSensitiveText(pageContext?.selectedText || '') : '';
   const pageText = mergedSettings.includePageText ? clampText(redactSensitiveText(pageContext?.text || ''), limit) : '';
@@ -413,7 +500,8 @@ function countRedactions(context = {}) {
     context.pageContext?.pickedElement?.text,
     context.pageContext?.pickedElement?.outerHtml,
   ].filter(Boolean).join('\n');
-  return (values.match(/\[REDACTED_[A-Z_]+\]/g) || []).length;
+  const visibleCount = (values.match(/\[REDACTED_[A-Z_]+\]/g) || []).length;
+  return Math.max(visibleCount, normalizeExtractionMetadata(context.pageContext)?.redactionCount || 0);
 }
 
 function contextScopeLabel(scope = {}) {
@@ -422,7 +510,7 @@ function contextScopeLabel(scope = {}) {
   return 'Follow active tab';
 }
 
-export function buildBrowserContextReceipt({ context = {}, attachments = [], settings = {}, contextHash = '' } = {}) {
+export function buildBrowserContextReceipt({ context = {}, attachments = [], settings = {}, contextHash = '', contextDelivery = 'full' } = {}) {
   const contextScope = context.contextScope || {};
   if (contextScope.mode === 'chat-only') {
     return {
@@ -454,6 +542,24 @@ export function buildBrowserContextReceipt({ context = {}, attachments = [], set
     });
   }
   if (contextHash) items.push({ label: 'Context hash', value: String(contextHash) });
+  items.push({
+    label: 'Delivery',
+    value: contextDelivery === 'reference' ? 'Unchanged-context reference' : 'Full snapshot',
+  });
+  const extraction = normalizeExtractionMetadata(pageContext);
+  if (extraction) {
+    items.push({
+      label: 'Extractor',
+      value: `v${extraction.version || 'unknown'} · ${extraction.method || 'unknown'} · ${Math.round(extraction.confidence * 100)}% confidence`,
+    });
+  }
+  const siteAdapter = normalizeSiteAdapterMetadata(pageContext);
+  if (siteAdapter) {
+    items.push({
+      label: 'Site adapter',
+      value: `${siteAdapter.id} · ${siteAdapter.route.kind || 'page'} · ${siteAdapter.policy || 'read-only'}${siteAdapter.suppressed ? ' · page text suppressed' : ''}`,
+    });
+  }
   items.push(
     {
       label: 'Selected text',
@@ -491,4 +597,356 @@ export function buildBrowserContextReceipt({ context = {}, attachments = [], set
     },
   );
   return { title: 'What Hermes saw', items };
+}
+
+function createBudgetState() {
+  return { any: false, sources: {} };
+}
+
+function recordTruncation(state, source, omitted = 0) {
+  if (!omitted) return;
+  state.any = true;
+  state.sources[source] = (state.sources[source] || 0) + omitted;
+}
+
+function boundedText(value, maxChars, state, source) {
+  const text = String(value ?? '');
+  if (text.length <= maxChars) return text;
+  recordTruncation(state, source, text.length - maxChars);
+  return text.slice(0, maxChars);
+}
+
+function boundedStructuredValue(value, state, source, depth = 0) {
+  if (value === null || typeof value === 'boolean') return value;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    return boundedText(value, BROWSER_CONTEXT_TURN_BUDGETS.structuredStringChars, state, source);
+  }
+  if (depth >= BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredDepth) {
+    recordTruncation(state, source, 1);
+    return null;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredItems) {
+      recordTruncation(state, source, value.length - BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredItems);
+    }
+    return value
+      .slice(0, BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredItems)
+      .map((item, index) => boundedStructuredValue(item, state, `${source}.${index}`, depth + 1));
+  }
+  if (!value || typeof value !== 'object') return null;
+  const keys = Object.keys(value).sort();
+  if (keys.length > BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredKeys) {
+    recordTruncation(state, source, keys.length - BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredKeys);
+  }
+  const output = {};
+  for (const key of keys.slice(0, BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredKeys)) {
+    output[key] = boundedStructuredValue(value[key], state, `${source}.${key}`, depth + 1);
+  }
+  return output;
+}
+
+function recordBoundedSourceText(state, source, value, limit) {
+  const length = String(value ?? '').length;
+  if (length > limit) recordTruncation(state, source, length - limit);
+}
+
+function recordMetadataNormalizationTruncation(pageContext = {}, state) {
+  const extraction = pageContext?.meta?.extraction || pageContext?.extraction || {};
+  for (const [key, limit] of [['schema', 100], ['version', 40], ['method', 80]]) {
+    recordBoundedSourceText(state, `browser.extraction.${key}`, extraction?.[key], limit);
+  }
+
+  const adapter = pageContext?.meta?.siteAdapter || pageContext?.siteAdapter || {};
+  const capabilities = Array.isArray(adapter?.capabilities) ? adapter.capabilities : [];
+  const actions = (Array.isArray(adapter?.actions) ? adapter.actions : [])
+    .filter((action) => action?.mode === 'draft-copy-only');
+  if (capabilities.length > 20) recordTruncation(state, 'browser.site_adapter.capabilities', capabilities.length - 20);
+  if (actions.length > 12) recordTruncation(state, 'browser.site_adapter.actions', actions.length - 12);
+  for (const action of actions.slice(0, 12)) {
+    recordBoundedSourceText(state, 'browser.site_adapter.action_id', action?.id, 80);
+    recordBoundedSourceText(state, 'browser.site_adapter.action_label', action?.label, 120);
+  }
+
+  const picked = pageContext?.pickedElement || {};
+  recordBoundedSourceText(state, 'browser.picked_element.tag', picked?.tag, 80);
+  recordBoundedSourceText(state, 'browser.picked_element.selector', picked?.selector, BROWSER_CONTEXT_TURN_BUDGETS.structuredStringChars);
+  recordBoundedSourceText(state, 'browser.picked_element.text', picked?.text, 2_000);
+  recordBoundedSourceText(state, 'browser.picked_element.outer_html', picked?.outerHtml, 4_000);
+  recordBoundedSourceText(state, 'browser.picked_element.class_name', picked?.className, 300);
+  const attributeKeys = picked?.attributes && typeof picked.attributes === 'object'
+    ? Object.keys(picked.attributes)
+    : [];
+  if (attributeKeys.length > BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredKeys) {
+    recordTruncation(
+      state,
+      'browser.picked_element.attributes',
+      attributeKeys.length - BROWSER_CONTEXT_TURN_BUDGETS.maxStructuredKeys,
+    );
+  }
+}
+
+function assertSupportedExternalValue(value, ancestors = new Set()) {
+  if (value === null || ['string', 'number', 'boolean'].includes(typeof value)) return;
+  if (typeof value === 'undefined' || typeof value === 'bigint' || typeof value === 'symbol' || typeof value === 'function') {
+    throw new TypeError('BCP v2 rejected an unsupported external value.');
+  }
+  if (typeof value !== 'object') throw new TypeError('BCP v2 rejected an unsupported external value.');
+  if (ancestors.has(value)) throw new TypeError('BCP v2 rejected a cyclic external value.');
+  if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    throw new TypeError('BCP v2 rejected an unsupported external object.');
+  }
+  ancestors.add(value);
+  for (const key of Object.keys(value)) assertSupportedExternalValue(value[key], ancestors);
+  ancestors.delete(value);
+}
+
+function finalRedactValue(value, telemetry, ancestors = new Set()) {
+  if (value === null || typeof value === 'boolean' || typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const redacted = redactSensitiveTextWithCount(value);
+    telemetry.redactionCount += Number(redacted.count || 0);
+    let text = redacted.text;
+    try {
+      const parsed = new URL(text);
+      if (parsed.protocol === 'data:' || hasCredentialBearingUrl(parsed)) {
+        telemetry.redactionCount += 1;
+        text = '(omitted by privacy guard)';
+      }
+    } catch {
+      // Most untrusted text is intentionally not a URL.
+    }
+    return text;
+  }
+  if (typeof value === 'undefined' || typeof value === 'bigint' || typeof value === 'symbol' || typeof value === 'function') {
+    throw new TypeError('BCP v2 final redaction rejected an unsupported value.');
+  }
+  if (typeof value !== 'object') throw new TypeError('BCP v2 final redaction rejected an unsupported value.');
+  if (ancestors.has(value)) throw new TypeError('BCP v2 final redaction rejected a cycle.');
+  if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    throw new TypeError('BCP v2 final redaction rejected an unsupported object.');
+  }
+  ancestors.add(value);
+  const output = Array.isArray(value) ? [] : {};
+  for (const key of Object.keys(value)) output[key] = finalRedactValue(value[key], telemetry, ancestors);
+  ancestors.delete(value);
+  return output;
+}
+
+function budgetTabs(tabs, state, source) {
+  const rows = Array.isArray(tabs) ? tabs : [];
+  if (rows.length > BROWSER_CONTEXT_TURN_BUDGETS.maxTabs) recordTruncation(state, source, rows.length - BROWSER_CONTEXT_TURN_BUDGETS.maxTabs);
+  return rows.slice(0, BROWSER_CONTEXT_TURN_BUDGETS.maxTabs).map((tab) => ({
+    id: Number.isFinite(Number(tab?.id)) ? Number(tab.id) : null,
+    active: Boolean(tab?.active),
+    pinned: Boolean(tab?.pinned),
+    audible: Boolean(tab?.audible),
+    title: boundedText(tab?.title || '', BROWSER_CONTEXT_TURN_BUDGETS.tabTitleChars, state, `${source}.title`),
+    url: boundedText(tab?.url || '', BROWSER_CONTEXT_TURN_BUDGETS.tabUrlChars, state, `${source}.url`),
+    favIconUrl: '',
+  }));
+}
+
+function budgetBrowserPayload(payload, state) {
+  const page = payload?.pageContext || {};
+  const headings = Array.isArray(page.meta?.headings) ? page.meta.headings : [];
+  if (headings.length > BROWSER_CONTEXT_TURN_BUDGETS.maxHeadings) {
+    recordTruncation(state, 'browser.headings', headings.length - BROWSER_CONTEXT_TURN_BUDGETS.maxHeadings);
+  }
+  const transcript = typeof page.youtubeTranscript === 'string' ? page.youtubeTranscript : '';
+  return {
+    protocol: BROWSER_CONTEXT_PROTOCOL_ID,
+    contextScope: {
+      mode: String(payload?.contextScope?.mode || 'follow-active'),
+      pinnedTabId: Number.isFinite(Number(payload?.contextScope?.pinnedTabId)) ? Number(payload.contextScope.pinnedTabId) : null,
+      pinnedWindowId: Number.isFinite(Number(payload?.contextScope?.pinnedWindowId)) ? Number(payload.contextScope.pinnedWindowId) : null,
+      pinnedTitle: boundedText(payload?.contextScope?.pinnedTitle || '', BROWSER_CONTEXT_TURN_BUDGETS.tabTitleChars, state, 'browser.pinned_title'),
+      pinnedUrl: boundedText(payload?.contextScope?.pinnedUrl || '', BROWSER_CONTEXT_TURN_BUDGETS.tabUrlChars, state, 'browser.pinned_url'),
+      selectedTabIds: (Array.isArray(payload?.contextScope?.selectedTabIds) ? payload.contextScope.selectedTabIds : []).slice(0, BROWSER_CONTEXT_TURN_BUDGETS.maxTabs).map(Number).filter(Number.isFinite),
+    },
+    settings: {
+      contextDepth: String(payload?.settings?.contextDepth || 'normal'),
+      includeTabs: Boolean(payload?.settings?.includeTabs),
+      includePageText: Boolean(payload?.settings?.includePageText),
+      includeSelectedText: Boolean(payload?.settings?.includeSelectedText),
+      maxTabs: Math.min(BROWSER_CONTEXT_TURN_BUDGETS.maxTabs, Number(payload?.settings?.maxTabs) || BROWSER_CONTEXT_TURN_BUDGETS.maxTabs),
+    },
+    activeTab: budgetTabs([payload?.activeTab || {}], state, 'browser.active_tab')[0],
+    tabs: budgetTabs(payload?.tabs, state, 'browser.tabs'),
+    selectedTabs: budgetTabs(payload?.selectedTabs, state, 'browser.selected_tabs'),
+    pageContext: {
+      restricted: Boolean(page.restricted),
+      reason: boundedText(page.reason || '', 300, state, 'browser.reason'),
+      selectedText: boundedText(page.selectedText || '', BROWSER_CONTEXT_TURN_BUDGETS.selectedTextChars, state, 'browser.selected_text'),
+      text: boundedText(page.text || '', BROWSER_CONTEXT_TURN_BUDGETS.pageTextChars, state, 'browser.page_text'),
+      youtubeTranscript: boundedText(transcript, BROWSER_CONTEXT_TURN_BUDGETS.transcriptChars, state, 'browser.transcript'),
+      extraction: boundedStructuredValue(page.extraction || null, state, 'browser.extraction'),
+      siteAdapter: boundedStructuredValue(page.siteAdapter || null, state, 'browser.site_adapter'),
+      meta: {
+        description: boundedText(page.meta?.description || '', 800, state, 'browser.description'),
+        language: boundedText(page.meta?.language || '', 80, state, 'browser.language'),
+        headings: headings.slice(0, BROWSER_CONTEXT_TURN_BUDGETS.maxHeadings).map((heading) => ({
+          level: boundedText(heading?.level || '', 12, state, 'browser.heading_level'),
+          text: boundedText(heading?.text || '', BROWSER_CONTEXT_TURN_BUDGETS.headingChars, state, 'browser.heading'),
+        })),
+      },
+      pickedElement: boundedStructuredValue(page.pickedElement || null, state, 'browser.picked_element'),
+    },
+  };
+}
+
+function normalizedAttachmentKind(value = '') {
+  const kind = String(value || '').toLowerCase();
+  return ['file', 'folder', 'image', 'text', 'url'].includes(kind) ? kind : 'attachment';
+}
+
+function buildAttachmentContext(attachments, state) {
+  const rows = Array.isArray(attachments) ? attachments : [];
+  if (rows.length > BROWSER_CONTEXT_TURN_BUDGETS.maxAttachments) {
+    recordTruncation(state, 'attachments.items', rows.length - BROWSER_CONTEXT_TURN_BUDGETS.maxAttachments);
+  }
+  let textRemaining = BROWSER_CONTEXT_TURN_BUDGETS.attachmentTextTotalChars;
+  const items = rows.slice(0, BROWSER_CONTEXT_TURN_BUDGETS.maxAttachments).map((attachment) => {
+    const requestedText = String(attachment?.text || '');
+    const allowance = Math.max(0, Math.min(BROWSER_CONTEXT_TURN_BUDGETS.attachmentTextChars, textRemaining));
+    const text = boundedText(requestedText, allowance, state, 'attachments.text');
+    textRemaining = Math.max(0, textRemaining - text.length);
+    return {
+      kind: normalizedAttachmentKind(attachment?.kind),
+      label: boundedText(attachment?.label || attachment?.name || '', BROWSER_CONTEXT_TURN_BUDGETS.attachmentLabelChars, state, 'attachments.label'),
+      mime_type: boundedText(attachment?.mimeType || attachment?.type || '', 160, state, 'attachments.mime_type'),
+      detail: boundedText(attachment?.detail || '', BROWSER_CONTEXT_TURN_BUDGETS.attachmentDetailChars, state, 'attachments.detail'),
+      local_path: boundedText(attachment?.localPath || attachment?.path || '', BROWSER_CONTEXT_TURN_BUDGETS.attachmentDetailChars, state, 'attachments.local_path'),
+      text,
+    };
+  });
+  return { items };
+}
+
+function browserContextForTurn({ activeTab, tabs, selectedTabs, pageContext, contextScope, settings, contextHash, contextDelivery }, state) {
+  if (isChatOnlyScope(contextScope)) return { delivery: 'none', mode: 'chat-only' };
+  if (contextDelivery === 'reference') {
+    return { delivery: 'reference', context_hash: boundedText(contextHash, 80, state, 'receipt.context_hash') };
+  }
+  recordMetadataNormalizationTruncation(pageContext, state);
+  const payload = buildBrowserContextPayload({ activeTab, tabs, selectedTabs, pageContext, contextScope, attachments: [], settings });
+  return { delivery: 'full', payload: budgetBrowserPayload(payload, state) };
+}
+
+function reduceEnvelopeToSerializedBudget(envelope, state) {
+  const stringify = () => JSON.stringify(envelope);
+  const size = () => stringify().length;
+  const clear = (object, key, source) => {
+    const prior = String(object?.[key] || '');
+    if (!prior) return;
+    object[key] = '';
+    recordTruncation(state, source, prior.length);
+  };
+  const page = envelope.browser_context?.payload?.pageContext;
+  const items = envelope.attachment_context?.items || [];
+  for (const item of items) {
+    if (size() <= BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars) break;
+    clear(item, 'text', 'attachments.total');
+  }
+  for (const [key, source] of [['youtubeTranscript', 'browser.transcript_total'], ['text', 'browser.page_text_total'], ['selectedText', 'browser.selected_text_total']]) {
+    if (size() <= BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars) break;
+    clear(page, key, source);
+  }
+  if (size() > BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars && page?.meta) {
+    const count = page.meta.headings?.length || 0;
+    page.meta.headings = [];
+    recordTruncation(state, 'browser.headings_total', count);
+  }
+  if (size() > BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars && envelope.browser_context?.payload) {
+    const payload = envelope.browser_context.payload;
+    recordTruncation(state, 'browser.tabs_total', (payload.tabs?.length || 0) + (payload.selectedTabs?.length || 0));
+    payload.tabs = [];
+    payload.selectedTabs = [];
+  }
+  while (size() > BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars && items.length) {
+    items.pop();
+    recordTruncation(state, 'attachments.total_items', 1);
+  }
+  if (size() > BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars) {
+    envelope.human_input.text = boundedText(envelope.human_input.text, 1_000, state, 'human_input.total');
+    if (envelope.instruction_transform) envelope.instruction_transform.text = boundedText(envelope.instruction_transform.text, 1_000, state, 'instruction_transform.total');
+  }
+  if (size() > BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars) throw new RangeError('BCP v2 serialized envelope exceeds the shared total budget.');
+}
+
+/**
+ * Construct a typed, provenance-separated Browser turn. This deliberately
+ * contains no prose wrapper assembled from page or attachment strings.
+ */
+export function buildBrowserTurnEnvelope({
+  humanInput = '',
+  instructionTransform = null,
+  activeTab = {},
+  tabs = [],
+  selectedTabs = null,
+  pageContext = {},
+  contextScope = {},
+  attachments = [],
+  settings = DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS,
+  contextHash = '',
+  contextDelivery = 'full',
+} = {}) {
+  assertSupportedExternalValue({ humanInput, instructionTransform, activeTab, tabs, selectedTabs, pageContext, contextScope, attachments, settings, contextHash, contextDelivery });
+  const truncation = createBudgetState();
+  const composerText = boundedText(String(humanInput || '').trim(), BROWSER_CONTEXT_TURN_BUDGETS.humanInputChars, truncation, 'human_input');
+  const transformText = instructionTransform?.text == null
+    ? ''
+    : boundedText(String(instructionTransform.text || '').trim(), BROWSER_CONTEXT_TURN_BUDGETS.instructionTransformChars, truncation, 'instruction_transform');
+  const browserContext = browserContextForTurn({ activeTab, tabs, selectedTabs, pageContext, contextScope, settings, contextHash, contextDelivery }, truncation);
+  const attachmentContext = buildAttachmentContext(attachments, truncation);
+  const envelope = {
+    protocol: BROWSER_CONTEXT_TURN_PROTOCOL_ID,
+    human_input: { source: 'composer', text: composerText || 'Attachment-only turn.' },
+    ...(transformText ? { instruction_transform: { kind: 'slash-command', text: transformText } } : {}),
+    browser_context: browserContext,
+    attachment_context: attachmentContext,
+    source_receipt: {
+      protocol: BROWSER_CONTEXT_TURN_PROTOCOL_ID,
+      version: 2,
+      context_hash: browserContext.context_hash || (browserContext.delivery === 'full' ? boundedText(contextHash, 80, truncation, 'receipt.context_hash') : ''),
+      delivery: browserContext.delivery,
+      source_counts: {
+        attachments: Array.isArray(attachments) ? attachments.length : 0,
+        attachments_sent: attachmentContext.items.length,
+        tabs: Array.isArray(tabs) ? tabs.length : 0,
+        selected_tabs: Array.isArray(selectedTabs) ? selectedTabs.length : 0,
+        headings: Array.isArray(pageContext?.meta?.headings) ? pageContext.meta.headings.length : 0,
+      },
+      redaction_count: 0,
+      truncation: { any: false, sources: {} },
+      budgets: {
+        total_limit: BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars,
+        serialized_chars: 0,
+      },
+    },
+  };
+  let telemetry = { redactionCount: 0 };
+  let finalEnvelope = finalRedactValue(envelope, telemetry);
+  finalEnvelope.source_receipt.redaction_count = telemetry.redactionCount;
+  reduceEnvelopeToSerializedBudget(finalEnvelope, truncation);
+  finalEnvelope.source_receipt.truncation = { any: truncation.any, sources: truncation.sources };
+  // Canonical recursive redaction is intentionally the final operation before
+  // serialization; it rejects cycles and unsupported values instead of trying
+  // to stringify them into an ambiguous turn.
+  telemetry = { redactionCount: 0 };
+  finalEnvelope = finalRedactValue(finalEnvelope, telemetry);
+  finalEnvelope.source_receipt.redaction_count = Math.max(finalEnvelope.source_receipt.redaction_count, telemetry.redactionCount);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    finalEnvelope.source_receipt.budgets.serialized_chars = JSON.stringify(finalEnvelope).length;
+  }
+  if (finalEnvelope.source_receipt.budgets.serialized_chars > BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars) {
+    throw new RangeError('BCP v2 serialized envelope exceeds the shared total budget.');
+  }
+  return finalEnvelope;
+}
+
+export function serializeBrowserTurnEnvelope(options = {}) {
+  // buildBrowserTurnEnvelope performs finalRedactValue immediately before this
+  // JSON serialization boundary.
+  return JSON.stringify(buildBrowserTurnEnvelope(options));
 }

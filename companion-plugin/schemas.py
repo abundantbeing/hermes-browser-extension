@@ -14,8 +14,21 @@ SCHEMA_STATUS = {
 
 SCHEMA_GET_CONTEXT = {
     "name": "browser_get_context",
-    "description": "Retrieve the current cached browser context envelope (scope, active tab, payload hash).",
-    "parameters": _EMPTY_PARAMETERS,
+    "description": "Consume the current turn's browser context once using its opaque context capability ID.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "context_id": {
+                "type": "string",
+                "description": "Opaque Browser context capability ID supplied by the companion context notice.",
+                "minLength": 32,
+                "maxLength": 32,
+                "pattern": "^[a-f0-9]{32}$",
+            },
+        },
+        "required": ["context_id"],
+        "additionalProperties": False,
+    },
 }
 
 SCHEMA_CLEAR_CONTEXT = {
@@ -38,6 +51,34 @@ SCHEMA_EVENT_LOG = {
                 "default": 20,
             },
         },
+        "additionalProperties": False,
+    },
+}
+
+SCHEMA_TEXT_UTILITY = {
+    "name": "browser_text_utility",
+    "description": "Run a bounded deterministic text operation locally without a model or network call.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "string",
+                "enum": ["clean_formatting", "make_bullets", "text_stats", "diff"],
+                "description": "Local operation to perform.",
+            },
+            "text": {
+                "type": "string",
+                "maxLength": 50000,
+                "description": "Source text. Limited to 50,000 characters.",
+            },
+            "compare_text": {
+                "type": "string",
+                "maxLength": 50000,
+                "description": "Revised text for the diff action.",
+                "default": "",
+            },
+        },
+        "required": ["action", "text"],
         "additionalProperties": False,
     },
 }

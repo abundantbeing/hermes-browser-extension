@@ -106,12 +106,14 @@ test('sidepanel includes startup readiness UI, styles, and boot controller wirin
 test('sidepanel startup and conversation chrome use the compact branded shell', () => {
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const js = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
   assert.match(html, /assets\/img\/hermes-browser-logo-left\.svg/);
   assert.match(html, /class="startup-brand-icon"/);
   assert.match(css, /assets\/img\/hermes-browser-extension-icon-ink\.png/);
   assert.match(css, /\.startup-screen\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*place-items:\s*center;[^}]*overflow:\s*hidden;/s);
-  assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*top:\s*calc\(50% \+ 258px\);[^}]*justify-content:\s*center;/s);
+  assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*top:\s*var\(--startup-settings-top,[^;]+\);[^}]*left:\s*50%;[^}]*justify-content:\s*center;[^}]*transform:\s*translateX\(-50%\);/s);
+  assert.match(js, /function\s+positionStartupSettings[\s\S]*listRect\.bottom\s*\+\s*12/);
   assert.match(css, /body\.startup-active\s+\.topbar\s+#settingsButton\s*\{[^}]*pointer-events:\s*auto;/s);
   assert.match(css, /\.startup-brand-lockup\s*\{[^}]*justify-items:\s*center;/s);
   assert.doesNotMatch(html, /Connecting Browser Extension/i);

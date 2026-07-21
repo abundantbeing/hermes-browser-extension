@@ -146,6 +146,7 @@ async function apiFetch(path, options = {}) {
   const hasBody = typeof options.body !== 'undefined';
   return fetch(`${base}${path}`, {
     ...options,
+    redirect: 'error',
     headers: {
       ...authHeaders({ json: hasBody }),
       ...(options.headers || {}),

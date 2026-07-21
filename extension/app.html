@@ -50,7 +50,7 @@
         </div>
       </header>
       <section id="modelPicker" class="model-picker" hidden aria-label="Choose Hermes model">
-        <div class="model-picker-head"><strong>Choose model</strong><button id="refreshModels" class="model-refresh-button" type="button"><span class="model-refresh-mark" aria-hidden="true">↻</span><span>Refresh</span></button></div>
+        <div class="model-picker-head"><strong id="modelPickerTitle">Choose model</strong><div class="model-picker-head-actions"><button id="refreshModels" class="model-refresh-button" type="button"><span class="model-refresh-mark" aria-hidden="true">↻</span><span>Refresh</span></button><button id="closeModelPicker" type="button" aria-label="Close model picker">×</button></div></div>
         <input id="modelSearch" type="search" placeholder="Search all models" autocomplete="off" />
         <div class="model-picker-body">
           <div id="modelProviderList" class="model-provider-list" aria-label="Model providers"></div>
@@ -120,6 +120,15 @@
         </div>
 
         <footer class="fulltab-composer-wrap">
+          <section id="taskStack" class="task-stack" data-expanded="true" aria-label="Hermes task status" hidden>
+            <button id="taskStackToggle" class="task-stack-toggle" type="button" aria-expanded="true">
+              <span class="task-stack-title">☑ TASKS</span>
+              <span id="taskStackSummary" class="task-stack-summary">0 complete · 0 active</span>
+              <span id="taskStackProgress" class="task-stack-progress" aria-hidden="true"><i></i></span>
+              <span class="task-stack-chevron" aria-hidden="true">↑</span>
+            </button>
+            <ol id="taskStackList" class="task-stack-list"></ol>
+          </section>
           <form id="fullTabComposer" class="fulltab-composer" aria-label="Hermes message composer">
             <div class="composer-topline">
               <span class="composer-chat-label"><span class="read-only-indicator online" aria-hidden="true"></span><span>CHAT</span></span>
@@ -231,13 +240,56 @@
             </div>
             <div class="theme-setting"><div><strong>Theme</strong><span>Use the same palette and chrome language as Hermes Browser.</span></div><div id="settingsThemeGrid" class="theme-grid" role="radiogroup" aria-label="Theme"></div><input id="settingsTheme" type="hidden" value="nous" /></div>
           </section>
+          <section class="inline-assist-settings">
+            <h3>Hermes Assist</h3>
+            <label class="inline-assist-toggle">
+              <span><strong>Show Hermes Assist in writing fields</strong><small>Turn the field-bound launcher on or off across normal web pages.</small></span>
+              <input id="inlineAssistEnabled" type="checkbox" aria-label="Show Hermes Assist in writing fields" />
+            </label>
+            <label>
+              Default session route
+              <select id="inlineAssistDefaultRoute">
+                <option value="ask">Ask every time</option>
+                <option value="current">Continue current chat</option>
+                <option value="new">Start new Assist session</option>
+                <option value="background">Run in background</option>
+              </select>
+            </label>
+            <div class="inline-assist-model-setting">
+              <span>Hermes Assist model</span>
+              <button id="inlineAssistModelButton" class="model-picker-button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose the model used by Hermes Assist" disabled>
+                <strong id="inlineAssistModelLabel">Choose Assist model</strong><span aria-hidden="true">⌄</span>
+              </button>
+              <input id="inlineAssistModel" type="hidden" />
+            </div>
+            <label>
+              Assist session history
+              <select id="inlineAssistSessionRetention">
+                <option value="keep">Keep Assist sessions</option>
+                <option value="delete">Delete after the draft returns</option>
+              </select>
+            </label>
+            <p id="assistModelCapabilityHint">Choose any available model for Hermes Assist. If the gateway cannot enforce that exact model, Assist transparently falls back to the gateway default and labels the result.</p>
+          </section>
+          <section class="context-menu-settings">
+            <h3>Right-click actions</h3>
+            <label>Default right-click route
+              <select id="contextMenuDefaultRoute">
+                <option value="ask">Ask every time</option>
+                <option value="current">Use current tab session</option>
+                <option value="new">Start new Browser session</option>
+                <option value="background">Run in background</option>
+              </select>
+            </label>
+            <p>Open Hermes Browser uses the side panel only. Selection tasks start automatically after routing.</p>
+          </section>
           <section>
             <h3>Hermes connection</h3>
             <label>Profile<input id="settingsProfile" type="text" autocomplete="off" /></label>
             <label>Gateway URL<input id="settingsGatewayUrl" type="url" autocomplete="off" /></label>
             <label>API token<input id="settingsApiKey" type="password" autocomplete="off" placeholder="Leave blank to keep current token" /></label>
           </section>
-          <footer><button id="saveSettings" type="submit">Save connection settings</button></footer>
+          <footer><button id="saveSettings" type="submit">Save settings</button></footer>
         </form>
       </dialog>
     </main>

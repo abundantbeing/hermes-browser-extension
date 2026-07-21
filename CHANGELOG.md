@@ -2,10 +2,42 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-21
+
+### Added
+
+- Added **Hermes Assist**, a review-first inline drafting surface for 31 supported writing environments including X, GitHub, Gmail, ChatGPT, Claude, Reddit, Slack, Discord, Outlook, Google Chat, and Atlassian surfaces.
+- Added site- and composer-aware primary actions such as **Draft a reply**, **Draft a post**, and **Draft a message**, while retaining useful site-specific secondary actions.
+- Added explicit current-session, new-session, and background-session routing for Hermes Assist and context-menu actions.
+- Added per-site context controls with private-surface defaults, visible context warnings, bounded extraction, and copy-only fallbacks for framework-owned structured editors.
+- Added capability-gated model routing for Hermes Assist: gateways that advertise per-session model locking receive the exact selected provider/model and must acknowledge it; released gateways without that contract use the active Hermes Agent model without sending unsupported override fields.
+- Added deterministic local text utilities for formatting cleanup, bullets, text statistics, and diffs without a model call.
+- Added Browser Context Protocol v2 turn envelopes and owner/session/turn-scoped companion context storage with bounded retention and consume-on-read isolation.
+
+### Changed
+
+- Unified Local, Hermes Cloud Preview, and Remote readiness behind one staged connection controller that does not report ready until its required session-binding gate passes.
+- Kept automatic API pairing loopback-only. Remote API connections now require an explicitly configured endpoint and token; dashboard connections continue to use Trusted Dashboard Attach.
+- Made non-loopback agent discovery permanently credential-free, even when a probed service self-identifies as Hermes.
+- Made rich structured editors preview/copy-first by default; safe direct apply remains limited to reviewed, supported composer integrations.
+- Added exact target-specific Chromium and Firefox release packaging with versioned archives, SHA-256 checksums, and a machine-readable release manifest.
+
+### Security
+
+- Bound browser context to typed turns with owner, conversation, session, and turn identity; enforced TTL, size, redirect, URL-scheme, and redaction limits at trust boundaries.
+- Kept Cloud/dashboard tickets short-lived, single-use, memory-only, HTTPS-only, and bound to the exact active signed-in tab and origin.
+- Prevented stored bearer credentials from being released during non-loopback discovery and prevented automatic pairing with non-loopback API endpoints.
+- Preserved Chat-only enforcement for Cloud and ticketed dashboard transports.
+
 ### Fixed
 
+- Fixed X reply context capture so Hermes receives the source post instead of an empty inner reply form.
+- Fixed X draft insertion to use one framework-owned paste transaction, preventing duplicate or undeletable ghost text.
+- De-duplicated inline result application by request id so retries cannot apply the same draft twice.
+- Contained keyboard events inside Hermes Assist so host-page shortcuts cannot steal focus, navigate, or react while a user types a custom instruction.
 - Preserved remote dashboard conversations across WebSocket replacement by persisting the gateway's durable session identity, resuming it on reconnect, and routing follow-up RPCs through the fresh live session identity.
 - Made Chrome 141+ require a real `sidePanel.onOpened` event so Arc's hidden `SIDE_PANEL` contexts cannot suppress the reusable extension-tab fallback, while retaining context confirmation for Chrome 116-140.
+- Corrected GPT-5.6 context metadata by provider: OpenAI Codex OAuth models now show the canonical 272k window, direct OpenAI models retain 1.05M, explicit runtime/catalog telemetry remains authoritative, and rows without provider identity no longer inherit the generic 400k GPT-5 guess.
 
 ### Contributors
 

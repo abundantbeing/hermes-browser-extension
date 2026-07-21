@@ -61,6 +61,13 @@ export function isLoopbackGatewayUrl(raw = '') {
   }
 }
 
+export function automaticApiPairingAllowed(input = {}) {
+  const settings = migrateConnectionSettings(input);
+  return settings.connectionMode === 'local'
+    && settings.connectionTransport === CONNECTION_TRANSPORTS.LOCAL_API
+    && isLoopbackGatewayUrl(settings.gatewayUrl);
+}
+
 export function sanitizeGatewayUrlForConnectionMode({ connectionMode, gatewayUrl = '', localDefaultUrl = '' } = {}) {
   const mode = normalizeConnectionMode(connectionMode);
   const raw = String(gatewayUrl || '').trim();

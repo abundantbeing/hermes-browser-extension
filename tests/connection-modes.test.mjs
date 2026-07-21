@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   CONNECTION_MODES,
   CONNECTION_SCHEMA_VERSION,
   CONNECTION_TRANSPORTS,
   apiCredentialSatisfied,
+  automaticApiPairingAllowed,
   connectionModePreviewUrl,
   isLoopbackGatewayUrl,
   legacyGatewayModeForConnection,
@@ -16,6 +18,8 @@ import {
   transportRequiresApiKey,
   transportUsesDashboardTicket,
 } from '../extension/lib/connection-modes.mjs';
+
+const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
 test('connection modes expose Desktop-aligned product choices', () => {
   assert.deepEqual(CONNECTION_MODES.map((mode) => mode.value), ['local', 'cloud', 'remote']);
@@ -141,6 +145,27 @@ test('ticket transports are keyless while Local and Remote API require credentia
   assert.equal(transportUsesDashboardTicket(CONNECTION_TRANSPORTS.REMOTE_DASHBOARD), true);
   assert.equal(apiCredentialSatisfied({ connectionMode: 'cloud', apiKey: '' }), true);
   assert.equal(apiCredentialSatisfied({ connectionMode: 'local', apiKey: '' }), false);
+});
+
+test('automatic API pairing is loopback-only and enforced by the side-panel connect path', () => {
+  assert.equal(automaticApiPairingAllowed({
+    connectionMode: 'local',
+    connectionTransport: CONNECTION_TRANSPORTS.LOCAL_API,
+    gatewayUrl: 'http://127.0.0.1:8642',
+  }), true);
+  assert.equal(automaticApiPairingAllowed({
+    connectionMode: 'local',
+    connectionTransport: CONNECTION_TRANSPORTS.LOCAL_API,
+    gatewayUrl: 'https://api.example.test',
+  }), false);
+  assert.equal(automaticApiPairingAllowed({
+    connectionMode: 'remote',
+    connectionTransport: CONNECTION_TRANSPORTS.REMOTE_API,
+    gatewayUrl: 'https://api.example.test',
+  }), false);
+  const connectBody = sidepanelSource.match(/async function connectApiWithPairing\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(connectBody, /automaticApiPairingAllowed\(settings\)/);
+  assert.match(connectBody, /Automatic pairing is available only for a loopback Local gateway/);
 });
 
 test('Cloud sanitization rejects loopback, insecure, and credential-bearing origins', () => {

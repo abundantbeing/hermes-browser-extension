@@ -4,18 +4,27 @@ import path from 'node:path';
 const root = process.cwd();
 const packagePath = path.join(root, 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+const packageLockPath = path.join(root, 'package-lock.json');
+const packageLock = JSON.parse(fs.readFileSync(packageLockPath, 'utf8'));
+const companionPluginPath = path.join(root, 'companion-plugin', 'plugin.yaml');
+const companionPluginYaml = fs.readFileSync(companionPluginPath, 'utf8');
+const companionPluginVersion = companionPluginYaml.match(/^version:\s*([^\s]+)\s*$/m)?.[1] || '';
 const manifestPath = path.join(root, 'extension', 'manifest.json');
 const rootManifestPath = path.join(root, 'manifest.json');
 const distManifestPath = path.join(root, 'dist', 'manifest.json');
 const rootBuildInfoPath = path.join(root, 'build-info.json');
 const sourceBuildInfoPath = path.join(root, 'extension', 'build-info.json');
 const distBuildInfoPath = path.join(root, 'dist', 'build-info.json');
+const firefoxManifestPath = path.join(root, 'dist', 'firefox', 'manifest.json');
+const firefoxBuildInfoPath = path.join(root, 'dist', 'firefox', 'build-info.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 const rootManifest = fs.existsSync(rootManifestPath) ? JSON.parse(fs.readFileSync(rootManifestPath, 'utf8')) : null;
 const distManifest = fs.existsSync(distManifestPath) ? JSON.parse(fs.readFileSync(distManifestPath, 'utf8')) : null;
 const rootBuildInfo = fs.existsSync(rootBuildInfoPath) ? JSON.parse(fs.readFileSync(rootBuildInfoPath, 'utf8')) : null;
 const sourceBuildInfo = fs.existsSync(sourceBuildInfoPath) ? JSON.parse(fs.readFileSync(sourceBuildInfoPath, 'utf8')) : null;
 const distBuildInfo = fs.existsSync(distBuildInfoPath) ? JSON.parse(fs.readFileSync(distBuildInfoPath, 'utf8')) : null;
+const firefoxManifest = fs.existsSync(firefoxManifestPath) ? JSON.parse(fs.readFileSync(firefoxManifestPath, 'utf8')) : null;
+const firefoxBuildInfo = fs.existsSync(firefoxBuildInfoPath) ? JSON.parse(fs.readFileSync(firefoxBuildInfoPath, 'utf8')) : null;
 const requiredFiles = [
   manifest.background?.service_worker,
   manifest.side_panel?.default_path,
@@ -54,6 +63,12 @@ function validateBuildInfo(buildInfo, label) {
 }
 
 if (manifest.manifest_version !== 3) errors.push('manifest_version must be 3');
+if (packageLock.version !== packageJson.version || packageLock.packages?.['']?.version !== packageJson.version) {
+  errors.push(`package-lock.json version mirrors must match package.json version ${packageJson.version}`);
+}
+if (companionPluginVersion !== packageJson.version) {
+  errors.push(`companion-plugin/plugin.yaml version ${companionPluginVersion || '(missing)'} must match package.json version ${packageJson.version}`);
+}
 if (manifest.version !== packageJson.version) {
   errors.push(`extension/manifest.json version ${manifest.version} must match package.json version ${packageJson.version}`);
 }
@@ -63,15 +78,22 @@ if (rootManifest && rootManifest.version !== packageJson.version) {
 if (distManifest && distManifest.version !== packageJson.version) {
   errors.push(`dist/manifest.json version ${distManifest.version} must match package.json version ${packageJson.version}; run npm run build`);
 }
+if (firefoxManifest && firefoxManifest.version !== packageJson.version) {
+  errors.push(`Firefox manifest version ${firefoxManifest.version} must match package.json version ${packageJson.version}; run npm run build:firefox`);
+}
+if (firefoxManifest && !firefoxManifest.browser_specific_settings?.gecko?.id) {
+  errors.push('Firefox manifest must include browser_specific_settings.gecko.id');
+}
 if (distManifest && !distBuildInfo) {
   errors.push('dist/build-info.json missing; run npm run build so update checks can compare the loaded build commit to GitHub main');
 }
 validateBuildInfo(rootBuildInfo, 'root build-info.json');
 validateBuildInfo(sourceBuildInfo, 'extension/build-info.json');
 validateBuildInfo(distBuildInfo, 'dist/build-info.json');
+validateBuildInfo(firefoxBuildInfo, 'Firefox build-info.json');
 if (!manifest.permissions?.includes('sidePanel')) errors.push('sidePanel permission missing');
 if (!manifest.permissions?.includes('storage')) errors.push('storage permission missing');
-if (manifest.permissions?.includes('debugger')) errors.push('debugger permission is intentionally not allowed in v0.1');
+if (manifest.permissions?.includes('debugger')) errors.push('debugger permission is intentionally not allowed');
 if (!manifest.optional_permissions?.includes('audioCapture')) errors.push('audioCapture optional permission missing for runtime microphone prompt');
 if (manifest.permissions?.includes('audioCapture')) errors.push('audioCapture should be optional so dictation can request it on click');
 if (manifest.permissions?.includes('microphone') || manifest.optional_permissions?.includes('microphone')) {

@@ -65,8 +65,18 @@ def register(ctx) -> None:
         emoji="📋",
     )
 
+    ctx.register_tool(
+        name="browser_text_utility",
+        toolset="hermes-browser-companion",
+        schema=tools.SCHEMA_TEXT_UTILITY,
+        handler=tools.browser_text_utility,
+        description="Run bounded deterministic text cleanup, bullets, stats, or diff without a model call.",
+        emoji="⚙️",
+    )
+
     # ── Hooks ──────────────────────────────────────────────────────────
     ctx.register_hook("pre_llm_call", hooks.pre_llm_call)
+    ctx.register_hook("pre_tool_call", hooks.pre_tool_call)
     ctx.register_hook("post_tool_call", hooks.post_tool_call)
 
     # ── Bundled skill ──────────────────────────────────────────────────

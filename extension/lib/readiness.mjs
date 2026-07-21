@@ -30,7 +30,7 @@ function initialSteps() {
 }
 
 function normalizeStatus(status = 'pending') {
-  return ['pending', 'active', 'ready', 'legacy', 'fallback', 'observed', 'skipped', 'unconfigured', 'unreachable', 'degraded', 'error'].includes(status)
+  return ['pending', 'active', 'ready', 'legacy', 'fallback', 'observed', 'skipped', 'blocked', 'unconfigured', 'unreachable', 'degraded', 'error'].includes(status)
     ? status
     : 'pending';
 }

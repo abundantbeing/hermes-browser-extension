@@ -52,3 +52,10 @@ test('redactSensitiveText continues to redact credential assignments', () => {
   assert.doesNotMatch(redacted, /browser-secret-value/);
   assert.match(redacted, /\[REDACTED_SECRET\]/);
 });
+
+test('redactSensitiveText blocks encoded credential assignments without decoding display text', () => {
+  const redacted = redactSensitiveText('api%5Fkey=encoded-private-value ordinary%20display%20text');
+  assert.doesNotMatch(redacted, /encoded-private-value/);
+  assert.match(redacted, /api%5Fkey=\[REDACTED_SECRET\]/);
+  assert.match(redacted, /ordinary%20display%20text/);
+});

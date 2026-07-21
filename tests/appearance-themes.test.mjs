@@ -11,6 +11,7 @@ import {
   normalizeColorMode,
   resolveColorMode,
 } from '../extension/lib/appearance-themes.mjs';
+import * as appearance from '../extension/lib/appearance-themes.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -24,6 +25,50 @@ function cssValue(block, property) {
   const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return block.match(new RegExp(`${escapedProperty}\\s*:\\s*([^;]+);`))?.[1]?.trim() || '';
 }
+
+test('inline Assist resolves every canonical theme in both modes with Mono parity', () => {
+  assert.equal(typeof appearance.resolveInlineAssistTheme, 'function');
+  for (const theme of APPEARANCE_THEMES) {
+    for (const mode of ['light', 'dark']) {
+      const tokens = appearance.resolveInlineAssistTheme(theme.value, mode);
+      assert.equal(tokens.theme, theme.value);
+      assert.equal(tokens.mode, mode);
+      for (const key of ['surface', 'panel', 'ink', 'fg', 'accent', 'primary', 'logo', 'logoBackground']) assert.match(tokens[key], /^#[0-9a-f]{6}$/i);
+      assert.equal(tokens.logoBackground, '#ffffff');
+      assert.equal(tokens.logo, theme.value === 'nous' ? '#0505e8' : '#111111');
+    }
+    assert.equal(
+      appearance.resolveInlineAssistTheme(theme.value, 'dark').primary,
+      appearance.resolveInlineAssistTheme(theme.value, 'light').primary,
+      `${theme.value} logo color must not invert by mode`,
+    );
+  }
+  const monoDark = appearance.resolveInlineAssistTheme('mono', 'dark');
+  assert.deepEqual(monoDark, {
+    theme: 'mono',
+    mode: 'dark',
+    surface: '#0d0d0d',
+    panel: '#171717',
+    ink: '#e5e5e5',
+    fg: '#f1f1f1',
+    accent: '#c9c9c9',
+    primary: '#202020',
+    logo: '#111111',
+    logoBackground: '#ffffff',
+  });
+  const nousLight = appearance.resolveInlineAssistTheme('nous', 'light');
+  assert.equal(nousLight.primary, '#0505e8');
+  assert.equal(nousLight.logo, '#0505e8');
+  assert.equal(nousLight.panel, '#ffffff');
+});
+
+test('Nous Light keeps message and composer cards opaque white', () => {
+  const fulltabCss = read('extension/fulltab-themes.css');
+  const selector = 'html[data-hermes-theme="nous"][data-hermes-mode="light"]';
+  assert.match(fulltabCss, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\.web-message \\{[^}]*background:\\s*#ffffff;`, 's'));
+  assert.match(fulltabCss, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\.web-message\\.user \\{[^}]*background:\\s*#ffffff;`, 's'));
+  assert.match(fulltabCss, new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\.fulltab-composer \\{[^}]*background:\\s*#ffffff;`, 's'));
+});
 
 test('canonical Hermes appearance themes stay ordered with Nous first', () => {
   assert.deepEqual(APPEARANCE_THEMES.map((theme) => theme.value), [

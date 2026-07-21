@@ -1,4 +1,56 @@
 /* Canonical Hermes palettes for the Browser sidepanel. Loaded after sidepanel.css. */
+html[data-hermes-theme="nous"][data-hermes-mode="light"] {
+  --hermes-user-bg: #ffffff;
+  --hermes-user-fg: #0505e8;
+  --hermes-user-border: rgba(5, 5, 232, 0.58);
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] ::selection {
+  background: #EDFF45;
+  color: #0505e8;
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .model-provider-option {
+  color: #f8faff;
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .model-provider-option.selected {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0505e8;
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.assistant,
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.user {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  background: #ffffff !important;
+  color: var(--hermes-ink);
+  border-color: rgba(5, 5, 232, 0.58);
+  opacity: 1;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.user .message-content,
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.user .message-role {
+  color: inherit;
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.user .context-receipt {
+  border-top-color: rgba(var(--hermes-ink-rgb), 0.18);
+  color: rgba(var(--hermes-ink-rgb), 0.74);
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.user .context-receipt summary {
+  color: rgba(var(--hermes-ink-rgb), 0.84);
+}
+
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.user .context-receipt dt {
+  color: rgba(var(--hermes-ink-rgb), 0.56);
+}
+
 html[data-hermes-theme="senter-space"][data-hermes-mode="dark"] {
   --hermes-blue: #071614;
   --hermes-blue-deep: #040b0a;

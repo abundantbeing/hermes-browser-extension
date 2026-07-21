@@ -2,8 +2,9 @@
  * Firefox build script for Hermes Browser Extension.
  *
  * Copies the extension source to dist/firefox/ and generates a Firefox-compatible
- * manifest.json by stripping Chrome-only keys (side_panel, minimum_chrome_version,
- * sidePanel permission) and adding browser_specific_settings.gecko.id.
+ * manifest.json by replacing Chromium's service worker with Firefox's module
+ * background scripts, stripping Chrome-only keys/permissions, and adding Gecko
+ * identity plus built-in data-consent categories.
  *
  * Firefox uses sidebar_action (already in the manifest) for sidebar support.
  * browser-runtime.mjs already detects Firefox via UA and browser.sidebarAction.
@@ -11,11 +12,14 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { writeContentExtractorRuntime } from './build-content-runtime.mjs';
 
 const root = process.cwd();
 const src = path.join(root, 'extension');
 const dest = path.join(root, 'dist', 'firefox');
 const buildInfoFileName = 'build-info.json';
+
+await writeContentExtractorRuntime({ rootDir: root });
 
 function copyDir(from, to) {
   fs.mkdirSync(to, { recursive: true });
@@ -67,11 +71,28 @@ if (Array.isArray(sourceManifest.permissions)) {
   sourceManifest.permissions = sourceManifest.permissions.filter((p) => p !== 'sidePanel');
 }
 
+// Firefox MV3 uses background.scripts; service_worker is ignored without this fallback.
+if (sourceManifest.background?.service_worker) {
+  sourceManifest.background = {
+    scripts: [sourceManifest.background.service_worker],
+    type: sourceManifest.background.type || 'module',
+  };
+}
+
+// audioCapture is Chromium-only. Firefox voice support uses runtime feature detection.
+if (Array.isArray(sourceManifest.optional_permissions)) {
+  sourceManifest.optional_permissions = sourceManifest.optional_permissions.filter((permission) => permission !== 'audioCapture');
+  if (!sourceManifest.optional_permissions.length) delete sourceManifest.optional_permissions;
+}
+
 // Add Firefox-specific settings
 sourceManifest.browser_specific_settings = {
   gecko: {
     id: 'hermes-browser@abundantbeing.github.io',
-    strict_min_version: '115.0',
+    strict_min_version: '142.0',
+    data_collection_permissions: {
+      required: ['websiteContent', 'personalCommunications'],
+    },
   },
 };
 
@@ -89,5 +110,5 @@ fs.writeFileSync(path.join(dest, 'manifest.json'), `${JSON.stringify(sourceManif
 fs.writeFileSync(path.join(dest, buildInfoFileName), infoJson);
 
 console.log(`Built Firefox extension: ${dest}`);
-console.log(`Firefox manifest: stripped side_panel/sidePanel, added browser_specific_settings.gecko.id`);
+console.log('Firefox manifest: module background script, Firefox sidebar, no audioCapture, declared data consent');
 console.log(`Stamped build metadata: ${buildInfoFileName}`);

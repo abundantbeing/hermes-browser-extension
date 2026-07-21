@@ -92,8 +92,12 @@ export async function readHermesSse(response, { onAssistant, onTool, onRuntime, 
     if (event.type.startsWith('tool.') || event.type === 'hermes.tool.progress') {
       onTool?.(normalizeBrowserRuntimeEvent({ type: event.type, data }));
     }
-    if (event.type === 'run.completed') onRuntime?.(data);
+    if (event.type === 'run.completed') {
+      onRuntime?.(data);
+      return true;
+    }
     if (event.type === 'error') throw new Error(data.message || event.data || 'Hermes stream error');
+    return false;
   };
 
   while (true) {
@@ -106,7 +110,16 @@ export async function readHermesSse(response, { onAssistant, onTool, onRuntime, 
     buffer += decoder.decode(value, { stream: true });
     const blocks = buffer.split(/\r?\n\r?\n/);
     buffer = blocks.pop() || '';
-    for (const block of blocks) if (block.trim()) processBlock(block);
+    let terminal = false;
+    for (const block of blocks) {
+      if (!block.trim()) continue;
+      terminal = processBlock(block) || terminal;
+      if (terminal) break;
+    }
+    if (terminal) {
+      await reader.cancel().catch(() => {});
+      return stream.text;
+    }
   }
   buffer += decoder.decode();
   if (buffer.trim()) processBlock(buffer);
