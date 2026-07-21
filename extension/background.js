@@ -426,6 +426,9 @@ async function applyPanelResidencyMode(mode = cachedPanelResidencyMode, { tabId 
     return;
   }
 
+  // Update only the global default. Existing tab-scoped overrides intentionally
+  // keep their attached panel documents and sessions; untouched and new tabs
+  // resolve to this shared panel path.
   await chrome.sidePanel.setOptions({
     path: buildSidePanelPath({
       mode: panelResidencyMode,

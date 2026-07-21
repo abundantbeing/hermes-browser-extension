@@ -187,6 +187,7 @@ test('side-panel confirmation rejects a silent no-op so the caller can use its t
 });
 
 function createBackgroundHarness({
+  panelResidencyMode = 'tab-attached',
   runtimeContexts = [],
   sidePanelOpen = async () => {},
   synchronizeFallbackQueries = false,
@@ -197,20 +198,22 @@ function createBackgroundHarness({
   const updatedTabs = [];
   const focusedWindows = [];
   const sidePanelOpenCalls = [];
+  const sidePanelOptions = [];
   let actionHandler = null;
+  let installedHandler = null;
   const chromeApi = {
     runtime: {
       getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
       getURL: (value) => `chrome-extension://test/${value}`,
       getContexts: async () => runtimeContexts,
-      onInstalled: { addListener() {} },
+      onInstalled: { addListener(handler) { installedHandler = handler; } },
       onStartup: { addListener() {} },
       onMessage: { addListener() {} },
     },
     storage: {
       local: {
         get: async () => ({
-          hermesBrowserSettings: { panelResidencyMode: 'tab-attached' },
+          hermesBrowserSettings: { panelResidencyMode },
         }),
       },
       onChanged: { addListener() {} },
@@ -241,7 +244,7 @@ function createBackgroundHarness({
     },
     sidePanel: {
       setPanelBehavior: async () => {},
-      setOptions: async () => {},
+      setOptions: async (options) => { sidePanelOptions.push(options); },
       open: async (options) => {
         sidePanelOpenCalls.push(options);
         return sidePanelOpen(options);
@@ -264,9 +267,34 @@ function createBackgroundHarness({
     updatedTabs,
     focusedWindows,
     sidePanelOpenCalls,
+    sidePanelOptions,
     get actionHandler() { return actionHandler; },
+    get installedHandler() { return installedHandler; },
   };
 }
+
+test('global residency updates only the default path and preserves existing tab overrides', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness({ panelResidencyMode: 'global' });
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?global-residency=${Date.now()}`);
+    assert.equal(typeof harness.installedHandler, 'function');
+    await harness.installedHandler();
+    assert.deepEqual(harness.sidePanelOptions, [{
+      path: 'sidepanel.html?panel=global',
+      enabled: true,
+    }]);
+    assert.equal(
+      harness.sidePanelOptions.some((options) => Object.hasOwn(options, 'tabId')),
+      false,
+      'global mode must not rewrite tabs that already own attached panel documents',
+    );
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
 
 test('background action reuses the extension-tab fallback across repeated silent side-panel no-ops', async () => {
   const originalChrome = globalThis.chrome;

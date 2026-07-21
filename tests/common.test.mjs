@@ -2152,6 +2152,9 @@ test('panel residency setting is present in defaults and settings UI copy', () =
   assert.match(html, /name="panelResidencyMode"/);
   assert.match(html, /Attach to current tab/);
   assert.match(html, /Keep open across tabs/);
+  assert.match(html, /Existing attached panels stay as they are\./);
+  assert.match(html, /Other and new tabs use the shared panel\./);
+  assert.doesNotMatch(html, /Reopen Hermes to apply this change/);
   assert.match(background, /hermesBrowserSettings[\s\S]*panelResidencyMode/);
 });
 
