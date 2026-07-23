@@ -305,6 +305,14 @@ test('sidepanel requires an on-brand source decision before sending into a forei
   assert.match(source, /await beginHermesBrowserDraft\(\{ focus: false \}\);[\s\S]*await askHermes/);
 });
 
+test('sidepanel does not page through the global session list after a completed turn', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const sender = source.match(/async function askHermes\([\s\S]*?\n\}/)?.[0] || '';
+
+  assert.doesNotMatch(sender, /loadSessions\(/, 'post-answer session paging must not delay composer cleanup or run beside the next turn');
+  assert.match(sender, /finally \{[\s\S]*sending = false;[\s\S]*updateComposerBusyState\(\);/);
+});
+
 test('sidepanel wires Browser-scoped models and compact session copy/rename actions', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
