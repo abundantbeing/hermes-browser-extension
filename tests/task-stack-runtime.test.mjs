@@ -48,3 +48,17 @@ test('task-stack styling uses existing Hermes tokens and supports collapsed and 
     assert.match(source, /data-expanded/);
   }
 });
+
+test('task-stack lists use the sharp transparent-track Hermes scrollbar on both surfaces', async () => {
+  const [sidepanelCss, appCss] = await Promise.all([
+    read('extension/sidepanel.css'),
+    read('extension/app.css'),
+  ]);
+
+  for (const source of [sidepanelCss, appCss]) {
+    assert.match(source, /\.task-stack-list\s*\{[^}]*scrollbar-gutter:\s*stable;/s);
+    assert.match(source, /\.task-stack-list::-webkit-scrollbar\s*\{[^}]*width:\s*8px;/s);
+    assert.match(source, /\.task-stack-list::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*rgba\(var\(--hermes-fg-rgb\),\s*0?\.45\);[^}]*border:\s*1px solid var\(--hermes-line-strong\);/s);
+    assert.doesNotMatch(source, /\.task-stack-list::-webkit-scrollbar-track/);
+  }
+});

@@ -77,3 +77,25 @@ test('per-session storage is capped and updates recency without leaking task pay
   assert.equal(store['session-54'].tasks[0].content, 'Task 54');
   assert.equal(store['session-54'].updatedAt, 54);
 });
+
+test('terminal task updates remove only the completed session stack', () => {
+  const otherSession = {
+    tasks: [{ id: 'keep', content: 'Keep working', status: 'in_progress' }],
+    updatedAt: 4,
+  };
+  const store = {
+    'finished-session': {
+      tasks: [{ id: 'old', content: 'Old task', status: 'in_progress' }],
+      updatedAt: 3,
+    },
+    'other-session': otherSession,
+  };
+
+  const next = updateTaskStackStore(store, 'finished-session', [
+    { id: 'done', content: 'Done', status: 'completed' },
+    { id: 'skipped', content: 'Skipped', status: 'cancelled' },
+  ], { now: 5 });
+
+  assert.equal(next['finished-session'], undefined);
+  assert.deepEqual(next['other-session'], otherSession);
+});

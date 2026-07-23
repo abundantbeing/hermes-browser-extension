@@ -131,13 +131,19 @@ export function updateTaskStackStore(store = {}, sessionId = '', tasks = [], opt
   if (!cleanSessionId) return { ...(store || {}) };
   const now = Number.isFinite(Number(options.now)) ? Number(options.now) : Date.now();
   const maxSessions = Math.max(1, Number(options.maxSessions || MAX_STORED_SESSIONS));
-  const next = {
-    ...(store && typeof store === 'object' ? store : {}),
-    [cleanSessionId]: {
-      tasks: normalizeTaskStack(tasks),
+  const normalizedTasks = normalizeTaskStack(tasks);
+  const next = { ...(store && typeof store === 'object' ? store : {}) };
+  const hasActiveWork = normalizedTasks.some((task) => (
+    task.status === TASK_STATUSES.PENDING || task.status === TASK_STATUSES.IN_PROGRESS
+  ));
+  if (hasActiveWork) {
+    next[cleanSessionId] = {
+      tasks: normalizedTasks,
       updatedAt: now,
-    },
-  };
+    };
+  } else {
+    delete next[cleanSessionId];
+  }
   const ordered = Object.entries(next)
     .sort((left, right) => Number(right[1]?.updatedAt || 0) - Number(left[1]?.updatedAt || 0))
     .slice(0, maxSessions);
