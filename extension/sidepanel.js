@@ -469,6 +469,7 @@ let browserIntroDismissedForPanel = false;
 let operationToastTimer = null;
 let latestUpdateReview = null;
 let sessionsRefreshing = false;
+let sessionLoadPromise = null;
 
 function currentTaskStack() {
   const sessionId = String(settings.sessionId || '').trim();
@@ -4579,6 +4580,16 @@ async function loadAllHermesSessions() {
 }
 
 async function loadSessions({ quiet = false } = {}) {
+  if (sessionLoadPromise) return sessionLoadPromise;
+  sessionLoadPromise = loadSessionsOnce({ quiet });
+  try {
+    return await sessionLoadPromise;
+  } finally {
+    sessionLoadPromise = null;
+  }
+}
+
+async function loadSessionsOnce({ quiet = false } = {}) {
   if (isRemoteWsMode()) {
     // Remote reads go over the WS; only possible once a socket is open.
     if (remoteWsConnection?.client?.readyState !== 1) {

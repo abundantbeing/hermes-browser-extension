@@ -311,6 +311,8 @@ test('sidepanel refreshes sessions without holding the composer busy after an an
 
   assert.match(sender, /void loadSessions\(\{ quiet: true \}\)\.catch\(\(\) => \{\}\);/);
   assert.doesNotMatch(sender, /await loadSessions\(\{ quiet: true \}\);/);
+  assert.match(source, /if \(sessionLoadPromise\) return sessionLoadPromise;/);
+  assert.match(source, /sessionLoadPromise = loadSessionsOnce\(\{ quiet \}\);/);
 });
 
 test('sidepanel wires Browser-scoped models and compact session copy/rename actions', () => {
