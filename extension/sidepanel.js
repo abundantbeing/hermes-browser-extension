@@ -7373,7 +7373,9 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     messages.push({ role: 'assistant', content: finalAnswer, ts: Date.now() });
     await trimAndSaveMessages();
     if (autoTitle) await maybeAutoNameCurrentSession(autoTitle);
-    await loadSessions({ quiet: true });
+    // Session refresh is a background UI update; do not keep the composer busy
+    // while paging through every available session after the answer is shown.
+    void loadSessions({ quiet: true }).catch(() => {});
     if (contextDelivery !== CONTEXT_DELIVERY_MODES.NONE) {
       contextDeliveryBySession.set(contextDeliverySessionKey, recordContextDelivery(
         contextDeliveryBySession.get(contextDeliverySessionKey) || null,
