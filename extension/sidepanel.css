@@ -1644,6 +1644,42 @@ body.startup-active .topbar #settingsButton {
   cursor: zoom-in;
   vertical-align: middle;
 }
+.user-message-images {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.user-message-images.multiple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.user-message-image-open {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  background: rgba(var(--hermes-paper-rgb),0.08);
+  color: inherit;
+  text-align: left;
+  cursor: zoom-in;
+}
+.user-message-image-open img {
+  display: block;
+  width: 100%;
+  max-height: min(52vh, 440px);
+  object-fit: contain;
+  border: 0;
+}
+.user-message-image-name {
+  display: block;
+  padding: 6px 8px;
+  overflow: hidden;
+  font-family: var(--hermes-font-mono);
+  font-size: 10px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .generated-image-inspectable {
   position: relative;
   display: inline-block;

@@ -102,6 +102,7 @@ import {
   normalizeColorMode,
 } from './lib/appearance-themes.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
+import { appendUserImageAttachments } from './lib/image-render.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
 import {
   buildDashboardWsUrl,
@@ -138,7 +139,7 @@ import {
 } from './lib/capabilities.mjs';
 import { normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
-import { classifyTurnRecovery, latestAssistantAfterUser } from './lib/turn-recovery.mjs';
+import { classifyTurnRecovery, latestAssistantAfterUser, sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
 import {
@@ -6279,14 +6280,14 @@ async function apiFetch(path, options = {}) {
   return hermesClient.fetch(path, options);
 }
 
-async function compactCurrentSessionContext() {
+async function compactCurrentSessionContext({ automaticRecovery = false } = {}) {
   if (!settings.sessionId) {
-    setStatus('warn', 'No active session', 'Open or create a Hermes Browser Extension session before compacting context.');
-    return;
+    if (!automaticRecovery) setStatus('warn', 'No active session', 'Open or create a Hermes Browser Extension session before compacting context.');
+    return { ok: false, reason: 'no-session' };
   }
   if (!gatewayCapabilities.sessionCompress) {
-    setStatus('warn', 'Context compaction unavailable', 'The connected Hermes runtime does not advertise native session compaction.');
-    return;
+    if (!automaticRecovery) setStatus('warn', 'Context compaction unavailable', 'The connected Hermes runtime does not advertise native session compaction.');
+    return { ok: false, reason: 'route-unavailable' };
   }
   const button = els.contextCompactButton;
   if (button) {
@@ -6315,12 +6316,14 @@ async function compactCurrentSessionContext() {
         source: 'context compaction',
       });
     }
-    setStatus('ok', 'Context compacted', payload?.summary || 'Hermes compacted the active session context.');
+    setStatus('ok', automaticRecovery ? 'Context recovered' : 'Context compacted', payload?.summary || 'Hermes compacted the active session context.');
     contextDeliveryBySession.clear();
     forceFullContextNextTurn = true;
     await loadSessions({ quiet: true });
+    return { ok: true, sessionId: compactedSessionId || settings.sessionId, payload };
   } catch (error) {
     setStatus('warn', 'Context compaction failed', error?.message || String(error));
+    return { ok: false, reason: 'request-failed', error };
   } finally {
     renderContextWindow();
   }
@@ -7276,8 +7279,9 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       basePromptText = resolved?.prompt || userText;
     }
     const promptUserText = userTextWithAttachments(userText, preparedAttachments);
-    const displayUserText = turnOptions.displayUserText || (preparedAttachments.length
-      ? `${userText || 'Attachment-only turn.'}\n${preparedAttachments.map((attachment) => `${attachmentIcon(attachment.kind)} ${attachment.label}`).join('\n')}`
+    const displayAttachments = preparedAttachments.filter((attachment) => attachment.kind !== 'image');
+    const displayUserText = turnOptions.displayUserText || (displayAttachments.length
+      ? `${userText || 'Attachment-only turn.'}\n${displayAttachments.map((attachment) => `${attachmentIcon(attachment.kind)} ${attachment.label}`).join('\n')}`
       : userText);
     const promptTabs = filterPromptTabs(context.tabs, turnContextScope);
     const selectedPromptTabs = Array.isArray(turnContextScope.selectedTabIds) ? promptTabs : undefined;
@@ -7317,6 +7321,11 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     const { node: userNode } = addMessage('user', displayUserText);
     await persistBrowserIntroSeen();
     appendContextReceipt(userNode, receipt);
+    appendUserImageAttachments(
+      userNode.querySelector('.message-content'),
+      preparedAttachments,
+      { onOpen: (image) => openGeneratedImageLightbox(image) },
+    );
     const { node } = addMessage('assistant', THINKING_PLACEHOLDER, { persist: false });
     const streamView = createStreamingMessageUpdater(node);
     let answer = '';
@@ -7348,6 +7357,8 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       } else if (streamError?.hermesSetupFailure) {
         streamView.update(`Hermes setup issue.\n${streamError.message}`);
         throw streamError;
+      } else if (sessionContextFailureRecovery(streamError, gatewayCapabilities)) {
+        throw streamError;
       } else if (isRemoteWsMode()) {
         // No REST fallback in remote-dashboard mode — the api_server surface is
         // not reachable cross-origin. Surface the WS/ticket error directly.
@@ -7369,6 +7380,11 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       }
     }
     const finalAnswer = answer || liveText || '(empty response)';
+    if (sessionContextFailureRecovery(finalAnswer, gatewayCapabilities)) {
+      const contextError = new Error(finalAnswer);
+      contextError.requestAccepted = true;
+      throw contextError;
+    }
     await streamView.flush(finalAnswer);
     messages.push({ role: 'assistant', content: finalAnswer, ts: Date.now() });
     await trimAndSaveMessages();
@@ -7390,6 +7406,32 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     didSend = true;
   } catch (error) {
     if (!isAbortError(error)) {
+      const contextRecovery = sessionContextFailureRecovery(error, gatewayCapabilities);
+      if (contextRecovery) {
+        markGatewayDegraded(error);
+        if (!turnOptions.preserveComposer) {
+          if (!els.input.value.trim() && !attachments.length) {
+            els.input.value = userText;
+            attachments = [...turnAttachments];
+            renderAttachments();
+            renderSkillSuggestions();
+          } else if (!queuedTurn) {
+            queuedTurn = { text: userText, attachments: [...turnAttachments], kind: 'recovery', autoSend: false };
+            renderQueueNotice();
+          }
+        }
+        const compactResult = contextRecovery.action === 'compact'
+          ? await compactCurrentSessionContext({ automaticRecovery: true })
+          : { ok: false, reason: 'new-session-required' };
+        const replayDetail = contextRecovery.retryTurn
+          ? 'Hermes may retry the accepted turn.'
+          : 'Browser did not replay the accepted turn, preventing a duplicate message.';
+        const recoveryDetail = compactResult.ok
+          ? 'Hermes compacted the session and Browser adopted the acknowledged successor when provided.'
+          : 'This runtime could not recover the session automatically. Start a new session, then resend the preserved draft.';
+        addMessage('system', `Session context reached its compression ceiling. ${recoveryDetail} ${replayDetail}`);
+        return didSend;
+      }
       if (error?.remoteDiagnostic && applyRemoteDiagnostic(error.remoteDiagnostic, { statusKind: 'error' })) {
         addMessage('system', `Hermes Browser Extension setup issue: ${error.remoteDiagnostic.detail} Open Settings → Support diagnostics → Copy Diagnostics and paste the redacted report if you need help.`);
         return didSend;

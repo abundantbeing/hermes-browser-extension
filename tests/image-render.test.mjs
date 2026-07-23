@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { renderMarkdown } from '../extension/lib/common.mjs';
-import { extractMediaTags, resolveImageSource, stripGeneratedImageEchoes } from '../extension/lib/image-render.mjs';
+import * as imageRender from '../extension/lib/image-render.mjs';
+
+const {
+  extractMediaTags,
+  resolveImageSource,
+  stripGeneratedImageEchoes,
+} = imageRender;
 
 const TRANSPARENT_PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==';
 
@@ -17,6 +23,57 @@ test('image helpers accept only safe remote or raster data image sources', () =>
   assert.equal(resolveImageSource('file:///C:/Users/Jaybo/image.png'), null);
   assert.equal(resolveImageSource('data:image/svg+xml;base64,PHN2Zy8+'), null);
   assert.equal(resolveImageSource('javascript:alert(1)'), null);
+});
+
+test('user image attachments normalize into safe renderable message previews', () => {
+  assert.equal(typeof imageRender.normalizeUserImageAttachments, 'function');
+  assert.deepEqual(imageRender.normalizeUserImageAttachments([
+    { kind: 'image', name: 'image.png', dataUrl: TRANSPARENT_PNG_DATA_URL },
+    { kind: 'image', name: 'unsafe.svg', dataUrl: 'data:image/svg+xml;base64,PHN2Zy8+' },
+    { kind: 'file', name: 'notes.txt', text: 'hello' },
+  ]), [{
+    name: 'image.png',
+    source: TRANSPARENT_PNG_DATA_URL,
+  }]);
+});
+
+test('refreshed user messages retain matching live image previews without serializing them into transcript text', () => {
+  assert.equal(typeof imageRender.preserveUserImageAttachments, 'function');
+  const local = [
+    { role: 'user', content: 'What is in this image?', attachments: [{ kind: 'image', name: 'image.png', dataUrl: TRANSPARENT_PNG_DATA_URL }] },
+    { role: 'assistant', content: 'A blue square' },
+  ];
+  const refreshed = [
+    { id: 10, role: 'user', content: 'What is in this image?' },
+    { id: 11, role: 'assistant', content: 'A blue square' },
+  ];
+
+  const merged = imageRender.preserveUserImageAttachments(refreshed, local);
+
+  assert.equal(merged[0].id, 10);
+  assert.deepEqual(merged[0].attachments, local[0].attachments);
+  assert.doesNotMatch(merged[0].content, /data:image/);
+  assert.notEqual(merged[0], refreshed[0]);
+  assert.equal(merged[1], refreshed[1]);
+});
+
+test('repeated identical user prompts retain image previews in chronological order', () => {
+  const newerSource = 'https://example.com/newer.png';
+  const local = [
+    { role: 'user', content: 'Describe this', attachments: [{ kind: 'image', name: 'older.png', dataUrl: TRANSPARENT_PNG_DATA_URL }] },
+    { role: 'assistant', content: 'Older answer' },
+    { role: 'user', content: 'Describe this', attachments: [{ kind: 'image', name: 'newer.png', dataUrl: newerSource }] },
+  ];
+  const refreshed = [
+    { id: 20, role: 'user', content: 'Describe this' },
+    { id: 21, role: 'assistant', content: 'Older answer' },
+    { id: 22, role: 'user', content: 'Describe this' },
+  ];
+
+  const merged = imageRender.preserveUserImageAttachments(refreshed, local);
+
+  assert.equal(merged[0].attachments[0].name, 'older.png');
+  assert.equal(merged[2].attachments[0].name, 'newer.png');
 });
 
 test('image helpers extract standalone MEDIA tags and remove only image echoes', () => {

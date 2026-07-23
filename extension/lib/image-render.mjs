@@ -35,6 +35,88 @@ export function resolveImageSource(value = '') {
   }
 }
 
+export function normalizeUserImageAttachments(attachments = []) {
+  if (!Array.isArray(attachments)) return [];
+  const previews = [];
+  const seen = new Set();
+  for (const attachment of attachments) {
+    if (!attachment || typeof attachment !== 'object') continue;
+    const kind = String(attachment.kind || '').trim().toLowerCase();
+    const mime = String(attachment.mime || attachment.type || '').trim().toLowerCase();
+    if (kind && kind !== 'image' && !mime.startsWith('image/')) continue;
+    const source = resolveImageSource(attachment.dataUrl || attachment.source || attachment.url || '');
+    if (!source || seen.has(source)) continue;
+    seen.add(source);
+    previews.push({
+      name: String(attachment.name || 'Attached image').trim().slice(0, 180) || 'Attached image',
+      source,
+    });
+    if (previews.length >= 8) break;
+  }
+  return previews;
+}
+
+function attachmentMessageKey(message = {}) {
+  return String(message?.content || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[\t ]+/g, ' ')
+    .trim();
+}
+
+function matchingUserMessageContent(remoteContent = '', localContent = '') {
+  if (!remoteContent || !localContent) return false;
+  if (remoteContent === localContent) return true;
+  return remoteContent.startsWith(`${localContent}\n\n[ATTACHMENTS]`);
+}
+
+export function preserveUserImageAttachments(refreshedMessages = [], localMessages = []) {
+  if (!Array.isArray(refreshedMessages) || !Array.isArray(localMessages)) return Array.isArray(refreshedMessages) ? refreshedMessages : [];
+  const localCandidates = localMessages
+    .map((message, index) => ({ message, index, key: attachmentMessageKey(message) }))
+    .filter(({ message, key }) => String(message?.role || '').toLowerCase() === 'user'
+      && key
+      && normalizeUserImageAttachments(message.attachments).length);
+  const claimed = new Set();
+
+  const preserved = [...refreshedMessages];
+  for (let index = preserved.length - 1; index >= 0; index -= 1) {
+    const message = preserved[index];
+    if (String(message?.role || '').toLowerCase() !== 'user' || normalizeUserImageAttachments(message?.attachments).length) continue;
+    const key = attachmentMessageKey(message);
+    const candidate = localCandidates.findLast(({ index, key: localKey }) => !claimed.has(index) && matchingUserMessageContent(key, localKey));
+    if (!candidate) continue;
+    claimed.add(candidate.index);
+    preserved[index] = { ...message, attachments: candidate.message.attachments };
+  }
+  return preserved;
+}
+
+export function appendUserImageAttachments(container, attachments = [], { onOpen } = {}) {
+  const previews = normalizeUserImageAttachments(attachments);
+  const doc = container?.ownerDocument || globalThis.document;
+  if (!container || !doc?.createElement || !previews.length) return null;
+  const group = doc.createElement('div');
+  group.className = `user-message-images${previews.length > 1 ? ' multiple' : ''}`;
+  for (const preview of previews) {
+    const button = doc.createElement('button');
+    button.type = 'button';
+    button.className = 'user-message-image-open';
+    button.setAttribute('aria-label', `Open attached image ${preview.name}`);
+    const image = doc.createElement('img');
+    image.src = preview.source;
+    image.alt = preview.name;
+    image.loading = 'lazy';
+    const caption = doc.createElement('span');
+    caption.className = 'user-message-image-name';
+    caption.textContent = preview.name;
+    button.append(image, caption);
+    if (typeof onOpen === 'function') button.addEventListener('click', () => onOpen(image, preview));
+    group.append(button);
+  }
+  container.append(group);
+  return group;
+}
+
 /**
  * Extract full-line MEDIA tags without treating local paths as browser URLs.
  */

@@ -46,7 +46,14 @@ import {
   shouldEnrichCanonicalProviderCatalog,
   shouldTrySessionModelFallback,
 } from './lib/model-discovery.mjs';
-import { extractMediaTags, resolveImageSource, resolvedGeneratedImageSources, stripGeneratedImageEchoes } from './lib/image-render.mjs';
+import {
+  appendUserImageAttachments,
+  extractMediaTags,
+  preserveUserImageAttachments,
+  resolveImageSource,
+  resolvedGeneratedImageSources,
+  stripGeneratedImageEchoes,
+} from './lib/image-render.mjs';
 import { modelLockRequestOutcome, readHermesSse, runSteerFailureState } from './lib/fulltab-runtime.mjs';
 import { createDiffusionCanvas } from './lib/diffusion-canvas.mjs';
 import {
@@ -69,6 +76,7 @@ import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.m
 import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
+import { sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const handoff = parseFullTabHandoff(globalThis.location.search);
@@ -759,6 +767,11 @@ function renderMessages(messages = []) {
     const media = resolvedGeneratedImageSources(visibleText);
     const displayText = stripGeneratedImageEchoes(tagged.text, media);
     if (displayText) content.innerHTML = renderMarkdown(displayText);
+    if (role === 'user') {
+      appendUserImageAttachments(content, message.attachments, {
+        onOpen: (_image, preview) => openImageLightbox(preview.source, preview.name),
+      });
+    }
     const deferMediaGroup = role === 'assistant'
       && liveRun?.image
       && liveRun?.revealPending
@@ -1883,6 +1896,32 @@ async function createSession() {
   return activeSessionId;
 }
 
+async function compactActiveSessionContext({ automaticRecovery = false } = {}) {
+  if (!activeSessionId) return { ok: false, reason: 'no-session' };
+  if (!gatewayCapabilities.sessionCompress) return { ok: false, reason: 'route-unavailable' };
+  try {
+    const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/compress`, {
+      method: 'POST',
+      body: JSON.stringify({ source: automaticRecovery ? 'hermes_web_recovery' : 'hermes_web' }),
+    });
+    const payload = await client.readJson(response);
+    if (!response.ok) throw new Error(payload?.error?.message || payload?.error || payload?.message || `Context compaction failed (${response.status})`);
+    const compactedSessionId = String(payload?.rotated_session_id || payload?.session_id || '').trim();
+    if (compactedSessionId && compactedSessionId !== activeSessionId) {
+      activeSessionId = compactedSessionId;
+      settings = { ...settings, webSessionId: activeSessionId };
+      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      els.composerSessionLabel.textContent = activeSessionId;
+      renderTaskStack();
+    }
+    if (payload?.runtime && typeof payload.runtime === 'object') latestRuntime = payload.runtime;
+    renderContextWindow();
+    return { ok: true, sessionId: activeSessionId, payload };
+  } catch (error) {
+    return { ok: false, reason: 'request-failed', error };
+  }
+}
+
 async function sendPrompt(text) {
   if (sending) return;
   if (!activeSessionId) await createSession();
@@ -1900,6 +1939,7 @@ async function sendPrompt(text) {
   renderMessages(activeMessages);
   activeAbortController = new AbortController();
   const model = effectiveModel();
+  let contextRecoveryHandled = false;
   try {
     const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/chat/stream`, {
       method: 'POST',
@@ -1914,7 +1954,7 @@ async function sendPrompt(text) {
       }),
     });
     if (!response.ok || !response.body) throw new Error(`Hermes stream failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
-    await readHermesSse(response, {
+    const streamedAnswer = await readHermesSse(response, {
       signal: activeAbortController.signal,
       onAssistant: (content) => {
         assistant.content = content;
@@ -1949,14 +1989,38 @@ async function sendPrompt(text) {
         renderContextWindow();
       },
     });
+    if (sessionContextFailureRecovery(streamedAnswer, gatewayCapabilities)) {
+      const contextError = new Error(streamedAnswer);
+      contextError.requestAccepted = true;
+      throw contextError;
+    }
     const refreshed = await client.getSessionMessages(activeSessionId).catch(() => null);
     if (refreshed?.length) {
-      activeMessages = refreshed;
+      activeMessages = preserveUserImageAttachments(refreshed, activeMessages);
       if (!liveRun?.revealPending) renderMessages(activeMessages);
     }
     const listedSessions = normalizeHermesSessions(await client.listSessions({ limit: 200, maxPages: 5 }).catch(() => []));
     sessions = visibleHermesWebSessions(await migrateOwnedHermesWebSessionSources(listedSessions));
     renderSessions(els.sessionSearch.value);
+  } catch (error) {
+    const contextRecovery = sessionContextFailureRecovery(error, gatewayCapabilities);
+    if (!contextRecovery) throw error;
+    contextRecoveryHandled = true;
+    activeMessages = activeMessages.filter((message) => message !== assistant);
+    if (!els.prompt.value.trim()) els.prompt.value = text;
+    attachments = [...turnAttachments];
+    renderAttachments();
+    const compactResult = contextRecovery.action === 'compact'
+      ? await compactActiveSessionContext({ automaticRecovery: true })
+      : { ok: false, reason: 'new-session-required' };
+    const replayDetail = contextRecovery.retryTurn
+      ? 'Hermes may retry the accepted turn.'
+      : 'Browser did not replay the accepted turn, preventing a duplicate message.';
+    const recoveryDetail = compactResult.ok
+      ? 'Hermes compacted the session and Browser adopted the acknowledged successor when provided.'
+      : 'This runtime could not recover the session automatically. Start a new session, then resend the preserved draft.';
+    activeMessages = [...activeMessages, { role: 'system', content: `Session context reached its compression ceiling. ${recoveryDetail} ${replayDetail}` }];
+    els.composerStatus.textContent = compactResult.ok ? 'Context recovered · draft preserved' : 'New session required · draft preserved';
   } finally {
     if (liveRun?.revealPromise) await liveRun.revealPromise;
     activeAbortController = null;
@@ -1964,7 +2028,7 @@ async function sendPrompt(text) {
     clearLiveRun();
     setSending(false);
     renderMessages(activeMessages);
-    if (queuedTurn) {
+    if (queuedTurn && !contextRecoveryHandled) {
       const next = queuedTurn;
       queuedTurn = null;
       attachments = next.attachments || [];

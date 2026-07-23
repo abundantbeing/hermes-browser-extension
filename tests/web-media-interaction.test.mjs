@@ -24,6 +24,14 @@ test('Hermes Web exposes an accessible themed image lightbox and preserves the f
   assert.match(css, /\.image-lightbox\s*\{[^}]*width:\s*fit-content/s, 'the lightbox should fit portrait media instead of forcing a wide empty canvas');
 });
 
+test('Hermes Web renders sent user images and retains them through the immediate history refresh', () => {
+  assert.match(app, /appendUserImageAttachments/);
+  assert.match(app, /preserveUserImageAttachments/);
+  assert.match(app, /appendUserImageAttachments\([\s\S]{0,240}message\.attachments/);
+  assert.match(css, /\.user-message-images\s*\{/);
+  assert.match(css, /\.user-message-image-open\s*\{/);
+});
+
 test('only a safe first generated image source is chosen for the canvas reveal', () => {
   assert.equal(firstResolvedImageSource('Done.\nMEDIA:https://cdn.example.com/final.webp'), 'https://cdn.example.com/final.webp');
   assert.equal(firstResolvedImageSource('MEDIA:javascript:alert(1)'), '');

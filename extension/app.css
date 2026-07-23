@@ -372,6 +372,42 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
 .web-message.user .web-message-content pre { background: rgba(var(--hermes-white-rgb), 0.08); }
 .web-message-content code { font-family: var(--hermes-font-mono); }
 .web-message-content img { max-width: 100%; border: 1px solid currentColor; }
+.user-message-images {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
+.user-message-images.multiple { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.user-message-image-open {
+  display: grid;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  background: rgba(var(--hermes-white-rgb), 0.08);
+  color: inherit;
+  text-align: left;
+  cursor: zoom-in;
+}
+.user-message-image-open img {
+  display: block;
+  width: 100%;
+  max-height: min(58vh, 620px);
+  object-fit: contain;
+  border: 0;
+}
+.user-message-image-name {
+  display: block;
+  padding: 8px 10px;
+  overflow: hidden;
+  font-family: var(--hermes-font-mono);
+  font-size: 11px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .generated-media { margin: 18px 0 0; }
 .generated-media img { display: block; width: min(100%, 760px); height: auto; }
 .generated-media-open { position: relative; display: block; max-width: 100%; padding: 0; border: 1px solid currentColor; border-radius: 0; background: transparent; color: inherit; cursor: zoom-in; }

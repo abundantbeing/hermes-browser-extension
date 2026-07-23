@@ -14,6 +14,13 @@ test('generated images open in an accessible lightbox with a download action', (
   assert.match(sidepanelSource, /els\.messages\.addEventListener\('click'/);
 });
 
+test('side-panel user image attachments render inside the sent user message', () => {
+  assert.match(sidepanelSource, /appendUserImageAttachments/);
+  assert.match(sidepanelSource, /appendUserImageAttachments\([\s\S]{0,240}preparedAttachments/);
+  assert.match(cssSource, /\.user-message-images\s*\{/);
+  assert.match(cssSource, /\.user-message-image-open\s*\{/);
+});
+
 test('generated image result is handed to the existing animation before final inline rendering', () => {
   assert.match(sidepanelSource, /revealGeneratedImageFromContent/);
   assert.match(sidepanelSource, /activeImageGenerationPlaceholder/);
