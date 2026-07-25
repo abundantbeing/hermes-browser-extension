@@ -301,8 +301,12 @@ async function queueOpenSessionRequest(message, sender) {
   return { ok: true, sessionId, surface };
 }
 
+let contextMenusConfigured = false;
+
 async function configureContextMenus() {
   if (!chrome.contextMenus?.create) return;
+  if (contextMenusConfigured) return;
+  contextMenusConfigured = true;
   await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
     id: CONTEXT_MENU_ROOT_ID,
