@@ -53,19 +53,16 @@ def owner_from_hook_kwargs(kwargs: dict[str, Any]) -> ContextOwner | None:
     """Build an owner only from trusted Hermes hook kwargs.
 
     Tool arguments and browser-provided BCP data are intentionally ignored.
-    An owner must name a platform, Hermes session, and Hermes turn; task IDs
-    may be empty when Hermes has not assigned one.
+    Session, turn, and task IDs are required because they are the trusted
+    execution identifiers shared by pre-LLM, pre-tool, and post-tool hooks.
     """
-    platform = _trusted_identifier(kwargs.get("platform"))
-    sender_id = _trusted_identifier(kwargs.get("sender_id"))
     session_id = _trusted_identifier(kwargs.get("session_id"))
     turn_id = _trusted_identifier(kwargs.get("turn_id"))
     task_id = _trusted_identifier(kwargs.get("task_id"))
-    if not platform or not session_id or not turn_id:
+    if not session_id or not turn_id or not task_id:
         return None
-    principal_id = f"{platform}:{sender_id}" if sender_id else f"{platform}:session:{session_id}"
     return ContextOwner(
-        principal_id=principal_id,
+        principal_id=f"session:{session_id}",
         session_id=session_id,
         turn_id=turn_id,
         task_id=task_id,

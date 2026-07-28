@@ -186,16 +186,14 @@ test('hooks handle real Hermes **kwargs safely', () => {
   const script = `${pluginImportHarness}
 from companion_plugin.context_store import owner_from_hook_kwargs
 
-owner = owner_from_hook_kwargs({
-    "platform": "telegram",
-    "sender_id": "sender-1",
-    "session_id": "session-1",
-    "turn_id": "turn-1",
-    "task_id": "task-1",
-})
-assert owner.principal_id == "telegram:sender-1"
-assert owner_from_hook_kwargs({"platform": "telegram", "session_id": "session-1", "turn_id": "turn-1"}).principal_id == "telegram:session:session-1"
-assert owner_from_hook_kwargs({"platform": "telegram", "session_id": "session-1"}) is None
+shared = {"session_id": "session-1", "turn_id": "turn-1", "task_id": "task-1"}
+capture_owner = owner_from_hook_kwargs({"platform": "telegram", "sender_id": "sender-1", **shared})
+tool_owner = owner_from_hook_kwargs(shared)
+assert capture_owner == tool_owner
+assert capture_owner.principal_id == "session:session-1"
+assert owner_from_hook_kwargs({"platform": "web", "sender_id": "sender-2", **shared}) == tool_owner
+for missing in shared:
+    assert owner_from_hook_kwargs({key: value for key, value in shared.items() if key != missing}) is None
 `;
   runPluginPython(script);
 });
@@ -386,14 +384,17 @@ def envelope(page_text=PAGE_SENTINEL):
         "source_receipt": {"protocol": "hermes.browser.turn.v2", "version": 2, "context_hash": "a1b2c3d4e5f60789", "delivery": "full"},
     }
 
-def trusted(**overrides):
+def tool_hook(**overrides):
     values = {
-        "platform": "telegram",
-        "sender_id": "sender-1",
         "session_id": "session-1",
         "turn_id": "turn-1",
         "task_id": "task-1",
     }
+    values.update(overrides)
+    return values
+
+def capture_hook(**overrides):
+    values = {"platform": "telegram", "sender_id": "sender-1", **tool_hook()}
     values.update(overrides)
     return values
 
@@ -408,10 +409,10 @@ tools.set_store(store)
 
 # Legacy prompt blocks and malformed turn envelopes cannot create a v2 record.
 legacy = "UNTRUSTED_BROWSER_CONTEXT_START\\nPage text: " + PAGE_SENTINEL + "\\nUNTRUSTED_BROWSER_CONTEXT_END"
-assert hooks.pre_llm_call(user_message=legacy, **trusted()) is None
-assert hooks.pre_llm_call(user_message='{"protocol":"hermes.browser.turn.v2"}', **trusted()) is None
+assert hooks.pre_llm_call(user_message=legacy, **capture_hook()) is None
+assert hooks.pre_llm_call(user_message='{"protocol":"hermes.browser.turn.v2"}', **capture_hook()) is None
 
-notice = hooks.pre_llm_call(user_message=json.dumps(envelope()), **trusted())
+notice = hooks.pre_llm_call(user_message=json.dumps(envelope()), **capture_hook())
 assert isinstance(notice, dict) and "context_id=" in notice["context"]
 assert PAGE_SENTINEL not in notice["context"]
 context_id = context_id_from(notice)
@@ -422,7 +423,7 @@ direct = json.loads(tools.browser_get_context({"context_id": context_id}))
 assert direct == {"available": False, "reason": "Browser context unavailable."}
 
 # Status is owner scoped and intentionally leaves the record available.
-assert hooks.pre_tool_call(tool_name="browser_context_status", args={}, **trusted()) is None
+assert hooks.pre_tool_call(tool_name="browser_context_status", args={}, **tool_hook()) is None
 status = json.loads(tools.browser_context_status({}))
 assert status["available"] is True
 assert status["context_id"] == context_id
@@ -438,10 +439,9 @@ for schema in (schemas.SCHEMA_STATUS, schemas.SCHEMA_GET_CONTEXT, schemas.SCHEMA
     assert "task_id" not in json.dumps(schema)
 
 for wrong_owner in (
-    trusted(sender_id="sender-2"),
-    trusted(session_id="session-2"),
-    trusted(turn_id="turn-2"),
-    trusted(task_id="task-sibling"),
+    tool_hook(session_id="session-2"),
+    tool_hook(turn_id="turn-2"),
+    tool_hook(task_id="task-sibling"),
 ):
     blocked = hooks.pre_tool_call(
         tool_name="browser_get_context",
@@ -451,29 +451,29 @@ for wrong_owner in (
     assert blocked == {"action": "block", "message": "Browser context unavailable."}
     assert PAGE_SENTINEL not in json.dumps(blocked)
 
-assert hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, **trusted()) is None
+assert hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, **tool_hook()) is None
 claimed = json.loads(tools.browser_get_context({"context_id": context_id}))
 assert claimed["available"] is True
 assert claimed["context_id"] == context_id
 assert claimed["payload"]["pageContext"]["text"] == PAGE_SENTINEL
 
-replay = hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, **trusted())
+replay = hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, **tool_hook())
 assert replay == {"action": "block", "message": "Browser context unavailable."}
 
 # Diagnostics are owner scoped and do not retain tool args/results, page text,
 # or raw sender identifiers.
-hooks.post_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, result={"page": PAGE_SENTINEL}, duration_ms=1, **trusted())
-assert hooks.pre_tool_call(tool_name="browser_event_log", args={"limit": 50}, **trusted()) is None
+hooks.post_tool_call(tool_name="browser_get_context", args={"context_id": context_id}, result={"page": PAGE_SENTINEL}, duration_ms=1, **tool_hook())
+assert hooks.pre_tool_call(tool_name="browser_event_log", args={"limit": 50}, **tool_hook()) is None
 events = json.loads(tools.browser_event_log({"limit": 50}))
 event_blob = json.dumps(events)
 assert PAGE_SENTINEL not in event_blob
 assert "sender-1" not in event_blob
 
 # A concurrent pre-tool race can grant exactly one lease for one capability.
-concurrent_notice = hooks.pre_llm_call(user_message=json.dumps(envelope("CONCURRENT_PAGE_SENTINEL")), **trusted(turn_id="turn-concurrent"))
+concurrent_notice = hooks.pre_llm_call(user_message=json.dumps(envelope("CONCURRENT_PAGE_SENTINEL")), **capture_hook(turn_id="turn-concurrent"))
 concurrent_id = context_id_from(concurrent_notice)
 def consume_once():
-    decision = hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": concurrent_id}, **trusted(turn_id="turn-concurrent"))
+    decision = hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": concurrent_id}, **tool_hook(turn_id="turn-concurrent"))
     if decision is not None:
         return decision
     return json.loads(tools.browser_get_context({"context_id": concurrent_id}))
