@@ -94,8 +94,11 @@ validateBuildInfo(firefoxBuildInfo, 'Firefox build-info.json');
 if (!manifest.permissions?.includes('sidePanel')) errors.push('sidePanel permission missing');
 if (!manifest.permissions?.includes('storage')) errors.push('storage permission missing');
 if (manifest.permissions?.includes('debugger')) errors.push('debugger permission is intentionally not allowed');
-if (!manifest.optional_permissions?.includes('audioCapture')) errors.push('audioCapture optional permission missing for runtime microphone prompt');
-if (manifest.permissions?.includes('audioCapture')) errors.push('audioCapture should be optional so dictation can request it on click');
+for (const [label, candidate] of [['extension/manifest.json', manifest], ['root manifest.json', rootManifest]]) {
+  if (candidate?.permissions?.includes('audioCapture') || candidate?.optional_permissions?.includes('audioCapture')) {
+    errors.push(`${label} must not declare the unsupported Chrome Apps audioCapture permission; use getUserMedia instead`);
+  }
+}
 if (manifest.permissions?.includes('microphone') || manifest.optional_permissions?.includes('microphone')) {
   errors.push('microphone is a Web Permission name, not a Chrome extension manifest permission; use the request-permissions page instead');
 }

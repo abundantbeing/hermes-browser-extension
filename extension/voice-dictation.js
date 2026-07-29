@@ -46,37 +46,6 @@ function setRecording(value, label = '') {
   if (startButton) startButton.textContent = recording ? `Stop${label ? ` ${label}` : ''}` : 'Start dictation';
 }
 
-function chromeRuntimeErrorMessage() {
-  try {
-    return chrome.runtime?.lastError?.message || '';
-  } catch {
-    return '';
-  }
-}
-
-function chromePermissionCall(method, details) {
-  return new Promise((resolve, reject) => {
-    try {
-      method.call(chrome.permissions, details, (value) => {
-        const runtimeError = chromeRuntimeErrorMessage();
-        if (runtimeError) reject(new Error(runtimeError));
-        else resolve(Boolean(value));
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-async function ensureExtensionAudioPermission() {
-  const permissions = globalThis.chrome?.permissions;
-  if (!permissions) return true;
-  const details = { permissions: ['audioCapture'] };
-  if (permissions.request) return chromePermissionCall(permissions.request, details);
-  if (permissions.contains) return chromePermissionCall(permissions.contains, details);
-  return true;
-}
-
 function microphoneSettingsUrl() {
   const site = encodeURIComponent(`chrome-extension://${chrome.runtime.id}/`);
   return `chrome://settings/content/siteDetails?site=${site}`;
@@ -305,8 +274,6 @@ async function startRecording() {
   startButton.disabled = true;
   setStatus('Voice mode: Hermes STT\n\nRequesting microphone access…');
   try {
-    const permitted = await ensureExtensionAudioPermission();
-    if (!permitted) throw new DOMException('audioCapture permission was not granted', 'NotAllowedError');
     stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
     chunks = [];
     const mimeType = preferredVoiceMimeType();

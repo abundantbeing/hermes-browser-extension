@@ -2046,42 +2046,6 @@ function preferredVoiceMimeType() {
   return VOICE_AUDIO_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) || '';
 }
 
-function chromeRuntimeErrorMessage() {
-  try {
-    return globalThis.chrome?.runtime?.lastError?.message || '';
-  } catch {
-    return '';
-  }
-}
-
-function chromePermissionCall(method, details) {
-  return new Promise((resolve, reject) => {
-    try {
-      method.call(globalThis.chrome.permissions, details, (value) => {
-        const runtimeError = chromeRuntimeErrorMessage();
-        if (runtimeError) reject(new Error(runtimeError));
-        else resolve(Boolean(value));
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-async function ensureExtensionAudioPermission() {
-  const permissions = globalThis.chrome?.permissions;
-  if (!permissions) return true;
-  const details = { permissions: ['audioCapture'] };
-  try {
-    if (permissions.request) return await chromePermissionCall(permissions.request, details);
-    if (permissions.contains) return await chromePermissionCall(permissions.contains, details);
-    return true;
-  } catch (error) {
-    console.warn('Hermes Browser could not request audioCapture permission', error);
-    return false;
-  }
-}
-
 function microphonePermissionError(message = microphonePermissionHelp()) {
   const error = new Error(message);
   error.name = 'NotAllowedError';
@@ -2310,10 +2274,6 @@ function startWebSpeechDictation(detail = 'Speak to dictate into the Hermes comp
 }
 
 async function startRecorderDictation() {
-  const permitted = await ensureExtensionAudioPermission();
-  if (!permitted) {
-    throw microphonePermissionError();
-  }
   await ensureMicrophoneOriginPermission();
   const stream = await getMicrophoneStreamWithPermissionRetry();
   const mimeType = preferredVoiceMimeType();

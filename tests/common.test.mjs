@@ -1157,16 +1157,22 @@ test('voice dictation detects blocked microphone permissions with actionable gui
   assert.match(microphonePermissionHelp(), /Microphone to Allow/i);
 });
 
-test('manifest keeps audioCapture optional and includes visible microphone/voice extension pages', () => {
-  const manifest = JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
+test('manifests omit unsupported audioCapture permission and use the web microphone flow', () => {
+  const manifests = [
+    JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8')),
+    JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8')),
+  ];
   const permissionHtml = readFileSync(new URL('../extension/request-permissions.html', import.meta.url), 'utf8');
   const permissionJs = readFileSync(new URL('../extension/request-permissions.js', import.meta.url), 'utf8');
   const voiceHtml = readFileSync(new URL('../extension/voice-dictation.html', import.meta.url), 'utf8');
   const voiceJs = readFileSync(new URL('../extension/voice-dictation.js', import.meta.url), 'utf8');
-  assert.equal(manifest.permissions.includes('audioCapture'), false);
-  assert.equal(manifest.optional_permissions.includes('audioCapture'), true);
-  assert.equal(manifest.permissions.includes('microphone'), false);
-  assert.equal(manifest.optional_permissions?.includes('microphone'), false);
+  const sidepanelJs = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  for (const manifest of manifests) {
+    assert.equal(manifest.permissions.includes('audioCapture'), false);
+    assert.equal(Boolean(manifest.optional_permissions?.includes('audioCapture')), false);
+    assert.equal(manifest.permissions.includes('microphone'), false);
+    assert.equal(Boolean(manifest.optional_permissions?.includes('microphone')), false);
+  }
   assert.match(permissionHtml, /Allow microphone access/);
   assert.match(permissionHtml, /openMicrophoneSettingsButton/);
   assert.match(permissionJs, /addEventListener\('click', requestMicrophonePermission\)/);
@@ -1175,6 +1181,8 @@ test('manifest keeps audioCapture optional and includes visible microphone/voice
   assert.match(voiceHtml, /Voice dictation/);
   assert.match(voiceJs, /HERMES_VOICE_TRANSCRIPT/);
   assert.match(voiceJs, /getUserMedia\(\{ audio: \{ echoCancellation: true, noiseSuppression: true \} \}\)/);
+  assert.doesNotMatch(voiceJs, /chrome\.permissions|audioCapture/);
+  assert.doesNotMatch(sidepanelJs, /chrome\.permissions|audioCapture/);
   assert.match(voiceJs, /chrome:\/\/settings\/content\/siteDetails/);
 });
 
