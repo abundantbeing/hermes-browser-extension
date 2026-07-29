@@ -2810,6 +2810,40 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
   assert.equal(result.models.at(-1).contextTokens, 1_000_000);
 });
 
+test('Cloud Preview flattens provider-aware model.options payloads before rendering', async () => {
+  const { modelRowsFromGatewayOptions } = await import('../extension/lib/model-discovery.mjs');
+  const providerPayload = {
+    providers: [
+      {
+        slug: 'openai-codex',
+        name: 'OpenAI Codex',
+        authenticated: true,
+        models: ['gpt-5.6-sol', 'gpt-5.6-terra'],
+      },
+      {
+        slug: 'nous',
+        name: 'Nous Portal',
+        authenticated: true,
+        models: ['openai/gpt-5.5'],
+      },
+    ],
+  };
+
+  const normalized = normalizeHermesModels(modelRowsFromGatewayOptions(providerPayload));
+  assert.deepEqual(normalized.map((model) => model.id), [
+    'openai-codex::gpt-5.6-sol',
+    'openai-codex::gpt-5.6-terra',
+    'nous::openai/gpt-5.5',
+  ]);
+  assert.deepEqual(normalized.map((model) => model.provider), ['openai-codex', 'openai-codex', 'nous']);
+
+  const legacyRows = [{ id: 'legacy-model', provider: 'legacy' }];
+  assert.deepEqual(modelRowsFromGatewayOptions(legacyRows), legacyRows);
+
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(sidepanel, /modelRowsFromGatewayOptions\(await remoteWsConnection\.client\.request\(WS_METHODS\.modelOptions\)\)/);
+});
+
 test('discoverModelsFromDashboard extracts the dashboard token and fetches model options', async () => {
   const {
     dashboardModelDiscoveryBaseUrl,

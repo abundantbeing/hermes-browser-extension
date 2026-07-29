@@ -164,6 +164,7 @@ import {
   mergeModelsWithRegistry,
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   modelCatalogCacheKey,
+  modelRowsFromGatewayOptions,
   modelCatalogRefreshDecision,
   normalizeCachedModelCatalog,
   normalizeExternalModelSourceList,
@@ -3838,7 +3839,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
         renderModelOptions(availableModels);
         return { ok: false, count: availableModels.length, error: 'Remote Hermes is not connected.' };
       }
-      data = await remoteWsConnection.client.request(WS_METHODS.modelOptions);
+      data = modelRowsFromGatewayOptions(await remoteWsConnection.client.request(WS_METHODS.modelOptions));
       registrySource = 'dashboard';
     }
 

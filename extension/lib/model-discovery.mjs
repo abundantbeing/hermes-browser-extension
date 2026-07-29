@@ -164,6 +164,15 @@ export function modelsFromModelOptionsPayload(payload = {}) {
   return models;
 }
 
+export function modelRowsFromGatewayOptions(payload = {}) {
+  const providerModels = modelsFromModelOptionsPayload(payload);
+  if (providerModels.length || Array.isArray(payload?.providers)) return providerModels;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.models)) return payload.models;
+  return [];
+}
+
 export async function discoverModelsFromRegistry({
   apiFetch,
   readJsonResponse,
