@@ -63,6 +63,7 @@ import {
   normalizeToolActivity,
   normalizeReasoningEffort,
   pairingFailureMessage,
+  prepareOnDeviceSpeechRecognition,
   queuedMessageControlState,
   reasoningEffortShortLabel,
   requiresForeignSessionConfirmation,
@@ -73,6 +74,7 @@ import {
   shouldReuseImageGenerationActivity,
   shouldStopSessionPaging,
   shouldFallbackToWebSpeechForTranscription,
+  shouldUseLocalDashboardAudioTranscription,
   shouldAutoOpenSessionGroup,
   shouldAutoFlushQueuedTurn,
   shouldCreateFreshSessionOnOpen,
@@ -151,6 +153,7 @@ import {
   parseAgentPortsInput,
 } from './lib/agent-discovery.mjs';
 import {
+  transcribeAudioViaDashboard,
   dashboardModelDiscoveryBaseUrl,
   discoverCanonicalProviderCatalog,
   discoverModelsFromDashboard,
@@ -2037,6 +2040,13 @@ function canUseHermesVoiceTranscription() {
   return Boolean(settings.apiKey && gatewayCapabilities.audioTranscription && canRecordVoiceAudio());
 }
 
+function canUseLocalDashboardVoiceTranscription() {
+  return shouldUseLocalDashboardAudioTranscription({
+    gatewayMode: settings.gatewayMode,
+    recordingAvailable: canRecordVoiceAudio(),
+  });
+}
+
 function browserSpeechAvailable() {
   return Boolean(speechRecognitionConstructor());
 }
@@ -2167,11 +2177,15 @@ async function getMicrophoneStreamWithPermissionRetry() {
 
 function updateVoiceButtonState() {
   if (!els.voiceButton) return;
-  const supported = canUseHermesVoiceTranscription() || browserSpeechAvailable();
+  const supported = canUseHermesVoiceTranscription()
+    || canUseLocalDashboardVoiceTranscription()
+    || browserSpeechAvailable();
   els.voiceButton.disabled = !supported;
   els.voiceButton.classList.toggle('recording', dictating);
   els.voiceButton.classList.toggle('active', dictating);
-  const mode = canUseHermesVoiceTranscription() ? 'Hermes STT' : 'browser speech fallback';
+  const mode = canUseHermesVoiceTranscription()
+    ? 'Hermes API STT'
+    : (canUseLocalDashboardVoiceTranscription() ? 'Hermes Dashboard STT' : 'browser speech fallback');
   els.voiceButton.title = !supported
     ? 'Voice dictation is not supported in this browser or connected Hermes runtime'
     : (dictating ? `Stop voice dictation (${mode})` : `Start voice dictation (${mode})`);
@@ -2202,12 +2216,32 @@ function cleanupVoiceRecorder() {
 }
 
 async function transcribeVoiceRecording(blob) {
-  if (!canUseHermesVoiceTranscription()) {
+  const canUseApiTranscription = canUseHermesVoiceTranscription();
+  const canUseDashboardTranscription = canUseLocalDashboardVoiceTranscription();
+  if (!canUseApiTranscription && !canUseDashboardTranscription) {
     const error = new Error('Hermes audio transcription is unavailable on this gateway.');
     error.fallbackToWebSpeech = true;
     throw error;
   }
   const dataUrl = await blobToDataUrl(blob);
+  if (canUseDashboardTranscription && !canUseApiTranscription) {
+    const result = await transcribeAudioViaDashboard({
+      baseUrl: dashboardModelDiscoveryBaseUrl({
+        gatewayMode: normalizeGatewayMode(settings.gatewayMode),
+        gatewayUrl: settings.gatewayUrl,
+      }),
+      profile: settings.activeProfile,
+      dataUrl,
+      mimeType: blob.type || 'audio/webm',
+    });
+    if (!result.ok) {
+      const error = new Error(result.error || 'Hermes Dashboard voice transcription failed.');
+      error.status = result.status;
+      error.fallbackToWebSpeech = shouldFallbackToWebSpeechForTranscription(result.status);
+      throw error;
+    }
+    return result.transcript;
+  }
   const response = await apiFetch(AUDIO_TRANSCRIBE_ENDPOINT, {
     method: 'POST',
     body: JSON.stringify(buildAudioTranscriptionBody(dataUrl, blob.type || 'audio/webm')),
@@ -2255,15 +2289,25 @@ function ensureSpeechRecognition() {
   return speechRecognition;
 }
 
-function startWebSpeechDictation(detail = 'Speak to dictate into the Hermes composer.') {
+async function startWebSpeechDictation(detail = 'Speak to dictate into the Hermes composer.') {
   const recognition = ensureSpeechRecognition();
   if (!recognition) return false;
   dictationFinalText = '';
   try {
+    const preparation = await prepareOnDeviceSpeechRecognition({
+      Recognition: speechRecognitionConstructor(),
+      recognition,
+      language: recognition.lang,
+      onStatus: () => setStatus('ok', 'Preparing on-device dictation', 'Downloading the browser language pack once so voice dictation can run locally.'),
+    });
     recognition.start();
     dictating = true;
     updateVoiceButtonState();
-    setStatus('ok', 'Listening', detail);
+    setStatus(
+      'ok',
+      preparation.mode === 'local' ? 'Listening on device' : 'Listening',
+      preparation.mode === 'local' ? 'Speech recognition is running locally in the browser.' : detail,
+    );
     return true;
   } catch (error) {
     dictating = false;
@@ -2311,7 +2355,7 @@ async function startRecorderDictation() {
       applyDictationTranscript(transcript);
       setStatus('ok', 'Voice dictation ready', 'Transcript inserted into the composer.');
     } catch (error) {
-      if (error?.fallbackToWebSpeech && startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback; speak again.')) {
+      if (error?.fallbackToWebSpeech && await startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback; speak again.')) {
         return;
       }
       setStatus('warn', 'Voice transcription failed', error?.message || String(error));
@@ -2347,8 +2391,10 @@ async function toggleVoiceDictation() {
   dictationBaseText = els.input.value.trim();
   dictationFinalText = '';
   await loadGatewayCapabilities({ quiet: true, healthOk: isConnected() }).catch(() => {});
-  if (!canUseHermesVoiceTranscription() && startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback.')) return;
-  if (canUseHermesVoiceTranscription()) {
+  const canUseRecorderTranscription = canUseHermesVoiceTranscription()
+    || canUseLocalDashboardVoiceTranscription();
+  if (!canUseRecorderTranscription && await startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback.')) return;
+  if (canUseRecorderTranscription) {
     try {
       await startRecorderDictation();
       return;
@@ -2361,12 +2407,12 @@ async function toggleVoiceDictation() {
         await openVoiceDictationPage('Comet/Chromium blocked microphone capture inside the side panel. Use this visible Hermes Voice tab once; it will transcribe locally through Hermes and send the text back here.');
         return;
       }
-      if (startWebSpeechDictation('Hermes microphone capture failed. Using browser speech fallback.')) return;
+      if (await startWebSpeechDictation('Hermes microphone capture failed. Using browser speech fallback.')) return;
       setStatus('warn', 'Voice dictation unavailable', error?.message || String(error));
       return;
     }
   }
-  if (startWebSpeechDictation()) return;
+  if (await startWebSpeechDictation()) return;
   await openVoiceDictationPage('This side panel context cannot capture microphone audio directly. Use the Hermes Voice tab to dictate into the composer.');
   updateVoiceButtonState();
 }
@@ -3640,6 +3686,14 @@ async function requestSessionModelLock(selected = currentSelectedModel(), { sess
 }
 
 async function syncSessionModelLock(selected, { previousId = '', previousBinding = null, requestedDetail = '', statusDetail = '' } = {}) {
+  if (isUnsavedBrowserDraftSession({ sessionId: settings.sessionId, sessions: availableSessions })) {
+    setStatus(
+      'warn',
+      'Hermes model requested',
+      `${requestedDetail || modelDisplayName(selected) || settings.model} — selected for this draft; Hermes will confirm it when the first message saves the session.${statusDetail ? ` ${statusDetail}` : ''}`,
+    );
+    return { state: 'pending', payload: null };
+  }
   const supportsLock = Boolean(gatewayCapabilities?.sessionModelLock || gatewayCapabilities?.endpoints?.session_model_lock);
   if (!supportsLock || !settings.sessionId) {
     setStatus(

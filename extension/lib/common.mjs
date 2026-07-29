@@ -1216,6 +1216,10 @@ const MODEL_CONTEXT_FALLBACKS = Object.freeze([
   ['qwen3.6-plus', 1_048_576],
   ['qwen3-coder-plus', 1_000_000],
   ['qwen3-coder', 262_144],
+  ['qwen3.8-max-preview', 1_000_000],
+  ['qwen3.7-max', 1_000_000],
+  ['qwen3.7-plus', 1_000_000],
+  ['qwen3.6-flash', 1_000_000],
   ['qwen', 131_072],
   ['minimax-m3', 1_000_000],
   ['minimax/m3', 1_000_000],
@@ -1955,6 +1959,15 @@ function modelContextTokens(model = {}) {
   // for Codex OAuth's real 272K GPT-5.6 window.
   if (Number.isFinite(number) && number > 0) {
     if (number === 400_000 && fallback === 272_000) return fallback;
+    // Qwen Token Plan slugs (qwen3.6/3.7/3.8 max/plus/flash) are 1M, but a
+    // stale Hermes runtime or cached model catalog often reports the generic
+    // qwen family default (131072) instead. When the curated table knows the
+    // specific 1M window, trust it over that stale generic value so the picker
+    // is correct without needing the dashboard up + a manual model refresh.
+    if (number === 131_072 && fallback === 1_000_000) {
+      const haystack = `${model.id ?? ''} ${model.rawModelId ?? ''} ${model.raw_model_id ?? ''} ${model.model ?? ''} ${model.name ?? ''}`.toLowerCase();
+      if (/qwen3\.[6-9]-/.test(haystack)) return fallback;
+    }
     return number;
   }
   return fallback;
@@ -1993,6 +2006,59 @@ export function buildAudioTranscriptionBody(dataUrl = '', mimeType = 'audio/webm
 
 export function shouldFallbackToWebSpeechForTranscription(status = 0) {
   return new Set([404, 405, 501]).has(Number(status));
+}
+
+export function shouldUseLocalDashboardAudioTranscription({
+  gatewayMode = 'local-api',
+  recordingAvailable = false,
+} = {}) {
+  return normalizeGatewayMode(gatewayMode) === 'local-api' && Boolean(recordingAvailable);
+}
+
+export function onDeviceSpeechRecognitionAction(availability = '') {
+  const state = String(availability || '').trim().toLowerCase();
+  if (state === 'available') return 'start-local';
+  if (state === 'downloadable' || state === 'downloading') return 'install-local';
+  return 'start-cloud';
+}
+
+export async function prepareOnDeviceSpeechRecognition({
+  Recognition = null,
+  recognition = null,
+  language = 'en-US',
+  onStatus = null,
+} = {}) {
+  const supportsLocal = Boolean(
+    Recognition
+      && recognition
+      && 'processLocally' in recognition
+      && typeof Recognition.available === 'function'
+      && typeof Recognition.install === 'function',
+  );
+  if (!supportsLocal) return { mode: 'cloud', availability: 'unsupported' };
+
+  const options = { langs: [String(language || 'en-US')], processLocally: true };
+  try {
+    const availability = await Recognition.available(options);
+    const action = onDeviceSpeechRecognitionAction(availability);
+    if (action === 'start-local') {
+      recognition.processLocally = true;
+      return { mode: 'local', availability };
+    }
+    if (action === 'install-local') {
+      onStatus?.('installing');
+      const installed = await Recognition.install(options);
+      if (installed) {
+        recognition.processLocally = true;
+        return { mode: 'local', availability: 'available', installed: true };
+      }
+    }
+  } catch (error) {
+    return { mode: 'cloud', availability: 'error', error };
+  }
+
+  recognition.processLocally = false;
+  return { mode: 'cloud', availability: 'unavailable' };
 }
 
 export function isMicrophonePermissionError(error = {}) {

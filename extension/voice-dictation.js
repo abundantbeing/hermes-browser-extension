@@ -3,12 +3,18 @@ import {
   DEFAULT_SETTINGS,
   buildAudioTranscriptionBody,
   normalizeGatewayUrl,
+  prepareOnDeviceSpeechRecognition,
   shouldFallbackToWebSpeechForTranscription,
+  shouldUseLocalDashboardAudioTranscription,
 } from './lib/common.mjs';
 import {
   DEFAULT_GATEWAY_CAPABILITIES,
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
+import {
+  dashboardModelDiscoveryBaseUrl,
+  transcribeAudioViaDashboard,
+} from './lib/model-discovery.mjs';
 
 const startButton = document.getElementById('startVoiceButton');
 const settingsButton = document.getElementById('openMicSettingsButton');
@@ -79,6 +85,13 @@ function canRecordVoiceAudio() {
 
 function canUseHermesStt() {
   return Boolean(settings.apiKey && capabilities.audioTranscription && canRecordVoiceAudio());
+}
+
+function canUseLocalDashboardStt() {
+  return shouldUseLocalDashboardAudioTranscription({
+    gatewayMode: settings.gatewayMode,
+    recordingAvailable: canRecordVoiceAudio(),
+  });
 }
 
 function stopStream() {
@@ -153,12 +166,32 @@ async function loadCapabilities() {
 }
 
 async function transcribeVoiceRecording(blob) {
-  if (!canUseHermesStt()) {
+  const canUseApiTranscription = canUseHermesStt();
+  const canUseDashboardTranscription = canUseLocalDashboardStt();
+  if (!canUseApiTranscription && !canUseDashboardTranscription) {
     const error = new Error('Hermes audio transcription is unavailable on this gateway.');
     error.fallbackToWebSpeech = true;
     throw error;
   }
   const dataUrl = await blobToDataUrl(blob);
+  if (canUseDashboardTranscription && !canUseApiTranscription) {
+    const result = await transcribeAudioViaDashboard({
+      baseUrl: dashboardModelDiscoveryBaseUrl({
+        gatewayMode: settings.gatewayMode,
+        gatewayUrl: settings.gatewayUrl,
+      }),
+      profile: settings.activeProfile,
+      dataUrl,
+      mimeType: blob.type || 'audio/webm',
+    });
+    if (!result.ok) {
+      const error = new Error(result.error || 'Hermes Dashboard voice transcription failed.');
+      error.status = result.status;
+      error.fallbackToWebSpeech = shouldFallbackToWebSpeechForTranscription(result.status);
+      throw error;
+    }
+    return result.transcript;
+  }
   const response = await apiFetch(AUDIO_TRANSCRIBE_ENDPOINT, {
     method: 'POST',
     body: JSON.stringify(buildAudioTranscriptionBody(dataUrl, blob.type || 'audio/webm')),
@@ -232,7 +265,7 @@ function ensureBrowserSpeech() {
   return speechRecognition;
 }
 
-function startBrowserSpeechFallback() {
+async function startBrowserSpeechFallback() {
   const recognition = ensureBrowserSpeech();
   if (!recognition) {
     setStatus('Voice mode unavailable. This browser does not expose Hermes STT or Web Speech fallback.');
@@ -242,10 +275,18 @@ function startBrowserSpeechFallback() {
   speechInterimText = '';
   try {
     startButton.disabled = false;
+    const preparation = await prepareOnDeviceSpeechRecognition({
+      Recognition: speechRecognitionConstructor(),
+      recognition,
+      language: recognition.lang,
+      onStatus: () => setStatus('Voice mode: On-device speech\n\nDownloading the browser language pack once…'),
+    });
     recognition.start();
     speechActive = true;
     setRecording(true, 'speech');
-    setStatus('Voice mode: Browser speech fallback\n\nListening… speak now, then click Stop.');
+    setStatus(preparation.mode === 'local'
+      ? 'Voice mode: On-device speech\n\nListening locally… speak now, then click Stop.'
+      : 'Voice mode: Browser speech fallback\n\nListening… speak now, then click Stop.');
     return true;
   } catch (error) {
     speechActive = false;
@@ -309,7 +350,7 @@ async function startRecording() {
         setStatus(`Transcript sent to the Hermes side panel:\n\n${transcript}`);
         setTimeout(() => window.close(), 1600);
       } catch (error) {
-        if (error?.fallbackToWebSpeech && startBrowserSpeechFallback()) return;
+        if (error?.fallbackToWebSpeech && await startBrowserSpeechFallback()) return;
         setStatus(`Voice transcription failed.\n\n${error?.message || String(error)}`);
       } finally {
         startButton.disabled = false;
@@ -323,7 +364,7 @@ async function startRecording() {
     stopStream();
     if (isMicrophoneBlocked(error)) {
       setStatus(`Microphone permission is blocked for Hermes Browser Extension.\n\nClick Open microphone settings, set Microphone to Allow for this extension, return here, then click Start dictation again.\n\n${error?.message || String(error)}`);
-    } else if (startBrowserSpeechFallback()) {
+    } else if (await startBrowserSpeechFallback()) {
       return;
     } else {
       setStatus(`Could not start voice dictation.\n\n${error?.message || String(error)}`);
@@ -343,11 +384,11 @@ function stopRecording() {
 
 async function startBestVoiceMode() {
   await loadCapabilities();
-  if (canUseHermesStt()) {
+  if (canUseHermesStt() || canUseLocalDashboardStt()) {
     await startRecording();
     return;
   }
-  if (startBrowserSpeechFallback()) return;
+  if (await startBrowserSpeechFallback()) return;
   if (!settings.apiKey) {
     setStatus('Voice mode unavailable. Connect Hermes for STT, or use a Chromium build that supports browser speech fallback.');
   } else {
@@ -371,8 +412,8 @@ try {
   await loadCapabilities();
   if (!loadedFromExtensionStorage) {
     setStatus('Preview mode: load this page from the installed Hermes Browser Extension to use connected Hermes settings and voice dictation.');
-  } else if (canUseHermesStt()) {
-    setStatus('Voice mode: Hermes STT\n\nAudio is sent once to your configured Hermes transcription endpoint when you stop recording.');
+  } else if (canUseHermesStt() || canUseLocalDashboardStt()) {
+    setStatus('Voice mode: Hermes STT\n\nAudio is sent once to your local Hermes transcription endpoint when you stop recording.');
   } else if (browserSpeechAvailable()) {
     setStatus('Voice mode: Browser speech fallback\n\nHermes STT is unavailable on this gateway. Speech recognition runs in the browser; only the transcript is sent back to the side panel.');
   } else if (!canRecordVoiceAudio()) {

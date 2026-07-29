@@ -891,6 +891,19 @@ test('model selection stays pending until runtime metadata confirms or warns', (
   assert.match(source, /Model lock failed|model lock failed/i);
 });
 
+test('model selection stays local while the active Browser draft is unsaved', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const lockSync = source.match(/async function syncSessionModelLock\([\s\S]*?\r?\n\}\r?\n\r?\nasync function ensureActiveSessionModelLockOrThrow/)?.[0] || '';
+
+  assert.match(lockSync, /isUnsavedBrowserDraftSession\(\{ sessionId: settings\.sessionId, sessions: availableSessions \}\)/);
+  assert.match(lockSync, /Hermes model requested/);
+  assert.match(lockSync, /state:\s*'pending'/);
+  assert.ok(
+    lockSync.indexOf('isUnsavedBrowserDraftSession') < lockSync.indexOf('const rollbackScope'),
+    'unsaved drafts must stay pending before the hard-failure rollback path',
+  );
+});
+
 test('model runtime ack helper distinguishes pending confirmed and mismatch states', () => {
   assert.equal(modelRuntimeAckState({ requested: { provider: 'nous', model: 'x-ai/grok-4.5' }, runtime: {} }).state, 'pending');
   assert.equal(modelRuntimeAckState({ requested: { provider: 'nous', model: 'x-ai/grok-4.5' }, runtime: { provider: 'nous', model: 'x-ai/grok-4.5' } }).state, 'confirmed');
@@ -1148,6 +1161,122 @@ test('voice dictation targets the Desktop-compatible Hermes audio transcription 
   assert.equal(shouldFallbackToWebSpeechForTranscription(500), false);
 });
 
+test('voice dictation uses the authenticated local Dashboard transcription route when the API server omits audio', async () => {
+  const {
+    dashboardAudioTranscriptionUrl,
+    transcribeAudioViaDashboard,
+  } = await import('../extension/lib/model-discovery.mjs');
+
+  assert.equal(
+    dashboardAudioTranscriptionUrl('http://127.0.0.1:9119/sessions', 'default'),
+    'http://127.0.0.1:9119/api/audio/transcribe?profile=default',
+  );
+  assert.equal(common.shouldUseLocalDashboardAudioTranscription({
+    gatewayMode: 'local-api',
+    recordingAvailable: true,
+  }), true);
+  assert.equal(common.shouldUseLocalDashboardAudioTranscription({
+    gatewayMode: 'remote-api',
+    recordingAvailable: true,
+  }), false);
+
+  const calls = [];
+  const responses = [
+    {
+      ok: true,
+      status: 200,
+      text: async () => '<script>window.__HERMES_SESSION_TOKEN__="dashboard-test-token";</script>',
+    },
+    {
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify({ ok: true, transcript: 'voice path works', provider: 'local' }),
+    },
+  ];
+  const result = await transcribeAudioViaDashboard({
+    baseUrl: 'http://127.0.0.1:9119/sessions',
+    profile: 'default',
+    dataUrl: 'data:audio/webm;base64,AAAA',
+    mimeType: 'audio/webm',
+    fetchFn: async (url, options) => {
+      calls.push({ url, options });
+      return responses.shift();
+    },
+  });
+
+  assert.deepEqual(result, {
+    ok: true,
+    transcript: 'voice path works',
+    provider: 'local',
+    error: '',
+    status: 200,
+  });
+  assert.equal(calls[0].url, 'http://127.0.0.1:9119/sessions');
+  assert.equal(calls[1].url, 'http://127.0.0.1:9119/api/audio/transcribe?profile=default');
+  assert.equal(calls[1].options.headers['X-Hermes-Session-Token'], 'dashboard-test-token');
+  assert.deepEqual(JSON.parse(calls[1].options.body), {
+    data_url: 'data:audio/webm;base64,AAAA',
+    mime_type: 'audio/webm',
+  });
+
+  const sidepanelJs = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const voiceJs = readFileSync(new URL('../extension/voice-dictation.js', import.meta.url), 'utf8');
+  for (const source of [sidepanelJs, voiceJs]) {
+    assert.match(source, /transcribeAudioViaDashboard/);
+    assert.match(source, /shouldUseLocalDashboardAudioTranscription/);
+  }
+});
+
+test('voice dictation prefers on-device speech and installs a language pack when available', async () => {
+  assert.equal(common.onDeviceSpeechRecognitionAction('available'), 'start-local');
+  assert.equal(common.onDeviceSpeechRecognitionAction('downloadable'), 'install-local');
+  assert.equal(common.onDeviceSpeechRecognitionAction('downloading'), 'install-local');
+  assert.equal(common.onDeviceSpeechRecognitionAction('unavailable'), 'start-cloud');
+  assert.equal(common.onDeviceSpeechRecognitionAction('unknown'), 'start-cloud');
+
+  const localRecognition = { processLocally: false };
+  const local = await common.prepareOnDeviceSpeechRecognition({
+    Recognition: { available: async () => 'available', install: async () => true },
+    recognition: localRecognition,
+    language: 'en-US',
+  });
+  assert.equal(local.mode, 'local');
+  assert.equal(localRecognition.processLocally, true);
+
+  let installs = 0;
+  const installedRecognition = { processLocally: false };
+  const installed = await common.prepareOnDeviceSpeechRecognition({
+    Recognition: {
+      available: async () => 'downloadable',
+      install: async () => { installs += 1; return true; },
+    },
+    recognition: installedRecognition,
+    language: 'en-US',
+  });
+  assert.equal(installed.mode, 'local');
+  assert.equal(installs, 1);
+  assert.equal(installedRecognition.processLocally, true);
+
+  const cloudRecognition = { processLocally: false };
+  const cloud = await common.prepareOnDeviceSpeechRecognition({
+    Recognition: { available: async () => 'unavailable', install: async () => true },
+    recognition: cloudRecognition,
+    language: 'en-US',
+  });
+  assert.equal(cloud.mode, 'cloud');
+  assert.equal(cloudRecognition.processLocally, false);
+
+  const sidepanelJs = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const voiceJs = readFileSync(new URL('../extension/voice-dictation.js', import.meta.url), 'utf8');
+  for (const source of [sidepanelJs, voiceJs]) {
+    assert.match(source, /prepareOnDeviceSpeechRecognition/);
+  }
+  const commonJs = readFileSync(new URL('../extension/lib/common.mjs', import.meta.url), 'utf8');
+  assert.match(commonJs, /Recognition\.available/);
+  assert.match(commonJs, /Recognition\.install/);
+  assert.match(commonJs, /processLocally\s*=\s*true/);
+});
+
 test('voice dictation detects blocked microphone permissions with actionable guidance', () => {
   assert.equal(isMicrophonePermissionError({ name: 'NotAllowedError', message: 'Permission denied' }), true);
   assert.equal(isMicrophonePermissionError({ error: 'not-allowed' }), true);
@@ -1352,6 +1481,29 @@ test('normalizeHermesModels does not keep default hermes-agent fallback when rea
 test('normalizeHermesModels applies curated context fallback when provider rows omit limits', () => {
   const models = normalizeHermesModels({ data: [{ id: 'minimax:MiniMax-M3', name: 'MiniMax-M3', context_length: 0 }] }, 'minimax:MiniMax-M3');
   assert.equal(models[0].contextTokens, 1000000);
+});
+
+test('normalizeHermesModels applies 1M context fallback for Qwen Token Plan models', () => {
+  for (const model of ['qwen3.8-max-preview', 'qwen3.7-max', 'qwen3.7-plus', 'qwen3.6-flash']) {
+    const qwenModels = normalizeHermesModels({ data: [{ id: model, rawModelId: model, provider: 'qwen-token-plan', context_length: 0 }] }, model);
+    assert.equal(qwenModels[0].contextTokens, 1_000_000, `${model} should fall back to 1M context`);
+  }
+
+  const unknownQwen = normalizeHermesModels({ data: [{ id: 'qwen-unknown-model', context_length: 0 }] }, 'qwen-unknown-model');
+  assert.equal(unknownQwen[0].contextTokens, 131_072, 'unrecognized qwen models should keep the generic 131072 catch-all');
+});
+
+test('normalizeHermesModels overrides a stale 131072 runtime with curated 1M for Qwen Token Plan models', () => {
+  for (const model of ['qwen3.8-max-preview', 'qwen3.7-max', 'qwen3.7-plus', 'qwen3.6-flash']) {
+    const stale = normalizeHermesModels({ data: [{ id: model, rawModelId: model, provider: 'qwen-token-plan', context_length: 131072 }] }, model);
+    assert.equal(stale[0].contextTokens, 1_000_000, `${model} should prefer curated 1M over a stale 131072 runtime`);
+  }
+
+  const customRuntime = normalizeHermesModels({ data: [{ id: 'qwen3.8-max-preview', rawModelId: 'qwen3.8-max-preview', provider: 'qwen-token-plan', context_length: 262144 }] }, 'qwen3.8-max-preview');
+  assert.equal(customRuntime[0].contextTokens, 262144, 'a real non-default runtime limit must still be trusted');
+
+  const nonQwen = normalizeHermesModels({ data: [{ id: 'claude-opus-4.8', rawModelId: 'claude-opus-4.8', provider: 'anthropic', context_length: 131072 }] }, 'claude-opus-4.8');
+  assert.equal(nonQwen[0].contextTokens, 131_072, 'the stale-runtime repair must stay scoped to qwen3.6-3.9 slugs');
 });
 
 test('normalizeHermesModels uses provider-aware GPT-5.5 context fallbacks', () => {

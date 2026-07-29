@@ -354,6 +354,103 @@ export function dashboardModelOptionsUrl(baseUrl = '', refresh = false, profile 
   }
 }
 
+export function dashboardAudioTranscriptionUrl(baseUrl = LOCAL_DASHBOARD_URL, profile = '') {
+  try {
+    const url = new URL(String(baseUrl || LOCAL_DASHBOARD_URL).trim());
+    url.hash = '';
+    url.search = '';
+    url.pathname = '/api/audio/transcribe';
+    const profileName = String(profile || '').trim();
+    if (profileName) url.searchParams.set('profile', profileName);
+    return url.toString();
+  } catch {
+    const profileName = String(profile || '').trim();
+    const suffix = profileName ? `?profile=${encodeURIComponent(profileName)}` : '';
+    return `${String(baseUrl || LOCAL_DASHBOARD_URL).replace(/\/+$/, '')}/api/audio/transcribe${suffix}`;
+  }
+}
+
+export async function transcribeAudioViaDashboard({
+  baseUrl = LOCAL_DASHBOARD_URL,
+  fetchFn = globalThis.fetch?.bind(globalThis),
+  profile = '',
+  dataUrl = '',
+  mimeType = 'audio/webm',
+  rootTimeoutMs = 2500,
+  transcriptionTimeoutMs = 120000,
+} = {}) {
+  const dashboardUrl = String(baseUrl || '').trim();
+  if (!dashboardUrl) return { ok: false, transcript: '', provider: '', error: 'no-dashboard-url', status: 0 };
+  if (!String(dataUrl || '').startsWith('data:')) {
+    return { ok: false, transcript: '', provider: '', error: 'invalid-audio-payload', status: 0 };
+  }
+  try {
+    const rootResponse = await fetchWithTimeout(fetchFn, dashboardUrl, {
+      method: 'GET',
+      headers: { Accept: 'text/html' },
+      credentials: 'include',
+      cache: 'no-store',
+    }, rootTimeoutMs);
+    if (!rootResponse.ok) {
+      return {
+        ok: false,
+        transcript: '',
+        provider: '',
+        error: `dashboard-root-${rootResponse.status}`,
+        status: rootResponse.status,
+      };
+    }
+    const token = extractDashboardSessionToken(await rootResponse.text());
+    if (!token) {
+      return { ok: false, transcript: '', provider: '', error: 'no-dashboard-session-token', status: 0 };
+    }
+    const response = await fetchWithTimeout(fetchFn, dashboardAudioTranscriptionUrl(dashboardUrl, profile), {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Hermes-Session-Token': token,
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        data_url: String(dataUrl || ''),
+        mime_type: String(mimeType || 'audio/webm'),
+      }),
+    }, transcriptionTimeoutMs);
+    const text = await response.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = { error: text.slice(0, 500) };
+    }
+    if (!response.ok) {
+      return {
+        ok: false,
+        transcript: '',
+        provider: '',
+        error: payload?.detail || payload?.error?.message || payload?.error || `dashboard-transcription-${response.status}`,
+        status: response.status,
+      };
+    }
+    return {
+      ok: true,
+      transcript: String(payload?.transcript || '').trim(),
+      provider: String(payload?.provider || ''),
+      error: '',
+      status: response.status,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      transcript: '',
+      provider: '',
+      error: error?.name === 'AbortError' ? 'dashboard-transcription-timeout' : (error?.message || 'dashboard-transcription-error'),
+      status: 0,
+    };
+  }
+}
+
 export async function discoverModelsFromDashboard({
   baseUrl = LOCAL_DASHBOARD_URL,
   fetchFn = globalThis.fetch?.bind(globalThis),
