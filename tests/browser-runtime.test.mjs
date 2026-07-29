@@ -191,6 +191,7 @@ function createBackgroundHarness({
   runtimeContexts = [],
   sidePanelOpen = async () => {},
   synchronizeFallbackQueries = false,
+  contextMenuRemoveAll = async () => {},
 } = {}) {
   const activeTab = { id: 7, windowId: 8 };
   const extensionTabs = [];
@@ -199,15 +200,18 @@ function createBackgroundHarness({
   const focusedWindows = [];
   const sidePanelOpenCalls = [];
   const sidePanelOptions = [];
+  const contextMenuCreateCalls = [];
+  let contextMenuRemoveAllCalls = 0;
   let actionHandler = null;
   let installedHandler = null;
+  let startupHandler = null;
   const chromeApi = {
     runtime: {
       getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
       getURL: (value) => `chrome-extension://test/${value}`,
       getContexts: async () => runtimeContexts,
       onInstalled: { addListener(handler) { installedHandler = handler; } },
-      onStartup: { addListener() {} },
+      onStartup: { addListener(handler) { startupHandler = handler; } },
       onMessage: { addListener() {} },
     },
     storage: {
@@ -258,6 +262,16 @@ function createBackgroundHarness({
       create: async () => {},
       update: async (windowId, options) => { focusedWindows.push({ windowId, options }); },
     },
+    contextMenus: {
+      removeAll: async () => {
+        contextMenuRemoveAllCalls += 1;
+        return contextMenuRemoveAll(contextMenuRemoveAllCalls);
+      },
+      create: (options, callback) => {
+        contextMenuCreateCalls.push(options);
+        callback?.();
+      },
+    },
   };
 
   return {
@@ -268,8 +282,11 @@ function createBackgroundHarness({
     focusedWindows,
     sidePanelOpenCalls,
     sidePanelOptions,
+    contextMenuCreateCalls,
+    get contextMenuRemoveAllCalls() { return contextMenuRemoveAllCalls; },
     get actionHandler() { return actionHandler; },
     get installedHandler() { return installedHandler; },
+    get startupHandler() { return startupHandler; },
   };
 }
 
@@ -291,6 +308,46 @@ test('global residency updates only the default path and preserves existing tab 
       false,
       'global mode must not rewrite tabs that already own attached panel documents',
     );
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background serializes concurrent lifecycle context-menu configuration', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness({
+    contextMenuRemoveAll: async () => new Promise((resolve) => setTimeout(resolve, 20)),
+  });
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?concurrent-context-menus=${Date.now()}`);
+    assert.equal(typeof harness.installedHandler, 'function');
+    assert.equal(typeof harness.startupHandler, 'function');
+    await Promise.all([harness.installedHandler(), harness.startupHandler()]);
+    assert.equal(harness.contextMenuRemoveAllCalls, 1, 'concurrent lifecycle events must share one configuration attempt');
+    assert.equal(harness.contextMenuCreateCalls.length, 7, 'one root and six child menus must be created exactly once');
+    assert.equal(new Set(harness.contextMenuCreateCalls.map((item) => item.id)).size, 7);
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background retries context-menu configuration after a failed removal', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness({
+    contextMenuRemoveAll: async (attempt) => {
+      if (attempt === 1) throw new Error('context menu removal failed');
+    },
+  });
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?retry-context-menus=${Date.now()}`);
+    await assert.rejects(harness.installedHandler(), /context menu removal failed/);
+    await harness.startupHandler();
+    assert.equal(harness.contextMenuRemoveAllCalls, 2, 'a failed attempt must not poison later lifecycle retries');
+    assert.equal(harness.contextMenuCreateCalls.length, 7);
   } finally {
     globalThis.chrome = originalChrome;
   }

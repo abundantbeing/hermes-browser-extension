@@ -31,6 +31,7 @@ import {
 } from './lib/assist-model-contract.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
+let contextMenuConfigurationPromise = null;
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
 const CONTEXT_MENU_STORAGE_KEY = 'hermesBrowserContextMenuRequest';
@@ -301,21 +302,42 @@ async function queueOpenSessionRequest(message, sender) {
   return { ok: true, sessionId, surface };
 }
 
-async function configureContextMenus() {
-  if (!chrome.contextMenus?.create) return;
-  await chrome.contextMenus.removeAll();
-  chrome.contextMenus.create({
-    id: CONTEXT_MENU_ROOT_ID,
-    title: 'Hermes Browser',
-    contexts: ['page', 'selection', 'editable', 'link', 'image', 'video', 'audio'],
-  });
-  for (const item of CONTEXT_MENU_ITEMS) {
-    chrome.contextMenus.create({
-      id: item.id,
-      parentId: CONTEXT_MENU_ROOT_ID,
-      title: item.title,
-      contexts: item.contexts,
+function createContextMenu(options) {
+  return new Promise((resolve, reject) => {
+    chrome.contextMenus.create(options, () => {
+      const message = chrome.runtime?.lastError?.message || '';
+      if (message) reject(new Error(message));
+      else resolve();
     });
+  });
+}
+
+async function configureContextMenus() {
+  if (!chrome.contextMenus?.create || !chrome.contextMenus?.removeAll) return;
+  if (contextMenuConfigurationPromise) return contextMenuConfigurationPromise;
+
+  const configuration = (async () => {
+    await chrome.contextMenus.removeAll();
+    await createContextMenu({
+      id: CONTEXT_MENU_ROOT_ID,
+      title: 'Hermes Browser',
+      contexts: ['page', 'selection', 'editable', 'link', 'image', 'video', 'audio'],
+    });
+    for (const item of CONTEXT_MENU_ITEMS) {
+      await createContextMenu({
+        id: item.id,
+        parentId: CONTEXT_MENU_ROOT_ID,
+        title: item.title,
+        contexts: item.contexts,
+      });
+    }
+  })();
+  contextMenuConfigurationPromise = configuration;
+
+  try {
+    await configuration;
+  } finally {
+    if (contextMenuConfigurationPromise === configuration) contextMenuConfigurationPromise = null;
   }
 }
 
