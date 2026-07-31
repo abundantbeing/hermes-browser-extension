@@ -96,10 +96,9 @@ test('native Hermes wake owns the full wake, VAD transcript, TTS, and resume lif
         available: true,
         enabled: false,
         listening: false,
-        phrase: 'hey hermes',
         provider: 'openwakeword',
       };
-      if (method === WS_METHODS.wakeStart) return { started: true, phrase: 'hey hermes', provider: 'openwakeword' };
+      if (method === WS_METHODS.wakeStart) return { started: true, provider: 'openwakeword' };
       return { ok: true };
     },
     on: (type, handler) => {
@@ -120,13 +119,21 @@ test('native Hermes wake owns the full wake, VAD transcript, TTS, and resume lif
     }),
     openPanel: async () => { opened += 1; },
   });
-  const arming = await controller.configure({ wakeWordEnabled: true, wakeWordPreferNative: true, wakeWordBrowserFallback: false });
+  const arming = await controller.configure({
+    wakeWordEnabled: true,
+    wakeWordPreferNative: true,
+    wakeWordBrowserFallback: false,
+    wakeWordPhrase: 'computer',
+  });
   assert.equal(arming.mode, 'native');
   assert.equal(arming.state, 'arming');
   for (let attempt = 0; attempt < 10 && controller.state().state !== 'listening'; attempt += 1) {
     await new Promise((resolve) => globalThis.setImmediate(resolve));
   }
   assert.equal(controller.state().state, 'listening');
+  assert.equal(controller.state().phrase, 'hey hermes');
+  assert.match(controller.state().detail, /hey hermes/);
+  assert.doesNotMatch(controller.state().detail, /computer/);
   assert.ok(calls.some(([method, url]) => method === 'connect' && url.includes('?token=loopback-token')));
   await client.emit(WS_EVENTS.wakeDetected, { payload: { phrase: 'hey hermes' } });
   assert.ok(calls.some(([method]) => method === WS_METHODS.voiceToggle));

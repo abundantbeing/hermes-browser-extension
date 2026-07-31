@@ -2001,7 +2001,11 @@ async function toggleWakeWord() {
 }
 
 async function consumeWakeTurn(turn = null) {
-  if (!wakeTurnIsFresh(turn) || !turn?.id || wakeTurnProcessingId === turn.id) return false;
+  if (!wakeTurnIsFresh(turn)) {
+    await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+    return false;
+  }
+  if (!turn?.id || wakeTurnProcessingId === turn.id) return false;
   wakeTurnProcessingId = turn.id;
   const claim = await chrome.runtime.sendMessage({
     type: WAKE_MESSAGES.claimTurn,

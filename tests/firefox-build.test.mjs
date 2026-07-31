@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const manifest = JSON.parse(readFileSync(new URL('../dist/firefox/manifest.json', import.meta.url), 'utf8'));
 
@@ -17,6 +17,8 @@ test('Firefox build removes unsupported Chromium permissions while retaining sid
   assert.equal(manifest.permissions.includes('offscreen'), false);
   assert.equal(manifest.optional_permissions?.includes('audioCapture') || false, false);
   assert.ok(manifest.sidebar_action);
+  assert.equal(existsSync(new URL('../dist/firefox/wake-listener.html', import.meta.url)), false);
+  assert.equal(existsSync(new URL('../dist/firefox/wake-listener.js', import.meta.url)), false);
 });
 
 test('Firefox build truthfully declares built-in data consent categories', () => {

@@ -363,6 +363,7 @@ test('Hey Hermes hands one exactly-once wake turn to both Browser surfaces throu
   assert.match(web, /await sendPrompt\(text\)/);
   assert.match(web, /WAKE_MESSAGES\.turnReply/);
   assert.match(web, /changes\[WAKE_STORAGE_KEYS\.turn\]/);
+  assert.match(web, /if \(!wakeTurnIsFresh\(turn\)\) \{\s*await chrome\.storage\.local\.remove\(WAKE_STORAGE_KEYS\.turn\);/);
 });
 
 test('Hermes Web Cloud handoff uses the same signed-in dashboard ticket transport instead of a read-only dead end', () => {
@@ -389,6 +390,9 @@ test('Hermes Web Cloud handoff uses the same signed-in dashboard ticket transpor
   assert.match(source, /let dashboardTurnSessionId = '';/);
   assert.match(source, /sessionHistory, \{ session_id: dashboardTurnSessionId \}/);
   assert.doesNotMatch(source, /sessionHistory, \{ session_id: dashboardLiveSessionId \}/);
+  assert.match(source, /dashboardLiveSessionId = '';/);
+  assert.match(source, /if \(!dashboardLiveSessionId\) await establishDashboardSession\(activeSessionId\);/);
+  assert.match(source, /settings = \{ \.\.\.settings, webSessionId: activeSessionId, webSessionTitle: title \};/);
 });
 
 test('saving unrelated settings preserves an explicit browser-local wake preference', () => {

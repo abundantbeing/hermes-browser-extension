@@ -102,6 +102,9 @@ const infoJson = `${JSON.stringify(buildInfo(), null, 2)}\n`;
 // Clean and copy
 fs.rmSync(dest, { recursive: true, force: true });
 copyDir(src, dest);
+for (const fileName of ['wake-listener.html', 'wake-listener.js']) {
+  fs.rmSync(path.join(dest, fileName), { force: true });
+}
 
 // Write Firefox manifest
 fs.writeFileSync(path.join(dest, 'manifest.json'), `${JSON.stringify(sourceManifest, null, 2)}\r\n`);

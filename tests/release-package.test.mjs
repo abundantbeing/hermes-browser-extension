@@ -27,6 +27,10 @@ test('package command builds both target trees before archiving', () => {
   assert.match(packageJson.scripts.package, /scripts\/package\.mjs/);
 });
 
+test('standalone npm test builds its Firefox fixture before the suite reads it', () => {
+  assert.equal(packageJson.scripts.pretest, 'npm run build:firefox');
+});
+
 test('release packager creates versioned isolated Chromium and Firefox archives plus checksums', () => {
   assert.match(packageSource, /hermes-browser-extension-v\$\{version\}-chromium\.tar\.gz/);
   assert.match(packageSource, /hermes-browser-extension-v\$\{version\}-firefox-preview\.tar\.gz/);
