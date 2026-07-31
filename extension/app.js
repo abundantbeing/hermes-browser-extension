@@ -2842,8 +2842,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
   if (area === 'local' && changes[WAKE_STORAGE_KEYS.turn]?.newValue) consumeWakeTurn(changes[WAKE_STORAGE_KEYS.turn].newValue).catch(() => {});
 });
-chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type === WAKE_MESSAGES.turnReady) consumeWakeTurn(message.turn).catch(() => {});
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === WAKE_MESSAGES.turnReady) {
+    consumeWakeTurn(message.turn).catch(() => {});
+    sendResponse?.({ ok: true, accepted: true, surface: SURFACE_KINDS.FULL_TAB });
+  }
   if (message?.type === WAKE_MESSAGES.localState) renderWakeState(message);
   return false;
 });

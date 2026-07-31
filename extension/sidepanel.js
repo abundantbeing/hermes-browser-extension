@@ -8911,8 +8911,11 @@ function bindEvents() {
       return false;
     }
     if (message?.type === WAKE_MESSAGES.turnReady) {
-      consumeWakeTurn(message.turn).then((ok) => sendResponse?.({ ok })).catch((error) => sendResponse?.({ ok: false, error: error?.message || String(error) }));
-      return true;
+      consumeWakeTurn(message.turn).catch((error) => {
+        setStatus('warn', 'Wake command handoff failed', error?.message || String(error));
+      });
+      sendResponse?.({ ok: true, accepted: true, surface: SURFACE_KINDS.SIDE_PANEL });
+      return false;
     }
     if (message?.type === 'HERMES_VOICE_TRANSCRIPT') {
       consumeVoiceDraft(message).then((ok) => sendResponse?.({ ok })).catch((error) => sendResponse?.({ ok: false, error: error?.message || String(error) }));
