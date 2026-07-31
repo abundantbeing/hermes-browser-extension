@@ -23,6 +23,7 @@ import {
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
+import { initI18n } from './lib/i18n.mjs';
 import { migrateConnectionSettings, normalizeConnectionMode } from './lib/connection-modes.mjs';
 import { fullTabEntryPathForPage, parseFullTabHandoff } from './lib/surface-protocol.mjs';
 import {
@@ -2472,6 +2473,7 @@ globalThis.addEventListener('visibilitychange', () => {
 
 initializeResponsiveShell();
 updateScrim();
+await initI18n(document);
 loadApp()
   .then(() => consumePendingVoiceDraft())
   .catch((error) => showError('Hermes Web could not start', error?.message || String(error)));

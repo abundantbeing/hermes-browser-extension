@@ -59,6 +59,8 @@ settingsButton?.addEventListener('click', openMicrophoneSettings);
 closeButton?.addEventListener('click', () => window.close());
 
 (async () => {
+  const { initI18n } = await import('./lib/i18n.mjs');
+  await initI18n(document);
   const state = await microphonePermissionState();
   if (state === 'granted') {
     setStatus('Microphone access is already enabled for Hermes Browser Extension.');

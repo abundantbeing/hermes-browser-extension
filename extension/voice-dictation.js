@@ -11,6 +11,7 @@ import {
   DEFAULT_GATEWAY_CAPABILITIES,
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
+import { initI18n } from './lib/i18n.mjs';
 import {
   dashboardModelDiscoveryBaseUrl,
   transcribeAudioViaDashboard,
@@ -406,6 +407,8 @@ startButton?.addEventListener('click', () => {
 });
 settingsButton?.addEventListener('click', openMicrophoneSettings);
 closeButton?.addEventListener('click', () => window.close());
+
+await initI18n(document);
 
 try {
   const loadedFromExtensionStorage = await loadSettings();

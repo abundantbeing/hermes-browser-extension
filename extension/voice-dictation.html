@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hermes Voice Dictation</title>
+    <title data-i18n="Hermes Voice Dictation">Hermes Voice Dictation</title>
     <link rel="stylesheet" href="sidepanel.css" />
     <style>
       body {
@@ -71,17 +71,17 @@
   </head>
   <body data-hermes-theme="nous" data-hermes-mode="dark" data-hermes-color-mode="dark">
     <main class="voice-card" aria-labelledby="voiceTitle">
-      <p class="eyebrow">HERMES BROWSER EXTENSION</p>
-      <h1 id="voiceTitle">Voice dictation</h1>
+      <p class="eyebrow" data-i18n="HERMES BROWSER EXTENSION">HERMES BROWSER EXTENSION</p>
+      <h1 id="voiceTitle" data-i18n="Voice dictation">Voice dictation</h1>
       <p>Chromium can block microphone capture inside extension side panels. This visible extension tab records from the same Hermes extension origin when Hermes STT is available, or uses Browser speech fallback when the connected runtime does not expose audio transcription.</p>
       <p>No audio is saved by this page. In Hermes STT mode, audio is sent once to your configured Hermes transcription endpoint when you stop recording. In Browser speech fallback mode, only the transcript is sent back to the side panel.</p>
       <div class="voice-meter" aria-hidden="true"><span></span></div>
       <div class="voice-actions">
-        <button id="startVoiceButton" type="button">Start dictation</button>
-        <button id="openMicSettingsButton" class="secondary" type="button">Open microphone settings</button>
-        <button id="closeVoiceButton" class="secondary" type="button">Close</button>
+        <button id="startVoiceButton" type="button" data-i18n="Start dictation">Start dictation</button>
+        <button id="openMicSettingsButton" class="secondary" type="button" data-i18n="Open microphone settings">Open microphone settings</button>
+        <button id="closeVoiceButton" class="secondary" type="button" data-i18n="Close">Close</button>
       </div>
-      <div id="voiceStatus" role="status" aria-live="polite">Click Start dictation to grant microphone access and record.</div>
+      <div id="voiceStatus" role="status" aria-live="polite" data-i18n="Click Start dictation to grant microphone access and record.">Click Start dictation to grant microphone access and record.</div>
     </main>
     <script type="module" src="voice-dictation.js"></script>
   </body>

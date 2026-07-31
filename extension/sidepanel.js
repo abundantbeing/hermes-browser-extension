@@ -98,6 +98,7 @@ import {
   resolveAssistModelBindingFromCatalog,
 } from './lib/assist-model-contract.mjs';
 import { serializeBrowserTurnEnvelope } from './lib/browser-context-protocol.mjs';
+import { getLanguage, initI18n, setLanguage } from './lib/i18n.mjs';
 import {
   APPEARANCE_THEMES,
   normalizeAppearanceTheme,
@@ -311,6 +312,7 @@ const els = {
   closeSettingsButton: $('#closeSettingsButton'),
   settingsDialog: $('#settingsDialog'),
   settingsForm: $('#settingsForm'),
+  languageSelect: $('#languageSelect'),
   testConnectionButton: $('#testConnectionButton'),
   versionLabel: $('#versionLabel'),
   checkUpdatesButton: $('#checkUpdatesButton'),
@@ -8015,6 +8017,12 @@ function eventPathContains(event, node) {
 function bindEvents() {
   portalDockFloatingPanels();
   observeDockFloatingAnchor();
+  els.languageSelect?.addEventListener('change', async (event) => {
+    const next = event.target.value === 'zh' ? 'zh' : 'en';
+    await setLanguage(next);
+    // 设置界面立即按新语言重绘（下拉自身保持双语固定文案）
+    renderAppearanceControls();
+  });
   els.messages?.addEventListener('copy', (event) => {
     writeAssistantClipboardEvent(event, {
       selection: globalThis.getSelection?.(),
@@ -8413,6 +8421,9 @@ function bindEvents() {
   els.settingsForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     try {
+      if (els.languageSelect) {
+        await setLanguage(els.languageSelect.value);
+      }
       await saveSettingsFromForm();
       await probeGatewayLiveness({ quiet: false });
       if (minimumConnectionReady()) {
@@ -8727,6 +8738,8 @@ async function runStartupReadiness() {
 }
 
 bindEvents();
+await initI18n(document);
+if (els.languageSelect) els.languageSelect.value = getLanguage();
 await runStartupReadiness();
 try {
   await consumePendingInlineDraftRequest();

@@ -3727,6 +3727,24 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   align-items: center;
   gap: 10px;
 }
+.language-select-wrap {
+  display: flex;
+  align-items: center;
+}
+.language-select {
+  min-height: 36px;
+  min-width: 120px;
+  padding: 7px 10px;
+  border: 1px solid var(--hermes-line);
+  border-radius: 8px;
+  background: var(--hermes-surface, rgba(var(--hermes-ink-rgb), 0.05));
+  color: var(--hermes-ink);
+  font-size: 12px;
+}
+.language-select option {
+  background: var(--hermes-surface);
+  color: var(--hermes-ink);
+}
 .profile-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
