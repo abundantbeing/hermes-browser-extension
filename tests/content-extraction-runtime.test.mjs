@@ -3,6 +3,7 @@ import { mkdtemp, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 import {
@@ -14,7 +15,9 @@ import {
   EXTRACTION_VERSION,
 } from '../extension/lib/content-extraction-core.mjs';
 
-const rootDir = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/(?:[A-Za-z]:)/, (value) => value.slice(1))), '..');
+// fileURLToPath decodes URL-escaped characters, so non-ASCII repository paths
+// (e.g. Chinese directory names) resolve correctly on Windows/WSL.
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 async function jsonFile(relativePath) {
   return JSON.parse(await readFile(path.join(rootDir, relativePath), 'utf8'));
