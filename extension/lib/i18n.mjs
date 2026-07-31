@@ -68,16 +68,16 @@ function localizeElement(element) {
   if (element.hasAttribute('data-i18n')) {
     const key = element.getAttribute('data-i18n');
     const translated = t(key);
-    if (translated !== key) {
-      if (element.childElementCount === 0) {
-        element.textContent = translated;
-      } else {
-        // Element has children (e.g. <li>text <code>x</code> tail</li>):
-        // only replace the direct text child that matches the key.
-        for (const child of element.childNodes) {
-          if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() === key) {
-            child.textContent = translated;
-          }
+    if (element.childElementCount === 0) {
+      // Always write: zh -> translation, en -> original key text
+      element.textContent = translated;
+    } else {
+      // Element has children (e.g. <li>text <code>x</code> tail</li>):
+      // localize the direct text children individually (original is kept
+      // in originalTexts so switching back to English can restore it).
+      for (const child of element.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          localizeTextNode(child);
         }
       }
     }
@@ -109,6 +109,41 @@ function shouldSkipTextNode(node) {
   return false;
 }
 
+/** Original (pre-translation) text of every text node we have touched. */
+const originalTexts = new WeakMap();
+
+/** Write a text node, remembering its current text so it can be restored later. */
+function setTextNodeText(node, text) {
+  if (!originalTexts.has(node)) originalTexts.set(node, node.textContent);
+  node.textContent = text;
+}
+
+/** Restore a text node to its original (English) text. */
+function restoreTextNodeText(node) {
+  const original = originalTexts.get(node);
+  if (original !== undefined) {
+    node.textContent = original;
+    originalTexts.delete(node);
+  }
+}
+
+/** Localize a single text node: zh -> dictionary match, en -> restore original. */
+function localizeTextNode(node) {
+  if (!node || node.nodeType !== Node.TEXT_NODE || shouldSkipTextNode(node)) return;
+  const raw = node.textContent;
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+  if (currentLanguage === 'zh') {
+    // Whole-string match only (no surrounding whitespace) to avoid
+    // breaking template/interpolated text.
+    if (raw === trimmed && ZH_DICTIONARY[trimmed]) {
+      setTextNodeText(node, ZH_DICTIONARY[trimmed]);
+    }
+  } else {
+    restoreTextNodeText(node);
+  }
+}
+
 /** Localize a whole subtree. */
 export function applyI18n(root = document) {
   if (!root || typeof document === 'undefined' || typeof NodeFilter === 'undefined') return;
@@ -124,11 +159,8 @@ export function applyI18n(root = document) {
   for (const node of nodes) {
     if (node.nodeType === Node.ELEMENT_NODE) {
       localizeElement(node);
-    } else if (currentLanguage === 'zh' && !shouldSkipTextNode(node)) {
-      const raw = node.textContent;
-      if (raw && raw === raw.trim() && ZH_DICTIONARY[raw]) {
-        node.textContent = ZH_DICTIONARY[raw];
-      }
+    } else {
+      localizeTextNode(node);
     }
   }
 }
@@ -148,14 +180,10 @@ export function startI18nObserver() {
           }
           // Whole-string match on direct text children
           for (const child of node.childNodes) {
-            if (child.nodeType === Node.TEXT_NODE && !shouldSkipTextNode(child)) {
-              const raw = child.textContent;
-              if (raw && raw === raw.trim() && ZH_DICTIONARY[raw]) child.textContent = ZH_DICTIONARY[raw];
-            }
+            if (child.nodeType === Node.TEXT_NODE) localizeTextNode(child);
           }
-        } else if (node.nodeType === Node.TEXT_NODE && !shouldSkipTextNode(node)) {
-          const raw = node.textContent;
-          if (raw && raw === raw.trim() && ZH_DICTIONARY[raw]) node.textContent = ZH_DICTIONARY[raw];
+        } else if (node.nodeType === Node.TEXT_NODE) {
+          localizeTextNode(node);
         }
       }
     }
