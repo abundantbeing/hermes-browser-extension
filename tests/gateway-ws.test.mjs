@@ -9,11 +9,38 @@ import {
   classifyGatewayFrame,
   createGatewayClient,
   establishGatewaySession,
+  normalizeGatewayHistoryMessages,
   remoteSessionIdentity,
   remoteStoredSessionIdForGateway,
   runtimeModelFromSessionStatus,
   WS_METHODS,
 } from '../extension/lib/gateway-ws.mjs';
+
+test('Cloud history normalization keeps canonical gateway text rows and legacy content rows', () => {
+  const messages = normalizeGatewayHistoryMessages({
+    count: 6,
+    messages: [
+      { role: 'user', text: 'old user turn', row_id: 41 },
+      { role: 'assistant', text: 'old assistant turn', row_id: 42 },
+      { role: 'system', content: [{ type: 'text', text: 'legacy block content' }] },
+      { role: 'assistant', content: { text: 'legacy object content' } },
+      { role: 'tool', name: 'web_search', context: 'searched the web' },
+      null,
+    ],
+  });
+
+  assert.deepEqual(
+    messages.map(({ role, content }) => ({ role, content })),
+    [
+      { role: 'user', content: 'old user turn' },
+      { role: 'assistant', content: 'old assistant turn' },
+      { role: 'system', content: 'legacy block content' },
+      { role: 'assistant', content: 'legacy object content' },
+      { role: 'tool', content: 'searched the web' },
+    ],
+  );
+  assert.equal(messages[0].row_id, 41);
+});
 
 class FakeWebSocket {
   constructor(url) {
@@ -199,6 +226,21 @@ test('sidepanel reconnect wiring persists the durable id and resumes only on the
   assert.match(source, /establishGatewaySession\(\{[\s\S]*?storedSessionId,[\s\S]*?createParams:/);
   assert.match(source, /remoteDashboardSession:\s*\{[\s\S]*?storedSessionId:\s*storedId,[\s\S]*?gatewayUrl:\s*connection\.baseUrl/);
   assert.match(source, /connection\.wsStoredSessionId\s*=\s*storedId/);
+});
+
+test('both Browser surfaces normalize Cloud history before rendering it', () => {
+  const appSource = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+  const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+
+  assert.match(
+    appSource,
+    /function dashboardHistoryMessages\(payload = \{\}\) \{\s*return normalizeGatewayHistoryMessages\(payload\);\s*\}/,
+  );
+  assert.match(
+    sidepanelSource,
+    /const contextMessages = normalizeGatewayHistoryMessages\(result\)[\s\S]*?content: message\.content/,
+  );
+  assert.doesNotMatch(sidepanelSource, /coerceWsMessageContent/);
 });
 
 test('classifyGatewayFrame distinguishes responses, errors, events, and noise', () => {

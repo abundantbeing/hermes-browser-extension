@@ -60,6 +60,36 @@ export function remoteSessionIdentity(result = {}, requestedId = '') {
   return { liveId, storedId };
 }
 
+function gatewayHistoryText(value) {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return value.map(gatewayHistoryText).filter(Boolean).join('');
+  if (!value || typeof value !== 'object') return '';
+  return gatewayHistoryText(value.text ?? value.output_text ?? value.content ?? '');
+}
+
+// The gateway's display projection uses `text`; older dashboard responses and
+// the REST session API use `content`. Normalize both before either Browser
+// surface filters or persists history so resumed Cloud sessions stay complete.
+export function normalizeGatewayHistoryMessages(payload = {}) {
+  const rows = Array.isArray(payload)
+    ? payload
+    : payload?.messages || payload?.data?.messages || payload?.history || payload?.data || [];
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .filter((message) => message && typeof message === 'object')
+    .map((message) => {
+      const candidates = [message.content, message.text, message.context];
+      const content = candidates.map(gatewayHistoryText).find(Boolean) || '';
+      return {
+        ...message,
+        role: String(message.role || '').toLowerCase(),
+        content,
+      };
+    })
+    .filter((message) => message.role);
+}
+
 function comparableGatewayUrl(value = '') {
   try {
     const parsed = new URL(String(value || '').trim());

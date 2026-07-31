@@ -113,6 +113,7 @@ import {
   buildSessionModelSwitchRequest,
   createGatewayClient,
   establishGatewaySession,
+  normalizeGatewayHistoryMessages,
   remoteStoredSessionIdForGateway,
   runtimeModelFromSessionStatus,
   WS_EVENTS,
@@ -5177,11 +5178,10 @@ async function loadSessionMessages(sessionId = settings.sessionId, { requestId =
     try {
       const result = await remoteWsConnection.client.request(WS_METHODS.sessionHistory, { session_id: sessionId });
       if (!isCurrentRequest()) return false;
-      const rows = Array.isArray(result?.messages) ? result.messages : [];
-      const contextMessages = rows
+      const contextMessages = normalizeGatewayHistoryMessages(result)
         .map((message) => ({
           role: message.role,
-          content: coerceWsMessageContent(message.content),
+          content: message.content,
           ts: Number(message.timestamp || message.ts || Date.now()),
         }))
         .filter((message) => message.content);
@@ -7044,17 +7044,6 @@ async function ensureRemoteWsSession(connection) {
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   updateSessionLabel();
   return liveId;
-}
-
-// Dashboard history content may be a string, an array of text parts, or a
-// single block object; flatten to plain text for the message pane.
-function coerceWsMessageContent(content) {
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content)) {
-    return content.map((part) => (typeof part === 'string' ? part : part?.text || '')).filter(Boolean).join('');
-  }
-  if (content && typeof content === 'object') return String(content.text || '');
-  return '';
 }
 
 async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {}) {

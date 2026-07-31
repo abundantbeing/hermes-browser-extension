@@ -81,7 +81,7 @@ import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
 import { sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
-import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
+import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, normalizeGatewayHistoryMessages, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
 import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 
 const $ = (selector) => document.querySelector(selector);
@@ -323,8 +323,7 @@ async function establishDashboardSession(storedSessionId = '') {
 }
 
 function dashboardHistoryMessages(payload = {}) {
-  const rows = payload?.messages || payload?.data?.messages || payload?.history || payload?.data || [];
-  return Array.isArray(rows) ? rows : [];
+  return normalizeGatewayHistoryMessages(payload);
 }
 
 async function loadDashboardSessionMessages(storedSessionId) {
