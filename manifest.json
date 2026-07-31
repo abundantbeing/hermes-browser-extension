@@ -4,7 +4,7 @@
   "short_name": "Hermes Ext",
   "version": "0.2.0",
   "description": "Browser-native side panel for Hermes Agent \u2014 connect web context to your local or remote Hermes runtime.",
-  "minimum_chrome_version": "114",
+  "minimum_chrome_version": "116",
   "icons": {
     "16": "extension/assets/icons/icon-16.png",
     "32": "extension/assets/icons/icon-32.png",
@@ -15,6 +15,7 @@
     "activeTab",
     "contextMenus",
     "downloads",
+    "offscreen",
     "scripting",
     "sidePanel",
     "storage",
@@ -95,6 +96,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src http: https: wss:;"
+    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src http: https: wss: ws://127.0.0.1:* ws://localhost:*;"
   }
 }

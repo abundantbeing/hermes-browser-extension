@@ -30,6 +30,7 @@
           </svg>
           <span class="sr-only">Settings</span>
         </button>
+        <button id="startupTestConnectionButton" class="startup-test-connection" type="button">TEST CONNECTION</button>
         <div class="topbar-status">
           <span id="connectionPill" class="connection-pill" role="status" aria-label="Hermes connection status" title="Hermes connection status">●</span>
         </div>
@@ -150,6 +151,9 @@
             <button id="commandMenuButton" class="composer-command" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="quickMoreMenu" aria-label="Open quick commands" title="Open quick commands">
               <span aria-hidden="true">/</span><strong>commands</strong>
             </button>
+            <button id="wakeButton" class="composer-icon composer-wake" type="button" aria-label="Turn on wake word" title="Turn on wake word">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="2" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8.7 8.7a4.7 4.7 0 0 0 0 6.6m6.6-6.6a4.7 4.7 0 0 1 0 6.6M5.9 5.9a8.6 8.6 0 0 0 0 12.2m12.2-12.2a8.6 8.6 0 0 1 0 12.2"/></svg>
+            </button>
             <button id="voiceButton" class="composer-icon composer-mic" type="button" aria-label="Start voice dictation" title="Start voice dictation">
               <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
             </button>
@@ -242,7 +246,18 @@
             <p class="eyebrow">HERMES BROWSER</p>
             <h2 id="settingsTitle">Settings</h2>
           </div>
-          <button id="closeSettingsButton" class="settings-button" type="button">CLOSE</button>
+          <div class="settings-header-actions">
+            <button id="testConnectionButton" class="settings-connection-test secondary" type="button" aria-busy="false" title="Test the current Hermes connection">
+              <svg class="settings-connection-test-icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M4.4 7.1A6.2 6.2 0 0 1 15 5.7l1.2 1.4"></path>
+                <path d="m16.5 3.8-.3 3.3-3.3-.3"></path>
+                <path d="M15.6 12.9A6.2 6.2 0 0 1 5 14.3l-1.2-1.4"></path>
+                <path d="m3.5 16.2.3-3.3 3.3.3"></path>
+              </svg>
+              <span class="settings-connection-test-label">TEST</span>
+            </button>
+            <button id="closeSettingsButton" class="settings-button" type="button">CLOSE</button>
+          </div>
         </header>
 
         <section class="settings-section release-settings browser-release-card" aria-labelledby="releaseTitle">
@@ -361,6 +376,38 @@
             <span>Same Desktop palettes, minus window transparency.</span>
             <div id="themeGrid" class="theme-grid" role="radiogroup" aria-label="Theme"></div>
           </div>
+        </section>
+
+        <section class="settings-section wake-word-settings" aria-labelledby="wakeWordTitle">
+          <div class="settings-section-head">
+            <div>
+              <h3 id="wakeWordTitle">Wake word</h3>
+              <p>Say “Hey Hermes” for a hands-free, one-turn voice request. Always-on detection stays on this machine.</p>
+            </div>
+          </div>
+          <label class="settings-toggle-card">
+            <span class="settings-toggle-copy">
+              <strong>Enable wake word</strong>
+              <small>Prefers Hermes’ native wake engine locally and uses Chromium on-device speech for Cloud Preview.</small>
+            </span>
+            <input id="wakeWordEnabledInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <label>
+            Browser fallback phrase
+            <input id="wakeWordPhraseInput" type="text" maxlength="64" autocomplete="off" placeholder="hey hermes" />
+          </label>
+          <label class="settings-toggle-card compact-toggle-card">
+            <span class="settings-toggle-copy"><strong>Browser-local fallback</strong><small>Required for Cloud Preview and older Hermes builds. It refuses cloud speech recognition.</small></span>
+            <input id="wakeWordBrowserFallbackInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <label class="settings-toggle-card compact-toggle-card">
+            <span class="settings-toggle-copy"><strong>Speak wake replies</strong><small>Uses Hermes TTS on the native path and local browser speech on the fallback path.</small></span>
+            <input id="wakeWordSpeakRepliesInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <p id="wakeWordStatus" class="hint" role="status" aria-live="polite">Wake word is off.</p>
         </section>
 
         <section class="settings-section inline-assist-settings" aria-labelledby="inlineAssistTitle">
@@ -614,7 +661,6 @@
         </section>
 
         <footer>
-          <button id="testConnectionButton" class="secondary" type="button">Test connection</button>
           <button id="saveSettingsButton" type="submit">Save settings</button>
         </footer>
       </form>

@@ -112,7 +112,7 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
   assert.match(html, /class="startup-brand-icon"/);
   assert.match(css, /assets\/img\/hermes-browser-extension-icon-ink\.png/);
   assert.match(css, /\.startup-screen\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*place-items:\s*center;[^}]*overflow:\s*hidden;/s);
-  assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*top:\s*var\(--startup-settings-top,[^;]+\);[^}]*left:\s*50%;[^}]*justify-content:\s*center;[^}]*transform:\s*translateX\(-50%\);/s);
+  assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*top:\s*min\(var\(--startup-settings-top,[^;]+\),\s*calc\(100vh - 84px\)\);[^}]*left:\s*50%;[^}]*justify-content:\s*center;[^}]*transform:\s*translateX\(-50%\);/s);
   assert.match(js, /function\s+positionStartupSettings[\s\S]*listRect\.bottom\s*\+\s*12/);
   assert.match(css, /body\.startup-active\s+\.topbar\s+#settingsButton\s*\{[^}]*pointer-events:\s*auto;/s);
   assert.match(css, /\.startup-brand-lockup\s*\{[^}]*justify-items:\s*center;/s);

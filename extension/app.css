@@ -169,6 +169,8 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
 }
 .icon-control:hover,
 .text-control:hover { background: var(--hermes-white); color: var(--hermes-blue); }
+.icon-control.active,
+.icon-control[aria-pressed="true"] { background: var(--hermes-white); color: var(--hermes-blue); }
 .text-control { padding: 0 13px; font: 9px var(--hermes-font-mono); letter-spacing: 0.12em; }
 .mobile-only { display: none; }
 

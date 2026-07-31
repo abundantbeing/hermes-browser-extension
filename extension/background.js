@@ -29,6 +29,8 @@ import {
   assistModelFallbackNotice,
   buildAssistModelRouteRequest,
 } from './lib/assist-model-contract.mjs';
+import { createWakeBackgroundController } from './lib/wake-background.mjs';
+import { WAKE_MESSAGES } from './lib/wake-word.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let contextMenuConfigurationPromise = null;
@@ -47,6 +49,23 @@ const CONTEXT_MENU_ITEMS = Object.freeze([
   { id: 'hermes-browser-draft-reply', title: 'Draft reply with Hermes', contexts: ['editable'], inlineAction: 'draft-reply' },
   { id: 'hermes-browser-open', title: 'Open Hermes Browser', contexts: ['page', 'link', 'image', 'video', 'audio'] },
 ]);
+const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
+  WAKE_MESSAGES.claimTurn,
+  WAKE_MESSAGES.getState,
+  WAKE_MESSAGES.setEnabled,
+  WAKE_MESSAGES.localDetected,
+  WAKE_MESSAGES.localState,
+  WAKE_MESSAGES.turnReply,
+]);
+const wakeController = createWakeBackgroundController({
+  chromeApi: chrome,
+  openPanel: (tab, options) => openHermesPanel(tab, options),
+});
+function restoreWakeController() {
+  if (!chrome.runtime?.sendMessage || !chrome.storage?.local?.get) return;
+  wakeController.restore().catch((error) => console.warn('[Hermes Browser] Wake initialization failed:', error));
+}
+restoreWakeController();
 
 function assistSessionId() {
   const entropy = globalThis.crypto?.randomUUID?.().replace(/-/g, '').slice(0, 12)
@@ -720,7 +739,10 @@ async function getYoutubeTranscript({ videoId, tabId, provider = 'default' } = {
 }
 
 chrome.runtime.onInstalled.addListener(configureInstalledSurfaces);
-chrome.runtime.onStartup.addListener(configureInstalledSurfaces);
+chrome.runtime.onStartup.addListener(async () => {
+  await configureInstalledSurfaces();
+  restoreWakeController();
+});
 chrome.action.onClicked.addListener(openHermesPanel);
 chrome.contextMenus?.onClicked?.addListener?.((info, tab) => {
   handleContextMenuClick(info, tab).catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error));
@@ -742,9 +764,11 @@ chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
   }
 });
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  const action = message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
-    ? queueInlineDraftRequest(message, sender)
-    : message?.type === 'HERMES_INLINE_SESSION_STATUS'
+  const action = WAKE_BACKGROUND_MESSAGE_TYPES.has(message?.type)
+    ? wakeController.handleMessage(message)
+    : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
+      ? queueInlineDraftRequest(message, sender)
+      : message?.type === 'HERMES_INLINE_SESSION_STATUS'
       ? inlineSessionStatus()
       : message?.type === 'HERMES_INLINE_OPEN_SESSION'
         ? queueOpenSessionRequest(message, sender)

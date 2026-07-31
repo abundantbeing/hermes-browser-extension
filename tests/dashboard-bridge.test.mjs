@@ -83,7 +83,7 @@ test('findDashboardTab requires the active loaded same-origin tab', async () => 
   const tab = await findDashboardTab(tabsApi, 'https://host.ts.net');
   assert.equal(tab.id, 2);
   assert.equal(await findDashboardTab(tabsApi, 'https://host.ts.net', 7), null);
-  assert.equal((await findDashboardTab(tabsApi, 'https://host.ts.net', 2)).id, 2);
+  assert.equal(await findDashboardTab(tabsApi, 'https://host.ts.net', 2), null);
 
   const none = await findDashboardTab({ query: async () => [] }, 'https://host.ts.net');
   assert.equal(none, null);
@@ -93,6 +93,37 @@ test('findDashboardTab requires the active loaded same-origin tab', async () => 
   assert.equal(await findDashboardTab({ query: async () => [
     { id: 4, url: 'https://host.ts.net/dashboard', status: 'loading', discarded: false },
   ] }, 'https://host.ts.net'), null);
+});
+
+test('findDashboardTab reuses an exact remembered same-origin tab without requiring it to stay active', async () => {
+  let queried = false;
+  const tabsApi = {
+    query: async () => {
+      queried = true;
+      return [{ id: 99, url: 'https://unrelated.example.test', status: 'complete', discarded: false }];
+    },
+    get: async (tabId) => {
+      assert.equal(tabId, 7);
+      return { id: 7, url: 'https://host.ts.net/dashboard', status: 'complete', discarded: false };
+    },
+  };
+
+  const tab = await findDashboardTab(tabsApi, 'https://host.ts.net', 7);
+  assert.equal(tab.id, 7);
+  assert.equal(queried, false, 'an explicit remembered tab must not be replaced by the newly active page');
+});
+
+test('findDashboardTab fails closed when an explicit remembered tab cannot be resolved exactly', async () => {
+  let queried = false;
+  const tab = await findDashboardTab({
+    query: async () => {
+      queried = true;
+      return [{ id: 7, url: 'https://host.ts.net/dashboard', status: 'complete', discarded: false }];
+    },
+  }, 'https://host.ts.net', 7);
+
+  assert.equal(tab, null);
+  assert.equal(queried, false, 'an explicit lease must never degrade into active-tab trust');
 });
 
 test('mintWsTicket returns no_dashboard_tab when no tab is open', async () => {

@@ -785,14 +785,16 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 .startup-blocked { opacity: 0.72; }
 body.startup-active .topbar {
   position: fixed;
-  top: var(--startup-settings-top, calc(50% + 294px));
+  top: min(var(--startup-settings-top, calc(50% + 294px)), calc(100vh - 84px));
   right: auto;
   bottom: auto;
   left: 50%;
   z-index: 70;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 7px;
   width: auto;
   min-height: 34px;
   padding: 0;
@@ -812,6 +814,21 @@ body.startup-active .topbar #settingsButton {
   color: var(--hermes-fg);
   border-color: rgba(var(--hermes-fg-rgb),0.42);
 }
+body.startup-active .topbar #startupTestConnectionButton {
+  display: block;
+  visibility: visible;
+  pointer-events: auto;
+  min-width: 142px;
+  min-height: 30px;
+  margin: 0;
+  padding: 7px 12px;
+  border-color: rgba(var(--hermes-fg-rgb),0.42);
+  background: rgba(var(--hermes-panel-rgb),0.72);
+  color: var(--hermes-fg);
+  font: 700 10px/1 var(--hermes-font-mono);
+  letter-spacing: 0.1em;
+}
+body:not(.startup-active) #startupTestConnectionButton { display: none; }
 @keyframes startup-field-breathe {
   0%, 100% { transform: scale(1.015); opacity: 0.1; }
   50% { transform: scale(1.035); opacity: 0.16; }
@@ -2429,8 +2446,22 @@ body.startup-active .topbar #settingsButton {
 }
 .composer-icon[hidden] { display: none; }
 .composer-icon:disabled { cursor: not-allowed; opacity: 0.42; }
+.composer-wake { right: 67px; }
 .composer-mic { right: 38px; }
+.composer-input-wrap.busy-draft .composer-wake,
 .composer-input-wrap.busy-draft .composer-mic { display: none; }
+.composer-wake.listening {
+  color: var(--hermes-accent);
+  border-color: rgba(var(--hermes-accent-rgb),0.72);
+  box-shadow: 0 0 0 3px rgba(var(--hermes-accent-rgb),0.12);
+  animation: wake-listening-pulse 1.8s ease-in-out infinite;
+}
+.composer-wake.paused { color: rgba(var(--hermes-ink-rgb),0.48); border-style: dashed; }
+.composer-wake.unavailable { color: var(--danger); border-color: var(--danger); }
+@keyframes wake-listening-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(var(--hermes-accent-rgb),0.08); }
+  50% { box-shadow: 0 0 0 5px rgba(var(--hermes-accent-rgb),0.18); }
+}
 .composer-mic.recording { color: var(--danger); border-color: var(--danger); }
 .composer-send { right: 9px; }
 .composer-send svg { transform: translateY(-1px); }
@@ -2572,6 +2603,46 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 .composer-actions { margin-top: 8px; grid-template-columns: auto auto minmax(0, 1fr); }
 .composer-actions button, .settings-dialog footer button { min-height: 36px; padding: 9px 10px 7px; font-size: 10px; font-weight: 400; }
+.settings-header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.settings-connection-test {
+  min-height: 30px;
+  padding: 6px 9px 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: rgba(var(--hermes-accent-rgb),0.42);
+  color: var(--hermes-accent);
+  font-family: var(--hermes-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+.settings-connection-test-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform-origin: 50% 50%;
+}
+.settings-connection-test.is-testing {
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb),0.09);
+  cursor: progress;
+}
+.settings-connection-test.is-testing .settings-connection-test-icon {
+  animation: settings-connection-orbit 0.9s linear infinite;
+}
+@keyframes settings-connection-orbit {
+  to { transform: rotate(360deg); }
+}
 .icon-refresh {
   display: inline-flex;
   align-items: center;
@@ -2600,6 +2671,9 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 @media (prefers-reduced-motion: reduce) {
   .icon-refresh.is-refreshing .refresh-glyph {
+    animation: none;
+  }
+  .settings-connection-test.is-testing .settings-connection-test-icon {
     animation: none;
   }
 }

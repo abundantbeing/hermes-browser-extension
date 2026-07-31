@@ -14,6 +14,7 @@ test('Firefox build uses a module background script fallback instead of a Chromi
 test('Firefox build removes unsupported Chromium permissions while retaining sidebar support', () => {
   assert.equal(manifest.side_panel, undefined);
   assert.equal(manifest.permissions.includes('sidePanel'), false);
+  assert.equal(manifest.permissions.includes('offscreen'), false);
   assert.equal(manifest.optional_permissions?.includes('audioCapture') || false, false);
   assert.ok(manifest.sidebar_action);
 });

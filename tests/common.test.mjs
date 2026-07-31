@@ -289,6 +289,121 @@ test('Browser-owned session ids keep Browser source identity when the API server
   assert.equal(session.messageCount, 24);
 });
 
+test('stored runtime acknowledgements fill missing Cloud session model metadata without overriding canonical rows', () => {
+  assert.equal(typeof common.applySessionModelBindings, 'function');
+  const sessions = normalizeHermesSessions({ sessions: [
+    { id: 'cloud-bound', title: 'Bound Cloud session', source: 'tui', message_count: 4 },
+    { id: 'canonical', title: 'Canonical row', source: 'tui', message_count: 2, provider: 'nous', model: 'hermes-4' },
+    { id: 'unknown', title: 'Old Cloud session', source: 'tui', message_count: 1 },
+  ] });
+
+  const merged = common.applySessionModelBindings(sessions, {
+    'cloud-bound': { provider: 'openai-codex', rawModelId: 'gpt-5.6-sol', modelId: 'gpt-5.6-sol', contextTokens: 400000 },
+    canonical: { provider: 'stale-provider', rawModelId: 'stale-model', modelId: 'stale-model', contextTokens: 1 },
+  });
+
+  assert.deepEqual(merged.find((session) => session.id === 'cloud-bound'), {
+    ...sessions.find((session) => session.id === 'cloud-bound'),
+    provider: 'openai-codex',
+    model: 'gpt-5.6-sol',
+    rawModelId: 'gpt-5.6-sol',
+    contextLength: 400000,
+  });
+  assert.equal(merged.find((session) => session.id === 'canonical').provider, 'nous');
+  assert.equal(merged.find((session) => session.id === 'canonical').rawModelId, 'hermes-4');
+  assert.equal(merged.find((session) => session.id === 'unknown').model, '', 'historical rows without evidence must stay unlabeled');
+});
+
+test('Cloud session labels persist only provider-qualified runtime acknowledgements', () => {
+  assert.equal(typeof common.sessionModelBindingFromRuntime, 'function');
+  assert.equal(common.sessionModelBindingFromRuntime({ model: 'gpt-5.6-sol' }), null);
+  assert.deepEqual(common.sessionModelBindingFromRuntime({
+    provider: 'openai-codex',
+    model: 'gpt-5.6-sol',
+  }, [{ id: 'codex/gpt-5.6-sol', rawModelId: 'gpt-5.6-sol', provider: 'openai-codex', contextTokens: 600000 }]), {
+    modelId: 'codex/gpt-5.6-sol',
+    provider: 'openai-codex',
+    rawModelId: 'gpt-5.6-sol',
+    contextTokens: 600000,
+  });
+});
+
+test('startup exposes one-click connection testing and Cloud reconnect uses the persisted exact tab lease', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+
+  assert.match(html, /id="settingsButton"[\s\S]*id="startupTestConnectionButton"/);
+  assert.match(html, /id="startupTestConnectionButton"[^>]*>\s*TEST CONNECTION\s*</);
+  assert.match(css, /body\.startup-active \.topbar #startupTestConnectionButton/);
+  assert.match(css, /top:\s*min\(var\(--startup-settings-top[^;]*calc\(100vh - 84px\)\)/);
+  assert.match(source, /startupTestConnectionButton:\s*\$\('#startupTestConnectionButton'\)/);
+  assert.match(source, /els\.startupTestConnectionButton\?\.addEventListener\('click', testConnection\)/);
+  assert.match(source, /function connectionTestButtons\(\)/);
+  assert.match(source, /\[els\.testConnectionButton, els\.startupTestConnectionButton\]/);
+  assert.match(source, /for \(const button of connectionTestButtons\(\)\)/);
+  assert.match(source, /trustedDashboardTabId\s*=\s*Number\(settings\.trustedDashboardTabId\)/);
+  assert.match(source, /trustedDashboardTabId:\s*selected\.tabId/);
+  assert.doesNotMatch(source, /Open the signed-in Hermes Cloud agent in the active tab, then choose Connect to Hermes/);
+});
+
+test('Hey Hermes hands one exactly-once wake turn to both Browser surfaces through their existing prompt seams', () => {
+  const sidepanelHtml = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const webHtml = readFileSync(new URL('../extension/app.html', import.meta.url), 'utf8');
+  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+
+  assert.match(sidepanelHtml, /id="wakeButton"/);
+  assert.match(sidepanel, /consumeWakeTurn\(message\.turn\)/);
+  assert.match(sidepanel, /WAKE_MESSAGES\.turnReply/);
+  assert.match(webHtml, /id="wakeButton"/);
+  assert.match(web, /WAKE_MESSAGES/);
+  assert.match(web, /WAKE_STORAGE_KEYS/);
+  assert.match(web, /async function consumeWakeTurn/);
+  assert.match(web, /await sendPrompt\(text\)/);
+  assert.match(web, /WAKE_MESSAGES\.turnReply/);
+  assert.match(web, /changes\[WAKE_STORAGE_KEYS\.turn\]/);
+});
+
+test('Hermes Web Cloud handoff uses the same signed-in dashboard ticket transport instead of a read-only dead end', () => {
+  const source = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /Live dashboard handoff is next/);
+  assert.match(source, /mintWsTicket/);
+  assert.match(source, /isTrustedDashboardOrigin/);
+  assert.match(source, /isTrustedDashboardOrigin\(settings\.trustedDashboardOrigin, desiredOrigin\)/);
+  assert.match(source, /dashboardConnection\?\.origin === desiredOrigin/);
+  assert.match(source, /Number\(dashboardConnection\?\.tabId\) === tabId/);
+  assert.match(source, /createGatewayClient/);
+  assert.match(source, /establishGatewaySession/);
+  assert.match(source, /WS_METHODS\.sessionList/);
+  assert.match(source, /WS_METHODS\.promptSubmit/);
+  const establish = source.match(/async function establishDashboardSession[\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(establish.indexOf('buildSessionModelSwitchRequest') < establish.indexOf('WS_METHODS.sessionStatus'), 'Hermes Web must apply the selected session model before acknowledging and persisting runtime truth');
+  const select = source.match(/async function selectModel[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(select, /usesDashboardTicketTransport\(\)/);
+  assert.ok(select.indexOf('buildSessionModelSwitchRequest') < select.indexOf('WS_METHODS.sessionStatus'));
+  assert.match(select, /cloudSwitchAccepted = true/);
+  assert.match(select, /if \(cloudSwitchAccepted\)[\s\S]*Cloud model rollback/);
+  assert.match(source, /const forThisSession = \(event\) => event\.sessionId === sessionId;/);
+  assert.match(source, /WS_EVENTS\.error, \(event\) => \{\s*if \(!forThisSession\(event\)\) return;/);
+  assert.match(source, /let dashboardTurnSessionId = '';/);
+  assert.match(source, /sessionHistory, \{ session_id: dashboardTurnSessionId \}/);
+  assert.doesNotMatch(source, /sessionHistory, \{ session_id: dashboardLiveSessionId \}/);
+});
+
+test('saving unrelated settings preserves an explicit browser-local wake preference', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const saveSettings = source.match(/async function saveSettingsFromForm\(\)[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(saveSettings, /wakeWordPreferNative:\s*settings\.wakeWordPreferNative !== false/);
+  assert.doesNotMatch(saveSettings, /wakeWordPreferNative:\s*true/);
+});
+
+test('sidepanel reapplies the stored Cloud session model before persisting resume-time runtime truth', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const establish = source.match(/async function ensureRemoteWsSession[\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(establish.indexOf('buildSessionModelSwitchRequest') < establish.indexOf('WS_METHODS.sessionStatus'));
+});
+
 test('sidepanel requires an on-brand source decision before sending into a foreign session', () => {
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
@@ -1296,11 +1411,19 @@ test('manifests omit unsupported audioCapture permission and use the web microph
   const voiceHtml = readFileSync(new URL('../extension/voice-dictation.html', import.meta.url), 'utf8');
   const voiceJs = readFileSync(new URL('../extension/voice-dictation.js', import.meta.url), 'utf8');
   const sidepanelJs = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const wakeListenerHtml = readFileSync(new URL('../extension/wake-listener.html', import.meta.url), 'utf8');
+  const wakeListenerJs = readFileSync(new URL('../extension/wake-listener.js', import.meta.url), 'utf8');
   for (const manifest of manifests) {
     assert.equal(manifest.permissions.includes('audioCapture'), false);
     assert.equal(Boolean(manifest.optional_permissions?.includes('audioCapture')), false);
     assert.equal(manifest.permissions.includes('microphone'), false);
     assert.equal(Boolean(manifest.optional_permissions?.includes('microphone')), false);
+    assert.equal(manifest.permissions.includes('offscreen'), true);
+    assert.ok(Number(manifest.minimum_chrome_version) >= 116);
+    const csp = manifest.content_security_policy?.extension_pages || '';
+    assert.match(csp, /ws:\/\/127\.0\.0\.1:\*/);
+    assert.match(csp, /ws:\/\/localhost:\*/);
+    assert.doesNotMatch(csp, /connect-src[^;]*\sws:\s*;/, 'insecure WebSockets must stay loopback-scoped');
   }
   assert.match(permissionHtml, /Allow microphone access/);
   assert.match(permissionHtml, /openMicrophoneSettingsButton/);
@@ -1313,6 +1436,9 @@ test('manifests omit unsupported audioCapture permission and use the web microph
   assert.doesNotMatch(voiceJs, /chrome\.permissions|audioCapture/);
   assert.doesNotMatch(sidepanelJs, /chrome\.permissions|audioCapture/);
   assert.match(voiceJs, /chrome:\/\/settings\/content\/siteDetails/);
+  assert.match(wakeListenerHtml, /wake-listener\.js/);
+  assert.match(wakeListenerJs, /prepareOnDeviceSpeechRecognition/);
+  assert.match(wakeListenerJs, /prepared\.mode !== 'local'/);
 });
 
 test('sidepanel falls back to visible voice dictation tab when sidepanel microphone capture is blocked', () => {
@@ -2844,6 +2970,17 @@ test('Cloud Preview flattens provider-aware model.options payloads before render
   assert.match(sidepanel, /modelRowsFromGatewayOptions\(await remoteWsConnection\.client\.request\(WS_METHODS\.modelOptions\)\)/);
 });
 
+test('Cloud Preview applies model picks to the live session and refreshes context metadata', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(sidepanel, /buildSessionModelSwitchRequest\(\{/);
+  assert.match(sidepanel, /connection\.client\.request\(request\.method, request\.params\)/);
+  assert.match(sidepanel, /WS_METHODS\.sessionStatus/);
+  assert.match(sidepanel, /runtimeModelFromSessionStatus\(statusPayload\)/);
+  assert.match(sidepanel, /source:\s*'Cloud model switch'/);
+  assert.match(sidepanel, /runtime\.context_length\s*=\s*selected\?\.contextTokens/);
+  assert.match(sidepanel, /Cloud model switch failed/);
+});
+
 test('discoverModelsFromDashboard extracts the dashboard token and fetches model options', async () => {
   const {
     dashboardModelDiscoveryBaseUrl,
@@ -3352,4 +3489,18 @@ test('Nous dark theme uses Desktop-style dark blue surfaces instead of light box
   assert.match(block, /--hermes-paper:\s*#0a3572\b/i, 'dark Nous cards should be deep Hermes blue');
   assert.match(block, /--hermes-input-bg:\s*#062a60\b/i, 'dark Nous text fields should be darker blue than cards');
   assert.match(css, /textarea, input, select \{[\s\S]*?background:\s*var\(--hermes-input-bg, var\(--hermes-paper\)\)/, 'form controls should use the input surface token');
+});
+
+test('settings header owns the animated connection test control', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.equal((html.match(/id="testConnectionButton"/g) || []).length, 1);
+  assert.match(html, /settings-header-actions[\s\S]*?testConnectionButton[\s\S]*?closeSettingsButton/);
+  assert.match(html, /settings-connection-test-icon/);
+  assert.match(css, /\.settings-connection-test\.is-testing \.settings-connection-test-icon[\s\S]*?animation:\s*settings-connection-orbit/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?settings-connection-test/);
+  assert.match(source, /function setTestConnectionBusy\(busy\)/);
+  assert.match(source, /setTestConnectionButtonLabel\('TESTING'\)/);
+  assert.match(source, /setTestConnectionButtonLabel\(ok \? 'ONLINE' : 'FAILED'\)/);
 });

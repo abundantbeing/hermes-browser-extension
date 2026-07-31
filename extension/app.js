@@ -3,6 +3,7 @@ import {
   contextCompactionState,
   contextMeterDisplay,
   estimateTokens,
+  applySessionModelBindings,
   groupSessionsForMenu,
   messageDisplayText,
   isModelRuntimeSelectable,
@@ -10,6 +11,7 @@ import {
   normalizeHermesSessions,
   normalizeHermesSkills,
   normalizeToolActivity,
+  sessionModelBindingFromRuntime,
   renderMarkdown,
   shouldAutoOpenSessionGroup,
   skillSuggestionsForInput,
@@ -24,7 +26,8 @@ import {
 } from './lib/capabilities.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
 import { migrateConnectionSettings, normalizeConnectionMode } from './lib/connection-modes.mjs';
-import { fullTabEntryPathForPage, parseFullTabHandoff } from './lib/surface-protocol.mjs';
+import { SURFACE_KINDS, fullTabEntryPathForPage, parseFullTabHandoff } from './lib/surface-protocol.mjs';
+import { WAKE_MESSAGES, WAKE_STORAGE_KEYS, normalizeWakeWordSettings, wakeTurnIsFresh } from './lib/wake-word.mjs';
 import {
   APPEARANCE_THEMES,
   normalizeAppearanceTheme,
@@ -41,6 +44,7 @@ import {
   mergeModelsWithRegistry,
   modelCatalogCacheKey,
   modelCatalogRefreshDecision,
+  modelRowsFromGatewayOptions,
   normalizeCachedModelCatalog,
   selectModelCatalogFallback,
   shouldEnrichCanonicalProviderCatalog,
@@ -77,6 +81,8 @@ import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
 import { sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
+import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
+import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const handoff = parseFullTabHandoff(globalThis.location.search);
@@ -155,6 +161,7 @@ const els = {
   taskStackProgress: $('#taskStackProgress'),
   taskStackList: $('#taskStackList'),
   settingsButton: $('#settingsButton'),
+  wakeButton: $('#wakeButton'),
   settingsDialog: $('#settingsDialog'),
   settingsForm: $('#settingsForm'),
   closeSettings: $('#closeSettings'),
@@ -221,6 +228,9 @@ let imageViewerState = createImageViewerState();
 let imagePanGesture = null;
 let sessionHistoryLoading = true;
 let webSessionLoadRequestId = 0;
+let wakeTurnProcessingId = '';
+let dashboardConnection = null;
+let dashboardLiveSessionId = '';
 const HERMES_WEB_SESSION_SOURCE = 'hermes_web';
 const openSessionGroups = new Set();
 const closedSessionGroups = new Set();
@@ -230,6 +240,154 @@ const TASK_STACKS_STORAGE_KEY = 'hermesBrowserTaskStacks';
 const client = createHermesClient({
   getConnection: () => settings,
 });
+
+function usesDashboardTicketTransport() {
+  const mode = normalizeConnectionMode(settings.connectionMode);
+  return mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' || settings.gatewayMode === 'remote-dashboard';
+}
+
+async function ensureDashboardConnection() {
+  const desiredOrigin = originOf(settings.gatewayUrl || '');
+  if (!isTrustedDashboardOrigin(settings.trustedDashboardOrigin, desiredOrigin)) {
+    const error = new Error('Hermes Cloud origin is not trusted. Reconnect from the side panel before opening Hermes Web.');
+    error.ticketReason = 'dashboard_origin_untrusted';
+    throw error;
+  }
+  const tabId = Number(settings.trustedDashboardTabId);
+  if (dashboardConnection?.client?.readyState === 1
+    && dashboardConnection?.origin === desiredOrigin
+    && Number(dashboardConnection?.tabId) === tabId) {
+    return dashboardConnection;
+  }
+  dashboardConnection?.client?.close?.();
+  dashboardConnection = null;
+  if (!Number.isFinite(tabId) || tabId <= 0) {
+    throw new Error('Open the signed-in Hermes Cloud agent once from the side panel so Browser can remember its exact tab.');
+  }
+  const ticket = await mintWsTicket({
+    tabsApi: chrome.tabs,
+    scriptingApi: chrome.scripting,
+    baseUrl: settings.gatewayUrl,
+    tabId,
+  });
+  if (!ticket.ok) throw new Error(ticketFailureHelp(ticket.reason, ticket.origin || settings.gatewayUrl));
+  const gatewayClient = createGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 180_000, readyTimeoutMs: 30_000 });
+  gatewayClient.on('close', () => {
+    if (dashboardConnection?.client === gatewayClient) dashboardConnection = null;
+    dashboardLiveSessionId = '';
+  });
+  await gatewayClient.connect(buildDashboardWsUrl(settings.gatewayUrl, ticket.ticket));
+  dashboardConnection = { client: gatewayClient, origin: desiredOrigin, tabId };
+  return dashboardConnection;
+}
+
+async function establishDashboardSession(storedSessionId = '') {
+  const connection = await ensureDashboardConnection();
+  const identity = await establishGatewaySession({
+    client: connection.client,
+    storedSessionId,
+    createParams: { source: HERMES_WEB_SESSION_SOURCE },
+  });
+  dashboardLiveSessionId = identity.liveId;
+  activeSessionId = identity.storedId;
+  const selectedModel = effectiveModel();
+  if (selectedModel.model && selectedModel.provider) {
+    try {
+      const request = buildSessionModelSwitchRequest({
+        sessionId: identity.liveId,
+        model: selectedModel.model,
+        provider: selectedModel.provider,
+      });
+      await connection.client.request(request.method, request.params);
+    } catch (error) {
+      console.warn('[Hermes Web] Cloud model selection was not applied:', error?.message || error);
+    }
+  }
+  try {
+    const status = await connection.client.request(WS_METHODS.sessionStatus, { session_id: identity.liveId });
+    const binding = sessionModelBindingFromRuntime(runtimeModelFromSessionStatus(status), availableModels);
+    if (binding) {
+      settings = {
+        ...settings,
+        sessionModelBindings: {
+          ...(settings.sessionModelBindings || {}),
+          [identity.storedId]: binding,
+        },
+      };
+      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    }
+  } catch (error) {
+    console.warn('[Hermes Web] Cloud runtime metadata was not acknowledged:', error?.message || error);
+  }
+  return identity;
+}
+
+function dashboardHistoryMessages(payload = {}) {
+  const rows = payload?.messages || payload?.data?.messages || payload?.history || payload?.data || [];
+  return Array.isArray(rows) ? rows : [];
+}
+
+async function loadDashboardSessionMessages(storedSessionId) {
+  const connection = await ensureDashboardConnection();
+  const identity = await establishDashboardSession(storedSessionId);
+  const history = await connection.client.request(WS_METHODS.sessionHistory, { session_id: identity.liveId });
+  return dashboardHistoryMessages(history);
+}
+
+async function listDashboardSessions() {
+  const connection = await ensureDashboardConnection();
+  const result = await connection.client.request(WS_METHODS.sessionList, { limit: 200, offset: 0 });
+  return applySessionModelBindings(normalizeHermesSessions(result), settings.sessionModelBindings);
+}
+
+async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } = {}) {
+  const connection = await ensureDashboardConnection();
+  if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
+  const sessionId = dashboardLiveSessionId;
+  onRun?.(sessionId);
+  return new Promise((resolve, reject) => {
+    let finalText = '';
+    let settled = false;
+    const offs = [];
+    const forThisSession = (event) => event.sessionId === sessionId;
+    const cleanup = () => {
+      for (const off of offs) off();
+      signal?.removeEventListener?.('abort', onAbort);
+    };
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      fn(value);
+    };
+    const onAbort = () => {
+      connection.client.request(WS_METHODS.sessionInterrupt, { session_id: sessionId }).catch(() => {});
+      finish(reject, new DOMException('Hermes turn stopped by user', 'AbortError'));
+    };
+    if (signal?.aborted) return onAbort();
+    signal?.addEventListener?.('abort', onAbort, { once: true });
+    offs.push(connection.client.on(WS_EVENTS.messageDelta, (event) => {
+      if (!forThisSession(event)) return;
+      finalText += event.payload?.text || '';
+      onDelta?.(finalText);
+    }));
+    offs.push(connection.client.on(WS_EVENTS.messageComplete, (event) => {
+      if (!forThisSession(event)) return;
+      finalText = event.payload?.text || finalText;
+      onDelta?.(finalText);
+      finish(resolve, finalText);
+    }));
+    offs.push(connection.client.on('tool.start', (event) => {
+      if (forThisSession(event)) onTool?.({ tool_name: event.payload?.name });
+    }));
+    offs.push(connection.client.on(WS_EVENTS.error, (event) => {
+      if (!forThisSession(event)) return;
+      finish(reject, new Error(event.payload?.message || 'Dashboard stream error'));
+    }));
+    offs.push(connection.client.on('close', () => finish(reject, new Error('Dashboard connection closed mid-turn.'))));
+    connection.client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt }).catch((error) => finish(reject, error));
+  });
+}
 
 async function loadGatewayCapabilities() {
   try {
@@ -815,6 +973,17 @@ function renderMessages(messages = []) {
 
 function effectiveModel() {
   const binding = settings.sessionModelBindings?.[activeSessionId] || settings.extensionPreferredModel || {};
+  if (binding.unconfirmed) {
+    return {
+      id: '',
+      model: '',
+      provider: '',
+      label: 'Runtime model unconfirmed',
+      contextTokens: 0,
+      reasoning: undefined,
+      fast: undefined,
+    };
+  }
   const selected = availableModels.find((model) => model.id === settings.model)
     || availableModels.find((model) => model.rawModelId === binding.rawModelId && (!binding.provider || model.provider === binding.provider));
   return {
@@ -1383,6 +1552,9 @@ function renderComposerSuggestions({ force = false } = {}) {
 async function selectModel(model) {
   const previousSettings = settings;
   const previousSelectedModelProvider = selectedModelProvider;
+  let cloudSwitchAccepted = false;
+  let cloudSwitchConnection = null;
+  let cloudSwitchSessionId = '';
   selectedModelProvider = modelProviderName(model);
   const binding = {
     modelId: model.id,
@@ -1401,25 +1573,94 @@ async function selectModel(model) {
   try {
     await chrome.storage.local.set({ hermesBrowserSettings: settings });
     if (activeSessionId) {
-      const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/model`, {
-        method: 'POST',
-        body: JSON.stringify({ provider: model.provider, model: model.rawModelId, model_options: modelOptionsPayload(), require_model_lock: true }),
-      });
-      const payload = await client.readJson(response);
-      const outcome = modelLockRequestOutcome({
-        responseOk: response.ok,
-        status: response.status,
-        payload,
-        requested: { provider: model.provider, model: model.rawModelId },
-      });
-      if (!outcome.ok && outcome.rollback) throw new Error(outcome.detail);
-      els.composerStatus.textContent = outcome.state === 'legacy'
-        ? 'Model requested · Hermes will confirm on the next turn'
-        : outcome.state === 'pending'
-          ? 'Model lock pending · waiting for runtime confirmation'
-          : `Model lock accepted${outcome.detail ? ` · ${outcome.detail}` : ''}`;
+      if (usesDashboardTicketTransport()) {
+        const connection = await ensureDashboardConnection();
+        if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
+        cloudSwitchConnection = connection;
+        cloudSwitchSessionId = dashboardLiveSessionId;
+        const request = buildSessionModelSwitchRequest({
+          sessionId: dashboardLiveSessionId,
+          model: model.rawModelId,
+          provider: model.provider,
+        });
+        await connection.client.request(request.method, request.params);
+        cloudSwitchAccepted = true;
+        const status = await connection.client.request(WS_METHODS.sessionStatus, { session_id: dashboardLiveSessionId });
+        const acknowledged = sessionModelBindingFromRuntime(runtimeModelFromSessionStatus(status), availableModels);
+        if (!acknowledged) throw new Error('Hermes Cloud did not acknowledge the active session model.');
+        settings = {
+          ...settings,
+          model: acknowledged.modelId,
+          sessionModelBindings: { ...(settings.sessionModelBindings || {}), [activeSessionId]: acknowledged },
+        };
+        await chrome.storage.local.set({ hermesBrowserSettings: settings });
+        const exact = acknowledged.provider === model.provider && acknowledged.rawModelId === model.rawModelId;
+        els.composerStatus.textContent = exact
+          ? 'Cloud session model confirmed'
+          : `Cloud fallback · ${acknowledged.provider} · ${acknowledged.rawModelId}`;
+      } else {
+        const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/model`, {
+          method: 'POST',
+          body: JSON.stringify({ provider: model.provider, model: model.rawModelId, model_options: modelOptionsPayload(), require_model_lock: true }),
+        });
+        const payload = await client.readJson(response);
+        const outcome = modelLockRequestOutcome({
+          responseOk: response.ok,
+          status: response.status,
+          payload,
+          requested: { provider: model.provider, model: model.rawModelId },
+        });
+        if (!outcome.ok && outcome.rollback) throw new Error(outcome.detail);
+        els.composerStatus.textContent = outcome.state === 'legacy'
+          ? 'Model requested · Hermes will confirm on the next turn'
+          : outcome.state === 'pending'
+            ? 'Model lock pending · waiting for runtime confirmation'
+            : `Model lock accepted${outcome.detail ? ` · ${outcome.detail}` : ''}`;
+      }
     }
   } catch (error) {
+    if (cloudSwitchAccepted) {
+      const previousBinding = previousSettings.sessionModelBindings?.[activeSessionId]
+        || previousSettings.extensionPreferredModel
+        || {};
+      const previousModel = availableModels.find((candidate) => candidate.id === previousSettings.model)
+        || availableModels.find((candidate) => candidate.rawModelId === previousBinding.rawModelId && (!previousBinding.provider || candidate.provider === previousBinding.provider));
+      const rollbackModel = previousModel?.rawModelId || previousBinding.rawModelId || '';
+      const rollbackProvider = previousModel?.provider || previousBinding.provider || '';
+      try {
+        if (!rollbackModel || !rollbackProvider || !cloudSwitchConnection || !cloudSwitchSessionId) {
+          throw new Error('The previous provider-qualified model was unavailable.');
+        }
+        const rollbackRequest = buildSessionModelSwitchRequest({
+          sessionId: cloudSwitchSessionId,
+          model: rollbackModel,
+          provider: rollbackProvider,
+        });
+        await cloudSwitchConnection.client.request(rollbackRequest.method, rollbackRequest.params);
+        const rollbackStatus = await cloudSwitchConnection.client.request(WS_METHODS.sessionStatus, { session_id: cloudSwitchSessionId });
+        const rollbackAck = sessionModelBindingFromRuntime(runtimeModelFromSessionStatus(rollbackStatus), availableModels);
+        if (!rollbackAck || rollbackAck.rawModelId !== rollbackModel || rollbackAck.provider !== rollbackProvider) {
+          throw new Error('Hermes did not confirm the previous runtime model.');
+        }
+      } catch (rollbackError) {
+        settings = {
+          ...settings,
+          model: '',
+          sessionModelBindings: {
+            ...(settings.sessionModelBindings || {}),
+            [activeSessionId]: { unconfirmed: true },
+          },
+        };
+        selectedModelProvider = '';
+        await chrome.storage.local.set({ hermesBrowserSettings: settings }).catch(() => {});
+        renderModelPicker();
+        renderComposerRuntimeControl();
+        renderContextWindow();
+        const truthError = new Error(`Cloud model changed, but runtime confirmation and Cloud model rollback both failed: ${rollbackError?.message || String(rollbackError)}`);
+        els.composerStatus.textContent = 'Cloud runtime model unconfirmed';
+        throw truthError;
+      }
+    }
     settings = previousSettings;
     selectedModelProvider = previousSelectedModelProvider;
     await chrome.storage.local.set({ hermesBrowserSettings: settings }).catch(() => {});
@@ -1428,7 +1669,8 @@ async function selectModel(model) {
     renderContextWindow();
     throw error;
   }
-  els.modelLabel.textContent = model.label || model.rawModelId;
+  const acknowledgedModel = effectiveModel();
+  els.modelLabel.textContent = acknowledgedModel.label || acknowledgedModel.model || model.label || model.rawModelId;
   renderModelPicker();
   els.modelPicker.hidden = true;
   els.modelPickerButton.setAttribute('aria-expanded', 'false');
@@ -1726,6 +1968,68 @@ async function consumePendingVoiceDraft() {
   return consumeVoiceDraft(stored?.[VOICE_DRAFT_STORAGE_KEY]);
 }
 
+function renderWakeState(state = {}) {
+  if (!els.wakeButton) return;
+  const active = Boolean(state.enabled) && !['off', 'unavailable'].includes(String(state.state || ''));
+  els.wakeButton.setAttribute('aria-pressed', String(active));
+  els.wakeButton.classList.toggle('active', active);
+  els.wakeButton.title = state.detail || (active ? 'Hey Hermes is listening' : 'Enable Hey Hermes');
+}
+
+async function toggleWakeWord() {
+  const desired = !normalizeWakeWordSettings(settings).enabled;
+  settings = { ...settings, wakeWordEnabled: desired };
+  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  try {
+    let state = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: desired, settings });
+    if (desired && state?.mode === 'browser-local') {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Microphone capture is unavailable in Hermes Web.');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      for (const track of stream?.getTracks?.() || []) track.stop();
+      state = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: true, settings });
+    }
+    renderWakeState(state || { enabled: desired, state: desired ? 'arming' : 'off' });
+  } catch (error) {
+    if (desired) {
+      settings = { ...settings, wakeWordEnabled: false };
+      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings }).catch(() => null);
+      renderWakeState({ enabled: false, state: 'off', detail: 'Wake word is off.' });
+    }
+    throw error;
+  }
+}
+
+async function consumeWakeTurn(turn = null) {
+  if (!wakeTurnIsFresh(turn) || !turn?.id || wakeTurnProcessingId === turn.id) return false;
+  wakeTurnProcessingId = turn.id;
+  const claim = await chrome.runtime.sendMessage({
+    type: WAKE_MESSAGES.claimTurn,
+    turnId: turn.id,
+    surface: SURFACE_KINDS.FULL_TAB,
+  }).catch(() => null);
+  if (claim?.claimed === false) {
+    wakeTurnProcessingId = '';
+    return false;
+  }
+  if (!claim) await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+  let reply = '';
+  try {
+    const text = String(turn.text || '').trim();
+    await sendPrompt(text);
+    reply = String([...activeMessages].reverse().find((message) => message?.role === 'assistant')?.content || '').trim();
+    return true;
+  } finally {
+    await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.turnReply, turnId: turn.id, text: reply }).catch(() => null);
+    if (wakeTurnProcessingId === turn.id) wakeTurnProcessingId = '';
+  }
+}
+
+async function consumePendingWakeTurn() {
+  const stored = await chrome.storage.local.get(WAKE_STORAGE_KEYS.turn);
+  return consumeWakeTurn(stored?.[WAKE_STORAGE_KEYS.turn]);
+}
+
 function updateBusyControls() {
   const hasDraft = Boolean(els.prompt.value.trim() || attachments.length);
   els.queueDraft.hidden = !(sending && hasDraft);
@@ -1869,6 +2173,19 @@ async function createSession() {
   const id = `hermes-web-${stamp}-${Math.random().toString(16).slice(2, 8)}`;
   const model = effectiveModel();
   const title = `Hermes Web · ${new Date().toLocaleString()}`;
+  if (usesDashboardTicketTransport()) {
+    const identity = await establishDashboardSession('');
+    activeSessionId = identity.storedId;
+    renderTaskStack();
+    settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: title };
+    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    activeMessages = [];
+    renderMessages([]);
+    renderSessions();
+    els.sessionTitle.textContent = title;
+    els.composerSessionLabel.textContent = activeSessionId;
+    return activeSessionId;
+  }
   const response = await client.fetch('/api/sessions', {
     method: 'POST',
     body: JSON.stringify({
@@ -1940,7 +2257,40 @@ async function sendPrompt(text) {
   activeAbortController = new AbortController();
   const model = effectiveModel();
   let contextRecoveryHandled = false;
+  let dashboardTurnSessionId = '';
   try {
+    if (usesDashboardTicketTransport()) {
+      const streamedAnswer = await streamDashboardPrompt(prompt, {
+        signal: activeAbortController.signal,
+        onDelta: (content) => {
+          assistant.content = content;
+          if (isRenderableAssistantMessage(assistant) && !activeMessages.includes(assistant)) activeMessages = [...activeMessages, assistant];
+          clearLiveRun();
+          renderMessages(activeMessages);
+        },
+        onTool: renderToolEvent,
+        onRun: (runId) => {
+          dashboardTurnSessionId = String(runId || '');
+          activeRunId = String(runId || '');
+          updateBusyControls();
+        },
+      });
+      if (sessionContextFailureRecovery(streamedAnswer, gatewayCapabilities)) {
+        const contextError = new Error(streamedAnswer);
+        contextError.requestAccepted = true;
+        throw contextError;
+      }
+      const connection = await ensureDashboardConnection();
+      const history = await connection.client.request(WS_METHODS.sessionHistory, { session_id: dashboardTurnSessionId }).catch(() => null);
+      const refreshed = dashboardHistoryMessages(history);
+      if (refreshed.length) {
+        activeMessages = preserveUserImageAttachments(refreshed, activeMessages);
+        renderMessages(activeMessages);
+      }
+      sessions = visibleHermesWebSessions(await listDashboardSessions().catch(() => []));
+      renderSessions(els.sessionSearch.value);
+      return;
+    }
     const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/chat/stream`, {
       method: 'POST',
       signal: activeAbortController.signal,
@@ -2060,7 +2410,9 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
   renderContextWindow();
   renderConnectionTruth({ status: 'online' });
   try {
-    const messages = await client.getSessionMessages(cleanSessionId);
+    const messages = usesDashboardTicketTransport()
+      ? await loadDashboardSessionMessages(cleanSessionId)
+      : await client.getSessionMessages(cleanSessionId);
     if (requestId !== webSessionLoadRequestId) return;
     await chrome.storage.local.set({ hermesBrowserSettings: settings });
     if (requestId !== webSessionLoadRequestId) return;
@@ -2110,9 +2462,35 @@ async function loadApp() {
     return;
   }
   if (mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' || settings.gatewayMode === 'remote-dashboard') {
-    sessions = activeSessionId ? normalizeHermesSessions([{ id: activeSessionId, title: settings.webSessionTitle || 'Hermes Cloud session', source: mode }]) : [];
-    renderSessions();
-    showError('Live dashboard handoff is next', 'This connection uses a signed-in dashboard tab. Full-tab history remains read-only until the shared background WebSocket coordinator owns the ticketed connection.');
+    try {
+      const connection = await ensureDashboardConnection();
+      renderConnectionTruth({ status: 'online' });
+      const metadataPromise = Promise.all([
+        connection.client.request(WS_METHODS.modelOptions, {}).then((modelOptions) => {
+          const discoveredModels = modelRowsFromGatewayOptions(modelOptions || {});
+          if (!discoveredModels.length) return;
+          availableModels = normalizeHermesModels(discoveredModels, settings.model);
+          renderModelPicker();
+          renderConnectionTruth({ status: 'online' });
+        }).catch(() => null),
+        listDashboardSessions().then((rows) => {
+          sessions = visibleHermesWebSessions(rows);
+          sessionHistoryLoading = false;
+          renderSessions();
+        }),
+      ]);
+      const initialSessionId = handoff.newChat ? '' : activeSessionId;
+      const activeSessionPromise = initialSessionId
+        ? openSession(initialSessionId, { keepLoading: true })
+        : Promise.resolve();
+      if (handoff.newChat) await beginHermesWebDraft({ keepLoading: true });
+      await Promise.all([metadataPromise, activeSessionPromise]);
+      hideRuntimeLoadingState();
+      if (!activeSessionId) els.emptyState.hidden = false;
+    } catch (error) {
+      renderConnectionTruth({ status: 'error' });
+      showError('Hermes Cloud unavailable', error?.message || String(error));
+    }
     return;
   }
   if (!settings.apiKey) {
@@ -2281,6 +2659,7 @@ els.attachMenu.addEventListener('click', (event) => {
 els.attachmentInput.addEventListener('change', () => attachFiles(els.attachmentInput.files).finally(() => { els.attachmentInput.value = ''; }));
 els.imageAttachmentInput.addEventListener('change', () => attachFiles(els.imageAttachmentInput.files).finally(() => { els.imageAttachmentInput.value = ''; }));
 els.voiceButton.addEventListener('click', () => openVoiceDictation().catch((error) => { els.composerStatus.textContent = error?.message || String(error); }));
+els.wakeButton?.addEventListener('click', () => toggleWakeWord().catch((error) => { els.composerStatus.textContent = error?.message || String(error); }));
 els.quickVoice.addEventListener('click', () => els.voiceButton.click());
 els.quickModel.addEventListener('click', () => toggleModelPicker(true));
 els.composerModelControl?.addEventListener('click', () => toggleModelPicker());
@@ -2456,6 +2835,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
     renderTaskStack();
   }
   if (area === 'local' && changes[VOICE_DRAFT_STORAGE_KEY]?.newValue) consumeVoiceDraft(changes[VOICE_DRAFT_STORAGE_KEY].newValue).catch(() => {});
+  if (area === 'local' && changes[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
+  if (area === 'local' && changes[WAKE_STORAGE_KEYS.turn]?.newValue) consumeWakeTurn(changes[WAKE_STORAGE_KEYS.turn].newValue).catch(() => {});
+});
+chrome.runtime.onMessage.addListener((message) => {
+  if (message?.type === WAKE_MESSAGES.turnReady) consumeWakeTurn(message.turn).catch(() => {});
+  if (message?.type === WAKE_MESSAGES.localState) renderWakeState(message);
+  return false;
 });
 document.addEventListener('click', (event) => {
   if (!els.attachMenu.hidden && !els.attachMenu.contains(event.target) && !els.attachButton.contains(event.target)) toggleAttachMenu(false);
@@ -2465,13 +2851,23 @@ document.addEventListener('click', (event) => {
   }
   if (!els.sessionActionsMenu.hidden && !els.sessionActionsMenu.contains(event.target) && event.target !== els.copySessionId) toggleSessionActionsMenu(false);
 });
-globalThis.addEventListener('focus', () => consumePendingVoiceDraft().catch(() => {}));
+globalThis.addEventListener('focus', () => {
+  consumePendingVoiceDraft().catch(() => {});
+  consumePendingWakeTurn().catch(() => {});
+});
 globalThis.addEventListener('visibilitychange', () => {
-  if (!document.hidden) consumePendingVoiceDraft().catch(() => {});
+  if (!document.hidden) {
+    consumePendingVoiceDraft().catch(() => {});
+    consumePendingWakeTurn().catch(() => {});
+  }
 });
 
 initializeResponsiveShell();
 updateScrim();
 loadApp()
-  .then(() => consumePendingVoiceDraft())
+  .then(async () => {
+    renderWakeState(await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.getState }).catch(() => ({})));
+    await consumePendingVoiceDraft();
+    await consumePendingWakeTurn();
+  })
   .catch((error) => showError('Hermes Web could not start', error?.message || String(error)));

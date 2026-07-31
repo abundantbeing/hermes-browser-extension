@@ -70,7 +70,7 @@ test('Extension Web icon opens a clean Hermes Web draft instead of restoring a B
 test('Hermes Web loading stays visible until independent startup work is fully ready', () => {
   const css = read('extension/app.css');
   const js = read('extension/app.js');
-  const loadApp = js.match(/async function loadApp\(\)\s*\{([\s\S]*?)\n\}\n\nfunction setInspectorTab/)?.[1] || '';
+  const loadApp = js.match(/async function loadApp\(\)\s*\{([\s\S]*?)\r?\n\}\r?\n\r?\nfunction setInspectorTab/)?.[1] || '';
   const beginDraft = js.match(/async function beginHermesWebDraft\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   const renderSessions = js.match(/function renderSessions\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
 

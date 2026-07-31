@@ -485,11 +485,25 @@ async function main() {
 
     const workerTarget = await waitFor(async () => {
       const targets = await fetchJson(`${devtoolsBase}/json/list`);
-      return targets.find((target) => {
+      const candidates = targets.filter((target) => {
         if (target.type !== 'service_worker') return false;
         try { return new URL(String(target.url || '')).pathname === '/background.js'; }
         catch { return false; }
       });
+      for (const candidate of candidates) {
+        const probe = new CdpClient(candidate.webSocketDebuggerUrl);
+        try {
+          await probe.connect();
+          await probe.call('Runtime.enable');
+          const isHermesBrowser = await probe.evaluate(`globalThis.chrome?.runtime?.getManifest?.()?.name === 'Hermes Browser Extension'`);
+          if (isHermesBrowser) return candidate;
+        } catch {
+          // Chrome for Testing may expose unrelated component workers named background.js.
+        } finally {
+          probe.close();
+        }
+      }
+      return null;
     });
     const extensionId = new URL(workerTarget.url).hostname;
     // Use the existing extension service worker for storage and tab control.

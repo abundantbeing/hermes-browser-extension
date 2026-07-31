@@ -51,6 +51,7 @@ import {
   normalizeHermesModels,
   normalizeHermesProfiles,
   normalizeHermesSessions,
+  applySessionModelBindings,
   normalizeHermesSkills,
   normalizeExtensionVersion,
   normalizeFastMode,
@@ -80,6 +81,7 @@ import {
   shouldCreateFreshSessionOnOpen,
   shouldShowBrowserIntro,
   sourceBlobMapsMatch,
+  sessionModelBindingFromRuntime,
   resolveAcknowledgedSessionModelBinding,
   resolveAcknowledgedSessionModelOptions,
   resolveBrowserEffectiveModel,
@@ -108,9 +110,11 @@ import { appendUserImageAttachments } from './lib/image-render.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
 import {
   buildDashboardWsUrl,
+  buildSessionModelSwitchRequest,
   createGatewayClient,
   establishGatewaySession,
   remoteStoredSessionIdForGateway,
+  runtimeModelFromSessionStatus,
   WS_EVENTS,
   WS_METHODS,
 } from './lib/gateway-ws.mjs';
@@ -172,6 +176,12 @@ import {
   shouldEnrichCanonicalProviderCatalog,
   shouldTrySessionModelFallback,
 } from './lib/model-discovery.mjs';
+import {
+  WAKE_MESSAGES,
+  WAKE_STORAGE_KEYS,
+  normalizeWakeWordSettings,
+  wakeTurnIsFresh,
+} from './lib/wake-word.mjs';
 
 import {
   BUILTIN_COMMANDS,
@@ -304,9 +314,11 @@ const els = {
   queueButton: $('#queueButton'),
   steerButton: $('#steerButton'),
   stopButton: $('#stopButton'),
+  wakeButton: $('#wakeButton'),
   voiceButton: $('#voiceButton'),
   refreshButton: $('#refreshButton'),
   settingsButton: $('#settingsButton'),
+  startupTestConnectionButton: $('#startupTestConnectionButton'),
   openFullViewButton: $('#openFullViewButton'),
   closeSettingsButton: $('#closeSettingsButton'),
   settingsDialog: $('#settingsDialog'),
@@ -392,6 +404,11 @@ const els = {
   panelResidencyInputs: Array.from(document.querySelectorAll('input[name="panelResidencyMode"]')),
   autoNameSessionsInput: $('#autoNameSessionsInput'),
   transcriptProviderInput: $('#transcriptProviderInput'),
+  wakeWordEnabledInput: $('#wakeWordEnabledInput'),
+  wakeWordPhraseInput: $('#wakeWordPhraseInput'),
+  wakeWordBrowserFallbackInput: $('#wakeWordBrowserFallbackInput'),
+  wakeWordSpeakRepliesInput: $('#wakeWordSpeakRepliesInput'),
+  wakeWordStatus: $('#wakeWordStatus'),
   profileSelect: $('#profileSelect'),
   refreshProfilesButton: $('#refreshProfilesButton'),
   profileStatus: $('#profileStatus'),
@@ -418,6 +435,8 @@ const els = {
 };
 
 let settings = { ...DEFAULT_SETTINGS };
+let wakeState = { enabled: false, state: 'off', mode: 'off', phrase: DEFAULT_SETTINGS.wakeWordPhrase, provider: '', detail: 'Wake word is off.' };
+let wakeTurnProcessingId = '';
 const hermesClient = createHermesClient({
   getConnection: () => settings,
 });
@@ -1528,8 +1547,8 @@ function applyConnectionMode(value) {
       els.connectButton.textContent = 'Connect to Hermes';
     }
     if (els.testConnectionButton) {
-      els.testConnectionButton.disabled = false;
-      els.testConnectionButton.textContent = 'Test connection';
+      setTestConnectionBusy(false);
+      setTestConnectionButtonLabel('TEST');
       els.testConnectionButton.classList.remove('success', 'error');
     }
   }
@@ -2174,6 +2193,124 @@ async function getMicrophoneStreamWithPermissionRetry() {
     if (isMicrophonePermissionError(error)) error.voiceDictationPageFallback = true;
     throw error;
   }
+}
+
+function renderWakeState(nextState = wakeState) {
+  wakeState = { ...wakeState, ...(nextState || {}) };
+  const enabled = Boolean(wakeState.enabled || settings.wakeWordEnabled);
+  const currentState = String(wakeState.state || (enabled ? 'arming' : 'off'));
+  const listening = ['listening', 'awaiting-command'].includes(currentState);
+  const paused = ['arming', 'capturing', 'paused', 'processing'].includes(currentState);
+  const unavailable = ['degraded', 'unavailable'].includes(currentState);
+  const phrase = String(wakeState.phrase || settings.wakeWordPhrase || DEFAULT_SETTINGS.wakeWordPhrase);
+  const provider = wakeState.mode === 'native'
+    ? `Hermes ${wakeState.provider || 'native'}`
+    : (wakeState.mode === 'browser-local' ? 'Browser on-device speech' : 'Wake word');
+  const detail = String(wakeState.detail || (enabled ? `Preparing “${phrase}”…` : 'Wake word is off.'));
+  if (els.wakeButton) {
+    els.wakeButton.classList.toggle('active', enabled);
+    els.wakeButton.classList.toggle('listening', listening);
+    els.wakeButton.classList.toggle('paused', paused);
+    els.wakeButton.classList.toggle('unavailable', unavailable);
+    els.wakeButton.setAttribute('aria-pressed', String(enabled));
+    els.wakeButton.setAttribute('aria-label', enabled ? 'Turn off wake word' : 'Turn on wake word');
+    els.wakeButton.title = `${provider}: ${detail}`;
+  }
+  if (els.wakeWordStatus) els.wakeWordStatus.textContent = `${provider}: ${detail}`;
+  if (els.wakeWordEnabledInput) els.wakeWordEnabledInput.checked = enabled;
+}
+
+async function refreshWakeState() {
+  try {
+    const next = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.getState });
+    if (next) renderWakeState(next);
+  } catch {
+    renderWakeState({
+      enabled: Boolean(settings.wakeWordEnabled),
+      state: settings.wakeWordEnabled ? 'unavailable' : 'off',
+      detail: settings.wakeWordEnabled ? 'Wake controller is unavailable in this browser runtime.' : 'Wake word is off.',
+    });
+  }
+}
+
+async function grantWakeMicrophoneAccess() {
+  if (!navigator.mediaDevices?.getUserMedia) throw new Error('This browser cannot capture microphone audio.');
+  const stream = await getMicrophoneStreamWithPermissionRetry();
+  stream?.getTracks?.().forEach((track) => track.stop());
+}
+
+async function setWakeWordEnabled(enabled) {
+  const desired = Boolean(enabled);
+  settings = { ...settings, wakeWordEnabled: desired };
+  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  renderWakeState({ enabled: desired, state: desired ? 'arming' : 'off', detail: desired ? 'Selecting the safest wake listener…' : 'Wake word is off.' });
+  let next = await chrome.runtime.sendMessage({
+    type: WAKE_MESSAGES.setEnabled,
+    enabled: desired,
+    settings,
+  });
+  if (desired && next?.mode === 'browser-local') {
+    try {
+      await grantWakeMicrophoneAccess();
+      next = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: true, settings });
+    } catch (error) {
+      settings = { ...settings, wakeWordEnabled: false };
+      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings }).catch(() => null);
+      if (isMicrophonePermissionError(error)) {
+        await openMicrophonePermissionPage();
+        throw microphonePermissionError('Microphone access is required for Browser-local wake listening. Grant it in the Hermes permission tab, then click the ear again.');
+      }
+      throw error;
+    }
+  }
+  if (next) renderWakeState(next);
+  return next;
+}
+
+async function consumeWakeTurn(turn = null) {
+  if (!wakeTurnIsFresh(turn) || !turn?.id) {
+    if (turn) await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+    return false;
+  }
+  if (wakeTurnProcessingId === turn.id) return false;
+  wakeTurnProcessingId = turn.id;
+  const claim = await chrome.runtime.sendMessage({
+    type: WAKE_MESSAGES.claimTurn,
+    turnId: turn.id,
+    surface: SURFACE_KINDS.SIDE_PANEL,
+  }).catch(() => null);
+  if (claim?.claimed === false) {
+    wakeTurnProcessingId = '';
+    return false;
+  }
+  if (!claim) await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+  let completed = false;
+  try {
+    const sent = await askHermes(String(turn.text || '').trim(), [], {
+      forceChatOnly: true,
+      displayUserText: String(turn.text || '').trim(),
+      onComplete: async (finalAnswer) => {
+        completed = true;
+        await chrome.runtime.sendMessage({
+          type: WAKE_MESSAGES.turnReply,
+          turnId: turn.id,
+          text: finalAnswer,
+        });
+      },
+    });
+    return Boolean(sent);
+  } finally {
+    if (!completed) {
+      await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.turnReply, turnId: turn.id, text: '' }).catch(() => null);
+    }
+    if (wakeTurnProcessingId === turn.id) wakeTurnProcessingId = '';
+  }
+}
+
+async function consumePendingWakeTurn() {
+  const stored = await chrome.storage.local.get(WAKE_STORAGE_KEYS.turn);
+  return consumeWakeTurn(stored?.[WAKE_STORAGE_KEYS.turn]);
 }
 
 function updateVoiceButtonState() {
@@ -3687,6 +3824,64 @@ async function requestSessionModelLock(selected = currentSelectedModel(), { sess
 }
 
 async function syncSessionModelLock(selected, { previousId = '', previousBinding = null, requestedDetail = '', statusDetail = '' } = {}) {
+  if (isRemoteWsMode()) {
+    setStatus('warn', 'Cloud model switch pending', `${requestedDetail || modelDisplayName(selected) || settings.model} — waiting for the live Cloud session to confirm.`);
+    try {
+      const connection = await ensureRemoteWsClient();
+      const liveSessionId = await ensureRemoteWsSession(connection);
+      const request = buildSessionModelSwitchRequest({
+        sessionId: liveSessionId,
+        model: selected?.rawModelId || selected?.model || selected?.id || '',
+        provider: selected?.provider || currentModelProviderSlug() || '',
+      });
+      const payload = await connection.client.request(request.method, request.params);
+      if (payload?.confirm_required) {
+        throw new Error(payload.confirm_message || 'Hermes requires confirmation before switching to this model.');
+      }
+      const statusPayload = await connection.client.request(WS_METHODS.sessionStatus, { session_id: liveSessionId });
+      const runtime = runtimeModelFromSessionStatus(statusPayload);
+      const ack = modelRuntimeAckState({
+        requested: {
+          provider: selected?.provider || '',
+          model: selected?.rawModelId || selected?.model || selected?.id || '',
+        },
+        runtime,
+      });
+      if (ack.state !== 'confirmed') {
+        const active = [runtime.provider, runtime.model].filter(Boolean).join(' · ') || 'an unreported model';
+        throw new Error(`Hermes kept ${active} active instead of the requested model.`);
+      }
+      runtime.context_length = selected?.contextTokens || settings.modelContextTokens || 0;
+      applySessionRuntimeSnapshot({
+        sessionId: settings.sessionId || liveSessionId,
+        runtime,
+        source: 'Cloud model switch',
+      });
+      applyPendingModelRuntimeAck(runtime);
+      setStatus('ok', 'Cloud model switched', `${modelProviderLabel(selected)} · ${modelDisplayName(selected)} is active for this session.`);
+      return { state: 'confirmed', payload };
+    } catch (error) {
+      if (previousId) {
+        const remoteRollbackScope = updateBrowserModelScope({
+          selectedModel: previousBinding || { modelId: previousId, rawModelId: previousId, contextTokens: 0 },
+          sessionId: settings.sessionId,
+          sessionModelBindings: settings.sessionModelBindings || {},
+        });
+        settings = {
+          ...settings,
+          model: previousId,
+          modelContextTokens: previousBinding?.contextTokens || settings.modelContextTokens || 0,
+          extensionPreferredModel: remoteRollbackScope.extensionPreferredModel,
+          sessionModelBindings: remoteRollbackScope.sessionModelBindings,
+        };
+        await chrome.storage.local.set({ hermesBrowserSettings: settings });
+        renderModelOptions(availableModels);
+      }
+      pendingModelRuntimeAck = null;
+      setStatus('error', 'Cloud model switch failed', error?.message || String(error));
+      return { state: 'failed', error };
+    }
+  }
   if (isUnsavedBrowserDraftSession({ sessionId: settings.sessionId, sessions: availableSessions })) {
     setStatus(
       'warn',
@@ -4605,7 +4800,10 @@ async function loadSessions({ quiet = false } = {}) {
     }
     try {
       const result = await remoteWsConnection.client.request(WS_METHODS.sessionList, { limit: 200 });
-      availableSessions = normalizeHermesSessions(result).filter((session) => Number(session.messageCount || 0) > 0);
+      availableSessions = applySessionModelBindings(
+        normalizeHermesSessions(result),
+        settings.sessionModelBindings,
+      ).filter((session) => Number(session.messageCount || 0) > 0);
       syncActiveSessionRuntimeFromList();
       updateSessionLabel();
       renderSessionMenu();
@@ -5646,6 +5844,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   renderBrowserIntroVisibility();
   const migrateConnectionSchema = stored.hermesBrowserSettings?.connectionSchemaVersion !== DEFAULT_SETTINGS.connectionSchemaVersion;
   const storedSettings = migrateConnectionSettings(stored.hermesBrowserSettings || {});
+  const storedWakeSettings = normalizeWakeWordSettings({ ...DEFAULT_SETTINGS, ...storedSettings });
   const migrateDesktopOptionDefaults = !storedSettings.modelOptionsVersion && storedSettings.reasoningEffort === 'medium';
   const migrateModelOptionScope = !storedSettings.extensionPreferredModelOptions || !storedSettings.sessionModelOptionBindings;
   settings = { ...DEFAULT_SETTINGS, ...storedSettings };
@@ -5677,6 +5876,11 @@ async function loadSettings({ restoreMessages = false } = {}) {
     inlineAssistReasoningEffort: normalizeReasoningEffort(settings.inlineAssistReasoningEffort || 'low'),
     inlineAssistFastMode: settings.inlineAssistFastMode !== false,
     contextMenuDefaultRoute: ['current', 'new', 'background'].includes(settings.contextMenuDefaultRoute) ? settings.contextMenuDefaultRoute : 'ask',
+    wakeWordEnabled: storedWakeSettings.enabled,
+    wakeWordPhrase: storedWakeSettings.phrase,
+    wakeWordPreferNative: storedWakeSettings.preferNative,
+    wakeWordBrowserFallback: storedWakeSettings.browserFallback,
+    wakeWordSpeakReplies: storedWakeSettings.speakReplies,
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
     textSize: normalizeTextSize(settings.textSize),
@@ -5699,6 +5903,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
       .filter(([, options]) => Boolean(options))),
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
   };
+  trustedDashboardTabId = Number(settings.trustedDashboardTabId) || null;
   contextScope = contextScopeForGateway(contextScope, settings.gatewayMode);
   saveContextScopeForInstance();
   const effectiveBinding = resolveBrowserEffectiveModel({
@@ -5769,6 +5974,11 @@ function syncSettingsForm() {
     els.customModelSourcesInput.value = normalizeExternalModelSourceList(settings.customModelSources || []).join('\n');
   }
   els.transcriptProviderInput.value = settings.transcriptProvider || DEFAULT_SETTINGS.transcriptProvider;
+  if (els.wakeWordEnabledInput) els.wakeWordEnabledInput.checked = Boolean(settings.wakeWordEnabled);
+  if (els.wakeWordPhraseInput) els.wakeWordPhraseInput.value = settings.wakeWordPhrase || DEFAULT_SETTINGS.wakeWordPhrase;
+  if (els.wakeWordBrowserFallbackInput) els.wakeWordBrowserFallbackInput.checked = settings.wakeWordBrowserFallback !== false;
+  if (els.wakeWordSpeakRepliesInput) els.wakeWordSpeakRepliesInput.checked = settings.wakeWordSpeakReplies !== false;
+  renderWakeState();
   renderCompatibilityPanel();
   renderConnectionSecurity();
   renderRemoteDiagnostics(lastRemoteDiagnostic);
@@ -5844,6 +6054,11 @@ async function saveSettingsFromForm() {
     agentPorts: parseAgentPortsInput(els.agentPortsInput?.value || '').length ? parseAgentPortsInput(els.agentPortsInput?.value || '') : getAgentPorts(),
     customModelSources: normalizeExternalModelSourceList(els.customModelSourcesInput?.value?.split(/\n+/) || settings.customModelSources || []),
     transcriptProvider: els.transcriptProviderInput.value.trim() || DEFAULT_SETTINGS.transcriptProvider,
+    wakeWordEnabled: els.wakeWordEnabledInput ? els.wakeWordEnabledInput.checked : Boolean(settings.wakeWordEnabled),
+    wakeWordPhrase: normalizeWakeWordSettings({ wakeWordPhrase: els.wakeWordPhraseInput?.value }).phrase,
+    wakeWordPreferNative: settings.wakeWordPreferNative !== false,
+    wakeWordBrowserFallback: els.wakeWordBrowserFallbackInput ? els.wakeWordBrowserFallbackInput.checked : settings.wakeWordBrowserFallback !== false,
+    wakeWordSpeakReplies: els.wakeWordSpeakRepliesInput ? els.wakeWordSpeakRepliesInput.checked : settings.wakeWordSpeakReplies !== false,
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
     textSize: normalizeTextSize(settings.textSize),
@@ -5868,6 +6083,12 @@ async function saveSettingsFromForm() {
   }
   applyAppearanceSettings();
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
+    || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
+    || previousSettings.wakeWordBrowserFallback !== settings.wakeWordBrowserFallback
+    || previousSettings.wakeWordSpeakReplies !== settings.wakeWordSpeakReplies
+    || connectionChanged;
+  if (wakeChanged) await setWakeWordEnabled(settings.wakeWordEnabled);
   await maybeRenameCurrentSessionTitle(previousSettings, settings.sessionTitle);
   syncSettingsForm();
   updateConnectionPrompt();
@@ -6670,6 +6891,8 @@ async function requestDashboardOriginTrust(baseUrl) {
   }
   if (isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
     trustedDashboardTabId = tab.id;
+    settings = { ...settings, trustedDashboardTabId: tab.id };
+    await chrome.storage.local.set({ hermesBrowserSettings: settings });
     return origin;
   }
   const approved = globalThis.confirm?.(dashboardTrustPrompt(origin)) === true;
@@ -6679,7 +6902,7 @@ async function requestDashboardOriginTrust(baseUrl) {
     throw error;
   }
   trustedDashboardTabId = tab.id;
-  settings = { ...settings, trustedDashboardOrigin: origin };
+  settings = { ...settings, trustedDashboardOrigin: origin, trustedDashboardTabId: tab.id };
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   return origin;
 }
@@ -6790,6 +7013,33 @@ async function ensureRemoteWsSession(connection) {
       },
       modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
     };
+    try {
+      const request = buildSessionModelSwitchRequest({
+        sessionId: liveId,
+        model: binding.rawModelId || binding.modelId,
+        provider: binding.provider,
+      });
+      await connection.client.request(request.method, request.params);
+    } catch (error) {
+      console.warn('[Hermes] Cloud model selection was not applied:', error?.message || error);
+    }
+  }
+  try {
+    const statusPayload = await connection.client.request(WS_METHODS.sessionStatus, { session_id: liveId });
+    const runtime = runtimeModelFromSessionStatus(statusPayload);
+    const acknowledgedBinding = sessionModelBindingFromRuntime(runtime, availableModels);
+    if (acknowledgedBinding) {
+      settings = {
+        ...settings,
+        sessionModelBindings: {
+          ...(settings.sessionModelBindings || {}),
+          [storedId]: acknowledgedBinding,
+        },
+      };
+      applySessionRuntimeSnapshot({ sessionId: storedId, runtime, source: 'Cloud session status' });
+    }
+  } catch (error) {
+    console.warn('[Hermes] Cloud runtime metadata was not acknowledged:', error?.message || error);
   }
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   updateSessionLabel();
@@ -7023,10 +7273,22 @@ async function connectTicketTransport({ cloud = false } = {}) {
   markConnectionProbe('connecting', cloud ? 'Finding active Hermes Cloud agent tab.' : settings.gatewayUrl);
   try {
     if (cloud) {
-      const selected = await resolveActiveCloudAgentTab({ tabsApi: chrome.tabs });
+      const rememberedTabId = Number(settings.trustedDashboardTabId);
+      const rememberedOrigin = String(settings.trustedDashboardOrigin || '').trim();
+      let selected = Number.isFinite(rememberedTabId) && rememberedTabId > 0 && rememberedOrigin
+        ? await assertCloudAgentTabStillMatches({
+          tabsApi: chrome.tabs,
+          tabId: rememberedTabId,
+          expectedOrigin: rememberedOrigin,
+        }).catch(() => null)
+        : null;
+      const reusingTrustedTab = Boolean(selected);
+      selected ||= await resolveActiveCloudAgentTab({ tabsApi: chrome.tabs });
       if (!connectionController.isCurrent(generation)) return;
-      const approved = globalThis.confirm?.(dashboardTrustPrompt(selected.origin)) === true;
-      if (!approved) throw new Error('Hermes Cloud connection was cancelled before ticket minting.');
+      if (!reusingTrustedTab) {
+        const approved = globalThis.confirm?.(dashboardTrustPrompt(selected.origin)) === true;
+        if (!approved) throw new Error('Hermes Cloud connection was cancelled before ticket minting.');
+      }
       await assertCloudAgentTabStillMatches({ tabsApi: chrome.tabs, tabId: selected.tabId, expectedOrigin: selected.origin });
       if (!connectionController.isCurrent(generation)) return;
       trustedDashboardTabId = selected.tabId;
@@ -7037,6 +7299,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
         gatewayMode: 'remote-dashboard',
         gatewayUrl: selected.origin,
         trustedDashboardOrigin: selected.origin,
+        trustedDashboardTabId: selected.tabId,
         apiKey: '',
         tokenSource: '',
       };
@@ -7836,25 +8099,65 @@ async function consumePendingOpenSessionRequest() {
 
 let testConnectionFlashTimer = null;
 
+function connectionTestButtons() {
+  return [els.testConnectionButton, els.startupTestConnectionButton].filter(Boolean);
+}
+
+function setTestConnectionButtonLabel(label) {
+  for (const button of connectionTestButtons()) {
+    const target = button.querySelector('.settings-connection-test-label');
+    const nextLabel = button === els.startupTestConnectionButton && label === 'TEST'
+      ? 'TEST CONNECTION'
+      : label;
+    if (target) target.textContent = nextLabel;
+    else button.textContent = nextLabel;
+  }
+}
+
+function setTestConnectionBusy(busy) {
+  for (const button of connectionTestButtons()) {
+    button.disabled = Boolean(busy);
+    button.classList.toggle('is-testing', Boolean(busy));
+    button.setAttribute('aria-busy', String(Boolean(busy)));
+  }
+  if (busy) setTestConnectionButtonLabel('TESTING');
+}
+
 function flashTestConnectionResult(ok) {
-  const button = els.testConnectionButton;
-  if (!button) return;
   clearTimeout(testConnectionFlashTimer);
-  button.classList.remove('success', 'error');
-  button.classList.add(ok ? 'success' : 'error');
-  button.textContent = ok ? 'Connected ✓' : 'Failed';
+  for (const button of connectionTestButtons()) {
+    button.classList.remove('is-testing', 'success', 'error');
+    button.classList.add(ok ? 'success' : 'error');
+    button.setAttribute('aria-busy', 'false');
+  }
+  setTestConnectionButtonLabel(ok ? 'ONLINE' : 'FAILED');
   testConnectionFlashTimer = setTimeout(() => {
-    button.classList.remove('success', 'error');
-    button.textContent = 'Test connection';
+    for (const button of connectionTestButtons()) button.classList.remove('success', 'error');
+    setTestConnectionButtonLabel('TEST');
   }, 2600);
 }
 
 async function testConnection() {
-  await saveSettingsFromForm();
+  clearTimeout(testConnectionFlashTimer);
+  for (const button of connectionTestButtons()) button.classList.remove('success', 'error');
+  setTestConnectionBusy(true);
+  try {
+    await saveSettingsFromForm();
+  } catch (error) {
+    setTestConnectionBusy(false);
+    flashTestConnectionResult(false);
+    throw error;
+  }
   const action = connectionActionForSettings(settings);
   if (action === CONNECTION_ACTIONS.CLOUD_ACTIVE_TAB_ATTACH || action === CONNECTION_ACTIONS.REMOTE_DASHBOARD_ATTACH) {
-    await connectTicketTransport({ cloud: action === CONNECTION_ACTIONS.CLOUD_ACTIVE_TAB_ATTACH });
-    flashTestConnectionResult(isConnected());
+    let connected = false;
+    try {
+      await connectTicketTransport({ cloud: action === CONNECTION_ACTIONS.CLOUD_ACTIVE_TAB_ATTACH });
+      connected = isConnected();
+    } finally {
+      setTestConnectionBusy(false);
+      flashTestConnectionResult(connected);
+    }
     return;
   }
   const generation = connectionController.begin({
@@ -7862,10 +8165,6 @@ async function testConnection() {
     transport: settings.connectionTransport,
   });
   markConnectionProbe('connecting', normalizeGatewayUrl(settings.gatewayUrl));
-  els.testConnectionButton.disabled = true;
-  els.testConnectionButton.textContent = 'Testing...';
-  els.testConnectionButton.classList.remove('success', 'error');
-  clearTimeout(testConnectionFlashTimer);
   let ok = false;
   try {
     const response = await apiFetch('/health', { method: 'GET' });
@@ -7960,7 +8259,7 @@ async function testConnection() {
     }
   } finally {
     if (connectionController.isCurrent(generation)) {
-      els.testConnectionButton.disabled = false;
+      setTestConnectionBusy(false);
       flashTestConnectionResult(ok);
     }
   }
@@ -8025,6 +8324,7 @@ function bindEvents() {
   });
   window.addEventListener('resize', positionOperationToast);
   els.settingsButton.addEventListener('click', openSettingsDialog);
+  els.startupTestConnectionButton?.addEventListener('click', testConnection);
   els.taskStackToggle?.addEventListener('click', () => {
     taskStackExpanded = !taskStackExpanded;
     renderTaskStack();
@@ -8204,6 +8504,12 @@ function bindEvents() {
     const action = event.target?.closest?.('[data-queued-action]')?.dataset?.queuedAction;
     if (action === 'delete') deleteQueuedTurn();
     if (action === 'steer') steerQueuedTurn();
+  });
+  els.wakeButton?.addEventListener('click', () => {
+    setWakeWordEnabled(!(wakeState.enabled || settings.wakeWordEnabled)).catch((error) => {
+      setStatus('warn', 'Wake word unavailable', error?.message || String(error));
+      refreshWakeState();
+    });
   });
   els.voiceButton?.addEventListener('click', toggleVoiceDictation);
   els.checkUpdatesButton?.addEventListener('click', () => checkForUpdates());
@@ -8599,6 +8905,15 @@ function bindEvents() {
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'removed', eventTabId: tabId })) refreshContext();
   });
   chrome.runtime?.onMessage?.addListener?.((message, _sender, sendResponse) => {
+    if (message?.type === WAKE_MESSAGES.localState) {
+      renderWakeState(message);
+      sendResponse?.({ ok: true });
+      return false;
+    }
+    if (message?.type === WAKE_MESSAGES.turnReady) {
+      consumeWakeTurn(message.turn).then((ok) => sendResponse?.({ ok })).catch((error) => sendResponse?.({ ok: false, error: error?.message || String(error) }));
+      return true;
+    }
     if (message?.type === 'HERMES_VOICE_TRANSCRIPT') {
       consumeVoiceDraft(message).then((ok) => sendResponse?.({ ok })).catch((error) => sendResponse?.({ ok: false, error: error?.message || String(error) }));
       return true;
@@ -8611,10 +8926,18 @@ function bindEvents() {
     return false;
   });
   chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
-    if (areaName !== 'local' || !changes?.[VOICE_DRAFT_STORAGE_KEY]?.newValue) return;
-    consumeVoiceDraft(changes[VOICE_DRAFT_STORAGE_KEY].newValue).catch((error) => {
-      setStatus('warn', 'Voice transcript handoff failed', error?.message || String(error));
-    });
+    if (areaName !== 'local') return;
+    if (changes?.[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
+    if (changes?.[WAKE_STORAGE_KEYS.turn]?.newValue) {
+      consumeWakeTurn(changes[WAKE_STORAGE_KEYS.turn].newValue).catch((error) => {
+        setStatus('warn', 'Wake command handoff failed', error?.message || String(error));
+      });
+    }
+    if (changes?.[VOICE_DRAFT_STORAGE_KEY]?.newValue) {
+      consumeVoiceDraft(changes[VOICE_DRAFT_STORAGE_KEY].newValue).catch((error) => {
+        setStatus('warn', 'Voice transcript handoff failed', error?.message || String(error));
+      });
+    }
   });
 }
 
@@ -8640,11 +8963,6 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
       },
       connectGateway: async () => {
         if (isRemoteWsMode()) {
-          if (restoreSettings && settings.connectionMode === 'cloud' && remoteWsConnection?.client?.readyState !== 1) {
-            const error = new Error('Open the signed-in Hermes Cloud agent in the active tab, then choose Connect to Hermes.');
-            error.readinessStatus = 'unconfigured';
-            throw error;
-          }
           const connection = await ensureRemoteWsClient();
           return {
             detail: `Dashboard transport ready at ${connection.baseUrl}.`,
@@ -8719,7 +9037,9 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
 async function runStartupReadiness() {
   try {
     await runPanelConnectionReadiness({ restoreSettings: true });
+    await refreshWakeState();
     await consumePendingVoiceDraft();
+    await consumePendingWakeTurn();
   } catch (error) {
     setStatus('error', `Startup ${error?.stage || 'readiness'} failed`, error?.message || String(error));
     renderEmptyState();

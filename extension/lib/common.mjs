@@ -91,6 +91,11 @@ export const DEFAULT_SETTINGS = Object.freeze({
   inlineAssistFastMode: false,
   contextMenuDefaultRoute: 'ask',
   transcriptProvider: 'default',
+  wakeWordEnabled: false,
+  wakeWordPhrase: 'hey hermes',
+  wakeWordPreferNative: true,
+  wakeWordBrowserFallback: true,
+  wakeWordSpeakReplies: true,
   agentDiscoveryHost: '127.0.0.1',
   agentDiscoveryScheme: 'http',
   autoNameSessions: true,
@@ -103,6 +108,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   maxLocalMessages: 40,
   customModelSources: [],
   trustedDashboardOrigin: '',
+  trustedDashboardTabId: null,
   remoteDashboardSession: null,
 });
 
@@ -2243,6 +2249,37 @@ export function normalizeHermesSessions(payload = {}) {
       };
     })
     .sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
+}
+
+export function applySessionModelBindings(sessions = [], sessionModelBindings = {}) {
+  const bindings = sessionModelBindings && typeof sessionModelBindings === 'object' ? sessionModelBindings : {};
+  return Array.from(sessions || []).map((session) => {
+    const binding = normalizeBrowserModelBinding(bindings[String(session?.id || '')]);
+    if (!binding) return session;
+    const canonicalModel = String(session?.rawModelId || session?.model || '').trim();
+    const canonicalProvider = String(session?.provider || '').trim();
+    return {
+      ...session,
+      provider: canonicalProvider || binding.provider,
+      model: canonicalModel || binding.rawModelId || binding.modelId,
+      rawModelId: canonicalModel || binding.rawModelId || binding.modelId,
+      contextLength: Number(session?.contextLength || binding.contextTokens || 0) || 0,
+    };
+  });
+}
+
+export function sessionModelBindingFromRuntime(runtime = {}, models = []) {
+  const acknowledged = normalizeRuntimeModelPayload(runtime);
+  if (!acknowledged.model || !acknowledged.provider) return null;
+  const catalog = Array.from(models || []);
+  const match = catalog.find((model) => String(model?.rawModelId || model?.model || model?.id || '') === acknowledged.model
+    && String(model?.provider || model?.owner || '') === acknowledged.provider);
+  return normalizeBrowserModelBinding({
+    modelId: match?.id || acknowledged.model,
+    provider: acknowledged.provider,
+    rawModelId: acknowledged.model,
+    contextTokens: Number(match?.contextTokens || match?.contextLength || runtime?.context_length || runtime?.contextLength || 0) || 0,
+  });
 }
 
 export function groupSessionsForMenu(sessions = [], selectedSessionId = DEFAULT_SETTINGS.sessionId, query = '') {

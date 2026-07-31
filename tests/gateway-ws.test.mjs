@@ -4,11 +4,14 @@ import { readFileSync } from 'node:fs';
 
 import {
   buildDashboardWsUrl,
+  buildDashboardWsUrlWithCredential,
+  buildSessionModelSwitchRequest,
   classifyGatewayFrame,
   createGatewayClient,
   establishGatewaySession,
   remoteSessionIdentity,
   remoteStoredSessionIdForGateway,
+  runtimeModelFromSessionStatus,
   WS_METHODS,
 } from '../extension/lib/gateway-ws.mjs';
 
@@ -56,6 +59,57 @@ test('buildDashboardWsUrl upgrades scheme, keeps path prefix, encodes ticket', (
   assert.equal(
     buildDashboardWsUrl('http://127.0.0.1:8642/hermes/', 't1'),
     'ws://127.0.0.1:8642/hermes/api/ws?ticket=t1',
+  );
+});
+
+test('loopback dashboard WebSockets use the injected session token instead of an OAuth ticket', () => {
+  assert.equal(
+    buildDashboardWsUrlWithCredential('http://127.0.0.1:9119', 'token', 'local/session'),
+    'ws://127.0.0.1:9119/api/ws?token=local%2Fsession',
+  );
+  assert.throws(() => buildDashboardWsUrlWithCredential('http://127.0.0.1:9119', 'internal', 'secret'), /credential/i);
+});
+
+test('Cloud session model switches use the persistent session-scoped config contract', () => {
+  assert.deepEqual(
+    buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'gpt-5.6-luna', provider: 'nous' }),
+    {
+      method: 'config.set',
+      params: {
+        session_id: 'runtime-1',
+        key: 'model',
+        value: 'gpt-5.6-luna --provider nous --session',
+      },
+    },
+  );
+  assert.throws(() => buildSessionModelSwitchRequest({ sessionId: '', model: 'x', provider: 'nous' }), /session/i);
+  assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: '', provider: 'nous' }), /model/i);
+  assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'x', provider: '' }), /provider/i);
+  assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'x --global', provider: 'nous' }), /flags|whitespace/i);
+  assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'x', provider: '--global' }), /flags|whitespace/i);
+});
+
+test('session.status model lines provide runtime acknowledgement for Cloud switches', () => {
+  assert.deepEqual(
+    runtimeModelFromSessionStatus('Hermes TUI Status\n\nModel: openai/gpt-5.6-luna (nous)\nAgent Running: No'),
+    { model: 'openai/gpt-5.6-luna', provider: 'nous' },
+  );
+  assert.deepEqual(runtimeModelFromSessionStatus('Model: (unknown) (unknown)'), { model: '', provider: '' });
+  assert.deepEqual(runtimeModelFromSessionStatus('no model metadata'), { model: '', provider: '' });
+});
+
+test('session.status runtime acknowledgement accepts structured fields and strips terminal formatting', () => {
+  assert.deepEqual(
+    runtimeModelFromSessionStatus({ model: 'openai/gpt-5.6-luna', provider: 'nous' }),
+    { model: 'openai/gpt-5.6-luna', provider: 'nous' },
+  );
+  assert.deepEqual(
+    runtimeModelFromSessionStatus({ output: '\u001b[36mModel: vendor/model (preview) (provider-id)\u001b[0m' }),
+    { model: 'vendor/model (preview)', provider: 'provider-id' },
+  );
+  assert.deepEqual(
+    runtimeModelFromSessionStatus({ output: 'Model: vendor/model', model: 'vendor/model', provider: '' }),
+    { model: 'vendor/model', provider: '' },
   );
 });
 

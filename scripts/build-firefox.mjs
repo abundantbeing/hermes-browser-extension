@@ -66,9 +66,9 @@ const sourceManifest = JSON.parse(fs.readFileSync(path.join(src, 'manifest.json'
 delete sourceManifest.side_panel;
 delete sourceManifest.minimum_chrome_version;
 
-// Remove sidePanel from permissions (Firefox doesn't support it)
+// Remove Chromium-only permissions (Firefox doesn't support them)
 if (Array.isArray(sourceManifest.permissions)) {
-  sourceManifest.permissions = sourceManifest.permissions.filter((p) => p !== 'sidePanel');
+  sourceManifest.permissions = sourceManifest.permissions.filter((p) => !['offscreen', 'sidePanel'].includes(p));
 }
 
 // Firefox MV3 uses background.scripts; service_worker is ignored without this fallback.

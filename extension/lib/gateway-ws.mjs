@@ -15,10 +15,20 @@ export const WS_METHODS = Object.freeze({
   sessionList: 'session.list',
   sessionHistory: 'session.history',
   sessionInfo: 'session.info',
+  sessionStatus: 'session.status',
   promptSubmit: 'prompt.submit',
   sessionInterrupt: 'session.interrupt',
   sessionSteer: 'session.steer',
   modelOptions: 'model.options',
+  wakeStart: 'wake.start',
+  wakeStop: 'wake.stop',
+  wakePause: 'wake.pause',
+  wakeResume: 'wake.resume',
+  wakeStatus: 'wake.status',
+  voiceToggle: 'voice.toggle',
+  voiceRecord: 'voice.record',
+  voiceTts: 'voice.tts',
+  configSet: 'config.set',
 });
 
 // Streamed assistant-turn events we care about. Everything else (tool.*,
@@ -28,6 +38,9 @@ export const WS_EVENTS = Object.freeze({
   messageStart: 'message.start',
   messageDelta: 'message.delta',
   messageComplete: 'message.complete',
+  wakeDetected: 'wake.detected',
+  voiceTranscript: 'voice.transcript',
+  voiceStatus: 'voice.status',
   error: 'error',
 });
 
@@ -82,10 +95,59 @@ export async function establishGatewaySession({ client, storedSessionId = '', cr
 }
 
 export function buildDashboardWsUrl(baseUrl, ticket) {
+  return buildDashboardWsUrlWithCredential(baseUrl, 'ticket', ticket);
+}
+
+export function buildDashboardWsUrlWithCredential(baseUrl, credentialName, credentialValue) {
+  if (credentialName !== 'ticket' && credentialName !== 'token') {
+    throw new Error('Dashboard WebSocket credential must be a ticket or token.');
+  }
   const parsed = new URL(String(baseUrl || ''));
   const scheme = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
   const prefix = parsed.pathname.replace(/\/+$/, '');
-  return `${scheme}//${parsed.host}${prefix}/api/ws?ticket=${encodeURIComponent(String(ticket || ''))}`;
+  return `${scheme}//${parsed.host}${prefix}/api/ws?${credentialName}=${encodeURIComponent(String(credentialValue || ''))}`;
+}
+
+export function buildSessionModelSwitchRequest({ sessionId = '', model = '', provider = '' } = {}) {
+  const normalizedSessionId = String(sessionId || '').trim();
+  const normalizedModel = String(model || '').trim();
+  const normalizedProvider = String(provider || '').trim();
+  if (!normalizedSessionId) throw new Error('A live Hermes session is required to switch models.');
+  if (!normalizedModel) throw new Error('A Hermes model is required to switch models.');
+  if (!normalizedProvider) throw new Error('A Hermes provider is required to switch models.');
+  if (/\s/.test(normalizedModel) || normalizedModel.startsWith('-')) throw new Error('Hermes model identifiers cannot contain command flags or whitespace.');
+  if (/\s/.test(normalizedProvider) || normalizedProvider.startsWith('-')) throw new Error('Hermes provider identifiers cannot contain command flags or whitespace.');
+  return {
+    method: WS_METHODS.configSet,
+    params: {
+      session_id: normalizedSessionId,
+      key: 'model',
+      value: `${normalizedModel} --provider ${normalizedProvider} --session`,
+    },
+  };
+}
+
+export function runtimeModelFromSessionStatus(output = '') {
+  const payload = output && typeof output === 'object' ? output : {};
+  const structuredModel = String(payload.model || payload.runtime?.model || '').trim();
+  const structuredProvider = String(payload.provider || payload.runtime?.provider || '').trim();
+  if (structuredModel || structuredProvider) {
+    return {
+      model: structuredModel === '(unknown)' ? '' : structuredModel,
+      provider: ['unknown', '(unknown)'].includes(structuredProvider) ? '' : structuredProvider,
+    };
+  }
+  const rawText = payload.output ?? payload.text ?? output;
+  const ansiPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-?]*[ -/]*[@-~]`, 'g');
+  const line = String(rawText || '').replace(ansiPattern, '').split(String.fromCharCode(10)).find((entry) => entry.trim().startsWith('Model:')) || '';
+  const match = line.trim().match(/^Model:\s*(.+)\s+\(([^()]*)\)\s*$/);
+  if (!match) return { model: '', provider: '' };
+  const model = String(match[1] || '').trim();
+  const provider = String(match[2] || '').trim();
+  return {
+    model: model === '(unknown)' ? '' : model,
+    provider: provider === 'unknown' || provider === '(unknown)' ? '' : provider,
+  };
 }
 
 // Classify an inbound frame so callers don't reimplement the JSON-RPC shape.

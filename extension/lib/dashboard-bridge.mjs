@@ -75,11 +75,30 @@ export async function mintTicketInPage(ticketUrl) {
   }
 }
 
-// Require the dashboard to be the user's active tab when they connect. This
-// makes the ambient cookie authority explicit instead of silently selecting a
-// background tab that may belong to another account or dashboard.
+// First trust requires the dashboard to be the user's active tab. Once the
+// exact tab id and origin are approved, reconnects may reuse that explicit
+// lease without forcing the user to keep Cloud selected in every new panel.
 export async function findDashboardTab(tabsApi, origin, tabId = null) {
-  if (!origin || !tabsApi?.query) return null;
+  if (!origin) return null;
+  const hasExplicitTab = tabId !== null && tabId !== undefined && Number.isFinite(Number(tabId));
+  if (hasExplicitTab) {
+    if (typeof tabsApi?.get !== 'function') return null;
+    try {
+      const remembered = await tabsApi.get(Number(tabId));
+      if (remembered
+        && remembered.id === Number(tabId)
+        && !remembered.discarded
+        && remembered.status === 'complete'
+        && !remembered.pendingUrl
+        && originOf(remembered.url) === origin) {
+        return remembered;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof tabsApi?.query !== 'function') return null;
   let tabs = [];
   try {
     tabs = await tabsApi.query({ active: true, currentWindow: true });
