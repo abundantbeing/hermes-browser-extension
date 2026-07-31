@@ -2,14 +2,19 @@ import {
   contextAccountingSnapshot,
   contextCompactionState,
   contextMeterDisplay,
+  CONTEXT_MENU_CONTEXTS,
+  DEFAULT_CONTEXT_MENU_ITEMS,
+  DEFAULT_SETTINGS,
   estimateTokens,
   applySessionModelBindings,
   groupSessionsForMenu,
+  INLINE_CONTEXT_ACTIONS,
   messageDisplayText,
   isModelRuntimeSelectable,
   normalizeHermesModels,
   normalizeHermesSessions,
   normalizeHermesSkills,
+  normalizeContextMenuItems,
   normalizeToolActivity,
   sessionModelBindingFromRuntime,
   renderMarkdown,
@@ -176,6 +181,8 @@ const els = {
   assistModelCapabilityHint: $('#assistModelCapabilityHint'),
   inlineAssistSessionRetention: $('#inlineAssistSessionRetention'),
   contextMenuDefaultRoute: $('#contextMenuDefaultRoute'),
+  contextMenuItemsList: $('#contextMenuItemsList'),
+  contextMenuAddItem: $('#contextMenuAddItem'),
   settingsProfile: $('#settingsProfile'),
   settingsGatewayUrl: $('#settingsGatewayUrl'),
   settingsApiKey: $('#settingsApiKey'),
@@ -1761,6 +1768,8 @@ function openSettings() {
   els.settingsGatewayUrl.value = settings.gatewayUrl || '';
   els.settingsApiKey.value = '';
   renderAppearanceSettings();
+  initContextMenuEditorItems();
+  renderContextMenuEditor();
   els.settingsDialog.showModal();
 }
 
@@ -1796,6 +1805,212 @@ async function saveSettings() {
   renderConnectionTruth({ status: 'idle' });
   els.settingsDialog.close();
   await loadApp();
+}
+
+let contextMenuEditorItems = [];
+
+function initContextMenuEditorItems() {
+  contextMenuEditorItems = normalizeContextMenuItems(settings.contextMenuItems).map((item) => ({ ...item }));
+}
+
+function persistContextMenuEditorItems() {
+  settings = {
+    ...settings,
+    contextMenuItems: normalizeContextMenuItems(contextMenuEditorItems),
+  };
+  contextMenuEditorItems = normalizeContextMenuItems(settings.contextMenuItems).map((item) => ({ ...item }));
+  chrome.storage.local.set({ hermesBrowserSettings: settings }).catch((error) => {
+    console.warn('[Hermes Browser] Could not save context menu items:', error);
+  });
+}
+
+function renderContextMenuEditor() {
+  const list = els.contextMenuItemsList;
+  if (!list) return;
+  if (!contextMenuEditorItems.length) initContextMenuEditorItems();
+  const items = contextMenuEditorItems;
+  list.innerHTML = '';
+  items.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'context-menu-item-row';
+    row.dataset.id = item.id;
+    row.setAttribute('role', 'listitem');
+
+    const header = document.createElement('div');
+    header.className = 'context-menu-item-header';
+
+    const toggle = document.createElement('input');
+    toggle.type = 'checkbox';
+    toggle.checked = item.enabled !== false;
+    toggle.title = 'Show or hide this item';
+    toggle.addEventListener('change', () => {
+      contextMenuEditorItems[index].enabled = toggle.checked;
+      persistContextMenuEditorItems();
+    });
+    header.appendChild(toggle);
+
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.value = item.title;
+    titleInput.placeholder = 'Menu label';
+    titleInput.className = 'context-menu-item-title';
+    titleInput.addEventListener('change', () => {
+      contextMenuEditorItems[index].title = titleInput.value.trim();
+      persistContextMenuEditorItems();
+    });
+    header.appendChild(titleInput);
+
+    const controls = document.createElement('div');
+    controls.className = 'context-menu-item-controls';
+
+    const upBtn = document.createElement('button');
+    upBtn.type = 'button';
+    upBtn.textContent = '\u2191';
+    upBtn.className = 'secondary';
+    upBtn.disabled = index === 0;
+    upBtn.title = 'Move up';
+    upBtn.addEventListener('click', () => {
+      if (index > 0) {
+        [contextMenuEditorItems[index - 1], contextMenuEditorItems[index]] = [contextMenuEditorItems[index], contextMenuEditorItems[index - 1]];
+        persistContextMenuEditorItems();
+        renderContextMenuEditor();
+      }
+    });
+    controls.appendChild(upBtn);
+
+    const downBtn = document.createElement('button');
+    downBtn.type = 'button';
+    downBtn.textContent = '\u2193';
+    downBtn.className = 'secondary';
+    downBtn.disabled = index === items.length - 1;
+    downBtn.title = 'Move down';
+    downBtn.addEventListener('click', () => {
+      if (index < items.length - 1) {
+        [contextMenuEditorItems[index], contextMenuEditorItems[index + 1]] = [contextMenuEditorItems[index + 1], contextMenuEditorItems[index]];
+        persistContextMenuEditorItems();
+        renderContextMenuEditor();
+      }
+    });
+    controls.appendChild(downBtn);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.textContent = '\u2715';
+    removeBtn.className = 'secondary';
+    removeBtn.title = 'Remove item';
+    removeBtn.addEventListener('click', () => {
+      contextMenuEditorItems.splice(index, 1);
+      persistContextMenuEditorItems();
+      renderContextMenuEditor();
+    });
+    controls.appendChild(removeBtn);
+
+    header.appendChild(controls);
+    row.appendChild(header);
+
+    const detail = document.createElement('div');
+    detail.className = 'context-menu-item-detail';
+
+    const contextsLabel = document.createElement('span');
+    contextsLabel.className = 'context-menu-item-label';
+    contextsLabel.textContent = 'Show on:';
+    detail.appendChild(contextsLabel);
+
+    const contextsSelect = document.createElement('div');
+    contextsSelect.className = 'context-menu-contexts-checkboxes';
+    CONTEXT_MENU_CONTEXTS.forEach((ctx) => {
+      const ctxLabel = document.createElement('label');
+      const ctxCheckbox = document.createElement('input');
+      ctxCheckbox.type = 'checkbox';
+      ctxCheckbox.checked = item.contexts.includes(ctx.value);
+      ctxCheckbox.addEventListener('change', () => {
+        const current = contextMenuEditorItems[index].contexts;
+        if (ctxCheckbox.checked && !current.includes(ctx.value)) {
+          current.push(ctx.value);
+        } else if (!ctxCheckbox.checked) {
+          contextMenuEditorItems[index].contexts = current.filter((c) => c !== ctx.value);
+        }
+        persistContextMenuEditorItems();
+      });
+      ctxLabel.appendChild(ctxCheckbox);
+      ctxLabel.append(ctx.label);
+      contextsSelect.appendChild(ctxLabel);
+    });
+    detail.appendChild(contextsSelect);
+
+    const modeRow = document.createElement('div');
+    modeRow.className = 'context-menu-mode-row';
+    const isInline = Boolean(item.inlineAction);
+
+    const modeSelect = document.createElement('select');
+    modeSelect.className = 'context-menu-mode-select';
+    const promptOpt = document.createElement('option');
+    promptOpt.value = 'prompt';
+    promptOpt.textContent = 'Send prompt';
+    const inlineOpt = document.createElement('option');
+    inlineOpt.value = 'inline';
+    inlineOpt.textContent = 'Inline action';
+    modeSelect.appendChild(promptOpt);
+    modeSelect.appendChild(inlineOpt);
+    modeSelect.value = isInline ? 'inline' : 'prompt';
+    modeSelect.addEventListener('change', () => {
+      if (modeSelect.value === 'inline') {
+        delete contextMenuEditorItems[index].prompt;
+        contextMenuEditorItems[index].inlineAction = INLINE_CONTEXT_ACTIONS[0].value;
+      } else {
+        delete contextMenuEditorItems[index].inlineAction;
+        contextMenuEditorItems[index].prompt = contextMenuEditorItems[index].prompt || '';
+      }
+      persistContextMenuEditorItems();
+      renderContextMenuEditor();
+    });
+    modeRow.appendChild(modeSelect);
+
+    if (isInline) {
+      const inlineSelect = document.createElement('select');
+      INLINE_CONTEXT_ACTIONS.forEach((action) => {
+        const opt = document.createElement('option');
+        opt.value = action.value;
+        opt.textContent = action.label;
+        inlineSelect.appendChild(opt);
+      });
+      inlineSelect.value = item.inlineAction;
+      inlineSelect.addEventListener('change', () => {
+        contextMenuEditorItems[index].inlineAction = inlineSelect.value;
+        persistContextMenuEditorItems();
+      });
+      modeRow.appendChild(inlineSelect);
+    } else {
+      const promptInput = document.createElement('input');
+      promptInput.type = 'text';
+      promptInput.value = item.prompt || '';
+      promptInput.placeholder = 'Prompt sent to Hermes';
+      promptInput.className = 'context-menu-prompt-input';
+      promptInput.addEventListener('change', () => {
+        contextMenuEditorItems[index].prompt = promptInput.value;
+        persistContextMenuEditorItems();
+      });
+      modeRow.appendChild(promptInput);
+    }
+
+    detail.appendChild(modeRow);
+    row.appendChild(detail);
+
+    list.appendChild(row);
+  });
+}
+
+function addContextMenuItem() {
+  const id = `hermes-browser-custom-${Date.now().toString(36)}`;
+  contextMenuEditorItems.push({
+    id,
+    title: 'New action',
+    contexts: ['selection'],
+    prompt: '',
+    enabled: true,
+  });
+  persistContextMenuEditorItems();
+  renderContextMenuEditor();
 }
 
 function formatBytes(value = 0) {
@@ -2739,6 +2954,9 @@ els.settingsThemeGrid.addEventListener('click', (event) => {
 els.settingsForm.addEventListener('submit', (event) => {
   event.preventDefault();
   saveSettings().catch((error) => { els.composerStatus.textContent = `Settings failed: ${error?.message || String(error)}`; });
+});
+els.contextMenuAddItem?.addEventListener('click', () => {
+  addContextMenuItem();
 });
 els.newChatButton.addEventListener('click', () => beginHermesWebDraft().catch((error) => showError('Could not start draft', error?.message || String(error))));
 els.modelPickerButton.addEventListener('click', () => {

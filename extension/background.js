@@ -31,9 +31,14 @@ import {
 } from './lib/assist-model-contract.mjs';
 import { createWakeBackgroundController } from './lib/wake-background.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
+import {
+  DEFAULT_CONTEXT_MENU_ITEMS,
+  normalizeContextMenuItems,
+} from './lib/common.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let contextMenuConfigurationPromise = null;
+let cachedContextMenuItems = DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }));
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
 const CONTEXT_MENU_STORAGE_KEY = 'hermesBrowserContextMenuRequest';
@@ -41,14 +46,6 @@ const OPEN_SESSION_STORAGE_KEY = 'hermesBrowserOpenSessionRequest';
 const INLINE_DRAFT_TTL_MS = 5 * 60 * 1000;
 const HERMES_ASSIST_SOURCE = 'hermes_assist';
 const CONTEXT_MENU_ROOT_ID = 'hermes-browser-root';
-const CONTEXT_MENU_ITEMS = Object.freeze([
-  { id: 'hermes-browser-ask-selection', title: 'Ask Hermes about this selection', contexts: ['selection'], prompt: 'Help me understand or work with this selected text:' },
-  { id: 'hermes-browser-summarize-selection', title: 'Summarize selection', contexts: ['selection'], prompt: 'Summarize this selected text concisely:' },
-  { id: 'hermes-browser-explain-selection', title: 'Explain selection', contexts: ['selection'], prompt: 'Explain this selected text clearly:' },
-  { id: 'hermes-browser-improve-editable', title: 'Improve selected text', contexts: ['editable'], inlineAction: 'improve' },
-  { id: 'hermes-browser-draft-reply', title: 'Draft reply with Hermes', contexts: ['editable'], inlineAction: 'draft-reply' },
-  { id: 'hermes-browser-open', title: 'Open Hermes Browser', contexts: ['page', 'link', 'image', 'video', 'audio'] },
-]);
 const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
   WAKE_MESSAGES.claimTurn,
   WAKE_MESSAGES.getState,
@@ -336,13 +333,17 @@ async function configureContextMenus() {
   if (contextMenuConfigurationPromise) return contextMenuConfigurationPromise;
 
   const configuration = (async () => {
+    const stored = await chrome.storage.local.get('hermesBrowserSettings');
+    cachedContextMenuItems = normalizeContextMenuItems(stored?.hermesBrowserSettings?.contextMenuItems);
     await chrome.contextMenus.removeAll();
+    const allContexts = ['page', 'selection', 'editable', 'link', 'image', 'video', 'audio'];
     await createContextMenu({
       id: CONTEXT_MENU_ROOT_ID,
       title: 'Hermes Browser',
-      contexts: ['page', 'selection', 'editable', 'link', 'image', 'video', 'audio'],
+      contexts: allContexts,
     });
-    for (const item of CONTEXT_MENU_ITEMS) {
+    for (const item of cachedContextMenuItems) {
+      if (item.enabled === false) continue;
       await createContextMenu({
         id: item.id,
         parentId: CONTEXT_MENU_ROOT_ID,
@@ -360,6 +361,11 @@ async function configureContextMenus() {
   }
 }
 
+async function rebuildContextMenus() {
+  contextMenuConfigurationPromise = null;
+  await configureContextMenus();
+}
+
 function safeContextPageUrl(value = '') {
   try {
     const url = new URL(String(value || ''));
@@ -373,7 +379,7 @@ function safeContextPageUrl(value = '') {
 }
 
 async function handleContextMenuClick(info, tab) {
-  const item = CONTEXT_MENU_ITEMS.find((candidate) => candidate.id === info?.menuItemId);
+  const item = cachedContextMenuItems.find((candidate) => candidate.id === info?.menuItemId);
   if (!item || !tab?.id) return;
   if (item.id === 'hermes-browser-open') {
     await openHermesPanel(tab, { allowFallback: false });
@@ -757,6 +763,9 @@ chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
   } else if (changes.panelResidencyMode?.newValue) {
     cachedPanelResidencyMode = normalizePanelResidencyMode(changes.panelResidencyMode.newValue);
     changed = true;
+  }
+  if (changes.hermesBrowserSettings?.newValue?.contextMenuItems) {
+    rebuildContextMenus().catch((error) => console.warn('[Hermes Browser] Context menu rebuild failed:', error));
   }
   if (changed) {
     activeBrowserTabId()

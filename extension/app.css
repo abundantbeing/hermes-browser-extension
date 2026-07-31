@@ -690,3 +690,20 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
   .error-state h2 { font-size: 36px; }
   .web-settings-dialog section { grid-template-columns: 1fr; }
 }
+
+.context-menu-editor { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.context-menu-editor h4 { margin: 0; font-size: 12px; font-weight: 600; color: var(--hermes-muted, #888); text-transform: uppercase; letter-spacing: 0.05em; }
+.context-menu-items-list { display: flex; flex-direction: column; gap: 6px; }
+.context-menu-item-row { border: 1px solid var(--hermes-border, rgba(0,0,0,0.1)); border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 6px; background: var(--hermes-surface, rgba(0,0,0,0.03)); }
+.context-menu-item-header { display: flex; align-items: center; gap: 6px; }
+.context-menu-item-header input[type="checkbox"] { margin: 0; flex-shrink: 0; }
+.context-menu-item-title { flex: 1; min-width: 0; }
+.context-menu-item-controls { display: flex; gap: 2px; flex-shrink: 0; }
+.context-menu-item-controls button { padding: 2px 6px; font-size: 12px; min-width: 24px; }
+.context-menu-item-detail { display: flex; flex-direction: column; gap: 4px; padding-left: 22px; }
+.context-menu-item-label { font-size: 11px; font-weight: 500; color: var(--hermes-muted, #888); }
+.context-menu-contexts-checkboxes { display: flex; flex-wrap: wrap; gap: 6px; }
+.context-menu-contexts-checkboxes label { font-size: 11px; display: inline-flex; align-items: center; gap: 2px; }
+.context-menu-mode-row { display: flex; gap: 6px; align-items: center; }
+.context-menu-mode-select { flex-shrink: 0; }
+.context-menu-prompt-input { flex: 1; min-width: 0; }

@@ -47,6 +47,63 @@ export const TEXT_SIZE_OPTIONS = Object.freeze([
   { value: 'extra-large', label: 'Extra large' },
 ]);
 
+export const INLINE_CONTEXT_ACTIONS = Object.freeze([
+  { value: 'improve', label: 'Improve writing' },
+  { value: 'draft-reply', label: 'Draft reply' },
+  { value: 'shorten', label: 'Shorten' },
+  { value: 'fix-grammar', label: 'Fix grammar' },
+  { value: 'change-tone', label: 'Change tone' },
+  { value: 'draft-for-context', label: 'Draft for this field' },
+]);
+
+export const CONTEXT_MENU_CONTEXTS = Object.freeze([
+  { value: 'selection', label: 'Selected text' },
+  { value: 'editable', label: 'Editable fields' },
+  { value: 'page', label: 'Page' },
+  { value: 'link', label: 'Links' },
+  { value: 'image', label: 'Images' },
+  { value: 'video', label: 'Videos' },
+  { value: 'audio', label: 'Audio' },
+]);
+
+export const DEFAULT_CONTEXT_MENU_ITEMS = Object.freeze([
+  { id: 'hermes-browser-ask-selection', title: 'Ask Hermes about this selection', contexts: ['selection'], prompt: 'Help me understand or work with this selected text:', enabled: true },
+  { id: 'hermes-browser-summarize-selection', title: 'Summarize selection', contexts: ['selection'], prompt: 'Summarize this selected text concisely:', enabled: true },
+  { id: 'hermes-browser-explain-selection', title: 'Explain selection', contexts: ['selection'], prompt: 'Explain this selected text clearly:', enabled: true },
+  { id: 'hermes-browser-improve-editable', title: 'Improve selected text', contexts: ['editable'], inlineAction: 'improve', enabled: true },
+  { id: 'hermes-browser-draft-reply', title: 'Draft reply with Hermes', contexts: ['editable'], inlineAction: 'draft-reply', enabled: true },
+  { id: 'hermes-browser-open', title: 'Open Hermes Browser', contexts: ['page', 'link', 'image', 'video', 'audio'], enabled: true },
+]);
+
+export function normalizeContextMenuItem(value) {
+  if (!value || typeof value !== 'object') return null;
+  const id = String(value.id || '').trim();
+  if (!id) return null;
+  const title = String(value.title || '').trim();
+  if (!title) return null;
+  const validContexts = Array.isArray(value.contexts)
+    ? value.contexts.filter((c) => CONTEXT_MENU_CONTEXTS.some((ctx) => ctx.value === c))
+    : [];
+  if (!validContexts.length) return null;
+  const item = { id, title, contexts: validContexts, enabled: value.enabled !== false };
+  if (value.inlineAction) {
+    item.inlineAction = String(value.inlineAction);
+  } else if (value.prompt) {
+    item.prompt = String(value.prompt).trim();
+  } else {
+    item.prompt = '';
+  }
+  return item;
+}
+
+export function normalizeContextMenuItems(items) {
+  if (!Array.isArray(items)) return DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }));
+  const normalized = items
+    .map((item) => normalizeContextMenuItem(item))
+    .filter(Boolean);
+  return normalized.length ? normalized : DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }));
+}
+
 export const DEFAULT_SETTINGS = Object.freeze({
   connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
   connectionMode: 'local',
@@ -90,6 +147,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   inlineAssistReasoningEffort: 'low',
   inlineAssistFastMode: false,
   contextMenuDefaultRoute: 'ask',
+  contextMenuItems: Object.freeze(DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }))),
   transcriptProvider: 'default',
   wakeWordEnabled: false,
   wakeWordPhrase: 'hey hermes',

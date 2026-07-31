@@ -120,6 +120,7 @@ test('Sidecar intro is panel-open-only and new session cannot reveal it again', 
 
 test('background queues sender-bound requests, exposes session status, and registers branded context menus', async () => {
   const source = await read('extension/background.js');
+  const commonSource = await read('extension/lib/common.mjs');
   const [packaged, repository] = await Promise.all([
     read('extension/manifest.json').then(JSON.parse),
     read('manifest.json').then(JSON.parse),
@@ -146,12 +147,12 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /openHermesPanel\(sender\.tab\)/);
   assert.match(source, /expiresAt/);
   assert.match(source, /chrome\.contextMenus\.create/);
-  assert.match(source, /Ask Hermes about this selection/);
-  assert.match(source, /Improve selected text/);
+  assert.match(commonSource, /Ask Hermes about this selection/);
+  assert.match(commonSource, /Improve selected text/);
   assert.match(source, /openHermesPanel\(tab, \{ allowFallback: false \}\)/);
   assert.match(source, /Strict side-panel open failed; refusing to open a fallback tab/);
   assert.match(source, /contextMenuDefaultRoute/);
-  assert.match(source, /Explain selection/);
+  assert.match(commonSource, /Explain selection/);
   assert.ok(packaged.permissions.includes('contextMenus'));
   assert.ok(repository.permissions.includes('contextMenus'));
 });

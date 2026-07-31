@@ -4228,3 +4228,23 @@ html[data-hermes-text-size] .message-content h6 { font-size: calc(13px * var(--h
   .task-stack-progress i,
   .task-stack-chevron { transition: none; }
 }
+
+.context-menu-editor { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.context-menu-editor h4 { margin: 0; font-size: 10px; font-weight: 600; color: var(--hermes-muted); text-transform: uppercase; letter-spacing: 0.15em; }
+.context-menu-items-list { display: flex; flex-direction: column; gap: 6px; }
+.context-menu-item-row { border: 1px solid var(--hermes-line); border-radius: var(--radius, 4px); padding: 8px; display: flex; flex-direction: column; gap: 6px; background: rgba(var(--hermes-ink-rgb), 0.035); }
+.context-menu-item-header { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.context-menu-item-header input[type="checkbox"] { margin: 0; flex-shrink: 0; width: 14px; height: 14px; }
+.context-menu-item-title { flex: 1 1 120px; min-width: 0; font-size: 12px; }
+.context-menu-item-controls { display: flex; gap: 2px; flex-shrink: 0; }
+.context-menu-item-controls button { padding: 2px 5px; font-size: 11px; min-width: 22px; line-height: 1.4; }
+.context-menu-item-detail { display: flex; flex-direction: column; gap: 4px; padding-left: 18px; }
+.context-menu-item-label { font-size: 9px; font-weight: 500; color: var(--hermes-muted); text-transform: uppercase; letter-spacing: 0.12em; }
+.context-menu-contexts-checkboxes { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.context-menu-contexts-checkboxes label { font-size: 10px; display: inline-flex; align-items: center; gap: 2px; color: var(--hermes-ink); }
+.context-menu-contexts-checkboxes input[type="checkbox"] { width: 12px; height: 12px; margin: 0; }
+.context-menu-mode-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.context-menu-mode-select { flex-shrink: 0; font-size: 11px; }
+.context-menu-mode-row select { font-size: 11px; }
+.context-menu-prompt-input { flex: 1 1 100px; min-width: 0; font-size: 11px; }
+.context-menu-editor > button { align-self: flex-start; font-size: 11px; }
