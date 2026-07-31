@@ -8020,7 +8020,7 @@ function bindEvents() {
   els.languageSelect?.addEventListener('change', async (event) => {
     const next = event.target.value === 'zh' ? 'zh' : 'en';
     await setLanguage(next);
-    // 设置界面立即按新语言重绘（下拉自身保持双语固定文案）
+    // Re-render the appearance controls so the settings view updates to the new language
     renderAppearanceControls();
   });
   els.messages?.addEventListener('copy', (event) => {

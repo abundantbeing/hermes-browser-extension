@@ -1,11 +1,11 @@
 // ============================================================
-// Hermes Browser Extension — 中文词典 (zh)
-// key = 英文原文（精确匹配），value = 中文译文
-// 未收录的词条保持英文（安全降级）
+// Hermes Browser Extension — Chinese dictionary (zh)
+// key = English original (exact match), value = Chinese translation
+// Unlisted entries stay English (safe fallback)
 // ============================================================
 
 export const ZH_DICTIONARY = Object.freeze({
-  // ---- 通用 ----
+  // ---- General ----
   'Settings': '设置',
   'Close': '关闭',
   'CLOSE': '关闭',
@@ -128,7 +128,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Hermes Web': 'Hermes Web',
   'Hermes session': 'Hermes 会话',
 
-  // ---- 连接/网关 ----
+  // ---- Connection / Gateway ----
   'Gateway': '网关',
   'Gateway Connection': '网关连接',
   'Gateway URL': '网关地址',
@@ -200,7 +200,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Observed from session history; not advertised as a requestable Hermes model.': '从会话历史中观察到；未声明为可请求的 Hermes 模型。',
   'Dashboard WebSocket': '仪表板 WebSocket',
 
-  // ---- 设置 ----
+  // ---- Settings ----
   'Appearance': '外观',
   'Agent Profile': '代理配置',
   'Active profile': '活动配置',
@@ -314,7 +314,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Load-unpacked installs update through a guarded Hermes agent turn, then reload the built dist/ folder.': '以解压形式安装的版本通过受控的 Hermes 代理回合更新，然后重新加载构建的 dist/ 文件夹。',
   'Public alpha: load unpacked, local or remote Hermes API server, full Hermes tools when the connected runtime supports them.': '公开 alpha：解压加载，本地或远程 Hermes API 服务器，当连接的运行时支持时提供完整 Hermes 工具。',
 
-  // ---- 启动/状态 ----
+  // ---- Startup / Status ----
   'Checking settings, gateway, capabilities, models, and sessions.': '正在检查设置、网关、能力、模型和会话。',
   'Reading connection settings and canonical session history.': '正在读取连接设置和规范会话历史。',
   'Loading canonical Hermes history…': '正在加载规范 Hermes 历史…',
@@ -356,7 +356,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Sending observed model request': '正在发送观察到的模型请求',
   'Waiting for the session resource to confirm Thinking, effort, and Fast mode.': '正在等待会话资源确认思考、推理强度和快速模式。',
 
-  // ---- 会话状态 ----
+  // ---- Session state ----
   'ACTIVE TAB': '活动标签页',
   'No tab detected': '未检测到标签页',
   'No tab': '无标签页',
@@ -416,7 +416,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Web UI sections': 'Web UI 区域',
   'Hide sessions rail': '隐藏会话栏',
 
-  // ---- 上传/附件 ----
+  // ---- Attachments ----
   'Attach': '附加',
   '＋ Attach': '＋ 附加',
   'Attach context': '附加上下文',
@@ -473,7 +473,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Rendered message bodies only. Draft and input values stay excluded.': '仅渲染的消息正文。草稿和输入值保持排除。',
   'Rendered message bodies will be attached to the next Hermes turn.': '渲染的消息正文将附加到下一个 Hermes 回合。',
 
-  // ---- 共享会话 ----
+  // ---- Shared session ----
   'SHARED SESSION': '共享会话',
   'Shared session': '共享会话',
   'Choose where to send': '选择发送位置',
@@ -485,7 +485,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'OPENING SESSION': '正在打开会话',
   'Draft · saved when sent': '草稿 · 发送时保存',
 
-  // ---- 语音 ----
+  // ---- Voice ----
   'No speech captured': '未捕获到语音',
   'No speech detected': '未检测到语音',
   'Transcribing voice': '正在转写语音',
@@ -520,7 +520,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Transcript inserted into the composer.': '转写已插入输入框。',
   'Opening voice dictation tab': '正在打开语音输入标签页',
 
-  // ---- 任务/进度 ----
+  // ---- Tasks / Progress ----
   '☑ TASKS': '☑ 任务',
   '0 complete · 0 active': '0 完成 · 0 进行中',
   'complete': '完成',
@@ -531,7 +531,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'ID': 'ID',
   'Waiting for session usage.': '正在等待会话使用。',
 
-  // ---- 启动界面 ----
+  // ---- Startup screens ----
   'PUBLIC SETUP': '公开设置',
   'LOCAL SIDECAR / CHROME PANEL': '本地边车 / CHROME 面板',
   'HERMES BROWSER': 'HERMES 浏览器',
@@ -650,7 +650,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Interface language': '界面语言',
   'Choose the interface language for the Browser extension.': '选择浏览器扩展的界面语言。',
 
-  // ---- 请求权限页 ----
+  // ---- Request permissions page ----
   'Request permissions': '请求权限',
   'This extension needs microphone access for voice dictation.': '此扩展需要麦克风访问权限以进行语音输入。',
   'Grant microphone access': '授予麦克风访问权限',
@@ -660,7 +660,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Microphone access is required for dictation.': '语音输入需要麦克风访问权限。',
   'Allow': '允许',
 
-  // ---- 语音页 ----
+  // ---- Voice page ----
   'Recording...': '录音中...',
   'Listening...': '正在聆听...',
   'Processing...': '处理中...',
@@ -670,7 +670,7 @@ export const ZH_DICTIONARY = Object.freeze({
   'Microphone': '麦克风',
   'Transcription': '转写',
 
-  // ---- 杂项通用 ----
+  // ---- Misc / General ----
   'Search': '搜索',
   'Type a message': '输入消息',
   'Type your message': '输入您的消息',

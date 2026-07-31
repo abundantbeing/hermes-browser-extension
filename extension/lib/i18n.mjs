@@ -1,8 +1,12 @@
 // ============================================================
-// Hermes Browser Extension — 轻量国际化 (i18n)
-// 设计：词典 key = 英文原文。默认英文时零成本；切中文时按 key 查表替换。
-// - 静态 HTML：元素加 data-i18n="英文原文" / data-i18n-title / data-i18n-placeholder
-// - 动态 JS 文本：setLanguage 后由 MutationObserver 自动整段匹配翻译
+// Hermes Browser Extension — lightweight runtime i18n
+// Design: dictionary keys are the English originals. English is
+// zero-cost by default; switching to another language replaces
+// matching keys with their translations.
+// - Static HTML: elements carry data-i18n="English original" /
+//   data-i18n-title / data-i18n-placeholder / data-i18n-aria-label
+// - Dynamic JS text: after setLanguage, a MutationObserver
+//   auto-translates inserted nodes by whole-string dictionary match
 // ============================================================
 
 import { ZH_DICTIONARY } from './i18n-zh.mjs';
@@ -17,7 +21,7 @@ function normalizeLanguage(value) {
   return SUPPORTED_LANGUAGES.includes(String(value || '').toLowerCase()) ? String(value).toLowerCase() : 'en';
 }
 
-/** 翻译单个字符串：命中词典返回译文，否则返回原文。 */
+/** Translate a single string: dictionary hit returns the translation, otherwise the original. */
 export function t(key) {
   if (currentLanguage === 'zh' && typeof key === 'string' && key) {
     return ZH_DICTIONARY[key] || key;
@@ -25,12 +29,12 @@ export function t(key) {
   return key;
 }
 
-/** 读取当前语言（同步缓存值）。 */
+/** Current language (cached value). */
 export function getLanguage() {
   return currentLanguage;
 }
 
-/** 持久化 + 应用语言，返回实际生效的语言。 */
+/** Persist and apply the language; returns the effective language. */
 export async function setLanguage(language) {
   const normalized = normalizeLanguage(language);
   currentLanguage = normalized;
@@ -43,7 +47,7 @@ export async function setLanguage(language) {
   return normalized;
 }
 
-/** 从 storage 加载语言并应用（初始化时调用一次）。 */
+/** Load the language from storage and apply it (call once at startup). */
 export async function initI18n(root = document) {
   let stored = 'en';
   try {
@@ -58,7 +62,7 @@ export async function initI18n(root = document) {
   return currentLanguage;
 }
 
-/** 翻译单个元素（data-i18n 及其属性变体）。 */
+/** Localize a single element (data-i18n and its attribute variants). */
 function localizeElement(element) {
   if (!element || element.nodeType !== Node.ELEMENT_NODE) return;
   if (element.hasAttribute('data-i18n')) {
@@ -68,7 +72,8 @@ function localizeElement(element) {
       if (element.childElementCount === 0) {
         element.textContent = translated;
       } else {
-        // 含子元素（如 <li>text <code>x</code> tail</li>）：只替换命中的直接文本子节点
+        // Element has children (e.g. <li>text <code>x</code> tail</li>):
+        // only replace the direct text child that matches the key.
         for (const child of element.childNodes) {
           if (child.nodeType === Node.TEXT_NODE && child.textContent.trim() === key) {
             child.textContent = translated;
@@ -94,17 +99,17 @@ function localizeElement(element) {
   }
 }
 
-/** 是否应该跳过文本节点（用户内容/输入区不翻译）。 */
+/** Whether a text node should be skipped (user content / input areas stay untranslated). */
 function shouldSkipTextNode(node) {
   const parent = node.parentElement;
   if (!parent) return true;
   if (parent.closest?.('.message-content, .transcript, textarea, input, [contenteditable="true"], .composer, .user-message, .assistant-message')) return true;
-  // 跳过已经翻译过的节点，避免死循环
+  // Skip nodes already handled through data-i18n to avoid double translation
   if (parent.hasAttribute?.('data-i18n')) return true;
   return false;
 }
 
-/** 翻译整棵子树。 */
+/** Localize a whole subtree. */
 export function applyI18n(root = document) {
   if (!root || typeof document === 'undefined' || typeof NodeFilter === 'undefined') return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
@@ -128,7 +133,7 @@ export function applyI18n(root = document) {
   }
 }
 
-/** 监听 DOM 变化：新插入的 data-i18n 元素 / 可整段匹配的文本自动翻译。 */
+/** Watch DOM mutations: auto-localize inserted data-i18n elements and whole-string text nodes. */
 export function startI18nObserver() {
   if (observer) return observer;
   observer = new MutationObserver((mutations) => {
@@ -141,7 +146,7 @@ export function startI18nObserver() {
             const elements = node.querySelectorAll?.('[data-i18n], [data-i18n-title], [data-i18n-placeholder], [data-i18n-aria-label], [data-i18n-alt], [data-i18n-value]');
             if (elements) for (const el of elements) localizeElement(el);
           }
-          // 纯文本子节点整段匹配
+          // Whole-string match on direct text children
           for (const child of node.childNodes) {
             if (child.nodeType === Node.TEXT_NODE && !shouldSkipTextNode(child)) {
               const raw = child.textContent;
