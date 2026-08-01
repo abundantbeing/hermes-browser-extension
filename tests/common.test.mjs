@@ -1608,9 +1608,16 @@ test('normalizeHermesModels does not keep default hermes-agent fallback when rea
   assert.deepEqual(models.map((model) => model.id), ['openai-codex:gpt-5.5']);
 });
 
-test('normalizeHermesModels applies curated context fallback when provider rows omit limits', () => {
-  const models = normalizeHermesModels({ data: [{ id: 'minimax:MiniMax-M3', name: 'MiniMax-M3', context_length: 0 }] }, 'minimax:MiniMax-M3');
-  assert.equal(models[0].contextTokens, 1000000);
+test('normalizeHermesModels applies explicit MiniMax context fallbacks when provider rows omit limits', () => {
+  const m3Models = normalizeHermesModels({ data: [{ id: 'minimax:MiniMax-M3', name: 'MiniMax-M3', context_length: 0 }] }, 'minimax:MiniMax-M3');
+  assert.equal(m3Models[0].contextTokens, 1_000_000);
+
+  const m27Models = normalizeHermesModels({ data: [{ id: 'minimax:MiniMax-M2.7', name: 'MiniMax-M2.7', context_length: 0 }] }, 'minimax:MiniMax-M2.7');
+  assert.equal(m27Models[0].contextTokens, 204_800);
+
+  const source = readFileSync(new URL('../extension/lib/common.mjs', import.meta.url), 'utf8');
+  assert.match(source, /\['minimax-m2\.7',\s*204_800\]/);
+  assert.match(source, /\['minimax\/m2\.7',\s*204_800\]/);
 });
 
 test('normalizeHermesModels applies 1M context fallback for Qwen Token Plan models', () => {

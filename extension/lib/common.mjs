@@ -1229,6 +1229,8 @@ const MODEL_CONTEXT_FALLBACKS = Object.freeze([
   ['qwen', 131_072],
   ['minimax-m3', 1_000_000],
   ['minimax/m3', 1_000_000],
+  ['minimax-m2.7', 204_800],
+  ['minimax/m2.7', 204_800],
   ['minimax', 204_800],
   ['glm-5.2', 1_048_576],
   ['glm', 202_752],
