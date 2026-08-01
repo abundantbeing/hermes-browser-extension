@@ -8306,14 +8306,37 @@ function contextMenuPromptText(request = {}) {
   return text;
 }
 
+async function contextMenuPageText(request = {}) {
+  // Page-level prompt items carry only the page URL (background.js writes
+  // selection: '' for page contexts). Capture the actual page content so the
+  // task can work with the page itself — selection items already carry their
+  // content and skip capture. Depth honors the control-panel setting
+  // (contextDepth: minimal / normal / full). Failure degrades to URL-only,
+  // never drops the request.
+  if (!request.pageUrl || request.selection || !Number.isFinite(request.tabId)) return '';
+  const tab = await chrome.tabs.get(request.tabId).catch(() => null);
+  if (!tab) return '';
+  const pageContext = await getPageContext(tab, {});
+  if (!pageContext?.ok || !pageContext.text) return '';
+  return pageContext.text;
+}
+
 async function executeContextMenuRequest(request, requestedRoute) {
-  const userText = contextMenuPromptText(request);
+  const capturedPageText = await contextMenuPageText(request);
+  const baseText = contextMenuPromptText(request);
+  const userText = capturedPageText ? `${baseText}\n\n${capturedPageText}` : baseText;
   if (!userText) return false;
   let route = normalizeContextMenuRoute(requestedRoute);
   if (route === 'ask') route = settings.sessionId ? 'current' : 'new';
   if (route === 'current' && !settings.sessionId) route = 'new';
   if (route === 'new') {
-    await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus: false });
+    // Title the session from the task at birth, so right-click sessions never
+    // sit under the default "Hermes Browser Extension" name waiting for a
+    // post-turn rename (which can be gated by autoNameSessions / apiKey /
+    // remote-dashboard rename support). The derived title also makes the
+    // post-turn auto-title logic skip (title is no longer default).
+    const draftTitle = autoSessionTitleFromText(baseText) || makeBrowserSessionTitle();
+    await beginHermesBrowserDraft({ title: draftTitle, focus: false });
   }
   if (route === 'background') {
     const { session } = await runInlineDraftInBackground({ adapterId: 'right-click' }, userText);
