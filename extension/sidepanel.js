@@ -8306,25 +8306,14 @@ function contextMenuPromptText(request = {}) {
   return text;
 }
 
-async function contextMenuPageText(request = {}) {
-  // Page-level prompt items carry only the page URL (background.js writes
-  // selection: '' for page contexts). Capture the actual page content so the
-  // task can work with the page itself — selection items already carry their
-  // content and skip capture. Depth honors the control-panel setting
-  // (contextDepth: minimal / normal / full). Failure degrades to URL-only,
-  // never drops the request.
-  if (!request.pageUrl || request.selection || !Number.isFinite(request.tabId)) return '';
-  const tab = await chrome.tabs.get(request.tabId).catch(() => null);
-  if (!tab) return '';
-  const pageContext = await getPageContext(tab, {});
-  if (!pageContext?.ok || !pageContext.text) return '';
-  return pageContext.text;
-}
-
 async function executeContextMenuRequest(request, requestedRoute) {
-  const capturedPageText = await contextMenuPageText(request);
-  const baseText = contextMenuPromptText(request);
-  const userText = capturedPageText ? `${baseText}\n\n${capturedPageText}` : baseText;
+  // The right-click path no longer forces chat-only. askHermes calls
+  // refreshContext(), which honors the user's context scope setting and
+  // contextDepth — the same pipeline the composer uses. Selection items
+  // carry their text in the prompt; page-context items get the page DOM
+  // through the normal browser_context attachment, not folded into the
+  // prompt body. The user's "Page context depth" setting controls this.
+  const userText = contextMenuPromptText(request);
   if (!userText) return false;
   let route = normalizeContextMenuRoute(requestedRoute);
   if (route === 'ask') route = settings.sessionId ? 'current' : 'new';
@@ -8335,7 +8324,7 @@ async function executeContextMenuRequest(request, requestedRoute) {
     // post-turn rename (which can be gated by autoNameSessions / apiKey /
     // remote-dashboard rename support). The derived title also makes the
     // post-turn auto-title logic skip (title is no longer default).
-    const draftTitle = autoSessionTitleFromText(baseText) || makeBrowserSessionTitle();
+  const draftTitle = autoSessionTitleFromText(userText) || makeBrowserSessionTitle();
     await beginHermesBrowserDraft({ title: draftTitle, focus: false });
   }
   if (route === 'background') {
@@ -8349,7 +8338,6 @@ async function executeContextMenuRequest(request, requestedRoute) {
   if (route === 'current' && settings.sessionId) approvedForeignSessionIds.add(String(settings.sessionId));
   els.input.value = '';
   const sent = await askHermes(userText, [], {
-    forceChatOnly: true,
     preserveComposer: true,
     disableCommandParsing: true,
     displayUserText: `Right-click task · ${String(request.prompt || '').replace(/:$/, '')}`,

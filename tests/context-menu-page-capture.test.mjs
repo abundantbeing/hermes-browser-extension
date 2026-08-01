@@ -5,32 +5,35 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
 
-test('right-click page contexts capture the page text through the existing context pipeline', async () => {
-  const source = await read('extension/sidepanel.js');
-  assert.match(source, /async function contextMenuPageText\(request = \{\}\)/);
-  assert.match(source, /if \(!request\.pageUrl \|\| request\.selection \|\| !Number\.isFinite\(request\.tabId\)\) return '';/);
-  assert.match(source, /const tab = await chrome\.tabs\.get\(request\.tabId\)\.catch\(\(\) => null\);/);
-  assert.match(source, /const pageContext = await getPageContext\(tab, \{\}\)/);
-  assert.match(source, /if \(!pageContext\?\.ok \|\| !pageContext\.text\) return '';/);
-});
-
-test('captured page text is folded into the task and failure degrades to URL-only', async () => {
+test('right-click tasks do not force chat-only so browser context attaches per the user setting', async () => {
   const source = await read('extension/sidepanel.js');
   const execute = source.match(/async function executeContextMenuRequest\(request, requestedRoute\) \{[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(execute, /const capturedPageText = await contextMenuPageText\(request\);/);
-  assert.match(execute, /const baseText = contextMenuPromptText\(request\);/);
-  assert.match(execute, /const userText = capturedPageText \? `\$\{baseText\}\\n\\n\$\{capturedPageText\}` : baseText;/);
-  assert.match(execute, /if \(!userText\) return false;/);
+  assert.ok(execute, 'executeContextMenuRequest must exist');
+  // forceChatOnly must NOT appear in the askHermes call — its presence forced
+  // refreshContext() to skip, nulled the browser context, and showed
+  // "Chat only — no browser context attached" for every right-click task.
+  const askCall = execute.match(/await askHermes\(userText, \[\], \{[\s\S]*?\}\)/)?.[0] || '';
+  assert.ok(askCall, 'executeContextMenuRequest must call askHermes');
+  assert.doesNotMatch(askCall, /forceChatOnly/, 'right-click tasks must not force chat-only');
 });
 
-test('capture honors the control-panel contextDepth setting used by getPageContext', async () => {
+test('right-click tasks use contextMenuPromptText for the user message (no separate page-text capture)', async () => {
+  const source = await read('extension/sidepanel.js');
+  // The old contextMenuPageText helper is gone — page content now arrives
+  // through refreshContext → browser_context, not folded into the prompt.
+  assert.doesNotMatch(source, /async function contextMenuPageText/);
+  const execute = source.match(/async function executeContextMenuRequest\(request, requestedRoute\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(execute, /contextMenuPromptText\(request\)/);
+});
+
+test('getPageContext honors the control-panel contextDepth setting so right-click context inherits it', async () => {
   const [source, common] = await Promise.all([
     read('extension/sidepanel.js'),
     read('extension/lib/common.mjs'),
   ]);
   assert.match(common, /contextDepth: 'normal'/);
   // getPageContext reads the depth from settings, not from the options object,
-  // so the right-click capture inherits the control-panel choice for free.
+  // so refreshContext → getPageContext inherits the control-panel choice.
   assert.match(source, /const requestOptions = \{\s*depth: settings\.contextDepth,/);
   assert.match(source, /contextDepthInput: \$\(['"]#contextDepthInput['"]\)/);
 });
@@ -38,7 +41,7 @@ test('capture honors the control-panel contextDepth setting used by getPageConte
 test('right-click new sessions are titled from the task text at creation', async () => {
   const source = await read('extension/sidepanel.js');
   const execute = source.match(/async function executeContextMenuRequest\(request, requestedRoute\) \{[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(execute, /const draftTitle = autoSessionTitleFromText\(baseText\) \|\| makeBrowserSessionTitle\(\);/);
+  assert.match(execute, /const draftTitle = autoSessionTitleFromText\(userText\) \|\| makeBrowserSessionTitle\(\);/);
   assert.match(execute, /beginHermesBrowserDraft\(\{ title: draftTitle, focus: false \}\)/);
 });
 
