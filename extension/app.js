@@ -86,7 +86,7 @@ import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
 import { sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
-import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
+import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, normalizeGatewayHistoryMessages, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
 import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 
 const $ = (selector) => document.querySelector(selector);
@@ -330,8 +330,7 @@ async function establishDashboardSession(storedSessionId = '') {
 }
 
 function dashboardHistoryMessages(payload = {}) {
-  const rows = payload?.messages || payload?.data?.messages || payload?.history || payload?.data || [];
-  return Array.isArray(rows) ? rows : [];
+  return normalizeGatewayHistoryMessages(payload);
 }
 
 async function loadDashboardSessionMessages(storedSessionId) {
@@ -3060,8 +3059,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
   if (area === 'local' && changes[WAKE_STORAGE_KEYS.turn]?.newValue) consumeWakeTurn(changes[WAKE_STORAGE_KEYS.turn].newValue).catch(() => {});
 });
-chrome.runtime.onMessage.addListener((message) => {
-  if (message?.type === WAKE_MESSAGES.turnReady) consumeWakeTurn(message.turn).catch(() => {});
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === WAKE_MESSAGES.turnReady) {
+    consumeWakeTurn(message.turn).catch(() => {});
+    sendResponse?.({ ok: true, accepted: true, surface: SURFACE_KINDS.FULL_TAB });
+  }
   if (message?.type === WAKE_MESSAGES.localState) renderWakeState(message);
   return false;
 });

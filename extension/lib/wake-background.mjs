@@ -210,9 +210,16 @@ export function createWakeBackgroundController({
       createdAt: Date.now(),
     };
     await chromeApi.storage.local.set({ [WAKE_STORAGE_KEYS.turn]: turn });
-    await publish({ state: 'processing', detail: 'Wake command captured. Opening Hermes…' });
-    await openWakeSurface();
-    chromeApi.runtime.sendMessage({ type: WAKE_MESSAGES.turnReady, turn }).catch(() => null);
+    await publish({ state: 'processing', detail: 'Wake command captured.' });
+    const turnReadyMessage = { type: WAKE_MESSAGES.turnReady, turn };
+    const delivered = await chromeApi.runtime.sendMessage(turnReadyMessage)
+      .then((result) => result?.accepted === true)
+      .catch(() => false);
+    if (!delivered) {
+      await publish({ state: 'processing', detail: 'Wake command captured. Opening Hermes…' });
+      await openWakeSurface();
+      await chromeApi.runtime.sendMessage(turnReadyMessage).catch(() => null);
+    }
     replyTimer = globalThis.setTimeout(async () => {
       if (mode === 'native') await resumeNative();
       else await chromeApi.runtime.sendMessage({ type: WAKE_MESSAGES.resumeLocal }).catch(() => null);

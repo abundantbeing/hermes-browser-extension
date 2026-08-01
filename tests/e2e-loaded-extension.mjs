@@ -698,6 +698,51 @@ async function main() {
     assert.ok(mock.requests.some((request) => request.path === `/api/sessions/${storedAfterSend.hermesBrowserSettings.sessionId}/chat/stream` && request.method === 'POST'));
     assert.ok(mock.requests.filter((request) => request.path !== '/health' && request.path !== '/v1/health').every((request) => request.authorization === `Bearer ${TEST_TOKEN}`));
 
+    const wakeStreamRequestsBefore = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
+    const wakeProbeSetup = await setup.evaluate(`(() => {
+      globalThis.__hermesWakeOpenCalls = [];
+      globalThis.__hermesWakeOpenRestores = [];
+      const wrap = (owner, key, label) => {
+        const original = owner?.[key];
+        if (typeof original !== 'function') return false;
+        const bound = original.bind(owner);
+        owner[key] = (...args) => {
+          globalThis.__hermesWakeOpenCalls.push(label);
+          return bound(...args);
+        };
+        if (owner[key] === original) return false;
+        globalThis.__hermesWakeOpenRestores.push(() => { owner[key] = original; });
+        return true;
+      };
+      return [
+        wrap(chrome.sidePanel, 'open', 'sidePanel.open') && 'sidePanel.open',
+        wrap(chrome.tabs, 'create', 'tabs.create') && 'tabs.create',
+        wrap(chrome.tabs, 'update', 'tabs.update') && 'tabs.update',
+        wrap(chrome.windows, 'create', 'windows.create') && 'windows.create',
+      ].filter(Boolean);
+    })()`);
+    assert.ok(wakeProbeSetup.length > 0, 'Loaded wake E2E could not instrument any surface-opening API.');
+    const wakeTurnAccepted = await panel.evaluate(`chrome.runtime.sendMessage({
+      type: 'HERMES_WAKE_LOCAL_DETECTED',
+      text: 'Confirm the loaded wake handoff stays in this session.',
+    })`);
+    assert.equal(wakeTurnAccepted, true);
+    await waitFor(() => mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length === wakeStreamRequestsBefore + 1);
+    await waitFor(async () => {
+      const stored = await setup.evaluate(`chrome.storage.local.get(['hermesBrowserSettings', 'hermesBrowserWakeTurn'])`);
+      return !stored.hermesBrowserWakeTurn ? stored : null;
+    });
+    const wakeHandoff = await setup.evaluate(`(() => {
+      const calls = [...(globalThis.__hermesWakeOpenCalls || [])];
+      for (const restore of globalThis.__hermesWakeOpenRestores || []) restore();
+      delete globalThis.__hermesWakeOpenCalls;
+      delete globalThis.__hermesWakeOpenRestores;
+      return calls;
+    })()`);
+    const wakeSessionAfter = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
+    assert.deepEqual(wakeHandoff, []);
+    assert.equal(wakeSessionAfter.hermesBrowserSettings.sessionId, storedAfterSend.hermesBrowserSettings.sessionId);
+
     const taskPayload = {
       [storedAfterSend.hermesBrowserSettings.sessionId]: {
         updatedAt: Date.now(),
@@ -1823,6 +1868,11 @@ async function main() {
       },
       requestCount: mock.requests.length,
       renderedReply: TEST_REPLY,
+      wakeHandoff: {
+        instrumented: wakeProbeSetup,
+        surfaceOpenCalls: wakeHandoff,
+        sessionPreserved: wakeSessionAfter.hermesBrowserSettings.sessionId,
+      },
       taskSummary: taskPanelState.summary,
       inlineRoute: routeState.labels,
       inlineBackgroundResult: inlineResultState.result,

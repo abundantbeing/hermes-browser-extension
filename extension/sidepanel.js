@@ -118,6 +118,7 @@ import {
   buildSessionModelSwitchRequest,
   createGatewayClient,
   establishGatewaySession,
+  normalizeGatewayHistoryMessages,
   remoteStoredSessionIdForGateway,
   runtimeModelFromSessionStatus,
   WS_EVENTS,
@@ -5184,11 +5185,10 @@ async function loadSessionMessages(sessionId = settings.sessionId, { requestId =
     try {
       const result = await remoteWsConnection.client.request(WS_METHODS.sessionHistory, { session_id: sessionId });
       if (!isCurrentRequest()) return false;
-      const rows = Array.isArray(result?.messages) ? result.messages : [];
-      const contextMessages = rows
+      const contextMessages = normalizeGatewayHistoryMessages(result)
         .map((message) => ({
           role: message.role,
-          content: coerceWsMessageContent(message.content),
+          content: message.content,
           ts: Number(message.timestamp || message.ts || Date.now()),
         }))
         .filter((message) => message.content);
@@ -7260,17 +7260,6 @@ async function ensureRemoteWsSession(connection) {
   return liveId;
 }
 
-// Dashboard history content may be a string, an array of text parts, or a
-// single block object; flatten to plain text for the message pane.
-function coerceWsMessageContent(content) {
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content)) {
-    return content.map((part) => (typeof part === 'string' ? part : part?.text || '')).filter(Boolean).join('');
-  }
-  if (content && typeof content === 'object') return String(content.text || '');
-  return '';
-}
-
 async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {}) {
   const connection = await ensureRemoteWsClient();
   const sessionId = await ensureRemoteWsSession(connection);
@@ -9128,8 +9117,11 @@ function bindEvents() {
       return false;
     }
     if (message?.type === WAKE_MESSAGES.turnReady) {
-      consumeWakeTurn(message.turn).then((ok) => sendResponse?.({ ok })).catch((error) => sendResponse?.({ ok: false, error: error?.message || String(error) }));
-      return true;
+      consumeWakeTurn(message.turn).catch((error) => {
+        setStatus('warn', 'Wake command handoff failed', error?.message || String(error));
+      });
+      sendResponse?.({ ok: true, accepted: true, surface: SURFACE_KINDS.SIDE_PANEL });
+      return false;
     }
     if (message?.type === 'HERMES_VOICE_TRANSCRIPT') {
       consumeVoiceDraft(message).then((ok) => sendResponse?.({ ok })).catch((error) => sendResponse?.({ ok: false, error: error?.message || String(error) }));

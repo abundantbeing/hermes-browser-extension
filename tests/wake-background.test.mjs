@@ -146,8 +146,14 @@ test('native Hermes wake owns the full wake, VAD transcript, TTS, and resume lif
   assert.ok(calls.some(([method]) => method === WS_METHODS.wakeResume));
 });
 
-test('detected browser-local command is TTL-stored once and opens Hermes', async () => {
+test('detected browser-local command opens Hermes only after no existing surface responds', async () => {
   const chrome = mockChrome();
+  const sendMessage = chrome.api.runtime.sendMessage;
+  chrome.api.runtime.sendMessage = async (message) => {
+    const response = await sendMessage(message);
+    if (message.type === WAKE_MESSAGES.turnReady) throw new Error('No receiving end');
+    return response;
+  };
   let opened = 0;
   const controller = createWakeBackgroundController({ chromeApi: chrome.api, openPanel: async () => { opened += 1; } });
   await controller.configure({ wakeWordEnabled: true, wakeWordPreferNative: false });
@@ -155,8 +161,41 @@ test('detected browser-local command is TTL-stored once and opens Hermes', async
   assert.equal(opened, 1);
   assert.equal(chrome.values[WAKE_STORAGE_KEYS.turn].text, 'summarize this page');
   assert.equal(chrome.values[WAKE_STORAGE_KEYS.turn].mode, 'browser-local');
-  assert.ok(chrome.messages.some((message) => message.type === WAKE_MESSAGES.turnReady));
+  assert.equal(chrome.messages.filter((message) => message.type === WAKE_MESSAGES.turnReady).length, 2);
 });
+
+for (const connectionMode of ['local', 'remote', 'cloud']) {
+  test(`existing Hermes surface handles a ${connectionMode} wake turn without opening another tab`, async () => {
+    const chrome = mockChrome();
+    chrome.values.hermesBrowserSettings = {
+      connectionMode,
+      sessionId: `existing-${connectionMode}-session`,
+      webSessionId: `existing-${connectionMode}-web-session`,
+    };
+    const sendMessage = chrome.api.runtime.sendMessage;
+    chrome.api.runtime.sendMessage = async (message) => {
+      const response = await sendMessage(message);
+      if (message.type === WAKE_MESSAGES.turnReady) {
+        return { ok: true, accepted: true, surface: 'side_panel' };
+      }
+      return response;
+    };
+    let opened = 0;
+    const controller = createWakeBackgroundController({
+      chromeApi: chrome.api,
+      openPanel: async () => { opened += 1; },
+    });
+
+    await controller.configure({ wakeWordEnabled: true, wakeWordPreferNative: false });
+    await controller.handleMessage({ type: WAKE_MESSAGES.localDetected, text: 'summarize this page' });
+
+    assert.equal(opened, 0);
+    assert.equal(chrome.values.hermesBrowserSettings.connectionMode, connectionMode);
+    assert.equal(chrome.values.hermesBrowserSettings.sessionId, `existing-${connectionMode}-session`);
+    assert.equal(chrome.values.hermesBrowserSettings.webSessionId, `existing-${connectionMode}-web-session`);
+    assert.equal(chrome.messages.filter((message) => message.type === WAKE_MESSAGES.turnReady).length, 1);
+  });
+}
 
 test('wake turns have one atomic surface claimant across side panel and Hermes Web', async () => {
   const chrome = mockChrome();
@@ -178,6 +217,14 @@ test('the real extension background routes atomic wake claims into the controlle
   const background = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8');
   const routedTypes = background.match(/const WAKE_BACKGROUND_MESSAGE_TYPES = new Set\(\[([\s\S]*?)\]\);/)?.[1] || '';
   assert.match(routedTypes, /WAKE_MESSAGES\.claimTurn/);
+});
+
+test('both Hermes surfaces immediately acknowledge a delivered wake turn', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+
+  assert.match(sidepanel, /sendResponse\?\.\(\{ ok: true, accepted: true, surface: SURFACE_KINDS\.SIDE_PANEL \}\)/);
+  assert.match(app, /sendResponse\?\.\(\{ ok: true, accepted: true, surface: SURFACE_KINDS\.FULL_TAB \}\)/);
 });
 
 test('wake reply resumes local listener when spoken replies are disabled', async () => {
