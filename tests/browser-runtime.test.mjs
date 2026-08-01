@@ -280,7 +280,11 @@ function createBackgroundHarness({
         contextMenuCreateCalls.push(options);
         callback?.();
       },
-      onClicked: { addListener(handler) { contextMenuClickedHandler = handler; } },
+      onClicked: {
+        addListener(handler) {
+          contextMenuClickedHandler = (info, tab) => handler(info, tab);
+        },
+      },
     },
   };
 
@@ -455,6 +459,59 @@ test('background hands a page-context prompt item to the panel instead of silent
     assert.equal(request.prompt, 'Run /ingest for this page');
     assert.equal(request.selection, '');
     assert.equal(request.pageUrl, 'https://example.com/article');
+    assert.equal(harness.createdTabs.length, 0, 'an answered side-panel open must not open a fallback tab');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background opens the side panel for an open-action item without a fallback tab', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness();
+  harness.setStoredContextMenuItems([{
+    id: 'hermes-browser-open',
+    title: 'Open Hermes Browser',
+    contexts: ['page', 'link', 'image', 'video', 'audio'],
+    enabled: true,
+  }]);
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?open-action-lenient=${Date.now()}`);
+    await harness.installedHandler();
+    assert.equal(typeof harness.contextMenuClickedHandler, 'function');
+    await harness.contextMenuClickedHandler(
+      { menuItemId: 'hermes-browser-open', pageUrl: 'https://example.com' },
+      { id: 7, windowId: 8 },
+    );
+    assert.equal(harness.sidePanelOpenCalls.length, 1, 'the side panel must be asked to open');
+    assert.equal(harness.createdTabs.length, 0, 'an answered side-panel open must not open a fallback tab');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background falls back to a tab when the side panel cannot open', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness({
+    sidePanelOpen: async () => { throw new Error('side panel unavailable'); },
+  });
+  harness.setStoredContextMenuItems([{
+    id: 'hermes-browser-open',
+    title: 'Open Hermes Browser',
+    contexts: ['page'],
+    enabled: true,
+  }]);
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?open-action-fallback=${Date.now()}`);
+    await harness.installedHandler();
+    await harness.contextMenuClickedHandler(
+      { menuItemId: 'hermes-browser-open', pageUrl: 'https://example.com' },
+      { id: 7, windowId: 8 },
+    );
+    assert.equal(harness.createdTabs.length, 1, 'when the side panel throws, the fallback tab must open');
   } finally {
     globalThis.chrome = originalChrome;
   }

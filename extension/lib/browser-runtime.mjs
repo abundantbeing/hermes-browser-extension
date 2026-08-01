@@ -184,6 +184,7 @@ async function openSidePanelWithConfirmation({
   pollDelays = [0, 75, 150, 300, 500],
   userAgent = globalThis.navigator?.userAgent || '',
   wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  requireConfirmation = true,
 } = {}) {
   if (typeof sidePanelApi?.open !== 'function') return false;
 
@@ -200,6 +201,10 @@ async function openSidePanelWithConfirmation({
 
   try {
     await sidePanelApi.open(openOptions);
+    // For user-initiated right-click actions an answered open() call is
+    // enough: some Chrome versions resolve the panel without a confirming
+    // onOpened event, and a fallback tab is worse than a settled panel.
+    if (!requireConfirmation) return true;
     for (const delay of pollDelays) {
       if (delay > 0) await wait(delay);
       if (openedByEvent) return true;

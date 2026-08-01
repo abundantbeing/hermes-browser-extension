@@ -417,7 +417,7 @@ async function handleContextMenuClick(info, tab) {
   const item = cachedContextMenuItems.find((candidate) => candidate.id === info?.menuItemId);
   if (!item || !tab?.id) return;
   if (item.open) {
-    await openHermesPanel(tab, { allowFallback: true });
+    await openHermesPanel(tab, { allowFallback: true, lenientPanel: true });
     return;
   }
   if (item.inlineAction) {
@@ -439,7 +439,7 @@ async function handleContextMenuClick(info, tab) {
       expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
     },
   });
-  await openHermesPanel(tab, { allowFallback: true });
+  await openHermesPanel(tab, { allowFallback: true, lenientPanel: true });
 }
 
 async function configureInstalledSurfaces() {
@@ -583,7 +583,7 @@ async function openOrFocusPanelTab(panelUrl) {
   }
 }
 
-async function openHermesPanel(tab, { allowFallback = true } = {}) {
+async function openHermesPanel(tab, { allowFallback = true, lenientPanel = false } = {}) {
   await refreshPanelResidencyModeFromStorage();
   const panelResidencyMode = cachedPanelResidencyMode;
   const tabId = Number(tab?.id);
@@ -615,6 +615,7 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
             runtimeApi: chrome.runtime,
             openOptions: { tabId },
             panelUrl,
+            requireConfirmation: !lenientPanel,
           });
           if (panelOpened) return;
         } catch (tabOpenError) {
@@ -627,6 +628,7 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
             runtimeApi: chrome.runtime,
             openOptions: { windowId },
             panelUrl,
+            requireConfirmation: !lenientPanel,
           });
           if (panelOpened) return;
         }
@@ -638,6 +640,7 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
           runtimeApi: chrome.runtime,
           openOptions: { windowId },
           panelUrl,
+          requireConfirmation: !lenientPanel,
         });
         if (panelOpened) return;
       }
@@ -785,9 +788,9 @@ chrome.runtime.onStartup.addListener(async () => {
   restoreWakeController();
 });
 chrome.action.onClicked.addListener(openHermesPanel);
-chrome.contextMenus?.onClicked?.addListener?.((info, tab) => {
-  handleContextMenuClick(info, tab).catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error));
-});
+chrome.contextMenus?.onClicked?.addListener?.((info, tab) => (
+  handleContextMenuClick(info, tab).catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error))
+));
 chrome.tabs?.onActivated?.addListener?.(({ tabId }) => reapplyPanelResidencyForTab(tabId));
 chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
   if (areaName !== 'local') return;
