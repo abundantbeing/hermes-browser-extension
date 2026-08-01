@@ -413,15 +413,51 @@ function safeContextPageUrl(value = '') {
   }
 }
 
+function openSidePanelWithinUserGesture(tab) {
+  // chrome.sidePanel.open() may only be called in response to a user gesture,
+  // and the gesture is forfeited as soon as the handler awaits any chrome API
+  // call. The async openHermesPanel path alone therefore always fails the
+  // gesture check and opens a fallback tab instead. Attempt the open
+  // synchronously here, inside the click's live gesture; the async path only
+  // runs when the panel is not yet enabled for this tab/window.
+  const sidePanelApi = chrome?.sidePanel;
+  if (typeof sidePanelApi?.open !== 'function') return { attempted: false };
+  const tabId = Number(tab?.id);
+  const windowId = Number(tab?.windowId);
+  const tabAttached = normalizePanelResidencyMode(cachedPanelResidencyMode) === PANEL_RESIDENCY_MODES.TAB_ATTACHED;
+  let openOptions = null;
+  if (tabAttached && Number.isFinite(tabId) && tabId > 0) {
+    openOptions = { tabId };
+  } else if (Number.isFinite(windowId)) {
+    openOptions = { windowId };
+  }
+  if (!openOptions) return { attempted: false };
+  try {
+    return { attempted: true, openPromise: Promise.resolve(sidePanelApi.open(openOptions)) };
+  } catch (error) {
+    return { attempted: true, openPromise: Promise.reject(error) };
+  }
+}
+
 async function handleContextMenuClick(info, tab) {
   const item = cachedContextMenuItems.find((candidate) => candidate.id === info?.menuItemId);
   if (!item || !tab?.id) return;
-  if (item.open) {
-    await openHermesPanel(tab, { allowFallback: true, lenientPanel: true });
-    return;
-  }
   if (item.inlineAction) {
     await chrome.tabs.sendMessage(tab.id, { type: 'HERMES_INLINE_CONTEXT_ACTION', actionId: item.inlineAction }).catch(() => null);
+    return;
+  }
+
+  // Summon the panel inside the user gesture (see openSidePanelWithinUserGesture).
+  // If the panel is not yet enabled for this tab/window the promise rejects
+  // and we run the async openHermesPanel path instead: re-apply residency,
+  // retry the open, and only then fall back to a tab.
+  const gestureOpen = openSidePanelWithinUserGesture(tab);
+  const summonPanel = gestureOpen.attempted
+    ? gestureOpen.openPromise.catch(() => openHermesPanel(tab, { allowFallback: true, lenientPanel: true }))
+    : openHermesPanel(tab, { allowFallback: true, lenientPanel: true });
+
+  if (item.open) {
+    await summonPanel;
     return;
   }
   const selection = String(info?.selectionText || '').trim().slice(0, 8_000);
@@ -439,7 +475,9 @@ async function handleContextMenuClick(info, tab) {
       expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
     },
   });
-  await openHermesPanel(tab, { allowFallback: true, lenientPanel: true });
+  // The panel summoned above consumes the request on load (fresh panel) or
+  // via storage.onChanged (panel already open).
+  await summonPanel;
 }
 
 async function configureInstalledSurfaces() {

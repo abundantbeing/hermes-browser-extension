@@ -203,6 +203,7 @@ function createBackgroundHarness({
   const contextMenuCreateCalls = [];
   const contextMenuSessionWrites = [];
   const storedSettings = { panelResidencyMode };
+  const callLog = [];
   let contextMenuRemoveAllCalls = 0;
   let actionHandler = null;
   let installedHandler = null;
@@ -220,13 +221,19 @@ function createBackgroundHarness({
     },
     storage: {
       local: {
-        get: async () => ({
-          hermesBrowserSettings: { ...storedSettings },
-        }),
+        get: async () => {
+          callLog.push('storage.local.get');
+          return {
+            hermesBrowserSettings: { ...storedSettings },
+          };
+        },
       },
       session: {
         get: async () => ({}),
-        set: async (value) => { contextMenuSessionWrites.push(value); },
+        set: async (value) => {
+          callLog.push('storage.session.set');
+          contextMenuSessionWrites.push(value);
+        },
         remove: async () => {},
       },
       onChanged: { addListener(handler) { storageChangedHandler = handler; } },
@@ -244,6 +251,7 @@ function createBackgroundHarness({
         return snapshot;
       },
       create: async (options) => {
+        callLog.push('tabs.create');
         createdTabs.push(options);
         const created = { id: 100 + createdTabs.length, windowId: 8, pendingUrl: options.url };
         extensionTabs.push(created);
@@ -253,12 +261,14 @@ function createBackgroundHarness({
         updatedTabs.push({ tabId, options });
         return extensionTabs.find((tab) => tab.id === tabId) || null;
       },
+      sendMessage: async () => ({ ok: true }),
       onActivated: { addListener() {} },
     },
     sidePanel: {
       setPanelBehavior: async () => {},
       setOptions: async (options) => { sidePanelOptions.push(options); },
       open: async (options) => {
+        callLog.push('sidePanel.open');
         sidePanelOpenCalls.push(options);
         return sidePanelOpen(options);
       },
@@ -297,6 +307,7 @@ function createBackgroundHarness({
     sidePanelOpenCalls,
     sidePanelOptions,
     contextMenuCreateCalls,
+    callLog,
     get contextMenuRemoveAllCalls() { return contextMenuRemoveAllCalls; },
     get actionHandler() { return actionHandler; },
     get installedHandler() { return installedHandler; },
@@ -512,6 +523,120 @@ test('background falls back to a tab when the side panel cannot open', async () 
       { id: 7, windowId: 8 },
     );
     assert.equal(harness.createdTabs.length, 1, 'when the side panel throws, the fallback tab must open');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background summons the side panel inside the gesture for an open-action item', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness();
+  harness.setStoredContextMenuItems([{
+    id: 'hermes-browser-open',
+    title: 'Open Hermes Browser',
+    contexts: ['page', 'link', 'image', 'video', 'audio'],
+    enabled: true,
+  }]);
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?gesture-open=${Date.now()}`);
+    await harness.installedHandler();
+    harness.callLog.length = 0;
+    await harness.contextMenuClickedHandler(
+      { menuItemId: 'hermes-browser-open', pageUrl: 'https://example.com' },
+      { id: 7, windowId: 8 },
+    );
+    assert.equal(harness.callLog[0], 'sidePanel.open', 'the side panel must be asked to open before any awaited API');
+    assert.deepEqual(harness.sidePanelOpenCalls, [{ tabId: 7 }], 'tab-attached mode opens for the clicked tab');
+    assert.equal(harness.createdTabs.length, 0, 'an answered side-panel open must not open a fallback tab');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background writes the context-menu request after summoning the panel within the gesture', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness();
+  harness.setStoredContextMenuItems([{
+    id: 'ingest-this',
+    title: 'Ingest this',
+    contexts: ['page', 'link', 'image', 'video', 'audio'],
+    prompt: 'Run /ingest for this page',
+  }]);
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?gesture-prompt=${Date.now()}`);
+    await harness.installedHandler();
+    harness.callLog.length = 0;
+    await harness.contextMenuClickedHandler(
+      { menuItemId: 'ingest-this', pageUrl: 'https://example.com/article' },
+      { id: 7, windowId: 8 },
+    );
+    assert.equal(harness.callLog[0], 'sidePanel.open', 'the side panel must be asked to open before any awaited API');
+    assert.ok(
+      harness.callLog.indexOf('sidePanel.open') < harness.callLog.indexOf('storage.session.set'),
+      'the request must be written only after the in-gesture summon',
+    );
+    const writes = harness.contextMenuSessionWrites.filter((value) => value.hermesBrowserContextMenuRequest);
+    assert.equal(writes.length, 1, 'a page-context prompt click must write a request');
+    assert.equal(writes[0].hermesBrowserContextMenuRequest.prompt, 'Run /ingest for this page');
+    assert.equal(harness.createdTabs.length, 0, 'an answered side-panel open must not open a fallback tab');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background writes the request and falls back to a tab when the in-gesture summon is refused', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness({
+    sidePanelOpen: async () => { throw new Error('sidePanel.open() may only be called in response to a user gesture.'); },
+  });
+  harness.setStoredContextMenuItems([{
+    id: 'ingest-this',
+    title: 'Ingest this',
+    contexts: ['page'],
+    prompt: 'Run /ingest for this page',
+  }]);
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?gesture-refused=${Date.now()}`);
+    await harness.installedHandler();
+    await harness.contextMenuClickedHandler(
+      { menuItemId: 'ingest-this', pageUrl: 'https://example.com/article' },
+      { id: 7, windowId: 8 },
+    );
+    const writes = harness.contextMenuSessionWrites.filter((value) => value.hermesBrowserContextMenuRequest);
+    assert.equal(writes.length, 1, 'the request must be written even when the panel is refused');
+    assert.equal(harness.createdTabs.length, 1, 'a refused side-panel open falls back to the extension tab');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background never summons the panel for an inline-action item', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness();
+  harness.setStoredContextMenuItems([{
+    id: 'summarize',
+    title: 'Summarize selection',
+    contexts: ['editable'],
+    inlineAction: 'summarize',
+  }]);
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?gesture-inline=${Date.now()}`);
+    await harness.installedHandler();
+    harness.callLog.length = 0;
+    await harness.contextMenuClickedHandler(
+      { menuItemId: 'summarize', pageUrl: 'https://example.com' },
+      { id: 7, windowId: 8 },
+    );
+    assert.equal(harness.sidePanelOpenCalls.length, 0, 'inline actions are handled by the content script, not the panel');
+    assert.equal(harness.createdTabs.length, 0);
   } finally {
     globalThis.chrome = originalChrome;
   }
