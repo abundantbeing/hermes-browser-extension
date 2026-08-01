@@ -24,7 +24,6 @@ import {
   contextMeterDisplay,
   CONTEXT_MENU_CONTEXTS,
   CONTEXT_MENU_INLINE_CONTEXTS,
-  CONTEXT_MENU_PROMPT_CONTEXTS,
   encodeSessionId,
   estimateContextWindow,
   estimateLocalSessionContextTokens,
@@ -6105,11 +6104,9 @@ function renderContextMenuEditor() {
     contextsLabel.textContent = 'Show on:';
     detail.appendChild(contextsLabel);
 
-    const allowedContexts = mode === 'prompt'
-      ? CONTEXT_MENU_PROMPT_CONTEXTS
-      : mode === 'inline'
-        ? CONTEXT_MENU_INLINE_CONTEXTS
-        : CONTEXT_MENU_CONTEXTS.map((ctx) => ctx.value);
+    const allowedContexts = mode === 'inline'
+      ? CONTEXT_MENU_INLINE_CONTEXTS
+      : CONTEXT_MENU_CONTEXTS.map((ctx) => ctx.value);
 
     const contextsSelect = document.createElement('div');
     contextsSelect.className = 'context-menu-contexts-checkboxes';
@@ -6177,8 +6174,7 @@ function renderContextMenuEditor() {
         delete current.open;
         delete current.inlineAction;
         current.prompt = current.prompt || '';
-        current.contexts = current.contexts.filter((c) => CONTEXT_MENU_PROMPT_CONTEXTS.includes(c));
-        if (!current.contexts.length) current.contexts = [...CONTEXT_MENU_PROMPT_CONTEXTS];
+        if (!current.contexts.length) current.contexts = ['selection'];
       }
       persistContextMenuEditorItems();
       renderContextMenuEditor();
@@ -8302,7 +8298,12 @@ function normalizeContextMenuRoute(value = '') {
 function contextMenuPromptText(request = {}) {
   const prompt = String(request.prompt || '').trim().slice(0, 500);
   const selection = String(request.selection || '').trim().slice(0, 8_000);
-  return prompt && selection ? `${prompt}\n\n${selection}` : '';
+  if (!prompt && !selection) return '';
+  const pageUrl = String(request.pageUrl || '').trim();
+  let text = prompt || selection;
+  if (prompt && selection) text = `${prompt}\n\n${selection}`;
+  else if (!selection && pageUrl) text = `${text}\n\nPage: ${pageUrl}`;
+  return text;
 }
 
 async function executeContextMenuRequest(request, requestedRoute) {

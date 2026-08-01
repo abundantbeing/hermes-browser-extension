@@ -417,7 +417,7 @@ async function handleContextMenuClick(info, tab) {
   const item = cachedContextMenuItems.find((candidate) => candidate.id === info?.menuItemId);
   if (!item || !tab?.id) return;
   if (item.open) {
-    await openHermesPanel(tab, { allowFallback: false });
+    await openHermesPanel(tab, { allowFallback: true });
     return;
   }
   if (item.inlineAction) {
@@ -425,7 +425,7 @@ async function handleContextMenuClick(info, tab) {
     return;
   }
   const selection = String(info?.selectionText || '').trim().slice(0, 8_000);
-  if (!selection || !chrome.storage?.session) return;
+  if (!chrome.storage?.session) return;
   const stored = await chrome.storage.local.get('hermesBrowserSettings');
   const route = normalizeContextMenuRoute(stored?.hermesBrowserSettings?.contextMenuDefaultRoute);
   await chrome.storage.session.set({
@@ -439,7 +439,7 @@ async function handleContextMenuClick(info, tab) {
       expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
     },
   });
-  await openHermesPanel(tab, { allowFallback: false });
+  await openHermesPanel(tab, { allowFallback: true });
 }
 
 async function configureInstalledSurfaces() {

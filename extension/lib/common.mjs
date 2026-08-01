@@ -70,7 +70,6 @@ export const CONTEXT_MENU_OPEN_ID = 'hermes-browser-open';
 export const CONTEXT_MENU_MAX_ITEMS = 20;
 export const CONTEXT_MENU_MAX_TITLE_LENGTH = 64;
 export const CONTEXT_MENU_MAX_PROMPT_LENGTH = 8_000;
-export const CONTEXT_MENU_PROMPT_CONTEXTS = Object.freeze(['selection', 'editable']);
 export const CONTEXT_MENU_INLINE_CONTEXTS = Object.freeze(['editable']);
 
 export const DEFAULT_CONTEXT_MENU_ITEMS = Object.freeze([
@@ -129,8 +128,9 @@ export function normalizeContextMenuItem(value) {
     return null;
   } else {
     item.prompt = String(value.prompt || '').trim().slice(0, CONTEXT_MENU_MAX_PROMPT_LENGTH);
-    item.contexts = restrictContexts(contexts, CONTEXT_MENU_PROMPT_CONTEXTS);
-    if (!item.contexts.length) return null;
+    // Prompt items work on every context: selection/editable pass the selected
+    // text, and page/link/image/video/audio hand the prompt and page URL to the
+    // panel without a selection.
   }
   return item;
 }

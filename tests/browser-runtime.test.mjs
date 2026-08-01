@@ -201,12 +201,14 @@ function createBackgroundHarness({
   const sidePanelOpenCalls = [];
   const sidePanelOptions = [];
   const contextMenuCreateCalls = [];
+  const contextMenuSessionWrites = [];
   const storedSettings = { panelResidencyMode };
   let contextMenuRemoveAllCalls = 0;
   let actionHandler = null;
   let installedHandler = null;
   let startupHandler = null;
   let storageChangedHandler = null;
+  let contextMenuClickedHandler = null;
   const chromeApi = {
     runtime: {
       getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
@@ -221,6 +223,11 @@ function createBackgroundHarness({
         get: async () => ({
           hermesBrowserSettings: { ...storedSettings },
         }),
+      },
+      session: {
+        get: async () => ({}),
+        set: async (value) => { contextMenuSessionWrites.push(value); },
+        remove: async () => {},
       },
       onChanged: { addListener(handler) { storageChangedHandler = handler; } },
     },
@@ -273,6 +280,7 @@ function createBackgroundHarness({
         contextMenuCreateCalls.push(options);
         callback?.();
       },
+      onClicked: { addListener(handler) { contextMenuClickedHandler = handler; } },
     },
   };
 
@@ -290,6 +298,8 @@ function createBackgroundHarness({
     get installedHandler() { return installedHandler; },
     get startupHandler() { return startupHandler; },
     get storageChangedHandler() { return storageChangedHandler; },
+    get contextMenuClickedHandler() { return contextMenuClickedHandler; },
+    get contextMenuSessionWrites() { return contextMenuSessionWrites; },
     setStoredContextMenuItems(items) { storedSettings.contextMenuItems = items; },
   };
 }
@@ -415,6 +425,36 @@ test('background rebuilds the menu when contextMenuItems is deleted or reset', a
     await new Promise((resolve) => setTimeout(resolve, 80));
     assert.equal(harness.contextMenuRemoveAllCalls, 1, 'a removed contextMenuItems key must trigger a rebuild');
     assert.equal(harness.contextMenuCreateCalls.length, 7, 'deleted items must rebuild the default menu plus the root');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background hands a page-context prompt item to the panel instead of silently no-opping', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness();
+  harness.setStoredContextMenuItems([{
+    id: 'ingest-this',
+    title: 'Ingest this',
+    contexts: ['page', 'link', 'image', 'video', 'audio'],
+    prompt: 'Run /ingest for this page',
+  }]);
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?page-prompt-item=${Date.now()}`);
+    await harness.installedHandler();
+    assert.equal(typeof harness.contextMenuClickedHandler, 'function');
+    await harness.contextMenuClickedHandler(
+      { menuItemId: 'ingest-this', pageUrl: 'https://example.com/article' },
+      { id: 7, windowId: 8 },
+    );
+    const writes = harness.contextMenuSessionWrites.filter((value) => value.hermesBrowserContextMenuRequest);
+    assert.equal(writes.length, 1, 'a page-context prompt click must write a request');
+    const request = writes[0].hermesBrowserContextMenuRequest;
+    assert.equal(request.prompt, 'Run /ingest for this page');
+    assert.equal(request.selection, '');
+    assert.equal(request.pageUrl, 'https://example.com/article');
   } finally {
     globalThis.chrome = originalChrome;
   }

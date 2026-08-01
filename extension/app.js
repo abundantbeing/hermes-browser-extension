@@ -4,7 +4,6 @@ import {
   contextMeterDisplay,
   CONTEXT_MENU_CONTEXTS,
   CONTEXT_MENU_INLINE_CONTEXTS,
-  CONTEXT_MENU_PROMPT_CONTEXTS,
   DEFAULT_SETTINGS,
   estimateTokens,
   applySessionModelBindings,
@@ -1958,11 +1957,9 @@ function renderContextMenuEditor() {
     contextsLabel.textContent = 'Show on:';
     detail.appendChild(contextsLabel);
 
-    const allowedContexts = mode === 'prompt'
-      ? CONTEXT_MENU_PROMPT_CONTEXTS
-      : mode === 'inline'
-        ? CONTEXT_MENU_INLINE_CONTEXTS
-        : CONTEXT_MENU_CONTEXTS.map((ctx) => ctx.value);
+    const allowedContexts = mode === 'inline'
+      ? CONTEXT_MENU_INLINE_CONTEXTS
+      : CONTEXT_MENU_CONTEXTS.map((ctx) => ctx.value);
 
     const contextsSelect = document.createElement('div');
     contextsSelect.className = 'context-menu-contexts-checkboxes';
@@ -2030,8 +2027,7 @@ function renderContextMenuEditor() {
         delete current.open;
         delete current.inlineAction;
         current.prompt = current.prompt || '';
-        current.contexts = current.contexts.filter((c) => CONTEXT_MENU_PROMPT_CONTEXTS.includes(c));
-        if (!current.contexts.length) current.contexts = [...CONTEXT_MENU_PROMPT_CONTEXTS];
+        if (!current.contexts.length) current.contexts = ['selection'];
       }
       persistContextMenuEditorItems();
       renderContextMenuEditor();

@@ -80,11 +80,12 @@ test('context menu: allowlisted inline actions are accepted', () => {
   assert.deepEqual(item.contexts, ['editable']);
 });
 
-test('context menu: prompt items are restricted to selection and editable contexts', () => {
-  const item = normalizeContextMenuItem({ id: 'a', title: 'A', contexts: ['page', 'link', 'selection'], prompt: 'Ask' });
-  assert.deepEqual(item.contexts, ['selection']);
-  const pageOnly = normalizeContextMenuItem({ id: 'b', title: 'B', contexts: ['page'], prompt: 'Ask' });
-  assert.equal(pageOnly, null);
+test('context menu: prompt items keep every context', () => {
+  const item = normalizeContextMenuItem({ id: 'a', title: 'A', contexts: ['page', 'link', 'image', 'video', 'audio', 'selection', 'editable'], prompt: 'Ask' });
+  assert.deepEqual(item.contexts, ['page', 'link', 'image', 'video', 'audio', 'selection', 'editable']);
+  const pageOnly = normalizeContextMenuItem({ id: 'b', title: 'B', contexts: ['page'], prompt: 'Run /ingest for this page' });
+  assert.equal(pageOnly.prompt, 'Run /ingest for this page');
+  assert.deepEqual(pageOnly.contexts, ['page']);
 });
 
 test('context menu: inline items are restricted to editable contexts', () => {
