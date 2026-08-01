@@ -23,7 +23,8 @@ import {
   contextControlState,
   contextMeterDisplay,
   CONTEXT_MENU_CONTEXTS,
-  DEFAULT_CONTEXT_MENU_ITEMS,
+  CONTEXT_MENU_INLINE_CONTEXTS,
+  CONTEXT_MENU_PROMPT_CONTEXTS,
   encodeSessionId,
   estimateContextWindow,
   estimateLocalSessionContextTokens,
@@ -409,6 +410,7 @@ const els = {
   contextMenuDefaultRoute: $('#contextMenuDefaultRoute'),
   contextMenuItemsList: $('#contextMenuItemsList'),
   contextMenuAddItem: $('#contextMenuAddItem'),
+  contextMenuEditorNotice: $('#contextMenuEditorNotice'),
   panelResidencyInputs: Array.from(document.querySelectorAll('input[name="panelResidencyMode"]')),
   autoNameSessionsInput: $('#autoNameSessionsInput'),
   transcriptProviderInput: $('#transcriptProviderInput'),
@@ -5998,11 +6000,15 @@ function renderContextMenuEditor() {
   if (!contextMenuEditorItems.length) initContextMenuEditorItems();
   const items = contextMenuEditorItems;
   list.innerHTML = '';
-  items.forEach((item, index) => {
+  items.forEach((item) => {
     const row = document.createElement('div');
     row.className = 'context-menu-item-row';
     row.dataset.id = item.id;
     row.setAttribute('role', 'listitem');
+
+    const resolveIndex = () => contextMenuEditorItems.findIndex((candidate) => candidate.id === row.dataset.id);
+    const resolveItem = () => contextMenuEditorItems.find((candidate) => candidate.id === row.dataset.id);
+    const mode = item.open ? 'open' : item.inlineAction ? 'inline' : 'prompt';
 
     const header = document.createElement('div');
     header.className = 'context-menu-item-header';
@@ -6012,7 +6018,12 @@ function renderContextMenuEditor() {
     toggle.checked = item.enabled !== false;
     toggle.title = 'Show or hide this item';
     toggle.addEventListener('change', () => {
-      contextMenuEditorItems[index].enabled = toggle.checked;
+      const current = resolveItem();
+      if (!current) {
+        renderContextMenuEditor();
+        return;
+      }
+      current.enabled = toggle.checked;
       persistContextMenuEditorItems();
     });
     header.appendChild(toggle);
@@ -6023,7 +6034,12 @@ function renderContextMenuEditor() {
     titleInput.placeholder = 'Menu label';
     titleInput.className = 'context-menu-item-title';
     titleInput.addEventListener('change', () => {
-      contextMenuEditorItems[index].title = titleInput.value.trim();
+      const current = resolveItem();
+      if (!current) {
+        renderContextMenuEditor();
+        return;
+      }
+      current.title = titleInput.value.trim();
       persistContextMenuEditorItems();
     });
     header.appendChild(titleInput);
@@ -6035,9 +6051,10 @@ function renderContextMenuEditor() {
     upBtn.type = 'button';
     upBtn.textContent = '↑';
     upBtn.className = 'secondary';
-    upBtn.disabled = index === 0;
+    upBtn.disabled = resolveIndex() <= 0;
     upBtn.title = 'Move up';
     upBtn.addEventListener('click', () => {
+      const index = resolveIndex();
       if (index > 0) {
         [contextMenuEditorItems[index - 1], contextMenuEditorItems[index]] = [contextMenuEditorItems[index], contextMenuEditorItems[index - 1]];
         persistContextMenuEditorItems();
@@ -6050,10 +6067,11 @@ function renderContextMenuEditor() {
     downBtn.type = 'button';
     downBtn.textContent = '↓';
     downBtn.className = 'secondary';
-    downBtn.disabled = index === items.length - 1;
+    downBtn.disabled = resolveIndex() === -1 || resolveIndex() === items.length - 1;
     downBtn.title = 'Move down';
     downBtn.addEventListener('click', () => {
-      if (index < items.length - 1) {
+      const index = resolveIndex();
+      if (index >= 0 && index < items.length - 1) {
         [contextMenuEditorItems[index], contextMenuEditorItems[index + 1]] = [contextMenuEditorItems[index + 1], contextMenuEditorItems[index]];
         persistContextMenuEditorItems();
         renderContextMenuEditor();
@@ -6067,9 +6085,12 @@ function renderContextMenuEditor() {
     removeBtn.className = 'secondary';
     removeBtn.title = 'Remove item';
     removeBtn.addEventListener('click', () => {
-      contextMenuEditorItems.splice(index, 1);
-      persistContextMenuEditorItems();
-      renderContextMenuEditor();
+      const index = resolveIndex();
+      if (index >= 0) {
+        contextMenuEditorItems.splice(index, 1);
+        persistContextMenuEditorItems();
+        renderContextMenuEditor();
+      }
     });
     controls.appendChild(removeBtn);
 
@@ -6084,6 +6105,12 @@ function renderContextMenuEditor() {
     contextsLabel.textContent = 'Show on:';
     detail.appendChild(contextsLabel);
 
+    const allowedContexts = mode === 'prompt'
+      ? CONTEXT_MENU_PROMPT_CONTEXTS
+      : mode === 'inline'
+        ? CONTEXT_MENU_INLINE_CONTEXTS
+        : CONTEXT_MENU_CONTEXTS.map((ctx) => ctx.value);
+
     const contextsSelect = document.createElement('div');
     contextsSelect.className = 'context-menu-contexts-checkboxes';
     CONTEXT_MENU_CONTEXTS.forEach((ctx) => {
@@ -6091,12 +6118,17 @@ function renderContextMenuEditor() {
       const ctxCheckbox = document.createElement('input');
       ctxCheckbox.type = 'checkbox';
       ctxCheckbox.checked = item.contexts.includes(ctx.value);
+      ctxCheckbox.disabled = !allowedContexts.includes(ctx.value);
       ctxCheckbox.addEventListener('change', () => {
-        const current = contextMenuEditorItems[index].contexts;
-        if (ctxCheckbox.checked && !current.includes(ctx.value)) {
-          current.push(ctx.value);
+        const current = resolveItem();
+        if (!current) {
+          renderContextMenuEditor();
+          return;
+        }
+        if (ctxCheckbox.checked && !current.contexts.includes(ctx.value)) {
+          current.contexts.push(ctx.value);
         } else if (!ctxCheckbox.checked) {
-          contextMenuEditorItems[index].contexts = current.filter((c) => c !== ctx.value);
+          current.contexts = current.contexts.filter((c) => c !== ctx.value);
         }
         persistContextMenuEditorItems();
       });
@@ -6108,7 +6140,6 @@ function renderContextMenuEditor() {
 
     const modeRow = document.createElement('div');
     modeRow.className = 'context-menu-mode-row';
-    const isInline = Boolean(item.inlineAction);
 
     const modeSelect = document.createElement('select');
     modeSelect.className = 'context-menu-mode-select';
@@ -6118,23 +6149,48 @@ function renderContextMenuEditor() {
     const inlineOpt = document.createElement('option');
     inlineOpt.value = 'inline';
     inlineOpt.textContent = 'Inline action';
+    const openOpt = document.createElement('option');
+    openOpt.value = 'open';
+    openOpt.textContent = 'Open Hermes Browser';
     modeSelect.appendChild(promptOpt);
     modeSelect.appendChild(inlineOpt);
-    modeSelect.value = isInline ? 'inline' : 'prompt';
+    modeSelect.appendChild(openOpt);
+    modeSelect.value = mode;
     modeSelect.addEventListener('change', () => {
-      if (modeSelect.value === 'inline') {
-        delete contextMenuEditorItems[index].prompt;
-        contextMenuEditorItems[index].inlineAction = INLINE_CONTEXT_ACTIONS[0].value;
+      const current = resolveItem();
+      if (!current) {
+        renderContextMenuEditor();
+        return;
+      }
+      if (modeSelect.value === 'open') {
+        current.open = true;
+        delete current.inlineAction;
+        delete current.prompt;
+        if (!current.contexts.length) current.contexts = ['page', 'link', 'image', 'video', 'audio'];
+      } else if (modeSelect.value === 'inline') {
+        delete current.open;
+        delete current.prompt;
+        current.inlineAction = INLINE_CONTEXT_ACTIONS[0].value;
+        current.contexts = current.contexts.filter((c) => CONTEXT_MENU_INLINE_CONTEXTS.includes(c));
+        if (!current.contexts.length) current.contexts = [...CONTEXT_MENU_INLINE_CONTEXTS];
       } else {
-        delete contextMenuEditorItems[index].inlineAction;
-        contextMenuEditorItems[index].prompt = contextMenuEditorItems[index].prompt || '';
+        delete current.open;
+        delete current.inlineAction;
+        current.prompt = current.prompt || '';
+        current.contexts = current.contexts.filter((c) => CONTEXT_MENU_PROMPT_CONTEXTS.includes(c));
+        if (!current.contexts.length) current.contexts = [...CONTEXT_MENU_PROMPT_CONTEXTS];
       }
       persistContextMenuEditorItems();
       renderContextMenuEditor();
     });
     modeRow.appendChild(modeSelect);
 
-    if (isInline) {
+    if (mode === 'open') {
+      const openNote = document.createElement('span');
+      openNote.className = 'context-menu-mode-note';
+      openNote.textContent = 'Opens the Hermes side panel.';
+      modeRow.appendChild(openNote);
+    } else if (mode === 'inline') {
       const inlineSelect = document.createElement('select');
       INLINE_CONTEXT_ACTIONS.forEach((action) => {
         const opt = document.createElement('option');
@@ -6144,7 +6200,12 @@ function renderContextMenuEditor() {
       });
       inlineSelect.value = item.inlineAction;
       inlineSelect.addEventListener('change', () => {
-        contextMenuEditorItems[index].inlineAction = inlineSelect.value;
+        const current = resolveItem();
+        if (!current) {
+          renderContextMenuEditor();
+          return;
+        }
+        current.inlineAction = inlineSelect.value;
         persistContextMenuEditorItems();
       });
       modeRow.appendChild(inlineSelect);
@@ -6155,7 +6216,12 @@ function renderContextMenuEditor() {
       promptInput.placeholder = 'Prompt sent to Hermes';
       promptInput.className = 'context-menu-prompt-input';
       promptInput.addEventListener('change', () => {
-        contextMenuEditorItems[index].prompt = promptInput.value;
+        const current = resolveItem();
+        if (!current) {
+          renderContextMenuEditor();
+          return;
+        }
+        current.prompt = promptInput.value;
         persistContextMenuEditorItems();
       });
       modeRow.appendChild(promptInput);
@@ -6174,19 +6240,41 @@ function initContextMenuEditorItems() {
   contextMenuEditorItems = normalizeContextMenuItems(settings.contextMenuItems).map((item) => ({ ...item }));
 }
 
+function clearContextMenuEditorNotice() {
+  if (!els.contextMenuEditorNotice) return;
+  els.contextMenuEditorNotice.hidden = true;
+  els.contextMenuEditorNotice.textContent = '';
+}
+
+function showContextMenuEditorNotice(message) {
+  if (!els.contextMenuEditorNotice) return;
+  els.contextMenuEditorNotice.textContent = message;
+  els.contextMenuEditorNotice.hidden = false;
+}
+
 function persistContextMenuEditorItems() {
-  settings = {
-    ...settings,
-    contextMenuItems: normalizeContextMenuItems(contextMenuEditorItems),
-  };
-  contextMenuEditorItems = normalizeContextMenuItems(settings.contextMenuItems).map((item) => ({ ...item }));
-  chrome.storage.local.set({ hermesBrowserSettings: settings }).catch((error) => {
-    console.warn('[Hermes Browser] Could not save context menu items:', error);
-  });
+  const previousLength = contextMenuEditorItems.length;
+  const normalized = normalizeContextMenuItems(contextMenuEditorItems);
+  contextMenuEditorItems = normalized.map((item) => ({ ...item }));
+  settings = { ...settings, contextMenuItems: normalized };
+  clearContextMenuEditorNotice();
+  chrome.storage.local.get('hermesBrowserSettings')
+    .then((stored) => {
+      const latestSettings = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+        ? stored.hermesBrowserSettings
+        : {};
+      settings = { ...settings, ...latestSettings, contextMenuItems: normalized };
+      return chrome.storage.local.set({ hermesBrowserSettings: settings });
+    })
+    .catch((error) => {
+      console.warn('[Hermes Browser] Could not save context menu items:', error);
+      showContextMenuEditorNotice(`Save failed: ${error?.message || String(error)}`);
+    });
+  if (normalized.length !== previousLength) renderContextMenuEditor();
 }
 
 function addContextMenuItem() {
-  const id = `hermes-browser-custom-${Date.now().toString(36)}`;
+  const id = `hermes-browser-custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   contextMenuEditorItems.push({
     id,
     title: 'New action',
@@ -9146,6 +9234,18 @@ function bindEvents() {
       consumeVoiceDraft(changes[VOICE_DRAFT_STORAGE_KEY].newValue).catch((error) => {
         setStatus('warn', 'Voice transcript handoff failed', error?.message || String(error));
       });
+    }
+    const settingsChange = changes?.hermesBrowserSettings;
+    if (settingsChange) {
+      const next = settingsChange.newValue;
+      if (next && typeof next === 'object' && 'contextMenuItems' in next) {
+        settings = { ...settings, ...next };
+        contextMenuEditorItems = normalizeContextMenuItems(next.contextMenuItems).map((item) => ({ ...item }));
+        if (!els.settingsDialog?.hidden && els.contextMenuItemsList) renderContextMenuEditor();
+      } else if (!next || typeof next !== 'object') {
+        contextMenuEditorItems = normalizeContextMenuItems(undefined).map((item) => ({ ...item }));
+        if (!els.settingsDialog?.hidden && els.contextMenuItemsList) renderContextMenuEditor();
+      }
     }
   });
 }

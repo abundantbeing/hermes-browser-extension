@@ -32,13 +32,14 @@ import {
 import { createWakeBackgroundController } from './lib/wake-background.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
 import {
-  DEFAULT_CONTEXT_MENU_ITEMS,
+  cloneDefaultContextMenuItems,
   normalizeContextMenuItems,
 } from './lib/common.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let contextMenuConfigurationPromise = null;
-let cachedContextMenuItems = DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }));
+let contextMenuRebuildChain = Promise.resolve();
+let cachedContextMenuItems = cloneDefaultContextMenuItems();
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
 const CONTEXT_MENU_STORAGE_KEY = 'hermesBrowserContextMenuRequest';
@@ -46,6 +47,7 @@ const OPEN_SESSION_STORAGE_KEY = 'hermesBrowserOpenSessionRequest';
 const INLINE_DRAFT_TTL_MS = 5 * 60 * 1000;
 const HERMES_ASSIST_SOURCE = 'hermes_assist';
 const CONTEXT_MENU_ROOT_ID = 'hermes-browser-root';
+const CONTEXT_MENU_ALL_CONTEXTS = ['page', 'selection', 'editable', 'link', 'image', 'video', 'audio'];
 const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
   WAKE_MESSAGES.claimTurn,
   WAKE_MESSAGES.getState,
@@ -334,23 +336,32 @@ async function configureContextMenus() {
 
   const configuration = (async () => {
     const stored = await chrome.storage.local.get('hermesBrowserSettings');
-    cachedContextMenuItems = normalizeContextMenuItems(stored?.hermesBrowserSettings?.contextMenuItems);
-    await chrome.contextMenus.removeAll();
-    const allContexts = ['page', 'selection', 'editable', 'link', 'image', 'video', 'audio'];
-    await createContextMenu({
-      id: CONTEXT_MENU_ROOT_ID,
-      title: 'Hermes Browser',
-      contexts: allContexts,
-    });
-    for (const item of cachedContextMenuItems) {
-      if (item.enabled === false) continue;
+    const nextItems = normalizeContextMenuItems(stored?.hermesBrowserSettings?.contextMenuItems);
+    let menuMutated = false;
+    try {
+      await chrome.contextMenus.removeAll();
+      menuMutated = true;
       await createContextMenu({
-        id: item.id,
-        parentId: CONTEXT_MENU_ROOT_ID,
-        title: item.title,
-        contexts: item.contexts,
+        id: CONTEXT_MENU_ROOT_ID,
+        title: 'Hermes Browser',
+        contexts: CONTEXT_MENU_ALL_CONTEXTS,
       });
+      for (const item of nextItems) {
+        if (item.enabled === false) continue;
+        await createContextMenu({
+          id: item.id,
+          parentId: CONTEXT_MENU_ROOT_ID,
+          title: item.title,
+          contexts: item.contexts,
+        });
+      }
+    } catch (error) {
+      if (menuMutated && cachedContextMenuItems.length) {
+        await restoreLastGoodContextMenu().catch(() => null);
+      }
+      throw error;
     }
+    cachedContextMenuItems = nextItems;
   })();
   contextMenuConfigurationPromise = configuration;
 
@@ -361,9 +372,33 @@ async function configureContextMenus() {
   }
 }
 
-async function rebuildContextMenus() {
-  contextMenuConfigurationPromise = null;
-  await configureContextMenus();
+async function restoreLastGoodContextMenu() {
+  await chrome.contextMenus.removeAll();
+  await createContextMenu({
+    id: CONTEXT_MENU_ROOT_ID,
+    title: 'Hermes Browser',
+    contexts: CONTEXT_MENU_ALL_CONTEXTS,
+  });
+  for (const item of cachedContextMenuItems) {
+    if (item.enabled === false) continue;
+    await createContextMenu({
+      id: item.id,
+      parentId: CONTEXT_MENU_ROOT_ID,
+      title: item.title,
+      contexts: item.contexts,
+    });
+  }
+}
+
+function rebuildContextMenus() {
+  contextMenuRebuildChain = contextMenuRebuildChain
+    .catch(() => null)
+    .then(async () => {
+      const inFlight = contextMenuConfigurationPromise;
+      if (inFlight) await inFlight.catch(() => null);
+      return configureContextMenus();
+    });
+  return contextMenuRebuildChain;
 }
 
 function safeContextPageUrl(value = '') {
@@ -381,7 +416,7 @@ function safeContextPageUrl(value = '') {
 async function handleContextMenuClick(info, tab) {
   const item = cachedContextMenuItems.find((candidate) => candidate.id === info?.menuItemId);
   if (!item || !tab?.id) return;
-  if (item.id === 'hermes-browser-open') {
+  if (item.open) {
     await openHermesPanel(tab, { allowFallback: false });
     return;
   }
@@ -764,7 +799,8 @@ chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
     cachedPanelResidencyMode = normalizePanelResidencyMode(changes.panelResidencyMode.newValue);
     changed = true;
   }
-  if (changes.hermesBrowserSettings?.newValue?.contextMenuItems) {
+  const settingsChange = changes.hermesBrowserSettings;
+  if (settingsChange && ('contextMenuItems' in (settingsChange.newValue || {}) || 'contextMenuItems' in (settingsChange.oldValue || {}))) {
     rebuildContextMenus().catch((error) => console.warn('[Hermes Browser] Context menu rebuild failed:', error));
   }
   if (changed) {

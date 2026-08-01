@@ -201,10 +201,12 @@ function createBackgroundHarness({
   const sidePanelOpenCalls = [];
   const sidePanelOptions = [];
   const contextMenuCreateCalls = [];
+  const storedSettings = { panelResidencyMode };
   let contextMenuRemoveAllCalls = 0;
   let actionHandler = null;
   let installedHandler = null;
   let startupHandler = null;
+  let storageChangedHandler = null;
   const chromeApi = {
     runtime: {
       getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
@@ -217,10 +219,10 @@ function createBackgroundHarness({
     storage: {
       local: {
         get: async () => ({
-          hermesBrowserSettings: { panelResidencyMode },
+          hermesBrowserSettings: { ...storedSettings },
         }),
       },
-      onChanged: { addListener() {} },
+      onChanged: { addListener(handler) { storageChangedHandler = handler; } },
     },
     action: {
       setPopup: async () => {},
@@ -287,6 +289,8 @@ function createBackgroundHarness({
     get actionHandler() { return actionHandler; },
     get installedHandler() { return installedHandler; },
     get startupHandler() { return startupHandler; },
+    get storageChangedHandler() { return storageChangedHandler; },
+    setStoredContextMenuItems(items) { storedSettings.contextMenuItems = items; },
   };
 }
 
@@ -348,6 +352,69 @@ test('background retries context-menu configuration after a failed removal', asy
     await harness.startupHandler();
     assert.equal(harness.contextMenuRemoveAllCalls, 2, 'a failed attempt must not poison later lifecycle retries');
     assert.equal(harness.contextMenuCreateCalls.length, 7);
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background serializes rapid context-menu rebuilds so removeAll/create cannot overlap', async () => {
+  const originalChrome = globalThis.chrome;
+  let activeRemoveAll = 0;
+  let maxConcurrentRemoveAll = 0;
+  const harness = createBackgroundHarness({
+    contextMenuRemoveAll: async () => {
+      activeRemoveAll += 1;
+      maxConcurrentRemoveAll = Math.max(maxConcurrentRemoveAll, activeRemoveAll);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      activeRemoveAll -= 1;
+    },
+  });
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?rebuild-serialization=${Date.now()}`);
+    const handler = harness.storageChangedHandler;
+    assert.equal(typeof handler, 'function');
+    const trigger = (items) => handler({ hermesBrowserSettings: { newValue: { contextMenuItems: items } } }, 'local');
+    const settle = (ms = 35) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    harness.setStoredContextMenuItems([{ id: 'a', title: 'A', contexts: ['selection'] }]);
+    trigger([{ id: 'a', title: 'A', contexts: ['selection'] }]);
+    await settle();
+    harness.setStoredContextMenuItems([{ id: 'b', title: 'B', contexts: ['selection'] }]);
+    trigger([{ id: 'b', title: 'B', contexts: ['selection'] }]);
+    await settle();
+    harness.setStoredContextMenuItems([{ id: 'c', title: 'C', contexts: ['selection'] }]);
+    trigger([{ id: 'c', title: 'C', contexts: ['selection'] }]);
+    await settle(200);
+
+    assert.equal(maxConcurrentRemoveAll, 1, 'rapid rebuilds must never overlap removeAll()');
+    assert.equal(harness.contextMenuRemoveAllCalls, 3, 'each rebuild must re-read the latest configuration');
+    const lastCreate = harness.contextMenuCreateCalls[harness.contextMenuCreateCalls.length - 1];
+    assert.equal(lastCreate.id, 'c', 'the final generation must win');
+  } finally {
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background rebuilds the menu when contextMenuItems is deleted or reset', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness();
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?context-menu-deleted=${Date.now()}`);
+    const handler = harness.storageChangedHandler;
+    assert.equal(typeof handler, 'function');
+    handler({
+      hermesBrowserSettings: {
+        oldValue: { contextMenuItems: [{ id: 'x', title: 'X', contexts: ['selection'] }] },
+        newValue: {},
+      },
+    }, 'local');
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    assert.equal(harness.contextMenuRemoveAllCalls, 1, 'a removed contextMenuItems key must trigger a rebuild');
+    assert.equal(harness.contextMenuCreateCalls.length, 7, 'deleted items must rebuild the default menu plus the root');
   } finally {
     globalThis.chrome = originalChrome;
   }

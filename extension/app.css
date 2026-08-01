@@ -708,5 +708,7 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
 .context-menu-mode-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .context-menu-mode-select { flex-shrink: 0; font-size: 11px; }
 .context-menu-mode-row select { font-size: 11px; }
+.context-menu-mode-note { font-size: 10px; color: var(--hermes-muted); }
+.context-menu-editor-notice { font-size: 11px; color: var(--hermes-danger, #b3261e); margin: 0; }
 .context-menu-prompt-input { flex: 1 1 100px; min-width: 0; font-size: 11px; }
 .context-menu-editor > button { align-self: flex-start; font-size: 11px; }

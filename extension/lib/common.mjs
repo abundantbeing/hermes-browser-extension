@@ -66,6 +66,13 @@ export const CONTEXT_MENU_CONTEXTS = Object.freeze([
   { value: 'audio', label: 'Audio' },
 ]);
 
+export const CONTEXT_MENU_OPEN_ID = 'hermes-browser-open';
+export const CONTEXT_MENU_MAX_ITEMS = 20;
+export const CONTEXT_MENU_MAX_TITLE_LENGTH = 64;
+export const CONTEXT_MENU_MAX_PROMPT_LENGTH = 8_000;
+export const CONTEXT_MENU_PROMPT_CONTEXTS = Object.freeze(['selection', 'editable']);
+export const CONTEXT_MENU_INLINE_CONTEXTS = Object.freeze(['editable']);
+
 export const DEFAULT_CONTEXT_MENU_ITEMS = Object.freeze([
   { id: 'hermes-browser-ask-selection', title: 'Ask Hermes about this selection', contexts: ['selection'], prompt: 'Help me understand or work with this selected text:', enabled: true },
   { id: 'hermes-browser-summarize-selection', title: 'Summarize selection', contexts: ['selection'], prompt: 'Summarize this selected text concisely:', enabled: true },
@@ -75,33 +82,71 @@ export const DEFAULT_CONTEXT_MENU_ITEMS = Object.freeze([
   { id: 'hermes-browser-open', title: 'Open Hermes Browser', contexts: ['page', 'link', 'image', 'video', 'audio'], enabled: true },
 ]);
 
+export function cloneDefaultContextMenuItems() {
+  return DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({
+    ...item,
+    contexts: [...item.contexts],
+  }));
+}
+
+function validContextValues(contexts) {
+  if (!Array.isArray(contexts)) return [];
+  const allowed = new Set(CONTEXT_MENU_CONTEXTS.map((ctx) => ctx.value));
+  const seen = new Set();
+  const result = [];
+  for (const context of contexts) {
+    const value = String(context);
+    if (!allowed.has(value) || seen.has(value)) continue;
+    seen.add(value);
+    result.push(value);
+  }
+  return result;
+}
+
+function restrictContexts(contexts, allowed) {
+  const allowedSet = new Set(allowed);
+  return contexts.filter((context) => allowedSet.has(context));
+}
+
 export function normalizeContextMenuItem(value) {
   if (!value || typeof value !== 'object') return null;
   const id = String(value.id || '').trim();
   if (!id) return null;
-  const title = String(value.title || '').trim();
+  const title = String(value.title || '').trim().slice(0, CONTEXT_MENU_MAX_TITLE_LENGTH);
   if (!title) return null;
-  const validContexts = Array.isArray(value.contexts)
-    ? value.contexts.filter((c) => CONTEXT_MENU_CONTEXTS.some((ctx) => ctx.value === c))
-    : [];
-  if (!validContexts.length) return null;
-  const item = { id, title, contexts: validContexts, enabled: value.enabled !== false };
-  if (value.inlineAction) {
-    item.inlineAction = String(value.inlineAction);
-  } else if (value.prompt) {
-    item.prompt = String(value.prompt).trim();
+  const contexts = validContextValues(value.contexts);
+  if (!contexts.length) return null;
+  const item = { id, title, contexts, enabled: value.enabled !== false };
+  const isOpen = value.open === true || value.mode === 'open' || id === CONTEXT_MENU_OPEN_ID;
+  if (isOpen) {
+    item.open = true;
+  } else if (value.inlineAction && INLINE_CONTEXT_ACTIONS.some((action) => action.value === value.inlineAction)) {
+    item.inlineAction = value.inlineAction;
+    item.contexts = restrictContexts(contexts, CONTEXT_MENU_INLINE_CONTEXTS);
+    if (!item.contexts.length) return null;
+  } else if (value.inlineAction) {
+    // Unknown inline action: reject the item rather than advertising a silent no-op.
+    return null;
   } else {
-    item.prompt = '';
+    item.prompt = String(value.prompt || '').trim().slice(0, CONTEXT_MENU_MAX_PROMPT_LENGTH);
+    item.contexts = restrictContexts(contexts, CONTEXT_MENU_PROMPT_CONTEXTS);
+    if (!item.contexts.length) return null;
   }
   return item;
 }
 
 export function normalizeContextMenuItems(items) {
-  if (!Array.isArray(items)) return DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }));
-  const normalized = items
-    .map((item) => normalizeContextMenuItem(item))
-    .filter(Boolean);
-  return normalized.length ? normalized : DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }));
+  if (!Array.isArray(items)) return cloneDefaultContextMenuItems();
+  const seenIds = new Set();
+  const normalized = [];
+  for (const value of items) {
+    if (normalized.length >= CONTEXT_MENU_MAX_ITEMS) break;
+    const item = normalizeContextMenuItem(value);
+    if (!item || seenIds.has(item.id)) continue;
+    seenIds.add(item.id);
+    normalized.push(item);
+  }
+  return normalized;
 }
 
 export const DEFAULT_SETTINGS = Object.freeze({
@@ -147,7 +192,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   inlineAssistReasoningEffort: 'low',
   inlineAssistFastMode: false,
   contextMenuDefaultRoute: 'ask',
-  contextMenuItems: Object.freeze(DEFAULT_CONTEXT_MENU_ITEMS.map((item) => ({ ...item }))),
+  contextMenuItems: Object.freeze(cloneDefaultContextMenuItems()),
   transcriptProvider: 'default',
   wakeWordEnabled: false,
   wakeWordPhrase: 'hey hermes',
