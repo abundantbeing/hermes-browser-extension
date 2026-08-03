@@ -192,6 +192,7 @@ function createBackgroundHarness({
   sidePanelOpen = async () => {},
   synchronizeFallbackQueries = false,
   contextMenuRemoveAll = async () => {},
+  blockStorageGet = false,
 } = {}) {
   const activeTab = { id: 7, windowId: 8 };
   const extensionTabs = [];
@@ -205,6 +206,12 @@ function createBackgroundHarness({
   let actionHandler = null;
   let installedHandler = null;
   let startupHandler = null;
+  let contextMenuHandler = null;
+  let runtimeMessageHandler = null;
+  let releaseStorageGet = null;
+  const storageGetGate = blockStorageGet
+    ? new Promise((resolve) => { releaseStorageGet = resolve; })
+    : Promise.resolve();
   const chromeApi = {
     runtime: {
       getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
@@ -212,13 +219,14 @@ function createBackgroundHarness({
       getContexts: async () => runtimeContexts,
       onInstalled: { addListener(handler) { installedHandler = handler; } },
       onStartup: { addListener(handler) { startupHandler = handler; } },
-      onMessage: { addListener() {} },
+      onMessage: { addListener(handler) { runtimeMessageHandler = handler; } },
     },
     storage: {
       local: {
-        get: async () => ({
-          hermesBrowserSettings: { panelResidencyMode },
-        }),
+        get: async () => {
+          await storageGetGate;
+          return { hermesBrowserSettings: { panelResidencyMode } };
+        },
       },
       onChanged: { addListener() {} },
     },
@@ -263,6 +271,7 @@ function createBackgroundHarness({
       update: async (windowId, options) => { focusedWindows.push({ windowId, options }); },
     },
     contextMenus: {
+      onClicked: { addListener(handler) { contextMenuHandler = handler; } },
       removeAll: async () => {
         contextMenuRemoveAllCalls += 1;
         return contextMenuRemoveAll(contextMenuRemoveAllCalls);
@@ -287,8 +296,36 @@ function createBackgroundHarness({
     get actionHandler() { return actionHandler; },
     get installedHandler() { return installedHandler; },
     get startupHandler() { return startupHandler; },
+    get contextMenuHandler() { return contextMenuHandler; },
+    get runtimeMessageHandler() { return runtimeMessageHandler; },
+    releaseStorageGet() { releaseStorageGet?.(); },
   };
 }
+
+test('background registers MV3 listeners before locale and residency storage hydration completes', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness({ blockStorageGet: true });
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    const imported = await Promise.race([
+      import(`../extension/background.js?cold-listener-registration=${Date.now()}`),
+      new Promise((resolve) => setTimeout(() => resolve('timed-out'), 100)),
+    ]);
+    assert.notEqual(imported, 'timed-out', 'module evaluation must not await storage hydration');
+    assert.equal(typeof harness.installedHandler, 'function');
+    assert.equal(typeof harness.startupHandler, 'function');
+    assert.equal(typeof harness.actionHandler, 'function');
+    assert.equal(typeof harness.contextMenuHandler, 'function');
+    assert.equal(typeof harness.runtimeMessageHandler, 'function');
+
+    const result = await harness.contextMenuHandler({ menuItemId: 'invalid' }, harness.activeTab);
+    assert.deepEqual(result, { ok: false, reason: 'unknown-menu-item' });
+  } finally {
+    harness.releaseStorageGet();
+    globalThis.chrome = originalChrome;
+  }
+});
 
 test('global residency updates only the default path and preserves existing tab overrides', async () => {
   const originalChrome = globalThis.chrome;

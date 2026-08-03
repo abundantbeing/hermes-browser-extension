@@ -1311,6 +1311,130 @@
     "message": "Сжатие контекста недоступно",
     "description": "Runtime interface message ui.context.compaction.unavailable"
   },
+  "runtime_ui_context_menu_editor_action": {
+    "message": "Action",
+    "description": "Runtime interface message ui.context.menu.editor.action"
+  },
+  "runtime_ui_context_menu_editor_action_inline": {
+    "message": "Improve inline",
+    "description": "Runtime interface message ui.context.menu.editor.action.inline"
+  },
+  "runtime_ui_context_menu_editor_action_open": {
+    "message": "Open Hermes",
+    "description": "Runtime interface message ui.context.menu.editor.action.open"
+  },
+  "runtime_ui_context_menu_editor_action_prompt": {
+    "message": "Prompt Hermes",
+    "description": "Runtime interface message ui.context.menu.editor.action.prompt"
+  },
+  "runtime_ui_context_menu_editor_add": {
+    "message": "Add action",
+    "description": "Runtime interface message ui.context.menu.editor.add"
+  },
+  "runtime_ui_context_menu_editor_collapse": {
+    "message": "Close action editor",
+    "description": "Runtime interface message ui.context.menu.editor.collapse"
+  },
+  "runtime_ui_context_menu_editor_context_audio": {
+    "message": "Audio",
+    "description": "Runtime interface message ui.context.menu.editor.context.audio"
+  },
+  "runtime_ui_context_menu_editor_context_editable": {
+    "message": "Editable field",
+    "description": "Runtime interface message ui.context.menu.editor.context.editable"
+  },
+  "runtime_ui_context_menu_editor_context_image": {
+    "message": "Image",
+    "description": "Runtime interface message ui.context.menu.editor.context.image"
+  },
+  "runtime_ui_context_menu_editor_context_link": {
+    "message": "Link",
+    "description": "Runtime interface message ui.context.menu.editor.context.link"
+  },
+  "runtime_ui_context_menu_editor_context_page": {
+    "message": "Page",
+    "description": "Runtime interface message ui.context.menu.editor.context.page"
+  },
+  "runtime_ui_context_menu_editor_context_selection": {
+    "message": "Selection",
+    "description": "Runtime interface message ui.context.menu.editor.context.selection"
+  },
+  "runtime_ui_context_menu_editor_context_video": {
+    "message": "Video",
+    "description": "Runtime interface message ui.context.menu.editor.context.video"
+  },
+  "runtime_ui_context_menu_editor_contexts": {
+    "message": "Show on",
+    "description": "Runtime interface message ui.context.menu.editor.contexts"
+  },
+  "runtime_ui_context_menu_editor_empty": {
+    "message": "No right-click actions are enabled. Add one or restore the defaults.",
+    "description": "Runtime interface message ui.context.menu.editor.empty"
+  },
+  "runtime_ui_context_menu_editor_enabled": {
+    "message": "Enabled",
+    "description": "Runtime interface message ui.context.menu.editor.enabled"
+  },
+  "runtime_ui_context_menu_editor_error_context": {
+    "message": "Choose at least one context.",
+    "description": "Runtime interface message ui.context.menu.editor.error.context"
+  },
+  "runtime_ui_context_menu_editor_error_prompt": {
+    "message": "Prompt is required.",
+    "description": "Runtime interface message ui.context.menu.editor.error.prompt"
+  },
+  "runtime_ui_context_menu_editor_error_save": {
+    "message": "Right-click actions could not be saved.",
+    "description": "Runtime interface message ui.context.menu.editor.error.save"
+  },
+  "runtime_ui_context_menu_editor_error_title": {
+    "message": "Title is required.",
+    "description": "Runtime interface message ui.context.menu.editor.error.title"
+  },
+  "runtime_ui_context_menu_editor_expand": {
+    "message": "Edit action",
+    "description": "Runtime interface message ui.context.menu.editor.expand"
+  },
+  "runtime_ui_context_menu_editor_move_down": {
+    "message": "Move down",
+    "description": "Runtime interface message ui.context.menu.editor.move.down"
+  },
+  "runtime_ui_context_menu_editor_move_up": {
+    "message": "Move up",
+    "description": "Runtime interface message ui.context.menu.editor.move.up"
+  },
+  "runtime_ui_context_menu_editor_new_action": {
+    "message": "New action",
+    "description": "Runtime interface message ui.context.menu.editor.new.action"
+  },
+  "runtime_ui_context_menu_editor_new_prompt": {
+    "message": "Ask Hermes about this selection.",
+    "description": "Runtime interface message ui.context.menu.editor.new.prompt"
+  },
+  "runtime_ui_context_menu_editor_opening_behavior": {
+    "message": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
+    "description": "Runtime interface message ui.context.menu.editor.opening.behavior"
+  },
+  "runtime_ui_context_menu_editor_prompt": {
+    "message": "Prompt",
+    "description": "Runtime interface message ui.context.menu.editor.prompt"
+  },
+  "runtime_ui_context_menu_editor_remove": {
+    "message": "Remove action",
+    "description": "Runtime interface message ui.context.menu.editor.remove"
+  },
+  "runtime_ui_context_menu_editor_restore": {
+    "message": "Restore defaults",
+    "description": "Runtime interface message ui.context.menu.editor.restore"
+  },
+  "runtime_ui_context_menu_editor_saved": {
+    "message": "Right-click actions saved.",
+    "description": "Runtime interface message ui.context.menu.editor.saved"
+  },
+  "runtime_ui_context_menu_editor_title": {
+    "message": "Title",
+    "description": "Runtime interface message ui.context.menu.editor.title"
+  },
   "runtime_ui_context_refresh_unavailable": {
     "message": "Обновление контекста недоступно",
     "description": "Runtime interface message ui.context.refresh.unavailable"

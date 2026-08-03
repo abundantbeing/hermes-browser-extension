@@ -7,6 +7,7 @@
     <link rel="icon" href="assets/icons/icon-32.png" />
     <link rel="stylesheet" href="sidepanel.css" />
     <link rel="stylesheet" href="sidepanel-themes.css" />
+    <link rel="stylesheet" href="context-menu-editor.css" />
   </head>
   <body>
     <main class="shell">
@@ -473,7 +474,8 @@
               <option value="background" data-i18n="ui.run.in.background">Run in background</option>
             </select>
           </label>
-          <p class="hint" data-i18n="ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c">Open Hermes Browser always opens the side panel only. Selection actions start immediately after routing.</p>
+          <p class="hint" data-i18n="ui.context.menu.editor.opening.behavior">Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.</p>
+          <div id="contextMenuEditor" data-context-menu-surface="side-panel"></div>
         </section>
 
         <section class="settings-section connection-settings" aria-labelledby="connectionTitle">

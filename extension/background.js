@@ -32,24 +32,20 @@ import {
 import { createWakeBackgroundController } from './lib/wake-background.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
 import { initI18n, subscribeLocale, translateUiText } from './lib/i18n.mjs';
+import {
+  CONTEXT_MENU_CONFIG_GET,
+  CONTEXT_MENU_CONFIG_MUTATE,
+  CONTEXT_MENU_REQUEST_CLAIM,
+  createContextMenuController,
+} from './lib/context-menu-controller.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
-let contextMenuConfigurationPromise = null;
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
-const CONTEXT_MENU_STORAGE_KEY = 'hermesBrowserContextMenuRequest';
 const OPEN_SESSION_STORAGE_KEY = 'hermesBrowserOpenSessionRequest';
 const INLINE_DRAFT_TTL_MS = 5 * 60 * 1000;
 const HERMES_ASSIST_SOURCE = 'hermes_assist';
-const CONTEXT_MENU_ROOT_ID = 'hermes-browser-root';
-const CONTEXT_MENU_ITEMS = Object.freeze([
-  { id: 'hermes-browser-ask-selection', title: 'Ask Hermes about this selection', contexts: ['selection'], prompt: 'Help me understand or work with this selected text:' },
-  { id: 'hermes-browser-summarize-selection', title: 'Summarize selection', contexts: ['selection'], prompt: 'Summarize this selected text concisely:' },
-  { id: 'hermes-browser-explain-selection', title: 'Explain selection', contexts: ['selection'], prompt: 'Explain this selected text clearly:' },
-  { id: 'hermes-browser-improve-editable', title: 'Improve selected text', contexts: ['editable'], inlineAction: 'improve' },
-  { id: 'hermes-browser-draft-reply', title: 'Draft reply with Hermes', contexts: ['editable'], inlineAction: 'draft-reply' },
-  { id: 'hermes-browser-open', title: 'Open Hermes Browser', contexts: ['page', 'link', 'image', 'video', 'audio'] },
-]);
+
 const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
   WAKE_MESSAGES.claimTurn,
   WAKE_MESSAGES.getState,
@@ -61,6 +57,11 @@ const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
 const wakeController = createWakeBackgroundController({
   chromeApi: chrome,
   openPanel: (tab, options) => openHermesPanel(tab, options),
+});
+const contextMenuController = createContextMenuController({
+  chromeApi: chrome,
+  openHermesSurface: (tab) => openHermesPanelFromContextGesture(tab),
+  translate: (_key, fallback) => translateUiText(fallback),
 });
 function restoreWakeController() {
   if (!chrome.runtime?.sendMessage || !chrome.storage?.local?.get) return;
@@ -92,11 +93,6 @@ function pageKey(value = '') {
   } catch {
     return '';
   }
-}
-
-function normalizeContextMenuRoute(value = '') {
-  const route = String(value || '').trim().toLowerCase();
-  return ['ask', 'current', 'new', 'background'].includes(route) ? route : 'ask';
 }
 
 async function sendDirectInlineResult(tabId, request, result) {
@@ -322,88 +318,8 @@ async function queueOpenSessionRequest(message, sender) {
   return { ok: true, sessionId, surface };
 }
 
-function createContextMenu(options) {
-  return new Promise((resolve, reject) => {
-    chrome.contextMenus.create(options, () => {
-      const message = chrome.runtime?.lastError?.message || '';
-      if (message) reject(new Error(message));
-      else resolve();
-    });
-  });
-}
-
-async function configureContextMenus() {
-  if (!chrome.contextMenus?.create || !chrome.contextMenus?.removeAll) return;
-  if (contextMenuConfigurationPromise) return contextMenuConfigurationPromise;
-
-  const configuration = (async () => {
-    await chrome.contextMenus.removeAll();
-    await createContextMenu({
-      id: CONTEXT_MENU_ROOT_ID,
-      title: 'Hermes Browser',
-      contexts: ['page', 'selection', 'editable', 'link', 'image', 'video', 'audio'],
-    });
-    for (const item of CONTEXT_MENU_ITEMS) {
-      await createContextMenu({
-        id: item.id,
-        parentId: CONTEXT_MENU_ROOT_ID,
-        title: translateUiText(item.title),
-        contexts: item.contexts,
-      });
-    }
-  })();
-  contextMenuConfigurationPromise = configuration;
-
-  try {
-    await configuration;
-  } finally {
-    if (contextMenuConfigurationPromise === configuration) contextMenuConfigurationPromise = null;
-  }
-}
-
-function safeContextPageUrl(value = '') {
-  try {
-    const url = new URL(String(value || ''));
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return '';
-    url.search = '';
-    url.hash = '';
-    return url.toString();
-  } catch {
-    return '';
-  }
-}
-
-async function handleContextMenuClick(info, tab) {
-  const item = CONTEXT_MENU_ITEMS.find((candidate) => candidate.id === info?.menuItemId);
-  if (!item || !tab?.id) return;
-  if (item.id === 'hermes-browser-open') {
-    await openHermesPanel(tab, { allowFallback: false });
-    return;
-  }
-  if (item.inlineAction) {
-    await chrome.tabs.sendMessage(tab.id, { type: 'HERMES_INLINE_CONTEXT_ACTION', actionId: item.inlineAction }).catch(() => null);
-    return;
-  }
-  const selection = String(info?.selectionText || '').trim().slice(0, 8_000);
-  if (!selection || !chrome.storage?.session) return;
-  const stored = await chrome.storage.local.get('hermesBrowserSettings');
-  const route = normalizeContextMenuRoute(stored?.hermesBrowserSettings?.contextMenuDefaultRoute);
-  await chrome.storage.session.set({
-    [CONTEXT_MENU_STORAGE_KEY]: {
-      prompt: item.prompt,
-      selection,
-      pageUrl: safeContextPageUrl(info?.pageUrl || tab.url),
-      tabId: Number(tab.id),
-      route,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + INLINE_DRAFT_TTL_MS,
-    },
-  });
-  await openHermesPanel(tab, { allowFallback: false });
-}
-
 async function configureInstalledSurfaces() {
-  await Promise.all([configureSidePanel(), configureContextMenus()]);
+  await Promise.all([configureSidePanel(), contextMenuController.configure()]);
 }
 
 function defaultSidePanelPath() {
@@ -635,6 +551,55 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
   await openOrFocusPanelTab(panelUrl);
 }
 
+function openHermesPanelFromContextGesture(tab) {
+  const browserId = detectBrowserId();
+  if (browserId === 'opera' || browserId === 'firefox') {
+    try {
+      const nativeAttempt = openNativeSidebar({ windowId: tab?.windowId ?? null });
+      return Promise.resolve(nativeAttempt)
+        .then((opened) => (opened ? true : openHermesPanel(tab)))
+        .catch(() => openHermesPanel(tab));
+    } catch {
+      return openHermesPanel(tab);
+    }
+  }
+
+  if (!chrome.sidePanel?.open) return openHermesPanel(tab);
+  const panelResidencyMode = cachedPanelResidencyMode;
+  const tabId = Number(tab?.id);
+  const useTabAttached = panelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED
+    && Number.isFinite(tabId)
+    && tabId > 0;
+  const panelPath = buildSidePanelPath({
+    mode: panelResidencyMode,
+    tabId: useTabAttached ? tabId : null,
+    defaultPath: defaultSidePanelPath(),
+  });
+  const panelUrl = chrome.runtime.getURL(panelPath);
+  const openOptions = useTabAttached
+    ? { tabId }
+    : { windowId: Number(tab?.windowId) };
+
+  try {
+    const panelAttempt = openSidePanelWithConfirmation({
+      sidePanelApi: chrome.sidePanel,
+      runtimeApi: chrome.runtime,
+      openOptions,
+      panelUrl,
+    });
+    return Promise.resolve(panelAttempt)
+      .then(async (opened) => {
+        if (opened) return true;
+        console.warn('[Hermes Browser] Context-menu side panel was not confirmed; using the extension fallback.');
+        await openOrFocusPanelTab(panelUrl);
+        return true;
+      })
+      .catch(() => openHermesPanel(tab));
+  } catch {
+    return openHermesPanel(tab);
+  }
+}
+
 async function openHermesFullView(requestedUrl = '') {
   const packagedAppUrl = new URL(chrome.runtime.getURL('app.html'));
   const rootDevAppUrl = new URL(chrome.runtime.getURL('extension/app.html'));
@@ -739,7 +704,7 @@ async function getYoutubeTranscript({ videoId, tabId, provider = 'default' } = {
   return { ok: false, videoId: cleanVideoId, reason: failures.map((item) => `${item.source}:${item.reason}`).join('; ') || 'transcript_unavailable' };
 }
 
-subscribeLocale(() => configureContextMenus().catch((error) => {
+subscribeLocale(() => contextMenuController.configure().catch((error) => {
   console.warn('[Hermes Browser] Localized context menus could not be configured:', error);
 }));
 void initI18n().catch((error) => {
@@ -753,11 +718,14 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 chrome.action.onClicked.addListener(openHermesPanel);
 chrome.contextMenus?.onClicked?.addListener?.((info, tab) => {
-  handleContextMenuClick(info, tab).catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error));
+  return contextMenuController.handleClick(info, tab)
+    .catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error));
 });
 chrome.tabs?.onActivated?.addListener?.(({ tabId }) => reapplyPanelResidencyForTab(tabId));
 chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
   if (areaName !== 'local') return;
+  contextMenuController.handleStorageChanged(changes, areaName)
+    .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
   let changed = false;
   if (changes.hermesBrowserSettings?.newValue?.panelResidencyMode) {
     cachedPanelResidencyMode = normalizePanelResidencyMode(changes.hermesBrowserSettings.newValue.panelResidencyMode);
@@ -774,6 +742,8 @@ chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const action = WAKE_BACKGROUND_MESSAGE_TYPES.has(message?.type)
     ? wakeController.handleMessage(message)
+    : [CONTEXT_MENU_CONFIG_GET, CONTEXT_MENU_CONFIG_MUTATE, CONTEXT_MENU_REQUEST_CLAIM].includes(message?.type)
+      ? contextMenuController.handleMessage(message)
     : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
       ? queueInlineDraftRequest(message, sender)
       : message?.type === 'HERMES_INLINE_SESSION_STATUS'
@@ -790,4 +760,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     .then(sendResponse)
     .catch((error) => sendResponse({ ok: false, reason: error?.message || String(error) }));
   return true;
+});
+
+initI18n().catch((error) => {
+  console.warn('[Hermes Browser] Localization initialization failed:', error);
+  return contextMenuController.configure();
+}).catch((error) => {
+  console.warn('[Hermes Browser] Default context menus could not be configured:', error);
+});
+refreshPanelResidencyModeFromStorage().catch((error) => {
+  console.warn('[Hermes Browser] Panel residency initialization failed:', error);
 });

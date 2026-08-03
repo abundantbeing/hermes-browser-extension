@@ -94,6 +94,13 @@ import {
 } from './lib/common.mjs';
 import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
+  buildContextMenuTurn,
+  contextMenuRequestMatchesTab,
+  normalizeContextMenuRequest,
+} from './lib/context-menu-request.mjs';
+import { mountContextMenuEditor } from './lib/context-menu-editor-client.mjs';
+import { CONTEXT_MENU_REQUEST_CLAIM } from './lib/context-menu-controller.mjs';
+import {
   assertAssistModelSelectionAcknowledged,
   assistModelFallbackNotice,
   assistModelRoutingSupported,
@@ -404,6 +411,7 @@ const els = {
   assistModelCapabilityHint: $('#assistModelCapabilityHint'),
   inlineAssistSessionRetention: $('#inlineAssistSessionRetention'),
   contextMenuDefaultRoute: $('#contextMenuDefaultRoute'),
+  contextMenuEditor: $('#contextMenuEditor'),
   panelResidencyInputs: Array.from(document.querySelectorAll('input[name="panelResidencyMode"]')),
   autoNameSessionsInput: $('#autoNameSessionsInput'),
   transcriptProviderInput: $('#transcriptProviderInput'),
@@ -497,6 +505,26 @@ let browserIntroDismissedForPanel = false;
 let operationToastTimer = null;
 let latestUpdateReview = null;
 let sessionsRefreshing = false;
+let contextMenuEditor = null;
+
+function contextMenuEditorTranslate(key, fallback) {
+  const translated = t(key);
+  return translated === key ? fallback : translated;
+}
+
+async function ensureContextMenuEditor() {
+  if (!els.contextMenuEditor) return null;
+  if (contextMenuEditor) {
+    contextMenuEditor.setTranslator(contextMenuEditorTranslate);
+    return contextMenuEditor;
+  }
+  contextMenuEditor = await mountContextMenuEditor({
+    chromeApi: chrome,
+    root: els.contextMenuEditor,
+    translate: contextMenuEditorTranslate,
+  });
+  return contextMenuEditor;
+}
 
 function currentTaskStack() {
   const sessionId = String(settings.sessionId || '').trim();
@@ -5970,6 +5998,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   }
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
   syncSettingsForm();
+  await ensureContextMenuEditor();
   renderMessagesFromStorage();
   renderTaskStack();
 }
@@ -6170,13 +6199,17 @@ function manifestContentScriptFiles() {
   return scripts.length ? scripts : ['content-extractor.js', 'content.js'];
 }
 
-async function sendContentMessageWithInstallFallback(tabId, message) {
+async function sendContentMessageWithInstallFallback(tabId, message, { frameId = 0 } = {}) {
+  const messageOptions = Number(frameId) > 0 ? { frameId: Number(frameId) } : undefined;
+  const scriptTarget = Number(frameId) > 0
+    ? { tabId, frameIds: [Number(frameId)] }
+    : { tabId };
   try {
-    return await chrome.tabs.sendMessage(tabId, message);
+    return await chrome.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
     try {
-      await chrome.scripting.executeScript({ target: { tabId }, files: manifestContentScriptFiles() });
-      return await chrome.tabs.sendMessage(tabId, message);
+      await chrome.scripting.executeScript({ target: scriptTarget, files: manifestContentScriptFiles() });
+      return await chrome.tabs.sendMessage(tabId, message, messageOptions);
     } catch (fallbackError) {
       if (fallbackError && typeof fallbackError === 'object' && !fallbackError.cause) fallbackError.cause = originalError;
       throw fallbackError;
@@ -6212,12 +6245,15 @@ async function getPageContextViaScripting(tabId, options, originalError) {
   try {
     const extractorPath = manifestContentScriptFiles().find((file) => file.endsWith('content-extractor.js'));
     if (!extractorPath) throw new Error('Hermes content extractor is missing from the active manifest.');
+    const scriptTarget = Number(options?.frameId) > 0
+      ? { tabId, frameIds: [Number(options.frameId)] }
+      : { tabId };
     await chrome.scripting.executeScript({
-      target: { tabId },
+      target: scriptTarget,
       files: [extractorPath],
     });
     const [injected] = await chrome.scripting.executeScript({
-      target: { tabId },
+      target: scriptTarget,
       func: collectPageContextWithSharedExtractor,
       args: [options],
     });
@@ -6261,21 +6297,38 @@ async function getPageContext(tab, options = {}) {
   const requestOptions = {
     depth: settings.contextDepth,
     explicitSiteCapture: Boolean(options.explicitSiteCapture),
+    frameId: Number(options.frameId || 0),
   };
   try {
-    const response = await chrome.tabs.sendMessage(tab.id, { type: 'HERMES_GET_PAGE_CONTEXT', options: requestOptions });
+    const response = await chrome.tabs.sendMessage(
+      tab.id,
+      { type: 'HERMES_GET_PAGE_CONTEXT', options: requestOptions },
+      requestOptions.frameId > 0 ? { frameId: requestOptions.frameId } : undefined,
+    );
     // A response that claims ok but carries no actual page text is the signature
     // of a stale/orphaned content script that returned a bare ack. Run the
     // scripting fallback so the user still gets real page text instead of 0.
-    if (response?.ok && (response.text || response.selectedText || response.meta?.headings?.length)) return response;
+    if (response?.ok && (response.text || response.selectedText || response.meta?.headings?.length)) {
+      return options.selectedTextOverride === undefined
+        ? response
+        : { ...response, selectedText: String(options.selectedTextOverride || '') };
+    }
     if (response?.ok) {
       const fallback = await getPageContextViaScripting(tab.id, requestOptions, new Error('Stale content script: empty page context'));
-      if (fallback?.ok) return fallback;
+      if (fallback?.ok) {
+        return options.selectedTextOverride === undefined
+          ? fallback
+          : { ...fallback, selectedText: String(options.selectedTextOverride || '') };
+      }
     }
     return response || { ok: false, error: 'No page context response', text: '', selectedText: '', meta: {} };
   } catch (error) {
     const fallback = await getPageContextViaScripting(tab.id, requestOptions, error);
-    if (fallback?.ok) return fallback;
+    if (fallback?.ok) {
+      return options.selectedTextOverride === undefined
+        ? fallback
+        : { ...fallback, selectedText: String(options.selectedTextOverride || '') };
+    }
     return {
       ok: false,
       error: fallback?.error || error?.message || String(error),
@@ -7563,10 +7616,16 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   let shouldFlushQueue = false;
   try {
     const preparedAttachments = await saveImageAttachmentsForTurn(turnAttachments);
+    const contextOverride = turnOptions.contextOverride || null;
+    const turnProtocolSettings = contextOverride
+      ? { ...settings, ...(contextOverride.settingsOverride || {}) }
+      : settings;
     const turnContextScope = turnOptions.forceChatOnly
       ? { mode: CONTEXT_SCOPE_MODES.CHAT_ONLY, selectedTabIds: [] }
-      : contextScopeForGateway(contextScope, settings.gatewayMode);
-    const capturedContext = turnOptions.forceChatOnly ? null : await refreshContext();
+      : contextOverride?.contextScope || contextScopeForGateway(contextScope, settings.gatewayMode);
+    const capturedContext = turnOptions.forceChatOnly
+      ? null
+      : contextOverride || await refreshContext();
     const context = turnContextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY
       ? { activeTab: null, tabs: [], pageContext: null, contextScope: turnContextScope }
       : capturedContext;
@@ -7594,7 +7653,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       activeTab: context.activeTab,
       selectedTabs: selectedPromptTabs || promptTabs,
       pageContext: context.pageContext,
-      settings,
+      settings: turnProtocolSettings,
     });
     const contextDeliverySessionKey = [
       normalizeGatewayUrl(settings.gatewayUrl),
@@ -7617,12 +7676,18 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       selectedTabs: selectedPromptTabs,
       contextScope: turnContextScope,
       attachments: preparedAttachments,
-      settings,
+      settings: turnProtocolSettings,
       contextHash,
       contextDelivery,
     });
 
-    const receipt = buildContextReceipt({ context, attachments: preparedAttachments, settings, contextHash, contextDelivery });
+    const receipt = buildContextReceipt({
+      context,
+      attachments: preparedAttachments,
+      settings: turnProtocolSettings,
+      contextHash,
+      contextDelivery,
+    });
     const { node: userNode } = addMessage('user', displayUserText);
     await persistBrowserIntroSeen();
     appendContextReceipt(userNode, receipt);
@@ -8035,15 +8100,48 @@ function normalizeContextMenuRoute(value = '') {
   return ['ask', 'current', 'new', 'background'].includes(route) ? route : 'ask';
 }
 
-function contextMenuPromptText(request = {}) {
-  const prompt = String(request.prompt || '').trim().slice(0, 500);
-  const selection = String(request.selection || '').trim().slice(0, 8_000);
-  return prompt && selection ? `${prompt}\n\n${selection}` : '';
+async function prepareContextMenuTurn(rawRequest) {
+  const request = normalizeContextMenuRequest(rawRequest);
+  if (!request) return null;
+  const tab = await chrome.tabs.get(request.tabId).catch(() => null);
+  if (!tab || !await contextMenuRequestMatchesTab(request, tab)) return null;
+  const initialTurn = await buildContextMenuTurn({ request, tab });
+  if (!initialTurn) return null;
+  const capturedPageContext = initialTurn.capturePage
+    ? await getPageContext(tab, {
+      frameId: request.frameId,
+      selectedTextOverride: request.selection,
+    })
+    : null;
+  return buildContextMenuTurn({ request, tab, capturedPageContext });
+}
+
+function serializePreparedContextMenuTurn(turn) {
+  const contextSettings = { ...settings, ...(turn.context.settingsOverride || {}) };
+  const contextHash = browserContextPayloadHash({
+    activeTab: turn.context.activeTab,
+    selectedTabs: turn.context.selectedTabs,
+    pageContext: turn.context.pageContext,
+    settings: contextSettings,
+  });
+  return serializeBrowserTurnEnvelope({
+    humanInput: turn.humanInput,
+    activeTab: turn.context.activeTab,
+    tabs: turn.context.tabs,
+    selectedTabs: turn.context.selectedTabs,
+    pageContext: turn.context.pageContext,
+    contextScope: turn.context.contextScope,
+    attachments: turn.attachments,
+    settings: contextSettings,
+    contextHash,
+    contextDelivery: CONTEXT_DELIVERY_MODES.FULL,
+  });
 }
 
 async function executeContextMenuRequest(request, requestedRoute) {
-  const userText = contextMenuPromptText(request);
-  if (!userText) return false;
+  const turn = await prepareContextMenuTurn(request);
+  if (!turn) throw new Error('The page changed before Hermes could start the right-click task.');
+  const userText = turn.humanInput;
   let route = normalizeContextMenuRoute(requestedRoute);
   if (route === 'ask') route = settings.sessionId ? 'current' : 'new';
   if (route === 'current' && !settings.sessionId) route = 'new';
@@ -8051,7 +8149,10 @@ async function executeContextMenuRequest(request, requestedRoute) {
     await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus: false });
   }
   if (route === 'background') {
-    const { session } = await runInlineDraftInBackground({ adapterId: 'right-click' }, userText);
+    const { session } = await runInlineDraftInBackground(
+      { adapterId: 'right-click', tabId: request.tabId, frameId: request.frameId },
+      serializePreparedContextMenuTurn(turn),
+    );
     await loadSessions({ quiet: true });
     const completed = availableSessions.find((item) => item.id === session.id) || { id: session.id, title: session.title, source: DEFAULT_SETTINGS.sessionSource };
     await openHermesSession(completed);
@@ -8060,8 +8161,9 @@ async function executeContextMenuRequest(request, requestedRoute) {
   }
   if (route === 'current' && settings.sessionId) approvedForeignSessionIds.add(String(settings.sessionId));
   els.input.value = '';
-  const sent = await askHermes(userText, [], {
-    forceChatOnly: true,
+  const sent = await askHermes(userText, turn.attachments, {
+    contextOverride: turn.context,
+    forceFullContext: true,
     preserveComposer: true,
     disableCommandParsing: true,
     displayUserText: `Right-click task · ${String(request.prompt || '').replace(/:$/, '')}`,
@@ -8094,18 +8196,21 @@ async function handleContextMenuRouteChoice(event) {
 }
 
 async function consumePendingContextMenuRequest() {
-  if (!chrome.storage?.session) return false;
-  const stored = await chrome.storage.session.get(CONTEXT_MENU_STORAGE_KEY);
-  const request = stored?.[CONTEXT_MENU_STORAGE_KEY];
+  if (!chrome.runtime?.sendMessage) return false;
+  const claim = await chrome.runtime.sendMessage({
+    type: CONTEXT_MENU_REQUEST_CLAIM,
+    sourceTabId: isAttachedPanelResidency() ? Number(sidePanelParams.tabId) : null,
+  }).catch(() => null);
+  const request = claim?.request;
   if (!request) return false;
-  await chrome.storage.session.remove(CONTEXT_MENU_STORAGE_KEY);
-  if (Number(request.expiresAt || 0) <= Date.now() || !contextMenuPromptText(request)) return false;
-  const route = normalizeContextMenuRoute(request.route || settings.contextMenuDefaultRoute);
+  const normalizedRequest = normalizeContextMenuRequest(request);
+  if (!normalizedRequest) return false;
+  const route = normalizeContextMenuRoute(normalizedRequest.route || settings.contextMenuDefaultRoute);
   if (route === 'ask') {
-    showContextMenuRouteNotice(request);
+    showContextMenuRouteNotice(normalizedRequest);
     return true;
   }
-  await executeContextMenuRequest(request, route);
+  await executeContextMenuRequest(normalizedRequest, route);
   return true;
 }
 
@@ -9082,6 +9187,7 @@ async function runStartupReadiness() {
 }
 
 subscribeLocale(() => {
+  contextMenuEditor?.setTranslator(contextMenuEditorTranslate);
   renderAppearanceControls();
   renderGatewayHelp();
   renderContextScopeControls();

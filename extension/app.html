@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="app-parity.css" />
     <link rel="stylesheet" href="fulltab-themes.css" />
+    <link rel="stylesheet" href="context-menu-editor.css" />
   </head>
   <body>
     <main class="web-shell" data-state="loading">
@@ -289,7 +290,8 @@
                 <option value="background" data-i18n="ui.run.in.background">Run in background</option>
               </select>
             </label>
-            <p data-i18n="ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05">Open Hermes Browser uses the side panel only. Selection tasks start automatically after routing.</p>
+            <p data-i18n="ui.context.menu.editor.opening.behavior">Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.</p>
+            <div id="contextMenuEditor" data-context-menu-surface="hermes-web"></div>
           </section>
           <section>
             <h3 data-i18n="ui.hermes.connection">Hermes connection</h3>

@@ -1311,6 +1311,130 @@
     "message": "上下文压缩不可用",
     "description": "Runtime interface message ui.context.compaction.unavailable"
   },
+  "runtime_ui_context_menu_editor_action": {
+    "message": "操作",
+    "description": "Runtime interface message ui.context.menu.editor.action"
+  },
+  "runtime_ui_context_menu_editor_action_inline": {
+    "message": "内联改进",
+    "description": "Runtime interface message ui.context.menu.editor.action.inline"
+  },
+  "runtime_ui_context_menu_editor_action_open": {
+    "message": "打开 Hermes",
+    "description": "Runtime interface message ui.context.menu.editor.action.open"
+  },
+  "runtime_ui_context_menu_editor_action_prompt": {
+    "message": "提示 Hermes",
+    "description": "Runtime interface message ui.context.menu.editor.action.prompt"
+  },
+  "runtime_ui_context_menu_editor_add": {
+    "message": "添加操作",
+    "description": "Runtime interface message ui.context.menu.editor.add"
+  },
+  "runtime_ui_context_menu_editor_collapse": {
+    "message": "关闭操作编辑器",
+    "description": "Runtime interface message ui.context.menu.editor.collapse"
+  },
+  "runtime_ui_context_menu_editor_context_audio": {
+    "message": "音频",
+    "description": "Runtime interface message ui.context.menu.editor.context.audio"
+  },
+  "runtime_ui_context_menu_editor_context_editable": {
+    "message": "可编辑字段",
+    "description": "Runtime interface message ui.context.menu.editor.context.editable"
+  },
+  "runtime_ui_context_menu_editor_context_image": {
+    "message": "图像",
+    "description": "Runtime interface message ui.context.menu.editor.context.image"
+  },
+  "runtime_ui_context_menu_editor_context_link": {
+    "message": "链接",
+    "description": "Runtime interface message ui.context.menu.editor.context.link"
+  },
+  "runtime_ui_context_menu_editor_context_page": {
+    "message": "页面",
+    "description": "Runtime interface message ui.context.menu.editor.context.page"
+  },
+  "runtime_ui_context_menu_editor_context_selection": {
+    "message": "所选内容",
+    "description": "Runtime interface message ui.context.menu.editor.context.selection"
+  },
+  "runtime_ui_context_menu_editor_context_video": {
+    "message": "视频",
+    "description": "Runtime interface message ui.context.menu.editor.context.video"
+  },
+  "runtime_ui_context_menu_editor_contexts": {
+    "message": "显示位置",
+    "description": "Runtime interface message ui.context.menu.editor.contexts"
+  },
+  "runtime_ui_context_menu_editor_empty": {
+    "message": "当前没有右键操作。请添加操作或恢复默认值。",
+    "description": "Runtime interface message ui.context.menu.editor.empty"
+  },
+  "runtime_ui_context_menu_editor_enabled": {
+    "message": "已启用",
+    "description": "Runtime interface message ui.context.menu.editor.enabled"
+  },
+  "runtime_ui_context_menu_editor_error_context": {
+    "message": "请至少选择一个上下文。",
+    "description": "Runtime interface message ui.context.menu.editor.error.context"
+  },
+  "runtime_ui_context_menu_editor_error_prompt": {
+    "message": "提示词为必填项。",
+    "description": "Runtime interface message ui.context.menu.editor.error.prompt"
+  },
+  "runtime_ui_context_menu_editor_error_save": {
+    "message": "无法保存右键操作。",
+    "description": "Runtime interface message ui.context.menu.editor.error.save"
+  },
+  "runtime_ui_context_menu_editor_error_title": {
+    "message": "标题为必填项。",
+    "description": "Runtime interface message ui.context.menu.editor.error.title"
+  },
+  "runtime_ui_context_menu_editor_expand": {
+    "message": "编辑操作",
+    "description": "Runtime interface message ui.context.menu.editor.expand"
+  },
+  "runtime_ui_context_menu_editor_move_down": {
+    "message": "下移",
+    "description": "Runtime interface message ui.context.menu.editor.move.down"
+  },
+  "runtime_ui_context_menu_editor_move_up": {
+    "message": "上移",
+    "description": "Runtime interface message ui.context.menu.editor.move.up"
+  },
+  "runtime_ui_context_menu_editor_new_action": {
+    "message": "新操作",
+    "description": "Runtime interface message ui.context.menu.editor.new.action"
+  },
+  "runtime_ui_context_menu_editor_new_prompt": {
+    "message": "向 Hermes 询问所选内容。",
+    "description": "Runtime interface message ui.context.menu.editor.new.prompt"
+  },
+  "runtime_ui_context_menu_editor_opening_behavior": {
+    "message": "需要打开 Hermes 的操作会在可用时使用侧面板；若无法确认侧面板已打开，则使用扩展完整视图作为回退。",
+    "description": "Runtime interface message ui.context.menu.editor.opening.behavior"
+  },
+  "runtime_ui_context_menu_editor_prompt": {
+    "message": "提示词",
+    "description": "Runtime interface message ui.context.menu.editor.prompt"
+  },
+  "runtime_ui_context_menu_editor_remove": {
+    "message": "移除操作",
+    "description": "Runtime interface message ui.context.menu.editor.remove"
+  },
+  "runtime_ui_context_menu_editor_restore": {
+    "message": "恢复默认值",
+    "description": "Runtime interface message ui.context.menu.editor.restore"
+  },
+  "runtime_ui_context_menu_editor_saved": {
+    "message": "右键操作已保存。",
+    "description": "Runtime interface message ui.context.menu.editor.saved"
+  },
+  "runtime_ui_context_menu_editor_title": {
+    "message": "标题",
+    "description": "Runtime interface message ui.context.menu.editor.title"
+  },
   "runtime_ui_context_refresh_unavailable": {
     "message": "上下文刷新不可用",
     "description": "Runtime interface message ui.context.refresh.unavailable"

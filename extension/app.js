@@ -35,6 +35,7 @@ import {
   resolveColorMode,
 } from './lib/appearance-themes.mjs';
 import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
+import { mountContextMenuEditor } from './lib/context-menu-editor-client.mjs';
 import {
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   dashboardModelDiscoveryBaseUrl,
@@ -178,6 +179,7 @@ const els = {
   assistModelCapabilityHint: $('#assistModelCapabilityHint'),
   inlineAssistSessionRetention: $('#inlineAssistSessionRetention'),
   contextMenuDefaultRoute: $('#contextMenuDefaultRoute'),
+  contextMenuEditor: $('#contextMenuEditor'),
   settingsProfile: $('#settingsProfile'),
   settingsGatewayUrl: $('#settingsGatewayUrl'),
   settingsApiKey: $('#settingsApiKey'),
@@ -234,6 +236,7 @@ let webSessionLoadRequestId = 0;
 let wakeTurnProcessingId = '';
 let dashboardConnection = null;
 let dashboardLiveSessionId = '';
+let contextMenuEditor = null;
 const HERMES_WEB_SESSION_SOURCE = 'hermes_web';
 const openSessionGroups = new Set();
 const closedSessionGroups = new Set();
@@ -243,6 +246,25 @@ const TASK_STACKS_STORAGE_KEY = 'hermesBrowserTaskStacks';
 const client = createHermesClient({
   getConnection: () => settings,
 });
+
+function contextMenuEditorTranslate(key, fallback) {
+  const translated = t(key);
+  return translated === key ? fallback : translated;
+}
+
+async function ensureContextMenuEditor() {
+  if (!els.contextMenuEditor) return null;
+  if (contextMenuEditor) {
+    contextMenuEditor.setTranslator(contextMenuEditorTranslate);
+    return contextMenuEditor;
+  }
+  contextMenuEditor = await mountContextMenuEditor({
+    chromeApi: chrome,
+    root: els.contextMenuEditor,
+    translate: contextMenuEditorTranslate,
+  });
+  return contextMenuEditor;
+}
 
 function usesDashboardTicketTransport() {
   const mode = normalizeConnectionMode(settings.connectionMode);
@@ -2466,6 +2488,7 @@ async function loadApp() {
     inlineAssistFastMode: Boolean(stored.hermesBrowserSettings?.inlineAssistFastMode),
     contextMenuDefaultRoute: ['current', 'new', 'background'].includes(stored.hermesBrowserSettings?.contextMenuDefaultRoute) ? stored.hermesBrowserSettings.contextMenuDefaultRoute : 'ask',
   };
+  await ensureContextMenuEditor();
   applyAppearance();
   applySessionVisibility();
   activeSessionId = handoff.newChat ? '' : (activeSessionId || settings.webSessionId || '');
@@ -2893,6 +2916,7 @@ globalThis.addEventListener('visibilitychange', () => {
 });
 
 subscribeLocale(() => {
+  contextMenuEditor?.setTranslator(contextMenuEditorTranslate);
   renderAppearanceSettings();
   renderInlineAssistModelOptions();
   renderTaskStack();
