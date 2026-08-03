@@ -1,0 +1,4374 @@
+{
+  "extensionName": {
+    "message": "Extensión de navegador Hermes",
+    "description": "Hermes Browser extensionName"
+  },
+  "extensionShortName": {
+    "message": "Extensión Hermes",
+    "description": "Hermes Browser extensionShortName"
+  },
+  "extensionDescription": {
+    "message": "Panel lateral nativo del navegador para Hermes Agent. Conecta el contexto web con tu entorno de ejecución Hermes local o remoto.",
+    "description": "Hermes Browser extensionDescription"
+  },
+  "openExtension": {
+    "message": "Abrir extensión de navegador Hermes",
+    "description": "Hermes Browser openExtension"
+  },
+  "openSidebar": {
+    "message": "Abrir barra lateral de Hermes Browser",
+    "description": "Hermes Browser openSidebar"
+  },
+  "runtime_a11y_extension_controls": {
+    "message": "controles de Hermes Browser Extension",
+    "description": "Runtime interface message a11y.extension_controls"
+  },
+  "runtime_a11y_extension_header": {
+    "message": "encabezado de Hermes Browser Extension",
+    "description": "Runtime interface message a11y.extension_header"
+  },
+  "runtime_agent_scan": {
+    "message": "↻ Agentes de escaneo",
+    "description": "Runtime interface message agent.scan"
+  },
+  "runtime_assist_options_heading": {
+    "message": "Opciones de Hermes Assist",
+    "description": "Runtime interface message assist.options_heading"
+  },
+  "runtime_assist_routing_exact": {
+    "message": "El enrutamiento del modelo Exact Assist está disponible. El proveedor y el modelo seleccionados se verifican antes de ejecutar cada borrador.",
+    "description": "Runtime interface message assist.routing.exact"
+  },
+  "runtime_assist_routing_exact_short": {
+    "message": "Enrutamiento exacto del modelo Assist confirmado",
+    "description": "Runtime interface message assist.routing.exact_short"
+  },
+  "runtime_assist_routing_fallback": {
+    "message": "Su elección de modelo de Assist permanece guardada. Esta gateway no puede aplicar un modelo exacto, por lo que Assist utiliza el gateway predeterminada y etiqueta cada resultado alternativo.",
+    "description": "Runtime interface message assist.routing.fallback"
+  },
+  "runtime_assist_routing_fallback_short": {
+    "message": "Usa el valor predeterminado de la puerta de enlace cuando el enrutamiento exacto no está disponible",
+    "description": "Runtime interface message assist.routing.fallback_short"
+  },
+  "runtime_commands_click_or_enter": {
+    "message": "Haga clic o presione Enter para ejecutar.",
+    "description": "Runtime interface message commands.click_or_enter"
+  },
+  "runtime_commands_details": {
+    "message": "Detalles del comando",
+    "description": "Runtime interface message commands.details"
+  },
+  "runtime_commands_insert_then_detail": {
+    "message": "Haga clic para insertar y luego agregue los detalles.",
+    "description": "Runtime interface message commands.insert_then_detail"
+  },
+  "runtime_commands_runs_immediately": {
+    "message": "Se ejecuta de inmediato en el contexto actual del navegador.",
+    "description": "Runtime interface message commands.runs_immediately"
+  },
+  "runtime_common_current": {
+    "message": "actual",
+    "description": "Runtime interface message common.current"
+  },
+  "runtime_common_follow": {
+    "message": "seguir",
+    "description": "Runtime interface message common.follow"
+  },
+  "runtime_common_live": {
+    "message": "en vivo",
+    "description": "Runtime interface message common.live"
+  },
+  "runtime_common_lock": {
+    "message": "bloquear",
+    "description": "Runtime interface message common.lock"
+  },
+  "runtime_common_none": {
+    "message": "ninguno",
+    "description": "Runtime interface message common.none"
+  },
+  "runtime_common_offline": {
+    "message": "offline",
+    "description": "Runtime interface message common.offline"
+  },
+  "runtime_common_online": {
+    "message": "online",
+    "description": "Runtime interface message common.online"
+  },
+  "runtime_common_skills": {
+    "message": "habilidades",
+    "description": "Runtime interface message common.skills"
+  },
+  "runtime_common_using": {
+    "message": "Usando",
+    "description": "Runtime interface message common.using"
+  },
+  "runtime_composer_attach": {
+    "message": "＋ Adjuntar",
+    "description": "Runtime interface message composer.attach"
+  },
+  "runtime_composer_chat_label": {
+    "message": "CHAT",
+    "description": "Runtime interface message composer.chat_label"
+  },
+  "runtime_composer_connect_first": {
+    "message": "Conéctate primero a Hermes",
+    "description": "Runtime interface message composer.connect_first"
+  },
+  "runtime_composer_queue_message": {
+    "message": "mensaje de cola",
+    "description": "Runtime interface message composer.queue_message"
+  },
+  "runtime_connect_approve_or_paste": {
+    "message": "Aprobar el emparejamiento cuando esté disponible o pegar",
+    "description": "Runtime interface message connect.approve_or_paste"
+  },
+  "runtime_connect_clone_build_load": {
+    "message": "Clona este repositorio, compílalo y carga el",
+    "description": "Runtime interface message connect.clone_build_load"
+  },
+  "runtime_connect_folder_unpacked": {
+    "message": "carpeta descomprimida.",
+    "description": "Runtime interface message connect.folder_unpacked"
+  },
+  "runtime_connect_manual_setup_suffix": {
+    "message": "para configuración manual.",
+    "description": "Runtime interface message connect.manual_setup_suffix"
+  },
+  "runtime_connection_not_configured_short": {
+    "message": "no configurada",
+    "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connection_unknown_transport": {
+    "message": "transporte desconocido",
+    "description": "Runtime interface message connection.unknown_transport"
+  },
+  "runtime_context_attached_tab": {
+    "message": "Pestaña adjunta",
+    "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_browser_tab_handoff": {
+    "message": "Traspaso de la pestaña {tabId} del navegador",
+    "description": "Runtime interface message context.browser_tab_handoff"
+  },
+  "runtime_context_follow_active_tab": {
+    "message": "Seguir pestaña activa",
+    "description": "Runtime interface message context.follow_active_tab"
+  },
+  "runtime_context_in": {
+    "message": "IN",
+    "description": "Runtime interface message context.in"
+  },
+  "runtime_context_include_all_tabs": {
+    "message": "Incluir todas las pestañas",
+    "description": "Runtime interface message context.include_all_tabs"
+  },
+  "runtime_context_include_prompt_tab": {
+    "message": "Incluir esta pestaña en la lista de pestañas del prompt",
+    "description": "Runtime interface message context.include_prompt_tab"
+  },
+  "runtime_context_no_page": {
+    "message": "sin página",
+    "description": "Runtime interface message context.no_page"
+  },
+  "runtime_context_out": {
+    "message": "OUT",
+    "description": "Runtime interface message context.out"
+  },
+  "runtime_context_page_only": {
+    "message": "Solo página",
+    "description": "Runtime interface message context.page_only"
+  },
+  "runtime_context_pin_current_tab": {
+    "message": "Fijar pestaña actual",
+    "description": "Runtime interface message context.pin_current_tab"
+  },
+  "runtime_context_pin_tab": {
+    "message": "Fijar: {title}",
+    "description": "Runtime interface message context.pin_tab"
+  },
+  "runtime_context_pinned_tab": {
+    "message": "Pestaña fijada",
+    "description": "Runtime interface message context.pinned_tab"
+  },
+  "runtime_context_refresh_page": {
+    "message": "Actualizar el contexto de la página",
+    "description": "Runtime interface message context.refresh_page"
+  },
+  "runtime_context_remove_prompt_tab": {
+    "message": "Quitar esta pestaña de la lista de pestañas del prompt",
+    "description": "Runtime interface message context.remove_prompt_tab"
+  },
+  "runtime_context_tokens": {
+    "message": "fichas",
+    "description": "Runtime interface message context.tokens"
+  },
+  "runtime_context_unlock_pinned_tab": {
+    "message": "Desbloquear pestaña fijada",
+    "description": "Runtime interface message context.unlock_pinned_tab"
+  },
+  "runtime_diagnostic_api_authorization_health_detail": {
+    "message": "La comprobación de estado respondió, pero las rutas protegidas de Browser/modelo requieren Authorization: Bearer ***. Pegue la clave API o el token de navegador con ámbito en Configuración.",
+    "description": "Runtime interface message diagnostic.api_authorization_health_detail"
+  },
+  "runtime_diagnostic_api_authorization_title": {
+    "message": "El servidor API necesita autorización",
+    "description": "Runtime interface message diagnostic.api_authorization_title"
+  },
+  "runtime_diagnostic_api_rejected_detail": {
+    "message": "Hermes rechazó esta solicitud. Compruebe la clave API/el token de navegador y mantenga la URL apuntando al servidor API, no al endpoint SSO de Dashboard.",
+    "description": "Runtime interface message diagnostic.api_rejected_detail"
+  },
+  "runtime_diagnostic_auth_detail": {
+    "message": "La API de Hermes rechazó la solicitud. Compruebe el token de la API de Browser en Configuración y asegúrese de que coincida con el gateway de Hermes en ejecución.",
+    "description": "Runtime interface message diagnostic.auth_detail"
+  },
+  "runtime_diagnostic_auth_title": {
+    "message": "Error de autenticación de Hermes",
+    "description": "Runtime interface message diagnostic.auth_title"
+  },
+  "runtime_diagnostic_auth_user": {
+    "message": "El token de API de Hermes fue rechazado. Actualice el token en Configuración de Browser y vuelva a conectarse.",
+    "description": "Runtime interface message diagnostic.auth_user"
+  },
+  "runtime_diagnostic_cors_extension_detail": {
+    "message": "Browser no pudo acceder a la API de Hermes desde este origen de extensión. Agregue chrome-extension://<extension-id> a API_SERVER_CORS_ORIGINS en el host remoto.",
+    "description": "Runtime interface message diagnostic.cors_extension_detail"
+  },
+  "runtime_diagnostic_cors_title": {
+    "message": "Origen CORS no permitido",
+    "description": "Runtime interface message diagnostic.cors_title"
+  },
+  "runtime_diagnostic_dashboard_url_detail": {
+    "message": "Esto parece ser el endpoint SSO de Hermes Dashboard. El modo de API de Browser necesita la URL del servidor API de Hermes en :8642, además de Authorization: Bearer ***",
+    "description": "Runtime interface message diagnostic.dashboard_url_detail"
+  },
+  "runtime_diagnostic_dashboard_url_title": {
+    "message": "URL de Dashboard detectada",
+    "description": "Runtime interface message diagnostic.dashboard_url_title"
+  },
+  "runtime_diagnostic_gateway_error_title": {
+    "message": "Error de gateway de Hermes",
+    "description": "Runtime interface message diagnostic.gateway_error_title"
+  },
+  "runtime_diagnostic_gateway_unreachable_detail": {
+    "message": "No se puede acceder al gateway de Hermes.",
+    "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
+  },
+  "runtime_diagnostic_network_detail": {
+    "message": "Browser no pudo acceder a la API de Hermes. Compruebe la URL del gateway, el enrutamiento de firewall/VPN y la configuración de CORS/origen para esta extensión.",
+    "description": "Runtime interface message diagnostic.network_detail"
+  },
+  "runtime_diagnostic_network_title": {
+    "message": "Error de red/CORS de Hermes",
+    "description": "Runtime interface message diagnostic.network_title"
+  },
+  "runtime_diagnostic_network_user": {
+    "message": "Browser no pudo acceder a Hermes porque la solicitud falló en la capa de red/CORS.",
+    "description": "Runtime interface message diagnostic.network_user"
+  },
+  "runtime_diagnostic_remote_setup_title": {
+    "message": "Problema de configuración remota",
+    "description": "Runtime interface message diagnostic.remote_setup_title"
+  },
+  "runtime_diagnostic_remote_unclassified_detail": {
+    "message": "La extensión de Browser no pudo clasificar esta respuesta del gateway remoto.",
+    "description": "Runtime interface message diagnostic.remote_unclassified_detail"
+  },
+  "runtime_diagnostic_route_detail": {
+    "message": "La ruta del gateway de Hermes no está disponible en este tiempo de ejecución. Actualice/reinicie Hermes o use el modo alternativo documentado cuando esté disponible.",
+    "description": "Runtime interface message diagnostic.route_detail"
+  },
+  "runtime_diagnostic_route_title": {
+    "message": "Ruta de Hermes no disponible",
+    "description": "Runtime interface message diagnostic.route_title"
+  },
+  "runtime_diagnostic_route_user": {
+    "message": "Este tiempo de ejecución de Hermes aún no expone la ruta de Browser solicitada.",
+    "description": "Runtime interface message diagnostic.route_user"
+  },
+  "runtime_diagnostic_runtime_exception_detail": {
+    "message": "El servidor API de Hermes es accesible, pero el agente Hermes upstream generó una excepción de tiempo de ejecución. Esto suele indicar un problema opcional de tiempo de ejecución/herramienta, como computer_use/cua-driver, no de autenticación de Browser, emparejamiento, CORS ni empaquetado.",
+    "description": "Runtime interface message diagnostic.runtime_exception_detail"
+  },
+  "runtime_diagnostic_runtime_exception_title": {
+    "message": "Excepción de tiempo de ejecución de Hermes",
+    "description": "Runtime interface message diagnostic.runtime_exception_title"
+  },
+  "runtime_diagnostic_runtime_exception_user": {
+    "message": "Se detectó un rastreo de pila del gateway de Hermes dentro del agente Hermes upstream. Browser puede permanecer conectado; consulte los registros de Hermes y ejecute `hermes computer-use doctor` si computer_use/cua-driver aparece en el rastreo.",
+    "description": "Runtime interface message diagnostic.runtime_exception_user"
+  },
+  "runtime_diagnostics_surface": {
+    "message": "Superficie",
+    "description": "Runtime interface message diagnostics.surface"
+  },
+  "runtime_fulltab_handoff_opened_from": {
+    "message": "Abierto desde {source}.",
+    "description": "Runtime interface message fulltab.handoff.opened_from"
+  },
+  "runtime_fulltab_handoff_opened_from_tab": {
+    "message": "Abierto desde {source} en la pestaña {tabId} del navegador.",
+    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  },
+  "runtime_image_generated": {
+    "message": "Imagen generada",
+    "description": "Runtime interface message image.generated"
+  },
+  "runtime_image_generated_preview": {
+    "message": "Vista previa de la imagen generada",
+    "description": "Runtime interface message image.generated_preview"
+  },
+  "runtime_image_generating": {
+    "message": "Hermes está generando una imagen",
+    "description": "Runtime interface message image.generating"
+  },
+  "runtime_image_meta_active": {
+    "message": "{aspectRatio} // activa",
+    "description": "Runtime interface message image.meta_active"
+  },
+  "runtime_image_phase_denoising": {
+    "message": "DESRUIDO",
+    "description": "Runtime interface message image.phase_denoising"
+  },
+  "runtime_image_phase_finalizing": {
+    "message": "FINALIZANDO",
+    "description": "Runtime interface message image.phase_finalizing"
+  },
+  "runtime_image_phase_latent": {
+    "message": "CAMPO LATENTE",
+    "description": "Runtime interface message image.phase_latent"
+  },
+  "runtime_image_phase_resolving": {
+    "message": "RESOLVIENDO",
+    "description": "Runtime interface message image.phase_resolving"
+  },
+  "runtime_items_count": {
+    "message": "{count} elementos",
+    "description": "Runtime interface message items.count"
+  },
+  "runtime_manifest_extension_description": {
+    "message": "Panel lateral nativo del navegador para Hermes Agent. Conecta el contexto web con tu entorno de ejecución Hermes local o remoto.",
+    "description": "Runtime interface message manifest.extension_description"
+  },
+  "runtime_manifest_extension_name": {
+    "message": "Extensión de navegador Hermes",
+    "description": "Runtime interface message manifest.extension_name"
+  },
+  "runtime_manifest_extension_short_name": {
+    "message": "Extensión Hermes",
+    "description": "Runtime interface message manifest.extension_short_name"
+  },
+  "runtime_manifest_open_extension": {
+    "message": "Abrir extensión de navegador Hermes",
+    "description": "Runtime interface message manifest.open_extension"
+  },
+  "runtime_manifest_open_sidebar": {
+    "message": "Abrir barra lateral de Hermes Browser",
+    "description": "Runtime interface message manifest.open_sidebar"
+  },
+  "runtime_permissions_not_granted": {
+    "message": "No se concedió el permiso para el micrófono.\n\n{error}\n\nHaga clic en Abrir configuración del micrófono, configure Micrófono en Permitir para Hermes Browser Extension, regrese aquí e inténtelo nuevamente.",
+    "description": "Runtime interface message permissions.not_granted"
+  },
+  "runtime_permissions_state": {
+    "message": "Estado de permiso del micrófono: {state}. Si Chromium muestra esto como bloqueado, abra la configuración del micrófono y configure Micrófono en Permitir para Hermes Browser Extension.",
+    "description": "Runtime interface message permissions.state"
+  },
+  "runtime_picker_pick_different": {
+    "message": "◈ Elegir un elemento diferente",
+    "description": "Runtime interface message picker.pick_different"
+  },
+  "runtime_picker_picking_element": {
+    "message": "◈ Seleccionando elemento...",
+    "description": "Runtime interface message picker.picking_element"
+  },
+  "runtime_profile_available": {
+    "message": "{count} perfiles disponibles",
+    "description": "Runtime interface message profile.available"
+  },
+  "runtime_profile_available_suffix": {
+    "message": "perfiles disponibles",
+    "description": "Runtime interface message profile.available_suffix"
+  },
+  "runtime_profile_default": {
+    "message": "Perfil predeterminado",
+    "description": "Runtime interface message profile.default"
+  },
+  "runtime_profile_refresh": {
+    "message": "↻ Perfiles",
+    "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_using": {
+    "message": "Usando {name}{model}{skills}",
+    "description": "Runtime interface message profile.using"
+  },
+  "runtime_run_stop": {
+    "message": "■ Detener",
+    "description": "Runtime interface message run.stop"
+  },
+  "runtime_runtime_fast_mode_toggle": {
+    "message": "Modo rápido {state}",
+    "description": "Runtime interface message runtime.fast_mode_toggle"
+  },
+  "runtime_runtime_model_control_title": {
+    "message": "{model} · {options}. Cambiar modelo y opciones de tiempo de ejecución.",
+    "description": "Runtime interface message runtime.model_control_title"
+  },
+  "runtime_runtime_options_heading": {
+    "message": "Opciones de tiempo de ejecución",
+    "description": "Runtime interface message runtime.options_heading"
+  },
+  "runtime_runtime_options_saved": {
+    "message": "Opciones de tiempo de ejecución: {summary}",
+    "description": "Runtime interface message runtime.options_saved"
+  },
+  "runtime_runtime_reasoning": {
+    "message": "{effort} razonamiento",
+    "description": "Runtime interface message runtime.reasoning"
+  },
+  "runtime_runtime_thinking_off": {
+    "message": "Pensamiento desactivado",
+    "description": "Runtime interface message runtime.thinking_off"
+  },
+  "runtime_runtime_thinking_toggle": {
+    "message": "Pensamiento {state}",
+    "description": "Runtime interface message runtime.thinking_toggle"
+  },
+  "runtime_session_copy_id_for": {
+    "message": "Copiar ID de sesión para {title}",
+    "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_new_extension_session": {
+    "message": "＋ Nueva sesión Hermes Browser Extension",
+    "description": "Runtime interface message session.new_extension_session"
+  },
+  "runtime_session_opening": {
+    "message": "Abriendo {title}",
+    "description": "Runtime interface message session.opening"
+  },
+  "runtime_session_rail_save_failed": {
+    "message": "Error al guardar el carril de sesiones: {error}",
+    "description": "Runtime interface message session.rail_save_failed"
+  },
+  "runtime_session_rename_named": {
+    "message": "Cambiar nombre de la sesión {title}",
+    "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_settings_language_description": {
+    "message": "Elija el idioma de la interfaz.",
+    "description": "Runtime interface message settings.language.description"
+  },
+  "runtime_settings_language_label": {
+    "message": "Idioma",
+    "description": "Runtime interface message settings.language.label"
+  },
+  "runtime_settings_local_api_setup_hint": {
+    "message": "Servidor de API local (predeterminado: http://127.0.0.1:8642). Pega su clave a continuación.",
+    "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_public_alpha_load_unpacked": {
+    "message": "· alfa público/carga desempaquetada",
+    "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_status_connection_not_responding": {
+    "message": "{summary} no responde. Inicie Hermes Desktop/Gateway y vuelva a conectarse.",
+    "description": "Runtime interface message status.connection_not_responding"
+  },
+  "runtime_status_gmail_no_rendered": {
+    "message": "No había cuerpos de mensajes renderizados disponibles.",
+    "description": "Runtime interface message status.gmail_no_rendered"
+  },
+  "runtime_status_model_discovery_limited": {
+    "message": "Gateway expone solo una fila de /v1/models y /api/sessions no estaba disponible ({error}).",
+    "description": "Runtime interface message status.model_discovery_limited"
+  },
+  "runtime_status_model_lock_failed_detail": {
+    "message": "{error}. No se envía porque Hermes podría volver al modelo global.",
+    "description": "Runtime interface message status.model_lock_failed_detail"
+  },
+  "runtime_status_model_registry_fallback": {
+    "message": "Se recurre a /v1/models ({error}).",
+    "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_context_restricted": {
+    "message": "{url} - contexto restringido",
+    "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_profile_selected_restart": {
+    "message": "Se seleccionó {profile}. Reinicie el gateway de Hermes si el perfil en ejecución no cambia de inmediato.",
+    "description": "Runtime interface message status.profile_selected_restart"
+  },
+  "runtime_status_profile_switch_unavailable": {
+    "message": "{error}. Browser usará el perfil de Hermes actualmente en ejecución.",
+    "description": "Runtime interface message status.profile_switch_unavailable"
+  },
+  "runtime_tasks_summary": {
+    "message": "{complete} completo · {active} activo",
+    "description": "Runtime interface message tasks.summary"
+  },
+  "runtime_ui_0_complete_0_active": {
+    "message": "0 completo · 0 activo",
+    "description": "Runtime interface message ui.0.complete.0.active"
+  },
+  "runtime_ui_accept": {
+    "message": "Aceptar",
+    "description": "Runtime interface message ui.accept"
+  },
+  "runtime_ui_access": {
+    "message": "Acceso",
+    "description": "Runtime interface message ui.access"
+  },
+  "runtime_ui_account": {
+    "message": "cuenta",
+    "description": "Runtime interface message ui.account"
+  },
+  "runtime_ui_action": {
+    "message": "acción",
+    "description": "Runtime interface message ui.action"
+  },
+  "runtime_ui_actions": {
+    "message": "Acciones",
+    "description": "Runtime interface message ui.actions"
+  },
+  "runtime_ui_active": {
+    "message": "activo",
+    "description": "Runtime interface message ui.active"
+  },
+  "runtime_ui_active_profile": {
+    "message": "Perfil activo",
+    "description": "Runtime interface message ui.active.profile"
+  },
+  "runtime_ui_active_tab": {
+    "message": "Pestaña activa",
+    "description": "Runtime interface message ui.active.tab"
+  },
+  "runtime_ui_active_tab_2bc454c2": {
+    "message": "PESTAÑA ACTIVA",
+    "description": "Runtime interface message ui.active.tab.2bc454c2"
+  },
+  "runtime_ui_active_tab_ready": {
+    "message": "Pestaña activa lista",
+    "description": "Runtime interface message ui.active.tab.ready"
+  },
+  "runtime_ui_active_tab_status": {
+    "message": "Estado de pestaña activa",
+    "description": "Runtime interface message ui.active.tab.status"
+  },
+  "runtime_ui_activity": {
+    "message": "Actividad",
+    "description": "Runtime interface message ui.activity"
+  },
+  "runtime_ui_add": {
+    "message": "Añadir",
+    "description": "Runtime interface message ui.add"
+  },
+  "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
+    "message": "Agregue instrucciones después del comando de barra diagonal antes de enviar.",
+    "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_adjust": {
+    "message": "Ajustar",
+    "description": "Runtime interface message ui.adjust"
+  },
+  "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
+    "message": "Ajuste el panel lateral para facilitar la lectura sin cambiar el zoom del navegador.",
+    "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_agent": {
+    "message": "AGENTE",
+    "description": "Runtime interface message ui.agent"
+  },
+  "runtime_ui_agent_5ce2e6f4": {
+    "message": "Agente",
+    "description": "Runtime interface message ui.agent.5ce2e6f4"
+  },
+  "runtime_ui_agent_discovery_has_not_run_yet": {
+    "message": "El descubrimiento del agente aún no se ha ejecutado.",
+    "description": "Runtime interface message ui.agent.discovery.has.not.run.yet"
+  },
+  "runtime_ui_agent_host": {
+    "message": "Anfitrión del agente",
+    "description": "Runtime interface message ui.agent.host"
+  },
+  "runtime_ui_agent_host_invalid": {
+    "message": "El host del agente no es válido",
+    "description": "Runtime interface message ui.agent.host.invalid"
+  },
+  "runtime_ui_agent_ports_comma_separated_default_8642_8646": {
+    "message": "Puertos del agente (separados por comas, predeterminado 8642-8646)",
+    "description": "Runtime interface message ui.agent.ports.comma.separated.default.8642.8646"
+  },
+  "runtime_ui_agent_ports_invalid": {
+    "message": "Puertos de agente no válidos",
+    "description": "Runtime interface message ui.agent.ports.invalid"
+  },
+  "runtime_ui_agent_profile": {
+    "message": "Perfil del agente",
+    "description": "Runtime interface message ui.agent.profile"
+  },
+  "runtime_ui_agent_scheme": {
+    "message": "Esquema de agente",
+    "description": "Runtime interface message ui.agent.scheme"
+  },
+  "runtime_ui_agent_scheme_invalid": {
+    "message": "Esquema de agente no válido",
+    "description": "Runtime interface message ui.agent.scheme.invalid"
+  },
+  "runtime_ui_agent_settings_invalid": {
+    "message": "La configuración del agente no es válida",
+    "description": "Runtime interface message ui.agent.settings.invalid"
+  },
+  "runtime_ui_agents_scanned": {
+    "message": "Agentes escaneados",
+    "description": "Runtime interface message ui.agents.scanned"
+  },
+  "runtime_ui_all": {
+    "message": "Todos",
+    "description": "Runtime interface message ui.all"
+  },
+  "runtime_ui_allow": {
+    "message": "Permitir",
+    "description": "Runtime interface message ui.allow"
+  },
+  "runtime_ui_allow_hermes_microphone": {
+    "message": "Permitir Hermes Micrófono",
+    "description": "Runtime interface message ui.allow.hermes.microphone"
+  },
+  "runtime_ui_allow_microphone": {
+    "message": "Permitir micrófono",
+    "description": "Runtime interface message ui.allow.microphone"
+  },
+  "runtime_ui_allow_microphone_access": {
+    "message": "Permitir acceso al micrófono",
+    "description": "Runtime interface message ui.allow.microphone.access"
+  },
+  "runtime_ui_already_connected": {
+    "message": "Ya conectado",
+    "description": "Runtime interface message ui.already.connected"
+  },
+  "runtime_ui_always": {
+    "message": "siempre",
+    "description": "Runtime interface message ui.always"
+  },
+  "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
+    "message": "La escucha activa del navegador siempre activa requiere compatibilidad con documentos fuera de pantalla Chromium.",
+    "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
+  },
+  "runtime_ui_answer": {
+    "message": "respuesta",
+    "description": "Runtime interface message ui.answer"
+  },
+  "runtime_ui_api": {
+    "message": "API",
+    "description": "Runtime interface message ui.api"
+  },
+  "runtime_ui_api_key_blank_dashboard": {
+    "message": "Tecla API (en blanco = panel)",
+    "description": "Runtime interface message ui.api.key.blank.dashboard"
+  },
+  "runtime_ui_api_key_browser_token": {
+    "message": "API clave/token del navegador",
+    "description": "Runtime interface message ui.api.key.browser.token"
+  },
+  "runtime_ui_api_server_key": {
+    "message": "API_SERVER_KEY",
+    "description": "Runtime interface message ui.api.server.key"
+  },
+  "runtime_ui_api_token": {
+    "message": "API ficha",
+    "description": "Runtime interface message ui.api.token"
+  },
+  "runtime_ui_api_token_required": {
+    "message": "API token requerido",
+    "description": "Runtime interface message ui.api.token.required"
+  },
+  "runtime_ui_app": {
+    "message": "Aplicación",
+    "description": "Runtime interface message ui.app"
+  },
+  "runtime_ui_appearance": {
+    "message": "Apariencia",
+    "description": "Runtime interface message ui.appearance"
+  },
+  "runtime_ui_apply": {
+    "message": "Aplicar",
+    "description": "Runtime interface message ui.apply"
+  },
+  "runtime_ui_apply_to_field": {
+    "message": "Aplicar al campo",
+    "description": "Runtime interface message ui.apply.to.field"
+  },
+  "runtime_ui_approval_opened_approve_hermes_browser_extension_then_return_here": {
+    "message": "Aprobación abierta. Apruebe Hermes Browser Extension y luego regrese aquí.",
+    "description": "Runtime interface message ui.approval.opened.approve.hermes.browser.extension.then.return.here"
+  },
+  "runtime_ui_approve": {
+    "message": "Aprobar",
+    "description": "Runtime interface message ui.approve"
+  },
+  "runtime_ui_artifacts": {
+    "message": "Artefactos",
+    "description": "Runtime interface message ui.artifacts"
+  },
+  "runtime_ui_ask": {
+    "message": "preguntar",
+    "description": "Runtime interface message ui.ask"
+  },
+  "runtime_ui_ask_about_any_page_hermes_sees_the_active_tab_selected_text_pag_b2a32c39": {
+    "message": "Pregunta por cualquier página. Hermes ve la pestaña activa, el texto seleccionado, el contexto de la página y las pestañas abiertas.",
+    "description": "Runtime interface message ui.ask.about.any.page.hermes.sees.the.active.tab.selected.text.pag.b2a32c39"
+  },
+  "runtime_ui_ask_every_time": {
+    "message": "pregunta cada vez",
+    "description": "Runtime interface message ui.ask.every.time"
+  },
+  "runtime_ui_ask_hermes": {
+    "message": "Pregunta a Hermes",
+    "description": "Runtime interface message ui.ask.hermes"
+  },
+  "runtime_ui_ask_hermes_36d55d5a": {
+    "message": "PREGUNTAR A HERMES",
+    "description": "Runtime interface message ui.ask.hermes.36d55d5a"
+  },
+  "runtime_ui_ask_hermes_about_the_active_page_context": {
+    "message": "Pregunta a Hermes sobre el contexto de la página activa.",
+    "description": "Runtime interface message ui.ask.hermes.about.the.active.page.context"
+  },
+  "runtime_ui_ask_hermes_about_this_page": {
+    "message": "Pregunta a Hermes sobre esta página...",
+    "description": "Runtime interface message ui.ask.hermes.about.this.page"
+  },
+  "runtime_ui_ask_hermes_about_this_selection": {
+    "message": "Pregunta a Hermes sobre esta selección",
+    "description": "Runtime interface message ui.ask.hermes.about.this.selection"
+  },
+  "runtime_ui_ask_hermes_anything": {
+    "message": "Pregúntale a Hermes cualquier cosa…",
+    "description": "Runtime interface message ui.ask.hermes.anything"
+  },
+  "runtime_ui_assist_could_not_run": {
+    "message": "La asistencia no se pudo ejecutar",
+    "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_options": {
+    "message": "Opciones de asistencia",
+    "description": "Runtime interface message ui.assist.options"
+  },
+  "runtime_ui_assist_session_history": {
+    "message": "Historial de sesiones de asistencia",
+    "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assistant": {
+    "message": "asistente",
+    "description": "Runtime interface message ui.assistant"
+  },
+  "runtime_ui_attach": {
+    "message": "Adjuntar",
+    "description": "Runtime interface message ui.attach"
+  },
+  "runtime_ui_attach_context": {
+    "message": "Adjuntar contexto",
+    "description": "Runtime interface message ui.attach.context"
+  },
+  "runtime_ui_attach_files": {
+    "message": "Adjuntar archivos",
+    "description": "Runtime interface message ui.attach.files"
+  },
+  "runtime_ui_attach_the_active_signed_in_hermes_cloud_agent_tab_with_a_one_use_ticket": {
+    "message": "Adjunte la pestaña del agente activo Hermes Cloud que haya iniciado sesión con un ticket de un solo uso.",
+    "description": "Runtime interface message ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket"
+  },
+  "runtime_ui_attach_to_current_tab": {
+    "message": "Adjuntar a la pestaña actual",
+    "description": "Runtime interface message ui.attach.to.current.tab"
+  },
+  "runtime_ui_attachment": {
+    "message": "Adjunto",
+    "description": "Runtime interface message ui.attachment"
+  },
+  "runtime_ui_attachments": {
+    "message": "Adjuntos",
+    "description": "Runtime interface message ui.attachments"
+  },
+  "runtime_ui_attribute": {
+    "message": "Atributo",
+    "description": "Runtime interface message ui.attribute"
+  },
+  "runtime_ui_audio": {
+    "message": "Audio",
+    "description": "Runtime interface message ui.audio"
+  },
+  "runtime_ui_authorization": {
+    "message": "Autorización",
+    "description": "Runtime interface message ui.authorization"
+  },
+  "runtime_ui_auto": {
+    "message": "Automático",
+    "description": "Runtime interface message ui.auto"
+  },
+  "runtime_ui_auto_name_browser_sessions": {
+    "message": "Sesiones de navegador con nombre automático",
+    "description": "Runtime interface message ui.auto.name.browser.sessions"
+  },
+  "runtime_ui_auto_name_skipped": {
+    "message": "Nombre automático omitido",
+    "description": "Runtime interface message ui.auto.name.skipped"
+  },
+  "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
+    "message": "El emparejamiento automático no está disponible en este tiempo de ejecución Hermes. Abra Configuración y use la configuración manual con su URL Gateway y su token API.",
+    "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
+  },
+  "runtime_ui_automatic_replacement": {
+    "message": "Reemplazo automático",
+    "description": "Runtime interface message ui.automatic.replacement"
+  },
+  "runtime_ui_available": {
+    "message": "disponible",
+    "description": "Runtime interface message ui.available"
+  },
+  "runtime_ui_available_7c62a142": {
+    "message": "Disponible",
+    "description": "Runtime interface message ui.available.7c62a142"
+  },
+  "runtime_ui_back": {
+    "message": "Atrás",
+    "description": "Runtime interface message ui.back"
+  },
+  "runtime_ui_back_to_actions": {
+    "message": "Volver a acciones",
+    "description": "Runtime interface message ui.back.to.actions"
+  },
+  "runtime_ui_back_to_result": {
+    "message": "Volver al resultado",
+    "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_background": {
+    "message": "Antecedentes",
+    "description": "Runtime interface message ui.background"
+  },
+  "runtime_ui_block": {
+    "message": "Bloquear",
+    "description": "Runtime interface message ui.block"
+  },
+  "runtime_ui_blocked": {
+    "message": "Bloqueado",
+    "description": "Runtime interface message ui.blocked"
+  },
+  "runtime_ui_blocked_fcc4cce1": {
+    "message": "BLOQUEADO",
+    "description": "Runtime interface message ui.blocked.fcc4cce1"
+  },
+  "runtime_ui_body": {
+    "message": "cuerpo",
+    "description": "Runtime interface message ui.body"
+  },
+  "runtime_ui_browser": {
+    "message": "Navegador",
+    "description": "Runtime interface message ui.browser"
+  },
+  "runtime_ui_browser_behavior": {
+    "message": "Comportamiento del navegador",
+    "description": "Runtime interface message ui.browser.behavior"
+  },
+  "runtime_ui_browser_extension": {
+    "message": "Extensión del navegador",
+    "description": "Runtime interface message ui.browser.extension"
+  },
+  "runtime_ui_browser_extension_full_view": {
+    "message": "Vista completa de la extensión del navegador",
+    "description": "Runtime interface message ui.browser.extension.full.view"
+  },
+  "runtime_ui_browser_fallback_phrase": {
+    "message": "Frase alternativa del navegador",
+    "description": "Runtime interface message ui.browser.fallback.phrase"
+  },
+  "runtime_ui_browser_local_fallback": {
+    "message": "Reserva local del navegador",
+    "description": "Runtime interface message ui.browser.local.fallback"
+  },
+  "runtime_ui_browser_update_review": {
+    "message": "Revisión de actualización del navegador",
+    "description": "Runtime interface message ui.browser.update.review"
+  },
+  "runtime_ui_browser_updates": {
+    "message": "Actualizaciones del navegador",
+    "description": "Runtime interface message ui.browser.updates"
+  },
+  "runtime_ui_build": {
+    "message": "construir",
+    "description": "Runtime interface message ui.build"
+  },
+  "runtime_ui_building_redacted_diagnostics": {
+    "message": "Construyendo diagnósticos redactados...",
+    "description": "Runtime interface message ui.building.redacted.diagnostics"
+  },
+  "runtime_ui_cache": {
+    "message": "caché",
+    "description": "Runtime interface message ui.cache"
+  },
+  "runtime_ui_cancel": {
+    "message": "Cancelar",
+    "description": "Runtime interface message ui.cancel"
+  },
+  "runtime_ui_canonical_hermes_history_model_selection_tools_and_generated_me_c7aacd25": {
+    "message": "El historial canónico de Hermes, la selección de modelos, las herramientas y los medios generados permanecen adjuntos a esta sesión.",
+    "description": "Runtime interface message ui.canonical.hermes.history.model.selection.tools.and.generated.me.c7aacd25"
+  },
+  "runtime_ui_capabilities": {
+    "message": "Capacidades",
+    "description": "Runtime interface message ui.capabilities"
+  },
+  "runtime_ui_capability": {
+    "message": "Capacidad",
+    "description": "Runtime interface message ui.capability"
+  },
+  "runtime_ui_capture_visible_gmail_thread": {
+    "message": "Capturar hilo visible Gmail",
+    "description": "Runtime interface message ui.capture.visible.gmail.thread"
+  },
+  "runtime_ui_card": {
+    "message": "tarjeta",
+    "description": "Runtime interface message ui.card"
+  },
+  "runtime_ui_category": {
+    "message": "categoría",
+    "description": "Runtime interface message ui.category"
+  },
+  "runtime_ui_change": {
+    "message": "Cambiar",
+    "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_model_and_runtime_options": {
+    "message": "Cambiar modelo y opciones de tiempo de ejecución",
+    "description": "Runtime interface message ui.change.model.and.runtime.options"
+  },
+  "runtime_ui_changes_apply_instantly_and_are_saved_automatically": {
+    "message": "Los cambios se aplican instantáneamente y se guardan automáticamente.",
+    "description": "Runtime interface message ui.changes.apply.instantly.and.are.saved.automatically"
+  },
+  "runtime_ui_channel": {
+    "message": "canal",
+    "description": "Runtime interface message ui.channel"
+  },
+  "runtime_ui_channels": {
+    "message": "Canales",
+    "description": "Runtime interface message ui.channels"
+  },
+  "runtime_ui_chat_only": {
+    "message": "Solo chat",
+    "description": "Runtime interface message ui.chat.only"
+  },
+  "runtime_ui_chat_only_3b155e99": {
+    "message": "💬 Solo chat",
+    "description": "Runtime interface message ui.chat.only.3b155e99"
+  },
+  "runtime_ui_chat_only_mode_is_active_hermes_will_not_read_or_attach_browser_13891aa3": {
+    "message": "El modo Solo chat está activo. Hermes no leerá ni adjuntará el contexto del navegador en este turno.",
+    "description": "Runtime interface message ui.chat.only.mode.is.active.hermes.will.not.read.or.attach.browser.13891aa3"
+  },
+  "runtime_ui_chats": {
+    "message": "Charlas",
+    "description": "Runtime interface message ui.chats"
+  },
+  "runtime_ui_check": {
+    "message": "comprobar",
+    "description": "Runtime interface message ui.check"
+  },
+  "runtime_ui_checking": {
+    "message": "Comprobando...",
+    "description": "Runtime interface message ui.checking"
+  },
+  "runtime_ui_checking_browser_main": {
+    "message": "Comprobando el navegador principal...",
+    "description": "Runtime interface message ui.checking.browser.main"
+  },
+  "runtime_ui_checking_hermes": {
+    "message": "Comprobando Hermes",
+    "description": "Runtime interface message ui.checking.hermes"
+  },
+  "runtime_ui_checking_settings_gateway_capabilities_models_and_sessions": {
+    "message": "Comprobando configuración, Gateway, capacidades, modelos y sesiones.",
+    "description": "Runtime interface message ui.checking.settings.gateway.capabilities.models.and.sessions"
+  },
+  "runtime_ui_choose": {
+    "message": "Elegir",
+    "description": "Runtime interface message ui.choose"
+  },
+  "runtime_ui_choose_9fd8325f": {
+    "message": "ELEGIR",
+    "description": "Runtime interface message ui.choose.9fd8325f"
+  },
+  "runtime_ui_choose_another_tab_or_follow_the_active_tab": {
+    "message": "Elija otra pestaña o siga la pestaña activa.",
+    "description": "Runtime interface message ui.choose.another.tab.or.follow.the.active.tab"
+  },
+  "runtime_ui_choose_any_available_model_for_hermes_assist_if_the_gateway_can_848c1645": {
+    "message": "Elija cualquier modelo disponible para Hermes Assist. Si Gateway no puede aplicar ese modelo exacto, Assist usa de forma transparente el valor predeterminado de Gateway y etiqueta el resultado.",
+    "description": "Runtime interface message ui.choose.any.available.model.for.hermes.assist.if.the.gateway.can.848c1645"
+  },
+  "runtime_ui_choose_assist_model": {
+    "message": "Elija el modelo de asistencia",
+    "description": "Runtime interface message ui.choose.assist.model"
+  },
+  "runtime_ui_choose_hermes_model": {
+    "message": "Elija el modelo Hermes",
+    "description": "Runtime interface message ui.choose.hermes.model"
+  },
+  "runtime_ui_choose_model": {
+    "message": "Elige modelo",
+    "description": "Runtime interface message ui.choose.model"
+  },
+  "runtime_ui_choose_the_brightness_treatment_for_this_web_workspace": {
+    "message": "Elija el tratamiento de brillo para este espacio de trabajo web.",
+    "description": "Runtime interface message ui.choose.the.brightness.treatment.for.this.web.workspace"
+  },
+  "runtime_ui_choose_the_model_used_by_hermes_assist": {
+    "message": "Elija el modelo utilizado por Hermes Assist",
+    "description": "Runtime interface message ui.choose.the.model.used.by.hermes.assist"
+  },
+  "runtime_ui_choose_what_browser_context_is_allowed_into_each_prompt": {
+    "message": "Elija qué contexto del navegador está permitido en cada mensaje.",
+    "description": "Runtime interface message ui.choose.what.browser.context.is.allowed.into.each.prompt"
+  },
+  "runtime_ui_choose_where_ask_explain_improve_and_summarize_selection_tasks_run": {
+    "message": "Elija dónde se ejecutan las tareas de selección Preguntar, Explicar, Mejorar y Resumir.",
+    "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
+  },
+  "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
+    "message": "Elija dónde llega esta sesión del navegador Hermes.",
+    "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
+  },
+  "runtime_ui_choose_where_to_send": {
+    "message": "Elige dónde enviar",
+    "description": "Runtime interface message ui.choose.where.to.send"
+  },
+  "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
+    "message": "Elija qué perfil de agente Hermes debe usar el navegador cuando el gateway local exponga perfiles.",
+    "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
+  },
+  "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
+    "message": "Elija qué pestaña Hermes lee y qué pestañas abiertas aparecen en el mensaje",
+    "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
+  },
+  "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
+    "message": "Chrome puede suprimir las indicaciones del micrófono dentro de los paneles laterales de extensión. Esta página de extensión temporal solicita a Chrome acceso al micrófono y luego lo envía de regreso al panel lateral de Hermes.",
+    "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
+  },
+  "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
+    "message": "Chromium puede bloquear la captura del micrófono dentro de los paneles laterales de extensión. Esta pestaña de extensión visible graba desde el mismo origen de extensión Hermes cuando Hermes STT está disponible, o utiliza el respaldo de voz del navegador cuando el tiempo de ejecución conectado no expone la transcripción de audio.",
+    "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_class": {
+    "message": "clase",
+    "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clear": {
+    "message": "Borrar",
+    "description": "Runtime interface message ui.clear"
+  },
+  "runtime_ui_clear_picked_element": {
+    "message": "✕ Borrar elemento seleccionado",
+    "description": "Runtime interface message ui.clear.picked.element"
+  },
+  "runtime_ui_clear_stored_token": {
+    "message": "Borrar token almacenado",
+    "description": "Runtime interface message ui.clear.stored.token"
+  },
+  "runtime_ui_cli": {
+    "message": "CLI",
+    "description": "Runtime interface message ui.cli"
+  },
+  "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
+    "message": "Haga clic en Permitir micrófono para solicitar acceso. Chromium requiere que esta solicitud se realice desde una página de extensión visible.",
+    "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
+  },
+  "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
+    "message": "Haga clic en cualquier elemento de la página. Presione Esc para cancelar.",
+    "description": "Runtime interface message ui.click.any.element.on.the.page.press.esc.to.cancel"
+  },
+  "runtime_ui_click_connect_to_hermes_or_use_manual_setup_with_a_local_remote_5b53a482": {
+    "message": "Haga clic en Conectarse a Hermes o use la configuración manual con una URL y un token Gateway local/remoto.",
+    "description": "Runtime interface message ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482"
+  },
+  "runtime_ui_click_start_dictation_to_grant_microphone_access_and_record": {
+    "message": "Haga clic en Iniciar dictado para otorgar acceso al micrófono y grabar.",
+    "description": "Runtime interface message ui.click.start.dictation.to.grant.microphone.access.and.record"
+  },
+  "runtime_ui_click_the_mic_again_to_transcribe_with_hermes_speech_to_text": {
+    "message": "Vuelva a hacer clic en el micrófono para transcribir con Hermes voz a texto.",
+    "description": "Runtime interface message ui.click.the.mic.again.to.transcribe.with.hermes.speech.to.text"
+  },
+  "runtime_ui_client": {
+    "message": "Cliente",
+    "description": "Runtime interface message ui.client"
+  },
+  "runtime_ui_close": {
+    "message": "Cerrar",
+    "description": "Runtime interface message ui.close"
+  },
+  "runtime_ui_close_dbc87420": {
+    "message": "CERRAR",
+    "description": "Runtime interface message ui.close.dbc87420"
+  },
+  "runtime_ui_close_generated_image": {
+    "message": "Cerrar imagen generada",
+    "description": "Runtime interface message ui.close.generated.image"
+  },
+  "runtime_ui_close_hermes_assist": {
+    "message": "Cerrar Hermes Assist",
+    "description": "Runtime interface message ui.close.hermes.assist"
+  },
+  "runtime_ui_close_model_picker": {
+    "message": "Cerrar selector de modelo",
+    "description": "Runtime interface message ui.close.model.picker"
+  },
+  "runtime_ui_close_settings": {
+    "message": "Cerrar configuración",
+    "description": "Runtime interface message ui.close.settings"
+  },
+  "runtime_ui_close_update_review": {
+    "message": "Cerrar revisión de actualización",
+    "description": "Runtime interface message ui.close.update.review"
+  },
+  "runtime_ui_cloud": {
+    "message": "nube",
+    "description": "Runtime interface message ui.cloud"
+  },
+  "runtime_ui_code": {
+    "message": "Código",
+    "description": "Runtime interface message ui.code"
+  },
+  "runtime_ui_collapse": {
+    "message": "Colapso",
+    "description": "Runtime interface message ui.collapse"
+  },
+  "runtime_ui_color": {
+    "message": "Color",
+    "description": "Runtime interface message ui.color"
+  },
+  "runtime_ui_color_mode": {
+    "message": "Modo de color",
+    "description": "Runtime interface message ui.color.mode"
+  },
+  "runtime_ui_color_mode_588a2981": {
+    "message": "Modo de color",
+    "description": "Runtime interface message ui.color.mode.588a2981"
+  },
+  "runtime_ui_command": {
+    "message": "Comando",
+    "description": "Runtime interface message ui.command"
+  },
+  "runtime_ui_commands": {
+    "message": "comandos",
+    "description": "Runtime interface message ui.commands"
+  },
+  "runtime_ui_commands_45e5f3f7": {
+    "message": "Comandos",
+    "description": "Runtime interface message ui.commands.45e5f3f7"
+  },
+  "runtime_ui_commands_760ac2f0": {
+    "message": "/ Comandos",
+    "description": "Runtime interface message ui.commands.760ac2f0"
+  },
+  "runtime_ui_commit": {
+    "message": "comprometerse",
+    "description": "Runtime interface message ui.commit"
+  },
+  "runtime_ui_compact_context": {
+    "message": "Contexto compacto",
+    "description": "Runtime interface message ui.compact.context"
+  },
+  "runtime_ui_compacting": {
+    "message": "Compactando…",
+    "description": "Runtime interface message ui.compacting"
+  },
+  "runtime_ui_comparing_this_loaded_build_with_the_public_github_repository": {
+    "message": "Comparando esta compilación cargada con el repositorio público GitHub.",
+    "description": "Runtime interface message ui.comparing.this.loaded.build.with.the.public.github.repository"
+  },
+  "runtime_ui_compatibility": {
+    "message": "Compatibilidad",
+    "description": "Runtime interface message ui.compatibility"
+  },
+  "runtime_ui_complete": {
+    "message": "completo",
+    "description": "Runtime interface message ui.complete"
+  },
+  "runtime_ui_complete_2c85a73c": {
+    "message": "COMPLETAR",
+    "description": "Runtime interface message ui.complete.2c85a73c"
+  },
+  "runtime_ui_component": {
+    "message": "Componente",
+    "description": "Runtime interface message ui.component"
+  },
+  "runtime_ui_config": {
+    "message": "configuración",
+    "description": "Runtime interface message ui.config"
+  },
+  "runtime_ui_configuration": {
+    "message": "Configuración",
+    "description": "Runtime interface message ui.configuration"
+  },
+  "runtime_ui_configure": {
+    "message": "Configurar",
+    "description": "Runtime interface message ui.configure"
+  },
+  "runtime_ui_confirm": {
+    "message": "Confirmar",
+    "description": "Runtime interface message ui.confirm"
+  },
+  "runtime_ui_connect_first": {
+    "message": "Conéctate primero",
+    "description": "Runtime interface message ui.connect.first"
+  },
+  "runtime_ui_connect_hermes": {
+    "message": "Conectar Hermes",
+    "description": "Runtime interface message ui.connect.hermes"
+  },
+  "runtime_ui_connect_or_test_your_gateway_to_see_supported_features": {
+    "message": "Conecte o pruebe su Gateway para ver las funciones compatibles.",
+    "description": "Runtime interface message ui.connect.or.test.your.gateway.to.see.supported.features"
+  },
+  "runtime_ui_connect_to_hermes": {
+    "message": "Conéctese a Hermes",
+    "description": "Runtime interface message ui.connect.to.hermes"
+  },
+  "runtime_ui_connect_to_hermes_then_send_the_prepared_update_request": {
+    "message": "Conéctese a Hermes y luego envíe la solicitud de actualización preparada.",
+    "description": "Runtime interface message ui.connect.to.hermes.then.send.the.prepared.update.request"
+  },
+  "runtime_ui_connected": {
+    "message": "Conectado",
+    "description": "Runtime interface message ui.connected"
+  },
+  "runtime_ui_connected_agent": {
+    "message": "Agente conectado",
+    "description": "Runtime interface message ui.connected.agent"
+  },
+  "runtime_ui_connected_agent_1e63a585": {
+    "message": "AGENTE CONECTADO",
+    "description": "Runtime interface message ui.connected.agent.1e63a585"
+  },
+  "runtime_ui_connected_to_hermes_this_draft_will_create_a_new_hermes_web_ses_59e2faf2": {
+    "message": "Conectado a Hermes. Este borrador creará una nueva sesión Hermes Web cuando lo envíes.",
+    "description": "Runtime interface message ui.connected.to.hermes.this.draft.will.create.a.new.hermes.web.ses.59e2faf2"
+  },
+  "runtime_ui_connected_to_hermes_you_can_start_chatting_with_page_context": {
+    "message": "Conectado a Hermes. Puede comenzar a chatear con el contexto de la página.",
+    "description": "Runtime interface message ui.connected.to.hermes.you.can.start.chatting.with.page.context"
+  },
+  "runtime_ui_connecting": {
+    "message": "Conectando...",
+    "description": "Runtime interface message ui.connecting"
+  },
+  "runtime_ui_connecting_c1f3b71f": {
+    "message": "Conectando",
+    "description": "Runtime interface message ui.connecting.c1f3b71f"
+  },
+  "runtime_ui_connection": {
+    "message": "Conexión",
+    "description": "Runtime interface message ui.connection"
+  },
+  "runtime_ui_connection_detail": {
+    "message": "DETALLE DE CONEXIÓN",
+    "description": "Runtime interface message ui.connection.detail"
+  },
+  "runtime_ui_connection_details": {
+    "message": "Detalles de conexión",
+    "description": "Runtime interface message ui.connection.details"
+  },
+  "runtime_ui_connection_mode": {
+    "message": "Modo de conexión",
+    "description": "Runtime interface message ui.connection.mode"
+  },
+  "runtime_ui_connection_not_configured": {
+    "message": "Conexión no configurada",
+    "description": "Runtime interface message ui.connection.not.configured"
+  },
+  "runtime_ui_connection_security": {
+    "message": "Seguridad de la conexión",
+    "description": "Runtime interface message ui.connection.security"
+  },
+  "runtime_ui_connection_truth": {
+    "message": "VERDAD DE CONEXIÓN",
+    "description": "Runtime interface message ui.connection.truth"
+  },
+  "runtime_ui_content": {
+    "message": "Contenido",
+    "description": "Runtime interface message ui.content"
+  },
+  "runtime_ui_context": {
+    "message": "Contexto",
+    "description": "Runtime interface message ui.context"
+  },
+  "runtime_ui_context_compaction_failed": {
+    "message": "Error en la compactación del contexto",
+    "description": "Runtime interface message ui.context.compaction.failed"
+  },
+  "runtime_ui_context_compaction_unavailable": {
+    "message": "Compactación de contexto no disponible",
+    "description": "Runtime interface message ui.context.compaction.unavailable"
+  },
+  "runtime_ui_context_refresh_unavailable": {
+    "message": "Actualización de contexto no disponible",
+    "description": "Runtime interface message ui.context.refresh.unavailable"
+  },
+  "runtime_ui_context_window": {
+    "message": "VENTANA DE CONTEXTO",
+    "description": "Runtime interface message ui.context.window"
+  },
+  "runtime_ui_context_window_details": {
+    "message": "Detalles de la ventana de contexto",
+    "description": "Runtime interface message ui.context.window.details"
+  },
+  "runtime_ui_continue": {
+    "message": "Continuar",
+    "description": "Runtime interface message ui.continue"
+  },
+  "runtime_ui_continue_current_chat": {
+    "message": "Continuar el chat actual",
+    "description": "Runtime interface message ui.continue.current.chat"
+  },
+  "runtime_ui_continue_here": {
+    "message": "Continuar aquí",
+    "description": "Runtime interface message ui.continue.here"
+  },
+  "runtime_ui_control_the_field_launcher_and_where_assist_runs_by_default": {
+    "message": "Controla el iniciador de campo y dónde se ejecuta Assist de forma predeterminada.",
+    "description": "Runtime interface message ui.control.the.field.launcher.and.where.assist.runs.by.default"
+  },
+  "runtime_ui_conversation": {
+    "message": "Conversación",
+    "description": "Runtime interface message ui.conversation"
+  },
+  "runtime_ui_cookie": {
+    "message": "galleta",
+    "description": "Runtime interface message ui.cookie"
+  },
+  "runtime_ui_copied": {
+    "message": "copiado",
+    "description": "Runtime interface message ui.copied"
+  },
+  "runtime_ui_copied_redacted_diagnostics_paste_them_into_the_github_issue_or_064866e3": {
+    "message": "Diagnósticos redactados copiados. Pégalos en el tema de GitHub o en el hilo de soporte.",
+    "description": "Runtime interface message ui.copied.redacted.diagnostics.paste.them.into.the.github.issue.or.064866e3"
+  },
+  "runtime_ui_copied_result_to_clipboard": {
+    "message": "Resultado copiado al portapapeles",
+    "description": "Runtime interface message ui.copied.result.to.clipboard"
+  },
+  "runtime_ui_copy": {
+    "message": "Copiar",
+    "description": "Runtime interface message ui.copy"
+  },
+  "runtime_ui_copy_a_redacted_compatibility_report_it_excludes_tokens_cookies_ab0019e3": {
+    "message": "Copie un informe de compatibilidad redactado. Excluye tokens, cookies, texto de página, texto seleccionado, títulos de pestañas y URL completas.",
+    "description": "Runtime interface message ui.copy.a.redacted.compatibility.report.it.excludes.tokens.cookies.ab0019e3"
+  },
+  "runtime_ui_copy_blocked_select_preview_manually": {
+    "message": "Copia bloqueada · seleccionar vista previa manualmente",
+    "description": "Runtime interface message ui.copy.blocked.select.preview.manually"
+  },
+  "runtime_ui_copy_diagnostics": {
+    "message": "Copiar diagnóstico",
+    "description": "Runtime interface message ui.copy.diagnostics"
+  },
+  "runtime_ui_copy_failed": {
+    "message": "Copia fallida",
+    "description": "Runtime interface message ui.copy.failed"
+  },
+  "runtime_ui_copy_redacted_diagnostics": {
+    "message": "Copiar diagnósticos redactados",
+    "description": "Runtime interface message ui.copy.redacted.diagnostics"
+  },
+  "runtime_ui_copy_server_env": {
+    "message": "Copiar entorno del servidor",
+    "description": "Runtime interface message ui.copy.server.env"
+  },
+  "runtime_ui_copy_session_id": {
+    "message": "Copiar ID de sesión",
+    "description": "Runtime interface message ui.copy.session.id"
+  },
+  "runtime_ui_copy_to_use": {
+    "message": "Copiar para usar",
+    "description": "Runtime interface message ui.copy.to.use"
+  },
+  "runtime_ui_copy_unavailable": {
+    "message": "Copia no disponible",
+    "description": "Runtime interface message ui.copy.unavailable"
+  },
+  "runtime_ui_copying": {
+    "message": "Copiando...",
+    "description": "Runtime interface message ui.copying"
+  },
+  "runtime_ui_could_not_change_session": {
+    "message": "No se pudo cambiar de sesión",
+    "description": "Runtime interface message ui.could.not.change.session"
+  },
+  "runtime_ui_could_not_clear_token": {
+    "message": "No se pudo borrar el token",
+    "description": "Runtime interface message ui.could.not.clear.token"
+  },
+  "runtime_ui_could_not_copy_diagnostics_check_browser_clipboard_permissions": {
+    "message": "No se pudieron copiar los diagnósticos. Verifique los permisos del portapapeles del navegador.",
+    "description": "Runtime interface message ui.could.not.copy.diagnostics.check.browser.clipboard.permissions"
+  },
+  "runtime_ui_could_not_copy_env_block": {
+    "message": "No se pudo copiar el bloque ambiental",
+    "description": "Runtime interface message ui.could.not.copy.env.block"
+  },
+  "runtime_ui_could_not_create_session": {
+    "message": "No se pudo crear la sesión",
+    "description": "Runtime interface message ui.could.not.create.session"
+  },
+  "runtime_ui_could_not_load_this_session": {
+    "message": "No se pudo cargar esta sesión",
+    "description": "Runtime interface message ui.could.not.load.this.session"
+  },
+  "runtime_ui_could_not_migrate_browser_session": {
+    "message": "No se pudo migrar la sesión del navegador",
+    "description": "Runtime interface message ui.could.not.migrate.browser.session"
+  },
+  "runtime_ui_could_not_open_full_view": {
+    "message": "No se pudo abrir la vista completa",
+    "description": "Runtime interface message ui.could.not.open.full.view"
+  },
+  "runtime_ui_could_not_open_session": {
+    "message": "No se pudo abrir la sesión",
+    "description": "Runtime interface message ui.could.not.open.session"
+  },
+  "runtime_ui_could_not_pin_active_tab": {
+    "message": "No se pudo fijar la pestaña activa",
+    "description": "Runtime interface message ui.could.not.pin.active.tab"
+  },
+  "runtime_ui_could_not_pin_tab": {
+    "message": "No se pudo fijar la pestaña",
+    "description": "Runtime interface message ui.could.not.pin.tab"
+  },
+  "runtime_ui_could_not_rename_session": {
+    "message": "No se pudo cambiar el nombre de la sesión",
+    "description": "Runtime interface message ui.could.not.rename.session"
+  },
+  "runtime_ui_could_not_start_draft": {
+    "message": "No se pudo iniciar el borrador",
+    "description": "Runtime interface message ui.could.not.start.draft"
+  },
+  "runtime_ui_could_not_start_hermes_session": {
+    "message": "No se pudo iniciar la sesión Hermes",
+    "description": "Runtime interface message ui.could.not.start.hermes.session"
+  },
+  "runtime_ui_could_not_switch_to_chat_only": {
+    "message": "No se pudo cambiar a Solo chat",
+    "description": "Runtime interface message ui.could.not.switch.to.chat.only"
+  },
+  "runtime_ui_could_not_unlock_tab_scope": {
+    "message": "No se pudo desbloquear el alcance de la pestaña",
+    "description": "Runtime interface message ui.could.not.unlock.tab.scope"
+  },
+  "runtime_ui_create": {
+    "message": "crear",
+    "description": "Runtime interface message ui.create"
+  },
+  "runtime_ui_create_and_open_a_new_hermes_assist_session": {
+    "message": "Cree y abra una nueva sesión Hermes Assist.",
+    "description": "Runtime interface message ui.create.and.open.a.new.hermes.assist.session"
+  },
+  "runtime_ui_current": {
+    "message": "Actual",
+    "description": "Runtime interface message ui.current"
+  },
+  "runtime_ui_current_session": {
+    "message": "Sesión actual",
+    "description": "Runtime interface message ui.current.session"
+  },
+  "runtime_ui_custom": {
+    "message": "personalizado",
+    "description": "Runtime interface message ui.custom"
+  },
+  "runtime_ui_custom_hermes_assist_instruction": {
+    "message": "Instrucción personalizada Hermes Assist",
+    "description": "Runtime interface message ui.custom.hermes.assist.instruction"
+  },
+  "runtime_ui_custom_model_source_is_discovery_only": {
+    "message": "La fuente del modelo personalizado es solo de descubrimiento",
+    "description": "Runtime interface message ui.custom.model.source.is.discovery.only"
+  },
+  "runtime_ui_custom_model_source_unavailable": {
+    "message": "Fuente de modelo personalizado no disponible",
+    "description": "Runtime interface message ui.custom.model.source.unavailable"
+  },
+  "runtime_ui_custom_model_source_urls": {
+    "message": "URL de origen del modelo personalizado",
+    "description": "Runtime interface message ui.custom.model.source.urls"
+  },
+  "runtime_ui_dark": {
+    "message": "☾ Oscuro",
+    "description": "Runtime interface message ui.dark"
+  },
+  "runtime_ui_dashboard_websocket": {
+    "message": "Panel de control WebSocket",
+    "description": "Runtime interface message ui.dashboard.websocket"
+  },
+  "runtime_ui_dashboard_websocket_does_not_expose_an_existing_session_model_o_bb6f12cd": {
+    "message": "El panel WebSocket aún no expone una actualización de las opciones del modelo de sesión existente. Estas opciones se aplicarán a la próxima nueva sesión.",
+    "description": "Runtime interface message ui.dashboard.websocket.does.not.expose.an.existing.session.model.o.bb6f12cd"
+  },
+  "runtime_ui_data": {
+    "message": "Datos",
+    "description": "Runtime interface message ui.data"
+  },
+  "runtime_ui_date": {
+    "message": "Fecha",
+    "description": "Runtime interface message ui.date"
+  },
+  "runtime_ui_default": {
+    "message": "Predeterminado",
+    "description": "Runtime interface message ui.default"
+  },
+  "runtime_ui_default_right_click_route": {
+    "message": "Ruta predeterminada del clic derecho",
+    "description": "Runtime interface message ui.default.right.click.route"
+  },
+  "runtime_ui_default_session_route": {
+    "message": "Ruta de sesión predeterminada",
+    "description": "Runtime interface message ui.default.session.route"
+  },
+  "runtime_ui_delete": {
+    "message": "Eliminar",
+    "description": "Runtime interface message ui.delete"
+  },
+  "runtime_ui_delete_after_the_draft_returns": {
+    "message": "Eliminar después de que regrese el borrador",
+    "description": "Runtime interface message ui.delete.after.the.draft.returns"
+  },
+  "runtime_ui_description": {
+    "message": "Descripción",
+    "description": "Runtime interface message ui.description"
+  },
+  "runtime_ui_detail": {
+    "message": "Detalle",
+    "description": "Runtime interface message ui.detail"
+  },
+  "runtime_ui_details": {
+    "message": "Detalles",
+    "description": "Runtime interface message ui.details"
+  },
+  "runtime_ui_detect_from_hermes_gateway": {
+    "message": "Detectar desde Hermes Gateway",
+    "description": "Runtime interface message ui.detect.from.hermes.gateway"
+  },
+  "runtime_ui_detecting_runtime": {
+    "message": "Detectando tiempo de ejecución",
+    "description": "Runtime interface message ui.detecting.runtime"
+  },
+  "runtime_ui_device": {
+    "message": "Dispositivo",
+    "description": "Runtime interface message ui.device"
+  },
+  "runtime_ui_devices": {
+    "message": "Dispositivos",
+    "description": "Runtime interface message ui.devices"
+  },
+  "runtime_ui_diagnostics": {
+    "message": "Diagnóstico",
+    "description": "Runtime interface message ui.diagnostics"
+  },
+  "runtime_ui_diagnostics_copied": {
+    "message": "Diagnóstico copiado",
+    "description": "Runtime interface message ui.diagnostics.copied"
+  },
+  "runtime_ui_diagnostics_copy_failed": {
+    "message": "Error en la copia de diagnóstico",
+    "description": "Runtime interface message ui.diagnostics.copy.failed"
+  },
+  "runtime_ui_dialog": {
+    "message": "Diálogo",
+    "description": "Runtime interface message ui.dialog"
+  },
+  "runtime_ui_discovered_hermes_agents": {
+    "message": "Agentes Hermes descubiertos",
+    "description": "Runtime interface message ui.discovered.hermes.agents"
+  },
+  "runtime_ui_dismiss_notification": {
+    "message": "Descartar notificación",
+    "description": "Runtime interface message ui.dismiss.notification"
+  },
+  "runtime_ui_display": {
+    "message": "Pantalla",
+    "description": "Runtime interface message ui.display"
+  },
+  "runtime_ui_dist": {
+    "message": "dist/",
+    "description": "Runtime interface message ui.dist"
+  },
+  "runtime_ui_download": {
+    "message": "Descargar",
+    "description": "Runtime interface message ui.download"
+  },
+  "runtime_ui_downloading_the_browser_language_pack_once_so_voice_dictation_c_b476f51c": {
+    "message": "Descargar el paquete de idioma del navegador una vez para que el dictado de voz pueda ejecutarse localmente.",
+    "description": "Runtime interface message ui.downloading.the.browser.language.pack.once.so.voice.dictation.c.b476f51c"
+  },
+  "runtime_ui_draft_and_input_values_stayed_excluded": {
+    "message": "Los valores borrador y de entrada quedaron excluidos.",
+    "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
+  },
+  "runtime_ui_draft_ready_for_review": {
+    "message": "Borrador listo para revisión",
+    "description": "Runtime interface message ui.draft.ready.for.review"
+  },
+  "runtime_ui_draft_ready_still_your_decision": {
+    "message": "Borrador listo. Sigue siendo tu decisión.",
+    "description": "Runtime interface message ui.draft.ready.still.your.decision"
+  },
+  "runtime_ui_draft_ready_this_managed_editor_stays_untouched": {
+    "message": "Borrador listo · este editor administrado permanece intacto",
+    "description": "Runtime interface message ui.draft.ready.this.managed.editor.stays.untouched"
+  },
+  "runtime_ui_draft_reply_with_hermes": {
+    "message": "Borrador de respuesta con Hermes",
+    "description": "Runtime interface message ui.draft.reply.with.hermes"
+  },
+  "runtime_ui_draft_saved_when_sent": {
+    "message": "Borrador · guardado cuando se envía",
+    "description": "Runtime interface message ui.draft.saved.when.sent"
+  },
+  "runtime_ui_drop_files_to_attach": {
+    "message": "Soltar archivos para adjuntar",
+    "description": "Runtime interface message ui.drop.files.to.attach"
+  },
+  "runtime_ui_edit": {
+    "message": "Editar",
+    "description": "Runtime interface message ui.edit"
+  },
+  "runtime_ui_edit_models": {
+    "message": "⚙ Editar modelos...",
+    "description": "Runtime interface message ui.edit.models"
+  },
+  "runtime_ui_edit_models_in_hermes_desktop": {
+    "message": "Editar modelos en Hermes Desktop",
+    "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
+  },
+  "runtime_ui_element": {
+    "message": "Elemento",
+    "description": "Runtime interface message ui.element"
+  },
+  "runtime_ui_element_pick_cancelled": {
+    "message": "Selección de elemento cancelada",
+    "description": "Runtime interface message ui.element.pick.cancelled"
+  },
+  "runtime_ui_element_pick_failed": {
+    "message": "Error en la elección del elemento",
+    "description": "Runtime interface message ui.element.pick.failed"
+  },
+  "runtime_ui_element_pick_is_not_available_on_this_url": {
+    "message": "La selección de elementos no está disponible en esta URL.",
+    "description": "Runtime interface message ui.element.pick.is.not.available.on.this.url"
+  },
+  "runtime_ui_element_picked": {
+    "message": "Elemento elegido",
+    "description": "Runtime interface message ui.element.picked"
+  },
+  "runtime_ui_elements": {
+    "message": "Elementos",
+    "description": "Runtime interface message ui.elements"
+  },
+  "runtime_ui_empty": {
+    "message": "vacio",
+    "description": "Runtime interface message ui.empty"
+  },
+  "runtime_ui_empty_draft": {
+    "message": "(borrador vacío)",
+    "description": "Runtime interface message ui.empty.draft"
+  },
+  "runtime_ui_enable": {
+    "message": "Habilitar",
+    "description": "Runtime interface message ui.enable"
+  },
+  "runtime_ui_enable_browser_context_before_picking_an_element": {
+    "message": "Habilite el contexto del navegador antes de elegir un elemento.",
+    "description": "Runtime interface message ui.enable.browser.context.before.picking.an.element"
+  },
+  "runtime_ui_enable_wake_word": {
+    "message": "Habilitar palabra de activación",
+    "description": "Runtime interface message ui.enable.wake.word"
+  },
+  "runtime_ui_enabled": {
+    "message": "Habilitado",
+    "description": "Runtime interface message ui.enabled"
+  },
+  "runtime_ui_english": {
+    "message": "ingles",
+    "description": "Runtime interface message ui.english"
+  },
+  "runtime_ui_enter_at_least_one_port_number_e_g_8642_8643_8644_8645_8646": {
+    "message": "Introduzca al menos un número de puerto; por ejemplo: 8642,8643,8644,8645,8646",
+    "description": "Runtime interface message ui.enter.at.least.one.port.number.e.g.8642.8643.8644.8645.8646"
+  },
+  "runtime_ui_enter_sends_shift_enter_adds_a_new_line_ctrl_v_drag_drop_or_att_a1c82bcd": {
+    "message": "Enter envía. Shift+Enter añade una nueva línea. Ctrl+V, arrastrar y soltar, o + adjunta archivos.",
+    "description": "Runtime interface message ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd"
+  },
+  "runtime_ui_enter_your_dashboard_https_url_in_settings_and_sign_in_to_it_in_0b5f6bb9": {
+    "message": "Ingrese la URL de su panel de control https en Configuración e inicie sesión en una pestaña del navegador.",
+    "description": "Runtime interface message ui.enter.your.dashboard.https.url.in.settings.and.sign.in.to.it.in.0b5f6bb9"
+  },
+  "runtime_ui_entries": {
+    "message": "Entradas",
+    "description": "Runtime interface message ui.entries"
+  },
+  "runtime_ui_entry": {
+    "message": "Entrada",
+    "description": "Runtime interface message ui.entry"
+  },
+  "runtime_ui_error": {
+    "message": "error",
+    "description": "Runtime interface message ui.error"
+  },
+  "runtime_ui_event": {
+    "message": "Evento",
+    "description": "Runtime interface message ui.event"
+  },
+  "runtime_ui_events": {
+    "message": "Eventos",
+    "description": "Runtime interface message ui.events"
+  },
+  "runtime_ui_exception": {
+    "message": "Excepción",
+    "description": "Runtime interface message ui.exception"
+  },
+  "runtime_ui_existing_attached_panels_stay_as_they_are_other_and_new_tabs_us_fb9a0ba6": {
+    "message": "Los paneles adjuntos existentes permanecen como están. Otras pestañas y las nuevas utilizan el panel compartido.",
+    "description": "Runtime interface message ui.existing.attached.panels.stay.as.they.are.other.and.new.tabs.us.fb9a0ba6"
+  },
+  "runtime_ui_expand": {
+    "message": "Expandir",
+    "description": "Runtime interface message ui.expand"
+  },
+  "runtime_ui_explain": {
+    "message": "explicar",
+    "description": "Runtime interface message ui.explain"
+  },
+  "runtime_ui_explain_selection": {
+    "message": "Explicar la selección",
+    "description": "Runtime interface message ui.explain.selection"
+  },
+  "runtime_ui_extension": {
+    "message": "Extensión",
+    "description": "Runtime interface message ui.extension"
+  },
+  "runtime_ui_fallback": {
+    "message": "respaldo",
+    "description": "Runtime interface message ui.fallback"
+  },
+  "runtime_ui_falls_back_to_review_if_the_field_changed": {
+    "message": "Vuelve a revisar si el campo cambió",
+    "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
+  },
+  "runtime_ui_fast_mode": {
+    "message": "modo rápido",
+    "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_field": {
+    "message": "campo",
+    "description": "Runtime interface message ui.field"
+  },
+  "runtime_ui_field_changed_review_required": {
+    "message": "Campo modificado · revisión requerida",
+    "description": "Runtime interface message ui.field.changed.review.required"
+  },
+  "runtime_ui_file": {
+    "message": "Archivo",
+    "description": "Runtime interface message ui.file"
+  },
+  "runtime_ui_files": {
+    "message": "▧ Archivos...",
+    "description": "Runtime interface message ui.files"
+  },
+  "runtime_ui_files_453f0471": {
+    "message": "▧ Archivos…",
+    "description": "Runtime interface message ui.files.453f0471"
+  },
+  "runtime_ui_files_6ce6c512": {
+    "message": "Archivos",
+    "description": "Runtime interface message ui.files.6ce6c512"
+  },
+  "runtime_ui_files_attached": {
+    "message": "Archivos adjuntos",
+    "description": "Runtime interface message ui.files.attached"
+  },
+  "runtime_ui_filter": {
+    "message": "Filtrar",
+    "description": "Runtime interface message ui.filter"
+  },
+  "runtime_ui_find": {
+    "message": "encontrar",
+    "description": "Runtime interface message ui.find"
+  },
+  "runtime_ui_finish": {
+    "message": "terminar",
+    "description": "Runtime interface message ui.finish"
+  },
+  "runtime_ui_finished_without_a_model_call": {
+    "message": "Terminado sin llamada de modelo.",
+    "description": "Runtime interface message ui.finished.without.a.model.call"
+  },
+  "runtime_ui_focused_draft": {
+    "message": "Borrador enfocado",
+    "description": "Runtime interface message ui.focused.draft"
+  },
+  "runtime_ui_folder": {
+    "message": "▰ Carpeta...",
+    "description": "Runtime interface message ui.folder"
+  },
+  "runtime_ui_folder_30baa249": {
+    "message": "Carpeta",
+    "description": "Runtime interface message ui.folder.30baa249"
+  },
+  "runtime_ui_form": {
+    "message": "Formulario",
+    "description": "Runtime interface message ui.form"
+  },
+  "runtime_ui_format": {
+    "message": "Formato",
+    "description": "Runtime interface message ui.format"
+  },
+  "runtime_ui_frame": {
+    "message": "marco",
+    "description": "Runtime interface message ui.frame"
+  },
+  "runtime_ui_full_largest_payload": {
+    "message": "Completo: carga útil más grande",
+    "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_gateway": {
+    "message": "Gateway",
+    "description": "Runtime interface message ui.gateway"
+  },
+  "runtime_ui_gateway_connection": {
+    "message": "Conexión de Gateway",
+    "description": "Runtime interface message ui.gateway.connection"
+  },
+  "runtime_ui_gateway_default": {
+    "message": "Predeterminado de Gateway",
+    "description": "Runtime interface message ui.gateway.default"
+  },
+  "runtime_ui_gateway_url": {
+    "message": "Gateway URL",
+    "description": "Runtime interface message ui.gateway.url"
+  },
+  "runtime_ui_generated_by_hermes": {
+    "message": "Generado por Hermes",
+    "description": "Runtime interface message ui.generated.by.hermes"
+  },
+  "runtime_ui_generated_image": {
+    "message": "IMAGEN GENERADA",
+    "description": "Runtime interface message ui.generated.image"
+  },
+  "runtime_ui_gmail_thread_capture_unavailable": {
+    "message": "Gmail captura de hilo no disponible",
+    "description": "Runtime interface message ui.gmail.thread.capture.unavailable"
+  },
+  "runtime_ui_gmail_thread_captured": {
+    "message": "Gmail hilo capturado",
+    "description": "Runtime interface message ui.gmail.thread.captured"
+  },
+  "runtime_ui_grant": {
+    "message": "subvención",
+    "description": "Runtime interface message ui.grant"
+  },
+  "runtime_ui_grid": {
+    "message": "Cuadrícula",
+    "description": "Runtime interface message ui.grid"
+  },
+  "runtime_ui_group": {
+    "message": "grupo",
+    "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_handing_update_to_hermes": {
+    "message": "Entregando actualización a Hermes",
+    "description": "Runtime interface message ui.handing.update.to.hermes"
+  },
+  "runtime_ui_hash": {
+    "message": "picadillo",
+    "description": "Runtime interface message ui.hash"
+  },
+  "runtime_ui_header": {
+    "message": "encabezado",
+    "description": "Runtime interface message ui.header"
+  },
+  "runtime_ui_help": {
+    "message": "Ayuda",
+    "description": "Runtime interface message ui.help"
+  },
+  "runtime_ui_hermes_agent": {
+    "message": "Hermes Agente",
+    "description": "Runtime interface message ui.hermes.agent"
+  },
+  "runtime_ui_hermes_agent_badge": {
+    "message": "Hermes Insignia de agente",
+    "description": "Runtime interface message ui.hermes.agent.badge"
+  },
+  "runtime_ui_hermes_api_unavailable": {
+    "message": "Hermes API no disponible",
+    "description": "Runtime interface message ui.hermes.api.unavailable"
+  },
+  "runtime_ui_hermes_appears_only_on_tabs_where_you_open_it": {
+    "message": "Hermes aparece solo en las pestañas donde lo abres.",
+    "description": "Runtime interface message ui.hermes.appears.only.on.tabs.where.you.open.it"
+  },
+  "runtime_ui_hermes_assist": {
+    "message": "Hermes Assist",
+    "description": "Runtime interface message ui.hermes.assist"
+  },
+  "runtime_ui_hermes_assist_model": {
+    "message": "Hermes Assist modelo",
+    "description": "Runtime interface message ui.hermes.assist.model"
+  },
+  "runtime_ui_hermes_browser": {
+    "message": "Hermes Browser",
+    "description": "Runtime interface message ui.hermes.browser"
+  },
+  "runtime_ui_hermes_browser_bb83b5a0": {
+    "message": "NAVEGADOR HERMES",
+    "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
+  },
+  "runtime_ui_hermes_browser_extension": {
+    "message": "EXTENSIÓN DEL NAVEGADOR HERMES",
+    "description": "Runtime interface message ui.hermes.browser.extension"
+  },
+  "runtime_ui_hermes_browser_extension_connected": {
+    "message": "Hermes Browser Extension conectado",
+    "description": "Runtime interface message ui.hermes.browser.extension.connected"
+  },
+  "runtime_ui_hermes_browser_extension_conversation": {
+    "message": "Hermes Browser Extension conversación",
+    "description": "Runtime interface message ui.hermes.browser.extension.conversation"
+  },
+  "runtime_ui_hermes_browser_intro": {
+    "message": "Hermes Browser introducción",
+    "description": "Runtime interface message ui.hermes.browser.intro"
+  },
+  "runtime_ui_hermes_browser_local_sidecar": {
+    "message": "Hermes Browser sidecar local",
+    "description": "Runtime interface message ui.hermes.browser.local.sidecar"
+  },
+  "runtime_ui_hermes_browser_update_channel": {
+    "message": "NAVEGADOR HERMES / CANAL DE ACTUALIZACIÓN",
+    "description": "Runtime interface message ui.hermes.browser.update.channel"
+  },
+  "runtime_ui_hermes_chat_actions": {
+    "message": "Hermes acciones de chat",
+    "description": "Runtime interface message ui.hermes.chat.actions"
+  },
+  "runtime_ui_hermes_cloud": {
+    "message": "Hermes Cloud",
+    "description": "Runtime interface message ui.hermes.cloud"
+  },
+  "runtime_ui_hermes_cloud_preview": {
+    "message": "Hermes Cloud Preview",
+    "description": "Runtime interface message ui.hermes.cloud.preview"
+  },
+  "runtime_ui_hermes_cloud_unavailable": {
+    "message": "Hermes Cloud no disponible",
+    "description": "Runtime interface message ui.hermes.cloud.unavailable"
+  },
+  "runtime_ui_hermes_compatibility": {
+    "message": "Hermes compatibilidad",
+    "description": "Runtime interface message ui.hermes.compatibility"
+  },
+  "runtime_ui_hermes_compatibility_fallback": {
+    "message": "Respaldo de compatibilidad de Hermes",
+    "description": "Runtime interface message ui.hermes.compatibility.fallback"
+  },
+  "runtime_ui_hermes_connection": {
+    "message": "Hermes conexión",
+    "description": "Runtime interface message ui.hermes.connection"
+  },
+  "runtime_ui_hermes_connection_status": {
+    "message": "Hermes estado de conexión",
+    "description": "Runtime interface message ui.hermes.connection.status"
+  },
+  "runtime_ui_hermes_gateway_connected_with_runtime_warning": {
+    "message": "Hermes Gateway conectado con una advertencia de tiempo de ejecución",
+    "description": "Runtime interface message ui.hermes.gateway.connected.with.runtime.warning"
+  },
+  "runtime_ui_hermes_gateway_test_failed": {
+    "message": "Falló la prueba de Hermes Gateway",
+    "description": "Runtime interface message ui.hermes.gateway.test.failed"
+  },
+  "runtime_ui_hermes_gateway_unavailable": {
+    "message": "Puerta de enlace Hermes no disponible",
+    "description": "Runtime interface message ui.hermes.gateway.unavailable"
+  },
+  "runtime_ui_hermes_has_not_acknowledged_this_session_model_pair_yet_retryin_c39a64e1": {
+    "message": "Hermes aún no ha reconocido este par de sesión/modelo. Reintentando el bloqueo antes de enviar.",
+    "description": "Runtime interface message ui.hermes.has.not.acknowledged.this.session.model.pair.yet.retryin.c39a64e1"
+  },
+  "runtime_ui_hermes_image_synthesis": {
+    "message": "Hermes síntesis de imágenes",
+    "description": "Runtime interface message ui.hermes.image.synthesis"
+  },
+  "runtime_ui_hermes_inspector": {
+    "message": "Hermes inspector",
+    "description": "Runtime interface message ui.hermes.inspector"
+  },
+  "runtime_ui_hermes_is_drafting": {
+    "message": "Hermes está redactando",
+    "description": "Runtime interface message ui.hermes.is.drafting"
+  },
+  "runtime_ui_hermes_is_not_connected_yet_browser_speech_fallback_is_unavaila_2a5064db": {
+    "message": "Hermes aún no está conectado. El respaldo de voz del navegador no está disponible aquí; conecte el panel lateral a Hermes y luego use el dictado de voz.",
+    "description": "Runtime interface message ui.hermes.is.not.connected.yet.browser.speech.fallback.is.unavaila.2a5064db"
+  },
+  "runtime_ui_hermes_is_not_currently_running_send_or_queue_the_message_instead": {
+    "message": "Hermes no se está ejecutando actualmente. En su lugar, envíe o ponga en cola el mensaje.",
+    "description": "Runtime interface message ui.hermes.is.not.currently.running.send.or.queue.the.message.instead"
+  },
+  "runtime_ui_hermes_is_thinking_brainstorming_contemplating_reasoning_proces_3e8d81c0": {
+    "message": "Hermes es pensar, hacer una lluvia de ideas, contemplar, razonar, procesar, analizar, reflexionar, ponderar, deliberar y formular.",
+    "description": "Runtime interface message ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0"
+  },
+  "runtime_ui_hermes_is_working": {
+    "message": "Hermes está funcionando…",
+    "description": "Runtime interface message ui.hermes.is.working"
+  },
+  "runtime_ui_hermes_message_composer": {
+    "message": "Hermes compositor de mensajes",
+    "description": "Runtime interface message ui.hermes.message.composer"
+  },
+  "runtime_ui_hermes_model_confirmed": {
+    "message": "Hermes modelo confirmado",
+    "description": "Runtime interface message ui.hermes.model.confirmed"
+  },
+  "runtime_ui_hermes_model_lock_accepted": {
+    "message": "Hermes modelo de bloqueo aceptado",
+    "description": "Runtime interface message ui.hermes.model.lock.accepted"
+  },
+  "runtime_ui_hermes_model_options_confirmed": {
+    "message": "Hermes opciones de modelo confirmadas",
+    "description": "Runtime interface message ui.hermes.model.options.confirmed"
+  },
+  "runtime_ui_hermes_model_options_failed": {
+    "message": "Hermes opciones de modelo fallaron",
+    "description": "Runtime interface message ui.hermes.model.options.failed"
+  },
+  "runtime_ui_hermes_model_options_mismatch": {
+    "message": "Hermes las opciones del modelo no coinciden",
+    "description": "Runtime interface message ui.hermes.model.options.mismatch"
+  },
+  "runtime_ui_hermes_model_options_pending": {
+    "message": "Hermes opciones de modelo pendientes",
+    "description": "Runtime interface message ui.hermes.model.options.pending"
+  },
+  "runtime_ui_hermes_model_requested": {
+    "message": "Hermes modelo solicitado",
+    "description": "Runtime interface message ui.hermes.model.requested"
+  },
+  "runtime_ui_hermes_models_synced": {
+    "message": "Hermes modelos sincronizados",
+    "description": "Runtime interface message ui.hermes.models.synced"
+  },
+  "runtime_ui_hermes_native_wake_word_is_unavailable": {
+    "message": "La palabra de activación nativa Hermes no está disponible.",
+    "description": "Runtime interface message ui.hermes.native.wake.word.is.unavailable"
+  },
+  "runtime_ui_hermes_on_this_machine_default_and_offline_capable": {
+    "message": "Hermes en esta máquina. Predeterminado y compatible sin conexión.",
+    "description": "Runtime interface message ui.hermes.on.this.machine.default.and.offline.capable"
+  },
+  "runtime_ui_hermes_profile_switched": {
+    "message": "Hermes perfil cambiado",
+    "description": "Runtime interface message ui.hermes.profile.switched"
+  },
+  "runtime_ui_hermes_profiles_synced": {
+    "message": "Hermes perfiles sincronizados",
+    "description": "Runtime interface message ui.hermes.profiles.synced"
+  },
+  "runtime_ui_hermes_refused_to_start_the_wake_listener": {
+    "message": "Hermes se negó a iniciar el detector de activación.",
+    "description": "Runtime interface message ui.hermes.refused.to.start.the.wake.listener"
+  },
+  "runtime_ui_hermes_returned_only_fallback_model_data_keeping_your_selected_128b9943": {
+    "message": "Hermes solo devolvió datos de modelo de respaldo. Se conserva el modelo seleccionado hasta que haya un catálogo real disponible.",
+    "description": "Runtime interface message ui.hermes.returned.only.fallback.model.data.keeping.your.selected.128b9943"
+  },
+  "runtime_ui_hermes_session": {
+    "message": "Hermes sesión",
+    "description": "Runtime interface message ui.hermes.session"
+  },
+  "runtime_ui_hermes_sessions": {
+    "message": "Hermes sesiones",
+    "description": "Runtime interface message ui.hermes.sessions"
+  },
+  "runtime_ui_hermes_sessions_synced": {
+    "message": "Hermes sesiones sincronizadas",
+    "description": "Runtime interface message ui.hermes.sessions.synced"
+  },
+  "runtime_ui_hermes_skill_suggestions": {
+    "message": "Hermes sugerencias de habilidades",
+    "description": "Runtime interface message ui.hermes.skill.suggestions"
+  },
+  "runtime_ui_hermes_skills_synced": {
+    "message": "Hermes habilidades sincronizadas",
+    "description": "Runtime interface message ui.hermes.skills.synced"
+  },
+  "runtime_ui_hermes_task_status": {
+    "message": "Hermes estado de la tarea",
+    "description": "Runtime interface message ui.hermes.task.status"
+  },
+  "runtime_ui_hermes_token_cleared": {
+    "message": "Hermes token borrado",
+    "description": "Runtime interface message ui.hermes.token.cleared"
+  },
+  "runtime_ui_hermes_voice_dictation": {
+    "message": "Hermes Voice Dictation",
+    "description": "Runtime interface message ui.hermes.voice.dictation"
+  },
+  "runtime_ui_hermes_web": {
+    "message": "Hermes Web",
+    "description": "Runtime interface message ui.hermes.web"
+  },
+  "runtime_ui_hermes_web_3336aa2f": {
+    "message": "WEB DE HERMES",
+    "description": "Runtime interface message ui.hermes.web.3336aa2f"
+  },
+  "runtime_ui_hermes_web_could_not_start": {
+    "message": "Hermes Web no pudo iniciar",
+    "description": "Runtime interface message ui.hermes.web.could.not.start"
+  },
+  "runtime_ui_hermes_web_home": {
+    "message": "Hermes Web inicio",
+    "description": "Runtime interface message ui.hermes.web.home"
+  },
+  "runtime_ui_hermes_web_ready": {
+    "message": "HERMES WEB // LISTO",
+    "description": "Runtime interface message ui.hermes.web.ready"
+  },
+  "runtime_ui_hermes_web_settings": {
+    "message": "Hermes Web configuración",
+    "description": "Runtime interface message ui.hermes.web.settings"
+  },
+  "runtime_ui_hermes_will_consume_it_if_the_current_turn_reaches_an_injection_0fb01647": {
+    "message": "Hermes lo consumirá si el turno actual llega a un punto de inyección; de lo contrario, el borrador volverá aquí.",
+    "description": "Runtime interface message ui.hermes.will.consume.it.if.the.current.turn.reaches.an.injection.0fb01647"
+  },
+  "runtime_ui_hermes_will_consume_the_queued_text_if_the_current_turn_reaches_bd527e1e": {
+    "message": "Hermes consumirá el texto en cola si el turno actual alcanza un punto de inyección.",
+    "description": "Runtime interface message ui.hermes.will.consume.the.queued.text.if.the.current.turn.reaches.bd527e1e"
+  },
+  "runtime_ui_hermes_will_never_replace_or_switch_an_existing_conversation_wi_7e65804d": {
+    "message": "Hermes nunca reemplazará ni cambiará una conversación existente sin esta opción.",
+    "description": "Runtime interface message ui.hermes.will.never.replace.or.switch.an.existing.conversation.wi.7e65804d"
+  },
+  "runtime_ui_hermes_will_send_it_after_the_current_turn_finishes_or_stops": {
+    "message": "Hermes lo enviará después de que finalice o se detenga el turno actual.",
+    "description": "Runtime interface message ui.hermes.will.send.it.after.the.current.turn.finishes.or.stops"
+  },
+  "runtime_ui_hermes_will_stop_before_changing_a_dirty_checkout": {
+    "message": "Hermes se detendrá antes de cambiar una caja sucia.",
+    "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
+  },
+  "runtime_ui_hide": {
+    "message": "Ocultar",
+    "description": "Runtime interface message ui.hide"
+  },
+  "runtime_ui_hide_sessions_rail": {
+    "message": "Ocultar carril de sesiones",
+    "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_high": {
+    "message": "Alto",
+    "description": "Runtime interface message ui.high"
+  },
+  "runtime_ui_highlighted_text": {
+    "message": "Texto resaltado",
+    "description": "Runtime interface message ui.highlighted.text"
+  },
+  "runtime_ui_hint": {
+    "message": "pista",
+    "description": "Runtime interface message ui.hint"
+  },
+  "runtime_ui_home": {
+    "message": "Inicio",
+    "description": "Runtime interface message ui.home"
+  },
+  "runtime_ui_host": {
+    "message": "Anfitrión",
+    "description": "Runtime interface message ui.host"
+  },
+  "runtime_ui_id": {
+    "message": "identificación",
+    "description": "Runtime interface message ui.id"
+  },
+  "runtime_ui_image": {
+    "message": "Imagen",
+    "description": "Runtime interface message ui.image"
+  },
+  "runtime_ui_image_attached_from_clipboard": {
+    "message": "Imagen adjunta del portapapeles",
+    "description": "Runtime interface message ui.image.attached.from.clipboard"
+  },
+  "runtime_ui_image_pasted_into_hermes": {
+    "message": "Imagen pegada en Hermes",
+    "description": "Runtime interface message ui.image.pasted.into.hermes"
+  },
+  "runtime_ui_image_ready_for_hermes_vision": {
+    "message": "Imagen lista para la visión Hermes",
+    "description": "Runtime interface message ui.image.ready.for.hermes.vision"
+  },
+  "runtime_ui_image_stayed_inline_only": {
+    "message": "La imagen solo permaneció en línea",
+    "description": "Runtime interface message ui.image.stayed.inline.only"
+  },
+  "runtime_ui_images": {
+    "message": "▧ Imágenes...",
+    "description": "Runtime interface message ui.images"
+  },
+  "runtime_ui_images_09e871c9": {
+    "message": "Imágenes",
+    "description": "Runtime interface message ui.images.09e871c9"
+  },
+  "runtime_ui_images_9ef50004": {
+    "message": "▧ Imágenes…",
+    "description": "Runtime interface message ui.images.9ef50004"
+  },
+  "runtime_ui_images_documents_and_code": {
+    "message": "Imágenes, documentos y código.",
+    "description": "Runtime interface message ui.images.documents.and.code"
+  },
+  "runtime_ui_images_documents_and_code_stay_with_this_message": {
+    "message": "Imágenes, documentos y códigos permanecen con este mensaje.",
+    "description": "Runtime interface message ui.images.documents.and.code.stay.with.this.message"
+  },
+  "runtime_ui_improve": {
+    "message": "mejorar",
+    "description": "Runtime interface message ui.improve"
+  },
+  "runtime_ui_improve_selected_text": {
+    "message": "Mejorar el texto seleccionado",
+    "description": "Runtime interface message ui.improve.selected.text"
+  },
+  "runtime_ui_index": {
+    "message": "índice",
+    "description": "Runtime interface message ui.index"
+  },
+  "runtime_ui_info": {
+    "message": "Información",
+    "description": "Runtime interface message ui.info"
+  },
+  "runtime_ui_inline_assist": {
+    "message": "asistencia en línea",
+    "description": "Runtime interface message ui.inline.assist"
+  },
+  "runtime_ui_input": {
+    "message": "Entrada",
+    "description": "Runtime interface message ui.input"
+  },
+  "runtime_ui_inspector_views": {
+    "message": "Vistas de inspector",
+    "description": "Runtime interface message ui.inspector.views"
+  },
+  "runtime_ui_install": {
+    "message": "Instalar",
+    "description": "Runtime interface message ui.install"
+  },
+  "runtime_ui_installing_the_local_speech_language_pack": {
+    "message": "Instalando el paquete de idioma de voz local...",
+    "description": "Runtime interface message ui.installing.the.local.speech.language.pack"
+  },
+  "runtime_ui_instant_tools_no_model_call": {
+    "message": "Herramientas instantáneas · sin llamada de modelo",
+    "description": "Runtime interface message ui.instant.tools.no.model.call"
+  },
+  "runtime_ui_invalid": {
+    "message": "Inválido",
+    "description": "Runtime interface message ui.invalid"
+  },
+  "runtime_ui_item": {
+    "message": "Artículo",
+    "description": "Runtime interface message ui.item"
+  },
+  "runtime_ui_keep_assist_sessions": {
+    "message": "Mantener sesiones de asistencia",
+    "description": "Runtime interface message ui.keep.assist.sessions"
+  },
+  "runtime_ui_keep_open_across_tabs": {
+    "message": "Mantener abierto entre pestañas",
+    "description": "Runtime interface message ui.keep.open.across.tabs"
+  },
+  "runtime_ui_keep_replacement": {
+    "message": "Mantener reemplazo",
+    "description": "Runtime interface message ui.keep.replacement"
+  },
+  "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
+    "message": "Mantenga visible el chat actual. Devuelve el resultado a este campo.",
+    "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_key": {
+    "message": "clave",
+    "description": "Runtime interface message ui.key"
+  },
+  "runtime_ui_label": {
+    "message": "Etiqueta",
+    "description": "Runtime interface message ui.label"
+  },
+  "runtime_ui_large": {
+    "message": "Grande",
+    "description": "Runtime interface message ui.large"
+  },
+  "runtime_ui_later": {
+    "message": "DESPUÉS",
+    "description": "Runtime interface message ui.later"
+  },
+  "runtime_ui_later_56e2f5d3": {
+    "message": "Más tarde",
+    "description": "Runtime interface message ui.later.56e2f5d3"
+  },
+  "runtime_ui_latest": {
+    "message": "Lo último",
+    "description": "Runtime interface message ui.latest"
+  },
+  "runtime_ui_layout": {
+    "message": "Diseño",
+    "description": "Runtime interface message ui.layout"
+  },
+  "runtime_ui_leave_blank_to_keep_current_token": {
+    "message": "Déjelo en blanco para mantener el token actual",
+    "description": "Runtime interface message ui.leave.blank.to.keep.current.token"
+  },
+  "runtime_ui_light": {
+    "message": "☼ Luz",
+    "description": "Runtime interface message ui.light"
+  },
+  "runtime_ui_limit": {
+    "message": "Límite",
+    "description": "Runtime interface message ui.limit"
+  },
+  "runtime_ui_list": {
+    "message": "Lista",
+    "description": "Runtime interface message ui.list"
+  },
+  "runtime_ui_load_unpacked_installs_update_through_a_guarded_hermes_agent_tu_410111a9": {
+    "message": "Cargue la actualización de las instalaciones desempaquetadas a través de un turno de agente Hermes protegido y luego vuelva a cargar la carpeta dist/ creada.",
+    "description": "Runtime interface message ui.load.unpacked.installs.update.through.a.guarded.hermes.agent.tu.410111a9"
+  },
+  "runtime_ui_loading": {
+    "message": "Cargando",
+    "description": "Runtime interface message ui.loading"
+  },
+  "runtime_ui_loading_249feada": {
+    "message": "📎 Cargando...",
+    "description": "Runtime interface message ui.loading.249feada"
+  },
+  "runtime_ui_loading_b04ba49f": {
+    "message": "Cargando...",
+    "description": "Runtime interface message ui.loading.b04ba49f"
+  },
+  "runtime_ui_loading_canonical_hermes_history": {
+    "message": "Cargando historial canónico Hermes…",
+    "description": "Runtime interface message ui.loading.canonical.hermes.history"
+  },
+  "runtime_ui_loading_connection": {
+    "message": "Conexión de carga",
+    "description": "Runtime interface message ui.loading.connection"
+  },
+  "runtime_ui_loading_hermes_runtime_truth": {
+    "message": "Cargando Hermes verdad del tiempo de ejecución",
+    "description": "Runtime interface message ui.loading.hermes.runtime.truth"
+  },
+  "runtime_ui_local": {
+    "message": "locales",
+    "description": "Runtime interface message ui.local"
+  },
+  "runtime_ui_local_api_server": {
+    "message": "Servidor local API",
+    "description": "Runtime interface message ui.local.api.server"
+  },
+  "runtime_ui_local_gateway": {
+    "message": "Gateway local",
+    "description": "Runtime interface message ui.local.gateway"
+  },
+  "runtime_ui_local_setup_keep_hermes_gateway_api_server_running_on_this_machine": {
+    "message": "Configuración local: mantenga el servidor Hermes Gateway/API ejecutándose en esta máquina.",
+    "description": "Runtime interface message ui.local.setup.keep.hermes.gateway.api.server.running.on.this.machine"
+  },
+  "runtime_ui_local_sidecar_chrome_panel": {
+    "message": "SIDECAR LOCAL / PANEL CROMADO",
+    "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_low": {
+    "message": "Bajo",
+    "description": "Runtime interface message ui.low"
+  },
+  "runtime_ui_main": {
+    "message": "principal",
+    "description": "Runtime interface message ui.main"
+  },
+  "runtime_ui_make_this_more_confident_without_sounding_aggressive": {
+    "message": "Haz esto con más confianza sin sonar agresivo...",
+    "description": "Runtime interface message ui.make.this.more.confident.without.sounding.aggressive"
+  },
+  "runtime_ui_manual": {
+    "message": "manuales",
+    "description": "Runtime interface message ui.manual"
+  },
+  "runtime_ui_manual_setup": {
+    "message": "Configuración manual",
+    "description": "Runtime interface message ui.manual.setup"
+  },
+  "runtime_ui_manual_setup_required": {
+    "message": "Se requiere configuración manual",
+    "description": "Runtime interface message ui.manual.setup.required"
+  },
+  "runtime_ui_maybe_later": {
+    "message": "tal vez más tarde",
+    "description": "Runtime interface message ui.maybe.later"
+  },
+  "runtime_ui_med": {
+    "message": "Med",
+    "description": "Runtime interface message ui.med"
+  },
+  "runtime_ui_menu": {
+    "message": "Menú",
+    "description": "Runtime interface message ui.menu"
+  },
+  "runtime_ui_message": {
+    "message": "Mensaje",
+    "description": "Runtime interface message ui.message"
+  },
+  "runtime_ui_message_7be2d2d2": {
+    "message": "中文",
+    "description": "Runtime interface message ui.message.7be2d2d2"
+  },
+  "runtime_ui_message_attachments": {
+    "message": "Archivos adjuntos de mensajes",
+    "description": "Runtime interface message ui.message.attachments"
+  },
+  "runtime_ui_message_queued": {
+    "message": "Mensaje en cola",
+    "description": "Runtime interface message ui.message.queued"
+  },
+  "runtime_ui_messages": {
+    "message": "Mensajes",
+    "description": "Runtime interface message ui.messages"
+  },
+  "runtime_ui_microphone": {
+    "message": "micrófono",
+    "description": "Runtime interface message ui.microphone"
+  },
+  "runtime_ui_microphone_access_is_already_enabled_for_hermes_browser_extension": {
+    "message": "El acceso al micrófono ya está habilitado para Hermes Browser Extension.",
+    "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
+  },
+  "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
+    "message": "El acceso al micrófono está bloqueado para Hermes Browser.",
+    "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
+  },
+  "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
+    "message": "El acceso al micrófono está habilitado. Regrese al panel lateral Hermes y haga clic en el micrófono nuevamente, o use la pestaña Dictado de voz Hermes si la captura del panel lateral aún está bloqueada.",
+    "description": "Runtime interface message ui.microphone.access.is.enabled.return.to.the.hermes.side.panel.an.2839c056"
+  },
+  "runtime_ui_microphone_permission_blocked": {
+    "message": "Permiso de micrófono bloqueado",
+    "description": "Runtime interface message ui.microphone.permission.blocked"
+  },
+  "runtime_ui_microphone_permission_enabled": {
+    "message": "Permiso de micrófono habilitado",
+    "description": "Runtime interface message ui.microphone.permission.enabled"
+  },
+  "runtime_ui_microphone_permission_needed": {
+    "message": "Se necesita permiso para el micrófono",
+    "description": "Runtime interface message ui.microphone.permission.needed"
+  },
+  "runtime_ui_minimal_selected_text_short_page_text": {
+    "message": "Mínimo: texto seleccionado + texto de página breve",
+    "description": "Runtime interface message ui.minimal.selected.text.short.page.text"
+  },
+  "runtime_ui_missing": {
+    "message": "desaparecido",
+    "description": "Runtime interface message ui.missing"
+  },
+  "runtime_ui_mode": {
+    "message": "MODO",
+    "description": "Runtime interface message ui.mode"
+  },
+  "runtime_ui_mode_controls_brightness_theme_controls_the_accent_palette_and_0d9c3d47": {
+    "message": "El modo controla el brillo. El tema controla la paleta de acentos y el estilo de la superficie del chat.",
+    "description": "Runtime interface message ui.mode.controls.brightness.theme.controls.the.accent.palette.and.0d9c3d47"
+  },
+  "runtime_ui_model": {
+    "message": "MODELO",
+    "description": "Runtime interface message ui.model"
+  },
+  "runtime_ui_model_68c2cc7f": {
+    "message": "modelo",
+    "description": "Runtime interface message ui.model.68c2cc7f"
+  },
+  "runtime_ui_model_discovery_limited": {
+    "message": "Descubrimiento de modelo limitado",
+    "description": "Runtime interface message ui.model.discovery.limited"
+  },
+  "runtime_ui_model_lock_failed": {
+    "message": "Error en el bloqueo del modelo",
+    "description": "Runtime interface message ui.model.lock.failed"
+  },
+  "runtime_ui_model_lock_pending": {
+    "message": "Bloqueo de modelo pendiente",
+    "description": "Runtime interface message ui.model.lock.pending"
+  },
+  "runtime_ui_model_mismatch": {
+    "message": "Modelo no coincidente",
+    "description": "Runtime interface message ui.model.mismatch"
+  },
+  "runtime_ui_model_providers": {
+    "message": "Proveedores de modelos",
+    "description": "Runtime interface message ui.model.providers"
+  },
+  "runtime_ui_model_refresh_limited": {
+    "message": "Actualización de modelo limitada",
+    "description": "Runtime interface message ui.model.refresh.limited"
+  },
+  "runtime_ui_model_registry_unavailable": {
+    "message": "Registro de modelo no disponible",
+    "description": "Runtime interface message ui.model.registry.unavailable"
+  },
+  "runtime_ui_model_runtime_options": {
+    "message": "Opciones de tiempo de ejecución del modelo",
+    "description": "Runtime interface message ui.model.runtime.options"
+  },
+  "runtime_ui_more": {
+    "message": "Más",
+    "description": "Runtime interface message ui.more"
+  },
+  "runtime_ui_name": {
+    "message": "Nombre",
+    "description": "Runtime interface message ui.name"
+  },
+  "runtime_ui_native_context_controls_unavailable": {
+    "message": "Los controles de contexto nativos no están disponibles.",
+    "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_new": {
+    "message": "Nuevo",
+    "description": "Runtime interface message ui.new"
+  },
+  "runtime_ui_new_browser_chat": {
+    "message": "Nuevo chat del navegador",
+    "description": "Runtime interface message ui.new.browser.chat"
+  },
+  "runtime_ui_new_chat": {
+    "message": "Nuevo chat",
+    "description": "Runtime interface message ui.new.chat"
+  },
+  "runtime_ui_new_hermes_browser_extension_draft": {
+    "message": "Nuevo borrador de Hermes Browser Extension",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.draft"
+  },
+  "runtime_ui_new_hermes_browser_extension_session": {
+    "message": "Nueva sesión Hermes Browser Extension",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.session"
+  },
+  "runtime_ui_new_session": {
+    "message": "Nueva sesión",
+    "description": "Runtime interface message ui.new.session"
+  },
+  "runtime_ui_new_session_inline_assist": {
+    "message": "Nueva sesión · Asistencia en línea",
+    "description": "Runtime interface message ui.new.session.inline.assist"
+  },
+  "runtime_ui_next": {
+    "message": "Siguiente",
+    "description": "Runtime interface message ui.next"
+  },
+  "runtime_ui_next_prompt_payload": {
+    "message": "Carga útil del siguiente prompt",
+    "description": "Runtime interface message ui.next.prompt.payload"
+  },
+  "runtime_ui_no": {
+    "message": "No",
+    "description": "Runtime interface message ui.no"
+  },
+  "runtime_ui_no_active_run": {
+    "message": "Sin ejecución activa",
+    "description": "Runtime interface message ui.no.active.run"
+  },
+  "runtime_ui_no_active_session": {
+    "message": "Ninguna sesión activa",
+    "description": "Runtime interface message ui.no.active.session"
+  },
+  "runtime_ui_no_active_tab_detected": {
+    "message": "No se detectó ninguna pestaña activa",
+    "description": "Runtime interface message ui.no.active.tab.detected"
+  },
+  "runtime_ui_no_agent_ports": {
+    "message": "Sin puertos de agente",
+    "description": "Runtime interface message ui.no.agent.ports"
+  },
+  "runtime_ui_no_agents_scanned_yet_click": {
+    "message": "Aún no hay agentes escaneados. Haga clic",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click"
+  },
+  "runtime_ui_no_agents_scanned_yet_click_scan_agents": {
+    "message": "Aún no hay agentes escaneados. Haga clic en \"Escanear agentes\".",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click.scan.agents"
+  },
+  "runtime_ui_no_audio_is_saved_by_this_page_in_hermes_stt_mode_audio_is_sent_df9cdcdc": {
+    "message": "Esta página no guarda ningún audio. En el modo Hermes STT, el audio se envía una vez a su punto final de transcripción Hermes configurado cuando detiene la grabación. En el modo de reserva de voz del navegador, solo se envía la transcripción al panel lateral.",
+    "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
+  },
+  "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
+    "message": "Aquí no se guarda ningún audio. El permiso solo permite que Hermes Browser grabe tu voz cuando haces clic en el botón del micrófono.",
+    "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
+  },
+  "runtime_ui_no_browser_context_attached": {
+    "message": "No se adjunta ningún contexto del navegador",
+    "description": "Runtime interface message ui.no.browser.context.attached"
+  },
+  "runtime_ui_no_browser_context_will_be_read_or_attached": {
+    "message": "No se leerá ni adjuntará ningún contexto del navegador.",
+    "description": "Runtime interface message ui.no.browser.context.will.be.read.or.attached"
+  },
+  "runtime_ui_no_browser_tab_selected_text_open_tabs_metadata_transcript_or_p_5f06547f": {
+    "message": "No se adjuntará ninguna pestaña del navegador, texto seleccionado, pestañas abiertas, metadatos, transcripciones ni texto de página.",
+    "description": "Runtime interface message ui.no.browser.tab.selected.text.open.tabs.metadata.transcript.or.p.5f06547f"
+  },
+  "runtime_ui_no_matching_tabs": {
+    "message": "No hay pestañas coincidentes",
+    "description": "Runtime interface message ui.no.matching.tabs"
+  },
+  "runtime_ui_no_models_found": {
+    "message": "No se encontraron modelos.",
+    "description": "Runtime interface message ui.no.models.found"
+  },
+  "runtime_ui_no_models_match": {
+    "message": "Ningún modelo coincide",
+    "description": "Runtime interface message ui.no.models.match"
+  },
+  "runtime_ui_no_providers_found": {
+    "message": "No se encontraron proveedores",
+    "description": "Runtime interface message ui.no.providers.found"
+  },
+  "runtime_ui_no_sessions_found": {
+    "message": "No se encontraron sesiones",
+    "description": "Runtime interface message ui.no.sessions.found"
+  },
+  "runtime_ui_no_speech_captured": {
+    "message": "No se capturó ningún discurso",
+    "description": "Runtime interface message ui.no.speech.captured"
+  },
+  "runtime_ui_no_speech_captured_click_start_dictation_and_try_again": {
+    "message": "No se capturó ningún discurso. Haga clic en Iniciar dictado e inténtelo de nuevo.",
+    "description": "Runtime interface message ui.no.speech.captured.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_speech_detected": {
+    "message": "No se detectó voz",
+    "description": "Runtime interface message ui.no.speech.detected"
+  },
+  "runtime_ui_no_speech_detected_click_start_dictation_and_try_again": {
+    "message": "No se detectó ninguna voz. Haga clic en Iniciar dictado e inténtelo de nuevo.",
+    "description": "Runtime interface message ui.no.speech.detected.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_submit_no_send_no_other_fields_touched": {
+    "message": "No enviar · no enviar · no se tocan otros campos",
+    "description": "Runtime interface message ui.no.submit.no.send.no.other.fields.touched"
+  },
+  "runtime_ui_no_tab": {
+    "message": "Sin pestaña",
+    "description": "Runtime interface message ui.no.tab"
+  },
+  "runtime_ui_no_tab_detected": {
+    "message": "No se detectó ninguna pestaña",
+    "description": "Runtime interface message ui.no.tab.detected"
+  },
+  "runtime_ui_normal_good_default": {
+    "message": "Normal - buen valor predeterminado",
+    "description": "Runtime interface message ui.normal.good.default"
+  },
+  "runtime_ui_not_connected": {
+    "message": "No conectado",
+    "description": "Runtime interface message ui.not.connected"
+  },
+  "runtime_ui_nothing_to_steer": {
+    "message": "Nada que dirigir",
+    "description": "Runtime interface message ui.nothing.to.steer"
+  },
+  "runtime_ui_notice": {
+    "message": "Aviso",
+    "description": "Runtime interface message ui.notice"
+  },
+  "runtime_ui_now": {
+    "message": "ahora",
+    "description": "Runtime interface message ui.now"
+  },
+  "runtime_ui_number": {
+    "message": "Número",
+    "description": "Runtime interface message ui.number"
+  },
+  "runtime_ui_object": {
+    "message": "Objeto",
+    "description": "Runtime interface message ui.object"
+  },
+  "runtime_ui_observed_from_session_history_not_advertised_as_a_requestable_h_6343f8c8": {
+    "message": "Observado desde el historial de sesiones; no anunciado como modelo Hermes solicitable.",
+    "description": "Runtime interface message ui.observed.from.session.history.not.advertised.as.a.requestable.h.6343f8c8"
+  },
+  "runtime_ui_off": {
+    "message": "Apagado",
+    "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_ok": {
+    "message": "OK",
+    "description": "Runtime interface message ui.ok"
+  },
+  "runtime_ui_on": {
+    "message": "encendido",
+    "description": "Runtime interface message ui.on"
+  },
+  "runtime_ui_on_device_speech_recognition_is_unavailable_in_this_browser": {
+    "message": "El reconocimiento de voz en el dispositivo no está disponible en este navegador.",
+    "description": "Runtime interface message ui.on.device.speech.recognition.is.unavailable.in.this.browser"
+  },
+  "runtime_ui_only_controls_supported_by_the_selected_model_are_shown": {
+    "message": "Solo se muestran los controles compatibles con el modelo seleccionado.",
+    "description": "Runtime interface message ui.only.controls.supported.by.the.selected.model.are.shown"
+  },
+  "runtime_ui_open": {
+    "message": "Abierto",
+    "description": "Runtime interface message ui.open"
+  },
+  "runtime_ui_open_a_normal_browser_tab_and_try_again": {
+    "message": "Abra una pestaña normal del navegador e inténtelo de nuevo.",
+    "description": "Runtime interface message ui.open.a.normal.browser.tab.and.try.again"
+  },
+  "runtime_ui_open_a_normal_http_https_tab_then_refresh_context": {
+    "message": "Abra una pestaña http/https normal y luego actualice el contexto.",
+    "description": "Runtime interface message ui.open.a.normal.http.https.tab.then.refresh.context"
+  },
+  "runtime_ui_open_a_normal_page_tab_first": {
+    "message": "Primero abra una pestaña de página normal.",
+    "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_full_view": {
+    "message": "Abrir vista completa",
+    "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_hermes_assist": {
+    "message": "Abrir Hermes Assist",
+    "description": "Runtime interface message ui.open.hermes.assist"
+  },
+  "runtime_ui_open_hermes_browser": {
+    "message": "Abrir Hermes Browser",
+    "description": "Runtime interface message ui.open.hermes.browser"
+  },
+  "runtime_ui_open_hermes_browser_always_opens_the_side_panel_only_selection_0b8dac3c": {
+    "message": "Abrir Hermes Browser siempre abre solo el panel lateral. Las acciones de selección comienzan inmediatamente después del enrutamiento.",
+    "description": "Runtime interface message ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c"
+  },
+  "runtime_ui_open_hermes_browser_uses_the_side_panel_only_selection_tasks_st_4f56df05": {
+    "message": "Abrir Hermes Browser usa solo el panel lateral. Las tareas de selección comienzan automáticamente después del enrutamiento.",
+    "description": "Runtime interface message ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05"
+  },
+  "runtime_ui_open_hermes_session": {
+    "message": "Abrir sesión Hermes",
+    "description": "Runtime interface message ui.open.hermes.session"
+  },
+  "runtime_ui_open_hermes_web_in_a_full_tab": {
+    "message": "Abra Hermes Web en una pestaña completa",
+    "description": "Runtime interface message ui.open.hermes.web.in.a.full.tab"
+  },
+  "runtime_ui_open_hermes_web_settings": {
+    "message": "Abra la configuración de Hermes Web",
+    "description": "Runtime interface message ui.open.hermes.web.settings"
+  },
+  "runtime_ui_open_microphone_settings": {
+    "message": "Abrir la configuración del micrófono",
+    "description": "Runtime interface message ui.open.microphone.settings"
+  },
+  "runtime_ui_open_navigation": {
+    "message": "Abrir navegación",
+    "description": "Runtime interface message ui.open.navigation"
+  },
+  "runtime_ui_open_or_create_a_hermes_browser_extension_session_before_compac_4c0fdd2e": {
+    "message": "Abra o cree una sesión Hermes Browser Extension antes de compactar el contexto.",
+    "description": "Runtime interface message ui.open.or.create.a.hermes.browser.extension.session.before.compac.4c0fdd2e"
+  },
+  "runtime_ui_open_quick_commands": {
+    "message": "Abrir comandos rápidos",
+    "description": "Runtime interface message ui.open.quick.commands"
+  },
+  "runtime_ui_open_session": {
+    "message": "Sesión abierta",
+    "description": "Runtime interface message ui.open.session"
+  },
+  "runtime_ui_open_settings": {
+    "message": "Abrir configuración",
+    "description": "Runtime interface message ui.open.settings"
+  },
+  "runtime_ui_open_side_panel_settings_and_connect_the_local_or_remote_api_be_706335b5": {
+    "message": "Abra la Configuración del panel lateral y conecte la API local o remota antes de cargar el historial de sesiones canónico.",
+    "description": "Runtime interface message ui.open.side.panel.settings.and.connect.the.local.or.remote.api.be.706335b5"
+  },
+  "runtime_ui_open_tabs": {
+    "message": "Pestañas abiertas",
+    "description": "Runtime interface message ui.open.tabs"
+  },
+  "runtime_ui_open_the_exact_session_in_the_full_hermes_web_workspace": {
+    "message": "Abra la sesión exacta en el espacio de trabajo completo Hermes Web.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
+  },
+  "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
+    "message": "Abra la sesión exacta en el panel lateral Hermes Browser.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
+  },
+  "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
+    "message": "Abra el panel lateral de la extensión Hermes desde la barra de herramientas de su navegador.",
+    "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
+  },
+  "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
+    "message": "Abra la sesión de Assist retenida en el panel lateral del navegador o en Hermes Web.",
+    "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
+  },
+  "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
+    "message": "Abra el panel lateral, configure una conexión Hermes y luego abra la vista completa nuevamente.",
+    "description": "Runtime interface message ui.open.the.side.panel.configure.a.hermes.connection.then.open.ful.47648857"
+  },
+  "runtime_ui_open_the_signed_in_hermes_cloud_agent_in_the_active_tab_wait_fo_b7be52ec": {
+    "message": "Abra el agente Hermes Cloud que haya iniciado sesión en la pestaña activa, espere a que termine de cargarse y luego elija Conectarse a Hermes. No se utiliza ningún token de API ni respaldo de localhost.",
+    "description": "Runtime interface message ui.open.the.signed.in.hermes.cloud.agent.in.the.active.tab.wait.fo.b7be52ec"
+  },
+  "runtime_ui_opened_directly_in_full_view": {
+    "message": "Abierto directamente a la vista.",
+    "description": "Runtime interface message ui.opened.directly.in.full.view"
+  },
+  "runtime_ui_opening_chromium_microphone_permission_prompt": {
+    "message": "Abriendo el mensaje de permiso del micrófono Chromium…",
+    "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
+  },
+  "runtime_ui_opening_session": {
+    "message": "SESIÓN DE APERTURA",
+    "description": "Runtime interface message ui.opening.session"
+  },
+  "runtime_ui_opening_shared_session": {
+    "message": "APERTURA DE LA SESIÓN COMPARTIDA",
+    "description": "Runtime interface message ui.opening.shared.session"
+  },
+  "runtime_ui_opening_voice_dictation_tab": {
+    "message": "Abrir la pestaña de dictado de voz",
+    "description": "Runtime interface message ui.opening.voice.dictation.tab"
+  },
+  "runtime_ui_optional": {
+    "message": "Opcional",
+    "description": "Runtime interface message ui.optional"
+  },
+  "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
+    "message": "Descubrimiento opcional solamente: el navegador sondea cada punto final OpenAI-compatible `/v1/models` y muestra coincidencias en el selector de modelo. El enrutamiento en tiempo de ejecución aún proviene de el gateway Hermes conectada.",
+    "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
+  },
+  "runtime_ui_options": {
+    "message": "Opciones",
+    "description": "Runtime interface message ui.options"
+  },
+  "runtime_ui_or_tell_hermes_exactly_what_you_need": {
+    "message": "O dile a Hermes exactamente lo que necesitas",
+    "description": "Runtime interface message ui.or.tell.hermes.exactly.what.you.need"
+  },
+  "runtime_ui_origin": {
+    "message": "Origen",
+    "description": "Runtime interface message ui.origin"
+  },
+  "runtime_ui_other": {
+    "message": "Otro",
+    "description": "Runtime interface message ui.other"
+  },
+  "runtime_ui_owner": {
+    "message": "propietario",
+    "description": "Runtime interface message ui.owner"
+  },
+  "runtime_ui_page": {
+    "message": "Página",
+    "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context": {
+    "message": "Contexto de la página",
+    "description": "Runtime interface message ui.page.context"
+  },
+  "runtime_ui_page_context_depth": {
+    "message": "Profundidad del contexto de la página",
+    "description": "Runtime interface message ui.page.context.depth"
+  },
+  "runtime_ui_page_text": {
+    "message": "Texto de la página",
+    "description": "Runtime interface message ui.page.text"
+  },
+  "runtime_ui_pages": {
+    "message": "paginas",
+    "description": "Runtime interface message ui.pages"
+  },
+  "runtime_ui_panel": {
+    "message": "panel",
+    "description": "Runtime interface message ui.panel"
+  },
+  "runtime_ui_panel_opening": {
+    "message": "Apertura del panel",
+    "description": "Runtime interface message ui.panel.opening"
+  },
+  "runtime_ui_paste": {
+    "message": "Pegar",
+    "description": "Runtime interface message ui.paste"
+  },
+  "runtime_ui_paste_a_gateway_api_key_or_reconnect_when_you_are_ready": {
+    "message": "Pegue una clave Gateway API o vuelva a conectarse cuando esté listo.",
+    "description": "Runtime interface message ui.paste.a.gateway.api.key.or.reconnect.when.you.are.ready"
+  },
+  "runtime_ui_paste_image": {
+    "message": "▣ Pegar imagen",
+    "description": "Runtime interface message ui.paste.image"
+  },
+  "runtime_ui_paste_this_into_the_hermes_api_server_environment_on_the_remote_machine": {
+    "message": "Pegue esto en el entorno Hermes API-server en la máquina remota.",
+    "description": "Runtime interface message ui.paste.this.into.the.hermes.api.server.environment.on.the.remote.machine"
+  },
+  "runtime_ui_path": {
+    "message": "Camino",
+    "description": "Runtime interface message ui.path"
+  },
+  "runtime_ui_pending": {
+    "message": "Pendiente",
+    "description": "Runtime interface message ui.pending"
+  },
+  "runtime_ui_permission": {
+    "message": "Permiso",
+    "description": "Runtime interface message ui.permission"
+  },
+  "runtime_ui_pick": {
+    "message": "elegir",
+    "description": "Runtime interface message ui.pick"
+  },
+  "runtime_ui_pick_a_fixed_mode_or_follow_your_system_setting": {
+    "message": "Elija un modo fijo o siga la configuración de su sistema.",
+    "description": "Runtime interface message ui.pick.a.fixed.mode.or.follow.your.system.setting"
+  },
+  "runtime_ui_pick_an_element": {
+    "message": "Elige un elemento",
+    "description": "Runtime interface message ui.pick.an.element"
+  },
+  "runtime_ui_pick_page_element": {
+    "message": "◈ Seleccionar elemento de página",
+    "description": "Runtime interface message ui.pick.page.element"
+  },
+  "runtime_ui_picked_element_cleared": {
+    "message": "Elemento seleccionado borrado",
+    "description": "Runtime interface message ui.picked.element.cleared"
+  },
+  "runtime_ui_pinned_tab_closed": {
+    "message": "Pestaña fijada cerrada",
+    "description": "Runtime interface message ui.pinned.tab.closed"
+  },
+  "runtime_ui_policy": {
+    "message": "Política",
+    "description": "Runtime interface message ui.policy"
+  },
+  "runtime_ui_popup": {
+    "message": "ventana emergente",
+    "description": "Runtime interface message ui.popup"
+  },
+  "runtime_ui_port": {
+    "message": "Puerto",
+    "description": "Runtime interface message ui.port"
+  },
+  "runtime_ui_preferences": {
+    "message": "Preferencias",
+    "description": "Runtime interface message ui.preferences"
+  },
+  "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
+    "message": "Prefiere el motor de activación nativo de Hermes localmente y utiliza la voz de Chromium en el dispositivo para Cloud Preview.",
+    "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
+  },
+  "runtime_ui_preparing_on_device_dictation": {
+    "message": "Preparar el dictado en el dispositivo",
+    "description": "Runtime interface message ui.preparing.on.device.dictation"
+  },
+  "runtime_ui_preparing_the_browser_local_wake_listener": {
+    "message": "Preparando el sistema de escucha de activación local del navegador...",
+    "description": "Runtime interface message ui.preparing.the.browser.local.wake.listener"
+  },
+  "runtime_ui_preview": {
+    "message": "Vista previa",
+    "description": "Runtime interface message ui.preview"
+  },
+  "runtime_ui_preview_1aa787fe": {
+    "message": "vista previa",
+    "description": "Runtime interface message ui.preview.1aa787fe"
+  },
+  "runtime_ui_preview_copy_only": {
+    "message": "Vista previa + copiar solo",
+    "description": "Runtime interface message ui.preview.copy.only"
+  },
+  "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
+    "message": "Modo de vista previa: cargue esta página desde el Hermes Browser Extension instalado para usar la configuración del Hermes conectado y el dictado de voz.",
+    "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
+  },
+  "runtime_ui_previous": {
+    "message": "Anterior",
+    "description": "Runtime interface message ui.previous"
+  },
+  "runtime_ui_private": {
+    "message": "PRIVADO",
+    "description": "Runtime interface message ui.private"
+  },
+  "runtime_ui_pro": {
+    "message": "profesional",
+    "description": "Runtime interface message ui.pro"
+  },
+  "runtime_ui_process": {
+    "message": "Proceso",
+    "description": "Runtime interface message ui.process"
+  },
+  "runtime_ui_profile": {
+    "message": "PERFIL",
+    "description": "Runtime interface message ui.profile"
+  },
+  "runtime_ui_profile_api_unavailable": {
+    "message": "Perfil API no disponible",
+    "description": "Runtime interface message ui.profile.api.unavailable"
+  },
+  "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
+    "message": "Perfil API no disponible. El navegador utilizará el perfil de puerta de enlace Hermes actualmente en ejecución.",
+    "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
+  },
+  "runtime_ui_profile_ff4fc027": {
+    "message": "Perfil",
+    "description": "Runtime interface message ui.profile.ff4fc027"
+  },
+  "runtime_ui_profile_switch_unavailable": {
+    "message": "Cambio de perfil no disponible",
+    "description": "Runtime interface message ui.profile.switch.unavailable"
+  },
+  "runtime_ui_profile_sync_unavailable": {
+    "message": "Sincronización de perfil no disponible",
+    "description": "Runtime interface message ui.profile.sync.unavailable"
+  },
+  "runtime_ui_profiles_sync_after_connecting_to_hermes": {
+    "message": "Los perfiles se sincronizan después de conectarse a Hermes.",
+    "description": "Runtime interface message ui.profiles.sync.after.connecting.to.hermes"
+  },
+  "runtime_ui_prompt": {
+    "message": "Prompt",
+    "description": "Runtime interface message ui.prompt"
+  },
+  "runtime_ui_prompt_context": {
+    "message": "Contexto del prompt",
+    "description": "Runtime interface message ui.prompt.context"
+  },
+  "runtime_ui_prompt_context_settings": {
+    "message": "Configuración del contexto del prompt",
+    "description": "Runtime interface message ui.prompt.context.settings"
+  },
+  "runtime_ui_prompt_snippet": {
+    "message": "▤ Fragmento de prompt…",
+    "description": "Runtime interface message ui.prompt.snippet"
+  },
+  "runtime_ui_prompt_snippets": {
+    "message": "▤ Fragmentos de prompt...",
+    "description": "Runtime interface message ui.prompt.snippets"
+  },
+  "runtime_ui_property": {
+    "message": "Propiedad",
+    "description": "Runtime interface message ui.property"
+  },
+  "runtime_ui_provider": {
+    "message": "Proveedor",
+    "description": "Runtime interface message ui.provider"
+  },
+  "runtime_ui_provider_model_and_reasoning": {
+    "message": "Proveedor, modelo y razonamiento.",
+    "description": "Runtime interface message ui.provider.model.and.reasoning"
+  },
+  "runtime_ui_public": {
+    "message": "Público",
+    "description": "Runtime interface message ui.public"
+  },
+  "runtime_ui_public_alpha_load_unpacked_local_or_remote_hermes_api_server_fu_f39d96e3": {
+    "message": "Alfa público: carga herramientas Hermes API server descomprimidas, locales o remotas, Hermes completas cuando el tiempo de ejecución conectado las admita.",
+    "description": "Runtime interface message ui.public.alpha.load.unpacked.local.or.remote.hermes.api.server.fu.f39d96e3"
+  },
+  "runtime_ui_public_flow_connect_to_hermes_creates_a_scoped_browser_token_wh_9184ad4d": {
+    "message": "Flujo público: Conectarse a Hermes crea un token de navegador con ámbito cuando el servidor API admite el emparejamiento. Para hosts remotos, configure API_SERVER_CORS_ORIGINS en el origen de esta extensión y use un API_SERVER_KEY fuerte o un token con alcance.",
+    "description": "Runtime interface message ui.public.flow.connect.to.hermes.creates.a.scoped.browser.token.wh.9184ad4d"
+  },
+  "runtime_ui_public_setup": {
+    "message": "CONFIGURACIÓN PÚBLICA",
+    "description": "Runtime interface message ui.public.setup"
+  },
+  "runtime_ui_query": {
+    "message": "Consulta",
+    "description": "Runtime interface message ui.query"
+  },
+  "runtime_ui_queue": {
+    "message": "cola",
+    "description": "Runtime interface message ui.queue"
+  },
+  "runtime_ui_queued": {
+    "message": "En cola",
+    "description": "Runtime interface message ui.queued"
+  },
+  "runtime_ui_queued_message_deleted": {
+    "message": "Mensaje en cola eliminado",
+    "description": "Runtime interface message ui.queued.message.deleted"
+  },
+  "runtime_ui_quick_commands": {
+    "message": "Comandos rápidos",
+    "description": "Runtime interface message ui.quick.commands"
+  },
+  "runtime_ui_range": {
+    "message": "Rango",
+    "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_readable_dom_text": {
+    "message": "Texto DOM legible",
+    "description": "Runtime interface message ui.readable.dom.text"
+  },
+  "runtime_ui_reading_connection_settings_and_canonical_session_history": {
+    "message": "Lectura de la configuración de conexión y el historial de sesiones canónicas.",
+    "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_ready": {
+    "message": "Listo",
+    "description": "Runtime interface message ui.ready"
+  },
+  "runtime_ui_reasoning_effort": {
+    "message": "esfuerzo de razonamiento",
+    "description": "Runtime interface message ui.reasoning.effort"
+  },
+  "runtime_ui_reconnect": {
+    "message": "Reconectar",
+    "description": "Runtime interface message ui.reconnect"
+  },
+  "runtime_ui_reconnecting": {
+    "message": "Reconectando",
+    "description": "Runtime interface message ui.reconnecting"
+  },
+  "runtime_ui_record": {
+    "message": "Registro",
+    "description": "Runtime interface message ui.record"
+  },
+  "runtime_ui_recording_voice": {
+    "message": "Grabación de voz",
+    "description": "Runtime interface message ui.recording.voice"
+  },
+  "runtime_ui_refresh": {
+    "message": "Actualizar",
+    "description": "Runtime interface message ui.refresh"
+  },
+  "runtime_ui_refresh_context_to_calculate_the_next_prompt_payload": {
+    "message": "Actualice el contexto para calcular la carga útil del siguiente prompt.",
+    "description": "Runtime interface message ui.refresh.context.to.calculate.the.next.prompt.payload"
+  },
+  "runtime_ui_refresh_model_catalog": {
+    "message": "Actualizar catálogo de modelos",
+    "description": "Runtime interface message ui.refresh.model.catalog"
+  },
+  "runtime_ui_refresh_models": {
+    "message": "Actualizar modelos",
+    "description": "Runtime interface message ui.refresh.models"
+  },
+  "runtime_ui_refresh_sessions": {
+    "message": "Actualizar sesiones",
+    "description": "Runtime interface message ui.refresh.sessions"
+  },
+  "runtime_ui_refreshing_models": {
+    "message": "Modelos refrescantes",
+    "description": "Runtime interface message ui.refreshing.models"
+  },
+  "runtime_ui_refreshing_sessions": {
+    "message": "Sesiones refrescantes...",
+    "description": "Runtime interface message ui.refreshing.sessions"
+  },
+  "runtime_ui_remember_for_right_click_actions": {
+    "message": "Recuerde para acciones de clic derecho",
+    "description": "Runtime interface message ui.remember.for.right.click.actions"
+  },
+  "runtime_ui_remote": {
+    "message": "Remoto",
+    "description": "Runtime interface message ui.remote"
+  },
+  "runtime_ui_remote_api_server": {
+    "message": "Servidor remoto API",
+    "description": "Runtime interface message ui.remote.api.server"
+  },
+  "runtime_ui_remote_api_server_environment_variables": {
+    "message": "Variables de entorno del servidor remoto API",
+    "description": "Runtime interface message ui.remote.api.server.environment.variables"
+  },
+  "runtime_ui_remote_dashboard_rename_rpc_is_not_available_yet": {
+    "message": "El cambio de nombre de RPC del panel remoto aún no está disponible.",
+    "description": "Runtime interface message ui.remote.dashboard.rename.rpc.is.not.available.yet"
+  },
+  "runtime_ui_remote_dashboard_websocket": {
+    "message": "Panel remoto (WebSocket)",
+    "description": "Runtime interface message ui.remote.dashboard.websocket"
+  },
+  "runtime_ui_remote_env_copied": {
+    "message": "Entorno remoto copiado",
+    "description": "Runtime interface message ui.remote.env.copied"
+  },
+  "runtime_ui_remote_gateway": {
+    "message": "Gateway remoto",
+    "description": "Runtime interface message ui.remote.gateway"
+  },
+  "runtime_ui_remote_setup_diagnostics": {
+    "message": "Diagnóstico de configuración remota",
+    "description": "Runtime interface message ui.remote.setup.diagnostics"
+  },
+  "runtime_ui_remove": {
+    "message": "Quitar",
+    "description": "Runtime interface message ui.remove"
+  },
+  "runtime_ui_rename": {
+    "message": "Cambiar nombre",
+    "description": "Runtime interface message ui.rename"
+  },
+  "runtime_ui_rename_a_fresh_browser_session_from_the_first_real_message": {
+    "message": "Cambie el nombre de una nueva sesión del navegador a partir del primer mensaje real.",
+    "description": "Runtime interface message ui.rename.a.fresh.browser.session.from.the.first.real.message"
+  },
+  "runtime_ui_rename_session": {
+    "message": "Cambiar nombre de sesión",
+    "description": "Runtime interface message ui.rename.session"
+  },
+  "runtime_ui_rendered_message_bodies_only_draft_and_input_values_stay_excluded": {
+    "message": "Solo cuerpos de mensajes renderizados. Los valores borrador y de entrada permanecen excluidos.",
+    "description": "Runtime interface message ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded"
+  },
+  "runtime_ui_rendered_message_bodies_will_be_attached_to_the_next_hermes_turn": {
+    "message": "Los cuerpos de los mensajes renderizados se adjuntarán al siguiente turno Hermes.",
+    "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
+  },
+  "runtime_ui_replaced_the_original_field_safely": {
+    "message": "Reemplazó el campo original de forma segura",
+    "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_reply": {
+    "message": "Responder",
+    "description": "Runtime interface message ui.reply"
+  },
+  "runtime_ui_request": {
+    "message": "Solicitar",
+    "description": "Runtime interface message ui.request"
+  },
+  "runtime_ui_required": {
+    "message": "Requerido",
+    "description": "Runtime interface message ui.required"
+  },
+  "runtime_ui_required_for_cloud_preview_and_older_hermes_builds_it_refuses_c_f0bdad5b": {
+    "message": "Requerido para Cloud Preview y compilaciones anteriores de Hermes. Rechaza el reconocimiento de voz en la nube.",
+    "description": "Runtime interface message ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b"
+  },
+  "runtime_ui_reset": {
+    "message": "Reiniciar",
+    "description": "Runtime interface message ui.reset"
+  },
+  "runtime_ui_reset_zoom": {
+    "message": "Restablecer zoom",
+    "description": "Runtime interface message ui.reset.zoom"
+  },
+  "runtime_ui_response": {
+    "message": "Respuesta",
+    "description": "Runtime interface message ui.response"
+  },
+  "runtime_ui_restricted_page": {
+    "message": "Pagina restringida",
+    "description": "Runtime interface message ui.restricted.page"
+  },
+  "runtime_ui_result": {
+    "message": "Resultado",
+    "description": "Runtime interface message ui.result"
+  },
+  "runtime_ui_result_preview": {
+    "message": "Vista previa del resultado",
+    "description": "Runtime interface message ui.result.preview"
+  },
+  "runtime_ui_retry": {
+    "message": "Reintentar",
+    "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_page": {
+    "message": "Volver a la página",
+    "description": "Runtime interface message ui.return.to.page"
+  },
+  "runtime_ui_review": {
+    "message": "Revisión",
+    "description": "Runtime interface message ui.review"
+  },
+  "runtime_ui_review_the_result_before_applying_it": {
+    "message": "Revisa el resultado antes de aplicarlo.",
+    "description": "Runtime interface message ui.review.the.result.before.applying.it"
+  },
+  "runtime_ui_right_click_actions": {
+    "message": "Acciones de clic derecho",
+    "description": "Runtime interface message ui.right.click.actions"
+  },
+  "runtime_ui_right_click_task_complete": {
+    "message": "Tarea de clic derecho completada",
+    "description": "Runtime interface message ui.right.click.task.complete"
+  },
+  "runtime_ui_right_click_task_failed": {
+    "message": "Error en la tarea al hacer clic derecho",
+    "description": "Runtime interface message ui.right.click.task.failed"
+  },
+  "runtime_ui_row": {
+    "message": "Fila",
+    "description": "Runtime interface message ui.row"
+  },
+  "runtime_ui_rows": {
+    "message": "Filas",
+    "description": "Runtime interface message ui.rows"
+  },
+  "runtime_ui_run": {
+    "message": "correr",
+    "description": "Runtime interface message ui.run"
+  },
+  "runtime_ui_run_in_background": {
+    "message": "Ejecutar en segundo plano",
+    "description": "Runtime interface message ui.run.in.background"
+  },
+  "runtime_ui_runs": {
+    "message": "Corre",
+    "description": "Runtime interface message ui.runs"
+  },
+  "runtime_ui_runtime_identity": {
+    "message": "Identidad en tiempo de ejecución",
+    "description": "Runtime interface message ui.runtime.identity"
+  },
+  "runtime_ui_safe_apply": {
+    "message": "APLICAR DE FORMA SEGURA",
+    "description": "Runtime interface message ui.safe.apply"
+  },
+  "runtime_ui_safety": {
+    "message": "Seguridad",
+    "description": "Runtime interface message ui.safety"
+  },
+  "runtime_ui_same_desktop_palettes_minus_window_transparency": {
+    "message": "Mismas paletas de escritorio, menos transparencia de ventana.",
+    "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
+  },
+  "runtime_ui_save": {
+    "message": "Guardar",
+    "description": "Runtime interface message ui.save"
+  },
+  "runtime_ui_save_settings": {
+    "message": "Guardar configuración",
+    "description": "Runtime interface message ui.save.settings"
+  },
+  "runtime_ui_saved": {
+    "message": "Guardado",
+    "description": "Runtime interface message ui.saved"
+  },
+  "runtime_ui_saved_when_you_send_the_first_message": {
+    "message": "Se guarda cuando envías el primer mensaje.",
+    "description": "Runtime interface message ui.saved.when.you.send.the.first.message"
+  },
+  "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
+    "message": "Diga \"Hola Hermes\" para recibir una solicitud de voz de un solo turno con manos libres. La detección siempre activa permanece en esta máquina.",
+    "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
+    "message": "Escale la copia de la interfaz sin cambiar el zoom del navegador.",
+    "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
+  },
+  "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
+    "message": "Analiza un host API Hermes confiable en busca de puertas de enlace en ejecución. Utilice localhost para agentes en la misma máquina o un host/IP Tailscale para agentes remotos privados.",
+    "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
+  },
+  "runtime_ui_screen": {
+    "message": "Pantalla",
+    "description": "Runtime interface message ui.screen"
+  },
+  "runtime_ui_script": {
+    "message": "Guión",
+    "description": "Runtime interface message ui.script"
+  },
+  "runtime_ui_search": {
+    "message": "Buscar",
+    "description": "Runtime interface message ui.search"
+  },
+  "runtime_ui_search_all_models": {
+    "message": "Buscar todos los modelos",
+    "description": "Runtime interface message ui.search.all.models"
+  },
+  "runtime_ui_search_chats": {
+    "message": "Buscar chats",
+    "description": "Runtime interface message ui.search.chats"
+  },
+  "runtime_ui_search_sessions": {
+    "message": "Sesiones de búsqueda",
+    "description": "Runtime interface message ui.search.sessions"
+  },
+  "runtime_ui_search_tabs": {
+    "message": "Pestañas de búsqueda",
+    "description": "Runtime interface message ui.search.tabs"
+  },
+  "runtime_ui_security": {
+    "message": "Seguridad",
+    "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_select": {
+    "message": "Seleccionar",
+    "description": "Runtime interface message ui.select"
+  },
+  "runtime_ui_select_model": {
+    "message": "Seleccionar modelo",
+    "description": "Runtime interface message ui.select.model"
+  },
+  "runtime_ui_selected_model_runtime_options": {
+    "message": "Opciones de tiempo de ejecución del modelo seleccionado",
+    "description": "Runtime interface message ui.selected.model.runtime.options"
+  },
+  "runtime_ui_selecting_the_safest_wake_listener": {
+    "message": "Seleccionando el despertador más seguro...",
+    "description": "Runtime interface message ui.selecting.the.safest.wake.listener"
+  },
+  "runtime_ui_selection": {
+    "message": "Selección",
+    "description": "Runtime interface message ui.selection"
+  },
+  "runtime_ui_self_hosted_api_or_dashboard_api_can_use_trusted_lan_http_dashb_152b7f4c": {
+    "message": "API autohospedado o panel de control. API puede usar LAN confiable http; El panel de control utiliza https.",
+    "description": "Runtime interface message ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c"
+  },
+  "runtime_ui_send": {
+    "message": "enviar",
+    "description": "Runtime interface message ui.send"
+  },
+  "runtime_ui_send_it_when_the_current_hermes_run_finishes": {
+    "message": "Envíelo cuando finalice la ejecución actual de Hermes.",
+    "description": "Runtime interface message ui.send.it.when.the.current.hermes.run.finishes"
+  },
+  "runtime_ui_send_message": {
+    "message": "enviar mensaje",
+    "description": "Runtime interface message ui.send.message"
+  },
+  "runtime_ui_sending_observed_model_request": {
+    "message": "Envío de solicitud de modelo observado",
+    "description": "Runtime interface message ui.sending.observed.model.request"
+  },
+  "runtime_ui_server": {
+    "message": "Servidor",
+    "description": "Runtime interface message ui.server"
+  },
+  "runtime_ui_service": {
+    "message": "Servicio",
+    "description": "Runtime interface message ui.service"
+  },
+  "runtime_ui_session": {
+    "message": "SESIÓN",
+    "description": "Runtime interface message ui.session"
+  },
+  "runtime_ui_session_actions": {
+    "message": "Acciones de sesión",
+    "description": "Runtime interface message ui.session.actions"
+  },
+  "runtime_ui_session_context_window": {
+    "message": "Ventana de contexto de sesión",
+    "description": "Runtime interface message ui.session.context.window"
+  },
+  "runtime_ui_session_f7f1997c": {
+    "message": "Sesión",
+    "description": "Runtime interface message ui.session.f7f1997c"
+  },
+  "runtime_ui_session_handoff": {
+    "message": "Traspaso de sesión",
+    "description": "Runtime interface message ui.session.handoff"
+  },
+  "runtime_ui_session_id": {
+    "message": "ID de sesión",
+    "description": "Runtime interface message ui.session.id"
+  },
+  "runtime_ui_session_id_copied": {
+    "message": "ID de sesión copiada",
+    "description": "Runtime interface message ui.session.id.copied"
+  },
+  "runtime_ui_session_naming_prompt_context_and_side_panel_residency_live_together": {
+    "message": "El nombre de la sesión, el contexto del prompt y la permanencia del panel lateral se gestionan juntos.",
+    "description": "Runtime interface message ui.session.naming.prompt.context.and.side.panel.residency.live.together"
+  },
+  "runtime_ui_session_renamed": {
+    "message": "Sesión renombrada",
+    "description": "Runtime interface message ui.session.renamed"
+  },
+  "runtime_ui_session_renamed_and_synced": {
+    "message": "Sesión renombrada y sincronizada",
+    "description": "Runtime interface message ui.session.renamed.and.synced"
+  },
+  "runtime_ui_session_runtime": {
+    "message": "Tiempo de ejecución de la sesión",
+    "description": "Runtime interface message ui.session.runtime"
+  },
+  "runtime_ui_session_sync_failed": {
+    "message": "Falló la sincronización de la sesión",
+    "description": "Runtime interface message ui.session.sync.failed"
+  },
+  "runtime_ui_session_title": {
+    "message": "Título de la sesión",
+    "description": "Runtime interface message ui.session.title"
+  },
+  "runtime_ui_session_title_saved_locally": {
+    "message": "Título de la sesión guardado localmente",
+    "description": "Runtime interface message ui.session.title.saved.locally"
+  },
+  "runtime_ui_session_title_updated": {
+    "message": "Título de la sesión actualizado",
+    "description": "Runtime interface message ui.session.title.updated"
+  },
+  "runtime_ui_session_unavailable": {
+    "message": "Sesión no disponible",
+    "description": "Runtime interface message ui.session.unavailable"
+  },
+  "runtime_ui_sessions": {
+    "message": "SESIONES",
+    "description": "Runtime interface message ui.sessions"
+  },
+  "runtime_ui_set": {
+    "message": "conjunto",
+    "description": "Runtime interface message ui.set"
+  },
+  "runtime_ui_set_a_remote_dashboard": {
+    "message": "Configurar un panel remoto",
+    "description": "Runtime interface message ui.set.a.remote.dashboard"
+  },
+  "runtime_ui_settings": {
+    "message": "Configuración",
+    "description": "Runtime interface message ui.settings"
+  },
+  "runtime_ui_settings_not_saved": {
+    "message": "Configuraciones no guardadas",
+    "description": "Runtime interface message ui.settings.not.saved"
+  },
+  "runtime_ui_setup": {
+    "message": "Configuración",
+    "description": "Runtime interface message ui.setup"
+  },
+  "runtime_ui_share": {
+    "message": "Compartir",
+    "description": "Runtime interface message ui.share"
+  },
+  "runtime_ui_shared_session": {
+    "message": "SESIÓN COMPARTIDA",
+    "description": "Runtime interface message ui.shared.session"
+  },
+  "runtime_ui_shared_session_0a6bce9c": {
+    "message": "Sesión compartida",
+    "description": "Runtime interface message ui.shared.session.0a6bce9c"
+  },
+  "runtime_ui_shell": {
+    "message": "Concha",
+    "description": "Runtime interface message ui.shell"
+  },
+  "runtime_ui_short": {
+    "message": "corto",
+    "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_show": {
+    "message": "Mostrar",
+    "description": "Runtime interface message ui.show"
+  },
+  "runtime_ui_show_hermes_assist_in_writing_fields": {
+    "message": "Mostrar Hermes Assist en los campos de escritura",
+    "description": "Runtime interface message ui.show.hermes.assist.in.writing.fields"
+  },
+  "runtime_ui_side_panel": {
+    "message": "Panel lateral",
+    "description": "Runtime interface message ui.side.panel"
+  },
+  "runtime_ui_sidebar": {
+    "message": "Barra lateral",
+    "description": "Runtime interface message ui.sidebar"
+  },
+  "runtime_ui_signal": {
+    "message": "señal",
+    "description": "Runtime interface message ui.signal"
+  },
+  "runtime_ui_site": {
+    "message": "Sitio",
+    "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_size": {
+    "message": "Tamaño",
+    "description": "Runtime interface message ui.size"
+  },
+  "runtime_ui_skill": {
+    "message": "Habilidad",
+    "description": "Runtime interface message ui.skill"
+  },
+  "runtime_ui_skill_sync_failed": {
+    "message": "Falló la sincronización de habilidades",
+    "description": "Runtime interface message ui.skill.sync.failed"
+  },
+  "runtime_ui_skills": {
+    "message": "Habilidades",
+    "description": "Runtime interface message ui.skills"
+  },
+  "runtime_ui_skip": {
+    "message": "Saltar",
+    "description": "Runtime interface message ui.skip"
+  },
+  "runtime_ui_slash_commands_and_skills": {
+    "message": "Comandos y habilidades de corte",
+    "description": "Runtime interface message ui.slash.commands.and.skills"
+  },
+  "runtime_ui_slash_helpers": {
+    "message": "Ayudantes de barra",
+    "description": "Runtime interface message ui.slash.helpers"
+  },
+  "runtime_ui_socket": {
+    "message": "Zócalo",
+    "description": "Runtime interface message ui.socket"
+  },
+  "runtime_ui_source": {
+    "message": "FUENTE",
+    "description": "Runtime interface message ui.source"
+  },
+  "runtime_ui_source_6da13add": {
+    "message": "Fuente",
+    "description": "Runtime interface message ui.source.6da13add"
+  },
+  "runtime_ui_source_deck": {
+    "message": "Cubierta fuente",
+    "description": "Runtime interface message ui.source.deck"
+  },
+  "runtime_ui_source_receipts_arrive_after_shared_context_extraction": {
+    "message": "Los recibos de origen llegan después de la extracción del contexto compartido.",
+    "description": "Runtime interface message ui.source.receipts.arrive.after.shared.context.extraction"
+  },
+  "runtime_ui_speak_into_the_composer": {
+    "message": "Habla con el compositor.",
+    "description": "Runtime interface message ui.speak.into.the.composer"
+  },
+  "runtime_ui_speak_wake_replies": {
+    "message": "Hablar respuestas de despertar",
+    "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_standard": {
+    "message": "Estándar",
+    "description": "Runtime interface message ui.standard"
+  },
+  "runtime_ui_start": {
+    "message": "Empezar",
+    "description": "Runtime interface message ui.start"
+  },
+  "runtime_ui_start_dictation": {
+    "message": "Iniciar dictado",
+    "description": "Runtime interface message ui.start.dictation"
+  },
+  "runtime_ui_start_new_assist_session": {
+    "message": "Iniciar nueva sesión de asistencia",
+    "description": "Runtime interface message ui.start.new.assist.session"
+  },
+  "runtime_ui_start_new_browser_session": {
+    "message": "Iniciar nueva sesión del navegador",
+    "description": "Runtime interface message ui.start.new.browser.session"
+  },
+  "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
+    "message": "Inicie Hermes API server localmente o en una máquina remota accesible.",
+    "description": "Runtime interface message ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine"
+  },
+  "runtime_ui_start_voice_dictation": {
+    "message": "Iniciar dictado de voz",
+    "description": "Runtime interface message ui.start.voice.dictation"
+  },
+  "runtime_ui_starting_hermes_native_wake_engine": {
+    "message": "Iniciando el motor de activación nativo de Hermes...",
+    "description": "Runtime interface message ui.starting.hermes.native.wake.engine"
+  },
+  "runtime_ui_starting_hermes_voice_recording_now": {
+    "message": "Iniciando la grabación de voz de Hermes ahora.",
+    "description": "Runtime interface message ui.starting.hermes.voice.recording.now"
+  },
+  "runtime_ui_startup_readiness_checks": {
+    "message": "Comprobaciones de preparación para el inicio",
+    "description": "Runtime interface message ui.startup.readiness.checks"
+  },
+  "runtime_ui_status": {
+    "message": "Estado",
+    "description": "Runtime interface message ui.status"
+  },
+  "runtime_ui_steer": {
+    "message": "dirigir",
+    "description": "Runtime interface message ui.steer"
+  },
+  "runtime_ui_steer_failed": {
+    "message": "Dirección fallida",
+    "description": "Runtime interface message ui.steer.failed"
+  },
+  "runtime_ui_steer_not_injected": {
+    "message": "Dirección no inyectada",
+    "description": "Runtime interface message ui.steer.not.injected"
+  },
+  "runtime_ui_steer_sent": {
+    "message": "Dirección enviada",
+    "description": "Runtime interface message ui.steer.sent"
+  },
+  "runtime_ui_steer_sent_to_active_run": {
+    "message": "Dirección enviada a carrera activa",
+    "description": "Runtime interface message ui.steer.sent.to.active.run"
+  },
+  "runtime_ui_steer_the_current_run": {
+    "message": "Dirigir la carrera actual",
+    "description": "Runtime interface message ui.steer.the.current.run"
+  },
+  "runtime_ui_stop": {
+    "message": "Detener",
+    "description": "Runtime interface message ui.stop"
+  },
+  "runtime_ui_stop_hermes": {
+    "message": "Detener Hermes",
+    "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stopping_hermes": {
+    "message": "Deteniendo Hermes",
+    "description": "Runtime interface message ui.stopping.hermes"
+  },
+  "runtime_ui_stopping_recording": {
+    "message": "Deteniendo la grabación…",
+    "description": "Runtime interface message ui.stopping.recording"
+  },
+  "runtime_ui_storage": {
+    "message": "Almacenamiento",
+    "description": "Runtime interface message ui.storage"
+  },
+  "runtime_ui_stream": {
+    "message": "corriente",
+    "description": "Runtime interface message ui.stream"
+  },
+  "runtime_ui_submit": {
+    "message": "Enviar",
+    "description": "Runtime interface message ui.submit"
+  },
+  "runtime_ui_summarize": {
+    "message": "resumir",
+    "description": "Runtime interface message ui.summarize"
+  },
+  "runtime_ui_summarize_selection": {
+    "message": "Resumir selección",
+    "description": "Runtime interface message ui.summarize.selection"
+  },
+  "runtime_ui_summary": {
+    "message": "Resumen",
+    "description": "Runtime interface message ui.summary"
+  },
+  "runtime_ui_support_diagnostics": {
+    "message": "Diagnóstico de soporte",
+    "description": "Runtime interface message ui.support.diagnostics"
+  },
+  "runtime_ui_switch": {
+    "message": "Cambiar",
+    "description": "Runtime interface message ui.switch"
+  },
+  "runtime_ui_switch_partially_failed": {
+    "message": "El interruptor falló parcialmente",
+    "description": "Runtime interface message ui.switch.partially.failed"
+  },
+  "runtime_ui_switch_to_this_agent": {
+    "message": "Cambiar a este agente",
+    "description": "Runtime interface message ui.switch.to.this.agent"
+  },
+  "runtime_ui_switched_gateway": {
+    "message": "Gateway cambiado",
+    "description": "Runtime interface message ui.switched.gateway"
+  },
+  "runtime_ui_syncing_hermes_model_catalog_this_can_take_20_30_seconds": {
+    "message": "Sincronizando el catálogo de modelos Hermes... esto puede tardar entre 20 y 30 segundos.",
+    "description": "Runtime interface message ui.syncing.hermes.model.catalog.this.can.take.20.30.seconds"
+  },
+  "runtime_ui_system": {
+    "message": "▱ Sistema",
+    "description": "Runtime interface message ui.system"
+  },
+  "runtime_ui_system_bc0792d8": {
+    "message": "Sistema",
+    "description": "Runtime interface message ui.system.bc0792d8"
+  },
+  "runtime_ui_tab": {
+    "message": "Pestaña",
+    "description": "Runtime interface message ui.tab"
+  },
+  "runtime_ui_tabs": {
+    "message": "Pestañas",
+    "description": "Runtime interface message ui.tabs"
+  },
+  "runtime_ui_tabs_in_prompt": {
+    "message": "Pestañas en el prompt",
+    "description": "Runtime interface message ui.tabs.in.prompt"
+  },
+  "runtime_ui_tag": {
+    "message": "Etiqueta",
+    "description": "Runtime interface message ui.tag"
+  },
+  "runtime_ui_tags": {
+    "message": "Etiquetas",
+    "description": "Runtime interface message ui.tags"
+  },
+  "runtime_ui_target": {
+    "message": "Objetivo",
+    "description": "Runtime interface message ui.target"
+  },
+  "runtime_ui_task": {
+    "message": "Tarea",
+    "description": "Runtime interface message ui.task"
+  },
+  "runtime_ui_tasks": {
+    "message": "☑ TAREAS",
+    "description": "Runtime interface message ui.tasks"
+  },
+  "runtime_ui_template": {
+    "message": "Plantilla",
+    "description": "Runtime interface message ui.template"
+  },
+  "runtime_ui_test": {
+    "message": "prueba",
+    "description": "Runtime interface message ui.test"
+  },
+  "runtime_ui_test_984816fd": {
+    "message": "PROBAR",
+    "description": "Runtime interface message ui.test.984816fd"
+  },
+  "runtime_ui_test_connection": {
+    "message": "Conexión de prueba",
+    "description": "Runtime interface message ui.test.connection"
+  },
+  "runtime_ui_test_connection_f7dafbab": {
+    "message": "PROBAR CONEXIÓN",
+    "description": "Runtime interface message ui.test.connection.f7dafbab"
+  },
+  "runtime_ui_test_the_current_hermes_connection": {
+    "message": "Pruebe la conexión actual Hermes",
+    "description": "Runtime interface message ui.test.the.current.hermes.connection"
+  },
+  "runtime_ui_text": {
+    "message": "Texto",
+    "description": "Runtime interface message ui.text"
+  },
+  "runtime_ui_text_size": {
+    "message": "Tamaño del texto",
+    "description": "Runtime interface message ui.text.size"
+  },
+  "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
+    "message": "El tiempo de ejecución Hermes conectado no anuncia la compactación de sesión nativa.",
+    "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
+  },
+  "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
+    "message": "El tiempo de ejecución conectado recibirá estas opciones en el siguiente turno, pero no expone un punto final de reconocimiento.",
+    "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
+    "message": "El catálogo de modelos en vivo no está disponible; manteniendo la última lista de proveedores/modelos verificados.",
+    "description": "Runtime interface message ui.the.live.model.catalog.is.unavailable.keeping.the.last.verified.0e0250fe"
+  },
+  "runtime_ui_the_local_speech_language_pack_did_not_become_ready_in_90_secon_d69760e3": {
+    "message": "El paquete de idioma local no estuvo listo en 90 segundos. Vuelva a probar el oído después de que Chrome termine de instalar el soporte de voz.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.did.not.become.ready.in.90.secon.d69760e3"
+  },
+  "runtime_ui_the_local_speech_language_pack_is_unavailable_wake_listening_wi_6da8a4e2": {
+    "message": "El paquete de idioma de voz local no está disponible. La escucha activa no utilizará el reconocimiento de la nube.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.is.unavailable.wake.listening.wi.6da8a4e2"
+  },
+  "runtime_ui_the_microphone_is_unavailable_to_the_wake_listener": {
+    "message": "El micrófono no está disponible para el oyente que despierta.",
+    "description": "Runtime interface message ui.the.microphone.is.unavailable.to.the.wake.listener"
+  },
+  "runtime_ui_the_page_is_the_prompt": {
+    "message": "LA PÁGINA ES EL PROMPT",
+    "description": "Runtime interface message ui.the.page.is.the.prompt"
+  },
+  "runtime_ui_theme": {
+    "message": "Tema",
+    "description": "Runtime interface message ui.theme"
+  },
+  "runtime_ui_thinking": {
+    "message": "Pensando",
+    "description": "Runtime interface message ui.thinking"
+  },
+  "runtime_ui_thinking_off_standard": {
+    "message": "Pensando fuera · Estándar",
+    "description": "Runtime interface message ui.thinking.off.standard"
+  },
+  "runtime_ui_this_browser_does_not_expose_on_device_speech_recognition": {
+    "message": "Este navegador no expone el reconocimiento de voz en el dispositivo.",
+    "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
+  },
+  "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
+    "message": "Este navegador Chromium no expone MediaRecorder/getUserMedia a páginas de extensión y el respaldo de Web Speech no está disponible.",
+    "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
+    "message": "Este Gateway aún no expone /v1/capabilities. Las rutas específicas del navegador permanecerán en modo de respaldo.",
+    "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
+  },
+  "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
+    "message": "Este Hermes Gateway aún no expone /v1/profiles. Se usa el perfil que se está ejecutando actualmente.",
+    "description": "Runtime interface message ui.this.hermes.gateway.does.not.expose.v1.profiles.yet.using.the.c.0222afa8"
+  },
+  "runtime_ui_this_hermes_runtime_does_not_advertise_browser_pairing_yet": {
+    "message": "Este tiempo de ejecución Hermes aún no anuncia el emparejamiento del navegador.",
+    "description": "Runtime interface message ui.this.hermes.runtime.does.not.advertise.browser.pairing.yet"
+  },
+  "runtime_ui_this_managed_editor_is_not_mutated_until_insertion_is_verified": {
+    "message": "Este editor administrado no cambia hasta que se verifica la inserción.",
+    "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
+  },
+  "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
+    "message": "Este modelo se descubrió desde un punto final personalizado, pero Hermes debe exponerlo a través del tiempo de ejecución conectado antes de que el navegador pueda enrutar solicitudes hacia él.",
+    "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
+  },
+  "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
+    "message": "Esta solicitud está vinculada a la sesión del navegador seleccionada.",
+    "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_time": {
+    "message": "tiempo",
+    "description": "Runtime interface message ui.time"
+  },
+  "runtime_ui_title": {
+    "message": "Título",
+    "description": "Runtime interface message ui.title"
+  },
+  "runtime_ui_toggle_hey_hermes": {
+    "message": "Alternar Hola Hermes",
+    "description": "Runtime interface message ui.toggle.hey.hermes"
+  },
+  "runtime_ui_toggle_inspector": {
+    "message": "Alternar inspector",
+    "description": "Runtime interface message ui.toggle.inspector"
+  },
+  "runtime_ui_token": {
+    "message": "ficha",
+    "description": "Runtime interface message ui.token"
+  },
+  "runtime_ui_tokens": {
+    "message": "Fichas",
+    "description": "Runtime interface message ui.tokens"
+  },
+  "runtime_ui_tokens_are_stored_in_chrome_storage_local_and_never_displayed_after_save": {
+    "message": "Los tokens se almacenan en chrome.storage.local y nunca se muestran después de guardarlos.",
+    "description": "Runtime interface message ui.tokens.are.stored.in.chrome.storage.local.and.never.displayed.after.save"
+  },
+  "runtime_ui_tool": {
+    "message": "Herramienta",
+    "description": "Runtime interface message ui.tool"
+  },
+  "runtime_ui_tool_activity": {
+    "message": "ACTIVIDAD DE LA HERRAMIENTA",
+    "description": "Runtime interface message ui.tool.activity"
+  },
+  "runtime_ui_tool_and_run_events_will_appear_here": {
+    "message": "Los eventos de herramienta y ejecución aparecerán aquí.",
+    "description": "Runtime interface message ui.tool.and.run.events.will.appear.here"
+  },
+  "runtime_ui_total": {
+    "message": "totales",
+    "description": "Runtime interface message ui.total"
+  },
+  "runtime_ui_transcribing_through_your_local_hermes_gateway": {
+    "message": "Transcribiendo a través de su gateway local Hermes...",
+    "description": "Runtime interface message ui.transcribing.through.your.local.hermes.gateway"
+  },
+  "runtime_ui_transcribing_voice": {
+    "message": "transcribir voz",
+    "description": "Runtime interface message ui.transcribing.voice"
+  },
+  "runtime_ui_transcript_inserted_into_the_composer": {
+    "message": "Transcripción insertada en el compositor.",
+    "description": "Runtime interface message ui.transcript.inserted.into.the.composer"
+  },
+  "runtime_ui_transcription": {
+    "message": "Transcripción",
+    "description": "Runtime interface message ui.transcription"
+  },
+  "runtime_ui_trusted": {
+    "message": "Confiable",
+    "description": "Runtime interface message ui.trusted"
+  },
+  "runtime_ui_try_recording_again": {
+    "message": "Intente grabar nuevamente.",
+    "description": "Runtime interface message ui.try.recording.again"
+  },
+  "runtime_ui_turn_off": {
+    "message": "Apagar",
+    "description": "Runtime interface message ui.turn.off"
+  },
+  "runtime_ui_turn_on": {
+    "message": "encender",
+    "description": "Runtime interface message ui.turn.on"
+  },
+  "runtime_ui_turn_the_field_bound_launcher_on_or_off_across_normal_web_pages": {
+    "message": "Active o desactive el iniciador de campo en páginas web normales.",
+    "description": "Runtime interface message ui.turn.the.field.bound.launcher.on.or.off.across.normal.web.pages"
+  },
+  "runtime_ui_type": {
+    "message": "Tipo",
+    "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_ui": {
+    "message": "interfaz de usuario",
+    "description": "Runtime interface message ui.ui"
+  },
+  "runtime_ui_unavailable": {
+    "message": "No disponible",
+    "description": "Runtime interface message ui.unavailable"
+  },
+  "runtime_ui_undo": {
+    "message": "Deshacer",
+    "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_update": {
+    "message": "Actualizar",
+    "description": "Runtime interface message ui.update"
+  },
+  "runtime_ui_update_now": {
+    "message": "Actualizar ahora",
+    "description": "Runtime interface message ui.update.now"
+  },
+  "runtime_ui_update_prompt_ready": {
+    "message": "Aviso de actualización listo",
+    "description": "Runtime interface message ui.update.prompt.ready"
+  },
+  "runtime_ui_updates_are_checked_against_the_public_github_repo": {
+    "message": "Las actualizaciones se comparan con el repositorio público GitHub.",
+    "description": "Runtime interface message ui.updates.are.checked.against.the.public.github.repo"
+  },
+  "runtime_ui_upload": {
+    "message": "Subir",
+    "description": "Runtime interface message ui.upload"
+  },
+  "runtime_ui_url": {
+    "message": "↗ URL...",
+    "description": "Runtime interface message ui.url"
+  },
+  "runtime_ui_url_0e2d9b07": {
+    "message": "URL",
+    "description": "Runtime interface message ui.url.0e2d9b07"
+  },
+  "runtime_ui_url_19911671": {
+    "message": "↗ URL…",
+    "description": "Runtime interface message ui.url.19911671"
+  },
+  "runtime_ui_use": {
+    "message": "uso",
+    "description": "Runtime interface message ui.use"
+  },
+  "runtime_ui_use_current_tab_session": {
+    "message": "Usar la sesión de la pestaña actual",
+    "description": "Runtime interface message ui.use.current.tab.session"
+  },
+  "runtime_ui_use_hermes_desktop_model_settings_or_the_hermes_model_command_t_f5a4940b": {
+    "message": "Utilice la configuración del modelo Hermes Desktop o el comando del modelo Hermes y luego actualice los modelos aquí.",
+    "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
+  },
+  "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
+    "message": "Utilice la sesión actual de la pestaña activa, cree una nueva sesión del navegador o ejecútela por separado.",
+    "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
+  },
+  "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
+    "message": "Utilice la misma paleta y lenguaje Chrome que Hermes Browser.",
+    "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
+  },
+  "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
+    "message": "Utilícelo cuando la URL de un panel remoto, un token de portador o un origen CORS estén mal configurados.",
+    "description": "Runtime interface message ui.use.this.when.a.remote.dashboard.url.bearer.token.or.cors.origi.9956db87"
+  },
+  "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
+    "message": "Úselo al presentar GitHub problemas o informes de soporte.",
+    "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_user": {
+    "message": "Usuario",
+    "description": "Runtime interface message ui.user"
+  },
+  "runtime_ui_uses_hermes_tts_on_the_native_path_and_local_browser_speech_on_acf402bd": {
+    "message": "Utiliza Hermes TTS en la ruta nativa y la voz del navegador local en la ruta alternativa.",
+    "description": "Runtime interface message ui.uses.hermes.tts.on.the.native.path.and.local.browser.speech.on.acf402bd"
+  },
+  "runtime_ui_using_cached_hermes_catalog": {
+    "message": "Usando el catálogo Hermes en caché",
+    "description": "Runtime interface message ui.using.cached.hermes.catalog"
+  },
+  "runtime_ui_using_hermes_speech_to_text_matching_desktop_dictation": {
+    "message": "Usando Hermes voz a texto, igualando el dictado de escritorio.",
+    "description": "Runtime interface message ui.using.hermes.speech.to.text.matching.desktop.dictation"
+  },
+  "runtime_ui_using_the_currently_running_hermes_gateway_profile": {
+    "message": "Usando el perfil de Hermes Gateway que se está ejecutando actualmente.",
+    "description": "Runtime interface message ui.using.the.currently.running.hermes.gateway.profile"
+  },
+  "runtime_ui_value": {
+    "message": "Valor",
+    "description": "Runtime interface message ui.value"
+  },
+  "runtime_ui_version": {
+    "message": "Versión",
+    "description": "Runtime interface message ui.version"
+  },
+  "runtime_ui_version_loading": {
+    "message": "cargando versión…",
+    "description": "Runtime interface message ui.version.loading"
+  },
+  "runtime_ui_video": {
+    "message": "Vídeo",
+    "description": "Runtime interface message ui.video"
+  },
+  "runtime_ui_view": {
+    "message": "Ver",
+    "description": "Runtime interface message ui.view"
+  },
+  "runtime_ui_voice": {
+    "message": "Voz",
+    "description": "Runtime interface message ui.voice"
+  },
+  "runtime_ui_voice_dictation": {
+    "message": "Dictado de voz",
+    "description": "Runtime interface message ui.voice.dictation"
+  },
+  "runtime_ui_voice_dictation_ready": {
+    "message": "Dictado de voz listo",
+    "description": "Runtime interface message ui.voice.dictation.ready"
+  },
+  "runtime_ui_voice_dictation_stopped": {
+    "message": "Se detuvo el dictado de voz",
+    "description": "Runtime interface message ui.voice.dictation.stopped"
+  },
+  "runtime_ui_voice_dictation_unavailable": {
+    "message": "Dictado de voz no disponible",
+    "description": "Runtime interface message ui.voice.dictation.unavailable"
+  },
+  "runtime_ui_voice_mode_browser_speech_fallback_hermes_stt_is_unavailable_on_70bf6212": {
+    "message": "Modo de voz: alternativa de reconocimiento de voz del navegador\n\nHermes STT no está disponible en este gateway. El reconocimiento de voz se ejecuta en el navegador; solo la transcripción se envía de vuelta al panel lateral.",
+    "description": "Runtime interface message ui.voice.mode.browser.speech.fallback.hermes.stt.is.unavailable.on.70bf6212"
+  },
+  "runtime_ui_voice_mode_hermes_stt_audio_is_sent_once_to_your_local_hermes_t_6e927a4e": {
+    "message": "Modo de voz: Hermes STT\n\nEl audio se envía una vez a su punto final de transcripción local Hermes cuando detiene la grabación.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.audio.is.sent.once.to.your.local.hermes.t.6e927a4e"
+  },
+  "runtime_ui_voice_mode_hermes_stt_recording_speak_now_then_click_stop_transcribe": {
+    "message": "Modo de voz: Hermes STT\n\nGrabando... hable ahora, luego haga clic en Detener + transcribir.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.recording.speak.now.then.click.stop.transcribe"
+  },
+  "runtime_ui_voice_mode_hermes_stt_requesting_microphone_access": {
+    "message": "Modo de voz: Hermes STT\n\nSolicitando acceso al micrófono…",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.requesting.microphone.access"
+  },
+  "runtime_ui_voice_mode_on_device_speech_downloading_the_browser_language_pack_once": {
+    "message": "Modo de voz: voz en el dispositivo\n\nDescargando el paquete de idioma del navegador una vez...",
+    "description": "Runtime interface message ui.voice.mode.on.device.speech.downloading.the.browser.language.pack.once"
+  },
+  "runtime_ui_voice_mode_unavailable_connect_hermes_for_stt_or_use_a_chromium_08a02bbb": {
+    "message": "El modo de voz no está disponible. Conecta Hermes para STT o utiliza una compilación de Chromium compatible con la alternativa de reconocimiento de voz del navegador.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.connect.hermes.for.stt.or.use.a.chromium.08a02bbb"
+  },
+  "runtime_ui_voice_mode_unavailable_this_browser_does_not_expose_hermes_stt_fcc04044": {
+    "message": "El modo de voz no está disponible. Este navegador no ofrece Hermes STT ni la alternativa Web Speech.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.browser.does.not.expose.hermes.stt.fcc04044"
+  },
+  "runtime_ui_voice_mode_unavailable_this_hermes_runtime_has_no_audio_transcr_70f57e78": {
+    "message": "El modo de voz no está disponible. Este tiempo de ejecución de Hermes no tiene una ruta de transcripción de audio y este navegador no ofrece una alternativa Web Speech.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.hermes.runtime.has.no.audio.transcr.70f57e78"
+  },
+  "runtime_ui_voice_recording_failed": {
+    "message": "Error en la grabación de voz",
+    "description": "Runtime interface message ui.voice.recording.failed"
+  },
+  "runtime_ui_voice_tab_opened": {
+    "message": "Pestaña de voz abierta",
+    "description": "Runtime interface message ui.voice.tab.opened"
+  },
+  "runtime_ui_voice_transcript_handoff_failed": {
+    "message": "Falló la transferencia de transcripción de voz",
+    "description": "Runtime interface message ui.voice.transcript.handoff.failed"
+  },
+  "runtime_ui_voice_transcript_ready": {
+    "message": "Transcripción de voz lista",
+    "description": "Runtime interface message ui.voice.transcript.ready"
+  },
+  "runtime_ui_voice_transcription_failed": {
+    "message": "Error en la transcripción de voz",
+    "description": "Runtime interface message ui.voice.transcription.failed"
+  },
+  "runtime_ui_waiting_for_hermes_desktop_approval": {
+    "message": "Esperando la aprobación de Hermes Desktop...",
+    "description": "Runtime interface message ui.waiting.for.hermes.desktop.approval"
+  },
+  "runtime_ui_waiting_for_permission_request": {
+    "message": "Esperando solicitud de permiso...",
+    "description": "Runtime interface message ui.waiting.for.permission.request"
+  },
+  "runtime_ui_waiting_for_session_usage": {
+    "message": "Esperando el uso de la sesión.",
+    "description": "Runtime interface message ui.waiting.for.session.usage"
+  },
+  "runtime_ui_waiting_for_the_session_resource_to_confirm_thinking_effort_and_63018fde": {
+    "message": "Esperando que el recurso de sesión confirme Pensamiento, esfuerzo y modo Rápido.",
+    "description": "Runtime interface message ui.waiting.for.the.session.resource.to.confirm.thinking.effort.and.63018fde"
+  },
+  "runtime_ui_wake_command_captured": {
+    "message": "Comando de activación capturado.",
+    "description": "Runtime interface message ui.wake.command.captured"
+  },
+  "runtime_ui_wake_command_captured_opening_hermes": {
+    "message": "Comando de activación capturado. Abriendo Hermes…",
+    "description": "Runtime interface message ui.wake.command.captured.opening.hermes"
+  },
+  "runtime_ui_wake_listener_document_is_ready": {
+    "message": "El documento de Wake Listener está listo.",
+    "description": "Runtime interface message ui.wake.listener.document.is.ready"
+  },
+  "runtime_ui_wake_listener_paused_during_the_voice_turn": {
+    "message": "El oyente despierto hizo una pausa durante el turno de voz.",
+    "description": "Runtime interface message ui.wake.listener.paused.during.the.voice.turn"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command": {
+    "message": "Se escucha la frase de despertar. Escuchando tus órdenes.",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command_38ffdf10": {
+    "message": "Se escucha la frase de despertar. Escuchando tus órdenes...",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command.38ffdf10"
+  },
+  "runtime_ui_wake_word": {
+    "message": "palabra de despertar",
+    "description": "Runtime interface message ui.wake.word"
+  },
+  "runtime_ui_wake_word_is_off": {
+    "message": "La palabra para despertar está apagada.",
+    "description": "Runtime interface message ui.wake.word.is.off"
+  },
+  "runtime_ui_web_ui_sections": {
+    "message": "Secciones de la interfaz de usuario web",
+    "description": "Runtime interface message ui.web.ui.sections"
+  },
+  "runtime_ui_what_hermes_saw": {
+    "message": "LO QUE HERMES VIO",
+    "description": "Runtime interface message ui.what.hermes.saw"
+  },
+  "runtime_ui_what_should_we_work_on": {
+    "message": "¿En qué deberíamos trabajar?",
+    "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_should_hermes_work": {
+    "message": "¿Dónde debería funcionar Hermes?",
+    "description": "Runtime interface message ui.where.should.hermes.work"
+  },
+  "runtime_ui_where_should_this_right_click_task_run": {
+    "message": "¿Dónde debería ejecutarse esta tarea del botón derecho?",
+    "description": "Runtime interface message ui.where.should.this.right.click.task.run"
+  },
+  "runtime_ui_where_should_this_session_open": {
+    "message": "¿Dónde debería abrirse esta sesión?",
+    "description": "Runtime interface message ui.where.should.this.session.open"
+  },
+  "runtime_ui_window": {
+    "message": "ventana",
+    "description": "Runtime interface message ui.window"
+  },
+  "runtime_ui_window_tab_list": {
+    "message": "Lista de pestañas de ventana",
+    "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_worker": {
+    "message": "trabajador",
+    "description": "Runtime interface message ui.worker"
+  },
+  "runtime_ui_working": {
+    "message": "trabajando",
+    "description": "Runtime interface message ui.working"
+  },
+  "runtime_ui_working_92263e08": {
+    "message": "EN CURSO",
+    "description": "Runtime interface message ui.working.92263e08"
+  },
+  "runtime_ui_workspace": {
+    "message": "Espacio de trabajo",
+    "description": "Runtime interface message ui.workspace"
+  },
+  "runtime_ui_workspaces": {
+    "message": "Espacios de trabajo",
+    "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_xl": {
+    "message": "XL",
+    "description": "Runtime interface message ui.xl"
+  },
+  "runtime_ui_you": {
+    "message": "tu",
+    "description": "Runtime interface message ui.you"
+  },
+  "runtime_ui_your_current_conversation_stays_visible": {
+    "message": "Tu conversación actual permanece visible.",
+    "description": "Runtime interface message ui.your.current.conversation.stays.visible"
+  },
+  "runtime_ui_youtube_transcript_provider": {
+    "message": "YouTube proveedor de transcripciones",
+    "description": "Runtime interface message ui.youtube.transcript.provider"
+  },
+  "runtime_ui_zoom_in": {
+    "message": "Acercar",
+    "description": "Runtime interface message ui.zoom.in"
+  },
+  "runtime_ui_zoom_out": {
+    "message": "alejar",
+    "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_voice_browser_preview": {
+    "message": "Modo de voz: alternativa de reconocimiento de voz del navegador\n\n{preview}",
+    "description": "Runtime interface message voice.browser.preview"
+  },
+  "runtime_voice_browser_start_failed": {
+    "message": "No se pudo iniciar la alternativa de reconocimiento de voz del navegador.\n\n{error}",
+    "description": "Runtime interface message voice.browser.start_failed"
+  },
+  "runtime_voice_browser_stop_failed": {
+    "message": "No se pudo detener la alternativa de reconocimiento de voz del navegador.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stop_failed"
+  },
+  "runtime_voice_browser_stopped": {
+    "message": "Se detuvo la alternativa de reconocimiento de voz del navegador.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stopped"
+  },
+  "runtime_voice_capture_error": {
+    "message": "No se pudo capturar el audio del micrófono.",
+    "description": "Runtime interface message voice.capture_error"
+  },
+  "runtime_voice_permission_blocked": {
+    "message": "El permiso del micrófono está bloqueado para Hermes Browser Extension.\n\nHaga clic en Abrir configuración del micrófono, configure Micrófono en Permitir para esta extensión, regrese aquí y luego haga clic en Iniciar dictado nuevamente.\n\n{error}",
+    "description": "Runtime interface message voice.permission_blocked"
+  },
+  "runtime_voice_settings_load_failed": {
+    "message": "No se pudo cargar la configuración de Hermes Browser.\n\n{error}",
+    "description": "Runtime interface message voice.settings_load_failed"
+  },
+  "runtime_voice_speech_recognition_error": {
+    "message": "Error de reconocimiento de voz",
+    "description": "Runtime interface message voice.speech_recognition_error"
+  },
+  "runtime_voice_start_failed": {
+    "message": "No se pudo iniciar el dictado de voz.\n\n{error}",
+    "description": "Runtime interface message voice.start_failed"
+  },
+  "runtime_voice_transcript_sent": {
+    "message": "Transcripción enviada al panel lateral Hermes:\n\n{transcript}",
+    "description": "Runtime interface message voice.transcript_sent"
+  },
+  "runtime_voice_transcription_failed": {
+    "message": "Error en la transcripción de voz.\n\n{error}",
+    "description": "Runtime interface message voice.transcription_failed"
+  },
+  "runtime_wake_turn_off": {
+    "message": "Desactivar palabra de activación",
+    "description": "Runtime interface message wake.turn_off"
+  },
+  "runtime_wake_turn_on": {
+    "message": "Activar palabra de activación",
+    "description": "Runtime interface message wake.turn_on"
+  }
+}

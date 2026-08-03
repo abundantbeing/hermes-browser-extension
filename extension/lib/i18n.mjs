@@ -3,11 +3,27 @@ import {
   loadLocaleMessages,
   localeDirection,
   normalizeLocale,
+  SUPPORTED_LOCALES,
 } from './i18n-registry.mjs';
 
 export { DEFAULT_LOCALE, localeDirection, normalizeLocale } from './i18n-registry.mjs';
 
 export const LOCALE_STORAGE_KEY = 'hermesBrowserLocale';
+
+export function populateLanguageSelect(select) {
+  if (!select) return;
+  const expected = SUPPORTED_LOCALES.map((locale) => locale.id).join('|');
+  const current = Array.from(select.options || [], (option) => option.value).join('|');
+  if (current === expected) return;
+  const options = SUPPORTED_LOCALES.map((locale) => {
+    const option = document.createElement('option');
+    option.value = locale.id;
+    option.textContent = locale.nativeName;
+    option.dataset.i18nInvariant = '';
+    return option;
+  });
+  select.replaceChildren(...options);
+}
 
 const ATTRIBUTE_MARKERS = Object.freeze({
   'data-i18n-placeholder': 'placeholder',
@@ -60,6 +76,9 @@ export function createI18nRuntime({
   let activeMessages = {};
   let initialized = false;
   let destroyed = false;
+  let storageRevision = 0;
+  let latestStorageLocale = null;
+  let pendingStorageApply = Promise.resolve();
   const subscribers = new Set();
   const messageCache = new Map();
 
@@ -125,16 +144,34 @@ export function createI18nRuntime({
     return locale;
   }
 
-  async function storageChanged(changes, areaName) {
+  function storageChanged(changes, areaName) {
     if (destroyed || (areaName && areaName !== 'local')) return;
     const changed = changes?.[LOCALE_STORAGE_KEY];
     if (!changed || normalizeLocale(changed.newValue) === locale) return;
-    await applyLocale(changed.newValue);
+    const nextLocale = changed.newValue;
+    storageRevision += 1;
+    latestStorageLocale = nextLocale;
+    pendingStorageApply = pendingStorageApply
+      .catch(() => {})
+      .then(() => applyLocale(nextLocale));
+    return pendingStorageApply;
+  }
+
+  async function settleStorageChanges() {
+    while (true) {
+      const pending = pendingStorageApply;
+      await pending;
+      if (pending === pendingStorageApply) break;
+    }
+    if (latestStorageLocale != null && normalizeLocale(latestStorageLocale) !== locale) {
+      await applyLocale(latestStorageLocale);
+    }
   }
 
   async function init() {
     if (initialized) return locale;
     initialized = true;
+    const startingRevision = storageRevision;
     storageEvents?.addListener?.(storageChanged);
     let storedLocale = DEFAULT_LOCALE;
     try {
@@ -143,7 +180,13 @@ export function createI18nRuntime({
     } catch {
       storedLocale = DEFAULT_LOCALE;
     }
-    return applyLocale(storedLocale);
+    if (storageRevision !== startingRevision) {
+      await settleStorageChanges();
+      return locale;
+    }
+    await applyLocale(storedLocale);
+    if (storageRevision !== startingRevision) await settleStorageChanges();
+    return locale;
   }
 
   async function setLocale(value) {

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -45,6 +46,17 @@ function chromeExecutable() {
   const found = candidates.find((candidate) => existsSync(candidate));
   if (!found) throw new Error('System Chrome/Edge not found. Set CHROME_PATH.');
   return found;
+}
+
+function unpackedExtensionId(extensionPath) {
+  const encoding = process.platform === 'win32' ? 'utf16le' : 'utf8';
+  const digest = createHash('sha256')
+    .update(Buffer.from(path.resolve(extensionPath), encoding))
+    .digest()
+    .subarray(0, 16);
+  return Array.from(digest, (byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+    .replace(/[0-9a-f]/g, (nibble) => String.fromCharCode(97 + Number.parseInt(nibble, 16)));
 }
 
 function json(res, status, payload) {
@@ -463,6 +475,7 @@ async function main() {
   let chatgptFixture;
   let chromeStderr = '';
   try {
+    const extensionId = unpackedExtensionId(DIST);
     chrome = spawn(chromeExecutable(), [
       '--headless=new',
       '--no-sandbox',
@@ -474,14 +487,27 @@ async function main() {
       `--user-data-dir=${PROFILE}`,
       `--disable-extensions-except=${DIST}`,
       `--load-extension=${DIST}`,
-      'about:blank',
+      `chrome-extension://${extensionId}/request-permissions.html`,
     ], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
     chrome.stderr.on('data', (chunk) => { chromeStderr += String(chunk); });
 
     const activePort = path.join(PROFILE, 'DevToolsActivePort');
     await waitFor(() => existsSync(activePort));
-    const [portLine] = (await readFile(activePort, 'utf8')).trim().split(/\r?\n/);
+    const [portLine] = (await readFile(activePort, 'utf8')).trim().split('\n');
     const devtoolsBase = `http://127.0.0.1:${Number(portLine)}`;
+
+    const wakeTarget = await waitFor(async () => {
+      const targets = await fetchJson(`${devtoolsBase}/json/list`);
+      return targets.find((target) => target.type === 'page' && String(target.url || '').startsWith(`chrome-extension://${extensionId}/`));
+    });
+    const wakeClient = new CdpClient(wakeTarget.webSocketDebuggerUrl);
+    try {
+      await wakeClient.connect();
+      await wakeClient.call('Runtime.enable');
+      await wakeClient.evaluate(`void chrome.runtime.sendMessage({ type: 'HERMES_INLINE_SESSION_STATUS' }).catch(() => null); true`);
+    } finally {
+      wakeClient.close();
+    }
 
     const workerTarget = await waitFor(async () => {
       const targets = await fetchJson(`${devtoolsBase}/json/list`);
@@ -505,7 +531,7 @@ async function main() {
       }
       return null;
     });
-    const extensionId = new URL(workerTarget.url).hostname;
+    assert.equal(new URL(workerTarget.url).hostname, extensionId, 'Loaded worker must belong to the path-derived Hermes extension id.');
     // Use the existing extension service worker for storage and tab control.
     // Opening a second sidepanel just for setup runs the full startup lifecycle
     // and can race the real panel by creating another fresh Browser session.

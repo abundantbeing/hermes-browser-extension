@@ -742,7 +742,9 @@ async function getYoutubeTranscript({ videoId, tabId, provider = 'default' } = {
 subscribeLocale(() => configureContextMenus().catch((error) => {
   console.warn('[Hermes Browser] Localized context menus could not be configured:', error);
 }));
-await initI18n();
+void initI18n().catch((error) => {
+  console.warn('[Hermes Browser] Localization initialization failed:', error);
+});
 
 chrome.runtime.onInstalled.addListener(configureInstalledSurfaces);
 chrome.runtime.onStartup.addListener(async () => {

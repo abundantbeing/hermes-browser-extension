@@ -49,6 +49,12 @@ test('Hermes Assist localizes application copy but preserves generated and user 
   assert.doesNotMatch(helper, /translateUiText\(resultText\)/);
 });
 
+test('Hermes Assist bridge excludes settings-only copy and remains bounded across all locales', () => {
+  const source = read('extension/lib/i18n-content.js');
+  assert.doesNotMatch(source, /Select your interface language/);
+  assert.ok(source.length < 500_000, `content i18n bridge grew to ${source.length} bytes`);
+});
+
 test('Hermes Assist canonicalizes locale aliases and cannot miss an initialization race', async () => {
   const source = read('extension/lib/i18n-content.js');
   const listeners = new Set();
@@ -73,4 +79,14 @@ test('Hermes Assist canonicalizes locale aliases and cannot miss an initializati
   await sandbox.HermesI18nContent.ready;
   assert.equal(sandbox.HermesI18nContent.getLocale(), 'zh-CN');
   assert.notEqual(sandbox.HermesI18nContent.translateText('Hermes Assist'), 'Hermes Assist');
+
+  const [storageListener] = listeners;
+  for (const [value, expected] of [
+    ['zh_Hant', 'zh-TW'],
+    ['pt_PT', 'pt-BR'],
+    ['ar_EG', 'ar'],
+  ]) {
+    storageListener({ hermesBrowserLocale: { newValue: value } }, 'local');
+    assert.equal(sandbox.HermesI18nContent.getLocale(), expected);
+  }
 });

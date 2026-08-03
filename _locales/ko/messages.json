@@ -1,0 +1,4374 @@
+{
+  "extensionName": {
+    "message": "Hermes 브라우저 확장 프로그램",
+    "description": "Hermes Browser extensionName"
+  },
+  "extensionShortName": {
+    "message": "Hermes 확장",
+    "description": "Hermes Browser extensionShortName"
+  },
+  "extensionDescription": {
+    "message": "Hermes Agent용 브라우저 네이티브 사이드 패널입니다. 웹 컨텍스트를 로컬 또는 원격 Hermes 런타임에 연결하세요.",
+    "description": "Hermes Browser extensionDescription"
+  },
+  "openExtension": {
+    "message": "Hermes 브라우저 확장 프로그램 열기",
+    "description": "Hermes Browser openExtension"
+  },
+  "openSidebar": {
+    "message": "Hermes 브라우저 사이드바 열기",
+    "description": "Hermes Browser openSidebar"
+  },
+  "runtime_a11y_extension_controls": {
+    "message": "Hermes Browser Extension 제어",
+    "description": "Runtime interface message a11y.extension_controls"
+  },
+  "runtime_a11y_extension_header": {
+    "message": "Hermes Browser Extension 헤더",
+    "description": "Runtime interface message a11y.extension_header"
+  },
+  "runtime_agent_scan": {
+    "message": "↻ 에이전트 검색",
+    "description": "Runtime interface message agent.scan"
+  },
+  "runtime_assist_options_heading": {
+    "message": "Hermes Assist 옵션",
+    "description": "Runtime interface message assist.options_heading"
+  },
+  "runtime_assist_routing_exact": {
+    "message": "정확한 지원 모델 라우팅이 가능합니다. 선택한 공급자와 모델은 각 초안이 실행되기 전에 확인됩니다.",
+    "description": "Runtime interface message assist.routing.exact"
+  },
+  "runtime_assist_routing_exact_short": {
+    "message": "정확한 모델 라우팅 확인",
+    "description": "Runtime interface message assist.routing.exact_short"
+  },
+  "runtime_assist_routing_fallback": {
+    "message": "선택한 Assist 모델은 계속 저장됩니다. 이 게이트웨이는 정확한 모델을 적용할 수 없으므로 Assist는 게이트웨이 기본값을 사용하고 모든 대체 결과에 라벨을 지정합니다.",
+    "description": "Runtime interface message assist.routing.fallback"
+  },
+  "runtime_assist_routing_fallback_short": {
+    "message": "정확한 라우팅을 사용할 수 없는 경우 게이트웨이 기본값으로 대체",
+    "description": "Runtime interface message assist.routing.fallback_short"
+  },
+  "runtime_commands_click_or_enter": {
+    "message": "클릭하거나 Enter 키를 눌러 실행하세요.",
+    "description": "Runtime interface message commands.click_or_enter"
+  },
+  "runtime_commands_details": {
+    "message": "명령 세부정보",
+    "description": "Runtime interface message commands.details"
+  },
+  "runtime_commands_insert_then_detail": {
+    "message": "클릭하여 삽입한 다음 세부정보를 추가하세요.",
+    "description": "Runtime interface message commands.insert_then_detail"
+  },
+  "runtime_commands_runs_immediately": {
+    "message": "현재 브라우저 컨텍스트에 대해 즉시 실행됩니다.",
+    "description": "Runtime interface message commands.runs_immediately"
+  },
+  "runtime_common_current": {
+    "message": "현재",
+    "description": "Runtime interface message common.current"
+  },
+  "runtime_common_follow": {
+    "message": "팔로우",
+    "description": "Runtime interface message common.follow"
+  },
+  "runtime_common_live": {
+    "message": "라이브",
+    "description": "Runtime interface message common.live"
+  },
+  "runtime_common_lock": {
+    "message": "잠금",
+    "description": "Runtime interface message common.lock"
+  },
+  "runtime_common_none": {
+    "message": "없음",
+    "description": "Runtime interface message common.none"
+  },
+  "runtime_common_offline": {
+    "message": "오프라인",
+    "description": "Runtime interface message common.offline"
+  },
+  "runtime_common_online": {
+    "message": "온라인",
+    "description": "Runtime interface message common.online"
+  },
+  "runtime_common_skills": {
+    "message": "스킬",
+    "description": "Runtime interface message common.skills"
+  },
+  "runtime_common_using": {
+    "message": "사용 중",
+    "description": "Runtime interface message common.using"
+  },
+  "runtime_composer_attach": {
+    "message": "＋ 첨부",
+    "description": "Runtime interface message composer.attach"
+  },
+  "runtime_composer_chat_label": {
+    "message": "채팅",
+    "description": "Runtime interface message composer.chat_label"
+  },
+  "runtime_composer_connect_first": {
+    "message": "먼저 Hermes에 연결하세요.",
+    "description": "Runtime interface message composer.connect_first"
+  },
+  "runtime_composer_queue_message": {
+    "message": "메시지 대기열에 추가",
+    "description": "Runtime interface message composer.queue_message"
+  },
+  "runtime_connect_approve_or_paste": {
+    "message": "페어링이 가능해지면 승인하거나 붙여넣으세요",
+    "description": "Runtime interface message connect.approve_or_paste"
+  },
+  "runtime_connect_clone_build_load": {
+    "message": "이 리포지토리를 클론하고 빌드한 뒤",
+    "description": "Runtime interface message connect.clone_build_load"
+  },
+  "runtime_connect_folder_unpacked": {
+    "message": "폴더를 압축 해제했습니다.",
+    "description": "Runtime interface message connect.folder_unpacked"
+  },
+  "runtime_connect_manual_setup_suffix": {
+    "message": "수동 설정용입니다.",
+    "description": "Runtime interface message connect.manual_setup_suffix"
+  },
+  "runtime_connection_not_configured_short": {
+    "message": "구성되지 않음",
+    "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connection_unknown_transport": {
+    "message": "알 수 없는 전송",
+    "description": "Runtime interface message connection.unknown_transport"
+  },
+  "runtime_context_attached_tab": {
+    "message": "첨부 탭",
+    "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_browser_tab_handoff": {
+    "message": "브라우저 탭 {tabId} 핸드오프",
+    "description": "Runtime interface message context.browser_tab_handoff"
+  },
+  "runtime_context_follow_active_tab": {
+    "message": "활성 탭 팔로우",
+    "description": "Runtime interface message context.follow_active_tab"
+  },
+  "runtime_context_in": {
+    "message": "입력",
+    "description": "Runtime interface message context.in"
+  },
+  "runtime_context_include_all_tabs": {
+    "message": "모든 탭 포함",
+    "description": "Runtime interface message context.include_all_tabs"
+  },
+  "runtime_context_include_prompt_tab": {
+    "message": "이 탭을 프롬프트 탭 목록에 포함",
+    "description": "Runtime interface message context.include_prompt_tab"
+  },
+  "runtime_context_no_page": {
+    "message": "페이지 없음",
+    "description": "Runtime interface message context.no_page"
+  },
+  "runtime_context_out": {
+    "message": "출력",
+    "description": "Runtime interface message context.out"
+  },
+  "runtime_context_page_only": {
+    "message": "페이지 전용",
+    "description": "Runtime interface message context.page_only"
+  },
+  "runtime_context_pin_current_tab": {
+    "message": "현재 탭 고정",
+    "description": "Runtime interface message context.pin_current_tab"
+  },
+  "runtime_context_pin_tab": {
+    "message": "고정: {title}",
+    "description": "Runtime interface message context.pin_tab"
+  },
+  "runtime_context_pinned_tab": {
+    "message": "고정된 탭",
+    "description": "Runtime interface message context.pinned_tab"
+  },
+  "runtime_context_refresh_page": {
+    "message": "페이지 컨텍스트 새로 고침",
+    "description": "Runtime interface message context.refresh_page"
+  },
+  "runtime_context_remove_prompt_tab": {
+    "message": "이 탭을 프롬프트 탭 목록에서 제거",
+    "description": "Runtime interface message context.remove_prompt_tab"
+  },
+  "runtime_context_tokens": {
+    "message": "토큰",
+    "description": "Runtime interface message context.tokens"
+  },
+  "runtime_context_unlock_pinned_tab": {
+    "message": "고정된 탭 잠금 해제",
+    "description": "Runtime interface message context.unlock_pinned_tab"
+  },
+  "runtime_diagnostic_api_authorization_health_detail": {
+    "message": "상태 확인에는 응답이 있었지만 보호된 Browser/모델 경로에는 Authorization: Bearer ***가 필요합니다. 설정에 API 키 또는 범위가 지정된 브라우저 토큰을 붙여넣으세요.",
+    "description": "Runtime interface message diagnostic.api_authorization_health_detail"
+  },
+  "runtime_diagnostic_api_authorization_title": {
+    "message": "API 서버에 권한 부여가 필요합니다",
+    "description": "Runtime interface message diagnostic.api_authorization_title"
+  },
+  "runtime_diagnostic_api_rejected_detail": {
+    "message": "Hermes가 이 요청을 거부했습니다. API 키/브라우저 토큰을 확인하고 URL이 Dashboard SSO 엔드포인트가 아닌 API 서버를 가리키는지 확인하세요.",
+    "description": "Runtime interface message diagnostic.api_rejected_detail"
+  },
+  "runtime_diagnostic_auth_detail": {
+    "message": "Hermes API가 요청을 거부했습니다. 설정에서 Browser API 토큰을 확인하고 실행 중인 Hermes 게이트웨이와 일치하는지 확인하세요.",
+    "description": "Runtime interface message diagnostic.auth_detail"
+  },
+  "runtime_diagnostic_auth_title": {
+    "message": "Hermes 인증에 실패했습니다",
+    "description": "Runtime interface message diagnostic.auth_title"
+  },
+  "runtime_diagnostic_auth_user": {
+    "message": "Hermes API 토큰이 거부되었습니다. Browser 설정 토큰을 업데이트한 후 다시 연결하세요.",
+    "description": "Runtime interface message diagnostic.auth_user"
+  },
+  "runtime_diagnostic_cors_extension_detail": {
+    "message": "Browser가 이 확장 프로그램 출처에서 Hermes API에 연결할 수 없습니다. 원격 호스트의 API_SERVER_CORS_ORIGINS에 chrome-extension://<extension-id>를 추가하세요.",
+    "description": "Runtime interface message diagnostic.cors_extension_detail"
+  },
+  "runtime_diagnostic_cors_title": {
+    "message": "CORS 출처가 허용되지 않음",
+    "description": "Runtime interface message diagnostic.cors_title"
+  },
+  "runtime_diagnostic_dashboard_url_detail": {
+    "message": "이는 Hermes Dashboard SSO 엔드포인트로 보입니다. Browser API 모드에는 :8642의 Hermes API 서버 URL 및 Authorization: Bearer ***가 필요합니다.",
+    "description": "Runtime interface message diagnostic.dashboard_url_detail"
+  },
+  "runtime_diagnostic_dashboard_url_title": {
+    "message": "Dashboard URL 감지됨",
+    "description": "Runtime interface message diagnostic.dashboard_url_title"
+  },
+  "runtime_diagnostic_gateway_error_title": {
+    "message": "Hermes 게이트웨이 오류",
+    "description": "Runtime interface message diagnostic.gateway_error_title"
+  },
+  "runtime_diagnostic_gateway_unreachable_detail": {
+    "message": "Hermes 게이트웨이에 연결할 수 없습니다.",
+    "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
+  },
+  "runtime_diagnostic_network_detail": {
+    "message": "Browser가 Hermes API에 연결할 수 없습니다. 이 확장 프로그램의 게이트웨이 URL, 방화벽/VPN 라우팅 및 CORS/출처 설정을 확인하세요.",
+    "description": "Runtime interface message diagnostic.network_detail"
+  },
+  "runtime_diagnostic_network_title": {
+    "message": "Hermes 네트워크/CORS 실패",
+    "description": "Runtime interface message diagnostic.network_title"
+  },
+  "runtime_diagnostic_network_user": {
+    "message": "요청이 네트워크/CORS 계층에서 실패하여 Browser가 Hermes에 연결할 수 없습니다.",
+    "description": "Runtime interface message diagnostic.network_user"
+  },
+  "runtime_diagnostic_remote_setup_title": {
+    "message": "원격 설정 문제",
+    "description": "Runtime interface message diagnostic.remote_setup_title"
+  },
+  "runtime_diagnostic_remote_unclassified_detail": {
+    "message": "Browser Extension이 이 원격 게이트웨이 응답을 분류할 수 없습니다.",
+    "description": "Runtime interface message diagnostic.remote_unclassified_detail"
+  },
+  "runtime_diagnostic_route_detail": {
+    "message": "이 런타임에서는 Hermes 게이트웨이 경로를 사용할 수 없습니다. Hermes를 업데이트/재시작하거나, 사용 가능한 경우 문서화된 대체 모드를 사용하세요.",
+    "description": "Runtime interface message diagnostic.route_detail"
+  },
+  "runtime_diagnostic_route_title": {
+    "message": "Hermes 경로를 사용할 수 없음",
+    "description": "Runtime interface message diagnostic.route_title"
+  },
+  "runtime_diagnostic_route_user": {
+    "message": "이 Hermes 런타임은 요청된 Browser 경로를 아직 노출하지 않습니다.",
+    "description": "Runtime interface message diagnostic.route_user"
+  },
+  "runtime_diagnostic_runtime_exception_detail": {
+    "message": "Hermes API 서버에는 연결할 수 있지만 상위 Hermes Agent에서 런타임 예외가 발생했습니다. 이는 Browser 인증, 페어링, CORS 또는 패키징이 아니라 computer_use/cua-driver와 같은 선택적 런타임/도구 문제를 가리키는 경우가 많습니다.",
+    "description": "Runtime interface message diagnostic.runtime_exception_detail"
+  },
+  "runtime_diagnostic_runtime_exception_title": {
+    "message": "Hermes 런타임 예외",
+    "description": "Runtime interface message diagnostic.runtime_exception_title"
+  },
+  "runtime_diagnostic_runtime_exception_user": {
+    "message": "상위 Hermes Agent 내부에서 Hermes 게이트웨이 추적 정보를 감지했습니다. Browser는 연결된 상태를 유지할 수 있습니다. Hermes 로그를 확인하고 추적 정보에 computer_use/cua-driver가 나타나면 `hermes computer-use doctor`를 실행하세요.",
+    "description": "Runtime interface message diagnostic.runtime_exception_user"
+  },
+  "runtime_diagnostics_surface": {
+    "message": "표면",
+    "description": "Runtime interface message diagnostics.surface"
+  },
+  "runtime_fulltab_handoff_opened_from": {
+    "message": "{source}에서 열었습니다.",
+    "description": "Runtime interface message fulltab.handoff.opened_from"
+  },
+  "runtime_fulltab_handoff_opened_from_tab": {
+    "message": "브라우저 탭 {tabId}의 {source}에서 열었습니다.",
+    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  },
+  "runtime_image_generated": {
+    "message": "생성된 이미지",
+    "description": "Runtime interface message image.generated"
+  },
+  "runtime_image_generated_preview": {
+    "message": "생성된 이미지 미리보기",
+    "description": "Runtime interface message image.generated_preview"
+  },
+  "runtime_image_generating": {
+    "message": "Hermes가 이미지를 생성하는 중입니다",
+    "description": "Runtime interface message image.generating"
+  },
+  "runtime_image_meta_active": {
+    "message": "{aspectRatio} // 활성",
+    "description": "Runtime interface message image.meta_active"
+  },
+  "runtime_image_phase_denoising": {
+    "message": "노이즈 제거 중",
+    "description": "Runtime interface message image.phase_denoising"
+  },
+  "runtime_image_phase_finalizing": {
+    "message": "마무리 중",
+    "description": "Runtime interface message image.phase_finalizing"
+  },
+  "runtime_image_phase_latent": {
+    "message": "잠재 필드",
+    "description": "Runtime interface message image.phase_latent"
+  },
+  "runtime_image_phase_resolving": {
+    "message": "해석 중",
+    "description": "Runtime interface message image.phase_resolving"
+  },
+  "runtime_items_count": {
+    "message": "{count} 항목",
+    "description": "Runtime interface message items.count"
+  },
+  "runtime_manifest_extension_description": {
+    "message": "Hermes Agent용 브라우저 네이티브 사이드 패널입니다. 웹 컨텍스트를 로컬 또는 원격 Hermes 런타임에 연결하세요.",
+    "description": "Runtime interface message manifest.extension_description"
+  },
+  "runtime_manifest_extension_name": {
+    "message": "Hermes 브라우저 확장 프로그램",
+    "description": "Runtime interface message manifest.extension_name"
+  },
+  "runtime_manifest_extension_short_name": {
+    "message": "Hermes 확장",
+    "description": "Runtime interface message manifest.extension_short_name"
+  },
+  "runtime_manifest_open_extension": {
+    "message": "Hermes 브라우저 확장 프로그램 열기",
+    "description": "Runtime interface message manifest.open_extension"
+  },
+  "runtime_manifest_open_sidebar": {
+    "message": "Hermes 브라우저 사이드바 열기",
+    "description": "Runtime interface message manifest.open_sidebar"
+  },
+  "runtime_permissions_not_granted": {
+    "message": "마이크 권한이 부여되지 않았습니다.\n\n{error}\n\n마이크 설정 열기를 클릭하고 Hermes Browser Extension에 대해 마이크를 허용으로 설정한 후 여기로 돌아와 다시 시도하세요.",
+    "description": "Runtime interface message permissions.not_granted"
+  },
+  "runtime_permissions_state": {
+    "message": "마이크 권한 상태: {state}. Chromium이(가) 차단된 것으로 표시되면 마이크 설정을 열고 Hermes Browser Extension에 대해 마이크를 허용으로 설정하세요.",
+    "description": "Runtime interface message permissions.state"
+  },
+  "runtime_picker_pick_different": {
+    "message": "◈ 다른 요소 선택",
+    "description": "Runtime interface message picker.pick_different"
+  },
+  "runtime_picker_picking_element": {
+    "message": "◈ 요소 선택 중...",
+    "description": "Runtime interface message picker.picking_element"
+  },
+  "runtime_profile_available": {
+    "message": "{count}개의 프로필 사용 가능",
+    "description": "Runtime interface message profile.available"
+  },
+  "runtime_profile_available_suffix": {
+    "message": "개의 프로필 사용 가능",
+    "description": "Runtime interface message profile.available_suffix"
+  },
+  "runtime_profile_default": {
+    "message": "기본 프로필",
+    "description": "Runtime interface message profile.default"
+  },
+  "runtime_profile_refresh": {
+    "message": "↻ 프로필",
+    "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_using": {
+    "message": "사용 중: {name}{model}{skills}",
+    "description": "Runtime interface message profile.using"
+  },
+  "runtime_run_stop": {
+    "message": "■ 중지",
+    "description": "Runtime interface message run.stop"
+  },
+  "runtime_runtime_fast_mode_toggle": {
+    "message": "빠른 모드 {state}",
+    "description": "Runtime interface message runtime.fast_mode_toggle"
+  },
+  "runtime_runtime_model_control_title": {
+    "message": "{model} · {options}. 모델 및 런타임 옵션을 변경합니다.",
+    "description": "Runtime interface message runtime.model_control_title"
+  },
+  "runtime_runtime_options_heading": {
+    "message": "런타임 옵션",
+    "description": "Runtime interface message runtime.options_heading"
+  },
+  "runtime_runtime_options_saved": {
+    "message": "런타임 옵션: {summary}",
+    "description": "Runtime interface message runtime.options_saved"
+  },
+  "runtime_runtime_reasoning": {
+    "message": "{effort} 추론",
+    "description": "Runtime interface message runtime.reasoning"
+  },
+  "runtime_runtime_thinking_off": {
+    "message": "생각 끔",
+    "description": "Runtime interface message runtime.thinking_off"
+  },
+  "runtime_runtime_thinking_toggle": {
+    "message": "생각 {state}",
+    "description": "Runtime interface message runtime.thinking_toggle"
+  },
+  "runtime_session_copy_id_for": {
+    "message": "{title}의 세션 ID 복사",
+    "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_new_extension_session": {
+    "message": "＋ 새 Hermes Browser Extension 세션",
+    "description": "Runtime interface message session.new_extension_session"
+  },
+  "runtime_session_opening": {
+    "message": "{title} 여는 중",
+    "description": "Runtime interface message session.opening"
+  },
+  "runtime_session_rail_save_failed": {
+    "message": "세션 레일 저장 실패: {error}",
+    "description": "Runtime interface message session.rail_save_failed"
+  },
+  "runtime_session_rename_named": {
+    "message": "세션 {title} 이름 바꾸기",
+    "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_settings_language_description": {
+    "message": "인터페이스 언어를 선택하세요.",
+    "description": "Runtime interface message settings.language.description"
+  },
+  "runtime_settings_language_label": {
+    "message": "언어",
+    "description": "Runtime interface message settings.language.label"
+  },
+  "runtime_settings_local_api_setup_hint": {
+    "message": "로컬 API 서버(기본값 http://127.0.0.1:8642). 아래에 해당 키를 붙여넣으세요.",
+    "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_public_alpha_load_unpacked": {
+    "message": "· 공개 알파/로드 언팩",
+    "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_status_connection_not_responding": {
+    "message": "{summary}이(가) 응답하지 않습니다. Hermes Desktop/Gateway를 시작한 후 다시 연결하세요.",
+    "description": "Runtime interface message status.connection_not_responding"
+  },
+  "runtime_status_gmail_no_rendered": {
+    "message": "렌더링된 메시지 본문을 사용할 수 없습니다.",
+    "description": "Runtime interface message status.gmail_no_rendered"
+  },
+  "runtime_status_model_discovery_limited": {
+    "message": "게이트웨이는 /v1/models 행을 하나만 노출하며 /api/sessions를 사용할 수 없습니다({error}).",
+    "description": "Runtime interface message status.model_discovery_limited"
+  },
+  "runtime_status_model_lock_failed_detail": {
+    "message": "{error}. Hermes가 전역 모델로 대체할 수 있으므로 전송하지 않습니다.",
+    "description": "Runtime interface message status.model_lock_failed_detail"
+  },
+  "runtime_status_model_registry_fallback": {
+    "message": "/v1/models로 대체합니다({error}).",
+    "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_context_restricted": {
+    "message": "{url} - 컨텍스트 제한됨",
+    "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_profile_selected_restart": {
+    "message": "{profile}이(가) 선택되었습니다. 실행 중인 프로필이 즉시 변경되지 않으면 Hermes 게이트웨이를 재시작하세요.",
+    "description": "Runtime interface message status.profile_selected_restart"
+  },
+  "runtime_status_profile_switch_unavailable": {
+    "message": "{error}. Browser는 현재 실행 중인 Hermes 프로필을 사용합니다.",
+    "description": "Runtime interface message status.profile_switch_unavailable"
+  },
+  "runtime_tasks_summary": {
+    "message": "{complete} 완료 · {active} 진행 중",
+    "description": "Runtime interface message tasks.summary"
+  },
+  "runtime_ui_0_complete_0_active": {
+    "message": "0 완료 · 0 진행 중",
+    "description": "Runtime interface message ui.0.complete.0.active"
+  },
+  "runtime_ui_accept": {
+    "message": "수락",
+    "description": "Runtime interface message ui.accept"
+  },
+  "runtime_ui_access": {
+    "message": "액세스",
+    "description": "Runtime interface message ui.access"
+  },
+  "runtime_ui_account": {
+    "message": "계정",
+    "description": "Runtime interface message ui.account"
+  },
+  "runtime_ui_action": {
+    "message": "작업",
+    "description": "Runtime interface message ui.action"
+  },
+  "runtime_ui_actions": {
+    "message": "작업",
+    "description": "Runtime interface message ui.actions"
+  },
+  "runtime_ui_active": {
+    "message": "진행 중",
+    "description": "Runtime interface message ui.active"
+  },
+  "runtime_ui_active_profile": {
+    "message": "활성 프로필",
+    "description": "Runtime interface message ui.active.profile"
+  },
+  "runtime_ui_active_tab": {
+    "message": "활성 탭",
+    "description": "Runtime interface message ui.active.tab"
+  },
+  "runtime_ui_active_tab_2bc454c2": {
+    "message": "활성 탭",
+    "description": "Runtime interface message ui.active.tab.2bc454c2"
+  },
+  "runtime_ui_active_tab_ready": {
+    "message": "활성 탭 준비됨",
+    "description": "Runtime interface message ui.active.tab.ready"
+  },
+  "runtime_ui_active_tab_status": {
+    "message": "활성 탭 상태",
+    "description": "Runtime interface message ui.active.tab.status"
+  },
+  "runtime_ui_activity": {
+    "message": "활동",
+    "description": "Runtime interface message ui.activity"
+  },
+  "runtime_ui_add": {
+    "message": "추가",
+    "description": "Runtime interface message ui.add"
+  },
+  "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
+    "message": "보내기 전에 슬래시 명령어 뒤에 지시사항을 추가하세요.",
+    "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_adjust": {
+    "message": "조정",
+    "description": "Runtime interface message ui.adjust"
+  },
+  "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
+    "message": "브라우저 확대/축소를 변경하지 않고 사이드 패널의 가독성을 조정합니다.",
+    "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_agent": {
+    "message": "에이전트",
+    "description": "Runtime interface message ui.agent"
+  },
+  "runtime_ui_agent_5ce2e6f4": {
+    "message": "에이전트",
+    "description": "Runtime interface message ui.agent.5ce2e6f4"
+  },
+  "runtime_ui_agent_discovery_has_not_run_yet": {
+    "message": "에이전트 검색이 아직 실행되지 않았습니다.",
+    "description": "Runtime interface message ui.agent.discovery.has.not.run.yet"
+  },
+  "runtime_ui_agent_host": {
+    "message": "에이전트 호스트",
+    "description": "Runtime interface message ui.agent.host"
+  },
+  "runtime_ui_agent_host_invalid": {
+    "message": "에이전트 호스트가 잘못되었습니다",
+    "description": "Runtime interface message ui.agent.host.invalid"
+  },
+  "runtime_ui_agent_ports_comma_separated_default_8642_8646": {
+    "message": "에이전트 포트 (쉼표로 구분, 기본값 8642-8646)",
+    "description": "Runtime interface message ui.agent.ports.comma.separated.default.8642.8646"
+  },
+  "runtime_ui_agent_ports_invalid": {
+    "message": "에이전트 포트가 잘못되었습니다",
+    "description": "Runtime interface message ui.agent.ports.invalid"
+  },
+  "runtime_ui_agent_profile": {
+    "message": "에이전트 프로필",
+    "description": "Runtime interface message ui.agent.profile"
+  },
+  "runtime_ui_agent_scheme": {
+    "message": "에이전트 스킴",
+    "description": "Runtime interface message ui.agent.scheme"
+  },
+  "runtime_ui_agent_scheme_invalid": {
+    "message": "에이전트 스킴이 잘못되었습니다",
+    "description": "Runtime interface message ui.agent.scheme.invalid"
+  },
+  "runtime_ui_agent_settings_invalid": {
+    "message": "에이전트 설정이 잘못되었습니다",
+    "description": "Runtime interface message ui.agent.settings.invalid"
+  },
+  "runtime_ui_agents_scanned": {
+    "message": "검색된 에이전트",
+    "description": "Runtime interface message ui.agents.scanned"
+  },
+  "runtime_ui_all": {
+    "message": "전체",
+    "description": "Runtime interface message ui.all"
+  },
+  "runtime_ui_allow": {
+    "message": "허용",
+    "description": "Runtime interface message ui.allow"
+  },
+  "runtime_ui_allow_hermes_microphone": {
+    "message": "Hermes 마이크 허용",
+    "description": "Runtime interface message ui.allow.hermes.microphone"
+  },
+  "runtime_ui_allow_microphone": {
+    "message": "마이크 허용",
+    "description": "Runtime interface message ui.allow.microphone"
+  },
+  "runtime_ui_allow_microphone_access": {
+    "message": "마이크 액세스 허용",
+    "description": "Runtime interface message ui.allow.microphone.access"
+  },
+  "runtime_ui_already_connected": {
+    "message": "이미 연결됨",
+    "description": "Runtime interface message ui.already.connected"
+  },
+  "runtime_ui_always": {
+    "message": "항상",
+    "description": "Runtime interface message ui.always"
+  },
+  "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
+    "message": "항상 켜져 있는 브라우저 깨우기 청취에는 Chromium 오프스크린 문서 지원이 필요합니다.",
+    "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
+  },
+  "runtime_ui_answer": {
+    "message": "답변",
+    "description": "Runtime interface message ui.answer"
+  },
+  "runtime_ui_api": {
+    "message": "API",
+    "description": "Runtime interface message ui.api"
+  },
+  "runtime_ui_api_key_blank_dashboard": {
+    "message": "API 키 (비워두면 대시보드)",
+    "description": "Runtime interface message ui.api.key.blank.dashboard"
+  },
+  "runtime_ui_api_key_browser_token": {
+    "message": "API 키 / 브라우저 토큰",
+    "description": "Runtime interface message ui.api.key.browser.token"
+  },
+  "runtime_ui_api_server_key": {
+    "message": "API_SERVER_KEY",
+    "description": "Runtime interface message ui.api.server.key"
+  },
+  "runtime_ui_api_token": {
+    "message": "API 토큰",
+    "description": "Runtime interface message ui.api.token"
+  },
+  "runtime_ui_api_token_required": {
+    "message": "API 토큰이 필요합니다",
+    "description": "Runtime interface message ui.api.token.required"
+  },
+  "runtime_ui_app": {
+    "message": "앱",
+    "description": "Runtime interface message ui.app"
+  },
+  "runtime_ui_appearance": {
+    "message": "모양",
+    "description": "Runtime interface message ui.appearance"
+  },
+  "runtime_ui_apply": {
+    "message": "적용",
+    "description": "Runtime interface message ui.apply"
+  },
+  "runtime_ui_apply_to_field": {
+    "message": "분야에 적용",
+    "description": "Runtime interface message ui.apply.to.field"
+  },
+  "runtime_ui_approval_opened_approve_hermes_browser_extension_then_return_here": {
+    "message": "승인 창이 열렸습니다. Hermes Browser Extension을 승인한 후 여기로 돌아오세요.",
+    "description": "Runtime interface message ui.approval.opened.approve.hermes.browser.extension.then.return.here"
+  },
+  "runtime_ui_approve": {
+    "message": "승인",
+    "description": "Runtime interface message ui.approve"
+  },
+  "runtime_ui_artifacts": {
+    "message": "아티팩트",
+    "description": "Runtime interface message ui.artifacts"
+  },
+  "runtime_ui_ask": {
+    "message": "질문",
+    "description": "Runtime interface message ui.ask"
+  },
+  "runtime_ui_ask_about_any_page_hermes_sees_the_active_tab_selected_text_pag_b2a32c39": {
+    "message": "모든 페이지에 대해 질문하세요. Hermes는 활성 탭, 선택한 텍스트, 페이지 컨텍스트, 열려 있는 탭을 확인할 수 있습니다.",
+    "description": "Runtime interface message ui.ask.about.any.page.hermes.sees.the.active.tab.selected.text.pag.b2a32c39"
+  },
+  "runtime_ui_ask_every_time": {
+    "message": "매번 확인",
+    "description": "Runtime interface message ui.ask.every.time"
+  },
+  "runtime_ui_ask_hermes": {
+    "message": "Hermes에게 질문",
+    "description": "Runtime interface message ui.ask.hermes"
+  },
+  "runtime_ui_ask_hermes_36d55d5a": {
+    "message": "에르메스에게 물어보세요",
+    "description": "Runtime interface message ui.ask.hermes.36d55d5a"
+  },
+  "runtime_ui_ask_hermes_about_the_active_page_context": {
+    "message": "활성 페이지의 컨텍스트에 대해 Hermes에게 질문합니다.",
+    "description": "Runtime interface message ui.ask.hermes.about.the.active.page.context"
+  },
+  "runtime_ui_ask_hermes_about_this_page": {
+    "message": "이 페이지에 대해 Hermes에게 질문...",
+    "description": "Runtime interface message ui.ask.hermes.about.this.page"
+  },
+  "runtime_ui_ask_hermes_about_this_selection": {
+    "message": "이 선택에 대해 Hermes에게 문의하세요.",
+    "description": "Runtime interface message ui.ask.hermes.about.this.selection"
+  },
+  "runtime_ui_ask_hermes_anything": {
+    "message": "무엇이든 Hermes에게 질문…",
+    "description": "Runtime interface message ui.ask.hermes.anything"
+  },
+  "runtime_ui_assist_could_not_run": {
+    "message": "지원을 실행할 수 없습니다.",
+    "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_options": {
+    "message": "Assist 옵션",
+    "description": "Runtime interface message ui.assist.options"
+  },
+  "runtime_ui_assist_session_history": {
+    "message": "Assist 세션 기록",
+    "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assistant": {
+    "message": "어시스턴트",
+    "description": "Runtime interface message ui.assistant"
+  },
+  "runtime_ui_attach": {
+    "message": "첨부",
+    "description": "Runtime interface message ui.attach"
+  },
+  "runtime_ui_attach_context": {
+    "message": "컨텍스트 첨부",
+    "description": "Runtime interface message ui.attach.context"
+  },
+  "runtime_ui_attach_files": {
+    "message": "파일 첨부",
+    "description": "Runtime interface message ui.attach.files"
+  },
+  "runtime_ui_attach_the_active_signed_in_hermes_cloud_agent_tab_with_a_one_use_ticket": {
+    "message": "로그인된 활성 Hermes Cloud 에이전트 탭을 일회용 티켓으로 첨부합니다.",
+    "description": "Runtime interface message ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket"
+  },
+  "runtime_ui_attach_to_current_tab": {
+    "message": "현재 탭에 첨부",
+    "description": "Runtime interface message ui.attach.to.current.tab"
+  },
+  "runtime_ui_attachment": {
+    "message": "첨부 파일",
+    "description": "Runtime interface message ui.attachment"
+  },
+  "runtime_ui_attachments": {
+    "message": "첨부 파일",
+    "description": "Runtime interface message ui.attachments"
+  },
+  "runtime_ui_attribute": {
+    "message": "속성",
+    "description": "Runtime interface message ui.attribute"
+  },
+  "runtime_ui_audio": {
+    "message": "오디오",
+    "description": "Runtime interface message ui.audio"
+  },
+  "runtime_ui_authorization": {
+    "message": "인증",
+    "description": "Runtime interface message ui.authorization"
+  },
+  "runtime_ui_auto": {
+    "message": "자동",
+    "description": "Runtime interface message ui.auto"
+  },
+  "runtime_ui_auto_name_browser_sessions": {
+    "message": "브라우저 세션 자동 이름 지정",
+    "description": "Runtime interface message ui.auto.name.browser.sessions"
+  },
+  "runtime_ui_auto_name_skipped": {
+    "message": "자동 이름 지정을 건너뜀",
+    "description": "Runtime interface message ui.auto.name.skipped"
+  },
+  "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
+    "message": "이 Hermes 런타임에서는 자동 페어링을 사용할 수 없습니다. 설정을 열고 게이트웨이 URL과 API 토큰으로 수동 설정을 사용하세요.",
+    "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
+  },
+  "runtime_ui_automatic_replacement": {
+    "message": "자동 교체",
+    "description": "Runtime interface message ui.automatic.replacement"
+  },
+  "runtime_ui_available": {
+    "message": "사용 가능",
+    "description": "Runtime interface message ui.available"
+  },
+  "runtime_ui_available_7c62a142": {
+    "message": "사용 가능",
+    "description": "Runtime interface message ui.available.7c62a142"
+  },
+  "runtime_ui_back": {
+    "message": "뒤로",
+    "description": "Runtime interface message ui.back"
+  },
+  "runtime_ui_back_to_actions": {
+    "message": "작업으로 돌아가기",
+    "description": "Runtime interface message ui.back.to.actions"
+  },
+  "runtime_ui_back_to_result": {
+    "message": "결과로 돌아가기",
+    "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_background": {
+    "message": "배경",
+    "description": "Runtime interface message ui.background"
+  },
+  "runtime_ui_block": {
+    "message": "차단",
+    "description": "Runtime interface message ui.block"
+  },
+  "runtime_ui_blocked": {
+    "message": "차단됨",
+    "description": "Runtime interface message ui.blocked"
+  },
+  "runtime_ui_blocked_fcc4cce1": {
+    "message": "막힌",
+    "description": "Runtime interface message ui.blocked.fcc4cce1"
+  },
+  "runtime_ui_body": {
+    "message": "본문",
+    "description": "Runtime interface message ui.body"
+  },
+  "runtime_ui_browser": {
+    "message": "브라우저",
+    "description": "Runtime interface message ui.browser"
+  },
+  "runtime_ui_browser_behavior": {
+    "message": "브라우저 동작",
+    "description": "Runtime interface message ui.browser.behavior"
+  },
+  "runtime_ui_browser_extension": {
+    "message": "브라우저 확장",
+    "description": "Runtime interface message ui.browser.extension"
+  },
+  "runtime_ui_browser_extension_full_view": {
+    "message": "브라우저 확장 전체 보기",
+    "description": "Runtime interface message ui.browser.extension.full.view"
+  },
+  "runtime_ui_browser_fallback_phrase": {
+    "message": "브라우저 대체 문구",
+    "description": "Runtime interface message ui.browser.fallback.phrase"
+  },
+  "runtime_ui_browser_local_fallback": {
+    "message": "브라우저-로컬 대체",
+    "description": "Runtime interface message ui.browser.local.fallback"
+  },
+  "runtime_ui_browser_update_review": {
+    "message": "브라우저 업데이트 검토",
+    "description": "Runtime interface message ui.browser.update.review"
+  },
+  "runtime_ui_browser_updates": {
+    "message": "브라우저 업데이트",
+    "description": "Runtime interface message ui.browser.updates"
+  },
+  "runtime_ui_build": {
+    "message": "빌드",
+    "description": "Runtime interface message ui.build"
+  },
+  "runtime_ui_building_redacted_diagnostics": {
+    "message": "마스킹된 진단 정보를 생성하는 중...",
+    "description": "Runtime interface message ui.building.redacted.diagnostics"
+  },
+  "runtime_ui_cache": {
+    "message": "캐시",
+    "description": "Runtime interface message ui.cache"
+  },
+  "runtime_ui_cancel": {
+    "message": "취소",
+    "description": "Runtime interface message ui.cancel"
+  },
+  "runtime_ui_canonical_hermes_history_model_selection_tools_and_generated_me_c7aacd25": {
+    "message": "표준 Hermes 기록, 모델 선택, 도구 및 생성된 미디어는 이 세션에 계속 연결됩니다.",
+    "description": "Runtime interface message ui.canonical.hermes.history.model.selection.tools.and.generated.me.c7aacd25"
+  },
+  "runtime_ui_capabilities": {
+    "message": "기능",
+    "description": "Runtime interface message ui.capabilities"
+  },
+  "runtime_ui_capability": {
+    "message": "기능",
+    "description": "Runtime interface message ui.capability"
+  },
+  "runtime_ui_capture_visible_gmail_thread": {
+    "message": "표시된 Gmail 스레드 캡처",
+    "description": "Runtime interface message ui.capture.visible.gmail.thread"
+  },
+  "runtime_ui_card": {
+    "message": "카드",
+    "description": "Runtime interface message ui.card"
+  },
+  "runtime_ui_category": {
+    "message": "카테고리",
+    "description": "Runtime interface message ui.category"
+  },
+  "runtime_ui_change": {
+    "message": "변경",
+    "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_model_and_runtime_options": {
+    "message": "모델 및 런타임 옵션 변경",
+    "description": "Runtime interface message ui.change.model.and.runtime.options"
+  },
+  "runtime_ui_changes_apply_instantly_and_are_saved_automatically": {
+    "message": "변경 사항은 즉시 적용되며 자동으로 저장됩니다.",
+    "description": "Runtime interface message ui.changes.apply.instantly.and.are.saved.automatically"
+  },
+  "runtime_ui_channel": {
+    "message": "채널",
+    "description": "Runtime interface message ui.channel"
+  },
+  "runtime_ui_channels": {
+    "message": "채널",
+    "description": "Runtime interface message ui.channels"
+  },
+  "runtime_ui_chat_only": {
+    "message": "채팅 전용",
+    "description": "Runtime interface message ui.chat.only"
+  },
+  "runtime_ui_chat_only_3b155e99": {
+    "message": "💬 채팅 전용",
+    "description": "Runtime interface message ui.chat.only.3b155e99"
+  },
+  "runtime_ui_chat_only_mode_is_active_hermes_will_not_read_or_attach_browser_13891aa3": {
+    "message": "채팅 전용 모드가 활성화되어 있습니다. 이번 턴에서는 Hermes가 브라우저 컨텍스트를 읽거나 첨부하지 않습니다.",
+    "description": "Runtime interface message ui.chat.only.mode.is.active.hermes.will.not.read.or.attach.browser.13891aa3"
+  },
+  "runtime_ui_chats": {
+    "message": "채팅",
+    "description": "Runtime interface message ui.chats"
+  },
+  "runtime_ui_check": {
+    "message": "확인",
+    "description": "Runtime interface message ui.check"
+  },
+  "runtime_ui_checking": {
+    "message": "확인 중...",
+    "description": "Runtime interface message ui.checking"
+  },
+  "runtime_ui_checking_browser_main": {
+    "message": "Browser main 확인 중…",
+    "description": "Runtime interface message ui.checking.browser.main"
+  },
+  "runtime_ui_checking_hermes": {
+    "message": "Hermes 확인 중",
+    "description": "Runtime interface message ui.checking.hermes"
+  },
+  "runtime_ui_checking_settings_gateway_capabilities_models_and_sessions": {
+    "message": "설정, 게이트웨이, 기능, 모델, 세션을 확인하고 있습니다.",
+    "description": "Runtime interface message ui.checking.settings.gateway.capabilities.models.and.sessions"
+  },
+  "runtime_ui_choose": {
+    "message": "선택",
+    "description": "Runtime interface message ui.choose"
+  },
+  "runtime_ui_choose_9fd8325f": {
+    "message": "선택하다",
+    "description": "Runtime interface message ui.choose.9fd8325f"
+  },
+  "runtime_ui_choose_another_tab_or_follow_the_active_tab": {
+    "message": "다른 탭을 선택하거나 활성 탭을 따라갑니다.",
+    "description": "Runtime interface message ui.choose.another.tab.or.follow.the.active.tab"
+  },
+  "runtime_ui_choose_any_available_model_for_hermes_assist_if_the_gateway_can_848c1645": {
+    "message": "Hermes Assist에 사용할 모델을 선택하세요. 게이트웨이가 해당 모델을 강제할 수 없는 경우 Assist는 투명하게 게이트웨이 기본값으로 폴백하고 결과를 표시합니다.",
+    "description": "Runtime interface message ui.choose.any.available.model.for.hermes.assist.if.the.gateway.can.848c1645"
+  },
+  "runtime_ui_choose_assist_model": {
+    "message": "Assist 모델 선택",
+    "description": "Runtime interface message ui.choose.assist.model"
+  },
+  "runtime_ui_choose_hermes_model": {
+    "message": "Hermes 모델 선택",
+    "description": "Runtime interface message ui.choose.hermes.model"
+  },
+  "runtime_ui_choose_model": {
+    "message": "모델 선택",
+    "description": "Runtime interface message ui.choose.model"
+  },
+  "runtime_ui_choose_the_brightness_treatment_for_this_web_workspace": {
+    "message": "이 웹 작업 공간의 밝기 처리 방식을 선택합니다.",
+    "description": "Runtime interface message ui.choose.the.brightness.treatment.for.this.web.workspace"
+  },
+  "runtime_ui_choose_the_model_used_by_hermes_assist": {
+    "message": "Hermes Assist에서 사용할 모델 선택",
+    "description": "Runtime interface message ui.choose.the.model.used.by.hermes.assist"
+  },
+  "runtime_ui_choose_what_browser_context_is_allowed_into_each_prompt": {
+    "message": "각 프롬프트에 포함할 브라우저 컨텍스트를 선택합니다.",
+    "description": "Runtime interface message ui.choose.what.browser.context.is.allowed.into.each.prompt"
+  },
+  "runtime_ui_choose_where_ask_explain_improve_and_summarize_selection_tasks_run": {
+    "message": "질문, 설명, 개선, 요약 선택 작업의 실행 위치를 고릅니다.",
+    "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
+  },
+  "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
+    "message": "이 브라우저 세션이 Hermes에 도달하는 위치를 선택하세요.",
+    "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
+  },
+  "runtime_ui_choose_where_to_send": {
+    "message": "보낼 위치 선택",
+    "description": "Runtime interface message ui.choose.where.to.send"
+  },
+  "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
+    "message": "로컬 게이트웨이가 프로필을 노출할 때 브라우저가 사용해야 하는 Hermes 에이전트 프로필을 선택합니다.",
+    "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
+  },
+  "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
+    "message": "Hermes가 읽을 탭과 프롬프트에 표시할 열려 있는 탭을 선택하세요",
+    "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
+  },
+  "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
+    "message": "Chrome 확장 프로그램 측면 패널 내부에서 마이크 프롬프트를 억제할 수 있습니다. 이 임시 확장 페이지는 Chrome에게 마이크 액세스를 요청한 다음 Hermes 측면 패널로 다시 돌아갑니다.",
+    "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
+  },
+  "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
+    "message": "Chromium은 확장 프로그램 측면 패널 내에서 마이크 캡처를 차단할 수 있습니다. 이 표시된 확장 프로그램 탭은 Hermes STT를 사용할 수 있으면 동일한 Hermes 확장 프로그램 출처에서 녹음합니다. 연결된 런타임이 오디오 전사를 제공하지 않으면 브라우저 음성 폴백을 사용합니다.",
+    "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_class": {
+    "message": "클래스",
+    "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clear": {
+    "message": "지우기",
+    "description": "Runtime interface message ui.clear"
+  },
+  "runtime_ui_clear_picked_element": {
+    "message": "✕ 선택한 요소 지우기",
+    "description": "Runtime interface message ui.clear.picked.element"
+  },
+  "runtime_ui_clear_stored_token": {
+    "message": "저장된 토큰 지우기",
+    "description": "Runtime interface message ui.clear.stored.token"
+  },
+  "runtime_ui_cli": {
+    "message": "CLI",
+    "description": "Runtime interface message ui.cli"
+  },
+  "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
+    "message": "마이크 허용을 클릭하여 액세스를 요청하세요. Chromium에서는 이 요청이 표시되는 확장 프로그램 페이지에서 발생하도록 요구합니다.",
+    "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
+  },
+  "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
+    "message": "페이지에서 아무 요소나 클릭하세요. Esc를 누르면 취소됩니다.",
+    "description": "Runtime interface message ui.click.any.element.on.the.page.press.esc.to.cancel"
+  },
+  "runtime_ui_click_connect_to_hermes_or_use_manual_setup_with_a_local_remote_5b53a482": {
+    "message": "'Hermes에 연결'을 클릭하거나, 로컬/원격 게이트웨이 URL과 토큰으로 수동 설정을 사용하세요.",
+    "description": "Runtime interface message ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482"
+  },
+  "runtime_ui_click_start_dictation_to_grant_microphone_access_and_record": {
+    "message": "'받아쓰기 시작'을 클릭해 마이크 액세스를 허용하고 녹음하세요.",
+    "description": "Runtime interface message ui.click.start.dictation.to.grant.microphone.access.and.record"
+  },
+  "runtime_ui_click_the_mic_again_to_transcribe_with_hermes_speech_to_text": {
+    "message": "마이크를 다시 클릭하면 Hermes 음성 인식으로 텍스트 변환이 이루어집니다.",
+    "description": "Runtime interface message ui.click.the.mic.again.to.transcribe.with.hermes.speech.to.text"
+  },
+  "runtime_ui_client": {
+    "message": "클라이언트",
+    "description": "Runtime interface message ui.client"
+  },
+  "runtime_ui_close": {
+    "message": "닫기",
+    "description": "Runtime interface message ui.close"
+  },
+  "runtime_ui_close_dbc87420": {
+    "message": "닫기",
+    "description": "Runtime interface message ui.close.dbc87420"
+  },
+  "runtime_ui_close_generated_image": {
+    "message": "생성된 이미지 닫기",
+    "description": "Runtime interface message ui.close.generated.image"
+  },
+  "runtime_ui_close_hermes_assist": {
+    "message": "Hermes Assist 닫기",
+    "description": "Runtime interface message ui.close.hermes.assist"
+  },
+  "runtime_ui_close_model_picker": {
+    "message": "모델 선택기 닫기",
+    "description": "Runtime interface message ui.close.model.picker"
+  },
+  "runtime_ui_close_settings": {
+    "message": "설정 닫기",
+    "description": "Runtime interface message ui.close.settings"
+  },
+  "runtime_ui_close_update_review": {
+    "message": "업데이트 검토 닫기",
+    "description": "Runtime interface message ui.close.update.review"
+  },
+  "runtime_ui_cloud": {
+    "message": "클라우드",
+    "description": "Runtime interface message ui.cloud"
+  },
+  "runtime_ui_code": {
+    "message": "코드",
+    "description": "Runtime interface message ui.code"
+  },
+  "runtime_ui_collapse": {
+    "message": "접기",
+    "description": "Runtime interface message ui.collapse"
+  },
+  "runtime_ui_color": {
+    "message": "색상",
+    "description": "Runtime interface message ui.color"
+  },
+  "runtime_ui_color_mode": {
+    "message": "색상 모드",
+    "description": "Runtime interface message ui.color.mode"
+  },
+  "runtime_ui_color_mode_588a2981": {
+    "message": "색상 모드",
+    "description": "Runtime interface message ui.color.mode.588a2981"
+  },
+  "runtime_ui_command": {
+    "message": "명령어",
+    "description": "Runtime interface message ui.command"
+  },
+  "runtime_ui_commands": {
+    "message": "명령어",
+    "description": "Runtime interface message ui.commands"
+  },
+  "runtime_ui_commands_45e5f3f7": {
+    "message": "명령어",
+    "description": "Runtime interface message ui.commands.45e5f3f7"
+  },
+  "runtime_ui_commands_760ac2f0": {
+    "message": "/ 명령어",
+    "description": "Runtime interface message ui.commands.760ac2f0"
+  },
+  "runtime_ui_commit": {
+    "message": "커밋",
+    "description": "Runtime interface message ui.commit"
+  },
+  "runtime_ui_compact_context": {
+    "message": "컨텍스트 압축",
+    "description": "Runtime interface message ui.compact.context"
+  },
+  "runtime_ui_compacting": {
+    "message": "압축 중…",
+    "description": "Runtime interface message ui.compacting"
+  },
+  "runtime_ui_comparing_this_loaded_build_with_the_public_github_repository": {
+    "message": "현재 로드된 빌드를 공개 GitHub 리포지토리와 비교하고 있습니다.",
+    "description": "Runtime interface message ui.comparing.this.loaded.build.with.the.public.github.repository"
+  },
+  "runtime_ui_compatibility": {
+    "message": "호환성",
+    "description": "Runtime interface message ui.compatibility"
+  },
+  "runtime_ui_complete": {
+    "message": "완료",
+    "description": "Runtime interface message ui.complete"
+  },
+  "runtime_ui_complete_2c85a73c": {
+    "message": "완벽한",
+    "description": "Runtime interface message ui.complete.2c85a73c"
+  },
+  "runtime_ui_component": {
+    "message": "컴포넌트",
+    "description": "Runtime interface message ui.component"
+  },
+  "runtime_ui_config": {
+    "message": "구성",
+    "description": "Runtime interface message ui.config"
+  },
+  "runtime_ui_configuration": {
+    "message": "구성",
+    "description": "Runtime interface message ui.configuration"
+  },
+  "runtime_ui_configure": {
+    "message": "구성",
+    "description": "Runtime interface message ui.configure"
+  },
+  "runtime_ui_confirm": {
+    "message": "확인",
+    "description": "Runtime interface message ui.confirm"
+  },
+  "runtime_ui_connect_first": {
+    "message": "먼저 연결하세요",
+    "description": "Runtime interface message ui.connect.first"
+  },
+  "runtime_ui_connect_hermes": {
+    "message": "Hermes에 연결",
+    "description": "Runtime interface message ui.connect.hermes"
+  },
+  "runtime_ui_connect_or_test_your_gateway_to_see_supported_features": {
+    "message": "게이트웨이를 연결하거나 테스트하여 지원되는 기능을 확인하세요.",
+    "description": "Runtime interface message ui.connect.or.test.your.gateway.to.see.supported.features"
+  },
+  "runtime_ui_connect_to_hermes": {
+    "message": "Hermes에 연결",
+    "description": "Runtime interface message ui.connect.to.hermes"
+  },
+  "runtime_ui_connect_to_hermes_then_send_the_prepared_update_request": {
+    "message": "Hermes에 접속한 후 준비된 업데이트 요청을 보냅니다.",
+    "description": "Runtime interface message ui.connect.to.hermes.then.send.the.prepared.update.request"
+  },
+  "runtime_ui_connected": {
+    "message": "연결됨",
+    "description": "Runtime interface message ui.connected"
+  },
+  "runtime_ui_connected_agent": {
+    "message": "연결된 에이전트",
+    "description": "Runtime interface message ui.connected.agent"
+  },
+  "runtime_ui_connected_agent_1e63a585": {
+    "message": "연결된 에이전트",
+    "description": "Runtime interface message ui.connected.agent.1e63a585"
+  },
+  "runtime_ui_connected_to_hermes_this_draft_will_create_a_new_hermes_web_ses_59e2faf2": {
+    "message": "Hermes에 연결되었습니다. 이 초안은 전송 시 새 Hermes Web 세션을 생성합니다.",
+    "description": "Runtime interface message ui.connected.to.hermes.this.draft.will.create.a.new.hermes.web.ses.59e2faf2"
+  },
+  "runtime_ui_connected_to_hermes_you_can_start_chatting_with_page_context": {
+    "message": "Hermes에 연결되었습니다. 페이지 컨텍스트와 함께 채팅을 시작할 수 있습니다.",
+    "description": "Runtime interface message ui.connected.to.hermes.you.can.start.chatting.with.page.context"
+  },
+  "runtime_ui_connecting": {
+    "message": "연결 중...",
+    "description": "Runtime interface message ui.connecting"
+  },
+  "runtime_ui_connecting_c1f3b71f": {
+    "message": "연결 중",
+    "description": "Runtime interface message ui.connecting.c1f3b71f"
+  },
+  "runtime_ui_connection": {
+    "message": "연결",
+    "description": "Runtime interface message ui.connection"
+  },
+  "runtime_ui_connection_detail": {
+    "message": "연결 세부 정보",
+    "description": "Runtime interface message ui.connection.detail"
+  },
+  "runtime_ui_connection_details": {
+    "message": "연결 세부 정보",
+    "description": "Runtime interface message ui.connection.details"
+  },
+  "runtime_ui_connection_mode": {
+    "message": "연결 모드",
+    "description": "Runtime interface message ui.connection.mode"
+  },
+  "runtime_ui_connection_not_configured": {
+    "message": "연결이 구성되지 않았습니다.",
+    "description": "Runtime interface message ui.connection.not.configured"
+  },
+  "runtime_ui_connection_security": {
+    "message": "연결 보안",
+    "description": "Runtime interface message ui.connection.security"
+  },
+  "runtime_ui_connection_truth": {
+    "message": "실제 연결 상태",
+    "description": "Runtime interface message ui.connection.truth"
+  },
+  "runtime_ui_content": {
+    "message": "콘텐츠",
+    "description": "Runtime interface message ui.content"
+  },
+  "runtime_ui_context": {
+    "message": "컨텍스트",
+    "description": "Runtime interface message ui.context"
+  },
+  "runtime_ui_context_compaction_failed": {
+    "message": "컨텍스트 압축 실패",
+    "description": "Runtime interface message ui.context.compaction.failed"
+  },
+  "runtime_ui_context_compaction_unavailable": {
+    "message": "컨텍스트 압축을 사용할 수 없음",
+    "description": "Runtime interface message ui.context.compaction.unavailable"
+  },
+  "runtime_ui_context_refresh_unavailable": {
+    "message": "컨텍스트 새로 고침을 사용할 수 없음",
+    "description": "Runtime interface message ui.context.refresh.unavailable"
+  },
+  "runtime_ui_context_window": {
+    "message": "컨텍스트 창",
+    "description": "Runtime interface message ui.context.window"
+  },
+  "runtime_ui_context_window_details": {
+    "message": "컨텍스트 창 세부 정보",
+    "description": "Runtime interface message ui.context.window.details"
+  },
+  "runtime_ui_continue": {
+    "message": "계속",
+    "description": "Runtime interface message ui.continue"
+  },
+  "runtime_ui_continue_current_chat": {
+    "message": "현재 채팅 계속",
+    "description": "Runtime interface message ui.continue.current.chat"
+  },
+  "runtime_ui_continue_here": {
+    "message": "여기서 계속",
+    "description": "Runtime interface message ui.continue.here"
+  },
+  "runtime_ui_control_the_field_launcher_and_where_assist_runs_by_default": {
+    "message": "필드 런처와 Assist의 기본 실행 위치를 제어합니다.",
+    "description": "Runtime interface message ui.control.the.field.launcher.and.where.assist.runs.by.default"
+  },
+  "runtime_ui_conversation": {
+    "message": "대화",
+    "description": "Runtime interface message ui.conversation"
+  },
+  "runtime_ui_cookie": {
+    "message": "쿠키",
+    "description": "Runtime interface message ui.cookie"
+  },
+  "runtime_ui_copied": {
+    "message": "복사됨",
+    "description": "Runtime interface message ui.copied"
+  },
+  "runtime_ui_copied_redacted_diagnostics_paste_them_into_the_github_issue_or_064866e3": {
+    "message": "마스킹된 진단 정보를 복사했습니다. GitHub 이슈 또는 지원 스레드에 붙여넣으세요.",
+    "description": "Runtime interface message ui.copied.redacted.diagnostics.paste.them.into.the.github.issue.or.064866e3"
+  },
+  "runtime_ui_copied_result_to_clipboard": {
+    "message": "결과를 클립보드에 복사했습니다.",
+    "description": "Runtime interface message ui.copied.result.to.clipboard"
+  },
+  "runtime_ui_copy": {
+    "message": "복사",
+    "description": "Runtime interface message ui.copy"
+  },
+  "runtime_ui_copy_a_redacted_compatibility_report_it_excludes_tokens_cookies_ab0019e3": {
+    "message": "마스킹된 호환성 보고서를 복사합니다. 토큰, 쿠키, 페이지 텍스트, 선택한 텍스트, 탭 제목, 전체 URL은 제외됩니다.",
+    "description": "Runtime interface message ui.copy.a.redacted.compatibility.report.it.excludes.tokens.cookies.ab0019e3"
+  },
+  "runtime_ui_copy_blocked_select_preview_manually": {
+    "message": "복사가 차단됨 · 수동으로 미리보기 선택",
+    "description": "Runtime interface message ui.copy.blocked.select.preview.manually"
+  },
+  "runtime_ui_copy_diagnostics": {
+    "message": "진단 정보 복사",
+    "description": "Runtime interface message ui.copy.diagnostics"
+  },
+  "runtime_ui_copy_failed": {
+    "message": "복사 실패",
+    "description": "Runtime interface message ui.copy.failed"
+  },
+  "runtime_ui_copy_redacted_diagnostics": {
+    "message": "마스킹된 진단 정보 복사",
+    "description": "Runtime interface message ui.copy.redacted.diagnostics"
+  },
+  "runtime_ui_copy_server_env": {
+    "message": "서버 환경 변수 복사",
+    "description": "Runtime interface message ui.copy.server.env"
+  },
+  "runtime_ui_copy_session_id": {
+    "message": "세션 ID 복사",
+    "description": "Runtime interface message ui.copy.session.id"
+  },
+  "runtime_ui_copy_to_use": {
+    "message": "복사하여 사용",
+    "description": "Runtime interface message ui.copy.to.use"
+  },
+  "runtime_ui_copy_unavailable": {
+    "message": "복사를 사용할 수 없음",
+    "description": "Runtime interface message ui.copy.unavailable"
+  },
+  "runtime_ui_copying": {
+    "message": "복사 중...",
+    "description": "Runtime interface message ui.copying"
+  },
+  "runtime_ui_could_not_change_session": {
+    "message": "세션을 변경할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.change.session"
+  },
+  "runtime_ui_could_not_clear_token": {
+    "message": "토큰을 지울 수 없습니다",
+    "description": "Runtime interface message ui.could.not.clear.token"
+  },
+  "runtime_ui_could_not_copy_diagnostics_check_browser_clipboard_permissions": {
+    "message": "진단 정보를 복사할 수 없습니다. 브라우저 클립보드 권한을 확인하세요.",
+    "description": "Runtime interface message ui.could.not.copy.diagnostics.check.browser.clipboard.permissions"
+  },
+  "runtime_ui_could_not_copy_env_block": {
+    "message": "환경 변수 블록을 복사할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.copy.env.block"
+  },
+  "runtime_ui_could_not_create_session": {
+    "message": "세션을 만들 수 없습니다",
+    "description": "Runtime interface message ui.could.not.create.session"
+  },
+  "runtime_ui_could_not_load_this_session": {
+    "message": "이 세션을 로드할 수 없습니다.",
+    "description": "Runtime interface message ui.could.not.load.this.session"
+  },
+  "runtime_ui_could_not_migrate_browser_session": {
+    "message": "브라우저 세션을 마이그레이션할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.migrate.browser.session"
+  },
+  "runtime_ui_could_not_open_full_view": {
+    "message": "전체 보기를 열 수 없습니다",
+    "description": "Runtime interface message ui.could.not.open.full.view"
+  },
+  "runtime_ui_could_not_open_session": {
+    "message": "세션을 열 수 없습니다",
+    "description": "Runtime interface message ui.could.not.open.session"
+  },
+  "runtime_ui_could_not_pin_active_tab": {
+    "message": "활성 탭을 고정할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.pin.active.tab"
+  },
+  "runtime_ui_could_not_pin_tab": {
+    "message": "탭을 고정할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.pin.tab"
+  },
+  "runtime_ui_could_not_rename_session": {
+    "message": "세션 이름을 변경할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.rename.session"
+  },
+  "runtime_ui_could_not_start_draft": {
+    "message": "초안을 시작할 수 없습니다.",
+    "description": "Runtime interface message ui.could.not.start.draft"
+  },
+  "runtime_ui_could_not_start_hermes_session": {
+    "message": "Hermes 세션을 시작할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.start.hermes.session"
+  },
+  "runtime_ui_could_not_switch_to_chat_only": {
+    "message": "채팅 전용으로 전환할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.switch.to.chat.only"
+  },
+  "runtime_ui_could_not_unlock_tab_scope": {
+    "message": "탭 범위를 잠금 해제할 수 없습니다",
+    "description": "Runtime interface message ui.could.not.unlock.tab.scope"
+  },
+  "runtime_ui_create": {
+    "message": "만들기",
+    "description": "Runtime interface message ui.create"
+  },
+  "runtime_ui_create_and_open_a_new_hermes_assist_session": {
+    "message": "새 Hermes Assist 세션을 만들고 엽니다.",
+    "description": "Runtime interface message ui.create.and.open.a.new.hermes.assist.session"
+  },
+  "runtime_ui_current": {
+    "message": "현재",
+    "description": "Runtime interface message ui.current"
+  },
+  "runtime_ui_current_session": {
+    "message": "현재 세션",
+    "description": "Runtime interface message ui.current.session"
+  },
+  "runtime_ui_custom": {
+    "message": "사용자 지정",
+    "description": "Runtime interface message ui.custom"
+  },
+  "runtime_ui_custom_hermes_assist_instruction": {
+    "message": "사용자 정의 Hermes Assist 명령",
+    "description": "Runtime interface message ui.custom.hermes.assist.instruction"
+  },
+  "runtime_ui_custom_model_source_is_discovery_only": {
+    "message": "사용자 지정 모델 소스는 검색 전용입니다",
+    "description": "Runtime interface message ui.custom.model.source.is.discovery.only"
+  },
+  "runtime_ui_custom_model_source_unavailable": {
+    "message": "사용자 지정 모델 소스를 사용할 수 없음",
+    "description": "Runtime interface message ui.custom.model.source.unavailable"
+  },
+  "runtime_ui_custom_model_source_urls": {
+    "message": "사용자 지정 모델 소스 URL",
+    "description": "Runtime interface message ui.custom.model.source.urls"
+  },
+  "runtime_ui_dark": {
+    "message": "☾ 다크",
+    "description": "Runtime interface message ui.dark"
+  },
+  "runtime_ui_dashboard_websocket": {
+    "message": "대시보드 WebSocket",
+    "description": "Runtime interface message ui.dashboard.websocket"
+  },
+  "runtime_ui_dashboard_websocket_does_not_expose_an_existing_session_model_o_bb6f12cd": {
+    "message": "대시보드 WebSocket은 아직 기존 세션의 모델 옵션 업데이트를 지원하지 않습니다. 이 옵션은 다음 새 세션에 적용됩니다.",
+    "description": "Runtime interface message ui.dashboard.websocket.does.not.expose.an.existing.session.model.o.bb6f12cd"
+  },
+  "runtime_ui_data": {
+    "message": "데이터",
+    "description": "Runtime interface message ui.data"
+  },
+  "runtime_ui_date": {
+    "message": "날짜",
+    "description": "Runtime interface message ui.date"
+  },
+  "runtime_ui_default": {
+    "message": "기본값",
+    "description": "Runtime interface message ui.default"
+  },
+  "runtime_ui_default_right_click_route": {
+    "message": "기본 우클릭 실행 위치",
+    "description": "Runtime interface message ui.default.right.click.route"
+  },
+  "runtime_ui_default_session_route": {
+    "message": "기본 세션 실행 위치",
+    "description": "Runtime interface message ui.default.session.route"
+  },
+  "runtime_ui_delete": {
+    "message": "삭제",
+    "description": "Runtime interface message ui.delete"
+  },
+  "runtime_ui_delete_after_the_draft_returns": {
+    "message": "초안이 반환된 후 삭제",
+    "description": "Runtime interface message ui.delete.after.the.draft.returns"
+  },
+  "runtime_ui_description": {
+    "message": "설명",
+    "description": "Runtime interface message ui.description"
+  },
+  "runtime_ui_detail": {
+    "message": "세부 정보",
+    "description": "Runtime interface message ui.detail"
+  },
+  "runtime_ui_details": {
+    "message": "세부 정보",
+    "description": "Runtime interface message ui.details"
+  },
+  "runtime_ui_detect_from_hermes_gateway": {
+    "message": "Hermes 게이트웨이에서 검색",
+    "description": "Runtime interface message ui.detect.from.hermes.gateway"
+  },
+  "runtime_ui_detecting_runtime": {
+    "message": "런타임 검색 중",
+    "description": "Runtime interface message ui.detecting.runtime"
+  },
+  "runtime_ui_device": {
+    "message": "장치",
+    "description": "Runtime interface message ui.device"
+  },
+  "runtime_ui_devices": {
+    "message": "장치",
+    "description": "Runtime interface message ui.devices"
+  },
+  "runtime_ui_diagnostics": {
+    "message": "진단 정보",
+    "description": "Runtime interface message ui.diagnostics"
+  },
+  "runtime_ui_diagnostics_copied": {
+    "message": "진단 정보를 복사했습니다",
+    "description": "Runtime interface message ui.diagnostics.copied"
+  },
+  "runtime_ui_diagnostics_copy_failed": {
+    "message": "진단 정보 복사 실패",
+    "description": "Runtime interface message ui.diagnostics.copy.failed"
+  },
+  "runtime_ui_dialog": {
+    "message": "대화상자",
+    "description": "Runtime interface message ui.dialog"
+  },
+  "runtime_ui_discovered_hermes_agents": {
+    "message": "검색된 Hermes 에이전트",
+    "description": "Runtime interface message ui.discovered.hermes.agents"
+  },
+  "runtime_ui_dismiss_notification": {
+    "message": "알림 닫기",
+    "description": "Runtime interface message ui.dismiss.notification"
+  },
+  "runtime_ui_display": {
+    "message": "표시",
+    "description": "Runtime interface message ui.display"
+  },
+  "runtime_ui_dist": {
+    "message": "dist/",
+    "description": "Runtime interface message ui.dist"
+  },
+  "runtime_ui_download": {
+    "message": "다운로드",
+    "description": "Runtime interface message ui.download"
+  },
+  "runtime_ui_downloading_the_browser_language_pack_once_so_voice_dictation_c_b476f51c": {
+    "message": "음성 받아쓰기를 로컬에서 실행할 수 있도록 브라우저 언어 팩을 한 번만 다운로드하고 있습니다.",
+    "description": "Runtime interface message ui.downloading.the.browser.language.pack.once.so.voice.dictation.c.b476f51c"
+  },
+  "runtime_ui_draft_and_input_values_stayed_excluded": {
+    "message": "초안 및 입력 값은 제외된 상태로 유지됩니다.",
+    "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
+  },
+  "runtime_ui_draft_ready_for_review": {
+    "message": "초안 검토 준비 완료",
+    "description": "Runtime interface message ui.draft.ready.for.review"
+  },
+  "runtime_ui_draft_ready_still_your_decision": {
+    "message": "초안이 준비되었습니다. 여전히 당신의 결정입니다.",
+    "description": "Runtime interface message ui.draft.ready.still.your.decision"
+  },
+  "runtime_ui_draft_ready_this_managed_editor_stays_untouched": {
+    "message": "초안 준비됨 · 이 관리 편집기는 그대로 유지됩니다.",
+    "description": "Runtime interface message ui.draft.ready.this.managed.editor.stays.untouched"
+  },
+  "runtime_ui_draft_reply_with_hermes": {
+    "message": "Hermes를 사용한 초안 답장",
+    "description": "Runtime interface message ui.draft.reply.with.hermes"
+  },
+  "runtime_ui_draft_saved_when_sent": {
+    "message": "초안 · 전송 시 저장됨",
+    "description": "Runtime interface message ui.draft.saved.when.sent"
+  },
+  "runtime_ui_drop_files_to_attach": {
+    "message": "파일을 놓아서 첨부",
+    "description": "Runtime interface message ui.drop.files.to.attach"
+  },
+  "runtime_ui_edit": {
+    "message": "편집",
+    "description": "Runtime interface message ui.edit"
+  },
+  "runtime_ui_edit_models": {
+    "message": "⚙ 모델 편집...",
+    "description": "Runtime interface message ui.edit.models"
+  },
+  "runtime_ui_edit_models_in_hermes_desktop": {
+    "message": "Hermes Desktop에서 모델 편집",
+    "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
+  },
+  "runtime_ui_element": {
+    "message": "요소",
+    "description": "Runtime interface message ui.element"
+  },
+  "runtime_ui_element_pick_cancelled": {
+    "message": "요소 선택이 취소되었습니다",
+    "description": "Runtime interface message ui.element.pick.cancelled"
+  },
+  "runtime_ui_element_pick_failed": {
+    "message": "요소 선택에 실패했습니다",
+    "description": "Runtime interface message ui.element.pick.failed"
+  },
+  "runtime_ui_element_pick_is_not_available_on_this_url": {
+    "message": "이 URL에서는 요소 선택을 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.element.pick.is.not.available.on.this.url"
+  },
+  "runtime_ui_element_picked": {
+    "message": "요소를 선택했습니다",
+    "description": "Runtime interface message ui.element.picked"
+  },
+  "runtime_ui_elements": {
+    "message": "요소",
+    "description": "Runtime interface message ui.elements"
+  },
+  "runtime_ui_empty": {
+    "message": "비어 있음",
+    "description": "Runtime interface message ui.empty"
+  },
+  "runtime_ui_empty_draft": {
+    "message": "(빈 초안)",
+    "description": "Runtime interface message ui.empty.draft"
+  },
+  "runtime_ui_enable": {
+    "message": "활성화",
+    "description": "Runtime interface message ui.enable"
+  },
+  "runtime_ui_enable_browser_context_before_picking_an_element": {
+    "message": "요소를 선택하기 전에 브라우저 컨텍스트를 활성화하세요.",
+    "description": "Runtime interface message ui.enable.browser.context.before.picking.an.element"
+  },
+  "runtime_ui_enable_wake_word": {
+    "message": "깨우기 단어 활성화",
+    "description": "Runtime interface message ui.enable.wake.word"
+  },
+  "runtime_ui_enabled": {
+    "message": "활성화됨",
+    "description": "Runtime interface message ui.enabled"
+  },
+  "runtime_ui_english": {
+    "message": "영어",
+    "description": "Runtime interface message ui.english"
+  },
+  "runtime_ui_enter_at_least_one_port_number_e_g_8642_8643_8644_8645_8646": {
+    "message": "포트 번호를 하나 이상 입력하세요 (예: 8642,8643,8644,8645,8646)",
+    "description": "Runtime interface message ui.enter.at.least.one.port.number.e.g.8642.8643.8644.8645.8646"
+  },
+  "runtime_ui_enter_sends_shift_enter_adds_a_new_line_ctrl_v_drag_drop_or_att_a1c82bcd": {
+    "message": "Enter로 전송합니다. Shift+Enter로 줄바꿈합니다. Ctrl+V, 드래그 앤 드롭 또는 + 로 파일을 첨부합니다.",
+    "description": "Runtime interface message ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd"
+  },
+  "runtime_ui_enter_your_dashboard_https_url_in_settings_and_sign_in_to_it_in_0b5f6bb9": {
+    "message": "설정에 대시보드 https URL을 입력하고 브라우저 탭에서 로그인하세요.",
+    "description": "Runtime interface message ui.enter.your.dashboard.https.url.in.settings.and.sign.in.to.it.in.0b5f6bb9"
+  },
+  "runtime_ui_entries": {
+    "message": "항목",
+    "description": "Runtime interface message ui.entries"
+  },
+  "runtime_ui_entry": {
+    "message": "항목",
+    "description": "Runtime interface message ui.entry"
+  },
+  "runtime_ui_error": {
+    "message": "오류",
+    "description": "Runtime interface message ui.error"
+  },
+  "runtime_ui_event": {
+    "message": "이벤트",
+    "description": "Runtime interface message ui.event"
+  },
+  "runtime_ui_events": {
+    "message": "이벤트",
+    "description": "Runtime interface message ui.events"
+  },
+  "runtime_ui_exception": {
+    "message": "예외",
+    "description": "Runtime interface message ui.exception"
+  },
+  "runtime_ui_existing_attached_panels_stay_as_they_are_other_and_new_tabs_us_fb9a0ba6": {
+    "message": "기존에 첨부된 패널은 그대로 유지됩니다. 다른 탭과 새 탭은 공유 패널을 사용합니다.",
+    "description": "Runtime interface message ui.existing.attached.panels.stay.as.they.are.other.and.new.tabs.us.fb9a0ba6"
+  },
+  "runtime_ui_expand": {
+    "message": "펼치기",
+    "description": "Runtime interface message ui.expand"
+  },
+  "runtime_ui_explain": {
+    "message": "설명",
+    "description": "Runtime interface message ui.explain"
+  },
+  "runtime_ui_explain_selection": {
+    "message": "선택 설명",
+    "description": "Runtime interface message ui.explain.selection"
+  },
+  "runtime_ui_extension": {
+    "message": "확장 프로그램",
+    "description": "Runtime interface message ui.extension"
+  },
+  "runtime_ui_fallback": {
+    "message": "폴백",
+    "description": "Runtime interface message ui.fallback"
+  },
+  "runtime_ui_falls_back_to_review_if_the_field_changed": {
+    "message": "필드가 변경된 경우 검토를 위해 다시 돌아갑니다.",
+    "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
+  },
+  "runtime_ui_fast_mode": {
+    "message": "빠른 모드",
+    "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_field": {
+    "message": "필드",
+    "description": "Runtime interface message ui.field"
+  },
+  "runtime_ui_field_changed_review_required": {
+    "message": "필드가 변경됨 · 검토 필요",
+    "description": "Runtime interface message ui.field.changed.review.required"
+  },
+  "runtime_ui_file": {
+    "message": "파일",
+    "description": "Runtime interface message ui.file"
+  },
+  "runtime_ui_files": {
+    "message": "▧ 파일...",
+    "description": "Runtime interface message ui.files"
+  },
+  "runtime_ui_files_453f0471": {
+    "message": "▧ 파일…",
+    "description": "Runtime interface message ui.files.453f0471"
+  },
+  "runtime_ui_files_6ce6c512": {
+    "message": "파일",
+    "description": "Runtime interface message ui.files.6ce6c512"
+  },
+  "runtime_ui_files_attached": {
+    "message": "파일을 첨부했습니다",
+    "description": "Runtime interface message ui.files.attached"
+  },
+  "runtime_ui_filter": {
+    "message": "필터",
+    "description": "Runtime interface message ui.filter"
+  },
+  "runtime_ui_find": {
+    "message": "찾기",
+    "description": "Runtime interface message ui.find"
+  },
+  "runtime_ui_finish": {
+    "message": "완료",
+    "description": "Runtime interface message ui.finish"
+  },
+  "runtime_ui_finished_without_a_model_call": {
+    "message": "모델콜 없이 끝났습니다.",
+    "description": "Runtime interface message ui.finished.without.a.model.call"
+  },
+  "runtime_ui_focused_draft": {
+    "message": "집중 초안",
+    "description": "Runtime interface message ui.focused.draft"
+  },
+  "runtime_ui_folder": {
+    "message": "▰ 폴더...",
+    "description": "Runtime interface message ui.folder"
+  },
+  "runtime_ui_folder_30baa249": {
+    "message": "폴더",
+    "description": "Runtime interface message ui.folder.30baa249"
+  },
+  "runtime_ui_form": {
+    "message": "양식",
+    "description": "Runtime interface message ui.form"
+  },
+  "runtime_ui_format": {
+    "message": "형식",
+    "description": "Runtime interface message ui.format"
+  },
+  "runtime_ui_frame": {
+    "message": "프레임",
+    "description": "Runtime interface message ui.frame"
+  },
+  "runtime_ui_full_largest_payload": {
+    "message": "전체 - 최대 페이로드",
+    "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_gateway": {
+    "message": "게이트웨이",
+    "description": "Runtime interface message ui.gateway"
+  },
+  "runtime_ui_gateway_connection": {
+    "message": "게이트웨이 연결",
+    "description": "Runtime interface message ui.gateway.connection"
+  },
+  "runtime_ui_gateway_default": {
+    "message": "게이트웨이 기본값",
+    "description": "Runtime interface message ui.gateway.default"
+  },
+  "runtime_ui_gateway_url": {
+    "message": "게이트웨이 URL",
+    "description": "Runtime interface message ui.gateway.url"
+  },
+  "runtime_ui_generated_by_hermes": {
+    "message": "Hermes 생성",
+    "description": "Runtime interface message ui.generated.by.hermes"
+  },
+  "runtime_ui_generated_image": {
+    "message": "생성된 이미지",
+    "description": "Runtime interface message ui.generated.image"
+  },
+  "runtime_ui_gmail_thread_capture_unavailable": {
+    "message": "Gmail 스레드 캡처를 사용할 수 없음",
+    "description": "Runtime interface message ui.gmail.thread.capture.unavailable"
+  },
+  "runtime_ui_gmail_thread_captured": {
+    "message": "Gmail 스레드를 캡처했습니다",
+    "description": "Runtime interface message ui.gmail.thread.captured"
+  },
+  "runtime_ui_grant": {
+    "message": "허용",
+    "description": "Runtime interface message ui.grant"
+  },
+  "runtime_ui_grid": {
+    "message": "그리드",
+    "description": "Runtime interface message ui.grid"
+  },
+  "runtime_ui_group": {
+    "message": "그룹",
+    "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_handing_update_to_hermes": {
+    "message": "Hermes에 대한 업데이트 처리 중",
+    "description": "Runtime interface message ui.handing.update.to.hermes"
+  },
+  "runtime_ui_hash": {
+    "message": "해시",
+    "description": "Runtime interface message ui.hash"
+  },
+  "runtime_ui_header": {
+    "message": "헤더",
+    "description": "Runtime interface message ui.header"
+  },
+  "runtime_ui_help": {
+    "message": "도움말",
+    "description": "Runtime interface message ui.help"
+  },
+  "runtime_ui_hermes_agent": {
+    "message": "Hermes Agent",
+    "description": "Runtime interface message ui.hermes.agent"
+  },
+  "runtime_ui_hermes_agent_badge": {
+    "message": "Hermes Agent 배지",
+    "description": "Runtime interface message ui.hermes.agent.badge"
+  },
+  "runtime_ui_hermes_api_unavailable": {
+    "message": "Hermes API를 사용할 수 없음",
+    "description": "Runtime interface message ui.hermes.api.unavailable"
+  },
+  "runtime_ui_hermes_appears_only_on_tabs_where_you_open_it": {
+    "message": "Hermes는 직접 연 탭에만 표시됩니다.",
+    "description": "Runtime interface message ui.hermes.appears.only.on.tabs.where.you.open.it"
+  },
+  "runtime_ui_hermes_assist": {
+    "message": "Hermes Assist",
+    "description": "Runtime interface message ui.hermes.assist"
+  },
+  "runtime_ui_hermes_assist_model": {
+    "message": "Hermes Assist 모델",
+    "description": "Runtime interface message ui.hermes.assist.model"
+  },
+  "runtime_ui_hermes_browser": {
+    "message": "Hermes Browser",
+    "description": "Runtime interface message ui.hermes.browser"
+  },
+  "runtime_ui_hermes_browser_bb83b5a0": {
+    "message": "HERMES BROWSER",
+    "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
+  },
+  "runtime_ui_hermes_browser_extension": {
+    "message": "HERMES BROWSER EXTENSION",
+    "description": "Runtime interface message ui.hermes.browser.extension"
+  },
+  "runtime_ui_hermes_browser_extension_connected": {
+    "message": "Hermes Browser Extension이 연결되었습니다",
+    "description": "Runtime interface message ui.hermes.browser.extension.connected"
+  },
+  "runtime_ui_hermes_browser_extension_conversation": {
+    "message": "Hermes Browser Extension 대화",
+    "description": "Runtime interface message ui.hermes.browser.extension.conversation"
+  },
+  "runtime_ui_hermes_browser_intro": {
+    "message": "Hermes Browser 소개",
+    "description": "Runtime interface message ui.hermes.browser.intro"
+  },
+  "runtime_ui_hermes_browser_local_sidecar": {
+    "message": "Hermes Browser 로컬 사이드카",
+    "description": "Runtime interface message ui.hermes.browser.local.sidecar"
+  },
+  "runtime_ui_hermes_browser_update_channel": {
+    "message": "HERMES BROWSER / 업데이트 채널",
+    "description": "Runtime interface message ui.hermes.browser.update.channel"
+  },
+  "runtime_ui_hermes_chat_actions": {
+    "message": "Hermes 채팅 작업",
+    "description": "Runtime interface message ui.hermes.chat.actions"
+  },
+  "runtime_ui_hermes_cloud": {
+    "message": "Hermes Cloud",
+    "description": "Runtime interface message ui.hermes.cloud"
+  },
+  "runtime_ui_hermes_cloud_preview": {
+    "message": "Hermes Cloud Preview",
+    "description": "Runtime interface message ui.hermes.cloud.preview"
+  },
+  "runtime_ui_hermes_cloud_unavailable": {
+    "message": "Hermes Cloud 사용할 수 없음",
+    "description": "Runtime interface message ui.hermes.cloud.unavailable"
+  },
+  "runtime_ui_hermes_compatibility": {
+    "message": "Hermes 호환성",
+    "description": "Runtime interface message ui.hermes.compatibility"
+  },
+  "runtime_ui_hermes_compatibility_fallback": {
+    "message": "Hermes 호환성 폴백",
+    "description": "Runtime interface message ui.hermes.compatibility.fallback"
+  },
+  "runtime_ui_hermes_connection": {
+    "message": "Hermes 연결",
+    "description": "Runtime interface message ui.hermes.connection"
+  },
+  "runtime_ui_hermes_connection_status": {
+    "message": "Hermes 연결 상태",
+    "description": "Runtime interface message ui.hermes.connection.status"
+  },
+  "runtime_ui_hermes_gateway_connected_with_runtime_warning": {
+    "message": "Hermes 게이트웨이가 런타임 경고와 함께 연결됨",
+    "description": "Runtime interface message ui.hermes.gateway.connected.with.runtime.warning"
+  },
+  "runtime_ui_hermes_gateway_test_failed": {
+    "message": "Hermes 게이트웨이 테스트 실패",
+    "description": "Runtime interface message ui.hermes.gateway.test.failed"
+  },
+  "runtime_ui_hermes_gateway_unavailable": {
+    "message": "Hermes 게이트웨이를 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.hermes.gateway.unavailable"
+  },
+  "runtime_ui_hermes_has_not_acknowledged_this_session_model_pair_yet_retryin_c39a64e1": {
+    "message": "Hermes가 아직 이 세션/모델 쌍을 확인하지 않았습니다. 전송 전에 잠금을 재시도하고 있습니다.",
+    "description": "Runtime interface message ui.hermes.has.not.acknowledged.this.session.model.pair.yet.retryin.c39a64e1"
+  },
+  "runtime_ui_hermes_image_synthesis": {
+    "message": "Hermes 이미지 생성",
+    "description": "Runtime interface message ui.hermes.image.synthesis"
+  },
+  "runtime_ui_hermes_inspector": {
+    "message": "Hermes 검사기",
+    "description": "Runtime interface message ui.hermes.inspector"
+  },
+  "runtime_ui_hermes_is_drafting": {
+    "message": "Hermes 초안 작성 중",
+    "description": "Runtime interface message ui.hermes.is.drafting"
+  },
+  "runtime_ui_hermes_is_not_connected_yet_browser_speech_fallback_is_unavaila_2a5064db": {
+    "message": "Hermes가 아직 연결되지 않았습니다. 여기서는 브라우저 음성 폴백을 사용할 수 없습니다. 측면 패널을 Hermes에 연결한 다음 음성 받아쓰기를 사용하세요.",
+    "description": "Runtime interface message ui.hermes.is.not.connected.yet.browser.speech.fallback.is.unavaila.2a5064db"
+  },
+  "runtime_ui_hermes_is_not_currently_running_send_or_queue_the_message_instead": {
+    "message": "Hermes가 현재 실행 중이 아닙니다. 대신 메시지를 보내거나 대기열에 추가하세요.",
+    "description": "Runtime interface message ui.hermes.is.not.currently.running.send.or.queue.the.message.instead"
+  },
+  "runtime_ui_hermes_is_thinking_brainstorming_contemplating_reasoning_proces_3e8d81c0": {
+    "message": "Hermes가 생각 중입니다. 브레인스토밍, 숙고, 추론, 처리, 분석, 성찰, 검토, 심의 및 구상 중",
+    "description": "Runtime interface message ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0"
+  },
+  "runtime_ui_hermes_is_working": {
+    "message": "Hermes가 작업 중…",
+    "description": "Runtime interface message ui.hermes.is.working"
+  },
+  "runtime_ui_hermes_message_composer": {
+    "message": "Hermes 메시지 작성란",
+    "description": "Runtime interface message ui.hermes.message.composer"
+  },
+  "runtime_ui_hermes_model_confirmed": {
+    "message": "Hermes 모델 확인됨",
+    "description": "Runtime interface message ui.hermes.model.confirmed"
+  },
+  "runtime_ui_hermes_model_lock_accepted": {
+    "message": "Hermes 모델 잠금 수락됨",
+    "description": "Runtime interface message ui.hermes.model.lock.accepted"
+  },
+  "runtime_ui_hermes_model_options_confirmed": {
+    "message": "Hermes 모델 옵션 확인됨",
+    "description": "Runtime interface message ui.hermes.model.options.confirmed"
+  },
+  "runtime_ui_hermes_model_options_failed": {
+    "message": "Hermes 모델 옵션 실패",
+    "description": "Runtime interface message ui.hermes.model.options.failed"
+  },
+  "runtime_ui_hermes_model_options_mismatch": {
+    "message": "Hermes 모델 옵션 불일치",
+    "description": "Runtime interface message ui.hermes.model.options.mismatch"
+  },
+  "runtime_ui_hermes_model_options_pending": {
+    "message": "Hermes 모델 옵션 대기 중",
+    "description": "Runtime interface message ui.hermes.model.options.pending"
+  },
+  "runtime_ui_hermes_model_requested": {
+    "message": "Hermes 모델 요청됨",
+    "description": "Runtime interface message ui.hermes.model.requested"
+  },
+  "runtime_ui_hermes_models_synced": {
+    "message": "Hermes 모델 동기화됨",
+    "description": "Runtime interface message ui.hermes.models.synced"
+  },
+  "runtime_ui_hermes_native_wake_word_is_unavailable": {
+    "message": "Hermes 기본 깨우기 단어를 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.hermes.native.wake.word.is.unavailable"
+  },
+  "runtime_ui_hermes_on_this_machine_default_and_offline_capable": {
+    "message": "이 컴퓨터의 Hermes. 기본값이며 오프라인 사용 가능.",
+    "description": "Runtime interface message ui.hermes.on.this.machine.default.and.offline.capable"
+  },
+  "runtime_ui_hermes_profile_switched": {
+    "message": "Hermes 프로필 전환됨",
+    "description": "Runtime interface message ui.hermes.profile.switched"
+  },
+  "runtime_ui_hermes_profiles_synced": {
+    "message": "Hermes 프로필 동기화됨",
+    "description": "Runtime interface message ui.hermes.profiles.synced"
+  },
+  "runtime_ui_hermes_refused_to_start_the_wake_listener": {
+    "message": "Hermes 깨우기 수신기 시작을 거부했습니다.",
+    "description": "Runtime interface message ui.hermes.refused.to.start.the.wake.listener"
+  },
+  "runtime_ui_hermes_returned_only_fallback_model_data_keeping_your_selected_128b9943": {
+    "message": "Hermes가 폴백 모델 데이터만 반환했습니다. 실제 카탈로그를 사용할 수 있을 때까지 선택한 모델을 유지합니다.",
+    "description": "Runtime interface message ui.hermes.returned.only.fallback.model.data.keeping.your.selected.128b9943"
+  },
+  "runtime_ui_hermes_session": {
+    "message": "Hermes 세션",
+    "description": "Runtime interface message ui.hermes.session"
+  },
+  "runtime_ui_hermes_sessions": {
+    "message": "Hermes 세션",
+    "description": "Runtime interface message ui.hermes.sessions"
+  },
+  "runtime_ui_hermes_sessions_synced": {
+    "message": "Hermes 세션 동기화됨",
+    "description": "Runtime interface message ui.hermes.sessions.synced"
+  },
+  "runtime_ui_hermes_skill_suggestions": {
+    "message": "Hermes 스킬 제안",
+    "description": "Runtime interface message ui.hermes.skill.suggestions"
+  },
+  "runtime_ui_hermes_skills_synced": {
+    "message": "Hermes 스킬 동기화됨",
+    "description": "Runtime interface message ui.hermes.skills.synced"
+  },
+  "runtime_ui_hermes_task_status": {
+    "message": "Hermes 작업 상태",
+    "description": "Runtime interface message ui.hermes.task.status"
+  },
+  "runtime_ui_hermes_token_cleared": {
+    "message": "Hermes 토큰 지워짐",
+    "description": "Runtime interface message ui.hermes.token.cleared"
+  },
+  "runtime_ui_hermes_voice_dictation": {
+    "message": "Hermes 음성 받아쓰기",
+    "description": "Runtime interface message ui.hermes.voice.dictation"
+  },
+  "runtime_ui_hermes_web": {
+    "message": "Hermes Web",
+    "description": "Runtime interface message ui.hermes.web"
+  },
+  "runtime_ui_hermes_web_3336aa2f": {
+    "message": "HERMES WEB",
+    "description": "Runtime interface message ui.hermes.web.3336aa2f"
+  },
+  "runtime_ui_hermes_web_could_not_start": {
+    "message": "Hermes Web을 시작할 수 없습니다",
+    "description": "Runtime interface message ui.hermes.web.could.not.start"
+  },
+  "runtime_ui_hermes_web_home": {
+    "message": "Hermes Web 홈",
+    "description": "Runtime interface message ui.hermes.web.home"
+  },
+  "runtime_ui_hermes_web_ready": {
+    "message": "HERMES WEB // 준비 완료",
+    "description": "Runtime interface message ui.hermes.web.ready"
+  },
+  "runtime_ui_hermes_web_settings": {
+    "message": "Hermes Web 설정",
+    "description": "Runtime interface message ui.hermes.web.settings"
+  },
+  "runtime_ui_hermes_will_consume_it_if_the_current_turn_reaches_an_injection_0fb01647": {
+    "message": "현재 턴이 삽입 지점에 도달하면 Hermes가 이를 사용하고, 그렇지 않으면 초안이 여기로 반환됩니다.",
+    "description": "Runtime interface message ui.hermes.will.consume.it.if.the.current.turn.reaches.an.injection.0fb01647"
+  },
+  "runtime_ui_hermes_will_consume_the_queued_text_if_the_current_turn_reaches_bd527e1e": {
+    "message": "현재 턴이 삽입 지점에 도달하면 Hermes가 대기열의 텍스트를 사용합니다.",
+    "description": "Runtime interface message ui.hermes.will.consume.the.queued.text.if.the.current.turn.reaches.bd527e1e"
+  },
+  "runtime_ui_hermes_will_never_replace_or_switch_an_existing_conversation_wi_7e65804d": {
+    "message": "Hermes는 이 선택 없이 기존 대화를 대체하거나 전환하지 않습니다.",
+    "description": "Runtime interface message ui.hermes.will.never.replace.or.switch.an.existing.conversation.wi.7e65804d"
+  },
+  "runtime_ui_hermes_will_send_it_after_the_current_turn_finishes_or_stops": {
+    "message": "현재 턴이 끝나거나 중지된 후 Hermes가 전송합니다.",
+    "description": "Runtime interface message ui.hermes.will.send.it.after.the.current.turn.finishes.or.stops"
+  },
+  "runtime_ui_hermes_will_stop_before_changing_a_dirty_checkout": {
+    "message": "Hermes는 더티 체크아웃을 변경하기 전에 중지됩니다.",
+    "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
+  },
+  "runtime_ui_hide": {
+    "message": "숨기기",
+    "description": "Runtime interface message ui.hide"
+  },
+  "runtime_ui_hide_sessions_rail": {
+    "message": "세션 레일 숨기기",
+    "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_high": {
+    "message": "높음",
+    "description": "Runtime interface message ui.high"
+  },
+  "runtime_ui_highlighted_text": {
+    "message": "강조 표시된 텍스트",
+    "description": "Runtime interface message ui.highlighted.text"
+  },
+  "runtime_ui_hint": {
+    "message": "힌트",
+    "description": "Runtime interface message ui.hint"
+  },
+  "runtime_ui_home": {
+    "message": "홈",
+    "description": "Runtime interface message ui.home"
+  },
+  "runtime_ui_host": {
+    "message": "호스트",
+    "description": "Runtime interface message ui.host"
+  },
+  "runtime_ui_id": {
+    "message": "ID",
+    "description": "Runtime interface message ui.id"
+  },
+  "runtime_ui_image": {
+    "message": "이미지",
+    "description": "Runtime interface message ui.image"
+  },
+  "runtime_ui_image_attached_from_clipboard": {
+    "message": "클립보드에서 이미지를 첨부했습니다",
+    "description": "Runtime interface message ui.image.attached.from.clipboard"
+  },
+  "runtime_ui_image_pasted_into_hermes": {
+    "message": "Hermes에 이미지를 붙여넣었습니다",
+    "description": "Runtime interface message ui.image.pasted.into.hermes"
+  },
+  "runtime_ui_image_ready_for_hermes_vision": {
+    "message": "이미지가 Hermes 비전용으로 준비됨",
+    "description": "Runtime interface message ui.image.ready.for.hermes.vision"
+  },
+  "runtime_ui_image_stayed_inline_only": {
+    "message": "이미지가 인라인으로만 유지됨",
+    "description": "Runtime interface message ui.image.stayed.inline.only"
+  },
+  "runtime_ui_images": {
+    "message": "▧ 이미지...",
+    "description": "Runtime interface message ui.images"
+  },
+  "runtime_ui_images_09e871c9": {
+    "message": "이미지",
+    "description": "Runtime interface message ui.images.09e871c9"
+  },
+  "runtime_ui_images_9ef50004": {
+    "message": "▧ 이미지…",
+    "description": "Runtime interface message ui.images.9ef50004"
+  },
+  "runtime_ui_images_documents_and_code": {
+    "message": "이미지, 문서, 코드",
+    "description": "Runtime interface message ui.images.documents.and.code"
+  },
+  "runtime_ui_images_documents_and_code_stay_with_this_message": {
+    "message": "이미지, 문서, 코드는 이 메시지에 함께 유지됩니다.",
+    "description": "Runtime interface message ui.images.documents.and.code.stay.with.this.message"
+  },
+  "runtime_ui_improve": {
+    "message": "개선",
+    "description": "Runtime interface message ui.improve"
+  },
+  "runtime_ui_improve_selected_text": {
+    "message": "선택한 텍스트 개선",
+    "description": "Runtime interface message ui.improve.selected.text"
+  },
+  "runtime_ui_index": {
+    "message": "인덱스",
+    "description": "Runtime interface message ui.index"
+  },
+  "runtime_ui_info": {
+    "message": "정보",
+    "description": "Runtime interface message ui.info"
+  },
+  "runtime_ui_inline_assist": {
+    "message": "인라인 지원",
+    "description": "Runtime interface message ui.inline.assist"
+  },
+  "runtime_ui_input": {
+    "message": "입력",
+    "description": "Runtime interface message ui.input"
+  },
+  "runtime_ui_inspector_views": {
+    "message": "검사기 보기",
+    "description": "Runtime interface message ui.inspector.views"
+  },
+  "runtime_ui_install": {
+    "message": "설치",
+    "description": "Runtime interface message ui.install"
+  },
+  "runtime_ui_installing_the_local_speech_language_pack": {
+    "message": "로컬 음성 언어 팩 설치 중…",
+    "description": "Runtime interface message ui.installing.the.local.speech.language.pack"
+  },
+  "runtime_ui_instant_tools_no_model_call": {
+    "message": "즉각적인 도구 · 모델 호출 없음",
+    "description": "Runtime interface message ui.instant.tools.no.model.call"
+  },
+  "runtime_ui_invalid": {
+    "message": "잘못됨",
+    "description": "Runtime interface message ui.invalid"
+  },
+  "runtime_ui_item": {
+    "message": "항목",
+    "description": "Runtime interface message ui.item"
+  },
+  "runtime_ui_keep_assist_sessions": {
+    "message": "Assist 세션 유지",
+    "description": "Runtime interface message ui.keep.assist.sessions"
+  },
+  "runtime_ui_keep_open_across_tabs": {
+    "message": "탭 간에 열린 상태 유지",
+    "description": "Runtime interface message ui.keep.open.across.tabs"
+  },
+  "runtime_ui_keep_replacement": {
+    "message": "교체 유지",
+    "description": "Runtime interface message ui.keep.replacement"
+  },
+  "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
+    "message": "현재 채팅을 계속 표시하세요. 결과를 이 필드에 반환합니다.",
+    "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_key": {
+    "message": "키",
+    "description": "Runtime interface message ui.key"
+  },
+  "runtime_ui_label": {
+    "message": "레이블",
+    "description": "Runtime interface message ui.label"
+  },
+  "runtime_ui_large": {
+    "message": "크게",
+    "description": "Runtime interface message ui.large"
+  },
+  "runtime_ui_later": {
+    "message": "나중에",
+    "description": "Runtime interface message ui.later"
+  },
+  "runtime_ui_later_56e2f5d3": {
+    "message": "나중에",
+    "description": "Runtime interface message ui.later.56e2f5d3"
+  },
+  "runtime_ui_latest": {
+    "message": "최신",
+    "description": "Runtime interface message ui.latest"
+  },
+  "runtime_ui_layout": {
+    "message": "레이아웃",
+    "description": "Runtime interface message ui.layout"
+  },
+  "runtime_ui_leave_blank_to_keep_current_token": {
+    "message": "현재 토큰을 유지하려면 비워두세요",
+    "description": "Runtime interface message ui.leave.blank.to.keep.current.token"
+  },
+  "runtime_ui_light": {
+    "message": "☼ 라이트",
+    "description": "Runtime interface message ui.light"
+  },
+  "runtime_ui_limit": {
+    "message": "제한",
+    "description": "Runtime interface message ui.limit"
+  },
+  "runtime_ui_list": {
+    "message": "목록",
+    "description": "Runtime interface message ui.list"
+  },
+  "runtime_ui_load_unpacked_installs_update_through_a_guarded_hermes_agent_tu_410111a9": {
+    "message": "로드 언팩은 보호된 Hermes 에이전트 차례를 통해 업데이트를 설치한 다음 빌드된 dist/ 폴더를 다시 로드합니다.",
+    "description": "Runtime interface message ui.load.unpacked.installs.update.through.a.guarded.hermes.agent.tu.410111a9"
+  },
+  "runtime_ui_loading": {
+    "message": "로드 중",
+    "description": "Runtime interface message ui.loading"
+  },
+  "runtime_ui_loading_249feada": {
+    "message": "📎 로딩 중...",
+    "description": "Runtime interface message ui.loading.249feada"
+  },
+  "runtime_ui_loading_b04ba49f": {
+    "message": "로드 중...",
+    "description": "Runtime interface message ui.loading.b04ba49f"
+  },
+  "runtime_ui_loading_canonical_hermes_history": {
+    "message": "표준 Hermes 기록 로드 중…",
+    "description": "Runtime interface message ui.loading.canonical.hermes.history"
+  },
+  "runtime_ui_loading_connection": {
+    "message": "연결 로드 중",
+    "description": "Runtime interface message ui.loading.connection"
+  },
+  "runtime_ui_loading_hermes_runtime_truth": {
+    "message": "Hermes 런타임의 실제 상태를 로드하는 중",
+    "description": "Runtime interface message ui.loading.hermes.runtime.truth"
+  },
+  "runtime_ui_local": {
+    "message": "로컬",
+    "description": "Runtime interface message ui.local"
+  },
+  "runtime_ui_local_api_server": {
+    "message": "로컬 API 서버",
+    "description": "Runtime interface message ui.local.api.server"
+  },
+  "runtime_ui_local_gateway": {
+    "message": "로컬 게이트웨이",
+    "description": "Runtime interface message ui.local.gateway"
+  },
+  "runtime_ui_local_setup_keep_hermes_gateway_api_server_running_on_this_machine": {
+    "message": "로컬 설정: 이 시스템에서 Hermes Gateway/API 서버를 계속 실행합니다.",
+    "description": "Runtime interface message ui.local.setup.keep.hermes.gateway.api.server.running.on.this.machine"
+  },
+  "runtime_ui_local_sidecar_chrome_panel": {
+    "message": "로컬 사이드카 / Chrome 패널",
+    "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_low": {
+    "message": "낮음",
+    "description": "Runtime interface message ui.low"
+  },
+  "runtime_ui_main": {
+    "message": "기본",
+    "description": "Runtime interface message ui.main"
+  },
+  "runtime_ui_make_this_more_confident_without_sounding_aggressive": {
+    "message": "공격적으로 들리지 않으면서 좀 더 자신감 있게…",
+    "description": "Runtime interface message ui.make.this.more.confident.without.sounding.aggressive"
+  },
+  "runtime_ui_manual": {
+    "message": "수동",
+    "description": "Runtime interface message ui.manual"
+  },
+  "runtime_ui_manual_setup": {
+    "message": "수동 설정",
+    "description": "Runtime interface message ui.manual.setup"
+  },
+  "runtime_ui_manual_setup_required": {
+    "message": "수동 설정 필요",
+    "description": "Runtime interface message ui.manual.setup.required"
+  },
+  "runtime_ui_maybe_later": {
+    "message": "어쩌면 나중에",
+    "description": "Runtime interface message ui.maybe.later"
+  },
+  "runtime_ui_med": {
+    "message": "메드",
+    "description": "Runtime interface message ui.med"
+  },
+  "runtime_ui_menu": {
+    "message": "메뉴",
+    "description": "Runtime interface message ui.menu"
+  },
+  "runtime_ui_message": {
+    "message": "메시지",
+    "description": "Runtime interface message ui.message"
+  },
+  "runtime_ui_message_7be2d2d2": {
+    "message": "중국어",
+    "description": "Runtime interface message ui.message.7be2d2d2"
+  },
+  "runtime_ui_message_attachments": {
+    "message": "메시지 첨부파일",
+    "description": "Runtime interface message ui.message.attachments"
+  },
+  "runtime_ui_message_queued": {
+    "message": "메시지가 대기 중입니다.",
+    "description": "Runtime interface message ui.message.queued"
+  },
+  "runtime_ui_messages": {
+    "message": "메시지",
+    "description": "Runtime interface message ui.messages"
+  },
+  "runtime_ui_microphone": {
+    "message": "마이크로폰",
+    "description": "Runtime interface message ui.microphone"
+  },
+  "runtime_ui_microphone_access_is_already_enabled_for_hermes_browser_extension": {
+    "message": "Hermes Browser Extension에 대해 마이크 액세스가 이미 활성화되어 있습니다.",
+    "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
+  },
+  "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
+    "message": "Hermes Browser에 대한 마이크 액세스가 차단되었습니다.",
+    "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
+  },
+  "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
+    "message": "마이크 액세스가 활성화되었습니다. Hermes 측면 패널로 돌아가 마이크를 다시 클릭하거나, 측면 패널 캡처가 여전히 차단된 경우 Hermes 음성 받아쓰기 탭을 사용하세요.",
+    "description": "Runtime interface message ui.microphone.access.is.enabled.return.to.the.hermes.side.panel.an.2839c056"
+  },
+  "runtime_ui_microphone_permission_blocked": {
+    "message": "마이크 권한이 차단되었습니다.",
+    "description": "Runtime interface message ui.microphone.permission.blocked"
+  },
+  "runtime_ui_microphone_permission_enabled": {
+    "message": "마이크 권한이 활성화되었습니다.",
+    "description": "Runtime interface message ui.microphone.permission.enabled"
+  },
+  "runtime_ui_microphone_permission_needed": {
+    "message": "마이크 권한이 필요합니다",
+    "description": "Runtime interface message ui.microphone.permission.needed"
+  },
+  "runtime_ui_minimal_selected_text_short_page_text": {
+    "message": "최소 - 선택한 텍스트 + 짧은 페이지 텍스트",
+    "description": "Runtime interface message ui.minimal.selected.text.short.page.text"
+  },
+  "runtime_ui_missing": {
+    "message": "없어진",
+    "description": "Runtime interface message ui.missing"
+  },
+  "runtime_ui_mode": {
+    "message": "모드",
+    "description": "Runtime interface message ui.mode"
+  },
+  "runtime_ui_mode_controls_brightness_theme_controls_the_accent_palette_and_0d9c3d47": {
+    "message": "모드는 밝기를 제어합니다. 테마는 악센트 팔레트와 채팅 표면 스타일을 제어합니다.",
+    "description": "Runtime interface message ui.mode.controls.brightness.theme.controls.the.accent.palette.and.0d9c3d47"
+  },
+  "runtime_ui_model": {
+    "message": "모델",
+    "description": "Runtime interface message ui.model"
+  },
+  "runtime_ui_model_68c2cc7f": {
+    "message": "모델",
+    "description": "Runtime interface message ui.model.68c2cc7f"
+  },
+  "runtime_ui_model_discovery_limited": {
+    "message": "모델 검색이 제한됨",
+    "description": "Runtime interface message ui.model.discovery.limited"
+  },
+  "runtime_ui_model_lock_failed": {
+    "message": "모델 잠금 실패",
+    "description": "Runtime interface message ui.model.lock.failed"
+  },
+  "runtime_ui_model_lock_pending": {
+    "message": "모델 잠금 대기 중",
+    "description": "Runtime interface message ui.model.lock.pending"
+  },
+  "runtime_ui_model_mismatch": {
+    "message": "모델 불일치",
+    "description": "Runtime interface message ui.model.mismatch"
+  },
+  "runtime_ui_model_providers": {
+    "message": "모델 제공자",
+    "description": "Runtime interface message ui.model.providers"
+  },
+  "runtime_ui_model_refresh_limited": {
+    "message": "모델 새로 고침이 제한됨",
+    "description": "Runtime interface message ui.model.refresh.limited"
+  },
+  "runtime_ui_model_registry_unavailable": {
+    "message": "모델 레지스트리를 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.model.registry.unavailable"
+  },
+  "runtime_ui_model_runtime_options": {
+    "message": "모델 런타임 옵션",
+    "description": "Runtime interface message ui.model.runtime.options"
+  },
+  "runtime_ui_more": {
+    "message": "더",
+    "description": "Runtime interface message ui.more"
+  },
+  "runtime_ui_name": {
+    "message": "이름",
+    "description": "Runtime interface message ui.name"
+  },
+  "runtime_ui_native_context_controls_unavailable": {
+    "message": "기본 컨텍스트 컨트롤을 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_new": {
+    "message": "새로운",
+    "description": "Runtime interface message ui.new"
+  },
+  "runtime_ui_new_browser_chat": {
+    "message": "새로운 Browser 채팅",
+    "description": "Runtime interface message ui.new.browser.chat"
+  },
+  "runtime_ui_new_chat": {
+    "message": "새 채팅",
+    "description": "Runtime interface message ui.new.chat"
+  },
+  "runtime_ui_new_hermes_browser_extension_draft": {
+    "message": "새로운 Hermes Browser Extension 초안",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.draft"
+  },
+  "runtime_ui_new_hermes_browser_extension_session": {
+    "message": "새로운 Hermes Browser Extension 세션",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.session"
+  },
+  "runtime_ui_new_session": {
+    "message": "새 세션",
+    "description": "Runtime interface message ui.new.session"
+  },
+  "runtime_ui_new_session_inline_assist": {
+    "message": "새 세션 · 인라인 지원",
+    "description": "Runtime interface message ui.new.session.inline.assist"
+  },
+  "runtime_ui_next": {
+    "message": "다음",
+    "description": "Runtime interface message ui.next"
+  },
+  "runtime_ui_next_prompt_payload": {
+    "message": "다음 프롬프트 페이로드",
+    "description": "Runtime interface message ui.next.prompt.payload"
+  },
+  "runtime_ui_no": {
+    "message": "아니요",
+    "description": "Runtime interface message ui.no"
+  },
+  "runtime_ui_no_active_run": {
+    "message": "활성 실행 없음",
+    "description": "Runtime interface message ui.no.active.run"
+  },
+  "runtime_ui_no_active_session": {
+    "message": "활성 세션 없음",
+    "description": "Runtime interface message ui.no.active.session"
+  },
+  "runtime_ui_no_active_tab_detected": {
+    "message": "활성 탭이 감지되지 않았습니다.",
+    "description": "Runtime interface message ui.no.active.tab.detected"
+  },
+  "runtime_ui_no_agent_ports": {
+    "message": "에이전트 포트 없음",
+    "description": "Runtime interface message ui.no.agent.ports"
+  },
+  "runtime_ui_no_agents_scanned_yet_click": {
+    "message": "아직 검사한 에이전트가 없습니다. 딸깍 하는 소리",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click"
+  },
+  "runtime_ui_no_agents_scanned_yet_click_scan_agents": {
+    "message": "아직 검색된 에이전트가 없습니다. \"에이전트 검색\"을 클릭하세요.",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click.scan.agents"
+  },
+  "runtime_ui_no_audio_is_saved_by_this_page_in_hermes_stt_mode_audio_is_sent_df9cdcdc": {
+    "message": "이 페이지에는 오디오가 저장되지 않습니다. Hermes STT 모드에서는 녹음을 중지할 때 오디오가 구성된 Hermes 전사 엔드포인트로 한 번 전송됩니다. 브라우저 음성 폴백 모드에서는 전사문만 측면 패널로 다시 전송됩니다.",
+    "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
+  },
+  "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
+    "message": "여기에는 오디오가 저장되지 않습니다. 이 권한을 사용하면 마이크 버튼을 클릭할 때만 Hermes Browser가 음성을 녹음할 수 있습니다.",
+    "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
+  },
+  "runtime_ui_no_browser_context_attached": {
+    "message": "브라우저 컨텍스트가 첨부되지 않았습니다.",
+    "description": "Runtime interface message ui.no.browser.context.attached"
+  },
+  "runtime_ui_no_browser_context_will_be_read_or_attached": {
+    "message": "브라우저 컨텍스트를 읽거나 첨부하지 않습니다.",
+    "description": "Runtime interface message ui.no.browser.context.will.be.read.or.attached"
+  },
+  "runtime_ui_no_browser_tab_selected_text_open_tabs_metadata_transcript_or_p_5f06547f": {
+    "message": "브라우저 탭, 선택한 텍스트, 열린 탭, 메타데이터, 스크립트 또는 페이지 텍스트는 첨부되지 않습니다.",
+    "description": "Runtime interface message ui.no.browser.tab.selected.text.open.tabs.metadata.transcript.or.p.5f06547f"
+  },
+  "runtime_ui_no_matching_tabs": {
+    "message": "일치하는 탭이 없습니다.",
+    "description": "Runtime interface message ui.no.matching.tabs"
+  },
+  "runtime_ui_no_models_found": {
+    "message": "모델을 찾을 수 없습니다.",
+    "description": "Runtime interface message ui.no.models.found"
+  },
+  "runtime_ui_no_models_match": {
+    "message": "일치하는 모델이 없습니다.",
+    "description": "Runtime interface message ui.no.models.match"
+  },
+  "runtime_ui_no_providers_found": {
+    "message": "제공업체를 찾을 수 없습니다.",
+    "description": "Runtime interface message ui.no.providers.found"
+  },
+  "runtime_ui_no_sessions_found": {
+    "message": "세션을 찾을 수 없습니다.",
+    "description": "Runtime interface message ui.no.sessions.found"
+  },
+  "runtime_ui_no_speech_captured": {
+    "message": "음성이 캡처되지 않았습니다.",
+    "description": "Runtime interface message ui.no.speech.captured"
+  },
+  "runtime_ui_no_speech_captured_click_start_dictation_and_try_again": {
+    "message": "음성이 캡처되지 않았습니다. 받아쓰기 시작을 클릭하고 다시 시도하세요.",
+    "description": "Runtime interface message ui.no.speech.captured.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_speech_detected": {
+    "message": "음성이 감지되지 않았습니다.",
+    "description": "Runtime interface message ui.no.speech.detected"
+  },
+  "runtime_ui_no_speech_detected_click_start_dictation_and_try_again": {
+    "message": "음성이 감지되지 않았습니다. 받아쓰기 시작을 클릭하고 다시 시도하세요.",
+    "description": "Runtime interface message ui.no.speech.detected.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_submit_no_send_no_other_fields_touched": {
+    "message": "제출 안 함 · 보내기 안 함 · 다른 필드 건드리지 않음",
+    "description": "Runtime interface message ui.no.submit.no.send.no.other.fields.touched"
+  },
+  "runtime_ui_no_tab": {
+    "message": "탭 없음",
+    "description": "Runtime interface message ui.no.tab"
+  },
+  "runtime_ui_no_tab_detected": {
+    "message": "탭이 감지되지 않았습니다.",
+    "description": "Runtime interface message ui.no.tab.detected"
+  },
+  "runtime_ui_normal_good_default": {
+    "message": "보통 - 좋은 기본값",
+    "description": "Runtime interface message ui.normal.good.default"
+  },
+  "runtime_ui_not_connected": {
+    "message": "연결되지 않음",
+    "description": "Runtime interface message ui.not.connected"
+  },
+  "runtime_ui_nothing_to_steer": {
+    "message": "조종할 게 아무것도 없어",
+    "description": "Runtime interface message ui.nothing.to.steer"
+  },
+  "runtime_ui_notice": {
+    "message": "알아채다",
+    "description": "Runtime interface message ui.notice"
+  },
+  "runtime_ui_now": {
+    "message": "지금",
+    "description": "Runtime interface message ui.now"
+  },
+  "runtime_ui_number": {
+    "message": "숫자",
+    "description": "Runtime interface message ui.number"
+  },
+  "runtime_ui_object": {
+    "message": "물체",
+    "description": "Runtime interface message ui.object"
+  },
+  "runtime_ui_observed_from_session_history_not_advertised_as_a_requestable_h_6343f8c8": {
+    "message": "세션 기록에서 관찰됩니다. 요청 가능한 Hermes 모델로 광고되지 않았습니다.",
+    "description": "Runtime interface message ui.observed.from.session.history.not.advertised.as.a.requestable.h.6343f8c8"
+  },
+  "runtime_ui_off": {
+    "message": "끄다",
+    "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_ok": {
+    "message": "좋아요",
+    "description": "Runtime interface message ui.ok"
+  },
+  "runtime_ui_on": {
+    "message": "~에",
+    "description": "Runtime interface message ui.on"
+  },
+  "runtime_ui_on_device_speech_recognition_is_unavailable_in_this_browser": {
+    "message": "이 브라우저에서는 기기 내 음성 인식을 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.on.device.speech.recognition.is.unavailable.in.this.browser"
+  },
+  "runtime_ui_only_controls_supported_by_the_selected_model_are_shown": {
+    "message": "선택한 모델에서 지원하는 컨트롤만 표시됩니다.",
+    "description": "Runtime interface message ui.only.controls.supported.by.the.selected.model.are.shown"
+  },
+  "runtime_ui_open": {
+    "message": "열려 있는",
+    "description": "Runtime interface message ui.open"
+  },
+  "runtime_ui_open_a_normal_browser_tab_and_try_again": {
+    "message": "일반 브라우저 탭을 열고 다시 시도하세요.",
+    "description": "Runtime interface message ui.open.a.normal.browser.tab.and.try.again"
+  },
+  "runtime_ui_open_a_normal_http_https_tab_then_refresh_context": {
+    "message": "일반 http/https 탭을 열고 컨텍스트를 새로 고칩니다.",
+    "description": "Runtime interface message ui.open.a.normal.http.https.tab.then.refresh.context"
+  },
+  "runtime_ui_open_a_normal_page_tab_first": {
+    "message": "먼저 일반 페이지 탭을 엽니다.",
+    "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_full_view": {
+    "message": "전체 보기 열기",
+    "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_hermes_assist": {
+    "message": "Hermes Assist 열기",
+    "description": "Runtime interface message ui.open.hermes.assist"
+  },
+  "runtime_ui_open_hermes_browser": {
+    "message": "Hermes Browser 열기",
+    "description": "Runtime interface message ui.open.hermes.browser"
+  },
+  "runtime_ui_open_hermes_browser_always_opens_the_side_panel_only_selection_0b8dac3c": {
+    "message": "Open Hermes Browser는 항상 측면 패널만 엽니다. 선택 작업은 라우팅 직후에 시작됩니다.",
+    "description": "Runtime interface message ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c"
+  },
+  "runtime_ui_open_hermes_browser_uses_the_side_panel_only_selection_tasks_st_4f56df05": {
+    "message": "Open Hermes Browser는 측면 패널만 사용합니다. 선택 작업은 라우팅 후 자동으로 시작됩니다.",
+    "description": "Runtime interface message ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05"
+  },
+  "runtime_ui_open_hermes_session": {
+    "message": "Hermes 세션 열기",
+    "description": "Runtime interface message ui.open.hermes.session"
+  },
+  "runtime_ui_open_hermes_web_in_a_full_tab": {
+    "message": "전체 탭에서 Hermes Web 열기",
+    "description": "Runtime interface message ui.open.hermes.web.in.a.full.tab"
+  },
+  "runtime_ui_open_hermes_web_settings": {
+    "message": "Hermes Web 설정 열기",
+    "description": "Runtime interface message ui.open.hermes.web.settings"
+  },
+  "runtime_ui_open_microphone_settings": {
+    "message": "마이크 설정 열기",
+    "description": "Runtime interface message ui.open.microphone.settings"
+  },
+  "runtime_ui_open_navigation": {
+    "message": "탐색 열기",
+    "description": "Runtime interface message ui.open.navigation"
+  },
+  "runtime_ui_open_or_create_a_hermes_browser_extension_session_before_compac_4c0fdd2e": {
+    "message": "컨텍스트를 압축하기 전에 Hermes Browser Extension 세션을 열거나 생성하세요.",
+    "description": "Runtime interface message ui.open.or.create.a.hermes.browser.extension.session.before.compac.4c0fdd2e"
+  },
+  "runtime_ui_open_quick_commands": {
+    "message": "빠른 명령 열기",
+    "description": "Runtime interface message ui.open.quick.commands"
+  },
+  "runtime_ui_open_session": {
+    "message": "세션 열기",
+    "description": "Runtime interface message ui.open.session"
+  },
+  "runtime_ui_open_settings": {
+    "message": "설정 열기",
+    "description": "Runtime interface message ui.open.settings"
+  },
+  "runtime_ui_open_side_panel_settings_and_connect_the_local_or_remote_api_be_706335b5": {
+    "message": "정식 세션 기록을 로드하기 전에 측면 패널 설정을 열고 로컬 또는 원격 API를 연결하세요.",
+    "description": "Runtime interface message ui.open.side.panel.settings.and.connect.the.local.or.remote.api.be.706335b5"
+  },
+  "runtime_ui_open_tabs": {
+    "message": "탭 열기",
+    "description": "Runtime interface message ui.open.tabs"
+  },
+  "runtime_ui_open_the_exact_session_in_the_full_hermes_web_workspace": {
+    "message": "전체 Hermes Web 작업 공간에서 정확한 세션을 엽니다.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
+  },
+  "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
+    "message": "Hermes Browser 측면 패널에서 정확한 세션을 엽니다.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
+  },
+  "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
+    "message": "브라우저 도구 모음에서 Hermes 확장 측면 패널을 엽니다.",
+    "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
+  },
+  "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
+    "message": "브라우저 측면 패널이나 Hermes Web에서 보관된 지원 세션을 엽니다.",
+    "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
+  },
+  "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
+    "message": "측면 패널을 열고 Hermes 연결을 구성한 다음 전체 보기를 다시 엽니다.",
+    "description": "Runtime interface message ui.open.the.side.panel.configure.a.hermes.connection.then.open.ful.47648857"
+  },
+  "runtime_ui_open_the_signed_in_hermes_cloud_agent_in_the_active_tab_wait_fo_b7be52ec": {
+    "message": "활성 탭에서 로그인된 Hermes Cloud 에이전트를 열고 로드가 완료될 때까지 기다린 다음 Hermes에 연결을 선택합니다. API 토큰 또는 localhost 대체가 사용되지 않습니다.",
+    "description": "Runtime interface message ui.open.the.signed.in.hermes.cloud.agent.in.the.active.tab.wait.fo.b7be52ec"
+  },
+  "runtime_ui_opened_directly_in_full_view": {
+    "message": "전체보기로 직접 열었습니다.",
+    "description": "Runtime interface message ui.opened.directly.in.full.view"
+  },
+  "runtime_ui_opening_chromium_microphone_permission_prompt": {
+    "message": "Chromium 마이크 권한 프롬프트를 여는 중…",
+    "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
+  },
+  "runtime_ui_opening_session": {
+    "message": "오프닝 세션",
+    "description": "Runtime interface message ui.opening.session"
+  },
+  "runtime_ui_opening_shared_session": {
+    "message": "공유 세션 열기",
+    "description": "Runtime interface message ui.opening.shared.session"
+  },
+  "runtime_ui_opening_voice_dictation_tab": {
+    "message": "음성 받아쓰기 탭 열기",
+    "description": "Runtime interface message ui.opening.voice.dictation.tab"
+  },
+  "runtime_ui_optional": {
+    "message": "선택 과목",
+    "description": "Runtime interface message ui.optional"
+  },
+  "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
+    "message": "선택적 검색 전용: 브라우저는 각 OpenAI-compatible `/v1/models` 엔드포인트를 조사하고 모델 선택기에 일치 항목을 표시합니다. 런타임 라우팅은 여전히 ​​연결된 Hermes 게이트웨이에서 나옵니다.",
+    "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
+  },
+  "runtime_ui_options": {
+    "message": "옵션",
+    "description": "Runtime interface message ui.options"
+  },
+  "runtime_ui_or_tell_hermes_exactly_what_you_need": {
+    "message": "또는 Hermes에게 필요한 것이 무엇인지 정확하게 알려주십시오.",
+    "description": "Runtime interface message ui.or.tell.hermes.exactly.what.you.need"
+  },
+  "runtime_ui_origin": {
+    "message": "기원",
+    "description": "Runtime interface message ui.origin"
+  },
+  "runtime_ui_other": {
+    "message": "다른",
+    "description": "Runtime interface message ui.other"
+  },
+  "runtime_ui_owner": {
+    "message": "소유자",
+    "description": "Runtime interface message ui.owner"
+  },
+  "runtime_ui_page": {
+    "message": "페이지",
+    "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context": {
+    "message": "페이지 컨텍스트",
+    "description": "Runtime interface message ui.page.context"
+  },
+  "runtime_ui_page_context_depth": {
+    "message": "페이지 컨텍스트 깊이",
+    "description": "Runtime interface message ui.page.context.depth"
+  },
+  "runtime_ui_page_text": {
+    "message": "페이지 텍스트",
+    "description": "Runtime interface message ui.page.text"
+  },
+  "runtime_ui_pages": {
+    "message": "페이지",
+    "description": "Runtime interface message ui.pages"
+  },
+  "runtime_ui_panel": {
+    "message": "패널",
+    "description": "Runtime interface message ui.panel"
+  },
+  "runtime_ui_panel_opening": {
+    "message": "패널 오프닝",
+    "description": "Runtime interface message ui.panel.opening"
+  },
+  "runtime_ui_paste": {
+    "message": "반죽",
+    "description": "Runtime interface message ui.paste"
+  },
+  "runtime_ui_paste_a_gateway_api_key_or_reconnect_when_you_are_ready": {
+    "message": "Gateway API 키를 붙여넣거나 준비가 되면 다시 연결하세요.",
+    "description": "Runtime interface message ui.paste.a.gateway.api.key.or.reconnect.when.you.are.ready"
+  },
+  "runtime_ui_paste_image": {
+    "message": "▣ 이미지 붙여넣기",
+    "description": "Runtime interface message ui.paste.image"
+  },
+  "runtime_ui_paste_this_into_the_hermes_api_server_environment_on_the_remote_machine": {
+    "message": "이를 원격 시스템의 Hermes API 서버 환경에 붙여넣습니다.",
+    "description": "Runtime interface message ui.paste.this.into.the.hermes.api.server.environment.on.the.remote.machine"
+  },
+  "runtime_ui_path": {
+    "message": "길",
+    "description": "Runtime interface message ui.path"
+  },
+  "runtime_ui_pending": {
+    "message": "보류 중",
+    "description": "Runtime interface message ui.pending"
+  },
+  "runtime_ui_permission": {
+    "message": "허가",
+    "description": "Runtime interface message ui.permission"
+  },
+  "runtime_ui_pick": {
+    "message": "선택하다",
+    "description": "Runtime interface message ui.pick"
+  },
+  "runtime_ui_pick_a_fixed_mode_or_follow_your_system_setting": {
+    "message": "고정 모드를 선택하거나 시스템 설정을 따르세요.",
+    "description": "Runtime interface message ui.pick.a.fixed.mode.or.follow.your.system.setting"
+  },
+  "runtime_ui_pick_an_element": {
+    "message": "요소 선택",
+    "description": "Runtime interface message ui.pick.an.element"
+  },
+  "runtime_ui_pick_page_element": {
+    "message": "◈ 페이지 요소 선택",
+    "description": "Runtime interface message ui.pick.page.element"
+  },
+  "runtime_ui_picked_element_cleared": {
+    "message": "선택한 요소가 지워졌습니다.",
+    "description": "Runtime interface message ui.picked.element.cleared"
+  },
+  "runtime_ui_pinned_tab_closed": {
+    "message": "고정된 탭이 닫혔습니다.",
+    "description": "Runtime interface message ui.pinned.tab.closed"
+  },
+  "runtime_ui_policy": {
+    "message": "정책",
+    "description": "Runtime interface message ui.policy"
+  },
+  "runtime_ui_popup": {
+    "message": "팝업",
+    "description": "Runtime interface message ui.popup"
+  },
+  "runtime_ui_port": {
+    "message": "포트",
+    "description": "Runtime interface message ui.port"
+  },
+  "runtime_ui_preferences": {
+    "message": "환경설정",
+    "description": "Runtime interface message ui.preferences"
+  },
+  "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
+    "message": "로컬에서 Hermes' 기본 깨우기 엔진을 선호하고 Cloud Preview용 Chromium 기기 내 음성을 사용합니다.",
+    "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
+  },
+  "runtime_ui_preparing_on_device_dictation": {
+    "message": "기기 내 받아쓰기 준비 중",
+    "description": "Runtime interface message ui.preparing.on.device.dictation"
+  },
+  "runtime_ui_preparing_the_browser_local_wake_listener": {
+    "message": "브라우저-로컬 깨우기 리스너 준비 중…",
+    "description": "Runtime interface message ui.preparing.the.browser.local.wake.listener"
+  },
+  "runtime_ui_preview": {
+    "message": "시사",
+    "description": "Runtime interface message ui.preview"
+  },
+  "runtime_ui_preview_1aa787fe": {
+    "message": "시사",
+    "description": "Runtime interface message ui.preview.1aa787fe"
+  },
+  "runtime_ui_preview_copy_only": {
+    "message": "미리보기 + 복사만 가능",
+    "description": "Runtime interface message ui.preview.copy.only"
+  },
+  "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
+    "message": "미리보기 모드: 연결된 Hermes 설정 및 음성 받아쓰기를 사용하려면 설치된 Hermes Browser Extension에서 이 페이지를 로드하세요.",
+    "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
+  },
+  "runtime_ui_previous": {
+    "message": "이전의",
+    "description": "Runtime interface message ui.previous"
+  },
+  "runtime_ui_private": {
+    "message": "사적인",
+    "description": "Runtime interface message ui.private"
+  },
+  "runtime_ui_pro": {
+    "message": "찬성",
+    "description": "Runtime interface message ui.pro"
+  },
+  "runtime_ui_process": {
+    "message": "프로세스",
+    "description": "Runtime interface message ui.process"
+  },
+  "runtime_ui_profile": {
+    "message": "프로필",
+    "description": "Runtime interface message ui.profile"
+  },
+  "runtime_ui_profile_api_unavailable": {
+    "message": "프로필 API를 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.profile.api.unavailable"
+  },
+  "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
+    "message": "프로필 API를 사용할 수 없습니다. Browser는 현재 실행 중인 Hermes 게이트웨이 프로필을 사용합니다.",
+    "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
+  },
+  "runtime_ui_profile_ff4fc027": {
+    "message": "윤곽",
+    "description": "Runtime interface message ui.profile.ff4fc027"
+  },
+  "runtime_ui_profile_switch_unavailable": {
+    "message": "프로필 전환을 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.profile.switch.unavailable"
+  },
+  "runtime_ui_profile_sync_unavailable": {
+    "message": "프로필 동기화를 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.profile.sync.unavailable"
+  },
+  "runtime_ui_profiles_sync_after_connecting_to_hermes": {
+    "message": "Hermes에 연결한 후 프로필이 동기화됩니다.",
+    "description": "Runtime interface message ui.profiles.sync.after.connecting.to.hermes"
+  },
+  "runtime_ui_prompt": {
+    "message": "즉각적인",
+    "description": "Runtime interface message ui.prompt"
+  },
+  "runtime_ui_prompt_context": {
+    "message": "프롬프트 컨텍스트",
+    "description": "Runtime interface message ui.prompt.context"
+  },
+  "runtime_ui_prompt_context_settings": {
+    "message": "프롬프트 컨텍스트 설정",
+    "description": "Runtime interface message ui.prompt.context.settings"
+  },
+  "runtime_ui_prompt_snippet": {
+    "message": "▤ 프롬프트 스니펫…",
+    "description": "Runtime interface message ui.prompt.snippet"
+  },
+  "runtime_ui_prompt_snippets": {
+    "message": "▤ 프롬프트 스니펫...",
+    "description": "Runtime interface message ui.prompt.snippets"
+  },
+  "runtime_ui_property": {
+    "message": "재산",
+    "description": "Runtime interface message ui.property"
+  },
+  "runtime_ui_provider": {
+    "message": "공급자",
+    "description": "Runtime interface message ui.provider"
+  },
+  "runtime_ui_provider_model_and_reasoning": {
+    "message": "공급자, 모델 및 추론",
+    "description": "Runtime interface message ui.provider.model.and.reasoning"
+  },
+  "runtime_ui_public": {
+    "message": "공공의",
+    "description": "Runtime interface message ui.public"
+  },
+  "runtime_ui_public_alpha_load_unpacked_local_or_remote_hermes_api_server_fu_f39d96e3": {
+    "message": "공개 알파: 연결된 런타임이 지원하는 경우 압축이 풀린 로컬 또는 원격 Hermes API 서버, 전체 Hermes 도구를 로드합니다.",
+    "description": "Runtime interface message ui.public.alpha.load.unpacked.local.or.remote.hermes.api.server.fu.f39d96e3"
+  },
+  "runtime_ui_public_flow_connect_to_hermes_creates_a_scoped_browser_token_wh_9184ad4d": {
+    "message": "공용 흐름: Hermes에 연결하면 API 서버가 페어링을 지원할 때 범위가 지정된 브라우저 토큰이 생성됩니다. 원격 호스트의 경우 API_SERVER_CORS_ORIGINS를 이 확장 원본으로 설정하고 강력한 API_SERVER_KEY 또는 범위가 지정된 토큰을 사용합니다.",
+    "description": "Runtime interface message ui.public.flow.connect.to.hermes.creates.a.scoped.browser.token.wh.9184ad4d"
+  },
+  "runtime_ui_public_setup": {
+    "message": "공개 설정",
+    "description": "Runtime interface message ui.public.setup"
+  },
+  "runtime_ui_query": {
+    "message": "질문",
+    "description": "Runtime interface message ui.query"
+  },
+  "runtime_ui_queue": {
+    "message": "대기줄",
+    "description": "Runtime interface message ui.queue"
+  },
+  "runtime_ui_queued": {
+    "message": "대기 중",
+    "description": "Runtime interface message ui.queued"
+  },
+  "runtime_ui_queued_message_deleted": {
+    "message": "대기 중인 메시지가 삭제되었습니다.",
+    "description": "Runtime interface message ui.queued.message.deleted"
+  },
+  "runtime_ui_quick_commands": {
+    "message": "빠른 명령",
+    "description": "Runtime interface message ui.quick.commands"
+  },
+  "runtime_ui_range": {
+    "message": "범위",
+    "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_readable_dom_text": {
+    "message": "읽을 수 있는 DOM 텍스트",
+    "description": "Runtime interface message ui.readable.dom.text"
+  },
+  "runtime_ui_reading_connection_settings_and_canonical_session_history": {
+    "message": "연결 설정 및 표준 세션 기록을 읽는 중입니다.",
+    "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_ready": {
+    "message": "준비가 된",
+    "description": "Runtime interface message ui.ready"
+  },
+  "runtime_ui_reasoning_effort": {
+    "message": "추론 노력",
+    "description": "Runtime interface message ui.reasoning.effort"
+  },
+  "runtime_ui_reconnect": {
+    "message": "다시 연결",
+    "description": "Runtime interface message ui.reconnect"
+  },
+  "runtime_ui_reconnecting": {
+    "message": "다시 연결하는 중",
+    "description": "Runtime interface message ui.reconnecting"
+  },
+  "runtime_ui_record": {
+    "message": "기록",
+    "description": "Runtime interface message ui.record"
+  },
+  "runtime_ui_recording_voice": {
+    "message": "음성 녹음",
+    "description": "Runtime interface message ui.recording.voice"
+  },
+  "runtime_ui_refresh": {
+    "message": "새로 고치다",
+    "description": "Runtime interface message ui.refresh"
+  },
+  "runtime_ui_refresh_context_to_calculate_the_next_prompt_payload": {
+    "message": "다음 프롬프트 페이로드를 계산하려면 컨텍스트를 새로 고치세요.",
+    "description": "Runtime interface message ui.refresh.context.to.calculate.the.next.prompt.payload"
+  },
+  "runtime_ui_refresh_model_catalog": {
+    "message": "모델 카탈로그 새로 고침",
+    "description": "Runtime interface message ui.refresh.model.catalog"
+  },
+  "runtime_ui_refresh_models": {
+    "message": "모델 새로 고침",
+    "description": "Runtime interface message ui.refresh.models"
+  },
+  "runtime_ui_refresh_sessions": {
+    "message": "세션 새로 고침",
+    "description": "Runtime interface message ui.refresh.sessions"
+  },
+  "runtime_ui_refreshing_models": {
+    "message": "상쾌한 모델",
+    "description": "Runtime interface message ui.refreshing.models"
+  },
+  "runtime_ui_refreshing_sessions": {
+    "message": "세션을 새로 고치는 중…",
+    "description": "Runtime interface message ui.refreshing.sessions"
+  },
+  "runtime_ui_remember_for_right_click_actions": {
+    "message": "마우스 오른쪽 버튼 클릭 동작을 기억하세요",
+    "description": "Runtime interface message ui.remember.for.right.click.actions"
+  },
+  "runtime_ui_remote": {
+    "message": "원격",
+    "description": "Runtime interface message ui.remote"
+  },
+  "runtime_ui_remote_api_server": {
+    "message": "원격 API 서버",
+    "description": "Runtime interface message ui.remote.api.server"
+  },
+  "runtime_ui_remote_api_server_environment_variables": {
+    "message": "원격 API 서버 환경 변수",
+    "description": "Runtime interface message ui.remote.api.server.environment.variables"
+  },
+  "runtime_ui_remote_dashboard_rename_rpc_is_not_available_yet": {
+    "message": "원격 대시보드 이름 변경 RPC는 아직 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.remote.dashboard.rename.rpc.is.not.available.yet"
+  },
+  "runtime_ui_remote_dashboard_websocket": {
+    "message": "원격 대시보드(WebSocket)",
+    "description": "Runtime interface message ui.remote.dashboard.websocket"
+  },
+  "runtime_ui_remote_env_copied": {
+    "message": "원격 환경이 복사되었습니다.",
+    "description": "Runtime interface message ui.remote.env.copied"
+  },
+  "runtime_ui_remote_gateway": {
+    "message": "원격 게이트웨이",
+    "description": "Runtime interface message ui.remote.gateway"
+  },
+  "runtime_ui_remote_setup_diagnostics": {
+    "message": "원격 설정 진단",
+    "description": "Runtime interface message ui.remote.setup.diagnostics"
+  },
+  "runtime_ui_remove": {
+    "message": "제거하다",
+    "description": "Runtime interface message ui.remove"
+  },
+  "runtime_ui_rename": {
+    "message": "이름 바꾸기",
+    "description": "Runtime interface message ui.rename"
+  },
+  "runtime_ui_rename_a_fresh_browser_session_from_the_first_real_message": {
+    "message": "첫 번째 실제 메시지에서 새로운 브라우저 세션의 이름을 바꿉니다.",
+    "description": "Runtime interface message ui.rename.a.fresh.browser.session.from.the.first.real.message"
+  },
+  "runtime_ui_rename_session": {
+    "message": "세션 이름 바꾸기",
+    "description": "Runtime interface message ui.rename.session"
+  },
+  "runtime_ui_rendered_message_bodies_only_draft_and_input_values_stay_excluded": {
+    "message": "렌더링된 메시지 본문만. 초안 및 입력 값은 제외된 상태로 유지됩니다.",
+    "description": "Runtime interface message ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded"
+  },
+  "runtime_ui_rendered_message_bodies_will_be_attached_to_the_next_hermes_turn": {
+    "message": "렌더링된 메시지 본문은 다음 Hermes 턴에 첨부됩니다.",
+    "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
+  },
+  "runtime_ui_replaced_the_original_field_safely": {
+    "message": "원래 필드를 안전하게 교체했습니다.",
+    "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_reply": {
+    "message": "회신하다",
+    "description": "Runtime interface message ui.reply"
+  },
+  "runtime_ui_request": {
+    "message": "요구",
+    "description": "Runtime interface message ui.request"
+  },
+  "runtime_ui_required": {
+    "message": "필수의",
+    "description": "Runtime interface message ui.required"
+  },
+  "runtime_ui_required_for_cloud_preview_and_older_hermes_builds_it_refuses_c_f0bdad5b": {
+    "message": "Cloud Preview 및 이전 Hermes 빌드에 필요합니다. 클라우드 음성 인식을 거부합니다.",
+    "description": "Runtime interface message ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b"
+  },
+  "runtime_ui_reset": {
+    "message": "다시 놓기",
+    "description": "Runtime interface message ui.reset"
+  },
+  "runtime_ui_reset_zoom": {
+    "message": "확대/축소 재설정",
+    "description": "Runtime interface message ui.reset.zoom"
+  },
+  "runtime_ui_response": {
+    "message": "응답",
+    "description": "Runtime interface message ui.response"
+  },
+  "runtime_ui_restricted_page": {
+    "message": "제한된 페이지",
+    "description": "Runtime interface message ui.restricted.page"
+  },
+  "runtime_ui_result": {
+    "message": "결과",
+    "description": "Runtime interface message ui.result"
+  },
+  "runtime_ui_result_preview": {
+    "message": "결과 미리보기",
+    "description": "Runtime interface message ui.result.preview"
+  },
+  "runtime_ui_retry": {
+    "message": "다시 해 보다",
+    "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_page": {
+    "message": "페이지로 돌아가기",
+    "description": "Runtime interface message ui.return.to.page"
+  },
+  "runtime_ui_review": {
+    "message": "검토",
+    "description": "Runtime interface message ui.review"
+  },
+  "runtime_ui_review_the_result_before_applying_it": {
+    "message": "적용하기 전에 결과를 검토하세요.",
+    "description": "Runtime interface message ui.review.the.result.before.applying.it"
+  },
+  "runtime_ui_right_click_actions": {
+    "message": "마우스 오른쪽 버튼 클릭 동작",
+    "description": "Runtime interface message ui.right.click.actions"
+  },
+  "runtime_ui_right_click_task_complete": {
+    "message": "마우스 오른쪽 버튼 클릭 작업 완료",
+    "description": "Runtime interface message ui.right.click.task.complete"
+  },
+  "runtime_ui_right_click_task_failed": {
+    "message": "마우스 오른쪽 버튼 클릭 작업이 실패했습니다.",
+    "description": "Runtime interface message ui.right.click.task.failed"
+  },
+  "runtime_ui_row": {
+    "message": "열",
+    "description": "Runtime interface message ui.row"
+  },
+  "runtime_ui_rows": {
+    "message": "행",
+    "description": "Runtime interface message ui.rows"
+  },
+  "runtime_ui_run": {
+    "message": "달리다",
+    "description": "Runtime interface message ui.run"
+  },
+  "runtime_ui_run_in_background": {
+    "message": "백그라운드에서 실행",
+    "description": "Runtime interface message ui.run.in.background"
+  },
+  "runtime_ui_runs": {
+    "message": "실행",
+    "description": "Runtime interface message ui.runs"
+  },
+  "runtime_ui_runtime_identity": {
+    "message": "런타임 ID",
+    "description": "Runtime interface message ui.runtime.identity"
+  },
+  "runtime_ui_safe_apply": {
+    "message": "안전한 신청",
+    "description": "Runtime interface message ui.safe.apply"
+  },
+  "runtime_ui_safety": {
+    "message": "안전",
+    "description": "Runtime interface message ui.safety"
+  },
+  "runtime_ui_same_desktop_palettes_minus_window_transparency": {
+    "message": "창 투명도를 뺀 동일한 Desktop 팔레트.",
+    "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
+  },
+  "runtime_ui_save": {
+    "message": "구하다",
+    "description": "Runtime interface message ui.save"
+  },
+  "runtime_ui_save_settings": {
+    "message": "설정 저장",
+    "description": "Runtime interface message ui.save.settings"
+  },
+  "runtime_ui_saved": {
+    "message": "저장됨",
+    "description": "Runtime interface message ui.saved"
+  },
+  "runtime_ui_saved_when_you_send_the_first_message": {
+    "message": "첫 번째 메시지를 보낼 때 저장됩니다.",
+    "description": "Runtime interface message ui.saved.when.you.send.the.first.message"
+  },
+  "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
+    "message": "“Hey Hermes”라고 말하면 핸즈프리 단일 턴 음성 요청을 할 수 있습니다. 상시 감지는 이 컴퓨터에서만 유지됩니다.",
+    "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
+    "message": "브라우저 확대/축소를 변경하지 않고 인터페이스 사본을 확장합니다.",
+    "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
+  },
+  "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
+    "message": "게이트웨이를 실행하기 위해 신뢰할 수 있는 Hermes API 호스트를 스캔합니다. 동일 머신 에이전트의 경우 localhost를 사용하고 개인 원격 에이전트의 경우 Tailscale 호스트/IP를 사용합니다.",
+    "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
+  },
+  "runtime_ui_screen": {
+    "message": "화면",
+    "description": "Runtime interface message ui.screen"
+  },
+  "runtime_ui_script": {
+    "message": "스크립트",
+    "description": "Runtime interface message ui.script"
+  },
+  "runtime_ui_search": {
+    "message": "찾다",
+    "description": "Runtime interface message ui.search"
+  },
+  "runtime_ui_search_all_models": {
+    "message": "모든 모델 검색",
+    "description": "Runtime interface message ui.search.all.models"
+  },
+  "runtime_ui_search_chats": {
+    "message": "채팅 검색",
+    "description": "Runtime interface message ui.search.chats"
+  },
+  "runtime_ui_search_sessions": {
+    "message": "세션 검색",
+    "description": "Runtime interface message ui.search.sessions"
+  },
+  "runtime_ui_search_tabs": {
+    "message": "검색 탭",
+    "description": "Runtime interface message ui.search.tabs"
+  },
+  "runtime_ui_security": {
+    "message": "보안",
+    "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_select": {
+    "message": "선택하다",
+    "description": "Runtime interface message ui.select"
+  },
+  "runtime_ui_select_model": {
+    "message": "모델 선택",
+    "description": "Runtime interface message ui.select.model"
+  },
+  "runtime_ui_selected_model_runtime_options": {
+    "message": "선택된 모델 런타임 옵션",
+    "description": "Runtime interface message ui.selected.model.runtime.options"
+  },
+  "runtime_ui_selecting_the_safest_wake_listener": {
+    "message": "가장 안전한 깨우기 수신기 선택 중…",
+    "description": "Runtime interface message ui.selecting.the.safest.wake.listener"
+  },
+  "runtime_ui_selection": {
+    "message": "선택",
+    "description": "Runtime interface message ui.selection"
+  },
+  "runtime_ui_self_hosted_api_or_dashboard_api_can_use_trusted_lan_http_dashb_152b7f4c": {
+    "message": "자체 호스팅 API 또는 대시보드. API는 신뢰할 수 있는 LAN http를 사용할 수 있습니다. 대시보드는 https를 사용합니다.",
+    "description": "Runtime interface message ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c"
+  },
+  "runtime_ui_send": {
+    "message": "보내다",
+    "description": "Runtime interface message ui.send"
+  },
+  "runtime_ui_send_it_when_the_current_hermes_run_finishes": {
+    "message": "현재 Hermes 실행이 완료되면 보냅니다.",
+    "description": "Runtime interface message ui.send.it.when.the.current.hermes.run.finishes"
+  },
+  "runtime_ui_send_message": {
+    "message": "메시지 보내기",
+    "description": "Runtime interface message ui.send.message"
+  },
+  "runtime_ui_sending_observed_model_request": {
+    "message": "관찰된 모델 요청 보내기",
+    "description": "Runtime interface message ui.sending.observed.model.request"
+  },
+  "runtime_ui_server": {
+    "message": "섬기는 사람",
+    "description": "Runtime interface message ui.server"
+  },
+  "runtime_ui_service": {
+    "message": "서비스",
+    "description": "Runtime interface message ui.service"
+  },
+  "runtime_ui_session": {
+    "message": "세션",
+    "description": "Runtime interface message ui.session"
+  },
+  "runtime_ui_session_actions": {
+    "message": "세션 작업",
+    "description": "Runtime interface message ui.session.actions"
+  },
+  "runtime_ui_session_context_window": {
+    "message": "세션 컨텍스트 창",
+    "description": "Runtime interface message ui.session.context.window"
+  },
+  "runtime_ui_session_f7f1997c": {
+    "message": "세션",
+    "description": "Runtime interface message ui.session.f7f1997c"
+  },
+  "runtime_ui_session_handoff": {
+    "message": "세션 핸드오프",
+    "description": "Runtime interface message ui.session.handoff"
+  },
+  "runtime_ui_session_id": {
+    "message": "세션 ID",
+    "description": "Runtime interface message ui.session.id"
+  },
+  "runtime_ui_session_id_copied": {
+    "message": "세션 ID가 복사되었습니다.",
+    "description": "Runtime interface message ui.session.id.copied"
+  },
+  "runtime_ui_session_naming_prompt_context_and_side_panel_residency_live_together": {
+    "message": "세션 이름 지정, 프롬프트 컨텍스트 및 측면 패널 상주가 함께 작동합니다.",
+    "description": "Runtime interface message ui.session.naming.prompt.context.and.side.panel.residency.live.together"
+  },
+  "runtime_ui_session_renamed": {
+    "message": "세션 이름이 변경되었습니다.",
+    "description": "Runtime interface message ui.session.renamed"
+  },
+  "runtime_ui_session_renamed_and_synced": {
+    "message": "세션 이름이 변경되고 동기화되었습니다.",
+    "description": "Runtime interface message ui.session.renamed.and.synced"
+  },
+  "runtime_ui_session_runtime": {
+    "message": "세션 런타임",
+    "description": "Runtime interface message ui.session.runtime"
+  },
+  "runtime_ui_session_sync_failed": {
+    "message": "세션 동기화 실패",
+    "description": "Runtime interface message ui.session.sync.failed"
+  },
+  "runtime_ui_session_title": {
+    "message": "세션 제목",
+    "description": "Runtime interface message ui.session.title"
+  },
+  "runtime_ui_session_title_saved_locally": {
+    "message": "세션 제목이 로컬에 저장됨",
+    "description": "Runtime interface message ui.session.title.saved.locally"
+  },
+  "runtime_ui_session_title_updated": {
+    "message": "세션 제목이 업데이트되었습니다.",
+    "description": "Runtime interface message ui.session.title.updated"
+  },
+  "runtime_ui_session_unavailable": {
+    "message": "세션을 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.session.unavailable"
+  },
+  "runtime_ui_sessions": {
+    "message": "세션",
+    "description": "Runtime interface message ui.sessions"
+  },
+  "runtime_ui_set": {
+    "message": "세트",
+    "description": "Runtime interface message ui.set"
+  },
+  "runtime_ui_set_a_remote_dashboard": {
+    "message": "원격 대시보드 설정",
+    "description": "Runtime interface message ui.set.a.remote.dashboard"
+  },
+  "runtime_ui_settings": {
+    "message": "설정",
+    "description": "Runtime interface message ui.settings"
+  },
+  "runtime_ui_settings_not_saved": {
+    "message": "설정이 저장되지 않았습니다.",
+    "description": "Runtime interface message ui.settings.not.saved"
+  },
+  "runtime_ui_setup": {
+    "message": "설정",
+    "description": "Runtime interface message ui.setup"
+  },
+  "runtime_ui_share": {
+    "message": "공유하다",
+    "description": "Runtime interface message ui.share"
+  },
+  "runtime_ui_shared_session": {
+    "message": "공유 세션",
+    "description": "Runtime interface message ui.shared.session"
+  },
+  "runtime_ui_shared_session_0a6bce9c": {
+    "message": "공유 세션",
+    "description": "Runtime interface message ui.shared.session.0a6bce9c"
+  },
+  "runtime_ui_shell": {
+    "message": "껍데기",
+    "description": "Runtime interface message ui.shell"
+  },
+  "runtime_ui_short": {
+    "message": "짧은",
+    "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_show": {
+    "message": "보여주다",
+    "description": "Runtime interface message ui.show"
+  },
+  "runtime_ui_show_hermes_assist_in_writing_fields": {
+    "message": "쓰기 필드에 Hermes Assist 표시",
+    "description": "Runtime interface message ui.show.hermes.assist.in.writing.fields"
+  },
+  "runtime_ui_side_panel": {
+    "message": "측면 패널",
+    "description": "Runtime interface message ui.side.panel"
+  },
+  "runtime_ui_sidebar": {
+    "message": "사이드바",
+    "description": "Runtime interface message ui.sidebar"
+  },
+  "runtime_ui_signal": {
+    "message": "신호",
+    "description": "Runtime interface message ui.signal"
+  },
+  "runtime_ui_site": {
+    "message": "대지",
+    "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_size": {
+    "message": "크기",
+    "description": "Runtime interface message ui.size"
+  },
+  "runtime_ui_skill": {
+    "message": "기능",
+    "description": "Runtime interface message ui.skill"
+  },
+  "runtime_ui_skill_sync_failed": {
+    "message": "스킬 동기화 실패",
+    "description": "Runtime interface message ui.skill.sync.failed"
+  },
+  "runtime_ui_skills": {
+    "message": "기술",
+    "description": "Runtime interface message ui.skills"
+  },
+  "runtime_ui_skip": {
+    "message": "건너뛰다",
+    "description": "Runtime interface message ui.skip"
+  },
+  "runtime_ui_slash_commands_and_skills": {
+    "message": "슬래시 명령 및 기술",
+    "description": "Runtime interface message ui.slash.commands.and.skills"
+  },
+  "runtime_ui_slash_helpers": {
+    "message": "슬래시 도우미",
+    "description": "Runtime interface message ui.slash.helpers"
+  },
+  "runtime_ui_socket": {
+    "message": "소켓",
+    "description": "Runtime interface message ui.socket"
+  },
+  "runtime_ui_source": {
+    "message": "소스",
+    "description": "Runtime interface message ui.source"
+  },
+  "runtime_ui_source_6da13add": {
+    "message": "원천",
+    "description": "Runtime interface message ui.source.6da13add"
+  },
+  "runtime_ui_source_deck": {
+    "message": "소스 덱",
+    "description": "Runtime interface message ui.source.deck"
+  },
+  "runtime_ui_source_receipts_arrive_after_shared_context_extraction": {
+    "message": "소스 영수증은 공유 컨텍스트 추출 후에 도착합니다.",
+    "description": "Runtime interface message ui.source.receipts.arrive.after.shared.context.extraction"
+  },
+  "runtime_ui_speak_into_the_composer": {
+    "message": "작곡가에게 말을 걸다",
+    "description": "Runtime interface message ui.speak.into.the.composer"
+  },
+  "runtime_ui_speak_wake_replies": {
+    "message": "깨우기 답장 말하기",
+    "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_standard": {
+    "message": "기준",
+    "description": "Runtime interface message ui.standard"
+  },
+  "runtime_ui_start": {
+    "message": "시작",
+    "description": "Runtime interface message ui.start"
+  },
+  "runtime_ui_start_dictation": {
+    "message": "받아쓰기 시작",
+    "description": "Runtime interface message ui.start.dictation"
+  },
+  "runtime_ui_start_new_assist_session": {
+    "message": "새로운 Assist 세션 시작",
+    "description": "Runtime interface message ui.start.new.assist.session"
+  },
+  "runtime_ui_start_new_browser_session": {
+    "message": "새로운 Browser 세션 시작",
+    "description": "Runtime interface message ui.start.new.browser.session"
+  },
+  "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
+    "message": "로컬로 또는 연결 가능한 원격 시스템에서 Hermes API 서버를 시작합니다.",
+    "description": "Runtime interface message ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine"
+  },
+  "runtime_ui_start_voice_dictation": {
+    "message": "음성 받아쓰기 시작",
+    "description": "Runtime interface message ui.start.voice.dictation"
+  },
+  "runtime_ui_starting_hermes_native_wake_engine": {
+    "message": "Hermes' 기본 깨우기 엔진 시작 중…",
+    "description": "Runtime interface message ui.starting.hermes.native.wake.engine"
+  },
+  "runtime_ui_starting_hermes_voice_recording_now": {
+    "message": "지금 Hermes 음성 녹음을 시작합니다.",
+    "description": "Runtime interface message ui.starting.hermes.voice.recording.now"
+  },
+  "runtime_ui_startup_readiness_checks": {
+    "message": "시작 준비 확인",
+    "description": "Runtime interface message ui.startup.readiness.checks"
+  },
+  "runtime_ui_status": {
+    "message": "상태",
+    "description": "Runtime interface message ui.status"
+  },
+  "runtime_ui_steer": {
+    "message": "수송아지",
+    "description": "Runtime interface message ui.steer"
+  },
+  "runtime_ui_steer_failed": {
+    "message": "조종 실패",
+    "description": "Runtime interface message ui.steer.failed"
+  },
+  "runtime_ui_steer_not_injected": {
+    "message": "스티어링이 주입되지 않음",
+    "description": "Runtime interface message ui.steer.not.injected"
+  },
+  "runtime_ui_steer_sent": {
+    "message": "스티어링 전송됨",
+    "description": "Runtime interface message ui.steer.sent"
+  },
+  "runtime_ui_steer_sent_to_active_run": {
+    "message": "활성 실행으로 전송된 조종",
+    "description": "Runtime interface message ui.steer.sent.to.active.run"
+  },
+  "runtime_ui_steer_the_current_run": {
+    "message": "현재 실행을 조종",
+    "description": "Runtime interface message ui.steer.the.current.run"
+  },
+  "runtime_ui_stop": {
+    "message": "멈추다",
+    "description": "Runtime interface message ui.stop"
+  },
+  "runtime_ui_stop_hermes": {
+    "message": "Hermes 중지",
+    "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stopping_hermes": {
+    "message": "Hermes 중지 중",
+    "description": "Runtime interface message ui.stopping.hermes"
+  },
+  "runtime_ui_stopping_recording": {
+    "message": "녹음을 중지하는 중…",
+    "description": "Runtime interface message ui.stopping.recording"
+  },
+  "runtime_ui_storage": {
+    "message": "저장",
+    "description": "Runtime interface message ui.storage"
+  },
+  "runtime_ui_stream": {
+    "message": "개울",
+    "description": "Runtime interface message ui.stream"
+  },
+  "runtime_ui_submit": {
+    "message": "제출하다",
+    "description": "Runtime interface message ui.submit"
+  },
+  "runtime_ui_summarize": {
+    "message": "요약",
+    "description": "Runtime interface message ui.summarize"
+  },
+  "runtime_ui_summarize_selection": {
+    "message": "선택 요약",
+    "description": "Runtime interface message ui.summarize.selection"
+  },
+  "runtime_ui_summary": {
+    "message": "요약",
+    "description": "Runtime interface message ui.summary"
+  },
+  "runtime_ui_support_diagnostics": {
+    "message": "진단 지원",
+    "description": "Runtime interface message ui.support.diagnostics"
+  },
+  "runtime_ui_switch": {
+    "message": "스위치",
+    "description": "Runtime interface message ui.switch"
+  },
+  "runtime_ui_switch_partially_failed": {
+    "message": "부분적으로 스위치 실패",
+    "description": "Runtime interface message ui.switch.partially.failed"
+  },
+  "runtime_ui_switch_to_this_agent": {
+    "message": "이 에이전트로 전환",
+    "description": "Runtime interface message ui.switch.to.this.agent"
+  },
+  "runtime_ui_switched_gateway": {
+    "message": "전환된 게이트웨이",
+    "description": "Runtime interface message ui.switched.gateway"
+  },
+  "runtime_ui_syncing_hermes_model_catalog_this_can_take_20_30_seconds": {
+    "message": "Hermes 모델 카탈로그 동기화 중… 20~30초 정도 걸릴 수 있습니다.",
+    "description": "Runtime interface message ui.syncing.hermes.model.catalog.this.can.take.20.30.seconds"
+  },
+  "runtime_ui_system": {
+    "message": "▱ 시스템",
+    "description": "Runtime interface message ui.system"
+  },
+  "runtime_ui_system_bc0792d8": {
+    "message": "체계",
+    "description": "Runtime interface message ui.system.bc0792d8"
+  },
+  "runtime_ui_tab": {
+    "message": "꼬리표",
+    "description": "Runtime interface message ui.tab"
+  },
+  "runtime_ui_tabs": {
+    "message": "탭",
+    "description": "Runtime interface message ui.tabs"
+  },
+  "runtime_ui_tabs_in_prompt": {
+    "message": "프롬프트의 탭",
+    "description": "Runtime interface message ui.tabs.in.prompt"
+  },
+  "runtime_ui_tag": {
+    "message": "꼬리표",
+    "description": "Runtime interface message ui.tag"
+  },
+  "runtime_ui_tags": {
+    "message": "태그",
+    "description": "Runtime interface message ui.tags"
+  },
+  "runtime_ui_target": {
+    "message": "목표",
+    "description": "Runtime interface message ui.target"
+  },
+  "runtime_ui_task": {
+    "message": "일",
+    "description": "Runtime interface message ui.task"
+  },
+  "runtime_ui_tasks": {
+    "message": "☑ 작업",
+    "description": "Runtime interface message ui.tasks"
+  },
+  "runtime_ui_template": {
+    "message": "주형",
+    "description": "Runtime interface message ui.template"
+  },
+  "runtime_ui_test": {
+    "message": "시험",
+    "description": "Runtime interface message ui.test"
+  },
+  "runtime_ui_test_984816fd": {
+    "message": "시험",
+    "description": "Runtime interface message ui.test.984816fd"
+  },
+  "runtime_ui_test_connection": {
+    "message": "테스트 연결",
+    "description": "Runtime interface message ui.test.connection"
+  },
+  "runtime_ui_test_connection_f7dafbab": {
+    "message": "테스트 연결",
+    "description": "Runtime interface message ui.test.connection.f7dafbab"
+  },
+  "runtime_ui_test_the_current_hermes_connection": {
+    "message": "현재 Hermes 연결을 테스트합니다.",
+    "description": "Runtime interface message ui.test.the.current.hermes.connection"
+  },
+  "runtime_ui_text": {
+    "message": "텍스트",
+    "description": "Runtime interface message ui.text"
+  },
+  "runtime_ui_text_size": {
+    "message": "텍스트 크기",
+    "description": "Runtime interface message ui.text.size"
+  },
+  "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
+    "message": "연결된 Hermes 런타임은 네이티브 세션 압축을 지원하지 않습니다.",
+    "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
+  },
+  "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
+    "message": "연결된 런타임은 다음 턴에 이 옵션을 받지만 확인 엔드포인트를 제공하지 않습니다.",
+    "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
+    "message": "라이브 모델 카탈로그를 사용할 수 없습니다. 마지막으로 검증된 공급자/모델 목록을 유지합니다.",
+    "description": "Runtime interface message ui.the.live.model.catalog.is.unavailable.keeping.the.last.verified.0e0250fe"
+  },
+  "runtime_ui_the_local_speech_language_pack_did_not_become_ready_in_90_secon_d69760e3": {
+    "message": "로컬 음성 언어 팩이 90초 내에 준비되지 않았습니다. Chrome가 음성 지원 설치를 마친 후 귀를 다시 시도하세요.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.did.not.become.ready.in.90.secon.d69760e3"
+  },
+  "runtime_ui_the_local_speech_language_pack_is_unavailable_wake_listening_wi_6da8a4e2": {
+    "message": "로컬 음성 언어 팩을 사용할 수 없습니다. 깨우기 청취는 클라우드 인식을 사용하지 않습니다.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.is.unavailable.wake.listening.wi.6da8a4e2"
+  },
+  "runtime_ui_the_microphone_is_unavailable_to_the_wake_listener": {
+    "message": "깨우기 청취자는 마이크를 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.the.microphone.is.unavailable.to.the.wake.listener"
+  },
+  "runtime_ui_the_page_is_the_prompt": {
+    "message": "페이지가 바로 프롬프트입니다",
+    "description": "Runtime interface message ui.the.page.is.the.prompt"
+  },
+  "runtime_ui_theme": {
+    "message": "테마",
+    "description": "Runtime interface message ui.theme"
+  },
+  "runtime_ui_thinking": {
+    "message": "생각 중",
+    "description": "Runtime interface message ui.thinking"
+  },
+  "runtime_ui_thinking_off_standard": {
+    "message": "생각 끔 · 표준",
+    "description": "Runtime interface message ui.thinking.off.standard"
+  },
+  "runtime_ui_this_browser_does_not_expose_on_device_speech_recognition": {
+    "message": "이 브라우저는 기기 내 음성 인식을 노출하지 않습니다.",
+    "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
+  },
+  "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
+    "message": "이 Chromium 브라우저는 확장 프로그램 페이지에 MediaRecorder/getUserMedia를 제공하지 않으며 Web Speech 폴백을 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
+    "message": "이 게이트웨이는 아직 /v1/capabilities를 제공하지 않습니다. Browser 전용 경로는 폴백 모드로 유지됩니다.",
+    "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
+  },
+  "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
+    "message": "이 Hermes 게이트웨이는 아직 /v1/profiles를 노출하지 않습니다. 현재 실행 중인 프로필을 사용합니다.",
+    "description": "Runtime interface message ui.this.hermes.gateway.does.not.expose.v1.profiles.yet.using.the.c.0222afa8"
+  },
+  "runtime_ui_this_hermes_runtime_does_not_advertise_browser_pairing_yet": {
+    "message": "이 Hermes 런타임은 아직 Browser 페어링을 지원하지 않습니다.",
+    "description": "Runtime interface message ui.this.hermes.runtime.does.not.advertise.browser.pairing.yet"
+  },
+  "runtime_ui_this_managed_editor_is_not_mutated_until_insertion_is_verified": {
+    "message": "이 관리형 편집기는 삽입이 확인될 때까지 변경되지 않습니다.",
+    "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
+  },
+  "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
+    "message": "이 모델은 사용자 지정 엔드포인트에서 검색되었지만 Browser가 요청을 라우팅하려면 Hermes가 연결된 런타임을 통해 해당 모델을 제공해야 합니다.",
+    "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
+  },
+  "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
+    "message": "이 요청은 선택한 브라우저 세션에 바인딩됩니다.",
+    "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_time": {
+    "message": "시간",
+    "description": "Runtime interface message ui.time"
+  },
+  "runtime_ui_title": {
+    "message": "제목",
+    "description": "Runtime interface message ui.title"
+  },
+  "runtime_ui_toggle_hey_hermes": {
+    "message": "안녕하세요 Hermes 전환",
+    "description": "Runtime interface message ui.toggle.hey.hermes"
+  },
+  "runtime_ui_toggle_inspector": {
+    "message": "검사기 전환",
+    "description": "Runtime interface message ui.toggle.inspector"
+  },
+  "runtime_ui_token": {
+    "message": "토큰",
+    "description": "Runtime interface message ui.token"
+  },
+  "runtime_ui_tokens": {
+    "message": "토큰",
+    "description": "Runtime interface message ui.tokens"
+  },
+  "runtime_ui_tokens_are_stored_in_chrome_storage_local_and_never_displayed_after_save": {
+    "message": "토큰은 chrome.storage.local에 저장되며 저장 후에는 표시되지 않습니다.",
+    "description": "Runtime interface message ui.tokens.are.stored.in.chrome.storage.local.and.never.displayed.after.save"
+  },
+  "runtime_ui_tool": {
+    "message": "도구",
+    "description": "Runtime interface message ui.tool"
+  },
+  "runtime_ui_tool_activity": {
+    "message": "도구 활동",
+    "description": "Runtime interface message ui.tool.activity"
+  },
+  "runtime_ui_tool_and_run_events_will_appear_here": {
+    "message": "도구 및 실행 이벤트가 여기에 표시됩니다.",
+    "description": "Runtime interface message ui.tool.and.run.events.will.appear.here"
+  },
+  "runtime_ui_total": {
+    "message": "총",
+    "description": "Runtime interface message ui.total"
+  },
+  "runtime_ui_transcribing_through_your_local_hermes_gateway": {
+    "message": "로컬 Hermes 게이트웨이를 통해 기록하는 중…",
+    "description": "Runtime interface message ui.transcribing.through.your.local.hermes.gateway"
+  },
+  "runtime_ui_transcribing_voice": {
+    "message": "음성 녹음 중",
+    "description": "Runtime interface message ui.transcribing.voice"
+  },
+  "runtime_ui_transcript_inserted_into_the_composer": {
+    "message": "작곡가에 성적표가 삽입되었습니다.",
+    "description": "Runtime interface message ui.transcript.inserted.into.the.composer"
+  },
+  "runtime_ui_transcription": {
+    "message": "전사",
+    "description": "Runtime interface message ui.transcription"
+  },
+  "runtime_ui_trusted": {
+    "message": "신뢰할 수 있는",
+    "description": "Runtime interface message ui.trusted"
+  },
+  "runtime_ui_try_recording_again": {
+    "message": "다시 녹음해 보세요.",
+    "description": "Runtime interface message ui.try.recording.again"
+  },
+  "runtime_ui_turn_off": {
+    "message": "끄다",
+    "description": "Runtime interface message ui.turn.off"
+  },
+  "runtime_ui_turn_on": {
+    "message": "켜다",
+    "description": "Runtime interface message ui.turn.on"
+  },
+  "runtime_ui_turn_the_field_bound_launcher_on_or_off_across_normal_web_pages": {
+    "message": "일반 웹 페이지에서 필드 바인딩 실행 프로그램을 켜거나 끕니다.",
+    "description": "Runtime interface message ui.turn.the.field.bound.launcher.on.or.off.across.normal.web.pages"
+  },
+  "runtime_ui_type": {
+    "message": "유형",
+    "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_ui": {
+    "message": "UI",
+    "description": "Runtime interface message ui.ui"
+  },
+  "runtime_ui_unavailable": {
+    "message": "없는",
+    "description": "Runtime interface message ui.unavailable"
+  },
+  "runtime_ui_undo": {
+    "message": "끄르다",
+    "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_update": {
+    "message": "업데이트",
+    "description": "Runtime interface message ui.update"
+  },
+  "runtime_ui_update_now": {
+    "message": "지금 업데이트",
+    "description": "Runtime interface message ui.update.now"
+  },
+  "runtime_ui_update_prompt_ready": {
+    "message": "업데이트 프롬프트 준비됨",
+    "description": "Runtime interface message ui.update.prompt.ready"
+  },
+  "runtime_ui_updates_are_checked_against_the_public_github_repo": {
+    "message": "업데이트는 공개 GitHub 저장소를 기준으로 확인됩니다.",
+    "description": "Runtime interface message ui.updates.are.checked.against.the.public.github.repo"
+  },
+  "runtime_ui_upload": {
+    "message": "업로드",
+    "description": "Runtime interface message ui.upload"
+  },
+  "runtime_ui_url": {
+    "message": "↗ URL...",
+    "description": "Runtime interface message ui.url"
+  },
+  "runtime_ui_url_0e2d9b07": {
+    "message": "URL",
+    "description": "Runtime interface message ui.url.0e2d9b07"
+  },
+  "runtime_ui_url_19911671": {
+    "message": "↗ URL…",
+    "description": "Runtime interface message ui.url.19911671"
+  },
+  "runtime_ui_use": {
+    "message": "사용",
+    "description": "Runtime interface message ui.use"
+  },
+  "runtime_ui_use_current_tab_session": {
+    "message": "현재 탭 세션 사용",
+    "description": "Runtime interface message ui.use.current.tab.session"
+  },
+  "runtime_ui_use_hermes_desktop_model_settings_or_the_hermes_model_command_t_f5a4940b": {
+    "message": "Hermes Desktop 모델 설정 또는 Hermes 모델 명령을 사용한 다음 여기에서 모델 새로 고침을 사용하세요.",
+    "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
+  },
+  "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
+    "message": "활성 탭의 현재 세션을 사용하거나, 새 Browser 세션을 생성하거나, 별도로 실행하세요.",
+    "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
+  },
+  "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
+    "message": "Hermes Browser와 동일한 팔레트 및 크롬 언어를 사용합니다.",
+    "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
+  },
+  "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
+    "message": "원격 대시보드 URL, 전달자 토큰 또는 CORS 원본이 잘못 구성된 경우 이 방법을 사용하세요.",
+    "description": "Runtime interface message ui.use.this.when.a.remote.dashboard.url.bearer.token.or.cors.origi.9956db87"
+  },
+  "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
+    "message": "GitHub 문제 또는 지원 보고서를 제출할 때 이것을 사용하십시오.",
+    "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_user": {
+    "message": "사용자",
+    "description": "Runtime interface message ui.user"
+  },
+  "runtime_ui_uses_hermes_tts_on_the_native_path_and_local_browser_speech_on_acf402bd": {
+    "message": "기본 경로에서는 Hermes TTS를 사용하고 대체 경로에서는 로컬 브라우저 음성을 사용합니다.",
+    "description": "Runtime interface message ui.uses.hermes.tts.on.the.native.path.and.local.browser.speech.on.acf402bd"
+  },
+  "runtime_ui_using_cached_hermes_catalog": {
+    "message": "캐시된 Hermes 카탈로그 사용",
+    "description": "Runtime interface message ui.using.cached.hermes.catalog"
+  },
+  "runtime_ui_using_hermes_speech_to_text_matching_desktop_dictation": {
+    "message": "Hermes 음성-텍스트 변환을 사용하여 Desktop 받아쓰기와 일치합니다.",
+    "description": "Runtime interface message ui.using.hermes.speech.to.text.matching.desktop.dictation"
+  },
+  "runtime_ui_using_the_currently_running_hermes_gateway_profile": {
+    "message": "현재 실행 중인 Hermes 게이트웨이 프로필을 사용합니다.",
+    "description": "Runtime interface message ui.using.the.currently.running.hermes.gateway.profile"
+  },
+  "runtime_ui_value": {
+    "message": "값",
+    "description": "Runtime interface message ui.value"
+  },
+  "runtime_ui_version": {
+    "message": "버전",
+    "description": "Runtime interface message ui.version"
+  },
+  "runtime_ui_version_loading": {
+    "message": "버전 로드 중…",
+    "description": "Runtime interface message ui.version.loading"
+  },
+  "runtime_ui_video": {
+    "message": "동영상",
+    "description": "Runtime interface message ui.video"
+  },
+  "runtime_ui_view": {
+    "message": "보다",
+    "description": "Runtime interface message ui.view"
+  },
+  "runtime_ui_voice": {
+    "message": "목소리",
+    "description": "Runtime interface message ui.voice"
+  },
+  "runtime_ui_voice_dictation": {
+    "message": "음성 받아쓰기",
+    "description": "Runtime interface message ui.voice.dictation"
+  },
+  "runtime_ui_voice_dictation_ready": {
+    "message": "음성 받아쓰기 준비됨",
+    "description": "Runtime interface message ui.voice.dictation.ready"
+  },
+  "runtime_ui_voice_dictation_stopped": {
+    "message": "음성 받아쓰기가 중지되었습니다.",
+    "description": "Runtime interface message ui.voice.dictation.stopped"
+  },
+  "runtime_ui_voice_dictation_unavailable": {
+    "message": "음성 받아쓰기를 사용할 수 없습니다.",
+    "description": "Runtime interface message ui.voice.dictation.unavailable"
+  },
+  "runtime_ui_voice_mode_browser_speech_fallback_hermes_stt_is_unavailable_on_70bf6212": {
+    "message": "음성 모드: 브라우저 음성 폴백\n\n이 게이트웨이에서는 Hermes STT를 사용할 수 없습니다. 음성 인식은 브라우저에서 실행되며 전사문만 측면 패널로 다시 전송됩니다.",
+    "description": "Runtime interface message ui.voice.mode.browser.speech.fallback.hermes.stt.is.unavailable.on.70bf6212"
+  },
+  "runtime_ui_voice_mode_hermes_stt_audio_is_sent_once_to_your_local_hermes_t_6e927a4e": {
+    "message": "음성 모드: Hermes STT\n\n녹음을 중지하면 오디오가 로컬 Hermes 전사 엔드포인트로 한 번 전송됩니다.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.audio.is.sent.once.to.your.local.hermes.t.6e927a4e"
+  },
+  "runtime_ui_voice_mode_hermes_stt_recording_speak_now_then_click_stop_transcribe": {
+    "message": "음성 모드: Hermes STT\n\n녹음… 지금 말한 다음 중지 + 스크립트 작성을 클릭하세요.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.recording.speak.now.then.click.stop.transcribe"
+  },
+  "runtime_ui_voice_mode_hermes_stt_requesting_microphone_access": {
+    "message": "음성 모드: Hermes STT\n\n마이크 액세스 요청 중…",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.requesting.microphone.access"
+  },
+  "runtime_ui_voice_mode_on_device_speech_downloading_the_browser_language_pack_once": {
+    "message": "음성 모드: 기기 내 음성\n\n브라우저 언어 팩을 한 번 다운로드하는 중…",
+    "description": "Runtime interface message ui.voice.mode.on.device.speech.downloading.the.browser.language.pack.once"
+  },
+  "runtime_ui_voice_mode_unavailable_connect_hermes_for_stt_or_use_a_chromium_08a02bbb": {
+    "message": "음성 모드를 사용할 수 없습니다. STT를 사용하려면 Hermes에 연결하거나 브라우저 음성 폴백을 지원하는 Chromium 빌드를 사용하세요.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.connect.hermes.for.stt.or.use.a.chromium.08a02bbb"
+  },
+  "runtime_ui_voice_mode_unavailable_this_browser_does_not_expose_hermes_stt_fcc04044": {
+    "message": "음성 모드를 사용할 수 없습니다. 이 브라우저는 Hermes STT 또는 Web Speech 폴백을 제공하지 않습니다.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.browser.does.not.expose.hermes.stt.fcc04044"
+  },
+  "runtime_ui_voice_mode_unavailable_this_hermes_runtime_has_no_audio_transcr_70f57e78": {
+    "message": "음성 모드를 사용할 수 없습니다. 이 Hermes 런타임에는 오디오 전사 경로가 없고 이 브라우저는 Web Speech 폴백을 제공하지 않습니다.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.hermes.runtime.has.no.audio.transcr.70f57e78"
+  },
+  "runtime_ui_voice_recording_failed": {
+    "message": "음성 녹음 실패",
+    "description": "Runtime interface message ui.voice.recording.failed"
+  },
+  "runtime_ui_voice_tab_opened": {
+    "message": "음성 탭이 열렸습니다.",
+    "description": "Runtime interface message ui.voice.tab.opened"
+  },
+  "runtime_ui_voice_transcript_handoff_failed": {
+    "message": "음성 스크립트 전달 실패",
+    "description": "Runtime interface message ui.voice.transcript.handoff.failed"
+  },
+  "runtime_ui_voice_transcript_ready": {
+    "message": "음성 스크립트 준비됨",
+    "description": "Runtime interface message ui.voice.transcript.ready"
+  },
+  "runtime_ui_voice_transcription_failed": {
+    "message": "음성 녹음 실패",
+    "description": "Runtime interface message ui.voice.transcription.failed"
+  },
+  "runtime_ui_waiting_for_hermes_desktop_approval": {
+    "message": "Hermes Desktop 승인을 기다리는 중...",
+    "description": "Runtime interface message ui.waiting.for.hermes.desktop.approval"
+  },
+  "runtime_ui_waiting_for_permission_request": {
+    "message": "권한 요청을 기다리는 중…",
+    "description": "Runtime interface message ui.waiting.for.permission.request"
+  },
+  "runtime_ui_waiting_for_session_usage": {
+    "message": "세션 사용을 기다리는 중입니다.",
+    "description": "Runtime interface message ui.waiting.for.session.usage"
+  },
+  "runtime_ui_waiting_for_the_session_resource_to_confirm_thinking_effort_and_63018fde": {
+    "message": "세션 리소스가 사고, 노력 및 빠른 모드를 확인하기를 기다리는 중입니다.",
+    "description": "Runtime interface message ui.waiting.for.the.session.resource.to.confirm.thinking.effort.and.63018fde"
+  },
+  "runtime_ui_wake_command_captured": {
+    "message": "깨우기 명령이 캡처되었습니다.",
+    "description": "Runtime interface message ui.wake.command.captured"
+  },
+  "runtime_ui_wake_command_captured_opening_hermes": {
+    "message": "깨우기 명령이 캡처되었습니다. Hermes 여는 중…",
+    "description": "Runtime interface message ui.wake.command.captured.opening.hermes"
+  },
+  "runtime_ui_wake_listener_document_is_ready": {
+    "message": "Wake Listener 문서가 준비되었습니다.",
+    "description": "Runtime interface message ui.wake.listener.document.is.ready"
+  },
+  "runtime_ui_wake_listener_paused_during_the_voice_turn": {
+    "message": "음성 회전 중에 깨우기 리스너가 일시중지되었습니다.",
+    "description": "Runtime interface message ui.wake.listener.paused.during.the.voice.turn"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command": {
+    "message": "깨우기 문구가 들렸습니다. 당신의 명령을 듣고 있습니다.",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command_38ffdf10": {
+    "message": "깨우기 문구가 들렸습니다. 당신의 명령을 듣고…",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command.38ffdf10"
+  },
+  "runtime_ui_wake_word": {
+    "message": "깨우기 단어",
+    "description": "Runtime interface message ui.wake.word"
+  },
+  "runtime_ui_wake_word_is_off": {
+    "message": "깨우기 단어가 꺼져 있습니다.",
+    "description": "Runtime interface message ui.wake.word.is.off"
+  },
+  "runtime_ui_web_ui_sections": {
+    "message": "Web UI 섹션",
+    "description": "Runtime interface message ui.web.ui.sections"
+  },
+  "runtime_ui_what_hermes_saw": {
+    "message": "헤르메스가 본 것",
+    "description": "Runtime interface message ui.what.hermes.saw"
+  },
+  "runtime_ui_what_should_we_work_on": {
+    "message": "우리는 무엇을 해야 할까요?",
+    "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_should_hermes_work": {
+    "message": "Hermes는 어디에서 작동하나요?",
+    "description": "Runtime interface message ui.where.should.hermes.work"
+  },
+  "runtime_ui_where_should_this_right_click_task_run": {
+    "message": "이 마우스 오른쪽 버튼 클릭 작업은 어디에서 실행되어야 합니까?",
+    "description": "Runtime interface message ui.where.should.this.right.click.task.run"
+  },
+  "runtime_ui_where_should_this_session_open": {
+    "message": "이 세션은 어디서 열리나요?",
+    "description": "Runtime interface message ui.where.should.this.session.open"
+  },
+  "runtime_ui_window": {
+    "message": "창문",
+    "description": "Runtime interface message ui.window"
+  },
+  "runtime_ui_window_tab_list": {
+    "message": "창 탭 목록",
+    "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_worker": {
+    "message": "노동자",
+    "description": "Runtime interface message ui.worker"
+  },
+  "runtime_ui_working": {
+    "message": "작업 중",
+    "description": "Runtime interface message ui.working"
+  },
+  "runtime_ui_working_92263e08": {
+    "message": "일하고 있는",
+    "description": "Runtime interface message ui.working.92263e08"
+  },
+  "runtime_ui_workspace": {
+    "message": "작업공간",
+    "description": "Runtime interface message ui.workspace"
+  },
+  "runtime_ui_workspaces": {
+    "message": "작업공간",
+    "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_xl": {
+    "message": "특대",
+    "description": "Runtime interface message ui.xl"
+  },
+  "runtime_ui_you": {
+    "message": "너",
+    "description": "Runtime interface message ui.you"
+  },
+  "runtime_ui_your_current_conversation_stays_visible": {
+    "message": "현재 대화는 계속 표시됩니다.",
+    "description": "Runtime interface message ui.your.current.conversation.stays.visible"
+  },
+  "runtime_ui_youtube_transcript_provider": {
+    "message": "YouTube 성적표 제공자",
+    "description": "Runtime interface message ui.youtube.transcript.provider"
+  },
+  "runtime_ui_zoom_in": {
+    "message": "확대",
+    "description": "Runtime interface message ui.zoom.in"
+  },
+  "runtime_ui_zoom_out": {
+    "message": "축소",
+    "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_voice_browser_preview": {
+    "message": "음성 모드: 브라우저 음성 폴백\n\n{preview}",
+    "description": "Runtime interface message voice.browser.preview"
+  },
+  "runtime_voice_browser_start_failed": {
+    "message": "브라우저 음성 폴백을 시작할 수 없습니다.\n\n{error}",
+    "description": "Runtime interface message voice.browser.start_failed"
+  },
+  "runtime_voice_browser_stop_failed": {
+    "message": "브라우저 음성 폴백을 중지할 수 없습니다.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stop_failed"
+  },
+  "runtime_voice_browser_stopped": {
+    "message": "브라우저 음성 폴백이 중지되었습니다.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stopped"
+  },
+  "runtime_voice_capture_error": {
+    "message": "마이크 오디오를 캡처할 수 없습니다.",
+    "description": "Runtime interface message voice.capture_error"
+  },
+  "runtime_voice_permission_blocked": {
+    "message": "Hermes Browser Extension에 대한 마이크 권한이 차단되었습니다.\n\n마이크 설정 열기를 클릭하고 마이크를 이 확장 프로그램에 대해 허용으로 설정한 후 여기로 돌아온 후 받아쓰기 시작을 다시 클릭하세요.\n\n{error}",
+    "description": "Runtime interface message voice.permission_blocked"
+  },
+  "runtime_voice_settings_load_failed": {
+    "message": "Hermes Browser 설정을 로드할 수 없습니다.\n\n{error}",
+    "description": "Runtime interface message voice.settings_load_failed"
+  },
+  "runtime_voice_speech_recognition_error": {
+    "message": "음성 인식 오류",
+    "description": "Runtime interface message voice.speech_recognition_error"
+  },
+  "runtime_voice_start_failed": {
+    "message": "음성 받아쓰기를 시작할 수 없습니다.\n\n{error}",
+    "description": "Runtime interface message voice.start_failed"
+  },
+  "runtime_voice_transcript_sent": {
+    "message": "Hermes 측면 패널로 전송된 기록:\n\n{transcript}",
+    "description": "Runtime interface message voice.transcript_sent"
+  },
+  "runtime_voice_transcription_failed": {
+    "message": "음성 녹음에 실패했습니다.\n\n{error}",
+    "description": "Runtime interface message voice.transcription_failed"
+  },
+  "runtime_wake_turn_off": {
+    "message": "호출어 끄기",
+    "description": "Runtime interface message wake.turn_off"
+  },
+  "runtime_wake_turn_on": {
+    "message": "호출어 켜기",
+    "description": "Runtime interface message wake.turn_on"
+  }
+}

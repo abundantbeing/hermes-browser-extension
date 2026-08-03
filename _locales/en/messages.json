@@ -31,6 +31,10 @@
     "message": "↻ Scan agents",
     "description": "Runtime interface message agent.scan"
   },
+  "runtime_assist_options_heading": {
+    "message": "Hermes Assist options",
+    "description": "Runtime interface message assist.options_heading"
+  },
   "runtime_assist_routing_exact": {
     "message": "Exact Assist model routing is available. The selected provider and model are verified before each draft runs.",
     "description": "Runtime interface message assist.routing.exact"
@@ -46,6 +50,58 @@
   "runtime_assist_routing_fallback_short": {
     "message": "Falls back to the gateway default when exact routing is unavailable",
     "description": "Runtime interface message assist.routing.fallback_short"
+  },
+  "runtime_commands_click_or_enter": {
+    "message": "Click or press Enter to run.",
+    "description": "Runtime interface message commands.click_or_enter"
+  },
+  "runtime_commands_details": {
+    "message": "Command details",
+    "description": "Runtime interface message commands.details"
+  },
+  "runtime_commands_insert_then_detail": {
+    "message": "Click to insert, then add details.",
+    "description": "Runtime interface message commands.insert_then_detail"
+  },
+  "runtime_commands_runs_immediately": {
+    "message": "Runs immediately against the current browser context.",
+    "description": "Runtime interface message commands.runs_immediately"
+  },
+  "runtime_common_current": {
+    "message": "current",
+    "description": "Runtime interface message common.current"
+  },
+  "runtime_common_follow": {
+    "message": "follow",
+    "description": "Runtime interface message common.follow"
+  },
+  "runtime_common_live": {
+    "message": "live",
+    "description": "Runtime interface message common.live"
+  },
+  "runtime_common_lock": {
+    "message": "lock",
+    "description": "Runtime interface message common.lock"
+  },
+  "runtime_common_none": {
+    "message": "none",
+    "description": "Runtime interface message common.none"
+  },
+  "runtime_common_offline": {
+    "message": "offline",
+    "description": "Runtime interface message common.offline"
+  },
+  "runtime_common_online": {
+    "message": "online",
+    "description": "Runtime interface message common.online"
+  },
+  "runtime_common_skills": {
+    "message": "skills",
+    "description": "Runtime interface message common.skills"
+  },
+  "runtime_common_using": {
+    "message": "Using",
+    "description": "Runtime interface message common.using"
   },
   "runtime_composer_attach": {
     "message": "＋ Attach",
@@ -79,13 +135,57 @@
     "message": "for manual setup.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connection_not_configured_short": {
+    "message": "not configured",
+    "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connection_unknown_transport": {
+    "message": "unknown transport",
+    "description": "Runtime interface message connection.unknown_transport"
+  },
   "runtime_context_attached_tab": {
     "message": "Attached tab",
     "description": "Runtime interface message context.attached_tab"
   },
+  "runtime_context_browser_tab_handoff": {
+    "message": "Browser tab {tabId} handoff",
+    "description": "Runtime interface message context.browser_tab_handoff"
+  },
   "runtime_context_follow_active_tab": {
     "message": "Follow active tab",
     "description": "Runtime interface message context.follow_active_tab"
+  },
+  "runtime_context_in": {
+    "message": "IN",
+    "description": "Runtime interface message context.in"
+  },
+  "runtime_context_include_all_tabs": {
+    "message": "Include all tabs",
+    "description": "Runtime interface message context.include_all_tabs"
+  },
+  "runtime_context_include_prompt_tab": {
+    "message": "Include this tab in the prompt tab list",
+    "description": "Runtime interface message context.include_prompt_tab"
+  },
+  "runtime_context_no_page": {
+    "message": "no page",
+    "description": "Runtime interface message context.no_page"
+  },
+  "runtime_context_out": {
+    "message": "OUT",
+    "description": "Runtime interface message context.out"
+  },
+  "runtime_context_page_only": {
+    "message": "Page only",
+    "description": "Runtime interface message context.page_only"
+  },
+  "runtime_context_pin_current_tab": {
+    "message": "Pin current tab",
+    "description": "Runtime interface message context.pin_current_tab"
+  },
+  "runtime_context_pin_tab": {
+    "message": "Pin: {title}",
+    "description": "Runtime interface message context.pin_tab"
   },
   "runtime_context_pinned_tab": {
     "message": "Pinned tab",
@@ -95,17 +195,177 @@
     "message": "Refresh page context",
     "description": "Runtime interface message context.refresh_page"
   },
+  "runtime_context_remove_prompt_tab": {
+    "message": "Remove this tab from the prompt tab list",
+    "description": "Runtime interface message context.remove_prompt_tab"
+  },
   "runtime_context_tokens": {
     "message": "tokens",
     "description": "Runtime interface message context.tokens"
+  },
+  "runtime_context_unlock_pinned_tab": {
+    "message": "Unlock pinned tab",
+    "description": "Runtime interface message context.unlock_pinned_tab"
+  },
+  "runtime_diagnostic_api_authorization_health_detail": {
+    "message": "Health responded, but protected Browser/model routes need Authorization: Bearer *** Paste the API key or scoped browser token in Settings.",
+    "description": "Runtime interface message diagnostic.api_authorization_health_detail"
+  },
+  "runtime_diagnostic_api_authorization_title": {
+    "message": "API server needs authorization",
+    "description": "Runtime interface message diagnostic.api_authorization_title"
+  },
+  "runtime_diagnostic_api_rejected_detail": {
+    "message": "Hermes rejected this request. Check the API key/browser token and keep the URL pointed at the API server, not the Dashboard SSO endpoint.",
+    "description": "Runtime interface message diagnostic.api_rejected_detail"
+  },
+  "runtime_diagnostic_auth_detail": {
+    "message": "Hermes API rejected the request. Check the Browser API token in Settings and make sure it matches the running Hermes gateway.",
+    "description": "Runtime interface message diagnostic.auth_detail"
+  },
+  "runtime_diagnostic_auth_title": {
+    "message": "Hermes authentication failed",
+    "description": "Runtime interface message diagnostic.auth_title"
+  },
+  "runtime_diagnostic_auth_user": {
+    "message": "Hermes API token was rejected. Update the Browser Settings token, then reconnect.",
+    "description": "Runtime interface message diagnostic.auth_user"
+  },
+  "runtime_diagnostic_cors_extension_detail": {
+    "message": "Browser could not reach the Hermes API from this extension origin. Add chrome-extension://<extension-id> to API_SERVER_CORS_ORIGINS on the remote host.",
+    "description": "Runtime interface message diagnostic.cors_extension_detail"
+  },
+  "runtime_diagnostic_cors_title": {
+    "message": "CORS origin not allowed",
+    "description": "Runtime interface message diagnostic.cors_title"
+  },
+  "runtime_diagnostic_dashboard_url_detail": {
+    "message": "This looks like the Hermes Dashboard SSO endpoint. Browser API mode needs the Hermes API server URL on :8642 plus an Authorization: Bearer ***",
+    "description": "Runtime interface message diagnostic.dashboard_url_detail"
+  },
+  "runtime_diagnostic_dashboard_url_title": {
+    "message": "Dashboard URL detected",
+    "description": "Runtime interface message diagnostic.dashboard_url_title"
+  },
+  "runtime_diagnostic_gateway_error_title": {
+    "message": "Hermes gateway error",
+    "description": "Runtime interface message diagnostic.gateway_error_title"
+  },
+  "runtime_diagnostic_gateway_unreachable_detail": {
+    "message": "Hermes gateway is not reachable.",
+    "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
+  },
+  "runtime_diagnostic_network_detail": {
+    "message": "Browser could not reach the Hermes API. Check the gateway URL, firewall/VPN routing, and CORS/origin settings for this extension.",
+    "description": "Runtime interface message diagnostic.network_detail"
+  },
+  "runtime_diagnostic_network_title": {
+    "message": "Hermes network/CORS failure",
+    "description": "Runtime interface message diagnostic.network_title"
+  },
+  "runtime_diagnostic_network_user": {
+    "message": "Browser could not reach Hermes because the request failed at the network/CORS layer.",
+    "description": "Runtime interface message diagnostic.network_user"
+  },
+  "runtime_diagnostic_remote_setup_title": {
+    "message": "Remote setup issue",
+    "description": "Runtime interface message diagnostic.remote_setup_title"
+  },
+  "runtime_diagnostic_remote_unclassified_detail": {
+    "message": "The Browser Extension could not classify this remote gateway response.",
+    "description": "Runtime interface message diagnostic.remote_unclassified_detail"
+  },
+  "runtime_diagnostic_route_detail": {
+    "message": "The Hermes gateway route is unavailable on this runtime. Update/restart Hermes or use the documented fallback mode when available.",
+    "description": "Runtime interface message diagnostic.route_detail"
+  },
+  "runtime_diagnostic_route_title": {
+    "message": "Hermes route unavailable",
+    "description": "Runtime interface message diagnostic.route_title"
+  },
+  "runtime_diagnostic_route_user": {
+    "message": "This Hermes runtime does not expose the requested Browser route yet.",
+    "description": "Runtime interface message diagnostic.route_user"
+  },
+  "runtime_diagnostic_runtime_exception_detail": {
+    "message": "Hermes API server is reachable, but upstream Hermes Agent raised a runtime exception. This often points at an optional runtime/tool issue such as computer_use/cua-driver, not Browser auth, pairing, CORS, or packaging.",
+    "description": "Runtime interface message diagnostic.runtime_exception_detail"
+  },
+  "runtime_diagnostic_runtime_exception_title": {
+    "message": "Hermes runtime exception",
+    "description": "Runtime interface message diagnostic.runtime_exception_title"
+  },
+  "runtime_diagnostic_runtime_exception_user": {
+    "message": "Hermes gateway traceback detected inside upstream Hermes Agent. Browser can stay connected; check Hermes logs and run `hermes computer-use doctor` if computer_use/cua-driver appears in the traceback.",
+    "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
     "message": "Surface",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_fulltab_handoff_opened_from": {
+    "message": "Opened from {source}.",
+    "description": "Runtime interface message fulltab.handoff.opened_from"
+  },
+  "runtime_fulltab_handoff_opened_from_tab": {
+    "message": "Opened from {source} on browser tab {tabId}.",
+    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  },
+  "runtime_image_generated": {
+    "message": "Generated image",
+    "description": "Runtime interface message image.generated"
+  },
+  "runtime_image_generated_preview": {
+    "message": "Generated image preview",
+    "description": "Runtime interface message image.generated_preview"
+  },
+  "runtime_image_generating": {
+    "message": "Hermes is generating an image",
+    "description": "Runtime interface message image.generating"
+  },
+  "runtime_image_meta_active": {
+    "message": "{aspectRatio} // active",
+    "description": "Runtime interface message image.meta_active"
+  },
+  "runtime_image_phase_denoising": {
+    "message": "DENOISING",
+    "description": "Runtime interface message image.phase_denoising"
+  },
+  "runtime_image_phase_finalizing": {
+    "message": "FINALIZING",
+    "description": "Runtime interface message image.phase_finalizing"
+  },
+  "runtime_image_phase_latent": {
+    "message": "LATENT FIELD",
+    "description": "Runtime interface message image.phase_latent"
+  },
+  "runtime_image_phase_resolving": {
+    "message": "RESOLVING",
+    "description": "Runtime interface message image.phase_resolving"
+  },
   "runtime_items_count": {
     "message": "{count} items",
     "description": "Runtime interface message items.count"
+  },
+  "runtime_manifest_extension_description": {
+    "message": "Browser-native side panel for Hermes Agent. Connect web context to your local or remote Hermes runtime.",
+    "description": "Runtime interface message manifest.extension_description"
+  },
+  "runtime_manifest_extension_name": {
+    "message": "Hermes Browser Extension",
+    "description": "Runtime interface message manifest.extension_name"
+  },
+  "runtime_manifest_extension_short_name": {
+    "message": "Hermes Ext",
+    "description": "Runtime interface message manifest.extension_short_name"
+  },
+  "runtime_manifest_open_extension": {
+    "message": "Open Hermes Browser Extension",
+    "description": "Runtime interface message manifest.open_extension"
+  },
+  "runtime_manifest_open_sidebar": {
+    "message": "Open Hermes Browser Sidebar",
+    "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_permissions_not_granted": {
     "message": "Microphone permission was not granted.\n\n{error}\n\nClick Open microphone settings, set Microphone to Allow for Hermes Browser Extension, return here, and try again.",
@@ -115,17 +375,85 @@
     "message": "Microphone permission state: {state}. If Chromium shows this as blocked, open microphone settings and set Microphone to Allow for Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
+  "runtime_picker_pick_different": {
+    "message": "◈ Pick a different element",
+    "description": "Runtime interface message picker.pick_different"
+  },
+  "runtime_picker_picking_element": {
+    "message": "◈ Picking element...",
+    "description": "Runtime interface message picker.picking_element"
+  },
+  "runtime_profile_available": {
+    "message": "{count} profiles available",
+    "description": "Runtime interface message profile.available"
+  },
+  "runtime_profile_available_suffix": {
+    "message": "profiles available",
+    "description": "Runtime interface message profile.available_suffix"
+  },
+  "runtime_profile_default": {
+    "message": "Default profile",
+    "description": "Runtime interface message profile.default"
+  },
   "runtime_profile_refresh": {
     "message": "↻ Profiles",
     "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_using": {
+    "message": "Using {name}{model}{skills}",
+    "description": "Runtime interface message profile.using"
   },
   "runtime_run_stop": {
     "message": "■ Stop",
     "description": "Runtime interface message run.stop"
   },
+  "runtime_runtime_fast_mode_toggle": {
+    "message": "Fast mode {state}",
+    "description": "Runtime interface message runtime.fast_mode_toggle"
+  },
+  "runtime_runtime_model_control_title": {
+    "message": "{model} · {options}. Change model and runtime options.",
+    "description": "Runtime interface message runtime.model_control_title"
+  },
+  "runtime_runtime_options_heading": {
+    "message": "Runtime options",
+    "description": "Runtime interface message runtime.options_heading"
+  },
+  "runtime_runtime_options_saved": {
+    "message": "Runtime options: {summary}",
+    "description": "Runtime interface message runtime.options_saved"
+  },
+  "runtime_runtime_reasoning": {
+    "message": "{effort} reasoning",
+    "description": "Runtime interface message runtime.reasoning"
+  },
+  "runtime_runtime_thinking_off": {
+    "message": "Thinking off",
+    "description": "Runtime interface message runtime.thinking_off"
+  },
+  "runtime_runtime_thinking_toggle": {
+    "message": "Thinking {state}",
+    "description": "Runtime interface message runtime.thinking_toggle"
+  },
+  "runtime_session_copy_id_for": {
+    "message": "Copy session ID for {title}",
+    "description": "Runtime interface message session.copy_id_for"
+  },
   "runtime_session_new_extension_session": {
     "message": "＋ New Hermes Browser Extension Session",
     "description": "Runtime interface message session.new_extension_session"
+  },
+  "runtime_session_opening": {
+    "message": "Opening {title}",
+    "description": "Runtime interface message session.opening"
+  },
+  "runtime_session_rail_save_failed": {
+    "message": "Session rail save failed: {error}",
+    "description": "Runtime interface message session.rail_save_failed"
+  },
+  "runtime_session_rename_named": {
+    "message": "Rename session {title}",
+    "description": "Runtime interface message session.rename_named"
   },
   "runtime_settings_language_description": {
     "message": "Choose the interface language.",
@@ -142,6 +470,38 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· public alpha / load unpacked",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_status_connection_not_responding": {
+    "message": "{summary} is not responding. Start Hermes Desktop/Gateway, then reconnect.",
+    "description": "Runtime interface message status.connection_not_responding"
+  },
+  "runtime_status_gmail_no_rendered": {
+    "message": "No rendered message bodies were available.",
+    "description": "Runtime interface message status.gmail_no_rendered"
+  },
+  "runtime_status_model_discovery_limited": {
+    "message": "Gateway exposes only one /v1/models row and /api/sessions was unavailable ({error}).",
+    "description": "Runtime interface message status.model_discovery_limited"
+  },
+  "runtime_status_model_lock_failed_detail": {
+    "message": "{error}. Not sending because Hermes might fall back to the global model.",
+    "description": "Runtime interface message status.model_lock_failed_detail"
+  },
+  "runtime_status_model_registry_fallback": {
+    "message": "Falling back to /v1/models ({error}).",
+    "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_context_restricted": {
+    "message": "{url} - context restricted",
+    "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_profile_selected_restart": {
+    "message": "{profile} selected. Restart Hermes gateway if the running profile does not change immediately.",
+    "description": "Runtime interface message status.profile_selected_restart"
+  },
+  "runtime_status_profile_switch_unavailable": {
+    "message": "{error}. Browser will use the currently running Hermes profile.",
+    "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
     "message": "{complete} complete · {active} active",
@@ -1579,10 +1939,6 @@
     "message": "HERMES BROWSER EXTENSION",
     "description": "Runtime interface message ui.hermes.browser.extension"
   },
-  "runtime_ui_hermes_browser_extension_771953e6": {
-    "message": "Hermes Browser Extension",
-    "description": "Runtime interface message ui.hermes.browser.extension.771953e6"
-  },
   "runtime_ui_hermes_browser_extension_connected": {
     "message": "Hermes Browser Extension connected",
     "description": "Runtime interface message ui.hermes.browser.extension.connected"
@@ -2923,10 +3279,6 @@
     "message": "Response",
     "description": "Runtime interface message ui.response"
   },
-  "runtime_ui_restart": {
-    "message": "Restart",
-    "description": "Runtime interface message ui.restart"
-  },
   "runtime_ui_restricted_page": {
     "message": "Restricted page",
     "description": "Runtime interface message ui.restricted.page"
@@ -3983,6 +4335,10 @@
     "message": "Browser speech fallback stopped.\n\n{error}",
     "description": "Runtime interface message voice.browser.stopped"
   },
+  "runtime_voice_capture_error": {
+    "message": "Could not capture microphone audio.",
+    "description": "Runtime interface message voice.capture_error"
+  },
   "runtime_voice_permission_blocked": {
     "message": "Microphone permission is blocked for Hermes Browser Extension.\n\nClick Open microphone settings, set Microphone to Allow for this extension, return here, then click Start dictation again.\n\n{error}",
     "description": "Runtime interface message voice.permission_blocked"
@@ -3990,6 +4346,10 @@
   "runtime_voice_settings_load_failed": {
     "message": "Could not load Hermes Browser settings.\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
+  },
+  "runtime_voice_speech_recognition_error": {
+    "message": "Speech recognition error",
+    "description": "Runtime interface message voice.speech_recognition_error"
   },
   "runtime_voice_start_failed": {
     "message": "Could not start voice dictation.\n\n{error}",

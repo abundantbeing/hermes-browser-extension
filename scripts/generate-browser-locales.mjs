@@ -6,21 +6,12 @@ import { SUPPORTED_LOCALES, loadLocaleMessages } from '../extension/lib/i18n-reg
 const root = path.resolve(import.meta.dirname, '..');
 const checkOnly = process.argv.includes('--check');
 const generatedContentBridgePath = path.join(root, 'extension/lib/i18n-content.js');
-const nativeCopy = Object.freeze({
-  en: Object.freeze({
-    extensionName: 'Hermes Browser Extension',
-    extensionShortName: 'Hermes Ext',
-    extensionDescription: 'Browser-native side panel for Hermes Agent. Connect web context to your local or remote Hermes runtime.',
-    openExtension: 'Open Hermes Browser Extension',
-    openSidebar: 'Open Hermes Browser Sidebar',
-  }),
-  'zh-CN': Object.freeze({
-    extensionName: 'Hermes 浏览器扩展',
-    extensionShortName: 'Hermes 扩展',
-    extensionDescription: 'Hermes Agent 的浏览器原生侧边栏，可将网页上下文连接到本地或远程 Hermes 运行时。',
-    openExtension: '打开 Hermes 浏览器扩展',
-    openSidebar: '打开 Hermes 浏览器侧边栏',
-  }),
+const NATIVE_MESSAGE_KEYS = Object.freeze({
+  extensionName: 'manifest.extension_name',
+  extensionShortName: 'manifest.extension_short_name',
+  extensionDescription: 'manifest.extension_description',
+  openExtension: 'manifest.open_extension',
+  openSidebar: 'manifest.open_sidebar',
 });
 
 function chromeMessageName(key) {
@@ -34,8 +25,9 @@ function stringMessage(entry) {
 }
 
 function serializeMessages(locale, runtimeMessages) {
-  const native = nativeCopy[locale.id];
-  if (!native) throw new Error(`Missing browser-native copy for ${locale.id}`);
+  const native = Object.fromEntries(Object.entries(NATIVE_MESSAGE_KEYS).map(([name, key]) => [name, stringMessage(runtimeMessages[key])]));
+  const missingNative = Object.entries(native).filter(([, message]) => !message).map(([name]) => name);
+  if (missingNative.length) throw new Error(`Missing browser-native copy for ${locale.id}: ${missingNative.join(', ')}`);
   const messages = {};
   for (const [name, message] of Object.entries(native)) {
     messages[name] = { message, description: `Hermes Browser ${name}` };
@@ -81,7 +73,11 @@ function contentBridgeSource() {
       return [englishMessage, typeof translated === 'string' ? translated : englishMessage];
     })),
   ]));
-  return `(() => {\n  const STORAGE_KEY = 'hermesBrowserLocale';\n  const catalogs = Object.freeze(${JSON.stringify(catalogs)});\n  let locale = 'en';\n  let storageRevision = 0;\n  const subscribers = new Set();\n\n  function normalize(value) {\n    const raw = String(value || '').replace(/_/g, '-');\n    let candidate = raw;\n    try { [candidate] = Intl.getCanonicalLocales(raw); } catch { return 'en'; }\n    const exact = Object.keys(catalogs).find((id) => id.toLowerCase() === candidate.toLowerCase());\n    if (exact) return exact;\n    const base = candidate.split('-')[0].toLowerCase();\n    return Object.keys(catalogs).find((id) => id.toLowerCase() === base) || 'en';\n  }\n\n  function translateText(value) {\n    if (typeof value !== 'string' || locale === 'en') return value;\n    const leading = value.match(/^\\s*/)?.[0] || '';\n    const trailing = value.match(/\\s*$/)?.[0] || '';\n    const end = trailing.length ? value.length - trailing.length : value.length;\n    const message = value.slice(leading.length, end);\n    return catalogs[locale]?.[message] ? leading + catalogs[locale][message] + trailing : value;\n  }\n\n  function storageChanged(changes, areaName) {\n    if (areaName && areaName !== 'local' || !changes?.[STORAGE_KEY]) return;\n    storageRevision += 1;\n    const next = normalize(changes[STORAGE_KEY].newValue);\n    if (next === locale) return;\n    locale = next;\n    for (const subscriber of subscribers) subscriber({ locale, translateText });\n  }\n\n  async function initialize() {\n    const startingRevision = storageRevision;\n    chrome.storage.onChanged.addListener(storageChanged);\n    const stored = await chrome.storage.local.get(STORAGE_KEY).catch(() => ({}));\n    if (storageRevision === startingRevision) locale = normalize(stored?.[STORAGE_KEY]);\n    return locale;\n  }\n\n  const ready = initialize();\n  globalThis.HermesI18nContent = Object.freeze({\n    getLocale: () => locale,\n    ready,\n    subscribe(subscriber) {\n      if (typeof subscriber !== 'function') return () => {};\n      subscribers.add(subscriber);\n      return () => subscribers.delete(subscriber);\n    },\n    translateText,\n  });\n})();\n`;
+  const aliases = Object.fromEntries(SUPPORTED_LOCALES.flatMap((locale) => locale.aliases.map((alias) => [
+    alias.replaceAll('_', '-').toLowerCase(),
+    locale.id,
+  ])));
+  return `(() => {\n  const STORAGE_KEY = 'hermesBrowserLocale';\n  const catalogs = Object.freeze(${JSON.stringify(catalogs)});\n  const aliases = Object.freeze(${JSON.stringify(aliases)});\n  let locale = 'en';\n  let storageRevision = 0;\n  const subscribers = new Set();\n\n  function normalize(value) {\n    const raw = String(value || '').replace(/_/g, '-');\n    let candidate = raw;\n    try { [candidate] = Intl.getCanonicalLocales(raw); } catch { return 'en'; }\n    const aliased = aliases[candidate.toLowerCase()];\n    if (aliased) return aliased;\n    const exact = Object.keys(catalogs).find((id) => id.toLowerCase() === candidate.toLowerCase());\n    if (exact) return exact;\n    const base = candidate.split('-')[0].toLowerCase();\n    return aliases[base] || Object.keys(catalogs).find((id) => id.toLowerCase() === base) || 'en';\n  }\n\n  function translateText(value) {\n    if (typeof value !== 'string' || locale === 'en') return value;\n    const leading = value.match(/^\\s*/)?.[0] || '';\n    const trailing = value.match(/\\s*$/)?.[0] || '';\n    const end = trailing.length ? value.length - trailing.length : value.length;\n    const message = value.slice(leading.length, end);\n    return catalogs[locale]?.[message] ? leading + catalogs[locale][message] + trailing : value;\n  }\n\n  function storageChanged(changes, areaName) {\n    if (areaName && areaName !== 'local' || !changes?.[STORAGE_KEY]) return;\n    storageRevision += 1;\n    const next = normalize(changes[STORAGE_KEY].newValue);\n    if (next === locale) return;\n    locale = next;\n    for (const subscriber of subscribers) subscriber({ locale, translateText });\n  }\n\n  async function initialize() {\n    const startingRevision = storageRevision;\n    chrome.storage.onChanged.addListener(storageChanged);\n    const stored = await chrome.storage.local.get(STORAGE_KEY).catch(() => ({}));\n    if (storageRevision === startingRevision) locale = normalize(stored?.[STORAGE_KEY]);\n    return locale;\n  }\n\n  const ready = initialize();\n  globalThis.HermesI18nContent = Object.freeze({\n    getLocale: () => locale,\n    ready,\n    subscribe(subscriber) {\n      if (typeof subscriber !== 'function') return () => {};\n      subscribers.add(subscriber);\n      return () => subscribers.delete(subscriber);\n    },\n    translateText,\n  });\n})();\n`;
 }
 
 const expectedContentBridge = contentBridgeSource();

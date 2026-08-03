@@ -31,6 +31,10 @@
     "message": "↻ 扫描代理",
     "description": "Runtime interface message agent.scan"
   },
+  "runtime_assist_options_heading": {
+    "message": "Hermes Assist 选项",
+    "description": "Runtime interface message assist.options_heading"
+  },
   "runtime_assist_routing_exact": {
     "message": "Hermes Assist 支持精确模型路由。每次生成草稿前都会验证所选提供商和模型。",
     "description": "Runtime interface message assist.routing.exact"
@@ -46,6 +50,58 @@
   "runtime_assist_routing_fallback_short": {
     "message": "精确路由不可用时回退到网关默认模型",
     "description": "Runtime interface message assist.routing.fallback_short"
+  },
+  "runtime_commands_click_or_enter": {
+    "message": "点击或按 Enter 运行。",
+    "description": "Runtime interface message commands.click_or_enter"
+  },
+  "runtime_commands_details": {
+    "message": "命令详情",
+    "description": "Runtime interface message commands.details"
+  },
+  "runtime_commands_insert_then_detail": {
+    "message": "点击插入，然后添加详细信息。",
+    "description": "Runtime interface message commands.insert_then_detail"
+  },
+  "runtime_commands_runs_immediately": {
+    "message": "立即基于当前浏览器上下文运行。",
+    "description": "Runtime interface message commands.runs_immediately"
+  },
+  "runtime_common_current": {
+    "message": "当前",
+    "description": "Runtime interface message common.current"
+  },
+  "runtime_common_follow": {
+    "message": "跟随",
+    "description": "Runtime interface message common.follow"
+  },
+  "runtime_common_live": {
+    "message": "实时",
+    "description": "Runtime interface message common.live"
+  },
+  "runtime_common_lock": {
+    "message": "锁定",
+    "description": "Runtime interface message common.lock"
+  },
+  "runtime_common_none": {
+    "message": "无",
+    "description": "Runtime interface message common.none"
+  },
+  "runtime_common_offline": {
+    "message": "离线",
+    "description": "Runtime interface message common.offline"
+  },
+  "runtime_common_online": {
+    "message": "在线",
+    "description": "Runtime interface message common.online"
+  },
+  "runtime_common_skills": {
+    "message": "技能",
+    "description": "Runtime interface message common.skills"
+  },
+  "runtime_common_using": {
+    "message": "正在使用",
+    "description": "Runtime interface message common.using"
   },
   "runtime_composer_attach": {
     "message": "＋ 附加",
@@ -79,13 +135,57 @@
     "message": "以进行手动设置。",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connection_not_configured_short": {
+    "message": "未配置",
+    "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connection_unknown_transport": {
+    "message": "未知传输方式",
+    "description": "Runtime interface message connection.unknown_transport"
+  },
   "runtime_context_attached_tab": {
     "message": "已附加标签页",
     "description": "Runtime interface message context.attached_tab"
   },
+  "runtime_context_browser_tab_handoff": {
+    "message": "浏览器标签页 {tabId} 交接",
+    "description": "Runtime interface message context.browser_tab_handoff"
+  },
   "runtime_context_follow_active_tab": {
     "message": "跟随活动标签页",
     "description": "Runtime interface message context.follow_active_tab"
+  },
+  "runtime_context_in": {
+    "message": "已加入",
+    "description": "Runtime interface message context.in"
+  },
+  "runtime_context_include_all_tabs": {
+    "message": "包含所有标签页",
+    "description": "Runtime interface message context.include_all_tabs"
+  },
+  "runtime_context_include_prompt_tab": {
+    "message": "将此标签页加入提示词标签页列表",
+    "description": "Runtime interface message context.include_prompt_tab"
+  },
+  "runtime_context_no_page": {
+    "message": "无页面",
+    "description": "Runtime interface message context.no_page"
+  },
+  "runtime_context_out": {
+    "message": "未加入",
+    "description": "Runtime interface message context.out"
+  },
+  "runtime_context_page_only": {
+    "message": "仅页面",
+    "description": "Runtime interface message context.page_only"
+  },
+  "runtime_context_pin_current_tab": {
+    "message": "固定当前标签页",
+    "description": "Runtime interface message context.pin_current_tab"
+  },
+  "runtime_context_pin_tab": {
+    "message": "固定：{title}",
+    "description": "Runtime interface message context.pin_tab"
   },
   "runtime_context_pinned_tab": {
     "message": "固定标签页",
@@ -95,17 +195,177 @@
     "message": "刷新页面上下文",
     "description": "Runtime interface message context.refresh_page"
   },
+  "runtime_context_remove_prompt_tab": {
+    "message": "从提示词标签页列表中移除此标签页",
+    "description": "Runtime interface message context.remove_prompt_tab"
+  },
   "runtime_context_tokens": {
     "message": "令牌",
     "description": "Runtime interface message context.tokens"
+  },
+  "runtime_context_unlock_pinned_tab": {
+    "message": "取消固定标签页",
+    "description": "Runtime interface message context.unlock_pinned_tab"
+  },
+  "runtime_diagnostic_api_authorization_health_detail": {
+    "message": "Health 已响应，但受保护的浏览器/模型路由需要 Authorization: Bearer ***。请在设置中粘贴 API key 或限定范围的浏览器令牌。",
+    "description": "Runtime interface message diagnostic.api_authorization_health_detail"
+  },
+  "runtime_diagnostic_api_authorization_title": {
+    "message": "API server 需要授权",
+    "description": "Runtime interface message diagnostic.api_authorization_title"
+  },
+  "runtime_diagnostic_api_rejected_detail": {
+    "message": "Hermes 拒绝了此请求。请检查 API key/浏览器令牌，并确保 URL 指向 API server，而不是 Dashboard SSO 端点。",
+    "description": "Runtime interface message diagnostic.api_rejected_detail"
+  },
+  "runtime_diagnostic_auth_detail": {
+    "message": "Hermes API 拒绝了请求。请检查设置中的浏览器 API 令牌，并确保它与运行中的 Hermes gateway 匹配。",
+    "description": "Runtime interface message diagnostic.auth_detail"
+  },
+  "runtime_diagnostic_auth_title": {
+    "message": "Hermes 身份验证失败",
+    "description": "Runtime interface message diagnostic.auth_title"
+  },
+  "runtime_diagnostic_auth_user": {
+    "message": "Hermes API 令牌被拒绝。请更新浏览器设置令牌，然后重新连接。",
+    "description": "Runtime interface message diagnostic.auth_user"
+  },
+  "runtime_diagnostic_cors_extension_detail": {
+    "message": "浏览器无法从此扩展源访问 Hermes API。请在远程主机的 API_SERVER_CORS_ORIGINS 中添加 chrome-extension://<extension-id>。",
+    "description": "Runtime interface message diagnostic.cors_extension_detail"
+  },
+  "runtime_diagnostic_cors_title": {
+    "message": "不允许此 CORS 源",
+    "description": "Runtime interface message diagnostic.cors_title"
+  },
+  "runtime_diagnostic_dashboard_url_detail": {
+    "message": "这看起来像 Hermes Dashboard SSO 端点。浏览器 API 模式需要 :8642 上的 Hermes API server URL，以及 Authorization: Bearer ***",
+    "description": "Runtime interface message diagnostic.dashboard_url_detail"
+  },
+  "runtime_diagnostic_dashboard_url_title": {
+    "message": "检测到 Dashboard URL",
+    "description": "Runtime interface message diagnostic.dashboard_url_title"
+  },
+  "runtime_diagnostic_gateway_error_title": {
+    "message": "Hermes gateway 错误",
+    "description": "Runtime interface message diagnostic.gateway_error_title"
+  },
+  "runtime_diagnostic_gateway_unreachable_detail": {
+    "message": "无法访问 Hermes gateway。",
+    "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
+  },
+  "runtime_diagnostic_network_detail": {
+    "message": "浏览器无法访问 Hermes API。请检查 gateway URL、防火墙/VPN 路由，以及此扩展的 CORS/源设置。",
+    "description": "Runtime interface message diagnostic.network_detail"
+  },
+  "runtime_diagnostic_network_title": {
+    "message": "Hermes 网络/CORS 故障",
+    "description": "Runtime interface message diagnostic.network_title"
+  },
+  "runtime_diagnostic_network_user": {
+    "message": "浏览器无法访问 Hermes，因为请求在网络/CORS 层失败。",
+    "description": "Runtime interface message diagnostic.network_user"
+  },
+  "runtime_diagnostic_remote_setup_title": {
+    "message": "远程设置问题",
+    "description": "Runtime interface message diagnostic.remote_setup_title"
+  },
+  "runtime_diagnostic_remote_unclassified_detail": {
+    "message": "Browser Extension 无法分类此远程 gateway 响应。",
+    "description": "Runtime interface message diagnostic.remote_unclassified_detail"
+  },
+  "runtime_diagnostic_route_detail": {
+    "message": "此运行时上无法使用 Hermes gateway 路由。请更新/重启 Hermes，或在可用时使用文档所述的回退模式。",
+    "description": "Runtime interface message diagnostic.route_detail"
+  },
+  "runtime_diagnostic_route_title": {
+    "message": "Hermes 路由不可用",
+    "description": "Runtime interface message diagnostic.route_title"
+  },
+  "runtime_diagnostic_route_user": {
+    "message": "此 Hermes 运行时尚未公开请求的浏览器路由。",
+    "description": "Runtime interface message diagnostic.route_user"
+  },
+  "runtime_diagnostic_runtime_exception_detail": {
+    "message": "Hermes API server 可访问，但上游 Hermes Agent 引发了运行时异常。这通常指向 computer_use/cua-driver 等可选运行时/工具问题，而不是浏览器授权、配对、CORS 或打包问题。",
+    "description": "Runtime interface message diagnostic.runtime_exception_detail"
+  },
+  "runtime_diagnostic_runtime_exception_title": {
+    "message": "Hermes 运行时异常",
+    "description": "Runtime interface message diagnostic.runtime_exception_title"
+  },
+  "runtime_diagnostic_runtime_exception_user": {
+    "message": "在上游 Hermes Agent 中检测到 Hermes gateway traceback。浏览器可保持连接；请检查 Hermes 日志，如果 traceback 中出现 computer_use/cua-driver，请运行 `hermes computer-use doctor`。",
+    "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
     "message": "界面",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_fulltab_handoff_opened_from": {
+    "message": "已从 {source} 打开。",
+    "description": "Runtime interface message fulltab.handoff.opened_from"
+  },
+  "runtime_fulltab_handoff_opened_from_tab": {
+    "message": "已从 {source} 打开，来源为浏览器标签页 {tabId}。",
+    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  },
+  "runtime_image_generated": {
+    "message": "生成的图像",
+    "description": "Runtime interface message image.generated"
+  },
+  "runtime_image_generated_preview": {
+    "message": "生成图像预览",
+    "description": "Runtime interface message image.generated_preview"
+  },
+  "runtime_image_generating": {
+    "message": "Hermes 正在生成图像",
+    "description": "Runtime interface message image.generating"
+  },
+  "runtime_image_meta_active": {
+    "message": "{aspectRatio} // 进行中",
+    "description": "Runtime interface message image.meta_active"
+  },
+  "runtime_image_phase_denoising": {
+    "message": "降噪",
+    "description": "Runtime interface message image.phase_denoising"
+  },
+  "runtime_image_phase_finalizing": {
+    "message": "完成处理",
+    "description": "Runtime interface message image.phase_finalizing"
+  },
+  "runtime_image_phase_latent": {
+    "message": "潜在空间",
+    "description": "Runtime interface message image.phase_latent"
+  },
+  "runtime_image_phase_resolving": {
+    "message": "解析",
+    "description": "Runtime interface message image.phase_resolving"
+  },
   "runtime_items_count": {
     "message": "{count} 项",
     "description": "Runtime interface message items.count"
+  },
+  "runtime_manifest_extension_description": {
+    "message": "Hermes Agent 的浏览器原生侧边栏，可将网页上下文连接到本地或远程 Hermes 运行时。",
+    "description": "Runtime interface message manifest.extension_description"
+  },
+  "runtime_manifest_extension_name": {
+    "message": "Hermes 浏览器扩展",
+    "description": "Runtime interface message manifest.extension_name"
+  },
+  "runtime_manifest_extension_short_name": {
+    "message": "Hermes 扩展",
+    "description": "Runtime interface message manifest.extension_short_name"
+  },
+  "runtime_manifest_open_extension": {
+    "message": "打开 Hermes 浏览器扩展",
+    "description": "Runtime interface message manifest.open_extension"
+  },
+  "runtime_manifest_open_sidebar": {
+    "message": "打开 Hermes 浏览器侧边栏",
+    "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_permissions_not_granted": {
     "message": "未授予麦克风权限。\n\n{error}\n\n请点击“打开麦克风设置”，将 Hermes Browser Extension 的麦克风权限设为“允许”，返回此页面后重试。",
@@ -115,17 +375,85 @@
     "message": "麦克风权限状态：{state}。如果 Chromium 显示为已阻止，请打开麦克风设置，并将 Hermes Browser Extension 的麦克风权限设为“允许”。",
     "description": "Runtime interface message permissions.state"
   },
+  "runtime_picker_pick_different": {
+    "message": "◈ 选择其他元素",
+    "description": "Runtime interface message picker.pick_different"
+  },
+  "runtime_picker_picking_element": {
+    "message": "◈ 正在选取元素...",
+    "description": "Runtime interface message picker.picking_element"
+  },
+  "runtime_profile_available": {
+    "message": "有 {count} 个配置文件可用",
+    "description": "Runtime interface message profile.available"
+  },
+  "runtime_profile_available_suffix": {
+    "message": "个配置文件可用",
+    "description": "Runtime interface message profile.available_suffix"
+  },
+  "runtime_profile_default": {
+    "message": "默认配置文件",
+    "description": "Runtime interface message profile.default"
+  },
   "runtime_profile_refresh": {
     "message": "↻ 刷新配置",
     "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_using": {
+    "message": "正在使用 {name}{model}{skills}",
+    "description": "Runtime interface message profile.using"
   },
   "runtime_run_stop": {
     "message": "■ 停止",
     "description": "Runtime interface message run.stop"
   },
+  "runtime_runtime_fast_mode_toggle": {
+    "message": "快速模式 {state}",
+    "description": "Runtime interface message runtime.fast_mode_toggle"
+  },
+  "runtime_runtime_model_control_title": {
+    "message": "{model} · {options}。更改模型和运行时选项。",
+    "description": "Runtime interface message runtime.model_control_title"
+  },
+  "runtime_runtime_options_heading": {
+    "message": "运行时选项",
+    "description": "Runtime interface message runtime.options_heading"
+  },
+  "runtime_runtime_options_saved": {
+    "message": "运行时选项：{summary}",
+    "description": "Runtime interface message runtime.options_saved"
+  },
+  "runtime_runtime_reasoning": {
+    "message": "{effort} 推理",
+    "description": "Runtime interface message runtime.reasoning"
+  },
+  "runtime_runtime_thinking_off": {
+    "message": "思考已关闭",
+    "description": "Runtime interface message runtime.thinking_off"
+  },
+  "runtime_runtime_thinking_toggle": {
+    "message": "思考 {state}",
+    "description": "Runtime interface message runtime.thinking_toggle"
+  },
+  "runtime_session_copy_id_for": {
+    "message": "复制会话 {title} 的 ID",
+    "description": "Runtime interface message session.copy_id_for"
+  },
   "runtime_session_new_extension_session": {
     "message": "＋ 新建 Hermes 浏览器扩展会话",
     "description": "Runtime interface message session.new_extension_session"
+  },
+  "runtime_session_opening": {
+    "message": "正在打开 {title}",
+    "description": "Runtime interface message session.opening"
+  },
+  "runtime_session_rail_save_failed": {
+    "message": "会话栏保存失败：{error}",
+    "description": "Runtime interface message session.rail_save_failed"
+  },
+  "runtime_session_rename_named": {
+    "message": "重命名会话 {title}",
+    "description": "Runtime interface message session.rename_named"
   },
   "runtime_settings_language_description": {
     "message": "选择界面语言。",
@@ -142,6 +470,38 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· 公开测试版 / 加载未打包扩展",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_status_connection_not_responding": {
+    "message": "{summary} 无响应。请启动 Hermes Desktop/Gateway，然后重新连接。",
+    "description": "Runtime interface message status.connection_not_responding"
+  },
+  "runtime_status_gmail_no_rendered": {
+    "message": "没有可用的已渲染邮件正文。",
+    "description": "Runtime interface message status.gmail_no_rendered"
+  },
+  "runtime_status_model_discovery_limited": {
+    "message": "Gateway 仅公开一个 /v1/models 条目，且 /api/sessions 不可用（{error}）。",
+    "description": "Runtime interface message status.model_discovery_limited"
+  },
+  "runtime_status_model_lock_failed_detail": {
+    "message": "{error}。未发送，因为 Hermes 可能会回退到全局模型。",
+    "description": "Runtime interface message status.model_lock_failed_detail"
+  },
+  "runtime_status_model_registry_fallback": {
+    "message": "正在回退到 /v1/models（{error}）。",
+    "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_context_restricted": {
+    "message": "{url} - 上下文受限",
+    "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_profile_selected_restart": {
+    "message": "已选择 {profile}。如果运行中的配置文件未立即更改，请重启 Hermes gateway。",
+    "description": "Runtime interface message status.profile_selected_restart"
+  },
+  "runtime_status_profile_switch_unavailable": {
+    "message": "{error}。浏览器将使用当前运行的 Hermes 配置文件。",
+    "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
     "message": "已完成 {complete} · 进行中 {active}",
@@ -456,7 +816,7 @@
     "description": "Runtime interface message ui.auto.name.skipped"
   },
   "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
-    "message": "此 Hermes 运行时不支持自动配对。请打开设置，使用网关地址和 API 令牌进行手动设置。",
+    "message": "此 Hermes 运行时不支持自动配对。请打开设置，使用网关 URL 和 API 令牌进行手动设置。",
     "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
   },
   "runtime_ui_automatic_replacement": {
@@ -728,7 +1088,7 @@
     "description": "Runtime interface message ui.click.any.element.on.the.page.press.esc.to.cancel"
   },
   "runtime_ui_click_connect_to_hermes_or_use_manual_setup_with_a_local_remote_5b53a482": {
-    "message": "点击连接到 Hermes，或使用手动设置并填写本地/远程网关地址和令牌。",
+    "message": "点击连接到 Hermes，或使用手动设置并填写本地/远程网关 URL 和令牌。",
     "description": "Runtime interface message ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482"
   },
   "runtime_ui_click_start_dictation_to_grant_microphone_access_and_record": {
@@ -1140,7 +1500,7 @@
     "description": "Runtime interface message ui.custom.model.source.unavailable"
   },
   "runtime_ui_custom_model_source_urls": {
-    "message": "自定义模型源地址",
+    "message": "自定义模型源 URL",
     "description": "Runtime interface message ui.custom.model.source.urls"
   },
   "runtime_ui_dark": {
@@ -1352,7 +1712,7 @@
     "description": "Runtime interface message ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd"
   },
   "runtime_ui_enter_your_dashboard_https_url_in_settings_and_sign_in_to_it_in_0b5f6bb9": {
-    "message": "在设置中输入仪表板 https 地址，并在浏览器标签页中登录。",
+    "message": "在设置中输入仪表板 https URL，并在浏览器标签页中登录。",
     "description": "Runtime interface message ui.enter.your.dashboard.https.url.in.settings.and.sign.in.to.it.in.0b5f6bb9"
   },
   "runtime_ui_entries": {
@@ -1496,7 +1856,7 @@
     "description": "Runtime interface message ui.gateway.default"
   },
   "runtime_ui_gateway_url": {
-    "message": "网关地址",
+    "message": "网关 URL",
     "description": "Runtime interface message ui.gateway.url"
   },
   "runtime_ui_generated_by_hermes": {
@@ -1578,10 +1938,6 @@
   "runtime_ui_hermes_browser_extension": {
     "message": "HERMES 浏览器扩展",
     "description": "Runtime interface message ui.hermes.browser.extension"
-  },
-  "runtime_ui_hermes_browser_extension_771953e6": {
-    "message": "Hermes 浏览器扩展",
-    "description": "Runtime interface message ui.hermes.browser.extension.771953e6"
   },
   "runtime_ui_hermes_browser_extension_connected": {
     "message": "Hermes 浏览器扩展已连接",
@@ -2923,10 +3279,6 @@
     "message": "响应",
     "description": "Runtime interface message ui.response"
   },
-  "runtime_ui_restart": {
-    "message": "重启",
-    "description": "Runtime interface message ui.restart"
-  },
   "runtime_ui_restricted_page": {
     "message": "受限页面",
     "description": "Runtime interface message ui.restricted.page"
@@ -3696,7 +4048,7 @@
     "description": "Runtime interface message ui.url"
   },
   "runtime_ui_url_0e2d9b07": {
-    "message": "地址",
+    "message": "URL",
     "description": "Runtime interface message ui.url.0e2d9b07"
   },
   "runtime_ui_url_19911671": {
@@ -3983,6 +4335,10 @@
     "message": "浏览器语音识别后备方案已停止。\n\n{error}",
     "description": "Runtime interface message voice.browser.stopped"
   },
+  "runtime_voice_capture_error": {
+    "message": "无法捕获麦克风音频。",
+    "description": "Runtime interface message voice.capture_error"
+  },
   "runtime_voice_permission_blocked": {
     "message": "Hermes Browser Extension 的麦克风权限已被阻止。\n\n请点击“打开麦克风设置”，将此扩展程序的麦克风权限设为“允许”，返回此页面后再次点击“开始听写”。\n\n{error}",
     "description": "Runtime interface message voice.permission_blocked"
@@ -3990,6 +4346,10 @@
   "runtime_voice_settings_load_failed": {
     "message": "无法加载 Hermes Browser 设置。\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
+  },
+  "runtime_voice_speech_recognition_error": {
+    "message": "语音识别错误",
+    "description": "Runtime interface message voice.speech_recognition_error"
   },
   "runtime_voice_start_failed": {
     "message": "无法开始语音听写。\n\n{error}",

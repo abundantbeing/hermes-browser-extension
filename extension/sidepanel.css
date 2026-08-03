@@ -3824,6 +3824,24 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   letter-spacing: 0.025em;
   text-transform: none;
 }
+:lang(zh-TW) [data-i18n],
+:lang(zh-TW) .task-stack-status,
+:lang(zh-TW) .task-stack-summary,
+:lang(ja) [data-i18n],
+:lang(ja) .task-stack-status,
+:lang(ja) .task-stack-summary,
+:lang(ko) [data-i18n],
+:lang(ko) .task-stack-status,
+:lang(ko) .task-stack-summary {
+  letter-spacing: 0.025em;
+  text-transform: none;
+}
+:lang(hi) [data-i18n],
+:lang(th) [data-i18n],
+:lang(ar) [data-i18n] {
+  letter-spacing: 0;
+  text-transform: none;
+}
 @media (max-width: 420px) {
   .language-row { grid-template-columns: 1fr; align-items: stretch; }
   .language-select { width: 100%; }
@@ -3916,6 +3934,22 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 .conn-mode-head { display: flex; align-items: center; gap: 6px; }
 .conn-mode-title { font-size: 11px; font-weight: 600; }
 .conn-mode-check { margin-left: auto; color: var(--hermes-accent); font-size: 11px; line-height: 1; }
+html[dir="rtl"] .settings-control-group-head small,
+html[dir="rtl"] .context-popover header strong,
+html[dir="rtl"] .context-popover dd,
+html[dir="rtl"] .context-receipt dd { text-align: start; }
+html[dir="rtl"] .conn-mode-check { margin-left: 0; margin-right: auto; }
+html[dir="rtl"] .composer-wake { right: auto; left: 67px; }
+html[dir="rtl"] .composer-mic { right: auto; left: 38px; }
+html[dir="rtl"] .composer-send,
+html[dir="rtl"] .composer-stop,
+html[dir="rtl"] .composer-steer { right: auto; left: 9px; }
+html[dir="rtl"] .composer-input-wrap.busy-draft .composer-stop,
+html[dir="rtl"] .composer-queue { right: auto; left: 38px; }
+html[dir="rtl"] .composer-input-wrap.busy-draft .composer-queue { right: auto; left: 9px; }
+html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer .composer-stop { right: auto; left: 67px; }
+html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer .composer-queue { right: auto; left: 38px; }
+html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-right: 12px; padding-left: 98px; }
 .conn-mode-card.selected .conn-mode-check::after { content: "\2713"; }
 .conn-mode-desc { font-size: 9.5px; line-height: 1.3; color: var(--hermes-muted); }
 #gatewayHelp { overflow-wrap: anywhere; }

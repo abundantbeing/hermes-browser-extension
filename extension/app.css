@@ -632,8 +632,40 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
   letter-spacing: 0.025em;
   text-transform: none;
 }
+:lang(zh-TW) [data-i18n],
+:lang(zh-TW) .task-stack-status,
+:lang(zh-TW) .task-stack-summary,
+:lang(ja) [data-i18n],
+:lang(ja) .task-stack-status,
+:lang(ja) .task-stack-summary,
+:lang(ko) [data-i18n],
+:lang(ko) .task-stack-status,
+:lang(ko) .task-stack-summary {
+  letter-spacing: 0.025em;
+  text-transform: none;
+}
+:lang(hi) [data-i18n],
+:lang(th) [data-i18n],
+:lang(ar) [data-i18n] {
+  letter-spacing: 0;
+  text-transform: none;
+}
 .web-settings-dialog .inline-assist-model-setting { display: grid; gap: 7px; color: var(--hermes-muted); font: 9px var(--hermes-font-mono); text-transform: uppercase; }
 .web-settings-dialog #inlineAssistModelButton { min-height: 39px; padding: 0 9px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--hermes-line-strong); border-radius: 0; background: transparent; color: var(--hermes-ink); font: inherit; text-align: left; text-transform: none; }
+.web-settings-dialog #inlineAssistModelButton { text-align: start; }
+html[dir="rtl"] .web-settings-dialog .language-select { padding-right: 10px; padding-left: 34px; }
+html[dir="rtl"] .model-provider-option,
+html[dir="rtl"] .model-choice,
+html[dir="rtl"] .composer-runtime-control,
+html[dir="rtl"] .attach-menu button,
+html[dir="rtl"] .theme-card { text-align: start; }
+html[dir="rtl"] .rail-nav-item small,
+html[dir="rtl"] .mobile-only { margin-left: 0; margin-right: auto; }
+@media (max-width: 1023px) {
+  html[dir="rtl"] .session-rail { left: auto; right: 0; transform: translateX(102%); box-shadow: -12px 0 0 rgba(var(--hermes-blue-rgb), 0.18); }
+  html[dir="rtl"] .web-shell.nav-open .session-rail { transform: translateX(0); }
+  html[dir="rtl"] .model-picker { left: auto; right: 16px; }
+}
 .web-settings-dialog #inlineAssistModelButton:disabled { opacity: 1; cursor: default; background: rgba(var(--hermes-blue-rgb), 0.035); }
 .web-settings-dialog #inlineAssistModelButton:disabled span:last-child { opacity: 0.35; }
 .web-settings-dialog #inlineAssistModelButton:focus-visible { outline: 2px solid var(--hermes-ink); outline-offset: -3px; }

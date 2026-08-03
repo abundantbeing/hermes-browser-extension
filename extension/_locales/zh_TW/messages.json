@@ -1,0 +1,4374 @@
+{
+  "extensionName": {
+    "message": "Hermes 瀏覽器擴充功能",
+    "description": "Hermes Browser extensionName"
+  },
+  "extensionShortName": {
+    "message": "Hermes 擴充",
+    "description": "Hermes Browser extensionShortName"
+  },
+  "extensionDescription": {
+    "message": "Hermes Agent 的瀏覽器原生側邊欄，可將網頁內容連線到您的本機或遠端 Hermes 執行環境。",
+    "description": "Hermes Browser extensionDescription"
+  },
+  "openExtension": {
+    "message": "開啟 Hermes 瀏覽器擴充功能",
+    "description": "Hermes Browser openExtension"
+  },
+  "openSidebar": {
+    "message": "開啟 Hermes 瀏覽器側邊欄",
+    "description": "Hermes Browser openSidebar"
+  },
+  "runtime_a11y_extension_controls": {
+    "message": "Hermes Browser 擴充功能控制項",
+    "description": "Runtime interface message a11y.extension_controls"
+  },
+  "runtime_a11y_extension_header": {
+    "message": "Hermes Browser 擴充功能標頭",
+    "description": "Runtime interface message a11y.extension_header"
+  },
+  "runtime_agent_scan": {
+    "message": "↻ 掃描代理程式",
+    "description": "Runtime interface message agent.scan"
+  },
+  "runtime_assist_options_heading": {
+    "message": "Hermes Assist 選項",
+    "description": "Runtime interface message assist.options_heading"
+  },
+  "runtime_assist_routing_exact": {
+    "message": "可使用精確的 Assist 模型路由。每次執行草稿前，都會驗證所選供應商和模型。",
+    "description": "Runtime interface message assist.routing.exact"
+  },
+  "runtime_assist_routing_exact_short": {
+    "message": "已確認精確模型路由",
+    "description": "Runtime interface message assist.routing.exact_short"
+  },
+  "runtime_assist_routing_fallback": {
+    "message": "您選擇的 Assist 模型會保留。此閘道器無法強制使用精確模型，因此 Assist 會使用閘道器預設值，並為每個後備結果加上標籤。",
+    "description": "Runtime interface message assist.routing.fallback"
+  },
+  "runtime_assist_routing_fallback_short": {
+    "message": "精確路由不可用時，會退回到閘道器預設值",
+    "description": "Runtime interface message assist.routing.fallback_short"
+  },
+  "runtime_commands_click_or_enter": {
+    "message": "按一下或按 Enter 執行。",
+    "description": "Runtime interface message commands.click_or_enter"
+  },
+  "runtime_commands_details": {
+    "message": "指令詳細資料",
+    "description": "Runtime interface message commands.details"
+  },
+  "runtime_commands_insert_then_detail": {
+    "message": "按一下即可插入，然後新增詳細資料。",
+    "description": "Runtime interface message commands.insert_then_detail"
+  },
+  "runtime_commands_runs_immediately": {
+    "message": "會立即針對目前的瀏覽器內容執行。",
+    "description": "Runtime interface message commands.runs_immediately"
+  },
+  "runtime_common_current": {
+    "message": "目前",
+    "description": "Runtime interface message common.current"
+  },
+  "runtime_common_follow": {
+    "message": "跟隨",
+    "description": "Runtime interface message common.follow"
+  },
+  "runtime_common_live": {
+    "message": "即時",
+    "description": "Runtime interface message common.live"
+  },
+  "runtime_common_lock": {
+    "message": "鎖定",
+    "description": "Runtime interface message common.lock"
+  },
+  "runtime_common_none": {
+    "message": "無",
+    "description": "Runtime interface message common.none"
+  },
+  "runtime_common_offline": {
+    "message": "離線",
+    "description": "Runtime interface message common.offline"
+  },
+  "runtime_common_online": {
+    "message": "線上",
+    "description": "Runtime interface message common.online"
+  },
+  "runtime_common_skills": {
+    "message": "技能",
+    "description": "Runtime interface message common.skills"
+  },
+  "runtime_common_using": {
+    "message": "正在使用",
+    "description": "Runtime interface message common.using"
+  },
+  "runtime_composer_attach": {
+    "message": "＋ 附加",
+    "description": "Runtime interface message composer.attach"
+  },
+  "runtime_composer_chat_label": {
+    "message": "交談",
+    "description": "Runtime interface message composer.chat_label"
+  },
+  "runtime_composer_connect_first": {
+    "message": "請先連線至 Hermes",
+    "description": "Runtime interface message composer.connect_first"
+  },
+  "runtime_composer_queue_message": {
+    "message": "將訊息加入佇列",
+    "description": "Runtime interface message composer.queue_message"
+  },
+  "runtime_connect_approve_or_paste": {
+    "message": "在可用時核准配對，或貼上",
+    "description": "Runtime interface message connect.approve_or_paste"
+  },
+  "runtime_connect_clone_build_load": {
+    "message": "複製此存放庫、完成建置，然後載入",
+    "description": "Runtime interface message connect.clone_build_load"
+  },
+  "runtime_connect_folder_unpacked": {
+    "message": "未封裝資料夾。",
+    "description": "Runtime interface message connect.folder_unpacked"
+  },
+  "runtime_connect_manual_setup_suffix": {
+    "message": "用於手動設定。",
+    "description": "Runtime interface message connect.manual_setup_suffix"
+  },
+  "runtime_connection_not_configured_short": {
+    "message": "未設定",
+    "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connection_unknown_transport": {
+    "message": "未知的傳輸",
+    "description": "Runtime interface message connection.unknown_transport"
+  },
+  "runtime_context_attached_tab": {
+    "message": "已附加的分頁",
+    "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_browser_tab_handoff": {
+    "message": "瀏覽器分頁 {tabId} 交接",
+    "description": "Runtime interface message context.browser_tab_handoff"
+  },
+  "runtime_context_follow_active_tab": {
+    "message": "跟隨活動分頁",
+    "description": "Runtime interface message context.follow_active_tab"
+  },
+  "runtime_context_in": {
+    "message": "輸入",
+    "description": "Runtime interface message context.in"
+  },
+  "runtime_context_include_all_tabs": {
+    "message": "包含所有分頁",
+    "description": "Runtime interface message context.include_all_tabs"
+  },
+  "runtime_context_include_prompt_tab": {
+    "message": "將此分頁納入提示分頁清單",
+    "description": "Runtime interface message context.include_prompt_tab"
+  },
+  "runtime_context_no_page": {
+    "message": "無頁面",
+    "description": "Runtime interface message context.no_page"
+  },
+  "runtime_context_out": {
+    "message": "輸出",
+    "description": "Runtime interface message context.out"
+  },
+  "runtime_context_page_only": {
+    "message": "僅頁面",
+    "description": "Runtime interface message context.page_only"
+  },
+  "runtime_context_pin_current_tab": {
+    "message": "固定目前分頁",
+    "description": "Runtime interface message context.pin_current_tab"
+  },
+  "runtime_context_pin_tab": {
+    "message": "固定：{title}",
+    "description": "Runtime interface message context.pin_tab"
+  },
+  "runtime_context_pinned_tab": {
+    "message": "已固定的分頁",
+    "description": "Runtime interface message context.pinned_tab"
+  },
+  "runtime_context_refresh_page": {
+    "message": "重新整理頁面內容",
+    "description": "Runtime interface message context.refresh_page"
+  },
+  "runtime_context_remove_prompt_tab": {
+    "message": "將此分頁從提示分頁清單中移除",
+    "description": "Runtime interface message context.remove_prompt_tab"
+  },
+  "runtime_context_tokens": {
+    "message": "權杖",
+    "description": "Runtime interface message context.tokens"
+  },
+  "runtime_context_unlock_pinned_tab": {
+    "message": "解除鎖定已固定的分頁",
+    "description": "Runtime interface message context.unlock_pinned_tab"
+  },
+  "runtime_diagnostic_api_authorization_health_detail": {
+    "message": "健康檢查已有回應，但受保護的 Browser/模型路由需要 Authorization: Bearer *** 請在「設定」中貼上 API 金鑰或範圍限定的瀏覽器權杖。",
+    "description": "Runtime interface message diagnostic.api_authorization_health_detail"
+  },
+  "runtime_diagnostic_api_authorization_title": {
+    "message": "API 伺服器需要授權",
+    "description": "Runtime interface message diagnostic.api_authorization_title"
+  },
+  "runtime_diagnostic_api_rejected_detail": {
+    "message": "Hermes 拒絕了此請求。請檢查 API 金鑰/瀏覽器權杖，並確認 URL 指向 API 伺服器，而不是 Dashboard SSO 端點。",
+    "description": "Runtime interface message diagnostic.api_rejected_detail"
+  },
+  "runtime_diagnostic_auth_detail": {
+    "message": "Hermes API 拒絕此請求。請在「設定」中檢查 Browser API 權杖，並確認它與正在執行的 Hermes 閘道器相符。",
+    "description": "Runtime interface message diagnostic.auth_detail"
+  },
+  "runtime_diagnostic_auth_title": {
+    "message": "Hermes 驗證失敗",
+    "description": "Runtime interface message diagnostic.auth_title"
+  },
+  "runtime_diagnostic_auth_user": {
+    "message": "Hermes API 權杖遭拒。請更新 Browser 設定權杖，然後重新連線。",
+    "description": "Runtime interface message diagnostic.auth_user"
+  },
+  "runtime_diagnostic_cors_extension_detail": {
+    "message": "Browser 無法從此擴充功能來源存取 Hermes API。請在遠端主機的 API_SERVER_CORS_ORIGINS 中加入 chrome-extension://<extension-id>。",
+    "description": "Runtime interface message diagnostic.cors_extension_detail"
+  },
+  "runtime_diagnostic_cors_title": {
+    "message": "CORS 來源不被允許",
+    "description": "Runtime interface message diagnostic.cors_title"
+  },
+  "runtime_diagnostic_dashboard_url_detail": {
+    "message": "這似乎是 Hermes Dashboard SSO 端點。Browser API 模式需要 :8642 上的 Hermes API 伺服器 URL，以及 Authorization: Bearer ***",
+    "description": "Runtime interface message diagnostic.dashboard_url_detail"
+  },
+  "runtime_diagnostic_dashboard_url_title": {
+    "message": "偵測到 Dashboard URL",
+    "description": "Runtime interface message diagnostic.dashboard_url_title"
+  },
+  "runtime_diagnostic_gateway_error_title": {
+    "message": "Hermes 閘道器錯誤",
+    "description": "Runtime interface message diagnostic.gateway_error_title"
+  },
+  "runtime_diagnostic_gateway_unreachable_detail": {
+    "message": "無法連線至 Hermes 閘道器。",
+    "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
+  },
+  "runtime_diagnostic_network_detail": {
+    "message": "Browser 無法連線至 Hermes API。請檢查此擴充功能的閘道器 URL、防火牆/VPN 路由及 CORS/來源設定。",
+    "description": "Runtime interface message diagnostic.network_detail"
+  },
+  "runtime_diagnostic_network_title": {
+    "message": "Hermes 網路/CORS 失敗",
+    "description": "Runtime interface message diagnostic.network_title"
+  },
+  "runtime_diagnostic_network_user": {
+    "message": "由於請求在網路/CORS 層失敗，Browser 無法連線至 Hermes。",
+    "description": "Runtime interface message diagnostic.network_user"
+  },
+  "runtime_diagnostic_remote_setup_title": {
+    "message": "遠端設定問題",
+    "description": "Runtime interface message diagnostic.remote_setup_title"
+  },
+  "runtime_diagnostic_remote_unclassified_detail": {
+    "message": "Browser Extension 無法分類此遠端閘道器回應。",
+    "description": "Runtime interface message diagnostic.remote_unclassified_detail"
+  },
+  "runtime_diagnostic_route_detail": {
+    "message": "此執行階段無法使用 Hermes 閘道器路由。請更新/重新啟動 Hermes，或在可用時使用文件所述的後備模式。",
+    "description": "Runtime interface message diagnostic.route_detail"
+  },
+  "runtime_diagnostic_route_title": {
+    "message": "Hermes 路由不可用",
+    "description": "Runtime interface message diagnostic.route_title"
+  },
+  "runtime_diagnostic_route_user": {
+    "message": "此 Hermes 執行階段尚未公開所要求的 Browser 路由。",
+    "description": "Runtime interface message diagnostic.route_user"
+  },
+  "runtime_diagnostic_runtime_exception_detail": {
+    "message": "Hermes API 伺服器可連線，但上游 Hermes Agent 引發了執行階段例外。這通常表示選用的執行階段/工具問題，例如 computer_use/cua-driver，而不是 Browser 驗證、配對、CORS 或封裝問題。",
+    "description": "Runtime interface message diagnostic.runtime_exception_detail"
+  },
+  "runtime_diagnostic_runtime_exception_title": {
+    "message": "Hermes 執行階段例外",
+    "description": "Runtime interface message diagnostic.runtime_exception_title"
+  },
+  "runtime_diagnostic_runtime_exception_user": {
+    "message": "在上游 Hermes Agent 內偵測到 Hermes 閘道器追蹤資訊。Browser 可保持連線；請檢查 Hermes 日誌，如追蹤資訊中出現 computer_use/cua-driver，請執行 `hermes computer-use doctor`。",
+    "description": "Runtime interface message diagnostic.runtime_exception_user"
+  },
+  "runtime_diagnostics_surface": {
+    "message": "介面",
+    "description": "Runtime interface message diagnostics.surface"
+  },
+  "runtime_fulltab_handoff_opened_from": {
+    "message": "從 {source} 開啟。",
+    "description": "Runtime interface message fulltab.handoff.opened_from"
+  },
+  "runtime_fulltab_handoff_opened_from_tab": {
+    "message": "從瀏覽器分頁 {tabId} 的 {source} 開啟。",
+    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  },
+  "runtime_image_generated": {
+    "message": "已產生的圖片",
+    "description": "Runtime interface message image.generated"
+  },
+  "runtime_image_generated_preview": {
+    "message": "已產生圖片的預覽",
+    "description": "Runtime interface message image.generated_preview"
+  },
+  "runtime_image_generating": {
+    "message": "Hermes 正在產生圖片",
+    "description": "Runtime interface message image.generating"
+  },
+  "runtime_image_meta_active": {
+    "message": "{aspectRatio} // 使用中",
+    "description": "Runtime interface message image.meta_active"
+  },
+  "runtime_image_phase_denoising": {
+    "message": "去噪中",
+    "description": "Runtime interface message image.phase_denoising"
+  },
+  "runtime_image_phase_finalizing": {
+    "message": "完成中",
+    "description": "Runtime interface message image.phase_finalizing"
+  },
+  "runtime_image_phase_latent": {
+    "message": "潛在欄位",
+    "description": "Runtime interface message image.phase_latent"
+  },
+  "runtime_image_phase_resolving": {
+    "message": "解析中",
+    "description": "Runtime interface message image.phase_resolving"
+  },
+  "runtime_items_count": {
+    "message": "{count} 個項目",
+    "description": "Runtime interface message items.count"
+  },
+  "runtime_manifest_extension_description": {
+    "message": "Hermes Agent 的瀏覽器原生側邊欄，可將網頁內容連線到您的本機或遠端 Hermes 執行環境。",
+    "description": "Runtime interface message manifest.extension_description"
+  },
+  "runtime_manifest_extension_name": {
+    "message": "Hermes 瀏覽器擴充功能",
+    "description": "Runtime interface message manifest.extension_name"
+  },
+  "runtime_manifest_extension_short_name": {
+    "message": "Hermes 擴充",
+    "description": "Runtime interface message manifest.extension_short_name"
+  },
+  "runtime_manifest_open_extension": {
+    "message": "開啟 Hermes 瀏覽器擴充功能",
+    "description": "Runtime interface message manifest.open_extension"
+  },
+  "runtime_manifest_open_sidebar": {
+    "message": "開啟 Hermes 瀏覽器側邊欄",
+    "description": "Runtime interface message manifest.open_sidebar"
+  },
+  "runtime_permissions_not_granted": {
+    "message": "未授予麥克風權限。\n\n{error}\n\n按一下「開啟麥克風設定」，將 Hermes Browser 擴充功能的麥克風設為「允許」，返回此處後再試一次。",
+    "description": "Runtime interface message permissions.not_granted"
+  },
+  "runtime_permissions_state": {
+    "message": "麥克風權限狀態：{state}。如果 Chromium 將其顯示為已封鎖，請開啟麥克風設定，並將 Hermes Browser 擴充功能的麥克風設為「允許」。",
+    "description": "Runtime interface message permissions.state"
+  },
+  "runtime_picker_pick_different": {
+    "message": "◈ 選取其他元素",
+    "description": "Runtime interface message picker.pick_different"
+  },
+  "runtime_picker_picking_element": {
+    "message": "◈ 正在選取元素...",
+    "description": "Runtime interface message picker.picking_element"
+  },
+  "runtime_profile_available": {
+    "message": "有 {count} 個設定檔可用",
+    "description": "Runtime interface message profile.available"
+  },
+  "runtime_profile_available_suffix": {
+    "message": "個設定檔可用",
+    "description": "Runtime interface message profile.available_suffix"
+  },
+  "runtime_profile_default": {
+    "message": "預設設定檔",
+    "description": "Runtime interface message profile.default"
+  },
+  "runtime_profile_refresh": {
+    "message": "↻ 重新整理設定檔",
+    "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_using": {
+    "message": "正在使用 {name}{model}{skills}",
+    "description": "Runtime interface message profile.using"
+  },
+  "runtime_run_stop": {
+    "message": "■ 停止",
+    "description": "Runtime interface message run.stop"
+  },
+  "runtime_runtime_fast_mode_toggle": {
+    "message": "快速模式 {state}",
+    "description": "Runtime interface message runtime.fast_mode_toggle"
+  },
+  "runtime_runtime_model_control_title": {
+    "message": "{model} · {options}。變更模型與執行階段選項。",
+    "description": "Runtime interface message runtime.model_control_title"
+  },
+  "runtime_runtime_options_heading": {
+    "message": "執行階段選項",
+    "description": "Runtime interface message runtime.options_heading"
+  },
+  "runtime_runtime_options_saved": {
+    "message": "執行階段選項：{summary}",
+    "description": "Runtime interface message runtime.options_saved"
+  },
+  "runtime_runtime_reasoning": {
+    "message": "{effort} 推理",
+    "description": "Runtime interface message runtime.reasoning"
+  },
+  "runtime_runtime_thinking_off": {
+    "message": "思考關閉",
+    "description": "Runtime interface message runtime.thinking_off"
+  },
+  "runtime_runtime_thinking_toggle": {
+    "message": "思考 {state}",
+    "description": "Runtime interface message runtime.thinking_toggle"
+  },
+  "runtime_session_copy_id_for": {
+    "message": "複製 {title} 的工作階段 ID",
+    "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_new_extension_session": {
+    "message": "＋ 新增 Hermes Browser 擴充功能工作階段",
+    "description": "Runtime interface message session.new_extension_session"
+  },
+  "runtime_session_opening": {
+    "message": "正在開啟 {title}",
+    "description": "Runtime interface message session.opening"
+  },
+  "runtime_session_rail_save_failed": {
+    "message": "工作階段欄儲存失敗：{error}",
+    "description": "Runtime interface message session.rail_save_failed"
+  },
+  "runtime_session_rename_named": {
+    "message": "重新命名工作階段 {title}",
+    "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_settings_language_description": {
+    "message": "選擇介面語言。",
+    "description": "Runtime interface message settings.language.description"
+  },
+  "runtime_settings_language_label": {
+    "message": "語言",
+    "description": "Runtime interface message settings.language.label"
+  },
+  "runtime_settings_local_api_setup_hint": {
+    "message": "本機 API 伺服器（預設為 http://127.0.0.1:8642）。請在下方貼上其金鑰。",
+    "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_public_alpha_load_unpacked": {
+    "message": "· 公開 Alpha / 載入未封裝擴充功能",
+    "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_status_connection_not_responding": {
+    "message": "{summary} 沒有回應。請啟動 Hermes Desktop/Gateway，然後重新連線。",
+    "description": "Runtime interface message status.connection_not_responding"
+  },
+  "runtime_status_gmail_no_rendered": {
+    "message": "沒有可用的已呈現訊息本文。",
+    "description": "Runtime interface message status.gmail_no_rendered"
+  },
+  "runtime_status_model_discovery_limited": {
+    "message": "閘道器僅公開一個 /v1/models 資料列，且 /api/sessions 不可用（{error}）。",
+    "description": "Runtime interface message status.model_discovery_limited"
+  },
+  "runtime_status_model_lock_failed_detail": {
+    "message": "{error}。由於 Hermes 可能會退回至全域模型，因此不會傳送。",
+    "description": "Runtime interface message status.model_lock_failed_detail"
+  },
+  "runtime_status_model_registry_fallback": {
+    "message": "正在退回至 /v1/models（{error}）。",
+    "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_context_restricted": {
+    "message": "{url} - 內容受限",
+    "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_profile_selected_restart": {
+    "message": "已選擇 {profile}。如果執行中的設定檔沒有立即變更，請重新啟動 Hermes 閘道器。",
+    "description": "Runtime interface message status.profile_selected_restart"
+  },
+  "runtime_status_profile_switch_unavailable": {
+    "message": "{error}。Browser 將使用目前執行中的 Hermes 設定檔。",
+    "description": "Runtime interface message status.profile_switch_unavailable"
+  },
+  "runtime_tasks_summary": {
+    "message": "已完成 {complete} · 進行中 {active}",
+    "description": "Runtime interface message tasks.summary"
+  },
+  "runtime_ui_0_complete_0_active": {
+    "message": "0 完成 · 0 進行中",
+    "description": "Runtime interface message ui.0.complete.0.active"
+  },
+  "runtime_ui_accept": {
+    "message": "接受",
+    "description": "Runtime interface message ui.accept"
+  },
+  "runtime_ui_access": {
+    "message": "存取",
+    "description": "Runtime interface message ui.access"
+  },
+  "runtime_ui_account": {
+    "message": "帳號",
+    "description": "Runtime interface message ui.account"
+  },
+  "runtime_ui_action": {
+    "message": "操作",
+    "description": "Runtime interface message ui.action"
+  },
+  "runtime_ui_actions": {
+    "message": "操作",
+    "description": "Runtime interface message ui.actions"
+  },
+  "runtime_ui_active": {
+    "message": "進行中",
+    "description": "Runtime interface message ui.active"
+  },
+  "runtime_ui_active_profile": {
+    "message": "作用中設定檔",
+    "description": "Runtime interface message ui.active.profile"
+  },
+  "runtime_ui_active_tab": {
+    "message": "活動分頁",
+    "description": "Runtime interface message ui.active.tab"
+  },
+  "runtime_ui_active_tab_2bc454c2": {
+    "message": "活動分頁",
+    "description": "Runtime interface message ui.active.tab.2bc454c2"
+  },
+  "runtime_ui_active_tab_ready": {
+    "message": "活動分頁就緒",
+    "description": "Runtime interface message ui.active.tab.ready"
+  },
+  "runtime_ui_active_tab_status": {
+    "message": "活動分頁狀態",
+    "description": "Runtime interface message ui.active.tab.status"
+  },
+  "runtime_ui_activity": {
+    "message": "活動",
+    "description": "Runtime interface message ui.activity"
+  },
+  "runtime_ui_add": {
+    "message": "新增",
+    "description": "Runtime interface message ui.add"
+  },
+  "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
+    "message": "傳送前在斜槓指令後新增指令。",
+    "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_adjust": {
+    "message": "調整",
+    "description": "Runtime interface message ui.adjust"
+  },
+  "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
+    "message": "調整側邊面板以獲得更好的可讀性，無需變更瀏覽器縮放。",
+    "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_agent": {
+    "message": "代理程式",
+    "description": "Runtime interface message ui.agent"
+  },
+  "runtime_ui_agent_5ce2e6f4": {
+    "message": "代理程式",
+    "description": "Runtime interface message ui.agent.5ce2e6f4"
+  },
+  "runtime_ui_agent_discovery_has_not_run_yet": {
+    "message": "代理程式探索尚未執行。",
+    "description": "Runtime interface message ui.agent.discovery.has.not.run.yet"
+  },
+  "runtime_ui_agent_host": {
+    "message": "代理程式主機",
+    "description": "Runtime interface message ui.agent.host"
+  },
+  "runtime_ui_agent_host_invalid": {
+    "message": "代理程式主機無效",
+    "description": "Runtime interface message ui.agent.host.invalid"
+  },
+  "runtime_ui_agent_ports_comma_separated_default_8642_8646": {
+    "message": "代理程式連線埠（逗號分隔，預設 8642-8646）",
+    "description": "Runtime interface message ui.agent.ports.comma.separated.default.8642.8646"
+  },
+  "runtime_ui_agent_ports_invalid": {
+    "message": "代理程式連線埠無效",
+    "description": "Runtime interface message ui.agent.ports.invalid"
+  },
+  "runtime_ui_agent_profile": {
+    "message": "代理程式設定",
+    "description": "Runtime interface message ui.agent.profile"
+  },
+  "runtime_ui_agent_scheme": {
+    "message": "代理程式通訊協定",
+    "description": "Runtime interface message ui.agent.scheme"
+  },
+  "runtime_ui_agent_scheme_invalid": {
+    "message": "代理程式通訊協定無效",
+    "description": "Runtime interface message ui.agent.scheme.invalid"
+  },
+  "runtime_ui_agent_settings_invalid": {
+    "message": "代理程式設定無效",
+    "description": "Runtime interface message ui.agent.settings.invalid"
+  },
+  "runtime_ui_agents_scanned": {
+    "message": "已掃描代理程式",
+    "description": "Runtime interface message ui.agents.scanned"
+  },
+  "runtime_ui_all": {
+    "message": "全部",
+    "description": "Runtime interface message ui.all"
+  },
+  "runtime_ui_allow": {
+    "message": "允許",
+    "description": "Runtime interface message ui.allow"
+  },
+  "runtime_ui_allow_hermes_microphone": {
+    "message": "允許 Hermes 麥克風",
+    "description": "Runtime interface message ui.allow.hermes.microphone"
+  },
+  "runtime_ui_allow_microphone": {
+    "message": "允許麥克風",
+    "description": "Runtime interface message ui.allow.microphone"
+  },
+  "runtime_ui_allow_microphone_access": {
+    "message": "允許麥克風存取",
+    "description": "Runtime interface message ui.allow.microphone.access"
+  },
+  "runtime_ui_already_connected": {
+    "message": "已連線",
+    "description": "Runtime interface message ui.already.connected"
+  },
+  "runtime_ui_always": {
+    "message": "一律",
+    "description": "Runtime interface message ui.always"
+  },
+  "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
+    "message": "瀏覽器中的常駐喚醒聆聽需要 Chromium 支援離屏文件。",
+    "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
+  },
+  "runtime_ui_answer": {
+    "message": "回答",
+    "description": "Runtime interface message ui.answer"
+  },
+  "runtime_ui_api": {
+    "message": "API",
+    "description": "Runtime interface message ui.api"
+  },
+  "runtime_ui_api_key_blank_dashboard": {
+    "message": "API 金鑰（留空 = 儀表板）",
+    "description": "Runtime interface message ui.api.key.blank.dashboard"
+  },
+  "runtime_ui_api_key_browser_token": {
+    "message": "API 金鑰 / 瀏覽器權杖",
+    "description": "Runtime interface message ui.api.key.browser.token"
+  },
+  "runtime_ui_api_server_key": {
+    "message": "API_SERVER_KEY",
+    "description": "Runtime interface message ui.api.server.key"
+  },
+  "runtime_ui_api_token": {
+    "message": "API 權杖",
+    "description": "Runtime interface message ui.api.token"
+  },
+  "runtime_ui_api_token_required": {
+    "message": "需要 API 權杖",
+    "description": "Runtime interface message ui.api.token.required"
+  },
+  "runtime_ui_app": {
+    "message": "應用程式",
+    "description": "Runtime interface message ui.app"
+  },
+  "runtime_ui_appearance": {
+    "message": "外觀",
+    "description": "Runtime interface message ui.appearance"
+  },
+  "runtime_ui_apply": {
+    "message": "套用",
+    "description": "Runtime interface message ui.apply"
+  },
+  "runtime_ui_apply_to_field": {
+    "message": "套用至欄位",
+    "description": "Runtime interface message ui.apply.to.field"
+  },
+  "runtime_ui_approval_opened_approve_hermes_browser_extension_then_return_here": {
+    "message": "已開啟核准視窗。請核准 Hermes Browser 擴充功能，然後返回此處。",
+    "description": "Runtime interface message ui.approval.opened.approve.hermes.browser.extension.then.return.here"
+  },
+  "runtime_ui_approve": {
+    "message": "核准",
+    "description": "Runtime interface message ui.approve"
+  },
+  "runtime_ui_artifacts": {
+    "message": "成品",
+    "description": "Runtime interface message ui.artifacts"
+  },
+  "runtime_ui_ask": {
+    "message": "詢問",
+    "description": "Runtime interface message ui.ask"
+  },
+  "runtime_ui_ask_about_any_page_hermes_sees_the_active_tab_selected_text_pag_b2a32c39": {
+    "message": "可詢問任何頁面。Hermes 可看到活動分頁、選取文字、頁面內容和開啟的分頁。",
+    "description": "Runtime interface message ui.ask.about.any.page.hermes.sees.the.active.tab.selected.text.pag.b2a32c39"
+  },
+  "runtime_ui_ask_every_time": {
+    "message": "每次都詢問",
+    "description": "Runtime interface message ui.ask.every.time"
+  },
+  "runtime_ui_ask_hermes": {
+    "message": "詢問 Hermes",
+    "description": "Runtime interface message ui.ask.hermes"
+  },
+  "runtime_ui_ask_hermes_36d55d5a": {
+    "message": "詢問 HERMES",
+    "description": "Runtime interface message ui.ask.hermes.36d55d5a"
+  },
+  "runtime_ui_ask_hermes_about_the_active_page_context": {
+    "message": "就活動頁面內容詢問 Hermes。",
+    "description": "Runtime interface message ui.ask.hermes.about.the.active.page.context"
+  },
+  "runtime_ui_ask_hermes_about_this_page": {
+    "message": "就此頁面詢問 Hermes...",
+    "description": "Runtime interface message ui.ask.hermes.about.this.page"
+  },
+  "runtime_ui_ask_hermes_about_this_selection": {
+    "message": "詢問 Hermes 關於此選取內容",
+    "description": "Runtime interface message ui.ask.hermes.about.this.selection"
+  },
+  "runtime_ui_ask_hermes_anything": {
+    "message": "向 Hermes 詢問任何問題…",
+    "description": "Runtime interface message ui.ask.hermes.anything"
+  },
+  "runtime_ui_assist_could_not_run": {
+    "message": "無法執行 Assist",
+    "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_options": {
+    "message": "Assist 選項",
+    "description": "Runtime interface message ui.assist.options"
+  },
+  "runtime_ui_assist_session_history": {
+    "message": "Assist 工作階段歷史",
+    "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assistant": {
+    "message": "助手",
+    "description": "Runtime interface message ui.assistant"
+  },
+  "runtime_ui_attach": {
+    "message": "附加",
+    "description": "Runtime interface message ui.attach"
+  },
+  "runtime_ui_attach_context": {
+    "message": "附加內容",
+    "description": "Runtime interface message ui.attach.context"
+  },
+  "runtime_ui_attach_files": {
+    "message": "附加檔案",
+    "description": "Runtime interface message ui.attach.files"
+  },
+  "runtime_ui_attach_the_active_signed_in_hermes_cloud_agent_tab_with_a_one_use_ticket": {
+    "message": "使用一次性票證附加目前已登入的 Hermes Cloud 代理程式分頁。",
+    "description": "Runtime interface message ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket"
+  },
+  "runtime_ui_attach_to_current_tab": {
+    "message": "附加到目前分頁",
+    "description": "Runtime interface message ui.attach.to.current.tab"
+  },
+  "runtime_ui_attachment": {
+    "message": "附件",
+    "description": "Runtime interface message ui.attachment"
+  },
+  "runtime_ui_attachments": {
+    "message": "附件",
+    "description": "Runtime interface message ui.attachments"
+  },
+  "runtime_ui_attribute": {
+    "message": "屬性",
+    "description": "Runtime interface message ui.attribute"
+  },
+  "runtime_ui_audio": {
+    "message": "音訊",
+    "description": "Runtime interface message ui.audio"
+  },
+  "runtime_ui_authorization": {
+    "message": "授權",
+    "description": "Runtime interface message ui.authorization"
+  },
+  "runtime_ui_auto": {
+    "message": "自動",
+    "description": "Runtime interface message ui.auto"
+  },
+  "runtime_ui_auto_name_browser_sessions": {
+    "message": "自動命名瀏覽器工作階段",
+    "description": "Runtime interface message ui.auto.name.browser.sessions"
+  },
+  "runtime_ui_auto_name_skipped": {
+    "message": "已跳過自動命名",
+    "description": "Runtime interface message ui.auto.name.skipped"
+  },
+  "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
+    "message": "此 Hermes 執行階段不支援自動配對。請開啟「設定」，使用閘道 URL 和 API 權杖進行手動設定。",
+    "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
+  },
+  "runtime_ui_automatic_replacement": {
+    "message": "自動取代",
+    "description": "Runtime interface message ui.automatic.replacement"
+  },
+  "runtime_ui_available": {
+    "message": "可用",
+    "description": "Runtime interface message ui.available"
+  },
+  "runtime_ui_available_7c62a142": {
+    "message": "可用",
+    "description": "Runtime interface message ui.available.7c62a142"
+  },
+  "runtime_ui_back": {
+    "message": "返回",
+    "description": "Runtime interface message ui.back"
+  },
+  "runtime_ui_back_to_actions": {
+    "message": "返回操作",
+    "description": "Runtime interface message ui.back.to.actions"
+  },
+  "runtime_ui_back_to_result": {
+    "message": "返回結果",
+    "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_background": {
+    "message": "背景",
+    "description": "Runtime interface message ui.background"
+  },
+  "runtime_ui_block": {
+    "message": "封鎖",
+    "description": "Runtime interface message ui.block"
+  },
+  "runtime_ui_blocked": {
+    "message": "已封鎖",
+    "description": "Runtime interface message ui.blocked"
+  },
+  "runtime_ui_blocked_fcc4cce1": {
+    "message": "已封鎖",
+    "description": "Runtime interface message ui.blocked.fcc4cce1"
+  },
+  "runtime_ui_body": {
+    "message": "本文",
+    "description": "Runtime interface message ui.body"
+  },
+  "runtime_ui_browser": {
+    "message": "瀏覽器",
+    "description": "Runtime interface message ui.browser"
+  },
+  "runtime_ui_browser_behavior": {
+    "message": "瀏覽器行為",
+    "description": "Runtime interface message ui.browser.behavior"
+  },
+  "runtime_ui_browser_extension": {
+    "message": "瀏覽器擴充功能",
+    "description": "Runtime interface message ui.browser.extension"
+  },
+  "runtime_ui_browser_extension_full_view": {
+    "message": "瀏覽器擴充功能完整檢視",
+    "description": "Runtime interface message ui.browser.extension.full.view"
+  },
+  "runtime_ui_browser_fallback_phrase": {
+    "message": "瀏覽器後備喚醒語",
+    "description": "Runtime interface message ui.browser.fallback.phrase"
+  },
+  "runtime_ui_browser_local_fallback": {
+    "message": "瀏覽器本機後備方案",
+    "description": "Runtime interface message ui.browser.local.fallback"
+  },
+  "runtime_ui_browser_update_review": {
+    "message": "瀏覽器更新審查",
+    "description": "Runtime interface message ui.browser.update.review"
+  },
+  "runtime_ui_browser_updates": {
+    "message": "瀏覽器更新",
+    "description": "Runtime interface message ui.browser.updates"
+  },
+  "runtime_ui_build": {
+    "message": "建置",
+    "description": "Runtime interface message ui.build"
+  },
+  "runtime_ui_building_redacted_diagnostics": {
+    "message": "正在建置脫敏診斷...",
+    "description": "Runtime interface message ui.building.redacted.diagnostics"
+  },
+  "runtime_ui_cache": {
+    "message": "快取",
+    "description": "Runtime interface message ui.cache"
+  },
+  "runtime_ui_cancel": {
+    "message": "取消",
+    "description": "Runtime interface message ui.cancel"
+  },
+  "runtime_ui_canonical_hermes_history_model_selection_tools_and_generated_me_c7aacd25": {
+    "message": "規範的 Hermes 歷史記錄、模型選擇、工具和產生的媒體會持續附加到此工作階段。",
+    "description": "Runtime interface message ui.canonical.hermes.history.model.selection.tools.and.generated.me.c7aacd25"
+  },
+  "runtime_ui_capabilities": {
+    "message": "功能",
+    "description": "Runtime interface message ui.capabilities"
+  },
+  "runtime_ui_capability": {
+    "message": "功能",
+    "description": "Runtime interface message ui.capability"
+  },
+  "runtime_ui_capture_visible_gmail_thread": {
+    "message": "擷取可見的 Gmail 執行緒",
+    "description": "Runtime interface message ui.capture.visible.gmail.thread"
+  },
+  "runtime_ui_card": {
+    "message": "卡片",
+    "description": "Runtime interface message ui.card"
+  },
+  "runtime_ui_category": {
+    "message": "分類",
+    "description": "Runtime interface message ui.category"
+  },
+  "runtime_ui_change": {
+    "message": "變更",
+    "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_model_and_runtime_options": {
+    "message": "變更模型和執行階段選項",
+    "description": "Runtime interface message ui.change.model.and.runtime.options"
+  },
+  "runtime_ui_changes_apply_instantly_and_are_saved_automatically": {
+    "message": "變更即時生效並自動儲存。",
+    "description": "Runtime interface message ui.changes.apply.instantly.and.are.saved.automatically"
+  },
+  "runtime_ui_channel": {
+    "message": "頻道",
+    "description": "Runtime interface message ui.channel"
+  },
+  "runtime_ui_channels": {
+    "message": "頻道",
+    "description": "Runtime interface message ui.channels"
+  },
+  "runtime_ui_chat_only": {
+    "message": "僅交談",
+    "description": "Runtime interface message ui.chat.only"
+  },
+  "runtime_ui_chat_only_3b155e99": {
+    "message": "💬 僅交談",
+    "description": "Runtime interface message ui.chat.only.3b155e99"
+  },
+  "runtime_ui_chat_only_mode_is_active_hermes_will_not_read_or_attach_browser_13891aa3": {
+    "message": "僅交談模式已啟用。Hermes 不會為本輪讀取或附加瀏覽器內容。",
+    "description": "Runtime interface message ui.chat.only.mode.is.active.hermes.will.not.read.or.attach.browser.13891aa3"
+  },
+  "runtime_ui_chats": {
+    "message": "交談",
+    "description": "Runtime interface message ui.chats"
+  },
+  "runtime_ui_check": {
+    "message": "檢查",
+    "description": "Runtime interface message ui.check"
+  },
+  "runtime_ui_checking": {
+    "message": "檢查中...",
+    "description": "Runtime interface message ui.checking"
+  },
+  "runtime_ui_checking_browser_main": {
+    "message": "正在檢查 Browser 主分支…",
+    "description": "Runtime interface message ui.checking.browser.main"
+  },
+  "runtime_ui_checking_hermes": {
+    "message": "正在檢查 Hermes",
+    "description": "Runtime interface message ui.checking.hermes"
+  },
+  "runtime_ui_checking_settings_gateway_capabilities_models_and_sessions": {
+    "message": "正在檢查設定、閘道器、功能、模型和工作階段。",
+    "description": "Runtime interface message ui.checking.settings.gateway.capabilities.models.and.sessions"
+  },
+  "runtime_ui_choose": {
+    "message": "選擇",
+    "description": "Runtime interface message ui.choose"
+  },
+  "runtime_ui_choose_9fd8325f": {
+    "message": "選擇",
+    "description": "Runtime interface message ui.choose.9fd8325f"
+  },
+  "runtime_ui_choose_another_tab_or_follow_the_active_tab": {
+    "message": "選擇其他分頁或跟隨活動分頁。",
+    "description": "Runtime interface message ui.choose.another.tab.or.follow.the.active.tab"
+  },
+  "runtime_ui_choose_any_available_model_for_hermes_assist_if_the_gateway_can_848c1645": {
+    "message": "為 Hermes Assist 選擇任何可用模型。如果閘道器無法強制執行該確切模型，Assist 會透明地退回到閘道器預設值並標記結果。",
+    "description": "Runtime interface message ui.choose.any.available.model.for.hermes.assist.if.the.gateway.can.848c1645"
+  },
+  "runtime_ui_choose_assist_model": {
+    "message": "選擇 Assist 模型",
+    "description": "Runtime interface message ui.choose.assist.model"
+  },
+  "runtime_ui_choose_hermes_model": {
+    "message": "選擇 Hermes 模型",
+    "description": "Runtime interface message ui.choose.hermes.model"
+  },
+  "runtime_ui_choose_model": {
+    "message": "選擇模型",
+    "description": "Runtime interface message ui.choose.model"
+  },
+  "runtime_ui_choose_the_brightness_treatment_for_this_web_workspace": {
+    "message": "選擇此 Web 工作區的亮度方案。",
+    "description": "Runtime interface message ui.choose.the.brightness.treatment.for.this.web.workspace"
+  },
+  "runtime_ui_choose_the_model_used_by_hermes_assist": {
+    "message": "選擇 Hermes Assist 使用的模型",
+    "description": "Runtime interface message ui.choose.the.model.used.by.hermes.assist"
+  },
+  "runtime_ui_choose_what_browser_context_is_allowed_into_each_prompt": {
+    "message": "選擇每個提示中允許包含哪些瀏覽器內容。",
+    "description": "Runtime interface message ui.choose.what.browser.context.is.allowed.into.each.prompt"
+  },
+  "runtime_ui_choose_where_ask_explain_improve_and_summarize_selection_tasks_run": {
+    "message": "選擇詢問、解釋、改進和摘要選取內容任務在何處執行。",
+    "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
+  },
+  "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
+    "message": "選擇此瀏覽器工作階段要連線至哪個 Hermes。",
+    "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
+  },
+  "runtime_ui_choose_where_to_send": {
+    "message": "選擇傳送位置",
+    "description": "Runtime interface message ui.choose.where.to.send"
+  },
+  "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
+    "message": "當本機閘道器提供設定檔時，選擇瀏覽器應使用哪個 Hermes Agent 設定檔。",
+    "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
+  },
+  "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
+    "message": "選擇 Hermes 讀取哪個分頁以及提示中顯示哪些開啟的分頁",
+    "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
+  },
+  "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
+    "message": "Chrome 可能會在擴充功能側邊面板中抑制麥克風提示。此暫時的擴充功能頁面會向 Chrome 要求麥克風存取權，然後帶您返回 Hermes 側邊面板。",
+    "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
+  },
+  "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
+    "message": "Chromium 可能會封鎖擴充功能側邊面板中的麥克風擷取。當 Hermes STT 可用時，此可見的擴充功能分頁會從相同的 Hermes 擴充功能來源錄音；若已連線的執行階段未提供音訊轉錄，則使用瀏覽器語音後備方案。",
+    "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_class": {
+    "message": "類",
+    "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clear": {
+    "message": "清除",
+    "description": "Runtime interface message ui.clear"
+  },
+  "runtime_ui_clear_picked_element": {
+    "message": "✕ 清除已拾取元素",
+    "description": "Runtime interface message ui.clear.picked.element"
+  },
+  "runtime_ui_clear_stored_token": {
+    "message": "清除已儲存的權杖",
+    "description": "Runtime interface message ui.clear.stored.token"
+  },
+  "runtime_ui_cli": {
+    "message": "CLI",
+    "description": "Runtime interface message ui.cli"
+  },
+  "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
+    "message": "按一下「允許麥克風」以要求存取權。Chromium 要求此請求必須從可見的擴充功能頁面提出。",
+    "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
+  },
+  "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
+    "message": "按一下頁面上的任意元素。按 Esc 取消。",
+    "description": "Runtime interface message ui.click.any.element.on.the.page.press.esc.to.cancel"
+  },
+  "runtime_ui_click_connect_to_hermes_or_use_manual_setup_with_a_local_remote_5b53a482": {
+    "message": "按一下連線到 Hermes，或使用手動設定並填寫本機/遠端閘道器URL和權杖。",
+    "description": "Runtime interface message ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482"
+  },
+  "runtime_ui_click_start_dictation_to_grant_microphone_access_and_record": {
+    "message": "按一下開始語音輸入以授予麥克風權限並錄音。",
+    "description": "Runtime interface message ui.click.start.dictation.to.grant.microphone.access.and.record"
+  },
+  "runtime_ui_click_the_mic_again_to_transcribe_with_hermes_speech_to_text": {
+    "message": "再次按一下麥克風，使用 Hermes 語音轉文字進行轉錄。",
+    "description": "Runtime interface message ui.click.the.mic.again.to.transcribe.with.hermes.speech.to.text"
+  },
+  "runtime_ui_client": {
+    "message": "用戶端",
+    "description": "Runtime interface message ui.client"
+  },
+  "runtime_ui_close": {
+    "message": "關閉",
+    "description": "Runtime interface message ui.close"
+  },
+  "runtime_ui_close_dbc87420": {
+    "message": "關閉",
+    "description": "Runtime interface message ui.close.dbc87420"
+  },
+  "runtime_ui_close_generated_image": {
+    "message": "關閉產生的影像",
+    "description": "Runtime interface message ui.close.generated.image"
+  },
+  "runtime_ui_close_hermes_assist": {
+    "message": "關閉 Hermes Assist",
+    "description": "Runtime interface message ui.close.hermes.assist"
+  },
+  "runtime_ui_close_model_picker": {
+    "message": "關閉模型選擇器",
+    "description": "Runtime interface message ui.close.model.picker"
+  },
+  "runtime_ui_close_settings": {
+    "message": "關閉設定",
+    "description": "Runtime interface message ui.close.settings"
+  },
+  "runtime_ui_close_update_review": {
+    "message": "關閉更新審查",
+    "description": "Runtime interface message ui.close.update.review"
+  },
+  "runtime_ui_cloud": {
+    "message": "雲",
+    "description": "Runtime interface message ui.cloud"
+  },
+  "runtime_ui_code": {
+    "message": "程式碼",
+    "description": "Runtime interface message ui.code"
+  },
+  "runtime_ui_collapse": {
+    "message": "收合",
+    "description": "Runtime interface message ui.collapse"
+  },
+  "runtime_ui_color": {
+    "message": "顏色",
+    "description": "Runtime interface message ui.color"
+  },
+  "runtime_ui_color_mode": {
+    "message": "顏色模式",
+    "description": "Runtime interface message ui.color.mode"
+  },
+  "runtime_ui_color_mode_588a2981": {
+    "message": "顏色模式",
+    "description": "Runtime interface message ui.color.mode.588a2981"
+  },
+  "runtime_ui_command": {
+    "message": "指令",
+    "description": "Runtime interface message ui.command"
+  },
+  "runtime_ui_commands": {
+    "message": "指令",
+    "description": "Runtime interface message ui.commands"
+  },
+  "runtime_ui_commands_45e5f3f7": {
+    "message": "指令",
+    "description": "Runtime interface message ui.commands.45e5f3f7"
+  },
+  "runtime_ui_commands_760ac2f0": {
+    "message": "/ 指令",
+    "description": "Runtime interface message ui.commands.760ac2f0"
+  },
+  "runtime_ui_commit": {
+    "message": "提交",
+    "description": "Runtime interface message ui.commit"
+  },
+  "runtime_ui_compact_context": {
+    "message": "壓縮內容",
+    "description": "Runtime interface message ui.compact.context"
+  },
+  "runtime_ui_compacting": {
+    "message": "正在壓縮…",
+    "description": "Runtime interface message ui.compacting"
+  },
+  "runtime_ui_comparing_this_loaded_build_with_the_public_github_repository": {
+    "message": "正在將目前載入的建置與公開 GitHub 存放庫進行比較。",
+    "description": "Runtime interface message ui.comparing.this.loaded.build.with.the.public.github.repository"
+  },
+  "runtime_ui_compatibility": {
+    "message": "相容性",
+    "description": "Runtime interface message ui.compatibility"
+  },
+  "runtime_ui_complete": {
+    "message": "完成",
+    "description": "Runtime interface message ui.complete"
+  },
+  "runtime_ui_complete_2c85a73c": {
+    "message": "完成",
+    "description": "Runtime interface message ui.complete.2c85a73c"
+  },
+  "runtime_ui_component": {
+    "message": "元件",
+    "description": "Runtime interface message ui.component"
+  },
+  "runtime_ui_config": {
+    "message": "設定",
+    "description": "Runtime interface message ui.config"
+  },
+  "runtime_ui_configuration": {
+    "message": "設定",
+    "description": "Runtime interface message ui.configuration"
+  },
+  "runtime_ui_configure": {
+    "message": "設定",
+    "description": "Runtime interface message ui.configure"
+  },
+  "runtime_ui_confirm": {
+    "message": "確認",
+    "description": "Runtime interface message ui.confirm"
+  },
+  "runtime_ui_connect_first": {
+    "message": "請先連線",
+    "description": "Runtime interface message ui.connect.first"
+  },
+  "runtime_ui_connect_hermes": {
+    "message": "連線 Hermes",
+    "description": "Runtime interface message ui.connect.hermes"
+  },
+  "runtime_ui_connect_or_test_your_gateway_to_see_supported_features": {
+    "message": "連線或測試您的閘道器以檢視支援的功能。",
+    "description": "Runtime interface message ui.connect.or.test.your.gateway.to.see.supported.features"
+  },
+  "runtime_ui_connect_to_hermes": {
+    "message": "連線到 Hermes",
+    "description": "Runtime interface message ui.connect.to.hermes"
+  },
+  "runtime_ui_connect_to_hermes_then_send_the_prepared_update_request": {
+    "message": "連線至 Hermes，然後傳送準備好的更新請求。",
+    "description": "Runtime interface message ui.connect.to.hermes.then.send.the.prepared.update.request"
+  },
+  "runtime_ui_connected": {
+    "message": "已連線",
+    "description": "Runtime interface message ui.connected"
+  },
+  "runtime_ui_connected_agent": {
+    "message": "已連線的代理程式",
+    "description": "Runtime interface message ui.connected.agent"
+  },
+  "runtime_ui_connected_agent_1e63a585": {
+    "message": "已連線的代理程式",
+    "description": "Runtime interface message ui.connected.agent.1e63a585"
+  },
+  "runtime_ui_connected_to_hermes_this_draft_will_create_a_new_hermes_web_ses_59e2faf2": {
+    "message": "已連線到 Hermes。傳送時此草稿將建立一個新的 Hermes Web 工作階段。",
+    "description": "Runtime interface message ui.connected.to.hermes.this.draft.will.create.a.new.hermes.web.ses.59e2faf2"
+  },
+  "runtime_ui_connected_to_hermes_you_can_start_chatting_with_page_context": {
+    "message": "已連線到 Hermes。您可以帶著頁面內容開始交談。",
+    "description": "Runtime interface message ui.connected.to.hermes.you.can.start.chatting.with.page.context"
+  },
+  "runtime_ui_connecting": {
+    "message": "連線中...",
+    "description": "Runtime interface message ui.connecting"
+  },
+  "runtime_ui_connecting_c1f3b71f": {
+    "message": "連線中",
+    "description": "Runtime interface message ui.connecting.c1f3b71f"
+  },
+  "runtime_ui_connection": {
+    "message": "連線",
+    "description": "Runtime interface message ui.connection"
+  },
+  "runtime_ui_connection_detail": {
+    "message": "連線詳情",
+    "description": "Runtime interface message ui.connection.detail"
+  },
+  "runtime_ui_connection_details": {
+    "message": "連線詳情",
+    "description": "Runtime interface message ui.connection.details"
+  },
+  "runtime_ui_connection_mode": {
+    "message": "連線模式",
+    "description": "Runtime interface message ui.connection.mode"
+  },
+  "runtime_ui_connection_not_configured": {
+    "message": "尚未設定連線",
+    "description": "Runtime interface message ui.connection.not.configured"
+  },
+  "runtime_ui_connection_security": {
+    "message": "連線安全",
+    "description": "Runtime interface message ui.connection.security"
+  },
+  "runtime_ui_connection_truth": {
+    "message": "連線狀態",
+    "description": "Runtime interface message ui.connection.truth"
+  },
+  "runtime_ui_content": {
+    "message": "內容",
+    "description": "Runtime interface message ui.content"
+  },
+  "runtime_ui_context": {
+    "message": "內容",
+    "description": "Runtime interface message ui.context"
+  },
+  "runtime_ui_context_compaction_failed": {
+    "message": "內容壓縮失敗",
+    "description": "Runtime interface message ui.context.compaction.failed"
+  },
+  "runtime_ui_context_compaction_unavailable": {
+    "message": "內容壓縮不可用",
+    "description": "Runtime interface message ui.context.compaction.unavailable"
+  },
+  "runtime_ui_context_refresh_unavailable": {
+    "message": "內容重新整理不可用",
+    "description": "Runtime interface message ui.context.refresh.unavailable"
+  },
+  "runtime_ui_context_window": {
+    "message": "內容視窗",
+    "description": "Runtime interface message ui.context.window"
+  },
+  "runtime_ui_context_window_details": {
+    "message": "內容視窗詳情",
+    "description": "Runtime interface message ui.context.window.details"
+  },
+  "runtime_ui_continue": {
+    "message": "繼續",
+    "description": "Runtime interface message ui.continue"
+  },
+  "runtime_ui_continue_current_chat": {
+    "message": "繼續目前交談",
+    "description": "Runtime interface message ui.continue.current.chat"
+  },
+  "runtime_ui_continue_here": {
+    "message": "在此繼續",
+    "description": "Runtime interface message ui.continue.here"
+  },
+  "runtime_ui_control_the_field_launcher_and_where_assist_runs_by_default": {
+    "message": "控制欄位啟動器以及 Assist 預設執行位置。",
+    "description": "Runtime interface message ui.control.the.field.launcher.and.where.assist.runs.by.default"
+  },
+  "runtime_ui_conversation": {
+    "message": "對話",
+    "description": "Runtime interface message ui.conversation"
+  },
+  "runtime_ui_cookie": {
+    "message": "Cookie",
+    "description": "Runtime interface message ui.cookie"
+  },
+  "runtime_ui_copied": {
+    "message": "已複製",
+    "description": "Runtime interface message ui.copied"
+  },
+  "runtime_ui_copied_redacted_diagnostics_paste_them_into_the_github_issue_or_064866e3": {
+    "message": "已複製脫敏診斷。將其貼上到 GitHub issue 或支援帖中。",
+    "description": "Runtime interface message ui.copied.redacted.diagnostics.paste.them.into.the.github.issue.or.064866e3"
+  },
+  "runtime_ui_copied_result_to_clipboard": {
+    "message": "結果已複製到剪貼簿",
+    "description": "Runtime interface message ui.copied.result.to.clipboard"
+  },
+  "runtime_ui_copy": {
+    "message": "複製",
+    "description": "Runtime interface message ui.copy"
+  },
+  "runtime_ui_copy_a_redacted_compatibility_report_it_excludes_tokens_cookies_ab0019e3": {
+    "message": "複製脫敏的相容性報告。它排除權杖、Cookie、頁面文字、選取文字、分頁標題和完整 URL。",
+    "description": "Runtime interface message ui.copy.a.redacted.compatibility.report.it.excludes.tokens.cookies.ab0019e3"
+  },
+  "runtime_ui_copy_blocked_select_preview_manually": {
+    "message": "複製已封鎖 · 請手動選取預覽內容",
+    "description": "Runtime interface message ui.copy.blocked.select.preview.manually"
+  },
+  "runtime_ui_copy_diagnostics": {
+    "message": "複製診斷",
+    "description": "Runtime interface message ui.copy.diagnostics"
+  },
+  "runtime_ui_copy_failed": {
+    "message": "複製失敗",
+    "description": "Runtime interface message ui.copy.failed"
+  },
+  "runtime_ui_copy_redacted_diagnostics": {
+    "message": "複製脫敏診斷",
+    "description": "Runtime interface message ui.copy.redacted.diagnostics"
+  },
+  "runtime_ui_copy_server_env": {
+    "message": "複製伺服器環境變數",
+    "description": "Runtime interface message ui.copy.server.env"
+  },
+  "runtime_ui_copy_session_id": {
+    "message": "複製工作階段 ID",
+    "description": "Runtime interface message ui.copy.session.id"
+  },
+  "runtime_ui_copy_to_use": {
+    "message": "複製以供使用",
+    "description": "Runtime interface message ui.copy.to.use"
+  },
+  "runtime_ui_copy_unavailable": {
+    "message": "複製不可用",
+    "description": "Runtime interface message ui.copy.unavailable"
+  },
+  "runtime_ui_copying": {
+    "message": "複製中...",
+    "description": "Runtime interface message ui.copying"
+  },
+  "runtime_ui_could_not_change_session": {
+    "message": "無法變更工作階段",
+    "description": "Runtime interface message ui.could.not.change.session"
+  },
+  "runtime_ui_could_not_clear_token": {
+    "message": "無法清除權杖",
+    "description": "Runtime interface message ui.could.not.clear.token"
+  },
+  "runtime_ui_could_not_copy_diagnostics_check_browser_clipboard_permissions": {
+    "message": "無法複製診斷。請檢查瀏覽器剪貼簿權限。",
+    "description": "Runtime interface message ui.could.not.copy.diagnostics.check.browser.clipboard.permissions"
+  },
+  "runtime_ui_could_not_copy_env_block": {
+    "message": "無法複製環境變數塊",
+    "description": "Runtime interface message ui.could.not.copy.env.block"
+  },
+  "runtime_ui_could_not_create_session": {
+    "message": "無法建立工作階段",
+    "description": "Runtime interface message ui.could.not.create.session"
+  },
+  "runtime_ui_could_not_load_this_session": {
+    "message": "無法載入此工作階段",
+    "description": "Runtime interface message ui.could.not.load.this.session"
+  },
+  "runtime_ui_could_not_migrate_browser_session": {
+    "message": "無法遷移瀏覽器工作階段",
+    "description": "Runtime interface message ui.could.not.migrate.browser.session"
+  },
+  "runtime_ui_could_not_open_full_view": {
+    "message": "無法開啟完整檢視",
+    "description": "Runtime interface message ui.could.not.open.full.view"
+  },
+  "runtime_ui_could_not_open_session": {
+    "message": "無法開啟工作階段",
+    "description": "Runtime interface message ui.could.not.open.session"
+  },
+  "runtime_ui_could_not_pin_active_tab": {
+    "message": "無法固定活動分頁",
+    "description": "Runtime interface message ui.could.not.pin.active.tab"
+  },
+  "runtime_ui_could_not_pin_tab": {
+    "message": "無法固定分頁",
+    "description": "Runtime interface message ui.could.not.pin.tab"
+  },
+  "runtime_ui_could_not_rename_session": {
+    "message": "無法重新命名工作階段",
+    "description": "Runtime interface message ui.could.not.rename.session"
+  },
+  "runtime_ui_could_not_start_draft": {
+    "message": "無法啟動草稿",
+    "description": "Runtime interface message ui.could.not.start.draft"
+  },
+  "runtime_ui_could_not_start_hermes_session": {
+    "message": "無法啟動 Hermes 工作階段",
+    "description": "Runtime interface message ui.could.not.start.hermes.session"
+  },
+  "runtime_ui_could_not_switch_to_chat_only": {
+    "message": "無法切換到僅交談模式",
+    "description": "Runtime interface message ui.could.not.switch.to.chat.only"
+  },
+  "runtime_ui_could_not_unlock_tab_scope": {
+    "message": "無法解鎖分頁範圍",
+    "description": "Runtime interface message ui.could.not.unlock.tab.scope"
+  },
+  "runtime_ui_create": {
+    "message": "建立",
+    "description": "Runtime interface message ui.create"
+  },
+  "runtime_ui_create_and_open_a_new_hermes_assist_session": {
+    "message": "建立並開啟新的 Hermes Assist 工作階段。",
+    "description": "Runtime interface message ui.create.and.open.a.new.hermes.assist.session"
+  },
+  "runtime_ui_current": {
+    "message": "目前",
+    "description": "Runtime interface message ui.current"
+  },
+  "runtime_ui_current_session": {
+    "message": "目前工作階段",
+    "description": "Runtime interface message ui.current.session"
+  },
+  "runtime_ui_custom": {
+    "message": "自訂",
+    "description": "Runtime interface message ui.custom"
+  },
+  "runtime_ui_custom_hermes_assist_instruction": {
+    "message": "自訂 Hermes Assist 指示",
+    "description": "Runtime interface message ui.custom.hermes.assist.instruction"
+  },
+  "runtime_ui_custom_model_source_is_discovery_only": {
+    "message": "自訂模型源僅用於探索",
+    "description": "Runtime interface message ui.custom.model.source.is.discovery.only"
+  },
+  "runtime_ui_custom_model_source_unavailable": {
+    "message": "自訂模型源不可用",
+    "description": "Runtime interface message ui.custom.model.source.unavailable"
+  },
+  "runtime_ui_custom_model_source_urls": {
+    "message": "自訂模型來源 URL",
+    "description": "Runtime interface message ui.custom.model.source.urls"
+  },
+  "runtime_ui_dark": {
+    "message": "☾ 深色",
+    "description": "Runtime interface message ui.dark"
+  },
+  "runtime_ui_dashboard_websocket": {
+    "message": "儀表板 WebSocket",
+    "description": "Runtime interface message ui.dashboard.websocket"
+  },
+  "runtime_ui_dashboard_websocket_does_not_expose_an_existing_session_model_o_bb6f12cd": {
+    "message": "儀表板 WebSocket 尚不支援更新現有工作階段的模型選項。這些選項將套用至下一個新工作階段。",
+    "description": "Runtime interface message ui.dashboard.websocket.does.not.expose.an.existing.session.model.o.bb6f12cd"
+  },
+  "runtime_ui_data": {
+    "message": "資料",
+    "description": "Runtime interface message ui.data"
+  },
+  "runtime_ui_date": {
+    "message": "日期",
+    "description": "Runtime interface message ui.date"
+  },
+  "runtime_ui_default": {
+    "message": "預設",
+    "description": "Runtime interface message ui.default"
+  },
+  "runtime_ui_default_right_click_route": {
+    "message": "預設右鍵操作傳送位置",
+    "description": "Runtime interface message ui.default.right.click.route"
+  },
+  "runtime_ui_default_session_route": {
+    "message": "預設工作階段傳送位置",
+    "description": "Runtime interface message ui.default.session.route"
+  },
+  "runtime_ui_delete": {
+    "message": "刪除",
+    "description": "Runtime interface message ui.delete"
+  },
+  "runtime_ui_delete_after_the_draft_returns": {
+    "message": "草稿返回後刪除",
+    "description": "Runtime interface message ui.delete.after.the.draft.returns"
+  },
+  "runtime_ui_description": {
+    "message": "描述",
+    "description": "Runtime interface message ui.description"
+  },
+  "runtime_ui_detail": {
+    "message": "詳情",
+    "description": "Runtime interface message ui.detail"
+  },
+  "runtime_ui_details": {
+    "message": "詳情",
+    "description": "Runtime interface message ui.details"
+  },
+  "runtime_ui_detect_from_hermes_gateway": {
+    "message": "從 Hermes 閘道器偵測",
+    "description": "Runtime interface message ui.detect.from.hermes.gateway"
+  },
+  "runtime_ui_detecting_runtime": {
+    "message": "正在偵測執行階段",
+    "description": "Runtime interface message ui.detecting.runtime"
+  },
+  "runtime_ui_device": {
+    "message": "裝置",
+    "description": "Runtime interface message ui.device"
+  },
+  "runtime_ui_devices": {
+    "message": "裝置",
+    "description": "Runtime interface message ui.devices"
+  },
+  "runtime_ui_diagnostics": {
+    "message": "診斷",
+    "description": "Runtime interface message ui.diagnostics"
+  },
+  "runtime_ui_diagnostics_copied": {
+    "message": "診斷已複製",
+    "description": "Runtime interface message ui.diagnostics.copied"
+  },
+  "runtime_ui_diagnostics_copy_failed": {
+    "message": "診斷複製失敗",
+    "description": "Runtime interface message ui.diagnostics.copy.failed"
+  },
+  "runtime_ui_dialog": {
+    "message": "對話方塊",
+    "description": "Runtime interface message ui.dialog"
+  },
+  "runtime_ui_discovered_hermes_agents": {
+    "message": "已探索的 Hermes 代理程式",
+    "description": "Runtime interface message ui.discovered.hermes.agents"
+  },
+  "runtime_ui_dismiss_notification": {
+    "message": "關閉通知",
+    "description": "Runtime interface message ui.dismiss.notification"
+  },
+  "runtime_ui_display": {
+    "message": "顯示",
+    "description": "Runtime interface message ui.display"
+  },
+  "runtime_ui_dist": {
+    "message": "dist/",
+    "description": "Runtime interface message ui.dist"
+  },
+  "runtime_ui_download": {
+    "message": "下載",
+    "description": "Runtime interface message ui.download"
+  },
+  "runtime_ui_downloading_the_browser_language_pack_once_so_voice_dictation_c_b476f51c": {
+    "message": "下載瀏覽器語言包一次，以便語音輸入可在本機執行。",
+    "description": "Runtime interface message ui.downloading.the.browser.language.pack.once.so.voice.dictation.c.b476f51c"
+  },
+  "runtime_ui_draft_and_input_values_stayed_excluded": {
+    "message": "草稿和輸入值會持續排除。",
+    "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
+  },
+  "runtime_ui_draft_ready_for_review": {
+    "message": "草稿已準備好審查",
+    "description": "Runtime interface message ui.draft.ready.for.review"
+  },
+  "runtime_ui_draft_ready_still_your_decision": {
+    "message": "草稿已準備好。最終決定仍由您做出。",
+    "description": "Runtime interface message ui.draft.ready.still.your.decision"
+  },
+  "runtime_ui_draft_ready_this_managed_editor_stays_untouched": {
+    "message": "草稿已準備好 · 此受管理的編輯器不會變更",
+    "description": "Runtime interface message ui.draft.ready.this.managed.editor.stays.untouched"
+  },
+  "runtime_ui_draft_reply_with_hermes": {
+    "message": "使用 Hermes 起草回覆",
+    "description": "Runtime interface message ui.draft.reply.with.hermes"
+  },
+  "runtime_ui_draft_saved_when_sent": {
+    "message": "草稿 · 傳送時儲存",
+    "description": "Runtime interface message ui.draft.saved.when.sent"
+  },
+  "runtime_ui_drop_files_to_attach": {
+    "message": "拖放檔案以附加",
+    "description": "Runtime interface message ui.drop.files.to.attach"
+  },
+  "runtime_ui_edit": {
+    "message": "編輯",
+    "description": "Runtime interface message ui.edit"
+  },
+  "runtime_ui_edit_models": {
+    "message": "⚙ 編輯模型...",
+    "description": "Runtime interface message ui.edit.models"
+  },
+  "runtime_ui_edit_models_in_hermes_desktop": {
+    "message": "在 Hermes Desktop 中編輯模型",
+    "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
+  },
+  "runtime_ui_element": {
+    "message": "元素",
+    "description": "Runtime interface message ui.element"
+  },
+  "runtime_ui_element_pick_cancelled": {
+    "message": "元素拾取已取消",
+    "description": "Runtime interface message ui.element.pick.cancelled"
+  },
+  "runtime_ui_element_pick_failed": {
+    "message": "元素拾取失敗",
+    "description": "Runtime interface message ui.element.pick.failed"
+  },
+  "runtime_ui_element_pick_is_not_available_on_this_url": {
+    "message": "此 URL 上無法拾取元素。",
+    "description": "Runtime interface message ui.element.pick.is.not.available.on.this.url"
+  },
+  "runtime_ui_element_picked": {
+    "message": "已拾取元素",
+    "description": "Runtime interface message ui.element.picked"
+  },
+  "runtime_ui_elements": {
+    "message": "元素",
+    "description": "Runtime interface message ui.elements"
+  },
+  "runtime_ui_empty": {
+    "message": "空",
+    "description": "Runtime interface message ui.empty"
+  },
+  "runtime_ui_empty_draft": {
+    "message": "（空白草稿）",
+    "description": "Runtime interface message ui.empty.draft"
+  },
+  "runtime_ui_enable": {
+    "message": "啟用",
+    "description": "Runtime interface message ui.enable"
+  },
+  "runtime_ui_enable_browser_context_before_picking_an_element": {
+    "message": "拾取元素前請先啟用瀏覽器內容。",
+    "description": "Runtime interface message ui.enable.browser.context.before.picking.an.element"
+  },
+  "runtime_ui_enable_wake_word": {
+    "message": "啟用喚醒詞",
+    "description": "Runtime interface message ui.enable.wake.word"
+  },
+  "runtime_ui_enabled": {
+    "message": "已啟用",
+    "description": "Runtime interface message ui.enabled"
+  },
+  "runtime_ui_english": {
+    "message": "英語",
+    "description": "Runtime interface message ui.english"
+  },
+  "runtime_ui_enter_at_least_one_port_number_e_g_8642_8643_8644_8645_8646": {
+    "message": "至少輸入一個連線埠號，例如 8642,8643,8644,8645,8646",
+    "description": "Runtime interface message ui.enter.at.least.one.port.number.e.g.8642.8643.8644.8645.8646"
+  },
+  "runtime_ui_enter_sends_shift_enter_adds_a_new_line_ctrl_v_drag_drop_or_att_a1c82bcd": {
+    "message": "Enter 傳送。Shift+Enter 換行。Ctrl+V、拖放或 + 附加檔案。",
+    "description": "Runtime interface message ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd"
+  },
+  "runtime_ui_enter_your_dashboard_https_url_in_settings_and_sign_in_to_it_in_0b5f6bb9": {
+    "message": "在設定中輸入儀表板 https URL，並在瀏覽器分頁中登入。",
+    "description": "Runtime interface message ui.enter.your.dashboard.https.url.in.settings.and.sign.in.to.it.in.0b5f6bb9"
+  },
+  "runtime_ui_entries": {
+    "message": "條目",
+    "description": "Runtime interface message ui.entries"
+  },
+  "runtime_ui_entry": {
+    "message": "條目",
+    "description": "Runtime interface message ui.entry"
+  },
+  "runtime_ui_error": {
+    "message": "錯誤",
+    "description": "Runtime interface message ui.error"
+  },
+  "runtime_ui_event": {
+    "message": "事件",
+    "description": "Runtime interface message ui.event"
+  },
+  "runtime_ui_events": {
+    "message": "事件",
+    "description": "Runtime interface message ui.events"
+  },
+  "runtime_ui_exception": {
+    "message": "異常",
+    "description": "Runtime interface message ui.exception"
+  },
+  "runtime_ui_existing_attached_panels_stay_as_they_are_other_and_new_tabs_us_fb9a0ba6": {
+    "message": "已有的附加面板保持不變。其他和新分頁使用共享面板。",
+    "description": "Runtime interface message ui.existing.attached.panels.stay.as.they.are.other.and.new.tabs.us.fb9a0ba6"
+  },
+  "runtime_ui_expand": {
+    "message": "展開",
+    "description": "Runtime interface message ui.expand"
+  },
+  "runtime_ui_explain": {
+    "message": "解釋",
+    "description": "Runtime interface message ui.explain"
+  },
+  "runtime_ui_explain_selection": {
+    "message": "解釋選取內容",
+    "description": "Runtime interface message ui.explain.selection"
+  },
+  "runtime_ui_extension": {
+    "message": "擴充功能",
+    "description": "Runtime interface message ui.extension"
+  },
+  "runtime_ui_fallback": {
+    "message": "退回",
+    "description": "Runtime interface message ui.fallback"
+  },
+  "runtime_ui_falls_back_to_review_if_the_field_changed": {
+    "message": "若欄位已變更，則退回至審查",
+    "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
+  },
+  "runtime_ui_fast_mode": {
+    "message": "快速模式",
+    "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_field": {
+    "message": "欄位",
+    "description": "Runtime interface message ui.field"
+  },
+  "runtime_ui_field_changed_review_required": {
+    "message": "欄位已變更 · 需要審查",
+    "description": "Runtime interface message ui.field.changed.review.required"
+  },
+  "runtime_ui_file": {
+    "message": "檔案",
+    "description": "Runtime interface message ui.file"
+  },
+  "runtime_ui_files": {
+    "message": "▧ 檔案...",
+    "description": "Runtime interface message ui.files"
+  },
+  "runtime_ui_files_453f0471": {
+    "message": "▧ 檔案…",
+    "description": "Runtime interface message ui.files.453f0471"
+  },
+  "runtime_ui_files_6ce6c512": {
+    "message": "檔案",
+    "description": "Runtime interface message ui.files.6ce6c512"
+  },
+  "runtime_ui_files_attached": {
+    "message": "已附加檔案",
+    "description": "Runtime interface message ui.files.attached"
+  },
+  "runtime_ui_filter": {
+    "message": "篩選",
+    "description": "Runtime interface message ui.filter"
+  },
+  "runtime_ui_find": {
+    "message": "查詢",
+    "description": "Runtime interface message ui.find"
+  },
+  "runtime_ui_finish": {
+    "message": "完成",
+    "description": "Runtime interface message ui.finish"
+  },
+  "runtime_ui_finished_without_a_model_call": {
+    "message": "已完成，未呼叫模型。",
+    "description": "Runtime interface message ui.finished.without.a.model.call"
+  },
+  "runtime_ui_focused_draft": {
+    "message": "聚焦的草稿",
+    "description": "Runtime interface message ui.focused.draft"
+  },
+  "runtime_ui_folder": {
+    "message": "▰ 資料夾...",
+    "description": "Runtime interface message ui.folder"
+  },
+  "runtime_ui_folder_30baa249": {
+    "message": "資料夾",
+    "description": "Runtime interface message ui.folder.30baa249"
+  },
+  "runtime_ui_form": {
+    "message": "表單",
+    "description": "Runtime interface message ui.form"
+  },
+  "runtime_ui_format": {
+    "message": "格式",
+    "description": "Runtime interface message ui.format"
+  },
+  "runtime_ui_frame": {
+    "message": "幀",
+    "description": "Runtime interface message ui.frame"
+  },
+  "runtime_ui_full_largest_payload": {
+    "message": "完整 - 最大載荷",
+    "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_gateway": {
+    "message": "閘道器",
+    "description": "Runtime interface message ui.gateway"
+  },
+  "runtime_ui_gateway_connection": {
+    "message": "閘道器連線",
+    "description": "Runtime interface message ui.gateway.connection"
+  },
+  "runtime_ui_gateway_default": {
+    "message": "閘道器預設值",
+    "description": "Runtime interface message ui.gateway.default"
+  },
+  "runtime_ui_gateway_url": {
+    "message": "閘道 URL",
+    "description": "Runtime interface message ui.gateway.url"
+  },
+  "runtime_ui_generated_by_hermes": {
+    "message": "由 Hermes 產生",
+    "description": "Runtime interface message ui.generated.by.hermes"
+  },
+  "runtime_ui_generated_image": {
+    "message": "產生的影像",
+    "description": "Runtime interface message ui.generated.image"
+  },
+  "runtime_ui_gmail_thread_capture_unavailable": {
+    "message": "Gmail 執行緒擷取不可用",
+    "description": "Runtime interface message ui.gmail.thread.capture.unavailable"
+  },
+  "runtime_ui_gmail_thread_captured": {
+    "message": "已擷取 Gmail 執行緒",
+    "description": "Runtime interface message ui.gmail.thread.captured"
+  },
+  "runtime_ui_grant": {
+    "message": "授予",
+    "description": "Runtime interface message ui.grant"
+  },
+  "runtime_ui_grid": {
+    "message": "網格",
+    "description": "Runtime interface message ui.grid"
+  },
+  "runtime_ui_group": {
+    "message": "分組",
+    "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_handing_update_to_hermes": {
+    "message": "正在將更新交給 Hermes",
+    "description": "Runtime interface message ui.handing.update.to.hermes"
+  },
+  "runtime_ui_hash": {
+    "message": "雜湊",
+    "description": "Runtime interface message ui.hash"
+  },
+  "runtime_ui_header": {
+    "message": "頁首",
+    "description": "Runtime interface message ui.header"
+  },
+  "runtime_ui_help": {
+    "message": "說明",
+    "description": "Runtime interface message ui.help"
+  },
+  "runtime_ui_hermes_agent": {
+    "message": "Hermes Agent",
+    "description": "Runtime interface message ui.hermes.agent"
+  },
+  "runtime_ui_hermes_agent_badge": {
+    "message": "Hermes Agent 徽章",
+    "description": "Runtime interface message ui.hermes.agent.badge"
+  },
+  "runtime_ui_hermes_api_unavailable": {
+    "message": "Hermes API 不可用",
+    "description": "Runtime interface message ui.hermes.api.unavailable"
+  },
+  "runtime_ui_hermes_appears_only_on_tabs_where_you_open_it": {
+    "message": "Hermes 只出現在您開啟它的分頁上。",
+    "description": "Runtime interface message ui.hermes.appears.only.on.tabs.where.you.open.it"
+  },
+  "runtime_ui_hermes_assist": {
+    "message": "Hermes Assist",
+    "description": "Runtime interface message ui.hermes.assist"
+  },
+  "runtime_ui_hermes_assist_model": {
+    "message": "Hermes Assist 模型",
+    "description": "Runtime interface message ui.hermes.assist.model"
+  },
+  "runtime_ui_hermes_browser": {
+    "message": "Hermes Browser",
+    "description": "Runtime interface message ui.hermes.browser"
+  },
+  "runtime_ui_hermes_browser_bb83b5a0": {
+    "message": "HERMES BROWSER",
+    "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
+  },
+  "runtime_ui_hermes_browser_extension": {
+    "message": "HERMES BROWSER EXTENSION",
+    "description": "Runtime interface message ui.hermes.browser.extension"
+  },
+  "runtime_ui_hermes_browser_extension_connected": {
+    "message": "Hermes Browser 擴充功能已連線",
+    "description": "Runtime interface message ui.hermes.browser.extension.connected"
+  },
+  "runtime_ui_hermes_browser_extension_conversation": {
+    "message": "Hermes Browser 擴充功能對話",
+    "description": "Runtime interface message ui.hermes.browser.extension.conversation"
+  },
+  "runtime_ui_hermes_browser_intro": {
+    "message": "Hermes Browser 簡介",
+    "description": "Runtime interface message ui.hermes.browser.intro"
+  },
+  "runtime_ui_hermes_browser_local_sidecar": {
+    "message": "Hermes Browser 本機 Sidecar",
+    "description": "Runtime interface message ui.hermes.browser.local.sidecar"
+  },
+  "runtime_ui_hermes_browser_update_channel": {
+    "message": "HERMES BROWSER / 更新管道",
+    "description": "Runtime interface message ui.hermes.browser.update.channel"
+  },
+  "runtime_ui_hermes_chat_actions": {
+    "message": "Hermes 交談操作",
+    "description": "Runtime interface message ui.hermes.chat.actions"
+  },
+  "runtime_ui_hermes_cloud": {
+    "message": "Hermes Cloud",
+    "description": "Runtime interface message ui.hermes.cloud"
+  },
+  "runtime_ui_hermes_cloud_preview": {
+    "message": "Hermes Cloud 預覽",
+    "description": "Runtime interface message ui.hermes.cloud.preview"
+  },
+  "runtime_ui_hermes_cloud_unavailable": {
+    "message": "Hermes Cloud 無法使用",
+    "description": "Runtime interface message ui.hermes.cloud.unavailable"
+  },
+  "runtime_ui_hermes_compatibility": {
+    "message": "Hermes 相容性",
+    "description": "Runtime interface message ui.hermes.compatibility"
+  },
+  "runtime_ui_hermes_compatibility_fallback": {
+    "message": "Hermes 相容性後備方案",
+    "description": "Runtime interface message ui.hermes.compatibility.fallback"
+  },
+  "runtime_ui_hermes_connection": {
+    "message": "Hermes 連線",
+    "description": "Runtime interface message ui.hermes.connection"
+  },
+  "runtime_ui_hermes_connection_status": {
+    "message": "Hermes 連線狀態",
+    "description": "Runtime interface message ui.hermes.connection.status"
+  },
+  "runtime_ui_hermes_gateway_connected_with_runtime_warning": {
+    "message": "Hermes 閘道器已連線，但有執行階段警告",
+    "description": "Runtime interface message ui.hermes.gateway.connected.with.runtime.warning"
+  },
+  "runtime_ui_hermes_gateway_test_failed": {
+    "message": "Hermes 閘道器測試失敗",
+    "description": "Runtime interface message ui.hermes.gateway.test.failed"
+  },
+  "runtime_ui_hermes_gateway_unavailable": {
+    "message": "Hermes 閘道器無法使用",
+    "description": "Runtime interface message ui.hermes.gateway.unavailable"
+  },
+  "runtime_ui_hermes_has_not_acknowledged_this_session_model_pair_yet_retryin_c39a64e1": {
+    "message": "Hermes 尚未確認此工作階段/模型組合。傳送前重試鎖定。",
+    "description": "Runtime interface message ui.hermes.has.not.acknowledged.this.session.model.pair.yet.retryin.c39a64e1"
+  },
+  "runtime_ui_hermes_image_synthesis": {
+    "message": "Hermes 影像生成",
+    "description": "Runtime interface message ui.hermes.image.synthesis"
+  },
+  "runtime_ui_hermes_inspector": {
+    "message": "Hermes 檢查器",
+    "description": "Runtime interface message ui.hermes.inspector"
+  },
+  "runtime_ui_hermes_is_drafting": {
+    "message": "Hermes 正在起草",
+    "description": "Runtime interface message ui.hermes.is.drafting"
+  },
+  "runtime_ui_hermes_is_not_connected_yet_browser_speech_fallback_is_unavaila_2a5064db": {
+    "message": "Hermes 尚未連線。此處無法使用瀏覽器語音後備方案；請先將側邊面板連線至 Hermes，再使用語音輸入。",
+    "description": "Runtime interface message ui.hermes.is.not.connected.yet.browser.speech.fallback.is.unavaila.2a5064db"
+  },
+  "runtime_ui_hermes_is_not_currently_running_send_or_queue_the_message_instead": {
+    "message": "Hermes 目前未執行。請改為傳送訊息或將訊息加入佇列。",
+    "description": "Runtime interface message ui.hermes.is.not.currently.running.send.or.queue.the.message.instead"
+  },
+  "runtime_ui_hermes_is_thinking_brainstorming_contemplating_reasoning_proces_3e8d81c0": {
+    "message": "Hermes 正在思考、頭腦風暴、沉思、推理、處理、分析、反思、琢磨、權衡、構思",
+    "description": "Runtime interface message ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0"
+  },
+  "runtime_ui_hermes_is_working": {
+    "message": "Hermes 正在工作…",
+    "description": "Runtime interface message ui.hermes.is.working"
+  },
+  "runtime_ui_hermes_message_composer": {
+    "message": "Hermes 訊息撰寫區",
+    "description": "Runtime interface message ui.hermes.message.composer"
+  },
+  "runtime_ui_hermes_model_confirmed": {
+    "message": "Hermes 模型已確認",
+    "description": "Runtime interface message ui.hermes.model.confirmed"
+  },
+  "runtime_ui_hermes_model_lock_accepted": {
+    "message": "Hermes 模型鎖定已接受",
+    "description": "Runtime interface message ui.hermes.model.lock.accepted"
+  },
+  "runtime_ui_hermes_model_options_confirmed": {
+    "message": "Hermes 模型選項已確認",
+    "description": "Runtime interface message ui.hermes.model.options.confirmed"
+  },
+  "runtime_ui_hermes_model_options_failed": {
+    "message": "Hermes 模型選項失敗",
+    "description": "Runtime interface message ui.hermes.model.options.failed"
+  },
+  "runtime_ui_hermes_model_options_mismatch": {
+    "message": "Hermes 模型選項不匹配",
+    "description": "Runtime interface message ui.hermes.model.options.mismatch"
+  },
+  "runtime_ui_hermes_model_options_pending": {
+    "message": "Hermes 模型選項待處理",
+    "description": "Runtime interface message ui.hermes.model.options.pending"
+  },
+  "runtime_ui_hermes_model_requested": {
+    "message": "Hermes 模型已請求",
+    "description": "Runtime interface message ui.hermes.model.requested"
+  },
+  "runtime_ui_hermes_models_synced": {
+    "message": "Hermes 模型已同步",
+    "description": "Runtime interface message ui.hermes.models.synced"
+  },
+  "runtime_ui_hermes_native_wake_word_is_unavailable": {
+    "message": "Hermes 原生喚醒詞無法使用。",
+    "description": "Runtime interface message ui.hermes.native.wake.word.is.unavailable"
+  },
+  "runtime_ui_hermes_on_this_machine_default_and_offline_capable": {
+    "message": "本機上的 Hermes。預設且支援離線。",
+    "description": "Runtime interface message ui.hermes.on.this.machine.default.and.offline.capable"
+  },
+  "runtime_ui_hermes_profile_switched": {
+    "message": "Hermes 設定檔已切換",
+    "description": "Runtime interface message ui.hermes.profile.switched"
+  },
+  "runtime_ui_hermes_profiles_synced": {
+    "message": "Hermes 設定檔已同步",
+    "description": "Runtime interface message ui.hermes.profiles.synced"
+  },
+  "runtime_ui_hermes_refused_to_start_the_wake_listener": {
+    "message": "Hermes 拒絕啟動喚醒聆聽器。",
+    "description": "Runtime interface message ui.hermes.refused.to.start.the.wake.listener"
+  },
+  "runtime_ui_hermes_returned_only_fallback_model_data_keeping_your_selected_128b9943": {
+    "message": "Hermes 僅傳回後備模型資料。在實際目錄可用前，會保留您選擇的模型。",
+    "description": "Runtime interface message ui.hermes.returned.only.fallback.model.data.keeping.your.selected.128b9943"
+  },
+  "runtime_ui_hermes_session": {
+    "message": "Hermes 工作階段",
+    "description": "Runtime interface message ui.hermes.session"
+  },
+  "runtime_ui_hermes_sessions": {
+    "message": "Hermes 工作階段",
+    "description": "Runtime interface message ui.hermes.sessions"
+  },
+  "runtime_ui_hermes_sessions_synced": {
+    "message": "Hermes 工作階段已同步",
+    "description": "Runtime interface message ui.hermes.sessions.synced"
+  },
+  "runtime_ui_hermes_skill_suggestions": {
+    "message": "Hermes 技能建議",
+    "description": "Runtime interface message ui.hermes.skill.suggestions"
+  },
+  "runtime_ui_hermes_skills_synced": {
+    "message": "Hermes 技能已同步",
+    "description": "Runtime interface message ui.hermes.skills.synced"
+  },
+  "runtime_ui_hermes_task_status": {
+    "message": "Hermes 任務狀態",
+    "description": "Runtime interface message ui.hermes.task.status"
+  },
+  "runtime_ui_hermes_token_cleared": {
+    "message": "Hermes 權杖已清除",
+    "description": "Runtime interface message ui.hermes.token.cleared"
+  },
+  "runtime_ui_hermes_voice_dictation": {
+    "message": "Hermes 語音聽寫",
+    "description": "Runtime interface message ui.hermes.voice.dictation"
+  },
+  "runtime_ui_hermes_web": {
+    "message": "Hermes Web",
+    "description": "Runtime interface message ui.hermes.web"
+  },
+  "runtime_ui_hermes_web_3336aa2f": {
+    "message": "HERMES WEB",
+    "description": "Runtime interface message ui.hermes.web.3336aa2f"
+  },
+  "runtime_ui_hermes_web_could_not_start": {
+    "message": "Hermes Web 無法啟動",
+    "description": "Runtime interface message ui.hermes.web.could.not.start"
+  },
+  "runtime_ui_hermes_web_home": {
+    "message": "Hermes Web 主頁",
+    "description": "Runtime interface message ui.hermes.web.home"
+  },
+  "runtime_ui_hermes_web_ready": {
+    "message": "HERMES WEB // 就緒",
+    "description": "Runtime interface message ui.hermes.web.ready"
+  },
+  "runtime_ui_hermes_web_settings": {
+    "message": "Hermes Web 設定",
+    "description": "Runtime interface message ui.hermes.web.settings"
+  },
+  "runtime_ui_hermes_will_consume_it_if_the_current_turn_reaches_an_injection_0fb01647": {
+    "message": "若目前回合到達注入點，Hermes 將使用它；否則草稿會返回此處。",
+    "description": "Runtime interface message ui.hermes.will.consume.it.if.the.current.turn.reaches.an.injection.0fb01647"
+  },
+  "runtime_ui_hermes_will_consume_the_queued_text_if_the_current_turn_reaches_bd527e1e": {
+    "message": "若目前回合到達注入點，Hermes 將使用佇列中的文字。",
+    "description": "Runtime interface message ui.hermes.will.consume.the.queued.text.if.the.current.turn.reaches.bd527e1e"
+  },
+  "runtime_ui_hermes_will_never_replace_or_switch_an_existing_conversation_wi_7e65804d": {
+    "message": "未經此選擇，Hermes 絕不會取代或切換現有對話。",
+    "description": "Runtime interface message ui.hermes.will.never.replace.or.switch.an.existing.conversation.wi.7e65804d"
+  },
+  "runtime_ui_hermes_will_send_it_after_the_current_turn_finishes_or_stops": {
+    "message": "Hermes 會在目前回合完成或停止後傳送它。",
+    "description": "Runtime interface message ui.hermes.will.send.it.after.the.current.turn.finishes.or.stops"
+  },
+  "runtime_ui_hermes_will_stop_before_changing_a_dirty_checkout": {
+    "message": "Hermes 會在變更有未提交變更的工作目錄前停止。",
+    "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
+  },
+  "runtime_ui_hide": {
+    "message": "隱藏",
+    "description": "Runtime interface message ui.hide"
+  },
+  "runtime_ui_hide_sessions_rail": {
+    "message": "隱藏工作階段欄",
+    "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_high": {
+    "message": "高",
+    "description": "Runtime interface message ui.high"
+  },
+  "runtime_ui_highlighted_text": {
+    "message": "高亮文字",
+    "description": "Runtime interface message ui.highlighted.text"
+  },
+  "runtime_ui_hint": {
+    "message": "提示",
+    "description": "Runtime interface message ui.hint"
+  },
+  "runtime_ui_home": {
+    "message": "主頁",
+    "description": "Runtime interface message ui.home"
+  },
+  "runtime_ui_host": {
+    "message": "主機",
+    "description": "Runtime interface message ui.host"
+  },
+  "runtime_ui_id": {
+    "message": "ID",
+    "description": "Runtime interface message ui.id"
+  },
+  "runtime_ui_image": {
+    "message": "影像",
+    "description": "Runtime interface message ui.image"
+  },
+  "runtime_ui_image_attached_from_clipboard": {
+    "message": "已從剪貼簿附加影像",
+    "description": "Runtime interface message ui.image.attached.from.clipboard"
+  },
+  "runtime_ui_image_pasted_into_hermes": {
+    "message": "影像已貼上到 Hermes",
+    "description": "Runtime interface message ui.image.pasted.into.hermes"
+  },
+  "runtime_ui_image_ready_for_hermes_vision": {
+    "message": "影像已可供 Hermes 視覺功能使用",
+    "description": "Runtime interface message ui.image.ready.for.hermes.vision"
+  },
+  "runtime_ui_image_stayed_inline_only": {
+    "message": "影像僅保留為內嵌內容",
+    "description": "Runtime interface message ui.image.stayed.inline.only"
+  },
+  "runtime_ui_images": {
+    "message": "▧ 影像...",
+    "description": "Runtime interface message ui.images"
+  },
+  "runtime_ui_images_09e871c9": {
+    "message": "影像",
+    "description": "Runtime interface message ui.images.09e871c9"
+  },
+  "runtime_ui_images_9ef50004": {
+    "message": "▧ 影像…",
+    "description": "Runtime interface message ui.images.9ef50004"
+  },
+  "runtime_ui_images_documents_and_code": {
+    "message": "影像、文件和程式碼",
+    "description": "Runtime interface message ui.images.documents.and.code"
+  },
+  "runtime_ui_images_documents_and_code_stay_with_this_message": {
+    "message": "影像、文件和程式碼會隨附於此訊息。",
+    "description": "Runtime interface message ui.images.documents.and.code.stay.with.this.message"
+  },
+  "runtime_ui_improve": {
+    "message": "改進",
+    "description": "Runtime interface message ui.improve"
+  },
+  "runtime_ui_improve_selected_text": {
+    "message": "改善選取的文字",
+    "description": "Runtime interface message ui.improve.selected.text"
+  },
+  "runtime_ui_index": {
+    "message": "索引",
+    "description": "Runtime interface message ui.index"
+  },
+  "runtime_ui_info": {
+    "message": "資訊",
+    "description": "Runtime interface message ui.info"
+  },
+  "runtime_ui_inline_assist": {
+    "message": "內嵌 Assist",
+    "description": "Runtime interface message ui.inline.assist"
+  },
+  "runtime_ui_input": {
+    "message": "輸入",
+    "description": "Runtime interface message ui.input"
+  },
+  "runtime_ui_inspector_views": {
+    "message": "檢查器檢視",
+    "description": "Runtime interface message ui.inspector.views"
+  },
+  "runtime_ui_install": {
+    "message": "安裝",
+    "description": "Runtime interface message ui.install"
+  },
+  "runtime_ui_installing_the_local_speech_language_pack": {
+    "message": "正在安裝本機語音語言包…",
+    "description": "Runtime interface message ui.installing.the.local.speech.language.pack"
+  },
+  "runtime_ui_instant_tools_no_model_call": {
+    "message": "即時工具 · 不呼叫模型",
+    "description": "Runtime interface message ui.instant.tools.no.model.call"
+  },
+  "runtime_ui_invalid": {
+    "message": "無效",
+    "description": "Runtime interface message ui.invalid"
+  },
+  "runtime_ui_item": {
+    "message": "專案",
+    "description": "Runtime interface message ui.item"
+  },
+  "runtime_ui_keep_assist_sessions": {
+    "message": "保留 Assist 工作階段",
+    "description": "Runtime interface message ui.keep.assist.sessions"
+  },
+  "runtime_ui_keep_open_across_tabs": {
+    "message": "跨分頁保持開啟",
+    "description": "Runtime interface message ui.keep.open.across.tabs"
+  },
+  "runtime_ui_keep_replacement": {
+    "message": "保留取代內容",
+    "description": "Runtime interface message ui.keep.replacement"
+  },
+  "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
+    "message": "保持目前交談可見。將結果傳回此欄位。",
+    "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_key": {
+    "message": "金鑰",
+    "description": "Runtime interface message ui.key"
+  },
+  "runtime_ui_label": {
+    "message": "標籤",
+    "description": "Runtime interface message ui.label"
+  },
+  "runtime_ui_large": {
+    "message": "大",
+    "description": "Runtime interface message ui.large"
+  },
+  "runtime_ui_later": {
+    "message": "稍後",
+    "description": "Runtime interface message ui.later"
+  },
+  "runtime_ui_later_56e2f5d3": {
+    "message": "稍後",
+    "description": "Runtime interface message ui.later.56e2f5d3"
+  },
+  "runtime_ui_latest": {
+    "message": "最新",
+    "description": "Runtime interface message ui.latest"
+  },
+  "runtime_ui_layout": {
+    "message": "佈局",
+    "description": "Runtime interface message ui.layout"
+  },
+  "runtime_ui_leave_blank_to_keep_current_token": {
+    "message": "留空以保留目前權杖",
+    "description": "Runtime interface message ui.leave.blank.to.keep.current.token"
+  },
+  "runtime_ui_light": {
+    "message": "☼ 淺色",
+    "description": "Runtime interface message ui.light"
+  },
+  "runtime_ui_limit": {
+    "message": "限制",
+    "description": "Runtime interface message ui.limit"
+  },
+  "runtime_ui_list": {
+    "message": "列表",
+    "description": "Runtime interface message ui.list"
+  },
+  "runtime_ui_load_unpacked_installs_update_through_a_guarded_hermes_agent_tu_410111a9": {
+    "message": "以解壓形式安裝的版本透過受控的 Hermes 代理程式輪更新，然後重新載入建置的 dist/ 資料夾。",
+    "description": "Runtime interface message ui.load.unpacked.installs.update.through.a.guarded.hermes.agent.tu.410111a9"
+  },
+  "runtime_ui_loading": {
+    "message": "載入中",
+    "description": "Runtime interface message ui.loading"
+  },
+  "runtime_ui_loading_249feada": {
+    "message": "📎 載入中...",
+    "description": "Runtime interface message ui.loading.249feada"
+  },
+  "runtime_ui_loading_b04ba49f": {
+    "message": "載入中...",
+    "description": "Runtime interface message ui.loading.b04ba49f"
+  },
+  "runtime_ui_loading_canonical_hermes_history": {
+    "message": "正在載入規範 Hermes 歷史…",
+    "description": "Runtime interface message ui.loading.canonical.hermes.history"
+  },
+  "runtime_ui_loading_connection": {
+    "message": "正在載入連線",
+    "description": "Runtime interface message ui.loading.connection"
+  },
+  "runtime_ui_loading_hermes_runtime_truth": {
+    "message": "正在載入 Hermes 執行階段資訊",
+    "description": "Runtime interface message ui.loading.hermes.runtime.truth"
+  },
+  "runtime_ui_local": {
+    "message": "本機",
+    "description": "Runtime interface message ui.local"
+  },
+  "runtime_ui_local_api_server": {
+    "message": "本機 API 伺服器",
+    "description": "Runtime interface message ui.local.api.server"
+  },
+  "runtime_ui_local_gateway": {
+    "message": "本機閘道器",
+    "description": "Runtime interface message ui.local.gateway"
+  },
+  "runtime_ui_local_setup_keep_hermes_gateway_api_server_running_on_this_machine": {
+    "message": "本機設定：讓 Hermes 閘道器/API 伺服器在本機保持執行。",
+    "description": "Runtime interface message ui.local.setup.keep.hermes.gateway.api.server.running.on.this.machine"
+  },
+  "runtime_ui_local_sidecar_chrome_panel": {
+    "message": "本機邊車 / CHROME 面板",
+    "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_low": {
+    "message": "低",
+    "description": "Runtime interface message ui.low"
+  },
+  "runtime_ui_main": {
+    "message": "主分支",
+    "description": "Runtime interface message ui.main"
+  },
+  "runtime_ui_make_this_more_confident_without_sounding_aggressive": {
+    "message": "讓這段文字更有自信，但不要顯得咄咄逼人…",
+    "description": "Runtime interface message ui.make.this.more.confident.without.sounding.aggressive"
+  },
+  "runtime_ui_manual": {
+    "message": "手動",
+    "description": "Runtime interface message ui.manual"
+  },
+  "runtime_ui_manual_setup": {
+    "message": "手動設定",
+    "description": "Runtime interface message ui.manual.setup"
+  },
+  "runtime_ui_manual_setup_required": {
+    "message": "需要手動設定",
+    "description": "Runtime interface message ui.manual.setup.required"
+  },
+  "runtime_ui_maybe_later": {
+    "message": "稍後再說",
+    "description": "Runtime interface message ui.maybe.later"
+  },
+  "runtime_ui_med": {
+    "message": "中",
+    "description": "Runtime interface message ui.med"
+  },
+  "runtime_ui_menu": {
+    "message": "選單",
+    "description": "Runtime interface message ui.menu"
+  },
+  "runtime_ui_message": {
+    "message": "訊息",
+    "description": "Runtime interface message ui.message"
+  },
+  "runtime_ui_message_7be2d2d2": {
+    "message": "中文",
+    "description": "Runtime interface message ui.message.7be2d2d2"
+  },
+  "runtime_ui_message_attachments": {
+    "message": "訊息附件",
+    "description": "Runtime interface message ui.message.attachments"
+  },
+  "runtime_ui_message_queued": {
+    "message": "訊息已加入佇列",
+    "description": "Runtime interface message ui.message.queued"
+  },
+  "runtime_ui_messages": {
+    "message": "訊息",
+    "description": "Runtime interface message ui.messages"
+  },
+  "runtime_ui_microphone": {
+    "message": "麥克風",
+    "description": "Runtime interface message ui.microphone"
+  },
+  "runtime_ui_microphone_access_is_already_enabled_for_hermes_browser_extension": {
+    "message": "Hermes Browser 擴充功能的麥克風存取權已啟用。",
+    "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
+  },
+  "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
+    "message": "Hermes Browser 的麥克風存取權已封鎖。",
+    "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
+  },
+  "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
+    "message": "麥克風存取權已啟用。返回 Hermes 側邊面板後再次按一下麥克風；若側邊面板擷取功能仍遭封鎖，請改用 Hermes 語音輸入分頁。",
+    "description": "Runtime interface message ui.microphone.access.is.enabled.return.to.the.hermes.side.panel.an.2839c056"
+  },
+  "runtime_ui_microphone_permission_blocked": {
+    "message": "麥克風權限被封鎖",
+    "description": "Runtime interface message ui.microphone.permission.blocked"
+  },
+  "runtime_ui_microphone_permission_enabled": {
+    "message": "麥克風權限已啟用",
+    "description": "Runtime interface message ui.microphone.permission.enabled"
+  },
+  "runtime_ui_microphone_permission_needed": {
+    "message": "需要麥克風權限",
+    "description": "Runtime interface message ui.microphone.permission.needed"
+  },
+  "runtime_ui_minimal_selected_text_short_page_text": {
+    "message": "最小 - 選取文字 + 短頁面文字",
+    "description": "Runtime interface message ui.minimal.selected.text.short.page.text"
+  },
+  "runtime_ui_missing": {
+    "message": "缺失",
+    "description": "Runtime interface message ui.missing"
+  },
+  "runtime_ui_mode": {
+    "message": "模式",
+    "description": "Runtime interface message ui.mode"
+  },
+  "runtime_ui_mode_controls_brightness_theme_controls_the_accent_palette_and_0d9c3d47": {
+    "message": "模式控制亮度。主題控制強調色盤和交談介面樣式。",
+    "description": "Runtime interface message ui.mode.controls.brightness.theme.controls.the.accent.palette.and.0d9c3d47"
+  },
+  "runtime_ui_model": {
+    "message": "模型",
+    "description": "Runtime interface message ui.model"
+  },
+  "runtime_ui_model_68c2cc7f": {
+    "message": "模型",
+    "description": "Runtime interface message ui.model.68c2cc7f"
+  },
+  "runtime_ui_model_discovery_limited": {
+    "message": "模型探索受限",
+    "description": "Runtime interface message ui.model.discovery.limited"
+  },
+  "runtime_ui_model_lock_failed": {
+    "message": "模型鎖定失敗",
+    "description": "Runtime interface message ui.model.lock.failed"
+  },
+  "runtime_ui_model_lock_pending": {
+    "message": "模型鎖定待處理",
+    "description": "Runtime interface message ui.model.lock.pending"
+  },
+  "runtime_ui_model_mismatch": {
+    "message": "模型不匹配",
+    "description": "Runtime interface message ui.model.mismatch"
+  },
+  "runtime_ui_model_providers": {
+    "message": "模型提供者",
+    "description": "Runtime interface message ui.model.providers"
+  },
+  "runtime_ui_model_refresh_limited": {
+    "message": "模型重新整理受限",
+    "description": "Runtime interface message ui.model.refresh.limited"
+  },
+  "runtime_ui_model_registry_unavailable": {
+    "message": "模型登錄檔不可用",
+    "description": "Runtime interface message ui.model.registry.unavailable"
+  },
+  "runtime_ui_model_runtime_options": {
+    "message": "模型執行階段選項",
+    "description": "Runtime interface message ui.model.runtime.options"
+  },
+  "runtime_ui_more": {
+    "message": "更多",
+    "description": "Runtime interface message ui.more"
+  },
+  "runtime_ui_name": {
+    "message": "名稱",
+    "description": "Runtime interface message ui.name"
+  },
+  "runtime_ui_native_context_controls_unavailable": {
+    "message": "原生內容控制元件不可用。",
+    "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_new": {
+    "message": "新增",
+    "description": "Runtime interface message ui.new"
+  },
+  "runtime_ui_new_browser_chat": {
+    "message": "新增瀏覽器交談",
+    "description": "Runtime interface message ui.new.browser.chat"
+  },
+  "runtime_ui_new_chat": {
+    "message": "新增交談",
+    "description": "Runtime interface message ui.new.chat"
+  },
+  "runtime_ui_new_hermes_browser_extension_draft": {
+    "message": "新增 Hermes Browser 擴充功能草稿",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.draft"
+  },
+  "runtime_ui_new_hermes_browser_extension_session": {
+    "message": "新增 Hermes Browser 擴充功能工作階段",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.session"
+  },
+  "runtime_ui_new_session": {
+    "message": "新工作階段",
+    "description": "Runtime interface message ui.new.session"
+  },
+  "runtime_ui_new_session_inline_assist": {
+    "message": "新增工作階段 · 內嵌 Assist",
+    "description": "Runtime interface message ui.new.session.inline.assist"
+  },
+  "runtime_ui_next": {
+    "message": "下一步",
+    "description": "Runtime interface message ui.next"
+  },
+  "runtime_ui_next_prompt_payload": {
+    "message": "下一個提示承載內容",
+    "description": "Runtime interface message ui.next.prompt.payload"
+  },
+  "runtime_ui_no": {
+    "message": "否",
+    "description": "Runtime interface message ui.no"
+  },
+  "runtime_ui_no_active_run": {
+    "message": "無活動執行",
+    "description": "Runtime interface message ui.no.active.run"
+  },
+  "runtime_ui_no_active_session": {
+    "message": "無活動工作階段",
+    "description": "Runtime interface message ui.no.active.session"
+  },
+  "runtime_ui_no_active_tab_detected": {
+    "message": "未偵測到活動分頁",
+    "description": "Runtime interface message ui.no.active.tab.detected"
+  },
+  "runtime_ui_no_agent_ports": {
+    "message": "無代理程式連線埠",
+    "description": "Runtime interface message ui.no.agent.ports"
+  },
+  "runtime_ui_no_agents_scanned_yet_click": {
+    "message": "尚未掃描代理程式。按一下",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click"
+  },
+  "runtime_ui_no_agents_scanned_yet_click_scan_agents": {
+    "message": "尚未掃描代理程式。按一下“掃描代理程式”。",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click.scan.agents"
+  },
+  "runtime_ui_no_audio_is_saved_by_this_page_in_hermes_stt_mode_audio_is_sent_df9cdcdc": {
+    "message": "此頁面不會儲存任何音訊。在 Hermes STT 模式下，停止錄音時會將音訊一次傳送至您設定的 Hermes 轉錄端點。在瀏覽器語音後備模式下，只會將轉錄文字傳回側邊面板。",
+    "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
+  },
+  "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
+    "message": "此處不會儲存音訊。此權限僅允許 Hermes Browser 在您按一下麥克風按鈕時錄製聲音。",
+    "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
+  },
+  "runtime_ui_no_browser_context_attached": {
+    "message": "未附加瀏覽器內容",
+    "description": "Runtime interface message ui.no.browser.context.attached"
+  },
+  "runtime_ui_no_browser_context_will_be_read_or_attached": {
+    "message": "不會讀取或附加瀏覽器內容。",
+    "description": "Runtime interface message ui.no.browser.context.will.be.read.or.attached"
+  },
+  "runtime_ui_no_browser_tab_selected_text_open_tabs_metadata_transcript_or_p_5f06547f": {
+    "message": "不會附加瀏覽器分頁、選取文字、開啟的分頁、後設資料、字幕或頁面文字。",
+    "description": "Runtime interface message ui.no.browser.tab.selected.text.open.tabs.metadata.transcript.or.p.5f06547f"
+  },
+  "runtime_ui_no_matching_tabs": {
+    "message": "沒有匹配的分頁",
+    "description": "Runtime interface message ui.no.matching.tabs"
+  },
+  "runtime_ui_no_models_found": {
+    "message": "未找到模型。",
+    "description": "Runtime interface message ui.no.models.found"
+  },
+  "runtime_ui_no_models_match": {
+    "message": "沒有匹配的模型",
+    "description": "Runtime interface message ui.no.models.match"
+  },
+  "runtime_ui_no_providers_found": {
+    "message": "未找到提供商",
+    "description": "Runtime interface message ui.no.providers.found"
+  },
+  "runtime_ui_no_sessions_found": {
+    "message": "未找到工作階段",
+    "description": "Runtime interface message ui.no.sessions.found"
+  },
+  "runtime_ui_no_speech_captured": {
+    "message": "未擷取到語音",
+    "description": "Runtime interface message ui.no.speech.captured"
+  },
+  "runtime_ui_no_speech_captured_click_start_dictation_and_try_again": {
+    "message": "未擷取到語音。按一下「開始語音輸入」後再試一次。",
+    "description": "Runtime interface message ui.no.speech.captured.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_speech_detected": {
+    "message": "未偵測到語音",
+    "description": "Runtime interface message ui.no.speech.detected"
+  },
+  "runtime_ui_no_speech_detected_click_start_dictation_and_try_again": {
+    "message": "未偵測到語音。按一下「開始語音輸入」後再試一次。",
+    "description": "Runtime interface message ui.no.speech.detected.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_submit_no_send_no_other_fields_touched": {
+    "message": "不提交 · 不傳送 · 不會碰觸其他欄位",
+    "description": "Runtime interface message ui.no.submit.no.send.no.other.fields.touched"
+  },
+  "runtime_ui_no_tab": {
+    "message": "無分頁",
+    "description": "Runtime interface message ui.no.tab"
+  },
+  "runtime_ui_no_tab_detected": {
+    "message": "未偵測到分頁",
+    "description": "Runtime interface message ui.no.tab.detected"
+  },
+  "runtime_ui_normal_good_default": {
+    "message": "標準 - 推薦預設",
+    "description": "Runtime interface message ui.normal.good.default"
+  },
+  "runtime_ui_not_connected": {
+    "message": "未連線",
+    "description": "Runtime interface message ui.not.connected"
+  },
+  "runtime_ui_nothing_to_steer": {
+    "message": "沒有可引導的內容",
+    "description": "Runtime interface message ui.nothing.to.steer"
+  },
+  "runtime_ui_notice": {
+    "message": "通知",
+    "description": "Runtime interface message ui.notice"
+  },
+  "runtime_ui_now": {
+    "message": "現在",
+    "description": "Runtime interface message ui.now"
+  },
+  "runtime_ui_number": {
+    "message": "數字",
+    "description": "Runtime interface message ui.number"
+  },
+  "runtime_ui_object": {
+    "message": "物件",
+    "description": "Runtime interface message ui.object"
+  },
+  "runtime_ui_observed_from_session_history_not_advertised_as_a_requestable_h_6343f8c8": {
+    "message": "從工作階段歷史中觀察到；未宣告為可請求的 Hermes 模型。",
+    "description": "Runtime interface message ui.observed.from.session.history.not.advertised.as.a.requestable.h.6343f8c8"
+  },
+  "runtime_ui_off": {
+    "message": "關",
+    "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_ok": {
+    "message": "確定",
+    "description": "Runtime interface message ui.ok"
+  },
+  "runtime_ui_on": {
+    "message": "開",
+    "description": "Runtime interface message ui.on"
+  },
+  "runtime_ui_on_device_speech_recognition_is_unavailable_in_this_browser": {
+    "message": "此瀏覽器無法使用裝置端語音辨識。",
+    "description": "Runtime interface message ui.on.device.speech.recognition.is.unavailable.in.this.browser"
+  },
+  "runtime_ui_only_controls_supported_by_the_selected_model_are_shown": {
+    "message": "僅顯示所選模型支援的控制元件。",
+    "description": "Runtime interface message ui.only.controls.supported.by.the.selected.model.are.shown"
+  },
+  "runtime_ui_open": {
+    "message": "開啟",
+    "description": "Runtime interface message ui.open"
+  },
+  "runtime_ui_open_a_normal_browser_tab_and_try_again": {
+    "message": "開啟普通瀏覽器分頁後重試。",
+    "description": "Runtime interface message ui.open.a.normal.browser.tab.and.try.again"
+  },
+  "runtime_ui_open_a_normal_http_https_tab_then_refresh_context": {
+    "message": "開啟普通 http/https 分頁，然後重新整理內容。",
+    "description": "Runtime interface message ui.open.a.normal.http.https.tab.then.refresh.context"
+  },
+  "runtime_ui_open_a_normal_page_tab_first": {
+    "message": "請先開啟普通頁面分頁。",
+    "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_full_view": {
+    "message": "開啟完整檢視",
+    "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_hermes_assist": {
+    "message": "開啟 Hermes Assist",
+    "description": "Runtime interface message ui.open.hermes.assist"
+  },
+  "runtime_ui_open_hermes_browser": {
+    "message": "開啟 Hermes Browser",
+    "description": "Runtime interface message ui.open.hermes.browser"
+  },
+  "runtime_ui_open_hermes_browser_always_opens_the_side_panel_only_selection_0b8dac3c": {
+    "message": "開啟 Hermes Browser 時一律只會開啟側邊面板。選取操作會在傳送後立即開始。",
+    "description": "Runtime interface message ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c"
+  },
+  "runtime_ui_open_hermes_browser_uses_the_side_panel_only_selection_tasks_st_4f56df05": {
+    "message": "Hermes Browser 僅使用側邊面板。選取任務會在傳送後自動開始。",
+    "description": "Runtime interface message ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05"
+  },
+  "runtime_ui_open_hermes_session": {
+    "message": "開啟 Hermes 工作階段",
+    "description": "Runtime interface message ui.open.hermes.session"
+  },
+  "runtime_ui_open_hermes_web_in_a_full_tab": {
+    "message": "在完整分頁中開啟 Hermes Web",
+    "description": "Runtime interface message ui.open.hermes.web.in.a.full.tab"
+  },
+  "runtime_ui_open_hermes_web_settings": {
+    "message": "開啟 Hermes Web 設定",
+    "description": "Runtime interface message ui.open.hermes.web.settings"
+  },
+  "runtime_ui_open_microphone_settings": {
+    "message": "開啟麥克風設定",
+    "description": "Runtime interface message ui.open.microphone.settings"
+  },
+  "runtime_ui_open_navigation": {
+    "message": "開啟導覽",
+    "description": "Runtime interface message ui.open.navigation"
+  },
+  "runtime_ui_open_or_create_a_hermes_browser_extension_session_before_compac_4c0fdd2e": {
+    "message": "壓縮內容前，請先開啟或建立 Hermes Browser 擴充功能工作階段。",
+    "description": "Runtime interface message ui.open.or.create.a.hermes.browser.extension.session.before.compac.4c0fdd2e"
+  },
+  "runtime_ui_open_quick_commands": {
+    "message": "開啟快速指令",
+    "description": "Runtime interface message ui.open.quick.commands"
+  },
+  "runtime_ui_open_session": {
+    "message": "開啟工作階段",
+    "description": "Runtime interface message ui.open.session"
+  },
+  "runtime_ui_open_settings": {
+    "message": "開啟設定",
+    "description": "Runtime interface message ui.open.settings"
+  },
+  "runtime_ui_open_side_panel_settings_and_connect_the_local_or_remote_api_be_706335b5": {
+    "message": "開啟側邊面板「設定」，並在載入規範工作階段歷史前連線至本機或遠端 API。",
+    "description": "Runtime interface message ui.open.side.panel.settings.and.connect.the.local.or.remote.api.be.706335b5"
+  },
+  "runtime_ui_open_tabs": {
+    "message": "開啟的分頁",
+    "description": "Runtime interface message ui.open.tabs"
+  },
+  "runtime_ui_open_the_exact_session_in_the_full_hermes_web_workspace": {
+    "message": "在完整 Hermes Web 工作區中開啟確切的工作階段。",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
+  },
+  "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
+    "message": "在 Hermes Browser 側邊面板中開啟確切的工作階段。",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
+  },
+  "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
+    "message": "從瀏覽器工具列開啟 Hermes 擴充功能側邊面板。",
+    "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
+  },
+  "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
+    "message": "在瀏覽器側邊面板或 Hermes Web 中開啟保留的 Assist 工作階段。",
+    "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
+  },
+  "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
+    "message": "開啟側邊面板，設定 Hermes 連線後，再次開啟完整檢視。",
+    "description": "Runtime interface message ui.open.the.side.panel.configure.a.hermes.connection.then.open.ful.47648857"
+  },
+  "runtime_ui_open_the_signed_in_hermes_cloud_agent_in_the_active_tab_wait_fo_b7be52ec": {
+    "message": "在活動分頁中開啟已登入的 Hermes Cloud Agent，等待載入完成後選擇「連線至 Hermes」。不會使用 API 權杖或 localhost 後備方案。",
+    "description": "Runtime interface message ui.open.the.signed.in.hermes.cloud.agent.in.the.active.tab.wait.fo.b7be52ec"
+  },
+  "runtime_ui_opened_directly_in_full_view": {
+    "message": "已直接在完整檢視中開啟。",
+    "description": "Runtime interface message ui.opened.directly.in.full.view"
+  },
+  "runtime_ui_opening_chromium_microphone_permission_prompt": {
+    "message": "正在開啟 Chromium 麥克風權限提示…",
+    "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
+  },
+  "runtime_ui_opening_session": {
+    "message": "正在開啟工作階段",
+    "description": "Runtime interface message ui.opening.session"
+  },
+  "runtime_ui_opening_shared_session": {
+    "message": "正在開啟共享工作階段",
+    "description": "Runtime interface message ui.opening.shared.session"
+  },
+  "runtime_ui_opening_voice_dictation_tab": {
+    "message": "正在開啟語音輸入分頁",
+    "description": "Runtime interface message ui.opening.voice.dictation.tab"
+  },
+  "runtime_ui_optional": {
+    "message": "可選",
+    "description": "Runtime interface message ui.optional"
+  },
+  "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
+    "message": "僅限選用探索：Browser 會探查每個相容 OpenAI 的 `/v1/models` 端點，並在模型選擇器中顯示相符項目。執行階段路由仍由已連線的 Hermes 閘道器提供。",
+    "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
+  },
+  "runtime_ui_options": {
+    "message": "選項",
+    "description": "Runtime interface message ui.options"
+  },
+  "runtime_ui_or_tell_hermes_exactly_what_you_need": {
+    "message": "或精確告訴 Hermes 您需要什麼",
+    "description": "Runtime interface message ui.or.tell.hermes.exactly.what.you.need"
+  },
+  "runtime_ui_origin": {
+    "message": "來源",
+    "description": "Runtime interface message ui.origin"
+  },
+  "runtime_ui_other": {
+    "message": "其他",
+    "description": "Runtime interface message ui.other"
+  },
+  "runtime_ui_owner": {
+    "message": "所有者",
+    "description": "Runtime interface message ui.owner"
+  },
+  "runtime_ui_page": {
+    "message": "頁面",
+    "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context": {
+    "message": "頁面內容",
+    "description": "Runtime interface message ui.page.context"
+  },
+  "runtime_ui_page_context_depth": {
+    "message": "頁面內容深度",
+    "description": "Runtime interface message ui.page.context.depth"
+  },
+  "runtime_ui_page_text": {
+    "message": "頁面文字",
+    "description": "Runtime interface message ui.page.text"
+  },
+  "runtime_ui_pages": {
+    "message": "頁面",
+    "description": "Runtime interface message ui.pages"
+  },
+  "runtime_ui_panel": {
+    "message": "面板",
+    "description": "Runtime interface message ui.panel"
+  },
+  "runtime_ui_panel_opening": {
+    "message": "面板開啟方式",
+    "description": "Runtime interface message ui.panel.opening"
+  },
+  "runtime_ui_paste": {
+    "message": "貼上",
+    "description": "Runtime interface message ui.paste"
+  },
+  "runtime_ui_paste_a_gateway_api_key_or_reconnect_when_you_are_ready": {
+    "message": "準備好後貼上閘道器 API 金鑰或重新連線。",
+    "description": "Runtime interface message ui.paste.a.gateway.api.key.or.reconnect.when.you.are.ready"
+  },
+  "runtime_ui_paste_image": {
+    "message": "▣ 貼上影像",
+    "description": "Runtime interface message ui.paste.image"
+  },
+  "runtime_ui_paste_this_into_the_hermes_api_server_environment_on_the_remote_machine": {
+    "message": "將其貼上到遠端機器上的 Hermes API 伺服器環境中。",
+    "description": "Runtime interface message ui.paste.this.into.the.hermes.api.server.environment.on.the.remote.machine"
+  },
+  "runtime_ui_path": {
+    "message": "路徑",
+    "description": "Runtime interface message ui.path"
+  },
+  "runtime_ui_pending": {
+    "message": "待處理",
+    "description": "Runtime interface message ui.pending"
+  },
+  "runtime_ui_permission": {
+    "message": "權限",
+    "description": "Runtime interface message ui.permission"
+  },
+  "runtime_ui_pick": {
+    "message": "選擇",
+    "description": "Runtime interface message ui.pick"
+  },
+  "runtime_ui_pick_a_fixed_mode_or_follow_your_system_setting": {
+    "message": "選擇固定模式或跟隨系統設定。",
+    "description": "Runtime interface message ui.pick.a.fixed.mode.or.follow.your.system.setting"
+  },
+  "runtime_ui_pick_an_element": {
+    "message": "拾取元素",
+    "description": "Runtime interface message ui.pick.an.element"
+  },
+  "runtime_ui_pick_page_element": {
+    "message": "◈ 拾取頁面元素",
+    "description": "Runtime interface message ui.pick.page.element"
+  },
+  "runtime_ui_picked_element_cleared": {
+    "message": "已清除拾取的元素",
+    "description": "Runtime interface message ui.picked.element.cleared"
+  },
+  "runtime_ui_pinned_tab_closed": {
+    "message": "固定的分頁已關閉",
+    "description": "Runtime interface message ui.pinned.tab.closed"
+  },
+  "runtime_ui_policy": {
+    "message": "策略",
+    "description": "Runtime interface message ui.policy"
+  },
+  "runtime_ui_popup": {
+    "message": "彈出視窗",
+    "description": "Runtime interface message ui.popup"
+  },
+  "runtime_ui_port": {
+    "message": "連線埠",
+    "description": "Runtime interface message ui.port"
+  },
+  "runtime_ui_preferences": {
+    "message": "偏好設定",
+    "description": "Runtime interface message ui.preferences"
+  },
+  "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
+    "message": "優先在本機使用 Hermes 原生喚醒引擎，並針對 Cloud Preview 使用 Chromium 裝置端語音。",
+    "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
+  },
+  "runtime_ui_preparing_on_device_dictation": {
+    "message": "正在準備裝置端語音輸入",
+    "description": "Runtime interface message ui.preparing.on.device.dictation"
+  },
+  "runtime_ui_preparing_the_browser_local_wake_listener": {
+    "message": "正在準備瀏覽器本機喚醒聆聽器…",
+    "description": "Runtime interface message ui.preparing.the.browser.local.wake.listener"
+  },
+  "runtime_ui_preview": {
+    "message": "預覽",
+    "description": "Runtime interface message ui.preview"
+  },
+  "runtime_ui_preview_1aa787fe": {
+    "message": "預覽",
+    "description": "Runtime interface message ui.preview.1aa787fe"
+  },
+  "runtime_ui_preview_copy_only": {
+    "message": "僅預覽與複製",
+    "description": "Runtime interface message ui.preview.copy.only"
+  },
+  "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
+    "message": "預覽模式：請從已安裝的 Hermes Browser 擴充功能載入此頁面，以使用已連線的 Hermes 設定和語音輸入。",
+    "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
+  },
+  "runtime_ui_previous": {
+    "message": "上一個",
+    "description": "Runtime interface message ui.previous"
+  },
+  "runtime_ui_private": {
+    "message": "私人",
+    "description": "Runtime interface message ui.private"
+  },
+  "runtime_ui_pro": {
+    "message": "專業版",
+    "description": "Runtime interface message ui.pro"
+  },
+  "runtime_ui_process": {
+    "message": "程序",
+    "description": "Runtime interface message ui.process"
+  },
+  "runtime_ui_profile": {
+    "message": "設定檔",
+    "description": "Runtime interface message ui.profile"
+  },
+  "runtime_ui_profile_api_unavailable": {
+    "message": "設定檔 API 不可用",
+    "description": "Runtime interface message ui.profile.api.unavailable"
+  },
+  "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
+    "message": "設定檔 API 不可用。瀏覽器將使用目前執行的 Hermes 閘道器設定檔。",
+    "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
+  },
+  "runtime_ui_profile_ff4fc027": {
+    "message": "設定檔",
+    "description": "Runtime interface message ui.profile.ff4fc027"
+  },
+  "runtime_ui_profile_switch_unavailable": {
+    "message": "設定檔切換不可用",
+    "description": "Runtime interface message ui.profile.switch.unavailable"
+  },
+  "runtime_ui_profile_sync_unavailable": {
+    "message": "設定檔同步不可用",
+    "description": "Runtime interface message ui.profile.sync.unavailable"
+  },
+  "runtime_ui_profiles_sync_after_connecting_to_hermes": {
+    "message": "連線至 Hermes 後會同步設定檔。",
+    "description": "Runtime interface message ui.profiles.sync.after.connecting.to.hermes"
+  },
+  "runtime_ui_prompt": {
+    "message": "提示",
+    "description": "Runtime interface message ui.prompt"
+  },
+  "runtime_ui_prompt_context": {
+    "message": "提示內容",
+    "description": "Runtime interface message ui.prompt.context"
+  },
+  "runtime_ui_prompt_context_settings": {
+    "message": "提示內容設定",
+    "description": "Runtime interface message ui.prompt.context.settings"
+  },
+  "runtime_ui_prompt_snippet": {
+    "message": "▤ 提示片段…",
+    "description": "Runtime interface message ui.prompt.snippet"
+  },
+  "runtime_ui_prompt_snippets": {
+    "message": "▤ 提示片段...",
+    "description": "Runtime interface message ui.prompt.snippets"
+  },
+  "runtime_ui_property": {
+    "message": "屬性",
+    "description": "Runtime interface message ui.property"
+  },
+  "runtime_ui_provider": {
+    "message": "提供商",
+    "description": "Runtime interface message ui.provider"
+  },
+  "runtime_ui_provider_model_and_reasoning": {
+    "message": "提供商、模型和推理",
+    "description": "Runtime interface message ui.provider.model.and.reasoning"
+  },
+  "runtime_ui_public": {
+    "message": "公開",
+    "description": "Runtime interface message ui.public"
+  },
+  "runtime_ui_public_alpha_load_unpacked_local_or_remote_hermes_api_server_fu_f39d96e3": {
+    "message": "公開 Alpha：載入未封裝擴充功能，使用本機或遠端 Hermes API 伺服器；連線的執行階段支援時可使用完整 Hermes 工具。",
+    "description": "Runtime interface message ui.public.alpha.load.unpacked.local.or.remote.hermes.api.server.fu.f39d96e3"
+  },
+  "runtime_ui_public_flow_connect_to_hermes_creates_a_scoped_browser_token_wh_9184ad4d": {
+    "message": "公開流程：當 API 伺服器支援配對時，「連線至 Hermes」會建立限定範圍的瀏覽器權杖。針對遠端主機，請將 API_SERVER_CORS_ORIGINS 設為此擴充功能來源，並使用高強度 API_SERVER_KEY 或限定範圍權杖。",
+    "description": "Runtime interface message ui.public.flow.connect.to.hermes.creates.a.scoped.browser.token.wh.9184ad4d"
+  },
+  "runtime_ui_public_setup": {
+    "message": "公開設定",
+    "description": "Runtime interface message ui.public.setup"
+  },
+  "runtime_ui_query": {
+    "message": "查詢",
+    "description": "Runtime interface message ui.query"
+  },
+  "runtime_ui_queue": {
+    "message": "佇列",
+    "description": "Runtime interface message ui.queue"
+  },
+  "runtime_ui_queued": {
+    "message": "已加入佇列",
+    "description": "Runtime interface message ui.queued"
+  },
+  "runtime_ui_queued_message_deleted": {
+    "message": "已刪除佇列中的訊息",
+    "description": "Runtime interface message ui.queued.message.deleted"
+  },
+  "runtime_ui_quick_commands": {
+    "message": "快速指令",
+    "description": "Runtime interface message ui.quick.commands"
+  },
+  "runtime_ui_range": {
+    "message": "範圍",
+    "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_readable_dom_text": {
+    "message": "可讀 DOM 文字",
+    "description": "Runtime interface message ui.readable.dom.text"
+  },
+  "runtime_ui_reading_connection_settings_and_canonical_session_history": {
+    "message": "正在讀取連線設定和規範工作階段歷史。",
+    "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_ready": {
+    "message": "就緒",
+    "description": "Runtime interface message ui.ready"
+  },
+  "runtime_ui_reasoning_effort": {
+    "message": "推理強度",
+    "description": "Runtime interface message ui.reasoning.effort"
+  },
+  "runtime_ui_reconnect": {
+    "message": "重新連線",
+    "description": "Runtime interface message ui.reconnect"
+  },
+  "runtime_ui_reconnecting": {
+    "message": "重新連線中",
+    "description": "Runtime interface message ui.reconnecting"
+  },
+  "runtime_ui_record": {
+    "message": "記錄",
+    "description": "Runtime interface message ui.record"
+  },
+  "runtime_ui_recording_voice": {
+    "message": "正在錄音",
+    "description": "Runtime interface message ui.recording.voice"
+  },
+  "runtime_ui_refresh": {
+    "message": "重新整理",
+    "description": "Runtime interface message ui.refresh"
+  },
+  "runtime_ui_refresh_context_to_calculate_the_next_prompt_payload": {
+    "message": "重新整理內容以計算下一個提示載荷。",
+    "description": "Runtime interface message ui.refresh.context.to.calculate.the.next.prompt.payload"
+  },
+  "runtime_ui_refresh_model_catalog": {
+    "message": "重新整理模型目錄",
+    "description": "Runtime interface message ui.refresh.model.catalog"
+  },
+  "runtime_ui_refresh_models": {
+    "message": "重新整理模型",
+    "description": "Runtime interface message ui.refresh.models"
+  },
+  "runtime_ui_refresh_sessions": {
+    "message": "重新整理工作階段",
+    "description": "Runtime interface message ui.refresh.sessions"
+  },
+  "runtime_ui_refreshing_models": {
+    "message": "正在重新整理模型",
+    "description": "Runtime interface message ui.refreshing.models"
+  },
+  "runtime_ui_refreshing_sessions": {
+    "message": "正在重新整理工作階段…",
+    "description": "Runtime interface message ui.refreshing.sessions"
+  },
+  "runtime_ui_remember_for_right_click_actions": {
+    "message": "記住右鍵操作的選擇",
+    "description": "Runtime interface message ui.remember.for.right.click.actions"
+  },
+  "runtime_ui_remote": {
+    "message": "遠端",
+    "description": "Runtime interface message ui.remote"
+  },
+  "runtime_ui_remote_api_server": {
+    "message": "遠端 API 伺服器",
+    "description": "Runtime interface message ui.remote.api.server"
+  },
+  "runtime_ui_remote_api_server_environment_variables": {
+    "message": "遠端 API 伺服器環境變數",
+    "description": "Runtime interface message ui.remote.api.server.environment.variables"
+  },
+  "runtime_ui_remote_dashboard_rename_rpc_is_not_available_yet": {
+    "message": "遠端儀表板重新命名 RPC 尚不可用。",
+    "description": "Runtime interface message ui.remote.dashboard.rename.rpc.is.not.available.yet"
+  },
+  "runtime_ui_remote_dashboard_websocket": {
+    "message": "遠端儀表板（WebSocket）",
+    "description": "Runtime interface message ui.remote.dashboard.websocket"
+  },
+  "runtime_ui_remote_env_copied": {
+    "message": "遠端環境變數已複製",
+    "description": "Runtime interface message ui.remote.env.copied"
+  },
+  "runtime_ui_remote_gateway": {
+    "message": "遠端閘道器",
+    "description": "Runtime interface message ui.remote.gateway"
+  },
+  "runtime_ui_remote_setup_diagnostics": {
+    "message": "遠端設定診斷",
+    "description": "Runtime interface message ui.remote.setup.diagnostics"
+  },
+  "runtime_ui_remove": {
+    "message": "移除",
+    "description": "Runtime interface message ui.remove"
+  },
+  "runtime_ui_rename": {
+    "message": "重新命名",
+    "description": "Runtime interface message ui.rename"
+  },
+  "runtime_ui_rename_a_fresh_browser_session_from_the_first_real_message": {
+    "message": "根據第一條真實訊息重新命名新瀏覽器工作階段。",
+    "description": "Runtime interface message ui.rename.a.fresh.browser.session.from.the.first.real.message"
+  },
+  "runtime_ui_rename_session": {
+    "message": "重新命名工作階段",
+    "description": "Runtime interface message ui.rename.session"
+  },
+  "runtime_ui_rendered_message_bodies_only_draft_and_input_values_stay_excluded": {
+    "message": "僅渲染的訊息本文。草稿和輸入值保持排除。",
+    "description": "Runtime interface message ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded"
+  },
+  "runtime_ui_rendered_message_bodies_will_be_attached_to_the_next_hermes_turn": {
+    "message": "渲染的訊息本文將附加到下一個 Hermes 輪。",
+    "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
+  },
+  "runtime_ui_replaced_the_original_field_safely": {
+    "message": "已安全地取代原始欄位",
+    "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_reply": {
+    "message": "回覆",
+    "description": "Runtime interface message ui.reply"
+  },
+  "runtime_ui_request": {
+    "message": "請求",
+    "description": "Runtime interface message ui.request"
+  },
+  "runtime_ui_required": {
+    "message": "必填",
+    "description": "Runtime interface message ui.required"
+  },
+  "runtime_ui_required_for_cloud_preview_and_older_hermes_builds_it_refuses_c_f0bdad5b": {
+    "message": "Cloud Preview 和較舊的 Hermes 組建需要此項。它會拒絕雲端語音辨識。",
+    "description": "Runtime interface message ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b"
+  },
+  "runtime_ui_reset": {
+    "message": "重置",
+    "description": "Runtime interface message ui.reset"
+  },
+  "runtime_ui_reset_zoom": {
+    "message": "重置縮放",
+    "description": "Runtime interface message ui.reset.zoom"
+  },
+  "runtime_ui_response": {
+    "message": "回應",
+    "description": "Runtime interface message ui.response"
+  },
+  "runtime_ui_restricted_page": {
+    "message": "受限頁面",
+    "description": "Runtime interface message ui.restricted.page"
+  },
+  "runtime_ui_result": {
+    "message": "結果",
+    "description": "Runtime interface message ui.result"
+  },
+  "runtime_ui_result_preview": {
+    "message": "結果預覽",
+    "description": "Runtime interface message ui.result.preview"
+  },
+  "runtime_ui_retry": {
+    "message": "重試",
+    "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_page": {
+    "message": "返回頁面",
+    "description": "Runtime interface message ui.return.to.page"
+  },
+  "runtime_ui_review": {
+    "message": "審查",
+    "description": "Runtime interface message ui.review"
+  },
+  "runtime_ui_review_the_result_before_applying_it": {
+    "message": "套用前先審查結果。",
+    "description": "Runtime interface message ui.review.the.result.before.applying.it"
+  },
+  "runtime_ui_right_click_actions": {
+    "message": "右鍵操作",
+    "description": "Runtime interface message ui.right.click.actions"
+  },
+  "runtime_ui_right_click_task_complete": {
+    "message": "以滑鼠右鍵按一下即可完成任務",
+    "description": "Runtime interface message ui.right.click.task.complete"
+  },
+  "runtime_ui_right_click_task_failed": {
+    "message": "右鍵任務失敗",
+    "description": "Runtime interface message ui.right.click.task.failed"
+  },
+  "runtime_ui_row": {
+    "message": "行",
+    "description": "Runtime interface message ui.row"
+  },
+  "runtime_ui_rows": {
+    "message": "行",
+    "description": "Runtime interface message ui.rows"
+  },
+  "runtime_ui_run": {
+    "message": "執行",
+    "description": "Runtime interface message ui.run"
+  },
+  "runtime_ui_run_in_background": {
+    "message": "在背景執行",
+    "description": "Runtime interface message ui.run.in.background"
+  },
+  "runtime_ui_runs": {
+    "message": "執行",
+    "description": "Runtime interface message ui.runs"
+  },
+  "runtime_ui_runtime_identity": {
+    "message": "執行階段身分",
+    "description": "Runtime interface message ui.runtime.identity"
+  },
+  "runtime_ui_safe_apply": {
+    "message": "安全套用",
+    "description": "Runtime interface message ui.safe.apply"
+  },
+  "runtime_ui_safety": {
+    "message": "安全",
+    "description": "Runtime interface message ui.safety"
+  },
+  "runtime_ui_same_desktop_palettes_minus_window_transparency": {
+    "message": "與桌面端相同的調色盤，不含視窗透明度。",
+    "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
+  },
+  "runtime_ui_save": {
+    "message": "儲存",
+    "description": "Runtime interface message ui.save"
+  },
+  "runtime_ui_save_settings": {
+    "message": "儲存設定",
+    "description": "Runtime interface message ui.save.settings"
+  },
+  "runtime_ui_saved": {
+    "message": "已儲存",
+    "description": "Runtime interface message ui.saved"
+  },
+  "runtime_ui_saved_when_you_send_the_first_message": {
+    "message": "傳送第一條訊息後儲存。",
+    "description": "Runtime interface message ui.saved.when.you.send.the.first.message"
+  },
+  "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
+    "message": "說出「Hey Hermes」即可進行免手持的單輪語音請求。常駐偵測僅會在此機器上進行。",
+    "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
+    "message": "縮放介面文字而不變更瀏覽器縮放。",
+    "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
+  },
+  "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
+    "message": "掃描受信任的 Hermes API 主機以尋找正在執行的閘道器。請針對同一部電腦的代理程式使用 localhost，或針對私人遠端代理程式使用 Tailscale 主機/IP。",
+    "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
+  },
+  "runtime_ui_screen": {
+    "message": "螢幕",
+    "description": "Runtime interface message ui.screen"
+  },
+  "runtime_ui_script": {
+    "message": "指令碼",
+    "description": "Runtime interface message ui.script"
+  },
+  "runtime_ui_search": {
+    "message": "搜尋",
+    "description": "Runtime interface message ui.search"
+  },
+  "runtime_ui_search_all_models": {
+    "message": "搜尋所有模型",
+    "description": "Runtime interface message ui.search.all.models"
+  },
+  "runtime_ui_search_chats": {
+    "message": "搜尋交談",
+    "description": "Runtime interface message ui.search.chats"
+  },
+  "runtime_ui_search_sessions": {
+    "message": "搜尋工作階段",
+    "description": "Runtime interface message ui.search.sessions"
+  },
+  "runtime_ui_search_tabs": {
+    "message": "搜尋分頁",
+    "description": "Runtime interface message ui.search.tabs"
+  },
+  "runtime_ui_security": {
+    "message": "安全",
+    "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_select": {
+    "message": "選擇",
+    "description": "Runtime interface message ui.select"
+  },
+  "runtime_ui_select_model": {
+    "message": "選擇模型",
+    "description": "Runtime interface message ui.select.model"
+  },
+  "runtime_ui_selected_model_runtime_options": {
+    "message": "所選模型的執行階段選項",
+    "description": "Runtime interface message ui.selected.model.runtime.options"
+  },
+  "runtime_ui_selecting_the_safest_wake_listener": {
+    "message": "正在選擇最安全的喚醒聆聽器…",
+    "description": "Runtime interface message ui.selecting.the.safest.wake.listener"
+  },
+  "runtime_ui_selection": {
+    "message": "選取",
+    "description": "Runtime interface message ui.selection"
+  },
+  "runtime_ui_self_hosted_api_or_dashboard_api_can_use_trusted_lan_http_dashb_152b7f4c": {
+    "message": "自託管 API 或儀表板。API 可使用可信區域網 http；儀表板使用 https。",
+    "description": "Runtime interface message ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c"
+  },
+  "runtime_ui_send": {
+    "message": "傳送",
+    "description": "Runtime interface message ui.send"
+  },
+  "runtime_ui_send_it_when_the_current_hermes_run_finishes": {
+    "message": "目前的 Hermes 執行完成時傳送它。",
+    "description": "Runtime interface message ui.send.it.when.the.current.hermes.run.finishes"
+  },
+  "runtime_ui_send_message": {
+    "message": "傳送訊息",
+    "description": "Runtime interface message ui.send.message"
+  },
+  "runtime_ui_sending_observed_model_request": {
+    "message": "正在傳送觀察到的模型請求",
+    "description": "Runtime interface message ui.sending.observed.model.request"
+  },
+  "runtime_ui_server": {
+    "message": "伺服器",
+    "description": "Runtime interface message ui.server"
+  },
+  "runtime_ui_service": {
+    "message": "服務",
+    "description": "Runtime interface message ui.service"
+  },
+  "runtime_ui_session": {
+    "message": "工作階段",
+    "description": "Runtime interface message ui.session"
+  },
+  "runtime_ui_session_actions": {
+    "message": "工作階段操作",
+    "description": "Runtime interface message ui.session.actions"
+  },
+  "runtime_ui_session_context_window": {
+    "message": "工作階段內容視窗",
+    "description": "Runtime interface message ui.session.context.window"
+  },
+  "runtime_ui_session_f7f1997c": {
+    "message": "工作階段",
+    "description": "Runtime interface message ui.session.f7f1997c"
+  },
+  "runtime_ui_session_handoff": {
+    "message": "工作階段交接",
+    "description": "Runtime interface message ui.session.handoff"
+  },
+  "runtime_ui_session_id": {
+    "message": "工作階段 ID",
+    "description": "Runtime interface message ui.session.id"
+  },
+  "runtime_ui_session_id_copied": {
+    "message": "工作階段 ID 已複製",
+    "description": "Runtime interface message ui.session.id.copied"
+  },
+  "runtime_ui_session_naming_prompt_context_and_side_panel_residency_live_together": {
+    "message": "工作階段命名、提示內容和側邊面板駐留設定集中在一起。",
+    "description": "Runtime interface message ui.session.naming.prompt.context.and.side.panel.residency.live.together"
+  },
+  "runtime_ui_session_renamed": {
+    "message": "工作階段已重新命名",
+    "description": "Runtime interface message ui.session.renamed"
+  },
+  "runtime_ui_session_renamed_and_synced": {
+    "message": "工作階段已重新命名並同步",
+    "description": "Runtime interface message ui.session.renamed.and.synced"
+  },
+  "runtime_ui_session_runtime": {
+    "message": "工作階段執行階段",
+    "description": "Runtime interface message ui.session.runtime"
+  },
+  "runtime_ui_session_sync_failed": {
+    "message": "工作階段同步失敗",
+    "description": "Runtime interface message ui.session.sync.failed"
+  },
+  "runtime_ui_session_title": {
+    "message": "工作階段標題",
+    "description": "Runtime interface message ui.session.title"
+  },
+  "runtime_ui_session_title_saved_locally": {
+    "message": "工作階段標題已儲存到本機",
+    "description": "Runtime interface message ui.session.title.saved.locally"
+  },
+  "runtime_ui_session_title_updated": {
+    "message": "工作階段標題已更新",
+    "description": "Runtime interface message ui.session.title.updated"
+  },
+  "runtime_ui_session_unavailable": {
+    "message": "工作階段不可用",
+    "description": "Runtime interface message ui.session.unavailable"
+  },
+  "runtime_ui_sessions": {
+    "message": "工作階段",
+    "description": "Runtime interface message ui.sessions"
+  },
+  "runtime_ui_set": {
+    "message": "設定",
+    "description": "Runtime interface message ui.set"
+  },
+  "runtime_ui_set_a_remote_dashboard": {
+    "message": "設定遠端儀表板",
+    "description": "Runtime interface message ui.set.a.remote.dashboard"
+  },
+  "runtime_ui_settings": {
+    "message": "設定",
+    "description": "Runtime interface message ui.settings"
+  },
+  "runtime_ui_settings_not_saved": {
+    "message": "設定未儲存",
+    "description": "Runtime interface message ui.settings.not.saved"
+  },
+  "runtime_ui_setup": {
+    "message": "設定",
+    "description": "Runtime interface message ui.setup"
+  },
+  "runtime_ui_share": {
+    "message": "分享",
+    "description": "Runtime interface message ui.share"
+  },
+  "runtime_ui_shared_session": {
+    "message": "共享工作階段",
+    "description": "Runtime interface message ui.shared.session"
+  },
+  "runtime_ui_shared_session_0a6bce9c": {
+    "message": "共享工作階段",
+    "description": "Runtime interface message ui.shared.session.0a6bce9c"
+  },
+  "runtime_ui_shell": {
+    "message": "Shell",
+    "description": "Runtime interface message ui.shell"
+  },
+  "runtime_ui_short": {
+    "message": "短",
+    "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_show": {
+    "message": "顯示",
+    "description": "Runtime interface message ui.show"
+  },
+  "runtime_ui_show_hermes_assist_in_writing_fields": {
+    "message": "在寫作欄位中顯示 Hermes Assist",
+    "description": "Runtime interface message ui.show.hermes.assist.in.writing.fields"
+  },
+  "runtime_ui_side_panel": {
+    "message": "側邊面板",
+    "description": "Runtime interface message ui.side.panel"
+  },
+  "runtime_ui_sidebar": {
+    "message": "側邊欄",
+    "description": "Runtime interface message ui.sidebar"
+  },
+  "runtime_ui_signal": {
+    "message": "訊號",
+    "description": "Runtime interface message ui.signal"
+  },
+  "runtime_ui_site": {
+    "message": "站點",
+    "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_size": {
+    "message": "大小",
+    "description": "Runtime interface message ui.size"
+  },
+  "runtime_ui_skill": {
+    "message": "技能",
+    "description": "Runtime interface message ui.skill"
+  },
+  "runtime_ui_skill_sync_failed": {
+    "message": "技能同步失敗",
+    "description": "Runtime interface message ui.skill.sync.failed"
+  },
+  "runtime_ui_skills": {
+    "message": "技能",
+    "description": "Runtime interface message ui.skills"
+  },
+  "runtime_ui_skip": {
+    "message": "跳過",
+    "description": "Runtime interface message ui.skip"
+  },
+  "runtime_ui_slash_commands_and_skills": {
+    "message": "斜槓指令和技能",
+    "description": "Runtime interface message ui.slash.commands.and.skills"
+  },
+  "runtime_ui_slash_helpers": {
+    "message": "斜槓輔助",
+    "description": "Runtime interface message ui.slash.helpers"
+  },
+  "runtime_ui_socket": {
+    "message": "Socket",
+    "description": "Runtime interface message ui.socket"
+  },
+  "runtime_ui_source": {
+    "message": "來源",
+    "description": "Runtime interface message ui.source"
+  },
+  "runtime_ui_source_6da13add": {
+    "message": "來源",
+    "description": "Runtime interface message ui.source.6da13add"
+  },
+  "runtime_ui_source_deck": {
+    "message": "來源列表",
+    "description": "Runtime interface message ui.source.deck"
+  },
+  "runtime_ui_source_receipts_arrive_after_shared_context_extraction": {
+    "message": "共用內容擷取後會收到來源收據。",
+    "description": "Runtime interface message ui.source.receipts.arrive.after.shared.context.extraction"
+  },
+  "runtime_ui_speak_into_the_composer": {
+    "message": "對著輸入框說話",
+    "description": "Runtime interface message ui.speak.into.the.composer"
+  },
+  "runtime_ui_speak_wake_replies": {
+    "message": "朗讀喚醒回覆",
+    "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_standard": {
+    "message": "標準",
+    "description": "Runtime interface message ui.standard"
+  },
+  "runtime_ui_start": {
+    "message": "開始",
+    "description": "Runtime interface message ui.start"
+  },
+  "runtime_ui_start_dictation": {
+    "message": "開始語音輸入",
+    "description": "Runtime interface message ui.start.dictation"
+  },
+  "runtime_ui_start_new_assist_session": {
+    "message": "開始新的 Assist 工作階段",
+    "description": "Runtime interface message ui.start.new.assist.session"
+  },
+  "runtime_ui_start_new_browser_session": {
+    "message": "開始新的 Browser 工作階段",
+    "description": "Runtime interface message ui.start.new.browser.session"
+  },
+  "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
+    "message": "在本機或可存取的遠端機器上啟動 Hermes API 伺服器。",
+    "description": "Runtime interface message ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine"
+  },
+  "runtime_ui_start_voice_dictation": {
+    "message": "開始語音輸入",
+    "description": "Runtime interface message ui.start.voice.dictation"
+  },
+  "runtime_ui_starting_hermes_native_wake_engine": {
+    "message": "正在啟動 Hermes 原生喚醒引擎…",
+    "description": "Runtime interface message ui.starting.hermes.native.wake.engine"
+  },
+  "runtime_ui_starting_hermes_voice_recording_now": {
+    "message": "現在開始 Hermes 語音錄製。",
+    "description": "Runtime interface message ui.starting.hermes.voice.recording.now"
+  },
+  "runtime_ui_startup_readiness_checks": {
+    "message": "啟動就緒檢查",
+    "description": "Runtime interface message ui.startup.readiness.checks"
+  },
+  "runtime_ui_status": {
+    "message": "狀態",
+    "description": "Runtime interface message ui.status"
+  },
+  "runtime_ui_steer": {
+    "message": "引導",
+    "description": "Runtime interface message ui.steer"
+  },
+  "runtime_ui_steer_failed": {
+    "message": "引導失敗",
+    "description": "Runtime interface message ui.steer.failed"
+  },
+  "runtime_ui_steer_not_injected": {
+    "message": "引導未注入",
+    "description": "Runtime interface message ui.steer.not.injected"
+  },
+  "runtime_ui_steer_sent": {
+    "message": "引導已傳送",
+    "description": "Runtime interface message ui.steer.sent"
+  },
+  "runtime_ui_steer_sent_to_active_run": {
+    "message": "引導已傳送到活動執行",
+    "description": "Runtime interface message ui.steer.sent.to.active.run"
+  },
+  "runtime_ui_steer_the_current_run": {
+    "message": "引導目前執行",
+    "description": "Runtime interface message ui.steer.the.current.run"
+  },
+  "runtime_ui_stop": {
+    "message": "停止",
+    "description": "Runtime interface message ui.stop"
+  },
+  "runtime_ui_stop_hermes": {
+    "message": "停止 Hermes",
+    "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stopping_hermes": {
+    "message": "正在停止 Hermes",
+    "description": "Runtime interface message ui.stopping.hermes"
+  },
+  "runtime_ui_stopping_recording": {
+    "message": "正在停止錄音…",
+    "description": "Runtime interface message ui.stopping.recording"
+  },
+  "runtime_ui_storage": {
+    "message": "儲存",
+    "description": "Runtime interface message ui.storage"
+  },
+  "runtime_ui_stream": {
+    "message": "流",
+    "description": "Runtime interface message ui.stream"
+  },
+  "runtime_ui_submit": {
+    "message": "提交",
+    "description": "Runtime interface message ui.submit"
+  },
+  "runtime_ui_summarize": {
+    "message": "摘要",
+    "description": "Runtime interface message ui.summarize"
+  },
+  "runtime_ui_summarize_selection": {
+    "message": "摘要選取內容",
+    "description": "Runtime interface message ui.summarize.selection"
+  },
+  "runtime_ui_summary": {
+    "message": "摘要",
+    "description": "Runtime interface message ui.summary"
+  },
+  "runtime_ui_support_diagnostics": {
+    "message": "支援診斷",
+    "description": "Runtime interface message ui.support.diagnostics"
+  },
+  "runtime_ui_switch": {
+    "message": "切換",
+    "description": "Runtime interface message ui.switch"
+  },
+  "runtime_ui_switch_partially_failed": {
+    "message": "切換部分失敗",
+    "description": "Runtime interface message ui.switch.partially.failed"
+  },
+  "runtime_ui_switch_to_this_agent": {
+    "message": "切換到該代理程式",
+    "description": "Runtime interface message ui.switch.to.this.agent"
+  },
+  "runtime_ui_switched_gateway": {
+    "message": "已切換閘道器",
+    "description": "Runtime interface message ui.switched.gateway"
+  },
+  "runtime_ui_syncing_hermes_model_catalog_this_can_take_20_30_seconds": {
+    "message": "正在同步 Hermes 模型目錄…這可能需要 20–30 秒。",
+    "description": "Runtime interface message ui.syncing.hermes.model.catalog.this.can.take.20.30.seconds"
+  },
+  "runtime_ui_system": {
+    "message": "▱ 跟隨系統",
+    "description": "Runtime interface message ui.system"
+  },
+  "runtime_ui_system_bc0792d8": {
+    "message": "系統",
+    "description": "Runtime interface message ui.system.bc0792d8"
+  },
+  "runtime_ui_tab": {
+    "message": "分頁",
+    "description": "Runtime interface message ui.tab"
+  },
+  "runtime_ui_tabs": {
+    "message": "分頁",
+    "description": "Runtime interface message ui.tabs"
+  },
+  "runtime_ui_tabs_in_prompt": {
+    "message": "提示中的分頁",
+    "description": "Runtime interface message ui.tabs.in.prompt"
+  },
+  "runtime_ui_tag": {
+    "message": "標籤",
+    "description": "Runtime interface message ui.tag"
+  },
+  "runtime_ui_tags": {
+    "message": "標籤",
+    "description": "Runtime interface message ui.tags"
+  },
+  "runtime_ui_target": {
+    "message": "目標",
+    "description": "Runtime interface message ui.target"
+  },
+  "runtime_ui_task": {
+    "message": "任務",
+    "description": "Runtime interface message ui.task"
+  },
+  "runtime_ui_tasks": {
+    "message": "☑ 任務",
+    "description": "Runtime interface message ui.tasks"
+  },
+  "runtime_ui_template": {
+    "message": "模板",
+    "description": "Runtime interface message ui.template"
+  },
+  "runtime_ui_test": {
+    "message": "測試",
+    "description": "Runtime interface message ui.test"
+  },
+  "runtime_ui_test_984816fd": {
+    "message": "測試",
+    "description": "Runtime interface message ui.test.984816fd"
+  },
+  "runtime_ui_test_connection": {
+    "message": "測試連線",
+    "description": "Runtime interface message ui.test.connection"
+  },
+  "runtime_ui_test_connection_f7dafbab": {
+    "message": "測試連線",
+    "description": "Runtime interface message ui.test.connection.f7dafbab"
+  },
+  "runtime_ui_test_the_current_hermes_connection": {
+    "message": "測試目前的 Hermes 連線",
+    "description": "Runtime interface message ui.test.the.current.hermes.connection"
+  },
+  "runtime_ui_text": {
+    "message": "文字",
+    "description": "Runtime interface message ui.text"
+  },
+  "runtime_ui_text_size": {
+    "message": "字號",
+    "description": "Runtime interface message ui.text.size"
+  },
+  "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
+    "message": "連線的 Hermes 執行階段未宣告原生工作階段壓縮功能。",
+    "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
+  },
+  "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
+    "message": "連線的執行階段將在下一輪接收這些選項，但不提供確認端點。",
+    "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
+    "message": "即時模型目錄不可用；保留上次驗證的提供者／模型清單。",
+    "description": "Runtime interface message ui.the.live.model.catalog.is.unavailable.keeping.the.last.verified.0e0250fe"
+  },
+  "runtime_ui_the_local_speech_language_pack_did_not_become_ready_in_90_secon_d69760e3": {
+    "message": "本機語音語言包未在 90 秒內就緒。Chrome 完成安裝語音支援後，請重試耳朵圖示。",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.did.not.become.ready.in.90.secon.d69760e3"
+  },
+  "runtime_ui_the_local_speech_language_pack_is_unavailable_wake_listening_wi_6da8a4e2": {
+    "message": "本機語音語言包無法使用。喚醒聆聽不會使用雲端辨識。",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.is.unavailable.wake.listening.wi.6da8a4e2"
+  },
+  "runtime_ui_the_microphone_is_unavailable_to_the_wake_listener": {
+    "message": "喚醒聆聽器無法使用麥克風。",
+    "description": "Runtime interface message ui.the.microphone.is.unavailable.to.the.wake.listener"
+  },
+  "runtime_ui_the_page_is_the_prompt": {
+    "message": "頁面就是提示",
+    "description": "Runtime interface message ui.the.page.is.the.prompt"
+  },
+  "runtime_ui_theme": {
+    "message": "主題",
+    "description": "Runtime interface message ui.theme"
+  },
+  "runtime_ui_thinking": {
+    "message": "思考",
+    "description": "Runtime interface message ui.thinking"
+  },
+  "runtime_ui_thinking_off_standard": {
+    "message": "思考關閉 · 標準",
+    "description": "Runtime interface message ui.thinking.off.standard"
+  },
+  "runtime_ui_this_browser_does_not_expose_on_device_speech_recognition": {
+    "message": "此瀏覽器未提供裝置端語音辨識。",
+    "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
+  },
+  "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
+    "message": "此 Chromium 瀏覽器未向擴充功能頁面提供 MediaRecorder/getUserMedia，且 Web Speech 後備方案無法使用。",
+    "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
+    "message": "此閘道尚未提供 /v1/capabilities。瀏覽器專用路由會維持在後備模式。",
+    "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
+  },
+  "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
+    "message": "此 Hermes 閘道器尚未公開 /v1/profiles。正在使用目前執行的設定檔。",
+    "description": "Runtime interface message ui.this.hermes.gateway.does.not.expose.v1.profiles.yet.using.the.c.0222afa8"
+  },
+  "runtime_ui_this_hermes_runtime_does_not_advertise_browser_pairing_yet": {
+    "message": "此 Hermes 執行階段尚未宣告瀏覽器配對功能。",
+    "description": "Runtime interface message ui.this.hermes.runtime.does.not.advertise.browser.pairing.yet"
+  },
+  "runtime_ui_this_managed_editor_is_not_mutated_until_insertion_is_verified": {
+    "message": "在確認插入前，此受管理的編輯器不會變更",
+    "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
+  },
+  "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
+    "message": "此模型是從自訂端點探索到的，但 Hermes 必須透過已連線的執行階段提供它，Browser 才能將請求傳送至該模型。",
+    "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
+  },
+  "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
+    "message": "此請求已繫結至所選的瀏覽器工作階段。",
+    "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_time": {
+    "message": "時間",
+    "description": "Runtime interface message ui.time"
+  },
+  "runtime_ui_title": {
+    "message": "標題",
+    "description": "Runtime interface message ui.title"
+  },
+  "runtime_ui_toggle_hey_hermes": {
+    "message": "切換 Hey Hermes",
+    "description": "Runtime interface message ui.toggle.hey.hermes"
+  },
+  "runtime_ui_toggle_inspector": {
+    "message": "切換檢查器",
+    "description": "Runtime interface message ui.toggle.inspector"
+  },
+  "runtime_ui_token": {
+    "message": "權杖",
+    "description": "Runtime interface message ui.token"
+  },
+  "runtime_ui_tokens": {
+    "message": "權杖",
+    "description": "Runtime interface message ui.tokens"
+  },
+  "runtime_ui_tokens_are_stored_in_chrome_storage_local_and_never_displayed_after_save": {
+    "message": "權杖儲存在 chrome.storage.local 中，儲存後不會顯示。",
+    "description": "Runtime interface message ui.tokens.are.stored.in.chrome.storage.local.and.never.displayed.after.save"
+  },
+  "runtime_ui_tool": {
+    "message": "工具",
+    "description": "Runtime interface message ui.tool"
+  },
+  "runtime_ui_tool_activity": {
+    "message": "工具活動",
+    "description": "Runtime interface message ui.tool.activity"
+  },
+  "runtime_ui_tool_and_run_events_will_appear_here": {
+    "message": "工具和執行事件會顯示於此。",
+    "description": "Runtime interface message ui.tool.and.run.events.will.appear.here"
+  },
+  "runtime_ui_total": {
+    "message": "總計",
+    "description": "Runtime interface message ui.total"
+  },
+  "runtime_ui_transcribing_through_your_local_hermes_gateway": {
+    "message": "正在透過您的本機 Hermes 閘道器轉錄…",
+    "description": "Runtime interface message ui.transcribing.through.your.local.hermes.gateway"
+  },
+  "runtime_ui_transcribing_voice": {
+    "message": "正在轉錄語音",
+    "description": "Runtime interface message ui.transcribing.voice"
+  },
+  "runtime_ui_transcript_inserted_into_the_composer": {
+    "message": "轉錄內容已插入撰寫區。",
+    "description": "Runtime interface message ui.transcript.inserted.into.the.composer"
+  },
+  "runtime_ui_transcription": {
+    "message": "轉錄",
+    "description": "Runtime interface message ui.transcription"
+  },
+  "runtime_ui_trusted": {
+    "message": "可信",
+    "description": "Runtime interface message ui.trusted"
+  },
+  "runtime_ui_try_recording_again": {
+    "message": "請重試錄音。",
+    "description": "Runtime interface message ui.try.recording.again"
+  },
+  "runtime_ui_turn_off": {
+    "message": "關閉",
+    "description": "Runtime interface message ui.turn.off"
+  },
+  "runtime_ui_turn_on": {
+    "message": "開啟",
+    "description": "Runtime interface message ui.turn.on"
+  },
+  "runtime_ui_turn_the_field_bound_launcher_on_or_off_across_normal_web_pages": {
+    "message": "在普通網頁上開啟或關閉繫結欄位的啟動器。",
+    "description": "Runtime interface message ui.turn.the.field.bound.launcher.on.or.off.across.normal.web.pages"
+  },
+  "runtime_ui_type": {
+    "message": "型別",
+    "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_ui": {
+    "message": "介面",
+    "description": "Runtime interface message ui.ui"
+  },
+  "runtime_ui_unavailable": {
+    "message": "不可用",
+    "description": "Runtime interface message ui.unavailable"
+  },
+  "runtime_ui_undo": {
+    "message": "撤銷",
+    "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_update": {
+    "message": "更新",
+    "description": "Runtime interface message ui.update"
+  },
+  "runtime_ui_update_now": {
+    "message": "立即更新",
+    "description": "Runtime interface message ui.update.now"
+  },
+  "runtime_ui_update_prompt_ready": {
+    "message": "更新提示已準備好",
+    "description": "Runtime interface message ui.update.prompt.ready"
+  },
+  "runtime_ui_updates_are_checked_against_the_public_github_repo": {
+    "message": "更新會與公開 GitHub 存放庫核對。",
+    "description": "Runtime interface message ui.updates.are.checked.against.the.public.github.repo"
+  },
+  "runtime_ui_upload": {
+    "message": "上傳",
+    "description": "Runtime interface message ui.upload"
+  },
+  "runtime_ui_url": {
+    "message": "↗ URL...",
+    "description": "Runtime interface message ui.url"
+  },
+  "runtime_ui_url_0e2d9b07": {
+    "message": "URL",
+    "description": "Runtime interface message ui.url.0e2d9b07"
+  },
+  "runtime_ui_url_19911671": {
+    "message": "↗ URL…",
+    "description": "Runtime interface message ui.url.19911671"
+  },
+  "runtime_ui_use": {
+    "message": "使用",
+    "description": "Runtime interface message ui.use"
+  },
+  "runtime_ui_use_current_tab_session": {
+    "message": "使用目前分頁工作階段",
+    "description": "Runtime interface message ui.use.current.tab.session"
+  },
+  "runtime_ui_use_hermes_desktop_model_settings_or_the_hermes_model_command_t_f5a4940b": {
+    "message": "使用 Hermes Desktop 模型設定或 Hermes model 指令，然後在此處重新整理模型。",
+    "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
+  },
+  "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
+    "message": "使用活動分頁的目前工作階段、建立新的瀏覽器工作階段，或單獨執行。",
+    "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
+  },
+  "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
+    "message": "使用與 Hermes Browser 相同的調色盤和 Chrome 語言。",
+    "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
+  },
+  "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
+    "message": "遠端儀表板 URL、持有人權杖或 CORS 來源設定錯誤時，請使用此項。",
+    "description": "Runtime interface message ui.use.this.when.a.remote.dashboard.url.bearer.token.or.cors.origi.9956db87"
+  },
+  "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
+    "message": "在提交 GitHub issue 或支援報告時使用。",
+    "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_user": {
+    "message": "使用者",
+    "description": "Runtime interface message ui.user"
+  },
+  "runtime_ui_uses_hermes_tts_on_the_native_path_and_local_browser_speech_on_acf402bd": {
+    "message": "原生路徑使用 Hermes TTS，後備路徑使用本機瀏覽器語音。",
+    "description": "Runtime interface message ui.uses.hermes.tts.on.the.native.path.and.local.browser.speech.on.acf402bd"
+  },
+  "runtime_ui_using_cached_hermes_catalog": {
+    "message": "使用快取的 Hermes 目錄",
+    "description": "Runtime interface message ui.using.cached.hermes.catalog"
+  },
+  "runtime_ui_using_hermes_speech_to_text_matching_desktop_dictation": {
+    "message": "使用 Hermes 語音轉文字，與 Desktop 語音聽寫一致。",
+    "description": "Runtime interface message ui.using.hermes.speech.to.text.matching.desktop.dictation"
+  },
+  "runtime_ui_using_the_currently_running_hermes_gateway_profile": {
+    "message": "使用目前執行的 Hermes 閘道器設定檔。",
+    "description": "Runtime interface message ui.using.the.currently.running.hermes.gateway.profile"
+  },
+  "runtime_ui_value": {
+    "message": "值",
+    "description": "Runtime interface message ui.value"
+  },
+  "runtime_ui_version": {
+    "message": "版本",
+    "description": "Runtime interface message ui.version"
+  },
+  "runtime_ui_version_loading": {
+    "message": "版本載入中…",
+    "description": "Runtime interface message ui.version.loading"
+  },
+  "runtime_ui_video": {
+    "message": "影片",
+    "description": "Runtime interface message ui.video"
+  },
+  "runtime_ui_view": {
+    "message": "檢視",
+    "description": "Runtime interface message ui.view"
+  },
+  "runtime_ui_voice": {
+    "message": "語音",
+    "description": "Runtime interface message ui.voice"
+  },
+  "runtime_ui_voice_dictation": {
+    "message": "語音輸入",
+    "description": "Runtime interface message ui.voice.dictation"
+  },
+  "runtime_ui_voice_dictation_ready": {
+    "message": "語音輸入就緒",
+    "description": "Runtime interface message ui.voice.dictation.ready"
+  },
+  "runtime_ui_voice_dictation_stopped": {
+    "message": "語音輸入已停止",
+    "description": "Runtime interface message ui.voice.dictation.stopped"
+  },
+  "runtime_ui_voice_dictation_unavailable": {
+    "message": "語音輸入不可用",
+    "description": "Runtime interface message ui.voice.dictation.unavailable"
+  },
+  "runtime_ui_voice_mode_browser_speech_fallback_hermes_stt_is_unavailable_on_70bf6212": {
+    "message": "語音模式：瀏覽器語音後備方案\n\n此閘道器無法使用 Hermes STT。語音辨識會在瀏覽器中執行；只有轉錄文字會傳回側邊面板。",
+    "description": "Runtime interface message ui.voice.mode.browser.speech.fallback.hermes.stt.is.unavailable.on.70bf6212"
+  },
+  "runtime_ui_voice_mode_hermes_stt_audio_is_sent_once_to_your_local_hermes_t_6e927a4e": {
+    "message": "語音模式：Hermes STT\n\n停止錄音時，音訊會一次傳送至您的本機 Hermes 轉錄端點。",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.audio.is.sent.once.to.your.local.hermes.t.6e927a4e"
+  },
+  "runtime_ui_voice_mode_hermes_stt_recording_speak_now_then_click_stop_transcribe": {
+    "message": "語音模式：Hermes STT\n\n正在錄音…請立即說話，然後按一下「停止並轉錄」。",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.recording.speak.now.then.click.stop.transcribe"
+  },
+  "runtime_ui_voice_mode_hermes_stt_requesting_microphone_access": {
+    "message": "語音模式：Hermes STT\n\n正在要求麥克風存取權…",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.requesting.microphone.access"
+  },
+  "runtime_ui_voice_mode_on_device_speech_downloading_the_browser_language_pack_once": {
+    "message": "語音模式：裝置端語音\n\n正在一次性下載瀏覽器語言包…",
+    "description": "Runtime interface message ui.voice.mode.on.device.speech.downloading.the.browser.language.pack.once"
+  },
+  "runtime_ui_voice_mode_unavailable_connect_hermes_for_stt_or_use_a_chromium_08a02bbb": {
+    "message": "語音模式無法使用。請連線至 Hermes 以使用 STT，或使用支援瀏覽器語音後備方案的 Chromium 組建。",
+    "description": "Runtime interface message ui.voice.mode.unavailable.connect.hermes.for.stt.or.use.a.chromium.08a02bbb"
+  },
+  "runtime_ui_voice_mode_unavailable_this_browser_does_not_expose_hermes_stt_fcc04044": {
+    "message": "語音模式無法使用。此瀏覽器未提供 Hermes STT 或 Web Speech 後備方案。",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.browser.does.not.expose.hermes.stt.fcc04044"
+  },
+  "runtime_ui_voice_mode_unavailable_this_hermes_runtime_has_no_audio_transcr_70f57e78": {
+    "message": "語音模式無法使用。此 Hermes 執行階段沒有音訊轉錄路由，且此瀏覽器未提供 Web Speech 後備方案。",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.hermes.runtime.has.no.audio.transcr.70f57e78"
+  },
+  "runtime_ui_voice_recording_failed": {
+    "message": "語音錄製失敗",
+    "description": "Runtime interface message ui.voice.recording.failed"
+  },
+  "runtime_ui_voice_tab_opened": {
+    "message": "語音分頁已開啟",
+    "description": "Runtime interface message ui.voice.tab.opened"
+  },
+  "runtime_ui_voice_transcript_handoff_failed": {
+    "message": "語音轉錄交接失敗",
+    "description": "Runtime interface message ui.voice.transcript.handoff.failed"
+  },
+  "runtime_ui_voice_transcript_ready": {
+    "message": "語音轉錄就緒",
+    "description": "Runtime interface message ui.voice.transcript.ready"
+  },
+  "runtime_ui_voice_transcription_failed": {
+    "message": "語音轉錄失敗",
+    "description": "Runtime interface message ui.voice.transcription.failed"
+  },
+  "runtime_ui_waiting_for_hermes_desktop_approval": {
+    "message": "等待 Hermes Desktop 核准...",
+    "description": "Runtime interface message ui.waiting.for.hermes.desktop.approval"
+  },
+  "runtime_ui_waiting_for_permission_request": {
+    "message": "正在等待權限請求…",
+    "description": "Runtime interface message ui.waiting.for.permission.request"
+  },
+  "runtime_ui_waiting_for_session_usage": {
+    "message": "正在等待工作階段使用。",
+    "description": "Runtime interface message ui.waiting.for.session.usage"
+  },
+  "runtime_ui_waiting_for_the_session_resource_to_confirm_thinking_effort_and_63018fde": {
+    "message": "正在等待工作階段資源確認思考、推理強度和快速模式。",
+    "description": "Runtime interface message ui.waiting.for.the.session.resource.to.confirm.thinking.effort.and.63018fde"
+  },
+  "runtime_ui_wake_command_captured": {
+    "message": "已擷取喚醒指令。",
+    "description": "Runtime interface message ui.wake.command.captured"
+  },
+  "runtime_ui_wake_command_captured_opening_hermes": {
+    "message": "已擷取喚醒指令。正在開啟 Hermes…",
+    "description": "Runtime interface message ui.wake.command.captured.opening.hermes"
+  },
+  "runtime_ui_wake_listener_document_is_ready": {
+    "message": "喚醒聆聽器文件已就緒。",
+    "description": "Runtime interface message ui.wake.listener.document.is.ready"
+  },
+  "runtime_ui_wake_listener_paused_during_the_voice_turn": {
+    "message": "語音回合期間已暫停喚醒聆聽器。",
+    "description": "Runtime interface message ui.wake.listener.paused.during.the.voice.turn"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command": {
+    "message": "已聽到喚醒語。正在聆聽您的指令。",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command_38ffdf10": {
+    "message": "已聽到喚醒語。正在聆聽您的指令…",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command.38ffdf10"
+  },
+  "runtime_ui_wake_word": {
+    "message": "喚醒詞",
+    "description": "Runtime interface message ui.wake.word"
+  },
+  "runtime_ui_wake_word_is_off": {
+    "message": "喚醒詞已關閉。",
+    "description": "Runtime interface message ui.wake.word.is.off"
+  },
+  "runtime_ui_web_ui_sections": {
+    "message": "Web UI 區段",
+    "description": "Runtime interface message ui.web.ui.sections"
+  },
+  "runtime_ui_what_hermes_saw": {
+    "message": "HERMES 看到的內容",
+    "description": "Runtime interface message ui.what.hermes.saw"
+  },
+  "runtime_ui_what_should_we_work_on": {
+    "message": "我們該做什麼？",
+    "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_should_hermes_work": {
+    "message": "Hermes 應在何處工作？",
+    "description": "Runtime interface message ui.where.should.hermes.work"
+  },
+  "runtime_ui_where_should_this_right_click_task_run": {
+    "message": "此右鍵任務應在何處執行？",
+    "description": "Runtime interface message ui.where.should.this.right.click.task.run"
+  },
+  "runtime_ui_where_should_this_session_open": {
+    "message": "此工作階段應在何處開啟？",
+    "description": "Runtime interface message ui.where.should.this.session.open"
+  },
+  "runtime_ui_window": {
+    "message": "視窗",
+    "description": "Runtime interface message ui.window"
+  },
+  "runtime_ui_window_tab_list": {
+    "message": "視窗分頁清單",
+    "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_worker": {
+    "message": "工作程序",
+    "description": "Runtime interface message ui.worker"
+  },
+  "runtime_ui_working": {
+    "message": "工作中",
+    "description": "Runtime interface message ui.working"
+  },
+  "runtime_ui_working_92263e08": {
+    "message": "處理中",
+    "description": "Runtime interface message ui.working.92263e08"
+  },
+  "runtime_ui_workspace": {
+    "message": "工作區",
+    "description": "Runtime interface message ui.workspace"
+  },
+  "runtime_ui_workspaces": {
+    "message": "工作區",
+    "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_xl": {
+    "message": "特大",
+    "description": "Runtime interface message ui.xl"
+  },
+  "runtime_ui_you": {
+    "message": "您",
+    "description": "Runtime interface message ui.you"
+  },
+  "runtime_ui_your_current_conversation_stays_visible": {
+    "message": "您目前的對話會保持可見。",
+    "description": "Runtime interface message ui.your.current.conversation.stays.visible"
+  },
+  "runtime_ui_youtube_transcript_provider": {
+    "message": "YouTube 字幕提供者",
+    "description": "Runtime interface message ui.youtube.transcript.provider"
+  },
+  "runtime_ui_zoom_in": {
+    "message": "放大",
+    "description": "Runtime interface message ui.zoom.in"
+  },
+  "runtime_ui_zoom_out": {
+    "message": "縮小",
+    "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_voice_browser_preview": {
+    "message": "語音模式：瀏覽器語音後備方案\n\n{preview}",
+    "description": "Runtime interface message voice.browser.preview"
+  },
+  "runtime_voice_browser_start_failed": {
+    "message": "無法啟動瀏覽器語音後備方案。\n\n{error}",
+    "description": "Runtime interface message voice.browser.start_failed"
+  },
+  "runtime_voice_browser_stop_failed": {
+    "message": "無法停止瀏覽器語音後備方案。\n\n{error}",
+    "description": "Runtime interface message voice.browser.stop_failed"
+  },
+  "runtime_voice_browser_stopped": {
+    "message": "瀏覽器語音後備方案已停止。\n\n{error}",
+    "description": "Runtime interface message voice.browser.stopped"
+  },
+  "runtime_voice_capture_error": {
+    "message": "無法擷取麥克風音訊。",
+    "description": "Runtime interface message voice.capture_error"
+  },
+  "runtime_voice_permission_blocked": {
+    "message": "Hermes Browser 擴充功能的麥克風權限已封鎖。\n\n按一下「開啟麥克風設定」，將此擴充功能的麥克風設為「允許」，返回此處後再按一下「開始語音輸入」。\n\n{error}",
+    "description": "Runtime interface message voice.permission_blocked"
+  },
+  "runtime_voice_settings_load_failed": {
+    "message": "無法載入 Hermes Browser 設定。\n\n{error}",
+    "description": "Runtime interface message voice.settings_load_failed"
+  },
+  "runtime_voice_speech_recognition_error": {
+    "message": "語音辨識錯誤",
+    "description": "Runtime interface message voice.speech_recognition_error"
+  },
+  "runtime_voice_start_failed": {
+    "message": "無法啟動語音輸入。\n\n{error}",
+    "description": "Runtime interface message voice.start_failed"
+  },
+  "runtime_voice_transcript_sent": {
+    "message": "已將轉錄文字傳送至 Hermes 側邊面板：\n\n{transcript}",
+    "description": "Runtime interface message voice.transcript_sent"
+  },
+  "runtime_voice_transcription_failed": {
+    "message": "語音轉錄失敗。\n\n{error}",
+    "description": "Runtime interface message voice.transcription_failed"
+  },
+  "runtime_wake_turn_off": {
+    "message": "關閉喚醒詞",
+    "description": "Runtime interface message wake.turn_off"
+  },
+  "runtime_wake_turn_on": {
+    "message": "開啟喚醒詞",
+    "description": "Runtime interface message wake.turn_on"
+  }
+}

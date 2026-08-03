@@ -8,7 +8,44 @@ import {
   formatMessage,
   localeDirection,
   normalizeLocale,
+  populateLanguageSelect,
 } from '../extension/lib/i18n.mjs';
+import { SUPPORTED_LOCALES } from '../extension/lib/i18n-registry.mjs';
+
+test('ships the exact 21-locale registry with endonyms, aliases, and Arabic RTL', () => {
+  assert.deepEqual(
+    SUPPORTED_LOCALES.map((locale) => locale.id),
+    ['en', 'es', 'pt-BR', 'zh-CN', 'zh-TW', 'ja', 'ko', 'fr', 'de', 'it', 'nl', 'pl', 'tr', 'ru', 'uk', 'hi', 'id', 'vi', 'th', 'ar', 'da'],
+  );
+  assert.equal(normalizeLocale('ZH_hant'), 'zh-TW');
+  assert.equal(normalizeLocale('pt-PT'), 'pt-BR');
+  assert.equal(normalizeLocale('da-DK'), 'da');
+  assert.equal(localeDirection('ar-EG'), 'rtl');
+  assert.equal(SUPPORTED_LOCALES.find((locale) => locale.id === 'th')?.nativeName, 'ไทย');
+  assert.equal(SUPPORTED_LOCALES.find((locale) => locale.id === 'da')?.nativeName, 'Dansk');
+});
+
+test('populates the shared language selector with all 21 invariant endonyms', () => {
+  const previousDocument = globalThis.document;
+  globalThis.document = {
+    createElement: () => ({ dataset: {}, value: '', textContent: '' }),
+  };
+  try {
+    const select = {
+      options: [{ value: 'en' }],
+      replaceChildren(...options) { this.options = options; },
+    };
+    populateLanguageSelect(select);
+    assert.equal(select.options.length, 21);
+    assert.deepEqual(select.options.slice(0, 5).map(({ value }) => value), ['en', 'es', 'pt-BR', 'zh-CN', 'zh-TW']);
+    assert.equal(select.options.find(({ value }) => value === 'th')?.textContent, 'ไทย');
+    assert.equal(select.options.find(({ value }) => value === 'ar')?.textContent, 'العربية');
+    assert.equal(select.options.find(({ value }) => value === 'da')?.textContent, 'Dansk');
+    assert.ok(select.options.every((option) => Object.hasOwn(option.dataset, 'i18nInvariant')));
+  } finally {
+    globalThis.document = previousDocument;
+  }
+});
 
 function createSharedStorage(initial = {}) {
   const state = { ...initial };
@@ -136,4 +173,45 @@ test('synchronizes two open extension documents without translating runtime or u
 
   runtimeA.destroy();
   runtimeB.destroy();
+});
+
+test('a locale storage event during initialization wins over the stale storage snapshot', async () => {
+  let resolveGet;
+  let resolveChangedLocale;
+  const listeners = new Set();
+  const runtime = createI18nRuntime({
+    storageArea: {
+      get() {
+        return new Promise((resolve) => { resolveGet = resolve; });
+      },
+      async set() {},
+    },
+    storageEvents: {
+      addListener(listener) { listeners.add(listener); },
+      removeListener(listener) { listeners.delete(listener); },
+    },
+    loadMessages: async (locale) => {
+      if (locale !== 'zh-CN') return catalogs.en;
+      return new Promise((resolve) => { resolveChangedLocale = () => resolve(catalogs['zh-CN']); });
+    },
+  });
+
+  const initializing = runtime.init();
+  assert.equal(listeners.size, 1);
+  for (const listener of listeners) {
+    listener({ [LOCALE_STORAGE_KEY]: { oldValue: 'en', newValue: 'zh-CN' } }, 'local');
+  }
+  resolveGet({ [LOCALE_STORAGE_KEY]: 'en' });
+
+  const initializedFromStaleSnapshot = await Promise.race([
+    initializing.then(() => true),
+    new Promise((resolve) => globalThis.setTimeout(() => resolve(false), 0)),
+  ]);
+  assert.equal(initializedFromStaleSnapshot, false);
+
+  resolveChangedLocale();
+  await initializing;
+
+  assert.equal(runtime.getLocale(), 'zh-CN');
+  runtime.destroy();
 });

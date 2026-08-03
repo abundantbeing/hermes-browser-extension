@@ -92,7 +92,7 @@ import {
   updateBrowserModelOptionScope,
   updateReviewState,
 } from './lib/common.mjs';
-import { getLocale, initI18n, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
+import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
   assertAssistModelSelectionAcknowledged,
   assistModelFallbackNotice,
@@ -690,15 +690,15 @@ function markConnectionProbe(status, detail = '') {
   updateConnectionPrompt();
 }
 
-function setStatus(kind, title, detail) {
-  lastVisibleStatus = { kind: kind || '', title: title || '', detail: detail || '', ts: Date.now() };
+function setStatus(kind, title, detail, { translateTitle = true, translateDetail = true } = {}) {
+  lastVisibleStatus = { kind: kind || '', title: title || '', detail: detail || '', translateTitle, translateDetail, ts: Date.now() };
   els.statusDot.className = `status-dot ${kind || ''}`.trim();
   const safeTitle = title || 'Hermes Browser Extension';
   const safeDetail = detail || '';
-  els.activeTitle.textContent = translateUiText(safeTitle);
-  els.activeTitle.title = translateUiText(safeTitle);
-  els.activeUrl.textContent = translateUiText(safeDetail);
-  els.activeUrl.title = translateUiText(safeDetail);
+  els.activeTitle.textContent = translateTitle ? translateUiText(safeTitle) : safeTitle;
+  els.activeTitle.title = translateTitle ? translateUiText(safeTitle) : safeTitle;
+  els.activeUrl.textContent = translateDetail ? translateUiText(safeDetail) : safeDetail;
+  els.activeUrl.title = translateDetail ? translateUiText(safeDetail) : safeDetail;
   renderStatusActions();
 }
 
@@ -717,7 +717,12 @@ function applyRemoteDiagnostic(diagnostic, { statusKind = 'error' } = {}) {
   renderRemoteDiagnostics(diagnostic);
   markConnectionProbe('unreachable', diagnostic.detail);
   scheduleConnectionProbe();
-  setStatus(statusKind, diagnostic.title, diagnostic.detail);
+  setStatus(
+    statusKind,
+    diagnostic.title,
+    diagnostic.kind === 'unknown' ? diagnostic.detail : translateUiText(diagnostic.detail),
+    { translateDetail: false },
+  );
   return true;
 }
 
@@ -934,7 +939,7 @@ async function copySupportDiagnostics() {
     setStatus('ok', 'Diagnostics copied', 'Redacted support diagnostics are on your clipboard.');
   } catch (error) {
     if (els.diagnosticsCopyStatus) els.diagnosticsCopyStatus.textContent = translateUiText('Could not copy diagnostics. Check browser clipboard permissions.');
-    setStatus('warn', 'Diagnostics copy failed', error?.message || String(error));
+    setStatus('warn', 'Diagnostics copy failed', error?.message || String(error), { translateDetail: false });
   } finally {
     els.copyDiagnosticsButton.disabled = false;
     els.copyDiagnosticsButton.textContent = originalText;
@@ -1241,8 +1246,8 @@ function renderContextScopeTabList(query = '') {
     row.className = 'context-scope-tab-row';
     appendContextScopeMenuButton({
       action: `pin-tab:${tab.id}`,
-      label: `Pin: ${compactPinnedTitle(tab.title || tab.url || 'Untitled tab', 88)}`,
-      detail: isPinned ? 'current' : isActive ? 'active' : '',
+      label: t('context.pin_tab', { title: compactPinnedTitle(tab.title || tab.url || translateUiText('Untitled tab'), 88) }),
+      detail: translateUiText(isPinned ? 'current' : isActive ? 'active' : ''),
       selected: isPinned,
       parent: row,
     }).classList.add('context-scope-pin-action');
@@ -1251,8 +1256,8 @@ function renderContextScopeTabList(query = '') {
     toggle.className = 'context-scope-include-toggle';
     toggle.dataset.promptTabToggle = String(tab.id);
     toggle.setAttribute('aria-pressed', String(isIncluded));
-    toggle.title = isIncluded ? 'Remove this tab from the prompt tab list' : 'Include this tab in the prompt tab list';
-    toggle.textContent = isIncluded ? 'IN' : 'OUT';
+    toggle.title = translateUiText(isIncluded ? 'Remove this tab from the prompt tab list' : 'Include this tab in the prompt tab list');
+    toggle.textContent = translateUiText(isIncluded ? 'IN' : 'OUT');
     if (isIncluded) toggle.classList.add('selected');
     row.appendChild(toggle);
     list.appendChild(row);
@@ -1260,7 +1265,7 @@ function renderContextScopeTabList(query = '') {
   if (!filteredTabs.length) {
     const empty = document.createElement('p');
     empty.className = 'context-scope-empty';
-    empty.textContent = 'No matching tabs';
+    empty.textContent = translateUiText('No matching tabs');
     list.appendChild(empty);
   }
 }
@@ -1287,7 +1292,7 @@ function renderContextScopePromptControls(tabs = currentContext.tabs || []) {
   const header = document.createElement('div');
   header.className = 'context-scope-section-head';
   const title = document.createElement('span');
-  title.textContent = 'Tabs in prompt';
+  title.textContent = translateUiText('Tabs in prompt');
   const count = document.createElement('small');
   count.textContent = `${promptTabsCount(tabs)}/${tabs.length}`;
   header.append(title, count);
@@ -1296,14 +1301,14 @@ function renderContextScopePromptControls(tabs = currentContext.tabs || []) {
   actions.className = 'context-scope-prompt-actions';
   appendContextScopeMenuButton({
     action: 'prompt-tabs-all',
-    label: 'Include all tabs',
+    label: translateUiText('Include all tabs'),
     detail: `${tabs.length}`,
     selected: selectedTabs === null,
     parent: actions,
   });
   appendContextScopeMenuButton({
     action: 'prompt-tabs-none',
-    label: 'Page only',
+    label: translateUiText('Page only'),
     detail: '0',
     selected: Array.isArray(selectedTabs) && selectedTabs.length === 0,
     parent: actions,
@@ -1322,25 +1327,25 @@ function renderContextScopeMenu(query = '', { focusSearch = false } = {}) {
   actions.className = 'context-scope-actions';
   appendContextScopeMenuButton({
     action: 'chat-only',
-    label: 'Chat only',
-    detail: 'no page',
+    label: translateUiText('Chat only'),
+    detail: translateUiText('no page'),
     selected: contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY,
     parent: actions,
   });
   if (isGlobalPanelResidency()) {
     appendContextScopeMenuButton({
       action: 'follow-active',
-      label: 'Follow active tab',
-      detail: 'live',
+      label: translateUiText('Follow active tab'),
+      detail: translateUiText('live'),
       selected: contextScope.mode === CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE,
       parent: actions,
     });
   } else if (contextScope.mode === CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE) {
     syncAttachedPanelContextScope();
   }
-  appendContextScopeMenuButton({ action: 'pin-active', label: 'Pin current tab', detail: 'lock', parent: actions });
+  appendContextScopeMenuButton({ action: 'pin-active', label: translateUiText('Pin current tab'), detail: translateUiText('lock'), parent: actions });
   if (isGlobalPanelResidency() && contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB) {
-    appendContextScopeMenuButton({ action: 'unlock', label: 'Unlock pinned tab', detail: 'follow', parent: actions });
+    appendContextScopeMenuButton({ action: 'unlock', label: translateUiText('Unlock pinned tab'), detail: translateUiText('follow'), parent: actions });
   }
   els.contextScopeMenu.appendChild(actions);
 
@@ -1351,7 +1356,7 @@ function renderContextScopeMenu(query = '', { focusSearch = false } = {}) {
     const search = document.createElement('input');
     search.className = 'context-scope-search';
     search.type = 'search';
-    search.placeholder = 'Search tabs';
+    search.placeholder = translateUiText('Search tabs');
     search.autocomplete = 'off';
     search.value = searchQuery;
     els.contextScopeMenu.appendChild(search);
@@ -1811,7 +1816,12 @@ function updateConnectionPrompt() {
     } else if (state.state === 'unreachable') {
       els.sendButton.textContent = translateUiText('Reconnect');
       els.connectStatus.textContent = currentConnectionTroubleshooting(state);
-      setStatus('error', 'Hermes API unavailable', currentConnectionTroubleshooting(state) || `${summary.title} is not responding. Start Hermes Desktop/Gateway, then reconnect.`);
+      setStatus(
+        'error',
+        'Hermes API unavailable',
+        currentConnectionTroubleshooting(state) || t('status.connection_not_responding', { summary: summary.title }),
+        { translateDetail: false },
+      );
     } else {
       els.sendButton.textContent = translateUiText('Connect first');
       if (isRemoteWsMode()) {
@@ -2003,7 +2013,7 @@ async function steerCurrentDraft() {
     return true;
   } catch (error) {
     pendingSteerText = '';
-    setStatus('warn', 'Steer failed', error?.message || String(error));
+    setStatus('warn', 'Steer failed', error?.message || String(error), { translateDetail: false });
     els.input.focus();
     return false;
   }
@@ -2023,7 +2033,7 @@ async function steerQueuedTurn() {
     return true;
   } catch (error) {
     pendingSteerText = '';
-    setStatus('warn', 'Steer failed', error?.message || String(error));
+    setStatus('warn', 'Steer failed', error?.message || String(error), { translateDetail: false });
     els.input.focus();
     return false;
   }
@@ -2424,7 +2434,7 @@ function ensureSpeechRecognition() {
       setStatus('warn', 'Microphone permission blocked', microphonePermissionHelp());
       return;
     }
-    setStatus('warn', 'Voice dictation stopped', event.error || 'Speech recognition error');
+    setStatus('warn', 'Voice dictation stopped', event.error || t('voice.speech_recognition_error'), { translateDetail: false });
   };
   recognition.onend = () => {
     dictating = false;
@@ -2457,7 +2467,7 @@ async function startWebSpeechDictation(detail = 'Speak to dictate into the Herme
   } catch (error) {
     dictating = false;
     updateVoiceButtonState();
-    setStatus('warn', 'Voice dictation unavailable', error?.message || String(error));
+    setStatus('warn', 'Voice dictation unavailable', error?.message || String(error), { translateDetail: false });
     return false;
   }
 }
@@ -2478,7 +2488,7 @@ async function startRecorderDictation() {
     cleanupVoiceRecorder();
     dictating = false;
     updateVoiceButtonState();
-    setStatus('warn', 'Voice recording failed', event?.error?.message || 'Could not capture microphone audio.');
+    setStatus('warn', 'Voice recording failed', event?.error?.message || t('voice.capture_error'), { translateDetail: false });
   };
   recorder.onstop = async () => {
     const chunks = voiceRecorderChunks;
@@ -2503,7 +2513,7 @@ async function startRecorderDictation() {
       if (error?.fallbackToWebSpeech && await startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback; speak again.')) {
         return;
       }
-      setStatus('warn', 'Voice transcription failed', error?.message || String(error));
+      setStatus('warn', 'Voice transcription failed', error?.message || String(error), { translateDetail: false });
     }
   };
 
@@ -2522,7 +2532,7 @@ function stopRecorderDictation() {
     cleanupVoiceRecorder();
     dictating = false;
     updateVoiceButtonState();
-    setStatus('warn', 'Voice recording failed', error?.message || String(error));
+    setStatus('warn', 'Voice recording failed', error?.message || String(error), { translateDetail: false });
   }
   return true;
 }
@@ -2553,7 +2563,7 @@ async function toggleVoiceDictation() {
         return;
       }
       if (await startWebSpeechDictation('Hermes microphone capture failed. Using browser speech fallback.')) return;
-      setStatus('warn', 'Voice dictation unavailable', error?.message || String(error));
+      setStatus('warn', 'Voice dictation unavailable', error?.message || String(error), { translateDetail: false });
       return;
     }
   }
@@ -2705,7 +2715,10 @@ function applyAppearanceSettings() {
 
 function renderAppearanceControls() {
   applyAppearanceSettings();
-  if (els.languageSelect) els.languageSelect.value = getLocale();
+  if (els.languageSelect) {
+    populateLanguageSelect(els.languageSelect);
+    els.languageSelect.value = getLocale();
+  }
   const colorMode = normalizeColorMode(settings.colorMode);
   const activeTheme = normalizeAppearanceTheme(settings.appearanceTheme);
   for (const button of els.colorModeButtons || []) {
@@ -3409,7 +3422,7 @@ function renderModelMenu(query = els.modelSearchInput?.value || '') {
   if (!allGroups.length) {
     const empty = document.createElement('div');
     empty.className = 'model-group-title';
-    empty.textContent = 'No providers found';
+    empty.textContent = translateUiText('No providers found');
     els.modelMenuList.appendChild(empty);
     return;
   }
@@ -3451,7 +3464,7 @@ function renderModelMenu(query = els.modelSearchInput?.value || '') {
   if (!groupsToRender.length) {
     const empty = document.createElement('div');
     empty.className = 'model-group-title';
-    empty.textContent = 'No models match';
+    empty.textContent = translateUiText('No models match');
     els.modelMenuList.appendChild(empty);
     return;
   }
@@ -3627,7 +3640,7 @@ async function syncSessionModelOptions({
     };
     await chrome.storage.local.set({ hermesBrowserSettings: settings });
     renderModelOptions(availableModels);
-    setStatus('error', 'Hermes model options failed', error?.message || String(error));
+    setStatus('error', 'Hermes model options failed', error?.message || String(error), { translateDetail: false });
     return { state: 'failed', error };
   }
 }
@@ -3886,7 +3899,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
         renderModelOptions(availableModels);
       }
       pendingModelRuntimeAck = null;
-      setStatus('error', 'Cloud model switch failed', error?.message || String(error));
+      setStatus('error', 'Cloud model switch failed', error?.message || String(error), { translateDetail: false });
       return { state: 'failed', error };
     }
   }
@@ -3943,7 +3956,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
       renderModelOptions(availableModels);
     }
     pendingModelRuntimeAck = null;
-    setStatus('error', 'Model lock failed', error?.message || String(error));
+    setStatus('error', 'Model lock failed', error?.message || String(error), { translateDetail: false });
     return { state: 'failed', error };
   }
 }
@@ -3964,7 +3977,7 @@ async function ensureActiveSessionModelLockOrThrow() {
     await requestSessionModelLock(selected);
     return true;
   } catch (error) {
-    setStatus('error', 'Model lock failed', `${error?.message || error}. Not sending because Hermes might fall back to the global model.`);
+    setStatus('error', 'Model lock failed', t('status.model_lock_failed_detail', { error: error?.message || error }), { translateDetail: false });
     throw error;
   }
 }
@@ -4080,7 +4093,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
             registryModels = normalizeHermesModels(data, settings.model);
             registrySource = 'v1';
             if (!quiet && registryResult.error && registryResult.error !== 'status-404') {
-              setStatus('warn', 'Model registry unavailable', `Falling back to /v1/models (${registryResult.error}).`);
+              setStatus('warn', 'Model registry unavailable', t('status.model_registry_fallback', { error: registryResult.error }), { translateDetail: false });
             }
           }
         }
@@ -4120,7 +4133,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
           }
         }
       } else if (!sessionResult.ok && !quiet) {
-        setStatus('warn', 'Model discovery limited', `Gateway exposes only one /v1/models row and /api/sessions was unavailable (${sessionResult.error}).`);
+        setStatus('warn', 'Model discovery limited', t('status.model_discovery_limited', { error: sessionResult.error }), { translateDetail: false });
       }
     }
 
@@ -4178,7 +4191,12 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
     renderContextWindow();
     const diagnostic = classifyGatewayError(error);
     if (diagnostic.probeStatus === 'degraded') markGatewayDegraded(error);
-    if (!quiet) setStatus('warn', diagnostic.kind === 'unknown' ? 'Model sync failed' : diagnostic.title, diagnostic.kind === 'unknown' ? (error?.message || String(error)) : diagnostic.detail);
+    if (!quiet) setStatus(
+      'warn',
+      diagnostic.kind === 'unknown' ? 'Model sync failed' : diagnostic.title,
+      diagnostic.kind === 'unknown' ? (error?.message || String(error)) : translateUiText(diagnostic.detail),
+      { translateDetail: false },
+    );
     return { ok: false, count: availableModels.length, error: diagnostic.kind === 'unknown' ? (error?.message || String(error)) : diagnostic.detail };
   } finally {
     if (trackRefresh) {
@@ -4211,7 +4229,7 @@ async function loadSkills({ quiet = false } = {}) {
   } catch (error) {
     availableSkills = [];
     renderSkillSuggestions();
-    if (!quiet) setStatus('warn', 'Skill sync failed', error?.message || String(error));
+    if (!quiet) setStatus('warn', 'Skill sync failed', error?.message || String(error), { translateDetail: false });
   }
 }
 
@@ -4305,14 +4323,14 @@ function showQuickCommandDetail(cmd) {
   const detail = els.quickMoreMenu?.querySelector('[data-command-detail]');
   if (!detail || !cmd) return;
   detail.querySelector('[data-command-detail-token]').textContent = `/${cmd.name}`;
-  detail.querySelector('[data-command-detail-category]').textContent = cmd.category || 'Command';
-  detail.querySelector('[data-command-detail-description]').textContent = cmd.description;
-  detail.querySelector('[data-command-detail-hint]').textContent = cmd.promptHint || (cmd.requiresInput
+  detail.querySelector('[data-command-detail-category]').textContent = translateUiText(cmd.category || 'Command');
+  detail.querySelector('[data-command-detail-description]').textContent = translateUiText(cmd.description);
+  detail.querySelector('[data-command-detail-hint]').textContent = translateUiText(cmd.promptHint || (cmd.requiresInput
     ? 'Add instructions after the slash command before sending.'
-    : 'Runs immediately against the current browser context.');
-  detail.querySelector('[data-command-detail-footnote]').textContent = cmd.requiresInput
+    : 'Runs immediately against the current browser context.'));
+  detail.querySelector('[data-command-detail-footnote]').textContent = translateUiText(cmd.requiresInput
     ? 'Click to insert, then add details.'
-    : 'Click or press Enter to run.';
+    : 'Click or press Enter to run.');
   detail.hidden = false;
   els.quickMoreMenu?.classList.add('has-command-detail');
 }
@@ -4336,9 +4354,9 @@ function renderQuickMoreMenu(category = 'all') {
   const header = document.createElement('div');
   header.className = 'quick-more-heading';
   const headerLabel = document.createElement('span');
-  headerLabel.textContent = 'Commands';
+  headerLabel.textContent = translateUiText('Commands');
   const headerHint = document.createElement('small');
-  headerHint.textContent = 'Slash helpers';
+  headerHint.textContent = translateUiText('Slash helpers');
   header.append(headerLabel, headerHint);
   els.quickMoreMenu.appendChild(header);
 
@@ -4348,7 +4366,7 @@ function renderQuickMoreMenu(category = 'all') {
   detail.dataset.commandDetail = 'true';
   detail.hidden = true;
   detail.setAttribute('aria-live', 'polite');
-  detail.setAttribute('aria-label', 'Command details');
+  detail.setAttribute('aria-label', translateUiText('Command details'));
 
   const detailTop = document.createElement('div');
   detailTop.className = 'qmd-top';
@@ -4395,10 +4413,10 @@ function renderQuickMoreMenu(category = 'all') {
     copy.className = 'qmi-copy';
     const description = document.createElement('span');
     description.className = 'qmi-description';
-    description.textContent = cmd.description;
+    description.textContent = translateUiText(cmd.description);
     const categoryTag = document.createElement('span');
     categoryTag.className = 'qmi-category';
-    categoryTag.textContent = cmd.category || '';
+    categoryTag.textContent = translateUiText(cmd.category || '');
     copy.append(description, categoryTag);
 
     item.append(token, copy);
@@ -4415,11 +4433,15 @@ function renderQuickMoreMenu(category = 'all') {
 function renderProfiles() {
   if (!els.profileSelect) return;
   const selected = settings.activeProfile || availableProfiles.find((profile) => profile.active)?.name || '';
-  els.profileSelect.innerHTML = '<option value="">Detect from Hermes gateway</option>';
+  els.profileSelect.replaceChildren();
+  const detectOption = document.createElement('option');
+  detectOption.value = '';
+  detectOption.textContent = translateUiText('Detect from Hermes gateway');
+  els.profileSelect.appendChild(detectOption);
   for (const profile of availableProfiles) {
     const option = document.createElement('option');
     option.value = profile.name;
-    option.textContent = `${profile.name}${profile.active ? ' · active' : ''}${profile.model ? ` · ${profile.model}` : ''}`;
+    option.textContent = `${profile.name}${profile.active ? ` · ${translateUiText('active')}` : ''}${profile.model ? ` · ${profile.model}` : ''}`;
     option.selected = profile.name === selected;
     els.profileSelect.appendChild(option);
   }
@@ -4428,8 +4450,12 @@ function renderProfiles() {
   if (availableProfiles.length) {
     const active = availableProfiles.find((profile) => profile.name === selected) || availableProfiles.find((profile) => profile.active);
     els.profileStatus.textContent = active
-      ? `Using ${active.name}${active.model ? ` · ${active.model}` : ''}${active.skillCount ? ` · ${active.skillCount} skills` : ''}`
-      : `${availableProfiles.length} profiles available`;
+      ? t('profile.using', {
+        name: active.name,
+        model: active.model ? ` · ${active.model}` : '',
+        skills: active.skillCount ? ` · ${active.skillCount} ${translateUiText('skills')}` : '',
+      })
+      : t('profile.available', { count: availableProfiles.length });
   } else {
     els.profileStatus.textContent = translateUiText('Profile API unavailable. Browser will use the currently running Hermes gateway profile.');
   }
@@ -4470,12 +4496,17 @@ async function applySelectedProfile(profileName = '') {
     });
     const payload = await readJsonResponse(response);
     if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Profile switch failed (${response.status})`);
-    setStatus('ok', 'Hermes profile switched', payload.restart_required ? `${profileName} selected. Restart Hermes gateway if the running profile does not change immediately.` : profileName);
+    setStatus(
+      'ok',
+      'Hermes profile switched',
+      payload.restart_required ? t('status.profile_selected_restart', { profile: profileName }) : profileName,
+      { translateDetail: false },
+    );
     await loadProfiles({ quiet: true });
     await loadModels({ quiet: true });
     await loadSkills({ quiet: true });
   } catch (error) {
-    setStatus('warn', 'Profile switch unavailable', `${error?.message || String(error)}. Browser will use the currently running Hermes profile.`);
+    setStatus('warn', 'Profile switch unavailable', t('status.profile_switch_unavailable', { error: error?.message || String(error) }), { translateDetail: false });
   }
 }
 
@@ -4513,7 +4544,7 @@ function renderAgentList(agents = discoveredAgents) {
   if (!agents.length) {
     const empty = document.createElement('p');
     empty.className = 'hint';
-    empty.textContent = 'No agents scanned yet. Click "Scan agents".';
+    empty.textContent = translateUiText('No agents scanned yet. Click "Scan agents".');
     els.agentList.appendChild(empty);
     return;
   }
@@ -4536,17 +4567,17 @@ function renderAgentList(agents = discoveredAgents) {
       if (agent.model && agent.model !== 'hermes-agent') bits.push(agent.model);
       meta.textContent = bits.join(' · ');
     } else {
-      meta.textContent = agent.error ? `port ${agent.port} · ${agent.error}` : `port ${agent.port} · offline`;
+      meta.textContent = agent.error ? `port ${agent.port} · ${agent.error}` : `port ${agent.port} · ${translateUiText('offline')}`;
     }
     const status = document.createElement('span');
     status.className = `agent-card-status ${agent.ok ? 'agent-card-status-ok' : 'agent-card-status-off'}`;
-    status.textContent = agent.ok ? 'online' : 'offline';
+    status.textContent = translateUiText(agent.ok ? 'online' : 'offline');
     card.append(name, meta, status);
     if (agent.ok && normalizeGatewayUrl(agent.url) !== currentUrl) {
       const switchButton = document.createElement('button');
       switchButton.type = 'button';
       switchButton.className = 'secondary';
-      switchButton.textContent = 'Switch to this agent';
+      switchButton.textContent = translateUiText('Switch to this agent');
       switchButton.addEventListener('click', () => switchAgentGateway(agent));
       card.appendChild(switchButton);
     }
@@ -4569,7 +4600,7 @@ async function loadAgents({ quiet = false } = {}) {
     await persistAgentDiscoverySettings({ ports, host, scheme });
   } catch (error) {
     if (els.agentPickerStatus) els.agentPickerStatus.textContent = error?.message || String(error);
-    setStatus('warn', 'Agent host invalid', error?.message || String(error));
+    setStatus('warn', 'Agent host invalid', error?.message || String(error), { translateDetail: false });
     return;
   }
   if (els.agentPickerStatus) els.agentPickerStatus.textContent = `Scanning ${scheme}://${host} across ${ports.length} port${ports.length === 1 ? '' : 's'}...`;
@@ -4604,7 +4635,7 @@ async function switchAgentGateway(agent) {
     await testConnection();
     await loadAgents({ quiet: true });
   } catch (error) {
-    setStatus('warn', 'Switch partially failed', error?.message || String(error));
+    setStatus('warn', 'Switch partially failed', error?.message || String(error), { translateDetail: false });
   }
 }
 
@@ -4649,7 +4680,7 @@ async function copyTextToClipboard(text = '', { label = 'Text copied' } = {}) {
   if (!value) return false;
   try {
     await navigator.clipboard.writeText(value);
-    setStatus('ok', label, value);
+    setStatus('ok', label, value, { translateDetail: false });
     return true;
   } catch (error) {
     try {
@@ -4657,14 +4688,14 @@ async function copyTextToClipboard(text = '', { label = 'Text copied' } = {}) {
     } catch {
       /* ignore prompt fallback errors */
     }
-    setStatus('warn', 'Copy unavailable', error?.message || `Use the prompt fallback to copy: ${value}`);
+    setStatus('warn', 'Copy unavailable', error?.message || `Use the prompt fallback to copy: ${value}`, { translateDetail: false });
     return false;
   }
 }
 
 async function promptRenameSession(session = {}) {
   const currentTitle = sessionDisplayName(session);
-  const nextTitle = window.prompt('Rename session', currentTitle);
+  const nextTitle = window.prompt(translateUiText('Rename session'), currentTitle);
   if (nextTitle == null) return false;
   const cleanTitle = String(nextTitle || '').trim();
   if (!cleanTitle || cleanTitle === currentTitle) return false;
@@ -4672,7 +4703,7 @@ async function promptRenameSession(session = {}) {
     await renameHermesSessionTitle(session.id, cleanTitle);
     return true;
   } catch (error) {
-    setStatus('warn', 'Could not rename session', error?.message || String(error));
+    setStatus('warn', 'Could not rename session', error?.message || String(error), { translateDetail: false });
     return false;
   }
 }
@@ -4684,7 +4715,7 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
   if (!groups.length) {
     const empty = document.createElement('div');
     empty.className = 'session-group-title';
-    empty.textContent = 'No sessions found';
+    empty.textContent = translateUiText('No sessions found');
     els.sessionMenuList.appendChild(empty);
     return;
   }
@@ -4748,19 +4779,19 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
       copyButton.type = 'button';
       copyButton.className = 'session-action-button';
       copyButton.textContent = 'ID';
-      copyButton.title = 'Copy session ID';
-      copyButton.setAttribute('aria-label', `Copy session ID for ${sessionDisplayName(session)}`);
+      copyButton.title = translateUiText('Copy session ID');
+      copyButton.setAttribute('aria-label', t('session.copy_id_for', { title: sessionDisplayName(session) }));
       copyButton.addEventListener('click', (event) => {
         event.stopPropagation();
-        copyTextToClipboard(session.id, { label: 'Copy session ID' });
+        copyTextToClipboard(session.id, { label: translateUiText('Copy session ID') });
       });
 
       const renameButton = document.createElement('button');
       renameButton.type = 'button';
       renameButton.className = 'session-action-button';
-      renameButton.textContent = 'Rename';
-      renameButton.title = 'Rename session';
-      renameButton.setAttribute('aria-label', `Rename session ${sessionDisplayName(session)}`);
+      renameButton.textContent = translateUiText('Rename');
+      renameButton.title = translateUiText('Rename session');
+      renameButton.setAttribute('aria-label', t('session.rename_named', { title: sessionDisplayName(session) }));
       renameButton.addEventListener('click', (event) => {
         event.stopPropagation();
         promptRenameSession(session);
@@ -4820,7 +4851,7 @@ async function loadSessions({ quiet = false } = {}) {
     } catch (error) {
       updateSessionLabel();
       renderSessionMenu();
-      if (!quiet) setStatus('warn', 'Session sync failed', error?.message || String(error));
+      if (!quiet) setStatus('warn', 'Session sync failed', error?.message || String(error), { translateDetail: false });
       return { ok: false, count: availableSessions.length, error: error?.message || String(error) };
     }
   }
@@ -4841,7 +4872,7 @@ async function loadSessions({ quiet = false } = {}) {
   } catch (error) {
     updateSessionLabel();
     renderSessionMenu();
-    if (!quiet) setStatus('warn', 'Session sync failed', error?.message || String(error));
+    if (!quiet) setStatus('warn', 'Session sync failed', error?.message || String(error), { translateDetail: false });
     return { ok: false, count: availableSessions.length, error: error?.message || String(error) };
   }
 }
@@ -4909,7 +4940,7 @@ async function maybeRenameCurrentSessionTitle(previousSettings = {}, nextTitle =
   try {
     return await renameHermesSessionTitle(sessionId, cleanTitle);
   } catch (error) {
-    setStatus('warn', 'Could not rename session', error?.message || String(error));
+    setStatus('warn', 'Could not rename session', error?.message || String(error), { translateDetail: false });
     return false;
   }
 }
@@ -4929,7 +4960,7 @@ async function maybeAutoNameCurrentSession(title = '') {
   try {
     return await renameHermesSessionTitle(settings.sessionId, cleanTitle, { quiet: true });
   } catch (error) {
-    setStatus('warn', 'Auto-name skipped', error?.message || String(error));
+    setStatus('warn', 'Auto-name skipped', error?.message || String(error), { translateDetail: false });
     return false;
   }
 }
@@ -5102,14 +5133,14 @@ function renderSessionHistoryLoading(session = {}) {
 
   const label = document.createElement('span');
   label.className = 'session-history-loading-label';
-  label.textContent = 'OPENING SESSION';
+  label.textContent = translateUiText('OPENING SESSION');
 
   const title = document.createElement('strong');
   title.textContent = sessionDisplayName(session);
 
   const detail = document.createElement('span');
   detail.className = 'session-history-loading-detail';
-  detail.textContent = 'Loading canonical Hermes history…';
+  detail.textContent = translateUiText('Loading canonical Hermes history…');
 
   loading.append(rail, label, title, detail);
   els.messages.replaceChildren(loading);
@@ -5147,7 +5178,7 @@ async function openHermesSession(selectedSession) {
     } catch (error) {
       if (requestId !== sessionLoadRequestId) return;
       renderMessagesFromStorage();
-      setStatus('error', 'Could not open session', error?.message || String(error));
+      setStatus('error', 'Could not open session', error?.message || String(error), { translateDetail: false });
       return;
     }
   }
@@ -5175,7 +5206,7 @@ async function openHermesSession(selectedSession) {
   renderSessionMenu();
   const loaded = await loadSessionMessages(liveSessionId, { requestId });
   if (requestId !== sessionLoadRequestId) return;
-  setStatus(loaded ? 'ok' : 'warn', loaded ? 'Session opened' : 'Session opened without history', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`);
+  setStatus(loaded ? 'ok' : 'warn', loaded ? 'Session opened' : 'Session opened without history', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`, { translateDetail: false });
 }
 
 async function loadSessionMessages(sessionId = settings.sessionId, { requestId = null } = {}) {
@@ -5325,7 +5356,7 @@ async function handleSessionOwnershipDecision(event) {
     await beginHermesBrowserDraft({ focus: false });
     await askHermes(userText, turnAttachments);
   } catch (error) {
-    setStatus('error', 'Could not change session', error?.message || String(error));
+    setStatus('error', 'Could not change session', error?.message || String(error), { translateDetail: false });
   } finally {
     for (const actionButton of buttons) actionButton.disabled = false;
   }
@@ -5351,7 +5382,7 @@ async function ensureDefaultBrowserSession({ focus = false } = {}) {
         return;
       }
     } catch (error) {
-      setStatus('warn', 'Could not migrate Browser session', error?.message || String(error));
+      setStatus('warn', 'Could not migrate Browser session', error?.message || String(error), { translateDetail: false });
     }
   }
   const existingBrowserSession = availableSessions.find(isHermesBrowserSession);
@@ -5429,7 +5460,7 @@ function openGeneratedImageLightbox(image) {
   dialog.className = 'generated-image-lightbox';
   dialog.setAttribute('role', 'dialog');
   dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-label', image.alt || 'Generated image preview');
+  dialog.setAttribute('aria-label', image.alt || translateUiText('Generated image preview'));
 
   const frame = document.createElement('div');
   frame.className = 'generated-image-lightbox-frame';
@@ -5437,7 +5468,7 @@ function openGeneratedImageLightbox(image) {
   stage.className = 'generated-image-lightbox-stage';
   const preview = document.createElement('img');
   preview.src = source;
-  preview.alt = image.alt || 'Generated image';
+  preview.alt = image.alt || translateUiText('Generated image');
   preview.draggable = false;
   stage.append(preview);
 
@@ -5446,26 +5477,26 @@ function openGeneratedImageLightbox(image) {
   const zoomOut = document.createElement('button');
   zoomOut.type = 'button';
   zoomOut.textContent = '−';
-  zoomOut.setAttribute('aria-label', 'Zoom out');
+  zoomOut.setAttribute('aria-label', translateUiText('Zoom out'));
   const zoomLabel = document.createElement('button');
   zoomLabel.type = 'button';
   zoomLabel.textContent = '100%';
-  zoomLabel.setAttribute('aria-label', 'Reset zoom');
+  zoomLabel.setAttribute('aria-label', translateUiText('Reset zoom'));
   const zoomIn = document.createElement('button');
   zoomIn.type = 'button';
   zoomIn.textContent = '+';
-  zoomIn.setAttribute('aria-label', 'Zoom in');
+  zoomIn.setAttribute('aria-label', translateUiText('Zoom in'));
   const download = document.createElement('a');
   download.className = 'generated-image-lightbox-download';
   download.href = source;
   download.download = generatedImageDownloadName(source);
   download.target = '_blank';
   download.rel = 'noopener noreferrer';
-  download.textContent = 'Download';
+  download.textContent = translateUiText('Download');
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'generated-image-lightbox-close';
-  close.textContent = 'Close';
+  close.textContent = translateUiText('Close');
   close.addEventListener('click', closeGeneratedImageLightbox);
   const renderViewer = () => {
     preview.style.transform = `translate3d(${viewerState.x}px, ${viewerState.y}px, 0) scale(${viewerState.scale})`;
@@ -5597,7 +5628,7 @@ function renderImageGenPlaceholder(activity = {}) {
   root.dataset.visualProfile = variant.profile;
   root.setAttribute('role', 'status');
   root.setAttribute('aria-live', 'polite');
-  root.setAttribute('aria-label', 'Hermes is generating an image');
+  root.setAttribute('aria-label', translateUiText('Hermes is generating an image'));
 
   const canvas = document.createElement('canvas');
   canvas.className = 'image-gen-diffusion-canvas';
@@ -5623,9 +5654,9 @@ function renderImageGenPlaceholder(activity = {}) {
   const chrome = document.createElement('div');
   chrome.className = 'image-gen-chrome';
   const title = document.createElement('strong');
-  title.textContent = 'Hermes image synthesis';
+  title.textContent = translateUiText('Hermes image synthesis');
   const meta = document.createElement('span');
-  meta.textContent = `${aspectRatio} // active`;
+  meta.textContent = t('image.meta_active', { aspectRatio });
   chrome.append(title, meta);
 
   const status = document.createElement('div');
@@ -5634,7 +5665,7 @@ function renderImageGenPlaceholder(activity = {}) {
   phaseTrack.className = 'image-gen-phase-track';
   for (const phase of ['LATENT FIELD', 'DENOISING', 'RESOLVING', 'FINALIZING']) {
     const phaseLabel = document.createElement('span');
-    phaseLabel.textContent = phase;
+    phaseLabel.textContent = translateUiText(phase);
     phaseTrack.appendChild(phaseLabel);
   }
   const pulse = document.createElement('span');
@@ -6364,10 +6395,10 @@ function setPickButtonState() {
   const attachPick = document.querySelector('[data-attach="pick-element"]');
   if (attachPick) {
     attachPick.textContent = pickingActive
-      ? '◈ Picking element...'
+      ? translateUiText('◈ Picking element...')
       : hasPick
-        ? '◈ Pick a different element'
-        : '◈ Pick page element';
+        ? translateUiText('◈ Pick a different element')
+        : translateUiText('◈ Pick page element');
     attachPick.setAttribute('aria-pressed', String(pickingActive || Boolean(hasPick)));
   }
   const attachClear = document.getElementById('clearPickAttachButton');
@@ -6405,7 +6436,7 @@ async function startElementPick() {
     setStatus('ok', 'Pick an element', 'Click any element on the page. Press Esc to cancel.');
   } catch (error) {
     await clearElementPickState({ tabId: tab.id });
-    setStatus('warn', 'Element pick failed', error?.message || String(error));
+    setStatus('warn', 'Element pick failed', error?.message || String(error), { translateDetail: false });
   }
 }
 
@@ -6474,11 +6505,11 @@ async function refreshContext(options = {}) {
   } else if (!tab) {
     setStatus('warn', 'No active tab detected', 'Open a normal browser tab and try again.');
   } else if (pageContext?.restricted) {
-    setStatus('warn', tab.title || 'Restricted page', `${tab.url} - context restricted`);
+    setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
   } else if (pageContext?.ok) {
-    setStatus('ok', tab.title || 'Active tab ready', tab.url || '');
+    setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
   } else {
-    setStatus('warn', tab.title || 'Page context partial', pageContext?.error || tab.url || '');
+    setStatus('warn', tab.title || translateUiText('Page context partial'), pageContext?.error || tab.url || '', { translateTitle: false, translateDetail: false });
   }
   renderContextScopeControls();
   renderContextWindow();
@@ -6535,7 +6566,7 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
   const button = els.contextCompactButton;
   if (button) {
     button.disabled = true;
-    button.textContent = 'Compacting…';
+    button.textContent = translateUiText('Compacting…');
   }
   try {
     const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/compress`, {
@@ -6565,7 +6596,7 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
     await loadSessions({ quiet: true });
     return { ok: true, sessionId: compactedSessionId || settings.sessionId, payload };
   } catch (error) {
-    setStatus('warn', 'Context compaction failed', error?.message || String(error));
+    setStatus('warn', 'Context compaction failed', error?.message || String(error), { translateDetail: false });
     return { ok: false, reason: 'request-failed', error };
   } finally {
     renderContextWindow();
@@ -7329,7 +7360,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
     if (connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) {
       markGatewayUnreachable(error);
       els.connectStatus.textContent = error?.message || String(error);
-      setStatus('error', cloud ? 'Hermes Cloud Preview failed' : 'Dashboard Attach failed', error?.message || String(error));
+      setStatus('error', cloud ? 'Hermes Cloud Preview failed' : 'Dashboard Attach failed', error?.message || String(error), { translateDetail: false });
     }
   } finally {
     if (connectionController.isCurrent(generation)) {
@@ -7502,7 +7533,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       } catch (error) {
         sending = false;
         updateComposerBusyState();
-        setStatus('error', 'Could not start Hermes session', error?.message || String(error));
+        setStatus('error', 'Could not start Hermes session', error?.message || String(error), { translateDetail: false });
         return false;
       }
     }
@@ -8248,10 +8279,10 @@ async function testConnection() {
       if (diagnostic.kind !== 'unknown') {
         applyRemoteDiagnostic(diagnostic, { statusKind: 'error' });
       } else {
-        setStatus('error', 'Hermes gateway test failed', currentConnectionTroubleshooting() || error?.message || String(error));
+        setStatus('error', 'Hermes gateway test failed', currentConnectionTroubleshooting() || error?.message || String(error), { translateDetail: false });
       }
     } else {
-      setStatus('error', 'Hermes gateway test failed', currentConnectionTroubleshooting() || error?.message || String(error));
+      setStatus('error', 'Hermes gateway test failed', currentConnectionTroubleshooting() || error?.message || String(error), { translateDetail: false });
     }
   } finally {
     if (connectionController.isCurrent(generation)) {
@@ -8331,7 +8362,7 @@ function bindEvents() {
     renderTaskStack();
   });
   els.openFullViewButton?.addEventListener('click', () => {
-    openFullView().catch((error) => setStatus('warn', 'Could not open full view', error?.message || String(error)));
+    openFullView().catch((error) => setStatus('warn', 'Could not open full view', error?.message || String(error), { translateDetail: false }));
   });
   els.manualSettingsButton.addEventListener('click', openSettingsDialog);
   [els.modelMenu, els.sessionMenu, els.contextPopover, els.attachMenu, els.skillMenu].filter(Boolean).forEach((panel) => {
@@ -8363,7 +8394,7 @@ function bindEvents() {
       await loadSessions({ quiet: true });
       setStatus('ok', 'New Hermes Browser Extension draft', 'Saved when you send the first message.');
     } catch (error) {
-      setStatus('error', 'Could not create session', error?.message || String(error));
+      setStatus('error', 'Could not create session', error?.message || String(error), { translateDetail: false });
     }
   });
   els.createSessionButton.addEventListener('click', async () => {
@@ -8374,7 +8405,7 @@ function bindEvents() {
       els.sessionMenuButton.setAttribute('aria-expanded', 'false');
       await loadSessions({ quiet: true });
     } catch (error) {
-      setStatus('error', 'Could not create session', error?.message || String(error));
+      setStatus('error', 'Could not create session', error?.message || String(error), { translateDetail: false });
     }
   });
   els.refreshSessionsButton.addEventListener('click', refreshSessionsFromMenu);
@@ -8392,7 +8423,7 @@ function bindEvents() {
       await navigator.clipboard.writeText(text);
       setStatus('ok', 'Remote env copied', 'Paste this into the Hermes API-server environment on the remote machine.');
     } catch (error) {
-      setStatus('warn', 'Could not copy env block', error?.message || String(error));
+      setStatus('warn', 'Could not copy env block', error?.message || String(error), { translateDetail: false });
     }
   });
   els.settingsDialog.addEventListener('click', (event) => {
@@ -8437,7 +8468,7 @@ function bindEvents() {
     }
   });
   els.refreshButton.addEventListener('click', () => {
-    refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error)));
+    refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
   });
   els.explicitSiteCaptureButton?.addEventListener('click', async () => {
     try {
@@ -8453,9 +8484,9 @@ function bindEvents() {
         });
         return;
       }
-      setStatus('warn', 'Gmail thread capture unavailable', pageContext?.error || 'No rendered message bodies were available.');
+      setStatus('warn', 'Gmail thread capture unavailable', pageContext?.error || t('status.gmail_no_rendered'), { translateDetail: false });
     } catch (error) {
-      setStatus('warn', 'Gmail thread capture unavailable', error?.message || String(error));
+      setStatus('warn', 'Gmail thread capture unavailable', error?.message || String(error), { translateDetail: false });
     }
   });
   els.stopButton?.addEventListener('click', stopCurrentTurn);
@@ -8508,7 +8539,7 @@ function bindEvents() {
   });
   els.wakeButton?.addEventListener('click', () => {
     setWakeWordEnabled(!(wakeState.enabled || settings.wakeWordEnabled)).catch((error) => {
-      setStatus('warn', 'Wake word unavailable', error?.message || String(error));
+      setStatus('warn', 'Wake word unavailable', error?.message || String(error), { translateDetail: false });
       refreshWakeState();
     });
   });
@@ -8534,19 +8565,19 @@ function bindEvents() {
       ports,
       host: els.agentHostInput?.value || settings.agentDiscoveryHost,
       scheme: els.agentSchemeInput?.value || settings.agentDiscoveryScheme,
-    }).then(() => loadAgents()).catch((error) => setStatus('warn', 'Agent settings invalid', error?.message || String(error)));
+    }).then(() => loadAgents()).catch((error) => setStatus('warn', 'Agent settings invalid', error?.message || String(error), { translateDetail: false }));
   });
   els.agentPortsInput?.addEventListener('change', () => {
     const ports = parseAgentPortsInput(els.agentPortsInput.value);
     if (ports.length) {
-      persistAgentDiscoverySettings({ ports }).catch((error) => setStatus('warn', 'Agent ports invalid', error?.message || String(error)));
+      persistAgentDiscoverySettings({ ports }).catch((error) => setStatus('warn', 'Agent ports invalid', error?.message || String(error), { translateDetail: false }));
     }
   });
   els.agentHostInput?.addEventListener('change', () => {
-    persistAgentDiscoverySettings({ host: els.agentHostInput.value }).catch((error) => setStatus('warn', 'Agent host invalid', error?.message || String(error)));
+    persistAgentDiscoverySettings({ host: els.agentHostInput.value }).catch((error) => setStatus('warn', 'Agent host invalid', error?.message || String(error), { translateDetail: false }));
   });
   els.agentSchemeInput?.addEventListener('change', () => {
-    persistAgentDiscoverySettings({ scheme: els.agentSchemeInput.value }).catch((error) => setStatus('warn', 'Agent scheme invalid', error?.message || String(error)));
+    persistAgentDiscoverySettings({ scheme: els.agentSchemeInput.value }).catch((error) => setStatus('warn', 'Agent scheme invalid', error?.message || String(error), { translateDetail: false }));
   });
   els.editModelsButton.addEventListener('click', () => {
     closeFloatingPanels();
@@ -8554,7 +8585,7 @@ function bindEvents() {
     setStatus('warn', 'Edit models in Hermes Desktop', 'Use Hermes Desktop model settings or the Hermes model command, then Refresh Models here.');
   });
   els.contextMenuRouteNotice?.addEventListener('click', (event) => {
-    handleContextMenuRouteChoice(event).catch((error) => setStatus('error', 'Right-click task failed', error?.message || String(error)));
+    handleContextMenuRouteChoice(event).catch((error) => setStatus('error', 'Right-click task failed', error?.message || String(error), { translateDetail: false }));
   });
   els.modelMenuButton.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -8671,17 +8702,17 @@ function bindEvents() {
     els.contextBarButton.setAttribute('aria-expanded', String(!nextHidden));
   });
   els.contextCompactButton?.addEventListener('click', () => {
-    compactCurrentSessionContext().catch((error) => setStatus('warn', 'Context compaction failed', error?.message || String(error)));
+    compactCurrentSessionContext().catch((error) => setStatus('warn', 'Context compaction failed', error?.message || String(error), { translateDetail: false }));
   });
   els.testConnectionButton.addEventListener('click', testConnection);
   els.copyDiagnosticsButton?.addEventListener('click', () => {
-    copySupportDiagnostics().catch((error) => setStatus('warn', 'Diagnostics copy failed', error?.message || String(error)));
+    copySupportDiagnostics().catch((error) => setStatus('warn', 'Diagnostics copy failed', error?.message || String(error), { translateDetail: false }));
   });
   els.statusCopyDiagnosticsButton?.addEventListener('click', () => {
-    copySupportDiagnostics().catch((error) => setStatus('warn', 'Diagnostics copy failed', error?.message || String(error)));
+    copySupportDiagnostics().catch((error) => setStatus('warn', 'Diagnostics copy failed', error?.message || String(error), { translateDetail: false }));
   });
   els.clearTokenButton?.addEventListener('click', () => {
-    clearStoredToken().catch((error) => setStatus('warn', 'Could not clear token', error?.message || String(error)));
+    clearStoredToken().catch((error) => setStatus('warn', 'Could not clear token', error?.message || String(error), { translateDetail: false }));
   });
   els.gatewayModeInput?.addEventListener('change', () => {
     const summary = currentGatewaySummary({ gatewayMode: els.gatewayModeInput.value, gatewayUrl: els.gatewayUrlInput.value });
@@ -8733,7 +8764,7 @@ function bindEvents() {
       closeSettingsDialog();
       await refreshContext();
     } catch (error) {
-      setStatus('warn', 'Settings not saved', error?.message || String(error));
+      setStatus('warn', 'Settings not saved', error?.message || String(error), { translateDetail: false });
     }
   });
   els.sessionOwnershipNotice?.addEventListener('click', handleSessionOwnershipDecision);
@@ -8858,20 +8889,20 @@ function bindEvents() {
     els.contextScopeMenu.hidden = true;
     if (action === 'chat-only') {
       applyContextScope({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY }, { ensureSession: false })
-        .catch((error) => setStatus('warn', 'Could not switch to Chat only', error?.message || String(error)));
+        .catch((error) => setStatus('warn', 'Could not switch to Chat only', error?.message || String(error), { translateDetail: false }));
       return;
     }
     if (action === 'follow-active' || action === 'unlock') {
-      unlockContextScope().catch((error) => setStatus('warn', 'Could not unlock tab scope', error?.message || String(error)));
+      unlockContextScope().catch((error) => setStatus('warn', 'Could not unlock tab scope', error?.message || String(error), { translateDetail: false }));
       return;
     }
     if (action === 'pin-active') {
-      activeTab().then(pinContextTab).catch((error) => setStatus('warn', 'Could not pin active tab', error?.message || String(error)));
+      activeTab().then(pinContextTab).catch((error) => setStatus('warn', 'Could not pin active tab', error?.message || String(error), { translateDetail: false }));
       return;
     }
     if (action.startsWith('pin-tab:')) {
       const tabId = Number(action.slice('pin-tab:'.length));
-      pinContextTabById(tabId).catch((error) => setStatus('warn', 'Could not pin tab', error?.message || String(error)));
+      pinContextTabById(tabId).catch((error) => setStatus('warn', 'Could not pin tab', error?.message || String(error), { translateDetail: false }));
     }
   });
 
@@ -8913,7 +8944,7 @@ function bindEvents() {
     }
     if (message?.type === WAKE_MESSAGES.turnReady) {
       consumeWakeTurn(message.turn).catch((error) => {
-        setStatus('warn', 'Wake command handoff failed', error?.message || String(error));
+        setStatus('warn', 'Wake command handoff failed', error?.message || String(error), { translateDetail: false });
       });
       sendResponse?.({ ok: true, accepted: true, surface: SURFACE_KINDS.SIDE_PANEL });
       return false;
@@ -8934,12 +8965,12 @@ function bindEvents() {
     if (changes?.[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
     if (changes?.[WAKE_STORAGE_KEYS.turn]?.newValue) {
       consumeWakeTurn(changes[WAKE_STORAGE_KEYS.turn].newValue).catch((error) => {
-        setStatus('warn', 'Wake command handoff failed', error?.message || String(error));
+        setStatus('warn', 'Wake command handoff failed', error?.message || String(error), { translateDetail: false });
       });
     }
     if (changes?.[VOICE_DRAFT_STORAGE_KEY]?.newValue) {
       consumeVoiceDraft(changes[VOICE_DRAFT_STORAGE_KEY].newValue).catch((error) => {
-        setStatus('warn', 'Voice transcript handoff failed', error?.message || String(error));
+        setStatus('warn', 'Voice transcript handoff failed', error?.message || String(error), { translateDetail: false });
       });
     }
   });
@@ -9045,7 +9076,7 @@ async function runStartupReadiness() {
     await consumePendingVoiceDraft();
     await consumePendingWakeTurn();
   } catch (error) {
-    setStatus('error', `Startup ${error?.stage || 'readiness'} failed`, error?.message || String(error));
+    setStatus('error', `Startup ${error?.stage || 'readiness'} failed`, error?.message || String(error), { translateDetail: false });
     renderEmptyState();
   }
 }
@@ -9060,7 +9091,10 @@ subscribeLocale(() => {
   updateComposerBusyState();
   renderWakeState();
   renderModelRefreshState();
-  if (lastVisibleStatus) setStatus(lastVisibleStatus.kind, lastVisibleStatus.title, lastVisibleStatus.detail);
+  if (lastVisibleStatus) setStatus(lastVisibleStatus.kind, lastVisibleStatus.title, lastVisibleStatus.detail, {
+    translateTitle: lastVisibleStatus.translateTitle,
+    translateDetail: lastVisibleStatus.translateDetail,
+  });
 });
 await initI18n();
 bindEvents();
@@ -9076,7 +9110,7 @@ try {
 try {
   await refreshContext();
 } catch (error) {
-  setStatus('warn', 'Context refresh unavailable', error?.message || String(error));
+  setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false });
 }
 updateConnectionPrompt();
 renderVersionInfo();

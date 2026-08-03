@@ -1,0 +1,4374 @@
+{
+  "extensionName": {
+    "message": "Hermes Browser Extension",
+    "description": "Hermes Browser extensionName"
+  },
+  "extensionShortName": {
+    "message": "Hermes Ext",
+    "description": "Hermes Browser extensionShortName"
+  },
+  "extensionDescription": {
+    "message": "Browserintegreret sidepanel til Hermes Agent. Forbind webkontekst med din lokale eller eksterne Hermes-runtime.",
+    "description": "Hermes Browser extensionDescription"
+  },
+  "openExtension": {
+    "message": "Åbn Hermes Browser Extension",
+    "description": "Hermes Browser openExtension"
+  },
+  "openSidebar": {
+    "message": "Åbn Hermes Browser-sidepanel",
+    "description": "Hermes Browser openSidebar"
+  },
+  "runtime_a11y_extension_controls": {
+    "message": "Kontrolelementer til Hermes Browser Extension",
+    "description": "Runtime interface message a11y.extension_controls"
+  },
+  "runtime_a11y_extension_header": {
+    "message": "Overskrift til Hermes Browser Extension",
+    "description": "Runtime interface message a11y.extension_header"
+  },
+  "runtime_agent_scan": {
+    "message": "↻ Scan agenter",
+    "description": "Runtime interface message agent.scan"
+  },
+  "runtime_assist_options_heading": {
+    "message": "Hermes Assist-indstillinger",
+    "description": "Runtime interface message assist.options_heading"
+  },
+  "runtime_assist_routing_exact": {
+    "message": "Præcis routing af Assist-modellen er tilgængelig. Den valgte udbyder og model verificeres før hvert udkast kører.",
+    "description": "Runtime interface message assist.routing.exact"
+  },
+  "runtime_assist_routing_exact_short": {
+    "message": "Præcis routing af Assist-modellen er bekræftet",
+    "description": "Runtime interface message assist.routing.exact_short"
+  },
+  "runtime_assist_routing_fallback": {
+    "message": "Dit valg af Assist-model forbliver gemt. Denne gateway kan ikke gennemtvinge en præcis model, så Assist bruger gatewayens standard og mærker hvert fallback-resultat.",
+    "description": "Runtime interface message assist.routing.fallback"
+  },
+  "runtime_assist_routing_fallback_short": {
+    "message": "Falder tilbage til gateway-standarden, når nøjagtig routing ikke er tilgængelig",
+    "description": "Runtime interface message assist.routing.fallback_short"
+  },
+  "runtime_commands_click_or_enter": {
+    "message": "Klik eller tryk på Enter for at køre.",
+    "description": "Runtime interface message commands.click_or_enter"
+  },
+  "runtime_commands_details": {
+    "message": "Kommandodetaljer",
+    "description": "Runtime interface message commands.details"
+  },
+  "runtime_commands_insert_then_detail": {
+    "message": "Klik for at indsætte, og tilføj derefter detaljer.",
+    "description": "Runtime interface message commands.insert_then_detail"
+  },
+  "runtime_commands_runs_immediately": {
+    "message": "Kører straks mod den aktuelle browserkontekst.",
+    "description": "Runtime interface message commands.runs_immediately"
+  },
+  "runtime_common_current": {
+    "message": "aktuel",
+    "description": "Runtime interface message common.current"
+  },
+  "runtime_common_follow": {
+    "message": "følg",
+    "description": "Runtime interface message common.follow"
+  },
+  "runtime_common_live": {
+    "message": "live",
+    "description": "Runtime interface message common.live"
+  },
+  "runtime_common_lock": {
+    "message": "lås",
+    "description": "Runtime interface message common.lock"
+  },
+  "runtime_common_none": {
+    "message": "ingen",
+    "description": "Runtime interface message common.none"
+  },
+  "runtime_common_offline": {
+    "message": "offline",
+    "description": "Runtime interface message common.offline"
+  },
+  "runtime_common_online": {
+    "message": "online",
+    "description": "Runtime interface message common.online"
+  },
+  "runtime_common_skills": {
+    "message": "færdigheder",
+    "description": "Runtime interface message common.skills"
+  },
+  "runtime_common_using": {
+    "message": "Bruger",
+    "description": "Runtime interface message common.using"
+  },
+  "runtime_composer_attach": {
+    "message": "＋ Vedhæft",
+    "description": "Runtime interface message composer.attach"
+  },
+  "runtime_composer_chat_label": {
+    "message": "SNAK",
+    "description": "Runtime interface message composer.chat_label"
+  },
+  "runtime_composer_connect_first": {
+    "message": "Tilslut først til Hermes",
+    "description": "Runtime interface message composer.connect_first"
+  },
+  "runtime_composer_queue_message": {
+    "message": "Kø besked",
+    "description": "Runtime interface message composer.queue_message"
+  },
+  "runtime_connect_approve_or_paste": {
+    "message": "Godkend parring, når det er tilgængeligt, eller indsæt",
+    "description": "Runtime interface message connect.approve_or_paste"
+  },
+  "runtime_connect_clone_build_load": {
+    "message": "Klon denne repo, byg den, og indlæs",
+    "description": "Runtime interface message connect.clone_build_load"
+  },
+  "runtime_connect_folder_unpacked": {
+    "message": "mappe udpakket.",
+    "description": "Runtime interface message connect.folder_unpacked"
+  },
+  "runtime_connect_manual_setup_suffix": {
+    "message": "til manuel opsætning.",
+    "description": "Runtime interface message connect.manual_setup_suffix"
+  },
+  "runtime_connection_not_configured_short": {
+    "message": "ikke konfigureret",
+    "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connection_unknown_transport": {
+    "message": "ukendt transport",
+    "description": "Runtime interface message connection.unknown_transport"
+  },
+  "runtime_context_attached_tab": {
+    "message": "Vedhæftet fane",
+    "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_browser_tab_handoff": {
+    "message": "Overdragelse af browserfane {tabId}",
+    "description": "Runtime interface message context.browser_tab_handoff"
+  },
+  "runtime_context_follow_active_tab": {
+    "message": "Følg den aktive fane",
+    "description": "Runtime interface message context.follow_active_tab"
+  },
+  "runtime_context_in": {
+    "message": "IND",
+    "description": "Runtime interface message context.in"
+  },
+  "runtime_context_include_all_tabs": {
+    "message": "Inkluder alle faner",
+    "description": "Runtime interface message context.include_all_tabs"
+  },
+  "runtime_context_include_prompt_tab": {
+    "message": "Inkluder denne fane i listen over promptfaner",
+    "description": "Runtime interface message context.include_prompt_tab"
+  },
+  "runtime_context_no_page": {
+    "message": "ingen side",
+    "description": "Runtime interface message context.no_page"
+  },
+  "runtime_context_out": {
+    "message": "UD",
+    "description": "Runtime interface message context.out"
+  },
+  "runtime_context_page_only": {
+    "message": "Kun side",
+    "description": "Runtime interface message context.page_only"
+  },
+  "runtime_context_pin_current_tab": {
+    "message": "Fastgør aktuel fane",
+    "description": "Runtime interface message context.pin_current_tab"
+  },
+  "runtime_context_pin_tab": {
+    "message": "Fastgør: {title}",
+    "description": "Runtime interface message context.pin_tab"
+  },
+  "runtime_context_pinned_tab": {
+    "message": "Fastgjort fane",
+    "description": "Runtime interface message context.pinned_tab"
+  },
+  "runtime_context_refresh_page": {
+    "message": "Opdater sidekontekst",
+    "description": "Runtime interface message context.refresh_page"
+  },
+  "runtime_context_remove_prompt_tab": {
+    "message": "Fjern denne fane fra listen over promptfaner",
+    "description": "Runtime interface message context.remove_prompt_tab"
+  },
+  "runtime_context_tokens": {
+    "message": "tokens",
+    "description": "Runtime interface message context.tokens"
+  },
+  "runtime_context_unlock_pinned_tab": {
+    "message": "Lås fastgjort fane op",
+    "description": "Runtime interface message context.unlock_pinned_tab"
+  },
+  "runtime_diagnostic_api_authorization_health_detail": {
+    "message": "Sundhedstjekket svarede, men beskyttede Browser-/modelruter kræver Authorization: Bearer *** Indsæt API-nøglen eller browsertokenet med begrænset omfang i Indstillinger.",
+    "description": "Runtime interface message diagnostic.api_authorization_health_detail"
+  },
+  "runtime_diagnostic_api_authorization_title": {
+    "message": "API-serveren kræver godkendelse",
+    "description": "Runtime interface message diagnostic.api_authorization_title"
+  },
+  "runtime_diagnostic_api_rejected_detail": {
+    "message": "Hermes afviste denne anmodning. Kontrollér API-nøglen/browsertokenet, og sørg for, at URL’en peger på API-serveren, ikke Dashboard SSO-slutpunktet.",
+    "description": "Runtime interface message diagnostic.api_rejected_detail"
+  },
+  "runtime_diagnostic_auth_detail": {
+    "message": "Hermes API afviste anmodningen. Kontrollér Browser API-tokenet i Indstillinger, og sørg for, at det matcher den kørende Hermes-gateway.",
+    "description": "Runtime interface message diagnostic.auth_detail"
+  },
+  "runtime_diagnostic_auth_title": {
+    "message": "Hermes-godkendelse mislykkedes",
+    "description": "Runtime interface message diagnostic.auth_title"
+  },
+  "runtime_diagnostic_auth_user": {
+    "message": "Hermes API-tokenet blev afvist. Opdater tokenet i Browser-indstillingerne, og opret derefter forbindelse igen.",
+    "description": "Runtime interface message diagnostic.auth_user"
+  },
+  "runtime_diagnostic_cors_extension_detail": {
+    "message": "Browser kunne ikke nå Hermes API fra denne udvidelsesoprindelse. Føj chrome-extension://<extension-id> til API_SERVER_CORS_ORIGINS på fjernværten.",
+    "description": "Runtime interface message diagnostic.cors_extension_detail"
+  },
+  "runtime_diagnostic_cors_title": {
+    "message": "CORS-oprindelse er ikke tilladt",
+    "description": "Runtime interface message diagnostic.cors_title"
+  },
+  "runtime_diagnostic_dashboard_url_detail": {
+    "message": "Dette ligner Hermes Dashboard SSO-slutpunktet. Browser API-tilstand kræver URL’en til Hermes API-serveren på :8642 samt Authorization: Bearer ***",
+    "description": "Runtime interface message diagnostic.dashboard_url_detail"
+  },
+  "runtime_diagnostic_dashboard_url_title": {
+    "message": "Dashboard-URL fundet",
+    "description": "Runtime interface message diagnostic.dashboard_url_title"
+  },
+  "runtime_diagnostic_gateway_error_title": {
+    "message": "Hermes-gatewayfejl",
+    "description": "Runtime interface message diagnostic.gateway_error_title"
+  },
+  "runtime_diagnostic_gateway_unreachable_detail": {
+    "message": "Hermes-gatewayen kan ikke nås.",
+    "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
+  },
+  "runtime_diagnostic_network_detail": {
+    "message": "Browser kunne ikke nå Hermes API. Kontrollér gateway-URL’en, firewall-/VPN-routing og CORS-/oprindelsesindstillingerne for denne udvidelse.",
+    "description": "Runtime interface message diagnostic.network_detail"
+  },
+  "runtime_diagnostic_network_title": {
+    "message": "Hermes-netværks-/CORS-fejl",
+    "description": "Runtime interface message diagnostic.network_title"
+  },
+  "runtime_diagnostic_network_user": {
+    "message": "Browser kunne ikke nå Hermes, fordi anmodningen mislykkedes på netværks-/CORS-laget.",
+    "description": "Runtime interface message diagnostic.network_user"
+  },
+  "runtime_diagnostic_remote_setup_title": {
+    "message": "Problem med fjernopsætning",
+    "description": "Runtime interface message diagnostic.remote_setup_title"
+  },
+  "runtime_diagnostic_remote_unclassified_detail": {
+    "message": "Browser Extension kunne ikke klassificere dette svar fra den eksterne gateway.",
+    "description": "Runtime interface message diagnostic.remote_unclassified_detail"
+  },
+  "runtime_diagnostic_route_detail": {
+    "message": "Hermes-gatewayruten er ikke tilgængelig i dette runtime-miljø. Opdater eller genstart Hermes, eller brug den dokumenterede reservefunktion, når den er tilgængelig.",
+    "description": "Runtime interface message diagnostic.route_detail"
+  },
+  "runtime_diagnostic_route_title": {
+    "message": "Hermes-rute er ikke tilgængelig",
+    "description": "Runtime interface message diagnostic.route_title"
+  },
+  "runtime_diagnostic_route_user": {
+    "message": "Dette Hermes-runtime-miljø stiller endnu ikke den ønskede Browser-rute til rådighed.",
+    "description": "Runtime interface message diagnostic.route_user"
+  },
+  "runtime_diagnostic_runtime_exception_detail": {
+    "message": "Hermes API-serveren kan nås, men den opstrøms Hermes Agent udløste en runtime-undtagelse. Det peger ofte på et valgfrit runtime-/værktøjsproblem såsom computer_use/cua-driver, ikke Browser-godkendelse, parring, CORS eller pakning.",
+    "description": "Runtime interface message diagnostic.runtime_exception_detail"
+  },
+  "runtime_diagnostic_runtime_exception_title": {
+    "message": "Hermes-runtime-undtagelse",
+    "description": "Runtime interface message diagnostic.runtime_exception_title"
+  },
+  "runtime_diagnostic_runtime_exception_user": {
+    "message": "Hermes-gateway-sporingslog fundet i opstrøms Hermes Agent. Browser kan forblive tilsluttet; kontrollér Hermes-loggene, og kør `hermes computer-use doctor`, hvis computer_use/cua-driver vises i sporingsloggen.",
+    "description": "Runtime interface message diagnostic.runtime_exception_user"
+  },
+  "runtime_diagnostics_surface": {
+    "message": "Overflade",
+    "description": "Runtime interface message diagnostics.surface"
+  },
+  "runtime_fulltab_handoff_opened_from": {
+    "message": "Åbnet fra {source}.",
+    "description": "Runtime interface message fulltab.handoff.opened_from"
+  },
+  "runtime_fulltab_handoff_opened_from_tab": {
+    "message": "Åbnet fra {source} på browserfane {tabId}.",
+    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  },
+  "runtime_image_generated": {
+    "message": "Genereret billede",
+    "description": "Runtime interface message image.generated"
+  },
+  "runtime_image_generated_preview": {
+    "message": "Forhåndsvisning af genereret billede",
+    "description": "Runtime interface message image.generated_preview"
+  },
+  "runtime_image_generating": {
+    "message": "Hermes genererer et billede",
+    "description": "Runtime interface message image.generating"
+  },
+  "runtime_image_meta_active": {
+    "message": "{aspectRatio} // aktiv",
+    "description": "Runtime interface message image.meta_active"
+  },
+  "runtime_image_phase_denoising": {
+    "message": "AFSTØJNING",
+    "description": "Runtime interface message image.phase_denoising"
+  },
+  "runtime_image_phase_finalizing": {
+    "message": "FINALISERING",
+    "description": "Runtime interface message image.phase_finalizing"
+  },
+  "runtime_image_phase_latent": {
+    "message": "LATENT FELT",
+    "description": "Runtime interface message image.phase_latent"
+  },
+  "runtime_image_phase_resolving": {
+    "message": "OPLØSNING",
+    "description": "Runtime interface message image.phase_resolving"
+  },
+  "runtime_items_count": {
+    "message": "{count} elementer",
+    "description": "Runtime interface message items.count"
+  },
+  "runtime_manifest_extension_description": {
+    "message": "Browserintegreret sidepanel til Hermes Agent. Forbind webkontekst med din lokale eller eksterne Hermes-runtime.",
+    "description": "Runtime interface message manifest.extension_description"
+  },
+  "runtime_manifest_extension_name": {
+    "message": "Hermes Browser Extension",
+    "description": "Runtime interface message manifest.extension_name"
+  },
+  "runtime_manifest_extension_short_name": {
+    "message": "Hermes Ext",
+    "description": "Runtime interface message manifest.extension_short_name"
+  },
+  "runtime_manifest_open_extension": {
+    "message": "Åbn Hermes Browser Extension",
+    "description": "Runtime interface message manifest.open_extension"
+  },
+  "runtime_manifest_open_sidebar": {
+    "message": "Åbn Hermes Browser-sidepanel",
+    "description": "Runtime interface message manifest.open_sidebar"
+  },
+  "runtime_permissions_not_granted": {
+    "message": "Mikrofontilladelse blev ikke givet.\n\n{error}\n\nKlik på Åbn mikrofonindstillinger, indstil Mikrofon til Tillad Hermes Browser Extension, vend tilbage hertil, og prøv igen.",
+    "description": "Runtime interface message permissions.not_granted"
+  },
+  "runtime_permissions_state": {
+    "message": "Mikrofontilladelsestilstand: {state}. Hvis Chromium viser dette som blokeret, skal du åbne mikrofonindstillingerne og indstille Mikrofon til Tillad for Hermes Browser Extension.",
+    "description": "Runtime interface message permissions.state"
+  },
+  "runtime_picker_pick_different": {
+    "message": "◈ Vælg et andet element",
+    "description": "Runtime interface message picker.pick_different"
+  },
+  "runtime_picker_picking_element": {
+    "message": "◈ Vælger element...",
+    "description": "Runtime interface message picker.picking_element"
+  },
+  "runtime_profile_available": {
+    "message": "{count} profiler tilgængelige",
+    "description": "Runtime interface message profile.available"
+  },
+  "runtime_profile_available_suffix": {
+    "message": "profiler tilgængelige",
+    "description": "Runtime interface message profile.available_suffix"
+  },
+  "runtime_profile_default": {
+    "message": "Standardprofil",
+    "description": "Runtime interface message profile.default"
+  },
+  "runtime_profile_refresh": {
+    "message": "↻ Profiler",
+    "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_using": {
+    "message": "Bruger {name}{model}{skills}",
+    "description": "Runtime interface message profile.using"
+  },
+  "runtime_run_stop": {
+    "message": "■ Stop",
+    "description": "Runtime interface message run.stop"
+  },
+  "runtime_runtime_fast_mode_toggle": {
+    "message": "Hurtig tilstand {state}",
+    "description": "Runtime interface message runtime.fast_mode_toggle"
+  },
+  "runtime_runtime_model_control_title": {
+    "message": "{model} · {options}. Skift model og køretidsindstillinger.",
+    "description": "Runtime interface message runtime.model_control_title"
+  },
+  "runtime_runtime_options_heading": {
+    "message": "Køretidsindstillinger",
+    "description": "Runtime interface message runtime.options_heading"
+  },
+  "runtime_runtime_options_saved": {
+    "message": "Køretidsindstillinger: {summary}",
+    "description": "Runtime interface message runtime.options_saved"
+  },
+  "runtime_runtime_reasoning": {
+    "message": "{effort} ræsonnement",
+    "description": "Runtime interface message runtime.reasoning"
+  },
+  "runtime_runtime_thinking_off": {
+    "message": "Tænkning slået fra",
+    "description": "Runtime interface message runtime.thinking_off"
+  },
+  "runtime_runtime_thinking_toggle": {
+    "message": "Tænkning {state}",
+    "description": "Runtime interface message runtime.thinking_toggle"
+  },
+  "runtime_session_copy_id_for": {
+    "message": "Kopiér sessions-id for {title}",
+    "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_new_extension_session": {
+    "message": "＋ Ny Hermes Browser Extension session",
+    "description": "Runtime interface message session.new_extension_session"
+  },
+  "runtime_session_opening": {
+    "message": "Åbner {title}",
+    "description": "Runtime interface message session.opening"
+  },
+  "runtime_session_rail_save_failed": {
+    "message": "Kunne ikke gemme sessionsbjælken: {error}",
+    "description": "Runtime interface message session.rail_save_failed"
+  },
+  "runtime_session_rename_named": {
+    "message": "Omdøb session {title}",
+    "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_settings_language_description": {
+    "message": "Vælg grænsefladesproget.",
+    "description": "Runtime interface message settings.language.description"
+  },
+  "runtime_settings_language_label": {
+    "message": "Sprog",
+    "description": "Runtime interface message settings.language.label"
+  },
+  "runtime_settings_local_api_setup_hint": {
+    "message": "Lokal API-server (standard http://127.0.0.1:8642). Indsæt dens nøgle nedenfor.",
+    "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_public_alpha_load_unpacked": {
+    "message": "· offentlig alfa / indlæs udpakket",
+    "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_status_connection_not_responding": {
+    "message": "{summary} svarer ikke. Start Hermes Desktop/Gateway, og opret derefter forbindelse igen.",
+    "description": "Runtime interface message status.connection_not_responding"
+  },
+  "runtime_status_gmail_no_rendered": {
+    "message": "Der var ingen gengivne meddelelsestekster tilgængelige.",
+    "description": "Runtime interface message status.gmail_no_rendered"
+  },
+  "runtime_status_model_discovery_limited": {
+    "message": "Gatewayen viser kun én /v1/models-række, og /api/sessions var ikke tilgængelig ({error}).",
+    "description": "Runtime interface message status.model_discovery_limited"
+  },
+  "runtime_status_model_lock_failed_detail": {
+    "message": "{error}. Sender ikke, fordi Hermes muligvis falder tilbage til den globale model.",
+    "description": "Runtime interface message status.model_lock_failed_detail"
+  },
+  "runtime_status_model_registry_fallback": {
+    "message": "Falder tilbage til /v1/models ({error}).",
+    "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_context_restricted": {
+    "message": "{url} - kontekst begrænset",
+    "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_profile_selected_restart": {
+    "message": "{profile} er valgt. Genstart Hermes-gatewayen, hvis den aktive profil ikke ændres med det samme.",
+    "description": "Runtime interface message status.profile_selected_restart"
+  },
+  "runtime_status_profile_switch_unavailable": {
+    "message": "{error}. Browser bruger den aktuelt kørende Hermes-profil.",
+    "description": "Runtime interface message status.profile_switch_unavailable"
+  },
+  "runtime_tasks_summary": {
+    "message": "{complete} fuldført · {active} aktiv",
+    "description": "Runtime interface message tasks.summary"
+  },
+  "runtime_ui_0_complete_0_active": {
+    "message": "0 fuldført · 0 aktive",
+    "description": "Runtime interface message ui.0.complete.0.active"
+  },
+  "runtime_ui_accept": {
+    "message": "Acceptere",
+    "description": "Runtime interface message ui.accept"
+  },
+  "runtime_ui_access": {
+    "message": "Adgang",
+    "description": "Runtime interface message ui.access"
+  },
+  "runtime_ui_account": {
+    "message": "Konto",
+    "description": "Runtime interface message ui.account"
+  },
+  "runtime_ui_action": {
+    "message": "Handling",
+    "description": "Runtime interface message ui.action"
+  },
+  "runtime_ui_actions": {
+    "message": "Handlinger",
+    "description": "Runtime interface message ui.actions"
+  },
+  "runtime_ui_active": {
+    "message": "aktiv",
+    "description": "Runtime interface message ui.active"
+  },
+  "runtime_ui_active_profile": {
+    "message": "Aktiv profil",
+    "description": "Runtime interface message ui.active.profile"
+  },
+  "runtime_ui_active_tab": {
+    "message": "Aktiv fane",
+    "description": "Runtime interface message ui.active.tab"
+  },
+  "runtime_ui_active_tab_2bc454c2": {
+    "message": "AKTIV FANEN",
+    "description": "Runtime interface message ui.active.tab.2bc454c2"
+  },
+  "runtime_ui_active_tab_ready": {
+    "message": "Aktiv fane klar",
+    "description": "Runtime interface message ui.active.tab.ready"
+  },
+  "runtime_ui_active_tab_status": {
+    "message": "Aktiv fanestatus",
+    "description": "Runtime interface message ui.active.tab.status"
+  },
+  "runtime_ui_activity": {
+    "message": "Aktivitet",
+    "description": "Runtime interface message ui.activity"
+  },
+  "runtime_ui_add": {
+    "message": "Tilføje",
+    "description": "Runtime interface message ui.add"
+  },
+  "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
+    "message": "Tilføj instruktioner efter skråstreg-kommandoen før afsendelse.",
+    "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_adjust": {
+    "message": "Tilpasse",
+    "description": "Runtime interface message ui.adjust"
+  },
+  "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
+    "message": "Juster sidepanelet for læsbarhed uden at ændre browserzoom.",
+    "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_agent": {
+    "message": "AGENT",
+    "description": "Runtime interface message ui.agent"
+  },
+  "runtime_ui_agent_5ce2e6f4": {
+    "message": "Agent",
+    "description": "Runtime interface message ui.agent.5ce2e6f4"
+  },
+  "runtime_ui_agent_discovery_has_not_run_yet": {
+    "message": "Agentopdagelsen er ikke kørt endnu.",
+    "description": "Runtime interface message ui.agent.discovery.has.not.run.yet"
+  },
+  "runtime_ui_agent_host": {
+    "message": "Agent vært",
+    "description": "Runtime interface message ui.agent.host"
+  },
+  "runtime_ui_agent_host_invalid": {
+    "message": "Agentværten er ugyldig",
+    "description": "Runtime interface message ui.agent.host.invalid"
+  },
+  "runtime_ui_agent_ports_comma_separated_default_8642_8646": {
+    "message": "Agentporte (kommasepareret, standard 8642-8646)",
+    "description": "Runtime interface message ui.agent.ports.comma.separated.default.8642.8646"
+  },
+  "runtime_ui_agent_ports_invalid": {
+    "message": "Agentporte er ugyldige",
+    "description": "Runtime interface message ui.agent.ports.invalid"
+  },
+  "runtime_ui_agent_profile": {
+    "message": "Agent profil",
+    "description": "Runtime interface message ui.agent.profile"
+  },
+  "runtime_ui_agent_scheme": {
+    "message": "Agent ordning",
+    "description": "Runtime interface message ui.agent.scheme"
+  },
+  "runtime_ui_agent_scheme_invalid": {
+    "message": "Agentskema ugyldigt",
+    "description": "Runtime interface message ui.agent.scheme.invalid"
+  },
+  "runtime_ui_agent_settings_invalid": {
+    "message": "Agentindstillinger er ugyldige",
+    "description": "Runtime interface message ui.agent.settings.invalid"
+  },
+  "runtime_ui_agents_scanned": {
+    "message": "Agenter scannet",
+    "description": "Runtime interface message ui.agents.scanned"
+  },
+  "runtime_ui_all": {
+    "message": "Alle",
+    "description": "Runtime interface message ui.all"
+  },
+  "runtime_ui_allow": {
+    "message": "Tillade",
+    "description": "Runtime interface message ui.allow"
+  },
+  "runtime_ui_allow_hermes_microphone": {
+    "message": "Tillad Hermes-mikrofon",
+    "description": "Runtime interface message ui.allow.hermes.microphone"
+  },
+  "runtime_ui_allow_microphone": {
+    "message": "Tillad mikrofon",
+    "description": "Runtime interface message ui.allow.microphone"
+  },
+  "runtime_ui_allow_microphone_access": {
+    "message": "Tillad mikrofonadgang",
+    "description": "Runtime interface message ui.allow.microphone.access"
+  },
+  "runtime_ui_already_connected": {
+    "message": "Allerede forbundet",
+    "description": "Runtime interface message ui.already.connected"
+  },
+  "runtime_ui_always": {
+    "message": "Altid",
+    "description": "Runtime interface message ui.always"
+  },
+  "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
+    "message": "Always-on browser wake listening kræver Chromium offscreen-dokumentstøtte.",
+    "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
+  },
+  "runtime_ui_answer": {
+    "message": "Svar",
+    "description": "Runtime interface message ui.answer"
+  },
+  "runtime_ui_api": {
+    "message": "API",
+    "description": "Runtime interface message ui.api"
+  },
+  "runtime_ui_api_key_blank_dashboard": {
+    "message": "API-tast (tom = dashboard)",
+    "description": "Runtime interface message ui.api.key.blank.dashboard"
+  },
+  "runtime_ui_api_key_browser_token": {
+    "message": "API nøgle / browser token",
+    "description": "Runtime interface message ui.api.key.browser.token"
+  },
+  "runtime_ui_api_server_key": {
+    "message": "API_SERVER_KEY",
+    "description": "Runtime interface message ui.api.server.key"
+  },
+  "runtime_ui_api_token": {
+    "message": "API token",
+    "description": "Runtime interface message ui.api.token"
+  },
+  "runtime_ui_api_token_required": {
+    "message": "API token påkrævet",
+    "description": "Runtime interface message ui.api.token.required"
+  },
+  "runtime_ui_app": {
+    "message": "App",
+    "description": "Runtime interface message ui.app"
+  },
+  "runtime_ui_appearance": {
+    "message": "Udseende",
+    "description": "Runtime interface message ui.appearance"
+  },
+  "runtime_ui_apply": {
+    "message": "Anvende",
+    "description": "Runtime interface message ui.apply"
+  },
+  "runtime_ui_apply_to_field": {
+    "message": "Anvend på felt",
+    "description": "Runtime interface message ui.apply.to.field"
+  },
+  "runtime_ui_approval_opened_approve_hermes_browser_extension_then_return_here": {
+    "message": "Godkendelse åbnet. Godkend Hermes Browser Extension, og vend derefter tilbage hertil.",
+    "description": "Runtime interface message ui.approval.opened.approve.hermes.browser.extension.then.return.here"
+  },
+  "runtime_ui_approve": {
+    "message": "Godkende",
+    "description": "Runtime interface message ui.approve"
+  },
+  "runtime_ui_artifacts": {
+    "message": "Artefakter",
+    "description": "Runtime interface message ui.artifacts"
+  },
+  "runtime_ui_ask": {
+    "message": "Spørge",
+    "description": "Runtime interface message ui.ask"
+  },
+  "runtime_ui_ask_about_any_page_hermes_sees_the_active_tab_selected_text_pag_b2a32c39": {
+    "message": "Spørg om enhver side. Hermes ser den aktive fane, valgt tekst, sidekontekst og åbne faner.",
+    "description": "Runtime interface message ui.ask.about.any.page.hermes.sees.the.active.tab.selected.text.pag.b2a32c39"
+  },
+  "runtime_ui_ask_every_time": {
+    "message": "Spørg hver gang",
+    "description": "Runtime interface message ui.ask.every.time"
+  },
+  "runtime_ui_ask_hermes": {
+    "message": "Spørg Hermes",
+    "description": "Runtime interface message ui.ask.hermes"
+  },
+  "runtime_ui_ask_hermes_36d55d5a": {
+    "message": "SPØRG HERMES",
+    "description": "Runtime interface message ui.ask.hermes.36d55d5a"
+  },
+  "runtime_ui_ask_hermes_about_the_active_page_context": {
+    "message": "Spørg Hermes om den aktive sidekontekst.",
+    "description": "Runtime interface message ui.ask.hermes.about.the.active.page.context"
+  },
+  "runtime_ui_ask_hermes_about_this_page": {
+    "message": "Spørg Hermes om denne side...",
+    "description": "Runtime interface message ui.ask.hermes.about.this.page"
+  },
+  "runtime_ui_ask_hermes_about_this_selection": {
+    "message": "Spørg Hermes om dette valg",
+    "description": "Runtime interface message ui.ask.hermes.about.this.selection"
+  },
+  "runtime_ui_ask_hermes_anything": {
+    "message": "Spørg Hermes hvad som helst...",
+    "description": "Runtime interface message ui.ask.hermes.anything"
+  },
+  "runtime_ui_assist_could_not_run": {
+    "message": "Assist kunne ikke køre",
+    "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_options": {
+    "message": "Assist muligheder",
+    "description": "Runtime interface message ui.assist.options"
+  },
+  "runtime_ui_assist_session_history": {
+    "message": "Assist sessionshistorik",
+    "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assistant": {
+    "message": "Assistent",
+    "description": "Runtime interface message ui.assistant"
+  },
+  "runtime_ui_attach": {
+    "message": "Vedhæft",
+    "description": "Runtime interface message ui.attach"
+  },
+  "runtime_ui_attach_context": {
+    "message": "Vedhæft kontekst",
+    "description": "Runtime interface message ui.attach.context"
+  },
+  "runtime_ui_attach_files": {
+    "message": "Vedhæft filer",
+    "description": "Runtime interface message ui.attach.files"
+  },
+  "runtime_ui_attach_the_active_signed_in_hermes_cloud_agent_tab_with_a_one_use_ticket": {
+    "message": "Vedhæft den aktive loggede Hermes Cloud agentfane med en engangsbillet.",
+    "description": "Runtime interface message ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket"
+  },
+  "runtime_ui_attach_to_current_tab": {
+    "message": "Vedhæft til den aktuelle fane",
+    "description": "Runtime interface message ui.attach.to.current.tab"
+  },
+  "runtime_ui_attachment": {
+    "message": "Vedhæftet fil",
+    "description": "Runtime interface message ui.attachment"
+  },
+  "runtime_ui_attachments": {
+    "message": "Vedhæftede filer",
+    "description": "Runtime interface message ui.attachments"
+  },
+  "runtime_ui_attribute": {
+    "message": "Attribut",
+    "description": "Runtime interface message ui.attribute"
+  },
+  "runtime_ui_audio": {
+    "message": "Lyd",
+    "description": "Runtime interface message ui.audio"
+  },
+  "runtime_ui_authorization": {
+    "message": "Bemyndigelse",
+    "description": "Runtime interface message ui.authorization"
+  },
+  "runtime_ui_auto": {
+    "message": "Auto",
+    "description": "Runtime interface message ui.auto"
+  },
+  "runtime_ui_auto_name_browser_sessions": {
+    "message": "Navngiv automatisk browsersessioner",
+    "description": "Runtime interface message ui.auto.name.browser.sessions"
+  },
+  "runtime_ui_auto_name_skipped": {
+    "message": "Auto-navn sprunget over",
+    "description": "Runtime interface message ui.auto.name.skipped"
+  },
+  "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
+    "message": "Automatisk parring er ikke tilgængelig på denne Hermes-runtime. Åbn Indstillinger og brug manuel opsætning med dit Gateway URL og API token.",
+    "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
+  },
+  "runtime_ui_automatic_replacement": {
+    "message": "Automatisk udskiftning",
+    "description": "Runtime interface message ui.automatic.replacement"
+  },
+  "runtime_ui_available": {
+    "message": "tilgængelig",
+    "description": "Runtime interface message ui.available"
+  },
+  "runtime_ui_available_7c62a142": {
+    "message": "Tilgængelig",
+    "description": "Runtime interface message ui.available.7c62a142"
+  },
+  "runtime_ui_back": {
+    "message": "Tilbage",
+    "description": "Runtime interface message ui.back"
+  },
+  "runtime_ui_back_to_actions": {
+    "message": "Tilbage til handlinger",
+    "description": "Runtime interface message ui.back.to.actions"
+  },
+  "runtime_ui_back_to_result": {
+    "message": "Tilbage til resultatet",
+    "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_background": {
+    "message": "Baggrund",
+    "description": "Runtime interface message ui.background"
+  },
+  "runtime_ui_block": {
+    "message": "Blok",
+    "description": "Runtime interface message ui.block"
+  },
+  "runtime_ui_blocked": {
+    "message": "Blokeret",
+    "description": "Runtime interface message ui.blocked"
+  },
+  "runtime_ui_blocked_fcc4cce1": {
+    "message": "BLOKERET",
+    "description": "Runtime interface message ui.blocked.fcc4cce1"
+  },
+  "runtime_ui_body": {
+    "message": "Legeme",
+    "description": "Runtime interface message ui.body"
+  },
+  "runtime_ui_browser": {
+    "message": "Browser",
+    "description": "Runtime interface message ui.browser"
+  },
+  "runtime_ui_browser_behavior": {
+    "message": "Browseradfærd",
+    "description": "Runtime interface message ui.browser.behavior"
+  },
+  "runtime_ui_browser_extension": {
+    "message": "Browserudvidelse",
+    "description": "Runtime interface message ui.browser.extension"
+  },
+  "runtime_ui_browser_extension_full_view": {
+    "message": "Browser-udvidelse fuld visning",
+    "description": "Runtime interface message ui.browser.extension.full.view"
+  },
+  "runtime_ui_browser_fallback_phrase": {
+    "message": "Browser fallback sætning",
+    "description": "Runtime interface message ui.browser.fallback.phrase"
+  },
+  "runtime_ui_browser_local_fallback": {
+    "message": "Browser-lokal fallback",
+    "description": "Runtime interface message ui.browser.local.fallback"
+  },
+  "runtime_ui_browser_update_review": {
+    "message": "Gennemgang af browseropdatering",
+    "description": "Runtime interface message ui.browser.update.review"
+  },
+  "runtime_ui_browser_updates": {
+    "message": "Browseropdateringer",
+    "description": "Runtime interface message ui.browser.updates"
+  },
+  "runtime_ui_build": {
+    "message": "Byg",
+    "description": "Runtime interface message ui.build"
+  },
+  "runtime_ui_building_redacted_diagnostics": {
+    "message": "Opbygning af redigeret diagnostik...",
+    "description": "Runtime interface message ui.building.redacted.diagnostics"
+  },
+  "runtime_ui_cache": {
+    "message": "Cache",
+    "description": "Runtime interface message ui.cache"
+  },
+  "runtime_ui_cancel": {
+    "message": "Ophæve",
+    "description": "Runtime interface message ui.cancel"
+  },
+  "runtime_ui_canonical_hermes_history_model_selection_tools_and_generated_me_c7aacd25": {
+    "message": "Kanonisk Hermes historie, modelvalg, værktøjer og genererede medier forbliver knyttet til denne session.",
+    "description": "Runtime interface message ui.canonical.hermes.history.model.selection.tools.and.generated.me.c7aacd25"
+  },
+  "runtime_ui_capabilities": {
+    "message": "Evner",
+    "description": "Runtime interface message ui.capabilities"
+  },
+  "runtime_ui_capability": {
+    "message": "Evne",
+    "description": "Runtime interface message ui.capability"
+  },
+  "runtime_ui_capture_visible_gmail_thread": {
+    "message": "Fang synlig Gmail tråd",
+    "description": "Runtime interface message ui.capture.visible.gmail.thread"
+  },
+  "runtime_ui_card": {
+    "message": "Kort",
+    "description": "Runtime interface message ui.card"
+  },
+  "runtime_ui_category": {
+    "message": "Kategori",
+    "description": "Runtime interface message ui.category"
+  },
+  "runtime_ui_change": {
+    "message": "Forandring",
+    "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_model_and_runtime_options": {
+    "message": "Skift model og køretidsindstillinger",
+    "description": "Runtime interface message ui.change.model.and.runtime.options"
+  },
+  "runtime_ui_changes_apply_instantly_and_are_saved_automatically": {
+    "message": "Ændringer gælder med det samme og gemmes automatisk.",
+    "description": "Runtime interface message ui.changes.apply.instantly.and.are.saved.automatically"
+  },
+  "runtime_ui_channel": {
+    "message": "Kanal",
+    "description": "Runtime interface message ui.channel"
+  },
+  "runtime_ui_channels": {
+    "message": "Kanaler",
+    "description": "Runtime interface message ui.channels"
+  },
+  "runtime_ui_chat_only": {
+    "message": "Kun chat",
+    "description": "Runtime interface message ui.chat.only"
+  },
+  "runtime_ui_chat_only_3b155e99": {
+    "message": "💬 Kun chat",
+    "description": "Runtime interface message ui.chat.only.3b155e99"
+  },
+  "runtime_ui_chat_only_mode_is_active_hermes_will_not_read_or_attach_browser_13891aa3": {
+    "message": "Kun chat-tilstand er aktiv. Hermes vil ikke læse eller vedhæfte browserkontekst for denne tur.",
+    "description": "Runtime interface message ui.chat.only.mode.is.active.hermes.will.not.read.or.attach.browser.13891aa3"
+  },
+  "runtime_ui_chats": {
+    "message": "Chats",
+    "description": "Runtime interface message ui.chats"
+  },
+  "runtime_ui_check": {
+    "message": "Check",
+    "description": "Runtime interface message ui.check"
+  },
+  "runtime_ui_checking": {
+    "message": "Tjekker...",
+    "description": "Runtime interface message ui.checking"
+  },
+  "runtime_ui_checking_browser_main": {
+    "message": "Kontrollerer hovedbrowseren...",
+    "description": "Runtime interface message ui.checking.browser.main"
+  },
+  "runtime_ui_checking_hermes": {
+    "message": "Tjekker Hermes",
+    "description": "Runtime interface message ui.checking.hermes"
+  },
+  "runtime_ui_checking_settings_gateway_capabilities_models_and_sessions": {
+    "message": "Kontrol af indstillinger, gateway, muligheder, modeller og sessioner.",
+    "description": "Runtime interface message ui.checking.settings.gateway.capabilities.models.and.sessions"
+  },
+  "runtime_ui_choose": {
+    "message": "Vælge",
+    "description": "Runtime interface message ui.choose"
+  },
+  "runtime_ui_choose_9fd8325f": {
+    "message": "VÆLG",
+    "description": "Runtime interface message ui.choose.9fd8325f"
+  },
+  "runtime_ui_choose_another_tab_or_follow_the_active_tab": {
+    "message": "Vælg en anden fane, eller følg den aktive fane.",
+    "description": "Runtime interface message ui.choose.another.tab.or.follow.the.active.tab"
+  },
+  "runtime_ui_choose_any_available_model_for_hermes_assist_if_the_gateway_can_848c1645": {
+    "message": "Vælg enhver tilgængelig model til Hermes Assist. Hvis gatewayen ikke kan håndhæve den nøjagtige model, falder Assist transparent tilbage til gateway-standarden og mærker resultatet.",
+    "description": "Runtime interface message ui.choose.any.available.model.for.hermes.assist.if.the.gateway.can.848c1645"
+  },
+  "runtime_ui_choose_assist_model": {
+    "message": "Vælg Assist model",
+    "description": "Runtime interface message ui.choose.assist.model"
+  },
+  "runtime_ui_choose_hermes_model": {
+    "message": "Vælg Hermes model",
+    "description": "Runtime interface message ui.choose.hermes.model"
+  },
+  "runtime_ui_choose_model": {
+    "message": "Vælg model",
+    "description": "Runtime interface message ui.choose.model"
+  },
+  "runtime_ui_choose_the_brightness_treatment_for_this_web_workspace": {
+    "message": "Vælg lysstyrkebehandlingen for dette webarbejdsområde.",
+    "description": "Runtime interface message ui.choose.the.brightness.treatment.for.this.web.workspace"
+  },
+  "runtime_ui_choose_the_model_used_by_hermes_assist": {
+    "message": "Vælg den model, der bruges af Hermes Assist",
+    "description": "Runtime interface message ui.choose.the.model.used.by.hermes.assist"
+  },
+  "runtime_ui_choose_what_browser_context_is_allowed_into_each_prompt": {
+    "message": "Vælg hvilken browserkontekst der er tilladt i hver prompt.",
+    "description": "Runtime interface message ui.choose.what.browser.context.is.allowed.into.each.prompt"
+  },
+  "runtime_ui_choose_where_ask_explain_improve_and_summarize_selection_tasks_run": {
+    "message": "Vælg, hvor Spørg, Forklar, Forbedre og Opsummer udvælgelsesopgaver.",
+    "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
+  },
+  "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
+    "message": "Vælg, hvor denne browsersession når Hermes.",
+    "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
+  },
+  "runtime_ui_choose_where_to_send": {
+    "message": "Vælg, hvor du vil sende",
+    "description": "Runtime interface message ui.choose.where.to.send"
+  },
+  "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
+    "message": "Vælg, hvilken Hermes-agentprofil browseren skal bruge, når den lokale gateway afslører profiler.",
+    "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
+  },
+  "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
+    "message": "Vælg hvilken fane Hermes læser, og hvilke åbne faner der vises i prompten",
+    "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
+  },
+  "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
+    "message": "Chrome kan undertrykke mikrofonprompter inde i forlængelsessidepaneler. Denne midlertidige udvidelsesside beder Chrome om mikrofonadgang og sender dig derefter tilbage til Hermes sidepanelet.",
+    "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
+  },
+  "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
+    "message": "Chromium kan blokere mikrofonoptagelse inde i forlængelsessidepaneler. Denne synlige udvidelsesfane optager fra den samme Hermes-udvidelsesoprindelse, når Hermes STT er tilgængelig, eller bruger browserens taletilbagegang, når den tilsluttede runtime ikke afslører lydtransskription.",
+    "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_class": {
+    "message": "klasse",
+    "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clear": {
+    "message": "Klar",
+    "description": "Runtime interface message ui.clear"
+  },
+  "runtime_ui_clear_picked_element": {
+    "message": "✕ Klart udvalgt element",
+    "description": "Runtime interface message ui.clear.picked.element"
+  },
+  "runtime_ui_clear_stored_token": {
+    "message": "Ryd gemt token",
+    "description": "Runtime interface message ui.clear.stored.token"
+  },
+  "runtime_ui_cli": {
+    "message": "CLI",
+    "description": "Runtime interface message ui.cli"
+  },
+  "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
+    "message": "Klik på Tillad mikrofon for at anmode om adgang. Chromium kræver, at denne anmodning sker fra en synlig udvidelsesside.",
+    "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
+  },
+  "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
+    "message": "Klik på ethvert element på siden. Tryk på Esc for at annullere.",
+    "description": "Runtime interface message ui.click.any.element.on.the.page.press.esc.to.cancel"
+  },
+  "runtime_ui_click_connect_to_hermes_or_use_manual_setup_with_a_local_remote_5b53a482": {
+    "message": "Klik på Opret forbindelse til Hermes, eller brug Manuel opsætning med en lokal/fjerngateway URL og token.",
+    "description": "Runtime interface message ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482"
+  },
+  "runtime_ui_click_start_dictation_to_grant_microphone_access_and_record": {
+    "message": "Klik på Start diktering for at give mikrofonadgang og optage.",
+    "description": "Runtime interface message ui.click.start.dictation.to.grant.microphone.access.and.record"
+  },
+  "runtime_ui_click_the_mic_again_to_transcribe_with_hermes_speech_to_text": {
+    "message": "Klik på mikrofonen igen for at transskribere med Hermes tale-til-tekst.",
+    "description": "Runtime interface message ui.click.the.mic.again.to.transcribe.with.hermes.speech.to.text"
+  },
+  "runtime_ui_client": {
+    "message": "Klient",
+    "description": "Runtime interface message ui.client"
+  },
+  "runtime_ui_close": {
+    "message": "Tæt",
+    "description": "Runtime interface message ui.close"
+  },
+  "runtime_ui_close_dbc87420": {
+    "message": "TÆT",
+    "description": "Runtime interface message ui.close.dbc87420"
+  },
+  "runtime_ui_close_generated_image": {
+    "message": "Luk genereret billede",
+    "description": "Runtime interface message ui.close.generated.image"
+  },
+  "runtime_ui_close_hermes_assist": {
+    "message": "Luk Hermes Assist",
+    "description": "Runtime interface message ui.close.hermes.assist"
+  },
+  "runtime_ui_close_model_picker": {
+    "message": "Luk modelvælgeren",
+    "description": "Runtime interface message ui.close.model.picker"
+  },
+  "runtime_ui_close_settings": {
+    "message": "Luk indstillinger",
+    "description": "Runtime interface message ui.close.settings"
+  },
+  "runtime_ui_close_update_review": {
+    "message": "Luk opdateringsgennemgang",
+    "description": "Runtime interface message ui.close.update.review"
+  },
+  "runtime_ui_cloud": {
+    "message": "Sky",
+    "description": "Runtime interface message ui.cloud"
+  },
+  "runtime_ui_code": {
+    "message": "Kode",
+    "description": "Runtime interface message ui.code"
+  },
+  "runtime_ui_collapse": {
+    "message": "Bryde sammen",
+    "description": "Runtime interface message ui.collapse"
+  },
+  "runtime_ui_color": {
+    "message": "Farve",
+    "description": "Runtime interface message ui.color"
+  },
+  "runtime_ui_color_mode": {
+    "message": "Farvetilstand",
+    "description": "Runtime interface message ui.color.mode"
+  },
+  "runtime_ui_color_mode_588a2981": {
+    "message": "Farvetilstand",
+    "description": "Runtime interface message ui.color.mode.588a2981"
+  },
+  "runtime_ui_command": {
+    "message": "Kommando",
+    "description": "Runtime interface message ui.command"
+  },
+  "runtime_ui_commands": {
+    "message": "kommandoer",
+    "description": "Runtime interface message ui.commands"
+  },
+  "runtime_ui_commands_45e5f3f7": {
+    "message": "Kommandoer",
+    "description": "Runtime interface message ui.commands.45e5f3f7"
+  },
+  "runtime_ui_commands_760ac2f0": {
+    "message": "/ Kommandoer",
+    "description": "Runtime interface message ui.commands.760ac2f0"
+  },
+  "runtime_ui_commit": {
+    "message": "Begå",
+    "description": "Runtime interface message ui.commit"
+  },
+  "runtime_ui_compact_context": {
+    "message": "Kompakt kontekst",
+    "description": "Runtime interface message ui.compact.context"
+  },
+  "runtime_ui_compacting": {
+    "message": "Komprimerer...",
+    "description": "Runtime interface message ui.compacting"
+  },
+  "runtime_ui_comparing_this_loaded_build_with_the_public_github_repository": {
+    "message": "Sammenligning af denne indlæste build med det offentlige GitHub-lager.",
+    "description": "Runtime interface message ui.comparing.this.loaded.build.with.the.public.github.repository"
+  },
+  "runtime_ui_compatibility": {
+    "message": "Kompatibilitet",
+    "description": "Runtime interface message ui.compatibility"
+  },
+  "runtime_ui_complete": {
+    "message": "komplet",
+    "description": "Runtime interface message ui.complete"
+  },
+  "runtime_ui_complete_2c85a73c": {
+    "message": "KOMPLET",
+    "description": "Runtime interface message ui.complete.2c85a73c"
+  },
+  "runtime_ui_component": {
+    "message": "Komponent",
+    "description": "Runtime interface message ui.component"
+  },
+  "runtime_ui_config": {
+    "message": "Konfig",
+    "description": "Runtime interface message ui.config"
+  },
+  "runtime_ui_configuration": {
+    "message": "Konfiguration",
+    "description": "Runtime interface message ui.configuration"
+  },
+  "runtime_ui_configure": {
+    "message": "Konfigurer",
+    "description": "Runtime interface message ui.configure"
+  },
+  "runtime_ui_confirm": {
+    "message": "Bekræfte",
+    "description": "Runtime interface message ui.confirm"
+  },
+  "runtime_ui_connect_first": {
+    "message": "Tilslut først",
+    "description": "Runtime interface message ui.connect.first"
+  },
+  "runtime_ui_connect_hermes": {
+    "message": "Forbind Hermes",
+    "description": "Runtime interface message ui.connect.hermes"
+  },
+  "runtime_ui_connect_or_test_your_gateway_to_see_supported_features": {
+    "message": "Tilslut eller test din Gateway for at se understøttede funktioner.",
+    "description": "Runtime interface message ui.connect.or.test.your.gateway.to.see.supported.features"
+  },
+  "runtime_ui_connect_to_hermes": {
+    "message": "Opret forbindelse til Hermes",
+    "description": "Runtime interface message ui.connect.to.hermes"
+  },
+  "runtime_ui_connect_to_hermes_then_send_the_prepared_update_request": {
+    "message": "Opret forbindelse til Hermes, og send derefter den forberedte opdateringsanmodning.",
+    "description": "Runtime interface message ui.connect.to.hermes.then.send.the.prepared.update.request"
+  },
+  "runtime_ui_connected": {
+    "message": "Forbundet",
+    "description": "Runtime interface message ui.connected"
+  },
+  "runtime_ui_connected_agent": {
+    "message": "Tilsluttet agent",
+    "description": "Runtime interface message ui.connected.agent"
+  },
+  "runtime_ui_connected_agent_1e63a585": {
+    "message": "TILSLUTET AGENT",
+    "description": "Runtime interface message ui.connected.agent.1e63a585"
+  },
+  "runtime_ui_connected_to_hermes_this_draft_will_create_a_new_hermes_web_ses_59e2faf2": {
+    "message": "Forbundet til Hermes. Dette udkast vil oprette en ny Hermes Web-session, når du sender.",
+    "description": "Runtime interface message ui.connected.to.hermes.this.draft.will.create.a.new.hermes.web.ses.59e2faf2"
+  },
+  "runtime_ui_connected_to_hermes_you_can_start_chatting_with_page_context": {
+    "message": "Forbundet til Hermes. Du kan begynde at chatte med sidekontekst.",
+    "description": "Runtime interface message ui.connected.to.hermes.you.can.start.chatting.with.page.context"
+  },
+  "runtime_ui_connecting": {
+    "message": "Opretter forbindelse...",
+    "description": "Runtime interface message ui.connecting"
+  },
+  "runtime_ui_connecting_c1f3b71f": {
+    "message": "Forbinder",
+    "description": "Runtime interface message ui.connecting.c1f3b71f"
+  },
+  "runtime_ui_connection": {
+    "message": "Forbindelse",
+    "description": "Runtime interface message ui.connection"
+  },
+  "runtime_ui_connection_detail": {
+    "message": "FORBINDELSESDETALJER",
+    "description": "Runtime interface message ui.connection.detail"
+  },
+  "runtime_ui_connection_details": {
+    "message": "Forbindelsesdetaljer",
+    "description": "Runtime interface message ui.connection.details"
+  },
+  "runtime_ui_connection_mode": {
+    "message": "Tilslutningstilstand",
+    "description": "Runtime interface message ui.connection.mode"
+  },
+  "runtime_ui_connection_not_configured": {
+    "message": "Forbindelsen er ikke konfigureret",
+    "description": "Runtime interface message ui.connection.not.configured"
+  },
+  "runtime_ui_connection_security": {
+    "message": "Forbindelsessikkerhed",
+    "description": "Runtime interface message ui.connection.security"
+  },
+  "runtime_ui_connection_truth": {
+    "message": "FORBINDELSES SANDHED",
+    "description": "Runtime interface message ui.connection.truth"
+  },
+  "runtime_ui_content": {
+    "message": "Tilfreds",
+    "description": "Runtime interface message ui.content"
+  },
+  "runtime_ui_context": {
+    "message": "Sammenhæng",
+    "description": "Runtime interface message ui.context"
+  },
+  "runtime_ui_context_compaction_failed": {
+    "message": "Kontekstkomprimering mislykkedes",
+    "description": "Runtime interface message ui.context.compaction.failed"
+  },
+  "runtime_ui_context_compaction_unavailable": {
+    "message": "Kontekstkomprimering er ikke tilgængelig",
+    "description": "Runtime interface message ui.context.compaction.unavailable"
+  },
+  "runtime_ui_context_refresh_unavailable": {
+    "message": "Kontekstopdatering er ikke tilgængelig",
+    "description": "Runtime interface message ui.context.refresh.unavailable"
+  },
+  "runtime_ui_context_window": {
+    "message": "KONTEKST VINDU",
+    "description": "Runtime interface message ui.context.window"
+  },
+  "runtime_ui_context_window_details": {
+    "message": "Kontekstvinduets detaljer",
+    "description": "Runtime interface message ui.context.window.details"
+  },
+  "runtime_ui_continue": {
+    "message": "Fortsætte",
+    "description": "Runtime interface message ui.continue"
+  },
+  "runtime_ui_continue_current_chat": {
+    "message": "Fortsæt nuværende chat",
+    "description": "Runtime interface message ui.continue.current.chat"
+  },
+  "runtime_ui_continue_here": {
+    "message": "Fortsæt her",
+    "description": "Runtime interface message ui.continue.here"
+  },
+  "runtime_ui_control_the_field_launcher_and_where_assist_runs_by_default": {
+    "message": "Styr feltstarteren og hvor Assist kører som standard.",
+    "description": "Runtime interface message ui.control.the.field.launcher.and.where.assist.runs.by.default"
+  },
+  "runtime_ui_conversation": {
+    "message": "Samtale",
+    "description": "Runtime interface message ui.conversation"
+  },
+  "runtime_ui_cookie": {
+    "message": "Cookie",
+    "description": "Runtime interface message ui.cookie"
+  },
+  "runtime_ui_copied": {
+    "message": "Kopieret",
+    "description": "Runtime interface message ui.copied"
+  },
+  "runtime_ui_copied_redacted_diagnostics_paste_them_into_the_github_issue_or_064866e3": {
+    "message": "Kopieret redigeret diagnostik. Indsæt dem i GitHub-problemet eller supporttråden.",
+    "description": "Runtime interface message ui.copied.redacted.diagnostics.paste.them.into.the.github.issue.or.064866e3"
+  },
+  "runtime_ui_copied_result_to_clipboard": {
+    "message": "Kopierede resultat til udklipsholder",
+    "description": "Runtime interface message ui.copied.result.to.clipboard"
+  },
+  "runtime_ui_copy": {
+    "message": "Kopi",
+    "description": "Runtime interface message ui.copy"
+  },
+  "runtime_ui_copy_a_redacted_compatibility_report_it_excludes_tokens_cookies_ab0019e3": {
+    "message": "Kopiér en redigeret kompatibilitetsrapport. Det udelukker tokens, cookies, sidetekst, valgt tekst, fanetitler og fuld URLs.",
+    "description": "Runtime interface message ui.copy.a.redacted.compatibility.report.it.excludes.tokens.cookies.ab0019e3"
+  },
+  "runtime_ui_copy_blocked_select_preview_manually": {
+    "message": "Kopiér blokeret · vælg forhåndsvisning manuelt",
+    "description": "Runtime interface message ui.copy.blocked.select.preview.manually"
+  },
+  "runtime_ui_copy_diagnostics": {
+    "message": "Kopidiagnostik",
+    "description": "Runtime interface message ui.copy.diagnostics"
+  },
+  "runtime_ui_copy_failed": {
+    "message": "Kopiering mislykkedes",
+    "description": "Runtime interface message ui.copy.failed"
+  },
+  "runtime_ui_copy_redacted_diagnostics": {
+    "message": "Kopiér redigeret diagnostik",
+    "description": "Runtime interface message ui.copy.redacted.diagnostics"
+  },
+  "runtime_ui_copy_server_env": {
+    "message": "Kopier serverenv",
+    "description": "Runtime interface message ui.copy.server.env"
+  },
+  "runtime_ui_copy_session_id": {
+    "message": "Kopiér sessions-id",
+    "description": "Runtime interface message ui.copy.session.id"
+  },
+  "runtime_ui_copy_to_use": {
+    "message": "Kopiér til brug",
+    "description": "Runtime interface message ui.copy.to.use"
+  },
+  "runtime_ui_copy_unavailable": {
+    "message": "Kopi er ikke tilgængelig",
+    "description": "Runtime interface message ui.copy.unavailable"
+  },
+  "runtime_ui_copying": {
+    "message": "Kopierer...",
+    "description": "Runtime interface message ui.copying"
+  },
+  "runtime_ui_could_not_change_session": {
+    "message": "Sessionen kunne ikke ændres",
+    "description": "Runtime interface message ui.could.not.change.session"
+  },
+  "runtime_ui_could_not_clear_token": {
+    "message": "Kunne ikke rydde token",
+    "description": "Runtime interface message ui.could.not.clear.token"
+  },
+  "runtime_ui_could_not_copy_diagnostics_check_browser_clipboard_permissions": {
+    "message": "Diagnostik kunne ikke kopieres. Tjek browserens udklipsholdertilladelser.",
+    "description": "Runtime interface message ui.could.not.copy.diagnostics.check.browser.clipboard.permissions"
+  },
+  "runtime_ui_could_not_copy_env_block": {
+    "message": "Kunne ikke kopiere env-blok",
+    "description": "Runtime interface message ui.could.not.copy.env.block"
+  },
+  "runtime_ui_could_not_create_session": {
+    "message": "Kunne ikke oprette session",
+    "description": "Runtime interface message ui.could.not.create.session"
+  },
+  "runtime_ui_could_not_load_this_session": {
+    "message": "Denne session kunne ikke indlæses",
+    "description": "Runtime interface message ui.could.not.load.this.session"
+  },
+  "runtime_ui_could_not_migrate_browser_session": {
+    "message": "Kunne ikke migrere browsersession",
+    "description": "Runtime interface message ui.could.not.migrate.browser.session"
+  },
+  "runtime_ui_could_not_open_full_view": {
+    "message": "Kunne ikke åbne fuld visning",
+    "description": "Runtime interface message ui.could.not.open.full.view"
+  },
+  "runtime_ui_could_not_open_session": {
+    "message": "Sessionen kunne ikke åbnes",
+    "description": "Runtime interface message ui.could.not.open.session"
+  },
+  "runtime_ui_could_not_pin_active_tab": {
+    "message": "Aktiv fane kunne ikke fastgøres",
+    "description": "Runtime interface message ui.could.not.pin.active.tab"
+  },
+  "runtime_ui_could_not_pin_tab": {
+    "message": "Fanen kunne ikke fastgøres",
+    "description": "Runtime interface message ui.could.not.pin.tab"
+  },
+  "runtime_ui_could_not_rename_session": {
+    "message": "Sessionen kunne ikke omdøbes",
+    "description": "Runtime interface message ui.could.not.rename.session"
+  },
+  "runtime_ui_could_not_start_draft": {
+    "message": "Kunne ikke starte kladde",
+    "description": "Runtime interface message ui.could.not.start.draft"
+  },
+  "runtime_ui_could_not_start_hermes_session": {
+    "message": "Kunne ikke starte Hermes session",
+    "description": "Runtime interface message ui.could.not.start.hermes.session"
+  },
+  "runtime_ui_could_not_switch_to_chat_only": {
+    "message": "Kunne ikke skifte til kun Chat",
+    "description": "Runtime interface message ui.could.not.switch.to.chat.only"
+  },
+  "runtime_ui_could_not_unlock_tab_scope": {
+    "message": "Faneomfanget kunne ikke låses op",
+    "description": "Runtime interface message ui.could.not.unlock.tab.scope"
+  },
+  "runtime_ui_create": {
+    "message": "Skabe",
+    "description": "Runtime interface message ui.create"
+  },
+  "runtime_ui_create_and_open_a_new_hermes_assist_session": {
+    "message": "Opret og åbn en ny Hermes Assist-session.",
+    "description": "Runtime interface message ui.create.and.open.a.new.hermes.assist.session"
+  },
+  "runtime_ui_current": {
+    "message": "Strøm",
+    "description": "Runtime interface message ui.current"
+  },
+  "runtime_ui_current_session": {
+    "message": "Nuværende session",
+    "description": "Runtime interface message ui.current.session"
+  },
+  "runtime_ui_custom": {
+    "message": "Skik",
+    "description": "Runtime interface message ui.custom"
+  },
+  "runtime_ui_custom_hermes_assist_instruction": {
+    "message": "Brugerdefineret Hermes Assist instruktion",
+    "description": "Runtime interface message ui.custom.hermes.assist.instruction"
+  },
+  "runtime_ui_custom_model_source_is_discovery_only": {
+    "message": "Tilpasset modelkilde er kun for opdagelse",
+    "description": "Runtime interface message ui.custom.model.source.is.discovery.only"
+  },
+  "runtime_ui_custom_model_source_unavailable": {
+    "message": "Tilpasset modelkilde er ikke tilgængelig",
+    "description": "Runtime interface message ui.custom.model.source.unavailable"
+  },
+  "runtime_ui_custom_model_source_urls": {
+    "message": "Tilpasset modelkilde URLs",
+    "description": "Runtime interface message ui.custom.model.source.urls"
+  },
+  "runtime_ui_dark": {
+    "message": "☾ Mørkt",
+    "description": "Runtime interface message ui.dark"
+  },
+  "runtime_ui_dashboard_websocket": {
+    "message": "Dashboard WebSocket",
+    "description": "Runtime interface message ui.dashboard.websocket"
+  },
+  "runtime_ui_dashboard_websocket_does_not_expose_an_existing_session_model_o_bb6f12cd": {
+    "message": "Dashboard WebSocket afslører endnu ikke en opdatering af eksisterende sessionsmodelindstillinger. Disse muligheder gælder for den næste nye session.",
+    "description": "Runtime interface message ui.dashboard.websocket.does.not.expose.an.existing.session.model.o.bb6f12cd"
+  },
+  "runtime_ui_data": {
+    "message": "Data",
+    "description": "Runtime interface message ui.data"
+  },
+  "runtime_ui_date": {
+    "message": "Dato",
+    "description": "Runtime interface message ui.date"
+  },
+  "runtime_ui_default": {
+    "message": "Misligholdelse",
+    "description": "Runtime interface message ui.default"
+  },
+  "runtime_ui_default_right_click_route": {
+    "message": "Standard højre-klik rute",
+    "description": "Runtime interface message ui.default.right.click.route"
+  },
+  "runtime_ui_default_session_route": {
+    "message": "Standard sessionsrute",
+    "description": "Runtime interface message ui.default.session.route"
+  },
+  "runtime_ui_delete": {
+    "message": "Slet",
+    "description": "Runtime interface message ui.delete"
+  },
+  "runtime_ui_delete_after_the_draft_returns": {
+    "message": "Slet efter kladden er returneret",
+    "description": "Runtime interface message ui.delete.after.the.draft.returns"
+  },
+  "runtime_ui_description": {
+    "message": "Beskrivelse",
+    "description": "Runtime interface message ui.description"
+  },
+  "runtime_ui_detail": {
+    "message": "Detalje",
+    "description": "Runtime interface message ui.detail"
+  },
+  "runtime_ui_details": {
+    "message": "Detaljer",
+    "description": "Runtime interface message ui.details"
+  },
+  "runtime_ui_detect_from_hermes_gateway": {
+    "message": "Registrer fra Hermes gateway",
+    "description": "Runtime interface message ui.detect.from.hermes.gateway"
+  },
+  "runtime_ui_detecting_runtime": {
+    "message": "Registrerer køretid",
+    "description": "Runtime interface message ui.detecting.runtime"
+  },
+  "runtime_ui_device": {
+    "message": "Enhed",
+    "description": "Runtime interface message ui.device"
+  },
+  "runtime_ui_devices": {
+    "message": "Enheder",
+    "description": "Runtime interface message ui.devices"
+  },
+  "runtime_ui_diagnostics": {
+    "message": "Diagnostik",
+    "description": "Runtime interface message ui.diagnostics"
+  },
+  "runtime_ui_diagnostics_copied": {
+    "message": "Diagnostik kopieret",
+    "description": "Runtime interface message ui.diagnostics.copied"
+  },
+  "runtime_ui_diagnostics_copy_failed": {
+    "message": "Diagnostikkopi mislykkedes",
+    "description": "Runtime interface message ui.diagnostics.copy.failed"
+  },
+  "runtime_ui_dialog": {
+    "message": "Dialog",
+    "description": "Runtime interface message ui.dialog"
+  },
+  "runtime_ui_discovered_hermes_agents": {
+    "message": "Opdagede Hermes-agenter",
+    "description": "Runtime interface message ui.discovered.hermes.agents"
+  },
+  "runtime_ui_dismiss_notification": {
+    "message": "Afvis underretning",
+    "description": "Runtime interface message ui.dismiss.notification"
+  },
+  "runtime_ui_display": {
+    "message": "Vise",
+    "description": "Runtime interface message ui.display"
+  },
+  "runtime_ui_dist": {
+    "message": "dist/",
+    "description": "Runtime interface message ui.dist"
+  },
+  "runtime_ui_download": {
+    "message": "Download",
+    "description": "Runtime interface message ui.download"
+  },
+  "runtime_ui_downloading_the_browser_language_pack_once_so_voice_dictation_c_b476f51c": {
+    "message": "Downloader browserens sprogpakke én gang, så stemmediktering kan køre lokalt.",
+    "description": "Runtime interface message ui.downloading.the.browser.language.pack.once.so.voice.dictation.c.b476f51c"
+  },
+  "runtime_ui_draft_and_input_values_stayed_excluded": {
+    "message": "Udkast og inputværdier forblev ekskluderet.",
+    "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
+  },
+  "runtime_ui_draft_ready_for_review": {
+    "message": "Udkast klar til gennemgang",
+    "description": "Runtime interface message ui.draft.ready.for.review"
+  },
+  "runtime_ui_draft_ready_still_your_decision": {
+    "message": "Udkast klar. Stadig din beslutning.",
+    "description": "Runtime interface message ui.draft.ready.still.your.decision"
+  },
+  "runtime_ui_draft_ready_this_managed_editor_stays_untouched": {
+    "message": "Kladde klar · denne administrerede editor forbliver uberørt",
+    "description": "Runtime interface message ui.draft.ready.this.managed.editor.stays.untouched"
+  },
+  "runtime_ui_draft_reply_with_hermes": {
+    "message": "Udkast til svar med Hermes",
+    "description": "Runtime interface message ui.draft.reply.with.hermes"
+  },
+  "runtime_ui_draft_saved_when_sent": {
+    "message": "Kladde · gemt ved afsendelse",
+    "description": "Runtime interface message ui.draft.saved.when.sent"
+  },
+  "runtime_ui_drop_files_to_attach": {
+    "message": "Slip filer for at vedhæfte",
+    "description": "Runtime interface message ui.drop.files.to.attach"
+  },
+  "runtime_ui_edit": {
+    "message": "Redigere",
+    "description": "Runtime interface message ui.edit"
+  },
+  "runtime_ui_edit_models": {
+    "message": "⚙ Rediger modeller...",
+    "description": "Runtime interface message ui.edit.models"
+  },
+  "runtime_ui_edit_models_in_hermes_desktop": {
+    "message": "Rediger modeller i Hermes Desktop",
+    "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
+  },
+  "runtime_ui_element": {
+    "message": "Element",
+    "description": "Runtime interface message ui.element"
+  },
+  "runtime_ui_element_pick_cancelled": {
+    "message": "Valg af element annulleret",
+    "description": "Runtime interface message ui.element.pick.cancelled"
+  },
+  "runtime_ui_element_pick_failed": {
+    "message": "Valg af element mislykkedes",
+    "description": "Runtime interface message ui.element.pick.failed"
+  },
+  "runtime_ui_element_pick_is_not_available_on_this_url": {
+    "message": "Elementvalg er ikke tilgængeligt på denne URL.",
+    "description": "Runtime interface message ui.element.pick.is.not.available.on.this.url"
+  },
+  "runtime_ui_element_picked": {
+    "message": "Element valgt",
+    "description": "Runtime interface message ui.element.picked"
+  },
+  "runtime_ui_elements": {
+    "message": "Elementer",
+    "description": "Runtime interface message ui.elements"
+  },
+  "runtime_ui_empty": {
+    "message": "Tom",
+    "description": "Runtime interface message ui.empty"
+  },
+  "runtime_ui_empty_draft": {
+    "message": "(tom kladde)",
+    "description": "Runtime interface message ui.empty.draft"
+  },
+  "runtime_ui_enable": {
+    "message": "Aktiver",
+    "description": "Runtime interface message ui.enable"
+  },
+  "runtime_ui_enable_browser_context_before_picking_an_element": {
+    "message": "Aktiver browserkontekst, før du vælger et element.",
+    "description": "Runtime interface message ui.enable.browser.context.before.picking.an.element"
+  },
+  "runtime_ui_enable_wake_word": {
+    "message": "Aktiver wake word",
+    "description": "Runtime interface message ui.enable.wake.word"
+  },
+  "runtime_ui_enabled": {
+    "message": "Aktiveret",
+    "description": "Runtime interface message ui.enabled"
+  },
+  "runtime_ui_english": {
+    "message": "Engelsk",
+    "description": "Runtime interface message ui.english"
+  },
+  "runtime_ui_enter_at_least_one_port_number_e_g_8642_8643_8644_8645_8646": {
+    "message": "Indtast mindst ét ​​portnummer, f.eks. 8642,8643,8644,8645,8646",
+    "description": "Runtime interface message ui.enter.at.least.one.port.number.e.g.8642.8643.8644.8645.8646"
+  },
+  "runtime_ui_enter_sends_shift_enter_adds_a_new_line_ctrl_v_drag_drop_or_att_a1c82bcd": {
+    "message": "Indtast sender. Shift+Enter tilføjer en ny linje. Ctrl+V, træk/slip eller + vedhæfter filer.",
+    "description": "Runtime interface message ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd"
+  },
+  "runtime_ui_enter_your_dashboard_https_url_in_settings_and_sign_in_to_it_in_0b5f6bb9": {
+    "message": "Indtast dit dashboard https URL i Indstillinger, og log ind på det i en browserfane.",
+    "description": "Runtime interface message ui.enter.your.dashboard.https.url.in.settings.and.sign.in.to.it.in.0b5f6bb9"
+  },
+  "runtime_ui_entries": {
+    "message": "Indgange",
+    "description": "Runtime interface message ui.entries"
+  },
+  "runtime_ui_entry": {
+    "message": "Indgang",
+    "description": "Runtime interface message ui.entry"
+  },
+  "runtime_ui_error": {
+    "message": "Fejl",
+    "description": "Runtime interface message ui.error"
+  },
+  "runtime_ui_event": {
+    "message": "Tilfælde",
+    "description": "Runtime interface message ui.event"
+  },
+  "runtime_ui_events": {
+    "message": "Begivenheder",
+    "description": "Runtime interface message ui.events"
+  },
+  "runtime_ui_exception": {
+    "message": "Undtagelse",
+    "description": "Runtime interface message ui.exception"
+  },
+  "runtime_ui_existing_attached_panels_stay_as_they_are_other_and_new_tabs_us_fb9a0ba6": {
+    "message": "Eksisterende vedhæftede paneler forbliver som de er. Andre og nye faner bruger det delte panel.",
+    "description": "Runtime interface message ui.existing.attached.panels.stay.as.they.are.other.and.new.tabs.us.fb9a0ba6"
+  },
+  "runtime_ui_expand": {
+    "message": "Udvide",
+    "description": "Runtime interface message ui.expand"
+  },
+  "runtime_ui_explain": {
+    "message": "Forklare",
+    "description": "Runtime interface message ui.explain"
+  },
+  "runtime_ui_explain_selection": {
+    "message": "Forklar valget",
+    "description": "Runtime interface message ui.explain.selection"
+  },
+  "runtime_ui_extension": {
+    "message": "Forlængelse",
+    "description": "Runtime interface message ui.extension"
+  },
+  "runtime_ui_fallback": {
+    "message": "tilbagefald",
+    "description": "Runtime interface message ui.fallback"
+  },
+  "runtime_ui_falls_back_to_review_if_the_field_changed": {
+    "message": "Falder tilbage til gennemgang, hvis feltet ændres",
+    "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
+  },
+  "runtime_ui_fast_mode": {
+    "message": "Hurtig tilstand",
+    "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_field": {
+    "message": "Felt",
+    "description": "Runtime interface message ui.field"
+  },
+  "runtime_ui_field_changed_review_required": {
+    "message": "Feltet ændret · gennemgang påkrævet",
+    "description": "Runtime interface message ui.field.changed.review.required"
+  },
+  "runtime_ui_file": {
+    "message": "Fil",
+    "description": "Runtime interface message ui.file"
+  },
+  "runtime_ui_files": {
+    "message": "▧ Filer...",
+    "description": "Runtime interface message ui.files"
+  },
+  "runtime_ui_files_453f0471": {
+    "message": "▧ Filer...",
+    "description": "Runtime interface message ui.files.453f0471"
+  },
+  "runtime_ui_files_6ce6c512": {
+    "message": "Filer",
+    "description": "Runtime interface message ui.files.6ce6c512"
+  },
+  "runtime_ui_files_attached": {
+    "message": "Filer vedhæftet",
+    "description": "Runtime interface message ui.files.attached"
+  },
+  "runtime_ui_filter": {
+    "message": "Filter",
+    "description": "Runtime interface message ui.filter"
+  },
+  "runtime_ui_find": {
+    "message": "Finde",
+    "description": "Runtime interface message ui.find"
+  },
+  "runtime_ui_finish": {
+    "message": "Slutte",
+    "description": "Runtime interface message ui.finish"
+  },
+  "runtime_ui_finished_without_a_model_call": {
+    "message": "Færdig uden modelkald.",
+    "description": "Runtime interface message ui.finished.without.a.model.call"
+  },
+  "runtime_ui_focused_draft": {
+    "message": "Fokuseret udkast",
+    "description": "Runtime interface message ui.focused.draft"
+  },
+  "runtime_ui_folder": {
+    "message": "▰ Mappe...",
+    "description": "Runtime interface message ui.folder"
+  },
+  "runtime_ui_folder_30baa249": {
+    "message": "Folder",
+    "description": "Runtime interface message ui.folder.30baa249"
+  },
+  "runtime_ui_form": {
+    "message": "Form",
+    "description": "Runtime interface message ui.form"
+  },
+  "runtime_ui_format": {
+    "message": "Format",
+    "description": "Runtime interface message ui.format"
+  },
+  "runtime_ui_frame": {
+    "message": "Ramme",
+    "description": "Runtime interface message ui.frame"
+  },
+  "runtime_ui_full_largest_payload": {
+    "message": "Fuld - største nyttelast",
+    "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_gateway": {
+    "message": "Gateway",
+    "description": "Runtime interface message ui.gateway"
+  },
+  "runtime_ui_gateway_connection": {
+    "message": "Gateway forbindelse",
+    "description": "Runtime interface message ui.gateway.connection"
+  },
+  "runtime_ui_gateway_default": {
+    "message": "Gateway standard",
+    "description": "Runtime interface message ui.gateway.default"
+  },
+  "runtime_ui_gateway_url": {
+    "message": "Gateway URL",
+    "description": "Runtime interface message ui.gateway.url"
+  },
+  "runtime_ui_generated_by_hermes": {
+    "message": "Genereret af Hermes",
+    "description": "Runtime interface message ui.generated.by.hermes"
+  },
+  "runtime_ui_generated_image": {
+    "message": "GENERERET BILLEDE",
+    "description": "Runtime interface message ui.generated.image"
+  },
+  "runtime_ui_gmail_thread_capture_unavailable": {
+    "message": "Gmail trådoptagelse er ikke tilgængelig",
+    "description": "Runtime interface message ui.gmail.thread.capture.unavailable"
+  },
+  "runtime_ui_gmail_thread_captured": {
+    "message": "Gmail tråd fanget",
+    "description": "Runtime interface message ui.gmail.thread.captured"
+  },
+  "runtime_ui_grant": {
+    "message": "Give",
+    "description": "Runtime interface message ui.grant"
+  },
+  "runtime_ui_grid": {
+    "message": "Gitter",
+    "description": "Runtime interface message ui.grid"
+  },
+  "runtime_ui_group": {
+    "message": "Gruppe",
+    "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_handing_update_to_hermes": {
+    "message": "Overdrager opdatering til Hermes",
+    "description": "Runtime interface message ui.handing.update.to.hermes"
+  },
+  "runtime_ui_hash": {
+    "message": "Hash",
+    "description": "Runtime interface message ui.hash"
+  },
+  "runtime_ui_header": {
+    "message": "Overskrift",
+    "description": "Runtime interface message ui.header"
+  },
+  "runtime_ui_help": {
+    "message": "Hjælp",
+    "description": "Runtime interface message ui.help"
+  },
+  "runtime_ui_hermes_agent": {
+    "message": "Hermes Agent",
+    "description": "Runtime interface message ui.hermes.agent"
+  },
+  "runtime_ui_hermes_agent_badge": {
+    "message": "Hermes Agent badge",
+    "description": "Runtime interface message ui.hermes.agent.badge"
+  },
+  "runtime_ui_hermes_api_unavailable": {
+    "message": "Hermes API ikke tilgængelig",
+    "description": "Runtime interface message ui.hermes.api.unavailable"
+  },
+  "runtime_ui_hermes_appears_only_on_tabs_where_you_open_it": {
+    "message": "Hermes vises kun på faner, hvor du åbner den.",
+    "description": "Runtime interface message ui.hermes.appears.only.on.tabs.where.you.open.it"
+  },
+  "runtime_ui_hermes_assist": {
+    "message": "Hermes Assist",
+    "description": "Runtime interface message ui.hermes.assist"
+  },
+  "runtime_ui_hermes_assist_model": {
+    "message": "Hermes Assist model",
+    "description": "Runtime interface message ui.hermes.assist.model"
+  },
+  "runtime_ui_hermes_browser": {
+    "message": "Hermes Browser",
+    "description": "Runtime interface message ui.hermes.browser"
+  },
+  "runtime_ui_hermes_browser_bb83b5a0": {
+    "message": "HERMES BROWSER",
+    "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
+  },
+  "runtime_ui_hermes_browser_extension": {
+    "message": "HERMES BROWSER EXTENSION",
+    "description": "Runtime interface message ui.hermes.browser.extension"
+  },
+  "runtime_ui_hermes_browser_extension_connected": {
+    "message": "Hermes Browser Extension tilsluttet",
+    "description": "Runtime interface message ui.hermes.browser.extension.connected"
+  },
+  "runtime_ui_hermes_browser_extension_conversation": {
+    "message": "Hermes Browser Extension samtale",
+    "description": "Runtime interface message ui.hermes.browser.extension.conversation"
+  },
+  "runtime_ui_hermes_browser_intro": {
+    "message": "Hermes Browser intro",
+    "description": "Runtime interface message ui.hermes.browser.intro"
+  },
+  "runtime_ui_hermes_browser_local_sidecar": {
+    "message": "Hermes Browser lokal sidevogn",
+    "description": "Runtime interface message ui.hermes.browser.local.sidecar"
+  },
+  "runtime_ui_hermes_browser_update_channel": {
+    "message": "HERMES BROWSER / OPDATERING KANAL",
+    "description": "Runtime interface message ui.hermes.browser.update.channel"
+  },
+  "runtime_ui_hermes_chat_actions": {
+    "message": "Hermes chathandlinger",
+    "description": "Runtime interface message ui.hermes.chat.actions"
+  },
+  "runtime_ui_hermes_cloud": {
+    "message": "Hermes Cloud",
+    "description": "Runtime interface message ui.hermes.cloud"
+  },
+  "runtime_ui_hermes_cloud_preview": {
+    "message": "Hermes Cloud Preview",
+    "description": "Runtime interface message ui.hermes.cloud.preview"
+  },
+  "runtime_ui_hermes_cloud_unavailable": {
+    "message": "Hermes Cloud ikke tilgængelig",
+    "description": "Runtime interface message ui.hermes.cloud.unavailable"
+  },
+  "runtime_ui_hermes_compatibility": {
+    "message": "Hermes kompatibilitet",
+    "description": "Runtime interface message ui.hermes.compatibility"
+  },
+  "runtime_ui_hermes_compatibility_fallback": {
+    "message": "Hermes-kompatibilitet, fallback",
+    "description": "Runtime interface message ui.hermes.compatibility.fallback"
+  },
+  "runtime_ui_hermes_connection": {
+    "message": "Hermes forbindelse",
+    "description": "Runtime interface message ui.hermes.connection"
+  },
+  "runtime_ui_hermes_connection_status": {
+    "message": "Hermes forbindelsesstatus",
+    "description": "Runtime interface message ui.hermes.connection.status"
+  },
+  "runtime_ui_hermes_gateway_connected_with_runtime_warning": {
+    "message": "Hermes gateway forbundet med runtime advarsel",
+    "description": "Runtime interface message ui.hermes.gateway.connected.with.runtime.warning"
+  },
+  "runtime_ui_hermes_gateway_test_failed": {
+    "message": "Hermes gateway-test mislykkedes",
+    "description": "Runtime interface message ui.hermes.gateway.test.failed"
+  },
+  "runtime_ui_hermes_gateway_unavailable": {
+    "message": "Hermes gateway er ikke tilgængelig",
+    "description": "Runtime interface message ui.hermes.gateway.unavailable"
+  },
+  "runtime_ui_hermes_has_not_acknowledged_this_session_model_pair_yet_retryin_c39a64e1": {
+    "message": "Hermes har ikke anerkendt denne session/model-par endnu. Prøver at låse igen før afsendelse.",
+    "description": "Runtime interface message ui.hermes.has.not.acknowledged.this.session.model.pair.yet.retryin.c39a64e1"
+  },
+  "runtime_ui_hermes_image_synthesis": {
+    "message": "Hermes billedsyntese",
+    "description": "Runtime interface message ui.hermes.image.synthesis"
+  },
+  "runtime_ui_hermes_inspector": {
+    "message": "Hermes inspektør",
+    "description": "Runtime interface message ui.hermes.inspector"
+  },
+  "runtime_ui_hermes_is_drafting": {
+    "message": "Hermes er ved at tegne",
+    "description": "Runtime interface message ui.hermes.is.drafting"
+  },
+  "runtime_ui_hermes_is_not_connected_yet_browser_speech_fallback_is_unavaila_2a5064db": {
+    "message": "Hermes er ikke forbundet endnu. Browser tale fallback er ikke tilgængelig her; tilslut sidepanelet til Hermes, og brug derefter stemmediktering.",
+    "description": "Runtime interface message ui.hermes.is.not.connected.yet.browser.speech.fallback.is.unavaila.2a5064db"
+  },
+  "runtime_ui_hermes_is_not_currently_running_send_or_queue_the_message_instead": {
+    "message": "Hermes kører ikke i øjeblikket. Send eller sæt beskeden i kø i stedet.",
+    "description": "Runtime interface message ui.hermes.is.not.currently.running.send.or.queue.the.message.instead"
+  },
+  "runtime_ui_hermes_is_thinking_brainstorming_contemplating_reasoning_proces_3e8d81c0": {
+    "message": "Hermes er at tænke, brainstorme, overveje, ræsonnere, bearbejde, analysere, reflektere, overveje, overveje og formulere",
+    "description": "Runtime interface message ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0"
+  },
+  "runtime_ui_hermes_is_working": {
+    "message": "Hermes arbejder...",
+    "description": "Runtime interface message ui.hermes.is.working"
+  },
+  "runtime_ui_hermes_message_composer": {
+    "message": "Hermes budskabskomponist",
+    "description": "Runtime interface message ui.hermes.message.composer"
+  },
+  "runtime_ui_hermes_model_confirmed": {
+    "message": "Hermes model bekræftet",
+    "description": "Runtime interface message ui.hermes.model.confirmed"
+  },
+  "runtime_ui_hermes_model_lock_accepted": {
+    "message": "Hermes modellås accepteret",
+    "description": "Runtime interface message ui.hermes.model.lock.accepted"
+  },
+  "runtime_ui_hermes_model_options_confirmed": {
+    "message": "Hermes model muligheder bekræftet",
+    "description": "Runtime interface message ui.hermes.model.options.confirmed"
+  },
+  "runtime_ui_hermes_model_options_failed": {
+    "message": "Hermes modelindstillinger mislykkedes",
+    "description": "Runtime interface message ui.hermes.model.options.failed"
+  },
+  "runtime_ui_hermes_model_options_mismatch": {
+    "message": "Hermes modelvalg stemmer ikke overens",
+    "description": "Runtime interface message ui.hermes.model.options.mismatch"
+  },
+  "runtime_ui_hermes_model_options_pending": {
+    "message": "Hermes model muligheder afventer",
+    "description": "Runtime interface message ui.hermes.model.options.pending"
+  },
+  "runtime_ui_hermes_model_requested": {
+    "message": "Hermes model efterspurgt",
+    "description": "Runtime interface message ui.hermes.model.requested"
+  },
+  "runtime_ui_hermes_models_synced": {
+    "message": "Hermes-modeller synkroniseret",
+    "description": "Runtime interface message ui.hermes.models.synced"
+  },
+  "runtime_ui_hermes_native_wake_word_is_unavailable": {
+    "message": "Hermes’ indbyggede vækkeord er ikke tilgængeligt.",
+    "description": "Runtime interface message ui.hermes.native.wake.word.is.unavailable"
+  },
+  "runtime_ui_hermes_on_this_machine_default_and_offline_capable": {
+    "message": "Hermes på denne maskine. Standard og offline-kompatibel.",
+    "description": "Runtime interface message ui.hermes.on.this.machine.default.and.offline.capable"
+  },
+  "runtime_ui_hermes_profile_switched": {
+    "message": "Hermes profil skiftet",
+    "description": "Runtime interface message ui.hermes.profile.switched"
+  },
+  "runtime_ui_hermes_profiles_synced": {
+    "message": "Hermes-profiler synkroniseret",
+    "description": "Runtime interface message ui.hermes.profiles.synced"
+  },
+  "runtime_ui_hermes_refused_to_start_the_wake_listener": {
+    "message": "Hermes nægtede at starte vækkeordslytteren.",
+    "description": "Runtime interface message ui.hermes.refused.to.start.the.wake.listener"
+  },
+  "runtime_ui_hermes_returned_only_fallback_model_data_keeping_your_selected_128b9943": {
+    "message": "Hermes returnerede kun reservemodeldata. Bevar din valgte model indtil et rigtigt katalog er tilgængeligt.",
+    "description": "Runtime interface message ui.hermes.returned.only.fallback.model.data.keeping.your.selected.128b9943"
+  },
+  "runtime_ui_hermes_session": {
+    "message": "Hermes session",
+    "description": "Runtime interface message ui.hermes.session"
+  },
+  "runtime_ui_hermes_sessions": {
+    "message": "Hermes sessioner",
+    "description": "Runtime interface message ui.hermes.sessions"
+  },
+  "runtime_ui_hermes_sessions_synced": {
+    "message": "Hermes-sessioner synkroniseret",
+    "description": "Runtime interface message ui.hermes.sessions.synced"
+  },
+  "runtime_ui_hermes_skill_suggestions": {
+    "message": "Hermes færdigheder forslag",
+    "description": "Runtime interface message ui.hermes.skill.suggestions"
+  },
+  "runtime_ui_hermes_skills_synced": {
+    "message": "Hermes færdigheder synkroniseret",
+    "description": "Runtime interface message ui.hermes.skills.synced"
+  },
+  "runtime_ui_hermes_task_status": {
+    "message": "Hermes opgavestatus",
+    "description": "Runtime interface message ui.hermes.task.status"
+  },
+  "runtime_ui_hermes_token_cleared": {
+    "message": "Hermes token ryddet",
+    "description": "Runtime interface message ui.hermes.token.cleared"
+  },
+  "runtime_ui_hermes_voice_dictation": {
+    "message": "Hermes Voice Dictation",
+    "description": "Runtime interface message ui.hermes.voice.dictation"
+  },
+  "runtime_ui_hermes_web": {
+    "message": "Hermes Web",
+    "description": "Runtime interface message ui.hermes.web"
+  },
+  "runtime_ui_hermes_web_3336aa2f": {
+    "message": "HERMES WEB",
+    "description": "Runtime interface message ui.hermes.web.3336aa2f"
+  },
+  "runtime_ui_hermes_web_could_not_start": {
+    "message": "Hermes Web kunne ikke starte",
+    "description": "Runtime interface message ui.hermes.web.could.not.start"
+  },
+  "runtime_ui_hermes_web_home": {
+    "message": "Hermes Web hjemme",
+    "description": "Runtime interface message ui.hermes.web.home"
+  },
+  "runtime_ui_hermes_web_ready": {
+    "message": "HERMES WEB // KLAR",
+    "description": "Runtime interface message ui.hermes.web.ready"
+  },
+  "runtime_ui_hermes_web_settings": {
+    "message": "Hermes Web indstillinger",
+    "description": "Runtime interface message ui.hermes.web.settings"
+  },
+  "runtime_ui_hermes_will_consume_it_if_the_current_turn_reaches_an_injection_0fb01647": {
+    "message": "Hermes vil forbruge det, hvis den aktuelle tur når et injektionspunkt; ellers vender udkastet tilbage her.",
+    "description": "Runtime interface message ui.hermes.will.consume.it.if.the.current.turn.reaches.an.injection.0fb01647"
+  },
+  "runtime_ui_hermes_will_consume_the_queued_text_if_the_current_turn_reaches_bd527e1e": {
+    "message": "Hermes vil forbruge teksten i køen, hvis den aktuelle tur når et indsprøjtningspunkt.",
+    "description": "Runtime interface message ui.hermes.will.consume.the.queued.text.if.the.current.turn.reaches.bd527e1e"
+  },
+  "runtime_ui_hermes_will_never_replace_or_switch_an_existing_conversation_wi_7e65804d": {
+    "message": "Hermes vil aldrig erstatte eller skifte en eksisterende samtale uden dette valg.",
+    "description": "Runtime interface message ui.hermes.will.never.replace.or.switch.an.existing.conversation.wi.7e65804d"
+  },
+  "runtime_ui_hermes_will_send_it_after_the_current_turn_finishes_or_stops": {
+    "message": "Hermes vil sende det, når det aktuelle sving er afsluttet eller stoppet.",
+    "description": "Runtime interface message ui.hermes.will.send.it.after.the.current.turn.finishes.or.stops"
+  },
+  "runtime_ui_hermes_will_stop_before_changing_a_dirty_checkout": {
+    "message": "Hermes stopper, før den ændrer et checkout med ucommittede ændringer.",
+    "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
+  },
+  "runtime_ui_hide": {
+    "message": "Skjule",
+    "description": "Runtime interface message ui.hide"
+  },
+  "runtime_ui_hide_sessions_rail": {
+    "message": "Skjul sessionsskinne",
+    "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_high": {
+    "message": "Høj",
+    "description": "Runtime interface message ui.high"
+  },
+  "runtime_ui_highlighted_text": {
+    "message": "Fremhævet tekst",
+    "description": "Runtime interface message ui.highlighted.text"
+  },
+  "runtime_ui_hint": {
+    "message": "Antydning",
+    "description": "Runtime interface message ui.hint"
+  },
+  "runtime_ui_home": {
+    "message": "Hjem",
+    "description": "Runtime interface message ui.home"
+  },
+  "runtime_ui_host": {
+    "message": "Vært",
+    "description": "Runtime interface message ui.host"
+  },
+  "runtime_ui_id": {
+    "message": "ID",
+    "description": "Runtime interface message ui.id"
+  },
+  "runtime_ui_image": {
+    "message": "Billede",
+    "description": "Runtime interface message ui.image"
+  },
+  "runtime_ui_image_attached_from_clipboard": {
+    "message": "Billede vedhæftet fra udklipsholder",
+    "description": "Runtime interface message ui.image.attached.from.clipboard"
+  },
+  "runtime_ui_image_pasted_into_hermes": {
+    "message": "Billede indsat i Hermes",
+    "description": "Runtime interface message ui.image.pasted.into.hermes"
+  },
+  "runtime_ui_image_ready_for_hermes_vision": {
+    "message": "Billede klar til Hermes vision",
+    "description": "Runtime interface message ui.image.ready.for.hermes.vision"
+  },
+  "runtime_ui_image_stayed_inline_only": {
+    "message": "Billedet forblev kun inline",
+    "description": "Runtime interface message ui.image.stayed.inline.only"
+  },
+  "runtime_ui_images": {
+    "message": "▧ Billeder...",
+    "description": "Runtime interface message ui.images"
+  },
+  "runtime_ui_images_09e871c9": {
+    "message": "Billeder",
+    "description": "Runtime interface message ui.images.09e871c9"
+  },
+  "runtime_ui_images_9ef50004": {
+    "message": "▧ Billeder...",
+    "description": "Runtime interface message ui.images.9ef50004"
+  },
+  "runtime_ui_images_documents_and_code": {
+    "message": "Billeder, dokumenter og kode",
+    "description": "Runtime interface message ui.images.documents.and.code"
+  },
+  "runtime_ui_images_documents_and_code_stay_with_this_message": {
+    "message": "Billeder, dokumenter og kode forbliver med denne besked.",
+    "description": "Runtime interface message ui.images.documents.and.code.stay.with.this.message"
+  },
+  "runtime_ui_improve": {
+    "message": "Forbedre",
+    "description": "Runtime interface message ui.improve"
+  },
+  "runtime_ui_improve_selected_text": {
+    "message": "Forbedre valgt tekst",
+    "description": "Runtime interface message ui.improve.selected.text"
+  },
+  "runtime_ui_index": {
+    "message": "Indeks",
+    "description": "Runtime interface message ui.index"
+  },
+  "runtime_ui_info": {
+    "message": "Info",
+    "description": "Runtime interface message ui.info"
+  },
+  "runtime_ui_inline_assist": {
+    "message": "Inline assist",
+    "description": "Runtime interface message ui.inline.assist"
+  },
+  "runtime_ui_input": {
+    "message": "Input",
+    "description": "Runtime interface message ui.input"
+  },
+  "runtime_ui_inspector_views": {
+    "message": "Inspektør synspunkter",
+    "description": "Runtime interface message ui.inspector.views"
+  },
+  "runtime_ui_install": {
+    "message": "Installere",
+    "description": "Runtime interface message ui.install"
+  },
+  "runtime_ui_installing_the_local_speech_language_pack": {
+    "message": "Installerer den lokale talesprogpakke...",
+    "description": "Runtime interface message ui.installing.the.local.speech.language.pack"
+  },
+  "runtime_ui_instant_tools_no_model_call": {
+    "message": "Øjeblikkelige værktøjer · ingen modelopkald",
+    "description": "Runtime interface message ui.instant.tools.no.model.call"
+  },
+  "runtime_ui_invalid": {
+    "message": "Ugyldig",
+    "description": "Runtime interface message ui.invalid"
+  },
+  "runtime_ui_item": {
+    "message": "Punkt",
+    "description": "Runtime interface message ui.item"
+  },
+  "runtime_ui_keep_assist_sessions": {
+    "message": "Hold Assist-sessioner",
+    "description": "Runtime interface message ui.keep.assist.sessions"
+  },
+  "runtime_ui_keep_open_across_tabs": {
+    "message": "Hold åben på tværs af faner",
+    "description": "Runtime interface message ui.keep.open.across.tabs"
+  },
+  "runtime_ui_keep_replacement": {
+    "message": "Behold udskiftningen",
+    "description": "Runtime interface message ui.keep.replacement"
+  },
+  "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
+    "message": "Hold den aktuelle chat synlig. Returner resultatet til dette felt.",
+    "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_key": {
+    "message": "Nøgle",
+    "description": "Runtime interface message ui.key"
+  },
+  "runtime_ui_label": {
+    "message": "Mærke",
+    "description": "Runtime interface message ui.label"
+  },
+  "runtime_ui_large": {
+    "message": "Stor",
+    "description": "Runtime interface message ui.large"
+  },
+  "runtime_ui_later": {
+    "message": "SENERE",
+    "description": "Runtime interface message ui.later"
+  },
+  "runtime_ui_later_56e2f5d3": {
+    "message": "Senere",
+    "description": "Runtime interface message ui.later.56e2f5d3"
+  },
+  "runtime_ui_latest": {
+    "message": "Seneste",
+    "description": "Runtime interface message ui.latest"
+  },
+  "runtime_ui_layout": {
+    "message": "Layout",
+    "description": "Runtime interface message ui.layout"
+  },
+  "runtime_ui_leave_blank_to_keep_current_token": {
+    "message": "Lad stå tomt for at beholde det aktuelle token",
+    "description": "Runtime interface message ui.leave.blank.to.keep.current.token"
+  },
+  "runtime_ui_light": {
+    "message": "☼ Lys",
+    "description": "Runtime interface message ui.light"
+  },
+  "runtime_ui_limit": {
+    "message": "Begrænse",
+    "description": "Runtime interface message ui.limit"
+  },
+  "runtime_ui_list": {
+    "message": "Liste",
+    "description": "Runtime interface message ui.list"
+  },
+  "runtime_ui_load_unpacked_installs_update_through_a_guarded_hermes_agent_tu_410111a9": {
+    "message": "Indlæs-udpakkede installationer opdateres gennem en bevogtet Hermes-agenttur, og genindlæs derefter den indbyggede dist/-mappe.",
+    "description": "Runtime interface message ui.load.unpacked.installs.update.through.a.guarded.hermes.agent.tu.410111a9"
+  },
+  "runtime_ui_loading": {
+    "message": "Indlæser",
+    "description": "Runtime interface message ui.loading"
+  },
+  "runtime_ui_loading_249feada": {
+    "message": "📎 Indlæser...",
+    "description": "Runtime interface message ui.loading.249feada"
+  },
+  "runtime_ui_loading_b04ba49f": {
+    "message": "Indlæser...",
+    "description": "Runtime interface message ui.loading.b04ba49f"
+  },
+  "runtime_ui_loading_canonical_hermes_history": {
+    "message": "Indlæser kanonisk Hermes-historie...",
+    "description": "Runtime interface message ui.loading.canonical.hermes.history"
+  },
+  "runtime_ui_loading_connection": {
+    "message": "Indlæser forbindelse",
+    "description": "Runtime interface message ui.loading.connection"
+  },
+  "runtime_ui_loading_hermes_runtime_truth": {
+    "message": "Indlæser Hermes runtime truth",
+    "description": "Runtime interface message ui.loading.hermes.runtime.truth"
+  },
+  "runtime_ui_local": {
+    "message": "Lokal",
+    "description": "Runtime interface message ui.local"
+  },
+  "runtime_ui_local_api_server": {
+    "message": "Lokal API server",
+    "description": "Runtime interface message ui.local.api.server"
+  },
+  "runtime_ui_local_gateway": {
+    "message": "Lokal gateway",
+    "description": "Runtime interface message ui.local.gateway"
+  },
+  "runtime_ui_local_setup_keep_hermes_gateway_api_server_running_on_this_machine": {
+    "message": "Lokal opsætning: Lad Hermes Gateway/API-server køre på denne maskine.",
+    "description": "Runtime interface message ui.local.setup.keep.hermes.gateway.api.server.running.on.this.machine"
+  },
+  "runtime_ui_local_sidecar_chrome_panel": {
+    "message": "LOKAL SIDECAR / KROMPANEL",
+    "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_low": {
+    "message": "Lav",
+    "description": "Runtime interface message ui.low"
+  },
+  "runtime_ui_main": {
+    "message": "Hoved",
+    "description": "Runtime interface message ui.main"
+  },
+  "runtime_ui_make_this_more_confident_without_sounding_aggressive": {
+    "message": "Gør dette mere selvsikkert uden at lyde aggressivt...",
+    "description": "Runtime interface message ui.make.this.more.confident.without.sounding.aggressive"
+  },
+  "runtime_ui_manual": {
+    "message": "Manuel",
+    "description": "Runtime interface message ui.manual"
+  },
+  "runtime_ui_manual_setup": {
+    "message": "Manuel opsætning",
+    "description": "Runtime interface message ui.manual.setup"
+  },
+  "runtime_ui_manual_setup_required": {
+    "message": "Manuel opsætning påkrævet",
+    "description": "Runtime interface message ui.manual.setup.required"
+  },
+  "runtime_ui_maybe_later": {
+    "message": "Måske senere",
+    "description": "Runtime interface message ui.maybe.later"
+  },
+  "runtime_ui_med": {
+    "message": "Med",
+    "description": "Runtime interface message ui.med"
+  },
+  "runtime_ui_menu": {
+    "message": "Menu",
+    "description": "Runtime interface message ui.menu"
+  },
+  "runtime_ui_message": {
+    "message": "Besked",
+    "description": "Runtime interface message ui.message"
+  },
+  "runtime_ui_message_7be2d2d2": {
+    "message": "Kinesisk",
+    "description": "Runtime interface message ui.message.7be2d2d2"
+  },
+  "runtime_ui_message_attachments": {
+    "message": "Vedhæftede meddelelser",
+    "description": "Runtime interface message ui.message.attachments"
+  },
+  "runtime_ui_message_queued": {
+    "message": "Besked i kø",
+    "description": "Runtime interface message ui.message.queued"
+  },
+  "runtime_ui_messages": {
+    "message": "Beskeder",
+    "description": "Runtime interface message ui.messages"
+  },
+  "runtime_ui_microphone": {
+    "message": "Mikrofon",
+    "description": "Runtime interface message ui.microphone"
+  },
+  "runtime_ui_microphone_access_is_already_enabled_for_hermes_browser_extension": {
+    "message": "Mikrofonadgang er allerede aktiveret for Hermes Browser Extension.",
+    "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
+  },
+  "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
+    "message": "Mikrofonadgang er blokeret for Hermes Browser.",
+    "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
+  },
+  "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
+    "message": "Mikrofonadgang er aktiveret. Vend tilbage til Hermes sidepanelet, og klik på mikrofonen igen, eller brug fanen Hermes Voice Dictation, hvis sidepaneloptagelse stadig er blokeret.",
+    "description": "Runtime interface message ui.microphone.access.is.enabled.return.to.the.hermes.side.panel.an.2839c056"
+  },
+  "runtime_ui_microphone_permission_blocked": {
+    "message": "Mikrofontilladelse er blokeret",
+    "description": "Runtime interface message ui.microphone.permission.blocked"
+  },
+  "runtime_ui_microphone_permission_enabled": {
+    "message": "Mikrofontilladelse aktiveret",
+    "description": "Runtime interface message ui.microphone.permission.enabled"
+  },
+  "runtime_ui_microphone_permission_needed": {
+    "message": "Mikrofontilladelse er nødvendig",
+    "description": "Runtime interface message ui.microphone.permission.needed"
+  },
+  "runtime_ui_minimal_selected_text_short_page_text": {
+    "message": "Minimal - valgt tekst + kort sidetekst",
+    "description": "Runtime interface message ui.minimal.selected.text.short.page.text"
+  },
+  "runtime_ui_missing": {
+    "message": "Manglende",
+    "description": "Runtime interface message ui.missing"
+  },
+  "runtime_ui_mode": {
+    "message": "MODE",
+    "description": "Runtime interface message ui.mode"
+  },
+  "runtime_ui_mode_controls_brightness_theme_controls_the_accent_palette_and_0d9c3d47": {
+    "message": "Mode styrer lysstyrken. Tema styrer accentpaletten og chatoverfladestylingen.",
+    "description": "Runtime interface message ui.mode.controls.brightness.theme.controls.the.accent.palette.and.0d9c3d47"
+  },
+  "runtime_ui_model": {
+    "message": "MODEL",
+    "description": "Runtime interface message ui.model"
+  },
+  "runtime_ui_model_68c2cc7f": {
+    "message": "Model",
+    "description": "Runtime interface message ui.model.68c2cc7f"
+  },
+  "runtime_ui_model_discovery_limited": {
+    "message": "Modelopdagelse begrænset",
+    "description": "Runtime interface message ui.model.discovery.limited"
+  },
+  "runtime_ui_model_lock_failed": {
+    "message": "Modellås mislykkedes",
+    "description": "Runtime interface message ui.model.lock.failed"
+  },
+  "runtime_ui_model_lock_pending": {
+    "message": "Modellås afventer",
+    "description": "Runtime interface message ui.model.lock.pending"
+  },
+  "runtime_ui_model_mismatch": {
+    "message": "Model uoverensstemmelse",
+    "description": "Runtime interface message ui.model.mismatch"
+  },
+  "runtime_ui_model_providers": {
+    "message": "Modeludbydere",
+    "description": "Runtime interface message ui.model.providers"
+  },
+  "runtime_ui_model_refresh_limited": {
+    "message": "Begrænset modelopdatering",
+    "description": "Runtime interface message ui.model.refresh.limited"
+  },
+  "runtime_ui_model_registry_unavailable": {
+    "message": "Modelregistrering er ikke tilgængelig",
+    "description": "Runtime interface message ui.model.registry.unavailable"
+  },
+  "runtime_ui_model_runtime_options": {
+    "message": "Model runtime muligheder",
+    "description": "Runtime interface message ui.model.runtime.options"
+  },
+  "runtime_ui_more": {
+    "message": "Mere",
+    "description": "Runtime interface message ui.more"
+  },
+  "runtime_ui_name": {
+    "message": "Navn",
+    "description": "Runtime interface message ui.name"
+  },
+  "runtime_ui_native_context_controls_unavailable": {
+    "message": "Indbyggede kontekstkontroller er ikke tilgængelige.",
+    "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_new": {
+    "message": "Ny",
+    "description": "Runtime interface message ui.new"
+  },
+  "runtime_ui_new_browser_chat": {
+    "message": "Ny browserchat",
+    "description": "Runtime interface message ui.new.browser.chat"
+  },
+  "runtime_ui_new_chat": {
+    "message": "Ny chat",
+    "description": "Runtime interface message ui.new.chat"
+  },
+  "runtime_ui_new_hermes_browser_extension_draft": {
+    "message": "Nyt Hermes Browser Extension udkast",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.draft"
+  },
+  "runtime_ui_new_hermes_browser_extension_session": {
+    "message": "Ny Hermes Browser Extension session",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.session"
+  },
+  "runtime_ui_new_session": {
+    "message": "Ny session",
+    "description": "Runtime interface message ui.new.session"
+  },
+  "runtime_ui_new_session_inline_assist": {
+    "message": "Ny session · Inline assist",
+    "description": "Runtime interface message ui.new.session.inline.assist"
+  },
+  "runtime_ui_next": {
+    "message": "Næste",
+    "description": "Runtime interface message ui.next"
+  },
+  "runtime_ui_next_prompt_payload": {
+    "message": "Næste prompte nyttelast",
+    "description": "Runtime interface message ui.next.prompt.payload"
+  },
+  "runtime_ui_no": {
+    "message": "Ingen",
+    "description": "Runtime interface message ui.no"
+  },
+  "runtime_ui_no_active_run": {
+    "message": "Intet aktivt løb",
+    "description": "Runtime interface message ui.no.active.run"
+  },
+  "runtime_ui_no_active_session": {
+    "message": "Ingen aktiv session",
+    "description": "Runtime interface message ui.no.active.session"
+  },
+  "runtime_ui_no_active_tab_detected": {
+    "message": "Ingen aktiv fane fundet",
+    "description": "Runtime interface message ui.no.active.tab.detected"
+  },
+  "runtime_ui_no_agent_ports": {
+    "message": "Ingen agentporte",
+    "description": "Runtime interface message ui.no.agent.ports"
+  },
+  "runtime_ui_no_agents_scanned_yet_click": {
+    "message": "Ingen agenter scannet endnu. Klik",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click"
+  },
+  "runtime_ui_no_agents_scanned_yet_click_scan_agents": {
+    "message": "Ingen agenter scannet endnu. Klik på \"Scan agenter\".",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click.scan.agents"
+  },
+  "runtime_ui_no_audio_is_saved_by_this_page_in_hermes_stt_mode_audio_is_sent_df9cdcdc": {
+    "message": "Ingen lyd gemmes af denne side. I Hermes STT-tilstand sendes lyd én gang til dit konfigurerede Hermes-transskriptionsslutpunkt, når du stopper optagelsen. I browserens tale fallback-tilstand sendes kun transskriptionen tilbage til sidepanelet.",
+    "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
+  },
+  "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
+    "message": "Ingen lyd gemmes her. Tilladelsen lader kun Hermes Browser optage din stemme, når du klikker på mikrofonknappen.",
+    "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
+  },
+  "runtime_ui_no_browser_context_attached": {
+    "message": "Ingen browserkontekst knyttet",
+    "description": "Runtime interface message ui.no.browser.context.attached"
+  },
+  "runtime_ui_no_browser_context_will_be_read_or_attached": {
+    "message": "Ingen browserkontekst vil blive læst eller vedhæftet.",
+    "description": "Runtime interface message ui.no.browser.context.will.be.read.or.attached"
+  },
+  "runtime_ui_no_browser_tab_selected_text_open_tabs_metadata_transcript_or_p_5f06547f": {
+    "message": "Ingen browserfane, valgt tekst, åbne faner, metadata, transskription eller sidetekst vil blive vedhæftet.",
+    "description": "Runtime interface message ui.no.browser.tab.selected.text.open.tabs.metadata.transcript.or.p.5f06547f"
+  },
+  "runtime_ui_no_matching_tabs": {
+    "message": "Ingen matchende faner",
+    "description": "Runtime interface message ui.no.matching.tabs"
+  },
+  "runtime_ui_no_models_found": {
+    "message": "Ingen modeller fundet.",
+    "description": "Runtime interface message ui.no.models.found"
+  },
+  "runtime_ui_no_models_match": {
+    "message": "Ingen modeller matcher",
+    "description": "Runtime interface message ui.no.models.match"
+  },
+  "runtime_ui_no_providers_found": {
+    "message": "Ingen udbydere fundet",
+    "description": "Runtime interface message ui.no.providers.found"
+  },
+  "runtime_ui_no_sessions_found": {
+    "message": "Ingen sessioner fundet",
+    "description": "Runtime interface message ui.no.sessions.found"
+  },
+  "runtime_ui_no_speech_captured": {
+    "message": "Ingen tale fanget",
+    "description": "Runtime interface message ui.no.speech.captured"
+  },
+  "runtime_ui_no_speech_captured_click_start_dictation_and_try_again": {
+    "message": "Ingen tale fanget. Klik på Start diktering, og prøv igen.",
+    "description": "Runtime interface message ui.no.speech.captured.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_speech_detected": {
+    "message": "Ingen tale registreret",
+    "description": "Runtime interface message ui.no.speech.detected"
+  },
+  "runtime_ui_no_speech_detected_click_start_dictation_and_try_again": {
+    "message": "Ingen tale registreret. Klik på Start diktering, og prøv igen.",
+    "description": "Runtime interface message ui.no.speech.detected.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_submit_no_send_no_other_fields_touched": {
+    "message": "Ingen indsendelse · ingen afsendelse · ingen andre felter berøres",
+    "description": "Runtime interface message ui.no.submit.no.send.no.other.fields.touched"
+  },
+  "runtime_ui_no_tab": {
+    "message": "Ingen fane",
+    "description": "Runtime interface message ui.no.tab"
+  },
+  "runtime_ui_no_tab_detected": {
+    "message": "Ingen fane fundet",
+    "description": "Runtime interface message ui.no.tab.detected"
+  },
+  "runtime_ui_normal_good_default": {
+    "message": "Normal - god standard",
+    "description": "Runtime interface message ui.normal.good.default"
+  },
+  "runtime_ui_not_connected": {
+    "message": "Ikke forbundet",
+    "description": "Runtime interface message ui.not.connected"
+  },
+  "runtime_ui_nothing_to_steer": {
+    "message": "Intet at styre",
+    "description": "Runtime interface message ui.nothing.to.steer"
+  },
+  "runtime_ui_notice": {
+    "message": "Meddelelse",
+    "description": "Runtime interface message ui.notice"
+  },
+  "runtime_ui_now": {
+    "message": "Nu",
+    "description": "Runtime interface message ui.now"
+  },
+  "runtime_ui_number": {
+    "message": "Antal",
+    "description": "Runtime interface message ui.number"
+  },
+  "runtime_ui_object": {
+    "message": "Objekt",
+    "description": "Runtime interface message ui.object"
+  },
+  "runtime_ui_observed_from_session_history_not_advertised_as_a_requestable_h_6343f8c8": {
+    "message": "Observeret fra sessionshistorie; ikke annonceret som en forespørgelig Hermes-model.",
+    "description": "Runtime interface message ui.observed.from.session.history.not.advertised.as.a.requestable.h.6343f8c8"
+  },
+  "runtime_ui_off": {
+    "message": "Slukket",
+    "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_ok": {
+    "message": "OK",
+    "description": "Runtime interface message ui.ok"
+  },
+  "runtime_ui_on": {
+    "message": "På",
+    "description": "Runtime interface message ui.on"
+  },
+  "runtime_ui_on_device_speech_recognition_is_unavailable_in_this_browser": {
+    "message": "Talegenkendelse på enheden er ikke tilgængelig i denne browser.",
+    "description": "Runtime interface message ui.on.device.speech.recognition.is.unavailable.in.this.browser"
+  },
+  "runtime_ui_only_controls_supported_by_the_selected_model_are_shown": {
+    "message": "Kun kontroller, der understøttes af den valgte model, vises.",
+    "description": "Runtime interface message ui.only.controls.supported.by.the.selected.model.are.shown"
+  },
+  "runtime_ui_open": {
+    "message": "Åben",
+    "description": "Runtime interface message ui.open"
+  },
+  "runtime_ui_open_a_normal_browser_tab_and_try_again": {
+    "message": "Åbn en normal browserfane, og prøv igen.",
+    "description": "Runtime interface message ui.open.a.normal.browser.tab.and.try.again"
+  },
+  "runtime_ui_open_a_normal_http_https_tab_then_refresh_context": {
+    "message": "Åbn en normal http/https fane, og opdater derefter konteksten.",
+    "description": "Runtime interface message ui.open.a.normal.http.https.tab.then.refresh.context"
+  },
+  "runtime_ui_open_a_normal_page_tab_first": {
+    "message": "Åbn en normal sidefane først.",
+    "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_full_view": {
+    "message": "Åbn fuld visning",
+    "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_hermes_assist": {
+    "message": "Åbn Hermes Assist",
+    "description": "Runtime interface message ui.open.hermes.assist"
+  },
+  "runtime_ui_open_hermes_browser": {
+    "message": "Åbn Hermes Browser",
+    "description": "Runtime interface message ui.open.hermes.browser"
+  },
+  "runtime_ui_open_hermes_browser_always_opens_the_side_panel_only_selection_0b8dac3c": {
+    "message": "Åbn Hermes Browser åbner altid kun sidepanelet. Valghandlinger starter umiddelbart efter routing.",
+    "description": "Runtime interface message ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c"
+  },
+  "runtime_ui_open_hermes_browser_uses_the_side_panel_only_selection_tasks_st_4f56df05": {
+    "message": "Åbn Hermes Browser bruger kun sidepanelet. Udvælgelsesopgaver starter automatisk efter routing.",
+    "description": "Runtime interface message ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05"
+  },
+  "runtime_ui_open_hermes_session": {
+    "message": "Åbn Hermes-session",
+    "description": "Runtime interface message ui.open.hermes.session"
+  },
+  "runtime_ui_open_hermes_web_in_a_full_tab": {
+    "message": "Åbn Hermes Web i en fuld fane",
+    "description": "Runtime interface message ui.open.hermes.web.in.a.full.tab"
+  },
+  "runtime_ui_open_hermes_web_settings": {
+    "message": "Åbn Hermes Web-indstillinger",
+    "description": "Runtime interface message ui.open.hermes.web.settings"
+  },
+  "runtime_ui_open_microphone_settings": {
+    "message": "Åbn mikrofonindstillinger",
+    "description": "Runtime interface message ui.open.microphone.settings"
+  },
+  "runtime_ui_open_navigation": {
+    "message": "Åbn navigation",
+    "description": "Runtime interface message ui.open.navigation"
+  },
+  "runtime_ui_open_or_create_a_hermes_browser_extension_session_before_compac_4c0fdd2e": {
+    "message": "Åbn eller opret en Hermes Browser Extension-session, før du komprimerer konteksten.",
+    "description": "Runtime interface message ui.open.or.create.a.hermes.browser.extension.session.before.compac.4c0fdd2e"
+  },
+  "runtime_ui_open_quick_commands": {
+    "message": "Åbn hurtige kommandoer",
+    "description": "Runtime interface message ui.open.quick.commands"
+  },
+  "runtime_ui_open_session": {
+    "message": "Åbn session",
+    "description": "Runtime interface message ui.open.session"
+  },
+  "runtime_ui_open_settings": {
+    "message": "Åbn indstillinger",
+    "description": "Runtime interface message ui.open.settings"
+  },
+  "runtime_ui_open_side_panel_settings_and_connect_the_local_or_remote_api_be_706335b5": {
+    "message": "Åbn indstillinger på sidepanelet, og tilslut den lokale eller eksterne API, før du indlæser kanonisk sessionshistorik.",
+    "description": "Runtime interface message ui.open.side.panel.settings.and.connect.the.local.or.remote.api.be.706335b5"
+  },
+  "runtime_ui_open_tabs": {
+    "message": "Åbn faner",
+    "description": "Runtime interface message ui.open.tabs"
+  },
+  "runtime_ui_open_the_exact_session_in_the_full_hermes_web_workspace": {
+    "message": "Åbn den nøjagtige session i hele Hermes Web-arbejdsområdet.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
+  },
+  "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
+    "message": "Åbn den nøjagtige session i Hermes Browser sidepanelet.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
+  },
+  "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
+    "message": "Åbn Hermes-udvidelsens sidepanel fra din browserværktøjslinje.",
+    "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
+  },
+  "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
+    "message": "Åbn den bevarede Assist-session i browsersidepanelet eller i Hermes Web.",
+    "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
+  },
+  "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
+    "message": "Åbn sidepanelet, konfigurer en Hermes-forbindelse, og åbn derefter fuld visning igen.",
+    "description": "Runtime interface message ui.open.the.side.panel.configure.a.hermes.connection.then.open.ful.47648857"
+  },
+  "runtime_ui_open_the_signed_in_hermes_cloud_agent_in_the_active_tab_wait_fo_b7be52ec": {
+    "message": "Åbn den loggede Hermes Cloud-agent på den aktive fane, vent på, at den er færdig med at indlæse, og vælg derefter Opret forbindelse til Hermes. Ingen API token eller localhost fallback bruges.",
+    "description": "Runtime interface message ui.open.the.signed.in.hermes.cloud.agent.in.the.active.tab.wait.fo.b7be52ec"
+  },
+  "runtime_ui_opened_directly_in_full_view": {
+    "message": "Åbnet direkte i fuld visning.",
+    "description": "Runtime interface message ui.opened.directly.in.full.view"
+  },
+  "runtime_ui_opening_chromium_microphone_permission_prompt": {
+    "message": "Åbner Chromium mikrofontilladelsesprompt...",
+    "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
+  },
+  "runtime_ui_opening_session": {
+    "message": "ÅBNING",
+    "description": "Runtime interface message ui.opening.session"
+  },
+  "runtime_ui_opening_shared_session": {
+    "message": "ÅBNING AF FÆLLES SESSION",
+    "description": "Runtime interface message ui.opening.shared.session"
+  },
+  "runtime_ui_opening_voice_dictation_tab": {
+    "message": "Åbner fanen for stemmediktering",
+    "description": "Runtime interface message ui.opening.voice.dictation.tab"
+  },
+  "runtime_ui_optional": {
+    "message": "Valgfri",
+    "description": "Runtime interface message ui.optional"
+  },
+  "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
+    "message": "Kun valgfri opdagelse: Browser sonderer hvert OpenAI-compatible `/v1/models`-slutpunkt og viser matches i modelvælgeren. Runtime-routing kommer stadig fra den tilsluttede Hermes-gateway.",
+    "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
+  },
+  "runtime_ui_options": {
+    "message": "Valgmuligheder",
+    "description": "Runtime interface message ui.options"
+  },
+  "runtime_ui_or_tell_hermes_exactly_what_you_need": {
+    "message": "Eller fortæl Hermes præcis, hvad du har brug for",
+    "description": "Runtime interface message ui.or.tell.hermes.exactly.what.you.need"
+  },
+  "runtime_ui_origin": {
+    "message": "Oprindelse",
+    "description": "Runtime interface message ui.origin"
+  },
+  "runtime_ui_other": {
+    "message": "Andre",
+    "description": "Runtime interface message ui.other"
+  },
+  "runtime_ui_owner": {
+    "message": "Ejer",
+    "description": "Runtime interface message ui.owner"
+  },
+  "runtime_ui_page": {
+    "message": "Side",
+    "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context": {
+    "message": "Sidekontekst",
+    "description": "Runtime interface message ui.page.context"
+  },
+  "runtime_ui_page_context_depth": {
+    "message": "Sidekontekstdybde",
+    "description": "Runtime interface message ui.page.context.depth"
+  },
+  "runtime_ui_page_text": {
+    "message": "Sidetekst",
+    "description": "Runtime interface message ui.page.text"
+  },
+  "runtime_ui_pages": {
+    "message": "Sider",
+    "description": "Runtime interface message ui.pages"
+  },
+  "runtime_ui_panel": {
+    "message": "Panel",
+    "description": "Runtime interface message ui.panel"
+  },
+  "runtime_ui_panel_opening": {
+    "message": "Panelåbning",
+    "description": "Runtime interface message ui.panel.opening"
+  },
+  "runtime_ui_paste": {
+    "message": "Indsæt",
+    "description": "Runtime interface message ui.paste"
+  },
+  "runtime_ui_paste_a_gateway_api_key_or_reconnect_when_you_are_ready": {
+    "message": "Indsæt en Gateway API-nøgle eller genopret forbindelse, når du er klar.",
+    "description": "Runtime interface message ui.paste.a.gateway.api.key.or.reconnect.when.you.are.ready"
+  },
+  "runtime_ui_paste_image": {
+    "message": "▣ Indsæt billede",
+    "description": "Runtime interface message ui.paste.image"
+  },
+  "runtime_ui_paste_this_into_the_hermes_api_server_environment_on_the_remote_machine": {
+    "message": "Indsæt dette i Hermes API-server-miljøet på den eksterne maskine.",
+    "description": "Runtime interface message ui.paste.this.into.the.hermes.api.server.environment.on.the.remote.machine"
+  },
+  "runtime_ui_path": {
+    "message": "Sti",
+    "description": "Runtime interface message ui.path"
+  },
+  "runtime_ui_pending": {
+    "message": "Indtil",
+    "description": "Runtime interface message ui.pending"
+  },
+  "runtime_ui_permission": {
+    "message": "Tilladelse",
+    "description": "Runtime interface message ui.permission"
+  },
+  "runtime_ui_pick": {
+    "message": "Plukke",
+    "description": "Runtime interface message ui.pick"
+  },
+  "runtime_ui_pick_a_fixed_mode_or_follow_your_system_setting": {
+    "message": "Vælg en fast tilstand, eller følg din systemindstilling.",
+    "description": "Runtime interface message ui.pick.a.fixed.mode.or.follow.your.system.setting"
+  },
+  "runtime_ui_pick_an_element": {
+    "message": "Vælg et element",
+    "description": "Runtime interface message ui.pick.an.element"
+  },
+  "runtime_ui_pick_page_element": {
+    "message": "◈ Vælg sideelement",
+    "description": "Runtime interface message ui.pick.page.element"
+  },
+  "runtime_ui_picked_element_cleared": {
+    "message": "Det valgte element blev ryddet",
+    "description": "Runtime interface message ui.picked.element.cleared"
+  },
+  "runtime_ui_pinned_tab_closed": {
+    "message": "Fastgjort fane lukket",
+    "description": "Runtime interface message ui.pinned.tab.closed"
+  },
+  "runtime_ui_policy": {
+    "message": "Politik",
+    "description": "Runtime interface message ui.policy"
+  },
+  "runtime_ui_popup": {
+    "message": "Popup",
+    "description": "Runtime interface message ui.popup"
+  },
+  "runtime_ui_port": {
+    "message": "Havn",
+    "description": "Runtime interface message ui.port"
+  },
+  "runtime_ui_preferences": {
+    "message": "Præferencer",
+    "description": "Runtime interface message ui.preferences"
+  },
+  "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
+    "message": "Foretrækker Hermes' native wake engine lokalt og bruger Chromium tale på enheden til Cloud Preview.",
+    "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
+  },
+  "runtime_ui_preparing_on_device_dictation": {
+    "message": "Forberedelse af diktat på enheden",
+    "description": "Runtime interface message ui.preparing.on.device.dictation"
+  },
+  "runtime_ui_preparing_the_browser_local_wake_listener": {
+    "message": "Forbereder den browser-lokale wake-lytter...",
+    "description": "Runtime interface message ui.preparing.the.browser.local.wake.listener"
+  },
+  "runtime_ui_preview": {
+    "message": "Forhåndsvisning",
+    "description": "Runtime interface message ui.preview"
+  },
+  "runtime_ui_preview_1aa787fe": {
+    "message": "forhåndsvisning",
+    "description": "Runtime interface message ui.preview.1aa787fe"
+  },
+  "runtime_ui_preview_copy_only": {
+    "message": "Kun forhåndsvisning + kopi",
+    "description": "Runtime interface message ui.preview.copy.only"
+  },
+  "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
+    "message": "Eksempeltilstand: Indlæs denne side fra den installerede Hermes Browser Extension for at bruge tilsluttede Hermes-indstillinger og stemmediktering.",
+    "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
+  },
+  "runtime_ui_previous": {
+    "message": "Tidligere",
+    "description": "Runtime interface message ui.previous"
+  },
+  "runtime_ui_private": {
+    "message": "PRIVAT",
+    "description": "Runtime interface message ui.private"
+  },
+  "runtime_ui_pro": {
+    "message": "Pro",
+    "description": "Runtime interface message ui.pro"
+  },
+  "runtime_ui_process": {
+    "message": "Behandle",
+    "description": "Runtime interface message ui.process"
+  },
+  "runtime_ui_profile": {
+    "message": "PROFIL",
+    "description": "Runtime interface message ui.profile"
+  },
+  "runtime_ui_profile_api_unavailable": {
+    "message": "Profil API er ikke tilgængelig",
+    "description": "Runtime interface message ui.profile.api.unavailable"
+  },
+  "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
+    "message": "Profil API er ikke tilgængelig. Browseren vil bruge den aktuelle Hermes gateway-profil.",
+    "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
+  },
+  "runtime_ui_profile_ff4fc027": {
+    "message": "Profil",
+    "description": "Runtime interface message ui.profile.ff4fc027"
+  },
+  "runtime_ui_profile_switch_unavailable": {
+    "message": "Profilkontakt er ikke tilgængelig",
+    "description": "Runtime interface message ui.profile.switch.unavailable"
+  },
+  "runtime_ui_profile_sync_unavailable": {
+    "message": "Profilsynkronisering er ikke tilgængelig",
+    "description": "Runtime interface message ui.profile.sync.unavailable"
+  },
+  "runtime_ui_profiles_sync_after_connecting_to_hermes": {
+    "message": "Profiler synkroniseres efter tilslutning til Hermes.",
+    "description": "Runtime interface message ui.profiles.sync.after.connecting.to.hermes"
+  },
+  "runtime_ui_prompt": {
+    "message": "Hurtig",
+    "description": "Runtime interface message ui.prompt"
+  },
+  "runtime_ui_prompt_context": {
+    "message": "Spørg kontekst",
+    "description": "Runtime interface message ui.prompt.context"
+  },
+  "runtime_ui_prompt_context_settings": {
+    "message": "Spørg kontekstindstillinger",
+    "description": "Runtime interface message ui.prompt.context.settings"
+  },
+  "runtime_ui_prompt_snippet": {
+    "message": "▤ Prompt uddrag...",
+    "description": "Runtime interface message ui.prompt.snippet"
+  },
+  "runtime_ui_prompt_snippets": {
+    "message": "▤ Prompt-uddrag...",
+    "description": "Runtime interface message ui.prompt.snippets"
+  },
+  "runtime_ui_property": {
+    "message": "Ejendom",
+    "description": "Runtime interface message ui.property"
+  },
+  "runtime_ui_provider": {
+    "message": "Udbyder",
+    "description": "Runtime interface message ui.provider"
+  },
+  "runtime_ui_provider_model_and_reasoning": {
+    "message": "Udbyder, model og ræsonnement",
+    "description": "Runtime interface message ui.provider.model.and.reasoning"
+  },
+  "runtime_ui_public": {
+    "message": "Offentlig",
+    "description": "Runtime interface message ui.public"
+  },
+  "runtime_ui_public_alpha_load_unpacked_local_or_remote_hermes_api_server_fu_f39d96e3": {
+    "message": "Offentlig alfa: indlæs udpakket, lokal eller ekstern Hermes API-server, fulde Hermes-værktøjer, når den tilsluttede runtime understøtter dem.",
+    "description": "Runtime interface message ui.public.alpha.load.unpacked.local.or.remote.hermes.api.server.fu.f39d96e3"
+  },
+  "runtime_ui_public_flow_connect_to_hermes_creates_a_scoped_browser_token_wh_9184ad4d": {
+    "message": "Offentligt flow: Opret forbindelse til Hermes opretter et scoped browsertoken, når API-serveren understøtter parring. For fjernværter skal du indstille API_SERVER_CORS_ORIGINS til denne udvidelsesoprindelse og bruge et stærkt API_SERVER_KEY eller scoped token.",
+    "description": "Runtime interface message ui.public.flow.connect.to.hermes.creates.a.scoped.browser.token.wh.9184ad4d"
+  },
+  "runtime_ui_public_setup": {
+    "message": "OFFENTLIG OPSÆTNING",
+    "description": "Runtime interface message ui.public.setup"
+  },
+  "runtime_ui_query": {
+    "message": "Forespørgsel",
+    "description": "Runtime interface message ui.query"
+  },
+  "runtime_ui_queue": {
+    "message": "Kø",
+    "description": "Runtime interface message ui.queue"
+  },
+  "runtime_ui_queued": {
+    "message": "I kø",
+    "description": "Runtime interface message ui.queued"
+  },
+  "runtime_ui_queued_message_deleted": {
+    "message": "Besked i kø slettet",
+    "description": "Runtime interface message ui.queued.message.deleted"
+  },
+  "runtime_ui_quick_commands": {
+    "message": "Hurtige kommandoer",
+    "description": "Runtime interface message ui.quick.commands"
+  },
+  "runtime_ui_range": {
+    "message": "Rækkevidde",
+    "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_readable_dom_text": {
+    "message": "Læsbar DOM-tekst",
+    "description": "Runtime interface message ui.readable.dom.text"
+  },
+  "runtime_ui_reading_connection_settings_and_canonical_session_history": {
+    "message": "Læser forbindelsesindstillinger og kanonisk sessionshistorik.",
+    "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_ready": {
+    "message": "Parat",
+    "description": "Runtime interface message ui.ready"
+  },
+  "runtime_ui_reasoning_effort": {
+    "message": "Ræsonnement indsats",
+    "description": "Runtime interface message ui.reasoning.effort"
+  },
+  "runtime_ui_reconnect": {
+    "message": "Tilslut igen",
+    "description": "Runtime interface message ui.reconnect"
+  },
+  "runtime_ui_reconnecting": {
+    "message": "Genopretter forbindelse",
+    "description": "Runtime interface message ui.reconnecting"
+  },
+  "runtime_ui_record": {
+    "message": "Optage",
+    "description": "Runtime interface message ui.record"
+  },
+  "runtime_ui_recording_voice": {
+    "message": "Optager stemme",
+    "description": "Runtime interface message ui.recording.voice"
+  },
+  "runtime_ui_refresh": {
+    "message": "Opfriske",
+    "description": "Runtime interface message ui.refresh"
+  },
+  "runtime_ui_refresh_context_to_calculate_the_next_prompt_payload": {
+    "message": "Opdater kontekst for at beregne den næste prompt nyttelast.",
+    "description": "Runtime interface message ui.refresh.context.to.calculate.the.next.prompt.payload"
+  },
+  "runtime_ui_refresh_model_catalog": {
+    "message": "Opdater modelkataloget",
+    "description": "Runtime interface message ui.refresh.model.catalog"
+  },
+  "runtime_ui_refresh_models": {
+    "message": "Opdater modeller",
+    "description": "Runtime interface message ui.refresh.models"
+  },
+  "runtime_ui_refresh_sessions": {
+    "message": "Opdater sessioner",
+    "description": "Runtime interface message ui.refresh.sessions"
+  },
+  "runtime_ui_refreshing_models": {
+    "message": "Forfriskende modeller",
+    "description": "Runtime interface message ui.refreshing.models"
+  },
+  "runtime_ui_refreshing_sessions": {
+    "message": "Forfriskende sessioner...",
+    "description": "Runtime interface message ui.refreshing.sessions"
+  },
+  "runtime_ui_remember_for_right_click_actions": {
+    "message": "Husk for højreklikshandlinger",
+    "description": "Runtime interface message ui.remember.for.right.click.actions"
+  },
+  "runtime_ui_remote": {
+    "message": "Fjern",
+    "description": "Runtime interface message ui.remote"
+  },
+  "runtime_ui_remote_api_server": {
+    "message": "Fjernserver API",
+    "description": "Runtime interface message ui.remote.api.server"
+  },
+  "runtime_ui_remote_api_server_environment_variables": {
+    "message": "Ekstern API servermiljøvariabler",
+    "description": "Runtime interface message ui.remote.api.server.environment.variables"
+  },
+  "runtime_ui_remote_dashboard_rename_rpc_is_not_available_yet": {
+    "message": "Remote Dashboard Rename RPC er ikke tilgængelig endnu.",
+    "description": "Runtime interface message ui.remote.dashboard.rename.rpc.is.not.available.yet"
+  },
+  "runtime_ui_remote_dashboard_websocket": {
+    "message": "Fjernbetjeningspanel (WebSocket)",
+    "description": "Runtime interface message ui.remote.dashboard.websocket"
+  },
+  "runtime_ui_remote_env_copied": {
+    "message": "Fjernenv kopieret",
+    "description": "Runtime interface message ui.remote.env.copied"
+  },
+  "runtime_ui_remote_gateway": {
+    "message": "Fjernbetjent gateway",
+    "description": "Runtime interface message ui.remote.gateway"
+  },
+  "runtime_ui_remote_setup_diagnostics": {
+    "message": "Fjernopsætningsdiagnostik",
+    "description": "Runtime interface message ui.remote.setup.diagnostics"
+  },
+  "runtime_ui_remove": {
+    "message": "Fjerne",
+    "description": "Runtime interface message ui.remove"
+  },
+  "runtime_ui_rename": {
+    "message": "Omdøb",
+    "description": "Runtime interface message ui.rename"
+  },
+  "runtime_ui_rename_a_fresh_browser_session_from_the_first_real_message": {
+    "message": "Omdøb en ny browsersession fra den første rigtige besked.",
+    "description": "Runtime interface message ui.rename.a.fresh.browser.session.from.the.first.real.message"
+  },
+  "runtime_ui_rename_session": {
+    "message": "Omdøb session",
+    "description": "Runtime interface message ui.rename.session"
+  },
+  "runtime_ui_rendered_message_bodies_only_draft_and_input_values_stay_excluded": {
+    "message": "Kun gengivne meddelelsestekster. Udkast og inputværdier forbliver ekskluderet.",
+    "description": "Runtime interface message ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded"
+  },
+  "runtime_ui_rendered_message_bodies_will_be_attached_to_the_next_hermes_turn": {
+    "message": "Gengivne meddelelsestekster vil blive knyttet til den næste Hermes-tur.",
+    "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
+  },
+  "runtime_ui_replaced_the_original_field_safely": {
+    "message": "Udskiftet det originale felt sikkert",
+    "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_reply": {
+    "message": "Svar",
+    "description": "Runtime interface message ui.reply"
+  },
+  "runtime_ui_request": {
+    "message": "Anmodning",
+    "description": "Runtime interface message ui.request"
+  },
+  "runtime_ui_required": {
+    "message": "Påkrævet",
+    "description": "Runtime interface message ui.required"
+  },
+  "runtime_ui_required_for_cloud_preview_and_older_hermes_builds_it_refuses_c_f0bdad5b": {
+    "message": "Påkrævet for Cloud Preview og ældre Hermes builds. Det nægter cloud-talegenkendelse.",
+    "description": "Runtime interface message ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b"
+  },
+  "runtime_ui_reset": {
+    "message": "Nulstil",
+    "description": "Runtime interface message ui.reset"
+  },
+  "runtime_ui_reset_zoom": {
+    "message": "Nulstil zoom",
+    "description": "Runtime interface message ui.reset.zoom"
+  },
+  "runtime_ui_response": {
+    "message": "Svar",
+    "description": "Runtime interface message ui.response"
+  },
+  "runtime_ui_restricted_page": {
+    "message": "Begrænset side",
+    "description": "Runtime interface message ui.restricted.page"
+  },
+  "runtime_ui_result": {
+    "message": "Resultat",
+    "description": "Runtime interface message ui.result"
+  },
+  "runtime_ui_result_preview": {
+    "message": "Forhåndsvisning af resultat",
+    "description": "Runtime interface message ui.result.preview"
+  },
+  "runtime_ui_retry": {
+    "message": "Prøv igen",
+    "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_page": {
+    "message": "Vend tilbage til siden",
+    "description": "Runtime interface message ui.return.to.page"
+  },
+  "runtime_ui_review": {
+    "message": "Gennemgå",
+    "description": "Runtime interface message ui.review"
+  },
+  "runtime_ui_review_the_result_before_applying_it": {
+    "message": "Gennemgå resultatet, før du anvender det.",
+    "description": "Runtime interface message ui.review.the.result.before.applying.it"
+  },
+  "runtime_ui_right_click_actions": {
+    "message": "Højreklik på handlinger",
+    "description": "Runtime interface message ui.right.click.actions"
+  },
+  "runtime_ui_right_click_task_complete": {
+    "message": "Højreklik på opgaven fuldført",
+    "description": "Runtime interface message ui.right.click.task.complete"
+  },
+  "runtime_ui_right_click_task_failed": {
+    "message": "Højreklik-opgave mislykkedes",
+    "description": "Runtime interface message ui.right.click.task.failed"
+  },
+  "runtime_ui_row": {
+    "message": "Række",
+    "description": "Runtime interface message ui.row"
+  },
+  "runtime_ui_rows": {
+    "message": "Rækker",
+    "description": "Runtime interface message ui.rows"
+  },
+  "runtime_ui_run": {
+    "message": "Løbe",
+    "description": "Runtime interface message ui.run"
+  },
+  "runtime_ui_run_in_background": {
+    "message": "Kør i baggrunden",
+    "description": "Runtime interface message ui.run.in.background"
+  },
+  "runtime_ui_runs": {
+    "message": "Løber",
+    "description": "Runtime interface message ui.runs"
+  },
+  "runtime_ui_runtime_identity": {
+    "message": "Runtime identitet",
+    "description": "Runtime interface message ui.runtime.identity"
+  },
+  "runtime_ui_safe_apply": {
+    "message": "ANVEND SIKKERT",
+    "description": "Runtime interface message ui.safe.apply"
+  },
+  "runtime_ui_safety": {
+    "message": "Sikkerhed",
+    "description": "Runtime interface message ui.safety"
+  },
+  "runtime_ui_same_desktop_palettes_minus_window_transparency": {
+    "message": "Samme skrivebordspaletter, minus vinduesgennemsigtighed.",
+    "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
+  },
+  "runtime_ui_save": {
+    "message": "Spare",
+    "description": "Runtime interface message ui.save"
+  },
+  "runtime_ui_save_settings": {
+    "message": "Gem indstillinger",
+    "description": "Runtime interface message ui.save.settings"
+  },
+  "runtime_ui_saved": {
+    "message": "Gemt",
+    "description": "Runtime interface message ui.saved"
+  },
+  "runtime_ui_saved_when_you_send_the_first_message": {
+    "message": "Gemt, når du sender den første besked.",
+    "description": "Runtime interface message ui.saved.when.you.send.the.first.message"
+  },
+  "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
+    "message": "Sig \"Hey Hermes\" for en håndfri stemmeanmodning med én omgang. Always-on detektion forbliver på denne maskine.",
+    "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
+    "message": "Skaler interfacekopi uden at ændre browserzoom.",
+    "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
+  },
+  "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
+    "message": "Scanner en pålidelig Hermes API-vært for at køre gateways. Brug localhost til agenter på samme maskine eller en Tailscale-vært/IP til private fjernagenter.",
+    "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
+  },
+  "runtime_ui_screen": {
+    "message": "Skærm",
+    "description": "Runtime interface message ui.screen"
+  },
+  "runtime_ui_script": {
+    "message": "Manuskript",
+    "description": "Runtime interface message ui.script"
+  },
+  "runtime_ui_search": {
+    "message": "Søge",
+    "description": "Runtime interface message ui.search"
+  },
+  "runtime_ui_search_all_models": {
+    "message": "Søg alle modeller",
+    "description": "Runtime interface message ui.search.all.models"
+  },
+  "runtime_ui_search_chats": {
+    "message": "Søg i chats",
+    "description": "Runtime interface message ui.search.chats"
+  },
+  "runtime_ui_search_sessions": {
+    "message": "Søg sessioner",
+    "description": "Runtime interface message ui.search.sessions"
+  },
+  "runtime_ui_search_tabs": {
+    "message": "Søg faner",
+    "description": "Runtime interface message ui.search.tabs"
+  },
+  "runtime_ui_security": {
+    "message": "Sikkerhed",
+    "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_select": {
+    "message": "Vælge",
+    "description": "Runtime interface message ui.select"
+  },
+  "runtime_ui_select_model": {
+    "message": "Vælg model",
+    "description": "Runtime interface message ui.select.model"
+  },
+  "runtime_ui_selected_model_runtime_options": {
+    "message": "Valgte model runtime muligheder",
+    "description": "Runtime interface message ui.selected.model.runtime.options"
+  },
+  "runtime_ui_selecting_the_safest_wake_listener": {
+    "message": "Vælger den sikreste wake-lytter...",
+    "description": "Runtime interface message ui.selecting.the.safest.wake.listener"
+  },
+  "runtime_ui_selection": {
+    "message": "Udvælgelse",
+    "description": "Runtime interface message ui.selection"
+  },
+  "runtime_ui_self_hosted_api_or_dashboard_api_can_use_trusted_lan_http_dashb_152b7f4c": {
+    "message": "Selvhostet API eller dashboard. API kan bruge betroede LAN http; dashboard bruger https.",
+    "description": "Runtime interface message ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c"
+  },
+  "runtime_ui_send": {
+    "message": "Sende",
+    "description": "Runtime interface message ui.send"
+  },
+  "runtime_ui_send_it_when_the_current_hermes_run_finishes": {
+    "message": "Send den, når den aktuelle Hermes-kørsel afsluttes.",
+    "description": "Runtime interface message ui.send.it.when.the.current.hermes.run.finishes"
+  },
+  "runtime_ui_send_message": {
+    "message": "Send besked",
+    "description": "Runtime interface message ui.send.message"
+  },
+  "runtime_ui_sending_observed_model_request": {
+    "message": "Sender observeret modelanmodning",
+    "description": "Runtime interface message ui.sending.observed.model.request"
+  },
+  "runtime_ui_server": {
+    "message": "Server",
+    "description": "Runtime interface message ui.server"
+  },
+  "runtime_ui_service": {
+    "message": "Service",
+    "description": "Runtime interface message ui.service"
+  },
+  "runtime_ui_session": {
+    "message": "SESSION",
+    "description": "Runtime interface message ui.session"
+  },
+  "runtime_ui_session_actions": {
+    "message": "Sessionshandlinger",
+    "description": "Runtime interface message ui.session.actions"
+  },
+  "runtime_ui_session_context_window": {
+    "message": "Sessionskontekstvindue",
+    "description": "Runtime interface message ui.session.context.window"
+  },
+  "runtime_ui_session_f7f1997c": {
+    "message": "Session",
+    "description": "Runtime interface message ui.session.f7f1997c"
+  },
+  "runtime_ui_session_handoff": {
+    "message": "Session aflevering",
+    "description": "Runtime interface message ui.session.handoff"
+  },
+  "runtime_ui_session_id": {
+    "message": "Sessions-id",
+    "description": "Runtime interface message ui.session.id"
+  },
+  "runtime_ui_session_id_copied": {
+    "message": "Sessions-id kopieret",
+    "description": "Runtime interface message ui.session.id.copied"
+  },
+  "runtime_ui_session_naming_prompt_context_and_side_panel_residency_live_together": {
+    "message": "Sessionsnavngivning, promptkontekst og sidepanelophold lever sammen.",
+    "description": "Runtime interface message ui.session.naming.prompt.context.and.side.panel.residency.live.together"
+  },
+  "runtime_ui_session_renamed": {
+    "message": "Session omdøbt",
+    "description": "Runtime interface message ui.session.renamed"
+  },
+  "runtime_ui_session_renamed_and_synced": {
+    "message": "Session omdøbt og synkroniseret",
+    "description": "Runtime interface message ui.session.renamed.and.synced"
+  },
+  "runtime_ui_session_runtime": {
+    "message": "Session køretid",
+    "description": "Runtime interface message ui.session.runtime"
+  },
+  "runtime_ui_session_sync_failed": {
+    "message": "Synkronisering af session mislykkedes",
+    "description": "Runtime interface message ui.session.sync.failed"
+  },
+  "runtime_ui_session_title": {
+    "message": "Sessions titel",
+    "description": "Runtime interface message ui.session.title"
+  },
+  "runtime_ui_session_title_saved_locally": {
+    "message": "Sessionstitel gemt lokalt",
+    "description": "Runtime interface message ui.session.title.saved.locally"
+  },
+  "runtime_ui_session_title_updated": {
+    "message": "Sessionens titel er opdateret",
+    "description": "Runtime interface message ui.session.title.updated"
+  },
+  "runtime_ui_session_unavailable": {
+    "message": "Sessionen er ikke tilgængelig",
+    "description": "Runtime interface message ui.session.unavailable"
+  },
+  "runtime_ui_sessions": {
+    "message": "SESSIONER",
+    "description": "Runtime interface message ui.sessions"
+  },
+  "runtime_ui_set": {
+    "message": "Sæt",
+    "description": "Runtime interface message ui.set"
+  },
+  "runtime_ui_set_a_remote_dashboard": {
+    "message": "Indstil et fjernbetjeningspanel",
+    "description": "Runtime interface message ui.set.a.remote.dashboard"
+  },
+  "runtime_ui_settings": {
+    "message": "Indstillinger",
+    "description": "Runtime interface message ui.settings"
+  },
+  "runtime_ui_settings_not_saved": {
+    "message": "Indstillinger er ikke gemt",
+    "description": "Runtime interface message ui.settings.not.saved"
+  },
+  "runtime_ui_setup": {
+    "message": "Opsætning",
+    "description": "Runtime interface message ui.setup"
+  },
+  "runtime_ui_share": {
+    "message": "Dele",
+    "description": "Runtime interface message ui.share"
+  },
+  "runtime_ui_shared_session": {
+    "message": "DELT SESSION",
+    "description": "Runtime interface message ui.shared.session"
+  },
+  "runtime_ui_shared_session_0a6bce9c": {
+    "message": "Delt session",
+    "description": "Runtime interface message ui.shared.session.0a6bce9c"
+  },
+  "runtime_ui_shell": {
+    "message": "Shell",
+    "description": "Runtime interface message ui.shell"
+  },
+  "runtime_ui_short": {
+    "message": "Kort",
+    "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_show": {
+    "message": "Vise",
+    "description": "Runtime interface message ui.show"
+  },
+  "runtime_ui_show_hermes_assist_in_writing_fields": {
+    "message": "Vis Hermes Assist i skrivefelter",
+    "description": "Runtime interface message ui.show.hermes.assist.in.writing.fields"
+  },
+  "runtime_ui_side_panel": {
+    "message": "Sidepanel",
+    "description": "Runtime interface message ui.side.panel"
+  },
+  "runtime_ui_sidebar": {
+    "message": "Sidebjælke",
+    "description": "Runtime interface message ui.sidebar"
+  },
+  "runtime_ui_signal": {
+    "message": "Signal",
+    "description": "Runtime interface message ui.signal"
+  },
+  "runtime_ui_site": {
+    "message": "websted",
+    "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_size": {
+    "message": "Størrelse",
+    "description": "Runtime interface message ui.size"
+  },
+  "runtime_ui_skill": {
+    "message": "Dygtighed",
+    "description": "Runtime interface message ui.skill"
+  },
+  "runtime_ui_skill_sync_failed": {
+    "message": "Synkronisering af færdigheder mislykkedes",
+    "description": "Runtime interface message ui.skill.sync.failed"
+  },
+  "runtime_ui_skills": {
+    "message": "Færdigheder",
+    "description": "Runtime interface message ui.skills"
+  },
+  "runtime_ui_skip": {
+    "message": "Springe",
+    "description": "Runtime interface message ui.skip"
+  },
+  "runtime_ui_slash_commands_and_skills": {
+    "message": "Skær kommandoer og færdigheder",
+    "description": "Runtime interface message ui.slash.commands.and.skills"
+  },
+  "runtime_ui_slash_helpers": {
+    "message": "Slash hjælpere",
+    "description": "Runtime interface message ui.slash.helpers"
+  },
+  "runtime_ui_socket": {
+    "message": "Stikkontakt",
+    "description": "Runtime interface message ui.socket"
+  },
+  "runtime_ui_source": {
+    "message": "KILDE",
+    "description": "Runtime interface message ui.source"
+  },
+  "runtime_ui_source_6da13add": {
+    "message": "Kilde",
+    "description": "Runtime interface message ui.source.6da13add"
+  },
+  "runtime_ui_source_deck": {
+    "message": "Kilde dæk",
+    "description": "Runtime interface message ui.source.deck"
+  },
+  "runtime_ui_source_receipts_arrive_after_shared_context_extraction": {
+    "message": "Kildekvitteringer ankommer efter delt kontekstudtrækning.",
+    "description": "Runtime interface message ui.source.receipts.arrive.after.shared.context.extraction"
+  },
+  "runtime_ui_speak_into_the_composer": {
+    "message": "Tal ind til komponisten",
+    "description": "Runtime interface message ui.speak.into.the.composer"
+  },
+  "runtime_ui_speak_wake_replies": {
+    "message": "Læs svar efter vækkeordet op",
+    "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_standard": {
+    "message": "Standard",
+    "description": "Runtime interface message ui.standard"
+  },
+  "runtime_ui_start": {
+    "message": "Starte",
+    "description": "Runtime interface message ui.start"
+  },
+  "runtime_ui_start_dictation": {
+    "message": "Start diktat",
+    "description": "Runtime interface message ui.start.dictation"
+  },
+  "runtime_ui_start_new_assist_session": {
+    "message": "Start en ny Assist-session",
+    "description": "Runtime interface message ui.start.new.assist.session"
+  },
+  "runtime_ui_start_new_browser_session": {
+    "message": "Start ny browsersession",
+    "description": "Runtime interface message ui.start.new.browser.session"
+  },
+  "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
+    "message": "Start Hermes API-serveren lokalt eller på en tilgængelig fjernmaskine.",
+    "description": "Runtime interface message ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine"
+  },
+  "runtime_ui_start_voice_dictation": {
+    "message": "Start stemmediktering",
+    "description": "Runtime interface message ui.start.voice.dictation"
+  },
+  "runtime_ui_starting_hermes_native_wake_engine": {
+    "message": "Starter Hermes' native wake engine...",
+    "description": "Runtime interface message ui.starting.hermes.native.wake.engine"
+  },
+  "runtime_ui_starting_hermes_voice_recording_now": {
+    "message": "Starter Hermes stemmeoptagelse nu.",
+    "description": "Runtime interface message ui.starting.hermes.voice.recording.now"
+  },
+  "runtime_ui_startup_readiness_checks": {
+    "message": "Kontrol af opstartsparathed",
+    "description": "Runtime interface message ui.startup.readiness.checks"
+  },
+  "runtime_ui_status": {
+    "message": "Status",
+    "description": "Runtime interface message ui.status"
+  },
+  "runtime_ui_steer": {
+    "message": "Styre",
+    "description": "Runtime interface message ui.steer"
+  },
+  "runtime_ui_steer_failed": {
+    "message": "Styr mislykkedes",
+    "description": "Runtime interface message ui.steer.failed"
+  },
+  "runtime_ui_steer_not_injected": {
+    "message": "Styr ikke indsprøjtet",
+    "description": "Runtime interface message ui.steer.not.injected"
+  },
+  "runtime_ui_steer_sent": {
+    "message": "Steer sendt",
+    "description": "Runtime interface message ui.steer.sent"
+  },
+  "runtime_ui_steer_sent_to_active_run": {
+    "message": "Styr sendt til aktiv kørsel",
+    "description": "Runtime interface message ui.steer.sent.to.active.run"
+  },
+  "runtime_ui_steer_the_current_run": {
+    "message": "Styr den aktuelle kørsel",
+    "description": "Runtime interface message ui.steer.the.current.run"
+  },
+  "runtime_ui_stop": {
+    "message": "Stop",
+    "description": "Runtime interface message ui.stop"
+  },
+  "runtime_ui_stop_hermes": {
+    "message": "Stop Hermes",
+    "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stopping_hermes": {
+    "message": "Stop Hermes",
+    "description": "Runtime interface message ui.stopping.hermes"
+  },
+  "runtime_ui_stopping_recording": {
+    "message": "Stopper optagelsen...",
+    "description": "Runtime interface message ui.stopping.recording"
+  },
+  "runtime_ui_storage": {
+    "message": "Opbevaring",
+    "description": "Runtime interface message ui.storage"
+  },
+  "runtime_ui_stream": {
+    "message": "Strøm",
+    "description": "Runtime interface message ui.stream"
+  },
+  "runtime_ui_submit": {
+    "message": "Indsend",
+    "description": "Runtime interface message ui.submit"
+  },
+  "runtime_ui_summarize": {
+    "message": "Sammenfatte",
+    "description": "Runtime interface message ui.summarize"
+  },
+  "runtime_ui_summarize_selection": {
+    "message": "Opsummer valget",
+    "description": "Runtime interface message ui.summarize.selection"
+  },
+  "runtime_ui_summary": {
+    "message": "Oversigt",
+    "description": "Runtime interface message ui.summary"
+  },
+  "runtime_ui_support_diagnostics": {
+    "message": "Support diagnostik",
+    "description": "Runtime interface message ui.support.diagnostics"
+  },
+  "runtime_ui_switch": {
+    "message": "Skifte",
+    "description": "Runtime interface message ui.switch"
+  },
+  "runtime_ui_switch_partially_failed": {
+    "message": "Skiftet mislykkedes delvist",
+    "description": "Runtime interface message ui.switch.partially.failed"
+  },
+  "runtime_ui_switch_to_this_agent": {
+    "message": "Skift til denne agent",
+    "description": "Runtime interface message ui.switch.to.this.agent"
+  },
+  "runtime_ui_switched_gateway": {
+    "message": "Skiftet gateway",
+    "description": "Runtime interface message ui.switched.gateway"
+  },
+  "runtime_ui_syncing_hermes_model_catalog_this_can_take_20_30_seconds": {
+    "message": "Synkroniserer Hermes modelkatalog... dette kan tage 20-30 sekunder.",
+    "description": "Runtime interface message ui.syncing.hermes.model.catalog.this.can.take.20.30.seconds"
+  },
+  "runtime_ui_system": {
+    "message": "▱ System",
+    "description": "Runtime interface message ui.system"
+  },
+  "runtime_ui_system_bc0792d8": {
+    "message": "System",
+    "description": "Runtime interface message ui.system.bc0792d8"
+  },
+  "runtime_ui_tab": {
+    "message": "Tab",
+    "description": "Runtime interface message ui.tab"
+  },
+  "runtime_ui_tabs": {
+    "message": "Faner",
+    "description": "Runtime interface message ui.tabs"
+  },
+  "runtime_ui_tabs_in_prompt": {
+    "message": "Faner i prompt",
+    "description": "Runtime interface message ui.tabs.in.prompt"
+  },
+  "runtime_ui_tag": {
+    "message": "Tag",
+    "description": "Runtime interface message ui.tag"
+  },
+  "runtime_ui_tags": {
+    "message": "Tags",
+    "description": "Runtime interface message ui.tags"
+  },
+  "runtime_ui_target": {
+    "message": "Mål",
+    "description": "Runtime interface message ui.target"
+  },
+  "runtime_ui_task": {
+    "message": "Opgave",
+    "description": "Runtime interface message ui.task"
+  },
+  "runtime_ui_tasks": {
+    "message": "☑ OPGAVER",
+    "description": "Runtime interface message ui.tasks"
+  },
+  "runtime_ui_template": {
+    "message": "Skabelon",
+    "description": "Runtime interface message ui.template"
+  },
+  "runtime_ui_test": {
+    "message": "Prøve",
+    "description": "Runtime interface message ui.test"
+  },
+  "runtime_ui_test_984816fd": {
+    "message": "PRØVE",
+    "description": "Runtime interface message ui.test.984816fd"
+  },
+  "runtime_ui_test_connection": {
+    "message": "Test forbindelse",
+    "description": "Runtime interface message ui.test.connection"
+  },
+  "runtime_ui_test_connection_f7dafbab": {
+    "message": "TEST FORBINDELSE",
+    "description": "Runtime interface message ui.test.connection.f7dafbab"
+  },
+  "runtime_ui_test_the_current_hermes_connection": {
+    "message": "Test den aktuelle Hermes-forbindelse",
+    "description": "Runtime interface message ui.test.the.current.hermes.connection"
+  },
+  "runtime_ui_text": {
+    "message": "Tekst",
+    "description": "Runtime interface message ui.text"
+  },
+  "runtime_ui_text_size": {
+    "message": "Tekststørrelse",
+    "description": "Runtime interface message ui.text.size"
+  },
+  "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
+    "message": "Den tilsluttede Hermes-runtime annoncerer ikke indbygget sessionskomprimering.",
+    "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
+  },
+  "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
+    "message": "Den tilsluttede runtime vil modtage disse muligheder ved næste tur, men afslører ikke et bekræftelsesslutpunkt.",
+    "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
+    "message": "Live-modelkataloget er ikke tilgængeligt; holde den seneste verificerede udbyder/modelliste.",
+    "description": "Runtime interface message ui.the.live.model.catalog.is.unavailable.keeping.the.last.verified.0e0250fe"
+  },
+  "runtime_ui_the_local_speech_language_pack_did_not_become_ready_in_90_secon_d69760e3": {
+    "message": "Den lokale talesprogpakke blev ikke klar på 90 sekunder. Prøv øret igen, når Chrome er færdig med at installere taleunderstøttelse.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.did.not.become.ready.in.90.secon.d69760e3"
+  },
+  "runtime_ui_the_local_speech_language_pack_is_unavailable_wake_listening_wi_6da8a4e2": {
+    "message": "Den lokale sprogpakke til talegenkendelse er ikke tilgængelig. Lytning efter vækkeord bruger ikke skygenkendelse.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.is.unavailable.wake.listening.wi.6da8a4e2"
+  },
+  "runtime_ui_the_microphone_is_unavailable_to_the_wake_listener": {
+    "message": "Mikrofonen er ikke tilgængelig for vækkeordslytteren.",
+    "description": "Runtime interface message ui.the.microphone.is.unavailable.to.the.wake.listener"
+  },
+  "runtime_ui_the_page_is_the_prompt": {
+    "message": "SIDEN ER PROMPTEN",
+    "description": "Runtime interface message ui.the.page.is.the.prompt"
+  },
+  "runtime_ui_theme": {
+    "message": "Tema",
+    "description": "Runtime interface message ui.theme"
+  },
+  "runtime_ui_thinking": {
+    "message": "Tænker",
+    "description": "Runtime interface message ui.thinking"
+  },
+  "runtime_ui_thinking_off_standard": {
+    "message": "Tænker af · Standard",
+    "description": "Runtime interface message ui.thinking.off.standard"
+  },
+  "runtime_ui_this_browser_does_not_expose_on_device_speech_recognition": {
+    "message": "Denne browser afslører ikke talegenkendelse på enheden.",
+    "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
+  },
+  "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
+    "message": "Denne Chromium-browser stiller ikke MediaRecorder/getUserMedia til rådighed for udvidelsessider, og Web Speech-fallback er ikke tilgængeligt.",
+    "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
+    "message": "Denne gateway afslører ikke /v1/capabilities endnu. Browserspecifikke ruter forbliver i fallback-tilstand.",
+    "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
+  },
+  "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
+    "message": "Denne Hermes-gateway afslører ikke /v1/profiles endnu. Bruger den aktuelle profil.",
+    "description": "Runtime interface message ui.this.hermes.gateway.does.not.expose.v1.profiles.yet.using.the.c.0222afa8"
+  },
+  "runtime_ui_this_hermes_runtime_does_not_advertise_browser_pairing_yet": {
+    "message": "Denne Hermes runtime annoncerer ikke browserparring endnu.",
+    "description": "Runtime interface message ui.this.hermes.runtime.does.not.advertise.browser.pairing.yet"
+  },
+  "runtime_ui_this_managed_editor_is_not_mutated_until_insertion_is_verified": {
+    "message": "Dette administrerede redigeringsfelt ændres ikke, før indsættelsen er bekræftet",
+    "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
+  },
+  "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
+    "message": "Denne model blev opdaget fra et brugerdefineret slutpunkt, men Hermes skal eksponere den gennem den tilsluttede runtime, før browseren kan dirigere anmodninger til den.",
+    "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
+  },
+  "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
+    "message": "Denne anmodning er bundet til den valgte browsersession.",
+    "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_time": {
+    "message": "Tid",
+    "description": "Runtime interface message ui.time"
+  },
+  "runtime_ui_title": {
+    "message": "Titel",
+    "description": "Runtime interface message ui.title"
+  },
+  "runtime_ui_toggle_hey_hermes": {
+    "message": "Slå Hej Hermes til/fra",
+    "description": "Runtime interface message ui.toggle.hey.hermes"
+  },
+  "runtime_ui_toggle_inspector": {
+    "message": "Skift inspektør",
+    "description": "Runtime interface message ui.toggle.inspector"
+  },
+  "runtime_ui_token": {
+    "message": "Token",
+    "description": "Runtime interface message ui.token"
+  },
+  "runtime_ui_tokens": {
+    "message": "Poletter",
+    "description": "Runtime interface message ui.tokens"
+  },
+  "runtime_ui_tokens_are_stored_in_chrome_storage_local_and_never_displayed_after_save": {
+    "message": "Tokens gemmes i chrome.storage.local og vises aldrig efter lagring.",
+    "description": "Runtime interface message ui.tokens.are.stored.in.chrome.storage.local.and.never.displayed.after.save"
+  },
+  "runtime_ui_tool": {
+    "message": "Værktøj",
+    "description": "Runtime interface message ui.tool"
+  },
+  "runtime_ui_tool_activity": {
+    "message": "VÆRKTØJSAKTIVITET",
+    "description": "Runtime interface message ui.tool.activity"
+  },
+  "runtime_ui_tool_and_run_events_will_appear_here": {
+    "message": "Værktøjs- og kørselsbegivenheder vises her.",
+    "description": "Runtime interface message ui.tool.and.run.events.will.appear.here"
+  },
+  "runtime_ui_total": {
+    "message": "Total",
+    "description": "Runtime interface message ui.total"
+  },
+  "runtime_ui_transcribing_through_your_local_hermes_gateway": {
+    "message": "Transskriberer gennem din lokale Hermes-gateway...",
+    "description": "Runtime interface message ui.transcribing.through.your.local.hermes.gateway"
+  },
+  "runtime_ui_transcribing_voice": {
+    "message": "Transskriberende stemme",
+    "description": "Runtime interface message ui.transcribing.voice"
+  },
+  "runtime_ui_transcript_inserted_into_the_composer": {
+    "message": "Afskrift indsat i komponisten.",
+    "description": "Runtime interface message ui.transcript.inserted.into.the.composer"
+  },
+  "runtime_ui_transcription": {
+    "message": "Transskription",
+    "description": "Runtime interface message ui.transcription"
+  },
+  "runtime_ui_trusted": {
+    "message": "Betroet",
+    "description": "Runtime interface message ui.trusted"
+  },
+  "runtime_ui_try_recording_again": {
+    "message": "Prøv at optage igen.",
+    "description": "Runtime interface message ui.try.recording.again"
+  },
+  "runtime_ui_turn_off": {
+    "message": "Sluk",
+    "description": "Runtime interface message ui.turn.off"
+  },
+  "runtime_ui_turn_on": {
+    "message": "Tænd",
+    "description": "Runtime interface message ui.turn.on"
+  },
+  "runtime_ui_turn_the_field_bound_launcher_on_or_off_across_normal_web_pages": {
+    "message": "Slå den feltbundne launcher til eller fra på almindelige websider.",
+    "description": "Runtime interface message ui.turn.the.field.bound.launcher.on.or.off.across.normal.web.pages"
+  },
+  "runtime_ui_type": {
+    "message": "Type",
+    "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_ui": {
+    "message": "UI",
+    "description": "Runtime interface message ui.ui"
+  },
+  "runtime_ui_unavailable": {
+    "message": "Ikke tilgængelig",
+    "description": "Runtime interface message ui.unavailable"
+  },
+  "runtime_ui_undo": {
+    "message": "Fortryd",
+    "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_update": {
+    "message": "Opdatering",
+    "description": "Runtime interface message ui.update"
+  },
+  "runtime_ui_update_now": {
+    "message": "Opdater nu",
+    "description": "Runtime interface message ui.update.now"
+  },
+  "runtime_ui_update_prompt_ready": {
+    "message": "Opdateringsprompt klar",
+    "description": "Runtime interface message ui.update.prompt.ready"
+  },
+  "runtime_ui_updates_are_checked_against_the_public_github_repo": {
+    "message": "Opdateringer kontrolleres mod den offentlige GitHub repo.",
+    "description": "Runtime interface message ui.updates.are.checked.against.the.public.github.repo"
+  },
+  "runtime_ui_upload": {
+    "message": "Upload",
+    "description": "Runtime interface message ui.upload"
+  },
+  "runtime_ui_url": {
+    "message": "↗ URL...",
+    "description": "Runtime interface message ui.url"
+  },
+  "runtime_ui_url_0e2d9b07": {
+    "message": "URL",
+    "description": "Runtime interface message ui.url.0e2d9b07"
+  },
+  "runtime_ui_url_19911671": {
+    "message": "↗ URL...",
+    "description": "Runtime interface message ui.url.19911671"
+  },
+  "runtime_ui_use": {
+    "message": "Bruge",
+    "description": "Runtime interface message ui.use"
+  },
+  "runtime_ui_use_current_tab_session": {
+    "message": "Brug den aktuelle fanesession",
+    "description": "Runtime interface message ui.use.current.tab.session"
+  },
+  "runtime_ui_use_hermes_desktop_model_settings_or_the_hermes_model_command_t_f5a4940b": {
+    "message": "Brug Hermes Desktop modelindstillinger eller Hermes-modelkommandoen, og derefter Opdater modeller her.",
+    "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
+  },
+  "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
+    "message": "Brug den aktive fanes aktuelle session, opret en ny browsersession, eller kør separat.",
+    "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
+  },
+  "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
+    "message": "Brug samme palet og chrome-sprog som Hermes Browser.",
+    "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
+  },
+  "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
+    "message": "Brug dette, når en fjern-dashboard-URL, et Bearer-token eller en CORS-oprindelse er forkert konfigureret.",
+    "description": "Runtime interface message ui.use.this.when.a.remote.dashboard.url.bearer.token.or.cors.origi.9956db87"
+  },
+  "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
+    "message": "Brug dette, når du indgiver GitHub-problemer eller supportrapporter.",
+    "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_user": {
+    "message": "Bruger",
+    "description": "Runtime interface message ui.user"
+  },
+  "runtime_ui_uses_hermes_tts_on_the_native_path_and_local_browser_speech_on_acf402bd": {
+    "message": "Bruger Hermes TTS på den oprindelige sti og lokal browsertale på den alternative sti.",
+    "description": "Runtime interface message ui.uses.hermes.tts.on.the.native.path.and.local.browser.speech.on.acf402bd"
+  },
+  "runtime_ui_using_cached_hermes_catalog": {
+    "message": "Brug af cachelagret Hermes-katalog",
+    "description": "Runtime interface message ui.using.cached.hermes.catalog"
+  },
+  "runtime_ui_using_hermes_speech_to_text_matching_desktop_dictation": {
+    "message": "Brug af Hermes tale-til-tekst, matchende skrivebordsdiktering.",
+    "description": "Runtime interface message ui.using.hermes.speech.to.text.matching.desktop.dictation"
+  },
+  "runtime_ui_using_the_currently_running_hermes_gateway_profile": {
+    "message": "Bruger den aktuelle Hermes gateway-profil.",
+    "description": "Runtime interface message ui.using.the.currently.running.hermes.gateway.profile"
+  },
+  "runtime_ui_value": {
+    "message": "Værdi",
+    "description": "Runtime interface message ui.value"
+  },
+  "runtime_ui_version": {
+    "message": "Version",
+    "description": "Runtime interface message ui.version"
+  },
+  "runtime_ui_version_loading": {
+    "message": "version indlæses...",
+    "description": "Runtime interface message ui.version.loading"
+  },
+  "runtime_ui_video": {
+    "message": "Video",
+    "description": "Runtime interface message ui.video"
+  },
+  "runtime_ui_view": {
+    "message": "Udsigt",
+    "description": "Runtime interface message ui.view"
+  },
+  "runtime_ui_voice": {
+    "message": "Stemme",
+    "description": "Runtime interface message ui.voice"
+  },
+  "runtime_ui_voice_dictation": {
+    "message": "Stemmediktering",
+    "description": "Runtime interface message ui.voice.dictation"
+  },
+  "runtime_ui_voice_dictation_ready": {
+    "message": "Stemmediktering klar",
+    "description": "Runtime interface message ui.voice.dictation.ready"
+  },
+  "runtime_ui_voice_dictation_stopped": {
+    "message": "Stemmediktering stoppet",
+    "description": "Runtime interface message ui.voice.dictation.stopped"
+  },
+  "runtime_ui_voice_dictation_unavailable": {
+    "message": "Stemmediktering er ikke tilgængelig",
+    "description": "Runtime interface message ui.voice.dictation.unavailable"
+  },
+  "runtime_ui_voice_mode_browser_speech_fallback_hermes_stt_is_unavailable_on_70bf6212": {
+    "message": "Stemmetilstand: Browser tale fallback\n\nHermes STT er ikke tilgængelig på denne gateway. Talegenkendelse kører i browseren; kun udskriften sendes tilbage til sidepanelet.",
+    "description": "Runtime interface message ui.voice.mode.browser.speech.fallback.hermes.stt.is.unavailable.on.70bf6212"
+  },
+  "runtime_ui_voice_mode_hermes_stt_audio_is_sent_once_to_your_local_hermes_t_6e927a4e": {
+    "message": "Stemmetilstand: Hermes STT\n\nLyden sendes én gang til dit lokale Hermes-transskriptionsslutpunkt, når du stopper optagelsen.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.audio.is.sent.once.to.your.local.hermes.t.6e927a4e"
+  },
+  "runtime_ui_voice_mode_hermes_stt_recording_speak_now_then_click_stop_transcribe": {
+    "message": "Stemmetilstand: Hermes STT\n\nOptager... tal nu, og klik derefter på Stop + transskriber.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.recording.speak.now.then.click.stop.transcribe"
+  },
+  "runtime_ui_voice_mode_hermes_stt_requesting_microphone_access": {
+    "message": "Stemmetilstand: Hermes STT\n\nAnmoder om mikrofonadgang...",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.requesting.microphone.access"
+  },
+  "runtime_ui_voice_mode_on_device_speech_downloading_the_browser_language_pack_once": {
+    "message": "Stemmetilstand: Tale på enheden\n\nDownloader browserens sprogpakke én gang...",
+    "description": "Runtime interface message ui.voice.mode.on.device.speech.downloading.the.browser.language.pack.once"
+  },
+  "runtime_ui_voice_mode_unavailable_connect_hermes_for_stt_or_use_a_chromium_08a02bbb": {
+    "message": "Stemmetilstand er ikke tilgængelig. Opret forbindelse til Hermes for STT, eller brug en Chromium-build, der understøtter browserens talefallback.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.connect.hermes.for.stt.or.use.a.chromium.08a02bbb"
+  },
+  "runtime_ui_voice_mode_unavailable_this_browser_does_not_expose_hermes_stt_fcc04044": {
+    "message": "Stemmetilstand er ikke tilgængelig. Denne browser afslører ikke Hermes STT eller Web Speech fallback.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.browser.does.not.expose.hermes.stt.fcc04044"
+  },
+  "runtime_ui_voice_mode_unavailable_this_hermes_runtime_has_no_audio_transcr_70f57e78": {
+    "message": "Stemmetilstand er ikke tilgængelig. Denne Hermes runtime har ingen lydtransskriptionsrute, og denne browser afslører ingen Web Speech fallback.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.hermes.runtime.has.no.audio.transcr.70f57e78"
+  },
+  "runtime_ui_voice_recording_failed": {
+    "message": "Stemmeoptagelse mislykkedes",
+    "description": "Runtime interface message ui.voice.recording.failed"
+  },
+  "runtime_ui_voice_tab_opened": {
+    "message": "Voice-fanen åbnet",
+    "description": "Runtime interface message ui.voice.tab.opened"
+  },
+  "runtime_ui_voice_transcript_handoff_failed": {
+    "message": "Overdragelse af stemmetransskription mislykkedes",
+    "description": "Runtime interface message ui.voice.transcript.handoff.failed"
+  },
+  "runtime_ui_voice_transcript_ready": {
+    "message": "Stemmetransskription klar",
+    "description": "Runtime interface message ui.voice.transcript.ready"
+  },
+  "runtime_ui_voice_transcription_failed": {
+    "message": "Stemmetransskription mislykkedes",
+    "description": "Runtime interface message ui.voice.transcription.failed"
+  },
+  "runtime_ui_waiting_for_hermes_desktop_approval": {
+    "message": "Venter på Hermes Desktop godkendelse...",
+    "description": "Runtime interface message ui.waiting.for.hermes.desktop.approval"
+  },
+  "runtime_ui_waiting_for_permission_request": {
+    "message": "Venter på anmodning om tilladelse...",
+    "description": "Runtime interface message ui.waiting.for.permission.request"
+  },
+  "runtime_ui_waiting_for_session_usage": {
+    "message": "Venter på sessionsbrug.",
+    "description": "Runtime interface message ui.waiting.for.session.usage"
+  },
+  "runtime_ui_waiting_for_the_session_resource_to_confirm_thinking_effort_and_63018fde": {
+    "message": "Venter på, at sessionsressourcen bekræfter Tænkning, indsats og hurtig tilstand.",
+    "description": "Runtime interface message ui.waiting.for.the.session.resource.to.confirm.thinking.effort.and.63018fde"
+  },
+  "runtime_ui_wake_command_captured": {
+    "message": "Wake-kommandoen er taget.",
+    "description": "Runtime interface message ui.wake.command.captured"
+  },
+  "runtime_ui_wake_command_captured_opening_hermes": {
+    "message": "Wake-kommandoen er taget. Åbner Hermes...",
+    "description": "Runtime interface message ui.wake.command.captured.opening.hermes"
+  },
+  "runtime_ui_wake_listener_document_is_ready": {
+    "message": "Wake listener-dokumentet er klar.",
+    "description": "Runtime interface message ui.wake.listener.document.is.ready"
+  },
+  "runtime_ui_wake_listener_paused_during_the_voice_turn": {
+    "message": "Wake-lytteren holdt pause under stemmedrejningen.",
+    "description": "Runtime interface message ui.wake.listener.paused.during.the.voice.turn"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command": {
+    "message": "Wake-sætning hørt. Lytter efter din kommando.",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command_38ffdf10": {
+    "message": "Wake-sætning hørt. Lytter efter din kommando...",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command.38ffdf10"
+  },
+  "runtime_ui_wake_word": {
+    "message": "Vækkeord",
+    "description": "Runtime interface message ui.wake.word"
+  },
+  "runtime_ui_wake_word_is_off": {
+    "message": "Vækkeord er slået fra.",
+    "description": "Runtime interface message ui.wake.word.is.off"
+  },
+  "runtime_ui_web_ui_sections": {
+    "message": "Web UI sektioner",
+    "description": "Runtime interface message ui.web.ui.sections"
+  },
+  "runtime_ui_what_hermes_saw": {
+    "message": "HVAD HERMES SÅ",
+    "description": "Runtime interface message ui.what.hermes.saw"
+  },
+  "runtime_ui_what_should_we_work_on": {
+    "message": "Hvad skal vi arbejde med?",
+    "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_should_hermes_work": {
+    "message": "Hvor skal Hermes arbejde?",
+    "description": "Runtime interface message ui.where.should.hermes.work"
+  },
+  "runtime_ui_where_should_this_right_click_task_run": {
+    "message": "Hvor skal denne højreklik-opgave køre?",
+    "description": "Runtime interface message ui.where.should.this.right.click.task.run"
+  },
+  "runtime_ui_where_should_this_session_open": {
+    "message": "Hvor skal denne session åbne?",
+    "description": "Runtime interface message ui.where.should.this.session.open"
+  },
+  "runtime_ui_window": {
+    "message": "Vindue",
+    "description": "Runtime interface message ui.window"
+  },
+  "runtime_ui_window_tab_list": {
+    "message": "Vinduefaneliste",
+    "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_worker": {
+    "message": "Arbejder",
+    "description": "Runtime interface message ui.worker"
+  },
+  "runtime_ui_working": {
+    "message": "arbejder",
+    "description": "Runtime interface message ui.working"
+  },
+  "runtime_ui_working_92263e08": {
+    "message": "ARBEJDER",
+    "description": "Runtime interface message ui.working.92263e08"
+  },
+  "runtime_ui_workspace": {
+    "message": "Arbejdsplads",
+    "description": "Runtime interface message ui.workspace"
+  },
+  "runtime_ui_workspaces": {
+    "message": "Arbejdsrum",
+    "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_xl": {
+    "message": "XL",
+    "description": "Runtime interface message ui.xl"
+  },
+  "runtime_ui_you": {
+    "message": "Du",
+    "description": "Runtime interface message ui.you"
+  },
+  "runtime_ui_your_current_conversation_stays_visible": {
+    "message": "Din aktuelle samtale forbliver synlig.",
+    "description": "Runtime interface message ui.your.current.conversation.stays.visible"
+  },
+  "runtime_ui_youtube_transcript_provider": {
+    "message": "YouTube transskriptionsudbyder",
+    "description": "Runtime interface message ui.youtube.transcript.provider"
+  },
+  "runtime_ui_zoom_in": {
+    "message": "Zoom ind",
+    "description": "Runtime interface message ui.zoom.in"
+  },
+  "runtime_ui_zoom_out": {
+    "message": "Zoom ud",
+    "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_voice_browser_preview": {
+    "message": "Stemmetilstand: Browser tale fallback\n\n{preview}",
+    "description": "Runtime interface message voice.browser.preview"
+  },
+  "runtime_voice_browser_start_failed": {
+    "message": "Browser tale fallback kunne ikke starte.\n\n{error}",
+    "description": "Runtime interface message voice.browser.start_failed"
+  },
+  "runtime_voice_browser_stop_failed": {
+    "message": "Browsertaletilbagefald kunne ikke stoppe.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stop_failed"
+  },
+  "runtime_voice_browser_stopped": {
+    "message": "Browser tale fallback stoppet.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stopped"
+  },
+  "runtime_voice_capture_error": {
+    "message": "Kunne ikke optage lyd fra mikrofonen.",
+    "description": "Runtime interface message voice.capture_error"
+  },
+  "runtime_voice_permission_blocked": {
+    "message": "Mikrofontilladelse er blokeret for Hermes Browser Extension.\n\nKlik på Åbn mikrofonindstillinger, indstil Mikrofon til Tillad denne udvidelse, vend tilbage hertil, og klik derefter på Start diktering igen.\n\n{error}",
+    "description": "Runtime interface message voice.permission_blocked"
+  },
+  "runtime_voice_settings_load_failed": {
+    "message": "Kunne ikke indlæse Hermes Browser-indstillinger.\n\n{error}",
+    "description": "Runtime interface message voice.settings_load_failed"
+  },
+  "runtime_voice_speech_recognition_error": {
+    "message": "Fejl i talegenkendelse",
+    "description": "Runtime interface message voice.speech_recognition_error"
+  },
+  "runtime_voice_start_failed": {
+    "message": "Kunne ikke starte stemmediktering.\n\n{error}",
+    "description": "Runtime interface message voice.start_failed"
+  },
+  "runtime_voice_transcript_sent": {
+    "message": "Transskription sendt til Hermes sidepanelet:\n\n{transcript}",
+    "description": "Runtime interface message voice.transcript_sent"
+  },
+  "runtime_voice_transcription_failed": {
+    "message": "Stemmetransskription mislykkedes.\n\n{error}",
+    "description": "Runtime interface message voice.transcription_failed"
+  },
+  "runtime_wake_turn_off": {
+    "message": "Slå wake word fra",
+    "description": "Runtime interface message wake.turn_off"
+  },
+  "runtime_wake_turn_on": {
+    "message": "Slå wake word til",
+    "description": "Runtime interface message wake.turn_on"
+  }
+}

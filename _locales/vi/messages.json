@@ -1,0 +1,4374 @@
+{
+  "extensionName": {
+    "message": "Tiện ích mở rộng Hermes Browser",
+    "description": "Hermes Browser extensionName"
+  },
+  "extensionShortName": {
+    "message": "Hermes Ext",
+    "description": "Hermes Browser extensionShortName"
+  },
+  "extensionDescription": {
+    "message": "Thanh bên tích hợp sẵn trong trình duyệt dành cho Hermes Agent. Kết nối ngữ cảnh web với môi trường chạy Hermes cục bộ hoặc từ xa của bạn.",
+    "description": "Hermes Browser extensionDescription"
+  },
+  "openExtension": {
+    "message": "Mở tiện ích mở rộng Hermes Browser",
+    "description": "Hermes Browser openExtension"
+  },
+  "openSidebar": {
+    "message": "Mở thanh bên Hermes Browser",
+    "description": "Hermes Browser openSidebar"
+  },
+  "runtime_a11y_extension_controls": {
+    "message": "Hermes Browser Extension điều khiển",
+    "description": "Runtime interface message a11y.extension_controls"
+  },
+  "runtime_a11y_extension_header": {
+    "message": "tiêu đề Hermes Browser Extension",
+    "description": "Runtime interface message a11y.extension_header"
+  },
+  "runtime_agent_scan": {
+    "message": "↻ Quét tác nhân",
+    "description": "Runtime interface message agent.scan"
+  },
+  "runtime_assist_options_heading": {
+    "message": "Tùy chọn Hermes Assist",
+    "description": "Runtime interface message assist.options_heading"
+  },
+  "runtime_assist_routing_exact": {
+    "message": "Định tuyến mô hình Assist chính xác có sẵn. Nhà cung cấp và mô hình đã chọn sẽ được xác minh trước khi chạy mỗi bản nháp.",
+    "description": "Runtime interface message assist.routing.exact"
+  },
+  "runtime_assist_routing_exact_short": {
+    "message": "Đã xác nhận định tuyến mô hình chính xác",
+    "description": "Runtime interface message assist.routing.exact_short"
+  },
+  "runtime_assist_routing_fallback": {
+    "message": "Lựa chọn mô hình Assist của bạn vẫn được lưu. Cổng này không thể thực thi một mô hình chính xác, vì vậy Assist sử dụng mặc định của cổng và gắn nhãn cho mọi kết quả dự phòng.",
+    "description": "Runtime interface message assist.routing.fallback"
+  },
+  "runtime_assist_routing_fallback_short": {
+    "message": "Quay trở lại mặc định cổng khi không có định tuyến chính xác",
+    "description": "Runtime interface message assist.routing.fallback_short"
+  },
+  "runtime_commands_click_or_enter": {
+    "message": "Nhấp hoặc nhấn Enter để chạy.",
+    "description": "Runtime interface message commands.click_or_enter"
+  },
+  "runtime_commands_details": {
+    "message": "Chi tiết lệnh",
+    "description": "Runtime interface message commands.details"
+  },
+  "runtime_commands_insert_then_detail": {
+    "message": "Nhấp để chèn, sau đó thêm chi tiết.",
+    "description": "Runtime interface message commands.insert_then_detail"
+  },
+  "runtime_commands_runs_immediately": {
+    "message": "Chạy ngay lập tức với bối cảnh trình duyệt hiện tại.",
+    "description": "Runtime interface message commands.runs_immediately"
+  },
+  "runtime_common_current": {
+    "message": "hiện tại",
+    "description": "Runtime interface message common.current"
+  },
+  "runtime_common_follow": {
+    "message": "theo dõi",
+    "description": "Runtime interface message common.follow"
+  },
+  "runtime_common_live": {
+    "message": "trực tiếp",
+    "description": "Runtime interface message common.live"
+  },
+  "runtime_common_lock": {
+    "message": "khóa",
+    "description": "Runtime interface message common.lock"
+  },
+  "runtime_common_none": {
+    "message": "không có",
+    "description": "Runtime interface message common.none"
+  },
+  "runtime_common_offline": {
+    "message": "ngoại tuyến",
+    "description": "Runtime interface message common.offline"
+  },
+  "runtime_common_online": {
+    "message": "trực tuyến",
+    "description": "Runtime interface message common.online"
+  },
+  "runtime_common_skills": {
+    "message": "kỹ năng",
+    "description": "Runtime interface message common.skills"
+  },
+  "runtime_common_using": {
+    "message": "Đang sử dụng",
+    "description": "Runtime interface message common.using"
+  },
+  "runtime_composer_attach": {
+    "message": "＋ Đính kèm",
+    "description": "Runtime interface message composer.attach"
+  },
+  "runtime_composer_chat_label": {
+    "message": "TRÒ CHUYỆN",
+    "description": "Runtime interface message composer.chat_label"
+  },
+  "runtime_composer_connect_first": {
+    "message": "Kết nối với Hermes trước",
+    "description": "Runtime interface message composer.connect_first"
+  },
+  "runtime_composer_queue_message": {
+    "message": "Tin nhắn xếp hàng",
+    "description": "Runtime interface message composer.queue_message"
+  },
+  "runtime_connect_approve_or_paste": {
+    "message": "Phê duyệt ghép nối khi có sẵn hoặc dán",
+    "description": "Runtime interface message connect.approve_or_paste"
+  },
+  "runtime_connect_clone_build_load": {
+    "message": "Sao chép kho lưu trữ này, xây dựng nó và tải",
+    "description": "Runtime interface message connect.clone_build_load"
+  },
+  "runtime_connect_folder_unpacked": {
+    "message": "thư mục được giải nén.",
+    "description": "Runtime interface message connect.folder_unpacked"
+  },
+  "runtime_connect_manual_setup_suffix": {
+    "message": "để thiết lập thủ công.",
+    "description": "Runtime interface message connect.manual_setup_suffix"
+  },
+  "runtime_connection_not_configured_short": {
+    "message": "chưa được cấu hình",
+    "description": "Runtime interface message connection.not_configured_short"
+  },
+  "runtime_connection_unknown_transport": {
+    "message": "giao thức truyền tải không xác định",
+    "description": "Runtime interface message connection.unknown_transport"
+  },
+  "runtime_context_attached_tab": {
+    "message": "Tab đính kèm",
+    "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_browser_tab_handoff": {
+    "message": "Chuyển giao tab trình duyệt {tabId}",
+    "description": "Runtime interface message context.browser_tab_handoff"
+  },
+  "runtime_context_follow_active_tab": {
+    "message": "Theo dõi tab đang hoạt động",
+    "description": "Runtime interface message context.follow_active_tab"
+  },
+  "runtime_context_in": {
+    "message": "VÀO",
+    "description": "Runtime interface message context.in"
+  },
+  "runtime_context_include_all_tabs": {
+    "message": "Bao gồm tất cả các tab",
+    "description": "Runtime interface message context.include_all_tabs"
+  },
+  "runtime_context_include_prompt_tab": {
+    "message": "Đưa tab này vào danh sách tab lời nhắc",
+    "description": "Runtime interface message context.include_prompt_tab"
+  },
+  "runtime_context_no_page": {
+    "message": "không có trang",
+    "description": "Runtime interface message context.no_page"
+  },
+  "runtime_context_out": {
+    "message": "RA",
+    "description": "Runtime interface message context.out"
+  },
+  "runtime_context_page_only": {
+    "message": "Chỉ trang",
+    "description": "Runtime interface message context.page_only"
+  },
+  "runtime_context_pin_current_tab": {
+    "message": "Ghim tab hiện tại",
+    "description": "Runtime interface message context.pin_current_tab"
+  },
+  "runtime_context_pin_tab": {
+    "message": "Ghim: {title}",
+    "description": "Runtime interface message context.pin_tab"
+  },
+  "runtime_context_pinned_tab": {
+    "message": "Tab được ghim",
+    "description": "Runtime interface message context.pinned_tab"
+  },
+  "runtime_context_refresh_page": {
+    "message": "Làm mới bối cảnh trang",
+    "description": "Runtime interface message context.refresh_page"
+  },
+  "runtime_context_remove_prompt_tab": {
+    "message": "Xóa tab này khỏi danh sách tab lời nhắc",
+    "description": "Runtime interface message context.remove_prompt_tab"
+  },
+  "runtime_context_tokens": {
+    "message": "mã thông báo",
+    "description": "Runtime interface message context.tokens"
+  },
+  "runtime_context_unlock_pinned_tab": {
+    "message": "Mở khóa tab đã ghim",
+    "description": "Runtime interface message context.unlock_pinned_tab"
+  },
+  "runtime_diagnostic_api_authorization_health_detail": {
+    "message": "Kiểm tra tình trạng đã phản hồi, nhưng các tuyến Browser/mô hình được bảo vệ cần Authorization: Bearer *** Hãy dán khóa API hoặc mã thông báo trình duyệt có phạm vi trong Cài đặt.",
+    "description": "Runtime interface message diagnostic.api_authorization_health_detail"
+  },
+  "runtime_diagnostic_api_authorization_title": {
+    "message": "Máy chủ API cần ủy quyền",
+    "description": "Runtime interface message diagnostic.api_authorization_title"
+  },
+  "runtime_diagnostic_api_rejected_detail": {
+    "message": "Hermes đã từ chối yêu cầu này. Hãy kiểm tra khóa API/mã thông báo trình duyệt và bảo đảm URL trỏ đến máy chủ API, không phải điểm cuối SSO Dashboard.",
+    "description": "Runtime interface message diagnostic.api_rejected_detail"
+  },
+  "runtime_diagnostic_auth_detail": {
+    "message": "Hermes API đã từ chối yêu cầu. Hãy kiểm tra mã thông báo Browser API trong Cài đặt và bảo đảm mã đó khớp với cổng Hermes đang chạy.",
+    "description": "Runtime interface message diagnostic.auth_detail"
+  },
+  "runtime_diagnostic_auth_title": {
+    "message": "Xác thực Hermes thất bại",
+    "description": "Runtime interface message diagnostic.auth_title"
+  },
+  "runtime_diagnostic_auth_user": {
+    "message": "Mã thông báo Hermes API đã bị từ chối. Hãy cập nhật mã thông báo trong Cài đặt Browser, rồi kết nối lại.",
+    "description": "Runtime interface message diagnostic.auth_user"
+  },
+  "runtime_diagnostic_cors_extension_detail": {
+    "message": "Browser không thể truy cập Hermes API từ nguồn gốc tiện ích mở rộng này. Hãy thêm chrome-extension://<extension-id> vào API_SERVER_CORS_ORIGINS trên máy chủ từ xa.",
+    "description": "Runtime interface message diagnostic.cors_extension_detail"
+  },
+  "runtime_diagnostic_cors_title": {
+    "message": "Nguồn gốc CORS không được phép",
+    "description": "Runtime interface message diagnostic.cors_title"
+  },
+  "runtime_diagnostic_dashboard_url_detail": {
+    "message": "Đây có vẻ là điểm cuối SSO Hermes Dashboard. Chế độ Browser API cần URL máy chủ Hermes API trên :8642 cùng với Authorization: Bearer ***",
+    "description": "Runtime interface message diagnostic.dashboard_url_detail"
+  },
+  "runtime_diagnostic_dashboard_url_title": {
+    "message": "Đã phát hiện URL Dashboard",
+    "description": "Runtime interface message diagnostic.dashboard_url_title"
+  },
+  "runtime_diagnostic_gateway_error_title": {
+    "message": "Lỗi cổng Hermes",
+    "description": "Runtime interface message diagnostic.gateway_error_title"
+  },
+  "runtime_diagnostic_gateway_unreachable_detail": {
+    "message": "Không thể truy cập cổng Hermes.",
+    "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
+  },
+  "runtime_diagnostic_network_detail": {
+    "message": "Browser không thể truy cập Hermes API. Hãy kiểm tra URL cổng, định tuyến tường lửa/VPN và cài đặt CORS/nguồn gốc cho tiện ích mở rộng này.",
+    "description": "Runtime interface message diagnostic.network_detail"
+  },
+  "runtime_diagnostic_network_title": {
+    "message": "Lỗi mạng/CORS Hermes",
+    "description": "Runtime interface message diagnostic.network_title"
+  },
+  "runtime_diagnostic_network_user": {
+    "message": "Browser không thể truy cập Hermes vì yêu cầu đã thất bại ở lớp mạng/CORS.",
+    "description": "Runtime interface message diagnostic.network_user"
+  },
+  "runtime_diagnostic_remote_setup_title": {
+    "message": "Sự cố thiết lập từ xa",
+    "description": "Runtime interface message diagnostic.remote_setup_title"
+  },
+  "runtime_diagnostic_remote_unclassified_detail": {
+    "message": "Browser Extension không thể phân loại phản hồi cổng từ xa này.",
+    "description": "Runtime interface message diagnostic.remote_unclassified_detail"
+  },
+  "runtime_diagnostic_route_detail": {
+    "message": "Tuyến cổng Hermes không khả dụng trong runtime này. Hãy cập nhật/khởi động lại Hermes hoặc sử dụng chế độ dự phòng được tài liệu hướng dẫn khi có sẵn.",
+    "description": "Runtime interface message diagnostic.route_detail"
+  },
+  "runtime_diagnostic_route_title": {
+    "message": "Tuyến Hermes không khả dụng",
+    "description": "Runtime interface message diagnostic.route_title"
+  },
+  "runtime_diagnostic_route_user": {
+    "message": "Runtime Hermes này chưa cung cấp tuyến Browser được yêu cầu.",
+    "description": "Runtime interface message diagnostic.route_user"
+  },
+  "runtime_diagnostic_runtime_exception_detail": {
+    "message": "Máy chủ Hermes API có thể truy cập, nhưng Hermes Agent thượng nguồn đã phát sinh ngoại lệ runtime. Điều này thường chỉ ra sự cố runtime/công cụ tùy chọn như computer_use/cua-driver, không phải xác thực Browser, ghép cặp, CORS hoặc đóng gói.",
+    "description": "Runtime interface message diagnostic.runtime_exception_detail"
+  },
+  "runtime_diagnostic_runtime_exception_title": {
+    "message": "Ngoại lệ runtime Hermes",
+    "description": "Runtime interface message diagnostic.runtime_exception_title"
+  },
+  "runtime_diagnostic_runtime_exception_user": {
+    "message": "Đã phát hiện traceback cổng Hermes bên trong Hermes Agent thượng nguồn. Browser có thể duy trì kết nối; hãy kiểm tra nhật ký Hermes và chạy `hermes computer-use doctor` nếu computer_use/cua-driver xuất hiện trong traceback.",
+    "description": "Runtime interface message diagnostic.runtime_exception_user"
+  },
+  "runtime_diagnostics_surface": {
+    "message": "bề mặt",
+    "description": "Runtime interface message diagnostics.surface"
+  },
+  "runtime_fulltab_handoff_opened_from": {
+    "message": "Được mở từ {source}.",
+    "description": "Runtime interface message fulltab.handoff.opened_from"
+  },
+  "runtime_fulltab_handoff_opened_from_tab": {
+    "message": "Được mở từ {source} trên tab trình duyệt {tabId}.",
+    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
+  },
+  "runtime_image_generated": {
+    "message": "Hình ảnh đã tạo",
+    "description": "Runtime interface message image.generated"
+  },
+  "runtime_image_generated_preview": {
+    "message": "Xem trước hình ảnh đã tạo",
+    "description": "Runtime interface message image.generated_preview"
+  },
+  "runtime_image_generating": {
+    "message": "Hermes đang tạo hình ảnh",
+    "description": "Runtime interface message image.generating"
+  },
+  "runtime_image_meta_active": {
+    "message": "{aspectRatio} // đang hoạt động",
+    "description": "Runtime interface message image.meta_active"
+  },
+  "runtime_image_phase_denoising": {
+    "message": "KHỬ NHIỄU",
+    "description": "Runtime interface message image.phase_denoising"
+  },
+  "runtime_image_phase_finalizing": {
+    "message": "HOÀN TẤT",
+    "description": "Runtime interface message image.phase_finalizing"
+  },
+  "runtime_image_phase_latent": {
+    "message": "TRƯỜNG TIỀM ẨN",
+    "description": "Runtime interface message image.phase_latent"
+  },
+  "runtime_image_phase_resolving": {
+    "message": "GIẢI QUYẾT",
+    "description": "Runtime interface message image.phase_resolving"
+  },
+  "runtime_items_count": {
+    "message": "{count} mục",
+    "description": "Runtime interface message items.count"
+  },
+  "runtime_manifest_extension_description": {
+    "message": "Thanh bên tích hợp sẵn trong trình duyệt dành cho Hermes Agent. Kết nối ngữ cảnh web với môi trường chạy Hermes cục bộ hoặc từ xa của bạn.",
+    "description": "Runtime interface message manifest.extension_description"
+  },
+  "runtime_manifest_extension_name": {
+    "message": "Tiện ích mở rộng Hermes Browser",
+    "description": "Runtime interface message manifest.extension_name"
+  },
+  "runtime_manifest_extension_short_name": {
+    "message": "Hermes Ext",
+    "description": "Runtime interface message manifest.extension_short_name"
+  },
+  "runtime_manifest_open_extension": {
+    "message": "Mở tiện ích mở rộng Hermes Browser",
+    "description": "Runtime interface message manifest.open_extension"
+  },
+  "runtime_manifest_open_sidebar": {
+    "message": "Mở thanh bên Hermes Browser",
+    "description": "Runtime interface message manifest.open_sidebar"
+  },
+  "runtime_permissions_not_granted": {
+    "message": "Quyền sử dụng micrô không được cấp.\n\n{error}\n\nNhấp vào Mở cài đặt micrô, đặt Micrô thành Cho phép Hermes Browser Extension, quay lại đây và thử lại.",
+    "description": "Runtime interface message permissions.not_granted"
+  },
+  "runtime_permissions_state": {
+    "message": "Trạng thái cho phép micrô: {state}. Nếu Chromium hiển thị thông tin này là bị chặn, hãy mở cài đặt micrô và đặt Micrô thành Cho phép Hermes Browser Extension.",
+    "description": "Runtime interface message permissions.state"
+  },
+  "runtime_picker_pick_different": {
+    "message": "◈ Chọn phần tử khác",
+    "description": "Runtime interface message picker.pick_different"
+  },
+  "runtime_picker_picking_element": {
+    "message": "◈ Đang chọn phần tử...",
+    "description": "Runtime interface message picker.picking_element"
+  },
+  "runtime_profile_available": {
+    "message": "Có {count} hồ sơ khả dụng",
+    "description": "Runtime interface message profile.available"
+  },
+  "runtime_profile_available_suffix": {
+    "message": "hồ sơ khả dụng",
+    "description": "Runtime interface message profile.available_suffix"
+  },
+  "runtime_profile_default": {
+    "message": "Hồ sơ mặc định",
+    "description": "Runtime interface message profile.default"
+  },
+  "runtime_profile_refresh": {
+    "message": "↻ Hồ sơ",
+    "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_using": {
+    "message": "Đang sử dụng {name}{model}{skills}",
+    "description": "Runtime interface message profile.using"
+  },
+  "runtime_run_stop": {
+    "message": "■ Dừng lại",
+    "description": "Runtime interface message run.stop"
+  },
+  "runtime_runtime_fast_mode_toggle": {
+    "message": "Chế độ nhanh {state}",
+    "description": "Runtime interface message runtime.fast_mode_toggle"
+  },
+  "runtime_runtime_model_control_title": {
+    "message": "{model} · {options}. Thay đổi mô hình và tùy chọn thời gian chạy.",
+    "description": "Runtime interface message runtime.model_control_title"
+  },
+  "runtime_runtime_options_heading": {
+    "message": "Tùy chọn thời gian chạy",
+    "description": "Runtime interface message runtime.options_heading"
+  },
+  "runtime_runtime_options_saved": {
+    "message": "Tùy chọn thời gian chạy: {summary}",
+    "description": "Runtime interface message runtime.options_saved"
+  },
+  "runtime_runtime_reasoning": {
+    "message": "Lý luận {effort}",
+    "description": "Runtime interface message runtime.reasoning"
+  },
+  "runtime_runtime_thinking_off": {
+    "message": "Tắt suy nghĩ",
+    "description": "Runtime interface message runtime.thinking_off"
+  },
+  "runtime_runtime_thinking_toggle": {
+    "message": "Suy nghĩ {state}",
+    "description": "Runtime interface message runtime.thinking_toggle"
+  },
+  "runtime_session_copy_id_for": {
+    "message": "Sao chép ID phiên cho {title}",
+    "description": "Runtime interface message session.copy_id_for"
+  },
+  "runtime_session_new_extension_session": {
+    "message": "＋ Phiên Hermes Browser Extension mới",
+    "description": "Runtime interface message session.new_extension_session"
+  },
+  "runtime_session_opening": {
+    "message": "Đang mở {title}",
+    "description": "Runtime interface message session.opening"
+  },
+  "runtime_session_rail_save_failed": {
+    "message": "Không thể lưu đường ray phiên: {error}",
+    "description": "Runtime interface message session.rail_save_failed"
+  },
+  "runtime_session_rename_named": {
+    "message": "Đổi tên phiên {title}",
+    "description": "Runtime interface message session.rename_named"
+  },
+  "runtime_settings_language_description": {
+    "message": "Chọn ngôn ngữ giao diện.",
+    "description": "Runtime interface message settings.language.description"
+  },
+  "runtime_settings_language_label": {
+    "message": "Ngôn ngữ",
+    "description": "Runtime interface message settings.language.label"
+  },
+  "runtime_settings_local_api_setup_hint": {
+    "message": "Máy chủ API cục bộ (mặc định http://127.0.0.1:8642). Dán key của nó bên dưới.",
+    "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_public_alpha_load_unpacked": {
+    "message": "· giải nén alpha / tải công khai",
+    "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_status_connection_not_responding": {
+    "message": "{summary} không phản hồi. Hãy khởi động Hermes Desktop/Gateway, rồi kết nối lại.",
+    "description": "Runtime interface message status.connection_not_responding"
+  },
+  "runtime_status_gmail_no_rendered": {
+    "message": "Không có nội dung thư đã được hiển thị.",
+    "description": "Runtime interface message status.gmail_no_rendered"
+  },
+  "runtime_status_model_discovery_limited": {
+    "message": "Cổng chỉ hiển thị một hàng /v1/models và /api/sessions không khả dụng ({error}).",
+    "description": "Runtime interface message status.model_discovery_limited"
+  },
+  "runtime_status_model_lock_failed_detail": {
+    "message": "{error}. Không gửi vì Hermes có thể quay về mô hình toàn cục.",
+    "description": "Runtime interface message status.model_lock_failed_detail"
+  },
+  "runtime_status_model_registry_fallback": {
+    "message": "Đang quay về /v1/models ({error}).",
+    "description": "Runtime interface message status.model_registry_fallback"
+  },
+  "runtime_status_page_context_restricted": {
+    "message": "{url} - ngữ cảnh bị hạn chế",
+    "description": "Runtime interface message status.page_context_restricted"
+  },
+  "runtime_status_profile_selected_restart": {
+    "message": "Đã chọn {profile}. Hãy khởi động lại cổng Hermes nếu hồ sơ đang chạy không thay đổi ngay lập tức.",
+    "description": "Runtime interface message status.profile_selected_restart"
+  },
+  "runtime_status_profile_switch_unavailable": {
+    "message": "{error}. Browser sẽ sử dụng hồ sơ Hermes hiện đang chạy.",
+    "description": "Runtime interface message status.profile_switch_unavailable"
+  },
+  "runtime_tasks_summary": {
+    "message": "{complete} đã hoàn thành · {active} đang hoạt động",
+    "description": "Runtime interface message tasks.summary"
+  },
+  "runtime_ui_0_complete_0_active": {
+    "message": "0 hoàn thành · 0 hoạt động",
+    "description": "Runtime interface message ui.0.complete.0.active"
+  },
+  "runtime_ui_accept": {
+    "message": "Chấp nhận",
+    "description": "Runtime interface message ui.accept"
+  },
+  "runtime_ui_access": {
+    "message": "Truy cập",
+    "description": "Runtime interface message ui.access"
+  },
+  "runtime_ui_account": {
+    "message": "Tài khoản",
+    "description": "Runtime interface message ui.account"
+  },
+  "runtime_ui_action": {
+    "message": "hành động",
+    "description": "Runtime interface message ui.action"
+  },
+  "runtime_ui_actions": {
+    "message": "hành động",
+    "description": "Runtime interface message ui.actions"
+  },
+  "runtime_ui_active": {
+    "message": "hoạt động",
+    "description": "Runtime interface message ui.active"
+  },
+  "runtime_ui_active_profile": {
+    "message": "Hồ sơ hoạt động",
+    "description": "Runtime interface message ui.active.profile"
+  },
+  "runtime_ui_active_tab": {
+    "message": "Tab hoạt động",
+    "description": "Runtime interface message ui.active.tab"
+  },
+  "runtime_ui_active_tab_2bc454c2": {
+    "message": "THẺ HOẠT ĐỘNG",
+    "description": "Runtime interface message ui.active.tab.2bc454c2"
+  },
+  "runtime_ui_active_tab_ready": {
+    "message": "Tab hoạt động đã sẵn sàng",
+    "description": "Runtime interface message ui.active.tab.ready"
+  },
+  "runtime_ui_active_tab_status": {
+    "message": "Trạng thái tab đang hoạt động",
+    "description": "Runtime interface message ui.active.tab.status"
+  },
+  "runtime_ui_activity": {
+    "message": "Hoạt động",
+    "description": "Runtime interface message ui.activity"
+  },
+  "runtime_ui_add": {
+    "message": "Thêm",
+    "description": "Runtime interface message ui.add"
+  },
+  "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
+    "message": "Thêm hướng dẫn sau lệnh gạch chéo trước khi gửi.",
+    "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
+  },
+  "runtime_ui_adjust": {
+    "message": "điều chỉnh",
+    "description": "Runtime interface message ui.adjust"
+  },
+  "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
+    "message": "Điều chỉnh bảng điều khiển bên để dễ đọc mà không cần thay đổi mức thu phóng của trình duyệt.",
+    "description": "Runtime interface message ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom"
+  },
+  "runtime_ui_agent": {
+    "message": "TÁC NHÂN",
+    "description": "Runtime interface message ui.agent"
+  },
+  "runtime_ui_agent_5ce2e6f4": {
+    "message": "tác nhân",
+    "description": "Runtime interface message ui.agent.5ce2e6f4"
+  },
+  "runtime_ui_agent_discovery_has_not_run_yet": {
+    "message": "Khám phá tác nhân chưa chạy.",
+    "description": "Runtime interface message ui.agent.discovery.has.not.run.yet"
+  },
+  "runtime_ui_agent_host": {
+    "message": "Máy chủ tác nhân",
+    "description": "Runtime interface message ui.agent.host"
+  },
+  "runtime_ui_agent_host_invalid": {
+    "message": "Máy chủ tác nhân không hợp lệ",
+    "description": "Runtime interface message ui.agent.host.invalid"
+  },
+  "runtime_ui_agent_ports_comma_separated_default_8642_8646": {
+    "message": "Cổng tác nhân (được phân tách bằng dấu phẩy, 8642-8646 mặc định)",
+    "description": "Runtime interface message ui.agent.ports.comma.separated.default.8642.8646"
+  },
+  "runtime_ui_agent_ports_invalid": {
+    "message": "Cổng tác nhân không hợp lệ",
+    "description": "Runtime interface message ui.agent.ports.invalid"
+  },
+  "runtime_ui_agent_profile": {
+    "message": "Hồ sơ tác nhân",
+    "description": "Runtime interface message ui.agent.profile"
+  },
+  "runtime_ui_agent_scheme": {
+    "message": "Giao thức tác nhân",
+    "description": "Runtime interface message ui.agent.scheme"
+  },
+  "runtime_ui_agent_scheme_invalid": {
+    "message": "Giao thức tác nhân không hợp lệ",
+    "description": "Runtime interface message ui.agent.scheme.invalid"
+  },
+  "runtime_ui_agent_settings_invalid": {
+    "message": "Cài đặt tác nhân không hợp lệ",
+    "description": "Runtime interface message ui.agent.settings.invalid"
+  },
+  "runtime_ui_agents_scanned": {
+    "message": "Tác nhân được quét",
+    "description": "Runtime interface message ui.agents.scanned"
+  },
+  "runtime_ui_all": {
+    "message": "Tất cả",
+    "description": "Runtime interface message ui.all"
+  },
+  "runtime_ui_allow": {
+    "message": "Cho phép",
+    "description": "Runtime interface message ui.allow"
+  },
+  "runtime_ui_allow_hermes_microphone": {
+    "message": "Cho phép micrô Hermes",
+    "description": "Runtime interface message ui.allow.hermes.microphone"
+  },
+  "runtime_ui_allow_microphone": {
+    "message": "Cho phép micrô",
+    "description": "Runtime interface message ui.allow.microphone"
+  },
+  "runtime_ui_allow_microphone_access": {
+    "message": "Cho phép truy cập micrô",
+    "description": "Runtime interface message ui.allow.microphone.access"
+  },
+  "runtime_ui_already_connected": {
+    "message": "Đã kết nối",
+    "description": "Runtime interface message ui.already.connected"
+  },
+  "runtime_ui_always": {
+    "message": "Luôn luôn",
+    "description": "Runtime interface message ui.always"
+  },
+  "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
+    "message": "Tính năng nghe đánh thức của trình duyệt luôn bật yêu cầu hỗ trợ tài liệu ngoài màn hình Chromium.",
+    "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
+  },
+  "runtime_ui_answer": {
+    "message": "Trả lời",
+    "description": "Runtime interface message ui.answer"
+  },
+  "runtime_ui_api": {
+    "message": "API",
+    "description": "Runtime interface message ui.api"
+  },
+  "runtime_ui_api_key_blank_dashboard": {
+    "message": "Khóa API (trống = bảng điều khiển)",
+    "description": "Runtime interface message ui.api.key.blank.dashboard"
+  },
+  "runtime_ui_api_key_browser_token": {
+    "message": "Khóa API / mã thông báo trình duyệt",
+    "description": "Runtime interface message ui.api.key.browser.token"
+  },
+  "runtime_ui_api_server_key": {
+    "message": "API_SERVER_KEY",
+    "description": "Runtime interface message ui.api.server.key"
+  },
+  "runtime_ui_api_token": {
+    "message": "Mã thông báo API",
+    "description": "Runtime interface message ui.api.token"
+  },
+  "runtime_ui_api_token_required": {
+    "message": "Cần có mã thông báo API",
+    "description": "Runtime interface message ui.api.token.required"
+  },
+  "runtime_ui_app": {
+    "message": "ứng dụng",
+    "description": "Runtime interface message ui.app"
+  },
+  "runtime_ui_appearance": {
+    "message": "Giao diện",
+    "description": "Runtime interface message ui.appearance"
+  },
+  "runtime_ui_apply": {
+    "message": "Áp dụng",
+    "description": "Runtime interface message ui.apply"
+  },
+  "runtime_ui_apply_to_field": {
+    "message": "Áp dụng cho lĩnh vực",
+    "description": "Runtime interface message ui.apply.to.field"
+  },
+  "runtime_ui_approval_opened_approve_hermes_browser_extension_then_return_here": {
+    "message": "Đã mở phê duyệt. Phê duyệt Hermes Browser Extension, sau đó quay lại đây.",
+    "description": "Runtime interface message ui.approval.opened.approve.hermes.browser.extension.then.return.here"
+  },
+  "runtime_ui_approve": {
+    "message": "Phê duyệt",
+    "description": "Runtime interface message ui.approve"
+  },
+  "runtime_ui_artifacts": {
+    "message": "Tạo phẩm",
+    "description": "Runtime interface message ui.artifacts"
+  },
+  "runtime_ui_ask": {
+    "message": "Hỏi",
+    "description": "Runtime interface message ui.ask"
+  },
+  "runtime_ui_ask_about_any_page_hermes_sees_the_active_tab_selected_text_pag_b2a32c39": {
+    "message": "Hỏi về bất kỳ trang nào. Hermes xem tab đang hoạt động, văn bản đã chọn, ngữ cảnh trang và các tab đang mở.",
+    "description": "Runtime interface message ui.ask.about.any.page.hermes.sees.the.active.tab.selected.text.pag.b2a32c39"
+  },
+  "runtime_ui_ask_every_time": {
+    "message": "Hỏi mọi lúc",
+    "description": "Runtime interface message ui.ask.every.time"
+  },
+  "runtime_ui_ask_hermes": {
+    "message": "Hỏi Hermes",
+    "description": "Runtime interface message ui.ask.hermes"
+  },
+  "runtime_ui_ask_hermes_36d55d5a": {
+    "message": "HỎI HERMES",
+    "description": "Runtime interface message ui.ask.hermes.36d55d5a"
+  },
+  "runtime_ui_ask_hermes_about_the_active_page_context": {
+    "message": "Hỏi Hermes về bối cảnh trang đang hoạt động.",
+    "description": "Runtime interface message ui.ask.hermes.about.the.active.page.context"
+  },
+  "runtime_ui_ask_hermes_about_this_page": {
+    "message": "Hỏi Hermes về trang này...",
+    "description": "Runtime interface message ui.ask.hermes.about.this.page"
+  },
+  "runtime_ui_ask_hermes_about_this_selection": {
+    "message": "Hỏi Hermes về lựa chọn này",
+    "description": "Runtime interface message ui.ask.hermes.about.this.selection"
+  },
+  "runtime_ui_ask_hermes_anything": {
+    "message": "Hãy hỏi Hermes bất cứ điều gì…",
+    "description": "Runtime interface message ui.ask.hermes.anything"
+  },
+  "runtime_ui_assist_could_not_run": {
+    "message": "Assist không chạy được",
+    "description": "Runtime interface message ui.assist.could.not.run"
+  },
+  "runtime_ui_assist_options": {
+    "message": "Tùy chọn hỗ trợ",
+    "description": "Runtime interface message ui.assist.options"
+  },
+  "runtime_ui_assist_session_history": {
+    "message": "Hỗ trợ lịch sử phiên",
+    "description": "Runtime interface message ui.assist.session.history"
+  },
+  "runtime_ui_assistant": {
+    "message": "Trợ lý",
+    "description": "Runtime interface message ui.assistant"
+  },
+  "runtime_ui_attach": {
+    "message": "Đính kèm",
+    "description": "Runtime interface message ui.attach"
+  },
+  "runtime_ui_attach_context": {
+    "message": "Đính kèm bối cảnh",
+    "description": "Runtime interface message ui.attach.context"
+  },
+  "runtime_ui_attach_files": {
+    "message": "Đính kèm tập tin",
+    "description": "Runtime interface message ui.attach.files"
+  },
+  "runtime_ui_attach_the_active_signed_in_hermes_cloud_agent_tab_with_a_one_use_ticket": {
+    "message": "Đính kèm tab tác nhân Hermes Cloud đã đăng nhập đang hoạt động với một phiếu sử dụng một lần.",
+    "description": "Runtime interface message ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket"
+  },
+  "runtime_ui_attach_to_current_tab": {
+    "message": "Đính kèm vào tab hiện tại",
+    "description": "Runtime interface message ui.attach.to.current.tab"
+  },
+  "runtime_ui_attachment": {
+    "message": "Tệp đính kèm",
+    "description": "Runtime interface message ui.attachment"
+  },
+  "runtime_ui_attachments": {
+    "message": "Tệp đính kèm",
+    "description": "Runtime interface message ui.attachments"
+  },
+  "runtime_ui_attribute": {
+    "message": "Thuộc tính",
+    "description": "Runtime interface message ui.attribute"
+  },
+  "runtime_ui_audio": {
+    "message": "Âm thanh",
+    "description": "Runtime interface message ui.audio"
+  },
+  "runtime_ui_authorization": {
+    "message": "Ủy quyền",
+    "description": "Runtime interface message ui.authorization"
+  },
+  "runtime_ui_auto": {
+    "message": "Tự động",
+    "description": "Runtime interface message ui.auto"
+  },
+  "runtime_ui_auto_name_browser_sessions": {
+    "message": "Tự động đặt tên phiên trình duyệt",
+    "description": "Runtime interface message ui.auto.name.browser.sessions"
+  },
+  "runtime_ui_auto_name_skipped": {
+    "message": "Đã bỏ qua việc tự động đặt tên",
+    "description": "Runtime interface message ui.auto.name.skipped"
+  },
+  "runtime_ui_automatic_pairing_is_not_available_on_this_hermes_runtime_open_000a2372": {
+    "message": "Ghép nối tự động không khả dụng trên Hermes runtime này. Mở Cài đặt và sử dụng Thiết lập thủ công với mã thông báo Gateway URL và API của bạn.",
+    "description": "Runtime interface message ui.automatic.pairing.is.not.available.on.this.hermes.runtime.open.000a2372"
+  },
+  "runtime_ui_automatic_replacement": {
+    "message": "Tự động thay thế",
+    "description": "Runtime interface message ui.automatic.replacement"
+  },
+  "runtime_ui_available": {
+    "message": "có sẵn",
+    "description": "Runtime interface message ui.available"
+  },
+  "runtime_ui_available_7c62a142": {
+    "message": "Có sẵn",
+    "description": "Runtime interface message ui.available.7c62a142"
+  },
+  "runtime_ui_back": {
+    "message": "Quay lại",
+    "description": "Runtime interface message ui.back"
+  },
+  "runtime_ui_back_to_actions": {
+    "message": "Quay lại hành động",
+    "description": "Runtime interface message ui.back.to.actions"
+  },
+  "runtime_ui_back_to_result": {
+    "message": "Quay lại kết quả",
+    "description": "Runtime interface message ui.back.to.result"
+  },
+  "runtime_ui_background": {
+    "message": "Nền",
+    "description": "Runtime interface message ui.background"
+  },
+  "runtime_ui_block": {
+    "message": "Chặn",
+    "description": "Runtime interface message ui.block"
+  },
+  "runtime_ui_blocked": {
+    "message": "Bị chặn",
+    "description": "Runtime interface message ui.blocked"
+  },
+  "runtime_ui_blocked_fcc4cce1": {
+    "message": "ĐÃ CHẶN",
+    "description": "Runtime interface message ui.blocked.fcc4cce1"
+  },
+  "runtime_ui_body": {
+    "message": "Thân hình",
+    "description": "Runtime interface message ui.body"
+  },
+  "runtime_ui_browser": {
+    "message": "Trình duyệt",
+    "description": "Runtime interface message ui.browser"
+  },
+  "runtime_ui_browser_behavior": {
+    "message": "Hành vi của trình duyệt",
+    "description": "Runtime interface message ui.browser.behavior"
+  },
+  "runtime_ui_browser_extension": {
+    "message": "Tiện ích mở rộng trình duyệt",
+    "description": "Runtime interface message ui.browser.extension"
+  },
+  "runtime_ui_browser_extension_full_view": {
+    "message": "Chế độ xem đầy đủ tiện ích mở rộng trình duyệt",
+    "description": "Runtime interface message ui.browser.extension.full.view"
+  },
+  "runtime_ui_browser_fallback_phrase": {
+    "message": "Cụm từ dự phòng của trình duyệt",
+    "description": "Runtime interface message ui.browser.fallback.phrase"
+  },
+  "runtime_ui_browser_local_fallback": {
+    "message": "Dự phòng trình duyệt cục bộ",
+    "description": "Runtime interface message ui.browser.local.fallback"
+  },
+  "runtime_ui_browser_update_review": {
+    "message": "Đánh giá cập nhật trình duyệt",
+    "description": "Runtime interface message ui.browser.update.review"
+  },
+  "runtime_ui_browser_updates": {
+    "message": "Cập nhật trình duyệt",
+    "description": "Runtime interface message ui.browser.updates"
+  },
+  "runtime_ui_build": {
+    "message": "xây dựng",
+    "description": "Runtime interface message ui.build"
+  },
+  "runtime_ui_building_redacted_diagnostics": {
+    "message": "Xây dựng chẩn đoán được biên tập lại...",
+    "description": "Runtime interface message ui.building.redacted.diagnostics"
+  },
+  "runtime_ui_cache": {
+    "message": "Bộ nhớ đệm",
+    "description": "Runtime interface message ui.cache"
+  },
+  "runtime_ui_cancel": {
+    "message": "Hủy bỏ",
+    "description": "Runtime interface message ui.cancel"
+  },
+  "runtime_ui_canonical_hermes_history_model_selection_tools_and_generated_me_c7aacd25": {
+    "message": "Lịch sử Canonical Hermes, lựa chọn mô hình, công cụ và phương tiện được tạo vẫn được đính kèm với phiên này.",
+    "description": "Runtime interface message ui.canonical.hermes.history.model.selection.tools.and.generated.me.c7aacd25"
+  },
+  "runtime_ui_capabilities": {
+    "message": "Khả năng",
+    "description": "Runtime interface message ui.capabilities"
+  },
+  "runtime_ui_capability": {
+    "message": "Khả năng",
+    "description": "Runtime interface message ui.capability"
+  },
+  "runtime_ui_capture_visible_gmail_thread": {
+    "message": "Chụp chủ đề Gmail có thể nhìn thấy",
+    "description": "Runtime interface message ui.capture.visible.gmail.thread"
+  },
+  "runtime_ui_card": {
+    "message": "Thẻ",
+    "description": "Runtime interface message ui.card"
+  },
+  "runtime_ui_category": {
+    "message": "Danh mục",
+    "description": "Runtime interface message ui.category"
+  },
+  "runtime_ui_change": {
+    "message": "Thay đổi",
+    "description": "Runtime interface message ui.change"
+  },
+  "runtime_ui_change_model_and_runtime_options": {
+    "message": "Thay đổi tùy chọn mô hình và thời gian chạy",
+    "description": "Runtime interface message ui.change.model.and.runtime.options"
+  },
+  "runtime_ui_changes_apply_instantly_and_are_saved_automatically": {
+    "message": "Các thay đổi được áp dụng ngay lập tức và được lưu tự động.",
+    "description": "Runtime interface message ui.changes.apply.instantly.and.are.saved.automatically"
+  },
+  "runtime_ui_channel": {
+    "message": "Kênh",
+    "description": "Runtime interface message ui.channel"
+  },
+  "runtime_ui_channels": {
+    "message": "Kênh",
+    "description": "Runtime interface message ui.channels"
+  },
+  "runtime_ui_chat_only": {
+    "message": "Chỉ trò chuyện",
+    "description": "Runtime interface message ui.chat.only"
+  },
+  "runtime_ui_chat_only_3b155e99": {
+    "message": "💬 Chỉ trò chuyện",
+    "description": "Runtime interface message ui.chat.only.3b155e99"
+  },
+  "runtime_ui_chat_only_mode_is_active_hermes_will_not_read_or_attach_browser_13891aa3": {
+    "message": "Chế độ chỉ trò chuyện đang hoạt động. Hermes sẽ không đọc hoặc đính kèm ngữ cảnh trình duyệt trong lượt này.",
+    "description": "Runtime interface message ui.chat.only.mode.is.active.hermes.will.not.read.or.attach.browser.13891aa3"
+  },
+  "runtime_ui_chats": {
+    "message": "Trò chuyện",
+    "description": "Runtime interface message ui.chats"
+  },
+  "runtime_ui_check": {
+    "message": "Kiểm tra",
+    "description": "Runtime interface message ui.check"
+  },
+  "runtime_ui_checking": {
+    "message": "Đang kiểm tra...",
+    "description": "Runtime interface message ui.checking"
+  },
+  "runtime_ui_checking_browser_main": {
+    "message": "Đang kiểm tra trình duyệt chính…",
+    "description": "Runtime interface message ui.checking.browser.main"
+  },
+  "runtime_ui_checking_hermes": {
+    "message": "Đang kiểm tra Hermes",
+    "description": "Runtime interface message ui.checking.hermes"
+  },
+  "runtime_ui_checking_settings_gateway_capabilities_models_and_sessions": {
+    "message": "Kiểm tra cài đặt, cổng, khả năng, kiểu máy và phiên.",
+    "description": "Runtime interface message ui.checking.settings.gateway.capabilities.models.and.sessions"
+  },
+  "runtime_ui_choose": {
+    "message": "chọn",
+    "description": "Runtime interface message ui.choose"
+  },
+  "runtime_ui_choose_9fd8325f": {
+    "message": "CHỌN",
+    "description": "Runtime interface message ui.choose.9fd8325f"
+  },
+  "runtime_ui_choose_another_tab_or_follow_the_active_tab": {
+    "message": "Chọn một tab khác hoặc theo dõi tab đang hoạt động.",
+    "description": "Runtime interface message ui.choose.another.tab.or.follow.the.active.tab"
+  },
+  "runtime_ui_choose_any_available_model_for_hermes_assist_if_the_gateway_can_848c1645": {
+    "message": "Chọn bất kỳ mẫu nào có sẵn cho Hermes Assist. Nếu cổng không thể thực thi mô hình chính xác đó, Hỗ trợ sẽ quay trở lại mặc định của cổng một cách rõ ràng và gắn nhãn kết quả.",
+    "description": "Runtime interface message ui.choose.any.available.model.for.hermes.assist.if.the.gateway.can.848c1645"
+  },
+  "runtime_ui_choose_assist_model": {
+    "message": "Chọn mô hình Hỗ trợ",
+    "description": "Runtime interface message ui.choose.assist.model"
+  },
+  "runtime_ui_choose_hermes_model": {
+    "message": "Chọn mẫu Hermes",
+    "description": "Runtime interface message ui.choose.hermes.model"
+  },
+  "runtime_ui_choose_model": {
+    "message": "Chọn mô hình",
+    "description": "Runtime interface message ui.choose.model"
+  },
+  "runtime_ui_choose_the_brightness_treatment_for_this_web_workspace": {
+    "message": "Chọn cách xử lý độ sáng cho không gian làm việc trên Web này.",
+    "description": "Runtime interface message ui.choose.the.brightness.treatment.for.this.web.workspace"
+  },
+  "runtime_ui_choose_the_model_used_by_hermes_assist": {
+    "message": "Chọn model được Hermes Assist sử dụng",
+    "description": "Runtime interface message ui.choose.the.model.used.by.hermes.assist"
+  },
+  "runtime_ui_choose_what_browser_context_is_allowed_into_each_prompt": {
+    "message": "Chọn ngữ cảnh trình duyệt nào được phép đưa vào mỗi lời nhắc.",
+    "description": "Runtime interface message ui.choose.what.browser.context.is.allowed.into.each.prompt"
+  },
+  "runtime_ui_choose_where_ask_explain_improve_and_summarize_selection_tasks_run": {
+    "message": "Chọn nơi thực hiện các nhiệm vụ lựa chọn Hỏi, Giải thích, Cải thiện và Tóm tắt.",
+    "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
+  },
+  "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
+    "message": "Chọn nơi phiên Trình duyệt này đạt đến Hermes.",
+    "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
+  },
+  "runtime_ui_choose_where_to_send": {
+    "message": "Chọn nơi gửi",
+    "description": "Runtime interface message ui.choose.where.to.send"
+  },
+  "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
+    "message": "Chọn hồ sơ tác nhân Hermes mà Trình duyệt sẽ sử dụng khi cổng cục bộ hiển thị hồ sơ.",
+    "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
+  },
+  "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
+    "message": "Chọn tab Hermes đọc và tab đang mở nào xuất hiện trong lời nhắc",
+    "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
+  },
+  "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
+    "message": "Chrome có thể chặn lời nhắc của micrô bên trong bảng điều khiển bên mở rộng. Trang tiện ích mở rộng tạm thời này yêu cầu Chrome quyền truy cập micrô, sau đó đưa bạn trở lại bảng điều khiển bên Hermes.",
+    "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
+  },
+  "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
+    "message": "Chromium có thể chặn việc thu micrô bên trong các tấm bên mở rộng. Tab tiện ích mở rộng hiển thị này ghi lại từ cùng một nguồn gốc tiện ích Hermes khi Hermes STT có sẵn hoặc sử dụng tính năng dự phòng giọng nói của Trình duyệt khi thời gian chạy được kết nối không hiển thị bản ghi âm thanh.",
+    "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
+  },
+  "runtime_ui_class": {
+    "message": "lớp học",
+    "description": "Runtime interface message ui.class"
+  },
+  "runtime_ui_clear": {
+    "message": "Xóa",
+    "description": "Runtime interface message ui.clear"
+  },
+  "runtime_ui_clear_picked_element": {
+    "message": "✕ Xóa phần tử đã chọn",
+    "description": "Runtime interface message ui.clear.picked.element"
+  },
+  "runtime_ui_clear_stored_token": {
+    "message": "Xóa mã thông báo được lưu trữ",
+    "description": "Runtime interface message ui.clear.stored.token"
+  },
+  "runtime_ui_cli": {
+    "message": "CLI",
+    "description": "Runtime interface message ui.cli"
+  },
+  "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
+    "message": "Nhấp vào Cho phép micrô để yêu cầu quyền truy cập. Chromium yêu cầu yêu cầu này được thực hiện từ một trang tiện ích mở rộng hiển thị.",
+    "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
+  },
+  "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
+    "message": "Nhấp vào bất kỳ thành phần nào trên trang. Nhấn Esc để hủy.",
+    "description": "Runtime interface message ui.click.any.element.on.the.page.press.esc.to.cancel"
+  },
+  "runtime_ui_click_connect_to_hermes_or_use_manual_setup_with_a_local_remote_5b53a482": {
+    "message": "Nhấp vào Kết nối với Hermes hoặc sử dụng Thiết lập thủ công với Gateway URL cục bộ/từ xa và mã thông báo.",
+    "description": "Runtime interface message ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482"
+  },
+  "runtime_ui_click_start_dictation_to_grant_microphone_access_and_record": {
+    "message": "Nhấp vào Bắt đầu đọc chính tả để cấp quyền truy cập và ghi âm micrô.",
+    "description": "Runtime interface message ui.click.start.dictation.to.grant.microphone.access.and.record"
+  },
+  "runtime_ui_click_the_mic_again_to_transcribe_with_hermes_speech_to_text": {
+    "message": "Nhấp lại vào micrô để chuyển lời nói thành văn bản bằng Hermes.",
+    "description": "Runtime interface message ui.click.the.mic.again.to.transcribe.with.hermes.speech.to.text"
+  },
+  "runtime_ui_client": {
+    "message": "khách hàng",
+    "description": "Runtime interface message ui.client"
+  },
+  "runtime_ui_close": {
+    "message": "Đóng",
+    "description": "Runtime interface message ui.close"
+  },
+  "runtime_ui_close_dbc87420": {
+    "message": "ĐÓNG",
+    "description": "Runtime interface message ui.close.dbc87420"
+  },
+  "runtime_ui_close_generated_image": {
+    "message": "Đóng hình ảnh được tạo",
+    "description": "Runtime interface message ui.close.generated.image"
+  },
+  "runtime_ui_close_hermes_assist": {
+    "message": "Đóng Hermes Assist",
+    "description": "Runtime interface message ui.close.hermes.assist"
+  },
+  "runtime_ui_close_model_picker": {
+    "message": "Đóng bộ chọn mô hình",
+    "description": "Runtime interface message ui.close.model.picker"
+  },
+  "runtime_ui_close_settings": {
+    "message": "Đóng cài đặt",
+    "description": "Runtime interface message ui.close.settings"
+  },
+  "runtime_ui_close_update_review": {
+    "message": "Đóng đánh giá cập nhật",
+    "description": "Runtime interface message ui.close.update.review"
+  },
+  "runtime_ui_cloud": {
+    "message": "đám mây",
+    "description": "Runtime interface message ui.cloud"
+  },
+  "runtime_ui_code": {
+    "message": "Mã",
+    "description": "Runtime interface message ui.code"
+  },
+  "runtime_ui_collapse": {
+    "message": "Thu gọn",
+    "description": "Runtime interface message ui.collapse"
+  },
+  "runtime_ui_color": {
+    "message": "Màu sắc",
+    "description": "Runtime interface message ui.color"
+  },
+  "runtime_ui_color_mode": {
+    "message": "Chế độ màu",
+    "description": "Runtime interface message ui.color.mode"
+  },
+  "runtime_ui_color_mode_588a2981": {
+    "message": "Chế độ màu",
+    "description": "Runtime interface message ui.color.mode.588a2981"
+  },
+  "runtime_ui_command": {
+    "message": "Lệnh",
+    "description": "Runtime interface message ui.command"
+  },
+  "runtime_ui_commands": {
+    "message": "lệnh",
+    "description": "Runtime interface message ui.commands"
+  },
+  "runtime_ui_commands_45e5f3f7": {
+    "message": "Lệnh",
+    "description": "Runtime interface message ui.commands.45e5f3f7"
+  },
+  "runtime_ui_commands_760ac2f0": {
+    "message": "/ Lệnh",
+    "description": "Runtime interface message ui.commands.760ac2f0"
+  },
+  "runtime_ui_commit": {
+    "message": "Cam kết",
+    "description": "Runtime interface message ui.commit"
+  },
+  "runtime_ui_compact_context": {
+    "message": "Bối cảnh nhỏ gọn",
+    "description": "Runtime interface message ui.compact.context"
+  },
+  "runtime_ui_compacting": {
+    "message": "Đang nén…",
+    "description": "Runtime interface message ui.compacting"
+  },
+  "runtime_ui_comparing_this_loaded_build_with_the_public_github_repository": {
+    "message": "So sánh bản dựng đã tải này với kho lưu trữ GitHub công khai.",
+    "description": "Runtime interface message ui.comparing.this.loaded.build.with.the.public.github.repository"
+  },
+  "runtime_ui_compatibility": {
+    "message": "Khả năng tương thích",
+    "description": "Runtime interface message ui.compatibility"
+  },
+  "runtime_ui_complete": {
+    "message": "hoàn thành",
+    "description": "Runtime interface message ui.complete"
+  },
+  "runtime_ui_complete_2c85a73c": {
+    "message": "HOÀN THÀNH",
+    "description": "Runtime interface message ui.complete.2c85a73c"
+  },
+  "runtime_ui_component": {
+    "message": "thành phần",
+    "description": "Runtime interface message ui.component"
+  },
+  "runtime_ui_config": {
+    "message": "Cấu hình",
+    "description": "Runtime interface message ui.config"
+  },
+  "runtime_ui_configuration": {
+    "message": "Cấu hình",
+    "description": "Runtime interface message ui.configuration"
+  },
+  "runtime_ui_configure": {
+    "message": "Cấu hình",
+    "description": "Runtime interface message ui.configure"
+  },
+  "runtime_ui_confirm": {
+    "message": "Xác nhận",
+    "description": "Runtime interface message ui.confirm"
+  },
+  "runtime_ui_connect_first": {
+    "message": "Kết nối trước",
+    "description": "Runtime interface message ui.connect.first"
+  },
+  "runtime_ui_connect_hermes": {
+    "message": "Kết nối Hermes",
+    "description": "Runtime interface message ui.connect.hermes"
+  },
+  "runtime_ui_connect_or_test_your_gateway_to_see_supported_features": {
+    "message": "Kết nối hoặc kiểm tra Gateway của bạn để xem các tính năng được hỗ trợ.",
+    "description": "Runtime interface message ui.connect.or.test.your.gateway.to.see.supported.features"
+  },
+  "runtime_ui_connect_to_hermes": {
+    "message": "Kết nối với Hermes",
+    "description": "Runtime interface message ui.connect.to.hermes"
+  },
+  "runtime_ui_connect_to_hermes_then_send_the_prepared_update_request": {
+    "message": "Kết nối với Hermes, sau đó gửi yêu cầu cập nhật đã chuẩn bị.",
+    "description": "Runtime interface message ui.connect.to.hermes.then.send.the.prepared.update.request"
+  },
+  "runtime_ui_connected": {
+    "message": "Đã kết nối",
+    "description": "Runtime interface message ui.connected"
+  },
+  "runtime_ui_connected_agent": {
+    "message": "Tác nhân được kết nối",
+    "description": "Runtime interface message ui.connected.agent"
+  },
+  "runtime_ui_connected_agent_1e63a585": {
+    "message": "TÁC NHÂN KẾT NỐI",
+    "description": "Runtime interface message ui.connected.agent.1e63a585"
+  },
+  "runtime_ui_connected_to_hermes_this_draft_will_create_a_new_hermes_web_ses_59e2faf2": {
+    "message": "Đã kết nối với Hermes. Bản nháp này sẽ tạo một phiên Hermes Web mới khi bạn gửi.",
+    "description": "Runtime interface message ui.connected.to.hermes.this.draft.will.create.a.new.hermes.web.ses.59e2faf2"
+  },
+  "runtime_ui_connected_to_hermes_you_can_start_chatting_with_page_context": {
+    "message": "Đã kết nối với Hermes. Bạn có thể bắt đầu trò chuyện với ngữ cảnh trang.",
+    "description": "Runtime interface message ui.connected.to.hermes.you.can.start.chatting.with.page.context"
+  },
+  "runtime_ui_connecting": {
+    "message": "Đang kết nối...",
+    "description": "Runtime interface message ui.connecting"
+  },
+  "runtime_ui_connecting_c1f3b71f": {
+    "message": "Đang kết nối",
+    "description": "Runtime interface message ui.connecting.c1f3b71f"
+  },
+  "runtime_ui_connection": {
+    "message": "Kết nối",
+    "description": "Runtime interface message ui.connection"
+  },
+  "runtime_ui_connection_detail": {
+    "message": "CHI TIẾT KẾT NỐI",
+    "description": "Runtime interface message ui.connection.detail"
+  },
+  "runtime_ui_connection_details": {
+    "message": "Chi tiết kết nối",
+    "description": "Runtime interface message ui.connection.details"
+  },
+  "runtime_ui_connection_mode": {
+    "message": "Chế độ kết nối",
+    "description": "Runtime interface message ui.connection.mode"
+  },
+  "runtime_ui_connection_not_configured": {
+    "message": "Kết nối chưa được định cấu hình",
+    "description": "Runtime interface message ui.connection.not.configured"
+  },
+  "runtime_ui_connection_security": {
+    "message": "Bảo mật kết nối",
+    "description": "Runtime interface message ui.connection.security"
+  },
+  "runtime_ui_connection_truth": {
+    "message": "KẾT NỐI SỰ THẬT",
+    "description": "Runtime interface message ui.connection.truth"
+  },
+  "runtime_ui_content": {
+    "message": "Nội dung",
+    "description": "Runtime interface message ui.content"
+  },
+  "runtime_ui_context": {
+    "message": "Bối cảnh",
+    "description": "Runtime interface message ui.context"
+  },
+  "runtime_ui_context_compaction_failed": {
+    "message": "Nén bối cảnh không thành công",
+    "description": "Runtime interface message ui.context.compaction.failed"
+  },
+  "runtime_ui_context_compaction_unavailable": {
+    "message": "Nén bối cảnh không có sẵn",
+    "description": "Runtime interface message ui.context.compaction.unavailable"
+  },
+  "runtime_ui_context_refresh_unavailable": {
+    "message": "Làm mới bối cảnh không có sẵn",
+    "description": "Runtime interface message ui.context.refresh.unavailable"
+  },
+  "runtime_ui_context_window": {
+    "message": "CỬA SỔ BỐI CẢNH",
+    "description": "Runtime interface message ui.context.window"
+  },
+  "runtime_ui_context_window_details": {
+    "message": "Chi tiết cửa sổ ngữ cảnh",
+    "description": "Runtime interface message ui.context.window.details"
+  },
+  "runtime_ui_continue": {
+    "message": "Tiếp tục",
+    "description": "Runtime interface message ui.continue"
+  },
+  "runtime_ui_continue_current_chat": {
+    "message": "Tiếp tục trò chuyện hiện tại",
+    "description": "Runtime interface message ui.continue.current.chat"
+  },
+  "runtime_ui_continue_here": {
+    "message": "Tiếp tục ở đây",
+    "description": "Runtime interface message ui.continue.here"
+  },
+  "runtime_ui_control_the_field_launcher_and_where_assist_runs_by_default": {
+    "message": "Kiểm soát trình khởi chạy trường và nơi Hỗ trợ chạy theo mặc định.",
+    "description": "Runtime interface message ui.control.the.field.launcher.and.where.assist.runs.by.default"
+  },
+  "runtime_ui_conversation": {
+    "message": "Cuộc trò chuyện",
+    "description": "Runtime interface message ui.conversation"
+  },
+  "runtime_ui_cookie": {
+    "message": "bánh quy",
+    "description": "Runtime interface message ui.cookie"
+  },
+  "runtime_ui_copied": {
+    "message": "Đã sao chép",
+    "description": "Runtime interface message ui.copied"
+  },
+  "runtime_ui_copied_redacted_diagnostics_paste_them_into_the_github_issue_or_064866e3": {
+    "message": "Sao chép chẩn đoán được biên tập lại. Dán chúng vào chủ đề hỗ trợ hoặc vấn đề GitHub.",
+    "description": "Runtime interface message ui.copied.redacted.diagnostics.paste.them.into.the.github.issue.or.064866e3"
+  },
+  "runtime_ui_copied_result_to_clipboard": {
+    "message": "Đã sao chép kết quả vào bảng nhớ tạm",
+    "description": "Runtime interface message ui.copied.result.to.clipboard"
+  },
+  "runtime_ui_copy": {
+    "message": "Sao chép",
+    "description": "Runtime interface message ui.copy"
+  },
+  "runtime_ui_copy_a_redacted_compatibility_report_it_excludes_tokens_cookies_ab0019e3": {
+    "message": "Sao chép báo cáo tương thích đã được biên tập lại. Nó không bao gồm mã thông báo, cookie, văn bản trang, văn bản đã chọn, tiêu đề tab và URLs đầy đủ.",
+    "description": "Runtime interface message ui.copy.a.redacted.compatibility.report.it.excludes.tokens.cookies.ab0019e3"
+  },
+  "runtime_ui_copy_blocked_select_preview_manually": {
+    "message": "Sao chép bị chặn · chọn xem trước thủ công",
+    "description": "Runtime interface message ui.copy.blocked.select.preview.manually"
+  },
+  "runtime_ui_copy_diagnostics": {
+    "message": "Sao chép chẩn đoán",
+    "description": "Runtime interface message ui.copy.diagnostics"
+  },
+  "runtime_ui_copy_failed": {
+    "message": "Sao chép không thành công",
+    "description": "Runtime interface message ui.copy.failed"
+  },
+  "runtime_ui_copy_redacted_diagnostics": {
+    "message": "Sao chép chẩn đoán đã được biên tập lại",
+    "description": "Runtime interface message ui.copy.redacted.diagnostics"
+  },
+  "runtime_ui_copy_server_env": {
+    "message": "Sao chép env máy chủ",
+    "description": "Runtime interface message ui.copy.server.env"
+  },
+  "runtime_ui_copy_session_id": {
+    "message": "Sao chép ID phiên",
+    "description": "Runtime interface message ui.copy.session.id"
+  },
+  "runtime_ui_copy_to_use": {
+    "message": "Sao chép để sử dụng",
+    "description": "Runtime interface message ui.copy.to.use"
+  },
+  "runtime_ui_copy_unavailable": {
+    "message": "Bản sao không có sẵn",
+    "description": "Runtime interface message ui.copy.unavailable"
+  },
+  "runtime_ui_copying": {
+    "message": "Đang sao chép...",
+    "description": "Runtime interface message ui.copying"
+  },
+  "runtime_ui_could_not_change_session": {
+    "message": "Không thể thay đổi phiên",
+    "description": "Runtime interface message ui.could.not.change.session"
+  },
+  "runtime_ui_could_not_clear_token": {
+    "message": "Không thể xóa mã thông báo",
+    "description": "Runtime interface message ui.could.not.clear.token"
+  },
+  "runtime_ui_could_not_copy_diagnostics_check_browser_clipboard_permissions": {
+    "message": "Không thể sao chép chẩn đoán. Kiểm tra quyền truy cập clipboard của trình duyệt.",
+    "description": "Runtime interface message ui.could.not.copy.diagnostics.check.browser.clipboard.permissions"
+  },
+  "runtime_ui_could_not_copy_env_block": {
+    "message": "Không thể sao chép khối env",
+    "description": "Runtime interface message ui.could.not.copy.env.block"
+  },
+  "runtime_ui_could_not_create_session": {
+    "message": "Không thể tạo phiên",
+    "description": "Runtime interface message ui.could.not.create.session"
+  },
+  "runtime_ui_could_not_load_this_session": {
+    "message": "Không thể tải phiên này",
+    "description": "Runtime interface message ui.could.not.load.this.session"
+  },
+  "runtime_ui_could_not_migrate_browser_session": {
+    "message": "Không thể di chuyển phiên Trình duyệt",
+    "description": "Runtime interface message ui.could.not.migrate.browser.session"
+  },
+  "runtime_ui_could_not_open_full_view": {
+    "message": "Không thể mở chế độ xem đầy đủ",
+    "description": "Runtime interface message ui.could.not.open.full.view"
+  },
+  "runtime_ui_could_not_open_session": {
+    "message": "Không thể mở phiên",
+    "description": "Runtime interface message ui.could.not.open.session"
+  },
+  "runtime_ui_could_not_pin_active_tab": {
+    "message": "Không thể ghim tab đang hoạt động",
+    "description": "Runtime interface message ui.could.not.pin.active.tab"
+  },
+  "runtime_ui_could_not_pin_tab": {
+    "message": "Không thể ghim tab",
+    "description": "Runtime interface message ui.could.not.pin.tab"
+  },
+  "runtime_ui_could_not_rename_session": {
+    "message": "Không thể đổi tên phiên",
+    "description": "Runtime interface message ui.could.not.rename.session"
+  },
+  "runtime_ui_could_not_start_draft": {
+    "message": "Không thể bắt đầu bản nháp",
+    "description": "Runtime interface message ui.could.not.start.draft"
+  },
+  "runtime_ui_could_not_start_hermes_session": {
+    "message": "Không thể bắt đầu phiên Hermes",
+    "description": "Runtime interface message ui.could.not.start.hermes.session"
+  },
+  "runtime_ui_could_not_switch_to_chat_only": {
+    "message": "Không thể chuyển sang chỉ Trò chuyện",
+    "description": "Runtime interface message ui.could.not.switch.to.chat.only"
+  },
+  "runtime_ui_could_not_unlock_tab_scope": {
+    "message": "Không thể mở khóa phạm vi tab",
+    "description": "Runtime interface message ui.could.not.unlock.tab.scope"
+  },
+  "runtime_ui_create": {
+    "message": "Tạo",
+    "description": "Runtime interface message ui.create"
+  },
+  "runtime_ui_create_and_open_a_new_hermes_assist_session": {
+    "message": "Tạo và mở phiên Hermes Assist mới.",
+    "description": "Runtime interface message ui.create.and.open.a.new.hermes.assist.session"
+  },
+  "runtime_ui_current": {
+    "message": "hiện tại",
+    "description": "Runtime interface message ui.current"
+  },
+  "runtime_ui_current_session": {
+    "message": "Phiên hiện tại",
+    "description": "Runtime interface message ui.current.session"
+  },
+  "runtime_ui_custom": {
+    "message": "tùy chỉnh",
+    "description": "Runtime interface message ui.custom"
+  },
+  "runtime_ui_custom_hermes_assist_instruction": {
+    "message": "Lệnh Hermes Assist tùy chỉnh",
+    "description": "Runtime interface message ui.custom.hermes.assist.instruction"
+  },
+  "runtime_ui_custom_model_source_is_discovery_only": {
+    "message": "Nguồn mô hình tùy chỉnh chỉ dành cho khám phá",
+    "description": "Runtime interface message ui.custom.model.source.is.discovery.only"
+  },
+  "runtime_ui_custom_model_source_unavailable": {
+    "message": "Nguồn mô hình tùy chỉnh không có sẵn",
+    "description": "Runtime interface message ui.custom.model.source.unavailable"
+  },
+  "runtime_ui_custom_model_source_urls": {
+    "message": "Nguồn mô hình tùy chỉnh URLs",
+    "description": "Runtime interface message ui.custom.model.source.urls"
+  },
+  "runtime_ui_dark": {
+    "message": "☾ Tối",
+    "description": "Runtime interface message ui.dark"
+  },
+  "runtime_ui_dashboard_websocket": {
+    "message": "Bảng điều khiển WebSocket",
+    "description": "Runtime interface message ui.dashboard.websocket"
+  },
+  "runtime_ui_dashboard_websocket_does_not_expose_an_existing_session_model_o_bb6f12cd": {
+    "message": "Trang tổng quan WebSocket chưa hiển thị bản cập nhật tùy chọn mô hình phiên hiện có. Các tùy chọn này sẽ áp dụng cho phiên mới tiếp theo.",
+    "description": "Runtime interface message ui.dashboard.websocket.does.not.expose.an.existing.session.model.o.bb6f12cd"
+  },
+  "runtime_ui_data": {
+    "message": "dữ liệu",
+    "description": "Runtime interface message ui.data"
+  },
+  "runtime_ui_date": {
+    "message": "Ngày",
+    "description": "Runtime interface message ui.date"
+  },
+  "runtime_ui_default": {
+    "message": "Mặc định",
+    "description": "Runtime interface message ui.default"
+  },
+  "runtime_ui_default_right_click_route": {
+    "message": "Tuyến đường nhấp chuột phải mặc định",
+    "description": "Runtime interface message ui.default.right.click.route"
+  },
+  "runtime_ui_default_session_route": {
+    "message": "Tuyến phiên mặc định",
+    "description": "Runtime interface message ui.default.session.route"
+  },
+  "runtime_ui_delete": {
+    "message": "Xóa",
+    "description": "Runtime interface message ui.delete"
+  },
+  "runtime_ui_delete_after_the_draft_returns": {
+    "message": "Xóa sau khi bản nháp trở lại",
+    "description": "Runtime interface message ui.delete.after.the.draft.returns"
+  },
+  "runtime_ui_description": {
+    "message": "Mô tả",
+    "description": "Runtime interface message ui.description"
+  },
+  "runtime_ui_detail": {
+    "message": "Chi tiết",
+    "description": "Runtime interface message ui.detail"
+  },
+  "runtime_ui_details": {
+    "message": "Chi tiết",
+    "description": "Runtime interface message ui.details"
+  },
+  "runtime_ui_detect_from_hermes_gateway": {
+    "message": "Phát hiện từ Hermes gateway",
+    "description": "Runtime interface message ui.detect.from.hermes.gateway"
+  },
+  "runtime_ui_detecting_runtime": {
+    "message": "Phát hiện thời gian chạy",
+    "description": "Runtime interface message ui.detecting.runtime"
+  },
+  "runtime_ui_device": {
+    "message": "Thiết bị",
+    "description": "Runtime interface message ui.device"
+  },
+  "runtime_ui_devices": {
+    "message": "Thiết bị",
+    "description": "Runtime interface message ui.devices"
+  },
+  "runtime_ui_diagnostics": {
+    "message": "Chẩn đoán",
+    "description": "Runtime interface message ui.diagnostics"
+  },
+  "runtime_ui_diagnostics_copied": {
+    "message": "Đã sao chép chẩn đoán",
+    "description": "Runtime interface message ui.diagnostics.copied"
+  },
+  "runtime_ui_diagnostics_copy_failed": {
+    "message": "Sao chép chẩn đoán không thành công",
+    "description": "Runtime interface message ui.diagnostics.copy.failed"
+  },
+  "runtime_ui_dialog": {
+    "message": "Hộp thoại",
+    "description": "Runtime interface message ui.dialog"
+  },
+  "runtime_ui_discovered_hermes_agents": {
+    "message": "Phát hiện tác nhân Hermes",
+    "description": "Runtime interface message ui.discovered.hermes.agents"
+  },
+  "runtime_ui_dismiss_notification": {
+    "message": "Loại bỏ thông báo",
+    "description": "Runtime interface message ui.dismiss.notification"
+  },
+  "runtime_ui_display": {
+    "message": "Hiển thị",
+    "description": "Runtime interface message ui.display"
+  },
+  "runtime_ui_dist": {
+    "message": "dist/",
+    "description": "Runtime interface message ui.dist"
+  },
+  "runtime_ui_download": {
+    "message": "Tải xuống",
+    "description": "Runtime interface message ui.download"
+  },
+  "runtime_ui_downloading_the_browser_language_pack_once_so_voice_dictation_c_b476f51c": {
+    "message": "Tải xuống gói ngôn ngữ trình duyệt một lần để tính năng đọc chính tả bằng giọng nói có thể chạy cục bộ.",
+    "description": "Runtime interface message ui.downloading.the.browser.language.pack.once.so.voice.dictation.c.b476f51c"
+  },
+  "runtime_ui_draft_and_input_values_stayed_excluded": {
+    "message": "Giá trị dự thảo và đầu vào vẫn bị loại trừ.",
+    "description": "Runtime interface message ui.draft.and.input.values.stayed.excluded"
+  },
+  "runtime_ui_draft_ready_for_review": {
+    "message": "Dự thảo sẵn sàng để xem xét",
+    "description": "Runtime interface message ui.draft.ready.for.review"
+  },
+  "runtime_ui_draft_ready_still_your_decision": {
+    "message": "Dự thảo đã sẵn sàng. Vẫn là quyết định của bạn.",
+    "description": "Runtime interface message ui.draft.ready.still.your.decision"
+  },
+  "runtime_ui_draft_ready_this_managed_editor_stays_untouched": {
+    "message": "Bản nháp đã sẵn sàng · trình chỉnh sửa được quản lý này vẫn chưa được xử lý",
+    "description": "Runtime interface message ui.draft.ready.this.managed.editor.stays.untouched"
+  },
+  "runtime_ui_draft_reply_with_hermes": {
+    "message": "Trả lời nháp với Hermes",
+    "description": "Runtime interface message ui.draft.reply.with.hermes"
+  },
+  "runtime_ui_draft_saved_when_sent": {
+    "message": "Bản nháp · được lưu khi gửi",
+    "description": "Runtime interface message ui.draft.saved.when.sent"
+  },
+  "runtime_ui_drop_files_to_attach": {
+    "message": "Thả tập tin để đính kèm",
+    "description": "Runtime interface message ui.drop.files.to.attach"
+  },
+  "runtime_ui_edit": {
+    "message": "Chỉnh sửa",
+    "description": "Runtime interface message ui.edit"
+  },
+  "runtime_ui_edit_models": {
+    "message": "⚙ Chỉnh sửa mô hình...",
+    "description": "Runtime interface message ui.edit.models"
+  },
+  "runtime_ui_edit_models_in_hermes_desktop": {
+    "message": "Chỉnh sửa mô hình trong Hermes Desktop",
+    "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
+  },
+  "runtime_ui_element": {
+    "message": "Yếu tố",
+    "description": "Runtime interface message ui.element"
+  },
+  "runtime_ui_element_pick_cancelled": {
+    "message": "Việc chọn phần tử đã bị hủy",
+    "description": "Runtime interface message ui.element.pick.cancelled"
+  },
+  "runtime_ui_element_pick_failed": {
+    "message": "Chọn phần tử không thành công",
+    "description": "Runtime interface message ui.element.pick.failed"
+  },
+  "runtime_ui_element_pick_is_not_available_on_this_url": {
+    "message": "Tính năng chọn phần tử không có sẵn trên URL này.",
+    "description": "Runtime interface message ui.element.pick.is.not.available.on.this.url"
+  },
+  "runtime_ui_element_picked": {
+    "message": "Phần tử được chọn",
+    "description": "Runtime interface message ui.element.picked"
+  },
+  "runtime_ui_elements": {
+    "message": "Yếu tố",
+    "description": "Runtime interface message ui.elements"
+  },
+  "runtime_ui_empty": {
+    "message": "trống",
+    "description": "Runtime interface message ui.empty"
+  },
+  "runtime_ui_empty_draft": {
+    "message": "(dự thảo trống)",
+    "description": "Runtime interface message ui.empty.draft"
+  },
+  "runtime_ui_enable": {
+    "message": "Kích hoạt",
+    "description": "Runtime interface message ui.enable"
+  },
+  "runtime_ui_enable_browser_context_before_picking_an_element": {
+    "message": "Bật ngữ cảnh trình duyệt trước khi chọn một phần tử.",
+    "description": "Runtime interface message ui.enable.browser.context.before.picking.an.element"
+  },
+  "runtime_ui_enable_wake_word": {
+    "message": "Bật từ đánh thức",
+    "description": "Runtime interface message ui.enable.wake.word"
+  },
+  "runtime_ui_enabled": {
+    "message": "Đã bật",
+    "description": "Runtime interface message ui.enabled"
+  },
+  "runtime_ui_english": {
+    "message": "Tiếng Anh",
+    "description": "Runtime interface message ui.english"
+  },
+  "runtime_ui_enter_at_least_one_port_number_e_g_8642_8643_8644_8645_8646": {
+    "message": "Nhập ít nhất một số cổng, ví dụ: 8642,8643,8644,8645,8646",
+    "description": "Runtime interface message ui.enter.at.least.one.port.number.e.g.8642.8643.8644.8645.8646"
+  },
+  "runtime_ui_enter_sends_shift_enter_adds_a_new_line_ctrl_v_drag_drop_or_att_a1c82bcd": {
+    "message": "Nhập gửi. Shift+Enter thêm một dòng mới. Ctrl+V, kéo/thả hoặc + đính kèm tệp.",
+    "description": "Runtime interface message ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd"
+  },
+  "runtime_ui_enter_your_dashboard_https_url_in_settings_and_sign_in_to_it_in_0b5f6bb9": {
+    "message": "Nhập trang tổng quan https URL của bạn trong Cài đặt và đăng nhập vào trang tổng quan đó trong tab trình duyệt.",
+    "description": "Runtime interface message ui.enter.your.dashboard.https.url.in.settings.and.sign.in.to.it.in.0b5f6bb9"
+  },
+  "runtime_ui_entries": {
+    "message": "Bài dự thi",
+    "description": "Runtime interface message ui.entries"
+  },
+  "runtime_ui_entry": {
+    "message": "Nhập cảnh",
+    "description": "Runtime interface message ui.entry"
+  },
+  "runtime_ui_error": {
+    "message": "Lỗi",
+    "description": "Runtime interface message ui.error"
+  },
+  "runtime_ui_event": {
+    "message": "Sự kiện",
+    "description": "Runtime interface message ui.event"
+  },
+  "runtime_ui_events": {
+    "message": "Sự kiện",
+    "description": "Runtime interface message ui.events"
+  },
+  "runtime_ui_exception": {
+    "message": "Ngoại lệ",
+    "description": "Runtime interface message ui.exception"
+  },
+  "runtime_ui_existing_attached_panels_stay_as_they_are_other_and_new_tabs_us_fb9a0ba6": {
+    "message": "Các bảng đính kèm hiện có vẫn giữ nguyên như cũ. Các tab khác và tab mới sử dụng bảng chia sẻ.",
+    "description": "Runtime interface message ui.existing.attached.panels.stay.as.they.are.other.and.new.tabs.us.fb9a0ba6"
+  },
+  "runtime_ui_expand": {
+    "message": "Mở rộng",
+    "description": "Runtime interface message ui.expand"
+  },
+  "runtime_ui_explain": {
+    "message": "Giải thích",
+    "description": "Runtime interface message ui.explain"
+  },
+  "runtime_ui_explain_selection": {
+    "message": "Giải thích sự lựa chọn",
+    "description": "Runtime interface message ui.explain.selection"
+  },
+  "runtime_ui_extension": {
+    "message": "Tiện ích mở rộng",
+    "description": "Runtime interface message ui.extension"
+  },
+  "runtime_ui_fallback": {
+    "message": "thay thế",
+    "description": "Runtime interface message ui.fallback"
+  },
+  "runtime_ui_falls_back_to_review_if_the_field_changed": {
+    "message": "Quay lại xem xét nếu trường thay đổi",
+    "description": "Runtime interface message ui.falls.back.to.review.if.the.field.changed"
+  },
+  "runtime_ui_fast_mode": {
+    "message": "Chế độ nhanh",
+    "description": "Runtime interface message ui.fast.mode"
+  },
+  "runtime_ui_field": {
+    "message": "trường",
+    "description": "Runtime interface message ui.field"
+  },
+  "runtime_ui_field_changed_review_required": {
+    "message": "Trường đã thay đổi · yêu cầu xem xét",
+    "description": "Runtime interface message ui.field.changed.review.required"
+  },
+  "runtime_ui_file": {
+    "message": "tập tin",
+    "description": "Runtime interface message ui.file"
+  },
+  "runtime_ui_files": {
+    "message": "▧ Tập tin...",
+    "description": "Runtime interface message ui.files"
+  },
+  "runtime_ui_files_453f0471": {
+    "message": "▧ Tập tin…",
+    "description": "Runtime interface message ui.files.453f0471"
+  },
+  "runtime_ui_files_6ce6c512": {
+    "message": "Tập tin",
+    "description": "Runtime interface message ui.files.6ce6c512"
+  },
+  "runtime_ui_files_attached": {
+    "message": "Tập tin đính kèm",
+    "description": "Runtime interface message ui.files.attached"
+  },
+  "runtime_ui_filter": {
+    "message": "Lọc",
+    "description": "Runtime interface message ui.filter"
+  },
+  "runtime_ui_find": {
+    "message": "Tìm",
+    "description": "Runtime interface message ui.find"
+  },
+  "runtime_ui_finish": {
+    "message": "Kết thúc",
+    "description": "Runtime interface message ui.finish"
+  },
+  "runtime_ui_finished_without_a_model_call": {
+    "message": "Đã hoàn tất mà không cần gọi mẫu.",
+    "description": "Runtime interface message ui.finished.without.a.model.call"
+  },
+  "runtime_ui_focused_draft": {
+    "message": "dự thảo tập trung",
+    "description": "Runtime interface message ui.focused.draft"
+  },
+  "runtime_ui_folder": {
+    "message": "▰ Thư mục...",
+    "description": "Runtime interface message ui.folder"
+  },
+  "runtime_ui_folder_30baa249": {
+    "message": "Thư mục",
+    "description": "Runtime interface message ui.folder.30baa249"
+  },
+  "runtime_ui_form": {
+    "message": "biểu mẫu",
+    "description": "Runtime interface message ui.form"
+  },
+  "runtime_ui_format": {
+    "message": "định dạng",
+    "description": "Runtime interface message ui.format"
+  },
+  "runtime_ui_frame": {
+    "message": "khung",
+    "description": "Runtime interface message ui.frame"
+  },
+  "runtime_ui_full_largest_payload": {
+    "message": "Đầy đủ – tải trọng lớn nhất",
+    "description": "Runtime interface message ui.full.largest.payload"
+  },
+  "runtime_ui_gateway": {
+    "message": "Gateway",
+    "description": "Runtime interface message ui.gateway"
+  },
+  "runtime_ui_gateway_connection": {
+    "message": "Kết nối Gateway",
+    "description": "Runtime interface message ui.gateway.connection"
+  },
+  "runtime_ui_gateway_default": {
+    "message": "Gateway mặc định",
+    "description": "Runtime interface message ui.gateway.default"
+  },
+  "runtime_ui_gateway_url": {
+    "message": "Gateway URL",
+    "description": "Runtime interface message ui.gateway.url"
+  },
+  "runtime_ui_generated_by_hermes": {
+    "message": "Được tạo bởi Hermes",
+    "description": "Runtime interface message ui.generated.by.hermes"
+  },
+  "runtime_ui_generated_image": {
+    "message": "HÌNH ẢNH ĐƯỢC TẠO",
+    "description": "Runtime interface message ui.generated.image"
+  },
+  "runtime_ui_gmail_thread_capture_unavailable": {
+    "message": "Tính năng chụp luồng Gmail không khả dụng",
+    "description": "Runtime interface message ui.gmail.thread.capture.unavailable"
+  },
+  "runtime_ui_gmail_thread_captured": {
+    "message": "Chủ đề Gmail đã bị bắt",
+    "description": "Runtime interface message ui.gmail.thread.captured"
+  },
+  "runtime_ui_grant": {
+    "message": "Cấp",
+    "description": "Runtime interface message ui.grant"
+  },
+  "runtime_ui_grid": {
+    "message": "Lưới",
+    "description": "Runtime interface message ui.grid"
+  },
+  "runtime_ui_group": {
+    "message": "Nhóm",
+    "description": "Runtime interface message ui.group"
+  },
+  "runtime_ui_handing_update_to_hermes": {
+    "message": "Đang chuyển bản cập nhật cho Hermes",
+    "description": "Runtime interface message ui.handing.update.to.hermes"
+  },
+  "runtime_ui_hash": {
+    "message": "Băm",
+    "description": "Runtime interface message ui.hash"
+  },
+  "runtime_ui_header": {
+    "message": "tiêu đề",
+    "description": "Runtime interface message ui.header"
+  },
+  "runtime_ui_help": {
+    "message": "Trợ giúp",
+    "description": "Runtime interface message ui.help"
+  },
+  "runtime_ui_hermes_agent": {
+    "message": "Hermes Agent",
+    "description": "Runtime interface message ui.hermes.agent"
+  },
+  "runtime_ui_hermes_agent_badge": {
+    "message": "Huy hiệu Hermes Agent",
+    "description": "Runtime interface message ui.hermes.agent.badge"
+  },
+  "runtime_ui_hermes_api_unavailable": {
+    "message": "Hermes API không có sẵn",
+    "description": "Runtime interface message ui.hermes.api.unavailable"
+  },
+  "runtime_ui_hermes_appears_only_on_tabs_where_you_open_it": {
+    "message": "Hermes chỉ xuất hiện trên các tab mà bạn mở nó.",
+    "description": "Runtime interface message ui.hermes.appears.only.on.tabs.where.you.open.it"
+  },
+  "runtime_ui_hermes_assist": {
+    "message": "Hermes Assist",
+    "description": "Runtime interface message ui.hermes.assist"
+  },
+  "runtime_ui_hermes_assist_model": {
+    "message": "Mô hình Hermes Assist",
+    "description": "Runtime interface message ui.hermes.assist.model"
+  },
+  "runtime_ui_hermes_browser": {
+    "message": "Hermes Browser",
+    "description": "Runtime interface message ui.hermes.browser"
+  },
+  "runtime_ui_hermes_browser_bb83b5a0": {
+    "message": "TRÌNH DUYỆT HERMES",
+    "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
+  },
+  "runtime_ui_hermes_browser_extension": {
+    "message": "MỞ RỘNG TRÌNH DUYỆT HERMES",
+    "description": "Runtime interface message ui.hermes.browser.extension"
+  },
+  "runtime_ui_hermes_browser_extension_connected": {
+    "message": "Đã kết nối Hermes Browser Extension",
+    "description": "Runtime interface message ui.hermes.browser.extension.connected"
+  },
+  "runtime_ui_hermes_browser_extension_conversation": {
+    "message": "Cuộc trò chuyện Hermes Browser Extension",
+    "description": "Runtime interface message ui.hermes.browser.extension.conversation"
+  },
+  "runtime_ui_hermes_browser_intro": {
+    "message": "Giới thiệu Hermes Browser",
+    "description": "Runtime interface message ui.hermes.browser.intro"
+  },
+  "runtime_ui_hermes_browser_local_sidecar": {
+    "message": "Xe sidecar địa phương Hermes Browser",
+    "description": "Runtime interface message ui.hermes.browser.local.sidecar"
+  },
+  "runtime_ui_hermes_browser_update_channel": {
+    "message": "KÊNH TRÌNH DUYỆT/CẬP NHẬT HERMES",
+    "description": "Runtime interface message ui.hermes.browser.update.channel"
+  },
+  "runtime_ui_hermes_chat_actions": {
+    "message": "Hành động trò chuyện Hermes",
+    "description": "Runtime interface message ui.hermes.chat.actions"
+  },
+  "runtime_ui_hermes_cloud": {
+    "message": "Hermes Cloud",
+    "description": "Runtime interface message ui.hermes.cloud"
+  },
+  "runtime_ui_hermes_cloud_preview": {
+    "message": "Xem trước Hermes Cloud",
+    "description": "Runtime interface message ui.hermes.cloud.preview"
+  },
+  "runtime_ui_hermes_cloud_unavailable": {
+    "message": "Hermes Cloud không có sẵn",
+    "description": "Runtime interface message ui.hermes.cloud.unavailable"
+  },
+  "runtime_ui_hermes_compatibility": {
+    "message": "Khả năng tương thích Hermes",
+    "description": "Runtime interface message ui.hermes.compatibility"
+  },
+  "runtime_ui_hermes_compatibility_fallback": {
+    "message": "Dự phòng tương thích Hermes",
+    "description": "Runtime interface message ui.hermes.compatibility.fallback"
+  },
+  "runtime_ui_hermes_connection": {
+    "message": "Kết nối Hermes",
+    "description": "Runtime interface message ui.hermes.connection"
+  },
+  "runtime_ui_hermes_connection_status": {
+    "message": "Trạng thái kết nối Hermes",
+    "description": "Runtime interface message ui.hermes.connection.status"
+  },
+  "runtime_ui_hermes_gateway_connected_with_runtime_warning": {
+    "message": "Hermes gateway được kết nối với cảnh báo thời gian chạy",
+    "description": "Runtime interface message ui.hermes.gateway.connected.with.runtime.warning"
+  },
+  "runtime_ui_hermes_gateway_test_failed": {
+    "message": "Thử nghiệm Hermes gateway không thành công",
+    "description": "Runtime interface message ui.hermes.gateway.test.failed"
+  },
+  "runtime_ui_hermes_gateway_unavailable": {
+    "message": "Hermes cổng không khả dụng",
+    "description": "Runtime interface message ui.hermes.gateway.unavailable"
+  },
+  "runtime_ui_hermes_has_not_acknowledged_this_session_model_pair_yet_retryin_c39a64e1": {
+    "message": "Hermes chưa xác nhận cặp phiên/mô hình này. Đang thử khóa lại trước khi gửi.",
+    "description": "Runtime interface message ui.hermes.has.not.acknowledged.this.session.model.pair.yet.retryin.c39a64e1"
+  },
+  "runtime_ui_hermes_image_synthesis": {
+    "message": "Tổng hợp hình ảnh Hermes",
+    "description": "Runtime interface message ui.hermes.image.synthesis"
+  },
+  "runtime_ui_hermes_inspector": {
+    "message": "Thanh tra Hermes",
+    "description": "Runtime interface message ui.hermes.inspector"
+  },
+  "runtime_ui_hermes_is_drafting": {
+    "message": "Hermes đang soạn thảo",
+    "description": "Runtime interface message ui.hermes.is.drafting"
+  },
+  "runtime_ui_hermes_is_not_connected_yet_browser_speech_fallback_is_unavaila_2a5064db": {
+    "message": "Hermes chưa được kết nối. Dự phòng giọng nói của trình duyệt không có sẵn ở đây; kết nối bảng điều khiển bên với Hermes, sau đó sử dụng chức năng đọc chính tả bằng giọng nói.",
+    "description": "Runtime interface message ui.hermes.is.not.connected.yet.browser.speech.fallback.is.unavaila.2a5064db"
+  },
+  "runtime_ui_hermes_is_not_currently_running_send_or_queue_the_message_instead": {
+    "message": "Hermes hiện không chạy. Thay vào đó hãy gửi hoặc xếp hàng tin nhắn.",
+    "description": "Runtime interface message ui.hermes.is.not.currently.running.send.or.queue.the.message.instead"
+  },
+  "runtime_ui_hermes_is_thinking_brainstorming_contemplating_reasoning_proces_3e8d81c0": {
+    "message": "Hermes là suy nghĩ, động não, suy ngẫm, lý luận, xử lý, phân tích, phản ánh, cân nhắc, cân nhắc và hình thành",
+    "description": "Runtime interface message ui.hermes.is.thinking.brainstorming.contemplating.reasoning.proces.3e8d81c0"
+  },
+  "runtime_ui_hermes_is_working": {
+    "message": "Hermes đang hoạt động…",
+    "description": "Runtime interface message ui.hermes.is.working"
+  },
+  "runtime_ui_hermes_message_composer": {
+    "message": "Trình soạn tin nhắn Hermes",
+    "description": "Runtime interface message ui.hermes.message.composer"
+  },
+  "runtime_ui_hermes_model_confirmed": {
+    "message": "Đã xác nhận mẫu Hermes",
+    "description": "Runtime interface message ui.hermes.model.confirmed"
+  },
+  "runtime_ui_hermes_model_lock_accepted": {
+    "message": "Khóa mô hình Hermes được chấp nhận",
+    "description": "Runtime interface message ui.hermes.model.lock.accepted"
+  },
+  "runtime_ui_hermes_model_options_confirmed": {
+    "message": "Các tùy chọn kiểu máy Hermes đã được xác nhận",
+    "description": "Runtime interface message ui.hermes.model.options.confirmed"
+  },
+  "runtime_ui_hermes_model_options_failed": {
+    "message": "Tùy chọn mô hình Hermes không thành công",
+    "description": "Runtime interface message ui.hermes.model.options.failed"
+  },
+  "runtime_ui_hermes_model_options_mismatch": {
+    "message": "Tùy chọn mô hình Hermes không khớp",
+    "description": "Runtime interface message ui.hermes.model.options.mismatch"
+  },
+  "runtime_ui_hermes_model_options_pending": {
+    "message": "Tùy chọn mô hình Hermes đang chờ xử lý",
+    "description": "Runtime interface message ui.hermes.model.options.pending"
+  },
+  "runtime_ui_hermes_model_requested": {
+    "message": "Đã yêu cầu mẫu Hermes",
+    "description": "Runtime interface message ui.hermes.model.requested"
+  },
+  "runtime_ui_hermes_models_synced": {
+    "message": "Đã đồng bộ hóa các mô hình Hermes",
+    "description": "Runtime interface message ui.hermes.models.synced"
+  },
+  "runtime_ui_hermes_native_wake_word_is_unavailable": {
+    "message": "Hermes Từ đánh thức gốc không có sẵn.",
+    "description": "Runtime interface message ui.hermes.native.wake.word.is.unavailable"
+  },
+  "runtime_ui_hermes_on_this_machine_default_and_offline_capable": {
+    "message": "Hermes trên máy này. Mặc định và có khả năng ngoại tuyến.",
+    "description": "Runtime interface message ui.hermes.on.this.machine.default.and.offline.capable"
+  },
+  "runtime_ui_hermes_profile_switched": {
+    "message": "Cấu hình Hermes đã chuyển đổi",
+    "description": "Runtime interface message ui.hermes.profile.switched"
+  },
+  "runtime_ui_hermes_profiles_synced": {
+    "message": "Hồ sơ Hermes đã được đồng bộ hóa",
+    "description": "Runtime interface message ui.hermes.profiles.synced"
+  },
+  "runtime_ui_hermes_refused_to_start_the_wake_listener": {
+    "message": "Hermes từ chối khởi động trình nghe đánh thức.",
+    "description": "Runtime interface message ui.hermes.refused.to.start.the.wake.listener"
+  },
+  "runtime_ui_hermes_returned_only_fallback_model_data_keeping_your_selected_128b9943": {
+    "message": "Hermes chỉ trả về dữ liệu mô hình thay thế. Giữ mô hình đã chọn của bạn cho đến khi có danh mục thực sự.",
+    "description": "Runtime interface message ui.hermes.returned.only.fallback.model.data.keeping.your.selected.128b9943"
+  },
+  "runtime_ui_hermes_session": {
+    "message": "Phiên Hermes",
+    "description": "Runtime interface message ui.hermes.session"
+  },
+  "runtime_ui_hermes_sessions": {
+    "message": "Phiên Hermes",
+    "description": "Runtime interface message ui.hermes.sessions"
+  },
+  "runtime_ui_hermes_sessions_synced": {
+    "message": "Phiên Hermes đã được đồng bộ hóa",
+    "description": "Runtime interface message ui.hermes.sessions.synced"
+  },
+  "runtime_ui_hermes_skill_suggestions": {
+    "message": "Gợi ý kỹ năng Hermes",
+    "description": "Runtime interface message ui.hermes.skill.suggestions"
+  },
+  "runtime_ui_hermes_skills_synced": {
+    "message": "Các kỹ năng Hermes đã được đồng bộ hóa",
+    "description": "Runtime interface message ui.hermes.skills.synced"
+  },
+  "runtime_ui_hermes_task_status": {
+    "message": "Trạng thái nhiệm vụ Hermes",
+    "description": "Runtime interface message ui.hermes.task.status"
+  },
+  "runtime_ui_hermes_token_cleared": {
+    "message": "Đã xóa mã thông báo Hermes",
+    "description": "Runtime interface message ui.hermes.token.cleared"
+  },
+  "runtime_ui_hermes_voice_dictation": {
+    "message": "Hermes Voice Dictation",
+    "description": "Runtime interface message ui.hermes.voice.dictation"
+  },
+  "runtime_ui_hermes_web": {
+    "message": "Hermes Web",
+    "description": "Runtime interface message ui.hermes.web"
+  },
+  "runtime_ui_hermes_web_3336aa2f": {
+    "message": "WEB HERMES",
+    "description": "Runtime interface message ui.hermes.web.3336aa2f"
+  },
+  "runtime_ui_hermes_web_could_not_start": {
+    "message": "Hermes Web không thể khởi động",
+    "description": "Runtime interface message ui.hermes.web.could.not.start"
+  },
+  "runtime_ui_hermes_web_home": {
+    "message": "Trang chủ Hermes Web",
+    "description": "Runtime interface message ui.hermes.web.home"
+  },
+  "runtime_ui_hermes_web_ready": {
+    "message": "WEB HERMES // SẴN SÀNG",
+    "description": "Runtime interface message ui.hermes.web.ready"
+  },
+  "runtime_ui_hermes_web_settings": {
+    "message": "Cài đặt Hermes Web",
+    "description": "Runtime interface message ui.hermes.web.settings"
+  },
+  "runtime_ui_hermes_will_consume_it_if_the_current_turn_reaches_an_injection_0fb01647": {
+    "message": "Hermes sẽ tiêu thụ nó nếu lượt hiện tại đạt đến điểm tiêm; nếu không bản nháp sẽ quay lại đây.",
+    "description": "Runtime interface message ui.hermes.will.consume.it.if.the.current.turn.reaches.an.injection.0fb01647"
+  },
+  "runtime_ui_hermes_will_consume_the_queued_text_if_the_current_turn_reaches_bd527e1e": {
+    "message": "Hermes sẽ sử dụng văn bản được xếp hàng đợi nếu lượt hiện tại đạt đến điểm chèn.",
+    "description": "Runtime interface message ui.hermes.will.consume.the.queued.text.if.the.current.turn.reaches.bd527e1e"
+  },
+  "runtime_ui_hermes_will_never_replace_or_switch_an_existing_conversation_wi_7e65804d": {
+    "message": "Hermes sẽ không bao giờ thay thế hoặc chuyển đổi cuộc trò chuyện hiện có nếu không có lựa chọn này.",
+    "description": "Runtime interface message ui.hermes.will.never.replace.or.switch.an.existing.conversation.wi.7e65804d"
+  },
+  "runtime_ui_hermes_will_send_it_after_the_current_turn_finishes_or_stops": {
+    "message": "Hermes sẽ gửi nó sau khi lượt hiện tại kết thúc hoặc dừng.",
+    "description": "Runtime interface message ui.hermes.will.send.it.after.the.current.turn.finishes.or.stops"
+  },
+  "runtime_ui_hermes_will_stop_before_changing_a_dirty_checkout": {
+    "message": "Hermes sẽ dừng trước khi thay đổi khoản thanh toán bẩn.",
+    "description": "Runtime interface message ui.hermes.will.stop.before.changing.a.dirty.checkout"
+  },
+  "runtime_ui_hide": {
+    "message": "Ẩn",
+    "description": "Runtime interface message ui.hide"
+  },
+  "runtime_ui_hide_sessions_rail": {
+    "message": "Ẩn đường ray phiên",
+    "description": "Runtime interface message ui.hide.sessions.rail"
+  },
+  "runtime_ui_high": {
+    "message": "Cao",
+    "description": "Runtime interface message ui.high"
+  },
+  "runtime_ui_highlighted_text": {
+    "message": "Văn bản được đánh dấu",
+    "description": "Runtime interface message ui.highlighted.text"
+  },
+  "runtime_ui_hint": {
+    "message": "gợi ý",
+    "description": "Runtime interface message ui.hint"
+  },
+  "runtime_ui_home": {
+    "message": "Trang chủ",
+    "description": "Runtime interface message ui.home"
+  },
+  "runtime_ui_host": {
+    "message": "Máy chủ",
+    "description": "Runtime interface message ui.host"
+  },
+  "runtime_ui_id": {
+    "message": "ID",
+    "description": "Runtime interface message ui.id"
+  },
+  "runtime_ui_image": {
+    "message": "Hình ảnh",
+    "description": "Runtime interface message ui.image"
+  },
+  "runtime_ui_image_attached_from_clipboard": {
+    "message": "Hình ảnh được đính kèm từ clipboard",
+    "description": "Runtime interface message ui.image.attached.from.clipboard"
+  },
+  "runtime_ui_image_pasted_into_hermes": {
+    "message": "Hình ảnh được dán vào Hermes",
+    "description": "Runtime interface message ui.image.pasted.into.hermes"
+  },
+  "runtime_ui_image_ready_for_hermes_vision": {
+    "message": "Hình ảnh đã sẵn sàng cho tầm nhìn Hermes",
+    "description": "Runtime interface message ui.image.ready.for.hermes.vision"
+  },
+  "runtime_ui_image_stayed_inline_only": {
+    "message": "Hình ảnh chỉ ở trong dòng",
+    "description": "Runtime interface message ui.image.stayed.inline.only"
+  },
+  "runtime_ui_images": {
+    "message": "▧ Hình ảnh...",
+    "description": "Runtime interface message ui.images"
+  },
+  "runtime_ui_images_09e871c9": {
+    "message": "Hình ảnh",
+    "description": "Runtime interface message ui.images.09e871c9"
+  },
+  "runtime_ui_images_9ef50004": {
+    "message": "▧ Hình ảnh…",
+    "description": "Runtime interface message ui.images.9ef50004"
+  },
+  "runtime_ui_images_documents_and_code": {
+    "message": "Hình ảnh, tài liệu và mã",
+    "description": "Runtime interface message ui.images.documents.and.code"
+  },
+  "runtime_ui_images_documents_and_code_stay_with_this_message": {
+    "message": "Hình ảnh, tài liệu và mã sẽ ở lại với thông báo này.",
+    "description": "Runtime interface message ui.images.documents.and.code.stay.with.this.message"
+  },
+  "runtime_ui_improve": {
+    "message": "Cải thiện",
+    "description": "Runtime interface message ui.improve"
+  },
+  "runtime_ui_improve_selected_text": {
+    "message": "Cải thiện văn bản đã chọn",
+    "description": "Runtime interface message ui.improve.selected.text"
+  },
+  "runtime_ui_index": {
+    "message": "chỉ mục",
+    "description": "Runtime interface message ui.index"
+  },
+  "runtime_ui_info": {
+    "message": "Thông tin",
+    "description": "Runtime interface message ui.info"
+  },
+  "runtime_ui_inline_assist": {
+    "message": "Hỗ trợ nội tuyến",
+    "description": "Runtime interface message ui.inline.assist"
+  },
+  "runtime_ui_input": {
+    "message": "đầu vào",
+    "description": "Runtime interface message ui.input"
+  },
+  "runtime_ui_inspector_views": {
+    "message": "Quan điểm của thanh tra",
+    "description": "Runtime interface message ui.inspector.views"
+  },
+  "runtime_ui_install": {
+    "message": "cài đặt",
+    "description": "Runtime interface message ui.install"
+  },
+  "runtime_ui_installing_the_local_speech_language_pack": {
+    "message": "Đang cài đặt gói ngôn ngữ giọng nói địa phương…",
+    "description": "Runtime interface message ui.installing.the.local.speech.language.pack"
+  },
+  "runtime_ui_instant_tools_no_model_call": {
+    "message": "Công cụ tức thì · không cần gọi mẫu",
+    "description": "Runtime interface message ui.instant.tools.no.model.call"
+  },
+  "runtime_ui_invalid": {
+    "message": "không hợp lệ",
+    "description": "Runtime interface message ui.invalid"
+  },
+  "runtime_ui_item": {
+    "message": "Mục",
+    "description": "Runtime interface message ui.item"
+  },
+  "runtime_ui_keep_assist_sessions": {
+    "message": "Giữ các phiên Hỗ trợ",
+    "description": "Runtime interface message ui.keep.assist.sessions"
+  },
+  "runtime_ui_keep_open_across_tabs": {
+    "message": "Giữ mở trên các tab",
+    "description": "Runtime interface message ui.keep.open.across.tabs"
+  },
+  "runtime_ui_keep_replacement": {
+    "message": "Giữ thay thế",
+    "description": "Runtime interface message ui.keep.replacement"
+  },
+  "runtime_ui_keep_the_current_chat_visible_return_the_result_to_this_field": {
+    "message": "Giữ cuộc trò chuyện hiện tại ở chế độ hiển thị. Trả kết quả về trường này.",
+    "description": "Runtime interface message ui.keep.the.current.chat.visible.return.the.result.to.this.field"
+  },
+  "runtime_ui_key": {
+    "message": "Chìa khóa",
+    "description": "Runtime interface message ui.key"
+  },
+  "runtime_ui_label": {
+    "message": "Nhãn",
+    "description": "Runtime interface message ui.label"
+  },
+  "runtime_ui_large": {
+    "message": "lớn",
+    "description": "Runtime interface message ui.large"
+  },
+  "runtime_ui_later": {
+    "message": "SAU ĐÓ",
+    "description": "Runtime interface message ui.later"
+  },
+  "runtime_ui_later_56e2f5d3": {
+    "message": "sau này",
+    "description": "Runtime interface message ui.later.56e2f5d3"
+  },
+  "runtime_ui_latest": {
+    "message": "Mới nhất",
+    "description": "Runtime interface message ui.latest"
+  },
+  "runtime_ui_layout": {
+    "message": "Bố cục",
+    "description": "Runtime interface message ui.layout"
+  },
+  "runtime_ui_leave_blank_to_keep_current_token": {
+    "message": "Để trống để giữ mã thông báo hiện tại",
+    "description": "Runtime interface message ui.leave.blank.to.keep.current.token"
+  },
+  "runtime_ui_light": {
+    "message": "☼ Ánh sáng",
+    "description": "Runtime interface message ui.light"
+  },
+  "runtime_ui_limit": {
+    "message": "giới hạn",
+    "description": "Runtime interface message ui.limit"
+  },
+  "runtime_ui_list": {
+    "message": "Danh sách",
+    "description": "Runtime interface message ui.list"
+  },
+  "runtime_ui_load_unpacked_installs_update_through_a_guarded_hermes_agent_tu_410111a9": {
+    "message": "Cập nhật các bản cài đặt đã giải nén tải thông qua lượt tác nhân Hermes được bảo vệ, sau đó tải lại thư mục dist/ đã xây dựng.",
+    "description": "Runtime interface message ui.load.unpacked.installs.update.through.a.guarded.hermes.agent.tu.410111a9"
+  },
+  "runtime_ui_loading": {
+    "message": "Đang tải",
+    "description": "Runtime interface message ui.loading"
+  },
+  "runtime_ui_loading_249feada": {
+    "message": "📎 Đang tải...",
+    "description": "Runtime interface message ui.loading.249feada"
+  },
+  "runtime_ui_loading_b04ba49f": {
+    "message": "Đang tải...",
+    "description": "Runtime interface message ui.loading.b04ba49f"
+  },
+  "runtime_ui_loading_canonical_hermes_history": {
+    "message": "Đang tải lịch sử Hermes chuẩn…",
+    "description": "Runtime interface message ui.loading.canonical.hermes.history"
+  },
+  "runtime_ui_loading_connection": {
+    "message": "Đang tải kết nối",
+    "description": "Runtime interface message ui.loading.connection"
+  },
+  "runtime_ui_loading_hermes_runtime_truth": {
+    "message": "Đang tải Hermes runtime sự thật",
+    "description": "Runtime interface message ui.loading.hermes.runtime.truth"
+  },
+  "runtime_ui_local": {
+    "message": "Địa phương",
+    "description": "Runtime interface message ui.local"
+  },
+  "runtime_ui_local_api_server": {
+    "message": "Máy chủ API cục bộ",
+    "description": "Runtime interface message ui.local.api.server"
+  },
+  "runtime_ui_local_gateway": {
+    "message": "Cổng địa phương",
+    "description": "Runtime interface message ui.local.gateway"
+  },
+  "runtime_ui_local_setup_keep_hermes_gateway_api_server_running_on_this_machine": {
+    "message": "Thiết lập cục bộ: giữ cho Máy chủ Hermes Gateway/API chạy trên máy này.",
+    "description": "Runtime interface message ui.local.setup.keep.hermes.gateway.api.server.running.on.this.machine"
+  },
+  "runtime_ui_local_sidecar_chrome_panel": {
+    "message": "BỘ SIDECAR ĐỊA PHƯƠNG / BẢNG CHROME",
+    "description": "Runtime interface message ui.local.sidecar.chrome.panel"
+  },
+  "runtime_ui_low": {
+    "message": "Thấp",
+    "description": "Runtime interface message ui.low"
+  },
+  "runtime_ui_main": {
+    "message": "Chính",
+    "description": "Runtime interface message ui.main"
+  },
+  "runtime_ui_make_this_more_confident_without_sounding_aggressive": {
+    "message": "Làm cho điều này trở nên tự tin hơn mà không có vẻ hung hăng…",
+    "description": "Runtime interface message ui.make.this.more.confident.without.sounding.aggressive"
+  },
+  "runtime_ui_manual": {
+    "message": "Hướng dẫn sử dụng",
+    "description": "Runtime interface message ui.manual"
+  },
+  "runtime_ui_manual_setup": {
+    "message": "Thiết lập thủ công",
+    "description": "Runtime interface message ui.manual.setup"
+  },
+  "runtime_ui_manual_setup_required": {
+    "message": "Cần thiết lập thủ công",
+    "description": "Runtime interface message ui.manual.setup.required"
+  },
+  "runtime_ui_maybe_later": {
+    "message": "Có lẽ sau này",
+    "description": "Runtime interface message ui.maybe.later"
+  },
+  "runtime_ui_med": {
+    "message": "Địa Trung Hải",
+    "description": "Runtime interface message ui.med"
+  },
+  "runtime_ui_menu": {
+    "message": "Thực đơn",
+    "description": "Runtime interface message ui.menu"
+  },
+  "runtime_ui_message": {
+    "message": "Tin nhắn",
+    "description": "Runtime interface message ui.message"
+  },
+  "runtime_ui_message_7be2d2d2": {
+    "message": "中文",
+    "description": "Runtime interface message ui.message.7be2d2d2"
+  },
+  "runtime_ui_message_attachments": {
+    "message": "Tệp đính kèm tin nhắn",
+    "description": "Runtime interface message ui.message.attachments"
+  },
+  "runtime_ui_message_queued": {
+    "message": "Đã xếp hàng tin nhắn",
+    "description": "Runtime interface message ui.message.queued"
+  },
+  "runtime_ui_messages": {
+    "message": "Tin nhắn",
+    "description": "Runtime interface message ui.messages"
+  },
+  "runtime_ui_microphone": {
+    "message": "Micrô",
+    "description": "Runtime interface message ui.microphone"
+  },
+  "runtime_ui_microphone_access_is_already_enabled_for_hermes_browser_extension": {
+    "message": "Quyền truy cập micrô đã được bật cho Hermes Browser Extension.",
+    "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
+  },
+  "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
+    "message": "Quyền truy cập micrô bị chặn đối với Hermes Browser.",
+    "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
+  },
+  "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
+    "message": "Quyền truy cập micrô được bật. Quay lại bảng điều khiển bên Hermes và nhấp lại vào micrô hoặc sử dụng tab Đọc chính tả bằng giọng nói Hermes nếu tính năng chụp bảng điều khiển bên vẫn bị chặn.",
+    "description": "Runtime interface message ui.microphone.access.is.enabled.return.to.the.hermes.side.panel.an.2839c056"
+  },
+  "runtime_ui_microphone_permission_blocked": {
+    "message": "Đã chặn quyền sử dụng micrô",
+    "description": "Runtime interface message ui.microphone.permission.blocked"
+  },
+  "runtime_ui_microphone_permission_enabled": {
+    "message": "Đã bật quyền sử dụng micrô",
+    "description": "Runtime interface message ui.microphone.permission.enabled"
+  },
+  "runtime_ui_microphone_permission_needed": {
+    "message": "Cần có quyền sử dụng micrô",
+    "description": "Runtime interface message ui.microphone.permission.needed"
+  },
+  "runtime_ui_minimal_selected_text_short_page_text": {
+    "message": "Tối thiểu - văn bản đã chọn + văn bản trang ngắn",
+    "description": "Runtime interface message ui.minimal.selected.text.short.page.text"
+  },
+  "runtime_ui_missing": {
+    "message": "Thiếu",
+    "description": "Runtime interface message ui.missing"
+  },
+  "runtime_ui_mode": {
+    "message": "CHẾ ĐỘ",
+    "description": "Runtime interface message ui.mode"
+  },
+  "runtime_ui_mode_controls_brightness_theme_controls_the_accent_palette_and_0d9c3d47": {
+    "message": "Chế độ kiểm soát độ sáng. Chủ đề kiểm soát bảng màu nhấn và kiểu dáng bề mặt trò chuyện.",
+    "description": "Runtime interface message ui.mode.controls.brightness.theme.controls.the.accent.palette.and.0d9c3d47"
+  },
+  "runtime_ui_model": {
+    "message": "MÔ HÌNH",
+    "description": "Runtime interface message ui.model"
+  },
+  "runtime_ui_model_68c2cc7f": {
+    "message": "người mẫu",
+    "description": "Runtime interface message ui.model.68c2cc7f"
+  },
+  "runtime_ui_model_discovery_limited": {
+    "message": "Khám phá mô hình hạn chế",
+    "description": "Runtime interface message ui.model.discovery.limited"
+  },
+  "runtime_ui_model_lock_failed": {
+    "message": "Khóa mô hình không thành công",
+    "description": "Runtime interface message ui.model.lock.failed"
+  },
+  "runtime_ui_model_lock_pending": {
+    "message": "Khóa mô hình đang chờ xử lý",
+    "description": "Runtime interface message ui.model.lock.pending"
+  },
+  "runtime_ui_model_mismatch": {
+    "message": "Mô hình không khớp",
+    "description": "Runtime interface message ui.model.mismatch"
+  },
+  "runtime_ui_model_providers": {
+    "message": "Nhà cung cấp mô hình",
+    "description": "Runtime interface message ui.model.providers"
+  },
+  "runtime_ui_model_refresh_limited": {
+    "message": "Làm mới mô hình bị hạn chế",
+    "description": "Runtime interface message ui.model.refresh.limited"
+  },
+  "runtime_ui_model_registry_unavailable": {
+    "message": "Đăng ký mô hình không có sẵn",
+    "description": "Runtime interface message ui.model.registry.unavailable"
+  },
+  "runtime_ui_model_runtime_options": {
+    "message": "Tùy chọn thời gian chạy mô hình",
+    "description": "Runtime interface message ui.model.runtime.options"
+  },
+  "runtime_ui_more": {
+    "message": "Thêm",
+    "description": "Runtime interface message ui.more"
+  },
+  "runtime_ui_name": {
+    "message": "Tên",
+    "description": "Runtime interface message ui.name"
+  },
+  "runtime_ui_native_context_controls_unavailable": {
+    "message": "Điều khiển ngữ cảnh gốc không có sẵn.",
+    "description": "Runtime interface message ui.native.context.controls.unavailable"
+  },
+  "runtime_ui_new": {
+    "message": "Mới",
+    "description": "Runtime interface message ui.new"
+  },
+  "runtime_ui_new_browser_chat": {
+    "message": "Trò chuyện trên trình duyệt mới",
+    "description": "Runtime interface message ui.new.browser.chat"
+  },
+  "runtime_ui_new_chat": {
+    "message": "Trò chuyện mới",
+    "description": "Runtime interface message ui.new.chat"
+  },
+  "runtime_ui_new_hermes_browser_extension_draft": {
+    "message": "Dự thảo Hermes Browser Extension mới",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.draft"
+  },
+  "runtime_ui_new_hermes_browser_extension_session": {
+    "message": "Phiên Hermes Browser Extension mới",
+    "description": "Runtime interface message ui.new.hermes.browser.extension.session"
+  },
+  "runtime_ui_new_session": {
+    "message": "Phiên mới",
+    "description": "Runtime interface message ui.new.session"
+  },
+  "runtime_ui_new_session_inline_assist": {
+    "message": "Phiên mới · Hỗ trợ nội tuyến",
+    "description": "Runtime interface message ui.new.session.inline.assist"
+  },
+  "runtime_ui_next": {
+    "message": "Tiếp theo",
+    "description": "Runtime interface message ui.next"
+  },
+  "runtime_ui_next_prompt_payload": {
+    "message": "Tải trọng nhắc nhở tiếp theo",
+    "description": "Runtime interface message ui.next.prompt.payload"
+  },
+  "runtime_ui_no": {
+    "message": "Không",
+    "description": "Runtime interface message ui.no"
+  },
+  "runtime_ui_no_active_run": {
+    "message": "Không có hoạt động chạy",
+    "description": "Runtime interface message ui.no.active.run"
+  },
+  "runtime_ui_no_active_session": {
+    "message": "Không có phiên hoạt động",
+    "description": "Runtime interface message ui.no.active.session"
+  },
+  "runtime_ui_no_active_tab_detected": {
+    "message": "Không phát hiện thấy tab đang hoạt động",
+    "description": "Runtime interface message ui.no.active.tab.detected"
+  },
+  "runtime_ui_no_agent_ports": {
+    "message": "Không có cổng tác nhân",
+    "description": "Runtime interface message ui.no.agent.ports"
+  },
+  "runtime_ui_no_agents_scanned_yet_click": {
+    "message": "Chưa có tác nhân nào được quét. nhấp chuột",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click"
+  },
+  "runtime_ui_no_agents_scanned_yet_click_scan_agents": {
+    "message": "Chưa có tác nhân nào được quét. Nhấp vào \"Quét tác nhân\".",
+    "description": "Runtime interface message ui.no.agents.scanned.yet.click.scan.agents"
+  },
+  "runtime_ui_no_audio_is_saved_by_this_page_in_hermes_stt_mode_audio_is_sent_df9cdcdc": {
+    "message": "Không có âm thanh nào được lưu bởi trang này. Ở chế độ Hermes STT, âm thanh sẽ được gửi một lần đến điểm cuối phiên âm Hermes đã định cấu hình của bạn khi bạn dừng ghi. Ở chế độ dự phòng giọng nói của Trình duyệt, chỉ bản ghi được gửi trở lại bảng điều khiển bên.",
+    "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
+  },
+  "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
+    "message": "Không có âm thanh được lưu ở đây. Quyền chỉ cho phép Hermes Browser ghi lại giọng nói của bạn khi bạn nhấp vào nút mic.",
+    "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
+  },
+  "runtime_ui_no_browser_context_attached": {
+    "message": "Không có bối cảnh trình duyệt được đính kèm",
+    "description": "Runtime interface message ui.no.browser.context.attached"
+  },
+  "runtime_ui_no_browser_context_will_be_read_or_attached": {
+    "message": "Không có ngữ cảnh trình duyệt nào sẽ được đọc hoặc đính kèm.",
+    "description": "Runtime interface message ui.no.browser.context.will.be.read.or.attached"
+  },
+  "runtime_ui_no_browser_tab_selected_text_open_tabs_metadata_transcript_or_p_5f06547f": {
+    "message": "Sẽ không có tab trình duyệt, văn bản đã chọn, tab đang mở, siêu dữ liệu, bản ghi hoặc văn bản trang nào được đính kèm.",
+    "description": "Runtime interface message ui.no.browser.tab.selected.text.open.tabs.metadata.transcript.or.p.5f06547f"
+  },
+  "runtime_ui_no_matching_tabs": {
+    "message": "Không có tab phù hợp",
+    "description": "Runtime interface message ui.no.matching.tabs"
+  },
+  "runtime_ui_no_models_found": {
+    "message": "Không tìm thấy mô hình nào.",
+    "description": "Runtime interface message ui.no.models.found"
+  },
+  "runtime_ui_no_models_match": {
+    "message": "Không có mô hình nào phù hợp",
+    "description": "Runtime interface message ui.no.models.match"
+  },
+  "runtime_ui_no_providers_found": {
+    "message": "Không tìm thấy nhà cung cấp nào",
+    "description": "Runtime interface message ui.no.providers.found"
+  },
+  "runtime_ui_no_sessions_found": {
+    "message": "Không tìm thấy phiên nào",
+    "description": "Runtime interface message ui.no.sessions.found"
+  },
+  "runtime_ui_no_speech_captured": {
+    "message": "Không có lời nói nào được ghi lại",
+    "description": "Runtime interface message ui.no.speech.captured"
+  },
+  "runtime_ui_no_speech_captured_click_start_dictation_and_try_again": {
+    "message": "Không có lời nói nào được ghi lại. Nhấp vào Bắt đầu đọc chính tả và thử lại.",
+    "description": "Runtime interface message ui.no.speech.captured.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_speech_detected": {
+    "message": "Không phát hiện thấy giọng nói nào",
+    "description": "Runtime interface message ui.no.speech.detected"
+  },
+  "runtime_ui_no_speech_detected_click_start_dictation_and_try_again": {
+    "message": "Không phát hiện thấy giọng nói nào. Nhấp vào Bắt đầu đọc chính tả và thử lại.",
+    "description": "Runtime interface message ui.no.speech.detected.click.start.dictation.and.try.again"
+  },
+  "runtime_ui_no_submit_no_send_no_other_fields_touched": {
+    "message": "Không gửi · không gửi · không chạm vào trường nào khác",
+    "description": "Runtime interface message ui.no.submit.no.send.no.other.fields.touched"
+  },
+  "runtime_ui_no_tab": {
+    "message": "Không có tab",
+    "description": "Runtime interface message ui.no.tab"
+  },
+  "runtime_ui_no_tab_detected": {
+    "message": "Không phát hiện thấy tab nào",
+    "description": "Runtime interface message ui.no.tab.detected"
+  },
+  "runtime_ui_normal_good_default": {
+    "message": "Bình thường – mặc định phù hợp",
+    "description": "Runtime interface message ui.normal.good.default"
+  },
+  "runtime_ui_not_connected": {
+    "message": "Không được kết nối",
+    "description": "Runtime interface message ui.not.connected"
+  },
+  "runtime_ui_nothing_to_steer": {
+    "message": "Không có gì để chỉ đạo",
+    "description": "Runtime interface message ui.nothing.to.steer"
+  },
+  "runtime_ui_notice": {
+    "message": "thông báo",
+    "description": "Runtime interface message ui.notice"
+  },
+  "runtime_ui_now": {
+    "message": "bây giờ",
+    "description": "Runtime interface message ui.now"
+  },
+  "runtime_ui_number": {
+    "message": "Số",
+    "description": "Runtime interface message ui.number"
+  },
+  "runtime_ui_object": {
+    "message": "Đối tượng",
+    "description": "Runtime interface message ui.object"
+  },
+  "runtime_ui_observed_from_session_history_not_advertised_as_a_requestable_h_6343f8c8": {
+    "message": "Được quan sát từ lịch sử phiên; không được quảng cáo là mẫu Hermes có thể yêu cầu.",
+    "description": "Runtime interface message ui.observed.from.session.history.not.advertised.as.a.requestable.h.6343f8c8"
+  },
+  "runtime_ui_off": {
+    "message": "Tắt",
+    "description": "Runtime interface message ui.off"
+  },
+  "runtime_ui_ok": {
+    "message": "được rồi",
+    "description": "Runtime interface message ui.ok"
+  },
+  "runtime_ui_on": {
+    "message": "Bật",
+    "description": "Runtime interface message ui.on"
+  },
+  "runtime_ui_on_device_speech_recognition_is_unavailable_in_this_browser": {
+    "message": "Nhận dạng giọng nói trên thiết bị không khả dụng trong trình duyệt này.",
+    "description": "Runtime interface message ui.on.device.speech.recognition.is.unavailable.in.this.browser"
+  },
+  "runtime_ui_only_controls_supported_by_the_selected_model_are_shown": {
+    "message": "Chỉ các điều khiển được hỗ trợ bởi mô hình đã chọn mới được hiển thị.",
+    "description": "Runtime interface message ui.only.controls.supported.by.the.selected.model.are.shown"
+  },
+  "runtime_ui_open": {
+    "message": "Mở",
+    "description": "Runtime interface message ui.open"
+  },
+  "runtime_ui_open_a_normal_browser_tab_and_try_again": {
+    "message": "Mở tab trình duyệt bình thường và thử lại.",
+    "description": "Runtime interface message ui.open.a.normal.browser.tab.and.try.again"
+  },
+  "runtime_ui_open_a_normal_http_https_tab_then_refresh_context": {
+    "message": "Mở tab http/https bình thường, sau đó làm mới ngữ cảnh.",
+    "description": "Runtime interface message ui.open.a.normal.http.https.tab.then.refresh.context"
+  },
+  "runtime_ui_open_a_normal_page_tab_first": {
+    "message": "Trước tiên hãy mở tab trang bình thường.",
+    "description": "Runtime interface message ui.open.a.normal.page.tab.first"
+  },
+  "runtime_ui_open_full_view": {
+    "message": "Mở chế độ xem đầy đủ",
+    "description": "Runtime interface message ui.open.full.view"
+  },
+  "runtime_ui_open_hermes_assist": {
+    "message": "Mở Hermes Assist",
+    "description": "Runtime interface message ui.open.hermes.assist"
+  },
+  "runtime_ui_open_hermes_browser": {
+    "message": "Mở Hermes Browser",
+    "description": "Runtime interface message ui.open.hermes.browser"
+  },
+  "runtime_ui_open_hermes_browser_always_opens_the_side_panel_only_selection_0b8dac3c": {
+    "message": "Mở Hermes Browser luôn chỉ mở bảng điều khiển bên cạnh. Hành động lựa chọn bắt đầu ngay sau khi định tuyến.",
+    "description": "Runtime interface message ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c"
+  },
+  "runtime_ui_open_hermes_browser_uses_the_side_panel_only_selection_tasks_st_4f56df05": {
+    "message": "Mở Hermes Browser chỉ sử dụng bảng điều khiển bên cạnh. Nhiệm vụ lựa chọn bắt đầu tự động sau khi định tuyến.",
+    "description": "Runtime interface message ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05"
+  },
+  "runtime_ui_open_hermes_session": {
+    "message": "Mở phiên Hermes",
+    "description": "Runtime interface message ui.open.hermes.session"
+  },
+  "runtime_ui_open_hermes_web_in_a_full_tab": {
+    "message": "Mở Hermes Web trong tab đầy đủ",
+    "description": "Runtime interface message ui.open.hermes.web.in.a.full.tab"
+  },
+  "runtime_ui_open_hermes_web_settings": {
+    "message": "Mở cài đặt Hermes Web",
+    "description": "Runtime interface message ui.open.hermes.web.settings"
+  },
+  "runtime_ui_open_microphone_settings": {
+    "message": "Mở cài đặt micrô",
+    "description": "Runtime interface message ui.open.microphone.settings"
+  },
+  "runtime_ui_open_navigation": {
+    "message": "Mở điều hướng",
+    "description": "Runtime interface message ui.open.navigation"
+  },
+  "runtime_ui_open_or_create_a_hermes_browser_extension_session_before_compac_4c0fdd2e": {
+    "message": "Mở hoặc tạo phiên Hermes Browser Extension trước khi nén ngữ cảnh.",
+    "description": "Runtime interface message ui.open.or.create.a.hermes.browser.extension.session.before.compac.4c0fdd2e"
+  },
+  "runtime_ui_open_quick_commands": {
+    "message": "Mở lệnh nhanh",
+    "description": "Runtime interface message ui.open.quick.commands"
+  },
+  "runtime_ui_open_session": {
+    "message": "Phiên mở",
+    "description": "Runtime interface message ui.open.session"
+  },
+  "runtime_ui_open_settings": {
+    "message": "Mở cài đặt",
+    "description": "Runtime interface message ui.open.settings"
+  },
+  "runtime_ui_open_side_panel_settings_and_connect_the_local_or_remote_api_be_706335b5": {
+    "message": "Mở Cài đặt bảng điều khiển bên và kết nối Cục bộ hoặc Từ xa API trước khi tải lịch sử phiên chuẩn.",
+    "description": "Runtime interface message ui.open.side.panel.settings.and.connect.the.local.or.remote.api.be.706335b5"
+  },
+  "runtime_ui_open_tabs": {
+    "message": "Mở tab",
+    "description": "Runtime interface message ui.open.tabs"
+  },
+  "runtime_ui_open_the_exact_session_in_the_full_hermes_web_workspace": {
+    "message": "Mở phiên chính xác trong không gian làm việc Hermes Web đầy đủ.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
+  },
+  "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
+    "message": "Mở phiên chính xác trong bảng điều khiển bên Hermes Browser.",
+    "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
+  },
+  "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
+    "message": "Mở bảng điều khiển bên của tiện ích mở rộng Hermes từ thanh công cụ trình duyệt của bạn.",
+    "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
+  },
+  "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
+    "message": "Mở phiên Assist được giữ lại trong bảng điều khiển bên của Trình duyệt hoặc trong Hermes Web.",
+    "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
+  },
+  "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
+    "message": "Mở bảng điều khiển bên cạnh, định cấu hình kết nối Hermes, sau đó mở lại chế độ xem đầy đủ.",
+    "description": "Runtime interface message ui.open.the.side.panel.configure.a.hermes.connection.then.open.ful.47648857"
+  },
+  "runtime_ui_open_the_signed_in_hermes_cloud_agent_in_the_active_tab_wait_fo_b7be52ec": {
+    "message": "Mở tác nhân Hermes Cloud đã đăng nhập trong tab đang hoạt động, đợi cho tác nhân tải xong, sau đó chọn Kết nối với Hermes. Không sử dụng dự phòng API token hoặc localhost.",
+    "description": "Runtime interface message ui.open.the.signed.in.hermes.cloud.agent.in.the.active.tab.wait.fo.b7be52ec"
+  },
+  "runtime_ui_opened_directly_in_full_view": {
+    "message": "Mở trực tiếp ở chế độ xem đầy đủ.",
+    "description": "Runtime interface message ui.opened.directly.in.full.view"
+  },
+  "runtime_ui_opening_chromium_microphone_permission_prompt": {
+    "message": "Đang mở lời nhắc cấp phép micrô Chromium…",
+    "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
+  },
+  "runtime_ui_opening_session": {
+    "message": "PHIÊN KHAI THÁC",
+    "description": "Runtime interface message ui.opening.session"
+  },
+  "runtime_ui_opening_shared_session": {
+    "message": "KHAI THÁC PHẦN CHIA SẺ",
+    "description": "Runtime interface message ui.opening.shared.session"
+  },
+  "runtime_ui_opening_voice_dictation_tab": {
+    "message": "Đang mở tab đọc chính tả bằng giọng nói",
+    "description": "Runtime interface message ui.opening.voice.dictation.tab"
+  },
+  "runtime_ui_optional": {
+    "message": "Tùy chọn",
+    "description": "Runtime interface message ui.optional"
+  },
+  "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
+    "message": "Chỉ khám phá tùy chọn: Trình duyệt thăm dò từng điểm cuối OpenAI-compatible `/v1/models` và hiển thị kết quả trùng khớp trong bộ chọn mô hình. Định tuyến thời gian chạy vẫn đến từ cổng Hermes được kết nối.",
+    "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
+  },
+  "runtime_ui_options": {
+    "message": "Tùy chọn",
+    "description": "Runtime interface message ui.options"
+  },
+  "runtime_ui_or_tell_hermes_exactly_what_you_need": {
+    "message": "Hoặc cho Hermes biết chính xác những gì bạn cần",
+    "description": "Runtime interface message ui.or.tell.hermes.exactly.what.you.need"
+  },
+  "runtime_ui_origin": {
+    "message": "Xuất xứ",
+    "description": "Runtime interface message ui.origin"
+  },
+  "runtime_ui_other": {
+    "message": "Khác",
+    "description": "Runtime interface message ui.other"
+  },
+  "runtime_ui_owner": {
+    "message": "chủ sở hữu",
+    "description": "Runtime interface message ui.owner"
+  },
+  "runtime_ui_page": {
+    "message": "Trang",
+    "description": "Runtime interface message ui.page"
+  },
+  "runtime_ui_page_context": {
+    "message": "Bối cảnh trang",
+    "description": "Runtime interface message ui.page.context"
+  },
+  "runtime_ui_page_context_depth": {
+    "message": "Độ sâu ngữ cảnh trang",
+    "description": "Runtime interface message ui.page.context.depth"
+  },
+  "runtime_ui_page_text": {
+    "message": "văn bản trang",
+    "description": "Runtime interface message ui.page.text"
+  },
+  "runtime_ui_pages": {
+    "message": "Trang",
+    "description": "Runtime interface message ui.pages"
+  },
+  "runtime_ui_panel": {
+    "message": "bảng điều khiển",
+    "description": "Runtime interface message ui.panel"
+  },
+  "runtime_ui_panel_opening": {
+    "message": "Mở bảng điều khiển",
+    "description": "Runtime interface message ui.panel.opening"
+  },
+  "runtime_ui_paste": {
+    "message": "Dán",
+    "description": "Runtime interface message ui.paste"
+  },
+  "runtime_ui_paste_a_gateway_api_key_or_reconnect_when_you_are_ready": {
+    "message": "Dán khóa Gateway API hoặc kết nối lại khi bạn sẵn sàng.",
+    "description": "Runtime interface message ui.paste.a.gateway.api.key.or.reconnect.when.you.are.ready"
+  },
+  "runtime_ui_paste_image": {
+    "message": "▣ Dán hình ảnh",
+    "description": "Runtime interface message ui.paste.image"
+  },
+  "runtime_ui_paste_this_into_the_hermes_api_server_environment_on_the_remote_machine": {
+    "message": "Dán cái này vào môi trường Hermes API-server trên máy từ xa.",
+    "description": "Runtime interface message ui.paste.this.into.the.hermes.api.server.environment.on.the.remote.machine"
+  },
+  "runtime_ui_path": {
+    "message": "Đường dẫn",
+    "description": "Runtime interface message ui.path"
+  },
+  "runtime_ui_pending": {
+    "message": "Đang chờ xử lý",
+    "description": "Runtime interface message ui.pending"
+  },
+  "runtime_ui_permission": {
+    "message": "Quyền",
+    "description": "Runtime interface message ui.permission"
+  },
+  "runtime_ui_pick": {
+    "message": "chọn",
+    "description": "Runtime interface message ui.pick"
+  },
+  "runtime_ui_pick_a_fixed_mode_or_follow_your_system_setting": {
+    "message": "Chọn một chế độ cố định hoặc làm theo cài đặt hệ thống của bạn.",
+    "description": "Runtime interface message ui.pick.a.fixed.mode.or.follow.your.system.setting"
+  },
+  "runtime_ui_pick_an_element": {
+    "message": "Chọn một phần tử",
+    "description": "Runtime interface message ui.pick.an.element"
+  },
+  "runtime_ui_pick_page_element": {
+    "message": "◈ Chọn phần tử trang",
+    "description": "Runtime interface message ui.pick.page.element"
+  },
+  "runtime_ui_picked_element_cleared": {
+    "message": "Đã xóa phần tử được chọn",
+    "description": "Runtime interface message ui.picked.element.cleared"
+  },
+  "runtime_ui_pinned_tab_closed": {
+    "message": "Tab được ghim đã đóng",
+    "description": "Runtime interface message ui.pinned.tab.closed"
+  },
+  "runtime_ui_policy": {
+    "message": "Chính sách",
+    "description": "Runtime interface message ui.policy"
+  },
+  "runtime_ui_popup": {
+    "message": "Cửa sổ bật lên",
+    "description": "Runtime interface message ui.popup"
+  },
+  "runtime_ui_port": {
+    "message": "Cảng",
+    "description": "Runtime interface message ui.port"
+  },
+  "runtime_ui_preferences": {
+    "message": "Tùy chọn",
+    "description": "Runtime interface message ui.preferences"
+  },
+  "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
+    "message": "Ưu tiên công cụ đánh thức gốc Hermes’ cục bộ và sử dụng giọng nói Chromium trên thiết bị cho Cloud Preview.",
+    "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
+  },
+  "runtime_ui_preparing_on_device_dictation": {
+    "message": "Đang chuẩn bị đọc chính tả trên thiết bị",
+    "description": "Runtime interface message ui.preparing.on.device.dictation"
+  },
+  "runtime_ui_preparing_the_browser_local_wake_listener": {
+    "message": "Đang chuẩn bị trình nghe đánh thức cục bộ của trình duyệt…",
+    "description": "Runtime interface message ui.preparing.the.browser.local.wake.listener"
+  },
+  "runtime_ui_preview": {
+    "message": "Xem trước",
+    "description": "Runtime interface message ui.preview"
+  },
+  "runtime_ui_preview_1aa787fe": {
+    "message": "xem trước",
+    "description": "Runtime interface message ui.preview.1aa787fe"
+  },
+  "runtime_ui_preview_copy_only": {
+    "message": "Chỉ xem trước + sao chép",
+    "description": "Runtime interface message ui.preview.copy.only"
+  },
+  "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
+    "message": "Chế độ xem trước: tải trang này từ Hermes Browser Extension đã cài đặt để sử dụng cài đặt Hermes được kết nối và đọc chính tả bằng giọng nói.",
+    "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
+  },
+  "runtime_ui_previous": {
+    "message": "trước đó",
+    "description": "Runtime interface message ui.previous"
+  },
+  "runtime_ui_private": {
+    "message": "RIÊNG TƯ",
+    "description": "Runtime interface message ui.private"
+  },
+  "runtime_ui_pro": {
+    "message": "chuyên nghiệp",
+    "description": "Runtime interface message ui.pro"
+  },
+  "runtime_ui_process": {
+    "message": "Quy trình",
+    "description": "Runtime interface message ui.process"
+  },
+  "runtime_ui_profile": {
+    "message": "HỒ SƠ",
+    "description": "Runtime interface message ui.profile"
+  },
+  "runtime_ui_profile_api_unavailable": {
+    "message": "Hồ sơ API không có sẵn",
+    "description": "Runtime interface message ui.profile.api.unavailable"
+  },
+  "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
+    "message": "Hồ sơ API không có sẵn. Trình duyệt sẽ sử dụng cấu hình Hermes gateway hiện đang chạy.",
+    "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
+  },
+  "runtime_ui_profile_ff4fc027": {
+    "message": "Hồ sơ",
+    "description": "Runtime interface message ui.profile.ff4fc027"
+  },
+  "runtime_ui_profile_switch_unavailable": {
+    "message": "Chuyển hồ sơ không khả dụng",
+    "description": "Runtime interface message ui.profile.switch.unavailable"
+  },
+  "runtime_ui_profile_sync_unavailable": {
+    "message": "Đồng bộ hồ sơ không khả dụng",
+    "description": "Runtime interface message ui.profile.sync.unavailable"
+  },
+  "runtime_ui_profiles_sync_after_connecting_to_hermes": {
+    "message": "Đồng bộ hồ sơ sau khi kết nối với Hermes.",
+    "description": "Runtime interface message ui.profiles.sync.after.connecting.to.hermes"
+  },
+  "runtime_ui_prompt": {
+    "message": "Lời nhắc",
+    "description": "Runtime interface message ui.prompt"
+  },
+  "runtime_ui_prompt_context": {
+    "message": "Bối cảnh nhắc nhở",
+    "description": "Runtime interface message ui.prompt.context"
+  },
+  "runtime_ui_prompt_context_settings": {
+    "message": "Cài đặt ngữ cảnh nhắc nhở",
+    "description": "Runtime interface message ui.prompt.context.settings"
+  },
+  "runtime_ui_prompt_snippet": {
+    "message": "▤ Đoạn trích gợi ý…",
+    "description": "Runtime interface message ui.prompt.snippet"
+  },
+  "runtime_ui_prompt_snippets": {
+    "message": "▤ Đoạn trích gợi ý...",
+    "description": "Runtime interface message ui.prompt.snippets"
+  },
+  "runtime_ui_property": {
+    "message": "Tài sản",
+    "description": "Runtime interface message ui.property"
+  },
+  "runtime_ui_provider": {
+    "message": "nhà cung cấp",
+    "description": "Runtime interface message ui.provider"
+  },
+  "runtime_ui_provider_model_and_reasoning": {
+    "message": "Nhà cung cấp, mô hình và lý luận",
+    "description": "Runtime interface message ui.provider.model.and.reasoning"
+  },
+  "runtime_ui_public": {
+    "message": "công cộng",
+    "description": "Runtime interface message ui.public"
+  },
+  "runtime_ui_public_alpha_load_unpacked_local_or_remote_hermes_api_server_fu_f39d96e3": {
+    "message": "Bản alpha công khai: tải các công cụ Hermes API server đã giải nén, cục bộ hoặc từ xa, Hermes đầy đủ khi thời gian chạy được kết nối hỗ trợ chúng.",
+    "description": "Runtime interface message ui.public.alpha.load.unpacked.local.or.remote.hermes.api.server.fu.f39d96e3"
+  },
+  "runtime_ui_public_flow_connect_to_hermes_creates_a_scoped_browser_token_wh_9184ad4d": {
+    "message": "Luồng công khai: Kết nối với Hermes tạo mã thông báo trình duyệt trong phạm vi khi máy chủ API hỗ trợ ghép nối. Đối với các máy chủ từ xa, hãy đặt API_SERVER_CORS_ORIGINS thành nguồn gốc của tiện ích mở rộng này và sử dụng mã thông báo mạnh API_SERVER_KEY hoặc có phạm vi.",
+    "description": "Runtime interface message ui.public.flow.connect.to.hermes.creates.a.scoped.browser.token.wh.9184ad4d"
+  },
+  "runtime_ui_public_setup": {
+    "message": "CÀI ĐẶT CÔNG CỘNG",
+    "description": "Runtime interface message ui.public.setup"
+  },
+  "runtime_ui_query": {
+    "message": "Truy vấn",
+    "description": "Runtime interface message ui.query"
+  },
+  "runtime_ui_queue": {
+    "message": "Hàng đợi",
+    "description": "Runtime interface message ui.queue"
+  },
+  "runtime_ui_queued": {
+    "message": "Đã xếp hàng",
+    "description": "Runtime interface message ui.queued"
+  },
+  "runtime_ui_queued_message_deleted": {
+    "message": "Tin nhắn xếp hàng đã bị xóa",
+    "description": "Runtime interface message ui.queued.message.deleted"
+  },
+  "runtime_ui_quick_commands": {
+    "message": "Lệnh nhanh",
+    "description": "Runtime interface message ui.quick.commands"
+  },
+  "runtime_ui_range": {
+    "message": "Phạm vi",
+    "description": "Runtime interface message ui.range"
+  },
+  "runtime_ui_readable_dom_text": {
+    "message": "Văn bản DOM có thể đọc được",
+    "description": "Runtime interface message ui.readable.dom.text"
+  },
+  "runtime_ui_reading_connection_settings_and_canonical_session_history": {
+    "message": "Đọc cài đặt kết nối và lịch sử phiên chuẩn.",
+    "description": "Runtime interface message ui.reading.connection.settings.and.canonical.session.history"
+  },
+  "runtime_ui_ready": {
+    "message": "Sẵn sàng",
+    "description": "Runtime interface message ui.ready"
+  },
+  "runtime_ui_reasoning_effort": {
+    "message": "Nỗ lực lý luận",
+    "description": "Runtime interface message ui.reasoning.effort"
+  },
+  "runtime_ui_reconnect": {
+    "message": "Kết nối lại",
+    "description": "Runtime interface message ui.reconnect"
+  },
+  "runtime_ui_reconnecting": {
+    "message": "Đang kết nối lại",
+    "description": "Runtime interface message ui.reconnecting"
+  },
+  "runtime_ui_record": {
+    "message": "Ghi lại",
+    "description": "Runtime interface message ui.record"
+  },
+  "runtime_ui_recording_voice": {
+    "message": "Ghi âm giọng nói",
+    "description": "Runtime interface message ui.recording.voice"
+  },
+  "runtime_ui_refresh": {
+    "message": "Làm mới",
+    "description": "Runtime interface message ui.refresh"
+  },
+  "runtime_ui_refresh_context_to_calculate_the_next_prompt_payload": {
+    "message": "Làm mới ngữ cảnh để tính toán tải trọng nhắc tiếp theo.",
+    "description": "Runtime interface message ui.refresh.context.to.calculate.the.next.prompt.payload"
+  },
+  "runtime_ui_refresh_model_catalog": {
+    "message": "Làm mới danh mục mô hình",
+    "description": "Runtime interface message ui.refresh.model.catalog"
+  },
+  "runtime_ui_refresh_models": {
+    "message": "Làm mới mô hình",
+    "description": "Runtime interface message ui.refresh.models"
+  },
+  "runtime_ui_refresh_sessions": {
+    "message": "Làm mới phiên",
+    "description": "Runtime interface message ui.refresh.sessions"
+  },
+  "runtime_ui_refreshing_models": {
+    "message": "Làm mới mô hình",
+    "description": "Runtime interface message ui.refreshing.models"
+  },
+  "runtime_ui_refreshing_sessions": {
+    "message": "Đang làm mới phiên…",
+    "description": "Runtime interface message ui.refreshing.sessions"
+  },
+  "runtime_ui_remember_for_right_click_actions": {
+    "message": "Ghi nhớ thao tác click chuột phải",
+    "description": "Runtime interface message ui.remember.for.right.click.actions"
+  },
+  "runtime_ui_remote": {
+    "message": "Từ xa",
+    "description": "Runtime interface message ui.remote"
+  },
+  "runtime_ui_remote_api_server": {
+    "message": "Máy chủ API từ xa",
+    "description": "Runtime interface message ui.remote.api.server"
+  },
+  "runtime_ui_remote_api_server_environment_variables": {
+    "message": "Các biến môi trường máy chủ API từ xa",
+    "description": "Runtime interface message ui.remote.api.server.environment.variables"
+  },
+  "runtime_ui_remote_dashboard_rename_rpc_is_not_available_yet": {
+    "message": "RPC đổi tên bảng điều khiển từ xa chưa khả dụng.",
+    "description": "Runtime interface message ui.remote.dashboard.rename.rpc.is.not.available.yet"
+  },
+  "runtime_ui_remote_dashboard_websocket": {
+    "message": "Bảng điều khiển từ xa (WebSocket)",
+    "description": "Runtime interface message ui.remote.dashboard.websocket"
+  },
+  "runtime_ui_remote_env_copied": {
+    "message": "Đã sao chép env từ xa",
+    "description": "Runtime interface message ui.remote.env.copied"
+  },
+  "runtime_ui_remote_gateway": {
+    "message": "Cổng từ xa",
+    "description": "Runtime interface message ui.remote.gateway"
+  },
+  "runtime_ui_remote_setup_diagnostics": {
+    "message": "Chẩn đoán thiết lập từ xa",
+    "description": "Runtime interface message ui.remote.setup.diagnostics"
+  },
+  "runtime_ui_remove": {
+    "message": "Xóa",
+    "description": "Runtime interface message ui.remove"
+  },
+  "runtime_ui_rename": {
+    "message": "Đổi tên",
+    "description": "Runtime interface message ui.rename"
+  },
+  "runtime_ui_rename_a_fresh_browser_session_from_the_first_real_message": {
+    "message": "Đổi tên phiên trình duyệt mới từ tin nhắn thực đầu tiên.",
+    "description": "Runtime interface message ui.rename.a.fresh.browser.session.from.the.first.real.message"
+  },
+  "runtime_ui_rename_session": {
+    "message": "Đổi tên phiên",
+    "description": "Runtime interface message ui.rename.session"
+  },
+  "runtime_ui_rendered_message_bodies_only_draft_and_input_values_stay_excluded": {
+    "message": "Chỉ nội dung thư được hiển thị. Giá trị nháp và giá trị đầu vào vẫn bị loại trừ.",
+    "description": "Runtime interface message ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded"
+  },
+  "runtime_ui_rendered_message_bodies_will_be_attached_to_the_next_hermes_turn": {
+    "message": "Nội dung thư được hiển thị sẽ được đính kèm vào lượt Hermes tiếp theo.",
+    "description": "Runtime interface message ui.rendered.message.bodies.will.be.attached.to.the.next.hermes.turn"
+  },
+  "runtime_ui_replaced_the_original_field_safely": {
+    "message": "Thay thế trường ban đầu một cách an toàn",
+    "description": "Runtime interface message ui.replaced.the.original.field.safely"
+  },
+  "runtime_ui_reply": {
+    "message": "trả lời",
+    "description": "Runtime interface message ui.reply"
+  },
+  "runtime_ui_request": {
+    "message": "Yêu cầu",
+    "description": "Runtime interface message ui.request"
+  },
+  "runtime_ui_required": {
+    "message": "Bắt buộc",
+    "description": "Runtime interface message ui.required"
+  },
+  "runtime_ui_required_for_cloud_preview_and_older_hermes_builds_it_refuses_c_f0bdad5b": {
+    "message": "Cần thiết cho Cloud Preview và các bản dựng Hermes cũ hơn. Nó từ chối nhận dạng giọng nói trên đám mây.",
+    "description": "Runtime interface message ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b"
+  },
+  "runtime_ui_reset": {
+    "message": "Đặt lại",
+    "description": "Runtime interface message ui.reset"
+  },
+  "runtime_ui_reset_zoom": {
+    "message": "Đặt lại thu phóng",
+    "description": "Runtime interface message ui.reset.zoom"
+  },
+  "runtime_ui_response": {
+    "message": "phản hồi",
+    "description": "Runtime interface message ui.response"
+  },
+  "runtime_ui_restricted_page": {
+    "message": "Trang bị hạn chế",
+    "description": "Runtime interface message ui.restricted.page"
+  },
+  "runtime_ui_result": {
+    "message": "kết quả",
+    "description": "Runtime interface message ui.result"
+  },
+  "runtime_ui_result_preview": {
+    "message": "Xem trước kết quả",
+    "description": "Runtime interface message ui.result.preview"
+  },
+  "runtime_ui_retry": {
+    "message": "Thử lại",
+    "description": "Runtime interface message ui.retry"
+  },
+  "runtime_ui_return_to_page": {
+    "message": "Quay lại trang",
+    "description": "Runtime interface message ui.return.to.page"
+  },
+  "runtime_ui_review": {
+    "message": "Xem lại",
+    "description": "Runtime interface message ui.review"
+  },
+  "runtime_ui_review_the_result_before_applying_it": {
+    "message": "Xem lại kết quả trước khi áp dụng nó.",
+    "description": "Runtime interface message ui.review.the.result.before.applying.it"
+  },
+  "runtime_ui_right_click_actions": {
+    "message": "Hành động nhấp chuột phải",
+    "description": "Runtime interface message ui.right.click.actions"
+  },
+  "runtime_ui_right_click_task_complete": {
+    "message": "Nhiệm vụ nhấp chuột phải hoàn tất",
+    "description": "Runtime interface message ui.right.click.task.complete"
+  },
+  "runtime_ui_right_click_task_failed": {
+    "message": "Tác vụ nhấp chuột phải không thành công",
+    "description": "Runtime interface message ui.right.click.task.failed"
+  },
+  "runtime_ui_row": {
+    "message": "Hàng",
+    "description": "Runtime interface message ui.row"
+  },
+  "runtime_ui_rows": {
+    "message": "Hàng",
+    "description": "Runtime interface message ui.rows"
+  },
+  "runtime_ui_run": {
+    "message": "Chạy",
+    "description": "Runtime interface message ui.run"
+  },
+  "runtime_ui_run_in_background": {
+    "message": "Chạy ở chế độ nền",
+    "description": "Runtime interface message ui.run.in.background"
+  },
+  "runtime_ui_runs": {
+    "message": "Chạy",
+    "description": "Runtime interface message ui.runs"
+  },
+  "runtime_ui_runtime_identity": {
+    "message": "Nhận dạng thời gian chạy",
+    "description": "Runtime interface message ui.runtime.identity"
+  },
+  "runtime_ui_safe_apply": {
+    "message": "ÁP DỤNG AN TOÀN",
+    "description": "Runtime interface message ui.safe.apply"
+  },
+  "runtime_ui_safety": {
+    "message": "An toàn",
+    "description": "Runtime interface message ui.safety"
+  },
+  "runtime_ui_same_desktop_palettes_minus_window_transparency": {
+    "message": "Các bảng màu dành cho Máy tính để bàn giống nhau, trừ độ trong suốt của cửa sổ.",
+    "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
+  },
+  "runtime_ui_save": {
+    "message": "Lưu",
+    "description": "Runtime interface message ui.save"
+  },
+  "runtime_ui_save_settings": {
+    "message": "Lưu cài đặt",
+    "description": "Runtime interface message ui.save.settings"
+  },
+  "runtime_ui_saved": {
+    "message": "Đã lưu",
+    "description": "Runtime interface message ui.saved"
+  },
+  "runtime_ui_saved_when_you_send_the_first_message": {
+    "message": "Được lưu khi bạn gửi tin nhắn đầu tiên.",
+    "description": "Runtime interface message ui.saved.when.you.send.the.first.message"
+  },
+  "runtime_ui_say_hey_hermes_for_a_hands_free_one_turn_voice_request_always_o_cd7ebfae": {
+    "message": "Nói “Hey Hermes” để yêu cầu thoại một lần, rảnh tay. Tính năng phát hiện luôn bật vẫn còn trên máy này.",
+    "description": "Runtime interface message ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae"
+  },
+  "runtime_ui_scale_interface_copy_without_changing_browser_zoom": {
+    "message": "Sao chép giao diện tỷ lệ mà không thay đổi thu phóng trình duyệt.",
+    "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
+  },
+  "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
+    "message": "Quét máy chủ Hermes API đáng tin cậy để tìm các cổng đang chạy. Sử dụng localhost cho các tác nhân cùng một máy hoặc Tailscale máy chủ/IP cho các tác nhân từ xa riêng tư.",
+    "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
+  },
+  "runtime_ui_screen": {
+    "message": "Màn hình",
+    "description": "Runtime interface message ui.screen"
+  },
+  "runtime_ui_script": {
+    "message": "kịch bản",
+    "description": "Runtime interface message ui.script"
+  },
+  "runtime_ui_search": {
+    "message": "Tìm kiếm",
+    "description": "Runtime interface message ui.search"
+  },
+  "runtime_ui_search_all_models": {
+    "message": "Tìm kiếm tất cả các mô hình",
+    "description": "Runtime interface message ui.search.all.models"
+  },
+  "runtime_ui_search_chats": {
+    "message": "Tìm kiếm cuộc trò chuyện",
+    "description": "Runtime interface message ui.search.chats"
+  },
+  "runtime_ui_search_sessions": {
+    "message": "Phiên tìm kiếm",
+    "description": "Runtime interface message ui.search.sessions"
+  },
+  "runtime_ui_search_tabs": {
+    "message": "Tab tìm kiếm",
+    "description": "Runtime interface message ui.search.tabs"
+  },
+  "runtime_ui_security": {
+    "message": "Bảo mật",
+    "description": "Runtime interface message ui.security"
+  },
+  "runtime_ui_select": {
+    "message": "chọn",
+    "description": "Runtime interface message ui.select"
+  },
+  "runtime_ui_select_model": {
+    "message": "Chọn mô hình",
+    "description": "Runtime interface message ui.select.model"
+  },
+  "runtime_ui_selected_model_runtime_options": {
+    "message": "Tùy chọn thời gian chạy mô hình đã chọn",
+    "description": "Runtime interface message ui.selected.model.runtime.options"
+  },
+  "runtime_ui_selecting_the_safest_wake_listener": {
+    "message": "Chọn người nghe đánh thức an toàn nhất…",
+    "description": "Runtime interface message ui.selecting.the.safest.wake.listener"
+  },
+  "runtime_ui_selection": {
+    "message": "Lựa chọn",
+    "description": "Runtime interface message ui.selection"
+  },
+  "runtime_ui_self_hosted_api_or_dashboard_api_can_use_trusted_lan_http_dashb_152b7f4c": {
+    "message": "API hoặc bảng điều khiển tự lưu trữ. API có thể sử dụng LAN http đáng tin cậy; bảng điều khiển sử dụng https.",
+    "description": "Runtime interface message ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c"
+  },
+  "runtime_ui_send": {
+    "message": "Gửi",
+    "description": "Runtime interface message ui.send"
+  },
+  "runtime_ui_send_it_when_the_current_hermes_run_finishes": {
+    "message": "Gửi nó khi quá trình chạy Hermes hiện tại kết thúc.",
+    "description": "Runtime interface message ui.send.it.when.the.current.hermes.run.finishes"
+  },
+  "runtime_ui_send_message": {
+    "message": "Gửi tin nhắn",
+    "description": "Runtime interface message ui.send.message"
+  },
+  "runtime_ui_sending_observed_model_request": {
+    "message": "Gửi yêu cầu mô hình được quan sát",
+    "description": "Runtime interface message ui.sending.observed.model.request"
+  },
+  "runtime_ui_server": {
+    "message": "Máy chủ",
+    "description": "Runtime interface message ui.server"
+  },
+  "runtime_ui_service": {
+    "message": "Dịch vụ",
+    "description": "Runtime interface message ui.service"
+  },
+  "runtime_ui_session": {
+    "message": "PHIÊN",
+    "description": "Runtime interface message ui.session"
+  },
+  "runtime_ui_session_actions": {
+    "message": "Hành động phiên",
+    "description": "Runtime interface message ui.session.actions"
+  },
+  "runtime_ui_session_context_window": {
+    "message": "Cửa sổ ngữ cảnh phiên",
+    "description": "Runtime interface message ui.session.context.window"
+  },
+  "runtime_ui_session_f7f1997c": {
+    "message": "Phiên",
+    "description": "Runtime interface message ui.session.f7f1997c"
+  },
+  "runtime_ui_session_handoff": {
+    "message": "Chuyển giao phiên",
+    "description": "Runtime interface message ui.session.handoff"
+  },
+  "runtime_ui_session_id": {
+    "message": "ID phiên",
+    "description": "Runtime interface message ui.session.id"
+  },
+  "runtime_ui_session_id_copied": {
+    "message": "Đã sao chép ID phiên",
+    "description": "Runtime interface message ui.session.id.copied"
+  },
+  "runtime_ui_session_naming_prompt_context_and_side_panel_residency_live_together": {
+    "message": "Đặt tên phiên, bối cảnh lời nhắc và vị trí bảng điều khiển bên cạnh hoạt động cùng nhau.",
+    "description": "Runtime interface message ui.session.naming.prompt.context.and.side.panel.residency.live.together"
+  },
+  "runtime_ui_session_renamed": {
+    "message": "Đã đổi tên phiên",
+    "description": "Runtime interface message ui.session.renamed"
+  },
+  "runtime_ui_session_renamed_and_synced": {
+    "message": "Đã đổi tên và đồng bộ hóa phiên",
+    "description": "Runtime interface message ui.session.renamed.and.synced"
+  },
+  "runtime_ui_session_runtime": {
+    "message": "Thời gian chạy phiên",
+    "description": "Runtime interface message ui.session.runtime"
+  },
+  "runtime_ui_session_sync_failed": {
+    "message": "Đồng bộ hóa phiên không thành công",
+    "description": "Runtime interface message ui.session.sync.failed"
+  },
+  "runtime_ui_session_title": {
+    "message": "Tiêu đề phiên",
+    "description": "Runtime interface message ui.session.title"
+  },
+  "runtime_ui_session_title_saved_locally": {
+    "message": "Tiêu đề phiên được lưu cục bộ",
+    "description": "Runtime interface message ui.session.title.saved.locally"
+  },
+  "runtime_ui_session_title_updated": {
+    "message": "Đã cập nhật tiêu đề phiên",
+    "description": "Runtime interface message ui.session.title.updated"
+  },
+  "runtime_ui_session_unavailable": {
+    "message": "Phiên không có sẵn",
+    "description": "Runtime interface message ui.session.unavailable"
+  },
+  "runtime_ui_sessions": {
+    "message": "PHIÊN",
+    "description": "Runtime interface message ui.sessions"
+  },
+  "runtime_ui_set": {
+    "message": "Đặt",
+    "description": "Runtime interface message ui.set"
+  },
+  "runtime_ui_set_a_remote_dashboard": {
+    "message": "Đặt bảng điều khiển từ xa",
+    "description": "Runtime interface message ui.set.a.remote.dashboard"
+  },
+  "runtime_ui_settings": {
+    "message": "Cài đặt",
+    "description": "Runtime interface message ui.settings"
+  },
+  "runtime_ui_settings_not_saved": {
+    "message": "Cài đặt chưa được lưu",
+    "description": "Runtime interface message ui.settings.not.saved"
+  },
+  "runtime_ui_setup": {
+    "message": "thiết lập",
+    "description": "Runtime interface message ui.setup"
+  },
+  "runtime_ui_share": {
+    "message": "Chia sẻ",
+    "description": "Runtime interface message ui.share"
+  },
+  "runtime_ui_shared_session": {
+    "message": "PHIÊN CHIA SẺ",
+    "description": "Runtime interface message ui.shared.session"
+  },
+  "runtime_ui_shared_session_0a6bce9c": {
+    "message": "Phiên chia sẻ",
+    "description": "Runtime interface message ui.shared.session.0a6bce9c"
+  },
+  "runtime_ui_shell": {
+    "message": "Vỏ",
+    "description": "Runtime interface message ui.shell"
+  },
+  "runtime_ui_short": {
+    "message": "ngắn",
+    "description": "Runtime interface message ui.short"
+  },
+  "runtime_ui_show": {
+    "message": "Hiển thị",
+    "description": "Runtime interface message ui.show"
+  },
+  "runtime_ui_show_hermes_assist_in_writing_fields": {
+    "message": "Hiển thị Hermes Assist trong trường viết",
+    "description": "Runtime interface message ui.show.hermes.assist.in.writing.fields"
+  },
+  "runtime_ui_side_panel": {
+    "message": "Bảng điều khiển bên",
+    "description": "Runtime interface message ui.side.panel"
+  },
+  "runtime_ui_sidebar": {
+    "message": "Thanh bên",
+    "description": "Runtime interface message ui.sidebar"
+  },
+  "runtime_ui_signal": {
+    "message": "tín hiệu",
+    "description": "Runtime interface message ui.signal"
+  },
+  "runtime_ui_site": {
+    "message": "Trang web",
+    "description": "Runtime interface message ui.site"
+  },
+  "runtime_ui_size": {
+    "message": "Kích thước",
+    "description": "Runtime interface message ui.size"
+  },
+  "runtime_ui_skill": {
+    "message": "kỹ năng",
+    "description": "Runtime interface message ui.skill"
+  },
+  "runtime_ui_skill_sync_failed": {
+    "message": "Đồng bộ hóa kỹ năng không thành công",
+    "description": "Runtime interface message ui.skill.sync.failed"
+  },
+  "runtime_ui_skills": {
+    "message": "Kỹ năng",
+    "description": "Runtime interface message ui.skills"
+  },
+  "runtime_ui_skip": {
+    "message": "Bỏ qua",
+    "description": "Runtime interface message ui.skip"
+  },
+  "runtime_ui_slash_commands_and_skills": {
+    "message": "Lệnh và kỹ năng chém",
+    "description": "Runtime interface message ui.slash.commands.and.skills"
+  },
+  "runtime_ui_slash_helpers": {
+    "message": "Người trợ giúp chém",
+    "description": "Runtime interface message ui.slash.helpers"
+  },
+  "runtime_ui_socket": {
+    "message": "Ổ cắm",
+    "description": "Runtime interface message ui.socket"
+  },
+  "runtime_ui_source": {
+    "message": "NGUỒN",
+    "description": "Runtime interface message ui.source"
+  },
+  "runtime_ui_source_6da13add": {
+    "message": "Nguồn",
+    "description": "Runtime interface message ui.source.6da13add"
+  },
+  "runtime_ui_source_deck": {
+    "message": "Bộ nguồn",
+    "description": "Runtime interface message ui.source.deck"
+  },
+  "runtime_ui_source_receipts_arrive_after_shared_context_extraction": {
+    "message": "Biên nhận nguồn đến sau khi trích xuất bối cảnh được chia sẻ.",
+    "description": "Runtime interface message ui.source.receipts.arrive.after.shared.context.extraction"
+  },
+  "runtime_ui_speak_into_the_composer": {
+    "message": "Nói chuyện với nhà soạn nhạc",
+    "description": "Runtime interface message ui.speak.into.the.composer"
+  },
+  "runtime_ui_speak_wake_replies": {
+    "message": "Nói câu trả lời đánh thức",
+    "description": "Runtime interface message ui.speak.wake.replies"
+  },
+  "runtime_ui_standard": {
+    "message": "Tiêu chuẩn",
+    "description": "Runtime interface message ui.standard"
+  },
+  "runtime_ui_start": {
+    "message": "Bắt đầu",
+    "description": "Runtime interface message ui.start"
+  },
+  "runtime_ui_start_dictation": {
+    "message": "Bắt đầu đọc chính tả",
+    "description": "Runtime interface message ui.start.dictation"
+  },
+  "runtime_ui_start_new_assist_session": {
+    "message": "Bắt đầu phiên Hỗ trợ mới",
+    "description": "Runtime interface message ui.start.new.assist.session"
+  },
+  "runtime_ui_start_new_browser_session": {
+    "message": "Bắt đầu phiên trình duyệt mới",
+    "description": "Runtime interface message ui.start.new.browser.session"
+  },
+  "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
+    "message": "Khởi động Hermes API server cục bộ hoặc trên máy từ xa có thể truy cập.",
+    "description": "Runtime interface message ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine"
+  },
+  "runtime_ui_start_voice_dictation": {
+    "message": "Bắt đầu đọc chính tả bằng giọng nói",
+    "description": "Runtime interface message ui.start.voice.dictation"
+  },
+  "runtime_ui_starting_hermes_native_wake_engine": {
+    "message": "Đang khởi động công cụ đánh thức gốc Hermes’…",
+    "description": "Runtime interface message ui.starting.hermes.native.wake.engine"
+  },
+  "runtime_ui_starting_hermes_voice_recording_now": {
+    "message": "Đang bắt đầu ghi âm giọng nói Hermes.",
+    "description": "Runtime interface message ui.starting.hermes.voice.recording.now"
+  },
+  "runtime_ui_startup_readiness_checks": {
+    "message": "Kiểm tra mức độ sẵn sàng khởi động",
+    "description": "Runtime interface message ui.startup.readiness.checks"
+  },
+  "runtime_ui_status": {
+    "message": "Trạng thái",
+    "description": "Runtime interface message ui.status"
+  },
+  "runtime_ui_steer": {
+    "message": "Chỉ đạo",
+    "description": "Runtime interface message ui.steer"
+  },
+  "runtime_ui_steer_failed": {
+    "message": "Chỉ đạo thất bại",
+    "description": "Runtime interface message ui.steer.failed"
+  },
+  "runtime_ui_steer_not_injected": {
+    "message": "Chỉ đạo không được tiêm",
+    "description": "Runtime interface message ui.steer.not.injected"
+  },
+  "runtime_ui_steer_sent": {
+    "message": "Chỉ đạo đã gửi",
+    "description": "Runtime interface message ui.steer.sent"
+  },
+  "runtime_ui_steer_sent_to_active_run": {
+    "message": "Chỉ đạo được gửi đến hoạt động chạy",
+    "description": "Runtime interface message ui.steer.sent.to.active.run"
+  },
+  "runtime_ui_steer_the_current_run": {
+    "message": "Chỉ đạo hoạt động hiện tại",
+    "description": "Runtime interface message ui.steer.the.current.run"
+  },
+  "runtime_ui_stop": {
+    "message": "Dừng lại",
+    "description": "Runtime interface message ui.stop"
+  },
+  "runtime_ui_stop_hermes": {
+    "message": "Dừng Hermes",
+    "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stopping_hermes": {
+    "message": "Đang dừng Hermes",
+    "description": "Runtime interface message ui.stopping.hermes"
+  },
+  "runtime_ui_stopping_recording": {
+    "message": "Đang dừng ghi…",
+    "description": "Runtime interface message ui.stopping.recording"
+  },
+  "runtime_ui_storage": {
+    "message": "Lưu trữ",
+    "description": "Runtime interface message ui.storage"
+  },
+  "runtime_ui_stream": {
+    "message": "Truyền phát",
+    "description": "Runtime interface message ui.stream"
+  },
+  "runtime_ui_submit": {
+    "message": "Gửi",
+    "description": "Runtime interface message ui.submit"
+  },
+  "runtime_ui_summarize": {
+    "message": "Tóm tắt",
+    "description": "Runtime interface message ui.summarize"
+  },
+  "runtime_ui_summarize_selection": {
+    "message": "Tóm tắt lựa chọn",
+    "description": "Runtime interface message ui.summarize.selection"
+  },
+  "runtime_ui_summary": {
+    "message": "Tóm tắt",
+    "description": "Runtime interface message ui.summary"
+  },
+  "runtime_ui_support_diagnostics": {
+    "message": "Hỗ trợ chẩn đoán",
+    "description": "Runtime interface message ui.support.diagnostics"
+  },
+  "runtime_ui_switch": {
+    "message": "Chuyển đổi",
+    "description": "Runtime interface message ui.switch"
+  },
+  "runtime_ui_switch_partially_failed": {
+    "message": "Chuyển đổi không thành công một phần",
+    "description": "Runtime interface message ui.switch.partially.failed"
+  },
+  "runtime_ui_switch_to_this_agent": {
+    "message": "Chuyển sang tác nhân này",
+    "description": "Runtime interface message ui.switch.to.this.agent"
+  },
+  "runtime_ui_switched_gateway": {
+    "message": "Cổng chuyển mạch",
+    "description": "Runtime interface message ui.switched.gateway"
+  },
+  "runtime_ui_syncing_hermes_model_catalog_this_can_take_20_30_seconds": {
+    "message": "Đang đồng bộ hóa danh mục mẫu Hermes… quá trình này có thể mất 20–30 giây.",
+    "description": "Runtime interface message ui.syncing.hermes.model.catalog.this.can.take.20.30.seconds"
+  },
+  "runtime_ui_system": {
+    "message": "▱ Hệ thống",
+    "description": "Runtime interface message ui.system"
+  },
+  "runtime_ui_system_bc0792d8": {
+    "message": "Hệ thống",
+    "description": "Runtime interface message ui.system.bc0792d8"
+  },
+  "runtime_ui_tab": {
+    "message": "Thẻ",
+    "description": "Runtime interface message ui.tab"
+  },
+  "runtime_ui_tabs": {
+    "message": "Tab",
+    "description": "Runtime interface message ui.tabs"
+  },
+  "runtime_ui_tabs_in_prompt": {
+    "message": "Tab trong lời nhắc",
+    "description": "Runtime interface message ui.tabs.in.prompt"
+  },
+  "runtime_ui_tag": {
+    "message": "Gắn thẻ",
+    "description": "Runtime interface message ui.tag"
+  },
+  "runtime_ui_tags": {
+    "message": "Thẻ",
+    "description": "Runtime interface message ui.tags"
+  },
+  "runtime_ui_target": {
+    "message": "Mục tiêu",
+    "description": "Runtime interface message ui.target"
+  },
+  "runtime_ui_task": {
+    "message": "Nhiệm vụ",
+    "description": "Runtime interface message ui.task"
+  },
+  "runtime_ui_tasks": {
+    "message": "➡ NHIỆM VỤ",
+    "description": "Runtime interface message ui.tasks"
+  },
+  "runtime_ui_template": {
+    "message": "mẫu",
+    "description": "Runtime interface message ui.template"
+  },
+  "runtime_ui_test": {
+    "message": "kiểm tra",
+    "description": "Runtime interface message ui.test"
+  },
+  "runtime_ui_test_984816fd": {
+    "message": "BÀI KIỂM TRA",
+    "description": "Runtime interface message ui.test.984816fd"
+  },
+  "runtime_ui_test_connection": {
+    "message": "Kiểm tra kết nối",
+    "description": "Runtime interface message ui.test.connection"
+  },
+  "runtime_ui_test_connection_f7dafbab": {
+    "message": "KẾT NỐI KIỂM TRA",
+    "description": "Runtime interface message ui.test.connection.f7dafbab"
+  },
+  "runtime_ui_test_the_current_hermes_connection": {
+    "message": "Kiểm tra kết nối Hermes hiện tại",
+    "description": "Runtime interface message ui.test.the.current.hermes.connection"
+  },
+  "runtime_ui_text": {
+    "message": "văn bản",
+    "description": "Runtime interface message ui.text"
+  },
+  "runtime_ui_text_size": {
+    "message": "Kích thước văn bản",
+    "description": "Runtime interface message ui.text.size"
+  },
+  "runtime_ui_the_connected_hermes_runtime_does_not_advertise_native_session_dbf4542b": {
+    "message": "Hermes runtime được kết nối không quảng cáo nén phiên gốc.",
+    "description": "Runtime interface message ui.the.connected.hermes.runtime.does.not.advertise.native.session.dbf4542b"
+  },
+  "runtime_ui_the_connected_runtime_will_receive_these_options_on_the_next_tu_2e51e988": {
+    "message": "Thời gian chạy được kết nối sẽ nhận được các tùy chọn này ở lượt tiếp theo nhưng không hiển thị điểm cuối xác nhận.",
+    "description": "Runtime interface message ui.the.connected.runtime.will.receive.these.options.on.the.next.tu.2e51e988"
+  },
+  "runtime_ui_the_live_model_catalog_is_unavailable_keeping_the_last_verified_0e0250fe": {
+    "message": "Danh mục mô hình trực tiếp không có sẵn; giữ danh sách nhà cung cấp/mô hình được xác minh lần cuối.",
+    "description": "Runtime interface message ui.the.live.model.catalog.is.unavailable.keeping.the.last.verified.0e0250fe"
+  },
+  "runtime_ui_the_local_speech_language_pack_did_not_become_ready_in_90_secon_d69760e3": {
+    "message": "Gói ngôn ngữ nói địa phương chưa sẵn sàng sau 90 giây. Thử lại tai sau khi Chrome hoàn tất quá trình cài đặt hỗ trợ giọng nói.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.did.not.become.ready.in.90.secon.d69760e3"
+  },
+  "runtime_ui_the_local_speech_language_pack_is_unavailable_wake_listening_wi_6da8a4e2": {
+    "message": "Gói ngôn ngữ giọng nói địa phương không có sẵn. Nghe khi thức sẽ không sử dụng nhận dạng đám mây.",
+    "description": "Runtime interface message ui.the.local.speech.language.pack.is.unavailable.wake.listening.wi.6da8a4e2"
+  },
+  "runtime_ui_the_microphone_is_unavailable_to_the_wake_listener": {
+    "message": "Micrô không khả dụng đối với người nghe đánh thức.",
+    "description": "Runtime interface message ui.the.microphone.is.unavailable.to.the.wake.listener"
+  },
+  "runtime_ui_the_page_is_the_prompt": {
+    "message": "TRANG LÀ LỜI KHUYÊN",
+    "description": "Runtime interface message ui.the.page.is.the.prompt"
+  },
+  "runtime_ui_theme": {
+    "message": "chủ đề",
+    "description": "Runtime interface message ui.theme"
+  },
+  "runtime_ui_thinking": {
+    "message": "suy nghĩ",
+    "description": "Runtime interface message ui.thinking"
+  },
+  "runtime_ui_thinking_off_standard": {
+    "message": "Suy nghĩ lại · Tiêu chuẩn",
+    "description": "Runtime interface message ui.thinking.off.standard"
+  },
+  "runtime_ui_this_browser_does_not_expose_on_device_speech_recognition": {
+    "message": "Trình duyệt này không hiển thị tính năng nhận dạng giọng nói trên thiết bị.",
+    "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
+  },
+  "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
+    "message": "Trình duyệt Chromium này không hiển thị MediaRecorder/getUserMedia cho các trang tiện ích mở rộng và dự phòng Web Speech không khả dụng.",
+    "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
+  },
+  "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
+    "message": "Cổng này chưa hiển thị /v1/capabilities. Các tuyến dành riêng cho trình duyệt sẽ ở chế độ thay thế.",
+    "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
+  },
+  "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
+    "message": "Hermes gateway này chưa hiển thị /v1/profiles. Sử dụng hồ sơ hiện đang chạy.",
+    "description": "Runtime interface message ui.this.hermes.gateway.does.not.expose.v1.profiles.yet.using.the.c.0222afa8"
+  },
+  "runtime_ui_this_hermes_runtime_does_not_advertise_browser_pairing_yet": {
+    "message": "Hermes runtime này chưa quảng cáo ghép nối trình duyệt.",
+    "description": "Runtime interface message ui.this.hermes.runtime.does.not.advertise.browser.pairing.yet"
+  },
+  "runtime_ui_this_managed_editor_is_not_mutated_until_insertion_is_verified": {
+    "message": "Trình chỉnh sửa được quản lý này không bị thay đổi cho đến khi tính năng chèn được xác minh",
+    "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
+  },
+  "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
+    "message": "Mô hình này được phát hiện từ một điểm cuối tùy chỉnh, nhưng Hermes phải hiển thị nó thông qua thời gian chạy được kết nối trước khi Trình duyệt có thể định tuyến các yêu cầu đến nó.",
+    "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
+  },
+  "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
+    "message": "Yêu cầu này bị ràng buộc với phiên Trình duyệt đã chọn.",
+    "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
+  },
+  "runtime_ui_time": {
+    "message": "thời gian",
+    "description": "Runtime interface message ui.time"
+  },
+  "runtime_ui_title": {
+    "message": "Tiêu đề",
+    "description": "Runtime interface message ui.title"
+  },
+  "runtime_ui_toggle_hey_hermes": {
+    "message": "Chuyển đổi Xin chào Hermes",
+    "description": "Runtime interface message ui.toggle.hey.hermes"
+  },
+  "runtime_ui_toggle_inspector": {
+    "message": "Chuyển đổi thanh tra",
+    "description": "Runtime interface message ui.toggle.inspector"
+  },
+  "runtime_ui_token": {
+    "message": "Mã thông báo",
+    "description": "Runtime interface message ui.token"
+  },
+  "runtime_ui_tokens": {
+    "message": "Mã thông báo",
+    "description": "Runtime interface message ui.tokens"
+  },
+  "runtime_ui_tokens_are_stored_in_chrome_storage_local_and_never_displayed_after_save": {
+    "message": "Mã thông báo được lưu trữ trong chrome.storage.local và không bao giờ được hiển thị sau khi lưu.",
+    "description": "Runtime interface message ui.tokens.are.stored.in.chrome.storage.local.and.never.displayed.after.save"
+  },
+  "runtime_ui_tool": {
+    "message": "Công cụ",
+    "description": "Runtime interface message ui.tool"
+  },
+  "runtime_ui_tool_activity": {
+    "message": "HOẠT ĐỘNG CÔNG CỤ",
+    "description": "Runtime interface message ui.tool.activity"
+  },
+  "runtime_ui_tool_and_run_events_will_appear_here": {
+    "message": "Các sự kiện về công cụ và chạy sẽ xuất hiện ở đây.",
+    "description": "Runtime interface message ui.tool.and.run.events.will.appear.here"
+  },
+  "runtime_ui_total": {
+    "message": "Tổng cộng",
+    "description": "Runtime interface message ui.total"
+  },
+  "runtime_ui_transcribing_through_your_local_hermes_gateway": {
+    "message": "Phiên âm qua cổng Hermes cục bộ của bạn…",
+    "description": "Runtime interface message ui.transcribing.through.your.local.hermes.gateway"
+  },
+  "runtime_ui_transcribing_voice": {
+    "message": "Phiên âm giọng nói",
+    "description": "Runtime interface message ui.transcribing.voice"
+  },
+  "runtime_ui_transcript_inserted_into_the_composer": {
+    "message": "Bản ghi được chèn vào tệp soạn nhạc.",
+    "description": "Runtime interface message ui.transcript.inserted.into.the.composer"
+  },
+  "runtime_ui_transcription": {
+    "message": "Phiên âm",
+    "description": "Runtime interface message ui.transcription"
+  },
+  "runtime_ui_trusted": {
+    "message": "đáng tin cậy",
+    "description": "Runtime interface message ui.trusted"
+  },
+  "runtime_ui_try_recording_again": {
+    "message": "Hãy thử ghi lại.",
+    "description": "Runtime interface message ui.try.recording.again"
+  },
+  "runtime_ui_turn_off": {
+    "message": "Tắt",
+    "description": "Runtime interface message ui.turn.off"
+  },
+  "runtime_ui_turn_on": {
+    "message": "Bật",
+    "description": "Runtime interface message ui.turn.on"
+  },
+  "runtime_ui_turn_the_field_bound_launcher_on_or_off_across_normal_web_pages": {
+    "message": "Bật hoặc tắt trình khởi chạy giới hạn trường trên các trang web thông thường.",
+    "description": "Runtime interface message ui.turn.the.field.bound.launcher.on.or.off.across.normal.web.pages"
+  },
+  "runtime_ui_type": {
+    "message": "Loại",
+    "description": "Runtime interface message ui.type"
+  },
+  "runtime_ui_ui": {
+    "message": "giao diện người dùng",
+    "description": "Runtime interface message ui.ui"
+  },
+  "runtime_ui_unavailable": {
+    "message": "Không có sẵn",
+    "description": "Runtime interface message ui.unavailable"
+  },
+  "runtime_ui_undo": {
+    "message": "Hoàn tác",
+    "description": "Runtime interface message ui.undo"
+  },
+  "runtime_ui_update": {
+    "message": "cập nhật",
+    "description": "Runtime interface message ui.update"
+  },
+  "runtime_ui_update_now": {
+    "message": "Cập nhật ngay bây giờ",
+    "description": "Runtime interface message ui.update.now"
+  },
+  "runtime_ui_update_prompt_ready": {
+    "message": "Lời nhắc cập nhật đã sẵn sàng",
+    "description": "Runtime interface message ui.update.prompt.ready"
+  },
+  "runtime_ui_updates_are_checked_against_the_public_github_repo": {
+    "message": "Các bản cập nhật được kiểm tra dựa trên kho lưu trữ GitHub công khai.",
+    "description": "Runtime interface message ui.updates.are.checked.against.the.public.github.repo"
+  },
+  "runtime_ui_upload": {
+    "message": "Tải lên",
+    "description": "Runtime interface message ui.upload"
+  },
+  "runtime_ui_url": {
+    "message": "↗ URL...",
+    "description": "Runtime interface message ui.url"
+  },
+  "runtime_ui_url_0e2d9b07": {
+    "message": "URL",
+    "description": "Runtime interface message ui.url.0e2d9b07"
+  },
+  "runtime_ui_url_19911671": {
+    "message": "↗ URL…",
+    "description": "Runtime interface message ui.url.19911671"
+  },
+  "runtime_ui_use": {
+    "message": "sử dụng",
+    "description": "Runtime interface message ui.use"
+  },
+  "runtime_ui_use_current_tab_session": {
+    "message": "Sử dụng phiên tab hiện tại",
+    "description": "Runtime interface message ui.use.current.tab.session"
+  },
+  "runtime_ui_use_hermes_desktop_model_settings_or_the_hermes_model_command_t_f5a4940b": {
+    "message": "Sử dụng cài đặt mô hình Hermes Desktop hoặc lệnh mô hình Hermes, sau đó Làm mới mô hình tại đây.",
+    "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
+  },
+  "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
+    "message": "Sử dụng phiên hiện tại của tab đang hoạt động, tạo phiên Trình duyệt mới hoặc chạy riêng.",
+    "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
+  },
+  "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
+    "message": "Sử dụng cùng bảng màu và ngôn ngữ chrome như Hermes Browser.",
+    "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
+  },
+  "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
+    "message": "Sử dụng tùy chọn này khi URL trang tổng quan từ xa, mã thông báo mang hoặc nguồn gốc CORS bị định cấu hình sai.",
+    "description": "Runtime interface message ui.use.this.when.a.remote.dashboard.url.bearer.token.or.cors.origi.9956db87"
+  },
+  "runtime_ui_use_this_when_filing_github_issues_or_support_reports": {
+    "message": "Sử dụng điều này khi gửi báo cáo hỗ trợ hoặc vấn đề GitHub.",
+    "description": "Runtime interface message ui.use.this.when.filing.github.issues.or.support.reports"
+  },
+  "runtime_ui_user": {
+    "message": "người dùng",
+    "description": "Runtime interface message ui.user"
+  },
+  "runtime_ui_uses_hermes_tts_on_the_native_path_and_local_browser_speech_on_acf402bd": {
+    "message": "Sử dụng Hermes TTS trên đường dẫn gốc và giọng nói trình duyệt cục bộ trên đường dẫn dự phòng.",
+    "description": "Runtime interface message ui.uses.hermes.tts.on.the.native.path.and.local.browser.speech.on.acf402bd"
+  },
+  "runtime_ui_using_cached_hermes_catalog": {
+    "message": "Sử dụng danh mục Hermes được lưu trong bộ nhớ cache",
+    "description": "Runtime interface message ui.using.cached.hermes.catalog"
+  },
+  "runtime_ui_using_hermes_speech_to_text_matching_desktop_dictation": {
+    "message": "Sử dụng tính năng chuyển lời nói thành văn bản Hermes, phù hợp với tính năng đọc chính tả của Máy tính để bàn.",
+    "description": "Runtime interface message ui.using.hermes.speech.to.text.matching.desktop.dictation"
+  },
+  "runtime_ui_using_the_currently_running_hermes_gateway_profile": {
+    "message": "Sử dụng cấu hình Hermes gateway hiện đang chạy.",
+    "description": "Runtime interface message ui.using.the.currently.running.hermes.gateway.profile"
+  },
+  "runtime_ui_value": {
+    "message": "Giá trị",
+    "description": "Runtime interface message ui.value"
+  },
+  "runtime_ui_version": {
+    "message": "Phiên bản",
+    "description": "Runtime interface message ui.version"
+  },
+  "runtime_ui_version_loading": {
+    "message": "đang tải phiên bản…",
+    "description": "Runtime interface message ui.version.loading"
+  },
+  "runtime_ui_video": {
+    "message": "Video",
+    "description": "Runtime interface message ui.video"
+  },
+  "runtime_ui_view": {
+    "message": "Xem",
+    "description": "Runtime interface message ui.view"
+  },
+  "runtime_ui_voice": {
+    "message": "Giọng nói",
+    "description": "Runtime interface message ui.voice"
+  },
+  "runtime_ui_voice_dictation": {
+    "message": "Đọc chính tả bằng giọng nói",
+    "description": "Runtime interface message ui.voice.dictation"
+  },
+  "runtime_ui_voice_dictation_ready": {
+    "message": "Đọc chính tả bằng giọng nói đã sẵn sàng",
+    "description": "Runtime interface message ui.voice.dictation.ready"
+  },
+  "runtime_ui_voice_dictation_stopped": {
+    "message": "Đã dừng đọc chính tả bằng giọng nói",
+    "description": "Runtime interface message ui.voice.dictation.stopped"
+  },
+  "runtime_ui_voice_dictation_unavailable": {
+    "message": "Đọc chính tả bằng giọng nói không khả dụng",
+    "description": "Runtime interface message ui.voice.dictation.unavailable"
+  },
+  "runtime_ui_voice_mode_browser_speech_fallback_hermes_stt_is_unavailable_on_70bf6212": {
+    "message": "Chế độ giọng nói: Dự phòng giọng nói của trình duyệt\n\nHermes STT không khả dụng trên cổng này. Nhận dạng giọng nói chạy trong trình duyệt; chỉ có bản ghi được gửi trở lại bảng điều khiển bên.",
+    "description": "Runtime interface message ui.voice.mode.browser.speech.fallback.hermes.stt.is.unavailable.on.70bf6212"
+  },
+  "runtime_ui_voice_mode_hermes_stt_audio_is_sent_once_to_your_local_hermes_t_6e927a4e": {
+    "message": "Chế độ giọng nói: Hermes STT\n\nÂm thanh được gửi một lần đến điểm cuối phiên âm Hermes cục bộ của bạn khi bạn dừng ghi.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.audio.is.sent.once.to.your.local.hermes.t.6e927a4e"
+  },
+  "runtime_ui_voice_mode_hermes_stt_recording_speak_now_then_click_stop_transcribe": {
+    "message": "Chế độ giọng nói: Hermes STT\n\nĐang ghi âm… nói ngay bây giờ, sau đó nhấp vào Dừng + chép lời.",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.recording.speak.now.then.click.stop.transcribe"
+  },
+  "runtime_ui_voice_mode_hermes_stt_requesting_microphone_access": {
+    "message": "Chế độ giọng nói: Hermes STT\n\nĐang yêu cầu quyền truy cập micrô…",
+    "description": "Runtime interface message ui.voice.mode.hermes.stt.requesting.microphone.access"
+  },
+  "runtime_ui_voice_mode_on_device_speech_downloading_the_browser_language_pack_once": {
+    "message": "Chế độ giọng nói: Giọng nói trên thiết bị\n\nĐang tải xuống gói ngôn ngữ trình duyệt một lần…",
+    "description": "Runtime interface message ui.voice.mode.on.device.speech.downloading.the.browser.language.pack.once"
+  },
+  "runtime_ui_voice_mode_unavailable_connect_hermes_for_stt_or_use_a_chromium_08a02bbb": {
+    "message": "Chế độ giọng nói không khả dụng. Kết nối Hermes cho STT hoặc sử dụng bản dựng Chromium hỗ trợ dự phòng giọng nói của trình duyệt.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.connect.hermes.for.stt.or.use.a.chromium.08a02bbb"
+  },
+  "runtime_ui_voice_mode_unavailable_this_browser_does_not_expose_hermes_stt_fcc04044": {
+    "message": "Chế độ giọng nói không khả dụng. Trình duyệt này không hiển thị dự phòng Hermes STT hoặc Web Speech.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.browser.does.not.expose.hermes.stt.fcc04044"
+  },
+  "runtime_ui_voice_mode_unavailable_this_hermes_runtime_has_no_audio_transcr_70f57e78": {
+    "message": "Chế độ giọng nói không khả dụng. Thời gian chạy Hermes này không có lộ trình phiên âm âm thanh và trình duyệt này không hiển thị dự phòng Web Speech.",
+    "description": "Runtime interface message ui.voice.mode.unavailable.this.hermes.runtime.has.no.audio.transcr.70f57e78"
+  },
+  "runtime_ui_voice_recording_failed": {
+    "message": "Ghi âm giọng nói không thành công",
+    "description": "Runtime interface message ui.voice.recording.failed"
+  },
+  "runtime_ui_voice_tab_opened": {
+    "message": "Đã mở tab giọng nói",
+    "description": "Runtime interface message ui.voice.tab.opened"
+  },
+  "runtime_ui_voice_transcript_handoff_failed": {
+    "message": "Chuyển giao bản ghi giọng nói không thành công",
+    "description": "Runtime interface message ui.voice.transcript.handoff.failed"
+  },
+  "runtime_ui_voice_transcript_ready": {
+    "message": "Bản ghi giọng nói đã sẵn sàng",
+    "description": "Runtime interface message ui.voice.transcript.ready"
+  },
+  "runtime_ui_voice_transcription_failed": {
+    "message": "Phiên âm giọng nói không thành công",
+    "description": "Runtime interface message ui.voice.transcription.failed"
+  },
+  "runtime_ui_waiting_for_hermes_desktop_approval": {
+    "message": "Đang chờ phê duyệt Hermes Desktop...",
+    "description": "Runtime interface message ui.waiting.for.hermes.desktop.approval"
+  },
+  "runtime_ui_waiting_for_permission_request": {
+    "message": "Đang chờ yêu cầu cấp phép…",
+    "description": "Runtime interface message ui.waiting.for.permission.request"
+  },
+  "runtime_ui_waiting_for_session_usage": {
+    "message": "Đang chờ sử dụng phiên.",
+    "description": "Runtime interface message ui.waiting.for.session.usage"
+  },
+  "runtime_ui_waiting_for_the_session_resource_to_confirm_thinking_effort_and_63018fde": {
+    "message": "Đang chờ tài nguyên phiên xác nhận chế độ Suy nghĩ, nỗ lực và Nhanh.",
+    "description": "Runtime interface message ui.waiting.for.the.session.resource.to.confirm.thinking.effort.and.63018fde"
+  },
+  "runtime_ui_wake_command_captured": {
+    "message": "Lệnh đánh thức đã được ghi lại.",
+    "description": "Runtime interface message ui.wake.command.captured"
+  },
+  "runtime_ui_wake_command_captured_opening_hermes": {
+    "message": "Lệnh đánh thức đã được ghi lại. Đang mở Hermes…",
+    "description": "Runtime interface message ui.wake.command.captured.opening.hermes"
+  },
+  "runtime_ui_wake_listener_document_is_ready": {
+    "message": "Tài liệu trình nghe Wake đã sẵn sàng.",
+    "description": "Runtime interface message ui.wake.listener.document.is.ready"
+  },
+  "runtime_ui_wake_listener_paused_during_the_voice_turn": {
+    "message": "Người nghe Wake bị tạm dừng trong khi chuyển giọng nói.",
+    "description": "Runtime interface message ui.wake.listener.paused.during.the.voice.turn"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command": {
+    "message": "Đánh thức cụm từ nghe thấy. Đang lắng nghe mệnh lệnh của bạn.",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command"
+  },
+  "runtime_ui_wake_phrase_heard_listening_for_your_command_38ffdf10": {
+    "message": "Đánh thức cụm từ nghe thấy. Đang nghe lệnh của bạn…",
+    "description": "Runtime interface message ui.wake.phrase.heard.listening.for.your.command.38ffdf10"
+  },
+  "runtime_ui_wake_word": {
+    "message": "Lời đánh thức",
+    "description": "Runtime interface message ui.wake.word"
+  },
+  "runtime_ui_wake_word_is_off": {
+    "message": "Từ đánh thức đã tắt.",
+    "description": "Runtime interface message ui.wake.word.is.off"
+  },
+  "runtime_ui_web_ui_sections": {
+    "message": "Phần giao diện người dùng web",
+    "description": "Runtime interface message ui.web.ui.sections"
+  },
+  "runtime_ui_what_hermes_saw": {
+    "message": "HERMES THẤY GÌ",
+    "description": "Runtime interface message ui.what.hermes.saw"
+  },
+  "runtime_ui_what_should_we_work_on": {
+    "message": "Chúng ta nên làm gì?",
+    "description": "Runtime interface message ui.what.should.we.work.on"
+  },
+  "runtime_ui_where_should_hermes_work": {
+    "message": "Hermes nên làm việc ở đâu?",
+    "description": "Runtime interface message ui.where.should.hermes.work"
+  },
+  "runtime_ui_where_should_this_right_click_task_run": {
+    "message": "Tác vụ nhấp chuột phải này nên chạy ở đâu?",
+    "description": "Runtime interface message ui.where.should.this.right.click.task.run"
+  },
+  "runtime_ui_where_should_this_session_open": {
+    "message": "Phiên này nên mở ở đâu?",
+    "description": "Runtime interface message ui.where.should.this.session.open"
+  },
+  "runtime_ui_window": {
+    "message": "Cửa sổ",
+    "description": "Runtime interface message ui.window"
+  },
+  "runtime_ui_window_tab_list": {
+    "message": "Danh sách tab cửa sổ",
+    "description": "Runtime interface message ui.window.tab.list"
+  },
+  "runtime_ui_worker": {
+    "message": "công nhân",
+    "description": "Runtime interface message ui.worker"
+  },
+  "runtime_ui_working": {
+    "message": "đang làm việc",
+    "description": "Runtime interface message ui.working"
+  },
+  "runtime_ui_working_92263e08": {
+    "message": "ĐANG LÀM VIỆC",
+    "description": "Runtime interface message ui.working.92263e08"
+  },
+  "runtime_ui_workspace": {
+    "message": "Không gian làm việc",
+    "description": "Runtime interface message ui.workspace"
+  },
+  "runtime_ui_workspaces": {
+    "message": "Không gian làm việc",
+    "description": "Runtime interface message ui.workspaces"
+  },
+  "runtime_ui_xl": {
+    "message": "XL",
+    "description": "Runtime interface message ui.xl"
+  },
+  "runtime_ui_you": {
+    "message": "bạn",
+    "description": "Runtime interface message ui.you"
+  },
+  "runtime_ui_your_current_conversation_stays_visible": {
+    "message": "Cuộc trò chuyện hiện tại của bạn vẫn hiển thị.",
+    "description": "Runtime interface message ui.your.current.conversation.stays.visible"
+  },
+  "runtime_ui_youtube_transcript_provider": {
+    "message": "Nhà cung cấp bảng điểm YouTube",
+    "description": "Runtime interface message ui.youtube.transcript.provider"
+  },
+  "runtime_ui_zoom_in": {
+    "message": "Phóng to",
+    "description": "Runtime interface message ui.zoom.in"
+  },
+  "runtime_ui_zoom_out": {
+    "message": "Thu nhỏ",
+    "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_voice_browser_preview": {
+    "message": "Chế độ giọng nói: Dự phòng giọng nói của trình duyệt\n\n{preview}",
+    "description": "Runtime interface message voice.browser.preview"
+  },
+  "runtime_voice_browser_start_failed": {
+    "message": "Dự phòng giọng nói của trình duyệt không thể bắt đầu.\n\n{error}",
+    "description": "Runtime interface message voice.browser.start_failed"
+  },
+  "runtime_voice_browser_stop_failed": {
+    "message": "Không thể dừng tính năng dự phòng giọng nói của trình duyệt.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stop_failed"
+  },
+  "runtime_voice_browser_stopped": {
+    "message": "Dự phòng giọng nói của trình duyệt đã dừng.\n\n{error}",
+    "description": "Runtime interface message voice.browser.stopped"
+  },
+  "runtime_voice_capture_error": {
+    "message": "Không thể thu âm thanh từ micrô.",
+    "description": "Runtime interface message voice.capture_error"
+  },
+  "runtime_voice_permission_blocked": {
+    "message": "Quyền sử dụng micrô bị chặn đối với Hermes Browser Extension.\n\nNhấp vào Mở cài đặt micrô, đặt Micrô thành Cho phép tiện ích này, quay lại đây, sau đó nhấp lại vào Bắt đầu đọc chính tả.\n\n{error}",
+    "description": "Runtime interface message voice.permission_blocked"
+  },
+  "runtime_voice_settings_load_failed": {
+    "message": "Không thể tải cài đặt Hermes Browser.\n\n{error}",
+    "description": "Runtime interface message voice.settings_load_failed"
+  },
+  "runtime_voice_speech_recognition_error": {
+    "message": "Lỗi nhận dạng giọng nói",
+    "description": "Runtime interface message voice.speech_recognition_error"
+  },
+  "runtime_voice_start_failed": {
+    "message": "Không thể bắt đầu đọc chính tả bằng giọng nói.\n\n{error}",
+    "description": "Runtime interface message voice.start_failed"
+  },
+  "runtime_voice_transcript_sent": {
+    "message": "Bản ghi được gửi tới bảng điều khiển bên Hermes:\n\n{transcript}",
+    "description": "Runtime interface message voice.transcript_sent"
+  },
+  "runtime_voice_transcription_failed": {
+    "message": "Phiên âm giọng nói không thành công.\n\n{error}",
+    "description": "Runtime interface message voice.transcription_failed"
+  },
+  "runtime_wake_turn_off": {
+    "message": "Tắt từ đánh thức",
+    "description": "Runtime interface message wake.turn_off"
+  },
+  "runtime_wake_turn_on": {
+    "message": "Bật từ đánh thức",
+    "description": "Runtime interface message wake.turn_on"
+  }
+}

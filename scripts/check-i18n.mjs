@@ -3,16 +3,29 @@ import path from 'node:path';
 import { parseHTML } from 'linkedom';
 
 import english from '../extension/lib/locales/en.mjs';
-import simplifiedChinese from '../extension/lib/locales/zh-CN.mjs';
+import { loadLocaleMessages, SUPPORTED_LOCALES } from '../extension/lib/i18n-registry.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const errors = [];
 const markerPattern = /data-i18n(?:-placeholder|-title|-aria-label|-alt)?="([^"]+)"/g;
 const placeholderPattern = /\{([A-Za-z][A-Za-z0-9_]*)\}/g;
+const protectedTokens = ['Hermes', 'Nous', 'Chrome', 'Chromium', 'Firefox', 'GitHub', 'WebSocket', 'SSE', 'CORS', 'JSON', 'API', 'URL', 'WebUI', 'TUI'];
 
 function placeholderNames(entry) {
   const values = typeof entry === 'string' ? [entry] : Object.values(entry || {});
   return [...new Set(values.flatMap((value) => [...String(value).matchAll(placeholderPattern)].map((match) => match[1])))].sort();
+}
+
+function leafStrings(entry) {
+  if (typeof entry === 'string') return [entry];
+  if (entry && typeof entry === 'object' && !Array.isArray(entry)) return Object.values(entry).flatMap(leafStrings);
+  return [];
+}
+
+function sameMessageType(left, right) {
+  if (typeof left !== typeof right) return false;
+  if (left && typeof left === 'object') return !Array.isArray(left) && !Array.isArray(right);
+  return true;
 }
 
 function collectRuntimeOwnedIds(relativePath) {
@@ -88,19 +101,43 @@ function validateReverseCoverage(relativePath) {
 }
 
 const englishKeys = Object.keys(english).sort();
-const chineseKeys = Object.keys(simplifiedChinese).sort();
-if (JSON.stringify(englishKeys) !== JSON.stringify(chineseKeys)) {
-  const missing = englishKeys.filter((key) => !Object.hasOwn(simplifiedChinese, key));
-  const stale = chineseKeys.filter((key) => !Object.hasOwn(english, key));
-  if (missing.length) errors.push(`zh-CN missing keys: ${missing.join(', ')}`);
-  if (stale.length) errors.push(`zh-CN stale keys: ${stale.join(', ')}`);
-}
-
-for (const key of englishKeys) {
-  const expected = placeholderNames(english[key]);
-  const actual = placeholderNames(simplifiedChinese[key]);
-  if (JSON.stringify(expected) !== JSON.stringify(actual)) {
-    errors.push(`zh-CN placeholder mismatch for ${key}: expected [${expected}], received [${actual}]`);
+for (const locale of SUPPORTED_LOCALES) {
+  if (locale.id === 'en') continue;
+  let catalog;
+  try {
+    catalog = await loadLocaleMessages(locale.id);
+  } catch (error) {
+    errors.push(`${locale.id} catalog failed to load: ${error?.message || String(error)}`);
+    continue;
+  }
+  const localeKeys = Object.keys(catalog).sort();
+  const missing = englishKeys.filter((key) => !Object.hasOwn(catalog, key));
+  const stale = localeKeys.filter((key) => !Object.hasOwn(english, key));
+  if (missing.length) errors.push(`${locale.id} missing keys: ${missing.join(', ')}`);
+  if (stale.length) errors.push(`${locale.id} stale keys: ${stale.join(', ')}`);
+  for (const key of englishKeys) {
+    if (!Object.hasOwn(catalog, key)) continue;
+    if (!sameMessageType(english[key], catalog[key])) {
+      errors.push(`${locale.id} message type mismatch for ${key}`);
+      continue;
+    }
+    const expected = placeholderNames(english[key]);
+    const actual = placeholderNames(catalog[key]);
+    if (JSON.stringify(expected) !== JSON.stringify(actual)) {
+      errors.push(`${locale.id} placeholder mismatch for ${key}: expected [${expected}], received [${actual}]`);
+    }
+    const sourceLeaves = leafStrings(english[key]);
+    const translatedLeaves = leafStrings(catalog[key]);
+    for (let index = 0; index < sourceLeaves.length; index += 1) {
+      const source = sourceLeaves[index];
+      const translated = translatedLeaves[index] || '';
+      for (const token of protectedTokens) {
+        if (source.includes(token) && !translated.includes(token)) errors.push(`${locale.id} changed protected token ${token} for ${key}`);
+      }
+      for (const literal of source.match(/https?:\/\/[^\s)]+|`[^`]+`/g) || []) {
+        if (!translated.includes(literal)) errors.push(`${locale.id} changed protected literal ${literal} for ${key}`);
+      }
+    }
   }
 }
 
@@ -132,4 +169,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`i18n OK: ${englishKeys.length} messages, 2 locales, 4 extension surfaces`);
+console.log(`i18n OK: ${englishKeys.length} messages, ${SUPPORTED_LOCALES.length} locales, 4 extension surfaces`);

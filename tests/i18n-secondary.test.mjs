@@ -45,3 +45,49 @@ test('locale subscribers rerender application-owned dynamic regions without touc
     assert.match(source, /ASSIST_ROUTING_FALLBACK_ENGLISH/);
   }
 });
+
+test('Hermes Web and attachment renderers localize fixed runtime fallbacks without translating truth values', () => {
+  const app = read('extension/app.js');
+  const sidepanel = read('extension/sidepanel.js');
+  const appHtml = read('extension/app.html');
+  const connectionMode = app.match(/function connectionModeLabel\([^)]*\)\s*\{[\s\S]*?\n\}/)?.[0] || '';
+  const connectionTruth = app.match(/function renderConnectionTruth\([^)]*\)\s*\{[\s\S]*?\n\}/)?.[0] || '';
+  const composerRuntime = app.match(/function renderComposerRuntimeControl\([^)]*\)\s*\{[\s\S]*?\n\}/)?.[0] || '';
+  const pickState = sidepanel.match(/function setPickButtonState\([^)]*\)\s*\{[\s\S]*?\n\}/)?.[0] || '';
+
+  assert.match(connectionMode, /translateUiText\('Local gateway'\)/);
+  assert.match(connectionMode, /translateUiText\('Remote gateway'\)/);
+  assert.match(connectionTruth, /settings\.activeProfile \|\| translateUiText\('Default profile'\)/);
+  assert.match(connectionTruth, /t\('context\.browser_tab_handoff',\s*\{\s*tabId:\s*handoff\.sourceTabId\s*\}\)/);
+  assert.match(composerRuntime, /t\('runtime\.reasoning',\s*\{\s*effort:/);
+  assert.match(composerRuntime, /translateUiText\('Thinking off'\)/);
+  assert.match(composerRuntime, /translateUiText\('Fast mode'\)/);
+  assert.match(composerRuntime, /translateUiText\('Standard'\)/);
+  assert.match(composerRuntime, /t\('runtime\.model_control_title'/);
+  for (const english of ['◈ Picking element...', '◈ Pick a different element', '◈ Pick page element']) {
+    assert.match(pickState, new RegExp(`translateUiText\\('${escapeRegExp(english)}'\\)`));
+  }
+  assert.match(app, /t\('fulltab\.handoff\.opened_from_tab'/);
+  assert.match(app, /t\('fulltab\.handoff\.opened_from'/);
+  assert.match(app, /translateUiText\('Opened directly in full view\.'\)/);
+  assert.match(appHtml, /id="taskStackSummary"[^>]*data-i18n="ui\.0\.complete\.0\.active"/);
+});
+
+test('Sidepanel status rendering never reverse-translates runtime errors, tab titles, URLs, or session truth', () => {
+  const sidepanel = read('extension/sidepanel.js');
+  assert.doesNotMatch(sidepanel, /error\?\.message \|\| String\(error\)\);/);
+  assert.doesNotMatch(sidepanel, /error\?\.message \|\| String\(error\)\)\)\)/);
+  assert.match(sidepanel, /diagnostic\.kind === 'unknown' \? diagnostic\.detail : translateUiText\(diagnostic\.detail\)/);
+  assert.match(sidepanel, /tab\.title \|\| translateUiText\('Restricted page'\)[\s\S]*translateTitle: false, translateDetail: false/);
+  assert.match(sidepanel, /session\.sourceLabel \|\| session\.source \|\| 'Hermes'[\s\S]*translateDetail: false/);
+  assert.match(sidepanel, /t\('status\.profile_switch_unavailable', \{ error:/);
+});
+
+test('Hermes Web error rendering localizes fixed copy but preserves runtime error details verbatim', () => {
+  const app = read('extension/app.js');
+  assert.match(app, /function showError\(title, detail, \{ translateTitle = true, translateDetail = true \} = \{\}\)/);
+  assert.match(app, /translateDetail \? translateUiText\(detail\) : String\(detail \|\| ''\)/);
+  for (const title of ['Could not load this session', 'Hermes Cloud unavailable', 'Hermes gateway unavailable', 'Could not start draft', 'Hermes Web could not start']) {
+    assert.match(app, new RegExp(`showError\\('${escapeRegExp(title)}',[^;]+translateDetail: false`));
+  }
+});

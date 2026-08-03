@@ -34,7 +34,7 @@ import {
   normalizeColorMode,
   resolveColorMode,
 } from './lib/appearance-themes.mjs';
-import { getLocale, initI18n, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
+import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   dashboardModelDiscoveryBaseUrl,
@@ -459,8 +459,8 @@ async function captureTaskToolEvent(event) {
 
 function connectionModeLabel(mode) {
   if (mode === 'cloud') return 'Hermes Cloud';
-  if (mode === 'remote') return 'Remote gateway';
-  return 'Local gateway';
+  if (mode === 'remote') return translateUiText('Remote gateway');
+  return translateUiText('Local gateway');
 }
 
 
@@ -469,7 +469,7 @@ function gatewayOrigin(value = '') {
     const url = new URL(value);
     return url.origin;
   } catch {
-    return 'not configured';
+    return translateUiText('not configured');
   }
 }
 
@@ -527,7 +527,7 @@ function messageText(content) {
 function requestedModelLabel() {
   const binding = settings.sessionModelBindings?.[activeSessionId] || {};
   const provider = binding.provider || settings.provider || '';
-  const model = binding.rawModelId || binding.modelId || settings.model || 'Gateway default';
+  const model = binding.rawModelId || binding.modelId || settings.model || translateUiText('Gateway default');
   return [provider, model].filter(Boolean).join(' · ');
 }
 
@@ -535,7 +535,7 @@ function renderConnectionTruth({ status = 'idle' } = {}) {
   const mode = normalizeConnectionMode(settings.connectionMode);
   const label = connectionModeLabel(mode);
   const model = requestedModelLabel();
-  const profile = settings.activeProfile || 'Default profile';
+  const profile = settings.activeProfile || translateUiText('Default profile');
   els.connectionLabel.textContent = label;
   els.railAgentGlyph.dataset.connectionMode = mode;
   els.railAgentLabel.textContent = label;
@@ -545,10 +545,10 @@ function renderConnectionTruth({ status = 'idle' } = {}) {
   els.contextMode.textContent = translateUiText(mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' ? 'Chat only' : 'Inherited safely');
   els.contextSource.textContent = mode === 'cloud' || settings.connectionTransport === 'remote-dashboard'
     ? translateUiText('Cloud/dashboard context disabled')
-    : handoff.sourceTabId ? `Browser tab ${handoff.sourceTabId} handoff` : translateUiText('No browser context attached');
-  els.diagConnection.textContent = `${label} · ${settings.connectionTransport || settings.gatewayMode || 'unknown transport'}`;
+    : handoff.sourceTabId ? t('context.browser_tab_handoff', { tabId: handoff.sourceTabId }) : translateUiText('No browser context attached');
+  els.diagConnection.textContent = `${label} · ${settings.connectionTransport || settings.gatewayMode || translateUiText('unknown transport')}`;
   els.diagGateway.textContent = gatewayOrigin(settings.gatewayUrl);
-  els.diagSession.textContent = activeSessionId || 'none';
+  els.diagSession.textContent = activeSessionId || translateUiText('none');
   els.diagModel.textContent = model;
   els.diagProfile.textContent = profile;
 }
@@ -570,7 +570,7 @@ function persistSessionVisibility(partial) {
   els.composerSessionLabel.textContent = activeSessionId || translateUiText('Shared session');
   renderSessions(els.sessionSearch.value);
   chrome.storage.local.set({ hermesBrowserSettings: settings }).catch((error) => {
-    els.composerStatus.textContent = `Session rail save failed: ${error?.message || String(error)}`;
+    els.composerStatus.textContent = t('session.rail_save_failed', { error: error?.message || String(error) });
   });
 }
 
@@ -596,7 +596,7 @@ function hideRuntimeLoadingState() {
 
 function showSessionLoadingState(session = {}) {
   showRuntimeLoadingState({
-    title: `Opening ${sessionTitle(session)}`,
+    title: t('session.opening', { title: sessionTitle(session) }),
     detail: 'Loading canonical messages and restoring this session runtime.',
   });
 }
@@ -651,14 +651,14 @@ function renderSessions(query = '') {
       const title = document.createElement('strong');
       title.textContent = sessionTitle(session);
       const age = document.createElement('span');
-      age.textContent = session.selected ? 'Current session' : sessionTimestamp(session);
+      age.textContent = session.selected ? translateUiText('Current session') : sessionTimestamp(session);
       open.append(title, age);
       open.addEventListener('click', () => openSession(session.id));
       const rename = document.createElement('button');
       rename.type = 'button';
       rename.className = 'session-row-rename';
-      rename.title = 'Rename session';
-      rename.setAttribute('aria-label', `Rename ${sessionTitle(session)}`);
+      rename.title = translateUiText('Rename session');
+      rename.setAttribute('aria-label', t('session.rename_named', { title: sessionTitle(session) }));
       rename.textContent = '✎';
       rename.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -1022,10 +1022,13 @@ function renderComposerRuntimeControl() {
   const effort = MODEL_REASONING_EFFORTS.find((option) => option.value === options.reasoningEffort)?.label || options.reasoningEffort;
   els.composerModelName.textContent = model.label || translateUiText('Gateway default');
   els.composerRuntimeMeta.textContent = [
-    options.thinkingEnabled ? `${effort} reasoning` : 'Thinking off',
-    options.fastMode ? 'Fast mode' : 'Standard',
+    options.thinkingEnabled ? t('runtime.reasoning', { effort: translateUiText(effort) }) : translateUiText('Thinking off'),
+    options.fastMode ? translateUiText('Fast mode') : translateUiText('Standard'),
   ].join(' · ');
-  els.composerModelControl.title = `${model.label || 'Gateway default'} · ${els.composerRuntimeMeta.textContent}. Change model and runtime options.`;
+  els.composerModelControl.title = t('runtime.model_control_title', {
+    model: model.label || translateUiText('Gateway default'),
+    options: els.composerRuntimeMeta.textContent,
+  });
 }
 
 function renderModelRuntimeOptions() {
@@ -1038,7 +1041,7 @@ function renderModelRuntimeOptions() {
 
   const heading = document.createElement('p');
   heading.className = 'model-options-heading';
-  heading.textContent = assistTarget ? 'Hermes Assist options' : 'Runtime options';
+  heading.textContent = assistTarget ? t('assist.options_heading') : t('runtime.options_heading');
   els.modelOptionsList.append(heading);
 
   if (capabilities.reasoning) {
@@ -1064,7 +1067,7 @@ function renderModelRuntimeOptions() {
     thinking.dataset.runtimeToggle = 'thinking';
     thinking.className = `model-runtime-toggle${options.thinkingEnabled ? ' selected' : ''}`;
     thinking.setAttribute('aria-pressed', String(options.thinkingEnabled));
-    thinking.textContent = `Thinking ${options.thinkingEnabled ? 'On' : 'Off'}`;
+    thinking.textContent = t('runtime.thinking_toggle', { state: translateUiText(options.thinkingEnabled ? 'On' : 'Off') });
     toggles.append(thinking);
   }
   if (capabilities.fast) {
@@ -1073,7 +1076,7 @@ function renderModelRuntimeOptions() {
     fast.dataset.runtimeToggle = 'fast';
     fast.className = `model-runtime-toggle${options.fastMode ? ' selected' : ''}`;
     fast.setAttribute('aria-pressed', String(options.fastMode));
-    fast.textContent = `Fast mode ${options.fastMode ? 'On' : 'Off'}`;
+    fast.textContent = t('runtime.fast_mode_toggle', { state: translateUiText(options.fastMode ? 'On' : 'Off') });
     toggles.append(fast);
   }
   if (toggles.childElementCount) els.modelOptionsList.append(toggles);
@@ -1081,7 +1084,7 @@ function renderModelRuntimeOptions() {
   if (!capabilities.reasoning || !capabilities.fast) {
     const unavailable = document.createElement('p');
     unavailable.className = 'model-options-note';
-    unavailable.textContent = 'Only controls supported by the selected model are shown.';
+    unavailable.textContent = translateUiText('Only controls supported by the selected model are shown.');
     els.modelOptionsList.append(unavailable);
   }
   renderComposerRuntimeControl();
@@ -1103,7 +1106,11 @@ async function setModelRuntimeOptions(partial = {}) {
   renderModelRuntimeOptions();
   renderComposerRuntimeControl();
   const effortLabel = MODEL_REASONING_EFFORTS.find((option) => option.value === options.reasoningEffort)?.label || options.reasoningEffort;
-  els.composerStatus.textContent = `Runtime options: ${options.thinkingEnabled ? `${effortLabel} reasoning` : 'thinking off'}${options.fastMode ? ' · fast mode' : ''}`;
+  const runtimeSummary = [
+    options.thinkingEnabled ? t('runtime.reasoning', { effort: translateUiText(effortLabel) }) : translateUiText('Thinking off'),
+    options.fastMode ? translateUiText('Fast mode') : '',
+  ].filter(Boolean).join(' · ');
+  els.composerStatus.textContent = t('runtime.options_saved', { summary: runtimeSummary });
 }
 
 function modelProviderName(model = {}) {
@@ -1695,7 +1702,10 @@ function applyAppearance() {
 }
 
 function renderAppearanceSettings() {
-  if (els.settingsLanguageSelect) els.settingsLanguageSelect.value = getLocale();
+  if (els.settingsLanguageSelect) {
+    populateLanguageSelect(els.settingsLanguageSelect);
+    els.settingsLanguageSelect.value = getLocale();
+  }
   const mode = normalizeColorMode(els.settingsColorMode.value || settings.webColorMode || 'light');
   const theme = normalizeAppearanceTheme(els.settingsTheme.value || settings.webAppearanceTheme || 'nous');
   const textSize = ['default', 'large', 'extra-large'].includes(els.settingsTextSize.value) ? els.settingsTextSize.value : 'default';
@@ -2397,11 +2407,11 @@ async function sendPrompt(text) {
   }
 }
 
-function showError(title, detail) {
+function showError(title, detail, { translateTitle = true, translateDetail = true } = {}) {
   els.loadingState.hidden = true;
   els.errorState.hidden = false;
-  els.errorTitle.textContent = translateUiText(title);
-  els.errorDetail.textContent = translateUiText(detail);
+  els.errorTitle.textContent = translateTitle ? translateUiText(title) : String(title || '');
+  els.errorDetail.textContent = translateDetail ? translateUiText(detail) : String(detail || '');
 }
 
 async function openSession(sessionId, { keepLoading = false } = {}) {
@@ -2430,7 +2440,7 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
     if (!keepLoading) hideRuntimeLoadingState();
   } catch (error) {
     if (requestId !== webSessionLoadRequestId) return;
-    showError('Could not load this session', error?.message || String(error));
+    showError('Could not load this session', error?.message || String(error), { translateDetail: false });
   }
 }
 
@@ -2463,8 +2473,10 @@ async function loadApp() {
   const mode = normalizeConnectionMode(settings.connectionMode);
   renderConnectionTruth({ status: 'idle' });
   els.handoffDetail.textContent = handoff.sourceSurfaceId
-    ? `Opened from ${handoff.sourceSurfaceId}${handoff.sourceTabId ? ` on browser tab ${handoff.sourceTabId}` : ''}.`
-    : 'Opened directly in full view.';
+    ? handoff.sourceTabId
+      ? t('fulltab.handoff.opened_from_tab', { source: handoff.sourceSurfaceId, tabId: handoff.sourceTabId })
+      : t('fulltab.handoff.opened_from', { source: handoff.sourceSurfaceId })
+    : translateUiText('Opened directly in full view.');
   els.returnToPageButton.hidden = !handoff.sourceTabId;
 
   if (!settings.gatewayUrl) {
@@ -2499,7 +2511,7 @@ async function loadApp() {
       if (!activeSessionId) els.emptyState.hidden = false;
     } catch (error) {
       renderConnectionTruth({ status: 'error' });
-      showError('Hermes Cloud unavailable', error?.message || String(error));
+      showError('Hermes Cloud unavailable', error?.message || String(error), { translateDetail: false });
     }
     return;
   }
@@ -2540,7 +2552,7 @@ async function loadApp() {
     }
   } catch (error) {
     renderConnectionTruth({ status: 'error' });
-    showError('Hermes gateway unavailable', error?.message || String(error));
+    showError('Hermes gateway unavailable', error?.message || String(error), { translateDetail: false });
   }
 }
 
@@ -2751,7 +2763,7 @@ els.settingsForm.addEventListener('submit', (event) => {
   event.preventDefault();
   saveSettings().catch((error) => { els.composerStatus.textContent = `Settings failed: ${error?.message || String(error)}`; });
 });
-els.newChatButton.addEventListener('click', () => beginHermesWebDraft().catch((error) => showError('Could not start draft', error?.message || String(error))));
+els.newChatButton.addEventListener('click', () => beginHermesWebDraft().catch((error) => showError('Could not start draft', error?.message || String(error), { translateDetail: false })));
 els.modelPickerButton.addEventListener('click', () => {
   const nextOpen = els.modelPicker.hidden || modelSelectionTarget !== 'chat';
   if (!nextOpen) return toggleModelPicker(false);
@@ -2894,4 +2906,4 @@ loadApp()
     await consumePendingVoiceDraft();
     await consumePendingWakeTurn();
   })
-  .catch((error) => showError('Hermes Web could not start', error?.message || String(error)));
+  .catch((error) => showError('Hermes Web could not start', error?.message || String(error), { translateDetail: false }));
