@@ -178,3 +178,143 @@ export function ticketFailureHelp(reason = '', origin = '') {
       return `Could not get a dashboard WebSocket ticket (${reason || 'unknown'}).`;
   }
 }
+
+// ---------------------------------------------------------------------------
+// First-party profile discovery for remote-dashboard mode.
+//
+// The dashboard's REST surface (including /api/profiles) is CORS-blocked from
+// the extension origin, so the request must run INSIDE a signed-in dashboard
+// tab via chrome.scripting  same as ws-ticket minting. There the fetch is
+// first-party (same-origin cookie rides) and the dashboard session token in
+// the page bootstraps the authenticated /api/profiles call.
+//
+// The in-page function (discoverProfilesInPage) must stay self-contained:
+// chrome.scripting serializes it and runs it in the page, so it cannot close
+// over module scope.
+// ---------------------------------------------------------------------------
+
+export function dashboardProfilesUrl(baseUrl = '', profile = '') {
+  try {
+    const url = new URL(String(baseUrl || '').trim());
+    url.hash = '';
+    url.search = '';
+    const profileName = String(profile || '').trim();
+    if (profileName) url.searchParams.set('profile', profileName);
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/profiles`;
+    return url.toString();
+  } catch {
+    const params = new URLSearchParams();
+    const profileName = String(profile || '').trim();
+    if (profileName) params.set('profile', profileName);
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return `${String(baseUrl || '').replace(/\/+$/, '')}/api/profiles${suffix}`;
+  }
+}
+
+// Runs in the dashboard page. Mirrors discoverModelsFromDashboard's token
+// bootstrap but reads the profile roster instead of model options. Returns a
+// structured result so the caller can branch on `reason`.
+export async function discoverProfilesInPage(baseUrl, profile = '') {
+  try {
+    const rootUrl = String(baseUrl || '').trim().replace(/\/+$/, '');
+    const rootResponse = await fetch(rootUrl, {
+      method: 'GET',
+      headers: { Accept: 'text/html' },
+      credentials: 'include',
+    });
+    if (!rootResponse.ok) return { ok: false, reason: `dashboard_root_${rootResponse.status}` };
+    const html = await rootResponse.text();
+    const match = html.match(/window\.__HERMES_SESSION_TOKEN__\s*=\s*"([^"]+)"/);
+    const token = match?.[1] || '';
+    if (!token) return { ok: false, reason: 'no_dashboard_session_token' };
+
+    const response = await fetch(dashboardProfilesUrl(baseUrl, profile), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'X-Hermes-Session-Token': token,
+      },
+      credentials: 'include',
+    });
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, reason: 'not_signed_in', status: response.status };
+    }
+    if (!response.ok) return { ok: false, reason: `profiles_http_${response.status}`, status: response.status };
+    const data = await response.json().catch(() => null);
+    if (!data || !Array.isArray(data.profiles)) return { ok: false, reason: 'no_profiles_in_response' };
+    return { ok: true, profiles: data.profiles };
+  } catch (error) {
+    return { ok: false, reason: 'fetch_failed', detail: String(error?.message || error) };
+  }
+}
+
+// Discover profiles by executing the discovery inside a logged-in dashboard
+// tab. Returns the discoverProfilesInPage result shape, plus
+// { ok:false, reason:'no_dashboard_tab', origin } when no usable tab exists.
+export async function discoverProfilesViaTab({ tabsApi, scriptingApi, baseUrl, profile = '', discoverFn = discoverProfilesInPage }) {
+  const origin = originOf(baseUrl);
+  if (!origin) return { ok: false, reason: 'bad_base_url' };
+  if (!scriptingApi?.executeScript) return { ok: false, reason: 'scripting_unavailable' };
+
+  const tab = await findDashboardTab(tabsApi, origin);
+  if (!tab?.id) return { ok: false, reason: 'no_dashboard_tab', origin };
+
+  let injection;
+  try {
+    [injection] = await scriptingApi.executeScript({
+      target: { tabId: tab.id },
+      func: discoverFn,
+      args: [baseUrl, profile],
+    });
+  } catch (error) {
+    return { ok: false, reason: 'inject_failed', detail: String(error?.message || error) };
+  }
+  return injection?.result || { ok: false, reason: 'no_result' };
+}
+
+// fetchFn-based discovery (no scripting) for unit tests and the local-dashboard
+// scraping fallback. Mirrors discoverModelsFromDashboard's token bootstrap.
+export async function discoverProfilesFromDashboard({ baseUrl = '', fetchFn = globalThis.fetch?.bind(globalThis), profile = '' } = {}) {
+  const dashboardUrl = String(baseUrl || '').trim();
+  if (!dashboardUrl) return { ok: false, error: 'no-dashboard-url', profiles: [] };
+  if (typeof fetchFn !== 'function') return { ok: false, error: 'no-fetch', profiles: [] };
+  try {
+    const rootResponse = await fetchFn(dashboardUrl, {
+      method: 'GET',
+      headers: { Accept: 'text/html' },
+      credentials: 'include',
+    });
+    if (!rootResponse.ok) return { ok: false, error: `dashboard-root-${rootResponse.status}`, profiles: [] };
+    const html = await rootResponse.text();
+    const match = html.match(/window\.__HERMES_SESSION_TOKEN__\s*=\s*"([^"]+)"/);
+    const token = match?.[1] || '';
+    if (!token) return { ok: false, error: 'no-dashboard-session-token', profiles: [] };
+
+    const optionsResponse = await fetchFn(dashboardProfilesUrl(dashboardUrl, profile), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'X-Hermes-Session-Token': token,
+      },
+      credentials: 'include',
+    });
+    const text = await optionsResponse.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = { error: text.slice(0, 500) };
+    }
+    if (!optionsResponse.ok) {
+      return {
+        ok: false,
+        error: payload?.detail || payload?.error?.message || payload?.error || `dashboard-profiles-${optionsResponse.status}`,
+        profiles: [],
+      };
+    }
+    if (!payload || !Array.isArray(payload.profiles)) return { ok: false, error: 'no-profiles-in-response', profiles: [] };
+    return { ok: true, profiles: payload.profiles, error: '' };
+  } catch (error) {
+    return { ok: false, error: error?.name === 'AbortError' ? 'dashboard-timeout' : (error?.message || 'error'), profiles: [] };
+  }
+}

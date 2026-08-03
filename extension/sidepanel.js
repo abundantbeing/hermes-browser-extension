@@ -91,6 +91,9 @@ import {
   updateBrowserModelScope,
   updateBrowserModelOptionScope,
   updateReviewState,
+  sessionBindingIdentity,
+  isSessionBindingValid,
+  withSessionBindingIdentity,
 } from './lib/common.mjs';
 import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
@@ -129,6 +132,7 @@ import {
 } from './lib/gateway-ws.mjs';
 import {
   dashboardTrustPrompt,
+  discoverProfilesViaTab,
   findDashboardTab,
   isTrustedDashboardOrigin,
   mintWsTicket,
@@ -1255,15 +1259,22 @@ async function loadSessionBindingForActiveScope() {
 async function saveSessionBindingForActiveScope(session) {
   if (previousConversationScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB || !session?.id) return;
   const key = sessionBindingKeyForScope(contextScope, previousConversationScope);
+  // Bind the stored session to the gateway + profile that created it so resume
+  // cannot silently cross profile boundaries if the user switches profiles.
+  const identity = sessionBindingIdentity({
+    gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+    gatewayMode: settings.gatewayMode,
+    profile: safeActiveProfile(),
+  });
   await chrome.storage.local.set({
-    [key]: {
+    [key]: withSessionBindingIdentity({
       sessionId: session.id,
       sessionTitle: session.title || session.id,
       pinnedTabId: previousConversationScope.pinnedTabId,
       pinnedTitle: previousConversationScope.pinnedTitle || '',
       pinnedUrl: previousConversationScope.pinnedUrl || '',
       updatedAt: Date.now(),
-    },
+    }, identity),
   });
 }
 
@@ -1531,14 +1542,29 @@ async function ensureSessionForActiveScope({ focus = false } = {}) {
   }
   if (!minimumConnectionReady()) return;
   const binding = await loadSessionBindingForActiveScope();
+  // Never resume a stored session under a different gateway + profile than the
+  // one that created it. A mismatched binding is stale; drop it and start fresh
+  // so the user's Chat-only history never silently crosses into another profile.
   if (binding?.sessionId) {
-    const session = availableSessions.find((item) => item.id === binding.sessionId) || {
-      id: binding.sessionId,
-      title: binding.sessionTitle || binding.sessionId,
-      source: DEFAULT_SETTINGS.sessionSource,
-    };
-    await openHermesSession(session);
-    return;
+    const currentIdentity = sessionBindingIdentity({
+      gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+      gatewayMode: settings.gatewayMode,
+      profile: safeActiveProfile(),
+    });
+    if (isSessionBindingValid(binding, currentIdentity)) {
+      const session = availableSessions.find((item) => item.id === binding.sessionId) || {
+        id: binding.sessionId,
+        title: binding.sessionTitle || binding.sessionId,
+        source: DEFAULT_SETTINGS.sessionSource,
+      };
+      await openHermesSession(session);
+      return;
+    }
+    // Mismatched profile/gateway: forget the binding so we don't resume the
+    // wrong profile's chat. The stored messages for this scope stay until the
+    // new session overwrites them.
+    const key = sessionBindingKeyForScope(contextScope, previousConversationScope);
+    await chrome.storage.local.remove([key]);
   }
   await beginHermesBrowserDraft({ title: makePinnedTabSessionTitle(currentContext.activeTab || previousConversationScope), focus });
 }
@@ -4629,12 +4655,77 @@ function renderProfiles() {
         skills: active.skillCount ? ` · ${active.skillCount} ${translateUiText('skills')}` : '',
       })
       : t('profile.available', { count: availableProfiles.length });
+  } else if (isRemoteWsMode()) {
+    els.profileStatus.textContent = 'Profile API unavailable from the extension origin. Open the Hermes dashboard and sign in to select a profile.';
   } else {
     els.profileStatus.textContent = translateUiText('Profile API unavailable. Browser will use the currently running Hermes gateway profile.');
   }
 }
 
+// The profile we send to the dashboard. Empty string is a valid signal
+// (create under the running default profile), so we only fall back to the
+// dashboard-detected active profile when nothing is explicitly chosen.
+function safeActiveProfile() {
+  if (settings.activeProfile && availableProfiles.some((profile) => profile.name === settings.activeProfile)) {
+    return settings.activeProfile;
+  }
+  const detected = availableProfiles.find((profile) => profile.active)?.name || '';
+  return detected;
+}
+
+function profileDiscoveryHelp(reason = '', origin = '') {
+  switch (reason) {
+    case 'no_dashboard_tab':
+      return `Open ${origin || 'your Hermes dashboard'} in a tab and sign in, then refresh profiles.`;
+    case 'not_signed_in':
+      return 'Your Hermes dashboard tab is not signed in. Sign in there, then refresh profiles.';
+    case 'no_dashboard_session_token':
+      return 'The dashboard tab did not expose a session token; reload the dashboard and sign in.';
+    case 'bad_base_url':
+      return 'The remote gateway URL is not a valid https URL.';
+    case 'scripting_unavailable':
+      return 'This extension context cannot read the dashboard.';
+    default:
+      return `Could not discover Hermes profiles (${reason || 'unknown'}).`;
+  }
+}
+
 async function loadProfiles({ quiet = false } = {}) {
+  // Remote dashboard mode has no apiKey and its REST surface is CORS-blocked
+  // from the extension origin. Discover profiles first-party inside the
+  // signed-in dashboard tab (same trust model as ws-ticket minting).
+  if (isRemoteWsMode()) {
+    if (!settings.gatewayUrl) {
+      availableProfiles = [];
+      renderProfiles();
+      return;
+    }
+    try {
+      const result = await discoverProfilesViaTab({
+        tabsApi: chrome.tabs,
+        scriptingApi: chrome.scripting,
+        baseUrl: normalizeGatewayUrl(settings.gatewayUrl),
+      });
+      if (!result.ok) {
+        availableProfiles = [];
+        renderProfiles();
+        if (!quiet) {
+          setStatus('warn', 'Profile discovery unavailable', profileDiscoveryHelp(result.reason, normalizeGatewayUrl(settings.gatewayUrl)));
+        }
+        return;
+      }
+      availableProfiles = normalizeHermesProfiles({ profiles: result.profiles }, settings.activeProfile);
+      renderProfiles();
+      if (!quiet) {
+        setStatus('ok', 'Hermes profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
+      }
+    } catch (error) {
+      availableProfiles = [];
+      renderProfiles();
+      if (!quiet) setStatus('warn', 'Profile sync failed', error?.message || String(error));
+    }
+    return;
+  }
   if (!settings.apiKey || gatewayCapabilities.profiles === false) {
     availableProfiles = [];
     renderProfiles();
@@ -4661,7 +4752,17 @@ async function applySelectedProfile(profileName = '') {
   settings = { ...settings, activeProfile: profileName };
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   renderProfiles();
-  if (!profileName || !settings.apiKey) return;
+  if (!profileName) return;
+  if (isRemoteWsMode()) {
+    // Remote dashboard mode only reads profiles (discovery runs first-party in
+    // the signed-in dashboard tab); it does not POST a switch. The profile is
+    // attached to session.create, so reloading models is enough to reflect the
+    // new selection, and the next session will target it.
+    setStatus('ok', 'Hermes profile selected', `${profileName}. New sessions will use this profile.`);
+    await loadModels({ quiet: true });
+    return;
+  }
+  if (!settings.apiKey) return;
   try {
     const response = await apiFetch('/v1/profiles/active', {
       method: 'POST',
@@ -5209,6 +5310,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
         provider: requestProvider || undefined,
         reasoning_effort: preferredOptions.thinkingEnabled ? preferredOptions.reasoningEffort : 'none',
         fast: preferredOptions.fastMode,
+        profile: safeActiveProfile(),
       },
     });
     connection.wsSessionId = liveId;
@@ -7254,6 +7356,7 @@ async function ensureRemoteWsSession(connection) {
       provider: currentModelProviderSlug() || binding?.provider || undefined,
       reasoning_effort: normalizeReasoningEffort(settings.reasoningEffort),
       fast: normalizeFastMode(settings.fastMode),
+      profile: safeActiveProfile(),
     },
   });
   connection.wsSessionId = liveId;
@@ -8491,6 +8594,33 @@ async function testConnection() {
   markConnectionProbe('connecting', normalizeGatewayUrl(settings.gatewayUrl));
   let ok = false;
   try {
+    if (isRemoteWsMode()) {
+      // The dashboard's REST surface (including /api/status) is CORS-blocked
+      // from the extension origin, so the WebSocket is the only thing we can
+      // exercise. Minting a ticket + opening the socket validates the whole
+      // path: a signed-in dashboard tab, the ticket flow, and the handshake.
+      const connection = await ensureRemoteWsClient();
+      let modelNote = '';
+      try {
+        const models = await connection.client.request(WS_METHODS.modelOptions);
+        await loadModels({ quiet: true, payload: models });
+        modelNote = availableModels.length ? `  ${availableModels.length} models` : '';
+      } catch {
+        // model.options shape varies across gateways; the socket is already proven.
+      }
+      // First-party profile discovery runs inside the signed-in dashboard tab.
+      await loadProfiles({ quiet: true });
+      updateConnectionPrompt();
+      markGatewayReachable(`${normalizeGatewayUrl(settings.gatewayUrl)}${modelNote}`);
+      lastRemoteDiagnostic = null;
+      renderRemoteDiagnostics(null);
+      setStatus('ok', 'Remote Hermes dashboard connected', `${normalizeGatewayUrl(settings.gatewayUrl)}${modelNote}`);
+      settings = { ...settings, lastConnectionTestedAt: Date.now() };
+      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      renderConnectionSecurity();
+      ok = true;
+      return;
+    }
     const response = await apiFetch('/health', { method: 'GET' });
     const text = await response.text();
     if (!connectionController.isCurrent(generation)) return;

@@ -73,6 +73,9 @@ import {
   resolveAcknowledgedSessionModelBinding,
   resolveBrowserEffectiveModel,
   resolveCatalogModelIdForBinding,
+  sessionBindingIdentity,
+  isSessionBindingValid,
+  withSessionBindingIdentity,
   summarizeTabs,
   compareVersionStrings,
   autoSessionTitleFromText,
@@ -1512,7 +1515,9 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
     'connected API /api/model/options must be tried before dashboard scraping',
   );
   assert.match(source, /discoverModelsFromDashboard\(\{/);
-  assert.match(source, /profile: settings\.activeProfile/);
+  assert.match(source, /profile: safeActiveProfile\(\)/);
+  assert.match(source, /safeActiveProfile\(\)/);
+  assert.match(source, /discoverProfilesViaTab\(\{/);
   assert.match(source, /dashboardModelDiscoveryBaseUrl\(\{/);
   assert.doesNotMatch(source, /loadModels\(\{ quiet: true, payload: modelsPayload \}\)/);
   assert.match(source, /shouldTrySessionModelFallback\(\{\s*registryModels,\s*registrySource,\s*defaultModelId: DEFAULT_SETTINGS\.model,\s*\}\)/s);
@@ -1520,6 +1525,18 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   assert.match(source, /apiFetch\('\/v1\/profiles'/);
   assert.match(source, /apiFetch\(`\/api\/sessions\?limit=\$\{limit\}&offset=\$\{offset\}&include_children=true&order=recent`/);
   assert.match(source, /els\.refreshModelsButton\.addEventListener\('click', refreshModelsFromMenu\)/);
+});
+
+test('session resume is bound to gateway + profile and cannot cross profile boundaries', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  // Remote session.create carries the selected profile.
+  assert.match(source, /profile: safeActiveProfile\(\)/);
+  // Stored bindings are written with a gateway + profile identity.
+  assert.match(source, /withSessionBindingIdentity\(/);
+  // Resume validates the binding against the current gateway + profile before reopening.
+  assert.match(source, /isSessionBindingValid\(binding, currentIdentity\)/);
+  // A mismatched binding is invalidated (removed) rather than silently resumed.
+  assert.match(source, /chrome\.storage\.local\.remove\(\[key\]\)/);
 });
 
 test('sidepanel steers dashboard runs through session.steer instead of slash-command prompt injection', () => {
@@ -2301,6 +2318,46 @@ test('normalizeHermesProfiles marks active profile and keeps useful metadata', (
   assert.equal(profiles[0].active, false);
   assert.equal(profiles[1].active, true);
   assert.equal(profiles[1].model, 'claude-sonnet-4.6');
+});
+
+test('session binding identity gates resume across gateway + profile boundaries', () => {
+  const sebastian = sessionBindingIdentity({ gatewayUrl: 'https://dash.example/', gatewayMode: 'remote-dashboard', profile: 'sebastian' });
+  const bound = withSessionBindingIdentity({ sessionId: 's1' }, sebastian);
+  assert.deepEqual(bound.identity, sebastian);
+
+  // Same gateway + profile: resume is allowed.
+  assert.equal(
+    isSessionBindingValid(bound, sessionBindingIdentity({ gatewayUrl: 'https://dash.example', gatewayMode: 'remote-dashboard', profile: 'sebastian' })),
+    true,
+  );
+
+  // Trailing slash / mode normalization must not invalidate an otherwise-equal identity.
+  assert.equal(
+    isSessionBindingValid(bound, sessionBindingIdentity({ gatewayUrl: 'https://dash.example/', gatewayMode: 'remote-dashboard', profile: 'sebastian' })),
+    true,
+  );
+
+  // Different profile: never silently resume the wrong profile's chat.
+  assert.equal(
+    isSessionBindingValid(bound, sessionBindingIdentity({ gatewayUrl: 'https://dash.example', gatewayMode: 'remote-dashboard', profile: 'default' })),
+    false,
+  );
+
+  // Deselected profile (empty) vs a selected one is still a boundary change.
+  assert.equal(
+    isSessionBindingValid(bound, sessionBindingIdentity({ gatewayUrl: 'https://dash.example', gatewayMode: 'remote-dashboard', profile: '' })),
+    false,
+  );
+
+  // Different gateway is also a boundary change.
+  assert.equal(
+    isSessionBindingValid(bound, sessionBindingIdentity({ gatewayUrl: 'https://other.example', gatewayMode: 'remote-dashboard', profile: 'sebastian' })),
+    false,
+  );
+
+  // Missing/empty binding is never valid.
+  assert.equal(isSessionBindingValid(null, sebastian), false);
+  assert.equal(isSessionBindingValid({}, sebastian), false);
 });
 
 test('version helpers compare extension update versions safely', () => {
