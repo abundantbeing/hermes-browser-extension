@@ -94,6 +94,8 @@ import {
   normalizeToolActivity,
   shouldReuseImageGenerationActivity,
   TEXT_SIZE_OPTIONS,
+  agentDiscoveryAppliesToMode,
+  agentDiscoveryModeNote,
 } from '../extension/lib/common.mjs';
 import {
   extractYouTubeVideoId,
@@ -3623,4 +3625,29 @@ test('settings header owns the animated connection test control', () => {
   assert.match(source, /function setTestConnectionBusy\(busy\)/);
   assert.match(source, /setTestConnectionButtonLabel\('TESTING'\)/);
   assert.match(source, /setTestConnectionButtonLabel\(ok \? 'ONLINE' : 'FAILED'\)/);
+});
+
+test('agentDiscoveryAppliesToMode is false only in remote-dashboard mode', () => {
+  assert.equal(agentDiscoveryAppliesToMode('remote-dashboard'), false);
+  assert.equal(agentDiscoveryAppliesToMode('local-api'), true);
+  assert.equal(agentDiscoveryAppliesToMode('remote-api'), true);
+  assert.equal(agentDiscoveryAppliesToMode(undefined), true);
+  assert.equal(agentDiscoveryAppliesToMode('garbage'), true);
+});
+
+test('agentDiscoveryModeNote explains skip in remote-dashboard mode', () => {
+  const remoteNote = agentDiscoveryModeNote('remote-dashboard');
+  assert.match(remoteNote, /WebSocket/i);
+  assert.match(remoteNote, /8642-8646/i);
+  assert.match(remoteNote, /Dashboard Attach/i);
+  const localNote = agentDiscoveryModeNote('local-api');
+  assert.match(localNote, /sidecar gateways/i);
+  assert.doesNotMatch(localNote, /WebSocket/i);
+});
+
+test('Connected agent section copy clarifies the scan is remote-dashboard-inapplicable', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  assert.match(html, /id="agentList"/);
+  assert.match(html, /Scans a trusted Hermes API host for running sidecar gateways on/i);
+  assert.match(html, /Remote[\s\S]*?dashboard mode Dashboard Attach connects over the dashboard[\s\S]*?WebSocket/i);
 });

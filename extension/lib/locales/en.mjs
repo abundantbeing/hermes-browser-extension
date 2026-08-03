@@ -874,7 +874,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Saved when you send the first message.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Say “Hey Hermes” for a hands-free, one-turn voice request. Always-on detection stays on this machine.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Scale interface copy without changing browser zoom.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Scans a trusted Hermes API host for running gateways. Use localhost for same-machine agents, or a Tailscale host/IP for private remote agents.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Scans a trusted Hermes API host for running sidecar gateways on 8642-8646. This is for Local/Remote API mode only. In Remote dashboard mode Dashboard Attach connects over the dashboard WebSocket (port 443), so this scan is skipped and its status never reflects Dashboard Attach availability.",
   "ui.screen": "Screen",
   "ui.script": "Script",
   "ui.search": "Search",

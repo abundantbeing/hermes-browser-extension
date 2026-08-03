@@ -94,6 +94,8 @@ import {
   sessionBindingIdentity,
   isSessionBindingValid,
   withSessionBindingIdentity,
+  agentDiscoveryAppliesToMode,
+  agentDiscoveryModeNote,
 } from './lib/common.mjs';
 import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
@@ -954,6 +956,22 @@ function renderGatewayHelp() {
     if (!contextInput) continue;
     contextInput.disabled = dashboardAttach;
     contextInput.title = dashboardAttach ? 'Trusted Dashboard Attach is Chat-only.' : '';
+  }
+}
+
+// The "Connected agent" port scanner is meaningless in remote-dashboard mode
+// (transport is the dashboard WebSocket on 443, not a local sidecar on
+// 8642-8646). Disable the scanner controls there so they can't imply
+// Dashboard Attach is offline, and surface a clear non-blocking note.
+function renderAgentDiscoveryAvailability() {
+  const applicable = agentDiscoveryAppliesToMode(els.gatewayModeInput?.value || settings.gatewayMode);
+  for (const control of [els.refreshAgentsButton, els.addCustomAgentButton, els.agentHostInput, els.agentSchemeInput, els.agentPortsInput]) {
+    if (control && 'disabled' in control) control.disabled = !applicable;
+  }
+  if (els.agentPickerStatus) {
+    els.agentPickerStatus.textContent = applicable
+      ? 'Agent discovery has not run yet.'
+      : agentDiscoveryModeNote(els.gatewayModeInput?.value || settings.gatewayMode);
   }
 }
 
@@ -4861,6 +4879,17 @@ function renderAgentList(agents = discoveredAgents) {
 
 async function loadAgents({ quiet = false } = {}) {
   if (!els.agentList) return;
+  // In remote-dashboard mode the transport is the dashboard WebSocket (443),
+  // not a local sidecar on 8642-8646. The port probe is meaningless here and
+  // would falsely report "no agents online", implying Dashboard Attach is down.
+  // Skip it and let the connection indicator own the status.
+  if (isRemoteWsMode()) {
+    els.agentList.innerHTML = '<p class="hint">Sidecar agent scan is skipped in Remote dashboard mode. Dashboard Attach connects over the dashboard WebSocket (port 443); use the connection indicator for live status.</p>';
+    if (els.agentPickerStatus) {
+      els.agentPickerStatus.textContent = 'Skipped: remote dashboard mode uses the dashboard WebSocket, not a local sidecar.';
+    }
+    return;
+  }
   const ports = getAgentPorts();
   if (!ports.length) {
     els.agentList.innerHTML = '<p class="hint">No agent ports configured. Set ports in the field below.</p>';
@@ -9147,6 +9176,7 @@ function bindEvents() {
       els.gatewayUrlInput.value = summary.mode.defaultUrl || DEFAULT_SETTINGS.gatewayUrl;
     }
     renderGatewayHelp();
+    renderAgentDiscoveryAvailability();
   });
   els.gatewayUrlInput?.addEventListener('input', renderGatewayHelp);
   for (const card of document.querySelectorAll('[data-connection-mode]')) {
