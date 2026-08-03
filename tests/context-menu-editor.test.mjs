@@ -5,7 +5,10 @@ import { parseHTML } from 'linkedom';
 import { cloneDefaultContextMenuConfig as defaultContextMenuConfig } from '../extension/lib/context-menu-config.mjs';
 import { createContextMenuEditor } from '../extension/lib/context-menu-editor.mjs';
 
-function harness({ translate = (_key, fallback) => fallback } = {}) {
+function harness({
+  translate = (_key, fallback) => fallback,
+  mutate = async () => defaultContextMenuConfig(),
+} = {}) {
   const { document, Event } = parseHTML('<!doctype html><html><body><div id="editor"></div></body></html>');
   const mutations = [];
   const editor = createContextMenuEditor({
@@ -15,7 +18,7 @@ function harness({ translate = (_key, fallback) => fallback } = {}) {
     createId: () => 'custom-action',
     mutate: async (mutation) => {
       mutations.push(mutation);
-      return defaultContextMenuConfig();
+      return mutate(mutation);
     },
   });
   return { document, Event, editor, mutations };
@@ -67,6 +70,25 @@ test('shared editor blocks empty prompt updates with a row-level localized error
   assert.match(error.textContent, /Prompt is required/);
 });
 
+test('shared editor keeps context validation visible and restores the last valid selection', async () => {
+  const { document, Event, mutations } = harness();
+  const card = document.querySelector('[data-item-id="hermes-browser-ask-selection"]');
+  const contexts = card.querySelectorAll('.context-menu-context-input');
+  const previousSelection = Array.from(contexts).filter((context) => context.checked).map((context) => context.value);
+  for (const context of contexts) context.checked = false;
+  contexts[0].dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(mutations.length, 0);
+  const error = card.querySelector('.context-menu-editor-error');
+  assert.equal(error.hidden, false);
+  assert.match(error.textContent, /Choose at least one context/);
+  assert.deepEqual(
+    Array.from(contexts).filter((context) => context.checked).map((context) => context.value),
+    previousSelection,
+  );
+});
+
 test('shared editor rerenders application-owned copy when the locale changes', () => {
   const { document, editor } = harness();
   editor.setTranslator((key, fallback) => ({
@@ -108,4 +130,58 @@ test('shared editor move controls emit the controller offset contract', async ()
     id: 'hermes-browser-ask-selection',
     offset: 1,
   });
+});
+
+test('shared editor clears a failed-save banner as soon as the user retries', async () => {
+  let attempt = 0;
+  let finishRetry;
+  const retry = new Promise((resolve) => { finishRetry = resolve; });
+  const { document, Event } = harness({
+    mutate: async () => {
+      attempt += 1;
+      if (attempt === 1) throw new Error('Context-menu settings could not be saved.');
+      return retry;
+    },
+  });
+
+  let title = document.querySelector('[data-item-id="hermes-browser-ask-selection"] [data-field="title"]');
+  title.value = 'First failed title';
+  title.dispatchEvent(new Event('change'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  let status = document.querySelector('.context-menu-editor-status');
+  assert.equal(status.hidden, false);
+  assert.ok(status.classList.contains('error'));
+
+  title = document.querySelector('[data-item-id="hermes-browser-ask-selection"] [data-field="title"]');
+  title.value = 'Retry title';
+  title.dispatchEvent(new Event('change'));
+  status = document.querySelector('.context-menu-editor-status');
+  assert.equal(status.hidden, true, 'the stale failure must clear before the retry completes');
+
+  finishRetry(defaultContextMenuConfig());
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(document.querySelector('.context-menu-editor-status').classList.contains('error'), false);
+});
+
+test('shared editor clears a failed-save banner on row navigation and external config sync', async () => {
+  const { document, Event, editor } = harness({
+    mutate: async () => { throw new Error('Context-menu settings could not be saved.'); },
+  });
+  let title = document.querySelector('[data-item-id="hermes-browser-ask-selection"] [data-field="title"]');
+  title.value = 'Rejected title';
+  title.dispatchEvent(new Event('change'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  document.querySelectorAll('.context-menu-editor-card-toggle')[1].dispatchEvent(new Event('click'));
+  assert.equal(document.querySelector('.context-menu-editor-status').hidden, true);
+
+  title = document.querySelector('[data-item-id="hermes-browser-summarize-selection"] [data-field="title"]');
+  title.value = 'Another rejected title';
+  title.dispatchEvent(new Event('change'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(document.querySelector('.context-menu-editor-status').hidden, false);
+
+  editor.setConfig(defaultContextMenuConfig());
+  assert.equal(document.querySelector('.context-menu-editor-status').hidden, true);
 });

@@ -63,8 +63,20 @@ export function createContextMenuEditor({
     return node;
   }
 
+  function clearStatus() {
+    if (!statusMessage) return;
+    statusMessage = '';
+    statusKind = 'ok';
+    const status = root.querySelector('.context-menu-editor-status');
+    if (!status) return;
+    status.textContent = '';
+    status.className = 'context-menu-editor-status ok';
+    status.hidden = true;
+  }
+
   async function perform(mutation) {
     if (busy) return;
+    clearStatus();
     busy = true;
     root.setAttribute('aria-busy', 'true');
     try {
@@ -115,6 +127,7 @@ export function createContextMenuEditor({
       element('span', 'context-menu-editor-card-chevron', expanded ? '−' : '+'),
     );
     toggle.addEventListener('click', () => {
+      clearStatus();
       expandedItemIds.clear();
       if (!expanded) expandedItemIds.add(item.id);
       render();
@@ -194,6 +207,7 @@ export function createContextMenuEditor({
     error.setAttribute('role', 'alert');
 
     titleInput.addEventListener('change', () => {
+      clearStatus();
       const title = titleInput.value.trim();
       if (!title) {
         showError(error, text('ui.context.menu.editor.error.title', 'Title is required.'));
@@ -207,6 +221,7 @@ export function createContextMenuEditor({
       patch: { enabled: enabledInput.checked },
     }));
     promptInput.addEventListener('change', () => {
+      clearStatus();
       const prompt = promptInput.value.trim();
       if (!prompt) {
         showError(error, text('ui.context.menu.editor.error.prompt', 'Prompt is required.'));
@@ -224,10 +239,13 @@ export function createContextMenuEditor({
       perform({ type: 'update', id: item.id, patch });
     });
     contextGrid.addEventListener('change', () => {
+      clearStatus();
       const selected = Array.from(contextGrid.querySelectorAll('.context-menu-context-input:checked')).map((input) => input.value);
       if (!selected.length) {
+        for (const input of contextGrid.querySelectorAll('.context-menu-context-input')) {
+          input.checked = item.contexts.includes(input.value);
+        }
         showError(error, text('ui.context.menu.editor.error.context', 'Choose at least one context.'));
-        render();
         return;
       }
       perform({ type: 'update', id: item.id, patch: { contexts: selected } });
@@ -285,11 +303,13 @@ export function createContextMenuEditor({
 
   function setConfig(nextConfig) {
     currentConfig = normalizeContextMenuConfig(nextConfig);
+    clearStatus();
     render();
   }
 
   function setTranslator(nextTranslate) {
     if (typeof nextTranslate === 'function') t = nextTranslate;
+    clearStatus();
     render();
   }
 
