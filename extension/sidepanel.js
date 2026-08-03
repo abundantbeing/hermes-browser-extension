@@ -26,6 +26,7 @@ import {
   escapeHtml,
   extractAssistantText,
   formatUpdateStatus,
+  gatewayModeAfterTokenClear,
   gatewayConnectionTroubleshooting,
   gatewayConnectionSummary,
   groupModelsForMenu,
@@ -3975,14 +3976,21 @@ async function saveSettingsFromForm() {
 }
 
 async function clearStoredToken() {
-  settings = { ...settings, apiKey: '', tokenSource: '', lastConnectionTestedAt: 0 };
+  const gatewayMode = gatewayModeAfterTokenClear(settings.gatewayMode);
+  settings = { ...settings, gatewayMode, apiKey: '', tokenSource: '', lastConnectionTestedAt: 0 };
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   if (els.apiKeyInput) els.apiKeyInput.value = '';
   sessionRoutesAvailable = null;
-  markConnectionProbe('unconfigured', 'Token cleared by user.');
+  markConnectionProbe(gatewayMode === 'remote-dashboard' ? 'connecting' : 'unconfigured', 'Token cleared by user.');
   setGatewayCapabilities(normalizeGatewayCapabilities(null, { healthOk: false, hasApiKey: false, warning: 'Token cleared; reconnect to refresh capabilities.' }));
   syncSettingsForm();
-  setStatus('warn', 'Hermes token cleared', 'Paste a Gateway API key or reconnect when you are ready.');
+  setStatus(
+    gatewayMode === 'remote-dashboard' ? 'ok' : 'warn',
+    'Hermes token cleared',
+    gatewayMode === 'remote-dashboard'
+      ? 'Remote dashboard WebSocket mode selected. Keep the dashboard open and signed in, then reconnect.'
+      : 'Paste a Gateway API key or reconnect when you are ready.',
+  );
 }
 
 async function activeTab() {
@@ -5722,13 +5730,16 @@ async function runStartupReadiness() {
     renderStartupReadiness();
 
     setStartupReadiness({ phase: 'gateway-probe', step: 'gateway', status: 'active', detail: `Checking ${normalizeGatewayUrl(settings.gatewayUrl)}…` });
+    if (isRemoteWsMode()) await ensureRemoteWsClient();
     const state = await probeGatewayLiveness({ quiet: true });
-    if (!settings.apiKey || !state.connected) {
-      const missingToken = !settings.apiKey;
+    const gatewayReady = state.connected || (isRemoteWsMode() && remoteWsConnection?.client?.readyState === 1);
+    if (!gatewayReady) {
       setStartupReadiness({
         step: 'gateway',
-        status: missingToken ? 'unconfigured' : (state.state === 'unreachable' ? 'unreachable' : 'error'),
-        detail: missingToken ? 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.' : currentConnectionTroubleshooting(state),
+        status: state.state === 'unconfigured' ? 'unconfigured' : (state.state === 'unreachable' ? 'unreachable' : 'error'),
+        detail: state.state === 'unconfigured'
+          ? (isRemoteWsMode() ? 'Set a remote https dashboard URL in Settings and sign in to that dashboard in a browser tab.' : 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.')
+          : currentConnectionTroubleshooting(state),
       });
       renderModelOptions();
       renderSessionMenu();

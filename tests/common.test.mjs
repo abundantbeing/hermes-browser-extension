@@ -28,6 +28,7 @@ import {
   estimateContextWindow,
   extractAssistantText,
   formatContextMeter,
+  gatewayModeAfterTokenClear,
   gatewayConnectionTroubleshooting,
   gatewayConnectionSummary,
   isUsableRemoteGatewayUrl,
@@ -379,6 +380,12 @@ test('gateway settings support explicit local and remote Hermes API servers', ()
   assert.match(dashboard.title, /Remote Hermes dashboard/);
   assert.match(dashboard.setupHint, /WebSocket/);
   assert.match(dashboard.setupHint, /sign in/i);
+});
+
+test('clearing a remote API token switches transport to dashboard WebSocket mode', () => {
+  assert.equal(gatewayModeAfterTokenClear('remote-api'), 'remote-dashboard');
+  assert.equal(gatewayModeAfterTokenClear('remote-dashboard'), 'remote-dashboard');
+  assert.equal(gatewayModeAfterTokenClear('local-api'), 'local-api');
 });
 
 test('isUsableRemoteGatewayUrl requires a parseable https URL', () => {

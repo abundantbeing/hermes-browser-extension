@@ -132,6 +132,10 @@ export function normalizeGatewayMode(value = DEFAULT_SETTINGS.gatewayMode) {
   return GATEWAY_MODES.some((mode) => mode.value === normalized) ? normalized : DEFAULT_SETTINGS.gatewayMode;
 }
 
+export function gatewayModeAfterTokenClear(value = DEFAULT_SETTINGS.gatewayMode) {
+  return normalizeGatewayMode(value) === 'local-api' ? 'local-api' : 'remote-dashboard';
+}
+
 export function normalizeSessionStartupMode(value = DEFAULT_SETTINGS.sessionStartupMode) {
   const normalized = String(value || DEFAULT_SETTINGS.sessionStartupMode).trim().toLowerCase();
   return normalized === 'resume-last' ? 'resume-last' : 'new-session';
