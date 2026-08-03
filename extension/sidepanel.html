@@ -231,8 +231,11 @@
           <section class="settings-section">
             <h3>Connected agent</h3>
             <p class="hint">
-              Scans a trusted Hermes API host for running gateways. Use localhost for
-              same-machine agents, or a Tailscale host/IP for private remote agents.
+              Scans a trusted Hermes API host for running sidecar gateways on
+              8642-8646. This is for Local/Remote API mode only. In Remote
+              dashboard mode Dashboard Attach connects over the dashboard
+              WebSocket (port 443), so this scan is skipped and its status
+              never reflects Dashboard Attach availability.
             </p>
             <div id="agentList" class="agent-list" role="list" aria-label="Discovered Hermes agents"></div>
             <div class="settings-row">

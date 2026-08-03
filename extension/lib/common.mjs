@@ -132,6 +132,22 @@ export function normalizeGatewayMode(value = DEFAULT_SETTINGS.gatewayMode) {
   return GATEWAY_MODES.some((mode) => mode.value === normalized) ? normalized : DEFAULT_SETTINGS.gatewayMode;
 }
 
+// The "Connected agent" port scanner (localhost 8642-8646 sidecar probe) only
+// applies to the local/remote API-server transports. In remote-dashboard mode
+// the transport is the dashboard WebSocket on 443, so the probe is meaningless
+// and would falsely report "no agents online", implying Dashboard Attach is
+// down. Gate it behind this so UI never implies a false offline state.
+export function agentDiscoveryAppliesToMode(value = DEFAULT_SETTINGS.gatewayMode) {
+  return normalizeGatewayMode(value) !== 'remote-dashboard';
+}
+
+export function agentDiscoveryModeNote(value = DEFAULT_SETTINGS.gatewayMode) {
+  if (agentDiscoveryAppliesToMode(value)) {
+    return 'Scans a trusted Hermes API host for running sidecar gateways.';
+  }
+  return 'Sidecar scan is skipped in Remote dashboard mode. Dashboard Attach connects over the dashboard WebSocket (port 443); this scanner only finds local/sidecar API servers on 8642-8646. Dashboard Attach status is shown by the connection indicator, not here.';
+}
+
 export function normalizeSessionStartupMode(value = DEFAULT_SETTINGS.sessionStartupMode) {
   const normalized = String(value || DEFAULT_SETTINGS.sessionStartupMode).trim().toLowerCase();
   return normalized === 'resume-last' ? 'resume-last' : 'new-session';

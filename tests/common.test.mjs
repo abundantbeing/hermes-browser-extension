@@ -82,6 +82,8 @@ import {
   sanitizeToolPreview,
   normalizeToolActivity,
   TEXT_SIZE_OPTIONS,
+  agentDiscoveryAppliesToMode,
+  agentDiscoveryModeNote,
 } from '../extension/lib/common.mjs';
 import {
   extractYouTubeVideoId,
@@ -2107,4 +2109,29 @@ test('Nous dark theme uses Desktop-style dark blue surfaces instead of light box
   assert.match(block, /--hermes-paper:\s*#0a3572\b/i, 'dark Nous cards should be deep Hermes blue');
   assert.match(block, /--hermes-input-bg:\s*#062a60\b/i, 'dark Nous text fields should be darker blue than cards');
   assert.match(css, /textarea, input, select \{[\s\S]*?background:\s*var\(--hermes-input-bg, var\(--hermes-paper\)\)/, 'form controls should use the input surface token');
+});
+
+test('agentDiscoveryAppliesToMode is false only in remote-dashboard mode', () => {
+  assert.equal(agentDiscoveryAppliesToMode('remote-dashboard'), false);
+  assert.equal(agentDiscoveryAppliesToMode('local-api'), true);
+  assert.equal(agentDiscoveryAppliesToMode('remote-api'), true);
+  assert.equal(agentDiscoveryAppliesToMode(undefined), true);
+  assert.equal(agentDiscoveryAppliesToMode('garbage'), true);
+});
+
+test('agentDiscoveryModeNote explains skip in remote-dashboard mode', () => {
+  const remoteNote = agentDiscoveryModeNote('remote-dashboard');
+  assert.match(remoteNote, /WebSocket/i);
+  assert.match(remoteNote, /8642-8646/i);
+  assert.match(remoteNote, /Dashboard Attach/i);
+  const localNote = agentDiscoveryModeNote('local-api');
+  assert.match(localNote, /sidecar gateways/i);
+  assert.doesNotMatch(localNote, /WebSocket/i);
+});
+
+test('Connected agent section copy clarifies the scan is remote-dashboard-inapplicable', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  assert.match(html, /id="agentList"/);
+  assert.match(html, /Scans a trusted Hermes API host for running sidecar gateways on/i);
+  assert.match(html, /Remote[\s\S]*?dashboard mode Dashboard Attach connects over the dashboard[\s\S]*?WebSocket/i);
 });
