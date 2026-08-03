@@ -1775,3 +1775,37 @@ export function shouldStopSessionPaging({ rowCount = 0, offset = 0, total = 0, h
   if (total && offset < total) return false;
   return true;
 }
+
+// ---------------------------------------------------------------------------
+// Profile-bound session identity.
+//
+// A stored session binding records the gateway + profile it belongs to. Resume
+// must never cross profile boundaries: if the user selected a different profile
+// (or deselected one) since the binding was written, the binding is stale and
+// must be invalidated instead of silently resuming the wrong profile's chat.
+// ---------------------------------------------------------------------------
+
+export function sessionBindingIdentity({ gatewayUrl = '', profile = '', gatewayMode = '' } = {}) {
+  return {
+    gatewayUrl: normalizeGatewayUrl(gatewayUrl || ''),
+    gatewayMode: normalizeGatewayMode(gatewayMode || ''),
+    profile: String(profile || '').trim(),
+  };
+}
+
+// Compare a stored binding's identity against the current connection identity.
+// Returns true when the binding was created for the same gateway + profile.
+export function isSessionBindingValid(binding = null, currentIdentity = {}) {
+  if (!binding || typeof binding !== 'object') return false;
+  const prev = binding.identity || {};
+  const next = currentIdentity || {};
+  if (normalizeGatewayUrl(prev.gatewayUrl || '') !== normalizeGatewayUrl(next.gatewayUrl || '')) return false;
+  if (normalizeGatewayMode(prev.gatewayMode || '') !== normalizeGatewayMode(next.gatewayMode || '')) return false;
+  if (String(prev.profile || '').trim() !== String(next.profile || '').trim()) return false;
+  return true;
+}
+
+// Attach the identity to a binding before persisting it.
+export function withSessionBindingIdentity(binding = {}, currentIdentity = {}) {
+  return { ...(binding || {}), identity: { ...currentIdentity } };
+}
