@@ -3,7 +3,14 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import { openSidePanelWithConfirmation } from '../extension/lib/browser-runtime.mjs';
+import {
+  BROWSER_IDS,
+  actionIconPathsForBrowser,
+  detectBrowserId,
+  openSidePanelWithConfirmation,
+  setActionClickPanelBehavior,
+  setActionIconForBrowser,
+} from '../extension/lib/browser-runtime.mjs';
 
 const root = process.cwd();
 
@@ -19,9 +26,70 @@ test('browser-runtime.mjs openNativeSidebar handles sidebarAction.open() for Fir
   assert.match(source, /typeof sidebarAction\.open === 'function'/);
 });
 
-test('browser-runtime.mjs setActionClickPanelBehavior handles Firefox', () => {
-  const source = readFileSync(new URL('../extension/lib/browser-runtime.mjs', import.meta.url), 'utf8');
-  assert.match(source, /BROWSER_IDS\.FIREFOX/);
+test('browser runtime distinguishes Brave from generic Chromium', () => {
+  assert.equal(detectBrowserId({
+    userAgent: 'Mozilla/5.0 Chrome/150.0.0.0 Safari/537.36',
+    braveApi: { isBrave() {} },
+  }), BROWSER_IDS.BRAVE);
+  assert.equal(detectBrowserId({
+    userAgent: 'Mozilla/5.0 Chrome/150.0.0.0 Safari/537.36',
+    braveApi: null,
+  }), BROWSER_IDS.CHROMIUM);
+});
+
+test('Brave leaves action clicks with the extension listener', async () => {
+  const calls = [];
+  await setActionClickPanelBehavior({
+    browserId: BROWSER_IDS.BRAVE,
+    sidePanelApi: { setPanelBehavior: async (value) => calls.push(value) },
+  });
+  assert.deepEqual(calls, [{ openPanelOnActionClick: false }]);
+});
+
+test('every non-Brave browser keeps native automatic action behavior', async () => {
+  for (const browserId of [
+    BROWSER_IDS.CHROMIUM,
+    BROWSER_IDS.OPERA,
+    BROWSER_IDS.FIREFOX,
+    BROWSER_IDS.SAFARI,
+    BROWSER_IDS.UNKNOWN,
+  ]) {
+    const calls = [];
+    await setActionClickPanelBehavior({
+      browserId,
+      sidePanelApi: { setPanelBehavior: async (value) => calls.push(value) },
+    });
+    assert.deepEqual(
+      calls,
+      [{ openPanelOnActionClick: true }],
+      `${browserId} must keep native action-click panel behavior`,
+    );
+  }
+});
+
+test('Brave receives the Nous Girl action icon override', async () => {
+  const expected = {
+    16: 'assets/icons/brave-nous-girl-16.png',
+    32: 'assets/icons/brave-nous-girl-32.png',
+    48: 'assets/icons/brave-nous-girl-48.png',
+    128: 'assets/icons/brave-nous-girl-128.png',
+  };
+  assert.deepEqual(actionIconPathsForBrowser(BROWSER_IDS.BRAVE), expected);
+  assert.equal(actionIconPathsForBrowser(BROWSER_IDS.CHROMIUM), null);
+
+  const calls = [];
+  assert.equal(await setActionIconForBrowser({
+    browserId: BROWSER_IDS.BRAVE,
+    actionApi: { setIcon: async (value) => calls.push(value) },
+  }), true);
+  assert.deepEqual(calls, [{ path: expected }]);
+});
+
+test('Brave icon application reports failure instead of throwing', async () => {
+  assert.equal(await setActionIconForBrowser({
+    browserId: BROWSER_IDS.BRAVE,
+    actionApi: { setIcon: async () => { throw new Error('setIcon failed'); } },
+  }), false);
 });
 
 test('background.js openHermesPanel falls back to popup window for Firefox', () => {
@@ -390,7 +458,43 @@ test('background retries context-menu configuration after a failed removal', asy
   }
 });
 
-test('background action reuses the extension-tab fallback across repeated silent side-panel no-ops', async () => {
+test('action listener opens the side panel synchronously before storage hydration or setOptions', async () => {
+  const originalChrome = globalThis.chrome;
+  const harness = createBackgroundHarness({ blockStorageGet: true });
+  globalThis.chrome = harness.chromeApi;
+
+  try {
+    await import(`../extension/background.js?action-open-before-hydration=${Date.now()}`);
+    assert.equal(typeof harness.actionHandler, 'function');
+
+    const actionPromise = harness.actionHandler(harness.activeTab);
+    // Storage hydration is deliberately blocked: the user-gesture open must
+    // already be in flight before any await, setOptions, or native probe.
+    assert.deepEqual(
+      harness.sidePanelOpenCalls,
+      [{ tabId: 7 }],
+      'sidePanel.open must be invoked synchronously in the action listener stack',
+    );
+    assert.deepEqual(
+      harness.sidePanelOptions,
+      [],
+      'setOptions must not run before the synchronous open attempt',
+    );
+
+    harness.releaseStorageGet();
+    await actionPromise;
+    assert.equal(
+      harness.createdTabs.length,
+      0,
+      'a resolved side-panel request must never create a duplicate extension tab',
+    );
+  } finally {
+    harness.releaseStorageGet();
+    globalThis.chrome = originalChrome;
+  }
+});
+
+test('background action never opens a full tab after resolved side-panel requests', async () => {
   const originalChrome = globalThis.chrome;
   const harness = createBackgroundHarness();
   globalThis.chrome = harness.chromeApi;
@@ -400,16 +504,15 @@ test('background action reuses the extension-tab fallback across repeated silent
     assert.equal(typeof harness.actionHandler, 'function');
     await harness.actionHandler(harness.activeTab);
     await harness.actionHandler(harness.activeTab);
-    assert.equal(harness.createdTabs.length, 1, 'repeated fallback clicks must not create duplicate tabs');
-    assert.equal(harness.createdTabs[0].url, 'chrome-extension://test/sidepanel.html?panel=tab&tabId=7');
-    assert.deepEqual(harness.updatedTabs, [{ tabId: 101, options: { active: true } }]);
-    assert.deepEqual(harness.focusedWindows, [{ windowId: 8, options: { focused: true } }]);
+    assert.equal(harness.createdTabs.length, 0, 'resolved native requests must remain side-panel-only');
+    assert.deepEqual(harness.updatedTabs, []);
+    assert.deepEqual(harness.focusedWindows, []);
   } finally {
     globalThis.chrome = originalChrome;
   }
 });
 
-test('background action coalesces concurrent silent side-panel fallbacks', async () => {
+test('background action keeps concurrent resolved side-panel requests tab-free', async () => {
   const originalChrome = globalThis.chrome;
   const harness = createBackgroundHarness({ synchronizeFallbackQueries: true });
   globalThis.chrome = harness.chromeApi;
@@ -421,13 +524,13 @@ test('background action coalesces concurrent silent side-panel fallbacks', async
       harness.actionHandler(harness.activeTab),
       harness.actionHandler(harness.activeTab),
     ]);
-    assert.equal(harness.createdTabs.length, 1, 'concurrent fallback clicks must share one tab open');
+    assert.equal(harness.createdTabs.length, 0, 'concurrent resolved requests must not create a full tab');
   } finally {
     globalThis.chrome = originalChrome;
   }
 });
 
-test('background action falls back when a modern browser creates a hidden side-panel context', async () => {
+test('background action does not open a full tab when side-panel visibility confirmation is missed', async () => {
   const originalChrome = globalThis.chrome;
   const panelUrl = 'chrome-extension://test/sidepanel.html?panel=tab&tabId=7';
   const harness = createBackgroundHarness({
@@ -439,14 +542,18 @@ test('background action falls back when a modern browser creates a hidden side-p
     await import(`../extension/background.js?hidden-side-panel-context=${Date.now()}`);
     assert.equal(typeof harness.actionHandler, 'function');
     await harness.actionHandler(harness.activeTab);
-    assert.deepEqual(harness.sidePanelOpenCalls, [{ tabId: 7 }, { windowId: 8 }]);
-    assert.deepEqual(harness.createdTabs, [{ url: panelUrl, active: true }]);
+    assert.deepEqual(
+      harness.sidePanelOpenCalls,
+      [{ tabId: 7 }],
+      'a gesture open makes one correctly scoped attempt without a window-scope retry',
+    );
+    assert.deepEqual(harness.createdTabs, []);
   } finally {
     globalThis.chrome = originalChrome;
   }
 });
 
-test('background action retries a failed tab-scoped side-panel open at window scope only once', async () => {
+test('background action does not re-open the side panel after a failed tab-scoped gesture attempt', async () => {
   const originalChrome = globalThis.chrome;
   const harness = createBackgroundHarness({
     sidePanelOpen: async (options) => {
@@ -459,8 +566,12 @@ test('background action retries a failed tab-scoped side-panel open at window sc
     await import(`../extension/background.js?single-window-retry=${Date.now()}`);
     assert.equal(typeof harness.actionHandler, 'function');
     await harness.actionHandler(harness.activeTab);
-    assert.deepEqual(harness.sidePanelOpenCalls, [{ tabId: 7 }, { windowId: 8 }]);
-    assert.equal(harness.createdTabs.length, 1);
+    assert.deepEqual(
+      harness.sidePanelOpenCalls,
+      [{ tabId: 7 }],
+      'a failed gesture attempt must not trigger a second side-panel open',
+    );
+    assert.equal(harness.createdTabs.length, 1, 'the gesture-free fallback must open exactly one extension tab');
   } finally {
     globalThis.chrome = originalChrome;
   }

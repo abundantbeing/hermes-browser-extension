@@ -7,6 +7,7 @@
  */
 
 const BROWSER_IDS = Object.freeze({
+  BRAVE: 'brave',
   CHROMIUM: 'chromium',
   OPERA: 'opera',
   FIREFOX: 'firefox',
@@ -14,15 +15,20 @@ const BROWSER_IDS = Object.freeze({
   UNKNOWN: 'unknown',
 });
 
-function detectBrowserId() {
-  const ua = (typeof navigator !== 'undefined' ? navigator.userAgent : '') || '';
+function detectBrowserId({
+  userAgent = (typeof navigator !== 'undefined' ? navigator.userAgent : '') || '',
+  braveApi = typeof navigator !== 'undefined' ? navigator.brave : null,
+} = {}) {
+  // Brave exposes navigator.brave.isBrave on every page; its presence is the
+  // stable synchronous runtime signal. Do not call the async isBrave() probe.
+  if (typeof braveApi?.isBrave === 'function') return BROWSER_IDS.BRAVE;
   // Check UA first — more reliable than globalThis.opr which may not exist
   // in the MV3 service worker context even on Opera.
-  if (/\bOPR\/|Opera\b/i.test(ua)) return BROWSER_IDS.OPERA;
+  if (/\bOPR\/|Opera\b/i.test(userAgent)) return BROWSER_IDS.OPERA;
   if (typeof globalThis !== 'undefined' && globalThis.opr?.sidebarAction) return BROWSER_IDS.OPERA;
   if (typeof globalThis !== 'undefined' && globalThis.browser?.sidebarAction) return BROWSER_IDS.FIREFOX;
-  if (/\bFirefox\b/i.test(ua)) return BROWSER_IDS.FIREFOX;
-  if (/\bSafari\b/i.test(ua) && !/\bChrome\b/i.test(ua)) return BROWSER_IDS.SAFARI;
+  if (/\bFirefox\b/i.test(userAgent)) return BROWSER_IDS.FIREFOX;
+  if (/\bSafari\b/i.test(userAgent) && !/\bChrome\b/i.test(userAgent)) return BROWSER_IDS.SAFARI;
   return BROWSER_IDS.CHROMIUM;
 }
 
@@ -113,8 +119,17 @@ async function openNativeSidebar({ windowId = null } = {}) {
  * Opera/Firefox sidebarAction does not have a direct equivalent; the
  * _execute_sidebar_action manifest command handles keyboard shortcut.
  */
-async function setActionClickPanelBehavior() {
-  const browserId = detectBrowserId();
+async function setActionClickPanelBehavior({
+  browserId = detectBrowserId(),
+  sidePanelApi = globalThis.chrome?.sidePanel,
+} = {}) {
+  // Brave: disable browser-owned automatic action ownership so the toolbar
+  // click and _execute_action reach the extension's confirmed manual path.
+  if (browserId === BROWSER_IDS.BRAVE) {
+    if (!sidePanelApi?.setPanelBehavior) return;
+    await sidePanelApi.setPanelBehavior({ openPanelOnActionClick: false });
+    return;
+  }
 
   // Opera/Firefox sidebarAction: no setPanelBehavior equivalent —
   // the _execute_sidebar_action manifest command handles keyboard shortcut
@@ -123,9 +138,9 @@ async function setActionClickPanelBehavior() {
   // so both the sidebar and sidePanel paths work.
   if (browserId === BROWSER_IDS.OPERA || browserId === BROWSER_IDS.FIREFOX) {
     // Still set Chrome sidePanel behavior if Opera supports it (it often does)
-    if (globalThis.chrome?.sidePanel?.setPanelBehavior) {
+    if (sidePanelApi?.setPanelBehavior) {
       try {
-        await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+        await sidePanelApi.setPanelBehavior({ openPanelOnActionClick: true });
       } catch {
         // Opera may not fully support this — best-effort
       }
@@ -134,8 +149,43 @@ async function setActionClickPanelBehavior() {
   }
 
   // Chrome/Edge/Comet sidePanel
-  if (!globalThis.chrome?.sidePanel?.setPanelBehavior) return;
-  await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  if (!sidePanelApi?.setPanelBehavior) return;
+  await sidePanelApi.setPanelBehavior({ openPanelOnActionClick: true });
+}
+
+/**
+ * Brave-only action icon override: the Nous Girl mark, generated from the
+ * exact tracked source asset. Other browsers keep the manifest boxed icon.
+ */
+const BRAVE_ACTION_ICON_PATHS = Object.freeze({
+  16: 'assets/icons/brave-nous-girl-16.png',
+  32: 'assets/icons/brave-nous-girl-32.png',
+  48: 'assets/icons/brave-nous-girl-48.png',
+  128: 'assets/icons/brave-nous-girl-128.png',
+});
+
+function actionIconPathsForBrowser(browserId = detectBrowserId()) {
+  return browserId === BROWSER_IDS.BRAVE ? { ...BRAVE_ACTION_ICON_PATHS } : null;
+}
+
+/**
+ * Apply the browser-specific action icon. Best-effort: a missing API or a
+ * rejected setIcon returns false and never throws, so icon setup cannot
+ * block panel configuration.
+ */
+async function setActionIconForBrowser({
+  browserId = detectBrowserId(),
+  actionApi = globalThis.chrome?.action,
+} = {}) {
+  const path = actionIconPathsForBrowser(browserId);
+  if (!path || typeof actionApi?.setIcon !== 'function') return false;
+  try {
+    await actionApi.setIcon({ path });
+    return true;
+  } catch (error) {
+    console.warn('[Hermes Browser] Unable to apply browser-specific action icon:', error);
+    return false;
+  }
 }
 
 /**
@@ -227,6 +277,7 @@ async function openSidePanelWithConfirmation({
 
 export {
   BROWSER_IDS,
+  actionIconPathsForBrowser,
   detectBrowserId,
   getSidebarAction,
   hasChromeSidePanel,
@@ -234,5 +285,6 @@ export {
   openNativeSidebar,
   openSidePanelWithConfirmation,
   setActionClickPanelBehavior,
+  setActionIconForBrowser,
   nativePanelMode,
 };

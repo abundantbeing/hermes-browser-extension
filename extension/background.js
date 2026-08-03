@@ -9,6 +9,7 @@ import {
   openNativeSidebar,
   openSidePanelWithConfirmation,
   setActionClickPanelBehavior as setPanelBehaviorForBrowser,
+  setActionIconForBrowser,
 } from './lib/browser-runtime.mjs';
 import {
   normalizeTranscriptPayload,
@@ -402,6 +403,8 @@ async function configureSidePanel() {
     const tabId = await activeBrowserTabId();
     // No popup for any browser — background.js handles the click.
     await chrome.action.setPopup({ popup: '' });
+    // Brave-only Nous Girl action icon; best-effort and never blocks panel setup.
+    await setActionIconForBrowser();
     await applyPanelResidencyMode(panelResidencyMode, { tabId });
   } catch (error) {
     console.warn('[Hermes Browser] Unable to set side panel behavior:', error);
@@ -551,31 +554,40 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
   await openOrFocusPanelTab(panelUrl);
 }
 
-function openHermesPanelFromContextGesture(tab) {
+function openHermesPanelFromGesture(tab) {
   const browserId = detectBrowserId();
-  if (browserId === 'opera' || browserId === 'firefox') {
-    try {
-      const nativeAttempt = openNativeSidebar({ windowId: tab?.windowId ?? null });
-      return Promise.resolve(nativeAttempt)
-        .then((opened) => (opened ? true : openHermesPanel(tab)))
-        .catch(() => openHermesPanel(tab));
-    } catch {
-      return openHermesPanel(tab);
-    }
-  }
-
-  if (!chrome.sidePanel?.open) return openHermesPanel(tab);
   const panelResidencyMode = cachedPanelResidencyMode;
   const tabId = Number(tab?.id);
   const useTabAttached = panelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED
     && Number.isFinite(tabId)
     && tabId > 0;
-  const panelPath = buildSidePanelPath({
+  const panelUrl = chrome.runtime.getURL(buildSidePanelPath({
     mode: panelResidencyMode,
     tabId: useTabAttached ? tabId : null,
     defaultPath: defaultSidePanelPath(),
-  });
-  const panelUrl = chrome.runtime.getURL(panelPath);
+  }));
+
+  // Opera/Firefox: the single synchronous open attempt is the native sidebar.
+  // It must be initiated in the listener stack before any await so the user
+  // gesture (toolbar click, context menu, Alt+H) is not consumed by storage
+  // hydration, setOptions, or detection probes.
+  if (browserId === 'opera' || browserId === 'firefox') {
+    try {
+      const nativeAttempt = openNativeSidebar({ windowId: tab?.windowId ?? null });
+      return Promise.resolve(nativeAttempt)
+        .then((opened) => (opened ? true : openHermesPanelFallback(tab, browserId, panelUrl)))
+        .catch(() => openHermesPanelFallback(tab, browserId, panelUrl));
+    } catch {
+      return openHermesPanelFallback(tab, browserId, panelUrl);
+    }
+  }
+
+  if (!chrome.sidePanel?.open) return openHermesPanelFallback(tab, browserId, panelUrl);
+
+  // Chromium-family: one correctly scoped sidePanel attempt, opened
+  // synchronously. A resolved native request owns the gesture even when the
+  // visibility event is missed; opening a fallback tab in that state can show
+  // both the side panel and a duplicate full-tab Hermes surface.
   const openOptions = useTabAttached
     ? { tabId }
     : { windowId: Number(tab?.windowId) };
@@ -588,17 +600,42 @@ function openHermesPanelFromContextGesture(tab) {
       panelUrl,
     });
     return Promise.resolve(panelAttempt)
-      .then(async (opened) => {
-        if (opened) return true;
-        console.warn('[Hermes Browser] Context-menu side panel was not confirmed; using the extension fallback.');
-        await openOrFocusPanelTab(panelUrl);
+      .then((opened) => {
+        if (!opened) {
+          console.warn('[Hermes Browser] Side panel open resolved without visibility confirmation; not opening a fallback tab.');
+        }
         return true;
       })
-      .catch(() => openHermesPanel(tab));
+      .catch(() => openHermesPanelFallback(tab, browserId, panelUrl));
   } catch {
-    return openHermesPanel(tab);
+    return openHermesPanelFallback(tab, browserId, panelUrl);
   }
 }
+
+async function openHermesPanelFallback(tab, browserId, panelUrl) {
+  // Gesture-free fallbacks only: never re-attempt a native sidebar or
+  // sidePanel open after the initiating gesture window is spent.
+  if (browserId === 'opera' || browserId === 'firefox') {
+    try {
+      await chrome.windows.create({
+        url: panelUrl,
+        type: 'popup',
+        width: 420,
+        height: 800,
+        left: 0,
+        top: 0,
+      });
+      return true;
+    } catch (popupError) {
+      console.warn('[Hermes Browser] Popup window creation failed:', popupError);
+    }
+  }
+  await openOrFocusPanelTab(panelUrl);
+  return true;
+}
+
+// Backward-compatible entry name for the context-menu controller wiring.
+const openHermesPanelFromContextGesture = openHermesPanelFromGesture;
 
 async function openHermesFullView(requestedUrl = '') {
   const packagedAppUrl = new URL(chrome.runtime.getURL('app.html'));
@@ -716,7 +753,7 @@ chrome.runtime.onStartup.addListener(async () => {
   await configureInstalledSurfaces();
   restoreWakeController();
 });
-chrome.action.onClicked.addListener(openHermesPanel);
+chrome.action.onClicked.addListener(openHermesPanelFromGesture);
 chrome.contextMenus?.onClicked?.addListener?.((info, tab) => {
   return contextMenuController.handleClick(info, tab)
     .catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error));

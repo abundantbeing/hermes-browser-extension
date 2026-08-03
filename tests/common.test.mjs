@@ -2460,11 +2460,8 @@ test('panel residency setting is present in defaults and settings UI copy', () =
   assert.match(background, /hermesBrowserSettings[\s\S]*panelResidencyMode/);
 });
 
-test('background keeps action-click side panel opening while applying tab-attached residency', () => {
+test('background keeps non-Brave action-click side panel opening while Brave uses the extension listener', () => {
   const source = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8');
-  const runtimeSource = readFileSync(new URL('../extension/lib/browser-runtime.mjs', import.meta.url), 'utf8');
-  assert.match(runtimeSource, /openPanelOnActionClick:\s*true/);
-  assert.doesNotMatch(runtimeSource, /openPanelOnActionClick:\s*false/);
   assert.match(source, /setOptions\(\{\s*enabled:\s*false\s*\}\)/);
   assert.match(source, /sidePanel\.setOptions\(\{[\s\S]*tabId/);
   assert.match(source, /openSidePanelWithConfirmation\(\{/);

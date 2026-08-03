@@ -150,7 +150,7 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /createContextMenuController/);
   assert.match(source, /contextMenuController\.handleClick/);
   assert.match(source, /openHermesPanelFromContextGesture/);
-  assert.match(source, /Context-menu side panel was not confirmed; using the extension fallback/);
+  assert.match(source, /Side panel open resolved without visibility confirmation; not opening a fallback tab/);
   assert.match(contextMenuController, /chromeApi\.contextMenus\.create/);
   assert.match(contextMenuController, /browserMenuIdForItem/);
   assert.match(contextMenuController, /contextMenuDefaultRoute/);
