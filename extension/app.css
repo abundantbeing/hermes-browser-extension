@@ -622,6 +622,16 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
 .web-settings-dialog label { display: grid; gap: 7px; color: var(--hermes-muted); font: 9px var(--hermes-font-mono); text-transform: uppercase; }
 .web-settings-dialog input,
 .web-settings-dialog select { min-height: 39px; padding: 0 9px; border: 1px solid var(--hermes-line-strong); border-radius: 0; background: transparent; color: var(--hermes-ink); }
+.web-settings-dialog .language-select { width: 100%; padding-right: 34px; background: var(--hermes-paper); color: var(--hermes-ink); color-scheme: light dark; letter-spacing: 0; text-transform: none; }
+.web-settings-dialog select option { background: var(--hermes-paper); color: var(--hermes-ink); }
+.web-settings-dialog input:focus,
+.web-settings-dialog select:focus { border-color: var(--hermes-accent); box-shadow: 0 0 0 2px var(--hermes-accent); outline: none; }
+:lang(zh-CN) [data-i18n],
+:lang(zh-CN) .task-stack-status,
+:lang(zh-CN) .task-stack-summary {
+  letter-spacing: 0.025em;
+  text-transform: none;
+}
 .web-settings-dialog .inline-assist-model-setting { display: grid; gap: 7px; color: var(--hermes-muted); font: 9px var(--hermes-font-mono); text-transform: uppercase; }
 .web-settings-dialog #inlineAssistModelButton { min-height: 39px; padding: 0 9px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--hermes-line-strong); border-radius: 0; background: transparent; color: var(--hermes-ink); font: inherit; text-align: left; text-transform: none; }
 .web-settings-dialog #inlineAssistModelButton:disabled { opacity: 1; cursor: default; background: rgba(var(--hermes-blue-rgb), 0.035); }

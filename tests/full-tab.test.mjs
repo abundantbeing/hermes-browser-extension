@@ -15,7 +15,7 @@ test('full-tab extension surface has a dedicated shell without copied sidepanel 
   const tokens = read('extension/lib/design-tokens.css');
   const visualCss = `${tokens}\n${css}`;
 
-  assert.match(html, /<title>Hermes Web<\/title>/);
+  assert.match(html, /<title[^>]*>Hermes Web<\/title>/);
   assert.match(html, /id="sessionRail"/);
   assert.match(html, /id="conversationView"/);
   assert.match(html, /id="inspector"/);
@@ -148,7 +148,7 @@ test('side panel keeps Browser onboarding, refresh feedback, updates, and messag
   assert.match(checkUpdates, /commitsAhead:\s*comparison\.commitsAhead/);
   assert.match(checkUpdates, /alignment:\s*comparison\.alignment/);
   assert.match(js, /review\.emptyMessage/);
-  assert.match(js, /maybeLaterButton\.textContent\s*=\s*review\.available/);
+  assert.match(js, /maybeLaterButton\.textContent\s*=\s*translateUiText\(review\.available/);
   assert.match(refreshSessions, /sessionsRefreshing\s*=\s*true/);
   assert.match(js, /function positionOperationToast\(\)[\s\S]*?getBoundingClientRect\(\)/);
   assert.match(js, /HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY/);
@@ -198,7 +198,7 @@ test('side-panel context chip stays compact while the menu owns accurate compact
 
   assert.match(html, /id="contextRuntimeBreakdown"/);
   assert.match(render, /contextRuntimeBreakdown\.innerHTML/);
-  assert.match(render, /compaction\.compressionCountKnown\s*\?\s*formatNumber\(compaction\.compressionCount\)\s*:\s*'Not reported by Hermes'/);
+  assert.match(render, /compaction\.compressionCountKnown\s*\?\s*formatNumber\(compaction\.compressionCount\)\s*:\s*translateUiText\('Not reported by Hermes'\)/);
   assert.match(render, /contextAccountingSnapshot\(\{[\s\S]*?session,/);
   assert.match(render, /const runtime = activeSessionRuntime\.sessionId === settings\.sessionId/);
   assert.match(render, /contextCompactionState\(\{ accounting, runtime, session \}\)/);

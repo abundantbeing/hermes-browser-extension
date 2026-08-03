@@ -31,6 +31,7 @@ import {
 } from './lib/assist-model-contract.mjs';
 import { createWakeBackgroundController } from './lib/wake-background.mjs';
 import { WAKE_MESSAGES } from './lib/wake-word.mjs';
+import { initI18n, subscribeLocale, translateUiText } from './lib/i18n.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let contextMenuConfigurationPromise = null;
@@ -346,7 +347,7 @@ async function configureContextMenus() {
       await createContextMenu({
         id: item.id,
         parentId: CONTEXT_MENU_ROOT_ID,
-        title: item.title,
+        title: translateUiText(item.title),
         contexts: item.contexts,
       });
     }
@@ -737,6 +738,11 @@ async function getYoutubeTranscript({ videoId, tabId, provider = 'default' } = {
   }
   return { ok: false, videoId: cleanVideoId, reason: failures.map((item) => `${item.source}:${item.reason}`).join('; ') || 'transcript_unavailable' };
 }
+
+subscribeLocale(() => configureContextMenus().catch((error) => {
+  console.warn('[Hermes Browser] Localized context menus could not be configured:', error);
+}));
+await initI18n();
 
 chrome.runtime.onInstalled.addListener(configureInstalledSurfaces);
 chrome.runtime.onStartup.addListener(async () => {

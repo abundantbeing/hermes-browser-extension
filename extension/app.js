@@ -34,6 +34,7 @@ import {
   normalizeColorMode,
   resolveColorMode,
 } from './lib/appearance-themes.mjs';
+import { getLocale, initI18n, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   dashboardModelDiscoveryBaseUrl,
@@ -85,6 +86,7 @@ import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClien
 import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 
 const $ = (selector) => document.querySelector(selector);
+const ASSIST_ROUTING_FALLBACK_ENGLISH = 'Your Assist model choice stays saved. This gateway cannot enforce an exact model, so Assist uses the gateway default and labels every fallback result.';
 const handoff = parseFullTabHandoff(globalThis.location.search);
 
 const els = {
@@ -180,6 +182,7 @@ const els = {
   settingsGatewayUrl: $('#settingsGatewayUrl'),
   settingsApiKey: $('#settingsApiKey'),
   settingsThemeGrid: $('#settingsThemeGrid'),
+  settingsLanguageSelect: $('#settingsLanguageSelect'),
   imageLightbox: $('#imageLightbox'),
   imageLightboxCanvas: $('#imageLightboxCanvas'),
   imageLightboxImage: $('#imageLightboxImage'),
@@ -421,7 +424,10 @@ function renderTaskStack() {
   const progress = taskStackProgress(tasks);
   els.taskStack.dataset.expanded = String(taskStackExpanded);
   els.taskStackToggle.setAttribute('aria-expanded', String(taskStackExpanded));
-  els.taskStackSummary.textContent = `${progress.completed}/${progress.total} complete · ${progress.active} active`;
+  els.taskStackSummary.textContent = t('tasks.summary', {
+    complete: `${progress.completed}/${progress.total}`,
+    active: progress.active,
+  });
   const progressFill = els.taskStackProgress.querySelector('i');
   if (progressFill) progressFill.style.width = `${progress.percent}%`;
   const rows = tasks.map((task, index) => {
@@ -435,7 +441,7 @@ function renderTaskStack() {
     content.title = task.content;
     const status = document.createElement('span');
     status.className = 'task-stack-status';
-    status.textContent = task.status === 'in_progress' ? 'working' : task.status;
+    status.textContent = translateUiText(task.status === 'in_progress' ? 'working' : task.status);
     item.append(taskIndex, content, status);
     return item;
   });
@@ -536,10 +542,10 @@ function renderConnectionTruth({ status = 'idle' } = {}) {
   els.modelLabel.textContent = model;
   els.profileLabel.textContent = profile;
   els.connectionDot.className = `truth-dot ${status === 'online' ? 'online' : status === 'error' ? 'error' : ''}`.trim();
-  els.contextMode.textContent = mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' ? 'Chat only' : 'Inherited safely';
+  els.contextMode.textContent = translateUiText(mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' ? 'Chat only' : 'Inherited safely');
   els.contextSource.textContent = mode === 'cloud' || settings.connectionTransport === 'remote-dashboard'
-    ? 'Cloud/dashboard context disabled'
-    : handoff.sourceTabId ? `Browser tab ${handoff.sourceTabId} handoff` : 'No browser context attached';
+    ? translateUiText('Cloud/dashboard context disabled')
+    : handoff.sourceTabId ? `Browser tab ${handoff.sourceTabId} handoff` : translateUiText('No browser context attached');
   els.diagConnection.textContent = `${label} · ${settings.connectionTransport || settings.gatewayMode || 'unknown transport'}`;
   els.diagGateway.textContent = gatewayOrigin(settings.gatewayUrl);
   els.diagSession.textContent = activeSessionId || 'none';
@@ -551,8 +557,8 @@ function applySessionVisibility() {
   const visible = settings.webSessionsVisible !== false;
   els.shell.classList.toggle('sessions-hidden', !visible);
   els.railVisibilityToggle.setAttribute('aria-pressed', String(!visible));
-  els.railVisibilityToggle.setAttribute('aria-label', visible ? 'Collapse sessions' : 'Show sessions');
-  els.railVisibilityToggle.title = visible ? 'Collapse sessions' : 'Show sessions';
+  els.railVisibilityToggle.setAttribute('aria-label', translateUiText(visible ? 'Collapse sessions' : 'Show sessions'));
+  els.railVisibilityToggle.title = translateUiText(visible ? 'Collapse sessions' : 'Show sessions');
   els.railVisibilityToggle.textContent = visible ? '◀' : '▶';
 }
 
@@ -561,7 +567,7 @@ function persistSessionVisibility(partial) {
   applySessionVisibility();
   const active = sessions.find((session) => session.id === activeSessionId) || { title: settings.webSessionTitle || 'New Hermes Web chat' };
   els.sessionTitle.textContent = sessionTitle(active);
-  els.composerSessionLabel.textContent = activeSessionId || 'Shared session';
+  els.composerSessionLabel.textContent = activeSessionId || translateUiText('Shared session');
   renderSessions(els.sessionSearch.value);
   chrome.storage.local.set({ hermesBrowserSettings: settings }).catch((error) => {
     els.composerStatus.textContent = `Session rail save failed: ${error?.message || String(error)}`;
@@ -572,8 +578,8 @@ function showRuntimeLoadingState({
   title = 'Loading Hermes runtime truth',
   detail = 'Reading connection settings, models, skills, and canonical session history.',
 } = {}) {
-  els.loadingTitle.textContent = title;
-  els.loadingDetail.textContent = detail;
+  els.loadingTitle.textContent = translateUiText(title);
+  els.loadingDetail.textContent = translateUiText(detail);
   els.loadingState.hidden = false;
   els.emptyState.hidden = true;
   els.messageList.hidden = true;
@@ -603,11 +609,11 @@ function renderSessions(query = '') {
   if (!groups.length) {
     const empty = document.createElement('p');
     empty.className = 'session-list-empty';
-    empty.textContent = sessions.length
+    empty.textContent = translateUiText(sessions.length
       ? 'No sessions match this search.'
       : sessionHistoryLoading
         ? 'Loading canonical session history…'
-        : 'Canonical session history is unavailable for this connection.';
+        : 'Canonical session history is unavailable for this connection.');
     els.sessionList.append(empty);
     return;
   }
@@ -1014,7 +1020,7 @@ function renderComposerRuntimeControl() {
   const model = effectiveModel();
   const options = activeModelRuntimeOptions();
   const effort = MODEL_REASONING_EFFORTS.find((option) => option.value === options.reasoningEffort)?.label || options.reasoningEffort;
-  els.composerModelName.textContent = model.label || 'Gateway default';
+  els.composerModelName.textContent = model.label || translateUiText('Gateway default');
   els.composerRuntimeMeta.textContent = [
     options.thinkingEnabled ? `${effort} reasoning` : 'Thinking off',
     options.fastMode ? 'Fast mode' : 'Standard',
@@ -1131,7 +1137,7 @@ function renderInlineAssistRuntimeOptions() {
   els.inlineAssistRuntimeOptions.replaceChildren();
   const heading = document.createElement('p');
   heading.className = 'model-options-heading';
-  heading.textContent = 'Assist options';
+  heading.textContent = translateUiText('Assist options');
   const effort = document.createElement('div');
   effort.className = 'model-effort-options';
   for (const option of MODEL_REASONING_EFFORTS) {
@@ -1139,7 +1145,7 @@ function renderInlineAssistRuntimeOptions() {
     button.type = 'button';
     button.dataset.assistEffort = option.value;
     button.className = `model-runtime-option${options.reasoningEffort === option.value ? ' selected' : ''}`;
-    button.textContent = option.label;
+    button.textContent = translateUiText(option.label);
     effort.append(button);
   }
   const toggles = document.createElement('div');
@@ -1152,7 +1158,7 @@ function renderInlineAssistRuntimeOptions() {
     button.type = 'button';
     button.dataset.assistToggle = key;
     button.className = `model-runtime-toggle${enabled ? ' selected' : ''}`;
-    button.textContent = `${label} ${enabled ? 'On' : 'Off'}`;
+    button.textContent = `${translateUiText(label)} ${translateUiText(enabled ? 'On' : 'Off')}`;
     toggles.append(button);
   }
   els.inlineAssistRuntimeOptions.append(heading, effort, toggles);
@@ -1166,17 +1172,17 @@ function renderInlineAssistModelOptions() {
     || (!selectedId ? availableModels.find(isModelRuntimeSelectable) : null)
     || null;
   els.inlineAssistModel.value = selected?.id || selectedId;
-  if (els.inlineAssistModelLabel) els.inlineAssistModelLabel.textContent = selected?.label || selected?.rawModelId || selected?.id || selectedId || 'Choose model';
+  if (els.inlineAssistModelLabel) els.inlineAssistModelLabel.textContent = selected?.label || selected?.rawModelId || selected?.id || selectedId || translateUiText('Choose model');
   if (els.inlineAssistModelButton) {
     els.inlineAssistModelButton.disabled = false;
     els.inlineAssistModelButton.title = selected
-      ? `${modelProviderName(selected)} · ${selected.rawModelId || selected.id}${routingSupported ? ' · Exact model routing confirmed' : ' · Falls back to the gateway default when exact routing is unavailable'}`
-      : 'Choose the model used by Hermes Assist';
+      ? `${modelProviderName(selected)} · ${selected.rawModelId || selected.id} · ${t(routingSupported ? 'assist.routing.exact_short' : 'assist.routing.fallback_short')}`
+      : translateUiText('Choose the model used by Hermes Assist');
   }
   if (els.assistModelCapabilityHint) {
-    els.assistModelCapabilityHint.textContent = routingSupported
-      ? 'Exact Assist model routing is available. The selected provider and model are verified before each draft runs.'
-      : 'Your Assist model choice stays saved. This gateway cannot enforce an exact model, so Assist uses the gateway default and labels every fallback result.';
+    const key = routingSupported ? 'assist.routing.exact' : 'assist.routing.fallback';
+    const localized = t(key);
+    els.assistModelCapabilityHint.textContent = localized === key && !routingSupported ? ASSIST_ROUTING_FALLBACK_ENGLISH : localized;
   }
   renderInlineAssistRuntimeOptions();
 }
@@ -1209,10 +1215,10 @@ function setModelSelectionTarget(target = 'chat') {
   }
   if (modelSelectionTarget === 'assist') {
     els.modelPicker.dataset.selectionTarget = 'assist';
-    if (els.modelPickerTitle) els.modelPickerTitle.textContent = 'Choose Assist model';
+    if (els.modelPickerTitle) els.modelPickerTitle.textContent = translateUiText('Choose Assist model');
   } else {
     delete els.modelPicker.dataset.selectionTarget;
-    if (els.modelPickerTitle) els.modelPickerTitle.textContent = 'Choose model';
+    if (els.modelPickerTitle) els.modelPickerTitle.textContent = translateUiText('Choose model');
   }
   const selected = modelForSelectionTarget(modelSelectionTarget);
   selectedModelProvider = selected ? modelProviderName(selected) : '';
@@ -1274,7 +1280,7 @@ function renderModelPicker(query = '') {
       button.className = `model-choice ${model.id === current.id ? 'selected' : ''}`.trim();
       const selectable = isModelRuntimeSelectable(model);
       button.disabled = !selectable;
-      if (!selectable) button.title = 'Observed from session history; not advertised as a requestable Hermes model.';
+      if (!selectable) button.title = translateUiText('Observed from session history; not advertised as a requestable Hermes model.');
       const copy = document.createElement('span');
       const provider = document.createElement('small');
       const label = document.createElement('strong');
@@ -1298,7 +1304,7 @@ function renderModelPicker(query = '') {
       els.modelList.append(button);
     }
   }
-  if (!els.modelList.childElementCount) els.modelList.textContent = 'No models found.';
+  if (!els.modelList.childElementCount) els.modelList.textContent = translateUiText('No models found.');
   renderInlineAssistModelOptions();
   renderModelRuntimeOptions();
 }
@@ -1656,7 +1662,7 @@ async function selectModel(model) {
         renderComposerRuntimeControl();
         renderContextWindow();
         const truthError = new Error(`Cloud model changed, but runtime confirmation and Cloud model rollback both failed: ${rollbackError?.message || String(rollbackError)}`);
-        els.composerStatus.textContent = 'Cloud runtime model unconfirmed';
+        els.composerStatus.textContent = translateUiText('Cloud runtime model unconfirmed');
         throw truthError;
       }
     }
@@ -1689,6 +1695,7 @@ function applyAppearance() {
 }
 
 function renderAppearanceSettings() {
+  if (els.settingsLanguageSelect) els.settingsLanguageSelect.value = getLocale();
   const mode = normalizeColorMode(els.settingsColorMode.value || settings.webColorMode || 'light');
   const theme = normalizeAppearanceTheme(els.settingsTheme.value || settings.webAppearanceTheme || 'nous');
   const textSize = ['default', 'large', 'extra-large'].includes(els.settingsTextSize.value) ? els.settingsTextSize.value : 'default';
@@ -1948,7 +1955,7 @@ function voicePagePath() {
 
 async function openVoiceDictation() {
   await chrome.tabs.create({ url: chrome.runtime.getURL(voicePagePath()), active: true });
-  els.composerStatus.textContent = 'Voice tab opened';
+  els.composerStatus.textContent = translateUiText('Voice tab opened');
 }
 
 async function consumeVoiceDraft(draft) {
@@ -1956,7 +1963,7 @@ async function consumeVoiceDraft(draft) {
   if (!transcript) return false;
   els.prompt.value = [els.prompt.value.trim(), transcript].filter(Boolean).join(' ');
   await chrome.storage.local.remove(VOICE_DRAFT_STORAGE_KEY);
-  els.composerStatus.textContent = 'Voice transcript ready';
+  els.composerStatus.textContent = translateUiText('Voice transcript ready');
   updateBusyControls();
   els.prompt.focus();
   return true;
@@ -1972,7 +1979,7 @@ function renderWakeState(state = {}) {
   const active = Boolean(state.enabled) && !['off', 'unavailable'].includes(String(state.state || ''));
   els.wakeButton.setAttribute('aria-pressed', String(active));
   els.wakeButton.classList.toggle('active', active);
-  els.wakeButton.title = state.detail || (active ? 'Hey Hermes is listening' : 'Enable Hey Hermes');
+  els.wakeButton.title = state.detail || translateUiText(active ? 'Hey Hermes is listening' : 'Enable Hey Hermes');
 }
 
 async function toggleWakeWord() {
@@ -2046,7 +2053,7 @@ function queueCurrentDraft() {
   els.prompt.value = '';
   attachments = [];
   renderAttachments();
-  els.composerStatus.textContent = 'Message queued';
+  els.composerStatus.textContent = translateUiText('Message queued');
   updateBusyControls();
 }
 
@@ -2067,7 +2074,7 @@ async function steerCurrentDraft() {
     throw new Error(failure.detail);
   }
   els.prompt.value = '';
-  els.composerStatus.textContent = 'Steer sent';
+  els.composerStatus.textContent = translateUiText('Steer sent');
   updateBusyControls();
 }
 
@@ -2103,8 +2110,8 @@ function setSending(value) {
   sending = Boolean(value);
   els.send.disabled = sending;
   els.stopRun.hidden = !sending;
-  if (sending) els.composerStatus.textContent = 'Hermes is working…';
-  else if (els.composerStatus.textContent === 'Hermes is working…') els.composerStatus.textContent = '';
+  if (sending) els.composerStatus.textContent = translateUiText('Hermes is working…');
+  else if (els.composerStatus.textContent === translateUiText('Hermes is working…')) els.composerStatus.textContent = '';
   updateBusyControls();
 }
 
@@ -2134,7 +2141,7 @@ async function renameHermesWebSessionTitle(sessionId, title) {
     els.sessionTitle.textContent = settings.webSessionTitle;
   }
   renderSessions(els.sessionSearch.value);
-  els.composerStatus.textContent = 'Session renamed and synced';
+  els.composerStatus.textContent = translateUiText('Session renamed and synced');
   return true;
 }
 
@@ -2159,7 +2166,7 @@ async function beginHermesWebDraft({ focus = true, keepLoading = false } = {}) {
   settings = { ...settings, webSessionId: '', webSessionTitle: 'New Hermes Web chat' };
   const persistDraft = chrome.storage.local.set({ hermesBrowserSettings: settings });
   els.sessionTitle.textContent = settings.webSessionTitle;
-  els.composerSessionLabel.textContent = 'Draft · saved when sent';
+  els.composerSessionLabel.textContent = translateUiText('Draft · saved when sent');
   els.errorState.hidden = true;
   renderAttachments();
   renderMessages([]);
@@ -2373,7 +2380,7 @@ async function sendPrompt(text) {
       ? 'Hermes compacted the session and Browser adopted the acknowledged successor when provided.'
       : 'This runtime could not recover the session automatically. Start a new session, then resend the preserved draft.';
     activeMessages = [...activeMessages, { role: 'system', content: `Session context reached its compression ceiling. ${recoveryDetail} ${replayDetail}` }];
-    els.composerStatus.textContent = compactResult.ok ? 'Context recovered · draft preserved' : 'New session required · draft preserved';
+    els.composerStatus.textContent = translateUiText(compactResult.ok ? 'Context recovered · draft preserved' : 'New session required · draft preserved');
   } finally {
     if (liveRun?.revealPromise) await liveRun.revealPromise;
     activeAbortController = null;
@@ -2393,8 +2400,8 @@ async function sendPrompt(text) {
 function showError(title, detail) {
   els.loadingState.hidden = true;
   els.errorState.hidden = false;
-  els.errorTitle.textContent = title;
-  els.errorDetail.textContent = detail;
+  els.errorTitle.textContent = translateUiText(title);
+  els.errorDetail.textContent = translateUiText(detail);
 }
 
 async function openSession(sessionId, { keepLoading = false } = {}) {
@@ -2670,6 +2677,11 @@ els.queueDraft.addEventListener('click', queueCurrentDraft);
 els.steerDraft.addEventListener('click', () => steerCurrentDraft().catch((error) => { els.composerStatus.textContent = error?.message || String(error); }));
 els.commandMenuButton.addEventListener('click', () => renderComposerSuggestions({ force: els.skillMenu.hidden }));
 els.settingsButton.addEventListener('click', openSettings);
+els.settingsLanguageSelect?.addEventListener('change', () => {
+  setLocale(els.settingsLanguageSelect.value).catch((error) => {
+    els.composerStatus.textContent = `Language change failed: ${error?.message || String(error)}`;
+  });
+});
 els.taskStackToggle?.addEventListener('click', () => {
   taskStackExpanded = !taskStackExpanded;
   renderTaskStack();
@@ -2793,7 +2805,7 @@ els.sessionActionsMenu.addEventListener('click', (event) => {
     return;
   }
   navigator.clipboard.writeText(activeSessionId)
-    .then(() => { els.composerStatus.textContent = 'Session ID copied'; })
+    .then(() => { els.composerStatus.textContent = translateUiText('Session ID copied'); })
     .catch((error) => { els.composerStatus.textContent = `Copy failed: ${error?.message || String(error)}`; });
 });
 els.returnToPageButton.addEventListener('click', async () => {
@@ -2816,8 +2828,8 @@ els.copyDiagnostics.addEventListener('click', async () => {
     `Profile: ${els.diagProfile.textContent}`,
   ].join('\n');
   await navigator.clipboard.writeText(report);
-  els.copyDiagnostics.textContent = 'Diagnostics copied';
-  setTimeout(() => { els.copyDiagnostics.textContent = 'Copy redacted diagnostics'; }, 1400);
+  els.copyDiagnostics.textContent = translateUiText('Diagnostics copied');
+  setTimeout(() => { els.copyDiagnostics.textContent = translateUiText('Copy redacted diagnostics'); }, 1400);
 });
 for (const tab of document.querySelectorAll('[data-inspector-tab]')) {
   tab.addEventListener('click', () => setInspectorTab(tab.dataset.inspectorTab));
@@ -2868,6 +2880,12 @@ globalThis.addEventListener('visibilitychange', () => {
   }
 });
 
+subscribeLocale(() => {
+  renderAppearanceSettings();
+  renderInlineAssistModelOptions();
+  renderTaskStack();
+});
+await initI18n();
 initializeResponsiveShell();
 updateScrim();
 loadApp()

@@ -1,5 +1,5 @@
 /* Generated from extension/lib/content-extraction-core.mjs, extension/lib/appearance-themes.mjs, extension/lib/site-adapters.mjs, extension/lib/inline-draft-policy.mjs. Do not edit directly. */
-/* extension/lib/content-extraction-core.mjs · SHA-256 519a8df0c4cf2def */
+/* extension/lib/content-extraction-core.mjs · SHA-256 33c00d3ec5789bc5 */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
 
@@ -777,7 +777,7 @@ const CONTENT_EXTRACTION_API = Object.freeze({
   hermesGlobal.HermesContentExtractor = CONTENT_EXTRACTION_API;
 })(globalThis);
 
-/* extension/lib/appearance-themes.mjs · SHA-256 667a76786cb4f8cd */
+/* extension/lib/appearance-themes.mjs · SHA-256 7f80382b764f41b8 */
 (function hermesAppearanceRuntime(hermesGlobal) {
   'use strict';
 
@@ -921,7 +921,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 39cf88ea0dba5b14 */
+/* extension/lib/site-adapters.mjs · SHA-256 a311d362efb010dc */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1638,7 +1638,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 c1ed2d55c6be7883 */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 29f83b2825b2a59a */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 

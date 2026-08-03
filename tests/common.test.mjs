@@ -934,10 +934,14 @@ test('session group label is rendered without gateway-derived innerHTML interpol
 test('manifests expose an Alt+H action shortcut for opening the side panel', () => {
   const sourceManifest = JSON.parse(readFileSync(new URL('../extension/manifest.json', import.meta.url), 'utf8'));
   const rootManifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
+  const englishMessages = JSON.parse(readFileSync(new URL('../_locales/en/messages.json', import.meta.url), 'utf8'));
 
   for (const manifest of [sourceManifest, rootManifest]) {
     assert.equal(manifest.commands?._execute_action?.suggested_key?.default, 'Alt+H');
-    assert.match(manifest.commands?._execute_action?.description || '', /Open Hermes Browser Extension/i);
+    const description = manifest.commands?._execute_action?.description || '';
+    const messageKey = description.match(/^__MSG_(openExtension|openSidebar)__$/)?.[1] || '';
+    assert.ok(messageKey, `unexpected localized command description: ${description}`);
+    assert.match(englishMessages[messageKey]?.message || '', /Open Hermes Browser (?:Extension|Sidebar)/i);
   }
 });
 

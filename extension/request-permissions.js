@@ -1,10 +1,12 @@
+import { initI18n, t, translateUiText } from './lib/i18n.mjs';
+
 const statusEl = document.getElementById('permissionStatus');
 const allowButton = document.getElementById('allowMicrophoneButton');
 const settingsButton = document.getElementById('openMicrophoneSettingsButton');
 const closeButton = document.getElementById('closePermissionButton');
 
 function setStatus(message) {
-  if (statusEl) statusEl.textContent = message;
+  if (statusEl) statusEl.textContent = translateUiText(message);
 }
 
 function stopStream(stream) {
@@ -46,9 +48,9 @@ async function requestMicrophonePermission() {
       setStatus('Microphone access is enabled. Return to the Hermes side panel and click the mic again, or use the Hermes Voice Dictation tab if sidepanel capture is still blocked.');
       return;
     }
-    setStatus(`Microphone permission state: ${state}. If Chromium shows this as blocked, open microphone settings and set Microphone to Allow for Hermes Browser Extension.`);
+    setStatus(t('permissions.state', { state }));
   } catch (error) {
-    setStatus(`Microphone permission was not granted.\n\n${error?.message || String(error)}\n\nClick Open microphone settings, set Microphone to Allow for Hermes Browser Extension, return here, and try again.`);
+    setStatus(t('permissions.not_granted', { error: error?.message || String(error) }));
   } finally {
     allowButton.disabled = false;
   }
@@ -57,6 +59,8 @@ async function requestMicrophonePermission() {
 allowButton?.addEventListener('click', requestMicrophonePermission);
 settingsButton?.addEventListener('click', openMicrophoneSettings);
 closeButton?.addEventListener('click', () => window.close());
+
+await initI18n();
 
 (async () => {
   const state = await microphonePermissionState();

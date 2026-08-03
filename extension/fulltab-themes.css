@@ -287,6 +287,8 @@ html[data-hermes-theme="cyberpunk"] .proof-card { border-color: rgba(var(--herme
 .web-settings-dialog .appearance-row > div:first-child { min-width: 0; gap: 5px; }
 .web-settings-dialog .appearance-row > div:first-child strong,
 .web-settings-dialog .theme-setting strong { font-size: 12px; letter-spacing: 0.1em; }
+:lang(zh-CN) .web-settings-dialog .appearance-row > div:first-child strong,
+:lang(zh-CN) .web-settings-dialog .theme-setting strong { letter-spacing: 0.025em; text-transform: none; }
 .web-settings-dialog .appearance-row > div:first-child span,
 .web-settings-dialog .theme-setting span { max-width: 46ch; color: var(--hermes-muted); font: 12px/1.45 var(--hermes-font-ui); }
 .web-settings-dialog .segmented-control { align-self: center; }

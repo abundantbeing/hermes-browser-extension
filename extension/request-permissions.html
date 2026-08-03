@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Allow Hermes Microphone</title>
+    <title data-i18n="ui.allow.hermes.microphone">Allow Hermes Microphone</title>
     <link rel="stylesheet" href="sidepanel.css" />
     <style>
       body {
@@ -48,16 +48,16 @@
   </head>
   <body data-hermes-theme="nous" data-hermes-mode="dark" data-hermes-color-mode="dark">
     <main class="permission-card" aria-labelledby="permissionTitle">
-      <p class="eyebrow">HERMES BROWSER EXTENSION</p>
-      <h1 id="permissionTitle">Allow microphone access</h1>
-      <p>Chrome can suppress microphone prompts inside extension side panels. This temporary extension page asks Chrome for microphone access, then sends you back to the Hermes side panel.</p>
-      <p>No audio is saved here. The permission only lets Hermes Browser record your voice when you click the mic button.</p>
+      <p class="eyebrow" data-i18n="ui.hermes.browser.extension">HERMES BROWSER EXTENSION</p>
+      <h1 id="permissionTitle" data-i18n="ui.allow.microphone.access">Allow microphone access</h1>
+      <p data-i18n="ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35">Chrome can suppress microphone prompts inside extension side panels. This temporary extension page asks Chrome for microphone access, then sends you back to the Hermes side panel.</p>
+      <p data-i18n="ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1">No audio is saved here. The permission only lets Hermes Browser record your voice when you click the mic button.</p>
       <div class="permission-actions">
-        <button id="allowMicrophoneButton" type="button">Allow microphone</button>
-        <button id="openMicrophoneSettingsButton" class="secondary" type="button">Open microphone settings</button>
-        <button id="closePermissionButton" class="secondary" type="button">Close</button>
+        <button id="allowMicrophoneButton" type="button" data-i18n="ui.allow.microphone">Allow microphone</button>
+        <button id="openMicrophoneSettingsButton" class="secondary" type="button" data-i18n="ui.open.microphone.settings">Open microphone settings</button>
+        <button id="closePermissionButton" class="secondary" type="button" data-i18n="ui.close">Close</button>
       </div>
-      <div id="permissionStatus" role="status" aria-live="polite">Waiting for permission request…</div>
+      <div id="permissionStatus" role="status" aria-live="polite" data-i18n-runtime data-i18n="ui.waiting.for.permission.request">Waiting for permission request…</div>
     </main>
     <script type="module" src="request-permissions.js"></script>
   </body>

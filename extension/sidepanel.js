@@ -92,6 +92,7 @@ import {
   updateBrowserModelOptionScope,
   updateReviewState,
 } from './lib/common.mjs';
+import { getLocale, initI18n, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
   assertAssistModelSelectionAcknowledged,
   assistModelFallbackNotice,
@@ -254,6 +255,7 @@ import {
 } from './lib/surface-protocol.mjs';
 
 const $ = (selector) => document.querySelector(selector);
+const ASSIST_ROUTING_FALLBACK_ENGLISH = 'Your Assist model choice stays saved. This gateway cannot enforce an exact model, so Assist uses the gateway default and labels every fallback result.';
 const sidePanelParams = parseSidePanelParams(globalThis.location?.search || '');
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
@@ -428,6 +430,7 @@ const els = {
   agentPickerStatus: $('#agentPickerStatus'),
   customModelSourcesInput: $('#customModelSourcesInput'),
   themeGrid: $('#themeGrid'),
+  languageSelect: $('#languageSelect'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
   textSizeButtons: Array.from(document.querySelectorAll('[data-text-size]')),
   quickMoreMenu: $('#quickMoreMenu'),
@@ -511,7 +514,10 @@ function renderTaskStack() {
   const progress = taskStackProgress(tasks);
   els.taskStack.dataset.expanded = String(taskStackExpanded);
   els.taskStackToggle.setAttribute('aria-expanded', String(taskStackExpanded));
-  els.taskStackSummary.textContent = `${progress.completed}/${progress.total} complete · ${progress.active} active`;
+  els.taskStackSummary.textContent = t('tasks.summary', {
+    complete: `${progress.completed}/${progress.total}`,
+    active: progress.active,
+  });
   const progressFill = els.taskStackProgress.querySelector('i');
   if (progressFill) progressFill.style.width = `${progress.percent}%`;
   const rows = tasks.map((task, index) => {
@@ -525,7 +531,7 @@ function renderTaskStack() {
     content.title = task.content;
     const status = document.createElement('span');
     status.className = 'task-stack-status';
-    status.textContent = task.status === 'in_progress' ? 'working' : task.status;
+    status.textContent = translateUiText(task.status === 'in_progress' ? 'working' : task.status);
     item.append(taskIndex, content, status);
     return item;
   });
@@ -623,8 +629,8 @@ function positionStartupSettings(active = document.body?.classList.contains('sta
 function renderStartupReadiness() {
   const view = deriveStartupView(startupReadiness);
   if (els.startupScreen) els.startupScreen.hidden = !view.visible;
-  if (els.startupTitle) els.startupTitle.textContent = view.title;
-  if (els.startupDetail) els.startupDetail.textContent = view.detail;
+  if (els.startupTitle) els.startupTitle.textContent = translateUiText(view.title);
+  if (els.startupDetail) els.startupDetail.textContent = translateUiText(view.detail);
   if (els.startupProgress) els.startupProgress.style.width = `${Math.max(0, Math.min(100, view.progress))}%`;
   if (els.startupStepList) {
     els.startupStepList.textContent = '';
@@ -633,9 +639,9 @@ function renderStartupReadiness() {
       item.className = `startup-step startup-step-${step.status}`;
       item.dataset.status = step.status;
       const label = document.createElement('strong');
-      label.textContent = step.label;
+      label.textContent = translateUiText(step.label);
       const detail = document.createElement('span');
-      detail.textContent = step.detail || step.status;
+      detail.textContent = translateUiText(step.detail || step.status);
       item.append(label, detail);
       els.startupStepList.appendChild(item);
     }
@@ -689,10 +695,10 @@ function setStatus(kind, title, detail) {
   els.statusDot.className = `status-dot ${kind || ''}`.trim();
   const safeTitle = title || 'Hermes Browser Extension';
   const safeDetail = detail || '';
-  els.activeTitle.textContent = safeTitle;
-  els.activeTitle.title = safeTitle;
-  els.activeUrl.textContent = safeDetail;
-  els.activeUrl.title = safeDetail;
+  els.activeTitle.textContent = translateUiText(safeTitle);
+  els.activeTitle.title = translateUiText(safeTitle);
+  els.activeUrl.textContent = translateUiText(safeDetail);
+  els.activeUrl.title = translateUiText(safeDetail);
   renderStatusActions();
 }
 
@@ -756,8 +762,8 @@ function showOperationToast({ kind = 'ok', title = 'Hermes Browser', detail = ''
   if (!els.operationToast) return;
   hideOperationToast();
   els.operationToast.className = `operation-toast ${kind}`.trim();
-  els.operationToastTitle.textContent = title;
-  els.operationToastDetail.textContent = detail;
+  els.operationToastTitle.textContent = translateUiText(title);
+  els.operationToastDetail.textContent = translateUiText(detail);
   els.operationToast.hidden = false;
   positionOperationToast();
   if (duration > 0) operationToastTimer = setTimeout(hideOperationToast, duration);
@@ -766,7 +772,7 @@ function showOperationToast({ kind = 'ok', title = 'Hermes Browser', detail = ''
 function renderVersionInfo(statusText = '') {
   if (els.versionLabel) els.versionLabel.textContent = `v${CURRENT_EXTENSION_VERSION}`;
   if (els.updateStatus) {
-    els.updateStatus.textContent = statusText || 'Updates are checked against the public GitHub repo.';
+    els.updateStatus.textContent = translateUiText(statusText || 'Updates are checked against the public GitHub repo.');
   }
 }
 
@@ -794,9 +800,9 @@ function renderGatewayHelp() {
     gatewayUrl: els.gatewayUrlInput?.value || settings.gatewayUrl,
   });
   if (els.gatewayHelp) {
-    els.gatewayHelp.textContent = connectionMode === 'cloud'
+    els.gatewayHelp.textContent = translateUiText(connectionMode === 'cloud'
       ? 'Hermes Cloud uses Trusted Dashboard Attach. Open the signed-in agent dashboard in the active tab, then choose Test connection. Cloud connections are Chat-only.'
-      : summary.setupHint;
+      : summary.setupHint);
   }
   if (els.gatewayUrlInput) els.gatewayUrlInput.placeholder = summary.mode.defaultUrl || DEFAULT_SETTINGS.gatewayUrl;
   const dashboardAttach = connectionMode === 'cloud' || summary.mode.value === 'remote-dashboard';
@@ -895,8 +901,8 @@ async function copySupportDiagnostics() {
   if (!els.copyDiagnosticsButton) return;
   const originalText = els.copyDiagnosticsButton.textContent || 'Copy Diagnostics';
   els.copyDiagnosticsButton.disabled = true;
-  els.copyDiagnosticsButton.textContent = 'Copying...';
-  if (els.diagnosticsCopyStatus) els.diagnosticsCopyStatus.textContent = 'Building redacted diagnostics...';
+  els.copyDiagnosticsButton.textContent = translateUiText('Copying...');
+  if (els.diagnosticsCopyStatus) els.diagnosticsCopyStatus.textContent = translateUiText('Building redacted diagnostics...');
   try {
     const buildInfo = await loadExtensionBuildInfo().catch(() => ({}));
     const state = currentConnectionState();
@@ -924,10 +930,10 @@ async function copySupportDiagnostics() {
       extractorMode: currentContext?.pageContext?.source || 'extension-dom',
     });
     await navigator.clipboard.writeText(diagnostics.markdown);
-    if (els.diagnosticsCopyStatus) els.diagnosticsCopyStatus.textContent = 'Copied redacted diagnostics. Paste them into the GitHub issue or support thread.';
+    if (els.diagnosticsCopyStatus) els.diagnosticsCopyStatus.textContent = translateUiText('Copied redacted diagnostics. Paste them into the GitHub issue or support thread.');
     setStatus('ok', 'Diagnostics copied', 'Redacted support diagnostics are on your clipboard.');
   } catch (error) {
-    if (els.diagnosticsCopyStatus) els.diagnosticsCopyStatus.textContent = 'Could not copy diagnostics. Check browser clipboard permissions.';
+    if (els.diagnosticsCopyStatus) els.diagnosticsCopyStatus.textContent = translateUiText('Could not copy diagnostics. Check browser clipboard permissions.');
     setStatus('warn', 'Diagnostics copy failed', error?.message || String(error));
   } finally {
     els.copyDiagnosticsButton.disabled = false;
@@ -1155,7 +1161,7 @@ function renderContextScopeControls() {
   if (!els.contextScopeButton || !els.contextScopeLabel) return;
   const pinned = contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB;
   const chatOnly = contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY;
-  els.contextScopeLabel.textContent = contextScopeLabel();
+  els.contextScopeLabel.textContent = translateUiText(contextScopeLabel());
   els.contextScopeButton.classList.toggle('active', pinned || chatOnly);
   els.contextScopeButton.setAttribute('aria-expanded', String(!els.contextScopeMenu?.hidden));
   els.contextScopeButton.title = chatOnly
@@ -1545,7 +1551,7 @@ function applyConnectionMode(value) {
     trustedDashboardTabId = null;
     if (els.connectButton) {
       els.connectButton.disabled = false;
-      els.connectButton.textContent = 'Connect to Hermes';
+      els.connectButton.textContent = translateUiText('Connect to Hermes');
     }
     if (els.testConnectionButton) {
       setTestConnectionBusy(false);
@@ -1656,17 +1662,17 @@ function renderUpdateDialog(review = { loading: true }) {
   if (!els.updateDialog) return;
   els.updateDialog.hidden = false;
   els.updateDialog.setAttribute('aria-hidden', 'false');
-  els.updateDialogTitle.textContent = review.loading ? 'Checking Browser main…' : (review.title || 'Browser update review');
+  els.updateDialogTitle.textContent = review.loading ? translateUiText('Checking Browser main…') : (review.title || translateUiText('Browser update review'));
   els.updateDialogSummary.textContent = review.loading
-    ? 'Comparing this loaded build with the public GitHub repository.'
-    : (review.summary || 'Update details are unavailable.');
+    ? translateUiText('Comparing this loaded build with the public GitHub repository.')
+    : (review.summary || translateUiText('Update details are unavailable.'));
   els.updateChangeGroups.innerHTML = '';
   if (review.error || review.loading || !review.groups?.length) {
     const empty = document.createElement('p');
     empty.className = 'update-change-empty';
     empty.textContent = review.error || (review.loading
-      ? 'Reading version and commit metadata…'
-      : (review.emptyMessage || 'No newer public commits were found for this build.'));
+      ? translateUiText('Reading version and commit metadata…')
+      : (review.emptyMessage || translateUiText('No newer public commits were found for this build.')));
     els.updateChangeGroups.appendChild(empty);
   } else {
     for (const group of review.groups) {
@@ -1690,10 +1696,10 @@ function renderUpdateDialog(review = { loading: true }) {
     }
   }
   els.updateNowButton.hidden = !review.available;
-  els.maybeLaterButton.textContent = review.available ? 'MAYBE LATER' : 'CLOSE';
+  els.maybeLaterButton.textContent = translateUiText(review.available ? 'MAYBE LATER' : 'CLOSE');
   els.updateInstallNote.textContent = review.available
-    ? 'Update now starts a guarded Hermes agent turn. It will stop on local changes, build dist/, and reload through computer-use when available.'
-    : 'This check compares the loaded build metadata with the public Hermes Browser repository.';
+    ? translateUiText('Update now starts a guarded Hermes agent turn. It will stop on local changes, build dist/, and reload through computer-use when available.')
+    : translateUiText('This check compares the loaded build metadata with the public Hermes Browser repository.');
   (review.available ? els.updateNowButton : els.maybeLaterButton)?.focus({ preventScroll: true });
 }
 
@@ -1725,7 +1731,7 @@ async function checkForUpdates({ openReview = false } = {}) {
   if (!els.checkUpdatesButton) return;
   els.checkUpdatesButton.disabled = true;
   if (els.reviewUpdateButton) els.reviewUpdateButton.disabled = true;
-  els.checkUpdatesButton.textContent = 'Checking...';
+  els.checkUpdatesButton.textContent = translateUiText('Checking...');
   renderVersionInfo('Checking GitHub main and this loaded build commit...');
   if (openReview) renderUpdateDialog({ loading: true });
   try {
@@ -1784,7 +1790,7 @@ async function checkForUpdates({ openReview = false } = {}) {
   } finally {
     els.checkUpdatesButton.disabled = false;
     if (els.reviewUpdateButton) els.reviewUpdateButton.disabled = false;
-    els.checkUpdatesButton.textContent = 'Check';
+    els.checkUpdatesButton.textContent = translateUiText('Check');
   }
 }
 
@@ -1799,17 +1805,17 @@ function updateConnectionPrompt() {
   els.connectionPill.setAttribute('aria-label', connected ? 'Hermes connected' : `Hermes ${state.state}`);
   if (!connected) {
     if (state.state === 'connecting') {
-      els.sendButton.textContent = 'Checking...';
+      els.sendButton.textContent = translateUiText('Checking...');
       els.connectStatus.textContent = `Checking ${summary.title} at ${summary.normalizedUrl}...`;
       setStatus('warn', 'Checking Hermes', `${summary.title}: ${summary.normalizedUrl}`);
     } else if (state.state === 'unreachable') {
-      els.sendButton.textContent = 'Reconnect';
+      els.sendButton.textContent = translateUiText('Reconnect');
       els.connectStatus.textContent = currentConnectionTroubleshooting(state);
       setStatus('error', 'Hermes API unavailable', currentConnectionTroubleshooting(state) || `${summary.title} is not responding. Start Hermes Desktop/Gateway, then reconnect.`);
     } else {
-      els.sendButton.textContent = 'Connect first';
+      els.sendButton.textContent = translateUiText('Connect first');
       if (isRemoteWsMode()) {
-        els.connectStatus.textContent = 'Enter your dashboard https URL in Settings and sign in to it in a browser tab.';
+        els.connectStatus.textContent = translateUiText('Enter your dashboard https URL in Settings and sign in to it in a browser tab.');
         setStatus('warn', 'Set a remote dashboard', 'Enter your dashboard https URL in Settings and sign in to it in a browser tab.');
       } else {
         els.connectStatus.textContent = `${summary.title}. Click Connect to Hermes or use Manual setup.`;
@@ -1817,7 +1823,7 @@ function updateConnectionPrompt() {
       }
     }
   } else {
-    els.sendButton.textContent = sending ? 'Hermes running' : 'Ask Hermes';
+    els.sendButton.textContent = translateUiText(sending ? 'Hermes running' : 'Ask Hermes');
     els.connectStatus.textContent = state.state === 'degraded'
       ? `Connected to Hermes with a runtime warning. ${currentConnectionTroubleshooting(state)}`
       : 'Connected to Hermes. You can start chatting with page context.';
@@ -1830,8 +1836,8 @@ function setComposerButtonState(button, state = {}) {
   button.hidden = Boolean(state.hidden);
   button.disabled = Boolean(state.disabled);
   if (state.label) {
-    button.title = state.label;
-    button.setAttribute('aria-label', state.label);
+    button.title = translateUiText(state.label);
+    button.setAttribute('aria-label', translateUiText(state.label));
   }
 }
 
@@ -1863,7 +1869,7 @@ function updateComposerBusyState() {
   els.composerDropZone?.classList.toggle('can-steer', state.busyDraft && !state.controls.steer.hidden);
   if (els.sendButton) {
     els.sendButton.disabled = startupBlocking || state.mainButton.disabled;
-    if (isConnected()) els.sendButton.textContent = state.mainButton.label;
+    if (isConnected()) els.sendButton.textContent = translateUiText(state.mainButton.label);
   }
   renderQueueNotice();
 }
@@ -2214,10 +2220,10 @@ function renderWakeState(nextState = wakeState) {
     els.wakeButton.classList.toggle('paused', paused);
     els.wakeButton.classList.toggle('unavailable', unavailable);
     els.wakeButton.setAttribute('aria-pressed', String(enabled));
-    els.wakeButton.setAttribute('aria-label', enabled ? 'Turn off wake word' : 'Turn on wake word');
-    els.wakeButton.title = `${provider}: ${detail}`;
+    els.wakeButton.setAttribute('aria-label', translateUiText(enabled ? 'Turn off wake word' : 'Turn on wake word'));
+    els.wakeButton.title = `${translateUiText(provider)}: ${translateUiText(detail)}`;
   }
-  if (els.wakeWordStatus) els.wakeWordStatus.textContent = `${provider}: ${detail}`;
+  if (els.wakeWordStatus) els.wakeWordStatus.textContent = `${translateUiText(provider)}: ${translateUiText(detail)}`;
   if (els.wakeWordEnabledInput) els.wakeWordEnabledInput.checked = enabled;
 }
 
@@ -2699,6 +2705,7 @@ function applyAppearanceSettings() {
 
 function renderAppearanceControls() {
   applyAppearanceSettings();
+  if (els.languageSelect) els.languageSelect.value = getLocale();
   const colorMode = normalizeColorMode(settings.colorMode);
   const activeTheme = normalizeAppearanceTheme(settings.appearanceTheme);
   for (const button of els.colorModeButtons || []) {
@@ -3244,17 +3251,17 @@ function renderInlineAssistModelOptions(models = availableModels) {
     || (!selectedId ? models.find(isModelRuntimeSelectable) : null)
     || null;
   els.inlineAssistModel.value = selected?.id || selectedId;
-  if (els.inlineAssistModelLabel) els.inlineAssistModelLabel.textContent = selected ? modelDisplayName(selected) : (selectedId || 'Choose model');
+  if (els.inlineAssistModelLabel) els.inlineAssistModelLabel.textContent = selected ? modelDisplayName(selected) : (selectedId || translateUiText('Choose model'));
   if (els.inlineAssistModelButton) {
     els.inlineAssistModelButton.disabled = false;
     els.inlineAssistModelButton.title = selected
-      ? `${modelProviderLabel(selected)} · ${selected.rawModelId || selected.id}${routingSupported ? ' · Exact model routing confirmed' : ' · Falls back to the gateway default when exact routing is unavailable'}`
-      : 'Choose the model used by Hermes Assist';
+      ? `${modelProviderLabel(selected)} · ${selected.rawModelId || selected.id} · ${t(routingSupported ? 'assist.routing.exact_short' : 'assist.routing.fallback_short')}`
+      : translateUiText('Choose the model used by Hermes Assist');
   }
   if (els.assistModelCapabilityHint) {
-    els.assistModelCapabilityHint.textContent = routingSupported
-      ? 'Exact Assist model routing is available. The selected provider and model are verified before each draft runs.'
-      : 'Your Assist model choice stays saved. This gateway cannot enforce an exact model, so Assist uses the gateway default and labels every fallback result.';
+    const key = routingSupported ? 'assist.routing.exact' : 'assist.routing.fallback';
+    const localized = t(key);
+    els.assistModelCapabilityHint.textContent = localized === key && !routingSupported ? ASSIST_ROUTING_FALLBACK_ENGLISH : localized;
   }
   renderInlineAssistRuntimeOptions();
 }
@@ -3368,7 +3375,7 @@ function setModelSelectionTarget(target = 'chat') {
   if (modelSelectionTarget === 'assist') {
     if (els.modelMenu.parentElement !== document.body) document.body.append(els.modelMenu);
     els.modelMenu.dataset.selectionTarget = 'assist';
-    if (els.modelMenuTitle) els.modelMenuTitle.textContent = 'Choose Assist model';
+    if (els.modelMenuTitle) els.modelMenuTitle.textContent = translateUiText('Choose Assist model');
   } else {
     if (modelMenuHome.parent && els.modelMenu.parentElement !== modelMenuHome.parent) {
       modelMenuHome.parent.insertBefore(els.modelMenu, modelMenuHome.next);
@@ -3678,12 +3685,12 @@ function renderContextWindow(userText = els.input?.value || '') {
     unknown: 'Unavailable',
   };
   const runtimeRows = [
-    [accounting.source === 'local-estimate' ? 'Next request estimate' : 'Session context', `${formatNumber(compaction.usedTokens)} tokens`],
-    ['Context limit', compaction.contextLimitTokens ? `${formatNumber(compaction.contextLimitTokens)} tokens` : 'Not reported by Hermes'],
-    ['Auto-compact trigger', compaction.thresholdTokens ? `${formatNumber(compaction.thresholdTokens)} tokens · ${compaction.thresholdPercent}%` : 'Not reported by Hermes'],
-    ['Compactions', compaction.compressionCountKnown ? formatNumber(compaction.compressionCount) : 'Not reported by Hermes'],
-    ['Compaction state', compactionStateLabels[compaction.state] || compactionStateLabels.unknown],
-    ['Telemetry source', telemetrySourceLabels[compaction.source] || telemetrySourceLabels.unknown],
+    [translateUiText(accounting.source === 'local-estimate' ? 'Next request estimate' : 'Session context'), `${formatNumber(compaction.usedTokens)} ${translateUiText('tokens')}`],
+    [translateUiText('Context limit'), compaction.contextLimitTokens ? `${formatNumber(compaction.contextLimitTokens)} ${translateUiText('tokens')}` : translateUiText('Not reported by Hermes')],
+    [translateUiText('Auto-compact trigger'), compaction.thresholdTokens ? `${formatNumber(compaction.thresholdTokens)} ${translateUiText('tokens')} · ${compaction.thresholdPercent}%` : translateUiText('Not reported by Hermes')],
+    [translateUiText('Compactions'), compaction.compressionCountKnown ? formatNumber(compaction.compressionCount) : translateUiText('Not reported by Hermes')],
+    [translateUiText('Compaction state'), translateUiText(compactionStateLabels[compaction.state] || compactionStateLabels.unknown)],
+    [translateUiText('Telemetry source'), translateUiText(telemetrySourceLabels[compaction.source] || telemetrySourceLabels.unknown)],
   ];
   els.contextRuntimeBreakdown.innerHTML = runtimeRows.map(([label, value]) => `
     <dt>${escapeHtml(label)}</dt>
@@ -3692,28 +3699,28 @@ function renderContextWindow(userText = els.input?.value || '') {
 
   const controls = contextControlState({ capabilities: gatewayCapabilities, percentUsed: meter.percent, contextSource: accounting.source });
   if (els.contextControlStatus) {
-    els.contextControlStatus.textContent = controls.canCompact
+    els.contextControlStatus.textContent = translateUiText(controls.canCompact
       ? controls.label
-      : 'Hermes owns automatic compaction for this connection.';
+      : 'Hermes owns automatic compaction for this connection.');
   }
   if (els.contextCompactButton) {
     els.contextCompactButton.hidden = !controls.canCompact;
     els.contextCompactButton.disabled = !controls.canCompact || !settings.sessionId;
-    els.contextCompactButton.textContent = controls.compactRecommended ? 'Compact recommended' : 'Compact context';
-    els.contextCompactButton.title = controls.canCompact
+    els.contextCompactButton.textContent = translateUiText(controls.compactRecommended ? 'Compact recommended' : 'Compact context');
+    els.contextCompactButton.title = translateUiText(controls.canCompact
       ? 'Ask Hermes to compact this session context.'
-      : 'The connected Hermes runtime does not advertise native session compaction.';
+      : 'The connected Hermes runtime does not advertise native session compaction.');
   }
 
   const pc = currentContext?.pageContext;
   if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
-    els.contextChipLabel.textContent = '💬 Chat only';
-    els.contextChip.title = 'No browser tab, selected text, open tabs, metadata, transcript, or page text will be attached.';
-    els.contextPreview.textContent = 'Chat only mode is active. Hermes will not read or attach browser context for this turn.';
+    els.contextChipLabel.textContent = translateUiText('💬 Chat only');
+    els.contextChip.title = translateUiText('No browser tab, selected text, open tabs, metadata, transcript, or page text will be attached.');
+    els.contextPreview.textContent = translateUiText('Chat only mode is active. Hermes will not read or attach browser context for this turn.');
   } else {
     const chip = contextChipSummary({ pageContext: pc, activeTab: currentContext.activeTab, parts: stats.parts });
-    els.contextChipLabel.textContent = chip.label;
-    els.contextChip.title = chip.title;
+    els.contextChipLabel.textContent = translateUiText(chip.label);
+    els.contextChip.title = translateUiText(chip.title);
     els.contextPreview.textContent = [
       currentContext.activeTab?.title || '(unknown tab)',
       currentContext.activeTab?.url || '',
@@ -3728,19 +3735,19 @@ function renderContextWindow(userText = els.input?.value || '') {
       : explicitSiteCaptureAction(pc);
     els.explicitSiteCaptureButton.hidden = !action;
     if (action) {
-      els.explicitSiteCaptureButton.querySelector('strong').textContent = action.label;
-      els.explicitSiteCaptureButton.querySelector('span').textContent = action.description;
+      els.explicitSiteCaptureButton.querySelector('strong').textContent = translateUiText(action.label);
+      els.explicitSiteCaptureButton.querySelector('span').textContent = translateUiText(action.description);
     }
   }
 
   const rows = [
-    ['User draft', stats.parts.userRequest],
-    ['Active tab', stats.parts.activeTab],
-    ['Open tabs', stats.parts.openTabs],
-    ['Selection', stats.parts.selectedText],
-    ['Metadata', stats.parts.pageMetadata],
-    ['YouTube transcript', stats.parts.youtubeTranscript],
-    ['Page text', stats.parts.pageText],
+    [translateUiText('User draft'), stats.parts.userRequest],
+    [translateUiText('Active tab'), stats.parts.activeTab],
+    [translateUiText('Open tabs'), stats.parts.openTabs],
+    [translateUiText('Selection'), stats.parts.selectedText],
+    [translateUiText('Metadata'), stats.parts.pageMetadata],
+    [translateUiText('YouTube transcript'), stats.parts.youtubeTranscript],
+    [translateUiText('Page text'), stats.parts.pageText],
   ];
   els.contextBreakdown.innerHTML = rows.map(([label, part]) => `
     <dt>${label}</dt>
@@ -3966,14 +3973,14 @@ function renderModelRefreshState() {
   const state = modelRefreshControlState({ refreshing: modelsRefreshing });
   if (els.refreshModelsButton) {
     els.refreshModelsButton.disabled = state.disabled;
-    els.refreshModelsButton.textContent = state.label;
-    els.refreshModelsButton.title = state.title;
-    els.refreshModelsButton.setAttribute('aria-label', state.title);
+    els.refreshModelsButton.textContent = translateUiText(state.label);
+    els.refreshModelsButton.title = translateUiText(state.title);
+    els.refreshModelsButton.setAttribute('aria-label', translateUiText(state.title));
     els.refreshModelsButton.setAttribute('aria-busy', state.ariaBusy);
     els.refreshModelsButton.classList.toggle('model-refreshing', modelsRefreshing);
   }
   if (els.modelRefreshStatus) {
-    els.modelRefreshStatus.textContent = state.status;
+    els.modelRefreshStatus.textContent = translateUiText(state.status);
     els.modelRefreshStatus.hidden = !state.status;
   }
 }
@@ -4424,7 +4431,7 @@ function renderProfiles() {
       ? `Using ${active.name}${active.model ? ` · ${active.model}` : ''}${active.skillCount ? ` · ${active.skillCount} skills` : ''}`
       : `${availableProfiles.length} profiles available`;
   } else {
-    els.profileStatus.textContent = 'Profile API unavailable. Browser will use the currently running Hermes gateway profile.';
+    els.profileStatus.textContent = translateUiText('Profile API unavailable. Browser will use the currently running Hermes gateway profile.');
   }
 }
 
@@ -4614,7 +4621,7 @@ function renderEmptyState() {
   const setupCopy = settings.apiKey
     ? 'Ask Hermes about what you are viewing. Active tab, selected text, page text, and open tabs are attached as untrusted context.'
     : 'Click Connect to Hermes, approve locally, then start chatting with page context. Manual API key setup is still available in settings.';
-  els.messages.innerHTML = `<div class="empty-state"><strong>THE PAGE IS THE PROMPT</strong><span>${setupCopy}</span></div>`;
+  els.messages.innerHTML = `<div class="empty-state"><strong>${escapeHtml(translateUiText('THE PAGE IS THE PROMPT'))}</strong><span>${escapeHtml(translateUiText(setupCopy))}</span></div>`;
 }
 
 async function persistBrowserIntroSeen() {
@@ -4845,7 +4852,7 @@ async function refreshSessionsFromMenu() {
   els.refreshSessionsButton.disabled = true;
   els.refreshSessionsButton.classList.add('is-refreshing');
   els.refreshSessionsButton.setAttribute('aria-busy', 'true');
-  if (els.refreshSessionsLabel) els.refreshSessionsLabel.textContent = 'Refreshing Sessions…';
+  if (els.refreshSessionsLabel) els.refreshSessionsLabel.textContent = translateUiText('Refreshing Sessions…');
   let outcome;
   try {
     outcome = await loadSessions();
@@ -4856,7 +4863,7 @@ async function refreshSessionsFromMenu() {
     els.refreshSessionsButton.disabled = false;
     els.refreshSessionsButton.classList.remove('is-refreshing');
     els.refreshSessionsButton.removeAttribute('aria-busy');
-    if (els.refreshSessionsLabel) els.refreshSessionsLabel.textContent = 'Refresh Sessions';
+    if (els.refreshSessionsLabel) els.refreshSessionsLabel.textContent = translateUiText('Refresh Sessions');
   }
   showOperationToast(outcome?.ok
     ? { title: 'Sessions refreshed', detail: `${outcome.count} canonical session${outcome.count === 1 ? '' : 's'} ready.` }
@@ -7247,7 +7254,7 @@ async function pollPairing(pairingId, { attempts = 90, delay = 1500 } = {}) {
     if (payload.status === 'approved' && payload.token) return payload.token;
     if (payload.status === 'expired' || response.status === 410) throw new Error('Pairing expired. Click Connect again.');
     if (response.status === 404) throw new Error('Pairing request was not found. Click Connect again.');
-    els.connectStatus.textContent = 'Waiting for Hermes Desktop approval...';
+    els.connectStatus.textContent = translateUiText('Waiting for Hermes Desktop approval...');
     await sleep(delay);
   }
   throw new Error('Timed out waiting for Hermes Desktop approval.');
@@ -7258,7 +7265,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
   const transport = cloud ? CONNECTION_TRANSPORTS.CLOUD_TICKET_WS : CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
   const generation = connectionController.begin({ mode, transport });
   els.connectButton.disabled = true;
-  els.connectButton.textContent = cloud ? 'Connecting Cloud…' : 'Attaching dashboard…';
+  els.connectButton.textContent = translateUiText(cloud ? 'Connecting Cloud…' : 'Attaching dashboard…');
   markConnectionProbe('connecting', cloud ? 'Finding active Hermes Cloud agent tab.' : settings.gatewayUrl);
   try {
     if (cloud) {
@@ -7327,7 +7334,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
   } finally {
     if (connectionController.isCurrent(generation)) {
       els.connectButton.disabled = false;
-      els.connectButton.textContent = 'Connect to Hermes';
+      els.connectButton.textContent = translateUiText('Connect to Hermes');
     }
   }
 }
@@ -7360,7 +7367,7 @@ async function connectApiWithPairing() {
   const summary = currentGatewaySummary();
   markConnectionProbe('connecting', summary.normalizedUrl);
   els.connectButton.disabled = true;
-  els.connectButton.textContent = 'Connecting...';
+  els.connectButton.textContent = translateUiText('Connecting...');
   els.connectStatus.textContent = `Looking for ${summary.title} at ${summary.normalizedUrl}...`;
   try {
     const health = await publicApiFetch('/health', { method: 'GET' });
@@ -7372,7 +7379,7 @@ async function connectApiWithPairing() {
     if (!capabilities.browserPairing) {
       connectionController.transition(generation, CONNECTION_STATES.DEGRADED, { reason: 'manual-setup-required' });
       markConnectionProbe('unconfigured', 'Manual setup required; automatic browser pairing is not advertised by this Hermes runtime.');
-      els.connectStatus.textContent = 'Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.';
+      els.connectStatus.textContent = translateUiText('Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.');
       setStatus('warn', 'Manual setup required', 'This Hermes runtime does not advertise browser pairing yet.');
       openSettingsDialog();
       return;
@@ -7391,7 +7398,7 @@ async function connectApiWithPairing() {
 
     let pairedToken = payload.token || '';
     if (!pairedToken) {
-      els.connectStatus.textContent = 'Approval opened. Approve Hermes Browser Extension, then return here.';
+      els.connectStatus.textContent = translateUiText('Approval opened. Approve Hermes Browser Extension, then return here.');
       await openApprovalUrl(payload.approval_url);
       pairedToken = await pollPairing(payload.pairing_id);
     }
@@ -7410,7 +7417,7 @@ async function connectApiWithPairing() {
     await loadSessions({ quiet: true });
     await initializeSessionForPanelOpen({ focus: false });
     if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'hermes' })) return;
-    els.connectStatus.textContent = 'Connected to Hermes. You can start chatting with page context.';
+    els.connectStatus.textContent = translateUiText('Connected to Hermes. You can start chatting with page context.');
     markGatewayReachable(normalizeGatewayUrl(settings.gatewayUrl));
     setStatus('ok', 'Hermes Browser Extension connected', normalizeGatewayUrl(settings.gatewayUrl));
     renderEmptyState();
@@ -7423,7 +7430,7 @@ async function connectApiWithPairing() {
   } finally {
     if (connectionController.isCurrent(generation)) {
       els.connectButton.disabled = false;
-      els.connectButton.textContent = 'Connect to Hermes';
+      els.connectButton.textContent = translateUiText('Connect to Hermes');
     }
   }
 }
@@ -8313,6 +8320,11 @@ function bindEvents() {
   });
   window.addEventListener('resize', positionOperationToast);
   els.settingsButton.addEventListener('click', openSettingsDialog);
+  els.languageSelect?.addEventListener('change', () => {
+    setLocale(els.languageSelect.value).catch((error) => {
+      console.warn('[Hermes Browser] Language change failed:', error);
+    });
+  });
   els.startupTestConnectionButton?.addEventListener('click', testConnection);
   els.taskStackToggle?.addEventListener('click', () => {
     taskStackExpanded = !taskStackExpanded;
@@ -9038,6 +9050,19 @@ async function runStartupReadiness() {
   }
 }
 
+subscribeLocale(() => {
+  renderAppearanceControls();
+  renderGatewayHelp();
+  renderContextScopeControls();
+  renderTaskStack();
+  renderStartupReadiness();
+  renderContextWindow();
+  updateComposerBusyState();
+  renderWakeState();
+  renderModelRefreshState();
+  if (lastVisibleStatus) setStatus(lastVisibleStatus.kind, lastVisibleStatus.title, lastVisibleStatus.detail);
+});
+await initI18n();
 bindEvents();
 await runStartupReadiness();
 try {

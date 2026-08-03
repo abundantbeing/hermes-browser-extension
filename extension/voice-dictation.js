@@ -7,6 +7,7 @@ import {
   shouldFallbackToWebSpeechForTranscription,
   shouldUseLocalDashboardAudioTranscription,
 } from './lib/common.mjs';
+import { initI18n, t, translateUiText } from './lib/i18n.mjs';
 import {
   DEFAULT_GATEWAY_CAPABILITIES,
   normalizeGatewayCapabilities,
@@ -43,13 +44,15 @@ let speechInterimText = '';
 let speechActive = false;
 
 function setStatus(message) {
-  if (statusEl) statusEl.textContent = message;
+  if (statusEl) statusEl.textContent = translateUiText(message);
 }
 
 function setRecording(value, label = '') {
   recording = Boolean(value);
   document.body.classList.toggle('recording', recording);
-  if (startButton) startButton.textContent = recording ? `Stop${label ? ` ${label}` : ''}` : 'Start dictation';
+  if (startButton) startButton.textContent = recording
+    ? `${translateUiText('Stop')}${label ? ` ${label}` : ''}`
+    : translateUiText('Start dictation');
 }
 
 function microphoneSettingsUrl() {
@@ -243,10 +246,10 @@ function ensureBrowserSpeech() {
       else speechInterimText = `${speechInterimText} ${transcript}`.trim();
     }
     const preview = [speechFinalText, speechInterimText].filter(Boolean).join(' ');
-    setStatus(`Voice mode: Browser speech fallback\n\n${preview || 'Listening… speak now, then click Stop.'}`);
+    setStatus(t('voice.browser.preview', { preview: preview || translateUiText('Listening… speak now, then click Stop.') }));
   };
   recognition.onerror = (event) => {
-    setStatus(`Browser speech fallback stopped.\n\n${event.error || 'Speech recognition error'}`);
+    setStatus(t('voice.browser.stopped', { error: event.error || translateUiText('Speech recognition error') }));
   };
   recognition.onend = async () => {
     const transcript = [speechFinalText, speechInterimText].filter(Boolean).join(' ').trim();
@@ -258,7 +261,7 @@ function ensureBrowserSpeech() {
       return;
     }
     await publishTranscript(transcript, 'browser-speech-fallback');
-    setStatus(`Transcript sent to the Hermes side panel:\n\n${transcript}`);
+    setStatus(t('voice.transcript_sent', { transcript }));
     setTimeout(() => window.close(), 1600);
   };
   speechRecognition = recognition;
@@ -291,7 +294,7 @@ async function startBrowserSpeechFallback() {
   } catch (error) {
     speechActive = false;
     setRecording(false);
-    setStatus(`Browser speech fallback could not start.\n\n${error?.message || String(error)}`);
+    setStatus(t('voice.browser.start_failed', { error: error?.message || String(error) }));
     return false;
   }
 }
@@ -306,7 +309,7 @@ function stopBrowserSpeechFallback() {
     startButton.disabled = false;
     speechActive = false;
     setRecording(false);
-    setStatus(`Browser speech fallback could not stop.\n\n${error?.message || String(error)}`);
+    setStatus(t('voice.browser.stop_failed', { error: error?.message || String(error) }));
   }
   return true;
 }
@@ -347,11 +350,11 @@ async function startRecording() {
           return;
         }
         await publishTranscript(transcript, 'hermes-stt');
-        setStatus(`Transcript sent to the Hermes side panel:\n\n${transcript}`);
+        setStatus(t('voice.transcript_sent', { transcript }));
         setTimeout(() => window.close(), 1600);
       } catch (error) {
         if (error?.fallbackToWebSpeech && await startBrowserSpeechFallback()) return;
-        setStatus(`Voice transcription failed.\n\n${error?.message || String(error)}`);
+        setStatus(t('voice.transcription_failed', { error: error?.message || String(error) }));
       } finally {
         startButton.disabled = false;
       }
@@ -363,11 +366,11 @@ async function startRecording() {
     setRecording(false);
     stopStream();
     if (isMicrophoneBlocked(error)) {
-      setStatus(`Microphone permission is blocked for Hermes Browser Extension.\n\nClick Open microphone settings, set Microphone to Allow for this extension, return here, then click Start dictation again.\n\n${error?.message || String(error)}`);
+      setStatus(t('voice.permission_blocked', { error: error?.message || String(error) }));
     } else if (await startBrowserSpeechFallback()) {
       return;
     } else {
-      setStatus(`Could not start voice dictation.\n\n${error?.message || String(error)}`);
+      setStatus(t('voice.start_failed', { error: error?.message || String(error) }));
     }
   } finally {
     startButton.disabled = false;
@@ -396,12 +399,14 @@ async function startBestVoiceMode() {
   }
 }
 
+await initI18n();
+
 startButton?.addEventListener('click', () => {
   if (recording) {
     if (stopRecording()) return;
     if (stopBrowserSpeechFallback()) return;
   } else {
-    startBestVoiceMode().catch((error) => setStatus(`Could not start voice dictation.\n\n${error?.message || String(error)}`));
+    startBestVoiceMode().catch((error) => setStatus(t('voice.start_failed', { error: error?.message || String(error) })));
   }
 });
 settingsButton?.addEventListener('click', openMicrophoneSettings);
@@ -423,5 +428,5 @@ try {
     setStatus('Hermes is not connected yet. Browser speech fallback is unavailable here; connect the side panel to Hermes, then use voice dictation.');
   }
 } catch (error) {
-  setStatus(`Could not load Hermes Browser settings.\n\n${error?.message || String(error)}`);
+  setStatus(t('voice.settings_load_failed', { error: error?.message || String(error) }));
 }

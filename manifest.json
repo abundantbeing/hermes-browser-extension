@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Hermes Browser Extension",
-  "short_name": "Hermes Ext",
+  "default_locale": "en",
+  "name": "__MSG_extensionName__",
+  "short_name": "__MSG_extensionShortName__",
   "version": "0.2.0",
-  "description": "Browser-native side panel for Hermes Agent \u2014 connect web context to your local or remote Hermes runtime.",
+  "description": "__MSG_extensionDescription__",
   "minimum_chrome_version": "116",
   "icons": {
     "16": "extension/assets/icons/icon-16.png",
@@ -28,7 +29,7 @@
     "https://*/*"
   ],
   "action": {
-      "default_title": "Open Hermes Browser Extension",
+      "default_title": "__MSG_openExtension__",
       "default_icon": {
         "16": "extension/assets/icons/icon-16.png",
         "32": "extension/assets/icons/icon-32.png",
@@ -50,7 +51,7 @@
       "48": "extension/assets/icons/icon-48.png",
       "128": "extension/assets/icons/icon-128.png"
     },
-    "default_title": "Hermes Browser Extension",
+    "default_title": "__MSG_extensionName__",
     "default_panel": "extension/sidepanel.html"
   },
   "commands": {
@@ -59,14 +60,14 @@
         "default": "Alt+H",
         "mac": "Alt+H"
       },
-      "description": "Open Hermes Browser Extension"
+      "description": "__MSG_openExtension__"
     },
     "_execute_sidebar_action": {
       "suggested_key": {
         "default": "Ctrl+Shift+H",
         "mac": "Command+Shift+H"
       },
-      "description": "Open Hermes Browser Sidebar"
+      "description": "__MSG_openSidebar__"
     }
   },
   "content_scripts": [
@@ -78,6 +79,7 @@
       "js": [
         "extension/content-extractor.js",
         "extension/content.js",
+        "extension/lib/i18n-content.js",
         "extension/content-inline-helper.js"
       ],
       "run_at": "document_idle"

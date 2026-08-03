@@ -10,8 +10,8 @@ test('both manifests load the inline helper after extractor and content bridge',
     read('extension/manifest.json').then(JSON.parse),
     read('manifest.json').then(JSON.parse),
   ]);
-  assert.deepEqual(packaged.content_scripts[0].js, ['content-extractor.js', 'content.js', 'content-inline-helper.js']);
-  assert.deepEqual(repository.content_scripts[0].js, ['extension/content-extractor.js', 'extension/content.js', 'extension/content-inline-helper.js']);
+  assert.deepEqual(packaged.content_scripts[0].js, ['content-extractor.js', 'content.js', 'lib/i18n-content.js', 'content-inline-helper.js']);
+  assert.deepEqual(repository.content_scripts[0].js, ['extension/content-extractor.js', 'extension/content.js', 'extension/lib/i18n-content.js', 'extension/content-inline-helper.js']);
 });
 
 test('inline helper uses approved Hermes branding, routes sessions, and supports safe apply and undo', async () => {

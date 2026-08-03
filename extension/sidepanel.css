@@ -3801,6 +3801,33 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   align-items: center;
   gap: 10px;
 }
+.language-select {
+  width: min(100%, 220px);
+  min-height: 36px;
+  padding: 8px 34px 7px 10px;
+  border: 1px solid var(--hermes-line-strong);
+  border-radius: var(--radius);
+  background: var(--hermes-input-bg, var(--hermes-paper));
+  color: var(--hermes-ink);
+  color-scheme: light dark;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.language-select option {
+  background: var(--hermes-input-bg, var(--hermes-paper));
+  color: var(--hermes-ink);
+}
+:lang(zh-CN) [data-i18n],
+:lang(zh-CN) .task-stack-status,
+:lang(zh-CN) .task-stack-summary {
+  letter-spacing: 0.025em;
+  text-transform: none;
+}
+@media (max-width: 420px) {
+  .language-row { grid-template-columns: 1fr; align-items: stretch; }
+  .language-select { width: 100%; }
+}
 .profile-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

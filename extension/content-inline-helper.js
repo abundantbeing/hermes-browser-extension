@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const previousCleanup = globalThis.__HERMES_INLINE_HELPER_CLEANUP__;
   if (typeof previousCleanup === 'function') previousCleanup();
 
@@ -6,7 +6,10 @@
   const appearance = globalThis.HermesAppearance;
   const extractor = globalThis.HermesContentExtractor;
   const adapters = globalThis.HermesSiteAdapters;
-  if (!policy?.classifyEditable || !policy?.buildInlineDraftRequest || !policy?.applyResult || !appearance?.resolveInlineAssistTheme) return;
+  const i18n = globalThis.HermesI18nContent;
+  if (!policy?.classifyEditable || !policy?.buildInlineDraftRequest || !policy?.applyResult || !appearance?.resolveInlineAssistTheme || !i18n?.ready) return;
+  await i18n.ready;
+  const translateUiText = (value) => i18n.translateText(value);
 
   const REQUEST = 'HERMES_INLINE_DRAFT_REQUEST';
   const RESULT = 'HERMES_INLINE_DRAFT_RESULT';
@@ -32,6 +35,13 @@
   function make(tag, className = '', text = '') {
     const element = document.createElement(tag);
     if (className) element.className = className;
+    if (text) element.textContent = translateUiText(text);
+    return element;
+  }
+
+  function makeRaw(tag, className = '', text = '') {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
     if (text) element.textContent = text;
     return element;
   }
@@ -39,14 +49,14 @@
   function button(className, text, label = text) {
     const element = make('button', className, text);
     element.type = 'button';
-    element.setAttribute('aria-label', label);
+    element.setAttribute('aria-label', translateUiText(label));
     return element;
   }
 
   function logo(className) {
     const mark = make('span', className);
     mark.setAttribute('role', 'img');
-    mark.setAttribute('aria-label', 'Hermes Browser Extension');
+    mark.setAttribute('aria-label', translateUiText('Hermes Browser Extension'));
     mark.style.maskImage = `url("${logoUrl}")`;
     mark.style.webkitMaskImage = `url("${logoUrl}")`;
     return mark;
@@ -134,12 +144,12 @@
 
   const launcher = button('launcher', '', 'Open Hermes Assist');
   launcher.appendChild(logo('launcher-logo'));
-  launcher.title = 'Open Hermes Assist';
+  launcher.title = translateUiText('Open Hermes Assist');
   launcher.hidden = true;
 
   const panel = make('section', 'panel');
   panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', 'Hermes Assist');
+  panel.setAttribute('aria-label', translateUiText('Hermes Assist'));
   panel.hidden = true;
 
   const head = make('header', 'head');
@@ -147,7 +157,9 @@
   brandMark.appendChild(logo('brand-logo'));
   head.appendChild(brandMark);
   const brandCopy = make('div');
-  brandCopy.append(make('span', 'kicker', 'Hermes Browser'), make('strong', 'title', 'Hermes Assist'));
+  const brandKicker = make('span', 'kicker', 'Hermes Browser');
+  const brandTitle = make('strong', 'title', 'Hermes Assist');
+  brandCopy.append(brandKicker, brandTitle);
   const close = button('close', '×', 'Close Hermes Assist');
   head.append(brandCopy, close);
   const context = make('div', 'context');
@@ -156,7 +168,9 @@
   context.append(contextDetail, contextState);
   const body = make('div', 'body');
   const foot = make('footer', 'foot');
-  foot.append(make('span', '', 'No submit · no send · no other fields touched'), make('strong', '', 'SAFE APPLY'));
+  const footSafety = make('span', '', 'No submit · no send · no other fields touched');
+  const footMode = make('strong', '', 'SAFE APPLY');
+  foot.append(footSafety, footMode);
   panel.append(head, context, body, foot);
   shadow.append(style, launcher, panel);
   (document.documentElement || document.body).appendChild(host);
@@ -175,6 +189,7 @@
   let autoReplace = true;
   let appliedAutomatically = false;
   let rememberRoute = false;
+  let activeView = { name: 'assist', args: [] };
   let panelScrollSuspended = false;
   let targetResizeObserver = null;
   let targetMutationObserver = null;
@@ -573,11 +588,12 @@
   }
 
   function renderAssist() {
+    activeView = { name: 'assist', args: [] };
     const profile = siteProfile || refreshSiteProfile();
     const contextText = boundedContextForTarget();
     const usesVisibleContext = profile?.contextMode === 'visible';
-    contextDetail.textContent = currentContextLabel();
-    contextState.textContent = usesVisibleContext ? 'BOUNDED' : 'DRAFT ONLY';
+    contextDetail.textContent = translateUiText(currentContextLabel());
+    contextState.textContent = translateUiText(usesVisibleContext ? 'BOUNDED' : 'DRAFT ONLY');
     contextState.className = 'secure';
 
     const nodes = [];
@@ -594,7 +610,7 @@
       const contextToggle = make('input', 'toggle');
       contextToggle.type = 'checkbox';
       contextToggle.checked = usesVisibleContext;
-      contextToggle.setAttribute('aria-label', `Use visible ${profile.label} context`);
+      contextToggle.setAttribute('aria-label', translateUiText(`Use visible ${profile.label} context`));
       contextToggle.addEventListener('change', () => {
         void persistSiteContextMode(profile.adapterId, contextToggle.checked ? 'visible' : 'draft');
       });
@@ -624,8 +640,8 @@
     const customLabel = make('span', 'section-label', 'Or tell Hermes exactly what you need');
     const customRow = make('div', 'custom-row');
     const custom = make('textarea', 'custom');
-    custom.placeholder = 'Make this more confident without sounding aggressive…';
-    custom.setAttribute('aria-label', 'Custom Hermes Assist instruction');
+    custom.placeholder = translateUiText('Make this more confident without sounding aggressive…');
+    custom.setAttribute('aria-label', translateUiText('Custom Hermes Assist instruction'));
     const customGo = button('custom-go', 'Ask Hermes');
     customGo.addEventListener('click', () => {
       const text = custom.value.trim();
@@ -666,10 +682,11 @@
   }
 
   function renderRouting(session = {}) {
-    contextDetail.textContent = session.hasActiveSession
+    activeView = { name: 'routing', args: [session] };
+    contextDetail.textContent = translateUiText(session.hasActiveSession
       ? `Active chat · ${Number(session.messageCount || 0) || 'existing'} messages`
-      : 'No active Browser chat';
-    contextState.textContent = 'CHOOSE';
+      : 'No active Browser chat');
+    contextState.textContent = translateUiText('CHOOSE');
     contextState.className = '';
     const title = make('h2', 'route-title', 'Where should Hermes work?');
     const note = make('p', 'note', 'Hermes will never replace or switch an existing conversation without this choice.');
@@ -735,7 +752,8 @@
   }
 
   function renderWorking() {
-    contextState.textContent = 'WORKING';
+    activeView = { name: 'working', args: [] };
+    contextState.textContent = translateUiText('WORKING');
     const wrap = make('div', 'working');
     const mark = make('i', 'working-mark');
     const title = make('h2', 'route-title', 'Hermes is drafting');
@@ -745,7 +763,8 @@
   }
 
   function renderFailure(reason) {
-    contextState.textContent = 'BLOCKED';
+    activeView = { name: 'failure', args: [reason] };
+    contextState.textContent = translateUiText('BLOCKED');
     const title = make('h2', 'route-title', 'Assist could not run');
     const detail = make('p', 'status', reason || 'Hermes could not create this draft.');
     const back = button('action', 'Back to actions');
@@ -814,8 +833,12 @@
   }
 
   function renderResult({ fieldChanged = false, noModel = false } = {}) {
-    contextDetail.textContent = `${noModel ? 'Local utility' : 'Inline assist'} · ${pending?.actionLabel || 'Result'}`;
-    contextState.textContent = 'COMPLETE';
+    activeView = { name: 'result', args: [{ fieldChanged, noModel }] };
+    const actionLabel = pending?.actionId === 'custom'
+      ? pending.actionLabel
+      : translateUiText(pending?.actionLabel || 'Result');
+    contextDetail.textContent = `${translateUiText(noModel ? 'Local utility' : 'Inline assist')} · ${actionLabel}`;
+    contextState.textContent = translateUiText('COMPLETE');
     contextState.className = 'secure';
     const copyOnly = pending?.applyMode === 'copy-only';
     const success = make('div', 'success');
@@ -824,7 +847,7 @@
       : (appliedAutomatically ? 'Replaced the original field safely' : (fieldChanged ? 'Field changed · review required' : 'Draft ready for review'))));
     const card = make('div', 'run-card');
     const row = make('div', 'run-row');
-    row.append(make('span', '', 'Session'), make('strong', '', resultSessionTitle || 'Inline assist'));
+    row.append(make('span', '', 'Session'), makeRaw('strong', '', resultSessionTitle || translateUiText('Inline assist')));
     const title = make('div', 'run-title', noModel ? 'Finished without a model call.' : 'Draft ready. Still your decision.');
     const copy = make('p', 'run-copy', appliedAutomatically
       ? 'The original field was unchanged while Hermes worked, so automatic replacement was allowed.'
@@ -836,7 +859,7 @@
       card.append(routingNotice);
     }
     const label = make('span', 'section-label', 'Result preview');
-    const preview = make('div', 'preview', resultText || '(empty draft)');
+    const preview = makeRaw('div', 'preview', resultText || translateUiText('(empty draft)'));
     const actions = make('div', 'result-actions');
     actions.dataset.actionCount = resultSessionId ? '4' : '3';
     const keep = button('main', copyOnly ? 'Copy to use' : (policy.inlineDraftPrimaryActionLabel?.({
@@ -897,15 +920,16 @@
     if (!resultText) return;
     try {
       await navigator.clipboard.writeText(resultText);
-      contextDetail.textContent = 'Copied result to clipboard';
+      contextDetail.textContent = translateUiText('Copied result to clipboard');
     } catch {
-      contextDetail.textContent = 'Copy blocked · select preview manually';
+      contextDetail.textContent = translateUiText('Copy blocked · select preview manually');
     }
   }
 
   function renderOpenSessionChoices() {
     if (!resultSessionId) return;
-    contextState.textContent = 'CHOOSE';
+    activeView = { name: 'open-session', args: [] };
+    contextState.textContent = translateUiText('CHOOSE');
     contextState.className = '';
     const title = make('h2', 'route-title', 'Where should this session open?');
     const note = make('p', 'note', 'Open the retained Assist session in the Browser side panel or in Hermes Web.');
@@ -990,6 +1014,31 @@
     position();
   }
 
+  function applyLocalizedFrame() {
+    launcher.title = translateUiText('Open Hermes Assist');
+    launcher.setAttribute('aria-label', translateUiText('Open Hermes Assist'));
+    panel.setAttribute('aria-label', translateUiText('Hermes Assist'));
+    for (const mark of [launcher.querySelector('.launcher-logo'), brandMark.querySelector('.brand-logo')]) {
+      mark?.setAttribute('aria-label', translateUiText('Hermes Browser Extension'));
+    }
+    brandKicker.textContent = translateUiText('Hermes Browser');
+    brandTitle.textContent = translateUiText('Hermes Assist');
+    close.setAttribute('aria-label', translateUiText('Close Hermes Assist'));
+    footSafety.textContent = translateUiText('No submit · no send · no other fields touched');
+    footMode.textContent = translateUiText('SAFE APPLY');
+  }
+
+  function rerenderLocalizedView() {
+    applyLocalizedFrame();
+    if (panel.hidden) return;
+    if (activeView.name === 'routing') renderRouting(...activeView.args);
+    else if (activeView.name === 'working') renderWorking();
+    else if (activeView.name === 'failure') renderFailure(...activeView.args);
+    else if (activeView.name === 'result') renderResult(...activeView.args);
+    else if (activeView.name === 'open-session') renderOpenSessionChoices();
+    else renderAssist();
+  }
+
   document.addEventListener('focusin', onFocus, true);
   document.addEventListener('input', onEditableInput, true);
   document.addEventListener('keydown', onKey, true);
@@ -1009,6 +1058,7 @@
   close.addEventListener('click', hidePanel);
   chrome.runtime.onMessage.addListener(onResult);
   chrome.storage.onChanged.addListener(onStorageChanged);
+  const unsubscribeI18n = i18n.subscribe(rerenderLocalizedView);
   systemThemeQuery?.addEventListener?.('change', onSystemThemeChanged);
   void loadAssistSettings();
 
@@ -1023,6 +1073,7 @@
     disconnectTargetObservers();
     chrome.runtime.onMessage.removeListener(onResult);
     chrome.storage.onChanged.removeListener(onStorageChanged);
+    unsubscribeI18n();
     systemThemeQuery?.removeEventListener?.('change', onSystemThemeChanged);
     host.remove();
   };
