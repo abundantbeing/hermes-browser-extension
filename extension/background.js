@@ -440,6 +440,13 @@ function openSidePanelWithinUserGesture(tab) {
 }
 
 async function handleContextMenuClick(info, tab) {
+  // Hydrate cache from storage on cold wake — storage read is safe before the gesture call
+  try {
+    const stored = await chrome.storage.local.get('hermesBrowserSettings');
+    cachedContextMenuItems = normalizeContextMenuItems(stored?.hermesBrowserSettings?.contextMenuItems);
+  } catch {
+    // Fall back to existing cache if storage is unavailable
+  }
   const item = cachedContextMenuItems.find((candidate) => candidate.id === info?.menuItemId);
   if (!item || !tab?.id) return;
   if (item.inlineAction) {
