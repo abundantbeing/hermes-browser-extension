@@ -2172,6 +2172,21 @@ test('runtime option acknowledgement ignores stale responses from rapid toggles'
   assert.match(source, /if \(optionVersion !== modelOptionSelectionVersion\) return \{ state: 'stale' \}/);
 });
 
+test('runtime option changes stay local while the active Browser draft is unsaved', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const optionSyncStart = source.indexOf('async function syncSessionModelOptions(');
+  const optionSyncEnd = source.indexOf('function renderContextWindow', optionSyncStart);
+  const optionSync = source.slice(optionSyncStart, optionSyncEnd);
+
+  assert.match(optionSync, /isUnsavedBrowserDraftSession\(\{ sessionId, sessions: availableSessions \}\)/);
+  assert.match(optionSync, /Hermes model options pending/);
+  assert.match(optionSync, /state:\s*'pending'/);
+  assert.ok(
+    optionSync.indexOf('isUnsavedBrowserDraftSession') < optionSync.indexOf('requestSessionModelLock'),
+    'unsaved draft runtime options must stay pending before attempting a server model lock',
+  );
+});
+
 test('new API and dashboard sessions use future-session runtime option preferences', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(source, /function preferredModelOptionsForNewSession\(\)/);

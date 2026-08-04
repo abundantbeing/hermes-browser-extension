@@ -3625,6 +3625,10 @@ async function syncSessionModelOptions({
     setStatus('warn', 'Hermes model options pending', 'Dashboard WebSocket does not expose an existing-session model-options update yet. These options will apply to the next new session.');
     return { state: 'pending' };
   }
+  if (isUnsavedBrowserDraftSession({ sessionId, sessions: availableSessions })) {
+    setStatus('warn', 'Hermes model options pending', 'Selected for this draft; Hermes will confirm these options when the first message saves the session.');
+    return { state: 'pending' };
+  }
   const supportsLock = Boolean(gatewayCapabilities?.sessionModelLock || gatewayCapabilities?.endpoints?.session_model_lock);
   if (!supportsLock) {
     setStatus('warn', 'Hermes model options pending', 'The connected runtime will receive these options on the next turn, but does not expose an acknowledgement endpoint.');
