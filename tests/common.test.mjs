@@ -2928,6 +2928,7 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
   assert.equal(result.error, '');
   assert.deepEqual(calls, [['/api/model/options?refresh=true', 'GET']]);
   assert.deepEqual(result.models.map((model) => model.id), [
+    'hermes-agent',
     'openai-codex::gpt-5.5',
     'openai-codex::gpt-5.4',
     'openai-codex::gpt-5.6-sol',
@@ -2936,6 +2937,7 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
     'minimax::MiniMax-M3',
   ]);
   assert.deepEqual(result.models.map((model) => model.rawModelId), [
+    'hermes-agent',
     'gpt-5.5',
     'gpt-5.4',
     'gpt-5.6-sol',
@@ -2943,11 +2945,11 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
     'gpt-5.6-luna',
     'MiniMax-M3',
   ]);
-  assert.equal(result.models[0].provider, 'openai-codex');
-  assert.equal(result.models[0].providerLabel, 'OpenAI Codex');
-  assert.equal(result.models[0].reasoning, true);
-  assert.equal(result.models[0].fast, true);
-  assert.equal(result.models[0].runtimeSelectable, true);
+  assert.equal(result.models[1].provider, 'openai-codex');
+  assert.equal(result.models[1].providerLabel, 'OpenAI Codex');
+  assert.equal(result.models[1].reasoning, true);
+  assert.equal(result.models[1].fast, true);
+  assert.equal(result.models[1].runtimeSelectable, true);
   const normalized = normalizeHermesModels(result.models, 'openai-codex::gpt-5.6-sol');
   assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.5')?.contextTokens, 272_000);
   for (const model of normalized.filter((item) => item.rawModelId?.startsWith('gpt-5.6-'))) {
@@ -2977,11 +2979,12 @@ test('Cloud Preview flattens provider-aware model.options payloads before render
 
   const normalized = normalizeHermesModels(modelRowsFromGatewayOptions(providerPayload));
   assert.deepEqual(normalized.map((model) => model.id), [
+    'hermes-agent',
     'openai-codex::gpt-5.6-sol',
     'openai-codex::gpt-5.6-terra',
     'nous::openai/gpt-5.5',
   ]);
-  assert.deepEqual(normalized.map((model) => model.provider), ['openai-codex', 'openai-codex', 'nous']);
+  assert.deepEqual(normalized.map((model) => model.provider), ['hermes', 'openai-codex', 'openai-codex', 'nous']);
 
   const legacyRows = [{ id: 'legacy-model', provider: 'legacy' }];
   assert.deepEqual(modelRowsFromGatewayOptions(legacyRows), legacyRows);
@@ -3033,7 +3036,7 @@ test('discoverModelsFromDashboard extracts the dashboard token and fetches model
   assert.equal(result.ok, true);
   assert.deepEqual(calls.map((call) => call.url), ['http://127.0.0.1:9119', 'http://127.0.0.1:9119/api/model/options?refresh=true&profile=worker_beta']);
   assert.equal(calls[1].token, 'abc123');
-  assert.deepEqual(result.models.map((model) => model.id), ['nous::openai/gpt-5.5']);
+  assert.deepEqual(result.models.map((model) => model.id), ['hermes-agent', 'nous::openai/gpt-5.5']);
 });
 
 test('discoverModelsFromRegistry picks up context_length from capabilities when model entries are bare strings', async () => {
@@ -3058,11 +3061,12 @@ test('discoverModelsFromRegistry picks up context_length from capabilities when 
 
   const result = await discoverModelsFromRegistry({ apiFetch, readJsonResponse });
   assert.equal(result.ok, true);
-  assert.equal(result.models.length, 2);
-  assert.equal(result.models[0].contextTokens, 1048576);
-  assert.equal(result.models[1].contextTokens, 200000);
-  assert.equal(result.models[0].reasoning, true);
-  assert.equal(result.models[0].fast, false);
+  assert.equal(result.models.length, 3); // hermes-agent + 2 provider models
+  assert.equal(result.models[0].id, 'hermes-agent');
+  assert.equal(result.models[1].contextTokens, 1048576);
+  assert.equal(result.models[2].contextTokens, 200000);
+  assert.equal(result.models[1].reasoning, true);
+  assert.equal(result.models[1].fast, false);
 });
 
 test('discoverModelsFromRegistry preserves common model context metadata aliases', async () => {
@@ -3093,6 +3097,7 @@ test('discoverModelsFromRegistry preserves common model context metadata aliases
   assert.deepEqual(
     result.models.map((model) => [model.rawModelId, model.contextTokens]),
     [
+      ['hermes-agent', 0],
       ['provider/context-window', 321000],
       ['provider/context-tokens', 654000],
       ['provider/max-context', 987000],
