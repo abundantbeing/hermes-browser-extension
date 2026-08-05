@@ -154,6 +154,7 @@ import {
 } from './lib/capabilities.mjs';
 import { normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
+import { isDelegationToolEvent, turnMentionsDelegation, delegationBatchSettled } from './lib/async-delegation.mjs';
 import { classifyTurnRecovery, latestAssistantAfterUser, sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
@@ -567,6 +568,7 @@ function renderTaskStack() {
 }
 
 async function captureTaskToolEvent(event) {
+  if (isDelegationToolEvent(event)) sawDelegationToolThisTurn = true;
   const tasks = taskStackFromToolEvent(event);
   if (!tasks) return false;
   const sessionId = String(settings.sessionId || '').trim();
@@ -575,6 +577,58 @@ async function captureTaskToolEvent(event) {
   renderTaskStack();
   await chrome.storage.local.set({ [TASK_STACKS_STORAGE_KEY]: taskStackStore });
   return true;
+}
+
+// --- Async delegation watch -------------------------------------------------
+// When the gateway dispatches a delegate_task, the turn stream ends with the
+// dispatcher's acknowledgement and the subagent batch result is injected into
+// the session later asynchronously. The chat is an SSE stream, so nothing
+// renders after the turn unless we poll the session until the batch lands.
+let sawDelegationToolThisTurn = false;
+let delegationWatchTimer = null;
+let delegationWatchGeneration = 0;
+const DELEGATION_POLL_INTERVAL_MS = 2_500;
+const DELEGATION_POLL_MAX_MS = 10 * 60 * 1000;
+
+function cancelDelegationWatch() {
+  delegationWatchGeneration += 1;
+  if (delegationWatchTimer) {
+    clearTimeout(delegationWatchTimer);
+    delegationWatchTimer = null;
+  }
+}
+
+function watchForDelegationResults(finalAnswer = '') {
+  if (!sawDelegationToolThisTurn && !turnMentionsDelegation(finalAnswer)) return;
+  sawDelegationToolThisTurn = false;
+  const sessionId = String(settings.sessionId || '').trim();
+  if (!sessionId) return;
+  cancelDelegationWatch();
+  const generation = ++delegationWatchGeneration;
+  const startedAt = Date.now();
+  const baselineCount = messages.length;
+  setStatus('warn', 'Delegation in progress', 'Waiting for the subagent batch to complete — results appear here automatically.');
+  const poll = async () => {
+    if (generation !== delegationWatchGeneration) return;
+    if (String(settings.sessionId || '').trim() !== sessionId) {
+      delegationWatchTimer = null;
+      return;
+    }
+    try {
+      await loadSessionMessages(sessionId);
+    } catch (error) {
+      console.warn('[Hermes Browser] Delegation result poll failed:', error);
+    }
+    if (generation !== delegationWatchGeneration) return;
+    const settled = delegationBatchSettled(messages, baselineCount, startedAt, DELEGATION_POLL_MAX_MS);
+    if (!settled && !sending) {
+      delegationWatchTimer = setTimeout(poll, DELEGATION_POLL_INTERVAL_MS);
+    } else {
+      delegationWatchTimer = null;
+      if (settled) setStatus('ok', 'Delegation complete', 'Subagent results loaded.');
+    }
+  };
+  delegationWatchTimer = setTimeout(poll, DELEGATION_POLL_INTERVAL_MS);
 }
 
 let activeSessionRuntime = {
@@ -7582,6 +7636,8 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   }
 
   if (!guardForeignSessionSend(userText, turnAttachments)) return false;
+  cancelDelegationWatch();
+  sawDelegationToolThisTurn = false;
   const autoTitle = turnOptions.disableAutoTitle ? '' : autoTitleForCurrentTurn(userText);
   sending = true;
     if (!isRemoteWsMode()) {
@@ -7762,6 +7818,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     await streamView.flush(finalAnswer);
     messages.push({ role: 'assistant', content: finalAnswer, ts: Date.now() });
     await trimAndSaveMessages();
+    watchForDelegationResults(finalAnswer);
     if (autoTitle) await maybeAutoNameCurrentSession(autoTitle);
     if (contextDelivery !== CONTEXT_DELIVERY_MODES.NONE) {
       contextDeliveryBySession.set(contextDeliverySessionKey, recordContextDelivery(
