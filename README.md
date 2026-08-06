@@ -403,47 +403,6 @@ If Chromium still says the mic is blocked, click **Open microphone settings** in
 
 Use **Manual setup** and choose Local gateway, Hermes Cloud, or Remote gateway. Local/Remote API connections use a Gateway URL and API key; Cloud and dashboard-ticket connections require the signed-in HTTPS dashboard tab. The native Desktop approval flow is still evolving during alpha.
 
-## GitHub PR/Issue auto-review
-
-This repo includes two Hermes review runners:
-
-- `npm run review:watch` — local poller for open PRs/issues. This works now from a machine that can reach Hermes and is authenticated with `gh`.
-- `npm run review:event` — GitHub-event runner for future GitHub Actions/webhook wiring. It expects `GITHUB_EVENT_NAME`, `GITHUB_EVENT_PATH`, and `GITHUB_REPOSITORY`.
-
-The local poller checks open PRs and issues, computes a stable signature from PR head SHA or issue title/body, and only reviews changed targets. It upserts one bot comment per PR/issue with a stable marker. PR diffs and issue bodies are treated as untrusted input.
-
-Local setup:
-
-```bash
-# Uses gh auth token, local API_SERVER_KEY from ~/.hermes/.env,
-# and http://127.0.0.1:8642 by default.
-npm run review:watch
-```
-
-Optional overrides:
-
-```bash
-HERMES_REVIEW_REPO=abundantbeing/hermes-browser-extension
-HERMES_REVIEW_GATEWAY_URL=http://127.0.0.1:8642
-HERMES_REVIEW_API_KEY=<api-server-key-or-scoped-token>
-HERMES_REVIEW_MAX_TARGETS=3
-HERMES_REVIEW_STATE_FILE=~/.hermes/hermes-browser-review-state.json
-```
-
-For a GitHub-hosted Actions runner later, `HERMES_REVIEW_GATEWAY_URL` must be reachable from GitHub. A runner cannot reach `http://127.0.0.1:8642` on your personal machine; use a remote Hermes API server behind Tailscale/VPN/HTTPS or a self-hosted GitHub runner on the same network. Pushing `.github/workflows/*` also requires a GitHub token with `workflow` scope.
-
-Dry-runs:
-
-```bash
-npm run review:watch:dry-run
-
-GITHUB_EVENT_NAME=pull_request_target \
-GITHUB_EVENT_PATH=./event.json \
-GITHUB_REPOSITORY=abundantbeing/hermes-browser-extension \
-GITHUB_TOKEN=<github-token> \
-npm run review:event:dry-run
-```
-
 ## Development
 
 ```bash
@@ -486,8 +445,6 @@ scripts/
   build.mjs           copies extension/ to dist/
   build-firefox.mjs   produces the Firefox preview package at dist/firefox/
   check-manifest.mjs  validates required manifest assets/permissions
-  hermes-review-github-event.mjs PR/issue event runner for GitHub Actions/webhooks
-  hermes-review-watch.mjs local PR/issue review poller
   package.mjs         creates artifacts/hermes-browser-extension.tar.gz
 tests/
   common.test.mjs     utility behavior tests
