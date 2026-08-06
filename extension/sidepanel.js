@@ -671,6 +671,20 @@ function captureDelegationRuntimePayload(payload = {}) {
   }
 }
 
+async function captureDelegationDispatchesFromCurrentRestHistory() {
+  const sessionId = String(settings.sessionId || '').trim();
+  if (!sessionId || isRemoteWsMode() || !settings.apiKey) return false;
+  try {
+    const result = await fetchSessionMessagesQuietly(sessionId, { transport: 'rest' });
+    captureDelegationRuntimePayload({ messages: result?.messages || [] });
+    return true;
+  } catch {
+    // Older/stateless gateways may not expose durable history. Dispatch is
+    // inline there, so absence of this recovery route must remain non-fatal.
+    return false;
+  }
+}
+
 async function activateCurrentDelegationSession() {
   const durableSessionId = String(settings.sessionId || '').trim();
   if (!durableSessionId) return;
@@ -7427,7 +7441,9 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
     throw error;
   }
   try {
-    return await readSseResponse(response, onDelta, onTool, { signal, onRun });
+    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun });
+    await captureDelegationDispatchesFromCurrentRestHistory();
+    return result;
   } catch (error) {
     error.requestAccepted = true;
     throw error;
@@ -7468,7 +7484,9 @@ async function recoverAcceptedTurn(prompt, turnAttachments = attachments, { atte
       const response = await apiFetch(`/api/sessions/${encodeSessionId(settings.sessionId)}/messages`, { method: 'GET' });
       const payload = await readJsonResponse(response);
       if (response.ok) {
-        const answer = latestAssistantAfterUser(Array.isArray(payload.data) ? payload.data : [], userContent);
+        const rows = Array.isArray(payload.data) ? payload.data : [];
+        captureDelegationRuntimePayload({ messages: rows });
+        const answer = latestAssistantAfterUser(rows, userContent);
         if (answer) return answer;
       }
     } catch {
@@ -7700,6 +7718,7 @@ async function fallbackSessionChat(prompt, turnAttachments = attachments, { onRu
   const payload = await readJsonResponse(response);
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Hermes request failed (${response.status})`);
   onRuntime?.(payload);
+  await captureDelegationDispatchesFromCurrentRestHistory();
   return extractAssistantText(payload);
 }
 
@@ -7723,6 +7742,7 @@ async function fallbackChatCompletions(prompt, turnAttachments = attachments) {
   });
   const payload = await readJsonResponse(response);
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Hermes request failed (${response.status})`);
+  await captureDelegationDispatchesFromCurrentRestHistory();
   return extractAssistantText(payload);
 }
 

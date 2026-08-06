@@ -41,6 +41,10 @@ test('only exact internal completion turns are hidden from transcript renderers'
     role: 'user',
     content: '[ASYNC DELEGATION BATCH COMPLETE — deleg_abc12345]\nStatus: failed',
   }), true);
+  assert.equal(isDelegationCompletionMarkerMessage({
+    role: 'user',
+    content: ['[ASYNC DELEGATION COMPLETE — deleg_abc12345]', 'Status: completed'].join(String.fromCharCode(13, 10)),
+  }), true);
   assert.equal(isDelegationCompletionMarkerMessage({ role: 'assistant', content: '[ASYNC DELEGATION COMPLETE — deleg_abc12345]' }), false);
   assert.equal(isDelegationCompletionMarkerMessage({ role: 'user', content: 'Mentioning deleg_abc12345 is ordinary user text.' }), false);
   assert.equal(isDelegationCompletionMarkerMessage({ role: 'user', content: '[ASYNC DELEGATION COMPLETE — malformed]' }), false);

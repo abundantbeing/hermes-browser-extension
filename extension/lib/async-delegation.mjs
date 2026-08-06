@@ -109,7 +109,8 @@ export function normalizeDelegationId(value = '') {
 
 export function isDelegationCompletionMarkerMessage(message = {}) {
   if (String(message?.role || '').trim().toLowerCase() !== 'user') return false;
-  const marker = textValue(message?.content).match(
+  const content = textValue(message?.content).replaceAll(String.fromCharCode(13, 10), String.fromCharCode(10));
+  const marker = content.match(
     /^\[ASYNC DELEGATION(?: BATCH)? COMPLETE\s*[—-]\s*(deleg_[A-Za-z0-9_-]{8,128})\](?:\n|$)/i,
   );
   return Boolean(marker && normalizeDelegationId(marker[1]));
@@ -252,7 +253,14 @@ export function createDelegationWatchManager({
   const snapshot = () => normalizeDelegationWatchStore([...watches.values()], { now: now() });
 
   async function save() {
-    await persist(snapshot());
+    try {
+      await persist(snapshot());
+      return true;
+    } catch {
+      // Storage failures are transient. Keep the in-memory watch and poll chain
+      // alive so a later state transition can retry the bounded snapshot.
+      return false;
+    }
   }
 
   function notify(row) {
@@ -394,7 +402,9 @@ export function createDelegationWatchManager({
       if (row.scopeKey !== scopeKey || row.durableSessionId !== durableSessionId || row.state === 'completed' || row.state === 'cancelled') continue;
       cancelTimer(key);
       row.liveSessionId = String(liveSessionId || '').trim();
+      const resumedAfterTimeout = row.state === 'timed_out';
       if (row.state === 'timed_out' || row.state === 'load_failed') row.state = 'pending';
+      if (resumedAfterTimeout) row.dispatchedAt = timestamp;
       row.updatedAt = timestamp;
       row.nextPollAt = 0;
       watches.set(key, row);

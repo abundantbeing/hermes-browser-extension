@@ -40,6 +40,7 @@ const DELEGATION_ID = 'deleg_e2e12345';
 const DELEGATION_ACK = `Delegated background work as ${DELEGATION_ID}. Results will arrive later.`;
 const DELEGATION_RESULT = 'Delayed delegation result appeared without another user turn.';
 const FULLTAB_DELEGATION_PROMPT = 'Dispatch the delayed Hermes Web E2E delegation.';
+const FULLTAB_SESSION_ID = 'hermes-browser-extension-e2e-web';
 const FULLTAB_DELEGATION_ID = 'deleg_web12345';
 const FULLTAB_DELEGATION_ACK = `Delegated Hermes Web background work as ${FULLTAB_DELEGATION_ID}. Results will arrive later.`;
 const FULLTAB_DELEGATION_RESULT = 'Hermes Web rendered its delayed delegation result automatically.';
@@ -98,9 +99,11 @@ async function startMockHermes() {
   let assistCleanupStatus = 204;
   let assistSessionModelRouting = true;
   let delegationDispatched = false;
+  let delegationSessionId = '';
   let delegationCompletionAvailableAt = 0;
   let delegationHistoryPolls = 0;
   let fullTabDelegationDispatched = false;
+  let fullTabDelegationSessionId = '';
   let fullTabDelegationCompletionAvailableAt = 0;
   let fullTabDelegationHistoryPolls = 0;
   const server = createServer(async (req, res) => {
@@ -282,43 +285,48 @@ async function startMockHermes() {
       json(res, 201, session);
       return;
     }
-    if (/^\/api\/sessions\/[^/]+\/messages$/.test(url.pathname) && req.method === 'GET') {
-      if (!delegationDispatched && !fullTabDelegationDispatched) {
-        json(res, 200, { object: 'list', data: [] });
-        return;
-      }
+    const messagesMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/messages$/);
+    if (messagesMatch && req.method === 'GET') {
+      const sessionId = decodeURIComponent(messagesMatch[1]);
       const data = [];
-      if (delegationDispatched) {
+      if (delegationDispatched && sessionId === delegationSessionId) {
         delegationHistoryPolls += 1;
         data.push(
           { role: 'user', content: DELEGATION_PROMPT },
           { role: 'assistant', content: DELEGATION_ACK },
         );
+        if (Date.now() >= delegationCompletionAvailableAt) {
+          data.push(
+            { role: 'user', content: `[ASYNC DELEGATION COMPLETE — ${DELEGATION_ID}]\nStatus: completed` },
+            { role: 'assistant', content: DELEGATION_RESULT },
+          );
+        }
       }
-      if (delegationDispatched && Date.now() >= delegationCompletionAvailableAt) {
-        data.push(
-          { role: 'user', content: `[ASYNC DELEGATION COMPLETE — ${DELEGATION_ID}]\nStatus: completed` },
-          { role: 'assistant', content: DELEGATION_RESULT },
-        );
-      }
-      if (fullTabDelegationDispatched) {
+      if (fullTabDelegationDispatched && sessionId === fullTabDelegationSessionId) {
         fullTabDelegationHistoryPolls += 1;
         data.push(
           { role: 'user', content: FULLTAB_DELEGATION_PROMPT },
           { role: 'assistant', content: FULLTAB_DELEGATION_ACK },
         );
-      }
-      if (fullTabDelegationDispatched && Date.now() >= fullTabDelegationCompletionAvailableAt) {
-        data.push(
-          { role: 'user', content: `[ASYNC DELEGATION BATCH COMPLETE — ${FULLTAB_DELEGATION_ID}]\nStatus: completed` },
-          { role: 'assistant', content: FULLTAB_DELEGATION_RESULT },
-        );
+        if (Date.now() >= fullTabDelegationCompletionAvailableAt) {
+          data.push(
+            { role: 'user', content: `[ASYNC DELEGATION BATCH COMPLETE — ${FULLTAB_DELEGATION_ID}]\nStatus: completed` },
+            { role: 'assistant', content: FULLTAB_DELEGATION_RESULT },
+          );
+        }
       }
       json(res, 200, { object: 'list', data });
       return;
     }
-    if (/^\/api\/sessions\/[^/]+$/.test(url.pathname) && req.method === 'GET') {
-      json(res, 200, sessions[0] || { id: 'hermes-browser-extension-e2e', source: 'hermes_browser_extension' });
+    const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
+    if (sessionMatch && req.method === 'GET') {
+      const sessionId = decodeURIComponent(sessionMatch[1]);
+      json(res, 200, sessions.find((session) => session.id === sessionId) || {
+        id: sessionId,
+        session_id: sessionId,
+        title: sessionId === FULLTAB_SESSION_ID ? 'Loaded extension Hermes Web QA' : 'Hermes Browser Extension',
+        source: 'hermes_browser_extension',
+      });
       return;
     }
     if (/^\/api\/sessions\/[^/]+$/.test(url.pathname) && req.method === 'DELETE') {
@@ -354,15 +362,18 @@ async function startMockHermes() {
     }
     if (/^\/api\/sessions\/[^/]+\/chat\/stream$/.test(url.pathname) && req.method === 'POST') {
       chatRequest = body;
+      const sessionId = decodeURIComponent(url.pathname.split('/')[3] || '');
       const message = String(body?.message || '');
       const delegated = message.includes(DELEGATION_PROMPT);
       const fullTabDelegated = message.includes(FULLTAB_DELEGATION_PROMPT);
       if (delegated) {
         delegationDispatched = true;
+        delegationSessionId = sessionId;
         delegationCompletionAvailableAt = Date.now() + 1_500;
       }
       if (fullTabDelegated) {
         fullTabDelegationDispatched = true;
+        fullTabDelegationSessionId = sessionId;
         fullTabDelegationCompletionAvailableAt = Date.now() + 1_500;
       }
       const dispatch = {
@@ -430,6 +441,11 @@ async function startMockHermes() {
     getChatRequest: () => chatRequest,
     getDelegationHistoryPolls: () => delegationHistoryPolls,
     getFullTabDelegationHistoryPolls: () => fullTabDelegationHistoryPolls,
+    addSession: (session) => {
+      const id = String(session?.id || session?.session_id || '').trim();
+      if (!id || sessions.some((candidate) => candidate.id === id)) return;
+      sessions.push({ id, session_id: id, title: session?.title || id, source: session?.source || 'hermes_browser_extension' });
+    },
     setAssistCreateAcknowledgement: (mode = 'direct') => { assistCreateAcknowledgement = mode; },
     setAssistChatAcknowledgement: (mode = 'direct') => { assistChatAcknowledgement = mode; },
     setAssistCleanupStatus: (status = 204) => { assistCleanupStatus = Number(status); },
@@ -875,14 +891,19 @@ async function main() {
     assert.deepEqual(wakeHandoff, []);
     assert.equal(wakeSessionAfter.hermesBrowserSettings.sessionId, storedAfterSend.hermesBrowserSettings.sessionId);
 
+    const recoveredTasks = [
+      { id: 'recover', content: 'Recover last-night Browser feature contract', status: 'completed' },
+      { id: 'wire', content: 'Wire branded Assist and background return', status: 'completed' },
+      { id: 'verify', content: 'Verify the real loaded extension', status: 'in_progress' },
+    ];
     const taskPayload = {
       [storedAfterSend.hermesBrowserSettings.sessionId]: {
         updatedAt: Date.now(),
-        tasks: [
-          { id: 'recover', content: 'Recover last-night Browser feature contract', status: 'completed' },
-          { id: 'wire', content: 'Wire branded Assist and background return', status: 'completed' },
-          { id: 'verify', content: 'Verify the real loaded extension', status: 'in_progress' },
-        ],
+        tasks: recoveredTasks,
+      },
+      [FULLTAB_SESSION_ID]: {
+        updatedAt: Date.now(),
+        tasks: recoveredTasks,
       },
     };
     await setup.evaluate(`chrome.storage.local.set({hermesBrowserTaskStacks:${JSON.stringify(taskPayload)}})`);
@@ -898,9 +919,10 @@ async function main() {
     await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
     await saveScreenshot(panel, TASK_PANEL_SCREENSHOT);
 
+    mock.addSession({ id: FULLTAB_SESSION_ID, title: 'Loaded extension Hermes Web QA' });
     await setup.evaluate(`(async () => {
       const stored = await chrome.storage.local.get('hermesBrowserSettings');
-      await chrome.storage.local.set({hermesBrowserSettings:{...stored.hermesBrowserSettings,webSessionId:${JSON.stringify(storedAfterSend.hermesBrowserSettings.sessionId)},webSessionTitle:'Loaded extension QA'}});
+      await chrome.storage.local.set({hermesBrowserSettings:{...stored.hermesBrowserSettings,webSessionId:${JSON.stringify(FULLTAB_SESSION_ID)},webSessionTitle:'Loaded extension QA'}});
     })()`);
     const webTarget = await fetchJson(
       `${devtoolsBase}/json/new?${encodeURIComponent(`chrome-extension://${extensionId}/app.html`)}`,
@@ -942,6 +964,10 @@ async function main() {
     assert.equal(renderedFullTabDelegationResults, 1, 'Hermes Web must render one canonical completion.');
     const renderedFullTabDelegationMarkers = await web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).filter((node) => node.textContent.includes('ASYNC DELEGATION')).length`);
     assert.equal(renderedFullTabDelegationMarkers, 0, 'Hermes Web must hide internal completion markers.');
+    const fullTabContainsPanelResult = await web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(DELEGATION_RESULT)}))`);
+    assert.equal(fullTabContainsPanelResult, false, 'Hermes Web session must not contain the side panel delegation result.');
+    const panelContainsFullTabResult = await panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)}))`);
+    assert.equal(panelContainsFullTabResult, false, 'Side panel session must not contain the Hermes Web delegation result.');
     await saveScreenshot(web, DELEGATION_WEB_SCREENSHOT);
     if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
       const nousLightSurfaces = await waitFor(() => web.evaluate(`(() => {

@@ -157,6 +157,38 @@ test('timeout is distinct from completion and never calls completion renderer', 
   assert.equal(harness.completed.length, 0);
 });
 
+test('reactivating a timed-out watch grants a fresh completion probe budget', async () => {
+  const harness = createHarness();
+  await harness.manager.start(watch());
+  harness.advance(61_000);
+  await harness.manager.reconcile(watch());
+  assert.equal(harness.manager.snapshot()[0].state, 'timed_out');
+
+  harness.setLoadHistory(async () => ({ messages: completeHistory() }));
+  await harness.manager.activate({ scopeKey: SCOPE, durableSessionId: 'session-a', liveSessionId: '' });
+  await harness.manager.reconcile(watch());
+
+  assert.equal(harness.completed.length, 1);
+  assert.equal(harness.manager.snapshot()[0].state, 'completed');
+});
+
+test('transient persistence rejection never stops scheduling or startup hydration', async () => {
+  let persistCalls = 0;
+  const harness = createHarness({
+    persist: async () => {
+      persistCalls += 1;
+      if (persistCalls <= 2) throw new Error('storage temporarily unavailable');
+    },
+  });
+
+  await assert.doesNotReject(() => harness.manager.start(watch()));
+  assert.ok(harness.scheduled.size >= 1, 'start must schedule despite failed persistence');
+  await assert.doesNotReject(() => harness.manager.hydrate([
+    { ...watch(), state: 'pending', dispatchedAt: 999_000, updatedAt: 999_000 },
+  ]));
+  assert.ok(harness.scheduled.size >= 1, 'hydrate must preserve an active schedule despite failed persistence');
+});
+
 test('hydrate restores pending watches and drops invalid rows', async () => {
   const harness = createHarness();
   await harness.manager.hydrate([
