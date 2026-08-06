@@ -248,6 +248,7 @@ import {
   apiCredentialSatisfied,
   automaticApiPairingAllowed,
   connectionModePreviewUrl,
+  connectionSettingsAfterTokenClear,
   legacyGatewayModeForConnection,
   migrateConnectionSettings,
   normalizeConnectionMode,
@@ -6322,14 +6323,25 @@ async function saveSettingsFromForm() {
 }
 
 async function clearStoredToken() {
-  settings = { ...settings, apiKey: '', tokenSource: '', lastConnectionTestedAt: 0 };
+  const previousTransport = migrateConnectionSettings(settings).connectionTransport;
+  const cleared = connectionSettingsAfterTokenClear(settings);
+  settings = { ...settings, ...cleared };
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   if (els.apiKeyInput) els.apiKeyInput.value = '';
   sessionRoutesAvailable = null;
-  markConnectionProbe('unconfigured', 'Token cleared by user.');
+  const dashboardFallback = settings.connectionTransport === CONNECTION_TRANSPORTS.REMOTE_DASHBOARD
+    && previousTransport !== CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
+  markConnectionProbe(dashboardFallback ? 'connecting' : 'unconfigured', 'Token cleared by user.');
   setGatewayCapabilities(normalizeGatewayCapabilities(null, { healthOk: false, hasApiKey: false, warning: 'Token cleared; reconnect to refresh capabilities.' }));
   syncSettingsForm();
-  setStatus('warn', 'Hermes token cleared', 'Paste a Gateway API key or reconnect when you are ready.');
+  setStatus(
+    dashboardFallback ? 'ok' : 'warn',
+    'Hermes token cleared',
+    dashboardFallback
+      ? 'Remote dashboard WebSocket mode selected. Keep the dashboard open and signed in, then reconnect.'
+      : 'Paste a Gateway API key or reconnect when you are ready.',
+  );
+  if (dashboardFallback) await runPanelConnectionReadiness();
 }
 
 async function activeTab() {

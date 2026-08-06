@@ -2247,6 +2247,10 @@
     "message": "Hermes-token gewist",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "WebSocket-modus voor extern dashboard geselecteerd. Houd het dashboard open en ingelogd en verbind opnieuw.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Spraakdictatie",
     "description": "Runtime interface message ui.hermes.voice.dictation"

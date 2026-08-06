@@ -2247,6 +2247,10 @@
     "message": "Hermes token dihapus",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Mode WebSocket dasbor jarak jauh dipilih. Biarkan dasbor terbuka dan tetap masuk, lalu sambungkan kembali.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Dikte Suara",
     "description": "Runtime interface message ui.hermes.voice.dictation"

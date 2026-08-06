@@ -2247,6 +2247,10 @@
     "message": "Token Hermes cancellato",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Modalità WebSocket del dashboard remoto selezionata. Tieni il dashboard aperto e connesso, poi riconnettiti.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Dettatura vocale",
     "description": "Runtime interface message ui.hermes.voice.dictation"

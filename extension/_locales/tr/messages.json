@@ -2247,6 +2247,10 @@
     "message": "Hermes belirteci temizlendi",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Uzak pano WebSocket modu seçildi. Panoyu açık ve oturum açmış tutun, ardından yeniden bağlanın.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Sesli Dikte",
     "description": "Runtime interface message ui.hermes.voice.dictation"

@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes 스킬 동기화됨",
   "ui.hermes.task.status": "Hermes 작업 상태",
   "ui.hermes.token.cleared": "Hermes 토큰 지워짐",
+  "ui.hermes.token.cleared.dashboard.fallback": "원격 대시보드 WebSocket 모드를 선택했습니다. 대시보드를 열어 두고 로그인한 상태에서 다시 연결하세요.",
   "ui.hermes.voice.dictation": "Hermes 음성 받아쓰기",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "HERMES WEB",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "Hermes 측면 패널로 전송된 기록:\n\n{transcript}",
   "voice.transcription_failed": "음성 녹음에 실패했습니다.\n\n{error}",
   "wake.turn_off": "호출어 끄기",
-  "wake.turn_on": "호출어 켜기",
+  "wake.turn_on": "호출어 켜기"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

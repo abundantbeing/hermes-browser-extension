@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Các kỹ năng Hermes đã được đồng bộ hóa",
   "ui.hermes.task.status": "Trạng thái nhiệm vụ Hermes",
   "ui.hermes.token.cleared": "Đã xóa mã thông báo Hermes",
+  "ui.hermes.token.cleared.dashboard.fallback": "Đã chọn chế độ WebSocket của bảng điều khiển từ xa. Giữ bảng điều khiển mở và đăng nhập, sau đó kết nối lại.",
   "ui.hermes.voice.dictation": "Hermes Voice Dictation",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "WEB HERMES",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "Bản ghi được gửi tới bảng điều khiển bên Hermes:\n\n{transcript}",
   "voice.transcription_failed": "Phiên âm giọng nói không thành công.\n\n{error}",
   "wake.turn_off": "Tắt từ đánh thức",
-  "wake.turn_on": "Bật từ đánh thức",
+  "wake.turn_on": "Bật từ đánh thức"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

@@ -2247,6 +2247,10 @@
     "message": "Hermes टोकन साफ़ किया गया",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "रिमोट डैशबोर्ड WebSocket मोड चुना गया। डैशबोर्ड को खुला और साइन-इन रखें, फिर दोबारा कनेक्ट करें।",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes वॉयस डिक्टेशन",
     "description": "Runtime interface message ui.hermes.voice.dictation"

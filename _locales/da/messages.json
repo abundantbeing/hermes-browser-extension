@@ -2247,6 +2247,10 @@
     "message": "Hermes token ryddet",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Fjern-dashboardets WebSocket-tilstand valgt. Hold dashboardet åbent og logget ind, og opret forbindelse igen.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Voice Dictation",
     "description": "Runtime interface message ui.hermes.voice.dictation"

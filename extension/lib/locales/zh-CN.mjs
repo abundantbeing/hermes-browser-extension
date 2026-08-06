@@ -527,6 +527,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes 技能已同步",
   "ui.hermes.task.status": "Hermes 任务状态",
   "ui.hermes.token.cleared": "Hermes 令牌已清除",
+  "ui.hermes.token.cleared.dashboard.fallback": "已选择远程面板 WebSocket 模式。请保持面板打开并已登录，然后重新连接。",
   "ui.hermes.voice.dictation": "Hermes 语音输入",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "HERMES WEB",

@@ -131,6 +131,19 @@ export function legacyGatewayModeForConnection(input = {}) {
     : 'remote-dashboard';
 }
 
+export function connectionSettingsAfterTokenClear(input = {}) {
+  const cleared = migrateConnectionSettings({
+    ...input,
+    apiKey: '',
+    tokenSource: '',
+    lastConnectionTestedAt: 0,
+  });
+  if (cleared.connectionMode === 'remote' && cleared.connectionTransport === CONNECTION_TRANSPORTS.REMOTE_API) {
+    cleared.connectionTransport = CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
+  }
+  return { ...cleared, gatewayMode: legacyGatewayModeForConnection(cleared) };
+}
+
 export function resolvePhaseATransport({ connectionMode, currentTransport, apiKey = '' } = {}) {
   const mode = normalizeConnectionMode(connectionMode);
   if (mode === 'local') return CONNECTION_TRANSPORTS.LOCAL_API;

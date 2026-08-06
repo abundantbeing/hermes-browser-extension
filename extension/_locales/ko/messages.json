@@ -2247,6 +2247,10 @@
     "message": "Hermes 토큰 지워짐",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "원격 대시보드 WebSocket 모드를 선택했습니다. 대시보드를 열어 두고 로그인한 상태에서 다시 연결하세요.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes 음성 받아쓰기",
     "description": "Runtime interface message ui.hermes.voice.dictation"

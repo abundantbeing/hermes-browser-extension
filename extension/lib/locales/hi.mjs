@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes कौशल समन्वयित",
   "ui.hermes.task.status": "Hermes कार्य स्थिति",
   "ui.hermes.token.cleared": "Hermes टोकन साफ़ किया गया",
+  "ui.hermes.token.cleared.dashboard.fallback": "रिमोट डैशबोर्ड WebSocket मोड चुना गया। डैशबोर्ड को खुला और साइन-इन रखें, फिर दोबारा कनेक्ट करें।",
   "ui.hermes.voice.dictation": "Hermes वॉयस डिक्टेशन",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "हेमीज़ वेब",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "प्रतिलेख Hermes साइड पैनल पर भेजा गया:\n\n{transcript}",
   "voice.transcription_failed": "ध्वनि प्रतिलेखन विफल रहा.\n\n{error}",
   "wake.turn_off": "वेक वर्ड बंद करें",
-  "wake.turn_on": "वेक वर्ड चालू करें",
+  "wake.turn_on": "वेक वर्ड चालू करें"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

@@ -2247,6 +2247,10 @@
     "message": "Jeton Hermes effacé",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Mode WebSocket du tableau de bord distant sélectionné. Gardez le tableau de bord ouvert et connecté, puis reconnectez-vous.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Dictée vocale Hermes",
     "description": "Runtime interface message ui.hermes.voice.dictation"

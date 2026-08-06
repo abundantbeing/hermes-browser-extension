@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes habilidades sincronizadas",
   "ui.hermes.task.status": "Hermes status da tarefa",
   "ui.hermes.token.cleared": "Token Hermes apagado",
+  "ui.hermes.token.cleared.dashboard.fallback": "Modo WebSocket do painel remoto selecionado. Mantenha o painel aberto e conectado, e reconecte.",
   "ui.hermes.voice.dictation": "Hermes Voice Dictation",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "HERMES WEB",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "Transcrição enviada para o painel lateral Hermes:\n\n{transcript}",
   "voice.transcription_failed": "A transcrição de voz falhou.\n\n{error}",
   "wake.turn_off": "Desativar palavra de ativação",
-  "wake.turn_on": "Ativar palavra de ativação",
+  "wake.turn_on": "Ativar palavra de ativação"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

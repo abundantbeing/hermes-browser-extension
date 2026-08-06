@@ -2247,6 +2247,10 @@
     "message": "Hermes 權杖已清除",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "已選擇遠端面板 WebSocket 模式。請保持面板開啟並已登入，然後重新連線。",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes 語音聽寫",
     "description": "Runtime interface message ui.hermes.voice.dictation"

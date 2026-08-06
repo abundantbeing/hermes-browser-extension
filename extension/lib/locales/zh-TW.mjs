@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes 技能已同步",
   "ui.hermes.task.status": "Hermes 任務狀態",
   "ui.hermes.token.cleared": "Hermes 權杖已清除",
+  "ui.hermes.token.cleared.dashboard.fallback": "已選擇遠端面板 WebSocket 模式。請保持面板開啟並已登入，然後重新連線。",
   "ui.hermes.voice.dictation": "Hermes 語音聽寫",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "HERMES WEB",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "已將轉錄文字傳送至 Hermes 側邊面板：\n\n{transcript}",
   "voice.transcription_failed": "語音轉錄失敗。\n\n{error}",
   "wake.turn_off": "關閉喚醒詞",
-  "wake.turn_on": "開啟喚醒詞",
+  "wake.turn_on": "開啟喚醒詞"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

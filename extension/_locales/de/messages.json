@@ -2247,6 +2247,10 @@
     "message": "Hermes-Token freigegeben",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Remote-Dashboard-WebSocket-Modus ausgewählt. Lass das Dashboard geöffnet und angemeldet und verbinde dann neu.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes-Sprachdiktat",
     "description": "Runtime interface message ui.hermes.voice.dictation"

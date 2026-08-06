@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes スキルを同期しました",
   "ui.hermes.task.status": "Hermes タスクの状態",
   "ui.hermes.token.cleared": "Hermes トークンを消去しました",
+  "ui.hermes.token.cleared.dashboard.fallback": "リモートダッシュボードの WebSocket モードを選択しました。ダッシュボードを開いてサインインしたまま、再接続してください。",
   "ui.hermes.voice.dictation": "Hermes 音声入力",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "HERMES WEB",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "Hermes サイドパネルに送信されたトランスクリプト:\n\n{transcript}",
   "voice.transcription_failed": "音声の転写に失敗しました。\n\n{error}",
   "wake.turn_off": "ウェイクワードをオフにする",
-  "wake.turn_on": "ウェイクワードをオンにする",
+  "wake.turn_on": "ウェイクワードをオンにする"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

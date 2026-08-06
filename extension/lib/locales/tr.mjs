@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes becerileri senkronize edildi",
   "ui.hermes.task.status": "Hermes görev durumu",
   "ui.hermes.token.cleared": "Hermes belirteci temizlendi",
+  "ui.hermes.token.cleared.dashboard.fallback": "Uzak pano WebSocket modu seçildi. Panoyu açık ve oturum açmış tutun, ardından yeniden bağlanın.",
   "ui.hermes.voice.dictation": "Hermes Sesli Dikte",
   "ui.hermes.web": "Hermes Ağı",
   "ui.hermes.web.3336aa2f": "HERMES WEB",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "Hermes yan paneline gönderilen metin:\n\n{transcript}",
   "voice.transcription_failed": "Sesin transkripsiyonu başarısız oldu.\n\n{error}",
   "wake.turn_off": "Uyandırma kelimesini kapat",
-  "wake.turn_on": "Uyandırma kelimesini aç",
+  "wake.turn_on": "Uyandırma kelimesini aç"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

@@ -2247,6 +2247,10 @@
     "message": "Token Hermes apagado",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Modo WebSocket do painel remoto selecionado. Mantenha o painel aberto e conectado, e reconecte.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Voice Dictation",
     "description": "Runtime interface message ui.hermes.voice.dictation"

@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes навички синхронізовано",
   "ui.hermes.task.status": "Статус завдання Hermes",
   "ui.hermes.token.cleared": "Маркер Hermes очищено",
+  "ui.hermes.token.cleared.dashboard.fallback": "Вибрано режим WebSocket віддаленої панелі. Тримайте панель відкритою та авторизованою, потім підключіться знову.",
   "ui.hermes.voice.dictation": "Hermes Голосовий диктант",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "HERMES WEB",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "Розшифровку надіслано на бічну панель Hermes:\n\n{transcript}",
   "voice.transcription_failed": "Помилка транскрипції голосу.\n\n{error}",
   "wake.turn_off": "Вимкнути слово пробудження",
-  "wake.turn_on": "Увімкніть слово пробудження",
+  "wake.turn_on": "Увімкніть слово пробудження"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

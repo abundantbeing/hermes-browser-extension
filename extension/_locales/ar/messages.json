@@ -2247,6 +2247,10 @@
     "message": "تم مسح رمز Hermes",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "تم اختيار وضع WebSocket للوحة التحكم عن بُعد. أبقِ لوحة التحكم مفتوحة ومسجّلة الدخول، ثم أعد الاتصال.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Voice Dictation",
     "description": "Runtime interface message ui.hermes.voice.dictation"

@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Hermes skills synced",
   "ui.hermes.task.status": "Hermes task status",
   "ui.hermes.token.cleared": "Hermes token cleared",
+  "ui.hermes.token.cleared.dashboard.fallback": "Remote dashboard WebSocket mode selected. Keep the dashboard open and signed in, then reconnect.",
   "ui.hermes.voice.dictation": "Hermes Voice Dictation",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "HERMES WEB",

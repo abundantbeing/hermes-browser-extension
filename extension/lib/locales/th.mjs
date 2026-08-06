@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "ซิงค์ทักษะ Hermes แล้ว",
   "ui.hermes.task.status": "สถานะงาน Hermes",
   "ui.hermes.token.cleared": "ล้างโทเค็น Hermes แล้ว",
+  "ui.hermes.token.cleared.dashboard.fallback": "เลือกโหมด WebSocket ของแดชบอร์ดระยะไกลแล้ว เปิดแดชบอร์ดและลงชื่อเข้าใช้ค้างไว้ แล้วเชื่อมต่อใหม่",
   "ui.hermes.voice.dictation": "Hermes Voice Dictation",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "เว็บ HERMES",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "การถอดเสียงส่งไปที่แผงด้านข้าง Hermes:\n\n{transcript}",
   "voice.transcription_failed": "การถอดเสียงเป็นคำล้มเหลว\n\n{error}",
   "wake.turn_off": "ปิดคำปลุก",
-  "wake.turn_on": "เปิดคำปลุก",
+  "wake.turn_on": "เปิดคำปลุก"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

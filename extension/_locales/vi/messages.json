@@ -2247,6 +2247,10 @@
     "message": "Đã xóa mã thông báo Hermes",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Đã chọn chế độ WebSocket của bảng điều khiển từ xa. Giữ bảng điều khiển mở và đăng nhập, sau đó kết nối lại.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Voice Dictation",
     "description": "Runtime interface message ui.hermes.voice.dictation"

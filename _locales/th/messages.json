@@ -2247,6 +2247,10 @@
     "message": "ล้างโทเค็น Hermes แล้ว",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "เลือกโหมด WebSocket ของแดชบอร์ดระยะไกลแล้ว เปิดแดชบอร์ดและลงชื่อเข้าใช้ค้างไว้ แล้วเชื่อมต่อใหม่",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Voice Dictation",
     "description": "Runtime interface message ui.hermes.voice.dictation"

@@ -528,6 +528,7 @@ export default Object.freeze({
   "ui.hermes.skills.synced": "Keterampilan Hermes disinkronkan",
   "ui.hermes.task.status": "Hermes status tugas",
   "ui.hermes.token.cleared": "Hermes token dihapus",
+  "ui.hermes.token.cleared.dashboard.fallback": "Mode WebSocket dasbor jarak jauh dipilih. Biarkan dasbor terbuka dan tetap masuk, lalu sambungkan kembali.",
   "ui.hermes.voice.dictation": "Hermes Dikte Suara",
   "ui.hermes.web": "Hermes Web",
   "ui.hermes.web.3336aa2f": "WEB HERMES",
@@ -1089,7 +1090,8 @@ export default Object.freeze({
   "voice.transcript_sent": "Transkrip dikirim ke panel samping Hermes:\n\n{transcript}",
   "voice.transcription_failed": "Transkripsi suara gagal.\n\n{error}",
   "wake.turn_off": "Matikan kata bangun",
-  "wake.turn_on": "Aktifkan kata bangun",
+  "wake.turn_on": "Aktifkan kata bangun"
+,
   "ui.context.menu.editor.opening.behavior": "Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.",
   "ui.context.menu.editor.add": "Add action",
   "ui.context.menu.editor.restore": "Restore defaults",

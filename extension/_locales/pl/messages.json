@@ -2247,6 +2247,10 @@
     "message": "Token Hermes został wyczyszczony",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Wybrano tryb WebSocket zdalnego pulpitu. Pozostaw pulpit otwarty i zalogowany, a następnie połącz ponownie.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Dyktowanie głosu",
     "description": "Runtime interface message ui.hermes.voice.dictation"

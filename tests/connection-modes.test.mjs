@@ -9,6 +9,7 @@ import {
   apiCredentialSatisfied,
   automaticApiPairingAllowed,
   connectionModePreviewUrl,
+  connectionSettingsAfterTokenClear,
   isLoopbackGatewayUrl,
   legacyGatewayModeForConnection,
   migrateConnectionSettings,
@@ -175,4 +176,46 @@ test('Cloud sanitization rejects loopback, insecure, and credential-bearing orig
   assert.equal(sanitizeGatewayUrlForConnectionMode({ connectionMode: 'cloud', gatewayUrl: 'http://agent.example.test' }), '');
   assert.equal(sanitizeGatewayUrlForConnectionMode({ connectionMode: 'cloud', gatewayUrl: 'https://user@agent.example.test' }), '');
   assert.equal(sanitizeGatewayUrlForConnectionMode({ connectionMode: 'cloud', gatewayUrl: 'https://agent.example.test/chat' }), 'https://agent.example.test');
+});
+
+test('clearing an API token falls back to ticket-based dashboard transport for remote connections', () => {
+  const remoteApi = connectionSettingsAfterTokenClear({
+    connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
+    connectionMode: 'remote',
+    connectionTransport: CONNECTION_TRANSPORTS.REMOTE_API,
+    apiKey: 'remote-api-token',
+  });
+  assert.equal(remoteApi.connectionMode, 'remote');
+  assert.equal(remoteApi.connectionTransport, CONNECTION_TRANSPORTS.REMOTE_DASHBOARD);
+  assert.equal(remoteApi.apiKey, '');
+  assert.equal(remoteApi.gatewayMode, 'remote-dashboard');
+
+  const remoteDashboard = connectionSettingsAfterTokenClear({
+    connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
+    connectionMode: 'remote',
+    connectionTransport: CONNECTION_TRANSPORTS.REMOTE_DASHBOARD,
+    apiKey: 'remote-dashboard-token',
+  });
+  assert.equal(remoteDashboard.connectionTransport, CONNECTION_TRANSPORTS.REMOTE_DASHBOARD);
+  assert.equal(remoteDashboard.apiKey, '');
+
+  const local = connectionSettingsAfterTokenClear({
+    connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
+    connectionMode: 'local',
+    connectionTransport: CONNECTION_TRANSPORTS.LOCAL_API,
+    apiKey: 'local-api-token',
+  });
+  assert.equal(local.connectionTransport, CONNECTION_TRANSPORTS.LOCAL_API);
+  assert.equal(local.gatewayMode, 'local-api');
+
+  const legacyRemoteApi = connectionSettingsAfterTokenClear({ gatewayMode: 'remote-api', apiKey: 'legacy-remote-token' });
+  assert.equal(legacyRemoteApi.connectionMode, 'remote');
+  assert.equal(legacyRemoteApi.connectionTransport, CONNECTION_TRANSPORTS.REMOTE_DASHBOARD);
+  assert.equal(legacyRemoteApi.gatewayMode, 'remote-dashboard');
+});
+
+test('clearStoredToken applies the post-clear transport fallback and re-runs readiness on transport change', () => {
+  const clearBody = sidepanelSource.match(/async function clearStoredToken\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(clearBody, /connectionSettingsAfterTokenClear\(settings\)/);
+  assert.match(clearBody, /runPanelConnectionReadiness\(\)/);
 });

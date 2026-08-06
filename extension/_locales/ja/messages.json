@@ -2247,6 +2247,10 @@
     "message": "Hermes トークンを消去しました",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "リモートダッシュボードの WebSocket モードを選択しました。ダッシュボードを開いてサインインしたまま、再接続してください。",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes 音声入力",
     "description": "Runtime interface message ui.hermes.voice.dictation"

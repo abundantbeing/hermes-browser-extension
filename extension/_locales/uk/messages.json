@@ -2247,6 +2247,10 @@
     "message": "Маркер Hermes очищено",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "Вибрано режим WebSocket віддаленої панелі. Тримайте панель відкритою та авторизованою, потім підключіться знову.",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes Голосовий диктант",
     "description": "Runtime interface message ui.hermes.voice.dictation"

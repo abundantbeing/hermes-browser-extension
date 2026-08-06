@@ -2247,6 +2247,10 @@
     "message": "Hermes 令牌已清除",
     "description": "Runtime interface message ui.hermes.token.cleared"
   },
+  "runtime_ui_hermes_token_cleared_dashboard_fallback": {
+    "message": "已选择远程面板 WebSocket 模式。请保持面板打开并已登录，然后重新连接。",
+    "description": "Runtime interface message ui.hermes.token.cleared.dashboard.fallback"
+  },
   "runtime_ui_hermes_voice_dictation": {
     "message": "Hermes 语音输入",
     "description": "Runtime interface message ui.hermes.voice.dictation"
