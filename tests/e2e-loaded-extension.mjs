@@ -217,7 +217,7 @@ async function startMockHermes() {
     if (url.pathname === '/v1/models') {
       json(res, 200, { object: 'list', data: [
         { id: 'e2e-gateway', object: 'model', owned_by: 'hermes', root: 'e2e-gateway', parent: null },
-        { id: 'fast-e2e', object: 'model', owned_by: 'configured', root: 'fast-e2e', parent: 'e2e-gateway' },
+        { id: 'fast-e2e', object: 'model', owned_by: 'hermes', root: 'e2e/test-model', parent: 'e2e-gateway' },
         { id: 'e2e/test-model', provider: 'e2e', context_length: 32_000 },
         { id: 'e2e/alternate-model', provider: 'e2e', context_length: 32_000 },
         { id: 'alternate/provider-model', provider: 'alternate', context_length: 64_000 },

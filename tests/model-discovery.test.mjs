@@ -183,8 +183,8 @@ test('gateway virtual model merge keeps the live default, avoids duplicate route
     virtualModels: gatewayVirtualModelRows({
       data: [
         { id: 'browser-primary', object: 'model', owned_by: 'hermes', parent: null },
-        { id: 'deepseek-v4-pro', object: 'model', owned_by: 'configured', parent: 'browser-primary' },
-        { id: 'fast-route', object: 'model', owned_by: 'configured', parent: 'browser-primary' },
+        { id: 'deepseek-v4-pro', object: 'model', owned_by: 'hermes', parent: 'browser-primary' },
+        { id: 'fast-route', object: 'model', owned_by: 'hermes', parent: 'browser-primary' },
       ],
     }),
   });
@@ -205,6 +205,8 @@ test('both Browser surfaces merge only live gateway aliases into provider-aware 
     assert.match(source, /mergeVirtualModelRows\(\{/);
     assert.match(source, /gatewayDefault:/);
   }
+  const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(sidepanelSource, /if\s*\(!isRemoteWsMode\(\)\s*&&\s*registrySource !== 'gateway'\)/);
   const discoverySource = readFileSync(new URL('../extension/lib/model-discovery.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(discoverySource, /provider:\s*['"]hermes['"]/);
 });
