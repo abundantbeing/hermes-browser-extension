@@ -17,6 +17,8 @@ const ASSIST_MODE = String(process.env.ASSIST_MODE || 'dark');
 const ASSIST_SCREENSHOT_SUFFIX = ASSIST_THEME === 'mono' && ASSIST_MODE === 'dark' ? '' : `-${ASSIST_THEME}-${ASSIST_MODE}`;
 const TASK_PANEL_SCREENSHOT = path.join(QA_DIR, `feature-recovery-task-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const TASK_WEB_SCREENSHOT = path.join(QA_DIR, `feature-recovery-task-web${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const DELEGATION_PANEL_SCREENSHOT = path.join(QA_DIR, `delegation-completion-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const DELEGATION_WEB_SCREENSHOT = path.join(QA_DIR, `delegation-completion-web${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const INLINE_ROUTE_SCREENSHOT = path.join(QA_DIR, `feature-recovery-inline-routing${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const INLINE_RESULT_SCREENSHOT = path.join(QA_DIR, `feature-recovery-inline-result${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const INLINE_OPEN_SESSION_SCREENSHOT = path.join(QA_DIR, `feature-recovery-inline-open-session${ASSIST_SCREENSHOT_SUFFIX}.png`);
@@ -33,6 +35,14 @@ const GPT56_CONTEXT_PICKER_SCREENSHOT = path.join(QA_DIR, `gpt56-context-picker$
 const TEST_TOKEN = 'e2e-browser-token-not-a-secret';
 const TEST_PROMPT = 'Verify the loaded Hermes Browser round trip.';
 const TEST_REPLY = 'Loaded extension round trip confirmed.';
+const DELEGATION_PROMPT = 'Dispatch the delayed E2E delegation.';
+const DELEGATION_ID = 'deleg_e2e12345';
+const DELEGATION_ACK = `Delegated background work as ${DELEGATION_ID}. Results will arrive later.`;
+const DELEGATION_RESULT = 'Delayed delegation result appeared without another user turn.';
+const FULLTAB_DELEGATION_PROMPT = 'Dispatch the delayed Hermes Web E2E delegation.';
+const FULLTAB_DELEGATION_ID = 'deleg_web12345';
+const FULLTAB_DELEGATION_ACK = `Delegated Hermes Web background work as ${FULLTAB_DELEGATION_ID}. Results will arrive later.`;
+const FULLTAB_DELEGATION_RESULT = 'Hermes Web rendered its delayed delegation result automatically.';
 const INLINE_REPLY = 'Clearer, tighter, still your voice.';
 
 function chromeExecutable() {
@@ -87,6 +97,12 @@ async function startMockHermes() {
   let assistChatAcknowledgement = 'direct';
   let assistCleanupStatus = 204;
   let assistSessionModelRouting = true;
+  let delegationDispatched = false;
+  let delegationCompletionAvailableAt = 0;
+  let delegationHistoryPolls = 0;
+  let fullTabDelegationDispatched = false;
+  let fullTabDelegationCompletionAvailableAt = 0;
+  let fullTabDelegationHistoryPolls = 0;
   const server = createServer(async (req, res) => {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
     const body = await requestBody(req);
@@ -267,7 +283,38 @@ async function startMockHermes() {
       return;
     }
     if (/^\/api\/sessions\/[^/]+\/messages$/.test(url.pathname) && req.method === 'GET') {
-      json(res, 200, { object: 'list', data: [] });
+      if (!delegationDispatched && !fullTabDelegationDispatched) {
+        json(res, 200, { object: 'list', data: [] });
+        return;
+      }
+      const data = [];
+      if (delegationDispatched) {
+        delegationHistoryPolls += 1;
+        data.push(
+          { role: 'user', content: DELEGATION_PROMPT },
+          { role: 'assistant', content: DELEGATION_ACK },
+        );
+      }
+      if (delegationDispatched && Date.now() >= delegationCompletionAvailableAt) {
+        data.push(
+          { role: 'user', content: `[ASYNC DELEGATION COMPLETE — ${DELEGATION_ID}]\nStatus: completed` },
+          { role: 'assistant', content: DELEGATION_RESULT },
+        );
+      }
+      if (fullTabDelegationDispatched) {
+        fullTabDelegationHistoryPolls += 1;
+        data.push(
+          { role: 'user', content: FULLTAB_DELEGATION_PROMPT },
+          { role: 'assistant', content: FULLTAB_DELEGATION_ACK },
+        );
+      }
+      if (fullTabDelegationDispatched && Date.now() >= fullTabDelegationCompletionAvailableAt) {
+        data.push(
+          { role: 'user', content: `[ASYNC DELEGATION BATCH COMPLETE — ${FULLTAB_DELEGATION_ID}]\nStatus: completed` },
+          { role: 'assistant', content: FULLTAB_DELEGATION_RESULT },
+        );
+      }
+      json(res, 200, { object: 'list', data });
       return;
     }
     if (/^\/api\/sessions\/[^/]+$/.test(url.pathname) && req.method === 'GET') {
@@ -307,11 +354,39 @@ async function startMockHermes() {
     }
     if (/^\/api\/sessions\/[^/]+\/chat\/stream$/.test(url.pathname) && req.method === 'POST') {
       chatRequest = body;
+      const message = String(body?.message || '');
+      const delegated = message.includes(DELEGATION_PROMPT);
+      const fullTabDelegated = message.includes(FULLTAB_DELEGATION_PROMPT);
+      if (delegated) {
+        delegationDispatched = true;
+        delegationCompletionAvailableAt = Date.now() + 1_500;
+      }
+      if (fullTabDelegated) {
+        fullTabDelegationDispatched = true;
+        fullTabDelegationCompletionAvailableAt = Date.now() + 1_500;
+      }
+      const dispatch = {
+        status: 'dispatched',
+        mode: 'background',
+        count: 1,
+        delegation_id: fullTabDelegated ? FULLTAB_DELEGATION_ID : DELEGATION_ID,
+      };
+      const reply = fullTabDelegated ? FULLTAB_DELEGATION_ACK : delegated ? DELEGATION_ACK : TEST_REPLY;
+      const hasDelegation = delegated || fullTabDelegated;
       const blocks = [
         ['run.started', { run_id: 'run-e2e' }],
-        ['assistant.delta', { delta: TEST_REPLY }],
-        ['assistant.completed', { content: TEST_REPLY }],
-        ['run.completed', { run_id: 'run-e2e', status: 'completed', final_response: TEST_REPLY }],
+        ...(hasDelegation ? [['tool.finished', { tool_name: 'delegate_task', status: 'completed', result: dispatch }]] : []),
+        ['assistant.delta', { delta: reply }],
+        ['assistant.completed', { content: reply }],
+        ['run.completed', {
+          run_id: 'run-e2e',
+          status: 'completed',
+          final_response: reply,
+          ...(hasDelegation ? { messages: [
+            { role: 'tool', tool_name: 'delegate_task', content: JSON.stringify(dispatch) },
+            { role: 'assistant', content: reply },
+          ] } : {}),
+        }],
       ].map(([event, data]) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join('');
       res.writeHead(200, {
         'Content-Type': 'text/event-stream; charset=utf-8',
@@ -353,6 +428,8 @@ async function startMockHermes() {
     baseUrl: `http://127.0.0.1:${address.port}`,
     requests,
     getChatRequest: () => chatRequest,
+    getDelegationHistoryPolls: () => delegationHistoryPolls,
+    getFullTabDelegationHistoryPolls: () => fullTabDelegationHistoryPolls,
     setAssistCreateAcknowledgement: (mode = 'direct') => { assistCreateAcknowledgement = mode; },
     setAssistChatAcknowledgement: (mode = 'direct') => { assistChatAcknowledgement = mode; },
     setAssistCleanupStatus: (status = 204) => { assistCleanupStatus = Number(status); },
@@ -726,6 +803,33 @@ async function main() {
     assert.ok(mock.requests.some((request) => request.path === `/api/sessions/${storedAfterSend.hermesBrowserSettings.sessionId}/chat/stream` && request.method === 'POST'));
     assert.ok(mock.requests.filter((request) => request.path !== '/health' && request.path !== '/v1/health').every((request) => request.authorization === `Bearer ${TEST_TOKEN}`));
 
+    const delegationStreamsBefore = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
+    await panel.evaluate(`(() => {
+      const input = document.querySelector('#promptInput');
+      input.value = ${JSON.stringify(DELEGATION_PROMPT)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#composer').requestSubmit();
+      return true;
+    })()`);
+    await waitFor(() => panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(DELEGATION_ACK)}))`));
+    const pendingDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
+    const pendingDelegationWatch = pendingDelegationStore.hermesAsyncDelegationWatchesV1
+      ?.find((watch) => watch.delegationId === DELEGATION_ID);
+    assert.equal(pendingDelegationWatch?.state, 'pending', 'Dispatch acknowledgement must not settle the delegation watch.');
+    await waitFor(() => panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(DELEGATION_RESULT)}))`), 20_000);
+    const delegationStreamsAfter = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
+    assert.equal(delegationStreamsAfter, delegationStreamsBefore + 1, 'Delayed completion must appear without another user send.');
+    assert.ok(mock.getDelegationHistoryPolls() >= 2, 'Loaded extension must observe acknowledgement-only history before exact completion history.');
+    const completedDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
+    const completedDelegationWatch = completedDelegationStore.hermesAsyncDelegationWatchesV1
+      ?.find((watch) => watch.delegationId === DELEGATION_ID);
+    assert.equal(completedDelegationWatch?.state, 'completed');
+    const renderedDelegationResults = await panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).filter((node) => node.textContent.includes(${JSON.stringify(DELEGATION_RESULT)})).length`);
+    assert.equal(renderedDelegationResults, 1, 'At-least-once history reconciliation must render one canonical completion.');
+    const renderedDelegationMarkers = await panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).filter((node) => node.textContent.includes('ASYNC DELEGATION COMPLETE')).length`);
+    assert.equal(renderedDelegationMarkers, 0, 'Internal completion markers must not render as user messages.');
+    await saveScreenshot(panel, DELEGATION_PANEL_SCREENSHOT);
+
     const wakeStreamRequestsBefore = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
     const wakeProbeSetup = await setup.evaluate(`(() => {
       globalThis.__hermesWakeOpenCalls = [];
@@ -813,6 +917,32 @@ async function main() {
       return !stack?.hidden && rows.length === 3 ? document.querySelector('#taskStackSummary')?.textContent || '' : '';
     })()`));
     assert.match(taskWebState, /2\/3 complete · 1 active/i);
+    const fullTabDelegationStreamsBefore = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
+    await web.evaluate(`(() => {
+      const input = document.querySelector('#fullTabPrompt');
+      input.value = ${JSON.stringify(FULLTAB_DELEGATION_PROMPT)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#fullTabComposer').requestSubmit();
+      return true;
+    })()`);
+    await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK)}))`));
+    const pendingFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
+    const pendingFullTabDelegationWatch = pendingFullTabDelegationStore.hermesAsyncDelegationWatchesV1
+      ?.find((watch) => watch.delegationId === FULLTAB_DELEGATION_ID);
+    assert.equal(pendingFullTabDelegationWatch?.state, 'pending', 'Hermes Web acknowledgement must not settle the delegation watch.');
+    await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)}))`), 20_000);
+    const fullTabDelegationStreamsAfter = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
+    assert.equal(fullTabDelegationStreamsAfter, fullTabDelegationStreamsBefore + 1, 'Hermes Web completion must appear without another user send.');
+    assert.ok(mock.getFullTabDelegationHistoryPolls() >= 2, 'Hermes Web must observe acknowledgement-only history before exact completion history.');
+    const completedFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
+    const completedFullTabDelegationWatch = completedFullTabDelegationStore.hermesAsyncDelegationWatchesV1
+      ?.find((watch) => watch.delegationId === FULLTAB_DELEGATION_ID);
+    assert.equal(completedFullTabDelegationWatch?.state, 'completed');
+    const renderedFullTabDelegationResults = await web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).filter((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)})).length`);
+    assert.equal(renderedFullTabDelegationResults, 1, 'Hermes Web must render one canonical completion.');
+    const renderedFullTabDelegationMarkers = await web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).filter((node) => node.textContent.includes('ASYNC DELEGATION')).length`);
+    assert.equal(renderedFullTabDelegationMarkers, 0, 'Hermes Web must hide internal completion markers.');
+    await saveScreenshot(web, DELEGATION_WEB_SCREENSHOT);
     if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
       const nousLightSurfaces = await waitFor(() => web.evaluate(`(() => {
         const list = document.querySelector('#messageList');
@@ -1944,6 +2074,22 @@ async function main() {
       },
       requestCount: mock.requests.length,
       renderedReply: TEST_REPLY,
+      delegationCompletion: {
+        delegationId: DELEGATION_ID,
+        acknowledgementState: pendingDelegationWatch.state,
+        historyPolls: mock.getDelegationHistoryPolls(),
+        finalState: completedDelegationWatch.state,
+        renderedResults: renderedDelegationResults,
+        extraChatSends: delegationStreamsAfter - delegationStreamsBefore - 1,
+      },
+      fullTabDelegationCompletion: {
+        delegationId: FULLTAB_DELEGATION_ID,
+        acknowledgementState: pendingFullTabDelegationWatch.state,
+        historyPolls: mock.getFullTabDelegationHistoryPolls(),
+        finalState: completedFullTabDelegationWatch.state,
+        renderedResults: renderedFullTabDelegationResults,
+        extraChatSends: fullTabDelegationStreamsAfter - fullTabDelegationStreamsBefore - 1,
+      },
       wakeHandoff: {
         instrumented: wakeProbeSetup,
         surfaceOpenCalls: wakeHandoff,
@@ -1969,7 +2115,7 @@ async function main() {
       assistEfforts: sharedPickerState.efforts,
       gpt56ContextRows: gpt56ContextState.models,
       mainProviderSwitch: switchedProviderState.selected,
-      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
+      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
     }, null, 2));
   } catch (error) {
     const diagnostics = {};

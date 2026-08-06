@@ -154,6 +154,15 @@ import {
 } from './lib/capabilities.mjs';
 import { normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
+import {
+  DELEGATION_WATCH_STORAGE_KEY,
+  createDelegationWatchManager,
+  delegationDispatchFromToolEvent,
+  delegationDispatchesFromMessages,
+  delegationScopeKey,
+  isDelegationCompletionMarkerMessage,
+  mergeDelegationWatchStores,
+} from './lib/async-delegation.mjs';
 import { classifyTurnRecovery, latestAssistantAfterUser, sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
@@ -569,6 +578,7 @@ function renderTaskStack() {
 }
 
 async function captureTaskToolEvent(event) {
+  await captureDelegationToolEvent(event);
   const tasks = taskStackFromToolEvent(event);
   if (!tasks) return false;
   const sessionId = String(settings.sessionId || '').trim();
@@ -597,6 +607,86 @@ let activeSessionRuntime = {
 // /api/ws JSON-RPC socket (the api_server REST/SSE surface is unavailable
 // cross-origin). This holds the live socket + the dashboard-assigned session id.
 let remoteWsConnection = null;
+
+function currentDelegationScopeKey() {
+  return delegationScopeKey({
+    mode: settings.connectionTransport || settings.connectionMode || settings.gatewayMode,
+    gatewayUrl: settings.gatewayUrl,
+    profile: settings.activeProfile,
+  });
+}
+
+async function persistDelegationWatches(rows) {
+  const stored = await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
+  const merged = mergeDelegationWatchStores(stored?.[DELEGATION_WATCH_STORAGE_KEY] || [], rows);
+  await chrome.storage.local.set({ [DELEGATION_WATCH_STORAGE_KEY]: merged });
+}
+
+const delegationWatchManager = createDelegationWatchManager({
+  isBusy: () => sending,
+  isActive: (watch) => watch.scopeKey === currentDelegationScopeKey()
+    && watch.durableSessionId === String(settings.sessionId || '').trim(),
+  loadHistory: async (watch) => fetchSessionMessagesQuietly(
+    watch.transport === 'dashboard-ws' ? watch.liveSessionId : watch.durableSessionId,
+    { transport: watch.transport },
+  ),
+  onComplete: async (watch, result) => {
+    await commitFetchedSessionMessages(result, {
+      sessionId: watch.durableSessionId,
+      requestId: sessionLoadRequestId,
+    });
+  },
+  onState: (watch) => {
+    if (watch.state === 'pending' && watch.attempts === 0) {
+      setStatus('warn', 'Delegation in progress', 'Waiting for the exact subagent result. It will appear here automatically.');
+    } else if (watch.state === 'completed') {
+      setStatus('ok', 'Delegation result loaded', 'The durable subagent completion turn is now in this session.');
+    } else if (watch.state === 'timed_out') {
+      setStatus('warn', 'Delegation still pending', 'Automatic waiting paused. Reopen this session to check durable history again.');
+    }
+  },
+  persist: persistDelegationWatches,
+});
+
+async function startDelegationWatch(dispatch) {
+  const durableSessionId = String(settings.sessionId || '').trim();
+  if (!dispatch?.delegationId || !durableSessionId) return null;
+  return delegationWatchManager.start({
+    scopeKey: currentDelegationScopeKey(),
+    durableSessionId,
+    liveSessionId: remoteWsConnection?.wsSessionId || '',
+    delegationId: dispatch.delegationId,
+    transport: isRemoteWsMode() ? 'dashboard-ws' : 'rest',
+  });
+}
+
+async function captureDelegationToolEvent(event) {
+  const dispatch = delegationDispatchFromToolEvent(event);
+  if (dispatch) await startDelegationWatch(dispatch);
+}
+
+function captureDelegationRuntimePayload(payload = {}) {
+  for (const dispatch of delegationDispatchesFromMessages(payload?.messages || [])) {
+    startDelegationWatch(dispatch).catch((error) => console.warn('[Hermes Browser] Could not persist delegation watch:', error));
+  }
+}
+
+async function activateCurrentDelegationSession() {
+  const durableSessionId = String(settings.sessionId || '').trim();
+  if (!durableSessionId) return;
+  await delegationWatchManager.activate({
+    scopeKey: currentDelegationScopeKey(),
+    durableSessionId,
+    liveSessionId: remoteWsConnection?.wsSessionId || '',
+  });
+}
+
+async function hydrateDelegationWatches() {
+  const stored = await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
+  await delegationWatchManager.hydrate(stored?.[DELEGATION_WATCH_STORAGE_KEY] || []);
+  await activateCurrentDelegationSession();
+}
+
 const contextDeliveryBySession = new Map();
 let forceFullContextNextTurn = false;
 let trustedDashboardTabId = null;
@@ -5229,6 +5319,7 @@ async function openHermesSession(selectedSession) {
         client: connection.client,
         storedSessionId: session.id,
       });
+      if (requestId !== sessionLoadRequestId) return;
       connection.wsSessionId = liveId;
       connection.wsStoredSessionId = storedId;
       liveSessionId = liveId;
@@ -5270,6 +5361,7 @@ async function openHermesSession(selectedSession) {
   sessionRoutesAvailable = true;
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   await saveSessionBindingForActiveScope(session);
+  await activateCurrentDelegationSession();
   updateSessionLabel();
   renderSessionMenu();
   const loaded = await loadSessionMessages(liveSessionId, { requestId });
@@ -5277,61 +5369,72 @@ async function openHermesSession(selectedSession) {
   setStatus(loaded ? 'ok' : 'warn', loaded ? 'Session opened' : 'Session opened without history', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`, { translateDetail: false });
 }
 
-async function loadSessionMessages(sessionId = settings.sessionId, { requestId = null } = {}) {
-  const isCurrentRequest = () => requestId == null || requestId === sessionLoadRequestId;
-  if (isRemoteWsMode()) {
-    if (remoteWsConnection?.client?.readyState !== 1) return false;
-    try {
-      const result = await remoteWsConnection.client.request(WS_METHODS.sessionHistory, { session_id: sessionId });
-      if (!isCurrentRequest()) return false;
-      const contextMessages = normalizeGatewayHistoryMessages(result)
-        .map((message) => ({
-          role: message.role,
-          content: message.content,
-          ts: Number(message.timestamp || message.ts || Date.now()),
-        }))
-        .filter((message) => message.content);
-      messages = contextMessages.filter((message) => ['user', 'assistant', 'system'].includes(message.role));
-      loadedSessionContextEstimate = {
-        sessionId,
-        contextTokens: estimateLocalSessionContextTokens({ messages: contextMessages }),
-        visibleTokens: estimateLocalSessionContextTokens({ messages }),
-      };
-      await saveMessagesForActiveScope();
-      if (!isCurrentRequest()) return false;
-      renderMessagesFromStorage();
-      return true;
-    } catch (error) {
-      if (!isCurrentRequest()) return false;
-      addMessage('system', `Could not load session messages: ${error?.message || String(error)}`);
-      return false;
-    }
+async function fetchSessionMessagesQuietly(sessionId, { transport = isRemoteWsMode() ? 'dashboard-ws' : 'rest' } = {}) {
+  if (transport === 'dashboard-ws') {
+    if (remoteWsConnection?.client?.readyState !== 1) throw new Error('Remote Hermes is not connected.');
+    if (!sessionId) throw new Error('A live dashboard session id is required for history.');
+    const result = await remoteWsConnection.client.request(WS_METHODS.sessionHistory, { session_id: sessionId });
+    const contextMessages = normalizeGatewayHistoryMessages(result)
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+        ts: Number(message.timestamp || message.ts || Date.now()),
+      }))
+      .filter((message) => message.content);
+    return {
+      contextMessages,
+      messages: contextMessages.filter((message) => ['user', 'assistant', 'system'].includes(message.role)),
+      session: null,
+    };
   }
+  if (!settings.apiKey) throw new Error('Connect to Hermes before loading session messages.');
+  const response = await apiFetch(`/api/sessions/${encodeSessionId(sessionId)}/messages`, { method: 'GET' });
+  const payload = await readJsonResponse(response);
+  if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Messages failed (${response.status})`);
+  const rows = Array.isArray(payload.data) ? payload.data : [];
+  const contextMessages = rows
+    .filter((message) => message.content)
+    .map((message) => ({ role: message.role, content: String(message.content), ts: Number(message.timestamp || Date.now()) }));
+  return {
+    contextMessages,
+    messages: contextMessages.filter((message) => ['user', 'assistant', 'system'].includes(message.role)),
+    session: payload.session || null,
+  };
+}
+
+async function commitFetchedSessionMessages(result, { sessionId, requestId = null } = {}) {
+  if (requestId != null && requestId !== sessionLoadRequestId) return false;
+  if (String(settings.sessionId || '').trim() !== String(sessionId || '').trim()) return false;
+  if (result?.session) applySessionRuntimeSnapshot({
+    session: result.session,
+    sessionId: result.session.id || sessionId,
+    source: 'Hermes session',
+  });
+  const contextMessages = Array.isArray(result?.contextMessages) ? result.contextMessages : [];
+  messages = Array.isArray(result?.messages) ? result.messages : [];
+  loadedSessionContextEstimate = {
+    sessionId,
+    contextTokens: estimateLocalSessionContextTokens({ messages: contextMessages }),
+    visibleTokens: estimateLocalSessionContextTokens({ messages }),
+  };
+  await saveMessagesForActiveScope();
+  if (requestId != null && requestId !== sessionLoadRequestId) return false;
+  if (String(settings.sessionId || '').trim() !== String(sessionId || '').trim()) return false;
+  renderMessagesFromStorage();
+  return true;
+}
+
+async function loadSessionMessages(sessionId = settings.sessionId, { requestId = null } = {}) {
+  const expectedSessionId = String(settings.sessionId || '').trim();
+  const isCurrentRequest = () => requestId == null || requestId === sessionLoadRequestId;
   if (isUnsavedBrowserDraftSession({ sessionId, sessions: availableSessions })) {
     await loadMessagesForActiveScope();
     return true;
   }
-  if (!settings.apiKey) return false;
   try {
-    const response = await apiFetch(`/api/sessions/${encodeSessionId(sessionId)}/messages`, { method: 'GET' });
-    const payload = await readJsonResponse(response);
-    if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Messages failed (${response.status})`);
+    const result = await fetchSessionMessagesQuietly(sessionId);
     if (!isCurrentRequest()) return false;
-    if (payload.session) applySessionRuntimeSnapshot({ session: payload.session, sessionId: payload.session.id || sessionId, source: 'Hermes session' });
-    const rows = Array.isArray(payload.data) ? payload.data : [];
-    const contextMessages = rows
-      .filter((message) => message.content)
-      .map((message) => ({ role: message.role, content: String(message.content), ts: Number(message.timestamp || Date.now()) }));
-    messages = contextMessages.filter((message) => ['user', 'assistant', 'system'].includes(message.role));
-    loadedSessionContextEstimate = {
-      sessionId,
-      contextTokens: estimateLocalSessionContextTokens({ messages: contextMessages }),
-      visibleTokens: estimateLocalSessionContextTokens({ messages }),
-    };
-    await saveMessagesForActiveScope();
-    if (!isCurrentRequest()) return false;
-    renderMessagesFromStorage();
-    return true;
+    return commitFetchedSessionMessages(result, { sessionId: expectedSessionId, requestId });
   } catch (error) {
     if (!isCurrentRequest()) return false;
     addMessage('system', `Could not load session messages: ${error?.message || String(error)}`);
@@ -6045,7 +6148,10 @@ async function loadSettings({ restoreMessages = false } = {}) {
 
 function renderMessagesFromStorage() {
   els.messages.innerHTML = '';
-  for (const message of messages) addMessage(message.role, message.content, { persist: false });
+  for (const message of messages) {
+    if (isDelegationCompletionMarkerMessage(message)) continue;
+    addMessage(message.role, message.content, { persist: false });
+  }
   renderEmptyState();
 }
 
@@ -7003,6 +7109,7 @@ function applyPendingModelRuntimeAck(runtime = {}) {
 
 function applyTurnRuntimePayload(payload = {}) {
   if (!payload || typeof payload !== 'object') return;
+  captureDelegationRuntimePayload(payload);
   const runtime = payload.runtime || {};
   applySessionRuntimeSnapshot({
     sessionId: payload.session_id || payload.sessionId || settings.sessionId,
@@ -7175,6 +7282,7 @@ async function ensureRemoteWsSession(connection) {
     console.warn('[Hermes] Cloud runtime metadata was not acknowledged:', error?.message || error);
   }
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await activateCurrentDelegationSession();
   updateSessionLabel();
   return liveId;
 }
@@ -7224,7 +7332,14 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
       finish(resolve, finalText);
     }));
     offs.push(client.on('tool.start', (event) => {
-      if (forThisSession(event) && onTool) onTool({ tool_name: event.payload?.name });
+      if (forThisSession(event) && onTool) onTool({ type: 'tool.start', tool_name: event.payload?.name });
+    }));
+    offs.push(client.on('tool.complete', (event) => {
+      if (forThisSession(event) && onTool) onTool({
+        type: 'tool.complete',
+        tool_name: event.payload?.name,
+        result: event.payload?.result,
+      });
     }));
     offs.push(client.on(WS_EVENTS.error, (event) => {
       finish(reject, new Error(event.payload?.message || 'Dashboard stream error'));
@@ -9222,6 +9337,7 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
 async function runStartupReadiness() {
   try {
     await runPanelConnectionReadiness({ restoreSettings: true });
+    await hydrateDelegationWatches();
     await refreshWakeState();
     await consumePendingVoiceDraft();
     await consumePendingWakeTurn();

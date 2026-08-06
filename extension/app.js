@@ -84,6 +84,15 @@ import { thinkingIndicatorMarkup } from './lib/web-thinking-indicator.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
 import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
+import {
+  DELEGATION_WATCH_STORAGE_KEY,
+  createDelegationWatchManager,
+  delegationDispatchFromToolEvent,
+  delegationDispatchesFromMessages,
+  delegationScopeKey,
+  isDelegationCompletionMarkerMessage,
+  mergeDelegationWatchStores,
+} from './lib/async-delegation.mjs';
 import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
 import { sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
 import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, normalizeGatewayHistoryMessages, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
@@ -250,6 +259,90 @@ const client = createHermesClient({
   getConnection: () => settings,
 });
 
+function currentDelegationScopeKey() {
+  return delegationScopeKey({
+    mode: settings.connectionTransport || settings.connectionMode || settings.gatewayMode,
+    gatewayUrl: settings.gatewayUrl,
+    profile: settings.activeProfile,
+  });
+}
+
+async function persistDelegationWatches(rows) {
+  const stored = await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
+  const merged = mergeDelegationWatchStores(stored?.[DELEGATION_WATCH_STORAGE_KEY] || [], rows);
+  await chrome.storage.local.set({ [DELEGATION_WATCH_STORAGE_KEY]: merged });
+}
+
+const delegationWatchManager = createDelegationWatchManager({
+  isBusy: () => sending,
+  isActive: (watch) => watch.scopeKey === currentDelegationScopeKey()
+    && watch.durableSessionId === String(activeSessionId || '').trim(),
+  loadHistory: async (watch) => {
+    if (watch.transport === 'dashboard-ws') {
+      const connection = await ensureDashboardConnection();
+      if (!watch.liveSessionId) throw new Error('A live dashboard session id is required for history.');
+      const history = await connection.client.request(WS_METHODS.sessionHistory, { session_id: watch.liveSessionId });
+      return { messages: dashboardHistoryMessages(history) };
+    }
+    return { messages: await client.getSessionMessages(watch.durableSessionId) };
+  },
+  onComplete: async (watch, result) => {
+    await commitFullTabSessionMessages(result?.messages || [], {
+      sessionId: watch.durableSessionId,
+      requestId: webSessionLoadRequestId,
+    });
+  },
+  onState: (watch) => {
+    if (watch.state === 'pending' && watch.attempts === 0) {
+      els.composerStatus.textContent = translateUiText('Delegation in progress · result will appear automatically');
+    } else if (watch.state === 'completed') {
+      els.composerStatus.textContent = translateUiText('Delegation result loaded');
+    } else if (watch.state === 'timed_out') {
+      els.composerStatus.textContent = translateUiText('Delegation still pending · reopen this session to check again');
+    }
+  },
+  persist: persistDelegationWatches,
+});
+
+async function startDelegationWatch(dispatch) {
+  const durableSessionId = String(activeSessionId || '').trim();
+  if (!dispatch?.delegationId || !durableSessionId) return null;
+  return delegationWatchManager.start({
+    scopeKey: currentDelegationScopeKey(),
+    durableSessionId,
+    liveSessionId: dashboardLiveSessionId || '',
+    delegationId: dispatch.delegationId,
+    transport: usesDashboardTicketTransport() ? 'dashboard-ws' : 'rest',
+  });
+}
+
+async function captureDelegationToolEvent(event) {
+  const dispatch = delegationDispatchFromToolEvent(event);
+  if (dispatch) await startDelegationWatch(dispatch);
+}
+
+function captureDelegationRuntimePayload(runtime = {}) {
+  for (const dispatch of delegationDispatchesFromMessages(runtime?.messages || [])) {
+    startDelegationWatch(dispatch).catch((error) => console.warn('[Hermes Web] Could not persist delegation watch:', error));
+  }
+}
+
+async function activateCurrentDelegationSession() {
+  const durableSessionId = String(activeSessionId || '').trim();
+  if (!durableSessionId) return;
+  await delegationWatchManager.activate({
+    scopeKey: currentDelegationScopeKey(),
+    durableSessionId,
+    liveSessionId: dashboardLiveSessionId || '',
+  });
+}
+
+async function hydrateDelegationWatches(storedRows = null) {
+  const rows = storedRows || (await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]))?.[DELEGATION_WATCH_STORAGE_KEY] || [];
+  await delegationWatchManager.hydrate(rows);
+  await activateCurrentDelegationSession();
+}
+
 function contextMenuEditorTranslate(key, fallback) {
   const translated = t(key);
   return translated === key ? fallback : translated;
@@ -309,13 +402,18 @@ async function ensureDashboardConnection() {
   return dashboardConnection;
 }
 
-async function establishDashboardSession(storedSessionId = '') {
+async function establishDashboardSession(storedSessionId = '', { isCurrent = () => true } = {}) {
   const connection = await ensureDashboardConnection();
   const identity = await establishGatewaySession({
     client: connection.client,
     storedSessionId,
     createParams: { source: HERMES_WEB_SESSION_SOURCE },
   });
+  if (!isCurrent()) {
+    const error = new Error('A newer session selection replaced this dashboard request.');
+    error.name = 'AbortError';
+    throw error;
+  }
   dashboardLiveSessionId = identity.liveId;
   activeSessionId = identity.storedId;
   const selectedModel = effectiveModel();
@@ -347,6 +445,7 @@ async function establishDashboardSession(storedSessionId = '') {
   } catch (error) {
     console.warn('[Hermes Web] Cloud runtime metadata was not acknowledged:', error?.message || error);
   }
+  await activateCurrentDelegationSession();
   return identity;
 }
 
@@ -354,9 +453,9 @@ function dashboardHistoryMessages(payload = {}) {
   return normalizeGatewayHistoryMessages(payload);
 }
 
-async function loadDashboardSessionMessages(storedSessionId) {
+async function loadDashboardSessionMessages(storedSessionId, options = {}) {
   const connection = await ensureDashboardConnection();
-  const identity = await establishDashboardSession(storedSessionId);
+  const identity = await establishDashboardSession(storedSessionId, options);
   const history = await connection.client.request(WS_METHODS.sessionHistory, { session_id: identity.liveId });
   return dashboardHistoryMessages(history);
 }
@@ -405,7 +504,14 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
       finish(resolve, finalText);
     }));
     offs.push(connection.client.on('tool.start', (event) => {
-      if (forThisSession(event)) onTool?.({ tool_name: event.payload?.name });
+      if (forThisSession(event)) onTool?.({ type: 'tool.start', tool_name: event.payload?.name });
+    }));
+    offs.push(connection.client.on('tool.complete', (event) => {
+      if (forThisSession(event)) onTool?.({
+        type: 'tool.complete',
+        tool_name: event.payload?.name,
+        result: event.payload?.result,
+      });
     }));
     offs.push(connection.client.on(WS_EVENTS.error, (event) => {
       if (!forThisSession(event)) return;
@@ -474,6 +580,7 @@ function renderTaskStack() {
 }
 
 async function captureTaskToolEvent(event) {
+  await captureDelegationToolEvent(event);
   const tasks = taskStackFromToolEvent(event);
   if (!tasks || !activeSessionId) return false;
   taskStackStore = updateTaskStackStore(taskStackStore, activeSessionId, tasks);
@@ -935,7 +1042,9 @@ function renderMessages(messages = []) {
   els.messageList.replaceChildren();
   const visible = messages.filter((message) => {
     const role = String(message.role || '').toLowerCase();
-    return ['user', 'assistant', 'system'].includes(role) && (role !== 'assistant' || isRenderableAssistantMessage(message));
+    return !isDelegationCompletionMarkerMessage(message)
+      && ['user', 'assistant', 'system'].includes(role)
+      && (role !== 'assistant' || isRenderableAssistantMessage(message));
   });
   const hasLiveRun = Boolean(sending && liveRun);
   els.emptyState.hidden = visible.length > 0 || hasLiveRun;
@@ -2416,6 +2525,7 @@ async function sendPrompt(text) {
         updateBusyControls();
       },
       onRuntime: (runtime) => {
+        captureDelegationRuntimePayload(runtime);
         const actual = runtime?.runtime || runtime;
         latestRuntime = actual || {};
         if (actual?.model) els.modelLabel.textContent = actual.model;
@@ -2479,6 +2589,16 @@ function showError(title, detail, { translateTitle = true, translateDetail = tru
   els.errorDetail.textContent = translateDetail ? translateUiText(detail) : String(detail || '');
 }
 
+async function commitFullTabSessionMessages(messages = [], { sessionId, requestId = null } = {}) {
+  if (requestId != null && requestId !== webSessionLoadRequestId) return false;
+  if (String(activeSessionId || '').trim() !== String(sessionId || '').trim()) return false;
+  const preserved = preserveUserImageAttachments(messages, activeMessages);
+  renderMessages(preserved);
+  if (requestId != null && requestId !== webSessionLoadRequestId) return false;
+  if (String(activeSessionId || '').trim() !== String(sessionId || '').trim()) return false;
+  return true;
+}
+
 async function openSession(sessionId, { keepLoading = false } = {}) {
   const cleanSessionId = String(sessionId || '').trim();
   if (!cleanSessionId) return;
@@ -2496,12 +2616,15 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
   renderConnectionTruth({ status: 'online' });
   try {
     const messages = usesDashboardTicketTransport()
-      ? await loadDashboardSessionMessages(cleanSessionId)
+      ? await loadDashboardSessionMessages(cleanSessionId, { isCurrent: () => requestId === webSessionLoadRequestId })
       : await client.getSessionMessages(cleanSessionId);
     if (requestId !== webSessionLoadRequestId) return;
+    const durableSessionId = String(activeSessionId || cleanSessionId).trim();
+    settings = { ...settings, webSessionId: durableSessionId, webSessionTitle: sessionTitle(session) };
     await chrome.storage.local.set({ hermesBrowserSettings: settings });
     if (requestId !== webSessionLoadRequestId) return;
-    renderMessages(messages);
+    await activateCurrentDelegationSession();
+    await commitFullTabSessionMessages(messages, { sessionId: durableSessionId, requestId });
     if (!keepLoading) hideRuntimeLoadingState();
   } catch (error) {
     if (requestId !== webSessionLoadRequestId) return;
@@ -2514,7 +2637,7 @@ async function loadApp() {
   sessionHistoryLoading = true;
   showRuntimeLoadingState();
   renderSessions();
-  const stored = await chrome.storage.local.get(['hermesBrowserSettings', TASK_STACKS_STORAGE_KEY]);
+  const stored = await chrome.storage.local.get(['hermesBrowserSettings', TASK_STACKS_STORAGE_KEY, DELEGATION_WATCH_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -2535,6 +2658,7 @@ async function loadApp() {
   applyAppearance();
   applySessionVisibility();
   activeSessionId = handoff.newChat ? '' : (activeSessionId || settings.webSessionId || '');
+  await hydrateDelegationWatches(stored[DELEGATION_WATCH_STORAGE_KEY] || []);
   renderTaskStack();
   const mode = normalizeConnectionMode(settings.connectionMode);
   renderConnectionTruth({ status: 'idle' });

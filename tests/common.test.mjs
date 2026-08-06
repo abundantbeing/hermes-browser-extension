@@ -185,7 +185,9 @@ test('sidepanel replays stored history without emptying canonical messages betwe
   const renderer = source.match(/function renderMessagesFromStorage\(\) \{[\s\S]*?\n\}/)?.[0] || '';
 
   assert.match(renderer, /els\.messages\.innerHTML = '';/);
-  assert.match(renderer, /for \(const message of messages\) addMessage\(message\.role, message\.content, \{ persist: false \}\);/);
+  assert.match(renderer, /for \(const message of messages\) \{/);
+  assert.match(renderer, /if \(isDelegationCompletionMarkerMessage\(message\)\) continue;/);
+  assert.match(renderer, /addMessage\(message\.role, message\.content, \{ persist: false \}\);/);
   assert.doesNotMatch(renderer, /messages\s*=\s*\[\]/);
 });
 
