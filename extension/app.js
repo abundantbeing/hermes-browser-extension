@@ -14,6 +14,7 @@ import {
   sessionModelBindingFromRuntime,
   renderMarkdown,
   shouldAutoOpenSessionGroup,
+  shouldRequireModelLock,
   skillSuggestionsForInput,
 } from './lib/common.mjs';
 import {
@@ -40,10 +41,12 @@ import {
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   dashboardModelDiscoveryBaseUrl,
   discoverCanonicalProviderCatalog,
+  discoverGatewayVirtualModels,
   discoverModelsFromDashboard,
   discoverModelsFromRegistry,
   discoverModelsFromSessions,
   mergeModelsWithRegistry,
+  mergeVirtualModelRows,
   modelCatalogCacheKey,
   modelCatalogRefreshDecision,
   modelRowsFromGatewayOptions,
@@ -1021,6 +1024,8 @@ function effectiveModel() {
     contextTokens: Number(selected?.contextTokens || binding.contextTokens || settings.modelContextTokens || 0),
     reasoning: selected?.reasoning ?? binding.reasoning,
     fast: selected?.fast ?? binding.fast,
+    gatewayAlias: selected?.gatewayAlias === true || binding.gatewayAlias === true,
+    gatewayDefault: selected?.gatewayDefault === true || binding.gatewayDefault === true,
   };
 }
 
@@ -1400,12 +1405,23 @@ async function loadModels({ refresh = false } = {}) {
         registryModels = normalizeHermesModels(cachedFallback.models, settings.model);
         registrySource = cachedFallback.source;
       } else {
-        const response = await client.fetch('/v1/models', { method: 'GET' });
-        const payload = await client.readJson(response);
-        if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Model list failed (${response.status})`);
-        registryModels = normalizeHermesModels(payload, settings.model);
-        registrySource = 'v1';
+        const virtualResult = await discoverGatewayVirtualModels({ apiFetch: client.fetch, readJsonResponse: client.readJson });
+        if (!virtualResult.ok || !virtualResult.models.length) {
+          throw new Error(virtualResult.error || 'Hermes did not advertise a gateway model alias.');
+        }
+        registryModels = normalizeHermesModels(virtualResult.models, settings.model);
+        registrySource = 'gateway';
       }
+    }
+  }
+
+  if (registrySource !== 'gateway') {
+    const virtualResult = await discoverGatewayVirtualModels({ apiFetch: client.fetch, readJsonResponse: client.readJson });
+    if (virtualResult.ok && virtualResult.models.length) {
+      registryModels = normalizeHermesModels(mergeVirtualModelRows({
+        registryModels,
+        virtualModels: virtualResult.models,
+      }), settings.model);
     }
   }
 
@@ -1597,6 +1613,8 @@ async function selectModel(model) {
     contextTokens: model.contextTokens || 0,
     reasoning: model.reasoning,
     fast: model.fast,
+    gatewayAlias: model.gatewayAlias === true,
+    gatewayDefault: model.gatewayDefault === true,
   };
   settings = {
     ...settings,
@@ -1633,23 +1651,38 @@ async function selectModel(model) {
           ? 'Cloud session model confirmed'
           : `Cloud fallback · ${acknowledged.provider} · ${acknowledged.rawModelId}`;
       } else {
-        const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/model`, {
-          method: 'POST',
-          body: JSON.stringify({ provider: model.provider, model: model.rawModelId, model_options: modelOptionsPayload(), require_model_lock: true }),
+        const requireModelLock = shouldRequireModelLock({
+          provider: model.provider,
+          model: model.rawModelId,
+          defaultModel: 'hermes-agent',
+          gatewayDefault: model.gatewayDefault === true,
         });
-        const payload = await client.readJson(response);
-        const outcome = modelLockRequestOutcome({
-          responseOk: response.ok,
-          status: response.status,
-          payload,
-          requested: { provider: model.provider, model: model.rawModelId },
-        });
-        if (!outcome.ok && outcome.rollback) throw new Error(outcome.detail);
-        els.composerStatus.textContent = outcome.state === 'legacy'
-          ? 'Model requested · Hermes will confirm on the next turn'
-          : outcome.state === 'pending'
-            ? 'Model lock pending · waiting for runtime confirmation'
-            : `Model lock accepted${outcome.detail ? ` · ${outcome.detail}` : ''}`;
+        if (!requireModelLock) {
+          els.composerStatus.textContent = 'Gateway default requested · Hermes will confirm the runtime on the next turn';
+        } else {
+          const response = await client.fetch(`/api/sessions/${encodeURIComponent(activeSessionId)}/model`, {
+            method: 'POST',
+            body: JSON.stringify({ provider: model.provider || undefined, model: model.rawModelId, model_options: modelOptionsPayload(), require_model_lock: true }),
+          });
+          const payload = await client.readJson(response);
+          const outcome = modelLockRequestOutcome({
+            responseOk: response.ok,
+            status: response.status,
+            payload,
+            requested: {
+              provider: model.provider,
+              model: model.rawModelId,
+              gatewayAlias: model.gatewayAlias === true,
+              gatewayDefault: model.gatewayDefault === true,
+            },
+          });
+          if (!outcome.ok && outcome.rollback) throw new Error(outcome.detail);
+          els.composerStatus.textContent = outcome.state === 'legacy'
+            ? 'Model requested · Hermes will confirm on the next turn'
+            : outcome.state === 'pending'
+              ? 'Model lock pending · waiting for runtime confirmation'
+              : `Model lock accepted${outcome.detail ? ` · ${outcome.detail}` : ''}`;
+        }
       }
     }
   } catch (error) {
@@ -2237,7 +2270,12 @@ async function createSession() {
       model: model.model,
       provider: model.provider || undefined,
       model_options: modelOptionsPayload(),
-      require_model_lock: Boolean(model.provider || model.model),
+      require_model_lock: shouldRequireModelLock({
+        provider: model.provider,
+        model: model.model,
+        defaultModel: 'hermes-agent',
+        gatewayDefault: model.gatewayDefault === true,
+      }),
     }),
   });
   const payload = await client.readJson(response);
@@ -2340,7 +2378,12 @@ async function sendPrompt(text) {
         model: model.model,
         provider: model.provider || undefined,
         model_options: modelOptionsPayload(),
-        require_model_lock: Boolean(model.provider || model.model),
+        require_model_lock: shouldRequireModelLock({
+          provider: model.provider,
+          model: model.model,
+          defaultModel: 'hermes-agent',
+          gatewayDefault: model.gatewayDefault === true,
+        }),
         message: prompt,
         selected_skills: skillSelection.selectedSkills,
       }),

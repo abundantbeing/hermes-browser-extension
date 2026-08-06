@@ -1036,12 +1036,15 @@ export function normalizeBrowserModelBinding(value = {}) {
   const provider = String(value.provider || value.providerId || value.provider_id || value.owner || '').trim();
   const contextTokens = Number(value.contextTokens || value.context_tokens || value.contextLength || value.context_length || 0) || 0;
   if (!modelId && !rawModelId) return null;
-  return {
+  const binding = {
     modelId: modelId || rawModelId,
     provider,
     rawModelId: rawModelId || modelId,
     contextTokens,
   };
+  if (value.gatewayAlias === true) binding.gatewayAlias = true;
+  if (value.gatewayDefault === true) binding.gatewayDefault = true;
+  return binding;
 }
 
 export function resolveBrowserEffectiveModel({
@@ -1111,7 +1114,18 @@ export function modelRuntimeAckState({ requested = {}, runtime = {} } = {}) {
   const effective = normalizeRuntimeModelPayload(runtime);
   const requestedProvider = String(requested.provider || effective.requestedProvider || '').trim();
   const requestedModel = String(requested.model || effective.requestedModel || '').trim();
-  const modelOk = !requestedModel || !effective.model || runtimeValueMatches(requestedModel, effective.model);
+  const gatewayAlias = requested.gatewayAlias === true && !requestedProvider;
+  const gatewayDefault = requested.gatewayDefault === true && gatewayAlias;
+  const aliasRequestMatches = gatewayAlias
+    && requestedModel
+    && effective.requestedModel
+    && runtimeValueMatches(requestedModel, effective.requestedModel);
+  const aliasRouteConfirmed = gatewayDefault
+    ? effective.routeSource === 'global'
+    : aliasRequestMatches && effective.routeSource === 'model_routes';
+  const modelOk = gatewayAlias
+    ? aliasRouteConfirmed
+    : (!requestedModel || !effective.model || runtimeValueMatches(requestedModel, effective.model));
   const providerOk = !requestedProvider || !effective.provider || runtimeValueMatches(requestedProvider, effective.provider);
   if (!effective.model && !effective.provider) {
     return { state: 'pending', detail: 'Waiting for Hermes runtime metadata.' };
@@ -1128,8 +1142,10 @@ export function modelRuntimeAckState({ requested = {}, runtime = {} } = {}) {
   };
 }
 
-export function shouldRequireModelLock({ provider = '', model = '', defaultModel = DEFAULT_SETTINGS.model } = {}) {
-  return Boolean(String(provider || '').trim() || (String(model || '').trim() && String(model || '').trim() !== String(defaultModel || DEFAULT_SETTINGS.model).trim()));
+export function shouldRequireModelLock({ provider = '', model = '', defaultModel = DEFAULT_SETTINGS.model, gatewayDefault = false } = {}) {
+  const normalizedProvider = String(provider || '').trim();
+  if (gatewayDefault === true && !normalizedProvider) return false;
+  return Boolean(normalizedProvider || (String(model || '').trim() && String(model).trim() !== String(defaultModel || DEFAULT_SETTINGS.model).trim()));
 }
 
 const TITLE_SMALL_WORDS = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'from', 'in', 'of', 'on', 'or', 'the', 'to', 'vs', 'with']);
@@ -2115,6 +2131,9 @@ export function normalizeHermesModels(payload = {}, selectedModel = DEFAULT_SETT
       reasoning: typeof item === 'string' ? undefined : item.reasoning,
       authenticated: typeof item === 'string' ? undefined : item.authenticated,
       available: typeof item === 'string' ? undefined : item.available,
+      ...(typeof item !== 'string' && typeof item.current === 'boolean' ? { current: item.current } : {}),
+      ...(typeof item !== 'string' && item.gatewayAlias === true ? { gatewayAlias: true } : {}),
+      ...(typeof item !== 'string' && item.gatewayDefault === true ? { gatewayDefault: true } : {}),
       source,
       runtimeSelectable: typeof runtimeSelectable === 'boolean' ? runtimeSelectable : source !== 'sessions',
     });

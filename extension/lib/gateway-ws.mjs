@@ -144,15 +144,17 @@ export function buildSessionModelSwitchRequest({ sessionId = '', model = '', pro
   const normalizedProvider = String(provider || '').trim();
   if (!normalizedSessionId) throw new Error('A live Hermes session is required to switch models.');
   if (!normalizedModel) throw new Error('A Hermes model is required to switch models.');
-  if (!normalizedProvider) throw new Error('A Hermes provider is required to switch models.');
   if (/\s/.test(normalizedModel) || normalizedModel.startsWith('-')) throw new Error('Hermes model identifiers cannot contain command flags or whitespace.');
-  if (/\s/.test(normalizedProvider) || normalizedProvider.startsWith('-')) throw new Error('Hermes provider identifiers cannot contain command flags or whitespace.');
+  if (normalizedProvider && (/\s/.test(normalizedProvider) || normalizedProvider.startsWith('-'))) {
+    throw new Error('Hermes provider identifiers cannot contain command flags or whitespace.');
+  }
+  const providerFlag = normalizedProvider ? ` --provider ${normalizedProvider}` : '';
   return {
     method: WS_METHODS.configSet,
     params: {
       session_id: normalizedSessionId,
       key: 'model',
-      value: `${normalizedModel} --provider ${normalizedProvider} --session`,
+      value: `${normalizedModel}${providerFlag} --session`,
     },
   };
 }

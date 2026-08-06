@@ -216,6 +216,8 @@ async function startMockHermes() {
     }
     if (url.pathname === '/v1/models') {
       json(res, 200, { object: 'list', data: [
+        { id: 'e2e-gateway', object: 'model', owned_by: 'hermes', root: 'e2e-gateway', parent: null },
+        { id: 'fast-e2e', object: 'model', owned_by: 'configured', root: 'fast-e2e', parent: 'e2e-gateway' },
         { id: 'e2e/test-model', provider: 'e2e', context_length: 32_000 },
         { id: 'e2e/alternate-model', provider: 'e2e', context_length: 32_000 },
         { id: 'alternate/provider-model', provider: 'alternate', context_length: 64_000 },
@@ -1525,15 +1527,34 @@ async function main() {
     await waitFor(() => panel.evaluate(`document.querySelector('#browserIntroHero')?.hidden === true && document.querySelector('#messages')?.textContent === ''`));
 
     const rightClickMarker = 'RIGHT_CLICK_E2E_SELECTION_73f9';
-    await setup.evaluate(`chrome.storage.session.set({ hermesBrowserContextMenuRequest: {
-      prompt: 'Summarize this selected text concisely:',
-      selection: ${JSON.stringify('RIGHT_CLICK_E2E_SELECTION_73f9')},
-      pageUrl: ${JSON.stringify(`${mock.baseUrl}/qa-inline`)},
-      tabId: 1,
-      route: 'ask',
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 60000,
-    }})`);
+    const rightClickQueue = await setup.evaluate(`(async () => {
+      const fixtureUrl = ${JSON.stringify(`${mock.baseUrl}/qa-inline`)};
+      const tabs = await chrome.tabs.query({});
+      const tab = tabs.find((candidate) => candidate.url === fixtureUrl);
+      if (!tab) return { ok: false, reason: 'fixture-tab-missing' };
+      const bytes = new TextEncoder().encode(fixtureUrl);
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      const sourceUrlDigest = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+      const request = {
+        version: 1,
+        itemId: 'summarize-selection',
+        actionType: 'prompt',
+        prompt: 'Summarize this selected text concisely:',
+        route: 'ask',
+        trigger: 'selection',
+        selection: ${JSON.stringify('RIGHT_CLICK_E2E_SELECTION_73f9')},
+        pageUrl: fixtureUrl,
+        sourceUrlDigest,
+        tabId: tab.id,
+        windowId: tab.windowId,
+        frameId: 0,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 60000,
+      };
+      await chrome.storage.session.set({ hermesBrowserContextMenuRequest: [request] });
+      return { ok: true, tabId: tab.id, windowId: tab.windowId };
+    })()`);
+    assert.equal(rightClickQueue.ok, true);
     const rightClickChooser = await waitFor(() => panel.evaluate(`(() => {
       const notice = document.querySelector('#contextMenuRouteNotice');
       if (!notice || notice.hidden) return null;
@@ -1843,7 +1864,8 @@ async function main() {
     })()`));
     assert.ok(mainPickerState.providers.some((label) => label.includes('E2E Provider')));
     assert.ok(mainPickerState.providers.some((label) => label.includes('Alternate Provider')));
-    assert.equal(mainPickerState.providers.length, 7);
+    assert.ok(mainPickerState.providers.some((label) => label.includes('Hermes gateway')));
+    assert.equal(mainPickerState.providers.length, 8);
     assert.match(mainPickerState.selected, /E2E Provider/);
     assert.ok(mainPickerState.providerStrip.height >= 58, JSON.stringify(mainPickerState.providerStrip));
     assert.ok(mainPickerState.providerStrip.scrollWidth > mainPickerState.providerStrip.clientWidth, JSON.stringify(mainPickerState.providerStrip));
@@ -1855,6 +1877,34 @@ async function main() {
       assert.equal(selectedProviderButton?.color, 'rgb(5, 5, 232)');
     }
     await saveScreenshot(panel, MAIN_MODEL_PICKER_SCREENSHOT, { captureBeyondViewport: false });
+
+    const gatewayAliasRequestStart = mock.requests.length;
+    await panel.evaluate(`[...document.querySelectorAll('#modelProviderList .model-provider-option')].find((button) => button.textContent.includes('Hermes gateway'))?.click()`);
+    const gatewayAliasState = await waitFor(() => panel.evaluate(`(() => {
+      const selected = document.querySelector('#modelProviderList .model-provider-option.selected')?.textContent?.trim() || '';
+      const models = [...document.querySelectorAll('#modelMenuList .model-option')].map((button) => button.textContent.trim());
+      return selected.includes('Hermes gateway') && models.length === 2 ? { selected, models } : null;
+    })()`));
+    assert.ok(gatewayAliasState.models.some((label) => label.includes('e2e-gateway') && label.includes('gateway default')));
+    assert.ok(gatewayAliasState.models.some((label) => label.includes('fast-e2e')));
+    await panel.evaluate(`[...document.querySelectorAll('#modelMenuList .model-option')].find((button) => button.textContent.includes('e2e-gateway'))?.click()`);
+    const gatewayAliasStorage = await waitFor(() => setup.evaluate(`(async () => {
+      const { hermesBrowserSettings: stored = {} } = await chrome.storage.local.get('hermesBrowserSettings');
+      const binding = Object.values(stored.sessionModelBindings || {}).find((candidate) => candidate?.modelId === 'e2e-gateway');
+      return stored.model === 'e2e-gateway' && binding?.gatewayDefault === true
+        ? { model: stored.model, binding }
+        : null;
+    })()`));
+    assert.equal(gatewayAliasStorage.binding.provider, '');
+    assert.equal(gatewayAliasStorage.binding.gatewayAlias, true);
+    assert.equal(mock.requests.slice(gatewayAliasRequestStart).some((request) => request.method === 'POST' && /\/api\/sessions\/[^/]+\/model$/.test(request.path)), false);
+
+    await panel.evaluate(`(() => {
+      const menu = document.querySelector('#modelMenu');
+      if (menu?.hidden) document.querySelector('#modelMenuButton')?.click();
+      return true;
+    })()`);
+    await waitFor(() => panel.evaluate(`document.querySelector('#modelMenu')?.hidden === false`));
     await panel.evaluate(`[...document.querySelectorAll('#modelProviderList .model-provider-option')].find((button) => button.textContent.includes('OpenAI Codex'))?.click()`);
     const gpt56ContextState = await waitFor(() => panel.evaluate(`(() => {
       const selected = document.querySelector('#modelProviderList .model-provider-option.selected')?.textContent?.trim() || '';

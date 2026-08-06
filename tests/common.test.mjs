@@ -1033,8 +1033,49 @@ test('model runtime ack helper distinguishes pending confirmed and mismatch stat
   const mismatch = modelRuntimeAckState({ requested: { provider: 'nous', model: 'x-ai/grok-4.5' }, runtime: { provider: 'openai-codex', model: 'gpt-5.5' } });
   assert.equal(mismatch.state, 'mismatch');
   assert.match(mismatch.detail, /gpt-5\.5/);
+  const gatewayDefaultAck = modelRuntimeAckState({
+    requested: { model: 'custom-hermes-alias', provider: '', gatewayAlias: true, gatewayDefault: true },
+    runtime: { provider: 'openai-codex', model: 'gpt-5.6-sol', route_source: 'global' },
+  });
+  assert.equal(gatewayDefaultAck.state, 'confirmed');
+  const gatewayRouteAck = modelRuntimeAckState({
+    requested: { model: 'fast-route', provider: '', gatewayAlias: true, gatewayDefault: false },
+    runtime: {
+      provider: 'nous',
+      model: 'deepseek/deepseek-v4-flash-0731',
+      requested: { model: 'fast-route', provider: '' },
+      route_source: 'model_routes',
+    },
+  });
+  assert.equal(gatewayRouteAck.state, 'confirmed');
+  assert.equal(modelRuntimeAckState({
+    requested: { model: 'custom-hermes-alias', provider: '', gatewayAlias: true, gatewayDefault: true },
+    runtime: { provider: 'openai-codex', model: 'gpt-5.6-sol', route_source: 'raw_request' },
+  }).state, 'mismatch');
   assert.equal(shouldRequireModelLock({ provider: 'nous', model: 'x-ai/grok-4.5' }), true);
   assert.equal(shouldRequireModelLock({ provider: '', model: DEFAULT_SETTINGS.model, defaultModel: DEFAULT_SETTINGS.model }), false);
+  assert.equal(shouldRequireModelLock({ provider: '', model: 'custom-hermes-alias', gatewayDefault: true }), false);
+  assert.equal(shouldRequireModelLock({ provider: 'nous', model: 'custom-hermes-alias', gatewayDefault: true }), true);
+  assert.equal(shouldRequireModelLock({ provider: '', model: 'fast-route', gatewayDefault: false }), true);
+  const gatewayBinding = normalizeBrowserModelBinding({
+    modelId: 'custom-hermes-alias',
+    rawModelId: 'custom-hermes-alias',
+    provider: '',
+    gatewayAlias: true,
+    gatewayDefault: true,
+  });
+  assert.equal(gatewayBinding.gatewayAlias, true);
+  assert.equal(gatewayBinding.gatewayDefault, true);
+  const normalizedGatewayRow = normalizeHermesModels([{
+    id: 'custom-hermes-alias',
+    rawModelId: 'custom-hermes-alias',
+    provider: '',
+    gatewayAlias: true,
+    gatewayDefault: true,
+    source: 'gateway',
+  }], 'custom-hermes-alias')[0];
+  assert.equal(normalizedGatewayRow.gatewayAlias, true);
+  assert.equal(normalizedGatewayRow.gatewayDefault, true);
   assert.equal(normalizeRuntimeModelPayload({ runtime: { provider: 'nous', model: 'x-ai/grok-4.5', route_source: 'raw_request' } }).routeSource, 'raw_request');
   assert.equal(runtimeValueMatches('x-ai/grok-4.5', 'grok-4.5'), true);
 });

@@ -169,12 +169,14 @@ import {
   transcribeAudioViaDashboard,
   dashboardModelDiscoveryBaseUrl,
   discoverCanonicalProviderCatalog,
+  discoverGatewayVirtualModels,
   discoverModelsFromDashboard,
   discoverModelsFromExternalSources,
   discoverModelsFromRegistry,
   discoverModelsFromSessions,
   mergeModelsByRawId,
   mergeModelsWithRegistry,
+  mergeVirtualModelRows,
   MODEL_CATALOG_CACHE_STORAGE_KEY,
   modelCatalogCacheKey,
   modelRowsFromGatewayOptions,
@@ -3159,6 +3161,8 @@ function modelBindingFromModel(model = {}) {
     rawModelId: model.rawModelId || model.raw_model_id || model.model || model.id,
     provider: model.provider || model.providerId || model.owner || '',
     contextTokens: model.contextTokens || model.context_tokens || 0,
+    gatewayAlias: model.gatewayAlias === true,
+    gatewayDefault: model.gatewayDefault === true,
   });
 }
 
@@ -3843,6 +3847,8 @@ function applySelectedModel(selectedId, { persist = true, keepOpen = false } = {
       version: modelSelectionVersion,
       model: selected.rawModelId || selected.model || selected.id || nextId,
       provider: selected.provider || '',
+      gatewayAlias: selected.gatewayAlias === true,
+      gatewayDefault: selected.gatewayDefault === true,
       modelLabel: modelDisplayName(selected),
       providerLabel: modelProviderLabel(selected),
     };
@@ -3897,6 +3903,8 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
         requested: {
           provider: selected?.provider || '',
           model: selected?.rawModelId || selected?.model || selected?.id || '',
+          gatewayAlias: selected?.gatewayAlias === true,
+          gatewayDefault: selected?.gatewayDefault === true,
         },
         runtime,
       });
@@ -3943,6 +3951,20 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
     );
     return { state: 'pending', payload: null };
   }
+  const requiresLock = shouldRequireModelLock({
+    provider: selected?.provider || currentModelProviderSlug(),
+    model: selected?.rawModelId || selected?.model || selected?.id || currentModelRequestId(),
+    defaultModel: DEFAULT_SETTINGS.model,
+    gatewayDefault: selected?.gatewayDefault === true,
+  });
+  if (!requiresLock) {
+    setStatus(
+      'warn',
+      'Gateway default requested',
+      `${requestedDetail || modelDisplayName(selected) || settings.model} — Hermes will report the provider and model that actually execute the next turn.`,
+    );
+    return { state: 'pending', payload: null };
+  }
   const supportsLock = Boolean(gatewayCapabilities?.sessionModelLock || gatewayCapabilities?.endpoints?.session_model_lock);
   if (!supportsLock || !settings.sessionId) {
     setStatus(
@@ -3960,6 +3982,8 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
       requested: {
         provider: selected?.provider || '',
         model: selected?.rawModelId || selected?.model || selected?.id || '',
+        gatewayAlias: selected?.gatewayAlias === true,
+        gatewayDefault: selected?.gatewayDefault === true,
       },
       runtime,
     });
@@ -3999,6 +4023,7 @@ async function ensureActiveSessionModelLockOrThrow() {
     provider: currentModelProviderSlug(),
     model: currentModelRequestId(),
     defaultModel: DEFAULT_SETTINGS.model,
+    gatewayDefault: selected?.gatewayDefault === true,
   });
   if (!needsLock) return true;
   const supportsLock = Boolean(gatewayCapabilities?.sessionModelLock || gatewayCapabilities?.endpoints?.session_model_lock);
@@ -4119,16 +4144,27 @@ async function loadModels({ quiet = false, payload = null, refresh = false } = {
               setStatus('warn', 'Using cached Hermes catalog', 'The live model catalog is unavailable; keeping the last verified provider/model list.');
             }
           } else {
-            const response = await apiFetch('/v1/models', { method: 'GET' });
-            data = await readJsonResponse(response);
-            if (!response.ok) throw new Error(data?.error?.message || data?.error || `Model list failed (${response.status})`);
-            registryModels = normalizeHermesModels(data, settings.model);
-            registrySource = 'v1';
+            const virtualResult = await discoverGatewayVirtualModels({ apiFetch, readJsonResponse });
+            if (!virtualResult.ok || !virtualResult.models.length) {
+              throw new Error(virtualResult.error || 'Hermes did not advertise a gateway model alias.');
+            }
+            registryModels = normalizeHermesModels(virtualResult.models, settings.model);
+            registrySource = 'gateway';
             if (!quiet && registryResult.error && registryResult.error !== 'status-404') {
               setStatus('warn', 'Model registry unavailable', t('status.model_registry_fallback', { error: registryResult.error }), { translateDetail: false });
             }
           }
         }
+      }
+    }
+
+    if (!isRemoteWsMode() && registrySource !== 'gateway') {
+      const virtualResult = await discoverGatewayVirtualModels({ apiFetch, readJsonResponse });
+      if (virtualResult.ok && virtualResult.models.length) {
+        registryModels = normalizeHermesModels(mergeVirtualModelRows({
+          registryModels,
+          virtualModels: virtualResult.models,
+        }), settings.model);
       }
     }
 
@@ -6951,6 +6987,8 @@ function applyPendingModelRuntimeAck(runtime = {}) {
     requested: {
       provider: pendingModelRuntimeAck.provider,
       model: pendingModelRuntimeAck.model,
+      gatewayAlias: pendingModelRuntimeAck.gatewayAlias === true,
+      gatewayDefault: pendingModelRuntimeAck.gatewayDefault === true,
     },
     runtime,
   });
@@ -7216,6 +7254,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
               provider: currentModelProviderSlug(),
               model: currentModelRequestId(),
               defaultModel: DEFAULT_SETTINGS.model,
+              gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
             }),
             message: outboundContent(prompt, turnAttachments),
             system_message: currentHermesBrowserSystemPrompt(),
@@ -7537,6 +7576,7 @@ async function fallbackSessionChat(prompt, turnAttachments = attachments, { onRu
             provider: currentModelProviderSlug(),
             model: currentModelRequestId(),
             defaultModel: DEFAULT_SETTINGS.model,
+            gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
           }),
           message: outboundContent(prompt, turnAttachments),
           system_message: currentHermesBrowserSystemPrompt(),
@@ -7952,6 +7992,7 @@ async function runInlineDraftInBackground(request, prompt) {
         provider: currentModelProviderSlug(),
         model: currentModelRequestId(),
         defaultModel: DEFAULT_SETTINGS.model,
+        gatewayDefault: currentSelectedModel()?.gatewayDefault === true,
       }),
       message: prompt,
       system_message: currentHermesBrowserSystemPrompt(),

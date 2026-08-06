@@ -312,14 +312,15 @@ test('Hermes Web model discovery mirrors the side-panel fallback chain', () => {
   const registry = loadModels.indexOf('discoverModelsFromRegistry');
   const dashboard = loadModels.indexOf('discoverModelsFromDashboard');
   const cache = loadModels.indexOf('readCachedModelCatalog');
-  const openAiCompat = loadModels.indexOf("client.fetch('/v1/models'");
+  const liveGatewayAliases = loadModels.indexOf('discoverGatewayVirtualModels');
   const sessions = loadModels.indexOf('discoverModelsFromSessions');
 
   assert.ok(registry >= 0, 'Web should try the canonical API registry first');
   assert.ok(dashboard > registry, 'Web should fall back to the dashboard registry after an API registry miss');
   assert.ok(cache > dashboard, 'Web should retain the side-panel canonical cache fallback');
-  assert.ok(openAiCompat > cache, 'Web should fall back to the OpenAI-compatible model list after the cache');
-  assert.ok(sessions > openAiCompat, 'Web should expand sparse legacy inventories from session history');
+  assert.ok(liveGatewayAliases > cache, 'Web should discover gateway aliases from the live OpenAI-compatible model list after the cache');
+  assert.ok(sessions > liveGatewayAliases, 'Web should expand sparse legacy inventories from session history');
+  assert.match(loadModels, /mergeVirtualModelRows/);
   assert.match(loadModels, /writeCachedModelCatalog/);
   assert.match(loadModels, /modelCatalogRefreshDecision/);
   assert.match(renderModelPicker, /isModelRuntimeSelectable/);
@@ -348,7 +349,8 @@ test('full-tab session creation and controls enforce the upstream runtime truth 
   const selectModel = js.match(/async function selectModel\(model\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   const steerCurrentDraft = js.match(/async function steerCurrentDraft\(\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
 
-  assert.match(createSession, /require_model_lock:\s*Boolean\(model\.provider\s*\|\|\s*model\.model\)/);
+  assert.match(createSession, /require_model_lock:\s*shouldRequireModelLock\(\{/);
+  assert.match(createSession, /gatewayDefault:\s*model\.gatewayDefault === true/);
   assert.match(selectModel, /modelLockRequestOutcome/);
   assert.match(selectModel, /previousSettings/);
   assert.match(selectModel, /state === 'failed'|outcome\.rollback/);

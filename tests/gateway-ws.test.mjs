@@ -111,7 +111,19 @@ test('Cloud session model switches use the persistent session-scoped config cont
   );
   assert.throws(() => buildSessionModelSwitchRequest({ sessionId: '', model: 'x', provider: 'nous' }), /session/i);
   assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: '', provider: 'nous' }), /model/i);
-  assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'x', provider: '' }), /provider/i);
+  // Provider is optional for the gateway-default alias: 'hermes-agent' is
+  // resolved by the gateway, never sent as an explicit provider override.
+  assert.deepEqual(
+    buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'hermes-agent', provider: '' }),
+    {
+      method: 'config.set',
+      params: {
+        session_id: 'runtime-1',
+        key: 'model',
+        value: 'hermes-agent --session',
+      },
+    },
+  );
   assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'x --global', provider: 'nous' }), /flags|whitespace/i);
   assert.throws(() => buildSessionModelSwitchRequest({ sessionId: 'runtime-1', model: 'x', provider: '--global' }), /flags|whitespace/i);
 });

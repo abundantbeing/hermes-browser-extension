@@ -23,7 +23,10 @@ export function modelCatalogCacheKey({ gatewayMode = 'local-api', gatewayUrl = '
 export function normalizeCachedModelCatalog(payload = []) {
   const rows = Array.isArray(payload) ? payload : [];
   return rows
-    .filter((model) => model && typeof model === 'object' && String(model.id || '').trim())
+    .filter((model) => model
+      && typeof model === 'object'
+      && String(model.id || '').trim()
+      && model.gatewayAlias !== true)
     .map((model) => ({
       ...model,
       source: 'cache',
@@ -155,6 +158,7 @@ export function modelsFromModelOptionsPayload(payload = {}) {
         fast: typeof modelCaps.fast === 'boolean' ? modelCaps.fast : undefined,
         reasoning: typeof modelCaps.reasoning === 'boolean' ? modelCaps.reasoning : undefined,
         authenticated: provider?.authenticated !== false,
+        current: provider?.is_current === true || provider?.isCurrent === true,
         available: !unavailable.has(modelId),
         source: 'registry',
         runtimeSelectable: true,
@@ -162,6 +166,91 @@ export function modelsFromModelOptionsPayload(payload = {}) {
     }
   }
   return models;
+}
+
+export function gatewayVirtualModelRows(payload = {}) {
+  const rows = Array.isArray(payload?.data) ? payload.data : [];
+  const seen = new Set();
+  const models = [];
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') continue;
+    if (row.object && String(row.object).trim().toLowerCase() !== 'model') continue;
+    const id = String(row.id || '').trim();
+    const owner = String(row.owned_by || '').trim().toLowerCase();
+    if (!id || /\s/.test(id) || id.startsWith('-') || !['hermes', 'hermes-agent', 'configured'].includes(owner)) continue;
+    const key = id.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const parent = String(row.parent || '').trim();
+    const gatewayDefault = ['hermes', 'hermes-agent'].includes(owner) && !parent;
+    models.push({
+      id,
+      rawModelId: id,
+      label: gatewayDefault ? `${id} (gateway default)` : id,
+      provider: '',
+      providerLabel: 'Hermes gateway',
+      description: gatewayDefault
+        ? 'Live default alias advertised by this Hermes gateway'
+        : `Live route alias advertised by this Hermes gateway${parent ? ` · ${parent}` : ''}`,
+      contextTokens: contextTokensFromObject(row),
+      authenticated: true,
+      current: gatewayDefault,
+      available: true,
+      gatewayAlias: true,
+      gatewayDefault,
+      source: 'gateway',
+      runtimeSelectable: true,
+    });
+  }
+  return models;
+}
+
+export async function discoverGatewayVirtualModels({ apiFetch, readJsonResponse } = {}) {
+  if (typeof apiFetch !== 'function' || typeof readJsonResponse !== 'function') {
+    return { ok: false, models: [], error: 'no-fetch', source: 'gateway' };
+  }
+  try {
+    const response = await apiFetch('/v1/models', { method: 'GET' });
+    const payload = await readJsonResponse(response);
+    if (!response.ok) {
+      return {
+        ok: false,
+        models: [],
+        error: payload?.error?.message || payload?.error || `status-${response.status}`,
+        source: 'gateway',
+      };
+    }
+    return { ok: true, models: gatewayVirtualModelRows(payload), error: '', source: 'gateway' };
+  } catch (error) {
+    return { ok: false, models: [], error: error?.message || 'error', source: 'gateway' };
+  }
+}
+
+export function mergeVirtualModelRows({ registryModels = [], virtualModels = [] } = {}) {
+  const registry = Array.isArray(registryModels) ? registryModels.filter(Boolean) : [];
+  const virtual = Array.isArray(virtualModels) ? virtualModels.filter(Boolean) : [];
+  const registryRawIds = new Set(
+    registry
+      .map((model) => String(model?.rawModelId || model?.model || model?.id || '').trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const seen = new Set();
+  const merged = [];
+  const append = (model) => {
+    const rawModelId = String(model?.rawModelId || model?.model || model?.id || '').trim();
+    const provider = String(model?.provider || '').trim().toLowerCase();
+    const key = `${provider}::${rawModelId.toLowerCase()}`;
+    if (!rawModelId || seen.has(key)) return;
+    seen.add(key);
+    merged.push(model);
+  };
+  for (const model of virtual.filter((item) => item?.gatewayDefault === true)) append(model);
+  for (const model of virtual.filter((item) => item?.gatewayDefault !== true)) {
+    const rawModelId = String(model?.rawModelId || model?.model || model?.id || '').trim().toLowerCase();
+    if (!registryRawIds.has(rawModelId)) append(model);
+  }
+  for (const model of registry) append(model);
+  return merged;
 }
 
 export function modelRowsFromGatewayOptions(payload = {}) {
@@ -212,7 +301,7 @@ async function fetchWithTimeout(fetchFn, url, options = {}, timeoutMs = 5000) {
   }
 }
 
-function canonicalProviderModels(payload = {}, registryModels = []) {
+function canonicalProviderModels(payload = {}, registryModels = [], enrichProviders = null) {
   const providers = payload?.providers && typeof payload.providers === 'object' ? payload.providers : {};
   const templates = new Map();
   for (const model of Array.isArray(registryModels) ? registryModels : []) {
@@ -223,6 +312,13 @@ function canonicalProviderModels(payload = {}, registryModels = []) {
 
   const extras = [];
   for (const [provider, template] of templates) {
+    // Only catalog-backed providers (Nous Portal and OpenRouter) may be
+    // enriched from the canonical catalog. Direct provider rows that the
+    // gateway advertises as authenticated (DeepSeek with a local API key,
+    // OpenAI, Anthropic, ...) are authoritative: their raw model ids are
+    // already in gateway format, and injecting catalog rows would shadow or
+    // confuse the request with ids the gateway does not recognize (issue #61).
+    if (enrichProviders && !enrichProviders.has(provider)) continue;
     const entries = Array.isArray(providers?.[provider]?.models) ? providers[provider].models : [];
     for (const entry of entries) {
       const rawModelId = String(typeof entry === 'string' ? entry : entry?.id || entry?.model || entry?.name || '').trim();
@@ -285,6 +381,14 @@ export async function discoverCanonicalProviderCatalog({
   if (!hasCanonicalProvider) return { ok: true, models: currentModels, error: '', source: 'not-applicable' };
   if (typeof fetchFn !== 'function') return { ok: false, models: currentModels, error: 'no-fetch', source: 'registry' };
 
+  // Catalog-backed providers only: Nous Portal aliases plus OpenRouter.
+  // Direct provider rows advertised by the gateway are authoritative and are
+  // never overlaid with canonical catalog rows (issue #61).
+  const enrichProviders = new Set(nousProviders);
+  if (currentModels.some((model) => String(model?.provider || '').trim().toLowerCase() === 'openrouter')) {
+    enrichProviders.add('openrouter');
+  }
+
   const errors = [];
   let models = currentModels;
   let liveNousLoaded = false;
@@ -302,7 +406,7 @@ export async function discoverCanonicalProviderCatalog({
       const payload = await response.json();
       if (!Array.isArray(payload?.data)) throw new Error('invalid-live-nous-catalog');
       const providers = Object.fromEntries(nousProviders.map((provider) => [provider, { models: payload.data }]));
-      models = canonicalProviderModels({ providers }, models);
+      models = canonicalProviderModels({ providers }, models, enrichProviders);
       liveNousLoaded = true;
     } catch (error) {
       errors.push(error?.name === 'AbortError' ? 'nous-live-timeout' : (error?.message || 'nous-live-error'));
@@ -318,7 +422,7 @@ export async function discoverCanonicalProviderCatalog({
     }, timeoutMs);
     if (!response.ok) throw new Error(`status-${response.status}`);
     const payload = catalogWithNousAliases(await response.json(), nousProviders);
-    models = canonicalProviderModels(payload, models);
+    models = canonicalProviderModels(payload, models, enrichProviders);
     staticCatalogLoaded = true;
   } catch (error) {
     errors.push(error?.name === 'AbortError' ? 'canonical-timeout' : (error?.message || 'canonical-error'));
