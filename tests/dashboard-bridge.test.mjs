@@ -254,7 +254,7 @@ test('discoverProfilesInPage reports missing token when the dashboard boot does 
 test('discoverProfilesViaTab runs first-party in a signed-in dashboard tab', async () => {
   let injected = null;
   const result = await discoverProfilesViaTab({
-    tabsApi: { query: async () => [{ id: 9, url: 'https://host.ts.net/x', discarded: false }] },
+    tabsApi: { query: async () => [{ id: 9, url: 'https://host.ts.net/x', discarded: false, status: 'complete', active: true }] },
     scriptingApi: {
       executeScript: async (opts) => {
         injected = opts;
