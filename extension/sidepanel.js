@@ -4740,7 +4740,7 @@ async function loadProfiles({ quiet = false } = {}) {
     } catch (error) {
       availableProfiles = [];
       renderProfiles();
-      if (!quiet) setStatus('warn', 'Profile sync failed', error?.message || String(error));
+      if (!quiet) setStatus('warn', 'Profile sync failed', error?.message || String(error), { translateDetail: false });
     }
     return;
   }
