@@ -266,7 +266,21 @@
                 <option value="zh-CN">简体中文</option>
               </select>
             </div>
-            <div class="theme-setting"><div><strong data-i18n="ui.theme">Theme</strong><span data-i18n="ui.use.the.same.palette.and.chrome.language.as.hermes.browser">Use the same palette and chrome language as Hermes Browser.</span></div><div id="settingsThemeGrid" class="theme-grid" role="radiogroup" aria-label="Theme" data-i18n-aria-label="ui.theme"></div><input id="settingsTheme" type="hidden" value="nous" /></div>
+            <div class="theme-setting">
+              <div><strong data-i18n="ui.theme">Theme</strong><span data-i18n="ui.use.the.same.palette.and.chrome.language.as.hermes.browser">Use the same palette and chrome language as Hermes Browser.</span></div>
+              <div id="settingsThemeGrid" class="theme-grid" role="radiogroup" aria-label="Theme" data-i18n-aria-label="ui.theme"></div>
+              <input id="settingsTheme" type="hidden" value="nous" />
+              <details id="settingsCustomThemeManager" class="custom-theme-manager">
+                <summary class="custom-theme-summary"><span data-i18n="custom_theme.custom_themes">Custom themes</span><span class="custom-theme-summary-meta" data-i18n="custom_theme.user_installed">User-installed</span></summary>
+                <div class="custom-theme-manager-body">
+                  <label class="custom-theme-json-field" for="settingsCustomThemeImportTextarea"><strong data-i18n="custom_theme.paste_theme_json">Paste theme JSON</strong><span data-i18n="custom_theme.import_description">Import semantic colors only. CSS, URLs, and remote fonts are not accepted.</span><textarea id="settingsCustomThemeImportTextarea" rows="8" spellcheck="false" autocomplete="off" placeholder="{&#10;  &quot;schemaVersion&quot;: 1,&#10;  &quot;name&quot;: &quot;My theme&quot;&#10;}" data-i18n-invariant></textarea></label>
+                  <div class="custom-theme-import-actions"><label class="custom-theme-file-control" for="settingsCustomThemeFileInput"><span data-i18n="custom_theme.choose_theme_file">Choose theme file</span><input id="settingsCustomThemeFileInput" type="file" accept=".json,application/json" /></label><button id="settingsCustomThemePreviewButton" type="button" data-i18n="custom_theme.preview_theme">Preview theme</button></div>
+                  <section id="settingsCustomThemePreview" class="custom-theme-preview-card" aria-label="Theme preview" data-i18n-aria-label="custom_theme.preview_theme" hidden></section>
+                  <div class="custom-theme-install-row"><button id="settingsCustomThemeInstallButton" type="button" disabled data-i18n="custom_theme.install_theme">Install theme</button><button id="settingsCustomThemeResetButton" type="button" class="danger-action" hidden data-i18n="custom_theme.reset_storage">Reset custom theme storage</button></div>
+                  <p id="settingsCustomThemeImportStatus" class="settings-appearance-save-status custom-theme-status" role="status" aria-live="polite"></p>
+                </div>
+              </details>
+            </div>
           </section>
           <section class="inline-assist-settings">
             <h3 data-i18n="ui.hermes.assist">Hermes Assist</h3>

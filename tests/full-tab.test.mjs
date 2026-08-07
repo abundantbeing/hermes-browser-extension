@@ -10,6 +10,17 @@ import { FONT_PROFILES, ZOOM_MAX_PERCENT, ZOOM_MIN_PERCENT, ZOOM_PRESETS } from 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
+test('check:js syntax-checks both custom theme modules', () => {
+  const packageJson = JSON.parse(read('package.json'));
+  const checkJs = packageJson.scripts?.['check:js'] || '';
+  for (const modulePath of [
+    'extension/lib/custom-themes.mjs',
+    'extension/lib/custom-theme-store.mjs',
+  ]) {
+    assert.match(checkJs, new RegExp(`node --check ${modulePath.replaceAll('.', '\\.')}(?:\\s|$)`), `${modulePath} must be part of check:js`);
+  }
+});
+
 test('full-tab extension surface has a dedicated shell without copied sidepanel code', () => {
   const html = read('extension/app.html');
   const js = read('extension/app.js');
@@ -768,4 +779,57 @@ test('sidepanel primary Connect and Test use one explicit connection-mode dispat
   assert.match(html, /Hermes Cloud Preview/);
   assert.match(js, /async function connectApiWithPairing\(\)[\s\S]*?transportUsesDashboardTicket\(settings\.connectionTransport\)/, 'the Local/Remote API connector must reject ticket transports before URL normalization');
   assert.match(js, /sanitizeGatewayUrlForConnectionMode\(/, 'Cloud persistence must remove loopback and inherited Local URLs');
+});
+
+test('Hermes Web exposes an inline custom theme manager with stable accessible controls', () => {
+  const html = read('extension/app.html');
+  for (const id of [
+    'settingsCustomThemeManager',
+    'settingsCustomThemeImportTextarea',
+    'settingsCustomThemeFileInput',
+    'settingsCustomThemePreviewButton',
+    'settingsCustomThemePreview',
+    'settingsCustomThemeInstallButton',
+    'settingsCustomThemeImportStatus',
+    'settingsCustomThemeResetButton',
+  ]) assert.match(html, new RegExp(`id="${id}"`), `expected id="${id}"`);
+  assert.match(html, /<details[^>]*id="settingsCustomThemeManager"/);
+  assert.match(html, /id="settingsCustomThemeFileInput"[^>]*accept="[^"]*\.json/);
+  assert.match(html, /id="settingsCustomThemeImportStatus"[^>]*role="status"[^>]*aria-live="polite"/);
+  assert.doesNotMatch(html, /settingsCustomTheme[\s\S]{0,200}<dialog/i);
+});
+
+test('Hermes Web custom theme flow shares validation and storage while preserving web selection isolation', () => {
+  const app = read('extension/app.js');
+  assert.match(app, /from\s+['"]\.\/lib\/custom-themes\.mjs['"]/);
+  assert.match(app, /from\s+['"]\.\/lib\/custom-theme-store\.mjs['"]/);
+  for (const name of [
+    'CUSTOM_THEME_MAX_INPUT_BYTES',
+    'CUSTOM_THEME_STORAGE_KEY',
+    'validateThemeDocument',
+    'themeCssVariables',
+    'customThemeSelection',
+    'serializeThemeDocument',
+    'readCustomThemeStore',
+    'installCustomTheme',
+    'deleteCustomTheme',
+    'resetCustomThemeStore',
+  ]) assert.match(app, new RegExp(`\\b${name}\\b`), `expected ${name}`);
+
+  const preview = app.match(/async function previewWebCustomThemeImport\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(preview.indexOf('CUSTOM_THEME_MAX_INPUT_BYTES') < preview.indexOf('JSON.parse'));
+  assert.doesNotMatch(preview, /chrome\.storage\.(?:local\.)?(?:set|remove)/);
+
+  const install = app.match(/async function installPreviewedWebCustomTheme\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(install.indexOf('await installCustomTheme') < install.indexOf('applyAndPersistAppearance'));
+
+  const persist = app.match(/async function persistWebAppearanceSettings\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(persist, /webAppearanceTheme/);
+  assert.doesNotMatch(persist, /(?<!web)appearanceTheme\s*:/, 'normal Web selection may not mutate panel appearanceTheme');
+
+  assert.match(app, /let webCustomThemeDeleteArmedId\s*=\s*['"]/);
+  assert.match(app, /let webCustomThemeResetArmed\s*=\s*false/);
+  assert.match(app, /chrome\.storage\.onChanged\.addListener/);
+  assert.match(app, /CUSTOM_THEME_STORAGE_KEY/);
+  assert.match(app, /Active theme is unavailable\. Using Nous\./);
 });

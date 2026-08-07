@@ -279,6 +279,126 @@
     "message": "고정된 탭 잠금 해제",
     "description": "Runtime interface message context.unlock_pinned_tab"
   },
+  "runtime_custom_theme_active_unavailable": {
+    "message": "활성 테마를 사용할 수 없습니다. Nous를 사용합니다.",
+    "description": "Runtime interface message custom_theme.active_unavailable"
+  },
+  "runtime_custom_theme_choose_theme_file": {
+    "message": "테마 파일 선택",
+    "description": "Runtime interface message custom_theme.choose_theme_file"
+  },
+  "runtime_custom_theme_confirm_delete": {
+    "message": "삭제 확인",
+    "description": "Runtime interface message custom_theme.confirm_delete"
+  },
+  "runtime_custom_theme_confirm_reset": {
+    "message": "재설정 확인",
+    "description": "Runtime interface message custom_theme.confirm_reset"
+  },
+  "runtime_custom_theme_contrast_failed": {
+    "message": "테마가 대비 요구 사항을 충족하지 않습니다.",
+    "description": "Runtime interface message custom_theme.contrast_failed"
+  },
+  "runtime_custom_theme_custom_themes": {
+    "message": "사용자 지정 테마",
+    "description": "Runtime interface message custom_theme.custom_themes"
+  },
+  "runtime_custom_theme_delete_failed": {
+    "message": "테마를 삭제할 수 없습니다.",
+    "description": "Runtime interface message custom_theme.delete_failed"
+  },
+  "runtime_custom_theme_delete_theme": {
+    "message": "테마 삭제",
+    "description": "Runtime interface message custom_theme.delete_theme"
+  },
+  "runtime_custom_theme_deleted": {
+    "message": "테마가 삭제되었습니다.",
+    "description": "Runtime interface message custom_theme.deleted"
+  },
+  "runtime_custom_theme_export_theme": {
+    "message": "테마 내보내기",
+    "description": "Runtime interface message custom_theme.export_theme"
+  },
+  "runtime_custom_theme_file_read_failed": {
+    "message": "테마 파일을 읽을 수 없습니다.",
+    "description": "Runtime interface message custom_theme.file_read_failed"
+  },
+  "runtime_custom_theme_import_description": {
+    "message": "시맨틱 색상만 가져옵니다. CSS, URL 및 원격 글꼴은 허용되지 않습니다.",
+    "description": "Runtime interface message custom_theme.import_description"
+  },
+  "runtime_custom_theme_input_too_large": {
+    "message": "테마 입력이 너무 큽니다.",
+    "description": "Runtime interface message custom_theme.input_too_large"
+  },
+  "runtime_custom_theme_install_theme": {
+    "message": "테마 설치",
+    "description": "Runtime interface message custom_theme.install_theme"
+  },
+  "runtime_custom_theme_installed": {
+    "message": "테마가 설치되었습니다.",
+    "description": "Runtime interface message custom_theme.installed"
+  },
+  "runtime_custom_theme_invalid_file_type": {
+    "message": "JSON 테마 파일을 선택하세요.",
+    "description": "Runtime interface message custom_theme.invalid_file_type"
+  },
+  "runtime_custom_theme_light_and_dark": {
+    "message": "라이트 및 다크 팔레트",
+    "description": "Runtime interface message custom_theme.light_and_dark"
+  },
+  "runtime_custom_theme_light_only": {
+    "message": "라이트 팔레트만",
+    "description": "Runtime interface message custom_theme.light_only"
+  },
+  "runtime_custom_theme_limit_reached": {
+    "message": "테마 한도에 도달했습니다.",
+    "description": "Runtime interface message custom_theme.limit_reached"
+  },
+  "runtime_custom_theme_paste_theme_json": {
+    "message": "테마 JSON 붙여넣기",
+    "description": "Runtime interface message custom_theme.paste_theme_json"
+  },
+  "runtime_custom_theme_preview_theme": {
+    "message": "테마 미리보기",
+    "description": "Runtime interface message custom_theme.preview_theme"
+  },
+  "runtime_custom_theme_reset_complete": {
+    "message": "사용자 지정 테마 저장소가 재설정되었습니다.",
+    "description": "Runtime interface message custom_theme.reset_complete"
+  },
+  "runtime_custom_theme_reset_failed": {
+    "message": "사용자 지정 테마 저장소를 재설정할 수 없습니다.",
+    "description": "Runtime interface message custom_theme.reset_failed"
+  },
+  "runtime_custom_theme_reset_storage": {
+    "message": "사용자 지정 테마 저장소 재설정",
+    "description": "Runtime interface message custom_theme.reset_storage"
+  },
+  "runtime_custom_theme_save_failed": {
+    "message": "테마를 저장할 수 없습니다.",
+    "description": "Runtime interface message custom_theme.save_failed"
+  },
+  "runtime_custom_theme_storage_corrupt": {
+    "message": "사용자 지정 테마 저장소가 손상되었습니다. 계속하려면 명시적으로 재설정하세요.",
+    "description": "Runtime interface message custom_theme.storage_corrupt"
+  },
+  "runtime_custom_theme_storage_unavailable": {
+    "message": "사용자 지정 테마를 사용할 수 없습니다.",
+    "description": "Runtime interface message custom_theme.storage_unavailable"
+  },
+  "runtime_custom_theme_user_installed": {
+    "message": "사용자가 설치함",
+    "description": "Runtime interface message custom_theme.user_installed"
+  },
+  "runtime_custom_theme_valid": {
+    "message": "유효한 테마입니다. 설치하여 테마에 추가하세요.",
+    "description": "Runtime interface message custom_theme.valid"
+  },
+  "runtime_custom_theme_validation_errors": {
+    "message": "테마에 유효성 검사 오류가 있습니다.",
+    "description": "Runtime interface message custom_theme.validation_errors"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "상태 확인에는 응답이 있었지만 보호된 Browser/모델 경로에는 Authorization: Bearer ***가 필요합니다. 설정에 API 키 또는 범위가 지정된 브라우저 토큰을 붙여넣으세요.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

@@ -279,6 +279,126 @@
     "message": "पिन किया गया टैब अनलॉक करें",
     "description": "Runtime interface message context.unlock_pinned_tab"
   },
+  "runtime_custom_theme_active_unavailable": {
+    "message": "सक्रिय थीम उपलब्ध नहीं है। Nous का उपयोग किया जा रहा है।",
+    "description": "Runtime interface message custom_theme.active_unavailable"
+  },
+  "runtime_custom_theme_choose_theme_file": {
+    "message": "थीम फ़ाइल चुनें",
+    "description": "Runtime interface message custom_theme.choose_theme_file"
+  },
+  "runtime_custom_theme_confirm_delete": {
+    "message": "हटाने की पुष्टि करें",
+    "description": "Runtime interface message custom_theme.confirm_delete"
+  },
+  "runtime_custom_theme_confirm_reset": {
+    "message": "रीसेट की पुष्टि करें",
+    "description": "Runtime interface message custom_theme.confirm_reset"
+  },
+  "runtime_custom_theme_contrast_failed": {
+    "message": "थीम कंट्रास्ट आवश्यकताओं को पूरा नहीं करती।",
+    "description": "Runtime interface message custom_theme.contrast_failed"
+  },
+  "runtime_custom_theme_custom_themes": {
+    "message": "कस्टम थीम",
+    "description": "Runtime interface message custom_theme.custom_themes"
+  },
+  "runtime_custom_theme_delete_failed": {
+    "message": "थीम हटाई नहीं जा सकी।",
+    "description": "Runtime interface message custom_theme.delete_failed"
+  },
+  "runtime_custom_theme_delete_theme": {
+    "message": "थीम हटाएँ",
+    "description": "Runtime interface message custom_theme.delete_theme"
+  },
+  "runtime_custom_theme_deleted": {
+    "message": "थीम हटा दी गई।",
+    "description": "Runtime interface message custom_theme.deleted"
+  },
+  "runtime_custom_theme_export_theme": {
+    "message": "थीम निर्यात करें",
+    "description": "Runtime interface message custom_theme.export_theme"
+  },
+  "runtime_custom_theme_file_read_failed": {
+    "message": "थीम फ़ाइल पढ़ी नहीं जा सकी।",
+    "description": "Runtime interface message custom_theme.file_read_failed"
+  },
+  "runtime_custom_theme_import_description": {
+    "message": "केवल सिमैंटिक रंग आयात करें। CSS, URL और रिमोट फ़ॉन्ट स्वीकार नहीं किए जाते।",
+    "description": "Runtime interface message custom_theme.import_description"
+  },
+  "runtime_custom_theme_input_too_large": {
+    "message": "थीम इनपुट बहुत बड़ा है।",
+    "description": "Runtime interface message custom_theme.input_too_large"
+  },
+  "runtime_custom_theme_install_theme": {
+    "message": "थीम इंस्टॉल करें",
+    "description": "Runtime interface message custom_theme.install_theme"
+  },
+  "runtime_custom_theme_installed": {
+    "message": "थीम इंस्टॉल हो गई।",
+    "description": "Runtime interface message custom_theme.installed"
+  },
+  "runtime_custom_theme_invalid_file_type": {
+    "message": "JSON थीम फ़ाइल चुनें।",
+    "description": "Runtime interface message custom_theme.invalid_file_type"
+  },
+  "runtime_custom_theme_light_and_dark": {
+    "message": "लाइट और डार्क पैलेट",
+    "description": "Runtime interface message custom_theme.light_and_dark"
+  },
+  "runtime_custom_theme_light_only": {
+    "message": "केवल लाइट पैलेट",
+    "description": "Runtime interface message custom_theme.light_only"
+  },
+  "runtime_custom_theme_limit_reached": {
+    "message": "थीम सीमा पूरी हो गई।",
+    "description": "Runtime interface message custom_theme.limit_reached"
+  },
+  "runtime_custom_theme_paste_theme_json": {
+    "message": "थीम JSON पेस्ट करें",
+    "description": "Runtime interface message custom_theme.paste_theme_json"
+  },
+  "runtime_custom_theme_preview_theme": {
+    "message": "थीम का पूर्वावलोकन",
+    "description": "Runtime interface message custom_theme.preview_theme"
+  },
+  "runtime_custom_theme_reset_complete": {
+    "message": "कस्टम थीम स्टोरेज रीसेट हो गया।",
+    "description": "Runtime interface message custom_theme.reset_complete"
+  },
+  "runtime_custom_theme_reset_failed": {
+    "message": "कस्टम थीम स्टोरेज रीसेट नहीं हो सका।",
+    "description": "Runtime interface message custom_theme.reset_failed"
+  },
+  "runtime_custom_theme_reset_storage": {
+    "message": "कस्टम थीम स्टोरेज रीसेट करें",
+    "description": "Runtime interface message custom_theme.reset_storage"
+  },
+  "runtime_custom_theme_save_failed": {
+    "message": "थीम सहेजी नहीं जा सकी।",
+    "description": "Runtime interface message custom_theme.save_failed"
+  },
+  "runtime_custom_theme_storage_corrupt": {
+    "message": "कस्टम थीम स्टोरेज दूषित है। जारी रखने के लिए इसे स्पष्ट रूप से रीसेट करें।",
+    "description": "Runtime interface message custom_theme.storage_corrupt"
+  },
+  "runtime_custom_theme_storage_unavailable": {
+    "message": "कस्टम थीम उपलब्ध नहीं हैं।",
+    "description": "Runtime interface message custom_theme.storage_unavailable"
+  },
+  "runtime_custom_theme_user_installed": {
+    "message": "उपयोगकर्ता द्वारा इंस्टॉल",
+    "description": "Runtime interface message custom_theme.user_installed"
+  },
+  "runtime_custom_theme_valid": {
+    "message": "थीम मान्य है। इसे अपनी थीम में जोड़ने के लिए इंस्टॉल करें।",
+    "description": "Runtime interface message custom_theme.valid"
+  },
+  "runtime_custom_theme_validation_errors": {
+    "message": "थीम में सत्यापन त्रुटियाँ हैं।",
+    "description": "Runtime interface message custom_theme.validation_errors"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "स्वास्थ्य जाँच ने उत्तर दिया, लेकिन संरक्षित ब्राउज़र/मॉडल रूट्स को Authorization: Bearer *** की आवश्यकता है। सेटिंग्स में API कुंजी या स्कोप्ड ब्राउज़र टोकन चिपकाएँ।",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

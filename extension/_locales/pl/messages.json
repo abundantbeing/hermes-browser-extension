@@ -279,6 +279,126 @@
     "message": "Odblokuj przypiętą kartę",
     "description": "Runtime interface message context.unlock_pinned_tab"
   },
+  "runtime_custom_theme_active_unavailable": {
+    "message": "Aktywny motyw jest niedostępny. Używany jest Nous.",
+    "description": "Runtime interface message custom_theme.active_unavailable"
+  },
+  "runtime_custom_theme_choose_theme_file": {
+    "message": "Wybierz plik motywu",
+    "description": "Runtime interface message custom_theme.choose_theme_file"
+  },
+  "runtime_custom_theme_confirm_delete": {
+    "message": "Potwierdź usunięcie",
+    "description": "Runtime interface message custom_theme.confirm_delete"
+  },
+  "runtime_custom_theme_confirm_reset": {
+    "message": "Potwierdź reset",
+    "description": "Runtime interface message custom_theme.confirm_reset"
+  },
+  "runtime_custom_theme_contrast_failed": {
+    "message": "Motyw nie spełnia wymagań dotyczących kontrastu.",
+    "description": "Runtime interface message custom_theme.contrast_failed"
+  },
+  "runtime_custom_theme_custom_themes": {
+    "message": "Motywy niestandardowe",
+    "description": "Runtime interface message custom_theme.custom_themes"
+  },
+  "runtime_custom_theme_delete_failed": {
+    "message": "Nie udało się usunąć motywu.",
+    "description": "Runtime interface message custom_theme.delete_failed"
+  },
+  "runtime_custom_theme_delete_theme": {
+    "message": "Usuń motyw",
+    "description": "Runtime interface message custom_theme.delete_theme"
+  },
+  "runtime_custom_theme_deleted": {
+    "message": "Motyw usunięty.",
+    "description": "Runtime interface message custom_theme.deleted"
+  },
+  "runtime_custom_theme_export_theme": {
+    "message": "Eksportuj motyw",
+    "description": "Runtime interface message custom_theme.export_theme"
+  },
+  "runtime_custom_theme_file_read_failed": {
+    "message": "Nie udało się odczytać pliku motywu.",
+    "description": "Runtime interface message custom_theme.file_read_failed"
+  },
+  "runtime_custom_theme_import_description": {
+    "message": "Importuj wyłącznie kolory semantyczne. CSS, URL i zdalne czcionki nie są akceptowane.",
+    "description": "Runtime interface message custom_theme.import_description"
+  },
+  "runtime_custom_theme_input_too_large": {
+    "message": "Dane motywu są zbyt duże.",
+    "description": "Runtime interface message custom_theme.input_too_large"
+  },
+  "runtime_custom_theme_install_theme": {
+    "message": "Zainstaluj motyw",
+    "description": "Runtime interface message custom_theme.install_theme"
+  },
+  "runtime_custom_theme_installed": {
+    "message": "Motyw zainstalowany.",
+    "description": "Runtime interface message custom_theme.installed"
+  },
+  "runtime_custom_theme_invalid_file_type": {
+    "message": "Wybierz plik motywu JSON.",
+    "description": "Runtime interface message custom_theme.invalid_file_type"
+  },
+  "runtime_custom_theme_light_and_dark": {
+    "message": "Jasna i ciemna paleta",
+    "description": "Runtime interface message custom_theme.light_and_dark"
+  },
+  "runtime_custom_theme_light_only": {
+    "message": "Tylko jasna paleta",
+    "description": "Runtime interface message custom_theme.light_only"
+  },
+  "runtime_custom_theme_limit_reached": {
+    "message": "Osiągnięto limit motywów.",
+    "description": "Runtime interface message custom_theme.limit_reached"
+  },
+  "runtime_custom_theme_paste_theme_json": {
+    "message": "Wklej JSON motywu",
+    "description": "Runtime interface message custom_theme.paste_theme_json"
+  },
+  "runtime_custom_theme_preview_theme": {
+    "message": "Podgląd motywu",
+    "description": "Runtime interface message custom_theme.preview_theme"
+  },
+  "runtime_custom_theme_reset_complete": {
+    "message": "Magazyn motywów niestandardowych został zresetowany.",
+    "description": "Runtime interface message custom_theme.reset_complete"
+  },
+  "runtime_custom_theme_reset_failed": {
+    "message": "Nie udało się zresetować magazynu motywów niestandardowych.",
+    "description": "Runtime interface message custom_theme.reset_failed"
+  },
+  "runtime_custom_theme_reset_storage": {
+    "message": "Zresetuj magazyn motywów niestandardowych",
+    "description": "Runtime interface message custom_theme.reset_storage"
+  },
+  "runtime_custom_theme_save_failed": {
+    "message": "Nie udało się zapisać motywu.",
+    "description": "Runtime interface message custom_theme.save_failed"
+  },
+  "runtime_custom_theme_storage_corrupt": {
+    "message": "Magazyn motywów niestandardowych jest uszkodzony. Zresetuj go jawnie, aby kontynuować.",
+    "description": "Runtime interface message custom_theme.storage_corrupt"
+  },
+  "runtime_custom_theme_storage_unavailable": {
+    "message": "Motywy niestandardowe są niedostępne.",
+    "description": "Runtime interface message custom_theme.storage_unavailable"
+  },
+  "runtime_custom_theme_user_installed": {
+    "message": "Zainstalowany przez użytkownika",
+    "description": "Runtime interface message custom_theme.user_installed"
+  },
+  "runtime_custom_theme_valid": {
+    "message": "Motyw jest prawidłowy. Zainstaluj go, aby dodać go do swoich motywów.",
+    "description": "Runtime interface message custom_theme.valid"
+  },
+  "runtime_custom_theme_validation_errors": {
+    "message": "Motyw zawiera błędy walidacji.",
+    "description": "Runtime interface message custom_theme.validation_errors"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Usługa kontroli stanu odpowiedziała, ale chronione trasy Browser/modeli wymagają Authorization: Bearer ***. Wklej klucz API lub token przeglądarki o ograniczonym zakresie w Ustawieniach.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

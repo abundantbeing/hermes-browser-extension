@@ -127,6 +127,21 @@ import {
   stepTextZoomPercent,
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
+import {
+  CUSTOM_THEME_MAX_INPUT_BYTES,
+  CUSTOM_THEME_STORAGE_KEY,
+  customThemePaletteForMode,
+  customThemeSelection,
+  serializeThemeDocument,
+  themeCssVariables,
+  validateThemeDocument,
+} from './lib/custom-themes.mjs';
+import {
+  deleteCustomTheme,
+  installCustomTheme,
+  readCustomThemeStore,
+  resetCustomThemeStore,
+} from './lib/custom-theme-store.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
 import { appendUserImageAttachments } from './lib/image-render.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
@@ -465,6 +480,14 @@ const els = {
   agentPickerStatus: $('#agentPickerStatus'),
   customModelSourcesInput: $('#customModelSourcesInput'),
   themeGrid: $('#themeGrid'),
+  customThemeManager: $('#customThemeManager'),
+  customThemeImportTextarea: $('#customThemeImportTextarea'),
+  customThemeFileInput: $('#customThemeFileInput'),
+  customThemePreviewButton: $('#customThemePreviewButton'),
+  customThemePreview: $('#customThemePreview'),
+  customThemeInstallButton: $('#customThemeInstallButton'),
+  customThemeImportStatus: $('#customThemeImportStatus'),
+  customThemeResetButton: $('#customThemeResetButton'),
   languageSelect: $('#languageSelect'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
   textZoomPresetGrid: $('#textZoomPresetGrid'),
@@ -484,6 +507,12 @@ let settings = { ...DEFAULT_SETTINGS };
 let appearanceMutationId = 0;
 let appearanceSaveStatus = '';
 let appearanceWriteQueue = Promise.resolve();
+let customThemeStoreState = { ok: true, status: 'empty', themes: [] };
+let customThemePreviewState = null;
+let customThemeImportStatus = '';
+let customThemeDeleteArmedId = '';
+let customThemeResetArmed = false;
+let appliedCustomThemeVariables = [];
 let wakeState = { enabled: false, state: 'off', mode: 'off', phrase: DEFAULT_SETTINGS.wakeWordPhrase, provider: '', detail: 'Wake word is off.' };
 let wakeTurnProcessingId = '';
 const hermesClient = createHermesClient({
@@ -2892,6 +2921,322 @@ const systemColorQuery = typeof window !== 'undefined' && typeof window.matchMed
   : null;
 
 
+function customThemeText(key, fallback, params) {
+  const translated = t(key, params);
+  return translated && translated !== key ? translated : fallback;
+}
+
+function customThemeInputBytes(value) {
+  return new TextEncoder().encode(String(value || '')).byteLength;
+}
+
+function normalizedPanelThemeId(value) {
+  const selection = customThemeSelection(value, customThemeStoreState.themes);
+  if (selection.kind === 'builtin' || selection.kind === 'custom') return selection.id;
+  return normalizeAppearanceTheme(value);
+}
+
+function customThemePreviewMarkup(palette) {
+  const style = [
+    `--preview-bg:${palette.canvas}`,
+    `--preview-panel:${palette.paper}`,
+    `--preview-text:${palette.ink}`,
+    `--preview-muted:${palette.muted}`,
+    `--preview-accent:${palette.accent}`,
+  ].join(';');
+  return `<span class="theme-preview" aria-hidden="true" style="${style}"><span></span><span></span><span></span></span>`;
+}
+
+function renderCustomThemePreview() {
+  if (!els.customThemePreview || !els.customThemeInstallButton) return;
+  const state = customThemePreviewState;
+  els.customThemePreview.hidden = !state;
+  els.customThemeInstallButton.disabled = !state?.valid;
+  if (!state) {
+    els.customThemePreview.innerHTML = '';
+    return;
+  }
+  if (!state.valid) {
+    const errors = state.errors.map((error) => `<li><strong>${escapeHtml(error.path || '$')}</strong> — ${escapeHtml(error.message || error.code)}</li>`).join('');
+    els.customThemePreview.innerHTML = `<ul class="custom-theme-validation-list">${errors}</ul>`;
+    return;
+  }
+  const document = state.document;
+  const palette = document.colors;
+  const swatches = ['canvas', 'paper', 'ink', 'muted', 'primary', 'accent', 'danger']
+    .map((key) => `<span class="custom-theme-swatch" style="--swatch:${palette[key]}" title="${key}: ${palette[key]}" aria-label="${key}: ${palette[key]}"></span>`)
+    .join('');
+  const coverage = document.darkColors
+    ? customThemeText('custom_theme.light_and_dark', 'Light and dark palettes')
+    : customThemeText('custom_theme.light_only', 'Light palette only');
+  els.customThemePreview.innerHTML = `
+    <div class="custom-theme-preview-head">
+      <strong>${escapeHtml(document.name)}</strong>
+      <span class="custom-theme-preview-mode">${escapeHtml(coverage)}</span>
+    </div>
+    <div class="custom-theme-swatches" role="list" aria-label="Palette colors">${swatches}</div>
+  `;
+}
+
+function renderCustomThemeManagement() {
+  renderCustomThemePreview();
+  if (els.customThemeImportStatus) {
+    const corrupt = customThemeStoreState.status === 'corrupt'
+      ? customThemeText('custom_theme.storage_corrupt', 'Custom theme storage is corrupt. Reset it explicitly to continue.')
+      : '';
+    els.customThemeImportStatus.textContent = customThemeImportStatus || corrupt;
+  }
+  if (els.customThemeResetButton) {
+    els.customThemeResetButton.hidden = customThemeStoreState.status !== 'corrupt';
+    els.customThemeResetButton.textContent = customThemeResetArmed
+      ? customThemeText('custom_theme.confirm_reset', 'Confirm reset')
+      : customThemeText('custom_theme.reset_storage', 'Reset custom theme storage');
+  }
+}
+
+function renderCustomThemeCards(activeTheme) {
+  return customThemeStoreState.themes.map((record) => {
+    const selected = record.id === activeTheme;
+    const armed = customThemeDeleteArmedId === record.id;
+    const userInstalled = customThemeText('custom_theme.user_installed', 'User-installed');
+    const exportLabel = customThemeText('custom_theme.export_theme', 'Export');
+    const deleteLabel = armed
+      ? customThemeText('custom_theme.confirm_delete', 'Confirm delete')
+      : customThemeText('custom_theme.delete_theme', 'Delete');
+    return `
+      <div class="custom-theme-card-shell ${selected ? 'selected' : ''}" data-custom-theme-id="${record.id}">
+        <button class="custom-theme-card-select" type="button" data-theme="${record.id}" role="radio" aria-checked="${selected}" aria-label="${escapeHtml(record.document.name)}: ${escapeHtml(userInstalled)}">
+          ${customThemePreviewMarkup(record.document.colors)}
+          <span class="custom-theme-card-copy"><strong>${escapeHtml(record.document.name)}</strong><small>${escapeHtml(userInstalled)}</small></span>
+        </button>
+        <span class="custom-theme-card-actions">
+          <button type="button" data-custom-theme-export="${record.id}" aria-label="${escapeHtml(exportLabel)} ${escapeHtml(record.document.name)}">${escapeHtml(exportLabel)}</button>
+          <button class="danger-action" type="button" data-custom-theme-delete="${record.id}" aria-label="${escapeHtml(deleteLabel)} ${escapeHtml(record.document.name)}">${escapeHtml(deleteLabel)}</button>
+        </span>
+      </div>
+    `;
+  }).join('');
+}
+
+async function refreshCustomThemeStore({ render = true } = {}) {
+  const previousStatus = customThemeStoreState.status;
+  customThemeStoreState = await readCustomThemeStore(chrome.storage.local);
+  if (customThemeStoreState.status === 'corrupt') {
+    customThemeImportStatus = '';
+    customThemePreviewState = null;
+  } else if (previousStatus === 'corrupt') {
+    customThemeImportStatus = '';
+    customThemeResetArmed = false;
+  } else if (!customThemeStoreState.ok) {
+    customThemeImportStatus = `${customThemeText('custom_theme.storage_unavailable', 'Custom themes are unavailable.')} ${customThemeStoreState.error?.message || ''}`.trim();
+  }
+  if (render) renderAppearanceControls();
+  return customThemeStoreState;
+}
+
+async function previewCustomThemeImport(inputText = els.customThemeImportTextarea?.value || '') {
+  customThemePreviewState = null;
+  const inputBytes = customThemeInputBytes(inputText);
+  if (inputBytes > CUSTOM_THEME_MAX_INPUT_BYTES) {
+    customThemePreviewState = {
+      valid: false,
+      inputBytes,
+      errors: [{ code: 'input-too-large', path: '$', message: customThemeText('custom_theme.input_too_large', 'Theme input is too large.') }],
+    };
+    customThemeImportStatus = customThemeText('custom_theme.input_too_large', 'Theme input is too large.');
+    renderCustomThemeManagement();
+    return customThemePreviewState;
+  }
+  let candidate;
+  try {
+    candidate = JSON.parse(inputText);
+  } catch (error) {
+    customThemePreviewState = {
+      valid: false,
+      inputBytes,
+      errors: [{ code: 'invalid-json', path: '$', message: error?.message || 'Invalid JSON' }],
+    };
+    customThemeImportStatus = customThemeText('custom_theme.validation_errors', 'Theme has validation errors.');
+    renderCustomThemeManagement();
+    return customThemePreviewState;
+  }
+  const result = validateThemeDocument(candidate);
+  customThemePreviewState = { ...result, inputBytes };
+  customThemeImportStatus = result.valid
+    ? customThemeText('custom_theme.valid', 'Theme is valid. Install it to add it to your themes.')
+    : result.errors.some((error) => error.code === 'contrast')
+      ? customThemeText('custom_theme.contrast_failed', 'Theme failed contrast requirements.')
+    : customThemeText('custom_theme.validation_errors', 'Theme has validation errors.');
+  renderCustomThemeManagement();
+  return customThemePreviewState;
+}
+
+async function installPreviewedCustomTheme() {
+  if (!customThemePreviewState?.valid) {
+    customThemeImportStatus = customThemeText('custom_theme.validation_errors', 'Theme has validation errors.');
+    renderCustomThemeManagement();
+    return;
+  }
+  els.customThemeInstallButton?.setAttribute('aria-busy', 'true');
+  let result;
+  try {
+    result = await installCustomTheme(chrome.storage.local, customThemePreviewState.document, {
+      inputBytes: customThemePreviewState.inputBytes,
+    });
+  } finally {
+    els.customThemeInstallButton?.setAttribute('aria-busy', 'false');
+  }
+  if (!result.ok) {
+    customThemeImportStatus = result.error?.code === 'theme-limit-reached'
+      ? customThemeText('custom_theme.limit_reached', 'Theme limit reached.')
+      : `${customThemeText('custom_theme.save_failed', 'Theme could not be saved.')} ${result.error?.message || ''}`.trim();
+    renderCustomThemeManagement();
+    return;
+  }
+  customThemeStoreState = { ok: true, status: 'ready', themes: result.store.themes };
+  customThemeImportStatus = customThemeText('custom_theme.installed', 'Theme installed.');
+  renderAppearanceControls();
+  await setAppearanceOption('appearanceTheme', result.record.id);
+}
+
+function customThemeExportFilename(name) {
+  const safe = String(name || 'hermes-theme').normalize('NFKD').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 64);
+  return `${safe || 'hermes-theme'}.json`;
+}
+
+function exportCustomTheme(id) {
+  const record = customThemeStoreState.themes.find((candidate) => candidate.id === id);
+  if (!record) return;
+  const blob = new Blob([serializeThemeDocument(record.document)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = customThemeExportFilename(record.document.name);
+  link.hidden = true;
+  document.body.append(link);
+  try {
+    link.click();
+  } finally {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function fallbackDeletedCustomThemeSelections(id, { allCustom = false } = {}) {
+  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const freshSettings = stored.hermesBrowserSettings || {};
+  const shouldFallback = (value) => allCustom ? String(value || '').startsWith('custom:') : value === id;
+  const panelFallback = shouldFallback(freshSettings.appearanceTheme);
+  const webFallback = shouldFallback(freshSettings.webAppearanceTheme);
+  if (!panelFallback && !webFallback) return freshSettings;
+  const hermesBrowserSettings = {
+    ...freshSettings,
+    ...(panelFallback ? { appearanceTheme: 'nous' } : {}),
+    ...(webFallback ? { webAppearanceTheme: 'nous' } : {}),
+  };
+  await chrome.storage.local.set({ hermesBrowserSettings });
+  return hermesBrowserSettings;
+}
+
+async function handleCustomThemeDelete(id) {
+  const record = customThemeStoreState.themes.find((candidate) => candidate.id === id);
+  if (!record) return;
+  if (customThemeDeleteArmedId !== id) {
+    customThemeDeleteArmedId = id;
+    customThemeImportStatus = customThemeText('custom_theme.confirm_delete', 'Click Confirm delete to remove this theme.');
+    renderAppearanceControls();
+    return;
+  }
+  customThemeDeleteArmedId = '';
+  try {
+    const savedSettings = await fallbackDeletedCustomThemeSelections(id);
+    const result = await deleteCustomTheme(chrome.storage.local, id);
+    if (!result.ok) throw new Error(result.error?.message || 'Could not delete custom theme');
+    customThemeStoreState = { ok: true, status: result.store.themes.length ? 'ready' : 'empty', themes: result.store.themes };
+    if (settings.appearanceTheme === id) settings = { ...settings, ...savedSettings, appearanceTheme: 'nous' };
+    customThemeImportStatus = customThemeText('custom_theme.deleted', 'Theme deleted.');
+    renderAppearanceControls();
+  } catch (error) {
+    customThemeImportStatus = `${customThemeText('custom_theme.delete_failed', 'Theme could not be deleted.')} ${error?.message || ''}`.trim();
+    renderCustomThemeManagement();
+  }
+}
+
+async function handleCustomThemeReset() {
+  if (customThemeStoreState.status !== 'corrupt') return;
+  if (!customThemeResetArmed) {
+    customThemeResetArmed = true;
+    customThemeImportStatus = customThemeText('custom_theme.confirm_reset', 'Click Confirm reset to clear corrupt custom theme storage.');
+    renderCustomThemeManagement();
+    return;
+  }
+  customThemeResetArmed = false;
+  try {
+    const savedSettings = await fallbackDeletedCustomThemeSelections('', { allCustom: true });
+    const result = await resetCustomThemeStore(chrome.storage.local);
+    if (!result.ok) throw new Error(result.error?.message || 'Could not reset custom theme storage');
+    customThemeStoreState = { ok: true, status: 'empty', themes: [] };
+    settings = { ...settings, ...savedSettings, appearanceTheme: normalizedPanelThemeId(savedSettings.appearanceTheme) };
+    customThemeImportStatus = customThemeText('custom_theme.reset_complete', 'Custom theme storage reset.');
+    renderAppearanceControls();
+  } catch (error) {
+    customThemeImportStatus = `${customThemeText('custom_theme.reset_failed', 'Custom theme storage could not be reset.')} ${error?.message || ''}`.trim();
+    renderCustomThemeManagement();
+  }
+}
+
+async function handleCustomThemeFileSelection() {
+  const file = els.customThemeFileInput?.files?.[0];
+  if (!file) return;
+  if (file.size > CUSTOM_THEME_MAX_INPUT_BYTES) {
+    customThemePreviewState = {
+      valid: false,
+      inputBytes: file.size,
+      errors: [{ code: 'input-too-large', path: '$', message: customThemeText('custom_theme.input_too_large', 'Theme input is too large.') }],
+    };
+    customThemeImportStatus = customThemeText('custom_theme.input_too_large', 'Theme input is too large.');
+    renderCustomThemeManagement();
+    return;
+  }
+  const isJsonFile = file.type === 'application/json' || String(file.name || '').toLowerCase().endsWith('.json');
+  if (!isJsonFile) {
+    customThemePreviewState = {
+      valid: false,
+      inputBytes: file.size,
+      errors: [{ code: 'invalid-file-type', path: '$', message: customThemeText('custom_theme.invalid_file_type', 'Choose a JSON theme file.') }],
+    };
+    customThemeImportStatus = customThemeText('custom_theme.invalid_file_type', 'Choose a JSON theme file.');
+    renderCustomThemeManagement();
+    return;
+  }
+  try {
+    const text = await file.text();
+    if (els.customThemeImportTextarea) els.customThemeImportTextarea.value = text;
+    await previewCustomThemeImport(text);
+  } catch (error) {
+    customThemePreviewState = {
+      valid: false,
+      inputBytes: file.size,
+      errors: [{ code: 'file-read-failed', path: '$', message: error?.message || 'Theme file could not be read' }],
+    };
+    customThemeImportStatus = customThemeText('custom_theme.file_read_failed', 'Theme file could not be read.');
+    renderCustomThemeManagement();
+  }
+}
+
+async function handleCustomThemeStoreChange() {
+  const previousTheme = settings.appearanceTheme;
+  await refreshCustomThemeStore({ render: false });
+  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const freshAppearanceTheme = stored.hermesBrowserSettings?.appearanceTheme ?? previousTheme;
+  const nextTheme = normalizedPanelThemeId(freshAppearanceTheme);
+  if (String(previousTheme || '').startsWith('custom:') && nextTheme === 'nous' && previousTheme !== 'nous') {
+    appearanceSaveStatus = customThemeText('custom_theme.active_unavailable', 'Active theme is unavailable. Using Nous.');
+  }
+  settings = { ...settings, appearanceTheme: nextTheme };
+  renderAppearanceControls();
+}
+
 function resolvedColorMode(value = settings.colorMode) {
   const mode = normalizeColorMode(value);
   if (mode === 'system') return systemColorQuery?.matches ? 'dark' : 'light';
@@ -2910,19 +3255,31 @@ function panelAppearanceSnapshot() {
   return {
     ...panelAppearancePreferences(),
     colorMode: normalizeColorMode(settings.colorMode),
-    appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
+    appearanceTheme: normalizedPanelThemeId(settings.appearanceTheme),
   };
 }
 
 function applyAppearanceSettings() {
-  const theme = normalizeAppearanceTheme(settings.appearanceTheme);
   const colorMode = normalizeColorMode(settings.colorMode);
   const resolvedMode = resolvedColorMode(colorMode);
   const root = document.documentElement;
+  for (const property of appliedCustomThemeVariables) root.style.removeProperty(property);
+  appliedCustomThemeVariables = [];
+  const selection = customThemeSelection(settings.appearanceTheme, customThemeStoreState.themes);
+  const theme = selection.kind === 'custom' ? selection.id : normalizeAppearanceTheme(settings.appearanceTheme);
+  if (selection.kind === 'custom') {
+    const palette = customThemePaletteForMode(selection.document, resolvedMode);
+    const variables = themeCssVariables(palette);
+    for (const [property, value] of Object.entries(variables)) root.style.setProperty(property, value);
+    appliedCustomThemeVariables = Object.keys(variables);
+  }
   root.dataset.hermesTheme = theme;
   root.dataset.hermesColorMode = colorMode;
   root.dataset.hermesMode = resolvedMode;
-  root.style.colorScheme = resolvedMode;
+  const effectiveColorScheme = selection.kind === 'custom' && resolvedMode === 'dark' && !selection.document.darkColors
+    ? 'light'
+    : resolvedMode;
+  root.style.colorScheme = effectiveColorScheme;
   applyAppearancePreferences(root, appearancePreferencesForSurface(settings, 'panel'));
 }
 
@@ -2933,7 +3290,7 @@ function renderAppearanceControls() {
     els.languageSelect.value = getLocale();
   }
   const colorMode = normalizeColorMode(settings.colorMode);
-  const activeTheme = normalizeAppearanceTheme(settings.appearanceTheme);
+  const activeTheme = normalizedPanelThemeId(settings.appearanceTheme);
   const preferences = appearancePreferencesForSurface(settings, 'panel');
   const requestedProfile = settings.fontProfile === 'custom-local' ? 'custom-local' : preferences.fontProfile;
   for (const button of els.colorModeButtons || []) {
@@ -2958,8 +3315,9 @@ function renderAppearanceControls() {
     els.customFontFamilyInput.value = settings.customFontFamily || preferences.customFontFamily;
   }
   if (els.appearanceSaveStatus) els.appearanceSaveStatus.textContent = appearanceSaveStatus;
+  renderCustomThemeManagement();
   if (!els.themeGrid) return;
-  els.themeGrid.innerHTML = APPEARANCE_THEMES.map((theme) => {
+  const builtInCards = APPEARANCE_THEMES.map((theme) => {
     const selected = theme.value === activeTheme;
     const p = theme.preview;
     return `
@@ -2970,6 +3328,7 @@ function renderAppearanceControls() {
       </button>
     `;
   }).join('');
+  els.themeGrid.innerHTML = `${builtInCards}${renderCustomThemeCards(activeTheme)}`;
 }
 
 async function persistAppearanceSettings(preferences) {
@@ -2981,7 +3340,7 @@ async function persistAppearanceSettings(preferences) {
       ...mergedPreferences,
       appearanceSchemaVersion: 2,
       colorMode: normalizeColorMode(preferences.colorMode),
-      appearanceTheme: normalizeAppearanceTheme(preferences.appearanceTheme),
+      appearanceTheme: normalizedPanelThemeId(preferences.appearanceTheme),
     };
     await chrome.storage.local.set({ hermesBrowserSettings: hermesBrowserSettings });
     return hermesBrowserSettings;
@@ -2996,7 +3355,7 @@ async function setAppearanceOption(key, value, { persist = true } = {}) {
   appearanceMutationId += 1;
   const mutationId = appearanceMutationId;
   if (key === 'colorMode') settings = { ...settings, colorMode: normalizeColorMode(value) };
-  if (key === 'appearanceTheme') settings = { ...settings, appearanceTheme: normalizeAppearanceTheme(value) };
+  if (key === 'appearanceTheme') settings = { ...settings, appearanceTheme: normalizedPanelThemeId(value) };
   if (key === 'textZoomPercent') settings = { ...settings, textZoomPercent: normalizeTextZoomPercent(value) };
   if (key === 'fontProfile') settings = { ...settings, fontProfile: String(value || 'signature') };
   if (key === 'customFontFamily') settings = { ...settings, customFontFamily: sanitizeLocalFontFamily(value) };
@@ -6320,6 +6679,7 @@ async function trimAndSaveMessages() {
 
 async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
+  await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
   const stored = await chrome.storage.local.get(['hermesBrowserSettings', messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
@@ -6368,7 +6728,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     wakeWordBrowserFallback: storedWakeSettings.browserFallback,
     wakeWordSpeakReplies: storedWakeSettings.speakReplies,
     colorMode: normalizeColorMode(settings.colorMode),
-    appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
+    appearanceTheme: normalizedPanelThemeId(settings.appearanceTheme),
     appearanceSchemaVersion: 2,
     textZoomPercent: normalizeTextZoomPercent(settings.textZoomPercent),
     fontProfile: settings.fontProfile || 'signature',
@@ -6553,7 +6913,7 @@ async function saveSettingsFromForm() {
     wakeWordBrowserFallback: els.wakeWordBrowserFallbackInput ? els.wakeWordBrowserFallbackInput.checked : settings.wakeWordBrowserFallback !== false,
     wakeWordSpeakReplies: els.wakeWordSpeakRepliesInput ? els.wakeWordSpeakRepliesInput.checked : settings.wakeWordSpeakReplies !== false,
     colorMode: normalizeColorMode(settings.colorMode),
-    appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
+    appearanceTheme: normalizedPanelThemeId(settings.appearanceTheme),
     appearanceSchemaVersion: 2,
   };
   const connectionChanged = previousSettings.connectionMode !== settings.connectionMode
@@ -9370,9 +9730,33 @@ function bindEvents() {
     void setAppearanceOption('customFontFamily', family);
   });
   els.themeGrid?.addEventListener('click', (event) => {
+    const exportButton = event.target.closest('[data-custom-theme-export]');
+    if (exportButton) {
+      exportCustomTheme(exportButton.dataset.customThemeExport);
+      return;
+    }
+    const deleteButton = event.target.closest('[data-custom-theme-delete]');
+    if (deleteButton) {
+      void handleCustomThemeDelete(deleteButton.dataset.customThemeDelete);
+      return;
+    }
     const card = event.target.closest('[data-theme]');
     if (!card) return;
+    customThemeDeleteArmedId = '';
     void setAppearanceOption('appearanceTheme', card.dataset.theme);
+  });
+  els.customThemeImportTextarea?.addEventListener('input', () => {
+    customThemePreviewState = null;
+    customThemeImportStatus = '';
+    renderCustomThemeManagement();
+  });
+  els.customThemeFileInput?.addEventListener('change', () => void handleCustomThemeFileSelection());
+  els.customThemePreviewButton?.addEventListener('click', () => void previewCustomThemeImport());
+  els.customThemeInstallButton?.addEventListener('click', () => void installPreviewedCustomTheme());
+  els.customThemeResetButton?.addEventListener('click', () => void handleCustomThemeReset());
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local' || !Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) return;
+    void handleCustomThemeStoreChange();
   });
   systemColorQuery?.addEventListener?.('change', () => {
     if (normalizeColorMode(settings.colorMode) === 'system') renderAppearanceControls();

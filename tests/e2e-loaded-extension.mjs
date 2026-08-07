@@ -37,6 +37,37 @@ const READABILITY_WEB_SCREENSHOT = path.join(QA_DIR, `readability-web-1024${ASSI
 const READABILITY_PANEL_420_SCREENSHOT = path.join(QA_DIR, `readability-panel-420${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const READABILITY_PANEL_520_SCREENSHOT = path.join(QA_DIR, `readability-panel-520${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const READABILITY_WEB_1440_SCREENSHOT = path.join(QA_DIR, `readability-web-1440${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_PANEL_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_WEB_SCREENSHOT = path.join(QA_DIR, `custom-theme-web${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_PANEL_CARD_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-card${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_WEB_CARD_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-card${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_WEB_SHELL_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-shell${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_PANEL_320_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-320${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_PANEL_420_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-420${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_WEB_1024_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-1024${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const CUSTOM_THEME_FIXTURE_FILE = path.join(PROFILE, 'e2e-forge-theme.json');
+const CUSTOM_THEME_VALID_DOCUMENT = Object.freeze({
+  schemaVersion: 1,
+  name: 'E2E Forge',
+  description: 'Deterministic loaded-extension custom theme fixture.',
+  colors: {
+    canvas: '#ffffff', paper: '#f5f5f5', ink: '#111111', muted: '#595959',
+    primary: '#0505e8', primaryDeep: '#03039b', onPrimary: '#ffffff', accent: '#ffd400',
+    onAccent: '#111111', line: '#767676', input: '#ffffff', danger: '#b00020',
+    onDanger: '#ffffff', shellForeground: '#ffffff',
+  },
+  darkColors: {
+    canvas: '#101114', paper: '#181a20', ink: '#f4f5f7', muted: '#b5bac4',
+    primary: '#4c59e8', primaryDeep: '#343db8', onPrimary: '#ffffff', accent: '#e6ff57',
+    onAccent: '#101114', line: '#777d8a', input: '#101114', danger: '#ff6b78',
+    onDanger: '#101114', shellForeground: '#ffffff',
+  },
+});
+const CUSTOM_THEME_INVALID_DOCUMENT = Object.freeze({
+  ...CUSTOM_THEME_VALID_DOCUMENT,
+  name: 'E2E Low Contrast',
+  colors: { ...CUSTOM_THEME_VALID_DOCUMENT.colors, ink: '#777777' },
+});
 const TEST_TOKEN = 'e2e-browser-token-not-a-secret';
 const TEST_PROMPT = 'Verify the loaded Hermes Browser round trip.';
 const TEST_REPLY = 'Loaded extension round trip confirmed.';
@@ -588,6 +619,7 @@ async function main() {
   assert.ok(existsSync(path.join(DIST, 'manifest.json')), 'Run npm run build before loaded-extension E2E.');
   await rm(PROFILE, { recursive: true, force: true });
   await mkdir(PROFILE, { recursive: true });
+  await writeFile(CUSTOM_THEME_FIXTURE_FILE, `${JSON.stringify(CUSTOM_THEME_VALID_DOCUMENT, null, 2)}\n`, 'utf8');
   await mkdir(path.dirname(FAILURE_SCREENSHOT), { recursive: true });
   await mkdir(QA_DIR, { recursive: true });
 
@@ -1340,13 +1372,337 @@ async function main() {
     await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
     await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
     const panelSessionAfterReadability = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
-    const panelSessionIdAfterReadability = panelSessionAfterReadability.hermesBrowserSettings?.sessionId || '';
+    let panelSessionIdAfterReadability = panelSessionAfterReadability.hermesBrowserSettings?.sessionId || '';
     assert.match(panelSessionIdAfterReadability, /^hermes-browser-extension-/);
     const readabilityProof = {
       panel: { baseline: panelBaselineType, at175: panelReadabilityAt175, persisted: panelPersisted, at320: panelAt320, isolatedAfterWeb: panelIsolationAfterWeb },
       web: { baseline: webBaselineType, at113: webAt113, customFont: webCustomFont, persisted: webPersisted, accessibility: webAccessibility },
       liveMatrix: { panelAt420, panelAt520, webAt1440, stored: liveMatrixStored },
     };
+
+    const customThemePanelConsoleStart = panel.events.length;
+    const customThemeWebConsoleStart = web.events.length;
+    const customThemeStorageKey = 'hermesBrowserCustomThemesV1';
+    const invalidThemeJson = JSON.stringify(CUSTOM_THEME_INVALID_DOCUMENT);
+
+    await panel.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => panel.evaluate(`document.querySelector('#settingsDialog')?.hidden === false`));
+    await panel.evaluate(`(() => {
+      const manager = document.querySelector('#customThemeManager');
+      manager.open = true;
+      const input = document.querySelector('#customThemeImportTextarea');
+      input.value = ${JSON.stringify(invalidThemeJson)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#customThemePreviewButton').click();
+    })()`);
+    const invalidPreview = await waitFor(() => panel.evaluate(`(() => {
+      const status = document.querySelector('#customThemeImportStatus')?.textContent || '';
+      const errors = document.querySelectorAll('#customThemePreview .custom-theme-validation-list li').length;
+      const disabled = document.querySelector('#customThemeInstallButton')?.disabled;
+      return /contrast/i.test(status) && errors > 0 && disabled ? { status, errors, disabled } : null;
+    })()`));
+    const storeAfterInvalidPreview = await setup.evaluate(`chrome.storage.local.get(${JSON.stringify(customThemeStorageKey)})`);
+    assert.equal(storeAfterInvalidPreview[customThemeStorageKey], undefined, 'Invalid preview must not write custom-theme storage.');
+
+    await panel.call('DOM.enable');
+    const panelDocumentNode = await panel.call('DOM.getDocument', { depth: -1, pierce: true });
+    const panelThemeFileNode = await panel.call('DOM.querySelector', {
+      nodeId: panelDocumentNode.root.nodeId,
+      selector: '#customThemeFileInput',
+    });
+    assert.ok(panelThemeFileNode.nodeId, 'Panel custom-theme file input must be addressable.');
+    await panel.call('DOM.setFileInputFiles', { nodeId: panelThemeFileNode.nodeId, files: [CUSTOM_THEME_FIXTURE_FILE] });
+    await panel.evaluate(`document.querySelector('#customThemeFileInput').dispatchEvent(new Event('change', { bubbles: true }))`);
+    const validFilePreview = await waitFor(() => panel.evaluate(`(() => {
+      const status = document.querySelector('#customThemeImportStatus')?.textContent || '';
+      const installDisabled = document.querySelector('#customThemeInstallButton')?.disabled;
+      const name = document.querySelector('#customThemePreview .custom-theme-preview-head strong')?.textContent || '';
+      return /valid/i.test(status) && installDisabled === false && name === 'E2E Forge'
+        ? { status, installDisabled, name }
+        : null;
+    })()`));
+    const storeAfterValidPreview = await setup.evaluate(`chrome.storage.local.get(${JSON.stringify(customThemeStorageKey)})`);
+    assert.equal(storeAfterValidPreview[customThemeStorageKey], undefined, 'Valid preview must not write custom-theme storage before Install.');
+
+    await panel.evaluate(`document.querySelector('#customThemePreviewButton').click()`);
+    await waitFor(() => panel.evaluate(`document.querySelector('#customThemeInstallButton')?.disabled === false`));
+    const installButtonObject = await panel.call('Runtime.evaluate', {
+      expression: `document.querySelector('#customThemeInstallButton')`,
+      returnByValue: false,
+    });
+    const installButtonListeners = await panel.call('DOMDebugger.getEventListeners', {
+      objectId: installButtonObject.result.objectId,
+    });
+    assert.ok(installButtonListeners.listeners.some((listener) => listener.type === 'click'), 'Install button must have a live click listener.');
+    await panel.evaluate(`document.querySelector('#customThemeInstallButton').click()`);
+    const installedTheme = await waitFor(async () => {
+      const stored = await setup.evaluate(`chrome.storage.local.get([${JSON.stringify(customThemeStorageKey)}, 'hermesBrowserSettings'])`);
+      const records = stored[customThemeStorageKey]?.themes || [];
+      const id = records[0]?.id || '';
+      if (records.length === 1 && id.startsWith('custom:') && stored.hermesBrowserSettings?.appearanceTheme === id) {
+        return { id, record: records[0], settings: stored.hermesBrowserSettings };
+      }
+      const panelState = await panel.evaluate(`(() => ({
+        customStatus: document.querySelector('#customThemeImportStatus')?.textContent || '',
+        appearanceStatus: document.querySelector('#appearanceSaveStatus')?.textContent || '',
+        rootTheme: document.documentElement.dataset.hermesTheme || '',
+      }))()`);
+      if (/could not|failed|limit|invalid|validation/i.test(`${panelState.customStatus} ${panelState.appearanceStatus}`)) {
+        throw new Error(`Custom theme install failed: ${JSON.stringify({ records: records.length, storedTheme: stored.hermesBrowserSettings?.appearanceTheme || '', panelState })}`);
+      }
+      const liveErrors = consoleErrorsSince(panel, customThemePanelConsoleStart);
+      if (liveErrors.length) {
+        throw new Error(`Custom theme install threw: ${JSON.stringify(liveErrors.map((event) => event.params))}`);
+      }
+      return null;
+    });
+    const customThemeId = installedTheme.id;
+    assert.equal(installedTheme.record.document.name, 'E2E Forge');
+    assert.equal(installedTheme.settings.webAppearanceTheme, 'nous', 'Panel installation and selection must not change the Web selection.');
+
+    await panel.evaluate(`(() => {
+      document.querySelector('[data-text-zoom-percent="175"]')?.click();
+      const font = document.querySelector('#fontProfileSelect');
+      font.value = 'high-legibility';
+      font.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    const panelCustomTheme = await waitFor(() => panel.evaluate(`(() => {
+      const root = document.documentElement;
+      const status = document.querySelector('#appearanceSaveStatus')?.textContent || '';
+      if (root.dataset.hermesTheme !== ${JSON.stringify(customThemeId)} || root.dataset.hermesTextZoom !== '175'
+        || document.querySelector('#fontProfileSelect')?.value !== 'high-legibility' || status !== 'Saved') return null;
+      return {
+        theme: root.dataset.hermesTheme,
+        mode: root.dataset.hermesMode,
+        canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
+        paper: getComputedStyle(root).getPropertyValue('--hermes-paper').trim(),
+        inlineCanvas: root.style.getPropertyValue('--hermes-canvas').trim(),
+        fontFamily: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
+        zoom: root.dataset.hermesTextZoom,
+        horizontalOverflow: root.scrollWidth - root.clientWidth,
+      };
+    })()`));
+    assert.equal(panelCustomTheme.mode, 'dark');
+    assert.equal(panelCustomTheme.canvas, '#101114');
+    assert.equal(panelCustomTheme.inlineCanvas, '#101114');
+    assert.match(panelCustomTheme.fontFamily, /^Verdana/);
+    assert.ok(panelCustomTheme.horizontalOverflow <= 1, JSON.stringify(panelCustomTheme));
+
+    const webObservedInstalledTheme = await waitFor(() => web.evaluate(`Boolean(document.querySelector('[data-custom-theme-id="${customThemeId}"]'))`));
+    assert.equal(webObservedInstalledTheme, true, 'Hermes Web must observe installation without reload.');
+
+    await panel.evaluate(`(() => {
+      window.__customThemeExportProof = { created: 0, clicked: 0, revoked: 0 };
+      const create = URL.createObjectURL.bind(URL);
+      const revoke = URL.revokeObjectURL.bind(URL);
+      const click = HTMLAnchorElement.prototype.click;
+      URL.createObjectURL = (blob) => { window.__customThemeExportProof.created += 1; return create(blob); };
+      URL.revokeObjectURL = (url) => { window.__customThemeExportProof.revoked += 1; return revoke(url); };
+      HTMLAnchorElement.prototype.click = function patchedThemeExportClick() { window.__customThemeExportProof.clicked += 1; return click.call(this); };
+      document.querySelector('[data-custom-theme-export="${customThemeId}"]').click();
+    })()`);
+    const exportProof = await waitFor(() => panel.evaluate(`window.__customThemeExportProof?.created === 1 && window.__customThemeExportProof?.clicked === 1 && window.__customThemeExportProof?.revoked === 1 ? window.__customThemeExportProof : null`));
+    await panel.evaluate(`document.querySelector('#customThemeManager').open = true; document.querySelector('#customThemeManager').scrollIntoView({ block: 'start' })`);
+    await saveScreenshot(panel, CUSTOM_THEME_PANEL_SCREENSHOT, { captureBeyondViewport: false });
+    await panel.evaluate(`document.querySelector('[data-custom-theme-id="${customThemeId}"]').scrollIntoView({ block: 'center' })`);
+    await saveScreenshot(panel, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, { captureBeyondViewport: false });
+    const customThemePanelMatrix = {};
+    for (const [width, screenshot] of [[320, CUSTOM_THEME_PANEL_320_SCREENSHOT], [420, CUSTOM_THEME_PANEL_420_SCREENSHOT], [520, CUSTOM_THEME_PANEL_CARD_SCREENSHOT]]) {
+      await panel.call('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
+      await panel.evaluate(`document.querySelector('[data-custom-theme-id="${customThemeId}"]').scrollIntoView({ block: 'center' })`);
+      const matrixState = await panel.evaluate(`(() => ({
+        width: document.documentElement.clientWidth,
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        theme: document.documentElement.dataset.hermesTheme,
+        zoom: document.documentElement.dataset.hermesTextZoom,
+        profile: document.querySelector('#fontProfileSelect')?.value || '',
+      }))()`);
+      assert.equal(matrixState.theme, customThemeId);
+      assert.equal(matrixState.zoom, '175');
+      assert.equal(matrixState.profile, 'high-legibility');
+      assert.ok(matrixState.overflow <= 1, JSON.stringify(matrixState));
+      customThemePanelMatrix[width] = matrixState;
+      if (width !== 520) await saveScreenshot(panel, screenshot, { captureBeyondViewport: false });
+    }
+    await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
+
+    await panel.call('Page.reload', { ignoreCache: true });
+    const panelCustomPersisted = await waitFor(() => panel.evaluate(`(() => {
+      const root = document.documentElement;
+      if (document.querySelector('#startupScreen')?.hidden !== true || root.dataset.hermesTheme !== ${JSON.stringify(customThemeId)}) return null;
+      return {
+        theme: root.dataset.hermesTheme,
+        canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
+        zoom: root.dataset.hermesTextZoom,
+        profile: document.querySelector('#fontProfileSelect')?.value || '',
+      };
+    })()`));
+    assert.equal(panelCustomPersisted.canvas, '#101114');
+    assert.equal(panelCustomPersisted.zoom, '175');
+    assert.equal(panelCustomPersisted.profile, 'high-legibility');
+    const panelSessionAfterCustomReload = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
+    panelSessionIdAfterReadability = panelSessionAfterCustomReload.hermesBrowserSettings?.sessionId || '';
+    assert.match(panelSessionIdAfterReadability, /^hermes-browser-extension-/);
+
+    await web.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
+    await web.evaluate(`(() => {
+      document.querySelector('#settingsCustomThemeManager').open = true;
+      document.querySelector('[data-web-text-zoom-percent="175"]')?.click();
+      const font = document.querySelector('#settingsFontProfileSelect');
+      font.value = 'high-legibility';
+      font.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector('[data-theme="${customThemeId}"]')?.click();
+    })()`);
+    const webCustomTheme = await waitFor(() => web.evaluate(`(async () => {
+      const root = document.documentElement;
+      const stored = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings || {};
+      if (root.dataset.hermesTheme !== ${JSON.stringify(customThemeId)} || stored.webAppearanceTheme !== ${JSON.stringify(customThemeId)}
+        || root.dataset.hermesTextZoom !== '175' || stored.webFontProfile !== 'high-legibility') return null;
+      return {
+        theme: root.dataset.hermesTheme,
+        mode: root.dataset.hermesMode,
+        canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
+        inlineCanvas: root.style.getPropertyValue('--hermes-canvas').trim(),
+        fontFamily: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
+        zoom: root.dataset.hermesTextZoom,
+        panelTheme: stored.appearanceTheme,
+        webTheme: stored.webAppearanceTheme,
+        horizontalOverflow: root.scrollWidth - root.clientWidth,
+        logoForeground: getComputedStyle(document.querySelector('.web-brand'), '::before').backgroundColor,
+        logoMask: getComputedStyle(document.querySelector('.web-brand'), '::before').maskImage || getComputedStyle(document.querySelector('.web-brand'), '::before').webkitMaskImage,
+        baseLogoDisplay: getComputedStyle(document.querySelector('.web-brand-logo-base')).display,
+      };
+    })()`));
+    assert.equal(webCustomTheme.mode, 'light');
+    assert.equal(webCustomTheme.canvas, '#ffffff');
+    assert.equal(webCustomTheme.inlineCanvas, '#ffffff');
+    assert.equal(webCustomTheme.panelTheme, customThemeId);
+    assert.match(webCustomTheme.fontFamily, /^Verdana/);
+    assert.ok(webCustomTheme.horizontalOverflow <= 1, JSON.stringify(webCustomTheme));
+    assert.equal(webCustomTheme.logoForeground, 'rgb(255, 255, 255)');
+    assert.match(webCustomTheme.logoMask, /hermes-web-logo-white-dark\.svg/);
+    assert.equal(webCustomTheme.baseLogoDisplay, 'none');
+    await web.evaluate(`document.querySelector('#settingsCustomThemeManager').scrollIntoView({ block: 'start' })`);
+    await saveScreenshot(web, CUSTOM_THEME_WEB_SCREENSHOT, { captureBeyondViewport: false });
+    await web.evaluate(`document.querySelector('[data-custom-theme-id="${customThemeId}"]').scrollIntoView({ block: 'center' })`);
+    await saveScreenshot(web, CUSTOM_THEME_WEB_CARD_SCREENSHOT, { captureBeyondViewport: false });
+    const customThemeWebMatrix = { 1440: { width: 1440, overflow: webCustomTheme.horizontalOverflow, theme: webCustomTheme.theme, zoom: webCustomTheme.zoom, profile: 'high-legibility' } };
+    await web.call('Emulation.setDeviceMetricsOverride', { width: 1024, height: 960, deviceScaleFactor: 1, mobile: false });
+    await web.evaluate(`document.querySelector('[data-custom-theme-id="${customThemeId}"]').scrollIntoView({ block: 'center' })`);
+    customThemeWebMatrix[1024] = await web.evaluate(`(() => ({
+      width: document.documentElement.clientWidth,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      theme: document.documentElement.dataset.hermesTheme,
+      zoom: document.documentElement.dataset.hermesTextZoom,
+      profile: document.querySelector('#settingsFontProfileSelect')?.value || '',
+    }))()`);
+    assert.equal(customThemeWebMatrix[1024].theme, customThemeId);
+    assert.equal(customThemeWebMatrix[1024].zoom, '175');
+    assert.equal(customThemeWebMatrix[1024].profile, 'high-legibility');
+    assert.ok(customThemeWebMatrix[1024].overflow <= 1, JSON.stringify(customThemeWebMatrix[1024]));
+    await saveScreenshot(web, CUSTOM_THEME_WEB_1024_SCREENSHOT, { captureBeyondViewport: false });
+    await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
+    await web.evaluate(`document.querySelector('#settingsDialog').close()`);
+    await saveScreenshot(web, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, { captureBeyondViewport: false });
+
+    await web.call('Page.reload', { ignoreCache: true });
+    const webCustomPersisted = await waitFor(() => web.evaluate(`(() => {
+      const root = document.documentElement;
+      if (root.dataset.hermesTheme !== ${JSON.stringify(customThemeId)} || root.dataset.hermesTextZoom !== '175') return null;
+      return {
+        theme: root.dataset.hermesTheme,
+        canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
+        profile: document.querySelector('#settingsFontProfileSelect')?.value || '',
+      };
+    })()`));
+    assert.equal(webCustomPersisted.canvas, '#ffffff');
+    assert.equal(webCustomPersisted.profile, 'high-legibility');
+
+    await web.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
+    await web.evaluate(`document.querySelector('[data-custom-theme-delete="${customThemeId}"]').click()`);
+    await waitFor(() => web.evaluate(`/confirm/i.test(document.querySelector('[data-custom-theme-delete="${customThemeId}"]')?.textContent || '')`));
+    await web.evaluate(`document.querySelector('[data-custom-theme-delete="${customThemeId}"]').click()`);
+    const deletedThemeFallback = await waitFor(() => setup.evaluate(`(async () => {
+      const stored = await chrome.storage.local.get([${JSON.stringify(customThemeStorageKey)}, 'hermesBrowserSettings']);
+      const settings = stored.hermesBrowserSettings || {};
+      return stored[${JSON.stringify(customThemeStorageKey)}]?.version === 1
+        && stored[${JSON.stringify(customThemeStorageKey)}]?.themes?.length === 0
+        && settings.appearanceTheme === 'nous' && settings.webAppearanceTheme === 'nous'
+        ? { settings }
+        : null;
+    })()`));
+    const clearedSurfaces = await waitFor(async () => {
+      const panelState = await panel.evaluate(`(() => {
+        const root = document.documentElement;
+        return root.dataset.hermesTheme === 'nous' && !root.style.getPropertyValue('--hermes-canvas')
+          ? { theme: root.dataset.hermesTheme, zoom: root.dataset.hermesTextZoom, profile: document.querySelector('#fontProfileSelect')?.value || '' }
+          : null;
+      })()`);
+      const webState = await web.evaluate(`(() => {
+        const root = document.documentElement;
+        return root.dataset.hermesTheme === 'nous' && !root.style.getPropertyValue('--hermes-canvas')
+          ? { theme: root.dataset.hermesTheme, zoom: root.dataset.hermesTextZoom, profile: document.querySelector('#settingsFontProfileSelect')?.value || '' }
+          : null;
+      })()`);
+      return panelState && webState ? { panel: panelState, web: webState } : null;
+    });
+    assert.equal(clearedSurfaces.panel.zoom, '175');
+    assert.equal(clearedSurfaces.panel.profile, 'high-legibility');
+    assert.equal(clearedSurfaces.web.zoom, '175');
+    assert.equal(clearedSurfaces.web.profile, 'high-legibility');
+
+    const corruptStore = { version: 99, themes: [{ id: 'custom:corrupt' }] };
+    await setup.evaluate(`chrome.storage.local.set({ [${JSON.stringify(customThemeStorageKey)}]: ${JSON.stringify(corruptStore)} })`);
+    const corruptionDisclosure = await waitFor(async () => {
+      const panelState = await panel.evaluate(`(() => {
+        document.querySelector('#settingsButton')?.click();
+        const status = document.querySelector('#customThemeImportStatus')?.textContent || '';
+        const reset = document.querySelector('#customThemeResetButton');
+        return /corrupt/i.test(status) && reset?.hidden === false && document.documentElement.dataset.hermesTheme === 'nous'
+          ? { status, resetVisible: !reset.hidden }
+          : null;
+      })()`);
+      const webState = await web.evaluate(`(() => {
+        const status = document.querySelector('#settingsCustomThemeImportStatus')?.textContent || '';
+        const reset = document.querySelector('#settingsCustomThemeResetButton');
+        return /corrupt/i.test(status) && reset?.hidden === false && document.documentElement.dataset.hermesTheme === 'nous'
+          ? { status, resetVisible: !reset.hidden }
+          : null;
+      })()`);
+      return panelState && webState ? { panel: panelState, web: webState } : null;
+    });
+    const corruptStoreAfterDisclosure = await setup.evaluate(`chrome.storage.local.get(${JSON.stringify(customThemeStorageKey)})`);
+    assert.deepEqual(corruptStoreAfterDisclosure[customThemeStorageKey], corruptStore, 'Corrupt storage must not be overwritten automatically.');
+
+    await panel.evaluate(`document.querySelector('#customThemeResetButton').click()`);
+    await waitFor(() => panel.evaluate(`/confirm/i.test(document.querySelector('#customThemeResetButton')?.textContent || '')`));
+    await panel.evaluate(`document.querySelector('#customThemeResetButton').click()`);
+    await waitFor(() => setup.evaluate(`chrome.storage.local.get(${JSON.stringify(customThemeStorageKey)}).then((stored) => !stored[${JSON.stringify(customThemeStorageKey)}])`));
+    const customThemeProof = {
+      invalidPreview,
+      validFilePreview,
+      installed: { id: customThemeId, name: installedTheme.record.document.name },
+      panel: panelCustomTheme,
+      panelPersisted: panelCustomPersisted,
+      webObservedInstalledTheme,
+      web: webCustomTheme,
+      webPersisted: webCustomPersisted,
+      export: exportProof,
+      deletedThemeFallback,
+      clearedSurfaces,
+      corruptionDisclosure,
+      corruptStorePreserved: true,
+      matrix: { panel: customThemePanelMatrix, web: customThemeWebMatrix },
+    };
+    assert.deepEqual(consoleErrorsSince(panel, customThemePanelConsoleStart), []);
+    assert.deepEqual(consoleErrorsSince(web, customThemeWebConsoleStart), []);
+    await panel.evaluate(`(() => {
+      document.querySelector('[data-theme="${ASSIST_THEME}"]')?.click();
+      document.querySelector('[data-color-mode="${ASSIST_MODE}"]')?.click();
+    })()`);
+    await waitFor(() => setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings').then(({ hermesBrowserSettings: stored = {} }) => stored.appearanceTheme === ${JSON.stringify(ASSIST_THEME)} && stored.colorMode === ${JSON.stringify(ASSIST_MODE)})`));
 
     if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
       const nousLightSurfaces = await waitFor(() => web.evaluate(`(() => {
@@ -2521,7 +2877,8 @@ async function main() {
       gpt56ContextRows: gpt56ContextState.models,
       mainProviderSwitch: switchedProviderState.selected,
       readability: readabilityProof,
-      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
+      customTheme: customThemeProof,
+      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
     }, null, 2));
   } catch (error) {
     const diagnostics = {};

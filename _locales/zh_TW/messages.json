@@ -279,6 +279,126 @@
     "message": "解除鎖定已固定的分頁",
     "description": "Runtime interface message context.unlock_pinned_tab"
   },
+  "runtime_custom_theme_active_unavailable": {
+    "message": "目前的主題無法使用。正在使用 Nous。",
+    "description": "Runtime interface message custom_theme.active_unavailable"
+  },
+  "runtime_custom_theme_choose_theme_file": {
+    "message": "選擇主題檔案",
+    "description": "Runtime interface message custom_theme.choose_theme_file"
+  },
+  "runtime_custom_theme_confirm_delete": {
+    "message": "確認刪除",
+    "description": "Runtime interface message custom_theme.confirm_delete"
+  },
+  "runtime_custom_theme_confirm_reset": {
+    "message": "確認重設",
+    "description": "Runtime interface message custom_theme.confirm_reset"
+  },
+  "runtime_custom_theme_contrast_failed": {
+    "message": "主題未符合對比需求。",
+    "description": "Runtime interface message custom_theme.contrast_failed"
+  },
+  "runtime_custom_theme_custom_themes": {
+    "message": "自訂主題",
+    "description": "Runtime interface message custom_theme.custom_themes"
+  },
+  "runtime_custom_theme_delete_failed": {
+    "message": "無法刪除主題。",
+    "description": "Runtime interface message custom_theme.delete_failed"
+  },
+  "runtime_custom_theme_delete_theme": {
+    "message": "刪除主題",
+    "description": "Runtime interface message custom_theme.delete_theme"
+  },
+  "runtime_custom_theme_deleted": {
+    "message": "主題已刪除。",
+    "description": "Runtime interface message custom_theme.deleted"
+  },
+  "runtime_custom_theme_export_theme": {
+    "message": "匯出主題",
+    "description": "Runtime interface message custom_theme.export_theme"
+  },
+  "runtime_custom_theme_file_read_failed": {
+    "message": "無法讀取主題檔案。",
+    "description": "Runtime interface message custom_theme.file_read_failed"
+  },
+  "runtime_custom_theme_import_description": {
+    "message": "僅匯入語意色彩。不接受 CSS、URL 與遠端字型。",
+    "description": "Runtime interface message custom_theme.import_description"
+  },
+  "runtime_custom_theme_input_too_large": {
+    "message": "主題輸入內容過大。",
+    "description": "Runtime interface message custom_theme.input_too_large"
+  },
+  "runtime_custom_theme_install_theme": {
+    "message": "安裝主題",
+    "description": "Runtime interface message custom_theme.install_theme"
+  },
+  "runtime_custom_theme_installed": {
+    "message": "主題已安裝。",
+    "description": "Runtime interface message custom_theme.installed"
+  },
+  "runtime_custom_theme_invalid_file_type": {
+    "message": "請選擇 JSON 主題檔案。",
+    "description": "Runtime interface message custom_theme.invalid_file_type"
+  },
+  "runtime_custom_theme_light_and_dark": {
+    "message": "淺色與深色調色盤",
+    "description": "Runtime interface message custom_theme.light_and_dark"
+  },
+  "runtime_custom_theme_light_only": {
+    "message": "僅淺色調色盤",
+    "description": "Runtime interface message custom_theme.light_only"
+  },
+  "runtime_custom_theme_limit_reached": {
+    "message": "已達主題數量上限。",
+    "description": "Runtime interface message custom_theme.limit_reached"
+  },
+  "runtime_custom_theme_paste_theme_json": {
+    "message": "貼上主題 JSON",
+    "description": "Runtime interface message custom_theme.paste_theme_json"
+  },
+  "runtime_custom_theme_preview_theme": {
+    "message": "預覽主題",
+    "description": "Runtime interface message custom_theme.preview_theme"
+  },
+  "runtime_custom_theme_reset_complete": {
+    "message": "自訂主題儲存空間已重設。",
+    "description": "Runtime interface message custom_theme.reset_complete"
+  },
+  "runtime_custom_theme_reset_failed": {
+    "message": "無法重設自訂主題儲存空間。",
+    "description": "Runtime interface message custom_theme.reset_failed"
+  },
+  "runtime_custom_theme_reset_storage": {
+    "message": "重設自訂主題儲存空間",
+    "description": "Runtime interface message custom_theme.reset_storage"
+  },
+  "runtime_custom_theme_save_failed": {
+    "message": "無法儲存主題。",
+    "description": "Runtime interface message custom_theme.save_failed"
+  },
+  "runtime_custom_theme_storage_corrupt": {
+    "message": "自訂主題儲存空間已損毀。請明確重設後再繼續。",
+    "description": "Runtime interface message custom_theme.storage_corrupt"
+  },
+  "runtime_custom_theme_storage_unavailable": {
+    "message": "自訂主題無法使用。",
+    "description": "Runtime interface message custom_theme.storage_unavailable"
+  },
+  "runtime_custom_theme_user_installed": {
+    "message": "使用者安裝",
+    "description": "Runtime interface message custom_theme.user_installed"
+  },
+  "runtime_custom_theme_valid": {
+    "message": "主題有效。安裝後即可加入你的主題。",
+    "description": "Runtime interface message custom_theme.valid"
+  },
+  "runtime_custom_theme_validation_errors": {
+    "message": "主題有驗證錯誤。",
+    "description": "Runtime interface message custom_theme.validation_errors"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "健康檢查已有回應，但受保護的 Browser/模型路由需要 Authorization: Bearer *** 請在「設定」中貼上 API 金鑰或範圍限定的瀏覽器權杖。",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

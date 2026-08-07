@@ -279,6 +279,126 @@
     "message": "Розблокувати закріплену вкладку",
     "description": "Runtime interface message context.unlock_pinned_tab"
   },
+  "runtime_custom_theme_active_unavailable": {
+    "message": "Активна тема недоступна. Використовується Nous.",
+    "description": "Runtime interface message custom_theme.active_unavailable"
+  },
+  "runtime_custom_theme_choose_theme_file": {
+    "message": "Вибрати файл теми",
+    "description": "Runtime interface message custom_theme.choose_theme_file"
+  },
+  "runtime_custom_theme_confirm_delete": {
+    "message": "Підтвердити видалення",
+    "description": "Runtime interface message custom_theme.confirm_delete"
+  },
+  "runtime_custom_theme_confirm_reset": {
+    "message": "Підтвердити скидання",
+    "description": "Runtime interface message custom_theme.confirm_reset"
+  },
+  "runtime_custom_theme_contrast_failed": {
+    "message": "Тема не відповідає вимогам контрастності.",
+    "description": "Runtime interface message custom_theme.contrast_failed"
+  },
+  "runtime_custom_theme_custom_themes": {
+    "message": "Користувацькі теми",
+    "description": "Runtime interface message custom_theme.custom_themes"
+  },
+  "runtime_custom_theme_delete_failed": {
+    "message": "Не вдалося видалити тему.",
+    "description": "Runtime interface message custom_theme.delete_failed"
+  },
+  "runtime_custom_theme_delete_theme": {
+    "message": "Видалити тему",
+    "description": "Runtime interface message custom_theme.delete_theme"
+  },
+  "runtime_custom_theme_deleted": {
+    "message": "Тему видалено.",
+    "description": "Runtime interface message custom_theme.deleted"
+  },
+  "runtime_custom_theme_export_theme": {
+    "message": "Експортувати тему",
+    "description": "Runtime interface message custom_theme.export_theme"
+  },
+  "runtime_custom_theme_file_read_failed": {
+    "message": "Не вдалося прочитати файл теми.",
+    "description": "Runtime interface message custom_theme.file_read_failed"
+  },
+  "runtime_custom_theme_import_description": {
+    "message": "Імпортуйте лише семантичні кольори. CSS, URL і віддалені шрифти не підтримуються.",
+    "description": "Runtime interface message custom_theme.import_description"
+  },
+  "runtime_custom_theme_input_too_large": {
+    "message": "Дані теми завеликі.",
+    "description": "Runtime interface message custom_theme.input_too_large"
+  },
+  "runtime_custom_theme_install_theme": {
+    "message": "Установити тему",
+    "description": "Runtime interface message custom_theme.install_theme"
+  },
+  "runtime_custom_theme_installed": {
+    "message": "Тему встановлено.",
+    "description": "Runtime interface message custom_theme.installed"
+  },
+  "runtime_custom_theme_invalid_file_type": {
+    "message": "Виберіть файл теми JSON.",
+    "description": "Runtime interface message custom_theme.invalid_file_type"
+  },
+  "runtime_custom_theme_light_and_dark": {
+    "message": "Світла й темна палітри",
+    "description": "Runtime interface message custom_theme.light_and_dark"
+  },
+  "runtime_custom_theme_light_only": {
+    "message": "Лише світла палітра",
+    "description": "Runtime interface message custom_theme.light_only"
+  },
+  "runtime_custom_theme_limit_reached": {
+    "message": "Досягнуто ліміту тем.",
+    "description": "Runtime interface message custom_theme.limit_reached"
+  },
+  "runtime_custom_theme_paste_theme_json": {
+    "message": "Вставити JSON теми",
+    "description": "Runtime interface message custom_theme.paste_theme_json"
+  },
+  "runtime_custom_theme_preview_theme": {
+    "message": "Попередній перегляд теми",
+    "description": "Runtime interface message custom_theme.preview_theme"
+  },
+  "runtime_custom_theme_reset_complete": {
+    "message": "Сховище користувацьких тем скинуто.",
+    "description": "Runtime interface message custom_theme.reset_complete"
+  },
+  "runtime_custom_theme_reset_failed": {
+    "message": "Не вдалося скинути сховище користувацьких тем.",
+    "description": "Runtime interface message custom_theme.reset_failed"
+  },
+  "runtime_custom_theme_reset_storage": {
+    "message": "Скинути сховище користувацьких тем",
+    "description": "Runtime interface message custom_theme.reset_storage"
+  },
+  "runtime_custom_theme_save_failed": {
+    "message": "Не вдалося зберегти тему.",
+    "description": "Runtime interface message custom_theme.save_failed"
+  },
+  "runtime_custom_theme_storage_corrupt": {
+    "message": "Сховище користувацьких тем пошкоджене. Явно скиньте його, щоб продовжити.",
+    "description": "Runtime interface message custom_theme.storage_corrupt"
+  },
+  "runtime_custom_theme_storage_unavailable": {
+    "message": "Користувацькі теми недоступні.",
+    "description": "Runtime interface message custom_theme.storage_unavailable"
+  },
+  "runtime_custom_theme_user_installed": {
+    "message": "Установлено користувачем",
+    "description": "Runtime interface message custom_theme.user_installed"
+  },
+  "runtime_custom_theme_valid": {
+    "message": "Тема дійсна. Установіть її, щоб додати до своїх тем.",
+    "description": "Runtime interface message custom_theme.valid"
+  },
+  "runtime_custom_theme_validation_errors": {
+    "message": "У темі є помилки перевірки.",
+    "description": "Runtime interface message custom_theme.validation_errors"
+  },
   "runtime_diagnostic_api_authorization_health_detail": {
     "message": "Перевірка стану відповіла, але захищені маршрути Browser/моделей потребують Authorization: Bearer *** Вставте ключ API або браузерний токен з обмеженою областю дії в Налаштування.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"

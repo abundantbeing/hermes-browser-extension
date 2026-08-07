@@ -3748,6 +3748,76 @@ test('appearance saves use a monotonic mutation id, roll back only the current m
   assert.match(rollback, /fail|error|retry|could not|couldn/i, 'save failure must be disclosed with actionable copy');
 });
 
+test('side-panel custom theme manager pins stable IDs, safe import controls, and an inline details region', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  for (const id of [
+    'customThemeManager',
+    'customThemeImportTextarea',
+    'customThemeFileInput',
+    'customThemePreviewButton',
+    'customThemePreview',
+    'customThemeInstallButton',
+    'customThemeImportStatus',
+    'customThemeResetButton',
+  ]) assert.match(html, new RegExp(`id="${id}"`), `expected id="${id}"`);
+  assert.match(html, /<details[^>]*id="customThemeManager"/);
+  assert.match(html, /id="customThemeFileInput"[^>]*accept="[^"]*\.json/);
+  assert.match(html, /id="customThemeImportStatus"[^>]*role="status"[^>]*aria-live="polite"/);
+  assert.doesNotMatch(html, /customTheme[\s\S]{0,200}<dialog/i, 'custom theme management must not add a nested modal');
+  assert.doesNotMatch(html, /custom\s*(?:css|style)|font\s*url/i, 'there is no raw CSS or remote font channel');
+});
+
+test('side-panel custom theme flow reuses the pure modules and keeps preview, install, export, delete, and reset fail-closed', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /from\s+['"]\.\/lib\/custom-themes\.mjs['"]/);
+  assert.match(source, /from\s+['"]\.\/lib\/custom-theme-store\.mjs['"]/);
+  for (const name of [
+    'CUSTOM_THEME_MAX_INPUT_BYTES',
+    'CUSTOM_THEME_STORAGE_KEY',
+    'validateThemeDocument',
+    'themeCssVariables',
+    'customThemeSelection',
+    'serializeThemeDocument',
+    'readCustomThemeStore',
+    'installCustomTheme',
+    'deleteCustomTheme',
+    'resetCustomThemeStore',
+  ]) assert.match(source, new RegExp(`\\b${name}\\b`), `expected ${name}`);
+
+  const preview = source.match(/(?:async\s+)?function previewCustomThemeImport\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(preview, 'previewCustomThemeImport must exist');
+  assert.ok(preview.indexOf('CUSTOM_THEME_MAX_INPUT_BYTES') < preview.indexOf('JSON.parse'), 'byte limit must be checked before parsing');
+  assert.doesNotMatch(preview, /chrome\.storage\.(?:local\.)?(?:set|remove)/, 'preview may not write storage');
+
+  const fileFlow = source.match(/async function handleCustomThemeFileSelection\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(fileFlow.indexOf('file.size') < fileFlow.indexOf('file.text()'), 'file size must be checked before reading');
+  assert.ok(fileFlow.indexOf("application/json") < fileFlow.indexOf('file.text()'), 'file type must be checked before reading');
+  assert.match(fileFlow, /try\s*\{/);
+  assert.match(fileFlow, /catch\s*\(/);
+
+  const install = source.match(/async function installPreviewedCustomTheme\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(install, 'installPreviewedCustomTheme must exist');
+  assert.ok(install.indexOf('await installCustomTheme') < install.indexOf("setAppearanceOption('appearanceTheme'"), 'the record must be stored before panel selection');
+
+  const exportFlow = source.match(/function exportCustomTheme\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(exportFlow, /new Blob\(/);
+  assert.match(exportFlow, /URL\.createObjectURL\(/);
+  assert.match(exportFlow, /\.click\(\)/);
+  assert.match(exportFlow, /URL\.revokeObjectURL\(/);
+
+  assert.match(source, /let customThemeDeleteArmedId\s*=\s*['"]/);
+  assert.match(source, /let customThemeResetArmed\s*=\s*false/);
+  assert.match(source, /chrome\.storage\.onChanged\.addListener/);
+  assert.match(source, /CUSTOM_THEME_STORAGE_KEY/);
+});
+
+test('panel custom-theme selection never mutates webAppearanceTheme', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const setAppearance = source.match(/async function setAppearanceOption\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  const persist = source.match(/async function persistAppearanceSettings\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.doesNotMatch(`${setAppearance}\n${persist}`, /webAppearanceTheme/, 'panel selection must remain panel-scoped');
+});
+
 test('settings CSS uses the semantic text-zoom multiplier, calc typography, and a three-column narrow preset grid', () => {
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
   assert.match(css, /--hermes-text-zoom:\s*1;/, 'the root defines the semantic text-zoom multiplier');

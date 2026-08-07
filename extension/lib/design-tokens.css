@@ -60,6 +60,14 @@
   font-synthesis: none;
 }
 
+html[data-hermes-theme^="custom:"] {
+  color-scheme: light;
+}
+
+html[data-hermes-theme^="custom:"][data-hermes-mode="dark"] {
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 
 button,

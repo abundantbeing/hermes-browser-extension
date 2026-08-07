@@ -43,6 +43,21 @@ import {
   stepTextZoomPercent,
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
+import {
+  CUSTOM_THEME_MAX_INPUT_BYTES,
+  CUSTOM_THEME_STORAGE_KEY,
+  customThemePaletteForMode,
+  customThemeSelection,
+  serializeThemeDocument,
+  themeCssVariables,
+  validateThemeDocument,
+} from './lib/custom-themes.mjs';
+import {
+  deleteCustomTheme,
+  installCustomTheme,
+  readCustomThemeStore,
+  resetCustomThemeStore,
+} from './lib/custom-theme-store.mjs';
 import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import { mountContextMenuEditor } from './lib/context-menu-editor-client.mjs';
 import {
@@ -190,6 +205,14 @@ const els = {
   closeSettings: $('#closeSettings'),
   settingsColorMode: $('#settingsColorMode'),
   settingsTheme: $('#settingsTheme'),
+  webCustomThemeManager: $('#settingsCustomThemeManager'),
+  webCustomThemeImportTextarea: $('#settingsCustomThemeImportTextarea'),
+  webCustomThemeFileInput: $('#settingsCustomThemeFileInput'),
+  webCustomThemePreviewButton: $('#settingsCustomThemePreviewButton'),
+  webCustomThemePreview: $('#settingsCustomThemePreview'),
+  webCustomThemeInstallButton: $('#settingsCustomThemeInstallButton'),
+  webCustomThemeImportStatus: $('#settingsCustomThemeImportStatus'),
+  webCustomThemeResetButton: $('#settingsCustomThemeResetButton'),
   settingsTextZoomPresetGrid: $('#settingsTextZoomPresetGrid'),
   settingsTextZoomInput: $('#settingsTextZoomInput'),
   settingsTextZoomDecreaseButton: $('#settingsTextZoomDecreaseButton'),
@@ -239,6 +262,12 @@ let settings = {};
 let webAppearanceMutationId = 0;
 let webAppearanceSaveStatus = '';
 let webAppearanceWriteQueue = Promise.resolve();
+let webCustomThemeStoreState = { ok: true, status: 'empty', themes: [] };
+let webCustomThemePreviewState = null;
+let webCustomThemeImportStatus = '';
+let webCustomThemeDeleteArmedId = '';
+let webCustomThemeResetArmed = false;
+let appliedWebCustomThemeVariables = [];
 let sessions = [];
 let activeSessionId = handoff.sessionId;
 let activeMessages = [];
@@ -1875,15 +1904,359 @@ function webAppearancePreferences() {
   return appearancePreferencesForSurface(settings, 'web');
 }
 
+function webCustomThemeText(key, fallback, params) {
+  const translated = t(key, params);
+  return translated && translated !== key ? translated : fallback;
+}
+
+function normalizedWebThemeId(value) {
+  const selection = customThemeSelection(value, webCustomThemeStoreState.themes);
+  if (selection.kind === 'builtin' || selection.kind === 'custom') return selection.id;
+  return normalizeAppearanceTheme(value);
+}
+
+function webCustomThemeInputBytes(value) {
+  return new TextEncoder().encode(String(value || '')).byteLength;
+}
+
+function buildWebThemePreview(palette) {
+  const preview = document.createElement('span');
+  preview.className = 'theme-preview';
+  preview.setAttribute('aria-hidden', 'true');
+  preview.style.setProperty('--preview-bg', palette.canvas);
+  preview.style.setProperty('--preview-panel', palette.paper);
+  preview.style.setProperty('--preview-text', palette.ink);
+  preview.style.setProperty('--preview-muted', palette.muted);
+  preview.style.setProperty('--preview-accent', palette.accent);
+  preview.append(document.createElement('span'), document.createElement('span'), document.createElement('span'));
+  return preview;
+}
+
+function renderWebCustomThemePreview() {
+  const preview = els.webCustomThemePreview;
+  if (!preview || !els.webCustomThemeInstallButton) return;
+  preview.replaceChildren();
+  preview.hidden = !webCustomThemePreviewState;
+  els.webCustomThemeInstallButton.disabled = !webCustomThemePreviewState?.valid;
+  if (!webCustomThemePreviewState) return;
+  if (!webCustomThemePreviewState.valid) {
+    const list = document.createElement('ul');
+    list.className = 'custom-theme-validation-list';
+    for (const error of webCustomThemePreviewState.errors) {
+      const item = document.createElement('li');
+      const path = document.createElement('strong');
+      path.textContent = error.path || '$';
+      item.append(path, document.createTextNode(` — ${error.message || error.code}`));
+      list.append(item);
+    }
+    preview.append(list);
+    return;
+  }
+  const themeDocument = webCustomThemePreviewState.document;
+  const head = document.createElement('div');
+  head.className = 'custom-theme-preview-head';
+  const name = document.createElement('strong');
+  name.textContent = themeDocument.name;
+  const coverage = document.createElement('span');
+  coverage.className = 'custom-theme-preview-mode';
+  coverage.textContent = themeDocument.darkColors
+    ? webCustomThemeText('custom_theme.light_and_dark', 'Light and dark palettes')
+    : webCustomThemeText('custom_theme.light_only', 'Light palette only');
+  head.append(name, coverage);
+  const swatches = document.createElement('div');
+  swatches.className = 'custom-theme-swatches';
+  swatches.setAttribute('role', 'list');
+  for (const key of ['canvas', 'paper', 'ink', 'muted', 'primary', 'accent', 'danger']) {
+    const swatch = document.createElement('span');
+    swatch.className = 'custom-theme-swatch';
+    swatch.style.setProperty('--swatch', themeDocument.colors[key]);
+    swatch.title = `${key}: ${themeDocument.colors[key]}`;
+    swatch.setAttribute('aria-label', swatch.title);
+    swatches.append(swatch);
+  }
+  preview.append(head, swatches);
+}
+
+function renderWebCustomThemeManager() {
+  renderWebCustomThemePreview();
+  if (els.webCustomThemeImportStatus) {
+    const corrupt = webCustomThemeStoreState.status === 'corrupt'
+      ? webCustomThemeText('custom_theme.storage_corrupt', 'Custom theme storage is corrupt. Reset it explicitly to continue.')
+      : '';
+    els.webCustomThemeImportStatus.textContent = webCustomThemeImportStatus || corrupt;
+  }
+  if (els.webCustomThemeResetButton) {
+    els.webCustomThemeResetButton.hidden = webCustomThemeStoreState.status !== 'corrupt';
+    els.webCustomThemeResetButton.textContent = webCustomThemeResetArmed
+      ? webCustomThemeText('custom_theme.confirm_reset', 'Confirm reset')
+      : webCustomThemeText('custom_theme.reset_storage', 'Reset custom theme storage');
+  }
+}
+
+function appendWebCustomThemeCards(activeTheme) {
+  for (const record of webCustomThemeStoreState.themes) {
+    const selected = record.id === activeTheme;
+    const shell = document.createElement('div');
+    shell.className = `custom-theme-card-shell${selected ? ' selected' : ''}`;
+    shell.dataset.customThemeId = record.id;
+
+    const select = document.createElement('button');
+    select.className = 'custom-theme-card-select';
+    select.type = 'button';
+    select.dataset.theme = record.id;
+    select.setAttribute('role', 'radio');
+    select.setAttribute('aria-checked', String(selected));
+    select.setAttribute('aria-label', `${record.document.name}: ${webCustomThemeText('custom_theme.user_installed', 'User-installed')}`);
+    const copy = document.createElement('span');
+    copy.className = 'custom-theme-card-copy';
+    const name = document.createElement('strong');
+    name.textContent = record.document.name;
+    const meta = document.createElement('small');
+    meta.textContent = webCustomThemeText('custom_theme.user_installed', 'User-installed');
+    copy.append(name, meta);
+    select.append(buildWebThemePreview(record.document.colors), copy);
+
+    const actions = document.createElement('span');
+    actions.className = 'custom-theme-card-actions';
+    const exportButton = document.createElement('button');
+    exportButton.type = 'button';
+    exportButton.dataset.customThemeExport = record.id;
+    exportButton.textContent = webCustomThemeText('custom_theme.export_theme', 'Export');
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.className = 'danger-action';
+    deleteButton.dataset.customThemeDelete = record.id;
+    deleteButton.textContent = webCustomThemeDeleteArmedId === record.id
+      ? webCustomThemeText('custom_theme.confirm_delete', 'Confirm delete')
+      : webCustomThemeText('custom_theme.delete_theme', 'Delete');
+    actions.append(exportButton, deleteButton);
+    shell.append(select, actions);
+    els.settingsThemeGrid.append(shell);
+  }
+}
+
+async function refreshWebCustomThemeStore({ render = true } = {}) {
+  const previousStatus = webCustomThemeStoreState.status;
+  webCustomThemeStoreState = await readCustomThemeStore(chrome.storage.local);
+  if (webCustomThemeStoreState.status === 'corrupt') {
+    webCustomThemeImportStatus = '';
+    webCustomThemePreviewState = null;
+  } else if (previousStatus === 'corrupt') {
+    webCustomThemeImportStatus = '';
+    webCustomThemeResetArmed = false;
+  } else if (!webCustomThemeStoreState.ok) {
+    webCustomThemeImportStatus = `${webCustomThemeText('custom_theme.storage_unavailable', 'Custom themes are unavailable.')} ${webCustomThemeStoreState.error?.message || ''}`.trim();
+  }
+  if (render) renderAppearanceSettings();
+  return webCustomThemeStoreState;
+}
+
+async function previewWebCustomThemeImport(inputText = els.webCustomThemeImportTextarea?.value || '') {
+  webCustomThemePreviewState = null;
+  const inputBytes = webCustomThemeInputBytes(inputText);
+  if (inputBytes > CUSTOM_THEME_MAX_INPUT_BYTES) {
+    webCustomThemePreviewState = { valid: false, inputBytes, errors: [{ code: 'input-too-large', path: '$', message: webCustomThemeText('custom_theme.input_too_large', 'Theme input is too large.') }] };
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.input_too_large', 'Theme input is too large.');
+    renderWebCustomThemeManager();
+    return webCustomThemePreviewState;
+  }
+  let candidate;
+  try {
+    candidate = JSON.parse(inputText);
+  } catch (error) {
+    webCustomThemePreviewState = { valid: false, inputBytes, errors: [{ code: 'invalid-json', path: '$', message: error?.message || 'Invalid JSON' }] };
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.validation_errors', 'Theme has validation errors.');
+    renderWebCustomThemeManager();
+    return webCustomThemePreviewState;
+  }
+  const result = validateThemeDocument(candidate);
+  webCustomThemePreviewState = { ...result, inputBytes };
+  webCustomThemeImportStatus = result.valid
+    ? webCustomThemeText('custom_theme.valid', 'Theme is valid. Install it to add it to your themes.')
+    : result.errors.some((error) => error.code === 'contrast')
+      ? webCustomThemeText('custom_theme.contrast_failed', 'Theme failed contrast requirements.')
+    : webCustomThemeText('custom_theme.validation_errors', 'Theme has validation errors.');
+  renderWebCustomThemeManager();
+  return webCustomThemePreviewState;
+}
+
+async function installPreviewedWebCustomTheme() {
+  if (!webCustomThemePreviewState?.valid) {
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.validation_errors', 'Theme has validation errors.');
+    renderWebCustomThemeManager();
+    return;
+  }
+  els.webCustomThemeInstallButton?.setAttribute('aria-busy', 'true');
+  let result;
+  try {
+    result = await installCustomTheme(chrome.storage.local, webCustomThemePreviewState.document, { inputBytes: webCustomThemePreviewState.inputBytes });
+  } finally {
+    els.webCustomThemeInstallButton?.setAttribute('aria-busy', 'false');
+  }
+  if (!result.ok) {
+    webCustomThemeImportStatus = result.error?.code === 'theme-limit-reached'
+      ? webCustomThemeText('custom_theme.limit_reached', 'Theme limit reached.')
+      : `${webCustomThemeText('custom_theme.save_failed', 'Theme could not be saved.')} ${result.error?.message || ''}`.trim();
+    renderWebCustomThemeManager();
+    return;
+  }
+  webCustomThemeStoreState = { ok: true, status: 'ready', themes: result.store.themes };
+  webCustomThemeImportStatus = webCustomThemeText('custom_theme.installed', 'Theme installed.');
+  els.settingsTheme.value = result.record.id;
+  renderAppearanceSettings();
+  await applyAndPersistAppearance();
+}
+
+function webCustomThemeExportFilename(name) {
+  const safe = String(name || 'hermes-theme').normalize('NFKD').replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 64);
+  return `${safe || 'hermes-theme'}.json`;
+}
+
+function exportWebCustomTheme(id) {
+  const record = webCustomThemeStoreState.themes.find((candidate) => candidate.id === id);
+  if (!record) return;
+  const blob = new Blob([serializeThemeDocument(record.document)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = webCustomThemeExportFilename(record.document.name);
+  link.hidden = true;
+  document.body.append(link);
+  try {
+    link.click();
+  } finally {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function fallbackWebDeletedThemeSelections(id, { allCustom = false } = {}) {
+  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const fresh = stored.hermesBrowserSettings || {};
+  const shouldFallback = (value) => allCustom ? String(value || '').startsWith('custom:') : value === id;
+  const panelFallback = shouldFallback(fresh.appearanceTheme);
+  const webFallback = shouldFallback(fresh.webAppearanceTheme);
+  if (!panelFallback && !webFallback) return fresh;
+  const hermesBrowserSettings = {
+    ...fresh,
+    ...(panelFallback ? { appearanceTheme: 'nous' } : {}),
+    ...(webFallback ? { webAppearanceTheme: 'nous' } : {}),
+  };
+  await chrome.storage.local.set({ hermesBrowserSettings });
+  return hermesBrowserSettings;
+}
+
+async function deleteWebCustomTheme(id) {
+  const record = webCustomThemeStoreState.themes.find((candidate) => candidate.id === id);
+  if (!record) return;
+  if (webCustomThemeDeleteArmedId !== id) {
+    webCustomThemeDeleteArmedId = id;
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.confirm_delete', 'Click Confirm delete to remove this theme.');
+    renderAppearanceSettings();
+    return;
+  }
+  webCustomThemeDeleteArmedId = '';
+  try {
+    const saved = await fallbackWebDeletedThemeSelections(id);
+    const result = await deleteCustomTheme(chrome.storage.local, id);
+    if (!result.ok) throw new Error(result.error?.message || 'Could not delete custom theme');
+    webCustomThemeStoreState = { ok: true, status: result.store.themes.length ? 'ready' : 'empty', themes: result.store.themes };
+    settings = { ...settings, ...saved, webAppearanceTheme: normalizedWebThemeId(saved.webAppearanceTheme) };
+    els.settingsTheme.value = settings.webAppearanceTheme || 'nous';
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.deleted', 'Theme deleted.');
+    applyAppearance();
+    renderAppearanceSettings();
+  } catch (error) {
+    webCustomThemeImportStatus = `${webCustomThemeText('custom_theme.delete_failed', 'Theme could not be deleted.')} ${error?.message || ''}`.trim();
+    renderWebCustomThemeManager();
+  }
+}
+
+async function resetWebCustomThemeStore() {
+  if (webCustomThemeStoreState.status !== 'corrupt') return;
+  if (!webCustomThemeResetArmed) {
+    webCustomThemeResetArmed = true;
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.confirm_reset', 'Click Confirm reset to clear corrupt custom theme storage.');
+    renderWebCustomThemeManager();
+    return;
+  }
+  webCustomThemeResetArmed = false;
+  try {
+    const saved = await fallbackWebDeletedThemeSelections('', { allCustom: true });
+    const result = await resetCustomThemeStore(chrome.storage.local);
+    if (!result.ok) throw new Error(result.error?.message || 'Could not reset custom theme storage');
+    webCustomThemeStoreState = { ok: true, status: 'empty', themes: [] };
+    settings = { ...settings, ...saved, webAppearanceTheme: normalizedWebThemeId(saved.webAppearanceTheme) };
+    els.settingsTheme.value = settings.webAppearanceTheme || 'nous';
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.reset_complete', 'Custom theme storage reset.');
+    applyAppearance();
+    renderAppearanceSettings();
+  } catch (error) {
+    webCustomThemeImportStatus = `${webCustomThemeText('custom_theme.reset_failed', 'Custom theme storage could not be reset.')} ${error?.message || ''}`.trim();
+    renderWebCustomThemeManager();
+  }
+}
+
+async function handleWebCustomThemeFileSelection() {
+  const file = els.webCustomThemeFileInput?.files?.[0];
+  if (!file) return;
+  if (file.size > CUSTOM_THEME_MAX_INPUT_BYTES) {
+    webCustomThemePreviewState = { valid: false, inputBytes: file.size, errors: [{ code: 'input-too-large', path: '$', message: webCustomThemeText('custom_theme.input_too_large', 'Theme input is too large.') }] };
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.input_too_large', 'Theme input is too large.');
+    renderWebCustomThemeManager();
+    return;
+  }
+  const isJsonFile = file.type === 'application/json' || String(file.name || '').toLowerCase().endsWith('.json');
+  if (!isJsonFile) {
+    webCustomThemePreviewState = { valid: false, inputBytes: file.size, errors: [{ code: 'invalid-file-type', path: '$', message: webCustomThemeText('custom_theme.invalid_file_type', 'Choose a JSON theme file.') }] };
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.invalid_file_type', 'Choose a JSON theme file.');
+    renderWebCustomThemeManager();
+    return;
+  }
+  try {
+    const text = await file.text();
+    if (els.webCustomThemeImportTextarea) els.webCustomThemeImportTextarea.value = text;
+    await previewWebCustomThemeImport(text);
+  } catch (error) {
+    webCustomThemePreviewState = { valid: false, inputBytes: file.size, errors: [{ code: 'file-read-failed', path: '$', message: error?.message || 'Theme file could not be read' }] };
+    webCustomThemeImportStatus = webCustomThemeText('custom_theme.file_read_failed', 'Theme file could not be read.');
+    renderWebCustomThemeManager();
+  }
+}
+
+async function handleWebCustomThemeStoreChange() {
+  const previous = settings.webAppearanceTheme;
+  await refreshWebCustomThemeStore({ render: false });
+  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const requested = stored.hermesBrowserSettings?.webAppearanceTheme ?? previous;
+  const next = normalizedWebThemeId(requested);
+  if (String(previous || '').startsWith('custom:') && next === 'nous' && previous !== 'nous') {
+    webAppearanceSaveStatus = webCustomThemeText('custom_theme.active_unavailable', 'Active theme is unavailable. Using Nous.');
+  }
+  settings = { ...settings, webAppearanceTheme: next };
+  if (els.settingsTheme) els.settingsTheme.value = next;
+  applyAppearance();
+  renderAppearanceSettings();
+}
+
 function applyAppearance() {
   const mode = normalizeColorMode(settings.webColorMode || 'light');
-  const theme = normalizeAppearanceTheme(settings.webAppearanceTheme || 'nous');
   const resolved = resolveColorMode(mode, globalThis.matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.dataset.hermesMode = resolved;
-  document.documentElement.dataset.hermesColorMode = mode;
-  document.documentElement.dataset.hermesTheme = theme;
-  document.documentElement.style.colorScheme = resolved;
-  applyAppearancePreferences(document.documentElement, webAppearancePreferences());
+  const root = document.documentElement;
+  for (const property of appliedWebCustomThemeVariables) root.style.removeProperty(property);
+  appliedWebCustomThemeVariables = [];
+  const selection = customThemeSelection(settings.webAppearanceTheme, webCustomThemeStoreState.themes);
+  const theme = selection.kind === 'custom' ? selection.id : normalizeAppearanceTheme(settings.webAppearanceTheme || 'nous');
+  if (selection.kind === 'custom') {
+    const variables = themeCssVariables(customThemePaletteForMode(selection.document, resolved));
+    for (const [property, value] of Object.entries(variables)) root.style.setProperty(property, value);
+    appliedWebCustomThemeVariables = Object.keys(variables);
+  }
+  root.dataset.hermesMode = resolved;
+  root.dataset.hermesColorMode = mode;
+  root.dataset.hermesTheme = theme;
+  root.style.colorScheme = selection.kind === 'custom' && resolved === 'dark' && !selection.document.darkColors ? 'light' : resolved;
+  applyAppearancePreferences(root, webAppearancePreferences());
 }
 
 function renderAppearanceSettings() {
@@ -1892,7 +2265,7 @@ function renderAppearanceSettings() {
     els.settingsLanguageSelect.value = getLocale();
   }
   const mode = normalizeColorMode(settings.webColorMode || 'light');
-  const theme = normalizeAppearanceTheme(settings.webAppearanceTheme || 'nous');
+  const theme = normalizedWebThemeId(settings.webAppearanceTheme || 'nous');
   const preferences = webAppearancePreferences();
   els.settingsColorMode.value = mode;
   els.settingsTheme.value = theme;
@@ -1918,6 +2291,7 @@ function renderAppearanceSettings() {
     els.settingsCustomFontFamilyInput.value = preferences.customFontFamily;
   }
   if (els.settingsAppearanceSaveStatus) els.settingsAppearanceSaveStatus.textContent = webAppearanceSaveStatus;
+  renderWebCustomThemeManager();
   els.settingsThemeGrid.replaceChildren();
   for (const item of APPEARANCE_THEMES) {
     const selected = item.value === theme;
@@ -1945,6 +2319,7 @@ function renderAppearanceSettings() {
     button.append(preview, copy, check);
     els.settingsThemeGrid.append(button);
   }
+  appendWebCustomThemeCards(theme);
 }
 
 async function persistWebAppearanceSettings(preferences) {
@@ -1956,7 +2331,7 @@ async function persistWebAppearanceSettings(preferences) {
     const hermesBrowserSettings = {
       ...withAppearancePreferenceUpdate(freshSettings, 'web', preferences),
       webColorMode: normalizeColorMode(preferences.colorMode),
-      webAppearanceTheme: normalizeAppearanceTheme(preferences.appearanceTheme),
+      webAppearanceTheme: normalizedWebThemeId(preferences.appearanceTheme),
       appearanceSchemaVersion: 2,
     };
     await chrome.storage.local.set({ hermesBrowserSettings });
@@ -1981,7 +2356,7 @@ async function applyAndPersistAppearance(patch = {}) {
   settings = {
     ...withAppearancePreferenceUpdate(settings, 'web', nextPreferences),
     webColorMode: normalizeColorMode(els.settingsColorMode.value || settings.webColorMode || 'light'),
-    webAppearanceTheme: normalizeAppearanceTheme(els.settingsTheme.value || settings.webAppearanceTheme || 'nous'),
+    webAppearanceTheme: normalizedWebThemeId(els.settingsTheme.value || settings.webAppearanceTheme || 'nous'),
     appearanceSchemaVersion: 2,
   };
   const snapshot = {
@@ -2041,7 +2416,7 @@ async function saveSettings() {
   const nextSettings = migrateConnectionSettings({
     ...settings,
     webColorMode: normalizeColorMode(els.settingsColorMode.value),
-    webAppearanceTheme: normalizeAppearanceTheme(els.settingsTheme.value),
+    webAppearanceTheme: normalizedWebThemeId(els.settingsTheme.value),
     inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
     ...assistBinding,
@@ -2721,6 +3096,7 @@ async function loadApp() {
   sessionHistoryLoading = true;
   showRuntimeLoadingState();
   renderSessions();
+  await refreshWebCustomThemeStore({ render: false });
   const stored = await chrome.storage.local.get(['hermesBrowserSettings', TASK_STACKS_STORAGE_KEY, DELEGATION_WATCH_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
@@ -2737,6 +3113,7 @@ async function loadApp() {
     inlineAssistReasoningEffort: normalizeModelRuntimeOptions({ reasoningEffort: stored.hermesBrowserSettings?.inlineAssistReasoningEffort || 'low' }).reasoningEffort,
     inlineAssistFastMode: Boolean(stored.hermesBrowserSettings?.inlineAssistFastMode),
     contextMenuDefaultRoute: ['current', 'new', 'background'].includes(stored.hermesBrowserSettings?.contextMenuDefaultRoute) ? stored.hermesBrowserSettings.contextMenuDefaultRoute : 'ask',
+    webAppearanceTheme: normalizedWebThemeId(stored.hermesBrowserSettings?.webAppearanceTheme || 'nous'),
   };
   await ensureContextMenuEditor();
   applyAppearance();
@@ -3060,11 +3437,31 @@ els.settingsCustomFontFamilyInput?.addEventListener('change', () => {
   void applyAndPersistAppearance({ fontProfile: 'custom-local', customFontFamily });
 });
 els.settingsThemeGrid.addEventListener('click', (event) => {
+  const exportButton = event.target.closest('[data-custom-theme-export]');
+  if (exportButton) {
+    exportWebCustomTheme(exportButton.dataset.customThemeExport);
+    return;
+  }
+  const deleteButton = event.target.closest('[data-custom-theme-delete]');
+  if (deleteButton) {
+    void deleteWebCustomTheme(deleteButton.dataset.customThemeDelete);
+    return;
+  }
   const card = event.target.closest('[data-theme]');
   if (!card) return;
+  webCustomThemeDeleteArmedId = '';
   els.settingsTheme.value = card.dataset.theme;
   applyAndPersistAppearance();
 });
+els.webCustomThemeImportTextarea?.addEventListener('input', () => {
+  webCustomThemePreviewState = null;
+  webCustomThemeImportStatus = '';
+  renderWebCustomThemeManager();
+});
+els.webCustomThemeFileInput?.addEventListener('change', () => void handleWebCustomThemeFileSelection());
+els.webCustomThemePreviewButton?.addEventListener('click', () => void previewWebCustomThemeImport());
+els.webCustomThemeInstallButton?.addEventListener('click', () => void installPreviewedWebCustomTheme());
+els.webCustomThemeResetButton?.addEventListener('click', () => void resetWebCustomThemeStore());
 els.settingsForm.addEventListener('submit', (event) => {
   event.preventDefault();
   saveSettings().catch((error) => { els.composerStatus.textContent = `Settings failed: ${error?.message || String(error)}`; });
@@ -3161,6 +3558,9 @@ globalThis.addEventListener('resize', () => {
   updateScrim();
 });
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) {
+    void handleWebCustomThemeStoreChange();
+  }
   if (area === 'local' && changes[TASK_STACKS_STORAGE_KEY]) {
     taskStackStore = changes[TASK_STACKS_STORAGE_KEY].newValue && typeof changes[TASK_STACKS_STORAGE_KEY].newValue === 'object'
       ? changes[TASK_STACKS_STORAGE_KEY].newValue

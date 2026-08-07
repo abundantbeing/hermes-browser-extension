@@ -180,6 +180,19 @@ html[data-hermes-theme="slate"] .rail-brand-video { filter: grayscale(0.7) sepia
 html[data-hermes-theme="senter-space"] .rail-brand-video { filter: grayscale(0.25) sepia(0.3) saturate(1.25) hue-rotate(130deg); }
 html[data-hermes-theme="aurora"] .rail-brand-video { filter: grayscale(0.08) sepia(0.28) saturate(2.4) hue-rotate(286deg) brightness(1.08); }
 html[data-hermes-theme="solstice"] .rail-brand-video { filter: sepia(0.66) saturate(1.35) hue-rotate(338deg); }
+html[data-hermes-theme^="custom:"] .rail-brand-video { filter: none; }
+
+html[data-hermes-theme^="custom:"] .web-brand-logo-base { display: none; }
+html[data-hermes-theme^="custom:"] .web-brand::before {
+  content: "";
+  display: block;
+  width: 128px;
+  height: 54px;
+  flex: 0 0 128px;
+  background: var(--hermes-shell-fg);
+  -webkit-mask: url("assets/img/hermes-web-logo-white-dark.svg") left center / contain no-repeat;
+  mask: url("assets/img/hermes-web-logo-white-dark.svg") left center / contain no-repeat;
+}
 
 
 /* Web Settings keeps the extension structure without inheriting its tiny panel scale. */
@@ -240,6 +253,7 @@ html[data-hermes-theme="slate"] { --hermes-logo-filter: grayscale(0.55) sepia(0.
 html[data-hermes-theme="senter-space"] { --hermes-logo-filter: sepia(0.25) saturate(0.8) hue-rotate(120deg); }
 html[data-hermes-theme="aurora"] { --hermes-logo-filter: sepia(0.2) saturate(2.1) hue-rotate(286deg) brightness(1.08); }
 html[data-hermes-theme="solstice"] { --hermes-logo-filter: sepia(0.56) saturate(0.8) hue-rotate(336deg); }
+html[data-hermes-theme^="custom:"] { --hermes-logo-filter: none; }
 .web-brand-logo-nous-light { display: none; }
 .web-brand-logo-cyberpunk-light { display: none; }
 html[data-hermes-theme="nous"][data-hermes-mode="light"] .web-brand-logo-base { display: none; }
