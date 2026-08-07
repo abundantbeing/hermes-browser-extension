@@ -3840,6 +3840,33 @@ test('settings text controls keep at least 32px pointer targets and preserve can
   assert.doesNotMatch(css, /\.composer::-webkit-scrollbar/, 'composer must keep canonical scrollbars');
 });
 
+test('settings polish separates profile actions, aligns the zoom stepper, and collapses right-click actions', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+
+  assert.match(html, /class="settings-row profile-control-stack"/);
+  assert.match(html, /class="profile-action-row"[\s\S]*?id="refreshProfilesButton"/);
+  assert.match(css, /\.profile-control-stack\s*\{[^}]*gap:\s*(?:1[0-9]|[2-9]\d)px/s);
+  assert.match(css, /\.profile-action-row\s*\{[^}]*margin-top:\s*[4-9]px/s);
+
+  const stepper = css.match(/\.text-zoom-stepper\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(stepper, /grid-template-columns:\s*38px\s+minmax\(0,\s*1fr\)\s+38px/);
+  assert.match(stepper, /min-height:\s*38px/);
+  assert.match(css, /#textZoomDecreaseButton,[\s\S]*?#textZoomIncreaseButton\s*\{[^}]*height:\s*38px/s);
+  assert.match(css, /\.text-zoom-input-wrap #textZoomInput\s*\{[^}]*height:\s*38px/s);
+  assert.match(css, /#textZoomInput::-webkit-inner-spin-button/);
+  assert.match(css, /#textZoomInput::-webkit-outer-spin-button/);
+  assert.match(css, /appearance:\s*none/);
+  assert.match(css, /\.text-zoom-input-wrap > span:last-child\s*\{[^}]*display:\s*grid[^}]*place-items:\s*center/s);
+
+  assert.match(html, /<details id="contextMenuActionsDisclosure" class="context-menu-actions-disclosure">/);
+  assert.doesNotMatch(html, /<details id="contextMenuActionsDisclosure"[^>]*\sopen(?:\s|>)/);
+  assert.match(html, /<summary class="context-menu-actions-summary" aria-controls="contextMenuEditor">/);
+  assert.match(html, /<div id="contextMenuEditor" data-context-menu-surface="side-panel"><\/div>[\s\S]*?<\/details>/);
+  assert.match(css, /\.context-menu-actions-summary/);
+  assert.match(css, /\.context-menu-actions-disclosure\[open\] \.context-menu-actions-summary::after/);
+});
+
 test('Hermes compatibility settings panel is native-collapsible and defaults closed', () => {
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');

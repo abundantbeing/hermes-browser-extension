@@ -45,6 +45,10 @@ const CUSTOM_THEME_WEB_SHELL_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-sh
 const CUSTOM_THEME_PANEL_320_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-320${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_PANEL_420_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-420${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_WEB_1024_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-1024${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const SETTINGS_PROFILE_POLISH_SCREENSHOT = path.join(QA_DIR, `settings-profile-polish${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const SETTINGS_ZOOM_POLISH_SCREENSHOT = path.join(QA_DIR, `settings-zoom-polish${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT = path.join(QA_DIR, `settings-context-actions-collapsed${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const SETTINGS_CONTEXT_EXPANDED_SCREENSHOT = path.join(QA_DIR, `settings-context-actions-expanded${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_FIXTURE_FILE = path.join(PROFILE, 'e2e-forge-theme.json');
 const CUSTOM_THEME_VALID_DOCUMENT = Object.freeze({
   schemaVersion: 1,
@@ -1045,6 +1049,55 @@ async function main() {
     }))()`);
     await panel.evaluate(`document.querySelector('#settingsButton').click()`);
     await waitFor(() => panel.evaluate(`document.querySelector('#settingsDialog')?.hidden === false`));
+    const settingsPolishProof = {};
+    await panel.evaluate(`document.querySelector('#profileSelect').scrollIntoView({ block: 'center' })`);
+    settingsPolishProof.profile = await panel.evaluate(`(() => {
+      const select = document.querySelector('#profileSelect').getBoundingClientRect();
+      const button = document.querySelector('#refreshProfilesButton').getBoundingClientRect();
+      return { gap: button.top - select.bottom, selectBottom: select.bottom, buttonTop: button.top, buttonHeight: button.height };
+    })()`);
+    assert.ok(settingsPolishProof.profile.gap >= 12, JSON.stringify(settingsPolishProof.profile));
+    assert.ok(settingsPolishProof.profile.buttonHeight >= 36, JSON.stringify(settingsPolishProof.profile));
+    await saveScreenshot(panel, SETTINGS_PROFILE_POLISH_SCREENSHOT, { captureBeyondViewport: false });
+
+    await panel.evaluate(`document.querySelector('.text-zoom-stepper').scrollIntoView({ block: 'center' })`);
+    settingsPolishProof.zoom = await panel.evaluate(`(() => {
+      const rect = (selector) => document.querySelector(selector).getBoundingClientRect();
+      const stepper = rect('.text-zoom-stepper');
+      const minus = rect('#textZoomDecreaseButton');
+      const input = rect('#textZoomInput');
+      const percent = rect('.text-zoom-input-wrap > span:last-child');
+      const plus = rect('#textZoomIncreaseButton');
+      return {
+        heights: [minus.height, input.height, percent.height, plus.height],
+        tops: [minus.top, input.top, percent.top, plus.top],
+        stepperHeight: stepper.height,
+        percentCenterDelta: Math.abs((percent.top + percent.height / 2) - (input.top + input.height / 2)),
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    })()`);
+    for (const height of settingsPolishProof.zoom.heights) assert.ok(Math.abs(height - 38) <= 1, JSON.stringify(settingsPolishProof.zoom));
+    assert.ok(Math.max(...settingsPolishProof.zoom.tops) - Math.min(...settingsPolishProof.zoom.tops) <= 1, JSON.stringify(settingsPolishProof.zoom));
+    assert.ok(settingsPolishProof.zoom.percentCenterDelta <= 1, JSON.stringify(settingsPolishProof.zoom));
+    assert.ok(settingsPolishProof.zoom.overflow <= 1, JSON.stringify(settingsPolishProof.zoom));
+    await saveScreenshot(panel, SETTINGS_ZOOM_POLISH_SCREENSHOT, { captureBeyondViewport: false });
+
+    await panel.evaluate(`document.querySelector('#contextMenuActionsDisclosure').scrollIntoView({ block: 'center' })`);
+    settingsPolishProof.contextCollapsed = await panel.evaluate(`(() => {
+      const disclosure = document.querySelector('#contextMenuActionsDisclosure');
+      return { open: disclosure.open, editorHeight: document.querySelector('#contextMenuEditor').getBoundingClientRect().height, height: disclosure.getBoundingClientRect().height };
+    })()`);
+    assert.equal(settingsPolishProof.contextCollapsed.open, false);
+    assert.ok(settingsPolishProof.contextCollapsed.height <= 44, JSON.stringify(settingsPolishProof.contextCollapsed));
+    await saveScreenshot(panel, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, { captureBeyondViewport: false });
+    await panel.evaluate(`document.querySelector('#contextMenuActionsDisclosure > summary').click()`);
+    settingsPolishProof.contextExpanded = await waitFor(() => panel.evaluate(`(() => {
+      const disclosure = document.querySelector('#contextMenuActionsDisclosure');
+      const editorHeight = document.querySelector('#contextMenuEditor').getBoundingClientRect().height;
+      return disclosure.open && editorHeight > 100 ? { open: true, editorHeight } : null;
+    })()`));
+    await saveScreenshot(panel, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, { captureBeyondViewport: false });
+    await panel.evaluate(`document.querySelector('#contextMenuActionsDisclosure > summary').click()`);
     await panel.evaluate(`document.querySelector('[data-text-zoom-percent="175"]').click()`);
     await waitFor(() => panel.evaluate(`document.documentElement.dataset.hermesTextZoom === '175' && document.querySelector('#appearanceSaveStatus')?.textContent === 'Saved'`));
     await panel.evaluate(`(() => {
@@ -2876,9 +2929,10 @@ async function main() {
       assistEfforts: sharedPickerState.efforts,
       gpt56ContextRows: gpt56ContextState.models,
       mainProviderSwitch: switchedProviderState.selected,
+      settingsPolish: settingsPolishProof,
       readability: readabilityProof,
       customTheme: customThemeProof,
-      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
+      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, SETTINGS_PROFILE_POLISH_SCREENSHOT, SETTINGS_ZOOM_POLISH_SCREENSHOT, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
     }, null, 2));
   } catch (error) {
     const diagnostics = {};

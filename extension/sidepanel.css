@@ -3882,17 +3882,21 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   .language-row { grid-template-columns: 1fr; align-items: stretch; }
   .language-select { width: 100%; }
 }
-.profile-row {
+.profile-control-stack {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
 }
-.profile-row button { min-height: 36px; padding: 9px 10px 7px; font-size: 10px; }
-.profile-row select { margin-top: 6px; }
-@media (max-width: 420px) {
-  .profile-row { grid-template-columns: 1fr; align-items: stretch; }
+.profile-control-stack label { display: grid; gap: 6px; }
+.profile-control-stack select { margin: 0; }
+.profile-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 6px;
 }
+.profile-action-row button { min-height: 36px; padding: 9px 12px 7px; font-size: 10px; }
 .appearance-row strong,
 .theme-setting > strong {
   display: block;
@@ -3959,32 +3963,98 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 }
 .text-zoom-stepper {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
-  gap: 6px;
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  min-height: 38px;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--hermes-line);
+  background: var(--hermes-input-bg);
 }
 #textZoomDecreaseButton,
 #textZoomIncreaseButton {
-  min-width: 44px;
-  min-height: 44px;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
   padding: 0;
-  font-size: 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hermes-ink);
+  font-size: 17px;
+  line-height: 1;
 }
-.text-zoom-input-wrap { position: relative; min-width: 0; }
+#textZoomDecreaseButton { border-right: 1px solid var(--hermes-line); }
+#textZoomIncreaseButton { border-left: 1px solid var(--hermes-line); }
+#textZoomDecreaseButton:hover,
+#textZoomIncreaseButton:hover { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); }
+.text-zoom-input-wrap { position: relative; display: block; min-width: 0; height: 38px; }
 .text-zoom-input-wrap #textZoomInput {
   width: 100%;
-  min-height: 44px;
-  padding-right: 28px;
+  height: 38px;
+  min-height: 38px;
+  margin: 0;
+  padding: 0 36px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--hermes-ink);
   text-align: center;
+  line-height: 38px;
   font: 700 calc(12px * var(--hermes-text-zoom, 1)) var(--hermes-font-mono);
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+#textZoomInput::-webkit-inner-spin-button,
+#textZoomInput::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
 .text-zoom-input-wrap > span:last-child {
   position: absolute;
-  top: 50%;
-  right: 10px;
+  inset: 0 0 0 auto;
+  display: grid;
+  width: 32px;
+  place-items: center;
   margin: 0;
-  transform: translateY(-50%);
+  border-left: 1px solid var(--hermes-line);
+  color: var(--hermes-muted);
+  line-height: 1;
   pointer-events: none;
 }
+
+.context-menu-actions-disclosure {
+  border: 1px solid var(--hermes-line);
+  background: rgba(var(--hermes-ink-rgb), 0.025);
+}
+.context-menu-actions-summary {
+  position: relative;
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  padding: 9px 38px 8px 11px;
+  color: var(--hermes-ink);
+  cursor: pointer;
+  list-style: none;
+  font: 700 calc(11px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.context-menu-actions-summary::-webkit-details-marker { display: none; }
+.context-menu-actions-summary::after {
+  content: "+";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  color: var(--hermes-muted);
+  font-size: 17px;
+  line-height: 1;
+}
+.context-menu-actions-disclosure[open] .context-menu-actions-summary::after { content: "−"; }
+.context-menu-actions-disclosure[open] .context-menu-actions-summary { border-bottom: 1px solid var(--hermes-line); }
+.context-menu-actions-disclosure #contextMenuEditor { padding: 10px; }
 #fontProfileSelect,
 #customFontFamilyInput {
   width: 100%;

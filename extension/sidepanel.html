@@ -295,14 +295,16 @@
           </div>
           <section class="settings-section">
             <h3 data-i18n="ui.active.profile">Active profile</h3>
-            <div class="settings-row">
+            <div class="settings-row profile-control-stack">
               <label>
                 <span data-i18n="ui.active.profile">Active profile</span>
                 <select id="profileSelect" name="profileSelect">
                   <option value="" data-i18n="ui.detect.from.hermes.gateway">Detect from Hermes gateway</option>
                 </select>
               </label>
-              <button id="refreshProfilesButton" class="secondary" type="button" data-i18n="profile.refresh">↻ Profiles</button>
+              <div class="profile-action-row">
+                <button id="refreshProfilesButton" class="secondary" type="button" data-i18n="profile.refresh">↻ Profiles</button>
+              </div>
             </div>
             <p id="profileStatus" class="hint">Profiles sync after connecting to Hermes.</p>
           </section>
@@ -536,7 +538,12 @@
             </select>
           </label>
           <p class="hint" data-i18n="ui.context.menu.editor.opening.behavior">Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.</p>
-          <div id="contextMenuEditor" data-context-menu-surface="side-panel"></div>
+          <details id="contextMenuActionsDisclosure" class="context-menu-actions-disclosure">
+            <summary class="context-menu-actions-summary" aria-controls="contextMenuEditor">
+              <span data-i18n="ui.configure">Configure</span>
+            </summary>
+            <div id="contextMenuEditor" data-context-menu-surface="side-panel"></div>
+          </details>
         </section>
 
         <section class="settings-section connection-settings" aria-labelledby="connectionTitle">
