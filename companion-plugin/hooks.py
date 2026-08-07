@@ -91,6 +91,41 @@ def _owner_from_trusted_hook(**kwargs: Any) -> ContextOwner | None:
     return owner_from_hook_kwargs(kwargs)
 
 
+def handle_ws_method(method: str, params: dict[str, Any] | None, **kwargs: Any) -> dict[str, Any] | None:
+    """Handle dashboard-WebSocket ``browser.*`` RPCs routed by Hermes core.
+
+    Inert on cores without WS-to-plugin dispatch: the extension treats an
+    unknown-method error as \"upload unsupported\" and stays on full inline
+    delivery, so this hook failing closed is always safe.
+    """
+    if method not in ("browser.context.upload", "browser.events.publish"):
+        return None
+    owner = _owner_from_trusted_hook(**kwargs)
+    if owner is None:
+        return {"ok": False, "error": "unowned-rpc"}
+
+    if method == "browser.events.publish":
+        events = params.get("events") if isinstance(params, dict) else None
+        if not isinstance(events, list):
+            return {"ok": False, "error": "invalid-events"}
+        store = _ensure_store()
+        for item in events[:20]:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("type") or "browser.event")[:120]
+            data = {key: value for key, value in item.items() if key != "type"}
+            store.record_event(name, data, owner)
+        return {"ok": True, "count": min(len(events), 20)}
+
+    payload = params.get("payload") if isinstance(params, dict) else None
+    if not isinstance(payload, dict):
+        return {"ok": False, "error": "invalid-payload"}
+    status = _ensure_store().put_bcp_v2_payload(payload, owner)
+    if not status.get("available"):
+        return {"ok": False, "error": "storage-unavailable"}
+    return {"ok": True, "status": status}
+
+
 def pre_llm_call(**kwargs: Any) -> dict[str, str] | None:
     """Cache only a valid BCP v2 full-context envelope for this trusted turn."""
     try:

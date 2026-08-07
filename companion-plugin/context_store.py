@@ -249,6 +249,48 @@ class BrowserContextStore:
             )
             return self._metadata(record)
 
+    def put_bcp_v2_payload(self, payload: dict[str, Any], owner: ContextOwner) -> dict[str, Any]:
+        """Store one pre-validated BCP v2 context payload from the WS upload RPC.
+
+        The extension already validated and budget-capped the envelope before
+        sending it; this path still fail-closes on shape and size, binds the
+        record to the trusted execution owner, and reuses the same TTL/LRU
+        lifecycle as message-sourced records.
+        """
+        if not isinstance(payload, dict) or payload.get("protocol") != BCP_CONTEXT_PROTOCOL_ID:
+            return dict(_UNAVAILABLE)
+        try:
+            serialized = json.dumps(payload, default=str)
+        except (TypeError, ValueError):
+            return dict(_UNAVAILABLE)
+        if len(serialized) > _MAX_BCP_TURN_CHARS:
+            return dict(_UNAVAILABLE)
+        context_scope = payload.get("contextScope")
+        scope = context_scope.get("mode", "unknown") if isinstance(context_scope, dict) else "unknown"
+        now = self._now()
+        ttl = max(0.0, float(self.ttl_seconds))
+        record = BrowserContextRecord(
+            context_id=secrets.token_hex(16),
+            owner=owner,
+            payload=deepcopy(payload),
+            provenance={"protocol": "hermes.browser.upload.v1", "delivery": "upload", "context_hash": ""},
+            payload_hash=str(payload.get("context_hash") or "")[:80],
+            scope=str(scope)[:80] or "unknown",
+            created_at=now,
+            expires_at=now + ttl,
+        )
+        with self._lock:
+            self._prune_expired_locked(now)
+            self._records[record.context_id] = record
+            self._evict_locked()
+            self._record_event_locked(
+                "browser.context.uploaded",
+                {"protocol": record.provenance["protocol"], "scope": record.scope},
+                owner,
+                now,
+            )
+            return self._metadata(record)
+
     def status_for_owner(self, owner: ContextOwner) -> dict[str, Any]:
         """Return current-owner metadata only; this never consumes payload."""
         now = self._now()
