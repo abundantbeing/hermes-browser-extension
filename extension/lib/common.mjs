@@ -2265,6 +2265,7 @@ export function normalizeHermesSessions(payload = {}) {
         messageCount: Number(session.message_count || session.messageCount || 0),
         model: String(session.model || ''),
         provider: String(session.provider || session.provider_id || session.providerId || ''),
+        profile: String(session.profile || session.profile_name || session.effective_profile || session.session_profile || ''),
         rawModelId: String(session.rawModelId || session.raw_model_id || session.model || ''),
         modelOptions: normalizeAcknowledgedModelOptions(session.model_options || session.modelOptions),
         inputTokens: Number(session.input_tokens || session.inputTokens || 0),

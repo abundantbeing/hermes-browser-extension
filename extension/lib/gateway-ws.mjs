@@ -57,7 +57,14 @@ export function remoteSessionIdentity(result = {}, requestedId = '') {
     || liveId
     || '',
   ).trim();
-  return { liveId, storedId };
+  const profile = String(
+    result?.profile
+    || result?.profile_name
+    || result?.effective_profile
+    || result?.session_profile
+    || '',
+  ).trim();
+  return { liveId, storedId, profile };
 }
 
 function gatewayHistoryText(value) {
@@ -117,11 +124,11 @@ export async function establishGatewaySession({ client, storedSessionId = '', cr
   const result = requestedId
     ? await client.request(WS_METHODS.sessionResume, { session_id: requestedId })
     : await client.request(WS_METHODS.sessionCreate, createParams);
-  const { liveId, storedId } = remoteSessionIdentity(result, requestedId);
+  const { liveId, storedId, profile } = remoteSessionIdentity(result, requestedId);
   if (!liveId || !storedId) {
     throw new Error(`Dashboard did not return complete ${action === 'resumed' ? 'resume' : 'session'} identity.`);
   }
-  return { action, liveId, storedId };
+  return { action, liveId, storedId, profile };
 }
 
 export function buildDashboardWsUrl(baseUrl, ticket) {

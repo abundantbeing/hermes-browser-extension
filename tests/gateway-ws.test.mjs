@@ -160,15 +160,30 @@ test('WS_METHODS exposes Desktop/TUI session steering instead of slash-command i
 test('remoteSessionIdentity keeps live and durable ids distinct', () => {
   assert.deepEqual(
     remoteSessionIdentity({ session_id: 'live-A', stored_session_id: 'stored-A' }),
-    { liveId: 'live-A', storedId: 'stored-A' },
+    { liveId: 'live-A', storedId: 'stored-A', profile: '' },
   );
   assert.deepEqual(
     remoteSessionIdentity({ session_id: 'live-B', resumed: 'stored-B', session_key: 'stored-B' }, 'stored-A'),
-    { liveId: 'live-B', storedId: 'stored-B' },
+    { liveId: 'live-B', storedId: 'stored-B', profile: '' },
   );
   assert.deepEqual(
     remoteSessionIdentity({ session_id: 'live-C' }, 'stored-C'),
-    { liveId: 'live-C', storedId: 'stored-C' },
+    { liveId: 'live-C', storedId: 'stored-C', profile: '' },
+  );
+});
+
+test('remoteSessionIdentity surfaces the server-reported profile', () => {
+  assert.deepEqual(
+    remoteSessionIdentity({ session_id: 'live-A', stored_session_id: 'stored-A', profile: 'sebastian' }),
+    { liveId: 'live-A', storedId: 'stored-A', profile: 'sebastian' },
+  );
+  assert.deepEqual(
+    remoteSessionIdentity({ session_id: 'live-B', stored_session_id: 'stored-B', profile_name: 'work' }),
+    { liveId: 'live-B', storedId: 'stored-B', profile: 'work' },
+  );
+  assert.deepEqual(
+    remoteSessionIdentity({ session_id: 'live-C', stored_session_id: 'stored-C', effective_profile: 'default' }),
+    { liveId: 'live-C', storedId: 'stored-C', profile: 'default' },
   );
 });
 
@@ -197,7 +212,7 @@ test('gateway session reconnect resumes the durable id and routes follow-up RPCs
     id: createFrame.id,
     result: { session_id: 'live-A', stored_session_id: 'stored-A' },
   });
-  assert.deepEqual(await creating, { action: 'created', liveId: 'live-A', storedId: 'stored-A' });
+  assert.deepEqual(await creating, { action: 'created', liveId: 'live-A', storedId: 'stored-A', profile: '' });
 
   first.close();
 
@@ -223,7 +238,7 @@ test('gateway session reconnect resumes the durable id and routes follow-up RPCs
     id: resumeFrame.id,
     result: { session_id: 'live-B', resumed: 'stored-A', session_key: 'stored-A' },
   });
-  assert.deepEqual(await resuming, { action: 'resumed', liveId: 'live-B', storedId: 'stored-A' });
+  assert.deepEqual(await resuming, { action: 'resumed', liveId: 'live-B', storedId: 'stored-A', profile: '' });
 
   const followUp = second.request(WS_METHODS.sessionHistory, { session_id: 'live-B' });
   const historyFrame = JSON.parse(FakeWebSocket.last.sent.at(-1));

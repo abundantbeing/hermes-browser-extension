@@ -4683,9 +4683,18 @@ function renderProfiles() {
 // The profile we send to the dashboard. Empty string is a valid signal
 // (create under the running default profile), so we only fall back to the
 // dashboard-detected active profile when nothing is explicitly chosen.
+// An explicit persisted selection is preserved even when the roster is
+// temporarily unavailable: silently downgrading it to '' would recreate the
+// profile-routing bug this feature fixes (issue #60 review).
 function safeActiveProfile() {
-  if (settings.activeProfile && availableProfiles.some((profile) => profile.name === settings.activeProfile)) {
-    return settings.activeProfile;
+  if (settings.activeProfile) {
+    if (availableProfiles.some((profile) => profile.name === settings.activeProfile)) {
+      return settings.activeProfile;
+    }
+    // The roster may be empty after a transient discovery failure, but the
+    // user explicitly chose this profile. Fail closed: keep sending it rather
+    // than silently falling back to the default profile.
+    if (!availableProfiles.length) return settings.activeProfile;
   }
   const detected = availableProfiles.find((profile) => profile.active)?.name || '';
   return detected;
@@ -4725,7 +4734,10 @@ async function loadProfiles({ quiet = false } = {}) {
         baseUrl: normalizeGatewayUrl(settings.gatewayUrl),
       });
       if (!result.ok) {
-        availableProfiles = [];
+        // Fail closed: keep the last verified roster instead of wiping it.
+        // A transient discovery failure must not silently clear an explicit
+        // profile selection (issue #60 review). renderProfiles() still runs so
+        // the status area reflects the failure.
         renderProfiles();
         if (!quiet) {
           setStatus('warn', 'Profile discovery unavailable', profileDiscoveryHelp(result.reason, normalizeGatewayUrl(settings.gatewayUrl)));
@@ -4738,7 +4750,7 @@ async function loadProfiles({ quiet = false } = {}) {
         setStatus('ok', 'Hermes profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
       }
     } catch (error) {
-      availableProfiles = [];
+      // Fail closed: preserve the last verified roster (see above).
       renderProfiles();
       if (!quiet) setStatus('warn', 'Profile sync failed', error?.message || String(error), { translateDetail: false });
     }
@@ -4760,7 +4772,8 @@ async function loadProfiles({ quiet = false } = {}) {
     renderProfiles();
     if (!quiet) setStatus('ok', 'Hermes profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
   } catch (error) {
-    availableProfiles = [];
+    // Fail closed: preserve the last verified roster so an explicit profile
+    // selection is not silently dropped when /v1/profiles is unreachable.
     renderProfiles();
     if (!quiet) setStatus('warn', 'Profile sync unavailable', 'This Hermes gateway does not expose /v1/profiles yet. Using the currently running profile.');
   }
@@ -5142,10 +5155,17 @@ async function loadSessions({ quiet = false } = {}) {
     }
     try {
       const result = await remoteWsConnection.client.request(WS_METHODS.sessionList, { limit: 200 });
+      const desiredProfile = safeActiveProfile();
       availableSessions = applySessionModelBindings(
         normalizeHermesSessions(result),
         settings.sessionModelBindings,
-      ).filter((session) => Number(session.messageCount || 0) > 0);
+      )
+        .filter((session) => Number(session.messageCount || 0) > 0)
+        // Profile-aware scoping: when the gateway reports a profile per
+        // session, never show sessions from a different profile in the list
+        // (issue #60 review). Sessions without a reported profile stay visible
+        // because older gateways do not tag them.
+        .filter((session) => !desiredProfile || !session.profile || session.profile === desiredProfile);
       syncActiveSessionRuntimeFromList();
       updateSessionLabel();
       renderSessionMenu();
@@ -5461,11 +5481,24 @@ async function openHermesSession(selectedSession) {
   if (isRemoteWsMode()) {
     try {
       const connection = await ensureRemoteWsClient();
-      const { liveId, storedId } = await establishGatewaySession({
+      const { liveId, storedId, profile: reportedProfile } = await establishGatewaySession({
         client: connection.client,
         storedSessionId: session.id,
       });
       if (requestId !== sessionLoadRequestId) return;
+      // Profile boundary check: a session that the gateway reports under a
+      // different profile must not be resumed into the current selection. Fail
+      // closed and refuse to bind it (issue #60 review).
+      const desiredProfile = safeActiveProfile();
+      if (desiredProfile && reportedProfile && reportedProfile !== desiredProfile) {
+        setStatus(
+          'error',
+          'Session profile mismatch',
+          `This session belongs to the "${reportedProfile}" profile. Switch to that profile before resuming it.`,
+          { translateDetail: false },
+        );
+        return;
+      }
       connection.wsSessionId = liveId;
       connection.wsStoredSessionId = storedId;
       liveSessionId = liveId;

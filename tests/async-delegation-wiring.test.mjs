@@ -53,7 +53,7 @@ test('dashboard history reconciliation uses live ids while watches remain durabl
 });
 
 test('session identity is guarded before stale dashboard requests can mutate either surface', () => {
-  assert.match(sidepanelSource, /if \(requestId !== sessionLoadRequestId\) return;\s*connection\.wsSessionId = liveId/);
+  assert.match(sidepanelSource, /if \(requestId !== sessionLoadRequestId\) return;[\s\S]*?connection\.wsSessionId = liveId/);
   assert.match(appSource, /if \(!isCurrent\(\)\) \{[\s\S]*?newer session selection/);
   assert.match(appSource, /isCurrent: \(\) => requestId === webSessionLoadRequestId/);
 });

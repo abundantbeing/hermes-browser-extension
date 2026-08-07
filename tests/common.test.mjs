@@ -296,6 +296,17 @@ test('Browser-owned session ids keep Browser source identity when the API server
   assert.equal(session.messageCount, 24);
 });
 
+test('normalizeHermesSessions preserves the server-reported profile for profile-aware scoping', () => {
+  const sessions = normalizeHermesSessions({ data: [
+    { id: 's1', title: 'Seb', profile: 'sebastian', message_count: 3 },
+    { id: 's2', title: 'Work', profile_name: 'work', message_count: 2 },
+    { id: 's3', title: 'Untagged', message_count: 1 },
+  ] });
+  assert.equal(sessions.find((s) => s.id === 's1').profile, 'sebastian');
+  assert.equal(sessions.find((s) => s.id === 's2').profile, 'work');
+  assert.equal(sessions.find((s) => s.id === 's3').profile, '');
+});
+
 test('stored runtime acknowledgements fill missing Cloud session model metadata without overriding canonical rows', () => {
   assert.equal(typeof common.applySessionModelBindings, 'function');
   const sessions = normalizeHermesSessions({ sessions: [

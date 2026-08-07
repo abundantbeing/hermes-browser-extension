@@ -251,6 +251,31 @@ test('discoverProfilesInPage reports missing token when the dashboard boot does 
   }
 });
 
+test('discoverProfilesInPage survives chrome.scripting serialization (no module scope)', async () => {
+  // chrome.scripting.executeScript serializes the function body and runs it in
+  // the page realm: module-scope helpers are invisible there. This probe
+  // rebuilds the function the same way and proves it still works, so a future
+  // refactor cannot reintroduce a dashboardProfilesUrl module reference.
+  const serialized = discoverProfilesInPage.toString();
+  assert.doesNotMatch(serialized, /dashboardProfilesUrl/);
+  assert.match(serialized, /profilesUrlFor/);
+  const runner = new Function(`return (${serialized})`)();
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith('/api/profiles')) {
+      return { ok: true, status: 200, json: async () => ({ profiles: [{ name: 'sebastian' }] }) };
+    }
+    return { ok: true, status: 200, text: async () => '<script>window.__HERMES_SESSION_TOKEN__="tok";</script>' };
+  };
+  try {
+    const result = await runner('https://host.ts.net/');
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.profiles.map((p) => p.name), ['sebastian']);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
 test('discoverProfilesViaTab runs first-party in a signed-in dashboard tab', async () => {
   let injected = null;
   const result = await discoverProfilesViaTab({

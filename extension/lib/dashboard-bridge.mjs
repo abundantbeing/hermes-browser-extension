@@ -214,7 +214,28 @@ export function dashboardProfilesUrl(baseUrl = '', profile = '') {
 // Runs in the dashboard page. Mirrors discoverModelsFromDashboard's token
 // bootstrap but reads the profile roster instead of model options. Returns a
 // structured result so the caller can branch on `reason`.
+//
+// This function is serialized into the dashboard page by chrome.scripting, so
+// it MUST stay fully self-contained: no module-scope imports, no closures, no
+// helper references. The URL builder below is intentionally local.
 export async function discoverProfilesInPage(baseUrl, profile = '') {
+  const profilesUrlFor = (base = '', profileName = '') => {
+    try {
+      const url = new URL(String(base || '').trim());
+      url.hash = '';
+      url.search = '';
+      const name = String(profileName || '').trim();
+      if (name) url.searchParams.set('profile', name);
+      url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/profiles`;
+      return url.toString();
+    } catch {
+      const params = new URLSearchParams();
+      const name = String(profileName || '').trim();
+      if (name) params.set('profile', name);
+      const suffix = params.toString() ? `?${params.toString()}` : '';
+      return `${String(base || '').replace(/\/+$/, '')}/api/profiles${suffix}`;
+    }
+  };
   try {
     const rootUrl = String(baseUrl || '').trim().replace(/\/+$/, '');
     const rootResponse = await fetch(rootUrl, {
@@ -228,7 +249,7 @@ export async function discoverProfilesInPage(baseUrl, profile = '') {
     const token = match?.[1] || '';
     if (!token) return { ok: false, reason: 'no_dashboard_session_token' };
 
-    const response = await fetch(dashboardProfilesUrl(baseUrl, profile), {
+    const response = await fetch(profilesUrlFor(baseUrl, profile), {
       method: 'GET',
       headers: {
         Accept: 'application/json',
