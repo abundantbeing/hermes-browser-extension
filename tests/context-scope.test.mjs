@@ -95,3 +95,16 @@ test('remote dashboard connections enforce chat-only context', () => {
   assert.deepEqual(contextScopeForGateway(pinned, 'local-api'), pinned);
   assert.deepEqual(contextScopeForGateway(pinned, 'remote-api'), pinned);
 });
+
+test('remote dashboard connections share context only with explicit consent', () => {
+  const pinned = normalizeContextScope({ mode: CONTEXT_SCOPE_MODES.PINNED_TAB, pinnedTabId: 2, selectedTabIds: [2] });
+  // No consent flag: dashboard gateways stay chat-only (default behavior).
+  assert.equal(contextScopeForGateway(pinned, 'remote-dashboard', {}).mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
+  // Explicit consent preserves the requested scope over the dashboard socket.
+  assert.deepEqual(contextScopeForGateway(pinned, 'remote-dashboard', { shareBrowserContext: true }), pinned);
+  // Consent=false is equivalent to the default.
+  assert.equal(contextScopeForGateway(pinned, 'remote-dashboard', { shareBrowserContext: false }).mode, CONTEXT_SCOPE_MODES.CHAT_ONLY);
+  // API transports are never gated by the consent flag.
+  assert.deepEqual(contextScopeForGateway(pinned, 'local-api', { shareBrowserContext: false }), pinned);
+  assert.deepEqual(contextScopeForGateway(pinned, 'remote-api', { shareBrowserContext: false }), pinned);
+});

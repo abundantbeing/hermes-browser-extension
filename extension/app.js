@@ -692,9 +692,13 @@ function renderConnectionTruth({ status = 'idle' } = {}) {
   els.modelLabel.textContent = model;
   els.profileLabel.textContent = profile;
   els.connectionDot.className = `truth-dot ${status === 'online' ? 'online' : status === 'error' ? 'error' : ''}`.trim();
-  els.contextMode.textContent = translateUiText(mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' ? 'Chat only' : 'Inherited safely');
+  els.contextMode.textContent = translateUiText(mode === 'cloud' || settings.connectionTransport === 'remote-dashboard'
+    ? (settings.shareBrowserContext === true ? 'Tab context shared' : 'Chat only')
+    : 'Inherited safely');
   els.contextSource.textContent = mode === 'cloud' || settings.connectionTransport === 'remote-dashboard'
-    ? translateUiText('Cloud/dashboard context disabled')
+    ? (settings.shareBrowserContext === true
+      ? translateUiText('Browser context attached to this gateway')
+      : translateUiText('Cloud/dashboard context disabled'))
     : handoff.sourceTabId ? t('context.browser_tab_handoff', { tabId: handoff.sourceTabId }) : translateUiText('No browser context attached');
   els.diagConnection.textContent = `${label} · ${settings.connectionTransport || settings.gatewayMode || translateUiText('unknown transport')}`;
   els.diagGateway.textContent = gatewayOrigin(settings.gatewayUrl);

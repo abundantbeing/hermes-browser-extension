@@ -42,6 +42,17 @@ export function transportUsesDashboardTicket(value = '') {
   return TICKET_TRANSPORTS.has(normalizeConnectionTransport(value));
 }
 
+// Consent default for sharing browser context with a gateway. Cloud is a
+// third-party endpoint, so it stays OFF unless the user opts in. A self-hosted
+// remote dashboard is the user's own server, so it defaults ON. Local/Remote
+// API transports always share context; the value is unused by the scope gate.
+export function deriveShareBrowserContextDefault(input = {}) {
+  const settings = migrateConnectionSettings(input);
+  if (settings.connectionMode === 'cloud') return false;
+  if (settings.connectionTransport === CONNECTION_TRANSPORTS.REMOTE_DASHBOARD) return true;
+  return true;
+}
+
 export function apiCredentialSatisfied(input = {}) {
   if (normalizeConnectionMode(input?.connectionMode) === 'cloud') return true;
   const settings = migrateConnectionSettings(input);
