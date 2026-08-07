@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "गेटवे चलाने के लिए विश्वसनीय Hermes API होस्ट को स्कैन करता है। समान-मशीन एजेंटों के लिए localhost, या निजी दूरस्थ एजेंटों के लिए Tailscale होस्ट/आईपी का उपयोग करें।",
+    "message": "8642-8646 पर चल रहे sidecar gateways के लिए विश्वसनीय Hermes API होस्ट को स्कैन करता है। यह केवल Local/Remote API मोड के लिए है। Remote dashboard मोड में Dashboard Attach dashboard WebSocket (port 443) से कनेक्ट होता है, इसलिए यह स्कैन छोड़ दिया जाता है और इसकी स्थिति Dashboard Attach की उपलब्धता नहीं दिखाती।",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

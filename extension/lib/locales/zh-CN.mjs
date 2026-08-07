@@ -873,7 +873,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "发送第一条消息后保存。",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "说“Hey Hermes”即可免手操作地发起一轮语音请求。持续监听仅在此设备上进行。",
   "ui.scale.interface.copy.without.changing.browser.zoom": "缩放界面文字而不更改浏览器缩放。",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "扫描受信任 Hermes API 主机上正在运行的网关。本机 Agent 请使用 localhost；私有远程 Agent 请使用 Tailscale 主机名或 IP 地址。",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "扫描受信任的 Hermes API 主机，查找在 8642-8646 上运行的 sidecar 网关。此功能仅用于 Local/Remote API 模式。在 Remote dashboard 模式下，Dashboard Attach 通过仪表板 WebSocket（端口 443）连接，因此会跳过此扫描，其状态也不会反映 Dashboard Attach 的可用性。",
   "ui.screen": "屏幕",
   "ui.script": "脚本",
   "ui.search": "搜索",

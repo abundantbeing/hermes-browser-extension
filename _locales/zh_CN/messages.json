@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "扫描受信任 Hermes API 主机上正在运行的网关。本机 Agent 请使用 localhost；私有远程 Agent 请使用 Tailscale 主机名或 IP 地址。",
+    "message": "扫描受信任的 Hermes API 主机，查找在 8642-8646 上运行的 sidecar 网关。此功能仅用于 Local/Remote API 模式。在 Remote dashboard 模式下，Dashboard Attach 通过仪表板 WebSocket（端口 443）连接，因此会跳过此扫描，其状态也不会反映 Dashboard Attach 的可用性。",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

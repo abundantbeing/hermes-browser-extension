@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Disimpan saat Anda mengirim pesan pertama.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Ucapkan “Hai Hermes” untuk permintaan suara satu putaran secara handsfree. Deteksi selalu aktif tetap ada di mesin ini.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Skala salinan antarmuka tanpa mengubah zoom browser.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Memindai host Hermes API yang tepercaya untuk menjalankan gateway. Gunakan localhost untuk agen dengan mesin yang sama, atau Tailscale host/IP untuk agen jarak jauh pribadi.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Memindai host Hermes API tepercaya untuk gateway sidecar yang berjalan pada 8642-8646. Ini hanya berlaku untuk mode Local/Remote API. Dalam mode Remote dashboard, Dashboard Attach terhubung melalui WebSocket dasbor (port 443), sehingga pemindaian ini dilewati dan statusnya tidak pernah mencerminkan ketersediaan Dashboard Attach.",
   "ui.screen": "Layar",
   "ui.script": "Naskah",
   "ui.search": "Mencari",

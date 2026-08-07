@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Wird gespeichert, wenn Sie die erste Nachricht senden.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Sagen Sie „Hey Hermes“, um eine freihändige Sprachanfrage für einen Durchgang zu starten. Die Dauererkennung bleibt auf diesem Computer.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Skalieren Sie die Kopie der Benutzeroberfläche, ohne den Browserzoom zu ändern.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Durchsucht einen vertrauenswürdigen Hermes API-Host nach laufenden Gateways. Verwenden Sie „localhost“ für Agenten auf derselben Maschine oder einen Tailscale-Host/IP für private Remote-Agenten.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Durchsucht einen vertrauenswürdigen Hermes API-Host nach laufenden Sidecar-Gateways auf 8642–8646. Dies gilt nur für den Local/Remote-API-Modus. Im Remote-Dashboard-Modus verbindet sich Dashboard Attach über den Dashboard-WebSocket (Port 443); daher wird dieser Scan übersprungen und sein Status zeigt nie die Verfügbarkeit von Dashboard Attach an.",
   "ui.screen": "Bildschirm",
   "ui.script": "Skript",
   "ui.search": "Suchen",

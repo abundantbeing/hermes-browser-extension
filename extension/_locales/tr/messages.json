@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "Ağ geçitlerini çalıştırmak için güvenilir bir Hermes API ana bilgisayarını tarar. Aynı makine aracıları için localhost kullanın veya özel uzak aracılar için Tailscale ana bilgisayar/IP'yi kullanın.",
+    "message": "8642-8646 üzerinde çalışan sidecar ağ geçitlerini bulmak için güvenilir bir Hermes API ana bilgisayarını tarar. Bu yalnızca Local/Remote API modu içindir. Remote dashboard modunda Dashboard Attach, kontrol panelinin WebSocket'i (443 numaralı bağlantı noktası) üzerinden bağlanır; bu nedenle bu tarama atlanır ve durumu Dashboard Attach kullanılabilirliğini hiçbir zaman göstermez.",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

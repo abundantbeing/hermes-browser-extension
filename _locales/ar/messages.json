@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "يقوم بمسح مضيف Hermes API الموثوق به لتشغيل البوابات. استخدم localhost لوكلاء نفس الجهاز، أو Tailscale host/IP للوكلاء البعيدين الخاصين.",
+    "message": "يفحص مضيف Hermes API موثوقًا بحثًا عن بوابات sidecar قيد التشغيل على المنافذ 8642-8646. هذا الوضع مخصص لـ Local/Remote API فقط. في وضع Remote dashboard، يتصل Dashboard Attach عبر WebSocket لوحة المعلومات (المنفذ 443)، لذلك يتم تخطي هذا الفحص ولا تعكس حالته توفر Dashboard Attach.",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

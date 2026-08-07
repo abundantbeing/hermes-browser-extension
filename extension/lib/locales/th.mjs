@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "บันทึกเมื่อคุณส่งข้อความแรก",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "พูดว่า “Hey Hermes” เพื่อส่งคำขอเสียงแบบไม่ต้องใช้มือเพียงรอบเดียว การตรวจจับแบบเปิดตลอดเวลาจะอยู่บนเครื่องนี้",
   "ui.scale.interface.copy.without.changing.browser.zoom": "ปรับขนาดการคัดลอกอินเทอร์เฟซโดยไม่ต้องเปลี่ยนการซูมของเบราว์เซอร์",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "สแกนโฮสต์ Hermes API ที่เชื่อถือได้เพื่อเรียกใช้เกตเวย์ ใช้ localhost สำหรับเอเจนต์เครื่องเดียวกัน หรือใช้โฮสต์ Tailscale/IP สำหรับเอเจนต์ระยะไกลส่วนตัว",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "สแกนโฮสต์ Hermes API ที่เชื่อถือได้เพื่อค้นหาเกตเวย์ sidecar ที่ทำงานอยู่บนพอร์ต 8642-8646 ใช้สำหรับโหมด Local/Remote API เท่านั้น ในโหมด Remote dashboard นั้น Dashboard Attach จะเชื่อมต่อผ่าน WebSocket ของแดชบอร์ด (พอร์ต 443) จึงข้ามการสแกนนี้ และสถานะจะไม่สะท้อนความพร้อมใช้งานของ Dashboard Attach",
   "ui.screen": "หน้าจอ",
   "ui.script": "สคริปต์",
   "ui.search": "ค้นหา",

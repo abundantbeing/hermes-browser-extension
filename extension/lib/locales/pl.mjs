@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Zapisywane, gdy wyślesz pierwszą wiadomość.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Powiedz „Hej Hermes”, aby otrzymać polecenie głosowe bez użycia rąk. Zawsze włączone wykrywanie pozostaje na tym komputerze.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Skaluj tekst interfejsu bez zmiany powiększenia przeglądarki.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Skanuje zaufanego hosta Hermes API w poszukiwaniu działających bram. Użyj hosta lokalnego w przypadku agentów działających na tej samej maszynie lub hosta Tailscale /IP w przypadku prywatnych agentów zdalnych.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Skanuje zaufanego hosta Hermes API w poszukiwaniu działających bram sidecar na portach 8642–8646. Dotyczy to tylko trybu Local/Remote API. W trybie Remote dashboard funkcja Dashboard Attach łączy się przez WebSocket pulpitu nawigacyjnego (port 443), więc skanowanie jest pomijane, a jego stan nigdy nie odzwierciedla dostępności Dashboard Attach.",
   "ui.screen": "Ekran",
   "ui.script": "Skrypt",
   "ui.search": "Szukaj",

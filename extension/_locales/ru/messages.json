@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "Сканирует доверенный хост Hermes API на наличие работающих шлюзов. Используйте localhost для агентов на одном компьютере или хост/IP Tailscale для частных удаленных агентов.",
+    "message": "Сканирует доверенный хост Hermes API на наличие работающих sidecar-шлюзов на портах 8642–8646. Это относится только к режиму Local/Remote API. В режиме Remote dashboard функция Dashboard Attach подключается через WebSocket панели (порт 443), поэтому сканирование пропускается, а его состояние никогда не отражает доступность Dashboard Attach.",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

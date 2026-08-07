@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "تم الحفظ عند إرسال الرسالة الأولى.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "قل “Hey Hermes” لطلب صوتي من خطوة واحدة دون استخدام اليدين. يبقى الاكتشاف الدائم على هذا الجهاز.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "قم بقياس نسخة الواجهة دون تغيير تكبير المتصفح.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "يقوم بمسح مضيف Hermes API الموثوق به لتشغيل البوابات. استخدم localhost لوكلاء نفس الجهاز، أو Tailscale host/IP للوكلاء البعيدين الخاصين.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "يفحص مضيف Hermes API موثوقًا بحثًا عن بوابات sidecar قيد التشغيل على المنافذ 8642-8646. هذا الوضع مخصص لـ Local/Remote API فقط. في وضع Remote dashboard، يتصل Dashboard Attach عبر WebSocket لوحة المعلومات (المنفذ 443)، لذلك يتم تخطي هذا الفحص ولا تعكس حالته توفر Dashboard Attach.",
   "ui.screen": "شاشة",
   "ui.script": "البرنامج النصي",
   "ui.search": "يبحث",

@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "İlk mesajı gönderdiğinizde kaydedilir.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Eller serbest, tek dönüşlü sesli istek için \"Hey Hermes\" deyin. Her zaman açık algılama bu makinede kalır.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Tarayıcı yakınlaştırmasını değiştirmeden arayüz kopyasını ölçeklendirin.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Ağ geçitlerini çalıştırmak için güvenilir bir Hermes API ana bilgisayarını tarar. Aynı makine aracıları için localhost kullanın veya özel uzak aracılar için Tailscale ana bilgisayar/IP'yi kullanın.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "8642-8646 üzerinde çalışan sidecar ağ geçitlerini bulmak için güvenilir bir Hermes API ana bilgisayarını tarar. Bu yalnızca Local/Remote API modu içindir. Remote dashboard modunda Dashboard Attach, kontrol panelinin WebSocket'i (443 numaralı bağlantı noktası) üzerinden bağlanır; bu nedenle bu tarama atlanır ve durumu Dashboard Attach kullanılabilirliğini hiçbir zaman göstermez.",
   "ui.screen": "Ekran",
   "ui.script": "Senaryo",
   "ui.search": "Ara",

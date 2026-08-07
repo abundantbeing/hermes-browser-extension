@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "Scanner en pålidelig Hermes API-vært for at køre gateways. Brug localhost til agenter på samme maskine eller en Tailscale-vært/IP til private fjernagenter.",
+    "message": "Scanner en betroet Hermes API-vært efter kørende sidecar-gateways på 8642-8646. Dette gælder kun Local/Remote API-tilstand. I Remote dashboard-tilstand opretter Dashboard Attach forbindelse via dashboardets WebSocket (port 443), så scanningen springes over, og status viser aldrig tilgængeligheden af Dashboard Attach.",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

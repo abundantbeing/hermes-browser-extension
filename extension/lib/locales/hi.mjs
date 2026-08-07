@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "जब आप पहला संदेश भेजते हैं तो सहेजा जाता है।",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "हैंड्स-फ़्री, वन-टर्न ध्वनि अनुरोध के लिए \"अरे Hermes\" कहें। इस मशीन पर हमेशा ऑन डिटेक्शन रहता है।",
   "ui.scale.interface.copy.without.changing.browser.zoom": "ब्राउज़र ज़ूम बदले बिना स्केल इंटरफ़ेस कॉपी।",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "गेटवे चलाने के लिए विश्वसनीय Hermes API होस्ट को स्कैन करता है। समान-मशीन एजेंटों के लिए localhost, या निजी दूरस्थ एजेंटों के लिए Tailscale होस्ट/आईपी का उपयोग करें।",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "8642-8646 पर चल रहे sidecar gateways के लिए विश्वसनीय Hermes API होस्ट को स्कैन करता है। यह केवल Local/Remote API मोड के लिए है। Remote dashboard मोड में Dashboard Attach dashboard WebSocket (port 443) से कनेक्ट होता है, इसलिए यह स्कैन छोड़ दिया जाता है और इसकी स्थिति Dashboard Attach की उपलब्धता नहीं दिखाती।",
   "ui.screen": "स्क्रीन",
   "ui.script": "लिखी हुई कहानी",
   "ui.search": "खोज",

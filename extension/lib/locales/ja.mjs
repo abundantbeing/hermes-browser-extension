@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "最初のメッセージを送信したときに保存されます。",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "「Hey Hermes」と言って、ハンズフリーのワンターン音声リクエストを行います。このマシンでは常時検出が継続されます。",
   "ui.scale.interface.copy.without.changing.browser.zoom": "ブラウザのズームを変更せずにインターフェイスのコピーを拡大縮小します。",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "信頼できる Hermes API ホストをスキャンしてゲートウェイを実行します。同じマシンのエージェントには localhost を使用し、プライベート リモート エージェントには Tailscale のホスト/IP を使用します。",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "8642-8646 で実行中のサイドカーゲートウェイを、信頼された Hermes API ホストからスキャンします。これは Local/Remote API モード専用です。Remote dashboard モードでは Dashboard Attach がダッシュボードの WebSocket（ポート443）経由で接続するため、このスキャンは省略され、ステータスに Dashboard Attach の利用可能性は反映されません。",
   "ui.screen": "画面",
   "ui.script": "スクリプト",
   "ui.search": "検索",

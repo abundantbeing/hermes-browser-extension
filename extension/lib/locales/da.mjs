@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Gemt, når du sender den første besked.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Sig \"Hey Hermes\" for en håndfri stemmeanmodning med én omgang. Always-on detektion forbliver på denne maskine.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Skaler interfacekopi uden at ændre browserzoom.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Scanner en pålidelig Hermes API-vært for at køre gateways. Brug localhost til agenter på samme maskine eller en Tailscale-vært/IP til private fjernagenter.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Scanner en betroet Hermes API-vært efter kørende sidecar-gateways på 8642-8646. Dette gælder kun Local/Remote API-tilstand. I Remote dashboard-tilstand opretter Dashboard Attach forbindelse via dashboardets WebSocket (port 443), så scanningen springes over, og status viser aldrig tilgængeligheden af Dashboard Attach.",
   "ui.screen": "Skærm",
   "ui.script": "Manuskript",
   "ui.search": "Søge",

@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "Esegue la scansione di un host Hermes API attendibile per l'esecuzione di gateway. Utilizza localhost per agenti sulla stessa macchina o un host Tailscale/IP per agenti remoti privati.",
+    "message": "Esegue la scansione di un host Hermes API attendibile per individuare gateway sidecar attivi sulle porte 8642-8646. Questa funzione vale solo per la modalità Local/Remote API. In modalità Remote dashboard, Dashboard Attach si connette tramite il WebSocket del dashboard (porta 443), quindi la scansione viene ignorata e il relativo stato non indica mai la disponibilità di Dashboard Attach.",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

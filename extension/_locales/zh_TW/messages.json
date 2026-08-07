@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "掃描受信任的 Hermes API 主機以尋找正在執行的閘道器。請針對同一部電腦的代理程式使用 localhost，或針對私人遠端代理程式使用 Tailscale 主機/IP。",
+    "message": "掃描受信任的 Hermes API 主機，尋找在 8642-8646 上執行的 sidecar 閘道器。此功能僅適用於 Local/Remote API 模式。在 Remote dashboard 模式下，Dashboard Attach 會透過儀表板 WebSocket（連接埠 443）連線，因此會略過此掃描，其狀態也不會反映 Dashboard Attach 的可用性。",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

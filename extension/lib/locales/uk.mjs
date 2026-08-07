@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Зберігається під час надсилання першого повідомлення.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Скажіть «Привіт, Hermes», щоб отримати голосовий запит у режимі «вільні руки». Завжди ввімкнене виявлення залишається на цій машині.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Масштабуйте копію інтерфейсу без зміни масштабу браузера.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Сканує надійний хост Hermes API на наявність запущених шлюзів. Використовуйте localhost для агентів однієї машини або хост/IP Tailscale для приватних віддалених агентів.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Сканує надійний хост Hermes API на наявність запущених sidecar-шлюзів на портах 8642–8646. Це працює лише в режимі Local/Remote API. У режимі Remote dashboard функція Dashboard Attach підключається через WebSocket панелі (порт 443), тому сканування пропускається, а його стан ніколи не відображає доступність Dashboard Attach.",
   "ui.screen": "Екран",
   "ui.script": "Сценарій",
   "ui.search": "Пошук",

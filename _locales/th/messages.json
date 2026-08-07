@@ -3508,7 +3508,7 @@
     "description": "Runtime interface message ui.scale.interface.copy.without.changing.browser.zoom"
   },
   "runtime_ui_scans_a_trusted_hermes_api_host_for_running_gateways_use_localh_7f61d655": {
-    "message": "สแกนโฮสต์ Hermes API ที่เชื่อถือได้เพื่อเรียกใช้เกตเวย์ ใช้ localhost สำหรับเอเจนต์เครื่องเดียวกัน หรือใช้โฮสต์ Tailscale/IP สำหรับเอเจนต์ระยะไกลส่วนตัว",
+    "message": "สแกนโฮสต์ Hermes API ที่เชื่อถือได้เพื่อค้นหาเกตเวย์ sidecar ที่ทำงานอยู่บนพอร์ต 8642-8646 ใช้สำหรับโหมด Local/Remote API เท่านั้น ในโหมด Remote dashboard นั้น Dashboard Attach จะเชื่อมต่อผ่าน WebSocket ของแดชบอร์ด (พอร์ต 443) จึงข้ามการสแกนนี้ และสถานะจะไม่สะท้อนความพร้อมใช้งานของ Dashboard Attach",
     "description": "Runtime interface message ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655"
   },
   "runtime_ui_screen": {

@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "첫 번째 메시지를 보낼 때 저장됩니다.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "“Hey Hermes”라고 말하면 핸즈프리 단일 턴 음성 요청을 할 수 있습니다. 상시 감지는 이 컴퓨터에서만 유지됩니다.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "브라우저 확대/축소를 변경하지 않고 인터페이스 사본을 확장합니다.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "게이트웨이를 실행하기 위해 신뢰할 수 있는 Hermes API 호스트를 스캔합니다. 동일 머신 에이전트의 경우 localhost를 사용하고 개인 원격 에이전트의 경우 Tailscale 호스트/IP를 사용합니다.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "8642-8646에서 실행 중인 사이드카 게이트웨이를 찾기 위해 신뢰할 수 있는 Hermes API 호스트를 스캔합니다. 이 기능은 Local/Remote API 모드에서만 사용됩니다. Remote dashboard 모드에서는 Dashboard Attach가 대시보드 WebSocket(포트 443)을 통해 연결하므로 이 스캔을 건너뛰며, 상태는 Dashboard Attach의 사용 가능 여부를 나타내지 않습니다.",
   "ui.screen": "화면",
   "ui.script": "스크립트",
   "ui.search": "찾다",

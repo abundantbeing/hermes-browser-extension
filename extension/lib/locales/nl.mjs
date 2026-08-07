@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Opgeslagen wanneer u het eerste bericht verzendt.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Zeg \"Hey Hermes\" voor een handsfree spraakverzoek in één draai. Always-on-detectie blijft op deze machine staan.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Schaal de interfacetekst zonder de browserzoom te wijzigen.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Scant een vertrouwde Hermes API-host voor het uitvoeren van gateways. Gebruik localhost voor agenten op dezelfde machine, of een Tailscale host/IP voor particuliere externe agenten.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Scant een vertrouwde Hermes API-host op actieve sidecar-gateways op 8642-8646. Dit is alleen voor de modus Local/Remote API. In de modus Remote dashboard maakt Dashboard Attach verbinding via de WebSocket van het dashboard (poort 443), dus deze scan wordt overgeslagen en de status ervan geeft nooit de beschikbaarheid van Dashboard Attach weer.",
   "ui.screen": "Scherm",
   "ui.script": "Script",
   "ui.search": "Zoeken",

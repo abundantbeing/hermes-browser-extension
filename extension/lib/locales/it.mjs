@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Salvato quando invii il primo messaggio.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Pronuncia \"Ehi Hermes\" per una richiesta vocale a mani libere con un solo turno. Il rilevamento sempre attivo rimane su questa macchina.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Ridimensiona il testo dell’interfaccia senza modificare lo zoom del browser.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Esegue la scansione di un host Hermes API attendibile per l'esecuzione di gateway. Utilizza localhost per agenti sulla stessa macchina o un host Tailscale/IP per agenti remoti privati.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Esegue la scansione di un host Hermes API attendibile per individuare gateway sidecar attivi sulle porte 8642-8646. Questa funzione vale solo per la modalità Local/Remote API. In modalità Remote dashboard, Dashboard Attach si connette tramite il WebSocket del dashboard (porta 443), quindi la scansione viene ignorata e il relativo stato non indica mai la disponibilità di Dashboard Attach.",
   "ui.screen": "Schermo",
   "ui.script": "Copione",
   "ui.search": "Cerca",

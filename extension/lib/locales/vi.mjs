@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "Được lưu khi bạn gửi tin nhắn đầu tiên.",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "Nói “Hey Hermes” để yêu cầu thoại một lần, rảnh tay. Tính năng phát hiện luôn bật vẫn còn trên máy này.",
   "ui.scale.interface.copy.without.changing.browser.zoom": "Sao chép giao diện tỷ lệ mà không thay đổi thu phóng trình duyệt.",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Quét máy chủ Hermes API đáng tin cậy để tìm các cổng đang chạy. Sử dụng localhost cho các tác nhân cùng một máy hoặc Tailscale máy chủ/IP cho các tác nhân từ xa riêng tư.",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "Quét máy chủ Hermes API đáng tin cậy để tìm các cổng sidecar đang chạy trên 8642-8646. Chức năng này chỉ dành cho chế độ Local/Remote API. Trong chế độ Remote dashboard, Dashboard Attach kết nối qua WebSocket của bảng điều khiển (cổng 443), vì vậy quá trình quét được bỏ qua và trạng thái của nó không bao giờ phản ánh khả dụng của Dashboard Attach.",
   "ui.screen": "Màn hình",
   "ui.script": "kịch bản",
   "ui.search": "Tìm kiếm",

@@ -843,7 +843,7 @@ export default Object.freeze({
   "ui.saved.when.you.send.the.first.message": "傳送第一條訊息後儲存。",
   "ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae": "說出「Hey Hermes」即可進行免手持的單輪語音請求。常駐偵測僅會在此機器上進行。",
   "ui.scale.interface.copy.without.changing.browser.zoom": "縮放介面文字而不變更瀏覽器縮放。",
-  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "掃描受信任的 Hermes API 主機以尋找正在執行的閘道器。請針對同一部電腦的代理程式使用 localhost，或針對私人遠端代理程式使用 Tailscale 主機/IP。",
+  "ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655": "掃描受信任的 Hermes API 主機，尋找在 8642-8646 上執行的 sidecar 閘道器。此功能僅適用於 Local/Remote API 模式。在 Remote dashboard 模式下，Dashboard Attach 會透過儀表板 WebSocket（連接埠 443）連線，因此會略過此掃描，其狀態也不會反映 Dashboard Attach 的可用性。",
   "ui.screen": "螢幕",
   "ui.script": "指令碼",
   "ui.search": "搜尋",
