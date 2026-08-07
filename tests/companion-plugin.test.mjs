@@ -285,6 +285,75 @@ assert parse_bcp_v2_turn("x" * 64001) is None
   runPluginPython(script);
 });
 
+test('context_store accepts pre-validated upload payloads with owner scoping', () => {
+  const script = `${pluginImportHarness}
+import json
+from companion_plugin.context_store import BrowserContextStore, owner_from_hook_kwargs, BCP_CONTEXT_PROTOCOL_ID
+
+def owner(turn):
+    return owner_from_hook_kwargs({"platform": "telegram", "sender_id": "sender", "session_id": "session", "turn_id": turn, "task_id": "task"})
+
+def payload(label):
+    return {
+        "protocol": BCP_CONTEXT_PROTOCOL_ID,
+        "contextScope": {"mode": "pinned-tab"},
+        "settings": {},
+        "activeTab": {"url": "https://example.com"},
+        "tabs": [],
+        "selectedTabs": [],
+        "pageContext": {"text": label},
+        "context_hash": "deadbeef",
+    }
+
+store = BrowserContextStore(ttl_seconds=30, max_entries=2, max_entries_per_principal=2)
+first = store.put_bcp_v2_payload(payload("one"), owner("turn-1"))
+assert first["available"] is True
+assert first["scope"] == "pinned-tab"
+second = store.put_bcp_v2_payload(payload("two"), owner("turn-2"))
+assert second["available"] is True
+consumed = store.consume_for_owner(second["context_id"], owner("turn-2"))
+assert consumed["payload"]["pageContext"]["text"] == "two"
+# Wrong owner cannot consume another principal's record.
+assert store.consume_for_owner(first["context_id"], owner("turn-2")) is None
+# Fail-closed on shape and size.
+assert store.put_bcp_v2_payload({"protocol": "nope"}, owner("turn-1"))["available"] is False
+assert store.put_bcp_v2_payload({}, owner("turn-1"))["available"] is False
+oversize = payload("x" * 64001)
+assert store.put_bcp_v2_payload(oversize, owner("turn-1"))["available"] is False
+`;
+  runPluginPython(script);
+});
+
+test('handle_ws_method routes uploads and events and fails closed', () => {
+  const script = `${pluginImportHarness}
+from companion_plugin import hooks
+from companion_plugin.context_store import owner_from_hook_kwargs, BCP_CONTEXT_PROTOCOL_ID
+
+hooks.set_store(__import__("companion_plugin.context_store", fromlist=["BrowserContextStore"]).BrowserContextStore(ttl_seconds=30))
+
+def owner_kwargs(turn):
+    return {"platform": "telegram", "sender_id": "sender", "session_id": "session", "turn_id": turn, "task_id": "task"}
+
+owner = owner_from_hook_kwargs(owner_kwargs("turn-1"))
+# Unknown methods are ignored (return None) so other handlers can claim them.
+assert hooks.handle_ws_method("something.else", {}, **owner_kwargs("turn-1")) is None
+# Events publish records metadata without page text.
+result = hooks.handle_ws_method("browser.events.publish", {"events": [{"type": "tab.activated", "tab_id": 7}]}, **owner_kwargs("turn-1"))
+assert result == {"ok": True, "count": 1}
+assert hooks.handle_ws_method("browser.events.publish", {"events": "bad"}, **owner_kwargs("turn-1")) == {"ok": False, "error": "invalid-events"}
+# Upload stores the payload for the owning execution.
+upload = hooks.handle_ws_method("browser.context.upload", {"context_hash": "cafe", "payload": {
+    "protocol": BCP_CONTEXT_PROTOCOL_ID,
+    "contextScope": {"mode": "follow-active"},
+    "settings": {}, "activeTab": {}, "tabs": [], "selectedTabs": [], "pageContext": {"text": "uploaded"},
+}}, **owner_kwargs("turn-1"))
+assert upload["ok"] is True and upload["status"]["available"] is True
+# Malformed uploads fail closed.
+assert hooks.handle_ws_method("browser.context.upload", {"payload": "nope"}, **owner_kwargs("turn-1")) == {"ok": False, "error": "invalid-payload"}
+`;
+  runPluginPython(script);
+});
+
 test('browser_event_log clamps invalid limits without crashing', () => {
   const script = `${pluginImportHarness}
 from companion_plugin import tools

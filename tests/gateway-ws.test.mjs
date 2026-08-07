@@ -13,6 +13,7 @@ import {
   remoteSessionIdentity,
   remoteStoredSessionIdForGateway,
   runtimeModelFromSessionStatus,
+  WS_EVENTS,
   WS_METHODS,
 } from '../extension/lib/gateway-ws.mjs';
 
@@ -157,6 +158,14 @@ test('WS_METHODS exposes Desktop/TUI session steering instead of slash-command i
   assert.equal(WS_METHODS.promptSubmit, 'prompt.submit');
 });
 
+test('WS_METHODS and WS_EVENTS expose the browser companion surface', () => {
+  assert.equal(WS_METHODS.browserContextUpload, 'browser.context.upload');
+  assert.equal(WS_METHODS.browserEventsPublish, 'browser.events.publish');
+  assert.equal(WS_METHODS.browserControlResult, 'browser.control.result');
+  assert.equal(WS_EVENTS.browserControl, 'browser.control');
+  assert.equal(WS_EVENTS.fileDelivery, 'file.delivery');
+});
+
 test('remoteSessionIdentity keeps live and durable ids distinct', () => {
   assert.deepEqual(
     remoteSessionIdentity({ session_id: 'live-A', stored_session_id: 'stored-A' }),
@@ -283,6 +292,17 @@ test('classifyGatewayFrame distinguishes responses, errors, events, and noise', 
   );
   assert.equal(classifyGatewayFrame('not json').kind, 'ignore');
   assert.equal(classifyGatewayFrame({ method: 'event', params: {} }).kind, 'ignore');
+});
+
+test('classifyGatewayFrame routes browser control and file delivery as typed events', () => {
+  assert.deepEqual(
+    classifyGatewayFrame({ method: 'event', params: { type: 'browser.control', session_id: 's1', payload: { request_id: 'r1', action: 'snapshot' } } }),
+    { kind: 'event', type: 'browser.control', sessionId: 's1', payload: { request_id: 'r1', action: 'snapshot' } },
+  );
+  assert.deepEqual(
+    classifyGatewayFrame({ method: 'event', params: { type: 'file.delivery', session_id: 's1', payload: { name: 'plan.md', data: 'aGk=' } } }),
+    { kind: 'event', type: 'file.delivery', sessionId: 's1', payload: { name: 'plan.md', data: 'aGk=' } },
+  );
 });
 
 test('gateway client connects, resolves a matching RPC response, and dispatches events', async () => {
