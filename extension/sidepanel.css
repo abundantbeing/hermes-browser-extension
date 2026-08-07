@@ -4346,3 +4346,51 @@ h2,
   .task-stack-progress i,
   .task-stack-chevron { transition: none; }
 }
+
+/* ── Agent → extension file delivery (Phase 6) ─────────────────────────── */
+.file-delivery-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border, rgba(128, 128, 128, .35));
+  border-radius: 8px;
+  background: var(--bg-elevated, rgba(128, 128, 128, .08));
+}
+.file-delivery-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* ── Browser control approval (Phase 4) ────────────────────────────────── */
+.browser-control-approval-card {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--accent, rgba(100, 160, 255, .45));
+  border-radius: 8px;
+  background: var(--bg-elevated, rgba(128, 128, 128, .08));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.browser-control-approval-copy {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.browser-control-approval-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.browser-control-approval-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-left: auto;
+}
