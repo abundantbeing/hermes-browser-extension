@@ -31,6 +31,78 @@
     "message": "↻ Сканировать агентов",
     "description": "Runtime interface message agent.scan"
   },
+  "runtime_appearance_change_not_saved": {
+    "message": "Изменение внешнего вида не сохранено",
+    "description": "Runtime interface message appearance.change_not_saved"
+  },
+  "runtime_appearance_current_selection": {
+    "message": "Текущий выбор: {value}",
+    "description": "Runtime interface message appearance.current_selection"
+  },
+  "runtime_appearance_custom_percentage": {
+    "message": "Свой процент",
+    "description": "Runtime interface message appearance.custom_percentage"
+  },
+  "runtime_appearance_decrease_text_zoom": {
+    "message": "Уменьшить масштаб текста",
+    "description": "Runtime interface message appearance.decrease_text_zoom"
+  },
+  "runtime_appearance_font_family": {
+    "message": "Семейство шрифтов",
+    "description": "Runtime interface message appearance.font_family"
+  },
+  "runtime_appearance_font_high_legibility": {
+    "message": "Высокая читаемость",
+    "description": "Runtime interface message appearance.font_high_legibility"
+  },
+  "runtime_appearance_font_installed_local": {
+    "message": "Установленный локальный шрифт",
+    "description": "Runtime interface message appearance.font_installed_local"
+  },
+  "runtime_appearance_font_monospace": {
+    "message": "Моноширинный",
+    "description": "Runtime interface message appearance.font_monospace"
+  },
+  "runtime_appearance_font_signature": {
+    "message": "Подпись Hermes",
+    "description": "Runtime interface message appearance.font_signature"
+  },
+  "runtime_appearance_font_system_sans": {
+    "message": "Системный sans-serif",
+    "description": "Runtime interface message appearance.font_system_sans"
+  },
+  "runtime_appearance_increase_text_zoom": {
+    "message": "Увеличить масштаб текста",
+    "description": "Runtime interface message appearance.increase_text_zoom"
+  },
+  "runtime_appearance_invalid_local_font_family": {
+    "message": "Недопустимое локальное семейство шрифтов",
+    "description": "Runtime interface message appearance.invalid_local_font_family"
+  },
+  "runtime_appearance_local_font_fallback": {
+    "message": "Когда локальное семейство шрифтов недоступно, браузер использует запасной шрифт.",
+    "description": "Runtime interface message appearance.local_font_fallback"
+  },
+  "runtime_appearance_local_font_family_name": {
+    "message": "Название локального семейства шрифтов",
+    "description": "Runtime interface message appearance.local_font_family_name"
+  },
+  "runtime_appearance_percent_value": {
+    "message": "{percent} процентов",
+    "description": "Runtime interface message appearance.percent_value"
+  },
+  "runtime_appearance_saved": {
+    "message": "Сохранено",
+    "description": "Runtime interface message appearance.saved"
+  },
+  "runtime_appearance_saving": {
+    "message": "Сохранение…",
+    "description": "Runtime interface message appearance.saving"
+  },
+  "runtime_appearance_text_zoom": {
+    "message": "Масштаб текста",
+    "description": "Runtime interface message appearance.text_zoom"
+  },
   "runtime_assist_options_heading": {
     "message": "Параметры Hermes Assist",
     "description": "Runtime interface message assist.options_heading"

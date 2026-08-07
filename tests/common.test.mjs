@@ -109,6 +109,14 @@ import {
   sessionBindingKeyForScope,
   tabScopeId,
 } from '../extension/lib/context-scope.mjs';
+import {
+  ZOOM_PRESETS,
+  ZOOM_MIN_PERCENT,
+  ZOOM_MAX_PERCENT,
+  ZOOM_STEP_PERCENT,
+  FONT_PROFILES,
+  withAppearancePreferenceUpdate,
+} from '../extension/lib/appearance-preferences.mjs';
 
 test('session startup mode defaults to fresh panel-open sessions', () => {
   assert.equal(DEFAULT_SETTINGS.sessionStartupMode, 'new-session');
@@ -3558,45 +3566,208 @@ test('settings dialog render path refreshes appearance theme cards on open', () 
   );
 });
 
-test('settings text-size option has defaults, normalization, storage, and root dataset wiring', () => {
-  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
-  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
-  const dockRule = css.match(/\.bottom-dock\s*\{[\s\S]*?\}/)?.[0] || '';
-  const textareaRule = css.match(/textarea\s*\{\s*resize:\s*vertical;[\s\S]*?\}/)?.[0] || '';
-
+test('settings appearance defaults pin the zoom/font schema and keep textSize only for legacy compat', () => {
+  assert.equal(DEFAULT_SETTINGS.appearanceSchemaVersion, 2);
+  assert.equal(DEFAULT_SETTINGS.textZoomPercent, 100);
+  assert.equal(DEFAULT_SETTINGS.fontProfile, 'signature');
+  assert.equal(DEFAULT_SETTINGS.customFontFamily, '');
+  // The legacy named-size key survives only as a compatibility default at this
+  // unit; production surfaces must migrate through the shared module instead.
   assert.equal(DEFAULT_SETTINGS.textSize, 'default');
   assert.deepEqual(TEXT_SIZE_OPTIONS.map((option) => option.value), ['default', 'large', 'extra-large']);
   assert.equal(normalizeTextSize('large'), 'large');
   assert.equal(normalizeTextSize('Extra Large'), 'extra-large');
-  assert.equal(normalizeTextSize('small'), 'default');
   assert.equal(normalizeTextSize('bogus'), 'default');
+  // The canonical zoom/font contract lives in the shared appearance module.
+  assert.deepEqual(ZOOM_PRESETS, [90, 100, 110, 125, 150, 175]);
+  assert.equal(ZOOM_MIN_PERCENT, 75);
+  assert.equal(ZOOM_MAX_PERCENT, 200);
+  assert.equal(ZOOM_STEP_PERCENT, 5);
+  assert.deepEqual(FONT_PROFILES, ['signature', 'system-sans', 'high-legibility', 'mono', 'custom-local']);
+});
 
-  assert.match(html, /aria-label="Text size"/);
-  assert.doesNotMatch(html, /data-text-size="small"/);
-  assert.doesNotMatch(html, />Small<|\bSmall\s*<\/button>/);
-  assert.match(html, /data-text-size="default"/);
-  assert.match(html, /data-text-size="large"/);
-  assert.match(html, /data-text-size="extra-large"/);
-  assert.match(source, /textSizeButtons:\s*Array\.from\(document\.querySelectorAll\('\[data-text-size\]'\)\)/);
-  assert.match(source, /root\.dataset\.hermesTextSize\s*=\s*textSize/);
-  assert.match(source, /textSize:\s*normalizeTextSize\(settings\.textSize\)/);
-  assert.match(source, /setAppearanceOption\('textSize'/);
-  assert.match(css, /--hermes-text-zoom:\s*1/);
-  assert.match(css, /html\[data-hermes-text-size="extra-large"\]/);
-  assert.doesNotMatch(css, /html\[data-hermes-text-size="small"\]/);
-  assert.doesNotMatch(css, /\bzoom:\s*var\(--hermes-text-zoom/);
-  assert.match(css, /font-size:\s*calc\(12px \* var\(--hermes-text-zoom/);
-  assert.match(css, /\.text-size-control \{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/);
-  assert.match(css, /\.text-size-control \{[\s\S]*?width:\s*min\(100%, 156px\)/);
-  assert.match(css, /\.text-size-choice \{[\s\S]*?font-size:\s*calc\(10px \* var\(--hermes-text-zoom/);
-  assert.match(css, /html\[data-hermes-text-size\] \.message-content/);
-  assert.match(css, /html\[data-hermes-text-size\] \.appearance-row strong/);
-  assert.doesNotMatch(dockRule, /max-height:/);
-  assert.doesNotMatch(dockRule, /overflow-y:\s*auto/);
-  assert.match(textareaRule, /max-height:\s*28vh/);
-  assert.doesNotMatch(css, /\.bottom-dock::-webkit-scrollbar/);
-  assert.doesNotMatch(css, /\.composer::-webkit-scrollbar/);
+test('settings text-zoom markup pins preset grid, numeric input, stepper, font select, and status IDs', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  for (const id of [
+    'textZoomPresetGrid',
+    'textZoomInput',
+    'textZoomDecreaseButton',
+    'textZoomIncreaseButton',
+    'fontProfileSelect',
+    'customFontFamilyField',
+    'customFontFamilyInput',
+    'appearanceSaveStatus',
+  ]) {
+    assert.match(html, new RegExp(`id="${id}"`), `expected id="${id}" in sidepanel.html`);
+  }
+  for (const percent of ZOOM_PRESETS) {
+    assert.match(html, new RegExp(`data-text-zoom-percent="${percent}"`), `expected a ${percent}% preset button`);
+  }
+  assert.doesNotMatch(html, /data-text-zoom-percent="(?!90|100|110|125|150|175)\d+"/, 'presets may only use canonical zoom percents');
+});
+
+test('numeric text-zoom input accepts any bounded integer and the stepper buttons carry accessible labels', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const input = html.match(/<input[^>]*\bid="textZoomInput"[^>]*>/)?.[0] || '';
+  assert.ok(input, 'textZoomInput should exist');
+  assert.match(input, /type="number"/);
+  assert.match(input, /min="75"/);
+  assert.match(input, /max="200"/);
+  assert.match(input, /step="1"/, 'direct entry must accept non-preset integer values such as 113');
+  const decrease = html.match(/<button[^>]*\bid="textZoomDecreaseButton"[^>]*>/)?.[0] || '';
+  const increase = html.match(/<button[^>]*\bid="textZoomIncreaseButton"[^>]*>/)?.[0] || '';
+  assert.match(decrease, /aria-label="[^"]*[Dd]ecrease[^"]*"/, 'the decrease stepper needs an accessible label');
+  assert.match(increase, /aria-label="[^"]*[Ii]ncrease[^"]*"/, 'the increase stepper needs an accessible label');
+});
+
+test('font profile select exposes every canonical profile with a local fallback disclosure and polite status', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const select = html.match(/<select[^>]*\bid="fontProfileSelect"[\s\S]*?<\/select>/)?.[0] || '';
+  assert.ok(select, 'fontProfileSelect should exist');
+  for (const profile of FONT_PROFILES) {
+    assert.match(select, new RegExp(`<option[^>]*value="${profile}"`), `expected a ${profile} option`);
+  }
+  // The custom-family field must disclose that families load from this device
+  // and that missing families fall back to the system stack.
+  const fieldStart = html.indexOf('id="customFontFamilyField"');
+  const fieldEnd = fieldStart >= 0 ? html.indexOf('</label>', fieldStart) : -1;
+  const field = fieldStart >= 0 && fieldEnd >= 0 ? html.slice(fieldStart, fieldEnd + '</label>'.length) : '';
+  assert.ok(field, 'customFontFamilyField should exist');
+  assert.match(field, /local/i, 'custom font copy should disclose local loading');
+  assert.match(field, /fallback/i, 'custom font copy should disclose the fallback behavior');
+  const status = html.match(/<[^>]*\bid="appearanceSaveStatus"[^>]*>/)?.[0] || '';
+  assert.match(status, /role="status"/, 'save status must be a status region');
+  assert.match(status, /aria-live="polite"/, 'save status must announce politely');
+});
+
+test('side panel drops the legacy named-size markup, query, and event path', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  assert.doesNotMatch(html, /data-text-size/, 'no legacy data-text-size markup may remain');
+  assert.doesNotMatch(source, /\[data-text-size\]/, 'no legacy named-size query may remain');
+  assert.doesNotMatch(source, /textSizeButtons/, 'the named-size button collection must be gone');
+  assert.doesNotMatch(source, /setAppearanceOption\('textSize'/, 'the named-size event path must be gone');
+  assert.doesNotMatch(source, /dataset\.hermesTextSize/, 'the root must stop using data-hermes-text-size');
+  const apply = source.match(/function applyAppearanceSettings\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(apply, 'applyAppearanceSettings should exist');
+  assert.doesNotMatch(apply, /textSize|normalizeTextSize/, 'applyAppearanceSettings must not normalize a named size');
+  assert.doesNotMatch(css, /html\[data-hermes-text-size/, 'no legacy html[data-hermes-text-size...] selectors may remain');
+});
+
+test('side panel imports and delegates to the shared appearance-preferences module', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /from\s+['"]\.\/lib\/appearance-preferences\.mjs['"]/, 'sidepanel.js should import the shared module');
+  for (const name of [
+    'appearancePreferencesForSurface',
+    'applyAppearancePreferences',
+    'stepTextZoomPercent',
+    'withAppearancePreferenceUpdate',
+    'sanitizeLocalFontFamily',
+  ]) {
+    assert.match(source, new RegExp(`\\b${name}\\b`), `expected ${name} to be used by the side panel`);
+  }
+  assert.match(source, /applyAppearancePreferences\(\s*(?:document\.documentElement|root)\b/, 'appearance must be applied to the document root');
+  assert.match(source, /stepTextZoomPercent\([^,]+,\s*'down'\s*\)/, 'the decrease control must use the shared down-step contract');
+  assert.match(source, /stepTextZoomPercent\([^,]+,\s*'up'\s*\)/, 'the increase control must use the shared up-step contract');
+  assert.doesNotMatch(source, /dataset\.hermesTextSize\s*=/, 'no side-panel code may write data-hermes-text-size');
+});
+
+test('a single render function synchronizes preset selection, numeric output, custom-field visibility, and status copy', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const render = source.match(/function renderAppearanceControls\(\) \{([\s\S]*?)\r?\n\}\r?\n\r?\n(?:async )?function persistAppearanceSettings/)?.[1] || '';
+  assert.ok(render, 'renderAppearanceControls should exist');
+  assert.match(render, /textZoomPresetGrid/, 'render must select the matching preset button');
+  assert.match(render, /aria-checked/, 'preset selection must stay accessible');
+  assert.match(render, /textZoomInput/, 'render must update the numeric output');
+  assert.match(render, /customFontFamilyField/, 'render must toggle custom-field visibility');
+  assert.match(render, /appearanceSaveStatus/, 'render must update the save status copy');
+});
+
+test('appearance writes are awaited against a freshly re-read settings blob and never write web keys', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const persist = source.match(/async function persistAppearanceSettings\(([\s\S]*?)\) \{([\s\S]*?)\n\}/)?.[2] || '';
+  assert.ok(persist, 'persistAppearanceSettings should be async');
+  const getIndex = persist.search(/chrome\.storage\.local\.get\(\s*['"]hermesBrowserSettings['"]\s*\)/);
+  const setIndex = persist.search(/chrome\.storage\.local\.set\(\s*\{\s*hermesBrowserSettings\s*:/);
+  assert.ok(getIndex >= 0, 'persist must re-read the fresh hermesBrowserSettings blob before writing');
+  assert.ok(setIndex >= 0, 'persist must write hermesBrowserSettings');
+  assert.ok(getIndex < setIndex, 'the fresh read must happen before the write');
+  assert.match(persist, /withAppearancePreferenceUpdate\(/, 'persist must merge through the shared helper');
+  assert.match(persist, /'panel'/, 'persist must update the panel surface');
+  assert.doesNotMatch(persist, /webTextZoomPercent|webFontProfile|webCustomFontFamily/, 'persist must never write web* keys explicitly');
+  assert.match(source, /await persistAppearanceSettings\(/, 'appearance updates must await persistence');
+});
+
+test('panel save against a fresh blob preserves newer web values and unknown keys from a stale local snapshot', () => {
+  // The panel rendered from an older snapshot, then Hermes Web changed its
+  // appearance before the panel saved. The panel must re-read storage and
+  // merge only its own generic patch into that fresh object.
+  const stalePanelSnapshot = {
+    textZoomPercent: 100,
+    fontProfile: 'signature',
+    customFontFamily: '',
+    textSize: 'large',
+    webTextZoomPercent: 100,
+    webFontProfile: 'signature',
+    webCustomFontFamily: '',
+  };
+  const freshStorage = {
+    ...stalePanelSnapshot,
+    webTextZoomPercent: 150,
+    webFontProfile: 'mono',
+    webCustomFontFamily: 'Atkinson Hyperlegible',
+    unknownFutureKey: 'preserve-me',
+  };
+  const next = withAppearancePreferenceUpdate(freshStorage, 'panel', { textZoomPercent: 125 });
+  assert.equal(next.textZoomPercent, 125, 'the panel patch wins for its own key');
+  assert.equal(next.webTextZoomPercent, 150, 'the newer web zoom must survive');
+  assert.equal(next.webFontProfile, 'mono', 'the newer web profile must survive');
+  assert.equal(next.webCustomFontFamily, 'Atkinson Hyperlegible', 'the newer web family must survive');
+  assert.equal(next.unknownFutureKey, 'preserve-me', 'unknown keys must survive');
+  assert.equal('textSize' in next, false, 'only the panel legacy key is stripped');
+  assert.equal(next.fontProfile, 'signature', 'unchanged panel keys keep their fresh value');
+});
+
+test('appearance saves use a monotonic mutation id, roll back only the current mutation, and disclose failures', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /let appearanceMutationId\s*=\s*0;?/, 'the appearance mutation id should start at zero');
+  assert.match(
+    source,
+    /appearanceMutationId\s*(\+\+|(\+=\s*1)|(=\s*\w+\s*\+\s*1)|(=\s*1\s*\+))/,
+    'the mutation id must increase monotonically'
+  );
+  const setAppearance = source.match(/(?:async\s+)?function\s+setAppearanceOption\([\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(setAppearance, 'setAppearanceOption should exist');
+  const rollback = setAppearance.match(/catch\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(rollback, 'the appearance save path should catch write failures');
+  assert.match(rollback, /appearanceMutationId/, 'rollback must be gated by the current mutation id so an older failure cannot roll back a newer success');
+  assert.match(rollback, /applyAppearancePreferences\(|renderAppearanceControls\(/, 'rollback must restore and re-render the prior normalized preference');
+  assert.match(source, /appearanceSaveStatus:\s*\$\('#appearanceSaveStatus'\)/, 'the save status region must be in the element map');
+  assert.match(rollback, /appearanceSaveStatus|renderAppearanceControls|setAppearanceSaveStatus/, 'the failure path must update the appearance status UI');
+  assert.match(rollback, /fail|error|retry|could not|couldn/i, 'save failure must be disclosed with actionable copy');
+});
+
+test('settings CSS uses the semantic text-zoom multiplier, calc typography, and a three-column narrow preset grid', () => {
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  assert.match(css, /--hermes-text-zoom:\s*1;/, 'the root defines the semantic text-zoom multiplier');
+  assert.match(css, /font-size:\s*calc\([^)]*var\(--hermes-text-zoom/, 'typography must scale through calc');
+  const grid = css.match(/#textZoomPresetGrid\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.ok(grid, 'the preset grid should be styled');
+  assert.match(grid, /grid-template-columns:\s*repeat\(3,/, 'presets must remain three columns in the narrow panel');
+  assert.match(grid, /minmax\(0,\s*1fr\)/, 'preset columns must be allowed to shrink without horizontal overflow');
+  assert.match(css, /#textZoomDecreaseButton/, 'the decrease stepper needs rules');
+  assert.match(css, /#textZoomIncreaseButton/, 'the increase stepper needs rules');
+  assert.match(css, /#fontProfileSelect/, 'the font select needs rules');
+});
+
+test('settings text controls keep at least 32px pointer targets and preserve canonical scrollbars without CSS zoom', () => {
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  assert.match(css, /(?:\[data-text-zoom-percent\]|textZoomPresetGrid)[^{]*\{[^}]*min-height:\s*(?:3[2-9]|[4-9]\d)px/, 'preset buttons need at least a 32px pointer target (44px preferred)');
+  assert.doesNotMatch(css, /(?:\[data-text-zoom-percent\]|textZoomPresetGrid)[^{]*\{[^}]*min-height:\s*(?:[0-2]\d|3[01])px/, 'preset targets must never drop below 32px');
+  assert.doesNotMatch(css, /^\s*zoom\s*:/m, 'no CSS zoom property may be used');
+  assert.doesNotMatch(css, /\.bottom-dock::-webkit-scrollbar/, 'bottom-dock must keep canonical scrollbars');
+  assert.doesNotMatch(css, /\.composer::-webkit-scrollbar/, 'composer must keep canonical scrollbars');
 });
 
 test('Hermes compatibility settings panel is native-collapsible and defaults closed', () => {

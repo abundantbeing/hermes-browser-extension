@@ -31,6 +31,78 @@
     "message": "↻ स्कैन एजेंट",
     "description": "Runtime interface message agent.scan"
   },
+  "runtime_appearance_change_not_saved": {
+    "message": "रूप बदलाव सहेजा नहीं गया",
+    "description": "Runtime interface message appearance.change_not_saved"
+  },
+  "runtime_appearance_current_selection": {
+    "message": "वर्तमान चयन: {value}",
+    "description": "Runtime interface message appearance.current_selection"
+  },
+  "runtime_appearance_custom_percentage": {
+    "message": "कस्टम प्रतिशत",
+    "description": "Runtime interface message appearance.custom_percentage"
+  },
+  "runtime_appearance_decrease_text_zoom": {
+    "message": "टेक्स्ट ज़ूम घटाएँ",
+    "description": "Runtime interface message appearance.decrease_text_zoom"
+  },
+  "runtime_appearance_font_family": {
+    "message": "फ़ॉन्ट फ़ैमिली",
+    "description": "Runtime interface message appearance.font_family"
+  },
+  "runtime_appearance_font_high_legibility": {
+    "message": "उच्च पठनीयता",
+    "description": "Runtime interface message appearance.font_high_legibility"
+  },
+  "runtime_appearance_font_installed_local": {
+    "message": "इंस्टॉल किया गया स्थानीय फ़ॉन्ट",
+    "description": "Runtime interface message appearance.font_installed_local"
+  },
+  "runtime_appearance_font_monospace": {
+    "message": "मोनोस्पेस",
+    "description": "Runtime interface message appearance.font_monospace"
+  },
+  "runtime_appearance_font_signature": {
+    "message": "Hermes हस्ताक्षर",
+    "description": "Runtime interface message appearance.font_signature"
+  },
+  "runtime_appearance_font_system_sans": {
+    "message": "सिस्टम सैन्स",
+    "description": "Runtime interface message appearance.font_system_sans"
+  },
+  "runtime_appearance_increase_text_zoom": {
+    "message": "टेक्स्ट ज़ूम बढ़ाएँ",
+    "description": "Runtime interface message appearance.increase_text_zoom"
+  },
+  "runtime_appearance_invalid_local_font_family": {
+    "message": "अमान्य स्थानीय फ़ॉन्ट फ़ैमिली",
+    "description": "Runtime interface message appearance.invalid_local_font_family"
+  },
+  "runtime_appearance_local_font_fallback": {
+    "message": "जब स्थानीय फ़ॉन्ट फ़ैमिली उपलब्ध नहीं होती, तो ब्राउज़र फ़ॉलबैक फ़ॉन्ट का उपयोग करता है।",
+    "description": "Runtime interface message appearance.local_font_fallback"
+  },
+  "runtime_appearance_local_font_family_name": {
+    "message": "स्थानीय फ़ॉन्ट फ़ैमिली का नाम",
+    "description": "Runtime interface message appearance.local_font_family_name"
+  },
+  "runtime_appearance_percent_value": {
+    "message": "{percent} प्रतिशत",
+    "description": "Runtime interface message appearance.percent_value"
+  },
+  "runtime_appearance_saved": {
+    "message": "सहेजा गया",
+    "description": "Runtime interface message appearance.saved"
+  },
+  "runtime_appearance_saving": {
+    "message": "सहेजा जा रहा है…",
+    "description": "Runtime interface message appearance.saving"
+  },
+  "runtime_appearance_text_zoom": {
+    "message": "टेक्स्ट ज़ूम",
+    "description": "Runtime interface message appearance.text_zoom"
+  },
   "runtime_assist_options_heading": {
     "message": "Hermes Assist विकल्प",
     "description": "Runtime interface message assist.options_heading"

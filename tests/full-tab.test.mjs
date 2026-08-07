@@ -4,6 +4,8 @@ import path from 'node:path';
 import test from 'node:test';
 
 import * as fulltabRuntime from '../extension/lib/fulltab-runtime.mjs';
+import { APPEARANCE_THEMES } from '../extension/lib/appearance-themes.mjs';
+import { FONT_PROFILES, ZOOM_MAX_PERCENT, ZOOM_MIN_PERCENT, ZOOM_PRESETS } from '../extension/lib/appearance-preferences.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
@@ -38,6 +40,81 @@ test('full-tab extension surface has a dedicated shell without copied sidepanel 
   assert.doesNotMatch(js, /async function askHermes/);
   assert.doesNotMatch(js, /function streamSessionChat/);
   assert.doesNotMatch(html, /class="web-brand-mark"[^>]*>H<\/span>/);
+});
+
+test('Hermes Web appearance markup exposes numeric zoom, six presets, font profiles, and polite save status', () => {
+  const html = read('extension/app.html');
+  for (const id of [
+    'settingsTextZoomPresetGrid',
+    'settingsTextZoomInput',
+    'settingsTextZoomDecreaseButton',
+    'settingsTextZoomIncreaseButton',
+    'settingsFontProfileSelect',
+    'settingsCustomFontFamilyField',
+    'settingsCustomFontFamilyInput',
+    'settingsAppearanceSaveStatus',
+  ]) assert.match(html, new RegExp(`id="${id}"`), `expected ${id}`);
+  for (const percent of ZOOM_PRESETS) {
+    assert.match(html, new RegExp(`data-web-text-zoom-percent="${percent}"`), `expected ${percent}% Web preset`);
+  }
+  const input = html.match(/<input[^>]*id="settingsTextZoomInput"[^>]*>/)?.[0] || '';
+  assert.match(input, /type="number"/);
+  assert.match(input, new RegExp(`min="${ZOOM_MIN_PERCENT}"`));
+  assert.match(input, new RegExp(`max="${ZOOM_MAX_PERCENT}"`));
+  assert.match(input, /step="1"/);
+  const select = html.match(/<select[^>]*id="settingsFontProfileSelect"[\s\S]*?<\/select>/)?.[0] || '';
+  for (const profile of FONT_PROFILES) assert.match(select, new RegExp(`value="${profile}"`));
+  assert.match(html, /id="settingsAppearanceSaveStatus"[^>]*role="status"[^>]*aria-live="polite"/);
+  assert.doesNotMatch(html, /data-text-size|id="settingsTextSizes"|id="settingsTextSize"/);
+});
+
+test('Hermes Web delegates all zoom and font behavior to the shared preference module without inline named-size validators', () => {
+  const js = read('extension/app.js');
+  assert.match(js, /from\s+['"]\.\/lib\/appearance-preferences\.mjs['"]/);
+  for (const helper of ['appearancePreferencesForSurface', 'applyAppearancePreferences', 'stepTextZoomPercent', 'withAppearancePreferenceUpdate', 'sanitizeLocalFontFamily']) {
+    assert.match(js, new RegExp(`\\b${helper}\\b`), `expected ${helper}`);
+  }
+  assert.match(js, /appearancePreferencesForSurface\([^)]*,\s*['"]web['"]\s*\)/);
+  assert.match(js, /applyAppearancePreferences\(\s*(?:document\.documentElement|root)\b/);
+  assert.match(js, /stepTextZoomPercent\([^,]+,\s*['"]down['"]\s*\)/);
+  assert.match(js, /stepTextZoomPercent\([^,]+,\s*['"]up['"]\s*\)/);
+  assert.doesNotMatch(js, /\[['"]default['"],\s*['"]large['"],\s*['"]extra-large['"]\]/);
+  assert.doesNotMatch(js, /dataset\.hermesTextSize|\[data-text-size\]/);
+});
+
+test('Hermes Web appearance persistence is fresh, web-scoped, awaited, and guarded by a monotonic mutation id', () => {
+  const js = read('extension/app.js');
+  assert.match(js, /let webAppearanceMutationId\s*=\s*0/);
+  assert.match(js, /webAppearanceMutationId\s*(?:\+\+|\+=\s*1)/);
+  const persistStart = js.indexOf('async function persistWebAppearanceSettings');
+  const persistEnd = persistStart >= 0 ? js.indexOf('\nasync function applyAndPersistAppearance', persistStart) : -1;
+  const persist = persistStart >= 0 ? js.slice(persistStart, persistEnd >= 0 ? persistEnd : undefined) : '';
+  assert.ok(persist, 'expected async persistWebAppearanceSettings');
+  const getIndex = persist.search(/chrome\.storage\.local\.get\(\s*['"]hermesBrowserSettings['"]\s*\)/);
+  const setIndex = persist.search(/chrome\.storage\.local\.set\(/);
+  assert.ok(getIndex >= 0 && setIndex > getIndex, 'fresh read must precede the awaited write');
+  assert.match(persist, /withAppearancePreferenceUpdate\([^,]+,\s*['"]web['"]/);
+  assert.match(persist, /await chrome\.storage\.local\.set\(/);
+  assert.doesNotMatch(persist, /(?:^|[,{\s])(?:textZoomPercent|fontProfile|customFontFamily)\s*:/m, 'Web persistence must not explicitly assign panel-owned keys');
+  assert.match(js, /catch\s*\([^)]*\)\s*\{[\s\S]*?webAppearanceMutationId[\s\S]*?(?:applyAppearancePreferences|renderAppearanceSettings)/);
+  assert.match(js, /Could not save|not saved|retry/i);
+});
+
+test('Hermes Web uses multiplier-based full-tab typography without legacy selectors, CSS zoom, or built-in theme drift', () => {
+  const appCss = read('extension/app.css');
+  const parityCss = read('extension/app-parity.css');
+  const themeCss = read('extension/fulltab-themes.css');
+  const css = `${appCss}\n${parityCss}\n${themeCss}`;
+  assert.doesNotMatch(css, /data-hermes-text-size/);
+  assert.doesNotMatch(css, /^\s*zoom\s*:/m);
+  for (const token of ['--fulltab-content-size', '--fulltab-control-size', '--fulltab-label-size', '--fulltab-micro-size']) {
+    assert.match(css, new RegExp(`${token}:\\s*calc\\([^)]*var\\(--hermes-text-zoom`), `${token} must derive from the multiplier`);
+  }
+  assert.match(css, /#settingsTextZoomPresetGrid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s);
+  assert.match(css, /#settingsTextZoomInput\s*\{[^}]*min-width:\s*0/s);
+  assert.deepEqual(APPEARANCE_THEMES.map((theme) => theme.value), [
+    'nous', 'midnight', 'ember', 'mono', 'cyberpunk', 'slate', 'senter-space', 'aurora', 'solstice',
+  ]);
 });
 
 test('side panel exposes an explicit full-view handoff', () => {
@@ -381,7 +458,7 @@ test('full-tab chat hierarchy is compact and exposes useful Hermes controls inst
   assert.match(js, /VOICE_DRAFT_STORAGE_KEY/);
   assert.match(js, /settings\.webAppearanceTheme\s*\|\|\s*'nous'/);
   assert.match(js, /settings\.webColorMode\s*\|\|\s*'light'/);
-  assert.match(js, /function applyAndPersistAppearance\(\)/);
+  assert.match(js, /function applyAndPersistAppearance\(/);
   assert.match(js, /applyAndPersistAppearance\(\)/);
   assert.match(js, /innerWidth <= 1439[\s\S]*inspector-closed/);
   assert.match(html, /href="fulltab-themes\.css"/);
@@ -511,7 +588,7 @@ test('full-tab keeps model and message controls readable and visibly responsive 
   assert.match(css, /\.truth-control > span:not\(\.truth-dot\)\s*\{[^}]*min-width:\s*0;/);
   assert.match(css, /\.truth-dot\s*\{[^}]*flex:\s*0 0 auto;/);
   assert.doesNotMatch(css, /\.composer-runtime-control\s*>\s*span/);
-  assert.match(css, /--fulltab-content-size:\s*19px/);
+  assert.match(css, /--fulltab-content-size:\s*calc\(15px \* var\(--hermes-text-zoom/);
   assert.match(css, /font:\s*var\(--fulltab-content-size\)\/1\.62/);
   assert.doesNotMatch(read('extension/fulltab-themes.css'), /html\[data-hermes-theme\]\[data-hermes-mode\]\s*\{[^}]*--fulltab-content-size/);
   assert.doesNotMatch(css, /(?:^|[;{\s])zoom\s*:/m);
@@ -628,6 +705,7 @@ test('verification and build scripts include the full-tab modules', () => {
   assert.match(packageJson.scripts['check:js'], /hermes-client\.mjs/);
   assert.match(packageJson.scripts['check:js'], /web-commands\.mjs/);
   assert.match(packageJson.scripts['check:js'], /web-artifacts\.mjs/);
+  assert.match(packageJson.scripts['check:js'], /appearance-preferences\.mjs/);
 });
 
 test('Hermes Web keeps model and runtime controls in the composer and defers empty chats until their first turn', () => {

@@ -31,6 +31,78 @@
     "message": "↻ 에이전트 검색",
     "description": "Runtime interface message agent.scan"
   },
+  "runtime_appearance_change_not_saved": {
+    "message": "모양 변경이 저장되지 않았습니다",
+    "description": "Runtime interface message appearance.change_not_saved"
+  },
+  "runtime_appearance_current_selection": {
+    "message": "현재 선택: {value}",
+    "description": "Runtime interface message appearance.current_selection"
+  },
+  "runtime_appearance_custom_percentage": {
+    "message": "사용자 지정 백분율",
+    "description": "Runtime interface message appearance.custom_percentage"
+  },
+  "runtime_appearance_decrease_text_zoom": {
+    "message": "텍스트 축소",
+    "description": "Runtime interface message appearance.decrease_text_zoom"
+  },
+  "runtime_appearance_font_family": {
+    "message": "글꼴 모음",
+    "description": "Runtime interface message appearance.font_family"
+  },
+  "runtime_appearance_font_high_legibility": {
+    "message": "높은 가독성",
+    "description": "Runtime interface message appearance.font_high_legibility"
+  },
+  "runtime_appearance_font_installed_local": {
+    "message": "설치된 로컬 글꼴",
+    "description": "Runtime interface message appearance.font_installed_local"
+  },
+  "runtime_appearance_font_monospace": {
+    "message": "고정폭",
+    "description": "Runtime interface message appearance.font_monospace"
+  },
+  "runtime_appearance_font_signature": {
+    "message": "Hermes 시그니처",
+    "description": "Runtime interface message appearance.font_signature"
+  },
+  "runtime_appearance_font_system_sans": {
+    "message": "시스템 산세리프",
+    "description": "Runtime interface message appearance.font_system_sans"
+  },
+  "runtime_appearance_increase_text_zoom": {
+    "message": "텍스트 확대",
+    "description": "Runtime interface message appearance.increase_text_zoom"
+  },
+  "runtime_appearance_invalid_local_font_family": {
+    "message": "잘못된 로컬 글꼴 모음",
+    "description": "Runtime interface message appearance.invalid_local_font_family"
+  },
+  "runtime_appearance_local_font_fallback": {
+    "message": "로컬 글꼴 모음을 사용할 수 없으면 브라우저에서 대체 글꼴을 사용합니다.",
+    "description": "Runtime interface message appearance.local_font_fallback"
+  },
+  "runtime_appearance_local_font_family_name": {
+    "message": "로컬 글꼴 모음 이름",
+    "description": "Runtime interface message appearance.local_font_family_name"
+  },
+  "runtime_appearance_percent_value": {
+    "message": "{percent}퍼센트",
+    "description": "Runtime interface message appearance.percent_value"
+  },
+  "runtime_appearance_saved": {
+    "message": "저장됨",
+    "description": "Runtime interface message appearance.saved"
+  },
+  "runtime_appearance_saving": {
+    "message": "저장 중…",
+    "description": "Runtime interface message appearance.saving"
+  },
+  "runtime_appearance_text_zoom": {
+    "message": "텍스트 확대/축소",
+    "description": "Runtime interface message appearance.text_zoom"
+  },
   "runtime_assist_options_heading": {
     "message": "Hermes Assist 옵션",
     "description": "Runtime interface message assist.options_heading"

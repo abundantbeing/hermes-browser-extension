@@ -31,6 +31,78 @@
     "message": "↻ Pindai agen",
     "description": "Runtime interface message agent.scan"
   },
+  "runtime_appearance_change_not_saved": {
+    "message": "Perubahan tampilan tidak disimpan",
+    "description": "Runtime interface message appearance.change_not_saved"
+  },
+  "runtime_appearance_current_selection": {
+    "message": "Pilihan saat ini: {value}",
+    "description": "Runtime interface message appearance.current_selection"
+  },
+  "runtime_appearance_custom_percentage": {
+    "message": "Persentase kustom",
+    "description": "Runtime interface message appearance.custom_percentage"
+  },
+  "runtime_appearance_decrease_text_zoom": {
+    "message": "Perkecil zoom teks",
+    "description": "Runtime interface message appearance.decrease_text_zoom"
+  },
+  "runtime_appearance_font_family": {
+    "message": "Keluarga font",
+    "description": "Runtime interface message appearance.font_family"
+  },
+  "runtime_appearance_font_high_legibility": {
+    "message": "Keterbacaan tinggi",
+    "description": "Runtime interface message appearance.font_high_legibility"
+  },
+  "runtime_appearance_font_installed_local": {
+    "message": "Font lokal terpasang",
+    "description": "Runtime interface message appearance.font_installed_local"
+  },
+  "runtime_appearance_font_monospace": {
+    "message": "Monospace",
+    "description": "Runtime interface message appearance.font_monospace"
+  },
+  "runtime_appearance_font_signature": {
+    "message": "Tanda tangan Hermes",
+    "description": "Runtime interface message appearance.font_signature"
+  },
+  "runtime_appearance_font_system_sans": {
+    "message": "Sans sistem",
+    "description": "Runtime interface message appearance.font_system_sans"
+  },
+  "runtime_appearance_increase_text_zoom": {
+    "message": "Perbesar zoom teks",
+    "description": "Runtime interface message appearance.increase_text_zoom"
+  },
+  "runtime_appearance_invalid_local_font_family": {
+    "message": "Keluarga font lokal tidak valid",
+    "description": "Runtime interface message appearance.invalid_local_font_family"
+  },
+  "runtime_appearance_local_font_fallback": {
+    "message": "Browser menggunakan font cadangan saat keluarga font lokal tidak tersedia.",
+    "description": "Runtime interface message appearance.local_font_fallback"
+  },
+  "runtime_appearance_local_font_family_name": {
+    "message": "Nama keluarga font lokal",
+    "description": "Runtime interface message appearance.local_font_family_name"
+  },
+  "runtime_appearance_percent_value": {
+    "message": "{percent} persen",
+    "description": "Runtime interface message appearance.percent_value"
+  },
+  "runtime_appearance_saved": {
+    "message": "Tersimpan",
+    "description": "Runtime interface message appearance.saved"
+  },
+  "runtime_appearance_saving": {
+    "message": "Menyimpan…",
+    "description": "Runtime interface message appearance.saving"
+  },
+  "runtime_appearance_text_zoom": {
+    "message": "Zoom teks",
+    "description": "Runtime interface message appearance.text_zoom"
+  },
   "runtime_assist_options_heading": {
     "message": "Opsi Hermes Assist",
     "description": "Runtime interface message assist.options_heading"

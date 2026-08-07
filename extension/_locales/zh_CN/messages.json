@@ -31,6 +31,78 @@
     "message": "↻ 扫描代理",
     "description": "Runtime interface message agent.scan"
   },
+  "runtime_appearance_change_not_saved": {
+    "message": "外观更改未保存",
+    "description": "Runtime interface message appearance.change_not_saved"
+  },
+  "runtime_appearance_current_selection": {
+    "message": "当前选择：{value}",
+    "description": "Runtime interface message appearance.current_selection"
+  },
+  "runtime_appearance_custom_percentage": {
+    "message": "自定义百分比",
+    "description": "Runtime interface message appearance.custom_percentage"
+  },
+  "runtime_appearance_decrease_text_zoom": {
+    "message": "缩小文字",
+    "description": "Runtime interface message appearance.decrease_text_zoom"
+  },
+  "runtime_appearance_font_family": {
+    "message": "字体系列",
+    "description": "Runtime interface message appearance.font_family"
+  },
+  "runtime_appearance_font_high_legibility": {
+    "message": "高可读性",
+    "description": "Runtime interface message appearance.font_high_legibility"
+  },
+  "runtime_appearance_font_installed_local": {
+    "message": "已安装的本地字体",
+    "description": "Runtime interface message appearance.font_installed_local"
+  },
+  "runtime_appearance_font_monospace": {
+    "message": "等宽",
+    "description": "Runtime interface message appearance.font_monospace"
+  },
+  "runtime_appearance_font_signature": {
+    "message": "Hermes 签名",
+    "description": "Runtime interface message appearance.font_signature"
+  },
+  "runtime_appearance_font_system_sans": {
+    "message": "系统无衬线",
+    "description": "Runtime interface message appearance.font_system_sans"
+  },
+  "runtime_appearance_increase_text_zoom": {
+    "message": "放大文字",
+    "description": "Runtime interface message appearance.increase_text_zoom"
+  },
+  "runtime_appearance_invalid_local_font_family": {
+    "message": "本地字体系列无效",
+    "description": "Runtime interface message appearance.invalid_local_font_family"
+  },
+  "runtime_appearance_local_font_fallback": {
+    "message": "当本地字体系列不可用时，浏览器将使用备用字体。",
+    "description": "Runtime interface message appearance.local_font_fallback"
+  },
+  "runtime_appearance_local_font_family_name": {
+    "message": "本地字体系列名称",
+    "description": "Runtime interface message appearance.local_font_family_name"
+  },
+  "runtime_appearance_percent_value": {
+    "message": "百分之{percent}",
+    "description": "Runtime interface message appearance.percent_value"
+  },
+  "runtime_appearance_saved": {
+    "message": "已保存",
+    "description": "Runtime interface message appearance.saved"
+  },
+  "runtime_appearance_saving": {
+    "message": "正在保存…",
+    "description": "Runtime interface message appearance.saving"
+  },
+  "runtime_appearance_text_zoom": {
+    "message": "文字缩放",
+    "description": "Runtime interface message appearance.text_zoom"
+  },
   "runtime_assist_options_heading": {
     "message": "Hermes Assist 选项",
     "description": "Runtime interface message assist.options_heading"

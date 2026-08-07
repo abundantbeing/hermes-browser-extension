@@ -624,6 +624,27 @@ button:disabled { cursor: not-allowed; opacity: 0.52; }
 .web-settings-dialog select { min-height: 39px; padding: 0 9px; border: 1px solid var(--hermes-line-strong); border-radius: 0; background: transparent; color: var(--hermes-ink); }
 .web-settings-dialog .language-select { width: 100%; padding-right: 34px; background: var(--hermes-paper); color: var(--hermes-ink); color-scheme: light dark; letter-spacing: 0; text-transform: none; }
 .web-settings-dialog select option { background: var(--hermes-paper); color: var(--hermes-ink); }
+.web-settings-dialog .appearance-control-stack { grid-column: 1 / -1; min-width: 0; display: grid; gap: 10px; padding: 12px; border: 1px solid var(--hermes-line-strong); }
+.web-settings-dialog .appearance-control-stack > div:first-child strong,
+.web-settings-dialog .appearance-control-stack > div:first-child span,
+.web-settings-dialog .appearance-control-stack > label > strong,
+.web-settings-dialog .appearance-control-stack > label > span { display: block; }
+.web-settings-dialog .appearance-control-stack > div:first-child span,
+.web-settings-dialog .appearance-control-stack > label > span { margin-top: 4px; color: var(--hermes-muted); font: var(--fulltab-label-size)/1.45 var(--hermes-font-mono); }
+#settingsTextZoomPresetGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+#settingsTextZoomPresetGrid button,
+.settings-text-zoom-stepper > button { min-width: 32px; min-height: 38px; padding: 0 8px; border: 1px solid var(--hermes-line-strong); border-radius: 0; background: transparent; color: var(--hermes-ink); font: var(--fulltab-control-size) var(--hermes-font-mono); }
+#settingsTextZoomPresetGrid button:hover,
+#settingsTextZoomPresetGrid button.selected,
+.settings-text-zoom-stepper > button:hover { background: var(--hermes-blue); color: var(--hermes-white); }
+.settings-text-zoom-stepper { min-width: 0; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px; }
+.settings-text-zoom-input-wrap { position: relative; min-width: 0; display: block; }
+#settingsTextZoomInput { width: 100%; min-width: 0; padding-right: 28px; text-align: center; }
+.settings-text-zoom-input-wrap > span[aria-hidden="true"] { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); pointer-events: none; color: var(--hermes-muted); font: var(--fulltab-label-size) var(--hermes-font-mono); }
+.web-settings-dialog #settingsFontProfileSelect,
+.web-settings-dialog #settingsCustomFontFamilyInput { width: 100%; min-width: 0; }
+.settings-custom-font-family-field { min-width: 0; }
+.settings-appearance-save-status { min-height: 1.45em; margin: 0; color: var(--hermes-muted); font: var(--fulltab-label-size)/1.45 var(--hermes-font-mono); }
 .web-settings-dialog input:focus,
 .web-settings-dialog select:focus { border-color: var(--hermes-accent); box-shadow: 0 0 0 2px var(--hermes-accent); outline: none; }
 :lang(zh-CN) [data-i18n],

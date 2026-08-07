@@ -1,9 +1,10 @@
 /* Canonical Hermes Browser palettes, adapted to the full-tab shell semantics. */
 :root {
-  --fulltab-content-size: 15px;
-  --fulltab-control-size: 12px;
-  --fulltab-label-size: 9px;
-  --fulltab-micro-size: 8px;
+  --hermes-text-zoom: 1;
+  --fulltab-content-size: calc(15px * var(--hermes-text-zoom));
+  --fulltab-control-size: calc(12px * var(--hermes-text-zoom));
+  --fulltab-label-size: calc(9px * var(--hermes-text-zoom));
+  --fulltab-micro-size: calc(8px * var(--hermes-text-zoom));
 }
 
 html[data-hermes-theme][data-hermes-mode] {
@@ -162,9 +163,6 @@ html[data-hermes-theme="solstice"][data-hermes-mode="dark"] {
   --hermes-accent: #e2b366; --hermes-shell-fg: #f7ebd7; --hermes-shell-fg-rgb: 247, 235, 215;
 }
 
-html[data-hermes-text-size="default"] { --hermes-text-zoom: 1; --fulltab-content-size: 15px; --fulltab-control-size: 12px; --fulltab-label-size: 9px; --fulltab-micro-size: 8px; }
-html[data-hermes-text-size="large"] { --hermes-text-zoom: 1.13; --fulltab-content-size: 17px; --fulltab-control-size: 14px; --fulltab-label-size: 10px; --fulltab-micro-size: 9px; }
-html[data-hermes-text-size="extra-large"] { --hermes-text-zoom: 1.27; --fulltab-content-size: 19px; --fulltab-control-size: 16px; --fulltab-label-size: 11px; --fulltab-micro-size: 10px; }
 
 /* Theme-aware rail media. The source video remains untouched. */
 .rail-brand-video { transition: filter 160ms ease; }

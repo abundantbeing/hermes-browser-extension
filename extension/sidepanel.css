@@ -111,8 +111,6 @@
   font-family: var(--hermes-font-ui);
 }
 
-html[data-hermes-text-size="large"] { --hermes-text-zoom: 1.08; }
-html[data-hermes-text-size="extra-large"] { --hermes-text-zoom: 1.18; }
 
 html[data-hermes-theme="nous"][data-hermes-mode="dark"] {
   --hermes-blue: #082f67;
@@ -357,6 +355,7 @@ body {
   overflow: hidden;
   background: var(--hermes-app-bg);
   color: var(--hermes-fg);
+  font-family: var(--hermes-font-ui);
   font-size: calc(12px * var(--hermes-text-zoom, 1));
 }
 button, input, textarea, select { font: inherit; }
@@ -2772,7 +2771,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   border: 1px solid var(--hermes-line-strong);
   background: var(--hermes-input-bg, var(--hermes-paper));
   color: var(--hermes-ink);
-  font-family: Collapse, "Segoe WPC", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--hermes-font-ui);
   font-size: 11px;
   font-weight: 700;
   line-height: normal;
@@ -3870,9 +3869,8 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   background: rgba(var(--hermes-ink-rgb),0.05);
   min-width: 0;
 }
-.mode-choice,
-.text-size-choice {
-  min-height: 28px;
+.mode-choice {
+  min-height: 32px;
   border: 0;
   border-left: 1px solid var(--hermes-line);
   background: transparent;
@@ -3883,27 +3881,86 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   text-transform: none;
   letter-spacing: 0;
 }
-.mode-choice:first-child,
-.text-size-choice:first-child { border-left: 0; }
+.mode-choice:first-child { border-left: 0; }
 .mode-choice:hover,
-.mode-choice.selected,
-.text-size-choice:hover,
-.text-size-choice.selected {
+.mode-choice.selected {
   background: var(--hermes-primary-bg);
   color: var(--hermes-primary-fg);
 }
-.text-size-control {
+.appearance-control-stack {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--hermes-line);
+  background: rgba(var(--hermes-ink-rgb),0.035);
+}
+.appearance-control-stack strong { display: block; color: var(--hermes-ink); font-size: calc(12px * var(--hermes-text-zoom, 1)); }
+.appearance-control-stack span { display: block; margin-top: 3px; color: var(--hermes-muted); font-size: calc(10px * var(--hermes-text-zoom, 1)); line-height: 1.35; }
+#textZoomPresetGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(100%, 156px);
-  justify-self: end;
+  gap: 5px;
+  width: 100%;
 }
-.text-size-choice {
+#textZoomPresetGrid [data-text-zoom-percent] {
   min-width: 0;
-  padding-inline: 5px;
+  min-height: 36px;
+  padding: 7px 4px;
+  border: 1px solid var(--hermes-line);
+  background: transparent;
+  color: var(--hermes-muted);
   overflow: hidden;
   white-space: nowrap;
   font-size: calc(10px * var(--hermes-text-zoom, 1));
+  letter-spacing: 0.04em;
+}
+#textZoomPresetGrid [data-text-zoom-percent]:hover,
+#textZoomPresetGrid [data-text-zoom-percent].selected {
+  border-color: var(--hermes-accent);
+  background: var(--hermes-primary-bg);
+  color: var(--hermes-primary-fg);
+}
+.text-zoom-stepper {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 6px;
+}
+#textZoomDecreaseButton,
+#textZoomIncreaseButton {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 18px;
+}
+.text-zoom-input-wrap { position: relative; min-width: 0; }
+.text-zoom-input-wrap #textZoomInput {
+  width: 100%;
+  min-height: 44px;
+  padding-right: 28px;
+  text-align: center;
+  font: 700 calc(12px * var(--hermes-text-zoom, 1)) var(--hermes-font-mono);
+}
+.text-zoom-input-wrap > span:last-child {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  margin: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+#fontProfileSelect,
+#customFontFamilyInput {
+  width: 100%;
+  min-height: 44px;
+}
+.custom-font-family-field { display: grid; gap: 6px; }
+.custom-font-family-field[hidden] { display: none; }
+.appearance-save-status {
+  min-height: 1.35em;
+  margin: 0;
+  color: var(--hermes-muted);
+  font: 9px/1.35 var(--hermes-font-mono);
+  letter-spacing: 0.06em;
 }
 .connection-settings { container-type: inline-size; }
 .gateway-mode {
@@ -4083,63 +4140,63 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
 }
 .empty-state span { position: relative; display: block; color: var(--hermes-muted); font-size: 11px; line-height: 1.4; text-transform: uppercase; letter-spacing: 0.08em; }
 
-html[data-hermes-text-size] .intro,
-html[data-hermes-text-size] .status-copy span,
-html[data-hermes-text-size] .message-content,
-html[data-hermes-text-size] textarea,
-html[data-hermes-text-size] input,
-html[data-hermes-text-size] select,
-html[data-hermes-text-size] .model-menu-button,
-html[data-hermes-text-size] .session-menu-button,
-html[data-hermes-text-size] .context-bar,
-html[data-hermes-text-size] .skill-option,
-html[data-hermes-text-size] .attach-menu button,
-html[data-hermes-text-size] .context-scope-search,
-html[data-hermes-text-size] .context-scope-menu button,
-html[data-hermes-text-size] .session-option,
-html[data-hermes-text-size] .conn-mode-title,
-html[data-hermes-text-size] .profile-row button,
-html[data-hermes-text-size] .appearance-row strong,
-html[data-hermes-text-size] .theme-card-name {
+.intro,
+.status-copy span,
+.message-content,
+textarea,
+input,
+select,
+.model-menu-button,
+.session-menu-button,
+.context-bar,
+.skill-option,
+.attach-menu button,
+.context-scope-search,
+.context-scope-menu button,
+.session-option,
+.conn-mode-title,
+.profile-row button,
+.appearance-row strong,
+.theme-card-name {
   font-size: calc(12px * var(--hermes-text-zoom, 1));
 }
 
-html[data-hermes-text-size] .eyebrow,
-html[data-hermes-text-size] .composer-label,
-html[data-hermes-text-size] .status-label,
-html[data-hermes-text-size] .message-role,
-html[data-hermes-text-size] .hint,
-html[data-hermes-text-size] .settings-dialog label,
-html[data-hermes-text-size] .connect-panel li,
-html[data-hermes-text-size] .context-popover dt,
-html[data-hermes-text-size] .model-group-title,
-html[data-hermes-text-size] .context-chip strong,
-html[data-hermes-text-size] .composer-help,
-html[data-hermes-text-size] .queue-notice,
-html[data-hermes-text-size] .tool-activity-label,
-html[data-hermes-text-size] .tool-activity-preview,
-html[data-hermes-text-size] .model-button-copy strong,
-html[data-hermes-text-size] .skill-option-command,
-html[data-hermes-text-size] .session-option-meta,
-html[data-hermes-text-size] .context-popover header span,
-html[data-hermes-text-size] .compatibility-row strong,
-html[data-hermes-text-size] .theme-card-meta,
-html[data-hermes-text-size] .appearance-row span,
-html[data-hermes-text-size] .conn-mode-desc {
+.eyebrow,
+.composer-label,
+.status-label,
+.message-role,
+.hint,
+.settings-dialog label,
+.connect-panel li,
+.context-popover dt,
+.model-group-title,
+.context-chip strong,
+.composer-help,
+.queue-notice,
+.tool-activity-label,
+.tool-activity-preview,
+.model-button-copy strong,
+.skill-option-command,
+.session-option-meta,
+.context-popover header span,
+.compatibility-row strong,
+.theme-card-meta,
+.appearance-row span,
+.conn-mode-desc {
   font-size: calc(10px * var(--hermes-text-zoom, 1));
 }
 
-html[data-hermes-text-size] h2,
-html[data-hermes-text-size] .empty-state strong {
+h2,
+.empty-state strong {
   font-size: calc(28px * var(--hermes-text-zoom, 1));
 }
 
-html[data-hermes-text-size] .message-content h1 { font-size: calc(28px * var(--hermes-text-zoom, 1)); }
-html[data-hermes-text-size] .message-content h2 { font-size: calc(24px * var(--hermes-text-zoom, 1)); }
-html[data-hermes-text-size] .message-content h3 { font-size: calc(20px * var(--hermes-text-zoom, 1)); }
-html[data-hermes-text-size] .message-content h4,
-html[data-hermes-text-size] .message-content h5 { font-size: calc(16px * var(--hermes-text-zoom, 1)); }
-html[data-hermes-text-size] .message-content h6 { font-size: calc(13px * var(--hermes-text-zoom, 1)); }
+.message-content h1 { font-size: calc(28px * var(--hermes-text-zoom, 1)); }
+.message-content h2 { font-size: calc(24px * var(--hermes-text-zoom, 1)); }
+.message-content h3 { font-size: calc(20px * var(--hermes-text-zoom, 1)); }
+.message-content h4,
+.message-content h5 { font-size: calc(16px * var(--hermes-text-zoom, 1)); }
+.message-content h6 { font-size: calc(13px * var(--hermes-text-zoom, 1)); }
 
 @media (max-height: 720px) {
   .hero-card { min-height: 118px; }

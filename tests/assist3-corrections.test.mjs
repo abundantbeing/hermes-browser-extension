@@ -27,7 +27,7 @@ test('sidepanel model selectors reset the active provider and Assist picker is c
   assert.match(source, /modelProviderList\.scrollLeft\s*=\s*0/);
   assert.match(css, /\.model-menu\[data-selection-target="assist"\][\s\S]*max-height:\s*min\(/);
   assert.doesNotMatch(css, /\.model-menu\[data-selection-target="assist"\]\s*\{[^}]*max-height:\s*none/s);
-  assert.match(css, /#inlineAssistModelButton\s*\{[^}]*font-family:\s*Collapse,[^}]*"Segoe UI"/s);
+  assert.match(css, /#inlineAssistModelButton\s*\{[^}]*font-family:\s*var\(--hermes-font-ui\)/s);
   assert.match(css, /\.model-menu\s*\{[^}]*grid-template-rows:\s*auto\s+minmax\(58px,\s*auto\)/s);
   assert.match(css, /\.model-provider-list\s*\{[^}]*min-height:\s*58px/s);
   assert.match(css, /\.model-effort-list\s*\{[^}]*grid-template-columns:\s*repeat\(4,/s);

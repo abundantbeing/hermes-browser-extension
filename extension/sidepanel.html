@@ -363,16 +363,47 @@
             </div>
           </div>
 
-          <div class="appearance-row text-size-row">
+          <div class="appearance-control-stack text-zoom-setting">
             <div>
-              <strong data-i18n="ui.text.size">Text size</strong>
+              <strong data-i18n="appearance.text_zoom">Text zoom</strong>
               <span data-i18n="ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom">Adjust the side panel for readability without changing browser zoom.</span>
             </div>
-            <div class="segmented-control text-size-control" role="radiogroup" aria-label="Text size" data-i18n-aria-label="ui.text.size">
-              <button class="text-size-choice" type="button" data-text-size="default" role="radio" aria-checked="true" data-i18n="ui.default">Default</button>
-              <button class="text-size-choice" type="button" data-text-size="large" role="radio" aria-checked="false" data-i18n="ui.large">Large</button>
-              <button class="text-size-choice" type="button" data-text-size="extra-large" role="radio" aria-checked="false" data-i18n="ui.xl">XL</button>
+            <div id="textZoomPresetGrid" class="text-zoom-preset-grid" role="radiogroup" aria-label="Text zoom" data-i18n-aria-label="appearance.text_zoom">
+              <button type="button" data-text-zoom-percent="90" role="radio" aria-checked="false">90%</button>
+              <button type="button" data-text-zoom-percent="100" role="radio" aria-checked="true">100%</button>
+              <button type="button" data-text-zoom-percent="110" role="radio" aria-checked="false">110%</button>
+              <button type="button" data-text-zoom-percent="125" role="radio" aria-checked="false">125%</button>
+              <button type="button" data-text-zoom-percent="150" role="radio" aria-checked="false">150%</button>
+              <button type="button" data-text-zoom-percent="175" role="radio" aria-checked="false">175%</button>
             </div>
+            <div class="text-zoom-stepper">
+              <button id="textZoomDecreaseButton" type="button" aria-label="Decrease text zoom" data-i18n-aria-label="appearance.decrease_text_zoom">−</button>
+              <label class="text-zoom-input-wrap" for="textZoomInput">
+                <span class="sr-only" data-i18n="appearance.custom_percentage">Custom percentage</span>
+                <input id="textZoomInput" type="number" min="75" max="200" step="1" inputmode="numeric" value="100" aria-label="Custom percentage" data-i18n-aria-label="appearance.custom_percentage" />
+                <span aria-hidden="true">%</span>
+              </label>
+              <button id="textZoomIncreaseButton" type="button" aria-label="Increase text zoom" data-i18n-aria-label="appearance.increase_text_zoom">+</button>
+            </div>
+          </div>
+
+          <div class="appearance-control-stack font-profile-setting">
+            <label for="fontProfileSelect">
+              <strong data-i18n="appearance.font_family">Font family</strong>
+            </label>
+            <select id="fontProfileSelect" aria-label="Font family" data-i18n-aria-label="appearance.font_family">
+              <option value="signature" data-i18n="appearance.font_signature">Hermes signature</option>
+              <option value="system-sans" data-i18n="appearance.font_system_sans">System sans</option>
+              <option value="high-legibility" data-i18n="appearance.font_high_legibility">High legibility</option>
+              <option value="mono" data-i18n="appearance.font_monospace">Monospace</option>
+              <option value="custom-local" data-i18n="appearance.font_installed_local">Installed local font</option>
+            </select>
+            <label id="customFontFamilyField" class="custom-font-family-field" for="customFontFamilyInput" hidden>
+              <strong data-i18n="appearance.local_font_family_name">Local font family name</strong>
+              <span data-i18n="appearance.local_font_fallback">The browser uses a fallback when the local font family is unavailable.</span>
+              <input id="customFontFamilyInput" type="text" maxlength="80" autocomplete="off" placeholder="Atkinson Hyperlegible" data-i18n-invariant />
+            </label>
+            <p id="appearanceSaveStatus" class="appearance-save-status" role="status" aria-live="polite"></p>
           </div>
 
           <div class="appearance-row language-row">

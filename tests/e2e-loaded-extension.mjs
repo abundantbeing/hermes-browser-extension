@@ -32,6 +32,11 @@ const ASSIST_SETTINGS_SCREENSHOT = path.join(QA_DIR, `assist-settings${ASSIST_SC
 const ASSIST_RELEASED_GATEWAY_SCREENSHOT = path.join(QA_DIR, `assist-settings-released-gateway${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const MAIN_MODEL_PICKER_SCREENSHOT = path.join(QA_DIR, `main-model-picker${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const GPT56_CONTEXT_PICKER_SCREENSHOT = path.join(QA_DIR, `gpt56-context-picker${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const READABILITY_PANEL_SCREENSHOT = path.join(QA_DIR, `readability-panel-320${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const READABILITY_WEB_SCREENSHOT = path.join(QA_DIR, `readability-web-1024${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const READABILITY_PANEL_420_SCREENSHOT = path.join(QA_DIR, `readability-panel-420${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const READABILITY_PANEL_520_SCREENSHOT = path.join(QA_DIR, `readability-panel-520${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const READABILITY_WEB_1440_SCREENSHOT = path.join(QA_DIR, `readability-web-1440${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const TEST_TOKEN = 'e2e-browser-token-not-a-secret';
 const TEST_PROMPT = 'Verify the loaded Hermes Browser round trip.';
 const TEST_REPLY = 'Loaded extension round trip confirmed.';
@@ -459,6 +464,7 @@ class CdpClient {
     this.url = url;
     this.nextId = 1;
     this.pending = new Map();
+    this.events = [];
     this.socket = null;
   }
 
@@ -467,7 +473,10 @@ class CdpClient {
     this.socket = socket;
     socket.onmessage = (event) => {
       const payload = JSON.parse(String(event.data));
-      if (!payload.id) return;
+      if (!payload.id) {
+        this.events.push(payload);
+        return;
+      }
       const pending = this.pending.get(payload.id);
       if (!pending) return;
       this.pending.delete(payload.id);
@@ -542,6 +551,27 @@ async function saveScreenshot(client, filePath, { captureBeyondViewport = true }
   await writeFile(filePath, Buffer.from(shot.data, 'base64'));
 }
 
+async function assertSequentialTabReach(client, selectors, label) {
+  assert.ok(selectors.length > 0, `${label} did not define any controls.`);
+  await client.evaluate(`document.querySelector(${JSON.stringify(selectors[0])})?.focus()`);
+  for (const selector of selectors) {
+    const reached = await client.evaluate(`document.activeElement?.matches(${JSON.stringify(selector)}) || false`);
+    assert.equal(reached, true, `${label} Tab traversal did not reach ${selector}.`);
+    if (selector !== selectors.at(-1)) {
+      await client.call('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+      await client.call('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });
+    }
+  }
+}
+
+function consoleErrorsSince(client, startIndex) {
+  return client.events.slice(startIndex).filter((event) => (
+    event.method === 'Runtime.exceptionThrown'
+    || (event.method === 'Runtime.consoleAPICalled' && event.params?.type === 'error')
+    || (event.method === 'Log.entryAdded' && event.params?.entry?.level === 'error')
+  ));
+}
+
 async function clickInlineLauncher(client) {
   const point = await client.evaluate(`(() => {
     const launcher = document.querySelector('#hermes-inline-draft-host')?.shadowRoot?.querySelector('.launcher');
@@ -591,17 +621,20 @@ async function main() {
     const [portLine] = (await readFile(activePort, 'utf8')).trim().split('\n');
     const devtoolsBase = `http://127.0.0.1:${Number(portLine)}`;
 
-    const wakeTarget = await waitFor(async () => {
-      const targets = await fetchJson(`${devtoolsBase}/json/list`);
-      return targets.find((target) => target.type === 'page' && String(target.url || '').startsWith(`chrome-extension://${extensionId}/`));
-    });
-    const wakeClient = new CdpClient(wakeTarget.webSocketDebuggerUrl);
-    try {
-      await wakeClient.connect();
-      await wakeClient.call('Runtime.enable');
-      await wakeClient.evaluate(`void chrome.runtime.sendMessage({ type: 'HERMES_INLINE_SESSION_STATUS' }).catch(() => null); true`);
-    } finally {
-      wakeClient.close();
+    const initialTargets = await fetchJson(`${devtoolsBase}/json/list`);
+    const wakeTarget = initialTargets.find((target) => (
+      target.type === 'page'
+      && String(target.url || '').startsWith(`chrome-extension://${extensionId}/`)
+    ));
+    if (wakeTarget) {
+      const wakeClient = new CdpClient(wakeTarget.webSocketDebuggerUrl);
+      try {
+        await wakeClient.connect();
+        await wakeClient.call('Runtime.enable');
+        await wakeClient.evaluate(`void chrome.runtime.sendMessage({ type: 'HERMES_INLINE_SESSION_STATUS' }).catch(() => null); true`);
+      } finally {
+        wakeClient.close();
+      }
     }
 
     const workerTarget = await waitFor(async () => {
@@ -664,6 +697,7 @@ async function main() {
     panel = new CdpClient(pageTarget.webSocketDebuggerUrl);
     await panel.connect();
     await panel.call('Runtime.enable');
+    await panel.call('Log.enable');
     await panel.call('Page.enable');
 
     await waitFor(() => panel.evaluate(`(() => {
@@ -931,6 +965,7 @@ async function main() {
     web = new CdpClient(webTarget.webSocketDebuggerUrl);
     await web.connect();
     await web.call('Runtime.enable');
+    await web.call('Log.enable');
     await web.call('Page.enable');
     await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
     const taskWebState = await waitFor(() => web.evaluate(`(() => {
@@ -969,6 +1004,350 @@ async function main() {
     const panelContainsFullTabResult = await panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)}))`);
     assert.equal(panelContainsFullTabResult, false, 'Side panel session must not contain the Hermes Web delegation result.');
     await saveScreenshot(web, DELEGATION_WEB_SCREENSHOT);
+
+    const panelConsoleStart = panel.events.length;
+    const webConsoleStart = web.events.length;
+    const panelBaselineType = await panel.evaluate(`(() => ({
+      message: Number.parseFloat(getComputedStyle(document.querySelector('.message-content')).fontSize),
+      composer: Number.parseFloat(getComputedStyle(document.querySelector('#promptInput')).fontSize),
+    }))()`);
+    await panel.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => panel.evaluate(`document.querySelector('#settingsDialog')?.hidden === false`));
+    await panel.evaluate(`document.querySelector('[data-text-zoom-percent="175"]').click()`);
+    await waitFor(() => panel.evaluate(`document.documentElement.dataset.hermesTextZoom === '175' && document.querySelector('#appearanceSaveStatus')?.textContent === 'Saved'`));
+    await panel.evaluate(`(() => {
+      const select = document.querySelector('#fontProfileSelect');
+      select.value = 'high-legibility';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    const panelReadabilityAt175 = await waitFor(() => panel.evaluate(`(() => {
+      const root = document.documentElement;
+      const message = document.querySelector('.message-content');
+      const composer = document.querySelector('#promptInput');
+      const status = document.querySelector('#appearanceSaveStatus');
+      if (root.dataset.hermesTextZoom !== '175' || document.querySelector('#fontProfileSelect')?.value !== 'high-legibility' || status?.textContent !== 'Saved') return null;
+      return {
+        zoom: root.dataset.hermesTextZoom,
+        multiplier: getComputedStyle(root).getPropertyValue('--hermes-text-zoom').trim(),
+        message: Number.parseFloat(getComputedStyle(message).fontSize),
+        composer: Number.parseFloat(getComputedStyle(composer).fontSize),
+        uiVariable: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
+        rootFamily: getComputedStyle(root).fontFamily,
+        fontFamily: getComputedStyle(document.body).fontFamily,
+        bodyFontRules: [...document.styleSheets].flatMap((sheet) => {
+          try {
+            return [...sheet.cssRules].flatMap((rule) => rule.selectorText && document.body.matches(rule.selectorText) && rule.style?.fontFamily
+              ? [rule.selectorText + ' => ' + rule.style.fontFamily]
+              : []);
+          } catch { return []; }
+        }),
+      };
+    })()`));
+    assert.equal(panelReadabilityAt175.multiplier, '1.75');
+    assert.ok(panelReadabilityAt175.message > panelBaselineType.message * 1.5, JSON.stringify({ panelBaselineType, panelReadabilityAt175 }));
+    assert.ok(panelReadabilityAt175.composer > panelBaselineType.composer * 1.5, JSON.stringify({ panelBaselineType, panelReadabilityAt175 }));
+    assert.match(panelReadabilityAt175.fontFamily, /^Verdana/i, JSON.stringify(panelReadabilityAt175));
+
+    await panel.call('Page.reload', { ignoreCache: true });
+    const panelPersisted = await waitFor(() => panel.evaluate(`(() => {
+      const startup = document.querySelector('#startupScreen');
+      const root = document.documentElement;
+      if (!startup?.hidden || root.dataset.hermesTextZoom !== '175' || document.querySelector('#fontProfileSelect')?.value !== 'high-legibility') return null;
+      return {
+        zoom: root.dataset.hermesTextZoom,
+        multiplier: getComputedStyle(root).getPropertyValue('--hermes-text-zoom').trim(),
+        fontFamily: getComputedStyle(document.body).fontFamily,
+      };
+    })()`));
+    assert.equal(panelPersisted.multiplier, '1.75');
+    assert.match(panelPersisted.fontFamily, /^Verdana/i);
+    await panel.call('Emulation.setDeviceMetricsOverride', { width: 320, height: 900, deviceScaleFactor: 1, mobile: false });
+    await panel.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => panel.evaluate(`document.querySelector('#settingsDialog')?.hidden === false`));
+    await panel.evaluate(`document.querySelector('#textZoomInput').value = '200'; document.querySelector('#textZoomInput').dispatchEvent(new Event('change', { bubbles: true }))`);
+    const panelAt320 = await waitFor(() => panel.evaluate(`(() => {
+      const dialog = document.querySelector('#settingsDialog');
+      const root = document.documentElement;
+      if (root.dataset.hermesTextZoom !== '200' || document.querySelector('#appearanceSaveStatus')?.textContent !== 'Saved') return null;
+      const controls = [...document.querySelectorAll('#textZoomPresetGrid button, #textZoomDecreaseButton, #textZoomInput, #textZoomIncreaseButton, #fontProfileSelect')];
+      const unnamed = controls.filter((node) => !String(
+        node.getAttribute('aria-label')
+        || node.textContent
+        || [...(node.labels || [])].map((label) => label.textContent).join(' ')
+        || '',
+      ).trim());
+      const ids = [...document.querySelectorAll('[id]')].map((node) => node.id).filter(Boolean);
+      const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
+      const last = document.querySelector('#fontProfileSelect');
+      last.scrollIntoView({ block: 'nearest' });
+      const rect = last.getBoundingClientRect();
+      return {
+        zoom: root.dataset.hermesTextZoom,
+        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        duplicateIds,
+        unnamed: unnamed.map((node) => node.id || node.outerHTML),
+        finalControlVisible: rect.top >= 0 && rect.bottom <= innerHeight,
+        dialogOpen: !dialog.hidden,
+      };
+    })()`));
+    assert.ok(panelAt320.horizontalOverflow <= 1, JSON.stringify(panelAt320));
+    assert.deepEqual(panelAt320.duplicateIds, []);
+    assert.deepEqual(panelAt320.unnamed, []);
+    assert.equal(panelAt320.finalControlVisible, true);
+    await assertSequentialTabReach(panel, [
+      '[data-text-zoom-percent="90"]',
+      '[data-text-zoom-percent="100"]',
+      '[data-text-zoom-percent="110"]',
+      '[data-text-zoom-percent="125"]',
+      '[data-text-zoom-percent="150"]',
+      '[data-text-zoom-percent="175"]',
+      '#textZoomDecreaseButton',
+      '#textZoomInput',
+      '#textZoomIncreaseButton',
+      '#fontProfileSelect',
+    ], 'Side panel appearance controls');
+    await saveScreenshot(panel, READABILITY_PANEL_SCREENSHOT, { captureBeyondViewport: false });
+
+    const webBaselineType = await web.evaluate(`(() => ({
+      message: Number.parseFloat(getComputedStyle(document.querySelector('.web-message-content')).fontSize),
+      composer: Number.parseFloat(getComputedStyle(document.querySelector('#fullTabPrompt')).fontSize),
+    }))()`);
+    await web.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
+    await web.evaluate(`(() => {
+      const input = document.querySelector('#settingsTextZoomInput');
+      input.value = '113';
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    const webAt113 = await waitFor(() => web.evaluate(`(() => {
+      const root = document.documentElement;
+      if (root.dataset.hermesTextZoom !== '113' || document.querySelector('#settingsAppearanceSaveStatus')?.textContent !== 'Saved') return null;
+      return {
+        zoom: root.dataset.hermesTextZoom,
+        multiplier: getComputedStyle(root).getPropertyValue('--hermes-text-zoom').trim(),
+        message: Number.parseFloat(getComputedStyle(document.querySelector('.web-message-content')).fontSize),
+        composer: Number.parseFloat(getComputedStyle(document.querySelector('#fullTabPrompt')).fontSize),
+      };
+    })()`));
+    assert.equal(webAt113.multiplier, '1.13');
+    assert.ok(webAt113.message > webBaselineType.message * 1.1, JSON.stringify({ webBaselineType, webAt113 }));
+    assert.ok(webAt113.composer > webBaselineType.composer * 1.1, JSON.stringify({ webBaselineType, webAt113 }));
+    await web.evaluate(`(() => {
+      const input = document.querySelector('#settingsCustomFontFamilyInput');
+      const select = document.querySelector('#settingsFontProfileSelect');
+      input.value = 'Arial';
+      select.value = 'custom-local';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    await waitFor(() => web.evaluate(`new Promise((resolve) => chrome.storage.local.get('hermesBrowserSettings', (result) => {
+      const stored = result.hermesBrowserSettings || {};
+      resolve(stored.webFontProfile === 'custom-local' && stored.webCustomFontFamily === 'Arial');
+    }))`));
+    const webCustomFont = await waitFor(() => web.evaluate(`(() => {
+      const root = document.documentElement;
+      if (document.querySelector('#settingsFontProfileSelect')?.value !== 'custom-local') return null;
+      return {
+        profile: document.querySelector('#settingsFontProfileSelect').value,
+        customFamily: document.querySelector('#settingsCustomFontFamilyInput').value,
+        fontVariable: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
+        bodyFamily: getComputedStyle(document.body).fontFamily,
+      };
+    })()`));
+    assert.equal(webCustomFont.customFamily, 'Arial');
+    assert.match(webCustomFont.fontVariable, /^"Arial",/);
+    assert.match(webCustomFont.bodyFamily, /^Arial/i);
+    const panelIsolationAfterWeb = await panel.evaluate(`(() => ({
+      zoom: document.documentElement.dataset.hermesTextZoom,
+      profile: document.querySelector('#fontProfileSelect')?.value,
+      fontFamily: getComputedStyle(document.body).fontFamily,
+    }))()`);
+    assert.equal(panelIsolationAfterWeb.zoom, '200');
+    assert.equal(panelIsolationAfterWeb.profile, 'high-legibility');
+    assert.match(panelIsolationAfterWeb.fontFamily, /^Verdana/i);
+
+    await web.call('Page.reload', { ignoreCache: true });
+    await waitFor(() => web.evaluate(`document.readyState === 'complete' && Boolean(document.querySelector('#fullTabPrompt'))`));
+    const webPersisted = await web.evaluate(`(async () => {
+      const root = document.documentElement;
+      const stored = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings || {};
+      return {
+        zoom: root.dataset.hermesTextZoom,
+        multiplier: getComputedStyle(root).getPropertyValue('--hermes-text-zoom').trim(),
+        profile: document.querySelector('#settingsFontProfileSelect')?.value,
+        customFamily: document.querySelector('#settingsCustomFontFamilyInput')?.value,
+        fontVariable: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
+        storedZoom: stored.webTextZoomPercent,
+        storedProfile: stored.webFontProfile,
+        storedCustomFamily: stored.webCustomFontFamily,
+      };
+    })()`);
+    assert.equal(webPersisted.zoom, '113', JSON.stringify(webPersisted));
+    assert.equal(webPersisted.customFamily, 'Arial', JSON.stringify(webPersisted));
+    assert.match(webPersisted.fontVariable, /^"Arial",/);
+    await web.call('Emulation.setDeviceMetricsOverride', { width: 1024, height: 768, deviceScaleFactor: 1, mobile: false });
+    await web.evaluate(`document.querySelector('#settingsButton').click()`);
+    await waitFor(() => web.evaluate(`document.querySelector('#settingsDialog')?.open === true`));
+    const webAccessibility = await web.evaluate(`(() => {
+      const controls = [...document.querySelectorAll('#settingsTextZoomPresetGrid button, #settingsTextZoomDecreaseButton, #settingsTextZoomInput, #settingsTextZoomIncreaseButton, #settingsFontProfileSelect, #settingsCustomFontFamilyInput')]
+        .filter((node) => !node.hidden && getComputedStyle(node).display !== 'none');
+      const unnamed = controls.filter((node) => !String(
+        node.getAttribute('aria-label')
+        || node.textContent
+        || [...(node.labels || [])].map((label) => label.textContent).join(' ')
+        || '',
+      ).trim());
+      const ids = [...document.querySelectorAll('[id]')].map((node) => node.id).filter(Boolean);
+      const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
+      return {
+        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        duplicateIds,
+        unnamed: unnamed.map((node) => node.id || node.outerHTML),
+      };
+    })()`);
+    assert.ok(webAccessibility.horizontalOverflow <= 1, JSON.stringify(webAccessibility));
+    assert.deepEqual(webAccessibility.duplicateIds, []);
+    assert.deepEqual(webAccessibility.unnamed, []);
+    await assertSequentialTabReach(web, [
+      '[data-web-text-zoom-percent="90"]',
+      '[data-web-text-zoom-percent="100"]',
+      '[data-web-text-zoom-percent="110"]',
+      '[data-web-text-zoom-percent="125"]',
+      '[data-web-text-zoom-percent="150"]',
+      '[data-web-text-zoom-percent="175"]',
+      '#settingsTextZoomDecreaseButton',
+      '#settingsTextZoomInput',
+      '#settingsTextZoomIncreaseButton',
+      '#settingsFontProfileSelect',
+      '#settingsCustomFontFamilyInput',
+    ], 'Hermes Web appearance controls');
+    await saveScreenshot(web, READABILITY_WEB_SCREENSHOT, { captureBeyondViewport: false });
+
+    await panel.call('Emulation.setDeviceMetricsOverride', { width: 420, height: 900, deviceScaleFactor: 1, mobile: false });
+    await panel.evaluate(`(() => {
+      document.querySelector('[data-text-zoom-percent="90"]')?.click();
+      const input = document.querySelector('#textZoomInput');
+      input.value = '75';
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      const font = document.querySelector('#fontProfileSelect');
+      font.value = 'signature';
+      font.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector('[data-theme="nous"]')?.click();
+      document.querySelector('[data-color-mode="dark"]')?.click();
+    })()`);
+    const panelAt420 = await waitFor(() => panel.evaluate(`(() => {
+      const root = document.documentElement;
+      const state = {
+        width: innerWidth,
+        zoom: root.dataset.hermesTextZoom,
+        profile: document.querySelector('#fontProfileSelect')?.value || '',
+        theme: root.dataset.hermesTheme,
+        mode: root.dataset.hermesMode,
+        horizontalOverflow: root.scrollWidth - root.clientWidth,
+      };
+      return state.width === 420 && state.zoom === '75' && state.profile === 'signature'
+        && state.theme === 'nous' && state.mode === 'dark' ? state : null;
+    })()`));
+    assert.ok(panelAt420.horizontalOverflow <= 1, JSON.stringify(panelAt420));
+    await panel.evaluate(`document.querySelector('.appearance-settings')?.scrollIntoView({ block: 'start' })`);
+    await saveScreenshot(panel, READABILITY_PANEL_420_SCREENSHOT, { captureBeyondViewport: false });
+
+    await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
+    await panel.evaluate(`(() => {
+      const input = document.querySelector('#textZoomInput');
+      input.value = '150';
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      const custom = document.querySelector('#customFontFamilyInput');
+      custom.value = 'Arial';
+      custom.dispatchEvent(new Event('change', { bubbles: true }));
+      const font = document.querySelector('#fontProfileSelect');
+      font.value = 'custom-local';
+      font.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector('[data-theme="mono"]')?.click();
+      document.querySelector('[data-color-mode="dark"]')?.click();
+    })()`);
+    const panelAt520 = await waitFor(() => panel.evaluate(`(() => {
+      const root = document.documentElement;
+      const state = {
+        width: innerWidth,
+        zoom: root.dataset.hermesTextZoom,
+        profile: document.querySelector('#fontProfileSelect')?.value || '',
+        customFamily: document.querySelector('#customFontFamilyInput')?.value || '',
+        fontFamily: getComputedStyle(root).getPropertyValue('--hermes-font-ui').trim(),
+        theme: root.dataset.hermesTheme,
+        mode: root.dataset.hermesMode,
+        horizontalOverflow: root.scrollWidth - root.clientWidth,
+      };
+      return state.width === 520 && state.zoom === '150' && state.profile === 'custom-local'
+        && state.customFamily === 'Arial' && /^"Arial"/.test(state.fontFamily)
+        && state.theme === 'mono' && state.mode === 'dark' ? state : null;
+    })()`));
+    assert.ok(panelAt520.horizontalOverflow <= 1, JSON.stringify(panelAt520));
+    await panel.evaluate(`document.querySelector('.appearance-settings')?.scrollIntoView({ block: 'start' })`);
+    await saveScreenshot(panel, READABILITY_PANEL_520_SCREENSHOT, { captureBeyondViewport: false });
+
+    await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
+    await web.evaluate(`(() => {
+      document.querySelector('[data-web-text-zoom-percent="100"]')?.click();
+      const font = document.querySelector('#settingsFontProfileSelect');
+      font.value = 'signature';
+      font.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector('[data-theme="nous"]')?.click();
+      document.querySelector('[data-color-mode="light"]')?.click();
+    })()`);
+    const webAt1440 = await waitFor(() => web.evaluate(`(() => {
+      const root = document.documentElement;
+      const state = {
+        width: innerWidth,
+        height: innerHeight,
+        zoom: root.dataset.hermesTextZoom,
+        profile: document.querySelector('#settingsFontProfileSelect')?.value || '',
+        theme: root.dataset.hermesTheme,
+        mode: root.dataset.hermesMode,
+        horizontalOverflow: root.scrollWidth - root.clientWidth,
+      };
+      return state.width === 1440 && state.height === 960 && state.zoom === '100'
+        && state.profile === 'signature' && state.theme === 'nous' && state.mode === 'light' ? state : null;
+    })()`));
+    assert.ok(webAt1440.horizontalOverflow <= 1, JSON.stringify(webAt1440));
+    const liveMatrixStored = await waitFor(() => setup.evaluate(`(async () => {
+      const stored = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings || {};
+      return stored.textZoomPercent === 150 && stored.fontProfile === 'custom-local'
+        && stored.customFontFamily === 'Arial' && stored.appearanceTheme === 'mono'
+        && stored.colorMode === 'dark' && stored.webTextZoomPercent === 100
+        && stored.webFontProfile === 'signature' && stored.webAppearanceTheme === 'nous'
+        && stored.webColorMode === 'light' ? {
+          panel: {
+            zoom: stored.textZoomPercent,
+            profile: stored.fontProfile,
+            customFamily: stored.customFontFamily,
+            theme: stored.appearanceTheme,
+            mode: stored.colorMode,
+          },
+          web: {
+            zoom: stored.webTextZoomPercent,
+            profile: stored.webFontProfile,
+            theme: stored.webAppearanceTheme,
+            mode: stored.webColorMode,
+          },
+        } : null;
+    })()`));
+    await saveScreenshot(web, READABILITY_WEB_1440_SCREENSHOT, { captureBeyondViewport: false });
+
+    assert.deepEqual(consoleErrorsSince(panel, panelConsoleStart), []);
+    assert.deepEqual(consoleErrorsSince(web, webConsoleStart), []);
+    await panel.evaluate(`document.querySelector('#closeSettingsButton')?.click()`);
+    await web.evaluate(`document.querySelector('#settingsDialog')?.close()`);
+    await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
+    await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
+    const panelSessionAfterReadability = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
+    const panelSessionIdAfterReadability = panelSessionAfterReadability.hermesBrowserSettings?.sessionId || '';
+    assert.match(panelSessionIdAfterReadability, /^hermes-browser-extension-/);
+    const readabilityProof = {
+      panel: { baseline: panelBaselineType, at175: panelReadabilityAt175, persisted: panelPersisted, at320: panelAt320, isolatedAfterWeb: panelIsolationAfterWeb },
+      web: { baseline: webBaselineType, at113: webAt113, customFont: webCustomFont, persisted: webPersisted, accessibility: webAccessibility },
+      liveMatrix: { panelAt420, panelAt520, webAt1440, stored: liveMatrixStored },
+    };
+
     if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
       const nousLightSurfaces = await waitFor(() => web.evaluate(`(() => {
         const list = document.querySelector('#messageList');
@@ -1513,7 +1892,7 @@ async function main() {
     assert.equal(inlineResultState.result, INLINE_REPLY);
     assert.match(inlineResultState.session, /Hermes Assist/i);
     const afterBackground = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
-    assert.equal(afterBackground.hermesBrowserSettings.sessionId, storedAfterSend.hermesBrowserSettings.sessionId);
+    assert.equal(afterBackground.hermesBrowserSettings.sessionId, panelSessionIdAfterReadability);
     await saveScreenshot(fixture, INLINE_RESULT_SCREENSHOT, { captureBeyondViewport: false });
     const retainedAssistCreate = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_assist').at(-1);
     const retainedAssistSessionId = retainedAssistCreate?.body?.id || retainedAssistCreate?.body?.session_id || '';
@@ -2089,7 +2468,7 @@ async function main() {
       appearance: `${ASSIST_THEME}:${ASSIST_MODE}`,
       extensionId,
       gatewayUrl: mock.baseUrl,
-      sessionId: storedAfterSend.hermesBrowserSettings.sessionId,
+      sessionId: panelSessionIdAfterReadability,
       protocol: envelope.protocol,
       accessibility: {
         panel: panelAccessibility,
@@ -2141,7 +2520,8 @@ async function main() {
       assistEfforts: sharedPickerState.efforts,
       gpt56ContextRows: gpt56ContextState.models,
       mainProviderSwitch: switchedProviderState.selected,
-      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
+      readability: readabilityProof,
+      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
     }, null, 2));
   } catch (error) {
     const diagnostics = {};

@@ -60,7 +60,7 @@ import {
   normalizeBrowserModelBinding,
   normalizeRuntimeModelPayload,
   normalizeSessionStartupMode,
-  normalizeTextSize,
+
   normalizeToolActivity,
   normalizeReasoningEffort,
   pairingFailureMessage,
@@ -118,6 +118,15 @@ import {
   normalizeAppearanceTheme,
   normalizeColorMode,
 } from './lib/appearance-themes.mjs';
+import {
+  ZOOM_PRESETS,
+  appearancePreferencesForSurface,
+  applyAppearancePreferences,
+  normalizeTextZoomPercent,
+  sanitizeLocalFontFamily,
+  stepTextZoomPercent,
+  withAppearancePreferenceUpdate,
+} from './lib/appearance-preferences.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
 import { appendUserImageAttachments } from './lib/image-render.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
@@ -458,13 +467,23 @@ const els = {
   themeGrid: $('#themeGrid'),
   languageSelect: $('#languageSelect'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
-  textSizeButtons: Array.from(document.querySelectorAll('[data-text-size]')),
+  textZoomPresetGrid: $('#textZoomPresetGrid'),
+  textZoomInput: $('#textZoomInput'),
+  textZoomDecreaseButton: $('#textZoomDecreaseButton'),
+  textZoomIncreaseButton: $('#textZoomIncreaseButton'),
+  fontProfileSelect: $('#fontProfileSelect'),
+  customFontFamilyField: $('#customFontFamilyField'),
+  customFontFamilyInput: $('#customFontFamilyInput'),
+  appearanceSaveStatus: $('#appearanceSaveStatus'),
   quickMoreMenu: $('#quickMoreMenu'),
   commandMenuButton: $('#commandMenuButton'),
   template: $('#messageTemplate'),
 };
 
 let settings = { ...DEFAULT_SETTINGS };
+let appearanceMutationId = 0;
+let appearanceSaveStatus = '';
+let appearanceWriteQueue = Promise.resolve();
 let wakeState = { enabled: false, state: 'off', mode: 'off', phrase: DEFAULT_SETTINGS.wakeWordPhrase, provider: '', detail: 'Wake word is off.' };
 let wakeTurnProcessingId = '';
 const hermesClient = createHermesClient({
@@ -2879,17 +2898,32 @@ function resolvedColorMode(value = settings.colorMode) {
   return mode;
 }
 
+function panelAppearancePreferences() {
+  return {
+    textZoomPercent: normalizeTextZoomPercent(settings.textZoomPercent),
+    fontProfile: settings.fontProfile || 'signature',
+    customFontFamily: sanitizeLocalFontFamily(settings.customFontFamily),
+  };
+}
+
+function panelAppearanceSnapshot() {
+  return {
+    ...panelAppearancePreferences(),
+    colorMode: normalizeColorMode(settings.colorMode),
+    appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
+  };
+}
+
 function applyAppearanceSettings() {
   const theme = normalizeAppearanceTheme(settings.appearanceTheme);
   const colorMode = normalizeColorMode(settings.colorMode);
-  const textSize = normalizeTextSize(settings.textSize);
   const resolvedMode = resolvedColorMode(colorMode);
   const root = document.documentElement;
   root.dataset.hermesTheme = theme;
   root.dataset.hermesColorMode = colorMode;
-  root.dataset.hermesTextSize = textSize;
   root.dataset.hermesMode = resolvedMode;
   root.style.colorScheme = resolvedMode;
+  applyAppearancePreferences(root, appearancePreferencesForSurface(settings, 'panel'));
 }
 
 function renderAppearanceControls() {
@@ -2900,17 +2934,30 @@ function renderAppearanceControls() {
   }
   const colorMode = normalizeColorMode(settings.colorMode);
   const activeTheme = normalizeAppearanceTheme(settings.appearanceTheme);
+  const preferences = appearancePreferencesForSurface(settings, 'panel');
+  const requestedProfile = settings.fontProfile === 'custom-local' ? 'custom-local' : preferences.fontProfile;
   for (const button of els.colorModeButtons || []) {
     const selected = button.dataset.colorMode === colorMode;
     button.classList.toggle('selected', selected);
     button.setAttribute('aria-checked', String(selected));
   }
-  const textSize = normalizeTextSize(settings.textSize);
-  for (const button of els.textSizeButtons || []) {
-    const selected = button.dataset.textSize === textSize;
+  for (const button of els.textZoomPresetGrid?.querySelectorAll('[data-text-zoom-percent]') || []) {
+    const selected = Number(button.dataset.textZoomPercent) === preferences.textZoomPercent;
+    const percentLabel = t('appearance.percent_value', { percent: button.dataset.textZoomPercent });
     button.classList.toggle('selected', selected);
     button.setAttribute('aria-checked', String(selected));
+    button.setAttribute('aria-label', selected ? t('appearance.current_selection', { value: percentLabel }) : percentLabel);
   }
+  if (els.textZoomInput) {
+    els.textZoomInput.value = String(preferences.textZoomPercent);
+    els.textZoomInput.setAttribute('aria-valuetext', t('appearance.percent_value', { percent: preferences.textZoomPercent }));
+  }
+  if (els.fontProfileSelect) els.fontProfileSelect.value = requestedProfile;
+  if (els.customFontFamilyField) els.customFontFamilyField.hidden = requestedProfile !== 'custom-local';
+  if (els.customFontFamilyInput && document.activeElement !== els.customFontFamilyInput) {
+    els.customFontFamilyInput.value = settings.customFontFamily || preferences.customFontFamily;
+  }
+  if (els.appearanceSaveStatus) els.appearanceSaveStatus.textContent = appearanceSaveStatus;
   if (!els.themeGrid) return;
   els.themeGrid.innerHTML = APPEARANCE_THEMES.map((theme) => {
     const selected = theme.value === activeTheme;
@@ -2925,16 +2972,66 @@ function renderAppearanceControls() {
   }).join('');
 }
 
-function persistAppearanceSettings() {
-  chrome.storage.local.set({ hermesBrowserSettings: settings });
+async function persistAppearanceSettings(preferences) {
+  const writeAppearance = async () => {
+    const stored = await chrome.storage.local.get('hermesBrowserSettings');
+    const freshSettings = stored.hermesBrowserSettings || {};
+    const mergedPreferences = withAppearancePreferenceUpdate(freshSettings, 'panel', preferences);
+    const hermesBrowserSettings = {
+      ...mergedPreferences,
+      appearanceSchemaVersion: 2,
+      colorMode: normalizeColorMode(preferences.colorMode),
+      appearanceTheme: normalizeAppearanceTheme(preferences.appearanceTheme),
+    };
+    await chrome.storage.local.set({ hermesBrowserSettings: hermesBrowserSettings });
+    return hermesBrowserSettings;
+  };
+  const pendingWrite = appearanceWriteQueue.then(writeAppearance, writeAppearance);
+  appearanceWriteQueue = pendingWrite.catch(() => undefined);
+  return pendingWrite;
 }
 
-function setAppearanceOption(key, value, { persist = true } = {}) {
+async function setAppearanceOption(key, value, { persist = true } = {}) {
+  const previousAppearance = panelAppearanceSnapshot();
+  appearanceMutationId += 1;
+  const mutationId = appearanceMutationId;
   if (key === 'colorMode') settings = { ...settings, colorMode: normalizeColorMode(value) };
   if (key === 'appearanceTheme') settings = { ...settings, appearanceTheme: normalizeAppearanceTheme(value) };
-  if (key === 'textSize') settings = { ...settings, textSize: normalizeTextSize(value) };
+  if (key === 'textZoomPercent') settings = { ...settings, textZoomPercent: normalizeTextZoomPercent(value) };
+  if (key === 'fontProfile') settings = { ...settings, fontProfile: String(value || 'signature') };
+  if (key === 'customFontFamily') settings = { ...settings, customFontFamily: sanitizeLocalFontFamily(value) };
+
+  if (settings.fontProfile === 'custom-local' && !sanitizeLocalFontFamily(settings.customFontFamily)) {
+    appearanceSaveStatus = t('appearance.invalid_local_font_family');
+    renderAppearanceControls();
+    return;
+  }
+
+  appearanceSaveStatus = persist ? t('appearance.saving') : '';
   renderAppearanceControls();
-  if (persist) persistAppearanceSettings();
+  if (!persist) return;
+
+  try {
+    const savedSettings = await persistAppearanceSettings(panelAppearanceSnapshot());
+    if (mutationId === appearanceMutationId) {
+      settings = savedSettings;
+      appearanceSaveStatus = t('appearance.saved');
+      renderAppearanceControls();
+    }
+  } catch (error) {
+    if (mutationId === appearanceMutationId) {
+      settings = {
+        ...settings,
+        textZoomPercent: previousAppearance.textZoomPercent,
+        fontProfile: previousAppearance.fontProfile,
+        customFontFamily: previousAppearance.customFontFamily,
+        colorMode: previousAppearance.colorMode,
+        appearanceTheme: previousAppearance.appearanceTheme,
+      };
+      appearanceSaveStatus = `${t('appearance.change_not_saved')} ${error?.message || ''}`.trim();
+      renderAppearanceControls();
+    }
+  }
 }
 
 
@@ -6235,7 +6332,8 @@ async function loadSettings({ restoreMessages = false } = {}) {
   const storedWakeSettings = normalizeWakeWordSettings({ ...DEFAULT_SETTINGS, ...storedSettings });
   const migrateDesktopOptionDefaults = !storedSettings.modelOptionsVersion && storedSettings.reasoningEffort === 'medium';
   const migrateModelOptionScope = !storedSettings.extensionPreferredModelOptions || !storedSettings.sessionModelOptionBindings;
-  settings = { ...DEFAULT_SETTINGS, ...storedSettings };
+  const storedPanelAppearance = appearancePreferencesForSurface(storedSettings, 'panel');
+  settings = { ...DEFAULT_SETTINGS, ...storedSettings, ...storedPanelAppearance };
   settings = {
     ...settings,
     thinkingEnabled: settings.thinkingEnabled !== false,
@@ -6271,7 +6369,10 @@ async function loadSettings({ restoreMessages = false } = {}) {
     wakeWordSpeakReplies: storedWakeSettings.speakReplies,
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
-    textSize: normalizeTextSize(settings.textSize),
+    appearanceSchemaVersion: 2,
+    textZoomPercent: normalizeTextZoomPercent(settings.textZoomPercent),
+    fontProfile: settings.fontProfile || 'signature',
+    customFontFamily: sanitizeLocalFontFamily(settings.customFontFamily),
     panelResidencyMode: normalizePanelResidencyMode(settings.panelResidencyMode),
     extensionPreferredModel: normalizeBrowserModelBinding(settings.extensionPreferredModel),
     sessionModelBindings: Object.fromEntries(Object.entries(settings.sessionModelBindings && typeof settings.sessionModelBindings === 'object' ? settings.sessionModelBindings : {})
@@ -6453,7 +6554,7 @@ async function saveSettingsFromForm() {
     wakeWordSpeakReplies: els.wakeWordSpeakRepliesInput ? els.wakeWordSpeakRepliesInput.checked : settings.wakeWordSpeakReplies !== false,
     colorMode: normalizeColorMode(settings.colorMode),
     appearanceTheme: normalizeAppearanceTheme(settings.appearanceTheme),
-    textSize: normalizeTextSize(settings.textSize),
+    appearanceSchemaVersion: 2,
   };
   const connectionChanged = previousSettings.connectionMode !== settings.connectionMode
     || previousSettings.connectionTransport !== settings.connectionTransport
@@ -6473,6 +6574,17 @@ async function saveSettingsFromForm() {
   if (gatewayMode === 'remote-dashboard' && contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) {
     await applyContextScope(contextScope, { ensureSession: false });
   }
+  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const freshSettings = stored.hermesBrowserSettings || {};
+  const panelSettings = { ...settings };
+  for (const webAppearanceKey of ['webTextZoomPercent', 'webFontProfile', 'webCustomFontFamily', 'webTextSize']) {
+    delete panelSettings[webAppearanceKey];
+  }
+  settings = withAppearancePreferenceUpdate(
+    { ...freshSettings, ...panelSettings },
+    'panel',
+    panelAppearancePreferences(),
+  );
   applyAppearanceSettings();
   await chrome.storage.local.set({ hermesBrowserSettings: settings });
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
@@ -9225,15 +9337,42 @@ function bindEvents() {
     }
   });
   for (const button of els.colorModeButtons || []) {
-    button.addEventListener('click', () => setAppearanceOption('colorMode', button.dataset.colorMode));
+    button.addEventListener('click', () => void setAppearanceOption('colorMode', button.dataset.colorMode));
   }
-  for (const button of els.textSizeButtons || []) {
-    button.addEventListener('click', () => setAppearanceOption('textSize', button.dataset.textSize));
-  }
+  els.textZoomPresetGrid?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-text-zoom-percent]');
+    const percent = Number(button?.dataset.textZoomPercent);
+    if (!button || !ZOOM_PRESETS.includes(percent)) return;
+    void setAppearanceOption('textZoomPercent', percent);
+  });
+  els.textZoomInput?.addEventListener('change', () => {
+    void setAppearanceOption('textZoomPercent', els.textZoomInput.value);
+  });
+  els.textZoomDecreaseButton?.addEventListener('click', () => {
+    const current = appearancePreferencesForSurface(settings, 'panel').textZoomPercent;
+    void setAppearanceOption('textZoomPercent', stepTextZoomPercent(current, 'down'));
+  });
+  els.textZoomIncreaseButton?.addEventListener('click', () => {
+    const current = appearancePreferencesForSurface(settings, 'panel').textZoomPercent;
+    void setAppearanceOption('textZoomPercent', stepTextZoomPercent(current, 'up'));
+  });
+  els.fontProfileSelect?.addEventListener('change', () => {
+    void setAppearanceOption('fontProfile', els.fontProfileSelect.value);
+  });
+  els.customFontFamilyInput?.addEventListener('change', () => {
+    const family = sanitizeLocalFontFamily(els.customFontFamilyInput.value);
+    if (!family) {
+      appearanceMutationId += 1;
+      appearanceSaveStatus = t('appearance.invalid_local_font_family');
+      if (els.appearanceSaveStatus) els.appearanceSaveStatus.textContent = appearanceSaveStatus;
+      return;
+    }
+    void setAppearanceOption('customFontFamily', family);
+  });
   els.themeGrid?.addEventListener('click', (event) => {
     const card = event.target.closest('[data-theme]');
     if (!card) return;
-    setAppearanceOption('appearanceTheme', card.dataset.theme);
+    void setAppearanceOption('appearanceTheme', card.dataset.theme);
   });
   systemColorQuery?.addEventListener?.('change', () => {
     if (normalizeColorMode(settings.colorMode) === 'system') renderAppearanceControls();
