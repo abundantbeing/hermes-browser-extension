@@ -283,6 +283,7 @@ import {
   automaticApiPairingAllowed,
   connectionModePreviewUrl,
   connectionSettingsAfterTokenClear,
+  deriveShareBrowserContextDefault,
   legacyGatewayModeForConnection,
   migrateConnectionSettings,
   normalizeConnectionMode,
@@ -449,6 +450,8 @@ const els = {
   includeTabsInput: $('#includeTabsInput'),
   includePageTextInput: $('#includePageTextInput'),
   includeSelectedTextInput: $('#includeSelectedTextInput'),
+  shareBrowserContextInput: $('#shareBrowserContextInput'),
+  shareBrowserContextControl: $('#shareBrowserContextControl'),
   inlineAssistEnabled: $('#inlineAssistEnabled'),
   inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
   inlineAssistModel: $('#inlineAssistModel'),
@@ -1675,7 +1678,7 @@ async function initializeSessionForPanelOpen({ focus = false } = {}) {
 }
 
 async function applyContextScope(nextScope, { ensureSession = false } = {}) {
-  contextScope = contextScopeForGateway(nextScope, settings.gatewayMode);
+  contextScope = contextScopeForGateway(nextScope, settings.gatewayMode, { shareBrowserContext: settings.shareBrowserContext === true });
   previousConversationScope = conversationScopeForContextScope(contextScope, previousConversationScope);
   if (contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) rememberConversationScope(contextScope);
   else saveConversationScopeForInstance();
@@ -1740,6 +1743,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
       sessionChatStreaming: true,
       skills: true,
       dashboardWs: true,
+      browserContextInline: settings.shareBrowserContext === true,
       warnings: [
         'Remote dashboard mode uses WebSocket session/chat APIs; REST-only browser extension APIs stay unavailable.',
         'Voice transcription unavailable — using browser speech fallback when available.',
@@ -1784,6 +1788,19 @@ function renderConnectionModePanel() {
   if (els.gatewayUrlField) els.gatewayUrlField.hidden = mode === 'cloud';
   if (els.cloudPreviewHelp) els.cloudPreviewHelp.hidden = mode !== 'cloud';
   renderGatewayHelp();
+  renderShareBrowserContextControl();
+}
+
+// The browser-context sharing consent toggle is only relevant for Cloud and
+// dashboard-ticket (no-key Remote) connections, where sharing page context is
+// opt-in. Local/Remote API connections always share context; the control stays
+// hidden and the setting is unused by the scope gate.
+function renderShareBrowserContextControl() {
+  if (!els.shareBrowserContextControl || !els.shareBrowserContextInput) return;
+  const mode = normalizeConnectionMode(settings.connectionMode);
+  const relevant = mode === 'cloud' || settings.connectionTransport === CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
+  els.shareBrowserContextControl.hidden = !relevant;
+  if (relevant) els.shareBrowserContextInput.checked = settings.shareBrowserContext === true;
 }
 
 function applyConnectionMode(value) {
@@ -6936,8 +6953,17 @@ async function loadSettings({ restoreMessages = false } = {}) {
       .filter(([, options]) => Boolean(options))),
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
   };
+  settings = {
+    ...settings,
+    // Cloud/dashboard consent: honor an explicit stored choice, otherwise
+    // derive the safe default from the connection (Cloud → off, self-hosted
+    // remote dashboard → on, API transports → on/unused).
+    shareBrowserContext: typeof settings.shareBrowserContext === 'boolean'
+      ? settings.shareBrowserContext
+      : deriveShareBrowserContextDefault(settings),
+  };
   trustedDashboardTabId = Number(settings.trustedDashboardTabId) || null;
-  contextScope = contextScopeForGateway(contextScope, settings.gatewayMode);
+  contextScope = contextScopeForGateway(contextScope, settings.gatewayMode, { shareBrowserContext: settings.shareBrowserContext === true });
   saveContextScopeForInstance();
   const effectiveBinding = resolveBrowserEffectiveModel({
     sessionId: settings.sessionId,
@@ -6995,6 +7021,8 @@ function syncSettingsForm() {
   els.includeTabsInput.checked = Boolean(settings.includeTabs);
   els.includePageTextInput.checked = Boolean(settings.includePageText);
   els.includeSelectedTextInput.checked = Boolean(settings.includeSelectedText);
+  if (els.shareBrowserContextInput) els.shareBrowserContextInput.checked = settings.shareBrowserContext === true;
+  renderShareBrowserContextControl();
   if (els.inlineAssistEnabled) els.inlineAssistEnabled.checked = settings.inlineAssistEnabled !== false;
   if (els.inlineAssistDefaultRoute) els.inlineAssistDefaultRoute.value = normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute);
   renderInlineAssistModelOptions();
@@ -7036,6 +7064,7 @@ async function saveSettingsFromForm() {
     apiKey,
   });
   const gatewayMode = legacyGatewayModeForConnection({ connectionMode, connectionTransport });
+  const shareContextRelevant = connectionMode === 'cloud' || connectionTransport === CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
   const remote = connectionMode !== 'local';
   const rawGatewayUrl = els.gatewayUrlInput.value.trim();
   const gatewayUrl = connectionMode === 'cloud'
@@ -7076,6 +7105,9 @@ async function saveSettingsFromForm() {
     includeTabs: els.includeTabsInput.checked,
     includePageText: els.includePageTextInput.checked,
     includeSelectedText: els.includeSelectedTextInput.checked,
+    shareBrowserContext: shareContextRelevant && els.shareBrowserContextInput
+      ? els.shareBrowserContextInput.checked
+      : settings.shareBrowserContext === true,
     inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
     ...assistBinding,
@@ -8634,7 +8666,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       : settings;
     const turnContextScope = turnOptions.forceChatOnly
       ? { mode: CONTEXT_SCOPE_MODES.CHAT_ONLY, selectedTabIds: [] }
-      : contextOverride?.contextScope || contextScopeForGateway(contextScope, settings.gatewayMode);
+      : contextOverride?.contextScope || contextScopeForGateway(contextScope, settings.gatewayMode, { shareBrowserContext: settings.shareBrowserContext === true });
     const capturedContext = turnOptions.forceChatOnly
       ? null
       : contextOverride || await refreshContext();

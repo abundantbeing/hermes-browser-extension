@@ -10,6 +10,7 @@ import {
   automaticApiPairingAllowed,
   connectionModePreviewUrl,
   connectionSettingsAfterTokenClear,
+  deriveShareBrowserContextDefault,
   isLoopbackGatewayUrl,
   legacyGatewayModeForConnection,
   migrateConnectionSettings,
@@ -218,4 +219,32 @@ test('clearStoredToken applies the post-clear transport fallback and re-runs rea
   const clearBody = sidepanelSource.match(/async function clearStoredToken\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
   assert.match(clearBody, /connectionSettingsAfterTokenClear\(settings\)/);
   assert.match(clearBody, /runPanelConnectionReadiness\(\)/);
+});
+
+test('browser-context sharing consent defaults are safe per connection type', () => {
+  // Hermes Cloud is a third-party endpoint: sharing stays OFF unless the user opts in.
+  assert.equal(deriveShareBrowserContextDefault({
+    connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
+    connectionMode: 'cloud',
+    connectionTransport: CONNECTION_TRANSPORTS.CLOUD_TICKET_WS,
+  }), false);
+  // A self-hosted remote dashboard is the user's own server: sharing defaults ON.
+  assert.equal(deriveShareBrowserContextDefault({
+    connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
+    connectionMode: 'remote',
+    connectionTransport: CONNECTION_TRANSPORTS.REMOTE_DASHBOARD,
+  }), true);
+  // Local/Remote API transports always share context; the value is unused by the gate.
+  assert.equal(deriveShareBrowserContextDefault({
+    connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
+    connectionMode: 'local',
+    connectionTransport: CONNECTION_TRANSPORTS.LOCAL_API,
+  }), true);
+  assert.equal(deriveShareBrowserContextDefault({
+    connectionSchemaVersion: CONNECTION_SCHEMA_VERSION,
+    connectionMode: 'remote',
+    connectionTransport: CONNECTION_TRANSPORTS.REMOTE_API,
+  }), true);
+  // Legacy gateway-mode settings migrate to the same defaults.
+  assert.equal(deriveShareBrowserContextDefault({ gatewayMode: 'remote-dashboard' }), true);
 });

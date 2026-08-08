@@ -51,6 +51,7 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   pluginActions: false,
   approvalEvents: false,
   browserControl: false,
+  browserContextInline: false,
   dashboardWs: false,
   endpoints: DEFAULT_ENDPOINTS,
   raw: null,
