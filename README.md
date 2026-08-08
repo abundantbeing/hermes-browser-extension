@@ -15,7 +15,7 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 
 ## What it is
 
-Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium side panel for the real Hermes Agent runtime. Choose a local gateway, attach to a signed-in Hermes Cloud agent tab, or connect to a self-hosted remote API/dashboard. Local and remote API connections can use the models, tools, skills, sessions, memory, and MCP servers already configured in Hermes; Cloud and dashboard-ticket connections are intentionally Chat-only.
+Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium side panel for the real Hermes Agent runtime. Choose a local gateway, attach to a signed-in Hermes Cloud agent tab, or connect to a self-hosted remote API/dashboard. Local and remote API connections can use the models, tools, skills, sessions, memory, and MCP servers already configured in Hermes; Cloud and dashboard-ticket connections are Chat-only until you opt in to context sharing in Settings.
 
 This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/Chromium side-panel integration for Hermes Agent.
 
@@ -39,7 +39,7 @@ Private surfaces use per-site context controls and conservative defaults. Browse
 
 Open the extension's full view for canonical Hermes sessions, model/runtime control, rich messages, generated media, and accurate session context telemetry in a browser-native workspace.
 
-Hermes Web Alpha currently uses token-backed **Local or Remote API** connections. Hermes Cloud Preview and ticketed remote-dashboard transports remain Chat-only in the side panel; live full-view dashboard handoff is not shipped yet.
+Hermes Web Alpha currently uses token-backed **Local or Remote API** connections. Hermes Cloud Preview and ticketed remote-dashboard transports are Chat-only by default with opt-in context sharing in the side panel; live full-view dashboard handoff is not shipped yet.
 
 <p align="center">
   <img src="./assets/readme/hermes-web-new-session.png" alt="Hermes Web in Nous Light mode showing a connected new-session workspace with session rail, composer, and context inspector" width="100%" />
@@ -110,10 +110,10 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Firefox | Preview package | `npm run build:firefox` produces `dist/firefox/` with Firefox-specific manifest adaptation. Chrome/Edge/Chromium remain the primary public support target. |
 | Safari | Not shipped | Browser-family diagnostics exist, but no Safari package is included. |
 | Local Hermes API server | Yes | Default path: `http://127.0.0.1:8642`. |
-| Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Uses a single-use WebSocket ticket and enforces Chat-only context. This is not a general cookie import or background account-discovery flow. |
+| Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Uses a single-use WebSocket ticket and is Chat-only until you opt in to context sharing. This is not a general cookie import or background account-discovery flow. |
 | Remote API server | Yes, explicit URL/token only | Use trusted LAN/Tailscale/VPN or HTTPS reverse proxy; do not expose Hermes naked to the internet. |
-| Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard URL and no API key. Chat/session/model path only; REST-only profile/skills/image-upload surfaces remain unavailable. |
-| Hermes Web full view | Local/Remote API alpha | Requires a token-backed Local or Remote API connection. Cloud Preview and ticketed remote-dashboard transports remain Chat-only in the side panel. |
+| Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard URL and no API key. Chat/session/model path plus opt-in context sharing; REST-only profile/skills/image-upload surfaces remain unavailable. |
+| Hermes Web full view | Local/Remote API alpha | Requires a token-backed Local or Remote API connection. Cloud Preview and ticketed remote-dashboard transports are Chat-only by default with opt-in context sharing in the side panel. |
 | Browser Context Protocol | Yes | Extension emits typed `hermes.browser.context.v2` turn envelopes while retaining the v1 prompt compatibility path. |
 | Hermes Assist | Yes, site-aware preview/review | 31 writing environments are recognized. Safe plain-text composers may apply after explicit review; structured/private surfaces can fall back to copy-only. Hermes Assist never submits. |
 | Companion plugin | Optional functional context cache | `companion-plugin/` provides read-only tools/hooks for sanitized Browser context; not required for normal extension use. |
@@ -237,7 +237,7 @@ Hermes Cloud Preview uses **Trusted Dashboard Attach**:
 
 The extension binds trust to that exact active tab and HTTPS origin, verifies the tab again before minting, mints a short-lived single-use WebSocket ticket in the page, and verifies the WebSocket handshake before reporting success. The ticket is kept in memory only and is never persisted or logged. Cloud never falls back to localhost or a stored Local API token.
 
-Hermes Cloud is **Chat-only** in this release. Browser page text, selected text, open-tab context, and attachments are disabled for this mode. The extension does not read dashboard cookies, store a Cloud password, or add `cookies` or `nativeMessaging` permissions.
+Hermes Cloud is **Chat-only by default** in this release; enabling **Share page context with this gateway** in Settings (a per-connection consent toggle, off by default because the endpoint is a third party) unlocks Follow active tab, Pin current tab, per-tab prompt selection, and full BCP v2 page context over the dashboard WebSocket. Browser page text, selected text, and open-tab context stay disabled until you opt in, and the extension still does not read dashboard cookies, store a Cloud password, or add `cookies` or `nativeMessaging` permissions.
 
 If the connected Cloud agent does not expose `/api/auth/ws-ticket`, `/api/ws`, or the required session/model RPC methods, the extension reports the missing capability and leaves Local/Remote settings untouched. Update that agent's Hermes runtime using the [official Hermes Agent installation and update docs](https://hermes-agent.nousresearch.com/docs/getting-started/installation). It never redirects Cloud to `127.0.0.1` as a fallback.
 

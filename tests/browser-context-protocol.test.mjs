@@ -403,9 +403,9 @@ test('BCP v2 final redaction fails closed on unsupported values and cycles', () 
 
 test('BCP v2 sidepanel transport passes prepared attachments into the typed envelope', () => {
   const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const callStart = sidepanelSource.indexOf('serializeBrowserTurnEnvelope({');
+  const callStart = sidepanelSource.indexOf('buildBrowserTurnEnvelope({');
   const callEnd = sidepanelSource.indexOf('\n    });', callStart);
-  assert.ok(callStart >= 0 && callEnd > callStart, 'serializer call must be present and bounded');
+  assert.ok(callStart >= 0 && callEnd > callStart, 'envelope builder call must be present and bounded');
   const serializerCall = sidepanelSource.slice(callStart, callEnd);
   assert.match(serializerCall, /humanInput:\s*promptUserText/);
   assert.match(serializerCall, /attachments:\s*preparedAttachments/);

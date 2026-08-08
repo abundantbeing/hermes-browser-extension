@@ -57,6 +57,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   tokenSource: '',
   lastConnectionTestedAt: 0,
   shareBrowserContext: false,
+  allowBrowserControl: false,
   sessionId: 'hermes-browser-extension',
   sessionTitle: 'Hermes Browser Extension',
   sessionSource: 'hermes_browser',
