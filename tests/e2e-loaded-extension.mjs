@@ -7,6 +7,9 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
+import { crc32 } from '../extension/lib/vsix-theme-extractor.mjs';
+import { AGENT_THEME_END, AGENT_THEME_START } from '../extension/lib/agent-theme-authoring.mjs';
+
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const PROFILE = path.join(ROOT, 'tmp', `e2e-loaded-extension-${process.pid}`);
@@ -45,6 +48,8 @@ const CUSTOM_THEME_WEB_SHELL_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-sh
 const CUSTOM_THEME_PANEL_320_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-320${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_PANEL_420_SCREENSHOT = path.join(QA_DIR, `custom-theme-panel-420${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const CUSTOM_THEME_WEB_1024_SCREENSHOT = path.join(QA_DIR, `custom-theme-web-1024${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const AGENT_THEME_STUDIO_MONO_SCREENSHOT = path.join(QA_DIR, `agent-theme-studio-mono${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const AGENT_THEME_STUDIO_SCREENSHOT = path.join(QA_DIR, `agent-theme-studio${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const SETTINGS_PROFILE_POLISH_SCREENSHOT = path.join(QA_DIR, `settings-profile-polish${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const SETTINGS_ZOOM_POLISH_SCREENSHOT = path.join(QA_DIR, `settings-zoom-polish${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT = path.join(QA_DIR, `settings-context-actions-collapsed${ASSIST_SCREENSHOT_SUFFIX}.png`);
@@ -72,6 +77,14 @@ const CUSTOM_THEME_INVALID_DOCUMENT = Object.freeze({
   name: 'E2E Low Contrast',
   colors: { ...CUSTOM_THEME_VALID_DOCUMENT.colors, ink: '#777777' },
 });
+const AGENT_THEME_DOCUMENT = Object.freeze({
+  ...CUSTOM_THEME_VALID_DOCUMENT,
+  name: 'E2E Agent Matrix',
+  description: 'Generated through the loaded Hermes theme authoring path.',
+  colors: { ...CUSTOM_THEME_VALID_DOCUMENT.colors, primary: '#006b35', primaryDeep: '#003d20', onPrimary: '#ffffff', accent: '#00c864', onAccent: '#101114', shellForeground: '#ffffff' },
+  darkColors: { ...CUSTOM_THEME_VALID_DOCUMENT.darkColors, primary: '#00aa55', primaryDeep: '#006633', onPrimary: '#101114', accent: '#7cff7c', onAccent: '#101114', shellForeground: '#ffffff' },
+});
+const AGENT_THEME_REPLY = `${AGENT_THEME_START}\n${JSON.stringify(AGENT_THEME_DOCUMENT)}\n${AGENT_THEME_END}`;
 const TEST_TOKEN = 'e2e-browser-token-not-a-secret';
 const TEST_PROMPT = 'Verify the loaded Hermes Browser round trip.';
 const TEST_REPLY = 'Loaded extension round trip confirmed.';
@@ -85,6 +98,86 @@ const FULLTAB_DELEGATION_ID = 'deleg_web12345';
 const FULLTAB_DELEGATION_ACK = `Delegated Hermes Web background work as ${FULLTAB_DELEGATION_ID}. Results will arrive later.`;
 const FULLTAB_DELEGATION_RESULT = 'Hermes Web rendered its delayed delegation result automatically.';
 const INLINE_REPLY = 'Clearer, tighter, still your voice.';
+
+const zip16 = (value) => [value & 255, (value >>> 8) & 255];
+const zip32 = (value) => [value & 255, (value >>> 8) & 255, (value >>> 16) & 255, (value >>> 24) & 255];
+
+function marketplaceVsixFixture() {
+  const encoder = new TextEncoder();
+  const entries = [
+    {
+      name: 'extension/package.json',
+      data: JSON.stringify({
+        name: 'theme-dracula',
+        version: '2.25.1',
+        contributes: { themes: [{ label: 'Dracula', uiTheme: 'vs-dark', path: './themes/dracula.json' }] },
+      }),
+    },
+    {
+      name: 'extension/themes/dracula.json',
+      data: JSON.stringify({
+        name: 'Dracula',
+        type: 'dark',
+        colors: {
+          'editor.background': '#282a36',
+          'editor.foreground': '#f8f8f2',
+          'button.background': '#6272a4',
+          'editorError.foreground': '#ff5555',
+        },
+      }),
+    },
+  ];
+  const locals = [];
+  const centrals = [];
+  let offset = 0;
+  for (const entry of entries) {
+    const name = encoder.encode(entry.name);
+    const data = encoder.encode(entry.data);
+    const checksum = crc32(data);
+    const local = new Uint8Array([
+      ...zip32(0x04034b50), ...zip16(20), ...zip16(0x0800), ...zip16(0), ...zip16(0), ...zip16(0),
+      ...zip32(checksum), ...zip32(data.length), ...zip32(data.length), ...zip16(name.length), ...zip16(0),
+      ...name, ...data,
+    ]);
+    const central = new Uint8Array([
+      ...zip32(0x02014b50), ...zip16(20), ...zip16(20), ...zip16(0x0800), ...zip16(0), ...zip16(0), ...zip16(0),
+      ...zip32(checksum), ...zip32(data.length), ...zip32(data.length), ...zip16(name.length), ...zip16(0), ...zip16(0),
+      ...zip16(0), ...zip16(0), ...zip32(0), ...zip32(offset), ...name,
+    ]);
+    locals.push(local);
+    centrals.push(central);
+    offset += local.length;
+  }
+  const centralOffset = offset;
+  const centralSize = centrals.reduce((sum, item) => sum + item.length, 0);
+  const end = new Uint8Array([
+    ...zip32(0x06054b50), ...zip16(0), ...zip16(0), ...zip16(entries.length), ...zip16(entries.length),
+    ...zip32(centralSize), ...zip32(centralOffset), ...zip16(0),
+  ]);
+  const archive = new Uint8Array(centralOffset + centralSize + end.length);
+  let cursor = 0;
+  for (const part of [...locals, ...centrals, end]) { archive.set(part, cursor); cursor += part.length; }
+  return archive;
+}
+
+function marketplaceGalleryFixture() {
+  return {
+    results: [{
+      extensions: [{
+        extensionName: 'theme-dracula',
+        displayName: 'Dracula',
+        shortDescription: 'Deterministic E2E color theme',
+        publisher: { publisherName: 'dracula-theme', displayName: 'Dracula Theme' },
+        statistics: [{ statisticName: 'install', value: 123456 }],
+        tags: ['Themes'],
+        versions: [{
+          version: '2.25.1',
+          files: [{ assetType: 'Microsoft.VisualStudio.Services.VSIXPackage', source: 'https://deterministic.vsassets.io/theme.vsix' }],
+        }],
+      }],
+    }],
+  };
+}
 
 function chromeExecutable() {
   const candidates = [
@@ -422,7 +515,10 @@ async function startMockHermes() {
         count: 1,
         delegation_id: fullTabDelegated ? FULLTAB_DELEGATION_ID : DELEGATION_ID,
       };
-      const reply = fullTabDelegated ? FULLTAB_DELEGATION_ACK : delegated ? DELEGATION_ACK : TEST_REPLY;
+      const agentThemeRequested = message.includes(AGENT_THEME_START) && message.includes(AGENT_THEME_END);
+      const reply = agentThemeRequested
+        ? AGENT_THEME_REPLY
+        : fullTabDelegated ? FULLTAB_DELEGATION_ACK : delegated ? DELEGATION_ACK : TEST_REPLY;
       const hasDelegation = delegated || fullTabDelegated;
       const blocks = [
         ['run.started', { run_id: 'run-e2e' }],
@@ -564,6 +660,57 @@ async function waitFor(check, timeoutMs = 25_000, intervalMs = 150) {
   throw lastError || new Error(`Timed out after ${timeoutMs}ms`);
 }
 
+async function runWithMarketplaceInterception(worker, operation, expectedRequests = 3) {
+  const galleryBody = Buffer.from(JSON.stringify(marketplaceGalleryFixture())).toString('base64');
+  const archive = marketplaceVsixFixture();
+  const archiveBody = Buffer.from(archive).toString('base64');
+  let eventIndex = worker.events.length;
+  let handled = 0;
+  await worker.call('Fetch.enable', {
+    patterns: [
+      { urlPattern: 'https://marketplace.visualstudio.com/*', requestStage: 'Request' },
+      { urlPattern: 'https://*.vsassets.io/*', requestStage: 'Request' },
+    ],
+  });
+  let pending;
+  if (typeof operation === 'function' && operation.direct) {
+    pending = operation.direct();
+  } else {
+    pending = operation();
+  }
+  try {
+    while (handled < expectedRequests) {
+      const event = await waitFor(() => {
+        while (eventIndex < worker.events.length) {
+          const candidate = worker.events[eventIndex++];
+          if (candidate.method === 'Fetch.requestPaused') return candidate;
+        }
+        return null;
+      }, 10_000, 10);
+      const url = String(event.params?.request?.url || '');
+      const isGallery = url.startsWith('https://marketplace.visualstudio.com/');
+      const isArchive = url === 'https://deterministic.vsassets.io/theme.vsix';
+      assert.ok(isGallery || isArchive, `Unexpected intercepted Marketplace URL: ${url}`);
+      const body = isGallery ? galleryBody : archiveBody;
+      const contentType = isGallery ? 'application/json' : 'application/octet-stream';
+      await worker.call('Fetch.fulfillRequest', {
+        requestId: event.params.requestId,
+        responseCode: 200,
+        responseHeaders: [
+          { name: 'content-type', value: contentType },
+          { name: 'content-length', value: String(Buffer.from(body, 'base64').byteLength) },
+          { name: 'access-control-allow-origin', value: '*' },
+        ],
+        body,
+      });
+      handled += 1;
+    }
+    return await pending;
+  } finally {
+    await worker.call('Fetch.disable').catch(() => {});
+  }
+}
+
 async function fetchJson(url, options) {
   const response = await fetch(url, options);
   if (!response.ok) throw new Error(`${url} failed (${response.status})`);
@@ -634,6 +781,9 @@ async function main() {
   let web;
   let fixture;
   let chatgptFixture;
+  let marketplaceWorkerSpike;
+  let marketplacePanelUi;
+  let marketplaceWebUi;
   let chromeStderr = '';
   try {
     const extensionId = unpackedExtensionId(DIST);
@@ -667,6 +817,7 @@ async function main() {
       try {
         await wakeClient.connect();
         await wakeClient.call('Runtime.enable');
+        await waitFor(() => wakeClient.evaluate(`Boolean(globalThis.chrome?.runtime?.sendMessage)`));
         await wakeClient.evaluate(`void chrome.runtime.sendMessage({ type: 'HERMES_INLINE_SESSION_STATUS' }).catch(() => null); true`);
       } finally {
         wakeClient.close();
@@ -703,6 +854,11 @@ async function main() {
     await setup.connect();
     await setup.call('Runtime.enable');
     await waitFor(() => setup.evaluate(`Boolean(globalThis.chrome?.storage?.local)`));
+
+
+
+
+
     await setup.evaluate(`chrome.storage.local.set({hermesBrowserSettings:${JSON.stringify({
       connectionSchemaVersion: 1,
       connectionMode: 'local',
@@ -741,6 +897,73 @@ async function main() {
       const input = document.querySelector('#promptInput');
       return Boolean(startup?.hidden && input && !input.disabled);
     })()`));
+
+    marketplaceWorkerSpike = await runWithMarketplaceInterception(setup, () => panel.evaluate(`(async () => {
+      const search = await chrome.runtime.sendMessage({ type: 'HERMES_THEME_MARKETPLACE_SEARCH', query: 'dracula', limit: 20 });
+      const exact = search?.data?.results?.find((item) => item.extensionId === 'dracula-theme.theme-dracula');
+      if (!search?.ok || !exact) throw new Error('Marketplace worker spike did not return the reviewed exact theme ID.');
+      const installed = await chrome.runtime.sendMessage({ type: 'HERMES_THEME_MARKETPLACE_INSTALL', extensionId: exact.extensionId });
+      if (!installed?.ok || !installed.data?.themeId) throw new Error('Marketplace worker spike did not install through the runtime controller.');
+      const stored = await chrome.storage.local.get('hermesBrowserCustomThemesV1');
+      const record = stored.hermesBrowserCustomThemesV1?.themes?.find((item) => item.id === installed.data.themeId);
+      if (!record || record.source !== 'vscode-marketplace' || record.sourceId !== exact.extensionId) throw new Error('Marketplace worker spike did not persist normalized source metadata.');
+      if (/vsix|rawTheme|archiveBytes/i.test(JSON.stringify(record))) throw new Error('Marketplace worker spike persisted forbidden raw package data.');
+      await chrome.storage.local.remove('hermesBrowserCustomThemesV1');
+      return { exactId: exact.extensionId, sourceVersion: record.sourceVersion, variantCount: installed.data.variantCount, valid: true, storageWritten: true, rawBytesPersisted: false, transport: 'cdp-intercepted' };
+    })()`));
+    assert.equal(marketplaceWorkerSpike.exactId, 'dracula-theme.theme-dracula');
+    assert.equal(marketplaceWorkerSpike.valid, true);
+    assert.equal(marketplaceWorkerSpike.storageWritten, true);
+    assert.equal(marketplaceWorkerSpike.rawBytesPersisted, false);
+    assert.equal(marketplaceWorkerSpike.transport, 'cdp-intercepted');
+
+    marketplacePanelUi = await runWithMarketplaceInterception(setup, async () => {
+      await panel.evaluate(`(() => {
+        document.querySelector('#settingsButton').click();
+        document.querySelector('#customThemeManager').open = true;
+      })()`);
+      const loading = await waitFor(() => panel.evaluate(`document.querySelector('#marketplaceThemeStatus')?.textContent?.includes('Loading')`));
+      const rendered = await waitFor(() => panel.evaluate(`(() => {
+        const card = document.querySelector('#marketplaceThemeResults .marketplace-theme-card');
+        const button = card?.querySelector('button');
+        if (!card || !button) return null;
+        return { title: card.querySelector('strong')?.textContent, action: button.textContent, loading: document.querySelector('#marketplaceThemeStatus')?.textContent || '' };
+      })()`));
+      await panel.evaluate(`document.querySelector('#closeSettingsButton').click()`);
+      return { ...rendered, loadingObserved: Boolean(loading), transport: 'cdp-intercepted' };
+    }, 1);
+    assert.equal(marketplacePanelUi.title, 'Dracula');
+    assert.equal(marketplacePanelUi.action, 'Install');
+    assert.equal(marketplacePanelUi.loadingObserved, true);
+
+    const directFallbackProof = await runWithMarketplaceInterception(setup, () => panel.evaluate(`(async () => {
+      const installed = await chrome.runtime.sendMessage({ type: 'HERMES_THEME_MARKETPLACE_INSTALL', extensionId: 'dracula-theme.theme-dracula' });
+      const stored = await chrome.storage.local.get('hermesBrowserCustomThemesV1');
+      const record = stored.hermesBrowserCustomThemesV1?.themes?.find((item) => item.id === installed?.data?.themeId);
+      if (!installed?.ok || !record || record.source !== 'vscode-marketplace') throw new Error('Direct worker install did not persist through the runtime controller.');
+      await chrome.storage.local.remove('hermesBrowserCustomThemesV1');
+      const style = (selector) => getComputedStyle(document.querySelector(selector));
+      const create = style('#agentThemeCreateButton');
+      const search = style('#marketplaceThemeSearchButton');
+      const heading = style('#marketplaceThemeTitle');
+      const helper = style('.agent-theme-studio > p');
+      return {
+        themeId: installed.data.themeId,
+        searchBackground: search.backgroundColor,
+        searchColor: search.color,
+        buttonBackground: create.backgroundColor,
+        buttonColor: create.color,
+        headingFont: heading.fontSize,
+        helperColor: helper.color,
+      };
+    })()`), 2);
+    assert.equal(directFallbackProof.themeId.slice(0, 7), 'custom:');
+    assert.equal(directFallbackProof.searchBackground, 'rgb(244, 242, 235)');
+    assert.equal(directFallbackProof.searchColor, 'rgb(17, 17, 17)');
+    assert.equal(directFallbackProof.buttonBackground, 'rgb(5, 5, 232)');
+    assert.equal(directFallbackProof.buttonColor, 'rgb(255, 255, 255)');
+    assert.equal(directFallbackProof.headingFont, '13px');
+    assert.equal(directFallbackProof.helperColor, 'rgb(54, 255, 122)');
 
     const panelAccessibility = await panel.evaluate(`(() => {
       const visible = (node) => {
@@ -1010,6 +1233,26 @@ async function main() {
       return !stack?.hidden && rows.length === 3 ? document.querySelector('#taskStackSummary')?.textContent || '' : '';
     })()`));
     assert.match(taskWebState, /2\/3 complete · 1 active/i);
+
+    marketplaceWebUi = await runWithMarketplaceInterception(setup, async () => {
+      await web.evaluate(`(() => {
+        document.querySelector('#settingsButton').click();
+        document.querySelector('#settingsCustomThemeManager').open = true;
+      })()`);
+      const loading = await waitFor(() => web.evaluate(`document.querySelector('#settingsMarketplaceThemeStatus')?.textContent?.includes('Loading')`));
+      const rendered = await waitFor(() => web.evaluate(`(() => {
+        const card = document.querySelector('#settingsMarketplaceThemeResults .marketplace-theme-card');
+        const button = card?.querySelector('button');
+        if (!card || !button) return null;
+        return { title: card.querySelector('strong')?.textContent, action: button.textContent };
+      })()`));
+      await web.evaluate(`document.querySelector('#closeSettings').click()`);
+      return { ...rendered, loadingObserved: Boolean(loading), transport: 'cdp-intercepted' };
+    }, 1);
+    assert.equal(marketplaceWebUi.title, 'Dracula');
+    assert.equal(marketplaceWebUi.action, 'Install');
+    assert.equal(marketplaceWebUi.loadingObserved, true);
+
     const fullTabDelegationStreamsBefore = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
     await web.evaluate(`(() => {
       const input = document.querySelector('#fullTabPrompt');
@@ -1019,10 +1262,13 @@ async function main() {
       return true;
     })()`);
     await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK)}))`));
-    const pendingFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
-    const pendingFullTabDelegationWatch = pendingFullTabDelegationStore.hermesAsyncDelegationWatchesV1
-      ?.find((watch) => watch.delegationId === FULLTAB_DELEGATION_ID);
-    assert.equal(pendingFullTabDelegationWatch?.state, 'pending', 'Hermes Web acknowledgement must not settle the delegation watch.');
+    const pendingFullTabDelegationWatch = await waitFor(async () => {
+      const pendingFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
+      return pendingFullTabDelegationStore.hermesAsyncDelegationWatchesV1
+        ?.find((watch) => watch.delegationId === FULLTAB_DELEGATION_ID && watch.state === 'pending')
+        || null;
+    });
+    assert.equal(pendingFullTabDelegationWatch.state, 'pending', 'Hermes Web acknowledgement must not settle the delegation watch.');
     await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_RESULT)}))`), 20_000);
     const fullTabDelegationStreamsAfter = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
     assert.equal(fullTabDelegationStreamsAfter, fullTabDelegationStreamsBefore + 1, 'Hermes Web completion must appear without another user send.');
@@ -1252,6 +1498,11 @@ async function main() {
 
     await web.call('Page.reload', { ignoreCache: true });
     await waitFor(() => web.evaluate(`document.readyState === 'complete' && Boolean(document.querySelector('#fullTabPrompt'))`));
+    await waitFor(() => web.evaluate(`(() => (
+      document.documentElement.dataset.hermesTextZoom === '113'
+      && document.querySelector('#settingsFontProfileSelect')?.value === 'custom-local'
+      && document.querySelector('#settingsCustomFontFamilyInput')?.value === 'Arial'
+    ))()`));
     const webPersisted = await web.evaluate(`(async () => {
       const root = document.documentElement;
       const stored = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings || {};
@@ -1733,6 +1984,83 @@ async function main() {
     await waitFor(() => panel.evaluate(`/confirm/i.test(document.querySelector('#customThemeResetButton')?.textContent || '')`));
     await panel.evaluate(`document.querySelector('#customThemeResetButton').click()`);
     await waitFor(() => setup.evaluate(`chrome.storage.local.get(${JSON.stringify(customThemeStorageKey)}).then((stored) => !stored[${JSON.stringify(customThemeStorageKey)}])`));
+
+    await panel.evaluate(`(() => {
+      document.querySelector('[data-theme="mono"]')?.click();
+      document.querySelector('[data-color-mode="dark"]')?.click();
+      document.querySelector('#customThemeManager').open = true;
+      document.querySelector('#agentThemeDescription').scrollIntoView({ block: 'center' });
+    })()`);
+    await waitFor(() => setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings').then(({ hermesBrowserSettings: stored = {} }) => stored.appearanceTheme === 'mono' && stored.colorMode === 'dark')`));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    const monoAgentThemeProof = await panel.evaluate(`(() => {
+      const root = document.documentElement;
+      if (root.dataset.hermesTheme !== 'mono' || root.dataset.hermesMode !== 'dark') return null;
+      const create = getComputedStyle(document.querySelector('#agentThemeCreateButton'));
+      const helper = getComputedStyle(document.querySelector('.agent-theme-studio > p'));
+      return {
+        buttonBackground: create.backgroundColor,
+        buttonColor: create.color,
+        helperColor: helper.color,
+        canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
+      };
+    })()`);
+    assert.equal(monoAgentThemeProof.buttonBackground, 'rgb(5, 5, 232)');
+    assert.equal(monoAgentThemeProof.buttonColor, 'rgb(255, 255, 255)');
+    assert.equal(monoAgentThemeProof.helperColor, 'rgb(54, 255, 122)');
+    assert.notEqual(monoAgentThemeProof.canvas, '#101114', 'Mono proof must not retain the prior custom theme variables');
+    await saveScreenshot(panel, AGENT_THEME_STUDIO_MONO_SCREENSHOT, { captureBeyondViewport: false });
+
+    await panel.evaluate(`(() => {
+      const manager = document.querySelector('#customThemeManager');
+      manager.open = true;
+      const input = document.querySelector('#agentThemeDescription');
+      input.value = 'Matrix terminal with luminous green controls';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#agentThemeCreateButton').click();
+    })()`);
+    const agentThemeProof = await waitFor(async () => {
+      const stored = await setup.evaluate(`chrome.storage.local.get([${JSON.stringify(customThemeStorageKey)}, 'hermesBrowserSettings'])`);
+      const record = stored[customThemeStorageKey]?.themes?.[0];
+      if (!record || record.document?.name !== 'E2E Agent Matrix' || stored.hermesBrowserSettings?.appearanceTheme !== record.id) return null;
+      return panel.evaluate(`(() => {
+        const root = document.documentElement;
+        const status = document.querySelector('#agentThemeStatus')?.textContent || '';
+        if (!/created|validated|applied/i.test(status) || root.dataset.hermesTheme !== ${JSON.stringify(record.id)}) return null;
+        const rect = (selector) => {
+          const value = document.querySelector(selector)?.getBoundingClientRect();
+          return value ? { left: value.left, top: value.top, right: value.right, bottom: value.bottom, width: value.width, height: value.height } : null;
+        };
+        const file = document.querySelector('.custom-theme-file-control');
+        const preview = document.querySelector('#customThemePreviewButton');
+        return {
+          id: root.dataset.hermesTheme,
+          status,
+          primary: getComputedStyle(root).getPropertyValue('--hermes-blue').trim(),
+          canvas: getComputedStyle(root).getPropertyValue('--hermes-canvas').trim(),
+          description: document.querySelector('#agentThemeDescription')?.value || '',
+          geometry: {
+            searchInput: rect('#marketplaceThemeSearchInput'),
+            searchButton: rect('#marketplaceThemeSearchButton'),
+            file: rect('.custom-theme-file-control'),
+            preview: rect('#customThemePreviewButton'),
+            fileFont: getComputedStyle(file).fontSize,
+            previewFont: getComputedStyle(preview).fontSize,
+          },
+        };
+      })()`);
+    }, 20_000);
+    assert.equal(agentThemeProof.primary, '#00aa55');
+    assert.equal(agentThemeProof.canvas, '#101114');
+    assert.match(agentThemeProof.description, /Matrix terminal/);
+    assert.ok(Math.abs(agentThemeProof.geometry.searchInput.top - agentThemeProof.geometry.searchButton.top) <= 1, JSON.stringify(agentThemeProof.geometry));
+    assert.ok(agentThemeProof.geometry.searchButton.left - agentThemeProof.geometry.searchInput.right >= 10, JSON.stringify(agentThemeProof.geometry));
+    assert.ok(Math.abs(agentThemeProof.geometry.file.top - agentThemeProof.geometry.preview.top) <= 1, JSON.stringify(agentThemeProof.geometry));
+    assert.equal(agentThemeProof.geometry.fileFont, agentThemeProof.geometry.previewFont);
+    await panel.evaluate(`document.querySelector('#agentThemeDescription').scrollIntoView({ block: 'center' })`);
+    await saveScreenshot(panel, AGENT_THEME_STUDIO_SCREENSHOT, { captureBeyondViewport: false });
+    await setup.evaluate(`chrome.storage.local.remove(${JSON.stringify(customThemeStorageKey)})`);
+
     const customThemeProof = {
       invalidPreview,
       validFilePreview,
@@ -1747,6 +2075,8 @@ async function main() {
       clearedSurfaces,
       corruptionDisclosure,
       corruptStorePreserved: true,
+      monoAgentTheme: monoAgentThemeProof,
+      agentAuthored: agentThemeProof,
       matrix: { panel: customThemePanelMatrix, web: customThemeWebMatrix },
     };
     assert.deepEqual(consoleErrorsSince(panel, customThemePanelConsoleStart), []);
@@ -2877,6 +3207,8 @@ async function main() {
       appearance: `${ASSIST_THEME}:${ASSIST_MODE}`,
       extensionId,
       gatewayUrl: mock.baseUrl,
+      marketplaceWorkerSpike,
+      marketplaceUi: { panel: marketplacePanelUi, web: marketplaceWebUi },
       sessionId: panelSessionIdAfterReadability,
       protocol: envelope.protocol,
       accessibility: {
@@ -2932,7 +3264,7 @@ async function main() {
       settingsPolish: settingsPolishProof,
       readability: readabilityProof,
       customTheme: customThemeProof,
-      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, SETTINGS_PROFILE_POLISH_SCREENSHOT, SETTINGS_ZOOM_POLISH_SCREENSHOT, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
+      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, SETTINGS_PROFILE_POLISH_SCREENSHOT, SETTINGS_ZOOM_POLISH_SCREENSHOT, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, AGENT_THEME_STUDIO_MONO_SCREENSHOT, AGENT_THEME_STUDIO_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
     }, null, 2));
   } catch (error) {
     const diagnostics = {};

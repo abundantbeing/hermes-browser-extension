@@ -3767,6 +3767,68 @@ test('side-panel custom theme manager pins stable IDs, safe import controls, and
   assert.doesNotMatch(html, /custom\s*(?:css|style)|font\s*url/i, 'there is no raw CSS or remote font channel');
 });
 
+test('side-panel Marketplace browser is localized, revision guarded, debounced, and keeps local import available', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  for (const id of ['marketplaceThemeSearchInput','marketplaceThemeSearchButton','marketplaceThemeStatus','marketplaceThemeResults']) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.match(source, /marketplaceThemeRevision/);
+  assert.match(source, /marketplaceThemeError/);
+  assert.match(source, /setTimeout\(\(\)\s*=>\s*void loadMarketplaceThemes\(\), 300\)/);
+  assert.match(source, /HERMES_THEME_MARKETPLACE_SEARCH/);
+  assert.match(source, /HERMES_THEME_MARKETPLACE_INSTALL/);
+  assert.match(source, /marketplaceTransport\.send\(/, 'Side Panel must recover through the direct Marketplace transport when its worker is stale');
+  assert.doesNotMatch(source, /chrome\.runtime\.sendMessage\(\{\s*type:\s*['"]HERMES_THEME_MARKETPLACE_(?:SEARCH|INSTALL)/);
+  assert.match(source, /marketplaceThemeLoading\s*=\s*true[\s\S]{0,200}renderMarketplaceThemes\(\)/, 'typing must immediately replace stale errors with a loading state');
+  assert.match(source, /marketplaceThemeError\s*=\s*marketplaceErrorText/, 'failed searches must own an explicit error state');
+  assert.match(source, /if\s*\(marketplaceThemeError\)\s*return/, 'error state must not also render No themes found');
+  assert.match(css, /\.settings-dialog \.marketplace-theme-search\s*\{[^}]*gap:\s*12px/s, 'search input and action need professional separation');
+  assert.match(css, /\.settings-dialog \.marketplace-theme-search input,[\s\S]*?margin-top:\s*0/s, 'search input and action must share one visual baseline');
+  assert.match(css, /\.marketplace-theme-search button\s*\{[^}]*background:\s*#f4f2eb[^}]*color:\s*#111/s, 'Search Themes must use the approved white action treatment');
+  assert.match(css, /\.marketplace-theme-head div > strong\s*\{[^}]*font:[^;}]*13px\/1\.15/s, 'Marketplace heading must retain the readable example scale');
+  assert.match(css, /\.marketplace-theme-loading\s*\{[^}]*grid-template-columns:\s*repeat\(5/s, 'loading state must retain the example progress bars');
+  assert.match(source, /marketplace-theme-loading/);
+  assert.doesNotMatch(source, /marketplaceThemeResults\.innerHTML/);
+});
+
+test('composer plus, command pill, and topbar new-session icons are SVG-centered with no glyph hack offsets', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const newSession = html.match(/<button[^>]*id="newSessionButton"[\s\S]*?<\/button>/)?.[0] || '';
+  assert.match(newSession, /<svg[\s\S]*?class="new-session-icon"[\s\S]*?viewBox="0 0 24 24"/, 'topbar new-session must use a real SVG plus, not a baseline-riding text glyph');
+  assert.doesNotMatch(newSession, />\+</, 'new-session must not render a bare + text glyph');
+  assert.match(css, /\.icon-button \.new-session-icon\s*\{\s*width:\s*18px;[\s\S]*?height:\s*18px;/, 'new-session icon must be visibly larger than the 16px utility icons');
+  assert.match(css, /#newSessionButton:hover,[\s\S]*?#newSessionButton:focus-visible\s*\{\s*border-color:\s*var\(--hermes-accent\);\s*color:\s*var\(--hermes-accent\);\s*\}/, 'new-session hover must read as the primary action');
+  const attach = html.match(/<button[^>]*id="attachMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
+  assert.match(attach, /<svg[\s\S]*?viewBox="0 0 24 24"/, 'composer attach plus must be a real SVG, not a text glyph');
+  assert.doesNotMatch(attach, />\+</, 'composer attach must not render a bare + text glyph');
+  assert.match(css, /\.attach-menu-button\.composer-plus svg\s*\{\s*display:\s*block;\s*width:\s*14px;\s*height:\s*14px;\s*\}/, 'composer plus SVG must be block-centered at 14px');
+  assert.match(css, /\.attach-menu-button\.composer-plus\s*\{[^}]*padding:\s*0;/s, 'composer plus must not use a bottom-padding baseline hack');
+  const command = html.match(/<button[^>]*id="commandMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
+  assert.match(command, /<span aria-hidden="true">\/<\/span><strong[\s\S]*?commands<\/strong>/, 'command pill keeps its accessible slash + label structure');
+  assert.match(css, /\.composer-command\s*\{[^}]*height:\s*22px;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;/s, 'command pill must center its content vertically and horizontally');
+  assert.doesNotMatch(css, /\.composer-command span\s*\{[^}]*transform:\s*translateY/, 'command pill slash must not rely on a translateY glyph hack');
+});
+
+test('side-panel Agent Theme Studio uses the validated theme pipeline and polished equal-size actions', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  for (const id of ['agentThemeDescription','agentThemeCreateButton','agentThemeStatus']) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.match(source, /buildAgentThemePrompt/);
+  assert.match(source, /extractAgentThemeDocument/);
+  assert.match(source, /await askHermes\([\s\S]*?onComplete/);
+  assert.match(source, /await installCustomTheme\([\s\S]*?await setAppearanceOption\('appearanceTheme'/);
+  assert.match(css, /\.settings-dialog \.custom-theme-file-control,[\s\S]*?#customThemePreviewButton[\s\S]*?font:\s*700 calc\(10px \* var\(--hermes-text-zoom/s);
+  assert.match(css, /\.settings-dialog \.custom-theme-file-control\s*\{[^}]*display:\s*grid[^}]*place-items:\s*center/s);
+  assert.match(css, /#customThemePreviewButton\s*\{[^}]*display:\s*grid[^}]*place-items:\s*center/s);
+  assert.match(css, /#agentThemeCreateButton\s*\{[^}]*background:\s*#0505e8[^}]*color:\s*#fff/s, 'Ask Hermes must stay cobalt in Mono instead of becoming black');
+  assert.match(css, /#agentThemeDescription,[\s\S]*?#agentThemeCreateButton\s*\{[^}]*height:\s*42px[^}]*margin-top:\s*0/s, 'Ask Hermes and its prompt must be exactly the same height');
+  assert.match(css, /\.agent-theme-studio > p\s*\{[^}]*font:[^;}]*9px\/1\.45/s, 'Agent Theme Studio helper copy must match the readable example');
+  assert.match(css, /\.custom-theme-json-field > strong\s*\{[^}]*font:[^;}]*10px\/1\.25/s, 'Paste Theme JSON heading must remain clearly separated and readable');
+  assert.match(css, /html\[data-hermes-theme="mono"\]\[data-hermes-mode="dark"\][\s\S]*?\.agent-theme-studio > p,[\s\S]*?\.agent-theme-status\s*\{\s*color:\s*#36ff7a/s, 'Mono dark must restore the green Agent Theme Studio copy');
+});
+
 test('side-panel custom theme flow reuses the pure modules and keeps preview, install, export, delete, and reset fail-closed', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(source, /from\s+['"]\.\/lib\/custom-themes\.mjs['"]/);

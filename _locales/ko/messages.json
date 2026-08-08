@@ -27,6 +27,54 @@
     "message": "Hermes Browser Extension 헤더",
     "description": "Runtime interface message a11y.extension_header"
   },
+  "runtime_agent_theme_applied": {
+    "message": "Theme created, validated, and applied",
+    "description": "Runtime interface message agent_theme.applied"
+  },
+  "runtime_agent_theme_ask_hermes": {
+    "message": "Ask Hermes",
+    "description": "Runtime interface message agent_theme.ask_hermes"
+  },
+  "runtime_agent_theme_connect_first": {
+    "message": "Connect to Hermes before creating a theme",
+    "description": "Runtime interface message agent_theme.connect_first"
+  },
+  "runtime_agent_theme_create_with_hermes": {
+    "message": "Create with Hermes",
+    "description": "Runtime interface message agent_theme.create_with_hermes"
+  },
+  "runtime_agent_theme_create_your_own": {
+    "message": "Create your own",
+    "description": "Runtime interface message agent_theme.create_your_own"
+  },
+  "runtime_agent_theme_describe": {
+    "message": "Describe your theme",
+    "description": "Runtime interface message agent_theme.describe"
+  },
+  "runtime_agent_theme_description": {
+    "message": "Hermes generates and applies a validated theme using the same appearance contract as the built-in themes.",
+    "description": "Runtime interface message agent_theme.description"
+  },
+  "runtime_agent_theme_designing": {
+    "message": "Hermes is designing and validating your theme…",
+    "description": "Runtime interface message agent_theme.designing"
+  },
+  "runtime_agent_theme_failed": {
+    "message": "Hermes could not create a valid theme",
+    "description": "Runtime interface message agent_theme.failed"
+  },
+  "runtime_agent_theme_invalid_description": {
+    "message": "Describe the theme you want Hermes to create",
+    "description": "Runtime interface message agent_theme.invalid_description"
+  },
+  "runtime_agent_theme_placeholder": {
+    "message": "Matrix terminal, Spider-Man, retro Windows…",
+    "description": "Runtime interface message agent_theme.placeholder"
+  },
+  "runtime_agent_theme_safe_semantic_tokens": {
+    "message": "Safe semantic tokens",
+    "description": "Runtime interface message agent_theme.safe_semantic_tokens"
+  },
   "runtime_agent_scan": {
     "message": "↻ 에이전트 검색",
     "description": "Runtime interface message agent.scan"
@@ -558,6 +606,82 @@
   "runtime_manifest_open_sidebar": {
     "message": "Hermes 브라우저 사이드바 열기",
     "description": "Runtime interface message manifest.open_sidebar"
+  },
+  "runtime_marketplace_adjusted": {
+    "message": "가독성을 위해 테마가 조정되었습니다.",
+    "description": "Runtime interface message marketplace.adjusted"
+  },
+  "runtime_marketplace_browse": {
+    "message": "VS Code 테마 찾아보기",
+    "description": "Runtime interface message marketplace.browse"
+  },
+  "runtime_marketplace_derived": {
+    "message": "일부 소스 색상이 파생되었습니다.",
+    "description": "Runtime interface message marketplace.derived"
+  },
+  "runtime_marketplace_empty": {
+    "message": "테마를 찾을 수 없습니다.",
+    "description": "Runtime interface message marketplace.empty"
+  },
+  "runtime_marketplace_install": {
+    "message": "설치",
+    "description": "Runtime interface message marketplace.install"
+  },
+  "runtime_marketplace_installed": {
+    "message": "설치됨",
+    "description": "Runtime interface message marketplace.installed"
+  },
+  "runtime_marketplace_installing": {
+    "message": "설치 중…",
+    "description": "Runtime interface message marketplace.installing"
+  },
+  "runtime_marketplace_loading": {
+    "message": "테마 로드 중…",
+    "description": "Runtime interface message marketplace.loading"
+  },
+  "runtime_marketplace_local_import_available": {
+    "message": "로컬 가져오기는 계속 가능합니다.",
+    "description": "Runtime interface message marketplace.local_import_available"
+  },
+  "runtime_marketplace_most_installed": {
+    "message": "가장 많이 설치됨",
+    "description": "Runtime interface message marketplace.most_installed"
+  },
+  "runtime_marketplace_not_supported": {
+    "message": "패키지는 지원되는 테마가 아닙니다.",
+    "description": "Runtime interface message marketplace.not_supported"
+  },
+  "runtime_marketplace_package_corrupt": {
+    "message": "패키지가 손상되었습니다",
+    "description": "Runtime interface message marketplace.package_corrupt"
+  },
+  "runtime_marketplace_package_too_large": {
+    "message": "패키지가 너무 큽니다.",
+    "description": "Runtime interface message marketplace.package_too_large"
+  },
+  "runtime_marketplace_search": {
+    "message": "테마 검색",
+    "description": "Runtime interface message marketplace.search"
+  },
+  "runtime_marketplace_search_results": {
+    "message": "검색결과",
+    "description": "Runtime interface message marketplace.search_results"
+  },
+  "runtime_marketplace_select_installed": {
+    "message": "설치된 테마 선택",
+    "description": "Runtime interface message marketplace.select_installed"
+  },
+  "runtime_marketplace_timeout": {
+    "message": "요청 시간이 초과되었습니다.",
+    "description": "Runtime interface message marketplace.timeout"
+  },
+  "runtime_marketplace_unavailable": {
+    "message": "마켓플레이스를 사용할 수 없습니다.",
+    "description": "Runtime interface message marketplace.unavailable"
+  },
+  "runtime_marketplace_unsupported_archive": {
+    "message": "지원되지 않는 아카이브 형식",
+    "description": "Runtime interface message marketplace.unsupported_archive"
   },
   "runtime_permissions_not_granted": {
     "message": "마이크 권한이 부여되지 않았습니다.\n\n{error}\n\n마이크 설정 열기를 클릭하고 Hermes Browser Extension에 대해 마이크를 허용으로 설정한 후 여기로 돌아와 다시 시도하세요.",

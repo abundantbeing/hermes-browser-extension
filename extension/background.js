@@ -39,6 +39,8 @@ import {
   CONTEXT_MENU_REQUEST_CLAIM,
   createContextMenuController,
 } from './lib/context-menu-controller.mjs';
+import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
+import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
 
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
@@ -63,6 +65,10 @@ const contextMenuController = createContextMenuController({
   chromeApi: chrome,
   openHermesSurface: (tab) => openHermesPanelFromContextGesture(tab),
   translate: (_key, fallback) => translateUiText(fallback),
+});
+const themeMarketplaceController = createThemeMarketplaceController({
+  client: createVscodeMarketplaceClient(),
+  storageArea: chrome.storage.local,
 });
 function restoreWakeController() {
   if (!chrome.runtime?.sendMessage || !chrome.storage?.local?.get) return;
@@ -781,6 +787,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     ? wakeController.handleMessage(message)
     : [CONTEXT_MENU_CONFIG_GET, CONTEXT_MENU_CONFIG_MUTATE, CONTEXT_MENU_REQUEST_CLAIM].includes(message?.type)
       ? contextMenuController.handleMessage(message)
+      : themeMarketplaceController.handles(message?.type)
+        ? themeMarketplaceController.handleMessage(message)
     : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
       ? queueInlineDraftRequest(message, sender)
       : message?.type === 'HERMES_INLINE_SESSION_STATUS'

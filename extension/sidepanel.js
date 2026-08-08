@@ -142,6 +142,10 @@ import {
   readCustomThemeStore,
   resetCustomThemeStore,
 } from './lib/custom-theme-store.mjs';
+import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
+import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
+import { createThemeMarketplaceTransport } from './lib/theme-marketplace-transport.mjs';
+import { buildAgentThemePrompt, extractAgentThemeDocument } from './lib/agent-theme-authoring.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
 import { appendUserImageAttachments } from './lib/image-render.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
@@ -488,6 +492,14 @@ const els = {
   customThemeInstallButton: $('#customThemeInstallButton'),
   customThemeImportStatus: $('#customThemeImportStatus'),
   customThemeResetButton: $('#customThemeResetButton'),
+  marketplaceThemeSearchInput: $('#marketplaceThemeSearchInput'),
+  marketplaceThemeSearchButton: $('#marketplaceThemeSearchButton'),
+  marketplaceThemeStatus: $('#marketplaceThemeStatus'),
+  marketplaceThemeResults: $('#marketplaceThemeResults'),
+  marketplaceThemeMode: $('#marketplaceThemeMode'),
+  agentThemeDescription: $('#agentThemeDescription'),
+  agentThemeCreateButton: $('#agentThemeCreateButton'),
+  agentThemeStatus: $('#agentThemeStatus'),
   languageSelect: $('#languageSelect'),
   colorModeButtons: Array.from(document.querySelectorAll('[data-color-mode]')),
   textZoomPresetGrid: $('#textZoomPresetGrid'),
@@ -512,6 +524,23 @@ let customThemePreviewState = null;
 let customThemeImportStatus = '';
 let customThemeDeleteArmedId = '';
 let customThemeResetArmed = false;
+let marketplaceThemeRevision = 0;
+let marketplaceThemeResults = [];
+let marketplaceThemeLoading = false;
+let marketplaceThemeError = '';
+let marketplaceThemeInstallingId = '';
+let marketplaceThemeLoaded = false;
+let marketplaceThemeDebounceTimer = null;
+let agentThemeCreating = false;
+let agentThemeStatus = '';
+const directMarketplaceController = createThemeMarketplaceController({
+  client: createVscodeMarketplaceClient(),
+  storageArea: chrome.storage.local,
+});
+const marketplaceTransport = createThemeMarketplaceTransport({
+  runtime: chrome.runtime,
+  fallbackController: directMarketplaceController,
+});
 let appliedCustomThemeVariables = [];
 let wakeState = { enabled: false, state: 'off', mode: 'off', phrase: DEFAULT_SETTINGS.wakeWordPhrase, provider: '', detail: 'Wake word is off.' };
 let wakeTurnProcessingId = '';
@@ -2921,6 +2950,160 @@ const systemColorQuery = typeof window !== 'undefined' && typeof window.matchMed
   : null;
 
 
+function marketplaceText(key, fallback, params) {
+  const translated = t(key, params);
+  return translated && translated !== key ? translated : fallback;
+}
+
+function marketplaceErrorText(code) {
+  const map = {
+    'request-timeout': ['marketplace.timeout', 'Request timed out'],
+    'archive-too-large': ['marketplace.package_too_large', 'Package is too large'],
+    'no-color-themes': ['marketplace.not_supported', 'Package is not a supported theme'],
+    'package-corrupt': ['marketplace.package_corrupt', 'Package is corrupt'],
+    'unsupported-compression': ['marketplace.unsupported_archive', 'Unsupported archive format'],
+    'network-failed': ['marketplace.unavailable', 'Marketplace unavailable'],
+  };
+  const [key, fallback] = map[code] || ['marketplace.unavailable', 'Marketplace unavailable'];
+  return marketplaceText(key, fallback);
+}
+
+function renderMarketplaceThemes(status = '') {
+  if (!els.marketplaceThemeResults || !els.marketplaceThemeStatus) return;
+  els.marketplaceThemeStatus.textContent = status
+    || (marketplaceThemeLoading ? marketplaceText('marketplace.loading', 'Loading themes…') : marketplaceThemeError);
+  els.marketplaceThemeMode.textContent = els.marketplaceThemeSearchInput?.value.trim()
+    ? marketplaceText('marketplace.search_results', 'Search results')
+    : marketplaceText('marketplace.most_installed', 'Most installed');
+  els.marketplaceThemeResults.replaceChildren();
+  if (marketplaceThemeError) return;
+  if (marketplaceThemeLoading) {
+    const loading = document.createElement('div');
+    loading.className = 'marketplace-theme-loading';
+    loading.setAttribute('aria-hidden', 'true');
+    for (let index = 0; index < 5; index += 1) loading.append(document.createElement('i'));
+    els.marketplaceThemeResults.append(loading);
+    return;
+  }
+  if (!marketplaceThemeResults.length) {
+    const empty = document.createElement('p'); empty.className = 'marketplace-theme-empty';
+    empty.textContent = marketplaceText('marketplace.empty', 'No themes found');
+    els.marketplaceThemeResults.append(empty);
+    return;
+  }
+  for (const item of marketplaceThemeResults) {
+    const card = document.createElement('article'); card.className = 'marketplace-theme-card';
+    const copy = document.createElement('div'); copy.className = 'marketplace-theme-card-copy';
+    const title = document.createElement('strong'); title.textContent = item.displayName;
+    const meta = document.createElement('span'); meta.textContent = `${item.publisher}${item.installs ? ` · ${new Intl.NumberFormat(undefined, { notation: 'compact' }).format(item.installs)}` : ''}`;
+    const description = document.createElement('p'); description.textContent = item.description;
+    copy.append(title, meta, description);
+    const button = document.createElement('button'); button.type = 'button'; button.dataset.marketplaceInstall = item.extensionId;
+    button.disabled = Boolean(marketplaceThemeInstallingId);
+    button.textContent = marketplaceThemeInstallingId === item.extensionId
+      ? marketplaceText('marketplace.installing', 'Installing…')
+      : item.installedThemeId ? marketplaceText('marketplace.select_installed', 'Select installed theme') : marketplaceText('marketplace.install', 'Install');
+    card.append(copy, button); els.marketplaceThemeResults.append(card);
+  }
+}
+
+async function loadMarketplaceThemes() {
+  const revision = ++marketplaceThemeRevision;
+  marketplaceThemeLoading = true;
+  marketplaceThemeError = '';
+  renderMarketplaceThemes();
+  const query = els.marketplaceThemeSearchInput?.value.trim() || '';
+  const response = await marketplaceTransport.send({ type: 'HERMES_THEME_MARKETPLACE_SEARCH', query, limit: 20 });
+  if (revision !== marketplaceThemeRevision) return;
+  marketplaceThemeLoading = false;
+  marketplaceThemeLoaded = true;
+  if (!response?.ok) {
+    marketplaceThemeError = marketplaceErrorText(response?.error?.code);
+    renderMarketplaceThemes();
+    return;
+  }
+  marketplaceThemeError = '';
+  marketplaceThemeResults = Array.isArray(response.data?.results) ? response.data.results : [];
+  renderMarketplaceThemes();
+}
+
+async function installMarketplaceTheme(extensionId) {
+  if (marketplaceThemeInstallingId) return;
+  const existing = marketplaceThemeResults.find((item) => item.extensionId === extensionId)?.installedThemeId;
+  if (existing) { await setAppearanceOption('appearanceTheme', existing); return; }
+  marketplaceThemeInstallingId = extensionId; renderMarketplaceThemes();
+  const response = await marketplaceTransport.send({ type: 'HERMES_THEME_MARKETPLACE_INSTALL', extensionId });
+  marketplaceThemeInstallingId = '';
+  if (!response?.ok) {
+    marketplaceThemeError = marketplaceErrorText(response?.error?.code);
+    renderMarketplaceThemes();
+    return;
+  }
+  await refreshCustomThemeStore();
+  await setAppearanceOption('appearanceTheme', response.data.themeId);
+  const details = [];
+  if (response.data.adjusted?.length) details.push(marketplaceText('marketplace.adjusted', 'Theme was adjusted for readability'));
+  if (response.data.derived?.length) details.push(marketplaceText('marketplace.derived', 'Some source colors were derived'));
+  await loadMarketplaceThemes();
+  renderMarketplaceThemes(details.join(' · ') || marketplaceText('marketplace.installed', 'Installed'));
+}
+
+async function createAgentTheme() {
+  if (agentThemeCreating) return;
+  const description = String(els.agentThemeDescription?.value || '').trim();
+  let prompt;
+  try {
+    prompt = buildAgentThemePrompt(description);
+  } catch (error) {
+    agentThemeStatus = error?.message || marketplaceText('agent_theme.invalid_description', 'Describe the theme you want Hermes to create');
+    renderAgentThemeStudio();
+    els.agentThemeDescription?.focus();
+    return;
+  }
+  if (!isConnected()) {
+    agentThemeStatus = marketplaceText('agent_theme.connect_first', 'Connect to Hermes before creating a theme');
+    renderAgentThemeStudio();
+    els.connectButton?.focus();
+    return;
+  }
+  agentThemeCreating = true;
+  agentThemeStatus = marketplaceText('agent_theme.designing', 'Hermes is designing and validating your theme…');
+  renderAgentThemeStudio();
+  const sent = await askHermes(prompt, [], {
+    forceChatOnly: true,
+    disableAutoTitle: true,
+    disableCommandParsing: true,
+    displayUserText: `${marketplaceText('agent_theme.create_with_hermes', 'Create with Hermes')}: ${description}`,
+    onComplete: async (finalAnswer) => {
+      try {
+        const document = extractAgentThemeDocument(finalAnswer);
+        const installed = await installCustomTheme(chrome.storage.local, document);
+        if (!installed.ok) throw new Error(installed.error?.message || 'Theme installation failed');
+        await refreshCustomThemeStore();
+        await setAppearanceOption('appearanceTheme', installed.record.id);
+        if (els.customThemeImportTextarea) els.customThemeImportTextarea.value = serializeThemeDocument(document);
+        customThemePreviewState = { valid: true, document, errors: [] };
+        customThemeImportStatus = '';
+        agentThemeStatus = marketplaceText('agent_theme.applied', 'Theme created, validated, and applied');
+        renderCustomThemeManagement();
+      } catch (error) {
+        agentThemeStatus = error?.validationErrors?.[0]?.message
+          || error?.message
+          || marketplaceText('agent_theme.failed', 'Hermes did not return a valid theme');
+        renderAgentThemeStudio();
+      }
+    },
+  });
+  agentThemeCreating = false;
+  if (!sent) agentThemeStatus = marketplaceText('agent_theme.failed', 'Hermes could not create the theme');
+  renderAgentThemeStudio();
+}
+
+function renderAgentThemeStudio() {
+  if (els.agentThemeCreateButton) els.agentThemeCreateButton.disabled = agentThemeCreating || sending;
+  if (els.agentThemeStatus) els.agentThemeStatus.textContent = agentThemeStatus;
+}
+
 function customThemeText(key, fallback, params) {
   const translated = t(key, params);
   return translated && translated !== key ? translated : fallback;
@@ -2980,6 +3163,7 @@ function renderCustomThemePreview() {
 
 function renderCustomThemeManagement() {
   renderCustomThemePreview();
+  renderAgentThemeStudio();
   if (els.customThemeImportStatus) {
     const corrupt = customThemeStoreState.status === 'corrupt'
       ? customThemeText('custom_theme.storage_corrupt', 'Custom theme storage is corrupt. Reset it explicitly to continue.')
@@ -9754,6 +9938,28 @@ function bindEvents() {
   els.customThemePreviewButton?.addEventListener('click', () => void previewCustomThemeImport());
   els.customThemeInstallButton?.addEventListener('click', () => void installPreviewedCustomTheme());
   els.customThemeResetButton?.addEventListener('click', () => void handleCustomThemeReset());
+  els.agentThemeCreateButton?.addEventListener('click', () => void createAgentTheme());
+  els.agentThemeDescription?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    void createAgentTheme();
+  });
+  els.customThemeManager?.addEventListener('toggle', () => {
+    if (els.customThemeManager.open && !marketplaceThemeLoaded) void loadMarketplaceThemes();
+  });
+  els.marketplaceThemeSearchInput?.addEventListener('input', () => {
+    clearTimeout(marketplaceThemeDebounceTimer);
+    marketplaceThemeRevision += 1;
+    marketplaceThemeLoading = true;
+    marketplaceThemeError = '';
+    renderMarketplaceThemes();
+    marketplaceThemeDebounceTimer = setTimeout(() => void loadMarketplaceThemes(), 300);
+  });
+  els.marketplaceThemeSearchButton?.addEventListener('click', () => void loadMarketplaceThemes());
+  els.marketplaceThemeResults?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-marketplace-install]');
+    if (button) void installMarketplaceTheme(button.dataset.marketplaceInstall);
+  });
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local' || !Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) return;
     void handleCustomThemeStoreChange();

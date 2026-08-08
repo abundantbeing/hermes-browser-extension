@@ -58,9 +58,17 @@ function inspectRecord(record, index) {
     return { ok: false, code: 'invalid-record', message: `Theme record ${index} has an invalid shape` };
   }
   if (!CUSTOM_THEME_ID_RE.test(record.id)) return { ok: false, code: 'invalid-record', message: `Theme record ${index} has an invalid ID` };
-  if (record.source !== 'import') return { ok: false, code: 'invalid-record', message: `Theme record ${index} has an invalid source` };
-  if (record.sourceId !== null || record.sourceVersion !== null) {
+  if (!['import', 'vscode-marketplace'].includes(record.source)) return { ok: false, code: 'invalid-record', message: `Theme record ${index} has an invalid source` };
+  if (record.source === 'import' && (record.sourceId !== null || record.sourceVersion !== null)) {
     return { ok: false, code: 'invalid-record', message: `Imported theme record ${index} cannot carry remote source metadata` };
+  }
+  if (record.source === 'vscode-marketplace') {
+    if (typeof record.sourceId !== 'string' || !/^[\w-]+\.[\w-]+$/.test(record.sourceId) || record.sourceId.length > 200) {
+      return { ok: false, code: 'invalid-record', message: `Marketplace theme record ${index} has an invalid source ID` };
+    }
+    if (typeof record.sourceVersion !== 'string' || !record.sourceVersion || record.sourceVersion.length > 100) {
+      return { ok: false, code: 'invalid-record', message: `Marketplace theme record ${index} has an invalid source version` };
+    }
   }
   if (!isCanonicalIsoTimestamp(record.installedAt)) {
     return { ok: false, code: 'invalid-record', message: `Theme record ${index} has an invalid installation timestamp` };
@@ -163,11 +171,17 @@ export async function installCustomTheme(storageArea, document, options = {}) {
 
   let record;
   try {
+    const source = options.source === 'vscode-marketplace' ? 'vscode-marketplace' : 'import';
+    const sourceId = source === 'vscode-marketplace' ? String(options.sourceId || '').trim() : null;
+    const sourceVersion = source === 'vscode-marketplace' ? String(options.sourceVersion || '').trim() : null;
+    if (source === 'vscode-marketplace' && (!/^[\w-]+\.[\w-]+$/.test(sourceId) || sourceId.length > 200 || !sourceVersion || sourceVersion.length > 100)) {
+      throw new TypeError('Marketplace source metadata is invalid');
+    }
     record = {
       id: newCustomId(options),
-      source: 'import',
-      sourceId: null,
-      sourceVersion: null,
+      source,
+      sourceId,
+      sourceVersion,
       installedAt: nowIso(options),
       document: normalized,
     };

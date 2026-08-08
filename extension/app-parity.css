@@ -269,11 +269,14 @@
 }
 .composer-topline-actions button {
   min-height: 25px;
-  padding: 0 7px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--hermes-line-strong);
   background: transparent;
   color: var(--hermes-ink);
-  font: 8px var(--hermes-font-mono);
+  font: 9px/1 var(--hermes-font-mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -369,7 +372,8 @@
 .model-provider-list,
 .model-list,
 .tool-activity-list,
-.web-settings-dialog { scrollbar-gutter: stable; }
+.web-settings-dialog,
+.marketplace-theme-results { scrollbar-gutter: stable; }
 .session-list::-webkit-scrollbar,
 .conversation-scroll::-webkit-scrollbar,
 .inspector::-webkit-scrollbar,
@@ -379,7 +383,8 @@
 .model-provider-list::-webkit-scrollbar,
 .model-list::-webkit-scrollbar,
 .tool-activity-list::-webkit-scrollbar,
-.web-settings-dialog::-webkit-scrollbar { width: 8px; }
+.web-settings-dialog::-webkit-scrollbar,
+.marketplace-theme-results::-webkit-scrollbar { width: 8px; }
 .session-list::-webkit-scrollbar-thumb,
 .conversation-scroll::-webkit-scrollbar-thumb,
 .inspector::-webkit-scrollbar-thumb,
@@ -389,7 +394,8 @@
 .model-provider-list::-webkit-scrollbar-thumb,
 .model-list::-webkit-scrollbar-thumb,
 .tool-activity-list::-webkit-scrollbar-thumb,
-.web-settings-dialog::-webkit-scrollbar-thumb { background: rgba(var(--hermes-fg-rgb), 0.45); border: 1px solid var(--hermes-line-strong); }
+.web-settings-dialog::-webkit-scrollbar-thumb,
+.marketplace-theme-results::-webkit-scrollbar-thumb { background: rgba(var(--hermes-fg-rgb), 0.45); border: 1px solid var(--hermes-line-strong); }
 
 .session-rail { --hermes-fg-rgb: var(--hermes-shell-fg-rgb); }
 .model-picker { --hermes-fg-rgb: var(--hermes-shell-fg-rgb); }

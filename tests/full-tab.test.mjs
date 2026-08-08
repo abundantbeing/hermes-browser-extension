@@ -10,12 +10,17 @@ import { FONT_PROFILES, ZOOM_MAX_PERCENT, ZOOM_MIN_PERCENT, ZOOM_PRESETS } from 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('check:js syntax-checks both custom theme modules', () => {
+test('check:js syntax-checks the custom theme and VS Code converter modules', () => {
   const packageJson = JSON.parse(read('package.json'));
   const checkJs = packageJson.scripts?.['check:js'] || '';
   for (const modulePath of [
     'extension/lib/custom-themes.mjs',
     'extension/lib/custom-theme-store.mjs',
+    'extension/lib/agent-theme-authoring.mjs',
+    'extension/lib/vscode-theme-convert.mjs',
+    'extension/lib/vsix-theme-extractor.mjs',
+    'extension/lib/vscode-marketplace.mjs',
+    'extension/lib/theme-marketplace-controller.mjs',
   ]) {
     assert.match(checkJs, new RegExp(`node --check ${modulePath.replaceAll('.', '\\.')}(?:\\s|$)`), `${modulePath} must be part of check:js`);
   }
@@ -77,6 +82,25 @@ test('Hermes Web appearance markup exposes numeric zoom, six presets, font profi
   for (const profile of FONT_PROFILES) assert.match(select, new RegExp(`value="${profile}"`));
   assert.match(html, /id="settingsAppearanceSaveStatus"[^>]*role="status"[^>]*aria-live="polite"/);
   assert.doesNotMatch(html, /data-text-size|id="settingsTextSizes"|id="settingsTextSize"/);
+});
+
+test('Hermes Web Marketplace locks duplicate install gestures and keeps polished action geometry', () => {
+  const js = read('extension/app.js');
+  const css = read('extension/app.css');
+  assert.match(js, /button\.disabled\s*=\s*Boolean\(webMarketplaceInstallingId\)/);
+  assert.match(js, /if\s*\(webMarketplaceInstallingId\)\s*return/);
+  assert.match(js, /webMarketplaceTransport\.send\(/, 'Hermes Web must recover through the direct Marketplace transport when its worker is stale');
+  assert.doesNotMatch(js, /chrome\.runtime\.sendMessage\(\{\s*type:\s*['"]HERMES_THEME_MARKETPLACE_(?:SEARCH|INSTALL)/);
+  assert.match(css, /\.web-settings-dialog \.marketplace-theme-search\s*\{[^}]*gap:\s*12px/s);
+  assert.match(css, /\.web-settings-dialog \.marketplace-theme-search button\s*\{[^}]*background:\s*#f4f2eb[^}]*color:\s*#111/s);
+  assert.match(css, /\.custom-theme-file-control,[\s\S]*?#settingsCustomThemePreviewButton[\s\S]*?font:\s*700 var\(--fulltab-label-size\)\/1/s);
+  assert.match(css, /#settingsCustomThemePreviewButton\s*\{[^}]*display:\s*grid[^}]*place-items:\s*center/s);
+});
+
+test('Hermes Web composer command pill centers its label without glyph hacks', () => {
+  const parity = read('extension/app-parity.css');
+  assert.match(parity, /\.composer-topline-actions button\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/s, 'Web composer command must center its label vertically and horizontally');
+  assert.match(parity, /\.composer-topline-actions button\s*\{[^}]*font:\s*9px\/1 var\(--hermes-font-mono\);/s, 'Web composer command label must use a readable 9px mono with exact line height');
 });
 
 test('Hermes Web delegates all zoom and font behavior to the shared preference module without inline named-size validators', () => {
@@ -779,6 +803,17 @@ test('sidepanel primary Connect and Test use one explicit connection-mode dispat
   assert.match(html, /Hermes Cloud Preview/);
   assert.match(js, /async function connectApiWithPairing\(\)[\s\S]*?transportUsesDashboardTicket\(settings\.connectionTransport\)/, 'the Local/Remote API connector must reject ticket transports before URL normalization');
   assert.match(js, /sanitizeGatewayUrlForConnectionMode\(/, 'Cloud persistence must remove loopback and inherited Local URLs');
+});
+
+test('Hermes Web Marketplace browser has stable controls and stale-request protection', () => {
+  const html = read('extension/app.html');
+  const app = read('extension/app.js');
+  for (const id of ['settingsMarketplaceThemeSearchInput','settingsMarketplaceThemeSearchButton','settingsMarketplaceThemeStatus','settingsMarketplaceThemeResults']) assert.match(html, new RegExp(`id=["']${id}["']`));
+  assert.match(app, /webMarketplaceRevision/);
+  assert.match(app, /setTimeout\(\(\)=>void loadWebMarketplace\(\),300\)/);
+  assert.match(app, /HERMES_THEME_MARKETPLACE_SEARCH/);
+  assert.match(app, /HERMES_THEME_MARKETPLACE_INSTALL/);
+  assert.doesNotMatch(app, /settingsMarketplaceThemeResults\.innerHTML/);
 });
 
 test('Hermes Web exposes an inline custom theme manager with stable accessible controls', () => {

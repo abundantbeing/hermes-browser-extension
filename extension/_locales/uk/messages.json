@@ -27,6 +27,54 @@
     "message": "заголовок Hermes Browser Extension",
     "description": "Runtime interface message a11y.extension_header"
   },
+  "runtime_agent_theme_applied": {
+    "message": "Theme created, validated, and applied",
+    "description": "Runtime interface message agent_theme.applied"
+  },
+  "runtime_agent_theme_ask_hermes": {
+    "message": "Ask Hermes",
+    "description": "Runtime interface message agent_theme.ask_hermes"
+  },
+  "runtime_agent_theme_connect_first": {
+    "message": "Connect to Hermes before creating a theme",
+    "description": "Runtime interface message agent_theme.connect_first"
+  },
+  "runtime_agent_theme_create_with_hermes": {
+    "message": "Create with Hermes",
+    "description": "Runtime interface message agent_theme.create_with_hermes"
+  },
+  "runtime_agent_theme_create_your_own": {
+    "message": "Create your own",
+    "description": "Runtime interface message agent_theme.create_your_own"
+  },
+  "runtime_agent_theme_describe": {
+    "message": "Describe your theme",
+    "description": "Runtime interface message agent_theme.describe"
+  },
+  "runtime_agent_theme_description": {
+    "message": "Hermes generates and applies a validated theme using the same appearance contract as the built-in themes.",
+    "description": "Runtime interface message agent_theme.description"
+  },
+  "runtime_agent_theme_designing": {
+    "message": "Hermes is designing and validating your theme…",
+    "description": "Runtime interface message agent_theme.designing"
+  },
+  "runtime_agent_theme_failed": {
+    "message": "Hermes could not create a valid theme",
+    "description": "Runtime interface message agent_theme.failed"
+  },
+  "runtime_agent_theme_invalid_description": {
+    "message": "Describe the theme you want Hermes to create",
+    "description": "Runtime interface message agent_theme.invalid_description"
+  },
+  "runtime_agent_theme_placeholder": {
+    "message": "Matrix terminal, Spider-Man, retro Windows…",
+    "description": "Runtime interface message agent_theme.placeholder"
+  },
+  "runtime_agent_theme_safe_semantic_tokens": {
+    "message": "Safe semantic tokens",
+    "description": "Runtime interface message agent_theme.safe_semantic_tokens"
+  },
   "runtime_agent_scan": {
     "message": "↻ Сканувати агентів",
     "description": "Runtime interface message agent.scan"
@@ -558,6 +606,82 @@
   "runtime_manifest_open_sidebar": {
     "message": "Відкрити бічну панель Hermes Browser",
     "description": "Runtime interface message manifest.open_sidebar"
+  },
+  "runtime_marketplace_adjusted": {
+    "message": "Тему налаштовано для читабельності",
+    "description": "Runtime interface message marketplace.adjusted"
+  },
+  "runtime_marketplace_browse": {
+    "message": "Перегляньте теми VS Code",
+    "description": "Runtime interface message marketplace.browse"
+  },
+  "runtime_marketplace_derived": {
+    "message": "Деякі вихідні кольори були отримані",
+    "description": "Runtime interface message marketplace.derived"
+  },
+  "runtime_marketplace_empty": {
+    "message": "Теми не знайдено",
+    "description": "Runtime interface message marketplace.empty"
+  },
+  "runtime_marketplace_install": {
+    "message": "встановити",
+    "description": "Runtime interface message marketplace.install"
+  },
+  "runtime_marketplace_installed": {
+    "message": "встановлено",
+    "description": "Runtime interface message marketplace.installed"
+  },
+  "runtime_marketplace_installing": {
+    "message": "Встановлення…",
+    "description": "Runtime interface message marketplace.installing"
+  },
+  "runtime_marketplace_loading": {
+    "message": "Завантаження тем…",
+    "description": "Runtime interface message marketplace.loading"
+  },
+  "runtime_marketplace_local_import_available": {
+    "message": "Місцевий імпорт залишається доступним",
+    "description": "Runtime interface message marketplace.local_import_available"
+  },
+  "runtime_marketplace_most_installed": {
+    "message": "Більшість встановлених",
+    "description": "Runtime interface message marketplace.most_installed"
+  },
+  "runtime_marketplace_not_supported": {
+    "message": "Пакет не підтримується темою",
+    "description": "Runtime interface message marketplace.not_supported"
+  },
+  "runtime_marketplace_package_corrupt": {
+    "message": "Пакет пошкоджено",
+    "description": "Runtime interface message marketplace.package_corrupt"
+  },
+  "runtime_marketplace_package_too_large": {
+    "message": "Пакунок завеликий",
+    "description": "Runtime interface message marketplace.package_too_large"
+  },
+  "runtime_marketplace_search": {
+    "message": "Теми пошуку",
+    "description": "Runtime interface message marketplace.search"
+  },
+  "runtime_marketplace_search_results": {
+    "message": "Результати пошуку",
+    "description": "Runtime interface message marketplace.search_results"
+  },
+  "runtime_marketplace_select_installed": {
+    "message": "Виберіть встановлену тему",
+    "description": "Runtime interface message marketplace.select_installed"
+  },
+  "runtime_marketplace_timeout": {
+    "message": "Час очікування запиту минув",
+    "description": "Runtime interface message marketplace.timeout"
+  },
+  "runtime_marketplace_unavailable": {
+    "message": "Ринок недоступний",
+    "description": "Runtime interface message marketplace.unavailable"
+  },
+  "runtime_marketplace_unsupported_archive": {
+    "message": "Непідтримуваний формат архіву",
+    "description": "Runtime interface message marketplace.unsupported_archive"
   },
   "runtime_permissions_not_granted": {
     "message": "Дозвіл на мікрофон не надано.\n\n{error}\n\nНатисніть «Відкрити налаштування мікрофона», установіть «Дозволити мікрофон» для Hermes Browser Extension, поверніться сюди та повторіть спробу.",

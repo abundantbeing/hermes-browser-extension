@@ -17,7 +17,9 @@
           <span id="currentSessionName" data-i18n-runtime>Hermes Browser Extension</span>
           <span aria-hidden="true">⌄</span>
         </button>
-        <button id="newSessionButton" class="settings-button icon-button" type="button" title="New Hermes Browser Extension session" aria-label="New session" data-i18n-title="ui.new.hermes.browser.extension.session" data-i18n-aria-label="ui.new.session">+</button>
+        <button id="newSessionButton" class="settings-button icon-button" type="button" title="New Hermes Browser Extension session" aria-label="New session" data-i18n-title="ui.new.hermes.browser.extension.session" data-i18n-aria-label="ui.new.session">
+          <svg class="new-session-icon" aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg>
+        </button>
         <button id="openFullViewButton" class="settings-button icon-button" type="button" title="Open Hermes Web in a full tab" aria-label="Open full view" data-i18n-title="ui.open.hermes.web.in.a.full.tab" data-i18n-aria-label="ui.open.full.view">
           <svg class="web-view-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none">
             <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/>
@@ -148,7 +150,9 @@
           <div class="composer-input-wrap" id="composerDropZone">
             <textarea id="promptInput" rows="3" placeholder="Ask Hermes about this page..." data-i18n-placeholder="ui.ask.hermes.about.this.page"></textarea>
             <div id="dropOverlay" class="drop-overlay" hidden data-i18n="ui.drop.files.to.attach">Drop files to attach</div>
-            <button id="attachMenuButton" class="attach-menu-button composer-plus" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Attach context" title="Attach context" data-i18n-title="ui.attach.context" data-i18n-aria-label="ui.attach.context">+</button>
+            <button id="attachMenuButton" class="attach-menu-button composer-plus" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Attach context" title="Attach context" data-i18n-title="ui.attach.context" data-i18n-aria-label="ui.attach.context">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path d="M12 5.5v13M5.5 12h13" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg>
+            </button>
             <button id="commandMenuButton" class="composer-command" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="quickMoreMenu" aria-label="Open quick commands" title="Open quick commands" data-i18n-title="ui.open.quick.commands" data-i18n-aria-label="ui.open.quick.commands">
               <span aria-hidden="true">/</span><strong data-i18n="ui.commands">commands</strong>
             </button>
@@ -430,6 +434,27 @@
                 <span class="custom-theme-summary-meta" data-i18n="custom_theme.user_installed">User-installed</span>
               </summary>
               <div class="custom-theme-manager-body">
+                <section class="marketplace-theme-browser" aria-labelledby="marketplaceThemeTitle">
+                  <div class="marketplace-theme-head"><div><strong id="marketplaceThemeTitle" data-i18n="marketplace.browse">Browse VS Code themes</strong><span data-i18n="marketplace.local_import_available">Local import remains available</span></div><span id="marketplaceThemeMode" data-i18n="marketplace.most_installed">Most installed</span></div>
+                  <label class="marketplace-theme-search" for="marketplaceThemeSearchInput"><span class="sr-only" data-i18n="marketplace.search">Search themes</span><input id="marketplaceThemeSearchInput" type="search" autocomplete="off" placeholder="Search themes" data-i18n-placeholder="marketplace.search" /><button id="marketplaceThemeSearchButton" type="button" data-i18n="marketplace.search">Search themes</button></label>
+                  <p id="marketplaceThemeStatus" class="appearance-save-status marketplace-theme-status" role="status" aria-live="polite"></p>
+                  <div id="marketplaceThemeResults" class="marketplace-theme-results" aria-live="polite"></div>
+                </section>
+                <div class="custom-theme-local-divider"><span data-i18n="agent_theme.create_your_own">Create your own</span></div>
+                <section class="agent-theme-studio" aria-labelledby="agentThemeTitle">
+                  <div class="agent-theme-head">
+                    <strong id="agentThemeTitle" data-i18n="agent_theme.create_with_hermes">Create with Hermes</strong>
+                    <span data-i18n="agent_theme.safe_semantic_tokens">Safe semantic tokens</span>
+                  </div>
+                  <div class="agent-theme-compose">
+                    <label class="sr-only" for="agentThemeDescription" data-i18n="agent_theme.describe">Describe your theme</label>
+                    <input id="agentThemeDescription" type="text" maxlength="300" autocomplete="off" placeholder="Matrix terminal, Spider-Man, retro Windows…" data-i18n-placeholder="agent_theme.placeholder" />
+                    <button id="agentThemeCreateButton" type="button" data-i18n="agent_theme.ask_hermes">Ask Hermes</button>
+                  </div>
+                  <p data-i18n="agent_theme.description">Hermes generates and applies a validated theme using the same appearance contract as the built-in themes.</p>
+                  <p id="agentThemeStatus" class="appearance-save-status agent-theme-status" role="status" aria-live="polite"></p>
+                </section>
+                <div class="custom-theme-local-divider"><span data-i18n="custom_theme.paste_theme_json">Paste theme JSON</span></div>
                 <label class="custom-theme-json-field" for="customThemeImportTextarea">
                   <strong data-i18n="custom_theme.paste_theme_json">Paste theme JSON</strong>
                   <span data-i18n="custom_theme.import_description">Import semantic colors only. CSS, URLs, and remote fonts are not accepted.</span>
