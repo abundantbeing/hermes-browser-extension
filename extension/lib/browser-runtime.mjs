@@ -51,7 +51,7 @@ function hasSidebarAction() {
  * Opera uses sidebarAction.setOpenState(true), not .open().
  * Firefox uses sidebarAction.open() (promise/callback based).
  */
-async function openNativeSidebar({ windowId = null } = {}) {
+async function openNativeSidebar({ windowId: _windowId = null } = {}) {
   const sidebarAction = getSidebarAction();
   if (!sidebarAction) return false;
 
