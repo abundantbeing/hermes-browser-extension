@@ -2303,7 +2303,9 @@ async function stopCurrentTurn() {
   if (!sending) return;
   setStatus('warn', 'Stopping Hermes', activeRunId ? `Interrupt requested for ${activeRunId}` : 'Closing the active browser stream');
   if (activeRunId && !isRemoteWsMode()) {
-    apiFetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' }).catch(() => {});
+    apiFetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' }).catch((error) => {
+      setStatus('err', 'Stop request failed', error?.message || 'Hermes runtime may still process the turn');
+    });
   }
   activeAbortController?.abort();
 }
@@ -6299,7 +6301,9 @@ function showSessionOwnershipNotice(session = {}, userText = '', turnAttachments
     fromComposer: String(userText || '').trim() === els.input.value.trim(),
   };
   els.sessionOwnershipTitle.textContent = `${sourceLabel} session selected`;
-  els.sessionOwnershipDetail.textContent = `This chat belongs to ${sourceLabel}. Start a Browser chat to keep the turn in Browser history, or continue here intentionally.`;
+  const messageCount = Number(session.messageCount || 0);
+  const largeWarning = messageCount > 100 ? ` This session has ${messageCount} messages. Two surfaces on one session can desync.` : '';
+  els.sessionOwnershipDetail.textContent = `This chat belongs to ${sourceLabel}. Two surfaces on one session can overwrite each other.${largeWarning} Start a Browser chat to keep the turn in Browser history, or continue here intentionally.`;
   const continueButton = els.sessionOwnershipNotice.querySelector('[data-session-ownership-action="continue"]');
   if (continueButton) continueButton.textContent = `Continue in ${sourceLabel}`;
   els.sessionOwnershipNotice.hidden = false;

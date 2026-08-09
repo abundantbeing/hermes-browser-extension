@@ -3406,7 +3406,14 @@ els.composer.addEventListener('dragleave', (event) => {
 els.composer.addEventListener('drop', (event) => {
   handleComposerDrop(event).catch((error) => { els.composerStatus.textContent = `Drop failed: ${error?.message || String(error)}`; });
 });
-els.stopRun.addEventListener('click', () => activeAbortController?.abort());
+els.stopRun.addEventListener('click', () => {
+  if (activeRunId) {
+    client.fetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' }).catch((error) => {
+      els.composerStatus.textContent = `Stop failed: ${error?.message || 'Hermes runtime may still process the turn'}`;
+    });
+  }
+  activeAbortController?.abort();
+});
 els.attachButton.addEventListener('click', () => toggleAttachMenu());
 els.quickAttach.addEventListener('click', () => toggleAttachMenu(true));
 els.attachMenu.addEventListener('click', (event) => {
