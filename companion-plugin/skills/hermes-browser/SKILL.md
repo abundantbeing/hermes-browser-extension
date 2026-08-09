@@ -4,6 +4,8 @@ description: >-
   Use when a Hermes Browser companion plugin exposes Browser Context
   Protocol status/context tools. The agent should check for cached
   browser context before asking the user to re-describe the page.
+trigger_keywords: [hermes, browser, companion, context]
+last_curated: 2026-08-09
 ---
 
 # Hermes Browser Companion
