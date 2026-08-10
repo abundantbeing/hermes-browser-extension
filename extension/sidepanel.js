@@ -2303,9 +2303,13 @@ async function stopCurrentTurn() {
   if (!sending) return;
   setStatus('warn', 'Stopping Hermes', activeRunId ? `Interrupt requested for ${activeRunId}` : 'Closing the active browser stream');
   if (activeRunId && !isRemoteWsMode()) {
-    apiFetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' }).catch((error) => {
-      setStatus('err', 'Stop request failed', error?.message || 'Hermes runtime may still process the turn');
-    });
+    apiFetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Stop request failed (HTTP ${response.status})`);
+      })
+      .catch((error) => {
+        setStatus('err', 'Stop request failed', error?.message || 'Hermes runtime may still process the turn');
+      });
   }
   activeAbortController?.abort();
 }

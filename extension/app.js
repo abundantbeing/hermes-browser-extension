@@ -3408,9 +3408,13 @@ els.composer.addEventListener('drop', (event) => {
 });
 els.stopRun.addEventListener('click', () => {
   if (activeRunId) {
-    client.fetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' }).catch((error) => {
-      els.composerStatus.textContent = `Stop failed: ${error?.message || 'Hermes runtime may still process the turn'}`;
-    });
+    client.fetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Stop request failed (HTTP ${response.status})`);
+      })
+      .catch((error) => {
+        els.composerStatus.textContent = `Stop failed: ${error?.message || 'Hermes runtime may still process the turn'}`;
+      });
   }
   activeAbortController?.abort();
 });
