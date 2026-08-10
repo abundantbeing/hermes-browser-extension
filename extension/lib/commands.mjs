@@ -1,8 +1,10 @@
 /**
- * Hermes Browser Extension — built-in quick command registry.
+ * Hermes Browser Extension — unified Browser command registry.
  *
- * Commands are local prompt shapers. They do not grant new browser abilities,
- * make network calls, or bypass the normal untrusted browser-context wrapper.
+ * Helper commands are local prompt shapers. Native commands are deterministic
+ * surface operations such as Stop, Steer, Queue, session navigation, and model
+ * selection. Native commands are never sent to the model as slash-command text.
+ * Neither command kind bypasses the normal untrusted browser-context wrapper.
  *
  * @module lib/commands
  */
@@ -20,7 +22,7 @@
  */
 
 /** @type {ReadonlyArray<Readonly<CommandDef>>} */
-export const BUILTIN_COMMANDS = Object.freeze([
+const PROMPT_COMMANDS = Object.freeze([
   {
     name: 'summarize',
     aliases: ['summary'],
@@ -139,6 +141,33 @@ export const BUILTIN_COMMANDS = Object.freeze([
   },
 ]);
 
+/** Native operations shared by the side panel and Hermes Web surfaces. */
+export const NATIVE_COMMANDS = Object.freeze([
+  { name: 'help', aliases: ['commands'], description: 'Show the Browser command catalog.', category: 'Agent', icon: '?', requiresInput: false, action: 'command-help' },
+  { name: 'sessions', aliases: ['history'], description: 'Open the synced Hermes session list.', category: 'Session', icon: '☰', requiresInput: false, action: 'session-list' },
+  { name: 'new', description: 'Start a new Hermes session.', category: 'Session', icon: '+', requiresInput: false, action: 'new-session' },
+  { name: 'retry', description: 'Retry the latest user turn once.', category: 'Session', icon: '↻', requiresInput: false, action: 'retry-last' },
+  { name: 'model', description: 'Open the model picker.', category: 'Runtime', icon: '◉', requiresInput: false, action: 'model-picker' },
+  { name: 'provider', description: 'Open provider and runtime settings.', category: 'Runtime', icon: '◇', requiresInput: false, action: 'provider-settings' },
+  { name: 'reset', description: 'Reset into a clean Hermes session.', category: 'Session', icon: '↺', requiresInput: false, action: 'reset-session' },
+  { name: 'rollback', description: 'Restore a prior checkpoint when this surface supports it.', category: 'Session', icon: '⤺', requiresInput: true, action: 'unsupported', unsupportedReason: 'Rollback requires a live Desktop/TUI checkpoint and is not available through the Browser session API yet.' },
+  { name: 'steer', description: 'Inject guidance into the active Hermes run.', category: 'Run', icon: '↪', requiresInput: true, action: 'steer-run' },
+  { name: 'stop', aliases: ['cancel'], description: 'Stop the active Hermes run on the server.', category: 'Run', icon: '■', requiresInput: false, action: 'stop-run' },
+  { name: 'queue', description: 'Queue a message after the active run.', category: 'Run', icon: '≡', requiresInput: true, action: 'queue-message' },
+  { name: 'skills', description: 'Open installed Hermes skills.', category: 'Agent', icon: '✦', requiresInput: false, action: 'skill-list' },
+  { name: 'quit', aliases: ['exit'], description: 'Quit an interactive Hermes client.', category: 'Agent', icon: '×', requiresInput: false, action: 'unsupported', unsupportedReason: 'Browser surfaces stay attached to the browser; close the side panel or tab to leave.' },
+  { name: 'refresh', description: 'Refresh synced Hermes sessions.', category: 'Session', icon: '↻', requiresInput: false, action: 'refresh-sessions', surfaces: ['fulltab'] },
+  { name: 'context', description: 'Open context-window details.', category: 'Runtime', icon: '◫', requiresInput: false, action: 'context-window', surfaces: ['fulltab'] },
+  { name: 'activity', description: 'Open live tool activity.', category: 'Runtime', icon: '⌁', requiresInput: false, action: 'activity', surfaces: ['fulltab'] },
+  { name: 'attach', aliases: ['files'], description: 'Open the file attachment picker.', category: 'Agent', icon: '+', requiresInput: false, action: 'attach-files', surfaces: ['fulltab'] },
+  { name: 'settings', description: 'Open Hermes Web settings.', category: 'Runtime', icon: '⚙', requiresInput: false, action: 'settings', surfaces: ['fulltab'] },
+]);
+
+export const BUILTIN_COMMANDS = Object.freeze([
+  ...PROMPT_COMMANDS.map((command) => Object.freeze({ ...command, kind: 'helper' })),
+  ...NATIVE_COMMANDS.map((command) => Object.freeze({ ...command, kind: 'native' })),
+]);
+
 function normalizeCommandName(name = '') {
   return String(name || '').replace(/^\//, '').trim().toLowerCase();
 }
@@ -167,7 +196,7 @@ export function suggestCommands(input = '', limit = 6) {
 
 export function resolveCommandPrompt(commandName, userInput, ctx) {
   const command = getCommand(commandName);
-  if (!command) return null;
+  if (!command || typeof command.prompt !== 'function') return null;
   const extra = String(userInput || '').trim();
   const prompt = command.prompt(ctx);
   return {
@@ -184,4 +213,13 @@ export function parseCommandInput(value = '') {
   const command = getCommand(name);
   if (!command) return null;
   return { command, userInput: tail.trim(), tail };
+}
+
+export function parseBrowserCommand(value = '') {
+  const parsed = parseCommandInput(value);
+  if (!parsed) return null;
+  return {
+    ...parsed,
+    kind: parsed.command.kind === 'native' ? 'native' : 'helper',
+  };
 }

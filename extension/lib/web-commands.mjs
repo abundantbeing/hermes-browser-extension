@@ -1,33 +1,33 @@
-export const WEB_COMMANDS = Object.freeze([
-  { name: 'new', description: 'Start a new Hermes Web chat', action: 'new-session' },
-  { name: 'model', description: 'Choose the model for this session', action: 'model-picker' },
-  { name: 'context', description: 'Inspect the session context window', action: 'context-window' },
-  { name: 'activity', description: 'Show the active run and tool activity', action: 'activity' },
-  { name: 'files', description: 'Attach files to the next message', action: 'attach-files' },
-  { name: 'settings', description: 'Open Hermes Web settings', action: 'settings' },
-]);
+import {
+  BUILTIN_COMMANDS,
+  parseBrowserCommand,
+} from './commands.mjs';
 
-function commandToken(value = '') {
-  const match = /(?:^|\s)\/([a-z0-9_-]*)$/i.exec(String(value || ''));
-  return match ? String(match[1] || '').toLowerCase() : null;
+export const WEB_COMMANDS = Object.freeze(
+  BUILTIN_COMMANDS.filter((command) => !command.surfaces || command.surfaces.includes('fulltab')),
+);
+
+const WEB_COMMAND_NAMES = new Set(WEB_COMMANDS.map((command) => command.name));
+
+export function parseWebCommand(input = '') {
+  const parsed = parseBrowserCommand(input);
+  if (!parsed || parsed.kind !== 'native' || !WEB_COMMAND_NAMES.has(parsed.command.name)) return null;
+  return parsed;
 }
 
-export function webComposerSuggestionMode(value = '', { force = false } = {}) {
+export function webCommandSuggestions(input = '', limit = 8) {
+  const match = String(input || '').match(/(?:^|\s)\/([a-z0-9_-]*)$/i);
+  if (!match) return [];
+  const needle = String(match[1] || '').toLowerCase();
+  return WEB_COMMANDS
+    .filter((command) => !needle
+      || command.name.includes(needle)
+      || (command.aliases || []).some((alias) => alias.includes(needle))
+      || command.description.toLowerCase().includes(needle))
+    .slice(0, limit);
+}
+
+export function webComposerSuggestionMode(input = '', { force = false } = {}) {
   if (force) return 'commands';
-  return /(?:^|\s)[/@][a-z0-9_-]*$/i.test(String(value || '')) ? 'typed' : 'none';
-}
-
-export function webCommandSuggestions(value = '') {
-  const token = commandToken(value);
-  if (token == null) return [];
-  return WEB_COMMANDS.filter((command) => !token
-    || `${command.name} ${command.description}`.toLowerCase().includes(token));
-}
-
-export function parseWebCommand(value = '') {
-  const match = /^\/([a-z0-9_-]+)\s*$/i.exec(String(value || '').trim());
-  if (!match) return null;
-  const name = String(match[1] || '').toLowerCase();
-  const command = WEB_COMMANDS.find((item) => item.name === name);
-  return command ? { name: command.name, command: command.name } : null;
+  return /(?:^|\s)[/@][a-z0-9_-]*$/i.test(String(input || '')) ? 'typed' : 'none';
 }

@@ -459,15 +459,15 @@ test('full-tab session creation and controls enforce the upstream runtime truth 
   const js = read('extension/app.js');
   const createSession = js.match(/async function createSession\(\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   const selectModel = js.match(/async function selectModel\(model\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
-  const steerCurrentDraft = js.match(/async function steerCurrentDraft\(\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  const sendWebSteerText = js.match(/async function sendWebSteerText\(text\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
 
   assert.match(createSession, /require_model_lock:\s*shouldRequireModelLock\(\{/);
   assert.match(createSession, /gatewayDefault:\s*model\.gatewayDefault === true/);
   assert.match(selectModel, /modelLockRequestOutcome/);
   assert.match(selectModel, /previousSettings/);
   assert.match(selectModel, /state === 'failed'|outcome\.rollback/);
-  assert.match(steerCurrentDraft, /runSteerFailureState/);
-  assert.match(steerCurrentDraft, /activeRunId\s*=\s*''/);
+  assert.match(sendWebSteerText, /runSteerFailureState/);
+  assert.match(sendWebSteerText, /activeRunId\s*=\s*''/);
 });
 
 test('full-tab chat hierarchy is compact and exposes useful Hermes controls instead of dead cards', () => {

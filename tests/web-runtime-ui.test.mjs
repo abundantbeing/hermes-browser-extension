@@ -14,18 +14,22 @@ import {
 } from '../extension/lib/web-artifacts.mjs';
 import { isRenderableAssistantMessage } from '../extension/lib/web-run-state.mjs';
 
-test('Hermes Web has a focused command registry instead of inheriting browser-extension commands', () => {
-  assert.deepEqual(WEB_COMMANDS.map((command) => command.name), [
-    'new',
-    'model',
-    'context',
-    'activity',
-    'files',
-    'settings',
-  ]);
-  assert.deepEqual(parseWebCommand('/context'), { name: 'context', command: 'context' });
-  assert.equal(parseWebCommand('/context explain this'), null);
-  assert.deepEqual(webCommandSuggestions('/act').map((command) => command.name), ['activity']);
+test('Hermes Web shares the unified Browser registry while preserving full-tab actions', () => {
+  const nativeNames = WEB_COMMANDS.filter((command) => command.kind === 'native').map((command) => command.name);
+  const helperNames = WEB_COMMANDS.filter((command) => command.kind === 'helper').map((command) => command.name);
+
+  for (const name of ['help', 'sessions', 'new', 'retry', 'model', 'provider', 'reset', 'rollback', 'steer', 'stop', 'queue', 'skills', 'quit', 'context', 'activity', 'attach', 'settings']) {
+    assert.ok(nativeNames.includes(name), `Hermes Web should expose /${name}`);
+  }
+  for (const name of ['summarize', 'tldr', 'explain']) {
+    assert.ok(helperNames.includes(name), `Hermes Web should preserve /${name}`);
+  }
+
+  const context = parseWebCommand('/context');
+  assert.equal(context.kind, 'native');
+  assert.equal(context.command.action, 'context-window');
+  assert.equal(parseWebCommand('/summarize'), null, 'prompt helpers stay out of the native dispatch seam');
+  assert.deepEqual(webCommandSuggestions('/activity').map((command) => command.name), ['activity']);
 });
 
 test('the Web command button stays command-only while typed slash and at-sign input can invoke skills', () => {

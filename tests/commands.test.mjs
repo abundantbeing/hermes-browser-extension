@@ -4,7 +4,9 @@ import { readFileSync } from 'node:fs';
 
 import {
   BUILTIN_COMMANDS,
+  NATIVE_COMMANDS,
   getCommand,
+  parseBrowserCommand,
   parseCommandInput,
   resolveCommandPrompt,
   suggestCommands,
@@ -59,6 +61,94 @@ test('parseCommandInput returns command and user tail only for known commands', 
   assert.equal(parsed.userInput, 'Spanish');
   assert.equal(parseCommandInput('plain request'), null);
   assert.equal(parseCommandInput('/unknown thing'), null);
+});
+
+test('one Browser command registry exposes native Hermes run and session operations', () => {
+  const names = NATIVE_COMMANDS.map((command) => command.name);
+  for (const name of ['help', 'sessions', 'new', 'retry', 'model', 'provider', 'reset', 'rollback', 'steer', 'stop', 'queue', 'skills', 'quit']) {
+    assert.ok(names.includes(name), `/${name} should be a native Browser command`);
+  }
+  assert.equal(new Set(BUILTIN_COMMANDS.map((command) => command.name)).size, BUILTIN_COMMANDS.length);
+});
+
+test('parseBrowserCommand distinguishes native operations from prompt helpers and leaves skills alone', () => {
+  const steer = parseBrowserCommand('/steer tighten the scope');
+  assert.equal(steer.kind, 'native');
+  assert.equal(steer.command.action, 'steer-run');
+  assert.equal(steer.userInput, 'tighten the scope');
+
+  const helper = parseBrowserCommand('/summarize this page');
+  assert.equal(helper.kind, 'helper');
+  assert.equal(helper.command.name, 'summarize');
+
+  assert.equal(parseBrowserCommand('/my-installed-skill do this'), null);
+  assert.equal(parseBrowserCommand('plain request'), null);
+});
+
+test('native command aliases resolve to the same deterministic operation', () => {
+  assert.equal(parseBrowserCommand('/commands')?.command.action, 'command-help');
+  assert.equal(parseBrowserCommand('/cancel')?.command.action, 'stop-run');
+  assert.equal(parseBrowserCommand('/history')?.command.action, 'session-list');
+});
+
+test('Browser surfaces execute native run controls instead of sending slash text as prompts', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+
+  assert.match(sidepanel, /executeNativeBrowserCommand/);
+  assert.match(sidepanel, /action === 'steer-run'/);
+  assert.match(sidepanel, /action === 'stop-run'/);
+  assert.match(sidepanel, /WS_METHODS\.sessionInterrupt/);
+  assert.match(fulltab, /executeNativeBrowserCommand/);
+  assert.match(fulltab, /action === 'steer-run'/);
+  assert.match(fulltab, /action === 'stop-run'/);
+  assert.match(fulltab, /\/v1\/runs\/\$\{encodeURIComponent\(activeRunId\)\}\/stop/);
+});
+
+test('full-tab steer uses session.steer for Dashboard runs and capability-gates REST runs', () => {
+  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+  const start = fulltab.indexOf('async function sendWebSteerText');
+  const end = fulltab.indexOf('\nasync function stopActiveRun', start);
+  assert.ok(start >= 0 && end > start, 'full-tab should expose one bounded steer transport helper');
+  const block = fulltab.slice(start, end);
+  assert.match(block, /usesDashboardTicketTransport\(\)/);
+  assert.match(block, /WS_METHODS\.sessionSteer/);
+  assert.match(block, /gatewayCapabilities\.runSteer/);
+  assert.match(block, /runSteerFailureState/);
+});
+
+test('native full-tab commands never fall through as model prompts when attachments are staged', () => {
+  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+  const start = fulltab.indexOf("els.composer.addEventListener('submit'");
+  const end = fulltab.indexOf("els.prompt.addEventListener('keydown'", start);
+  assert.ok(start >= 0 && end > start, 'full-tab composer submit handler should be bounded');
+  const block = fulltab.slice(start, end);
+  assert.match(block, /browserCommand\?\.kind === 'native'/);
+  assert.doesNotMatch(block, /browserCommand\?\.kind === 'native'\s*&&\s*!attachments\.length/);
+});
+
+test('/queue preserves staged attachments on both Browser surfaces', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+  const sideStart = sidepanel.indexOf('async function executeNativeBrowserCommand');
+  const sideEnd = sidepanel.indexOf('\nconst VOICE_AUDIO_MIME_TYPES', sideStart);
+  const webStart = fulltab.indexOf('async function executeNativeBrowserCommand');
+  const webEnd = fulltab.indexOf('\nasync function runWebCommand', webStart);
+  assert.match(sidepanel.slice(sideStart, sideEnd), /queuedTurn = \{ text: userInput, attachments: \[\.\.\.attachments\]/);
+  assert.match(sidepanel.slice(sideStart, sideEnd), /clearAttachments\(\)/);
+  assert.match(fulltab.slice(webStart, webEnd), /queuedTurn = \{ text: userInput, attachments: \[\.\.\.attachments\] \}/);
+  assert.match(fulltab.slice(webStart, webEnd), /renderAttachments\(\)/);
+});
+
+test('Stop reports an unconfirmed runtime stop instead of silently swallowing control failures', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+  const sideStart = sidepanel.indexOf('async function stopCurrentTurn');
+  const sideEnd = sidepanel.indexOf('\nfunction browserCommandsForSurface', sideStart);
+  const webStart = fulltab.indexOf('async function stopActiveRun');
+  const webEnd = fulltab.indexOf('\nfunction renderToolEvent', webStart);
+  assert.match(sidepanel.slice(sideStart, sideEnd), /Runtime stop unconfirmed/);
+  assert.match(fulltab.slice(webStart, webEnd), /Runtime stop unconfirmed/);
 });
 
 test('resolveCommandPrompt appends user input without losing command context', () => {

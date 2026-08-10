@@ -239,7 +239,7 @@ import {
 
 import {
   BUILTIN_COMMANDS,
-  parseCommandInput,
+  parseBrowserCommand,
   resolveCommandPrompt,
 } from './lib/commands.mjs';
 import {
@@ -2300,12 +2300,143 @@ function isAbortError(error) {
 }
 
 async function stopCurrentTurn() {
-  if (!sending) return;
-  setStatus('warn', 'Stopping Hermes', activeRunId ? `Interrupt requested for ${activeRunId}` : 'Closing the active browser stream');
-  if (activeRunId && !isRemoteWsMode()) {
-    apiFetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' }).catch(() => {});
+  if (!sending) return false;
+  setStatus('warn', 'Stopping Hermes', activeRunId ? `Interrupt requested for ${activeRunId}` : 'Interrupting the active Hermes session');
+  let stopError = null;
+  try {
+    if (isRemoteWsMode()) {
+      const connection = await ensureRemoteWsClient();
+      const sessionId = await ensureRemoteWsSession(connection);
+      await connection.client.request(WS_METHODS.sessionInterrupt, { session_id: sessionId });
+    } else if (activeRunId) {
+      const response = await apiFetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' });
+      const payload = await readJsonResponse(response);
+      if (!response.ok) {
+        throw new Error(payload?.error?.message || payload?.error || payload?.message || `Hermes stop failed (${response.status})`);
+      }
+    } else {
+      throw new Error('The active run id is not available yet, so Hermes could not acknowledge a server stop.');
+    }
+  } catch (error) {
+    stopError = error;
   }
   activeAbortController?.abort();
+  if (stopError) {
+    setStatus('warn', 'Runtime stop unconfirmed', `Browser closed the local stream, but Hermes did not acknowledge the stop: ${stopError?.message || String(stopError)}`, { translateDetail: false });
+    return false;
+  }
+  setStatus('ok', 'Stop requested', 'Hermes acknowledged the runtime stop request.');
+  return true;
+}
+
+function browserCommandsForSurface(surface = 'sidepanel') {
+  return BUILTIN_COMMANDS.filter((command) => !command.surfaces || command.surfaces.includes(surface));
+}
+
+function nativeCommandCatalogText(surface = 'sidepanel') {
+  return browserCommandsForSurface(surface)
+    .map((command) => `/${command.name}${command.requiresInput ? ' …' : ''} — ${command.description}`)
+    .join('\n');
+}
+
+async function executeNativeBrowserCommand(parsedCommand) {
+  if (!parsedCommand || parsedCommand.kind !== 'native') return false;
+  const { command, userInput = '' } = parsedCommand;
+  const action = command.action;
+
+  if (action === 'steer-run') {
+    if (!userInput) {
+      setStatus('warn', 'Steer needs guidance', 'Add text after /steer.');
+      return true;
+    }
+    try {
+      await sendSteerText(userInput);
+      els.input.value = '';
+      renderSkillSuggestions();
+      updateComposerBusyState();
+      setStatus('ok', 'Steer sent to active run', 'Hermes accepted the guidance for the active run.');
+    } catch (error) {
+      setStatus('warn', 'Steer failed', error?.message || String(error), { translateDetail: false });
+    }
+    return true;
+  }
+
+  if (action === 'stop-run') {
+    if (!sending) setStatus('warn', 'Nothing to stop', 'Hermes is not currently running.');
+    else await stopCurrentTurn();
+    return true;
+  }
+
+  if (action === 'queue-message') {
+    if (!sending) {
+      setStatus('warn', 'Nothing to queue behind', 'Hermes is not currently running. Send the message normally.');
+    } else if (!userInput) {
+      setStatus('warn', 'Queue needs a message', 'Add text after /queue.');
+    } else {
+      queuedTurn = { text: userInput, attachments: [...attachments], kind: 'queued', autoSend: true };
+      els.input.value = '';
+      clearAttachments();
+      renderSkillSuggestions();
+      updateComposerBusyState();
+      setStatus('ok', 'Message queued', 'Hermes will send it after the current turn finishes or stops.');
+    }
+    return true;
+  }
+
+  if (action === 'command-help') {
+    addMessage('system', `Hermes Browser commands\n\n${nativeCommandCatalogText('sidepanel')}`);
+    return true;
+  }
+  if (action === 'session-list') {
+    closeFloatingPanels();
+    els.sessionMenu.hidden = false;
+    els.sessionMenuButton.setAttribute('aria-expanded', 'true');
+    await loadSessions({ quiet: true });
+    els.sessionSearchInput.focus();
+    return true;
+  }
+  if (action === 'new-session' || action === 'reset-session') {
+    if (sending) {
+      setStatus('warn', 'Current run is still active', 'Use /stop before starting a clean session.');
+    } else {
+      await persistBrowserIntroSeen();
+      await beginHermesBrowserDraft();
+      await loadSessions({ quiet: true });
+      setStatus('ok', 'New Hermes Browser Extension draft', 'Saved when you send the first message.');
+    }
+    return true;
+  }
+  if (action === 'retry-last') {
+    if (sending) {
+      setStatus('warn', 'Current run is still active', 'Stop or wait for the current run before retrying.');
+      return true;
+    }
+    const lastUser = [...messages].reverse().find((message) => message?.role === 'user' && String(message?.content || '').trim());
+    if (!lastUser) setStatus('warn', 'Nothing to retry', 'This session has no previous user turn.');
+    else await askHermes(String(lastUser.content).trim(), [], { disableAutoTitle: true });
+    return true;
+  }
+  if (action === 'model-picker') {
+    els.modelMenuButton.click();
+    return true;
+  }
+  if (action === 'provider-settings') {
+    openSettingsDialog();
+    setStatus('ok', 'Provider settings opened', 'Connection and model provider controls are available in Settings.');
+    return true;
+  }
+  if (action === 'skill-list') {
+    await loadSkills({ quiet: true });
+    els.input.value = '/';
+    renderSkillSuggestions();
+    els.input.focus();
+    return true;
+  }
+  if (action === 'unsupported') {
+    setStatus('warn', `/${command.name} is unavailable here`, command.unsupportedReason || 'This command is unavailable in Hermes Browser.', { translateDetail: false });
+    return true;
+  }
+  return false;
 }
 
 const VOICE_AUDIO_MIME_TYPES = Object.freeze([
@@ -5108,7 +5239,7 @@ function renderSkillSuggestions() {
   let builtinSuggestions = [];
   if (value.startsWith('/')) {
     const needle = value.slice(1).toLowerCase();
-    builtinSuggestions = BUILTIN_COMMANDS.filter((c) => {
+    builtinSuggestions = browserCommandsForSurface('sidepanel').filter((c) => {
       return !needle || c.name.startsWith(needle) || c.description.toLowerCase().includes(needle);
     }).slice(0, 4);
   }
@@ -5201,9 +5332,10 @@ function applyQuickCommand(cmd) {
 
 function renderQuickMoreMenu(category = 'all') {
   if (!els.quickMoreMenu) return;
+  const surfaceCommands = browserCommandsForSurface('sidepanel');
   const commands = category === 'all'
-    ? BUILTIN_COMMANDS
-    : BUILTIN_COMMANDS.filter((c) => c.category === category);
+    ? surfaceCommands
+    : surfaceCommands.filter((c) => c.category === category);
   if (!commands.length) { setQuickCommandMenuOpen(false); return; }
 
   els.quickMoreMenu.innerHTML = '';
@@ -8580,6 +8712,10 @@ async function fallbackChatCompletions(prompt, turnAttachments = attachments) {
 }
 
 async function askHermes(userText, turnAttachments = [...attachments], turnOptions = {}) {
+  const browserCommand = turnOptions.disableCommandParsing ? null : parseBrowserCommand(userText);
+  if (browserCommand?.kind === 'native') {
+    return executeNativeBrowserCommand(browserCommand);
+  }
   if (!isConnected()) {
     updateConnectionPrompt();
     addMessage('system', isRemoteWsMode()
@@ -8644,7 +8780,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
 
     // Command expansion is a declared instruction transform. Deliberately do
     // not pass page/tab data to it: Browser data remains in browser_context.
-    const parsedCommand = turnOptions.disableCommandParsing ? null : parseCommandInput(userText);
+    const parsedCommand = browserCommand?.kind === 'helper' ? browserCommand : null;
     let basePromptText = userText;
     if (parsedCommand) {
       const resolved = resolveCommandPrompt(parsedCommand.command.name, parsedCommand.userInput, {
@@ -9989,6 +10125,11 @@ function bindEvents() {
   els.sessionOwnershipNotice?.addEventListener('click', handleSessionOwnershipDecision);
   els.composer.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const browserCommand = parseBrowserCommand(els.input.value);
+    if (browserCommand?.kind === 'native') {
+      await executeNativeBrowserCommand(browserCommand);
+      return;
+    }
     if (sending) {
       const action = busyComposerSubmitAction({
         sending,
