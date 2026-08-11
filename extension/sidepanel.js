@@ -67,7 +67,6 @@ import {
   prepareOnDeviceSpeechRecognition,
   queuedMessageControlState,
   reasoningEffortShortLabel,
-  requiresForeignSessionConfirmation,
   renderMarkdown,
   runtimeValueMatches,
   safeTab,
@@ -251,7 +250,6 @@ import {
   CONTEXT_SCOPE_MODES,
   DEFAULT_CONTEXT_SCOPE,
   compactPinnedTitle,
-  contextScopeForGateway,
   contextScopeFromTab,
   filterPromptTabs,
   messageStorageKeyForScope,
@@ -260,6 +258,44 @@ import {
   sessionBindingKeyForScope,
   shouldRefreshForTabEvent,
 } from './lib/context-scope.mjs';
+import {
+  CONTEXT_CONSENT_STORAGE_KEY,
+  consentGrantedForIdentity,
+  consentRequiredForConnection,
+  contextConsentIdentity,
+  contextScopeWithConsent,
+  dashboardPrincipalFromMe,
+  fingerprintContextCredential,
+  normalizeContextConsentLedger,
+  normalizeContextConsentOrigin,
+  persistContextConsentDecision,
+} from './lib/context-consent.mjs';
+import {
+  SESSION_SURFACE_SOURCES,
+  requiresSessionOwnershipConfirmation,
+  sessionOwnershipNotice,
+} from './lib/session-ownership.mjs';
+import {
+  RUN_CONTROL_PHASES,
+  RUN_CONTROL_REQUEST_TIMEOUT_MS,
+  RUN_STATUS_POLL_MS,
+  RUN_TERMINAL_CONFIRM_TIMEOUT_MS,
+  acknowledgeStopRequest,
+  beginRunControl,
+  canSwitchActiveSession,
+  dashboardTerminalStatus,
+  markRunStreamClosed,
+  markRunTerminal,
+  markStopRequestFailed,
+  markTerminalTimeout,
+  requestRunStop,
+  restTerminalStatus,
+  runControlGenerationMatches,
+  runControlRequestWithTimeout,
+  runStopFailureTerminalStatus,
+  waitForTerminalStatus,
+  withRunControlId,
+} from './lib/run-control-lifecycle.mjs';
 import {
   PANEL_RESIDENCY_MODES,
   normalizePanelResidencyMode,
@@ -365,6 +401,10 @@ const els = {
   dropOverlay: $('#dropOverlay'),
   skillMenu: $('#skillMenu'),
   queueNotice: $('#queueNotice'),
+  runControlRecovery: $('#runControlRecovery'),
+  runControlRecoveryDetail: $('#runControlRecoveryDetail'),
+  retryRunStatusButton: $('#retryRunStatusButton'),
+  discardHeldQueueButton: $('#discardHeldQueueButton'),
   sendButton: $('#sendButton'),
   inlineSendButton: $('#inlineSendButton'),
   queueButton: $('#queueButton'),
@@ -449,6 +489,9 @@ const els = {
   includeTabsInput: $('#includeTabsInput'),
   includePageTextInput: $('#includePageTextInput'),
   includeSelectedTextInput: $('#includeSelectedTextInput'),
+  browserContextConsentControl: $('#browserContextConsentControl'),
+  browserContextConsentInput: $('#browserContextConsentInput'),
+  browserContextConsentIdentity: $('#browserContextConsentIdentity'),
   inlineAssistEnabled: $('#inlineAssistEnabled'),
   inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
   inlineAssistModel: $('#inlineAssistModel'),
@@ -551,6 +594,7 @@ let startupReadiness = initialStartupReadiness(settings);
 let contextScope = normalizeContextScope(DEFAULT_CONTEXT_SCOPE);
 let previousConversationScope = normalizeContextScope(DEFAULT_CONTEXT_SCOPE);
 let currentContext = { activeTab: null, tabs: [], pageContext: null, contextScope };
+let contextConsentPrincipalBinding = { origin: '', transport: '', principal: '' };
 const pickedElementsByTabId = new Map();
 let elementPickInProgress = false;
 let elementPickState = null;
@@ -582,6 +626,8 @@ let sending = false;
 let queuedTurn = null;
 let activeAbortController = null;
 let activeRunId = '';
+let activeRunControl = null;
+let runControlGeneration = 0;
 let pendingSteerText = '';
 let dragDepth = 0;
 let speechRecognition = null;
@@ -949,6 +995,7 @@ function openSettingsDialog() {
   syncSettingsForm();
   renderCompatibilityPanel();
   renderConnectionSecurity();
+  renderBrowserContextConsentControl();
   renderRemoteDiagnostics(lastRemoteDiagnostic);
   els.settingsDialog.hidden = false;
   els.settingsDialog.setAttribute('aria-hidden', 'false');
@@ -1016,6 +1063,110 @@ function currentGatewaySummary(overrides = {}) {
   });
 }
 
+function currentContextConsentController() {
+  return String(chrome.runtime.id || 'hermes-browser');
+}
+
+function contextConsentBindingMatches(source = settings) {
+  return contextConsentPrincipalBinding.origin === normalizeContextConsentOrigin(source.gatewayUrl)
+    && contextConsentPrincipalBinding.transport === String(source.connectionTransport || '');
+}
+
+async function refreshContextConsentPrincipal({ dashboardPrincipal, settingsOverride = settings } = {}) {
+  const source = settingsOverride || settings;
+  const origin = normalizeContextConsentOrigin(source.gatewayUrl);
+  const transport = String(source.connectionTransport || '');
+  if (!consentRequiredForConnection({ gatewayUrl: source.gatewayUrl })) {
+    contextConsentPrincipalBinding = { origin, transport, principal: 'local' };
+  } else if (transportUsesDashboardTicket(transport)) {
+    const supplied = dashboardPrincipal !== undefined;
+    const principal = supplied
+      ? dashboardPrincipalFromMe(dashboardPrincipal)
+      : (contextConsentBindingMatches(source) ? contextConsentPrincipalBinding.principal : '');
+    contextConsentPrincipalBinding = { origin, transport, principal };
+  } else {
+    const principal = source.apiKey
+      ? `api:${await fingerprintContextCredential(source.apiKey)}`
+      : '';
+    contextConsentPrincipalBinding = { origin, transport, principal };
+  }
+  renderBrowserContextConsentControl();
+  return contextConsentPrincipalBinding.principal;
+}
+
+function currentContextConsentIdentity(source = settings) {
+  if (!consentRequiredForConnection({ gatewayUrl: source.gatewayUrl })) return null;
+  if (!contextConsentBindingMatches(source) || !contextConsentPrincipalBinding.principal) return null;
+  return contextConsentIdentity({
+    gatewayUrl: source.gatewayUrl,
+    principal: contextConsentPrincipalBinding.principal,
+    profile: source.activeProfile || DEFAULT_SETTINGS.activeProfile,
+    controller: currentContextConsentController(),
+    transport: source.connectionTransport,
+  });
+}
+
+function effectiveContextGate(scope = contextScope, source = settings) {
+  return contextScopeWithConsent(scope, {
+    gatewayUrl: source.gatewayUrl,
+    connectionTransport: source.connectionTransport,
+    identity: currentContextConsentIdentity(source),
+    ledger: source.browserContextConsentLedger,
+  });
+}
+
+async function refreshContextConsentLedger(settingsOverride = settings) {
+  const stored = await chrome.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
+  const sendTimeSettings = {
+    ...settingsOverride,
+    browserContextConsentLedger: normalizeContextConsentLedger(stored?.[CONTEXT_CONSENT_STORAGE_KEY]),
+  };
+  await refreshContextConsentPrincipal({ settingsOverride: sendTimeSettings });
+  return sendTimeSettings;
+}
+
+function renderBrowserContextConsentControl() {
+  if (!els.browserContextConsentControl || !els.browserContextConsentInput) return;
+  const required = consentRequiredForConnection({ gatewayUrl: settings.gatewayUrl });
+  els.browserContextConsentControl.hidden = !required;
+  if (!required) {
+    els.browserContextConsentInput.checked = true;
+    els.browserContextConsentInput.disabled = true;
+    for (const contextInput of [els.includeTabsInput, els.includePageTextInput, els.includeSelectedTextInput]) {
+      if (contextInput) contextInput.disabled = false;
+    }
+    return;
+  }
+  const identity = currentContextConsentIdentity();
+  const granted = Boolean(identity) && consentGrantedForIdentity(settings.browserContextConsentLedger, identity);
+  els.browserContextConsentInput.checked = granted;
+  els.browserContextConsentInput.disabled = !identity;
+  if (els.browserContextConsentIdentity) {
+    els.browserContextConsentIdentity.textContent = identity
+      ? `${identity.origin} · ${identity.profile} · verified ${transportUsesDashboardTicket(identity.transport) ? 'dashboard account' : 'API credential'}`
+      : 'Reconnect or test this connection to verify its account before sharing page context.';
+  }
+  for (const contextInput of [els.includeTabsInput, els.includePageTextInput, els.includeSelectedTextInput]) {
+    if (!contextInput) continue;
+    contextInput.disabled = !granted;
+    contextInput.title = granted ? '' : 'Chat only until this exact connection is approved.';
+  }
+}
+
+async function setBrowserContextConsent(granted) {
+  await refreshContextConsentPrincipal();
+  const identity = currentContextConsentIdentity();
+  if (!identity) throw new Error('Reconnect or test this connection before sharing page context.');
+  const ledger = await persistContextConsentDecision({
+    storageArea: chrome.storage.local,
+    identity,
+    granted: Boolean(granted),
+  });
+  settings = { ...settings, browserContextConsentLedger: ledger };
+  renderBrowserContextConsentControl();
+  await refreshContext();
+}
+
 function renderGatewayHelp() {
   const connectionMode = normalizeConnectionMode(els.connectionModeInput?.value || settings.connectionMode);
   const summary = currentGatewaySummary({
@@ -1028,12 +1179,7 @@ function renderGatewayHelp() {
       : summary.setupHint);
   }
   if (els.gatewayUrlInput) els.gatewayUrlInput.placeholder = summary.mode.defaultUrl || DEFAULT_SETTINGS.gatewayUrl;
-  const dashboardAttach = connectionMode === 'cloud' || summary.mode.value === 'remote-dashboard';
-  for (const contextInput of [els.includeTabsInput, els.includePageTextInput, els.includeSelectedTextInput]) {
-    if (!contextInput) continue;
-    contextInput.disabled = dashboardAttach;
-    contextInput.title = dashboardAttach ? 'Trusted Dashboard Attach is Chat-only.' : '';
-  }
+  renderBrowserContextConsentControl();
 }
 
 // The "Connected agent" port scanner is meaningless in remote-dashboard mode
@@ -1392,30 +1538,31 @@ function syncSelectedTabsToContextScope() {
   saveContextScopeForInstance();
 }
 
-function contextScopeLabel() {
-  if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return 'Chat only';
-  if (contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB) {
-    if (isAttachedPanelResidency() && Number(contextScope.pinnedTabId) === Number(sidePanelParams.tabId)) {
-      return contextScope.pinnedTitle ? `Attached: ${contextScope.pinnedTitle}` : 'Attached tab';
+function contextScopeLabel(scope = contextScope) {
+  if (scope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return 'Chat only';
+  if (scope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB) {
+    if (isAttachedPanelResidency() && Number(scope.pinnedTabId) === Number(sidePanelParams.tabId)) {
+      return scope.pinnedTitle ? `Attached: ${scope.pinnedTitle}` : 'Attached tab';
     }
-    return contextScope.pinnedTitle ? `Pinned: ${contextScope.pinnedTitle}` : 'Pinned tab';
+    return scope.pinnedTitle ? `Pinned: ${scope.pinnedTitle}` : 'Pinned tab';
   }
   return isGlobalPanelResidency() ? 'Follow active tab' : 'Attached tab';
 }
 
 function renderContextScopeControls() {
   if (!els.contextScopeButton || !els.contextScopeLabel) return;
-  const pinned = contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB;
-  const chatOnly = contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY;
-  els.contextScopeLabel.textContent = translateUiText(contextScopeLabel());
+  const visibleScope = effectiveContextGate(contextScope).scope;
+  const pinned = visibleScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB;
+  const chatOnly = visibleScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY;
+  els.contextScopeLabel.textContent = translateUiText(contextScopeLabel(visibleScope));
   els.contextScopeButton.classList.toggle('active', pinned || chatOnly);
   els.contextScopeButton.setAttribute('aria-expanded', String(!els.contextScopeMenu?.hidden));
   els.contextScopeButton.title = chatOnly
     ? 'Hermes is in Chat only mode and will not read browser context'
     : pinned
-      ? (isAttachedPanelResidency() && Number(contextScope.pinnedTabId) === Number(sidePanelParams.tabId)
-        ? `Hermes is attached to ${contextScope.pinnedUrl || contextScope.pinnedTitle || 'this browser tab'}`
-        : `Hermes is pinned to ${contextScope.pinnedUrl || contextScope.pinnedTitle || 'this tab'}`)
+      ? (isAttachedPanelResidency() && Number(visibleScope.pinnedTabId) === Number(sidePanelParams.tabId)
+        ? `Hermes is attached to ${visibleScope.pinnedUrl || visibleScope.pinnedTitle || 'this browser tab'}`
+        : `Hermes is pinned to ${visibleScope.pinnedUrl || visibleScope.pinnedTitle || 'this tab'}`)
       : (isGlobalPanelResidency() ? 'Hermes follows the active browser tab' : 'Hermes is attached to this browser tab');
 }
 
@@ -1675,7 +1822,7 @@ async function initializeSessionForPanelOpen({ focus = false } = {}) {
 }
 
 async function applyContextScope(nextScope, { ensureSession = false } = {}) {
-  contextScope = contextScopeForGateway(nextScope, settings.gatewayMode);
+  contextScope = normalizeContextScope(nextScope);
   previousConversationScope = conversationScopeForContextScope(contextScope, previousConversationScope);
   if (contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) rememberConversationScope(contextScope);
   else saveConversationScopeForInstance();
@@ -2122,6 +2269,7 @@ function currentComposerDraftState() {
 }
 
 function updateComposerBusyState() {
+  renderRunControlRecovery();
   const state = currentComposerDraftState();
   const startupBlocking = !startupReadiness.ready;
   setComposerButtonState(els.inlineSendButton, state.controls.inlineSend);
@@ -2299,33 +2447,181 @@ function isAbortError(error) {
   return error?.name === 'AbortError' || /aborted|abort/i.test(String(error?.message || error || ''));
 }
 
+async function reconcileActiveRunTerminal({ stopRequested = false, dashboardSessionId = '', expectedGeneration = runControlGeneration } = {}) {
+  const reconciliationRunId = String(activeRunId || '');
+  if (!isRemoteWsMode() && !gatewayCapabilities.runStatus) {
+    throw new Error('Connected Hermes runtime does not explicitly advertise run status reconciliation.');
+  }
+  const readStatus = isRemoteWsMode()
+    ? async () => {
+      const sessionId = String(dashboardSessionId || reconciliationRunId).trim();
+      if (!sessionId) throw new Error('The active Dashboard session is unavailable for terminal reconciliation.');
+      const connection = await ensureRemoteWsClient();
+      return runControlRequestWithTimeout(
+        () => connection.client.request(WS_METHODS.sessionStatus, { session_id: sessionId }),
+        { timeoutMs: RUN_CONTROL_REQUEST_TIMEOUT_MS },
+      );
+    }
+    : async () => {
+      if (!reconciliationRunId) throw new Error('The active run id is unavailable for terminal reconciliation.');
+      const response = await runControlRequestWithTimeout(
+        (signal) => apiFetch(`/v1/runs/${encodeURIComponent(reconciliationRunId)}`, { method: 'GET', signal }),
+        { timeoutMs: RUN_CONTROL_REQUEST_TIMEOUT_MS },
+      );
+      const payload = await readJsonResponse(response);
+      if (!response.ok) {
+        const staleTerminal = runStopFailureTerminalStatus({ httpStatus: response.status, payload });
+        if (staleTerminal) return { status: staleTerminal };
+        throw new Error(payload?.error?.message || payload?.error || payload?.message || `Hermes run status failed (${response.status})`);
+      }
+      return payload;
+    };
+  const terminalStatus = isRemoteWsMode()
+    ? (payload) => dashboardTerminalStatus(payload, { stopRequested })
+    : restTerminalStatus;
+  const result = await waitForTerminalStatus({
+    readStatus,
+    terminalStatus,
+    timeoutMs: RUN_TERMINAL_CONFIRM_TIMEOUT_MS,
+    pollMs: RUN_STATUS_POLL_MS,
+  });
+  if (!runControlGenerationMatches(expectedGeneration, runControlGeneration)) return { ...result, stale: true };
+  activeRunControl = markRunTerminal(activeRunControl, result.status);
+  return result;
+}
+
+function renderRunControlRecovery() {
+  if (!els.runControlRecovery) return;
+  const unconfirmed = activeRunControl?.phase === RUN_CONTROL_PHASES.UNCONFIRMED;
+  els.runControlRecovery.hidden = !unconfirmed;
+  if (!unconfirmed) return;
+  els.runControlRecoveryDetail.textContent = activeRunControl?.detail
+    ? `Hermes has not confirmed a terminal run state. ${activeRunControl.detail}`
+    : 'Hermes has not confirmed a terminal run state. Retry status before starting another turn.';
+  els.retryRunStatusButton.disabled = false;
+  els.discardHeldQueueButton.disabled = !queuedTurn;
+}
+
+async function retryActiveRunTerminalStatus() {
+  if (activeRunControl?.phase !== RUN_CONTROL_PHASES.UNCONFIRMED) return false;
+  const expectedGeneration = runControlGeneration;
+  els.retryRunStatusButton.disabled = true;
+  try {
+    await reconcileActiveRunTerminal({
+      stopRequested: activeRunControl.controlStatus === 'accepted',
+      expectedGeneration,
+    });
+    if (!runControlGenerationMatches(expectedGeneration, runControlGeneration)) return false;
+    if (activeRunControl?.phase === RUN_CONTROL_PHASES.TERMINAL) {
+      setStatus('ok', 'Runtime state confirmed', 'Hermes reached a terminal state and Browser released the held writer.');
+      await settleActiveRunTerminal();
+      return true;
+    }
+  } catch (error) {
+    setStatus('warn', 'Runtime state unconfirmed', `Status retry failed. The writer and queued turns remain held: ${error?.message || String(error)}`, { translateDetail: false });
+  } finally {
+    renderRunControlRecovery();
+  }
+  return false;
+}
+
+function discardHeldQueuedTurn() {
+  queuedTurn = null;
+  renderQueueNotice();
+  renderRunControlRecovery();
+  setStatus('warn', 'Queued message deleted', 'The active runtime state is still unconfirmed; Browser did not release the writer.');
+}
+
+async function settleActiveRunTerminal() {
+  if (activeRunControl?.phase !== RUN_CONTROL_PHASES.TERMINAL || activeRunControl.writerLease !== 'released') return false;
+  const settledRunControl = activeRunControl;
+  activeAbortController?.abort();
+  activeAbortController = null;
+  activeRunId = '';
+  pendingSteerText = '';
+  sending = false;
+  updateComposerBusyState();
+  renderContextWindow();
+  const shouldFlushQueue = shouldAutoFlushQueuedTurn(queuedTurn, settledRunControl);
+  if (!shouldFlushQueue) return true;
+  const next = queuedTurn;
+  queuedTurn = null;
+  renderQueueNotice();
+  await askHermes(next.text, next.attachments || []);
+  return true;
+}
+
 async function stopCurrentTurn() {
   if (!sending) return false;
-  setStatus('warn', 'Stopping Hermes', activeRunId ? `Interrupt requested for ${activeRunId}` : 'Interrupting the active Hermes session');
-  let stopError = null;
+  if (!activeRunControl) {
+    activeRunControl = beginRunControl({ runId: activeRunId, transport: isRemoteWsMode() ? 'dashboard-ws' : 'rest' });
+  }
+  activeRunControl = requestRunStop(activeRunControl);
+  const stopGeneration = runControlGeneration;
+  const stopRunId = String(activeRunId || '');
+  setStatus('warn', 'Stopping Hermes', stopRunId ? `Interrupt requested for ${stopRunId}` : 'Interrupting the active Hermes session');
+  let dashboardSessionId = '';
   try {
     if (isRemoteWsMode()) {
       const connection = await ensureRemoteWsClient();
-      const sessionId = await ensureRemoteWsSession(connection);
-      await connection.client.request(WS_METHODS.sessionInterrupt, { session_id: sessionId });
-    } else if (activeRunId) {
-      const response = await apiFetch(`/v1/runs/${encodeURIComponent(activeRunId)}/stop`, { method: 'POST' });
+      if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+      dashboardSessionId = await ensureRemoteWsSession(connection);
+      if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+      await runControlRequestWithTimeout(
+        () => connection.client.request(WS_METHODS.sessionInterrupt, { session_id: dashboardSessionId }),
+        { timeoutMs: RUN_CONTROL_REQUEST_TIMEOUT_MS },
+      );
+      if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+    } else {
+      if (!stopRunId) {
+        activeAbortController?.abort();
+        activeRunControl = markRunTerminal(activeRunControl, 'cancelled');
+        setStatus('ok', 'Hermes stopped', 'Browser cancelled the turn before Hermes published a server run identity.');
+        return true;
+      }
+      if (!gatewayCapabilities.runStop || !gatewayCapabilities.runStatus) {
+        throw new Error('Connected Hermes runtime does not explicitly advertise both run Stop and run status.');
+      }
+      const response = await runControlRequestWithTimeout(
+        (signal) => apiFetch(`/v1/runs/${encodeURIComponent(stopRunId)}/stop`, { method: 'POST', signal }),
+        { timeoutMs: RUN_CONTROL_REQUEST_TIMEOUT_MS },
+      );
+      if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
       const payload = await readJsonResponse(response);
+      if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
       if (!response.ok) {
+        const staleTerminal = runStopFailureTerminalStatus({ httpStatus: response.status, payload });
+        if (staleTerminal) {
+          activeRunControl = markRunTerminal(activeRunControl, staleTerminal);
+          setStatus('ok', 'Hermes stopped', 'The runtime no longer reports this run as active, so Browser released the held writer.');
+          await settleActiveRunTerminal();
+          return true;
+        }
         throw new Error(payload?.error?.message || payload?.error || payload?.message || `Hermes stop failed (${response.status})`);
       }
-    } else {
-      throw new Error('The active run id is not available yet, so Hermes could not acknowledge a server stop.');
     }
+    if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+    activeRunControl = acknowledgeStopRequest(activeRunControl, { status: 'stopping' });
   } catch (error) {
-    stopError = error;
-  }
-  activeAbortController?.abort();
-  if (stopError) {
-    setStatus('warn', 'Runtime stop unconfirmed', `Browser closed the local stream, but Hermes did not acknowledge the stop: ${stopError?.message || String(stopError)}`, { translateDetail: false });
+    if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+    const stopDetail = error?.message || String(error);
+    activeRunControl = markStopRequestFailed(activeRunControl, stopDetail);
+    setStatus('warn', 'Runtime stop unconfirmed', `Hermes did not acknowledge the stop. Browser kept the run identity and queued turns remain held: ${stopDetail}`, { translateDetail: false });
     return false;
   }
-  setStatus('ok', 'Stop requested', 'Hermes acknowledged the runtime stop request.');
+
+  setStatus('warn', 'Stop accepted', 'Hermes is stopping. Browser is waiting for terminal runtime confirmation before releasing the session writer or queued turns.');
+  try {
+    await reconcileActiveRunTerminal({ stopRequested: true, dashboardSessionId, expectedGeneration: stopGeneration });
+    if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+  } catch (error) {
+    if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+    activeRunControl = markTerminalTimeout(activeRunControl, error?.message || 'Runtime terminal confirmation timed out.');
+    setStatus('warn', 'Runtime stop unconfirmed', `Hermes accepted Stop, but terminal confirmation timed out. Browser kept the run identity and queued turns remain held: ${error?.message || String(error)}`, { translateDetail: false });
+    return false;
+  }
+  setStatus('ok', 'Hermes stopped', 'Terminal cancellation confirmed and the session writer was released.');
+  await settleActiveRunTerminal();
   return true;
 }
 
@@ -6077,6 +6373,10 @@ function makeBrowserSessionTitle(date = new Date()) {
 }
 
 async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focus = true } = {}) {
+  if (!canSwitchActiveSession({ sending, runControl: activeRunControl })) {
+    setStatus('warn', 'Hermes is working…', 'Stop the active run before switching sessions.');
+    return false;
+  }
   // Dashboard WebSocket sessions require a server-issued id; local API sessions
   // can remain drafts until the first turn reaches ensureHermesSession().
   if (isRemoteWsMode()) return createHermesBrowserSession({ title, focus });
@@ -6243,6 +6543,10 @@ function renderSessionHistoryLoading(session = {}) {
 }
 
 async function openHermesSession(selectedSession) {
+  if (!canSwitchActiveSession({ sending, runControl: activeRunControl })) {
+    setStatus('warn', 'Hermes is working…', 'Stop the active run before switching sessions.');
+    return false;
+  }
   els.sessionMenu.hidden = true;
   els.sessionMenuButton.setAttribute('aria-expanded', 'false');
   const requestId = ++sessionLoadRequestId;
@@ -6407,14 +6711,6 @@ function activeSessionForSend() {
   };
 }
 
-function foreignSessionSourceLabel(session = {}) {
-  const label = String(session.sourceLabel || session.source || 'another Hermes surface').trim();
-  if (label.toLowerCase() === 'api') return 'API';
-  if (label.toLowerCase() === 'cli') return 'CLI';
-  if (label.toLowerCase() === 'webui') return 'Hermes Web';
-  return label;
-}
-
 function dismissSessionOwnershipNotice() {
   pendingForeignTurn = null;
   if (!els.sessionOwnershipNotice) return;
@@ -6423,24 +6719,33 @@ function dismissSessionOwnershipNotice() {
 
 function showSessionOwnershipNotice(session = {}, userText = '', turnAttachments = []) {
   if (!els.sessionOwnershipNotice) return;
-  const sourceLabel = foreignSessionSourceLabel(session);
+  const notice = sessionOwnershipNotice({
+    session,
+    expectedSource: SESSION_SURFACE_SOURCES.SIDE_PANEL,
+  });
   pendingForeignTurn = {
     sessionId: String(session.id || ''),
     userText: String(userText || ''),
     attachments: [...turnAttachments],
     fromComposer: String(userText || '').trim() === els.input.value.trim(),
   };
-  els.sessionOwnershipTitle.textContent = `${sourceLabel} session selected`;
-  els.sessionOwnershipDetail.textContent = `This chat belongs to ${sourceLabel}. Start a Browser chat to keep the turn in Browser history, or continue here intentionally.`;
+  els.sessionOwnershipTitle.textContent = notice.title;
+  els.sessionOwnershipDetail.textContent = notice.detail;
+  const newButton = els.sessionOwnershipNotice.querySelector('[data-session-ownership-action="new-browser"]');
+  if (newButton) newButton.textContent = notice.newChatLabel;
   const continueButton = els.sessionOwnershipNotice.querySelector('[data-session-ownership-action="continue"]');
-  if (continueButton) continueButton.textContent = `Continue in ${sourceLabel}`;
+  if (continueButton) continueButton.textContent = notice.continueLabel;
   els.sessionOwnershipNotice.hidden = false;
-  els.sessionOwnershipNotice.querySelector('[data-session-ownership-action="new-browser"]')?.focus();
+  newButton?.focus();
 }
 
 function guardForeignSessionSend(userText, turnAttachments) {
   const session = activeSessionForSend();
-  if (!requiresForeignSessionConfirmation(session, approvedForeignSessionIds)) {
+  if (!requiresSessionOwnershipConfirmation({
+    session,
+    expectedSource: SESSION_SURFACE_SOURCES.SIDE_PANEL,
+    approvedSessionIds: approvedForeignSessionIds,
+  })) {
     dismissSessionOwnershipNotice();
     return true;
   }
@@ -6997,7 +7302,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await chrome.storage.local.get(['hermesBrowserSettings', messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY]);
+  const stored = await chrome.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -7049,6 +7354,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     textZoomPercent: normalizeTextZoomPercent(settings.textZoomPercent),
     fontProfile: settings.fontProfile || 'signature',
     customFontFamily: sanitizeLocalFontFamily(settings.customFontFamily),
+    browserContextConsentLedger: normalizeContextConsentLedger(stored[CONTEXT_CONSENT_STORAGE_KEY] || settings.browserContextConsentLedger),
     panelResidencyMode: normalizePanelResidencyMode(settings.panelResidencyMode),
     extensionPreferredModel: normalizeBrowserModelBinding(settings.extensionPreferredModel),
     sessionModelBindings: Object.fromEntries(Object.entries(settings.sessionModelBindings && typeof settings.sessionModelBindings === 'object' ? settings.sessionModelBindings : {})
@@ -7069,7 +7375,8 @@ async function loadSettings({ restoreMessages = false } = {}) {
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
   };
   trustedDashboardTabId = Number(settings.trustedDashboardTabId) || null;
-  contextScope = contextScopeForGateway(contextScope, settings.gatewayMode);
+  contextScope = normalizeContextScope(contextScope);
+  await refreshContextConsentPrincipal({ settingsOverride: settings });
   saveContextScopeForInstance();
   const effectiveBinding = resolveBrowserEffectiveModel({
     sessionId: settings.sessionId,
@@ -7150,6 +7457,7 @@ function syncSettingsForm() {
   renderWakeState();
   renderCompatibilityPanel();
   renderConnectionSecurity();
+  renderBrowserContextConsentControl();
   renderRemoteDiagnostics(lastRemoteDiagnostic);
 }
 
@@ -7232,6 +7540,16 @@ async function saveSettingsFromForm() {
     appearanceTheme: normalizedPanelThemeId(settings.appearanceTheme),
     appearanceSchemaVersion: 2,
   };
+  await refreshContextConsentPrincipal({ settingsOverride: settings });
+  const consentIdentity = currentContextConsentIdentity(settings);
+  if (consentIdentity && els.browserContextConsentInput && !els.browserContextConsentInput.disabled) {
+    const ledger = await persistContextConsentDecision({
+      storageArea: chrome.storage.local,
+      identity: consentIdentity,
+      granted: els.browserContextConsentInput.checked,
+    });
+    settings = { ...settings, browserContextConsentLedger: ledger };
+  }
   const connectionChanged = previousSettings.connectionMode !== settings.connectionMode
     || previousSettings.connectionTransport !== settings.connectionTransport
     || normalizeGatewayUrl(previousSettings.gatewayUrl) !== normalizeGatewayUrl(settings.gatewayUrl);
@@ -7246,9 +7564,6 @@ async function saveSettingsFromForm() {
   }
   if (gatewayMode !== 'remote-dashboard' || !settings.trustedDashboardOrigin) {
     trustedDashboardTabId = null;
-  }
-  if (gatewayMode === 'remote-dashboard' && contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) {
-    await applyContextScope(contextScope, { ensureSession: false });
   }
   const stored = await chrome.storage.local.get('hermesBrowserSettings');
   const freshSettings = stored.hermesBrowserSettings || {};
@@ -7640,25 +7955,34 @@ function clearPickedElementForActiveTab() {
 }
 
 async function refreshContext(options = {}) {
-  if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
-    currentContext = { activeTab: null, tabs: [], selectedTabs: [], pageContext: null, contextScope };
+  const contextGate = effectiveContextGate(contextScope);
+  let captureScope = contextGate.scope;
+  if (captureScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
+    currentContext = { activeTab: null, tabs: [], selectedTabs: [], pageContext: null, contextScope: captureScope };
     selectedTabs = [];
-    setStatus('ok', 'Chat only', 'No browser context will be read or attached.');
+    setStatus(
+      'ok',
+      'Chat only',
+      contextGate.reason === 'consent_required'
+        ? 'This non-local connection cannot read browser context until you approve its exact endpoint, account, profile, and controller in Settings.'
+        : 'No browser context will be read or attached.',
+    );
     renderContextScopeControls();
     renderContextWindow();
     return currentContext;
   }
 
   const [active, tabs] = await Promise.all([activeTab(), tabsForCurrentScope()]);
-  const tab = resolveContextTargetTab({ activeTab: active, tabs, scope: contextScope });
-  if (contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB && tab) {
+  const tab = resolveContextTargetTab({ activeTab: active, tabs, scope: captureScope });
+  if (captureScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB && tab) {
     const nextScope = contextScopeFromTab(tab, contextScope);
     if (JSON.stringify(nextScope) !== JSON.stringify(contextScope)) {
       contextScope = nextScope;
+      captureScope = normalizeContextScope(nextScope);
       saveContextScopeForInstance();
     }
   }
-  const pinnedMissing = contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB && !tab;
+  const pinnedMissing = captureScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB && !tab;
   const pageContext = tab
     ? await getPageContext(tab, options)
     : pinnedMissing
@@ -7668,13 +7992,13 @@ async function refreshContext(options = {}) {
   if (pageContext && youtubeTranscript) pageContext.youtubeTranscript = youtubeTranscript;
   if (pageContext && tab) mergeStoredPickIntoPageContext(tab, pageContext);
   syncSelectedTabsFromContextScope(tabs);
-  const promptTabs = filterPromptTabs(tabs, contextScope);
+  const promptTabs = filterPromptTabs(tabs, captureScope);
   currentContext = {
     activeTab: tab,
     tabs,
-    selectedTabs: Array.isArray(contextScope.selectedTabIds) ? promptTabs : tabs,
+    selectedTabs: Array.isArray(captureScope.selectedTabIds) ? promptTabs : tabs,
     pageContext,
-    contextScope,
+    contextScope: captureScope,
   };
 
   if (pinnedMissing) {
@@ -7732,6 +8056,10 @@ async function apiFetch(path, options = {}) {
 }
 
 async function compactCurrentSessionContext({ automaticRecovery = false } = {}) {
+  if (!automaticRecovery && !canSwitchActiveSession({ sending, runControl: activeRunControl })) {
+    setStatus('warn', 'Compaction blocked while Hermes is running', 'Stop the active run before compacting this session.');
+    return { ok: false, reason: 'active-run' };
+  }
   if (!settings.sessionId) {
     if (!automaticRecovery) setStatus('warn', 'No active session', 'Open or create a Hermes Browser Extension session before compacting context.');
     return { ok: false, reason: 'no-session' };
@@ -7970,24 +8298,30 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
   let buffer = '';
   let finalText = '';
   let streamTextState = { text: '', finalized: false };
+  let sawRunStarted = false;
+  let sawTerminal = false;
 
   async function processBlock(block) {
     const event = parseSseBlock(block);
     const data = event.json || {};
     if (event.type === 'run.started' && data.run_id) {
+      sawRunStarted = true;
       onRun?.(data.run_id);
     } else if ((event.type === 'assistant.delta' && data.delta) || (event.type === 'assistant.completed' && data.content)) {
       streamTextState = reduceAssistantStreamText(streamTextState, { type: event.type, data });
       finalText = streamTextState.text;
       onDelta(finalText);
-    } else if (event.type === 'run.completed') {
-      onRuntime?.(data);
-      const nextState = reduceAssistantStreamText(streamTextState, { type: event.type, data });
-      if (nextState.text !== finalText) {
-        finalText = nextState.text;
-        onDelta(finalText);
+    } else if (['run.completed', 'run.failed', 'run.cancelled'].includes(event.type)) {
+      sawTerminal = true;
+      onRuntime?.({ ...data, status: event.type.slice('run.'.length) });
+      if (event.type === 'run.completed') {
+        const nextState = reduceAssistantStreamText(streamTextState, { type: event.type, data });
+        if (nextState.text !== finalText) {
+          finalText = nextState.text;
+          onDelta(finalText);
+        }
+        streamTextState = nextState;
       }
-      streamTextState = nextState;
       return true;
     } else if (event.type === 'steer.queued' && data.text) {
       onSteerQueued?.(data.text);
@@ -8032,6 +8366,9 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
   buffer += decoder.decode();
   const parsed = sseBlocksFromBuffer(buffer, { flush: true });
   for (const block of parsed.blocks) await processBlock(block);
+  if (sawRunStarted && !sawTerminal) {
+    throw new Error('Hermes stream closed before terminal run state.');
+  }
   return finalText;
 }
 
@@ -8161,6 +8498,7 @@ async function ensureRemoteWsClient() {
     error.ticketReason = ticket.reason;
     throw error;
   }
+  await refreshContextConsentPrincipal({ dashboardPrincipal: ticket.principal });
   const wsUrl = buildDashboardWsUrl(baseUrl, ticket.ticket);
   const client = createGatewayClient();
   try {
@@ -8276,9 +8614,11 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
     let finalText = '';
     let settled = false;
     const offs = [];
-    const forThisSession = (event) => !event.sessionId || event.sessionId === sessionId;
+    const timer = globalThis.setTimeout(() => finish(reject, new Error('Dashboard response timed out.')), 5 * 60 * 1000);
+    const forThisSession = (event) => event.sessionId === sessionId;
 
     const cleanup = () => {
+      globalThis.clearTimeout(timer);
       for (const off of offs) off();
       signal?.removeEventListener?.('abort', onAbort);
     };
@@ -8321,6 +8661,7 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
       });
     }));
     offs.push(client.on(WS_EVENTS.error, (event) => {
+      if (!forThisSession(event)) return;
       finish(reject, new Error(event.payload?.message || 'Dashboard stream error'));
     }));
     offs.push(client.on('close', () => finish(reject, new Error('Dashboard connection closed mid-turn.'))));
@@ -8725,13 +9066,16 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     return false;
   }
 
+  if (sending || !canSwitchActiveSession({ sending, runControl: activeRunControl })) return false;
   if (!guardForeignSessionSend(userText, turnAttachments)) return false;
   const autoTitle = turnOptions.disableAutoTitle ? '' : autoTitleForCurrentTurn(userText);
-  sending = true;
+  const turnRunControlGeneration = ++runControlGeneration;
+  activeRunControl = beginRunControl({ transport: isRemoteWsMode() ? 'dashboard-ws' : 'rest' });
     if (!isRemoteWsMode()) {
       try {
         await ensureHermesSession();
       } catch (error) {
+        activeRunControl = markRunTerminal(activeRunControl, 'failed');
         sending = false;
         updateComposerBusyState();
         setStatus('error', 'Could not start Hermes session', error?.message || String(error), { translateDetail: false });
@@ -8745,11 +9089,13 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     try {
       await ensureActiveSessionModelLockOrThrow();
     } catch {
+      activeRunControl = markRunTerminal(activeRunControl, 'failed');
       sending = false;
       updateComposerBusyState();
       return false;
     }
     activeAbortController = new AbortController();
+  sending = true;
   activeRunId = '';
   updateComposerBusyState();
   if (!turnOptions.preserveComposer) {
@@ -8761,19 +9107,32 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   }
 
   let didSend = false;
-  let shouldFlushQueue = false;
+  let streamTerminalStatus = '';
   try {
     const preparedAttachments = await saveImageAttachmentsForTurn(turnAttachments);
+    if (typeof turnOptions.resolveUserText === 'function' && isRemoteWsMode()) {
+      const consentConnection = await ensureRemoteWsClient();
+      await ensureRemoteWsSession(consentConnection);
+    }
+    await persistBrowserIntroSeen();
     const contextOverride = turnOptions.contextOverride || null;
-    const turnProtocolSettings = contextOverride
-      ? { ...settings, ...(contextOverride.settingsOverride || {}) }
-      : settings;
-    const turnContextScope = turnOptions.forceChatOnly
+    const requestedTurnScope = turnOptions.forceChatOnly
       ? { mode: CONTEXT_SCOPE_MODES.CHAT_ONLY, selectedTabIds: [] }
-      : contextOverride?.contextScope || contextScopeForGateway(contextScope, settings.gatewayMode);
-    const capturedContext = turnOptions.forceChatOnly
+      : contextOverride?.contextScope || contextScope;
+    const contextGate = turnOptions.forceChatOnly
+      ? { scope: normalizeContextScope(requestedTurnScope), allowed: true, reason: 'chat_only' }
+      : effectiveContextGate(requestedTurnScope);
+    const turnContextScope = contextGate.scope;
+    const gatedContextOverride = contextGate.allowed ? contextOverride : null;
+    const turnProtocolSettings = gatedContextOverride
+      ? { ...settings, ...(gatedContextOverride.settingsOverride || {}) }
+      : settings;
+    const capturedContext = turnContextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY
       ? null
-      : contextOverride || await refreshContext();
+      : gatedContextOverride || await refreshContext();
+    if (typeof turnOptions.resolveUserText === 'function') {
+      userText = String(await turnOptions.resolveUserText() || '');
+    }
     const context = turnContextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY
       ? { activeTab: null, tabs: [], pageContext: null, contextScope: turnContextScope }
       : capturedContext;
@@ -8837,7 +9196,6 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       contextDelivery,
     });
     const { node: userNode } = addMessage('user', displayUserText);
-    await persistBrowserIntroSeen();
     appendContextReceipt(userNode, receipt);
     appendUserImageAttachments(
       userNode.querySelector('.message-content'),
@@ -8852,10 +9210,12 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       answer = await streamSessionChat(
         prompt,
         (partial) => {
+          if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
           liveText = partial || '';
           streamView.updateText(liveText || THINKING_PLACEHOLDER);
         },
         (tool) => {
+          if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
           captureTaskToolEvent(tool).catch((error) => console.warn('[Hermes Browser] Task event persistence failed:', error));
           streamView.updateTool(normalizeToolActivity(tool));
         },
@@ -8863,10 +9223,17 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           signal: activeAbortController.signal,
           attachments: preparedAttachments,
           onRun: (runId) => {
+            if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             activeRunId = runId;
+            activeRunControl = withRunControlId(activeRunControl, runId);
           },
           onSteerQueued: restoreBackendQueuedSteerDraft,
-          onRuntime: applyTurnRuntimePayload,
+          onRuntime: (payload) => {
+            if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
+            const status = String(payload?.status || '').trim().toLowerCase();
+            if (['completed', 'failed', 'cancelled'].includes(status)) streamTerminalStatus = status;
+            applyTurnRuntimePayload(payload);
+          },
         },
       );
     } catch (streamError) {
@@ -8885,7 +9252,12 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       } else {
         if (classifyTurnRecovery(streamError) === 'fallback') {
           streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
-          answer = await fallbackSessionChat(prompt, preparedAttachments, { onRuntime: applyTurnRuntimePayload });
+          answer = await fallbackSessionChat(prompt, preparedAttachments, {
+            onRuntime: (payload) => {
+              if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
+              applyTurnRuntimePayload(payload);
+            },
+          });
         } else {
           streamView.update('Hermes accepted this turn; recovering the response without retrying it...');
           answer = await recoverAcceptedTurn(prompt, preparedAttachments);
@@ -8920,6 +9292,12 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       } catch (callbackError) {
         console.warn('[Hermes Browser] Inline draft completion delivery failed:', callbackError);
       }
+    }
+    if (
+      runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)
+      && [RUN_CONTROL_PHASES.RUNNING, RUN_CONTROL_PHASES.STOPPING, RUN_CONTROL_PHASES.UNCONFIRMED].includes(activeRunControl?.phase)
+    ) {
+      activeRunControl = markRunTerminal(activeRunControl, streamTerminalStatus || 'completed');
     }
     didSend = true;
   } catch (error) {
@@ -8967,20 +9345,33 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       addMessage('system', `Hermes Browser Extension error: ${error?.message || String(error)}`);
     }
   } finally {
-    activeAbortController = null;
-    activeRunId = '';
-    pendingSteerText = '';
-    sending = false;
-    updateComposerBusyState();
-    renderContextWindow();
-    els.input.focus();
-    shouldFlushQueue = shouldAutoFlushQueuedTurn(queuedTurn);
-  }
-  if (shouldFlushQueue) {
-    const next = queuedTurn;
-    queuedTurn = null;
-    renderQueueNotice();
-    await askHermes(next.text, next.attachments || []);
+    if (turnRunControlGeneration === runControlGeneration) {
+      activeRunControl = markRunStreamClosed(activeRunControl);
+      if ([RUN_CONTROL_PHASES.RUNNING, RUN_CONTROL_PHASES.UNCONFIRMED].includes(activeRunControl?.phase)) {
+        if (!activeRunId) {
+          if (activeRunControl.phase === RUN_CONTROL_PHASES.RUNNING) activeRunControl = markRunTerminal(activeRunControl, 'failed');
+        } else if (isRemoteWsMode() || gatewayCapabilities.runStatus) {
+          try {
+            await reconcileActiveRunTerminal({ stopRequested: false, expectedGeneration: turnRunControlGeneration });
+          } catch (error) {
+            if (runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) {
+              activeRunControl = markTerminalTimeout(activeRunControl, error?.message || 'Runtime terminal confirmation timed out.');
+              setStatus('warn', 'Runtime state unconfirmed', `The Browser stream closed before a terminal runtime state. Retry status from the recovery controls; the run identity and queued turns remain held: ${error?.message || String(error)}`, { translateDetail: false });
+            }
+          }
+        } else {
+          activeRunControl = markTerminalTimeout(activeRunControl, 'Connected Hermes runtime does not advertise terminal run status.');
+          setStatus('warn', 'Runtime state unconfirmed', 'The Browser stream closed before a terminal event, and this runtime does not advertise run status. Update Hermes Agent or reconnect to a compatible runtime before starting another turn.', { translateDetail: false });
+        }
+      }
+      if (activeRunControl?.phase === RUN_CONTROL_PHASES.TERMINAL && activeRunControl.writerLease === 'released') {
+        await settleActiveRunTerminal();
+      } else {
+        updateComposerBusyState();
+        renderContextWindow();
+      }
+      els.input.focus();
+    }
   }
   return didSend;
 }
@@ -9057,7 +9448,7 @@ async function runRemoteInlineBackground(session, prompt) {
     let settled = false;
     const offs = [];
     const timer = globalThis.setTimeout(() => finish(reject, new Error('Background assist timed out.')), 5 * 60 * 1000);
-    const forSession = (event) => !event.sessionId || event.sessionId === session.liveId;
+    const forSession = (event) => event.sessionId === session.liveId;
     const cleanup = () => {
       globalThis.clearTimeout(timer);
       offs.forEach((off) => off());
@@ -9075,13 +9466,19 @@ async function runRemoteInlineBackground(session, prompt) {
       if (!forSession(event)) return;
       finish(resolve, event.payload?.text || text);
     }));
-    offs.push(session.client.on(WS_EVENTS.error, (event) => finish(reject, new Error(event.payload?.message || 'Background assist failed.'))));
+    offs.push(session.client.on(WS_EVENTS.error, (event) => {
+      if (!forSession(event)) return;
+      finish(reject, new Error(event.payload?.message || 'Background assist failed.'));
+    }));
     session.client.request(WS_METHODS.promptSubmit, { session_id: session.liveId, text: prompt }).catch((error) => finish(reject, error));
   });
 }
 
-async function runInlineDraftInBackground(request, prompt) {
+async function runInlineDraftInBackground(request, resolvePrompt) {
   const session = await createInlineBackgroundSession(request);
+  const prompt = typeof resolvePrompt === 'function'
+    ? await resolvePrompt()
+    : String(resolvePrompt || '');
   if (session.client) {
     const answer = await runRemoteInlineBackground(session, prompt);
     return { answer, session };
@@ -9107,8 +9504,9 @@ async function runInlineDraftInBackground(request, prompt) {
   return { answer: extractAssistantText(payload), session };
 }
 
-async function runInlineDraftInCurrentSession(prompt) {
+async function runInlineDraftInCurrentSession(request) {
   await ensureHermesSession();
+  const prompt = await resolveInlineDraftPrompt(request);
   const { policy, request: exactRouteRequest } = buildAssistModelRouteRequest(settings, gatewayCapabilities);
   const requestedSelection = policy.selection || policy.requestedSelection || null;
   let attemptSelection = policy.selection;
@@ -9149,6 +9547,23 @@ async function runInlineDraftInCurrentSession(prompt) {
   throw new Error('Hermes Assist could not complete the selected-model fallback.');
 }
 
+function inlineDraftRequestForEffectiveContext(request, source = settings) {
+  const gate = effectiveContextGate(contextScope, source);
+  if (gate.scope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) return request;
+  return {
+    ...request,
+    pageContext: '',
+    pageUrl: '',
+    fieldLabel: '',
+  };
+}
+
+async function resolveInlineDraftPrompt(request, source = settings) {
+  const consentSettings = { ...source };
+  const sendTimeSettings = await refreshContextConsentLedger(consentSettings);
+  return buildInlineDraftPrompt(inlineDraftRequestForEffectiveContext(request, sendTimeSettings));
+}
+
 async function processInlineDraftRequest(rawRequest) {
   if (!rawRequest || inlineDraftProcessing) return false;
   const request = normalizeInlineDraftRequest(rawRequest);
@@ -9174,16 +9589,15 @@ async function processInlineDraftRequest(rawRequest) {
   await chrome.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
   let resultSent = false;
   try {
-    const prompt = buildInlineDraftPrompt(request);
     if (request.route === INLINE_DRAFT_ROUTES.BACKGROUND) {
-      const { answer, session } = await runInlineDraftInBackground(request, prompt);
+      const { answer, session } = await runInlineDraftInBackground(request, () => resolveInlineDraftPrompt(request));
       const text = sanitizeInlineDraftResult(answer);
       resultSent = await sendInlineDraftResult({ ...request, tabId }, { ok: true, text, sessionId: session.id, sessionTitle: session.title });
       await loadSessions({ quiet: true });
       return resultSent;
     }
     if (request.route === INLINE_DRAFT_ROUTES.CURRENT && !isRemoteWsMode()) {
-      const { answer, modelNotice } = await runInlineDraftInCurrentSession(prompt);
+      const { answer, modelNotice } = await runInlineDraftInCurrentSession(request);
       const text = sanitizeInlineDraftResult(answer);
       resultSent = await sendInlineDraftResult({ ...request, tabId }, {
         ok: true,
@@ -9209,8 +9623,10 @@ async function processInlineDraftRequest(rawRequest) {
       : '';
     const inlineSessionId = String(settings.sessionId || '');
     const inlineSessionTitle = String(settings.sessionTitle || 'Inline assist');
+    const prompt = await resolveInlineDraftPrompt(request);
     const didSend = await askHermes(prompt, [], {
       forceChatOnly: true,
+      resolveUserText: () => resolveInlineDraftPrompt(request),
       preserveComposer: true,
       disableCommandParsing: true,
       disableAutoTitle: true,
@@ -9249,6 +9665,28 @@ function normalizeContextMenuRoute(value = '') {
   return ['ask', 'current', 'new', 'background'].includes(route) ? route : 'ask';
 }
 
+function contextMenuTurnForEffectiveContext(turn, source = settings) {
+  const gate = effectiveContextGate(turn?.context?.contextScope || contextScope, source);
+  if (gate.scope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) return turn;
+  return {
+    ...turn,
+    context: {
+      ...turn.context,
+      activeTab: null,
+      tabs: [],
+      selectedTabs: [],
+      pageContext: null,
+      contextScope: gate.scope,
+      settingsOverride: {
+        ...turn.context.settingsOverride,
+        includePageText: false,
+        includeSelectedText: false,
+        includeTabs: false,
+      },
+    },
+  };
+}
+
 async function prepareContextMenuTurn(rawRequest) {
   const request = normalizeContextMenuRequest(rawRequest);
   if (!request) return null;
@@ -9256,13 +9694,15 @@ async function prepareContextMenuTurn(rawRequest) {
   if (!tab || !await contextMenuRequestMatchesTab(request, tab)) return null;
   const initialTurn = await buildContextMenuTurn({ request, tab });
   if (!initialTurn) return null;
-  const capturedPageContext = initialTurn.capturePage
+  const gate = effectiveContextGate(initialTurn.context?.contextScope || contextScope);
+  const capturedPageContext = initialTurn.capturePage && gate.scope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY
     ? await getPageContext(tab, {
       frameId: request.frameId,
       selectedTextOverride: request.selection,
     })
     : null;
-  return buildContextMenuTurn({ request, tab, capturedPageContext });
+  const preparedTurn = await buildContextMenuTurn({ request, tab, capturedPageContext });
+  return contextMenuTurnForEffectiveContext(preparedTurn);
 }
 
 function serializePreparedContextMenuTurn(turn) {
@@ -9298,9 +9738,14 @@ async function executeContextMenuRequest(request, requestedRoute) {
     await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus: false });
   }
   if (route === 'background') {
+    const consentSettings = { ...settings };
     const { session } = await runInlineDraftInBackground(
       { adapterId: 'right-click', tabId: request.tabId, frameId: request.frameId },
-      serializePreparedContextMenuTurn(turn),
+      async () => {
+        const sendTimeSettings = await refreshContextConsentLedger(consentSettings);
+        const sendTimeTurn = contextMenuTurnForEffectiveContext(turn, sendTimeSettings);
+        return serializePreparedContextMenuTurn(sendTimeTurn);
+      },
     );
     await loadSessions({ quiet: true });
     const completed = availableSessions.find((item) => item.id === session.id) || { id: session.id, title: session.title, source: DEFAULT_SETTINGS.sessionSource };
@@ -9308,7 +9753,6 @@ async function executeContextMenuRequest(request, requestedRoute) {
     showOperationToast({ title: 'Right-click task complete', detail: session.title });
     return true;
   }
-  if (route === 'current' && settings.sessionId) approvedForeignSessionIds.add(String(settings.sessionId));
   els.input.value = '';
   const sent = await askHermes(userText, turn.attachments, {
     contextOverride: turn.context,
@@ -9771,6 +10215,8 @@ function bindEvents() {
     }
   });
   els.stopButton?.addEventListener('click', stopCurrentTurn);
+  els.retryRunStatusButton?.addEventListener('click', () => { void retryActiveRunTerminalStatus(); });
+  els.discardHeldQueueButton?.addEventListener('click', discardHeldQueuedTurn);
   chrome.runtime.onMessage.addListener((message, sender) => {
     if (message?.type === ELEMENT_PICK_MESSAGES.RESULT) {
       applyPickedElementResult(message, sender);
@@ -9995,6 +10441,12 @@ function bindEvents() {
   els.clearTokenButton?.addEventListener('click', () => {
     clearStoredToken().catch((error) => setStatus('warn', 'Could not clear token', error?.message || String(error), { translateDetail: false }));
   });
+  els.browserContextConsentInput?.addEventListener('change', () => {
+    setBrowserContextConsent(els.browserContextConsentInput.checked).catch((error) => {
+      renderBrowserContextConsentControl();
+      setStatus('warn', 'Context sharing unchanged', error?.message || String(error), { translateDetail: false });
+    });
+  });
   els.gatewayModeInput?.addEventListener('change', () => {
     const summary = currentGatewaySummary({ gatewayMode: els.gatewayModeInput.value, gatewayUrl: els.gatewayUrlInput.value });
     if (!els.gatewayUrlInput.value.trim() || els.gatewayUrlInput.value.trim() === DEFAULT_SETTINGS.gatewayUrl) {
@@ -10097,8 +10549,16 @@ function bindEvents() {
     if (button) void installMarketplaceTheme(button.dataset.marketplaceInstall);
   });
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== 'local' || !Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) return;
-    void handleCustomThemeStoreChange();
+    if (areaName !== 'local') return;
+    if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
+    if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {
+      settings = {
+        ...settings,
+        browserContextConsentLedger: normalizeContextConsentLedger(changes[CONTEXT_CONSENT_STORAGE_KEY]?.newValue),
+      };
+      renderBrowserContextConsentControl();
+      void refreshContext();
+    }
   });
   systemColorQuery?.addEventListener?.('change', () => {
     if (normalizeColorMode(settings.colorMode) === 'system') renderAppearanceControls();

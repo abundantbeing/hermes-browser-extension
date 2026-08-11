@@ -89,6 +89,8 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
     assert.match(html, /Run in background/);
   }
   assert.match(source, /current\.text\s*!==\s*pending\.draftText/);
+  assert.match(source, /host\.dataset\.inlineAssistDefaultRoute/);
+  assert.match(source, /host\.dataset\.inlineAssistSessionRetention/);
   assert.doesNotMatch(source, /\.submit\s*\(|requestSubmit\s*\(/);
   assert.doesNotMatch(source, /\.innerHTML\s*=/);
 });

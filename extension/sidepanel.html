@@ -193,6 +193,13 @@
           <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
           <p class="composer-help" data-i18n="ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd">Enter sends. Shift+Enter adds a new line. Ctrl+V, drag/drop, or + attaches files.</p>
           <section id="queueNotice" class="queue-notice" aria-live="polite" hidden></section>
+          <section id="runControlRecovery" class="run-control-recovery" aria-live="polite" hidden>
+            <p id="runControlRecoveryDetail"></p>
+            <div>
+              <button id="retryRunStatusButton" type="button" data-i18n="ui.retry">Retry</button>
+              <button id="discardHeldQueueButton" type="button" data-i18n="ui.delete">Delete</button>
+            </div>
+          </section>
           <div class="composer-actions">
             <button id="refreshButton" class="secondary icon-refresh" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-title="context.refresh_page" data-i18n-aria-label="context.refresh_page"><span class="refresh-glyph" aria-hidden="true">↻</span></button>
             <button id="sendButton" type="submit" data-i18n="ui.ask.hermes">Ask Hermes</button>
@@ -692,6 +699,16 @@
               </label>
             </div>
           </div>
+
+          <label id="browserContextConsentControl" class="settings-toggle-card browser-context-consent" hidden>
+            <span class="settings-toggle-copy">
+              <strong data-i18n="context_consent.share_label">Share page context with this connection</strong>
+              <small data-i18n="context_consent.share_detail">Chat only until you approve this exact connection. Consent is isolated by endpoint, account, profile, and Browser controller.</small>
+              <small id="browserContextConsentIdentity" class="browser-context-consent-identity" data-i18n-runtime>Verifying connection identity…</small>
+            </span>
+            <input id="browserContextConsentInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
 
           <fieldset class="panel-residency-options settings-choice-group">
             <legend data-i18n="ui.panel.opening">Panel opening</legend>

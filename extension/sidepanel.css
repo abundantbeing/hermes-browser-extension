@@ -2396,6 +2396,18 @@ body:not(.startup-active) #startupTestConnectionButton { display: none; }
   gap: 6px;
 }
 .queue-notice-main { display: block; }
+.run-control-recovery {
+  margin: 7px 0 0;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--hermes-warning) 56%, transparent);
+  background: color-mix(in srgb, var(--hermes-warning) 10%, var(--hermes-paper));
+  color: var(--hermes-ink);
+  font-size: 11px;
+}
+.run-control-recovery[hidden] { display: none; }
+.run-control-recovery p { margin: 0; line-height: 1.45; }
+.run-control-recovery div { display: flex; gap: 6px; margin-top: 7px; }
+.run-control-recovery button { min-height: 26px; padding: 4px 8px; }
 .queue-notice-actions {
   display: flex;
   gap: 6px;
@@ -3366,6 +3378,15 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .settings-toggle-copy {
   display: block;
   min-width: 0;
+}
+.browser-context-consent { margin-top: 10px; }
+.browser-context-consent-identity {
+  color: var(--hermes-accent) !important;
+  overflow-wrap: anywhere;
+}
+.browser-context-consent:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.68;
 }
 .settings-toggle-copy strong,
 .settings-choice-copy strong {

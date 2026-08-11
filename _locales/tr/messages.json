@@ -263,6 +263,14 @@
     "message": "bilinmeyen aktarım",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "Bu bağlantıyı açıkça onaylayana kadar yalnızca sohbet kullanılabilir. Onay; uç nokta, hesap, profil ve tarayıcı denetleyicisine göre ayrılır.",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "Sayfa bağlamını bu bağlantıyla paylaş",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "Ekli sekme",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes'i durdur",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "Oturum değiştirmeden önce etkin çalıştırmayı durdurun.",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Hermes'i Durdurmak",

@@ -263,6 +263,14 @@
     "message": "未知的傳輸",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "在您核准此確切連線前僅限聊天。授權會依端點、帳戶、設定檔與瀏覽器控制器隔離。",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "與此連線共享頁面內容",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "已附加的分頁",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "停止 Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "切換工作階段前，請先停止目前的執行。",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "正在停止 Hermes",

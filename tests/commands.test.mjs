@@ -102,7 +102,7 @@ test('Browser surfaces execute native run controls instead of sending slash text
   assert.match(fulltab, /executeNativeBrowserCommand/);
   assert.match(fulltab, /action === 'steer-run'/);
   assert.match(fulltab, /action === 'stop-run'/);
-  assert.match(fulltab, /\/v1\/runs\/\$\{encodeURIComponent\(activeRunId\)\}\/stop/);
+  assert.match(fulltab, /\/v1\/runs\/\$\{encodeURIComponent\(stopRunId\)\}\/stop/);
 });
 
 test('full-tab steer uses session.steer for Dashboard runs and capability-gates REST runs', () => {

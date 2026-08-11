@@ -23,6 +23,8 @@ import {
   normalizeInlineDraftRequest,
   sanitizeInlineDraftResult,
 } from './lib/inline-draft-policy.mjs';
+import { CONTEXT_CONSENT_STORAGE_KEY } from './lib/context-consent.mjs';
+import { gateInlineDraftRequestContext } from './lib/inline-draft-consent.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -190,11 +192,18 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         resolvedTitle = String(created?.session?.title || created?.title || sessionTitle);
         assertAssistModelSelectionAcknowledged(created, attemptSelection);
 
+        const consentStored = await chrome.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
+        const gatedRequest = await gateInlineDraftRequestContext({
+          request,
+          settings,
+          ledger: consentStored[CONTEXT_CONSENT_STORAGE_KEY] || null,
+          controller: String(chrome.runtime.id || 'hermes-browser'),
+        });
         const chatResponse = await client.fetch(`/api/sessions/${encodeURIComponent(resolvedSessionId)}/chat`, {
           method: 'POST',
           body: JSON.stringify({
             ...attemptRouteRequest,
-            message: buildInlineDraftPrompt(request),
+            message: buildInlineDraftPrompt(gatedRequest.request),
           }),
         });
         const chatPayload = await client.readJson(chatResponse);

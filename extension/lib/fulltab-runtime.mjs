@@ -80,11 +80,16 @@ export async function readHermesSse(response, { onAssistant, onTool, onRuntime, 
   const decoder = new TextDecoder();
   let buffer = '';
   let stream = { text: '', finalized: false };
+  let sawRunStarted = false;
+  let sawTerminal = false;
 
   const processBlock = (block) => {
     const event = parseSseBlock(block);
     const data = event.json || {};
-    if (event.type === 'run.started') onRun?.(data.run_id || data.runId || '');
+    if (event.type === 'run.started') {
+      sawRunStarted = true;
+      onRun?.(data.run_id || data.runId || '');
+    }
     if (['assistant.delta', 'assistant.completed', 'run.completed'].includes(event.type)) {
       stream = reduceAssistantStreamText(stream, { type: event.type, data });
       onAssistant?.(stream.text, { finalized: stream.finalized, event: event.type, data });
@@ -92,8 +97,9 @@ export async function readHermesSse(response, { onAssistant, onTool, onRuntime, 
     if (event.type.startsWith('tool.') || event.type === 'hermes.tool.progress') {
       onTool?.(normalizeBrowserRuntimeEvent({ type: event.type, data }));
     }
-    if (event.type === 'run.completed') {
-      onRuntime?.(data);
+    if (['run.completed', 'run.failed', 'run.cancelled'].includes(event.type)) {
+      sawTerminal = true;
+      onRuntime?.({ ...data, status: event.type.slice('run.'.length) });
       return true;
     }
     if (event.type === 'error') throw new Error(data.message || event.data || 'Hermes stream error');
@@ -123,5 +129,8 @@ export async function readHermesSse(response, { onAssistant, onTool, onRuntime, 
   }
   buffer += decoder.decode();
   if (buffer.trim()) processBlock(buffer);
+  if (sawRunStarted && !sawTerminal) {
+    throw new Error('Hermes stream closed before terminal run state.');
+  }
   return stream.text;
 }

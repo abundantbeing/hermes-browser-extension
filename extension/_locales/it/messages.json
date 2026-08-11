@@ -263,6 +263,14 @@
     "message": "trasporto sconosciuto",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "Solo chat finché non approvi questa connessione specifica. Il consenso è isolato per endpoint, account, profilo e controller del browser.",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "Condividi il contesto della pagina con questa connessione",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "Scheda allegata",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Interrompere Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "Interrompi l’esecuzione attiva prima di cambiare sessione.",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Arresto di Hermes",

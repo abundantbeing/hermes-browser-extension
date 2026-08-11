@@ -263,6 +263,14 @@
     "message": "알 수 없는 전송",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "이 정확한 연결을 승인하기 전에는 채팅만 사용할 수 있습니다. 동의는 엔드포인트, 계정, 프로필 및 브라우저 컨트롤러별로 분리됩니다.",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "이 연결과 페이지 컨텍스트 공유",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "첨부 탭",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes 중지",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "세션을 전환하기 전에 활성 실행을 중지하세요.",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Hermes 중지 중",

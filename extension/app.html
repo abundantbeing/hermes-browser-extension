@@ -136,6 +136,23 @@
               <span class="composer-chat-label"><span class="read-only-indicator online" aria-hidden="true"></span><span data-i18n="composer.chat_label">CHAT</span></span>
               <div class="composer-topline-actions"><button id="commandMenuButton" type="button" aria-expanded="false" data-i18n="ui.commands.760ac2f0">/ Commands</button><span id="composerSessionLabel">Shared session</span></div>
             </div>
+            <section id="webRunControlRecovery" class="web-run-control-recovery" aria-live="polite" hidden>
+              <p id="webRunControlRecoveryDetail"></p>
+              <div>
+                <button id="webRetryRunStatusButton" type="button" data-i18n="ui.retry">Retry</button>
+                <button id="webDiscardHeldQueueButton" type="button" data-i18n="ui.delete">Delete</button>
+              </div>
+            </section>
+            <section id="webSessionOwnershipNotice" class="web-session-ownership-notice" role="alertdialog" aria-labelledby="webSessionOwnershipTitle" aria-describedby="webSessionOwnershipDetail" hidden>
+              <div>
+                <strong id="webSessionOwnershipTitle">Another Hermes surface owns this session</strong>
+                <small id="webSessionOwnershipDetail">Choose where this turn should run.</small>
+              </div>
+              <div class="web-session-ownership-actions">
+                <button type="button" data-web-session-ownership-action="new-web" data-i18n="ui.new.chat">New Hermes Web chat</button>
+                <button type="button" data-web-session-ownership-action="continue" data-i18n="ui.continue.here">Continue here</button>
+              </div>
+            </section>
             <div id="attachmentList" class="attachment-list" hidden aria-label="Message attachments" data-i18n-aria-label="ui.message.attachments"></div>
             <textarea id="fullTabPrompt" rows="3" placeholder="Ask Hermes anything…" data-i18n-placeholder="ui.ask.hermes.anything"></textarea>
 
@@ -333,6 +350,14 @@
             <label><span data-i18n="ui.profile.ff4fc027">Profile</span><input id="settingsProfile" type="text" autocomplete="off" /></label>
             <label><span data-i18n="ui.gateway.url">Gateway URL</span><input id="settingsGatewayUrl" type="url" autocomplete="off" /></label>
             <label><span data-i18n="ui.api.token">API token</span><input id="settingsApiKey" type="password" autocomplete="off" placeholder="Leave blank to keep current token" data-i18n-placeholder="ui.leave.blank.to.keep.current.token" /></label>
+            <label id="browserContextConsentControl" class="web-context-consent" hidden>
+              <span>
+                <strong data-i18n="context_consent.share_label">Share page context with this connection</strong>
+                <small data-i18n="context_consent.share_detail">Chat only until you approve this exact connection. Consent is isolated by endpoint, account, profile, and Browser controller.</small>
+                <small id="browserContextConsentIdentity" data-i18n-runtime>Verifying connection identity…</small>
+              </span>
+              <input id="browserContextConsentInput" type="checkbox" />
+            </label>
           </section>
           <footer><button id="saveSettings" type="submit" data-i18n="ui.save.settings">Save settings</button></footer>
         </form>

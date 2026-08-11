@@ -263,6 +263,14 @@
     "message": "невідомий транспорт",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "Лише чат, доки ви явно не схвалите саме це підключення. Згода ізольована за адресою, обліковим записом, профілем і контролером браузера.",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "Ділитися контекстом сторінки з цим підключенням",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "Долучена вкладка",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Зупинити Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "Зупиніть активний запуск перед перемиканням сеансу.",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Зупинка Hermes",

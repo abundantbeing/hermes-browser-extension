@@ -410,3 +410,17 @@ test('prompt uses one JSON data envelope and result sanitizer returns plain boun
   assert.equal(sanitizeInlineDraftResult('x'.repeat(20_000)).length, 12_000);
   assert.equal(INLINE_DRAFT_API.mode, 'draft-copy-only');
 });
+
+test('context-only drafting degrades to a generic safe prompt when consent strips all ambient metadata', () => {
+  const prompt = buildInlineDraftPrompt({
+    schema: 'hermes.browser.inline-draft.v1', version: '1.0.0', mode: 'draft-copy-only',
+    actionId: 'draft-for-context', actionLabel: 'Draft for this field', draftText: '',
+    fieldLabel: '', pageContext: '', pageUrl: '', adapterId: 'generic',
+    documentId: 'doc-ambient-denied', requestId: 'req-ambient-denied',
+  });
+  const payload = JSON.parse(prompt.slice(prompt.indexOf('{')));
+  assert.equal(payload.draft_text, '');
+  assert.equal(payload.field_label, '');
+  assert.equal(payload.page_context, '');
+  assert.match(prompt, /without assuming page-specific details/i);
+});

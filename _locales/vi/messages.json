@@ -263,6 +263,14 @@
     "message": "giao thức truyền tải không xác định",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "Chỉ trò chuyện cho đến khi bạn phê duyệt đúng kết nối này. Sự đồng ý được tách biệt theo điểm cuối, tài khoản, hồ sơ và bộ điều khiển Trình duyệt.",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "Chia sẻ ngữ cảnh trang với kết nối này",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "Tab đính kèm",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Dừng Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "Dừng lượt chạy đang hoạt động trước khi chuyển phiên.",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Đang dừng Hermes",

@@ -228,6 +228,8 @@
 
   function applyAssistSettings() {
     applyAssistAppearance();
+    host.dataset.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
+    host.dataset.inlineAssistSessionRetention = String(assistSettings.inlineAssistSessionRetention || 'retain');
     if (assistSettings.inlineAssistEnabled === false) {
       disconnectTargetObservers();
       launcher.hidden = true;

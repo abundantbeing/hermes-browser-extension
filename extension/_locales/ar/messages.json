@@ -263,6 +263,14 @@
     "message": "نقل غير معروف",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "الدردشة فقط حتى توافق على هذا الاتصال المحدد. تُعزل الموافقة حسب نقطة النهاية والحساب والملف الشخصي ووحدة تحكم المتصفح.",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "مشاركة سياق الصفحة مع هذا الاتصال",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "علامة التبويب المرفقة",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "وقف Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "أوقف التشغيل النشط قبل تبديل الجلسات.",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "وقف Hermes",

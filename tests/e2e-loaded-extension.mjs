@@ -93,7 +93,7 @@ const DELEGATION_ID = 'deleg_e2e12345';
 const DELEGATION_ACK = `Delegated background work as ${DELEGATION_ID}. Results will arrive later.`;
 const DELEGATION_RESULT = 'Delayed delegation result appeared without another user turn.';
 const FULLTAB_DELEGATION_PROMPT = 'Dispatch the delayed Hermes Web E2E delegation.';
-const FULLTAB_SESSION_ID = 'hermes-browser-extension-e2e-web';
+const FULLTAB_SESSION_ID = 'hermes-web-e2e';
 const FULLTAB_DELEGATION_ID = 'deleg_web12345';
 const FULLTAB_DELEGATION_ACK = `Delegated Hermes Web background work as ${FULLTAB_DELEGATION_ID}. Results will arrive later.`;
 const FULLTAB_DELEGATION_RESULT = 'Hermes Web rendered its delayed delegation result automatically.';
@@ -1212,7 +1212,7 @@ async function main() {
     await panel.call('Emulation.setDeviceMetricsOverride', { width: 520, height: 900, deviceScaleFactor: 1, mobile: false });
     await saveScreenshot(panel, TASK_PANEL_SCREENSHOT);
 
-    mock.addSession({ id: FULLTAB_SESSION_ID, title: 'Loaded extension Hermes Web QA' });
+    mock.addSession({ id: FULLTAB_SESSION_ID, title: 'Loaded extension Hermes Web QA', source: 'hermes_web' });
     await setup.evaluate(`(async () => {
       const stored = await chrome.storage.local.get('hermesBrowserSettings');
       await chrome.storage.local.set({hermesBrowserSettings:{...stored.hermesBrowserSettings,webSessionId:${JSON.stringify(FULLTAB_SESSION_ID)},webSessionTitle:'Loaded extension QA'}});
@@ -1227,6 +1227,16 @@ async function main() {
     await web.call('Log.enable');
     await web.call('Page.enable');
     await web.call('Emulation.setDeviceMetricsOverride', { width: 1440, height: 960, deviceScaleFactor: 1, mobile: false });
+    await waitFor(async () => {
+      const state = await web.evaluate(`({
+        listenersReady: document.documentElement.dataset.hermesWebListenersReady === 'true',
+        loadingHidden: document.querySelector('#loadingState')?.hidden === true,
+        promptEnabled: document.querySelector('#fullTabPrompt')?.disabled === false,
+        bootError: document.documentElement.dataset.hermesWebBootError || '',
+      })`);
+      if (state.bootError) throw new Error(`Hermes Web boot failed: ${state.bootError}`);
+      return state.listenersReady && state.loadingHidden && state.promptEnabled;
+    });
     const taskWebState = await waitFor(() => web.evaluate(`(() => {
       const stack = document.querySelector('#taskStack');
       const rows = Array.from(document.querySelectorAll('#taskStackList .task-stack-item'));
@@ -1256,12 +1266,37 @@ async function main() {
     const fullTabDelegationStreamsBefore = mock.requests.filter((request) => /\/chat\/stream$/.test(request.path) && request.method === 'POST').length;
     await web.evaluate(`(() => {
       const input = document.querySelector('#fullTabPrompt');
+      const form = document.querySelector('#fullTabComposer');
+      globalThis.__hbeE2eSubmitEvents = 0;
+      form.addEventListener('submit', () => { globalThis.__hbeE2eSubmitEvents += 1; }, { capture: true });
       input.value = ${JSON.stringify(FULLTAB_DELEGATION_PROMPT)};
       input.dispatchEvent(new Event('input', { bubbles: true }));
-      document.querySelector('#fullTabComposer').requestSubmit();
+      form.requestSubmit();
       return true;
     })()`);
-    await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK)}))`));
+    try {
+      await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK)}))`));
+    } catch (error) {
+      const webSendState = await web.evaluate(`(() => ({
+        composerStatus: document.querySelector('#composerStatus')?.textContent || '',
+        sessionLabel: document.querySelector('#composerSessionLabel')?.textContent || '',
+        ownershipHidden: document.querySelector('#webSessionOwnershipNotice')?.hidden,
+        ownershipDetail: document.querySelector('#webSessionOwnershipDetail')?.textContent || '',
+        errorHidden: document.querySelector('#errorState')?.hidden,
+        errorDetail: document.querySelector('#errorDetail')?.textContent || '',
+        prompt: document.querySelector('#fullTabPrompt')?.value || '',
+        submitEvents: globalThis.__hbeE2eSubmitEvents || 0,
+        sendDisabled: document.querySelector('#fullTabSend')?.disabled,
+        stopHidden: document.querySelector('#stopRun')?.hidden,
+        queueHidden: document.querySelector('#queueDraft')?.hidden,
+        promptDisabled: document.querySelector('#fullTabPrompt')?.disabled,
+        formValid: document.querySelector('#fullTabComposer')?.checkValidity(),
+        submitState: document.querySelector('#fullTabComposer')?.dataset.submitState || '',
+      }))()`);
+      console.error('[e2e] Hermes Web send state', JSON.stringify(webSendState, null, 2));
+      console.error('[e2e] Hermes Web console tail', JSON.stringify(web.events.slice(-20), null, 2));
+      throw error;
+    }
     const pendingFullTabDelegationWatch = await waitFor(async () => {
       const pendingFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
       return pendingFullTabDelegationStore.hermesAsyncDelegationWatchesV1
@@ -2668,6 +2703,11 @@ async function main() {
         inlineAssistSessionRetention: 'delete',
       }});
     })()`);
+    await waitFor(() => fixture.evaluate(`(() => {
+      const host = document.querySelector('#hermes-inline-draft-host');
+      return host?.dataset.inlineAssistDefaultRoute === 'background'
+        && host?.dataset.inlineAssistSessionRetention === 'delete';
+    })()`));
     await fixture.evaluate(`(() => {
       const field = document.querySelector('#draft');
       field.value = '';
@@ -2702,7 +2742,12 @@ async function main() {
     })()`));
     assert.equal(smartResult.preview, INLINE_REPLY);
     assert.equal(smartResult.field, INLINE_REPLY, `Smart draft did not apply automatically: ${smartResult.applyStatus}`);
-    assert.deepEqual(smartResult.buttons, ['Use draft', 'Undo', 'Copy']);
+    const smartDiagnostics = {
+      settings: await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`),
+      contentState: await fixture.evaluate(`document.querySelector('#hermes-inline-draft-host')?.dataset || {}`),
+      deleteCount: mock.requests.filter((request) => request.method === 'DELETE' && /^\/api\/sessions\//.test(request.path)).length,
+    };
+    assert.deepEqual(smartResult.buttons, ['Use draft', 'Undo', 'Copy'], `Delete-after-draft route retained a session: ${JSON.stringify(smartDiagnostics)}`);
     assert.match(smartResult.lastGridColumn, /1\s*\/\s*-1/);
     assert.equal(smartResult.hasOpenSession, false);
     await saveScreenshot(fixture, INLINE_NO_SESSION_SCREENSHOT, { captureBeyondViewport: false });

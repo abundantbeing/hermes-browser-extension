@@ -263,6 +263,14 @@
     "message": "transport tidak dikenal",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "Hanya chat sampai Anda menyetujui koneksi yang tepat ini. Persetujuan dipisahkan berdasarkan endpoint, akun, profil, dan pengontrol Browser.",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "Bagikan konteks halaman dengan koneksi ini",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "Tab terlampir",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hentikan Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "Hentikan proses aktif sebelum beralih sesi.",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Menghentikan Hermes",

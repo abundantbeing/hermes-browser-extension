@@ -263,6 +263,14 @@
     "message": "การขนส่งที่ไม่รู้จัก",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "ใช้ได้เฉพาะแชทจนกว่าคุณจะอนุมัติการเชื่อมต่อนี้โดยเฉพาะ การยินยอมจะแยกตามปลายทาง บัญชี โปรไฟล์ และตัวควบคุมเบราว์เซอร์",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "แชร์บริบทของหน้ากับการเชื่อมต่อนี้",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "แท็บที่แนบมา",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "หยุด Hermes",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "หยุดการทำงานที่กำลังใช้งานอยู่ก่อนสลับเซสชัน",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "กำลังหยุด Hermes",

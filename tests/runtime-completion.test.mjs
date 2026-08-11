@@ -30,9 +30,22 @@ test('Hermes Web stops reading as soon as run.completed arrives even if the HTTP
   assert.equal(cancelled, true);
 });
 
-test('the side panel treats run.completed as the terminal SSE boundary', () => {
+test('Hermes Web rejects EOF after run.started without a terminal lifecycle event', async () => {
+  const body = new globalThis.ReadableStream({
+    start(controller) {
+      controller.enqueue(encode('event: run.started\ndata: {"run_id":"run-disconnected"}\n\n'));
+      controller.enqueue(encode('event: assistant.delta\ndata: {"delta":"partial"}\n\n'));
+      controller.close();
+    },
+  });
+  await assert.rejects(() => readHermesSse({ body }, {}), /closed before terminal run state/i);
+});
+
+test('the side panel treats run.completed as the terminal SSE boundary and rejects started EOF', () => {
   const source = read('extension/sidepanel.js');
   const readSseResponse = source.match(/async function readSseResponse\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
-  assert.match(readSseResponse, /event\.type === 'run\.completed'[\s\S]*return true/);
+  assert.match(readSseResponse, /\['run\.completed', 'run\.failed', 'run\.cancelled'\]\.includes\(event\.type\)[\s\S]*return true/);
   assert.match(readSseResponse, /if \(terminal\)[\s\S]*reader\.cancel/);
+  assert.match(readSseResponse, /sawRunStarted/);
+  assert.match(readSseResponse, /closed before terminal run state/i);
 });

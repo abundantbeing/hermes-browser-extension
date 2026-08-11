@@ -263,6 +263,14 @@
     "message": "अज्ञात ट्रांसपोर्ट",
     "description": "Runtime interface message connection.unknown_transport"
   },
+  "runtime_context_consent_share_detail": {
+    "message": "इस सटीक कनेक्शन को मंज़ूरी देने तक केवल चैट उपलब्ध है। सहमति एंडपॉइंट, खाते, प्रोफ़ाइल और ब्राउज़र कंट्रोलर के अनुसार अलग रखी जाती है।",
+    "description": "Runtime interface message context_consent.share_detail"
+  },
+  "runtime_context_consent_share_label": {
+    "message": "इस कनेक्शन के साथ पेज संदर्भ साझा करें",
+    "description": "Runtime interface message context_consent.share_label"
+  },
   "runtime_context_attached_tab": {
     "message": "संलग्न टैब",
     "description": "Runtime interface message context.attached_tab"
@@ -4170,6 +4178,10 @@
   "runtime_ui_stop_hermes": {
     "message": "Hermes रोकें",
     "description": "Runtime interface message ui.stop.hermes"
+  },
+  "runtime_ui_stop_the_active_run_before_switching_sessions": {
+    "message": "सत्र बदलने से पहले सक्रिय रन को रोकें।",
+    "description": "Runtime interface message ui.stop.the.active.run.before.switching.sessions"
   },
   "runtime_ui_stopping_hermes": {
     "message": "Hermes को रोकना",

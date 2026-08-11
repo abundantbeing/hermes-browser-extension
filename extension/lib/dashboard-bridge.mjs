@@ -48,12 +48,43 @@ export function wsTicketUrl(baseUrl) {
 // so the caller can branch on `reason` (e.g. prompt the user to sign in).
 export async function mintTicketInPage(ticketUrl) {
   try {
-    const response = await fetch(ticketUrl, {
-      method: 'POST',
+    const requestOptions = {
       credentials: 'include',
       redirect: 'error',
       cache: 'no-store',
       headers: { Accept: 'application/json' },
+    };
+    let principal = null;
+    try {
+      const identityUrl = new URL(String(ticketUrl || ''));
+      identityUrl.pathname = identityUrl.pathname.replace(/\/api\/auth\/ws-ticket$/, '/api/auth/me');
+      const identityResponse = await fetch(identityUrl.toString(), {
+        method: 'GET',
+        ...requestOptions,
+      });
+      if (identityResponse.status === 401 || identityResponse.status === 403) {
+        return { ok: false, reason: 'not_signed_in', status: identityResponse.status };
+      }
+      if (identityResponse.ok) {
+        const identity = await identityResponse.json().catch(() => null);
+        const userId = String(identity?.user_id || '').trim();
+        const provider = String(identity?.provider || '').trim();
+        if (userId && provider) {
+          principal = {
+            user_id: userId,
+            provider,
+            org_id: String(identity?.org_id || '').trim(),
+          };
+        }
+      }
+    } catch {
+      // Older dashboards may not expose /api/auth/me. Ticket transport remains
+      // compatible, but Browser context consent fails closed without identity.
+      principal = null;
+    }
+    const response = await fetch(ticketUrl, {
+      method: 'POST',
+      ...requestOptions,
     });
     if (response.status === 401 || response.status === 403) {
       return { ok: false, reason: 'not_signed_in', status: response.status };
@@ -69,7 +100,33 @@ export async function mintTicketInPage(ticketUrl) {
     if (!Number.isFinite(ttlSeconds) || ttlSeconds <= 0 || ttlSeconds > 60) {
       return { ok: false, reason: 'invalid_ticket_ttl' };
     }
-    return { ok: true, ticket, ttlSeconds };
+    if (principal) {
+      try {
+        const identityUrl = new URL(String(ticketUrl || ''));
+        identityUrl.pathname = identityUrl.pathname.replace(/\/api\/auth\/ws-ticket$/, '/api/auth/me');
+        const verificationResponse = await fetch(identityUrl.toString(), {
+          method: 'GET',
+          ...requestOptions,
+        });
+        if (!verificationResponse.ok) return { ok: false, reason: 'account_identity_changed' };
+        const verifiedIdentity = await verificationResponse.json().catch(() => null);
+        const verifiedPrincipal = {
+          user_id: String(verifiedIdentity?.user_id || '').trim(),
+          provider: String(verifiedIdentity?.provider || '').trim(),
+          org_id: String(verifiedIdentity?.org_id || '').trim(),
+        };
+        if (
+          !verifiedPrincipal.user_id
+          || !verifiedPrincipal.provider
+          || verifiedPrincipal.user_id !== principal.user_id
+          || verifiedPrincipal.provider !== principal.provider
+          || verifiedPrincipal.org_id !== principal.org_id
+        ) return { ok: false, reason: 'account_identity_changed' };
+      } catch {
+        return { ok: false, reason: 'account_identity_changed' };
+      }
+    }
+    return { ok: true, ticket, ttlSeconds, principal };
   } catch (error) {
     return { ok: false, reason: 'fetch_failed', detail: String(error?.message || error) };
   }
@@ -174,6 +231,8 @@ export function ticketFailureHelp(reason = '', origin = '') {
       return 'This extension context cannot mint a dashboard ticket.';
     case 'dashboard_tab_changed':
       return 'The active dashboard tab changed while connecting. Return to the signed-in dashboard tab and try again.';
+    case 'account_identity_changed':
+      return 'The signed-in dashboard account changed while connecting. Confirm the intended account, then try again.';
     default:
       return `Could not get a dashboard WebSocket ticket (${reason || 'unknown'}).`;
   }

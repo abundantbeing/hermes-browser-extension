@@ -8,6 +8,7 @@ import { formatPickedElementBlock } from './element-picker.mjs';
 import { normalizeImageAspectRatio, resolveImageSource } from './image-render.mjs';
 import { hasCredentialBearingUrl, redactSensitiveText } from './redaction.mjs';
 import { CONNECTION_SCHEMA_VERSION, CONNECTION_TRANSPORTS } from './connection-modes.mjs';
+import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
 export { redactSensitiveText };
 
 export const GATEWAY_MODES = Object.freeze([
@@ -80,6 +81,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   includeTabs: false,
   includePageText: true,
   includeSelectedText: true,
+  browserContextConsentLedger: Object.freeze({ version: 1, entries: Object.freeze({}) }),
   inlineAssistEnabled: true,
   inlineAssistDefaultRoute: 'ask',
   inlineAssistModel: '',
@@ -1697,8 +1699,8 @@ export function busyComposerSubmitAction({ sending = false, draftText = '', atta
   return 'queue';
 }
 
-export function shouldAutoFlushQueuedTurn(turn = null) {
-  return Boolean(turn && turn.autoSend !== false && turn.kind !== 'steer-fallback');
+export function shouldAutoFlushQueuedTurn(turn = null, runControl = null) {
+  return canFlushQueuedTurn(turn, runControl);
 }
 
 export function composerControlState({ connected = false, sending = false, draftText = '', attachmentCount = 0, canSteer = true } = {}) {

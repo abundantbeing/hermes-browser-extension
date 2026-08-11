@@ -34,6 +34,7 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   skills: false,
   profiles: false,
   runs: false,
+  runStatus: false,
   runEvents: false,
   runStop: false,
   runSteer: false,
@@ -74,6 +75,12 @@ function inferredFeature(features = {}, endpoints = {}, featureNames = [], endpo
   return hasEndpoint(endpoints, endpointNames);
 }
 
+function advertisedFeature(features = {}, endpoints = {}, featureNames = [], endpointNames = []) {
+  const explicit = boolFeature(features, featureNames);
+  if (typeof explicit === 'boolean') return explicit;
+  return hasEndpoint(endpoints, endpointNames);
+}
+
 function missingWarnings(caps) {
   const warnings = [];
   for (const [key, copy] of Object.entries(WARNING_CAPABILITY_COPY)) {
@@ -95,9 +102,10 @@ function legacyCapabilities({ healthOk = false, hasApiKey = false, warning = '' 
         chatCompletions: Boolean(healthOk && hasApiKey),
         chatCompletionsStreaming: Boolean(healthOk && hasApiKey),
         skills: Boolean(healthOk && hasApiKey),
-        runs: Boolean(healthOk && hasApiKey),
-        runEvents: Boolean(healthOk && hasApiKey),
-        runStop: Boolean(healthOk && hasApiKey),
+        runs: false,
+        runStatus: false,
+        runEvents: false,
+        runStop: false,
         runSteer: false,
         sessionModelLock: false,
         sessionContext: false,
@@ -145,10 +153,11 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
         chatCompletionsStreaming: inferredFeature(features, endpoints, ['chat_completions_streaming'], ['chat_completions_stream']),
         skills: inferredFeature(features, endpoints, ['skills_api', 'skills'], ['skills']),
         profiles: inferredFeature(features, endpoints, ['profiles_api', 'profile_api'], ['profiles', 'profile_active', 'profiles_active']),
-        runs: inferredFeature(features, endpoints, ['run_submission', 'runs_api'], ['runs']),
-        runEvents: inferredFeature(features, endpoints, ['run_events_sse', 'run_events'], ['run_events']),
-        runStop: inferredFeature(features, endpoints, ['run_stop'], ['run_stop']),
-        runSteer: inferredFeature(features, endpoints, ['run_steer'], ['run_steer']),
+        runs: advertisedFeature(features, endpoints, ['run_submission', 'runs_api'], ['runs']),
+        runStatus: advertisedFeature(features, endpoints, ['run_status'], ['run_status']),
+        runEvents: advertisedFeature(features, endpoints, ['run_events_sse', 'run_events'], ['run_events']),
+        runStop: advertisedFeature(features, endpoints, ['run_stop'], ['run_stop']),
+        runSteer: advertisedFeature(features, endpoints, ['run_steer'], ['run_steer']),
         sessionModelLock: inferredFeature(features, endpoints, ['session_model_lock', 'sessionModelLock'], ['session_model_lock', 'session_model']),
         sessionContext: inferredFeature(features, endpoints, ['session_context', 'context_status', 'contextStatus'], ['session_context', 'session_context_get', 'context_status']),
         sessionCompress: hasEndpoint(endpoints, ['session_compress', 'session_compress_post', 'context_compress']),

@@ -445,7 +445,7 @@ test('sidepanel requires an on-brand source decision before sending into a forei
   assert.match(html, /data-session-ownership-action="continue"/);
   assert.match(css, /\.session-ownership-notice/);
   assert.match(css, /var\(--hermes-accent/);
-  assert.match(source, /requiresForeignSessionConfirmation\(session, approvedForeignSessionIds\)/);
+  assert.match(source, /requiresSessionOwnershipConfirmation\(\{[\s\S]*approvedSessionIds:\s*approvedForeignSessionIds/);
   assert.ok(sender.indexOf('guardForeignSessionSend(') < sender.indexOf('autoTitleForCurrentTurn'), 'ownership guard must run before title derivation');
   assert.match(source, /await beginHermesBrowserDraft\(\{ focus: false \}\);[\s\S]*await askHermes/);
 });
@@ -455,7 +455,9 @@ test('sidepanel does not page through the global session list after a completed 
   const sender = source.match(/async function askHermes\([\s\S]*?\n\}/)?.[0] || '';
 
   assert.doesNotMatch(sender, /loadSessions\(/, 'post-answer session paging must not delay composer cleanup or run beside the next turn');
-  assert.match(sender, /finally \{[\s\S]*sending = false;[\s\S]*updateComposerBusyState\(\);/);
+  assert.match(sender, /finally \{[\s\S]*settleActiveRunTerminal\(\);/);
+  const settle = source.match(/async function settleActiveRunTerminal\([\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(settle.indexOf('sending = false') < settle.indexOf('shouldAutoFlushQueuedTurn'), 'terminal settlement must unlock the composer before a released queued turn starts');
 });
 
 test('sidepanel wires Browser-scoped models and compact session copy/rename actions', () => {
@@ -911,9 +913,11 @@ test('remote API URL validation allows trusted HTTP while dashboard stays HTTPS-
   assert.equal(isUsableRemoteDashboardUrl('http://dash.example.com'), false);
 });
 
-test('remote dashboard turns are wired through the chat-only gateway scope policy', () => {
+test('remote dashboard turns are wired through endpoint-scoped consent with a final Chat-only gate', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(sidepanel, /contextScopeForGateway/);
+  assert.match(sidepanel, /from '\.\/lib\/context-consent\.mjs'/);
+  assert.match(sidepanel, /effectiveContextGate\(requestedTurnScope/);
+  assert.match(sidepanel, /const gatedContextOverride = contextGate\.allowed \? contextOverride : null/);
   assert.match(sidepanel, /turnOptions\.forceChatOnly/);
   assert.match(sidepanel, /turnContextScope\.mode\s*===\s*CONTEXT_SCOPE_MODES\.CHAT_ONLY/);
   assert.match(sidepanel, /contextScope:\s*turnContextScope/);
@@ -921,8 +925,9 @@ test('remote dashboard turns are wired through the chat-only gateway scope polic
   assert.match(sidepanel, /isTrustedDashboardOrigin\(baseUrl, settings\.trustedDashboardOrigin\)/);
   assert.match(sidepanel, /findDashboardTab\(chrome\.tabs, origin\)/);
   assert.match(sidepanel, /tabId:\s*trustedDashboardTabId/);
-  assert.match(sidepanel, /contextInput\.disabled\s*=\s*dashboardAttach/);
-  assert.match(sidepanel, /contextScope\s*=\s*contextScopeForGateway\(contextScope, settings\.gatewayMode\);/);
+  assert.match(sidepanel, /dashboardPrincipal:\s*ticket\.principal/);
+  assert.match(sidepanel, /browserContextConsentInput/);
+  assert.doesNotMatch(sidepanel, /contextScopeForGateway/);
 });
 
 test('manifest allows remote Hermes API server connections from extension pages', () => {
@@ -1019,7 +1024,11 @@ test('sidepanel routes session creation failures through remote setup diagnostic
 
 test('setup/session failures do not trigger misleading non-stream retry copy', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const streamCatch = source.match(/catch \(streamError\) \{[\s\S]*?answer = await fallbackSessionChat\(prompt, preparedAttachments, \{ onRuntime: applyTurnRuntimePayload \}\);[\s\S]*?\n\s*\}/)?.[0] || '';
+  const catchStart = source.indexOf('} catch (streamError) {');
+  const catchEnd = source.indexOf('\n    const finalAnswer =', catchStart);
+  const streamCatch = catchStart >= 0 && catchEnd > catchStart
+    ? source.slice(catchStart, catchEnd)
+    : '';
 
   assert.match(streamCatch, /streamError\?\.hermesSetupFailure/);
   assert.match(streamCatch, /throw streamError/);
@@ -1293,9 +1302,11 @@ test('composer submit steers active text by default while preserving explicit qu
 });
 
 test('backend queued steer fallbacks never auto-flush as normal queued prompts', () => {
-  assert.equal(shouldAutoFlushQueuedTurn({ text: 'send next', attachments: [], kind: 'queued' }), true);
-  assert.equal(shouldAutoFlushQueuedTurn({ text: 'use this guidance', attachments: [], kind: 'steer-fallback', autoSend: false }), false);
-  assert.equal(shouldAutoFlushQueuedTurn(null), false);
+  const terminalRunControl = { phase: 'terminal', writerLease: 'released' };
+  assert.equal(shouldAutoFlushQueuedTurn({ text: 'send next', attachments: [], kind: 'queued' }, terminalRunControl), true);
+  assert.equal(shouldAutoFlushQueuedTurn({ text: 'send next', attachments: [], kind: 'queued' }, { phase: 'stopping', writerLease: 'held' }), false);
+  assert.equal(shouldAutoFlushQueuedTurn({ text: 'use this guidance', attachments: [], kind: 'steer-fallback', autoSend: false }, terminalRunControl), false);
+  assert.equal(shouldAutoFlushQueuedTurn(null, terminalRunControl), false);
 
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(source, /busyComposerSubmitAction\(/);
@@ -1304,7 +1315,7 @@ test('backend queued steer fallbacks never auto-flush as normal queued prompts',
   assert.match(source, /pendingSteerText = steerText/, 'steer attempts should be tracked until stream confirmation or queued fallback');
   assert.match(source, /pendingSteerText = ''[\s\S]*setStatus\('warn', 'Steer not injected'/, 'queued steer events should clear optimistic success and show not-injected status');
   assert.doesNotMatch(source, /if \(sending\) \{\s*queueCurrentDraft\(\);\s*return;\s*\}/);
-  assert.match(source, /shouldAutoFlushQueuedTurn\(queuedTurn\)/);
+  assert.match(source, /shouldAutoFlushQueuedTurn\(queuedTurn, settledRunControl\)/);
 });
 
 test('chat-only context keeps the existing session and transcript scope', () => {

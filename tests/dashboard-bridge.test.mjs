@@ -44,7 +44,7 @@ test('mintTicketInPage maps fetch outcomes to structured results', async () => {
       requestOptions = options;
       return { ok: true, status: 200, json: async () => ({ ticket: 'T1', ttl_seconds: 30 }) };
     };
-    assert.deepEqual(await mintTicketInPage('https://h/api/auth/ws-ticket'), { ok: true, ticket: 'T1', ttlSeconds: 30 });
+    assert.deepEqual(await mintTicketInPage('https://h/api/auth/ws-ticket'), { ok: true, ticket: 'T1', ttlSeconds: 30, principal: null });
     assert.equal(requestOptions.credentials, 'include');
     assert.equal(requestOptions.redirect, 'error');
     assert.equal(requestOptions.cache, 'no-store');
@@ -70,6 +70,81 @@ test('mintTicketInPage maps fetch outcomes to structured results', async () => {
     const failed = await mintTicketInPage('https://h/api/auth/ws-ticket');
     assert.equal(failed.reason, 'fetch_failed');
     assert.match(failed.detail, /network down/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('mintTicketInPage binds the ticket to the verified dashboard principal when /api/auth/me is available', async () => {
+  const original = globalThis.fetch;
+  const calls = [];
+  try {
+    globalThis.fetch = async (url, options) => {
+      calls.push({ url: String(url), options });
+      if (String(url).endsWith('/api/auth/me')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ user_id: 'user-7', provider: 'nous', org_id: 'org-2' }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({ ticket: 'T1', ttl_seconds: 30 }) };
+    };
+    assert.deepEqual(await mintTicketInPage('https://h/api/auth/ws-ticket'), {
+      ok: true,
+      ticket: 'T1',
+      ttlSeconds: 30,
+      principal: { user_id: 'user-7', provider: 'nous', org_id: 'org-2' },
+    });
+    assert.deepEqual(calls.map((call) => call.url), [
+      'https://h/api/auth/me',
+      'https://h/api/auth/ws-ticket',
+      'https://h/api/auth/me',
+    ]);
+    assert.equal(calls[0].options.credentials, 'include');
+    assert.equal(calls[0].options.cache, 'no-store');
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('mintTicketInPage discards a ticket when the signed-in account changes during mint', async () => {
+  const original = globalThis.fetch;
+  let identityReads = 0;
+  try {
+    globalThis.fetch = async (url) => {
+      if (String(url).endsWith('/api/auth/me')) {
+        identityReads += 1;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ user_id: identityReads === 1 ? 'user-a' : 'user-b', provider: 'nous', org_id: 'org-2' }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({ ticket: 'T1', ttl_seconds: 30 }) };
+    };
+    assert.deepEqual(await mintTicketInPage('https://h/api/auth/ws-ticket'), {
+      ok: false,
+      reason: 'account_identity_changed',
+    });
+    assert.match(ticketFailureHelp('account_identity_changed'), /account changed/i);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test('mintTicketInPage keeps ticket transport compatible but leaves consent principal unavailable on older dashboards', async () => {
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => String(url).endsWith('/api/auth/me')
+      ? { ok: false, status: 404, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => ({ ticket: 'T2', ttl_seconds: 30 }) };
+    assert.deepEqual(await mintTicketInPage('https://h/api/auth/ws-ticket'), {
+      ok: true,
+      ticket: 'T2',
+      ttlSeconds: 30,
+      principal: null,
+    });
   } finally {
     globalThis.fetch = original;
   }
