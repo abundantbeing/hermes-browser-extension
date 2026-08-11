@@ -922,7 +922,7 @@ test('remote dashboard turns are wired through the chat-only gateway scope polic
   assert.match(sidepanel, /findDashboardTab\(chrome\.tabs, origin\)/);
   assert.match(sidepanel, /tabId:\s*trustedDashboardTabId/);
   assert.match(sidepanel, /contextInput\.disabled\s*=\s*dashboardAttach/);
-  assert.match(sidepanel, /contextScope\s*=\s*contextScopeForGateway\(contextScope, settings\.gatewayMode\);/);
+  assert.match(sidepanel, /contextScope\s*=\s*contextScopeForGateway\(contextScope, settings\.gatewayMode(?:, \{[^}]*\})?\);/);
 });
 
 test('manifest allows remote Hermes API server connections from extension pages', () => {

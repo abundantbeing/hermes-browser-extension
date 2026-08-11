@@ -58,8 +58,8 @@ export function normalizeContextScope(scope = {}) {
   };
 }
 
-export function contextScopeForGateway(scope = DEFAULT_CONTEXT_SCOPE, gatewayMode = '') {
-  if (String(gatewayMode || '').trim().toLowerCase() === 'remote-dashboard') {
+export function contextScopeForGateway(scope = DEFAULT_CONTEXT_SCOPE, gatewayMode = '', options = {}) {
+  if (String(gatewayMode || '').trim().toLowerCase() === 'remote-dashboard' && options?.shareBrowserContext !== true) {
     return normalizeContextScope({ mode: CONTEXT_SCOPE_MODES.CHAT_ONLY });
   }
   return normalizeContextScope(scope);

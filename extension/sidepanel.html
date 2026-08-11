@@ -693,6 +693,15 @@
             </div>
           </div>
 
+          <label class="settings-toggle-card" id="shareBrowserContextControl" hidden>
+            <span class="settings-toggle-copy">
+              <strong data-i18n="ui.share.browser.context">Share page context with this gateway</strong>
+              <small data-i18n="ui.share.browser.context.detail">Send page text and tab info from this browser to this gateway. Off by default for Cloud and dashboard connections; turn it on to let Hermes see your tabs.</small>
+            </span>
+            <input id="shareBrowserContextInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+
           <fieldset class="panel-residency-options settings-choice-group">
             <legend data-i18n="ui.panel.opening">Panel opening</legend>
             <div class="settings-choice-grid">
