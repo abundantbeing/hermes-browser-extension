@@ -29,6 +29,9 @@ export const WS_METHODS = Object.freeze({
   voiceRecord: 'voice.record',
   voiceTts: 'voice.tts',
   configSet: 'config.set',
+  browserContextUpload: 'browser.context.upload',
+  browserEventsPublish: 'browser.events.publish',
+  browserControlResult: 'browser.control.result',
 });
 
 // Streamed assistant-turn events we care about. Everything else (tool.*,
@@ -42,6 +45,12 @@ export const WS_EVENTS = Object.freeze({
   voiceTranscript: 'voice.transcript',
   voiceStatus: 'voice.status',
   error: 'error',
+  // Server→client capability events for the browser companion surface. These
+  // ride the existing `method === 'event'` frame with a typed `params.type`,
+  // so older cores that never emit them are harmless (extension stays in
+  // inline/full delivery mode).
+  browserControl: 'browser.control',
+  fileDelivery: 'file.delivery',
 });
 
 // Gateway sessions have two identities. `session_id` addresses the live

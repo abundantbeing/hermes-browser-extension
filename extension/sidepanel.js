@@ -112,7 +112,7 @@ import {
   buildAssistModelRouteRequest,
   resolveAssistModelBindingFromCatalog,
 } from './lib/assist-model-contract.mjs';
-import { serializeBrowserTurnEnvelope } from './lib/browser-context-protocol.mjs';
+import { buildBrowserTurnEnvelope, serializeBrowserTurnEnvelope } from './lib/browser-context-protocol.mjs';
 import {
   APPEARANCE_THEMES,
   normalizeAppearanceTheme,
@@ -452,6 +452,8 @@ const els = {
   includeSelectedTextInput: $('#includeSelectedTextInput'),
   shareBrowserContextInput: $('#shareBrowserContextInput'),
   shareBrowserContextControl: $('#shareBrowserContextControl'),
+  allowBrowserControlInput: $('#allowBrowserControlInput'),
+  allowBrowserControlControl: $('#allowBrowserControlControl'),
   inlineAssistEnabled: $('#inlineAssistEnabled'),
   inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
   inlineAssistModel: $('#inlineAssistModel'),
@@ -1744,6 +1746,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
       skills: true,
       dashboardWs: true,
       browserContextInline: settings.shareBrowserContext === true,
+      browserControl: settings.allowBrowserControl === true,
       warnings: [
         'Remote dashboard mode uses WebSocket session/chat APIs; REST-only browser extension APIs stay unavailable.',
         'Voice transcription unavailable — using browser speech fallback when available.',
@@ -1801,6 +1804,11 @@ function renderShareBrowserContextControl() {
   const relevant = mode === 'cloud' || settings.connectionTransport === CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
   els.shareBrowserContextControl.hidden = !relevant;
   if (relevant) els.shareBrowserContextInput.checked = settings.shareBrowserContext === true;
+  if (els.allowBrowserControlControl && els.allowBrowserControlInput) {
+    const sharing = relevant && settings.shareBrowserContext === true;
+    els.allowBrowserControlControl.hidden = !sharing;
+    if (sharing) els.allowBrowserControlInput.checked = settings.allowBrowserControl === true;
+  }
 }
 
 function applyConnectionMode(value) {
@@ -7093,6 +7101,9 @@ async function loadSettings({ restoreMessages = false } = {}) {
     shareBrowserContext: typeof settings.shareBrowserContext === 'boolean'
       ? settings.shareBrowserContext
       : deriveShareBrowserContextDefault(settings),
+    // Browser control is opt-in on top of context sharing and always starts
+    // disabled for existing installs.
+    allowBrowserControl: settings.allowBrowserControl === true,
   };
   trustedDashboardTabId = Number(settings.trustedDashboardTabId) || null;
   contextScope = contextScopeForGateway(contextScope, settings.gatewayMode, { shareBrowserContext: settings.shareBrowserContext === true });
@@ -7154,6 +7165,7 @@ function syncSettingsForm() {
   els.includePageTextInput.checked = Boolean(settings.includePageText);
   els.includeSelectedTextInput.checked = Boolean(settings.includeSelectedText);
   if (els.shareBrowserContextInput) els.shareBrowserContextInput.checked = settings.shareBrowserContext === true;
+  if (els.allowBrowserControlInput) els.allowBrowserControlInput.checked = settings.allowBrowserControl === true;
   renderShareBrowserContextControl();
   if (els.inlineAssistEnabled) els.inlineAssistEnabled.checked = settings.inlineAssistEnabled !== false;
   if (els.inlineAssistDefaultRoute) els.inlineAssistDefaultRoute.value = normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute);
@@ -7240,6 +7252,9 @@ async function saveSettingsFromForm() {
     shareBrowserContext: shareContextRelevant && els.shareBrowserContextInput
       ? els.shareBrowserContextInput.checked
       : settings.shareBrowserContext === true,
+    allowBrowserControl: shareContextRelevant && els.allowBrowserControlInput
+      ? els.allowBrowserControlInput.checked
+      : settings.allowBrowserControl === true,
     inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
     ...assistBinding,
@@ -8202,6 +8217,12 @@ async function ensureRemoteWsClient() {
     throw error;
   }
   const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '' };
+  client.on(WS_EVENTS.fileDelivery, (event) => handleFileDeliveryEvent(event).catch((error) => {
+    console.warn('[Hermes Browser] File delivery failed:', error?.message || error);
+  }));
+  client.on(WS_EVENTS.browserControl, (event) => handleBrowserControlEvent(event).catch((error) => {
+    console.warn('[Hermes Browser] Browser control failed:', error?.message || error);
+  }));
   client.on('close', () => {
     if (remoteWsConnection === connection) {
       remoteWsConnection = null;
@@ -8743,6 +8764,292 @@ async function fallbackChatCompletions(prompt, turnAttachments = attachments) {
   return extractAssistantText(payload);
 }
 
+// ── Dashboard browser-context upload (Phase 2) ────────────────────────────
+// When a Cloud/dashboard connection shares context, the full BCP envelope is
+// also pushed out-of-band to the companion plugin store (debounced) so later
+// turns can send hash references instead of re-sending page text. Cores
+// without the RPC reject it; we then fall back to full inline delivery for
+// every subsequent turn so the agent never misses context.
+let browserContextUploadAvailable = true;
+let browserContextUploadTimer = null;
+let pendingBrowserContextUpload = null;
+
+function pushBrowserContextUpload(envelope) {
+  if (!isRemoteWsMode() || settings.shareBrowserContext !== true || browserContextUploadAvailable === false) return;
+  if (!envelope || typeof envelope !== 'object') return;
+  pendingBrowserContextUpload = envelope;
+  clearTimeout(browserContextUploadTimer);
+  browserContextUploadTimer = setTimeout(() => {
+    const payload = pendingBrowserContextUpload;
+    pendingBrowserContextUpload = null;
+    const client = remoteWsConnection?.client;
+    const sessionId = remoteWsConnection?.wsStoredSessionId || remoteWsConnection?.wsSessionId;
+    if (!client || !sessionId) return;
+    client.request(WS_METHODS.browserContextUpload, {
+      session_id: sessionId,
+      context_hash: String(
+        envelope?.source_receipt?.context_hash
+        || envelope?.browser_context?.payload?.context_hash
+        || '',
+      ),
+      payload,
+    }).catch(() => {
+      // Core does not support out-of-band upload: stay on full inline delivery.
+      browserContextUploadAvailable = false;
+    });
+  }, 800);
+}
+
+// ── Dashboard file delivery (Phase 6) ────────────────────────────────────
+// Server→client `file.delivery` events carry base64 file bytes; render a
+// download card and save via chrome.downloads (already in the manifest).
+const MAX_DASHBOARD_FILE_BYTES = 4 * 1024 * 1024;
+
+async function handleFileDeliveryEvent(event) {
+  const payload = event?.payload || {};
+  const name = String(payload.name || 'hermes-file');
+  const mime = String(payload.mime || 'application/octet-stream');
+  const data = String(payload.data || '');
+  if (!data) return;
+  let bytes;
+  try {
+    bytes = Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
+  } catch {
+    setStatus('warn', 'File delivery failed', 'Malformed file payload from the gateway.');
+    return;
+  }
+  if (bytes.byteLength > MAX_DASHBOARD_FILE_BYTES) {
+    setStatus('warn', 'File too large', 'This gateway can only deliver files up to 4 MiB.');
+    return;
+  }
+  appendFileDeliveryCard({ name, mime, bytes });
+}
+
+function appendFileDeliveryCard({ name, mime, bytes }) {
+  const { node } = addMessage('system', '', { persist: false });
+  const content = node.querySelector('.message-content') || node;
+  const card = document.createElement('div');
+  card.className = 'file-delivery-card';
+  const label = document.createElement('span');
+  label.className = 'file-delivery-label';
+  label.textContent = `📎 ${name} · ${formatBytes(bytes.byteLength)}`;
+  const save = document.createElement('button');
+  save.type = 'button';
+  save.className = 'primary tiny';
+  save.textContent = translateUiText('Download');
+  save.addEventListener('click', () => saveDeliveredFile({ name, mime, bytes }));
+  card.append(label, save);
+  content.appendChild(card);
+  node.scrollIntoView?.({ block: 'nearest' });
+}
+
+async function saveDeliveredFile({ name, mime, bytes }) {
+  const blob = new Blob([bytes], { type: mime });
+  const dataUrl = URL.createObjectURL(blob);
+  const fallback = () => {
+    if (bytes.byteLength <= 512 * 1024) {
+      navigator.clipboard?.writeText(new TextDecoder().decode(bytes)).catch(() => {});
+    }
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = name;
+    link.click();
+  };
+  if (chrome.downloads?.download) {
+    chrome.downloads.download({ url: dataUrl, filename: name }, () => {
+      if (chrome.runtime?.lastError) fallback();
+    });
+  } else {
+    fallback();
+  }
+}
+
+// ── Browser control (Phase 4) ────────────────────────────────────────────
+// Server→client `browser.control` events ask the extension to drive the
+// active tab. Every action is gated by (a) context-sharing consent,
+// (b) the explicit allowBrowserControl setting, and (c) an inline per-action
+// approval card (with a session-scoped auto-approve). Results are correlated
+// back to the core via the `browser.control.result` RPC using the request_id.
+const BROWSER_CONTROL_ACTIONS = new Set(['navigate', 'click', 'type', 'scroll', 'snapshot', 'extract']);
+let browserControlAutoApprove = false;
+
+async function handleBrowserControlEvent(event) {
+  const payload = event?.payload || {};
+  const requestId = String(payload.request_id || '');
+  const action = String(payload.action || '');
+  if (!requestId || !BROWSER_CONTROL_ACTIONS.has(action)) return;
+  if (settings.shareBrowserContext !== true || settings.allowBrowserControl !== true) {
+    replyBrowserControl(requestId, false, 'browser control is disabled (enable it in Settings with context sharing on)');
+    return;
+  }
+  const approved = await requestBrowserControlApproval(action, payload.params || {});
+  if (!approved) {
+    replyBrowserControl(requestId, false, 'user declined the control request');
+    return;
+  }
+  try {
+    const result = await executeBrowserControl(action, payload.params || {});
+    replyBrowserControl(requestId, true, result);
+  } catch (error) {
+    const message = error?.message || String(error);
+    replyBrowserControl(requestId, false, message);
+  }
+}
+
+function replyBrowserControl(requestId, ok, resultOrError) {
+  const client = remoteWsConnection?.client;
+  if (!client || !requestId) return;
+  const body = ok ? { ok: true, result: resultOrError } : { ok: false, error: String(resultOrError || 'control failed') };
+  client.request(WS_METHODS.browserControlResult, { request_id: requestId, ...body }).catch(() => {});
+}
+
+function requestBrowserControlApproval(action, params) {
+  if (browserControlAutoApprove) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const { node } = addMessage('system', '', { persist: false });
+    const content = node.querySelector('.message-content') || node;
+    const card = document.createElement('div');
+    card.className = 'browser-control-approval-card';
+    const copy = document.createElement('div');
+    copy.className = 'browser-control-approval-copy';
+    const target = params.selector ? ` ${params.selector}` : params.url ? ` ${params.url}` : '';
+    copy.textContent = `Hermes wants to ${action}${target}`;
+    const row = document.createElement('div');
+    row.className = 'browser-control-approval-actions';
+    const accept = document.createElement('button');
+    accept.type = 'button';
+    accept.className = 'primary tiny';
+    accept.textContent = translateUiText('Approve');
+    const decline = document.createElement('button');
+    decline.type = 'button';
+    decline.className = 'secondary tiny';
+    decline.textContent = translateUiText('Decline');
+    const auto = document.createElement('label');
+    auto.className = 'browser-control-approval-auto';
+    const autoInput = document.createElement('input');
+    autoInput.type = 'checkbox';
+    auto.append(autoInput, document.createTextNode(` ${translateUiText('Approve for this session')}`));
+    const settle = (value) => {
+      if (autoInput.checked) browserControlAutoApprove = true;
+      card.remove();
+      resolve(value);
+    };
+    accept.addEventListener('click', () => settle(true));
+    decline.addEventListener('click', () => settle(false));
+    row.append(accept, decline, auto);
+    card.append(copy, row);
+    content.appendChild(card);
+    node.scrollIntoView?.({ block: 'nearest' });
+  });
+}
+
+function controlSnapshotInPage() {
+  const interactive = [...document.querySelectorAll('a,button,input,select,textarea,[role="button"],summary')]
+    .slice(0, 120)
+    .map((el) => {
+      const label = (el.getAttribute('aria-label') || el.innerText || el.value || el.placeholder || el.textContent || '').trim().slice(0, 120);
+      return { tag: el.tagName.toLowerCase(), label };
+    })
+    .filter((item) => item.label);
+  return { title: document.title, url: location.href, text: (document.body?.innerText || '').slice(0, 12000), interactive };
+}
+
+function controlClickInPage(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return { ok: false, error: `no element for selector: ${selector}` };
+  el.scrollIntoView({ block: 'center' });
+  el.click();
+  return { ok: true };
+}
+
+function controlTypeInPage(selector, text) {
+  const el = document.querySelector(selector);
+  if (!el) return { ok: false, error: `no element for selector: ${selector}` };
+  if (el.tagName === 'INPUT' && String(el.type || '').toLowerCase() === 'password') {
+    return { ok: false, error: 'refusing to type into a password field' };
+  }
+  const proto = el instanceof HTMLTextAreaElement
+    ? HTMLTextAreaElement.prototype
+    : el instanceof HTMLInputElement
+      ? HTMLInputElement.prototype
+      : null;
+  if (!proto) return { ok: false, error: 'target is not an input or textarea' };
+  Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, String(text));
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+  return { ok: true };
+}
+
+function controlScrollInPage(direction, delta) {
+  const amount = Number(delta) || Math.round(window.innerHeight * 0.8);
+  window.scrollBy({ top: direction === 'up' ? -amount : amount, behavior: 'smooth' });
+  return { ok: true, scrollY: window.scrollY };
+}
+
+function controlExtractInPage(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return { ok: false, error: `no element for selector: ${selector}` };
+  return { ok: true, text: (el.innerText || el.textContent || '').trim().slice(0, 12000) };
+}
+
+async function executeBrowserControl(action, params) {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tabId = tabs[0]?.id;
+  if (!tabId) throw new Error('no active tab');
+  if (action === 'navigate') {
+    const url = String(params.url || '').trim();
+    if (!/^https?:\/\//i.test(url)) throw new Error('refusing to navigate to a non-http(s) URL');
+    if (isRestrictedUrl(url)) throw new Error('refusing to navigate to a restricted URL');
+    await chrome.tabs.update(tabId, { url });
+    return { ok: true, url };
+  }
+  const target = { tabId };
+  if (action === 'snapshot') {
+    const [{ result }] = await chrome.scripting.executeScript({ target, func: controlSnapshotInPage });
+    return { ok: true, result };
+  }
+  if (action === 'click') {
+    const [{ result }] = await chrome.scripting.executeScript({ target, func: controlClickInPage, args: [String(params.selector || '')] });
+    return result;
+  }
+  if (action === 'type') {
+    const [{ result }] = await chrome.scripting.executeScript({ target, func: controlTypeInPage, args: [String(params.selector || ''), String(params.text ?? '')] });
+    return result;
+  }
+  if (action === 'scroll') {
+    const [{ result }] = await chrome.scripting.executeScript({ target, func: controlScrollInPage, args: [params.direction === 'up' ? 'up' : 'down', Number(params.delta) || 0] });
+    return result;
+  }
+  if (action === 'extract') {
+    const [{ result }] = await chrome.scripting.executeScript({ target, func: controlExtractInPage, args: [String(params.selector || '')] });
+    return result;
+  }
+  throw new Error(`unsupported action: ${action}`);
+}
+
+// ── Dashboard browser-event publishing (Phase 3) ──────────────────────────
+// Tab/page lifecycle events are pushed to the gateway as best-effort metadata
+// (never page text). Cores without the RPC simply ignore it.
+let browserEventsPublishTimer = null;
+let pendingBrowserEvents = [];
+
+function publishBrowserEvents(events) {
+  if (!isRemoteWsMode() || settings.shareBrowserContext !== true) return;
+  const fresh = (Array.isArray(events) ? events : []).filter(Boolean);
+  if (!fresh.length) return;
+  pendingBrowserEvents.push(...fresh);
+  clearTimeout(browserEventsPublishTimer);
+  browserEventsPublishTimer = setTimeout(() => {
+    const batch = pendingBrowserEvents;
+    pendingBrowserEvents = [];
+    const client = remoteWsConnection?.client;
+    const sessionId = remoteWsConnection?.wsStoredSessionId || remoteWsConnection?.wsSessionId;
+    if (!client || !sessionId || !batch.length) return;
+    client.request(WS_METHODS.browserEventsPublish, { session_id: sessionId, events: batch })
+      .catch(() => { /* best-effort metadata */ });
+  }, 600);
+}
+
 async function askHermes(userText, turnAttachments = [...attachments], turnOptions = {}) {
   const browserCommand = turnOptions.disableCommandParsing ? null : parseBrowserCommand(userText);
   if (browserCommand?.kind === 'native') {
@@ -8844,10 +9151,11 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       contextHash,
       previous: contextDeliveryBySession.get(contextDeliverySessionKey) || null,
     });
-    const contextDelivery = (turnOptions.forceFullContext || forceFullContextNextTurn) && deliveryDecision.mode !== CONTEXT_DELIVERY_MODES.NONE
+    const uploadUnavailable = isRemoteWsMode() && settings.shareBrowserContext === true && browserContextUploadAvailable === false;
+    const contextDelivery = (turnOptions.forceFullContext || forceFullContextNextTurn || uploadUnavailable) && deliveryDecision.mode !== CONTEXT_DELIVERY_MODES.NONE
       ? CONTEXT_DELIVERY_MODES.FULL
       : deliveryDecision.mode;
-    const prompt = serializeBrowserTurnEnvelope({
+    const envelope = buildBrowserTurnEnvelope({
       humanInput: promptUserText,
       instructionTransform: parsedCommand ? { kind: 'slash-command', text: basePromptText } : null,
       activeTab: context.activeTab,
@@ -8860,6 +9168,10 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       contextHash,
       contextDelivery,
     });
+    const prompt = JSON.stringify(envelope);
+    if (contextDelivery === CONTEXT_DELIVERY_MODES.FULL && turnContextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) {
+      pushBrowserContextUpload(envelope);
+    }
 
     const receipt = buildContextReceipt({
       context,
@@ -10320,13 +10632,18 @@ function bindEvents() {
   });
   chrome.tabs?.onActivated?.addListener?.((activeInfo) => {
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'activated', eventTabId: activeInfo?.tabId })) refreshContext();
+    publishBrowserEvents([{ type: 'tab.activated', tab_id: activeInfo?.tabId, ts: Date.now() }]);
   });
   chrome.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
     if (!(changeInfo.status === 'complete' || changeInfo.title || changeInfo.url)) return;
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'updated', eventTabId: tabId })) refreshContext();
+    if (changeInfo.status === 'complete') {
+      publishBrowserEvents([{ type: 'tab.updated', tab_id: tabId, title: String(changeInfo.title || '').slice(0, 240), ts: Date.now() }]);
+    }
   });
   chrome.tabs?.onRemoved?.addListener?.((tabId) => {
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'removed', eventTabId: tabId })) refreshContext();
+    publishBrowserEvents([{ type: 'tab.removed', tab_id: tabId, ts: Date.now() }]);
   });
   chrome.runtime?.onMessage?.addListener?.((message, _sender, sendResponse) => {
     if (message?.type === WAKE_MESSAGES.localState) {

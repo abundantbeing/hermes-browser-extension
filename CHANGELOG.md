@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added opt-in **browser-context sharing for Hermes Cloud and no-key Remote (dashboard WebSocket) connections** (`shareBrowserContext`): Cloud defaults OFF (third-party endpoint; sharing is a per-connection consent decision), self-hosted remote dashboards default ON. When enabled, Follow active tab, Pin current tab, and per-tab prompt selection work over the dashboard socket with full BCP v2 delivery, and the companion plugin's context tools (`browser_context_status`, `browser_get_context`) activate.
+- Added the dashboard WS companion surface: `browser.context.upload` (out-of-band context push enabling hash-reference turns), `browser.events.publish` (tab/page lifecycle metadata), `file.delivery` (agent → extension downloadable file cards via `chrome.downloads`), and `browser.control` (opt-in agent-driven browser actions with per-action approval cards). All degrade to full-inline delivery on cores without the RPCs.
+- Added `allowBrowserControl` opt-in setting: lets the agent navigate/click/type/scroll/snapshot/extract in the active tab, gated by context-sharing consent, an explicit setting, and per-action approval.
+
+### Changed
+
+- `contextScopeForGateway()` only forces Chat-only for dashboard gateways when context sharing is not consented; all scope call sites (startup, `applyContextScope`, turn-time) honor the setting.
+- Remote-dashboard capability synthesis reports `browserContextInline` and `browserControl` honestly; `app.js` context labels show "Tab context shared" vs "Chat only".
+
 ## [0.2.0] - 2026-07-21
 
 ### Added
