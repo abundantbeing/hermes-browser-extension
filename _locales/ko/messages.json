@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "마이크 권한 상태: {state}. Chromium이(가) 차단된 것으로 표시되면 마이크 설정을 열고 Hermes Browser Extension에 대해 마이크를 허용으로 설정하세요.",
+    "message": "마이크 권한 상태: {state}. 브라우저에서 이를 차단된 것으로 표시하면 마이크 설정을 열고 마이크를 Hermes Browser Extension에 대해 허용으로 설정하세요.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "항상 켜져 있는 브라우저 깨우기 청취에는 Chromium 오프스크린 문서 지원이 필요합니다.",
+    "message": "항상 켜져 있는 브라우저 깨우기 청취에는 오프스크린 문서 지원이 필요합니다.",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome 확장 프로그램 측면 패널 내부에서 마이크 프롬프트를 억제할 수 있습니다. 이 임시 확장 페이지는 Chrome에게 마이크 액세스를 요청한 다음 Hermes 측면 패널로 다시 돌아갑니다.",
+    "message": "일부 브라우저에서는 확장 사이드바 내부에 마이크 프롬프트가 표시되지 않습니다. 이 임시 확장 페이지는 브라우저에 마이크 액세스를 요청한 다음 다시 Hermes로 보냅니다.",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium은 확장 프로그램 측면 패널 내에서 마이크 캡처를 차단할 수 있습니다. 이 표시된 확장 프로그램 탭은 Hermes STT를 사용할 수 있으면 동일한 Hermes 확장 프로그램 출처에서 녹음합니다. 연결된 런타임이 오디오 전사를 제공하지 않으면 브라우저 음성 폴백을 사용합니다.",
+    "message": "일부 브라우저는 확장 사이드바 내부의 마이크 캡처를 차단합니다. 이 표시되는 확장 탭은 Hermes STT를 사용할 수 있을 때 동일한 Hermes 확장 원본에서 기록하거나, 연결된 런타임이 오디오 전사를 노출하지 않을 때 브라우저 음성 대체를 사용합니다.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "마이크 허용을 클릭하여 액세스를 요청하세요. Chromium에서는 이 요청이 표시되는 확장 프로그램 페이지에서 발생하도록 요구합니다.",
+    "message": "마이크 허용을 클릭하여 액세스를 요청하세요. 귀하의 브라우저는 표시되는 확장 페이지에서 이 요청을 요구할 수 있습니다.",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "Chromium 마이크 권한 프롬프트를 여는 중…",
+    "message": "브라우저 마이크 권한 프롬프트를 여는 중…",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "로컬에서 Hermes' 기본 깨우기 엔진을 선호하고 Cloud Preview용 Chromium 기기 내 음성을 사용합니다.",
+    "message": "Hermes 의 기본 깨우기 엔진을 로컬에서 선호하고 Cloud Preview 에 사용 가능한 기기 내 브라우저 음성을 사용합니다.",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "이 Chromium 브라우저는 확장 프로그램 페이지에 MediaRecorder/getUserMedia를 제공하지 않으며 Web Speech 폴백을 사용할 수 없습니다.",
+    "message": "이 브라우저는 MediaRecorder/getUserMedia를 확장 페이지에 노출하지 않으며 Web Speech 대체를 사용할 수 없습니다.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

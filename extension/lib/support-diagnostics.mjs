@@ -1,13 +1,9 @@
+import { detectBrowserProduct } from './browser-runtime.mjs';
+
 const NOT_AVAILABLE = 'unknown';
 
 export function browserFamilyFromUserAgent(userAgent = '') {
-  const ua = String(userAgent || '');
-  if (/Edg\//.test(ua)) return 'Edge';
-  if (/OPR\//.test(ua) || /Opera/i.test(ua)) return 'Opera';
-  if (/Firefox\//.test(ua)) return 'Firefox (unsupported preview)';
-  if (/Safari\//.test(ua) && !/Chrome\//.test(ua) && !/Chromium\//.test(ua)) return 'Safari (unsupported preview)';
-  if (/Chrome\//.test(ua) || /Chromium\//.test(ua)) return 'Chrome';
-  return NOT_AVAILABLE;
+  return detectBrowserProduct({ userAgent }).label || NOT_AVAILABLE;
 }
 
 export function redactDiagnosticUrl(value = '') {
@@ -26,7 +22,7 @@ export function redactExtensionOrigin(value = '') {
   if (!raw) return '(not available)';
   try {
     const url = new URL(raw);
-    if (url.protocol === 'chrome-extension:' || url.protocol === 'moz-extension:' || url.protocol === 'safari-web-extension:') {
+    if (url.protocol === 'chrome-extension:' || url.protocol === 'comet-extension:' || url.protocol === 'moz-extension:' || url.protocol === 'safari-web-extension:') {
       return `${url.protocol}//${url.host}`;
     }
     return url.origin;
@@ -61,6 +57,9 @@ export function buildSupportDiagnostics({
   extensionOrigin = '',
   buildInfo = {},
   userAgent = '',
+  browserProduct = null,
+  browserCapabilities = {},
+  controllerAdapter = {},
   platform = '',
   settings = {},
   connection = {},
@@ -71,7 +70,12 @@ export function buildSupportDiagnostics({
   lastError = null,
   extractorMode = '',
 } = {}) {
-  const browserFamily = browserFamilyFromUserAgent(userAgent);
+  const product = browserProduct || detectBrowserProduct({ userAgent, extensionUrl: extensionOrigin });
+  const browserFamily = product.label || browserFamilyFromUserAgent(userAgent);
+  const browserApis = browserCapabilities.apis || {};
+  const controllerLabel = controllerAdapter.id
+    ? `${controllerAdapter.id} (${controllerAdapter.enabled ? 'enabled' : 'disabled'})`
+    : 'unavailable (disabled)';
   const contextScopeMode = contextScope?.mode || 'follow-active-tab';
   const gatewayMode = settings.gatewayMode || 'local-api';
   const gatewayOrigin = redactDiagnosticUrl(settings.gatewayUrl || '');
@@ -87,7 +91,15 @@ export function buildSupportDiagnostics({
     bullet('Built at', buildInfo.builtAt || NOT_AVAILABLE),
     '',
     '## Browser / OS',
-    bullet('Browser family', browserFamily),
+    bullet('Browser product', browserFamily),
+    bullet('Browser engine', product.engine || NOT_AVAILABLE),
+    bullet('Product identity', `${product.confidence || NOT_AVAILABLE} via ${product.source || NOT_AVAILABLE}`),
+    bullet('Panel host', browserCapabilities.panelHost || NOT_AVAILABLE),
+    bullet('Side panel API', availability(browserApis.sidePanel)),
+    bullet('Sidebar API', availability(browserApis.sidebarAction)),
+    bullet('Scripting API', availability(browserApis.scripting)),
+    bullet('Debugger API', availability(browserApis.debugger)),
+    bullet('Controller adapter', controllerLabel),
     bullet('Platform', platform || NOT_AVAILABLE),
     '',
     '## Gateway',
@@ -144,6 +156,9 @@ export function buildSupportDiagnostics({
   return {
     markdown: `${lines.join('\n')}\n`,
     browserFamily,
+    browserProduct: product,
+    browserCapabilities,
+    controllerAdapter,
     gatewayOrigin,
     redacted: true,
   };

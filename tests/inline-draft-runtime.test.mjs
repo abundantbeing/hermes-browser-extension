@@ -5,13 +5,13 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
 
-test('both manifests load the inline helper after extractor and content bridge', async () => {
+test('both manifests load the browser API facade before extractor, bridge, i18n, and inline helper', async () => {
   const [packaged, repository] = await Promise.all([
     read('extension/manifest.json').then(JSON.parse),
     read('manifest.json').then(JSON.parse),
   ]);
-  assert.deepEqual(packaged.content_scripts[0].js, ['content-extractor.js', 'content.js', 'lib/i18n-content.js', 'content-inline-helper.js']);
-  assert.deepEqual(repository.content_scripts[0].js, ['extension/content-extractor.js', 'extension/content.js', 'extension/lib/i18n-content.js', 'extension/content-inline-helper.js']);
+  assert.deepEqual(packaged.content_scripts[0].js, ['lib/browser-api-global.js', 'content-extractor.js', 'content.js', 'lib/i18n-content.js', 'content-inline-helper.js']);
+  assert.deepEqual(repository.content_scripts[0].js, ['extension/lib/browser-api-global.js', 'extension/content-extractor.js', 'extension/content.js', 'extension/lib/i18n-content.js', 'extension/content-inline-helper.js']);
 });
 
 test('inline helper uses approved Hermes branding, routes sessions, and supports safe apply and undo', async () => {
@@ -27,8 +27,8 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.match(source, /\.launcher-logo \{ width:30px; height:30px; \}/);
   assert.match(source, /\.brand-logo \{ width:42px; height:42px; \}/);
   assert.match(source, /--hb-logo', tokens\.logo/);
-  assert.match(source, /chrome\.storage\.local\.get/);
-  assert.match(source, /chrome\.storage\.onChanged/);
+  assert.match(source, /browserApi\.storage\.local\.get/);
+  assert.match(source, /browserApi\.storage\.onChanged/);
   assert.match(source, /inlineAssistEnabled/);
   assert.match(source, /inlineAssistDefaultRoute/);
   assert.match(source, /Use this choice next time/);
@@ -146,7 +146,9 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /modelNotice/);
   assert.match(source, /inlineAssistSessionRetention === 'delete'/);
   assert.match(source, /new Date\(\)\.toISOString/);
-  assert.match(source, /chrome\.storage\.session/);
+  assert.match(source, /resolveBrowserApi/);
+  assert.match(source, /browserApi\.storage\.session/);
+  assert.doesNotMatch(source, /(?<![\w.])chrome\.storage/);
   assert.match(source, /openHermesPanel\(sender\.tab\)/);
   assert.match(source, /expiresAt/);
   assert.match(source, /createContextMenuController/);

@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Состояние разрешения микрофона: {state}. Если Chromium показывает, что он заблокирован, откройте настройки микрофона и установите для параметра «Микрофон» значение «Разрешить» для Hermes Browser Extension.",
+    "message": "Состояние разрешения микрофона: {state}. Если ваш браузер показывает это как заблокированное, откройте настройки микрофона и установите для микрофона значение «Разрешить для Hermes Browser Extension».",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "Для постоянного прослушивания пробуждения браузера требуется Chromium поддержка закадрового документа.",
+    "message": "Постоянное прослушивание пробуждения браузера требует поддержки закадровых документов.",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome может подавлять запросы микрофона внутри боковых панелей расширения. Эта страница временного расширения запрашивает у Chrome доступ к микрофону, а затем отправляет вас обратно на боковую панель Hermes.",
+    "message": "Некоторые браузеры подавляют запросы микрофона на боковых панелях расширений. Эта страница временного расширения запрашивает у вашего браузера доступ к микрофону, а затем отправляет вас обратно на Hermes.",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium может блокировать захват микрофона внутри боковых панелей расширения. Эта вкладка видимого расширения записывает из того же источника расширения Hermes, когда Hermes STT доступен, или использует резервную речь Browser, когда подключенная среда выполнения не предоставляет транскрипцию звука.",
+    "message": "Некоторые браузеры блокируют захват микрофона внутри боковых панелей расширений. Эта видимая вкладка расширения записывает из того же источника расширения Hermes, когда доступен Hermes STT, или использует резервную версию речи браузера, когда подключенная среда выполнения не предоставляет транскрипцию звука.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "Нажмите Разрешить микрофон, чтобы запросить доступ. Chromium требует, чтобы этот запрос выполнялся с видимой страницы расширения.",
+    "message": "Нажмите Разрешить микрофон, чтобы запросить доступ. Ваш браузер может запросить этот запрос с видимой страницы расширения.",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "Открытие запроса на разрешение микрофона Chromium…",
+    "message": "Открытие запроса разрешения на доступ к микрофону в браузере…",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "Предпочитает локальный механизм пробуждения Hermes’ и использует речь на устройстве Chromium для Cloud Preview.",
+    "message": "Предпочитает локальный механизм пробуждения Hermes и использует доступную речь браузера на устройстве для Cloud Preview.",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "Этот браузер Chromium не предоставляет MediaRecorder/getUserMedia страницам расширения, а резервный вариант Web Speech недоступен.",
+    "message": "Этот браузер не предоставляет доступ к MediaRecorder/getUserMedia страницам расширений, а резервный вариант Web Speech недоступен.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

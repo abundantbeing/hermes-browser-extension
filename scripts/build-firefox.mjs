@@ -13,11 +13,13 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { writeContentExtractorRuntime } from './build-content-runtime.mjs';
+import { MANIFEST_TARGETS, manifestAssumptionsFor } from './manifest-profiles.mjs';
 
 const root = process.cwd();
 const src = path.join(root, 'extension');
 const dest = path.join(root, 'dist', 'firefox');
 const buildInfoFileName = 'build-info.json';
+const firefoxProfile = manifestAssumptionsFor(MANIFEST_TARGETS.FIREFOX);
 
 await writeContentExtractorRuntime({ rootDir: root });
 
@@ -62,13 +64,12 @@ function buildInfo() {
 // Read source manifest and transform for Firefox
 const sourceManifest = JSON.parse(fs.readFileSync(path.join(src, 'manifest.json'), 'utf8'));
 
-// Remove Chrome-only keys
-delete sourceManifest.side_panel;
-delete sourceManifest.minimum_chrome_version;
+// Remove keys not represented by the Firefox manifest family.
+for (const key of firefoxProfile.removedManifestKeys) delete sourceManifest[key];
 
 // Remove Chromium-only permissions (Firefox doesn't support them)
 if (Array.isArray(sourceManifest.permissions)) {
-  sourceManifest.permissions = sourceManifest.permissions.filter((p) => !['offscreen', 'sidePanel'].includes(p));
+  sourceManifest.permissions = sourceManifest.permissions.filter((permission) => !firefoxProfile.removedPermissions.includes(permission));
 }
 
 // Firefox MV3 uses background.scripts; service_worker is ignored without this fallback.

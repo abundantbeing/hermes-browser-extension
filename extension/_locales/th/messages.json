@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "สถานะการอนุญาตไมโครโฟน: {state} หาก Chromium แสดงว่าถูกบล็อก ให้เปิดการตั้งค่าไมโครโฟนและตั้งค่าไมโครโฟนเป็นอนุญาตสำหรับ Hermes Browser Extension",
+    "message": "สถานะการอนุญาตไมโครโฟน: {state} หากเบราว์เซอร์ของคุณแสดงสิ่งนี้ว่าถูกบล็อก ให้เปิดการตั้งค่าไมโครโฟนและตั้งค่าไมโครโฟนเป็นอนุญาตสำหรับ Hermes Browser Extension",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "การฟังการปลุกเบราว์เซอร์ที่เปิดตลอดเวลาต้องใช้การสนับสนุนเอกสารนอกหน้าจอ Chromium",
+    "message": "การฟังการปลุกเบราว์เซอร์ที่เปิดตลอดเวลาจำเป็นต้องรองรับเอกสารนอกหน้าจอ",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome สามารถระงับการแจ้งเตือนไมโครโฟนภายในแผงด้านข้างส่วนขยาย หน้าส่วนขยายชั่วคราวนี้ขอ Chrome สำหรับการเข้าถึงไมโครโฟน จากนั้นจะส่งคุณกลับไปที่แผงด้านข้าง Hermes",
+    "message": "เบราว์เซอร์บางตัวระงับการแจ้งเตือนไมโครโฟนภายในแถบด้านข้างส่วนขยาย หน้าส่วนขยายชั่วคราวนี้ขอให้เบราว์เซอร์ของคุณเข้าถึงไมโครโฟน จากนั้นจะส่งคุณกลับไปที่ Hermes",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium สามารถบล็อกการจับไมโครโฟนภายในแผงด้านข้างส่วนขยาย แท็บส่วนขยายที่มองเห็นได้นี้จะบันทึกจากต้นกำเนิดส่วนขยาย Hermes เดียวกันเมื่อ Hermes STT พร้อมใช้งาน หรือใช้ทางเลือกสำรองคำพูดของเบราว์เซอร์เมื่อรันไทม์ที่เชื่อมต่อไม่เปิดเผยการถอดเสียง",
+    "message": "เบราว์เซอร์บางตัวบล็อกการจับไมโครโฟนภายในแถบด้านข้างส่วนขยาย แท็บส่วนขยายที่มองเห็นได้นี้จะบันทึกจากต้นกำเนิดส่วนขยาย Hermes เดียวกันเมื่อ Hermes STT พร้อมใช้งาน หรือใช้ทางเลือกคำพูดของเบราว์เซอร์เมื่อรันไทม์ที่เชื่อมต่อไม่เปิดเผยการถอดเสียง",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "คลิก อนุญาตไมโครโฟน เพื่อขอสิทธิ์ Chromium กำหนดให้ส่งคำขอนี้จากหน้าส่วนขยายที่มองเห็นได้",
+    "message": "คลิกอนุญาตให้ไมโครโฟนเพื่อขอการเข้าถึง เบราว์เซอร์ของคุณอาจต้องการคำขอนี้จากหน้าส่วนขยายที่มองเห็นได้",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "กำลังเปิดพร้อมท์การอนุญาตไมโครโฟน Chromium...",
+    "message": "กำลังเปิดพรอมต์การอนุญาตไมโครโฟนของเบราว์เซอร์...",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "ชอบกลไกการปลุกดั้งเดิมของ Hermes ในเครื่อง และใช้ Chromium คำพูดบนอุปกรณ์สำหรับ Cloud Preview",
+    "message": "ชอบกลไกปลุกดั้งเดิมของ Hermes ในเครื่อง และใช้เสียงพูดของเบราว์เซอร์บนอุปกรณ์ที่มีอยู่สำหรับ Cloud Preview",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "เบราว์เซอร์ Chromium นี้ไม่รองรับ MediaRecorder/getUserMedia สำหรับหน้าส่วนขยาย และไม่มีทางเลือกสำรอง Web Speech",
+    "message": "เบราว์เซอร์นี้ไม่เปิดเผย MediaRecorder/getUserMedia ในหน้าส่วนขยาย และ Web Speech ทางเลือกไม่พร้อมใช้งาน",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

@@ -389,7 +389,7 @@ test('Hey Hermes hands one exactly-once wake turn to both Browser surfaces throu
   assert.match(web, /await sendPrompt\(text\)/);
   assert.match(web, /WAKE_MESSAGES\.turnReply/);
   assert.match(web, /changes\[WAKE_STORAGE_KEYS\.turn\]/);
-  assert.match(web, /if \(!wakeTurnIsFresh\(turn\)\) \{\s*await chrome\.storage\.local\.remove\(WAKE_STORAGE_KEYS\.turn\);/);
+  assert.match(web, /if \(!wakeTurnIsFresh\(turn\)\) \{\s*await browserApi\.storage\.local\.remove\(WAKE_STORAGE_KEYS\.turn\);/);
 });
 
 test('Hermes Web Cloud handoff uses the same signed-in dashboard ticket transport instead of a read-only dead end', () => {
@@ -923,7 +923,7 @@ test('remote dashboard turns are wired through endpoint-scoped consent with a fi
   assert.match(sidepanel, /contextScope:\s*turnContextScope/);
   assert.match(sidepanel, /requestDashboardOriginTrust\(normalizeGatewayUrl\(settings\.gatewayUrl\)\)/);
   assert.match(sidepanel, /isTrustedDashboardOrigin\(baseUrl, settings\.trustedDashboardOrigin\)/);
-  assert.match(sidepanel, /findDashboardTab\(chrome\.tabs, origin\)/);
+  assert.match(sidepanel, /findDashboardTab\(browserApi\.tabs, origin\)/);
   assert.match(sidepanel, /tabId:\s*trustedDashboardTabId/);
   assert.match(sidepanel, /dashboardPrincipal:\s*ticket\.principal/);
   assert.match(sidepanel, /browserContextConsentInput/);
@@ -1515,13 +1515,15 @@ test('manifests omit unsupported audioCapture permission and use the web microph
   assert.match(permissionHtml, /openMicrophoneSettingsButton/);
   assert.match(permissionJs, /addEventListener\('click', requestMicrophonePermission\)/);
   assert.doesNotMatch(permissionJs, /await requestMicrophonePermission\(\)/);
-  assert.match(permissionJs, /chrome:\/\/settings\/content\/siteDetails/);
+  assert.match(permissionJs, /browserMicrophoneSettingsUrl/);
   assert.match(voiceHtml, /Voice dictation/);
   assert.match(voiceJs, /HERMES_VOICE_TRANSCRIPT/);
   assert.match(voiceJs, /getUserMedia\(\{ audio: \{ echoCancellation: true, noiseSuppression: true \} \}\)/);
-  assert.doesNotMatch(voiceJs, /chrome\.permissions|audioCapture/);
-  assert.doesNotMatch(sidepanelJs, /chrome\.permissions|audioCapture/);
-  assert.match(voiceJs, /chrome:\/\/settings\/content\/siteDetails/);
+  assert.doesNotMatch(voiceJs, /browserApi\.permissions|audioCapture/);
+  assert.doesNotMatch(sidepanelJs, /browserApi\.permissions|audioCapture/);
+  assert.doesNotMatch(sidepanelJs, /chrome:\/\/settings\/content\/siteDetails/);
+  assert.doesNotMatch(sidepanelJs, /function (?:microphoneSettingsUrl|openMicrophoneSettingsPage)\b/);
+  assert.match(voiceJs, /browserMicrophoneSettingsUrl/);
   assert.match(wakeListenerHtml, /wake-listener\.js/);
   assert.match(wakeListenerJs, /prepareOnDeviceSpeechRecognition/);
   assert.match(wakeListenerJs, /prepared\.mode !== 'local'/);
@@ -1534,7 +1536,7 @@ test('sidepanel falls back to visible voice dictation tab when sidepanel microph
   assert.match(source, /HERMES_VOICE_TRANSCRIPT/);
   assert.match(source, /consumePendingVoiceDraft/);
   assert.match(source, /error\.voiceDictationPageFallback = true/);
-  assert.match(source, /Comet\/Chromium blocked microphone capture inside the side panel/);
+  assert.match(source, /The current browser blocked microphone capture inside the side panel/);
 });
 
 test('connect and startup sync Hermes models, sessions, skills, and profiles from the gateway', () => {
@@ -1568,7 +1570,7 @@ test('session resume is bound to gateway + profile and cannot cross profile boun
   // Resume validates the binding against the current gateway + profile before reopening.
   assert.match(source, /isSessionBindingValid\(binding, currentIdentity\)/);
   // A mismatched binding is invalidated (removed) rather than silently resumed.
-  assert.match(source, /chrome\.storage\.local\.remove\(\[key\]\)/);
+  assert.match(source, /browserApi\.storage\.local\.remove\(\[key\]\)/);
 });
 
 test('sidepanel steers dashboard runs through session.steer instead of slash-command prompt injection', () => {
@@ -3699,8 +3701,8 @@ test('appearance writes are awaited against a freshly re-read settings blob and 
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const persist = source.match(/async function persistAppearanceSettings\(([\s\S]*?)\) \{([\s\S]*?)\n\}/)?.[2] || '';
   assert.ok(persist, 'persistAppearanceSettings should be async');
-  const getIndex = persist.search(/chrome\.storage\.local\.get\(\s*['"]hermesBrowserSettings['"]\s*\)/);
-  const setIndex = persist.search(/chrome\.storage\.local\.set\(\s*\{\s*hermesBrowserSettings\s*:/);
+  const getIndex = persist.search(/browserApi\.storage\.local\.get\(\s*['"]hermesBrowserSettings['"]\s*\)/);
+  const setIndex = persist.search(/browserApi\.storage\.local\.set\(\s*\{\s*hermesBrowserSettings\s*:/);
   assert.ok(getIndex >= 0, 'persist must re-read the fresh hermesBrowserSettings blob before writing');
   assert.ok(setIndex >= 0, 'persist must write hermesBrowserSettings');
   assert.ok(getIndex < setIndex, 'the fresh read must happen before the write');
@@ -3789,7 +3791,7 @@ test('side-panel Marketplace browser is localized, revision guarded, debounced, 
   assert.match(source, /HERMES_THEME_MARKETPLACE_SEARCH/);
   assert.match(source, /HERMES_THEME_MARKETPLACE_INSTALL/);
   assert.match(source, /marketplaceTransport\.send\(/, 'Side Panel must recover through the direct Marketplace transport when its worker is stale');
-  assert.doesNotMatch(source, /chrome\.runtime\.sendMessage\(\{\s*type:\s*['"]HERMES_THEME_MARKETPLACE_(?:SEARCH|INSTALL)/);
+  assert.doesNotMatch(source, /browserApi\.runtime\.sendMessage\(\{\s*type:\s*['"]HERMES_THEME_MARKETPLACE_(?:SEARCH|INSTALL)/);
   assert.match(source, /marketplaceThemeLoading\s*=\s*true[\s\S]{0,200}renderMarketplaceThemes\(\)/, 'typing must immediately replace stale errors with a loading state');
   assert.match(source, /marketplaceThemeError\s*=\s*marketplaceErrorText/, 'failed searches must own an explicit error state');
   assert.match(source, /if\s*\(marketplaceThemeError\)\s*return/, 'error state must not also render No themes found');
@@ -3860,7 +3862,7 @@ test('side-panel custom theme flow reuses the pure modules and keeps preview, in
   const preview = source.match(/(?:async\s+)?function previewCustomThemeImport\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   assert.ok(preview, 'previewCustomThemeImport must exist');
   assert.ok(preview.indexOf('CUSTOM_THEME_MAX_INPUT_BYTES') < preview.indexOf('JSON.parse'), 'byte limit must be checked before parsing');
-  assert.doesNotMatch(preview, /chrome\.storage\.(?:local\.)?(?:set|remove)/, 'preview may not write storage');
+  assert.doesNotMatch(preview, /browserApi\.storage\.(?:local\.)?(?:set|remove)/, 'preview may not write storage');
 
   const fileFlow = source.match(/async function handleCustomThemeFileSelection\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   assert.ok(fileFlow.indexOf('file.size') < fileFlow.indexOf('file.text()'), 'file size must be checked before reading');
@@ -3880,7 +3882,7 @@ test('side-panel custom theme flow reuses the pure modules and keeps preview, in
 
   assert.match(source, /let customThemeDeleteArmedId\s*=\s*['"]/);
   assert.match(source, /let customThemeResetArmed\s*=\s*false/);
-  assert.match(source, /chrome\.storage\.onChanged\.addListener/);
+  assert.match(source, /browserApi\.storage\.onChanged\.addListener/);
   assert.match(source, /CUSTOM_THEME_STORAGE_KEY/);
 });
 

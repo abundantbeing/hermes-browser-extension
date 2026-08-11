@@ -6,6 +6,8 @@ import {
   SUPPORTED_LOCALES,
 } from './i18n-registry.mjs';
 
+import { getBrowserApi } from './browser-api.mjs';
+
 export { DEFAULT_LOCALE, localeDirection, normalizeLocale } from './i18n-registry.mjs';
 
 export const LOCALE_STORAGE_KEY = 'hermesBrowserLocale';
@@ -53,11 +55,11 @@ export function formatMessage(entry, params = {}, locale = DEFAULT_LOCALE) {
 }
 
 function defaultStorageArea() {
-  return globalThis.chrome?.storage?.local || null;
+  return getBrowserApi()?.storage?.local || null;
 }
 
 function defaultStorageEvents() {
-  return globalThis.chrome?.storage?.onChanged || null;
+  return getBrowserApi()?.storage?.onChanged || null;
 }
 
 function defaultDocument() {

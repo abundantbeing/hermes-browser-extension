@@ -43,7 +43,10 @@ import {
 } from './lib/context-menu-controller.mjs';
 import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
 import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
+import { resolveBrowserApi } from './lib/browser-api.mjs';
 
+const browserApiResolution = resolveBrowserApi();
+const browserApi = browserApiResolution.api;
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
@@ -60,20 +63,20 @@ const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
   WAKE_MESSAGES.turnReply,
 ]);
 const wakeController = createWakeBackgroundController({
-  chromeApi: chrome,
+  chromeApi: browserApi,
   openPanel: (tab, options) => openHermesPanel(tab, options),
 });
 const contextMenuController = createContextMenuController({
-  chromeApi: chrome,
+  chromeApi: browserApi,
   openHermesSurface: (tab) => openHermesPanelFromContextGesture(tab),
   translate: (_key, fallback) => translateUiText(fallback),
 });
 const themeMarketplaceController = createThemeMarketplaceController({
   client: createVscodeMarketplaceClient(),
-  storageArea: chrome.storage.local,
+  storageArea: browserApi.storage.local,
 });
 function restoreWakeController() {
-  if (!chrome.runtime?.sendMessage || !chrome.storage?.local?.get) return;
+  if (!browserApi.runtime?.sendMessage || !browserApi.storage?.local?.get) return;
   wakeController.restore().catch((error) => console.warn('[Hermes Browser] Wake initialization failed:', error));
 }
 restoreWakeController();
@@ -105,7 +108,7 @@ function pageKey(value = '') {
 }
 
 async function sendDirectInlineResult(tabId, request, result) {
-  return chrome.tabs.sendMessage(tabId, {
+  return browserApi.tabs.sendMessage(tabId, {
     type: 'HERMES_INLINE_DRAFT_RESULT',
     requestId: request.requestId,
     documentId: request.documentId,
@@ -138,11 +141,11 @@ async function loadAssistGatewayCapabilities(client) {
 
 async function runInlineDraftInServiceWorker(request, sender, tabId) {
   try {
-    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    const tab = await browserApi.tabs.get(tabId).catch(() => null);
     if (!tab || pageKey(tab.url || tab.pendingUrl) !== pageKey(request.pageUrl)) {
       throw new Error('The originating page changed before Hermes could draft.');
     }
-    const stored = await chrome.storage.local.get('hermesBrowserSettings');
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
     const settings = stored?.hermesBrowserSettings || {};
     const client = createHermesClient({
       getConnection: () => ({
@@ -192,12 +195,12 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         resolvedTitle = String(created?.session?.title || created?.title || sessionTitle);
         assertAssistModelSelectionAcknowledged(created, attemptSelection);
 
-        const consentStored = await chrome.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
+        const consentStored = await browserApi.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
         const gatedRequest = await gateInlineDraftRequestContext({
           request,
           settings,
           ledger: consentStored[CONTEXT_CONSENT_STORAGE_KEY] || null,
-          controller: String(chrome.runtime.id || 'hermes-browser'),
+          controller: String(browserApi.runtime.id || 'hermes-browser'),
         });
         const chatResponse = await client.fetch(`/api/sessions/${encodeURIComponent(resolvedSessionId)}/chat`, {
           method: 'POST',
@@ -271,7 +274,7 @@ async function queueInlineDraftRequest(message, sender) {
   }
   const request = normalizeInlineDraftRequest(message?.request);
   if (!request) return { ok: false, reason: 'Inline draft request failed validation.' };
-  if (!chrome.storage?.session) return { ok: false, reason: 'Session-only draft handoff is unavailable in this browser.' };
+  if (!browserApi.storage?.session) return { ok: false, reason: 'Session-only draft handoff is unavailable in this browser.' };
   const queued = {
     ...request,
     tabId,
@@ -282,14 +285,14 @@ async function queueInlineDraftRequest(message, sender) {
     return runInlineDraftInServiceWorker(request, sender, tabId);
   }
   await Promise.all([
-    chrome.storage.session.set({ [INLINE_DRAFT_STORAGE_KEY]: queued }),
+    browserApi.storage.session.set({ [INLINE_DRAFT_STORAGE_KEY]: queued }),
     openHermesPanel(sender.tab),
   ]);
   return { ok: true, requestId: request.requestId };
 }
 
 async function inlineSessionStatus() {
-  const stored = await chrome.storage.local.get(['hermesBrowserSettings', INLINE_SESSION_STATE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', INLINE_SESSION_STATE_KEY]);
   const settings = stored?.hermesBrowserSettings || {};
   const state = stored?.[INLINE_SESSION_STATE_KEY] || {};
   const sessionId = String(state.sessionId || settings.sessionId || '').trim();
@@ -307,9 +310,9 @@ async function queueOpenSessionRequest(message, sender) {
   if (!/^[A-Za-z0-9_.:-]{8,200}$/.test(sessionId)) return { ok: false, reason: 'Invalid session binding.' };
   const surface = message?.surface === 'web' ? 'web' : 'sidepanel';
   if (surface === 'web') {
-    const sourceSidePanelPath = String(chrome.runtime.getManifest()?.side_panel?.default_path || 'sidepanel.html');
+    const sourceSidePanelPath = String(browserApi.runtime.getManifest()?.side_panel?.default_path || 'sidepanel.html');
     const appPath = sourceSidePanelPath.startsWith('extension/') ? 'extension/app.html' : 'app.html';
-    const appUrl = new URL(chrome.runtime.getURL(appPath));
+    const appUrl = new URL(browserApi.runtime.getURL(appPath));
     appUrl.searchParams.set('sessionId', sessionId);
     const sourceTabId = Number(sender?.tab?.id);
     if (Number.isFinite(sourceTabId) && sourceTabId > 0) appUrl.searchParams.set('sourceTabId', String(sourceTabId));
@@ -318,8 +321,8 @@ async function queueOpenSessionRequest(message, sender) {
     return { ok: true, sessionId, surface };
   }
 
-  const tab = sender?.tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
-  await chrome.storage.session.set({
+  const tab = sender?.tab || (await browserApi.tabs.query({ active: true, currentWindow: true }))[0];
+  await browserApi.storage.session.set({
     [OPEN_SESSION_STORAGE_KEY]: {
       sessionId,
       createdAt: Date.now(),
@@ -328,7 +331,7 @@ async function queueOpenSessionRequest(message, sender) {
   });
   const opened = await openHermesPanel(tab, { allowFallback: false });
   if (opened === false) {
-    await chrome.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
+    await browserApi.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
     return { ok: false, reason: 'The Browser side panel could not open. Choose Hermes Web instead.' };
   }
   return { ok: true, sessionId, surface };
@@ -339,7 +342,7 @@ async function configureInstalledSurfaces() {
 }
 
 function defaultSidePanelPath() {
-  return chrome.runtime.getManifest().side_panel?.default_path || 'sidepanel.html';
+  return browserApi.runtime.getManifest().side_panel?.default_path || 'sidepanel.html';
 }
 
 function panelResidencyModeFromStorage(stored = {}) {
@@ -352,7 +355,7 @@ function panelResidencyModeFromStorage(stored = {}) {
 
 async function refreshPanelResidencyModeFromStorage() {
   try {
-    const stored = await chrome.storage.local.get(['hermesBrowserSettings', 'panelResidencyMode']);
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', 'panelResidencyMode']);
     cachedPanelResidencyMode = panelResidencyModeFromStorage(stored);
   } catch (error) {
     console.warn('[Hermes Browser] Could not read panel residency setting:', error);
@@ -367,7 +370,7 @@ async function setActionClickSidePanelBehavior() {
 
 async function activeBrowserTabId() {
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
     const tabId = Number(tab?.id);
     return Number.isFinite(tabId) && tabId > 0 ? tabId : null;
   } catch {
@@ -382,12 +385,12 @@ async function applyPanelResidencyMode(mode = cachedPanelResidencyMode, { tabId 
   const useTabAttached = panelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED && Number.isFinite(cleanTabId) && cleanTabId > 0;
 
   await setActionClickSidePanelBehavior();
-  if (!chrome.sidePanel?.setOptions) return;
+  if (!browserApi.sidePanel?.setOptions) return;
 
   if (panelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED) {
-    await chrome.sidePanel.setOptions({ enabled: false });
+    await browserApi.sidePanel.setOptions({ enabled: false });
     if (useTabAttached) {
-      await chrome.sidePanel.setOptions({
+      await browserApi.sidePanel.setOptions({
         tabId: cleanTabId,
         path: buildSidePanelPath({
           mode: panelResidencyMode,
@@ -403,7 +406,7 @@ async function applyPanelResidencyMode(mode = cachedPanelResidencyMode, { tabId 
   // Update only the global default. Existing tab-scoped overrides intentionally
   // keep their attached panel documents and sessions; untouched and new tabs
   // resolve to this shared panel path.
-  await chrome.sidePanel.setOptions({
+  await browserApi.sidePanel.setOptions({
     path: buildSidePanelPath({
       mode: panelResidencyMode,
       defaultPath: defaultPanelPath,
@@ -417,7 +420,7 @@ async function configureSidePanel() {
     const panelResidencyMode = await refreshPanelResidencyModeFromStorage();
     const tabId = await activeBrowserTabId();
     // No popup for any browser — background.js handles the click.
-    await chrome.action.setPopup({ popup: '' });
+    await browserApi.action.setPopup({ popup: '' });
     // Brave-only Nous Girl action icon; best-effort and never blocks panel setup.
     await setActionIconForBrowser();
     await applyPanelResidencyMode(panelResidencyMode, { tabId });
@@ -440,7 +443,7 @@ async function openOrFocusPanelTab(panelUrl) {
   const openOperation = (async () => {
     let existingTab = null;
     try {
-      const candidates = await chrome.tabs.query({});
+      const candidates = await browserApi.tabs.query({});
       existingTab = candidates.find((candidate) => (
         candidate.url === panelUrl || candidate.pendingUrl === panelUrl
       )) || null;
@@ -450,10 +453,10 @@ async function openOrFocusPanelTab(panelUrl) {
 
     if (Number.isFinite(existingTab?.id)) {
       try {
-        const activatedTab = await chrome.tabs.update(existingTab.id, { active: true });
-        if (Number.isFinite(existingTab.windowId) && chrome.windows?.update) {
+        const activatedTab = await browserApi.tabs.update(existingTab.id, { active: true });
+        if (Number.isFinite(existingTab.windowId) && browserApi.windows?.update) {
           try {
-            await chrome.windows.update(existingTab.windowId, { focused: true });
+            await browserApi.windows.update(existingTab.windowId, { focused: true });
           } catch (focusError) {
             console.warn('[Hermes Browser] Could not focus the existing fallback window:', focusError);
           }
@@ -464,7 +467,7 @@ async function openOrFocusPanelTab(panelUrl) {
       }
     }
 
-    return chrome.tabs.create({ url: panelUrl, active: true });
+    return browserApi.tabs.create({ url: panelUrl, active: true });
   })();
 
   pendingPanelTabOpens.set(panelUrl, openOperation);
@@ -488,14 +491,14 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
     tabId: useTabAttached ? tabId : null,
     defaultPath: defaultPanelPath,
   });
-  const panelUrl = chrome.runtime.getURL(panelPath);
+  const panelUrl = browserApi.runtime.getURL(panelPath);
 
   // Try Opera/Firefox native sidebar first.
   const opened = await openNativeSidebar({ windowId: tab?.windowId ?? null });
   if (opened) return;
 
   // Chrome/Edge/Comet sidePanel API
-  const sidePanelCanOpen = Boolean(chrome.sidePanel?.open);
+  const sidePanelCanOpen = Boolean(browserApi.sidePanel?.open);
   const browserId = detectBrowserId();
 
   try {
@@ -505,8 +508,8 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
       if (useTabAttached) {
         try {
           const panelOpened = await openSidePanelWithConfirmation({
-            sidePanelApi: chrome.sidePanel,
-            runtimeApi: chrome.runtime,
+            sidePanelApi: browserApi.sidePanel,
+            runtimeApi: browserApi.runtime,
             openOptions: { tabId },
             panelUrl,
           });
@@ -517,8 +520,8 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
           attemptedWindowScope = true;
           console.warn('[Hermes Browser] Tab side panel open failed, retrying window side panel:', tabOpenError);
           const panelOpened = await openSidePanelWithConfirmation({
-            sidePanelApi: chrome.sidePanel,
-            runtimeApi: chrome.runtime,
+            sidePanelApi: browserApi.sidePanel,
+            runtimeApi: browserApi.runtime,
             openOptions: { windowId },
             panelUrl,
           });
@@ -528,8 +531,8 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
       if (tab?.windowId && !attemptedWindowScope) {
         const { windowId } = tab;
         const panelOpened = await openSidePanelWithConfirmation({
-          sidePanelApi: chrome.sidePanel,
-          runtimeApi: chrome.runtime,
+          sidePanelApi: browserApi.sidePanel,
+          runtimeApi: browserApi.runtime,
           openOptions: { windowId },
           panelUrl,
         });
@@ -551,8 +554,8 @@ async function openHermesPanel(tab, { allowFallback = true } = {}) {
   // with type: popup, a narrow width, and leftmost position.
   if (browserId === 'opera' || browserId === 'firefox') {
     try {
-      await chrome.windows.create({
-        url: chrome.runtime.getURL(panelPath),
+      await browserApi.windows.create({
+        url: browserApi.runtime.getURL(panelPath),
         type: 'popup',
         width: 420,
         height: 800,
@@ -576,7 +579,7 @@ function openHermesPanelFromGesture(tab) {
   const useTabAttached = panelResidencyMode === PANEL_RESIDENCY_MODES.TAB_ATTACHED
     && Number.isFinite(tabId)
     && tabId > 0;
-  const panelUrl = chrome.runtime.getURL(buildSidePanelPath({
+  const panelUrl = browserApi.runtime.getURL(buildSidePanelPath({
     mode: panelResidencyMode,
     tabId: useTabAttached ? tabId : null,
     defaultPath: defaultSidePanelPath(),
@@ -597,7 +600,7 @@ function openHermesPanelFromGesture(tab) {
     }
   }
 
-  if (!chrome.sidePanel?.open) return openHermesPanelFallback(tab, browserId, panelUrl);
+  if (!browserApi.sidePanel?.open) return openHermesPanelFallback(tab, browserId, panelUrl);
 
   // Chromium-family: one correctly scoped sidePanel attempt, opened
   // synchronously. A resolved native request owns the gesture even when the
@@ -609,8 +612,8 @@ function openHermesPanelFromGesture(tab) {
 
   try {
     const panelAttempt = openSidePanelWithConfirmation({
-      sidePanelApi: chrome.sidePanel,
-      runtimeApi: chrome.runtime,
+      sidePanelApi: browserApi.sidePanel,
+      runtimeApi: browserApi.runtime,
       openOptions,
       panelUrl,
     });
@@ -632,7 +635,7 @@ async function openHermesPanelFallback(tab, browserId, panelUrl) {
   // sidePanel open after the initiating gesture window is spent.
   if (browserId === 'opera' || browserId === 'firefox') {
     try {
-      await chrome.windows.create({
+      await browserApi.windows.create({
         url: panelUrl,
         type: 'popup',
         width: 420,
@@ -653,14 +656,14 @@ async function openHermesPanelFallback(tab, browserId, panelUrl) {
 const openHermesPanelFromContextGesture = openHermesPanelFromGesture;
 
 async function openHermesFullView(requestedUrl = '') {
-  const packagedAppUrl = new URL(chrome.runtime.getURL('app.html'));
-  const rootDevAppUrl = new URL(chrome.runtime.getURL('extension/app.html'));
+  const packagedAppUrl = new URL(browserApi.runtime.getURL('app.html'));
+  const rootDevAppUrl = new URL(browserApi.runtime.getURL('extension/app.html'));
   const targetUrl = new URL(String(requestedUrl || packagedAppUrl.href));
   const allowedPaths = new Set([packagedAppUrl.pathname, rootDevAppUrl.pathname]);
   if (targetUrl.origin !== packagedAppUrl.origin || !allowedPaths.has(targetUrl.pathname)) {
     throw new Error('Refused to open a non-Hermes full-view URL.');
   }
-  await chrome.tabs.create({ url: targetUrl.href, active: true });
+  await browserApi.tabs.create({ url: targetUrl.href, active: true });
   return { ok: true };
 }
 
@@ -728,7 +731,7 @@ async function fetchDomTranscript(tabId) {
   if (!tabId) return { ok: false, reason: 'no_active_tab', source: 'page-dom' };
   try {
     return normalizeTranscriptPayload(
-      await chrome.tabs.sendMessage(tabId, { type: 'HERMES_GET_YOUTUBE_TRANSCRIPT_DOM' }),
+      await browserApi.tabs.sendMessage(tabId, { type: 'HERMES_GET_YOUTUBE_TRANSCRIPT_DOM' }),
       'page-dom',
     );
   } catch (error) {
@@ -763,18 +766,18 @@ void initI18n().catch((error) => {
   console.warn('[Hermes Browser] Localization initialization failed:', error);
 });
 
-chrome.runtime.onInstalled.addListener(configureInstalledSurfaces);
-chrome.runtime.onStartup.addListener(async () => {
+browserApi.runtime.onInstalled.addListener(configureInstalledSurfaces);
+browserApi.runtime.onStartup.addListener(async () => {
   await configureInstalledSurfaces();
   restoreWakeController();
 });
-chrome.action.onClicked.addListener(openHermesPanelFromGesture);
-chrome.contextMenus?.onClicked?.addListener?.((info, tab) => {
+browserApi.action.onClicked.addListener(openHermesPanelFromGesture);
+browserApi.contextMenus?.onClicked?.addListener?.((info, tab) => {
   return contextMenuController.handleClick(info, tab)
     .catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error));
 });
-chrome.tabs?.onActivated?.addListener?.(({ tabId }) => reapplyPanelResidencyForTab(tabId));
-chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
+browserApi.tabs?.onActivated?.addListener?.(({ tabId }) => reapplyPanelResidencyForTab(tabId));
+browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   if (areaName !== 'local') return;
   contextMenuController.handleStorageChanged(changes, areaName)
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
@@ -791,7 +794,7 @@ chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
       .then((tabId) => reapplyPanelResidencyForTab(tabId));
   }
 });
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const action = WAKE_BACKGROUND_MESSAGE_TYPES.has(message?.type)
     ? wakeController.handleMessage(message)
     : [CONTEXT_MENU_CONFIG_GET, CONTEXT_MENU_CONFIG_MUTATE, CONTEXT_MENU_REQUEST_CLAIM].includes(message?.type)

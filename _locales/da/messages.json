@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Mikrofontilladelsestilstand: {state}. Hvis Chromium viser dette som blokeret, skal du åbne mikrofonindstillingerne og indstille Mikrofon til Tillad for Hermes Browser Extension.",
+    "message": "Mikrofontilladelsestilstand: {state}. Hvis din browser viser dette som blokeret, skal du åbne mikrofonindstillinger og indstille Mikrofon til Tillad Hermes Browser Extension .",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "Always-on browser wake listening kræver Chromium offscreen-dokumentstøtte.",
+    "message": "Always-on browser wake listening kræver understøttelse af dokumenter uden for skærmen.",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome kan undertrykke mikrofonprompter inde i forlængelsessidepaneler. Denne midlertidige udvidelsesside beder Chrome om mikrofonadgang og sender dig derefter tilbage til Hermes sidepanelet.",
+    "message": "Nogle browsere undertrykker mikrofonprompter i udvidelsessidebjælker. Denne midlertidige udvidelsesside beder din browser om mikrofonadgang og sender dig derefter tilbage til Hermes.",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium kan blokere mikrofonoptagelse inde i forlængelsessidepaneler. Denne synlige udvidelsesfane optager fra den samme Hermes-udvidelsesoprindelse, når Hermes STT er tilgængelig, eller bruger browserens taletilbagegang, når den tilsluttede runtime ikke afslører lydtransskription.",
+    "message": "Nogle browsere blokerer mikrofonoptagelse i udvidelsessidebjælker. Denne synlige udvidelsesfane optager fra den samme Hermes-udvidelsesoprindelse, når Hermes STT er tilgængelig, eller bruger browserens taletilbagegang, når den tilsluttede runtime ikke afslører lydtransskription.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "Klik på Tillad mikrofon for at anmode om adgang. Chromium kræver, at denne anmodning sker fra en synlig udvidelsesside.",
+    "message": "Klik på Tillad mikrofon for at anmode om adgang. Din browser kræver muligvis denne anmodning fra en synlig udvidelsesside.",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "Åbner Chromium mikrofontilladelsesprompt...",
+    "message": "Åbner tilladelsesprompten for browserens mikrofon...",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "Foretrækker Hermes' native wake engine lokalt og bruger Chromium tale på enheden til Cloud Preview.",
+    "message": "Foretrækker Hermes ’ native wake engine lokalt og bruger tilgængelig browsertale på enheden til Cloud Preview.",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "Denne Chromium-browser stiller ikke MediaRecorder/getUserMedia til rådighed for udvidelsessider, og Web Speech-fallback er ikke tilgængeligt.",
+    "message": "Denne browser udsætter ikke MediaRecorder/getUserMedia for udvidelsessider, og Web Speech er ikke tilgængelig.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

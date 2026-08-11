@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "État d'autorisation du microphone : {state}. Si Chromium indique que cela est bloqué, ouvrez les paramètres du microphone et définissez le microphone sur Autoriser pour Hermes Browser Extension.",
+    "message": "État d'autorisation du microphone : {state}. Si votre navigateur indique que cela est bloqué, ouvrez les paramètres du microphone et définissez Microphone sur Autoriser pour Hermes Browser Extension .",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "L'écoute de réveil du navigateur toujours active nécessite la prise en charge des documents hors écran Chromium.",
+    "message": "L'écoute de réveil du navigateur toujours active nécessite la prise en charge des documents hors écran.",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome peut supprimer les invites du microphone à l’intérieur des panneaux latéraux d’extension. Cette page d'extension temporaire demande à Chrome l'accès au microphone, puis vous renvoie au panneau latéral Hermes.",
+    "message": "Certains navigateurs suppriment les invites du microphone dans les barres latérales des extensions. Cette page d'extension temporaire demande à votre navigateur l'accès au microphone, puis vous renvoie à Hermes .",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium peut bloquer la capture du microphone à l'intérieur des panneaux latéraux d'extension. Cet onglet d'extension visible enregistre à partir de la même origine d'extension Hermes lorsque Hermes STT est disponible, ou utilise le repli vocal du navigateur lorsque le runtime connecté n'expose pas la transcription audio.",
+    "message": "Certains navigateurs bloquent la capture du microphone dans les barres latérales des extensions. Cet onglet d'extension visible enregistre à partir de la même origine d'extension Hermes lorsque Hermes STT est disponible, ou utilise le repli vocal du navigateur lorsque le runtime connecté n'expose pas la transcription audio.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "Cliquez sur Autoriser le microphone pour demander l'accès. Chromium nécessite que cette demande soit effectuée à partir d'une page d'extension visible.",
+    "message": "Cliquez sur Autoriser le microphone pour demander l'accès. Votre navigateur peut exiger cette demande à partir d'une page d'extension visible.",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "Ouverture de l’invite d’autorisation du microphone Chromium…",
+    "message": "Ouverture de l'invite d'autorisation du microphone du navigateur…",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "Préfère le moteur de réveil natif de Hermes localement et utilise la parole sur l'appareil de Chromium pour Cloud Preview.",
+    "message": "Préfère le moteur de réveil natif de Hermes localement et utilise la parole du navigateur disponible sur l'appareil pour Cloud Preview .",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "Ce navigateur Chromium n'expose pas MediaRecorder/getUserMedia aux pages d'extension et la solution de secours Web Speech n'est pas disponible.",
+    "message": "Ce navigateur n'expose pas MediaRecorder/getUserMedia aux pages d'extension et la solution de secours Web Speech n'est pas disponible.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

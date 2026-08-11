@@ -8,6 +8,7 @@ import {
   normalizeWakeStatus,
   normalizeWakeWordSettings,
 } from './wake-word.mjs';
+import { getBrowserApi } from './browser-api.mjs';
 
 const LOCAL_DASHBOARD_URL = 'http://127.0.0.1:9119';
 const NATIVE_WAKE_SESSION_ID = 'hermes-browser-wake';
@@ -35,7 +36,7 @@ function publicState(state = {}) {
 }
 
 export function createWakeBackgroundController({
-  chromeApi = globalThis.chrome,
+  chromeApi = getBrowserApi(),
   openPanel,
   gatewayClientFactory = createGatewayClient,
   fetchFn = globalThis.fetch?.bind(globalThis),

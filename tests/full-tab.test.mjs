@@ -90,7 +90,7 @@ test('Hermes Web Marketplace locks duplicate install gestures and keeps polished
   assert.match(js, /button\.disabled\s*=\s*Boolean\(webMarketplaceInstallingId\)/);
   assert.match(js, /if\s*\(webMarketplaceInstallingId\)\s*return/);
   assert.match(js, /webMarketplaceTransport\.send\(/, 'Hermes Web must recover through the direct Marketplace transport when its worker is stale');
-  assert.doesNotMatch(js, /chrome\.runtime\.sendMessage\(\{\s*type:\s*['"]HERMES_THEME_MARKETPLACE_(?:SEARCH|INSTALL)/);
+  assert.doesNotMatch(js, /browserApi\.runtime\.sendMessage\(\{\s*type:\s*['"]HERMES_THEME_MARKETPLACE_(?:SEARCH|INSTALL)/);
   assert.match(css, /\.web-settings-dialog \.marketplace-theme-search\s*\{[^}]*gap:\s*12px/s);
   assert.match(css, /\.web-settings-dialog \.marketplace-theme-search button\s*\{[^}]*background:\s*#f4f2eb[^}]*color:\s*#111/s);
   assert.match(css, /\.custom-theme-file-control,[\s\S]*?#settingsCustomThemePreviewButton[\s\S]*?font:\s*700 var\(--fulltab-label-size\)\/1/s);
@@ -125,11 +125,11 @@ test('Hermes Web appearance persistence is fresh, web-scoped, awaited, and guard
   const persistEnd = persistStart >= 0 ? js.indexOf('\nasync function applyAndPersistAppearance', persistStart) : -1;
   const persist = persistStart >= 0 ? js.slice(persistStart, persistEnd >= 0 ? persistEnd : undefined) : '';
   assert.ok(persist, 'expected async persistWebAppearanceSettings');
-  const getIndex = persist.search(/chrome\.storage\.local\.get\(\s*['"]hermesBrowserSettings['"]\s*\)/);
-  const setIndex = persist.search(/chrome\.storage\.local\.set\(/);
+  const getIndex = persist.search(/browserApi\.storage\.local\.get\(\s*['"]hermesBrowserSettings['"]\s*\)/);
+  const setIndex = persist.search(/browserApi\.storage\.local\.set\(/);
   assert.ok(getIndex >= 0 && setIndex > getIndex, 'fresh read must precede the awaited write');
   assert.match(persist, /withAppearancePreferenceUpdate\([^,]+,\s*['"]web['"]/);
-  assert.match(persist, /await chrome\.storage\.local\.set\(/);
+  assert.match(persist, /await browserApi\.storage\.local\.set\(/);
   assert.doesNotMatch(persist, /(?:^|[,{\s])(?:textZoomPercent|fontProfile|customFontFamily)\s*:/m, 'Web persistence must not explicitly assign panel-owned keys');
   assert.match(js, /catch\s*\([^)]*\)\s*\{[\s\S]*?webAppearanceMutationId[\s\S]*?(?:applyAppearancePreferences|renderAppearanceSettings)/);
   assert.match(js, /Could not save|not saved|retry/i);
@@ -163,7 +163,7 @@ test('side panel exposes an explicit full-view handoff', () => {
   assert.match(js, /buildFullTabHandoffUrl/);
   assert.match(js, /openHermesFullView/);
   assert.match(read('extension/background.js'), /HERMES_OPEN_FULL_VIEW/);
-  assert.match(read('extension/background.js'), /chrome\.tabs\.create/);
+  assert.match(read('extension/background.js'), /browserApi\.tabs\.create/);
   assert.match(css, /grid-template-columns:\s*auto minmax\(0, 1fr\) auto auto auto auto/);
   assert.doesNotMatch(css, /\.session-menu-button\s*\{[^}]*max-width:/s);
   assert.match(js, /newChat:\s*true/);
@@ -205,7 +205,7 @@ test('Hermes Web loading stays visible until independent startup work is fully r
     loadApp.indexOf('await Promise.all([metadataPromise, activeSessionPromise]);') < loadApp.indexOf('hideRuntimeLoadingState();'),
     'runtime truth loading must remain visible until both metadata and the active transcript settle',
   );
-  assert.match(beginDraft, /const persistDraft = chrome\.storage\.local\.set/);
+  assert.match(beginDraft, /const persistDraft = browserApi\.storage\.local\.set/);
   assert.match(js, /async function beginHermesWebDraft\(\{ focus = true, keepLoading = false \} = \{\}\)/);
   assert.match(beginDraft, /if \(!keepLoading\) hideRuntimeLoadingState\(\)/);
   assert.match(js, /let sessionHistoryLoading = true;/);
@@ -294,7 +294,7 @@ test('opening an old session paints an in-chat history loader before storage or 
   assert.match(web, /function showSessionLoadingState/);
   assert.match(webOpen, /const requestId = \+\+webSessionLoadRequestId/);
   assert.ok(
-    webOpen.indexOf('showSessionLoadingState(session)') < webOpen.indexOf('await chrome.storage.local.set'),
+    webOpen.indexOf('showSessionLoadingState(session)') < webOpen.indexOf('await browserApi.storage.local.set'),
     'Hermes Web should paint the selected-session loader before persistence can delay the frame',
   );
   assert.ok(
@@ -535,7 +535,7 @@ test('full-tab uses extension-style grouped model, attachment, collapsible sessi
   assert.match(css, /\.web-shell\.sessions-hidden/);
   assert.match(html, /class="composer-icon composer-mic"/);
   assert.match(js, /function consumePendingVoiceDraft/);
-  assert.match(voicePage, /await chrome\.storage\.local\.set\(\{ \[VOICE_DRAFT_STORAGE_KEY\]: payload \}\)/);
+  assert.match(voicePage, /await browserApi\.storage\.local\.set\(\{ \[VOICE_DRAFT_STORAGE_KEY\]: payload \}\)/);
 });
 
 test('full-tab sessions use canonical source groups and a gateway-backed rename action', () => {
@@ -853,7 +853,7 @@ test('Hermes Web custom theme flow shares validation and storage while preservin
 
   const preview = app.match(/async function previewWebCustomThemeImport\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   assert.ok(preview.indexOf('CUSTOM_THEME_MAX_INPUT_BYTES') < preview.indexOf('JSON.parse'));
-  assert.doesNotMatch(preview, /chrome\.storage\.(?:local\.)?(?:set|remove)/);
+  assert.doesNotMatch(preview, /browserApi\.storage\.(?:local\.)?(?:set|remove)/);
 
   const install = app.match(/async function installPreviewedWebCustomTheme\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   assert.ok(install.indexOf('await installCustomTheme') < install.indexOf('applyAndPersistAppearance'));
@@ -864,7 +864,7 @@ test('Hermes Web custom theme flow shares validation and storage while preservin
 
   assert.match(app, /let webCustomThemeDeleteArmedId\s*=\s*['"]/);
   assert.match(app, /let webCustomThemeResetArmed\s*=\s*false/);
-  assert.match(app, /chrome\.storage\.onChanged\.addListener/);
+  assert.match(app, /browserApi\.storage\.onChanged\.addListener/);
   assert.match(app, /CUSTOM_THEME_STORAGE_KEY/);
   assert.match(app, /Active theme is unavailable\. Using Nous\./);
 });

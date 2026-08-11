@@ -1,5 +1,15 @@
 import { initI18n, t, translateUiText } from './lib/i18n.mjs';
+import { getBrowserApi } from './lib/browser-api.mjs';
+import { browserMicrophoneSettingsUrl, detectBrowserProduct } from './lib/browser-runtime.mjs';
 
+const browserApi = getBrowserApi();
+const extensionUrl = browserApi?.runtime?.getURL?.('/') || '';
+const browserProduct = detectBrowserProduct({
+  userAgent: navigator.userAgent,
+  brands: navigator.userAgentData?.brands,
+  braveApi: navigator.brave,
+  extensionUrl,
+});
 const statusEl = document.getElementById('permissionStatus');
 const allowButton = document.getElementById('allowMicrophoneButton');
 const settingsButton = document.getElementById('openMicrophoneSettingsButton');
@@ -24,14 +34,17 @@ async function microphonePermissionState() {
 }
 
 function microphoneSettingsUrl() {
-  const site = encodeURIComponent(`chrome-extension://${chrome.runtime.id}/`);
-  return `chrome://settings/content/siteDetails?site=${site}`;
+  return browserMicrophoneSettingsUrl({ product: browserProduct, extensionUrl });
 }
 
 async function openMicrophoneSettings() {
   const url = microphoneSettingsUrl();
+  if (!url) {
+    setStatus(t('permissions.state', { state: 'blocked' }));
+    return;
+  }
   try {
-    await chrome.tabs.create({ url, active: true });
+    await browserApi.tabs.create({ url, active: true });
   } catch {
     window.open(url, '_blank', 'noopener,noreferrer');
   }
@@ -39,7 +52,7 @@ async function openMicrophoneSettings() {
 
 async function requestMicrophonePermission() {
   allowButton.disabled = true;
-  setStatus('Opening Chromium microphone permission prompt…');
+  setStatus('Opening the browser microphone permission prompt…');
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
     stopStream(stream);
@@ -68,5 +81,5 @@ await initI18n();
     setStatus('Microphone access is already enabled for Hermes Browser Extension.');
     return;
   }
-  setStatus('Click Allow microphone to request access. Chromium requires this request to happen from a visible extension page.');
+  setStatus('Click Allow microphone to request access. Your browser may require this request from a visible extension page.');
 })();

@@ -1,8 +1,9 @@
+const browserApi = globalThis.hermesBrowserApi;
 const CONTENT_SCRIPT_VERSION = '2026-07-16-extraction-site-adapters-v1';
 const previousListener = globalThis.__HERMES_BROWSER_CONTENT_LISTENER__;
 if (previousListener) {
   try {
-    chrome.runtime.onMessage.removeListener(previousListener);
+    browserApi.runtime.onMessage.removeListener(previousListener);
   } catch (_error) {
     // The previous listener can belong to an invalidated extension context after reload.
   }
@@ -291,12 +292,12 @@ function teardownPickMode({ cancelled = false, pickedElement = null } = {}) {
   document.removeEventListener('click', onPickClick, true);
   document.removeEventListener('keydown', onPickKeydown, true);
   if (cancelled) {
-    chrome.runtime.sendMessage({
+    browserApi.runtime.sendMessage({
       type: ELEMENT_PICK_MESSAGES.CANCELLED,
       url: location.href,
     }).catch(() => {});
   } else if (pickedElement) {
-    chrome.runtime.sendMessage({
+    browserApi.runtime.sendMessage({
       type: ELEMENT_PICK_MESSAGES.RESULT,
       url: location.href,
       pickedElement,
@@ -350,7 +351,7 @@ function startPickMode() {
   document.addEventListener('mousemove', onPickMouseMove, true);
   document.addEventListener('click', onPickClick, true);
   document.addEventListener('keydown', onPickKeydown, true);
-  chrome.runtime.sendMessage({ type: ELEMENT_PICK_MESSAGES.PICKING, url: location.href }).catch(() => {});
+  browserApi.runtime.sendMessage({ type: ELEMENT_PICK_MESSAGES.PICKING, url: location.href }).catch(() => {});
   return { ok: true };
 }
 
@@ -393,5 +394,5 @@ const messageListener = (message, _sender, sendResponse) => {
   return false;
 };
 
-chrome.runtime.onMessage.addListener(messageListener);
+browserApi.runtime.onMessage.addListener(messageListener);
 globalThis.__HERMES_BROWSER_CONTENT_LISTENER__ = messageListener;

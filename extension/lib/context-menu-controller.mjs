@@ -10,6 +10,7 @@ import {
   normalizeContextMenuRoute,
   parseBrowserMenuId,
 } from './context-menu-config.mjs';
+import { getBrowserApi } from './browser-api.mjs';
 
 const CONTEXT_MENU_REQUEST_STORAGE_KEY = 'hermesBrowserContextMenuRequest';
 const CONTEXT_MENU_REQUEST_CLAIM = 'HERMES_CONTEXT_MENU_REQUEST_CLAIM';
@@ -17,7 +18,7 @@ const CONTEXT_MENU_CONFIG_GET = 'HERMES_CONTEXT_MENU_CONFIG_GET';
 const CONTEXT_MENU_CONFIG_MUTATE = 'HERMES_CONTEXT_MENU_CONFIG_MUTATE';
 
 function createContextMenuController({
-  chromeApi = globalThis.chrome,
+  chromeApi = getBrowserApi(),
   now = () => Date.now(),
   openHermesSurface = async () => false,
   translate = (_key, fallback) => fallback,

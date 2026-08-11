@@ -14,10 +14,11 @@ import {
 
 const root = process.cwd();
 
-test('browser-runtime.mjs detects Firefox via UA and browser.sidebarAction', () => {
+test('browser-runtime.mjs detects Firefox through the shared WebExtension namespace', () => {
   const source = readFileSync(new URL('../extension/lib/browser-runtime.mjs', import.meta.url), 'utf8');
   assert.match(source, /Firefox/);
-  assert.match(source, /browser\?\.sidebarAction/);
+  assert.match(source, /getBrowserApi\(\)\?\.sidebarAction/);
+  assert.doesNotMatch(source, /globalThis\.(?:browser|chrome)\?\./);
 });
 
 test('browser-runtime.mjs openNativeSidebar handles sidebarAction.open() for Firefox', () => {
@@ -584,11 +585,12 @@ test('build-firefox.mjs exists and is valid JavaScript', () => {
   execFileSync('node', ['--check', buildScript], { encoding: 'utf8' });
 });
 
-test('build-firefox.mjs strips Chrome-only manifest keys and adds Firefox settings', () => {
+test('build-firefox.mjs applies the Firefox manifest profile and adds Gecko settings', () => {
   const source = readFileSync(new URL('../scripts/build-firefox.mjs', import.meta.url), 'utf8');
-  assert.match(source, /delete sourceManifest\.side_panel/);
-  assert.match(source, /delete sourceManifest\.minimum_chrome_version/);
-  assert.match(source, /sidePanel.*filter|filter.*sidePanel/);
+  assert.match(source, /manifest-profiles\.mjs/);
+  assert.match(source, /manifestAssumptionsFor\(MANIFEST_TARGETS\.FIREFOX\)/);
+  assert.match(source, /firefoxProfile\.removedManifestKeys/);
+  assert.match(source, /firefoxProfile\.removedPermissions/);
   assert.match(source, /browser_specific_settings/);
   assert.match(source, /gecko/);
 });

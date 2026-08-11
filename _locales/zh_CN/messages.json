@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "麦克风权限状态：{state}。如果 Chromium 显示为已阻止，请打开麦克风设置，并将 Hermes Browser Extension 的麦克风权限设为“允许”。",
+    "message": "麦克风权限状态：{state}。如果您的浏览器将其显示为已阻止，请打开麦克风设置并将 Hermes Browser Extension 的麦克风设置为允许。",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "浏览器持续唤醒监听需要 Chromium 支持离屏文档。",
+    "message": "始终在线的浏览器唤醒监听需要离屏文档支持。",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome 可能会在扩展侧面板中阻止麦克风权限提示。此临时扩展页面会向 Chrome 请求麦克风访问权限，然后带您返回 Hermes 侧面板。",
+    "message": "某些浏览器会禁止扩展侧边栏中的麦克风提示。此临时扩展页面会要求您的浏览器访问麦克风，然后将您带回 Hermes 。",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium 可能会在扩展侧面板中阻止麦克风采集。此可见扩展标签页会在 Hermes STT 可用时从同一 Hermes 扩展源录音；当已连接运行时不提供音频转写时，则使用浏览器语音回退。",
+    "message": "某些浏览器会阻止扩展侧边栏中的麦克风捕获。当 Hermes STT 可用时，此可见扩展选项卡记录来自同一 Hermes 扩展源，或者当连接的运行时不公开音频转录时使用浏览器语音回退。",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "点击“允许麦克风”以请求访问权限。Chromium 要求此请求必须从可见的扩展页面发起。",
+    "message": "单击允许麦克风请求访问权限。您的浏览器可能需要来自可见扩展页面的此请求。",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "正在打开 Chromium 麦克风权限提示…",
+    "message": "打开浏览器麦克风权限提示...",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "优先在本地使用 Hermes 原生唤醒引擎；Cloud Preview 使用 Chromium 设备端语音识别。",
+    "message": "更喜欢 Hermes 的本地本地唤醒引擎，并为 Cloud Preview 使用可用的设备上浏览器语音。",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "此 Chromium 浏览器未向扩展页面提供 MediaRecorder/getUserMedia，且 Web Speech 回退功能不可用。",
+    "message": "此浏览器不会将 MediaRecorder/getUserMedia 暴露给扩展页面，并且 Web Speech 后备不可用。",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

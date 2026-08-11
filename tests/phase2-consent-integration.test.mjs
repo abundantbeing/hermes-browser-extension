@@ -55,7 +55,7 @@ test('identity, endpoint, profile, and credential switches re-evaluate consent i
     assert.match(source, /contextConsentIdentity\(\{/);
     assert.match(source, /activeProfile/);
     assert.match(source, /connectionTransport/);
-    assert.match(source, /chrome\.runtime\.id/);
+    assert.match(source, /browserApi\.runtime\.id/);
   }
   assert.match(sidepanel, /refreshContextConsentPrincipal/);
   assert.match(fulltab, /refreshContextConsentPrincipal/);
@@ -93,7 +93,7 @@ test('consent decisions are stored separately and synchronized across both surfa
   for (const source of [sidepanel, fulltab]) {
     assert.match(source, /CONTEXT_CONSENT_STORAGE_KEY/);
     assert.match(source, /persistContextConsentDecision/);
-    assert.match(source, /chrome\.storage\.onChanged/);
+    assert.match(source, /browserApi\.storage\.onChanged/);
   }
 });
 
@@ -102,7 +102,7 @@ test('service-worker background and new-session inline drafts re-read the dedica
   assert.match(background, /CONTEXT_CONSENT_STORAGE_KEY/);
   assert.match(background, /gateInlineDraftRequestContext/);
   const runner = background.match(/async function runInlineDraftInServiceWorker\([\s\S]*?\n\}/)?.[0] || '';
-  assert.match(runner, /chrome\.storage\.local\.get\(\[CONTEXT_CONSENT_STORAGE_KEY\]\)/);
+  assert.match(runner, /browserApi\.storage\.local\.get\(\[CONTEXT_CONSENT_STORAGE_KEY\]\)/);
   assert.match(runner, /ledger: consentStored\[CONTEXT_CONSENT_STORAGE_KEY\] \|\| null/);
   assert.match(runner, /const gatedRequest = await gateInlineDraftRequestContext\(/);
   assert.ok(runner.indexOf('const gatedRequest = await gateInlineDraftRequestContext(') < runner.indexOf('message: buildInlineDraftPrompt(gatedRequest.request)'));
@@ -122,7 +122,7 @@ test('right-click background route re-reads consent after session creation and r
   assert.match(route, /serializePreparedContextMenuTurn/);
   assert.ok(route.indexOf('const consentSettings = { ...settings };') < route.indexOf('runInlineDraftInBackground('));
   assert.ok(route.indexOf('const sendTimeSettings = await refreshContextConsentLedger(consentSettings);') < route.indexOf('serializePreparedContextMenuTurn(sendTimeTurn)'));
-  assert.match(refresh, /chrome\.storage\.local\.get\(\[CONTEXT_CONSENT_STORAGE_KEY\]\)/);
+  assert.match(refresh, /browserApi\.storage\.local\.get\(\[CONTEXT_CONSENT_STORAGE_KEY\]\)/);
   assert.doesNotMatch(refresh, /hermesBrowserSettings/);
   assert.doesNotMatch(refresh, /\n\s*settings\s*=/);
 });

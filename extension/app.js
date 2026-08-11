@@ -161,8 +161,11 @@ import {
   waitForTerminalStatus,
   withRunControlId,
 } from './lib/run-control-lifecycle.mjs';
+import { resolveBrowserApi } from './lib/browser-api.mjs';
 
 const $ = (selector) => document.querySelector(selector);
+const browserApiResolution = resolveBrowserApi();
+const browserApi = browserApiResolution.api;
 globalThis.addEventListener('error', (event) => {
   document.documentElement.dataset.hermesWebBootError = String(event?.error?.message || event?.message || 'Hermes Web boot error').slice(0, 320);
 });
@@ -339,10 +342,10 @@ let webMarketplaceLoaded = false;
 let webMarketplaceDebounceTimer = null;
 const directWebMarketplaceController = createThemeMarketplaceController({
   client: createVscodeMarketplaceClient(),
-  storageArea: chrome.storage.local,
+  storageArea: browserApi.storage.local,
 });
 const webMarketplaceTransport = createThemeMarketplaceTransport({
-  runtime: chrome.runtime,
+  runtime: browserApi.runtime,
   fallbackController: directWebMarketplaceController,
 });
 let appliedWebCustomThemeVariables = [];
@@ -397,9 +400,9 @@ function currentDelegationScopeKey() {
 }
 
 async function persistDelegationWatches(rows) {
-  const stored = await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
   const merged = mergeDelegationWatchStores(stored?.[DELEGATION_WATCH_STORAGE_KEY] || [], rows);
-  await chrome.storage.local.set({ [DELEGATION_WATCH_STORAGE_KEY]: merged });
+  await browserApi.storage.local.set({ [DELEGATION_WATCH_STORAGE_KEY]: merged });
 }
 
 const delegationWatchManager = createDelegationWatchManager({
@@ -467,7 +470,7 @@ async function activateCurrentDelegationSession() {
 }
 
 async function hydrateDelegationWatches(storedRows = null) {
-  const rows = storedRows || (await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]))?.[DELEGATION_WATCH_STORAGE_KEY] || [];
+  const rows = storedRows || (await browserApi.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]))?.[DELEGATION_WATCH_STORAGE_KEY] || [];
   await delegationWatchManager.hydrate(rows);
   await activateCurrentDelegationSession();
 }
@@ -484,7 +487,7 @@ async function ensureContextMenuEditor() {
     return contextMenuEditor;
   }
   contextMenuEditor = await mountContextMenuEditor({
-    chromeApi: chrome,
+    chromeApi: browserApi,
     root: els.contextMenuEditor,
     translate: contextMenuEditorTranslate,
   });
@@ -497,7 +500,7 @@ function usesDashboardTicketTransport(source = settings) {
 }
 
 function currentContextConsentController() {
-  return String(chrome.runtime.id || 'hermes-browser');
+  return String(browserApi.runtime.id || 'hermes-browser');
 }
 
 function contextConsentBindingMatches(source = settings) {
@@ -563,7 +566,7 @@ async function setBrowserContextConsent(granted) {
   const identity = currentContextConsentIdentity();
   if (!identity) throw new Error('Reconnect this connection before sharing page context.');
   const ledger = await persistContextConsentDecision({
-    storageArea: chrome.storage.local,
+    storageArea: browserApi.storage.local,
     identity,
     granted: Boolean(granted),
   });
@@ -590,8 +593,8 @@ async function ensureDashboardConnection() {
     throw new Error('Open the signed-in Hermes Cloud agent once from the side panel so Browser can remember its exact tab.');
   }
   const ticket = await mintWsTicket({
-    tabsApi: chrome.tabs,
-    scriptingApi: chrome.scripting,
+    tabsApi: browserApi.tabs,
+    scriptingApi: browserApi.scripting,
     baseUrl: settings.gatewayUrl,
     tabId,
   });
@@ -645,7 +648,7 @@ async function establishDashboardSession(storedSessionId = '', { isCurrent = () 
           [identity.storedId]: binding,
         },
       };
-      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     }
   } catch (error) {
     console.warn('[Hermes Web] Cloud runtime metadata was not acknowledged:', error?.message || error);
@@ -806,7 +809,7 @@ async function captureTaskToolEvent(event) {
   if (!tasks || !activeSessionId) return false;
   taskStackStore = updateTaskStackStore(taskStackStore, activeSessionId, tasks);
   renderTaskStack();
-  await chrome.storage.local.set({ [TASK_STACKS_STORAGE_KEY]: taskStackStore });
+  await browserApi.storage.local.set({ [TASK_STACKS_STORAGE_KEY]: taskStackStore });
   return true;
 }
 
@@ -922,7 +925,7 @@ function persistSessionVisibility(partial) {
   els.sessionTitle.textContent = sessionTitle(active);
   els.composerSessionLabel.textContent = activeSessionId || translateUiText('Shared session');
   renderSessions(els.sessionSearch.value);
-  chrome.storage.local.set({ hermesBrowserSettings: settings }).catch((error) => {
+  browserApi.storage.local.set({ hermesBrowserSettings: settings }).catch((error) => {
     els.composerStatus.textContent = t('session.rail_save_failed', { error: error?.message || String(error) });
   });
 }
@@ -1100,13 +1103,13 @@ function artifactActionButton(label, action, artifact) {
 async function openArtifact(artifact) {
   const target = artifact.kind === 'local' ? toFileUrl(artifact.source) : artifact.source;
   if (!target) throw new Error('This artifact does not expose an openable URL.');
-  await chrome.tabs.create({ url: target, active: true });
+  await browserApi.tabs.create({ url: target, active: true });
 }
 
 async function downloadArtifact(artifact) {
   const target = artifact.kind === 'local' ? toFileUrl(artifact.source) : artifact.source;
   if (!target) throw new Error('This artifact does not expose a downloadable URL.');
-  await chrome.downloads.download({ url: target, filename: artifact.name, saveAs: true });
+  await browserApi.downloads.download({ url: target, filename: artifact.name, saveAs: true });
 }
 
 function renderArtifactCard(artifact) {
@@ -1459,7 +1462,7 @@ async function setModelRuntimeOptions(partial = {}) {
     extensionPreferredModelOptions: options,
     sessionModelOptionBindings: sessionBindings,
   };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   renderModelRuntimeOptions();
   renderComposerRuntimeControl();
   const effortLabel = MODEL_REASONING_EFFORTS.find((option) => option.value === options.reasoningEffort)?.label || options.reasoningEffort;
@@ -1557,7 +1560,7 @@ async function reconcileInlineAssistModelBinding() {
   const changed = Object.entries(binding).some(([key, value]) => settings[key] !== value);
   if (!changed) return false;
   settings = { ...settings, ...binding };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   return true;
 }
 
@@ -1658,7 +1661,7 @@ function renderModelPicker(query = '') {
         if (modelSelectionTarget === 'assist') {
           settings = { ...settings, inlineAssistModel: model.id, inlineAssistRawModel: model.rawModelId || model.id, inlineAssistProvider: model.provider || '' };
           renderInlineAssistModelOptions();
-          await chrome.storage.local.set({ hermesBrowserSettings: settings });
+          await browserApi.storage.local.set({ hermesBrowserSettings: settings });
           toggleModelPicker(false);
           els.inlineAssistModelButton?.setAttribute('aria-expanded', 'false');
         } else {
@@ -1675,7 +1678,7 @@ function renderModelPicker(query = '') {
 
 async function readCachedModelCatalog() {
   try {
-    const stored = await chrome.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
+    const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const key = modelCatalogCacheKey({
       gatewayMode: settings.gatewayMode,
       gatewayUrl: settings.gatewayUrl,
@@ -1691,7 +1694,7 @@ async function writeCachedModelCatalog(models = []) {
   const canonicalModels = normalizeCachedModelCatalog(models);
   if (!canonicalModels.length) return;
   try {
-    const stored = await chrome.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
+    const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const cache = stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY] && typeof stored[MODEL_CATALOG_CACHE_STORAGE_KEY] === 'object'
       ? stored[MODEL_CATALOG_CACHE_STORAGE_KEY]
       : {};
@@ -1701,7 +1704,7 @@ async function writeCachedModelCatalog(models = []) {
       profile: settings.activeProfile,
     });
     cache[key] = { savedAt: Date.now(), models: canonicalModels };
-    await chrome.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
+    await browserApi.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
   } catch {
     // Catalog caching is resilience-only; storage failures must not block sync.
   }
@@ -2055,7 +2058,7 @@ async function selectModel(model) {
     sessionModelBindings: { ...(settings.sessionModelBindings || {}), ...(activeSessionId ? { [activeSessionId]: binding } : {}) },
   };
   try {
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     if (activeSessionId) {
       if (usesDashboardTicketTransport()) {
         const connection = await ensureDashboardConnection();
@@ -2077,7 +2080,7 @@ async function selectModel(model) {
           model: acknowledged.modelId,
           sessionModelBindings: { ...(settings.sessionModelBindings || {}), [activeSessionId]: acknowledged },
         };
-        await chrome.storage.local.set({ hermesBrowserSettings: settings });
+        await browserApi.storage.local.set({ hermesBrowserSettings: settings });
         const exact = acknowledged.provider === model.provider && acknowledged.rawModelId === model.rawModelId;
         els.composerStatus.textContent = exact
           ? 'Cloud session model confirmed'
@@ -2151,7 +2154,7 @@ async function selectModel(model) {
           },
         };
         selectedModelProvider = '';
-        await chrome.storage.local.set({ hermesBrowserSettings: settings }).catch(() => {});
+        await browserApi.storage.local.set({ hermesBrowserSettings: settings }).catch(() => {});
         renderModelPicker();
         renderComposerRuntimeControl();
         renderContextWindow();
@@ -2162,7 +2165,7 @@ async function selectModel(model) {
     }
     settings = previousSettings;
     selectedModelProvider = previousSelectedModelProvider;
-    await chrome.storage.local.set({ hermesBrowserSettings: settings }).catch(() => {});
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings }).catch(() => {});
     renderModelPicker();
     renderComposerRuntimeControl();
     renderContextWindow();
@@ -2373,7 +2376,7 @@ function appendWebCustomThemeCards(activeTheme) {
 
 async function refreshWebCustomThemeStore({ render = true } = {}) {
   const previousStatus = webCustomThemeStoreState.status;
-  webCustomThemeStoreState = await readCustomThemeStore(chrome.storage.local);
+  webCustomThemeStoreState = await readCustomThemeStore(browserApi.storage.local);
   if (webCustomThemeStoreState.status === 'corrupt') {
     webCustomThemeImportStatus = '';
     webCustomThemePreviewState = null;
@@ -2425,7 +2428,7 @@ async function installPreviewedWebCustomTheme() {
   els.webCustomThemeInstallButton?.setAttribute('aria-busy', 'true');
   let result;
   try {
-    result = await installCustomTheme(chrome.storage.local, webCustomThemePreviewState.document, { inputBytes: webCustomThemePreviewState.inputBytes });
+    result = await installCustomTheme(browserApi.storage.local, webCustomThemePreviewState.document, { inputBytes: webCustomThemePreviewState.inputBytes });
   } finally {
     els.webCustomThemeInstallButton?.setAttribute('aria-busy', 'false');
   }
@@ -2467,7 +2470,7 @@ function exportWebCustomTheme(id) {
 }
 
 async function fallbackWebDeletedThemeSelections(id, { allCustom = false } = {}) {
-  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
   const fresh = stored.hermesBrowserSettings || {};
   const shouldFallback = (value) => allCustom ? String(value || '').startsWith('custom:') : value === id;
   const panelFallback = shouldFallback(fresh.appearanceTheme);
@@ -2478,7 +2481,7 @@ async function fallbackWebDeletedThemeSelections(id, { allCustom = false } = {})
     ...(panelFallback ? { appearanceTheme: 'nous' } : {}),
     ...(webFallback ? { webAppearanceTheme: 'nous' } : {}),
   };
-  await chrome.storage.local.set({ hermesBrowserSettings });
+  await browserApi.storage.local.set({ hermesBrowserSettings });
   return hermesBrowserSettings;
 }
 
@@ -2494,7 +2497,7 @@ async function deleteWebCustomTheme(id) {
   webCustomThemeDeleteArmedId = '';
   try {
     const saved = await fallbackWebDeletedThemeSelections(id);
-    const result = await deleteCustomTheme(chrome.storage.local, id);
+    const result = await deleteCustomTheme(browserApi.storage.local, id);
     if (!result.ok) throw new Error(result.error?.message || 'Could not delete custom theme');
     webCustomThemeStoreState = { ok: true, status: result.store.themes.length ? 'ready' : 'empty', themes: result.store.themes };
     settings = { ...settings, ...saved, webAppearanceTheme: normalizedWebThemeId(saved.webAppearanceTheme) };
@@ -2519,7 +2522,7 @@ async function resetWebCustomThemeStore() {
   webCustomThemeResetArmed = false;
   try {
     const saved = await fallbackWebDeletedThemeSelections('', { allCustom: true });
-    const result = await resetCustomThemeStore(chrome.storage.local);
+    const result = await resetCustomThemeStore(browserApi.storage.local);
     if (!result.ok) throw new Error(result.error?.message || 'Could not reset custom theme storage');
     webCustomThemeStoreState = { ok: true, status: 'empty', themes: [] };
     settings = { ...settings, ...saved, webAppearanceTheme: normalizedWebThemeId(saved.webAppearanceTheme) };
@@ -2563,7 +2566,7 @@ async function handleWebCustomThemeFileSelection() {
 async function handleWebCustomThemeStoreChange() {
   const previous = settings.webAppearanceTheme;
   await refreshWebCustomThemeStore({ render: false });
-  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
   const requested = stored.hermesBrowserSettings?.webAppearanceTheme ?? previous;
   const next = normalizedWebThemeId(requested);
   if (String(previous || '').startsWith('custom:') && next === 'nous' && previous !== 'nous') {
@@ -2660,7 +2663,7 @@ function renderAppearanceSettings() {
 
 async function persistWebAppearanceSettings(preferences) {
   const write = async () => {
-    const stored = await chrome.storage.local.get('hermesBrowserSettings');
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
     const freshSettings = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
       ? stored.hermesBrowserSettings
       : {};
@@ -2670,7 +2673,7 @@ async function persistWebAppearanceSettings(preferences) {
       webAppearanceTheme: normalizedWebThemeId(preferences.appearanceTheme),
       appearanceSchemaVersion: 2,
     };
-    await chrome.storage.local.set({ hermesBrowserSettings });
+    await browserApi.storage.local.set({ hermesBrowserSettings });
     return hermesBrowserSettings;
   };
   const pending = webAppearanceWriteQueue.then(write, write);
@@ -2770,14 +2773,14 @@ async function saveSettings() {
   const consentIdentity = currentContextConsentIdentity(nextSettings);
   if (consentIdentity && els.browserContextConsentInput && !els.browserContextConsentInput.disabled) {
     const ledger = await persistContextConsentDecision({
-      storageArea: chrome.storage.local,
+      storageArea: browserApi.storage.local,
       identity: consentIdentity,
       granted: els.browserContextConsentInput.checked,
     });
     nextSettings = { ...nextSettings, browserContextConsentLedger: ledger };
   }
   settings = withAppearancePreferenceUpdate(nextSettings, 'web', webAppearancePreferences());
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   applyAppearance();
   renderConnectionTruth({ status: 'idle' });
   els.settingsDialog.close();
@@ -2934,7 +2937,7 @@ function voicePagePath() {
 }
 
 async function openVoiceDictation() {
-  await chrome.tabs.create({ url: chrome.runtime.getURL(voicePagePath()), active: true });
+  await browserApi.tabs.create({ url: browserApi.runtime.getURL(voicePagePath()), active: true });
   els.composerStatus.textContent = translateUiText('Voice tab opened');
 }
 
@@ -2942,7 +2945,7 @@ async function consumeVoiceDraft(draft) {
   const transcript = String(draft?.transcript || draft?.text || draft?.payload?.transcript || '').trim();
   if (!transcript) return false;
   els.prompt.value = [els.prompt.value.trim(), transcript].filter(Boolean).join(' ');
-  await chrome.storage.local.remove(VOICE_DRAFT_STORAGE_KEY);
+  await browserApi.storage.local.remove(VOICE_DRAFT_STORAGE_KEY);
   els.composerStatus.textContent = translateUiText('Voice transcript ready');
   updateBusyControls();
   els.prompt.focus();
@@ -2950,7 +2953,7 @@ async function consumeVoiceDraft(draft) {
 }
 
 async function consumePendingVoiceDraft() {
-  const stored = await chrome.storage.local.get([VOICE_DRAFT_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get([VOICE_DRAFT_STORAGE_KEY]);
   return consumeVoiceDraft(stored?.[VOICE_DRAFT_STORAGE_KEY]);
 }
 
@@ -2965,21 +2968,21 @@ function renderWakeState(state = {}) {
 async function toggleWakeWord() {
   const desired = !normalizeWakeWordSettings(settings).enabled;
   settings = { ...settings, wakeWordEnabled: desired };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   try {
-    let state = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: desired, settings });
+    let state = await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: desired, settings });
     if (desired && state?.mode === 'browser-local') {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Microphone capture is unavailable in Hermes Web.');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       for (const track of stream?.getTracks?.() || []) track.stop();
-      state = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: true, settings });
+      state = await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: true, settings });
     }
     renderWakeState(state || { enabled: desired, state: desired ? 'arming' : 'off' });
   } catch (error) {
     if (desired) {
       settings = { ...settings, wakeWordEnabled: false };
-      await chrome.storage.local.set({ hermesBrowserSettings: settings });
-      await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings }).catch(() => null);
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings }).catch(() => null);
       renderWakeState({ enabled: false, state: 'off', detail: 'Wake word is off.' });
     }
     throw error;
@@ -2988,12 +2991,12 @@ async function toggleWakeWord() {
 
 async function consumeWakeTurn(turn = null) {
   if (!wakeTurnIsFresh(turn)) {
-    await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+    await browserApi.storage.local.remove(WAKE_STORAGE_KEYS.turn);
     return false;
   }
   if (!turn?.id || wakeTurnProcessingId === turn.id) return false;
   wakeTurnProcessingId = turn.id;
-  const claim = await chrome.runtime.sendMessage({
+  const claim = await browserApi.runtime.sendMessage({
     type: WAKE_MESSAGES.claimTurn,
     turnId: turn.id,
     surface: SURFACE_KINDS.FULL_TAB,
@@ -3002,7 +3005,7 @@ async function consumeWakeTurn(turn = null) {
     wakeTurnProcessingId = '';
     return false;
   }
-  if (!claim) await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+  if (!claim) await browserApi.storage.local.remove(WAKE_STORAGE_KEYS.turn);
   let reply = '';
   try {
     const text = String(turn.text || '').trim();
@@ -3010,13 +3013,13 @@ async function consumeWakeTurn(turn = null) {
     reply = String([...activeMessages].reverse().find((message) => message?.role === 'assistant')?.content || '').trim();
     return true;
   } finally {
-    await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.turnReply, turnId: turn.id, text: reply }).catch(() => null);
+    await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.turnReply, turnId: turn.id, text: reply }).catch(() => null);
     if (wakeTurnProcessingId === turn.id) wakeTurnProcessingId = '';
   }
 }
 
 async function consumePendingWakeTurn() {
-  const stored = await chrome.storage.local.get(WAKE_STORAGE_KEYS.turn);
+  const stored = await browserApi.storage.local.get(WAKE_STORAGE_KEYS.turn);
   return consumeWakeTurn(stored?.[WAKE_STORAGE_KEYS.turn]);
 }
 
@@ -3331,7 +3334,7 @@ async function renameHermesWebSessionTitle(sessionId, title) {
   sessions = normalizeHermesSessions({ data: [updated, ...sessions.filter((session) => session.id !== cleanSessionId)] });
   if (cleanSessionId === activeSessionId) {
     settings = { ...settings, webSessionTitle: updated.title || cleanTitle };
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     els.sessionTitle.textContent = settings.webSessionTitle;
   }
   renderSessions(els.sessionSearch.value);
@@ -3363,7 +3366,7 @@ async function beginHermesWebDraft({ focus = true, keepLoading = false } = {}) {
   renderTaskStack();
   attachments = [];
   settings = { ...settings, webSessionId: '', webSessionTitle: 'New Hermes Web chat' };
-  const persistDraft = chrome.storage.local.set({ hermesBrowserSettings: settings });
+  const persistDraft = browserApi.storage.local.set({ hermesBrowserSettings: settings });
   els.sessionTitle.textContent = settings.webSessionTitle;
   els.composerSessionLabel.textContent = translateUiText('Draft · saved when sent');
   els.errorState.hidden = true;
@@ -3387,7 +3390,7 @@ async function createSession() {
     activeSessionId = identity.storedId;
     renderTaskStack();
     settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: title };
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     activeMessages = [];
     renderMessages([]);
     renderSessions();
@@ -3418,7 +3421,7 @@ async function createSession() {
   activeSessionId = session.id || id;
   renderTaskStack();
   settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: session.title || title };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   activeMessages = [];
   renderMessages([]);
   renderSessions();
@@ -3441,7 +3444,7 @@ async function compactActiveSessionContext({ automaticRecovery = false } = {}) {
     if (compactedSessionId && compactedSessionId !== activeSessionId) {
       activeSessionId = compactedSessionId;
       settings = { ...settings, webSessionId: activeSessionId };
-      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
       els.composerSessionLabel.textContent = activeSessionId;
       renderTaskStack();
     }
@@ -3794,7 +3797,7 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
     if (requestId !== webSessionLoadRequestId) return;
     const durableSessionId = String(activeSessionId || cleanSessionId).trim();
     settings = { ...settings, webSessionId: durableSessionId, webSessionTitle: sessionTitle(session) };
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     if (requestId !== webSessionLoadRequestId) return;
     await activateCurrentDelegationSession();
     await commitFullTabSessionMessages(messages, { sessionId: durableSessionId, requestId });
@@ -3811,7 +3814,7 @@ async function loadApp() {
   showRuntimeLoadingState();
   renderSessions();
   await refreshWebCustomThemeStore({ render: false });
-  const stored = await chrome.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, DELEGATION_WATCH_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, DELEGATION_WATCH_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -4237,7 +4240,7 @@ els.modelOptionsList?.addEventListener('click', (event) => {
     if (toggle === 'thinking') settings.inlineAssistThinkingEnabled = !options.thinkingEnabled;
     if (toggle === 'fast') settings.inlineAssistFastMode = !options.fastMode;
     if (!effort && !toggle) return;
-    chrome.storage.local.set({ hermesBrowserSettings: settings });
+    browserApi.storage.local.set({ hermesBrowserSettings: settings });
     renderModelRuntimeOptions();
     return;
   }
@@ -4267,7 +4270,7 @@ els.sessionActionsMenu.addEventListener('click', (event) => {
     .catch((error) => { els.composerStatus.textContent = `Copy failed: ${error?.message || String(error)}`; });
 });
 els.returnToPageButton.addEventListener('click', async () => {
-  if (handoff.sourceTabId) await chrome.tabs.update(handoff.sourceTabId, { active: true });
+  if (handoff.sourceTabId) await browserApi.tabs.update(handoff.sourceTabId, { active: true });
 });
 els.connectionTruth.addEventListener('click', () => {
   setInspectorTab('diagnostics');
@@ -4300,7 +4303,7 @@ globalThis.addEventListener('resize', () => {
   setNavigationOpen(els.shell.classList.contains('nav-open'));
   updateScrim();
 });
-chrome.storage.onChanged.addListener((changes, area) => {
+browserApi.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) {
     void handleWebCustomThemeStoreChange();
   }
@@ -4321,7 +4324,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
   if (area === 'local' && changes[WAKE_STORAGE_KEYS.turn]?.newValue) consumeWakeTurn(changes[WAKE_STORAGE_KEYS.turn].newValue).catch(() => {});
 });
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+browserApi.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === WAKE_MESSAGES.turnReady) {
     consumeWakeTurn(message.turn).catch(() => {});
     sendResponse?.({ ok: true, accepted: true, surface: SURFACE_KINDS.FULL_TAB });
@@ -4360,7 +4363,7 @@ initializeResponsiveShell();
 updateScrim();
 loadApp()
   .then(async () => {
-    renderWakeState(await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.getState }).catch(() => ({})));
+    renderWakeState(await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.getState }).catch(() => ({})));
     await consumePendingVoiceDraft();
     await consumePendingWakeTurn();
   })

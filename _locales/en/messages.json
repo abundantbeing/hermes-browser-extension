@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Microphone permission state: {state}. If Chromium shows this as blocked, open microphone settings and set Microphone to Allow for Hermes Browser Extension.",
+    "message": "Microphone permission state: {state}. If your browser shows this as blocked, open microphone settings and set Microphone to Allow for Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "Always-on browser wake listening requires Chromium offscreen-document support.",
+    "message": "Always-on browser wake listening requires offscreen-document support.",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome can suppress microphone prompts inside extension side panels. This temporary extension page asks Chrome for microphone access, then sends you back to the Hermes side panel.",
+    "message": "Some browsers suppress microphone prompts inside extension sidebars. This temporary extension page asks your browser for microphone access, then sends you back to Hermes.",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium can block microphone capture inside extension side panels. This visible extension tab records from the same Hermes extension origin when Hermes STT is available, or uses Browser speech fallback when the connected runtime does not expose audio transcription.",
+    "message": "Some browsers block microphone capture inside extension sidebars. This visible extension tab records from the same Hermes extension origin when Hermes STT is available, or uses browser speech fallback when the connected runtime does not expose audio transcription.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "Click Allow microphone to request access. Chromium requires this request to happen from a visible extension page.",
+    "message": "Click Allow microphone to request access. Your browser may require this request from a visible extension page.",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "Opening Chromium microphone permission prompt…",
+    "message": "Opening the browser microphone permission prompt…",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "Prefers Hermes’ native wake engine locally and uses Chromium on-device speech for Cloud Preview.",
+    "message": "Prefers Hermes’ native wake engine locally and uses available on-device browser speech for Cloud Preview.",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4324,7 +4324,7 @@
     "description": "Runtime interface message ui.the.live.model.catalog.is.unavailable.keeping.the.last.verified.0e0250fe"
   },
   "runtime_ui_the_local_speech_language_pack_did_not_become_ready_in_90_secon_d69760e3": {
-    "message": "The local speech language pack did not become ready in 90 seconds. Retry the ear after Chrome finishes installing speech support.",
+    "message": "The local speech language pack did not become ready in 90 seconds. Retry the ear after your browser finishes installing speech support.",
     "description": "Runtime interface message ui.the.local.speech.language.pack.did.not.become.ready.in.90.secon.d69760e3"
   },
   "runtime_ui_the_local_speech_language_pack_is_unavailable_wake_listening_wi_6da8a4e2": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "This Chromium browser does not expose MediaRecorder/getUserMedia to extension pages, and Web Speech fallback is unavailable.",
+    "message": "This browser does not expose MediaRecorder/getUserMedia to extension pages, and Web Speech fallback is unavailable.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
@@ -4620,7 +4620,7 @@
     "description": "Runtime interface message ui.voice.mode.on.device.speech.downloading.the.browser.language.pack.once"
   },
   "runtime_ui_voice_mode_unavailable_connect_hermes_for_stt_or_use_a_chromium_08a02bbb": {
-    "message": "Voice mode unavailable. Connect Hermes for STT, or use a Chromium build that supports browser speech fallback.",
+    "message": "Voice mode unavailable. Connect Hermes for STT, or use a browser build that supports speech fallback.",
     "description": "Runtime interface message ui.voice.mode.unavailable.connect.hermes.for.stt.or.use.a.chromium.08a02bbb"
   },
   "runtime_ui_voice_mode_unavailable_this_browser_does_not_expose_hermes_stt_fcc04044": {

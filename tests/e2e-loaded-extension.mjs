@@ -817,7 +817,21 @@ async function main() {
       try {
         await wakeClient.connect();
         await wakeClient.call('Runtime.enable');
-        await waitFor(() => wakeClient.evaluate(`Boolean(globalThis.chrome?.runtime?.sendMessage)`));
+        try {
+          await waitFor(() => wakeClient.evaluate(`Boolean(globalThis.chrome?.runtime?.sendMessage)`));
+        } catch (error) {
+          const startupState = await wakeClient.evaluate(`(() => ({
+            href: location.href,
+            title: document.title,
+            readyState: document.readyState,
+            hasChrome: Boolean(globalThis.chrome),
+            hasRuntime: Boolean(globalThis.chrome?.runtime),
+            bodyText: document.body?.innerText?.slice(0, 500) || '',
+          }))()`).catch(() => null);
+          console.error('[e2e] initial extension page startup state', JSON.stringify(startupState, null, 2));
+          console.error('[e2e] initial extension page console tail', JSON.stringify(wakeClient.events.slice(-30), null, 2));
+          throw error;
+        }
         await wakeClient.evaluate(`void chrome.runtime.sendMessage({ type: 'HERMES_INLINE_SESSION_STATUS' }).catch(() => null); true`);
       } finally {
         wakeClient.close();

@@ -6,14 +6,141 @@
  * sidePanel/sidebarAction APIs and falls back to an extension tab.
  */
 
+import { getBrowserApi } from './browser-api.mjs';
+
 const BROWSER_IDS = Object.freeze({
+  ARC: 'arc',
   BRAVE: 'brave',
+  CHROME: 'chrome',
   CHROMIUM: 'chromium',
+  COMET: 'comet',
+  EDGE: 'edge',
   OPERA: 'opera',
+  OPERA_GX: 'opera-gx',
   FIREFOX: 'firefox',
   SAFARI: 'safari',
   UNKNOWN: 'unknown',
 });
+
+function browserProduct(id, label, engine, confidence, source) {
+  return Object.freeze({ id, label, engine, confidence, source });
+}
+
+function normalizedBrandNames(brands = []) {
+  return (Array.isArray(brands) ? brands : [])
+    .map((entry) => String(entry?.brand || entry || '').trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function detectBrowserProduct({
+  userAgent = (typeof navigator !== 'undefined' ? navigator.userAgent : '') || '',
+  brands = (typeof navigator !== 'undefined' ? navigator.userAgentData?.brands : []) || [],
+  braveApi = typeof navigator !== 'undefined' ? navigator.brave : null,
+  extensionUrl = '',
+} = {}) {
+  const ua = String(userAgent || '');
+  const url = String(extensionUrl || '');
+  const brandNames = normalizedBrandNames(brands);
+
+  if (typeof braveApi?.isBrave === 'function') {
+    return browserProduct(BROWSER_IDS.BRAVE, 'Brave', 'chromium', 'high', 'runtime-api');
+  }
+  if (/^comet-extension:/i.test(url) || /\bComet\//i.test(ua) || brandNames.some((brand) => brand.includes('comet'))) {
+    return browserProduct(
+      BROWSER_IDS.COMET,
+      'Perplexity Comet',
+      'chromium',
+      'high',
+      /^comet-extension:/i.test(url) ? 'extension-scheme' : (/\bComet\//i.test(ua) ? 'user-agent' : 'runtime-brand'),
+    );
+  }
+  if (/^moz-extension:/i.test(url)) {
+    return browserProduct(BROWSER_IDS.FIREFOX, 'Firefox', 'gecko', 'high', 'extension-scheme');
+  }
+  if (/^safari-web-extension:/i.test(url)) {
+    return browserProduct(BROWSER_IDS.SAFARI, 'Safari', 'webkit', 'high', 'extension-scheme');
+  }
+  if (brandNames.some((brand) => brand.includes('opera gx')) || /\bOpera GX\//i.test(ua)) {
+    return browserProduct(BROWSER_IDS.OPERA_GX, 'Opera GX', 'chromium', 'high', 'runtime-brand');
+  }
+  if (brandNames.some((brand) => brand === 'arc' || brand.includes('arc browser')) || /\bArc\//i.test(ua)) {
+    return browserProduct(BROWSER_IDS.ARC, 'Arc', 'chromium', 'high', 'runtime-brand');
+  }
+  if (/\bOPR\/|Opera\b/i.test(ua) || brandNames.some((brand) => brand.includes('opera'))) {
+    return browserProduct(BROWSER_IDS.OPERA, 'Opera / Opera GX', 'chromium', 'high', 'user-agent');
+  }
+  if (/\bEdg(?:A|iOS)?\//i.test(ua) || brandNames.some((brand) => brand.includes('microsoft edge'))) {
+    return browserProduct(BROWSER_IDS.EDGE, 'Microsoft Edge', 'chromium', 'high', 'user-agent');
+  }
+  if (/\bFirefox\b/i.test(ua)) {
+    return browserProduct(BROWSER_IDS.FIREFOX, 'Firefox', 'gecko', 'high', 'user-agent');
+  }
+  if (/\bSafari\b/i.test(ua) && !/\b(?:Chrome|Chromium|CriOS)\b/i.test(ua)) {
+    return browserProduct(BROWSER_IDS.SAFARI, 'Safari', 'webkit', 'high', 'user-agent');
+  }
+  if (brandNames.some((brand) => brand === 'google chrome')) {
+    return browserProduct(BROWSER_IDS.CHROME, 'Google Chrome', 'chromium', 'high', 'user-agent-data');
+  }
+  if (/\b(?:HeadlessChrome|Chrome|Chromium|CriOS)\//i.test(ua) || brandNames.some((brand) => brand === 'chromium')) {
+    return browserProduct(BROWSER_IDS.CHROMIUM, 'Chromium browser', 'chromium', 'masked', 'engine-only');
+  }
+  return browserProduct(BROWSER_IDS.UNKNOWN, 'Supported browser', 'unknown', 'unknown', 'unavailable');
+}
+
+function browserMicrophoneSettingsUrl({ product = detectBrowserProduct(), extensionUrl = '' } = {}) {
+  if (product?.id === BROWSER_IDS.FIREFOX || product?.engine === 'gecko') return '';
+  if (product?.id === BROWSER_IDS.SAFARI || product?.engine === 'webkit') return '';
+
+  const settingsScheme = product?.id === BROWSER_IDS.EDGE ? 'edge'
+    : product?.id === BROWSER_IDS.BRAVE ? 'brave'
+      : [BROWSER_IDS.OPERA, BROWSER_IDS.OPERA_GX].includes(product?.id) ? 'opera'
+        : product?.engine === 'chromium' ? 'chrome'
+          : '';
+  if (!settingsScheme) return '';
+
+  try {
+    const parsed = new URL(String(extensionUrl || ''));
+    const extensionOrigin = `${parsed.protocol}//${parsed.host}/`;
+    if (!parsed.host) return `${settingsScheme}://settings/content/microphone`;
+    return `${settingsScheme}://settings/content/siteDetails?site=${encodeURIComponent(extensionOrigin)}`;
+  } catch {
+    return `${settingsScheme}://settings/content/microphone`;
+  }
+}
+
+function hasMethod(owner, method) {
+  return typeof owner?.[method] === 'function';
+}
+
+function probeBrowserCapabilities({
+  product = detectBrowserProduct(),
+  api = getBrowserApi() || {},
+  sidebarAction = getSidebarAction(),
+  speechRecognition = globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition || null,
+} = {}) {
+  const apis = Object.freeze({
+    action: Boolean(api?.action),
+    commands: Boolean(api?.commands),
+    contextMenus: hasMethod(api?.contextMenus, 'create'),
+    debugger: hasMethod(api?.debugger, 'attach') && hasMethod(api?.debugger, 'sendCommand'),
+    downloads: hasMethod(api?.downloads, 'download'),
+    offscreen: hasMethod(api?.offscreen, 'createDocument'),
+    scripting: hasMethod(api?.scripting, 'executeScript'),
+    sidePanel: hasMethod(api?.sidePanel, 'open'),
+    sidebarAction: hasMethod(sidebarAction, 'open') || hasMethod(sidebarAction, 'setOpenState'),
+    storage: hasMethod(api?.storage?.local, 'get') && hasMethod(api?.storage?.local, 'set'),
+    tabGroups: Boolean(api?.tabGroups),
+    tabs: hasMethod(api?.tabs, 'query'),
+    voiceRecognition: typeof speechRecognition === 'function',
+    windows: Boolean(api?.windows),
+  });
+  return Object.freeze({
+    product,
+    panelHost: apis.sidePanel ? 'side-panel' : (apis.sidebarAction ? 'sidebar' : 'full-tab'),
+    apis,
+    fallbacks: Object.freeze({ fullTab: true }),
+  });
+}
 
 function detectBrowserId({
   userAgent = (typeof navigator !== 'undefined' ? navigator.userAgent : '') || '',
@@ -26,7 +153,7 @@ function detectBrowserId({
   // in the MV3 service worker context even on Opera.
   if (/\bOPR\/|Opera\b/i.test(userAgent)) return BROWSER_IDS.OPERA;
   if (typeof globalThis !== 'undefined' && globalThis.opr?.sidebarAction) return BROWSER_IDS.OPERA;
-  if (typeof globalThis !== 'undefined' && globalThis.browser?.sidebarAction) return BROWSER_IDS.FIREFOX;
+  if (getBrowserApi()?.sidebarAction) return BROWSER_IDS.FIREFOX;
   if (/\bFirefox\b/i.test(userAgent)) return BROWSER_IDS.FIREFOX;
   if (/\bSafari\b/i.test(userAgent) && !/\bChrome\b/i.test(userAgent)) return BROWSER_IDS.SAFARI;
   return BROWSER_IDS.CHROMIUM;
@@ -34,12 +161,13 @@ function detectBrowserId({
 
 function getSidebarAction() {
   if (typeof globalThis === 'undefined') return null;
-  // Opera exposes sidebarAction on chrome.sidebarAction or opr.sidebarAction
-  return globalThis.opr?.sidebarAction || globalThis.browser?.sidebarAction || globalThis.chrome?.sidebarAction || null;
+  // Opera can expose sidebarAction on opr.sidebarAction; Firefox exposes it
+  // through its selected WebExtension namespace.
+  return globalThis.opr?.sidebarAction || getBrowserApi()?.sidebarAction || null;
 }
 
 function hasChromeSidePanel() {
-  return typeof globalThis !== 'undefined' && Boolean(globalThis.chrome?.sidePanel?.open);
+  return Boolean(getBrowserApi()?.sidePanel?.open);
 }
 
 function hasSidebarAction() {
@@ -93,7 +221,8 @@ async function openNativeSidebar({ windowId = null } = {}) {
           // Some implementations require a callback
           try {
             const cbResult = sidebarAction.open(() => {
-              if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+              const lastError = getBrowserApi()?.runtime?.lastError;
+              if (lastError) reject(lastError);
               else resolve();
             });
             if (cbResult && typeof cbResult.then === 'function') {
@@ -121,7 +250,7 @@ async function openNativeSidebar({ windowId = null } = {}) {
  */
 async function setActionClickPanelBehavior({
   browserId = detectBrowserId(),
-  sidePanelApi = globalThis.chrome?.sidePanel,
+  sidePanelApi = getBrowserApi()?.sidePanel,
 } = {}) {
   // Brave: disable browser-owned automatic action ownership so the toolbar
   // click and _execute_action reach the extension's confirmed manual path.
@@ -175,7 +304,7 @@ function actionIconPathsForBrowser(browserId = detectBrowserId()) {
  */
 async function setActionIconForBrowser({
   browserId = detectBrowserId(),
-  actionApi = globalThis.chrome?.action,
+  actionApi = getBrowserApi()?.action,
 } = {}) {
   const path = actionIconPathsForBrowser(browserId);
   if (!path || typeof actionApi?.setIcon !== 'function') return false;
@@ -278,12 +407,15 @@ async function openSidePanelWithConfirmation({
 export {
   BROWSER_IDS,
   actionIconPathsForBrowser,
+  browserMicrophoneSettingsUrl,
   detectBrowserId,
+  detectBrowserProduct,
   getSidebarAction,
   hasChromeSidePanel,
   hasSidebarAction,
   openNativeSidebar,
   openSidePanelWithConfirmation,
+  probeBrowserCapabilities,
   setActionClickPanelBehavior,
   setActionIconForBrowser,
   nativePanelMode,

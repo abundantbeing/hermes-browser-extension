@@ -2,6 +2,7 @@
   const previousCleanup = globalThis.__HERMES_INLINE_HELPER_CLEANUP__;
   if (typeof previousCleanup === 'function') previousCleanup();
 
+  const browserApi = globalThis.hermesBrowserApi;
   const policy = globalThis.HermesInlineDraft;
   const appearance = globalThis.HermesAppearance;
   const extractor = globalThis.HermesContentExtractor;
@@ -16,8 +17,8 @@
   const SESSION_STATUS = 'HERMES_INLINE_SESSION_STATUS';
   const OPEN_SESSION = 'HERMES_INLINE_OPEN_SESSION';
   const CONTEXT_ACTION = 'HERMES_INLINE_CONTEXT_ACTION';
-  const extensionRoot = String(chrome.runtime.getManifest()?.side_panel?.default_path || '').startsWith('extension/') ? 'extension/' : '';
-  const logoUrl = chrome.runtime.getURL(`${extensionRoot}assets/img/hermes-browser-extension-icon-ink.png`);
+  const extensionRoot = String(browserApi.runtime.getManifest()?.side_panel?.default_path || '').startsWith('extension/') ? 'extension/' : '';
+  const logoUrl = browserApi.runtime.getURL(`${extensionRoot}assets/img/hermes-browser-extension-icon-ink.png`);
   const documentId = `doc-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
   const genericActions = [
     { id: 'draft-for-context', label: 'Draft for this field', detail: 'Use page + field context', mode: 'draft-copy-only' },
@@ -242,7 +243,7 @@
   }
 
   async function loadAssistSettings() {
-    const stored = await chrome.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY]).catch(() => ({}));
+    const stored = await browserApi.storage.local.get(['hermesBrowserSettings', SITE_CONTEXT_STORAGE_KEY]).catch(() => ({}));
     assistSettings = { ...assistSettings, ...(stored?.hermesBrowserSettings || {}) };
     siteContextPreferences = adapters?.normalizeInlineSiteContextPreferences?.(stored?.[SITE_CONTEXT_STORAGE_KEY]) || {};
     assistSettings.inlineAssistDefaultRoute = policy.normalizeRoutePreference?.(assistSettings.inlineAssistDefaultRoute) || 'ask';
@@ -251,14 +252,14 @@
   }
 
   async function persistDefaultRoute(route) {
-    const stored = await chrome.storage.local.get('hermesBrowserSettings').catch(() => ({}));
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings').catch(() => ({}));
     const next = {
       ...(stored?.hermesBrowserSettings || {}),
       inlineAssistEnabled: assistSettings.inlineAssistEnabled !== false,
       inlineAssistDefaultRoute: policy.normalizeRoutePreference?.(route) || 'ask',
     };
     assistSettings = { ...assistSettings, ...next };
-    await chrome.storage.local.set({ hermesBrowserSettings: next });
+    await browserApi.storage.local.set({ hermesBrowserSettings: next });
   }
 
   async function persistSiteContextMode(adapterId, mode) {
@@ -267,7 +268,7 @@
       ...siteContextPreferences,
       [adapterId]: mode,
     }) || { ...siteContextPreferences, [adapterId]: mode };
-    await chrome.storage.local.set({ [SITE_CONTEXT_STORAGE_KEY]: siteContextPreferences });
+    await browserApi.storage.local.set({ [SITE_CONTEXT_STORAGE_KEY]: siteContextPreferences });
     refreshSiteProfile();
     if (!panel.hidden) renderAssist();
     else position();
@@ -674,7 +675,7 @@
   async function beginAction(action) {
     if (!target) return;
     pendingAction = action;
-    const status = await chrome.runtime.sendMessage({ type: SESSION_STATUS }).catch(() => null);
+    const status = await browserApi.runtime.sendMessage({ type: SESSION_STATUS }).catch(() => null);
     const decision = policy.routeDecision?.({
       preference: assistSettings.inlineAssistDefaultRoute,
       hasActiveSession: Boolean(status?.hasActiveSession),
@@ -749,7 +750,7 @@
     pending = { ...built.request, applyMode: supportsSafeApply ? 'safe-apply' : 'copy-only' };
     resetResult();
     renderWorking();
-    const response = await chrome.runtime.sendMessage({ type: REQUEST, request: pending }).catch((error) => ({ ok: false, reason: error?.message }));
+    const response = await browserApi.runtime.sendMessage({ type: REQUEST, request: pending }).catch((error) => ({ ok: false, reason: error?.message }));
     if (!response?.ok) renderFailure(response?.reason || 'Hermes could not queue this draft.');
   }
 
@@ -954,7 +955,7 @@
 
   async function openResultSession(surface = 'sidepanel') {
     if (!resultSessionId) return;
-    const response = await chrome.runtime.sendMessage({
+    const response = await browserApi.runtime.sendMessage({
       type: OPEN_SESSION,
       sessionId: resultSessionId,
       surface: surface === 'web' ? 'web' : 'sidepanel',
@@ -1058,8 +1059,8 @@
   launcher.addEventListener('mousedown', onLauncherPointerDown);
   launcher.addEventListener('click', togglePanel);
   close.addEventListener('click', hidePanel);
-  chrome.runtime.onMessage.addListener(onResult);
-  chrome.storage.onChanged.addListener(onStorageChanged);
+  browserApi.runtime.onMessage.addListener(onResult);
+  browserApi.storage.onChanged.addListener(onStorageChanged);
   const unsubscribeI18n = i18n.subscribe(rerenderLocalizedView);
   systemThemeQuery?.addEventListener?.('change', onSystemThemeChanged);
   void loadAssistSettings();
@@ -1073,8 +1074,8 @@
     visualViewport?.removeEventListener?.('resize', position);
     visualViewport?.removeEventListener?.('scroll', position);
     disconnectTargetObservers();
-    chrome.runtime.onMessage.removeListener(onResult);
-    chrome.storage.onChanged.removeListener(onStorageChanged);
+    browserApi.runtime.onMessage.removeListener(onResult);
+    browserApi.storage.onChanged.removeListener(onStorageChanged);
     unsubscribeI18n();
     systemThemeQuery?.removeEventListener?.('change', onSystemThemeChanged);
     host.remove();

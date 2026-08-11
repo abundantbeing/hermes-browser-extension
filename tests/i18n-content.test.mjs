@@ -12,11 +12,14 @@ function read(relativePath) {
 
 test('generated content i18n bridge stays classic and precedes Hermes Assist', async () => {
   const source = read('extension/lib/i18n-content.js');
+  const facade = read('extension/lib/browser-api-global.js');
   assert.doesNotMatch(source, /^\s*(?:import|export)\s/m);
   assert.doesNotMatch(source, /MutationObserver/);
 
   const manifest = JSON.parse(read('extension/manifest.json'));
   const scripts = manifest.content_scripts.flatMap((entry) => entry.js || []);
+  assert.ok(scripts.indexOf('lib/browser-api-global.js') >= 0);
+  assert.ok(scripts.indexOf('lib/browser-api-global.js') < scripts.indexOf('lib/i18n-content.js'));
   assert.ok(scripts.indexOf('lib/i18n-content.js') >= 0);
   assert.ok(scripts.indexOf('lib/i18n-content.js') < scripts.indexOf('content-inline-helper.js'));
 
@@ -34,6 +37,7 @@ test('generated content i18n bridge stays classic and precedes Hermes Assist', a
     },
   };
   sandbox.globalThis = sandbox;
+  vm.runInNewContext(facade, sandbox);
   vm.runInNewContext(source, sandbox);
   await sandbox.HermesI18nContent.ready;
   assert.notEqual(sandbox.HermesI18nContent.translateText('Hermes Assist'), 'Hermes Assist');
@@ -57,6 +61,7 @@ test('Hermes Assist bridge excludes settings-only copy and remains bounded acros
 
 test('Hermes Assist canonicalizes locale aliases and cannot miss an initialization race', async () => {
   const source = read('extension/lib/i18n-content.js');
+  const facade = read('extension/lib/browser-api-global.js');
   const listeners = new Set();
   let resolveStoredLocale;
   const sandbox = {
@@ -72,6 +77,7 @@ test('Hermes Assist canonicalizes locale aliases and cannot miss an initializati
     },
   };
   sandbox.globalThis = sandbox;
+  vm.runInNewContext(facade, sandbox);
   vm.runInNewContext(source, sandbox);
   assert.equal(listeners.size, 1, 'listener must be registered before awaiting storage');
   for (const listener of listeners) listener({ hermesBrowserLocale: { newValue: 'ZH_cn' } }, 'local');

@@ -342,8 +342,13 @@ import {
   createSurfaceId,
   fullTabEntryPathForPage,
 } from './lib/surface-protocol.mjs';
+import { resolveBrowserApi } from './lib/browser-api.mjs';
+import { detectBrowserProduct, probeBrowserCapabilities } from './lib/browser-runtime.mjs';
+import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 
 const $ = (selector) => document.querySelector(selector);
+const browserApiResolution = resolveBrowserApi();
+const browserApi = browserApiResolution.api;
 const ASSIST_ROUTING_FALLBACK_ENGLISH = 'Your Assist model choice stays saved. This gateway cannot enforce an exact model, so Assist uses the gateway default and labels every fallback result.';
 const sidePanelParams = parseSidePanelParams(globalThis.location?.search || '');
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
@@ -578,10 +583,10 @@ let agentThemeCreating = false;
 let agentThemeStatus = '';
 const directMarketplaceController = createThemeMarketplaceController({
   client: createVscodeMarketplaceClient(),
-  storageArea: chrome.storage.local,
+  storageArea: browserApi.storage.local,
 });
 const marketplaceTransport = createThemeMarketplaceTransport({
-  runtime: chrome.runtime,
+  runtime: browserApi.runtime,
   fallbackController: directMarketplaceController,
 });
 let appliedCustomThemeVariables = [];
@@ -660,7 +665,7 @@ async function ensureContextMenuEditor() {
     return contextMenuEditor;
   }
   contextMenuEditor = await mountContextMenuEditor({
-    chromeApi: chrome,
+    chromeApi: browserApi,
     root: els.contextMenuEditor,
     translate: contextMenuEditorTranslate,
   });
@@ -715,7 +720,7 @@ async function captureTaskToolEvent(event) {
   if (!sessionId) return false;
   taskStackStore = updateTaskStackStore(taskStackStore, sessionId, tasks);
   renderTaskStack();
-  await chrome.storage.local.set({ [TASK_STACKS_STORAGE_KEY]: taskStackStore });
+  await browserApi.storage.local.set({ [TASK_STACKS_STORAGE_KEY]: taskStackStore });
   return true;
 }
 
@@ -747,9 +752,9 @@ function currentDelegationScopeKey() {
 }
 
 async function persistDelegationWatches(rows) {
-  const stored = await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
   const merged = mergeDelegationWatchStores(stored?.[DELEGATION_WATCH_STORAGE_KEY] || [], rows);
-  await chrome.storage.local.set({ [DELEGATION_WATCH_STORAGE_KEY]: merged });
+  await browserApi.storage.local.set({ [DELEGATION_WATCH_STORAGE_KEY]: merged });
 }
 
 const delegationWatchManager = createDelegationWatchManager({
@@ -826,7 +831,7 @@ async function activateCurrentDelegationSession() {
 }
 
 async function hydrateDelegationWatches() {
-  const stored = await chrome.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get([DELEGATION_WATCH_STORAGE_KEY]);
   await delegationWatchManager.hydrate(stored?.[DELEGATION_WATCH_STORAGE_KEY] || []);
   await activateCurrentDelegationSession();
 }
@@ -1048,11 +1053,30 @@ function renderVersionInfo(statusText = '') {
 
 function currentExtensionOrigin() {
   try {
-    const url = globalThis.chrome?.runtime?.getURL?.('') || '';
+    const url = browserApi?.runtime?.getURL?.('') || '';
     return url.replace(/\/+$/, '');
   } catch {
     return '';
   }
+}
+
+function currentBrowserPlatformSnapshot() {
+  const product = detectBrowserProduct({
+    userAgent: navigator.userAgent,
+    brands: navigator.userAgentData?.brands || [],
+    braveApi: navigator.brave,
+    extensionUrl: browserApi?.runtime?.getURL?.('') || '',
+  });
+  const capabilities = probeBrowserCapabilities({
+    product,
+    api: browserApi,
+    sidebarAction: globalThis.opr?.sidebarAction || browserApi?.sidebarAction || null,
+  });
+  return {
+    product,
+    capabilities,
+    controllerAdapter: controllerAdapterContractFor({ product, capabilities }),
+  };
 }
 
 function currentGatewaySummary(overrides = {}) {
@@ -1064,7 +1088,7 @@ function currentGatewaySummary(overrides = {}) {
 }
 
 function currentContextConsentController() {
-  return String(chrome.runtime.id || 'hermes-browser');
+  return String(browserApi.runtime.id || 'hermes-browser');
 }
 
 function contextConsentBindingMatches(source = settings) {
@@ -1116,7 +1140,7 @@ function effectiveContextGate(scope = contextScope, source = settings) {
 }
 
 async function refreshContextConsentLedger(settingsOverride = settings) {
-  const stored = await chrome.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
   const sendTimeSettings = {
     ...settingsOverride,
     browserContextConsentLedger: normalizeContextConsentLedger(stored?.[CONTEXT_CONSENT_STORAGE_KEY]),
@@ -1158,7 +1182,7 @@ async function setBrowserContextConsent(granted) {
   const identity = currentContextConsentIdentity();
   if (!identity) throw new Error('Reconnect or test this connection before sharing page context.');
   const ledger = await persistContextConsentDecision({
-    storageArea: chrome.storage.local,
+    storageArea: browserApi.storage.local,
     identity,
     granted: Boolean(granted),
   });
@@ -1291,11 +1315,15 @@ async function copySupportDiagnostics() {
   try {
     const buildInfo = await loadExtensionBuildInfo().catch(() => ({}));
     const state = currentConnectionState();
+    const browserPlatform = currentBrowserPlatformSnapshot();
     const diagnostics = buildSupportDiagnostics({
       extensionVersion: CURRENT_EXTENSION_VERSION,
       extensionOrigin: currentExtensionOrigin(),
       buildInfo,
       userAgent: navigator.userAgent,
+      browserProduct: browserPlatform.product,
+      browserCapabilities: browserPlatform.capabilities,
+      controllerAdapter: browserPlatform.controllerAdapter,
       platform: navigator.platform,
       settings,
       connection: {
@@ -1345,7 +1373,7 @@ function fullViewHandoffUrl() {
     instanceId: ensureSidepanelInstanceId(),
   });
   const url = buildFullTabHandoffUrl({
-    runtimeUrl: (path) => chrome.runtime.getURL(path),
+    runtimeUrl: (path) => browserApi.runtime.getURL(path),
     entryPath: fullTabEntryPathForPage(globalThis.location?.href || ''),
     newChat: true,
     sourceTabId: sidePanelParams.tabId,
@@ -1358,8 +1386,8 @@ async function openFullView() {
   const url = fullViewHandoffUrl();
   return openHermesFullView({
     url,
-    tabsApi: chrome.tabs,
-    runtimeApi: chrome.runtime,
+    tabsApi: browserApi.tabs,
+    runtimeApi: browserApi.runtime,
     windowOpen: globalThis.open?.bind(globalThis),
   });
 }
@@ -1473,7 +1501,7 @@ function activeMessagesStorageKey(conversationScope = previousConversationScope)
 
 async function loadMessagesForActiveScope() {
   const key = activeMessagesStorageKey(previousConversationScope);
-  const stored = await chrome.storage.local.get([key]);
+  const stored = await browserApi.storage.local.get([key]);
   messages = Array.isArray(stored[key]) ? stored[key] : [];
   const visibleTokens = estimateLocalSessionContextTokens({ messages });
   loadedSessionContextEstimate = {
@@ -1487,13 +1515,13 @@ async function loadMessagesForActiveScope() {
 async function saveMessagesForActiveScope() {
   const key = activeMessagesStorageKey(previousConversationScope);
   const cachedMessages = messagesForLocalCache(messages, settings.maxLocalMessages);
-  await chrome.storage.local.set({ [key]: cachedMessages });
+  await browserApi.storage.local.set({ [key]: cachedMessages });
 }
 
 async function loadSessionBindingForActiveScope() {
   if (previousConversationScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB) return null;
   const key = sessionBindingKeyForScope(contextScope, previousConversationScope);
-  const stored = await chrome.storage.local.get([key]);
+  const stored = await browserApi.storage.local.get([key]);
   return stored[key] || null;
 }
 
@@ -1507,7 +1535,7 @@ async function saveSessionBindingForActiveScope(session) {
     gatewayMode: settings.gatewayMode,
     profile: safeActiveProfile(),
   });
-  await chrome.storage.local.set({
+  await browserApi.storage.local.set({
     [key]: withSessionBindingIdentity({
       sessionId: session.id,
       sessionTitle: session.title || session.id,
@@ -1806,7 +1834,7 @@ async function ensureSessionForActiveScope({ focus = false } = {}) {
     // wrong profile's chat. The stored messages for this scope stay until the
     // new session overwrites them.
     const key = sessionBindingKeyForScope(contextScope, previousConversationScope);
-    await chrome.storage.local.remove([key]);
+    await browserApi.storage.local.remove([key]);
   }
   await beginHermesBrowserDraft({ title: makePinnedTabSessionTitle(currentContext.activeTab || previousConversationScope), focus });
 }
@@ -1844,7 +1872,7 @@ async function pinContextTabById(tabId) {
   if (!Number.isFinite(id)) return;
   let tab = currentContext.tabs.find((item) => Number(item.id) === id) || null;
   try {
-    const freshTab = await chrome.tabs.get(id);
+    const freshTab = await browserApi.tabs.get(id);
     if (freshTab?.id) tab = safeTab(freshTab);
   } catch (_error) {
     // The tab may have closed between render and click. Fall back to the
@@ -1986,7 +2014,7 @@ async function fetchJsonNoStore(url) {
 }
 
 async function loadExtensionBuildInfo() {
-  const runtime = globalThis.chrome?.runtime;
+  const runtime = browserApi?.runtime;
   const candidates = ['build-info.json', 'extension/build-info.json'];
   for (const candidate of candidates) {
     try {
@@ -2793,24 +2821,9 @@ async function microphonePermissionState() {
 }
 
 async function openMicrophonePermissionPage() {
-  const url = globalThis.chrome?.runtime?.getURL?.(MICROPHONE_PERMISSION_PAGE) || MICROPHONE_PERMISSION_PAGE;
-  if (globalThis.chrome?.tabs?.create) {
-    await globalThis.chrome.tabs.create({ url, active: true });
-    return;
-  }
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
-
-function microphoneSettingsUrl() {
-  const runtimeId = globalThis.chrome?.runtime?.id || '';
-  const site = encodeURIComponent(`chrome-extension://${runtimeId}/`);
-  return `chrome://settings/content/siteDetails?site=${site}`;
-}
-
-async function openMicrophoneSettingsPage() {
-  const url = microphoneSettingsUrl();
-  if (globalThis.chrome?.tabs?.create) {
-    await globalThis.chrome.tabs.create({ url, active: true });
+  const url = browserApi?.runtime?.getURL?.(MICROPHONE_PERMISSION_PAGE) || MICROPHONE_PERMISSION_PAGE;
+  if (browserApi?.tabs?.create) {
+    await browserApi.tabs.create({ url, active: true });
     return;
   }
   window.open(url, '_blank', 'noopener,noreferrer');
@@ -2818,9 +2831,9 @@ async function openMicrophoneSettingsPage() {
 
 async function openVoiceDictationPage(detail = 'Opening a Hermes Voice Dictation tab. Record there; the transcript will return to this composer automatically.') {
   setStatus('warn', 'Opening voice dictation tab', detail);
-  const url = globalThis.chrome?.runtime?.getURL?.(VOICE_DICTATION_PAGE) || VOICE_DICTATION_PAGE;
-  if (globalThis.chrome?.tabs?.create) {
-    await globalThis.chrome.tabs.create({ url, active: true });
+  const url = browserApi?.runtime?.getURL?.(VOICE_DICTATION_PAGE) || VOICE_DICTATION_PAGE;
+  if (browserApi?.tabs?.create) {
+    await browserApi.tabs.create({ url, active: true });
     return;
   }
   window.open(url, '_blank', 'noopener,noreferrer');
@@ -2842,16 +2855,16 @@ async function consumeVoiceDraft(draft = null) {
   if (!draft?.transcript) return false;
   const age = Math.abs(Date.now() - Number(draft.ts || 0));
   if (!Number.isFinite(age) || age > VOICE_DRAFT_MAX_AGE_MS) {
-    await globalThis.chrome?.storage?.local?.remove?.(VOICE_DRAFT_STORAGE_KEY);
+    await browserApi?.storage?.local?.remove?.(VOICE_DRAFT_STORAGE_KEY);
     return false;
   }
   const inserted = insertExternalVoiceTranscript(draft.transcript, draft.source || 'voice dictation tab');
-  if (inserted) await globalThis.chrome?.storage?.local?.remove?.(VOICE_DRAFT_STORAGE_KEY);
+  if (inserted) await browserApi?.storage?.local?.remove?.(VOICE_DRAFT_STORAGE_KEY);
   return inserted;
 }
 
 async function consumePendingVoiceDraft() {
-  const storage = globalThis.chrome?.storage?.local;
+  const storage = browserApi?.storage?.local;
   if (!storage?.get) return false;
   const stored = await storage.get([VOICE_DRAFT_STORAGE_KEY]);
   return consumeVoiceDraft(stored?.[VOICE_DRAFT_STORAGE_KEY]);
@@ -2867,7 +2880,7 @@ async function waitForMicrophonePermission({ timeoutMs = 60_000, intervalMs = 50
   return false;
 }
 
-async function requestMicrophoneOriginPermissionViaPage(detail = 'Opening a temporary Hermes permission tab because Chrome can suppress mic prompts inside extension side panels.') {
+async function requestMicrophoneOriginPermissionViaPage(detail = 'Opening a temporary Hermes permission tab because some browsers suppress mic prompts inside extension sidebars.') {
   setStatus('warn', 'Microphone permission needed', detail);
   await openMicrophonePermissionPage();
   const granted = await waitForMicrophonePermission();
@@ -2875,7 +2888,7 @@ async function requestMicrophoneOriginPermissionViaPage(detail = 'Opening a temp
     setStatus('ok', 'Microphone permission enabled', 'Starting Hermes voice recording now.');
     return true;
   }
-  throw microphonePermissionError('Microphone access was not granted. Use the Hermes permission tab or Chrome extension details to enable Microphone, then click the mic again.');
+  throw microphonePermissionError('Microphone access was not granted. Use the Hermes permission tab or your browser’s extension settings to enable Microphone, then click the mic again.');
 }
 
 async function ensureMicrophoneOriginPermission() {
@@ -2922,7 +2935,7 @@ function renderWakeState(nextState = wakeState) {
 
 async function refreshWakeState() {
   try {
-    const next = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.getState });
+    const next = await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.getState });
     if (next) renderWakeState(next);
   } catch {
     renderWakeState({
@@ -2942,9 +2955,9 @@ async function grantWakeMicrophoneAccess() {
 async function setWakeWordEnabled(enabled) {
   const desired = Boolean(enabled);
   settings = { ...settings, wakeWordEnabled: desired };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   renderWakeState({ enabled: desired, state: desired ? 'arming' : 'off', detail: desired ? 'Selecting the safest wake listener…' : 'Wake word is off.' });
-  let next = await chrome.runtime.sendMessage({
+  let next = await browserApi.runtime.sendMessage({
     type: WAKE_MESSAGES.setEnabled,
     enabled: desired,
     settings,
@@ -2952,11 +2965,11 @@ async function setWakeWordEnabled(enabled) {
   if (desired && next?.mode === 'browser-local') {
     try {
       await grantWakeMicrophoneAccess();
-      next = await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: true, settings });
+      next = await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: true, settings });
     } catch (error) {
       settings = { ...settings, wakeWordEnabled: false };
-      await chrome.storage.local.set({ hermesBrowserSettings: settings });
-      await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings }).catch(() => null);
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.setEnabled, enabled: false, settings }).catch(() => null);
       if (isMicrophonePermissionError(error)) {
         await openMicrophonePermissionPage();
         throw microphonePermissionError('Microphone access is required for Browser-local wake listening. Grant it in the Hermes permission tab, then click the ear again.');
@@ -2970,12 +2983,12 @@ async function setWakeWordEnabled(enabled) {
 
 async function consumeWakeTurn(turn = null) {
   if (!wakeTurnIsFresh(turn) || !turn?.id) {
-    if (turn) await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+    if (turn) await browserApi.storage.local.remove(WAKE_STORAGE_KEYS.turn);
     return false;
   }
   if (wakeTurnProcessingId === turn.id) return false;
   wakeTurnProcessingId = turn.id;
-  const claim = await chrome.runtime.sendMessage({
+  const claim = await browserApi.runtime.sendMessage({
     type: WAKE_MESSAGES.claimTurn,
     turnId: turn.id,
     surface: SURFACE_KINDS.SIDE_PANEL,
@@ -2984,7 +2997,7 @@ async function consumeWakeTurn(turn = null) {
     wakeTurnProcessingId = '';
     return false;
   }
-  if (!claim) await chrome.storage.local.remove(WAKE_STORAGE_KEYS.turn);
+  if (!claim) await browserApi.storage.local.remove(WAKE_STORAGE_KEYS.turn);
   let completed = false;
   try {
     const sent = await askHermes(String(turn.text || '').trim(), [], {
@@ -2992,7 +3005,7 @@ async function consumeWakeTurn(turn = null) {
       displayUserText: String(turn.text || '').trim(),
       onComplete: async (finalAnswer) => {
         completed = true;
-        await chrome.runtime.sendMessage({
+        await browserApi.runtime.sendMessage({
           type: WAKE_MESSAGES.turnReply,
           turnId: turn.id,
           text: finalAnswer,
@@ -3002,14 +3015,14 @@ async function consumeWakeTurn(turn = null) {
     return Boolean(sent);
   } finally {
     if (!completed) {
-      await chrome.runtime.sendMessage({ type: WAKE_MESSAGES.turnReply, turnId: turn.id, text: '' }).catch(() => null);
+      await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.turnReply, turnId: turn.id, text: '' }).catch(() => null);
     }
     if (wakeTurnProcessingId === turn.id) wakeTurnProcessingId = '';
   }
 }
 
 async function consumePendingWakeTurn() {
-  const stored = await chrome.storage.local.get(WAKE_STORAGE_KEYS.turn);
+  const stored = await browserApi.storage.local.get(WAKE_STORAGE_KEYS.turn);
   return consumeWakeTurn(stored?.[WAKE_STORAGE_KEYS.turn]);
 }
 
@@ -3242,7 +3255,7 @@ async function toggleVoiceDictation() {
       dictating = false;
       updateVoiceButtonState();
       if (isMicrophonePermissionError(error)) {
-        await openVoiceDictationPage('Comet/Chromium blocked microphone capture inside the side panel. Use this visible Hermes Voice tab once; it will transcribe locally through Hermes and send the text back here.');
+        await openVoiceDictationPage('The current browser blocked microphone capture inside the side panel. Use this visible Hermes Voice tab once; it will transcribe locally through Hermes and send the text back here.');
         return;
       }
       if (await startWebSpeechDictation('Hermes microphone capture failed. Using browser speech fallback.')) return;
@@ -3356,7 +3369,7 @@ function syncActiveSessionRuntimeFromList() {
   const nextBinding = JSON.stringify(settings.sessionModelBindings?.[session.id] || null);
   const nextOptionsBinding = JSON.stringify(settings.sessionModelOptionBindings?.[session.id] || null);
   if (settings.model !== previousModel || nextBinding !== previousBinding || nextOptionsBinding !== previousOptionsBinding) {
-    void chrome.storage.local.set({ hermesBrowserSettings: settings });
+    void browserApi.storage.local.set({ hermesBrowserSettings: settings });
     renderModelOptions(availableModels);
   }
 }
@@ -3369,7 +3382,7 @@ const UPDATE_MAIN_COMMIT_URL = 'https://api.github.com/repos/abundantbeing/herme
 const UPDATE_MAIN_TREE_URL = 'https://api.github.com/repos/abundantbeing/hermes-browser-extension/git/trees';
 const UPDATE_COMPARE_URL = 'https://api.github.com/repos/abundantbeing/hermes-browser-extension/compare';
 const REPO_URL = 'https://github.com/abundantbeing/hermes-browser-extension';
-const runtimeManifest = globalThis.chrome?.runtime?.getManifest?.() || {};
+const runtimeManifest = browserApi?.runtime?.getManifest?.() || {};
 const CURRENT_EXTENSION_VERSION = normalizeExtensionVersion(runtimeManifest, els.versionLabel?.textContent);
 
 const systemColorQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -3504,7 +3517,7 @@ async function createAgentTheme() {
     onComplete: async (finalAnswer) => {
       try {
         const document = extractAgentThemeDocument(finalAnswer);
-        const installed = await installCustomTheme(chrome.storage.local, document);
+        const installed = await installCustomTheme(browserApi.storage.local, document);
         if (!installed.ok) throw new Error(installed.error?.message || 'Theme installation failed');
         await refreshCustomThemeStore();
         await setAppearanceOption('appearanceTheme', installed.record.id);
@@ -3631,7 +3644,7 @@ function renderCustomThemeCards(activeTheme) {
 
 async function refreshCustomThemeStore({ render = true } = {}) {
   const previousStatus = customThemeStoreState.status;
-  customThemeStoreState = await readCustomThemeStore(chrome.storage.local);
+  customThemeStoreState = await readCustomThemeStore(browserApi.storage.local);
   if (customThemeStoreState.status === 'corrupt') {
     customThemeImportStatus = '';
     customThemePreviewState = null;
@@ -3691,7 +3704,7 @@ async function installPreviewedCustomTheme() {
   els.customThemeInstallButton?.setAttribute('aria-busy', 'true');
   let result;
   try {
-    result = await installCustomTheme(chrome.storage.local, customThemePreviewState.document, {
+    result = await installCustomTheme(browserApi.storage.local, customThemePreviewState.document, {
       inputBytes: customThemePreviewState.inputBytes,
     });
   } finally {
@@ -3734,7 +3747,7 @@ function exportCustomTheme(id) {
 }
 
 async function fallbackDeletedCustomThemeSelections(id, { allCustom = false } = {}) {
-  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
   const freshSettings = stored.hermesBrowserSettings || {};
   const shouldFallback = (value) => allCustom ? String(value || '').startsWith('custom:') : value === id;
   const panelFallback = shouldFallback(freshSettings.appearanceTheme);
@@ -3745,7 +3758,7 @@ async function fallbackDeletedCustomThemeSelections(id, { allCustom = false } = 
     ...(panelFallback ? { appearanceTheme: 'nous' } : {}),
     ...(webFallback ? { webAppearanceTheme: 'nous' } : {}),
   };
-  await chrome.storage.local.set({ hermesBrowserSettings });
+  await browserApi.storage.local.set({ hermesBrowserSettings });
   return hermesBrowserSettings;
 }
 
@@ -3761,7 +3774,7 @@ async function handleCustomThemeDelete(id) {
   customThemeDeleteArmedId = '';
   try {
     const savedSettings = await fallbackDeletedCustomThemeSelections(id);
-    const result = await deleteCustomTheme(chrome.storage.local, id);
+    const result = await deleteCustomTheme(browserApi.storage.local, id);
     if (!result.ok) throw new Error(result.error?.message || 'Could not delete custom theme');
     customThemeStoreState = { ok: true, status: result.store.themes.length ? 'ready' : 'empty', themes: result.store.themes };
     if (settings.appearanceTheme === id) settings = { ...settings, ...savedSettings, appearanceTheme: 'nous' };
@@ -3784,7 +3797,7 @@ async function handleCustomThemeReset() {
   customThemeResetArmed = false;
   try {
     const savedSettings = await fallbackDeletedCustomThemeSelections('', { allCustom: true });
-    const result = await resetCustomThemeStore(chrome.storage.local);
+    const result = await resetCustomThemeStore(browserApi.storage.local);
     if (!result.ok) throw new Error(result.error?.message || 'Could not reset custom theme storage');
     customThemeStoreState = { ok: true, status: 'empty', themes: [] };
     settings = { ...settings, ...savedSettings, appearanceTheme: normalizedPanelThemeId(savedSettings.appearanceTheme) };
@@ -3838,7 +3851,7 @@ async function handleCustomThemeFileSelection() {
 async function handleCustomThemeStoreChange() {
   const previousTheme = settings.appearanceTheme;
   await refreshCustomThemeStore({ render: false });
-  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
   const freshAppearanceTheme = stored.hermesBrowserSettings?.appearanceTheme ?? previousTheme;
   const nextTheme = normalizedPanelThemeId(freshAppearanceTheme);
   if (String(previousTheme || '').startsWith('custom:') && nextTheme === 'nous' && previousTheme !== 'nous') {
@@ -3944,7 +3957,7 @@ function renderAppearanceControls() {
 
 async function persistAppearanceSettings(preferences) {
   const writeAppearance = async () => {
-    const stored = await chrome.storage.local.get('hermesBrowserSettings');
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
     const freshSettings = stored.hermesBrowserSettings || {};
     const mergedPreferences = withAppearancePreferenceUpdate(freshSettings, 'panel', preferences);
     const hermesBrowserSettings = {
@@ -3953,7 +3966,7 @@ async function persistAppearanceSettings(preferences) {
       colorMode: normalizeColorMode(preferences.colorMode),
       appearanceTheme: normalizedPanelThemeId(preferences.appearanceTheme),
     };
-    await chrome.storage.local.set({ hermesBrowserSettings: hermesBrowserSettings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: hermesBrowserSettings });
     return hermesBrowserSettings;
   };
   const pendingWrite = appearanceWriteQueue.then(writeAppearance, writeAppearance);
@@ -4216,7 +4229,7 @@ async function attachFolder(fileList) {
 
 async function pasteClipboardImage() {
   if (!navigator.clipboard?.read) {
-    throw new Error('Use Ctrl+V inside the Ask Hermes box to paste images. Chrome does not expose global clipboard image read here.');
+    throw new Error('Use Ctrl+V inside the Ask Hermes box to paste images. This extension surface does not expose global clipboard image read.');
   }
   try {
     const items = await navigator.clipboard.read();
@@ -4533,7 +4546,7 @@ async function reconcileInlineAssistModelBinding(models = availableModels) {
   const changed = Object.entries(binding).some(([key, value]) => settings[key] !== value);
   if (!changed) return false;
   settings = { ...settings, ...binding };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   return true;
 }
 
@@ -4587,7 +4600,7 @@ async function applyAssistSelectedModel(model) {
     inlineAssistProvider: model.provider || '',
   };
   renderInlineAssistModelOptions();
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   els.modelMenu.hidden = true;
   els.modelMenuButton.setAttribute('aria-expanded', 'false');
   els.inlineAssistModelButton?.setAttribute('aria-expanded', 'false');
@@ -4780,7 +4793,7 @@ function renderModelRuntimeOptions() {
 }
 
 function persistModelRuntimeOptions() {
-  chrome.storage.local.set({ hermesBrowserSettings: settings });
+  browserApi.storage.local.set({ hermesBrowserSettings: settings });
 }
 
 function setModelRuntimeOption(key, value) {
@@ -4890,7 +4903,7 @@ async function syncSessionModelOptions({
       extensionPreferredModelOptions: previousPreferredModelOptions,
       sessionModelOptionBindings: previousSessionModelOptionBindings,
     };
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     renderModelOptions(availableModels);
     setStatus('error', 'Hermes model options failed', error?.message || String(error), { translateDetail: false });
     return { state: 'failed', error };
@@ -5056,7 +5069,7 @@ function applySelectedModel(selectedId, { persist = true, keepOpen = false } = {
     els.modelMenu.hidden = true;
     els.modelMenuButton.setAttribute('aria-expanded', 'false');
   }
-  if (persist) chrome.storage.local.set({ hermesBrowserSettings: settings });
+  if (persist) browserApi.storage.local.set({ hermesBrowserSettings: settings });
   if (persist && selected) {
     modelSelectionVersion += 1;
     pendingModelRuntimeAck = {
@@ -5151,7 +5164,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
           extensionPreferredModel: remoteRollbackScope.extensionPreferredModel,
           sessionModelBindings: remoteRollbackScope.sessionModelBindings,
         };
-        await chrome.storage.local.set({ hermesBrowserSettings: settings });
+        await browserApi.storage.local.set({ hermesBrowserSettings: settings });
         renderModelOptions(availableModels);
       }
       pendingModelRuntimeAck = null;
@@ -5224,7 +5237,7 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
         extensionPreferredModel: rollbackScope.extensionPreferredModel,
         sessionModelBindings: rollbackScope.sessionModelBindings,
       };
-      chrome.storage.local.set({ hermesBrowserSettings: settings });
+      browserApi.storage.local.set({ hermesBrowserSettings: settings });
       renderModelOptions(availableModels);
     }
     pendingModelRuntimeAck = null;
@@ -5273,7 +5286,7 @@ function renderModelRefreshState() {
 
 async function readCachedModelCatalog() {
   try {
-    const stored = await chrome.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
+    const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const key = modelCatalogCacheKey({
       gatewayMode: settings.gatewayMode,
       gatewayUrl: settings.gatewayUrl,
@@ -5289,7 +5302,7 @@ async function writeCachedModelCatalog(models) {
   const canonicalModels = normalizeCachedModelCatalog(models);
   if (!canonicalModels.length) return;
   try {
-    const stored = await chrome.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
+    const stored = await browserApi.storage.local.get([MODEL_CATALOG_CACHE_STORAGE_KEY]);
     const cache = stored?.[MODEL_CATALOG_CACHE_STORAGE_KEY] && typeof stored[MODEL_CATALOG_CACHE_STORAGE_KEY] === 'object'
       ? stored[MODEL_CATALOG_CACHE_STORAGE_KEY]
       : {};
@@ -5299,7 +5312,7 @@ async function writeCachedModelCatalog(models) {
       profile: settings.activeProfile,
     });
     cache[key] = { savedAt: Date.now(), models: canonicalModels };
-    await chrome.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
+    await browserApi.storage.local.set({ [MODEL_CATALOG_CACHE_STORAGE_KEY]: cache });
   } catch {
     // Catalog caching is resilience-only; storage failures must not block sync.
   }
@@ -5797,8 +5810,8 @@ async function loadProfiles({ quiet = false } = {}) {
     }
     try {
       const result = await discoverProfilesViaTab({
-        tabsApi: chrome.tabs,
-        scriptingApi: chrome.scripting,
+        tabsApi: browserApi.tabs,
+        scriptingApi: browserApi.scripting,
         baseUrl: normalizeGatewayUrl(settings.gatewayUrl),
       });
       if (!result.ok) {
@@ -5849,7 +5862,7 @@ async function loadProfiles({ quiet = false } = {}) {
 
 async function applySelectedProfile(profileName = '') {
   settings = { ...settings, activeProfile: profileName };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   renderProfiles();
   if (!profileName) return;
   if (isRemoteWsMode()) {
@@ -5907,7 +5920,7 @@ async function persistAgentDiscoverySettings({ ports = getAgentPorts(), host = s
     agentDiscoveryHost: normalizeAgentDiscoveryHost(host || DEFAULT_SETTINGS.agentDiscoveryHost),
     agentDiscoveryScheme: normalizeAgentDiscoveryScheme(scheme || DEFAULT_SETTINGS.agentDiscoveryScheme),
   };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   syncSettingsForm();
 }
 
@@ -6012,7 +6025,7 @@ async function switchAgentGateway(agent) {
     return;
   }
   settings = { ...settings, gatewayMode: 'local-api', gatewayUrl: nextUrl };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   setStatus('ok', 'Switched gateway', `Reconnecting to ${agent.name} (${nextUrl})...`);
   // Re-run the full connect flow against the new gateway.
   try {
@@ -6044,7 +6057,7 @@ async function persistBrowserIntroSeen() {
   renderBrowserIntroVisibility();
   if (browserIntroSeen) return;
   browserIntroSeen = true;
-  await chrome.storage.local.set({ [HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY]: true });
+  await browserApi.storage.local.set({ [HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY]: true });
 }
 
 function sessionDisplayName(session = {}) {
@@ -6299,7 +6312,7 @@ async function renameHermesSessionTitle(sessionId, title, { quiet = false } = {}
     // Dashboard WS currently exposes create/resume/list/history but not rename.
     availableSessions = availableSessions.map((session) => (session.id === sessionId ? { ...session, title: nextTitle } : session));
     settings = { ...settings, sessionTitle: nextTitle };
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     updateSessionLabel();
     renderSessionMenu();
     if (!quiet) setStatus('warn', 'Session title saved locally', 'Remote dashboard rename RPC is not available yet.');
@@ -6315,7 +6328,7 @@ async function renameHermesSessionTitle(sessionId, title, { quiet = false } = {}
   const updated = normalizeHermesSessions({ data: [payload.session || payload] })[0] || { id: sessionId, title: nextTitle, source: settings.sessionSource };
   availableSessions = normalizeHermesSessions({ data: [updated, ...availableSessions.filter((session) => session.id !== sessionId)] });
   settings = { ...settings, sessionTitle: updated.title || nextTitle };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   updateSessionLabel();
   renderSessionMenu();
   if (!quiet) setStatus('ok', 'Session title updated', settings.sessionTitle);
@@ -6398,7 +6411,7 @@ async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focu
   activeSessionRuntime = { ...activeSessionRuntime, sessionId, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
   sessionRoutesAvailable = true;
   messages = [];
-  await chrome.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
   await saveSessionBindingForActiveScope({ id: sessionId, title, source: DEFAULT_SETTINGS.sessionSource });
   renderMessagesFromStorage();
   updateSessionLabel();
@@ -6463,7 +6476,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
     };
     activeSessionRuntime = { ...activeSessionRuntime, sessionId: id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
     messages = [];
-    await chrome.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
     await saveSessionBindingForActiveScope(session);
     renderMessagesFromStorage();
     updateSessionLabel();
@@ -6508,7 +6521,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
   activeSessionRuntime = { ...activeSessionRuntime, sessionId: session.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
   sessionRoutesAvailable = true;
   messages = [];
-  await chrome.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
   await saveSessionBindingForActiveScope(session);
   renderMessagesFromStorage();
   updateSessionLabel();
@@ -6614,7 +6627,7 @@ async function openHermesSession(selectedSession) {
   renderModelOptions(availableModels);
   activeSessionRuntime = { ...activeSessionRuntime, sessionId: session.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
   sessionRoutesAvailable = true;
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   await saveSessionBindingForActiveScope(session);
   await activateCurrentDelegationSession();
   updateSessionLabel();
@@ -7078,13 +7091,13 @@ function renderImageGenPlaceholder(activity = {}) {
     registration.appendChild(mark);
   }
 
-  const chrome = document.createElement('div');
-  chrome.className = 'image-gen-chrome';
+  const imageChrome = document.createElement('div');
+  imageChrome.className = 'image-gen-chrome';
   const title = document.createElement('strong');
   title.textContent = translateUiText('Hermes image synthesis');
   const meta = document.createElement('span');
   meta.textContent = t('image.meta_active', { aspectRatio });
-  chrome.append(title, meta);
+  imageChrome.append(title, meta);
 
   const status = document.createElement('div');
   status.className = 'image-gen-status';
@@ -7101,7 +7114,7 @@ function renderImageGenPlaceholder(activity = {}) {
   pulse.append(document.createElement('i'), document.createElement('i'), document.createElement('i'));
   status.append(phaseTrack, pulse);
 
-  root.append(canvas, grid, vhs, registration, chrome, status);
+  root.append(canvas, grid, vhs, registration, imageChrome, status);
   const diffusion = createDiffusionCanvas(canvas, { aspectRatio, seed: visualSeed });
   root._start = () => diffusion.start();
   root._reveal = (image) => diffusion.reveal(image);
@@ -7283,7 +7296,7 @@ function createStreamingMessageUpdater(node) {
 
 async function persistInlineSessionState() {
   const title = String(settings.sessionTitle || settings.sessionId || 'Current Browser chat').slice(0, 160);
-  await chrome.storage.local.set({
+  await browserApi.storage.local.set({
     [INLINE_SESSION_STATE_KEY]: {
       sessionId: String(settings.sessionId || ''),
       title,
@@ -7302,7 +7315,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await chrome.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -7400,7 +7413,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   }
   applyAppearanceSettings();
   if (migrateConnectionSchema || migrateDesktopOptionDefaults || migrateModelOptionScope) {
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   }
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
   syncSettingsForm();
@@ -7544,7 +7557,7 @@ async function saveSettingsFromForm() {
   const consentIdentity = currentContextConsentIdentity(settings);
   if (consentIdentity && els.browserContextConsentInput && !els.browserContextConsentInput.disabled) {
     const ledger = await persistContextConsentDecision({
-      storageArea: chrome.storage.local,
+      storageArea: browserApi.storage.local,
       identity: consentIdentity,
       granted: els.browserContextConsentInput.checked,
     });
@@ -7565,7 +7578,7 @@ async function saveSettingsFromForm() {
   if (gatewayMode !== 'remote-dashboard' || !settings.trustedDashboardOrigin) {
     trustedDashboardTabId = null;
   }
-  const stored = await chrome.storage.local.get('hermesBrowserSettings');
+  const stored = await browserApi.storage.local.get('hermesBrowserSettings');
   const freshSettings = stored.hermesBrowserSettings || {};
   const panelSettings = { ...settings };
   for (const webAppearanceKey of ['webTextZoomPercent', 'webFontProfile', 'webCustomFontFamily', 'webTextSize']) {
@@ -7577,7 +7590,7 @@ async function saveSettingsFromForm() {
     panelAppearancePreferences(),
   );
   applyAppearanceSettings();
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
     || previousSettings.wakeWordBrowserFallback !== settings.wakeWordBrowserFallback
@@ -7593,7 +7606,7 @@ async function clearStoredToken() {
   const previousTransport = migrateConnectionSettings(settings).connectionTransport;
   const cleared = connectionSettingsAfterTokenClear(settings);
   settings = { ...settings, ...cleared };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   if (els.apiKeyInput) els.apiKeyInput.value = '';
   sessionRoutesAvailable = null;
   const dashboardFallback = settings.connectionTransport === CONNECTION_TRANSPORTS.REMOTE_DASHBOARD
@@ -7612,12 +7625,12 @@ async function clearStoredToken() {
 }
 
 async function activeTab() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
   return tab ? safeTab(tab) : null;
 }
 
 async function currentWindowTabs() {
-  const tabs = await chrome.tabs.query({ currentWindow: true });
+  const tabs = await browserApi.tabs.query({ currentWindow: true });
   return tabs.map(safeTab);
 }
 
@@ -7626,7 +7639,7 @@ async function tabsForCurrentScope() {
   if (contextScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB || contextScope.pinnedTabId === null) return tabs;
   if (tabs.some((tab) => Number(tab.id) === Number(contextScope.pinnedTabId))) return tabs;
   try {
-    const pinned = await chrome.tabs.get(Number(contextScope.pinnedTabId));
+    const pinned = await browserApi.tabs.get(Number(contextScope.pinnedTabId));
     return [safeTab(pinned), ...tabs.filter((tab) => Number(tab.id) !== Number(contextScope.pinnedTabId))];
   } catch {
     return tabs;
@@ -7634,7 +7647,7 @@ async function tabsForCurrentScope() {
 }
 
 function manifestContentScriptFiles() {
-  const scripts = chrome.runtime.getManifest()?.content_scripts?.flatMap((entry) => entry?.js || []) || [];
+  const scripts = browserApi.runtime.getManifest()?.content_scripts?.flatMap((entry) => entry?.js || []) || [];
   return scripts.length ? scripts : ['content-extractor.js', 'content.js'];
 }
 
@@ -7644,11 +7657,11 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
     ? { tabId, frameIds: [Number(frameId)] }
     : { tabId };
   try {
-    return await chrome.tabs.sendMessage(tabId, message, messageOptions);
+    return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
     try {
-      await chrome.scripting.executeScript({ target: scriptTarget, files: manifestContentScriptFiles() });
-      return await chrome.tabs.sendMessage(tabId, message, messageOptions);
+      await browserApi.scripting.executeScript({ target: scriptTarget, files: manifestContentScriptFiles() });
+      return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
     } catch (fallbackError) {
       if (fallbackError && typeof fallbackError === 'object' && !fallbackError.cause) fallbackError.cause = originalError;
       throw fallbackError;
@@ -7687,11 +7700,11 @@ async function getPageContextViaScripting(tabId, options, originalError) {
     const scriptTarget = Number(options?.frameId) > 0
       ? { tabId, frameIds: [Number(options.frameId)] }
       : { tabId };
-    await chrome.scripting.executeScript({
+    await browserApi.scripting.executeScript({
       target: scriptTarget,
       files: [extractorPath],
     });
-    const [injected] = await chrome.scripting.executeScript({
+    const [injected] = await browserApi.scripting.executeScript({
       target: scriptTarget,
       func: collectPageContextWithSharedExtractor,
       args: [options],
@@ -7739,7 +7752,7 @@ async function getPageContext(tab, options = {}) {
     frameId: Number(options.frameId || 0),
   };
   try {
-    const response = await chrome.tabs.sendMessage(
+    const response = await browserApi.tabs.sendMessage(
       tab.id,
       { type: 'HERMES_GET_PAGE_CONTEXT', options: requestOptions },
       requestOptions.frameId > 0 ? { frameId: requestOptions.frameId } : undefined,
@@ -7784,7 +7797,7 @@ async function getYoutubeTranscriptForTab(tab) {
   const provider = settings.transcriptProvider || DEFAULT_SETTINGS.transcriptProvider;
   if (!videoId || String(provider).trim().toLowerCase() === 'off') return null;
   try {
-    return await chrome.runtime.sendMessage({
+    return await browserApi.runtime.sendMessage({
       type: 'HERMES_GET_YOUTUBE_TRANSCRIPT',
       videoId,
       tabId: tab.id,
@@ -7814,7 +7827,7 @@ async function persistElementPickState({ tabId, url } = {}) {
   if (!next) return;
   applyElementPickState(next);
   try {
-    await chrome.storage?.session?.set?.({ [PICK_STATE_STORAGE_NAME]: next });
+    await browserApi.storage?.session?.set?.({ [PICK_STATE_STORAGE_NAME]: next });
   } catch (_error) {
     // Session storage is best-effort UI sync; the active panel still tracks state locally.
   }
@@ -7822,7 +7835,7 @@ async function persistElementPickState({ tabId, url } = {}) {
 
 async function loadElementPickState() {
   try {
-    const stored = await chrome.storage?.session?.get?.(PICK_STATE_STORAGE_NAME);
+    const stored = await browserApi.storage?.session?.get?.(PICK_STATE_STORAGE_NAME);
     applyElementPickState(stored?.[PICK_STATE_STORAGE_NAME] || null);
   } catch (_error) {
     applyElementPickState(null);
@@ -7833,7 +7846,7 @@ async function clearElementPickState({ tabId = null } = {}) {
   if (tabId && elementPickState?.tabId && !Object.is(Number(tabId), elementPickState.tabId)) return;
   applyElementPickState(null);
   try {
-    await chrome.storage?.session?.remove?.(PICK_STATE_STORAGE_NAME);
+    await browserApi.storage?.session?.remove?.(PICK_STATE_STORAGE_NAME);
   } catch (_error) {
     // Session storage is best-effort UI sync; the active panel still clears locally.
   }
@@ -7846,7 +7859,7 @@ function elementPickActiveForTab(tab = currentContext?.activeTab) {
   return !elementPickState.url || !currentUrl || elementPickState.url === currentUrl;
 }
 
-function isChromeSessionStorageArea(areaName = '') {
+function isSessionStorageArea(areaName = '') {
   return ['session'].includes(areaName);
 }
 
@@ -7917,7 +7930,7 @@ async function startElementPick() {
   }
   try {
     if (elementPickActiveForTab(tab)) {
-      await chrome.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
+      await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
       await clearElementPickState({ tabId: tab.id });
       setStatus('ok', 'Element pick cancelled', '');
       return;
@@ -8085,7 +8098,7 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
     const compactedSessionId = String(payload?.rotated_session_id || payload?.session_id || '').trim();
     if (compactedSessionId && compactedSessionId !== settings.sessionId) {
       settings = { ...settings, sessionId: compactedSessionId };
-      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     }
     if (payload && typeof payload === 'object') {
       applySessionRuntimeSnapshot({
@@ -8438,7 +8451,7 @@ function applyTurnRuntimePayload(payload = {}) {
 async function requestDashboardOriginTrust(baseUrl) {
   const origin = originOf(baseUrl);
   if (!origin) throw new Error('Set a remote https gateway URL without embedded credentials before connecting.');
-  const tab = await findDashboardTab(chrome.tabs, origin);
+  const tab = await findDashboardTab(browserApi.tabs, origin);
   if (!tab?.id) {
     const error = new Error(ticketFailureHelp('no_dashboard_tab', origin));
     error.ticketReason = 'no_dashboard_tab';
@@ -8447,7 +8460,7 @@ async function requestDashboardOriginTrust(baseUrl) {
   if (isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
     trustedDashboardTabId = tab.id;
     settings = { ...settings, trustedDashboardTabId: tab.id };
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     return origin;
   }
   const approved = globalThis.confirm?.(dashboardTrustPrompt(origin)) === true;
@@ -8458,7 +8471,7 @@ async function requestDashboardOriginTrust(baseUrl) {
   }
   trustedDashboardTabId = tab.id;
   settings = { ...settings, trustedDashboardOrigin: origin, trustedDashboardTabId: tab.id };
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   return origin;
 }
 
@@ -8488,8 +8501,8 @@ async function ensureRemoteWsClient() {
   remoteWsConnection = null;
 
   const ticket = await mintWsTicket({
-    tabsApi: chrome.tabs,
-    scriptingApi: chrome.scripting,
+    tabsApi: browserApi.tabs,
+    scriptingApi: browserApi.scripting,
     baseUrl,
     tabId: trustedDashboardTabId,
   });
@@ -8598,7 +8611,7 @@ async function ensureRemoteWsSession(connection) {
   } catch (error) {
     console.warn('[Hermes] Cloud runtime metadata was not acknowledged:', error?.message || error);
   }
-  await chrome.storage.local.set({ hermesBrowserSettings: settings });
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   await activateCurrentDelegationSession();
   updateSessionLabel();
   return liveId;
@@ -8807,7 +8820,7 @@ async function recoverAcceptedTurn(prompt, turnAttachments = attachments, { atte
 async function openApprovalUrl(url) {
   if (!url) return;
   try {
-    await chrome.tabs.create({ url });
+    await browserApi.tabs.create({ url });
   } catch {
     window.open(url, '_blank', 'noopener,noreferrer');
   }
@@ -8839,19 +8852,19 @@ async function connectTicketTransport({ cloud = false } = {}) {
       const rememberedOrigin = String(settings.trustedDashboardOrigin || '').trim();
       let selected = Number.isFinite(rememberedTabId) && rememberedTabId > 0 && rememberedOrigin
         ? await assertCloudAgentTabStillMatches({
-          tabsApi: chrome.tabs,
+          tabsApi: browserApi.tabs,
           tabId: rememberedTabId,
           expectedOrigin: rememberedOrigin,
         }).catch(() => null)
         : null;
       const reusingTrustedTab = Boolean(selected);
-      selected ||= await resolveActiveCloudAgentTab({ tabsApi: chrome.tabs });
+      selected ||= await resolveActiveCloudAgentTab({ tabsApi: browserApi.tabs });
       if (!connectionController.isCurrent(generation)) return;
       if (!reusingTrustedTab) {
         const approved = globalThis.confirm?.(dashboardTrustPrompt(selected.origin)) === true;
         if (!approved) throw new Error('Hermes Cloud connection was cancelled before ticket minting.');
       }
-      await assertCloudAgentTabStillMatches({ tabsApi: chrome.tabs, tabId: selected.tabId, expectedOrigin: selected.origin });
+      await assertCloudAgentTabStillMatches({ tabsApi: browserApi.tabs, tabId: selected.tabId, expectedOrigin: selected.origin });
       if (!connectionController.isCurrent(generation)) return;
       trustedDashboardTabId = selected.tabId;
       settings = {
@@ -8877,7 +8890,7 @@ async function connectTicketTransport({ cloud = false } = {}) {
       };
     }
 
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     syncSettingsForm();
     const readiness = await runPanelConnectionReadiness({ restoreSettings: false });
     if (!connectionController.isCurrent(generation)) return;
@@ -8955,7 +8968,7 @@ async function connectApiWithPairing() {
       method: 'POST',
       body: JSON.stringify({
         name: 'Hermes Browser Extension',
-        extensionId: chrome.runtime?.id || '',
+        extensionId: browserApi.runtime?.id || '',
       }),
     });
     const payload = await readJsonResponse(start);
@@ -8973,7 +8986,7 @@ async function connectApiWithPairing() {
 
     settings.tokenSource = 'pairing';
     settings.lastConnectionTestedAt = Date.now();
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     syncSettingsForm();
     updateConnectionPrompt();
     await loadGatewayCapabilities({ quiet: true, healthOk: true });
@@ -9390,7 +9403,7 @@ function inlineDraftPageKey(value = '') {
 async function sendInlineDraftResult(request, payload = {}) {
   if (!Number.isFinite(Number(request?.tabId))) return false;
   try {
-    await chrome.tabs.sendMessage(Number(request.tabId), {
+    await browserApi.tabs.sendMessage(Number(request.tabId), {
       type: 'HERMES_INLINE_DRAFT_RESULT',
       requestId: request.requestId,
       documentId: request.documentId,
@@ -9570,7 +9583,7 @@ async function processInlineDraftRequest(rawRequest) {
   const tabId = Number(rawRequest?.tabId);
   const expiresAt = Number(rawRequest?.expiresAt);
   if (!request || !Number.isFinite(tabId) || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
-    await chrome.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
     return false;
   }
   if (isAttachedPanelResidency() && Number(sidePanelParams.tabId) !== tabId) return false;
@@ -9578,15 +9591,15 @@ async function processInlineDraftRequest(rawRequest) {
     globalThis.setTimeout(() => consumePendingInlineDraftRequest(), 750);
     return false;
   }
-  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  const tab = await browserApi.tabs.get(tabId).catch(() => null);
   if (!tab || inlineDraftPageKey(tab.url || tab.pendingUrl) !== inlineDraftPageKey(request.pageUrl)) {
-    await chrome.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+    await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
     await sendInlineDraftResult({ ...request, tabId }, { ok: false, reason: 'The originating page changed before Hermes could draft.' });
     return false;
   }
 
   inlineDraftProcessing = true;
-  await chrome.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
+  await browserApi.storage.session.remove(INLINE_DRAFT_STORAGE_KEY);
   let resultSent = false;
   try {
     if (request.route === INLINE_DRAFT_ROUTES.BACKGROUND) {
@@ -9655,8 +9668,8 @@ async function processInlineDraftRequest(rawRequest) {
 }
 
 async function consumePendingInlineDraftRequest() {
-  if (!chrome.storage?.session || inlineDraftProcessing) return false;
-  const stored = await chrome.storage.session.get(INLINE_DRAFT_STORAGE_KEY);
+  if (!browserApi.storage?.session || inlineDraftProcessing) return false;
+  const stored = await browserApi.storage.session.get(INLINE_DRAFT_STORAGE_KEY);
   return processInlineDraftRequest(stored?.[INLINE_DRAFT_STORAGE_KEY]);
 }
 
@@ -9690,7 +9703,7 @@ function contextMenuTurnForEffectiveContext(turn, source = settings) {
 async function prepareContextMenuTurn(rawRequest) {
   const request = normalizeContextMenuRequest(rawRequest);
   if (!request) return null;
-  const tab = await chrome.tabs.get(request.tabId).catch(() => null);
+  const tab = await browserApi.tabs.get(request.tabId).catch(() => null);
   if (!tab || !await contextMenuRequestMatchesTab(request, tab)) return null;
   const initialTurn = await buildContextMenuTurn({ request, tab });
   if (!initialTurn) return null;
@@ -9783,14 +9796,14 @@ async function handleContextMenuRouteChoice(event) {
   if (els.contextMenuRememberRoute?.checked) {
     settings.contextMenuDefaultRoute = route;
     if (els.contextMenuDefaultRoute) els.contextMenuDefaultRoute.value = route;
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   }
   await executeContextMenuRequest(request, route);
 }
 
 async function consumePendingContextMenuRequest() {
-  if (!chrome.runtime?.sendMessage) return false;
-  const claim = await chrome.runtime.sendMessage({
+  if (!browserApi.runtime?.sendMessage) return false;
+  const claim = await browserApi.runtime.sendMessage({
     type: CONTEXT_MENU_REQUEST_CLAIM,
     sourceTabId: isAttachedPanelResidency() ? Number(sidePanelParams.tabId) : null,
   }).catch(() => null);
@@ -9808,11 +9821,11 @@ async function consumePendingContextMenuRequest() {
 }
 
 async function consumePendingOpenSessionRequest() {
-  if (!chrome.storage?.session) return false;
-  const stored = await chrome.storage.session.get(OPEN_SESSION_STORAGE_KEY);
+  if (!browserApi.storage?.session) return false;
+  const stored = await browserApi.storage.session.get(OPEN_SESSION_STORAGE_KEY);
   const request = stored?.[OPEN_SESSION_STORAGE_KEY];
   if (!request) return false;
-  await chrome.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
+  await browserApi.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
   if (Number(request.expiresAt || 0) <= Date.now()) return false;
   const sessionId = String(request.sessionId || '').trim();
   if (!sessionId) return false;
@@ -9914,7 +9927,7 @@ async function testConnection() {
       renderRemoteDiagnostics(null);
       setStatus('ok', 'Remote Hermes dashboard connected', `${normalizeGatewayUrl(settings.gatewayUrl)}${modelNote}`);
       settings = { ...settings, lastConnectionTestedAt: Date.now() };
-      await chrome.storage.local.set({ hermesBrowserSettings: settings });
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
       renderConnectionSecurity();
       ok = true;
       return;
@@ -9985,7 +9998,7 @@ async function testConnection() {
     }
 
     settings = { ...settings, lastConnectionTestedAt: Date.now() };
-    await chrome.storage.local.set({ hermesBrowserSettings: settings });
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     renderConnectionSecurity();
 
     ok = true;
@@ -10217,7 +10230,7 @@ function bindEvents() {
   els.stopButton?.addEventListener('click', stopCurrentTurn);
   els.retryRunStatusButton?.addEventListener('click', () => { void retryActiveRunTerminalStatus(); });
   els.discardHeldQueueButton?.addEventListener('click', discardHeldQueuedTurn);
-  chrome.runtime.onMessage.addListener((message, sender) => {
+  browserApi.runtime.onMessage.addListener((message, sender) => {
     if (message?.type === ELEMENT_PICK_MESSAGES.RESULT) {
       applyPickedElementResult(message, sender);
       return;
@@ -10227,7 +10240,7 @@ function bindEvents() {
       setStatus('ok', 'Element pick cancelled', '');
     }
   });
-  chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
+  browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     if (areaName === 'local' && changes?.[TASK_STACKS_STORAGE_KEY]) {
       taskStackStore = changes[TASK_STACKS_STORAGE_KEY].newValue && typeof changes[TASK_STACKS_STORAGE_KEY].newValue === 'object'
         ? changes[TASK_STACKS_STORAGE_KEY].newValue
@@ -10235,7 +10248,7 @@ function bindEvents() {
       renderTaskStack();
       return;
     }
-    if (!isChromeSessionStorageArea(areaName)) return;
+    if (!isSessionStorageArea(areaName)) return;
     const inlineDraftChange = changes?.[INLINE_DRAFT_STORAGE_KEY];
     if (inlineDraftChange?.newValue) {
       processInlineDraftRequest(inlineDraftChange.newValue).catch((error) => {
@@ -10251,10 +10264,10 @@ function bindEvents() {
     const pickStateChange = changes?.[PICK_STATE_STORAGE_NAME];
     if (pickStateChange) applyElementPickState(pickStateChange.newValue || null);
   });
-  chrome.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
+  browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
     if (changeInfo?.url) clearPickedElementForTab(tabId, { silent: true });
   });
-  chrome.tabs?.onRemoved?.addListener?.((tabId) => {
+  browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
     clearPickedElementForTab(tabId, { silent: true });
   });
   els.queueButton?.addEventListener('click', queueCurrentDraft);
@@ -10350,7 +10363,7 @@ function bindEvents() {
       if (effort) settings.inlineAssistReasoningEffort = normalizeReasoningEffort(effort.dataset.effort);
       if (!toggle && !effort) return;
       renderModelRuntimeOptions();
-      chrome.storage.local.set({ hermesBrowserSettings: settings });
+      browserApi.storage.local.set({ hermesBrowserSettings: settings });
       return;
     }
     if (toggle) {
@@ -10548,7 +10561,7 @@ function bindEvents() {
     const button = event.target.closest('[data-marketplace-install]');
     if (button) void installMarketplaceTheme(button.dataset.marketplaceInstall);
   });
-  chrome.storage.onChanged.addListener((changes, areaName) => {
+  browserApi.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
     if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {
@@ -10746,17 +10759,17 @@ function bindEvents() {
       renderContextScopeControls();
     }
   });
-  chrome.tabs?.onActivated?.addListener?.((activeInfo) => {
+  browserApi.tabs?.onActivated?.addListener?.((activeInfo) => {
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'activated', eventTabId: activeInfo?.tabId })) refreshContext();
   });
-  chrome.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
+  browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
     if (!(changeInfo.status === 'complete' || changeInfo.title || changeInfo.url)) return;
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'updated', eventTabId: tabId })) refreshContext();
   });
-  chrome.tabs?.onRemoved?.addListener?.((tabId) => {
+  browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'removed', eventTabId: tabId })) refreshContext();
   });
-  chrome.runtime?.onMessage?.addListener?.((message, _sender, sendResponse) => {
+  browserApi.runtime?.onMessage?.addListener?.((message, _sender, sendResponse) => {
     if (message?.type === WAKE_MESSAGES.localState) {
       renderWakeState(message);
       sendResponse?.({ ok: true });
@@ -10780,7 +10793,7 @@ function bindEvents() {
     }
     return false;
   });
-  chrome.storage?.onChanged?.addListener?.((changes, areaName) => {
+  browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     if (areaName !== 'local') return;
     if (changes?.[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
     if (changes?.[WAKE_STORAGE_KEYS.turn]?.newValue) {

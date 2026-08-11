@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "माइक्रोफ़ोन अनुमति स्थिति: {state}. यदि Chromium इसे अवरुद्ध के रूप में दिखाता है, तो माइक्रोफ़ोन सेटिंग्स खोलें और माइक्रोफ़ोन को Hermes Browser Extension के लिए अनुमति दें पर सेट करें।",
+    "message": "माइक्रोफ़ोन अनुमति स्थिति: {state}. यदि आपका ब्राउज़र इसे अवरुद्ध दिखाता है, तो माइक्रोफ़ोन सेटिंग खोलें और माइक्रोफ़ोन को Hermes Browser Extension के लिए अनुमति दें पर सेट करें।",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "हमेशा ऑन ब्राउज़र वेक लिसनिंग के लिए Chromium ऑफस्क्रीन-डॉक्यूमेंट समर्थन की आवश्यकता होती है।",
+    "message": "हमेशा ऑन ब्राउज़र वेक लिसनिंग के लिए ऑफस्क्रीन-डॉक्यूमेंट समर्थन की आवश्यकता होती है।",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome एक्सटेंशन साइड पैनल के अंदर माइक्रोफ़ोन संकेतों को दबा सकता है। यह अस्थायी एक्सटेंशन पृष्ठ माइक्रोफ़ोन एक्सेस के लिए Chrome पूछता है, फिर आपको Hermes साइड पैनल पर वापस भेजता है।",
+    "message": "कुछ ब्राउज़र एक्सटेंशन साइडबार के अंदर माइक्रोफ़ोन संकेतों को दबा देते हैं। यह अस्थायी एक्सटेंशन पृष्ठ आपके ब्राउज़र से माइक्रोफ़ोन एक्सेस मांगता है, फिर आपको Hermes पर वापस भेजता है।",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium एक्सटेंशन साइड पैनल के अंदर माइक्रोफ़ोन कैप्चर को ब्लॉक कर सकता है। यह दृश्यमान एक्सटेंशन टैब उसी Hermes एक्सटेंशन मूल से रिकॉर्ड करता है जब Hermes STT उपलब्ध होता है, या जब कनेक्टेड रनटाइम ऑडियो ट्रांसक्रिप्शन को उजागर नहीं करता है तो ब्राउज़र स्पीच फ़ॉलबैक का उपयोग करता है।",
+    "message": "कुछ ब्राउज़र एक्सटेंशन साइडबार के अंदर माइक्रोफ़ोन कैप्चर को ब्लॉक कर देते हैं। यह दृश्यमान एक्सटेंशन टैब उसी Hermes एक्सटेंशन मूल से रिकॉर्ड करता है जब Hermes STT उपलब्ध होता है, या जब कनेक्टेड रनटाइम ऑडियो ट्रांसक्रिप्शन को उजागर नहीं करता है तो ब्राउज़र स्पीच फ़ॉलबैक का उपयोग करता है।",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "एक्सेस का अनुरोध करने के लिए माइक्रोफ़ोन को अनुमति दें पर क्लिक करें। Chromium के लिए यह अनुरोध दृश्य विस्तार पृष्ठ से होना आवश्यक है।",
+    "message": "एक्सेस का अनुरोध करने के लिए माइक्रोफ़ोन को अनुमति दें पर क्लिक करें। आपके ब्राउज़र को दृश्यमान एक्सटेंशन पृष्ठ से इस अनुरोध की आवश्यकता हो सकती है।",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "Chromium माइक्रोफ़ोन अनुमति संकेत खुल रहा है…",
+    "message": "ब्राउज़र माइक्रोफ़ोन अनुमति प्रॉम्प्ट खोला जा रहा है...",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "स्थानीय स्तर पर Hermes' नेटिव वेक इंजन को प्राथमिकता देता है और क्लाउड पूर्वावलोकन के लिए Chromium ऑन-डिवाइस स्पीच का उपयोग करता है।",
+    "message": "स्थानीय रूप से Hermes 'नेटिव वेक इंजन को प्राथमिकता देता है और Cloud Preview के लिए डिवाइस पर उपलब्ध ब्राउज़र स्पीच का उपयोग करता है।",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "यह Chromium ब्राउज़र MediaRecorder/getUserMedia को एक्सटेंशन पृष्ठों पर उजागर नहीं करता है, और Web Speech फ़ॉलबैक अनुपलब्ध है।",
+    "message": "यह ब्राउज़र MediaRecorder/getUserMedia को एक्सटेंशन पृष्ठों पर उजागर नहीं करता है, और Web Speech फ़ॉलबैक अनुपलब्ध है।",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

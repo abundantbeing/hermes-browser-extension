@@ -60,8 +60,8 @@ test('Chromium and repository-root manifests load the extractor before the conte
   const extensionManifest = await jsonFile('extension/manifest.json');
   const rootManifest = await jsonFile('manifest.json');
 
-  assert.deepEqual(extensionManifest.content_scripts[0].js.slice(0, 2), ['content-extractor.js', 'content.js']);
-  assert.deepEqual(rootManifest.content_scripts[0].js.slice(0, 2), ['extension/content-extractor.js', 'extension/content.js']);
+  assert.deepEqual(extensionManifest.content_scripts[0].js.slice(1, 3), ['content-extractor.js', 'content.js']);
+  assert.deepEqual(rootManifest.content_scripts[0].js.slice(1, 3), ['extension/content-extractor.js', 'extension/content.js']);
 });
 
 test('build scripts generate the classic runtime before copying extension files', async () => {

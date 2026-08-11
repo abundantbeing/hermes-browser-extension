@@ -696,7 +696,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Status izin mikrofon: {state}. Jika Chromium menunjukkan ini diblokir, buka pengaturan mikrofon dan atur Mikrofon ke Izinkan untuk Hermes Browser Extension.",
+    "message": "Status izin mikrofon: {state}. Jika browser Anda menampilkan ini sebagai diblokir, buka pengaturan mikrofon dan setel Mikrofon ke Izinkan untuk Hermes Browser Extension .",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -976,7 +976,7 @@
     "description": "Runtime interface message ui.always"
   },
   "runtime_ui_always_on_browser_wake_listening_requires_chromium_offscreen_do_3c68b702": {
-    "message": "Mendengarkan browser saat bangun tidur yang selalu aktif memerlukan Chromium dukungan dokumen di luar layar.",
+    "message": "Mendengarkan browser saat bangun tidur yang selalu aktif memerlukan dukungan dokumen di luar layar.",
     "description": "Runtime interface message ui.always.on.browser.wake.listening.requires.chromium.offscreen.do.3c68b702"
   },
   "runtime_ui_answer": {
@@ -1376,11 +1376,11 @@
     "description": "Runtime interface message ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt"
   },
   "runtime_ui_chrome_can_suppress_microphone_prompts_inside_extension_side_pa_79f6cc35": {
-    "message": "Chrome dapat menyembunyikan perintah mikrofon di dalam panel samping ekstensi. Laman ekstensi sementara ini meminta Chrome untuk akses mikrofon, lalu mengarahkan Anda kembali ke panel samping Hermes.",
+    "message": "Beberapa browser menyembunyikan perintah mikrofon di dalam sidebar ekstensi. Laman ekstensi sementara ini meminta akses mikrofon pada browser Anda, lalu mengirim Anda kembali ke Hermes .",
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Chromium dapat memblokir pengambilan mikrofon di dalam panel samping ekstensi. Tab ekstensi yang terlihat ini merekam dari asal ekstensi Hermes yang sama ketika Hermes STT tersedia, atau menggunakan penggantian ucapan Browser ketika runtime yang terhubung tidak menampilkan transkripsi audio.",
+    "message": "Beberapa browser memblokir pengambilan mikrofon di dalam sidebar ekstensi. Tab ekstensi yang terlihat ini merekam dari asal ekstensi Hermes yang sama ketika Hermes STT tersedia, atau menggunakan penggantian ucapan browser ketika runtime yang terhubung tidak mengekspos transkripsi audio.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -1404,7 +1404,7 @@
     "description": "Runtime interface message ui.cli"
   },
   "runtime_ui_click_allow_microphone_to_request_access_chromium_requires_this_275e9aeb": {
-    "message": "Klik Izinkan mikrofon untuk meminta akses. Chromium mengharuskan permintaan ini dilakukan dari halaman ekstensi yang terlihat.",
+    "message": "Klik Izinkan mikrofon untuk meminta akses. Browser Anda mungkin memerlukan permintaan ini dari halaman ekstensi yang terlihat.",
     "description": "Runtime interface message ui.click.allow.microphone.to.request.access.chromium.requires.this.275e9aeb"
   },
   "runtime_ui_click_any_element_on_the_page_press_esc_to_cancel": {
@@ -3296,7 +3296,7 @@
     "description": "Runtime interface message ui.opened.directly.in.full.view"
   },
   "runtime_ui_opening_chromium_microphone_permission_prompt": {
-    "message": "Membuka perintah izin mikrofon Chromium…",
+    "message": "Membuka perintah izin mikrofon browser…",
     "description": "Runtime interface message ui.opening.chromium.microphone.permission.prompt"
   },
   "runtime_ui_opening_session": {
@@ -3436,7 +3436,7 @@
     "description": "Runtime interface message ui.preferences"
   },
   "runtime_ui_prefers_hermes_native_wake_engine_locally_and_uses_chromium_on_42c1439e": {
-    "message": "Lebih menyukai mesin bangun asli Hermes' secara lokal dan menggunakan Chromium ucapan di perangkat untuk Pratinjau Cloud.",
+    "message": "Lebih menyukai mesin bangun asli Hermes secara lokal dan menggunakan ucapan browser di perangkat yang tersedia untuk Cloud Preview .",
     "description": "Runtime interface message ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e"
   },
   "runtime_ui_preparing_on_device_dictation": {
@@ -4356,7 +4356,7 @@
     "description": "Runtime interface message ui.this.browser.does.not.expose.on.device.speech.recognition"
   },
   "runtime_ui_this_chromium_browser_does_not_expose_mediarecorder_getusermedi_936d7f71": {
-    "message": "Browser Chromium ini tidak mengekspos MediaRecorder/getUserMedia ke halaman ekstensi, dan Web Speech fallback tidak tersedia.",
+    "message": "Browser ini tidak mengekspos MediaRecorder/getUserMedia ke halaman ekstensi, dan cadangan Web Speech tidak tersedia.",
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {

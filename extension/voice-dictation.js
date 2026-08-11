@@ -16,7 +16,17 @@ import {
   dashboardModelDiscoveryBaseUrl,
   transcribeAudioViaDashboard,
 } from './lib/model-discovery.mjs';
+import { getBrowserApi } from './lib/browser-api.mjs';
+import { browserMicrophoneSettingsUrl, detectBrowserProduct } from './lib/browser-runtime.mjs';
 
+const browserApi = getBrowserApi();
+const extensionUrl = browserApi?.runtime?.getURL?.('/') || '';
+const browserProduct = detectBrowserProduct({
+  userAgent: navigator.userAgent,
+  brands: navigator.userAgentData?.brands,
+  braveApi: navigator.brave,
+  extensionUrl,
+});
 const startButton = document.getElementById('startVoiceButton');
 const settingsButton = document.getElementById('openMicSettingsButton');
 const closeButton = document.getElementById('closeVoiceButton');
@@ -56,14 +66,17 @@ function setRecording(value, label = '') {
 }
 
 function microphoneSettingsUrl() {
-  const site = encodeURIComponent(`chrome-extension://${chrome.runtime.id}/`);
-  return `chrome://settings/content/siteDetails?site=${site}`;
+  return browserMicrophoneSettingsUrl({ product: browserProduct, extensionUrl });
 }
 
 async function openMicrophoneSettings() {
   const url = microphoneSettingsUrl();
+  if (!url) {
+    setStatus(t('permissions.state', { state: 'blocked' }));
+    return;
+  }
   try {
-    await chrome.tabs.create({ url, active: true });
+    await browserApi.tabs.create({ url, active: true });
   } catch {
     window.open(url, '_blank', 'noopener,noreferrer');
   }
@@ -112,7 +125,7 @@ function blobToDataUrl(blob) {
 }
 
 async function loadSettings() {
-  const storage = globalThis.chrome?.storage?.local;
+  const storage = browserApi?.storage?.local;
   if (!storage?.get) return false;
   const stored = await storage.get(['hermesBrowserSettings']);
   settings = { ...DEFAULT_SETTINGS, ...(stored.hermesBrowserSettings || {}) };
@@ -217,9 +230,9 @@ async function publishTranscript(transcript, source = 'voice-dictation-page') {
     source,
     ts: Date.now(),
   };
-  await chrome.storage.local.set({ [VOICE_DRAFT_STORAGE_KEY]: payload });
+  await browserApi.storage.local.set({ [VOICE_DRAFT_STORAGE_KEY]: payload });
   try {
-    await chrome.runtime.sendMessage(payload);
+    await browserApi.runtime.sendMessage(payload);
   } catch {
     // Storage is the durable cross-surface return path; runtime messaging is an immediate optimization.
   }
@@ -393,7 +406,7 @@ async function startBestVoiceMode() {
   }
   if (await startBrowserSpeechFallback()) return;
   if (!settings.apiKey) {
-    setStatus('Voice mode unavailable. Connect Hermes for STT, or use a Chromium build that supports browser speech fallback.');
+    setStatus('Voice mode unavailable. Connect Hermes for STT, or use a browser build that supports speech fallback.');
   } else {
     setStatus('Voice mode unavailable. This Hermes runtime has no audio transcription route and this browser exposes no Web Speech fallback.');
   }
@@ -423,7 +436,7 @@ try {
     setStatus('Voice mode: Browser speech fallback\n\nHermes STT is unavailable on this gateway. Speech recognition runs in the browser; only the transcript is sent back to the side panel.');
   } else if (!canRecordVoiceAudio()) {
     startButton.disabled = true;
-    setStatus('This Chromium browser does not expose MediaRecorder/getUserMedia to extension pages, and Web Speech fallback is unavailable.');
+    setStatus('This browser does not expose MediaRecorder/getUserMedia to extension pages, and Web Speech fallback is unavailable.');
   } else if (!settings.apiKey) {
     setStatus('Hermes is not connected yet. Browser speech fallback is unavailable here; connect the side panel to Hermes, then use voice dictation.');
   }

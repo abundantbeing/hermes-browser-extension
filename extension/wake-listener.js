@@ -5,7 +5,9 @@ import {
   WAKE_MESSAGES,
   normalizeWakePhrase,
 } from './lib/wake-word.mjs';
+import { getBrowserApi } from './lib/browser-api.mjs';
 
+const browserApi = getBrowserApi();
 const Recognition = globalThis.SpeechRecognition || globalThis.webkitSpeechRecognition || null;
 let recognition = null;
 let processor = createWakeTranscriptProcessor();
@@ -17,7 +19,7 @@ let language = 'en-US';
 const LOCAL_PREPARE_TIMEOUT_MS = 90_000;
 
 function sendState(state, detail = '', extra = {}) {
-  return chrome.runtime.sendMessage({
+  return browserApi.runtime.sendMessage({
     type: WAKE_MESSAGES.localState,
     state,
     detail: String(detail || ''),
@@ -79,7 +81,7 @@ async function startRecognition() {
     await sendState(
       'unavailable',
       prepared.availability === 'timeout'
-        ? 'The local speech language pack did not become ready in 90 seconds. Retry the ear after Chrome finishes installing speech support.'
+        ? 'The local speech language pack did not become ready in 90 seconds. Retry the ear after your browser finishes installing speech support.'
         : prepared.availability === 'unsupported'
         ? 'On-device speech recognition is unavailable in this browser.'
         : 'The local speech language pack is unavailable. Wake listening will not use cloud recognition.',
@@ -102,7 +104,7 @@ async function startRecognition() {
         paused = true;
         processor.pause();
         stopRecognition();
-        chrome.runtime.sendMessage({
+        browserApi.runtime.sendMessage({
           type: WAKE_MESSAGES.localDetected,
           text: action.command,
           createdAt: Date.now(),
@@ -194,7 +196,7 @@ async function speak(text = '') {
   });
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+browserApi.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const task = message?.type === WAKE_MESSAGES.configure
     ? configure(message)
     : message?.type === WAKE_MESSAGES.pauseLocal

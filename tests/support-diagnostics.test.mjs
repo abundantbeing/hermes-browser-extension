@@ -20,6 +20,28 @@ test('buildSupportDiagnostics creates a public-safe copy block without secrets o
       dirty: false,
     },
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150.0.0.0 Safari/537.36',
+    browserProduct: {
+      id: 'chromium',
+      label: 'Chromium browser',
+      engine: 'chromium',
+      confidence: 'masked',
+      source: 'engine-only',
+    },
+    browserCapabilities: {
+      panelHost: 'side-panel',
+      apis: {
+        sidePanel: true,
+        sidebarAction: false,
+        scripting: true,
+        debugger: true,
+      },
+    },
+    controllerAdapter: {
+      id: 'chromium-cdp',
+      enabled: false,
+      actions: [],
+      reason: 'Browser control is disabled in Phase 3 while the adapter contract is established.',
+    },
     platform: 'Win32',
     settings: {
       gatewayMode: 'remote-api',
@@ -72,7 +94,12 @@ test('buildSupportDiagnostics creates a public-safe copy block without secrets o
   assert.match(diagnostics.markdown, /Hermes Browser Diagnostics/);
   assert.match(diagnostics.markdown, /Extension version: 0\.1\.9/);
   assert.match(diagnostics.markdown, /Extension origin: chrome-extension:\/\/abc123/);
-  assert.match(diagnostics.markdown, /Browser family: Chrome/);
+  assert.match(diagnostics.markdown, /Browser product: Chromium browser/);
+  assert.match(diagnostics.markdown, /Browser engine: chromium/);
+  assert.match(diagnostics.markdown, /Product identity: masked via engine-only/);
+  assert.match(diagnostics.markdown, /Panel host: side-panel/);
+  assert.match(diagnostics.markdown, /Side panel API: available/);
+  assert.match(diagnostics.markdown, /Controller adapter: chromium-cdp \(disabled\)/);
   assert.match(diagnostics.markdown, /Gateway URL origin: https:\/\/agent\.example\.com:8642/);
   assert.match(diagnostics.markdown, /Connection state: degraded/);
   assert.match(diagnostics.markdown, /Companion plugin: missing/);
@@ -112,10 +139,10 @@ test('redactExtensionOrigin returns only extension scheme and id', () => {
 });
 
 test('browserFamilyFromUserAgent recognizes Chromium-family support targets', () => {
-  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 Chrome/150.0.0.0 Safari/537.36'), 'Chrome');
-  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 Edg/150.0.0.0 Chrome/150.0.0.0'), 'Edge');
-  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 OPR/120.0.0.0 Chrome/120.0.0.0'), 'Opera');
-  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 Firefox/140.0'), 'Firefox (unsupported preview)');
+  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 Chrome/150.0.0.0 Safari/537.36'), 'Chromium browser');
+  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 Edg/150.0.0.0 Chrome/150.0.0.0'), 'Microsoft Edge');
+  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 OPR/120.0.0.0 Chrome/120.0.0.0'), 'Opera / Opera GX');
+  assert.equal(browserFamilyFromUserAgent('Mozilla/5.0 Firefox/140.0'), 'Firefox');
 });
 
 test('sidepanel exposes Copy Diagnostics support controls without raw diagnostics markup', () => {
