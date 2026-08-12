@@ -90,6 +90,31 @@ export async function mintTicketInPage(ticketUrl) {
       return { ok: false, reason: 'not_signed_in', status: response.status };
     }
     if (!response.ok) {
+      if (response.status >= 400 && response.status < 500) {
+        // The gate answers 401/403 for a dead session, so a 4xx here means
+        // the signed-in tab's session hit a server-side rejection (e.g. a
+        // stale rotating refresh token after days of inactivity). Re-probe
+        // identity so the caller gets a recoverable reason instead of a raw
+        // HTTP code.
+        const body = await response.json().catch(() => null);
+        let reprobe = null;
+        try {
+          const reprobeUrl = new URL(String(ticketUrl || ''));
+          reprobeUrl.pathname = reprobeUrl.pathname.replace(/\/api\/auth\/ws-ticket$/, '/api/auth/me');
+          reprobe = await fetch(reprobeUrl.toString(), { method: 'GET', ...requestOptions });
+        } catch {
+          reprobe = null;
+        }
+        if (reprobe && (reprobe.status === 401 || reprobe.status === 403)) {
+          return { ok: false, reason: 'not_signed_in', status: reprobe.status };
+        }
+        return {
+          ok: false,
+          reason: 'ticket_endpoint_rejected',
+          status: response.status,
+          detail: String(body?.detail || body?.error || ''),
+        };
+      }
       return { ok: false, reason: `ticket_http_${response.status}`, status: response.status };
     }
     const data = await response.json().catch(() => null);
@@ -233,7 +258,12 @@ export function ticketFailureHelp(reason = '', origin = '') {
       return 'The active dashboard tab changed while connecting. Return to the signed-in dashboard tab and try again.';
     case 'account_identity_changed':
       return 'The signed-in dashboard account changed while connecting. Confirm the intended account, then try again.';
+    case 'ticket_endpoint_rejected':
+      return 'The dashboard rejected the ticket request with a stale session. Hard-reload the dashboard tab (Ctrl+Shift+R), sign in again if asked, then try connecting again.';
     default:
+      if (/^ticket_http_4\d\d$/.test(String(reason || ''))) {
+        return 'The dashboard rejected the ticket request. Hard-reload the dashboard tab (Ctrl+Shift+R), sign in again if asked, then try connecting again.';
+      }
       return `Could not get a dashboard WebSocket ticket (${reason || 'unknown'}).`;
   }
 }

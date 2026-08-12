@@ -263,10 +263,61 @@ test('mintWsTicket discards a ticket when the selected dashboard tab navigates',
   assert.equal(JSON.stringify(result).includes('MUST_NOT_ESCAPE'), false);
 });
 
+test('mintTicketInPage classifies a 4xx mint rejection by re-probing sign-in state', async () => {
+  const original = globalThis.fetch;
+  try {
+    // Signed-in identity but the ticket endpoint rejects with 400 (stale
+    // session rotation on the server): must NOT surface as raw
+    // ticket_http_400 — the caller needs the recoverable reason.
+    globalThis.fetch = async (url) => {
+      if (String(url).endsWith('/api/auth/me')) {
+        return { ok: true, status: 200, json: async () => ({ user_id: 'u1', provider: 'nous', org_id: '' }) };
+      }
+      return { ok: false, status: 400, json: async () => ({ detail: 'stale rotation' }) };
+    };
+    const rejected = await mintTicketInPage('https://h/api/auth/ws-ticket');
+    assert.equal(rejected.ok, false);
+    assert.equal(rejected.reason, 'ticket_endpoint_rejected');
+    assert.equal(rejected.status, 400);
+    assert.match(String(rejected.detail || ''), /stale rotation/);
+
+    // Session dies mid-mint (signed-in at start, dead on the re-probe):
+    // the 400 downgrades to the sign-in reason so the user gets sign-in
+    // guidance instead of an opaque HTTP code.
+    let meCalls = 0;
+    globalThis.fetch = async (url) => {
+      if (String(url).endsWith('/api/auth/me')) {
+        meCalls += 1;
+        if (meCalls === 1) {
+          return { ok: true, status: 200, json: async () => ({ user_id: 'u1', provider: 'nous', org_id: '' }) };
+        }
+        return { ok: false, status: 401, json: async () => ({}) };
+      }
+      return { ok: false, status: 400, json: async () => ({}) };
+    };
+    const dead = await mintTicketInPage('https://h/api/auth/ws-ticket');
+    assert.equal(dead.reason, 'not_signed_in');
+    assert.equal(meCalls, 2);
+
+    // 5xx keeps the raw transport reason — no identity re-probe.
+    globalThis.fetch = async (url) => {
+      if (String(url).endsWith('/api/auth/me')) {
+        return { ok: true, status: 200, json: async () => ({ user_id: 'u1', provider: 'nous', org_id: '' }) };
+      }
+      return { ok: false, status: 500, json: async () => ({}) };
+    };
+    assert.equal((await mintTicketInPage('https://h/api/auth/ws-ticket')).reason, 'ticket_http_500');
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
 test('ticketFailureHelp gives actionable copy per reason', () => {
   assert.match(ticketFailureHelp('no_dashboard_tab', 'https://host.ts.net'), /Open https:\/\/host\.ts\.net.*sign in/);
   assert.match(ticketFailureHelp('not_signed_in'), /not signed in/i);
   assert.match(ticketFailureHelp('dashboard_tab_changed'), /changed while connecting/i);
+  assert.match(ticketFailureHelp('ticket_endpoint_rejected'), /reload/i);
+  assert.match(ticketFailureHelp('ticket_http_400'), /reload/i);
 });
 
 test('dashboardProfilesUrl builds a first-party /api/profiles URL', () => {
