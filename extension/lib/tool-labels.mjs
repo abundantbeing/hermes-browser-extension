@@ -1,7 +1,7 @@
 // Tool categorization and labeling extracted from common.mjs — 2026-08-12 module split
 
 import { redactSensitiveText } from './redaction.mjs';
-import { normalizeReadableWhitespace } from './common.mjs';
+import { normalizeReadableWhitespace } from './text-utils.mjs';
 
 const TOOL_CATEGORY_PATTERNS = Object.freeze([
   ['edit', /^(patch|write_file|skill_manage)$|write|patch|edit|update|rename/i],

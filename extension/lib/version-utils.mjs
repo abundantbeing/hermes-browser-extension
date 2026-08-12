@@ -56,7 +56,7 @@ export function shortGitCommit(value = '') {
   return commit ? commit.slice(0, 7) : '';
 }
 
-function commitsWord(count = 0) {
+export function commitsWord(count = 0) {
   return `${count} commit${count === 1 ? '' : 's'}`;
 }
 
@@ -129,7 +129,7 @@ export function shouldShowBrowserIntro({ seen = false, connected = false, messag
   return !seen && connected && Number(messageCount || 0) === 0;
 }
 
-function updateChangeCategory(message = '') {
+export function updateChangeCategory(message = '') {
   const type = String(message || '').trim().match(/^([a-z]+)(?:\([^)]*\))?!?:\s*/i)?.[1]?.toLowerCase() || '';
   if (type === 'fix') return 'FIXED';
   if (type === 'perf') return 'FASTER';
@@ -137,7 +137,7 @@ function updateChangeCategory(message = '') {
   return 'IMPROVED';
 }
 
-function updateChangeTitle(message = '') {
+export function updateChangeTitle(message = '') {
   const clean = String(message || '')
     .split('\n')[0]
     .replace(/^[a-z]+(?:\([^)]*\))?!?:\s*/i, '')
