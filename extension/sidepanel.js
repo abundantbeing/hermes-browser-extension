@@ -314,6 +314,15 @@ import {
   recordContextDelivery,
 } from './lib/context-delivery.mjs';
 import {
+  DELIVERY_STATE_STORAGE_KEY,
+  clearDeliveryState,
+  deliveryIdentityForTurn,
+  deliveryStateEntryForIdentity,
+  deliveryStateToMap,
+  normalizeDeliveryState,
+  serializeDeliveryState,
+} from './lib/session-delivery-state.mjs';
+import {
   CONNECTION_TRANSPORTS,
   apiCredentialSatisfied,
   automaticApiPairingAllowed,
@@ -838,6 +847,46 @@ async function hydrateDelegationWatches() {
 
 const contextDeliveryBySession = new Map();
 let forceFullContextNextTurn = false;
+
+// Issue #71 pre-gate: bounded minimal delivery metadata survives panel reloads
+// for durable identities only. Persistence stores exactly
+// { gatewayUrl, storedSessionId, contextHash, referenceCount, lastFullAt,
+// lastSentAt } — never page text, URL, title, or transcript — and fails closed
+// on corrupt, wrong-version, or identity-mismatched state.
+async function persistContextDeliveryState() {
+  try {
+    await browserApi.storage.local.set({
+      [DELIVERY_STATE_STORAGE_KEY]: serializeDeliveryState(contextDeliveryBySession),
+    });
+  } catch (error) {
+    console.warn('[Hermes Browser] Delivery state persistence failed:', error?.message || error);
+  }
+}
+
+async function hydrateContextDeliveryState() {
+  try {
+    const stored = await browserApi.storage.local.get([DELIVERY_STATE_STORAGE_KEY]);
+    const persisted = deliveryStateToMap(normalizeDeliveryState(stored?.[DELIVERY_STATE_STORAGE_KEY]));
+    for (const [key, record] of persisted) {
+      if (!contextDeliveryBySession.has(key)) contextDeliveryBySession.set(key, record);
+    }
+  } catch (error) {
+    console.warn('[Hermes Browser] Delivery state hydration failed:', error?.message || error);
+  }
+}
+
+async function clearContextDeliveryState() {
+  contextDeliveryBySession.clear();
+  forceFullContextNextTurn = true;
+  try {
+    await browserApi.storage.local.set({
+      [DELIVERY_STATE_STORAGE_KEY]: clearDeliveryState(),
+    });
+  } catch (error) {
+    console.warn('[Hermes Browser] Delivery state clear failed:', error?.message || error);
+  }
+}
+
 let trustedDashboardTabId = null;
 let connectionProbeStatus = 'connecting';
 let connectionProbeDetail = '';
@@ -7418,6 +7467,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
   syncSettingsForm();
   await ensureContextMenuEditor();
+  await hydrateContextDeliveryState();
   renderMessagesFromStorage();
   renderTaskStack();
 }
@@ -8109,8 +8159,7 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
       });
     }
     setStatus('ok', automaticRecovery ? 'Context recovered' : 'Context compacted', payload?.summary || 'Hermes compacted the active session context.');
-    contextDeliveryBySession.clear();
-    forceFullContextNextTurn = true;
+    await clearContextDeliveryState();
     await loadSessions({ quiet: true });
     return { ok: true, sessionId: compactedSessionId || settings.sessionId, payload };
   } catch (error) {
@@ -9084,18 +9133,21 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   const autoTitle = turnOptions.disableAutoTitle ? '' : autoTitleForCurrentTurn(userText);
   const turnRunControlGeneration = ++runControlGeneration;
   activeRunControl = beginRunControl({ transport: isRemoteWsMode() ? 'dashboard-ws' : 'rest' });
-    if (!isRemoteWsMode()) {
-      try {
-        await ensureHermesSession();
-      } catch (error) {
-        activeRunControl = markRunTerminal(activeRunControl, 'failed');
-        sending = false;
-        updateComposerBusyState();
-        setStatus('error', 'Could not start Hermes session', error?.message || String(error), { translateDetail: false });
-        return false;
-      }
+  try {
+    if (isRemoteWsMode()) {
+      const remoteConnection = await ensureRemoteWsClient();
+      await ensureRemoteWsSession(remoteConnection);
+    } else {
+      await ensureHermesSession();
     }
-    const selectedModel = currentSelectedModel();
+  } catch (error) {
+    activeRunControl = markRunTerminal(activeRunControl, 'failed');
+    sending = false;
+    updateComposerBusyState();
+    setStatus('error', 'Could not start Hermes session', error?.message || String(error), { translateDetail: false });
+    return false;
+  }
+  const selectedModel = currentSelectedModel();
     if (selectedModel && !isModelRuntimeSelectable(selectedModel)) {
       setStatus('warn', 'Sending observed model request', `${modelDisplayName(selectedModel)} was discovered from session history. The extension will request it, but the connected Hermes gateway may use its configured model if it does not support per-request overrides.`);
     }
@@ -9175,14 +9227,23 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       pageContext: context.pageContext,
       settings: turnProtocolSettings,
     });
-    const contextDeliverySessionKey = [
-      normalizeGatewayUrl(settings.gatewayUrl),
-      remoteWsConnection?.wsStoredSessionId || remoteWsConnection?.wsSessionId || settings.sessionId || sessionBindingKeyForScope(turnContextScope),
-    ].join('::');
+    // Issue #71 pre-gate: the delivery key must use the exact durable WS
+    // session identity (stored id). A live-id or settings fallback would key
+    // the same session under two identities and duplicate a full snapshot;
+    // deliveryIdentityForTurn fails closed (null) until the stored id exists.
+    const deliveryIdentity = deliveryIdentityForTurn({
+      gatewayUrl: settings.gatewayUrl,
+      isRemoteWs: isRemoteWsMode(),
+      wsStoredSessionId: remoteWsConnection?.wsStoredSessionId || '',
+      wsSessionId: remoteWsConnection?.wsSessionId || '',
+      settingsSessionId: settings.sessionId || '',
+      scopeBindingKey: sessionBindingKeyForScope(turnContextScope),
+    });
+    const contextDeliverySessionKey = deliveryIdentity?.key || '';
     const deliveryDecision = contextDeliveryDecision({
       scopeMode: turnContextScope.mode,
       contextHash,
-      previous: contextDeliveryBySession.get(contextDeliverySessionKey) || null,
+      previous: deliveryStateEntryForIdentity(contextDeliveryBySession, deliveryIdentity),
     });
     const contextDelivery = (turnOptions.forceFullContext || forceFullContextNextTurn) && deliveryDecision.mode !== CONTEXT_DELIVERY_MODES.NONE
       ? CONTEXT_DELIVERY_MODES.FULL
@@ -9292,12 +9353,16 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     messages.push({ role: 'assistant', content: finalAnswer, ts: Date.now() });
     await trimAndSaveMessages();
     if (autoTitle) await maybeAutoNameCurrentSession(autoTitle);
-    if (contextDelivery !== CONTEXT_DELIVERY_MODES.NONE) {
+    if (contextDelivery !== CONTEXT_DELIVERY_MODES.NONE && contextDeliverySessionKey) {
       contextDeliveryBySession.set(contextDeliverySessionKey, recordContextDelivery(
         contextDeliveryBySession.get(contextDeliverySessionKey) || null,
         { mode: contextDelivery, contextHash },
       ));
       if (contextDelivery === CONTEXT_DELIVERY_MODES.FULL) forceFullContextNextTurn = false;
+      // Record-only-after-success: the turn already produced a final answer.
+      // Persist the bounded metadata for the durable identity so a panel
+      // reload does not re-send a full snapshot of unchanged context.
+      void persistContextDeliveryState();
     }
     if (typeof turnOptions.onComplete === 'function') {
       try {

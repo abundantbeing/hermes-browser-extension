@@ -360,6 +360,12 @@ function cancelPickMode() {
   return { ok: true };
 }
 
+// Every content-script document announces a new authoritative frame
+// generation to the MV3 worker. The message carries no page URL or content;
+// sender.tab/frameId are supplied by the browser and cannot be spoofed by the
+// page. It also wakes a suspended worker without requiring the side panel.
+browserApi.runtime.sendMessage({ type: 'HERMES_CONTROLLER_DOCUMENT_READY' }).catch(() => {});
+
 const messageListener = (message, _sender, sendResponse) => {
   if (message?.type === 'HERMES_GET_PAGE_CONTEXT') {
     try {

@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
+  buildDashboardWsEndpoint,
   buildDashboardWsUrl,
   buildDashboardWsUrlWithCredential,
   buildSessionModelSwitchRequest,
   classifyGatewayFrame,
   createGatewayClient,
   establishGatewaySession,
+  gatewayWebSocketProtocols,
   normalizeGatewayHistoryMessages,
   remoteSessionIdentity,
   remoteStoredSessionIdForGateway,
@@ -43,8 +45,9 @@ test('Cloud history normalization keeps canonical gateway text rows and legacy c
 });
 
 class FakeWebSocket {
-  constructor(url) {
+  constructor(url, protocols = []) {
     this.url = url;
+    this.protocols = protocols;
     this.readyState = 0;
     this.sent = [];
     this._listeners = {};
@@ -87,6 +90,28 @@ test('buildDashboardWsUrl upgrades scheme, keeps path prefix, encodes ticket', (
     buildDashboardWsUrl('http://127.0.0.1:8642/hermes/', 't1'),
     'ws://127.0.0.1:8642/hermes/api/ws?ticket=t1',
   );
+});
+
+test('gateway controller admission uses a credential-free endpoint and ticket subprotocol', async () => {
+  const endpoint = buildDashboardWsEndpoint('https://dashboard.example/hermes?copied=1#section');
+  assert.equal(endpoint, 'wss://dashboard.example/hermes/api/ws');
+  assert.equal(endpoint.includes('ticket='), false);
+  assert.deepEqual(gatewayWebSocketProtocols('ticket-fixture'), [
+    'hermes-gateway-v1',
+    'hermes-gateway-ticket.ticket-fixture',
+  ]);
+  assert.throws(() => gatewayWebSocketProtocols('bad ticket'), /unsupported/i);
+
+  const client = createGatewayClient({ WebSocketImpl: FakeWebSocket });
+  const connecting = client.connect(endpoint, gatewayWebSocketProtocols('ticket-fixture'));
+  assert.equal(FakeWebSocket.last.url, endpoint);
+  assert.deepEqual(FakeWebSocket.last.protocols, [
+    'hermes-gateway-v1',
+    'hermes-gateway-ticket.ticket-fixture',
+  ]);
+  FakeWebSocket.last._open();
+  FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: {} } });
+  await connecting;
 });
 
 test('loopback dashboard WebSockets use the injected session token instead of an OAuth ticket', () => {

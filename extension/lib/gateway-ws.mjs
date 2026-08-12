@@ -135,6 +135,29 @@ export function buildDashboardWsUrl(baseUrl, ticket) {
   return buildDashboardWsUrlWithCredential(baseUrl, 'ticket', ticket);
 }
 
+/** Credential-free dashboard Gateway endpoint for subprotocol admission. */
+export function buildDashboardWsEndpoint(baseUrl) {
+  const parsed = new URL(String(baseUrl || ''));
+  if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) {
+    throw new Error('Dashboard Gateway URL must be credential-free http or https.');
+  }
+  parsed.protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
+  parsed.pathname = `${parsed.pathname.replace(/\/+$/, '')}/api/ws`;
+  parsed.search = '';
+  parsed.hash = '';
+  return parsed.toString();
+}
+
+/** One-shot ticket carried only in Sec-WebSocket-Protocol. */
+export function gatewayWebSocketProtocols(ticket) {
+  const cleanTicket = String(ticket || '').trim();
+  if (!cleanTicket) throw new Error('Dashboard WebSocket ticket is required.');
+  if (!/^[A-Za-z0-9._~-]+$/.test(cleanTicket)) {
+    throw new Error('Dashboard WebSocket ticket contains unsupported characters.');
+  }
+  return ['hermes-gateway-v1', `hermes-gateway-ticket.${cleanTicket}`];
+}
+
 export function buildDashboardWsUrlWithCredential(baseUrl, credentialName, credentialValue) {
   if (credentialName !== 'ticket' && credentialName !== 'token') {
     throw new Error('Dashboard WebSocket credential must be a ticket or token.');
@@ -280,7 +303,7 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000, 
     pending.clear();
   }
 
-  function connect(url) {
+  function connect(url, protocols = undefined) {
     if (!SocketCtor) return Promise.reject(new Error('WebSocket is not available in this context'));
     if (connectAttempt) return Promise.reject(new Error('WebSocket connection already in progress'));
     if (socket?.readyState === 1 && readyPayload) return Promise.resolve(readyPayload);
@@ -303,7 +326,9 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000, 
       attempt = { resolve, reject, timer };
       connectAttempt = attempt;
       try {
-        connectionSocket = new SocketCtor(url);
+        connectionSocket = protocols === undefined
+          ? new SocketCtor(url)
+          : new SocketCtor(url, protocols);
         socket = connectionSocket;
       } catch (error) {
         clearTimeout(timer);

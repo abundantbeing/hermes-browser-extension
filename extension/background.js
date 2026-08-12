@@ -6,6 +6,7 @@ import {
 } from './lib/panel-residency.mjs';
 import {
   detectBrowserId,
+  detectBrowserProduct,
   openNativeSidebar,
   openSidePanelWithConfirmation,
   setActionClickPanelBehavior as setPanelBehaviorForBrowser,
@@ -44,10 +45,77 @@ import {
 import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
 import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
+import {
+  CONTROLLER_HEARTBEAT_ALARM,
+  CONTROLLER_RECONCILE_ALARM,
+} from './lib/controller-lifecycle.mjs';
+import { createControllerConnector } from './lib/controller-connector.mjs';
+import {
+  CONTROLLER_WORKER_MESSAGES,
+  createControllerServiceWorker,
+} from './lib/controller-service-worker.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
+
+const controllerConnector = createControllerConnector({
+  fetchImpl: globalThis.fetch?.bind(globalThis),
+  WebSocketImpl: globalThis.WebSocket,
+  tabsApi: browserApi.tabs,
+  scriptingApi: browserApi.scripting,
+});
+const extensionOrigin = (() => {
+  try {
+    const parsed = new URL(browserApi.runtime.getURL(''));
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return '';
+  }
+})();
+const controllerWorker = typeof browserApi.storage?.local?.set === 'function'
+  ? createControllerServiceWorker({
+      storageArea: browserApi.storage.local,
+      connector: controllerConnector,
+      product: detectBrowserProduct({ extensionUrl: browserApi.runtime.getURL('') }),
+      extensionOrigin,
+      supportsTabGroups: Boolean(browserApi.tabGroups),
+    })
+  : null;
+const CONTROLLER_WORKER_MESSAGE_TYPES = new Set(Object.values(CONTROLLER_WORKER_MESSAGES));
+
+function startControllerAlarms() {
+  if (typeof browserApi?.alarms?.create !== 'function') return false;
+  browserApi.alarms.create(CONTROLLER_HEARTBEAT_ALARM, { periodInMinutes: 1 });
+  browserApi.alarms.create(CONTROLLER_RECONCILE_ALARM, { periodInMinutes: 5 });
+  return true;
+}
+
+browserApi.alarms?.onAlarm?.addListener?.((alarm) => {
+  if (!alarm?.name) return;
+  if (alarm.name === CONTROLLER_HEARTBEAT_ALARM || alarm.name === CONTROLLER_RECONCILE_ALARM) {
+    controllerWorker?.reconcile({ reason: alarm.name })
+      .catch((error) => console.warn('[Hermes Browser] Controller alarm reconcile failed:', error));
+  }
+});
+
+async function bootControllerWorker() {
+  if (!controllerWorker) return { ok: false, connected: false, dormant: true };
+  const result = await controllerWorker.boot();
+  startControllerAlarms();
+  return result;
+}
+
+async function reconcileControllerWorker(reason) {
+  if (!controllerWorker) return { ok: false, connected: false, dormant: true };
+  const result = await controllerWorker.reconcile({ reason });
+  startControllerAlarms();
+  return result;
+}
+
+bootControllerWorker().catch((error) => {
+  console.warn('[Hermes Browser] Controller worker initialization failed:', error);
+});
 const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
 const OPEN_SESSION_STORAGE_KEY = 'hermesBrowserOpenSessionRequest';
@@ -337,8 +405,9 @@ async function queueOpenSessionRequest(message, sender) {
   return { ok: true, sessionId, surface };
 }
 
-async function configureInstalledSurfaces() {
+async function configureInstalledSurfaces({ controllerReason = 'extension-installed' } = {}) {
   await Promise.all([configureSidePanel(), contextMenuController.configure()]);
+  await reconcileControllerWorker(controllerReason);
 }
 
 function defaultSidePanelPath() {
@@ -768,7 +837,7 @@ void initI18n().catch((error) => {
 
 browserApi.runtime.onInstalled.addListener(configureInstalledSurfaces);
 browserApi.runtime.onStartup.addListener(async () => {
-  await configureInstalledSurfaces();
+  await configureInstalledSurfaces({ controllerReason: 'browser-startup' });
   restoreWakeController();
 });
 browserApi.action.onClicked.addListener(openHermesPanelFromGesture);
@@ -777,10 +846,22 @@ browserApi.contextMenus?.onClicked?.addListener?.((info, tab) => {
     .catch((error) => console.warn('[Hermes Browser] Context menu action failed:', error));
 });
 browserApi.tabs?.onActivated?.addListener?.(({ tabId }) => reapplyPanelResidencyForTab(tabId));
+browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
+  controllerWorker?.handleTabUpdated(tabId, changeInfo)
+    .catch((error) => console.warn('[Hermes Browser] Could not invalidate controller document authority:', error));
+});
+browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
+  controllerWorker?.handleTabRemoved(tabId)
+    .catch((error) => console.warn('[Hermes Browser] Could not release removed controller tab state:', error));
+});
 browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   if (areaName !== 'local') return;
   contextMenuController.handleStorageChanged(changes, areaName)
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
+  if (changes.hermesBrowserSettings?.newValue && controllerWorker) {
+    controllerWorker.syncSettings(changes.hermesBrowserSettings.newValue)
+      .catch((error) => console.warn('[Hermes Browser] Controller settings rebind failed:', error));
+  }
   let changed = false;
   if (changes.hermesBrowserSettings?.newValue?.panelResidencyMode) {
     cachedPanelResidencyMode = normalizePanelResidencyMode(changes.hermesBrowserSettings.newValue.panelResidencyMode);
@@ -795,7 +876,11 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   }
 });
 browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  const action = WAKE_BACKGROUND_MESSAGE_TYPES.has(message?.type)
+  const action = CONTROLLER_WORKER_MESSAGE_TYPES.has(message?.type)
+    ? controllerWorker
+      ? controllerWorker.handleMessage(message, sender)
+      : Promise.resolve({ ok: false, error: 'controller_worker_unavailable' })
+    : WAKE_BACKGROUND_MESSAGE_TYPES.has(message?.type)
     ? wakeController.handleMessage(message)
     : [CONTEXT_MENU_CONFIG_GET, CONTEXT_MENU_CONFIG_MUTATE, CONTEXT_MENU_REQUEST_CLAIM].includes(message?.type)
       ? contextMenuController.handleMessage(message)

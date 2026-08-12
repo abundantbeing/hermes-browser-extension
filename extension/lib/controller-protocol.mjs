@@ -19,6 +19,14 @@ export const CONTROLLER_METHODS = Object.freeze({
   cancel: 'browser.controller.cancel',
 });
 
+/**
+ * Phase 5 heartbeat protocol. Kept separate from CONTROLLER_METHODS so the
+ * Phase 4 method table stays exact; the lifecycle uses this cadence for its
+ * (dormant, fail-closed) heartbeat/reconcile alarms.
+ */
+export const CONTROLLER_HEARTBEAT_METHOD = 'browser.controller.heartbeat';
+export const CONTROLLER_HEARTBEAT_INTERVAL_MS = 60_000;
+
 export const CONTROLLER_NOOP_CAPABILITY = 'controller.noop';
 
 export const CONTROLLER_TRANSPORT_FAMILIES = Object.freeze({
