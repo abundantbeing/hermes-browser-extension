@@ -1,50 +1,358 @@
-# Dependencies
-node_modules/
-
-# Build outputs and release artifacts
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
 dist/
-artifacts/
-build-info.json
-extension/build-info.json
+build/
+target/
 
-# Release notes and launch ads belong on GitHub Releases, not source control
-RELEASE-v*.md
-assets/readme/*-ad*
+# Dependencies
+.venv/
+venv/
+node_modules/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
 
-# Local QA/temp work
-tmp/
-.hermes/
-.gitnexus/
-.claude/
-
-# GitHub Actions are intentionally disabled for this repo while hosted runners are unavailable.
-# Keep local verification as the release gate instead of pushing false-red workflows.
-.github/workflows/
-
-# Private backups and local secrets
-backups/
-.env
-.env.*
-*.bak
-
-# Logs
+# Logs and temp files
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+*.tmp
+*.swp
+*.swo
 
-# OS/editor noise
-.DS_Store
-Thumbs.db
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
 .vscode/
 .idea/
 
-# Python bytecode cache
-__pycache__/
-*.pyc
+# System files
+.DS_Store
+Thumbs.db
 
-docs/
-.omx/
-CLAUDE.md
-AGENTS.md
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+
+# Gradle
+.gradle/
+
+# Python specific
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.tox/
+.coverage
+
+# Node.js specific
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Java specific
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+
+# C/C++ specific
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+
+# Go specific
+*.o
+*.so
+*.exe
+*.test
+*.prof
+coverage.out
+
+# Ruby specific
+*.gem
+*.rbc
+.bundle/
+.rbenv-gemsets/
+.rbenv-version/
+.Gemfile.lock
+
+# Rust specific
+*.o
+*.rlib
+*.so
+*.dylib
+*.dll
+target/
+
+# PHP specific
+*.phar
+vendor/
+
+# .NET specific
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*.vssscc
+.app.config
+*.userprefs
+.suo
+*.sln.docstates
+.vs/
+bin/
+obj/
+
+# Web specific
+*.min.js
+*.min.css
+public/build/
+
+# Database
+*.db
+*.db-journal
+
+# OS generated files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*:*
+*~
+
+# Backup files
+*~
+*.bak
+*.swp
+*.swo
+*#
+.#*
+*.orig
+*.rej
+
+# Testing
+*.log
+coverage/
+.junit/
+.nyc_output/
+istanbul/
+.mocha.opts
+.nycrc
+.tap/
+
+# Documentation
+docs/_build/
+docs/_site/
+
+# Distribution / packaging
+.Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git/
+.svn/
+.hg/
+.cvs/
+.Rproj.user
+.Rhistory
+.RData
+.rds
+.Rapp.history
+.Rprofile
+.Rproj
+.Rbuildignore
+.travis.yml
+.circleci/
+.drone.yml
+.gitlab-ci.yml
+.appveyor.yml
+.codeclimate.yml
+.codacy.yml
+.wercker/
+.jenkins.yml
+.shipit.yml
+.scrutinizer.yml
+.codecov.yml
+.coveralls.yml
+.direnv/
+.envrc
+.project
+.classpath
+.settings/
+.factorypath
+.target
+.gradle/
+.build/
+.externalToolBuilders/
+.launch
+.metadata
+.recommenders
+.scala_dependencies
+.sbt/
+project/
+!src/main/sbt-test/
+.stFolder/
+.stIgnore
+.syncthing/
+.sync/
+.syncid
+.syncignore
+.tm_properties
+.tmp/
+.temp/
+tmp/
+temp/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+.directory
+.nfs*
+*~
+.swp
+.swo
+.viminfo
+.netrwhist
+.vimsession
+.session.vim
+Session.vim
+*.un~
+*.bak
+*.old
+*.orig
+*.patch
+*.rej
+\#*\#
+*~
+*.tmp
+*.temp
+*.log
+*.out
+*.pid
+*.seed
+*.lock
+*.swp
+*.swo
+*.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+.directory
+.nfs*
+*~
+.swp
+.swo
+.viminfo
+.netrwhist
+.vimsession
+.session.vim
+Session.vim
+*.un~
+*.bak
+*.old
+*.orig
+*.patch
+*.rej
+\#*\#
+*~
+*.tmp
+*.temp
+*.log
+*.out
+*.pid
+*.seed
+*.lock
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+.directory
+.nfs*
+*~
+.swp
+.swo
+.viminfo
+.netrwhist
+.vimsession
+.session.vim
+Session.vim
+*.un~
+*.bak
+*.old
+*.orig
+*.patch
+*.rej
+\#*\#
+*~
+*.tmp
+*.temp
+*.log
+*.out
+*.pid
+*.seed
+*.lock
+*.swp
+*.swo
