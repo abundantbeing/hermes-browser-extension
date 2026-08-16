@@ -67,7 +67,6 @@ import {
   prepareOnDeviceSpeechRecognition,
   queuedMessageControlState,
   reasoningEffortShortLabel,
-  renderMarkdown,
   runtimeValueMatches,
   safeTab,
   shouldRequireModelLock,
@@ -96,6 +95,7 @@ import {
   agentDiscoveryAppliesToMode,
   agentDiscoveryModeNote,
 } from './lib/common.mjs';
+import { renderMarkdownSafe, sanitizeHtml } from './lib/sanitizer.mjs';
 import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
   buildContextMenuTurn,
@@ -3630,7 +3630,7 @@ function renderCustomThemePreview() {
   }
   if (!state.valid) {
     const errors = state.errors.map((error) => `<li><strong>${escapeHtml(error.path || '$')}</strong> — ${escapeHtml(error.message || error.code)}</li>`).join('');
-    els.customThemePreview.innerHTML = `<ul class="custom-theme-validation-list">${errors}</ul>`;
+    els.customThemePreview.innerHTML = sanitizeHtml(`<ul class="custom-theme-validation-list">${errors}</ul>`);
     return;
   }
   const document = state.document;
@@ -3641,13 +3641,13 @@ function renderCustomThemePreview() {
   const coverage = document.darkColors
     ? customThemeText('custom_theme.light_and_dark', 'Light and dark palettes')
     : customThemeText('custom_theme.light_only', 'Light palette only');
-  els.customThemePreview.innerHTML = `
+  els.customThemePreview.innerHTML = sanitizeHtml(`
     <div class="custom-theme-preview-head">
       <strong>${escapeHtml(document.name)}</strong>
       <span class="custom-theme-preview-mode">${escapeHtml(coverage)}</span>
     </div>
     <div class="custom-theme-swatches" role="list" aria-label="Palette colors">${swatches}</div>
-  `;
+  `);
 }
 
 function renderCustomThemeManagement() {
@@ -4001,7 +4001,7 @@ function renderAppearanceControls() {
       </button>
     `;
   }).join('');
-  els.themeGrid.innerHTML = `${builtInCards}${renderCustomThemeCards(activeTheme)}`;
+  els.themeGrid.innerHTML = sanitizeHtml(`${builtInCards}${renderCustomThemeCards(activeTheme)}`);
 }
 
 async function persistAppearanceSettings(preferences) {
@@ -6907,7 +6907,7 @@ function renderMessageContentElement(element, content = '') {
     renderThinkingIndicator(element);
     return;
   }
-  element.innerHTML = renderMarkdown(content || '');
+  element.innerHTML = renderMarkdownSafe(content || '');
   for (const image of element.querySelectorAll('img[data-slot="aui_generated-image"]')) {
     const wrapper = document.createElement('span');
     wrapper.className = 'generated-image-inspectable';
@@ -7033,7 +7033,7 @@ function openGeneratedImageLightbox(image) {
 }
 
 function extractRenderableImageSource(content = '') {
-  const html = renderMarkdown(content || '');
+  const html = renderMarkdownSafe(content || '');
   const template = document.createElement('template');
   template.innerHTML = html;
   const image = template.content.querySelector('img[data-slot="aui_generated-image"]');

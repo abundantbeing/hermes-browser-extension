@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { writeContentExtractorRuntime } from './build-content-runtime.mjs';
 import { MANIFEST_TARGETS, manifestAssumptionsFor } from './manifest-profiles.mjs';
+import { checkSelfContained } from './check-self-contained.mjs';
 
 const root = process.cwd();
 const src = path.join(root, 'extension');
@@ -22,6 +23,7 @@ const buildInfoFileName = 'build-info.json';
 const firefoxProfile = manifestAssumptionsFor(MANIFEST_TARGETS.FIREFOX);
 
 await writeContentExtractorRuntime({ rootDir: root });
+checkSelfContained(src);
 
 function copyDir(from, to) {
   fs.mkdirSync(to, { recursive: true });

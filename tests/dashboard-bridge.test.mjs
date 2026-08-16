@@ -385,7 +385,7 @@ test('discoverProfilesInPage survives chrome.scripting serialization (no module 
   const serialized = discoverProfilesInPage.toString();
   assert.doesNotMatch(serialized, /dashboardProfilesUrl/);
   assert.match(serialized, /profilesUrlFor/);
-  const runner = new Function(`return (${serialized})`)();
+  const runner = new Function(`return (${serialized})`)(); // eslint-disable-line no-new-func -- test-only serialization probe, mirrors chrome.scripting.executeScript; no dynamic user input
   const original = globalThis.fetch;
   globalThis.fetch = async (url) => {
     if (String(url).endsWith('/api/profiles')) {

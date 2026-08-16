@@ -876,6 +876,10 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
   }
 });
 browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // SECURITY BOUNDARY: Untrusted Input — `message` arrives from extension
+  // pages, content scripts, or (via forwarded events) web page code. Never
+  // trust its fields; validate types and treat string payloads as
+  // attacker-controlled until they pass through the sanitizer at render time.
   const action = CONTROLLER_WORKER_MESSAGE_TYPES.has(message?.type)
     ? controllerWorker
       ? controllerWorker.handleMessage(message, sender)
