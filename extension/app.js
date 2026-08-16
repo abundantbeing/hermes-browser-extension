@@ -12,12 +12,12 @@ import {
   normalizeHermesSkills,
   normalizeToolActivity,
   sessionModelBindingFromRuntime,
-  renderMarkdown,
   shouldAutoFlushQueuedTurn,
   shouldAutoOpenSessionGroup,
   shouldRequireModelLock,
   skillSuggestionsForInput,
 } from './lib/common.mjs';
+import { renderMarkdownSafe } from './lib/sanitizer.mjs';
 import {
   assistModelRoutingSupported,
   resolveAssistModelBindingFromCatalog,
@@ -1287,7 +1287,7 @@ function renderMessages(messages = []) {
     const tagged = extractMediaTags(visibleText);
     const media = resolvedGeneratedImageSources(visibleText);
     const displayText = stripGeneratedImageEchoes(tagged.text, media);
-    if (displayText) content.innerHTML = renderMarkdown(displayText);
+    if (displayText) content.innerHTML = renderMarkdownSafe(displayText);
     if (role === 'user') {
       appendUserImageAttachments(content, message.attachments, {
         onOpen: (_image, preview) => openImageLightbox(preview.source, preview.name),

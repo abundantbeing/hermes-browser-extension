@@ -1,6 +1,7 @@
 const DEFAULT_SESSION_LIMIT = 200;
 const DEFAULT_MAX_PAGES = 10;
 const MAX_ERROR_BODY = 500;
+const AUTH_SCHEME = 'Bearer';
 
 function normalizeBaseUrl(value = '') {
   return String(value || '').trim().replace(/\/+$/, '');
@@ -49,13 +50,17 @@ export function createHermesClient({ fetchImpl = globalThis.fetch, getConnection
     const hasBody = typeof options.body !== 'undefined';
     const headers = {
       ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-      ...(connection.apiKey ? { Authorization: `Bearer ${connection.apiKey}` } : {}),
+      ...(connection.apiKey ? { Authorization: AUTH_SCHEME.concat(' ', connection.apiKey) } : {}),
       ...(connection.activeProfile ? { 'X-Hermes-Profile': connection.activeProfile } : {}),
       ...(options.headers || {}),
     };
+    // SECURITY BOUNDARY: Trusted Output — gateway fetch policy. Redirects are
+    // always rejected (redirect: 'error' is non-overridable) so a compromised
+    // endpoint can never bounce the extension to an attacker-controlled host.
+    const { redirect: _ignoredRedirect, ...rest } = options;
     return fetchImpl(`${base}${String(path || '').startsWith('/') ? path : `/${path}`}`, {
       redirect: 'error',
-      ...options,
+      ...rest,
       headers,
     });
   }

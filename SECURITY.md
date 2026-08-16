@@ -48,6 +48,15 @@ This is a conservative first pass, not a complete security boundary.
 
 v0.2.0 redacts sensitive tab titles and URLs before prompt assembly so restricted tabs do not leak through active, selected, open-tab, pinned-scope, prompt, receipt, or payload-hash fields. Credential-bearing query/hash parameters are decoded before classification, including nested encodings and common signed-URL credential/signature fields.
 
+## Rendering & sanitization
+
+All dynamic HTML rendered into extension surfaces passes through DOMPurify (`extension/lib/sanitizer.mjs`) before reaching the DOM — chat messages, theme previews, and the theme grid included. Markdown rendering keeps a dedicated escaping renderer (links restricted to `http:`/`https:`/`mailto:`, images to `https:` and raster data URLs) and its output is sanitized a second time by DOMPurify, so hostile page content or gateway responses cannot inject markup, event handlers, or `javascript:` URLs.
+
+- `renderMarkdownSafe` is the only entry point for rendering model output as HTML.
+- `sanitizeHtml` guards other dynamic sinks (custom theme previews/cards).
+- The extension is fully self-contained: the build refuses to proceed if any page or module references a remote script (`scripts/check-self-contained.mjs`), and no `eval`/`new Function` is allowed (enforced by eslint).
+- Vendored runtime dependencies (DOMPurify) are pinned, byte-for-byte copies of published builds under `extension/lib/vendor/` — see `extension/lib/vendor/README.md`.
+
 ## API key / browser token storage
 
 The Hermes API key/browser token is stored in `chrome.storage.local` for the extension. It is masked after save, and v0.2.0 includes **Clear stored token** in Settings.
