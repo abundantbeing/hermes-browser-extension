@@ -5990,7 +5990,32 @@ function setQuickCommandMenuOpen(open) {
   if (!els.quickMoreMenu) return;
   els.quickMoreMenu.hidden = !open;
   els.commandMenuButton?.setAttribute('aria-expanded', String(Boolean(open)));
-  if (!open) clearQuickCommandDetail();
+  if (!open) {
+    clearQuickCommandDetail();
+  } else {
+    scrollInputToCaret();
+  }
+}
+
+function scrollInputToCaret() {
+  const input = els.input;
+  if (!input) return;
+  requestAnimationFrame(() => {
+    const start = input.selectionStart;
+    const end = input.selectionEnd;
+    const pos = (typeof start === 'number' && Number.isInteger(start)) ? start : (input.value ? input.value.length : 0);
+    if (typeof input.setSelectionRange === 'function' && typeof start === 'number' && typeof end === 'number') {
+      input.setSelectionRange(start, end);
+    }
+    if (pos >= (input.value?.length || 0)) {
+      input.scrollTop = input.scrollHeight;
+    } else {
+      const textBefore = String(input.value || '').slice(0, pos);
+      const lines = textBefore.split('\n').length;
+      const totalLines = Math.max(1, String(input.value || '').split('\n').length);
+      input.scrollTop = Math.max(0, Math.round((lines / totalLines) * input.scrollHeight - input.clientHeight / 2));
+    }
+  });
 }
 
 function clearQuickCommandDetail() {
