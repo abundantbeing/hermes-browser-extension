@@ -80,11 +80,15 @@ export function sessionOwnershipNotice({ session = {}, expectedSource = '' } = {
   const newChatLabel = normalized(expectedSource) === SESSION_SURFACE_SOURCES.FULL_TAB
     ? 'New Hermes Web chat'
     : 'New Browser chat';
+  const largeSession = count !== null && count > 100;
+  const detail = largeSession
+    ? `${countDetail} Large shared sessions can desync: Stop in one surface may not reach the other, causing the agent to keep running invisibly. Start a new chat to avoid ghost loops.`
+    : `${countDetail} Two Browser surfaces writing the same session can overwrite or reorder transcript updates. Start a new chat, or continue here intentionally.`;
   return Object.freeze({
     sourceLabel,
     messageCount: count,
     title: `${sourceLabel} session selected`,
-    detail: `${countDetail} Two Browser surfaces writing the same session can overwrite or reorder transcript updates. Start a new chat, or continue here intentionally.`,
+    detail,
     newChatLabel,
     continueLabel: `Continue in ${sourceLabel}`,
   });

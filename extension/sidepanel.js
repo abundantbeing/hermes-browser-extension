@@ -5657,6 +5657,17 @@ function setQuickCommandMenuOpen(open) {
   els.quickMoreMenu.hidden = !open;
   els.commandMenuButton?.setAttribute('aria-expanded', String(Boolean(open)));
   if (!open) clearQuickCommandDetail();
+  else scrollInputToCaret();
+}
+
+function scrollInputToCaret() {
+  const input = els.input;
+  if (!input || !input.setSelectionRange) return;
+  requestAnimationFrame(() => {
+    const pos = input.selectionStart || input.value.length;
+    input.setSelectionRange(pos, pos);
+    input.scrollTop = input.scrollHeight;
+  });
 }
 
 function clearQuickCommandDetail() {
