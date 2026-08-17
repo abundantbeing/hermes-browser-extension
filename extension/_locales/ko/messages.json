@@ -171,6 +171,114 @@
     "message": "정확한 라우팅을 사용할 수 없는 경우 게이트웨이 기본값으로 대체",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_browser_control_approve_once": {
+    "message": "한 번만 승인",
+    "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_control_ready": {
+    "message": "제어 준비 완료",
+    "description": "Runtime interface message browser_control.control_ready"
+  },
+  "runtime_browser_control_detach": {
+    "message": "분리",
+    "description": "Runtime interface message browser_control.detach"
+  },
+  "runtime_browser_control_detached_detail": {
+    "message": "브라우저 작업이 중지되고 모든 제어 탭의 임대가 해제되었습니다.",
+    "description": "Runtime interface message browser_control.detached_detail"
+  },
+  "runtime_browser_control_detached_toast": {
+    "message": "Hermes 컨트롤이 분리되었습니다",
+    "description": "Runtime interface message browser_control.detached_toast"
+  },
+  "runtime_browser_control_enable": {
+    "message": "제어 활성화",
+    "description": "Runtime interface message browser_control.enable"
+  },
+  "runtime_browser_control_enabled_detail": {
+    "message": "선택한 임대 탭만 브라우저 작업을 받을 수 있습니다.",
+    "description": "Runtime interface message browser_control.enabled_detail"
+  },
+  "runtime_browser_control_enabled_toast": {
+    "message": "Hermes 컨트롤이 활성화되었습니다",
+    "description": "Runtime interface message browser_control.enabled_toast"
+  },
+  "runtime_browser_control_follow": {
+    "message": "Hermes 따라가기",
+    "description": "Runtime interface message browser_control.follow"
+  },
+  "runtime_browser_control_kicker": {
+    "message": "HERMES 컨트롤",
+    "description": "Runtime interface message browser_control.kicker"
+  },
+  "runtime_browser_control_note": {
+    "message": "이 확장 프로그램 또는 업데이트를 설치할 때 Chromium 컨트롤러 액세스 권한이 부여되었습니다. Hermes는 승인된 임대 작업 중에만 연결되며, 브라우저 창을 절대 앞으로 가져오지 않고 자격 증명, MFA, 결제 입력란, 비밀 텍스트를 차단합니다.",
+    "description": "Runtime interface message browser_control.note"
+  },
+  "runtime_browser_control_pause": {
+    "message": "일시 중지",
+    "description": "Runtime interface message browser_control.pause"
+  },
+  "runtime_browser_control_reject": {
+    "message": "거부",
+    "description": "Runtime interface message browser_control.reject"
+  },
+  "runtime_browser_control_resume": {
+    "message": "재개",
+    "description": "Runtime interface message browser_control.resume"
+  },
+  "runtime_browser_control_scope": {
+    "message": "제어 범위",
+    "description": "Runtime interface message browser_control.scope"
+  },
+  "runtime_browser_control_selected_tabs": {
+    "message": "선택한 탭",
+    "description": "Runtime interface message browser_control.selected_tabs"
+  },
+  "runtime_browser_control_state_active": {
+    "message": "활성",
+    "description": "Runtime interface message browser_control.state_active"
+  },
+  "runtime_browser_control_state_off": {
+    "message": "꺼짐",
+    "description": "Runtime interface message browser_control.state_off"
+  },
+  "runtime_browser_control_state_paused": {
+    "message": "일시 중지됨",
+    "description": "Runtime interface message browser_control.state_paused"
+  },
+  "runtime_browser_control_state_ready": {
+    "message": "준비됨",
+    "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_stay": {
+    "message": "내 탭에 머무르기",
+    "description": "Runtime interface message browser_control.stay"
+  },
+  "runtime_browser_control_stop": {
+    "message": "중지",
+    "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_task_set": {
+    "message": "작업 세트",
+    "description": "Runtime interface message browser_control.task_set"
+  },
+  "runtime_browser_control_this_tab": {
+    "message": "이 탭",
+    "description": "Runtime interface message browser_control.this_tab"
+  },
+  "runtime_browser_control_title": {
+    "message": "임대 탭 조작",
+    "description": "Runtime interface message browser_control.title"
+  },
+  "runtime_browser_control_waiting": {
+    "message": "Hermes를 기다리는 중입니다.",
+    "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_while_working": {
+    "message": "Hermes 작업 중",
+    "description": "Runtime interface message browser_control.while_working"
+  },
   "runtime_commands_click_or_enter": {
     "message": "클릭하거나 Enter 키를 눌러 실행하세요.",
     "description": "Runtime interface message commands.click_or_enter"

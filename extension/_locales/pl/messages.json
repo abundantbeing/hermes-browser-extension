@@ -171,6 +171,114 @@
     "message": "Wraca do domyślnej bramy, gdy dokładne trasowanie jest niedostępne",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_browser_control_approve_once": {
+    "message": "Zatwierdź raz",
+    "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_control_ready": {
+    "message": "Sterowanie gotowe",
+    "description": "Runtime interface message browser_control.control_ready"
+  },
+  "runtime_browser_control_detach": {
+    "message": "Odłącz",
+    "description": "Runtime interface message browser_control.detach"
+  },
+  "runtime_browser_control_detached_detail": {
+    "message": "Akcje przeglądarki zatrzymane, a wszystkie dzierżawy sterowanych kart zostały zwolnione.",
+    "description": "Runtime interface message browser_control.detached_detail"
+  },
+  "runtime_browser_control_detached_toast": {
+    "message": "Sterowanie Hermes odłączone",
+    "description": "Runtime interface message browser_control.detached_toast"
+  },
+  "runtime_browser_control_enable": {
+    "message": "Włącz sterowanie",
+    "description": "Runtime interface message browser_control.enable"
+  },
+  "runtime_browser_control_enabled_detail": {
+    "message": "Tylko wybrane wydzierżawione karty mogą otrzymywać akcje przeglądarki.",
+    "description": "Runtime interface message browser_control.enabled_detail"
+  },
+  "runtime_browser_control_enabled_toast": {
+    "message": "Sterowanie Hermes włączone",
+    "description": "Runtime interface message browser_control.enabled_toast"
+  },
+  "runtime_browser_control_follow": {
+    "message": "Podążaj za Hermesem",
+    "description": "Runtime interface message browser_control.follow"
+  },
+  "runtime_browser_control_kicker": {
+    "message": "STEROWANIE HERMES",
+    "description": "Runtime interface message browser_control.kicker"
+  },
+  "runtime_browser_control_note": {
+    "message": "Dostęp do kontrolera Chromium został przyznany podczas instalacji tego rozszerzenia lub aktualizacji. Hermes dołącza się wyłącznie podczas autoryzowanej akcji dzierżawy, nigdy nie podnosi okna przeglądarki oraz blokuje dane logowania, MFA, pola płatności i tajny tekst.",
+    "description": "Runtime interface message browser_control.note"
+  },
+  "runtime_browser_control_pause": {
+    "message": "Wstrzymaj",
+    "description": "Runtime interface message browser_control.pause"
+  },
+  "runtime_browser_control_reject": {
+    "message": "Odrzuć",
+    "description": "Runtime interface message browser_control.reject"
+  },
+  "runtime_browser_control_resume": {
+    "message": "Wznów",
+    "description": "Runtime interface message browser_control.resume"
+  },
+  "runtime_browser_control_scope": {
+    "message": "Zakres sterowania",
+    "description": "Runtime interface message browser_control.scope"
+  },
+  "runtime_browser_control_selected_tabs": {
+    "message": "Wybrane karty",
+    "description": "Runtime interface message browser_control.selected_tabs"
+  },
+  "runtime_browser_control_state_active": {
+    "message": "Aktywne",
+    "description": "Runtime interface message browser_control.state_active"
+  },
+  "runtime_browser_control_state_off": {
+    "message": "Wyłączone",
+    "description": "Runtime interface message browser_control.state_off"
+  },
+  "runtime_browser_control_state_paused": {
+    "message": "Wstrzymane",
+    "description": "Runtime interface message browser_control.state_paused"
+  },
+  "runtime_browser_control_state_ready": {
+    "message": "Gotowe",
+    "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_stay": {
+    "message": "Zostań na mojej karcie",
+    "description": "Runtime interface message browser_control.stay"
+  },
+  "runtime_browser_control_stop": {
+    "message": "Zatrzymaj",
+    "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_task_set": {
+    "message": "Zestaw zadań",
+    "description": "Runtime interface message browser_control.task_set"
+  },
+  "runtime_browser_control_this_tab": {
+    "message": "Ta karta",
+    "description": "Runtime interface message browser_control.this_tab"
+  },
+  "runtime_browser_control_title": {
+    "message": "Steruj wydzierżawionymi kartami",
+    "description": "Runtime interface message browser_control.title"
+  },
+  "runtime_browser_control_waiting": {
+    "message": "Oczekiwanie na Hermesa.",
+    "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_while_working": {
+    "message": "Gdy Hermes pracuje",
+    "description": "Runtime interface message browser_control.while_working"
+  },
   "runtime_commands_click_or_enter": {
     "message": "Kliknij lub naciśnij Enter, aby uruchomić.",
     "description": "Runtime interface message commands.click_or_enter"

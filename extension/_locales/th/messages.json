@@ -171,6 +171,114 @@
     "message": "ถอยกลับไปเป็นค่าเริ่มต้นของเกตเวย์เมื่อเส้นทางที่แน่นอนไม่พร้อมใช้งาน",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_browser_control_approve_once": {
+    "message": "อนุมัติครั้งเดียว",
+    "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_control_ready": {
+    "message": "พร้อมควบคุม",
+    "description": "Runtime interface message browser_control.control_ready"
+  },
+  "runtime_browser_control_detach": {
+    "message": "แยกออก",
+    "description": "Runtime interface message browser_control.detach"
+  },
+  "runtime_browser_control_detached_detail": {
+    "message": "การดำเนินการของเบราว์เซอร์หยุดลงและปล่อยแท็บที่ถูกควบคุมทั้งหมดแล้ว",
+    "description": "Runtime interface message browser_control.detached_detail"
+  },
+  "runtime_browser_control_detached_toast": {
+    "message": "แยกการควบคุม Hermes แล้ว",
+    "description": "Runtime interface message browser_control.detached_toast"
+  },
+  "runtime_browser_control_enable": {
+    "message": "เปิดใช้การควบคุม",
+    "description": "Runtime interface message browser_control.enable"
+  },
+  "runtime_browser_control_enabled_detail": {
+    "message": "เฉพาะแท็บที่เช่าที่เลือกเท่านั้นที่สามารถรับการดำเนินการของเบราว์เซอร์ได้",
+    "description": "Runtime interface message browser_control.enabled_detail"
+  },
+  "runtime_browser_control_enabled_toast": {
+    "message": "เปิดใช้การควบคุม Hermes แล้ว",
+    "description": "Runtime interface message browser_control.enabled_toast"
+  },
+  "runtime_browser_control_follow": {
+    "message": "ตาม Hermes",
+    "description": "Runtime interface message browser_control.follow"
+  },
+  "runtime_browser_control_kicker": {
+    "message": "HERMES CONTROL",
+    "description": "Runtime interface message browser_control.kicker"
+  },
+  "runtime_browser_control_note": {
+    "message": "สิทธิ์เข้าถึงตัวควบคุม Chromium ถูกอนุญาตเมื่อติดตั้งส่วนขยายหรืออัปเดตนี้ Hermes จะเชื่อมต่อเฉพาะระหว่างการดำเนินการที่เช่าซึ่งได้รับอนุญาตเท่านั้น ไม่เคยเปิดหน้าต่างเบราว์เซอร์ขึ้นมา และบล็อกข้อมูลรับรอง MFA ช่องชำระเงิน และข้อความลับ",
+    "description": "Runtime interface message browser_control.note"
+  },
+  "runtime_browser_control_pause": {
+    "message": "หยุดชั่วคราว",
+    "description": "Runtime interface message browser_control.pause"
+  },
+  "runtime_browser_control_reject": {
+    "message": "ปฏิเสธ",
+    "description": "Runtime interface message browser_control.reject"
+  },
+  "runtime_browser_control_resume": {
+    "message": "ดำเนินการต่อ",
+    "description": "Runtime interface message browser_control.resume"
+  },
+  "runtime_browser_control_scope": {
+    "message": "ขอบเขตการควบคุม",
+    "description": "Runtime interface message browser_control.scope"
+  },
+  "runtime_browser_control_selected_tabs": {
+    "message": "แท็บที่เลือก",
+    "description": "Runtime interface message browser_control.selected_tabs"
+  },
+  "runtime_browser_control_state_active": {
+    "message": "ทำงานอยู่",
+    "description": "Runtime interface message browser_control.state_active"
+  },
+  "runtime_browser_control_state_off": {
+    "message": "ปิด",
+    "description": "Runtime interface message browser_control.state_off"
+  },
+  "runtime_browser_control_state_paused": {
+    "message": "ถูกหยุดชั่วคราว",
+    "description": "Runtime interface message browser_control.state_paused"
+  },
+  "runtime_browser_control_state_ready": {
+    "message": "พร้อม",
+    "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_stay": {
+    "message": "อยู่บนแท็บของฉัน",
+    "description": "Runtime interface message browser_control.stay"
+  },
+  "runtime_browser_control_stop": {
+    "message": "หยุด",
+    "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_task_set": {
+    "message": "ชุดงาน",
+    "description": "Runtime interface message browser_control.task_set"
+  },
+  "runtime_browser_control_this_tab": {
+    "message": "แท็บนี้",
+    "description": "Runtime interface message browser_control.this_tab"
+  },
+  "runtime_browser_control_title": {
+    "message": "ควบคุมแท็บที่เช่า",
+    "description": "Runtime interface message browser_control.title"
+  },
+  "runtime_browser_control_waiting": {
+    "message": "กำลังรอ Hermes",
+    "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_while_working": {
+    "message": "ขณะที่ Hermes ทำงาน",
+    "description": "Runtime interface message browser_control.while_working"
+  },
   "runtime_commands_click_or_enter": {
     "message": "คลิกหรือกด Enter เพื่อเรียกใช้",
     "description": "Runtime interface message commands.click_or_enter"

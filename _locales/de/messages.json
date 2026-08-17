@@ -171,6 +171,114 @@
     "message": "Fällt auf die Gateway-Standardeinstellung zurück, wenn kein genaues Routing verfügbar ist",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_browser_control_approve_once": {
+    "message": "Einmal genehmigen",
+    "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_control_ready": {
+    "message": "Steuerung bereit",
+    "description": "Runtime interface message browser_control.control_ready"
+  },
+  "runtime_browser_control_detach": {
+    "message": "Ablösen",
+    "description": "Runtime interface message browser_control.detach"
+  },
+  "runtime_browser_control_detached_detail": {
+    "message": "Browseraktionen wurden gestoppt und alle Leihverträge für gesteuerte Tabs wurden freigegeben.",
+    "description": "Runtime interface message browser_control.detached_detail"
+  },
+  "runtime_browser_control_detached_toast": {
+    "message": "Hermes-Steuerung abgelöst",
+    "description": "Runtime interface message browser_control.detached_toast"
+  },
+  "runtime_browser_control_enable": {
+    "message": "Steuerung aktivieren",
+    "description": "Runtime interface message browser_control.enable"
+  },
+  "runtime_browser_control_enabled_detail": {
+    "message": "Nur die ausgewählten gemieteten Tabs können Browseraktionen empfangen.",
+    "description": "Runtime interface message browser_control.enabled_detail"
+  },
+  "runtime_browser_control_enabled_toast": {
+    "message": "Hermes-Steuerung aktiviert",
+    "description": "Runtime interface message browser_control.enabled_toast"
+  },
+  "runtime_browser_control_follow": {
+    "message": "Hermes folgen",
+    "description": "Runtime interface message browser_control.follow"
+  },
+  "runtime_browser_control_kicker": {
+    "message": "HERMES CONTROL",
+    "description": "Runtime interface message browser_control.kicker"
+  },
+  "runtime_browser_control_note": {
+    "message": "Der Zugriff auf den Chromium-Controller wurde bei der Installation dieser Erweiterung oder dieses Updates gewährt. Hermes verbindet sich nur während einer autorisierten Leihaktion, öffnet nie ein Browserfenster und blockiert Anmeldedaten, MFA, Zahlungsfelder und geheime Texte.",
+    "description": "Runtime interface message browser_control.note"
+  },
+  "runtime_browser_control_pause": {
+    "message": "Pausieren",
+    "description": "Runtime interface message browser_control.pause"
+  },
+  "runtime_browser_control_reject": {
+    "message": "Ablehnen",
+    "description": "Runtime interface message browser_control.reject"
+  },
+  "runtime_browser_control_resume": {
+    "message": "Fortsetzen",
+    "description": "Runtime interface message browser_control.resume"
+  },
+  "runtime_browser_control_scope": {
+    "message": "Steuerungsumfang",
+    "description": "Runtime interface message browser_control.scope"
+  },
+  "runtime_browser_control_selected_tabs": {
+    "message": "Ausgewählte Tabs",
+    "description": "Runtime interface message browser_control.selected_tabs"
+  },
+  "runtime_browser_control_state_active": {
+    "message": "Aktiv",
+    "description": "Runtime interface message browser_control.state_active"
+  },
+  "runtime_browser_control_state_off": {
+    "message": "Aus",
+    "description": "Runtime interface message browser_control.state_off"
+  },
+  "runtime_browser_control_state_paused": {
+    "message": "Pausiert",
+    "description": "Runtime interface message browser_control.state_paused"
+  },
+  "runtime_browser_control_state_ready": {
+    "message": "Bereit",
+    "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_stay": {
+    "message": "Auf meinem Tab bleiben",
+    "description": "Runtime interface message browser_control.stay"
+  },
+  "runtime_browser_control_stop": {
+    "message": "Stoppen",
+    "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_task_set": {
+    "message": "Aufgabensatz",
+    "description": "Runtime interface message browser_control.task_set"
+  },
+  "runtime_browser_control_this_tab": {
+    "message": "Dieser Tab",
+    "description": "Runtime interface message browser_control.this_tab"
+  },
+  "runtime_browser_control_title": {
+    "message": "Gemietete Tabs bedienen",
+    "description": "Runtime interface message browser_control.title"
+  },
+  "runtime_browser_control_waiting": {
+    "message": "Warte auf Hermes.",
+    "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_while_working": {
+    "message": "Während Hermes arbeitet",
+    "description": "Runtime interface message browser_control.while_working"
+  },
   "runtime_commands_click_or_enter": {
     "message": "Klicken oder drücken Sie Enter, um auszuführen.",
     "description": "Runtime interface message commands.click_or_enter"

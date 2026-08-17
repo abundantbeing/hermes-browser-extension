@@ -106,7 +106,7 @@ import {
   webCommandSuggestions,
 } from './lib/web-commands.mjs';
 import { artifactActionState, describeArtifact, toFileUrl } from './lib/web-artifacts.mjs';
-import { isRenderableAssistantMessage, shouldPreserveImageGenerationRun } from './lib/web-run-state.mjs';
+import { browserDisplayMessages, isRenderableAssistantMessage, shouldPreserveImageGenerationRun } from './lib/web-run-state.mjs';
 import { thinkingIndicatorMarkup } from './lib/web-thinking-indicator.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
 import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
@@ -1264,12 +1264,8 @@ function renderLiveRun() {
 function renderMessages(messages = []) {
   activeMessages = messages;
   els.messageList.replaceChildren();
-  const visible = messages.filter((message) => {
-    const role = String(message.role || '').toLowerCase();
-    return !isDelegationCompletionMarkerMessage(message)
-      && ['user', 'assistant', 'system'].includes(role)
-      && (role !== 'assistant' || isRenderableAssistantMessage(message));
-  });
+  const visible = browserDisplayMessages(messages)
+    .filter((message) => !isDelegationCompletionMarkerMessage(message));
   const hasLiveRun = Boolean(sending && liveRun);
   els.emptyState.hidden = visible.length > 0 || hasLiveRun;
   els.messageList.hidden = visible.length === 0 && !hasLiveRun;

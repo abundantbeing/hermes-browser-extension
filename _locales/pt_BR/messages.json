@@ -171,6 +171,114 @@
     "message": "Usa o padrão do gateway quando o roteamento exato não está disponível",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_browser_control_approve_once": {
+    "message": "Aprovar uma vez",
+    "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_control_ready": {
+    "message": "Controle pronto",
+    "description": "Runtime interface message browser_control.control_ready"
+  },
+  "runtime_browser_control_detach": {
+    "message": "Desvincular",
+    "description": "Runtime interface message browser_control.detach"
+  },
+  "runtime_browser_control_detached_detail": {
+    "message": "As ações do navegador foram interrompidas e todas as cessões de abas controladas foram liberadas.",
+    "description": "Runtime interface message browser_control.detached_detail"
+  },
+  "runtime_browser_control_detached_toast": {
+    "message": "Controle do Hermes desvinculado",
+    "description": "Runtime interface message browser_control.detached_toast"
+  },
+  "runtime_browser_control_enable": {
+    "message": "Ativar controle",
+    "description": "Runtime interface message browser_control.enable"
+  },
+  "runtime_browser_control_enabled_detail": {
+    "message": "Somente as abas cedidas selecionadas podem receber ações do navegador.",
+    "description": "Runtime interface message browser_control.enabled_detail"
+  },
+  "runtime_browser_control_enabled_toast": {
+    "message": "Controle do Hermes ativado",
+    "description": "Runtime interface message browser_control.enabled_toast"
+  },
+  "runtime_browser_control_follow": {
+    "message": "Seguir o Hermes",
+    "description": "Runtime interface message browser_control.follow"
+  },
+  "runtime_browser_control_kicker": {
+    "message": "HERMES CONTROL",
+    "description": "Runtime interface message browser_control.kicker"
+  },
+  "runtime_browser_control_note": {
+    "message": "O acesso ao controlador do Chromium foi concedido quando esta extensão ou atualização foi instalada. O Hermes só se conecta durante uma ação cedida autorizada, nunca abre uma janela do navegador e bloqueia credenciais, MFA, campos de pagamento e texto secreto.",
+    "description": "Runtime interface message browser_control.note"
+  },
+  "runtime_browser_control_pause": {
+    "message": "Pausar",
+    "description": "Runtime interface message browser_control.pause"
+  },
+  "runtime_browser_control_reject": {
+    "message": "Rejeitar",
+    "description": "Runtime interface message browser_control.reject"
+  },
+  "runtime_browser_control_resume": {
+    "message": "Retomar",
+    "description": "Runtime interface message browser_control.resume"
+  },
+  "runtime_browser_control_scope": {
+    "message": "Escopo do controle",
+    "description": "Runtime interface message browser_control.scope"
+  },
+  "runtime_browser_control_selected_tabs": {
+    "message": "Abas selecionadas",
+    "description": "Runtime interface message browser_control.selected_tabs"
+  },
+  "runtime_browser_control_state_active": {
+    "message": "Ativo",
+    "description": "Runtime interface message browser_control.state_active"
+  },
+  "runtime_browser_control_state_off": {
+    "message": "Desativado",
+    "description": "Runtime interface message browser_control.state_off"
+  },
+  "runtime_browser_control_state_paused": {
+    "message": "Em pausa",
+    "description": "Runtime interface message browser_control.state_paused"
+  },
+  "runtime_browser_control_state_ready": {
+    "message": "Pronto",
+    "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_stay": {
+    "message": "Permanecer na minha aba",
+    "description": "Runtime interface message browser_control.stay"
+  },
+  "runtime_browser_control_stop": {
+    "message": "Parar",
+    "description": "Runtime interface message browser_control.stop"
+  },
+  "runtime_browser_control_task_set": {
+    "message": "Conjunto de tarefas",
+    "description": "Runtime interface message browser_control.task_set"
+  },
+  "runtime_browser_control_this_tab": {
+    "message": "Esta aba",
+    "description": "Runtime interface message browser_control.this_tab"
+  },
+  "runtime_browser_control_title": {
+    "message": "Operar abas cedidas",
+    "description": "Runtime interface message browser_control.title"
+  },
+  "runtime_browser_control_waiting": {
+    "message": "Aguardando o Hermes.",
+    "description": "Runtime interface message browser_control.waiting"
+  },
+  "runtime_browser_control_while_working": {
+    "message": "Enquanto o Hermes trabalha",
+    "description": "Runtime interface message browser_control.while_working"
+  },
   "runtime_commands_click_or_enter": {
     "message": "Clique ou pressione Enter para executar.",
     "description": "Runtime interface message commands.click_or_enter"

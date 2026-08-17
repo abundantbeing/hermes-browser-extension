@@ -71,6 +71,50 @@ test('tab leases expire after their TTL and are reclaimed', () => {
   assert.equal(store.leaseForTab(32), null);
 });
 
+test('successful activity renews the idle TTL only for the exact live lease authority', () => {
+  let now = 0;
+  const store = createTabLeaseStore({ now: () => now, ttlMs: 10_000, generation: 3 });
+  const acquired = store.acquire({
+    tabId: 33,
+    kind: TAB_LEASE_KINDS.THIS_TAB,
+    ownerId: 'controller-1',
+  });
+
+  now = 9_000;
+  assert.deepEqual(store.renew({
+    tabId: 33,
+    ownerId: 'other-controller',
+    leaseId: acquired.lease.leaseId,
+    generation: acquired.lease.generation,
+  }), { ok: false, error: 'not-owner' });
+  assert.deepEqual(store.renew({
+    tabId: 33,
+    ownerId: acquired.lease.ownerId,
+    leaseId: 'stale-lease',
+    generation: acquired.lease.generation,
+  }), { ok: false, error: 'stale-lease' });
+  assert.deepEqual(store.renew({
+    tabId: 33,
+    ownerId: acquired.lease.ownerId,
+    leaseId: acquired.lease.leaseId,
+    generation: 2,
+  }), { ok: false, error: 'stale-generation' });
+  const renewed = store.renew({
+    tabId: 33,
+    ownerId: acquired.lease.ownerId,
+    leaseId: acquired.lease.leaseId,
+    generation: acquired.lease.generation,
+  });
+
+  assert.equal(renewed.ok, true);
+  assert.equal(renewed.lease.acquiredAt, 0);
+  assert.equal(renewed.lease.expiresAt, 19_000);
+  now = 10_001;
+  assert.equal(store.reclaimExpired(), 0, 'renewed activity keeps the lease alive past its original idle deadline');
+  now = 19_000;
+  assert.equal(store.reclaimExpired(), 1, 'the renewed lease still expires after a fresh idle TTL');
+});
+
 test('tab leases invalidate on restart generation and preserve generations across hydrate', () => {
   const store = createTabLeaseStore({ now: () => 1_000, generation: 5 });
   store.acquire({ tabId: 41, kind: TAB_LEASE_KINDS.THIS_TAB, ownerId: 'controller-1' });
@@ -135,8 +179,8 @@ test('tab lease storage is bounded, versioned, minimal, and never carries page c
   assert.equal(snapshot.version, TAB_LEASE_VERSION);
   assert.equal(snapshot.entries.length, MAX_TAB_LEASES);
   assert.deepEqual(Object.keys(snapshot.entries[0]).sort(), [
-    'acquiredAt', 'expiresAt', 'generation', 'groupSource', 'kind', 'ownerId',
-    'ownership', 'tabId', 'taskSetId', 'windowId',
+    'acquiredAt', 'expiresAt', 'generation', 'groupSource', 'kind', 'leaseId',
+    'ownerId', 'ownership', 'tabId', 'taskSetId', 'windowId',
   ]);
   const json = JSON.stringify(snapshot);
   for (const forbidden of ['url', 'title', 'transcript', 'pageContext', '"text"']) {

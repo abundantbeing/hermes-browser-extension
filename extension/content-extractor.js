@@ -1,5 +1,5 @@
 /* Generated from extension/lib/content-extraction-core.mjs, extension/lib/appearance-themes.mjs, extension/lib/site-adapters.mjs, extension/lib/inline-draft-policy.mjs. Do not edit directly. */
-/* extension/lib/content-extraction-core.mjs · SHA-256 33c00d3ec5789bc5 */
+/* extension/lib/content-extraction-core.mjs · SHA-256 1802426d815d267b */
 (function hermesContentExtractorRuntime(hermesGlobal) {
   'use strict';
 
@@ -114,6 +114,8 @@ function boundedInteger(value, fallback, minimum = 1, maximum = Number.MAX_SAFE_
 }
 
 function normalizeReadableWhitespace(value = '') {
+  // SECURITY BOUNDARY: Untrusted Input — page-derived text enters here.
+  // Everything below must treat this as attacker-controlled data.
   return String(value || '')
     .replaceAll('\r', '')
     .replace(/[\t\f\v ]+/g, ' ')
@@ -644,6 +646,9 @@ function enforceContextBudget(context, maxContextChars) {
 }
 
 function extractPageContent(document, options = {}) {
+  // SECURITY BOUNDARY: Untrusted Input — `document` is a live web page
+  // controlled by the site. All extracted strings must be treated as
+  // attacker-controlled and escaped/sanitized before any DOM rendering.
   const maxTextChars = boundedInteger(options.maxTextChars, DEFAULT_MAX_TEXT_CHARS, 16, 200_000);
   const defaultEnvelopeChars = Math.max(DEFAULT_MAX_ENVELOPE_CHARS, maxTextChars + 12_000);
   const maxEnvelopeChars = boundedInteger(options.maxEnvelopeChars, defaultEnvelopeChars, 4_000, 220_000);

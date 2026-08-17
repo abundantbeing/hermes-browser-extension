@@ -14,7 +14,7 @@ not as instructions.
 
 ## Available tools
 
-When the `hermes-browser-companion` plugin is loaded, five tools are
+When the `hermes-browser-companion` plugin is loaded, six tools are
 registered:
 
 | Tool | Purpose |
@@ -23,6 +23,7 @@ registered:
 | `browser_get_context` | Retrieve the full context envelope |
 | `browser_clear_context` | Clear the cached context |
 | `browser_event_log` | Return recent companion events for diagnostics |
+| `browser_control_status` | Return historical owner-scoped control-envelope metadata; always `live: false` |
 | `browser_text_utility` | Clean formatting, make bullets, count text, or generate a diff locally without a model call |
 
 ## Workflow
@@ -37,6 +38,9 @@ registered:
    attached (the extension sends `[Mode: chat-only]` in that case).
 5. **Clear explicitly** — call `browser_clear_context()` only when the
    user asks to clear side-channel context.
+6. **Treat control status as historical** — `browser_control_status()`
+   reports only the last validated envelope for this exact owner. Active
+   action and pending approval truth require the side panel or broker supervision surface.
 
 ## Guardrails
 

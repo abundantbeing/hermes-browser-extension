@@ -159,6 +159,7 @@ import {
   WS_EVENTS,
   WS_METHODS,
 } from './lib/gateway-ws.mjs';
+import { browserDisplayMessages } from './lib/web-run-state.mjs';
 import {
   dashboardTrustPrompt,
   discoverProfilesViaTab,
@@ -354,6 +355,12 @@ import {
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
+import {
+  browserControlView,
+  controlLeaseRequest,
+  currentTabLeaseReplacement,
+  followTargetTabId,
+} from './lib/browser-control-ui.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const browserApiResolution = resolveBrowserApi();
@@ -375,6 +382,7 @@ const els = {
   startupDetail: $('#startupDetail'),
   startupProgress: $('#startupProgress'),
   startupStepList: $('#startupStepList'),
+  startupConnectButton: $('#startupConnectButton'),
   connectPanel: $('#connectPanel'),
   connectButton: $('#connectButton'),
   manualSettingsButton: $('#manualSettingsButton'),
@@ -455,6 +463,23 @@ const els = {
   statusDot: $('#statusDot'),
   statusActions: $('#statusActions'),
   statusCopyDiagnosticsButton: $('#statusCopyDiagnosticsButton'),
+  browserControlCard: $('#browserControlCard'),
+  browserControlCardDetail: $('#browserControlCardDetail'),
+  browserControlState: $('#browserControlState'),
+  browserControlScopeInput: $('#browserControlScopeInput'),
+  browserControlStayButton: $('#browserControlStayButton'),
+  browserControlFollowButton: $('#browserControlFollowButton'),
+  browserControlEnableButton: $('#browserControlEnableButton'),
+  browserControlDetachButton: $('#browserControlDetachButton'),
+  browserControlStrip: $('#browserControlStrip'),
+  browserControlStripSignal: $('#browserControlStripSignal'),
+  browserControlStripTitle: $('#browserControlStripTitle'),
+  browserControlStripDetail: $('#browserControlStripDetail'),
+  browserControlAttachButton: $('#browserControlAttachButton'),
+  browserControlPauseButton: $('#browserControlPauseButton'),
+  browserControlStopButton: $('#browserControlStopButton'),
+  browserControlApproveButton: $('#browserControlApproveButton'),
+  browserControlRejectButton: $('#browserControlRejectButton'),
   modelMenuButton: $('#modelMenuButton'),
   currentModelName: $('#currentModelName'),
   currentModelEffort: $('#currentModelEffort'),
@@ -658,6 +683,10 @@ const HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY = 'hermesBrowserIntroSeen';
 let browserIntroSeen = false;
 let browserIntroDismissedForPanel = false;
 let operationToastTimer = null;
+let browserControlStatus = null;
+let browserControlActiveTab = null;
+let browserControlCurrentTarget = null;
+let browserControlPollTimer = null;
 let latestUpdateReview = null;
 let sessionsRefreshing = false;
 let contextMenuEditor = null;
@@ -964,6 +993,12 @@ function renderStartupReadiness() {
       els.startupStepList.appendChild(item);
     }
   }
+  if (els.startupConnectButton) {
+    els.startupConnectButton.hidden = view.phase !== 'setup-needed';
+  }
+  if (els.startupTestConnectionButton) {
+    els.startupTestConnectionButton.hidden = view.phase === 'setup-needed';
+  }
   document.body?.classList.toggle('startup-active', view.visible);
   positionStartupSettings(view.visible);
   els.composer?.classList.toggle('startup-blocked', view.visible);
@@ -1062,6 +1097,305 @@ function closeSettingsDialog() {
   els.settingsDialog.hidden = true;
   els.settingsDialog.setAttribute('aria-hidden', 'true');
   els.settingsButton.focus();
+}
+
+function browserControlMessage(type, payload = {}) {
+  return browserApi.runtime.sendMessage({ type, ...payload });
+}
+
+const CONTROL_TARGET_READY_RETRY = Object.freeze({ attempts: 6, delayMs: 100 });
+
+async function resolveBrowserControlCandidate(candidate) {
+  let resolved = null;
+  for (let attempt = 0; attempt < CONTROL_TARGET_READY_RETRY.attempts; attempt += 1) {
+    try {
+      resolved = await browserControlMessage('HERMES_CONTROLLER_TARGET_RESOLVE', candidate);
+    } catch {
+      return null;
+    }
+    if (resolved?.reason !== 'document_not_ready') return resolved;
+    if (attempt + 1 < CONTROL_TARGET_READY_RETRY.attempts) {
+      await new Promise((resolve) => setTimeout(resolve, CONTROL_TARGET_READY_RETRY.delayMs));
+    }
+  }
+  return resolved;
+}
+
+function browserControlCandidate({ context = {}, scope = {} } = {}) {
+  if (scope?.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return null;
+  const pinned = scope?.mode === CONTEXT_SCOPE_MODES.PINNED_TAB;
+  const tabId = Number(pinned ? scope?.pinnedTabId : context?.activeTab?.id);
+  const url = String(pinned
+    ? (scope?.pinnedUrl || context?.activeTab?.url || '')
+    : (context?.activeTab?.url || '')).trim();
+  if (!Number.isInteger(tabId) || tabId <= 0 || !url) return null;
+  return { tabId, frameId: 0, expectedUrl: url };
+}
+
+async function resolveBrowserControlForTurn({ context = {}, scope = {} } = {}) {
+  const candidate = browserControlCandidate({ context, scope });
+  if (!candidate) {
+    return {
+      route: 'extension-controller',
+      availability: 'unavailable',
+      isolatedFallback: 'forbidden',
+      reason: 'target_unavailable',
+      message: 'Tab not found in your browser.',
+    };
+  }
+  try {
+    const resolved = await resolveBrowserControlCandidate(candidate);
+    if (resolved?.route === 'extension-controller' && resolved?.isolatedFallback === 'forbidden') return resolved;
+  } catch {
+    // Fall through to a fail-closed unavailable target.
+  }
+  return {
+    route: 'extension-controller',
+    availability: 'unavailable',
+    isolatedFallback: 'forbidden',
+    reason: 'controller_unavailable',
+    message: 'Tab not found in your browser.',
+  };
+}
+
+function browserControlTaskSetId() {
+  const ids = Array.isArray(selectedTabs) ? selectedTabs.map((tab) => Number(tab.id)).filter(Number.isInteger) : [];
+  return ids.length ? `task-set-${ids.sort((a, b) => a - b).join('-')}`.slice(0, 120) : '';
+}
+
+async function persistBrowserControlPreferences(patch = {}) {
+  settings = { ...settings, ...patch };
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+}
+
+function renderBrowserControl() {
+  if (!els.browserControlCard || !els.browserControlStrip) return;
+  const view = browserControlView({
+    settings,
+    status: browserControlStatus || {},
+    activeTab: browserControlActiveTab,
+    currentTarget: browserControlCurrentTarget,
+  });
+  const enabled = settings.browserControlEnabled === true;
+  const viewBehavior = settings.browserControlViewBehavior === 'follow' ? 'follow' : 'stay';
+  const paused = browserControlStatus?.paused === true;
+  const pendingApproval = browserControlStatus?.pendingApproval || null;
+
+  const stateKey = {
+    off: 'browser_control.state_off',
+    reconnecting: 'ui.reconnecting',
+    unavailable: 'ui.unavailable',
+    unattached: 'ui.attach',
+    preparing: 'ui.reconnecting',
+    ready: 'browser_control.state_ready',
+    active: 'browser_control.state_active',
+    paused: 'browser_control.state_paused',
+  }[view.state] || 'browser_control.state_off';
+  els.browserControlState.textContent = t(stateKey).toUpperCase();
+  els.browserControlState.dataset.state = view.state;
+  els.browserControlCardDetail.textContent = translateUiText(view.detail);
+  els.browserControlScopeInput.value = ['this-tab', 'selected-tabs', 'task-set'].includes(settings.browserControlScope)
+    ? settings.browserControlScope
+    : 'this-tab';
+  els.browserControlScopeInput.disabled = enabled;
+  els.browserControlStayButton.setAttribute('aria-pressed', String(viewBehavior === 'stay'));
+  els.browserControlFollowButton.setAttribute('aria-pressed', String(viewBehavior === 'follow'));
+  els.browserControlEnableButton.hidden = enabled && !view.canAttach;
+  els.browserControlEnableButton.textContent = t(view.canAttach
+    ? 'ui.attach.to.current.tab'
+    : 'browser_control.enable');
+  els.browserControlDetachButton.hidden = !enabled;
+
+  els.browserControlStrip.hidden = !enabled;
+  els.browserControlStrip.dataset.tone = view.tone;
+  els.browserControlStripTitle.textContent = translateUiText(view.title);
+  els.browserControlStripDetail.textContent = translateUiText(view.detail);
+  els.browserControlAttachButton.hidden = !view.canAttach;
+  els.browserControlPauseButton.textContent = t(paused ? 'browser_control.resume' : 'browser_control.pause');
+  els.browserControlPauseButton.disabled = !view.canPause;
+  els.browserControlStopButton.disabled = !view.canStop;
+  els.browserControlApproveButton.hidden = !pendingApproval;
+  els.browserControlRejectButton.hidden = !pendingApproval;
+}
+
+async function refreshBrowserControlStatus({ follow = true } = {}) {
+  if (document.visibilityState === 'hidden') return browserControlStatus;
+  try {
+    browserControlStatus = await browserControlMessage('HERMES_CONTROLLER_STATUS');
+    browserControlActiveTab = await activeTab();
+    browserControlCurrentTarget = null;
+    const activeTabId = Number(browserControlActiveTab?.id);
+    if (browserControlStatus?.leasedTabIds?.some((tabId) => Number(tabId) === activeTabId)) {
+      const candidate = browserControlCandidate({
+        context: { activeTab: browserControlActiveTab },
+        scope: { mode: CONTEXT_SCOPE_MODES.ACTIVE_TAB },
+      });
+      if (candidate) {
+        browserControlCurrentTarget = await browserControlMessage('HERMES_CONTROLLER_TARGET_RESOLVE', candidate)
+          .catch(() => null);
+      }
+    }
+    renderBrowserControl();
+    if (follow && settings.browserControlViewBehavior === 'follow') {
+      const tab = await activeTab();
+      const targetTabId = followTargetTabId({
+        viewBehavior: 'follow',
+        status: browserControlStatus,
+        activeTabId: tab?.id,
+      });
+      if (targetTabId) await browserApi.tabs.update(targetTabId, { active: true });
+    }
+    return browserControlStatus;
+  } catch {
+    browserControlStatus = null;
+    browserControlCurrentTarget = null;
+    renderBrowserControl();
+    return null;
+  }
+}
+
+function scheduleBrowserControlPoll() {
+  if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
+  browserControlPollTimer = null;
+  if (settings.browserControlEnabled !== true || document.visibilityState === 'hidden') return;
+  browserControlPollTimer = setTimeout(async () => {
+    await refreshBrowserControlStatus();
+    scheduleBrowserControlPoll();
+  }, 750);
+}
+
+async function attachBrowserControlToCurrentTab() {
+  await refreshBrowserControlStatus({ follow: false });
+  const tab = browserControlActiveTab || await activeTab();
+  if (browserControlStatus?.lastConnectFailure?.reason === 'missing_session') {
+    throw new Error('Start or select a Hermes session, then attach this tab.');
+  }
+  const replacement = currentTabLeaseReplacement({ status: browserControlStatus || {}, activeTab: tab });
+  if (!replacement.ok) {
+    const messages = {
+      controller_busy: 'Wait for the current browser action to finish before attaching another tab.',
+      controller_unavailable: 'Hermes Control is still reconnecting. Try Attach this tab again in a moment.',
+      restricted_url: 'Open a normal HTTP or HTTPS page before attaching Hermes Control.',
+    };
+    throw new Error(messages[replacement.error] || 'This tab cannot be attached right now.');
+  }
+  if (replacement.releaseTabIds.length) {
+    const released = await browserControlMessage('HERMES_CONTROLLER_LEASE_RELEASE', {
+      ownerId: replacement.ownerId,
+      tabIds: replacement.releaseTabIds,
+    });
+    if (!released?.ok) throw new Error(released?.error || 'Could not release the previous tab lease.');
+  }
+  const acquired = await browserControlMessage('HERMES_CONTROLLER_LEASE_ACQUIRE', replacement.acquire);
+  if (!acquired?.ok) throw new Error(acquired?.error || 'Could not lease this tab.');
+  const candidate = browserControlCandidate({
+    context: { activeTab: tab },
+    scope: { mode: CONTEXT_SCOPE_MODES.ACTIVE_TAB },
+  });
+  const resolved = candidate ? await resolveBrowserControlCandidate(candidate) : null;
+  if (resolved?.availability !== 'available' || resolved?.leaseOwned !== true) {
+    await refreshBrowserControlStatus({ follow: false });
+    throw new Error('This tab is leased but its page is not ready yet. Wait for the page to finish loading, then attach it again.');
+  }
+  await persistBrowserControlPreferences({
+    browserControlScope: 'this-tab',
+    browserControlPaused: false,
+  });
+  browserControlActiveTab = tab;
+  browserControlCurrentTarget = resolved;
+  await refreshBrowserControlStatus({ follow: false });
+  scheduleBrowserControlPoll();
+  showOperationToast({ title: 'This tab is attached', detail: 'Hermes Control is ready for the first browser action.' });
+  return resolved;
+}
+
+async function enableBrowserControl() {
+  if (settings.browserControlEnabled === true) {
+    return attachBrowserControlToCurrentTab();
+  }
+  if (!String(settings.sessionId || '').trim()) {
+    throw new Error('Start or select a Hermes session before enabling control.');
+  }
+  const tab = await activeTab();
+  const scope = els.browserControlScopeInput.value;
+  const leaseRequest = controlLeaseRequest({
+    scope,
+    activeTab: tab,
+    selectedTabs,
+    taskSetId: browserControlTaskSetId(),
+  });
+  if (!leaseRequest.ok) {
+    throw new Error(leaseRequest.error === 'explicit_selection_required'
+      ? 'Select one or more tabs in the Browser context scope before enabling this control scope.'
+      : 'A supported active tab is required.');
+  }
+
+  try {
+    await persistBrowserControlPreferences({
+      browserControlEnabled: true,
+      browserControlPaused: false,
+      browserControlScope: scope,
+    });
+    const rebound = await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH');
+    if (!rebound?.ok) throw new Error(rebound?.error || 'Controller capability refresh failed.');
+    const acquired = await browserControlMessage('HERMES_CONTROLLER_LEASE_ACQUIRE', {
+      ...leaseRequest,
+      ownership: 'owned',
+      ownerId: rebound.controllerId,
+    });
+    if (!acquired?.ok) throw new Error(acquired?.error || 'Could not lease the selected tabs.');
+    await refreshBrowserControlStatus({ follow: false });
+    scheduleBrowserControlPoll();
+    showOperationToast({ title: t('browser_control.enabled_toast'), detail: t('browser_control.enabled_detail') });
+  } catch (error) {
+    await persistBrowserControlPreferences({ browserControlEnabled: false, browserControlPaused: false });
+    await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH').catch(() => null);
+    throw error;
+  }
+}
+
+async function detachBrowserControl() {
+  await browserControlMessage('HERMES_CONTROLLER_DETACH');
+  settings = { ...settings, browserControlEnabled: false, browserControlPaused: false };
+  browserControlStatus = null;
+  renderBrowserControl();
+  scheduleBrowserControlPoll();
+  showOperationToast({ title: t('browser_control.detached_toast'), detail: t('browser_control.detached_detail') });
+}
+
+async function setBrowserControlViewBehavior(value) {
+  const viewBehavior = value === 'follow' ? 'follow' : 'stay';
+  await persistBrowserControlPreferences({ browserControlViewBehavior: viewBehavior });
+  renderBrowserControl();
+  if (viewBehavior === 'follow') await refreshBrowserControlStatus();
+}
+
+async function toggleBrowserControlPause() {
+  const type = browserControlStatus?.paused ? 'HERMES_CONTROLLER_RESUME' : 'HERMES_CONTROLLER_PAUSE';
+  browserControlStatus = await browserControlMessage(type);
+  settings = { ...settings, browserControlPaused: browserControlStatus?.paused === true };
+  renderBrowserControl();
+}
+
+async function decideBrowserControlApproval(approved) {
+  const pendingApproval = browserControlStatus?.pendingApproval;
+  if (!pendingApproval) return;
+  const type = approved ? 'HERMES_CONTROLLER_APPROVAL_GRANT' : 'HERMES_CONTROLLER_APPROVAL_REJECT';
+  const result = await browserControlMessage(type, {
+    approvalId: pendingApproval.approvalId,
+    approvalNonce: pendingApproval.approvalNonce,
+    commandId: pendingApproval.commandId,
+    controllerId: pendingApproval.controllerId,
+    leaseId: pendingApproval.leaseId,
+    leaseGeneration: pendingApproval.leaseGeneration,
+    action: pendingApproval.action,
+    tabId: pendingApproval.tabId,
+    frameId: 0,
+    documentGeneration: pendingApproval.documentGeneration,
+    state: pendingApproval.state,
+  });
+  if (!result?.ok) throw new Error(result?.error || 'Approval decision was not accepted.');
+  await refreshBrowserControlStatus();
 }
 
 function hideOperationToast() {
@@ -1552,7 +1886,7 @@ async function loadMessagesForActiveScope() {
   const key = activeMessagesStorageKey(previousConversationScope);
   const stored = await browserApi.storage.local.get([key]);
   messages = Array.isArray(stored[key]) ? stored[key] : [];
-  const visibleTokens = estimateLocalSessionContextTokens({ messages });
+  const visibleTokens = estimateLocalSessionContextTokens({ messages: browserDisplayMessages(messages) });
   loadedSessionContextEstimate = {
     sessionId: settings.sessionId,
     contextTokens: visibleTokens,
@@ -6693,14 +7027,15 @@ async function fetchSessionMessagesQuietly(sessionId, { transport = isRemoteWsMo
     const result = await remoteWsConnection.client.request(WS_METHODS.sessionHistory, { session_id: sessionId });
     const contextMessages = normalizeGatewayHistoryMessages(result)
       .map((message) => ({
+        ...message,
         role: message.role,
         content: message.content,
+        display_kind: message.display_kind,
         ts: Number(message.timestamp || message.ts || Date.now()),
-      }))
-      .filter((message) => message.content);
+      }));
     return {
       contextMessages,
-      messages: contextMessages.filter((message) => ['user', 'assistant', 'system'].includes(message.role)),
+      messages: contextMessages,
       session: null,
     };
   }
@@ -6709,12 +7044,16 @@ async function fetchSessionMessagesQuietly(sessionId, { transport = isRemoteWsMo
   const payload = await readJsonResponse(response);
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Messages failed (${response.status})`);
   const rows = Array.isArray(payload.data) ? payload.data : [];
-  const contextMessages = rows
-    .filter((message) => message.content)
-    .map((message) => ({ role: message.role, content: String(message.content), ts: Number(message.timestamp || Date.now()) }));
+  const contextMessages = rows.map((message) => ({
+    ...message,
+    role: String(message.role || '').toLowerCase(),
+    content: String(message.content || ''),
+    display_kind: message.display_kind,
+    ts: Number(message.timestamp || Date.now()),
+  }));
   return {
     contextMessages,
-    messages: contextMessages.filter((message) => ['user', 'assistant', 'system'].includes(message.role)),
+    messages: contextMessages,
     session: payload.session || null,
   };
 }
@@ -6732,7 +7071,7 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
   loadedSessionContextEstimate = {
     sessionId,
     contextTokens: estimateLocalSessionContextTokens({ messages: contextMessages }),
-    visibleTokens: estimateLocalSessionContextTokens({ messages }),
+    visibleTokens: estimateLocalSessionContextTokens({ messages: browserDisplayMessages(messages) }),
   };
   await saveMessagesForActiveScope();
   if (requestId != null && requestId !== sessionLoadRequestId) return false;
@@ -7474,7 +7813,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
 
 function renderMessagesFromStorage() {
   els.messages.innerHTML = '';
-  for (const message of messages) {
+  for (const message of browserDisplayMessages(messages)) {
     if (isDelegationCompletionMarkerMessage(message)) continue;
     addMessage(message.role, message.content, { persist: false });
   }
@@ -7522,6 +7861,7 @@ function syncSettingsForm() {
   renderConnectionSecurity();
   renderBrowserContextConsentControl();
   renderRemoteDiagnostics(lastRemoteDiagnostic);
+  renderBrowserControl();
 }
 
 async function saveSettingsFromForm() {
@@ -9038,12 +9378,7 @@ async function connectApiWithPairing() {
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     syncSettingsForm();
     updateConnectionPrompt();
-    await loadGatewayCapabilities({ quiet: true, healthOk: true });
-    await loadModels({ quiet: true });
-    await loadSkills({ quiet: true });
-    await loadProfiles({ quiet: true });
-    await loadSessions({ quiet: true });
-    await initializeSessionForPanelOpen({ focus: false });
+    await runPanelConnectionReadiness({ restoreSettings: false });
     if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'hermes' })) return;
     els.connectStatus.textContent = translateUiText('Connected to Hermes. You can start chatting with page context.');
     markGatewayReachable(normalizeGatewayUrl(settings.gatewayUrl));
@@ -9195,12 +9530,13 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     const capturedContext = turnContextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY
       ? null
       : gatedContextOverride || await refreshContext();
-    if (typeof turnOptions.resolveUserText === 'function') {
-      userText = String(await turnOptions.resolveUserText() || '');
-    }
     const context = turnContextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY
       ? { activeTab: null, tabs: [], pageContext: null, contextScope: turnContextScope }
       : capturedContext;
+    const browserControl = await resolveBrowserControlForTurn({ context, scope: turnContextScope });
+    if (typeof turnOptions.resolveUserText === 'function') {
+      userText = String(await turnOptions.resolveUserText() || '');
+    }
 
     // Command expansion is a declared instruction transform. Deliberately do
     // not pass page/tab data to it: Browser data remains in browser_context.
@@ -9260,6 +9596,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       settings: turnProtocolSettings,
       contextHash,
       contextDelivery,
+      browserControl,
     });
 
     const receipt = buildContextReceipt({
@@ -9783,7 +10120,7 @@ async function prepareContextMenuTurn(rawRequest) {
   return contextMenuTurnForEffectiveContext(preparedTurn);
 }
 
-function serializePreparedContextMenuTurn(turn) {
+function serializePreparedContextMenuTurn(turn, browserControl) {
   const contextSettings = { ...settings, ...(turn.context.settingsOverride || {}) };
   const contextHash = browserContextPayloadHash({
     activeTab: turn.context.activeTab,
@@ -9802,6 +10139,7 @@ function serializePreparedContextMenuTurn(turn) {
     settings: contextSettings,
     contextHash,
     contextDelivery: CONTEXT_DELIVERY_MODES.FULL,
+    browserControl,
   });
 }
 
@@ -9820,9 +10158,13 @@ async function executeContextMenuRequest(request, requestedRoute) {
     const { session } = await runInlineDraftInBackground(
       { adapterId: 'right-click', tabId: request.tabId, frameId: request.frameId },
       async () => {
+        const browserControl = await resolveBrowserControlForTurn({
+          context: turn.context,
+          scope: turn.context.contextScope,
+        });
         const sendTimeSettings = await refreshContextConsentLedger(consentSettings);
         const sendTimeTurn = contextMenuTurnForEffectiveContext(turn, sendTimeSettings);
-        return serializePreparedContextMenuTurn(sendTimeTurn);
+        return serializePreparedContextMenuTurn(sendTimeTurn, browserControl);
       },
     );
     await loadSessions({ quiet: true });
@@ -10016,6 +10358,14 @@ async function testConnection() {
     }
     await loadGatewayCapabilities({ quiet: true, healthOk: true });
     if (!connectionController.isCurrent(generation)) return;
+    if (!apiCredentialSatisfied(settings) && gatewayCapabilities.browserPairing && automaticApiPairingAllowed(settings)) {
+      await connectApiWithPairing();
+      if (!connectionController.isCurrent(generation)) return;
+      if (!apiCredentialSatisfied(settings)) {
+        throw new Error('Pairing was not completed. Approve the Hermes Browser request in the opened tab, then test again.');
+      }
+      await loadGatewayCapabilities({ quiet: true, healthOk: true });
+    }
 
     const modelsResponse = await apiFetch('/v1/models', { method: 'GET' });
     const modelsPayload = await readJsonResponse(modelsResponse);
@@ -10173,6 +10523,11 @@ function bindEvents() {
     panel.addEventListener('pointerdown', (event) => event.stopPropagation());
   });
   els.connectButton.addEventListener('click', connectToHermes);
+  els.startupConnectButton?.addEventListener('click', () => {
+    connectToHermes().catch((error) => {
+      setStatus('warn', 'Connect failed', error?.message || String(error), { translateDetail: false });
+    });
+  });
   els.sessionMenuButton.addEventListener('click', async (event) => {
     event.stopPropagation();
     const nextHidden = !els.sessionMenu.hidden;
@@ -10524,6 +10879,68 @@ function bindEvents() {
       renderBrowserContextConsentControl();
       setStatus('warn', 'Context sharing unchanged', error?.message || String(error), { translateDetail: false });
     });
+  });
+  els.browserControlEnableButton?.addEventListener('click', async () => {
+    els.browserControlEnableButton.disabled = true;
+    try {
+      await enableBrowserControl();
+    } catch (error) {
+      showOperationToast({ kind: 'warn', title: 'Control not enabled', detail: error?.message || String(error) });
+    } finally {
+      els.browserControlEnableButton.disabled = false;
+      renderBrowserControl();
+    }
+  });
+  els.browserControlAttachButton?.addEventListener('click', async () => {
+    els.browserControlAttachButton.disabled = true;
+    try {
+      await attachBrowserControlToCurrentTab();
+    } catch (error) {
+      showOperationToast({ kind: 'warn', title: 'Control not attached', detail: error?.message || String(error) });
+    } finally {
+      els.browserControlAttachButton.disabled = false;
+      renderBrowserControl();
+    }
+  });
+  els.browserControlDetachButton?.addEventListener('click', () => {
+    detachBrowserControl().catch((error) => showOperationToast({ kind: 'warn', title: 'Detach incomplete', detail: error?.message || String(error) }));
+  });
+  els.browserControlScopeInput?.addEventListener('change', () => {
+    if (settings.browserControlEnabled === true) {
+      renderBrowserControl();
+      return;
+    }
+    persistBrowserControlPreferences({ browserControlScope: els.browserControlScopeInput.value })
+      .then(renderBrowserControl)
+      .catch((error) => showOperationToast({ kind: 'warn', title: 'Scope unchanged', detail: error?.message || String(error) }));
+  });
+  els.browserControlStayButton?.addEventListener('click', () => {
+    setBrowserControlViewBehavior('stay').catch((error) => showOperationToast({ kind: 'warn', title: 'View unchanged', detail: error?.message || String(error) }));
+  });
+  els.browserControlFollowButton?.addEventListener('click', () => {
+    setBrowserControlViewBehavior('follow').catch((error) => showOperationToast({ kind: 'warn', title: 'View unchanged', detail: error?.message || String(error) }));
+  });
+  els.browserControlPauseButton?.addEventListener('click', () => {
+    toggleBrowserControlPause().catch((error) => showOperationToast({ kind: 'warn', title: 'Control state unchanged', detail: error?.message || String(error) }));
+  });
+  els.browserControlStopButton?.addEventListener('click', () => {
+    browserControlMessage('HERMES_CONTROLLER_STOP')
+      .then(() => refreshBrowserControlStatus())
+      .catch((error) => showOperationToast({ kind: 'warn', title: 'Stop failed', detail: error?.message || String(error) }));
+  });
+  els.browserControlApproveButton?.addEventListener('click', () => {
+    decideBrowserControlApproval(true).catch((error) => showOperationToast({ kind: 'warn', title: 'Approval not accepted', detail: error?.message || String(error) }));
+  });
+  els.browserControlRejectButton?.addEventListener('click', () => {
+    decideBrowserControlApproval(false).catch((error) => showOperationToast({ kind: 'warn', title: 'Rejection not accepted', detail: error?.message || String(error) }));
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
+      browserControlPollTimer = null;
+      return;
+    }
+    void refreshBrowserControlStatus().then(scheduleBrowserControlPoll);
   });
   els.gatewayModeInput?.addEventListener('change', () => {
     const summary = currentGatewaySummary({ gatewayMode: els.gatewayModeInput.value, gatewayUrl: els.gatewayUrlInput.value });
@@ -10991,6 +11408,7 @@ subscribeLocale(() => {
   updateComposerBusyState();
   renderWakeState();
   renderModelRefreshState();
+  renderBrowserControl();
   if (lastVisibleStatus) setStatus(lastVisibleStatus.kind, lastVisibleStatus.title, lastVisibleStatus.detail, {
     translateTitle: lastVisibleStatus.translateTitle,
     translateDetail: lastVisibleStatus.translateDetail,
@@ -10999,6 +11417,9 @@ subscribeLocale(() => {
 await initI18n();
 bindEvents();
 await runStartupReadiness();
+renderBrowserControl();
+await refreshBrowserControlStatus({ follow: false });
+scheduleBrowserControlPoll();
 try {
   await consumePendingInlineDraftRequest();
   await consumePendingContextMenuRequest();

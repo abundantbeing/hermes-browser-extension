@@ -868,6 +868,26 @@ body.startup-active .topbar #startupTestConnectionButton {
   letter-spacing: 0.1em;
 }
 body:not(.startup-active) #startupTestConnectionButton { display: none; }
+body:not(.startup-active) #startupConnectButton { display: none; }
+body.startup-active .topbar #startupConnectButton:not([hidden]) {
+  display: block;
+  visibility: visible;
+  pointer-events: auto;
+  min-width: 142px;
+  min-height: 30px;
+  margin: 0;
+  padding: 7px 12px;
+  background: var(--hermes-primary-bg);
+  color: var(--hermes-primary-fg);
+  border-color: var(--hermes-primary-border);
+  font: 700 10px/1 var(--hermes-font-mono);
+  letter-spacing: 0.1em;
+}
+body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  border-color: var(--hermes-line-strong);
+}
 @keyframes startup-field-breathe {
   0%, 100% { transform: scale(1.015); opacity: 0.1; }
   50% { transform: scale(1.035); opacity: 0.16; }
@@ -1014,6 +1034,170 @@ body:not(.startup-active) #startupTestConnectionButton { display: none; }
 }
 .settings-active-tab .status-copy strong {
   font-size: clamp(17px, 5vw, 21px);
+}
+
+.browser-control-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--hermes-line-strong);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(var(--hermes-accent-rgb), 0.08), transparent 52%),
+    var(--hermes-paper);
+  color: var(--hermes-ink);
+}
+.browser-control-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  min-width: 0;
+}
+.browser-control-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+.browser-control-kicker,
+.browser-control-state {
+  color: var(--hermes-accent);
+  font: 700 calc(9.5px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+.browser-control-card h5 {
+  margin: 0;
+  color: var(--hermes-ink);
+  font: 500 18px/1.08 var(--hermes-font-display);
+}
+.browser-control-card-head p {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--hermes-muted);
+  font: calc(11px * var(--hermes-text-zoom, 1))/1.45 var(--hermes-font-mono);
+}
+.browser-control-state {
+  min-width: 48px;
+  padding: 6px 8px;
+  border: 1px solid var(--hermes-line);
+  background: var(--hermes-input-bg);
+  text-align: center;
+}
+.browser-control-state[data-state="active"],
+.browser-control-state[data-state="ready"] { border-color: var(--hermes-accent); }
+.browser-control-state[data-state="reconnecting"],
+.browser-control-state[data-state="unavailable"],
+.browser-control-state[data-state="unattached"],
+.browser-control-state[data-state="preparing"],
+.browser-control-state[data-state="paused"],
+.browser-control-state[data-state="approval"] { border-color: var(--hermes-muted); color: var(--hermes-ink); }
+.browser-control-config {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+.browser-control-field,
+.browser-control-view {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+.browser-control-field > span,
+.browser-control-view legend {
+  color: var(--hermes-muted);
+  font: 700 10px/1.2 var(--hermes-font-mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.browser-control-field select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  margin: 0;
+  padding-inline: 12px 34px;
+  font-size: 12px;
+}
+.browser-control-view { margin: 0; padding: 0; border: 0; }
+.browser-control-view > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.browser-control-card-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.browser-control-strip-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.browser-control-action {
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  font: 700 calc(10.5px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: normal;
+  transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1), border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.browser-control-action:active { transform: scale(0.97); }
+.browser-control-action[aria-pressed="true"] {
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb), 0.12);
+  color: var(--hermes-ink);
+}
+.browser-control-action:disabled { opacity: 0.46; cursor: not-allowed; }
+.browser-control-note {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--hermes-line);
+  color: var(--hermes-muted);
+  font: calc(11px * var(--hermes-text-zoom, 1))/1.55 var(--hermes-font-mono);
+}
+
+.browser-control-strip[hidden] { display: none; }
+.browser-control-strip {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--hermes-line-strong);
+  border-radius: var(--radius);
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+}
+.browser-control-signal {
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--hermes-ink);
+  border-radius: 999px;
+  background: transparent;
+}
+.browser-control-strip[data-tone="ok"] .browser-control-signal { border-color: var(--hermes-accent); background: var(--hermes-accent); }
+.browser-control-strip[data-tone="warn"] .browser-control-signal { background: var(--hermes-paper); }
+.browser-control-strip-copy { min-width: 0; }
+.browser-control-strip-copy strong,
+.browser-control-strip-copy span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.browser-control-strip-copy strong { font: 500 calc(13px * var(--hermes-text-zoom, 1))/1.15 var(--hermes-font-display); }
+.browser-control-strip-copy span { margin-top: 3px; color: var(--hermes-muted); font: calc(10px * var(--hermes-text-zoom, 1))/1.35 var(--hermes-font-mono); }
+.browser-control-strip-actions { justify-content: flex-end; }
+.browser-control-strip-actions .browser-control-action { min-height: 26px; padding: 5px 7px; }
+@media (max-width: 560px) {
+  .browser-control-strip { grid-template-columns: 8px minmax(0, 1fr); align-items: start; }
+  .browser-control-strip-copy span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .browser-control-strip-actions { grid-column: 2; justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .browser-control-action { transition: none; }
+  .browser-control-action:active { transform: none; }
 }
 
 .composer-command {

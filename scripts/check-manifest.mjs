@@ -93,7 +93,8 @@ validateBuildInfo(distBuildInfo, 'dist/build-info.json');
 validateBuildInfo(firefoxBuildInfo, 'Firefox build-info.json');
 if (!manifest.permissions?.includes('sidePanel')) errors.push('sidePanel permission missing');
 if (!manifest.permissions?.includes('storage')) errors.push('storage permission missing');
-if (manifest.permissions?.includes('debugger')) errors.push('debugger permission is intentionally not allowed');
+if (!manifest.permissions?.includes('debugger')) errors.push('debugger permission missing for Phase 6 Chromium control');
+if (manifest.optional_permissions?.includes('debugger')) errors.push('debugger cannot be optional in Chrome; declare it in permissions');
 for (const [label, candidate] of [['extension/manifest.json', manifest], ['root manifest.json', rootManifest]]) {
   if (candidate?.permissions?.includes('audioCapture') || candidate?.optional_permissions?.includes('audioCapture')) {
     errors.push(`${label} must not declare the unsupported Chrome Apps audioCapture permission; use getUserMedia instead`);

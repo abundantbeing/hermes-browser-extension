@@ -82,9 +82,10 @@ if (sourceManifest.background?.service_worker) {
   };
 }
 
-// audioCapture is Chromium-only. Firefox voice support uses runtime feature detection.
+// Chromium-only optional capabilities are removed from Firefox packages.
 if (Array.isArray(sourceManifest.optional_permissions)) {
-  sourceManifest.optional_permissions = sourceManifest.optional_permissions.filter((permission) => permission !== 'audioCapture');
+  sourceManifest.optional_permissions = sourceManifest.optional_permissions
+    .filter((permission) => !firefoxProfile.removedOptionalPermissions.includes(permission));
   if (!sourceManifest.optional_permissions.length) delete sourceManifest.optional_permissions;
 }
 

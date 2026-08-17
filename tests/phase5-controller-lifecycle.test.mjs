@@ -89,9 +89,9 @@ test('controller lifecycle keeps one ordered queue per tab and executes heads in
 
   // Let the async executor run; results must arrive in per-tab FIFO order.
   await new Promise((resolve) => setTimeout(resolve, 20));
-  const tabA = terminals.filter((result) => result.tabId === 9).map((result) => result.params.arguments?.step);
+  const tabA = terminals.filter((result) => result.tabId === 9).map((result) => result.params.result?.step);
   assert.deepEqual(tabA, [1, 2]);
-  const tabB = terminals.filter((result) => result.tabId === 10).map((result) => result.params.arguments?.step);
+  const tabB = terminals.filter((result) => result.tabId === 10).map((result) => result.params.result?.step);
   assert.deepEqual(tabB, [1]);
   assert.equal(lifecycle.pendingCount(), 0);
 });
@@ -185,15 +185,44 @@ test('controller lifecycle honors a per-command executor and cancels the exact q
 test('controller lifecycle snapshots bounded pending metadata so a fresh worker can terminalize it', async () => {
   const lifecycle = createControllerLifecycle({ now: () => 1_000 });
   lifecycle.enqueueCommand({
-    frame: { command_id: 'persisted-pending', action: 'controller.noop', arguments: { forbidden: 'not-persisted' } },
+    frame: {
+      command_id: 'persisted-pending',
+      action: 'browser_type',
+      arguments: { text: 'not-persisted', url: 'https://example.test/?forbidden=yes' },
+      frame_id: 0,
+      document_generation: 3,
+      deadline_at: 9_000,
+    },
     tabId: 8,
     ownerGeneration: 1,
+    metadata: {
+      controllerId: 'controller-metadata',
+      browserProfileId: 'profile-metadata',
+      leaseId: 'lease-metadata',
+      leaseGeneration: 1,
+    },
     execute: () => new Promise(() => {}),
   });
   await Promise.resolve();
   const snapshot = lifecycle.snapshot();
-  assert.deepEqual(snapshot.pending, [{ commandId: 'persisted-pending', tabId: 8, generation: 1 }]);
-  assert.equal(JSON.stringify(snapshot).includes('not-persisted'), false);
+  assert.deepEqual(snapshot.pending, [{
+    commandId: 'persisted-pending',
+    action: 'browser_type',
+    controllerId: 'controller-metadata',
+    browserProfileId: 'profile-metadata',
+    leaseId: 'lease-metadata',
+    leaseGeneration: 1,
+    tabId: 8,
+    frameId: 0,
+    documentGeneration: 3,
+    deadlineAt: 9_000,
+    phase: 'executing',
+    terminalStatus: 'open',
+  }]);
+  const serialized = JSON.stringify(snapshot);
+  for (const forbidden of ['not-persisted', 'forbidden=yes', 'arguments', 'url']) {
+    assert.equal(serialized.includes(forbidden), false, forbidden);
+  }
 
   const restored = createControllerLifecycle({ now: () => 2_000 });
   const recovered = restored.hydrate(snapshot);

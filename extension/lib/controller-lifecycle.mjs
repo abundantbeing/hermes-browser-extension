@@ -30,6 +30,15 @@ export const CONTROLLER_MIN_BACKOFF_MS = 1_000;
 export const CONTROLLER_MAX_BACKOFF_MS = 60_000;
 export const CONTROLLER_MAX_REPLAY_TOMBSTONES = 512;
 export const CONTROLLER_MAX_COMMANDS_PER_TAB = 64;
+export const ControllerTransitionReason = Object.freeze({
+  TRANSPORT_LOST: 'transport-lost',
+  TRANSPORT_REFRESHED: 'transport-refreshed',
+  USER_STOP: 'user-stop',
+  USER_DETACH: 'user-detach',
+  IDENTITY_REPLACED: 'identity-replaced',
+  SETTINGS_REPLACED: 'settings-replaced',
+  DEBUGGER_DETACHED: 'debugger-detached',
+});
 
 /** Default Phase 5 executor: noop echoes; every real action is disabled. */
 function defaultExecute(frame = {}, { signal } = {}) {
@@ -55,6 +64,60 @@ function normalizeFrame(frame = {}) {
   const args = frame.arguments && typeof frame.arguments === 'object' ? frame.arguments : {};
   if (!commandId) return null;
   return { command_id: commandId, action, arguments: args, ...frame };
+}
+
+function pendingMetadata(entry = {}) {
+  const frame = entry.frame || {};
+  const metadata = entry.metadata || {};
+  return {
+    commandId: entry.commandId,
+    action: String(frame.action || '').trim(),
+    controllerId: String(metadata.controllerId || '').trim(),
+    browserProfileId: String(metadata.browserProfileId || '').trim(),
+    leaseId: String(metadata.leaseId || '').trim(),
+    leaseGeneration: Number(metadata.leaseGeneration),
+    tabId: entry.tabId,
+    frameId: Math.max(0, Number(frame.frame_id) || 0),
+    documentGeneration: Number(frame.document_generation),
+    deadlineAt: Number(frame.deadline_at) || 0,
+    phase: entry.controller ? 'executing' : 'queued',
+    terminalStatus: entry.terminal ? 'terminal' : 'open',
+  };
+}
+
+function normalizePendingMetadata(entry = {}) {
+  const legacyCommandId = String(entry.commandId || '').trim();
+  const legacyTabId = Number(entry.tabId);
+  const legacyGeneration = Number(entry.generation);
+  const normalized = {
+    commandId: legacyCommandId,
+    action: String(entry.action || '').trim(),
+    controllerId: String(entry.controllerId || '').trim(),
+    browserProfileId: String(entry.browserProfileId || '').trim(),
+    leaseId: String(entry.leaseId || '').trim(),
+    leaseGeneration: Number(entry.leaseGeneration),
+    tabId: Number(entry.tabId),
+    frameId: Math.max(0, Number(entry.frameId) || 0),
+    documentGeneration: Number(entry.documentGeneration),
+    deadlineAt: Number(entry.deadlineAt) || 0,
+    phase: ['queued', 'executing', 'approval-paused'].includes(entry.phase) ? entry.phase : '',
+    terminalStatus: entry.terminalStatus === 'open' ? 'open' : '',
+  };
+  if (!normalized.commandId || !normalized.action || !normalized.controllerId
+    || !normalized.browserProfileId || !normalized.leaseId
+    || !Number.isInteger(normalized.leaseGeneration) || normalized.leaseGeneration < 1
+    || !Number.isInteger(normalized.tabId) || normalized.tabId <= 0
+    || !Number.isInteger(normalized.documentGeneration) || normalized.documentGeneration < 1
+    || !normalized.phase || !normalized.terminalStatus) {
+    // Phase 5 wrote only command/tab/generation. Accept that shape only while
+    // hydrating so boot can terminalize it; new snapshots never emit it.
+    if (legacyCommandId && Number.isInteger(legacyTabId) && legacyTabId > 0
+      && Number.isInteger(legacyGeneration) && legacyGeneration >= 1) {
+      return { commandId: legacyCommandId, tabId: legacyTabId, generation: legacyGeneration };
+    }
+    return null;
+  }
+  return normalized;
 }
 
 /**
@@ -124,11 +187,14 @@ export function createControllerLifecycle({
     return pending.size;
   }
 
+  function hasPending(commandId) {
+    return pending.has(String(commandId || '').trim());
+  }
+
   function terminalParams(entry, outcome) {
     return {
       command_id: entry.commandId,
       tab_id: entry.tabId,
-      arguments: entry.frame.arguments || {},
       ...outcome,
     };
   }
@@ -197,7 +263,13 @@ export function createControllerLifecycle({
    * rejection ({ ok: false, error }) for stale generations, replays,
    * duplicates, or a full queue.
    */
-  function enqueueCommand({ frame, tabId, ownerGeneration = generation, execute: executeOverride } = {}) {
+  function enqueueCommand({
+    frame,
+    tabId,
+    ownerGeneration = generation,
+    execute: executeOverride,
+    metadata = {},
+  } = {}) {
     const normalizedFrame = normalizeFrame(frame);
     const normalizedTabId = Number(tabId);
     if (!normalizedFrame) return { ok: false, error: 'invalid_command' };
@@ -215,6 +287,7 @@ export function createControllerLifecycle({
       tabId: normalizedTabId,
       frame: normalizedFrame,
       generation,
+      metadata: metadata && typeof metadata === 'object' ? { ...metadata } : {},
       terminal: false,
       controller: null,
       settleCancellation: null,
@@ -260,6 +333,22 @@ export function createControllerLifecycle({
     return { ok: true, commandId: entry.commandId };
   }
 
+  /** Cancel every executing and queued command without advancing generation. */
+  function cancelAll() {
+    const commandIds = [...pending.keys()];
+    for (const commandId of commandIds) cancelCommand(commandId);
+    return { ok: true, cancelled: commandIds.length };
+  }
+
+  function cancelTab(tabId) {
+    const normalizedTabId = Number(tabId);
+    const commandIds = [...pending.values()]
+      .filter((entry) => entry.tabId === normalizedTabId)
+      .map((entry) => entry.commandId);
+    for (const commandId of commandIds) cancelCommand(commandId);
+    return { ok: true, tabId: normalizedTabId, cancelled: commandIds.length };
+  }
+
   /** Terminalize every pending command and clear all queues (restart). */
   function restart() {
     generation += 1;
@@ -282,7 +371,7 @@ export function createControllerLifecycle({
    * Dispatch an inbound controller frame. Frames from a stale generation are
    * rejected terminally; commands queue per tab; cancels hit only the head.
    */
-  function handleInboundFrame({ frame, tabId, frameGeneration = generation } = {}) {
+  function handleInboundFrame({ frame, tabId, frameGeneration = generation, metadata = {} } = {}) {
     if (Number(frameGeneration) !== generation) {
       return { ok: false, error: 'stale_generation' };
     }
@@ -290,7 +379,12 @@ export function createControllerLifecycle({
       const commandId = String(frame?.params?.command_id || '').trim();
       return commandId ? cancelCommand(commandId) : cancelHead(tabId ?? frame?.params?.tab_id);
     }
-    return enqueueCommand({ frame: frame?.params ?? frame, tabId, ownerGeneration: generation });
+    return enqueueCommand({
+      frame: frame?.params ?? frame,
+      tabId,
+      ownerGeneration: generation,
+      metadata,
+    });
   }
 
   function nextBackoffDelay() {
@@ -315,6 +409,17 @@ export function createControllerLifecycle({
     return { ok: true, dormant: true, pending: pending.size };
   }
 
+  function transition(reason) {
+    if (reason === ControllerTransitionReason.TRANSPORT_LOST) {
+      return { ok: true, reason, generation, pending: pending.size, terminal: false };
+    }
+    if (reason === ControllerTransitionReason.TRANSPORT_REFRESHED) {
+      resetBackoff();
+      return { ok: true, reason, generation, pending: pending.size, terminal: false };
+    }
+    return { ok: false, error: 'unsupported_transition' };
+  }
+
   function snapshot() {
     return {
       version: CONTROLLER_LIFECYCLE_VERSION,
@@ -324,11 +429,7 @@ export function createControllerLifecycle({
       tombstones: [...replayTombstones].slice(-maxTombstones),
       pending: [...pending.values()]
         .slice(0, Math.max(1, Number(maxCommandsPerTab) || CONTROLLER_MAX_COMMANDS_PER_TAB))
-        .map((entry) => ({
-          commandId: entry.commandId,
-          tabId: entry.tabId,
-          generation: entry.generation,
-        })),
+        .map(pendingMetadata),
     };
   }
 
@@ -346,14 +447,8 @@ export function createControllerLifecycle({
     }
     const recoveredPending = Array.isArray(raw.pending)
       ? raw.pending
-        .map((entry) => ({
-          commandId: String(entry?.commandId || '').trim(),
-          tabId: Number(entry?.tabId),
-          generation: Number(entry?.generation),
-        }))
-        .filter((entry) => entry.commandId
-          && Number.isInteger(entry.tabId) && entry.tabId > 0
-          && Number.isInteger(entry.generation) && entry.generation >= 1)
+        .map(normalizePendingMetadata)
+        .filter(Boolean)
         .slice(0, Math.max(1, Number(maxCommandsPerTab) || CONTROLLER_MAX_COMMANDS_PER_TAB))
       : [];
     for (const entry of recoveredPending) rememberTerminal(entry.commandId);
@@ -368,6 +463,8 @@ export function createControllerLifecycle({
     enqueueCommand,
     cancelHead,
     cancelCommand,
+    cancelAll,
+    cancelTab,
     handleInboundFrame,
     restart,
     rememberTerminal,
@@ -375,10 +472,12 @@ export function createControllerLifecycle({
     tombstoneCount,
     queueDepth,
     pendingCount,
+    hasPending,
     nextBackoffDelay,
     resetBackoff,
     markHeartbeat,
     reconcile,
+    transition,
     onTerminal,
     snapshot,
     hydrate,

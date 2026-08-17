@@ -270,6 +270,94 @@ test('Cloud connector uses trusted dashboard mint, credential-free gateway subpr
   assert.deepEqual(await sendingResult, { accepted: true });
 });
 
+test('local API connector materializes a ghost session on browser_control_session_forbidden and retries', async () => {
+  FakeSocket.instances = [];
+  const requests = [];
+  let registerCalls = 0;
+  const fetchImpl = async (url, options) => {
+    requests.push({ url, options });
+    if (url.endsWith('/v1/browser-control/register')) {
+      registerCalls += 1;
+      if (registerCalls === 1) {
+        return jsonResponse(403, {
+          error: {
+            message: 'Browser control may register only for an existing server session.',
+            code: 'browser_control_session_forbidden',
+          },
+        });
+      }
+      return jsonResponse(201, {
+        ticket: 'api-ticket-after-materialize',
+        ticket_expires_in_seconds: 30,
+        ws_path: '/v1/browser-control/ws',
+      });
+    }
+    if (url.endsWith('/api/sessions')) {
+      const body = JSON.parse(options.body);
+      assert.equal(body.id, 'stored-session-fixture');
+      assert.equal(body.source, 'hermes_browser');
+      return jsonResponse(201, { session: { id: body.id } });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket });
+  const connecting = connector.connect({
+    settings: {
+      connectionTransport: 'local-api',
+      gatewayUrl: 'http://127.0.0.1:8642',
+      apiKey: 'fixture-key',
+      sessionTitle: 'Hermes Browser Extension · fixture',
+      sessionSource: 'hermes_browser',
+    },
+    identity: IDENTITY,
+  });
+  await settle();
+
+  assert.equal(registerCalls, 2, 'register must be retried after materializing the session');
+  assert.equal(requests.length, 3);
+  assert.equal(requests[1].url, 'http://127.0.0.1:8642/api/sessions');
+  assert.equal(requests[1].options.method, 'POST');
+  assert.equal(requests[2].url, 'http://127.0.0.1:8642/v1/browser-control/register');
+  assert.equal(JSON.parse(requests[2].options.body).session_id, 'stored-session-fixture');
+
+  const socket = FakeSocket.instances[0];
+  assert.equal(socket.url, 'ws://127.0.0.1:8642/v1/browser-control/ws');
+  assert.deepEqual(socket.protocols, [
+    'hermes-browser-control-v1',
+    'hermes-browser-control-ticket.api-ticket-after-materialize',
+  ]);
+  socket.open();
+  const connection = await connecting;
+  assert.ok(connection.send, 'connection must resolve after the retried register');
+});
+
+test('local API connector fails when the ghost-session materialize POST is refused', async () => {
+  FakeSocket.instances = [];
+  let registerCalls = 0;
+  const fetchImpl = async (url) => {
+    if (url.endsWith('/v1/browser-control/register')) {
+      registerCalls += 1;
+      return jsonResponse(403, {
+        error: { message: 'Browser control may register only for an existing server session.', code: 'browser_control_session_forbidden' },
+      });
+    }
+    if (url.endsWith('/api/sessions')) return jsonResponse(401, { error: { message: 'Invalid key' } });
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket });
+  await assert.rejects(connector.connect({
+    settings: {
+      connectionTransport: 'local-api',
+      gatewayUrl: 'http://127.0.0.1:8642',
+      apiKey: 'fixture-key',
+      sessionTitle: 'Hermes Browser Extension · fixture',
+      sessionSource: 'hermes_browser',
+    },
+    identity: IDENTITY,
+  }), /Browser control may register only for an existing server session/);
+  assert.equal(registerCalls, 1, 'no register retry when materialization fails');
+});
+
 test('Cloud connector fails closed when dashboard trust does not match the configured origin', async () => {
   let minted = false;
   const connector = createControllerConnector({

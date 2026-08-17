@@ -198,7 +198,7 @@ test('sidepanel replays stored history without emptying canonical messages betwe
   const renderer = source.match(/function renderMessagesFromStorage\(\) \{[\s\S]*?\n\}/)?.[0] || '';
 
   assert.match(renderer, /els\.messages\.innerHTML = '';/);
-  assert.match(renderer, /for \(const message of messages\) \{/);
+  assert.match(renderer, /for \(const message of browserDisplayMessages\(messages\)\) \{/);
   assert.match(renderer, /if \(isDelegationCompletionMarkerMessage\(message\)\) continue;/);
   assert.match(renderer, /addMessage\(message\.role, message\.content, \{ persist: false \}\);/);
   assert.doesNotMatch(renderer, /messages\s*=\s*\[\]/);
@@ -1520,7 +1520,8 @@ test('manifests omit unsupported audioCapture permission and use the web microph
   assert.match(voiceJs, /HERMES_VOICE_TRANSCRIPT/);
   assert.match(voiceJs, /getUserMedia\(\{ audio: \{ echoCancellation: true, noiseSuppression: true \} \}\)/);
   assert.doesNotMatch(voiceJs, /browserApi\.permissions|audioCapture/);
-  assert.doesNotMatch(sidepanelJs, /browserApi\.permissions|audioCapture/);
+  assert.doesNotMatch(sidepanelJs, /permissions\?*\.?request\(\{[^}]*permissions:\s*\[['"]microphone['"]\]/s);
+  assert.doesNotMatch(sidepanelJs, /audioCapture/);
   assert.doesNotMatch(sidepanelJs, /chrome:\/\/settings\/content\/siteDetails/);
   assert.doesNotMatch(sidepanelJs, /function (?:microphoneSettingsUrl|openMicrophoneSettingsPage)\b/);
   assert.match(voiceJs, /browserMicrophoneSettingsUrl/);

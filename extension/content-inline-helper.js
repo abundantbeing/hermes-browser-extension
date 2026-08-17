@@ -79,21 +79,22 @@
     :host { all:initial; position:fixed; z-index:2147483646; inset:0; pointer-events:none; --hb-surface:#0d0d0d; --hb-paper:#171717; --hb-blue:#e5e5e5; --hb-fg:#f1f1f1; --hb-accent:#c9c9c9; --hb-logo:#0d0d0d; --hb-logo-bg:#f5f5f5; --hb-line:color-mix(in srgb,var(--hb-blue) 24%,transparent); --hb-muted:color-mix(in srgb,var(--hb-blue) 68%,transparent); --hb-soft:color-mix(in srgb,var(--hb-accent) 12%,var(--hb-paper)); --hermes-fg-rgb:241,241,241; --hermes-line-strong:rgba(229,229,229,0.78); font-family:"Segoe UI",Arial,sans-serif; color-scheme:dark; }
     *, *::before, *::after { box-sizing:border-box; }
     button, textarea { font:inherit; }
-    .launcher { position:fixed; z-index:2; display:grid; place-items:center; width:32px; height:32px; padding:0; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-logo-bg); color:var(--hb-logo); cursor:pointer; pointer-events:auto; overflow:hidden; transition:background 120ms ease,border-color 120ms ease; }
-    .launcher:hover, .launcher:focus-visible { background:var(--hb-soft); border-color:var(--hb-blue); outline:2px solid var(--hb-blue); outline-offset:2px; }
+    .launcher { position:fixed; z-index:2; display:grid; place-items:center; width:36px; height:36px; padding:0; border:1px solid var(--hb-line); border-radius:0; background:var(--hb-logo-bg); color:var(--hb-logo); cursor:pointer; pointer-events:auto; overflow:hidden; transition:background 120ms ease,border-color 120ms ease,box-shadow 120ms ease; box-shadow:0 2px 10px rgba(0,0,0,.18); }
+    .launcher:hover, .launcher:focus-visible { background:var(--hb-soft); border-color:var(--hb-blue); outline:2px solid var(--hb-blue); outline-offset:2px; box-shadow:0 4px 16px rgba(0,0,0,.24); }
     .launcher-logo, .brand-logo { display:block; background:var(--hb-logo); mask-position:center; mask-size:contain; mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; }
     .launcher-logo { width:30px; height:30px; }
     .launcher[hidden], .panel[hidden] { display:none; }
-    .panel { position:fixed; z-index:1; width:min(370px,calc(100vw - 20px)); max-height:min(650px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; }
+    .panel { position:fixed; z-index:1; width:min(500px,calc(100vw - 20px)); max-height:min(680px,calc(100vh - 20px)); overflow:auto; border:1px solid var(--hb-blue); border-radius:0; background:var(--hb-paper); color:var(--hb-blue); pointer-events:auto; box-shadow:0 18px 50px rgba(0,0,0,.32), 0 0 0 1px color-mix(in srgb,var(--hb-blue) 14%,transparent); }
     .panel, .preview, .custom { scrollbar-gutter:stable; }
     .panel::-webkit-scrollbar, .preview::-webkit-scrollbar, .custom::-webkit-scrollbar { width:8px; }
     .panel::-webkit-scrollbar-thumb, .preview::-webkit-scrollbar-thumb, .custom::-webkit-scrollbar-thumb { background:rgba(var(--hermes-fg-rgb),0.45); border:1px solid var(--hermes-line-strong); }
-    .head { display:grid; grid-template-columns:44px 1fr 34px; gap:11px; align-items:center; padding:12px; border-bottom:1px solid var(--hb-line); }
+    .head { display:grid; grid-template-columns:44px 1fr 44px; gap:12px; align-items:center; padding:14px; border-bottom:1px solid var(--hb-line); }
     .brand-mark { display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid var(--hb-line); background:var(--hb-logo-bg); }
     .brand-logo { width:42px; height:42px; }
-    .kicker, .section-label { display:block; color:var(--hb-muted); font-size:9px; letter-spacing:.14em; text-transform:uppercase; }
-    .title { display:block; margin-top:3px; font-family:Georgia,"Times New Roman",serif; font-size:20px; line-height:1; color:var(--hb-blue); }
-    .close { width:32px; height:32px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font-size:20px; }
+    .kicker, .section-label { display:block; color:var(--hb-muted); font-size:9px; letter-spacing:.16em; text-transform:uppercase; }
+    .title { display:block; margin-top:4px; font-family:Georgia,"Times New Roman",serif; font-size:22px; line-height:1; color:var(--hb-blue); }
+    .close { width:44px; height:44px; border:1px solid var(--hb-line); border-radius:0; background:transparent; color:var(--hb-blue); cursor:pointer; font-size:28px; line-height:1; display:grid; place-items:center; transition:background 120ms ease,border-color 120ms ease,color 120ms ease; }
+    .close:hover, .close:focus-visible { background:var(--hb-blue); color:var(--hb-paper); border-color:var(--hb-blue); outline:2px solid var(--hb-blue); outline-offset:2px; }
     .context { display:grid; grid-template-columns:1fr auto; gap:10px; padding:9px 12px; border-bottom:1px solid var(--hb-line); color:var(--hb-muted); font-size:10px; }
     .secure { color:var(--hb-blue); font-weight:800; }
     .body { display:flex; flex-direction:column; gap:11px; padding:12px; }
@@ -139,7 +140,7 @@
     .toggle::after { content:""; position:absolute; width:12px; height:12px; left:2px; top:2px; background:var(--hb-blue); transition:left 120ms ease,background 120ms ease; }
     .toggle:checked::after { left:18px; background:var(--hb-paper); }
     .foot { display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--hb-line); color:var(--hb-muted); font-size:9px; }
-    @media (max-width:420px) { .panel { width:calc(100vw - 16px); } }
+    @media (max-width:520px) { .panel { width:calc(100vw - 16px); } }
     @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; animation:none!important; } }
   `;
 
@@ -516,7 +517,7 @@
     launcher.style.top = `${launcherPosition.top}px`;
     if (!panel.hidden) {
       const safe = 8;
-      const panelWidth = Math.min(370, viewportWidth - 20);
+      const panelWidth = Math.min(500, viewportWidth - 20);
       const detachedPlacement = launcherPosition.strategy && launcherPosition.strategy !== 'inside-end';
       const belowTop = rect.bottom + 8;
       const availableBelow = viewportHeight - belowTop - safe;
@@ -524,7 +525,7 @@
       if (detachedPlacement && (availableBelow >= 300 || availableAbove >= 300)) {
         const useBelow = availableBelow >= 300 || availableBelow >= availableAbove;
         const availableHeight = useBelow ? availableBelow : availableAbove;
-        panel.style.maxHeight = `${Math.min(650, Math.max(300, availableHeight))}px`;
+        panel.style.maxHeight = `${Math.min(680, Math.max(300, availableHeight))}px`;
         panel.style.left = `${Math.max(safe, Math.min(viewportWidth - panelWidth - safe, rect.right - panelWidth))}px`;
         panel.style.top = `${useBelow ? belowTop : safe}px`;
         return;

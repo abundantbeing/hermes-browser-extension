@@ -10,6 +10,17 @@ export function isRenderableAssistantMessage(message = {}) {
   return Boolean(text || /MEDIA:\S+/i.test(text));
 }
 
+export function isBrowserDisplayMessageVisible(message = {}) {
+  if (String(message?.display_kind || '').toLowerCase() === 'hidden') return false;
+  const role = String(message?.role || '').toLowerCase();
+  if (!['user', 'assistant', 'system'].includes(role)) return false;
+  return role !== 'assistant' || isRenderableAssistantMessage(message);
+}
+
+export function browserDisplayMessages(messages = []) {
+  return Array.isArray(messages) ? messages.filter(isBrowserDisplayMessageVisible) : [];
+}
+
 /**
  * Keep the visual image-generation run in the transcript while Hermes performs
  * follow-up work (for example vision validation) before the final media lands.

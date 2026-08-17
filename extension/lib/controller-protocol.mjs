@@ -29,6 +29,43 @@ export const CONTROLLER_HEARTBEAT_INTERVAL_MS = 60_000;
 
 export const CONTROLLER_NOOP_CAPABILITY = 'controller.noop';
 
+export const CONTROLLER_BROWSER_CAPABILITIES = Object.freeze([
+  'browser_back',
+  'browser_click',
+  'browser_drag',
+  'browser_hover',
+  'browser_navigate',
+  'browser_press',
+  'browser_screenshot',
+  'browser_scroll',
+  'browser_scroll_to',
+  'browser_snapshot',
+  'browser_tab_activate',
+  'browser_tab_close',
+  'browser_tab_create',
+  'browser_tab_group',
+  'browser_tab_ungroup',
+  'browser_tabs',
+  'browser_type',
+]);
+
+const KNOWN_CONTROLLER_CAPABILITIES = new Set([
+  CONTROLLER_NOOP_CAPABILITY,
+  ...CONTROLLER_BROWSER_CAPABILITIES,
+]);
+
+function registrationCapabilities(identity = {}) {
+  const requested = Array.isArray(identity.capabilities) ? identity.capabilities : [];
+  const allowed = requested
+    .map((capability) => String(capability || '').trim())
+    .filter((capability) => capability !== CONTROLLER_NOOP_CAPABILITY && KNOWN_CONTROLLER_CAPABILITIES.has(capability));
+  return [CONTROLLER_NOOP_CAPABILITY, ...new Set(allowed)].sort((a, b) => {
+    if (a === CONTROLLER_NOOP_CAPABILITY) return -1;
+    if (b === CONTROLLER_NOOP_CAPABILITY) return 1;
+    return a.localeCompare(b);
+  });
+}
+
 export const CONTROLLER_TRANSPORT_FAMILIES = Object.freeze({
   LOCAL_API: 'local-api',
   REMOTE_API: 'remote-api',
@@ -65,7 +102,7 @@ function registrationPayload(identity = {}) {
     controller_id: controllerId,
     browser_profile_id: browserProfileId,
     session_id: sessionId,
-    capabilities: [CONTROLLER_NOOP_CAPABILITY],
+    capabilities: registrationCapabilities(identity),
     protocol_version: CONTROLLER_PROTOCOL_VERSION,
     product,
   };

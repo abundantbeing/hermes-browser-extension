@@ -35,6 +35,7 @@
           <span class="sr-only" data-i18n="ui.settings">Settings</span>
         </button>
         <button id="startupTestConnectionButton" class="startup-test-connection" type="button" data-i18n="ui.test.connection.f7dafbab">TEST CONNECTION</button>
+        <button id="startupConnectButton" class="startup-test-connection startup-connect-action" type="button" hidden data-i18n="ui.connect.to.hermes">Connect to Hermes</button>
         <div class="topbar-status">
           <span id="connectionPill" class="connection-pill" role="status" aria-label="Hermes connection status" title="Hermes connection status" data-i18n-title="ui.hermes.connection.status" data-i18n-aria-label="ui.hermes.connection.status">●</span>
         </div>
@@ -93,6 +94,21 @@
             <p class="intro" data-i18n="ui.ask.about.any.page.hermes.sees.the.active.tab.selected.text.pag.b2a32c39">Ask about any page. Hermes sees the active tab, selected text, page context, and open tabs.</p>
           </div>
           <img class="hero-badge" src="assets/img/hermes-badge.webp" alt="Hermes Agent badge" data-i18n-alt="ui.hermes.agent.badge" />
+        </section>
+
+        <section id="browserControlStrip" class="browser-control-strip" aria-live="polite" hidden>
+          <span id="browserControlStripSignal" class="browser-control-signal" aria-hidden="true"></span>
+          <div class="browser-control-strip-copy">
+            <strong id="browserControlStripTitle" data-i18n-runtime data-i18n="browser_control.control_ready">Control ready</strong>
+            <span id="browserControlStripDetail" data-i18n-runtime data-i18n="browser_control.waiting">Waiting for Hermes.</span>
+          </div>
+          <div class="browser-control-strip-actions">
+            <button id="browserControlAttachButton" class="browser-control-action" type="button" hidden data-i18n="ui.attach.to.current.tab">Attach to current tab</button>
+            <button id="browserControlPauseButton" class="browser-control-action secondary" type="button" data-i18n-runtime data-i18n="browser_control.pause">Pause</button>
+            <button id="browserControlStopButton" class="browser-control-action secondary" type="button" data-i18n="browser_control.stop">Stop</button>
+            <button id="browserControlApproveButton" class="browser-control-action" type="button" hidden data-i18n="browser_control.approve_once">Approve once</button>
+            <button id="browserControlRejectButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.reject">Reject</button>
+          </div>
         </section>
 
         <section id="messages" class="messages" aria-live="polite"></section>
@@ -666,6 +682,39 @@
             <div id="statusActions" class="status-actions" hidden>
               <button id="statusCopyDiagnosticsButton" class="secondary tiny" type="button" data-i18n="ui.copy.diagnostics">Copy Diagnostics</button>
             </div>
+          </section>
+
+          <section id="browserControlCard" class="browser-control-card" aria-labelledby="browserControlTitle">
+            <div class="browser-control-card-head">
+              <span class="browser-control-kicker" data-i18n="browser_control.kicker">HERMES CONTROL</span>
+              <div class="browser-control-title-row">
+                <h5 id="browserControlTitle" data-i18n="browser_control.title">Operate leased tabs</h5>
+                <span id="browserControlState" class="browser-control-state">OFF</span>
+              </div>
+              <p id="browserControlCardDetail">Off by default. Enabling control grants temporary browser-debugging access on Chromium.</p>
+            </div>
+            <div class="browser-control-config">
+              <label class="browser-control-field">
+                <span data-i18n="browser_control.scope">Control scope</span>
+                <select id="browserControlScopeInput">
+                  <option value="this-tab" data-i18n="browser_control.this_tab">This tab</option>
+                  <option value="selected-tabs" data-i18n="browser_control.selected_tabs">Selected tabs</option>
+                  <option value="task-set" data-i18n="browser_control.task_set">Task set</option>
+                </select>
+              </label>
+              <fieldset class="browser-control-view">
+                <legend data-i18n="browser_control.while_working">While Hermes works</legend>
+                <div>
+                  <button id="browserControlStayButton" class="browser-control-action secondary" type="button" aria-pressed="true" data-i18n="browser_control.stay">Stay on my tab</button>
+                  <button id="browserControlFollowButton" class="browser-control-action secondary" type="button" aria-pressed="false" data-i18n="browser_control.follow">Follow Hermes</button>
+                </div>
+              </fieldset>
+            </div>
+            <div class="browser-control-card-actions">
+              <button id="browserControlEnableButton" class="browser-control-action" type="button" data-i18n="browser_control.enable">Enable control</button>
+              <button id="browserControlDetachButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.detach">Detach</button>
+            </div>
+            <p class="browser-control-note" data-i18n="browser_control.note">Chromium controller access was granted when this extension or update was installed. Hermes attaches only during an authorized leased action, never raises a browser window, and blocks credentials, MFA, payment fields, and secret text.</p>
           </section>
 
           <label class="settings-toggle-card auto-name-toggle">

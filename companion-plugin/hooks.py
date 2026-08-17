@@ -22,6 +22,7 @@ _COMPANION_TOOLS = {
     "browser_get_context",
     "browser_clear_context",
     "browser_event_log",
+    "browser_control_status",
 }
 
 
@@ -139,6 +140,10 @@ def pre_tool_call(**kwargs: Any) -> dict[str, str] | None:
             tools.grant_lease("clear", store.clear_for_owner(owner))
             return None
 
+        if tool_name == "browser_control_status":
+            tools.grant_lease("control_status", store.control_status_for_owner(owner))
+            return None
+
         limit = tools._event_log_limit(args)
         tools.grant_lease("event_log", store.event_log_for_owner(owner, limit))
         return None
@@ -158,10 +163,17 @@ def post_tool_call(**kwargs: Any) -> dict[str, bool]:
         except (TypeError, ValueError):
             duration = 0
         tool_name = str(kwargs.get("tool_name") or "unknown")[:120]
-        _ensure_store().record_event(
+        store = _ensure_store()
+        store.record_event(
             "tool.finished",
             {"tool_name": tool_name, "duration_ms": duration},
             owner,
+        )
+        store.record_tool_receipt(
+            owner,
+            tool_name=tool_name,
+            ok=str(kwargs.get("status") or "").lower() == "ok",
+            duration_ms=duration,
         )
         return {"ok": True, "available": True}
     except Exception:

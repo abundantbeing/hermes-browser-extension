@@ -724,11 +724,11 @@ test('background worker opens only the extension-owned Hermes Web URL', async ()
   }
 });
 
-test('full-tab app adds only the downloads permission required for explicit artifact delivery', () => {
+test('full-tab package declares only justified artifact and Phase 6 controller permissions', () => {
   const manifest = JSON.parse(read('extension/manifest.json'));
   assert.equal(manifest.chrome_url_overrides, undefined);
   assert.equal(manifest.permissions.includes('downloads'), true);
-  assert.equal(manifest.permissions.includes('debugger'), false);
+  assert.equal(manifest.permissions.includes('debugger'), true);
   assert.equal(manifest.permissions.includes('nativeMessaging'), false);
   assert.equal(manifest.permissions.includes('cookies'), false);
 });

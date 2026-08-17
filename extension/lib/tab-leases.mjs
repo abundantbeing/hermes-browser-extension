@@ -14,7 +14,8 @@
  *                     reclaimed wholesale when the borrower disconnects.
  *
  * Safety:
- *  - expiry: leases older than the TTL are reclaimed;
+ *  - idle expiry: leases without successful owned activity for the TTL are
+ *    reclaimed; renewal never changes lease identity or ownership;
  *  - restart/generation: a new service-worker generation invalidates every
  *    lease from an older generation; hydrate preserves generations so a
  *    restart cannot resurrect stale leases under a rolled-back generation;
@@ -49,11 +50,13 @@ function normalizeLease(entry) {
   const kind = String(entry.kind || '').trim();
   const ownership = String(entry.ownership || '').trim();
   const ownerId = String(entry.ownerId || '').trim();
+  const leaseId = String(entry.leaseId || `${ownerId}:${Number(entry.tabId)}:${Number(entry.acquiredAt)}`).trim();
   const groupSource = entry.groupSource === 'internal' ? 'internal' : 'native';
   if (!Number.isInteger(tabId) || tabId <= 0) return null;
   if (!KNOWN_KINDS.has(kind)) return null;
   if (![TAB_LEASE_OWNERSHIPS.OWNED, TAB_LEASE_OWNERSHIPS.BORROWED].includes(ownership)) return null;
   if (!ownerId) return null;
+  if (!leaseId) return null;
   const generation = Number(entry.generation);
   const acquiredAt = Number(entry.acquiredAt);
   const expiresAt = Number(entry.expiresAt);
@@ -67,6 +70,7 @@ function normalizeLease(entry) {
     kind,
     ownership,
     ownerId,
+    leaseId,
     generation,
     acquiredAt,
     expiresAt,
@@ -130,6 +134,7 @@ export function createTabLeaseStore({
       return { ok: false, error: 'lease-limit' };
     }
     const lease = {
+      leaseId: `${normalizedOwner}:${normalizedTabId}:${Number(at)}`,
       tabId: normalizedTabId,
       windowId: Number(windowId) || null,
       kind,
@@ -154,6 +159,18 @@ export function createTabLeaseStore({
     }
     leases.delete(normalizedTabId);
     return { ok: true, lease: { ...lease } };
+  }
+
+  function renew({ tabId, ownerId, leaseId, generation, at = Number(now()) } = {}) {
+    const normalizedTabId = Number(tabId);
+    const lease = leases.get(normalizedTabId);
+    if (!lease) return { ok: false, error: 'not-leased' };
+    if (String(ownerId || '').trim() !== lease.ownerId) return { ok: false, error: 'not-owner' };
+    if (String(leaseId || '').trim() !== lease.leaseId) return { ok: false, error: 'stale-lease' };
+    if (Number(generation) !== lease.generation) return { ok: false, error: 'stale-generation' };
+    const renewed = { ...lease, expiresAt: Number(at) + Number(ttlMs) };
+    leases.set(normalizedTabId, renewed);
+    return { ok: true, lease: { ...renewed } };
   }
 
   function removeTab(tabId) {
@@ -264,6 +281,7 @@ export function createTabLeaseStore({
 
   return {
     acquire,
+    renew,
     release,
     removeTab,
     reclaimBorrowed,

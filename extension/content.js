@@ -29,8 +29,30 @@ const ELEMENT_PICK_MESSAGES = Object.freeze({
   PICKING: 'HERMES_ELEMENT_PICKING',
   CANCELLED: 'HERMES_ELEMENT_PICK_CANCELLED',
 });
+const BROWSER_CONTROL_INDICATOR_MESSAGE = 'HERMES_BROWSER_CONTROL_INDICATOR';
+const BROWSER_CONTROL_ACTION_LABELS = Object.freeze({
+  browser_back: 'Going back',
+  browser_click: 'Clicking',
+  browser_drag: 'Dragging',
+  browser_hover: 'Hovering',
+  browser_navigate: 'Navigating',
+  browser_press: 'Pressing a key',
+  browser_screenshot: 'Capturing',
+  browser_scroll: 'Scrolling',
+  browser_scroll_to: 'Scrolling to target',
+  browser_snapshot: 'Reading page',
+  browser_tab_activate: 'Switching tab',
+  browser_tab_close: 'Closing tab',
+  browser_tab_create: 'Creating tab',
+  browser_tab_group: 'Grouping tabs',
+  browser_tab_ungroup: 'Ungrouping tabs',
+  browser_tabs: 'Checking tabs',
+  browser_type: 'Typing',
+});
 let pickModeActive = false;
 let highlightedElement = null;
+let browserControlIndicatorHost = null;
+let browserControlIndicatorSuspended = false;
 
 function clamp(value, limit) {
   return HermesContentExtractor?.clampExtractedText?.(value, limit)?.text
@@ -39,6 +61,45 @@ function clamp(value, limit) {
 
 function clampPickerText(value = '', max = PICK_TEXT_LIMIT) {
   return clamp(value, max);
+}
+
+function removeBrowserControlIndicator() {
+  browserControlIndicatorHost?.remove?.();
+  browserControlIndicatorHost = null;
+  browserControlIndicatorSuspended = false;
+}
+
+function showBrowserControlIndicator(action = '', targetRect = null) {
+  removeBrowserControlIndicator();
+  const label = BROWSER_CONTROL_ACTION_LABELS[String(action || '').trim()];
+  if (!label) return false;
+  const host = document.createElement('div');
+  host.className = 'browser-control-indicator';
+  host.setAttribute('aria-hidden', 'true');
+  const root = host.attachShadow({ mode: 'closed' });
+  const rect = targetRect && typeof targetRect === 'object'
+    ? {
+      x: Math.round(Number(targetRect.x)),
+      y: Math.round(Number(targetRect.y)),
+      width: Math.round(Number(targetRect.width)),
+      height: Math.round(Number(targetRect.height)),
+    }
+    : null;
+  const targetStyle = rect && Object.values(rect).every(Number.isFinite) && rect.width > 0 && rect.height > 0
+    ? `display:block;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;`
+    : 'display:none;';
+  root.innerHTML = `<style>
+    :host { all: initial; }
+    .badge { position: fixed; top: 14px; right: 14px; z-index: 2147483646; display: flex; align-items: center; gap: 8px; box-sizing: border-box; max-width: min(250px, calc(100vw - 28px)); padding: 8px 10px; border: 1px solid #0505e8; border-radius: 0; background: #f4f2eb; color: #111; box-shadow: 0 8px 24px rgba(0,0,0,.18); font: 700 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
+    .target { position: fixed; z-index: 2147483645; box-sizing: border-box; border: 2px solid #0505e8; background: rgba(5,5,232,.08); box-shadow: 0 0 0 2px rgba(255,255,255,.75); pointer-events: none; ${targetStyle} }
+    i { display: block; width: 7px; height: 7px; border-radius: 999px; background: #36ff7a; box-shadow: 0 0 0 1px #111; }
+    span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    @media (prefers-color-scheme: dark) { div { border-color: #36ff7a; background: #111; color: #f4f2eb; } i { box-shadow: 0 0 0 1px #f4f2eb; } }
+    @media (prefers-reduced-motion: reduce) { div { transition: none; } }
+  </style><div class="target"></div><div class="badge"><i></i><span>Hermes · ${label}</span></div>`;
+  (document.documentElement || document.body).appendChild(host);
+  browserControlIndicatorHost = host;
+  return true;
 }
 
 function escapeCssIdent(value = '') {
@@ -367,6 +428,21 @@ function cancelPickMode() {
 browserApi.runtime.sendMessage({ type: 'HERMES_CONTROLLER_DOCUMENT_READY' }).catch(() => {});
 
 const messageListener = (message, _sender, sendResponse) => {
+  if (message?.type === BROWSER_CONTROL_INDICATOR_MESSAGE) {
+    if (message.phase === 'finish') removeBrowserControlIndicator();
+    else if (message.phase === 'suspend') {
+      browserControlIndicatorSuspended = true;
+      if (browserControlIndicatorHost) browserControlIndicatorHost.style.display = 'none';
+    } else if (message.phase === 'resume') {
+      browserControlIndicatorSuspended = false;
+      if (browserControlIndicatorHost) browserControlIndicatorHost.style.display = '';
+    } else if (message.phase === 'start') {
+      showBrowserControlIndicator(message.action, message.targetRect);
+      if (browserControlIndicatorSuspended && browserControlIndicatorHost) browserControlIndicatorHost.style.display = 'none';
+    }
+    sendResponse({ ok: true });
+    return false;
+  }
   if (message?.type === 'HERMES_GET_PAGE_CONTEXT') {
     try {
       sendResponse(collectContext(message.options || {}));

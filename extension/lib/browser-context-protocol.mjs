@@ -833,6 +833,32 @@ function browserContextForTurn({ activeTab, tabs, selectedTabs, pageContext, con
   return { delivery: 'full', payload: budgetBrowserPayload(payload, state) };
 }
 
+function browserControlForTurn(value = {}, state) {
+  const available = String(value?.availability || '') === 'available';
+  const common = {
+    route: 'extension-controller',
+    availability: available ? 'available' : 'unavailable',
+    isolated_fallback: 'forbidden',
+  };
+  if (!available) {
+    return {
+      ...common,
+      reason: boundedText(value?.reason || 'controller_unavailable', 80, state, 'browser_control.reason'),
+      message: boundedText(value?.message || 'Hermes control is unavailable for this exact tab.', 240, state, 'browser_control.message'),
+    };
+  }
+  return {
+    ...common,
+    controller_id: boundedText(value?.controllerId || value?.controller_id || '', 160, state, 'browser_control.controller_id'),
+    browser_profile_id: boundedText(value?.browserProfileId || value?.browser_profile_id || '', 160, state, 'browser_control.browser_profile_id'),
+    tab_id: Number(value?.tabId ?? value?.tab_id),
+    frame_id: Math.max(0, Number(value?.frameId ?? value?.frame_id) || 0),
+    document_generation: Math.max(1, Number(value?.documentGeneration ?? value?.document_generation) || 1),
+    url: boundedText(value?.url || '', BROWSER_CONTEXT_TURN_BUDGETS.tabUrlChars, state, 'browser_control.url'),
+    lease_owned: value?.leaseOwned === true || value?.lease_owned === true,
+  };
+}
+
 function reduceEnvelopeToSerializedBudget(envelope, state) {
   const stringify = () => JSON.stringify(envelope);
   const size = () => stringify().length;
@@ -890,20 +916,23 @@ export function buildBrowserTurnEnvelope({
   settings = DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS,
   contextHash = '',
   contextDelivery = 'full',
+  browserControl = {},
 } = {}) {
-  assertSupportedExternalValue({ humanInput, instructionTransform, activeTab, tabs, selectedTabs, pageContext, contextScope, attachments, settings, contextHash, contextDelivery });
+  assertSupportedExternalValue({ humanInput, instructionTransform, activeTab, tabs, selectedTabs, pageContext, contextScope, attachments, settings, contextHash, contextDelivery, browserControl });
   const truncation = createBudgetState();
   const composerText = boundedText(String(humanInput || '').trim(), BROWSER_CONTEXT_TURN_BUDGETS.humanInputChars, truncation, 'human_input');
   const transformText = instructionTransform?.text == null
     ? ''
     : boundedText(String(instructionTransform.text || '').trim(), BROWSER_CONTEXT_TURN_BUDGETS.instructionTransformChars, truncation, 'instruction_transform');
   const browserContext = browserContextForTurn({ activeTab, tabs, selectedTabs, pageContext, contextScope, settings, contextHash, contextDelivery }, truncation);
+  const browserControlTarget = browserControlForTurn(browserControl, truncation);
   const attachmentContext = buildAttachmentContext(attachments, truncation);
   const envelope = {
     protocol: BROWSER_CONTEXT_TURN_PROTOCOL_ID,
     human_input: { source: 'composer', text: composerText || 'Attachment-only turn.' },
     ...(transformText ? { instruction_transform: { kind: 'slash-command', text: transformText } } : {}),
     browser_context: browserContext,
+    browser_control: browserControlTarget,
     attachment_context: attachmentContext,
     source_receipt: {
       protocol: BROWSER_CONTEXT_TURN_PROTOCOL_ID,

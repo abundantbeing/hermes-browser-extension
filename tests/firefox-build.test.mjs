@@ -15,6 +15,7 @@ test('Firefox build removes unsupported Chromium permissions while retaining sid
   assert.equal(manifest.side_panel, undefined);
   assert.equal(manifest.permissions.includes('sidePanel'), false);
   assert.equal(manifest.permissions.includes('offscreen'), false);
+  assert.equal(manifest.permissions.includes('debugger'), false);
   assert.equal(manifest.optional_permissions?.includes('audioCapture') || false, false);
   assert.ok(manifest.sidebar_action);
   assert.equal(existsSync(new URL('../dist/firefox/wake-listener.html', import.meta.url)), false);

@@ -65,14 +65,20 @@ export function reduceStartupReadiness(state = initialStartupReadiness(), event 
     steps: { ...(state.steps || initialSteps()) },
     warnings: [...(state.warnings || [])],
   };
+  const eventStatus = normalizeStatus(event.status);
   if (event.type === 'reset') return initialStartupReadiness(event.settings || {});
-  if (event.phase) next.phase = event.phase;
+  // Stage-name phases are transient labels for active work. A terminal or
+  // blocked status must never let its stage name clobber the authoritative
+  // phase (setup-needed / error) set by the failure that ended the cascade.
+  if (event.phase && !['unconfigured', 'unreachable', 'error', 'blocked'].includes(eventStatus)) {
+    next.phase = event.phase;
+  }
   if (event.gateway) next.gateway = { ...next.gateway, ...event.gateway };
   if (event.selectedModel) next.selectedModel = { ...event.selectedModel };
   if (event.warning) next.warnings.push(event.warning);
   if (event.blockingError !== undefined) next.blockingError = String(event.blockingError || '');
   if (event.step) {
-    const status = normalizeStatus(event.status);
+    const status = eventStatus;
     next.steps[event.step] = {
       status,
       detail: String(event.detail || ''),

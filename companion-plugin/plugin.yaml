@@ -1,6 +1,8 @@
 name: hermes-browser-companion
 kind: standalone
 version: 0.2.0
+manifest_version: 2
+api_version: 1
 description: >-
   Hermes Browser companion plugin — caches browser context from conversations
   and exposes it to the agent via tools and lifecycle hooks. Fail-soft: when
@@ -12,10 +14,18 @@ provides_tools:
   - browser_get_context
   - browser_clear_context
   - browser_event_log
+  - browser_control_status
   - browser_text_utility
 
-provides_skills:
-  - hermes-browser
+config_schema:
+  durable_receipts:
+    type: bool
+    default: true
+    description: Persist only bounded redacted tool receipt metadata across restarts.
+  receipt_limit:
+    type: int
+    default: 8
+    description: Maximum durable redacted receipts to retain, clamped to eight.
 
 provides_hooks:
   - pre_llm_call

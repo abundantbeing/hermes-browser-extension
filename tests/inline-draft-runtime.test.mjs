@@ -21,8 +21,9 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.doesNotMatch(source, /logoUrl[\s\S]{0,180}hermes-browser-extension-icon-box-white\.png/);
   assert.doesNotMatch(source, /nous-girl-solo-logo\.png/);
   assert.match(source, /maskImage|webkitMaskImage/);
-  assert.doesNotMatch(source, /box-shadow\s*:/);
-  assert.match(source, /width:32px; height:32px/);
+  assert.match(source, /\.launcher \{[^}]*box-shadow:0 2px 10px rgba\(0,0,0,\.18\)/);
+  assert.match(source, /\.panel \{[^}]*box-shadow:0 18px 50px rgba\(0,0,0,\.32\)/);
+  assert.match(source, /width:36px; height:36px/);
   assert.match(source, /\.launcher \{[^}]*padding:0;/s);
   assert.match(source, /\.launcher-logo \{ width:30px; height:30px; \}/);
   assert.match(source, /\.brand-logo \{ width:42px; height:42px; \}/);

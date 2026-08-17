@@ -55,6 +55,15 @@ SCHEMA_EVENT_LOG = {
     },
 }
 
+SCHEMA_CONTROL_STATUS = {
+    "name": "browser_control_status",
+    "description": (
+        "Return historical owner-scoped Browser control envelope metadata. "
+        "This is not a live broker query and cannot authorize an action."
+    ),
+    "parameters": _EMPTY_PARAMETERS,
+}
+
 SCHEMA_TEXT_UTILITY = {
     "name": "browser_text_utility",
     "description": "Run a bounded deterministic text operation locally without a model or network call.",

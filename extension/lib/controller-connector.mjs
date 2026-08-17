@@ -208,7 +208,46 @@ export function createControllerConnector({
     }
     if (!response.ok) {
       const message = String(payload?.error?.message || payload?.detail || '').trim();
-      throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
+      // The gateway refuses to mint a controller ticket for a session it does
+      // not know (browser_control_session_forbidden). Local drafts mint their
+      // session id client-side before the first turn materializes it
+      // server-side, so recover by creating the session and retrying once.
+      // Without this the reconnect loop would spin forever on a ghost id.
+      if (payload?.error?.code === 'browser_control_session_forbidden'
+        && API_TRANSPORTS.has(family)
+        && String(identity?.hermesSessionId || '').trim()) {
+        const materialized = await materializeDraftSession({
+          fetchImpl,
+          baseUrl,
+          sessionId: String(identity.hermesSessionId).trim(),
+          title: String(settings?.sessionTitle || 'Hermes Browser Extension'),
+          source: String(settings?.sessionSource || 'hermes_browser'),
+          headers: apiHeaders(settings),
+          signal: controller.signal,
+        });
+        if (materialized) {
+          const retryResponse = await fetchImpl(descriptor.registrationUrl, {
+            method: 'POST',
+            headers: apiHeaders(settings),
+            body: JSON.stringify(descriptor.payload),
+            redirect: 'error',
+            cache: 'no-store',
+            signal: controller.signal,
+          });
+          const retryPayload = await retryResponse.json().catch(() => ({}));
+          if (retryResponse.ok) {
+            response = retryResponse;
+            payload = retryPayload;
+          } else {
+            const retryMessage = String(retryPayload?.error?.message || retryPayload?.detail || '').trim();
+            throw new Error(retryMessage || `Controller registration failed (HTTP ${retryResponse.status}).`);
+          }
+        } else {
+          throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
+        }
+      } else {
+        throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
+      }
     }
     const ticket = String(payload?.ticket || '').trim();
     if (!ticket) throw new Error('Controller registration did not return a ticket.');
@@ -221,6 +260,35 @@ export function createControllerConnector({
       onClose,
       timeoutMs: connectTimeoutMs,
     });
+  }
+
+  /**
+   * Create the draft session server-side so the controller can register
+   * against it. Mirrors the panel's ensureHermesSession() materialization.
+   * Returns true when the session now exists (created or already present).
+   */
+  async function materializeDraftSession({
+    fetchImpl,
+    baseUrl,
+    sessionId,
+    title,
+    source,
+    headers,
+    signal,
+  }) {
+    try {
+      const createResponse = await fetchImpl(`${String(baseUrl).replace(/\/+$/, '')}/api/sessions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ id: sessionId, title, source }),
+        redirect: 'error',
+        cache: 'no-store',
+        signal,
+      });
+      return createResponse.ok || createResponse.status === 409;
+    } catch {
+      return false;
+    }
   }
 
   async function connectCloud({ settings, identity, onFrame, onClose }) {

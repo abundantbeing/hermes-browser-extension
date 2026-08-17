@@ -86,7 +86,7 @@ test('inline and right-click background paths apply the final consent gate at tr
   assert.doesNotMatch(sender.slice(sender.indexOf('\n', resolverIndex) + 1, submitIndex), /\bawait\b/);
   assert.match(sidepanel, /function contextMenuTurnForEffectiveContext[\s\S]*pageContext: null/);
   assert.match(sidepanel, /initialTurn\.capturePage && gate\.scope\.mode !== CONTEXT_SCOPE_MODES\.CHAT_ONLY/);
-  assert.match(sidepanel, /serializePreparedContextMenuTurn\(turn\)/);
+  assert.match(sidepanel, /serializePreparedContextMenuTurn\(turn, browserControl\)/);
 });
 
 test('consent decisions are stored separately and synchronized across both surfaces', () => {
@@ -121,7 +121,7 @@ test('right-click background route re-reads consent after session creation and r
   assert.match(route, /contextMenuTurnForEffectiveContext\(turn, sendTimeSettings\)/);
   assert.match(route, /serializePreparedContextMenuTurn/);
   assert.ok(route.indexOf('const consentSettings = { ...settings };') < route.indexOf('runInlineDraftInBackground('));
-  assert.ok(route.indexOf('const sendTimeSettings = await refreshContextConsentLedger(consentSettings);') < route.indexOf('serializePreparedContextMenuTurn(sendTimeTurn)'));
+  assert.ok(route.indexOf('const sendTimeSettings = await refreshContextConsentLedger(consentSettings);') < route.indexOf('serializePreparedContextMenuTurn(sendTimeTurn, browserControl)'));
   assert.match(refresh, /browserApi\.storage\.local\.get\(\[CONTEXT_CONSENT_STORAGE_KEY\]\)/);
   assert.doesNotMatch(refresh, /hermesBrowserSettings/);
   assert.doesNotMatch(refresh, /\n\s*settings\s*=/);

@@ -75,7 +75,7 @@ function detectBrowserProduct({
   if (/\bFirefox\b/i.test(ua)) {
     return browserProduct(BROWSER_IDS.FIREFOX, 'Firefox', 'gecko', 'high', 'user-agent');
   }
-  if (/\bSafari\b/i.test(ua) && !/\b(?:Chrome|Chromium|CriOS)\b/i.test(ua)) {
+  if (/\bSafari\b/i.test(ua) && !/\b(?:HeadlessChrome|Chrome|Chromium|CriOS)\b/i.test(ua)) {
     return browserProduct(BROWSER_IDS.SAFARI, 'Safari', 'webkit', 'high', 'user-agent');
   }
   if (brandNames.some((brand) => brand === 'google chrome')) {

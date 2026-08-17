@@ -51,6 +51,32 @@ test('startup reducer classifies unconfigured and unreachable gateways as setup/
   assert.equal(deriveStartupView(unreachable).title, 'Hermes needs attention');
 });
 
+test('blocked cascade events never clobber the setup-needed phase after an unconfigured gateway', () => {
+  let state = initialStartupReadiness();
+  state = reduceStartupReadiness(state, {
+    type: 'stage',
+    phase: 'gateway',
+    step: 'gateway',
+    status: 'unconfigured',
+    detail: 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.',
+    blockingError: 'gateway: Add a Hermes API token or complete pairing to use full Hermes Browser mode.',
+  });
+  assert.equal(state.phase, 'setup-needed');
+  for (const stage of ['capabilities', 'models', 'selectedModel', 'skills', 'profiles', 'sessions', 'sessionBinding']) {
+    state = reduceStartupReadiness(state, {
+      type: 'stage',
+      phase: stage,
+      step: stage,
+      status: 'blocked',
+      detail: `Blocked by gateway failure.`,
+    });
+  }
+  assert.equal(state.phase, 'setup-needed');
+  const view = deriveStartupView(state);
+  assert.equal(view.title, 'Connect to Hermes');
+  assert.equal(view.detail, 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.');
+});
+
 test('missing capabilities and sparse model data degrade without blocking ready state', () => {
   let state = initialStartupReadiness();
   for (const [step, status] of [

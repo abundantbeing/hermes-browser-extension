@@ -14,7 +14,14 @@ import json
 from time import monotonic
 from typing import Any
 
-from .schemas import SCHEMA_CLEAR_CONTEXT, SCHEMA_EVENT_LOG, SCHEMA_GET_CONTEXT, SCHEMA_STATUS, SCHEMA_TEXT_UTILITY
+from .schemas import (
+    SCHEMA_CLEAR_CONTEXT,
+    SCHEMA_CONTROL_STATUS,
+    SCHEMA_EVENT_LOG,
+    SCHEMA_GET_CONTEXT,
+    SCHEMA_STATUS,
+    SCHEMA_TEXT_UTILITY,
+)
 from .text_utilities import run_text_utility
 
 _UNAVAILABLE = {"available": False, "reason": "Browser context unavailable."}
@@ -107,6 +114,11 @@ def _event_log_limit(args: dict[str, Any] | None = None) -> int:
 def browser_event_log(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
     """Return only a pre-authorized current-owner diagnostic event view."""
     return _json(_take_lease("event_log"))
+
+
+def browser_control_status(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
+    """Return only pre-authorized historical control-envelope metadata."""
+    return _json(_take_lease("control_status"))
 
 
 def browser_text_utility(args: dict[str, Any] | None = None, **kwargs: Any) -> str:

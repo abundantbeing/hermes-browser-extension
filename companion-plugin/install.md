@@ -6,7 +6,7 @@ to the agent via tools and lifecycle hooks.
 
 ## Status
 
-- **v0.1.10** — functional context cache with tool and hook support.
+- **v0.2.0** — owner-scoped context cache, historical control diagnostics, and redacted receipt metadata.
 - Fail-soft: gracefully unavailable when the extension is not connected.
 - No browser control, no API server routes, no `nativeMessaging`.
 - The Browser Extension keeps its prompt-embedded fallback — this plugin
@@ -36,10 +36,11 @@ hermes plugins list
    - `browser_get_context` — return the full context envelope
    - `browser_clear_context` — reset the cache
    - `browser_event_log` — recent events for diagnostics
+   - `browser_control_status` — historical owner-scoped control envelope metadata (`live: false`)
 4. The bundled `hermes-browser` skill teaches the agent when to use
    these tools.
 
 ## Requirements
 
 - Hermes Agent 0.17+
-- Hermes Browser Extension v0.1.10+
+- Hermes Browser Extension v0.2.0+

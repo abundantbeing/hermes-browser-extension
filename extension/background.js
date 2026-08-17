@@ -54,9 +54,17 @@ import {
   CONTROLLER_WORKER_MESSAGES,
   createControllerServiceWorker,
 } from './lib/controller-service-worker.mjs';
+import { createBrowserControlRuntime } from './lib/browser-control-runtime.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
+const browserProduct = detectBrowserProduct({
+  userAgent: globalThis.navigator?.userAgent || '',
+  brands: globalThis.navigator?.userAgentData?.brands || [],
+  braveApi: globalThis.navigator?.brave || null,
+  extensionUrl: browserApi.runtime.getURL(''),
+});
+const browserControlRuntime = createBrowserControlRuntime({ browserApi, product: browserProduct });
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 
 const controllerConnector = createControllerConnector({
@@ -77,11 +85,19 @@ const controllerWorker = typeof browserApi.storage?.local?.set === 'function'
   ? createControllerServiceWorker({
       storageArea: browserApi.storage.local,
       connector: controllerConnector,
-      product: detectBrowserProduct({ extensionUrl: browserApi.runtime.getURL('') }),
+      product: browserProduct,
       extensionOrigin,
       supportsTabGroups: Boolean(browserApi.tabGroups),
+      approvalStore: browserControlRuntime.approvals,
+      getControllerCapabilities: async (settings) => (await browserControlRuntime.status(settings)).capabilities,
+      executeBrowserCommand: (frame, context) => browserControlRuntime.execute(frame, context, context.settings),
+      getTab: (tabId) => browserApi.tabs.get(tabId),
     })
   : null;
+browserControlRuntime.setDebuggerDetachHandler((event) => {
+  controllerWorker?.handleDebuggerDetach(event)
+    .catch((error) => console.warn('[Hermes Browser] Debugger detach reconciliation failed:', error));
+});
 const CONTROLLER_WORKER_MESSAGE_TYPES = new Set(Object.values(CONTROLLER_WORKER_MESSAGES));
 
 function startControllerAlarms() {

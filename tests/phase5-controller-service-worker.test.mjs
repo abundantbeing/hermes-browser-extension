@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  CONTROLLER_MAX_TERMINAL_OUTBOX,
+  CONTROLLER_TERMINAL_OUTBOX_TTL_MS,
   CONTROLLER_WORKER_MESSAGES,
   CONTROLLER_WORKER_STORAGE_KEY,
   createControllerServiceWorker,
@@ -178,7 +180,7 @@ test('fresh service worker owns controller identity, registration, leases, and d
   }
 });
 
-test('fresh MV3 worker instance preserves durable ids, advances generation, adopts leases, and terminalizes recovered pending metadata', async () => {
+test('fresh MV3 worker suspension preserves durable identity generation leases and parked metadata', async () => {
   const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
   const firstConnector = fakeConnector();
   const first = createControllerServiceWorker({
@@ -198,6 +200,7 @@ test('fresh MV3 worker instance preserves durable ids, advances generation, adop
     tabIds: [23],
   }, extensionSender());
   await first.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.documentReady }, extensionSender({ tabId: 23 }));
+  const firstLease = { ...storage.state[TAB_LEASE_STORAGE_KEY].entries[0] };
 
   storage.state[CONTROLLER_LIFECYCLE_STORAGE_KEY].pending = [
     { commandId: 'interrupted-command', tabId: 23, generation: firstBoot.generation },
@@ -208,15 +211,16 @@ test('fresh MV3 worker instance preserves durable ids, advances generation, adop
     storageArea: storage.area,
     connector: secondConnector,
     product: PRODUCT,
-    randomUUID: () => { throw new Error('restart must not mint replacement identity'); },
+    randomUUID: () => { throw new Error('suspension recovery must preserve durable identity'); },
     extensionOrigin: 'chrome-extension://fixture',
     now: () => 2_000,
   });
   const secondBoot = await second.boot();
   assert.equal(secondBoot.controllerId, firstBoot.controllerId);
   assert.equal(secondBoot.browserProfileId, firstBoot.browserProfileId);
-  assert.ok(secondBoot.generation > firstBoot.generation);
-  assert.equal(storage.state[TAB_LEASE_STORAGE_KEY].entries[0].generation, secondBoot.generation);
+  assert.equal(secondBoot.generation, firstBoot.generation);
+  assert.equal(storage.state[TAB_LEASE_STORAGE_KEY].entries[0].leaseId, firstLease.leaseId);
+  assert.equal(storage.state[TAB_LEASE_STORAGE_KEY].entries[0].generation, firstLease.generation);
   assert.equal(storage.state[CONTROLLER_WORKER_STORAGE_KEY].documentGenerations['23:0'], 1);
   assert.equal(storage.state[CONTROLLER_LIFECYCLE_STORAGE_KEY].tombstones.includes('interrupted-command'), true);
   assert.equal(storage.state[CONTROLLER_LIFECYCLE_STORAGE_KEY].pending.length, 0);
@@ -229,7 +233,40 @@ test('fresh MV3 worker instance preserves durable ids, advances generation, adop
   assert.equal(recoveredTerminal?.params?.error?.code, 'restarted');
 });
 
-test('worker routes noop commands through per-tab lifecycle and rejects all real actions', async () => {
+test('fresh MV3 worker advances generation once when the durable controller route changed', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
+  const first = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: fakeConnector(),
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => 1_000,
+  });
+  const firstBoot = await first.boot();
+  await first.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.leaseAcquire,
+    kind: TAB_LEASE_KINDS.THIS_TAB,
+    ownership: TAB_LEASE_OWNERSHIPS.OWNED,
+    ownerId: firstBoot.controllerId,
+    tabIds: [24],
+  }, extensionSender());
+
+  storage.state.hermesBrowserSettings = controllerSettings({ gatewayUrl: 'http://127.0.0.1:9864' });
+  const second = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: fakeConnector(),
+    product: PRODUCT,
+    randomUUID: () => { throw new Error('route replacement must preserve the durable ids'); },
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => 2_000,
+  });
+  const secondBoot = await second.boot();
+  assert.equal(secondBoot.generation, firstBoot.generation + 1);
+  assert.equal(storage.state[TAB_LEASE_STORAGE_KEY].entries[0].generation, secondBoot.generation);
+});
+
+test('worker routes noop commands through per-tab lifecycle and rejects real actions while control is disabled', async () => {
   const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
   const connector = fakeConnector();
   const worker = createControllerServiceWorker({
@@ -267,7 +304,6 @@ test('worker routes noop commands through per-tab lifecycle and rejects all real
     params: {
       command_id: 'noop-1',
       tab_id: 31,
-      arguments: { echo: 'worker-owned' },
       ok: true,
       result: { echo: 'worker-owned' },
     },
@@ -520,7 +556,7 @@ test('an in-flight old-generation command never sends its terminal result on a r
   );
 });
 
-test('heartbeat alarm requires acknowledgement and reconnects a failed controller generation', async () => {
+test('heartbeat alarm requires acknowledgement and reconnects the same controller generation', async () => {
   const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
   const connector = fakeConnector();
   const worker = createControllerServiceWorker({
@@ -537,8 +573,109 @@ test('heartbeat alarm requires acknowledgement and reconnects a failed controlle
   const reconciled = await worker.reconcile({ reason: 'heartbeat-alarm' });
   assert.equal(connector.connections[0].closed, true);
   assert.equal(connector.connections.length, 2);
-  assert.ok(reconciled.generation > first.generation);
+  assert.equal(reconciled.generation, first.generation);
   assert.equal(reconciled.connected, true);
+});
+
+test('recoverable socket loss preserves controller generation and completes pending work once on the rebound socket', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
+  const connector = fakeConnector();
+  const execution = deferred();
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => 1_000,
+    executeCommand: () => execution.promise,
+  });
+  const first = await worker.boot();
+  const firstConnection = connector.connections[0];
+
+  await firstConnection.emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'survive-reconnect',
+      action: 'controller.noop',
+      arguments: {},
+    },
+  });
+  await settle();
+  assert.equal(worker.status().pendingCommands, 1);
+
+  firstConnection.disconnect('recoverable socket loss');
+  const rebound = await worker.reconcile({ reason: 'transport-lost' });
+
+  assert.equal(rebound.controllerId, first.controllerId);
+  assert.equal(rebound.browserProfileId, first.browserProfileId);
+  assert.equal(rebound.generation, first.generation);
+  assert.equal(rebound.pendingCommands, 1);
+  assert.equal(connector.connections.length, 2);
+
+  execution.resolve({ ok: true, result: { status: 'survived-reconnect' } });
+  await settle();
+  await settle();
+
+  assert.equal(firstConnection.sent.length, 0);
+  assert.deepEqual(connector.connections[1].sent, [{
+    method: 'browser.controller.result',
+    params: {
+      command_id: 'survive-reconnect',
+      tab_id: 2_147_483_647,
+      ok: true,
+      result: { status: 'survived-reconnect' },
+    },
+  }]);
+  assert.equal(worker.status().pendingCommands, 0);
+});
+
+test('stop wins over reconnect and late success while duplicate stop stays idempotent', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
+  const connector = fakeConnector();
+  const execution = deferred();
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => 1_000,
+    executeCommand: () => execution.promise,
+  });
+  await worker.boot();
+  const firstConnection = connector.connections[0];
+  await firstConnection.emit({
+    method: 'browser.controller.command',
+    params: { command_id: 'stop-is-terminal', action: 'controller.noop', arguments: {} },
+  });
+  await settle();
+
+  const firstStop = await worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.stop },
+    extensionSender(),
+  );
+  const duplicateStop = await worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.stop },
+    extensionSender(),
+  );
+  assert.equal(firstStop.cancelled, 1);
+  assert.equal(duplicateStop.cancelled, 0);
+  await settle();
+
+  firstConnection.disconnect('socket lost after stop');
+  await worker.reconcile({ reason: 'transport-lost-after-stop' });
+  execution.resolve({ ok: true, result: { status: 'late-success-must-not-win' } });
+  await settle();
+  await settle();
+
+  const terminals = [...firstConnection.sent, ...connector.connections[1].sent]
+    .filter((frame) => frame?.params?.command_id === 'stop-is-terminal');
+  assert.equal(terminals.length, 1);
+  assert.equal(terminals[0].params.ok, false);
+  assert.equal(terminals[0].params.error.code, 'cancelled');
+  assert.doesNotMatch(JSON.stringify(terminals), /late-success-must-not-win/);
+  assert.equal(worker.status().pendingCommands, 0);
 });
 
 test('acknowledged heartbeat recreates an expired registry record after browser sleep', async () => {
@@ -565,7 +702,7 @@ test('acknowledged heartbeat recreates an expired registry record after browser 
   assert.equal(registry.entries[0].generation, wake.generation);
 });
 
-test('post-sleep registry recreation preserves a worker generation above one', async () => {
+test('post-sleep registry recreation preserves the recoverable transport generation', async () => {
   let now = 1_000;
   const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
   const connector = fakeConnector();
@@ -579,11 +716,11 @@ test('post-sleep registry recreation preserves a worker generation above one', a
   });
   const first = await worker.boot();
   connector.connections[0].disconnect();
-  const second = await worker.reconcile({ reason: 'force-generation-two' });
-  assert.ok(second.generation > first.generation);
+  const second = await worker.reconcile({ reason: 'transport-lost' });
+  assert.equal(second.generation, first.generation);
 
   now += (6 * 60 * 1_000);
-  const wake = await worker.reconcile({ reason: 'post-sleep-generation-two' });
+  const wake = await worker.reconcile({ reason: 'post-sleep-recovery' });
   const registry = storage.state[CONTROLLER_REGISTRY_STORAGE_KEY];
   assert.equal(registry.entries.length, 1);
   assert.equal(registry.entries[0].generation, wake.generation);
@@ -666,6 +803,63 @@ test('settings rebind cannot overtake an acknowledged heartbeat transition', asy
   assert.equal(connector.connections[1].options.identity.hermesSessionId, 'stored-session-2');
 });
 
+test('out-of-order settings refresh reads cannot overwrite the newest controller route', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
+  const connector = fakeConnector();
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => 1_000,
+  });
+  const first = await worker.boot();
+  const originalGet = storage.area.get;
+  const settingsReads = [];
+  storage.area.get = async (keys = null) => {
+    if (keys !== 'hermesBrowserSettings') return originalGet(keys);
+    const gate = deferred();
+    settingsReads.push(gate);
+    return gate.promise;
+  };
+
+  const staleRefresh = worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.settingsRefresh },
+    extensionSender(),
+  );
+  await settle();
+  const newestRefresh = worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.settingsRefresh },
+    extensionSender(),
+  );
+  await settle();
+  assert.equal(settingsReads.length, 2);
+
+  const newestSettings = controllerSettings({
+    gatewayUrl: 'http://127.0.0.1:8644',
+    sessionId: 'newest-session',
+  });
+  settingsReads[1].resolve({ hermesBrowserSettings: newestSettings });
+  const newest = await newestRefresh;
+  assert.ok(newest.generation > first.generation);
+  assert.equal(connector.connections.at(-1).options.settings.gatewayUrl, newestSettings.gatewayUrl);
+  assert.equal(connector.connections.at(-1).options.identity.hermesSessionId, newestSettings.sessionId);
+
+  settingsReads[0].resolve({
+    hermesBrowserSettings: controllerSettings({
+      gatewayUrl: 'http://127.0.0.1:8643',
+      sessionId: 'stale-session',
+    }),
+  });
+  const stale = await staleRefresh;
+  assert.equal(stale.generation, newest.generation);
+  assert.equal(connector.connections.length, 2);
+  assert.equal(connector.connections.at(-1).closed, false);
+  assert.equal(connector.connections.at(-1).options.settings.gatewayUrl, newestSettings.gatewayUrl);
+  assert.equal(connector.connections.at(-1).options.identity.hermesSessionId, newestSettings.sessionId);
+});
+
 test('transient boot failure can retry after storage recovers', async () => {
   const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
   const originalGet = storage.area.get;
@@ -744,7 +938,7 @@ test('terminal state persists before send failure and retries only on the same c
   assert.equal(storage.state[CONTROLLER_LIFECYCLE_STORAGE_KEY].tombstones.includes('terminal-send-failure'), true);
   assert.equal(storage.state[CONTROLLER_WORKER_STORAGE_KEY].terminalOutbox.length, 1);
   assert.deepEqual(Object.keys(storage.state[CONTROLLER_WORKER_STORAGE_KEY].terminalOutbox[0]).sort(), [
-    'commandId', 'errorCode', 'ok', 'routeKey', 'tabId',
+    'commandId', 'createdAt', 'errorCode', 'expiresAt', 'ok', 'routeKey', 'tabId',
   ]);
 
   origin.disconnect();
@@ -794,6 +988,56 @@ test('terminal outbox uses collision-free route scopes and recovers lost success
     assert.equal(recovered?.params?.error?.code, 'delivery_interrupted');
   }
   assert.notEqual(routeKeys[0], routeKeys[1], 'different durable routes must never alias to one recovery scope');
+});
+
+test('terminal outbox is capped at eight metadata-only records and expires stale delivery state', async () => {
+  let now = 1_000;
+  const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
+  const connector = fakeConnector();
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => now,
+  });
+  await worker.boot();
+  const origin = connector.connections[0];
+  origin.send = async () => { throw new Error('socket closed'); };
+  for (let index = 0; index < 10; index += 1) {
+    await origin.emit({
+      method: 'browser.controller.command',
+      params: {
+        command_id: `bounded-terminal-${index}`,
+        action: 'controller.noop',
+        arguments: { typed: `forbidden-${index}` },
+      },
+    });
+    await settle();
+  }
+  const outbox = storage.state[CONTROLLER_WORKER_STORAGE_KEY].terminalOutbox;
+  assert.equal(CONTROLLER_MAX_TERMINAL_OUTBOX, 8);
+  assert.equal(outbox.length, CONTROLLER_MAX_TERMINAL_OUTBOX);
+  assert.equal(outbox[0].commandId, 'bounded-terminal-2');
+  assert.deepEqual(Object.keys(outbox[0]).sort(), [
+    'commandId', 'createdAt', 'errorCode', 'expiresAt', 'ok', 'routeKey', 'tabId',
+  ]);
+  assert.doesNotMatch(JSON.stringify(outbox), /forbidden-|arguments|typed/);
+
+  now += CONTROLLER_TERMINAL_OUTBOX_TTL_MS + 1;
+  const recoveredConnector = fakeConnector();
+  const recovered = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: recoveredConnector,
+    product: PRODUCT,
+    randomUUID: () => { throw new Error('recovery must preserve identity'); },
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => now,
+  });
+  await recovered.boot();
+  assert.equal(storage.state[CONTROLLER_WORKER_STORAGE_KEY].terminalOutbox.length, 0);
+  assert.equal(recoveredConnector.connections[0].sent.length, 0);
 });
 
 test('tab removal drops lease and document authority while navigation invalidates the old document generation', async () => {
