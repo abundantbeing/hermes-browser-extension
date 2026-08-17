@@ -78,6 +78,8 @@ function safeSnapshotResult(value = {}, refResult = {}) {
 
 function sanitizedActionResult(action, value) {
   if (action === 'browser_type') return { status: 'typed' };
+  if (action === 'browser_fill') return { status: 'filled' };
+  if (action === 'browser_select') return { status: 'selected' };
   if (action === 'browser_press') return { status: 'pressed' };
   if (action === 'browser_click') return { status: 'clicked' };
   if (action === 'browser_drag') return { status: 'dragged' };
@@ -204,7 +206,7 @@ export function createBrowserControlExecutor({
     const operation = (async () => {
       let target = null;
       let destination = null;
-      if (['browser_click', 'browser_drag', 'browser_hover', 'browser_scroll_to', 'browser_type'].includes(action) && args.ref) {
+      if (['browser_click', 'browser_drag', 'browser_fill', 'browser_hover', 'browser_scroll_to', 'browser_select', 'browser_type'].includes(action) && args.ref) {
         const resolved = refs.resolve({ ...scope, ref: args.ref });
         if (!resolved.ok) return errorOutcome(resolved.error, 'The target ref is not valid for this document.');
         target = resolved.target;
@@ -219,7 +221,7 @@ export function createBrowserControlExecutor({
         if (!resolved.ok) return errorOutcome(resolved.error, 'The drag destination ref is not valid for this document.');
         destination = resolved.target;
       }
-      if (['browser_drag', 'browser_hover', 'browser_scroll_to', 'browser_type'].includes(action) && !target) {
+      if (['browser_drag', 'browser_fill', 'browser_hover', 'browser_scroll_to', 'browser_select', 'browser_type'].includes(action) && !target) {
         return errorOutcome('invalid_ref', 'This action requires an exact target ref.');
       }
       if (action === 'browser_click' && !target && !(Number.isFinite(Number(args.x)) && Number.isFinite(Number(args.y)))) {
@@ -228,8 +230,8 @@ export function createBrowserControlExecutor({
 
       let pageState = {};
       if (typeof adapter.inspect === 'function' && [
-        'browser_back', 'browser_click', 'browser_drag', 'browser_hover', 'browser_navigate', 'browser_press',
-        'browser_screenshot', 'browser_scroll', 'browser_scroll_to', 'browser_snapshot', 'browser_type',
+        'browser_back', 'browser_click', 'browser_drag', 'browser_fill', 'browser_hover', 'browser_navigate', 'browser_press',
+        'browser_screenshot', 'browser_scroll', 'browser_scroll_to', 'browser_select', 'browser_snapshot', 'browser_type',
       ].includes(action)) {
         pageState = await adapter.inspect({ tabId: scope.tabId, frameId: scope.frameId, signal: controller.signal }) || {};
       }

@@ -10,12 +10,14 @@ const CHROMIUM_ACTIONS = [
   'browser_back',
   'browser_click',
   'browser_drag',
+  'browser_fill',
   'browser_hover',
   'browser_navigate',
   'browser_press',
   'browser_screenshot',
   'browser_scroll',
   'browser_scroll_to',
+  'browser_select',
   'browser_snapshot',
   'browser_tab_activate',
   'browser_tab_close',
@@ -82,9 +84,11 @@ test('Phase 6 Firefox adapter advertises a safe subset and exact trusted-input g
   assert.deepEqual(firefox.gaps, [
     { action: 'browser_click', reason: 'trusted-input-unavailable' },
     { action: 'browser_drag', reason: 'trusted-input-unavailable' },
+    { action: 'browser_fill', reason: 'trusted-input-unavailable' },
     { action: 'browser_hover', reason: 'trusted-input-unavailable' },
     { action: 'browser_press', reason: 'trusted-input-unavailable' },
     { action: 'browser_scroll_to', reason: 'trusted-input-unavailable' },
+    { action: 'browser_select', reason: 'trusted-input-unavailable' },
     { action: 'browser_type', reason: 'trusted-input-unavailable' },
   ]);
 });

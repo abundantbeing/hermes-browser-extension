@@ -398,6 +398,73 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
         }
         return { status: 'typed' };
       }
+      if (action === 'browser_fill') {
+        const backendNodeId = Number(target?.backendDOMNodeId);
+        if (!Number.isInteger(backendNodeId) || backendNodeId <= 0) throw new Error('The target ref has no DOM node.');
+        const fillValue = String(args.value ?? args.text ?? '');
+        await send('DOM.focus', { backendNodeId });
+        const resolved = await send('DOM.resolveNode', { backendNodeId });
+        const objectId = String(resolved?.object?.objectId || '');
+        if (objectId) {
+          await send('Runtime.callFunctionOn', {
+            objectId,
+            functionDeclaration: `function(val) {
+              const proto = Object.getPrototypeOf(this);
+              const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
+                || Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+                || Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+              if (setter) {
+                setter.call(this, val);
+              } else {
+                this.value = val;
+              }
+              this.dispatchEvent(new Event('input', { bubbles: true }));
+              this.dispatchEvent(new Event('change', { bubbles: true }));
+              this.dispatchEvent(new Event('blur', { bubbles: true }));
+            }`,
+            arguments: [{ value: fillValue }],
+            returnByValue: true,
+          });
+        }
+        return { status: 'filled' };
+      }
+      if (action === 'browser_select') {
+        const backendNodeId = Number(target?.backendDOMNodeId);
+        if (!Number.isInteger(backendNodeId) || backendNodeId <= 0) throw new Error('The target ref has no DOM node.');
+        const selectValue = String(args.value ?? args.option ?? '');
+        const selectIndex = Number.isInteger(Number(args.index)) ? Number(args.index) : null;
+        await send('DOM.focus', { backendNodeId });
+        const resolved = await send('DOM.resolveNode', { backendNodeId });
+        const objectId = String(resolved?.object?.objectId || '');
+        if (objectId) {
+          await send('Runtime.callFunctionOn', {
+            objectId,
+            functionDeclaration: `function(val, idx) {
+              if (this.tagName === 'SELECT') {
+                if (idx !== null && idx >= 0 && idx < this.options.length) {
+                  this.selectedIndex = idx;
+                } else if (val) {
+                  let matched = false;
+                  for (let i = 0; i < this.options.length; i++) {
+                    if (this.options[i].value === val || this.options[i].text === val) {
+                      this.selectedIndex = i;
+                      matched = true;
+                      break;
+                    }
+                  }
+                  if (!matched) this.value = val;
+                }
+                this.dispatchEvent(new Event('input', { bubbles: true }));
+                this.dispatchEvent(new Event('change', { bubbles: true }));
+                this.dispatchEvent(new Event('blur', { bubbles: true }));
+              }
+            }`,
+            arguments: [{ value: selectValue }, { value: selectIndex }],
+            returnByValue: true,
+          });
+        }
+        return { status: 'selected' };
+      }
       if (action === 'browser_press') {
         const key = { ...keyDescriptor(args.key), modifiers: modifierMask(args.modifiers) };
         await send('Input.dispatchKeyEvent', { type: 'rawKeyDown', ...key });

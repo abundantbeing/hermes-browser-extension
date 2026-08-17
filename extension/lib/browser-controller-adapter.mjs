@@ -8,12 +8,14 @@ const CHROMIUM_ACTIONS = Object.freeze([
   'browser_back',
   'browser_click',
   'browser_drag',
+  'browser_fill',
   'browser_hover',
   'browser_navigate',
   'browser_press',
   'browser_screenshot',
   'browser_scroll',
   'browser_scroll_to',
+  'browser_select',
   'browser_snapshot',
   'browser_tab_activate',
   'browser_tab_close',
@@ -39,9 +41,11 @@ const FIREFOX_ACTIONS = Object.freeze([
 const FIREFOX_GAPS = Object.freeze([
   Object.freeze({ action: 'browser_click', reason: 'trusted-input-unavailable' }),
   Object.freeze({ action: 'browser_drag', reason: 'trusted-input-unavailable' }),
+  Object.freeze({ action: 'browser_fill', reason: 'trusted-input-unavailable' }),
   Object.freeze({ action: 'browser_hover', reason: 'trusted-input-unavailable' }),
   Object.freeze({ action: 'browser_press', reason: 'trusted-input-unavailable' }),
   Object.freeze({ action: 'browser_scroll_to', reason: 'trusted-input-unavailable' }),
+  Object.freeze({ action: 'browser_select', reason: 'trusted-input-unavailable' }),
   Object.freeze({ action: 'browser_type', reason: 'trusted-input-unavailable' }),
 ]);
 

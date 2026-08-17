@@ -15,6 +15,8 @@ const SAFE_ACTIONS = new Set([
   'browser_navigate',
   'browser_click',
   'browser_type',
+  'browser_fill',
+  'browser_select',
   'browser_screenshot',
   'browser_tab_activate',
   'browser_tab_create',
@@ -87,12 +89,19 @@ export function classifyBrowserControlAction({
   if (normalizedAction !== 'browser_navigate' && currentUrl && isRestrictedUrl(currentUrl)) {
     return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'restricted_current_page');
   }
-  if (normalizedAction === 'browser_type') {
+  if (normalizedAction === 'browser_type' || normalizedAction === 'browser_fill') {
     if (target?.sensitive === true) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-field');
     if (PAYMENT_RE.test(descriptor)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-payment-field');
     if (MFA_RE.test(descriptor)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-mfa-field');
     if (CREDENTIAL_RE.test(descriptor)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-credential-field');
-    if (SECRET_TEXT_RE.test(String(args?.text || ''))) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'secret-text');
+    const textToCheck = String(args?.text ?? args?.value ?? '');
+    if (SECRET_TEXT_RE.test(textToCheck)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'secret-text');
+  }
+
+  if (normalizedAction === 'browser_select') {
+    if (target?.sensitive === true) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-field');
+    if (PAYMENT_RE.test(descriptor)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-payment-field');
+    if (CREDENTIAL_RE.test(descriptor)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-credential-field');
   }
 
   if (normalizedAction === 'browser_click' && Number.isFinite(Number(args?.x)) && Number.isFinite(Number(args?.y))) {

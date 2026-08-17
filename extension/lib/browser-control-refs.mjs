@@ -42,9 +42,12 @@ function sensitiveNode(node = {}) {
 function publicNode(node = {}, index) {
   const sensitive = sensitiveNode(node);
   const backendDOMNodeId = Number(node.backendDOMNodeId);
-  const frameId = node.frameId === undefined ? null : compact(node.frameId, 160);
+  const frameId = node.frameId === undefined || node.frameId === null ? null : compact(node.frameId, 160);
+  const prefix = frameId && frameId !== '0' && frameId !== 0
+    ? `@f${String(frameId).replace(/^f/i, '')}e`
+    : '@e';
   return {
-    ref: `@e${index + 1}`,
+    ref: `${prefix}${index + 1}`,
     role: compact(node.role || 'generic', 80),
     name: sensitive ? 'Sensitive field' : compact(node.name || node.label, 300),
     sensitive,
