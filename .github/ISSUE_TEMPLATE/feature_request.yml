@@ -1,0 +1,38 @@
+name: ✨ Feature Request
+description: Suggest a new capability, workflow, or UI enhancement for Hermes Browser Extension
+labels: ["type/feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make Hermes Browser Extension better? Let us know!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case
+      description: What problem are you trying to solve, or what workflow would this enable?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution & UX
+      description: Describe the feature, how it should work, and where in the UI it belongs.
+    validations:
+      required: true
+  - type: checkboxes
+    id: surfaces
+    attributes:
+      label: Target Surfaces
+      description: Which extension surfaces would this touch?
+      options:
+        - label: "Side Panel"
+        - label: "Hermes Assist (in-page inline drafting)"
+        - label: "Hermes Web (full tab)"
+        - label: "Browser Control / Agent Autopilot"
+        - label: "Context Menus & Shortcuts"
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context / Mockups
+      description: Any extra context, screenshots, or design references.

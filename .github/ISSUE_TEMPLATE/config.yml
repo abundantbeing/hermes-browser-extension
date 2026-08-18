@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Nous Research Discord
+    url: https://discord.gg/nousresearch
+    about: Ask questions, get help, and discuss Hermes development with the community.
+  - name: 📖 Hermes Agent Documentation
+    url: https://hermes-agent.nousresearch.com/docs
+    about: Read the official documentation and user guide.

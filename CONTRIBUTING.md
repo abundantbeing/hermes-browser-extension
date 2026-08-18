@@ -1,29 +1,75 @@
-# Contributing
+# Contributing to Hermes Browser Extension
 
-Thanks for helping improve Hermes Browser Extension.
+Thank you for contributing to Hermes Browser Extension! This guide outlines our architecture, development workflow, and the quality standards required to get pull requests reviewed and merged.
 
-## Development
+---
 
-- Use Node.js 20+.
-- Run `npm run verify` before opening a PR.
-- Run `npm run lint` for static checks when changing JavaScript.
-- Keep v0.1 read-only unless a proposal explicitly changes the permission model.
-- Load `dist/` unpacked for manual browser testing; do not load the repo root.
+## 1. Core Architecture Principles
 
-## Security-sensitive changes
+Hermes Browser Extension is a Manifest V3 web extension designed to bring Hermes Agent capabilities into real browser environments.
 
-Open an issue before adding permissions like:
+* **Fail-Closed Security:** No silent permission escalations or ambient context leaks. Context consent is strictly scoped by gateway, profile, and controller.
+* **Zero Remote Execution / Zero Eval:** The extension contains zero `eval()`, zero `new Function()`, zero remote script/font injections, and adheres strictly to Chrome Web Store and Mozilla Add-on security guidelines.
+* **Deterministic Model Routing:** The "Model-Fidelity Triad" (Provider-Aware Routing, Live Inventory, and Session Model Lock) guarantees user-selected models are respected.
+* **Cross-Browser Parity:** First-class support for Chromium engines (Comet, Chrome, Brave, Edge, Opera, Arc) with clean, documented subset compatibility for Firefox.
 
-- `debugger`
-- `nativeMessaging`
-- `downloads`
-- `cookies`
-- `history`
-- `bookmarks`
-- browser click/type/form-submit/control behavior
+---
 
-Hermes Browser Extension connects to a real local or remote Hermes runtime. Treat API key handling, browser permissions, page context capture, and prompt-injection boundaries as security-sensitive.
+## 2. Development Setup
 
-## Relationship to Hermes Agent
+### Prerequisites
+* Node.js `>=20`
+* Chromium-based browser (Comet / Chrome / Brave) or Firefox
 
-This repo is a community extension for Hermes Agent. Prefer changes that use existing Hermes API/MCP/plugin surfaces and avoid requiring Hermes core changes unless discussed upstream.
+### Installation
+```bash
+git clone https://github.com/abundantbeing/hermes-browser-extension.git
+cd hermes-browser-extension
+npm install
+```
+
+### Building & Testing
+```bash
+# Run unit tests
+npm test
+
+# Build unpacked extension into dist/
+npm run build
+
+# Build Firefox extension into dist/firefox
+npm run build:firefox
+
+# Run complete canonical verification (tests, JS syntax checks, manifest & locale validation)
+npm run verify
+```
+
+---
+
+## 3. Submitting Pull Requests
+
+### Before Opening a PR
+1. **Search Existing Work:** Search open and merged PRs/issues to ensure your change isn't a duplicate.
+2. **Atomic Changes:** Keep your PR focused on a single bug fix, feature, or enhancement. Avoid bundling unrelated formatting or refactoring.
+3. **Run Full Verification:** Make sure `npm run verify` passes with zero errors and zero unexpected warnings.
+
+### Commit Messages
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+* `fix(assist): ...`
+* `feat(browser-control): ...`
+* `fix(sidepanel): ...`
+* `docs(readme): ...`
+* `test(policy): ...`
+
+### PR Description
+Fill out the provided [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md) completely:
+* Explain what the PR does and why the chosen approach is correct.
+* Reference related issue numbers (`Fixes #...`).
+* Provide clear, reproducible verification steps.
+* Include screenshots or screencasts for any UI or behavioral changes.
+
+---
+
+## 4. Automated & Human Review
+
+* Automated review agents inspect incoming PRs for security boundaries, test coverage, and regressions.
+* Maintainers review all code diffs prior to merging into `main`.

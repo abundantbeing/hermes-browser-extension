@@ -115,16 +115,44 @@ function existingLabelNames(target = {}) {
 export function deriveReviewLabels(target = {}, diff = '') {
   const labels = new Set();
   const existing = existingLabelNames(target);
-  const text = [target.title, target.body, diff, ...(target.labels || []).map((label) => (typeof label === 'string' ? label : label?.name || ''))]
+  const metadataText = [target.title, target.body, ...(target.labels || []).map((label) => (typeof label === 'string' ? label : label?.name || ''))]
     .filter(Boolean)
     .join('\n');
 
   if (target.kind === 'pull_request') {
-    if (/\b(docs?|documentation|readme)\b/i.test(text)) labels.add('type/docs');
-    else if (/\b(fix|bug|error|broken|fail(?:ed|ure)?)\b/i.test(text)) labels.add('type/bug');
-    else if (/\b(test|coverage|ci)\b/i.test(text)) labels.add('type/test');
-    else labels.add('type/chore');
-  } else if (![...existing].some((name) => name.startsWith('type/'))) {
+    // For PRs: keep labels clean and high-signal (1-3 labels max), matching upstream Hermes Agent.
+    if (/^\s*(feat|feature)\b/i.test(target.title) || /\b(new feature|add capability)\b/i.test(metadataText)) {
+      labels.add('type/feature');
+    } else if (/^\s*(fix|bugfix)\b/i.test(target.title) || /\b(fix|bug|error|broken|fail(?:ed|ure)?)\b/i.test(metadataText)) {
+      labels.add('type/bug');
+    } else if (/^\s*docs\b/i.test(target.title) || /\b(docs?|documentation|readme)\b/i.test(metadataText)) {
+      labels.add('type/docs');
+    } else if (/^\s*test\b/i.test(target.title) || /\b(test|coverage|ci)\b/i.test(metadataText)) {
+      labels.add('type/test');
+    } else {
+      labels.add('type/chore');
+    }
+
+    // Add component labels only if PR title or body explicitly targets them
+    for (const [label, pattern] of LABEL_RULES) {
+      if (label.startsWith('comp/') && pattern.test(metadataText)) {
+        labels.add(label);
+      }
+    }
+
+    if (/https:\/\/github\.com\/(?!abundantbeing\/hermes-browser-extension\b)[^\s)]+/i.test(diff)) {
+      labels.add('needs/security-review');
+    }
+
+    if (![...labels, ...existing].some((label) => /^p[0-3]$/.test(label))) labels.add('p3');
+
+    return [...labels].filter((label) => !existing.has(label)).sort();
+  }
+
+  // For issues: thorough triage categorization
+  const text = [metadataText, diff].filter(Boolean).join('\n');
+
+  if (![...existing].some((name) => name.startsWith('type/'))) {
     labels.add('type/support');
   }
 
@@ -150,13 +178,9 @@ export function deriveReviewLabels(target = {}, diff = '') {
   if (/\b(browser control|computer-use|playwright|chrome devtools|control mode)\b/i.test(text)) labels.add('sweep:risk-browser-control');
   if (/\b(manifest|version|release|tag|package)\b/i.test(text)) labels.add('sweep:risk-release');
 
-  if (target.kind === 'pull_request' && /https:\/\/github\.com\/(?!abundantbeing\/hermes-browser-extension\b)[^\s)]+/i.test(diff)) {
-    labels.add('needs/security-review');
-  }
-
   if (hasError && !/\b(traceback|stack trace|stacktrace)\b/i.test(text)) labels.add('needs/traceback');
-  if (target.kind === 'issue' && /\b(chrome|extension|sidepanel|service worker|browser)\b/i.test(text)) labels.add('needs/browser-console');
-  if (target.kind === 'issue' && [...labels].some((label) => label.startsWith('needs/'))) labels.add('status/needs-info');
+  if (/\b(chrome|extension|sidepanel|service worker|browser)\b/i.test(text)) labels.add('needs/browser-console');
+  if ([...labels].some((label) => label.startsWith('needs/'))) labels.add('status/needs-info');
 
   if (![...labels, ...existing].some((label) => /^p[0-3]$/.test(label))) labels.add('p3');
 
