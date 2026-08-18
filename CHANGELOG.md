@@ -5,7 +5,7 @@
 ### Added
 
 - Added Mozilla signing for Firefox: `npm run sign:firefox` submits the Firefox build to AMO for signing and downloads a signed `.xpi` into `artifacts/`. Firefox 142+ users install the signed package from the Releases page instead of building locally.
-- Added a stable Firefox add-on ID and HTTPS update-manifest hook so installed self-distributed copies can update automatically after each signed release.
+- Added a stable Firefox add-on ID for Mozilla-hosted AMO updates.
 
 ## [0.2.0] - 2026-07-21
 

@@ -21,7 +21,6 @@ const src = path.join(root, 'extension');
 const dest = path.join(root, 'dist', 'firefox');
 const buildInfoFileName = 'build-info.json';
 const FIREFOX_ADDON_ID = 'hermes-browser-extension@abundantbeing.github.io';
-const FIREFOX_UPDATE_URL = 'https://raw.githubusercontent.com/abundantbeing/hermes-browser-extension/main/updates.json';
 const firefoxProfile = manifestAssumptionsFor(MANIFEST_TARGETS.FIREFOX);
 
 await writeContentExtractorRuntime({ rootDir: root });
@@ -96,7 +95,6 @@ sourceManifest.browser_specific_settings = {
   gecko: {
     id: FIREFOX_ADDON_ID,
     strict_min_version: '142.0',
-    update_url: FIREFOX_UPDATE_URL,
     data_collection_permissions: {
       required: ['websiteContent', 'personalCommunications'],
     },

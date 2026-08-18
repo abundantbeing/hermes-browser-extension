@@ -152,7 +152,7 @@ After code updates, run `npm run build` again and click **Reload** on the Hermes
 2. Open the downloaded file in Firefox, or use the Add-ons Manager → gear menu → **Install Add-on From File**.
 3. Confirm the install prompt. The extension opens in the Firefox sidebar (Ctrl+Shift+H).
 
-Firefox installs signed updates automatically from the project update manifest. New signed Firefox `.xpi` assets must be published with each release and added to `updates.json`; users do not need to reinstall manually after that. `npm run package` refreshes `updates.json` from the current package version.
+Because this package is Mozilla-hosted on AMO, Firefox receives future signed updates through AMO automatically. No separate update manifest or manual reinstall is required.
 
 ## Connect to Hermes
 
@@ -452,7 +452,6 @@ companion-plugin/     optional fail-soft Browser companion plugin with read-only
 scripts/
   build.mjs           copies extension/ to dist/
   build-firefox.mjs   produces the Firefox package at dist/firefox/
-  prepare-firefox-updates.mjs refreshes updates.json from package.json version
   check-manifest.mjs  validates required manifest assets/permissions
   package.mjs         creates artifacts/hermes-browser-extension.tar.gz
 tests/

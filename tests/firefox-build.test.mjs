@@ -22,9 +22,9 @@ test('Firefox build removes unsupported Chromium permissions while retaining sid
   assert.equal(existsSync(new URL('../dist/firefox/wake-listener.js', import.meta.url)), false);
 });
 
-test('Firefox build declares a stable signed add-on identity and update manifest', () => {
+test('Firefox build declares a stable signed add-on identity for AMO updates', () => {
   assert.equal(manifest.browser_specific_settings?.gecko?.id, 'hermes-browser-extension@abundantbeing.github.io');
-  assert.equal(manifest.browser_specific_settings?.gecko?.update_url, 'https://raw.githubusercontent.com/abundantbeing/hermes-browser-extension/main/updates.json');
+  assert.equal(manifest.browser_specific_settings?.gecko?.update_url, undefined);
 });
 
 
