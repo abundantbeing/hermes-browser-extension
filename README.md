@@ -99,7 +99,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Hermes Agent installed and working.
 - For Local or Remote API mode: Hermes Gateway/API server enabled locally or on a reachable remote machine. Hermes Cloud instead requires a signed-in HTTPS agent tab.
 - Node.js 20+.
-- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 114+ baseline). Firefox 142+ is available as a preview package through `npm run build:firefox`.
+- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 114+ baseline). Firefox 142+ is supported through a Mozilla-signed package on the [Releases](https://github.com/abundantbeing/hermes-browser-extension/releases) page; `npm run build:firefox` produces the local build.
 
 ## v0.2.0 compatibility matrix
 
@@ -107,7 +107,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | --- | --- | --- |
 | Chrome / Edge / Chromium 114+ side panel | Yes | Primary public support target. |
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API and extension clipboard permissions for Copy Diagnostics. |
-| Firefox | Preview package | `npm run build:firefox` produces `dist/firefox/` with Firefox-specific manifest adaptation. Chrome/Edge/Chromium remain the primary public support target. |
+| Firefox | Signed package | Mozilla-signed `.xpi` on the Releases page for Firefox 142+. `npm run build:firefox` + `npm run sign:firefox` produce a signed build. Chrome/Edge/Chromium remain the primary public support target. |
 | Safari | Not shipped | Browser-family diagnostics exist, but no Safari package is included. |
 | Local Hermes API server | Yes | Default path: `http://127.0.0.1:8642`. |
 | Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Uses a single-use WebSocket ticket and enforces Chat-only context. This is not a general cookie import or background account-discovery flow. |
@@ -145,6 +145,12 @@ dist/
 5. Pin/click the Hermes extension icon to open the side panel.
 
 After code updates, run `npm run build` again and click **Reload** on the Hermes Browser Extension card in the browser extensions page.
+
+### 3. Install in Firefox
+
+1. Download the `*-firefox-signed.xpi` asset from the [Releases](https://github.com/abundantbeing/hermes-browser-extension/releases) page.
+2. Open the downloaded file in Firefox, or use the Add-ons Manager → gear menu → **Install Add-on From File**.
+3. Confirm the install prompt. The extension opens in the Firefox sidebar (Ctrl+Shift+H).
 
 ## Connect to Hermes
 
@@ -443,7 +449,7 @@ extension/
 companion-plugin/     optional fail-soft Browser companion plugin with read-only context cache tools/hooks
 scripts/
   build.mjs           copies extension/ to dist/
-  build-firefox.mjs   produces the Firefox preview package at dist/firefox/
+  build-firefox.mjs   produces the Firefox package at dist/firefox/
   check-manifest.mjs  validates required manifest assets/permissions
   package.mjs         creates artifacts/hermes-browser-extension.tar.gz
 tests/

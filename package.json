@@ -32,6 +32,8 @@
     "build:content-runtime": "node scripts/build-content-runtime.mjs",
     "build": "node scripts/build.mjs",
     "build:firefox": "node scripts/build-firefox.mjs",
+    "lint:firefox": "web-ext lint --self-hosted --source-dir dist/firefox",
+    "sign:firefox": "web-ext sign --channel=unlisted --source-dir dist/firefox --artifacts-dir artifacts",
     "setup:windows": "node scripts/windows-setup.mjs",
     "setup:windows:dry-run": "node scripts/windows-setup.mjs --dry-run --json",
     "package": "npm run build && npm run build:firefox && node scripts/package.mjs",
@@ -54,7 +56,8 @@
     "eslint": "^9",
     "eslint-plugin-security": "^4.0.1",
     "jsdom": "^30.0.1",
-    "linkedom": "0.18.12"
+    "linkedom": "0.18.12",
+    "web-ext": "^10.6.0"
   },
   "dependencies": {
     "dompurify": "^3.4.13"
