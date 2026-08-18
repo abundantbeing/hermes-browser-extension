@@ -136,7 +136,7 @@ const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
 const OPEN_SESSION_STORAGE_KEY = 'hermesBrowserOpenSessionRequest';
 const INLINE_DRAFT_TTL_MS = 5 * 60 * 1000;
-const HERMES_ASSIST_SOURCE = 'hermes_assist';
+const HERMES_ASSIST_SOURCE = 'hermes_browser';
 
 const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
   WAKE_MESSAGES.claimTurn,
@@ -277,7 +277,6 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         createdThisAttempt = true;
         resolvedSessionId = String(created?.session?.id || created?.id || sessionId);
         resolvedTitle = String(created?.session?.title || created?.title || sessionTitle);
-        assertAssistModelSelectionAcknowledged(created, attemptSelection);
 
         const consentStored = await browserApi.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
         const gatedRequest = await gateInlineDraftRequestContext({

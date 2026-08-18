@@ -647,11 +647,19 @@
     custom.placeholder = translateUiText('Make this more confident without sounding aggressive…');
     custom.setAttribute('aria-label', translateUiText('Custom Hermes Assist instruction'));
     const customGo = button('custom-go', 'Ask Hermes');
-    customGo.addEventListener('click', () => {
+    const submitCustom = () => {
       const text = custom.value.trim();
       if (!text) return custom.focus();
-      beginAction({ id: 'custom', label: text.slice(0, 120), detail: 'Custom instruction', mode: 'draft-copy-only' });
+      beginAction({ id: 'custom', label: text.slice(0, 1000), detail: 'Custom instruction', mode: 'draft-copy-only' });
+    };
+    custom.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        submitCustom();
+      }
     });
+    customGo.addEventListener('click', submitCustom);
     customRow.append(custom, customGo);
     const setting = make('label', 'setting');
     const settingCopy = make('span');

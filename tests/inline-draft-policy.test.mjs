@@ -121,6 +121,28 @@ test('Gmail Draft reply can start from an empty composer with explicitly capture
   assert.match(gmailComposer.textContent, /Friday at 2 PM/);
 });
 
+test('custom user instruction can draft from an empty field with bounded page context', () => {
+  const field = one('<div contenteditable="true" role="textbox" aria-label="Post reply"></div>');
+  const customPrompt = 'help me figure out the best way to reply in the way I type about using the extension with Firefox';
+  const built = buildInlineDraftRequest(field, {
+    action: { id: 'custom', label: customPrompt, mode: 'draft-copy-only' },
+    route: 'background',
+    requestId: 'req-custom-1234',
+    documentId: 'doc-custom-1234',
+    pageUrl: 'https://x.com/home',
+    adapterId: 'x',
+    pageContext: 'Visible post asking how to use Hermes Browser on Firefox.',
+    redact: (text) => ({ text, count: 0 }),
+  });
+  assert.equal(built.ok, true);
+  assert.equal(built.request.draftText, '');
+  assert.equal(built.request.actionId, 'custom');
+  assert.equal(built.request.actionLabel, customPrompt);
+  const prompt = buildInlineDraftPrompt(built.request);
+  assert.match(prompt, /Firefox/);
+  assert.match(prompt, /known user voice\/preferences/i);
+});
+
 test('sensitive, disabled, and readonly editables are hard-blocked', () => {
   const blocked = [
     '<input type="password" value="secret">',
