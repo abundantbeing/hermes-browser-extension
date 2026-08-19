@@ -64,6 +64,29 @@ SCHEMA_CONTROL_STATUS = {
     "parameters": _EMPTY_PARAMETERS,
 }
 
+SCHEMA_JOURNAL = {
+    "name": "browser_context_journal",
+    "description": (
+        "Return the bounded owner-scoped metadata-only journal of stored "
+        "browser-context deliveries (timestamps, opaque ids, scope, control "
+        "metadata). Never includes page text or payloads and never "
+        "authorizes browser_get_context."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "limit": {
+                "type": "integer",
+                "description": "Maximum number of recent journal rows to return (1–500, default 50).",
+                "minimum": 1,
+                "maximum": 500,
+                "default": 50,
+            },
+        },
+        "additionalProperties": False,
+    },
+}
+
 SCHEMA_TEXT_UTILITY = {
     "name": "browser_text_utility",
     "description": "Run a bounded deterministic text operation locally without a model or network call.",

@@ -141,6 +141,17 @@
             <span data-i18n="ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded">Rendered message bodies only. Draft and input values stay excluded.</span>
           </button>
           <div id="contextScopeMenu" class="context-scope-menu" hidden></div>
+          <section id="localDocumentApprovalNotice" class="session-ownership-notice" aria-live="polite" hidden>
+            <div class="session-ownership-copy">
+              <span class="session-ownership-kicker" data-i18n="ui.local_document_access">LOCAL DOCUMENT ACCESS</span>
+              <strong id="localDocumentApprovalTitle">Local document detected</strong>
+              <span id="localDocumentApprovalDetail">Approve local document access to inspect this file, extract slides/text, and attach browser control.</span>
+            </div>
+            <div class="session-ownership-actions">
+              <button id="localDocumentApproveButton" type="button" data-i18n="ui.approve_document_access">Approve document access</button>
+              <button id="localDocumentDismissButton" class="secondary" type="button" data-i18n="ui.keep_restricted">Keep restricted</button>
+            </div>
+          </section>
           <section id="sessionOwnershipNotice" class="session-ownership-notice" aria-live="polite" hidden>
             <div class="session-ownership-copy">
               <span class="session-ownership-kicker" data-i18n="ui.shared.session">SHARED SESSION</span>

@@ -31,6 +31,19 @@ const PAYMENT_RE = /\b(?:credit.?card|card.?number|cvv|cvc|expiry|payment|billin
 const CREDENTIAL_RE = /\b(?:password|passwd|passcode|api.?(?:key|token)|access.?token|auth.?token|session.?token|private.?key|seed.?phrase|recovery.?phrase|secret)\b/i;
 const MFA_RE = /\b(?:one.?time|otp|mfa|2fa|verification.?code|security.?code)\b/i;
 const SECRET_TEXT_RE = /(?:\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|password|secret)\s*[:=]\s*\S+|\b(?:sk|pk|ghp|xox[baprs])[-_][A-Za-z0-9_-]{12,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,})/i;
+const DIALOG_CONSEQUENTIAL_RE = /\b(?:delete|remove|reset|overwrite|submit|send|post|publish|approve|confirm|pay|checkout|buy|purchase|transfer|subscribe|sign.?out|log.?out|discard|close)\b/i;
+
+/** Phase 8 privileged actions that are never safe by default. */
+export const BROWSER_CONTROL_PRIVILEGED_ACTIONS = Object.freeze([
+  'browser_console',
+  'browser_network_requests',
+  'browser_response_body',
+  'browser_pdf',
+  'browser_upload',
+  'browser_evaluate',
+  'browser_cdp',
+  'browser_dialog',
+]);
 
 function compact(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
@@ -52,14 +65,18 @@ function decision(risk, reason = '') {
   return Object.freeze({ risk, reason });
 }
 
-export function validateBrowserControlUrl(value = '') {
+export function validateBrowserControlUrl(value = '', { allowLocalFiles = false } = {}) {
   const raw = compact(value);
-  if (!raw || isRestrictedUrl(raw)) return { ok: false, error: 'restricted_url' };
+  if (!raw || isRestrictedUrl(raw, { allowLocalDocuments: allowLocalFiles })) return { ok: false, error: 'restricted_url' };
   let parsed;
   try {
     parsed = new URL(raw);
   } catch {
     return { ok: false, error: 'restricted_url' };
+  }
+  if (parsed.protocol === 'file:') {
+    if (!allowLocalFiles) return { ok: false, error: 'restricted_url' };
+    return { ok: true, url: parsed.href, origin: 'file://' };
   }
   if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) {
     return { ok: false, error: 'restricted_url' };
@@ -73,6 +90,8 @@ export function classifyBrowserControlAction({
   target = {},
   currentUrl = '',
   hasUnsavedContent = false,
+  developerMode = false,
+  allowLocalDocuments = false,
 } = {}) {
   const normalizedAction = compact(action);
   if (normalizedAction === 'browser_drag') {
@@ -81,14 +100,52 @@ export function classifyBrowserControlAction({
   if (normalizedAction === 'browser_tab_close') {
     return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'tab-close');
   }
+  if (normalizedAction !== 'browser_navigate' && currentUrl && isRestrictedUrl(currentUrl, { allowLocalDocuments })) {
+    return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'restricted_current_page');
+  }
+
+  // Phase 8 privileged actions: never safe by default. Reads pause for an
+  // approval; evaluate, response bodies, and raw CDP additionally require
+  // developer mode and/or a pre-approved artifact/request binding.
+  if (normalizedAction === 'browser_console') {
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'console-metadata');
+  }
+  if (normalizedAction === 'browser_network_requests') {
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'network-metadata');
+  }
+  if (normalizedAction === 'browser_response_body') {
+    if (!compact(args?.request_id)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'request-id-required');
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'response-body');
+  }
+  if (normalizedAction === 'browser_pdf') {
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'pdf-generation');
+  }
+  if (normalizedAction === 'browser_upload') {
+    if (!compact(args?.artifact_id)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'artifact-id-required');
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'file-upload');
+  }
+  if (normalizedAction === 'browser_evaluate') {
+    if (developerMode !== true) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'developer-mode-required');
+    if (!compact(args?.code ?? args?.expression)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'code-required');
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'evaluate-code');
+  }
+  if (normalizedAction === 'browser_cdp') {
+    if (developerMode !== true) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'developer-mode-required');
+    if (!compact(args?.method)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'method-required');
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'cdp-command');
+  }
+  if (normalizedAction === 'browser_dialog') {
+    const message = compact(args?.message ?? args?.text ?? args?.prompt);
+    if (DIALOG_CONSEQUENTIAL_RE.test(message)) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'dialog-consequence');
+    }
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'dialog-action');
+  }
   if (!SAFE_ACTIONS.has(normalizedAction) && normalizedAction !== 'browser_press') {
     return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'unsupported-action');
   }
 
   const descriptor = targetDescriptor(target);
-  if (normalizedAction !== 'browser_navigate' && currentUrl && isRestrictedUrl(currentUrl)) {
-    return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'restricted_current_page');
-  }
   if (normalizedAction === 'browser_type' || normalizedAction === 'browser_fill') {
     if (target?.sensitive === true) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-field');
     if (PAYMENT_RE.test(descriptor)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'sensitive-payment-field');
@@ -147,6 +204,7 @@ function approvalKey(value = {}) {
     Number(value.documentGeneration),
     compact(value.action),
     compact(value.state),
+    compact(value.binding),
   ].join('\u0000');
 }
 
@@ -170,6 +228,7 @@ export function createBrowserControlApprovalStore({
     const leaseGeneration = Number(value.leaseGeneration);
     const action = compact(value.action);
     const state = compact(value.state);
+    const binding = compact(value.binding).slice(0, 200);
     const tabId = Number(value.tabId);
     const documentGeneration = Number(value.documentGeneration);
     if (!approvalId || !commandId || !action || !Number.isInteger(tabId) || tabId <= 0
@@ -185,9 +244,10 @@ export function createBrowserControlApprovalStore({
       tabId,
       documentGeneration,
       state,
+      ...(binding ? { binding } : {}),
       key: approvalKey({
         approvalId, approvalNonce, commandId, controllerId, leaseId,
-        leaseGeneration, action, tabId, documentGeneration, state,
+        leaseGeneration, action, tabId, documentGeneration, state, binding,
       }),
     };
   }
@@ -225,7 +285,11 @@ export function createBrowserControlApprovalStore({
       consumedNonces.add(entry.approvalNonce);
       while (consumedNonces.size > boundedEntries) consumedNonces.delete(consumedNonces.values().next().value);
     }
-    return { ok: true, approvalId };
+    return {
+      ok: true,
+      approvalId,
+      ...(entry.binding ? { binding: entry.binding } : {}),
+    };
   }
 
   function request(value = {}) {
@@ -245,6 +309,7 @@ export function createBrowserControlApprovalStore({
     requests.set(normalized.approvalId, {
       ...normalized,
       reason: compact(value.reason).slice(0, 300),
+      ...(compact(value.detail) ? { detail: compact(value.detail).slice(0, 1_000) } : {}),
       createdAt: Number(now()),
       promise,
       resolve,
@@ -261,7 +326,7 @@ export function createBrowserControlApprovalStore({
   function pending() {
     return [...requests.values()].map(({
       approvalId, approvalNonce, commandId, controllerId, leaseId, leaseGeneration,
-      tabId, documentGeneration, action, state, reason,
+      tabId, documentGeneration, action, state, reason, binding, detail,
     }) => ({
       approvalId,
       ...(approvalNonce ? { approvalNonce } : {}),
@@ -274,6 +339,8 @@ export function createBrowserControlApprovalStore({
       action,
       ...(state ? { state } : {}),
       reason,
+      ...(binding ? { binding } : {}),
+      ...(detail ? { detail } : {}),
     }));
   }
 

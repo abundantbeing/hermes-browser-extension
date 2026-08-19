@@ -17,7 +17,9 @@ import json
 import secrets
 import threading
 from time import time
-from typing import Any, Callable
+from typing import Any, Callable, Optional
+
+from .journal import BrowserContextJournal
 
 BCP_TURN_PROTOCOL_ID = "hermes.browser.turn.v2"
 BCP_CONTEXT_PROTOCOL_ID = "hermes.browser.context.v1"
@@ -249,6 +251,7 @@ class BrowserContextStore:
     _durable_state: Any = field(default=None, init=False, repr=False)
     _durable_receipts_enabled: bool = field(default=False, init=False, repr=False)
     _receipt_limit: int = field(default=DEFAULT_RECEIPT_LIMIT, init=False, repr=False)
+    _journal: Optional[BrowserContextJournal] = field(default=None, init=False, repr=False)
     _lock: threading.RLock = field(default_factory=threading.RLock, init=False, repr=False)
 
     def _now(self) -> float:
@@ -306,6 +309,33 @@ class BrowserContextStore:
         self._receipt_limit = self._normalize_receipt_limit(receipt_limit)
         if len(rows) > self._receipt_limit:
             state.set(_DURABLE_RECEIPTS_KEY, rows[-self._receipt_limit :])
+
+    def configure_journal(self, data_dir: Any = None, *, max_rows: Any = 500) -> None:
+        """Attach the metadata-only rotation journal (Phase 8 Task 31).
+
+        ``data_dir`` may be a :class:`pathlib.Path`-compatible durable
+        directory (mode 0600 on the journal file where supported) or
+        ``None`` for a memory-only journal.  Journaling records metadata
+        rows about stored context; it never authorizes ``browser_get_context``
+        and never holds payload bytes.
+        """
+        try:
+            bounded = max(1, min(int(max_rows), 500))
+        except (TypeError, ValueError):
+            bounded = 500
+        journal = BrowserContextJournal(max_rows=bounded)
+        if data_dir is not None:
+            try:
+                from pathlib import Path
+
+                journal = BrowserContextJournal(
+                    max_rows=bounded,
+                    data_dir=Path(data_dir),
+                )
+            except Exception:
+                journal = BrowserContextJournal(max_rows=bounded)
+        with self._lock:
+            self._journal = journal
 
     def _prune_expired_locked(self, now: float) -> None:
         for context_id, record in list(self._records.items()):
@@ -369,6 +399,7 @@ class BrowserContextStore:
                 owner,
                 now,
             )
+            self._record_journal_locked(record, owner, now)
             return self._metadata(record)
 
     def status_for_owner(self, owner: ContextOwner) -> dict[str, Any]:
@@ -490,6 +521,61 @@ class BrowserContextStore:
         self._events.append(_StoredEvent(name=name, data=deepcopy(data), owner=owner, ts=now))
         if len(self._events) > max(1, int(self.max_events)):
             del self._events[: len(self._events) - max(1, int(self.max_events))]
+
+    def _record_journal_locked(
+        self,
+        record: BrowserContextRecord,
+        owner: ContextOwner,
+        now: float,
+    ) -> None:
+        """Append one metadata-only journal row for a stored record.
+
+        Only fields from the validated record metadata and its
+        ``browser_control`` subset participate; page text, DOM, typed
+        values, arguments, and results are structurally absent.  Journaling
+        is best-effort: a failure never fails the store itself, and it
+        never grants any context capability.
+        """
+        journal = self._journal
+        if journal is None:
+            return
+        control = record.browser_control if isinstance(record.browser_control, dict) else {}
+        try:
+            journal.record(
+                owner,
+                {
+                    "ts": now,
+                    "context_id": record.context_id,
+                    "payload_hash": record.payload_hash[:80],
+                    "scope": record.scope[:80] or "unknown",
+                    "controller_id": _bounded_identifier(control.get("controller_id")),
+                    "browser_profile_id": _bounded_identifier(
+                        control.get("browser_profile_id")
+                    ),
+                    "tab_id": int(control.get("tab_id") or 0),
+                    "lease_owned": control.get("lease_owned") is True,
+                    "delivery": record.provenance.get("delivery", "full")[:40],
+                },
+            )
+        except Exception:
+            # Diagnostics must never break the trusted store path.
+            return
+
+    def journal_for_owner(self, owner: ContextOwner, limit: Any = 50) -> dict[str, Any]:
+        """Return bounded owner-scoped journal metadata rows.
+
+        The returned envelope mirrors the other diagnostics accessors:
+        ``{"available": bool, "rows": [...]}`` with rows deep-copied.  The
+        journal is metadata-only and never authorizes ``browser_get_context``.
+        """
+        journal = self._journal
+        if journal is None:
+            return {"available": False, "rows": []}
+        try:
+            rows = journal.rows_for_owner(owner, limit=limit)
+        except Exception:
+            return {"available": False, "rows": []}
+        return {"available": bool(rows), "rows": deepcopy(rows)}
 
     def record_event(self, name: str, data: dict[str, Any] | None, owner: ContextOwner) -> None:
         """Record a pre-redacted diagnostic event for one exact owner tuple."""

@@ -117,7 +117,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Browser Context Protocol | Yes | Extension emits typed `hermes.browser.context.v2` turn envelopes while retaining the v1 prompt compatibility path. |
 | Hermes Assist | Yes, site-aware preview/review | 31 writing environments are recognized. Safe plain-text composers may apply after explicit review; structured/private surfaces can fall back to copy-only. Hermes Assist never submits. |
 | Companion plugin | Optional functional context cache | `companion-plugin/` provides read-only tools/hooks for sanitized Browser context; not required for normal extension use. |
-| Browser control / Runs UI / debugger / nativeMessaging | No | Deferred until supportability, action policy, approvals, and logs exist. |
+| Browser control / Runs UI / debugger / nativeMessaging | Yes (Experimental) | Bounded, opt-in MV3 controller with per-tab leases, explicit user approval gates, and sensitive action classification. |
 
 ## Quick start
 

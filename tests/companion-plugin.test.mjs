@@ -32,6 +32,7 @@ const files = [
   'companion-plugin/context_store.py',
   'companion-plugin/events.py',
   'companion-plugin/policy.py',
+  'companion-plugin/journal.py',
   'companion-plugin/tools.py',
   'companion-plugin/text_utilities.py',
   'companion-plugin/hooks.py',
@@ -138,6 +139,7 @@ assert [tool["name"] for tool in ctx.tools] == [
     "browser_clear_context",
     "browser_event_log",
     "browser_control_status",
+    "browser_context_journal",
     "browser_text_utility",
 ]
 for tool in ctx.tools:
@@ -162,6 +164,7 @@ schema_map = {
     "browser_clear_context": schemas.SCHEMA_CLEAR_CONTEXT,
     "browser_event_log": schemas.SCHEMA_EVENT_LOG,
     "browser_control_status": schemas.SCHEMA_CONTROL_STATUS,
+    "browser_context_journal": schemas.SCHEMA_JOURNAL,
     "browser_text_utility": schemas.SCHEMA_TEXT_UTILITY,
 }
 for name, schema in schema_map.items():
@@ -184,6 +187,7 @@ test('tools return JSON responses — status, get, clear, event_log', () => {
   assert.match(tools, /def browser_clear_context/);
   assert.match(tools, /def browser_event_log/);
   assert.match(tools, /def browser_control_status/);
+  assert.match(tools, /def browser_context_journal/);
   assert.match(tools, /def browser_text_utility/);
   // Handlers consume ContextVar leases; they may not query global/latest state.
   assert.match(tools, /ContextVar/);
@@ -498,6 +502,7 @@ test('companion skill preserves browser context trust boundaries', () => {
   assert.match(skill, /browser_clear_context/);
   assert.match(skill, /browser_event_log/);
   assert.match(skill, /browser_control_status/);
+  assert.match(skill, /browser_context_journal/);
   assert.match(skill, /historical/i);
   assert.match(skill, /side panel|broker supervision/i);
 });
@@ -657,6 +662,147 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
     outcomes = list(executor.map(lambda _index: consume_once(), range(2)))
 assert sum(item.get("available") is True for item in outcomes) == 1
 assert sum(item.get("action") == "block" for item in outcomes) == 1
+`;
+  runPluginPython(script);
+});
+
+test('Phase 8 journal is metadata-only, owner-scoped, bounded, and never authorizes context', () => {
+  const script = `${pluginImportHarness}
+import json
+import os
+import stat
+import tempfile
+
+from companion_plugin.context_store import BrowserContextStore
+from companion_plugin.journal import (
+    BrowserContextJournal,
+    JOURNAL_FILE_MODE,
+    JOURNAL_ROW_KEYS,
+    MAX_JOURNAL_ROWS,
+    validate_journal_row,
+)
+from companion_plugin import hooks, tools
+
+PAGE_SENTINEL = "JOURNAL_PAGE_TEXT_SENTINEL_DO_NOT_LEAK"
+
+def envelope(page_text=PAGE_SENTINEL, delivery="full"):
+    return {
+        "protocol": "hermes.browser.turn.v2",
+        "human_input": {"source": "composer", "text": "Summarize this page."},
+        "browser_context": {
+            "delivery": delivery,
+            "payload": {
+                "protocol": "hermes.browser.context.v1",
+                "contextScope": {"mode": "follow-active"},
+                "settings": {"contextDepth": "normal", "includeTabs": False, "includePageText": True, "includeSelectedText": True, "maxTabs": 12},
+                "activeTab": {"id": 1, "active": True, "title": "Docs", "url": "https://example.com/docs", "favIconUrl": ""},
+                "tabs": [],
+                "selectedTabs": [],
+                "pageContext": {"restricted": False, "reason": "", "selectedText": "", "text": page_text, "youtubeTranscript": "", "extraction": None, "siteAdapter": None, "meta": {"description": "", "language": "", "headings": []}, "pickedElement": None},
+            },
+        },
+        "attachment_context": {"items": []},
+        "source_receipt": {"protocol": "hermes.browser.turn.v2", "version": 2, "context_hash": "j00000000000000000000000000000000000", "delivery": delivery},
+    }
+
+def owner(**overrides):
+    class _Owner:
+        principal_id = "session:session-j"
+        session_id = "session-j"
+        turn_id = "turn-j"
+        task_id = "task-j"
+
+    values = {field: getattr(_Owner, field) for field in ("principal_id", "session_id", "turn_id", "task_id")}
+    values.update(overrides)
+    return type("Owner", (), values)()
+
+OWNER_OBJECT = owner()
+
+# Exact row-key contract: no page/payload/URL field can ever enter a row.
+assert set(JOURNAL_ROW_KEYS) == {
+    "ts", "context_id", "payload_hash", "scope", "controller_id",
+    "browser_profile_id", "tab_id", "lease_owned", "delivery",
+}
+try:
+    validate_journal_row({"ts": 1, "page": PAGE_SENTINEL})
+    raise AssertionError("row with page field must be refused")
+except Exception:
+    pass
+
+# Memory-only journal: bounded, owner-scoped, deterministic rotation.
+journal = BrowserContextJournal(max_rows=500)
+for index in range(520):
+    journal.record(
+        owner(),
+        {"ts": float(index), "context_id": f"ctx-{index}", "payload_hash": "h", "scope": "follow-active",
+         "controller_id": "c", "browser_profile_id": "p", "tab_id": index, "lease_owned": True, "delivery": "full"},
+    )
+assert journal.row_count == 500
+rows = journal.rows_for_owner(owner(), limit=500)
+assert len(rows) == 500
+assert rows[0]["context_id"] == "ctx-20"      # oldest dropped deterministically
+assert rows[-1]["context_id"] == "ctx-519"     # newest retained
+assert rows[-1]["ts"] == 519.0
+assert PAGE_SENTINEL not in json.dumps(rows)
+assert journal.rows_for_owner(owner(session_id="other"), limit=500) == []
+
+# Durable journal: mode 0600 where supported and reload from disk.
+with tempfile.TemporaryDirectory() as tmp:
+    durable = BrowserContextJournal(max_rows=500, data_dir=tmp)
+    durable.record(owner(), {"ts": 1.0, "context_id": "durable-1", "payload_hash": "h", "scope": "follow-active",
+                             "controller_id": "c", "browser_profile_id": "p", "tab_id": 1, "lease_owned": False, "delivery": "full"})
+    path = os.path.join(tmp, "journal.jsonl")
+    assert os.path.exists(path)
+    if os.name != "nt":
+        assert stat.S_IMODE(os.stat(path).st_mode) == JOURNAL_FILE_MODE
+    reloaded = BrowserContextJournal(max_rows=500, data_dir=tmp)
+    assert len(reloaded.rows_for_owner(owner(), limit=500)) == 1
+
+# Store wiring: journaling records metadata rows on put_bcp_v2 but the
+# journal tool never authorizes browser_get_context.
+store = BrowserContextStore()
+store.configure_journal(None)
+hooks.set_store(store)
+tools.set_store(store)
+hook_kwargs = {"session_id": "session-j", "turn_id": "turn-j", "task_id": "task-j"}
+notice = hooks.pre_llm_call(user_message=json.dumps(envelope()), **hook_kwargs)
+assert notice is not None
+journal_view = store.journal_for_owner(owner(), limit=50)
+assert journal_view["available"] is True
+blob = json.dumps(journal_view)
+assert PAGE_SENTINEL not in blob
+assert "https://example.com" not in blob
+assert "https://example.com/docs" not in blob
+
+# The journal tool itself cannot retrieve page text: no lease, no payload.
+direct = json.loads(tools.browser_context_journal({}))
+assert direct == {"available": False, "reason": "Browser context unavailable."}
+assert hooks.pre_tool_call(tool_name="browser_context_journal", args={"limit": 10}, **hook_kwargs) is None
+view = json.loads(tools.browser_context_journal({"limit": 10}))
+assert view["available"] is True
+assert PAGE_SENTINEL not in json.dumps(view)
+
+# Journaling never authorizes browser_get_context. A fresh store with the
+# same durable journal loaded has journal rows but no live in-memory record,
+# so the get handler must block even though the journal knows the id.
+with tempfile.TemporaryDirectory() as tmp:
+    source = BrowserContextStore()
+    source.configure_journal(tmp)
+    hooks.set_store(source)
+    tools.set_store(source)
+    assert hooks.pre_llm_call(user_message=json.dumps(envelope()), **hook_kwargs) is not None
+    source_view = source.journal_for_owner(owner(), limit=10)
+    journal_id = source_view["rows"][0]["context_id"]
+    assert len(journal_id) == 32
+
+    revived = BrowserContextStore()
+    revived.configure_journal(tmp)
+    hooks.set_store(revived)
+    tools.set_store(revived)
+    assert revived.journal_for_owner(owner(), limit=10)["available"] is True
+    blocked = hooks.pre_tool_call(tool_name="browser_get_context", args={"context_id": journal_id}, **hook_kwargs)
+    assert blocked == {"action": "block", "message": "Browser context unavailable."}
+    assert json.loads(tools.browser_get_context({"context_id": journal_id}))["available"] is False
 `;
   runPluginPython(script);
 });

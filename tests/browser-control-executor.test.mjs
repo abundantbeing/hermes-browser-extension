@@ -195,6 +195,56 @@ test('Phase 6 revalidates the page origin immediately before an approved mutatio
   assert.equal(sideEffects, 0);
 });
 
+test('Phase 8 approved local documents pass origin revalidation on the same file', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const approvals = createBrowserControlApprovalStore();
+  const refs = createBrowserControlRefStore();
+  refs.replace({ ...scope, nodes: [{ role: 'button', name: 'Enlarge image', backendDOMNodeId: 46 }] });
+  let sideEffects = 0;
+  const adapter = fullAdapter(async () => { sideEffects += 1; return { status: 'clicked' }; });
+  adapter.inspect = async () => ({
+    currentUrl: 'file:///D:/Hermes/bangkok-hermes-events-deck.html',
+    hasUnsavedContent: false,
+  });
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs });
+  const running = executor.execute(
+    frame('browser_click', { ref: '@e1' }),
+    { scope, allowLocalDocuments: true },
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  approvals.grant(approvals.pending()[0]);
+  assert.equal((await running).error, undefined);
+  assert.equal(sideEffects, 1);
+});
+
+test('Phase 8 navigating to a different local file still trips domain_changed', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const approvals = createBrowserControlApprovalStore();
+  const refs = createBrowserControlRefStore();
+  refs.replace({ ...scope, nodes: [{ role: 'button', name: 'Enlarge image', backendDOMNodeId: 46 }] });
+  let sideEffects = 0;
+  let inspections = 0;
+  const adapter = fullAdapter(async () => { sideEffects += 1; return { status: 'clicked' }; });
+  adapter.inspect = async () => ({
+    currentUrl: inspections++ === 0
+      ? 'file:///D:/Hermes/bangkok-hermes-events-deck.html'
+      : 'file:///D:/Hermes/other-deck.html',
+    hasUnsavedContent: false,
+  });
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs });
+  const running = executor.execute(
+    frame('browser_click', { ref: '@e1' }),
+    { scope, allowLocalDocuments: true },
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  approvals.grant(approvals.pending()[0]);
+  assert.deepEqual(await running, {
+    ok: false,
+    error: { code: 'domain_changed', message: 'The page origin changed before the action could run.' },
+  });
+  assert.equal(sideEffects, 0);
+});
+
 test('Phase 6 lifecycle terminal receipts never echo command arguments or typed text', async () => {
   const terminals = [];
   const lifecycle = createControllerLifecycle({

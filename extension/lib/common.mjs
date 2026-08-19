@@ -202,7 +202,6 @@ const RESTRICTED_SCHEMES = new Set([
   'data:',
   'devtools:',
   'edge:',
-  'file:',
   'brave:',
   'opera:',
   'view-source:',
@@ -2454,7 +2453,20 @@ function restrictedUrlHaystack(parsed) {
   return [...rawParts, ...decodedParts].join(' ');
 }
 
-export function isRestrictedUrl(url = '') {
+export function isLocalDocumentUrl(url = '') {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'file:') return true;
+    const host = parsed.hostname.toLowerCase();
+    if (['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(host) || host.endsWith('.localhost')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export function isRestrictedUrl(url = '', { allowLocalDocuments = false } = {}) {
   if (!url) return true;
   let parsed;
   try {
@@ -2463,6 +2475,10 @@ export function isRestrictedUrl(url = '') {
     return true;
   }
   if (RESTRICTED_SCHEMES.has(parsed.protocol)) return true;
+  if (parsed.protocol === 'file:') {
+    return !allowLocalDocuments;
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) return true;
   if (hasCredentialBearingUrl(parsed)) return true;
   const haystack = restrictedUrlHaystack(parsed);
   return SENSITIVE_URL_PATTERNS.some((pattern) => pattern.test(haystack));

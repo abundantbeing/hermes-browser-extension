@@ -773,6 +773,10 @@ test('isRestrictedUrl blocks browser internals and sensitive account categories'
   assert.equal(isRestrictedUrl('https://example.com/docs?x-api-key=browser-secret-value'), true);
   assert.equal(isRestrictedUrl('https://bucket.s3.amazonaws.com/file?X-Amz-Credential=browser-secret-value&X-Amz-Signature=browser-secret-value'), true);
   assert.equal(isRestrictedUrl('https://example.com/docs?next=public'), false);
+  assert.equal(isRestrictedUrl('file:///D:/Hermes/bangkok-hermes-events-deck.html'), true);
+  assert.equal(isRestrictedUrl('file:///D:/Hermes/bangkok-hermes-events-deck.html', { allowLocalDocuments: true }), false);
+  assert.equal(isRestrictedUrl('http://localhost:3000/presentation'), false);
+  assert.equal(isRestrictedUrl('http://127.0.0.1:8080/deck.html'), false);
 });
 
 test('privacySafeTabForPrompt redacts sensitive tab titles and URLs before prompt assembly', () => {

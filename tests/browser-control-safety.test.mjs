@@ -195,3 +195,109 @@ test('Phase 6 approval requests bind controller lease generation nonce and pause
   assert.equal(approvals.consume(exact).ok, true);
   assert.equal((await approvals.request(exact)).error, 'approval_replayed');
 });
+
+test('Phase 8 privileged actions pause for approval or demand exact arguments', async () => {
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
+
+  assert.equal(classifyBrowserControlAction({ action: 'browser_console' }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
+  assert.equal(classifyBrowserControlAction({ action: 'browser_network_requests' }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
+  assert.equal(classifyBrowserControlAction({ action: 'browser_pdf' }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
+
+  const body = classifyBrowserControlAction({ action: 'browser_response_body' });
+  assert.equal(body.risk, BROWSER_CONTROL_RISKS.BLOCKED);
+  assert.equal(body.reason, 'request-id-required');
+  assert.equal(classifyBrowserControlAction({
+    action: 'browser_response_body',
+    arguments: { request_id: 'req-1' },
+  }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
+
+  const upload = classifyBrowserControlAction({ action: 'browser_upload' });
+  assert.equal(upload.risk, BROWSER_CONTROL_RISKS.BLOCKED);
+  assert.equal(upload.reason, 'artifact-id-required');
+  assert.equal(classifyBrowserControlAction({
+    action: 'browser_upload',
+    arguments: { artifact_id: 'artifact-1' },
+  }).risk, BROWSER_CONTROL_RISKS.APPROVAL);
+
+  const evaluateNoDev = classifyBrowserControlAction({
+    action: 'browser_evaluate',
+    arguments: { code: '1 + 1' },
+  });
+  assert.equal(evaluateNoDev.risk, BROWSER_CONTROL_RISKS.BLOCKED);
+  assert.equal(evaluateNoDev.reason, 'developer-mode-required');
+  const evaluateDev = classifyBrowserControlAction({
+    action: 'browser_evaluate',
+    arguments: { code: '1 + 1' },
+    developerMode: true,
+  });
+  assert.equal(evaluateDev.risk, BROWSER_CONTROL_RISKS.APPROVAL);
+  assert.equal(evaluateDev.reason, 'evaluate-code');
+  assert.equal(classifyBrowserControlAction({
+    action: 'browser_evaluate',
+    arguments: {},
+    developerMode: true,
+  }).reason, 'code-required');
+
+  const cdpNoDev = classifyBrowserControlAction({ action: 'browser_cdp', arguments: { method: 'Runtime.getHeapUsage' } });
+  assert.equal(cdpNoDev.risk, BROWSER_CONTROL_RISKS.BLOCKED);
+  assert.equal(cdpNoDev.reason, 'developer-mode-required');
+  assert.equal(classifyBrowserControlAction({
+    action: 'browser_cdp',
+    arguments: { method: 'Runtime.getHeapUsage' },
+    developerMode: true,
+  }).reason, 'cdp-command');
+
+  const dialogBenign = classifyBrowserControlAction({
+    action: 'browser_dialog',
+    arguments: { accept: true, message: 'Continue?' },
+  });
+  assert.equal(dialogBenign.risk, BROWSER_CONTROL_RISKS.APPROVAL);
+  assert.equal(dialogBenign.reason, 'dialog-action');
+  const dialogConsequential = classifyBrowserControlAction({
+    action: 'browser_dialog',
+    arguments: { accept: true, message: 'Delete all data permanently?' },
+  });
+  assert.equal(dialogConsequential.risk, BROWSER_CONTROL_RISKS.APPROVAL);
+  assert.equal(dialogConsequential.reason, 'dialog-consequence');
+});
+
+test('Phase 8 privileged actions stay blocked on restricted pages even in developer mode', async () => {
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
+  const currentUrl = 'https://example.test/account/wallet';
+  for (const action of [
+    'browser_console', 'browser_network_requests', 'browser_response_body',
+    'browser_pdf', 'browser_upload', 'browser_evaluate', 'browser_cdp', 'browser_dialog',
+  ]) {
+    const result = classifyBrowserControlAction({
+      action,
+      arguments: { request_id: 'req-1', artifact_id: 'artifact-1', code: '1', method: 'X' },
+      currentUrl,
+      developerMode: true,
+    });
+    assert.equal(result.risk, BROWSER_CONTROL_RISKS.BLOCKED, action);
+    assert.equal(result.reason, 'restricted_current_page', action);
+  }
+});
+
+test('Phase 8 approval grants bind artifact ids so upload approvals are single-artifact', async () => {
+  const { createBrowserControlApprovalStore } = await phase6();
+  const approvals = createBrowserControlApprovalStore({ now: () => 1_000 });
+  const exact = {
+    approvalId: 'approval-upload',
+    commandId: 'command-upload',
+    controllerId: 'controller-upload',
+    leaseId: 'lease-upload',
+    leaseGeneration: 1,
+    tabId: 7,
+    documentGeneration: 3,
+    action: 'browser_upload',
+    state: 'paused',
+    binding: 'artifact-42',
+  };
+  const waiting = approvals.request(exact);
+  assert.equal(approvals.grant({ ...exact, binding: 'artifact-43' }).error, 'approval_mismatch');
+  assert.equal(approvals.grant(exact).ok, true);
+  assert.equal((await waiting).ok, true);
+  assert.deepEqual(approvals.consume({ ...exact, binding: 'artifact-41' }), { ok: false, error: 'approval_mismatch' });
+  assert.deepEqual(approvals.consume(exact), { ok: true, approvalId: 'approval-upload', binding: 'artifact-42' });
+});

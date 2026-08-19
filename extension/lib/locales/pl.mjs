@@ -1232,4 +1232,7 @@ export default Object.freeze({
   "ui.context.menu.editor.empty": "No right-click actions are enabled. Add one or restore the defaults.",
   "ui.context.menu.editor.new.action": "New action",
   "ui.context.menu.editor.new.prompt": "Ask Hermes about this selection.",
+  "ui.approve_document_access": "Approve document access",
+  "ui.keep_restricted": "Keep restricted",
+  "ui.local_document_access": "LOCAL DOCUMENT ACCESS",
 });

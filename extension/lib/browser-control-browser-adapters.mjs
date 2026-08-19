@@ -8,7 +8,7 @@ const MAX_INLINE_SCREENSHOT_CHARS = 1_500_000;
 const ACTIONABLE_AX_ROLES = new Set([
   'button', 'checkbox', 'combobox', 'dialog', 'gridcell', 'link', 'listbox',
   'menuitem', 'option', 'radio', 'searchbox', 'slider', 'spinbutton', 'switch',
-  'tab', 'textbox', 'treeitem',
+  'tab', 'textbox', 'treeitem', 'image', 'img', 'figure', 'graphics-symbol',
 ]);
 
 function abortError(signal) {
@@ -231,15 +231,15 @@ function pageProbe(mode, direction = '') {
   }
   if (mode === 'snapshot') {
     const roles = new Set([
-      'A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY',
+      'A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'SUMMARY', 'IMG', 'FIGURE',
     ]);
-    const candidates = [...document.querySelectorAll('a,button,input,select,textarea,summary,[role],[tabindex]')]
-      .filter((element) => roles.has(element.tagName) || element.getAttribute('role') || element.tabIndex >= 0)
+    const candidates = [...document.querySelectorAll('a,button,input,select,textarea,summary,img,figure,[role],[tabindex],[class*="clickable"],[class*="thumb"],[class*="card"]')]
+      .filter((element) => roles.has(element.tagName) || element.getAttribute('role') || element.tabIndex >= 0 || element.classList?.contains('clickable-image') || window.getComputedStyle(element).cursor === 'pointer' || window.getComputedStyle(element).cursor === 'zoom-in')
       .slice(0, 500);
     const nodes = candidates.map((element) => ({
       role: element.getAttribute('role')
-        || ({ A: 'link', BUTTON: 'button', INPUT: element.type === 'checkbox' ? 'checkbox' : 'textbox', SELECT: 'combobox', TEXTAREA: 'textbox', SUMMARY: 'button' }[element.tagName] || 'generic'),
-      name: String(element.getAttribute('aria-label') || element.innerText || element.placeholder || element.name || '').replace(/\s+/g, ' ').trim().slice(0, 500),
+        || ({ A: 'link', BUTTON: 'button', INPUT: element.type === 'checkbox' ? 'checkbox' : 'textbox', SELECT: 'combobox', TEXTAREA: 'textbox', SUMMARY: 'button', IMG: 'image', FIGURE: 'image' }[element.tagName] || (window.getComputedStyle(element).cursor === 'pointer' || window.getComputedStyle(element).cursor === 'zoom-in' ? 'button' : 'generic')),
+      name: String(element.getAttribute('aria-label') || element.alt || element.title || element.innerText || element.placeholder || element.name || '').replace(/\s+/g, ' ').trim().slice(0, 500),
       inputType: String(element.type || ''),
       autocomplete: String(element.autocomplete || ''),
     }));

@@ -1643,7 +1643,7 @@ const SITE_ADAPTER_API = Object.freeze({
   hermesGlobal.HermesSiteAdapters = SITE_ADAPTER_API;
 })(globalThis);
 
-/* extension/lib/inline-draft-policy.mjs · SHA-256 385ed1ca7f4c86a8 */
+/* extension/lib/inline-draft-policy.mjs · SHA-256 dfa3714e18e12599 */
 (function hermesInlineDraftRuntime(hermesGlobal) {
   'use strict';
 
@@ -1727,7 +1727,7 @@ function classifyEditable(element) {
 function safePageUrl(value = '') {
   try {
     const url = new URL(String(value || ''));
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return '';
+    if (!['http:', 'https:', 'file:'].includes(url.protocol) || url.username || url.password) return '';
     url.search = '';
     url.hash = '';
     return url.toString();

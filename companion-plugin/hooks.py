@@ -23,6 +23,7 @@ _COMPANION_TOOLS = {
     "browser_clear_context",
     "browser_event_log",
     "browser_control_status",
+    "browser_context_journal",
 }
 
 
@@ -142,6 +143,11 @@ def pre_tool_call(**kwargs: Any) -> dict[str, str] | None:
 
         if tool_name == "browser_control_status":
             tools.grant_lease("control_status", store.control_status_for_owner(owner))
+            return None
+
+        if tool_name == "browser_context_journal":
+            limit = tools._journal_limit(args)
+            tools.grant_lease("journal", store.journal_for_owner(owner, limit))
             return None
 
         limit = tools._event_log_limit(args)

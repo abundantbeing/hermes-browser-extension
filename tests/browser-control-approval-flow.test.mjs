@@ -130,3 +130,63 @@ test('Phase 6 approval store clears pending waiters on detach', async () => {
   assert.equal((await running).error.code, 'approval_cancelled');
   assert.equal(sideEffects(), 0);
 });
+
+test('Phase 8 privileged approvals carry evaluate previews and artifact bindings and resume exactly once', async () => {
+  const approvals = createBrowserControlApprovalStore({ ttlMs: 1_000 });
+  const refs = createBrowserControlRefStore();
+  const calls = [];
+  const adapter = {
+    contract: { enabled: true, actions: ['browser_evaluate', 'browser_upload'] },
+    async inspect() { return { currentUrl: 'https://example.test/editor', hasUnsavedContent: false }; },
+    async execute(action, args, context) {
+      calls.push({ action, artifact: context.artifact });
+      return action === 'browser_evaluate' ? { value: 'ok' } : { status: 'uploaded' };
+    },
+  };
+  const artifacts = {
+    async download() {
+      return { ok: true, artifact: { name: 'f.txt', mimeType: 'text/plain', size: 3, checksum: 'abc', bytes: new Uint8Array([1, 2, 3]) } };
+    },
+    async upload() { return { ok: false, error: 'unused' }; },
+  };
+  const executor = createBrowserControlExecutor({
+    adapter,
+    approvals,
+    refs,
+    artifacts,
+    developerMode: true,
+  });
+
+  let settled = false;
+  const evaluateRunning = executor.execute(
+    frame({ command_id: 'evaluate-command', approval_nonce: 'evaluate-nonce', action: 'browser_evaluate', arguments: { code: 'document.body.innerText' } }),
+    { scope: SCOPE },
+  ).then((result) => { settled = true; return result; });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  assert.equal(settled, false);
+  const evaluatePending = approvals.pending()[0];
+  assert.equal(evaluatePending.action, 'browser_evaluate');
+  assert.match(evaluatePending.reason, /document\.body\.innerText/);
+  assert.equal(evaluatePending.detail, 'document.body.innerText');
+  approvals.grant(evaluatePending);
+  const evaluateResult = await evaluateRunning;
+  assert.equal(evaluateResult.ok, true);
+  assert.deepEqual(evaluateResult.result, { value: 'ok', truncated: false });
+
+  const uploadRunning = executor.execute(
+    frame({ command_id: 'upload-command', approval_nonce: 'upload-nonce', action: 'browser_upload', arguments: { artifact_id: 'artifact-9' } }),
+    { scope: SCOPE },
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const uploadPending = approvals.pending()[0];
+  assert.equal(uploadPending.action, 'browser_upload');
+  assert.equal(uploadPending.binding, 'artifact-9');
+  assert.equal(approvals.grant({ ...uploadPending, binding: 'artifact-wrong' }).ok, false);
+  assert.equal(approvals.grant(uploadPending).ok, true);
+  const uploadResult = await uploadRunning;
+  assert.equal(uploadResult.ok, true);
+  assert.equal(uploadResult.result.status, 'uploaded');
+  assert.deepEqual(calls.map((call) => call.action), ['browser_evaluate', 'browser_upload']);
+  assert.equal(calls[1].artifact.name, 'f.txt');
+});

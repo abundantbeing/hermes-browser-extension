@@ -38,6 +38,7 @@ import {
   isMicrophonePermissionError,
   isModelRuntimeSelectable,
   isRestrictedUrl,
+  isLocalDocumentUrl,
   isUsableRemoteGatewayUrl,
   messageDisplayText,
   messagesForLocalCache,
@@ -414,6 +415,11 @@ const els = {
   contextScopeButton: $('#contextScopeButton'),
   contextScopeLabel: $('#contextScopeLabel'),
   contextScopeMenu: $('#contextScopeMenu'),
+  localDocumentApprovalNotice: $('#localDocumentApprovalNotice'),
+  localDocumentApprovalTitle: $('#localDocumentApprovalTitle'),
+  localDocumentApprovalDetail: $('#localDocumentApprovalDetail'),
+  localDocumentApproveButton: $('#localDocumentApproveButton'),
+  localDocumentDismissButton: $('#localDocumentDismissButton'),
   sessionOwnershipNotice: $('#sessionOwnershipNotice'),
   contextMenuRouteNotice: $('#contextMenuRouteNotice'),
   contextMenuRememberRoute: $('#contextMenuRememberRoute'),
@@ -1270,7 +1276,7 @@ async function attachBrowserControlToCurrentTab() {
   if (browserControlStatus?.lastConnectFailure?.reason === 'missing_session') {
     throw new Error('Start or select a Hermes session, then attach this tab.');
   }
-  const replacement = currentTabLeaseReplacement({ status: browserControlStatus || {}, activeTab: tab });
+  const replacement = currentTabLeaseReplacement({ status: browserControlStatus || {}, activeTab: tab, allowLocalFiles: true });
   if (!replacement.ok) {
     const messages = {
       controller_busy: 'Wait for the current browser action to finish before attaching another tab.',
@@ -1406,10 +1412,16 @@ function hideOperationToast() {
 
 function positionOperationToast() {
   if (!els.operationToast || els.operationToast.hidden) return;
+  // If settings dialog is open, place toast neatly docked at the bottom of the viewport
+  if (els.settingsDialog && !els.settingsDialog.hidden) {
+    els.operationToast.style.top = 'auto';
+    els.operationToast.style.bottom = '16px';
+    return;
+  }
   const composerTop = els.composer?.getBoundingClientRect().top;
   if (!Number.isFinite(composerTop) || composerTop <= 0) {
     els.operationToast.style.top = 'auto';
-    els.operationToast.style.bottom = '12px';
+    els.operationToast.style.bottom = '16px';
     return;
   }
   els.operationToast.style.bottom = 'auto';
@@ -7137,6 +7149,31 @@ function activeSessionForSend() {
   };
 }
 
+function dismissLocalDocumentApprovalNotice() {
+  if (!els.localDocumentApprovalNotice) return;
+  els.localDocumentApprovalNotice.hidden = true;
+}
+
+function renderLocalDocumentApproval(tab = currentContext?.activeTab) {
+  if (!els.localDocumentApprovalNotice) return;
+  const url = tab?.url || '';
+  const isLocal = isLocalDocumentUrl(url);
+  if (!isLocal || settings.allowLocalDocuments === true) {
+    dismissLocalDocumentApprovalNotice();
+    return;
+  }
+  let fileName = 'presentation / local file';
+  try {
+    const parsed = new URL(url);
+    fileName = parsed.pathname.split('/').filter(Boolean).pop() || 'local document';
+  } catch {
+    fileName = 'local document';
+  }
+  els.localDocumentApprovalTitle.textContent = `Local document · ${fileName}`;
+  els.localDocumentApprovalDetail.textContent = 'Approve local document access to inspect this file, extract slides/text, and attach browser control.';
+  els.localDocumentApprovalNotice.hidden = false;
+}
+
 function dismissSessionOwnershipNotice() {
   pendingForeignTurn = null;
   if (!els.sessionOwnershipNotice) return;
@@ -8150,11 +8187,13 @@ async function getPageContextViaScripting(tabId, options, originalError) {
 }
 
 async function getPageContext(tab, options = {}) {
-  if (!tab?.id || isRestrictedUrl(tab.url)) {
+  const isLocal = isLocalDocumentUrl(tab?.url);
+  const allowLocal = isLocal && (options.allowLocalDocuments !== false);
+  if (!tab?.id || isRestrictedUrl(tab.url, { allowLocalDocuments: allowLocal })) {
     return {
       ok: false,
       restricted: true,
-      reason: 'Hermes Browser Extension does not read browser internals, extension pages, or sensitive account/payment/password pages in v0.1.',
+      reason: 'Hermes Browser Extension does not read browser internals, extension pages, or sensitive account/payment/password pages.',
       text: '',
       selectedText: '',
       meta: {},
@@ -8167,14 +8206,11 @@ async function getPageContext(tab, options = {}) {
     frameId: Number(options.frameId || 0),
   };
   try {
-    const response = await browserApi.tabs.sendMessage(
+    const response = await sendContentMessageWithInstallFallback(
       tab.id,
       { type: 'HERMES_GET_PAGE_CONTEXT', options: requestOptions },
-      requestOptions.frameId > 0 ? { frameId: requestOptions.frameId } : undefined,
+      { frameId: requestOptions.frameId },
     );
-    // A response that claims ok but carries no actual page text is the signature
-    // of a stale/orphaned content script that returned a bare ack. Run the
-    // scripting fallback so the user still gets real page text instead of 0.
     if (response?.ok && (response.text || response.selectedText || response.meta?.headings?.length)) {
       return options.selectedTextOverride === undefined
         ? response
@@ -8440,6 +8476,7 @@ async function refreshContext(options = {}) {
   } else {
     setStatus('warn', tab.title || translateUiText('Page context partial'), pageContext?.error || tab.url || '', { translateTitle: false, translateDetail: false });
   }
+  renderLocalDocumentApproval(tab);
   renderContextScopeControls();
   renderContextWindow();
   return currentContext;
@@ -11101,6 +11138,16 @@ function bindEvents() {
     } catch (error) {
       setStatus('warn', 'Settings not saved', error?.message || String(error), { translateDetail: false });
     }
+  });
+  els.localDocumentApproveButton?.addEventListener('click', async () => {
+    settings = { ...settings, allowLocalDocuments: true };
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    dismissLocalDocumentApprovalNotice();
+    await refreshContext({ allowLocalDocuments: true });
+    await attachBrowserControlToCurrentTab();
+  });
+  els.localDocumentDismissButton?.addEventListener('click', () => {
+    dismissLocalDocumentApprovalNotice();
   });
   els.sessionOwnershipNotice?.addEventListener('click', handleSessionOwnershipDecision);
   els.composer.addEventListener('submit', async (event) => {

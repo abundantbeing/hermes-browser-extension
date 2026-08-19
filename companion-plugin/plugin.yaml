@@ -15,6 +15,7 @@ provides_tools:
   - browser_clear_context
   - browser_event_log
   - browser_control_status
+  - browser_context_journal
   - browser_text_utility
 
 config_schema:

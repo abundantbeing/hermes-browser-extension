@@ -1139,6 +1139,10 @@
     "message": "Goedkeuren",
     "description": "Runtime interface message ui.approve"
   },
+  "runtime_ui_approve_document_access": {
+    "message": "Approve document access",
+    "description": "Runtime interface message ui.approve_document_access"
+  },
   "runtime_ui_artifacts": {
     "message": "Artefacten",
     "description": "Runtime interface message ui.artifacts"
@@ -2851,6 +2855,10 @@
     "message": "Artikel",
     "description": "Runtime interface message ui.item"
   },
+  "runtime_ui_keep_restricted": {
+    "message": "Keep restricted",
+    "description": "Runtime interface message ui.keep_restricted"
+  },
   "runtime_ui_keep_assist_sessions": {
     "message": "Behoud Assist-sessies",
     "description": "Runtime interface message ui.keep.assist.sessions"
@@ -2942,6 +2950,10 @@
   "runtime_ui_local": {
     "message": "Lokaal",
     "description": "Runtime interface message ui.local"
+  },
+  "runtime_ui_local_document_access": {
+    "message": "LOCAL DOCUMENT ACCESS",
+    "description": "Runtime interface message ui.local_document_access"
   },
   "runtime_ui_local_api_server": {
     "message": "Lokale API-server",

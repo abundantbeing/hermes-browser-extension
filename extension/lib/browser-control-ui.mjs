@@ -54,14 +54,14 @@ export function followTargetTabId({ viewBehavior = 'stay', status = {}, activeTa
   return targetTabId === Number(activeTabId) ? null : targetTabId;
 }
 
-export function currentTabLeaseReplacement({ status = {}, activeTab = null } = {}) {
+export function currentTabLeaseReplacement({ status = {}, activeTab = null, allowLocalFiles = true } = {}) {
   if (status?.connected !== true || !String(status?.controllerId || '').trim()) {
     return { ok: false, error: 'controller_unavailable' };
   }
   if (status?.activeAction || Number(status?.pendingCommands) > 0 || status?.pendingApproval) {
     return { ok: false, error: 'controller_busy' };
   }
-  const eligible = validateBrowserControlUrl(activeTab?.url);
+  const eligible = validateBrowserControlUrl(activeTab?.url, { allowLocalFiles });
   if (!eligible.ok) return { ok: false, error: eligible.error };
   const request = controlLeaseRequest({ scope: 'this-tab', activeTab });
   if (!request.ok) return request;
@@ -174,7 +174,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
   const leasedTabIds = tabIdsFrom(status.leasedTabIds);
   const leaseCount = leasedTabIds.length;
   const activeTabId = Number(activeTab?.id);
-  const eligible = validateBrowserControlUrl(activeTab?.url);
+  const eligible = validateBrowserControlUrl(activeTab?.url, { allowLocalFiles: true });
   if (!Number.isInteger(activeTabId) || activeTabId <= 0 || !eligible.ok) {
     return baseView({
       state: 'unavailable',

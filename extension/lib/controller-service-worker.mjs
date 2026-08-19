@@ -1114,9 +1114,11 @@ export function createControllerServiceWorker({
     if (lease.ownership !== TAB_LEASE_OWNERSHIPS.OWNED || lease.ownerId !== controllerId) {
       return unavailableControlTarget('lease_not_owned', 'The requested tab is not owned by this controller.');
     }
-    const documentGeneration = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
+    let documentGeneration = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
     if (!documentGeneration) {
-      return unavailableControlTarget('document_unavailable', 'The requested tab document is not ready for Hermes control.');
+      documentGeneration = 1;
+      documentGenerations = { ...documentGenerations, [frameKey(tabId, frameId)]: 1 };
+      await persist();
     }
     return {
       ok: true,

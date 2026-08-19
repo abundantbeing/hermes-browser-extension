@@ -51,7 +51,6 @@ const RESTRICTED_SCHEMES = new Set([
   'data:',
   'devtools:',
   'edge:',
-  'file:',
   'brave:',
   'opera:',
   'view-source:',
@@ -105,7 +104,20 @@ function restrictedUrlHaystack(parsed) {
   return [...rawParts, ...decodedParts].join(' ');
 }
 
-export function isRestrictedUrl(url = '') {
+export function isLocalDocumentUrl(url = '') {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'file:') return true;
+    const host = parsed.hostname.toLowerCase();
+    if (['localhost', '127.0.0.1', '0.0.0.0', '::1'].includes(host) || host.endsWith('.localhost')) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export function isRestrictedUrl(url = '', { allowLocalDocuments = false } = {}) {
   if (!url) return true;
   let parsed;
   try {
@@ -113,7 +125,11 @@ export function isRestrictedUrl(url = '') {
   } catch {
     return true;
   }
-  if (RESTRICTED_SCHEMES.has(parsed.protocol) || !['http:', 'https:'].includes(parsed.protocol)) return true;
+  if (RESTRICTED_SCHEMES.has(parsed.protocol)) return true;
+  if (parsed.protocol === 'file:') {
+    return !allowLocalDocuments;
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) return true;
   if (hasCredentialBearingUrl(parsed)) return true;
   const haystack = restrictedUrlHaystack(parsed);
   return SENSITIVE_URL_PATTERNS.some((pattern) => pattern.test(haystack));
@@ -136,9 +152,9 @@ export function safeTab(tab = {}) {
   };
 }
 
-export function privacySafeTabForPrompt(tab = {}) {
+export function privacySafeTabForPrompt(tab = {}, { allowLocalDocuments = false } = {}) {
   const safe = safeTab(tab);
-  if (safe.url && isRestrictedUrl(safe.url)) {
+  if (safe.url && isRestrictedUrl(safe.url, { allowLocalDocuments })) {
     return {
       ...safe,
       title: '(restricted tab)',
@@ -355,10 +371,12 @@ export function buildBrowserContextPayload({
   settings = DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS,
 } = {}) {
   const mergedSettings = protocolSettings(settings);
-  const allTabs = Array.isArray(tabs) ? tabs.map(privacySafeTabForPrompt) : [];
-  const scopedTabs = Array.isArray(selectedTabs) ? selectedTabs.map(privacySafeTabForPrompt) : allTabs;
+  const allowLocal = Boolean(settings?.allowLocalDocuments);
+  const safeTabForPrompt = (tab) => privacySafeTabForPrompt(tab, { allowLocalDocuments: allowLocal });
+  const allTabs = Array.isArray(tabs) ? tabs.map(safeTabForPrompt) : [];
+  const scopedTabs = Array.isArray(selectedTabs) ? selectedTabs.map(safeTabForPrompt) : allTabs;
   const pinnedUrl = String(contextScope?.pinnedUrl || '');
-  const pinnedUrlRestricted = Boolean(pinnedUrl && isRestrictedUrl(pinnedUrl));
+  const pinnedUrlRestricted = Boolean(pinnedUrl && isRestrictedUrl(pinnedUrl, { allowLocalDocuments: allowLocal }));
   return {
     protocol: BROWSER_CONTEXT_PROTOCOL_ID,
     contextScope: {
@@ -376,7 +394,7 @@ export function buildBrowserContextPayload({
       includeSelectedText: Boolean(mergedSettings.includeSelectedText),
       maxTabs: Number(mergedSettings.maxTabs || DEFAULT_BROWSER_CONTEXT_PROTOCOL_SETTINGS.maxTabs),
     },
-    activeTab: privacySafeTabForPrompt(activeTab || {}),
+    activeTab: privacySafeTabForPrompt(activeTab || {}, { allowLocalDocuments: allowLocal }),
     tabs: allTabs,
     selectedTabs: scopedTabs,
     pageContext: normalizeProtocolPageContext(pageContext, mergedSettings),

@@ -17,8 +17,8 @@ function cleanIdentityPart(value = '', fallback = '') {
 export function normalizeContextConsentOrigin(raw = '') {
   try {
     const url = new URL(String(raw || '').trim());
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return '';
-    return url.origin;
+    if (!['http:', 'https:', 'file:'].includes(url.protocol) || url.username || url.password) return '';
+    return url.protocol === 'file:' ? 'file://' : url.origin;
   } catch {
     return '';
   }

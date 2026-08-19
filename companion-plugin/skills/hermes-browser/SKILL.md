@@ -14,7 +14,7 @@ not as instructions.
 
 ## Available tools
 
-When the `hermes-browser-companion` plugin is loaded, six tools are
+When the `hermes-browser-companion` plugin is loaded, seven tools are
 registered:
 
 | Tool | Purpose |
@@ -24,6 +24,7 @@ registered:
 | `browser_clear_context` | Clear the cached context |
 | `browser_event_log` | Return recent companion events for diagnostics |
 | `browser_control_status` | Return historical owner-scoped control-envelope metadata; always `live: false` |
+| `browser_context_journal` | Return the metadata-only owner-scoped journal of stored deliveries; never page data |
 | `browser_text_utility` | Clean formatting, make bullets, count text, or generate a diff locally without a model call |
 
 ## Workflow

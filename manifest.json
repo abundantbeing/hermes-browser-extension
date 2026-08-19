@@ -28,7 +28,8 @@
     "http://127.0.0.1/*",
     "http://localhost/*",
     "http://*/*",
-    "https://*/*"
+    "https://*/*",
+    "file:///*"
   ],
   "action": {
       "default_title": "__MSG_openExtension__",
@@ -76,7 +77,8 @@
     {
       "matches": [
         "http://*/*",
-        "https://*/*"
+        "https://*/*",
+        "file:///*"
       ],
       "js": [
         "extension/lib/browser-api-global.js",
@@ -96,7 +98,8 @@
       ],
       "matches": [
         "http://*/*",
-        "https://*/*"
+        "https://*/*",
+        "file:///*"
       ]
     }
   ],

@@ -1230,4 +1230,7 @@ export default Object.freeze({
   "voice.transcription_failed": "语音转写失败。\n\n{error}",
   "wake.turn_off": "关闭唤醒词",
   "wake.turn_on": "开启唤醒词",
+  "ui.approve_document_access": "Approve document access",
+  "ui.keep_restricted": "Keep restricted",
+  "ui.local_document_access": "LOCAL DOCUMENT ACCESS",
 });
