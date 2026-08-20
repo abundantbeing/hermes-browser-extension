@@ -1767,6 +1767,33 @@ test('normalizeHermesModels keeps Codex OAuth exclusions at 272k', () => {
   }
 });
 
+test('normalizeHermesModels keeps provider identity scoped and consistent for Codex OAuth aliases', () => {
+  const falsePositive = normalizeHermesModels({ data: [{
+    id: 'xai::gpt-5.6-sol',
+    rawModelId: 'gpt-5.6-sol',
+    provider: 'xai',
+    owned_by: 'codex',
+    context_length: 0,
+  }] }, 'xai::gpt-5.6-sol');
+  assert.equal(falsePositive[0].contextTokens, 0, 'incidental Codex metadata must not override an explicit non-Codex provider');
+
+  const labelOnly = normalizeHermesModels({ data: [{
+    id: 'gpt-5.6-terra',
+    rawModelId: 'gpt-5.6-terra',
+    providerLabel: 'OpenAI Codex',
+    context_length: 0,
+  }] }, 'gpt-5.6-terra');
+  assert.equal(labelOnly[0].contextTokens, 900_000, 'a provider label should be normalized only when no explicit provider exists');
+
+  const alias = normalizeHermesModels({ data: [{
+    id: 'codex::gpt-5.6-sol',
+    rawModelId: 'gpt-5.6-sol',
+    provider: 'codex',
+    context_length: 0,
+  }] }, 'codex::gpt-5.6-sol');
+  assert.equal(alias[0].contextTokens, 900_000, 'the bare codex provider alias should match accounting behavior');
+});
+
 test('normalizeHermesModels never invents a GPT-5.6 limit without a provider and trusts non-stale runtime metadata', () => {
   const unknownProvider = normalizeHermesModels({ data: [{ id: 'gpt-5.6-sol', context_length: 0 }] }, 'gpt-5.6-sol');
   assert.equal(unknownProvider[0].contextTokens, 0);
@@ -2768,7 +2795,7 @@ test('context accounting falls back to local prompt estimate when runtime prompt
   assert.equal(result.source, 'local-estimate');
 });
 
-test('context accounting reconciles the stale Codex advertisement with effective catalog metadata', () => {
+test('context accounting reconciles the stale Codex advertisement even when catalog metadata is also stale', () => {
   for (const model of ['gpt-5.6-luna', 'gpt-5.4']) {
     const result = contextAccountingSnapshot({
       localPromptTokens: 800,
@@ -2778,12 +2805,24 @@ test('context accounting reconciles the stale Codex advertisement with effective
         context_length: 272_000,
         last_prompt_tokens: 7_000,
       },
-      modelContextTokens: 900_000,
+      modelContextTokens: 272_000,
     });
 
     assert.equal(result.liveContextTokens, 7_000);
     assert.equal(result.contextLimitTokens, 900_000);
   }
+
+  const alias = contextAccountingSnapshot({
+    runtime: { provider: 'codex', model: 'gpt-5.6-sol', context_length: 272_000 },
+    modelContextTokens: 272_000,
+  });
+  assert.equal(alias.contextLimitTokens, 900_000);
+
+  const authoritative = contextAccountingSnapshot({
+    runtime: { provider: 'openai-codex', model: 'gpt-5.6-sol', context_length: 300_000 },
+    modelContextTokens: 900_000,
+  });
+  assert.equal(authoritative.contextLimitTokens, 300_000);
 });
 
 test('local context fallback includes the loaded transcript instead of showing zero for active chats', () => {

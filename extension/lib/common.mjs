@@ -1285,7 +1285,27 @@ const MODEL_CONTEXT_FALLBACKS = Object.freeze([
   ['deepseek', 128_000],
 ]);
 
-function fallbackModelContextTokens(...values) {
+function modelProviderIdentity(model = {}) {
+  const normalize = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
+  const explicitProvider = normalize(model.provider);
+  if (explicitProvider) return explicitProvider;
+  return normalize(model.providerLabel || model.provider_label || model.owned_by);
+}
+
+function fallbackModelContextTokens(model = {}) {
+  const values = [
+    model.id,
+    model.name,
+    model.root,
+    model.label,
+    model.rawModelId,
+    model.raw_model_id,
+    model.model,
+    model.provider,
+    model.providerLabel,
+    model.provider_label,
+    model.owned_by,
+  ];
   const variants = values
     .filter(Boolean)
     .flatMap((value) => {
@@ -1296,8 +1316,9 @@ function fallbackModelContextTokens(...values) {
     .filter(Boolean)
     .map((value) => String(value).toLowerCase())
     .join(' ');
-  const isCodexOAuth = providerHint.includes('openai-codex') || providerHint.includes('codex');
-  const isDirectOpenAi = values.some((value) => String(value || '').trim().toLowerCase() === 'openai');
+  const providerIdentity = modelProviderIdentity(model);
+  const isCodexOAuth = providerIdentity === 'openai-codex' || providerIdentity === 'codex';
+  const isDirectOpenAi = providerIdentity === 'openai';
   const isGpt56 = /\bgpt-5\.6(?:-|\b)/.test(providerHint);
   const isExactGpt54 = /\bgpt-5\.4\b(?!-)/.test(providerHint);
   const isGpt54Mini = /\bgpt-5\.4-mini\b/.test(providerHint);
@@ -1541,18 +1562,16 @@ export function contextAccountingSnapshot({
     session?.modelContextTokens,
     modelContextTokens,
   );
-  const catalogContextLimitTokens = positiveTokenNumber(modelContextTokens);
-  const runtimeIdentity = [
-    runtime?.provider,
-    runtime?.model,
-    session?.provider,
-    session?.model,
-  ].filter(Boolean).join(' ').toLowerCase();
+  const effectiveCodexFallback = fallbackModelContextTokens({
+    id: runtime?.id || session?.id,
+    model: runtime?.model || session?.model,
+    rawModelId: runtime?.rawModelId || runtime?.raw_model_id || session?.rawModelId || session?.raw_model_id,
+    provider: runtime?.provider || session?.provider,
+    providerLabel: runtime?.providerLabel || runtime?.provider_label || session?.providerLabel || session?.provider_label,
+  });
   const staleCodexAdvertisedLimit = reportedContextLimitTokens === 272_000
-    && catalogContextLimitTokens === 900_000
-    && runtimeIdentity.includes('openai-codex')
-    && (/\bgpt-5\.6(?:-|\b)/.test(runtimeIdentity) || /\bgpt-5\.4\b(?!-)/.test(runtimeIdentity));
-  const contextLimitTokens = staleCodexAdvertisedLimit ? catalogContextLimitTokens : reportedContextLimitTokens;
+    && effectiveCodexFallback === 900_000;
+  const contextLimitTokens = staleCodexAdvertisedLimit ? effectiveCodexFallback : reportedContextLimitTokens;
 
   const runtimePromptTokens = firstPositiveToken(
     runtime?.last_prompt_tokens,
@@ -1994,19 +2013,7 @@ function modelContextTokens(model = {}) {
     model.metadata?.context_length ??
     model.metadata?.context_window;
   const number = Number(value || 0);
-  const fallback = fallbackModelContextTokens(
-    model.id,
-    model.name,
-    model.root,
-    model.label,
-    model.rawModelId,
-    model.raw_model_id,
-    model.model,
-    model.provider,
-    model.providerLabel,
-    model.provider_label,
-    model.owned_by
-  );
+  const fallback = fallbackModelContextTokens(model);
   // Codex still advertises 272K for the GPT-5.6 family and exact GPT-5.4,
   // although Hermes has live-verified and reports a 900K effective window.
   // Override only that known-stale advertisement. Any other positive runtime
