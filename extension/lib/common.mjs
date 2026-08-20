@@ -1292,23 +1292,26 @@ function fallbackModelContextTokens(...values) {
       const raw = String(value).toLowerCase();
       return [raw, raw.replace(/[\s_./:]+/g, '-')];
     });
-  const joined = variants.join(' ');
   const providerHint = values
     .filter(Boolean)
     .map((value) => String(value).toLowerCase())
     .join(' ');
-  const isGpt56 = /\bgpt-5\.6-(?:sol|terra|luna)\b/.test(providerHint);
+  const isCodexOAuth = providerHint.includes('openai-codex') || providerHint.includes('codex');
+  const isDirectOpenAi = values.some((value) => String(value || '').trim().toLowerCase() === 'openai');
+  const isGpt56 = /\bgpt-5\.6(?:-|\b)/.test(providerHint);
+  const isExactGpt54 = /\bgpt-5\.4\b(?!-)/.test(providerHint);
+  const isGpt54Mini = /\bgpt-5\.4-mini\b/.test(providerHint);
   if (isGpt56) {
-    // Mirror Hermes Agent's provider-aware metadata: ChatGPT Codex OAuth
-    // enforces 272K for these slugs, while the direct OpenAI API exposes 1.05M.
-    // Without a provider, return unknown instead of falling into the generic
-    // GPT-5 400K family fallback and presenting a guess as an exact limit.
-    if (providerHint.includes('openai-codex') || providerHint.includes('codex')) return 272_000;
-    if (values.some((value) => String(value || '').trim().toLowerCase() === 'openai')) return 1_050_000;
+    // Hermes Agent resolves the stale Codex OAuth advertisement to an
+    // effective 900K window for the GPT-5.6 family. Direct OpenAI keeps its
+    // 1.05M API window, and provider-less rows stay unknown.
+    if (isCodexOAuth) return 900_000;
+    if (isDirectOpenAi) return 1_050_000;
     return 0;
   }
-  if (/\bgpt-5\.5\b/.test(providerHint) && providerHint.includes('openai-codex')) return 272_000;
-  if (/\bgpt-5\.5\b/.test(providerHint) && (joined.includes('openai-codex') || joined.includes('codex'))) return 272_000;
+  if (isCodexOAuth && isGpt54Mini) return 272_000;
+  if (isCodexOAuth && isExactGpt54) return 900_000;
+  if (/\bgpt-5\.5\b/.test(providerHint) && isCodexOAuth) return 272_000;
   for (const [needle, tokens] of MODEL_CONTEXT_FALLBACKS) {
     const key = String(needle).toLowerCase();
     const keySlug = key.replace(/[\s_./:]+/g, '-');
@@ -1545,10 +1548,11 @@ export function contextAccountingSnapshot({
     session?.provider,
     session?.model,
   ].filter(Boolean).join(' ').toLowerCase();
-  const staleCodexGpt56Limit = reportedContextLimitTokens === 400_000
-    && catalogContextLimitTokens === 272_000
-    && /gpt-5\.6-(?:sol|terra|luna)/.test(runtimeIdentity);
-  const contextLimitTokens = staleCodexGpt56Limit ? catalogContextLimitTokens : reportedContextLimitTokens;
+  const staleCodexAdvertisedLimit = reportedContextLimitTokens === 272_000
+    && catalogContextLimitTokens === 900_000
+    && runtimeIdentity.includes('openai-codex')
+    && (/\bgpt-5\.6(?:-|\b)/.test(runtimeIdentity) || /\bgpt-5\.4\b(?!-)/.test(runtimeIdentity));
+  const contextLimitTokens = staleCodexAdvertisedLimit ? catalogContextLimitTokens : reportedContextLimitTokens;
 
   const runtimePromptTokens = firstPositiveToken(
     runtime?.last_prompt_tokens,
@@ -2003,10 +2007,12 @@ function modelContextTokens(model = {}) {
     model.provider_label,
     model.owned_by
   );
-  // Older Hermes registries advertised the generic GPT-5 400K fallback even
-  // for Codex OAuth's real 272K GPT-5.6 window.
+  // Codex still advertises 272K for the GPT-5.6 family and exact GPT-5.4,
+  // although Hermes has live-verified and reports a 900K effective window.
+  // Override only that known-stale advertisement. Any other positive runtime
+  // value is authoritative.
   if (Number.isFinite(number) && number > 0) {
-    if (number === 400_000 && fallback === 272_000) return fallback;
+    if (number === 272_000 && fallback === 900_000) return fallback;
     // Qwen Token Plan slugs (qwen3.6/3.7/3.8 max/plus/flash) are 1M, but a
     // stale Hermes runtime or cached model catalog often reports the generic
     // qwen family default (131072) instead. When the curated table knows the

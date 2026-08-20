@@ -1747,17 +1747,27 @@ test('normalizeHermesModels uses provider-aware GPT-5.5 context fallbacks', () =
   assert.equal(openRouterModels[0].contextTokens, 1050000);
 });
 
-test('normalizeHermesModels mirrors Hermes provider-aware GPT-5.6 context metadata', () => {
-  for (const model of ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna']) {
+test('normalizeHermesModels mirrors Hermes effective Codex OAuth context metadata', () => {
+  for (const model of ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.6-sol-2026-08-16']) {
     const codexModels = normalizeHermesModels({ data: [{ id: `openai-codex::${model}`, rawModelId: model, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${model}`);
-    assert.equal(codexModels[0].contextTokens, 272_000, `${model} should use the Codex OAuth limit`);
+    assert.equal(codexModels[0].contextTokens, 900_000, `${model} should use the effective Codex OAuth limit`);
 
     const directModels = normalizeHermesModels({ data: [{ id: `openai::${model}`, rawModelId: model, provider: 'openai', context_length: 0 }] }, `openai::${model}`);
     assert.equal(directModels[0].contextTokens, 1_050_000, `${model} should use the direct OpenAI limit`);
   }
+
+  const codexGpt54 = normalizeHermesModels({ data: [{ id: 'openai-codex::gpt-5.4', rawModelId: 'gpt-5.4', provider: 'openai-codex', context_length: 0 }] }, 'openai-codex::gpt-5.4');
+  assert.equal(codexGpt54[0].contextTokens, 900_000, 'exact gpt-5.4 should use the effective Codex OAuth limit');
 });
 
-test('normalizeHermesModels never invents a GPT-5.6 limit without a provider and trusts explicit runtime metadata', () => {
+test('normalizeHermesModels keeps Codex OAuth exclusions at 272k', () => {
+  for (const model of ['gpt-5.5', 'gpt-5.4-mini']) {
+    const codexModels = normalizeHermesModels({ data: [{ id: `openai-codex::${model}`, rawModelId: model, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${model}`);
+    assert.equal(codexModels[0].contextTokens, 272_000, `${model} must keep its enforced Codex OAuth limit`);
+  }
+});
+
+test('normalizeHermesModels never invents a GPT-5.6 limit without a provider and trusts non-stale runtime metadata', () => {
   const unknownProvider = normalizeHermesModels({ data: [{ id: 'gpt-5.6-sol', context_length: 0 }] }, 'gpt-5.6-sol');
   assert.equal(unknownProvider[0].contextTokens, 0);
 
@@ -1765,21 +1775,23 @@ test('normalizeHermesModels never invents a GPT-5.6 limit without a provider and
   assert.equal(authoritativeRuntime[0].contextTokens, 300_000);
 });
 
-test('normalizeHermesModels repairs the legacy generic 400k limit for Codex GPT-5.6 only', () => {
-  const staleCodex = normalizeHermesModels({
-    data: [{
-      id: 'openai-codex::gpt-5.6-luna',
-      rawModelId: 'gpt-5.6-luna',
-      provider: 'openai-codex',
-      context_length: 400_000,
-    }],
-  }, 'openai-codex::gpt-5.6-luna');
-  assert.equal(staleCodex[0].contextTokens, 272_000);
+test('normalizeHermesModels repairs only the known-stale 272k Codex advertisement', () => {
+  for (const model of ['gpt-5.6-luna', 'gpt-5.4']) {
+    const staleCodex = normalizeHermesModels({
+      data: [{
+        id: `openai-codex::${model}`,
+        rawModelId: model,
+        provider: 'openai-codex',
+        context_length: 272_000,
+      }],
+    }, `openai-codex::${model}`);
+    assert.equal(staleCodex[0].contextTokens, 900_000);
+  }
 
   const unrelated = normalizeHermesModels({
-    data: [{ id: 'custom::gpt-5', rawModelId: 'gpt-5', provider: 'custom', context_length: 400_000 }],
+    data: [{ id: 'custom::gpt-5', rawModelId: 'gpt-5', provider: 'custom', context_length: 272_000 }],
   }, 'custom::gpt-5');
-  assert.equal(unrelated[0].contextTokens, 400_000);
+  assert.equal(unrelated[0].contextTokens, 272_000);
 });
 
 test('buildHermesModelOptions maps Browser thinking, effort, and fast controls to Hermes runtime options', () => {
@@ -2756,20 +2768,22 @@ test('context accounting falls back to local prompt estimate when runtime prompt
   assert.equal(result.source, 'local-estimate');
 });
 
-test('context accounting reconciles stale runtime 400k with the canonical Codex GPT-5.6 limit', () => {
-  const result = contextAccountingSnapshot({
-    localPromptTokens: 800,
-    runtime: {
-      provider: 'openai-codex',
-      model: 'gpt-5.6-luna',
-      context_length: 400_000,
-      last_prompt_tokens: 7_000,
-    },
-    modelContextTokens: 272_000,
-  });
+test('context accounting reconciles the stale Codex advertisement with effective catalog metadata', () => {
+  for (const model of ['gpt-5.6-luna', 'gpt-5.4']) {
+    const result = contextAccountingSnapshot({
+      localPromptTokens: 800,
+      runtime: {
+        provider: 'openai-codex',
+        model,
+        context_length: 272_000,
+        last_prompt_tokens: 7_000,
+      },
+      modelContextTokens: 900_000,
+    });
 
-  assert.equal(result.liveContextTokens, 7_000);
-  assert.equal(result.contextLimitTokens, 272_000);
+    assert.equal(result.liveContextTokens, 7_000);
+    assert.equal(result.contextLimitTokens, 900_000);
+  }
 });
 
 test('local context fallback includes the loaded transcript instead of showing zero for active chats', () => {
@@ -3090,7 +3104,7 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
   const normalized = normalizeHermesModels(result.models, 'openai-codex::gpt-5.6-sol');
   assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.5')?.contextTokens, 272_000);
   for (const model of normalized.filter((item) => item.rawModelId?.startsWith('gpt-5.6-'))) {
-    assert.equal(model.contextTokens, 272_000);
+    assert.equal(model.contextTokens, 900_000);
   }
   assert.equal(result.models.at(-1).contextTokens, 1_000_000);
 });
