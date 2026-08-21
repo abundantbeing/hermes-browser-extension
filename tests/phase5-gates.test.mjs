@@ -16,16 +16,16 @@ const PHASE5_PURE_MODULES = PHASE5_MODULES.filter((file) => ![
   'extension/lib/controller-service-worker.mjs',
 ].includes(file));
 
-test('Phase 5 keeps VERSION at 0.2.0 in package and every manifest', () => {
+test('Phase 5 controller foundations remain present in the v0.3.0 package and manifests', () => {
   const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(packageJson.version, '0.2.0');
+  assert.equal(packageJson.version, '0.3.0');
   for (const manifestPath of ['extension/manifest.json', 'manifest.json']) {
     const manifest = JSON.parse(readFileSync(new URL(`../${manifestPath}`, import.meta.url), 'utf8'));
-    assert.equal(manifest.version, '0.2.0');
+    assert.equal(manifest.version, '0.3.0');
   }
 });
 
-test('Phase 5 modules are part of the check:js syntax gate without a version bump', () => {
+test('Phase 5 modules are part of the v0.3.0 check:js syntax gate', () => {
   const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   for (const file of PHASE5_MODULES) {
     assert.match(

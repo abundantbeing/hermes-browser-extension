@@ -17,6 +17,8 @@ test('both manifests load the browser API facade before extractor, bridge, i18n,
 test('inline helper uses approved Hermes branding, routes sessions, and supports safe apply and undo', async () => {
   const source = await read('extension/content-inline-helper.js');
   assert.match(source, /const policy = globalThis\.HermesInlineDraft/);
+  assert.match(source, /__HERMES_INLINE_HELPER_GENERATION__/);
+  assert.match(source, /__HERMES_INLINE_HELPER_GENERATION__ !== generation/);
   assert.match(source, /hermes-browser-extension-icon-ink\.png/);
   assert.doesNotMatch(source, /logoUrl[\s\S]{0,180}hermes-browser-extension-icon-box-white\.png/);
   assert.doesNotMatch(source, /nous-girl-solo-logo\.png/);
@@ -76,7 +78,8 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.match(source, /Automatic replacement/);
   const sidepanelHtml = await read('extension/sidepanel.html');
   const appHtml = await read('extension/app.html');
-  for (const html of [sidepanelHtml, appHtml]) {
+  // Assist controls live only in the side panel Settings; Hermes Web no longer hosts them.
+  for (const html of [sidepanelHtml]) {
     assert.match(html, /inlineAssistEnabled/);
     assert.match(html, /inlineAssistDefaultRoute/);
     assert.match(html, /id="inlineAssistModelButton"[^>]*\sdisabled(?:\s|>)/);
@@ -89,6 +92,11 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
     assert.match(html, /Ask every time/);
     assert.match(html, /Run in background/);
   }
+  assert.doesNotMatch(appHtml, /inlineAssistEnabled/);
+  assert.doesNotMatch(appHtml, /inlineAssistDefaultRoute/);
+  assert.doesNotMatch(appHtml, /id="inlineAssistModelButton"/);
+  assert.doesNotMatch(appHtml, /assistModelCapabilityHint/);
+  assert.doesNotMatch(appHtml, /inlineAssistSessionRetention/);
   assert.match(source, /current\.text\s*!==\s*pending\.draftText/);
   assert.match(source, /host\.dataset\.inlineAssistDefaultRoute/);
   assert.match(source, /host\.dataset\.inlineAssistSessionRetention/);

@@ -1459,7 +1459,7 @@ async function main() {
       const ids = [...document.querySelectorAll('[id]')].map((node) => node.id).filter(Boolean);
       const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
       const last = document.querySelector('#fontProfileSelect');
-      last.scrollIntoView({ block: 'nearest' });
+      last.scrollIntoView({ block: 'center' });
       const rect = last.getBoundingClientRect();
       return {
         zoom: root.dataset.hermesTextZoom,
@@ -2243,7 +2243,7 @@ async function main() {
     assert.equal(logoState.background, 'rgb(255, 255, 255)');
     assert.match(logoState.mask, /hermes-browser-extension-icon-ink\.png/);
     assert.doesNotMatch(logoState.mask, /icon-box-white/);
-    assert.deepEqual(logoState.launcher, [32, 32]);
+    assert.deepEqual(logoState.launcher, [36, 36]);
     assert.deepEqual(logoState.logo, [30, 30]);
 
     const launcherPlacementBeforeShift = await fixture.evaluate(`(() => {
@@ -2682,7 +2682,7 @@ async function main() {
     const afterBackground = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
     assert.equal(afterBackground.hermesBrowserSettings.sessionId, panelSessionIdAfterReadability);
     await saveScreenshot(fixture, INLINE_RESULT_SCREENSHOT, { captureBeyondViewport: false });
-    const retainedAssistCreate = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_assist').at(-1);
+    const retainedAssistCreate = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser').at(-1);
     const retainedAssistSessionId = retainedAssistCreate?.body?.id || retainedAssistCreate?.body?.session_id || '';
     assert.match(retainedAssistSessionId, /^hermes-assist-/);
     await fixture.evaluate(`document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('.result-actions button:last-child').click()`);
@@ -2785,7 +2785,7 @@ async function main() {
     const smartRequest = mock.getChatRequest();
     assert.match(String(smartRequest?.message || ''), /Draft the text that belongs in the focused field/);
     assert.match(String(smartRequest?.message || ''), /"page_context":"[^"]+/);
-    const assistCreates = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_assist');
+    const assistCreates = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
     assert.ok(assistCreates.length >= 2);
     assert.equal(new Set(assistCreates.map((request) => request.body.title)).size, assistCreates.length);
     for (const request of assistCreates) {
@@ -3006,7 +3006,7 @@ async function main() {
     })()`);
     const switchedAssistRequests = await waitFor(() => {
       const recent = mock.requests.slice(switchedAssistRequestStart);
-      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_assist');
+      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
       const chat = recent.find((request) => request.method === 'POST' && /^\/api\/sessions\/[^/]+\/chat$/.test(request.path));
       return create && chat ? { create, chat } : null;
     });
@@ -3126,7 +3126,7 @@ async function main() {
     })()`);
     const releasedGatewayState = await waitFor(async () => {
       const recent = mock.requests.slice(releasedGatewayRequestStart);
-      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_assist');
+      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
       const chat = recent.find((request) => request.method === 'POST' && /\/chat$/.test(request.path));
       const state = await fixture.evaluate(`document.querySelector('#hermes-inline-draft-host')?.shadowRoot?.querySelector('.context span:last-child')?.textContent || ''`);
       return create && chat && state === 'COMPLETE' ? { create, chat } : null;
@@ -3139,7 +3139,7 @@ async function main() {
       assert.equal(Object.hasOwn(request, 'reasoning_effort'), false);
       assert.equal(Object.hasOwn(request, 'fast'), false);
     }
-    assert.equal(releasedGatewayState.create.body.source, 'hermes_assist');
+    assert.equal(releasedGatewayState.create.body.source, 'hermes_browser');
     assert.match(releasedGatewayState.chat.body.message, /Draft through an unmodified released Hermes gateway/);
 
     await panel.call('Page.reload', { ignoreCache: true });
@@ -3249,7 +3249,7 @@ async function main() {
       'gpt-5.6-terra',
       'gpt-5.6-luna',
     ]);
-    assert.ok(gpt56ContextState.models.every((label) => label.includes('272k')), JSON.stringify(gpt56ContextState));
+    assert.ok(gpt56ContextState.models.every((label) => label.includes('900k')), JSON.stringify(gpt56ContextState));
     assert.ok(gpt56ContextState.models.every((label) => !label.includes('400k')), JSON.stringify(gpt56ContextState));
     await saveScreenshot(panel, GPT56_CONTEXT_PICKER_SCREENSHOT, { captureBeyondViewport: false });
     await panel.evaluate(`[...document.querySelectorAll('#modelProviderList .model-provider-option')].find((button) => button.textContent.includes('Alternate Provider'))?.click()`);

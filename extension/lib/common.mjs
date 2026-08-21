@@ -85,6 +85,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   browserControlScope: 'this-tab',
   browserControlViewBehavior: 'stay',
   browserControlPaused: false,
+  browserControlDeveloperMode: false,
+  browserControlArtifactTransport: false,
   browserContextConsentLedger: Object.freeze({ version: 1, entries: Object.freeze({}) }),
   inlineAssistEnabled: true,
   inlineAssistDefaultRoute: 'ask',

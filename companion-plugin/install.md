@@ -6,7 +6,7 @@ to the agent via tools and lifecycle hooks.
 
 ## Status
 
-- **v0.2.0** — owner-scoped context cache, historical control diagnostics, and redacted receipt metadata.
+- **v0.3.0** — owner-scoped context cache, metadata-only journal, historical control diagnostics, and redacted receipt metadata.
 - Fail-soft: gracefully unavailable when the extension is not connected.
 - No browser control, no API server routes, no `nativeMessaging`.
 - The Browser Extension keeps its prompt-embedded fallback — this plugin
@@ -43,4 +43,4 @@ hermes plugins list
 ## Requirements
 
 - Hermes Agent 0.17+
-- Hermes Browser Extension v0.2.0+
+- Hermes Browser Extension v0.3.0+

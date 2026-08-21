@@ -222,3 +222,53 @@ test('composer command menu exposes full hover and focus descriptions', () => {
   assert.match(css, /\.quick-command-list\s*\{[^}]*overflow-y:\s*auto/s);
   assert.doesNotMatch(css, /\.qmi-description\s*\{[^}]*white-space:\s*normal/s);
 });
+
+test('commands menu opens upward above the composer and never covers the textarea (#73)', () => {
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+
+  const menuRule = css.match(/\.quick-more-menu\s*\{[\s\S]*?\}/)?.[0] || '';
+  assert.match(menuRule, /position:\s*absolute/);
+  // The menu anchors to the composer wrapper's top edge, opening into the free
+  // space above the textarea instead of overlapping typed prompt text.
+  assert.match(menuRule, /bottom:\s*calc\(100% \+ 6px\)/);
+  assert.doesNotMatch(menuRule, /bottom:\s*42px/);
+  // Both composer menus share the same positioning context.
+  assert.match(html, /class="composer-input-wrap"[\s\S]*?id="quickMoreMenu"/);
+  assert.match(html, /class="composer-input-wrap"[\s\S]*?id="skillMenu"/);
+  const skillRule = css.match(/\.skill-menu\s*\{[\s\S]*?\}/)?.[0] || '';
+  assert.match(skillRule, /bottom:\s*calc\(100% \+ 6px\)/);
+});
+
+test('settings header keeps a top Save action, compact close icon, and centered token button', () => {
+  const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+
+  const header = html.match(/class="settings-header-actions"[\s\S]*?<\/header>/)?.[0] || '';
+  assert.match(header, /id="saveSettingsTopButton"/);
+  assert.match(header, /saveSettingsTopButton[^>]*type="submit"/);
+  assert.match(header, /saveSettingsTopButton[^>]*data-i18n="ui.save"/);
+  // Hover tooltip parity with the other header controls.
+  assert.match(header, /saveSettingsTopButton[^>]*title="Save settings"/);
+  assert.match(header, /saveSettingsTopButton[^>]*data-i18n-title="ui.save.settings"/);
+  assert.match(header, /id="testConnectionButton"/);
+  // Close stays as an icon-only button with an accessible label.
+  assert.match(header, /id="closeSettingsButton"[\s\S]*?settings-close-icon/);
+  assert.match(header, /closeSettingsButton[^>]*aria-label="Close settings"/);
+  assert.match(header, /closeSettingsButton[\s\S]*?<svg/);
+  assert.doesNotMatch(header, /closeSettingsButton[^>]*data-i18n="ui.close.dbc87420"/);
+  // The top Save action is now the only save control: the footer button is gone.
+  assert.match(html, /<form id="settingsForm"[\s\S]*id="saveSettingsTopButton"/);
+  assert.doesNotMatch(html, /id="saveSettingsButton"/);
+  // Header save shares the unified accent-outline family with TEST.
+  assert.match(css, /#saveSettingsTopButton\s*\{[^}]*border-color:\s*rgba\(var\(--hermes-accent-rgb\)/s);
+  assert.match(css, /#saveSettingsTopButton:hover\s*\{[^}]*background:\s*rgba\(var\(--hermes-accent-rgb\)/s);
+  assert.match(css, /\.settings-header-actions\s*>\s*button\s*\{[^}]*font-family:\s*var\(--hermes-font-mono\)/s);
+  // Clear stored token and diagnostics buttons span the full card width with centered text.
+  assert.match(css, /\.connection-security button\s*\{[^}]*justify-self:\s*stretch/s);
+  assert.match(css, /\.connection-security button\s*\{[^}]*width:\s*100%/s);
+  assert.match(css, /\.support-diagnostics button\s*\{[^}]*justify-self:\s*stretch/s);
+  assert.match(css, /\.support-diagnostics button\s*\{[^}]*width:\s*100%/s);
+  assert.match(css, /\.connection-security button\s*\{[^}]*text-align:\s*center/s);
+  assert.match(css, /\.connection-security button\s*\{[^}]*align-items:\s*center/s);
+});

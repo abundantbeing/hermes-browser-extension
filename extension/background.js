@@ -55,6 +55,10 @@ import {
   createControllerServiceWorker,
 } from './lib/controller-service-worker.mjs';
 import { createBrowserControlRuntime } from './lib/browser-control-runtime.mjs';
+import {
+  createBrowserControlArtifactClient,
+  createBrowserControlArtifactHttpTransport,
+} from './lib/browser-control-artifacts.mjs';
 
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -64,7 +68,22 @@ const browserProduct = detectBrowserProduct({
   braveApi: globalThis.navigator?.brave || null,
   extensionUrl: browserApi.runtime.getURL(''),
 });
-const browserControlRuntime = createBrowserControlRuntime({ browserApi, product: browserProduct });
+const browserControlRuntime = createBrowserControlRuntime({
+  browserApi,
+  product: browserProduct,
+  artifactClientFactory: (settings = {}) => {
+    const baseUrl = String(settings.gatewayUrl || '').trim();
+    const apiKey = String(settings.apiKey || '').trim();
+    if (settings.browserControlArtifactTransport !== true || !baseUrl || !apiKey) return null;
+    return createBrowserControlArtifactClient({
+      transport: createBrowserControlArtifactHttpTransport({
+        fetchImpl: globalThis.fetch?.bind(globalThis),
+        baseUrl,
+        apiKey,
+      }),
+    });
+  },
+});
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 
 const controllerConnector = createControllerConnector({
@@ -277,6 +296,7 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
         createdThisAttempt = true;
         resolvedSessionId = String(created?.session?.id || created?.id || sessionId);
         resolvedTitle = String(created?.session?.title || created?.title || sessionTitle);
+        assertAssistModelSelectionAcknowledged(created, attemptSelection);
 
         const consentStored = await browserApi.storage.local.get([CONTEXT_CONSENT_STORAGE_KEY]);
         const gatedRequest = await gateInlineDraftRequestContext({

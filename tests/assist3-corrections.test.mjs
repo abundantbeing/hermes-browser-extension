@@ -53,10 +53,14 @@ test('Hermes Assist model selectors remain available and explain gateway-default
     read('extension/app.js'),
     read('extension/content-inline-helper.js'),
   ]);
-  for (const html of [sidepanelHtml, appHtml]) {
-    assert.match(html, /id="inlineAssistModelButton"[^>]*\sdisabled(?:\s|>)/);
-    assert.match(html, /id="assistModelCapabilityHint"/);
-  }
+  // The Hermes Web settings surface no longer hosts Assist or right-click controls;
+  // those live in the side panel Settings only.
+  assert.match(sidepanelHtml, /id="inlineAssistModelButton"[^>]*\sdisabled(?:\s|>)/);
+  assert.match(sidepanelHtml, /id="assistModelCapabilityHint"/);
+  assert.doesNotMatch(appHtml, /inline-assist-settings/);
+  assert.doesNotMatch(appHtml, /context-menu-settings/);
+  assert.doesNotMatch(appHtml, /id="inlineAssistModelButton"/);
+  assert.doesNotMatch(appHtml, /id="contextMenuDefaultRoute"/);
   for (const source of [sidepanelSource, appSource]) {
     assert.doesNotMatch(source, /inlineAssistModelButton\.disabled\s*=\s*true/);
     assert.match(source, /gateway default/i);

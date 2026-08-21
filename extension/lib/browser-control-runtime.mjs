@@ -27,6 +27,7 @@ export function createBrowserControlRuntime({
   now = Date.now,
   approvalStore = undefined,
   refStore = undefined,
+  artifactClientFactory = undefined,
 } = {}) {
   if (!browserApi?.tabs) throw new TypeError('Browser tabs API is required.');
   const engine = String(product?.engine || '').trim();
@@ -74,7 +75,23 @@ export function createBrowserControlRuntime({
     const current = await status(settings);
     if (!current.enabled) return null;
     const adapter = adapterForEngine();
-    return createBrowserControlExecutor({ adapter, approvals, refs, now });
+    let artifacts = null;
+    if (typeof artifactClientFactory === 'function') {
+      try {
+        artifacts = artifactClientFactory(settings) || null;
+      } catch {
+        artifacts = null;
+      }
+    }
+    return createBrowserControlExecutor({
+      adapter,
+      approvals,
+      refs,
+      artifacts,
+      now,
+      developerMode: settings?.browserControlDeveloperMode === true,
+      cdpPolicy: settings?.browserControlCdpPolicy || null,
+    });
   }
 
   async function execute(frame, context = {}, settings = {}) {

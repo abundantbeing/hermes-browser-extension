@@ -307,11 +307,16 @@ export function fenceFor(value = '') {
  * open a code fence, or start a heading. Data stays data.
  */
 export function escapeSkillText(value = '') {
-  return String(value ?? '')
+  const printable = Array.from(String(value ?? ''))
+    .filter((character) => {
+      const code = character.charCodeAt(0);
+      return code === 9 || code === 10 || code === 13 || (code >= 32 && code !== 127);
+    })
+    .join('');
+  return printable
     .replace(/`/g, '\\`')
     .replace(/^#{1,6}\s+/gm, '\\# ')
-    .replace(/^---+$/gm, '\\---')
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
+    .replace(/^---+$/gm, '\\---');
 }
 
 function stepKey(step = {}) {

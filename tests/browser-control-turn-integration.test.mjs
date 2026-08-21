@@ -65,7 +65,10 @@ test('Attach this tab replaces stale this-tab leases and proves the exact target
   assert.match(attach, /availability !== 'available'/);
   assert.match(attach, /leaseOwned !== true/);
   assert.match(sidepanelHtml, /id="browserControlAttachButton"/);
-  assert.match(sidepanel, /browserControlAttachButton\.hidden = !view\.canAttach/);
+  assert.match(sidepanel, /els\.browserControlAttachButton\.hidden = !\(view\.canAttach \|\| stripTabAttached\)/);
+  // The strip button toggles: Attach when the tab is unattached, Detach when this tab holds a lease.
+  assert.match(sidepanel, /stripToggleMode/);
+  assert.match(sidepanel, /dataset\.mode === 'detach'/);
 });
 
 test('enable and attach fail closed with a session-first message when no Hermes session exists', () => {

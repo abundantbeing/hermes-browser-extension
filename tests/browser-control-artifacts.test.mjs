@@ -6,6 +6,7 @@ import {
   buildArtifactReceipt,
   classifyArtifact,
   createBrowserControlArtifactClient,
+  createBrowserControlArtifactHttpTransport,
   normalizeArtifactName,
   sha256Hex,
 } from '../extension/lib/browser-control-artifacts.mjs';
@@ -82,6 +83,69 @@ async function pendingApproval(approvals) {
   assert.equal(pending.length, 1);
   return pending[0];
 }
+
+test('Phase 8 HTTP artifact transport maps authenticated Gateway upload and download contracts', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ url, options });
+    if (options.method === 'POST') {
+      return new Response(JSON.stringify({
+        artifact_id: 'artifact-http-1',
+        download_path: '/v1/artifacts/download/artifact-http-1',
+        expires_at: 1_800_000_000,
+      }), { status: 201, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response(new Uint8Array([1, 2, 3]), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="report.pdf"',
+        'X-Artifact-Sha256': 'checksum-1',
+      },
+    });
+  };
+  const transport = createBrowserControlArtifactHttpTransport({
+    fetchImpl,
+    baseUrl: 'http://127.0.0.1:8642',
+    apiKey: 'neutral-browser-key',
+  });
+  const uploaded = await transport.upload({
+    name: 'report.pdf',
+    mimeType: 'application/pdf',
+    bytes: new Uint8Array([1, 2, 3]),
+  });
+  assert.deepEqual(uploaded, {
+    artifactId: 'artifact-http-1',
+    url: '/v1/artifacts/download/artifact-http-1',
+    expiresAt: 1_800_000_000_000,
+  });
+  const downloaded = await transport.download({ artifactId: 'artifact-http-1' });
+  assert.equal(downloaded.name, 'report.pdf');
+  assert.equal(downloaded.mimeType, 'application/pdf');
+  assert.equal(downloaded.checksum, 'checksum-1');
+  assert.deepEqual([...downloaded.bytes], [1, 2, 3]);
+  assert.equal(calls[0].url, 'http://127.0.0.1:8642/v1/artifacts/upload');
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer neutral-browser-key');
+  assert.equal(calls[0].options.headers['X-Artifact-Filename'], 'report.pdf');
+  assert.equal(calls[1].url, 'http://127.0.0.1:8642/v1/artifacts/download/artifact-http-1');
+  assert.equal(calls[1].options.redirect, 'error');
+});
+
+test('Phase 8 HTTP artifact transport rejects missing credentials and unsafe base URLs', () => {
+  assert.throws(
+    () => createBrowserControlArtifactHttpTransport({ fetchImpl: async () => {}, baseUrl: 'https://gateway.test' }),
+    /API key is required/,
+  );
+  const transport = createBrowserControlArtifactHttpTransport({
+    fetchImpl: async () => new Response('', { status: 500 }),
+    baseUrl: 'https://user:password@gateway.test',
+    apiKey: 'neutral-browser-key',
+  });
+  assert.rejects(
+    () => transport.download({ artifactId: 'artifact-1' }),
+    /credential-free HTTP\(S\)/,
+  );
+});
 
 test('Phase 8 SHA-256 computes known vectors and round-trips bytes', async () => {
   assert.equal(await sha256Hex('abc'), 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');

@@ -33,6 +33,10 @@ test('Phase 6 live control strip stays above conversation and owns pause stop an
     'browserControlRejectButton',
   ]) assert.match(html, new RegExp(`id="${id}"`));
   assert.match(html, /aria-live="polite"/);
+  // Pause and Stop are compact icon-only glyphs; Stop only renders while an action is running or queued.
+  assert.match(html, /id="browserControlPauseButton"[^>]*icon-only/);
+  assert.match(html, /id="browserControlStopButton"[^>]*hidden/);
+  assert.match(html, /id="browserControlStopButton"[^>]*icon-only/);
 });
 
 test('Phase 6 enable and detach use install-declared debugger access without runtime permission prompts', () => {

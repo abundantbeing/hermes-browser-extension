@@ -254,3 +254,80 @@ export function createBrowserControlArtifactClient({
     normalizeArtifactName,
   };
 }
+
+function artifactEndpoint(baseUrl, path) {
+  const normalized = String(baseUrl || '').trim();
+  if (!normalized) throw new TypeError('Artifact transport base URL is required.');
+  const parsed = new URL(normalized.endsWith('/') ? normalized : `${normalized}/`);
+  if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) {
+    throw new TypeError('Artifact transport requires a credential-free HTTP(S) base URL.');
+  }
+  return new URL(String(path || '').replace(/^\/+/, ''), parsed).toString();
+}
+
+async function artifactError(response, fallback) {
+  try {
+    const payload = await response.json();
+    return String(payload?.error?.message || payload?.detail || fallback);
+  } catch {
+    return fallback;
+  }
+}
+
+function dispositionFilename(value = '') {
+  const match = String(value || '').match(/filename="([^"]+)"/i);
+  return match?.[1] || 'artifact.bin';
+}
+
+/** Authenticated HTTP transport for the Gateway one-shot artifact routes. */
+export function createBrowserControlArtifactHttpTransport({
+  fetchImpl = globalThis.fetch?.bind(globalThis),
+  baseUrl = '',
+  apiKey = '',
+} = {}) {
+  if (typeof fetchImpl !== 'function') throw new TypeError('Artifact transport fetch implementation is required.');
+  const token = String(apiKey || '').trim();
+  if (!token) throw new TypeError('Artifact transport API key is required.');
+  const authorization = `Bearer ${token}`;
+
+  async function upload({ name, mimeType, bytes }) {
+    const response = await fetchImpl(artifactEndpoint(baseUrl, 'v1/artifacts/upload'), {
+      method: 'POST',
+      redirect: 'error',
+      cache: 'no-store',
+      headers: {
+        Authorization: authorization,
+        'Content-Type': String(mimeType || 'application/octet-stream'),
+        'X-Artifact-Filename': String(name || 'artifact.bin'),
+      },
+      body: bytes,
+    });
+    if (!response.ok) throw new Error(await artifactError(response, `Artifact upload failed (${response.status}).`));
+    const payload = await response.json();
+    const expiresAt = Number(payload?.expires_at || 0);
+    return {
+      artifactId: payload?.artifact_id,
+      url: payload?.download_path,
+      expiresAt: expiresAt > 0 && expiresAt < 10_000_000_000 ? Math.floor(expiresAt * 1_000) : expiresAt,
+    };
+  }
+
+  async function download({ artifactId }) {
+    const id = String(artifactId || '').trim();
+    const response = await fetchImpl(artifactEndpoint(baseUrl, `v1/artifacts/download/${encodeURIComponent(id)}`), {
+      method: 'GET',
+      redirect: 'error',
+      cache: 'no-store',
+      headers: { Authorization: authorization },
+    });
+    if (!response.ok) throw new Error(await artifactError(response, `Artifact download failed (${response.status}).`));
+    return {
+      bytes: new Uint8Array(await response.arrayBuffer()),
+      name: dispositionFilename(response.headers.get('Content-Disposition')),
+      mimeType: response.headers.get('Content-Type') || 'application/octet-stream',
+      checksum: response.headers.get('X-Artifact-Sha256') || '',
+    };
+  }
+
+  return { upload, download };
+}

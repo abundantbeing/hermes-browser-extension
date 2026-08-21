@@ -86,7 +86,14 @@ test('normalizeGatewayCapabilities detects browser protocol and companion plugin
       run_events_sse: true,
       plugin_actions: false,
       approval_events: false,
-      browser_control: true,
+      browser_extension_control: {
+        enabled: true,
+        developer_mode: true,
+        artifact_transport: {
+          upload: { method: 'POST', path: '/v1/artifacts/upload' },
+          download: { method: 'GET', path: '/v1/artifacts/download/{artifact_id}' },
+        },
+      },
     },
     endpoints: {
       browser_context_update: { method: 'POST', path: '/api/browser/context' },
@@ -112,7 +119,9 @@ test('normalizeGatewayCapabilities detects browser protocol and companion plugin
   assert.equal(caps.browserEvents, true);
   assert.equal(caps.pluginActions, false);
   assert.equal(caps.approvalEvents, false);
-  assert.equal(caps.browserControl, false, 'v0.1.9 must not enable browser control even if an upstream runtime advertises it');
+  assert.equal(caps.browserControl, true);
+  assert.equal(caps.browserControlDeveloperMode, true);
+  assert.equal(caps.browserControlArtifactTransport, true);
 });
 
 test('normalizeGatewayCapabilities degrades missing capability routes into a legacy object', () => {
@@ -312,6 +321,9 @@ test('sidepanel UI has compatibility, token hygiene, and What Hermes saw surface
   assert.match(html, /id="contextControlStatus"/);
   assert.match(js, /browserPairing/);
   assert.match(js, /imageUpload/);
+  assert.match(js, /storage\.local\.get\('hermesBrowserSettings'\)/);
+  assert.match(js, /\.\.\.\(stored\?\.hermesBrowserSettings \|\| \{\}\)/);
+  assert.match(js, /browserControlDeveloperMode: nextDeveloperMode[\s\S]{0,240}browserControlArtifactTransport: nextArtifactTransport/);
   assert.match(voiceJs, /SpeechRecognition|webkitSpeechRecognition/);
   assert.match(voiceJs, /Browser speech fallback/);
 });

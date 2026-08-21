@@ -390,6 +390,7 @@ const els = {
   connectStatus: $('#connectStatus'),
   connectionPill: $('#connectionPill'),
   browserIntroHero: $('#browserIntroHero'),
+  browserIntroDismissButton: $('#browserIntroDismissButton'),
   sessionMenuButton: $('#sessionMenuButton'),
   currentSessionName: $('#currentSessionName'),
   newSessionButton: $('#newSessionButton'),
@@ -482,6 +483,7 @@ const els = {
   browserControlStripTitle: $('#browserControlStripTitle'),
   browserControlStripDetail: $('#browserControlStripDetail'),
   browserControlAttachButton: $('#browserControlAttachButton'),
+  browserControlDismissButton: $('#browserControlDismissButton'),
   browserControlPauseButton: $('#browserControlPauseButton'),
   browserControlStopButton: $('#browserControlStopButton'),
   browserControlApproveButton: $('#browserControlApproveButton'),
@@ -1216,10 +1218,27 @@ function renderBrowserControl() {
   els.browserControlStrip.dataset.tone = view.tone;
   els.browserControlStripTitle.textContent = translateUiText(view.title);
   els.browserControlStripDetail.textContent = translateUiText(view.detail);
-  els.browserControlAttachButton.hidden = !view.canAttach;
-  els.browserControlPauseButton.textContent = t(paused ? 'browser_control.resume' : 'browser_control.pause');
+  const activeTabIdForStrip = Number(browserControlActiveTab?.id);
+  const stripTabAttached = Number.isInteger(activeTabIdForStrip)
+    && Array.isArray(browserControlStatus?.leasedTabIds)
+    && browserControlStatus.leasedTabIds.some((tabId) => Number(tabId) === activeTabIdForStrip);
+  const stripToggleMode = stripTabAttached ? 'detach' : 'attach';
+  els.browserControlAttachButton.hidden = !(view.canAttach || stripTabAttached);
+  els.browserControlAttachButton.dataset.mode = stripToggleMode;
+  els.browserControlAttachButton.textContent = t(stripToggleMode === 'detach' ? 'browser_control.detach' : 'ui.attach');
+  els.browserControlAttachButton.title = t(stripToggleMode === 'detach' ? 'browser_control.detach' : 'ui.attach.to.current.tab');
+  els.browserControlAttachButton.setAttribute('aria-label', t(stripToggleMode === 'detach' ? 'browser_control.detach' : 'ui.attach.to.current.tab'));
+  els.browserControlPauseButton.dataset.paused = String(paused);
+  // Toggle glyphs via attributes: SVGElement does not reliably reflect the hidden property.
+  const pauseGlyph = els.browserControlPauseButton.querySelector('.glyph-pause');
+  const playGlyph = els.browserControlPauseButton.querySelector('.glyph-play');
+  if (pauseGlyph) { if (paused) pauseGlyph.setAttribute('hidden', ''); else pauseGlyph.removeAttribute('hidden'); }
+  if (playGlyph) { if (paused) playGlyph.removeAttribute('hidden'); else playGlyph.setAttribute('hidden', ''); }
+  const pauseLabelKey = paused ? 'browser_control.resume' : 'browser_control.pause';
+  els.browserControlPauseButton.title = t(pauseLabelKey);
+  els.browserControlPauseButton.setAttribute('aria-label', t(pauseLabelKey));
   els.browserControlPauseButton.disabled = !view.canPause;
-  els.browserControlStopButton.disabled = !view.canStop;
+  els.browserControlStopButton.hidden = !view.canStop;
   els.browserControlApproveButton.hidden = !pendingApproval;
   els.browserControlRejectButton.hidden = !pendingApproval;
 }
@@ -2292,6 +2311,26 @@ async function unlockContextScope() {
 
 function setGatewayCapabilities(caps) {
   gatewayCapabilities = caps || { ...DEFAULT_GATEWAY_CAPABILITIES };
+  const nextDeveloperMode = gatewayCapabilities.browserControlDeveloperMode === true;
+  const nextArtifactTransport = gatewayCapabilities.browserControlArtifactTransport === true;
+  if (settings.browserControlDeveloperMode !== nextDeveloperMode
+    || settings.browserControlArtifactTransport !== nextArtifactTransport) {
+    settings = {
+      ...settings,
+      browserControlDeveloperMode: nextDeveloperMode,
+      browserControlArtifactTransport: nextArtifactTransport,
+    };
+    void browserApi.storage.local.get('hermesBrowserSettings')
+      .then((stored) => browserApi.storage.local.set({
+        hermesBrowserSettings: {
+          ...(stored?.hermesBrowserSettings || {}),
+          browserControlDeveloperMode: nextDeveloperMode,
+          browserControlArtifactTransport: nextArtifactTransport,
+        },
+      }))
+      .then(() => browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH'))
+      .catch(() => undefined);
+  }
   renderCompatibilityPanel();
   renderInlineAssistModelOptions();
   updateVoiceButtonState();
@@ -10954,6 +10993,10 @@ function bindEvents() {
     }
   });
   els.browserControlAttachButton?.addEventListener('click', async () => {
+    if (els.browserControlAttachButton.dataset.mode === 'detach') {
+      detachBrowserControl().catch((error) => showOperationToast({ kind: 'warn', title: 'Detach incomplete', detail: error?.message || String(error) }));
+      return;
+    }
     els.browserControlAttachButton.disabled = true;
     try {
       await attachBrowserControlToCurrentTab();
@@ -10966,6 +11009,12 @@ function bindEvents() {
   });
   els.browserControlDetachButton?.addEventListener('click', () => {
     detachBrowserControl().catch((error) => showOperationToast({ kind: 'warn', title: 'Detach incomplete', detail: error?.message || String(error) }));
+  });
+  els.browserControlDismissButton?.addEventListener('click', () => {
+    detachBrowserControl().catch((error) => showOperationToast({ kind: 'warn', title: 'Detach incomplete', detail: error?.message || String(error) }));
+  });
+  els.browserIntroDismissButton?.addEventListener('click', () => {
+    persistBrowserIntroSeen();
   });
   els.browserControlScopeInput?.addEventListener('change', () => {
     if (settings.browserControlEnabled === true) {

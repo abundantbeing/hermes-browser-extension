@@ -86,6 +86,9 @@
         </section>
 
         <section id="browserIntroHero" class="hero-card" aria-label="Hermes Browser intro" data-i18n-aria-label="ui.hermes.browser.intro">
+          <button id="browserIntroDismissButton" class="hero-dismiss" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">
+            <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
           <div class="hero-copy">
             <p class="eyebrow" data-i18n="ui.local.sidecar.chrome.panel">LOCAL SIDECAR / CHROME PANEL</p>
             <svg class="hero-wordmark" viewBox="0 0 2918.77 1206.98" role="img" aria-label="Hermes Browser" data-i18n-aria-label="ui.hermes.browser">
@@ -102,10 +105,18 @@
             <strong id="browserControlStripTitle" data-i18n-runtime data-i18n="browser_control.control_ready">Control ready</strong>
             <span id="browserControlStripDetail" data-i18n-runtime data-i18n="browser_control.waiting">Waiting for Hermes.</span>
           </div>
+          <button id="browserControlDismissButton" class="browser-control-dismiss" type="button" aria-label="Detach" title="Detach" data-i18n-aria-label="browser_control.detach" data-i18n-title="browser_control.detach">
+            <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
           <div class="browser-control-strip-actions">
-            <button id="browserControlAttachButton" class="browser-control-action" type="button" hidden data-i18n="ui.attach.to.current.tab">Attach to current tab</button>
-            <button id="browserControlPauseButton" class="browser-control-action secondary" type="button" data-i18n-runtime data-i18n="browser_control.pause">Pause</button>
-            <button id="browserControlStopButton" class="browser-control-action secondary" type="button" data-i18n="browser_control.stop">Stop</button>
+            <button id="browserControlAttachButton" class="browser-control-action" type="button" hidden data-i18n-runtime data-i18n="ui.attach">Attach</button>
+            <button id="browserControlPauseButton" class="browser-control-action icon-only secondary" type="button" aria-label="Pause" title="Pause" data-i18n-aria-label="browser_control.pause" data-i18n-title="browser_control.pause">
+              <svg class="glyph-pause" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3.2 2h2.2v8H3.2zM6.6 2h2.2v8H6.6z" fill="currentColor"/></svg>
+              <svg class="glyph-play" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" hidden><path d="M3.2 2l7 4-7 4z" fill="currentColor"/></svg>
+            </button>
+            <button id="browserControlStopButton" class="browser-control-action icon-only secondary" type="button" hidden aria-label="Stop" title="Stop" data-i18n-aria-label="browser_control.stop" data-i18n-title="browser_control.stop">
+              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.6 2.6h6.8v6.8H2.6z" fill="currentColor"/></svg>
+            </button>
             <button id="browserControlApproveButton" class="browser-control-action" type="button" hidden data-i18n="browser_control.approve_once">Approve once</button>
             <button id="browserControlRejectButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.reject">Reject</button>
           </div>
@@ -219,7 +230,6 @@
           <input id="fileInput" type="file" multiple hidden />
           <input id="imageInput" type="file" accept="image/*" multiple hidden />
           <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
-          <p class="composer-help" data-i18n="ui.enter.sends.shift.enter.adds.a.new.line.ctrl.v.drag.drop.or.att.a1c82bcd">Enter sends. Shift+Enter adds a new line. Ctrl+V, drag/drop, or + attaches files.</p>
           <section id="queueNotice" class="queue-notice" aria-live="polite" hidden></section>
           <section id="runControlRecovery" class="run-control-recovery" aria-live="polite" hidden>
             <p id="runControlRecoveryDetail"></p>
@@ -283,10 +293,10 @@
       <form id="settingsForm">
         <header>
           <div>
-            <p class="eyebrow" data-i18n="ui.hermes.browser.bb83b5a0">HERMES BROWSER</p>
             <h2 id="settingsTitle" data-i18n="ui.settings">Settings</h2>
           </div>
           <div class="settings-header-actions">
+            <button id="saveSettingsTopButton" class="settings-button" type="submit" title="Save settings" data-i18n-title="ui.save.settings" data-i18n="ui.save">Save</button>
             <button id="testConnectionButton" class="settings-connection-test secondary" type="button" aria-busy="false" title="Test the current Hermes connection" data-i18n-title="ui.test.the.current.hermes.connection">
               <svg class="settings-connection-test-icon" viewBox="0 0 20 20" aria-hidden="true">
                 <path d="M4.4 7.1A6.2 6.2 0 0 1 15 5.7l1.2 1.4"></path>
@@ -296,7 +306,9 @@
               </svg>
               <span class="settings-connection-test-label" data-i18n="ui.test.984816fd">TEST</span>
             </button>
-            <button id="closeSettingsButton" class="settings-button" type="button" data-i18n="ui.close.dbc87420">CLOSE</button>
+            <button id="closeSettingsButton" class="settings-button settings-close-icon" type="button" aria-label="Close settings" title="Close settings" data-i18n-aria-label="ui.close.settings" data-i18n-title="ui.close.settings">
+              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
           </div>
         </header>
 
@@ -843,10 +855,6 @@
           <p id="diagnosticsCopyStatus" class="hint">Use this when filing GitHub issues or support reports.</p>
         </div>
         </section>
-
-        <footer>
-          <button id="saveSettingsButton" type="submit" data-i18n="ui.save.settings">Save settings</button>
-        </footer>
       </form>
     </section>
 

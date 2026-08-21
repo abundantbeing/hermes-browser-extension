@@ -2,10 +2,60 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-22
+
 ### Added
 
-- Added Mozilla signing for Firefox: `npm run sign:firefox` submits the Firefox build to AMO for signing and downloads a signed `.xpi` into `artifacts/`. Firefox 142+ users install the signed package from the Releases page instead of building locally.
-- Added a stable Firefox add-on ID for Mozilla-hosted AMO updates.
+- Added opt-in live browser control through an authenticated MV3 service-worker controller with exact per-tab leases, document-generation checks, lifecycle recovery, and no fallback for Browser-bound requests.
+- Added Chromium control actions for snapshots, refs, clicks, typing, form fill/select, navigation, scrolling, screenshots, tab operations, console/network inspection, PDF generation, uploads, dialogs, evaluate, and policy-bounded raw CDP.
+- Added explicit approval gates for consequential and privileged actions, with developer-mode enforcement for evaluate and raw CDP.
+- Added approved local HTML, browser-rendered PDF, and localhost context/control support on Windows and macOS, including click refs for interactive images and custom controls.
+- Added scoped one-shot artifact upload/download with MIME limits, TTL, SHA-256 checksums, provenance receipts, and atomic consume-on-download behavior.
+- Added reviewed workflow-to-skill draft generation from completed redacted receipts, with fixture-only dry runs and explicit approval before save.
+- Added a bounded metadata-only companion journal and adversarial privacy matrix.
+- Added Mozilla signing support and a stable Firefox add-on ID for Mozilla-hosted updates.
+
+### Changed
+
+- Added sticky settings controls and theme-aware operation notifications for control enable, attach, pause, approval, and detach states.
+- Expanded the compatibility, privacy, permissions, data-flow, and README documentation for live control and local documents.
+- Hardened controller reconnect, stale owner, approval, terminal latch, and exact-target authority behavior.
+- Wired capability-derived Developer Mode and authenticated one-shot artifact routes into the live extension runtime instead of leaving them as isolated executor modules.
+- Prevented rapid content-script reinjection from leaving duplicate inline Assist hosts, and aligned launcher geometry with the rendered 36px control.
+- Aligned Codex OAuth context-window fallback and accounting behavior with explicit provider identity while preserving authoritative runtime telemetry.
+
+### Security
+
+- Browser-bound requests never fall back to another browser backend.
+- Controller durability and companion diagnostics persist metadata and redacted receipts only, never raw DOM, page text, command arguments, typed values, credentials, screenshots, or response bodies.
+- Sensitive fields, restricted schemes, credential-bearing URLs, stale refs, stale documents, borrowed tabs, cross-domain mutation races, oversized artifacts, and replayed approvals fail closed.
+
+### Fixed
+
+- Fixed the side panel `/commands` menu covering long prompts ([issue #73](https://github.com/abundantbeing/hermes-browser-extension/issues/73)): the commands picker now opens upward into the free space above the `ASK HERMES` composer with a 6px gap, so multiline drafts stay fully visible, the textarea is never compressed, and command filtering, keyboard navigation, selection, and close behavior are unchanged.
+- Added a **Save** action to the Settings header next to **Test connection** with a hover tooltip, replacing the former bottom-left **Save settings** footer button so settings can be saved without scrolling; it shares the same accent-outline style, mono type, and hover behavior as the other header controls.
+- Replaced the Settings header **CLOSE** label with a compact close icon button, tightening the header row while keeping the same click target, keyboard focus, and accessible **Close settings** label.
+- Fixed **Clear stored token** button text alignment so the label sits centered inside the button, and made **Clear stored token** and **Copy Diagnostics** span the full width of their cards with centered labels.
+- Fixed the **Scan agents** button sizing and text placement so it renders with proper card metrics (matching the ↻ Profiles button) while staying left-aligned in its card, with the ↻ glyph and label vertically centered.
+- Kept the Settings sticky-header divider full-width and aligned the header content to the panel edges so the title and close button land on the divider's end points.
+- Removed the redundant **HERMES BROWSER** eyebrow above the Settings title so the dialog header reads as one clean row.
+- Added an in-chat **Detach** action: the Browser control strip button now toggles between **Attach** (when the current tab is not leased) and **Detach** (when it is), so you can detach straight from the chat interface instead of opening Settings.
+- Changed the composer **/commands** button from a pill to a rectangle (using the shared radius token) and re-centered the `/` and **commands** label inside it.
+- Removed the "Enter sends. Shift+Enter adds a new line..." helper line under the composer.
+- Shortened the startup screen's error line so a disconnected gateway no longer stacks the full diagnostic under the logo and pushes the readiness cards and buttons down; the full detail stays in the status card below where it belongs.
+- Centered the text in the Browser control **Attach / Pause / Stop** action buttons.
+- Added a dismiss ✕ to the Browser control strip that detaches control completely (removes the box) from the chat interface, and a white ✕ in the top-right of the **Local sidecar / Chrome panel** intro card so users can close it on sight.
+- Removed the **Hermes Assist** and **Right-click actions** sections from the Hermes Web settings dialog; both remain configurable in the side panel Settings, and Hermes Web keeps the stored preferences unchanged.
+- Converted the control strip **Pause** and **Stop** buttons to compact icon glyphs (pause/play and stop square) with hover tooltips, and the Stop button now only appears while an action is running or queued instead of sitting disabled. The pause button swaps to a play glyph while paused (fixed an SVG `hidden`-reflection bug in Chromium so the swap actually renders).
+
+### Contributors
+
+- Reproduced and scoped [issue #73](https://github.com/abundantbeing/hermes-browser-extension/issues/73) from the report by [@kidclone3](https://github.com/kidclone3).
+
+### Verification
+
+- Canonical JavaScript, manifest, locale, Chromium, Firefox, controller, companion, artifact, workflow, adversarial, and privacy suites are required to pass before publication.
+- Chrome-for-Testing reconnect/control journeys and the manual Comet control gate are required for release approval.
 
 ## [0.2.0] - 2026-07-21
 

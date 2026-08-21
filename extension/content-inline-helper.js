@@ -1,4 +1,6 @@
 (async () => {
+  const generation = Math.max(0, Number(globalThis.__HERMES_INLINE_HELPER_GENERATION__) || 0) + 1;
+  globalThis.__HERMES_INLINE_HELPER_GENERATION__ = generation;
   const previousCleanup = globalThis.__HERMES_INLINE_HELPER_CLEANUP__;
   if (typeof previousCleanup === 'function') previousCleanup();
 
@@ -10,6 +12,7 @@
   const i18n = globalThis.HermesI18nContent;
   if (!policy?.classifyEditable || !policy?.buildInlineDraftRequest || !policy?.applyResult || !appearance?.resolveInlineAssistTheme || !i18n?.ready) return;
   await i18n.ready;
+  if (globalThis.__HERMES_INLINE_HELPER_GENERATION__ !== generation) return;
   const translateUiText = (value) => i18n.translateText(value);
 
   const REQUEST = 'HERMES_INLINE_DRAFT_REQUEST';
@@ -504,8 +507,9 @@
         targetRect,
         obstacleRects,
         preferred: profile?.placement?.preferred || ['inside-end'],
+        size: 36,
       })
-      : policy.inlineLauncherPosition(rect, viewport);
+      : policy.inlineLauncherPosition(rect, viewport, { launcherSize: 36 });
     if (!launcherPosition) {
       suspendPanelForScroll();
       return;

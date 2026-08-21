@@ -10,8 +10,8 @@ body:
     id: version
     attributes:
       label: Extension Version
-      description: What version of Hermes Browser Extension are you running? (e.g. 0.2.0)
-      placeholder: "0.2.0"
+      description: What version of Hermes Browser Extension are you running? (e.g. 0.3.0)
+      placeholder: "0.3.0"
     validations:
       required: true
   - type: dropdown

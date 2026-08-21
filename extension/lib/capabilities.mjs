@@ -52,6 +52,8 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   pluginActions: false,
   approvalEvents: false,
   browserControl: false,
+  browserControlDeveloperMode: false,
+  browserControlArtifactTransport: false,
   dashboardWs: false,
   endpoints: DEFAULT_ENDPOINTS,
   raw: null,
@@ -171,10 +173,12 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
     browserEvents: inferredFeature(features, endpoints, ['browser_events', 'browserEvents', 'run_events_sse', 'run_events'], ['browser_events', 'run_events']),
     pluginActions: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.pluginActions, 'pluginActions'], ['browser_actions', 'plugin_actions']),
     approvalEvents: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.approvalEvents, 'approvalEvents'], ['approval_events']),
-    // Browser releases are support/read-only until a separate reviewed control surface ships.
-    // Enable browser control at your own risk; do not infer it
-    // from capability discovery alone. Action policy/approval logs come later.
-    browserControl: false,
+    browserControl: features?.browser_extension_control?.enabled === true,
+    browserControlDeveloperMode: features?.browser_extension_control?.enabled === true
+      && features?.browser_extension_control?.developer_mode === true,
+    browserControlArtifactTransport: features?.browser_extension_control?.enabled === true
+      && Boolean(features?.browser_extension_control?.artifact_transport?.upload?.path)
+      && Boolean(features?.browser_extension_control?.artifact_transport?.download?.path),
     dashboardWs: inferredFeature(features, endpoints, ['dashboard_ws', 'dashboardWebSocket'], ['dashboard_ws', 'ws_ticket']),
     endpoints,
     raw: payload,

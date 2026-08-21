@@ -614,6 +614,24 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
     var(--hermes-app-bg);
   background-blend-mode: normal, luminosity, normal;
 }
+.hero-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  min-height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #fff;
+}
+.hero-dismiss:hover { background: transparent; color: rgba(255, 255, 255, 0.72); }
 .hero-copy { position: relative; z-index: 1; max-width: 280px; }
 .hero-wordmark {
   display: block;
@@ -662,6 +680,24 @@ button:hover { background: rgba(var(--hermes-ink-rgb),0.08); color: var(--hermes
 button:active { transform: translateY(1px); }
 button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 .settings-button { min-width: 42px; min-height: 30px; padding: 7px 8px 5px; font-size: 10px; }
+.settings-close-icon {
+  min-width: 30px;
+  width: 30px;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hermes-paper);
+  border-color: rgba(var(--hermes-accent-rgb),0.42);
+  color: var(--hermes-accent);
+}
+.settings-close-icon:hover {
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb),0.09);
+  color: var(--hermes-accent);
+}
+.settings-close-icon svg { display: block; stroke-width: 1.6; }
+.settings-close-icon:hover svg { transform: none; }
 .settings-button { text-decoration: none; }
 .settings-button:hover { background: rgba(var(--hermes-ink-rgb),0.08); color: var(--hermes-ink); }
 .settings-button:active { transform: translateY(1px); }
@@ -775,6 +811,8 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 .startup-copy p:not(.eyebrow) {
   margin: 0 auto;
   max-width: 29ch;
+  max-height: 8.7em;
+  overflow: hidden;
   color: rgba(var(--hermes-fg-rgb),0.72);
   font: 10px/1.45 var(--hermes-font-mono);
 }
@@ -1134,6 +1172,10 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
 .browser-control-action {
   min-height: 38px;
   padding: 9px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   border-radius: var(--radius);
   font: 700 calc(10.5px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-mono);
   letter-spacing: 0.05em;
@@ -1158,6 +1200,7 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
 
 .browser-control-strip[hidden] { display: none; }
 .browser-control-strip {
+  position: relative;
   display: grid;
   grid-template-columns: 8px minmax(0, 1fr) auto;
   align-items: center;
@@ -1169,6 +1212,24 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
   background: var(--hermes-paper);
   color: var(--hermes-ink);
 }
+.browser-control-strip-copy { padding-right: 18px; }
+.browser-control-dismiss {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--hermes-ink);
+}
+.browser-control-dismiss:hover { background: transparent; color: var(--hermes-accent); }
 .browser-control-signal {
   width: 8px;
   height: 8px;
@@ -1185,6 +1246,17 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
 .browser-control-strip-copy span { margin-top: 3px; color: var(--hermes-muted); font: calc(10px * var(--hermes-text-zoom, 1))/1.35 var(--hermes-font-mono); }
 .browser-control-strip-actions { justify-content: flex-end; }
 .browser-control-strip-actions .browser-control-action { min-height: 26px; padding: 5px 7px; }
+.browser-control-strip-actions .browser-control-action.icon-only {
+  width: 26px;
+  min-width: 26px;
+  padding: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.browser-control-action.icon-only svg:not([hidden]) { display: block; }
+/* Chromium does not hide SVGs via [hidden] by default; force it. */
+.browser-control-action.icon-only svg[hidden] { display: none !important; }
 @media (max-width: 560px) {
   .browser-control-strip { grid-template-columns: 8px minmax(0, 1fr); align-items: start; }
   .browser-control-strip-copy span {
@@ -1213,7 +1285,7 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
   justify-content: center;
   gap: 4px;
   border: 1px solid var(--hermes-line-strong);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background:
     linear-gradient(180deg, rgba(var(--hermes-ink-rgb),0.04), rgba(var(--hermes-ink-rgb),0.015)),
     var(--hermes-input-bg, var(--hermes-paper));
@@ -1232,8 +1304,11 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
   line-height: 1;
   letter-spacing: 0;
   color: var(--hermes-accent);
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
 }
-.composer-command strong { display: inline-flex; align-items: center; line-height: 1; font-weight: 500; }
+.composer-command strong { display: inline-flex; align-items: center; height: 100%; line-height: 1; font-weight: 500; }
 .composer-command:hover,
 .composer-command[aria-expanded="true"] {
   border-color: var(--hermes-accent);
@@ -1244,7 +1319,8 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
 .quick-more-menu {
   position: absolute;
   left: 9px;
-  bottom: 42px;
+  /* Opens upward into the free space above the composer; never covers the textarea (#73). */
+  bottom: calc(100% + 6px);
   z-index: 74;
   width: min(318px, calc(100% - 18px));
   max-height: min(386px, 70vh);
@@ -2843,6 +2919,29 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   justify-content: flex-end;
   gap: 7px;
 }
+/* One visual family for the settings header controls: Save / TEST / close icon (#73 follow-up). */
+.settings-header-actions > button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--hermes-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+#saveSettingsTopButton {
+  padding: 6px 10px 5px;
+  border-color: rgba(var(--hermes-accent-rgb),0.42);
+  background: var(--hermes-paper);
+  color: var(--hermes-accent);
+}
+#saveSettingsTopButton:hover {
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb),0.09);
+  color: var(--hermes-accent);
+}
+#saveSettingsTopButton:active { transform: translateY(1px); }
 .settings-connection-test {
   min-height: 30px;
   padding: 6px 9px 5px;
@@ -2850,10 +2949,16 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   align-items: center;
   gap: 6px;
   border-color: rgba(var(--hermes-accent-rgb),0.42);
+  background: var(--hermes-paper);
   color: var(--hermes-accent);
   font-family: var(--hermes-font-mono);
   font-size: 9px;
   letter-spacing: 0.12em;
+}
+.settings-connection-test:hover {
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb),0.09);
+  color: var(--hermes-accent);
 }
 .settings-connection-test-icon {
   width: 14px;
@@ -3470,7 +3575,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   position: sticky;
   top: 0;
   z-index: 90;
-  padding: 12px 14px;
+  padding: 12px 0;
   background: var(--hermes-paper);
   border-bottom: 1px solid var(--hermes-line-strong);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
@@ -3767,8 +3872,20 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 .connection-security-summary span { color: var(--hermes-muted); }
 .connection-security-summary strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.connection-security button {
+  justify-self: stretch;
+  width: 100%;
+  min-height: 31px;
+  padding: 7px 10px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  text-align: center;
+}
 .support-diagnostics button {
-  justify-self: start;
+  justify-self: stretch;
+  width: 100%;
   min-height: 31px;
   padding: 7px 10px 6px;
   font-size: 10px;
@@ -4141,6 +4258,16 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   margin-top: 6px;
 }
 .profile-action-row button { min-height: 36px; padding: 9px 12px 7px; font-size: 10px; }
+/* Scan agents row: same metrics as the profile ↻ button, left-aligned in the card. */
+.settings-row > button {
+  min-height: 36px;
+  padding: 9px 12px 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  text-align: center;
+}
 .appearance-row strong,
 .theme-setting > strong {
   display: block;

@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(import.meta.dirname, '..');
 export const DIST = path.join(ROOT, 'dist');
@@ -881,6 +881,13 @@ async function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
+const directEntryPath = process.argv[1] ? path.resolve(process.argv[1]) : '';
+const currentModulePath = path.resolve(fileURLToPath(import.meta.url));
+if (directEntryPath === currentModulePath) {
+  await main();
+  // Standalone release-gate executable. Some CDP/WebSocket implementations
+  // retain idle handles after explicit cleanup.
+  process.exit(0);
+}
 
 

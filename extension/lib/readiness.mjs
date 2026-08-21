@@ -140,7 +140,9 @@ export function deriveStartupView(state = initialStartupReadiness()) {
           : 'Connecting Browser Extension',
     detail: state.ready
       ? 'Model, session, and runtime metadata are ready.'
-      : state.blockingError || active?.detail || 'Checking settings, gateway, capabilities, models, and sessions.',
+      : state.phase === 'error'
+        ? 'Connection needs attention. See the status card below.'
+        : state.blockingError || active?.detail || 'Checking settings, gateway, capabilities, models, and sessions.',
     progress: Math.round((completed / steps.length) * 100),
     steps,
   };

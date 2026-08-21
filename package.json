@@ -1,6 +1,6 @@
 {
   "name": "hermes-browser-extension",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Browser-native side panel for Hermes Agent — connect web context to your local or remote Hermes runtime.",
   "type": "module",
@@ -43,6 +43,7 @@
     "review:watch": "node scripts/hermes-review-watch.mjs",
     "review:watch:dry-run": "node scripts/hermes-review-watch.mjs --dry-run",
     "test:e2e:loaded": "npm run build && node tests/e2e-loaded-extension.mjs",
+    "test:verify:issue73": "npm run build && node tests/verify-issue73-menu-layout.mjs",
     "test:e2e:controller": "npm run build && node tests/e2e-controller-lifecycle.mjs",
     "test:e2e:browser-control": "npm run build && node tests/e2e-phase6-browser-control.mjs && node tests/e2e-phase6-browser-control-reconnect.mjs && node tests/e2e-phase6-agent-route.mjs && node tests/e2e-phase6-youtube-like.mjs",
     "test:e2e:browser-control:reconnect": "npm run build && node tests/e2e-phase6-browser-control-reconnect.mjs",

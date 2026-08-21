@@ -302,50 +302,6 @@
               </details>
             </div>
           </section>
-          <section class="inline-assist-settings">
-            <h3 data-i18n="ui.hermes.assist">Hermes Assist</h3>
-            <label class="inline-assist-toggle">
-              <span><strong data-i18n="ui.show.hermes.assist.in.writing.fields">Show Hermes Assist in writing fields</strong><small data-i18n="ui.turn.the.field.bound.launcher.on.or.off.across.normal.web.pages">Turn the field-bound launcher on or off across normal web pages.</small></span>
-              <input id="inlineAssistEnabled" type="checkbox" aria-label="Show Hermes Assist in writing fields" data-i18n-aria-label="ui.show.hermes.assist.in.writing.fields" />
-            </label>
-            <label>
-              <span data-i18n="ui.default.session.route">Default session route</span>
-              <select id="inlineAssistDefaultRoute">
-                <option value="ask" data-i18n="ui.ask.every.time">Ask every time</option>
-                <option value="current" data-i18n="ui.continue.current.chat">Continue current chat</option>
-                <option value="new" data-i18n="ui.start.new.assist.session">Start new Assist session</option>
-                <option value="background" data-i18n="ui.run.in.background">Run in background</option>
-              </select>
-            </label>
-            <div class="inline-assist-model-setting">
-              <span data-i18n="ui.hermes.assist.model">Hermes Assist model</span>
-              <button id="inlineAssistModelButton" class="model-picker-button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose the model used by Hermes Assist" disabled data-i18n-title="ui.choose.the.model.used.by.hermes.assist">
-                <strong id="inlineAssistModelLabel">Choose Assist model</strong><span aria-hidden="true">⌄</span>
-              </button>
-              <input id="inlineAssistModel" type="hidden" />
-            </div>
-            <label>
-              <span data-i18n="ui.assist.session.history">Assist session history</span>
-              <select id="inlineAssistSessionRetention">
-                <option value="keep" data-i18n="ui.keep.assist.sessions">Keep Assist sessions</option>
-                <option value="delete" data-i18n="ui.delete.after.the.draft.returns">Delete after the draft returns</option>
-              </select>
-            </label>
-            <p id="assistModelCapabilityHint">Choose any available model for Hermes Assist. If the gateway cannot enforce that exact model, Assist transparently falls back to the gateway default and labels the result.</p>
-          </section>
-          <section class="context-menu-settings">
-            <h3 data-i18n="ui.right.click.actions">Right-click actions</h3>
-            <label><span data-i18n="ui.default.right.click.route">Default right-click route</span>
-              <select id="contextMenuDefaultRoute">
-                <option value="ask" data-i18n="ui.ask.every.time">Ask every time</option>
-                <option value="current" data-i18n="ui.use.current.tab.session">Use current tab session</option>
-                <option value="new" data-i18n="ui.start.new.browser.session">Start new Browser session</option>
-                <option value="background" data-i18n="ui.run.in.background">Run in background</option>
-              </select>
-            </label>
-            <p data-i18n="ui.context.menu.editor.opening.behavior">Actions that open Hermes use the side panel when available and the extension full view as a confirmed fallback.</p>
-            <div id="contextMenuEditor" data-context-menu-surface="hermes-web"></div>
-          </section>
           <section>
             <h3 data-i18n="ui.hermes.connection">Hermes connection</h3>
             <label><span data-i18n="ui.profile.ff4fc027">Profile</span><input id="settingsProfile" type="text" autocomplete="off" /></label>

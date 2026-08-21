@@ -108,6 +108,38 @@ test('Phase 6 Firefox control needs no debugger permission and advertises only i
   assert.deepEqual(browser.permissions.calls, []);
 });
 
+test('Phase 8 runtime wires capability-derived developer mode and one-shot artifacts into the executor', async () => {
+  const { createBrowserControlRuntime } = await runtimeModule();
+  const browser = browserApi();
+  const observed = [];
+  const artifacts = {
+    upload: async () => ({ ok: false }),
+    download: async () => ({ ok: false }),
+  };
+  const runtime = createBrowserControlRuntime({
+    browserApi: browser.api,
+    product: identity.product,
+    artifactClientFactory: (settings) => {
+      observed.push(settings);
+      return artifacts;
+    },
+  });
+  const settings = {
+    browserControlEnabled: true,
+    browserControlDeveloperMode: true,
+    browserControlCdpPolicy: { allow: ['Runtime.evaluate'], deny: [] },
+  };
+  const executor = await runtime.executor(settings);
+  assert.ok(executor);
+  assert.deepEqual(observed, [settings]);
+
+  const source = await import('node:fs/promises')
+    .then(({ readFile }) => readFile(new URL('../extension/lib/browser-control-runtime.mjs', import.meta.url), 'utf8'));
+  assert.match(source, /artifacts,/);
+  assert.match(source, /developerMode:\s*settings\?\.browserControlDeveloperMode === true/);
+  assert.match(source, /cdpPolicy:\s*settings\?\.browserControlCdpPolicy/);
+});
+
 test('Phase 6 registration advertises only sanitized runtime-proven capabilities', async () => {
   const descriptor = controllerRegistrationFor({
     family: 'local-api',
