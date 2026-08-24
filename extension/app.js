@@ -121,7 +121,11 @@ import {
   mergeDelegationWatchStores,
 } from './lib/async-delegation.mjs';
 import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
-import { sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
+import {
+  hermesRequestError,
+  sessionContextFailureRecovery,
+  turnRequestFailureState,
+} from './lib/turn-recovery.mjs';
 import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, normalizeGatewayHistoryMessages, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
 import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 import {
@@ -3632,7 +3636,11 @@ async function sendPrompt(text) {
         selected_skills: skillSelection.selectedSkills,
       }),
     });
-    if (!response.ok || !response.body) throw new Error(`Hermes stream failed (${response.status}): ${(await response.text()).slice(0, 500)}`);
+    if (!response.ok || !response.body) throw hermesRequestError({
+      status: response.status,
+      body: await response.text(),
+      operation: 'Hermes stream',
+    });
     const streamedAnswer = await readHermesSse(response, {
       signal: activeAbortController.signal,
       onAssistant: (content) => {
@@ -3699,6 +3707,21 @@ async function sendPrompt(text) {
       activeRunControl = markRunTerminal(activeRunControl, streamTerminalStatus || 'completed');
     }
   } catch (error) {
+    const requestFailure = turnRequestFailureState(error);
+    if (requestFailure?.gatewayStatus === 'connected') {
+      activeMessages = activeMessages.filter((message) => message !== assistant);
+      if (!els.prompt.value.trim()) els.prompt.value = text;
+      attachments = [...turnAttachments];
+      renderAttachments();
+      activeMessages = [...activeMessages, {
+        role: 'system',
+        content: `${requestFailure.title}: ${requestFailure.detail} Gateway remains connected; adjust the model option and resend the preserved draft.`,
+      }];
+      els.composerStatus.textContent = `${requestFailure.title}: ${requestFailure.detail}`;
+      renderConnectionTruth({ status: 'online' });
+      renderMessages(activeMessages);
+      return false;
+    }
     const contextRecovery = sessionContextFailureRecovery(error, gatewayCapabilities);
     if (!contextRecovery) throw error;
     contextRecoveryHandled = true;
