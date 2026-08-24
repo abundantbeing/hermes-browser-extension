@@ -6,6 +6,7 @@ import * as turnRecovery from '../extension/lib/turn-recovery.mjs';
 
 const {
   classifyTurnRecovery,
+  hermesGatewayTurnError,
   hermesRequestError,
   latestAssistantAfterUser,
   turnRequestFailureState,
@@ -73,6 +74,54 @@ test('authentication rejection stays on the existing gateway-auth diagnostic pat
 
   assert.equal(classifyTurnRecovery(error), 'reject');
   assert.equal(turnRequestFailureState(error), null);
+});
+
+test('dashboard provider terminal events stay separate from gateway connectivity', () => {
+  const error = hermesGatewayTurnError({
+    operation: 'Hermes dashboard stream',
+    payload: {
+      status: 'error',
+      error: 'Invalid parameter: reasoning_effort must be one of low, medium, high.',
+      error_surface: {
+        layer: 'provider',
+        code: 'format_error',
+        retryable: false,
+      },
+    },
+  });
+
+  assert.ok(error instanceof Error);
+  assert.equal(error.turnFailureLayer, 'provider');
+  assert.equal(classifyTurnRecovery(error), 'reject');
+  assert.deepEqual(turnRequestFailureState(error), {
+    kind: 'model-option-rejected',
+    title: 'Model option rejected',
+    detail: 'Hermes dashboard stream failed: Invalid parameter: reasoning_effort must be one of low, medium, high.',
+    preserveDraft: true,
+    gatewayStatus: 'connected',
+  });
+});
+
+test('dashboard completion shaping ignores success and preserves real gateway failures', () => {
+  assert.equal(hermesGatewayTurnError({ payload: { status: 'completed', text: 'Done.' } }), null);
+
+  const gatewayError = hermesGatewayTurnError({
+    payload: {
+      status: 'error',
+      error: 'Dashboard worker crashed.',
+      error_surface: { layer: 'gateway', code: 'RuntimeError', retryable: true },
+    },
+  });
+  assert.ok(gatewayError instanceof Error);
+  assert.equal(gatewayError.turnFailureLayer, 'gateway');
+  assert.equal(classifyTurnRecovery(gatewayError), 'recover');
+  assert.equal(turnRequestFailureState(gatewayError), null);
+});
+
+test('request-failure UI does not intercept fallback-safe, server, or network failures', () => {
+  assert.equal(turnRequestFailureState(hermesRequestError({ status: 404, body: 'missing' })), null);
+  assert.equal(turnRequestFailureState(hermesRequestError({ status: 503, body: 'offline' })), null);
+  assert.equal(turnRequestFailureState(new Error('socket closed')), null);
 });
 
 test('recovery selects the assistant after the latest matching user turn', () => {
@@ -148,4 +197,38 @@ test('both Browser surfaces preserve provider-rejected drafts without marking He
   assert.match(sidepanelSource, /classifyTurnRecovery\(streamError\)[\s\S]{0,120}=== 'reject'/);
   assert.match(appSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*await response\.text\(\)/);
   assert.match(appSource, /turnRequestFailureState\(error\)[\s\S]{0,700}renderConnectionTruth\(\{\s*status:\s*'online'\s*\}\)/);
+});
+
+test('fallback REST and dashboard WS transports retain typed provider failures', () => {
+  const fallbackSessionStart = sidepanelSource.indexOf('async function fallbackSessionChat');
+  const fallbackCompletionsStart = sidepanelSource.indexOf('async function fallbackChatCompletions');
+  const askHermesStart = sidepanelSource.indexOf('async function askHermes');
+  assert.match(
+    sidepanelSource.slice(fallbackSessionStart, fallbackCompletionsStart),
+    /if \(!response\.ok\) throw hermesRequestError\(/,
+  );
+  assert.match(
+    sidepanelSource.slice(fallbackCompletionsStart, askHermesStart),
+    /if \(!response\.ok\) throw hermesRequestError\(/,
+  );
+
+  const sidepanelDashboardStart = sidepanelSource.indexOf('async function streamRemoteWsChat');
+  const sidepanelStreamStart = sidepanelSource.indexOf('async function streamSessionChat');
+  const sidepanelDashboard = sidepanelSource.slice(sidepanelDashboardStart, sidepanelStreamStart);
+  assert.match(sidepanelDashboard, /WS_EVENTS\.messageComplete[\s\S]*hermesGatewayTurnError/);
+  assert.match(sidepanelDashboard, /WS_EVENTS\.error[\s\S]*hermesGatewayTurnError/);
+
+  const webDashboardStart = appSource.indexOf('async function streamDashboardPrompt');
+  const webCapabilitiesStart = appSource.indexOf('async function loadGatewayCapabilities');
+  const webDashboard = appSource.slice(webDashboardStart, webCapabilitiesStart);
+  assert.match(webDashboard, /WS_EVENTS\.messageComplete[\s\S]*hermesGatewayTurnError/);
+  assert.match(webDashboard, /WS_EVENTS\.error[\s\S]*hermesGatewayTurnError/);
+
+  const streamCatchStart = sidepanelSource.indexOf('} catch (streamError) {', sidepanelSource.indexOf('async function askHermes'));
+  const streamCatchEnd = sidepanelSource.indexOf('const finalAnswer', streamCatchStart);
+  const streamCatch = sidepanelSource.slice(streamCatchStart, streamCatchEnd);
+  assert.ok(
+    streamCatch.indexOf("classifyTurnRecovery(streamError)") < streamCatch.indexOf('isRemoteWsMode()'),
+    'request rejection classification must run before remote-dashboard connection diagnostics',
+  );
 });
