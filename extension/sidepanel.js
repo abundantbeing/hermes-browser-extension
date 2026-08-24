@@ -198,7 +198,13 @@ import {
   isDelegationCompletionMarkerMessage,
   mergeDelegationWatchStores,
 } from './lib/async-delegation.mjs';
-import { classifyTurnRecovery, latestAssistantAfterUser, sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
+import {
+  classifyTurnRecovery,
+  hermesRequestError,
+  latestAssistantAfterUser,
+  sessionContextFailureRecovery,
+  turnRequestFailureState,
+} from './lib/turn-recovery.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
 import {
@@ -9205,9 +9211,11 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
 
   if (!response.ok || !response.body) {
     const text = await response.text();
-    const error = new Error(`Hermes stream failed (${response.status}): ${text.slice(0, 900)}`);
-    error.fallbackSafe = [404, 405, 501].includes(response.status);
-    throw error;
+    throw hermesRequestError({
+      status: response.status,
+      body: text,
+      operation: 'Hermes stream',
+    });
   }
   try {
     return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime });
@@ -9245,9 +9253,11 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
   }
   if (!response.ok || !response.body) {
     const text = await response.text();
-    const error = new Error(`Hermes chat-completions stream failed (${response.status}): ${text.slice(0, 900)}`);
-    error.fallbackSafe = [404, 405, 501].includes(response.status);
-    throw error;
+    throw hermesRequestError({
+      status: response.status,
+      body: text,
+      operation: 'Hermes chat-completions stream',
+    });
   }
   try {
     const result = await readSseResponse(response, onDelta, onTool, { signal, onRun });
@@ -9609,6 +9619,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
 
   let didSend = false;
   let streamTerminalStatus = '';
+  let streamView = null;
   try {
     const preparedAttachments = await saveImageAttachmentsForTurn(turnAttachments);
     if (typeof turnOptions.resolveUserText === 'function' && isRemoteWsMode()) {
@@ -9715,7 +9726,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       { onOpen: (image) => openGeneratedImageLightbox(image) },
     );
     const { node } = addMessage('assistant', THINKING_PLACEHOLDER, { persist: false });
-    const streamView = createStreamingMessageUpdater(node);
+    streamView = createStreamingMessageUpdater(node);
     let answer = '';
     let liveText = '';
     try {
@@ -9762,7 +9773,10 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
         streamView.update(`Could not reach the Hermes dashboard.\n${streamError.message}`);
         throw streamError;
       } else {
-        if (classifyTurnRecovery(streamError) === 'fallback') {
+        const recoveryAction = classifyTurnRecovery(streamError);
+        if (recoveryAction === 'reject') {
+          throw streamError;
+        } else if (recoveryAction === 'fallback') {
           streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
           answer = await fallbackSessionChat(prompt, preparedAttachments, {
             onRuntime: (payload) => {
@@ -9846,6 +9860,21 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       }
       if (error?.remoteDiagnostic && applyRemoteDiagnostic(error.remoteDiagnostic, { statusKind: 'error' })) {
         addMessage('system', `Hermes Browser Extension setup issue: ${error.remoteDiagnostic.detail} Open Settings → Support diagnostics → Copy Diagnostics and paste the redacted report if you need help.`);
+        return didSend;
+      }
+      const requestFailure = turnRequestFailureState(error);
+      if (requestFailure?.gatewayStatus === 'connected') {
+        if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
+          els.input.value = userText;
+          attachments = [...turnAttachments];
+          renderAttachments();
+          renderSkillSuggestions();
+        }
+        streamView.update(`${requestFailure.title}\n${requestFailure.detail}`);
+        setStatus('error', requestFailure.title, `${requestFailure.detail} Gateway remains connected.`, {
+          translateTitle: false,
+          translateDetail: false,
+        });
         return didSend;
       }
       const diagnostic = classifyGatewayError(error);

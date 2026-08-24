@@ -6,7 +6,9 @@ import * as turnRecovery from '../extension/lib/turn-recovery.mjs';
 
 const {
   classifyTurnRecovery,
+  hermesRequestError,
   latestAssistantAfterUser,
+  turnRequestFailureState,
 } = turnRecovery;
 
 const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
@@ -20,6 +22,57 @@ test('accepted stream failures recover instead of retrying the turn', () => {
 test('explicitly rejected stream routes may use the non-stream fallback', () => {
   assert.equal(classifyTurnRecovery({ fallbackSafe: true }), 'fallback');
   assert.equal(classifyTurnRecovery({ fallbackSafe: true, requestAccepted: true }), 'recover');
+});
+
+test('provider validation failures are rejected requests instead of accepted-turn recovery', () => {
+  const error = hermesRequestError({
+    status: 400,
+    operation: 'Hermes stream',
+    body: JSON.stringify({
+      error: {
+        message: 'reasoning_effort must be one of: no_think, low, high',
+      },
+    }),
+  });
+
+  assert.equal(error.message, 'Hermes stream failed (400): reasoning_effort must be one of: no_think, low, high');
+  assert.equal(error.httpStatus, 400);
+  assert.equal(error.requestRejected, true);
+  assert.equal(error.fallbackSafe, false);
+  assert.equal(classifyTurnRecovery(error), 'reject');
+});
+
+test('provider rejection details are redacted before reaching either Browser surface', () => {
+  const error = hermesRequestError({
+    status: 400,
+    body: JSON.stringify({ error: { message: 'reasoning_effort is invalid; Bearer private-value token=private-value' } }),
+  });
+
+  assert.match(error.message, /reasoning_effort is invalid/);
+  assert.match(error.message, /REDACTED/);
+  assert.doesNotMatch(error.message, /private-value/);
+});
+
+test('provider option rejection keeps gateway health separate and preserves the draft', () => {
+  const state = turnRequestFailureState(hermesRequestError({
+    status: 400,
+    body: '{"error":"reasoning_effort must be one of: no_think, low, high"}',
+  }));
+
+  assert.deepEqual(state, {
+    kind: 'model-option-rejected',
+    title: 'Model option rejected',
+    detail: 'Hermes request failed (400): reasoning_effort must be one of: no_think, low, high',
+    preserveDraft: true,
+    gatewayStatus: 'connected',
+  });
+});
+
+test('authentication rejection stays on the existing gateway-auth diagnostic path', () => {
+  const error = hermesRequestError({ status: 401, body: '{"error":"Unauthorized"}' });
+
+  assert.equal(classifyTurnRecovery(error), 'reject');
+  assert.equal(turnRequestFailureState(error), null);
 });
 
 test('recovery selects the assistant after the latest matching user turn', () => {
@@ -83,4 +136,16 @@ test('Hermes Web preserves the failed draft and uses the same acknowledged conte
   assert.match(appSource, /sessionContextFailureRecovery\(error, gatewayCapabilities\)/);
   assert.match(appSource, /await compactActiveSessionContext\(\{[\s\S]{0,160}automaticRecovery:\s*true/);
   assert.match(appSource, /retryTurn/);
+});
+
+test('both Browser surfaces preserve provider-rejected drafts without marking Hermes unreachable', () => {
+  assert.match(sidepanelSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*text/);
+  const sidepanelRejectionStart = sidepanelSource.lastIndexOf('const requestFailure = turnRequestFailureState(error)');
+  const sidepanelRejectionBranch = sidepanelSource.slice(sidepanelRejectionStart, sidepanelSource.indexOf('const diagnostic = classifyGatewayError(error)', sidepanelRejectionStart));
+  assert.match(sidepanelRejectionBranch, /Gateway remains connected/);
+  assert.match(sidepanelRejectionBranch, /streamView\.update/);
+  assert.doesNotMatch(sidepanelRejectionBranch, /addMessage\('system'/);
+  assert.match(sidepanelSource, /classifyTurnRecovery\(streamError\)[\s\S]{0,120}=== 'reject'/);
+  assert.match(appSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*await response\.text\(\)/);
+  assert.match(appSource, /turnRequestFailureState\(error\)[\s\S]{0,700}renderConnectionTruth\(\{\s*status:\s*'online'\s*\}\)/);
 });
