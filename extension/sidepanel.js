@@ -200,6 +200,7 @@ import {
 } from './lib/async-delegation.mjs';
 import {
   classifyTurnRecovery,
+  hermesGatewayTurnError,
   hermesRequestError,
   latestAssistantAfterUser,
   sessionContextFailureRecovery,
@@ -9155,6 +9156,11 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
     }));
     offs.push(client.on(WS_EVENTS.messageComplete, (event) => {
       if (!forThisSession(event)) return;
+      const completionError = hermesGatewayTurnError({ payload: event.payload });
+      if (completionError) {
+        finish(reject, completionError);
+        return;
+      }
       finalText = event.payload?.text || finalText;
       onDelta(finalText);
       finish(resolve, finalText);
@@ -9171,7 +9177,7 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
     }));
     offs.push(client.on(WS_EVENTS.error, (event) => {
       if (!forThisSession(event)) return;
-      finish(reject, new Error(event.payload?.message || 'Dashboard stream error'));
+      finish(reject, hermesGatewayTurnError({ payload: event.payload }) || new Error('Dashboard stream error'));
     }));
     offs.push(client.on('close', () => finish(reject, new Error('Dashboard connection closed mid-turn.'))));
 
@@ -9530,7 +9536,11 @@ async function fallbackSessionChat(prompt, turnAttachments = attachments, { onRu
         }),
   });
   const payload = await readJsonResponse(response);
-  if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Hermes request failed (${response.status})`);
+  if (!response.ok) throw hermesRequestError({
+    status: response.status,
+    body: JSON.stringify(payload),
+    operation: 'Hermes request',
+  });
   onRuntime?.(payload);
   await captureDelegationDispatchesFromCurrentRestHistory();
   return extractAssistantText(payload);
@@ -9555,7 +9565,11 @@ async function fallbackChatCompletions(prompt, turnAttachments = attachments) {
     }),
   });
   const payload = await readJsonResponse(response);
-  if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Hermes request failed (${response.status})`);
+  if (!response.ok) throw hermesRequestError({
+    status: response.status,
+    body: JSON.stringify(payload),
+    operation: 'Hermes chat-completions request',
+  });
   await captureDelegationDispatchesFromCurrentRestHistory();
   return extractAssistantText(payload);
 }
@@ -9767,14 +9781,14 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
         throw streamError;
       } else if (sessionContextFailureRecovery(streamError, gatewayCapabilities)) {
         throw streamError;
-      } else if (isRemoteWsMode()) {
-        // No REST fallback in remote-dashboard mode — the api_server surface is
-        // not reachable cross-origin. Surface the WS/ticket error directly.
-        streamView.update(`Could not reach the Hermes dashboard.\n${streamError.message}`);
-        throw streamError;
       } else {
         const recoveryAction = classifyTurnRecovery(streamError);
         if (recoveryAction === 'reject') {
+          throw streamError;
+        } else if (isRemoteWsMode()) {
+          // No REST fallback in remote-dashboard mode — the api_server surface is
+          // not reachable cross-origin. Surface genuine WS/ticket errors directly.
+          streamView.update(`Could not reach the Hermes dashboard.\n${streamError.message}`);
           throw streamError;
         } else if (recoveryAction === 'fallback') {
           streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);

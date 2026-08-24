@@ -3,7 +3,7 @@ import { redactSensitiveText } from './redaction.mjs';
 export function classifyTurnRecovery(error = {}) {
   if (error?.requestAccepted) return 'recover';
   if (error?.fallbackSafe) return 'fallback';
-  if (error?.requestRejected) return 'reject';
+  if (error?.requestRejected || error?.turnFailureLayer === 'provider') return 'reject';
   return 'recover';
 }
 
@@ -33,6 +33,19 @@ function responseErrorDetail(body = '') {
   return redactSensitiveText(text.replace(/\s+/g, ' ')).slice(0, 900);
 }
 
+function modelOptionRejectionText(value = '') {
+  return /reasoning[_ -]?effort|thinking.{0,60}(?:unsupported|must be one of)|unsupported.{0,60}reasoning/i.test(String(value || ''));
+}
+
+function normalizedErrorSurface(value = {}) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const layer = String(value.layer || '').trim().toLowerCase().slice(0, 40);
+  const code = String(value.code || '').trim().slice(0, 120);
+  const retryable = typeof value.retryable === 'boolean' ? value.retryable : null;
+  if (!layer && !code && retryable == null) return null;
+  return { layer, code, retryable };
+}
+
 export function hermesRequestError({ status = 0, body = '', operation = 'Hermes request' } = {}) {
   const statusCode = Number.isFinite(Number(status)) ? Math.trunc(Number(status)) : 0;
   const label = String(operation || 'Hermes request').trim() || 'Hermes request';
@@ -44,14 +57,42 @@ export function hermesRequestError({ status = 0, body = '', operation = 'Hermes 
   return error;
 }
 
+export function hermesGatewayTurnError({ payload = {}, operation = 'Hermes dashboard stream' } = {}) {
+  const record = payload && typeof payload === 'object' && !Array.isArray(payload) ? payload : {};
+  const surface = normalizedErrorSurface(record.error_surface || record.errorSurface);
+  const statusLabel = String(record.status || '').trim().toLowerCase();
+  const detail = record.error ?? record.message ?? '';
+  if (statusLabel !== 'error' && !String(detail || '').trim() && !surface) return null;
+
+  const rawStatus = record.http_status ?? record.status_code ?? record.httpStatus ?? 0;
+  const error = hermesRequestError({
+    status: rawStatus,
+    body: JSON.stringify({ error: detail || 'Dashboard turn failed.' }),
+    operation,
+  });
+  error.errorSurface = surface;
+  error.turnFailureLayer = surface?.layer || '';
+
+  if (surface?.layer === 'provider' || modelOptionRejectionText(error.message)) {
+    error.turnFailureLayer = 'provider';
+    error.requestRejected = true;
+    error.fallbackSafe = false;
+  }
+  return error;
+}
+
 export function turnRequestFailureState(error = {}) {
   const status = Number(error?.httpStatus || 0);
-  if (!error?.requestRejected || error?.fallbackSafe || [401, 403].includes(status)) return null;
+  const providerFailure = error?.turnFailureLayer === 'provider';
+  if ((!error?.requestRejected && !providerFailure) || error?.fallbackSafe || [401, 403].includes(status)) return null;
   const detail = recoveryErrorText(error).replace(/^Error:\s*/, '').trim();
-  const modelOptionRejected = /reasoning[_ -]?effort|thinking.{0,60}(?:unsupported|must be one of)|unsupported.{0,60}reasoning/i.test(detail);
+  const modelOptionRejected = modelOptionRejectionText(detail);
+  const providerTitle = error?.errorSurface?.retryable === false
+    ? 'Provider request rejected'
+    : 'Provider turn failed';
   return {
-    kind: modelOptionRejected ? 'model-option-rejected' : 'request-rejected',
-    title: modelOptionRejected ? 'Model option rejected' : 'Hermes request rejected',
+    kind: modelOptionRejected ? 'model-option-rejected' : providerFailure ? 'provider-turn-failed' : 'request-rejected',
+    title: modelOptionRejected ? 'Model option rejected' : providerFailure ? providerTitle : 'Hermes request rejected',
     detail,
     preserveDraft: true,
     gatewayStatus: 'connected',

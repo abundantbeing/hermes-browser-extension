@@ -122,6 +122,7 @@ import {
 } from './lib/async-delegation.mjs';
 import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.mjs';
 import {
+  hermesGatewayTurnError,
   hermesRequestError,
   sessionContextFailureRecovery,
   turnRequestFailureState,
@@ -727,6 +728,11 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
     }));
     offs.push(connection.client.on(WS_EVENTS.messageComplete, (event) => {
       if (!forThisSession(event)) return;
+      const completionError = hermesGatewayTurnError({ payload: event.payload });
+      if (completionError) {
+        finish(reject, completionError);
+        return;
+      }
       finalText = event.payload?.text || finalText;
       onDelta?.(finalText);
       finish(resolve, finalText);
@@ -743,7 +749,7 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
     }));
     offs.push(connection.client.on(WS_EVENTS.error, (event) => {
       if (!forThisSession(event)) return;
-      finish(reject, new Error(event.payload?.message || 'Dashboard stream error'));
+      finish(reject, hermesGatewayTurnError({ payload: event.payload }) || new Error('Dashboard stream error'));
     }));
     offs.push(connection.client.on('close', () => finish(reject, new Error('Dashboard connection closed mid-turn.'))));
     connection.client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt }).catch((error) => finish(reject, error));
