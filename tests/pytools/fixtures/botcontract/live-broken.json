@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "contracts": {
+    "profiles_list": { "fields": ["id", "name", "model"], "entry_count_cap": 200 },
+    "canonical_session": { "keys": ["session_key", "profile", "canonical_id"], "note": "renamed session_id -> session_key upstream" },
+    "group_projection": {
+      "version": 4,
+      "caps": ["read", "rename"]
+    },
+    "message_agent": { "available": true },
+    "routine_cron": { "available": false }
+  }
+}

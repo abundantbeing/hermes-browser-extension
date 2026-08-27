@@ -1,480 +1,498 @@
-const browserApi = globalThis.hermesBrowserApi;
-const CONTENT_SCRIPT_VERSION = '2026-07-16-extraction-site-adapters-v1';
-const previousListener = globalThis.__HERMES_BROWSER_CONTENT_LISTENER__;
-if (previousListener) {
-  try {
-    browserApi.runtime.onMessage.removeListener(previousListener);
-  } catch (_error) {
-    // The previous listener can belong to an invalidated extension context after reload.
-  }
-}
-globalThis.__HERMES_BROWSER_CONTENT_LOADED__ = CONTENT_SCRIPT_VERSION;
-
-const HermesContentExtractor = globalThis.HermesContentExtractor;
-const HermesSiteAdapters = globalThis.HermesSiteAdapters;
-
-const TEXT_LIMITS = {
-  minimal: 4_000,
-  normal: 12_000,
-  full: 30_000,
-};
-
-const PICK_STYLE_ID = 'hermes-element-pick-style';
-const OUTER_HTML_LIMIT = 4_000;
-const PICK_TEXT_LIMIT = 2_000;
-const ELEMENT_PICK_MESSAGES = Object.freeze({
-  START: 'HERMES_START_ELEMENT_PICK',
-  CANCEL: 'HERMES_CANCEL_ELEMENT_PICK',
-  RESULT: 'HERMES_ELEMENT_PICK_RESULT',
-  PICKING: 'HERMES_ELEMENT_PICKING',
-  CANCELLED: 'HERMES_ELEMENT_PICK_CANCELLED',
-});
-const BROWSER_CONTROL_INDICATOR_MESSAGE = 'HERMES_BROWSER_CONTROL_INDICATOR';
-const BROWSER_CONTROL_ACTION_LABELS = Object.freeze({
-  browser_back: 'Going back',
-  browser_click: 'Clicking',
-  browser_drag: 'Dragging',
-  browser_hover: 'Hovering',
-  browser_navigate: 'Navigating',
-  browser_press: 'Pressing a key',
-  browser_screenshot: 'Capturing',
-  browser_scroll: 'Scrolling',
-  browser_scroll_to: 'Scrolling to target',
-  browser_snapshot: 'Reading page',
-  browser_tab_activate: 'Switching tab',
-  browser_tab_close: 'Closing tab',
-  browser_tab_create: 'Creating tab',
-  browser_tab_group: 'Grouping tabs',
-  browser_tab_ungroup: 'Ungrouping tabs',
-  browser_tabs: 'Checking tabs',
-  browser_type: 'Typing',
-});
-let pickModeActive = false;
-let highlightedElement = null;
-let browserControlIndicatorHost = null;
-let browserControlIndicatorSuspended = false;
-
-function clamp(value, limit) {
-  return HermesContentExtractor?.clampExtractedText?.(value, limit)?.text
-    || String(value || '').slice(0, limit);
-}
-
-function clampPickerText(value = '', max = PICK_TEXT_LIMIT) {
-  return clamp(value, max);
-}
-
-function removeBrowserControlIndicator() {
-  browserControlIndicatorHost?.remove?.();
-  browserControlIndicatorHost = null;
-  browserControlIndicatorSuspended = false;
-}
-
-function showBrowserControlIndicator(action = '', targetRect = null) {
-  removeBrowserControlIndicator();
-  const label = BROWSER_CONTROL_ACTION_LABELS[String(action || '').trim()];
-  if (!label) return false;
-  const host = document.createElement('div');
-  host.className = 'browser-control-indicator';
-  host.setAttribute('aria-hidden', 'true');
-  const root = host.attachShadow({ mode: 'closed' });
-  const rect = targetRect && typeof targetRect === 'object'
-    ? {
-      x: Math.round(Number(targetRect.x)),
-      y: Math.round(Number(targetRect.y)),
-      width: Math.round(Number(targetRect.width)),
-      height: Math.round(Number(targetRect.height)),
-    }
-    : null;
-  const targetStyle = rect && Object.values(rect).every(Number.isFinite) && rect.width > 0 && rect.height > 0
-    ? `display:block;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;`
-    : 'display:none;';
-  root.innerHTML = `<style>
-    :host { all: initial; }
-    .badge { position: fixed; top: 14px; right: 14px; z-index: 2147483646; display: flex; align-items: center; gap: 8px; box-sizing: border-box; max-width: min(250px, calc(100vw - 28px)); padding: 8px 10px; border: 1px solid #0505e8; border-radius: 0; background: #f4f2eb; color: #111; box-shadow: 0 8px 24px rgba(0,0,0,.18); font: 700 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
-    .target { position: fixed; z-index: 2147483645; box-sizing: border-box; border: 2px solid #0505e8; background: rgba(5,5,232,.08); box-shadow: 0 0 0 2px rgba(255,255,255,.75); pointer-events: none; ${targetStyle} }
-    i { display: block; width: 7px; height: 7px; border-radius: 999px; background: #36ff7a; box-shadow: 0 0 0 1px #111; }
-    span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    @media (prefers-color-scheme: dark) { div { border-color: #36ff7a; background: #111; color: #f4f2eb; } i { box-shadow: 0 0 0 1px #f4f2eb; } }
-    @media (prefers-reduced-motion: reduce) { div { transition: none; } }
-  </style><div class="target"></div><div class="badge"><i></i><span>Hermes · ${label}</span></div>`;
-  (document.documentElement || document.body).appendChild(host);
-  browserControlIndicatorHost = host;
-  return true;
-}
-
-function escapeCssIdent(value = '') {
-  const raw = String(value || '');
-  if (!raw) return '';
-  if (typeof globalThis.CSS !== 'undefined' && typeof globalThis.CSS.escape === 'function') {
-    return globalThis.CSS.escape(raw);
-  }
-  return raw.replace(/[^a-zA-Z0-9_-]/g, (char) => `\\${char}`);
-}
-
-function buildCssSelector(element) {
-  if (!element || element.nodeType !== 1) return '';
-  const parts = [];
-  let node = element;
-  while (node && node.nodeType === 1 && node !== document.documentElement) {
-    const tag = node.tagName.toLowerCase();
-    let part = tag;
-    if (node.id) {
-      part = `${tag}#${escapeCssIdent(node.id)}`;
-      parts.unshift(part);
-      break;
-    }
-    const testId = node.getAttribute?.('data-testid') || node.getAttribute?.('data-test-id');
-    if (testId) {
-      part = `${tag}[data-testid="${String(testId).replace(/"/g, '\\"')}"]`;
-      parts.unshift(part);
-      break;
-    }
-    const parent = node.parentElement;
-    if (parent) {
-      const siblings = Array.from(parent.children).filter((child) => child.tagName === node.tagName);
-      if (siblings.length > 1) {
-        const index = siblings.indexOf(node) + 1;
-        part = `${tag}:nth-of-type(${index})`;
-      }
-    }
-    parts.unshift(part);
-    node = parent;
-  }
-  return parts.join(' > ');
-}
-
-function captureElementSnapshot(element) {
-  if (!element || element.nodeType !== 1) {
-    return { ok: false, reason: 'not_an_element' };
-  }
-  const tag = element.tagName.toLowerCase();
-  const rect = element.getBoundingClientRect?.();
-  const attrs = {};
-  for (const name of ['id', 'class', 'name', 'type', 'href', 'src', 'role', 'aria-label', 'aria-labelledby', 'data-testid', 'data-test-id']) {
-    const value = element.getAttribute?.(name);
-    if (value) attrs[name] = value.slice(0, 500);
-  }
-  const className = typeof element.className === 'string' ? element.className.trim().slice(0, 300) : '';
-  const text = clampPickerText((element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim());
-  let outerHtml = '';
-  try {
-    outerHtml = clampPickerText(element.outerHTML || '', OUTER_HTML_LIMIT);
-  } catch {
-    outerHtml = '';
-  }
-  return {
-    ok: true,
-    tag,
-    selector: buildCssSelector(element),
-    text,
-    outerHtml,
-    className,
-    attributes: attrs,
-    boundingBox: rect
-      ? {
-        x: Math.round(rect.x),
-        y: Math.round(rect.y),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height),
-      }
-      : null,
-    capturedAt: new Date().toISOString(),
-  };
-}
-
-function collectContext(options = {}) {
-  if (!HermesContentExtractor?.collectPageContext) {
-    throw new Error('Hermes content extractor runtime is unavailable.');
-  }
-  const depth = options.depth || 'normal';
-  const limit = TEXT_LIMITS[depth] || TEXT_LIMITS.normal;
-  const pageContext = HermesContentExtractor.collectPageContext(document, {
-    maxTextChars: limit,
-    maxSelectedTextChars: Math.min(limit, 8_000),
-    selectedText: globalThis.getSelection?.().toString() || '',
-    source: 'content-script',
-    url: location.href,
-  });
-  if (!HermesSiteAdapters?.inspectSite || !HermesSiteAdapters?.applySiteAdapterPolicy) return pageContext;
-  const siteAdapter = HermesSiteAdapters.inspectSite(document, {
-    url: location.href,
-    explicitCapture: Boolean(options.explicitSiteCapture),
-  });
-  return HermesSiteAdapters.applySiteAdapterPolicy(pageContext, siteAdapter);
-}
-
-function findBalancedJson(source, token) {
-  const tokenIndex = source.indexOf(token);
-  if (tokenIndex < 0) return null;
-  const start = source.indexOf('{', tokenIndex + token.length);
-  if (start < 0) return null;
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (let index = start; index < source.length; index += 1) {
-    const char = source[index];
-    if (inString) {
-      if (escape) {
-        escape = false;
-      } else if (char === '\\') {
-        escape = true;
-      } else if (char === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (char === '"') {
-      inString = true;
-    } else if (char === '{') {
-      depth += 1;
-    } else if (char === '}') {
-      depth -= 1;
-      if (depth === 0) return source.slice(start, index + 1);
-    }
-  }
-  return null;
-}
-
-function youtubePlayerResponse() {
-  const scripts = Array.from(document.scripts || []);
-  for (const script of scripts) {
-    const text = script.textContent || '';
-    if (!text.includes('ytInitialPlayerResponse')) continue;
-    const json = findBalancedJson(text, 'ytInitialPlayerResponse');
-    if (!json) continue;
+/* Hermes Browser Extension - content-script bridge.
+ *
+ * Re-entry contract: this file may execute MULTIPLE times in the same frame -
+ * once from the manifest-declared content_scripts list and again via the
+ * scripting.install-fallback path used when tabs.sendMessage rejects (see
+ * sendContentMessageWithInstallFallback in sidepanel.js), including in frames
+ * where the manifest injection already ran. To stay idempotent:
+ *   - everything lives inside this IIFE so top-level const/let/function
+ *     declarations are scoped per execution and can never collide
+ *     ("Identifier has already been declared", issue #86),
+ *   - cross-run coordination happens exclusively through globalThis sentinels
+ *     (__HERMES_BROWSER_CONTENT_LISTENER__, __HERMES_BROWSER_CONTENT_LOADED__),
+ *   - the previous run's message listener is removed before a fresh one binds,
+ *     and element-pick styles are added only when absent.
+ * Do not hoist any declaration out of the IIFE.
+ */
+(() => {
+  const browserApi = globalThis.hermesBrowserApi;
+  const CONTENT_SCRIPT_VERSION = '2026-07-16-extraction-site-adapters-v1';
+  const previousListener = globalThis.__HERMES_BROWSER_CONTENT_LISTENER__;
+  if (previousListener) {
     try {
-      return JSON.parse(json);
+      browserApi.runtime.onMessage.removeListener(previousListener);
     } catch (_error) {
-      // Try next script.
+      // The previous listener can belong to an invalidated extension context after reload.
     }
   }
-  return null;
-}
+  globalThis.__HERMES_BROWSER_CONTENT_LOADED__ = CONTENT_SCRIPT_VERSION;
 
-function captionTracks() {
-  const response = youtubePlayerResponse();
-  return response?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
-}
+  const HermesContentExtractor = globalThis.HermesContentExtractor;
+  const HermesSiteAdapters = globalThis.HermesSiteAdapters;
 
-function pickCaptionTrack(tracks = []) {
-  if (!tracks.length) return null;
-  return tracks.find((track) => track.languageCode === 'en' && track.kind !== 'asr')
-    || tracks.find((track) => track.languageCode === 'en')
-    || tracks.find((track) => track.kind !== 'asr')
-    || tracks[0];
-}
-
-function parseTimedTextXml(xml = '') {
-  const doc = new DOMParser().parseFromString(String(xml || ''), 'text/xml');
-  return Array.from(doc.querySelectorAll('text'))
-    .map((node) => ({
-      start: Number(node.getAttribute('start') || 0),
-      duration: Number(node.getAttribute('dur') || 0),
-      text: (node.textContent || '').replace(/\s+/g, ' ').trim(),
-    }))
-    .filter((segment) => segment.text);
-}
-
-async function collectYoutubeTranscript() {
-  const tracks = captionTracks();
-  const track = pickCaptionTrack(tracks);
-  if (!track?.baseUrl) return { ok: false, reason: 'no_caption_tracks', source: 'page-dom' };
-  const url = new URL(track.baseUrl);
-  if (!url.searchParams.has('fmt')) url.searchParams.set('fmt', 'srv3');
-  const requestOptions = { credentials: 'omit', redirect: 'error' };
-  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
-    requestOptions.signal = AbortSignal.timeout(8_000);
-  }
-  const response = await fetch(url.toString(), requestOptions);
-  if (!response.ok) return { ok: false, reason: `caption_fetch_${response.status}`, source: 'page-dom' };
-  const segments = parseTimedTextXml(await response.text());
-  if (!segments.length) return { ok: false, reason: 'empty_caption_track', source: 'page-dom' };
-  return {
-    ok: true,
-    source: 'page-dom',
-    language: track.languageCode || '',
-    text: segments.map((segment) => segment.text).join('\n'),
-    segments,
+  const TEXT_LIMITS = {
+    minimal: 4_000,
+    normal: 12_000,
+    full: 30_000,
   };
-}
 
-function ensurePickStyles() {
-  if (document.getElementById(PICK_STYLE_ID)) return;
-  const style = document.createElement('style');
-  style.id = PICK_STYLE_ID;
-  style.textContent = `
-    .hermes-element-pick-highlight {
-      outline: 2px solid #e11d48 !important;
-      outline-offset: 2px !important;
-      cursor: crosshair !important;
-    }
-    html.hermes-element-pick-mode, html.hermes-element-pick-mode * {
-      cursor: crosshair !important;
-    }
-    html.hermes-element-pick-mode::before {
-      content: 'Hermes: click an element (Esc to cancel)';
-      position: fixed;
-      top: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2147483646;
-      background: rgba(15, 23, 42, 0.92);
-      color: #f8fafc;
-      padding: 8px 14px;
-      border-radius: 8px;
-      font: 13px/1.4 system-ui, sans-serif;
-      pointer-events: none;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.35);
-    }
-  `;
-  (document.head || document.documentElement).appendChild(style);
-}
+  const PICK_STYLE_ID = 'hermes-element-pick-style';
+  const OUTER_HTML_LIMIT = 4_000;
+  const PICK_TEXT_LIMIT = 2_000;
+  const ELEMENT_PICK_MESSAGES = Object.freeze({
+    START: 'HERMES_START_ELEMENT_PICK',
+    CANCEL: 'HERMES_CANCEL_ELEMENT_PICK',
+    RESULT: 'HERMES_ELEMENT_PICK_RESULT',
+    PICKING: 'HERMES_ELEMENT_PICKING',
+    CANCELLED: 'HERMES_ELEMENT_PICK_CANCELLED',
+  });
+  const BROWSER_CONTROL_INDICATOR_MESSAGE = 'HERMES_BROWSER_CONTROL_INDICATOR';
+  const BROWSER_CONTROL_ACTION_LABELS = Object.freeze({
+    browser_back: 'Going back',
+    browser_click: 'Clicking',
+    browser_drag: 'Dragging',
+    browser_hover: 'Hovering',
+    browser_navigate: 'Navigating',
+    browser_press: 'Pressing a key',
+    browser_screenshot: 'Capturing',
+    browser_scroll: 'Scrolling',
+    browser_scroll_to: 'Scrolling to target',
+    browser_snapshot: 'Reading page',
+    browser_tab_activate: 'Switching tab',
+    browser_tab_close: 'Closing tab',
+    browser_tab_create: 'Creating tab',
+    browser_tab_group: 'Grouping tabs',
+    browser_tab_ungroup: 'Ungrouping tabs',
+    browser_tabs: 'Checking tabs',
+    browser_type: 'Typing',
+  });
+  let pickModeActive = false;
+  let highlightedElement = null;
+  let browserControlIndicatorHost = null;
+  let browserControlIndicatorSuspended = false;
 
-function clearHighlight() {
-  if (highlightedElement) {
-    highlightedElement.classList.remove('hermes-element-pick-highlight');
-    highlightedElement = null;
+  function clamp(value, limit) {
+    return HermesContentExtractor?.clampExtractedText?.(value, limit)?.text
+      || String(value || '').slice(0, limit);
   }
-}
 
-function setHighlight(element) {
-  if (!element || element === highlightedElement) return;
-  clearHighlight();
-  highlightedElement = element;
-  highlightedElement.classList.add('hermes-element-pick-highlight');
-}
+  function clampPickerText(value = '', max = PICK_TEXT_LIMIT) {
+    return clamp(value, max);
+  }
 
-function teardownPickMode({ cancelled = false, pickedElement = null } = {}) {
-  if (!pickModeActive) return;
-  pickModeActive = false;
-  clearHighlight();
-  document.documentElement.classList.remove('hermes-element-pick-mode');
-  document.removeEventListener('mousemove', onPickMouseMove, true);
-  document.removeEventListener('click', onPickClick, true);
-  document.removeEventListener('keydown', onPickKeydown, true);
-  if (cancelled) {
-    browserApi.runtime.sendMessage({
-      type: ELEMENT_PICK_MESSAGES.CANCELLED,
+  function removeBrowserControlIndicator() {
+    browserControlIndicatorHost?.remove?.();
+    browserControlIndicatorHost = null;
+    browserControlIndicatorSuspended = false;
+  }
+
+  function showBrowserControlIndicator(action = '', targetRect = null) {
+    removeBrowserControlIndicator();
+    const label = BROWSER_CONTROL_ACTION_LABELS[String(action || '').trim()];
+    if (!label) return false;
+    const host = document.createElement('div');
+    host.className = 'browser-control-indicator';
+    host.setAttribute('aria-hidden', 'true');
+    const root = host.attachShadow({ mode: 'closed' });
+    const rect = targetRect && typeof targetRect === 'object'
+      ? {
+        x: Math.round(Number(targetRect.x)),
+        y: Math.round(Number(targetRect.y)),
+        width: Math.round(Number(targetRect.width)),
+        height: Math.round(Number(targetRect.height)),
+      }
+      : null;
+    const targetStyle = rect && Object.values(rect).every(Number.isFinite) && rect.width > 0 && rect.height > 0
+      ? `display:block;left:${rect.x}px;top:${rect.y}px;width:${rect.width}px;height:${rect.height}px;`
+      : 'display:none;';
+    root.innerHTML = `<style>
+      :host { all: initial; }
+      .badge { position: fixed; top: 14px; right: 14px; z-index: 2147483646; display: flex; align-items: center; gap: 8px; box-sizing: border-box; max-width: min(250px, calc(100vw - 28px)); padding: 8px 10px; border: 1px solid #0505e8; border-radius: 0; background: #f4f2eb; color: #111; box-shadow: 0 8px 24px rgba(0,0,0,.18); font: 700 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
+      .target { position: fixed; z-index: 2147483645; box-sizing: border-box; border: 2px solid #0505e8; background: rgba(5,5,232,.08); box-shadow: 0 0 0 2px rgba(255,255,255,.75); pointer-events: none; ${targetStyle} }
+      i { display: block; width: 7px; height: 7px; border-radius: 999px; background: #36ff7a; box-shadow: 0 0 0 1px #111; }
+      span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      @media (prefers-color-scheme: dark) { div { border-color: #36ff7a; background: #111; color: #f4f2eb; } i { box-shadow: 0 0 0 1px #f4f2eb; } }
+      @media (prefers-reduced-motion: reduce) { div { transition: none; } }
+    </style><div class="target"></div><div class="badge"><i></i><span>Hermes · ${label}</span></div>`;
+    (document.documentElement || document.body).appendChild(host);
+    browserControlIndicatorHost = host;
+    return true;
+  }
+
+  function escapeCssIdent(value = '') {
+    const raw = String(value || '');
+    if (!raw) return '';
+    if (typeof globalThis.CSS !== 'undefined' && typeof globalThis.CSS.escape === 'function') {
+      return globalThis.CSS.escape(raw);
+    }
+    return raw.replace(/[^a-zA-Z0-9_-]/g, (char) => `\\${char}`);
+  }
+
+  function buildCssSelector(element) {
+    if (!element || element.nodeType !== 1) return '';
+    const parts = [];
+    let node = element;
+    while (node && node.nodeType === 1 && node !== document.documentElement) {
+      const tag = node.tagName.toLowerCase();
+      let part = tag;
+      if (node.id) {
+        part = `${tag}#${escapeCssIdent(node.id)}`;
+        parts.unshift(part);
+        break;
+      }
+      const testId = node.getAttribute?.('data-testid') || node.getAttribute?.('data-test-id');
+      if (testId) {
+        part = `${tag}[data-testid="${String(testId).replace(/"/g, '\\"')}"]`;
+        parts.unshift(part);
+        break;
+      }
+      const parent = node.parentElement;
+      if (parent) {
+        const siblings = Array.from(parent.children).filter((child) => child.tagName === node.tagName);
+        if (siblings.length > 1) {
+          const index = siblings.indexOf(node) + 1;
+          part = `${tag}:nth-of-type(${index})`;
+        }
+      }
+      parts.unshift(part);
+      node = parent;
+    }
+    return parts.join(' > ');
+  }
+
+  function captureElementSnapshot(element) {
+    if (!element || element.nodeType !== 1) {
+      return { ok: false, reason: 'not_an_element' };
+    }
+    const tag = element.tagName.toLowerCase();
+    const rect = element.getBoundingClientRect?.();
+    const attrs = {};
+    for (const name of ['id', 'class', 'name', 'type', 'href', 'src', 'role', 'aria-label', 'aria-labelledby', 'data-testid', 'data-test-id']) {
+      const value = element.getAttribute?.(name);
+      if (value) attrs[name] = value.slice(0, 500);
+    }
+    const className = typeof element.className === 'string' ? element.className.trim().slice(0, 300) : '';
+    const text = clampPickerText((element.innerText || element.textContent || '').replace(/\s+/g, ' ').trim());
+    let outerHtml = '';
+    try {
+      outerHtml = clampPickerText(element.outerHTML || '', OUTER_HTML_LIMIT);
+    } catch {
+      outerHtml = '';
+    }
+    return {
+      ok: true,
+      tag,
+      selector: buildCssSelector(element),
+      text,
+      outerHtml,
+      className,
+      attributes: attrs,
+      boundingBox: rect
+        ? {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        }
+        : null,
+      capturedAt: new Date().toISOString(),
+    };
+  }
+
+  function collectContext(options = {}) {
+    if (!HermesContentExtractor?.collectPageContext) {
+      throw new Error('Hermes content extractor runtime is unavailable.');
+    }
+    const depth = options.depth || 'normal';
+    const limit = TEXT_LIMITS[depth] || TEXT_LIMITS.normal;
+    const pageContext = HermesContentExtractor.collectPageContext(document, {
+      maxTextChars: limit,
+      maxSelectedTextChars: Math.min(limit, 8_000),
+      selectedText: globalThis.getSelection?.().toString() || '',
+      source: 'content-script',
       url: location.href,
-    }).catch(() => {});
-  } else if (pickedElement) {
-    browserApi.runtime.sendMessage({
-      type: ELEMENT_PICK_MESSAGES.RESULT,
+    });
+    if (!HermesSiteAdapters?.inspectSite || !HermesSiteAdapters?.applySiteAdapterPolicy) return pageContext;
+    const siteAdapter = HermesSiteAdapters.inspectSite(document, {
       url: location.href,
-      pickedElement,
-    }).catch(() => {});
+      explicitCapture: Boolean(options.explicitSiteCapture),
+    });
+    return HermesSiteAdapters.applySiteAdapterPolicy(pageContext, siteAdapter);
   }
-}
 
-function elementUnderPointer(event) {
-  let target = document.elementFromPoint(event.clientX, event.clientY);
-  while (target?.shadowRoot) {
-    const inner = target.shadowRoot.elementFromPoint(event.clientX, event.clientY);
-    if (!inner || inner === target) break;
-    target = inner;
+  function findBalancedJson(source, token) {
+    const tokenIndex = source.indexOf(token);
+    if (tokenIndex < 0) return null;
+    const start = source.indexOf('{', tokenIndex + token.length);
+    if (start < 0) return null;
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    for (let index = start; index < source.length; index += 1) {
+      const char = source[index];
+      if (inString) {
+        if (escape) {
+          escape = false;
+        } else if (char === '\\') {
+          escape = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (char === '"') {
+        inString = true;
+      } else if (char === '{') {
+        depth += 1;
+      } else if (char === '}') {
+        depth -= 1;
+        if (depth === 0) return source.slice(start, index + 1);
+      }
+    }
+    return null;
   }
-  if (!target || target === document.documentElement || target === document.body) return null;
-  if (target.id === PICK_STYLE_ID) return null;
-  return target;
-}
 
-function onPickMouseMove(event) {
-  if (!pickModeActive) return;
-  const element = elementUnderPointer(event);
-  if (element) setHighlight(element);
-}
+  function youtubePlayerResponse() {
+    const scripts = Array.from(document.scripts || []);
+    for (const script of scripts) {
+      const text = script.textContent || '';
+      if (!text.includes('ytInitialPlayerResponse')) continue;
+      const json = findBalancedJson(text, 'ytInitialPlayerResponse');
+      if (!json) continue;
+      try {
+        return JSON.parse(json);
+      } catch (_error) {
+        // Try next script.
+      }
+    }
+    return null;
+  }
 
-function onPickClick(event) {
-  if (!pickModeActive) return;
-  event.preventDefault();
-  event.stopPropagation();
-  const element = elementUnderPointer(event) || highlightedElement;
-  if (!element) return;
-  const snapshot = captureElementSnapshot(element);
-  if (!snapshot.ok) return;
-  teardownPickMode({ pickedElement: snapshot });
-}
+  function captionTracks() {
+    const response = youtubePlayerResponse();
+    return response?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+  }
 
-function onPickKeydown(event) {
-  if (!pickModeActive) return;
-  if (event.key === 'Escape') {
+  function pickCaptionTrack(tracks = []) {
+    if (!tracks.length) return null;
+    return tracks.find((track) => track.languageCode === 'en' && track.kind !== 'asr')
+      || tracks.find((track) => track.languageCode === 'en')
+      || tracks.find((track) => track.kind !== 'asr')
+      || tracks[0];
+  }
+
+  function parseTimedTextXml(xml = '') {
+    const doc = new DOMParser().parseFromString(String(xml || ''), 'text/xml');
+    return Array.from(doc.querySelectorAll('text'))
+      .map((node) => ({
+        start: Number(node.getAttribute('start') || 0),
+        duration: Number(node.getAttribute('dur') || 0),
+        text: (node.textContent || '').replace(/\s+/g, ' ').trim(),
+      }))
+      .filter((segment) => segment.text);
+  }
+
+  async function collectYoutubeTranscript() {
+    const tracks = captionTracks();
+    const track = pickCaptionTrack(tracks);
+    if (!track?.baseUrl) return { ok: false, reason: 'no_caption_tracks', source: 'page-dom' };
+    const url = new URL(track.baseUrl);
+    if (!url.searchParams.has('fmt')) url.searchParams.set('fmt', 'srv3');
+    const requestOptions = { credentials: 'omit', redirect: 'error' };
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+      requestOptions.signal = AbortSignal.timeout(8_000);
+    }
+    const response = await fetch(url.toString(), requestOptions);
+    if (!response.ok) return { ok: false, reason: `caption_fetch_${response.status}`, source: 'page-dom' };
+    const segments = parseTimedTextXml(await response.text());
+    if (!segments.length) return { ok: false, reason: 'empty_caption_track', source: 'page-dom' };
+    return {
+      ok: true,
+      source: 'page-dom',
+      language: track.languageCode || '',
+      text: segments.map((segment) => segment.text).join('\n'),
+      segments,
+    };
+  }
+
+  function ensurePickStyles() {
+    if (document.getElementById(PICK_STYLE_ID)) return;
+    const style = document.createElement('style');
+    style.id = PICK_STYLE_ID;
+    style.textContent = `
+      .hermes-element-pick-highlight {
+        outline: 2px solid #e11d48 !important;
+        outline-offset: 2px !important;
+        cursor: crosshair !important;
+      }
+      html.hermes-element-pick-mode, html.hermes-element-pick-mode * {
+        cursor: crosshair !important;
+      }
+      html.hermes-element-pick-mode::before {
+        content: 'Hermes: click an element (Esc to cancel)';
+        position: fixed;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 2147483646;
+        background: rgba(15, 23, 42, 0.92);
+        color: #f8fafc;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font: 13px/1.4 system-ui, sans-serif;
+        pointer-events: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+      }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  function clearHighlight() {
+    if (highlightedElement) {
+      highlightedElement.classList.remove('hermes-element-pick-highlight');
+      highlightedElement = null;
+    }
+  }
+
+  function setHighlight(element) {
+    if (!element || element === highlightedElement) return;
+    clearHighlight();
+    highlightedElement = element;
+    highlightedElement.classList.add('hermes-element-pick-highlight');
+  }
+
+  function teardownPickMode({ cancelled = false, pickedElement = null } = {}) {
+    if (!pickModeActive) return;
+    pickModeActive = false;
+    clearHighlight();
+    document.documentElement.classList.remove('hermes-element-pick-mode');
+    document.removeEventListener('mousemove', onPickMouseMove, true);
+    document.removeEventListener('click', onPickClick, true);
+    document.removeEventListener('keydown', onPickKeydown, true);
+    if (cancelled) {
+      browserApi.runtime.sendMessage({
+        type: ELEMENT_PICK_MESSAGES.CANCELLED,
+        url: location.href,
+      }).catch(() => {});
+    } else if (pickedElement) {
+      browserApi.runtime.sendMessage({
+        type: ELEMENT_PICK_MESSAGES.RESULT,
+        url: location.href,
+        pickedElement,
+      }).catch(() => {});
+    }
+  }
+
+  function elementUnderPointer(event) {
+    let target = document.elementFromPoint(event.clientX, event.clientY);
+    while (target?.shadowRoot) {
+      const inner = target.shadowRoot.elementFromPoint(event.clientX, event.clientY);
+      if (!inner || inner === target) break;
+      target = inner;
+    }
+    if (!target || target === document.documentElement || target === document.body) return null;
+    if (target.id === PICK_STYLE_ID) return null;
+    return target;
+  }
+
+  function onPickMouseMove(event) {
+    if (!pickModeActive) return;
+    const element = elementUnderPointer(event);
+    if (element) setHighlight(element);
+  }
+
+  function onPickClick(event) {
+    if (!pickModeActive) return;
     event.preventDefault();
     event.stopPropagation();
+    const element = elementUnderPointer(event) || highlightedElement;
+    if (!element) return;
+    const snapshot = captureElementSnapshot(element);
+    if (!snapshot.ok) return;
+    teardownPickMode({ pickedElement: snapshot });
+  }
+
+  function onPickKeydown(event) {
+    if (!pickModeActive) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      teardownPickMode({ cancelled: true });
+    }
+  }
+
+  function startPickMode() {
+    if (pickModeActive) return { ok: true, alreadyActive: true };
+    pickModeActive = true;
+    ensurePickStyles();
+    document.documentElement.classList.add('hermes-element-pick-mode');
+    document.addEventListener('mousemove', onPickMouseMove, true);
+    document.addEventListener('click', onPickClick, true);
+    document.addEventListener('keydown', onPickKeydown, true);
+    browserApi.runtime.sendMessage({ type: ELEMENT_PICK_MESSAGES.PICKING, url: location.href }).catch(() => {});
+    return { ok: true };
+  }
+
+  function cancelPickMode() {
     teardownPickMode({ cancelled: true });
+    return { ok: true };
   }
-}
 
-function startPickMode() {
-  if (pickModeActive) return { ok: true, alreadyActive: true };
-  pickModeActive = true;
-  ensurePickStyles();
-  document.documentElement.classList.add('hermes-element-pick-mode');
-  document.addEventListener('mousemove', onPickMouseMove, true);
-  document.addEventListener('click', onPickClick, true);
-  document.addEventListener('keydown', onPickKeydown, true);
-  browserApi.runtime.sendMessage({ type: ELEMENT_PICK_MESSAGES.PICKING, url: location.href }).catch(() => {});
-  return { ok: true };
-}
+  // Every content-script document announces a new authoritative frame
+  // generation to the MV3 worker. The message carries no page URL or content;
+  // sender.tab/frameId are supplied by the browser and cannot be spoofed by the
+  // page. It also wakes a suspended worker without requiring the side panel.
+  browserApi.runtime.sendMessage({ type: 'HERMES_CONTROLLER_DOCUMENT_READY' }).catch(() => {});
 
-function cancelPickMode() {
-  teardownPickMode({ cancelled: true });
-  return { ok: true };
-}
-
-// Every content-script document announces a new authoritative frame
-// generation to the MV3 worker. The message carries no page URL or content;
-// sender.tab/frameId are supplied by the browser and cannot be spoofed by the
-// page. It also wakes a suspended worker without requiring the side panel.
-browserApi.runtime.sendMessage({ type: 'HERMES_CONTROLLER_DOCUMENT_READY' }).catch(() => {});
-
-const messageListener = (message, _sender, sendResponse) => {
-  if (message?.type === BROWSER_CONTROL_INDICATOR_MESSAGE) {
-    if (message.phase === 'finish') removeBrowserControlIndicator();
-    else if (message.phase === 'suspend') {
-      browserControlIndicatorSuspended = true;
-      if (browserControlIndicatorHost) browserControlIndicatorHost.style.display = 'none';
-    } else if (message.phase === 'resume') {
-      browserControlIndicatorSuspended = false;
-      if (browserControlIndicatorHost) browserControlIndicatorHost.style.display = '';
-    } else if (message.phase === 'start') {
-      showBrowserControlIndicator(message.action, message.targetRect);
-      if (browserControlIndicatorSuspended && browserControlIndicatorHost) browserControlIndicatorHost.style.display = 'none';
+  const messageListener = (message, _sender, sendResponse) => {
+    if (message?.type === BROWSER_CONTROL_INDICATOR_MESSAGE) {
+      if (message.phase === 'finish') removeBrowserControlIndicator();
+      else if (message.phase === 'suspend') {
+        browserControlIndicatorSuspended = true;
+        if (browserControlIndicatorHost) browserControlIndicatorHost.style.display = 'none';
+      } else if (message.phase === 'resume') {
+        browserControlIndicatorSuspended = false;
+        if (browserControlIndicatorHost) browserControlIndicatorHost.style.display = '';
+      } else if (message.phase === 'start') {
+        showBrowserControlIndicator(message.action, message.targetRect);
+        if (browserControlIndicatorSuspended && browserControlIndicatorHost) browserControlIndicatorHost.style.display = 'none';
+      }
+      sendResponse({ ok: true });
+      return false;
     }
-    sendResponse({ ok: true });
+    if (message?.type === 'HERMES_GET_PAGE_CONTEXT') {
+      try {
+        sendResponse(collectContext(message.options || {}));
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error) });
+      }
+      return true;
+    }
+    if (message?.type === 'HERMES_GET_YOUTUBE_TRANSCRIPT_DOM') {
+      collectYoutubeTranscript()
+        .then(sendResponse)
+        .catch((error) => sendResponse({ ok: false, reason: error?.message || String(error), source: 'page-dom' }));
+      return true;
+    }
+    if (message?.type === ELEMENT_PICK_MESSAGES.START) {
+      try {
+        sendResponse(startPickMode());
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error) });
+      }
+      return true;
+    }
+    if (message?.type === ELEMENT_PICK_MESSAGES.CANCEL) {
+      try {
+        sendResponse(cancelPickMode());
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error) });
+      }
+      return true;
+    }
     return false;
-  }
-  if (message?.type === 'HERMES_GET_PAGE_CONTEXT') {
-    try {
-      sendResponse(collectContext(message.options || {}));
-    } catch (error) {
-      sendResponse({ ok: false, error: error?.message || String(error) });
-    }
-    return true;
-  }
-  if (message?.type === 'HERMES_GET_YOUTUBE_TRANSCRIPT_DOM') {
-    collectYoutubeTranscript()
-      .then(sendResponse)
-      .catch((error) => sendResponse({ ok: false, reason: error?.message || String(error), source: 'page-dom' }));
-    return true;
-  }
-  if (message?.type === ELEMENT_PICK_MESSAGES.START) {
-    try {
-      sendResponse(startPickMode());
-    } catch (error) {
-      sendResponse({ ok: false, error: error?.message || String(error) });
-    }
-    return true;
-  }
-  if (message?.type === ELEMENT_PICK_MESSAGES.CANCEL) {
-    try {
-      sendResponse(cancelPickMode());
-    } catch (error) {
-      sendResponse({ ok: false, error: error?.message || String(error) });
-    }
-    return true;
-  }
-  return false;
-};
+  };
 
-browserApi.runtime.onMessage.addListener(messageListener);
-globalThis.__HERMES_BROWSER_CONTENT_LISTENER__ = messageListener;
+  browserApi.runtime.onMessage.addListener(messageListener);
+  globalThis.__HERMES_BROWSER_CONTENT_LISTENER__ = messageListener;
+})();

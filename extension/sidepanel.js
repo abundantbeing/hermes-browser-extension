@@ -370,6 +370,53 @@ import {
   followTargetTabId,
 } from './lib/browser-control-ui.mjs';
 
+// -- Train 1 Phase 0 startup instrumentation (observer-only) ---------------
+// Marks/measure hooks for scripts/bench-startup.mjs (window.__HBE_BOOT_MARKS).
+// Every call below is guarded and one-shot so a repeated render or a missing
+// performance API can never gate, reorder, or otherwise change boot behavior;
+// hooks are appended after the existing behavior that completes each phase.
+const HBE_BOOT_TARGET = globalThis;
+if (!Array.isArray(HBE_BOOT_TARGET.__HBE_BOOT_MARKS)) {
+  HBE_BOOT_TARGET.__HBE_BOOT_MARKS = [];
+}
+const HBE_BOOT_MARKS = HBE_BOOT_TARGET.__HBE_BOOT_MARKS;
+const HBE_BOOT_EMITTED = new Set();
+function hbeBootClock() {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
+function hbeBootFindTime(markName) {
+  for (let index = HBE_BOOT_MARKS.length - 1; index >= 0; index -= 1) {
+    const entry = HBE_BOOT_MARKS[index];
+    if (entry?.mark === markName && Number.isFinite(entry?.t)) return entry.t;
+  }
+  return null;
+}
+function hbeBootEmit(name, { startMark = null } = {}) {
+  try {
+    const t = hbeBootClock();
+    if (!HBE_BOOT_EMITTED.has(name)) {
+      HBE_BOOT_EMITTED.add(name);
+      HBE_BOOT_MARKS.push({ mark: name, t });
+      if (typeof performance !== 'undefined' && typeof performance.mark === 'function') {
+        try { performance.mark(name); } catch { /* mark is best-effort */ }
+      }
+    }
+    if (startMark) {
+      const start = hbeBootFindTime(startMark);
+      if (start !== null) {
+        HBE_BOOT_MARKS.push({ measure: name, dur: Math.max(0, t - start) });
+        if (typeof performance !== 'undefined' && typeof performance.measure === 'function') {
+          try { performance.measure(name, { start, end: t }); } catch { /* measure is best-effort */ }
+        }
+      }
+    }
+  } catch { /* instrumentation must never block boot */ }
+}
+
+hbeBootEmit('panel:body-start');
+
 const $ = (selector) => document.querySelector(selector);
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
@@ -1022,7 +1069,10 @@ function renderStartupReadiness() {
   if (els.inlineSendButton) els.inlineSendButton.disabled = view.visible || els.inlineSendButton.disabled;
   if (els.modelMenuButton) els.modelMenuButton.disabled = view.visible;
   if (els.newSessionButton) els.newSessionButton.disabled = view.visible;
-  if (!view.visible) updateComposerBusyState();
+  if (!view.visible) {
+    updateComposerBusyState();
+    hbeBootEmit('panel:interactive', { startMark: 'panel:body-start' });
+  }
 }
 
 function setStartupReadiness(event = {}) {
@@ -7916,6 +7966,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   await ensureContextMenuEditor();
   await hydrateContextDeliveryState();
   renderMessagesFromStorage();
+  hbeBootEmit('panel:messages-painted', { startMark: 'panel:body-start' });
   renderTaskStack();
 }
 
@@ -8158,7 +8209,26 @@ async function sendContentMessageWithInstallFallback(tabId, message, { frameId =
     return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
   } catch (originalError) {
     try {
-      await browserApi.scripting.executeScript({ target: scriptTarget, files: manifestContentScriptFiles() });
+      // Issue #86: the fallback must be idempotent. The manifest bridge may
+      // already be alive in this tab/frame (a rejection can mean "listener
+      // not ready yet", "message target torn down", or "policy error"), and
+      // blindly re-running content.js into an initialized frame wasted work
+      // and risked double-binding listeners. Probe the re-entry sentinel the
+      // bridge sets (content.js) and inject only what is actually missing.
+      // Re-execution itself remains SAFE since content.js now scopes all
+      // state inside an IIFE with listener-cleanup-first semantics.
+      const sentinel = await browserApi.scripting.executeScript({
+        target: scriptTarget,
+        func: () => globalThis.__HERMES_BROWSER_CONTENT_LOADED__ || null,
+      });
+      const bridgeAlreadyLoaded = Boolean(sentinel?.[0]?.result);
+      const files = manifestContentScriptFiles();
+      const filesToInject = bridgeAlreadyLoaded
+        ? files.filter((file) => file.endsWith('content-extractor.js'))
+        : files;
+      if (filesToInject.length) {
+        await browserApi.scripting.executeScript({ target: scriptTarget, files: filesToInject });
+      }
       return await browserApi.tabs.sendMessage(tabId, message, messageOptions);
     } catch (fallbackError) {
       if (fallbackError && typeof fallbackError === 'object' && !fallbackError.cause) fallbackError.cause = originalError;
@@ -9461,31 +9531,50 @@ async function connectApiWithPairing() {
 
     const capabilities = await loadGatewayCapabilities({ quiet: true, publicOnly: true, healthOk: true });
     if (!connectionController.isCurrent(generation)) return;
-    if (!capabilities.browserPairing) {
-      connectionController.transition(generation, CONNECTION_STATES.DEGRADED, { reason: 'manual-setup-required' });
-      markConnectionProbe('unconfigured', 'Manual setup required; automatic browser pairing is not advertised by this Hermes runtime.');
-      els.connectStatus.textContent = translateUiText('Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.');
-      setStatus('warn', 'Manual setup required', 'This Hermes runtime does not advertise browser pairing yet.');
-      openSettingsDialog();
-      return;
+    let pairingStart = null;
+    let pairingPayload = null;
+    if (capabilities.browserPairing) {
+      pairingStart = await publicApiFetch('/api/browser-extension/pair/start', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Hermes Browser Extension',
+          extensionId: browserApi.runtime?.id || '',
+        }),
+      });
+      pairingPayload = await readJsonResponse(pairingStart);
+      if (!connectionController.isCurrent(generation)) return;
+      if (!pairingStart.ok) throw new Error(pairingFailureMessage(pairingStart.status, pairingPayload));
+    } else {
+      // Bootstrap pairing recovery (Firefox/401 hardening): some gateways keep
+      // /v1/capabilities behind the API key, so the unauthenticated probe 401s
+      // and the advertisement is unreadable even though the pairing bootstrap
+      // route is open. Give loopback local gateways one optimistic pair/start
+      // attempt before falling back to manual setup; a genuine miss lands in
+      // that same manual-setup path below.
+      pairingStart = await publicApiFetch('/api/browser-extension/pair/start', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'Hermes Browser Extension',
+          extensionId: browserApi.runtime?.id || '',
+        }),
+      });
+      try { pairingPayload = await readJsonResponse(pairingStart); } catch { pairingPayload = null; }
+      if (!connectionController.isCurrent(generation)) return;
+      if (!pairingStart.ok || !pairingPayload || (!pairingPayload.token && !pairingPayload.approval_url)) {
+        connectionController.transition(generation, CONNECTION_STATES.DEGRADED, { reason: 'manual-setup-required' });
+        markConnectionProbe('unconfigured', 'Manual setup required; automatic browser pairing is not advertised by this Hermes runtime.');
+        els.connectStatus.textContent = translateUiText('Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.');
+        setStatus('warn', 'Manual setup required', 'This Hermes runtime does not advertise browser pairing yet.');
+        openSettingsDialog();
+        return;
+      }
     }
 
-    const start = await publicApiFetch('/api/browser-extension/pair/start', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: 'Hermes Browser Extension',
-        extensionId: browserApi.runtime?.id || '',
-      }),
-    });
-    const payload = await readJsonResponse(start);
-    if (!connectionController.isCurrent(generation)) return;
-    if (!start.ok) throw new Error(pairingFailureMessage(start.status, payload));
-
-    let pairedToken = payload.token || '';
+    let pairedToken = pairingPayload.token || '';
     if (!pairedToken) {
       els.connectStatus.textContent = translateUiText('Approval opened. Approve Hermes Browser Extension, then return here.');
-      await openApprovalUrl(payload.approval_url);
-      pairedToken = await pollPairing(payload.pairing_id);
+      await openApprovalUrl(pairingPayload.approval_url);
+      pairedToken = await pollPairing(pairingPayload.pairing_id);
     }
     if (!connectionController.isCurrent(generation)) return;
     settings.apiKey = pairedToken;
@@ -11543,7 +11632,12 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
       },
     },
     onEvent: (event) => {
-      if (event.type === 'stage') setStartupReadiness(event);
+      if (event.type === 'stage') {
+        setStartupReadiness(event);
+        const stageKey = String(event?.step || event?.phase || '').trim();
+        if (stageKey) hbeBootEmit(`panel:stage-settle:${stageKey}`, { startMark: 'panel:body-start' });
+        if (stageKey === 'settings') hbeBootEmit('panel:settings-restored', { startMark: 'panel:body-start' });
+      }
     },
   });
 }
@@ -11551,6 +11645,7 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
 async function runStartupReadiness() {
   try {
     await runPanelConnectionReadiness({ restoreSettings: true });
+    hbeBootEmit('panel:readiness-complete');
     await hydrateDelegationWatches();
     await refreshWakeState();
     await consumePendingVoiceDraft();
@@ -11558,6 +11653,7 @@ async function runStartupReadiness() {
   } catch (error) {
     setStatus('error', `Startup ${error?.stage || 'readiness'} failed`, error?.message || String(error), { translateDetail: false });
     renderEmptyState();
+    hbeBootEmit('panel:readiness-failed');
   }
 }
 
@@ -11579,6 +11675,7 @@ subscribeLocale(() => {
   });
 });
 await initI18n();
+hbeBootEmit('panel:i18n-ready');
 bindEvents();
 await runStartupReadiness();
 renderBrowserControl();

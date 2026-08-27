@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-27
+
+### Fixed
+
+- Fixed repeated `Uncaught SyntaxError: Identifier 'browserApi' has already been declared` in Vivaldi/Chromium by scoping the entire content-script bridge inside an idempotent IIFE; cross-run coordination stays on the existing globalThis sentinels with listener cleanup before rebinding (#86).
+- Hardened the scripting install fallback to probe the content-script re-entry sentinel and inject only missing scripts instead of blindly re-executing all manifest scripts into an initialized frame (#86).
+- Fixed automatic pairing never reaching its approval window on gateways that keep `/v1/capabilities` behind authentication: a fresh install now makes one bootstrap pair/start attempt when the capability advertisement is unreadable (HTTP 401) on a loopback local gateway, falling back to manual setup only when that genuinely fails. Verified live end-to-end on Firefox 154 / Windows 11 against an auth-hardened gateway: pair start, Approve Connection page, token grant, and full readiness chain (#85 investigation).
+
+### Added
+
+- Added startup latency instrumentation (observer-only performance marks exposed via `window.__HBE_BOOT_MARKS`) covering body start, i18n, settings restore, per-stage readiness settles, message paint, and composer interactive.
+- Added `scripts/bench-startup.mjs` (`npm run bench:startup`): cold/warm/restart startup benchmark with an embedded fixture gateway, hard sample-count assertions, p50/p90 reporting, and a gateway-down scenario.
+
+### Changed
+
+- Internal-only: added the Python tooling namespace under `scripts/pytools/` (gateway log forensics, capability/route diffing, release consistency auditing, Bot Mode contract diffing, controller trace timelines) with stdlib unittest suites wired as `npm run test:pytools`.
+
 ## [0.3.0] - 2026-08-22
 
 ### Added

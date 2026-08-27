@@ -18,10 +18,10 @@ const PHASE5_PURE_MODULES = PHASE5_MODULES.filter((file) => ![
 
 test('Phase 5 controller foundations remain present in the v0.3.0 package and manifests', () => {
   const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(packageJson.version, '0.3.0');
+  assert.equal(packageJson.version, '0.3.1');
   for (const manifestPath of ['extension/manifest.json', 'manifest.json']) {
     const manifest = JSON.parse(readFileSync(new URL(`../${manifestPath}`, import.meta.url), 'utf8'));
-    assert.equal(manifest.version, '0.3.0');
+    assert.equal(manifest.version, '0.3.1');
   }
 });
 

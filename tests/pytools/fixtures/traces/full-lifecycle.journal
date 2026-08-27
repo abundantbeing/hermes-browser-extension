@@ -1,0 +1,7 @@
+{"ts": "2026-08-26T11:00:00Z", "event": "controller.register", "controller_id": "ctrl-77"}
+{"ts": "2026-08-26T11:00:02Z", "event": "lease_acquired", "controller_id": "ctrl-77", "tab_id": 42}
+{"ts": "2026-08-26T11:00:05Z", "event": "command.dispatch", "method": "browser.tab.scroll", "controller_id": "ctrl-77"}
+{"ts": "2026-08-26T11:00:06Z", "event": "approval.granted", "controller_id": "ctrl-77"}
+{"ts": "2026-08-26T11:00:07Z", "event": "action.result", "ok": true, "duration_ms": 120, "controller_id": "ctrl-77", "tab_id": 42, "receipts": [{"tool_name": "browser.tab.scroll", "ok": true, "duration_ms": 118, "controller_id": "ctrl-77", "tab_id": 42}]}
+{"ts": "2026-08-26T11:00:09Z", "event": "run.stop", "controller_id": "ctrl-77"}
+{"ts": "2026-08-26T11:00:11Z", "event": "control.detach", "controller_id": "ctrl-77"}

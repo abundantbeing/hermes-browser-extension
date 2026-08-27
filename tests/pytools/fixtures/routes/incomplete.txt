@@ -1,0 +1,4 @@
+# routes fixture MISSING the browserContextStatus route (advertised-but-unroutable case)
+/v1/browser_context_provider/register
+/v1/browser_context/upload
+/v1/browser_companion_plugin/ping

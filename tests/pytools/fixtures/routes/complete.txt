@@ -1,0 +1,8 @@
+# routes known to the deployed gateway (fixture: matches all advertised flags)
+/v1/browser_context_provider/register
+/v1/browser_context/upload
+/v1/browser_context/status
+/v1/browser_companion_plugin/ping
+/plugin_actions/list
+/approval_events/stream
+/v1/browser-control/session
