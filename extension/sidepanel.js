@@ -187,7 +187,7 @@ import {
   connectionSecuritySummary,
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
-import { normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
+import { filterKnownAssistantReconcileParts, normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import {
   DELEGATION_WATCH_STORAGE_KEY,
@@ -8872,7 +8872,7 @@ function sseBlocksFromBuffer(buffer, { flush = false } = {}) {
   return { blocks, rest };
 }
 
-async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime } = {}) {
+async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [] } = {}) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -9184,7 +9184,7 @@ async function ensureRemoteWsSession(connection) {
   return liveId;
 }
 
-async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {}) {
+async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, knownAssistantTexts = [] } = {}) {
   const connection = await ensureRemoteWsClient();
   const sessionId = await ensureRemoteWsSession(connection);
   onRun?.(sessionId);
@@ -9255,10 +9255,10 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun } = {
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime } = {}) {
-  if (isRemoteWsMode()) return streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun });
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [] } = {}) {
+  if (isRemoteWsMode()) return streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, knownAssistantTexts });
   const hasSessionRoutes = await ensureHermesSession();
-  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun });
+  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, knownAssistantTexts });
 
   let response;
   try {
@@ -9294,14 +9294,14 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
     });
   }
   try {
-    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime });
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts });
   } catch (error) {
     error.requestAccepted = true;
     throw error;
   }
 }
 
-async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun } = {}) {
+async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, knownAssistantTexts = [] } = {}) {
   let response;
   try {
     response = await apiFetch('/v1/chat/completions', {
@@ -9336,7 +9336,7 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
     });
   }
   try {
-    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun });
+    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun, knownAssistantTexts });
     await captureDelegationDispatchesFromCurrentRestHistory();
     return result;
   } catch (error) {
@@ -9823,6 +9823,12 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     });
     const { node: userNode } = addMessage('user', displayUserText);
     appendContextReceipt(userNode, receipt);
+    // Prior completed assistant bubbles, for run.completed reconcile filtering.
+    // Server degraded-history edge case must never restack them into this turn's
+    // live bubble. See runtime-events.mjs:filterKnownAssistantReconcileParts.
+    const priorAssistantTexts = messages
+      .filter((message) => message.role === 'assistant' && message.content)
+      .map((message) => String(message.content));
     appendUserImageAttachments(
       userNode.querySelector('.message-content'),
       preparedAttachments,

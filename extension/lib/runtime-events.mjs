@@ -53,7 +53,23 @@ function assistantTextFromRunCompleted(data = {}, finalizedText = '') {
   return assistantParts.join('\n\n');
 }
 
-export function reduceAssistantStreamText(state = {}, event = {}) {
+// Reconcile safety: strip prior-turn bubbles from a server reconcile payload.
+// Empty result falls back to the raw payload so a genuine reply is never lost.
+export function filterKnownAssistantReconcileParts(reconciledText = '', knownAssistantTexts = []) {
+  const raw = String(reconciledText || '');
+  if (!raw || !Array.isArray(knownAssistantTexts) || knownAssistantTexts.length === 0) return raw;
+  const norm = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+  const known = new Set(knownAssistantTexts.map(norm).filter(Boolean));
+  if (!known.size) return raw;
+  const parts = raw.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+  const kept = parts.filter((part) => {
+    if (!known.has(norm(part))) return true;
+    return parts.length === 1;
+  });
+  if (!kept.length) return raw;
+  return kept.join('\n\n');
+}
+export function reduceAssistantStreamText(state = {}, event = {}, knownAssistantTexts = []) {
   const current = {
     text: String(state.text || ''),
     finalized: Boolean(state.finalized),
@@ -64,10 +80,17 @@ export function reduceAssistantStreamText(state = {}, event = {}) {
     return { ...current, text: `${current.text}${data.delta}` };
   }
   if (type === BROWSER_RUNTIME_EVENT_NAMES.assistantCompleted && data.content) {
-    return { text: String(data.content), finalized: true };
+    return { text: filterKnownAssistantReconcileParts(String(data.content), knownAssistantTexts), finalized: true };
   }
   if (type === BROWSER_RUNTIME_EVENT_NAMES.runCompleted) {
-    const reconciled = assistantTextFromRunCompleted(data, current.finalized ? current.text : '');
+    // Defensive reconcile: a degraded server transcript can defeat turn-start
+    // detection and fold PRIOR turns into run.completed.messages. Drop parts
+    // this panel already rendered; current-turn segments survive.
+    // Refs: Firefox stacked-replies session 4d0c24 (2026-08-27).
+    const reconciled = filterKnownAssistantReconcileParts(
+      assistantTextFromRunCompleted(data, current.finalized ? current.text : ''),
+      knownAssistantTexts,
+    );
     return reconciled ? { ...current, text: reconciled } : current;
   }
   return current;

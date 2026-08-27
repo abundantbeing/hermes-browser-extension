@@ -93,3 +93,54 @@ test('run.completed remains a fallback when assistant.completed is absent', () =
   assert.equal(state.text, 'fallback transcript text');
   assert.equal(state.finalized, false);
 });
+test('run.completed reconcile drops prior-turn bubbles restacked by degraded server history', () => {
+  const priorA = 'earlier reply one';
+  const priorB = 'earlier reply two';
+  // Degraded-history server payload: current-turn segment first, then prior turns.
+  const stackedPayload = [
+    { role: 'assistant', content: 'current turn segment' },
+    { role: 'assistant', content: priorA },
+    { role: 'assistant', content: priorB },
+  ];
+  let state = reduceAssistantStreamText(
+    {},
+    { type: 'assistant.delta', data: { delta: 'current turn segment' } },
+    [priorA, priorB],
+  );
+  assert.equal(state.text, 'current turn segment');
+
+  state = reduceAssistantStreamText(state, { type: 'run.completed', data: { messages: stackedPayload } }, [priorA, priorB]);
+  assert.equal(state.text, 'current turn segment');
+});
+
+test('reconcile keeps genuinely new intermediate segments and never swallows the only part', () => {
+  // Intermediate tool-turn segment this panel has NOT shown yet survives.
+  let state = reduceAssistantStreamText(
+    {},
+    { type: 'assistant.delta', data: { delta: 'partial live' } },
+    ['older bubble'],
+  );
+  state = reduceAssistantStreamText(state, {
+    type: 'run.completed',
+    data: { messages: [{ role: 'assistant', content: 'hidden segment before tools' }, { role: 'assistant', content: 'partial live' }] },
+  }, ['older bubble']);
+  assert.equal(state.text, 'hidden segment before tools\n\npartial live');
+
+  // Server sends exactly a known prior reply as the only part (repeat-question
+  // case): never return empty; fall back to raw.
+  state = reduceAssistantStreamText({}, {}, ['the very same reply']);
+  state = reduceAssistantStreamText(state, {
+    type: 'assistant.completed',
+    data: { content: 'the very same reply' },
+  }, ['the very same reply']);
+  assert.equal(state.text, 'the very same reply');
+  assert.equal(state.finalized, true);
+});
+
+test('no known list behaves exactly as before (back-compat)', () => {
+  const state = reduceAssistantStreamText({}, {
+    type: 'assistant.completed',
+    data: { content: 'fresh reply' },
+  });
+  assert.equal(state.text, 'fresh reply');
+});
