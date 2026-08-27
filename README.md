@@ -105,7 +105,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Hermes Agent installed and working.
 - For Local or Remote API mode: Hermes Gateway/API server enabled locally or on a reachable remote machine. Hermes Cloud instead requires a signed-in HTTPS agent tab.
 - Node.js 20+.
-- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 116+ baseline). Firefox 142+ is supported via the Mozilla Add-ons listing: https://addons.mozilla.org/en-US/firefox/addon/hermes-browser-extension/. `npm run build:firefox` is for local/dev Firefox builds only.
+- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 116+ baseline). Firefox 142+ is supported via [AMO](https://addons.mozilla.org/en-US/firefox/addon/hermes-browser-extension/), the Mozilla Add-ons listing. `npm run build:firefox` is for local/dev Firefox builds only.
 
 ## v0.3.0 compatibility matrix
 
