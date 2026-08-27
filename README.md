@@ -162,7 +162,7 @@ After code updates, run `npm run build` again and click **Reload** on the Hermes
 
 ### 3. Install in Firefox
 
-1. Open https://addons.mozilla.org/en-US/firefox/addon/hermes-browser-extension/ in Firefox.
+1. Open [AMO](https://addons.mozilla.org/en-US/firefox/addon/hermes-browser-extension/) in Firefox.
 2. Click **Add to Firefox** and confirm the permission prompt.
 3. The extension opens in the Firefox sidebar (Ctrl+Shift+H).
 
