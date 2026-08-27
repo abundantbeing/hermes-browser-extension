@@ -127,6 +127,12 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Local HTML / PDF / localhost context and control | Yes, after approval | `file://` access also requires the browser's Allow access to file URLs switch. macOS and Windows file URLs share the same approval and lease model. |
 | `nativeMessaging` | No | Not requested or required. |
 
+### Firefox scope: chat and context only
+
+Hermes Browser Extension on Firefox is a chat-and-context client: pairing, the side panel, streaming replies, attachments, and page-context capture all work, but **real-tab attach ("Hermes Control") is Chromium-only**. Firefox WebExtensions have no equivalent to Chromium's `debugger` API, which live tab control requires — the Firefox package omits that permission entirely rather than shipping control that cannot run. On Firefox the panel's control card reports Control unavailable with an explanation instead of failing silently.
+
+If you need Hermes to click, type, scroll, or operate tabs on your behalf, load the extension in Chrome, Edge, Brave, or another Chromium browser.
+
 ## Quick start
 
 ### 1. Clone and build
