@@ -114,6 +114,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Chrome / Edge / Chromium 114+ side panel | Yes | Primary public support target. |
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API and extension clipboard permissions for Copy Diagnostics. |
 | Firefox | Signed package | Mozilla-signed `.xpi` on the Releases page for Firefox 142+. `npm run build:firefox` + `npm run sign:firefox` produce a signed build. Chrome/Edge/Chromium remain the primary public support target. |
+
 | Safari | Not shipped | Browser-family diagnostics exist, but no Safari package is included. |
 | Local Hermes API server | Yes | Default path: `http://127.0.0.1:8642`. |
 | Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Uses a single-use WebSocket ticket and enforces Chat-only context. This is not a general cookie import or background account-discovery flow. |
@@ -126,6 +127,12 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Browser control / Runs UI / debugger | Yes (Experimental) | Bounded, opt-in MV3 controller with per-tab leases, explicit user approval gates, and sensitive action classification. Requires compatible Hermes Agent controller support. |
 | Local HTML / PDF / localhost context and control | Yes, after approval | `file://` access also requires the browser's Allow access to file URLs switch. macOS and Windows file URLs share the same approval and lease model. |
 | `nativeMessaging` | No | Not requested or required. |
+
+### Firefox scope: chat and context only
+
+Hermes Browser Extension on Firefox is a chat-and-context client: pairing, the side panel, streaming replies, attachments, and page-context capture all work, but **real-tab attach ("Hermes Control") is Chromium-only**. Firefox WebExtensions have no equivalent to Chromium's `debugger` API, which live tab control requires — the Firefox package omits that permission entirely rather than shipping control that cannot run. On Firefox the panel's control card reports Control unavailable with an explanation instead of failing silently.
+
+If you need Hermes to click, type, scroll, or operate tabs on your behalf, load the extension in Chrome, Edge, Brave, or another Chromium browser.
 
 ## Quick start
 
