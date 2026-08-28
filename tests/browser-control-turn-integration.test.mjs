@@ -98,3 +98,12 @@ test('successful pairing re-runs readiness so the startup gate dismisses', () =>
   assert.ok(tokenIndex >= 0 && tokenIndex < readinessIndex);
   assert.doesNotMatch(pairing.slice(readinessIndex), /loadModels\(\{ quiet: true \}\)/);
 });
+
+test('successful manual connection tests run readiness to dismiss the startup gate', () => {
+  const start = sidepanel.indexOf('async function testConnection()');
+  const end = sidepanel.indexOf('\nfunction closeFloatingPanels()', start);
+  const testConnection = sidepanel.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.match(testConnection, /await runPanelConnectionReadiness\(\{ restoreSettings: false \}\)/);
+});

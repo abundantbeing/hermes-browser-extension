@@ -10599,57 +10599,28 @@ async function testConnection() {
     if (!connectionController.isCurrent(generation)) return;
     if (!apiCredentialSatisfied(settings) && gatewayCapabilities.browserPairing && automaticApiPairingAllowed(settings)) {
       await connectApiWithPairing();
-      if (!connectionController.isCurrent(generation)) return;
-      if (!apiCredentialSatisfied(settings)) {
+      if (!isConnected()) {
+        setTestConnectionBusy(false);
+        flashTestConnectionResult(false);
         throw new Error('Pairing was not completed. Approve the Hermes Browser request in the opened tab, then test again.');
       }
-      await loadGatewayCapabilities({ quiet: true, healthOk: true });
+      setTestConnectionBusy(false);
+      flashTestConnectionResult(true);
+      return;
     }
 
-    const modelsResponse = await apiFetch('/v1/models', { method: 'GET' });
-    const modelsPayload = await readJsonResponse(modelsResponse);
+    const readiness = await runPanelConnectionReadiness({ restoreSettings: false });
     if (!connectionController.isCurrent(generation)) return;
-    let degradedDiagnostic = null;
-    if (!modelsResponse.ok) {
-      if (isRemoteMode()) {
-        const remoteDiagnostic = classifyRemoteGatewaySetup({
-          url: settings.gatewayUrl,
-          healthOk: true,
-          status: modelsResponse.status,
-          body: JSON.stringify(modelsPayload).slice(0, 700),
-        });
-        lastRemoteDiagnostic = remoteDiagnostic;
-        renderRemoteDiagnostics(remoteDiagnostic);
-      }
-      const diagnostic = classifyGatewayError(`Health OK, auth/model probe failed (${modelsResponse.status}): ${JSON.stringify(modelsPayload).slice(0, 500)}`);
-      if (diagnostic.probeStatus === 'degraded') {
-        degradedDiagnostic = diagnostic;
-      } else {
-        throw new Error(`Health OK, auth/model probe failed (${modelsResponse.status}): ${JSON.stringify(modelsPayload).slice(0, 500)}`);
-      }
-    } else {
-      await loadModels({ quiet: true });
-    }
-    await loadSkills({ quiet: true });
-    await loadProfiles({ quiet: true });
-
-    const hasSessionRoutes = await ensureHermesSession();
-    if (!connectionController.isCurrent(generation)) return;
-    if (degradedDiagnostic) {
-      connectionController.transition(generation, CONNECTION_STATES.DEGRADED, { errorKind: degradedDiagnostic.kind });
-      setStatus('warn', 'Hermes gateway connected with runtime warning', degradedDiagnostic.detail);
-      markGatewayDegraded(degradedDiagnostic.detail);
-    } else {
-      if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'api' })) return;
-      setStatus(
-        'ok',
-        hasSessionRoutes ? 'Hermes gateway + session API connected' : 'Hermes gateway connected',
-        hasSessionRoutes ? normalizeGatewayUrl(settings.gatewayUrl) : `${normalizeGatewayUrl(settings.gatewayUrl)} - OpenAI-compatible fallback mode`,
-      );
-      markGatewayReachable(normalizeGatewayUrl(settings.gatewayUrl));
-      lastRemoteDiagnostic = null;
-      renderRemoteDiagnostics(null);
-    }
+    const hasSessionRoutes = Boolean(readiness.sessionId) || sessionRoutesAvailable !== false;
+    if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'api' })) return;
+    setStatus(
+      'ok',
+      hasSessionRoutes ? 'Hermes gateway + session API connected' : 'Hermes gateway connected',
+      hasSessionRoutes ? normalizeGatewayUrl(settings.gatewayUrl) : `${normalizeGatewayUrl(settings.gatewayUrl)} - OpenAI-compatible fallback mode`,
+    );
+    markGatewayReachable(normalizeGatewayUrl(settings.gatewayUrl));
+    lastRemoteDiagnostic = null;
+    renderRemoteDiagnostics(null);
 
     settings = { ...settings, lastConnectionTestedAt: Date.now() };
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });
