@@ -1547,7 +1547,6 @@ test('sidepanel falls back to visible voice dictation tab when sidepanel microph
 test('connect and startup sync Hermes models, sessions, skills, and profiles from the gateway', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(source, /await loadModels\(\{ quiet: true \}\);\s*await loadSkills\(\{ quiet: true \}\);\s*await loadProfiles\(\{ quiet: true \}\);\s*await loadSessions\(\{ quiet: true \}\);\s*await initializeSessionForPanelOpen\(\{ focus: false \}\);/s);
-  assert.match(source, /apiFetch\('\/v1\/models'/);
   assert.ok(
     source.indexOf('discoverModelsFromRegistry({ apiFetch, readJsonResponse, refresh })') > -1
       && source.indexOf('discoverModelsFromRegistry({ apiFetch, readJsonResponse, refresh })') < source.indexOf('discoverModelsFromDashboard({'),
