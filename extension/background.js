@@ -85,6 +85,7 @@ const browserControlRuntime = createBrowserControlRuntime({
   },
 });
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
+let panelResidencyHydrated = false;
 
 const controllerConnector = createControllerConnector({
   fetchImpl: globalThis.fetch?.bind(globalThis),
@@ -464,6 +465,8 @@ async function refreshPanelResidencyModeFromStorage() {
   } catch (error) {
     console.warn('[Hermes Browser] Could not read panel residency setting:', error);
     cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
+  } finally {
+    panelResidencyHydrated = true;
   }
   return cachedPanelResidencyMode;
 }
@@ -534,7 +537,16 @@ async function configureSidePanel() {
 }
 
 function reapplyPanelResidencyForTab(tabId) {
-  applyPanelResidencyMode(cachedPanelResidencyMode, { tabId })
+  // The worker starts with the tab-attached default. Do not overwrite an
+  // existing global panel while its persisted residency mode is still loading.
+  if (!panelResidencyHydrated) {
+    return refreshPanelResidencyModeFromStorage()
+      .then(() => reapplyPanelResidencyForTab(tabId));
+  }
+  // A global panel has one default path for the window. Reapplying identical
+  // options for every activated tab can recreate that document in Edge.
+  if (cachedPanelResidencyMode === PANEL_RESIDENCY_MODES.GLOBAL) return;
+  return applyPanelResidencyMode(cachedPanelResidencyMode, { tabId })
     .catch((error) => console.warn('[Hermes Browser] Could not apply panel residency setting:', error));
 }
 
@@ -728,9 +740,13 @@ function openHermesPanelFromGesture(tab) {
         }
         return true;
       })
-      .catch(() => openHermesPanelFallback(tab, browserId, panelUrl));
-  } catch {
-    return openHermesPanelFallback(tab, browserId, panelUrl);
+      .catch((error) => {
+        console.warn('[Hermes Browser] Native side panel open rejected; preserving the browser-owned side-panel action instead of opening a full tab:', error);
+        return true;
+      });
+  } catch (error) {
+    console.warn('[Hermes Browser] Native side panel open threw; preserving the browser-owned side-panel action instead of opening a full tab:', error);
+    return true;
   }
 }
 
@@ -898,16 +914,19 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
       .catch((error) => console.warn('[Hermes Browser] Controller settings rebind failed:', error));
   }
   let changed = false;
-  if (changes.hermesBrowserSettings?.newValue?.panelResidencyMode) {
-    cachedPanelResidencyMode = normalizePanelResidencyMode(changes.hermesBrowserSettings.newValue.panelResidencyMode);
-    changed = true;
-  } else if (changes.panelResidencyMode?.newValue) {
-    cachedPanelResidencyMode = normalizePanelResidencyMode(changes.panelResidencyMode.newValue);
-    changed = true;
+  if (Object.hasOwn(changes, 'hermesBrowserSettings')) {
+    const previousMode = cachedPanelResidencyMode;
+    cachedPanelResidencyMode = normalizePanelResidencyMode(changes.hermesBrowserSettings?.newValue?.panelResidencyMode);
+    changed = cachedPanelResidencyMode !== previousMode;
+  } else if (Object.hasOwn(changes, 'panelResidencyMode')) {
+    const previousMode = cachedPanelResidencyMode;
+    cachedPanelResidencyMode = normalizePanelResidencyMode(changes.panelResidencyMode?.newValue);
+    changed = cachedPanelResidencyMode !== previousMode;
   }
   if (changed) {
-    activeBrowserTabId()
-      .then((tabId) => reapplyPanelResidencyForTab(tabId));
+    return activeBrowserTabId()
+      .then((tabId) => applyPanelResidencyMode(cachedPanelResidencyMode, { tabId }))
+      .catch((error) => console.warn('[Hermes Browser] Could not apply changed panel residency setting:', error));
   }
 });
 browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
