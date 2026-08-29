@@ -23,6 +23,7 @@ const LANGUAGE_ALIASES = new Map([
   ['html', 'xml'],
   ['javascript', 'javascript'],
   ['js', 'javascript'],
+  ['jsx', 'javascript'],
   ['json', 'json'],
   ['md', 'markdown'],
   ['markdown', 'markdown'],
@@ -32,10 +33,25 @@ const LANGUAGE_ALIASES = new Map([
   ['shell', 'bash'],
   ['sql', 'sql'],
   ['ts', 'typescript'],
+  ['tsx', 'typescript'],
   ['typescript', 'typescript'],
   ['xml', 'xml'],
   ['yml', 'yaml'],
   ['yaml', 'yaml'],
+]);
+
+const SUBLANGUAGE_CLASSES = new Set([
+  'language-bash',
+  'language-csharp',
+  'language-css',
+  'language-javascript',
+  'language-json',
+  'language-markdown',
+  'language-python',
+  'language-sql',
+  'language-typescript',
+  'language-xml',
+  'language-yaml',
 ]);
 
 function defaultTokenize(source, language) {
@@ -55,12 +71,16 @@ function appendTrustedTokens(target, highlightedHtml) {
     if (sourceNode.nodeType !== 1 || sourceNode.nodeName !== 'SPAN') {
       throw new Error('Unexpected syntax-highlighter markup');
     }
+    const attributes = [...sourceNode.attributes];
+    if (attributes.length !== 1 || attributes[0].name !== 'class') {
+      throw new Error('Unexpected syntax-highlighter attribute');
+    }
     const classes = [...sourceNode.classList];
     if (
       !classes.length
       || classes.length > 4
       || classes.some((name) => !/^[a-z][a-z0-9_-]{0,63}$/i.test(name))
-      || !classes.some((name) => name.startsWith('hljs-'))
+      || !classes.some((name) => name.startsWith('hljs-') || SUBLANGUAGE_CLASSES.has(name))
     ) {
       throw new Error('Unexpected syntax-highlighter class');
     }

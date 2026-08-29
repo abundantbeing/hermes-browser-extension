@@ -39,6 +39,19 @@ test('resolves supported aliases and leaves unknown or untagged fences plain', (
   assert.equal(untagged.code.textContent, 'alpha < beta');
 });
 
+test('maps JSX and TSX fences to the registered JavaScript and TypeScript grammars', () => {
+  const jsx = renderedCode('```jsx\nconst view = <Panel enabled />;\n```');
+  const tsx = renderedCode('```tsx\nconst view: JSX.Element = <Panel enabled />;\n```');
+
+  highlightCodeBlocks(jsx.root);
+  highlightCodeBlocks(tsx.root);
+
+  assert.equal(jsx.code.dataset.highlighted, 'javascript');
+  assert.equal(tsx.code.dataset.highlighted, 'typescript');
+  assert.ok(jsx.code.querySelector('[class^="hljs-"]'));
+  assert.ok(tsx.code.querySelector('[class^="hljs-"]'));
+});
+
 test('preserves exact source text and falls back to plain text if tokenization fails', () => {
   const source = 'const payload = "<script>& text";\nconsole.log(payload);';
   const highlighted = renderedCode(`\`\`\`js\n${source}\n\`\`\``);
@@ -54,4 +67,32 @@ test('preserves exact source text and falls back to plain text if tokenization f
   assert.equal(highlighted.code.textContent, source);
   assert.equal(failed.code.textContent, source);
   assert.equal(failed.code.querySelector('[class^="hljs-"]'), null);
+});
+
+test('rejects unexpected tokenizer tags, attributes, and excessive classes', () => {
+  const source = 'print("safe")';
+  const hostileMarkup = [
+    '<img src="x" />',
+    '<span class="hljs-keyword" onclick="alert(1)">print</span>',
+    '<span class="hljs-a one two three four">print</span>',
+    '<span class="hljs-keyword"><b>nested</b></span>',
+  ];
+
+  for (const markup of hostileMarkup) {
+    const rendered = renderedCode(`\`\`\`python\n${source}\n\`\`\``);
+    highlightCodeBlocks(rendered.root, { tokenize: () => markup });
+    assert.equal(rendered.code.textContent, source);
+    assert.equal(rendered.code.dataset.highlighted, undefined);
+    assert.equal(rendered.code.querySelector('[class^="hljs-"]'), null);
+  }
+});
+
+test('accepts a valid sublanguage wrapper alongside hljs classes', () => {
+  const source = 'print("safe")';
+  const markup = '<span class="hljs-keyword language-python">print</span>(<span class="hljs-string">"safe"</span>)';
+  const rendered = renderedCode(`\`\`\`python\n${source}\n\`\`\``);
+  highlightCodeBlocks(rendered.root, { tokenize: () => markup });
+  assert.equal(rendered.code.textContent, source);
+  assert.equal(rendered.code.dataset.highlighted, 'python');
+  assert.ok(rendered.code.querySelector('.hljs-keyword.language-python'));
 });
