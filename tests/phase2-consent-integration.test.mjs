@@ -41,6 +41,19 @@ test('the Side Panel applies the final consent gate after every turn-time scope 
   assert.match(sender, /const gatedContextOverride = contextGate\.allowed \? contextOverride : null/);
 });
 
+test('tab-scope actions send users to the exact consent control instead of appearing to do nothing', () => {
+  const guard = sidepanel.match(/function requireContextConsentForScope\([\s\S]*?\n\}/)?.[0] || '';
+  const pin = sidepanel.match(/async function pinContextTab\([\s\S]*?\n\}/)?.[0] || '';
+  const unlock = sidepanel.match(/async function unlockContextScope\([\s\S]*?\n\}/)?.[0] || '';
+  assert.match(guard, /effectiveContextGate\(requested\)/);
+  assert.match(guard, /openSettingsDialog\(\)/);
+  assert.match(guard, /Share page context with this connection/);
+  assert.match(guard, /browserContextConsentControl\?\.scrollIntoView/);
+  assert.match(guard, /browserContextConsentInput\?\.focus/);
+  assert.ok(pin.indexOf('requireContextConsentForScope(nextScope)') < pin.indexOf('applyContextScope(nextScope'));
+  assert.ok(unlock.indexOf('requireContextConsentForScope(nextScope)') < unlock.indexOf('applyContextScope(nextScope'));
+});
+
 test('non-loopback Remote API is consent-gated as strictly as Cloud and dashboard transport', () => {
   const renderer = sidepanel.match(/function renderBrowserContextConsentControl\([\s\S]*?\n\}/)?.[0] || '';
   assert.match(renderer, /consentRequiredForConnection/);
