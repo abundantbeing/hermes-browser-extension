@@ -2205,10 +2205,38 @@ function renderContextScopePromptControls(tabs = currentContext.tabs || []) {
   return section;
 }
 
-function renderContextScopeMenu(query = '', { focusSearch = false } = {}) {
+function renderContextScopeConsentNotice(requestedScope = contextScope) {
+  const gate = effectiveContextGate(requestedScope);
+  if (gate.allowed) return null;
+
+  const needsConnection = gate.reason === 'principal-unavailable';
+  const notice = document.createElement('section');
+  notice.className = 'context-scope-consent-notice';
+  notice.setAttribute('role', 'status');
+
+  const title = document.createElement('strong');
+  title.textContent = translateUiText(needsConnection ? 'Verify this connection first' : 'Page context approval required');
+  const detail = document.createElement('span');
+  detail.textContent = translateUiText(needsConnection
+    ? 'Reconnect or test this connection before choosing a tab scope.'
+    : 'Approve “Share page context with this connection” before choosing a tab scope.');
+  const action = document.createElement('button');
+  action.type = 'button';
+  action.className = 'context-scope-consent-action';
+  action.dataset.scopeAction = 'open-context-consent';
+  action.dataset.contextConsentReason = gate.reason || '';
+  action.textContent = translateUiText('Open Settings');
+  notice.append(title, detail, action);
+  return notice;
+}
+
+function renderContextScopeMenu(query = '', { focusSearch = false, consentScope = contextScope } = {}) {
   if (!els.contextScopeMenu) return;
   const searchQuery = String(query || '');
   els.contextScopeMenu.innerHTML = '';
+
+  const consentNotice = renderContextScopeConsentNotice(consentScope);
+  if (consentNotice) els.contextScopeMenu.appendChild(consentNotice);
 
   const actions = document.createElement('div');
   actions.className = 'context-scope-actions';
@@ -2333,9 +2361,24 @@ async function applyContextScope(nextScope, { ensureSession = false } = {}) {
   await refreshContext();
 }
 
+function requireContextConsentForScope(nextScope) {
+  const requested = normalizeContextScope(nextScope);
+  if (requested.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return true;
+  const gate = effectiveContextGate(requested);
+  if (gate.allowed) return true;
+
+  renderContextScopeMenu('', { consentScope: requested });
+  requestAnimationFrame(() => {
+    els.contextScopeMenu?.querySelector('[data-scope-action="open-context-consent"]')?.focus();
+  });
+  return false;
+}
+
 async function pinContextTab(tab) {
   if (!tab?.id) return;
-  await applyContextScope(contextScopeFromTab(tab, contextScope), { ensureSession: true });
+  const nextScope = contextScopeFromTab(tab, contextScope);
+  if (!requireContextConsentForScope(nextScope)) return;
+  await applyContextScope(nextScope, { ensureSession: true });
 }
 
 async function pinContextTabById(tabId) {
@@ -2355,7 +2398,7 @@ async function pinContextTabById(tabId) {
 }
 
 async function unlockContextScope() {
-  await applyContextScope({
+  const nextScope = {
     ...contextScope,
     mode: CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE,
     pinnedTabId: null,
@@ -2363,7 +2406,9 @@ async function unlockContextScope() {
     pinnedTitle: '',
     pinnedUrl: '',
     selectedTabIds: [],
-  });
+  };
+  if (!requireContextConsentForScope(nextScope)) return;
+  await applyContextScope(nextScope);
 }
 
 function setGatewayCapabilities(caps) {
@@ -11457,6 +11502,21 @@ function bindEvents() {
     if (action === 'prompt-tabs-none') {
       setPromptTabsSelection([]);
       rerenderContextScopePromptSelectionPreservingScroll(currentContextScopeSearchQuery());
+      return;
+    }
+    if (action === 'open-context-consent') {
+      const gateReason = button.dataset.contextConsentReason || '';
+      els.contextScopeMenu.hidden = true;
+      renderContextScopeControls();
+      openSettingsDialog();
+      requestAnimationFrame(() => {
+        if (gateReason === 'principal-unavailable') {
+          els.testConnectionButton?.focus({ preventScroll: true });
+          return;
+        }
+        els.browserContextConsentControl?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        els.browserContextConsentInput?.focus({ preventScroll: true });
+      });
       return;
     }
 

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const sidepanelHtml = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+const sidepanelCss = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
 const fulltab = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 const fulltabHtml = readFileSync(new URL('../extension/app.html', import.meta.url), 'utf8');
 const background = readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8');
@@ -39,6 +40,26 @@ test('the Side Panel applies the final consent gate after every turn-time scope 
   assert.match(refresher, /effectiveContextGate\(contextScope\)/);
   assert.match(sender, /turnContextScope\.mode === CONTEXT_SCOPE_MODES\.CHAT_ONLY/);
   assert.match(sender, /const gatedContextOverride = contextGate\.allowed \? contextOverride : null/);
+});
+
+test('tab-scope actions render an inline consent warning instead of appearing to do nothing', () => {
+  const notice = sidepanel.match(/function renderContextScopeConsentNotice\([\s\S]*?\n\}/)?.[0] || '';
+  const guard = sidepanel.match(/function requireContextConsentForScope\([\s\S]*?\n\}/)?.[0] || '';
+  const pin = sidepanel.match(/async function pinContextTab\([\s\S]*?\n\}/)?.[0] || '';
+  const unlock = sidepanel.match(/async function unlockContextScope\([\s\S]*?\n\}/)?.[0] || '';
+  assert.match(notice, /Page context approval required/);
+  assert.match(notice, /open-context-consent/);
+  assert.match(notice, /contextConsentReason = gate\.reason/);
+  assert.match(notice, /Open Settings/);
+  assert.match(guard, /effectiveContextGate\(requested\)/);
+  assert.match(guard, /renderContextScopeMenu\('', \{ consentScope: requested \}\)/);
+  assert.match(guard, /open-context-consent/);
+  assert.doesNotMatch(guard, /openSettingsDialog\(\)/);
+  assert.match(sidepanel, /action === 'open-context-consent'[\s\S]*contextConsentReason[\s\S]*openSettingsDialog\(\)/);
+  assert.match(sidepanelCss, /\.context-scope-consent-notice/);
+  assert.match(sidepanelCss, /\.context-scope-consent-action/);
+  assert.ok(pin.indexOf('requireContextConsentForScope(nextScope)') < pin.indexOf('applyContextScope(nextScope'));
+  assert.ok(unlock.indexOf('requireContextConsentForScope(nextScope)') < unlock.indexOf('applyContextScope(nextScope'));
 });
 
 test('non-loopback Remote API is consent-gated as strictly as Cloud and dashboard transport', () => {
