@@ -2295,6 +2295,48 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
 }
 .message.user .message-content pre { border-color: rgba(var(--hermes-fg-rgb),0.34); background: rgba(var(--hermes-fg-rgb),0.10); }
 .message-content pre code { padding: 0; border: 0; background: transparent; }
+.message-content pre code.hljs {
+  --syntax-comment: #52606d;
+  --syntax-keyword: #741b78;
+  --syntax-string: #146b3a;
+  --syntax-number: #9a3b00;
+  --syntax-title: #074f9b;
+  --syntax-meta: #765400;
+  color: var(--hermes-ink);
+}
+html[data-hermes-mode="dark"] .message-content pre code.hljs,
+.message.user .message-content pre code.hljs {
+  --syntax-comment: #aeb8c4;
+  --syntax-keyword: #e6a7ff;
+  --syntax-string: #b9f6ca;
+  --syntax-number: #ffb58a;
+  --syntax-title: #9ecbff;
+  --syntax-meta: #ffe082;
+  color: currentColor;
+}
+.message-content .hljs-comment,
+.message-content .hljs-quote { color: var(--syntax-comment); font-style: italic; }
+.message-content .hljs-keyword,
+.message-content .hljs-selector-tag,
+.message-content .hljs-doctag { color: var(--syntax-keyword); font-weight: 700; }
+.message-content .hljs-string,
+.message-content .hljs-regexp,
+.message-content .hljs-attribute { color: var(--syntax-string); }
+.message-content .hljs-number,
+.message-content .hljs-literal,
+.message-content .hljs-symbol,
+.message-content .hljs-bullet { color: var(--syntax-number); }
+.message-content .hljs-title,
+.message-content .hljs-section,
+.message-content .hljs-function,
+.message-content .hljs-built_in,
+.message-content .hljs-type { color: var(--syntax-title); }
+.message-content .hljs-meta,
+.message-content .hljs-meta-keyword,
+.message-content .hljs-selector-id,
+.message-content .hljs-selector-class { color: var(--syntax-meta); }
+.message-content .hljs-emphasis { font-style: italic; }
+.message-content .hljs-strong { font-weight: 700; }
 .message-content blockquote {
   margin: 0.7em 0;
   padding: 0.15em 0 0.15em 0.8em;

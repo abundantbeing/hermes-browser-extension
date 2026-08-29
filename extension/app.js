@@ -18,6 +18,7 @@ import {
   skillSuggestionsForInput,
 } from './lib/common.mjs';
 import { renderMarkdownSafe } from './lib/sanitizer.mjs';
+import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
 import {
   assistModelRoutingSupported,
   resolveAssistModelBindingFromCatalog,
@@ -1293,7 +1294,10 @@ function renderMessages(messages = []) {
     const tagged = extractMediaTags(visibleText);
     const media = resolvedGeneratedImageSources(visibleText);
     const displayText = stripGeneratedImageEchoes(tagged.text, media);
-    if (displayText) content.innerHTML = renderMarkdownSafe(displayText);
+    if (displayText) {
+      content.innerHTML = renderMarkdownSafe(displayText);
+      highlightCodeBlocks(content);
+    }
     if (role === 'user') {
       appendUserImageAttachments(content, message.attachments, {
         onOpen: (_image, preview) => openImageLightbox(preview.source, preview.name),

@@ -88,7 +88,9 @@ const AGENT_THEME_DOCUMENT = Object.freeze({
 const AGENT_THEME_REPLY = `${AGENT_THEME_START}\n${JSON.stringify(AGENT_THEME_DOCUMENT)}\n${AGENT_THEME_END}`;
 const TEST_TOKEN = 'e2e-browser-token-not-a-secret';
 const TEST_PROMPT = 'Verify the loaded Hermes Browser round trip.';
-const TEST_REPLY = 'Loaded extension round trip confirmed.';
+const TEST_REPLY_MARKER = 'Loaded extension round trip confirmed.';
+const PANEL_SYNTAX_SOURCE = 'def greet(name: str):\n    return f"Hello, {name}!"';
+const TEST_REPLY = `${TEST_REPLY_MARKER}\n\n\`\`\`python\n${PANEL_SYNTAX_SOURCE}\n\`\`\``;
 const DELEGATION_PROMPT = 'Dispatch the delayed E2E delegation.';
 const DELEGATION_ID = 'deleg_e2e12345';
 const DELEGATION_ACK = `Delegated background work as ${DELEGATION_ID}. Results will arrive later.`;
@@ -96,7 +98,9 @@ const DELEGATION_RESULT = 'Delayed delegation result appeared without another us
 const FULLTAB_DELEGATION_PROMPT = 'Dispatch the delayed Hermes Web E2E delegation.';
 const FULLTAB_SESSION_ID = 'hermes-web-e2e';
 const FULLTAB_DELEGATION_ID = 'deleg_web12345';
-const FULLTAB_DELEGATION_ACK = `Delegated Hermes Web background work as ${FULLTAB_DELEGATION_ID}. Results will arrive later.`;
+const FULLTAB_DELEGATION_ACK_MARKER = `Delegated Hermes Web background work as ${FULLTAB_DELEGATION_ID}. Results will arrive later.`;
+const WEB_SYNTAX_SOURCE = 'const view: JSX.Element = <Panel enabled />;';
+const FULLTAB_DELEGATION_ACK = `${FULLTAB_DELEGATION_ACK_MARKER}\n\n\`\`\`tsx\n${WEB_SYNTAX_SOURCE}\n\`\`\``;
 const FULLTAB_DELEGATION_RESULT = 'Hermes Web rendered its delayed delegation result automatically.';
 const INLINE_REPLY = 'Clearer, tighter, still your voice.';
 
@@ -1087,7 +1091,35 @@ async function main() {
       return true;
     })()`);
 
-    await waitFor(() => panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(TEST_REPLY)}))`));
+    await waitFor(() => panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(TEST_REPLY_MARKER)}))`));
+    const panelSyntaxHighlight = await panel.evaluate(`(() => {
+      const content = Array.from(document.querySelectorAll('.message.assistant .message-content'))
+        .find((node) => node.textContent.includes(${JSON.stringify(TEST_REPLY_MARKER)}));
+      const code = content?.querySelector('pre > code');
+      const keyword = code?.querySelector('.hljs-keyword');
+      return code && keyword ? {
+        language: code.dataset.highlighted || '',
+        source: code.textContent,
+        keywordCount: code.querySelectorAll('.hljs-keyword').length,
+        codeColor: getComputedStyle(code).color,
+        keywordColor: getComputedStyle(keyword).color,
+        overflowX: getComputedStyle(code.parentElement).overflowX,
+      } : null;
+    })()`);
+    assert.deepEqual({
+      language: panelSyntaxHighlight?.language,
+      source: panelSyntaxHighlight?.source,
+      keywordCount: panelSyntaxHighlight?.keywordCount,
+      overflowX: panelSyntaxHighlight?.overflowX,
+    }, {
+      language: 'python',
+      source: PANEL_SYNTAX_SOURCE,
+      keywordCount: 2,
+      overflowX: 'auto',
+    });
+    assert.match(panelSyntaxHighlight.codeColor, /^rgba?\(/);
+    assert.match(panelSyntaxHighlight.keywordColor, /^rgba?\(/);
+    assert.notEqual(panelSyntaxHighlight.keywordColor, panelSyntaxHighlight.codeColor);
     await waitFor(() => panel.evaluate(`document.querySelector('#browserIntroHero')?.hidden === true`));
     if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
       const panelCardState = await panel.evaluate(`(() => {
@@ -1370,7 +1402,7 @@ async function main() {
       return true;
     })()`);
     try {
-      await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK)}))`));
+      await waitFor(() => web.evaluate(`Array.from(document.querySelectorAll('.web-message-content')).some((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK_MARKER)}))`));
     } catch (error) {
       const webSendState = await web.evaluate(`(() => ({
         composerStatus: document.querySelector('#composerStatus')?.textContent || '',
@@ -1392,6 +1424,34 @@ async function main() {
       console.error('[e2e] Hermes Web console tail', JSON.stringify(web.events.slice(-20), null, 2));
       throw error;
     }
+    const webSyntaxHighlight = await web.evaluate(`(() => {
+      const content = Array.from(document.querySelectorAll('.web-message.assistant .web-message-content'))
+        .find((node) => node.textContent.includes(${JSON.stringify(FULLTAB_DELEGATION_ACK_MARKER)}));
+      const code = content?.querySelector('pre > code');
+      const keyword = code?.querySelector('.hljs-keyword');
+      return code && keyword ? {
+        language: code.dataset.highlighted || '',
+        source: code.textContent,
+        keywordCount: code.querySelectorAll('.hljs-keyword').length,
+        codeColor: getComputedStyle(code).color,
+        keywordColor: getComputedStyle(keyword).color,
+        overflowX: getComputedStyle(code.parentElement).overflowX,
+      } : null;
+    })()`);
+    assert.deepEqual({
+      language: webSyntaxHighlight?.language,
+      source: webSyntaxHighlight?.source,
+      keywordCount: webSyntaxHighlight?.keywordCount,
+      overflowX: webSyntaxHighlight?.overflowX,
+    }, {
+      language: 'typescript',
+      source: WEB_SYNTAX_SOURCE,
+      keywordCount: 1,
+      overflowX: 'auto',
+    });
+    assert.match(webSyntaxHighlight.codeColor, /^rgba?\(/);
+    assert.match(webSyntaxHighlight.keywordColor, /^rgba?\(/);
+    assert.notEqual(webSyntaxHighlight.keywordColor, webSyntaxHighlight.codeColor);
     const pendingFullTabDelegationWatch = await waitFor(async () => {
       const pendingFullTabDelegationStore = await setup.evaluate(`chrome.storage.local.get('hermesAsyncDelegationWatchesV1')`);
       return pendingFullTabDelegationStore.hermesAsyncDelegationWatchesV1
