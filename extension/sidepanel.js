@@ -97,6 +97,7 @@ import {
   agentDiscoveryModeNote,
 } from './lib/common.mjs';
 import { renderMarkdownSafe, sanitizeHtml } from './lib/sanitizer.mjs';
+import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
 import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
 import {
   buildContextMenuTurn,
@@ -7405,6 +7406,7 @@ function renderMessageContentElement(element, content = '') {
     return;
   }
   element.innerHTML = renderMarkdownSafe(content || '');
+  highlightCodeBlocks(element);
   for (const image of element.querySelectorAll('img[data-slot="aui_generated-image"]')) {
     const wrapper = document.createElement('span');
     wrapper.className = 'generated-image-inspectable';
