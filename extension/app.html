@@ -156,6 +156,10 @@
             </section>
             <div id="attachmentList" class="attachment-list" hidden aria-label="Message attachments" data-i18n-aria-label="ui.message.attachments"></div>
             <textarea id="fullTabPrompt" rows="3" placeholder="Ask Hermes anything…" data-i18n-placeholder="ui.ask.hermes.anything"></textarea>
+            <div id="pasteOversizeWarning" class="paste-oversize-warning" role="alert" aria-live="polite" hidden>
+              <span class="paste-oversize-warning-icon" aria-hidden="true">⚠</span>
+              <span id="pasteOversizeWarningText"></span>
+            </div>
 
             <input id="attachmentInput" type="file" multiple hidden />
             <input id="imageAttachmentInput" type="file" accept="image/*" multiple hidden />

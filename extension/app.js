@@ -124,6 +124,7 @@ import { normalizeInlineDraftRoutePreference } from './lib/inline-draft-policy.m
 import { sessionContextFailureRecovery } from './lib/turn-recovery.mjs';
 import { buildDashboardWsUrl, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, normalizeGatewayHistoryMessages, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
 import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
+import { BROWSER_CONTEXT_TURN_BUDGETS, markUserWarnedOfTruncation } from './lib/browser-context-protocol.mjs';
 import {
   CONTEXT_CONSENT_STORAGE_KEY,
   consentGrantedForIdentity,
@@ -4021,6 +4022,20 @@ els.composer.addEventListener('submit', async (event) => {
     renderMessages(activeMessages);
   }
 });
+function updatePasteOversizeWarning() {
+  const warnEl = document.getElementById('pasteOversizeWarning');
+  const textEl = document.getElementById('pasteOversizeWarningText');
+  if (!warnEl || !textEl || !els.prompt) return;
+  const limit = BROWSER_CONTEXT_TURN_BUDGETS?.humanInputChars || 6000;
+  const len = els.prompt.value.length;
+  if (len > limit) {
+    const over = len - limit;
+    textEl.textContent = `Pasted text is ${len.toLocaleString()} chars — the per-message limit is ${limit.toLocaleString()}. About ${over.toLocaleString()} chars will be truncated before sending.`;
+    warnEl.hidden = false;
+  } else {
+    warnEl.hidden = true;
+  }
+}
 els.prompt.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
@@ -4032,9 +4047,11 @@ els.prompt.addEventListener('input', () => {
   updateBusyControls();
   renderComposerSuggestions();
   renderContextWindow();
+  updatePasteOversizeWarning();
 });
 els.prompt.addEventListener('paste', (event) => {
   handleComposerPaste(event).catch((error) => { els.composerStatus.textContent = `Paste failed: ${error?.message || String(error)}`; });
+  updatePasteOversizeWarning();
 });
 ['dragenter', 'dragover'].forEach((type) => {
   els.composer.addEventListener(type, (event) => {

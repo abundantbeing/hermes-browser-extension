@@ -485,6 +485,9 @@ html[data-hermes-theme^="custom:"] [tabindex]:focus-visible {
 .fulltab-composer textarea:focus { outline: none; }
 .fulltab-composer textarea::placeholder { color: rgba(var(--hermes-blue-rgb), 0.68); }
 .composer-footer { padding: 9px 11px; border-top: 1px solid var(--hermes-line); }
+.paste-oversize-warning { display: flex; align-items: center; gap: 6px; margin: 6px 0 2px; padding: 6px 9px; border: 1px solid var(--hermes-warn, #d9a441); border-radius: 6px; background: rgba(217, 164, 65, 0.12); color: var(--hermes-ink); font: 600 11px/1.3 var(--hermes-font-mono); }
+.paste-oversize-warning[hidden] { display: none; }
+.paste-oversize-warning-icon { color: var(--hermes-warn, #d9a441); font-size: 13px; }
 .composer-tools,
 .composer-state { display: flex; align-items: center; gap: 8px; }
 .composer-tools button { padding: 7px 9px; border: 0; background: transparent; color: var(--hermes-muted); font: 9px var(--hermes-font-mono); text-transform: uppercase; }

@@ -618,7 +618,13 @@ export function buildBrowserContextReceipt({ context = {}, attachments = [], set
 }
 
 function createBudgetState() {
-  return { any: false, sources: {} };
+  return { any: false, sources: {}, user_warned: false };
+}
+
+// Called from the composer UI when it shows the oversize-paste warning,
+// so Review can tell "user was warned" from "silent truncation".
+export function markUserWarnedOfTruncation(state) {
+  if (state && typeof state === 'object') state.user_warned = true;
 }
 
 function recordTruncation(state, source, omitted = 0) {
@@ -935,9 +941,11 @@ export function buildBrowserTurnEnvelope({
   contextHash = '',
   contextDelivery = 'full',
   browserControl = {},
+  userWarnedOfTruncation = false,
 } = {}) {
   assertSupportedExternalValue({ humanInput, instructionTransform, activeTab, tabs, selectedTabs, pageContext, contextScope, attachments, settings, contextHash, contextDelivery, browserControl });
   const truncation = createBudgetState();
+  if (userWarnedOfTruncation) truncation.user_warned = true;
   const composerText = boundedText(String(humanInput || '').trim(), BROWSER_CONTEXT_TURN_BUDGETS.humanInputChars, truncation, 'human_input');
   const transformText = instructionTransform?.text == null
     ? ''
@@ -976,7 +984,7 @@ export function buildBrowserTurnEnvelope({
   let finalEnvelope = finalRedactValue(envelope, telemetry);
   finalEnvelope.source_receipt.redaction_count = telemetry.redactionCount;
   reduceEnvelopeToSerializedBudget(finalEnvelope, truncation);
-  finalEnvelope.source_receipt.truncation = { any: truncation.any, sources: truncation.sources };
+  finalEnvelope.source_receipt.truncation = { any: truncation.any, sources: truncation.sources, user_warned: truncation.user_warned };
   // Canonical recursive redaction is intentionally the final operation before
   // serialization; it rejects cycles and unsupported values instead of trying
   // to stringify them into an ambiguous turn.
