@@ -113,6 +113,7 @@ import {
   resolveAssistModelBindingFromCatalog,
 } from './lib/assist-model-contract.mjs';
 import { serializeBrowserTurnEnvelope } from './lib/browser-context-protocol.mjs';
+import { BROWSER_CONTEXT_TURN_BUDGETS } from './lib/browser-context-protocol.mjs';
 import {
   APPEARANCE_THEMES,
   normalizeAppearanceTheme,
@@ -9812,6 +9813,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       contextHash,
       contextDelivery,
       browserControl,
+      userWarnedOfTruncation: promptUserText.length > BROWSER_CONTEXT_TURN_BUDGETS.humanInputChars,
     });
 
     const receipt = buildContextReceipt({
