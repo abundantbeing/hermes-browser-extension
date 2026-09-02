@@ -607,3 +607,13 @@ test('manifest.json has sidebar_action for Firefox sidebar support', () => {
   assert.ok(manifest.sidebar_action.default_panel, 'sidebar_action.default_panel must be set');
   assert.equal(manifest.sidebar_action.default_panel, manifest.side_panel.default_path, 'sidebar_action default_panel must match side_panel default_path');
 });
+
+test('Chromium loadable manifests omit Firefox-only sidebar_action', () => {
+  const rootManifest = JSON.parse(readFileSync(new URL('../manifest.json', import.meta.url), 'utf8'));
+  const buildSource = readFileSync(new URL('../scripts/build.mjs', import.meta.url), 'utf8');
+  assert.equal(rootManifest.sidebar_action, undefined);
+  assert.equal(rootManifest.commands?._execute_sidebar_action, undefined);
+  assert.match(buildSource, /manifest-profiles\.mjs/);
+  assert.match(buildSource, /MANIFEST_TARGETS\.CHROMIUM/);
+  assert.match(buildSource, /removedManifestKeys/);
+});

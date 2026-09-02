@@ -11327,11 +11327,15 @@ function bindEvents() {
     }
   });
   els.localDocumentApproveButton?.addEventListener('click', async () => {
-    settings = { ...settings, allowLocalDocuments: true };
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
-    dismissLocalDocumentApprovalNotice();
-    await refreshContext({ allowLocalDocuments: true });
-    await attachBrowserControlToCurrentTab();
+    try {
+      settings = { ...settings, allowLocalDocuments: true };
+      await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      dismissLocalDocumentApprovalNotice();
+      await refreshContext({ allowLocalDocuments: true });
+      await attachBrowserControlToCurrentTab();
+    } catch (error) {
+      showOperationToast({ kind: 'warn', title: 'Control not attached', detail: error?.message || String(error) });
+    }
   });
   els.localDocumentDismissButton?.addEventListener('click', () => {
     dismissLocalDocumentApprovalNotice();

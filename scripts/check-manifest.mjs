@@ -104,15 +104,27 @@ if (manifest.permissions?.includes('microphone') || manifest.optional_permission
   errors.push('microphone is a Web Permission name, not a Chrome extension manifest permission; use the request-permissions page instead');
 }
 if (!manifest.host_permissions?.includes('http://127.0.0.1/*')) errors.push('localhost gateway host permission missing');
-if (!manifest.sidebar_action) errors.push('sidebar_action missing for Opera sidebar support');
+if (!manifest.sidebar_action) errors.push('sidebar_action missing from extension source for Firefox sidebar support');
 if (manifest.sidebar_action?.default_panel !== manifest.side_panel?.default_path) {
   errors.push('sidebar_action default_panel must match side_panel default_path');
 }
-if (rootManifest && !rootManifest.sidebar_action) {
-  errors.push('root manifest sidebar_action missing for Opera support');
+if (rootManifest?.sidebar_action) {
+  errors.push('root Chromium manifest must not include Firefox-only sidebar_action');
 }
-if (rootManifest?.sidebar_action?.default_panel !== rootManifest?.side_panel?.default_path) {
-  errors.push('root manifest sidebar_action default_panel must match side_panel default_path');
+if (rootManifest?.commands?._execute_sidebar_action) {
+  errors.push('root Chromium manifest must not include Firefox-only _execute_sidebar_action');
+}
+if (distManifest?.sidebar_action) {
+  errors.push('dist Chromium manifest must not include Firefox-only sidebar_action; run npm run build');
+}
+if (distManifest?.commands?._execute_sidebar_action) {
+  errors.push('dist Chromium manifest must not include Firefox-only _execute_sidebar_action; run npm run build');
+}
+if (firefoxManifest && !firefoxManifest.sidebar_action) {
+  errors.push('Firefox manifest must include sidebar_action');
+}
+if (firefoxManifest && !firefoxManifest.commands?._execute_sidebar_action) {
+  errors.push('Firefox manifest must include _execute_sidebar_action');
 }
 for (const [index, entry] of (manifest.content_scripts || []).entries()) {
   if (entry.type) {
