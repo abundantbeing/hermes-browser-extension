@@ -94,6 +94,14 @@ test('Phase 6 approval reason remains fully readable in narrow Browser panels', 
   assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.browser-control-strip\s*\{[^}]*grid-template-columns:\s*8px minmax\(0,\s*1fr\)[^}]*\}[^}]*\.[\s\S]*?grid-column:\s*2/s);
 });
 
+test('local document approval does not leak attach failures as uncaught rejections', () => {
+  const handler = source.match(/localDocumentApproveButton\?\.addEventListener\('click', async \(\) => \{[\s\S]*?\n  \}\);/)?.[0] || '';
+  assert.match(handler, /try \{/);
+  assert.match(handler, /attachBrowserControlToCurrentTab\(\)/);
+  assert.match(handler, /catch \(error\)/);
+  assert.match(handler, /Control not attached/);
+});
+
 test('startup Connect button uses the theme primary tokens so it stays readable in every theme and mode', () => {
   const button = css.match(/body\.startup-active \.topbar #startupConnectButton:not\(\[hidden\]\)\s*\{[^}]*\}/)?.[0] || '';
   assert.match(button, /background:\s*var\(--hermes-primary-bg\)/);
