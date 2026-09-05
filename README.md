@@ -117,9 +117,9 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Node.js 20+.
 - Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 116+ baseline). Firefox 142+ is supported via [AMO](https://addons.mozilla.org/en-US/firefox/addon/hermes-browser-extension/), the Mozilla Add-ons listing. `npm run build:firefox` is for local/dev Firefox builds only.
 
-## v0.3.0 compatibility matrix
+## Compatibility matrix
 
-| Surface | Supported in v0.3.0 | Fallback / note |
+| Surface | Supported in v0.3.2 | Fallback / note |
 | --- | --- | --- |
 | Chrome / Edge / Chromium 114+ side panel | Yes | Primary public support target. |
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API and extension clipboard permissions for Copy Diagnostics. |
@@ -340,14 +340,14 @@ Make sure you loaded `dist/`, not the repo root. The selected folder must contai
 
 ### Chrome still shows an older version after updating
 
-The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.3.0, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.3.0`.
+The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.3.2, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.3.2`.
 
 Fix:
 
-1. Extract/download the v0.3.0 release or run `npm run build` locally.
+1. Extract/download the v0.3.2 release or run `npm run build` locally.
 2. Open `chrome://extensions` or `edge://extensions`.
 3. On the Hermes Browser Extension card, click **Reload**.
-4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.3.0 `dist/` folder.
+4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.3.2 `dist/` folder.
 5. Click **service worker** / **Inspect views** only for debugging; it is not the version source.
 
 ### Filing a support issue
