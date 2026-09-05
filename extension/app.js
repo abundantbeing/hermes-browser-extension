@@ -91,6 +91,7 @@ import {
   stripGeneratedImageEchoes,
 } from './lib/image-render.mjs';
 import { modelLockRequestOutcome, readHermesSse, runSteerFailureState } from './lib/fulltab-runtime.mjs';
+import { createUserInputController, pendingUserInputRecords, userInputAnswerPayload } from './lib/user-input.mjs';
 import { parseBrowserCommand, resolveCommandPrompt } from './lib/commands.mjs';
 import { createDiffusionCanvas } from './lib/diffusion-canvas.mjs';
 import {
@@ -195,6 +196,7 @@ const els = {
   copySessionId: $('#copySessionId'),
   sessionActionsMenu: $('#sessionActionsMenu'),
   messageList: $('#messageList'),
+  userInputRequests: $('#userInputRequests'),
   loadingState: $('#loadingState'),
   loadingTitle: $('#loadingTitle'),
   loadingDetail: $('#loadingDetail'),
@@ -394,6 +396,60 @@ const TASK_STACKS_STORAGE_KEY = 'hermesBrowserTaskStacks';
 
 const client = createHermesClient({
   getConnection: () => settings,
+});
+
+function activeUserInputSessionId() {
+  return usesDashboardTicketTransport()
+    ? String(dashboardLiveSessionId || '').trim()
+    : String(activeSessionId || '').trim();
+}
+
+async function sendUserInputAnswer(request, answers) {
+  if (usesDashboardTicketTransport()) {
+    const connection = await ensureDashboardConnection();
+    if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
+    const payload = userInputAnswerPayload({ ...request, sessionId: dashboardLiveSessionId }, answers);
+    return connection.client.request(WS_METHODS.userInputRespond, payload);
+  }
+  const payload = userInputAnswerPayload(request, answers);
+  const response = await client.fetch(
+    `/api/sessions/${encodeURIComponent(payload.session_id)}/user-input/${encodeURIComponent(payload.request_id)}/answer`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ answers: payload.answers, ...(payload.turn_id ? { turn_id: payload.turn_id } : {}) }),
+    },
+  );
+  const result = await client.readJson(response);
+  if (!response.ok) throw new Error(result?.error?.message || result?.error || `Hermes input answer failed (${response.status})`);
+  return result;
+}
+
+async function refreshPendingUserInputs() {
+  if (usesDashboardTicketTransport()) {
+    const connection = await ensureDashboardConnection();
+    if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
+    const liveSessionId = activeUserInputSessionId();
+    if (!liveSessionId) return;
+    userInputController.setActiveSession(liveSessionId);
+    const result = await connection.client.request(WS_METHODS.userInputPending, { session_id: liveSessionId });
+    userInputController.replace(liveSessionId, pendingUserInputRecords(result, liveSessionId));
+    return;
+  }
+  const sessionId = activeUserInputSessionId();
+  if (!sessionId || !settings.apiKey) return;
+  const response = await client.fetch(`/api/sessions/${encodeURIComponent(sessionId)}/user-input/pending`, { method: 'GET' });
+  if (!response.ok) return;
+  const result = await client.readJson(response);
+  userInputController.setActiveSession(sessionId);
+  userInputController.replace(sessionId, pendingUserInputRecords(result, sessionId));
+}
+
+const userInputController = createUserInputController({
+  container: els.userInputRequests,
+  onError: (error) => {
+    els.composerStatus.textContent = `Could not send Hermes input: ${error?.message || String(error)}`;
+  },
+  sendAnswer: sendUserInputAnswer,
 });
 
 function currentDelegationScopeKey() {
@@ -612,6 +668,12 @@ async function ensureDashboardConnection() {
   });
   await gatewayClient.connect(buildDashboardWsUrl(settings.gatewayUrl, ticket.ticket));
   dashboardConnection = { client: gatewayClient, origin: desiredOrigin, tabId };
+  gatewayClient.on(WS_EVENTS.userInputRequest, (event) => {
+    userInputController.upsert(event.payload, event.sessionId);
+  });
+  gatewayClient.on(WS_EVENTS.userInputAnswer, (event) => {
+    userInputController.clear(event.payload?.request_id);
+  });
   return dashboardConnection;
 }
 
@@ -629,6 +691,7 @@ async function establishDashboardSession(storedSessionId = '', { isCurrent = () 
   }
   dashboardLiveSessionId = identity.liveId;
   activeSessionId = identity.storedId;
+  userInputController.setActiveSession(identity.liveId);
   const selectedModel = effectiveModel();
   if (selectedModel.model && selectedModel.provider) {
     try {
@@ -673,6 +736,7 @@ async function resumeDashboardRecoverySession(connection, storedSessionId = acti
     throw new Error('Dashboard resumed a different durable session during run recovery.');
   }
   dashboardLiveSessionId = identity.liveId;
+  userInputController.setActiveSession(identity.liveId);
   return identity;
 }
 
@@ -693,7 +757,7 @@ async function listDashboardSessions() {
   return applySessionModelBindings(normalizeHermesSessions(result), settings.sessionModelBindings);
 }
 
-async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } = {}) {
+async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun, onUserInput } = {}) {
   const connection = await ensureDashboardConnection();
   if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
   const sessionId = dashboardLiveSessionId;
@@ -721,6 +785,9 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
     };
     if (signal?.aborted) return onAbort();
     signal?.addEventListener?.('abort', onAbort, { once: true });
+    offs.push(connection.client.on(WS_EVENTS.userInputRequest, (event) => {
+      if (forThisSession(event)) onUserInput?.(event.payload);
+    }));
     offs.push(connection.client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
       finalText += event.payload?.text || '';
@@ -3368,6 +3435,7 @@ async function beginHermesWebDraft({ focus = true, keepLoading = false } = {}) {
   dismissWebSessionOwnershipNotice();
   clearLiveRun();
   activeSessionId = '';
+  userInputController.setActiveSession('');
   activeMessages = [];
   renderTaskStack();
   attachments = [];
@@ -3394,6 +3462,7 @@ async function createSession() {
   if (usesDashboardTicketTransport()) {
     const identity = await establishDashboardSession('');
     activeSessionId = identity.storedId;
+    userInputController.setActiveSession(identity.liveId);
     renderTaskStack();
     settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: title };
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });
@@ -3425,6 +3494,7 @@ async function createSession() {
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Session creation failed (${response.status}).`);
   const session = payload.session || payload;
   activeSessionId = session.id || id;
+  userInputController.setActiveSession(activeUserInputSessionId());
   renderTaskStack();
   settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: session.title || title };
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
@@ -3596,6 +3666,7 @@ async function sendPrompt(text) {
           renderMessages(activeMessages);
         },
         onTool: renderToolEvent,
+        onUserInput: (payload) => userInputController.upsert(payload, activeUserInputSessionId()),
         onRun: (runId) => {
           dashboardTurnSessionId = String(runId || '');
           activeRunId = String(runId || '');
@@ -3649,6 +3720,7 @@ async function sendPrompt(text) {
     });
     const streamedAnswer = await readHermesSse(response, {
       signal: activeAbortController.signal,
+      onUserInput: (payload) => userInputController.upsert(payload, activeUserInputSessionId()),
       onAssistant: (content) => {
         if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
         assistant.content = content;
@@ -3805,6 +3877,7 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
   dismissWebSessionOwnershipNotice();
   const requestId = ++webSessionLoadRequestId;
   activeSessionId = cleanSessionId;
+  userInputController.setActiveSession(activeUserInputSessionId());
   renderTaskStack();
   const session = sessions.find((row) => row.id === cleanSessionId) || { id: cleanSessionId, title: settings.webSessionTitle };
   showSessionLoadingState(session);
@@ -3826,6 +3899,9 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
     if (requestId !== webSessionLoadRequestId) return;
     await activateCurrentDelegationSession();
     await commitFullTabSessionMessages(messages, { sessionId: durableSessionId, requestId });
+    await refreshPendingUserInputs().catch((error) => {
+      console.warn('[Hermes Web] Pending user-input replay failed:', error?.message || error);
+    });
     if (!keepLoading) hideRuntimeLoadingState();
   } catch (error) {
     if (requestId !== webSessionLoadRequestId) return;
@@ -3864,6 +3940,7 @@ async function loadApp() {
   renderAppearanceSettings();
   applySessionVisibility();
   activeSessionId = handoff.newChat ? '' : (activeSessionId || settings.webSessionId || '');
+  userInputController.setActiveSession(activeUserInputSessionId());
   await hydrateDelegationWatches(stored[DELEGATION_WATCH_STORAGE_KEY] || []);
   renderTaskStack();
   const mode = normalizeConnectionMode(settings.connectionMode);
@@ -3882,6 +3959,18 @@ async function loadApp() {
   if (mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' || settings.gatewayMode === 'remote-dashboard') {
     try {
       const connection = await ensureDashboardConnection();
+      gatewayCapabilities = {
+        ...DEFAULT_GATEWAY_CAPABILITIES,
+        auth: true,
+        dashboardWs: true,
+        health: true,
+        models: true,
+        sessionChat: true,
+        sessionChatStreaming: true,
+        sessionUserInput: true,
+        sessions: true,
+        source: 'remote-dashboard',
+      };
       renderConnectionTruth({ status: 'online' });
       const metadataPromise = Promise.all([
         connection.client.request(WS_METHODS.modelOptions, {}).then((modelOptions) => {

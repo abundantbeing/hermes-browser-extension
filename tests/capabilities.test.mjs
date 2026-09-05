@@ -165,6 +165,22 @@ test('capability aliases normalize future session model routing advertisements',
   assert.equal(normalized.sessionModelLock, true);
 });
 
+test('native user-input capability requires the feature or both answer/replay endpoints', () => {
+  const featureCaps = normalizeGatewayCapabilities({ features: { session_user_input: true } });
+  assert.equal(featureCaps.sessionUserInput, true);
+
+  const endpointCaps = normalizeGatewayCapabilities({ endpoints: {
+    session_user_input_pending: { method: 'GET', path: '/api/sessions/{session_id}/user-input/pending' },
+    session_user_input_answer: { method: 'POST', path: '/api/sessions/{session_id}/user-input/{request_id}/answer' },
+  } });
+  assert.equal(endpointCaps.sessionUserInput, true);
+
+  const incompleteCaps = normalizeGatewayCapabilities({ endpoints: {
+    session_user_input_pending: { method: 'GET', path: '/api/sessions/{session_id}/user-input/pending' },
+  } });
+  assert.equal(incompleteCaps.sessionUserInput, false);
+});
+
 test('manual context compaction stays disabled when a gateway advertises only a feature flag with no endpoint', () => {
   const caps = normalizeGatewayCapabilities({
     object: 'hermes.api_server.capabilities',

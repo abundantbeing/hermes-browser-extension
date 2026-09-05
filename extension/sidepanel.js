@@ -188,6 +188,7 @@ import {
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import { filterKnownAssistantReconcileParts, normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
+import { createUserInputController, pendingUserInputRecords, userInputAnswerPayload } from './lib/user-input.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import {
   DELEGATION_WATCH_STORAGE_KEY,
@@ -456,6 +457,7 @@ const els = {
   sessionRefreshIcon: $('#sessionRefreshIcon'),
   refreshSessionsLabel: $('#refreshSessionsLabel'),
   messages: $('#messages'),
+  userInputRequests: $('#userInputRequests'),
   taskStack: $('#taskStack'),
   taskStackToggle: $('#taskStackToggle'),
   taskStackSummary: $('#taskStackSummary'),
@@ -842,6 +844,60 @@ let activeSessionRuntime = {
 // /api/ws JSON-RPC socket (the api_server REST/SSE surface is unavailable
 // cross-origin). This holds the live socket + the dashboard-assigned session id.
 let remoteWsConnection = null;
+
+function activeUserInputSessionId() {
+  return isRemoteWsMode()
+    ? String(remoteWsConnection?.wsSessionId || '').trim()
+    : String(settings.sessionId || '').trim();
+}
+
+async function sendUserInputAnswer(request, answers) {
+  if (isRemoteWsMode()) {
+    const connection = await ensureRemoteWsClient();
+    const liveSessionId = await ensureRemoteWsSession(connection);
+    const payload = userInputAnswerPayload({ ...request, sessionId: liveSessionId }, answers);
+    return connection.client.request(WS_METHODS.userInputRespond, payload);
+  }
+  const payload = userInputAnswerPayload(request, answers);
+  const response = await apiFetch(
+    `/api/sessions/${encodeSessionId(payload.session_id)}/user-input/${encodeURIComponent(payload.request_id)}/answer`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ answers: payload.answers, ...(payload.turn_id ? { turn_id: payload.turn_id } : {}) }),
+    },
+  );
+  const result = await readJsonResponse(response);
+  if (!response.ok) throw new Error(result?.error?.message || result?.error || `Hermes input answer failed (${response.status})`);
+  return result;
+}
+
+async function refreshPendingUserInputs() {
+  const requestedSessionId = activeUserInputSessionId();
+  if (!requestedSessionId) return;
+  if (isRemoteWsMode()) {
+    const connection = await ensureRemoteWsClient();
+    const liveSessionId = await ensureRemoteWsSession(connection);
+    userInputController.setActiveSession(liveSessionId);
+    const result = await connection.client.request(WS_METHODS.userInputPending, { session_id: liveSessionId });
+    userInputController.replace(liveSessionId, pendingUserInputRecords(result, liveSessionId));
+    return;
+  }
+  if (sessionRoutesAvailable === false || !settings.apiKey) return;
+  const response = await apiFetch(
+    `/api/sessions/${encodeSessionId(requestedSessionId)}/user-input/pending`,
+    { method: 'GET' },
+  );
+  if (!response.ok) return;
+  const result = await readJsonResponse(response);
+  userInputController.setActiveSession(requestedSessionId);
+  userInputController.replace(requestedSessionId, pendingUserInputRecords(result, requestedSessionId));
+}
+
+const userInputController = createUserInputController({
+  container: els.userInputRequests,
+  onError: (error) => setStatus('warn', 'Could not send Hermes input', error?.message || String(error), { translateDetail: false }),
+  sendAnswer: sendUserInputAnswer,
+});
 
 function currentDelegationScopeKey() {
   return delegationScopeKey({
@@ -1974,6 +2030,7 @@ async function loadMessagesForActiveScope() {
   const key = activeMessagesStorageKey(previousConversationScope);
   const stored = await browserApi.storage.local.get([key]);
   messages = Array.isArray(stored[key]) ? stored[key] : [];
+  userInputController.setActiveSession(activeUserInputSessionId());
   const visibleTokens = estimateLocalSessionContextTokens({ messages: browserDisplayMessages(messages) });
   loadedSessionContextEstimate = {
     sessionId: settings.sessionId,
@@ -2404,6 +2461,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
       sessions: true,
       sessionChat: true,
       sessionChatStreaming: true,
+      sessionUserInput: true,
       skills: true,
       dashboardWs: true,
       warnings: [
@@ -6925,6 +6983,7 @@ async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focu
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
   };
   activeSessionRuntime = { ...activeSessionRuntime, sessionId, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
+  userInputController.setActiveSession(sessionId);
   sessionRoutesAvailable = true;
   messages = [];
   await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
@@ -6991,6 +7050,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
       modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
     };
     activeSessionRuntime = { ...activeSessionRuntime, sessionId: id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
+    userInputController.setActiveSession(liveId);
     messages = [];
     await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
     await saveSessionBindingForActiveScope(session);
@@ -7142,6 +7202,7 @@ async function openHermesSession(selectedSession) {
   applyModelOptionsForSession(session);
   renderModelOptions(availableModels);
   activeSessionRuntime = { ...activeSessionRuntime, sessionId: session.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
+  userInputController.setActiveSession(isRemoteWsMode() ? liveSessionId : session.id);
   sessionRoutesAvailable = true;
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   await saveSessionBindingForActiveScope(session);
@@ -7150,6 +7211,9 @@ async function openHermesSession(selectedSession) {
   renderSessionMenu();
   const loaded = await loadSessionMessages(liveSessionId, { requestId });
   if (requestId !== sessionLoadRequestId) return;
+  await refreshPendingUserInputs().catch((error) => {
+    console.warn('[Hermes Browser] Pending user-input replay failed:', error?.message || error);
+  });
   setStatus(loaded ? 'ok' : 'warn', loaded ? 'Session opened' : 'Session opened without history', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`, { translateDetail: false });
 }
 
@@ -8872,7 +8936,7 @@ function sseBlocksFromBuffer(buffer, { flush = false } = {}) {
   return { blocks, rest };
 }
 
-async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [] } = {}) {
+async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onUserInput, knownAssistantTexts = [] } = {}) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -8887,6 +8951,8 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
     if (event.type === 'run.started' && data.run_id) {
       sawRunStarted = true;
       onRun?.(data.run_id);
+    } else if (event.type === 'user_input.request') {
+      onUserInput?.(data);
     } else if ((event.type === 'assistant.delta' && data.delta) || (event.type === 'assistant.completed' && data.content)) {
       streamTextState = reduceAssistantStreamText(streamTextState, { type: event.type, data });
       finalText = streamTextState.text;
@@ -9088,6 +9154,12 @@ async function ensureRemoteWsClient() {
     throw error;
   }
   const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '' };
+  client.on(WS_EVENTS.userInputRequest, (event) => {
+    userInputController.upsert(event.payload, event.sessionId);
+  });
+  client.on(WS_EVENTS.userInputAnswer, (event) => {
+    userInputController.clear(event.payload?.request_id);
+  });
   client.on('close', () => {
     if (remoteWsConnection === connection) {
       remoteWsConnection = null;
@@ -9129,6 +9201,7 @@ async function ensureRemoteWsSession(connection) {
   });
   connection.wsSessionId = liveId;
   connection.wsStoredSessionId = storedId;
+  userInputController.setActiveSession(liveId);
   // Persist only the durable identity. Every socket replacement resumes it and
   // receives a fresh live id for prompt/history/steer/interrupt RPCs.
   settings = {
@@ -9184,7 +9257,7 @@ async function ensureRemoteWsSession(connection) {
   return liveId;
 }
 
-async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, knownAssistantTexts = [] } = {}) {
+async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, onUserInput, knownAssistantTexts = [] } = {}) {
   const connection = await ensureRemoteWsClient();
   const sessionId = await ensureRemoteWsSession(connection);
   onRun?.(sessionId);
@@ -9219,6 +9292,9 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, know
     }
     signal?.addEventListener?.('abort', onAbort, { once: true });
 
+    offs.push(client.on(WS_EVENTS.userInputRequest, (event) => {
+      if (forThisSession(event)) onUserInput?.(event.payload);
+    }));
     offs.push(client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
       finalText += event.payload?.text || '';
@@ -9255,10 +9331,10 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, know
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [] } = {}) {
-  if (isRemoteWsMode()) return streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, knownAssistantTexts });
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onUserInput, knownAssistantTexts = [] } = {}) {
+  if (isRemoteWsMode()) return streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, onUserInput, knownAssistantTexts });
   const hasSessionRoutes = await ensureHermesSession();
-  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, knownAssistantTexts });
+  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onUserInput, knownAssistantTexts });
 
   let response;
   try {
@@ -9294,14 +9370,14 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
     });
   }
   try {
-    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts });
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onUserInput, knownAssistantTexts });
   } catch (error) {
     error.requestAccepted = true;
     throw error;
   }
 }
 
-async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, knownAssistantTexts = [] } = {}) {
+async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onUserInput, knownAssistantTexts = [] } = {}) {
   let response;
   try {
     response = await apiFetch('/v1/chat/completions', {
@@ -9336,7 +9412,7 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
     });
   }
   try {
-    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun, knownAssistantTexts });
+    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun, onUserInput, knownAssistantTexts });
     await captureDelegationDispatchesFromCurrentRestHistory();
     return result;
   } catch (error) {
@@ -9860,6 +9936,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             activeRunControl = withRunControlId(activeRunControl, runId);
           },
           onSteerQueued: restoreBackendQueuedSteerDraft,
+          onUserInput: (payload) => userInputController.upsert(payload, activeUserInputSessionId()),
           onRuntime: (payload) => {
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             const status = String(payload?.status || '').trim().toLowerCase();
@@ -11623,6 +11700,9 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
       },
       bindSession: async () => {
         await initializeSessionForPanelOpen({ focus: false });
+        await refreshPendingUserInputs().catch((error) => {
+          console.warn('[Hermes Browser] Pending user-input replay failed:', error?.message || error);
+        });
         const sessionId = String(settings.sessionId || '').trim();
         if (!sessionId) {
           if (transportUsesDashboardTicket(settings.connectionTransport) || sessionRoutesAvailable !== false) {
