@@ -164,7 +164,9 @@ test('side panel exposes an explicit full-view handoff', () => {
   assert.match(js, /openHermesFullView/);
   assert.match(read('extension/background.js'), /HERMES_OPEN_FULL_VIEW/);
   assert.match(read('extension/background.js'), /browserApi\.tabs\.create/);
-  assert.match(css, /grid-template-columns:\s*auto minmax\(0, 1fr\) auto auto auto auto/);
+  assert.match(css, /\.topbar\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/s, 'topbar must lay out as a single-row flex bar');
+  assert.match(css, /\.topbar \.session-menu-button\s*\{\s*flex:\s*1 1 auto;\s*min-width:\s*0;\s*\}/, 'session name must take the remaining topbar space');
+  assert.match(css, /\.topbar \.topbar-status\s*\{\s*flex:\s*0 0 auto;\s*margin-left:\s*auto;\s*\}/, 'status must stay pinned to the trailing topbar edge');
   assert.doesNotMatch(css, /\.session-menu-button\s*\{[^}]*max-width:/s);
   assert.match(js, /newChat:\s*true/);
 });
@@ -457,7 +459,7 @@ test('full-tab run steer failures distinguish stale runs from missing gateway su
 
 test('full-tab session creation and controls enforce the upstream runtime truth contract', () => {
   const js = read('extension/app.js');
-  const createSession = js.match(/async function createSession\(\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  const createSession = js.match(/async function createSession\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   const selectModel = js.match(/async function selectModel\(model\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
   const sendWebSteerText = js.match(/async function sendWebSteerText\(text\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
 
@@ -535,7 +537,7 @@ test('full-tab uses extension-style grouped model, attachment, collapsible sessi
   assert.match(css, /\.web-shell\.sessions-hidden/);
   assert.match(html, /class="composer-icon composer-mic"/);
   assert.match(js, /function consumePendingVoiceDraft/);
-  assert.match(voicePage, /await browserApi\.storage\.local\.set\(\{ \[VOICE_DRAFT_STORAGE_KEY\]: payload \}\)/);
+  assert.match(voicePage, /storage\??\.local\??\.set\??\.\(\{ \[VOICE_DRAFT_STORAGE_KEY\]: payload \}\)/);
 });
 
 test('full-tab sessions use canonical source groups and a gateway-backed rename action', () => {

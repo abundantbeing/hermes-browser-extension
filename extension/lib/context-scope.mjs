@@ -92,11 +92,15 @@ export function resolveContextTargetTab({ activeTab = null, tabs = [], scope = D
   return tabs.find((tab) => Number(tab.id) === normalized.pinnedTabId) || null;
 }
 
-export function filterPromptTabs(tabs = [], scope = DEFAULT_CONTEXT_SCOPE) {
+export function filterPromptTabs(tabs = [], scope = DEFAULT_CONTEXT_SCOPE, { activeTab = null, targetTab = null } = {}) {
   const normalized = normalizeContextScope(scope);
   if (normalized.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return [];
   if (!Array.isArray(normalized.selectedTabIds)) return tabs;
-  const ids = new Set(normalized.selectedTabIds);
+  const target = targetTab || resolveContextTargetTab({ activeTab, tabs, scope: normalized });
+  const ids = new Set(normalized.selectedTabIds.map(Number));
+  if (target?.id !== undefined && target?.id !== null) {
+    ids.add(Number(target.id));
+  }
   return tabs.filter((tab) => ids.has(Number(tab.id)));
 }
 

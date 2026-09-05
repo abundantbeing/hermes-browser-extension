@@ -25,7 +25,9 @@ test('Hermes client resolves dynamic connection settings and safe request header
   connection = { gatewayUrl: 'https://agent.example/', apiKey: '', activeProfile: '' };
   await client.fetch('/v1/models', { method: 'GET' });
 
-  assert.equal(calls[0].url, 'http://127.0.0.1:8642/health');
+  // Bot Mode API transport: per-profile paths are multiplexed as /p/<profile>/...
+  assert.equal(calls[0].url, 'http://127.0.0.1:8642/p/work/health');
+  assert.equal(calls[0].url.includes('/p/work/v1/'), false, 'profile prefix applies once, ahead of the requested path');
   assert.equal(calls[0].options.headers.Authorization, 'Bearer secret-value');
   assert.equal(calls[0].options.headers['X-Hermes-Profile'], 'work');
   assert.equal(calls[0].options.redirect, 'error');

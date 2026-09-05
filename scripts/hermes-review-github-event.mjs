@@ -232,6 +232,58 @@ export async function fetchPullRequestDiff({ repo, number, token }) {
   return text;
 }
 
+// Parse raw SSE lines from a streaming /v1/chat/completions review response.
+// Pure helper so the review-watch cron and tests share one frame semantics:
+// `data: [DONE]` ends the stream, JSON error frames surface as `streamError`,
+// delta content frames accumulate into `chunks` (joined = the full review),
+// non-JSON keep-alive/ping frames are ignored, and multi-line `data:` frames
+// are rejoined with newlines before parsing.
+export function parseSseReviewEvents(lines = []) {
+  const chunks = [];
+  let streamError = null;
+  let sawDone = false;
+  let dataBuffer = [];
+
+  const flush = () => {
+    if (!dataBuffer.length) return;
+    const data = dataBuffer.join('\n');
+    dataBuffer = [];
+    if (data === '[DONE]') {
+      sawDone = true;
+      return;
+    }
+    let payload = null;
+    try {
+      payload = JSON.parse(data);
+    } catch {
+      return; // Keep-alive/ping frames are not JSON; ignore instead of failing.
+    }
+    if (payload && typeof payload === 'object' && payload.error) {
+      const message = payload.error?.message || payload.error;
+      streamError = new Error(String(message || 'Hermes review stream reported an error.'));
+      return;
+    }
+    const delta = payload?.choices?.[0]?.delta?.content;
+    if (typeof delta === 'string' && delta) chunks.push(delta);
+    else {
+      const message = payload?.choices?.[0]?.message?.content;
+      if (typeof message === 'string' && message) chunks.push(message);
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = String(rawLine ?? '').replace(/\r$/, '');
+    if (line.startsWith(':')) continue; // SSE comment (keep-alive).
+    if (!line) {
+      flush();
+      continue;
+    }
+    if (line.startsWith('data:')) dataBuffer.push(line.slice(5).replace(/^ /, ''));
+  }
+  flush();
+  return { chunks, streamError, sawDone };
+}
+
 export async function callHermesReview(prompt, env = process.env) {
   const base = normalizeGatewayUrl(env.HERMES_REVIEW_GATEWAY_URL);
   const timeoutMs = Math.max(1, Number(env.HERMES_REVIEW_TIMEOUT_MS || 180_000) || 180_000);
@@ -247,7 +299,10 @@ export async function callHermesReview(prompt, env = process.env) {
       },
       body: JSON.stringify({
         model: env.HERMES_REVIEW_MODEL || DEFAULT_MODEL,
-        stream: false,
+        // Stream the review (the review-watch cron consumes gateway :8642 SSE)
+        // so long reviews avoid per-request idle limits; deltas are rejoined by
+        // parseSseReviewEvents below. Non-streaming JSON responses still work.
+        stream: true,
         messages: [
           { role: 'system', content: env.HERMES_REVIEW_SYSTEM_PROMPT || 'You are Hermes Agent performing a GitHub review. Be concise, specific, and safety-minded.' },
           { role: 'user', content: prompt },
@@ -255,13 +310,21 @@ export async function callHermesReview(prompt, env = process.env) {
       }),
     });
     const text = await response.text();
+    if (!response.ok) throw new Error(`Hermes review request failed (${response.status}): ${text.slice(0, 700)}`);
+    const contentType = String(response.headers?.get?.('content-type') || '');
+    if (contentType.includes('text/event-stream') || text.trimStart().startsWith('data:')) {
+      const { chunks, streamError } = parseSseReviewEvents(text.split(/\r?\n/));
+      if (streamError) throw streamError;
+      const review = chunks.join('');
+      if (review) return review;
+      throw new Error('Hermes review stream ended without content.');
+    }
     let payload = {};
     try {
       payload = JSON.parse(text);
     } catch {
       payload = { error: text };
     }
-    if (!response.ok) throw new Error(`Hermes review request failed (${response.status}): ${text.slice(0, 700)}`);
     return payload?.choices?.[0]?.message?.content || payload?.message?.content || payload?.output_text || payload?.output || text;
   } catch (error) {
     if (error?.name === 'AbortError') throw new Error(`Hermes review request timed out after ${timeoutMs}ms`);

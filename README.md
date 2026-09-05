@@ -9,7 +9,7 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 </p>
 
 <p align="center">
-  <strong>Public alpha v0.3.0 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
+  <strong>Public v0.3.2 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
   Not on the Chrome Web Store yet.
 </p>
 
@@ -19,9 +19,19 @@ Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium 
 
 This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/Chromium side-panel integration for Hermes Agent.
 
-### New in v0.3.0: live browser control
+### New in v0.3.2: Hermes Bot Mode, Multi-Agent Threads and Intelligent Tab Scoping
 
-v0.3.0 adds an opt-in MV3 controller for leased browser tabs, explicit approval gates for consequential or privileged actions, local HTML/PDF/localhost document access after approval, scoped artifact transfer, and reviewed workflow-to-skill drafts. Control remains bound to the exact controller, tab lease, frame, and document generation, and a Browser-bound request never falls back to an isolated browser backend.
+v0.3.2 introduces **Hermes Bot Mode**, bringing your full Hermes multi-agent roster directly into the browser side panel:
+- **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles (`Roxas`, `Naminé`, `Riku`, and custom agents) with lazy model hydration and sub-50ms dynamic Desktop dashboard discovery.
+- **Group Chats & Collaborative Threads**: Synced multi-agent room projections, room-level thread tracking, and synchronized conversation histories without blank chat states.
+- **Truthful Page-Only Scoping & Zero Token Bloat**: By default, only the active browser tab is included (`1/N` tabs in prompt) and sent in the prompt envelope. All other open tabs remain strictly excluded, preventing context bloat and token waste.
+- **Interactive Multi-Tab In/Out Controls**: Click any tab to toggle it `IN` or `OUT` on demand, with a full-width **Page only** reset action and side-by-side **Include all tabs** and **AI Triage Tabs** controls.
+- **Multi-Keyword Tab Search**: Fast whitespace-token search filtering across tab titles and URLs with an active match count badge and keyboard navigation (`Enter` to toggle, `Escape` to clear).
+- **AI Tab Triage (`/sort-tabs`)**: Automated tab clustering by topic or project, duplicate domain/URL detection, and an actionable checklist of tabs recommended for closure.
+
+### Live browser control
+
+v0.3.0 added an opt-in MV3 controller for leased browser tabs, explicit approval gates for consequential or privileged actions, local HTML/PDF/localhost document access after approval, scoped artifact transfer, and reviewed workflow-to-skill drafts. Control remains bound to the exact controller, tab lease, frame, and document generation, and a Browser-bound request never falls back to an isolated browser backend.
 
 The release also keeps Hermes Assist, Hermes Web Alpha, session-scoped model routing, and the Browser Context Protocol introduced in v0.2.0.
 

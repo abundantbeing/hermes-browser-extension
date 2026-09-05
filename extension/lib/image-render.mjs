@@ -35,6 +35,93 @@ export function resolveImageSource(value = '') {
   }
 }
 
+function imageResultRecord(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function resolvedGeneratedImageSourcesFromResult(result) {
+  const record = imageResultRecord(result);
+  if (!record || record.success === false) return [];
+  const candidates = [record.host_image, record.image, record.agent_visible_image, record.url]
+    .filter((value) => typeof value === 'string' && value.trim());
+  const seen = new Set();
+  return candidates
+    .map((value) => resolveImageSource(value))
+    .filter((source) => {
+      if (!source || seen.has(source)) return false;
+      seen.add(source);
+      return true;
+    });
+}
+
+export function resolvedGeneratedImageSourcesFromMessages(messages = []) {
+  if (!Array.isArray(messages)) return [];
+  const found = [];
+  const seen = new Set();
+  const visit = (message) => {
+    if (!message || typeof message !== 'object') return;
+    const toolNames = [
+      message.tool_name,
+      message.toolName,
+      message.name,
+      message.tool_call?.name,
+      ...(Array.isArray(message.tool_calls) ? message.tool_calls.flatMap((call) => [call?.name, call?.function?.name]) : []),
+    ].map((value) => String(value || '').trim());
+    if (toolNames.some((toolName) => /image_generate/i.test(toolName))) {
+      const results = [message.result, message.output, message.content];
+      if (Array.isArray(message.tool_calls)) {
+        results.push(...message.tool_calls.flatMap((call) => [call?.result, call?.function?.result, call?.function?.arguments]));
+      }
+      for (const result of results) {
+        for (const source of resolvedGeneratedImageSourcesFromResult(result)) {
+        if (!seen.has(source)) {
+          seen.add(source);
+          found.push(source);
+        }
+      }
+    }
+    }
+    if (Array.isArray(message.content)) message.content.forEach(visit);
+    if (Array.isArray(message.parts)) message.parts.forEach(visit);
+  };
+  messages.forEach(visit);
+  return found;
+}
+export function appendGeneratedImageSourcesToMessages(messages = [], sources = []) {
+  const safeSources = [...new Set((Array.isArray(sources) ? sources : [])
+    .map((source) => resolveImageSource(source))
+    .filter(Boolean))];
+  if (!safeSources.length) return Array.isArray(messages) ? messages : [];
+  const next = Array.isArray(messages) ? messages.map((message) => ({ ...message })) : [];
+  let assistantIndex = -1;
+  for (let index = next.length - 1; index >= 0; index -= 1) {
+    if (String(next[index]?.role || '').toLowerCase() === 'assistant') {
+      assistantIndex = index;
+      break;
+    }
+  }
+  const currentContent = assistantIndex >= 0 ? String(next[assistantIndex].content || '') : '';
+  const missing = safeSources.filter((source) => !currentContent.includes(source));
+  if (!missing.length) return next;
+  const markdown = missing.map((source) => `![Generated image](${source})`).join('\n');
+  if (assistantIndex >= 0) {
+    next[assistantIndex] = {
+      ...next[assistantIndex],
+      content: [currentContent, markdown].filter(Boolean).join('\n\n'),
+    };
+  } else {
+    next.push({ role: 'assistant', content: markdown, ts: Date.now() });
+  }
+  return next;
+}
+
 export function normalizeUserImageAttachments(attachments = []) {
   if (!Array.isArray(attachments)) return [];
   const previews = [];

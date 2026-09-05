@@ -61,6 +61,13 @@ export const DEFAULT_SETTINGS = Object.freeze({
   sessionTitle: 'Hermes Browser Extension',
   sessionSource: 'hermes_browser',
   activeProfile: '',
+  botModeEnabled: false,
+  botModeDisplayDensity: 'comfortable',
+  botModeActivityNotifications: true,
+  botModeSelectedProfile: '',
+  botModeReturnProfile: '',
+  pendingProfileContextHandoff: '',
+  pendingProfileContextHandoffSessionId: '',
   model: 'hermes-agent',
   modelContextTokens: 0,
   extensionPreferredModel: null,
@@ -666,6 +673,7 @@ export function normalizeToolActivity(tool = {}) {
       : '',
     activityId,
     status,
+    result: data?.result ?? tool?.result ?? null,
     ts: Date.now(),
   };
 }
@@ -1170,9 +1178,15 @@ export function modelRuntimeAckState({ requested = {}, runtime = {} } = {}) {
   };
 }
 
+export function isLocalOrCustomProvider(provider = '') {
+  const p = String(provider || '').trim().toLowerCase();
+  return p === 'custom' || p.endsWith('-local') || p.startsWith('custom-') || p.includes('antigravity');
+}
+
 export function shouldRequireModelLock({ provider = '', model = '', defaultModel = DEFAULT_SETTINGS.model, gatewayDefault = false } = {}) {
   const normalizedProvider = String(provider || '').trim();
   if (gatewayDefault === true && !normalizedProvider) return false;
+  if (isLocalOrCustomProvider(normalizedProvider)) return false;
   return Boolean(normalizedProvider || (String(model || '').trim() && String(model).trim() !== String(defaultModel || DEFAULT_SETTINGS.model).trim()));
 }
 
@@ -1324,11 +1338,13 @@ function fallbackModelContextTokens(model = {}) {
   const isGpt56 = /\bgpt-5\.6(?:-|\b)/.test(providerHint);
   const isExactGpt54 = /\bgpt-5\.4\b(?!-)/.test(providerHint);
   const isGpt54Mini = /\bgpt-5\.4-mini\b/.test(providerHint);
+  const has900kVariant = variants.some((value) => /(?:^|[-_/:\s])900k(?:$|[-_/:\s])/.test(value));
   if (isGpt56) {
-    // Hermes Agent resolves the stale Codex OAuth advertisement to an
-    // effective 900K window for the GPT-5.6 family. Direct OpenAI keeps its
-    // 1.05M API window, and provider-less rows stay unknown.
-    if (isCodexOAuth) return 900_000;
+    // Codex OAuth exposes two GPT-5.6 subscription tiers. The explicit 900K
+    // suffix is the source of truth; the base family uses the 272K tier.
+    // Direct OpenAI keeps its 1.05M API window, and provider-less rows stay
+    // unknown.
+    if (isCodexOAuth) return has900kVariant ? 900_000 : 272_000;
     if (isDirectOpenAi) return 1_050_000;
     return 0;
   }
@@ -2129,11 +2145,25 @@ export function isMicrophonePermissionError(error = {}) {
   const message = String(error?.message || error?.error || error || '').toLowerCase();
   return name === 'notallowederror'
     || name === 'permissiondeniederror'
+    || name === 'notreadableerror'
+    || name === 'securityerror'
+    || name === 'invalidstateerror'
     || message.includes('not-allowed')
     || message.includes('permission denied')
     || message.includes('permission dismissed')
     || message.includes('permission blocked')
-    || message.includes('microphone access denied');
+    || message.includes('permissions policy')
+    || message.includes('microphone access denied')
+    || message.includes('microphone is not available');
+}
+
+export function shouldOpenVoiceDictationPageForSpeechError(error = {}) {
+  const code = String(error?.error || error?.code || error?.name || '').trim().toLowerCase();
+  const message = String(error?.message || error?.error || error || '').toLowerCase();
+  return ['network', 'service-not-allowed', 'not-allowed', 'audio-capture'].includes(code)
+    || message.includes('speech service')
+    || message.includes('speech recognition service')
+    || message.includes('network error');
 }
 
 export function microphonePermissionHelp() {
@@ -2293,6 +2323,8 @@ export function normalizeHermesSessions(payload = {}) {
         profile: String(session.profile || session.profile_name || session.effective_profile || session.session_profile || ''),
         rawModelId: String(session.rawModelId || session.raw_model_id || session.model || ''),
         modelOptions: normalizeAcknowledgedModelOptions(session.model_options || session.modelOptions),
+        transport: String(session.transport || session.transport_mode || '').trim(),
+        hidden: session.hidden === true || session.is_hidden === true || session.isHidden === true,
         inputTokens: Number(session.input_tokens || session.inputTokens || 0),
         outputTokens: Number(session.output_tokens || session.outputTokens || 0),
         cacheReadTokens: Number(session.cache_read_tokens || session.cacheReadTokens || 0),
@@ -2347,6 +2379,7 @@ export function groupSessionsForMenu(sessions = [], selectedSessionId = DEFAULT_
   const needle = String(query || '').trim().toLowerCase();
   const groups = new Map();
   for (const session of sessions || []) {
+    if (session?.hidden === true) continue;
     const haystack = `${session.id} ${session.title} ${session.source} ${session.sourceLabel} ${session.preview}`.toLowerCase();
     if (needle && !haystack.includes(needle)) continue;
     const label = session.sourceLabel || normalizeSessionSourceLabel(session.source);

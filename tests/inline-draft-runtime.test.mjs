@@ -125,7 +125,7 @@ test('Sidecar intro is panel-open-only and new session cannot reveal it again', 
   assert.match(html, /id="browserIntroHero"[^>]*aria-label="Hermes Browser intro"/);
   assert.match(source, /function renderBrowserIntroVisibility\(/);
   assert.match(source, /browserIntroHero/);
-  assert.match(source, /newSessionButton\.addEventListener[\s\S]{0,500}await persistBrowserIntroSeen\(\);[\s\S]{0,300}await beginHermesBrowserDraft\(\);/);
+  assert.match(source, /newSessionButton\.addEventListener[\s\S]{0,1200}await persistBrowserIntroSeen\(\);[\s\S]{0,900}await beginHermesBrowserDraft\(\);/);
   assert.match(source, /createSessionButton\.addEventListener[\s\S]{0,400}await persistBrowserIntroSeen\(\);[\s\S]{0,300}await beginHermesBrowserDraft\(\);/);
 });
 

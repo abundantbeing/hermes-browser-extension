@@ -200,6 +200,22 @@ test('model binding resolves from the live provider catalog', () => {
   });
 });
 
+test('model binding canonicalizes raw provider rows from gateway model catalogs', () => {
+  assert.deepEqual(resolveAssistModelBindingFromCatalog({
+    settings: { inlineAssistModel: 'e2e/test-model' },
+    models: [{
+      id: 'e2e/test-model',
+      rawModelId: 'e2e/test-model',
+      provider: 'e2e',
+      runtimeSelectable: true,
+    }],
+  }), {
+    inlineAssistModel: 'e2e::e2e/test-model',
+    inlineAssistRawModel: 'e2e/test-model',
+    inlineAssistProvider: 'e2e',
+  });
+});
+
 test('runtime acknowledgement aliases are normalized before exact comparison', () => {
   const selection = { model: 'deepseek-v4-pro', provider: 'opencode-go' };
   assert.deepEqual(

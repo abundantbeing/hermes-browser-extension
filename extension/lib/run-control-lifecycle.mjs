@@ -78,6 +78,19 @@ export function markRunStreamClosed(state) {
   return freeze({ ...state, streamOpen: false });
 }
 
+export function canRecoverStaleDashboardRunControl({
+  sending = false,
+  dashboardTransport = false,
+  runControl = null,
+} = {}) {
+  return Boolean(
+    dashboardTransport
+    && !sending
+    && runControl?.streamOpen === false
+    && [RUN_CONTROL_PHASES.RUNNING, RUN_CONTROL_PHASES.UNCONFIRMED].includes(runControl.phase),
+  );
+}
+
 export function markRunTerminal(state, status, now = Date.now()) {
   const terminalStatus = String(status || '').toLowerCase();
   if (!TERMINAL.has(terminalStatus)) throw new TypeError(`Unknown terminal run status: ${status}`);

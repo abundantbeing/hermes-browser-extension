@@ -87,6 +87,14 @@ function detectBrowserProduct({
   return browserProduct(BROWSER_IDS.UNKNOWN, 'Supported browser', 'unknown', 'unknown', 'unavailable');
 }
 
+function browserSpeechCloudFallbackAllowed({ product = detectBrowserProduct() } = {}) {
+  // `webkitSpeechRecognition` is exposed by many Chromium forks, but the
+  // Google-backed service used by Chrome is not available in those browsers.
+  // Treat local/on-device recognition separately; this gate only decides
+  // whether the network-backed browser fallback is safe to start.
+  return product?.id === BROWSER_IDS.CHROME;
+}
+
 function browserMicrophoneSettingsUrl({ product = detectBrowserProduct(), extensionUrl = '' } = {}) {
   if (product?.id === BROWSER_IDS.FIREFOX || product?.engine === 'gecko') return '';
   if (product?.id === BROWSER_IDS.SAFARI || product?.engine === 'webkit') return '';
@@ -408,6 +416,7 @@ export {
   BROWSER_IDS,
   actionIconPathsForBrowser,
   browserMicrophoneSettingsUrl,
+  browserSpeechCloudFallbackAllowed,
   detectBrowserId,
   detectBrowserProduct,
   getSidebarAction,

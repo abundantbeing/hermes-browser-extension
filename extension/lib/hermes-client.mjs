@@ -7,6 +7,13 @@ function normalizeBaseUrl(value = '') {
   return String(value || '').trim().replace(/\/+$/, '');
 }
 
+function profileScopedPath(path = '', profile = '') {
+  const normalizedPath = String(path || '').startsWith('/') ? String(path || '') : `/${path}`;
+  const selectedProfile = String(profile || '').trim();
+  if (!selectedProfile || /^\/p\/[^/]+(?:\/|$)/.test(normalizedPath)) return normalizedPath;
+  return `/p/${encodeURIComponent(selectedProfile)}${normalizedPath}`;
+}
+
 function normalizedRows(payload = {}) {
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload.data)) return payload.data;
@@ -50,7 +57,7 @@ export function createHermesClient({ fetchImpl = globalThis.fetch, getConnection
     const hasBody = typeof options.body !== 'undefined';
     const headers = {
       ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-      ...(connection.apiKey ? { Authorization: AUTH_SCHEME.concat(' ', connection.apiKey) } : {}),
+      ...(connection.apiKey ? { Authorization: `${AUTH_SCHEME} ${connection.apiKey}` } : {}),
       ...(connection.activeProfile ? { 'X-Hermes-Profile': connection.activeProfile } : {}),
       ...(options.headers || {}),
     };
@@ -58,7 +65,7 @@ export function createHermesClient({ fetchImpl = globalThis.fetch, getConnection
     // always rejected (redirect: 'error' is non-overridable) so a compromised
     // endpoint can never bounce the extension to an attacker-controlled host.
     const { redirect: _ignoredRedirect, ...rest } = options;
-    return fetchImpl(`${base}${String(path || '').startsWith('/') ? path : `/${path}`}`, {
+    return fetchImpl(`${base}${profileScopedPath(path, connection.activeProfile)}`, {
       redirect: 'error',
       ...rest,
       headers,

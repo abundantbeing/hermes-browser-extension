@@ -180,6 +180,9 @@ test('session.status runtime acknowledgement accepts structured fields and strip
 test('WS_METHODS exposes Desktop/TUI session steering instead of slash-command injection', () => {
   assert.equal(WS_METHODS.sessionSteer, 'session.steer');
   assert.equal(WS_METHODS.promptSubmit, 'prompt.submit');
+  assert.equal(WS_METHODS.profilesCreate, 'profiles.create');
+  assert.equal(WS_METHODS.profilesDescribe, 'profiles.describe');
+  assert.equal(WS_METHODS.profilesSetAsset, 'profiles.set_asset');
 });
 
 test('remoteSessionIdentity keeps live and durable ids distinct', () => {
@@ -336,6 +339,19 @@ test('gateway client connects, resolves a matching RPC response, and dispatches 
 
   assert.deepEqual(await pending, { status: 'streaming' });
   assert.deepEqual(deltas, ['hel']);
+});
+
+test('gateway RPC errors preserve their server code for session rebind recovery', async () => {
+  const client = createGatewayClient({ WebSocketImpl: FakeWebSocket });
+  const connecting = client.connect('wss://host/api/ws');
+  FakeWebSocket.last._open();
+  FakeWebSocket.last._message({ method: 'event', params: { type: 'gateway.ready', payload: {} } });
+  await connecting;
+  const pending = client.request('prompt.submit', { session_id: 'live-stale', text: 'hello' });
+  const frame = JSON.parse(FakeWebSocket.last.sent.at(-1));
+  FakeWebSocket.last._message({ id: frame.id, error: { code: 4001, message: 'session not found' } });
+  await assert.rejects(pending, (error) => error.code === 4001 && error.rpcCode === 4001);
+  client.close();
 });
 
 test('gateway client rejects a socket that never sends gateway.ready', async () => {

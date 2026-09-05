@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-09-05
+
+### Added
+
+- Added Hermes Bot Mode: dedicated multi-agent roster with seamless profile switching across default and named profiles (Roxas, Naminé, Riku, and custom profiles), lazy model loading, and instant agent opening.
+- Added live Group Chat & Threads support: multi-agent room projections, collaborative thread tracking, and synchronized conversation histories without blank chat states.
+- Added AI Tab Triage command (`/sort-tabs`, `/organize-tabs`, `/clean-tabs`, `/categorize-tabs`, `/triage-tabs`): automatically analyzes all open tabs in the window, clusters them into logical categories (Projects, Research, Social, Productivity, Stale/Duplicates), identifies redundant URLs, and generates an actionable removal checklist.
+- Added a full-width **Page only** action button and side-by-side **Include all tabs** and **AI Triage Tabs** controls with hover tooltip descriptions.
+- Added multi-keyword tab search supporting whitespace-separated query tokens matching across tab titles and URLs with an active match count badge and keyboard navigation (`Enter` to toggle, `Escape` to clear).
+
+### Fixed
+
+- Fixed 40-second connection delay by implementing dynamic loopback Desktop dashboard discovery across ephemeral ports (1297, 22784, etc.) with bounded racing and strict endpoint abort timeouts.
+- Fixed `dashboard-sessions-422` session loading failure: updated session pagination to respect the dashboard's max query limit (`limit <= 100`) across sequential pages, restoring full access to Hermes Browser Extension, Desktop, and API sessions without gateway errors.
+- Fixed startup loading freeze: restored sequential readiness step reporting with strict timeouts preventing loopback gateway endpoint hangs.
+- Fixed false "Invalid gateway API key API_SERVER_KEY" error banners on named profiles by enabling loopback browser pairing token authorization and direct dashboard WebSocket transport fallback.
+- Fixed tab context scope regression: "Page only" mode now truthfully displays `1/N` tabs in prompt, marks the active page `IN`, marks all other tabs `OUT`, and strictly isolates prompt payload tabs so the AI model never receives unselected browser tabs.
+
 ## [0.3.1] - 2026-08-27
 
 ### Fixed

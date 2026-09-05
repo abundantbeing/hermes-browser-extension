@@ -20,6 +20,39 @@ export function modelCatalogCacheKey({ gatewayMode = 'local-api', gatewayUrl = '
   return `${mode}|${url}|${activeProfile}`;
 }
 
+// Profile-independent cache slot: the union of every profile's verified
+// catalog for this gateway. Switching agents must never shrink the model
+// selector back to a single profile's subset.
+export const MODEL_CATALOG_SHARED_CACHE_PROFILE = '__shared__';
+
+export function globalModelCatalogCacheKey({ gatewayMode = 'local-api', gatewayUrl = '' } = {}) {
+  return modelCatalogCacheKey({ gatewayMode, gatewayUrl, profile: MODEL_CATALOG_SHARED_CACHE_PROFILE });
+}
+
+/**
+ * Union every cached catalog entry (all profiles) into one deduped list.
+ * `cache` is the raw storage map: { [cacheKey]: { savedAt, models } }.
+ * Rows dedupe by rawModelId (preferred) then id; the freshest entry wins so
+ * metadata (context tokens, provider labels) stays current.
+ */
+export function unionCachedModelCatalogs(cache = {}) {
+  if (!cache || typeof cache !== 'object') return [];
+  const byKey = new Map();
+  const entries = Object.values(cache)
+    .filter((entry) => entry && typeof entry === 'object')
+    .sort((a, b) => (Number(a?.savedAt) || 0) - (Number(b?.savedAt) || 0));
+  for (const entry of entries) {
+    const rows = Array.isArray(entry?.models) ? entry.models : [];
+    for (const model of rows) {
+      if (!model || typeof model !== 'object') continue;
+      const id = String(model.rawModelId || model.id || '').trim();
+      if (!id) continue;
+      byKey.set(id, model);
+    }
+  }
+  return [...byKey.values()];
+}
+
 export function normalizeCachedModelCatalog(payload = []) {
   const rows = Array.isArray(payload) ? payload : [];
   return rows
@@ -251,6 +284,16 @@ export function mergeVirtualModelRows({ registryModels = [], virtualModels = [] 
   }
   for (const model of registry) append(model);
   return merged;
+}
+
+// Desktop parity: /api/model/options carries the profile's own default model +
+// provider (what `hermes <profile>` uses). Extract it so agent switches can
+// pin the session model to the Bot's configured default.
+export function profileDefaultModelFromOptions(payload = {}) {
+  const model = String(payload?.model || '').trim();
+  const provider = String(payload?.provider || '').trim();
+  if (!model) return null;
+  return { model, provider };
 }
 
 export function modelRowsFromGatewayOptions(payload = {}) {

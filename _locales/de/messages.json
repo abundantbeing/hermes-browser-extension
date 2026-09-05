@@ -171,6 +171,414 @@
     "message": "Fällt auf die Gateway-Standardeinstellung zurück, wenn kein genaues Routing verfügbar ist",
     "description": "Runtime interface message assist.routing.fallback_short"
   },
+  "runtime_bot_mode_active_now": {
+    "message": "Active now",
+    "description": "Runtime interface message bot_mode.active_now"
+  },
+  "runtime_bot_mode_agents": {
+    "message": "Agenten",
+    "description": "Runtime interface message bot_mode.agents"
+  },
+  "runtime_bot_mode_avatar_preview": {
+    "message": "Avatar preview",
+    "description": "Runtime interface message bot_mode.avatar_preview"
+  },
+  "runtime_bot_mode_blobatar_title": {
+    "message": "Official blobatar face",
+    "description": "Runtime interface message bot_mode.blobatar_title"
+  },
+  "runtime_bot_mode_chat_empty": {
+    "message": "Say something to get started.",
+    "description": "Runtime interface message bot_mode.chat_empty"
+  },
+  "runtime_bot_mode_clear_avatar": {
+    "message": "Clear avatar",
+    "description": "Runtime interface message bot_mode.clear_avatar"
+  },
+  "runtime_bot_mode_close": {
+    "message": "Bot-Modus schließen",
+    "description": "Runtime interface message bot_mode.close"
+  },
+  "runtime_bot_mode_connected_instance": {
+    "message": "Aktuell verbundene Hermes-Instanz",
+    "description": "Runtime interface message bot_mode.connected_instance"
+  },
+  "runtime_bot_mode_cron_copy": {
+    "message": "Geplante Aufgaben im Profil dieses Agenten (Review-Watch, Scouts, Digests).",
+    "description": "Runtime interface message bot_mode.cron_copy"
+  },
+  "runtime_bot_mode_cron_refresh": {
+    "message": "Cron-Zeitplan erneut von Hermes lesen",
+    "description": "Runtime interface message bot_mode.cron_refresh"
+  },
+  "runtime_bot_mode_cron_title": {
+    "message": "Aktive Cron-Jobs",
+    "description": "Runtime interface message bot_mode.cron_title"
+  },
+  "runtime_bot_mode_custom_image": {
+    "message": "Custom image",
+    "description": "Runtime interface message bot_mode.custom_image"
+  },
+  "runtime_bot_mode_density": {
+    "message": "Listendichte",
+    "description": "Runtime interface message bot_mode.density"
+  },
+  "runtime_bot_mode_density_comfortable": {
+    "message": "Komfortabel",
+    "description": "Runtime interface message bot_mode.density_comfortable"
+  },
+  "runtime_bot_mode_density_compact": {
+    "message": "Kompakt",
+    "description": "Runtime interface message bot_mode.density_compact"
+  },
+  "runtime_bot_mode_dialog_label": {
+    "message": "Hermes Browser Bot-Modus",
+    "description": "Runtime interface message bot_mode.dialog_label"
+  },
+  "runtime_bot_mode_edit_profile": {
+    "message": "Edit Profile",
+    "description": "Runtime interface message bot_mode.edit_profile"
+  },
+  "runtime_bot_mode_enable_label": {
+    "message": "Hermes Browser Bot-Modus aktivieren",
+    "description": "Runtime interface message bot_mode.enable_label"
+  },
+  "runtime_bot_mode_field_description": {
+    "message": "Description",
+    "description": "Runtime interface message bot_mode.field_description"
+  },
+  "runtime_bot_mode_field_name": {
+    "message": "Profile name",
+    "description": "Runtime interface message bot_mode.field_name"
+  },
+  "runtime_bot_mode_field_title": {
+    "message": "Display title",
+    "description": "Runtime interface message bot_mode.field_title"
+  },
+  "runtime_bot_mode_group_cancel": {
+    "message": "Gruppenchat erstellen",
+    "description": "Runtime interface message bot_mode.group_cancel"
+  },
+  "runtime_bot_mode_group_create": {
+    "message": "Wähle mindestens einen Agent für diesen Gruppenchat.",
+    "description": "Runtime interface message bot_mode.group_create"
+  },
+  "runtime_bot_mode_group_field_members": {
+    "message": "Wähle die Agents, die an diesem Gruppenchat teilnehmen.",
+    "description": "Runtime interface message bot_mode.group_field_members"
+  },
+  "runtime_bot_mode_group_field_name": {
+    "message": "Browser-Startraum",
+    "description": "Runtime interface message bot_mode.group_field_name"
+  },
+  "runtime_bot_mode_group_generate": {
+    "message": "Generieren",
+    "description": "Runtime interface message bot_mode.group_generate"
+  },
+  "runtime_bot_mode_group_members_hint": {
+    "message": "Abbrechen",
+    "description": "Runtime interface message bot_mode.group_members_hint"
+  },
+  "runtime_bot_mode_group_members_label": {
+    "message": "Mitglieder",
+    "description": "Runtime interface message bot_mode.group_members_label"
+  },
+  "runtime_bot_mode_group_members_required": {
+    "message": "Gib diesem Gruppenchat einen Namen.",
+    "description": "Runtime interface message bot_mode.group_members_required"
+  },
+  "runtime_bot_mode_group_name_placeholder": {
+    "message": "Mitglieder des Gruppenchats",
+    "description": "Runtime interface message bot_mode.group_name_placeholder"
+  },
+  "runtime_bot_mode_group_roster_label": {
+    "message": "Hermes-Gruppenchats",
+    "description": "Runtime interface message bot_mode.group_roster_label"
+  },
+  "runtime_bot_mode_group_sheet_label": {
+    "message": "Neuer Gruppenchat",
+    "description": "Runtime interface message bot_mode.group_sheet_label"
+  },
+  "runtime_bot_mode_group_sheet_meta": {
+    "message": "Gruppenchat-Name",
+    "description": "Runtime interface message bot_mode.group_sheet_meta"
+  },
+  "runtime_bot_mode_group_sheet_title": {
+    "message": "Erstellt einen Bot-Gruppenchat auf diesem Gerät",
+    "description": "Runtime interface message bot_mode.group_sheet_title"
+  },
+  "runtime_bot_mode_group_threads": {
+    "message": "Group Chat Threads",
+    "description": "Runtime interface message bot_mode.group_threads"
+  },
+  "runtime_bot_mode_group_title_required": {
+    "message": "Profile aktualisieren",
+    "description": "Runtime interface message bot_mode.group_title_required"
+  },
+  "runtime_bot_mode_installed_skills": {
+    "message": "Installed skills",
+    "description": "Runtime interface message bot_mode.installed_skills"
+  },
+  "runtime_bot_mode_installed_skills_hint": {
+    "message": "Active skills configured on this agent profile.",
+    "description": "Runtime interface message bot_mode.installed_skills_hint"
+  },
+  "runtime_bot_mode_leave_confirm": {
+    "message": "Zurück zu regulären Sitzungen",
+    "description": "Runtime interface message bot_mode.leave_confirm"
+  },
+  "runtime_bot_mode_leave_detail": {
+    "message": "Das Starten einer neuen Sitzung bringt Sie zurück zu Ihrem regulären Hermes Browser-Arbeitsbereich.",
+    "description": "Runtime interface message bot_mode.leave_detail"
+  },
+  "runtime_bot_mode_leave_kicker": {
+    "message": "REGULÄRE SITZUNGEN",
+    "description": "Runtime interface message bot_mode.leave_kicker"
+  },
+  "runtime_bot_mode_leave_title": {
+    "message": "Bot-Modus verlassen?",
+    "description": "Runtime interface message bot_mode.leave_title"
+  },
+  "runtime_bot_mode_main_thread": {
+    "message": "Main room",
+    "description": "Runtime interface message bot_mode.main_thread"
+  },
+  "runtime_bot_mode_mcp_servers": {
+    "message": "MCP servers",
+    "description": "Runtime interface message bot_mode.mcp_servers"
+  },
+  "runtime_bot_mode_mcp_servers_hint": {
+    "message": "Capability-gated MCP integrations for this connected runtime.",
+    "description": "Runtime interface message bot_mode.mcp_servers_hint"
+  },
+  "runtime_bot_mode_new_agent": {
+    "message": "New Agent",
+    "description": "Runtime interface message bot_mode.new_agent"
+  },
+  "runtime_bot_mode_new_group": {
+    "message": "＋ Neuer Gruppenchat",
+    "description": "Runtime interface message bot_mode.new_group"
+  },
+  "runtime_bot_mode_off_hint_sidepanel": {
+    "message": "Standardmäßig deaktiviert. Verwendet die aktuell verbundene Hermes-Instanz.",
+    "description": "Runtime interface message bot_mode.off_hint_sidepanel"
+  },
+  "runtime_bot_mode_off_hint_web": {
+    "message": "Standardmäßig deaktiviert. Auf die aktuell verbundene Hermes-Instanz beschränkt.",
+    "description": "Runtime interface message bot_mode.off_hint_web"
+  },
+  "runtime_bot_mode_open_chat": {
+    "message": "Bot-Chat öffnen",
+    "description": "Runtime interface message bot_mode.open_chat"
+  },
+  "runtime_bot_mode_open_title": {
+    "message": "Bot-Modus öffnen",
+    "description": "Runtime interface message bot_mode.open_title"
+  },
+  "runtime_bot_mode_pet_apply": {
+    "message": "Auf ausgewählten Agenten anwenden",
+    "description": "Runtime interface message bot_mode.pet_apply"
+  },
+  "runtime_bot_mode_pet_clear": {
+    "message": "Löschen",
+    "description": "Runtime interface message bot_mode.pet_clear"
+  },
+  "runtime_bot_mode_pet_picker_moved": {
+    "message": "Profile pictures (petdex pets, custom images) are edited per agent in Bot Mode via Edit Profile.",
+    "description": "Runtime interface message bot_mode.pet_picker_moved"
+  },
+  "runtime_bot_mode_pet_search": {
+    "message": "Haustiere suchen",
+    "description": "Runtime interface message bot_mode.pet_search"
+  },
+  "runtime_bot_mode_pet_title": {
+    "message": "Haustier-Avatar",
+    "description": "Runtime interface message bot_mode.pet_title"
+  },
+  "runtime_bot_mode_profiles_title": {
+    "message": "Profiles",
+    "description": "Runtime interface message bot_mode.profiles_title"
+  },
+  "runtime_bot_mode_refresh_agents": {
+    "message": "Agenten aktualisieren",
+    "description": "Runtime interface message bot_mode.refresh_agents"
+  },
+  "runtime_bot_mode_return_to_sessions": {
+    "message": "Regular Sessions",
+    "description": "Runtime interface message bot_mode.return_to_sessions"
+  },
+  "runtime_bot_mode_return_to_sessions_title": {
+    "message": "Return to regular Hermes Browser sessions",
+    "description": "Runtime interface message bot_mode.return_to_sessions_title"
+  },
+  "runtime_bot_mode_roster_label": {
+    "message": "Hermes-Agenten",
+    "description": "Runtime interface message bot_mode.roster_label"
+  },
+  "runtime_bot_mode_roster_label_web": {
+    "message": "Hermes Web-Agenten",
+    "description": "Runtime interface message bot_mode.roster_label_web"
+  },
+  "runtime_bot_mode_save_profile": {
+    "message": "Save changes",
+    "description": "Runtime interface message bot_mode.save_profile"
+  },
+  "runtime_bot_mode_search": {
+    "message": "Agenten suchen",
+    "description": "Runtime interface message bot_mode.search"
+  },
+  "runtime_bot_mode_search_skills": {
+    "message": "Search skills",
+    "description": "Runtime interface message bot_mode.search_skills"
+  },
+  "runtime_bot_mode_settings_copy_sidepanel": {
+    "message": "Aktiviert die optionale Profilliste und die kanonische Bot-Chat-Navigation für diesen Browser.",
+    "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
+  },
+  "runtime_bot_mode_settings_copy_web": {
+    "message": "Aktiviert die optionale Agenten-Leiste und die kanonische Bot-Chat-Navigation in diesem Browser.",
+    "description": "Runtime interface message bot_mode.settings_copy_web"
+  },
+  "runtime_bot_mode_settings_title": {
+    "message": "Agenten & Bot-Modus",
+    "description": "Runtime interface message bot_mode.settings_title"
+  },
+  "runtime_bot_mode_sheet_create_failed": {
+    "message": "Hermes could not create the agent: {reason}",
+    "description": "Runtime interface message bot_mode.sheet_create_failed"
+  },
+  "runtime_bot_mode_sheet_create_offline": {
+    "message": "No Hermes desktop dashboard connection. Open Hermes Desktop, then try again.",
+    "description": "Runtime interface message bot_mode.sheet_create_offline"
+  },
+  "runtime_bot_mode_sheet_create_title": {
+    "message": "New Agent",
+    "description": "Runtime interface message bot_mode.sheet_create_title"
+  },
+  "runtime_bot_mode_sheet_edit_title": {
+    "message": "Edit profile",
+    "description": "Runtime interface message bot_mode.sheet_edit_title"
+  },
+  "runtime_bot_mode_sheet_label": {
+    "message": "Edit agent profile",
+    "description": "Runtime interface message bot_mode.sheet_label"
+  },
+  "runtime_bot_mode_sheet_meta_create": {
+    "message": "Creates a verified Hermes agent profile",
+    "description": "Runtime interface message bot_mode.sheet_meta_create"
+  },
+  "runtime_bot_mode_sheet_meta_profile": {
+    "message": "Profile {name}",
+    "description": "Runtime interface message bot_mode.sheet_meta_profile"
+  },
+  "runtime_bot_mode_sheet_missing_profile": {
+    "message": "Select an agent in Bot Mode first, then edit its profile.",
+    "description": "Runtime interface message bot_mode.sheet_missing_profile"
+  },
+  "runtime_bot_mode_sheet_name_required": {
+    "message": "Give the new agent a profile name.",
+    "description": "Runtime interface message bot_mode.sheet_name_required"
+  },
+  "runtime_bot_mode_sheet_remote_conflict": {
+    "message": "Another client updated this profile · your changes were saved on this device · reopen the sheet to load the latest revision",
+    "description": "Runtime interface message bot_mode.sheet_remote_conflict"
+  },
+  "runtime_bot_mode_sheet_remote_failed": {
+    "message": "Saved on this device · Hermes sync failed: {reason}",
+    "description": "Runtime interface message bot_mode.sheet_remote_failed"
+  },
+  "runtime_bot_mode_sheet_saved_local": {
+    "message": "Saved on this device",
+    "description": "Runtime interface message bot_mode.sheet_saved_local"
+  },
+  "runtime_bot_mode_sheet_saved_remote": {
+    "message": "Saved on this device · synced to Hermes",
+    "description": "Runtime interface message bot_mode.sheet_saved_remote"
+  },
+  "runtime_bot_mode_sheet_tabs_label": {
+    "message": "Profile editor sections",
+    "description": "Runtime interface message bot_mode.sheet_tabs_label"
+  },
+  "runtime_bot_mode_soul_hint": {
+    "message": "The core personality and architectural directive for this agent.",
+    "description": "Runtime interface message bot_mode.soul_hint"
+  },
+  "runtime_bot_mode_soul_instruction": {
+    "message": "SOUL.md instruction",
+    "description": "Runtime interface message bot_mode.soul_instruction"
+  },
+  "runtime_bot_mode_soul_placeholder": {
+    "message": "Enter custom SOUL prompt...",
+    "description": "Runtime interface message bot_mode.soul_placeholder"
+  },
+  "runtime_bot_mode_syncing": {
+    "message": "SYNCING BOT",
+    "description": "Runtime interface message bot_mode.syncing"
+  },
+  "runtime_bot_mode_syncing_detail": {
+    "message": "Loading profile, model, and Bot Chat session…",
+    "description": "Runtime interface message bot_mode.syncing_detail"
+  },
+  "runtime_bot_mode_tab_avatar": {
+    "message": "Avatar",
+    "description": "Runtime interface message bot_mode.tab_avatar"
+  },
+  "runtime_bot_mode_tab_general": {
+    "message": "General",
+    "description": "Runtime interface message bot_mode.tab_general"
+  },
+  "runtime_bot_mode_tab_groups": {
+    "message": "Gruppenchats",
+    "description": "Runtime interface message bot_mode.tab_groups"
+  },
+  "runtime_bot_mode_tab_mcp": {
+    "message": "MCP",
+    "description": "Runtime interface message bot_mode.tab_mcp"
+  },
+  "runtime_bot_mode_tab_skills": {
+    "message": "Fähigkeiten",
+    "description": "Runtime interface message bot_mode.tab_skills"
+  },
+  "runtime_bot_mode_tab_soul": {
+    "message": "SOUL",
+    "description": "Runtime interface message bot_mode.tab_soul"
+  },
+  "runtime_bot_mode_tab_tools": {
+    "message": "Werkzeuge",
+    "description": "Runtime interface message bot_mode.tab_tools"
+  },
+  "runtime_bot_mode_thread_replies": {
+    "message": "{count} replies",
+    "description": "Runtime interface message bot_mode.thread_replies"
+  },
+  "runtime_bot_mode_thread_reply": {
+    "message": "{count} reply",
+    "description": "Runtime interface message bot_mode.thread_reply"
+  },
+  "runtime_bot_mode_threads": {
+    "message": "Threads",
+    "description": "Runtime interface message bot_mode.threads"
+  },
+  "runtime_bot_mode_threads_title": {
+    "message": "Open group chat threads",
+    "description": "Runtime interface message bot_mode.threads_title"
+  },
+  "runtime_bot_mode_title": {
+    "message": "Bot-Modus",
+    "description": "Runtime interface message bot_mode.title"
+  },
+  "runtime_bot_mode_toolsets": {
+    "message": "Toolsets",
+    "description": "Runtime interface message bot_mode.toolsets"
+  },
+  "runtime_bot_mode_toolsets_hint": {
+    "message": "Enabled tool capabilities for this agent profile.",
+    "description": "Runtime interface message bot_mode.toolsets_hint"
+  },
+  "runtime_bot_mode_view_toggle_label": {
+    "message": "Listenansicht",
+    "description": "Runtime interface message bot_mode.view_toggle_label"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Einmal genehmigen",
     "description": "Runtime interface message browser_control.approve_once"
@@ -815,6 +1223,30 @@
     "message": "◈ Element wird ausgewählt...",
     "description": "Runtime interface message picker.picking_element"
   },
+  "runtime_profile_switch_cancel": {
+    "message": "Cancel",
+    "description": "Runtime interface message profile_switch.cancel"
+  },
+  "runtime_profile_switch_carry": {
+    "message": "Continue with prior context",
+    "description": "Runtime interface message profile_switch.carry"
+  },
+  "runtime_profile_switch_clean": {
+    "message": "Start clean session",
+    "description": "Runtime interface message profile_switch.clean"
+  },
+  "runtime_profile_switch_detail": {
+    "message": "Switching to {profile} requires a new session. Carry context from {previous} or start clean?",
+    "description": "Runtime interface message profile_switch.detail"
+  },
+  "runtime_profile_switch_kicker": {
+    "message": "PROFILE CHANGE",
+    "description": "Runtime interface message profile_switch.kicker"
+  },
+  "runtime_profile_switch_title": {
+    "message": "Start a new Hermes session?",
+    "description": "Runtime interface message profile_switch.title"
+  },
   "runtime_profile_available": {
     "message": "{count} Profile verfügbar",
     "description": "Runtime interface message profile.available"
@@ -830,6 +1262,10 @@
   "runtime_profile_refresh": {
     "message": "↻ Profile",
     "description": "Runtime interface message profile.refresh"
+  },
+  "runtime_profile_refresh_title": {
+    "message": "Profile aktualisieren",
+    "description": "Runtime interface message profile.refresh_title"
   },
   "runtime_profile_using": {
     "message": "Verwendung {name}{model}{skills}",
@@ -4944,7 +5380,7 @@
     "description": "Runtime interface message wake.turn_off"
   },
   "runtime_wake_turn_on": {
-    "message": "Aktivieren Sie das Weckwort",
+    "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
   }
 }

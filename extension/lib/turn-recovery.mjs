@@ -1,5 +1,19 @@
 import { redactSensitiveText } from './redaction.mjs';
 
+export const ACCEPTED_TURN_RECOVERY_MAX_MS = 180_000;
+export const ACCEPTED_TURN_RECOVERY_MAX_DELAY_MS = 4_000;
+
+export function acceptedTurnRecoveryPolicy({ attempt = 0, elapsedMs = 0, maxDurationMs = ACCEPTED_TURN_RECOVERY_MAX_MS } = {}) {
+  const duration = Math.max(30_000, Number(maxDurationMs) || ACCEPTED_TURN_RECOVERY_MAX_MS);
+  const elapsed = Math.max(0, Number(elapsedMs) || 0);
+  const index = Math.max(0, Math.floor(Number(attempt) || 0));
+  return {
+    maxDurationMs: duration,
+    delayMs: Math.min(ACCEPTED_TURN_RECOVERY_MAX_DELAY_MS, 750 * (2 ** Math.min(index, 3))),
+    shouldContinue: elapsed < duration,
+  };
+}
+
 export function classifyTurnRecovery(error = {}) {
   if (error?.requestAccepted) return 'recover';
   if (error?.fallbackSafe) return 'fallback';
@@ -113,14 +127,57 @@ export function sessionContextFailureRecovery(error = {}, capabilities = {}) {
   };
 }
 
+function comparablePartText(value) {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map(comparablePartText).filter(Boolean).join('');
+  if (value && typeof value === 'object') {
+    const text = value.text ?? value.content ?? value.output_text ?? value.message ?? '';
+    return comparablePartText(text);
+  }
+  return '';
+}
+
+function comparableTurnContent(value) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    // Some runtimes persist multimodal turns as a JSON-serialized parts array
+    // instead of a structured content field. Decode it so the text component
+    // still matches; if it is not JSON (or carries no text), keep the raw text.
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        const derived = comparableTurnContent(parsed);
+        if (derived) return derived;
+      } catch {
+        // Plain user text that merely looks like JSON — compare verbatim.
+      }
+    }
+    return trimmed;
+  }
+  if (Array.isArray(value)) {
+    return value.map(comparablePartText).filter(Boolean).join('').trim();
+  }
+  if (value && typeof value === 'object') return comparablePartText(value).trim();
+  return '';
+}
+
+function turnContentMatches(actual, expected) {
+  const actualText = comparableTurnContent(actual);
+  const expectedText = comparableTurnContent(expected);
+  if (!actualText || !expectedText) return false;
+  return actualText === expectedText
+    || actualText.startsWith(`${expectedText}\n\n[ATTACHMENTS]`)
+    || expectedText.startsWith(`${actualText}\n\n[ATTACHMENTS]`);
+}
+
 export function latestAssistantAfterUser(rows = [], userContent = '') {
-  const target = String(userContent || '');
+  const target = comparableTurnContent(userContent);
   if (!target || !Array.isArray(rows)) return '';
 
   let latestUserIndex = -1;
   for (let index = rows.length - 1; index >= 0; index -= 1) {
     const row = rows[index];
-    if (row?.role === 'user' && String(row.content || '') === target) {
+    if (row?.role === 'user' && turnContentMatches(row.content, userContent)) {
       latestUserIndex = index;
       break;
     }
@@ -130,7 +187,7 @@ export function latestAssistantAfterUser(rows = [], userContent = '') {
   for (let index = latestUserIndex + 1; index < rows.length; index += 1) {
     const row = rows[index];
     if (row?.role !== 'assistant') continue;
-    const content = String(row.content || '').trim();
+    const content = comparableTurnContent(row.content);
     if (content) return content;
   }
   return '';

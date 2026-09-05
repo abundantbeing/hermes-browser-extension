@@ -307,6 +307,10 @@ async function startMockHermes() {
       });
       return;
     }
+    if (url.pathname === '/api/desktop/dashboard-candidates' && req.method === 'GET') {
+      json(res, 200, { candidates: [] });
+      return;
+    }
     if (url.pathname === '/api/model/options') {
       json(res, 200, {
         providers: [{
@@ -335,11 +339,12 @@ async function startMockHermes() {
           slug: 'openai-codex',
           name: 'OpenAI Codex',
           authenticated: true,
-          models: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'],
+          models: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.6-luna-900k'],
           capabilities: {
             'gpt-5.6-sol': { reasoning: true, fast: true },
             'gpt-5.6-terra': { reasoning: true, fast: true },
             'gpt-5.6-luna': { reasoning: true, fast: true },
+            'gpt-5.6-luna-900k': { reasoning: true, fast: true },
           },
         }, {
           slug: 'portal',
@@ -1145,7 +1150,7 @@ async function main() {
     assert.ok(envelope.attachment_context);
     assert.ok(envelope.source_receipt);
     assert.ok(mock.requests.some((request) => request.path === `/api/sessions/${storedAfterSend.hermesBrowserSettings.sessionId}/chat/stream` && request.method === 'POST'));
-    assert.ok(mock.requests.filter((request) => request.path !== '/health' && request.path !== '/v1/health').every((request) => request.authorization === `Bearer ${TEST_TOKEN}`));
+    assert.ok(mock.requests.filter((request) => !['/health', '/v1/health', '/api/ws'].includes(request.path)).every((request) => request.authorization === `Bearer ${TEST_TOKEN}`));
 
     const rejectionPrompt = 'Verify unsupported reasoning option handling.';
     const rejectionDetail = 'Invalid parameter: reasoning_effort must be one of low, medium, high.';
@@ -3327,16 +3332,20 @@ async function main() {
     await panel.evaluate(`[...document.querySelectorAll('#modelProviderList .model-provider-option')].find((button) => button.textContent.includes('OpenAI Codex'))?.click()`);
     const gpt56ContextState = await waitFor(() => panel.evaluate(`(() => {
       const selected = document.querySelector('#modelProviderList .model-provider-option.selected')?.textContent?.trim() || '';
-      const models = [...document.querySelectorAll('#modelMenuList .model-option')].map((button) => button.textContent.trim());
-      return selected.includes('OpenAI Codex') && models.length === 3 ? { selected, models } : null;
+      const models = [...document.querySelectorAll('#modelMenuList .model-option')].map((button) => ({ id: button.dataset.modelId || '', label: button.textContent.trim() }));
+      return selected.includes('OpenAI Codex') && models.length === 4 ? { selected, models } : null;
     })()`));
-    assert.deepEqual(gpt56ContextState.models.map((label) => label.match(/gpt-5\.6-(?:sol|terra|luna)/)?.[0]), [
-      'gpt-5.6-sol',
-      'gpt-5.6-terra',
-      'gpt-5.6-luna',
+    assert.deepEqual(gpt56ContextState.models.map(({ id }) => id), [
+      'openai-codex::gpt-5.6-sol',
+      'openai-codex::gpt-5.6-terra',
+      'openai-codex::gpt-5.6-luna',
+      'openai-codex::gpt-5.6-luna-900k',
     ]);
-    assert.ok(gpt56ContextState.models.every((label) => label.includes('900k')), JSON.stringify(gpt56ContextState));
-    assert.ok(gpt56ContextState.models.every((label) => !label.includes('400k')), JSON.stringify(gpt56ContextState));
+    const baseGpt56Labels = gpt56ContextState.models.slice(0, 3).map(({ label }) => label);
+    const extendedGpt56Label = gpt56ContextState.models[3].label;
+    assert.ok(baseGpt56Labels.every((label) => label.includes('272k')), JSON.stringify(gpt56ContextState));
+    assert.ok(extendedGpt56Label.includes('900k'), JSON.stringify(gpt56ContextState));
+    assert.ok(gpt56ContextState.models.every(({ label }) => !label.includes('400k')), JSON.stringify(gpt56ContextState));
     await saveScreenshot(panel, GPT56_CONTEXT_PICKER_SCREENSHOT, { captureBeyondViewport: false });
     await panel.evaluate(`[...document.querySelectorAll('#modelProviderList .model-provider-option')].find((button) => button.textContent.includes('Alternate Provider'))?.click()`);
     const switchedProviderState = await waitFor(() => panel.evaluate(`(() => {

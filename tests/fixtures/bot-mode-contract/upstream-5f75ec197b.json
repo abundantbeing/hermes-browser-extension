@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "source": {
+    "kind": "nousresearch-hermes-agent-origin-main",
+    "commit": "5f75ec197b16d1a055688fb9df63ac49586a2230",
+    "release_tag": "v2026.8.27",
+    "captured_at": "2026-08-28"
+  },
+  "contracts": {
+    "profiles_list": {
+      "method": "profiles.list",
+      "request": { "include_sessions": true },
+      "response_fields": ["profiles", "bot_mode_protocol"],
+      "profile_fields": ["name", "model", "provider", "description", "display_name", "skill_count", "last_session", "worker_session", "canonical_session", "ui_meta", "ui_meta_revisions", "has_avatar"],
+      "session_methods": ["session.create", "session.list", "session.resume", "session.history"],
+      "session_profile_param": true,
+      "api_multiplex_path": "/p/<profile>/...",
+      "configure": {
+        "method": "profiles.configure",
+        "cas_request": "ui_meta_expected_revisions",
+        "cas_conflict": "applied.ui_meta_conflicts",
+        "confirm_request": "confirm_expensive_model",
+        "confirm_response": ["confirm_required", "confirm_message"]
+      },
+      "event_replay": {
+        "method": "session.events.since",
+        "event_field": "params.seq",
+        "ready_field": "payload.replay_epoch",
+        "response_fields": ["events", "latest_seq", "truncated", "count", "epoch"]
+      }
+    },
+    "canonical_session": {
+      "identity": "profile + exact title Bot Chat",
+      "nullable": true,
+      "fields": ["id", "resolved_id", "root_title", "title", "preview", "started_at", "last_active", "message_count"],
+      "durable_field": "id",
+      "runtime_field": "resolved_id",
+      "accepted_title_predicate": "root_title == Bot Chat || title == Bot Chat"
+    },
+    "group_projection": {
+      "available": false,
+      "version": 0,
+      "caps": [],
+      "desktop_ui_meta_only": true
+    },
+    "message_agent": {
+      "available": true,
+      "scope": "canonical Bot Chat only",
+      "browser_delivery": false
+    },
+    "routine_cron": {
+      "available": false,
+      "browser_contract": false
+    }
+  }
+}

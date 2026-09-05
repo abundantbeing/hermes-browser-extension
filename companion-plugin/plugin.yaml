@@ -1,6 +1,6 @@
 name: hermes-browser-companion
 kind: standalone
-version: 0.3.1
+version: 0.3.2
 manifest_version: 2
 api_version: 1
 description: >-
