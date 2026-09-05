@@ -899,3 +899,160 @@ html[dir="rtl"] .mobile-only { margin-left: 0; margin-right: auto; }
   .error-state h2 { font-size: 36px; }
   .web-settings-dialog section { grid-template-columns: 1fr; }
 }
+
+/* Native asynchronous Hermes user-input cards */
+.user-input-requests {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 170px;
+  z-index: 60;
+  display: grid;
+  gap: 12px;
+  max-height: min(58vh, 440px);
+  overflow-y: auto;
+  margin: 0;
+  pointer-events: none;
+}
+
+.web-shell #userInputRequests {
+  bottom: 238px;
+  max-width: 620px;
+}
+
+.user-input-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--hermes-line-strong);
+  border-radius: 14px;
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.user-input-card-header,
+.user-input-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.user-input-card-header h2 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.user-input-card-count,
+.user-input-card-context,
+.user-input-card-status {
+  color: var(--hermes-muted);
+  font-size: 0.76rem;
+}
+
+.user-input-card-context {
+  margin: -4px 0 0;
+  line-height: 1.45;
+}
+
+.user-input-card-form {
+  display: grid;
+  gap: 12px;
+}
+
+.user-input-card-form fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.user-input-card-form legend {
+  margin-bottom: 2px;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.user-input-options {
+  display: grid;
+  gap: 6px;
+}
+
+.user-input-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--hermes-line);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.user-input-option:has(input:checked) {
+  border-color: var(--hermes-accent);
+  background: color-mix(in srgb, var(--hermes-accent) 14%, var(--hermes-paper));
+}
+
+.user-input-free-text {
+  width: 100%;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--hermes-line);
+  border-radius: 9px;
+  background: var(--hermes-input-bg, var(--hermes-paper));
+  color: var(--hermes-ink);
+  font: inherit;
+}
+
+.user-input-card-actions button {
+  min-height: 32px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--hermes-primary-bg);
+  color: var(--hermes-primary-fg);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.user-input-card-actions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+
+.user-input-card {
+  color: var(--hermes-ink);
+}
+
+.user-input-card h2,
+.user-input-card legend {
+  color: var(--hermes-ink);
+  font-weight: 700;
+}
+
+.user-input-card-context,
+.user-input-card-count {
+  color: var(--hermes-ink);
+  opacity: 0.82;
+}
+
+.user-input-card label {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.user-input-card input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  accent-color: var(--hermes-accent, #0505e8);
+}
