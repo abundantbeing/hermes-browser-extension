@@ -6,7 +6,7 @@
 
 ### Added
 
-- Added Hermes Bot Mode: dedicated multi-agent roster with seamless profile switching across default and named profiles (Roxas, Naminé, Riku, and custom profiles), lazy model loading, and instant agent opening.
+- Added Hermes Bot Mode: dedicated multi-agent roster with seamless profile switching across default and named user profiles, lazy model loading, and instant agent opening.
 - Added live Group Chat & Threads support: multi-agent room projections, collaborative thread tracking, and synchronized conversation histories without blank chat states.
 - Added AI Tab Triage command (`/sort-tabs`, `/organize-tabs`, `/clean-tabs`, `/categorize-tabs`, `/triage-tabs`): automatically analyzes all open tabs in the window, clusters them into logical categories (Projects, Research, Social, Productivity, Stale/Duplicates), identifies redundant URLs, and generates an actionable removal checklist.
 - Added a full-width **Page only** action button and side-by-side **Include all tabs** and **AI Triage Tabs** controls with hover tooltip descriptions.
