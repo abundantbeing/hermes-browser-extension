@@ -105,9 +105,6 @@ import {
   writeCachedRosterUrl,
 } from './lib/desktop-roster.mjs';
 import {
-  CANONICAL_PET_NAMINE_DATA_URL,
-  CANONICAL_PET_RIKU_DATA_URL,
-  CANONICAL_PET_ROXAS_DATA_URL,
   fetchPetGallery,
   petFrameIcon,
   readAllPetAvatars,
@@ -7308,9 +7305,7 @@ function botProfileDisplayName(row) {
   if (rawDisplay && rawDisplay.toLowerCase() !== 'default') return rawDisplay;
   if (rawTitle && rawTitle.toLowerCase() !== 'default') return rawTitle;
   if (profileName.toLowerCase() === 'default' || !profileName) return 'Roxas';
-  if (profileName.toLowerCase() === 'namine') return 'Naminé';
-  if (profileName.toLowerCase() === 'riku') return 'Riku';
-  return profileName.charAt(0).toUpperCase() + profileName.slice(1);
+      return profileName.charAt(0).toUpperCase() + profileName.slice(1);
 }
 
 function remoteAvatarImageOf(remoteAvatar) {
@@ -7336,40 +7331,12 @@ async function refreshPetAvatarCache() {
 }
 
 function appendBotModeAvatar(container, displayName, profileName = '', remoteAvatar = null) {
-  const normalizedProfile = String(profileName || displayName || '').toLowerCase().trim();
   const remoteImage = remoteAvatarImageOf(remoteAvatar);
   if (remoteImage) {
     const img = document.createElement('img');
     img.src = remoteImage;
     img.alt = '';
     img.className = 'bot-mode-avatar-pet';
-    container.replaceChildren(img);
-    return;
-  }
-  if (normalizedProfile === 'roxas' || normalizedProfile === 'default') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_ROXAS_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Roxas';
-    container.replaceChildren(img);
-    return;
-  }
-  if (normalizedProfile === 'namine') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_NAMINE_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Naminé';
-    container.replaceChildren(img);
-    return;
-  }
-  if (normalizedProfile === 'riku') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_RIKU_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Riku';
     container.replaceChildren(img);
     return;
   }
@@ -7383,7 +7350,7 @@ function appendBotModeAvatar(container, displayName, profileName = '', remoteAva
     container.replaceChildren(img);
     return;
   }
-  const seed = displayName || 'agent';
+  const seed = displayName || profileName || 'agent';
   let svgMarkup = '';
   try {
     svgMarkup = blobatarSvg(seed, { size: 40 });
@@ -7393,17 +7360,13 @@ function appendBotModeAvatar(container, displayName, profileName = '', remoteAva
   if (svgMarkup) {
     const template = document.createElement('template');
     template.innerHTML = svgMarkup.trim();
-    const svg = template.content.firstElementChild;
-    if (svg) {
-      svg.setAttribute('aria-hidden', 'true');
-      container.replaceChildren(svg);
+    const svgNode = template.content.firstElementChild;
+    if (svgNode) {
+      container.replaceChildren(svgNode);
       return;
     }
   }
-  const fallback = document.createElement('span');
-  fallback.className = 'bot-mode-avatar-fallback';
-  fallback.textContent = String(displayName || '?').slice(0, 2).toUpperCase();
-  container.replaceChildren(fallback);
+  container.textContent = (displayName || profileName || '?').charAt(0).toUpperCase();
 }
 
 // Server avatar hydration for has_avatar roster rows. The canonical avatar is
@@ -7934,7 +7897,7 @@ function renderGroupAvatarCrest(container, row = null, image = null) {
     container.replaceChildren(img);
     return;
   }
-  const members = Array.isArray(row?.members) && row.members.length ? row.members : ['default', 'namine', 'riku'];
+  const members = Array.isArray(row?.members) && row.members.length ? row.members : ['default'];
   const faceStack = document.createElement('span');
   faceStack.className = 'face-stack face-stack-preview';
   members.slice(0, 3).forEach((memberName, idx) => {
@@ -7949,7 +7912,7 @@ function renderGroupAvatarCrest(container, row = null, image = null) {
 function updateNewGroupIconPreview() {
   if (!els.newGroupIcon) return;
   const members = [...newGroupSelection];
-  const selectedMembers = members.length ? members : ['default', 'namine', 'riku'];
+  const selectedMembers = members.length ? members : ['default'];
   if (newGroupPendingImage) {
     renderGroupAvatarCrest(els.newGroupIcon, { members: selectedMembers }, newGroupPendingImage);
     if (els.newGroupIconRemove) els.newGroupIconRemove.hidden = false;
@@ -8355,58 +8318,9 @@ async function openBotGroupChat(row) {
 // Group projections are read from the connected verified roster and never
 // substituted with Browser-owned fallback data.
 
-const CANONICAL_FALLBACK_PROFILES = [
-  {
-    name: 'default',
-    display_name: 'Roxas',
-    title: 'Architect',
-    avatar: { kind: 'image', icon: CANONICAL_PET_ROXAS_DATA_URL, image: CANONICAL_PET_ROXAS_DATA_URL },
-    ui_meta: { 'hermes-bots': { title: 'Roxas', avatar: { image: CANONICAL_PET_ROXAS_DATA_URL } } },
-    description: 'Primary AI partner and web development architect.',
-    provider: 'custom',
-    model: 'gemini-3.7-flash-high',
-    canonical_session: { id: 'canonical_default', status: 'ready', preview: 'Ready for operations.' },
-    activity: { activeNow: true, lastActive: Date.now() },
-  },
-  {
-    name: 'namine',
-    display_name: 'Naminé',
-    title: 'Repo triage',
-    avatar: { kind: 'image', icon: CANONICAL_PET_NAMINE_DATA_URL, image: CANONICAL_PET_NAMINE_DATA_URL },
-    ui_meta: { 'hermes-bots': { title: 'Naminé', avatar: { image: CANONICAL_PET_NAMINE_DATA_URL } } },
-    description: 'Autonomous repository triage and visible code reviewer.',
-    provider: 'openai-codex',
-    model: 'gpt-5.6-luna',
-    canonical_session: { id: 'canonical_namine', status: 'ready', preview: 'Ready for operations.' },
-    activity: { activeNow: false, lastActive: Date.now() - 240000 },
-  },
-  {
-    name: 'riku',
-    display_name: 'Riku',
-    title: 'Operator Assistant',
-    avatar: { kind: 'image', icon: CANONICAL_PET_RIKU_DATA_URL, image: CANONICAL_PET_RIKU_DATA_URL },
-    ui_meta: { 'hermes-bots': { title: 'Riku', avatar: { image: CANONICAL_PET_RIKU_DATA_URL } } },
-    description: 'Operator assistant and spiritual Telegram companion.',
-    provider: 'openai-codex',
-    model: 'gpt-5.6-luna',
-    canonical_session: { id: 'canonical_riku', status: 'ready', preview: 'Ready for operations.' },
-    activity: { activeNow: false, lastActive: Date.now() - 3600000 },
-  },
-];
+const CANONICAL_FALLBACK_PROFILES = [];
 
-const CANONICAL_FALLBACK_GROUP_CHATS = [
-  {
-    id: 'Roxas, Namine, Riku',
-    name: 'Roxas, Namine, Riku',
-    type: 'group',
-    displayName: 'Roxas, Namine, Riku',
-    title: '3 members · synced projection',
-    description: 'Recent synced history from hermes-bots-groups',
-    members: ['roxas', 'namine', 'riku'],
-    canonical: { durableId: 'room-launch', resolvedRuntimeId: 'room-launch', status: 'ready', preview: 'Roxas: Ready for operations.' },
-    activity: { activeNow: false, lastActive: Date.now() - 120000 },
-  },
-];
+const CANONICAL_FALLBACK_GROUP_CHATS = [];
 
 let desktopDashboardUrl = '';
 
@@ -8511,17 +8425,16 @@ async function loadProfiles({ quiet = false } = {}) {
     botModeRosterNote = 'Hermes is still syncing the rich Bot Mode roster in the background.';
   }
 
-  // Canonical fallback: when live gateway discovery has not registered custom profiles,
-  // ensure the canonical verified agent stack (Roxas, Naminé, Riku) is immediately available.
+  // Do NOT inject synthetic/hardcoded agent profiles.
+  // Profiles belong entirely to the user's actual connected Hermes gateway/dashboard.
   if (!botModeRoster.length) {
-    const split = splitBotRosterRows(CANONICAL_FALLBACK_PROFILES, { sourceId: 'canonical' });
-    availableProfiles = botProfileRowsToHermesProfiles(split.agents, settings.activeProfile);
-    botModeRoster = split.agents;
-    adoptSyncedGroupChats(mergeGroupChatLists(CANONICAL_FALLBACK_GROUP_CHATS, botModeGroupChats));
+    availableProfiles = [];
+    botModeRoster = [];
+    adoptSyncedGroupChats([]);
     renderProfiles();
     renderBotModeRoster(els.botModeSearch?.value);
     renderBotModeGroupChats(els.botModeSearch?.value);
-    if (!quiet) setStatus('ok', 'Hermes agents connected', `${botModeRoster.length} verified agents active`);
+    if (!quiet) setStatus('ok', 'Hermes profiles checked', 'No custom profiles found on gateway. Using default profile.');
   }
 }
 

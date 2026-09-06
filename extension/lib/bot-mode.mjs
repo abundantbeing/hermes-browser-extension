@@ -161,8 +161,8 @@ export function normalizeBotProfileList(payload = {}, {
       // Desktop Bot Mode display precedence: ui_meta title (the Bot's chosen
       // name, e.g. "Roxas" for profile "default") first, then the profile's
       // display_name, then the canonical persona name if "default".
-      displayName: clean(botMetaTitle || profile.display_name || profile.displayName || (profileName.toLowerCase() === 'default' ? 'Roxas' : (profileName.charAt(0).toUpperCase() + profileName.slice(1)))),
-      title: meta.title || (profileName.toLowerCase() === 'default' ? 'Architect' : ''),
+      displayName: clean(botMetaTitle || profile.display_name || profile.displayName || (profileName.charAt(0).toUpperCase() + profileName.slice(1))),
+      title: meta.title || '',
       description: clean(profile.description).slice(0, 500),
       provider: clean(profile.provider),
       model: clean(profile.model),
@@ -275,7 +275,7 @@ function normalizeGroupChatMessages(value) {
       const rawName = clean(from.name).slice(0, 128);
       // Synced desktop logs carry raw profile names ("default"). "default" is
       // never a display identity: map it to the canonical primary bot name.
-      const memberName = /^default$/i.test(rawName) ? 'Roxas' : rawName;
+      const memberName = rawName;
       return {
         id: clean(message.id).slice(0, 160),
         from: {
@@ -310,9 +310,9 @@ export function groupProjectionMessagesForDisplay(row = {}) {
 function capitalizeMemberName(name) {
   const value = clean(name);
   if (!value) return 'Hermes';
-  if (value.toLowerCase() === 'namine') return 'Naminé';
-  if (value.toLowerCase() === 'riku') return 'Riku';
-  if (value.toLowerCase() === 'roxas') return 'Roxas';
+  
+  
+  
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 

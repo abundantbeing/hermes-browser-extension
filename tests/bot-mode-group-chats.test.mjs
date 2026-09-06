@@ -91,7 +91,7 @@ test('splitBotRosterRows reads v3 group projections from profile ui_meta', () =>
   assert.deepEqual(split.groupChats[0].members, ['default', 'namine']);
   assert.equal(split.groupChats[0].canonical.status, 'missing', 'a projected room is not a resumable backend session');
   assert.equal(split.groupChats[0].messages.length, 2);
-  assert.equal(split.groupChats[0].messages[1].from.name, 'Roxas');
+  assert.equal(split.groupChats[0].messages[1].from.name, 'default');
   assert.equal(split.groupChats[0].activity.lastActive, NOW - 1000);
   assert.equal(split.groupChats[0].revision, 4);
 });
@@ -123,7 +123,7 @@ test('projected group messages preserve author labels for the shared bubble rend
 
   assert.deepEqual(messages, [
     { role: 'user', content: 'Ship it', ts: NOW - 2, roleLabel: 'Jon', thread: '' },
-    { role: 'assistant', content: 'On it', ts: NOW - 1, roleLabel: 'Roxas', thread: '' },
+    { role: 'assistant', content: 'On it', ts: NOW - 1, roleLabel: 'Default', thread: '' },
   ]);
 });
 

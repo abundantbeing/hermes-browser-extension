@@ -789,9 +789,7 @@ function botProfileDisplayName(row) {
   if (rawDisplay && rawDisplay.toLowerCase() !== 'default') return rawDisplay;
   if (rawTitle && rawTitle.toLowerCase() !== 'default') return rawTitle;
   if (profileName.toLowerCase() === 'default' || !profileName) return 'Roxas';
-  if (profileName.toLowerCase() === 'namine') return 'Naminé';
-  if (profileName.toLowerCase() === 'riku') return 'Riku';
-  return profileName.charAt(0).toUpperCase() + profileName.slice(1);
+      return profileName.charAt(0).toUpperCase() + profileName.slice(1);
 }
 
 function botProfileDisplayTitle(row) {
@@ -1100,58 +1098,9 @@ async function openWebBotGroupChat(row) {
   }
 }
 
-const CANONICAL_FALLBACK_PROFILES = [
-  {
-    name: 'default',
-    display_name: 'Roxas',
-    title: 'Architect',
-    avatar: { kind: 'image', icon: CANONICAL_PET_ROXAS_DATA_URL, image: CANONICAL_PET_ROXAS_DATA_URL },
-    ui_meta: { 'hermes-bots': { title: 'Roxas', avatar: { image: CANONICAL_PET_ROXAS_DATA_URL } } },
-    description: 'Primary AI partner and web development architect.',
-    provider: 'custom',
-    model: 'gemini-3.7-flash-high',
-    canonical_session: { id: 'canonical_default', status: 'ready', preview: 'Ready for operations.' },
-    activity: { activeNow: true, lastActive: Date.now() },
-  },
-  {
-    name: 'namine',
-    display_name: 'Naminé',
-    title: 'Repo triage',
-    avatar: { kind: 'image', icon: CANONICAL_PET_NAMINE_DATA_URL, image: CANONICAL_PET_NAMINE_DATA_URL },
-    ui_meta: { 'hermes-bots': { title: 'Naminé', avatar: { image: CANONICAL_PET_NAMINE_DATA_URL } } },
-    description: 'Autonomous repository triage and visible code reviewer.',
-    provider: 'openai-codex',
-    model: 'gpt-5.6-luna',
-    canonical_session: { id: 'canonical_namine', status: 'ready', preview: 'Ready for operations.' },
-    activity: { activeNow: false, lastActive: Date.now() - 240000 },
-  },
-  {
-    name: 'riku',
-    display_name: 'Riku',
-    title: 'Operator Assistant',
-    avatar: { kind: 'image', icon: CANONICAL_PET_RIKU_DATA_URL, image: CANONICAL_PET_RIKU_DATA_URL },
-    ui_meta: { 'hermes-bots': { title: 'Riku', avatar: { image: CANONICAL_PET_RIKU_DATA_URL } } },
-    description: 'Operator assistant and spiritual Telegram companion.',
-    provider: 'openai-codex',
-    model: 'gpt-5.6-luna',
-    canonical_session: { id: 'canonical_riku', status: 'ready', preview: 'Ready for operations.' },
-    activity: { activeNow: false, lastActive: Date.now() - 3600000 },
-  },
-];
+const CANONICAL_FALLBACK_PROFILES = [];
 
-const CANONICAL_FALLBACK_GROUP_CHATS = [
-  {
-    id: 'launch-room',
-    name: 'launch-room',
-    type: 'group',
-    displayName: 'Browser launch room',
-    title: '3 members · synced projection',
-    description: 'Recent synced history from hermes-bots-groups',
-    members: ['roxas', 'namine', 'riku'],
-    canonical: { durableId: 'room-launch', resolvedRuntimeId: 'room-launch', status: 'ready', preview: 'Roxas: Ready for operations.' },
-    activity: { activeNow: false, lastActive: Date.now() - 120000 },
-  },
-];
+const CANONICAL_FALLBACK_GROUP_CHATS = [];
 
 async function loadWebBotModeProfiles() {
   if (settings.botModeEnabled !== true) return [];
@@ -1175,13 +1124,12 @@ async function loadWebBotModeProfiles() {
   }
 
   if (!webBotModeRoster.length && generation === webBotModeGeneration) {
-    const split = splitBotRosterRows(CANONICAL_FALLBACK_PROFILES, { sourceId: 'canonical' });
-    webBotModeRoster = split.agents;
-    webBotModeGroupChats = mergeGroupChatLists(CANONICAL_FALLBACK_GROUP_CHATS, webBotModeGroupChats);
+    webBotModeRoster = [];
+    webBotModeGroupChats = [];
     renderWebBotModeRoster(els.webBotModeSearch?.value);
     renderWebBotModeGroupChats(els.webBotModeSearch?.value);
     if (els.webBotModeStatus) {
-      els.webBotModeStatus.textContent = `${webBotModeRoster.length} verified agents active`;
+      els.webBotModeStatus.textContent = 'No custom profiles on gateway';
     }
   }
   return webBotModeRoster;

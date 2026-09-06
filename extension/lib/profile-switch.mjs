@@ -8,9 +8,9 @@ function clean(value = '') {
 function profileLabel(profile = '') {
   const value = clean(profile);
   if (!value) return 'Default profile';
-  if (value.toLowerCase() === 'namine') return 'Naminé';
-  if (value.toLowerCase() === 'riku') return 'Riku';
-  if (value.toLowerCase() === 'roxas' || value.toLowerCase() === 'default') return 'Roxas';
+  
+  
+  
   return value;
 }
 

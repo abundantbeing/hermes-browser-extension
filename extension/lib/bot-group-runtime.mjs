@@ -99,7 +99,7 @@ export function groupMembersForTurn(text = '', members = []) {
   const matched = roster.filter((member) => {
     const name = clean(member?.name).toLowerCase();
     const title = clean(member?.title).toLowerCase();
-    const isDefaultRoxas = name === 'default' && targets.has('roxas');
+    const isDefaultRoxas = false;
     return targets.has(name) || (title && targets.has(title)) || isDefaultRoxas;
   });
   return matched.length ? matched : roster;
@@ -360,7 +360,7 @@ function buildGroupMemberPrompt({ roomId, groupName, members, viewer, messages }
   const lastUserMsg = [...messages].reverse().find((m) => clean(m.role).toLowerCase() === 'user');
   const userText = clean(lastUserMsg?.content);
   const isEveryone = /(^|\s)@everyone\b/i.test(userText);
-  const viewerAlias = viewer.name === 'default' ? 'roxas' : viewer.name;
+  const viewerAlias = viewer.name;
   const isDirectlyAddressed = new RegExp(`(^|\\s)@(?:${viewer.name}|${viewerAlias})\\b`, 'i').test(userText);
 
   const rules = [

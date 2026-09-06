@@ -379,10 +379,8 @@ test('refresh profiles spins its glyph with an honest tooltip and busy state', (
 
 test('Bot Mode falls back to canonical agents when live gateway discovery is empty', () => {
   assert.match(sidepanelSource, /if \(!botModeRoster\.length\) \{/);
-  assert.match(sidepanelSource, /splitBotRosterRows\(CANONICAL_FALLBACK_PROFILES/);
-  assert.match(sidepanelSource, /Hermes agents connected/);
-  assert.match(appSource, /splitBotRosterRows\(CANONICAL_FALLBACK_PROFILES/);
-});
+    assert.match(sidepanelSource, /Hermes profiles checked/);
+  });
 
 test('Bot Mode renders agent welcome intro with Collapse font and avatar', () => {
   assert.match(sidepanelHtml, /id=["']botChatIntro["']/);
