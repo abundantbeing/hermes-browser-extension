@@ -9254,6 +9254,10 @@ function renderActiveProfileIndicator() {
       slot.title = name;
       appendBotModeAvatar(slot, name, member.name, rosterRow?.avatar || null);
       els.activeProfileIndicator.append(slot);
+      const targetRow = rosterRow || { profileName: member.name, hasAvatar: true };
+      if (!remoteAvatarImageOf(targetRow.avatar)) {
+        void hydrateBotModeRemoteAvatar(targetRow, slot);
+      }
     }
 
     if (overflowCount > 0) {
