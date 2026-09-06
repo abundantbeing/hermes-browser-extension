@@ -6975,6 +6975,10 @@ function renderProfileRosterPreview() {
     const avatar = document.createElement('span');
     avatar.className = 'bot-mode-avatar bot-mode-avatar-mini';
     appendBotModeAvatar(avatar, profile.name, profile.name);
+    const botRow = botModeRoster.find((r) => r.profileName === profile.name);
+    if (botRow?.hasAvatar && !remoteAvatarImageOf(botRow.avatar)) {
+      void hydrateBotModeRemoteAvatar(botRow, avatar);
+    }
     const copy = document.createElement('span');
     copy.className = 'agent-roster-preview-copy';
     const name = document.createElement('strong');
@@ -7401,7 +7405,11 @@ async function fetchBotModeRemoteAvatar(row) {
   botModeRemoteAvatarCache.set(cacheKey, ''); // negative-cache until a fetch lands
   let dataUrl = '';
   try {
-    if (isRemoteWsMode()) {
+    const connection = await ensureProfileWsConnection({ readyTimeoutMs: 5_000 }).catch(() => null);
+    if (connection?.client?.readyState === 1) {
+      const asset = await connection.client.request(WS_METHODS.profilesGetAsset, { name: row.profileName, asset: 'avatar' });
+      dataUrl = botModeAvatarDataUrlFromAsset(asset);
+    } else if (isRemoteWsMode()) {
       const connection = await ensureRemoteWsClient();
       const asset = await connection.client.request(WS_METHODS.profilesGetAsset, { name: row.profileName, asset: 'avatar' });
       dataUrl = botModeAvatarDataUrlFromAsset(asset);
