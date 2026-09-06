@@ -39,6 +39,7 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   runStop: false,
   runSteer: false,
   sessionModelLock: false,
+  sessionUserInput: false,
   sessionContext: false,
   sessionCompress: false,
   audioTranscription: false,
@@ -62,6 +63,13 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
 
 function hasEndpoint(endpoints = {}, names = []) {
   return names.some((name) => Boolean(endpoints?.[name]?.path || endpoints?.[name] === true));
+}
+
+function completeUserInputCapability(features = {}, endpoints = {}) {
+  const explicit = boolFeature(features, ['session_user_input', 'sessionUserInput']);
+  if (typeof explicit === 'boolean') return explicit;
+  return ['session_user_input_pending', 'session_user_input_answer']
+    .every((name) => Boolean(endpoints?.[name]?.path || endpoints?.[name] === true));
 }
 
 function boolFeature(features = {}, names = []) {
@@ -110,6 +118,7 @@ function legacyCapabilities({ healthOk = false, hasApiKey = false, warning = '' 
         runStop: false,
         runSteer: false,
         sessionModelLock: false,
+        sessionUserInput: false,
         sessionContext: false,
         sessionCompress: false,
     profiles: false,
@@ -161,6 +170,7 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
         runStop: advertisedFeature(features, endpoints, ['run_stop'], ['run_stop']),
         runSteer: advertisedFeature(features, endpoints, ['run_steer'], ['run_steer']),
         sessionModelLock: inferredFeature(features, endpoints, ['session_model_lock', 'sessionModelLock'], ['session_model_lock', 'session_model']),
+        sessionUserInput: completeUserInputCapability(features, endpoints),
         sessionContext: inferredFeature(features, endpoints, ['session_context', 'context_status', 'contextStatus'], ['session_context', 'session_context_get', 'context_status']),
         sessionCompress: hasEndpoint(endpoints, ['session_compress', 'session_compress_post', 'context_compress']),
     audioTranscription: inferredFeature(features, endpoints, ['audio_api', 'audio_transcription', 'audioTranscription'], ['audio_transcribe', 'audio_transcription']),

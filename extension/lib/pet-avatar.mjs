@@ -78,7 +78,6 @@ export async function fetchPetGallery({ storageApi = globalThis.chrome?.storage,
 
 
 export async function readPetAvatar(profileName, storageApi = globalThis.chrome?.storage?.local) {
-  const norm = String(profileName || '').trim().toLowerCase();
   if (storageApi?.get && profileName) {
     try {
       const stored = await storageApi.get(PET_AVATAR_KEY);
@@ -105,9 +104,7 @@ export async function writePetAvatar(profileName, entry, storageApi = globalThis
 }
 
 export async function readAllPetAvatars(storageApi = globalThis.chrome?.storage?.local) {
-  const defaults = {
-    default: { slug: 'sora', displayName: 'Roxas', icon: CANONICAL_PET_ROXAS_DATA_URL },
-  };
+  const defaults = {};
   if (!storageApi?.get) return defaults;
   try {
     const stored = await storageApi.get(PET_AVATAR_KEY);

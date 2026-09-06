@@ -94,6 +94,8 @@ import {
   stripGeneratedImageEchoes,
 } from './lib/image-render.mjs';
 import { modelLockRequestOutcome, readHermesSse, runSteerFailureState } from './lib/fulltab-runtime.mjs';
+import { createUserInputFetchGuard, userInputWriteIsOwned } from './lib/user-input-race.mjs';
+import { classifyUserInputResult, createUserInputController, pendingUserInputRecords, userInputAnswerPayload } from './lib/user-input.mjs';
 import { parseBrowserCommand, resolveCommandPrompt } from './lib/commands.mjs';
 import { createDiffusionCanvas } from './lib/diffusion-canvas.mjs';
 import {
@@ -136,11 +138,6 @@ import {
   mergeGroupChatLists,
   splitBotRosterRows,
 } from './lib/bot-mode.mjs';
-import {
-  CANONICAL_PET_NAMINE_DATA_URL,
-  CANONICAL_PET_RIKU_DATA_URL,
-  CANONICAL_PET_ROXAS_DATA_URL,
-} from './lib/pet-avatar.mjs';
 import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
 import {
   acceptedTurnRecoveryPolicy,
@@ -228,6 +225,7 @@ const els = {
   copySessionId: $('#copySessionId'),
   sessionActionsMenu: $('#sessionActionsMenu'),
   messageList: $('#messageList'),
+  userInputRequests: $('#userInputRequests'),
   loadingState: $('#loadingState'),
   loadingTitle: $('#loadingTitle'),
   loadingDetail: $('#loadingDetail'),
@@ -439,6 +437,108 @@ const TASK_STACKS_STORAGE_KEY = 'hermesBrowserTaskStacks';
 
 const client = createHermesClient({
   getConnection: () => settings,
+});
+
+const userInputFetchGuard = createUserInputFetchGuard();
+
+function activeUserInputSessionId() {
+  return usesDashboardTicketTransport()
+    ? String(dashboardLiveSessionId || '').trim()
+    : String(activeSessionId || '').trim();
+}
+
+function userInputTransportOwner() {
+  if (usesDashboardTicketTransport()) return dashboardConnection;
+  return `${String(settings.connectionMode || settings.gatewayMode || '')}|${String(settings.gatewayUrl || '')}|${String(settings.activeProfile || '')}`;
+}
+
+function userInputFetchIsCurrent(token, sessionId, owner) {
+  return userInputFetchGuard.isCurrent(token)
+    && activeUserInputSessionId() === sessionId
+    && userInputTransportOwner() === owner;
+}
+
+function invalidateUserInputFetch(sessionId = activeUserInputSessionId(), owner = userInputTransportOwner()) {
+  const key = String(sessionId || '').trim();
+  if (key) userInputFetchGuard.invalidate(key, owner);
+}
+
+async function sendUserInputAnswer(request, answers) {
+  const requestedSessionId = String(request?.sessionId || '').trim();
+  invalidateUserInputFetch(requestedSessionId);
+  if (usesDashboardTicketTransport()) {
+    const connection = await ensureDashboardConnection();
+    if (!userInputWriteIsOwned({
+      requestedSessionId,
+      activeSessionId: activeUserInputSessionId(),
+      requestedOwner: connection,
+      activeOwner: userInputTransportOwner(),
+    })) {
+      throw new Error('The Hermes session changed while preparing this answer. Retry it from the active session.');
+    }
+    if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
+    if (dashboardLiveSessionId !== requestedSessionId || !userInputWriteIsOwned({
+      requestedSessionId,
+      activeSessionId: activeUserInputSessionId(),
+      requestedOwner: connection,
+      activeOwner: userInputTransportOwner(),
+    })) {
+      throw new Error('The Hermes session changed while preparing this answer. Retry it from the active session.');
+    }
+    const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
+    return classifyUserInputResult(await connection.client.request(WS_METHODS.userInputRespond, payload));
+  }
+  const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
+  const response = await client.fetch(
+    `/api/sessions/${encodeURIComponent(payload.session_id)}/user-input/${encodeURIComponent(payload.request_id)}/answer`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ answers: payload.answers, ...(payload.turn_id ? { turn_id: payload.turn_id } : {}) }),
+    },
+  );
+  const result = await client.readJson(response);
+  return classifyUserInputResult(result, { httpStatus: response.status });
+}
+
+async function refreshPendingUserInputs() {
+  const sessionId = activeUserInputSessionId();
+  if (!sessionId) return;
+  const owner = usesDashboardTicketTransport() ? 'dashboard-ws' : userInputTransportOwner();
+  const reservation = userInputFetchGuard.begin(sessionId, owner);
+  if (usesDashboardTicketTransport()) {
+    const connection = await ensureDashboardConnection();
+    if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
+    const liveSessionId = activeUserInputSessionId();
+    if (!userInputFetchGuard.isCurrent(reservation) || liveSessionId !== sessionId) return;
+    const token = userInputFetchGuard.bind(reservation, connection);
+    if (!token) return;
+    const result = await connection.client.request(WS_METHODS.userInputPending, { session_id: liveSessionId });
+    if (!userInputFetchIsCurrent(token, liveSessionId, connection)) return;
+    userInputController.setActiveSession(liveSessionId);
+    userInputController.replace(liveSessionId, pendingUserInputRecords(result, liveSessionId));
+    return;
+  }
+  if (!settings.apiKey) return;
+  const response = await client.fetch(`/api/sessions/${encodeURIComponent(sessionId)}/user-input/pending`, { method: 'GET' });
+  if (!response.ok) return;
+  const result = await client.readJson(response);
+  if (!userInputFetchIsCurrent(reservation, sessionId, owner)) return;
+  userInputController.setActiveSession(sessionId);
+  userInputController.replace(sessionId, pendingUserInputRecords(result, sessionId));
+}
+
+const userInputController = createUserInputController({
+  container: els.userInputRequests,
+  onError: (error) => {
+    els.composerStatus.textContent = `Could not send Hermes input: ${error?.message || String(error)}`;
+  },
+  onResult: (result) => {
+    if (!result.accepted) return;
+    els.composerStatus.textContent = result.delivery === 'deferred'
+      ? 'Answer recorded. Hermes will use it on the next eligible turn; automatic resume was not confirmed.'
+      : 'Answer recorded by Hermes.';
+  },
+  sendAnswer: sendUserInputAnswer,
 });
 
 function currentDelegationScopeKey() {
@@ -656,8 +756,17 @@ async function ensureDashboardConnection() {
     dashboardLiveSessionId = '';
   });
   await gatewayClient.connect(buildDashboardWsUrl(settings.gatewayUrl, ticket.ticket));
-  dashboardConnection = { client: gatewayClient, origin: desiredOrigin, tabId };
-  return dashboardConnection;
+  const connection = { client: gatewayClient, origin: desiredOrigin, tabId };
+  dashboardConnection = connection;
+  gatewayClient.on(WS_EVENTS.userInputRequest, (event) => {
+    invalidateUserInputFetch(event.sessionId, connection);
+    userInputController.upsert(event.payload, event.sessionId);
+  });
+  gatewayClient.on(WS_EVENTS.userInputAnswer, (event) => {
+    invalidateUserInputFetch(event.sessionId, connection);
+    userInputController.clear(event.payload?.request_id, event.sessionId);
+  });
+  return connection;
 }
 
 function botModeConnectionKey() {
@@ -698,6 +807,7 @@ async function establishDashboardSession(storedSessionId = '', { isCurrent = () 
   }
   dashboardLiveSessionId = identity.liveId;
   activeSessionId = identity.storedId;
+  userInputController.setActiveSession(identity.liveId);
   const selectedModel = effectiveModel();
   if (selectedModel.model && selectedModel.provider) {
     try {
@@ -743,6 +853,7 @@ async function resumeDashboardRecoverySession(connection, storedSessionId = acti
     throw new Error('Dashboard resumed a different durable session during run recovery.');
   }
   dashboardLiveSessionId = identity.liveId;
+  userInputController.setActiveSession(identity.liveId);
   return identity;
 }
 
@@ -799,34 +910,6 @@ function botProfileDisplayTitle(row) {
 
 // Deterministic Blobatar-style face for the Hermes Web rail (same algorithm as the side panel).
 function appendWebBotModeAvatar(container, displayName, profileName = '') {
-  const normalized = String(profileName || displayName || '').toLowerCase().trim();
-  if (normalized === 'roxas' || normalized === 'default') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_ROXAS_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Roxas';
-    container.replaceChildren(img);
-    return;
-  }
-  if (normalized === 'namine') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_NAMINE_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Naminé';
-    container.replaceChildren(img);
-    return;
-  }
-  if (normalized === 'riku') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_RIKU_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Riku';
-    container.replaceChildren(img);
-    return;
-  }
   const seed = String(displayName || 'agent').trim();
   let svgMarkup = '';
   try {
@@ -3963,6 +4046,7 @@ async function beginHermesWebDraft({ focus = true, keepLoading = false } = {}) {
   dismissWebSessionOwnershipNotice();
   clearLiveRun();
   activeSessionId = '';
+  userInputController.setActiveSession('');
   activeMessages = [];
   renderTaskStack();
   attachments = [];
@@ -3992,6 +4076,7 @@ async function createSession({ title: requestedTitle = '', hidden = false } = {}
       createParams: { title, hidden },
     });
     activeSessionId = identity.storedId;
+    userInputController.setActiveSession(identity.liveId);
     renderTaskStack();
     settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: title };
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });
@@ -4024,6 +4109,7 @@ async function createSession({ title: requestedTitle = '', hidden = false } = {}
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Session creation failed (${response.status}).`);
   const session = payload.session || payload;
   activeSessionId = session.id || id;
+  userInputController.setActiveSession(activeUserInputSessionId());
   renderTaskStack();
   settings = { ...settings, webSessionId: activeSessionId, webSessionTitle: session.title || title };
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
@@ -4248,6 +4334,16 @@ async function sendPrompt(text) {
     });
     const streamedAnswer = await readAcceptedHermesSse(response, {
       signal: activeAbortController.signal,
+      onUserInput: (payload) => {
+        const sessionId = activeUserInputSessionId();
+        invalidateUserInputFetch(sessionId);
+        userInputController.upsert(payload, sessionId);
+      },
+      onUserInputAnswer: (payload) => {
+        const sessionId = String(payload?.session_id || activeUserInputSessionId()).trim();
+        invalidateUserInputFetch(sessionId);
+        userInputController.clear(payload?.request_id, sessionId);
+      },
       onAssistant: (content) => {
         if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
         assistant.content = content;
@@ -4446,6 +4542,7 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
   dismissWebSessionOwnershipNotice();
   const requestId = ++webSessionLoadRequestId;
   activeSessionId = cleanSessionId;
+  userInputController.setActiveSession(activeUserInputSessionId());
   renderTaskStack();
   const session = sessions.find((row) => row.id === cleanSessionId) || { id: cleanSessionId, title: settings.webSessionTitle };
   showSessionLoadingState(session);
@@ -4467,6 +4564,9 @@ async function openSession(sessionId, { keepLoading = false } = {}) {
     if (requestId !== webSessionLoadRequestId) return;
     await activateCurrentDelegationSession();
     await commitFullTabSessionMessages(messages, { sessionId: durableSessionId, requestId });
+    await refreshPendingUserInputs().catch((error) => {
+      console.warn('[Hermes Web] Pending user-input replay failed:', error?.message || error);
+    });
     if (!keepLoading) hideRuntimeLoadingState();
     return true;
   } catch (error) {
@@ -4509,6 +4609,7 @@ async function loadApp() {
   applySessionVisibility();
   renderBotModeControls();
   activeSessionId = handoff.newChat ? '' : (activeSessionId || settings.webSessionId || '');
+  userInputController.setActiveSession(activeUserInputSessionId());
   await hydrateDelegationWatches(stored[DELEGATION_WATCH_STORAGE_KEY] || []);
   renderTaskStack();
   const mode = normalizeConnectionMode(settings.connectionMode);
@@ -4527,6 +4628,18 @@ async function loadApp() {
   if (mode === 'cloud' || settings.connectionTransport === 'remote-dashboard' || settings.gatewayMode === 'remote-dashboard') {
     try {
       const connection = await ensureDashboardConnection();
+      gatewayCapabilities = {
+        ...DEFAULT_GATEWAY_CAPABILITIES,
+        auth: true,
+        dashboardWs: true,
+        health: true,
+        models: true,
+        sessionChat: true,
+        sessionChatStreaming: true,
+        sessionUserInput: true,
+        sessions: true,
+        source: 'remote-dashboard',
+      };
       renderConnectionTruth({ status: 'online' });
       const metadataPromise = Promise.all([
         loadWebBotModeProfiles(),
@@ -5051,11 +5164,17 @@ document.addEventListener('click', (event) => {
   if (!els.sessionActionsMenu.hidden && !els.sessionActionsMenu.contains(event.target) && event.target !== els.copySessionId) toggleSessionActionsMenu(false);
 });
 globalThis.addEventListener('focus', () => {
+  refreshPendingUserInputs().catch((error) => {
+    console.warn('[Hermes Web] Pending user-input focus refresh failed:', error?.message || error);
+  });
   consumePendingVoiceDraft().catch(() => {});
   consumePendingWakeTurn().catch(() => {});
 });
 globalThis.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
+    refreshPendingUserInputs().catch((error) => {
+      console.warn('[Hermes Web] Pending user-input visibility refresh failed:', error?.message || error);
+    });
     consumePendingVoiceDraft().catch(() => {});
     consumePendingWakeTurn().catch(() => {});
   }
