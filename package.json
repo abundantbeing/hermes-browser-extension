@@ -45,6 +45,7 @@
     "test:pytools": "python -m unittest discover -s tests/pytools",
     "bench:startup": "node scripts/bench-startup.mjs",
     "test:e2e:loaded": "npm run build && node tests/e2e-loaded-extension.mjs",
+    "test:e2e:syntax": "npm run build && node tests/e2e-code-highlighting.mjs",
     "test:verify:issue73": "npm run build && node tests/verify-issue73-menu-layout.mjs",
     "test:e2e:controller": "npm run build && node tests/e2e-controller-lifecycle.mjs",
     "test:e2e:browser-control": "npm run build && node tests/e2e-phase6-browser-control.mjs && node tests/e2e-phase6-browser-control-reconnect.mjs && node tests/e2e-phase6-agent-route.mjs && node tests/e2e-phase6-youtube-like.mjs",

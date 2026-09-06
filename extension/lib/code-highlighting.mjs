@@ -40,6 +40,7 @@ const LANGUAGE_ALIASES = new Map([
   ['yaml', 'yaml'],
 ]);
 
+const MAX_HIGHLIGHT_SOURCE_LENGTH = 50_000;
 const SUBLANGUAGE_CLASSES = new Set([
   'language-bash',
   'language-csharp',
@@ -53,12 +54,24 @@ const SUBLANGUAGE_CLASSES = new Set([
   'language-xml',
   'language-yaml',
 ]);
+const TIER_CLASSES = new Set([
+  'class_',
+  'constant_',
+  'escape_',
+  'function_',
+  'inherited__',
+  'language_',
+]);
+
+function isTrustedTokenClass(name) {
+  return name.startsWith('hljs-') || SUBLANGUAGE_CLASSES.has(name) || TIER_CLASSES.has(name);
+}
 
 function defaultTokenize(source, language) {
   return hljs.highlight(source, { language, ignoreIllegals: true }).value;
 }
 
-function appendTrustedTokens(target, highlightedHtml) {
+function appendTrustedTokens(target, highlightedHtml, source) {
   const document = target.ownerDocument;
   const template = document.createElement('template');
   template.innerHTML = highlightedHtml;
@@ -81,6 +94,7 @@ function appendTrustedTokens(target, highlightedHtml) {
       || classes.length > 4
       || classes.some((name) => !/^[a-z][a-z0-9_-]{0,63}$/i.test(name))
       || !classes.some((name) => name.startsWith('hljs-') || SUBLANGUAGE_CLASSES.has(name))
+      || classes.some((name) => !isTrustedTokenClass(name))
     ) {
       throw new Error('Unexpected syntax-highlighter class');
     }
@@ -92,6 +106,9 @@ function appendTrustedTokens(target, highlightedHtml) {
 
   const fragment = document.createDocumentFragment();
   for (const child of template.content.childNodes) appendNode(child, fragment);
+  if (fragment.textContent !== source) {
+    throw new Error('Syntax-highlighter changed source text');
+  }
   target.replaceChildren(fragment);
 }
 
@@ -109,8 +126,9 @@ export function highlightCodeBlocks(root, { tokenize = defaultTokenize } = {}) {
     const requested = String(code.dataset?.lang || '').trim().toLowerCase();
     const language = LANGUAGE_ALIASES.get(requested);
     if (!language) continue;
+    if (source.length > MAX_HIGHLIGHT_SOURCE_LENGTH) continue;
     try {
-      appendTrustedTokens(code, tokenize(source, language));
+      appendTrustedTokens(code, tokenize(source, language), source);
       code.classList.add('hljs');
       code.dataset.highlighted = language;
     } catch {

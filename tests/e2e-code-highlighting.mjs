@@ -6,33 +6,37 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { chromeExecutableCandidates } from './e2e-code-highlighting-support.mjs';
+
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 
+const CUSTOM_BOUNDARY_VARIABLES = Object.freeze({
+  '--hermes-canvas': '#ffffff',
+  '--hermes-paper': '#ffffff',
+  '--hermes-paper-rgb': '255, 255, 255',
+  '--hermes-ink': '#000000',
+  '--hermes-ink-rgb': '0, 0, 0',
+  '--hermes-blue': '#000000',
+  '--hermes-blue-rgb': '0, 0, 0',
+  '--hermes-blue-deep': '#000000',
+  '--hermes-blue-deep-rgb': '0, 0, 0',
+  '--hermes-primary': '#000000',
+  '--hermes-on-primary': '#767676',
+  '--hermes-accent': '#000000',
+  '--hermes-shell-fg': '#767676',
+  '--hermes-shell-fg-rgb': '118, 118, 118',
+  '--hermes-user-bg': '#000000',
+  '--hermes-user-fg': '#767676',
+  '--hermes-fg': '#767676',
+  '--hermes-fg-rgb': '118, 118, 118',
+});
+
 function chromeExecutable() {
-  const home = os.homedir();
-  const candidates = [
-    process.env.CHROME_PATH,
-    path.join(home, 'opt/chrome-for-testing/chrome-linux64/chrome'),
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium-browser',
-    '/usr/bin/chromium',
-    '/snap/bin/chromium',
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
-    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-    '/mnt/c/Program Files/Google/Chrome/Application/chrome.exe',
-    '/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-    '/mnt/c/Program Files/Microsoft/Edge/Application/msedge.exe',
-    '/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-  ].filter(Boolean);
+  const candidates = chromeExecutableCandidates();
   const found = candidates.find((candidate) => existsSync(candidate));
   if (!found) {
-    throw new Error(
-      `System Chrome/Edge not found. Set CHROME_PATH (WSL: ~/opt/chrome-for-testing/chrome-linux64/chrome). Tried: ${candidates.join(', ')}`,
-    );
+    throw new Error(`Compatible Chrome/Edge not found. Set CHROME_PATH. Tried: ${candidates.join(', ')}`);
   }
   return found;
 }
@@ -151,29 +155,82 @@ async function inspectSurface(devtoolsBase, extensionId, surface) {
     return await client.evaluate(`(async () => {
       const { renderMarkdownSafe } = await import(chrome.runtime.getURL('lib/sanitizer.mjs'));
       const { highlightCodeBlocks } = await import(chrome.runtime.getURL('lib/code-highlighting.mjs'));
-      const root = document.createElement('div');
-      root.className = ${JSON.stringify(surface.contentClass)};
-      root.innerHTML = renderMarkdownSafe(${JSON.stringify(surface.markdown)});
-      highlightCodeBlocks(root);
-      document.body.replaceChildren(root);
-      const code = root.querySelector('pre > code');
-      const keyword = code?.querySelector('.hljs-keyword');
+      document.documentElement.dataset.hermesTheme = ${JSON.stringify(surface.theme)};
+      document.documentElement.dataset.hermesMode = ${JSON.stringify(surface.mode)};
+      document.documentElement.dataset.hermesEffectiveMode = ${JSON.stringify(surface.effectiveMode || surface.mode)};
+      const message = document.createElement('article');
+      message.className = ${JSON.stringify(surface.messageClass)};
+      const content = document.createElement('div');
+      content.className = ${JSON.stringify(surface.contentClass)};
+      content.innerHTML = renderMarkdownSafe(${JSON.stringify(surface.markdown)});
+      highlightCodeBlocks(content);
+      message.append(content);
+      document.body.replaceChildren(message);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      document.documentElement.dataset.hermesTheme = ${JSON.stringify(surface.theme)};
+      document.documentElement.dataset.hermesMode = ${JSON.stringify(surface.mode)};
+      document.documentElement.dataset.hermesEffectiveMode = ${JSON.stringify(surface.effectiveMode || surface.mode)};
+      for (const [name, value] of Object.entries(${JSON.stringify(surface.variables || {})})) {
+        document.documentElement.style.setProperty(name, value);
+      }
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const code = content.querySelector('pre > code');
       const pre = code?.closest('pre');
-      const snapshot = async (mode) => {
-        document.documentElement.dataset.hermesMode = mode;
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const token = code?.querySelector(${JSON.stringify(surface.tokenSelector)});
+      const parseColor = (value) => {
+        const serialized = String(value || '');
+        const parts = serialized.match(/[0-9.]+/g)?.map(Number) || [];
+        const scale = serialized.startsWith('color(srgb ') ? 255 : 1;
         return {
-          codeColor: getComputedStyle(code).color,
-          keywordColor: getComputedStyle(keyword).color,
+          r: (parts[0] || 0) * scale,
+          g: (parts[1] || 0) * scale,
+          b: (parts[2] || 0) * scale,
+          a: parts[3] ?? 1,
         };
       };
+      const composite = (front, back) => ({
+        r: front.r * front.a + back.r * (1 - front.a),
+        g: front.g * front.a + back.g * (1 - front.a),
+        b: front.b * front.a + back.b * (1 - front.a),
+        a: 1,
+      });
+      const luminance = (color) => {
+        const channel = (value) => {
+          const normalized = value / 255;
+          return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * channel(color.r) + 0.7152 * channel(color.g) + 0.0722 * channel(color.b);
+      };
+      const contrast = (left, right) => {
+        const high = Math.max(luminance(left), luminance(right));
+        const low = Math.min(luminance(left), luminance(right));
+        return (high + 0.05) / (low + 0.05);
+      };
+      const bodyBackground = composite(
+        parseColor(getComputedStyle(document.body).backgroundColor),
+        parseColor(getComputedStyle(document.documentElement).backgroundColor),
+      );
+      const messageBackground = composite(parseColor(getComputedStyle(message).backgroundColor), bodyBackground);
+      const preStyle = pre ? getComputedStyle(pre) : null;
+      const codeStyle = code ? getComputedStyle(code) : null;
+      const tokenStyle = token ? getComputedStyle(token) : null;
+      const preBackground = composite(parseColor(preStyle?.backgroundColor), messageBackground);
+      const tokenColor = parseColor(tokenStyle?.color);
+
       return {
+        theme: document.documentElement.dataset.hermesTheme || '',
+        mode: document.documentElement.dataset.hermesMode || '',
+        effectiveMode: document.documentElement.dataset.hermesEffectiveMode || '',
         language: code?.dataset.highlighted || '',
         source: code?.textContent || '',
-        keywordCount: code?.querySelectorAll('.hljs-keyword').length || 0,
-        overflowX: getComputedStyle(pre).overflowX,
-        light: await snapshot('light'),
-        dark: await snapshot('dark'),
+        tokenCount: code?.querySelectorAll(${JSON.stringify(surface.tokenSelector)}).length || 0,
+        overflowX: preStyle?.overflowX || '',
+        codeColor: codeStyle?.color || '',
+        tokenColor: tokenStyle?.color || '',
+        messageBackground: getComputedStyle(message).backgroundColor,
+        preBackground: preStyle?.backgroundColor || '',
+        contrastRatio: token ? contrast(tokenColor, preBackground) : 0,
       };
     })()`);
   } finally {
@@ -213,33 +270,68 @@ async function main() {
 
     const surfaces = [
       {
-        name: 'side panel',
-        page: 'sidepanel.html',
-        contentClass: 'message-content',
-        markdown: '```python\ndef greet(name):\n    return f"Hi {name}"\n```',
-        source: 'def greet(name):\n    return f"Hi {name}"',
-        language: 'python',
+        name: 'side panel Python', page: 'sidepanel.html', messageClass: 'message assistant', contentClass: 'message-content',
+        markdown: '```python\ndef greet(name):\n    return f"Hi {name}"\n```', source: 'def greet(name):\n    return f"Hi {name}"',
+        language: 'python', tokenSelector: '.hljs-keyword', theme: 'nous', mode: 'dark',
       },
       {
-        name: 'Hermes Web',
-        page: 'app.html',
-        contentClass: 'web-message-content',
-        markdown: '```tsx\nconst view: JSX.Element = <Panel enabled />;\n```',
-        source: 'const view: JSX.Element = <Panel enabled />;',
-        language: 'typescript',
+        name: 'Hermes Web TypeScript', page: 'app.html', messageClass: 'web-message assistant', contentClass: 'web-message-content',
+        markdown: '```tsx\nconst view: JSX.Element = <Panel enabled />;\n```', source: 'const view: JSX.Element = <Panel enabled />;',
+        language: 'typescript', tokenSelector: '.hljs-keyword', theme: 'nous', mode: 'light',
+      },
+      {
+        name: 'side panel HTML user', page: 'sidepanel.html', messageClass: 'message user', contentClass: 'message-content',
+        markdown: '```html\n<div>Hello</div>\n```', source: '<div>Hello</div>',
+        language: 'xml', tokenSelector: '.hljs-name', theme: 'cyberpunk', mode: 'light',
+      },
+      {
+        name: 'Hermes Web JSON user', page: 'app.html', messageClass: 'web-message user', contentClass: 'web-message-content',
+        markdown: '```json\n{"answer": 42}\n```', source: '{"answer": 42}',
+        language: 'json', tokenSelector: '.hljs-attr', theme: 'cyberpunk', mode: 'light',
+      },
+      {
+        name: 'side panel custom assistant', page: 'sidepanel.html', messageClass: 'message assistant', contentClass: 'message-content',
+        markdown: '```js\nconst label = "value";\n```', source: 'const label = "value";',
+        language: 'javascript', tokenSelector: '.hljs-string', theme: 'custom:contrast-boundary', mode: 'dark',
+        effectiveMode: 'light', variables: CUSTOM_BOUNDARY_VARIABLES, expectDistinctToken: false,
+      },
+      {
+        name: 'Hermes Web custom assistant', page: 'app.html', messageClass: 'web-message assistant', contentClass: 'web-message-content',
+        markdown: '```js\nconst label = "value";\n```', source: 'const label = "value";',
+        language: 'javascript', tokenSelector: '.hljs-string', theme: 'custom:contrast-boundary', mode: 'dark',
+        effectiveMode: 'light', variables: CUSTOM_BOUNDARY_VARIABLES, expectDistinctToken: false,
+      },
+      {
+        name: 'side panel custom user', page: 'sidepanel.html', messageClass: 'message user', contentClass: 'message-content',
+        markdown: '```js\nconst count = 42;\n```', source: 'const count = 42;',
+        language: 'javascript', tokenSelector: '.hljs-number', theme: 'custom:contrast-boundary', mode: 'dark',
+        effectiveMode: 'light', variables: CUSTOM_BOUNDARY_VARIABLES, expectDistinctToken: false,
+      },
+      {
+        name: 'Hermes Web custom user', page: 'app.html', messageClass: 'web-message user', contentClass: 'web-message-content',
+        markdown: '```js\nconst count = 42;\n```', source: 'const count = 42;',
+        language: 'javascript', tokenSelector: '.hljs-number', theme: 'custom:contrast-boundary', mode: 'dark',
+        effectiveMode: 'light', variables: CUSTOM_BOUNDARY_VARIABLES, expectDistinctToken: false,
       },
     ];
 
     const results = {};
     for (const surface of surfaces) {
       const result = await inspectSurface(devtoolsBase, extensionId, surface);
+      assert.equal(result.theme, surface.theme, `${surface.name} theme`);
+      assert.equal(result.mode, surface.mode, `${surface.name} mode`);
+      assert.equal(result.effectiveMode, surface.effectiveMode || surface.mode, `${surface.name} effective mode`);
       assert.equal(result.language, surface.language, `${surface.name} language`);
       assert.equal(result.source, surface.source, `${surface.name} source preservation`);
-      assert.ok(result.keywordCount >= 1, `${surface.name} keyword spans`);
+      assert.ok(result.tokenCount >= 1, `${surface.name} token spans`);
       assert.ok(['auto', 'scroll'].includes(result.overflowX), `${surface.name} horizontal overflow`);
-      assert.notEqual(result.light.keywordColor, result.light.codeColor, `${surface.name} light syntax color`);
-      assert.notEqual(result.dark.keywordColor, result.dark.codeColor, `${surface.name} dark syntax color`);
-      assert.notEqual(result.light.keywordColor, result.dark.keywordColor, `${surface.name} theme-specific syntax colors`);
+      if (surface.expectDistinctToken !== false) {
+        assert.notEqual(result.tokenColor, result.codeColor, `${surface.name} visible token styling`);
+      }
+      assert.ok(
+        result.contrastRatio >= 4.5,
+        `${surface.name} token contrast ${result.contrastRatio.toFixed(2)}:1 (${result.tokenColor} on ${result.preBackground} over ${result.messageBackground})`,
+      );
       results[surface.name] = result;
     }
     console.log(JSON.stringify({ verdict: 'PASS', surfaces: results }, null, 2));

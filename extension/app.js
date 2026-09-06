@@ -48,6 +48,7 @@ import {
 import {
   CUSTOM_THEME_MAX_INPUT_BYTES,
   CUSTOM_THEME_STORAGE_KEY,
+  customThemeEffectiveMode,
   customThemePaletteForMode,
   customThemeSelection,
   serializeThemeDocument,
@@ -3144,10 +3145,14 @@ function applyAppearance() {
     for (const [property, value] of Object.entries(variables)) root.style.setProperty(property, value);
     appliedWebCustomThemeVariables = Object.keys(variables);
   }
+  const effectiveMode = selection.kind === 'custom'
+    ? customThemeEffectiveMode(selection.document, resolved)
+    : resolved;
   root.dataset.hermesMode = resolved;
+  root.dataset.hermesEffectiveMode = effectiveMode;
   root.dataset.hermesColorMode = mode;
   root.dataset.hermesTheme = theme;
-  root.style.colorScheme = selection.kind === 'custom' && resolved === 'dark' && !selection.document.darkColors ? 'light' : resolved;
+  root.style.colorScheme = effectiveMode;
   applyAppearancePreferences(root, webAppearancePreferences());
 }
 

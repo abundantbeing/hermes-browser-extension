@@ -147,6 +147,7 @@ import {
 import {
   CUSTOM_THEME_MAX_INPUT_BYTES,
   CUSTOM_THEME_STORAGE_KEY,
+  customThemeEffectiveMode,
   customThemePaletteForMode,
   customThemeSelection,
   serializeThemeDocument,
@@ -4939,10 +4940,11 @@ function applyAppearanceSettings() {
   root.dataset.hermesTheme = theme;
   root.dataset.hermesColorMode = colorMode;
   root.dataset.hermesMode = resolvedMode;
-  const effectiveColorScheme = selection.kind === 'custom' && resolvedMode === 'dark' && !selection.document.darkColors
-    ? 'light'
+  const effectiveMode = selection.kind === 'custom'
+    ? customThemeEffectiveMode(selection.document, resolvedMode)
     : resolvedMode;
-  root.style.colorScheme = effectiveColorScheme;
+  root.dataset.hermesEffectiveMode = effectiveMode;
+  root.style.colorScheme = effectiveMode;
   applyAppearancePreferences(root, appearancePreferencesForSurface(settings, 'panel'));
 }
 

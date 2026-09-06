@@ -2568,8 +2568,7 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
   --syntax-meta: #765400;
   color: var(--hermes-ink);
 }
-html[data-hermes-mode="dark"] .message-content pre code.hljs,
-.message.user .message-content pre code.hljs {
+html[data-hermes-effective-mode="dark"] .message-content pre code.hljs {
   --syntax-comment: #aeb8c4;
   --syntax-keyword: #e6a7ff;
   --syntax-string: #b9f6ca;
@@ -2578,6 +2577,27 @@ html[data-hermes-mode="dark"] .message-content pre code.hljs,
   --syntax-meta: #ffe082;
   color: currentColor;
 }
+.message.user .message-content pre code.hljs {
+  --syntax-comment: color-mix(in srgb, currentColor 92%, var(--hermes-accent));
+  --syntax-keyword: color-mix(in srgb, currentColor 94%, var(--hermes-accent));
+  --syntax-string: color-mix(in srgb, currentColor 90%, var(--hermes-accent));
+  --syntax-number: color-mix(in srgb, currentColor 88%, var(--hermes-accent));
+  --syntax-title: color-mix(in srgb, currentColor 92%, var(--hermes-accent));
+  --syntax-meta: color-mix(in srgb, currentColor 90%, var(--hermes-accent));
+  color: currentColor;
+}
+html[data-hermes-theme^="custom:"] .message.user .message-content pre {
+  background: transparent;
+}
+html[data-hermes-theme^="custom:"] .message-content pre code.hljs,
+html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs {
+  --syntax-comment: currentColor;
+  --syntax-keyword: currentColor;
+  --syntax-string: currentColor;
+  --syntax-number: currentColor;
+  --syntax-title: currentColor;
+  --syntax-meta: currentColor;
+}
 .message-content .hljs-comment,
 .message-content .hljs-quote { color: var(--syntax-comment); font-style: italic; }
 .message-content .hljs-keyword,
@@ -2585,16 +2605,20 @@ html[data-hermes-mode="dark"] .message-content pre code.hljs,
 .message-content .hljs-doctag { color: var(--syntax-keyword); font-weight: 700; }
 .message-content .hljs-string,
 .message-content .hljs-regexp,
-.message-content .hljs-attribute { color: var(--syntax-string); }
+.message-content .hljs-attribute,
+.message-content .hljs-attr { color: var(--syntax-string); }
 .message-content .hljs-number,
 .message-content .hljs-literal,
 .message-content .hljs-symbol,
 .message-content .hljs-bullet { color: var(--syntax-number); }
+.message-content .hljs-punctuation { color: var(--syntax-meta); }
 .message-content .hljs-title,
 .message-content .hljs-section,
 .message-content .hljs-function,
 .message-content .hljs-built_in,
-.message-content .hljs-type { color: var(--syntax-title); }
+.message-content .hljs-type,
+.message-content .hljs-tag,
+.message-content .hljs-name { color: var(--syntax-title); }
 .message-content .hljs-meta,
 .message-content .hljs-meta-keyword,
 .message-content .hljs-selector-id,

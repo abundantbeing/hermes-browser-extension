@@ -39,7 +39,7 @@ test('resolves supported aliases and leaves unknown or untagged fences plain', (
   assert.equal(untagged.code.textContent, 'alpha < beta');
 });
 
-test('maps JSX and TSX fences to the registered JavaScript and TypeScript grammars', () => {
+test('maps JSX and TSX fences to registered grammars', () => {
   const jsx = renderedCode('```jsx\nconst view = <Panel enabled />;\n```');
   const tsx = renderedCode('```tsx\nconst view: JSX.Element = <Panel enabled />;\n```');
 
@@ -50,6 +50,16 @@ test('maps JSX and TSX fences to the registered JavaScript and TypeScript gramma
   assert.equal(tsx.code.dataset.highlighted, 'typescript');
   assert.ok(jsx.code.querySelector('[class^="hljs-"]'));
   assert.ok(tsx.code.querySelector('[class^="hljs-"]'));
+});
+
+test('keeps highlighting when registered grammars emit sublanguage wrappers', () => {
+  const rendered = renderedCode('```js\nconst view = html`<div>hello</div>`;\n```');
+
+  highlightCodeBlocks(rendered.root);
+
+  assert.equal(rendered.code.dataset.highlighted, 'javascript');
+  assert.ok(rendered.code.querySelector('.language-xml'));
+  assert.equal(rendered.code.textContent, 'const view = html`<div>hello</div>`;');
 });
 
 test('preserves exact source text and falls back to plain text if tokenization fails', () => {
@@ -69,12 +79,13 @@ test('preserves exact source text and falls back to plain text if tokenization f
   assert.equal(failed.code.querySelector('[class^="hljs-"]'), null);
 });
 
-test('rejects unexpected tokenizer tags, attributes, and excessive classes', () => {
+test('rejects unexpected tokenizer tags, attributes, and classes', () => {
   const source = 'print("safe")';
   const hostileMarkup = [
     '<img src="x" />',
     '<span class="hljs-keyword" onclick="alert(1)">print</span>',
     '<span class="hljs-a one two three four">print</span>',
+    '<span class="hljs-keyword message">print</span>("safe")',
     '<span class="hljs-keyword"><b>nested</b></span>',
   ];
 
@@ -87,12 +98,30 @@ test('rejects unexpected tokenizer tags, attributes, and excessive classes', () 
   }
 });
 
-test('accepts a valid sublanguage wrapper alongside hljs classes', () => {
+test('falls back when reconstructed tokens do not preserve the source', () => {
   const source = 'print("safe")';
-  const markup = '<span class="hljs-keyword language-python">print</span>(<span class="hljs-string">"safe"</span>)';
   const rendered = renderedCode(`\`\`\`python\n${source}\n\`\`\``);
-  highlightCodeBlocks(rendered.root, { tokenize: () => markup });
+
+  highlightCodeBlocks(rendered.root, {
+    tokenize: () => '<span class="hljs-keyword">return</span>',
+  });
+
   assert.equal(rendered.code.textContent, source);
-  assert.equal(rendered.code.dataset.highlighted, 'python');
-  assert.ok(rendered.code.querySelector('.hljs-keyword.language-python'));
+  assert.equal(rendered.code.dataset.highlighted, undefined);
+  assert.equal(rendered.code.querySelector('[class^="hljs-"]'), null);
+});
+
+test('leaves oversized blocks plain while preserving their exact source', () => {
+  const source = `const payload = "${'x'.repeat(100_000)}";`;
+  const rendered = renderedCode(`\`\`\`js\n${source}\n\`\`\``);
+
+  highlightCodeBlocks(rendered.root, {
+    tokenize() {
+      return '<span class="hljs-keyword">const</span>';
+    },
+  });
+
+  assert.equal(rendered.code.dataset.highlighted, undefined);
+  assert.equal(rendered.code.querySelector('[class^="hljs-"]'), null);
+  assert.equal(rendered.code.textContent, source);
 });
