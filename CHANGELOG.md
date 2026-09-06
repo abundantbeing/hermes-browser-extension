@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed Local gateway Bot Mode profile discovery when Dashboard authentication replaces the token-bearing root page with sign-in HTML; the extension now recognizes the authenticated dashboard and uses its public status profile roster (#99).
+
 ## [0.3.2] - 2026-09-05
 
 ### Added

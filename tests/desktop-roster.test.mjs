@@ -52,6 +52,27 @@ test('dynamic dashboard discovery uses the sidecar candidate route before scanni
   ]);
 });
 
+test('dynamic dashboard discovery recognizes an authenticated dashboard through public status', async () => {
+  const fetchFn = async (url) => {
+    const target = String(url);
+    if (target === 'http://127.0.0.1:9119') {
+      return response({ body: '<title>Sign in — Hermes Agent</title>' });
+    }
+    if (target === 'http://127.0.0.1:9119/api/status') {
+      return response({ json: { auth_required: true, profiles: ['default', 'agency', 'learning'] } });
+    }
+    return response({ status: 404, body: 'not found' });
+  };
+
+  const discovered = await discoverLocalDashboardBaseUrl({
+    gatewayUrl: 'http://127.0.0.1:8642',
+    fetchFn,
+    timeoutMs: 2_000,
+  });
+
+  assert.equal(discovered, 'http://127.0.0.1:9119');
+});
+
 test('dashboard roster fetch bootstraps a token and sends it only to the dashboard API', async () => {
   const calls = [];
   const fetchFn = async (url, options = {}) => {
@@ -72,4 +93,28 @@ test('dashboard roster fetch bootstraps a token and sends it only to the dashboa
   assert.equal(calls[0].headers['X-Hermes-Session-Token'], undefined);
   assert.equal(calls[1].url, 'http://127.0.0.1:43210/api/profiles?include_sessions=true');
   assert.equal(calls[1].headers['X-Hermes-Session-Token'], 'dash-token');
+});
+
+test('dashboard roster falls back to public status when authentication hides the session token', async () => {
+  const calls = [];
+  const fetchFn = async (url) => {
+    calls.push(String(url));
+    if (String(url) === 'http://127.0.0.1:9119') {
+      return response({ body: '<title>Sign in — Hermes Agent</title>' });
+    }
+    return response({ json: { auth_required: true, profiles: ['default', 'agency', 'learning'] } });
+  };
+
+  const payload = await fetchRosterFromDashboard({
+    baseUrl: 'http://127.0.0.1:9119',
+    fetchFn,
+  });
+
+  assert.deepEqual(payload, {
+    profiles: [{ name: 'default' }, { name: 'agency' }, { name: 'learning' }],
+  });
+  assert.deepEqual(calls, [
+    'http://127.0.0.1:9119',
+    'http://127.0.0.1:9119/api/status',
+  ]);
 });

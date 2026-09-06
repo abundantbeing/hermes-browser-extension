@@ -1,12 +1,12 @@
 // Desktop dashboard roster discovery (local API mode).
 //
-// Hermes Desktop serves its dashboard (and the /api/profiles roster endpoint)
-// on a random loopback port announced only on its own stdout. The sidecar API
-// server (8642) has no roster REST route, so in local-api mode the verified
-// roster is sourced from the desktop dashboard: GET / bootstraps
-// window.__HERMES_SESSION_TOKEN__, then GET /api/profiles?include_sessions=true
-// returns the roster. Extension host_permissions (http://127.0.0.1/*) exempt
-// these fetches from CORS.
+// Hermes Desktop serves its dashboard (and profile roster endpoints) on a
+// random loopback port announced only on its own stdout. The sidecar API server
+// (8642) has no roster REST route, so in local-api mode the verified roster is
+// sourced from the desktop dashboard. An unauthenticated dashboard
+// bootstraps a session token from GET / and exposes the rich /api/profiles
+// roster. An auth-gated dashboard serves its sign-in page there, so discovery
+// falls back to the public /api/status profile names.
 //
 // Port discovery is intentionally bounded: the last verified URL (cached in
 // chrome.storage.local), an explicit user-supplied URL, a sidecar candidate
@@ -28,6 +28,7 @@ const COMMON_DASHBOARD_PORTS = [
   62431, 59515, 46855, 57710, 57711, 43362, 50740, 50100, 50923, 51100,
 ];
 const SCAN_PROBE_TIMEOUT_MS = 200; // per-probe; loopback connection refused returns in <5ms
+const DASHBOARD_STATUS_PROBE_TIMEOUT_MS = 2_000;
 
 function fetchWithTimeout(fetchFn, url, options, timeoutMs) {
   if (typeof AbortSignal?.timeout !== 'function') return fetchFn(url, options);
@@ -39,6 +40,44 @@ export function extractDashboardSessionToken(html = '') {
   return match?.[1] || '';
 }
 
+function dashboardStatusUrl(baseUrl = '') {
+  try {
+    const url = new URL(String(baseUrl || '').trim());
+    url.hash = '';
+    url.search = '';
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/status`;
+    return url.toString();
+  } catch {
+    return '';
+  }
+}
+
+function rosterFromDashboardStatus(payload) {
+  if (typeof payload?.auth_required !== 'boolean' || !Array.isArray(payload.profiles)) return null;
+  const profiles = payload.profiles
+    .map((entry) => {
+      if (typeof entry === 'string') return { name: entry.trim() };
+      if (entry && typeof entry.name === 'string') return { ...entry, name: entry.name.trim() };
+      return null;
+    })
+    .filter((entry) => entry?.name);
+  if (profiles.length !== payload.profiles.length) return null;
+  return { profiles };
+}
+
+async function fetchPublicStatusRoster(baseUrl, fetchFn, timeoutMs) {
+  const statusUrl = dashboardStatusUrl(baseUrl);
+  if (!statusUrl) return null;
+  const response = await fetchWithTimeout(fetchFn, statusUrl, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+  }, timeoutMs);
+  if (!response.ok) return null;
+  const payload = await response.json().catch(() => null);
+  return rosterFromDashboardStatus(payload);
+}
+
 async function isDesktopDashboard(baseUrl, fetchFn = globalThis.fetch?.bind(globalThis), headers = {}) {
   try {
     const response = await fetchWithTimeout(fetchFn, baseUrl, {
@@ -48,7 +87,8 @@ async function isDesktopDashboard(baseUrl, fetchFn = globalThis.fetch?.bind(glob
     }, SCAN_PROBE_TIMEOUT_MS);
     if (!response.ok) return false;
     const html = await response.text();
-    return Boolean(extractDashboardSessionToken(html));
+    if (extractDashboardSessionToken(html)) return true;
+    return Boolean(await fetchPublicStatusRoster(baseUrl, fetchFn, DASHBOARD_STATUS_PROBE_TIMEOUT_MS));
   } catch {
     return false;
   }
@@ -165,7 +205,11 @@ export async function fetchRosterFromDashboard({ baseUrl = '', fetchFn = globalT
   if (!rootResponse.ok) throw new Error(`dashboard-root-${rootResponse.status}`);
   const html = await rootResponse.text();
   const token = extractDashboardSessionToken(html);
-  if (!token) throw new Error('no-dashboard-session-token');
+  if (!token) {
+    const statusRoster = await fetchPublicStatusRoster(dashboardUrl, fetchFn, 2500);
+    if (statusRoster) return statusRoster;
+    throw new Error('no-dashboard-session-token');
+  }
 
   let rosterUrl;
   try {
