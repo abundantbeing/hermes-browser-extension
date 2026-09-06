@@ -9075,8 +9075,15 @@ async function leaveBotModeForRegularSession() {
     activeGroupExpandedThreads.clear();
     resetActiveGroupTypingIndicator();
     botHistoryVisibleCount = BOT_HISTORY_PAGE_SIZE;
-    activeConversationTransport = 'rest';
-    activeDashboardWsConnection = null;
+    // If we're connected to a local Desktop dashboard runtime, keep the dashboard-ws transport active
+    // so regular sessions don't revert to unconfigured local-api REST and trigger a disconnect.
+    if (desktopDashboardUrl) {
+      activeConversationTransport = 'dashboard-ws';
+      activeDashboardWsConnection = profileWsConnection || null;
+    } else {
+      activeConversationTransport = 'rest';
+      activeDashboardWsConnection = null;
+    }
     activeSessionRuntime = {
       ...activeSessionRuntime,
       sessionId: '',
@@ -9116,6 +9123,7 @@ async function leaveBotModeForRegularSession() {
     renderMessagesFromStorage();
     renderActiveProfileIndicator();
     updateSessionLabel();
+    updateConnectionPrompt();
     setStatus('ok', 'Regular Sessions restored', `Started a fresh Hermes Browser session for ${profileSwitchDisplayName(nextProfile)}.`, { translateDetail: false });
     return true;
   } finally {
