@@ -59,7 +59,7 @@ test('dynamic dashboard discovery recognizes an authenticated dashboard through 
       return response({ body: '<title>Sign in — Hermes Agent</title>' });
     }
     if (target === 'http://127.0.0.1:9119/api/status') {
-      return response({ json: { auth_required: true, profiles: ['default', 'agency', 'learning'] } });
+      return response({ json: { version: '0.21.0', auth_required: true, gateway_mode: 'multiple', profiles: ['default', 'agency', 'learning'] } });
     }
     return response({ status: 404, body: 'not found' });
   };
@@ -71,6 +71,27 @@ test('dynamic dashboard discovery recognizes an authenticated dashboard through 
   });
 
   assert.equal(discovered, 'http://127.0.0.1:9119');
+});
+
+test('dynamic dashboard discovery rejects generic profile-shaped status payloads', async () => {
+  const fetchFn = async (url) => {
+    const target = String(url);
+    if (target === 'http://127.0.0.1:43210') {
+      return response({ body: '<title>Sign in</title>' });
+    }
+    if (target === 'http://127.0.0.1:43210/api/status') {
+      return response({ json: { auth_required: false, profiles: [] } });
+    }
+    return response({ status: 404, body: 'not found' });
+  };
+
+  const discovered = await discoverLocalDashboardBaseUrl({
+    explicitUrl: 'http://127.0.0.1:43210',
+    fetchFn,
+    timeoutMs: 500,
+  });
+
+  assert.equal(discovered, '');
 });
 
 test('dashboard roster fetch bootstraps a token and sends it only to the dashboard API', async () => {
@@ -95,24 +116,28 @@ test('dashboard roster fetch bootstraps a token and sends it only to the dashboa
   assert.equal(calls[1].headers['X-Hermes-Session-Token'], 'dash-token');
 });
 
-test('dashboard roster falls back to public status when authentication hides the session token', async () => {
+test('dashboard roster requires signed-in Dashboard authentication instead of trusting public status', async () => {
   const calls = [];
   const fetchFn = async (url) => {
     calls.push(String(url));
     if (String(url) === 'http://127.0.0.1:9119') {
       return response({ body: '<title>Sign in — Hermes Agent</title>' });
     }
-    return response({ json: { auth_required: true, profiles: ['default', 'agency', 'learning'] } });
+    return response({
+      json: {
+        version: '0.21.0',
+        auth_required: true,
+        gateway_mode: 'multiple',
+        profiles: ['default', 'agency', 'learning'],
+      },
+    });
   };
 
-  const payload = await fetchRosterFromDashboard({
+  await assert.rejects(fetchRosterFromDashboard({
     baseUrl: 'http://127.0.0.1:9119',
     fetchFn,
-  });
+  }), /dashboard-authentication-required/);
 
-  assert.deepEqual(payload, {
-    profiles: [{ name: 'default' }, { name: 'agency' }, { name: 'learning' }],
-  });
   assert.deepEqual(calls, [
     'http://127.0.0.1:9119',
     'http://127.0.0.1:9119/api/status',

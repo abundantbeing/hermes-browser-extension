@@ -27,6 +27,13 @@ test('originOf and wsTicketUrl normalize the dashboard base', () => {
   assert.equal(wsTicketUrl('https://host.ts.net/hermes?x=1#y'), 'https://host.ts.net/hermes/api/auth/ws-ticket');
 });
 
+test('dashboard trust accepts loopback HTTP without allowing remote plaintext origins', () => {
+  assert.equal(originOf('http://127.0.0.1:9119/dashboard'), 'http://127.0.0.1:9119');
+  assert.equal(originOf('http://localhost:9119/dashboard'), 'http://localhost:9119');
+  assert.equal(originOf('http://host.ts.net'), '');
+  assert.equal(isTrustedDashboardOrigin('http://127.0.0.1:9119', 'http://127.0.0.1:9119/'), true);
+});
+
 test('dashboard trust is bound to one canonical HTTPS origin', () => {
   assert.equal(isTrustedDashboardOrigin('https://host.ts.net/hermes', 'https://host.ts.net'), true);
   assert.equal(isTrustedDashboardOrigin('https://host.ts.net/other', 'https://host.ts.net/'), true);
@@ -248,6 +255,28 @@ test('mintWsTicket injects the mint into the dashboard tab with the ticket URL',
   assert.deepEqual(result, { ok: true, ticket: 'TKT', ttlSeconds: 30 });
   assert.equal(injected.target.tabId, 7);
   assert.deepEqual(injected.args, ['https://host.ts.net/api/auth/ws-ticket']);
+});
+
+test('mintWsTicket reuses the signed-in local Dashboard tab', async () => {
+  const dashboardTab = {
+    id: 11,
+    url: 'http://127.0.0.1:9119/',
+    status: 'complete',
+    discarded: false,
+  };
+  const result = await mintWsTicket({
+    tabsApi: {
+      query: async () => [dashboardTab],
+      get: async () => ({ ...dashboardTab }),
+    },
+    scriptingApi: {
+      executeScript: async () => [{ result: { ok: true, ticket: 'LOCAL', ttlSeconds: 30 } }],
+    },
+    baseUrl: 'http://127.0.0.1:9119',
+    mintFn: () => {},
+  });
+
+  assert.deepEqual(result, { ok: true, ticket: 'LOCAL', ttlSeconds: 30 });
 });
 
 test('mintWsTicket discards a ticket when the selected dashboard tab navigates', async () => {

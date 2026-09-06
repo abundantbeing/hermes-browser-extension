@@ -3,10 +3,10 @@
 // Hermes Desktop serves its dashboard (and profile roster endpoints) on a
 // random loopback port announced only on its own stdout. The sidecar API server
 // (8642) has no roster REST route, so in local-api mode the verified roster is
-// sourced from the desktop dashboard. An unauthenticated dashboard
-// bootstraps a session token from GET / and exposes the rich /api/profiles
-// roster. An auth-gated dashboard serves its sign-in page there, so discovery
-// falls back to the public /api/status profile names.
+// sourced from the desktop dashboard. An unauthenticated dashboard bootstraps
+// a session token from GET / and exposes the rich /api/profiles roster. An
+// auth-gated dashboard serves its sign-in page there; public /api/status only
+// identifies that dashboard before the signed-in tab mints a WebSocket ticket.
 //
 // Port discovery is intentionally bounded: the last verified URL (cached in
 // chrome.storage.local), an explicit user-supplied URL, a sidecar candidate
@@ -52,20 +52,18 @@ function dashboardStatusUrl(baseUrl = '') {
   }
 }
 
-function rosterFromDashboardStatus(payload) {
-  if (typeof payload?.auth_required !== 'boolean' || !Array.isArray(payload.profiles)) return null;
-  const profiles = payload.profiles
-    .map((entry) => {
-      if (typeof entry === 'string') return { name: entry.trim() };
-      if (entry && typeof entry.name === 'string') return { ...entry, name: entry.name.trim() };
-      return null;
-    })
-    .filter((entry) => entry?.name);
-  if (profiles.length !== payload.profiles.length) return null;
-  return { profiles };
+function isAuthenticatedDashboardStatus(payload) {
+  const profiles = payload?.profiles;
+  return payload?.auth_required === true
+    && typeof payload.version === 'string'
+    && Boolean(payload.version.trim())
+    && ['none', 'single', 'multiple', 'multiplex', 'unknown'].includes(payload.gateway_mode)
+    && Array.isArray(profiles)
+    && profiles.length > 0
+    && profiles.every((name) => typeof name === 'string' && Boolean(name.trim()));
 }
 
-async function fetchPublicStatusRoster(baseUrl, fetchFn, timeoutMs) {
+async function fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, timeoutMs) {
   const statusUrl = dashboardStatusUrl(baseUrl);
   if (!statusUrl) return null;
   const response = await fetchWithTimeout(fetchFn, statusUrl, {
@@ -75,20 +73,33 @@ async function fetchPublicStatusRoster(baseUrl, fetchFn, timeoutMs) {
   }, timeoutMs);
   if (!response.ok) return null;
   const payload = await response.json().catch(() => null);
-  return rosterFromDashboardStatus(payload);
+  return isAuthenticatedDashboardStatus(payload) ? payload : null;
 }
 
-async function isDesktopDashboard(baseUrl, fetchFn = globalThis.fetch?.bind(globalThis), headers = {}) {
+function remainingProbeTimeout(deadlineAt, maximumMs) {
+  return Math.max(0, Math.min(maximumMs, deadlineAt - Date.now()));
+}
+
+async function isDesktopDashboard(
+  baseUrl,
+  fetchFn = globalThis.fetch?.bind(globalThis),
+  headers = {},
+  deadlineAt = Date.now() + DASHBOARD_STATUS_PROBE_TIMEOUT_MS,
+) {
   try {
+    const rootTimeoutMs = remainingProbeTimeout(deadlineAt, SCAN_PROBE_TIMEOUT_MS);
+    if (!rootTimeoutMs) return false;
     const response = await fetchWithTimeout(fetchFn, baseUrl, {
       method: 'GET',
       headers: { Accept: 'text/html', ...headers },
       cache: 'no-store',
-    }, SCAN_PROBE_TIMEOUT_MS);
+    }, rootTimeoutMs);
     if (!response.ok) return false;
     const html = await response.text();
     if (extractDashboardSessionToken(html)) return true;
-    return Boolean(await fetchPublicStatusRoster(baseUrl, fetchFn, DASHBOARD_STATUS_PROBE_TIMEOUT_MS));
+    const statusTimeoutMs = remainingProbeTimeout(deadlineAt, DASHBOARD_STATUS_PROBE_TIMEOUT_MS);
+    if (!statusTimeoutMs) return false;
+    return Boolean(await fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, statusTimeoutMs));
   } catch {
     return false;
   }
@@ -98,7 +109,7 @@ async function scanLoopbackForDashboard(fetchFn, onProgress, headers = {}, deadl
   const probePorts = async (ports) => {
     const results = await Promise.all(ports.map(async (port) => {
       const candidate = `http://127.0.0.1:${port}`;
-      return (await isDesktopDashboard(candidate, fetchFn, headers)) ? candidate : null;
+      return (await isDesktopDashboard(candidate, fetchFn, headers, deadlineAt)) ? candidate : null;
     }));
     return results.find(Boolean) || '';
   };
@@ -156,7 +167,7 @@ export async function discoverLocalDashboardBaseUrl({
   }
   for (const candidate of candidates) {
     if (Date.now() >= deadlineAt) break;
-    if (await isDesktopDashboard(candidate, fetchFn, authHeaders)) return candidate;
+    if (await isDesktopDashboard(candidate, fetchFn, authHeaders, deadlineAt)) return candidate;
   }
 
   // Ask the sidecar gateway (fixed port, same machine) for live loopback
@@ -172,7 +183,7 @@ export async function discoverLocalDashboardBaseUrl({
           headers: authHeaders,
           cache: 'no-store',
         },
-        1500,
+        remainingProbeTimeout(deadlineAt, 1500),
       );
       if (response.ok) {
         const payload = await response.json().catch(() => null);
@@ -181,7 +192,7 @@ export async function discoverLocalDashboardBaseUrl({
           const candidate = `http://127.0.0.1:${Number(port)}`;
           if (tried.has(candidate)) continue;
           tried.add(candidate);
-          if (await isDesktopDashboard(candidate, fetchFn, authHeaders)) return candidate;
+          if (await isDesktopDashboard(candidate, fetchFn, authHeaders, deadlineAt)) return candidate;
         }
       }
     } catch {
@@ -206,8 +217,8 @@ export async function fetchRosterFromDashboard({ baseUrl = '', fetchFn = globalT
   const html = await rootResponse.text();
   const token = extractDashboardSessionToken(html);
   if (!token) {
-    const statusRoster = await fetchPublicStatusRoster(dashboardUrl, fetchFn, 2500);
-    if (statusRoster) return statusRoster;
+    const authenticatedStatus = await fetchAuthenticatedDashboardStatus(dashboardUrl, fetchFn, 2500);
+    if (authenticatedStatus) throw new Error('dashboard-authentication-required');
     throw new Error('no-dashboard-session-token');
   }
 

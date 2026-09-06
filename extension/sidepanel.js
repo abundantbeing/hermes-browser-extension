@@ -208,7 +208,6 @@ import {
 } from './lib/bot-group-runtime.mjs';
 import {
   dashboardTrustPrompt,
-  discoverProfilesViaTab,
   findDashboardTab,
   isTrustedDashboardOrigin,
   mintWsTicket,
@@ -885,6 +884,7 @@ let botModeRosterNote = '';
 let profileWsConnection = null;
 let desktopDashboardDiscoveryPromise = null;
 let profileRichRosterPromise = null;
+let profileRichRosterAllowsTrust = false;
 let activeConversationTransport = 'rest';
 let activeDashboardWsConnection = null;
 let activeGroupProjection = null;
@@ -7116,7 +7116,7 @@ async function ensureDesktopDashboardUrl({ timeoutMs = 2_500 } = {}) {
   return Promise.race([desktopDashboardDiscoveryPromise, timer]);
 }
 
-async function ensureProfileWsConnection({ readyTimeoutMs = 8_000 } = {}) {
+async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboardTrust = false } = {}) {
   if (isRemoteWsMode()) return ensureRemoteWsClient();
   // The dashboard WS (/api/ws) lives on the DESKTOP dashboard's random port —
   // the 8642 sidecar has no such route and a connect attempt there hangs
@@ -7131,45 +7131,49 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000 } = {}) {
   if (profileWsConnection?.client?.readyState === 1 && profileWsConnection.key === key) {
     return profileWsConnection;
   }
-  // Train 2: profiles.list rides an authenticated gateway WS. Prefer the ticketed
-  // client the ordinary chat already established (single-use ?ticket= is the only
-  // WS credential when the dashboard auth gate is engaged — the legacy ?token=
-  // query path is rejected there). Local loopback without a trusted dashboard tab
-  // falls back to the legacy ?token= path, which loopback accepts.
-  const canMintDashboardTicket = transportUsesDashboardTicket(settings.connectionTransport)
-    && Number.isFinite(trustedDashboardTabId)
+  // Auth-gated local dashboards use the same explicitly trusted, signed-in
+  // Dashboard tab and one-use ticket as Remote Dashboard Attach. The local API
+  // key authenticates port 8642; it cannot authenticate the dashboard on 9119.
+  let trustedTab = null;
+  if (Number.isFinite(trustedDashboardTabId) && dashboardTicketOriginMatches(baseUrl)) {
+    trustedTab = await findDashboardTab(browserApi.tabs, originOf(baseUrl), trustedDashboardTabId);
+    if (!trustedTab) trustedDashboardTabId = null;
+  }
+  if (allowDashboardTrust && !trustedTab) {
+    await requestDashboardOriginTrust(baseUrl, { local: true });
+    trustedTab = await findDashboardTab(browserApi.tabs, originOf(baseUrl), trustedDashboardTabId);
+  }
+  const canMintDashboardTicket = Boolean(trustedTab?.id)
     && dashboardTicketOriginMatches(baseUrl);
   if (canMintDashboardTicket) {
-    let ticket = null;
-    try {
-      ticket = await Promise.race([
-        mintWsTicket({
-          tabsApi: browserApi.tabs,
-          scriptingApi: browserApi.scripting,
-          baseUrl,
-          tabId: trustedDashboardTabId,
-        }),
-        new Promise((resolve) => setTimeout(() => resolve({ ok: false, reason: 'ticket-timeout' }), 5_000)),
-      ]);
-    } catch {
-      ticket = null;
+    const ticket = await Promise.race([
+      mintWsTicket({
+        tabsApi: browserApi.tabs,
+        scriptingApi: browserApi.scripting,
+        baseUrl,
+        tabId: trustedTab.id,
+      }),
+      new Promise((resolve) => setTimeout(() => resolve({ ok: false, reason: 'ticket-timeout' }), 5_000)),
+    ]);
+    if (!ticket?.ok) {
+      const error = new Error(ticketFailureHelp(ticket?.reason, ticket?.origin || baseUrl));
+      error.ticketReason = ticket?.reason || 'ticket-failed';
+      throw error;
     }
-    if (ticket?.ok) {
-      profileWsConnection?.client?.close?.();
-      const gatewayClient = createGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs });
-      gatewayClient.on('close', () => {
-        if (profileWsConnection?.client === gatewayClient) profileWsConnection = null;
-      });
-      gatewayClient.on('sessions.changed', () => {
-        if (activeGroupProjection) void syncActiveGroupRoomFromGateway();
-      });
-      gatewayClient.on('profiles.changed', () => {
-        void loadProfiles({ quiet: true });
-      });
-      await gatewayClient.connect(buildDashboardWsUrl(baseUrl, ticket.ticket));
-      profileWsConnection = { client: gatewayClient, baseUrl, key };
-      return profileWsConnection;
-    }
+    profileWsConnection?.client?.close?.();
+    const gatewayClient = createGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs });
+    gatewayClient.on('close', () => {
+      if (profileWsConnection?.client === gatewayClient) profileWsConnection = null;
+    });
+    gatewayClient.on('sessions.changed', () => {
+      if (activeGroupProjection) void syncActiveGroupRoomFromGateway();
+    });
+    gatewayClient.on('profiles.changed', () => {
+      void loadProfiles({ quiet: true });
+    });
+    await gatewayClient.connect(buildDashboardWsUrl(baseUrl, ticket.ticket));
+    profileWsConnection = { client: gatewayClient, baseUrl, key };
+    return profileWsConnection;
   }
   if (profileWsConnection?.client?.readyState === 1 && profileWsConnection.key === key) {
     return profileWsConnection;
@@ -8337,7 +8341,7 @@ const CANONICAL_FALLBACK_GROUP_CHATS = [];
 
 let desktopDashboardUrl = '';
 
-async function loadProfiles({ quiet = false } = {}) {
+async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}) {
   // Profiles load regardless of Bot Mode: the Settings → Active profile
   // selector and regular (non-Bot) sessions need the verified roster too.
   // Bot Mode only adds the deck/roster UI on top; the underlying profile
@@ -8364,19 +8368,33 @@ async function loadProfiles({ quiet = false } = {}) {
     if (!quiet) setStatus('ok', 'Hermes profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
   };
   let rosterLoaded = false;
-  const richRosterPromise = profileRichRosterPromise || (profileRichRosterPromise = (async () => {
-    try {
-      const connection = await ensureProfileWsConnection({ readyTimeoutMs: 5_000 });
-      return {
-        payload: await connection.client.request(WS_METHODS.profilesList, { include_sessions: true }),
-        sourceId: connection.baseUrl || normalizeGatewayUrl(settings.gatewayUrl),
-      };
-    } catch (error) {
-      return { error };
-    }
-  })().finally(() => {
-    profileRichRosterPromise = null;
-  }));
+  const createRichRosterPromise = () => {
+    let pending;
+    pending = (async () => {
+      try {
+        const connection = await ensureProfileWsConnection({ readyTimeoutMs: 5_000, allowDashboardTrust });
+        return {
+          payload: await connection.client.request(WS_METHODS.profilesList, { include_sessions: true }),
+          sourceId: connection.baseUrl || normalizeGatewayUrl(settings.gatewayUrl),
+        };
+      } catch (error) {
+        return { error };
+      }
+    })().finally(() => {
+      if (profileRichRosterPromise === pending) {
+        profileRichRosterPromise = null;
+        profileRichRosterAllowsTrust = false;
+      }
+    });
+    profileRichRosterPromise = pending;
+    profileRichRosterAllowsTrust = allowDashboardTrust;
+    return pending;
+  };
+  const mayReuseRichRoster = profileRichRosterPromise
+    && !(allowDashboardTrust && !profileRichRosterAllowsTrust);
+  const richRosterPromise = mayReuseRichRoster
+    ? profileRichRosterPromise
+    : createRichRosterPromise();
   const applyRichRoster = (result) => {
     if (generation !== botModeRosterGeneration || !result?.payload) return false;
     const split = splitBotRosterRows(result.payload, { sourceId: result.sourceId });
@@ -8416,9 +8434,11 @@ async function loadProfiles({ quiet = false } = {}) {
           // titles, previews, and group chats; its failure is non-fatal.
         }
       }
-    } catch {
+    } catch (error) {
       if (generation !== botModeRosterGeneration) return;
-      botModeRosterNote = 'Desktop dashboard roster unavailable; trying the gateway WebSocket.';
+      botModeRosterNote = error?.message === 'dashboard-authentication-required'
+        ? 'Dashboard authentication required. Open the signed-in local Dashboard tab, then refresh profiles to authorize Bot Mode.'
+        : 'Desktop dashboard roster unavailable; trying the gateway WebSocket.';
     }
   }
   if (rosterLoaded) return;
@@ -8436,6 +8456,9 @@ async function loadProfiles({ quiet = false } = {}) {
   }
   if (richResult?.timedOut) {
     botModeRosterNote = 'Hermes is still syncing the rich Bot Mode roster in the background.';
+  }
+  if (richResult?.error && allowDashboardTrust) {
+    botModeRosterNote = String(richResult.error?.message || botModeRosterNote);
   }
 
   // Do NOT inject synthetic/hardcoded agent profiles.
@@ -12246,9 +12269,11 @@ async function saveSettingsFromForm() {
     connectionTransport,
     gatewayMode,
     gatewayUrl,
-    trustedDashboardOrigin: isTrustedDashboardOrigin(gatewayUrl, settings.trustedDashboardOrigin)
+    trustedDashboardOrigin: connectionMode === 'local'
       ? settings.trustedDashboardOrigin
-      : '',
+      : (isTrustedDashboardOrigin(gatewayUrl, settings.trustedDashboardOrigin)
+        ? settings.trustedDashboardOrigin
+        : ''),
     apiKey: connectionMode === 'cloud' ? '' : apiKey,
     tokenSource: connectionMode === 'cloud' ? '' : tokenSource,
     model: settings.model || DEFAULT_SETTINGS.model,
@@ -12315,7 +12340,7 @@ async function saveSettingsFromForm() {
     botModeRoster = [];
     renderBotModeRoster();
   }
-  if (gatewayMode !== 'remote-dashboard' || !settings.trustedDashboardOrigin) {
+  if (!settings.trustedDashboardOrigin) {
     trustedDashboardTabId = null;
   }
   const stored = await browserApi.storage.local.get('hermesBrowserSettings');
@@ -13220,9 +13245,9 @@ function applyTurnRuntimePayload(payload = {}) {
   applyPendingModelRuntimeAck(runtime);
 }
 
-async function requestDashboardOriginTrust(baseUrl) {
+async function requestDashboardOriginTrust(baseUrl, { local = false } = {}) {
   const origin = originOf(baseUrl);
-  if (!origin) throw new Error('Set a remote https gateway URL without embedded credentials before connecting.');
+  if (!origin) throw new Error('Set or discover a valid HTTPS or loopback Dashboard URL before connecting.');
   const tab = await findDashboardTab(browserApi.tabs, origin);
   if (!tab?.id) {
     const error = new Error(ticketFailureHelp('no_dashboard_tab', origin));
@@ -13237,7 +13262,10 @@ async function requestDashboardOriginTrust(baseUrl) {
   }
   const approved = globalThis.confirm?.(dashboardTrustPrompt(origin)) === true;
   if (!approved) {
-    const error = new Error('Dashboard Attach was not approved. Open Settings → Test connection when you are ready to trust this origin.');
+    const retry = local
+      ? 'Keep the signed-in local Dashboard tab active, then reopen Bot Mode or refresh profiles when you are ready.'
+      : 'Open Settings → Test connection when you are ready to trust this origin.';
+    const error = new Error(`Dashboard Attach was not approved. ${retry}`);
     error.ticketReason = 'dashboard_origin_untrusted';
     throw error;
   }
@@ -15152,7 +15180,7 @@ function bindEvents() {
     els.botModePanel.hidden = !opening;
     els.botModeButton.setAttribute('aria-expanded', String(opening));
     if (opening) {
-      if (!botModeRoster.length) void loadProfiles({ quiet: true });
+      if (!botModeRoster.length) void loadProfiles({ quiet: true, allowDashboardTrust: true });
       setBotModeView(botModeView);
       els.botModeSearch?.focus();
     }

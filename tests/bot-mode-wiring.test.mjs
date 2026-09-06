@@ -26,7 +26,7 @@ test('Profiles always load; cron and PetDex stay Bot-Mode-gated', () => {
   // Profiles are a shared Hermes runtime surface: the Settings Active-profile
   // selector and regular (non-Bot) sessions need the verified roster even
   // with Bot Mode off. Only the Bot Mode deck UI is gated behind the toggle.
-  assert.match(sidepanelSource, /async function loadProfiles\(\{ quiet = false \} = \{\}\) \{\s*\/\/ Profiles load regardless of Bot Mode/);
+  assert.match(sidepanelSource, /async function loadProfiles\(\{ quiet = false, allowDashboardTrust = !quiet \} = \{\}\) \{\s*\/\/ Profiles load regardless of Bot Mode/);
   assert.match(sidepanelSource, /async function loadCronJobs\(\{ quiet = false \} = \{\}\) \{\s*if \(settings\.botModeEnabled !== true\) return/);
   assert.match(sidepanelSource, /async function ensurePetGallery\(\) \{\s*if \(settings\.botModeEnabled !== true\) return/);
 });
@@ -156,14 +156,20 @@ test('named-profile drafts and reopened sessions stay on the profile-aware dashb
   assert.match(openBody, /isNamedHermesProfile\(session\.profile/);
 });
 
-test('local dashboard fallback and first-paint loading never depend on a stale API key', () => {
+test('authenticated local dashboards reuse the explicit Dashboard ticket transport', () => {
   assert.match(sidepanelSource, /if \(state\.state === 'unconfigured' && !usesDashboardWsChatTransport\(\)\)/);
   assert.match(sidepanelSource, /activateLocalDashboardTransport\(\{ timeoutMs: 5_000 \}\)/);
   assert.match(sidepanelSource, /loadModels\(\{ quiet: true, startup: true \}\)/);
   assert.match(sidepanelSource, /dashboard-roster-timeout/);
-  assert.match(sidepanelSource, /ensureProfileWsConnection\(\{ readyTimeoutMs: 5_000 \}\)/);
-  assert.match(sidepanelSource, /transportUsesDashboardTicket\(settings\.connectionTransport\)/);
-  assert.match(sidepanelSource, /!botModeRoster\.length\) void loadProfiles\(\{ quiet: true \}\)/);
+  const connectionBody = sidepanelSource.match(/async function ensureProfileWsConnection\([\s\S]*?(?=\nfunction usesDashboardWsChatTransport)/)?.[0] || '';
+  assert.match(connectionBody, /requestDashboardOriginTrust\(baseUrl, \{ local: true \}\)/);
+  assert.match(connectionBody, /mintWsTicket\(/);
+  assert.doesNotMatch(connectionBody, /transportUsesDashboardTicket/);
+  assert.match(sidepanelSource, /!botModeRoster\.length\) void loadProfiles\(\{ quiet: true, allowDashboardTrust: true \}\)/);
+  assert.match(connectionBody, /findDashboardTab\(browserApi\.tabs, originOf\(baseUrl\), trustedDashboardTabId\)/);
+  assert.match(sidepanelSource, /profileRichRosterAllowsTrust/);
+  assert.match(sidepanelSource, /allowDashboardTrust && !profileRichRosterAllowsTrust/);
+  assert.match(sidepanelSource, /reopen Bot Mode or refresh profiles/);
 });
 
 test('profile switching and bot opening use cached row metadata before slow model options', () => {
