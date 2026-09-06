@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { detectBrowserProduct } from '../extension/lib/browser-runtime.mjs';
+import { detectBrowserProduct, browserSpeechCloudFallbackAllowed } from '../extension/lib/browser-runtime.mjs';
 
 test('Headless Chrome remains a truthful generic Chromium product when extension scheme is ambiguous', () => {
   const product = detectBrowserProduct({
@@ -17,6 +17,30 @@ test('Headless Chrome remains a truthful generic Chromium product when extension
     confidence: 'masked',
     source: 'engine-only',
   });
+});
+
+test('only Google Chrome uses the cloud Web Speech fallback; Chromium forks must use Hermes audio or the visible voice tab', () => {
+  const chrome = detectBrowserProduct({
+    userAgent: 'Mozilla/5.0 Chrome/151.0.0.0 Safari/537.36',
+    brands: [{ brand: 'Google Chrome', version: '151' }],
+    extensionUrl: 'chrome-extension://fixture/',
+  });
+  const comet = detectBrowserProduct({
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/151.0.0.0 Safari/537.36 Comet/1.0',
+    brands: [{ brand: 'Chromium', version: '151' }],
+    extensionUrl: 'chrome-extension://fixture/',
+  });
+  const chromium = detectBrowserProduct({
+    userAgent: 'Mozilla/5.0 Chromium/151.0.0.0 Safari/537.36',
+    brands: [{ brand: 'Chromium', version: '151' }],
+    extensionUrl: 'chrome-extension://fixture/',
+  });
+
+  assert.equal(chrome.id, 'chrome');
+  assert.equal(browserSpeechCloudFallbackAllowed({ product: chrome }), true);
+  assert.equal(comet.id, 'comet');
+  assert.equal(browserSpeechCloudFallbackAllowed({ product: comet }), false);
+  assert.equal(browserSpeechCloudFallbackAllowed({ product: chromium }), false);
 });
 
 test('background passes live runtime identity hints into browser product detection', () => {

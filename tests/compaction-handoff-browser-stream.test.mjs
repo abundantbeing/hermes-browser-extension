@@ -69,8 +69,8 @@ test('both Browser history surfaces use the field-driven display policy and pres
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const policy = readFileSync(new URL('../extension/lib/web-run-state.mjs', import.meta.url), 'utf8');
 
-  assert.match(app, /browserDisplayMessages\(messages\)/);
-  assert.match(sidepanel, /for \(const message of browserDisplayMessages\(messages\)\)/);
+  assert.match(app, /browserDisplayMessages\((?:messages|renderedMessages)\)/);
+  assert.match(sidepanel, /for \(const message of browserDisplayMessages\((?:visibleMessages|messages)\)\)/);
   assert.match(sidepanel, /messages:\s*contextMessages/);
   assert.match(sidepanel, /\.\.\.message,[\s\S]*?display_kind/);
   assert.doesNotMatch(policy, /CONTEXT COMPACTION|PRIOR CONTEXT|reference only/i);

@@ -99,15 +99,30 @@ export function resolveAssistModelBindingFromCatalog({ settings = {}, models = [
   if (!explicitId) return null;
   const explicitProvider = clean(settings.inlineAssistProvider);
   const requestable = Array.from(models || []).filter(isModelRuntimeSelectable);
-  const direct = requestable.find((model) => clean(model.id) === explicitId
-    && (!explicitProvider || clean(model.provider || model.providerId || model.owner) === explicitProvider));
+  const modelIdentity = (model) => {
+    const id = clean(model?.id || model?.model || model?.rawModelId);
+    const rawModelId = clean(model?.rawModelId || model?.raw_model_id || model?.model || model?.id);
+    const provider = clean(model?.provider || model?.providerId || model?.owner);
+    const gatewayAlias = model?.gatewayAlias === true || model?.gatewayDefault === true;
+    const canonicalId = provider && rawModelId && id === rawModelId && !gatewayAlias
+      ? `${provider}::${rawModelId}`
+      : id;
+    return { id, rawModelId, provider, canonicalId };
+  };
+  const providerMatches = (model) => {
+    const identity = modelIdentity(model);
+    return !explicitProvider || identity.provider === explicitProvider;
+  };
+  const direct = requestable.find((model) => {
+    const identity = modelIdentity(model);
+    return (identity.id === explicitId || identity.canonicalId === explicitId) && providerMatches(model);
+  });
   const rawCandidates = requestable.filter((model) => clean(model.rawModelId || model.raw_model_id || model.model) === explicitId
-    && (!explicitProvider || clean(model.provider || model.providerId || model.owner) === explicitProvider));
+    && providerMatches(model));
   const selected = direct || (rawCandidates.length === 1 ? rawCandidates[0] : null);
   if (!selected) return null;
-  const provider = clean(selected.provider || selected.providerId || selected.owner);
-  const modelId = clean(selected.id || selected.model || selected.rawModelId);
-  const rawModelId = clean(selected.rawModelId || selected.raw_model_id || selected.model || selected.id);
+  const identity = modelIdentity(selected);
+  const { provider, canonicalId: modelId, rawModelId } = identity;
   if (!provider || !modelId || !rawModelId) return null;
   return {
     inlineAssistModel: modelId,

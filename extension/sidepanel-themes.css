@@ -51,6 +51,47 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .message.user .context-
   color: rgba(var(--hermes-ink-rgb), 0.56);
 }
 
+html[data-hermes-theme="midnight"][data-hermes-mode="light"] {
+  --hermes-user-bg: #2a1a69;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #2a1a69;
+  --hermes-card-bg: #ffffff;
+}
+
+html[data-hermes-theme="ember"][data-hermes-mode="light"] {
+  --hermes-user-bg: #651b00;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #651b00;
+  --hermes-card-bg: #fffaf6;
+}
+
+html[data-hermes-theme="mono"][data-hermes-mode="light"] {
+  --hermes-user-bg: #1d1d1d;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #1d1d1d;
+  --hermes-card-bg: #ffffff;
+}
+
+html[data-hermes-theme="cyberpunk"][data-hermes-mode="light"] {
+  --hermes-user-bg: #005e25;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #005e25;
+  --hermes-card-bg: #fbfffc;
+}
+
+html[data-hermes-theme="slate"][data-hermes-mode="light"] {
+  --hermes-user-bg: #1d3848;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #1d3848;
+  --hermes-card-bg: #ffffff;
+  --hermes-app-bg: #ffffff;
+  --hermes-paper: #ffffff;
+  --hermes-fg: #18303f;
+  --hermes-fg-rgb: 24, 48, 63;
+  --hermes-ink: #1d3848;
+  --hermes-ink-rgb: 29, 56, 72;
+}
+
 html[data-hermes-theme="senter-space"][data-hermes-mode="dark"] {
   --hermes-blue: #071614;
   --hermes-blue-deep: #040b0a;
@@ -71,6 +112,7 @@ html[data-hermes-theme="senter-space"][data-hermes-mode="light"] {
   --hermes-blue: #174f48;
   --hermes-blue-deep: #103b35;
   --hermes-paper: #fbf8ef;
+  --hermes-app-bg: #fbf8ef;
   --hermes-fg: #174f48;
   --hermes-ink: #174f48;
   --hermes-accent: #b77c38;
@@ -105,6 +147,7 @@ html[data-hermes-theme="aurora"][data-hermes-mode="light"] {
   --hermes-blue: #b51c67;
   --hermes-blue-deep: #801044;
   --hermes-paper: #fff7fb;
+  --hermes-app-bg: #fff7fb;
   --hermes-fg: #42142f;
   --hermes-ink: #42142f;
   --hermes-accent: #e8358b;
@@ -139,6 +182,7 @@ html[data-hermes-theme="solstice"][data-hermes-mode="light"] {
   --hermes-blue: #6b4d22;
   --hermes-blue-deep: #513a1b;
   --hermes-paper: #fffbf3;
+  --hermes-app-bg: #fffbf3;
   --hermes-fg: #58401f;
   --hermes-ink: #58401f;
   --hermes-accent: #bd7d2d;
