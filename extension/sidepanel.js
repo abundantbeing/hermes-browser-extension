@@ -7308,13 +7308,13 @@ function botProfileDisplayName(row) {
   const rawTitle = String(row?.title || '').trim();
   if (rawDisplay && rawDisplay.toLowerCase() !== 'default') return rawDisplay;
   if (rawTitle && rawTitle.toLowerCase() !== 'default') return rawTitle;
-  if (profileName.toLowerCase() === 'default' || !profileName) return 'Roxas';
-      return profileName.charAt(0).toUpperCase() + profileName.slice(1);
+  if (profileName.toLowerCase() === 'default' || !profileName) return 'Default';
+  return profileName.charAt(0).toUpperCase() + profileName.slice(1);
 }
 
 function remoteAvatarImageOf(remoteAvatar) {
   if (!remoteAvatar || typeof remoteAvatar !== 'object') return '';
-  for (const key of ['image', 'dataUrl', 'data_url', 'src', 'icon']) {
+  for (const key of ['data', 'image', 'dataUrl', 'data_url', 'src', 'icon']) {
     const value = remoteAvatar[key];
     if (typeof value === 'string' && value.startsWith('data:image/')) return value;
   }
@@ -7393,7 +7393,9 @@ function botModeAvatarDataUrlFromAsset(asset) {
   if (!asset || typeof asset !== 'object') return '';
   const inline = remoteAvatarImageOf(asset);
   if (inline) return inline;
-  const base64 = String(asset.data_base64 || asset.dataBase64 || '').replace(/\s+/g, '');
+  const rawData = typeof asset.data === 'string' ? asset.data.trim() : '';
+  if (rawData.startsWith('data:image/')) return rawData;
+  const base64 = String(asset.data_base64 || asset.dataBase64 || rawData || '').replace(/\s+/g, '');
   if (!/^[A-Za-z0-9+/=]+$/.test(base64) || !base64) return '';
   const mime = String(asset.mime_type || asset.mimeType || 'image/png').toLowerCase();
   return mime.startsWith('image/') ? `data:${mime};base64,${base64}` : '';
@@ -7483,6 +7485,9 @@ function renderBotModeActiveStrip(rows) {
     const avatar = document.createElement('span');
     avatar.className = 'bot-mode-avatar bot-mode-avatar-mini';
     appendBotModeAvatar(avatar, botProfileDisplayName(row), row.profileName, row.avatar);
+    if (row.hasAvatar && !remoteAvatarImageOf(row.avatar)) {
+      void hydrateBotModeRemoteAvatar(row, avatar);
+    }
     const dot = document.createElement('i');
     dot.className = 'bot-mode-chip-dot';
     dot.setAttribute('aria-hidden', 'true');
@@ -9170,6 +9175,9 @@ function renderActiveProfileIndicator() {
   const row = botModeRoster.find((entry) => entry.profileName === activeProfile);
   const name = botProfileDisplayName(row || { profileName: activeProfile });
   appendBotModeAvatar(els.activeProfileIndicator, name, activeProfile, row?.avatar);
+  if (row?.hasAvatar && !remoteAvatarImageOf(row?.avatar)) {
+    void hydrateBotModeRemoteAvatar(row, els.activeProfileIndicator);
+  }
   els.activeProfileIndicator.title = `Active profile: ${name}`;
   els.activeProfileIndicator.hidden = false;
 }
@@ -9199,6 +9207,9 @@ function renderBotChatIntro(row = null) {
   if (els.browserIntroHero) els.browserIntroHero.hidden = true;
   if (els.botChatIntroAvatar) {
     appendBotModeAvatar(els.botChatIntroAvatar, botProfileDisplayName(activeRow), activeRow.profileName, activeRow.avatar);
+    if (activeRow?.hasAvatar && !remoteAvatarImageOf(activeRow.avatar)) {
+      void hydrateBotModeRemoteAvatar(activeRow, els.botChatIntroAvatar);
+    }
   }
   if (els.botChatIntroTitle) {
     els.botChatIntroTitle.textContent = (botProfileDisplayName(activeRow) || activeRow.displayName || activeRow.profileName || 'Agent').toUpperCase();
