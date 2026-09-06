@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed the side-panel model picker opening partly above the viewport, which hid its search box and provider selector with no way to scroll them back into view. The bottom-anchored popovers now reserve the live composer dock height instead of a fixed 176px, and the model list and runtime options shrink and scroll instead of pushing the header off-screen.
+
 ## [0.2.0] - 2026-07-21
 
 ### Added
