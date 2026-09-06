@@ -169,10 +169,11 @@ test('Phase 5 pre-gate: sidepanel establishes durable WS identity before deliver
   const hashAt = source.indexOf('const contextHash =', askStart);
   assert.ok(askStart >= 0 && hashAt > askStart, 'askHermes context-hash block must exist');
   const beforeHash = source.slice(askStart, hashAt);
+  assert.match(beforeHash, /const dashboardTransport = usesDashboardWsChatTransport\(\);/);
   assert.match(
     beforeHash,
-    /if \(isRemoteWsMode\(\)\)[\s\S]*ensureRemoteWsClient\(\)[\s\S]*ensureRemoteWsSession\(/,
-    'ordinary dashboard-WS turns must establish the durable stored session id before context hashing/keying',
+    /if \(dashboardTransport\) \{[\s\S]*ensureActiveDashboardWsConnection\(\)[\s\S]*ensureRemoteWsSession\([\s\S]*\} else \{[\s\S]*ensureHermesSession\(\)/,
+    'dashboard-WS turns must establish the durable stored session id before context hashing/keying',
   );
   assert.match(source, /deliveryIdentityForTurn\(/);
   assert.doesNotMatch(source, /wsStoredSessionId \|\| remoteWsConnection\?\.wsSessionId/);

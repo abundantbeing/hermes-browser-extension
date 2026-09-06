@@ -136,6 +136,102 @@ test('recovery selects the assistant after the latest matching user turn', () =>
   assert.equal(latestAssistantAfterUser(rows, 'same prompt'), 'new answer');
 });
 
+test('recovery matches accepted multimodal user turns by their text component', () => {
+  const rows = [
+    { role: 'user', content: [{ type: 'text', text: 'older image prompt' }, { type: 'image_url', image_url: { url: 'data:image/png;base64,old' } }] },
+    { role: 'assistant', content: 'old answer' },
+    { role: 'user', content: 'new image prompt\n\n[ATTACHMENTS]' },
+    { role: 'assistant', content: 'new generated image answer' },
+  ];
+  assert.equal(latestAssistantAfterUser(rows, [
+    { type: 'text', text: 'new image prompt' },
+    { type: 'image_url', image_url: { url: 'data:image/png;base64,different-but-same-turn' } },
+  ]), 'new generated image answer');
+});
+
+test('recovery matches multimodal user turns the server persisted as JSON-serialized content', () => {
+  const serialized = JSON.stringify([
+    { type: 'text', text: 'paint a boat' },
+    { type: 'image_url', image_url: { url: 'data:image/png;base64,abc' } },
+  ]);
+  const rows = [
+    { role: 'user', content: serialized },
+    { role: 'assistant', content: 'Here is your boat image.' },
+  ];
+  assert.equal(latestAssistantAfterUser(rows, [{ type: 'text', text: 'paint a boat' }]), 'Here is your boat image.');
+});
+
+test('recovery matches nested multimodal parts whose text lives in content arrays', () => {
+  const rows = [
+    {
+      role: 'user',
+      content: [
+        { type: 'text', content: [{ text: 'summarize' }, { text: ' this file' }] },
+        { type: 'file', file: { name: 'notes.txt' } },
+      ],
+    },
+    { role: 'assistant', content: 'summary' },
+  ];
+  assert.equal(latestAssistantAfterUser(rows, 'summarize this file'), 'summary');
+});
+
+test('recovery never misreads JSON-looking user text or JSON without a text component', () => {
+  const plain = [
+    { role: 'user', content: '{just text}' },
+    { role: 'assistant', content: 'ok' },
+  ];
+  assert.equal(latestAssistantAfterUser(plain, '{just text}'), 'ok');
+  const structured = [
+    { role: 'user', content: '{"a":1}' },
+    { role: 'assistant', content: 'ok' },
+  ];
+  assert.equal(latestAssistantAfterUser(structured, '{"a":1}'), 'ok');
+});
+
+test('recovery polling stays open for slow accepted turns and never replays the prompt', () => {
+  const policy = turnRecovery.acceptedTurnRecoveryPolicy({ attempt: 20, elapsedMs: 0 });
+  assert.ok(policy.maxDurationMs >= 120_000, 'the recovery window must stay open for slow image turns');
+  assert.ok(policy.delayMs <= turnRecovery.ACCEPTED_TURN_RECOVERY_MAX_DELAY_MS, 'the poll gap stays bounded');
+  assert.equal(policy.shouldContinue, true);
+  // Neither surface passes a short attempts/delay budget to the recovery poller.
+  assert.match(sidepanelSource, /recoverAcceptedTurn\(prompt, preparedAttachments, \{ signal: activeAbortController\.signal \}\)/);
+  assert.doesNotMatch(sidepanelSource, /recoverAcceptedTurn\([^)]*attempts\s*=/);
+  assert.match(appSource, /recoverAcceptedWebTurn\(prompt, \{ signal: activeAbortController\.signal \}\)/);
+  assert.doesNotMatch(appSource, /recoverAcceptedWebTurn\([^)]*attempts\s*=/);
+});
+
+test('terminal error paths dispose the diffusion placeholder on both surfaces', () => {
+  // Side panel: the streaming updater owns an explicit dispose and the turn
+  // catch calls it everywhere the stream ends without a final flush.
+  assert.match(sidepanelSource, /function dispose\(\) \{[\s\S]*?setToolActivity\(node, null\);/);
+  assert.match(sidepanelSource, /return \{ update: updateText, updateText, updateTool, flush, dispose \};/);
+  assert.match(sidepanelSource, /if \(error\?\.requestAccepted !== true\) streamView\?\.dispose\?\.\(\);/);
+  assert.match(sidepanelSource, /if \(contextRecovery\) \{[\s\S]*?streamView\?\.dispose\?\.\(\);/);
+  // Hermes Web: the live-run diffusion card is cleared on the rejected-request
+  // and context-recovery error branches, not only on stop/recovery paths.
+  const webRequestFailureStart = appSource.indexOf('const requestFailure = turnRequestFailureState(error)');
+  const webRequestFailureSegment = appSource.slice(webRequestFailureStart, webRequestFailureStart + 700);
+  assert.match(webRequestFailureSegment, /clearLiveRun\(\);/);
+  const webContextStart = appSource.indexOf('const contextRecovery = sessionContextFailureRecovery(error, gatewayCapabilities)');
+  const webContextSegment = appSource.slice(webContextStart, webContextStart + 260);
+  assert.match(webContextSegment, /clearLiveRun\(\);/);
+});
+
+test('both surfaces re-fetch the open session history after terminal reconcile', () => {
+  // Side panel: after settleActiveRunTerminal, a race-guarded quiet refresh
+  // re-reads the session history so late image/tool results are not missing.
+  assert.match(sidepanelSource, /await settleActiveRunTerminal\(\);[\s\S]*?void refreshActiveSessionHistoryQuietly\(runControlGeneration\)\.catch/);
+  assert.match(sidepanelSource, /async function refreshActiveSessionHistoryQuietly\(expectedGeneration = runControlGeneration\)/);
+  assert.match(sidepanelSource, /isUnsavedBrowserDraftSession\(\{ sessionId, sessions: availableSessions \}\)\) return false;/);
+  assert.match(sidepanelSource, /return commitFetchedSessionMessages\(result, \{ sessionId \}\);/);
+  // Hermes Web: same discipline after settleWebRunTerminal, on both the REST
+  // and dashboard transports.
+  assert.match(appSource, /await settleWebRunTerminal\(\);[\s\S]*?void refreshWebActiveSessionHistoryQuietly\(runControlGeneration\)\.catch/);
+  assert.match(appSource, /async function refreshWebActiveSessionHistoryQuietly\(expectedGeneration = runControlGeneration\)/);
+  assert.match(appSource, /preserveUserImageAttachments\(refreshed, activeMessages\)/);
+  assert.match(appSource, /WS_METHODS\.sessionHistory,\s*\{\s*session_id: sessionId,\s*profile: settings\.activeProfile \|\| ''/);
+});
+
 test('recovery does not return an assistant from before the matching user turn', () => {
   const rows = [
     { role: 'assistant', content: 'old answer' },
@@ -187,6 +283,14 @@ test('Hermes Web preserves the failed draft and uses the same acknowledged conte
   assert.match(appSource, /retryTurn/);
 });
 
+test('Hermes Web recovers accepted local stream turns without replaying and preserves generated image sources', () => {
+  assert.match(appSource, /async function recoverAcceptedWebTurn/);
+  assert.match(appSource, /acceptedTurnRecoveryPolicy/);
+  assert.match(appSource, /resolvedGeneratedImageSourcesFromMessages/);
+  assert.match(appSource, /requestAccepted/);
+  assert.match(appSource, /revealSources/);
+});
+
 test('both Browser surfaces preserve provider-rejected drafts without marking Hermes unreachable', () => {
   assert.match(sidepanelSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*text/);
   const sidepanelRejectionStart = sidepanelSource.lastIndexOf('const requestFailure = turnRequestFailureState(error)');
@@ -212,7 +316,7 @@ test('fallback REST and dashboard WS transports retain typed provider failures',
     /if \(!response\.ok\) throw hermesRequestError\(/,
   );
 
-  const sidepanelDashboardStart = sidepanelSource.indexOf('async function streamRemoteWsChat');
+  const sidepanelDashboardStart = sidepanelSource.indexOf('async function streamDashboardWsChat');
   const sidepanelStreamStart = sidepanelSource.indexOf('async function streamSessionChat');
   const sidepanelDashboard = sidepanelSource.slice(sidepanelDashboardStart, sidepanelStreamStart);
   assert.match(sidepanelDashboard, /WS_EVENTS\.messageComplete[\s\S]*hermesGatewayTurnError/);
@@ -227,8 +331,10 @@ test('fallback REST and dashboard WS transports retain typed provider failures',
   const streamCatchStart = sidepanelSource.indexOf('} catch (streamError) {', sidepanelSource.indexOf('async function askHermes'));
   const streamCatchEnd = sidepanelSource.indexOf('const finalAnswer', streamCatchStart);
   const streamCatch = sidepanelSource.slice(streamCatchStart, streamCatchEnd);
+  const recoveryIndex = streamCatch.indexOf("const recoveryAction = classifyTurnRecovery(streamError)");
+  const dashboardBranchIndex = streamCatch.indexOf('dashboardTransport');
   assert.ok(
-    streamCatch.indexOf("classifyTurnRecovery(streamError)") < streamCatch.indexOf('isRemoteWsMode()'),
-    'request rejection classification must run before remote-dashboard connection diagnostics',
+    recoveryIndex >= 0 && dashboardBranchIndex > recoveryIndex,
+    'request rejection classification must run before dashboard-transport fallback suppression',
   );
 });

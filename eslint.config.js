@@ -51,6 +51,9 @@ export default [
         btoa: 'readonly',
         structuredClone: 'readonly',
         crypto: 'readonly',
+        queueMicrotask: 'readonly',
+        createImageBitmap: 'readonly',
+        Node: 'readonly',
       },
     },
     rules: {

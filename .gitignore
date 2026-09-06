@@ -12,6 +12,7 @@ RELEASE-v*.md
 assets/readme/*-ad*
 
 # Local QA/temp work
+web-ext-artifacts/
 tmp/
 .hermes/
 .gitnexus/

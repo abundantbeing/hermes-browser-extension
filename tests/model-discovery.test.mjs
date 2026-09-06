@@ -11,7 +11,47 @@ import {
   discoverGatewayVirtualModels,
   gatewayVirtualModelRows,
   mergeVirtualModelRows,
+  MODEL_CATALOG_SHARED_CACHE_PROFILE,
+  globalModelCatalogCacheKey,
+  unionCachedModelCatalogs,
 } from '../extension/lib/model-discovery.mjs';
+
+test('the shared catalog cache key is profile-independent and distinct from every profile key', () => {
+  const shared = globalModelCatalogCacheKey({ gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642' });
+  assert.equal(shared, 'local-api|http://127.0.0.1:8642|__shared__');
+  for (const profile of ['default', 'namine', 'riku', '']) {
+    const scoped = modelCatalogCacheKey({ gatewayMode: 'local-api', gatewayUrl: 'http://127.0.0.1:8642', profile });
+    assert.notEqual(scoped, shared);
+  }
+  assert.equal(MODEL_CATALOG_SHARED_CACHE_PROFILE, '__shared__');
+});
+
+test('unionCachedModelCatalogs merges every profile cache into one deduped catalog', () => {
+  const cache = {
+    'local-api|gw|default': {
+      savedAt: 100,
+      models: [
+        { id: 'nous::z-ai/glm-5.3-flash', rawModelId: 'z-ai/glm-5.3-flash', provider: 'nous', contextTokens: 200000 },
+        { id: 'nous::qwen-max', rawModelId: 'qwen-max', provider: 'nous' },
+      ],
+    },
+    'local-api|gw|namine': {
+      savedAt: 200,
+      models: [
+        // Fresher metadata for the shared row must win.
+        { id: 'nous::qwen-max', rawModelId: 'qwen-max', provider: 'nous', contextTokens: 32768 },
+        { id: 'nous::minimax/minimax-m3', rawModelId: 'minimax/minimax-m3', provider: 'nous' },
+      ],
+    },
+  };
+  const union = unionCachedModelCatalogs(cache);
+  assert.equal(union.length, 3);
+  const qwen = union.find((model) => model.rawModelId === 'qwen-max');
+  assert.equal(qwen.contextTokens, 32768, 'freshest entry wins on conflicts');
+  // Empty/garbage entries degrade to an empty union, never a throw.
+  assert.deepEqual(unionCachedModelCatalogs(null), []);
+  assert.deepEqual(unionCachedModelCatalogs({ a: { savedAt: 1, models: [] }, b: {} }), []);
+});
 
 test('model catalog fallback prefers cached canonical providers over session history', () => {
   const cached = [

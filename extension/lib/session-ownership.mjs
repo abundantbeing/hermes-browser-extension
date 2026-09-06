@@ -47,7 +47,8 @@ export function sessionOwnedBySurface(session = {}, expectedSource = '') {
   const source = normalized(value.source);
   const expected = normalized(expectedSource);
   if (!sessionId || !expected) return false;
-  if (source === expected) return true;
+  if (source === expected || source === 'hermes_bot_mode' || source === 'bot_mode') return true;
+  if (sessionId.startsWith('canonical_') || sessionId.startsWith('bot_') || sessionId.startsWith('room-')) return true;
   if (expected === SESSION_SURFACE_SOURCES.SIDE_PANEL) {
     return sessionId === 'hermes-browser-extension' || sessionId.startsWith('hermes-browser-extension-');
   }

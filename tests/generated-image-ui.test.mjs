@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { appendGeneratedImageSourcesToMessages, firstResolvedImageSource, resolvedGeneratedImageSourcesFromMessages, resolvedGeneratedImageSourcesFromResult } from '../extension/lib/image-render.mjs';
+import { acceptedTurnRecoveryPolicy } from '../extension/lib/turn-recovery.mjs';
+
 
 const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const cssSource = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
@@ -63,4 +66,33 @@ test('generated-image and seeded VHS diffusion styles are responsive and motion-
   assert.doesNotMatch(cssSource, /image-gen-reticle|image-gen-scanline/);
   assert.match(cssSource, /\.generated-image-lightbox\s*\{/);
   assert.match(cssSource, /prefers-reduced-motion: reduce/);
+});
+
+test('history hydration keeps recovered safe image sources in the assistant bubble', () => {
+  const source = 'https://cdn.example/recovered.png';
+  const once = appendGeneratedImageSourcesToMessages([
+    { role: 'user', content: 'make an image' },
+    { role: 'assistant', content: 'Done.' },
+  ], [source, source, 'C:\\\\Users\\\\Jaybo\\\\recovered.png']);
+  assert.match(once[1].content, /Done\.\s+!\[Generated image\]\(https:\/\/cdn\.example\/recovered\.png\)/);
+  assert.deepEqual(appendGeneratedImageSourcesToMessages(once, [source]), once);
+});
+
+test('recovery stays open long enough for slow accepted image turns without replaying the prompt', () => {
+  const policy = acceptedTurnRecoveryPolicy({ attempt: 8 });
+  assert.ok(policy.maxDurationMs >= 120_000);
+  assert.ok(policy.delayMs <= 4_000);
+  assert.equal(policy.shouldContinue, true);
+  assert.match(sidepanelSource, /acceptedTurnRecoveryPolicy/);
+  assert.match(sidepanelSource, /imageSources/);
+});
+
+test('recovered image_generate results keep safe image sources and reject host file paths', () => {
+  const result = JSON.stringify({ success: true, image: 'https://cdn.example/generated.png' });
+  assert.equal(firstResolvedImageSource(result), '');
+  assert.deepEqual(resolvedGeneratedImageSourcesFromResult(result), ['https://cdn.example/generated.png']);
+  assert.deepEqual(resolvedGeneratedImageSourcesFromResult({ success: true, image: 'C:\\\\Users\\\\Jaybo\\\\image.png' }), []);
+  assert.deepEqual(resolvedGeneratedImageSourcesFromMessages([
+    { role: 'assistant', tool_calls: [{ function: { name: 'image_generate', result } }] },
+  ]), ['https://cdn.example/generated.png']);
 });

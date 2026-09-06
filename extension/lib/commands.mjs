@@ -88,6 +88,23 @@ const PROMPT_COMMANDS = Object.freeze([
     prompt: (ctx) => `List every open tab in the current window. For each tab give the title, URL, and a one-line description of what the page appears to be based on its content category. Total: ${ctx.tabs?.length || 0} tabs.`,
   },
   {
+    name: 'sort-tabs',
+    aliases: ['organize-tabs', 'clean-tabs', 'categorize-tabs', 'triage-tabs'],
+    description: 'Categorize and triage open tabs with AI to identify duplicates and tabs to remove.',
+    category: 'Tabs',
+    icon: '◫',
+    requiresInput: false,
+    promptHint: 'Categorize open tabs by project/topic and recommend tabs to close or keep.',
+    prompt: (ctx) => {
+      const tabCount = ctx.tabs?.length || 0;
+      return `Analyze and triage all ${tabCount} open tab${tabCount === 1 ? '' : 's'} in this window:
+1. **Group by Category**: Organize the tabs into clear, logical clusters (e.g., Code/Projects, Documentation/Research, Social/News, Productivity, Entertainment, Stale/Redundant).
+2. **Duplicate & Duplicate Domain Detection**: Flag identical URLs and tabs from the same site that can be consolidated.
+3. **Keep vs. Close Recommendations**: For every category, specify which tabs should be kept and which should be closed to free memory and declutter.
+4. **Actionable Removal Checklist**: Provide a clean checklist of tabs recommended for removal so the user can review and close them.`;
+    },
+  },
+  {
     name: 'actions',
     description: 'List interactive elements on this page.',
     category: 'Page',
@@ -152,6 +169,8 @@ export const NATIVE_COMMANDS = Object.freeze([
   { name: 'reset', description: 'Reset into a clean Hermes session.', category: 'Session', icon: '↺', requiresInput: false, action: 'reset-session' },
   { name: 'rollback', description: 'Restore a prior checkpoint when this surface supports it.', category: 'Session', icon: '⤺', requiresInput: true, action: 'unsupported', unsupportedReason: 'Rollback requires a live Desktop/TUI checkpoint and is not available through the Browser session API yet.' },
   { name: 'steer', description: 'Inject guidance into the active Hermes run.', category: 'Run', icon: '↪', requiresInput: true, action: 'steer-run' },
+  { name: 'bg', aliases: ['background'], description: 'Run an independent task in the background with fresh context.', category: 'Run', icon: '⚡', requiresInput: true, action: 'background-task' },
+  { name: 'btw', aliases: ['bytheway', 'side-question'], description: 'Ask a side question about this conversation from a transcript snapshot.', category: 'Run', icon: '💬', requiresInput: true, action: 'side-question' },
   { name: 'stop', aliases: ['cancel'], description: 'Stop the active Hermes run on the server.', category: 'Run', icon: '■', requiresInput: false, action: 'stop-run' },
   { name: 'queue', description: 'Queue a message after the active run.', category: 'Run', icon: '≡', requiresInput: true, action: 'queue-message' },
   { name: 'skills', description: 'Open installed Hermes skills.', category: 'Agent', icon: '✦', requiresInput: false, action: 'skill-list' },

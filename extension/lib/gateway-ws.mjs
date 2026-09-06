@@ -16,6 +16,14 @@ export const WS_METHODS = Object.freeze({
   sessionHistory: 'session.history',
   sessionInfo: 'session.info',
   sessionStatus: 'session.status',
+  sessionEventsSince: 'session.events.since',
+  sessionEventsStats: 'session.events.stats',
+  profilesList: 'profiles.list',
+  profilesDescribe: 'profiles.describe',
+  profilesGetAsset: 'profiles.get_asset',
+  profilesCreate: 'profiles.create',
+  profilesConfigure: 'profiles.configure',
+  profilesSetAsset: 'profiles.set_asset',
   promptSubmit: 'prompt.submit',
   sessionInterrupt: 'session.interrupt',
   sessionSteer: 'session.steer',
@@ -62,6 +70,7 @@ export function remoteSessionIdentity(result = {}, requestedId = '') {
     || result?.profile_name
     || result?.effective_profile
     || result?.session_profile
+    || result?.info?.profile_name
     || '',
   ).trim();
   return { liveId, storedId, profile };
@@ -117,18 +126,28 @@ export function remoteStoredSessionIdForGateway(binding, gatewayUrl = '') {
   return storedSessionId;
 }
 
-export async function establishGatewaySession({ client, storedSessionId = '', createParams = {} } = {}) {
+export async function establishGatewaySession({ client, storedSessionId = '', createParams = {}, profile = '' } = {}) {
   if (!client?.request) throw new Error('Hermes gateway client is required.');
   const requestedId = String(storedSessionId || '').trim();
+  const requestedProfile = String(profile || createParams?.profile || '').trim();
   const action = requestedId ? 'resumed' : 'created';
   const result = requestedId
-    ? await client.request(WS_METHODS.sessionResume, { session_id: requestedId })
-    : await client.request(WS_METHODS.sessionCreate, createParams);
-  const { liveId, storedId, profile } = remoteSessionIdentity(result, requestedId);
+    ? await client.request(WS_METHODS.sessionResume, {
+        session_id: requestedId,
+        ...(requestedProfile ? { profile: requestedProfile } : {}),
+      })
+    : await client.request(WS_METHODS.sessionCreate, {
+        ...createParams,
+        ...(requestedProfile ? { profile: requestedProfile } : {}),
+      });
+  const { liveId, storedId, profile: acknowledgedProfile } = remoteSessionIdentity(result, requestedId);
   if (!liveId || !storedId) {
     throw new Error(`Dashboard did not return complete ${action === 'resumed' ? 'resume' : 'session'} identity.`);
   }
-  return { action, liveId, storedId, profile };
+  if (requestedProfile && acknowledgedProfile !== requestedProfile) {
+    throw new Error(`Hermes profile acknowledgement mismatch: requested ${requestedProfile}, received ${acknowledgedProfile || 'none'}.`);
+  }
+  return { action, liveId, storedId, profile: acknowledgedProfile };
 }
 
 export function buildDashboardWsUrl(baseUrl, ticket) {
@@ -237,6 +256,7 @@ export function classifyGatewayFrame(raw) {
       kind: 'event',
       type: frame.params.type,
       sessionId: frame.params.session_id || '',
+      ...(typeof frame.params.seq === 'number' && Number.isFinite(frame.params.seq) ? { seq: frame.params.seq } : {}),
       payload: frame.params.payload || {},
     };
   }
@@ -254,6 +274,10 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000, 
   let nextId = 1;
   const pending = new Map();
   const listeners = new Map();
+  const lastSeenSeq = new Map();
+  let replayEpoch = '';
+  let replayInFlight = false;
+  let replayHold = null;
 
   function emit(type, event) {
     for (const handler of listeners.get(type) || []) {
@@ -279,8 +303,16 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000, 
       if (!call) return;
       pending.delete(frame.id);
       clearTimeout(call.timer);
-      if (frame.kind === 'error') call.reject(new Error(frame.error?.message || 'Gateway RPC failed'));
-      else call.resolve(frame.result);
+      if (frame.kind === 'error') {
+        const error = new Error(frame.error?.message || 'Gateway RPC failed');
+        const rpcCode = Number.isFinite(Number(frame.error?.code)) ? Number(frame.error.code) : frame.error?.code;
+        if (rpcCode !== undefined && rpcCode !== null) {
+          error.code = rpcCode;
+          error.rpcCode = rpcCode;
+        }
+        if (frame.error?.data !== undefined) error.data = frame.error.data;
+        call.reject(error);
+      } else call.resolve(frame.result);
       return;
     }
     if (frame.kind === 'event') {
@@ -289,9 +321,83 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000, 
         connectAttempt = null;
         clearTimeout(attempt.timer);
         readyPayload = frame.payload;
+        adoptReplayEpoch(String(frame.payload?.replay_epoch || ''));
         attempt.resolve(frame.payload);
+        queueMicrotask(() => { void fetchReplay(); });
       }
-      emit(frame.type, { type: frame.type, sessionId: frame.sessionId, payload: frame.payload });
+      const event = { type: frame.type, sessionId: frame.sessionId, seq: frame.seq, payload: frame.payload };
+      if (replayHold?.has(frame.sessionId) && Number.isFinite(frame.seq)) {
+        replayHold.get(frame.sessionId).push(event);
+        return;
+      }
+      dispatchIfNewer(event);
+    }
+  }
+
+  function adoptReplayEpoch(epoch = '') {
+    if (!epoch || replayEpoch === epoch) return;
+    if (replayEpoch) lastSeenSeq.clear();
+    replayEpoch = epoch;
+  }
+
+  function dispatchIfNewer(event = {}) {
+    const sessionId = String(event.sessionId || event.session_id || '');
+    const seq = typeof event.seq === 'number' && Number.isFinite(event.seq) ? event.seq : Number.NaN;
+    if (sessionId && Number.isFinite(seq)) {
+      const previous = lastSeenSeq.get(sessionId) || 0;
+      if (seq <= previous) return;
+      lastSeenSeq.set(sessionId, seq);
+    }
+    emit(event.type, {
+      type: event.type,
+      sessionId,
+      seq: Number.isFinite(seq) ? seq : null,
+      payload: event.payload || {},
+    });
+  }
+
+  async function fetchReplay() {
+    if (replayInFlight || !lastSeenSeq.size || !socket || socket.readyState !== 1) return;
+    replayInFlight = true;
+    replayHold = new Map([...lastSeenSeq.keys()].map((sessionId) => [sessionId, []]));
+    try {
+      const watermarks = [...lastSeenSeq.entries()];
+      const results = await Promise.allSettled(watermarks.map(([sessionId, lastSeen]) => (
+        request(WS_METHODS.sessionEventsSince, { session_id: sessionId, last_seen: lastSeen })
+          .then((result) => ({ sessionId, result }))
+      )));
+      for (const settled of results) {
+        if (settled.status !== 'fulfilled') continue;
+        const { sessionId, result } = settled.value;
+        const epoch = String(result?.epoch || '');
+        if (epoch && replayEpoch && epoch !== replayEpoch) {
+          adoptReplayEpoch(epoch);
+          continue;
+        }
+        for (const event of Array.isArray(result?.events) ? result.events : []) {
+          if (!event?.type) continue;
+          dispatchIfNewer({
+            type: event.type,
+            sessionId: event.session_id || sessionId,
+            seq: event.seq,
+            payload: event.payload || {},
+          });
+        }
+        if (result?.truncated === true) {
+          emit('session.replay.truncated', {
+            type: 'session.replay.truncated',
+            sessionId,
+            payload: { latestSeq: Number(result?.latest_seq || 0), epoch },
+          });
+        }
+      }
+    } finally {
+      const held = replayHold;
+      replayHold = null;
+      for (const events of held?.values() || []) {
+        for (const event of events) dispatchIfNewer(event);
+      }
+      replayInFlight = false;
     }
   }
 
@@ -417,6 +523,9 @@ export function createGatewayClient({ WebSocketImpl, requestTimeoutMs = 30_000, 
     request,
     on,
     close,
+    getSeqWatermarks() {
+      return Object.fromEntries(lastSeenSeq);
+    },
     get readyState() {
       return socket?.readyState ?? -1;
     },

@@ -21,6 +21,15 @@
         <button id="newSessionButton" class="settings-button icon-button" type="button" title="New Hermes Browser Extension session" aria-label="New session" data-i18n-title="ui.new.hermes.browser.extension.session" data-i18n-aria-label="ui.new.session">
           <svg class="new-session-icon" aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg>
         </button>
+        <button id="botModeButton" class="settings-button icon-button bot-mode-button" type="button" data-i18n-title="bot_mode.open_title" data-i18n-aria-label="bot_mode.open_title" aria-label="Open Bot Mode" title="Open Bot Mode" aria-expanded="false" hidden>
+          <svg class="bot-mode-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square">
+            <rect x="4.5" y="7" width="15" height="11" />
+            <path d="M12 7V3.8M9.6 3.8h4.8" />
+            <circle cx="9.4" cy="12.2" r="1.15" fill="currentColor" stroke="none" />
+            <circle cx="14.6" cy="12.2" r="1.15" fill="currentColor" stroke="none" />
+            <path d="M9.8 15.2c1.4 1 3 1 4.4 0" />
+          </svg><span class="sr-only" data-i18n="bot_mode.title">Bot Mode</span>
+        </button>
         <button id="openFullViewButton" class="settings-button icon-button" type="button" title="Open Hermes Web in a full tab" aria-label="Open full view" data-i18n-title="ui.open.hermes.web.in.a.full.tab" data-i18n-aria-label="ui.open.full.view">
           <svg class="web-view-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none">
             <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/>
@@ -53,6 +62,228 @@
         </footer>
       </section>
 
+      <section id="botModePanel" class="bot-mode-panel" role="dialog" data-i18n-aria-label="bot_mode.dialog_label" aria-label="Hermes Browser Bot Mode" hidden>
+        <header class="bot-mode-head">
+          <div class="bot-mode-head-copy">
+            <h2 data-i18n="bot_mode.title">Bot Mode</h2>
+            <p id="botModeStatus" role="status" aria-live="polite">Connect to load your Hermes agents.</p>
+          </div>
+          <div class="bot-mode-head-controls">
+            <button id="botModeRefreshButton" class="bot-mode-head-action" type="button" data-i18n-aria-label="ui.refresh" aria-label="Refresh">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            </button>
+            <button id="botModeCloseButton" class="bot-mode-head-action" type="button" data-i18n-aria-label="bot_mode.close" aria-label="Close Bot Mode">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"></path></svg>
+            </button>
+          </div>
+        </header>
+        <div class="bot-mode-search-row">
+          <input id="botModeSearch" type="search" data-i18n-placeholder="bot_mode.search" data-i18n-aria-label="bot_mode.search" placeholder="Search agents" aria-label="Search agents" autocomplete="off" />
+          <div class="bot-mode-view-toggle" role="group" data-i18n-aria-label="bot_mode.view_toggle_label" aria-label="Roster view">
+            <button id="botModeViewAgents" class="bot-mode-view-tab" type="button" aria-pressed="true" data-i18n="bot_mode.agents">Agents</button>
+            <button id="botModeViewGroups" class="bot-mode-view-tab" type="button" aria-pressed="false" data-i18n="bot_mode.tab_groups">Group Chats</button>
+          </div>
+        </div>
+        <div id="botModeActiveStrip" class="bot-mode-active-strip" data-i18n-aria-label="bot_mode.active_now" aria-label="Active now" hidden></div>
+        <div id="botModeRoster" class="bot-mode-roster" role="listbox" data-i18n-aria-label="bot_mode.roster_label" aria-label="Hermes agents"></div>
+        <div id="botModeGroupList" class="bot-mode-roster bot-mode-group-list" role="listbox" data-i18n-aria-label="bot_mode.group_roster_label" aria-label="Hermes group chats" hidden></div>
+        <footer class="bot-mode-foot">
+          <span id="botModeVerify" class="bot-mode-verify" data-i18n="bot_mode.connected_instance">Current connected Hermes instance</span>
+          <div class="bot-mode-actions">
+            <button id="botModeEditButton" class="bot-mode-action" type="button" disabled data-i18n="bot_mode.edit_profile">Edit Profile</button>
+            <button id="botModeNewAgentButton" class="bot-mode-action" type="button" data-i18n="bot_mode.new_agent">New Agent</button>
+            <button id="botModeNewGroupButton" class="bot-mode-action primary full-width" type="button" data-i18n="bot_mode.new_group" hidden>+ Start A New Group Chat</button>
+            <button id="botModeOpenButton" class="bot-mode-action primary" type="button" disabled data-i18n="bot_mode.open_chat">Open Bot Chat</button>
+          </div>
+        </footer>
+      </section>
+
+
+      <section id="botModeSheet" class="bot-mode-sheet" role="dialog" aria-modal="true" data-i18n-aria-label="bot_mode.sheet_label" aria-label="Edit agent profile" hidden>
+        <header class="bot-mode-sheet-head">
+          <div>
+            <h2 id="botModeSheetTitle">Edit profile</h2>
+            <p id="botModeSheetMeta">Profile</p>
+          </div>
+          <button id="botModeSheetCloseButton" type="button" data-i18n-aria-label="bot_mode.close" aria-label="Close Bot Mode">&times;</button>
+        </header>
+        <nav class="bot-mode-sheet-tabs" id="botModeSheetTabs" data-i18n-aria-label="bot_mode.sheet_tabs_label" aria-label="Profile editor sections">
+          <button class="bot-mode-sheet-tab on" type="button" data-sheet-tab="avatar" data-i18n="bot_mode.tab_avatar">Avatar</button>
+          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="general" data-i18n="bot_mode.tab_general">General</button>
+          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="skills" data-i18n="bot_mode.tab_skills">Skills</button>
+          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="tools" data-i18n="bot_mode.tab_tools">Tools</button>
+          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="mcp" data-i18n="bot_mode.tab_mcp">MCP</button>
+          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="soul" data-i18n="bot_mode.tab_soul">SOUL</button>
+        </nav>
+        <div class="bot-mode-sheet-body">
+          <div class="bot-mode-sheet-pane" data-sheet-pane="avatar">
+            <div class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.avatar_preview">Avatar preview</span>
+              <span id="botModeSheetAvatarPreview" class="bot-mode-avatar bot-mode-avatar-sheet"></span>
+            </div>
+            <div class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.blobatar_title">Official blobatar face</span>
+              <div id="botModeSheetFaceGrid" class="bot-mode-face-grid" role="listbox" data-i18n-aria-label="bot_mode.blobatar_title" aria-label="Official blobatar face"></div>
+            </div>
+            <div class="bot-mode-sheet-field bot-mode-pet-picker">
+              <div class="bot-mode-pet-head">
+                <span data-i18n="bot_mode.pet_title">Pet avatar</span>
+                <button id="botModePetClear" class="secondary" type="button" hidden data-i18n="bot_mode.pet_clear">Clear</button>
+              </div>
+              <p class="hint" id="botModePetHint">Pick a petdex mascot as this agent's profile picture.</p>
+              <div class="bot-mode-pet-controls">
+                <input id="botModePetSearch" type="search" placeholder="Search pets" autocomplete="off" data-i18n-placeholder="bot_mode.pet_search" data-i18n-aria-label="bot_mode.pet_search" aria-label="Search pets" />
+                <button id="botModePetApply" class="secondary" type="button" disabled data-i18n="bot_mode.pet_apply">Apply to selected agent</button>
+              </div>
+              <div id="botModePetGrid" class="bot-mode-pet-grid" role="listbox" data-i18n-aria-label="bot_mode.pet_title" aria-label="Petdex pets"></div>
+            </div>
+            <div class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.custom_image">Custom image</span>
+              <label class="bot-mode-upload-card" for="botModeSheetImageInput">
+                <input id="botModeSheetImageInput" class="bot-mode-sheet-file" type="file" accept="image/*" data-i18n-aria-label="bot_mode.custom_image" aria-label="Custom image" />
+                <span class="bot-mode-upload-text" id="botModeSheetUploadText">Choose an image…</span>
+              </label>
+              <button id="botModeSheetAvatarClear" class="bot-mode-action" type="button" data-i18n="bot_mode.clear_avatar">Clear avatar</button>
+            </div>
+          </div>
+          <div class="bot-mode-sheet-pane" data-sheet-pane="general" hidden>
+            <label class="bot-mode-sheet-field" id="botModeSheetNameField" hidden>
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_name">Profile name</span>
+              <input id="botModeSheetNameInput" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="bot_mode.field_name" data-i18n-aria-label="bot_mode.field_name" aria-label="Profile name" />
+            </label>
+            <label class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_title">Display title</span>
+              <input id="botModeSheetTitleInput" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="bot_mode.field_title" data-i18n-aria-label="bot_mode.field_title" aria-label="Display title" />
+            </label>
+            <label class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_description">Description</span>
+              <textarea id="botModeSheetDescriptionInput" rows="4" spellcheck="false" data-i18n-placeholder="bot_mode.field_description" data-i18n-aria-label="bot_mode.field_description" aria-label="Description"></textarea>
+            </label>
+          </div>
+          <div class="bot-mode-sheet-pane" data-sheet-pane="skills" hidden>
+            <div class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.installed_skills">Installed skills</span>
+              <p class="hint" data-i18n="bot_mode.installed_skills_hint">Active skills configured on this agent profile.</p>
+              <div class="bot-mode-check-tools">
+                <input id="botModeSheetSkillsSearch" type="search" placeholder="Search skills" autocomplete="off" data-i18n-placeholder="bot_mode.search_skills" data-i18n-aria-label="bot_mode.search_skills" aria-label="Search skills" />
+                <span id="botModeSheetSkillsCount" class="bot-mode-check-count" aria-live="polite"></span>
+              </div>
+              <div id="botModeSheetSkillsList" class="bot-mode-check-grid"></div>
+            </div>
+          </div>
+          <div class="bot-mode-sheet-pane" data-sheet-pane="tools" hidden>
+            <div class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.toolsets">Toolsets</span>
+              <p class="hint" data-i18n="bot_mode.toolsets_hint">Enabled tool capabilities for this agent profile.</p>
+              <div id="botModeSheetToolsList" class="bot-mode-check-grid"></div>
+            </div>
+          </div>
+          <div class="bot-mode-sheet-pane" data-sheet-pane="mcp" hidden>
+            <div class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.mcp_servers">MCP servers</span>
+              <p class="hint" data-i18n="bot_mode.mcp_servers_hint">Capability-gated MCP integrations for this connected runtime.</p>
+              <div id="botModeSheetMcpList" class="bot-mode-check-grid"></div>
+            </div>
+          </div>
+          <div class="bot-mode-sheet-pane" data-sheet-pane="soul" hidden>
+            <label class="bot-mode-sheet-field">
+              <span class="bot-mode-sheet-label" data-i18n="bot_mode.soul_instruction">SOUL.md instruction</span>
+              <p class="hint" data-i18n="bot_mode.soul_hint">The core personality and architectural directive for this agent.</p>
+              <textarea id="botModeSheetSoulInput" rows="7" spellcheck="false" placeholder="Enter custom SOUL prompt..." data-i18n-placeholder="bot_mode.soul_placeholder" data-i18n-aria-label="bot_mode.soul_placeholder"></textarea>
+            </label>
+          </div>
+        </div>
+        <footer class="bot-mode-sheet-foot">
+          <p id="botModeSheetWarning" class="bot-mode-sheet-warning" role="status" aria-live="polite" hidden></p>
+          <button id="botModeSheetSaveButton" class="bot-mode-action primary" type="button" data-i18n="bot_mode.save_profile">Save changes</button>
+        </footer>
+      </section>
+
+      <section id="newGroupModal" class="new-group-modal" role="dialog" aria-modal="true" aria-label="New group chat" data-i18n-aria-label="bot_mode.group_sheet_label" hidden>
+        <header class="new-group-head">
+          <div class="new-group-title-row">
+            <h2 data-i18n="bot_mode.group_sheet_label">New group chat</h2>
+            <button id="newGroupCloseButton" class="group-settings-close" type="button" aria-label="Close" data-i18n-aria-label="ui.close">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"></path></svg>
+            </button>
+          </div>
+          <p data-i18n="bot_mode.group_sheet_meta">Creates a bot group chat on this device</p>
+        </header>
+        <div class="new-group-body">
+          <input id="newGroupSearch" type="search" placeholder="Search agents" data-i18n-placeholder="bot_mode.search" autocomplete="off" />
+          <div id="newGroupBotList" class="new-group-bot-list" role="listbox"></div>
+          <div class="group-picture-section" data-i18n-runtime>
+            <div class="group-picture-preview-wrap">
+              <span id="newGroupIcon" class="group-picture-preview" aria-hidden="true"></span>
+            </div>
+            <div class="group-picture-controls">
+              <span class="group-picture-label">Room picture</span>
+              <div class="group-picture-btn-row">
+                <button id="newGroupIconUpload" type="button" class="new-group-secondary" data-i18n="ui.upload">Upload</button>
+                <button id="newGroupIconGenerate" type="button" class="new-group-secondary" data-i18n="bot_mode.group_generate">Generate</button>
+                <button id="newGroupIconRemove" type="button" class="new-group-secondary" hidden>Remove</button>
+              </div>
+              <input id="newGroupFileInput" type="file" accept="image/*" class="sr-only" aria-label="Upload room picture" />
+            </div>
+          </div>
+          <label class="new-group-field" data-i18n-runtime>
+            <span class="new-group-field-label">Group name</span>
+            <input id="newGroupNameInput" type="text" maxlength="64" placeholder="Browser launch room" data-i18n-placeholder="bot_mode.group_name_placeholder" autocomplete="off" spellcheck="false" />
+          </label>
+        </div>
+        <footer class="new-group-foot">
+          <button id="newGroupCancelButton" type="button" class="new-group-secondary" data-i18n="ui.cancel">Cancel</button>
+          <button id="newGroupCreateButton" type="button" class="new-group-primary" disabled>Create Group</button>
+        </footer>
+      </section>
+
+      <section id="groupSettingsModal" class="group-settings-modal" role="dialog" aria-modal="true" aria-label="Group settings" data-i18n-runtime hidden>
+        <div class="group-settings-card">
+          <header class="group-settings-head">
+            <div class="group-settings-title-row">
+              <h2 class="group-settings-title">Group settings</h2>
+              <button id="groupSettingsCloseButton" class="group-settings-close" type="button" aria-label="Close" data-i18n-aria-label="ui.close">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"></path></svg>
+              </button>
+            </div>
+            <p class="group-settings-subtitle">Rename the group or set a room picture. Members and history are kept.</p>
+          </header>
+          <div class="group-settings-body">
+            <div class="group-picture-section">
+              <div class="group-picture-preview-wrap">
+                <span id="groupSettingsAvatarPreview" class="group-picture-preview" aria-hidden="true"></span>
+              </div>
+              <div class="group-picture-controls">
+                <span class="group-picture-label">Room picture</span>
+                <div class="group-picture-btn-row">
+                  <button id="groupSettingsUploadButton" type="button" class="group-settings-action-btn" data-i18n="ui.upload">Upload</button>
+                  <button id="groupSettingsGenerateButton" type="button" class="group-settings-action-btn" data-i18n="bot_mode.group_generate">Generate</button>
+                  <button id="groupSettingsRemoveImageButton" type="button" class="group-settings-action-btn remove" hidden>Remove</button>
+                </div>
+                <input id="groupSettingsFileInput" type="file" accept="image/*" class="sr-only" aria-label="Upload room picture" />
+              </div>
+            </div>
+            <label class="group-settings-field">
+              <span class="group-settings-field-label">Group name</span>
+              <input id="groupSettingsNameInput" class="group-settings-input" type="text" maxlength="64" placeholder="Group name" autocomplete="off" spellcheck="false" />
+            </label>
+          </div>
+          <footer class="group-settings-foot">
+            <button id="groupSettingsCancelButton" type="button" class="group-settings-btn-secondary" data-i18n="ui.cancel">Cancel</button>
+            <button id="groupSettingsSaveButton" type="button" class="group-settings-btn-primary">Save</button>
+          </footer>
+        </div>
+      </section>
+
+      <div id="botModeLoadingOverlay" class="bot-mode-loading-overlay" hidden aria-live="polite">
+        <div class="bot-mode-loading-card">
+          <span id="botModeLoadingAvatar" class="bot-mode-avatar bot-mode-avatar-loading" aria-hidden="true"></span>
+          <span class="session-history-loading-rail" aria-hidden="true"></span>
+          <strong id="botModeLoadingAgentTitle">OPENING BOT CHAT…</strong>
+          <span id="botModeLoadingAgentSubtitle" class="hint">Connecting profile session…</span>
+        </div>
+      </div>
+
       <section id="appScroll" class="app-scroll" aria-label="Hermes Browser Extension conversation" data-i18n-aria-label="ui.hermes.browser.extension.conversation">
         <section id="startupScreen" class="startup-screen" aria-live="polite">
           <div class="startup-stage">
@@ -84,6 +315,15 @@
           </div>
           <p id="connectStatus" class="hint">Public alpha: load unpacked, local or remote Hermes API server, full Hermes tools when the connected runtime supports them.</p>
         </section>
+
+        <div id="botChatIntro" class="bot-chat-intro" hidden>
+          <div class="bot-chat-intro-avatar" id="botChatIntroAvatar"></div>
+          <h1 class="bot-chat-intro-title" id="botChatIntroTitle">ROXAS</h1>
+          <p class="bot-chat-intro-subtitle" id="botChatIntroSubtitle" data-i18n="bot_mode.chat_empty">Say something to get started.</p>
+          <div class="bot-chat-intro-actions">
+            <button id="botModeReturnButton" class="secondary bot-mode-return-button" type="button" data-i18n="bot_mode.return_to_sessions" data-i18n-title="bot_mode.return_to_sessions_title" data-i18n-aria-label="bot_mode.return_to_sessions_title">Regular Sessions</button>
+          </div>
+        </div>
 
         <section id="browserIntroHero" class="hero-card" aria-label="Hermes Browser intro" data-i18n-aria-label="ui.hermes.browser.intro">
           <button id="browserIntroDismissButton" class="hero-dismiss" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">
@@ -135,9 +375,23 @@
           </button>
           <ol id="taskStackList" class="task-stack-list"></ol>
         </section>
+        <div id="groupThreadActiveBanner" class="group-thread-active-banner" data-i18n-runtime hidden>
+          <div class="group-thread-banner-copy">
+            <span class="group-thread-badge" id="groupThreadBadge">🧵 NEW THREAD</span>
+            <span class="group-thread-hint" id="groupThreadHint">Next message will start a new thread in this group</span>
+          </div>
+          <button id="groupThreadExitButton" class="group-thread-exit-btn" type="button" aria-label="Exit thread view" title="Exit thread view">
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg>
+          </button>
+        </div>
+        <div id="groupTypingIndicator" class="group-typing-bar" data-i18n-runtime hidden aria-live="polite">
+          <span class="group-typing-avatars" id="groupTypingAvatars"></span>
+          <span class="group-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="group-typing-text" id="groupTypingText">Roxas is thinking…</span>
+        </div>
         <form id="composer" class="composer">
           <div class="composer-header">
-            <label class="composer-label" for="promptInput" data-i18n="ui.ask.hermes.36d55d5a">ASK HERMES</label>
+            <label class="composer-label" id="composerLabel" for="promptInput" data-i18n="ui.ask.hermes.36d55d5a">ASK HERMES</label>
             <button id="contextScopeButton" class="context-scope-button" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose which tab Hermes reads and which open tabs appear in the prompt" data-i18n-title="ui.choose.which.tab.hermes.reads.and.which.open.tabs.appear.in.the.prompt">
               <span id="contextScopeLabel">Follow active tab</span>
             </button>
@@ -240,6 +494,9 @@
           </section>
           <div class="composer-actions">
             <button id="refreshButton" class="secondary icon-refresh" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-title="context.refresh_page" data-i18n-aria-label="context.refresh_page"><span class="refresh-glyph" aria-hidden="true">↻</span></button>
+            <span id="activeProfileIndicator" class="active-profile-indicator" title="Active profile" hidden></span>
+            <button id="botModeThreadsButton" class="secondary bot-mode-threads-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" data-i18n="bot_mode.threads" data-i18n-title="bot_mode.threads_title" data-i18n-aria-label="bot_mode.threads_title">Threads</button>
+            <button id="botModeNewThreadButton" class="secondary bot-mode-new-thread-button" type="button" hidden data-i18n-runtime title="Start a new thread in this group" aria-label="Start a new thread in this group">+ New Thread</button>
             <button id="sendButton" type="submit" data-i18n="ui.ask.hermes">Ask Hermes</button>
           </div>
         </form>
@@ -337,6 +594,40 @@
             <p id="updateStatus" class="hint">Updates are checked against the public GitHub repo.</p>
           </div>
         </section>
+        <section class="settings-section bot-mode-settings" aria-labelledby="botModeSettingsTitle">
+          <div class="settings-section-head"><div><h3 id="botModeSettingsTitle" data-i18n="bot_mode.settings_title">Agents &amp; Bot Mode</h3><p data-i18n="bot_mode.settings_copy_sidepanel">Turn on the optional profile roster and canonical Bot Chat navigator for this browser.</p></div></div>
+          <label class="settings-toggle-card bot-mode-toggle-card" for="botModeEnabledInput">
+            <input id="botModeEnabledInput" class="settings-switch-input" type="checkbox" role="switch" />
+            <span class="bot-mode-toggle-copy settings-toggle-copy">
+              <strong data-i18n="bot_mode.enable_label">Enable Hermes Browser Bot Mode</strong>
+              <small data-i18n="bot_mode.off_hint_sidepanel">Off by default. Uses the currently connected Hermes instance.</small>
+            </span>
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <label class="bot-mode-density-row" for="botModeDisplayDensity"><span data-i18n="bot_mode.density">Roster density</span><select id="botModeDisplayDensity"><option value="comfortable" data-i18n="bot_mode.density_comfortable">Comfortable</option><option value="compact" data-i18n="bot_mode.density_compact">Compact</option></select></label>
+          <p class="hint" data-i18n="bot_mode.pet_picker_moved">Profile pictures (petdex pets, custom images) are edited per agent in Bot Mode via Edit Profile.</p>
+          <details class="bot-mode-cron-card" id="botModeCronCard">
+            <summary class="bot-mode-cron-head">
+              <div class="bot-mode-cron-title">
+                <h4 data-i18n="bot_mode.cron_title">Active Cron Jobs</h4>
+                <small data-i18n="bot_mode.cron_copy">Scheduled tasks running on this agent's profile (review-watch, scouts, digests).</small>
+              </div>
+              <button id="botModeCronRefreshButton" class="icon-button bot-mode-cron-refresh" type="button" title="Refresh cron jobs" data-i18n-title="profile.refresh_title" aria-label="Refresh cron jobs" data-i18n-aria-label="profile.refresh_title">
+                <span class="session-refresh-icon" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                </span>
+              </button>
+            </summary>
+            <div class="bot-mode-cron-body">
+              <ul id="botModeCronList" class="bot-mode-cron-list" aria-live="polite"></ul>
+              <p id="botModeCronStatus" class="hint" role="status">Cron schedule loads when Hermes is connected.</p>
+            </div>
+          </details>
+          <p id="botModeSettingsStatus" class="hint" role="status" aria-live="polite">Bot Mode is off.</p>
+        </section>
+
         <section class="settings-section profile-settings" aria-labelledby="profileTitle">
           <div class="settings-section-head">
             <div>
@@ -344,8 +635,7 @@
               <p data-i18n="ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401">Choose which Hermes agent profile the Browser should use when the local gateway exposes profiles.</p>
             </div>
           </div>
-          <section class="settings-section">
-            <h3 data-i18n="ui.active.profile">Active profile</h3>
+          <section class="settings-section agent-profile-card">
             <div class="settings-row profile-control-stack">
               <label>
                 <span data-i18n="ui.active.profile">Active profile</span>
@@ -354,12 +644,17 @@
                 </select>
               </label>
               <div class="profile-action-row">
-                <button id="refreshProfilesButton" class="secondary" type="button" data-i18n="profile.refresh">↻ Profiles</button>
+                <button id="refreshProfilesButton" class="secondary" type="button" title="Refresh profiles" data-i18n-title="profile.refresh_title" aria-label="Refresh profiles" data-i18n-aria-label="profile.refresh_title">
+                  <span class="session-refresh-icon" aria-hidden="true">↻</span>
+                  <span data-i18n="bot_mode.profiles_title">Profiles</span>
+                </button>
+                <span id="profileVerifiedCount" class="profile-verified-count" aria-live="polite"></span>
               </div>
             </div>
             <p id="profileStatus" class="hint">Profiles sync after connecting to Hermes.</p>
+            <div id="profileRosterPreview" class="agent-roster-preview" role="list" aria-label="Verified Hermes agents" data-i18n-aria-label="bot_mode.roster_label"></div>
           </section>
-          <section class="settings-section">
+          <section class="settings-section agent-connected-card">
             <h3 data-i18n="ui.connected.agent">Connected agent</h3>
             <p class="hint" data-i18n="ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655">
               Scans a trusted Hermes API host for running sidecar gateways on
@@ -369,25 +664,29 @@
               never reflects Dashboard Attach availability.
             </p>
             <div id="agentList" class="agent-list" role="list" aria-label="Discovered Hermes agents" data-i18n-aria-label="ui.discovered.hermes.agents"></div>
-            <div class="settings-row">
+            <div class="settings-row agent-scan-row">
               <button id="refreshAgentsButton" class="secondary" type="button" data-i18n="agent.scan">↻ Scan agents</button>
+              <button id="scanAgentRosterButton" class="secondary" type="button" data-i18n="bot_mode.refresh_agents">↻ Sync live roster</button>
             </div>
-            <label>
-              <span data-i18n="ui.agent.host">Agent host</span>
-              <input id="agentHostInput" type="text" autocomplete="off" placeholder="127.0.0.1 or macbook.tailnet.ts.net" data-i18n-invariant />
-            </label>
-            <label>
-              <span data-i18n="ui.agent.scheme">Agent scheme</span>
-              <select id="agentSchemeInput">
-                <option value="http">http</option>
-                <option value="https">https</option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="ui.agent.ports.comma.separated.default.8642.8646">Agent ports (comma-separated, default 8642-8646)</span>
-              <input id="agentPortsInput" type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />
-            </label>
-            <p id="agentPickerStatus" class="hint" data-i18n-runtime data-i18n="ui.agent.discovery.has.not.run.yet">Agent discovery has not run yet.</p>
+            <details class="agent-discovery-advanced">
+              <summary data-i18n="ui.agent.host">Agent host</summary>
+              <label>
+                <span data-i18n="ui.agent.host">Agent host</span>
+                <input id="agentHostInput" type="text" autocomplete="off" placeholder="127.0.0.1 or macbook.tailnet.ts.net" data-i18n-invariant />
+              </label>
+              <label>
+                <span data-i18n="ui.agent.scheme">Agent scheme</span>
+                <select id="agentSchemeInput">
+                  <option value="http">http</option>
+                  <option value="https">https</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="ui.agent.ports.comma.separated.default.8642.8646">Agent ports (comma-separated, default 8642-8646)</span>
+                <input id="agentPortsInput" type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />
+              </label>
+              <p id="agentPickerStatus" class="hint" data-i18n-runtime data-i18n="ui.agent.discovery.has.not.run.yet">Agent discovery has not run yet.</p>
+            </details>
             <label>
               <span data-i18n="ui.custom.model.source.urls">Custom model source URLs</span>
               <textarea id="customModelSourcesInput" rows="3" placeholder="http://wimpy:8080/v1&#10;http://192.168.1.50:11434/v1" autocomplete="off" data-i18n-invariant></textarea>
@@ -889,6 +1188,30 @@
         <div class="message-content"></div>
       </article>
     </template>
+
+    <section id="profileSwitchDialog" class="profile-switch-dialog" role="dialog" aria-modal="true" aria-labelledby="profileSwitchTitle" aria-describedby="profileSwitchDetail" tabindex="-1" hidden>
+      <div class="profile-switch-card">
+        <span class="session-ownership-kicker" data-i18n="profile_switch.kicker">PROFILE CHANGE</span>
+        <h2 id="profileSwitchTitle" data-i18n="profile_switch.title">Start a new Hermes session?</h2>
+        <p id="profileSwitchDetail"></p>
+        <div class="profile-switch-actions">
+          <button id="profileSwitchCarryButton" type="button" data-i18n="profile_switch.carry">Continue with prior context</button>
+          <button id="profileSwitchCleanButton" class="secondary" type="button" data-i18n="profile_switch.clean">Start clean session</button>
+          <button id="profileSwitchCancelButton" class="ghost" type="button" data-i18n="profile_switch.cancel">Cancel</button>
+        </div>
+      </div>
+    </section>
+    <section id="botModeLeaveDialog" class="profile-switch-dialog bot-mode-leave-dialog" role="dialog" aria-modal="true" aria-labelledby="botModeLeaveTitle" aria-describedby="botModeLeaveDetail" tabindex="-1" hidden>
+      <div class="profile-switch-card">
+        <span class="session-ownership-kicker" data-i18n="bot_mode.leave_kicker">REGULAR SESSIONS</span>
+        <h2 id="botModeLeaveTitle" data-i18n="bot_mode.leave_title">Exit Bot Mode?</h2>
+        <p id="botModeLeaveDetail" data-i18n="bot_mode.leave_detail">Starting a new extension session will return you to your regular Hermes Browser workspace.</p>
+        <div class="profile-switch-actions">
+          <button id="botModeLeaveConfirmButton" class="primary" type="button" data-i18n="bot_mode.leave_confirm">Return to Regular Sessions</button>
+          <button id="botModeLeaveCancelButton" class="ghost" type="button" data-i18n="ui.cancel">Cancel</button>
+        </div>
+      </div>
+    </section>
 
     <script type="module" src="sidepanel.js"></script>
   </body>
