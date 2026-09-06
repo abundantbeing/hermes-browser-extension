@@ -74,7 +74,7 @@ export function parseSseBlock(block = '') {
   return event;
 }
 
-export async function readHermesSse(response, { onAssistant, onTool, onRuntime, onRun, onUserInput, signal } = {}) {
+export async function readHermesSse(response, { onAssistant, onTool, onRuntime, onRun, onUserInput, onUserInputAnswer, signal } = {}) {
   if (!response?.body) throw new Error('Hermes stream did not return a response body.');
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -92,6 +92,9 @@ export async function readHermesSse(response, { onAssistant, onTool, onRuntime, 
     }
     if (event.type === 'user_input.request') {
       onUserInput?.(data);
+    }
+    if (event.type === 'user_input.answer') {
+      onUserInputAnswer?.(data);
     }
     if (['assistant.delta', 'assistant.completed', 'run.completed'].includes(event.type)) {
       stream = reduceAssistantStreamText(stream, { type: event.type, data });

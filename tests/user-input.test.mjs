@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -70,4 +71,32 @@ test('builds a session-scoped structured answer payload', () => {
     turn_id: 'turn-1',
   });
   assert.throws(() => userInputAnswerPayload(request, { choice: 'a' }), /Answer required: Why/);
+});
+
+test('mounts request stacks in the composer docks instead of content scrollers', () => {
+  const extensionRoot = new URL('../extension/', import.meta.url);
+  const surfaces = [
+    ['sidepanel.html', 'class="bottom-dock"'],
+    ['app.html', 'class="fulltab-composer-wrap"'],
+  ];
+
+  for (const [fileName, dockMarker] of surfaces) {
+    let html;
+    if (fileName === 'sidepanel.html') {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed repository test fixture.
+      html = readFileSync(new URL('sidepanel.html', extensionRoot), 'utf8');
+    } else {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- fixed repository test fixture.
+      html = readFileSync(new URL('app.html', extensionRoot), 'utf8');
+    }
+    const requestPosition = html.indexOf('id="userInputRequests"');
+    const dockPosition = html.indexOf(dockMarker);
+
+    assert.ok(requestPosition >= 0, `${fileName} should expose a user-input request mount`);
+    assert.ok(dockPosition >= 0, `${fileName} should expose its composer dock`);
+    assert.ok(
+      requestPosition > dockPosition,
+      `${fileName} should mount requests after the composer dock opens`,
+    );
+  }
 });

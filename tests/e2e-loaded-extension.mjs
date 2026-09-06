@@ -35,6 +35,8 @@ const ASSIST_SETTINGS_SCREENSHOT = path.join(QA_DIR, `assist-settings${ASSIST_SC
 const ASSIST_RELEASED_GATEWAY_SCREENSHOT = path.join(QA_DIR, `assist-settings-released-gateway${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const MAIN_MODEL_PICKER_SCREENSHOT = path.join(QA_DIR, `main-model-picker${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const PROVIDER_REJECTION_PANEL_SCREENSHOT = path.join(QA_DIR, `provider-rejection-panel${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const USER_INPUT_SCREENSHOT = path.join(QA_DIR, `user-input-card${ASSIST_SCREENSHOT_SUFFIX}.png`);
+const FULLTAB_USER_INPUT_SCREENSHOT = path.join(QA_DIR, `fulltab-user-input-card${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const GPT56_CONTEXT_PICKER_SCREENSHOT = path.join(QA_DIR, `gpt56-context-picker${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const READABILITY_PANEL_SCREENSHOT = path.join(QA_DIR, `readability-panel-320${ASSIST_SCREENSHOT_SUFFIX}.png`);
 const READABILITY_WEB_SCREENSHOT = path.join(QA_DIR, `readability-web-1024${ASSIST_SCREENSHOT_SUFFIX}.png`);
@@ -242,6 +244,7 @@ async function startMockHermes() {
   let fullTabDelegationHistoryPolls = 0;
   let nextChatStreamRejection = null;
   let nextChatFallbackRejection = null;
+  const userInputAnswers = new Map();
   const server = createServer(async (req, res) => {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
     const body = await requestBody(req);
@@ -279,6 +282,33 @@ async function startMockHermes() {
       json(res, 401, { error: { message: 'Unauthorized', type: 'authentication_error' } });
       return;
     }
+    const pendingUserInputMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/user-input\/pending$/);
+    if (pendingUserInputMatch && req.method === 'GET') {
+      const sessionId = decodeURIComponent(pendingUserInputMatch[1]);
+      json(res, 200, {
+        requests: userInputAnswers.has(sessionId) ? [] : [{
+          context: 'The loaded-extension test needs one explicit choice.',
+          expires_at: 0,
+          questions: [{ id: 'choice', options: ['Keep it', 'Change it'], text: 'Which path?' }],
+          request_id: 'e2e-user-input',
+          session_id: sessionId,
+          status: 'pending',
+        }],
+      });
+      return;
+    }
+    const answerUserInputMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/user-input\/([^/]+)\/answer$/);
+    if (answerUserInputMatch && req.method === 'POST') {
+      const sessionId = decodeURIComponent(answerUserInputMatch[1]);
+      const answer = {
+        answers: body?.answers || null,
+        requestId: decodeURIComponent(answerUserInputMatch[2]),
+        sessionId,
+      };
+      userInputAnswers.set(sessionId, answer);
+      json(res, 200, { accepted: true, answer: body?.answers || {}, delivery: 'deferred', status: 'answered' });
+      return;
+    }
     if (url.pathname === '/v1/capabilities') {
       json(res, 200, {
         object: 'hermes.api_server.capabilities',
@@ -290,6 +320,8 @@ async function startMockHermes() {
           session_chat: true,
           session_chat_streaming: true,
           session_model_routing: assistSessionModelRouting,
+          session_user_input_pending: true,
+          session_user_input_answer: true,
           skills_api: true,
         },
         endpoints: {
@@ -302,6 +334,8 @@ async function startMockHermes() {
           } : {}),
           session_chat: { method: 'POST', path: '/api/sessions/{session_id}/chat' },
           session_chat_stream: { method: 'POST', path: '/api/sessions/{session_id}/chat/stream' },
+          session_user_input_pending: { method: 'GET', path: '/api/sessions/{session_id}/user-input/pending' },
+          session_user_input_answer: { method: 'POST', path: '/api/sessions/{session_id}/user-input/{request_id}/answer' },
           skills: { method: 'GET', path: '/v1/skills' },
         },
       });
@@ -592,6 +626,7 @@ async function startMockHermes() {
     getChatRequest: () => chatRequest,
     getDelegationHistoryPolls: () => delegationHistoryPolls,
     getFullTabDelegationHistoryPolls: () => fullTabDelegationHistoryPolls,
+    getUserInputAnswer: (sessionId = '') => sessionId ? userInputAnswers.get(sessionId) || null : [...userInputAnswers.values()].at(-1) || null,
     addSession: (session) => {
       const id = String(session?.id || session?.session_id || '').trim();
       if (!id || sessions.some((candidate) => candidate.id === id)) return;
@@ -932,6 +967,99 @@ async function main() {
       const input = document.querySelector('#promptInput');
       return Boolean(startup?.hidden && input && !input.disabled);
     })()`));
+
+    await waitFor(() => panel.evaluate(`(() => {
+      const card = document.querySelector('#userInputRequests .user-input-card');
+      return card?.textContent?.includes('Which path?') ? true : false;
+    })()`));
+    const userInputState = await panel.evaluate(`(() => {
+      const card = document.querySelector('#userInputRequests .user-input-card');
+      const radio = card?.querySelector('input[type="radio"]');
+      const cardRect = card?.getBoundingClientRect();
+      const requestRect = document.querySelector('#userInputRequests')?.getBoundingClientRect();
+      const dockRect = document.querySelector('.bottom-dock')?.getBoundingClientRect();
+      const composerRect = document.querySelector('#composer')?.getBoundingClientRect();
+      const requestContainer = document.querySelector('#userInputRequests');
+      const optionNodes = [...document.querySelectorAll('#userInputRequests .user-input-option')];
+      const optionStyle = optionNodes[0] ? getComputedStyle(optionNodes[0]) : null;
+      const requestStyle = requestContainer ? getComputedStyle(requestContainer) : null;
+      const cardStyle = card ? getComputedStyle(card) : null;
+      return {
+        cardBottom: cardRect?.bottom || 0,
+        cardLeft: cardRect?.left || 0,
+        cardPaddingLeft: Number.parseFloat(cardStyle?.paddingLeft || '0'),
+        cardPaddingRight: Number.parseFloat(cardStyle?.paddingRight || '0'),
+        cardRectWidth: cardRect?.width || 0,
+        cardRight: cardRect?.right || 0,
+        cardTop: cardRect?.top || 0,
+        composerLeft: composerRect?.left || 0,
+        composerRight: composerRect?.right || 0,
+        composerTop: composerRect?.top || 0,
+        context: card?.querySelector('.user-input-card-context')?.textContent || '',
+        dockBottom: dockRect?.bottom || 0,
+        dockLeft: dockRect?.left || 0,
+        dockRight: dockRect?.right || 0,
+        dockTop: dockRect?.top || 0,
+        optionRects: optionNodes.map((node) => {
+          const rect = node.getBoundingClientRect();
+          return { bottom: rect.bottom, height: rect.height, top: rect.top, width: rect.width };
+        }),
+        optionGridColumns: optionStyle?.gridTemplateColumns || '',
+        requestClientHeight: requestContainer?.clientHeight || 0,
+        requestOverflowX: requestStyle?.overflowX || '',
+        requestRectBottom: requestRect?.bottom || 0,
+        requestRectLeft: requestRect?.left || 0,
+        requestRectRight: requestRect?.right || 0,
+        requestRectTop: requestRect?.top || 0,
+        requestScrollHeight: requestContainer?.scrollHeight || 0,
+        viewportWidth: document.documentElement.clientWidth,
+        documentScrollWidth: document.documentElement.scrollWidth,
+        dockDisplay: dockRect ? getComputedStyle(document.querySelector('.bottom-dock')).display : '',
+        dockGridRows: dockRect ? getComputedStyle(document.querySelector('.bottom-dock')).gridTemplateRows : '',
+        dockChildren: [...(document.querySelector('.bottom-dock')?.children || [])].map(child => ({
+          id: child.id,
+          rect: (() => { const rect = child.getBoundingClientRect(); return { bottom: rect.bottom, top: rect.top }; })(),
+        })),
+        shellGridRows: getComputedStyle(document.querySelector('.shell')).gridTemplateRows,
+        requestId: card?.dataset.requestId || '',
+        sessionId: card?.dataset.sessionId || '',
+        visible: Boolean(card && !card.hidden),
+        radioLabel: radio?.value || '',
+      };
+    })()`);
+    assert.equal(userInputState.visible, true);
+    assert.equal(userInputState.radioLabel, 'Keep it');
+    assert.equal(userInputState.requestId, 'e2e-user-input');
+    assert.ok(userInputState.cardTop >= 0);
+    assert.ok(userInputState.requestRectBottom <= userInputState.composerTop + 1, JSON.stringify(userInputState));
+    assert.ok(userInputState.requestScrollHeight >= userInputState.requestClientHeight, JSON.stringify(userInputState));
+    assert.ok(Math.abs(userInputState.cardLeft - userInputState.composerLeft) <= 1, JSON.stringify(userInputState));
+    assert.ok(Math.abs(userInputState.cardRight - userInputState.composerRight) <= 1, JSON.stringify(userInputState));
+    assert.ok(userInputState.requestRectRight <= userInputState.dockRight + 1, JSON.stringify(userInputState));
+    assert.ok(userInputState.documentScrollWidth <= userInputState.viewportWidth + 1, JSON.stringify(userInputState));
+    assert.equal(userInputState.requestOverflowX, 'hidden');
+    assert.ok(userInputState.optionRects.length >= 2, JSON.stringify(userInputState));
+    assert.ok(userInputState.optionRects[1].top >= userInputState.optionRects[0].bottom - 1, JSON.stringify(userInputState));
+    assert.ok(userInputState.optionRects.every((rect) => rect.height >= 40), JSON.stringify(userInputState));
+    assert.ok(userInputState.optionRects.every((rect) => rect.width >= userInputState.cardRectWidth - userInputState.cardPaddingLeft - userInputState.cardPaddingRight - 2), JSON.stringify(userInputState));
+    assert.ok(userInputState.cardPaddingLeft >= 14, JSON.stringify(userInputState));
+    assert.ok(userInputState.cardPaddingRight >= 14, JSON.stringify(userInputState));
+    await saveScreenshot(panel, USER_INPUT_SCREENSHOT, { captureBeyondViewport: false });
+    await panel.evaluate(`(() => {
+      const radio = document.querySelector('#userInputRequests input[type="radio"]');
+      if (!radio) throw new Error('Loaded user-input radio was not rendered.');
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector('#userInputRequests form')?.requestSubmit();
+      return true;
+    })()`);
+    await waitFor(() => panel.evaluate(`document.querySelector('#userInputRequests')?.hidden === true`));
+    const userInputAnswer = mock.getUserInputAnswer();
+    assert.deepEqual(userInputAnswer, {
+      answers: { choice: 'Keep it' },
+      requestId: 'e2e-user-input',
+      sessionId: userInputState.sessionId,
+    });
 
     marketplaceWorkerSpike = await runWithMarketplaceInterception(setup, () => panel.evaluate(`(async () => {
       const search = await chrome.runtime.sendMessage({ type: 'HERMES_THEME_MARKETPLACE_SEARCH', query: 'dracula', limit: 20 });
@@ -1310,10 +1438,10 @@ async function main() {
     mock.addSession({ id: FULLTAB_SESSION_ID, title: 'Loaded extension Hermes Web QA', source: 'hermes_web' });
     await setup.evaluate(`(async () => {
       const stored = await chrome.storage.local.get('hermesBrowserSettings');
-      await chrome.storage.local.set({hermesBrowserSettings:{...stored.hermesBrowserSettings,webSessionId:${JSON.stringify(FULLTAB_SESSION_ID)},webSessionTitle:'Loaded extension QA'}});
+      await chrome.storage.local.set({hermesBrowserSettings:{...stored.hermesBrowserSettings,sessionId:${JSON.stringify(FULLTAB_SESSION_ID)},webSessionId:${JSON.stringify(FULLTAB_SESSION_ID)},webSessionTitle:'Loaded extension QA'}});
     })()`);
     const webTarget = await fetchJson(
-      `${devtoolsBase}/json/new?${encodeURIComponent(`chrome-extension://${extensionId}/app.html`)}`,
+      `${devtoolsBase}/json/new?${encodeURIComponent(`chrome-extension://${extensionId}/app.html?sessionId=${encodeURIComponent(FULLTAB_SESSION_ID)}`)}`,
       { method: 'PUT' },
     );
     web = new CdpClient(webTarget.webSocketDebuggerUrl);
@@ -1338,6 +1466,47 @@ async function main() {
       return !stack?.hidden && rows.length === 3 ? document.querySelector('#taskStackSummary')?.textContent || '' : '';
     })()`));
     assert.match(taskWebState, /2\/3 complete · 1 active/i);
+
+    await waitFor(() => web.evaluate(`(() => Boolean(document.querySelector('#userInputRequests .user-input-card')?.textContent?.includes('Which path?')))`));
+    const fullTabUserInputState = await web.evaluate(`(() => {
+      const card = document.querySelector('#userInputRequests .user-input-card');
+      const cardRect = card?.getBoundingClientRect();
+      const composerRect = document.querySelector('#fullTabComposer')?.getBoundingClientRect();
+      const requestContainer = document.querySelector('#userInputRequests');
+      const radio = card?.querySelector('input[type="radio"]');
+      return {
+        cardBottom: cardRect?.bottom || 0,
+        cardHeight: cardRect?.height || 0,
+        composerTop: composerRect?.top || 0,
+        containerHidden: Boolean(requestContainer?.hidden),
+        requestId: card?.dataset.requestId || '',
+        sessionId: card?.dataset.sessionId || '',
+        visible: Boolean(card && !requestContainer?.hidden && (cardRect?.width || 0) > 0 && (cardRect?.height || 0) > 0),
+        radioLabel: radio?.value || '',
+      };
+    })()`);
+    assert.equal(fullTabUserInputState.visible, true, JSON.stringify({
+      state: fullTabUserInputState,
+      pendingRequests: mock.requests.filter(request => /\/user-input\/pending$/.test(request.path)),
+    }));
+    assert.equal(fullTabUserInputState.radioLabel, 'Keep it');
+    assert.equal(fullTabUserInputState.requestId, 'e2e-user-input');
+    assert.ok(fullTabUserInputState.cardBottom <= fullTabUserInputState.composerTop, JSON.stringify(fullTabUserInputState));
+    await saveScreenshot(web, FULLTAB_USER_INPUT_SCREENSHOT, { captureBeyondViewport: false });
+    await web.evaluate(`(() => {
+      const radio = document.querySelector('#userInputRequests input[type="radio"]');
+      if (!radio) throw new Error('Loaded Full Tab user-input radio was not rendered.');
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector('#userInputRequests form')?.requestSubmit();
+      return true;
+    })()`);
+    await waitFor(() => web.evaluate(`document.querySelector('#userInputRequests')?.hidden === true`));
+    assert.deepEqual(mock.getUserInputAnswer(fullTabUserInputState.sessionId), {
+      answers: { choice: 'Keep it' },
+      requestId: 'e2e-user-input',
+      sessionId: fullTabUserInputState.sessionId,
+    });
 
     marketplaceWebUi = await runWithMarketplaceInterception(setup, async () => {
       await web.evaluate(`(() => {
@@ -3409,7 +3578,7 @@ async function main() {
       settingsPolish: settingsPolishProof,
       readability: readabilityProof,
       customTheme: customThemeProof,
-      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, SETTINGS_PROFILE_POLISH_SCREENSHOT, SETTINGS_ZOOM_POLISH_SCREENSHOT, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, AGENT_THEME_STUDIO_MONO_SCREENSHOT, AGENT_THEME_STUDIO_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT],
+      screenshots: [TASK_PANEL_SCREENSHOT, TASK_WEB_SCREENSHOT, DELEGATION_PANEL_SCREENSHOT, DELEGATION_WEB_SCREENSHOT, SETTINGS_PROFILE_POLISH_SCREENSHOT, SETTINGS_ZOOM_POLISH_SCREENSHOT, SETTINGS_CONTEXT_COLLAPSED_SCREENSHOT, SETTINGS_CONTEXT_EXPANDED_SCREENSHOT, READABILITY_PANEL_SCREENSHOT, READABILITY_PANEL_420_SCREENSHOT, READABILITY_PANEL_520_SCREENSHOT, READABILITY_WEB_SCREENSHOT, READABILITY_WEB_1440_SCREENSHOT, CUSTOM_THEME_PANEL_SCREENSHOT, CUSTOM_THEME_WEB_SCREENSHOT, CUSTOM_THEME_PANEL_CARD_SCREENSHOT, CUSTOM_THEME_WEB_CARD_SCREENSHOT, CUSTOM_THEME_WEB_SHELL_SCREENSHOT, CUSTOM_THEME_PANEL_320_SCREENSHOT, CUSTOM_THEME_PANEL_420_SCREENSHOT, CUSTOM_THEME_WEB_1024_SCREENSHOT, AGENT_THEME_STUDIO_MONO_SCREENSHOT, AGENT_THEME_STUDIO_SCREENSHOT, INLINE_ROUTE_SCREENSHOT, INLINE_RESULT_SCREENSHOT, INLINE_OPEN_SESSION_SCREENSHOT, INLINE_NO_SESSION_SCREENSHOT, INLINE_LAUNCHER_SCREENSHOT, CHATGPT_LAUNCHER_SCREENSHOT, INLINE_TOGGLE_SCREENSHOT, INLINE_SINGLE_COPY_SCREENSHOT, INLINE_DELETE_ALL_SCREENSHOT, ASSIST_SETTINGS_SCREENSHOT, ASSIST_RELEASED_GATEWAY_SCREENSHOT, MAIN_MODEL_PICKER_SCREENSHOT, GPT56_CONTEXT_PICKER_SCREENSHOT, USER_INPUT_SCREENSHOT, FULLTAB_USER_INPUT_SCREENSHOT],
     }, null, 2));
   } catch (error) {
     const diagnostics = {};

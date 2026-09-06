@@ -188,7 +188,8 @@ import {
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import { filterKnownAssistantReconcileParts, normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
-import { createUserInputController, pendingUserInputRecords, userInputAnswerPayload } from './lib/user-input.mjs';
+import { createUserInputFetchGuard, userInputWriteIsOwned } from './lib/user-input-race.mjs';
+import { classifyUserInputResult, createUserInputController, pendingUserInputRecords, userInputAnswerPayload } from './lib/user-input.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import {
   DELEGATION_WATCH_STORAGE_KEY,
@@ -844,6 +845,7 @@ let activeSessionRuntime = {
 // /api/ws JSON-RPC socket (the api_server REST/SSE surface is unavailable
 // cross-origin). This holds the live socket + the dashboard-assigned session id.
 let remoteWsConnection = null;
+const userInputFetchGuard = createUserInputFetchGuard();
 
 function activeUserInputSessionId() {
   return isRemoteWsMode()
@@ -851,14 +853,48 @@ function activeUserInputSessionId() {
     : String(settings.sessionId || '').trim();
 }
 
+function userInputTransportOwner() {
+  if (isRemoteWsMode()) return remoteWsConnection;
+  return `${normalizeGatewayMode(settings.gatewayMode)}|${String(settings.gatewayUrl || '')}|${String(settings.activeProfile || '')}`;
+}
+
+function userInputFetchIsCurrent(token, sessionId, owner) {
+  return userInputFetchGuard.isCurrent(token)
+    && activeUserInputSessionId() === sessionId
+    && userInputTransportOwner() === owner;
+}
+
+function invalidateUserInputFetch(sessionId = activeUserInputSessionId(), owner = userInputTransportOwner()) {
+  const key = String(sessionId || '').trim();
+  if (key) userInputFetchGuard.invalidate(key, owner);
+}
+
 async function sendUserInputAnswer(request, answers) {
+  const requestedSessionId = String(request?.sessionId || '').trim();
+  invalidateUserInputFetch(requestedSessionId);
   if (isRemoteWsMode()) {
     const connection = await ensureRemoteWsClient();
+    if (!userInputWriteIsOwned({
+      requestedSessionId,
+      activeSessionId: activeUserInputSessionId(),
+      requestedOwner: connection,
+      activeOwner: userInputTransportOwner(),
+    })) {
+      throw new Error('The Hermes session changed while preparing this answer. Retry it from the active session.');
+    }
     const liveSessionId = await ensureRemoteWsSession(connection);
-    const payload = userInputAnswerPayload({ ...request, sessionId: liveSessionId }, answers);
-    return connection.client.request(WS_METHODS.userInputRespond, payload);
+    if (liveSessionId !== requestedSessionId || !userInputWriteIsOwned({
+      requestedSessionId,
+      activeSessionId: activeUserInputSessionId(),
+      requestedOwner: connection,
+      activeOwner: userInputTransportOwner(),
+    })) {
+      throw new Error('The Hermes session changed while preparing this answer. Retry it from the active session.');
+    }
+    const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
+    return classifyUserInputResult(await connection.client.request(WS_METHODS.userInputRespond, payload));
   }
-  const payload = userInputAnswerPayload(request, answers);
+  const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
   const response = await apiFetch(
     `/api/sessions/${encodeSessionId(payload.session_id)}/user-input/${encodeURIComponent(payload.request_id)}/answer`,
     {
@@ -867,18 +903,23 @@ async function sendUserInputAnswer(request, answers) {
     },
   );
   const result = await readJsonResponse(response);
-  if (!response.ok) throw new Error(result?.error?.message || result?.error || `Hermes input answer failed (${response.status})`);
-  return result;
+  return classifyUserInputResult(result, { httpStatus: response.status });
 }
 
 async function refreshPendingUserInputs() {
   const requestedSessionId = activeUserInputSessionId();
   if (!requestedSessionId) return;
+  const owner = isRemoteWsMode() ? 'remote-ws' : userInputTransportOwner();
+  const reservation = userInputFetchGuard.begin(requestedSessionId, owner);
   if (isRemoteWsMode()) {
     const connection = await ensureRemoteWsClient();
     const liveSessionId = await ensureRemoteWsSession(connection);
-    userInputController.setActiveSession(liveSessionId);
+    if (!userInputFetchGuard.isCurrent(reservation) || liveSessionId !== activeUserInputSessionId()) return;
+    const token = userInputFetchGuard.bind(reservation, connection);
+    if (!token) return;
     const result = await connection.client.request(WS_METHODS.userInputPending, { session_id: liveSessionId });
+    if (!userInputFetchIsCurrent(token, liveSessionId, connection)) return;
+    userInputController.setActiveSession(liveSessionId);
     userInputController.replace(liveSessionId, pendingUserInputRecords(result, liveSessionId));
     return;
   }
@@ -889,6 +930,7 @@ async function refreshPendingUserInputs() {
   );
   if (!response.ok) return;
   const result = await readJsonResponse(response);
+  if (!userInputFetchIsCurrent(reservation, requestedSessionId, owner)) return;
   userInputController.setActiveSession(requestedSessionId);
   userInputController.replace(requestedSessionId, pendingUserInputRecords(result, requestedSessionId));
 }
@@ -896,6 +938,13 @@ async function refreshPendingUserInputs() {
 const userInputController = createUserInputController({
   container: els.userInputRequests,
   onError: (error) => setStatus('warn', 'Could not send Hermes input', error?.message || String(error), { translateDetail: false }),
+  onResult: (result) => {
+    if (!result.accepted) return;
+    const detail = result.delivery === 'deferred'
+      ? 'Recorded. Hermes will use it on the next eligible turn; automatic resume was not confirmed.'
+      : 'Recorded by Hermes.';
+    setStatus('ok', 'Answer recorded', detail, { translateTitle: false, translateDetail: false });
+  },
   sendAnswer: sendUserInputAnswer,
 });
 
@@ -9155,10 +9204,12 @@ async function ensureRemoteWsClient() {
   }
   const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '' };
   client.on(WS_EVENTS.userInputRequest, (event) => {
+    invalidateUserInputFetch(event.sessionId, connection);
     userInputController.upsert(event.payload, event.sessionId);
   });
   client.on(WS_EVENTS.userInputAnswer, (event) => {
-    userInputController.clear(event.payload?.request_id);
+    invalidateUserInputFetch(event.sessionId, connection);
+    userInputController.clear(event.payload?.request_id, event.sessionId);
   });
   client.on('close', () => {
     if (remoteWsConnection === connection) {
@@ -9257,7 +9308,7 @@ async function ensureRemoteWsSession(connection) {
   return liveId;
 }
 
-async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, onUserInput, knownAssistantTexts = [] } = {}) {
+async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, knownAssistantTexts = [] } = {}) {
   const connection = await ensureRemoteWsClient();
   const sessionId = await ensureRemoteWsSession(connection);
   onRun?.(sessionId);
@@ -9292,9 +9343,6 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, onUs
     }
     signal?.addEventListener?.('abort', onAbort, { once: true });
 
-    offs.push(client.on(WS_EVENTS.userInputRequest, (event) => {
-      if (forThisSession(event)) onUserInput?.(event.payload);
-    }));
     offs.push(client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
       finalText += event.payload?.text || '';
@@ -9332,7 +9380,7 @@ async function streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, onUs
 }
 
 async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onUserInput, knownAssistantTexts = [] } = {}) {
-  if (isRemoteWsMode()) return streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, onUserInput, knownAssistantTexts });
+  if (isRemoteWsMode()) return streamRemoteWsChat(prompt, onDelta, onTool, { signal, onRun, knownAssistantTexts });
   const hasSessionRoutes = await ensureHermesSession();
   if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onUserInput, knownAssistantTexts });
 
@@ -9936,7 +9984,11 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             activeRunControl = withRunControlId(activeRunControl, runId);
           },
           onSteerQueued: restoreBackendQueuedSteerDraft,
-          onUserInput: (payload) => userInputController.upsert(payload, activeUserInputSessionId()),
+          onUserInput: (payload) => {
+            const sessionId = activeUserInputSessionId();
+            invalidateUserInputFetch(sessionId);
+            userInputController.upsert(payload, sessionId);
+          },
           onRuntime: (payload) => {
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             const status = String(payload?.status || '').trim().toLowerCase();
@@ -11260,12 +11312,20 @@ function bindEvents() {
   els.browserControlRejectButton?.addEventListener('click', () => {
     decideBrowserControlApproval(false).catch((error) => showOperationToast({ kind: 'warn', title: 'Rejection not accepted', detail: error?.message || String(error) }));
   });
+  globalThis.addEventListener('focus', () => {
+    void refreshPendingUserInputs().catch((error) => {
+      console.warn('[Hermes Browser] Pending user-input focus refresh failed:', error?.message || error);
+    });
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
       if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
       browserControlPollTimer = null;
       return;
     }
+    void refreshPendingUserInputs().catch((error) => {
+      console.warn('[Hermes Browser] Pending user-input visibility refresh failed:', error?.message || error);
+    });
     void refreshBrowserControlStatus().then(scheduleBrowserControlPoll);
   });
   els.gatewayModeInput?.addEventListener('change', () => {

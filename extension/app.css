@@ -902,33 +902,44 @@ html[dir="rtl"] .mobile-only { margin-left: 0; margin-right: auto; }
 
 /* Native asynchronous Hermes user-input cards */
 .user-input-requests {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: 170px;
-  z-index: 60;
+  position: static;
   display: grid;
-  gap: 12px;
-  max-height: min(58vh, 440px);
+  gap: 8px;
+  width: 100%;
+  max-height: min(40vh, 320px);
   overflow-y: auto;
-  margin: 0;
-  pointer-events: none;
+  margin: 0 0 8px;
+  padding: 0;
+  pointer-events: auto;
+  scrollbar-gutter: stable;
+}
+
+.user-input-requests[hidden] {
+  display: none;
 }
 
 .web-shell #userInputRequests {
-  bottom: 238px;
-  max-width: 620px;
+  position: static;
+  width: min(860px, 100%);
+  max-width: none;
+  margin: 0 auto 10px;
+}
+
+.fulltab-composer-wrap > #userInputRequests {
+  width: min(860px, 100%);
 }
 
 .user-input-card {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 6px;
+  min-width: 0;
+  padding: 7px 10px;
   border: 1px solid var(--hermes-line-strong);
-  border-radius: 14px;
+  border-radius: 0;
   background: var(--hermes-paper);
   color: var(--hermes-ink);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  box-shadow: none;
+  pointer-events: auto;
 }
 
 .user-input-card-header,
@@ -937,33 +948,49 @@ html[dir="rtl"] .mobile-only { margin-left: 0; margin-right: auto; }
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+}
+
+.user-input-card-header {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--hermes-line-strong);
 }
 
 .user-input-card-header h2 {
+  min-width: 0;
   margin: 0;
-  font-size: 0.9rem;
+  color: var(--hermes-ink);
+  font: 700 0.95rem/1.1 var(--hermes-font-display);
+  letter-spacing: 0.02em;
 }
 
 .user-input-card-count,
 .user-input-card-context,
 .user-input-card-status {
   color: var(--hermes-muted);
-  font-size: 0.76rem;
+  font: 9px/1.35 var(--hermes-font-mono);
+  letter-spacing: 0.04em;
+}
+
+.user-input-card-count {
+  flex: 0 0 auto;
+  text-transform: uppercase;
 }
 
 .user-input-card-context {
-  margin: -4px 0 0;
+  margin: -2px 0 0;
   line-height: 1.45;
+  letter-spacing: 0;
 }
 
 .user-input-card-form {
   display: grid;
-  gap: 12px;
+  gap: 6px;
 }
 
 .user-input-card-form fieldset {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -971,55 +998,86 @@ html[dir="rtl"] .mobile-only { margin-left: 0; margin-right: auto; }
 }
 
 .user-input-card-form legend {
-  margin-bottom: 2px;
-  font-size: 0.8rem;
-  font-weight: 650;
+  margin-bottom: 1px;
+  color: var(--hermes-ink);
+  font: 700 11px/1.3 var(--hermes-font-ui);
 }
 
 .user-input-options {
   display: grid;
-  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 4px;
 }
 
 .user-input-option {
-  display: flex;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--hermes-line);
-  border-radius: 9px;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid var(--hermes-line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--hermes-ink);
   cursor: pointer;
-  font-size: 0.78rem;
+  font: 10px/1.35 var(--hermes-font-ui);
+  text-align: left;
+}
+
+.user-input-option:hover {
+  border-color: var(--hermes-ink);
+  background: color-mix(in srgb, var(--hermes-accent) 8%, var(--hermes-paper));
 }
 
 .user-input-option:has(input:checked) {
-  border-color: var(--hermes-accent);
-  background: color-mix(in srgb, var(--hermes-accent) 14%, var(--hermes-paper));
+  border-color: var(--hermes-line-strong);
+  background: color-mix(in srgb, var(--hermes-accent) 16%, var(--hermes-paper));
+}
+
+.user-input-option > span {
+  min-width: 0;
 }
 
 .user-input-free-text {
   width: 100%;
   min-height: 34px;
   box-sizing: border-box;
-  padding: 8px 10px;
+  padding: 8px 9px;
   border: 1px solid var(--hermes-line);
-  border-radius: 9px;
+  border-radius: 0;
   background: var(--hermes-input-bg, var(--hermes-paper));
   color: var(--hermes-ink);
-  font: inherit;
+  font: 10px/1.4 var(--hermes-font-mono);
+}
+
+.user-input-free-text:focus,
+.user-input-option:focus-within {
+  outline: 1px solid var(--hermes-accent);
+  outline-offset: 1px;
+}
+
+.user-input-card-actions {
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px solid var(--hermes-line);
 }
 
 .user-input-card-actions button {
-  min-height: 32px;
+  min-height: 28px;
   padding: 7px 12px;
-  border: 0;
-  border-radius: 8px;
+  border: 1px solid var(--hermes-primary-border, var(--hermes-primary-bg));
+  border-radius: 0;
   background: var(--hermes-primary-bg);
   color: var(--hermes-primary-fg);
   cursor: pointer;
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 650;
+  font: 700 9px/1 var(--hermes-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.user-input-card-actions button:hover:not(:disabled) {
+  filter: brightness(1.12);
 }
 
 .user-input-card-actions button:disabled {
@@ -1027,32 +1085,9 @@ html[dir="rtl"] .mobile-only { margin-left: 0; margin-right: auto; }
   opacity: 0.6;
 }
 
-
-.user-input-card {
-  color: var(--hermes-ink);
-}
-
-.user-input-card h2,
-.user-input-card legend {
-  color: var(--hermes-ink);
-  font-weight: 700;
-}
-
-.user-input-card-context,
-.user-input-card-count {
-  color: var(--hermes-ink);
-  opacity: 0.82;
-}
-
-.user-input-card label {
-  align-items: center;
-  justify-content: flex-start;
-}
-
 .user-input-card input[type="radio"] {
   width: 16px;
   height: 16px;
-  flex: 0 0 16px;
   margin: 0;
   accent-color: var(--hermes-accent, #0505e8);
 }

@@ -91,7 +91,8 @@ import {
   stripGeneratedImageEchoes,
 } from './lib/image-render.mjs';
 import { modelLockRequestOutcome, readHermesSse, runSteerFailureState } from './lib/fulltab-runtime.mjs';
-import { createUserInputController, pendingUserInputRecords, userInputAnswerPayload } from './lib/user-input.mjs';
+import { createUserInputFetchGuard, userInputWriteIsOwned } from './lib/user-input-race.mjs';
+import { classifyUserInputResult, createUserInputController, pendingUserInputRecords, userInputAnswerPayload } from './lib/user-input.mjs';
 import { parseBrowserCommand, resolveCommandPrompt } from './lib/commands.mjs';
 import { createDiffusionCanvas } from './lib/diffusion-canvas.mjs';
 import {
@@ -398,20 +399,56 @@ const client = createHermesClient({
   getConnection: () => settings,
 });
 
+const userInputFetchGuard = createUserInputFetchGuard();
+
 function activeUserInputSessionId() {
   return usesDashboardTicketTransport()
     ? String(dashboardLiveSessionId || '').trim()
     : String(activeSessionId || '').trim();
 }
 
+function userInputTransportOwner() {
+  if (usesDashboardTicketTransport()) return dashboardConnection;
+  return `${String(settings.connectionMode || settings.gatewayMode || '')}|${String(settings.gatewayUrl || '')}|${String(settings.activeProfile || '')}`;
+}
+
+function userInputFetchIsCurrent(token, sessionId, owner) {
+  return userInputFetchGuard.isCurrent(token)
+    && activeUserInputSessionId() === sessionId
+    && userInputTransportOwner() === owner;
+}
+
+function invalidateUserInputFetch(sessionId = activeUserInputSessionId(), owner = userInputTransportOwner()) {
+  const key = String(sessionId || '').trim();
+  if (key) userInputFetchGuard.invalidate(key, owner);
+}
+
 async function sendUserInputAnswer(request, answers) {
+  const requestedSessionId = String(request?.sessionId || '').trim();
+  invalidateUserInputFetch(requestedSessionId);
   if (usesDashboardTicketTransport()) {
     const connection = await ensureDashboardConnection();
+    if (!userInputWriteIsOwned({
+      requestedSessionId,
+      activeSessionId: activeUserInputSessionId(),
+      requestedOwner: connection,
+      activeOwner: userInputTransportOwner(),
+    })) {
+      throw new Error('The Hermes session changed while preparing this answer. Retry it from the active session.');
+    }
     if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
-    const payload = userInputAnswerPayload({ ...request, sessionId: dashboardLiveSessionId }, answers);
-    return connection.client.request(WS_METHODS.userInputRespond, payload);
+    if (dashboardLiveSessionId !== requestedSessionId || !userInputWriteIsOwned({
+      requestedSessionId,
+      activeSessionId: activeUserInputSessionId(),
+      requestedOwner: connection,
+      activeOwner: userInputTransportOwner(),
+    })) {
+      throw new Error('The Hermes session changed while preparing this answer. Retry it from the active session.');
+    }
+    const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
+    return classifyUserInputResult(await connection.client.request(WS_METHODS.userInputRespond, payload));
   }
-  const payload = userInputAnswerPayload(request, answers);
+  const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
   const response = await client.fetch(
     `/api/sessions/${encodeURIComponent(payload.session_id)}/user-input/${encodeURIComponent(payload.request_id)}/answer`,
     {
@@ -420,26 +457,32 @@ async function sendUserInputAnswer(request, answers) {
     },
   );
   const result = await client.readJson(response);
-  if (!response.ok) throw new Error(result?.error?.message || result?.error || `Hermes input answer failed (${response.status})`);
-  return result;
+  return classifyUserInputResult(result, { httpStatus: response.status });
 }
 
 async function refreshPendingUserInputs() {
+  const sessionId = activeUserInputSessionId();
+  if (!sessionId) return;
+  const owner = usesDashboardTicketTransport() ? 'dashboard-ws' : userInputTransportOwner();
+  const reservation = userInputFetchGuard.begin(sessionId, owner);
   if (usesDashboardTicketTransport()) {
     const connection = await ensureDashboardConnection();
     if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
     const liveSessionId = activeUserInputSessionId();
-    if (!liveSessionId) return;
-    userInputController.setActiveSession(liveSessionId);
+    if (!userInputFetchGuard.isCurrent(reservation) || liveSessionId !== sessionId) return;
+    const token = userInputFetchGuard.bind(reservation, connection);
+    if (!token) return;
     const result = await connection.client.request(WS_METHODS.userInputPending, { session_id: liveSessionId });
+    if (!userInputFetchIsCurrent(token, liveSessionId, connection)) return;
+    userInputController.setActiveSession(liveSessionId);
     userInputController.replace(liveSessionId, pendingUserInputRecords(result, liveSessionId));
     return;
   }
-  const sessionId = activeUserInputSessionId();
-  if (!sessionId || !settings.apiKey) return;
+  if (!settings.apiKey) return;
   const response = await client.fetch(`/api/sessions/${encodeURIComponent(sessionId)}/user-input/pending`, { method: 'GET' });
   if (!response.ok) return;
   const result = await client.readJson(response);
+  if (!userInputFetchIsCurrent(reservation, sessionId, owner)) return;
   userInputController.setActiveSession(sessionId);
   userInputController.replace(sessionId, pendingUserInputRecords(result, sessionId));
 }
@@ -448,6 +491,12 @@ const userInputController = createUserInputController({
   container: els.userInputRequests,
   onError: (error) => {
     els.composerStatus.textContent = `Could not send Hermes input: ${error?.message || String(error)}`;
+  },
+  onResult: (result) => {
+    if (!result.accepted) return;
+    els.composerStatus.textContent = result.delivery === 'deferred'
+      ? 'Answer recorded. Hermes will use it on the next eligible turn; automatic resume was not confirmed.'
+      : 'Answer recorded by Hermes.';
   },
   sendAnswer: sendUserInputAnswer,
 });
@@ -667,14 +716,17 @@ async function ensureDashboardConnection() {
     dashboardLiveSessionId = '';
   });
   await gatewayClient.connect(buildDashboardWsUrl(settings.gatewayUrl, ticket.ticket));
-  dashboardConnection = { client: gatewayClient, origin: desiredOrigin, tabId };
+  const connection = { client: gatewayClient, origin: desiredOrigin, tabId };
+  dashboardConnection = connection;
   gatewayClient.on(WS_EVENTS.userInputRequest, (event) => {
+    invalidateUserInputFetch(event.sessionId, connection);
     userInputController.upsert(event.payload, event.sessionId);
   });
   gatewayClient.on(WS_EVENTS.userInputAnswer, (event) => {
-    userInputController.clear(event.payload?.request_id);
+    invalidateUserInputFetch(event.sessionId, connection);
+    userInputController.clear(event.payload?.request_id, event.sessionId);
   });
-  return dashboardConnection;
+  return connection;
 }
 
 async function establishDashboardSession(storedSessionId = '', { isCurrent = () => true } = {}) {
@@ -757,7 +809,7 @@ async function listDashboardSessions() {
   return applySessionModelBindings(normalizeHermesSessions(result), settings.sessionModelBindings);
 }
 
-async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun, onUserInput } = {}) {
+async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } = {}) {
   const connection = await ensureDashboardConnection();
   if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
   const sessionId = dashboardLiveSessionId;
@@ -785,9 +837,6 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun, o
     };
     if (signal?.aborted) return onAbort();
     signal?.addEventListener?.('abort', onAbort, { once: true });
-    offs.push(connection.client.on(WS_EVENTS.userInputRequest, (event) => {
-      if (forThisSession(event)) onUserInput?.(event.payload);
-    }));
     offs.push(connection.client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
       finalText += event.payload?.text || '';
@@ -3666,7 +3715,6 @@ async function sendPrompt(text) {
           renderMessages(activeMessages);
         },
         onTool: renderToolEvent,
-        onUserInput: (payload) => userInputController.upsert(payload, activeUserInputSessionId()),
         onRun: (runId) => {
           dashboardTurnSessionId = String(runId || '');
           activeRunId = String(runId || '');
@@ -3720,7 +3768,16 @@ async function sendPrompt(text) {
     });
     const streamedAnswer = await readHermesSse(response, {
       signal: activeAbortController.signal,
-      onUserInput: (payload) => userInputController.upsert(payload, activeUserInputSessionId()),
+      onUserInput: (payload) => {
+        const sessionId = activeUserInputSessionId();
+        invalidateUserInputFetch(sessionId);
+        userInputController.upsert(payload, sessionId);
+      },
+      onUserInputAnswer: (payload) => {
+        const sessionId = String(payload?.session_id || activeUserInputSessionId()).trim();
+        invalidateUserInputFetch(sessionId);
+        userInputController.clear(payload?.request_id, sessionId);
+      },
       onAssistant: (content) => {
         if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
         assistant.content = content;
@@ -4455,11 +4512,17 @@ document.addEventListener('click', (event) => {
   if (!els.sessionActionsMenu.hidden && !els.sessionActionsMenu.contains(event.target) && event.target !== els.copySessionId) toggleSessionActionsMenu(false);
 });
 globalThis.addEventListener('focus', () => {
+  refreshPendingUserInputs().catch((error) => {
+    console.warn('[Hermes Web] Pending user-input focus refresh failed:', error?.message || error);
+  });
   consumePendingVoiceDraft().catch(() => {});
   consumePendingWakeTurn().catch(() => {});
 });
 globalThis.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
+    refreshPendingUserInputs().catch((error) => {
+      console.warn('[Hermes Web] Pending user-input visibility refresh failed:', error?.message || error);
+    });
     consumePendingVoiceDraft().catch(() => {});
     consumePendingWakeTurn().catch(() => {});
   }

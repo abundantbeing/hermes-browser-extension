@@ -7,6 +7,7 @@ test('readHermesSse forwards native user-input requests without swallowing termi
   const frames = [
     'event: run.started\ndata: {"run_id":"run-1"}\n\n',
     'event: user_input.request\ndata: {"request_id":"request-1","session_id":"session-1","questions":[{"id":"choice","text":"Pick one"}]}\n\n',
+    'event: user_input.answer\ndata: {"request_id":"request-1","session_id":"session-1","status":"answered","accepted":true,"delivery":"deferred"}\n\n',
     'event: assistant.completed\ndata: {"content":"Working while you decide"}\n\n',
     'event: run.completed\ndata: {"content":"Working while you decide","completed":true}\n\n',
   ];
@@ -27,15 +28,19 @@ test('readHermesSse forwards native user-input requests without swallowing termi
     },
   };
   const requests = [];
+  const answers = [];
   let runtime;
 
   const result = await readHermesSse(response, {
     onUserInput: (payload) => requests.push(payload),
+    onUserInputAnswer: (payload) => answers.push(payload),
     onRuntime: (payload) => { runtime = payload; },
   });
 
   assert.equal(result, 'Working while you decide');
   assert.equal(requests.length, 1);
   assert.equal(requests[0].request_id, 'request-1');
+  assert.equal(answers.length, 1);
+  assert.equal(answers[0].status, 'answered');
   assert.equal(runtime.status, 'completed');
 });
