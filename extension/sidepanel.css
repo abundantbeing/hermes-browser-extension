@@ -3279,8 +3279,8 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 .active-profile-indicator.group-roster {
   width: auto;
-  min-width: 34px;
-  height: 34px;
+  min-width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -3298,7 +3298,8 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   border: none;
   box-shadow: none;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
+  border-radius: 6px;
   transition: transform 0.15s ease;
   flex: 0 0 auto;
 }
@@ -3312,6 +3313,13 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+.active-profile-indicator.group-roster .group-member-avatar-slot svg {
+  width: 28px;
+  height: 28px;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
 }
 .active-profile-indicator.group-roster .group-member-avatar-slot .bot-mode-avatar {
   width: 28px !important;
