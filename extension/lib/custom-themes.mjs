@@ -338,6 +338,10 @@ export function customThemePaletteForMode(document, resolvedMode) {
   return resolvedMode === 'dark' && document.darkColors ? document.darkColors : document.colors;
 }
 
+export function customThemeEffectiveMode(document, resolvedMode) {
+  return resolvedMode === 'dark' && document && !document.darkColors ? 'light' : resolvedMode;
+}
+
 export function customThemeSelection(id, records = []) {
   if (typeof id !== 'string') return { kind: 'invalid', id: null };
   if (BUILT_IN_THEME_IDS.has(id)) return { kind: 'builtin', id };

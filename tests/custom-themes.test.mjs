@@ -20,6 +20,7 @@ const missingContract = {
   normalizeThemeDocument: () => undefined,
   themeCssVariables: () => ({}),
   customThemePaletteForMode: () => undefined,
+  customThemeEffectiveMode: () => undefined,
   customThemeSelection: () => ({ kind: 'module-missing' }),
   serializeThemeDocument: () => undefined,
 };
@@ -52,6 +53,7 @@ const {
   normalizeThemeDocument,
   themeCssVariables,
   customThemePaletteForMode,
+  customThemeEffectiveMode,
   customThemeSelection,
   serializeThemeDocument,
 } = themes;
@@ -138,6 +140,15 @@ test('accepts and independently normalizes a valid light and dark document', () 
   assert.equal(result.document.darkColors.canvas, '#101114');
   assert.equal(customThemePaletteForMode(result.document, 'light').canvas, '#ffffff');
   assert.equal(customThemePaletteForMode(result.document, 'dark').canvas, '#101114');
+});
+
+test('light-only custom themes expose their effective palette mode', () => {
+  const lightOnly = validateThemeDocument(validDocument()).document;
+  const dualPalette = validateThemeDocument(validDocument({ darkColors: { ...DARK_COLORS } })).document;
+
+  assert.equal(customThemeEffectiveMode(lightOnly, 'dark'), 'light');
+  assert.equal(customThemeEffectiveMode(lightOnly, 'light'), 'light');
+  assert.equal(customThemeEffectiveMode(dualPalette, 'dark'), 'dark');
 });
 
 test('rejects missing required palette keys and reports their paths', () => {

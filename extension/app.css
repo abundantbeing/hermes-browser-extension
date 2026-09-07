@@ -390,6 +390,75 @@ html[data-hermes-theme^="custom:"] [tabindex]:focus-visible {
 .web-message-content pre { padding: 15px; overflow-x: auto; border: 1px solid currentColor; background: rgba(var(--hermes-blue-rgb), 0.05); }
 .web-message.user .web-message-content pre { background: rgba(var(--hermes-white-rgb), 0.08); }
 .web-message-content code { font-family: var(--hermes-font-mono); }
+.web-message-content pre code.hljs {
+  --syntax-comment: #52606d;
+  --syntax-keyword: #741b78;
+  --syntax-string: #146b3a;
+  --syntax-number: #9a3b00;
+  --syntax-title: #074f9b;
+  --syntax-meta: #765400;
+  color: var(--hermes-ink);
+}
+html[data-hermes-effective-mode="dark"] .web-message-content pre code.hljs {
+  --syntax-comment: #aeb8c4;
+  --syntax-keyword: #e6a7ff;
+  --syntax-string: #b9f6ca;
+  --syntax-number: #ffb58a;
+  --syntax-title: #9ecbff;
+  --syntax-meta: #ffe082;
+  color: currentColor;
+}
+.web-message.user .web-message-content pre code.hljs {
+  --syntax-comment: color-mix(in srgb, currentColor 92%, var(--hermes-accent));
+  --syntax-keyword: color-mix(in srgb, currentColor 94%, var(--hermes-accent));
+  --syntax-string: color-mix(in srgb, currentColor 90%, var(--hermes-accent));
+  --syntax-number: color-mix(in srgb, currentColor 88%, var(--hermes-accent));
+  --syntax-title: color-mix(in srgb, currentColor 92%, var(--hermes-accent));
+  --syntax-meta: color-mix(in srgb, currentColor 90%, var(--hermes-accent));
+  color: currentColor;
+}
+html[data-hermes-theme^="custom:"] .web-message.user {
+  color: var(--hermes-on-primary);
+}
+html[data-hermes-theme^="custom:"] .web-message.user .web-message-content pre {
+  background: transparent;
+}
+html[data-hermes-theme^="custom:"] .web-message-content pre code.hljs,
+html[data-hermes-theme^="custom:"] .web-message.user .web-message-content pre code.hljs {
+  --syntax-comment: currentColor;
+  --syntax-keyword: currentColor;
+  --syntax-string: currentColor;
+  --syntax-number: currentColor;
+  --syntax-title: currentColor;
+  --syntax-meta: currentColor;
+}
+.web-message-content .hljs-comment,
+.web-message-content .hljs-quote { color: var(--syntax-comment); font-style: italic; }
+.web-message-content .hljs-keyword,
+.web-message-content .hljs-selector-tag,
+.web-message-content .hljs-doctag { color: var(--syntax-keyword); font-weight: 700; }
+.web-message-content .hljs-string,
+.web-message-content .hljs-regexp,
+.web-message-content .hljs-attribute,
+.web-message-content .hljs-attr { color: var(--syntax-string); }
+.web-message-content .hljs-number,
+.web-message-content .hljs-literal,
+.web-message-content .hljs-symbol,
+.web-message-content .hljs-bullet { color: var(--syntax-number); }
+.web-message-content .hljs-punctuation { color: var(--syntax-meta); }
+.web-message-content .hljs-title,
+.web-message-content .hljs-section,
+.web-message-content .hljs-function,
+.web-message-content .hljs-built_in,
+.web-message-content .hljs-type,
+.web-message-content .hljs-tag,
+.web-message-content .hljs-name { color: var(--syntax-title); }
+.web-message-content .hljs-meta,
+.web-message-content .hljs-meta-keyword,
+.web-message-content .hljs-selector-id,
+.web-message-content .hljs-selector-class { color: var(--syntax-meta); }
+.web-message-content .hljs-emphasis { font-style: italic; }
+.web-message-content .hljs-strong { font-weight: 700; }
 .web-message-content img { max-width: 100%; border: 1px solid currentColor; }
 .user-message-images {
   display: grid;
