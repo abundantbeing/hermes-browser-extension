@@ -1,4 +1,4 @@
-// Ticket broker for the OAuth-gated dashboard.
+// Ticket broker for authentication-gated dashboards.
 //
 // The dashboard mints a WebSocket ticket only on a cookie-authenticated
 // POST /api/auth/ws-ticket. From a chrome-extension:// origin that request is
@@ -14,7 +14,9 @@
 export function originOf(url) {
   try {
     const parsed = new URL(String(url || ''));
-    if (parsed.protocol !== 'https:' || parsed.username || parsed.password) return '';
+    const loopbackHttp = parsed.protocol === 'http:'
+      && ['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname);
+    if ((parsed.protocol !== 'https:' && !loopbackHttp) || parsed.username || parsed.password) return '';
     return parsed.origin;
   } catch {
     return '';

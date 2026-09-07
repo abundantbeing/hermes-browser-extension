@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed Local gateway Bot Mode profile discovery when Dashboard authentication replaces the token-bearing root page with sign-in HTML; public status now identifies the dashboard, while the existing explicitly trusted signed-in tab and one-use WebSocket ticket flow authenticates the usable profile roster (#99).
+
 ## [0.3.2] - 2026-09-05
 
 ### Added
