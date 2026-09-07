@@ -14986,10 +14986,34 @@ async function testConnection() {
       ok = true;
       return;
     }
-    const response = await apiFetch('/health', { method: 'GET' });
-    const text = await response.text();
+    let response = null;
+    let text = '';
+    let dashboardAttached = false;
+    if (usesDashboardWsChatTransport() && (activeDashboardWsConnection?.client?.readyState === 1 || desktopDashboardUrl)) {
+      const dashboard = await activateLocalDashboardTransport({ timeoutMs: 5_000 });
+      if (dashboard) {
+        dashboardAttached = true;
+      }
+    }
+    if (!dashboardAttached) {
+      try {
+        response = await apiFetch('/health', { method: 'GET' });
+        text = await response.text();
+      } catch (healthError) {
+        if (!isRemoteMode()) {
+          const dashboard = await activateLocalDashboardTransport({ timeoutMs: 5_000 });
+          if (dashboard) {
+            dashboardAttached = true;
+          } else {
+            throw healthError;
+          }
+        } else {
+          throw healthError;
+        }
+      }
+    }
     if (!connectionController.isCurrent(generation)) return;
-    if (!response.ok) {
+    if (response && !response.ok && !dashboardAttached) {
       if (isRemoteMode()) {
         const diagnostic = classifyRemoteGatewaySetup({
           url: settings.gatewayUrl,
@@ -15001,24 +15025,31 @@ async function testConnection() {
         renderRemoteDiagnostics(diagnostic);
         throw new Error(`${diagnostic.title}: ${diagnostic.detail}`);
       }
-      throw new Error(`${response.status}: ${text}`);
-    }
-    await loadGatewayCapabilities({ quiet: true, healthOk: true });
-    if (!connectionController.isCurrent(generation)) return;
-    if (!apiCredentialSatisfied(settings) && gatewayCapabilities.browserPairing && automaticApiPairingAllowed(settings)) {
-      // connectApiWithPairing() starts its own connection generation, so the
-      // generation captured above is stale the moment it succeeds. Decide on
-      // the live connection state instead, and finish the test right there:
-      // pairing already ran the full canonical readiness cascade.
-      await connectApiWithPairing();
-      if (!isConnected()) {
-        setTestConnectionBusy(false);
-        flashTestConnectionResult(false);
-        throw new Error('Pairing was not completed. Approve the Hermes Browser request in the opened tab, then test again.');
+      const dashboard = !isRemoteMode() ? await activateLocalDashboardTransport({ timeoutMs: 5_000 }) : null;
+      if (dashboard) {
+        dashboardAttached = true;
+      } else {
+        throw new Error(`${response.status}: ${text}`);
       }
-      setTestConnectionBusy(false);
-      flashTestConnectionResult(true);
-      return;
+    }
+    if (!dashboardAttached) {
+      await loadGatewayCapabilities({ quiet: true, healthOk: true });
+      if (!connectionController.isCurrent(generation)) return;
+      if (!apiCredentialSatisfied(settings) && gatewayCapabilities.browserPairing && automaticApiPairingAllowed(settings)) {
+        // connectApiWithPairing() starts its own connection generation, so the
+        // generation captured above is stale the moment it succeeds. Decide on
+        // the live connection state instead, and finish the test right there:
+        // pairing already ran the full canonical readiness cascade.
+        await connectApiWithPairing();
+        if (!isConnected()) {
+          setTestConnectionBusy(false);
+          flashTestConnectionResult(false);
+          throw new Error('Pairing was not completed. Approve the Hermes Browser request in the opened tab, then test again.');
+        }
+        setTestConnectionBusy(false);
+        flashTestConnectionResult(true);
+        return;
+      }
     }
 
     // Manual tests complete the same one readiness lifecycle as startup, so a
@@ -15026,13 +15057,14 @@ async function testConnection() {
     const readiness = await runPanelConnectionReadiness({ restoreSettings: false });
     if (!connectionController.isCurrent(generation)) return;
     const hasSessionRoutes = Boolean(readiness.sessionId) || sessionRoutesAvailable !== false;
-    if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'api' })) return;
+    const gatewayTransportKind = dashboardAttached ? 'dashboard-ws' : 'api';
+    if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: gatewayTransportKind })) return;
     setStatus(
       'ok',
-      hasSessionRoutes ? 'Hermes gateway + session API connected' : 'Hermes gateway connected',
-      hasSessionRoutes ? normalizeGatewayUrl(settings.gatewayUrl) : `${normalizeGatewayUrl(settings.gatewayUrl)} - OpenAI-compatible fallback mode`,
+      dashboardAttached ? 'Hermes Desktop connected' : (hasSessionRoutes ? 'Hermes gateway + session API connected' : 'Hermes gateway connected'),
+      dashboardAttached ? (desktopDashboardUrl || normalizeGatewayUrl(settings.gatewayUrl)) : (hasSessionRoutes ? normalizeGatewayUrl(settings.gatewayUrl) : `${normalizeGatewayUrl(settings.gatewayUrl)} - OpenAI-compatible fallback mode`),
     );
-    markGatewayReachable(normalizeGatewayUrl(settings.gatewayUrl));
+    markGatewayReachable(dashboardAttached ? (desktopDashboardUrl || normalizeGatewayUrl(settings.gatewayUrl)) : normalizeGatewayUrl(settings.gatewayUrl));
     lastRemoteDiagnostic = null;
     renderRemoteDiagnostics(null);
 
