@@ -137,8 +137,8 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard URL and no API key. Chat/session/model path only; REST-only profile/skills/image-upload surfaces remain unavailable. |
 | Hermes Web full view | Local/Remote API alpha | Requires a token-backed Local or Remote API connection. Cloud Preview and ticketed remote-dashboard transports remain Chat-only in the side panel. |
 | Browser Context Protocol | Yes | Extension emits typed `hermes.browser.turn.v2` envelopes while retaining the v1 payload compatibility path. |
-|| Hermes Assist | Yes, site-aware preview/review | 31 writing environments are recognized. Safe plain-text composers may apply after explicit review; structured/private surfaces can fall back to copy-only. Hermes Assist never submits. |
-|| Page comments | Yes | Attach menu. Uses the red element picker. Queues beside Ask Hermes; chat shows a compact summary. |
+| Hermes Assist | Yes, site-aware preview/review | 31 writing environments are recognized. Safe plain-text composers may apply after explicit review; structured/private surfaces can fall back to copy-only. Hermes Assist never submits. |
+| Page comments | Yes | Attach menu. Uses the red element picker. Queues beside Ask Hermes; chat shows a compact summary. |
 | Companion plugin | Optional functional context cache | `companion-plugin/` provides read-only tools/hooks for sanitized Browser context; not required for normal extension use. |
 | Browser control / Runs UI / debugger | Yes (Experimental) | Bounded, opt-in MV3 controller with per-tab leases, explicit user approval gates, and sensitive action classification. Requires compatible Hermes Agent controller support. |
 | Local HTML / PDF / localhost context and control | Yes, after approval | `file://` access also requires the browser's Allow access to file URLs switch. macOS and Windows file URLs share the same approval and lease model. |
