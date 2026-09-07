@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Angehängte Registerkarte",
   "context.browser_tab_handoff": "Übergabe der Browser-Registerkarte {tabId}",
   "context.follow_active_tab": "Folgen Sie der aktiven Registerkarte",
+  "context.return_attached_tab": "Zum angehängten Tab zurückkehren",
   "context.in": "IN",
   "context.include_all_tabs": "Alle Tabs einbeziehen",
   "context.include_prompt_tab": "Diesen Tab in die Liste der Tabs in der Eingabeaufforderung aufnehmen",

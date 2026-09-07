@@ -843,6 +843,10 @@
     "message": "Diesen Tab aus der Liste der Tabs in der Eingabeaufforderung entfernen",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Zum angehängten Tab zurückkehren",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "Token",
     "description": "Runtime interface message context.tokens"

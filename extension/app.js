@@ -24,6 +24,7 @@ import {
 } from './lib/assist-model-contract.mjs';
 import {
   DEFAULT_GATEWAY_CAPABILITIES,
+  dashboardWsGatewayCapabilities,
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
@@ -136,11 +137,6 @@ import {
   mergeGroupChatLists,
   splitBotRosterRows,
 } from './lib/bot-mode.mjs';
-import {
-  CANONICAL_PET_NAMINE_DATA_URL,
-  CANONICAL_PET_RIKU_DATA_URL,
-  CANONICAL_PET_ROXAS_DATA_URL,
-} from './lib/pet-avatar.mjs';
 import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
 import {
   acceptedTurnRecoveryPolicy,
@@ -788,7 +784,7 @@ function botProfileDisplayName(row) {
   const rawTitle = String(row?.title || '').trim();
   if (rawDisplay && rawDisplay.toLowerCase() !== 'default') return rawDisplay;
   if (rawTitle && rawTitle.toLowerCase() !== 'default') return rawTitle;
-  if (profileName.toLowerCase() === 'default' || !profileName) return 'Roxas';
+  if (profileName.toLowerCase() === 'default' || !profileName) return 'Default';
       return profileName.charAt(0).toUpperCase() + profileName.slice(1);
 }
 
@@ -798,35 +794,7 @@ function botProfileDisplayTitle(row) {
 }
 
 // Deterministic Blobatar-style face for the Hermes Web rail (same algorithm as the side panel).
-function appendWebBotModeAvatar(container, displayName, profileName = '') {
-  const normalized = String(profileName || displayName || '').toLowerCase().trim();
-  if (normalized === 'roxas' || normalized === 'default') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_ROXAS_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Roxas';
-    container.replaceChildren(img);
-    return;
-  }
-  if (normalized === 'namine') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_NAMINE_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Naminé';
-    container.replaceChildren(img);
-    return;
-  }
-  if (normalized === 'riku') {
-    const img = document.createElement('img');
-    img.src = CANONICAL_PET_RIKU_DATA_URL;
-    img.alt = '';
-    img.className = 'bot-mode-avatar-pet';
-    img.title = 'Riku';
-    container.replaceChildren(img);
-    return;
-  }
+function appendWebBotModeAvatar(container, displayName) {
   const seed = String(displayName || 'agent').trim();
   let svgMarkup = '';
   try {
@@ -1148,6 +1116,7 @@ async function openWebBotProfile(row) {
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   renderConnectionTruth({ status: 'online' });
   renderWebBotModeRoster(els.webBotModeSearch?.value);
+  await loadSkills({ quiet: true });
   if (row.canonical.status === 'mismatch') {
     els.webBotModeStatus.textContent = `Open ${row.displayName} in Hermes Desktop Bot Mode to repair its canonical Bot Chat.`;
     return false;
@@ -1280,6 +1249,11 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
 }
 
 async function loadGatewayCapabilities() {
+  if (usesDashboardTicketTransport() && dashboardConnection?.client?.readyState === 1) {
+    gatewayCapabilities = dashboardWsGatewayCapabilities({ health: true, source: 'dashboard-ws' });
+    renderInlineAssistModelOptions();
+    return gatewayCapabilities;
+  }
   try {
     const response = await client.fetch('/v1/capabilities', { method: 'GET', cache: 'no-store' });
     const payload = await client.readJson(response);
@@ -2350,6 +2324,24 @@ async function refreshModelsFromPicker() {
 }
 
 async function loadSkills({ quiet = false } = {}) {
+  if (usesDashboardTicketTransport()) {
+    try {
+      const connection = await ensureDashboardConnection();
+      const profile = String(settings.activeProfile || 'default').trim() || 'default';
+      const payload = await connection.client.request(WS_METHODS.profilesDescribe, { name: profile });
+      availableSkills = normalizeHermesSkills({ data: payload?.skills || [] });
+      renderComposerSuggestions();
+      if (!quiet) els.composerStatus.textContent = `${availableSkills.length} skills synced`;
+      return { ok: true, count: availableSkills.length, source: 'dashboard-ws' };
+    } catch (error) {
+      if (!settings.apiKey) {
+        availableSkills = [];
+        renderComposerSuggestions();
+        if (!quiet) els.composerStatus.textContent = `Skill sync failed: ${error?.message || String(error)}`;
+        return { ok: false, count: 0, error: error?.message || String(error) };
+      }
+    }
+  }
   try {
     const response = await client.fetch('/v1/skills', { method: 'GET' });
     const payload = await client.readJson(response);
@@ -4530,6 +4522,7 @@ async function loadApp() {
       renderConnectionTruth({ status: 'online' });
       const metadataPromise = Promise.all([
         loadWebBotModeProfiles(),
+        loadSkills({ quiet: true }),
         connection.client.request(WS_METHODS.modelOptions, {}).then((modelOptions) => {
           const discoveredModels = modelRowsFromGatewayOptions(modelOptions || {});
           if (!discoveredModels.length) return;

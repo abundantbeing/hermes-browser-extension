@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Pestaña adjunta",
   "context.browser_tab_handoff": "Traspaso de la pestaña {tabId} del navegador",
   "context.follow_active_tab": "Seguir pestaña activa",
+  "context.return_attached_tab": "Volver a la pestaña adjunta",
   "context.in": "IN",
   "context.include_all_tabs": "Incluir todas las pestañas",
   "context.include_prompt_tab": "Incluir esta pestaña en la lista de pestañas del prompt",

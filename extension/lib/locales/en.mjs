@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Attached tab",
   "context.browser_tab_handoff": "Browser tab {tabId} handoff",
   "context.follow_active_tab": "Follow active tab",
+  "context.return_attached_tab": "Return to attached tab",
   "context.in": "IN",
   "context.include_all_tabs": "Include all tabs",
   "context.include_prompt_tab": "Include this tab in the prompt tab list",

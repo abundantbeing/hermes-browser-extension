@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Прикрепленная вкладка",
   "context.browser_tab_handoff": "Передача вкладки браузера {tabId}",
   "context.follow_active_tab": "Следовать за активной вкладкой",
+  "context.return_attached_tab": "Вернуться к прикрепленной вкладке",
   "context.in": "В",
   "context.include_all_tabs": "Включить все вкладки",
   "context.include_prompt_tab": "Включить эту вкладку в список вкладок промпта",

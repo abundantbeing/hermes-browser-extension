@@ -60,6 +60,27 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   warnings: Object.freeze([]),
 });
 
+export function dashboardWsGatewayCapabilities({ health = false, source = 'dashboard-ws' } = {}) {
+  return {
+    ...DEFAULT_GATEWAY_CAPABILITIES,
+    source,
+    health: health === true,
+    auth: true,
+    models: true,
+    sessions: true,
+    sessionChat: true,
+    sessionChatStreaming: true,
+    skills: true,
+    profiles: true,
+    dashboardWs: true,
+    warnings: Object.freeze([
+      'Dashboard WebSocket transport is active; REST-only API routes are not required.',
+      'Voice transcription unavailable - using browser speech fallback when available.',
+      'Image upload unavailable - pasted images stay inline only.',
+    ]),
+  };
+}
+
 function hasEndpoint(endpoints = {}, names = []) {
   return names.some((name) => Boolean(endpoints?.[name]?.path || endpoints?.[name] === true));
 }

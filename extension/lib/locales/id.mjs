@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Tab terlampir",
   "context.browser_tab_handoff": "Serah terima tab browser {tabId}",
   "context.follow_active_tab": "Ikuti tab aktif",
+  "context.return_attached_tab": "Kembali ke tab terlampir",
   "context.in": "MASUK",
   "context.include_all_tabs": "Sertakan semua tab",
   "context.include_prompt_tab": "Sertakan tab ini dalam daftar tab prompt",

@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Aba anexada",
   "context.browser_tab_handoff": "Transferência da aba {tabId} do navegador",
   "context.follow_active_tab": "Seguir aba ativa",
+  "context.return_attached_tab": "Voltar para a aba anexada",
   "context.in": "IN",
   "context.include_all_tabs": "Incluir todas as abas",
   "context.include_prompt_tab": "Incluir esta aba na lista de abas do prompt",

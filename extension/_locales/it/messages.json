@@ -843,6 +843,10 @@
     "message": "Rimuovi questa scheda dall'elenco delle schede del prompt",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Torna alla scheda collegata",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "token",
     "description": "Runtime interface message context.tokens"

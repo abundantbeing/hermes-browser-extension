@@ -843,6 +843,10 @@
     "message": "Usuń tę kartę z listy kart promptu",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Wróć do dołączonej karty",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "tokeny",
     "description": "Runtime interface message context.tokens"

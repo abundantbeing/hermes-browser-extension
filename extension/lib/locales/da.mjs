@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Vedhæftet fane",
   "context.browser_tab_handoff": "Overdragelse af browserfane {tabId}",
   "context.follow_active_tab": "Følg den aktive fane",
+  "context.return_attached_tab": "Gå tilbage til den tilknyttede fane",
   "context.in": "IND",
   "context.include_all_tabs": "Inkluder alle faner",
   "context.include_prompt_tab": "Inkluder denne fane i listen over promptfaner",

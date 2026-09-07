@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Onglet joint",
   "context.browser_tab_handoff": "Transfert de l'onglet navigateur {tabId}",
   "context.follow_active_tab": "Suivre l'onglet actif",
+  "context.return_attached_tab": "Revenir à l'onglet attaché",
   "context.in": "IN",
   "context.include_all_tabs": "Inclure tous les onglets",
   "context.include_prompt_tab": "Inclure cet onglet dans la liste des onglets de l'invite",

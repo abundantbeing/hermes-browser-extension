@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Dołączona zakładka",
   "context.browser_tab_handoff": "Przekazanie karty przeglądarki {tabId}",
   "context.follow_active_tab": "Śledź aktywną kartę",
+  "context.return_attached_tab": "Wróć do dołączonej karty",
   "context.in": "W",
   "context.include_all_tabs": "Uwzględnij wszystkie karty",
   "context.include_prompt_tab": "Uwzględnij tę kartę na liście kart promptu",

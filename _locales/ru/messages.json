@@ -843,6 +843,10 @@
     "message": "Удалить эту вкладку из списка вкладок промпта",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Вернуться к прикрепленной вкладке",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "Токены",
     "description": "Runtime interface message context.tokens"

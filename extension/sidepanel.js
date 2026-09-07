@@ -229,6 +229,7 @@ import {
   buildContextReceipt,
   capabilityStatusRows,
   connectionSecuritySummary,
+  dashboardWsGatewayCapabilities,
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import { filterKnownAssistantReconcileParts, normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
@@ -316,6 +317,14 @@ import {
   sessionBindingKeyForScope,
   shouldRefreshForTabEvent,
 } from './lib/context-scope.mjs';
+import {
+  createRevisionGate,
+  resetContextScope,
+  resolveContextScopeAction,
+  restoreConversationSessionState,
+  shouldPreserveDashboardTransport,
+  snapshotConversationSessionState,
+} from './lib/context-scope-transition.mjs';
 import {
   CONTEXT_CONSENT_STORAGE_KEY,
   consentGrantedForIdentity,
@@ -856,6 +865,10 @@ let startupReadiness = initialStartupReadiness(settings);
 let contextScope = normalizeContextScope(DEFAULT_CONTEXT_SCOPE);
 let previousConversationScope = normalizeContextScope(DEFAULT_CONTEXT_SCOPE);
 let currentContext = { activeTab: null, tabs: [], pageContext: null, contextScope };
+let nonPinnedConversationSessionSnapshot = null;
+const scopeRevision = createRevisionGate();
+const contextRefreshRevision = createRevisionGate();
+let scopeTransitionQueue = Promise.resolve();
 let contextConsentPrincipalBinding = { origin: '', transport: '', principal: '' };
 const pickedElementsByTabId = new Map();
 let elementPickInProgress = false;
@@ -2151,6 +2164,51 @@ function rememberConversationScope(scope = contextScope) {
   return previousConversationScope;
 }
 
+function nonPinnedConversationSessionKey() {
+  return `hermesBrowserConversationSession:${ensureSidepanelInstanceId()}`;
+}
+
+function rememberNonPinnedConversationSession(scope = previousConversationScope) {
+  const conversationScope = conversationScopeForContextScope(scope, previousConversationScope);
+  if (conversationScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB) return null;
+  const snapshot = snapshotConversationSessionState({
+    settings,
+    activeSessionRuntime,
+    sessionRoutesAvailable,
+    transport: activeConversationTransport,
+  });
+  nonPinnedConversationSessionSnapshot = snapshot;
+  try {
+    globalThis.sessionStorage?.setItem(nonPinnedConversationSessionKey(), JSON.stringify(snapshot));
+  } catch {
+    // Per-panel session identity persistence is best-effort only.
+  }
+  return snapshot;
+}
+
+function loadNonPinnedConversationSession() {
+  if (nonPinnedConversationSessionSnapshot) return nonPinnedConversationSessionSnapshot;
+  try {
+    const stored = globalThis.sessionStorage?.getItem(nonPinnedConversationSessionKey());
+    if (stored) nonPinnedConversationSessionSnapshot = JSON.parse(stored);
+  } catch {
+    nonPinnedConversationSessionSnapshot = null;
+  }
+  return nonPinnedConversationSessionSnapshot;
+}
+
+function restoreNonPinnedConversationSession() {
+  const snapshot = loadNonPinnedConversationSession();
+  if (!snapshot) return null;
+  const restored = restoreConversationSessionState(settings, snapshot);
+  if (!restored.restored) return null;
+  settings = restored.settings;
+  activeSessionRuntime = restored.activeSessionRuntime;
+  sessionRoutesAvailable = restored.sessionRoutesAvailable;
+  activeConversationTransport = restored.transport;
+  return restored;
+}
+
 function isGlobalPanelResidency() {
   return normalizePanelResidencyMode(settings.panelResidencyMode) === PANEL_RESIDENCY_MODES.GLOBAL
     && sidePanelParams.panelMode === PANEL_RESIDENCY_MODES.GLOBAL;
@@ -2217,9 +2275,11 @@ function activeMessagesStorageKey(conversationScope = previousConversationScope)
     : 'hermesBrowserMessages';
 }
 
-async function loadMessagesForActiveScope() {
+async function loadMessagesForActiveScope({ scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   const key = activeMessagesStorageKey(previousConversationScope);
   const stored = await browserApi.storage.local.get([key]);
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   messages = Array.isArray(stored[key]) ? stored[key] : [];
   const visibleTokens = estimateLocalSessionContextTokens({ messages: browserDisplayMessages(messages) });
   loadedSessionContextEstimate = {
@@ -2228,23 +2288,29 @@ async function loadMessagesForActiveScope() {
     visibleTokens,
   };
   renderMessagesFromStorage();
+  return true;
 }
 
-async function saveMessagesForActiveScope() {
+async function saveMessagesForActiveScope({ scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   const key = activeMessagesStorageKey(previousConversationScope);
   const cachedMessages = messagesForLocalCache(messages, settings.maxLocalMessages);
   await browserApi.storage.local.set({ [key]: cachedMessages });
+  return scopeRevision.isCurrent(scopeRevisionId);
 }
 
-async function loadSessionBindingForActiveScope() {
+async function loadSessionBindingForActiveScope({ scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return null;
   if (previousConversationScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB) return null;
   const key = sessionBindingKeyForScope(contextScope, previousConversationScope);
   const stored = await browserApi.storage.local.get([key]);
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return null;
   return stored[key] || null;
 }
 
-async function saveSessionBindingForActiveScope(session) {
-  if (previousConversationScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB || !session?.id) return;
+async function saveSessionBindingForActiveScope(session, { scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  if (previousConversationScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB || !session?.id) return false;
   const key = sessionBindingKeyForScope(contextScope, previousConversationScope);
   // Bind the stored session to the gateway + profile that created it so resume
   // cannot silently cross profile boundaries if the user switches profiles.
@@ -2253,16 +2319,16 @@ async function saveSessionBindingForActiveScope(session) {
     gatewayMode: settings.gatewayMode,
     profile: safeActiveProfile(),
   });
-  await browserApi.storage.local.set({
-    [key]: withSessionBindingIdentity({
-      sessionId: session.id,
-      sessionTitle: session.title || session.id,
-      pinnedTabId: previousConversationScope.pinnedTabId,
-      pinnedTitle: previousConversationScope.pinnedTitle || '',
-      pinnedUrl: previousConversationScope.pinnedUrl || '',
-      updatedAt: Date.now(),
-    }, identity),
-  });
+  const binding = withSessionBindingIdentity({
+    sessionId: session.id,
+    sessionTitle: session.title || session.id,
+    pinnedTabId: previousConversationScope.pinnedTabId,
+    pinnedTitle: previousConversationScope.pinnedTitle || '',
+    pinnedUrl: previousConversationScope.pinnedUrl || '',
+    updatedAt: Date.now(),
+  }, identity);
+  await browserApi.storage.local.set({ [key]: binding });
+  return scopeRevision.isCurrent(scopeRevisionId);
 }
 
 function syncSelectedTabsFromContextScope(tabs = currentContext.tabs || []) {
@@ -2426,7 +2492,11 @@ function renderContextScopeTabList(query = '') {
     row.className = 'context-scope-tab-row';
     appendContextScopeMenuButton({
       action: `pin-tab:${tab.id}`,
-      label: t('context.pin_tab', { title: compactPinnedTitle(tab.title || tab.url || translateUiText('Untitled tab'), 88) }),
+      label: isPinned
+        ? isAttachedPanelResidency()
+          ? t('context.return_attached_tab')
+          : t('context.follow_active_tab')
+        : t('context.pin_tab', { title: compactPinnedTitle(tab.title || tab.url || translateUiText('Untitled tab'), 88) }),
       detail: translateUiText(isPinned ? 'current' : isActive ? 'active' : ''),
       selected: isPinned,
       parent: row,
@@ -2535,6 +2605,24 @@ function renderContextScopeMenu(query = '', { focusSearch = false } = {}) {
     });
   } else if (contextScope.mode === CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE) {
     syncAttachedPanelContextScope();
+    appendContextScopeMenuButton({
+      action: 'attached-reset',
+      label: t('context.return_attached_tab'),
+      detail: translateUiText('owner'),
+      title: translateUiText('Return Hermes context to the tab that owns this attached panel.'),
+      selected: true,
+      parent: actions,
+    });
+  } else {
+    appendContextScopeMenuButton({
+      action: 'attached-reset',
+      label: t('context.return_attached_tab'),
+      detail: translateUiText('owner'),
+      title: translateUiText('Return Hermes context to the tab that owns this attached panel.'),
+      selected: contextScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB
+        && Number(contextScope.pinnedTabId) === Number(sidePanelParams.tabId),
+      parent: actions,
+    });
   }
   appendContextScopeMenuButton({
     action: 'pin-active',
@@ -2594,13 +2682,14 @@ function makePinnedTabSessionTitle(tab = {}) {
 // Used for explicit scope changes inside an already-open panel. Startup uses
 // initializeSessionForPanelOpen() so opening the extension does not silently
 // resume a previous Browser session.
-async function ensureSessionForActiveScope({ focus = false } = {}) {
+async function ensureSessionForActiveScope({ focus = false, scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (previousConversationScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB) {
-    await ensureDefaultBrowserSession({ focus });
-    return;
+    return ensureDefaultBrowserSession({ focus, scopeRevisionId });
   }
-  if (!minimumConnectionReady()) return;
-  const binding = await loadSessionBindingForActiveScope();
+  if (!minimumConnectionReady()) return false;
+  const binding = await loadSessionBindingForActiveScope({ scopeRevisionId });
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   // Never resume a stored session under a different gateway + profile than the
   // one that created it. A mismatched binding is stale; drop it and start fresh
   // so the user's Chat-only history never silently crosses into another profile.
@@ -2616,16 +2705,20 @@ async function ensureSessionForActiveScope({ focus = false } = {}) {
         title: binding.sessionTitle || binding.sessionId,
         source: DEFAULT_SETTINGS.sessionSource,
       };
-      await openHermesSession(session);
-      return;
+      return openHermesSession(session, { scopeRevisionId });
     }
     // Mismatched profile/gateway: forget the binding so we don't resume the
     // wrong profile's chat. The stored messages for this scope stay until the
     // new session overwrites them.
     const key = sessionBindingKeyForScope(contextScope, previousConversationScope);
     await browserApi.storage.local.remove([key]);
+    if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   }
-  await beginHermesBrowserDraft({ title: makePinnedTabSessionTitle(currentContext.activeTab || previousConversationScope), focus });
+  return beginHermesBrowserDraft({
+    title: makePinnedTabSessionTitle(currentContext.activeTab || previousConversationScope),
+    focus,
+    scopeRevisionId,
+  });
 }
 
 async function initializeSessionForPanelOpen({ focus = false } = {}) {
@@ -2638,50 +2731,185 @@ async function initializeSessionForPanelOpen({ focus = false } = {}) {
   await ensureSessionForActiveScope({ focus });
 }
 
-async function applyContextScope(nextScope, { ensureSession = false } = {}) {
-  contextScope = normalizeContextScope(nextScope);
+function scopeTransitionSnapshot() {
+  return {
+    contextScope,
+    previousConversationScope,
+    selectedTabs: selectedTabs === null ? null : [...selectedTabs],
+    currentContext,
+    messages,
+    settings,
+    availableSessions,
+    activeSessionRuntime,
+    activeConversationTransport,
+    activeDashboardWsConnection,
+    activeDashboardWsConnectionState: activeDashboardWsConnection
+      ? {
+        wsSessionId: activeDashboardWsConnection.wsSessionId,
+        wsStoredSessionId: activeDashboardWsConnection.wsStoredSessionId,
+        profile: activeDashboardWsConnection.profile,
+      }
+      : null,
+    sessionRoutesAvailable,
+    loadedSessionContextEstimate,
+  };
+}
+
+function restoreScopeTransitionSnapshot(snapshot) {
+  contextScope = snapshot.contextScope;
+  previousConversationScope = snapshot.previousConversationScope;
+  selectedTabs = snapshot.selectedTabs === null ? null : [...snapshot.selectedTabs];
+  currentContext = snapshot.currentContext;
+  messages = snapshot.messages;
+  settings = snapshot.settings;
+  availableSessions = snapshot.availableSessions;
+  activeSessionRuntime = snapshot.activeSessionRuntime;
+  activeConversationTransport = snapshot.activeConversationTransport;
+  activeDashboardWsConnection = snapshot.activeDashboardWsConnection;
+  if (activeDashboardWsConnection && snapshot.activeDashboardWsConnectionState) {
+    activeDashboardWsConnection.wsSessionId = snapshot.activeDashboardWsConnectionState.wsSessionId;
+    activeDashboardWsConnection.wsStoredSessionId = snapshot.activeDashboardWsConnectionState.wsStoredSessionId;
+    activeDashboardWsConnection.profile = snapshot.activeDashboardWsConnectionState.profile;
+  }
+  sessionRoutesAvailable = snapshot.sessionRoutesAvailable;
+  loadedSessionContextEstimate = snapshot.loadedSessionContextEstimate;
+  saveContextScopeForInstance();
+  saveConversationScopeForInstance();
+  renderContextScopeControls();
+  renderMessagesFromStorage();
+  updateSessionLabel();
+  renderSessionMenu();
+}
+
+async function commitContextScope(nextScope, { ensureSession = false, scopeRevisionId } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  const snapshot = ensureSession ? scopeTransitionSnapshot() : null;
+  const normalizedScope = normalizeContextScope(nextScope);
+  const conversationScope = conversationScopeForContextScope(contextScope, previousConversationScope);
+  const enteringExplicitPin = ensureSession
+    && conversationScope.mode !== CONTEXT_SCOPE_MODES.PINNED_TAB
+    && normalizedScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB;
+  const returningToGlobalFollow = ensureSession
+    && conversationScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB
+    && normalizedScope.mode === CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE;
+  if (enteringExplicitPin) rememberNonPinnedConversationSession(conversationScope);
+  const restoredConversation = returningToGlobalFollow ? restoreNonPinnedConversationSession() : null;
+  const restoredSession = restoredConversation?.settings?.sessionId
+    ? availableSessions.find((item) => item.id === restoredConversation.settings.sessionId) || {
+      id: restoredConversation.settings.sessionId,
+      title: restoredConversation.settings.sessionTitle || restoredConversation.settings.sessionId,
+      source: restoredConversation.settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
+    }
+    : null;
+  const legacyPinnedConversation = returningToGlobalFollow && !restoredConversation;
+
+  contextScope = normalizedScope;
   previousConversationScope = conversationScopeForContextScope(contextScope, previousConversationScope);
-  if (contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY) rememberConversationScope(contextScope);
+  if (legacyPinnedConversation) previousConversationScope = snapshot.previousConversationScope;
+  if (contextScope.mode !== CONTEXT_SCOPE_MODES.CHAT_ONLY && !legacyPinnedConversation) rememberConversationScope(contextScope);
   else saveConversationScopeForInstance();
   saveContextScopeForInstance();
   syncSelectedTabsFromContextScope(currentContext.tabs || []);
   renderContextScopeControls();
-  await loadMessagesForActiveScope();
-  if (ensureSession) await ensureSessionForActiveScope({ focus: false });
-  await refreshContext();
+  try {
+    await loadMessagesForActiveScope({ scopeRevisionId });
+    if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+    if (restoredSession) {
+      const opened = await openHermesSession(restoredSession, { scopeRevisionId });
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+      if (!opened) throw new Error('Could not restore the previous conversation for this tab scope.');
+    } else if (ensureSession) {
+      const sessionReady = await ensureSessionForActiveScope({ focus: false, scopeRevisionId });
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+      if (!sessionReady) throw new Error('Could not bind a session for this tab scope.');
+    }
+    await refreshContext({ scopeRevisionId });
+    return scopeRevision.isCurrent(scopeRevisionId);
+  } catch (error) {
+    if (scopeRevision.isCurrent(scopeRevisionId) && snapshot) {
+      restoreScopeTransitionSnapshot(snapshot);
+      try {
+        await browserApi.storage.local.set({ hermesBrowserSettings: snapshot.settings });
+      } catch {
+        // Preserve the original transition error if durable rollback is unavailable.
+      }
+    }
+    if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+    throw error;
+  }
+}
+
+function applyContextScope(nextScope, { ensureSession = false } = {}) {
+  const scopeRevisionId = scopeRevision.begin();
+  const normalizedScope = normalizeContextScope(nextScope);
+  if (!ensureSession && normalizedScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
+    contextScope = normalizedScope;
+    syncSelectedTabsFromContextScope(currentContext.tabs || []);
+    saveContextScopeForInstance();
+    saveConversationScopeForInstance();
+    renderContextScopeControls();
+  }
+  const transition = () => commitContextScope(normalizedScope, { ensureSession, scopeRevisionId });
+  const queued = scopeTransitionQueue.then(transition, transition);
+  scopeTransitionQueue = queued.catch(() => undefined);
+  return queued;
+}
+
+async function resolveAttachedPanelOwnerTab() {
+  if (!isAttachedPanelResidency()) return null;
+  try {
+    const owner = await browserApi.tabs.get(Number(sidePanelParams.tabId));
+    return owner?.id ? safeTab(owner) : null;
+  } catch {
+    return null;
+  }
 }
 
 async function pinContextTab(tab) {
-  if (!tab?.id) return;
-  await applyContextScope(contextScopeFromTab(tab, contextScope), { ensureSession: true });
+  if (!tab?.id) return false;
+  const attachedOwner = await resolveAttachedPanelOwnerTab();
+  if (isAttachedPanelResidency() && !attachedOwner) {
+    throw new Error('The attached owner tab is closed or no longer available.');
+  }
+  const action = resolveContextScopeAction({
+    currentScope: contextScope,
+    targetTab: tab,
+    panelMode: settings.panelResidencyMode,
+    attachedTab: attachedOwner,
+    attachedTabId: sidePanelParams.tabId,
+  });
+  if (action.kind === 'noop') return false;
+  const applied = await applyContextScope(action.scope, { ensureSession: true });
+  return applied;
 }
 
 async function pinContextTabById(tabId) {
   const id = Number(tabId);
-  if (!Number.isFinite(id)) return;
-  let tab = currentContext.tabs.find((item) => Number(item.id) === id) || null;
+  if (!Number.isFinite(id)) return false;
+  let tab = null;
   try {
     const freshTab = await browserApi.tabs.get(id);
     if (freshTab?.id) tab = safeTab(freshTab);
   } catch (_error) {
-    // The tab may have closed between render and click. Fall back to the
-    // snapshot from the menu when available so the user does not need a manual
-    // refresh just because the tab list is stale.
+    // The tab may have closed between render and click. Do not pin from the
+    // stale menu snapshot: scope ownership must be based on a live tab.
   }
-  if (!tab) throw new Error('Tab is closed or no longer available.');
-  await pinContextTab(tab);
+  if (!tab) return false;
+  return pinContextTab(tab);
 }
 
 async function unlockContextScope() {
-  await applyContextScope({
-    ...contextScope,
-    mode: CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE,
-    pinnedTabId: null,
-    pinnedWindowId: null,
-    pinnedTitle: '',
-    pinnedUrl: '',
-    selectedTabIds: [],
-  });
+  const attachedOwner = await resolveAttachedPanelOwnerTab();
+  if (isAttachedPanelResidency() && !attachedOwner) {
+    throw new Error('The attached owner tab is closed or no longer available.');
+  }
+  const applied = await applyContextScope(resetContextScope({
+    panelMode: settings.panelResidencyMode,
+    attachedTab: attachedOwner,
+    attachedTabId: sidePanelParams.tabId,
+    previousScope: contextScope,
+  }), { ensureSession: true });
+  return applied;
 }
 
 function setGatewayCapabilities(caps) {
@@ -2712,25 +2940,12 @@ function setGatewayCapabilities(caps) {
 }
 
 async function loadGatewayCapabilities({ quiet = false, publicOnly = false, healthOk = false } = {}) {
-  if (isRemoteWsMode()) {
-    setGatewayCapabilities({
-      ...DEFAULT_GATEWAY_CAPABILITIES,
-      source: 'remote-dashboard',
-      health: remoteWsConnection?.client?.readyState === 1,
-      auth: true,
-      models: true,
-      sessions: true,
-      sessionChat: true,
-      sessionChatStreaming: true,
-      skills: true,
-      dashboardWs: true,
-      warnings: [
-        'Remote dashboard mode uses WebSocket session/chat APIs; REST-only browser extension APIs stay unavailable.',
-        'Voice transcription unavailable - using browser speech fallback when available.',
-        'Image upload unavailable - pasted images stay inline only.',
-        'Automatic browser pairing unavailable - manual dashboard sign-in is required.',
-      ],
-    });
+  if (usesDashboardWsChatTransport()) {
+    const connection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
+    setGatewayCapabilities(dashboardWsGatewayCapabilities({
+      source: isRemoteWsMode() ? 'remote-dashboard' : 'dashboard-ws',
+      health: connection?.client?.readyState === 1,
+    }));
     return gatewayCapabilities;
   }
   try {
@@ -6655,10 +6870,30 @@ async function refreshModelsFromMenu() {
 }
 
 async function loadSkills({ quiet = false } = {}) {
+  if (usesDashboardWsChatTransport()) {
+    const connection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
+    if (connection?.client?.readyState === 1) {
+      try {
+        const profile = safeActiveProfile() || 'default';
+        const payload = await connection.client.request(WS_METHODS.profilesDescribe, { name: profile });
+        availableSkills = normalizeHermesSkills({ data: payload?.skills || [] });
+        renderSkillSuggestions();
+        if (!quiet) setStatus('ok', 'Hermes skills synced', `${availableSkills.length} /skill commands available`);
+        return { ok: true, count: availableSkills.length, source: 'dashboard-ws' };
+      } catch (error) {
+        if (!settings.apiKey) {
+          availableSkills = [];
+          renderSkillSuggestions();
+          if (!quiet) setStatus('warn', 'Skill sync failed', error?.message || String(error), { translateDetail: false });
+          return { ok: false, count: 0, error: error?.message || String(error) };
+        }
+      }
+    }
+  }
   if (!settings.apiKey) {
     availableSkills = [];
     renderSkillSuggestions();
-    return;
+    return { ok: false, count: 0, error: 'Connect to Hermes before refreshing skills.' };
   }
   try {
     const response = await apiFetch('/v1/skills', {
@@ -6674,6 +6909,7 @@ async function loadSkills({ quiet = false } = {}) {
     availableSkills = [];
     renderSkillSuggestions();
     if (!quiet) setStatus('warn', 'Skill sync failed', error?.message || String(error), { translateDetail: false });
+    return { ok: false, count: 0, error: error?.message || String(error) };
   }
 }
 
@@ -8727,6 +8963,9 @@ async function applySelectedProfile(profileName = '', { quiet = false, viaBotMod
   }).catch(() => undefined);
   // The cron schedule is profile-scoped: re-read it for the newly active agent.
   void loadCronJobs({ quiet: true });
+  // Skill commands are profile-scoped too; refresh them after every successful
+  // profile boundary so the composer never keeps the prior profile's catalog.
+  void loadSkills({ quiet: true });
   return true;
 }
 
@@ -10906,7 +11145,8 @@ function makeBrowserSessionTitle(date = new Date()) {
   return `Hermes Browser Extension · ${stamp}`;
 }
 
-async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focus = true } = {}) {
+async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focus = true, scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (!canSwitchActiveSession({ sending, runControl: activeRunControl })) {
     setStatus('warn', 'Hermes is working…', 'Stop the active run before switching sessions.');
     return false;
@@ -10915,9 +11155,8 @@ async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focu
   // must use that profile-aware transport even when the extension itself is
   // connected to the local API sidecar; otherwise the first send can land on
   // the default profile or fail before the profile WS fallback is reached.
-  if (isRemoteWsMode()) return createHermesBrowserSession({ title, focus });
-  if (isNamedHermesProfile()) {
-    return createHermesBrowserSession({ title, focus, transport: 'dashboard-ws' });
+  if (isRemoteWsMode() || isNamedHermesProfile() || activeConversationTransport === 'dashboard-ws') {
+    return createHermesBrowserSession({ title, focus, transport: 'dashboard-ws', scopeRevisionId });
   }
   const sessionId = makeBrowserSessionId();
   const preferredBinding = preferredModelBindingForNewSession();
@@ -10938,7 +11177,9 @@ async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focu
   sessionRoutesAvailable = true;
   messages = [];
   await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
-  await saveSessionBindingForActiveScope({ id: sessionId, title, source: DEFAULT_SETTINGS.sessionSource });
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  await saveSessionBindingForActiveScope({ id: sessionId, title, source: DEFAULT_SETTINGS.sessionSource }, { scopeRevisionId });
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   renderMessagesFromStorage();
   updateSessionLabel();
   renderSessionMenu();
@@ -10954,7 +11195,8 @@ function preferredModelOptionsForNewSession() {
   });
 }
 
-async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), focus = true, hidden = false, transport = '', source = '' } = {}) {
+async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), focus = true, hidden = false, transport = '', source = '', scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   activeGroupAbortController?.abort?.();
   activeGroupAbortController = null;
   activeGroupProjection = null;
@@ -10967,10 +11209,12 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
   const requestProvider = preferredModel?.provider || preferredBinding?.provider || '';
   const dashboardTransport = activeConversationTransport === 'dashboard-ws'
     || shouldUseBotDashboardTransport({ gatewayMode: settings.gatewayMode, transport });
+  let connection = null;
   if (dashboardTransport) {
     activeConversationTransport = 'dashboard-ws';
     try {
-      const connection = await ensureActiveDashboardWsConnection();
+      connection = await ensureActiveDashboardWsConnection();
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       const { liveId, storedId } = await establishGatewaySession({
         client: connection.client,
         profile: safeActiveProfile(),
@@ -10985,6 +11229,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
           profile: safeActiveProfile(),
         },
       });
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       connection.wsSessionId = liveId;
       connection.wsStoredSessionId = storedId;
       connection.profile = safeActiveProfile();
@@ -11023,18 +11268,31 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
       activeSessionRuntime = { ...activeSessionRuntime, sessionId: id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
       messages = [];
       await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
-      await saveSessionBindingForActiveScope(session);
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+      await saveSessionBindingForActiveScope(session, { scopeRevisionId });
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       renderMessagesFromStorage();
       updateSessionLabel();
       renderSessionMenu();
       if (focus) els.input.focus();
       return session;
     } catch (wsError) {
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+      const preserveDashboardTransport = shouldPreserveDashboardTransport({
+        requestedTransport: 'dashboard-ws',
+        connectionReadyState: connection?.client?.readyState || activeDashboardWsConnection?.client?.readyState,
+        error: wsError,
+      });
+      if (preserveDashboardTransport || isRemoteWsMode()) {
+        console.warn('[Hermes Browser] dashboard-ws session creation failed; preserving the active transport:', wsError?.message || wsError);
+        throw wsError;
+      }
       console.warn('[Hermes Browser] dashboard-ws session creation fell back to REST:', wsError?.message || wsError);
+      activeConversationTransport = 'rest';
+      activeDashboardWsConnection = null;
     }
   }
-  activeConversationTransport = 'rest';
-  activeDashboardWsConnection = null;
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   const sessionId = makeBrowserSessionId();
   const response = await apiFetch('/api/sessions', {
     method: 'POST',
@@ -11050,6 +11308,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
     }),
   });
   const payload = await readJsonResponse(response);
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Could not create session (${response.status})`);
   const session = normalizeHermesSessions({ data: [{
     ...(payload.session || payload),
@@ -11079,7 +11338,9 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
   sessionRoutesAvailable = true;
   messages = [];
   await browserApi.storage.local.set({ hermesBrowserSettings: settings, [activeMessagesStorageKey(previousConversationScope)]: [] });
-  await saveSessionBindingForActiveScope(session);
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  await saveSessionBindingForActiveScope(session, { scopeRevisionId });
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   renderMessagesFromStorage();
   updateSessionLabel();
   renderSessionMenu();
@@ -11113,6 +11374,8 @@ function renderSessionHistoryLoading(session = {}) {
 }
 
 async function openHermesSession(selectedSession) {
+  const { scopeRevisionId = scopeRevision.current() } = arguments[1] || {};
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (!canSwitchActiveSession({ sending, runControl: activeRunControl })) {
     setStatus('warn', 'Hermes is working…', 'Stop the active run before switching sessions.');
     return false;
@@ -11125,6 +11388,10 @@ async function openHermesSession(selectedSession) {
   els.sessionMenu.hidden = true;
   els.sessionMenuButton.setAttribute('aria-expanded', 'false');
   const requestId = ++sessionLoadRequestId;
+  const isCurrentRequest = () => {
+    if (requestId !== sessionLoadRequestId) return;
+    return scopeRevision.isCurrent(scopeRevisionId);
+  };
   let session = selectedSession;
   renderSessionHistoryLoading(session);
   const requestedSessionId = session.id;
@@ -11146,7 +11413,7 @@ async function openHermesSession(selectedSession) {
         storedSessionId: session.id,
         profile: safeActiveProfile(),
       });
-      if (requestId !== sessionLoadRequestId) return;
+      if (!isCurrentRequest()) return false;
       // Profile boundary check: a session that the gateway reports under a
       // different profile must not be resumed into the current selection. Fail
       // closed and refuse to bind it (issue #60 review).
@@ -11158,7 +11425,7 @@ async function openHermesSession(selectedSession) {
           `This session belongs to the "${reportedProfile}" profile. Switch to that profile before resuming it.`,
           { translateDetail: false },
         );
-        return;
+        return false;
       }
       connection.wsSessionId = liveId;
       connection.wsStoredSessionId = storedId;
@@ -11176,16 +11443,21 @@ async function openHermesSession(selectedSession) {
         },
       };
     } catch (error) {
-      if (requestId !== sessionLoadRequestId) return;
-      if (!isRemoteWsMode()) {
+      if (!isCurrentRequest()) return false;
+      if (!shouldPreserveDashboardTransport({
+        requestedTransport: 'dashboard-ws',
+        connectionReadyState: activeDashboardWsConnection?.client?.readyState,
+        error,
+      }) && !isRemoteWsMode()) {
         activeConversationTransport = 'rest';
         activeDashboardWsConnection = null;
       }
       renderMessagesFromStorage();
       setStatus('error', 'Could not open session', error?.message || String(error), { translateDetail: false });
-      return;
+      return false;
     }
   }
+  if (!isCurrentRequest()) return false;
   const inheritedModelBinding = settings.sessionModelBindings?.[requestedSessionId];
   const inheritedModelOptions = settings.sessionModelOptionBindings?.[requestedSessionId];
   settings = {
@@ -11205,16 +11477,20 @@ async function openHermesSession(selectedSession) {
   activeSessionRuntime = { ...activeSessionRuntime, sessionId: session.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
   sessionRoutesAvailable = true;
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
-  await saveSessionBindingForActiveScope(session);
+  if (!isCurrentRequest()) return false;
+  await saveSessionBindingForActiveScope(session, { scopeRevisionId });
+  if (!isCurrentRequest()) return false;
   await activateCurrentDelegationSession();
+  if (!isCurrentRequest()) return false;
   updateSessionLabel();
   renderSessionMenu();
   const loaded = await loadSessionMessages(liveSessionId, {
     requestId,
+    scopeRevisionId,
     transport: activeConversationTransport,
     connection: activeDashboardWsConnection,
   });
-  if (requestId !== sessionLoadRequestId) return;
+  if (!isCurrentRequest()) return false;
   setStatus(loaded ? 'ok' : 'warn', loaded ? 'Session opened' : 'Session opened without history', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`, { translateDetail: false });
   return true;
 }
@@ -11260,7 +11536,8 @@ async function fetchSessionMessagesQuietly(sessionId, {
   };
 }
 
-async function commitFetchedSessionMessages(result, { sessionId, requestId = null } = {}) {
+async function commitFetchedSessionMessages(result, { sessionId, requestId = null, scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (requestId != null && requestId !== sessionLoadRequestId) return false;
   if (String(settings.sessionId || '').trim() !== String(sessionId || '').trim()) return false;
   if (result?.session) applySessionRuntimeSnapshot({
@@ -11275,7 +11552,8 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
     contextTokens: estimateLocalSessionContextTokens({ messages: contextMessages }),
     visibleTokens: estimateLocalSessionContextTokens({ messages: browserDisplayMessages(messages) }),
   };
-  await saveMessagesForActiveScope();
+  await saveMessagesForActiveScope({ scopeRevisionId });
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (requestId != null && requestId !== sessionLoadRequestId) return false;
   if (String(settings.sessionId || '').trim() !== String(sessionId || '').trim()) return false;
   renderMessagesFromStorage();
@@ -11284,19 +11562,23 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
 
 async function loadSessionMessages(sessionId = settings.sessionId, {
   requestId = null,
+  scopeRevisionId = scopeRevision.current(),
   transport = usesDashboardWsChatTransport() ? 'dashboard-ws' : 'rest',
   connection = activeDashboardWsConnection,
 } = {}) {
   const expectedSessionId = String(settings.sessionId || '').trim();
-  const isCurrentRequest = () => requestId == null || requestId === sessionLoadRequestId;
+  const isCurrentRequest = () => (requestId == null || requestId === sessionLoadRequestId)
+    && scopeRevision.isCurrent(scopeRevisionId);
+  if (!isCurrentRequest()) return false;
   if (isUnsavedBrowserDraftSession({ sessionId, sessions: availableSessions })) {
+    if (!isCurrentRequest()) return false;
     await loadMessagesForActiveScope();
     return true;
   }
   try {
     const result = await fetchSessionMessagesQuietly(sessionId, { transport, connection: activeDashboardWsConnection || connection });
     if (!isCurrentRequest()) return false;
-    return commitFetchedSessionMessages(result, { sessionId: expectedSessionId, requestId });
+    return commitFetchedSessionMessages(result, { sessionId: expectedSessionId, requestId, scopeRevisionId });
   } catch (error) {
     if (!isCurrentRequest()) return false;
     addMessage('system', `Could not load session messages: ${error?.message || String(error)}`);
@@ -11446,10 +11728,11 @@ async function handleSessionOwnershipDecision(event) {
   }
 }
 
-async function ensureDefaultBrowserSession({ focus = false } = {}) {
-  if ((!settings.apiKey && !usesDashboardWsChatTransport()) || settings.sessionId !== DEFAULT_SETTINGS.sessionId) return;
+async function ensureDefaultBrowserSession({ focus = false, scopeRevisionId = scopeRevision.current() } = {}) {
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  if ((!settings.apiKey && !usesDashboardWsChatTransport()) || settings.sessionId !== DEFAULT_SETTINGS.sessionId) return false;
   const current = availableSessions.find((session) => session.id === settings.sessionId);
-  if (isHermesBrowserSession(current)) return;
+  if (isHermesBrowserSession(current)) return true;
   if (current) {
     try {
       const response = await apiFetch(`/api/sessions/${encodeSessionId(current.id)}`, {
@@ -11457,24 +11740,28 @@ async function ensureDefaultBrowserSession({ focus = false } = {}) {
         body: JSON.stringify({ source: DEFAULT_SETTINGS.sessionSource }),
       });
       const payload = await readJsonResponse(response);
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Session migration failed (${response.status})`);
       const migrated = normalizeHermesSessions({ data: [payload.session || payload] })[0];
       if (migrated) {
         availableSessions = normalizeHermesSessions({ data: [migrated, ...availableSessions.filter((item) => item.id !== migrated.id)] });
         updateSessionLabel();
         renderSessionMenu();
-        return;
+        return true;
       }
     } catch (error) {
+      if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       setStatus('warn', 'Could not migrate Browser session', error?.message || String(error), { translateDetail: false });
     }
   }
+  if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   const existingBrowserSession = availableSessions.find(isHermesBrowserSession);
   if (existingBrowserSession) {
-    await openHermesSession(existingBrowserSession);
-    return;
+    await openHermesSession(existingBrowserSession, { scopeRevisionId });
+    return scopeRevision.isCurrent(scopeRevisionId);
   }
-  await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus });
+  await beginHermesBrowserDraft({ title: makeBrowserSessionTitle(), focus, scopeRevisionId });
+  return scopeRevision.isCurrent(scopeRevisionId);
 }
 
 const THINKING_PLACEHOLDER = 'Hermes is thinking...';
@@ -12759,9 +13046,17 @@ function clearPickedElementForActiveTab() {
 }
 
 async function refreshContext(options = {}) {
+  options = options && typeof options === 'object' ? { ...options } : {};
+  const scopeRevisionId = options.scopeRevisionId ?? scopeRevision.current();
+  delete options.scopeRevisionId;
+  const refreshRevisionId = contextRefreshRevision.begin();
+  const isCurrentScope = () => scopeRevision.isCurrent(scopeRevisionId)
+    && contextRefreshRevision.isCurrent(refreshRevisionId);
+  if (!isCurrentScope()) return currentContext;
   const contextGate = effectiveContextGate(contextScope);
   let captureScope = contextGate.scope;
   if (captureScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
+    if (!isCurrentScope()) return currentContext;
     currentContext = { activeTab: null, tabs: [], selectedTabs: [], pageContext: null, contextScope: captureScope };
     selectedTabs = [];
     setStatus(
@@ -12777,10 +13072,12 @@ async function refreshContext(options = {}) {
   }
 
   const [active, tabs] = await Promise.all([activeTab(), tabsForCurrentScope()]);
+  if (!isCurrentScope()) return currentContext;
   const tab = resolveContextTargetTab({ activeTab: active, tabs, scope: captureScope });
   if (captureScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB && tab) {
     const nextScope = contextScopeFromTab(tab, contextScope);
     if (JSON.stringify(nextScope) !== JSON.stringify(contextScope)) {
+      if (!isCurrentScope()) return currentContext;
       contextScope = nextScope;
       captureScope = normalizeContextScope(nextScope);
       saveContextScopeForInstance();
@@ -12792,11 +13089,14 @@ async function refreshContext(options = {}) {
     : pinnedMissing
       ? { ok: false, restricted: true, reason: 'Pinned tab is closed or no longer available.', text: '', selectedText: '', meta: {} }
       : null;
+  if (!isCurrentScope()) return currentContext;
   const youtubeTranscript = tab ? await getYoutubeTranscriptForTab(tab) : null;
+  if (!isCurrentScope()) return currentContext;
   if (pageContext && youtubeTranscript) pageContext.youtubeTranscript = youtubeTranscript;
   if (pageContext && tab) mergeStoredPickIntoPageContext(tab, pageContext);
   syncSelectedTabsFromContextScope(tabs);
   const promptTabs = filterPromptTabs(tabs, captureScope, { activeTab: tab, targetTab: tab });
+  if (!isCurrentScope()) return currentContext;
   currentContext = {
     activeTab: tab,
     tabs,
@@ -14258,8 +14558,10 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       } else if (sessionContextFailureRecovery(streamError, gatewayCapabilities)) {
         throw streamError;
       } else {
+        const fallbackSafeStatus = [404, 405, 501].includes(Number(streamError?.httpStatus ?? streamError?.status));
+        const fallbackSafe = streamError?.fallbackSafe === true || fallbackSafeStatus;
         const recoveryAction = classifyTurnRecovery(streamError);
-        if (recoveryAction === 'reject' || streamError?.streamError || streamError?.requestRejected) {
+        if ((recoveryAction === 'reject' && !fallbackSafe) || streamError?.streamError || (streamError?.requestRejected && !fallbackSafe)) {
           if (liveText) {
             answer = liveText;
           } else {
@@ -14270,7 +14572,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           // is not the active Bot Chat session. Surface genuine WS/ticket errors directly.
           streamView.update(`Could not reach the Hermes dashboard.\n${streamError.message}`);
           throw streamError;
-        } else if (recoveryAction === 'fallback') {
+        } else if (fallbackSafe || recoveryAction === 'fallback') {
           streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);
           answer = await fallbackSessionChat(prompt, preparedAttachments, {
             onRuntime: (payload) => {
@@ -16259,8 +16561,8 @@ function bindEvents() {
         .catch((error) => setStatus('warn', 'Could not switch to Chat only', error?.message || String(error), { translateDetail: false }));
       return;
     }
-    if (action === 'follow-active' || action === 'unlock') {
-      unlockContextScope().catch((error) => setStatus('warn', 'Could not unlock tab scope', error?.message || String(error), { translateDetail: false }));
+    if (action === 'follow-active' || action === 'unlock' || action === 'attached-reset') {
+      unlockContextScope().catch((error) => setStatus('warn', 'Could not reset tab scope', error?.message || String(error), { translateDetail: false }));
       return;
     }
     if (action === 'pin-active') {

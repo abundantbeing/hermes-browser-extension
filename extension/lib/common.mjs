@@ -2182,7 +2182,13 @@ export function normalizeHermesModels(payload = {}, selectedModel = DEFAULT_SETT
   const models = [];
 
   for (const item of rawModels) {
-    const id = typeof item === 'string' ? item : item?.id;
+    const rawId = typeof item === 'string' ? item : item?.id;
+    const provider = typeof item === 'string' ? '' : String(item.provider || item.owned_by || '').trim();
+    const alreadyQualified = provider && (
+      String(rawId || '').includes('::')
+      || String(rawId || '').startsWith(`${provider}:`)
+    );
+    const id = provider && rawId && !alreadyQualified ? `${provider}::${rawId}` : rawId;
     if (!id || seen.has(id)) continue;
     seen.add(id);
     const source = typeof item === 'string' ? '' : item.source || '';
@@ -2192,10 +2198,10 @@ export function normalizeHermesModels(payload = {}, selectedModel = DEFAULT_SETT
     models.push({
       id,
       label: typeof item === 'string' ? item : item.label || item.name || item.id,
-      owner: typeof item === 'string' ? '' : item.owned_by || item.provider || '',
-      provider: typeof item === 'string' ? '' : item.provider || item.owned_by || '',
-      providerLabel: typeof item === 'string' ? '' : item.providerLabel || item.provider_label || item.provider_name || item.owned_by || item.provider || '',
-      rawModelId: typeof item === 'string' ? item : item.rawModelId || item.raw_model_id || item.model || item.id,
+      owner: typeof item === 'string' ? '' : item.owned_by || provider,
+      provider,
+      providerLabel: typeof item === 'string' ? '' : item.providerLabel || item.provider_label || item.provider_name || item.owned_by || provider,
+      rawModelId: typeof item === 'string' ? item : item.rawModelId || item.raw_model_id || item.model || rawId,
       description: typeof item === 'string' ? '' : item.description || '',
       contextTokens: typeof item === 'string' ? 0 : modelContextTokens(item),
       fast: typeof item === 'string' ? undefined : item.fast,

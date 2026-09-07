@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "संलग्न टैब",
   "context.browser_tab_handoff": "ब्राउज़र टैब {tabId} हैंडऑफ़",
   "context.follow_active_tab": "सक्रिय टैब का पालन करें",
+  "context.return_attached_tab": "संलग्न टैब पर लौटें",
   "context.in": "इन",
   "context.include_all_tabs": "सभी टैब शामिल करें",
   "context.include_prompt_tab": "इस टैब को प्रॉम्प्ट टैब सूची में शामिल करें",

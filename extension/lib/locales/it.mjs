@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Scheda allegata",
   "context.browser_tab_handoff": "Trasferimento della scheda del browser {tabId}",
   "context.follow_active_tab": "Segui la scheda attiva",
+  "context.return_attached_tab": "Torna alla scheda collegata",
   "context.in": "IN",
   "context.include_all_tabs": "Includi tutte le schede",
   "context.include_prompt_tab": "Includi questa scheda nell'elenco delle schede del prompt",

@@ -843,6 +843,10 @@
     "message": "將此分頁從提示分頁清單中移除",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "返回附加的分頁",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "權杖",
     "description": "Runtime interface message context.tokens"

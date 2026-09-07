@@ -843,6 +843,10 @@
     "message": "Remove this tab from the prompt tab list",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Return to attached tab",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "tokens",
     "description": "Runtime interface message context.tokens"

@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Tab đính kèm",
   "context.browser_tab_handoff": "Chuyển giao tab trình duyệt {tabId}",
   "context.follow_active_tab": "Theo dõi tab đang hoạt động",
+  "context.return_attached_tab": "Quay lại tab được gắn",
   "context.in": "VÀO",
   "context.include_all_tabs": "Bao gồm tất cả các tab",
   "context.include_prompt_tab": "Đưa tab này vào danh sách tab lời nhắc",

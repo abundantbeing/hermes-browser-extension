@@ -843,6 +843,10 @@
     "message": "Dit tabblad verwijderen uit de prompttabbladlijst",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Terug naar het gekoppelde tabblad",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "tokens",
     "description": "Runtime interface message context.tokens"

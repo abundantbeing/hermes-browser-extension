@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Ekli sekme",
   "context.browser_tab_handoff": "{tabId} sekmesi aktarımı",
   "context.follow_active_tab": "Etkin sekmeyi takip et",
+  "context.return_attached_tab": "Ekli sekmeye dön",
   "context.in": "DAHİL",
   "context.include_all_tabs": "Tüm sekmeleri dahil et",
   "context.include_prompt_tab": "Bu sekmeyi prompt sekmesi listesine dahil et",

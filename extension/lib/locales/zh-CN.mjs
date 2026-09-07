@@ -188,6 +188,7 @@ export default Object.freeze({
   "context.attached_tab": "已附加标签页",
   "context.browser_tab_handoff": "浏览器标签页 {tabId} 交接",
   "context.follow_active_tab": "跟随活动标签页",
+  "context.return_attached_tab": "返回附加的标签页",
   "context.in": "已加入",
   "context.include_all_tabs": "包含所有标签页",
   "context.include_prompt_tab": "将此标签页加入提示词标签页列表",

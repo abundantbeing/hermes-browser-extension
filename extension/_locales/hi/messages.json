@@ -843,6 +843,10 @@
     "message": "इस टैब को प्रॉम्प्ट टैब सूची से हटाएँ",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "संलग्न टैब पर लौटें",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "टोकन",
     "description": "Runtime interface message context.tokens"

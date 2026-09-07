@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "علامة التبويب المرفقة",
   "context.browser_tab_handoff": "تسليم علامة تبويب المتصفح {tabId}",
   "context.follow_active_tab": "اتبع علامة التبويب النشطة",
+  "context.return_attached_tab": "العودة إلى علامة التبويب المرفقة",
   "context.in": "داخل",
   "context.include_all_tabs": "تضمين كل علامات التبويب",
   "context.include_prompt_tab": "تضمين علامة التبويب هذه في قائمة علامات تبويب المطالبة",

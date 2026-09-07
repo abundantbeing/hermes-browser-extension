@@ -843,6 +843,10 @@
     "message": "이 탭을 프롬프트 탭 목록에서 제거",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "연결된 탭으로 돌아가기",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "토큰",
     "description": "Runtime interface message context.tokens"

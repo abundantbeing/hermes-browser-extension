@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "已附加的分頁",
   "context.browser_tab_handoff": "瀏覽器分頁 {tabId} 交接",
   "context.follow_active_tab": "跟隨活動分頁",
+  "context.return_attached_tab": "返回附加的分頁",
   "context.in": "輸入",
   "context.include_all_tabs": "包含所有分頁",
   "context.include_prompt_tab": "將此分頁納入提示分頁清單",

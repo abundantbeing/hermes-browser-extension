@@ -7,6 +7,7 @@ import {
   buildContextReceipt,
   capabilityStatusRows,
   connectionSecuritySummary,
+  dashboardWsGatewayCapabilities,
   normalizeGatewayCapabilities,
 } from '../extension/lib/capabilities.mjs';
 
@@ -71,6 +72,22 @@ test('normalizeGatewayCapabilities maps the Hermes /v1/capabilities API contract
   assert.equal(caps.browserPairing, false);
   assert.equal(caps.imageUpload, false);
   assert.match(caps.warnings.join('\n'), /audio transcription/i);
+});
+
+test('dashboard WebSocket transport advertises its real session and skill surface', () => {
+  const caps = dashboardWsGatewayCapabilities({ health: true });
+
+  assert.equal(caps.source, 'dashboard-ws');
+  assert.equal(caps.health, true);
+  assert.equal(caps.auth, true);
+  assert.equal(caps.models, true);
+  assert.equal(caps.sessions, true);
+  assert.equal(caps.sessionChat, true);
+  assert.equal(caps.sessionChatStreaming, true);
+  assert.equal(caps.skills, true);
+  assert.equal(caps.profiles, true);
+  assert.equal(caps.dashboardWs, true);
+  assert.doesNotMatch(caps.warnings.join('\n'), /legacy/i);
 });
 
 test('normalizeGatewayCapabilities detects browser protocol and companion plugin capability flags', () => {

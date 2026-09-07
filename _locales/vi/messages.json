@@ -843,6 +843,10 @@
     "message": "Xóa tab này khỏi danh sách tab lời nhắc",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Quay lại tab được gắn",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "mã thông báo",
     "description": "Runtime interface message context.tokens"

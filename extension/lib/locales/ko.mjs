@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "첨부 탭",
   "context.browser_tab_handoff": "브라우저 탭 {tabId} 핸드오프",
   "context.follow_active_tab": "활성 탭 팔로우",
+  "context.return_attached_tab": "연결된 탭으로 돌아가기",
   "context.in": "입력",
   "context.include_all_tabs": "모든 탭 포함",
   "context.include_prompt_tab": "이 탭을 프롬프트 탭 목록에 포함",

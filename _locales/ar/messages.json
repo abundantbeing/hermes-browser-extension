@@ -843,6 +843,10 @@
     "message": "إزالة علامة التبويب هذه من قائمة علامات تبويب المطالبة",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "العودة إلى علامة التبويب المرفقة",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "الرموز",
     "description": "Runtime interface message context.tokens"

@@ -843,6 +843,10 @@
     "message": "Retirer cet onglet de la liste des onglets de l'invite",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Revenir à l'onglet attaché",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "jetons",
     "description": "Runtime interface message context.tokens"

@@ -843,6 +843,10 @@
     "message": "Quitar esta pestaña de la lista de pestañas del prompt",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Volver a la pestaña adjunta",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "fichas",
     "description": "Runtime interface message context.tokens"

@@ -843,6 +843,10 @@
     "message": "从提示词标签页列表中移除此标签页",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "返回附加的标签页",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "令牌",
     "description": "Runtime interface message context.tokens"

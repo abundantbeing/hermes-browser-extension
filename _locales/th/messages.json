@@ -843,6 +843,10 @@
     "message": "นำแท็บนี้ออกจากรายการแท็บพร้อมท์",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "กลับไปยังแท็บที่แนบไว้",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "โทเค็น",
     "description": "Runtime interface message context.tokens"

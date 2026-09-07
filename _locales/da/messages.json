@@ -843,6 +843,10 @@
     "message": "Fjern denne fane fra listen over promptfaner",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "Gå tilbage til den tilknyttede fane",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "tokens",
     "description": "Runtime interface message context.tokens"

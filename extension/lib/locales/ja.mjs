@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "付属タブ",
   "context.browser_tab_handoff": "ブラウザタブ {tabId} のハンドオフ",
   "context.follow_active_tab": "アクティブなタブをフォローする",
+  "context.return_attached_tab": "接続中のタブに戻る",
   "context.in": "入力",
   "context.include_all_tabs": "すべてのタブを含める",
   "context.include_prompt_tab": "このタブをプロンプトタブリストに含める",

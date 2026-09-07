@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "Bijgevoegd tabblad",
   "context.browser_tab_handoff": "Overdracht van browsertabblad {tabId}",
   "context.follow_active_tab": "Volg het actieve tabblad",
+  "context.return_attached_tab": "Terug naar het gekoppelde tabblad",
   "context.in": "IN",
   "context.include_all_tabs": "Alle tabbladen opnemen",
   "context.include_prompt_tab": "Dit tabblad opnemen in de prompttabbladlijst",

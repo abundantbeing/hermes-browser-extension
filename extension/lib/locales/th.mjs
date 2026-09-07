@@ -189,6 +189,7 @@ export default Object.freeze({
   "context.attached_tab": "แท็บที่แนบมา",
   "context.browser_tab_handoff": "แฮนด์ออฟแท็บเบราว์เซอร์ {tabId}",
   "context.follow_active_tab": "ติดตามแทปที่ใช้งานอยู่",
+  "context.return_attached_tab": "กลับไปยังแท็บที่แนบไว้",
   "context.in": "เข้า",
   "context.include_all_tabs": "รวมแท็บทั้งหมด",
   "context.include_prompt_tab": "รวมแท็บนี้ในรายการแท็บพร้อมท์",

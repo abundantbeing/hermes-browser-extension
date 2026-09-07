@@ -843,6 +843,10 @@
     "message": "このタブをプロンプトタブリストから削除",
     "description": "Runtime interface message context.remove_prompt_tab"
   },
+  "runtime_context_return_attached_tab": {
+    "message": "接続中のタブに戻る",
+    "description": "Runtime interface message context.return_attached_tab"
+  },
   "runtime_context_tokens": {
     "message": "トークン",
     "description": "Runtime interface message context.tokens"

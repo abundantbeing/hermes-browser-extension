@@ -1747,6 +1747,15 @@ test('normalizeHermesModels converts OpenAI-style /v1/models payload and keeps s
   assert.equal(models[1].contextTokens, 131072);
 });
 
+test('normalizeHermesModels canonicalizes provider-qualified UI IDs while preserving raw runtime IDs', () => {
+  const models = normalizeHermesModels({
+    data: [{ id: 'e2e/test-model', provider: 'e2e', context_length: 32000 }],
+  }, 'e2e/test-model');
+  assert.equal(models[0].id, 'e2e::e2e/test-model');
+  assert.equal(models[0].rawModelId, 'e2e/test-model');
+  assert.equal(models[0].provider, 'e2e');
+});
+
 test('normalizeHermesModels does not keep default hermes-agent fallback when real models exist', () => {
   const models = normalizeHermesModels({ data: [{ id: 'openai-codex:gpt-5.5' }] }, 'hermes-agent');
   assert.deepEqual(models.map((model) => model.id), ['openai-codex:gpt-5.5']);
