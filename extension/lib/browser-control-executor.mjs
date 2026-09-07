@@ -8,9 +8,9 @@ import { hasCredentialBearingUrl } from './redaction.mjs';
 import {
   base64ToBytes,
 } from './browser-control-artifacts.mjs';
+import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
 const MAX_RESULT_TEXT = 100_000;
-const MAX_INLINE_SCREENSHOT_CHARS = 1_500_000;
 const MAX_CONSOLE_ENTRIES = 200;
 const MAX_CONSOLE_ENTRY_CHARS = 2_000;
 const MAX_NETWORK_REQUESTS = 100;

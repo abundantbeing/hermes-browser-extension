@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 
 import {
   DEFAULT_WAKE_WORD_PHRASE,
@@ -19,6 +20,19 @@ test('wake settings are disabled and local-only by default', () => {
     browserFallback: true,
     speakReplies: true,
   });
+});
+
+test('composer wake control stays hidden until wake word is enabled in settings', () => {
+  const sidepanelHtml = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const webHtml = readFileSync(new URL('../extension/app.html', import.meta.url), 'utf8');
+  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+  const composerWake = sidepanelHtml.match(/<button[^>]*id="wakeButton"[^>]*>/)?.[0] || '';
+  assert.match(composerWake, /\bhidden\b/);
+  assert.match(sidepanel, /els\.wakeButton\.hidden = !enabled/);
+  const webWake = webHtml.match(/<button[^>]*id="wakeButton"[^>]*>/)?.[0] || '';
+  assert.match(webWake, /\bhidden\b/);
+  assert.match(web, /els\.wakeButton\.hidden = !/);
 });
 
 test('wake settings normalize booleans and a bounded phrase', () => {

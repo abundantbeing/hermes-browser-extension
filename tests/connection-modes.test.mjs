@@ -18,6 +18,7 @@ import {
   sanitizeGatewayUrlForConnectionMode,
   transportRequiresApiKey,
   transportUsesDashboardTicket,
+  isGatewayAuthRejection,
 } from '../extension/lib/connection-modes.mjs';
 
 const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
@@ -217,5 +218,20 @@ test('clearing an API token falls back to ticket-based dashboard transport for r
 test('clearStoredToken applies the post-clear transport fallback and re-runs readiness on transport change', () => {
   const clearBody = sidepanelSource.match(/async function clearStoredToken\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
   assert.match(clearBody, /connectionSettingsAfterTokenClear\(settings\)/);
-  assert.match(clearBody, /runPanelConnectionReadiness\(\)/);
+  assert.doesNotMatch(clearBody, /runPanelConnectionReadiness\(\)/);
+  assert.match(clearBody, /updateConnectionPrompt\(\)/);
+  assert.match(clearBody, /HERMES_CONTROLLER_SETTINGS_REFRESH/);
+  assert.match(clearBody, /clearCachedRosterUrl/);
+  assert.match(clearBody, /profileWsConnection/);
+  assert.match(clearBody, /activeDashboardWsConnection/);
+});
+
+test('loadSkills uses the profile dashboard socket and never REST-falls-back onto a named profile', () => {
+  assert.match(sidepanelSource, /profileWsConnection/);
+  assert.match(sidepanelSource, /restSkillsFallbackAllowed/);
+});
+
+test('isGatewayAuthRejection classifies pairing and HTTP auth failures', () => {
+  assert.equal(isGatewayAuthRejection('Controller registration failed (HTTP 401).'), true);
+  assert.equal(isGatewayAuthRejection('Network unreachable.'), false);
 });

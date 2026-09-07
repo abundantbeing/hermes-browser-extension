@@ -449,7 +449,7 @@
             <button id="commandMenuButton" class="composer-command" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="quickMoreMenu" aria-label="Open quick commands" title="Open quick commands" data-i18n-title="ui.open.quick.commands" data-i18n-aria-label="ui.open.quick.commands">
               <span aria-hidden="true">/</span><strong data-i18n="ui.commands">commands</strong>
             </button>
-            <button id="wakeButton" class="composer-icon composer-wake" type="button" aria-label="Turn on wake word" title="Turn on wake word" data-i18n-title="wake.turn_on" data-i18n-aria-label="wake.turn_on">
+            <button id="wakeButton" class="composer-icon composer-wake" type="button" hidden aria-label="Turn on wake word" title="Turn on wake word" data-i18n-title="wake.turn_on" data-i18n-aria-label="wake.turn_on">
               <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="2" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8.7 8.7a4.7 4.7 0 0 0 0 6.6m6.6-6.6a4.7 4.7 0 0 1 0 6.6M5.9 5.9a8.6 8.6 0 0 0 0 12.2m12.2-12.2a8.6 8.6 0 0 1 0 12.2"/></svg>
             </button>
             <button id="voiceButton" class="composer-icon composer-mic" type="button" aria-label="Start voice dictation" title="Start voice dictation" data-i18n-title="ui.start.voice.dictation" data-i18n-aria-label="ui.start.voice.dictation">
@@ -475,12 +475,39 @@
               <button type="button" data-attach="paste-image" data-i18n="ui.paste.image">▣ Paste image</button>
               <button type="button" data-attach="url" data-i18n="ui.url">↗ URL...</button>
               <button type="button" data-attach="pick-element" data-i18n="ui.pick.page.element">◈ Pick page element</button>
+              <button type="button" data-attach="comment-page" id="commentPageAttachButton"><svg class="attach-menu-icon" aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M5 4.5h14v11H9l-4 3.5V4.5Z"/><path d="M8.5 9h7M8.5 12h4"/></svg><span data-i18n="ui.comment.on.page">Comment on page</span></button>
               <button type="button" data-attach="clear-pick" id="clearPickAttachButton" hidden data-i18n="ui.clear.picked.element">✕ Clear picked element</button>
               <hr />
               <button type="button" data-snippet="Summarize the attached context and call out the important takeaways." data-i18n="ui.prompt.snippets">▤ Prompt snippets...</button>
             </section>
           </div>
           <div id="attachmentList" class="attachment-list" hidden></div>
+          <section id="pageAnnotationPanel" class="page-annotation-panel" hidden>
+            <div class="page-annotation-toolbar">
+              <p class="page-annotation-heading" data-i18n="ui.page.comments">Page comments</p>
+              <div class="page-annotation-modes" role="group" data-i18n-aria-label="ui.page.comments" aria-label="Page comments">
+                <button id="pageAnnotationElementButton" type="button" data-i18n="ui.select.element">Element</button>
+                <button id="pageAnnotationAreaButton" type="button" data-i18n="ui.select.area">Area</button>
+                <button id="pageAnnotationCancelButton" type="button" data-i18n="ui.cancel.selection">Cancel selection</button>
+              </div>
+            </div>
+            <p id="pageAnnotationStatus" class="page-annotation-status" aria-live="polite"></p>
+            <section id="pageAnnotationDraft" class="page-annotation-draft" hidden>
+              <p id="pageAnnotationDraftLabel" class="page-annotation-draft-label"></p>
+              <textarea id="pageAnnotationNote" rows="3" data-i18n-placeholder="ui.comment.note.placeholder" placeholder="Write a comment about this target"></textarea>
+              <div class="page-annotation-draft-actions">
+                <button id="pageAnnotationSaveButton" type="button" data-i18n="ui.save.comment">Save comment</button>
+                <button id="pageAnnotationDiscardButton" type="button" data-i18n="ui.discard.comment">Discard</button>
+              </div>
+            </section>
+            <div id="pageAnnotationList" class="page-annotation-list"></div>
+            <div class="page-annotation-actions">
+              <button id="pageAnnotationFlushButton" type="button" data-i18n="ui.add.comments.to.message">Add comments to message</button>
+              <button id="pageAnnotationQueueButton" type="button" data-i18n="ui.queue.comments">Queue comments</button>
+              <button id="pageAnnotationClearButton" type="button" data-i18n="ui.clear.comments">Clear comments</button>
+              <button id="pageAnnotationDoneButton" type="button" data-i18n="ui.done">Done</button>
+            </div>
+          </section>
           <input id="fileInput" type="file" multiple hidden />
           <input id="imageInput" type="file" accept="image/*" multiple hidden />
           <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
@@ -497,6 +524,11 @@
             <span id="activeProfileIndicator" class="active-profile-indicator" title="Active profile" hidden></span>
             <button id="botModeThreadsButton" class="secondary bot-mode-threads-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" data-i18n="bot_mode.threads" data-i18n-title="bot_mode.threads_title" data-i18n-aria-label="bot_mode.threads_title">Threads</button>
             <button id="botModeNewThreadButton" class="secondary bot-mode-new-thread-button" type="button" hidden data-i18n-runtime title="Start a new thread in this group" aria-label="Start a new thread in this group">+ New Thread</button>
+            <button id="pageCommentTrayButton" class="secondary page-comment-tray-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="pageCommentTray" data-i18n="ui.page.comments">Comments</button>
+            <section id="pageCommentTray" class="page-comment-tray" hidden>
+              <div id="pageCommentTrayList"></div>
+              <button id="pageCommentTraySend" type="button" data-i18n="ui.send.comments">Send comments</button>
+            </section>
             <button id="sendButton" type="submit" data-i18n="ui.ask.hermes">Ask Hermes</button>
           </div>
         </form>

@@ -1,0 +1,1 @@
+export const MAX_INLINE_SCREENSHOT_CHARS = 1_500_000;

@@ -31,6 +31,12 @@ const AUTHORED_MODULES = Object.freeze([
     globalName: 'HermesInlineDraft',
     apiName: 'INLINE_DRAFT_API',
   },
+  {
+    path: 'extension/lib/page-annotation-content.mjs',
+    runtimeName: 'hermesPageAnnotationRuntime',
+    globalName: 'HermesPageAnnotation',
+    apiName: 'PAGE_ANNOTATION_CONTENT_API',
+  },
 ]);
 
 function classicModuleBody(source, authoredPath) {

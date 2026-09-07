@@ -1435,6 +1435,10 @@
     "message": "追加",
     "description": "Runtime interface message ui.add"
   },
+  "runtime_ui_add_comments_to_message": {
+    "message": "Add comments to message",
+    "description": "Runtime interface message ui.add.comments.to.message"
+  },
   "runtime_ui_add_instructions_after_the_slash_command_before_sending": {
     "message": "送信する前に、スラッシュコマンドの後ろに指示を追加してください。",
     "description": "Runtime interface message ui.add.instructions.after.the.slash.command.before.sending"
@@ -1787,6 +1791,10 @@
     "message": "キャンセル",
     "description": "Runtime interface message ui.cancel"
   },
+  "runtime_ui_cancel_selection": {
+    "message": "Cancel selection",
+    "description": "Runtime interface message ui.cancel.selection"
+  },
   "runtime_ui_canonical_hermes_history_model_selection_tools_and_generated_me_c7aacd25": {
     "message": "Canonical Hermes の履歴、モデル選択、ツール、生成されたメディアは、このセッションに接続されたままになります。",
     "description": "Runtime interface message ui.canonical.hermes.history.model.selection.tools.and.generated.me.c7aacd25"
@@ -1943,6 +1951,10 @@
     "message": "クリア",
     "description": "Runtime interface message ui.clear"
   },
+  "runtime_ui_clear_comments": {
+    "message": "Clear comments",
+    "description": "Runtime interface message ui.clear.comments"
+  },
   "runtime_ui_clear_picked_element": {
     "message": "✕ ピックした要素をクリア",
     "description": "Runtime interface message ui.clear.picked.element"
@@ -2046,6 +2058,38 @@
   "runtime_ui_commands_760ac2f0": {
     "message": "/ コマンド",
     "description": "Runtime interface message ui.commands.760ac2f0"
+  },
+  "runtime_ui_comment_capture_unavailable": {
+    "message": "Screenshot unavailable",
+    "description": "Runtime interface message ui.comment.capture.unavailable"
+  },
+  "runtime_ui_comment_count": {
+    "message": "{count} comments",
+    "description": "Runtime interface message ui.comment.count"
+  },
+  "runtime_ui_comment_iframe_unsupported": {
+    "message": "Comments inside cross-origin iframes are not supported",
+    "description": "Runtime interface message ui.comment.iframe.unsupported"
+  },
+  "runtime_ui_comment_note_placeholder": {
+    "message": "Write a comment about this target",
+    "description": "Runtime interface message ui.comment.note.placeholder"
+  },
+  "runtime_ui_comment_on_page": {
+    "message": "Comment on page",
+    "description": "Runtime interface message ui.comment.on.page"
+  },
+  "runtime_ui_comment_page_changed": {
+    "message": "Page changed - comments need review",
+    "description": "Runtime interface message ui.comment.page.changed"
+  },
+  "runtime_ui_comment_persistence_unavailable": {
+    "message": "Could not save comments locally",
+    "description": "Runtime interface message ui.comment.persistence.unavailable"
+  },
+  "runtime_ui_comment_target_changed": {
+    "message": "Target changed",
+    "description": "Runtime interface message ui.comment.target.changed"
   },
   "runtime_ui_commit": {
     "message": "コミット",
@@ -2587,6 +2631,10 @@
     "message": "ダイアログ",
     "description": "Runtime interface message ui.dialog"
   },
+  "runtime_ui_discard_comment": {
+    "message": "Discard",
+    "description": "Runtime interface message ui.discard.comment"
+  },
   "runtime_ui_discovered_hermes_agents": {
     "message": "検出された Hermes エージェント",
     "description": "Runtime interface message ui.discovered.hermes.agents"
@@ -2602,6 +2650,10 @@
   "runtime_ui_dist": {
     "message": "dist/",
     "description": "Runtime interface message ui.dist"
+  },
+  "runtime_ui_done": {
+    "message": "Done",
+    "description": "Runtime interface message ui.done"
   },
   "runtime_ui_download": {
     "message": "ダウンロード",
@@ -3903,6 +3955,10 @@
     "message": "ページ",
     "description": "Runtime interface message ui.page"
   },
+  "runtime_ui_page_comments": {
+    "message": "Page comments",
+    "description": "Runtime interface message ui.page.comments"
+  },
   "runtime_ui_page_context": {
     "message": "ページのコンテキスト",
     "description": "Runtime interface message ui.page.context"
@@ -4122,6 +4178,10 @@
   "runtime_ui_queue": {
     "message": "列",
     "description": "Runtime interface message ui.queue"
+  },
+  "runtime_ui_queue_comments": {
+    "message": "Queue comments",
+    "description": "Runtime interface message ui.queue.comments"
   },
   "runtime_ui_queued": {
     "message": "キューに入れられました",
@@ -4371,6 +4431,10 @@
     "message": "保存",
     "description": "Runtime interface message ui.save"
   },
+  "runtime_ui_save_comment": {
+    "message": "Save comment",
+    "description": "Runtime interface message ui.save.comment"
+  },
   "runtime_ui_save_settings": {
     "message": "設定を保存する",
     "description": "Runtime interface message ui.save.settings"
@@ -4430,6 +4494,14 @@
   "runtime_ui_select": {
     "message": "選択",
     "description": "Runtime interface message ui.select"
+  },
+  "runtime_ui_select_area": {
+    "message": "Area",
+    "description": "Runtime interface message ui.select.area"
+  },
+  "runtime_ui_select_element": {
+    "message": "Element",
+    "description": "Runtime interface message ui.select.element"
   },
   "runtime_ui_select_model": {
     "message": "モデルを選択してください",

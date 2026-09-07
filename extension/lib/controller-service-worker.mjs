@@ -28,7 +28,7 @@ import {
 } from './tab-leases.mjs';
 import { CONTROLLER_METHODS } from './controller-protocol.mjs';
 import { createBrowserControlApprovalStore } from './browser-control-safety.mjs';
-import { transportUsesDashboardTicket } from './connection-modes.mjs';
+import { isGatewayAuthRejection, transportUsesDashboardTicket } from './connection-modes.mjs';
 
 export const CONTROLLER_WORKER_VERSION = 1;
 export const CONTROLLER_WORKER_STORAGE_KEY = 'hermesBrowserControllerWorker';
@@ -779,6 +779,18 @@ export function createControllerServiceWorker({
           detail: String(error?.message || error || 'Controller connection failed.').slice(0, 180),
           retryAfterMs: lifecycle.nextBackoffDelay(),
         };
+        if (isGatewayAuthRejection(lastConnectFailure.detail) && String(settings.tokenSource || '') === 'pairing') {
+          settings = { ...settings, tokenSource: '', lastConnectionTestedAt: 0 };
+          settings.apiKey = '';
+          const stored = await storageArea.get('hermesBrowserSettings');
+          const current = stored?.hermesBrowserSettings && typeof stored.hermesBrowserSettings === 'object'
+            ? stored.hermesBrowserSettings
+            : {};
+          current.tokenSource = '';
+          current.lastConnectionTestedAt = 0;
+          current.apiKey = '';
+          await storageArea.set({ hermesBrowserSettings: current });
+        }
         await persist();
         return {
           ...status(),

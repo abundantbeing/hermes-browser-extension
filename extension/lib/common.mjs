@@ -141,6 +141,20 @@ export function messageDisplayText(role = '', content = '') {
   const text = String(content ?? '');
   if (String(role || '').trim().toLowerCase() !== 'user') return text;
 
+  const reveal = (value) => {
+    const source = String(value ?? '');
+    if (!source.includes('HERMES_PAGE_COMMENTS')) return source;
+    const stripped = source
+      .replace(/<<<HERMES_PAGE_COMMENTS[\s\S]*?<<<END_HERMES_PAGE_COMMENTS>>>/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    if (stripped) return stripped;
+    const count = (source.match(/^Comment \d+$/gm) || []).length;
+    if (count === 1) return '1 page comment';
+    if (count > 1) return `${count} page comments`;
+    return 'Page comments';
+  };
+
   // BCP v2 history is structured. Only a fully unambiguous typed envelope can
   // hide its data sections; malformed lookalikes remain visible fail-closed.
   try {
@@ -160,7 +174,7 @@ export function messageDisplayText(role = '', content = '') {
       && envelope.browser_context
       && envelope.attachment_context
       && envelope.source_receipt
-    ) return input.text;
+    ) return reveal(input.text);
   } catch {
     // Fall through to legacy v1 parsing or verbatim display.
   }
@@ -173,8 +187,8 @@ export function messageDisplayText(role = '', content = '') {
     if (line === 'USER_REQUEST_START') starts.push(index);
     if (line === 'USER_REQUEST_END') ends.push(index);
   }
-  if (starts.length !== 1 || ends.length !== 1 || ends[0] <= starts[0]) return text;
-  return lines.slice(starts[0] + 1, ends[0]).join('\n').trim();
+  if (starts.length !== 1 || ends.length !== 1 || ends[0] <= starts[0]) return reveal(text);
+  return reveal(lines.slice(starts[0] + 1, ends[0]).join('\n').trim());
 }
 
 export function isHermesBrowserOwnedSession(session = {}) {
@@ -1292,6 +1306,8 @@ const MODEL_CONTEXT_FALLBACKS = Object.freeze([
   ['glm', 202_752],
   ['grok-4-fast', 2_000_000],
   ['grok-4.20', 2_000_000],
+  ['grok-4.6', 500_000],
+  ['grok-4-6', 500_000],
   ['grok-4.3', 1_000_000],
   ['grok-4', 256_000],
   ['grok-3', 131_072],
@@ -2047,6 +2063,12 @@ function modelContextTokens(model = {}) {
       const haystack = `${model.id ?? ''} ${model.rawModelId ?? ''} ${model.raw_model_id ?? ''} ${model.model ?? ''} ${model.name ?? ''}`.toLowerCase();
       if (/qwen3\.[6-9]-/.test(haystack)) return fallback;
     }
+    // Grok 4.6 is 500k. The older grok-4 catch-all (256k) used to win via
+    // substring match, and some catalogs still advertise that stale window.
+    if (fallback === 500_000 && number > 0 && number < fallback) {
+      const haystack = `${model.id ?? ''} ${model.rawModelId ?? ''} ${model.raw_model_id ?? ''} ${model.model ?? ''} ${model.name ?? ''}`.toLowerCase();
+      if (haystack.includes('grok-4.6') || haystack.includes('grok-4-6')) return fallback;
+    }
     return number;
   }
   return fallback;
@@ -2414,6 +2436,17 @@ export function skillCommandForName(name = '') {
     .replace(/[^a-z0-9-]/g, '')
     .replace(/-{2,}/g, '-')
     .replace(/^-|-$/g, '')}`;
+}
+
+export function isNamedHermesProfileName(profileName = '') {
+  const normalized = String(profileName || '').trim().toLowerCase();
+  return Boolean(normalized && normalized !== 'default');
+}
+
+export function restSkillsFallbackAllowed({ profileName = '', dashboardReady = false } = {}) {
+  if (dashboardReady) return false;
+  if (isNamedHermesProfileName(profileName)) return false;
+  return true;
 }
 
 export function normalizeHermesSkills(payload = {}) {

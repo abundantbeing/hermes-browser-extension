@@ -88,6 +88,7 @@ import {
   resolveBrowserEffectiveModelOptions,
   resolveCatalogModelIdForBinding,
   skillSuggestionsForInput,
+  restSkillsFallbackAllowed,
   updateBrowserModelScope,
   updateBrowserModelOptionScope,
   updateReviewState,
@@ -103,6 +104,7 @@ import {
   fetchRosterFromDashboard,
   readCachedRosterUrl,
   writeCachedRosterUrl,
+  clearCachedRosterUrl,
 } from './lib/desktop-roster.mjs';
 import {
   fetchPetGallery,
@@ -302,9 +304,34 @@ import {
 } from './lib/commands.mjs';
 import {
   ELEMENT_PICK_MESSAGES,
+  normalizePickedElement,
   pickedElementForTab,
   storedPickedElementRecord,
 } from './lib/element-picker.mjs';
+import {
+  PAGE_ANNOTATION_MESSAGES,
+  PAGE_ANNOTATION_MODES,
+} from './lib/page-annotation-content.mjs';
+import {
+  addPageAnnotation,
+  buildPageAnnotationComposerBundle,
+  compactPageAnnotationIdentity,
+  emptyPageAnnotationStack,
+  formatPageCommentTargetLabel,
+  mergePageAnnotationComposerState,
+  normalizePageAnnotationResult,
+  pageAnnotationCommentsEnabled,
+  queuePageAnnotationTurn,
+  removePageAnnotation,
+  updatePageAnnotationNote,
+} from './lib/page-annotation.mjs';
+import { captureAnnotationCrop } from './lib/page-annotation-capture.mjs';
+import {
+  clearPageAnnotationSession,
+  createPageAnnotationImageStore,
+  persistPageAnnotationSession,
+  restorePageAnnotationSession,
+} from './lib/page-annotation-storage.mjs';
 import {
   CONTEXT_SCOPE_MODES,
   DEFAULT_CONTEXT_SCOPE,
@@ -566,6 +593,10 @@ const els = {
   retryRunStatusButton: $('#retryRunStatusButton'),
   discardHeldQueueButton: $('#discardHeldQueueButton'),
   sendButton: $('#sendButton'),
+  pageCommentTrayButton: $('#pageCommentTrayButton'),
+  pageCommentTray: $('#pageCommentTray'),
+  pageCommentTrayList: $('#pageCommentTrayList'),
+  pageCommentTraySend: $('#pageCommentTraySend'),
   botModeThreadsButton: $('#botModeThreadsButton'),
   botModeNewThreadButton: $('#botModeNewThreadButton'),
   inlineSendButton: $('#inlineSendButton'),
@@ -729,6 +760,21 @@ const els = {
   attachMenuButton: $('#attachMenuButton'),
   attachMenu: $('#attachMenu'),
   attachmentList: $('#attachmentList'),
+  pageAnnotationPanel: $('#pageAnnotationPanel'),
+  pageAnnotationElementButton: $('#pageAnnotationElementButton'),
+  pageAnnotationAreaButton: $('#pageAnnotationAreaButton'),
+  pageAnnotationCancelButton: $('#pageAnnotationCancelButton'),
+  pageAnnotationStatus: $('#pageAnnotationStatus'),
+  pageAnnotationDraft: $('#pageAnnotationDraft'),
+  pageAnnotationDraftLabel: $('#pageAnnotationDraftLabel'),
+  pageAnnotationNote: $('#pageAnnotationNote'),
+  pageAnnotationSaveButton: $('#pageAnnotationSaveButton'),
+  pageAnnotationDiscardButton: $('#pageAnnotationDiscardButton'),
+  pageAnnotationList: $('#pageAnnotationList'),
+  pageAnnotationFlushButton: $('#pageAnnotationFlushButton'),
+  pageAnnotationQueueButton: $('#pageAnnotationQueueButton'),
+  pageAnnotationClearButton: $('#pageAnnotationClearButton'),
+  pageAnnotationDoneButton: $('#pageAnnotationDoneButton'),
   fileInput: $('#fileInput'),
   imageInput: $('#imageInput'),
   folderInput: $('#folderInput'),
@@ -874,6 +920,13 @@ const pickedElementsByTabId = new Map();
 let elementPickInProgress = false;
 let elementPickState = null;
 const PICK_STATE_STORAGE_NAME = 'hermes:elementPickInProgress';
+let pageAnnotationSession = null;
+let pageAnnotationStack = emptyPageAnnotationStack();
+let pageAnnotationDraft = null;
+let pageAnnotationMode = PAGE_ANNOTATION_MODES.ELEMENT;
+let pageAnnotationStale = false;
+let pageCommentPickActive = false;
+const pageAnnotationImages = createPageAnnotationImageStore();
 let selectedTabs = []; // null = all tabs; array of SafeTab = user-filtered set
 let messages = [];
 let taskStackStore = {};
@@ -4123,6 +4176,7 @@ function renderWakeState(nextState = wakeState) {
     els.wakeButton.setAttribute('aria-pressed', String(enabled));
     els.wakeButton.setAttribute('aria-label', translateUiText(enabled ? 'Turn off wake word' : 'Turn on wake word'));
     els.wakeButton.title = `${translateUiText(provider)}: ${translateUiText(detail)}`;
+    els.wakeButton.hidden = !enabled;
   }
   if (els.wakeWordStatus) els.wakeWordStatus.textContent = `${translateUiText(provider)}: ${translateUiText(detail)}`;
   if (els.wakeWordEnabledInput) els.wakeWordEnabledInput.checked = enabled;
@@ -6871,7 +6925,9 @@ async function refreshModelsFromMenu() {
 
 async function loadSkills({ quiet = false } = {}) {
   if (usesDashboardWsChatTransport()) {
-    const connection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
+    const connection = isRemoteWsMode()
+      ? remoteWsConnection
+      : (profileWsConnection?.client?.readyState === 1 ? profileWsConnection : activeDashboardWsConnection);
     if (connection?.client?.readyState === 1) {
       try {
         const profile = safeActiveProfile() || 'default';
@@ -6881,7 +6937,7 @@ async function loadSkills({ quiet = false } = {}) {
         if (!quiet) setStatus('ok', 'Hermes skills synced', `${availableSkills.length} /skill commands available`);
         return { ok: true, count: availableSkills.length, source: 'dashboard-ws' };
       } catch (error) {
-        if (!settings.apiKey) {
+        if (!settings.apiKey || !restSkillsFallbackAllowed({ profileName: safeActiveProfile() || 'default' })) {
           availableSkills = [];
           renderSkillSuggestions();
           if (!quiet) setStatus('warn', 'Skill sync failed', error?.message || String(error), { translateDetail: false });
@@ -6890,7 +6946,7 @@ async function loadSkills({ quiet = false } = {}) {
       }
     }
   }
-  if (!settings.apiKey) {
+  if (!settings.apiKey || !restSkillsFallbackAllowed({ profileName: safeActiveProfile() || 'default' })) {
     availableSkills = [];
     renderSkillSuggestions();
     return { ok: false, count: 0, error: 'Connect to Hermes before refreshing skills.' };
@@ -8965,7 +9021,9 @@ async function applySelectedProfile(profileName = '', { quiet = false, viaBotMod
   void loadCronJobs({ quiet: true });
   // Skill commands are profile-scoped too; refresh them after every successful
   // profile boundary so the composer never keeps the prior profile's catalog.
-  void loadSkills({ quiet: true });
+  void ensureProfileWsConnection()
+    .then(() => loadSkills({ quiet: true }))
+    .catch(() => loadSkills({ quiet: true }));
   return true;
 }
 
@@ -12669,9 +12727,19 @@ async function clearStoredToken() {
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   if (els.apiKeyInput) els.apiKeyInput.value = '';
   sessionRoutesAvailable = null;
+  desktopDashboardUrl = '';
+  await clearCachedRosterUrl(browserApi.storage.local).catch(() => undefined);
+  connectionController.cancel('stored token cleared');
+  try { remoteWsConnection?.client?.close?.(); } catch { /* ignore */ }
+  remoteWsConnection = null;
+  try { profileWsConnection?.client?.close?.(); } catch { /* ignore */ }
+  profileWsConnection = null;
+  activeDashboardWsConnection = null;
+  activeConversationTransport = 'rest';
+  await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH').catch(() => null);
   const dashboardFallback = settings.connectionTransport === CONNECTION_TRANSPORTS.REMOTE_DASHBOARD
     && previousTransport !== CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
-  markConnectionProbe(dashboardFallback ? 'connecting' : 'unconfigured', 'Token cleared by user.');
+  markConnectionProbe('unconfigured', 'Token cleared by user.');
   setGatewayCapabilities(normalizeGatewayCapabilities(null, { healthOk: false, hasApiKey: false, warning: 'Token cleared; reconnect to refresh capabilities.' }));
   syncSettingsForm();
   setStatus(
@@ -12681,7 +12749,7 @@ async function clearStoredToken() {
       ? 'Remote dashboard WebSocket mode selected. Keep the dashboard open and signed in, then reconnect.'
       : 'Paste a Gateway API key or reconnect when you are ready.',
   );
-  if (dashboardFallback) await runPanelConnectionReadiness();
+  updateConnectionPrompt();
 }
 
 async function activeTab() {
@@ -12920,6 +12988,38 @@ async function loadElementPickState() {
   }
 }
 
+async function loadPageAnnotationState() {
+  const tab = annotationTargetTab();
+  if (!tab?.id) return;
+  const restored = await restorePageAnnotationSession({
+    storageArea: browserApi.storage?.session,
+    images: pageAnnotationImages,
+    tabId: tab.id,
+    safeUrl: tab.url,
+    documentKey: pageAnnotationSession?.documentKey || '',
+  }).catch(() => null);
+  if (!restored?.session) return;
+  pageAnnotationSession = {
+    sessionId: restored.session.sessionId,
+    tabId: restored.session.tabId,
+    safeUrl: restored.session.safeUrl,
+    documentKey: restored.session.documentKey,
+  };
+  pageAnnotationStack = {
+    ...emptyPageAnnotationStack(pageAnnotationSession),
+    nextNumber: restored.session.nextNumber || 1,
+    pins: restored.session.pins || [],
+  };
+  pageAnnotationStale = restored.status === 'stale';
+  for (const pin of pageAnnotationStack.pins) {
+    if (!pin.imageDataUrl && pin.imageRef) {
+      const stored = await pageAnnotationImages.get(pin.imageRef);
+      if (typeof stored === 'string') pin.imageDataUrl = stored;
+    }
+  }
+  renderPageAnnotationPanel();
+}
+
 async function clearElementPickState({ tabId = null } = {}) {
   if (tabId && elementPickState?.tabId && !Object.is(Number(tabId), elementPickState.tabId)) return;
   applyElementPickState(null);
@@ -12991,9 +13091,11 @@ function setPickButtonState() {
   }
 }
 
-async function startElementPick() {
+async function startElementPick({ purpose = 'context' } = {}) {
   if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
-    setStatus('warn', 'Chat only', 'Enable browser context before picking an element.');
+    setStatus('warn', 'Chat only', purpose === 'comment'
+      ? 'Enable browser context before commenting on the page.'
+      : 'Enable browser context before picking an element.');
     return;
   }
   const [active, tabs] = await Promise.all([activeTab(), tabsForCurrentScope()]);
@@ -13003,27 +13105,46 @@ async function startElementPick() {
     return;
   }
   if (isRestrictedUrl(tab.url)) {
-    setStatus('warn', 'Restricted page', 'Element pick is not available on this URL.');
+    setStatus('warn', 'Restricted page', purpose === 'comment'
+      ? 'Page comments are not available on this URL.'
+      : 'Element pick is not available on this URL.');
     return;
   }
   try {
     if (elementPickActiveForTab(tab)) {
       await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL });
       await clearElementPickState({ tabId: tab.id });
-      setStatus('ok', 'Element pick cancelled', '');
+      pageCommentPickActive = false;
+      setStatus('ok', purpose === 'comment' ? 'Page comments cancelled' : 'Element pick cancelled', '');
       return;
     }
-    const response = await sendContentMessageWithInstallFallback(tab.id, { type: ELEMENT_PICK_MESSAGES.START });
+    pageCommentPickActive = purpose === 'comment';
+    const commentPick = pageCommentPickActive;
+    const response = await sendContentMessageWithInstallFallback(tab.id, {
+      type: ELEMENT_PICK_MESSAGES.START,
+      purpose: commentPick ? 'comment' : 'context',
+      theme: pageCommentThemeFromPanel(),
+    });
     if (response?.ok === false) throw new Error(response.error || 'Could not start element picker');
     await persistElementPickState({ tabId: tab.id, url: tab.url });
-    setStatus('ok', 'Pick an element', 'Click any element on the page. Press Esc to cancel.');
+    setStatus(
+      'ok',
+      commentPick ? 'Comment on page' : 'Pick an element',
+      commentPick ? 'Click an element, then write a comment. Esc cancels.' : 'Click any element on the page. Press Esc to cancel.',
+    );
   } catch (error) {
+    const wasComment = pageCommentPickActive;
+    pageCommentPickActive = false;
     await clearElementPickState({ tabId: tab.id });
-    setStatus('warn', 'Element pick failed', error?.message || String(error), { translateDetail: false });
+    setStatus('warn', wasComment ? 'Page comments failed' : 'Element pick failed', error?.message || String(error), { translateDetail: false });
   }
 }
 
 function applyPickedElementResult(message = {}, sender = {}) {
+  if (pageCommentPickActive) {
+    void preparePageCommentFromPick(message, sender);
+    return;
+  }
   const tabId = sender.tab?.id || currentContext?.activeTab?.id;
   const pickedElement = message.pickedElement;
   if (!pickedElement?.ok) return;
@@ -13041,8 +13162,360 @@ function applyPickedElementResult(message = {}, sender = {}) {
   setStatus('ok', 'Element picked', label || 'Attached to context for the next message.');
 }
 
+async function preparePageCommentFromPick(message = {}, sender = {}) {
+  const picked = normalizePickedElement(message.pickedElement);
+  if (!picked) {
+    pageCommentPickActive = false;
+    return;
+  }
+  const tabId = sender.tab?.id || annotationTargetTab()?.id;
+  const tab = annotationTargetTab() || currentContext?.activeTab || sender.tab || null;
+  await clearElementPickState({ tabId });
+  pageAnnotationSession = {
+    sessionId: pageAnnotationSession?.sessionId || `page-annotation-${Date.now()}`,
+    tabId,
+    safeUrl: String(message.url || tab?.url || ''),
+    documentKey: pageAnnotationSession?.documentKey || '',
+  };
+  if (!pageAnnotationStack.sessionId) pageAnnotationStack = emptyPageAnnotationStack(pageAnnotationSession);
+  const rect = picked.boundingBox;
+  let imageDataUrl = '';
+  if (tab?.id && rect) {
+    const capture = await captureAnnotationCrop({
+      captureVisibleTab: async (target) => browserApi.tabs.captureVisibleTab(target.windowId || tab.windowId, { format: 'png' }),
+      tab: { ...tab, active: true, id: tab.id, windowId: tab.windowId },
+      rect,
+      viewport: { width: 1, height: 1, devicePixelRatio: 1 },
+      cropImage: cropAnnotationImage,
+    }).catch((error) => ({ ok: false, error: error?.message || String(error) }));
+    if (capture?.ok) imageDataUrl = capture.dataUrl;
+    else if (capture && capture.ok === false) {
+      setStatus('warn', t('ui.comment.capture.unavailable'), capture?.reason || capture?.error || '', { translateDetail: false });
+    }
+  }
+  pageAnnotationDraft = {
+    kind: 'element',
+    rect,
+    viewport: { width: 1, height: 1, devicePixelRatio: 1 },
+    identity: compactPageAnnotationIdentity({
+      selector: picked.selector,
+      tag: picked.tag,
+      text: picked.text,
+      html: picked.outerHtml,
+    }),
+    target: { selector: picked.selector, tag: picked.tag, html: picked.outerHtml, text: picked.text },
+    imageDataUrl,
+    imageRef: `${pageAnnotationSession.sessionId}/annotation-${pageAnnotationStack.nextNumber}`,
+    note: '',
+  };
+}
+
+async function commitPageCommentFromCard(message = {}) {
+  const action = message.action === 'send' ? 'send' : 'queue';
+  if (!pageAnnotationDraft && message.pickedElement) {
+    await preparePageCommentFromPick(message, {});
+  }
+  if (!pageAnnotationDraft) return;
+  savePageAnnotationDraft(message.note);
+  renderPageCommentTray();
+  if (action === 'queue') {
+    await startElementPick({ purpose: 'comment' });
+    setStatus('ok', 'Comment queued', 'Click another element, or send comments from the composer.');
+    return;
+  }
+  pageCommentPickActive = false;
+  const userText = String(els.input?.value || '').trim();
+  if (sending) {
+    queuedTurn = queuePageAnnotationTurn(buildPageAnnotationComposerBundle({
+      ...pageAnnotationStack,
+      safeUrl: pageAnnotationSession?.safeUrl || pageAnnotationStack.safeUrl,
+      pins: pageAnnotationStack.pins || [],
+    }, { resolveImage: (pin) => pin.imageDataUrl }));
+    renderQueueNotice();
+    return;
+  }
+  await askHermes(userText, [...attachments]);
+}
+
+function cancelPageCommentCard() {
+  pageAnnotationDraft = null;
+  pageCommentPickActive = false;
+  renderPageAnnotationPanel();
+  setStatus('ok', 'Page comments closed', (pageAnnotationStack.pins || []).length ? 'Queued comments are still in the composer.' : 'Cancelled.');
+}
+
 function clearPickedElementForActiveTab() {
   clearPickedElementForTab(currentContext?.activeTab?.id);
+}
+
+function annotationCommentsEnabled() {
+  return pageAnnotationCommentsEnabled({});
+}
+
+function pageCommentThemeFromPanel() {
+  const computed = globalThis.getComputedStyle;
+  const styles = typeof computed === 'function' ? computed(document.documentElement) : null;
+  const body = typeof computed === 'function' && document.body ? computed(document.body) : null;
+  const read = (name, fallback) => String(styles?.getPropertyValue?.(name) || '').trim() || fallback;
+  return {
+    bg: read('--hermes-menu-bg', read('--hermes-paper', '#171717')),
+    field: read('--hermes-paper', '#111111'),
+    fg: read('--hermes-fg', '#f1f1f1'),
+    muted: read('--hermes-muted', 'rgba(241,241,241,0.62)'),
+    border: read('--hermes-line', 'rgba(229,229,229,0.44)'),
+    primary: read('--hermes-ink', read('--hermes-blue', '#e5e5e5')),
+    primaryFg: read('--hermes-paper', '#111111'),
+    font: String(body?.fontFamily || 'ui-sans-serif, system-ui, sans-serif'),
+  };
+}
+
+function annotationTargetTab() {
+  return resolveContextTargetTab({
+    activeTab: currentContext?.activeTab,
+    tabs: currentContext?.tabs || [],
+    scope: contextScope,
+  }) || currentContext?.activeTab || null;
+}
+
+function renderPageAnnotationPanel() {
+  const enabled = annotationCommentsEnabled();
+  const commentButton = document.getElementById('commentPageAttachButton');
+  if (commentButton) commentButton.hidden = !enabled;
+  if (els.pageAnnotationPanel) els.pageAnnotationPanel.hidden = true;
+  renderPageCommentTray();
+}
+
+function renderPageCommentTray() {
+  const pins = pageAnnotationStack.pins || [];
+  const count = pins.length;
+  if (els.pageCommentTrayButton) {
+    els.pageCommentTrayButton.hidden = count === 0;
+    els.pageCommentTrayButton.textContent = count === 1 ? 'Comments · 1' : `Comments · ${count}`;
+    if (!count) els.pageCommentTrayButton.setAttribute('aria-expanded', 'false');
+  }
+  if (els.pageCommentTray && count === 0) els.pageCommentTray.hidden = true;
+  if (!els.pageCommentTrayList) return;
+  els.pageCommentTrayList.replaceChildren();
+  for (const pin of pins) {
+    const row = document.createElement('div');
+    row.className = 'page-comment-tray-row';
+    const number = document.createElement('strong');
+    number.textContent = String(pin.number);
+    const body = document.createElement('span');
+    body.textContent = pin.note || formatPageCommentTargetLabel(pin.target || pin.identity || {});
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.addEventListener('click', () => {
+      pageAnnotationStack = removePageAnnotation(pageAnnotationStack, pin.id);
+      persistCurrentPageAnnotations();
+      renderPageCommentTray();
+    });
+    row.append(number, body, remove);
+    els.pageCommentTrayList.append(row);
+  }
+}
+
+function persistCurrentPageAnnotations() {
+  const tab = annotationTargetTab();
+  if (!tab?.id || !pageAnnotationSession) return;
+  persistPageAnnotationSession({
+    storageArea: browserApi.storage?.session,
+    images: pageAnnotationImages,
+    session: {
+      ...pageAnnotationStack,
+      ...pageAnnotationSession,
+      updatedAt: Date.now(),
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    },
+    imageBlobs: Object.fromEntries((pageAnnotationStack.pins || []).map((pin) => [pin.imageRef, pin.imageDataUrl || null]).filter((entry) => entry[1])),
+  }).catch(() => {});
+}
+
+async function cropAnnotationImage(dataUrl, crop) {
+  const image = new globalThis.Image();
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+    image.src = dataUrl;
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = crop.width;
+  canvas.height = crop.height;
+  canvas.getContext('2d').drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+  return canvas.toDataURL('image/png');
+}
+
+async function syncPageAnnotationPins() {
+  const tab = annotationTargetTab();
+  if (!tab?.id || !pageAnnotationSession) return;
+  await sendContentMessageWithInstallFallback(tab.id, {
+    type: PAGE_ANNOTATION_MESSAGES.SYNC,
+    sessionId: pageAnnotationSession.sessionId,
+    documentKey: pageAnnotationSession.documentKey,
+    pins: (pageAnnotationStack.pins || []).map((pin) => ({
+      id: pin.id,
+      number: pin.number,
+      kind: pin.kind,
+      rect: pin.rect,
+      selector: pin.target?.selector || pin.identity?.selector || '',
+    })),
+  }).catch(() => {});
+}
+
+async function stopPageAnnotationSession({ keepPins = false } = {}) {
+  const tab = annotationTargetTab();
+  if (tab?.id) {
+    await sendContentMessageWithInstallFallback(tab.id, { type: PAGE_ANNOTATION_MESSAGES.CANCEL }).catch(() => {});
+  }
+  pageAnnotationDraft = null;
+  pageAnnotationStale = false;
+  if (!keepPins || !(pageAnnotationStack.pins || []).length) {
+    pageAnnotationStack = emptyPageAnnotationStack({});
+    pageAnnotationSession = null;
+    if (tab?.id) {
+      clearPageAnnotationSession({ storageArea: browserApi.storage?.session, images: pageAnnotationImages, tabId: tab.id }).catch(() => {});
+    }
+  }
+  await syncPageAnnotationPins();
+  renderPageAnnotationPanel();
+}
+
+async function startPageAnnotation(mode = pageAnnotationMode) {
+  if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
+    setStatus('warn', 'Chat only', 'Enable browser context before commenting on the page.');
+    return;
+  }
+  const hasWork = Boolean(pageAnnotationDraft) || Boolean(pageAnnotationStack.pins?.length);
+  if (pageAnnotationSession && !hasWork) {
+    await stopPageAnnotationSession();
+    setStatus('ok', 'Page comments closed', 'Click Comment on page again to pick another element.');
+    return;
+  }
+  const [active, tabs] = await Promise.all([activeTab(), tabsForCurrentScope()]);
+  const tab = resolveContextTargetTab({ activeTab: active, tabs, scope: contextScope });
+  if (!tab?.id) {
+    setStatus('warn', 'No tab', 'Open a normal page tab first.');
+    return;
+  }
+  if (isRestrictedUrl(tab.url)) {
+    setStatus('warn', 'Restricted page', 'Page comments are not available on this URL.');
+    return;
+  }
+  if (elementPickActiveForTab(tab)) {
+    await browserApi.tabs.sendMessage(tab.id, { type: ELEMENT_PICK_MESSAGES.CANCEL }).catch(() => {});
+    await clearElementPickState({ tabId: tab.id });
+  }
+  pageAnnotationMode = mode === PAGE_ANNOTATION_MODES.AREA ? PAGE_ANNOTATION_MODES.AREA : PAGE_ANNOTATION_MODES.ELEMENT;
+  pageAnnotationSession = {
+    sessionId: pageAnnotationSession?.sessionId || `page-annotation-${Date.now()}`,
+    tabId: tab.id,
+    safeUrl: tab.url,
+    documentKey: pageAnnotationSession?.documentKey || '',
+  };
+  if (!pageAnnotationStack.sessionId) pageAnnotationStack = emptyPageAnnotationStack(pageAnnotationSession);
+  const response = await sendContentMessageWithInstallFallback(tab.id, {
+    type: PAGE_ANNOTATION_MESSAGES.START,
+    version: 1,
+    sessionId: pageAnnotationSession.sessionId,
+    mode: pageAnnotationMode,
+  });
+  if (response?.ok === false) throw new Error(response.error || 'Could not start page comments');
+  if (response?.documentKey) pageAnnotationSession.documentKey = response.documentKey;
+  renderPageAnnotationPanel();
+  setStatus('ok', 'Comment on page', pageAnnotationMode === PAGE_ANNOTATION_MODES.AREA ? 'Drag a region, then write a comment.' : 'Click an element, then write a comment.');
+}
+
+async function cancelPageAnnotationSelection() {
+  await stopPageAnnotationSession({ keepPins: true });
+  setStatus('ok', 'Page comments closed', (pageAnnotationStack.pins || []).length ? 'Saved comments are still in the queue.' : 'Selection cancelled.');
+}
+
+async function applyPageAnnotationResult(message = {}, sender = {}) {
+  const tabId = sender.tab?.id || annotationTargetTab()?.id;
+  if (!pageAnnotationSession || Number(tabId) !== Number(pageAnnotationSession.tabId)) return;
+  if (message.documentKey && !pageAnnotationSession.documentKey) pageAnnotationSession.documentKey = message.documentKey;
+  const normalized = normalizePageAnnotationResult(message, pageAnnotationSession);
+  if (!normalized) return;
+  const tab = annotationTargetTab();
+  await sendContentMessageWithInstallFallback(tab.id, {
+    type: PAGE_ANNOTATION_MESSAGES.CAPTURE_BEGIN,
+    sessionId: pageAnnotationSession.sessionId,
+    rect: normalized.rect,
+  }).catch(() => {});
+  let imageDataUrl = '';
+  const capture = await captureAnnotationCrop({
+    captureVisibleTab: async (target) => browserApi.tabs.captureVisibleTab(target.windowId || tab.windowId, { format: 'png' }),
+    tab: { ...tab, active: true, id: tab.id, windowId: tab.windowId },
+    rect: normalized.rect,
+    viewport: normalized.viewport || { width: 1, height: 1, devicePixelRatio: 1 },
+    cropImage: cropAnnotationImage,
+  }).catch((error) => ({ ok: false, error: error?.message || String(error) }));
+  await sendContentMessageWithInstallFallback(tab.id, {
+    type: PAGE_ANNOTATION_MESSAGES.CAPTURE_END,
+    sessionId: pageAnnotationSession.sessionId,
+  }).catch(() => {});
+  if (capture?.ok) imageDataUrl = capture.dataUrl;
+  pageAnnotationDraft = {
+    ...normalized,
+    imageDataUrl,
+    imageRef: `${pageAnnotationSession.sessionId}/annotation-${pageAnnotationStack.nextNumber}`,
+    note: '',
+  };
+  if (els.pageAnnotationNote) els.pageAnnotationNote.value = '';
+  renderPageAnnotationPanel();
+  if (!capture?.ok) setStatus('warn', t('ui.comment.capture.unavailable'), capture?.reason || '', { translateDetail: false });
+}
+
+function savePageAnnotationDraft(note) {
+  if (!pageAnnotationDraft) return;
+  pageAnnotationDraft.note = note === undefined
+    ? String(els.pageAnnotationNote?.value || '')
+    : String(note || '');
+  pageAnnotationStack = addPageAnnotation(pageAnnotationStack, pageAnnotationDraft);
+  if (pageAnnotationDraft.imageDataUrl) {
+    pageAnnotationImages.put(pageAnnotationDraft.imageRef, pageAnnotationDraft.imageDataUrl);
+  }
+  pageAnnotationDraft = null;
+  persistCurrentPageAnnotations();
+  syncPageAnnotationPins();
+  renderPageAnnotationPanel();
+}
+
+function discardPageAnnotationDraft() {
+  pageAnnotationDraft = null;
+  renderPageAnnotationPanel();
+}
+
+function flushPageAnnotationsToComposer({ queue = false } = {}) {
+  if (!pageAnnotationStack.pins?.length) return false;
+  const bundle = buildPageAnnotationComposerBundle({
+    ...pageAnnotationStack,
+    safeUrl: pageAnnotationSession?.safeUrl || pageAnnotationStack.safeUrl,
+    pins: pageAnnotationStack.pins.map((pin) => ({
+      ...pin,
+      imageDataUrl: pin.imageDataUrl || null,
+    })),
+  }, {
+    resolveImage: (pin) => pin.imageDataUrl,
+  });
+  if (queue) {
+    queuedTurn = queuePageAnnotationTurn(bundle);
+    renderQueueNotice();
+    setStatus('ok', 'Comments queued', 'Hermes will send them after the current turn finishes.');
+    return true;
+  }
+  const merged = mergePageAnnotationComposerState({ text: els.input.value, attachments }, bundle);
+  els.input.value = merged.text;
+  attachments = merged.attachments;
+  renderAttachments();
+  renderContextWindow();
+  setStatus('ok', 'Comments added', 'Review the composer, then send when you are ready.');
+  return true;
+}
+
+function clearPageAnnotations() {
+  stopPageAnnotationSession({ keepPins: false }).catch(() => {});
 }
 
 async function refreshContext(options = {}) {
@@ -14327,6 +14800,23 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
 
   const dashboardTransport = usesDashboardWsChatTransport();
   if (sending) return false;
+  let commentPack = { displayUserText: '', consumed: false };
+  if ((pageAnnotationStack.pins || []).length) {
+    const bundle = buildPageAnnotationComposerBundle({
+      ...pageAnnotationStack,
+      safeUrl: pageAnnotationSession?.safeUrl || pageAnnotationStack.safeUrl,
+      pins: pageAnnotationStack.pins,
+    }, { resolveImage: (pin) => pin.imageDataUrl });
+    const visible = String(userText || '').trim();
+    const merged = mergePageAnnotationComposerState({ text: userText, attachments: turnAttachments }, bundle);
+    const count = pageAnnotationStack.pins.length;
+    commentPack = {
+      displayUserText: visible || (count === 1 ? '1 page comment' : `${count} page comments`),
+      consumed: true,
+    };
+    userText = merged.text;
+    turnAttachments = merged.attachments;
+  }
   if (!canSwitchActiveSession({ sending, runControl: activeRunControl })) {
     if (canRecoverStaleDashboardRunControl({ sending, dashboardTransport, runControl: activeRunControl })) {
       activeRunControl = markRunTerminal(activeRunControl, 'failed');
@@ -14431,7 +14921,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       : basePromptText;
     const promptUserText = userTextWithAttachments(outboundUserText, preparedAttachments);
     const displayAttachments = preparedAttachments.filter((attachment) => attachment.kind !== 'image');
-    const displayUserText = turnOptions.displayUserText || (displayAttachments.length
+    const displayUserText = turnOptions.displayUserText || commentPack.displayUserText || (displayAttachments.length
       ? `${userText || 'Attachment-only turn.'}\n${displayAttachments.map((attachment) => `${attachmentIcon(attachment.kind)} ${attachment.label}`).join('\n')}`
       : userText);
     const isTabCommand = parsedCommand?.command?.category === 'Tabs';
@@ -14643,6 +15133,12 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       activeRunControl = markRunTerminal(activeRunControl, streamTerminalStatus || 'completed');
     }
     didSend = true;
+    if (commentPack.consumed) {
+      pageAnnotationStack = emptyPageAnnotationStack(pageAnnotationSession || {});
+      pageAnnotationDraft = null;
+      persistCurrentPageAnnotations();
+      renderPageCommentTray();
+    }
   } catch (error) {
     // Terminal stream errors leave the image-generation placeholder (and its
     // diffusion canvas loop) running: dispose it wherever the turn ends without
@@ -14651,8 +15147,10 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     if (error?.requestAccepted !== true) streamView?.dispose?.();
     if (error?.requestAccepted === true) {
       if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
-        els.input.value = userText;
-        attachments = [...turnAttachments];
+        els.input.value = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
+        attachments = commentPack.consumed
+          ? [...turnAttachments].filter((item) => item?.source !== 'page-annotations')
+          : [...turnAttachments];
         renderAttachments();
         renderSkillSuggestions();
       }
@@ -14671,8 +15169,10 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
         markGatewayDegraded(error);
         if (!turnOptions.preserveComposer) {
           if (!els.input.value.trim() && !attachments.length) {
-            els.input.value = userText;
-            attachments = [...turnAttachments];
+            els.input.value = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
+            attachments = commentPack.consumed
+              ? [...turnAttachments].filter((item) => item?.source !== 'page-annotations')
+              : [...turnAttachments];
             renderAttachments();
             renderSkillSuggestions();
           } else if (!queuedTurn) {
@@ -14699,8 +15199,10 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       const requestFailure = turnRequestFailureState(error);
       if (requestFailure?.gatewayStatus === 'connected') {
         if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
-          els.input.value = userText;
-          attachments = [...turnAttachments];
+          els.input.value = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
+          attachments = commentPack.consumed
+            ? [...turnAttachments].filter((item) => item?.source !== 'page-annotations')
+            : [...turnAttachments];
           renderAttachments();
           renderSkillSuggestions();
         }
@@ -15877,9 +16379,47 @@ function bindEvents() {
   });
   els.retryRunStatusButton?.addEventListener('click', () => { void retryActiveRunTerminalStatus(); });
   els.discardHeldQueueButton?.addEventListener('click', discardHeldQueuedTurn);
+  els.pageCommentTrayButton?.addEventListener('click', () => {
+    if (!els.pageCommentTray) return;
+    const open = els.pageCommentTray.hidden;
+    els.pageCommentTray.hidden = !open;
+    els.pageCommentTrayButton.setAttribute('aria-expanded', String(open));
+  });
+  els.pageCommentTraySend?.addEventListener('click', () => {
+    if (els.pageCommentTray) els.pageCommentTray.hidden = true;
+    void askHermes(String(els.input?.value || '').trim(), [...attachments]);
+  });
+  window.addEventListener('pagehide', () => {
+    const tab = currentContext?.activeTab || annotationTargetTab();
+    if (tab?.id) {
+      browserApi.tabs.sendMessage(tab.id, { type: PAGE_ANNOTATION_MESSAGES.ABORT }).catch(() => {});
+    }
+    pageCommentPickActive = false;
+    void clearElementPickState({ tabId: tab?.id });
+  });
   browserApi.runtime.onMessage.addListener((message, sender) => {
     if (message?.type === ELEMENT_PICK_MESSAGES.RESULT) {
       applyPickedElementResult(message, sender);
+      return;
+    }
+    if (message?.type === PAGE_ANNOTATION_MESSAGES.CARD_SUBMIT) {
+      void commitPageCommentFromCard(message);
+      return;
+    }
+    if (message?.type === PAGE_ANNOTATION_MESSAGES.CARD_CANCEL) {
+      cancelPageCommentCard();
+      return;
+    }
+    if (message?.type === PAGE_ANNOTATION_MESSAGES.RESULT) {
+      applyPageAnnotationResult(message, sender);
+      return;
+    }
+    if (message?.type === PAGE_ANNOTATION_MESSAGES.PICKING && message.documentKey && pageAnnotationSession) {
+      pageAnnotationSession.documentKey = message.documentKey;
+      return;
+    }
+    if (message?.type === PAGE_ANNOTATION_MESSAGES.ERROR) {
+      if (message.reason === 'iframe_not_supported') setStatus('warn', t('ui.comment.iframe.unsupported'), '');
       return;
     }
     if (message?.type === ELEMENT_PICK_MESSAGES.CANCELLED) {
@@ -15913,6 +16453,14 @@ function bindEvents() {
   });
   browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
     if (changeInfo?.url) clearPickedElementForTab(tabId, { silent: true });
+    if (changeInfo?.url && pageAnnotationSession?.tabId === tabId) {
+      pageAnnotationStale = Boolean(pageAnnotationStack.pins?.length);
+      if (!pageAnnotationStale && !pageAnnotationDraft) {
+        stopPageAnnotationSession().catch(() => {});
+      } else {
+        renderPageAnnotationPanel();
+      }
+    }
   });
   browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
     clearPickedElementForTab(tabId, { silent: true });
@@ -16120,6 +16668,12 @@ function bindEvents() {
         await startElementPick();
         return;
       }
+      if (kind === 'comment-page') {
+        els.attachMenu.hidden = true;
+        els.attachMenuButton.setAttribute('aria-expanded', 'false');
+        await startElementPick({ purpose: 'comment' });
+        return;
+      }
       if (kind === 'clear-pick') {
         clearPickedElementForActiveTab();
         return;
@@ -16132,6 +16686,23 @@ function bindEvents() {
     } catch (error) {
       addMessage('system', `Attach failed: ${error?.message || String(error)}`);
     }
+  });
+  els.pageAnnotationElementButton?.addEventListener('click', () => {
+    startPageAnnotation(PAGE_ANNOTATION_MODES.ELEMENT).catch((error) => setStatus('warn', 'Page comments failed', error?.message || String(error), { translateDetail: false }));
+  });
+  els.pageAnnotationAreaButton?.addEventListener('click', () => {
+    startPageAnnotation(PAGE_ANNOTATION_MODES.AREA).catch((error) => setStatus('warn', 'Page comments failed', error?.message || String(error), { translateDetail: false }));
+  });
+  els.pageAnnotationCancelButton?.addEventListener('click', () => {
+    cancelPageAnnotationSelection().catch(() => {});
+  });
+  els.pageAnnotationSaveButton?.addEventListener('click', savePageAnnotationDraft);
+  els.pageAnnotationDiscardButton?.addEventListener('click', discardPageAnnotationDraft);
+  els.pageAnnotationFlushButton?.addEventListener('click', () => flushPageAnnotationsToComposer());
+  els.pageAnnotationQueueButton?.addEventListener('click', () => flushPageAnnotationsToComposer({ queue: true }));
+  els.pageAnnotationClearButton?.addEventListener('click', clearPageAnnotations);
+  els.pageAnnotationDoneButton?.addEventListener('click', () => {
+    stopPageAnnotationSession({ keepPins: false }).catch(() => {});
   });
   els.fileInput.addEventListener('change', async () => {
     await attachFiles(els.fileInput.files);
@@ -16656,6 +17227,7 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
         if (restoreSettings) {
           await loadSettings({ restoreMessages: false });
           await loadElementPickState();
+          await loadPageAnnotationState();
         }
         settings = migrateConnectionSettings(settings);
         return {

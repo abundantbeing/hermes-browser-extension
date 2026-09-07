@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Page annotation fixture</title>
+  <style>
+    body { font: 16px/1.4 sans-serif; margin: 48px; }
+    main, footer { margin: 24px 0; padding: 24px; border: 1px solid #ccc; }
+    button, a { margin-right: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <h1 id="hero-title">Hero title</h1>
+      <p id="hero-copy">Hero copy for comment targeting.</p>
+      <button id="save" data-testid="save-changes">Save changes</button>
+      <button id="replace-target">Replace target</button>
+    </section>
+    <label>Password <input id="secret" type="password" value="hunter2"></label>
+    <input type="hidden" name="csrf" value="hidden-token">
+    <iframe id="foreign" title="foreign" src="about:blank" width="320" height="80"></iframe>
+  </main>
+  <footer>
+    <a href="#docs">Docs</a>
+    <button id="reload">Reload</button>
+    <button id="navigate">Change URL</button>
+  </footer>
+  <script>
+    document.getElementById('replace-target').addEventListener('click', () => {
+      const button = document.getElementById('save');
+      const next = document.createElement('button');
+      next.id = 'save';
+      next.dataset.testid = 'save-changes';
+      next.textContent = 'Save changes (replaced)';
+      button.replaceWith(next);
+    });
+    document.getElementById('reload').addEventListener('click', () => location.reload());
+    document.getElementById('navigate').addEventListener('click', () => {
+      history.pushState({}, '', location.pathname + '?step=2');
+    });
+  </script>
+</body>
+</html>

@@ -3513,6 +3513,7 @@ function renderWakeState(state = {}) {
   els.wakeButton.setAttribute('aria-pressed', String(active));
   els.wakeButton.classList.toggle('active', active);
   els.wakeButton.title = state.detail || translateUiText(active ? 'Hey Hermes is listening' : 'Enable Hey Hermes');
+  els.wakeButton.hidden = !(state.enabled || settings.wakeWordEnabled);
 }
 
 async function toggleWakeWord() {

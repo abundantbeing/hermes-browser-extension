@@ -144,6 +144,10 @@ export function connectionSettingsAfterTokenClear(input = {}) {
   return { ...cleared, gatewayMode: legacyGatewayModeForConnection(cleared) };
 }
 
+export function isGatewayAuthRejection(detail = '') {
+  return /401|403|credential|api key|token|unauthorized|forbidden|auth/i.test(String(detail || ''));
+}
+
 export function resolvePhaseATransport({ connectionMode, currentTransport, apiKey = '' } = {}) {
   const mode = normalizeConnectionMode(connectionMode);
   if (mode === 'local') return CONNECTION_TRANSPORTS.LOCAL_API;

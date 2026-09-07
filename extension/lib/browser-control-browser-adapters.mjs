@@ -2,9 +2,9 @@ import {
   controllerAdapterContractFor,
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
+import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
 const CDP_VERSION = '1.3';
-const MAX_INLINE_SCREENSHOT_CHARS = 1_500_000;
 const ACTIONABLE_AX_ROLES = new Set([
   'button', 'checkbox', 'combobox', 'dialog', 'gridcell', 'link', 'listbox',
   'menuitem', 'option', 'radio', 'searchbox', 'slider', 'spinbutton', 'switch',

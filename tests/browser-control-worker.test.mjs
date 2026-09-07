@@ -817,3 +817,30 @@ test('worker surfaces the bounded last connect failure and skips reconnect kicks
   assert.equal(failed.lastConnectFailure.detail, 'Controller registration failed (HTTP 401).');
   assert.equal(attempts, 1);
 });
+
+test('worker drops a rejected pairing token so reconnect can mint a fresh ticket', async () => {
+  const store = memoryStorage({
+    hermesBrowserSettings: settings({ tokenSource: 'pairing' }),
+  });
+  const worker = createControllerServiceWorker({
+    storageArea: store.area,
+    connector: {
+      async connect() {
+        throw new Error('Controller registration failed (HTTP 401).');
+      },
+    },
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async () => ({ ok: true, result: {} }),
+    now: () => 0,
+  });
+  const failed = await worker.handleMessage(
+    { type: CONTROLLER_WORKER_MESSAGES.status },
+    extensionSender(),
+  );
+  assert.equal(failed.connected, false);
+  assert.equal(failed.lastConnectFailure.reason, 'connect_failed');
+  assert.equal(String(store.state.hermesBrowserSettings.tokenSource || ''), '');
+  assert.equal(String(store.state.hermesBrowserSettings.apiKey || ''), '');
+});

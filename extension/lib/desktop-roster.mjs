@@ -256,3 +256,13 @@ export async function writeCachedRosterUrl(url, storageApi = globalThis.chrome?.
   await storageApi.set({ [DESKTOP_ROSTER_URL_STORAGE_KEY]: { url, cachedAt: Date.now() } });
 }
 
+export async function clearCachedRosterUrl(storageApi = globalThis.chrome?.storage?.local) {
+  if (storageApi?.remove) {
+    await storageApi.remove(DESKTOP_ROSTER_URL_STORAGE_KEY);
+    return;
+  }
+  if (storageApi?.set) {
+    await storageApi.set({ [DESKTOP_ROSTER_URL_STORAGE_KEY]: { url: '', cachedAt: 0 } });
+  }
+}
+

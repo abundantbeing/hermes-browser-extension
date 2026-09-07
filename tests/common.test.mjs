@@ -62,6 +62,8 @@ import {
   runtimeValueMatches,
   reasoningEffortShortLabel,
   skillCommandForName,
+  isNamedHermesProfileName,
+  restSkillsFallbackAllowed,
   skillSuggestionsForInput,
   shouldStopSessionPaging,
   shouldFallbackToWebSpeechForTranscription,
@@ -244,6 +246,13 @@ test('messageDisplayText reveals only the human request from canonical Browser p
   assert.equal(common.messageDisplayText('user', wrapped), 'Summarize this page\nand keep it short.');
   assert.equal(common.messageDisplayText('user', 'Plain request'), 'Plain request');
   assert.equal(common.messageDisplayText('assistant', wrapped), wrapped);
+  assert.equal(
+    common.messageDisplayText(
+      'user',
+      '<<<HERMES_PAGE_COMMENTS session=x>>>\nComment 1\nNote: hi\n<<<END_HERMES_PAGE_COMMENTS>>>',
+    ),
+    '1 page comment',
+  );
 });
 
 test('messageDisplayText fails closed for malformed or ambiguous request boundaries', () => {
@@ -1766,6 +1775,17 @@ test('normalizeHermesModels applies curated context fallback when provider rows 
   assert.equal(models[0].contextTokens, 1000000);
 });
 
+test('normalizeHermesModels gives Grok 4.6 a 500k window instead of the grok-4 256k catch-all', () => {
+  const omitted = normalizeHermesModels({ data: [{ id: 'x-ai/grok-4.6', rawModelId: 'grok-4.6', provider: 'x-ai', context_length: 0 }] }, 'x-ai/grok-4.6');
+  assert.equal(omitted[0].contextTokens, 500_000);
+
+  const stale = normalizeHermesModels({ data: [{ id: 'grok-4.6', rawModelId: 'grok-4.6', provider: 'xai', context_length: 256_000 }] }, 'grok-4.6');
+  assert.equal(stale[0].contextTokens, 500_000);
+
+  const older = normalizeHermesModels({ data: [{ id: 'grok-4', rawModelId: 'grok-4', provider: 'xai', context_length: 0 }] }, 'grok-4');
+  assert.equal(older[0].contextTokens, 256_000);
+});
+
 test('normalizeHermesModels applies 1M context fallback for Qwen Token Plan models', () => {
   for (const model of ['qwen3.8-max-preview', 'qwen3.7-max', 'qwen3.7-plus', 'qwen3.6-flash']) {
     const qwenModels = normalizeHermesModels({ data: [{ id: model, rawModelId: model, provider: 'qwen-token-plan', context_length: 0 }] }, model);
@@ -2466,6 +2486,15 @@ test('skill helpers normalize slash commands and suggest matches from / or @ inp
   assert.deepEqual(skillSuggestionsForInput('/herm', skills).map((skill) => skill.command), ['/hermes-browser-development']);
   assert.deepEqual(skillSuggestionsForInput('@test', skills).map((skill) => skill.command), ['/test-driven-development']);
   assert.deepEqual(skillSuggestionsForInput('normal message', skills), []);
+});
+
+test('named profiles never inherit the default REST skills catalog', () => {
+  assert.equal(isNamedHermesProfileName('default'), false);
+  assert.equal(isNamedHermesProfileName(''), false);
+  assert.equal(isNamedHermesProfileName('research'), true);
+  assert.equal(restSkillsFallbackAllowed({ profileName: 'default', dashboardReady: false }), true);
+  assert.equal(restSkillsFallbackAllowed({ profileName: 'research', dashboardReady: false }), false);
+  assert.equal(restSkillsFallbackAllowed({ profileName: 'default', dashboardReady: true }), false);
 });
 
 test('normalizeHermesProfiles marks active profile and keeps useful metadata', () => {

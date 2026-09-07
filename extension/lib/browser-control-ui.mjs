@@ -1,4 +1,5 @@
 import { validateBrowserControlUrl } from './browser-control-safety.mjs';
+import { isGatewayAuthRejection } from './connection-modes.mjs';
 
 const CONTROL_SCOPES = new Set(['this-tab', 'selected-tabs', 'task-set']);
 const VIEW_BEHAVIORS = new Set(['stay', 'follow']);
@@ -106,7 +107,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
     let detail = 'Hermes is restoring the controller connection. No tab actions can run yet.';
     if (failure?.reason === 'missing_session') {
       detail = 'No Hermes session is active yet. Start or select a session, then attach this tab.';
-    } else if (failure?.reason === 'connect_failed' && /401|403|credential|api key|token|auth/i.test(String(failure.detail || ''))) {
+    } else if (failure?.reason === 'connect_failed' && isGatewayAuthRejection(failure.detail)) {
       detail = 'The gateway rejected the saved token. Reconnect from Settings, then attach this tab.';
     } else if (failure?.reason === 'connect_failed' && failure?.detail) {
       detail = `Could not reach the controller. ${String(failure.detail).slice(0, 140)}`;

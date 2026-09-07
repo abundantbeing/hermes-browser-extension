@@ -29,6 +29,7 @@
 
   const HermesContentExtractor = globalThis.HermesContentExtractor;
   const HermesSiteAdapters = globalThis.HermesSiteAdapters;
+  const HermesPageAnnotation = globalThis.HermesPageAnnotation;
 
   const TEXT_LIMITS = {
     minimal: 4_000,
@@ -67,6 +68,8 @@
     browser_type: 'Typing',
   });
   let pickModeActive = false;
+  let pickPurpose = 'context';
+  let pickTheme = null;
   let highlightedElement = null;
   let browserControlIndicatorHost = null;
   let browserControlIndicatorSuspended = false;
@@ -343,6 +346,9 @@
         pointer-events: none;
         box-shadow: 0 4px 20px rgba(0,0,0,0.35);
       }
+      html.hermes-element-pick-mode[data-hermes-pick-purpose="comment"]::before {
+        content: 'Hermes: click an element to comment (Esc to cancel)';
+      }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -364,8 +370,10 @@
   function teardownPickMode({ cancelled = false, pickedElement = null } = {}) {
     if (!pickModeActive) return;
     pickModeActive = false;
+    pickPurpose = 'context';
     clearHighlight();
     document.documentElement.classList.remove('hermes-element-pick-mode');
+    document.documentElement.removeAttribute('data-hermes-pick-purpose');
     document.removeEventListener('mousemove', onPickMouseMove, true);
     document.removeEventListener('click', onPickClick, true);
     document.removeEventListener('keydown', onPickKeydown, true);
@@ -409,7 +417,53 @@
     if (!element) return;
     const snapshot = captureElementSnapshot(element);
     if (!snapshot.ok) return;
+    const commentMode = pickPurpose === 'comment';
     teardownPickMode({ pickedElement: snapshot });
+    if (commentMode) {
+      const visible = String(snapshot.text || '').replace(/\s+/g, ' ').trim();
+      const last = String(snapshot.selector || '').split('>').pop()?.trim() || '';
+      const label = visible
+        ? (visible.length > 42 ? `${visible.slice(0, 41)}…` : visible)
+        : (last || snapshot.tag || 'Element');
+      const openCard = (theme) => {
+        HermesPageAnnotation?.mountPageCommentCard?.(document, {
+          label,
+          detail: snapshot.selector || '',
+          rect: snapshot.boundingBox,
+          theme,
+          onQueue: (note) => {
+            browserApi.runtime.sendMessage({
+              type: HermesPageAnnotation?.PAGE_ANNOTATION_MESSAGES?.CARD_SUBMIT || 'HERMES_PAGE_COMMENT_CARD_SUBMIT',
+              action: 'queue',
+              note,
+              pickedElement: snapshot,
+              url: location.href,
+            }).catch(() => {});
+          },
+          onSend: (note) => {
+            browserApi.runtime.sendMessage({
+              type: HermesPageAnnotation?.PAGE_ANNOTATION_MESSAGES?.CARD_SUBMIT || 'HERMES_PAGE_COMMENT_CARD_SUBMIT',
+              action: 'send',
+              note,
+              pickedElement: snapshot,
+              url: location.href,
+            }).catch(() => {});
+          },
+          onCancel: () => {
+            browserApi.runtime.sendMessage({
+              type: HermesPageAnnotation?.PAGE_ANNOTATION_MESSAGES?.CARD_CANCEL || 'HERMES_PAGE_COMMENT_CARD_CANCEL',
+              url: location.href,
+            }).catch(() => {});
+          },
+        });
+      };
+      if (pickTheme) openCard(pickTheme);
+      else {
+        browserApi.storage?.local?.get?.('hermesBrowserSettings')
+          .then((stored) => openCard(HermesPageAnnotation?.resolvePageCommentCardTheme?.(stored?.hermesBrowserSettings || {})))
+          .catch(() => openCard(null));
+      }
+    }
   }
 
   function onPickKeydown(event) {
@@ -421,11 +475,16 @@
     }
   }
 
-  function startPickMode() {
+  function startPickMode(message = {}) {
     if (pickModeActive) return { ok: true, alreadyActive: true };
+    annotationController?.cancel?.();
+    HermesPageAnnotation?.hidePageCommentCard?.(document);
     pickModeActive = true;
+    pickPurpose = message.purpose === 'comment' ? 'comment' : 'context';
+    pickTheme = message.theme && typeof message.theme === 'object' ? message.theme : null;
     ensurePickStyles();
     document.documentElement.classList.add('hermes-element-pick-mode');
+    document.documentElement.setAttribute('data-hermes-pick-purpose', pickPurpose);
     document.addEventListener('mousemove', onPickMouseMove, true);
     document.addEventListener('click', onPickClick, true);
     document.addEventListener('keydown', onPickKeydown, true);
@@ -434,9 +493,50 @@
   }
 
   function cancelPickMode() {
+    HermesPageAnnotation?.hidePageCommentCard?.(document);
     teardownPickMode({ cancelled: true });
     return { ok: true };
   }
+
+  const annotationController = HermesPageAnnotation?.createPageAnnotationController?.({
+    document,
+    sendMessage: (message) => {
+      browserApi.runtime.sendMessage(message).catch(() => {});
+    },
+  }) || null;
+
+  function startAnnotationMode(message = {}) {
+    cancelPickMode();
+    if (!annotationController) return { ok: false, error: 'Page annotation runtime is unavailable.' };
+    const started = annotationController.start({
+      sessionId: message.sessionId,
+      mode: message.mode,
+    });
+    return { ...started, documentKey: HermesPageAnnotation.createDocumentKey(document) };
+  }
+
+  function cancelAnnotationMode() {
+    return annotationController?.cancel?.() || { ok: true };
+  }
+
+  function abortPageOverlays() {
+    HermesPageAnnotation?.hidePageCommentCard?.(document);
+    cancelPickMode();
+    cancelAnnotationMode();
+    return { ok: true };
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (!pickModeActive && !document.querySelector('[data-hermes-page-comment-card]')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    abortPageOverlays();
+    browserApi.runtime.sendMessage({
+      type: HermesPageAnnotation?.PAGE_ANNOTATION_MESSAGES?.CARD_CANCEL || 'HERMES_PAGE_COMMENT_CARD_CANCEL',
+      url: location.href,
+    }).catch(() => {});
+  }, true);
 
   // Every content-script document announces a new authoritative frame
   // generation to the MV3 worker. The message carries no page URL or content;
@@ -476,18 +576,48 @@
     }
     if (message?.type === ELEMENT_PICK_MESSAGES.START) {
       try {
-        sendResponse(startPickMode());
+        sendResponse(startPickMode(message));
       } catch (error) {
         sendResponse({ ok: false, error: error?.message || String(error) });
       }
       return true;
     }
-    if (message?.type === ELEMENT_PICK_MESSAGES.CANCEL) {
+    if (message?.type === ELEMENT_PICK_MESSAGES.CANCEL
+      || message?.type === (HermesPageAnnotation?.PAGE_ANNOTATION_MESSAGES?.ABORT || 'HERMES_ABORT_PAGE_OVERLAYS')) {
       try {
-        sendResponse(cancelPickMode());
+        sendResponse(abortPageOverlays());
       } catch (error) {
         sendResponse({ ok: false, error: error?.message || String(error) });
       }
+      return true;
+    }
+    const annotationMessages = HermesPageAnnotation?.PAGE_ANNOTATION_MESSAGES || {};
+    if (message?.type === annotationMessages.START) {
+      try {
+        sendResponse(startAnnotationMode(message));
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error) });
+      }
+      return true;
+    }
+    if (message?.type === annotationMessages.CANCEL) {
+      try {
+        sendResponse(cancelAnnotationMode());
+      } catch (error) {
+        sendResponse({ ok: false, error: error?.message || String(error) });
+      }
+      return true;
+    }
+    if (message?.type === annotationMessages.SYNC) {
+      sendResponse(annotationController?.sync?.(message.pins || []) || { ok: false });
+      return true;
+    }
+    if (message?.type === annotationMessages.CAPTURE_BEGIN) {
+      sendResponse(annotationController?.beginCapture?.(message) || { ok: false });
+      return true;
+    }
+    if (message?.type === annotationMessages.CAPTURE_END) {
+      sendResponse(annotationController?.endCapture?.(message) || { ok: false });
       return true;
     }
     return false;
