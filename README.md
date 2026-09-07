@@ -22,7 +22,7 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 ### New in v0.3.2: Hermes Bot Mode, Multi-Agent Threads and Intelligent Tab Scoping
 
 v0.3.2 introduces **Hermes Bot Mode**, bringing your full Hermes multi-agent roster directly into the browser side panel:
-- **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles (`Roxas`, `Naminé`, `Riku`, and custom agents) with lazy model hydration and sub-50ms dynamic Desktop dashboard discovery.
+- **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles with lazy model hydration and sub-50ms dynamic Desktop dashboard discovery.
 - **Group Chats & Collaborative Threads**: Synced multi-agent room projections, room-level thread tracking, and synchronized conversation histories without blank chat states.
 - **Truthful Page-Only Scoping & Zero Token Bloat**: By default, only the active browser tab is included (`1/N` tabs in prompt) and sent in the prompt envelope. All other open tabs remain strictly excluded, preventing context bloat and token waste.
 - **Interactive Multi-Tab In/Out Controls**: Click any tab to toggle it `IN` or `OUT` on demand, with a full-width **Page only** reset action and side-by-side **Include all tabs** and **AI Triage Tabs** controls.
@@ -34,6 +34,10 @@ v0.3.2 introduces **Hermes Bot Mode**, bringing your full Hermes multi-agent ros
 v0.3.0 added an opt-in MV3 controller for leased browser tabs, explicit approval gates for consequential or privileged actions, local HTML/PDF/localhost document access after approval, scoped artifact transfer, and reviewed workflow-to-skill drafts. Control remains bound to the exact controller, tab lease, frame, and document generation, and a Browser-bound request never falls back to an isolated browser backend.
 
 The release also keeps Hermes Assist, Hermes Web Alpha, session-scoped model routing, and the Browser Context Protocol introduced in v0.2.0.
+
+### Page comments
+
+**Comment on page** in the attach menu uses the existing red element picker. Click a target, write a note, and queue pins without filling the composer. Queued comments sit beside Ask Hermes until you send; the chat shows a compact summary while Hermes still receives the annotated targets, notes, and crops. Closing the side panel or pressing Esc cancels pick and comment chrome. The on-page comment card follows the active extension theme and can be dragged.
 
 ### Hermes Assist
 
@@ -100,6 +104,8 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Adds a collapsible “What Hermes saw” receipt after each sent turn for transparent context/debugging.
 - Shows a live Tool Activity Strip while Hermes streams, so tool calls appear as structured runtime activity instead of raw `[tool]` markdown appended into answers.
 - Classifies upstream Hermes runtime/tool exceptions as connected-with-warning diagnostics when the gateway is reachable, including the known Python `NoneType`/`int()` traceback class.
+- Adds **Comment on page**: pick an element, write a note, and queue pins beside Ask Hermes without dumping annotation text into the composer. Chat shows a compact summary; Hermes still receives the full annotated targets.
+- Named agent profiles load their own skill catalog instead of inheriting the default profile's slash commands.
 - Captures active tab title/URL, open tabs, selected text, readable page text, metadata, headings, forms, links, and buttons where available.
 - Supports voice dictation through Hermes audio transcription when available, with Browser speech fallback when the connected runtime does not expose STT.
 - Wraps webpage text as untrusted context before sending it to Hermes.
@@ -131,7 +137,8 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard URL and no API key. Chat/session/model path only; REST-only profile/skills/image-upload surfaces remain unavailable. |
 | Hermes Web full view | Local/Remote API alpha | Requires a token-backed Local or Remote API connection. Cloud Preview and ticketed remote-dashboard transports remain Chat-only in the side panel. |
 | Browser Context Protocol | Yes | Extension emits typed `hermes.browser.turn.v2` envelopes while retaining the v1 payload compatibility path. |
-| Hermes Assist | Yes, site-aware preview/review | 31 writing environments are recognized. Safe plain-text composers may apply after explicit review; structured/private surfaces can fall back to copy-only. Hermes Assist never submits. |
+|| Hermes Assist | Yes, site-aware preview/review | 31 writing environments are recognized. Safe plain-text composers may apply after explicit review; structured/private surfaces can fall back to copy-only. Hermes Assist never submits. |
+|| Page comments | Yes | Attach menu. Uses the red element picker. Queues beside Ask Hermes; chat shows a compact summary. |
 | Companion plugin | Optional functional context cache | `companion-plugin/` provides read-only tools/hooks for sanitized Browser context; not required for normal extension use. |
 | Browser control / Runs UI / debugger | Yes (Experimental) | Bounded, opt-in MV3 controller with per-tab leases, explicit user approval gates, and sensitive action classification. Requires compatible Hermes Agent controller support. |
 | Local HTML / PDF / localhost context and control | Yes, after approval | `file://` access also requires the browser's Allow access to file URLs switch. macOS and Windows file URLs share the same approval and lease model. |
