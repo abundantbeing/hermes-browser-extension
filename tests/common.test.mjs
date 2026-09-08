@@ -1840,6 +1840,46 @@ test('normalizeHermesModels maps tiered Codex GPT-5.6 context variants by explic
   assert.equal(codexGpt54[0].contextTokens, 900_000, 'exact gpt-5.4 should use the effective Codex OAuth limit');
 });
 
+test('normalizeHermesModels maps Codex ChatGPT 6 Astra context to 272k and 900k', () => {
+  for (const model of ['gpt-6-astra', 'chatgpt-6-astra']) {
+    const base = normalizeHermesModels({ data: [{ id: `openai-codex::${model}`, rawModelId: model, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${model}`);
+    assert.equal(base[0].contextTokens, 272_000, `${model} should use the base Codex OAuth limit`);
+
+    const largeVariant = `${model}-900k`;
+    const large = normalizeHermesModels({ data: [{ id: `openai-codex::${largeVariant}`, rawModelId: largeVariant, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${largeVariant}`);
+    assert.equal(large[0].contextTokens, 900_000, `${largeVariant} should use the 900K Codex OAuth limit`);
+  }
+
+  const labeled = normalizeHermesModels({ data: [{
+    id: 'openai-codex::gpt-6-astra',
+    rawModelId: 'gpt-6-astra',
+    name: 'ChatGPT 6 Astra',
+    provider: 'openai-codex',
+    context_length: 0,
+  }] }, 'openai-codex::gpt-6-astra');
+  assert.equal(labeled[0].contextTokens, 272_000, 'ChatGPT 6 Astra should register as 272k');
+
+  const labeled900k = normalizeHermesModels({ data: [{
+    id: 'openai-codex::gpt-6-astra',
+    rawModelId: 'gpt-6-astra',
+    label: 'ChatGPT 6 Astra 900K',
+    provider: 'openai-codex',
+    context_length: 272_000,
+  }] }, 'openai-codex::gpt-6-astra');
+  assert.equal(labeled900k[0].contextTokens, 900_000, 'a visible 900K Astra label should repair the stale 272K advertisement');
+
+  const alias = normalizeHermesModels({ data: [{
+    id: 'codex::gpt-6-astra',
+    rawModelId: 'gpt-6-astra',
+    provider: 'codex',
+    context_length: 0,
+  }] }, 'codex::gpt-6-astra');
+  assert.equal(alias[0].contextTokens, 272_000);
+
+  const unknownProvider = normalizeHermesModels({ data: [{ id: 'gpt-6-astra', context_length: 0 }] }, 'gpt-6-astra');
+  assert.equal(unknownProvider[0].contextTokens, 0, 'Astra must not invent a window without a provider');
+});
+
 test('normalizeHermesModels keeps Codex OAuth exclusions at 272k', () => {
   for (const model of ['gpt-5.5', 'gpt-5.4-mini']) {
     const codexModels = normalizeHermesModels({ data: [{ id: `openai-codex::${model}`, rawModelId: model, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${model}`);

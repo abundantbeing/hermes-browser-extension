@@ -1352,14 +1352,15 @@ function fallbackModelContextTokens(model = {}) {
   const isCodexOAuth = providerIdentity === 'openai-codex' || providerIdentity === 'codex';
   const isDirectOpenAi = providerIdentity === 'openai';
   const isGpt56 = /\bgpt-5\.6(?:-|\b)/.test(providerHint);
+  const isGpt6Astra = /\b(?:chat)?gpt[- .]?6[- .]?astra(?:-|\b)/.test(providerHint);
   const isExactGpt54 = /\bgpt-5\.4\b(?!-)/.test(providerHint);
   const isGpt54Mini = /\bgpt-5\.4-mini\b/.test(providerHint);
-  const has900kVariant = variants.some((value) => /(?:^|[-_/:\s])900k(?:$|[-_/:\s])/.test(value));
-  if (isGpt56) {
-    // Codex OAuth exposes two GPT-5.6 subscription tiers. The explicit 900K
-    // suffix is the source of truth; the base family uses the 272K tier.
-    // Direct OpenAI keeps its 1.05M API window, and provider-less rows stay
-    // unknown.
+  const has900kVariant = variants.some((value) => /(?:^|[-_/:\\s])900k(?:$|[-_/:\\s])/.test(value));
+  if (isGpt56 || isGpt6Astra) {
+    // Codex OAuth exposes two GPT-5.6 / GPT-6 Astra subscription tiers. The
+    // explicit 900K suffix is the source of truth; the base family uses the
+    // 272K tier. Direct OpenAI keeps its 1.05M API window, and provider-less
+    // rows stay unknown.
     if (isCodexOAuth) return has900kVariant ? 900_000 : 272_000;
     if (isDirectOpenAi) return 1_050_000;
     return 0;
@@ -2048,7 +2049,7 @@ function modelContextTokens(model = {}) {
     model.metadata?.context_window;
   const number = Number(value || 0);
   const fallback = fallbackModelContextTokens(model);
-  // Codex still advertises 272K for the GPT-5.6 family and exact GPT-5.4,
+  // Codex still advertises 272K for GPT-5.6, GPT-6 Astra, and exact GPT-5.4,
   // although Hermes has live-verified and reports a 900K effective window.
   // Override only that known-stale advertisement. Any other positive runtime
   // value is authoritative.

@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Mapped Codex ChatGPT 6 Astra context windows: 272k for the base model and 900k for the explicit 900k variant, matching the GPT-5.6 Codex OAuth tiers.
 - Restored Bot Mode Desktop roster parity: authenticated `profiles.list` supplies display names, avatars, last-activity stamps, group-chat projections, and canonical Bot Chat identity. Public status/health names are discovery only and no longer replace a rich roster.
 - Opening a bot resumes the confirmed existing Bot Chat and fails closed on lookup errors instead of creating a duplicate chat.
 - Dashboard discovery uses explicit URLs, cached URLs, open loopback tabs, sidecar candidate ports, and documented default ports. It no longer scans arbitrary ephemeral port ranges or treats gateway health names as a complete roster.
