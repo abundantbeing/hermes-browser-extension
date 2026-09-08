@@ -98,14 +98,16 @@ import {
   agentDiscoveryAppliesToMode,
   agentDiscoveryModeNote,
 } from './lib/common.mjs';
+import { resolveCanonicalBotSession } from './lib/bot-canonical-session.mjs';
 import {
   discoverLocalDashboardBaseUrl,
   extractDashboardSessionToken,
-  fetchRosterFromDashboard,
   readCachedRosterUrl,
   writeCachedRosterUrl,
   clearCachedRosterUrl,
+  writeLastKnownRoster,
 } from './lib/desktop-roster.mjs';
+import { createBackgroundLoopbackFetch } from './lib/loopback-cors.mjs';
 import {
   fetchPetGallery,
   petFrameIcon,
@@ -506,6 +508,10 @@ hbeBootEmit('panel:body-start');
 const $ = (selector) => document.querySelector(selector);
 const browserApiResolution = resolveBrowserApi();
 const browserApi = browserApiResolution.api;
+const dashboardFetch = createBackgroundLoopbackFetch({
+  sendMessage: (message) => browserApi.runtime.sendMessage(message),
+  fetchFn: globalThis.fetch?.bind(globalThis),
+});
 const browserProduct = detectBrowserProduct({
   userAgent: navigator.userAgent,
   brands: navigator.userAgentData?.brands || [],
@@ -938,6 +944,7 @@ let availableSkills = [];
 let availableProfiles = [];
 let botModeRoster = [];
 let botModeRosterGeneration = 0;
+let rosterRetryCount = 0;
 // Group chats are kept in their own roster, separated from agent profiles.
 // Synced rows (dashboard / gateway) remain in memory for the current Bot Mode
 // lifecycle. Browser never persists or fabricates group-room state.
@@ -949,8 +956,6 @@ let botModeView = 'agents';
 let botModeRosterNote = '';
 let profileWsConnection = null;
 let desktopDashboardDiscoveryPromise = null;
-let profileRichRosterPromise = null;
-let profileRichRosterAllowsTrust = false;
 let activeConversationTransport = 'rest';
 let activeDashboardWsConnection = null;
 let activeGroupProjection = null;
@@ -7374,9 +7379,24 @@ function dashboardTicketOriginMatches(baseUrl = '') {
   return Boolean(expected && actual && expected === actual);
 }
 
-async function ensureDesktopDashboardUrl({ timeoutMs = 2_500 } = {}) {
+async function localhostDashboardCandidateUrls() {
+  try {
+    const tabs = await browserApi.tabs.query({ url: ['http://127.0.0.1/*', 'http://localhost/*'] });
+    return [...new Set((Array.isArray(tabs) ? tabs : []).map((tab) => {
+      try {
+        return new URL(String(tab?.url || '')).origin;
+      } catch {
+        return '';
+      }
+    }).filter(Boolean))];
+  } catch {
+    return [];
+  }
+}
+
+async function ensureDesktopDashboardUrl({ timeoutMs = 8_000 } = {}) {
   if (desktopDashboardUrl) {
-    const alive = await fetch(desktopDashboardUrl, {
+    const alive = await dashboardFetch(desktopDashboardUrl, {
       method: 'GET',
       signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(300) : undefined,
       cache: 'no-store',
@@ -7387,13 +7407,15 @@ async function ensureDesktopDashboardUrl({ timeoutMs = 2_500 } = {}) {
   if (!desktopDashboardDiscoveryPromise) {
     desktopDashboardDiscoveryPromise = (async () => {
       const cached = await readCachedRosterUrl();
+      const candidateUrls = await localhostDashboardCandidateUrls();
       const discovered = await discoverLocalDashboardBaseUrl({
         cachedUrl: cached.url,
         cachedAt: cached.cachedAt,
+        candidateUrls,
         gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
         apiKey: hermesGatewayKey(),
-        fetchFn: fetch,
-        timeoutMs,
+        fetchFn: dashboardFetch,
+        timeoutMs: Math.max(8_000, Number(timeoutMs) || 8_000),
       });
       if (discovered) {
         desktopDashboardUrl = discovered;
@@ -7404,8 +7426,17 @@ async function ensureDesktopDashboardUrl({ timeoutMs = 2_500 } = {}) {
       desktopDashboardDiscoveryPromise = null;
     });
   }
+  const discovery = desktopDashboardDiscoveryPromise;
   const timer = new Promise((resolve) => setTimeout(() => resolve(''), Math.max(500, timeoutMs)));
-  return Promise.race([desktopDashboardDiscoveryPromise, timer]);
+  const raced = await Promise.race([discovery, timer]);
+  if (raced) return raced;
+  void discovery.then((url) => {
+    if (!url || desktopDashboardUrl === url) return;
+    desktopDashboardUrl = url;
+    void writeCachedRosterUrl(url);
+    void loadProfiles({ quiet: true, allowDashboardTrust: true });
+  });
+  return desktopDashboardUrl || '';
 }
 
 async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboardTrust = false } = {}) {
@@ -7423,15 +7454,24 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
   if (profileWsConnection?.client?.readyState === 1 && profileWsConnection.key === key) {
     return profileWsConnection;
   }
+  // Legacy loopback dashboards expose a session bootstrap to permitted local
+  // clients. Resolve it before considering interactive Dashboard Attach.
+  let dashboardToken = '';
+  try {
+    const rootResponse = await dashboardFetch(baseUrl, { headers: { Accept: 'text/html' }, cache: 'no-store', redirect: 'error' });
+    if (rootResponse.ok) dashboardToken = extractDashboardSessionToken(await rootResponse.text());
+  } catch {
+    // Authenticated dashboards use the explicit signed-in tab below.
+  }
   // Auth-gated local dashboards use the same explicitly trusted, signed-in
-  // Dashboard tab and one-use ticket as Remote Dashboard Attach. The local API
+  // Dashboard tab and one-use ticket as Remote Dashboard Attach.
   // key authenticates port 8642; it cannot authenticate the dashboard on 9119.
   let trustedTab = null;
   if (Number.isFinite(trustedDashboardTabId) && dashboardTicketOriginMatches(baseUrl)) {
     trustedTab = await findDashboardTab(browserApi.tabs, originOf(baseUrl), trustedDashboardTabId);
     if (!trustedTab) trustedDashboardTabId = null;
   }
-  if (allowDashboardTrust && !trustedTab) {
+  if (allowDashboardTrust && !trustedTab && !dashboardToken) {
     await requestDashboardOriginTrust(baseUrl, { local: true });
     trustedTab = await findDashboardTab(browserApi.tabs, originOf(baseUrl), trustedDashboardTabId);
   }
@@ -7481,15 +7521,6 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
   gatewayClient.on('profiles.changed', () => {
     void loadProfiles({ quiet: true });
   });
-  let dashboardToken = '';
-  if (desktopDashboardUrl) {
-    try {
-      const rootResponse = await fetch(baseUrl, { headers: { Accept: 'text/html' }, cache: 'no-store' });
-      dashboardToken = extractDashboardSessionToken(await rootResponse.text());
-    } catch {
-      dashboardToken = '';
-    }
-  }
   const wsUrl = dashboardToken
     ? buildDashboardWsUrlWithCredential(baseUrl, 'token', dashboardToken)
     : (!desktopDashboardUrl && settings.apiKey
@@ -7510,7 +7541,7 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
           desktopDashboardUrl = freshUrl;
           await writeCachedRosterUrl(freshUrl);
           const freshBase = normalizeGatewayUrl(freshUrl);
-          const rootRes = await fetch(freshBase, { headers: { Accept: 'text/html' }, cache: 'no-store' });
+          const rootRes = await dashboardFetch(freshBase, { headers: { Accept: 'text/html' }, cache: 'no-store', redirect: 'error' });
           const freshToken = extractDashboardSessionToken(await rootRes.text());
           const freshWs = freshToken ? buildDashboardWsUrlWithCredential(freshBase, 'token', freshToken) : buildDashboardWsUrl(freshBase);
           await gatewayClient.connect(freshWs);
@@ -7618,7 +7649,6 @@ function remoteAvatarImageOf(remoteAvatar) {
 }
 
 async function refreshPetAvatarCache() {
-  if (settings.botModeEnabled !== true) return;
   try {
     const all = await readAllPetAvatars();
     petAvatarsByProfile.clear();
@@ -7631,10 +7661,22 @@ async function refreshPetAvatarCache() {
 }
 
 function appendBotModeAvatar(container, displayName, profileName = '', remoteAvatar = null) {
+  const override = botProfileOverrideFor(profileName);
+  const overrideImage = typeof override?.icon === 'string' && override.icon.startsWith('data:image/')
+    ? override.icon
+    : '';
   const remoteImage = remoteAvatarImageOf(remoteAvatar);
   if (remoteImage) {
     const img = document.createElement('img');
     img.src = remoteImage;
+    img.alt = '';
+    img.className = 'bot-mode-avatar-pet';
+    container.replaceChildren(img);
+    return;
+  }
+  if (overrideImage) {
+    const img = document.createElement('img');
+    img.src = overrideImage;
     img.alt = '';
     img.className = 'bot-mode-avatar-pet';
     container.replaceChildren(img);
@@ -7650,7 +7692,7 @@ function appendBotModeAvatar(container, displayName, profileName = '', remoteAva
     container.replaceChildren(img);
     return;
   }
-  const seed = displayName || profileName || 'agent';
+  const seed = override?.blobatarSeed || displayName || profileName || 'agent';
   let svgMarkup = '';
   try {
     svgMarkup = blobatarSvg(seed, { size: 40 });
@@ -8633,136 +8675,55 @@ const CANONICAL_FALLBACK_GROUP_CHATS = [];
 
 let desktopDashboardUrl = '';
 
-async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}) {
-  // Profiles load regardless of Bot Mode: the Settings → Active profile
-  // selector and regular (non-Bot) sessions need the verified roster too.
-  // Bot Mode only adds the deck/roster UI on top; the underlying profile
-  // data is a shared Hermes runtime surface, not a Bot Mode feature.
-  const generation = ++botModeRosterGeneration;
-  // Local API mode: the sidecar (8642) has no roster REST route and its /api/ws
-  // only exists on the desktop dashboard, which sits on a random loopback port.
-  //
-  // Route order matters: the gateway WebSocket profiles.list RPC returns the
-  // RICH roster (ui_meta bot titles/avatars, canonical Bot Chat previews, and
-  // the hermes-bots-groups projection), while the dashboard REST /api/profiles
-  // endpoint strips ui_meta. REST first meant group chats never synced and
-  // roster rows fell back to placeholders. WS is tried first, REST second —
-  // both are absorbed into the same merge so whichever succeeds wins, and a
-  // successful REST only upgrades agents, never erases synced groups.
-  const applyRoster = (split, sourceId, { allowCanonicalFallback = true } = {}) => {
-    if (generation !== botModeRosterGeneration) return;
-    botModeRosterNote = '';
-    availableProfiles = botProfileRowsToHermesProfiles(split.agents, settings.activeProfile);
-    adoptSyncedGroupChats(split.groupChats, { allowCanonicalFallback });
-    botModeRoster = split.agents;
-    renderProfiles();
-    renderBotModeRoster(els.botModeSearch?.value);
-    if (!quiet) setStatus('ok', 'Hermes profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
-  };
-  let rosterLoaded = false;
-  const createRichRosterPromise = () => {
-    let pending;
-    pending = (async () => {
-      try {
-        const connection = await ensureProfileWsConnection({ readyTimeoutMs: 5_000, allowDashboardTrust });
-        return {
-          payload: await connection.client.request(WS_METHODS.profilesList, { include_sessions: true }),
-          sourceId: connection.baseUrl || normalizeGatewayUrl(settings.gatewayUrl),
-        };
-      } catch (error) {
-        return { error };
-      }
-    })().finally(() => {
-      if (profileRichRosterPromise === pending) {
-        profileRichRosterPromise = null;
-        profileRichRosterAllowsTrust = false;
-      }
-    });
-    profileRichRosterPromise = pending;
-    profileRichRosterAllowsTrust = allowDashboardTrust;
-    return pending;
-  };
-  const mayReuseRichRoster = profileRichRosterPromise
-    && !(allowDashboardTrust && !profileRichRosterAllowsTrust);
-  const richRosterPromise = mayReuseRichRoster
-    ? profileRichRosterPromise
-    : createRichRosterPromise();
-  const applyRichRoster = (result) => {
-    if (generation !== botModeRosterGeneration || !result?.payload) return false;
-    const split = splitBotRosterRows(result.payload, { sourceId: result.sourceId });
-    if (!split.agents.length && !split.groupChats.length) return false;
-    applyRoster(split, result.sourceId);
-    rosterLoaded = true;
-    return true;
-  };
-  void richRosterPromise.then((result) => {
-    const applied = applyRichRoster(result);
-    if (!applied && result?.error && generation === botModeRosterGeneration && !botModeGroupChats.length) {
-      adoptSyncedGroupChats([], { allowCanonicalFallback: true });
-    }
-  }).catch(() => undefined);
-  if (!isRemoteWsMode()) {
-    try {
-      if (desktopDashboardUrl) {
-        // Verify that the cached dashboard port is still alive before querying
-        const aliveCheck = await fetch(desktopDashboardUrl, { method: 'GET', signal: AbortSignal.timeout(300) }).catch(() => null);
-        if (!aliveCheck || !aliveCheck.ok) desktopDashboardUrl = '';
-      }
-      if (!desktopDashboardUrl) {
-        desktopDashboardUrl = await ensureDesktopDashboardUrl({ timeoutMs: 3_500 });
-      }
-      if (desktopDashboardUrl) {
-        const payload = await Promise.race([
-          fetchRosterFromDashboard({ baseUrl: desktopDashboardUrl, fetchFn: fetch }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('dashboard-roster-timeout')), 4_000)),
-        ]);
-        if (generation !== botModeRosterGeneration) return;
-        const split = splitBotRosterRows(payload, { sourceId: desktopDashboardUrl });
-        if (split.agents.length && !rosterLoaded) {
-          applyRoster(split, desktopDashboardUrl, { allowCanonicalFallback: false });
-          rosterLoaded = true;
-          // REST payload strips ui_meta, so it can never carry the group
-          // projection. Let the WS attempt below upgrade the roster with bot
-          // titles, previews, and group chats; its failure is non-fatal.
-        }
-      }
-    } catch (error) {
-      if (generation !== botModeRosterGeneration) return;
-      botModeRosterNote = error?.message === 'dashboard-authentication-required'
-        ? 'Dashboard authentication required. Open the signed-in local Dashboard tab, then refresh profiles to authorize Bot Mode.'
-        : 'Desktop dashboard roster unavailable; trying the gateway WebSocket.';
-    }
-  }
-  if (rosterLoaded) return;
-  const richResult = await Promise.race([
-    richRosterPromise,
-    new Promise((resolve) => setTimeout(() => resolve({ timedOut: true }), 5_500)),
-  ]);
-  if (generation !== botModeRosterGeneration) return;
-  applyRichRoster(richResult);
-  if (rosterLoaded) {
-    if (!botModeGroupChats.length && richResult?.error) {
-      adoptSyncedGroupChats([], { allowCanonicalFallback: true });
-    }
+function scheduleRosterRetry({ force = false } = {}) {
+  if (botModeRoster.length && !force) {
+    rosterRetryCount = 0;
     return;
   }
-  if (richResult?.timedOut) {
-    botModeRosterNote = 'Hermes is still syncing the rich Bot Mode roster in the background.';
-  }
-  if (richResult?.error && allowDashboardTrust) {
-    botModeRosterNote = String(richResult.error?.message || botModeRosterNote);
-  }
+  if (rosterRetryCount >= 3) return;
+  rosterRetryCount += 1;
+  const delayMs = 1200 * rosterRetryCount;
+  setTimeout(() => {
+    void loadProfiles({ quiet: true, allowDashboardTrust: true });
+  }, delayMs);
+}
 
-  // Do NOT inject synthetic/hardcoded agent profiles.
-  // Profiles belong entirely to the user's actual connected Hermes gateway/dashboard.
-  if (!botModeRoster.length) {
-    availableProfiles = [];
-    botModeRoster = [];
-    adoptSyncedGroupChats([]);
+async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}) {
+  // Profiles load regardless of Bot Mode. Only the authenticated profiles.list
+  // contract owns bot names, assets, activity, canonical sessions and groups.
+  // Public status and REST profile summaries are discovery, never roster data.
+  const generation = ++botModeRosterGeneration;
+  const gatewayUrl = normalizeGatewayUrl(settings.gatewayUrl);
+  try {
+    const connection = await ensureProfileWsConnection({ readyTimeoutMs: 8_000, allowDashboardTrust });
+    const payload = await connection.client.request(WS_METHODS.profilesList, { include_sessions: true });
+    if (generation !== botModeRosterGeneration || gatewayUrl !== normalizeGatewayUrl(settings.gatewayUrl)) return;
+    if (!Array.isArray(payload?.profiles)) throw new Error('invalid-profile-roster');
+    const sourceId = connection.baseUrl || gatewayUrl;
+    const split = splitBotRosterRows(payload, { sourceId });
+    availableProfiles = botProfileRowsToHermesProfiles(split.agents, settings.activeProfile);
+    botModeRoster = split.agents;
+    adoptSyncedGroupChats(split.groupChats, { allowCanonicalFallback: false });
+    botModeRosterNote = '';
+    rosterRetryCount = 0;
+    botModeRemoteAvatarCache.clear();
+    await writeLastKnownRoster({ agents: split.agents, groupChats: split.groupChats, sourceId });
+    if (generation !== botModeRosterGeneration) return;
     renderProfiles();
     renderBotModeRoster(els.botModeSearch?.value);
     renderBotModeGroupChats(els.botModeSearch?.value);
-    if (!quiet) setStatus('ok', 'Hermes profiles checked', 'No custom profiles found on gateway. Using default profile.');
+    void loadSessions({ quiet: true });
+    if (!quiet) setStatus('ok', 'Hermes profiles synced', `${availableProfiles.length} profile${availableProfiles.length === 1 ? '' : 's'} available`);
+  } catch {
+    if (generation !== botModeRosterGeneration || gatewayUrl !== normalizeGatewayUrl(settings.gatewayUrl)) return;
+    // Preserve live rich rows and groups. Do not restore legacy caches: earlier
+    // versions persisted status-only rows without authority or connection scope.
+    botModeRosterNote = 'Desktop profile sync unavailable. Existing bot details are preserved. Open the connected Dashboard and refresh profiles to reconnect.';
+    renderProfiles();
+    renderBotModeRoster(els.botModeSearch?.value);
+    renderBotModeGroupChats(els.botModeSearch?.value);
+    if (!quiet) setStatus('warn', 'Desktop profile sync unavailable', botModeRosterNote, { translateDetail: false });
+    scheduleRosterRetry({ force: true });
   }
 }
 
@@ -9195,6 +9156,23 @@ async function loadCronJobs({ quiet = false } = {}) {
   }
 }
 
+async function listCanonicalBotChatViaGateway(profileName) {
+  const base = String(normalizeGatewayUrl(settings.gatewayUrl) || '').replace(/\/$/, '');
+  const name = String(profileName || '').trim();
+  if (!base || !name) return null;
+  const key = hermesGatewayKey();
+  const url = `${base}/p/${encodeURIComponent(name)}/api/sessions?title=${encodeURIComponent(BOT_CHAT_TITLE)}&include_hidden=true&limit=5`;
+  const headers = { Accept: 'application/json' };
+  if (key) headers.Authorization = `Bearer ${key}`;
+  const response = await fetch(url, { headers, credentials: 'omit', cache: 'no-store' });
+  if (!response.ok) return null;
+  const payload = await response.json();
+  const rows = Array.isArray(payload?.data)
+    ? payload.data
+    : (Array.isArray(payload?.sessions) ? payload.sessions : []);
+  return rows.find((entry) => String(entry?.title || '') === BOT_CHAT_TITLE) || rows[0] || null;
+}
+
 async function openBotProfile(row) {
   // Bot Mode deck navigation is panel-owned: a stale UNCONFIRMED run-control
   // from a previous failed attempt must never wedge the deck open forever.
@@ -9297,49 +9275,25 @@ async function openBotProfile(row) {
   // only create a fresh one when the bot has never chatted.
   // The user stays on the sleek centered botModeLoadingOverlay until the session is ready!
   try {
-    let sessionReady = false;
-    try {
-      const resumePromise = (async () => {
-        const connection = await ensureActiveDashboardWsConnection();
-        const listed = await connection.client.request('session.list', {
-          title: BOT_CHAT_TITLE,
-          include_hidden: true,
-          profile: row.profileName,
-          limit: 5,
-        });
-        const rows = Array.isArray(listed?.sessions) ? listed.sessions : (Array.isArray(listed) ? listed : []);
-        const canonical = rows.find((entry) => String(entry?.title || '') === BOT_CHAT_TITLE) || rows[0] || null;
-        if (canonical?.id) {
-          const opened = await openHermesSession({
-            id: canonical.id,
-            title: BOT_CHAT_TITLE,
-            source: 'hermes_bot_mode',
-            profile: row.profileName,
-            transport: 'dashboard-ws',
-          });
-          return opened === true;
-        }
-        return false;
-      })();
-      const timeout = new Promise((resolve) => setTimeout(() => resolve(false), 8_000));
-      sessionReady = await Promise.race([resumePromise, timeout]);
-    } catch (resumeErr) {
-      console.warn('[Hermes Browser] Bot session resume fell through:', resumeErr?.message || resumeErr);
-      sessionReady = false;
-    }
-
-    if (!sessionReady) {
-      try {
-        await createHermesBrowserSession({ title: BOT_CHAT_TITLE, hidden: true, focus: true, transport: 'dashboard-ws', source: 'hermes_bot_mode' });
-      } catch (wsCreateErr) {
-        console.warn('[Hermes Browser] dashboard-ws create fell back to rest:', wsCreateErr?.message || wsCreateErr);
-        await createHermesBrowserSession({ title: BOT_CHAT_TITLE, hidden: true, focus: true, transport: 'rest', source: 'hermes_bot_mode' });
-      }
+    const connection = await ensureActiveDashboardWsConnection();
+    const canonical = await resolveCanonicalBotSession(row, (params) => connection.client.request('session.list', { ...params, limit: 200 }));
+    if (canonical) {
+      const opened = await openHermesSession({
+        id: canonical.durableId,
+        title: BOT_CHAT_TITLE,
+        source: 'hermes_bot_mode',
+        profile: row.profileName,
+        transport: 'dashboard-ws',
+      });
+      if (opened !== true) throw new Error('Could not resume the existing Bot Chat. No replacement was created.');
+    } else {
+      const created = await createHermesBrowserSession({ title: BOT_CHAT_TITLE, hidden: true, focus: true, transport: 'dashboard-ws', source: 'hermes_bot_mode' });
+      if (!created) throw new Error('Bot Chat creation did not complete.');
     }
     return true;
   } catch (err) {
-    console.warn('[Hermes Browser] Bot session open failed, creating local fallback:', err);
-    await createHermesBrowserSession({ title: BOT_CHAT_TITLE, hidden: true, focus: true, transport: 'rest', source: 'hermes_bot_mode' }).catch(() => null);
+    console.warn('[Hermes Browser] Bot session open failed; preserving canonical identity:', err);
+    setStatus('error', 'Could not open Bot Chat', err?.message || String(err), { translateDetail: false });
     return false;
   } finally {
     if (els.botModeLoadingOverlay) els.botModeLoadingOverlay.hidden = true;
@@ -11279,6 +11233,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
         createParams: {
           title,
           hidden,
+          ...(source === 'hermes_bot_mode' ? { follow_profile_config: true } : {}),
           source: source || settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
           model: requestModel,
           provider: requestProvider || undefined,
@@ -11341,7 +11296,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
         connectionReadyState: connection?.client?.readyState || activeDashboardWsConnection?.client?.readyState,
         error: wsError,
       });
-      if (preserveDashboardTransport || isRemoteWsMode()) {
+      if (source === 'hermes_bot_mode' || preserveDashboardTransport || isRemoteWsMode()) {
         console.warn('[Hermes Browser] dashboard-ws session creation failed; preserving the active transport:', wsError?.message || wsError);
         throw wsError;
       }
@@ -17372,6 +17327,7 @@ subscribeLocale(() => {
 await initI18n();
 hbeBootEmit('panel:i18n-ready');
 bindEvents();
+void loadBotProfileOverrides();
 void refreshPetAvatarCache();
 await runStartupReadiness();
 renderBrowserControl();

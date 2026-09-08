@@ -3328,7 +3328,8 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .active-profile-indicator[hidden] {
   display: none !important;
 }
-.active-profile-indicator img {
+.active-profile-indicator img,
+.active-profile-indicator svg {
   width: 32px;
   height: 32px;
   object-fit: contain;
@@ -5903,6 +5904,7 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   height: 40px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   border-radius: 12px;
   background: radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.14) 0%, rgba(0, 0, 0, 0.3) 100%), var(--hermes-paper);
   border: 1.5px solid rgba(var(--hermes-fg-rgb), 0.28);
@@ -5910,7 +5912,7 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, border-color 0.22s ease;
   transform-style: preserve-3d;
 }
-.bot-mode-avatar svg { width: 100%; height: 100%; display: block; }
+.bot-mode-avatar svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; display: block; object-fit: contain; }
 .bot-mode-avatar-fallback { font: 700 14px var(--hermes-font-mono); color: var(--hermes-ink); }
 .bot-mode-avatar-pet {
   width: 100%;
@@ -5926,6 +5928,7 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
 .new-group-bot-row:hover .bot-mode-avatar,
 .bot-mode-chip:hover .bot-mode-avatar,
 .bot-mode-avatar:hover {
+  overflow: visible;
   transform: translateY(-2px);
   border-color: rgba(var(--hermes-fg-rgb), 0.7);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45), inset 0 1px 1.5px rgba(255, 255, 255, 0.35);

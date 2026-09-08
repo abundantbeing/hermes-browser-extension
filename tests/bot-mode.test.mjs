@@ -94,9 +94,9 @@ test('Bot Mode normalizes a bounded verified roster without leaking profile path
       status: 'ready',
     },
     preview: 'Train 2 is ready',
-    lastActive: 995,
+    lastActive: 990,
     activity: {
-      lastActive: 995,
+      lastActive: 990,
       lastActiveText: 'now',
       activeNow: true,
       unread: 0,
@@ -274,5 +274,51 @@ test('cronRelativeTime renders compact human labels', () => {
   assert.equal(cronRelativeTime(now + 2 * 3_600_000, now), 'in 2h');
   assert.equal(cronRelativeTime(now + 3 * 86_400_000, now), 'in 3d');
   assert.equal(cronRelativeTime(0, now), '');
+});
+
+test('Bot Mode maps Desktop image metadata into the avatar render shape', () => {
+  const result = normalizeBotProfileList({
+    profiles: [{
+      name: 'roxas',
+      ui_meta: { 'hermes-bots': { image: 'data:image/png;base64,desktop-avatar' } },
+    }],
+  });
+
+  assert.deepEqual(result.rows[0].avatar, { image: 'data:image/png;base64,desktop-avatar' });
+});
+
+test('Bot Mode labels an untitled default profile as Hermes', () => {
+  const result = normalizeBotProfileList({ profiles: [{ name: 'default' }] });
+
+  assert.equal(result.rows[0].displayName, 'Hermes');
+});
+
+test('Bot Mode uses the fresher canonical-or-last session for activity without changing canonical identity', () => {
+  const result = normalizeBotProfileList(
+    {
+      profiles: [{
+        name: 'roxas',
+        canonical_session: {
+          id: 'canonical-bot-chat',
+          resolved_id: 'canonical-runtime',
+          root_title: BOT_CHAT_TITLE,
+          last_active: 1_800_000_100,
+        },
+        last_session: {
+          id: 'newer-visible-session',
+          preview: 'Latest visible conversation',
+          last_active: 1_800_000_200,
+        },
+      }],
+    },
+    { now: 1_800_000_200_000 },
+  );
+
+  const row = result.rows[0];
+  assert.equal(row.canonical.durableId, 'canonical-bot-chat');
+  assert.equal(row.canonical.resolvedRuntimeId, 'canonical-runtime');
+  assert.equal(row.preview, 'Latest visible conversation');
+  assert.equal(row.lastActive, 1_800_000_200);
+  assert.equal(row.activity.lastActive, 1_800_000_200);
 });
 

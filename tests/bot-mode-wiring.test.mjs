@@ -29,7 +29,16 @@ test('Profiles always load; cron and PetDex stay Bot-Mode-gated', () => {
   assert.match(sidepanelSource, /async function loadProfiles\(\{ quiet = false, allowDashboardTrust = !quiet \} = \{\}\) \{\s*\/\/ Profiles load regardless of Bot Mode/);
   assert.match(sidepanelSource, /async function loadCronJobs\(\{ quiet = false \} = \{\}\) \{\s*if \(settings\.botModeEnabled !== true\) return/);
   assert.match(sidepanelSource, /async function ensurePetGallery\(\) \{\s*if \(settings\.botModeEnabled !== true\) return/);
+
 });
+
+test('profile avatars hydrate from overrides and pet cache even when Bot Mode is off', () => {
+  assert.match(sidepanelSource, /void loadBotProfileOverrides\(\)/);
+  assert.match(sidepanelSource, /async function refreshPetAvatarCache\(\) \{\s*try \{/);
+  assert.match(sidepanelSource, /const override = botProfileOverrideFor\(profileName\)/);
+  assert.match(sidepanelSource, /scheduleRosterRetry/);
+});
+
 test('side panel exposes an opt-in Bot Mode settings control and roster overlay', () => {
   for (const id of ['botModeButton', 'botModePanel', 'botModeSearch', 'botModeRoster', 'botModeStatus', 'botModeEnabledInput']) {
     assert.match(sidepanelHtml, new RegExp(`id=["']${id}["']`));
@@ -157,18 +166,13 @@ test('named-profile drafts and reopened sessions stay on the profile-aware dashb
 });
 
 test('authenticated local dashboards reuse the explicit Dashboard ticket transport', () => {
-  assert.match(sidepanelSource, /if \(state\.state === 'unconfigured' && !usesDashboardWsChatTransport\(\)\)/);
   assert.match(sidepanelSource, /activateLocalDashboardTransport\(\{ timeoutMs: 5_000 \}\)/);
   assert.match(sidepanelSource, /loadModels\(\{ quiet: true, startup: true \}\)/);
-  assert.match(sidepanelSource, /dashboard-roster-timeout/);
   const connectionBody = sidepanelSource.match(/async function ensureProfileWsConnection\([\s\S]*?(?=\nfunction usesDashboardWsChatTransport)/)?.[0] || '';
   assert.match(connectionBody, /requestDashboardOriginTrust\(baseUrl, \{ local: true \}\)/);
   assert.match(connectionBody, /mintWsTicket\(/);
   assert.doesNotMatch(connectionBody, /transportUsesDashboardTicket/);
-  assert.match(sidepanelSource, /!botModeRoster\.length\) void loadProfiles\(\{ quiet: true, allowDashboardTrust: true \}\)/);
   assert.match(connectionBody, /findDashboardTab\(browserApi\.tabs, originOf\(baseUrl\), trustedDashboardTabId\)/);
-  assert.match(sidepanelSource, /profileRichRosterAllowsTrust/);
-  assert.match(sidepanelSource, /allowDashboardTrust && !profileRichRosterAllowsTrust/);
   assert.match(sidepanelSource, /reopen Bot Mode or refresh profiles/);
 });
 
@@ -383,10 +387,15 @@ test('refresh profiles spins its glyph with an honest tooltip and busy state', (
   assert.match(sidepanelCss, /@media \(prefers-reduced-motion: reduce\) \{[^}]*?#refreshProfilesButton\.is-refreshing \.session-refresh-icon \{ animation: none; \}/);
 });
 
-test('Bot Mode falls back to canonical agents when live gateway discovery is empty', () => {
-  assert.match(sidepanelSource, /if \(!botModeRoster\.length\) \{/);
-    assert.match(sidepanelSource, /Hermes profiles checked/);
-  });
+test('Bot Mode preserves existing agents when live gateway discovery fails', () => {
+  const loadBody = sidepanelSource.match(/async function loadProfiles\([\s\S]*?(?=\nfunction profileSwitchDisplayName)/)?.[0] || '';
+  assert.match(loadBody, /request\(WS_METHODS\.profilesList, \{ include_sessions: true \}\)/);
+  assert.match(loadBody, /writeLastKnownRoster\(\{ agents: split\.agents, groupChats: split\.groupChats/);
+  assert.match(loadBody, /Desktop profile sync unavailable/);
+  assert.doesNotMatch(loadBody, /fetchRosterFromGateway/);
+  assert.doesNotMatch(loadBody, /discoverRosterViaGatewayTab/);
+  assert.doesNotMatch(loadBody, /Hermes profiles checked/);
+});
 
 test('Bot Mode renders agent welcome intro with Collapse font and avatar', () => {
   assert.match(sidepanelHtml, /id=["']botChatIntro["']/);
@@ -396,6 +405,19 @@ test('Bot Mode renders agent welcome intro with Collapse font and avatar', () =>
   assert.match(sidepanelCss, /"Collapse"/);
   assert.match(sidepanelSource, /function renderBotChatIntro/);
   assert.match(sidepanelHtml, /id=["']botModeNewGroupButton["']/);
+});
+
+test('opening a bot resumes the confirmed canonical Bot Chat and never forks on lookup failure', () => {
+  const openBody = sidepanelSource.match(/async function openBotProfile\([\s\S]*?(?=\nasync function )/)?.[0] || '';
+  assert.match(openBody, /resolveCanonicalBotSession\(row,/);
+  assert.match(openBody, /session\.list/);
+  assert.match(openBody, /limit: 200/);
+  assert.match(openBody, /id: canonical\.durableId/);
+  assert.match(openBody, /No replacement was created/);
+  assert.match(openBody, /preserving canonical identity/);
+  assert.doesNotMatch(openBody, /listCanonicalBotChatViaGateway/);
+  assert.doesNotMatch(openBody, /Bot REST resume fell through/);
+  assert.doesNotMatch(openBody, /creating local fallback/);
 });
 
 

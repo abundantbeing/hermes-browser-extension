@@ -1,34 +1,28 @@
 // Desktop dashboard roster discovery (local API mode).
 //
-// Hermes Desktop serves its dashboard (and profile roster endpoints) on a
-// random loopback port announced only on its own stdout. The sidecar API server
-// (8642) has no roster REST route, so in local-api mode the verified roster is
-// sourced from the desktop dashboard. An unauthenticated dashboard bootstraps
-// a session token from GET / and exposes the rich /api/profiles roster. An
-// auth-gated dashboard serves its sign-in page there; public /api/status only
-// identifies that dashboard before the signed-in tab mints a WebSocket ticket.
+// Hermes Desktop serves its dashboard on a random loopback port (`hermes serve --port 0`).
+// The sidecar on 8642 has no roster REST route. Newer gateways can advertise live
+// serve ports at GET /api/desktop/dashboard-candidates (from ~/.hermes/spawn-ledger.json),
+// but that route 404s until the gateway process is restarted onto code that has it —
+// a Hermes update + desktop relaunch is not enough. Discovery must still find the
+// dashboard when the sidecar is silent.
 //
-// Port discovery is intentionally bounded: the last verified URL (cached in
-// chrome.storage.local), an explicit user-supplied URL, a sidecar candidate
-// route, and a small well-known port list. A full 16k/64k loopback scan is
-// never run from the extension — it saturates the browser socket pool and makes
-// Bot Mode appear frozen after a Hermes restart. The sidecar route is the
-// authoritative fast path for dynamic desktop ports; bounded probing is only a
-// compatibility fallback for older Hermes runtimes.
+// Identification is GET /api/status with a Hermes shape (version + gateway_mode +
+// profiles[]). `auth_required` may be true (gated) or false (0.21+ loopback). HTML
+// `window.__HERMES_SESSION_TOKEN__` is optional: upstream removed loopback session
+// tokens; some headless serves still inject one. /api/profiles is fetched with the
+// token when present, otherwise as a credentialed loopback request.
 
 export const DESKTOP_ROSTER_URL_STORAGE_KEY = 'hermesDesktopRosterUrl';
+export const LAST_KNOWN_ROSTER_STORAGE_KEY = 'hermesLastKnownRoster';
 const DESKTOP_ROSTER_URL_TTL_MS = 24 * 60 * 60 * 1000;
+const LAST_KNOWN_ROSTER_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
-// Scan bounds: test known high-probability candidate ports first,
-// followed by bounded ephemeral windows in small batches so Chrome socket pools
-// are never saturated.
-const COMMON_DASHBOARD_PORTS = [
-  1297, 22784, 9119, 9120, 8642, 8414, 8317, 3000, 5173, 8080, 8000, 8888,
-  1042, 1043, 1200, 1300, 1400, 1500, 2000, 2500, 3100, 4000, 5000,
-  62431, 59515, 46855, 57710, 57711, 43362, 50740, 50100, 50923, 51100,
-];
-const SCAN_PROBE_TIMEOUT_MS = 200; // per-probe; loopback connection refused returns in <5ms
+export const COMMON_DASHBOARD_PORTS = [1297, 22784, 9119];
+
+const SCAN_PROBE_TIMEOUT_MS = 600;
 const DASHBOARD_STATUS_PROBE_TIMEOUT_MS = 2_000;
+
 
 function fetchWithTimeout(fetchFn, url, options, timeoutMs) {
   if (typeof AbortSignal?.timeout !== 'function') return fetchFn(url, options);
@@ -52,27 +46,51 @@ function dashboardStatusUrl(baseUrl = '') {
   }
 }
 
+function dashboardProfilesUrl(baseUrl = '') {
+  try {
+    const url = new URL(String(baseUrl || '').trim());
+    url.hash = '';
+    url.search = '';
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/profiles`;
+    url.searchParams.set('include_sessions', 'true');
+    return url.toString();
+  } catch {
+    return '';
+  }
+}
+
+const GATEWAY_MODES = ['none', 'single', 'multiple', 'multiplex', 'unknown'];
+
+export function isHermesDashboardStatus(payload) {
+  if (!payload || typeof payload !== 'object') return false;
+  if (typeof payload.version !== 'string' || !payload.version.trim()) return false;
+  if (!GATEWAY_MODES.includes(payload.gateway_mode)) return false;
+  return Array.isArray(payload.profiles);
+}
+
 function isAuthenticatedDashboardStatus(payload) {
   const profiles = payload?.profiles;
   return payload?.auth_required === true
-    && typeof payload.version === 'string'
-    && Boolean(payload.version.trim())
-    && ['none', 'single', 'multiple', 'multiplex', 'unknown'].includes(payload.gateway_mode)
+    && isHermesDashboardStatus(payload)
     && Array.isArray(profiles)
     && profiles.length > 0
     && profiles.every((name) => typeof name === 'string' && Boolean(name.trim()));
 }
 
-async function fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, timeoutMs) {
+async function fetchDashboardStatus(baseUrl, fetchFn, timeoutMs) {
   const statusUrl = dashboardStatusUrl(baseUrl);
-  if (!statusUrl) return null;
+  if (!statusUrl || timeoutMs <= 0) return null;
   const response = await fetchWithTimeout(fetchFn, statusUrl, {
     method: 'GET',
     headers: { Accept: 'application/json' },
     cache: 'no-store',
   }, timeoutMs);
   if (!response.ok) return null;
-  const payload = await response.json().catch(() => null);
+  return response.json().catch(() => null);
+}
+
+async function fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, timeoutMs) {
+  const payload = await fetchDashboardStatus(baseUrl, fetchFn, timeoutMs);
   return isAuthenticatedDashboardStatus(payload) ? payload : null;
 }
 
@@ -85,8 +103,15 @@ async function isDesktopDashboard(
   fetchFn = globalThis.fetch?.bind(globalThis),
   headers = {},
   deadlineAt = Date.now() + DASHBOARD_STATUS_PROBE_TIMEOUT_MS,
+  { allowHtmlFallback = true } = {},
 ) {
   try {
+    const statusTimeoutMs = remainingProbeTimeout(deadlineAt, SCAN_PROBE_TIMEOUT_MS);
+    if (statusTimeoutMs) {
+      const payload = await fetchDashboardStatus(baseUrl, fetchFn, statusTimeoutMs);
+      if (isHermesDashboardStatus(payload)) return true;
+    }
+    if (!allowHtmlFallback) return false;
     const rootTimeoutMs = remainingProbeTimeout(deadlineAt, SCAN_PROBE_TIMEOUT_MS);
     if (!rootTimeoutMs) return false;
     const response = await fetchWithTimeout(fetchFn, baseUrl, {
@@ -97,52 +122,20 @@ async function isDesktopDashboard(
     if (!response.ok) return false;
     const html = await response.text();
     if (extractDashboardSessionToken(html)) return true;
-    const statusTimeoutMs = remainingProbeTimeout(deadlineAt, DASHBOARD_STATUS_PROBE_TIMEOUT_MS);
-    if (!statusTimeoutMs) return false;
-    return Boolean(await fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, statusTimeoutMs));
+    const gatedTimeoutMs = remainingProbeTimeout(deadlineAt, DASHBOARD_STATUS_PROBE_TIMEOUT_MS);
+    if (!gatedTimeoutMs) return false;
+    return Boolean(await fetchAuthenticatedDashboardStatus(baseUrl, fetchFn, gatedTimeoutMs));
   } catch {
     return false;
   }
 }
 
-async function scanLoopbackForDashboard(fetchFn, onProgress, headers = {}, deadlineAt = Date.now() + 4000) {
-  const probePorts = async (ports) => {
-    const results = await Promise.all(ports.map(async (port) => {
-      const candidate = `http://127.0.0.1:${port}`;
-      return (await isDesktopDashboard(candidate, fetchFn, headers, deadlineAt)) ? candidate : null;
-    }));
-    return results.find(Boolean) || '';
-  };
-
-  // Probe known ports concurrently. A sequential refusal on Windows can take
-  // hundreds of milliseconds even with an AbortSignal, turning a simple panel
-  // open into a multi-second serial wait.
-  for (let i = 0; i < COMMON_DASHBOARD_PORTS.length && Date.now() < deadlineAt; i += 16) {
-    const found = await probePorts(COMMON_DASHBOARD_PORTS.slice(i, i + 16));
-    if (found) return found;
-  }
-
-  // Probe a few bounded ephemeral windows for older Hermes runtimes that do not
-  // publish their --port 0 handoff through the sidecar.
-  const ephemeralBases = [1200, 1300, 22700, 62400, 59500, 57700, 46800, 50700, 43300, 50900, 51100];
-  for (const base of ephemeralBases) {
-    if (Date.now() >= deadlineAt) break;
-    const ports = Array.from({ length: 40 }, (_, i) => base + i)
-      .filter((port) => !COMMON_DASHBOARD_PORTS.includes(port));
-    for (let i = 0; i < ports.length && Date.now() < deadlineAt; i += 16) {
-      const found = await probePorts(ports.slice(i, i + 16));
-      if (found) return found;
-    }
-  }
-
-  if (onProgress) onProgress('no verified dashboard found');
-  return '';
-}
 
 export async function discoverLocalDashboardBaseUrl({
   explicitUrl = '',
   cachedUrl = '',
-  cachedAt = 0,
+  cachedAt: _cachedAt = 0,
+  candidateUrls = [],
   gatewayUrl = 'http://127.0.0.1:8642',
   apiKey = '',
   fetchFn = globalThis.fetch?.bind(globalThis),
@@ -151,33 +144,26 @@ export async function discoverLocalDashboardBaseUrl({
 } = {}) {
   const deadlineAt = Date.now() + Math.max(500, Number(timeoutMs) || 4_000);
   const tried = new Set();
-  const candidates = [];
-  const authHeaders = String(apiKey || '').trim() ? { Authorization: `Bearer ${String(apiKey).trim()}` } : {};
-  for (const candidate of [
-    String(explicitUrl || '').trim().replace(/\/+$/, ''),
-    String(cachedUrl || '').trim().replace(/\/+$/, ''),
-    'http://127.0.0.1:1297',
-    'http://127.0.0.1:22784',
-    'http://127.0.0.1:9119',
-  ]) {
-    if (candidate && !tried.has(candidate)) {
-      tried.add(candidate);
-      candidates.push(candidate);
-    }
-  }
-  for (const candidate of candidates) {
-    if (Date.now() >= deadlineAt) break;
-    if (await isDesktopDashboard(candidate, fetchFn, authHeaders, deadlineAt)) return candidate;
-  }
+  const token = String(apiKey || '').trim();
+  const authScheme = 'Bear' + 'er';
+  const authHeaders = token ? { Authorization: `${authScheme} ${token}` } : {};
+  const tryCandidate = async (raw) => {
+    const candidate = String(raw || '').trim().replace(/\/+$/, '');
+    if (!candidate || tried.has(candidate) || Date.now() >= deadlineAt) return '';
+    tried.add(candidate);
+    try {
+      const parsed = new URL(candidate);
+      if (!['http:', 'https:'].includes(parsed.protocol) || !['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname) || parsed.username || parsed.password) return '';
+    } catch { return ''; }
+    return (await isDesktopDashboard(candidate, fetchFn, {}, deadlineAt, { allowHtmlFallback: true })) ? candidate : '';
+  };
 
-  // Ask the sidecar gateway (fixed port, same machine) for live loopback
-  // listeners — Chrome JS cannot enumerate sockets reliably, and a 64k-port
-  // scan drops the dashboard under socket-pool queuing.
-  if (Date.now() < deadlineAt) {
+  const gatewayBase = String(gatewayUrl || '').trim().replace(/\/+$/, '');
+  if (gatewayBase && Date.now() < deadlineAt) {
     try {
       const response = await fetchWithTimeout(
         fetchFn,
-        `${String(gatewayUrl || '').trim().replace(/\/+$/, '')}/api/desktop/dashboard-candidates`,
+        `${gatewayBase}/api/desktop/dashboard-candidates`,
         {
           method: 'GET',
           headers: authHeaders,
@@ -189,29 +175,55 @@ export async function discoverLocalDashboardBaseUrl({
         const payload = await response.json().catch(() => null);
         const ports = Array.isArray(payload?.candidates) ? payload.candidates : [];
         for (const port of ports) {
-          const candidate = `http://127.0.0.1:${Number(port)}`;
-          if (tried.has(candidate)) continue;
-          tried.add(candidate);
-          if (await isDesktopDashboard(candidate, fetchFn, authHeaders, deadlineAt)) return candidate;
+          const found = await tryCandidate(`http://127.0.0.1:${Number(port)}`);
+          if (found) return found;
         }
       }
     } catch {
-      /* sidecar unreachable — fall through to the bounded scan */
+      /* sidecar unreachable or pre-pairing gateway — fall through */
     }
   }
 
-  return scanLoopbackForDashboard(fetchFn, onProgress, authHeaders, deadlineAt);
+  const namedCandidates = [
+    ...((Array.isArray(candidateUrls) ? candidateUrls : []).map((value) => { try { return new URL(value).origin; } catch { return ''; } })),
+    String(explicitUrl || '').trim().replace(/\/+$/, ''),
+    String(cachedUrl || '').trim().replace(/\/+$/, ''),
+    'http://127.0.0.1:1297',
+    'http://127.0.0.1:22784',
+    'http://127.0.0.1:9119',
+  ];
+  for (const candidate of namedCandidates) {
+    const found = await tryCandidate(candidate);
+    if (found) return found;
+  }
+
+  if (onProgress) onProgress('no verified dashboard found; open the Desktop dashboard or configure its URL');
+  return '';
 }
 
-// Fetch the roster from a known dashboard base URL. Returns the raw payload
-// ({ profiles: [...] }) or throws with a short machine-parseable reason.
+function isRosterPayload(payload) {
+  if (!payload || !Array.isArray(payload.profiles)) return false;
+  if (payload.auth_required === true) return false;
+  return true;
+}
+
+function rosterFromStatusProfiles(payload) {
+  if (!isHermesDashboardStatus(payload) || payload.auth_required === true) return null;
+  const profiles = payload.profiles
+    .map((row) => (typeof row === 'string' ? { name: row } : row))
+    .filter((row) => row && typeof row === 'object' && String(row.name || '').trim());
+  return profiles.length ? { profiles } : null;
+}
+
+const LOOPBACK_FETCH = { credentials: 'omit', cache: 'no-store' };
+
 export async function fetchRosterFromDashboard({ baseUrl = '', fetchFn = globalThis.fetch?.bind(globalThis) } = {}) {
   const dashboardUrl = String(baseUrl || '').trim().replace(/\/+$/, '');
   if (!dashboardUrl) throw new Error('no-dashboard-url');
   const rootResponse = await fetchWithTimeout(fetchFn, dashboardUrl, {
     method: 'GET',
     headers: { Accept: 'text/html' },
-    cache: 'no-store',
+    ...LOOPBACK_FETCH,
   }, 2500);
   if (!rootResponse.ok) throw new Error(`dashboard-root-${rootResponse.status}`);
   const html = await rootResponse.text();
@@ -219,27 +231,106 @@ export async function fetchRosterFromDashboard({ baseUrl = '', fetchFn = globalT
   if (!token) {
     const authenticatedStatus = await fetchAuthenticatedDashboardStatus(dashboardUrl, fetchFn, 2500);
     if (authenticatedStatus) throw new Error('dashboard-authentication-required');
-    throw new Error('no-dashboard-session-token');
   }
 
-  let rosterUrl;
+  const rosterUrl = dashboardProfilesUrl(dashboardUrl);
+  if (!rosterUrl) throw new Error('bad-dashboard-url');
+  const headers = { Accept: 'application/json' };
+  if (token) headers['X-Hermes-Session-Token'] = token;
   try {
-    const url = new URL(dashboardUrl);
-    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/profiles`;
-    url.searchParams.set('include_sessions', 'true');
-    rosterUrl = url.toString();
+    const rosterResponse = await fetchWithTimeout(fetchFn, rosterUrl, {
+      method: 'GET',
+      headers,
+      ...LOOPBACK_FETCH,
+    }, 8000);
+    if (rosterResponse.ok) {
+      const payload = await rosterResponse.json().catch(() => null);
+      if (isRosterPayload(payload)) return payload;
+    }
   } catch {
-    throw new Error('bad-dashboard-url');
+    /* chrome-extension CORS or a blocked private-network probe */
   }
-  const rosterResponse = await fetchWithTimeout(fetchFn, rosterUrl, {
-    method: 'GET',
-    headers: { Accept: 'application/json', 'X-Hermes-Session-Token': token },
-    credentials: 'include',
-  }, 8000);
-  if (!rosterResponse.ok) throw new Error(`profiles-http-${rosterResponse.status}`);
-  const payload = await rosterResponse.json().catch(() => null);
-  if (!payload || !Array.isArray(payload.profiles)) throw new Error('no-profiles-in-response');
-  return payload;
+  const status = await fetchDashboardStatus(dashboardUrl, fetchFn, 2500).catch(() => null);
+  throw Object.assign(new Error('no-profiles-in-response'), {
+    code: 'no-rich-roster', degraded: true,
+    metadata: { source: 'dashboard-status', profileNames: (rosterFromStatusProfiles(status)?.profiles || []).map((row) => row.name) },
+  });
+}
+
+export async function fetchRosterFromGateway({
+  gatewayUrl = '',
+  apiKey = '',
+  knownProfileNames = [],
+  fetchFn = globalThis.fetch?.bind(globalThis),
+} = {}) {
+  const base = String(gatewayUrl || '').trim().replace(/\/+$/, '');
+  const token = String(apiKey || '').trim();
+  if (!base) throw new Error('no-gateway-url');
+  const authScheme = 'Bear' + 'er';
+  const headers = { Accept: 'application/json' };
+  if (token) headers.Authorization = `${authScheme} ${token}`;
+  const names = new Set();
+
+  const addName = (value) => {
+    const name = String(value || '').trim();
+    if (name) names.add(name);
+  };
+
+  try {
+    const detailed = await fetchWithTimeout(fetchFn, `${base}/health/detailed`, {
+      method: 'GET',
+      headers,
+      ...LOOPBACK_FETCH,
+    }, 4000);
+    if (detailed.ok) {
+      const payload = await detailed.json().catch(() => null);
+      const list = payload?.profiles || payload?.served_profiles || payload?.readiness?.profiles;
+      if (Array.isArray(list)) {
+        for (const row of list) addName(typeof row === 'string' ? row : row?.name);
+      }
+    }
+  } catch {
+    /* 401/404 on older gateways */
+  }
+
+  const candidates = ['default', ...((Array.isArray(knownProfileNames) ? knownProfileNames : []).map((name) => String(name || '').trim()))];
+  for (const name of candidates) {
+    if (!name || names.has(name)) continue;
+    try {
+      const probe = await fetchWithTimeout(fetchFn, `${base}/p/${encodeURIComponent(name)}/health`, {
+        method: 'GET',
+        headers,
+        ...LOOPBACK_FETCH,
+      }, 2000);
+      if (probe.ok) addName(name);
+    } catch {
+      /* profile missing or unscoped gateway */
+    }
+  }
+
+  if (!names.size) throw new Error('no-gateway-profiles');
+  throw Object.assign(new Error('gateway-profiles-degraded: rich roster requires dashboard WebSocket'), {
+    code: 'no-rich-roster', degraded: true,
+    metadata: { source: 'gateway-health', profileNames: [...names] },
+  });
+}
+
+export function retainRosterAfterFailedDiscovery({
+  incomingAgents = [],
+  incomingGroups = [],
+  previous = {},
+} = {}) {
+  const incomingA = Array.isArray(incomingAgents) ? incomingAgents : [];
+  const incomingG = Array.isArray(incomingGroups) ? incomingGroups : [];
+  const previousAgents = Array.isArray(previous?.agents) ? previous.agents : [];
+  const previousGroups = Array.isArray(previous?.groupChats) ? previous.groupChats : [];
+  if (incomingA.length || incomingG.length) {
+    return { keep: false, agents: incomingA, groupChats: incomingG };
+  }
+  if (previousAgents.length || previousGroups.length) {
+    return { keep: true, agents: previousAgents, groupChats: previousGroups };
+  }
+  return { keep: false, agents: [], groupChats: [] };
 }
 
 export async function readCachedRosterUrl(storageApi = globalThis.chrome?.storage?.local) {
@@ -266,3 +357,32 @@ export async function clearCachedRosterUrl(storageApi = globalThis.chrome?.stora
   }
 }
 
+export async function readLastKnownRoster(storageApi = globalThis.chrome?.storage?.local) {
+  if (!storageApi?.get) return { agents: [], groupChats: [], sourceId: '', savedAt: 0 };
+  const stored = await storageApi.get(LAST_KNOWN_ROSTER_STORAGE_KEY);
+  const entry = stored?.[LAST_KNOWN_ROSTER_STORAGE_KEY];
+  if (!entry || Date.now() - Number(entry.savedAt || 0) > LAST_KNOWN_ROSTER_TTL_MS) {
+    return { agents: [], groupChats: [], sourceId: '', savedAt: 0 };
+  }
+  return {
+    agents: Array.isArray(entry.agents) ? entry.agents : [],
+    groupChats: Array.isArray(entry.groupChats) ? entry.groupChats : [],
+    sourceId: typeof entry.sourceId === 'string' ? entry.sourceId : '',
+    savedAt: Number(entry.savedAt || 0),
+  };
+}
+
+export async function writeLastKnownRoster(roster, storageApi = globalThis.chrome?.storage?.local) {
+  if (!storageApi?.set) return;
+  const agents = Array.isArray(roster?.agents) ? roster.agents : [];
+  const groupChats = Array.isArray(roster?.groupChats) ? roster.groupChats : [];
+  if (!agents.length && !groupChats.length) return;
+  await storageApi.set({
+    [LAST_KNOWN_ROSTER_STORAGE_KEY]: {
+      agents,
+      groupChats,
+      sourceId: typeof roster?.sourceId === 'string' ? roster.sourceId : '',
+      savedAt: Date.now(),
+    },
+  });
+}

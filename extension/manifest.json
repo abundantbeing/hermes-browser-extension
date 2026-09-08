@@ -18,6 +18,7 @@
     "contextMenus",
     "debugger",
     "downloads",
+    "declarativeNetRequestWithHostAccess",
     "offscreen",
     "scripting",
     "sidePanel",

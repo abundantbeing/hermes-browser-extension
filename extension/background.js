@@ -45,6 +45,7 @@ import {
 import { createVscodeMarketplaceClient } from './lib/vscode-marketplace.mjs';
 import { createThemeMarketplaceController } from './lib/theme-marketplace-controller.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
+import { installLoopbackCorsRules, handleLoopbackFetchMessage, LOOPBACK_FETCH_MESSAGE } from './lib/loopback-cors.mjs';
 import {
   CONTROLLER_HEARTBEAT_ALARM,
   CONTROLLER_RECONCILE_ALARM,
@@ -887,8 +888,19 @@ void initI18n().catch((error) => {
   console.warn('[Hermes Browser] Localization initialization failed:', error);
 });
 
-browserApi.runtime.onInstalled.addListener(configureInstalledSurfaces);
+void installLoopbackCorsRules().catch((error) => {
+  console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
+});
+browserApi.runtime.onInstalled.addListener((details) => {
+  void installLoopbackCorsRules().catch((error) => {
+    console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
+  });
+  return configureInstalledSurfaces(details);
+});
 browserApi.runtime.onStartup.addListener(async () => {
+  await installLoopbackCorsRules().catch((error) => {
+    console.warn('[Hermes Browser] Loopback CORS session rule cleanup failed:', error);
+  });
   await configureInstalledSurfaces({ controllerReason: 'browser-startup' });
   restoreWakeController();
 });
@@ -955,7 +967,9 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
           ? openHermesFullView(message.url)
           : message?.type === 'HERMES_GET_YOUTUBE_TRANSCRIPT'
             ? getYoutubeTranscript(message)
-            : null;
+            : message?.type === LOOPBACK_FETCH_MESSAGE
+              ? handleLoopbackFetchMessage(message)
+              : null;
   if (!action) return false;
   action
     .then(sendResponse)

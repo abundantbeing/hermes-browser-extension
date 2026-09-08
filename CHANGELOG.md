@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- Restored Bot Mode Desktop roster parity: authenticated `profiles.list` supplies display names, avatars, last-activity stamps, group-chat projections, and canonical Bot Chat identity. Public status/health names are discovery only and no longer replace a rich roster.
+- Opening a bot resumes the confirmed existing Bot Chat and fails closed on lookup errors instead of creating a duplicate chat.
+- Dashboard discovery uses explicit URLs, cached URLs, open loopback tabs, sidecar candidate ports, and documented default ports. It no longer scans arbitrary ephemeral port ranges or treats gateway health names as a complete roster.
+- Disabled the broad loopback CORS header rewrite. Loopback GET discovery can still proxy through the service worker without rewriting every localhost response.
 - Fixed Local gateway Bot Mode profile discovery when Dashboard authentication replaces the token-bearing root page with sign-in HTML; public status now identifies the dashboard, while the existing explicitly trusted signed-in tab and one-use WebSocket ticket flow authenticates the usable profile roster (#99).
 
 ## [0.3.2] - 2026-09-05

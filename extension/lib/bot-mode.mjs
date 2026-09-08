@@ -74,9 +74,14 @@ function metadataForProfile(profile) {
   const uiMeta = asObject(profile.ui_meta);
   const botMeta = asObject(uiMeta['hermes-bots']);
   const revisions = asObject(profile.ui_meta_revisions);
+  const image = typeof botMeta.image === 'string' ? botMeta.image.trim() : '';
   return {
     title: clean(botMeta.title || profile.title),
-    avatar: botMeta.avatar && typeof botMeta.avatar === 'object' ? botMeta.avatar : null,
+    // Desktop persists image as a data URL; keep the HBE avatar envelope that
+    // the renderers already consume while accepting the canonical field.
+    avatar: image
+      ? { image }
+      : botMeta.avatar && typeof botMeta.avatar === 'object' ? botMeta.avatar : null,
     revision: Math.max(0, Math.floor(finiteNumber(revisions['hermes-bots'], 0))),
   };
 }
@@ -144,15 +149,15 @@ export function normalizeBotProfileList(payload = {}, {
     const meta = metadataForProfile(profile);
     const botMetaTitle = clean(meta.title);
     const canonical = canonicalSession(profile.canonical_session);
-    const worker = asObject(profile.worker_session);
-    const workerLastActive = finiteNumber(worker.last_active ?? worker.lastActive, 0);
-    const lastActive = Math.max(canonical.lastActive, workerLastActive);
+    const lastSession = canonicalSession(profile.last_session);
+    const activitySession = canonical.lastActive >= lastSession.lastActive ? canonical : lastSession;
+    const lastActive = activitySession.lastActive;
     const activeNow = lastActive > 0
       && Math.max(0, finiteNumber(now, Date.now()) - timestampMs(lastActive)) <= Math.max(0, finiteNumber(activityWindowMs, DEFAULT_ACTIVITY_WINDOW_MS));
     // Desktop roster row parity: the Bot's own bot-meta title/handle plus the
     // last Bot Chat preview and relative recency. canonical_session.preview /
     // last_active come straight from the gateway profiles.list row.
-    const previewText = clean(canonical.preview);
+    const previewText = clean(activitySession.preview || canonical.preview || lastSession.preview);
     const rawLastActive = Number(timestampMs(lastActive)) || 0;
     rows.push({
       rosterKey: `${source}::${profileName}`,
@@ -161,7 +166,7 @@ export function normalizeBotProfileList(payload = {}, {
       // Desktop Bot Mode display precedence: ui_meta title (the Bot's chosen
       // name, e.g. "Roxas" for profile "default") first, then the profile's
       // display_name, then the canonical persona name if "default".
-      displayName: clean(botMetaTitle || profile.display_name || profile.displayName || (profileName.charAt(0).toUpperCase() + profileName.slice(1))),
+      displayName: clean(botMetaTitle || profile.display_name || profile.displayName || (profileName === 'default' ? 'Hermes' : profileName.charAt(0).toUpperCase() + profileName.slice(1))),
       title: meta.title || '',
       description: clean(profile.description).slice(0, 500),
       provider: clean(profile.provider),

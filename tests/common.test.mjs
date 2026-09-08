@@ -1595,22 +1595,19 @@ test('connect and startup sync Hermes models, sessions, skills, and profiles fro
   assert.match(source, /discoverModelsFromDashboard\(\{/);
   assert.match(source, /profile: safeActiveProfile\(\)/);
   assert.match(source, /safeActiveProfile\(\)/);
-  // Profile discovery moved into the Bot Mode roster path: the desktop
-  // dashboard /api/profiles roster (extension/lib/desktop-roster.mjs) is
-  // sourced first, then the WS profiles.list fallback inside loadProfiles.
+  // Profile discovery lives in the Bot Mode roster path: authenticated
+  // dashboard WebSocket profiles.list is the rich source. REST /api/profiles
+  // remains a dashboard-discovery helper, never a substitute roster.
   const roster = readFileSync(new URL('../extension/lib/desktop-roster.mjs', import.meta.url), 'utf8');
-  assert.match(roster, /\/api\/profiles/, 'desktop roster must source profiles from the dashboard /api/profiles endpoint');
-  assert.match(source, /fetchRosterFromDashboard\(\{/);
+  assert.match(roster, /\/api\/profiles/, 'desktop roster helper still knows the dashboard /api/profiles endpoint');
   assert.match(source, /discoverLocalDashboardBaseUrl\(\{/);
   assert.match(source, /WS_METHODS\.profilesList/);
   assert.match(source, /dashboardModelDiscoveryBaseUrl\(\{/);
   assert.doesNotMatch(source, /loadModels\(\{ quiet: true, payload: modelsPayload \}\)/);
   assert.match(source, /shouldTrySessionModelFallback\(\{\s*registryModels,\s*registrySource,\s*defaultModelId: DEFAULT_SETTINGS\.model,\s*\}\)/s);
   assert.match(source, /apiFetch\('\/v1\/skills'/);
-  // Profiles no longer load from a /v1/profiles REST route (the sidecar has
-  // none): they sync from the dashboard /api/profiles roster with the WS
-  // profiles.list fallback inside loadProfiles.
   assert.match(source, /request\(WS_METHODS\.profilesList, \{ include_sessions: true \}\)/);
+  assert.doesNotMatch(source, /fetchRosterFromDashboard\(\{/);
   assert.match(source, /apiFetch\(`\/api\/sessions\?limit=\$\{limit\}&offset=\$\{offset\}&include_children=true&order=recent`/);
   assert.match(source, /els\.refreshModelsButton\.addEventListener\('click', refreshModelsFromMenu\)/);
 });

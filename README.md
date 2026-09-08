@@ -22,7 +22,9 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 ### New in v0.3.2: Hermes Bot Mode, Multi-Agent Threads and Intelligent Tab Scoping
 
 v0.3.2 introduces **Hermes Bot Mode**, bringing your full Hermes multi-agent roster directly into the browser side panel:
-- **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles with lazy model hydration and sub-50ms dynamic Desktop dashboard discovery.
+- **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles with lazy model hydration and Desktop dashboard discovery from known candidates, cached URLs, and open dashboard tabs.
+- **Desktop Names, Avatars, and Last Activity**: Bot Mode uses authenticated Desktop `profiles.list` metadata for display names, avatars, last-activity stamps, and existing Bot Chat identity instead of internal profile ids or public health-name lists.
+- **Existing Bot Chat Resume**: Opening a bot resumes that profile's existing hidden Bot Chat. Lookup failures stay fail-closed so the extension does not mint a duplicate chat.
 - **Group Chats & Collaborative Threads**: Synced multi-agent room projections, room-level thread tracking, and synchronized conversation histories without blank chat states.
 - **Truthful Page-Only Scoping & Zero Token Bloat**: By default, only the active browser tab is included (`1/N` tabs in prompt) and sent in the prompt envelope. All other open tabs remain strictly excluded, preventing context bloat and token waste.
 - **Interactive Multi-Tab In/Out Controls**: Click any tab to toggle it `IN` or `OUT` on demand, with a full-width **Page only** reset action and side-by-side **Include all tabs** and **AI Triage Tabs** controls.

@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import * as dashboardBridge from '../extension/lib/dashboard-bridge.mjs';
+
 import {
   dashboardTrustPrompt,
   isTrustedDashboardOrigin,
@@ -15,6 +17,12 @@ import {
   discoverProfilesViaTab,
   discoverProfilesFromDashboard,
 } from '../extension/lib/dashboard-bridge.mjs';
+
+test('dashboard bridge does not expose loopback tab creation or in-page port scanning helpers', () => {
+  assert.equal(dashboardBridge.findOrOpenLoopbackTab, undefined);
+  assert.equal(dashboardBridge.scanHermesDashboardInPage, undefined);
+  assert.equal(dashboardBridge.discoverRosterViaGatewayTab, undefined);
+});
 
 test('originOf and wsTicketUrl normalize the dashboard base', () => {
   assert.equal(originOf('https://kurokami.example.ts.net/some/path?q=1'), 'https://kurokami.example.ts.net');
