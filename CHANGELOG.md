@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Dashboard chat no longer dies at a 5-minute wall clock while Hermes is still working. The idle watchdog resets on live session activity (tools, deltas, status), and a quiet timeout recovers the accepted turn instead of showing "Could not reach the Hermes dashboard."
 - Mapped Codex ChatGPT 6 Astra context windows: 272k for the base model and 900k for the explicit 900k variant, matching the GPT-5.6 Codex OAuth tiers.
 - Restored Bot Mode Desktop roster parity: authenticated `profiles.list` supplies display names, avatars, last-activity stamps, group-chat projections, and canonical Bot Chat identity. Public status/health names are discovery only and no longer replace a rich roster.
 - Opening a bot resumes the confirmed existing Bot Chat and fails closed on lookup errors instead of creating a duplicate chat.

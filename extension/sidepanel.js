@@ -181,6 +181,7 @@ import {
   WS_EVENTS,
   WS_METHODS,
 } from './lib/gateway-ws.mjs';
+import { createDashboardStreamWatchdog, isDashboardIdleTimeout } from './lib/dashboard-stream-watchdog.mjs';
 import {
   BOT_CHAT_TITLE,
   botModeExitStateForRegularSession,
@@ -14198,11 +14199,11 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
     let finalText = '';
     let settled = false;
     const offs = [];
-    const timer = globalThis.setTimeout(() => finish(reject, new Error('Dashboard response timed out.')), 5 * 60 * 1000);
+    const watchdog = createDashboardStreamWatchdog((error) => finish(reject, error));
     const forThisSession = (event) => event.sessionId === sessionId;
 
     const cleanup = () => {
-      globalThis.clearTimeout(timer);
+      watchdog.stop();
       for (const off of offs) off();
       signal?.removeEventListener?.('abort', onAbort);
     };
@@ -14223,8 +14224,12 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
     }
     signal?.addEventListener?.('abort', onAbort, { once: true });
 
+    offs.push(client.on('*', (event) => {
+      if (event.sessionId === sessionId) watchdog.ping();
+    }));
     offs.push(client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
+      watchdog.ping();
       finalText += event.payload?.text || '';
       onDelta(finalText);
     }));
@@ -14241,10 +14246,14 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
       finish(resolve, finalText);
     }));
     offs.push(client.on('tool.start', (event) => {
-      if (forThisSession(event) && onTool) onTool({ type: 'tool.start', tool_name: event.payload?.name });
+      if (!forThisSession(event)) return;
+      watchdog.ping();
+      if (onTool) onTool({ type: 'tool.start', tool_name: event.payload?.name });
     }));
     offs.push(client.on('tool.complete', (event) => {
-      if (forThisSession(event) && onTool) onTool({
+      if (!forThisSession(event)) return;
+      watchdog.ping();
+      if (onTool) onTool({
         type: 'tool.complete',
         tool_name: event.payload?.name,
         result: event.payload?.result,
@@ -15012,10 +15021,11 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           } else {
             throw streamError;
           }
-        } else if (dashboardTransport) {
+        } else if (dashboardTransport && !isDashboardIdleTimeout(streamError)) {
           // No REST fallback in dashboard-transport mode — the api_server surface
           // is not the active Bot Chat session. Surface genuine WS/ticket errors directly.
-          streamView.update(`Could not reach the Hermes dashboard.\n${streamError.message}`);
+          streamView.update(`Could not reach the Hermes dashboard.
+${streamError.message}`);
           throw streamError;
         } else if (fallbackSafe || recoveryAction === 'fallback') {
           streamView.update(`Streaming failed, retrying non-streaming...\n${streamError.message}`);

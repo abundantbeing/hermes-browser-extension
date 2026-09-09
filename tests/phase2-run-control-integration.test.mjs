@@ -219,7 +219,9 @@ test('Dashboard chat streams have bounded completion timers on both Browser surf
   ].join('\n');
   const webStream = web.match(/async function streamDashboardPrompt\([\s\S]*?\n\}/)?.[0] || '';
   for (const stream of [sideStream, webStream]) {
-    assert.match(stream, /setTimeout\(\(\) => finish\(reject, new Error\([^)]*timed out/i);
-    assert.match(stream, /clearTimeout\(timer\)/);
+    assert.match(stream, /createDashboardStreamWatchdog/);
+    assert.match(stream, /watchdog\.ping\(\)/);
+    assert.match(stream, /watchdog\.stop\(\)/);
+    assert.match(stream, /client\.on\('\*'/);
   }
 });

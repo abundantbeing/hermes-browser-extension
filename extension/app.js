@@ -147,6 +147,7 @@ import {
   turnRequestFailureState,
 } from './lib/turn-recovery.mjs';
 import { buildDashboardWsUrl, buildDashboardWsUrlWithCredential, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, normalizeGatewayHistoryMessages, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
+import { createDashboardStreamWatchdog } from './lib/dashboard-stream-watchdog.mjs';
 import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 import {
   CONTEXT_CONSENT_STORAGE_KEY,
@@ -1188,10 +1189,10 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
     let submitAccepted = false;
     let settled = false;
     const offs = [];
-    const timer = globalThis.setTimeout(() => finish(reject, new Error('Dashboard response timed out.')), 5 * 60 * 1000);
+    const watchdog = createDashboardStreamWatchdog((error) => finish(reject, error));
     const forThisSession = (event) => event.sessionId === sessionId;
     const cleanup = () => {
-      globalThis.clearTimeout(timer);
+      watchdog.stop();
       for (const off of offs) off();
       signal?.removeEventListener?.('abort', onAbort);
     };
@@ -1207,8 +1208,12 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
     };
     if (signal?.aborted) return onAbort();
     signal?.addEventListener?.('abort', onAbort, { once: true });
+    offs.push(connection.client.on('*', (event) => {
+      if (event.sessionId === sessionId) watchdog.ping();
+    }));
     offs.push(connection.client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
+      watchdog.ping();
       finalText += event.payload?.text || '';
       onDelta?.(finalText);
     }));
@@ -1224,10 +1229,14 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
       finish(resolve, finalText);
     }));
     offs.push(connection.client.on('tool.start', (event) => {
-      if (forThisSession(event)) onTool?.({ type: 'tool.start', tool_name: event.payload?.name });
+      if (!forThisSession(event)) return;
+      watchdog.ping();
+      onTool?.({ type: 'tool.start', tool_name: event.payload?.name });
     }));
     offs.push(connection.client.on('tool.complete', (event) => {
-      if (forThisSession(event)) onTool?.({
+      if (!forThisSession(event)) return;
+      watchdog.ping();
+      onTool?.({
         type: 'tool.complete',
         tool_name: event.payload?.name,
         result: event.payload?.result,
