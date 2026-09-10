@@ -76,6 +76,8 @@ import {
   shouldFallbackToWebSpeechForTranscription,
   shouldOpenVoiceDictationPageForSpeechError,
   shouldUseLocalDashboardAudioTranscription,
+  SPEECH_SILENT_START_TIMEOUT_MS,
+  speechRecognitionSilentlyFailed,
   shouldAutoOpenSessionGroup,
   shouldAutoFlushQueuedTurn,
   shouldCreateFreshSessionOnOpen,
@@ -167,7 +169,8 @@ import { createThemeMarketplaceController } from './lib/theme-marketplace-contro
 import { createThemeMarketplaceTransport } from './lib/theme-marketplace-transport.mjs';
 import { buildAgentThemePrompt, extractAgentThemeDocument } from './lib/agent-theme-authoring.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
-import { appendUserImageAttachments, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages, resolvedGeneratedImageSourcesFromResult } from './lib/image-render.mjs';
+import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages, resolvedGeneratedImageSourcesFromResult } from './lib/image-render.mjs';
+import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { extractYouTubeVideoId } from './lib/transcript.mjs';
 import {
   buildDashboardWsUrl,
@@ -181,7 +184,8 @@ import {
   WS_EVENTS,
   WS_METHODS,
 } from './lib/gateway-ws.mjs';
-import { createDashboardStreamWatchdog, isDashboardIdleTimeout } from './lib/dashboard-stream-watchdog.mjs';
+import { createDashboardStreamWatchdog, dashboardWatchdogTimeoutAction, isDashboardIdleTimeout, matchesDashboardSessionEvent, shouldReattachDashboardStream } from './lib/dashboard-stream-watchdog.mjs';
+import { clearComposerDraft, loadComposerDraft, persistComposerDraft } from './lib/composer-draft.mjs';
 import {
   BOT_CHAT_TITLE,
   botModeExitStateForRegularSession,
@@ -269,7 +273,11 @@ import {
 } from './lib/agent-discovery.mjs';
 import {
   transcribeAudioViaDashboard,
+  resolveDashboardTranscriptionBaseUrl,
+  dashboardFileStreamUrl,
   dashboardModelDiscoveryBaseUrl,
+  fetchDashboardMediaDataUrl,
+  fetchDashboardSessionToken,
   discoverCanonicalProviderCatalog,
   discoverGatewayVirtualModels,
   discoverModelsFromDashboard,
@@ -293,6 +301,18 @@ import {
   shouldTrySessionModelFallback,
   unionCachedModelCatalogs,
   } from './lib/model-discovery.mjs';
+import {
+  VOICE_CAPTURE_SAMPLE_INTERVAL_MS,
+  VOICE_CAPTURE_TIMESLICE_MS,
+  joinDictationTranscript,
+  voiceCaptureDecision,
+  voiceCaptureIsSignal,
+  voiceCapturePeak,
+  voiceCapturePeakFromBytes,
+  voiceDictationCaptureRoute,
+  formatVoiceElapsed,
+  voiceLevelBarHeights,
+} from './lib/voice-capture.mjs';
 import {
   WAKE_MESSAGES,
   WAKE_STORAGE_KEYS,
@@ -612,6 +632,10 @@ const els = {
   stopButton: $('#stopButton'),
   wakeButton: $('#wakeButton'),
   voiceButton: $('#voiceButton'),
+  voiceActivity: $('#voiceActivity'),
+  voiceActivityLabel: $('#voiceActivityLabel'),
+  voiceActivityTimer: $('#voiceActivityTimer'),
+  voiceActivityBars: $('#voiceActivityBars'),
   refreshButton: $('#refreshButton'),
   settingsButton: $('#settingsButton'),
   botModeButton: $('#botModeButton'),
@@ -705,6 +729,7 @@ const els = {
   botModePetApply: $('#botModePetApply'),
   botModePetClear: $('#botModePetClear'),
   botModePetHint: $('#botModePetHint'),
+  startupActions: $('#startupActions'),
   startupTestConnectionButton: $('#startupTestConnectionButton'),
   openFullViewButton: $('#openFullViewButton'),
   closeSettingsButton: $('#closeSettingsButton'),
@@ -999,10 +1024,13 @@ let runControlGeneration = 0;
 let pendingSteerText = '';
 let dragDepth = 0;
 let speechRecognition = null;
+let speechWatchdogTimer = null;
 let voiceRecorder = null;
 let voiceRecorderStream = null;
 let voiceRecorderChunks = [];
+let voiceCaptureSession = null;
 let dictating = false;
+let transcribingVoice = false;
 let voiceTransitionInFlight = false;
 let voiceDictationPageOpenPromise = null;
 let dictationBaseText = '';
@@ -1311,19 +1339,22 @@ function minimumConnectionReady() {
 }
 
 function positionStartupSettings(active = document.body?.classList.contains('startup-active')) {
-  const topbar = els.settingsButton?.closest('.topbar');
-  if (!topbar) return;
-  if (!active) {
-    topbar.style.removeProperty('--startup-settings-top');
+  const topbar = els.settingsButton?.closest('.topbar') || document.querySelector('.topbar');
+  const actions = els.startupActions || document.getElementById('startupActions');
+  const status = topbar?.querySelector('.topbar-status');
+  const buttons = [els.settingsButton, els.startupTestConnectionButton, els.startupConnectButton].filter(Boolean);
+  topbar?.style.removeProperty('--startup-settings-top');
+  if (!topbar || !actions) return;
+  if (active) {
+    actions.hidden = false;
+    for (const button of buttons) actions.append(button);
     return;
   }
-  const listRect = els.startupStepList?.getBoundingClientRect();
-  const buttonHeight = Math.max(34, els.settingsButton?.getBoundingClientRect().height || 0);
-  if (!listRect || !Number.isFinite(listRect.bottom)) return;
-  const viewportHeight = Math.max(buttonHeight + 24, Number(globalThis.innerHeight) || 0);
-  const maxTop = Math.max(12, viewportHeight - buttonHeight - 12);
-  const top = Math.min(maxTop, Math.round(listRect.bottom + 12));
-  topbar.style.setProperty('--startup-settings-top', `${top}px`);
+  actions.hidden = true;
+  for (const button of buttons) {
+    if (status) topbar.insertBefore(button, status);
+    else topbar.append(button);
+  }
 }
 
 // The Bot Mode deck and profile sheet pin their top edge to the topbar's real
@@ -2154,6 +2185,64 @@ function ensureSidepanelInstanceId() {
     return id;
   } catch {
     return 'default';
+  }
+}
+
+let composerDraftSaveTimer = 0;
+let restoringComposerDraft = false;
+
+function composerDraftStorage() {
+  return globalThis.sessionStorage || null;
+}
+
+function persistCurrentComposerDraft({ immediate = false } = {}) {
+  if (restoringComposerDraft) return;
+  const run = () => {
+    composerDraftSaveTimer = 0;
+    persistComposerDraft(composerDraftStorage(), {
+      instanceId: ensureSidepanelInstanceId(),
+      text: els.input?.value || '',
+      attachments,
+    });
+  };
+  if (immediate) {
+    if (composerDraftSaveTimer) {
+      clearTimeout(composerDraftSaveTimer);
+      composerDraftSaveTimer = 0;
+    }
+    run();
+    return;
+  }
+  if (composerDraftSaveTimer) return;
+  composerDraftSaveTimer = setTimeout(run, 200);
+}
+
+function forgetComposerDraft() {
+  if (composerDraftSaveTimer) {
+    clearTimeout(composerDraftSaveTimer);
+    composerDraftSaveTimer = 0;
+  }
+  clearComposerDraft(composerDraftStorage(), { instanceId: ensureSidepanelInstanceId() });
+}
+
+function restoreComposerDraft() {
+  const draft = loadComposerDraft(composerDraftStorage(), { instanceId: ensureSidepanelInstanceId() });
+  if (!draft) return false;
+  restoringComposerDraft = true;
+  try {
+    if (els.input && !String(els.input.value || '').trim() && draft.text) {
+      els.input.value = draft.text;
+    }
+    if (!attachments.length && draft.attachments.length) {
+      attachments = draft.attachments;
+      renderAttachments();
+    } else {
+      renderContextWindow();
+      updateComposerBusyState();
+    }
+    return true;
+  } finally {
+    restoringComposerDraft = false;
   }
 }
 
@@ -3412,7 +3501,7 @@ function setComposerButtonState(button, state = {}) {
 }
 
 function canSteerActiveRun() {
-  return Boolean(isRemoteWsMode() || gatewayCapabilities.runSteer);
+  return Boolean(usesDashboardWsChatTransport() || gatewayCapabilities.runSteer);
 }
 
 function currentComposerDraftState() {
@@ -4299,7 +4388,32 @@ function updateVoiceButtonState() {
     ? 'Voice dictation is not supported in this browser or connected Hermes runtime'
     : (dictating ? `Stop voice dictation (${mode})` : `Start voice dictation (${mode})`);
   els.voiceButton.setAttribute('aria-label', els.voiceButton.title);
-  els.voiceButton.setAttribute('aria-busy', String(voiceTransitionInFlight));
+  els.voiceButton.setAttribute('aria-busy', String(voiceTransitionInFlight || transcribingVoice));
+  renderVoiceActivity();
+}
+
+function renderVoiceActivity() {
+  const meter = els.voiceActivity;
+  if (!meter) return;
+  const session = voiceCaptureSession;
+  const recording = Boolean(dictating && session && !session.stopRequested);
+  const transcribing = Boolean(transcribingVoice);
+  meter.hidden = !(recording || transcribing);
+  meter.classList.toggle('recording', recording);
+  meter.classList.toggle('transcribing', transcribing);
+  if (els.voiceActivityLabel) {
+    els.voiceActivityLabel.textContent = transcribing ? 'Transcribing' : 'Dictating';
+  }
+  if (els.voiceActivityTimer) {
+    const startedAt = Number(session?.startedAt || 0);
+    const seconds = startedAt ? (Date.now() - startedAt) / 1000 : 0;
+    els.voiceActivityTimer.textContent = formatVoiceElapsed(seconds);
+  }
+  const bars = els.voiceActivityBars?.querySelectorAll('i') || [];
+  const heights = voiceLevelBarHeights(Number(session?.level || 0), { active: recording && !transcribing });
+  bars.forEach((bar, index) => {
+    bar.style.height = `${Math.round((heights[index] || 0.25) * 100)}%`;
+  });
 }
 
 function applyDictationTranscript(transcript = '') {
@@ -4319,6 +4433,20 @@ function blobToDataUrl(blob) {
 }
 
 function cleanupVoiceRecorder() {
+  const session = voiceCaptureSession;
+  if (session?.tickTimer) {
+    clearInterval(session.tickTimer);
+    session.tickTimer = null;
+  }
+  if (session?.audioContext) {
+    try {
+      const closing = session.audioContext.close?.();
+      if (closing?.catch) closing.catch(() => {});
+    } catch {
+      /* context already closed */
+    }
+  }
+  voiceCaptureSession = null;
   voiceRecorderStream?.getTracks?.().forEach((track) => track.stop());
   voiceRecorderStream = null;
   voiceRecorder = null;
@@ -4335,11 +4463,16 @@ async function transcribeVoiceRecording(blob) {
   }
   const dataUrl = await blobToDataUrl(blob);
   if (canUseDashboardTranscription && !canUseApiTranscription) {
+    // The Desktop dashboard lives on a discovered random loopback port; the
+    // fixed 9119 constant is only the last-resort fallback.
+    const baseUrl = await resolveDashboardTranscriptionBaseUrl({
+      desktopDashboardUrl,
+      gatewayMode: normalizeGatewayMode(settings.gatewayMode),
+      gatewayUrl: settings.gatewayUrl,
+      discover: () => ensureDesktopDashboardUrl({ timeoutMs: 2_500 }),
+    });
     const result = await transcribeAudioViaDashboard({
-      baseUrl: dashboardModelDiscoveryBaseUrl({
-        gatewayMode: normalizeGatewayMode(settings.gatewayMode),
-        gatewayUrl: settings.gatewayUrl,
-      }),
+      baseUrl,
       profile: settings.activeProfile,
       dataUrl,
       mimeType: blob.type || 'audio/webm',
@@ -4367,6 +4500,30 @@ async function transcribeVoiceRecording(blob) {
   return String(payload?.transcript || '').trim();
 }
 
+function clearSpeechWatchdog() {
+  if (speechWatchdogTimer) clearTimeout(speechWatchdogTimer);
+  speechWatchdogTimer = null;
+}
+
+function armSpeechWatchdog() {
+  clearSpeechWatchdog();
+  speechWatchdogTimer = setTimeout(() => {
+    speechWatchdogTimer = null;
+    if (!speechRecognitionSilentlyFailed({ elapsedMs: SPEECH_SILENT_START_TIMEOUT_MS })) return;
+    try {
+      speechRecognition?.abort?.();
+    } catch {
+      // The session is already dead; abort is best-effort.
+    }
+    clearSpeechWatchdog();
+    dictating = false;
+    updateVoiceButtonState();
+    setStatus('warn', 'Voice dictation unavailable', 'Speech recognition started but never delivered audio or a transcript. This side panel cannot capture microphone audio in this browser; using the Hermes Voice Dictation tab instead.', { translateDetail: false });
+    void openVoiceDictationPage('Browser speech started but never delivered audio in this side panel. Use the visible Hermes Voice Dictation tab to record; the transcript returns to this composer automatically.')
+      .catch((error) => setStatus('warn', 'Voice dictation unavailable', error?.message || String(error), { translateDetail: false }));
+  }, SPEECH_SILENT_START_TIMEOUT_MS);
+}
+
 function ensureSpeechRecognition() {
   if (speechRecognition) return speechRecognition;
   const Recognition = speechRecognitionConstructor();
@@ -4375,7 +4532,11 @@ function ensureSpeechRecognition() {
   recognition.continuous = true;
   recognition.interimResults = true;
   recognition.lang = navigator.language || 'en-US';
+  recognition.onstart = () => {
+    // Comet often fires start with no audio. Keep the silent-start watchdog armed until a result, error, or end.
+  };
   recognition.onresult = (event) => {
+    clearSpeechWatchdog();
     let interim = '';
     for (let index = event.resultIndex; index < event.results.length; index += 1) {
       const transcript = event.results[index]?.[0]?.transcript || '';
@@ -4385,6 +4546,7 @@ function ensureSpeechRecognition() {
     applyDictationTranscript([dictationFinalText, interim].filter(Boolean).join(' '));
   };
   recognition.onerror = (event) => {
+    clearSpeechWatchdog();
     if (isMicrophonePermissionError(event) || shouldOpenVoiceDictationPageForSpeechError(event)) {
       dictating = false;
       updateVoiceButtonState();
@@ -4395,8 +4557,13 @@ function ensureSpeechRecognition() {
     setStatus('warn', 'Voice dictation stopped', event.error || t('voice.speech_recognition_error'), { translateDetail: false });
   };
   recognition.onend = () => {
+    clearSpeechWatchdog();
+    const endedActiveSession = dictating;
     dictating = false;
     updateVoiceButtonState();
+    if (endedActiveSession && !dictationFinalText) {
+      setStatus('warn', 'No speech captured', 'Speech recognition ended without a transcript. If this browser blocks microphone capture in side panels, use the Hermes Voice Dictation tab.', { translateDetail: false });
+    }
   };
   speechRecognition = recognition;
   return speechRecognition;
@@ -4421,6 +4588,7 @@ async function startWebSpeechDictation(detail = 'Speak to dictate into the Herme
     recognition.start();
     dictating = true;
     updateVoiceButtonState();
+    armSpeechWatchdog();
     setStatus(
       'ok',
       preparation.mode === 'local' ? 'Listening on device' : 'Listening',
@@ -4436,67 +4604,240 @@ async function startWebSpeechDictation(detail = 'Speak to dictate into the Herme
 }
 
 async function startRecorderDictation() {
+  // Tear down any previous capture session (stream, monitor interval, audio
+  // context) before opening a new one so a rapid stop/start cannot leave a
+  // second live stream or monitor behind.
+  cleanupVoiceRecorder();
   await ensureMicrophoneOriginPermission();
   voiceRecorderStream = await getMicrophoneStreamWithPermissionRetry();
   const stream = voiceRecorderStream;
+  const now = Date.now();
+  const session = {
+    startedAt: now,
+    segmentStartedAt: now,
+    lastSignalAt: 0,
+    everSawSignal: false,
+    segmentSawSpeech: false,
+    stopRequested: false,
+    tickTimer: null,
+    transcribeChain: null,
+    analyser: null,
+    audioContext: null,
+    sampleBuffer: null,
+    sampleBytes: null,
+  };
+  voiceCaptureSession = session;
+
+  // Monitor real microphone energy so a stream that never delivers audio (a
+  // fork side panel with a muted or detached capture) cannot masquerade as a
+  // working "Recording voice" state. The same monitor rotates segments on
+  // speech pauses so text lands while the user is still talking.
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      const audioContext = new AudioContextClass();
+      session.audioContext = audioContext;
+      if (audioContext.state === 'suspended' && audioContext.resume) {
+        void audioContext.resume().catch?.(() => {});
+      }
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+      // Keep the graph rendered without any audible output.
+      const gain = audioContext.createGain();
+      gain.gain.value = 0;
+      analyser.connect(gain);
+      gain.connect(audioContext.destination);
+      session.analyser = analyser;
+    }
+  } catch (error) {
+    console.warn('Hermes voice capture monitor unavailable', error);
+    session.analyser = null;
+  }
+
+  startVoiceCaptureSegment();
+  session.tickTimer = setInterval(() => voiceCaptureTick(), VOICE_CAPTURE_SAMPLE_INTERVAL_MS);
+  dictating = true;
+  updateVoiceButtonState();
+  setStatus('ok', 'Dictating', 'Speak now. Click the mic again to stop and transcribe.');
+}
+
+function startVoiceCaptureSegment() {
+  const session = voiceCaptureSession;
+  const stream = voiceRecorderStream;
+  if (!session || !stream || session.stopRequested) return;
   const mimeType = preferredVoiceMimeType();
   const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
   voiceRecorder = recorder;
   voiceRecorderChunks = [];
+  session.segmentStartedAt = Date.now();
+  session.segmentSawSpeech = false;
 
   recorder.ondataavailable = (event) => {
     if (event.data?.size > 0) voiceRecorderChunks.push(event.data);
   };
   recorder.onerror = (event) => {
-    cleanupVoiceRecorder();
-    dictating = false;
-    updateVoiceButtonState();
+    if (voiceCaptureSession !== session) return;
+    finishVoiceCaptureSession();
     setStatus('warn', 'Voice recording failed', event?.error?.message || t('voice.capture_error'), { translateDetail: false });
   };
-  recorder.onstop = async () => {
-    const chunks = voiceRecorderChunks;
-    const recordingType = recorder.mimeType || mimeType || 'audio/webm';
-    cleanupVoiceRecorder();
-    dictating = false;
-    updateVoiceButtonState();
+  recorder.onstop = () => {
+    void handleVoiceCaptureSegmentStop(recorder);
+  };
+
+  recorder.start(VOICE_CAPTURE_TIMESLICE_MS);
+}
+
+function voiceCaptureTick() {
+  const session = voiceCaptureSession;
+  if (!session || session.stopRequested) return;
+  const analyser = session.analyser;
+  const contextRunning = !session.audioContext || session.audioContext.state === 'running';
+  // Without a usable monitor the stream cannot be judged; never invent an
+  // escalation (or a rotation) from missing measurements.
+  if (!analyser || !contextRunning) return;
+  let peak = 0;
+  try {
+    if (typeof analyser.getFloatTimeDomainData === 'function') {
+      if (!session.sampleBuffer || session.sampleBuffer.length !== analyser.fftSize) {
+        session.sampleBuffer = new Float32Array(analyser.fftSize);
+      }
+      analyser.getFloatTimeDomainData(session.sampleBuffer);
+      peak = voiceCapturePeak(session.sampleBuffer);
+    } else if (typeof analyser.getByteTimeDomainData === 'function') {
+      if (!session.sampleBytes || session.sampleBytes.length !== analyser.fftSize) {
+        session.sampleBytes = new Uint8Array(analyser.fftSize);
+      }
+      analyser.getByteTimeDomainData(session.sampleBytes);
+      peak = voiceCapturePeakFromBytes(session.sampleBytes);
+    } else {
+      return;
+    }
+  } catch {
+    return;
+  }
+  const tickedAt = Date.now();
+  session.level = peak;
+  if (voiceCaptureIsSignal({ peak })) {
+    session.everSawSignal = true;
+    session.segmentSawSpeech = true;
+    session.lastSignalAt = tickedAt;
+  }
+  renderVoiceActivity();
+  const action = voiceCaptureDecision({
+    elapsedMs: tickedAt - session.startedAt,
+    everSawSignal: session.everSawSignal,
+  });
+  if (action === 'escalate') {
+    escalateSilentVoiceCapture();
+  }
+}
+
+function escalateSilentVoiceCapture() {
+  const session = voiceCaptureSession;
+  if (!session) return;
+  session.stopRequested = true;
+  session.escalated = true;
+  dictating = false;
+  updateVoiceButtonState();
+  const recorder = voiceRecorder;
+  if (recorder && recorder.state !== 'inactive') {
+    try {
+      recorder.stop();
+    } catch {
+      /* the session is being torn down anyway */
+    }
+  }
+  cleanupVoiceRecorder();
+  setStatus(
+    'warn',
+    'Voice dictation moved to its own tab',
+    'The side panel microphone delivered no audio. Opening the Hermes Voice Dictation tab — record there and the transcript returns to this composer automatically.',
+    { translateDetail: false },
+  );
+  void openVoiceDictationPage('This side panel microphone produced no audio. Use the visible Hermes Voice Dictation tab; the transcript returns to this composer automatically.')
+    .catch((error) => setStatus('warn', 'Voice dictation unavailable', error?.message || String(error), { translateDetail: false }));
+}
+
+async function handleVoiceCaptureSegmentStop(recorder) {
+  const session = voiceCaptureSession;
+  const chunks = voiceRecorderChunks;
+  const recordingType = recorder?.mimeType || preferredVoiceMimeType() || 'audio/webm';
+  voiceRecorder = null;
+  voiceRecorderChunks = [];
+  const stopRequested = Boolean(session?.stopRequested);
+  const isCurrent = () => Boolean(session) && voiceCaptureSession === session;
+
+  const processSegment = async () => {
+    if (!isCurrent()) return; // stale handler from a previous capture session
+    if (session.escalated) {
+      finishVoiceCaptureSession();
+      return;
+    }
     if (!chunks.length) {
+      finishVoiceCaptureSession();
       setStatus('warn', 'No speech captured', 'Try recording again.');
       return;
     }
     try {
-      setStatus('ok', 'Transcribing voice', 'Using Hermes speech-to-text, matching Desktop dictation.');
+      transcribingVoice = true;
+      updateVoiceButtonState();
+      setStatus('ok', 'Transcribing', 'Analyzing what you said with Hermes speech-to-text.');
       const transcript = await transcribeVoiceRecording(new Blob(chunks, { type: recordingType }));
+      if (!isCurrent()) return;
       if (!transcript) {
+        finishVoiceCaptureSession();
         setStatus('warn', 'No speech detected', 'Try recording again.');
         return;
       }
-      applyDictationTranscript(transcript);
+      dictationFinalText = joinDictationTranscript(dictationFinalText, transcript);
+      applyDictationTranscript(dictationFinalText);
+      finishVoiceCaptureSession();
       setStatus('ok', 'Voice dictation ready', 'Transcript inserted into the composer.');
     } catch (error) {
-      if (error?.fallbackToWebSpeech && await startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback; speak again.')) {
-        return;
-      }
+      const current = isCurrent();
+      if (current) finishVoiceCaptureSession();
+      if (current && error?.fallbackToWebSpeech && await startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback; speak again.')) return;
       setStatus('warn', 'Voice transcription failed', error?.message || String(error), { translateDetail: false });
     }
   };
 
-  recorder.start();
-  dictating = true;
+  if (session) {
+    session.transcribeChain = (session.transcribeChain || Promise.resolve()).then(processSegment, processSegment);
+    await session.transcribeChain;
+  } else {
+    await processSegment();
+  }
+}
+
+function finishVoiceCaptureSession() {
+  dictating = false;
+  transcribingVoice = false;
   updateVoiceButtonState();
-  setStatus('ok', 'Recording voice', 'Click the mic again to transcribe with Hermes speech-to-text.');
+  cleanupVoiceRecorder();
 }
 
 function stopRecorderDictation() {
+  const session = voiceCaptureSession;
+  if (!session) return false;
+  session.stopRequested = true;
+  dictating = false;
+  transcribingVoice = true;
+  updateVoiceButtonState();
+  setStatus('ok', 'Transcribing', 'Analyzing what you said with Hermes speech-to-text.');
   const recorder = voiceRecorder;
-  if (!recorder) return false;
-  try {
-    if (recorder.state !== 'inactive') recorder.stop();
-  } catch (error) {
-    cleanupVoiceRecorder();
-    dictating = false;
-    updateVoiceButtonState();
-    setStatus('warn', 'Voice recording failed', error?.message || String(error), { translateDetail: false });
+  if (recorder && recorder.state !== 'inactive') {
+    try {
+      recorder.stop();
+    } catch (error) {
+      finishVoiceCaptureSession();
+      setStatus('warn', 'Voice recording failed', error?.message || String(error), { translateDetail: false });
+    }
+    return true;
   }
+  // If the recorder already stopped, finish unless a transcription is in flight.
+  if (!session.transcribeChain) finishVoiceCaptureSession();
   return true;
 }
 
@@ -4525,6 +4866,7 @@ async function toggleVoiceDictation() {
       updateVoiceButtonState();
       setStatus('warn', 'Voice dictation stopped', error?.message || String(error), { translateDetail: false });
     }
+    clearSpeechWatchdog();
     return;
   }
 
@@ -4544,10 +4886,15 @@ async function toggleVoiceDictation() {
     }
 
     await loadVoiceGatewayCapabilities();
-    const canUseRecorderTranscription = canUseHermesVoiceTranscription()
-      || canUseLocalDashboardVoiceTranscription();
-    if (!canUseRecorderTranscription) {
-      if (browserSpeechAvailable() && await startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback.')) return;
+    const captureRoute = voiceDictationCaptureRoute({
+      canRecord: canRecordVoiceAudio(),
+      canUseApiTranscription: canUseHermesVoiceTranscription(),
+      canUseDashboardTranscription: canUseLocalDashboardVoiceTranscription(),
+      browserSpeech: browserSpeechAvailable(),
+    });
+    if (captureRoute !== 'recorder') {
+      if (captureRoute === 'web-speech'
+        && await startWebSpeechDictation('Hermes transcription route is unavailable. Using browser speech fallback.')) return;
       await openVoiceDictationPage('This browser speech service is unavailable in the side panel. Use the visible Hermes Voice Dictation tab to capture audio and dictate into this composer.');
       return;
     }
@@ -5374,18 +5721,21 @@ function addAttachment(attachment) {
   attachments = [...attachments.filter((item) => item.id !== attachment.id), attachment];
   renderAttachments();
   renderContextWindow();
+  persistCurrentComposerDraft();
 }
 
 function removeAttachment(id) {
   attachments = attachments.filter((item) => item.id !== id);
   renderAttachments();
   renderContextWindow();
+  persistCurrentComposerDraft({ immediate: true });
 }
 
 function clearAttachments() {
   attachments = [];
   renderAttachments();
   renderContextWindow();
+  persistCurrentComposerDraft({ immediate: true });
 }
 
 function renderAttachments() {
@@ -5519,6 +5869,8 @@ async function attachFiles(fileList, { imagesOnly = false } = {}) {
       text: text || `[${file.name || 'file'} attached as metadata only: ${formatBytes(file.size)}. Browser cannot expose a stable local path; use Hermes Desktop for path-backed file refs.]`,
     });
   }
+  await ensureImageAttachmentsSaved();
+  persistCurrentComposerDraft({ immediate: true });
 }
 
 async function attachFolder(fileList) {
@@ -11550,6 +11902,94 @@ async function fetchSessionMessagesQuietly(sessionId, {
   };
 }
 
+async function resolveDashboardMediaBaseUrl() {
+  return resolveDashboardTranscriptionBaseUrl({
+    desktopDashboardUrl,
+    gatewayMode: normalizeGatewayMode(settings.gatewayMode),
+    gatewayUrl: settings.gatewayUrl,
+    discover: () => ensureDesktopDashboardUrl({ timeoutMs: 2_500 }),
+  });
+}
+
+async function hydrateSessionMedia(messageList = []) {
+  const rows = Array.isArray(messageList) ? messageList : [];
+  const pending = [];
+  for (const message of rows) {
+    const extracted = extractHistoryMediaAttachments(message);
+    if (extracted.length && !normalizeUserImageAttachments(message.attachments).length) {
+      message.attachments = [...(Array.isArray(message.attachments) ? message.attachments : []), ...extracted];
+    }
+    if (!Array.isArray(message?.attachments)) continue;
+    for (const attachment of message.attachments) {
+      if (!attachment || attachment.dataUrl || !attachment.pathRef) continue;
+      const plan = resolveMediaFetchPlan({ pathRef: attachment.pathRef });
+      if (plan.transport !== 'dashboard-media') continue;
+      pending.push(attachment);
+    }
+  }
+  if (!pending.length) return;
+  const baseUrl = await resolveDashboardMediaBaseUrl();
+  if (!baseUrl) return;
+  const token = await fetchDashboardSessionToken({ baseUrl });
+  await Promise.all(pending.map(async (attachment) => {
+    const dataUrl = await fetchDashboardMediaDataUrl({
+      baseUrl,
+      filePath: attachment.pathRef,
+      token,
+    });
+    if (dataUrl) attachment.dataUrl = dataUrl;
+  }));
+}
+
+async function hydrateSessionMediaInElement(element) {
+  if (!element?.querySelectorAll) return;
+  const nodes = [...element.querySelectorAll('[data-session-media][data-media-path]')];
+  if (!nodes.length) return;
+  const baseUrl = await resolveDashboardMediaBaseUrl();
+  if (!baseUrl) {
+    for (const node of nodes) node.classList.add('unavailable');
+    return;
+  }
+  const token = await fetchDashboardSessionToken({ baseUrl });
+  const doc = element.ownerDocument || document;
+  await Promise.all(nodes.map(async (node) => {
+    if (!node.isConnected) return;
+    const filePath = node.getAttribute('data-media-path') || '';
+    const kind = node.getAttribute('data-session-media') || classifyMediaKind(filePath);
+    const plan = resolveMediaFetchPlan({ pathRef: filePath });
+    if (kind === 'image' && plan.transport === 'dashboard-media') {
+      const dataUrl = await fetchDashboardMediaDataUrl({ baseUrl, filePath, token });
+      if (!dataUrl) {
+        node.classList.add('unavailable');
+        return;
+      }
+      const figure = doc.createElement('figure');
+      figure.className = 'generated-image';
+      figure.dataset.slot = 'aui_generated-image';
+      const image = doc.createElement('img');
+      image.src = dataUrl;
+      image.alt = filePath.split(/[\\/]/).pop() || 'Image';
+      image.loading = 'lazy';
+      image.dataset.slot = 'aui_generated-image';
+      figure.append(image);
+      node.replaceWith(figure);
+      return;
+    }
+    if (kind === 'video' && plan.transport === 'dashboard-stream') {
+      const video = doc.createElement('video');
+      video.className = 'session-media-player';
+      video.controls = true;
+      video.preload = 'metadata';
+      video.src = dashboardFileStreamUrl(baseUrl, filePath, token);
+      video.addEventListener('error', () => {
+        node.classList.add('unavailable');
+        if (video.isConnected) video.replaceWith(node);
+      }, { once: true });
+      node.replaceWith(video);
+    }
+  }));
+}
+
 async function commitFetchedSessionMessages(result, { sessionId, requestId = null, scopeRevisionId = scopeRevision.current() } = {}) {
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (requestId != null && requestId !== sessionLoadRequestId) return false;
@@ -11560,7 +12000,12 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
     source: 'Hermes session',
   });
   const contextMessages = Array.isArray(result?.contextMessages) ? result.contextMessages : [];
-  messages = Array.isArray(result?.messages) ? result.messages : [];
+  const incoming = Array.isArray(result?.messages) ? result.messages : [];
+  messages = preserveUserImageAttachments(incoming, messages).map((message) => {
+    const extracted = extractHistoryMediaAttachments(message);
+    if (!extracted.length || normalizeUserImageAttachments(message.attachments).length) return message;
+    return { ...message, attachments: extracted };
+  });
   loadedSessionContextEstimate = {
     sessionId,
     contextTokens: estimateLocalSessionContextTokens({ messages: contextMessages }),
@@ -11570,6 +12015,7 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (requestId != null && requestId !== sessionLoadRequestId) return false;
   if (String(settings.sessionId || '').trim() !== String(sessionId || '').trim()) return false;
+  await hydrateSessionMedia(messages);
   renderMessagesFromStorage();
   return true;
 }
@@ -11821,6 +12267,15 @@ function patchRenderedMessageContent(element, html = '') {
     }
     if (live.nodeType === Node.ELEMENT_NODE && next.nodeType === Node.ELEMENT_NODE) {
       if (live.outerHTML === next.outerHTML) { stable += 1; continue; }
+      if (
+        live.tagName === next.tagName
+        && stable === incoming.length - 1
+        && stable === existing.length - 1
+      ) {
+        if (live.innerHTML !== next.innerHTML) live.innerHTML = next.innerHTML;
+        stable += 1;
+        continue;
+      }
       break;
     }
     break;
@@ -11836,8 +12291,6 @@ function renderMessageContentElement(element, content = '') {
     renderThinkingIndicator(element);
     return;
   }
-  // Prefix-stable patch (see patchRenderedMessageContent): completed blocks in
-  // a streaming bubble are never rebuilt, so cards stop jumping mid-generation.
   patchRenderedMessageContent(element, renderMarkdownSafe(content || ''));
   for (const image of element.querySelectorAll('img[data-slot="aui_generated-image"]:not([data-inspect-wrapped])')) {
     image.dataset.inspectWrapped = 'true';
@@ -11858,6 +12311,7 @@ function renderMessageContentElement(element, content = '') {
       openGeneratedImageLightbox(image);
     });
   }
+  void hydrateSessionMediaInElement(element);
 }
 
 function closeGeneratedImageLightbox() {
@@ -12233,13 +12687,18 @@ function assistantMessageRoleLabel() {
   return botProfileDisplayName(row).toUpperCase();
 }
 
-function addMessage(role, content, { persist = true, roleLabel = '', contextReceipt = null } = {}) {
+function addMessage(role, content, { persist = true, roleLabel = '', contextReceipt = null, attachments = null } = {}) {
   if (!messages.length) els.messages.innerHTML = '';
   const node = els.template.content.firstElementChild.cloneNode(true);
   node.classList.add(role);
   node.querySelector('.message-role').textContent = roleLabel || (role === 'assistant' ? assistantMessageRoleLabel() : role);
   renderMessageContentElement(node.querySelector('.message-content'), messageDisplayText(role, content || ''));
   if (contextReceipt && contextReceipt?.items?.length) appendContextReceipt(node, contextReceipt);
+  if (role === 'user') {
+    appendUserImageAttachments(node.querySelector('.message-content'), attachments, {
+      onOpen: (image) => openGeneratedImageLightbox(image),
+    });
+  }
   els.messages.appendChild(node);
   scrollMessageStreamToBottom({ force: true });
   // The "What Hermes saw" receipt rides on the stored row so history replays
@@ -12247,6 +12706,7 @@ function addMessage(role, content, { persist = true, roleLabel = '', contextRece
   const record = { role, content: content || '', ts: Date.now() };
   if (roleLabel) record.roleLabel = roleLabel;
   if (contextReceipt && contextReceipt?.items?.length) record.contextReceipt = contextReceipt;
+  if (Array.isArray(attachments) && attachments.length) record.attachments = attachments;
   if (persist) {
     messages.push(record);
     trimAndSaveMessages();
@@ -12302,12 +12762,15 @@ function createStreamingMessageUpdater(node) {
     if (!renderedRecoveredImage || imageSource) setToolActivity(node, null);
     setMessageContent(node, pending);
   };
+  const paintStream = () => {
+    setMessageContent(node, pending || THINKING_PLACEHOLDER);
+  };
   const updateText = (content = '') => {
     pending = content || '';
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
-      setMessageContent(node, pending || THINKING_PLACEHOLDER);
+      paintStream();
     });
   };
   function updateTool(tool = null) {
@@ -12318,7 +12781,13 @@ function createStreamingMessageUpdater(node) {
     // tool-activity slot so the placeholder cannot keep animating after the turn.
     setToolActivity(node, null);
   }
-  return { update: updateText, updateText, updateTool, flush, dispose };
+  return {
+    update: updateText,
+    updateText,
+    updateTool,
+    flush,
+    dispose,
+  };
 }
 
 async function persistInlineSessionState() {
@@ -12460,6 +12929,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   renderMessagesFromStorage();
   hbeBootEmit('panel:messages-painted', { startMark: 'panel:body-start' });
   renderTaskStack();
+  restoreComposerDraft();
 }
 
 function renderMessagesFromStorage() {
@@ -12484,10 +12954,25 @@ function renderMessagesFromStorage() {
   }
   for (const message of browserDisplayMessages(visibleMessages)) {
     if (isDelegationCompletionMarkerMessage(message)) continue;
-    addMessage(message.role, message.content, { persist: false, roleLabel: message.roleLabel || '', contextReceipt: message.contextReceipt || null });
+    addMessage(message.role, message.content, {
+      persist: false,
+      roleLabel: message.roleLabel || '',
+      contextReceipt: message.contextReceipt || null,
+      attachments: message.attachments || null,
+    });
   }
   renderEmptyState();
   renderActiveProfileIndicator();
+  const alreadyHydrated = messages.some((message) => (message.attachments || []).some((item) => item.dataUrl && item.pathRef));
+  void (async () => {
+    await hydrateSessionMedia(messages);
+    const nowHydrated = messages.some((message) => (message.attachments || []).some((item) => item.dataUrl && item.pathRef));
+    if (nowHydrated && !alreadyHydrated) {
+      renderMessagesFromStorage();
+      return;
+    }
+    await hydrateSessionMediaInElement(els.messages);
+  })();
 }
 
 function syncSettingsForm() {
@@ -14167,41 +14652,57 @@ async function ensureRemoteWsSession(connection) {
 }
 
 async function streamDashboardWsChat(prompt, onDelta, onTool, options = {}) {
-  const connection = await ensureActiveDashboardWsConnection();
+  let connection = await ensureActiveDashboardWsConnection();
   let sessionId = await ensureRemoteWsSession(connection);
-  try {
-    return await streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, options);
-  } catch (error) {
-    if (Number(error?.rpcCode ?? error?.code) !== 4001) throw error;
-    connection.wsSessionId = '';
+  let submitPrompt = true;
+  let reattachAttempts = 0;
+  while (true) {
     try {
-      sessionId = await ensureRemoteWsSession(connection);
-    } catch (resumeError) {
-      if (Number(resumeError?.rpcCode ?? resumeError?.code) !== 4001) throw resumeError;
-      const previousBinding = settings.remoteDashboardSession || {};
-      connection.wsStoredSessionId = '';
-      settings = {
-        ...settings,
-        sessionId: '',
-        remoteDashboardSession: { ...previousBinding, storedSessionId: '' },
-      };
-      sessionId = await ensureRemoteWsSession(connection);
+      return await streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, {
+        ...options,
+        submitPrompt,
+      });
+    } catch (error) {
+      if (Number(error?.rpcCode ?? error?.code) === 4001) {
+        connection.wsSessionId = '';
+        try {
+          sessionId = await ensureRemoteWsSession(connection);
+        } catch (resumeError) {
+          if (Number(resumeError?.rpcCode ?? resumeError?.code) !== 4001) throw resumeError;
+          const previousBinding = settings.remoteDashboardSession || {};
+          connection.wsStoredSessionId = '';
+          settings = {
+            ...settings,
+            sessionId: '',
+            remoteDashboardSession: { ...previousBinding, storedSessionId: '' },
+          };
+          sessionId = await ensureRemoteWsSession(connection);
+        }
+        submitPrompt = true;
+        continue;
+      }
+      if (shouldReattachDashboardStream(error) && reattachAttempts < 8) {
+        reattachAttempts += 1;
+        submitPrompt = false;
+        connection = await ensureActiveDashboardWsConnection();
+        sessionId = await ensureRemoteWsSession(connection);
+        continue;
+      }
+      throw error;
     }
-    return streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, options);
   }
 }
 
-async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [] } = {}) {
+async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [], submitPrompt = true } = {}) {
   onRun?.(sessionId);
   const { client } = connection;
+  const sessionIds = [sessionId, connection.wsSessionId, connection.wsStoredSessionId];
 
   return new Promise((resolve, reject) => {
     let finalText = '';
     let settled = false;
     const offs = [];
-    const watchdog = createDashboardStreamWatchdog((error) => finish(reject, error));
-    const forThisSession = (event) => event.sessionId === sessionId;
-
+    const forThisSession = (event) => matchesDashboardSessionEvent(event, sessionIds);
     const cleanup = () => {
       watchdog.stop();
       for (const off of offs) off();
@@ -14213,6 +14714,45 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
       cleanup();
       fn(value);
     };
+    const seedFromHistory = async () => {
+      const history = await client.request(WS_METHODS.sessionHistory, {
+        session_id: sessionId,
+        profile: safeActiveProfile(),
+      }).catch(() => null);
+      const rows = normalizeGatewayHistoryMessages(history);
+      const answer = latestAssistantAfterUser(rows, prompt)
+        || [...rows].reverse().find((row) => row.role === 'assistant')?.content
+        || '';
+      if (answer && answer !== finalText) {
+        finalText = answer;
+        onDelta(finalText);
+      }
+      return answer;
+    };
+    const handleIdleTimeout = async (error) => {
+      if (settled) return;
+      try {
+        const status = await client.request(WS_METHODS.sessionStatus, { session_id: sessionId }).catch(() => null);
+        await seedFromHistory();
+        if (dashboardWatchdogTimeoutAction(status) === 'keep-listening') {
+          watchdog.ping();
+          return;
+        }
+        if (finalText) {
+          onRuntime?.({ status: 'completed' });
+          finish(resolve, finalText);
+          return;
+        }
+      } catch {
+        // Fall through to reattach.
+      }
+      error.requestAccepted = true;
+      error.reattach = true;
+      finish(reject, error);
+    };
+    const watchdog = createDashboardStreamWatchdog((error) => {
+      void handleIdleTimeout(error);
+    });
     function onAbort() {
       client.request(WS_METHODS.sessionInterrupt, { session_id: sessionId }).catch(() => {});
       finish(reject, new DOMException('Hermes turn stopped by user', 'AbortError'));
@@ -14225,7 +14765,7 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
     signal?.addEventListener?.('abort', onAbort, { once: true });
 
     offs.push(client.on('*', (event) => {
-      if (event.sessionId === sessionId) watchdog.ping();
+      if (forThisSession(event)) watchdog.ping();
     }));
     offs.push(client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
@@ -14266,9 +14806,18 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
       if (!forThisSession(event)) return;
       finish(reject, hermesGatewayTurnError({ payload: event.payload }) || new Error('Dashboard stream error'));
     }));
-    offs.push(client.on('close', () => finish(reject, new Error('Dashboard connection closed mid-turn.'))));
+    offs.push(client.on('close', () => {
+      const error = new Error('Dashboard connection closed mid-turn.');
+      error.requestAccepted = true;
+      error.reattach = true;
+      finish(reject, error);
+    }));
 
-    client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt }).catch((error) => finish(reject, error));
+    if (submitPrompt) {
+      client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt }).catch((error) => finish(reject, error));
+    } else {
+      void seedFromHistory();
+    }
   });
 }
 
@@ -14437,8 +14986,45 @@ function sleep(ms) {
 }
 
 async function recoverAcceptedTurn(prompt, turnAttachments = attachments, { signal, timeoutMs = acceptedTurnRecoveryPolicy().maxDurationMs } = {}) {
-  if (usesDashboardWsChatTransport() || !settings.apiKey) return { answer: '', imageSources: [] };
   const userContent = outboundContent(prompt, turnAttachments);
+  if (usesDashboardWsChatTransport()) {
+    const connection = await ensureActiveDashboardWsConnection().catch(() => null);
+    const sessionId = connection ? await ensureRemoteWsSession(connection).catch(() => '') : '';
+    if (!connection?.client || !sessionId) return { answer: '', imageSources: [] };
+    const startedAt = Date.now();
+    let attempt = 0;
+    while (true) {
+      if (signal?.aborted) throw new DOMException('Hermes turn stopped by user', 'AbortError');
+      try {
+        const status = await connection.client.request(WS_METHODS.sessionStatus, { session_id: sessionId }).catch(() => null);
+        const history = await connection.client.request(WS_METHODS.sessionHistory, {
+          session_id: sessionId,
+          profile: safeActiveProfile(),
+        }).catch(() => null);
+        const rows = normalizeGatewayHistoryMessages(history);
+        captureDelegationRuntimePayload({ messages: rows });
+        const answer = latestAssistantAfterUser(rows, userContent);
+        const imageSources = [...new Set([
+          ...resolvedGeneratedImageSourcesFromMessages(rows),
+          ...resolvedGeneratedImageSources(answer),
+        ])];
+        if (answer || imageSources.length) return { answer, imageSources };
+        if (dashboardWatchdogTimeoutAction(status) === 'finish') return { answer: '', imageSources: [] };
+      } catch (error) {
+        if (error?.name === 'AbortError') throw error;
+      }
+      const policy = acceptedTurnRecoveryPolicy({
+        attempt,
+        elapsedMs: Date.now() - startedAt,
+        maxDurationMs: timeoutMs,
+      });
+      if (!policy.shouldContinue) return { answer: '', imageSources: [], reason: 'timeout' };
+      const remainingMs = Math.max(1, policy.maxDurationMs - (Date.now() - startedAt));
+      await sleep(Math.min(policy.delayMs, remainingMs));
+      attempt += 1;
+    }
+  }
+  if (!settings.apiKey) return { answer: '', imageSources: [] };
   const startedAt = Date.now();
   let attempt = 0;
   while (true) {
@@ -14831,6 +15417,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     renderAttachments();
     renderSkillSuggestions();
     renderContextWindow('');
+    forgetComposerDraft();
   }
 
   let didSend = false;
@@ -14947,18 +15534,16 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       contextHash,
       contextDelivery,
     });
-    const { node: userNode } = addMessage('user', displayUserText, { contextReceipt: receipt });
+    addMessage('user', displayUserText, {
+      contextReceipt: receipt,
+      attachments: preparedAttachments,
+    });
     // Prior completed assistant bubbles, for run.completed reconcile filtering.
     // Server degraded-history edge case must never restack them into this turn's
     // live bubble. See runtime-events.mjs:filterKnownAssistantReconcileParts.
     const priorAssistantTexts = messages
       .filter((message) => message.role === 'assistant' && message.content)
       .map((message) => String(message.content));
-    appendUserImageAttachments(
-      userNode.querySelector('.message-content'),
-      preparedAttachments,
-      { onOpen: (image) => openGeneratedImageLightbox(image) },
-    );
     const { node } = addMessage('assistant', THINKING_PLACEHOLDER, { persist: false, roleLabel: assistantMessageRoleLabel() });
     streamView = createStreamingMessageUpdater(node);
     let answer = '';
@@ -15021,7 +15606,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           } else {
             throw streamError;
           }
-        } else if (dashboardTransport && !isDashboardIdleTimeout(streamError)) {
+        } else if (dashboardTransport && !shouldReattachDashboardStream(streamError) && !isDashboardIdleTimeout(streamError)) {
           // No REST fallback in dashboard-transport mode — the api_server surface
           // is not the active Bot Chat session. Surface genuine WS/ticket errors directly.
           streamView.update(`Could not reach the Hermes dashboard.
@@ -16355,6 +16940,7 @@ function bindEvents() {
     void askHermes(String(els.input?.value || '').trim(), [...attachments]);
   });
   window.addEventListener('pagehide', () => {
+    persistCurrentComposerDraft({ immediate: true });
     const tab = currentContext?.activeTab || annotationTargetTab();
     if (tab?.id) {
       browserApi.tabs.sendMessage(tab.id, { type: PAGE_ANNOTATION_MESSAGES.ABORT }).catch(() => {});
@@ -16779,6 +17365,7 @@ function bindEvents() {
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
+      persistCurrentComposerDraft({ immediate: true });
       if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
       browserControlPollTimer = null;
       return;
@@ -17014,6 +17601,7 @@ function bindEvents() {
     renderContextWindow();
     renderSkillSuggestions();
     updateComposerBusyState();
+    persistCurrentComposerDraft();
   });
   document.querySelectorAll('[data-prompt]').forEach((button) => {
     button.addEventListener('click', async () => {

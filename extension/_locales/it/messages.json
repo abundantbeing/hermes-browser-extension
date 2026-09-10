@@ -4527,6 +4527,10 @@
     "message": "Invia",
     "description": "Runtime interface message ui.send"
   },
+  "runtime_ui_send_comments": {
+    "message": "Send comments",
+    "description": "Runtime interface message ui.send.comments"
+  },
   "runtime_ui_send_it_when_the_current_hermes_run_finishes": {
     "message": "Invialo al termine dell'esecuzione Hermes corrente.",
     "description": "Runtime interface message ui.send.it.when.the.current.hermes.run.finishes"

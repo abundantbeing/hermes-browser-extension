@@ -295,6 +295,7 @@
             </div>
             <div class="startup-progress" aria-hidden="true"><span id="startupProgress"></span></div>
             <ol id="startupStepList" class="startup-step-list" aria-label="Startup readiness checks" data-i18n-aria-label="ui.startup.readiness.checks"></ol>
+            <div id="startupActions" class="startup-actions" hidden></div>
           </div>
         </section>
 
@@ -440,6 +441,12 @@
             </div>
             <label><input id="contextMenuRememberRoute" type="checkbox" /> <span data-i18n="ui.remember.for.right.click.actions">Remember for right-click actions</span></label>
           </section>
+          <div id="voiceActivity" class="voice-activity" hidden role="status" aria-live="polite">
+            <span class="voice-activity-dot" aria-hidden="true"></span>
+            <strong id="voiceActivityLabel">Dictating</strong>
+            <span id="voiceActivityTimer" class="voice-activity-timer">0:00</span>
+            <span id="voiceActivityBars" class="voice-activity-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
           <div class="composer-input-wrap" id="composerDropZone">
             <textarea id="promptInput" rows="3" placeholder="Ask Hermes about this page..." data-i18n-placeholder="ui.ask.hermes.about.this.page"></textarea>
             <div id="dropOverlay" class="drop-overlay" hidden data-i18n="ui.drop.files.to.attach">Drop files to attach</div>

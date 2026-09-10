@@ -95,7 +95,7 @@ test('Phase 6 approval reason remains fully readable in narrow Browser panels', 
 });
 
 test('startup Connect button uses the theme primary tokens so it stays readable in every theme and mode', () => {
-  const button = css.match(/body\.startup-active \.topbar #startupConnectButton:not\(\[hidden\]\)\s*\{[^}]*\}/)?.[0] || '';
+  const button = css.match(/body\.startup-active \.startup-actions #startupConnectButton:not\(\[hidden\]\)\s*\{[^}]*\}/)?.[0] || '';
   assert.match(button, /background:\s*var\(--hermes-primary-bg\)/);
   assert.match(button, /color:\s*var\(--hermes-primary-fg\)/);
   assert.match(button, /border-color:\s*var\(--hermes-primary-border\)/);

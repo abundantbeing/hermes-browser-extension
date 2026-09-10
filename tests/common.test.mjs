@@ -203,7 +203,7 @@ test('sidepanel replays stored history without emptying canonical messages betwe
   assert.match(renderer, /for \(const message of browserDisplayMessages\((?:visibleMessages|messages)\)\) \{/);
   assert.match(renderer, /if \(isDelegationCompletionMarkerMessage\(message\)\) continue;/);
   // Replay keeps roleLabel pass-through (group projection author labels).
-  assert.match(renderer, /addMessage\(message\.role, message\.content, \{ persist: false(?:, roleLabel: message\.roleLabel \|\| '')?(?:, contextReceipt: message\.contextReceipt \|\| null)? \}\);/);
+  assert.match(renderer, /addMessage\(message\.role, message\.content, \{[\s\S]*?persist: false[\s\S]*?attachments: message\.attachments \|\| null[\s\S]*?\}\);/);
   assert.doesNotMatch(renderer, /messages\s*=\s*\[\]/);
 });
 
@@ -384,8 +384,8 @@ test('startup exposes one-click connection testing and Cloud reconnect uses the 
 
   assert.match(html, /id="settingsButton"[\s\S]*id="startupTestConnectionButton"/);
   assert.match(html, /id="startupTestConnectionButton"[^>]*>\s*TEST CONNECTION\s*</);
-  assert.match(css, /body\.startup-active \.topbar #startupTestConnectionButton/);
-  assert.match(css, /top:\s*min\(var\(--startup-settings-top[^;]*calc\(100vh - 84px\)\)/);
+  assert.match(css, /body\.startup-active \.startup-actions #startupTestConnectionButton/);
+  assert.doesNotMatch(css, /--startup-settings-top/);
   assert.match(source, /startupTestConnectionButton:\s*\$\('#startupTestConnectionButton'\)/);
   assert.match(source, /els\.startupTestConnectionButton\?\.addEventListener\('click', testConnection\)/);
   assert.match(source, /function connectionTestButtons\(\)/);
@@ -434,7 +434,7 @@ test('Hermes Web Cloud handoff uses the same signed-in dashboard ticket transpor
   assert.ok(select.indexOf('buildSessionModelSwitchRequest') < select.indexOf('WS_METHODS.sessionStatus'));
   assert.match(select, /cloudSwitchAccepted = true/);
   assert.match(select, /if \(cloudSwitchAccepted\)[\s\S]*Cloud model rollback/);
-  assert.match(source, /const forThisSession = \(event\) => event\.sessionId === sessionId;/);
+  assert.match(source, /const forThisSession = \(event\) => matchesDashboardSessionEvent\(event, sessionIds\);/);
   assert.match(source, /WS_EVENTS\.error, \(event\) => \{\s*if \(!forThisSession\(event\)\) return;/);
   assert.match(source, /let dashboardTurnSessionId = '';/);
   assert.match(source, /sessionHistory, \{ session_id: dashboardTurnSessionId \}/);
@@ -1579,6 +1579,27 @@ test('sidepanel falls back to visible voice dictation tab when sidepanel microph
   assert.match(voiceSource, /preparation\.mode !== 'local'/);
   assert.match(voiceSource, /await browserApi\?\.storage\?\.local\?\.set\?\./);
   assert.match(source, /The current browser blocked microphone capture inside the side panel/);
+});
+
+test('speech silent-start watchdog treats started-but-mute recognition as a failure', () => {
+  assert.equal(common.SPEECH_SILENT_START_TIMEOUT_MS, 6000);
+  assert.equal(common.speechRecognitionSilentlyFailed({ elapsedMs: 5999 }), false);
+  assert.equal(common.speechRecognitionSilentlyFailed({ elapsedMs: 6000 }), true);
+  assert.equal(common.speechRecognitionSilentlyFailed({ elapsedMs: 6000, sawStart: true }), true);
+  assert.equal(common.speechRecognitionSilentlyFailed({ elapsedMs: 12000, sawResult: true }), false);
+  assert.equal(common.speechRecognitionSilentlyFailed({ elapsedMs: 12000, sawError: true }), false);
+  assert.equal(common.speechRecognitionSilentlyFailed({ elapsedMs: 12000, sawEnd: true }), false);
+
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(source, /dictating = true;\r?\n\s+updateVoiceButtonState\(\);\r?\n\s+armSpeechWatchdog\(\)/, 'sidepanel must arm the silent-start watchdog after starting web speech');
+  assert.match(source, /function armSpeechWatchdog\(\)/, 'sidepanel must define armSpeechWatchdog');
+  assert.match(source, /function clearSpeechWatchdog\(\)/, 'sidepanel must define clearSpeechWatchdog');
+  assert.doesNotMatch(source, /recognition\.onstart = \(\) => \{ clearSpeechWatchdog\(\); \};/, 'onstart must not cancel the watchdog — Comet fires start with no audio');
+  assert.match(source, /recognition\.onresult = \(event\) => \{/, 'sidepanel onresult must exist');
+  assert.match(source, /speechRecognitionSilentlyFailed/, 'sidepanel must use the silent-failure contract from common.mjs');
+  assert.match(source, /never delivered audio/, 'the watchdog must surface a real error instead of a fake ON state');
+  assert.match(source, /void openVoiceDictationPage\('Browser speech started but never delivered audio/, 'the watchdog must route to the granted-tab voice page that posts hermesVoiceDraft');
+  assert.match(source, /clearSpeechWatchdog\(\);\r?\n\s+dictating = false;/, 'the watchdog must clear the fake ON state before falling back');
 });
 
 test('connect and startup sync Hermes models, sessions, skills, and profiles from the gateway', () => {

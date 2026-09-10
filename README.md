@@ -5,6 +5,10 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 > Created by **Jon Komet** (`@abundantbeing`). Community extension for Hermes Agent by Nous Research.
 
 <p align="center">
+  <a href="https://ko-fi.com/T8Z726J5YZ"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support Jon Komet on Ko-fi" /></a>
+</p>
+
+<p align="center">
   <img src="./assets/readme/hermes-browser-demo.gif" alt="Hermes Browser Extension demo showing the side panel reading browser context and composing a Hermes prompt" width="100%" />
 </p>
 
@@ -40,6 +44,10 @@ The release also keeps Hermes Assist, Hermes Web Alpha, session-scoped model rou
 ### Page comments
 
 **Comment on page** in the attach menu uses the existing red element picker. Click a target, write a note, and queue pins without filling the composer. Queued comments sit beside Ask Hermes until you send; the chat shows a compact summary while Hermes still receives the annotated targets, notes, and crops. Closing the side panel or pressing Esc cancels pick and comment chrome. The on-page comment card follows the active extension theme and can be dragged.
+
+### Chat transcript
+
+Hermes-managed session images (cache/`@image:`/`MEDIA:` paths) hydrate when you reopen a chat. Unsent composer text and attachments come back after you close and reopen the side panel in the same browser session. If the Browser socket goes quiet while Hermes is still working, the panel reconnects to the live turn instead of showing a dashboard timeout.
 
 ### Hermes Assist
 
@@ -109,7 +117,8 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Adds **Comment on page**: pick an element, write a note, and queue pins beside Ask Hermes without dumping annotation text into the composer. Chat shows a compact summary; Hermes still receives the full annotated targets.
 - Named agent profiles load their own skill catalog instead of inheriting the default profile's slash commands.
 - Captures active tab title/URL, open tabs, selected text, readable page text, metadata, headings, forms, links, and buttons where available.
-- Supports voice dictation through Hermes audio transcription when available, with Browser speech fallback when the connected runtime does not expose STT.
+- Supports voice dictation through Hermes audio transcription when available: the side panel shows Dictating with a timer and live meter, then transcribes on stop. Browser speech fallback is used when the connected runtime does not expose STT.
+- Reopens session images from Hermes-managed cache/image paths, including Telegram sessions that stored `image_url` cache files. Hermes-sent `MEDIA:` videos play when the dashboard can stream them.
 - Wraps webpage text as untrusted context before sending it to Hermes.
 - Streams Hermes responses and falls back to non-streaming chat when needed.
 - Includes Desktop-style appearance settings with Light/Dark/System mode and nine themes: Nous, Midnight, Ember, Mono, Cyberpunk, Slate, Senter Space, Aphrodite, and Solstice.

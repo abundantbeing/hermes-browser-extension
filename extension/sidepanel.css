@@ -1040,9 +1040,12 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 }
 .startup-stage {
   width: min(100%, 390px);
+  max-height: 100%;
   display: grid;
   gap: 12px;
   align-content: center;
+  overflow-y: auto;
+  overscroll-contain: contain;
 }
 .startup-brand-lockup {
   display: grid;
@@ -1117,28 +1120,20 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 .startup-step-unconfigured { border-color: rgba(255, 96, 96, 0.72); }
 .startup-blocked { opacity: 0.72; }
 body.startup-active .topbar {
-  position: fixed;
-  top: min(var(--startup-settings-top, calc(50% + 294px)), calc(100vh - 84px));
-  right: auto;
-  bottom: auto;
-  left: 50%;
-  z-index: 70;
+  display: none;
+}
+.startup-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  width: auto;
-  min-height: 34px;
-  padding: 0;
-  border-color: transparent;
-  background: transparent;
-  backdrop-filter: none;
-  transform: translateX(-50%);
-  pointer-events: none;
+  width: 100%;
+  margin-top: 4px;
+  pointer-events: auto;
 }
-body.startup-active .topbar > * { display: none; }
-body.startup-active .topbar #settingsButton {
+.startup-actions[hidden] { display: none; }
+body.startup-active .startup-actions #settingsButton {
   display: grid;
   visibility: visible;
   pointer-events: auto;
@@ -1147,7 +1142,7 @@ body.startup-active .topbar #settingsButton {
   color: var(--hermes-fg);
   border-color: rgba(var(--hermes-fg-rgb),0.42);
 }
-body.startup-active .topbar #startupTestConnectionButton {
+body.startup-active .startup-actions #startupTestConnectionButton {
   display: block;
   visibility: visible;
   pointer-events: auto;
@@ -1158,12 +1153,12 @@ body.startup-active .topbar #startupTestConnectionButton {
   border-color: rgba(var(--hermes-fg-rgb),0.42);
   background: rgba(var(--hermes-panel-rgb),0.72);
   color: var(--hermes-fg);
-  font: 700 10px/1 var(--hermes-font-mono);
+  font: 700 calc(10px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
   letter-spacing: 0.1em;
 }
 body:not(.startup-active) #startupTestConnectionButton { display: none; }
 body:not(.startup-active) #startupConnectButton { display: none; }
-body.startup-active .topbar #startupConnectButton:not([hidden]) {
+body.startup-active .startup-actions #startupConnectButton:not([hidden]) {
   display: block;
   visibility: visible;
   pointer-events: auto;
@@ -1174,10 +1169,10 @@ body.startup-active .topbar #startupConnectButton:not([hidden]) {
   background: var(--hermes-primary-bg);
   color: var(--hermes-primary-fg);
   border-color: var(--hermes-primary-border);
-  font: 700 10px/1 var(--hermes-font-mono);
+  font: 700 calc(10px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
   letter-spacing: 0.1em;
 }
-body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
+body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
   background: var(--hermes-paper);
   color: var(--hermes-ink);
   border-color: var(--hermes-line-strong);
@@ -2212,6 +2207,28 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
   background: rgba(var(--hermes-ink-rgb),0.04);
   box-shadow: 0 8px 22px rgba(0,0,0,0.14);
 }
+.session-media {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 720px);
+  margin: 12px 0 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--hermes-line, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  font: 11px/1.3 var(--hermes-font, inherit);
+  color: var(--muted-foreground, rgba(255,255,255,0.72));
+}
+.session-media.unavailable { opacity: 0.7; }
+.session-media-label { font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; }
+.session-media-name { opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-media-player {
+  display: block;
+  width: min(100%, 720px);
+  margin: 12px 0 4px;
+  max-height: min(68vh, 680px);
+  background: #000;
+}
 .generated-image img {
   display: block;
   width: 100%;
@@ -3101,7 +3118,53 @@ body.startup-active .topbar #startupConnectButton:not([hidden]):hover {
   0%, 100% { box-shadow: 0 0 0 2px rgba(var(--hermes-accent-rgb),0.08); }
   50% { box-shadow: 0 0 0 5px rgba(var(--hermes-accent-rgb),0.18); }
 }
-.composer-mic.recording { color: var(--danger); border-color: var(--danger); }
+.composer-mic.recording { color: var(--ok); border-color: var(--ok); }
+.voice-activity {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  margin: 0 0 7px;
+  padding: 0 10px;
+  border: 1px solid var(--hermes-line, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  font: 11px/1 var(--hermes-font, inherit);
+  color: var(--muted-foreground, rgba(255,255,255,0.72));
+}
+.voice-activity[hidden] { display: none; }
+.voice-activity:not([hidden]) { display: flex; }
+.voice-activity.recording { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--hermes-line, rgba(255,255,255,0.12))); }
+.voice-activity.transcribing { color: var(--hermes-accent, var(--accent)); }
+.voice-activity-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+.voice-activity.recording .voice-activity-dot { animation: voice-activity-pulse 1.1s ease-in-out infinite; }
+.voice-activity.transcribing .voice-activity-dot { animation: voice-activity-spin 0.8s linear infinite; border-radius: 2px; }
+.voice-activity strong { font-weight: 650; letter-spacing: 0.02em; color: inherit; }
+.voice-activity-timer { font-family: var(--hermes-font-mono, ui-monospace, monospace); font-size: 10px; opacity: 0.8; }
+.voice-activity-bars { display: flex; align-items: center; gap: 2px; height: 14px; margin-left: auto; }
+.voice-activity-bars i {
+  display: block;
+  width: 2px;
+  height: 25%;
+  border-radius: 99px;
+  background: currentColor;
+  opacity: 0.85;
+  transition: height 80ms ease-out;
+}
+@keyframes voice-activity-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@keyframes voice-activity-spin {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
 .composer-send { right: 9px; }
 .composer-send svg { transform: translateY(-1px); }
 .composer-stop { right: 9px; color: var(--danger); border-color: var(--danger); font-size: 11px; }

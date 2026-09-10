@@ -86,6 +86,7 @@ test('dashboard WebSocket transport advertises its real session and skill surfac
   assert.equal(caps.sessionChatStreaming, true);
   assert.equal(caps.skills, true);
   assert.equal(caps.profiles, true);
+  assert.equal(caps.runSteer, true);
   assert.equal(caps.dashboardWs, true);
   assert.doesNotMatch(caps.warnings.join('\n'), /legacy/i);
 });

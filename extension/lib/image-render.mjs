@@ -1,3 +1,9 @@
+import {
+  extractImageRefs,
+  extractMediaTagPaths,
+  extractVisionCachePaths,
+} from './media-persistence.mjs';
+
 const RASTER_DATA_URL_RE = /^data:image\/(?:png|jpe?g|gif|webp|bmp);base64,[a-z0-9+/]+={0,2}$/i;
 
 export const IMAGE_ASPECT_RATIOS = Object.freeze({
@@ -143,17 +149,114 @@ export function normalizeUserImageAttachments(attachments = []) {
   return previews;
 }
 
-function attachmentMessageKey(message = {}) {
-  return String(message?.content || '')
+function mediaFileName(filePath = '', fallback = 'Attached image') {
+  const base = String(filePath || '').split(/[\\/]/).pop() || '';
+  return base.trim().slice(0, 180) || fallback;
+}
+
+function pushExtractedMedia(found, seen, value, name = 'Attached image') {
+  const source = resolveImageSource(value);
+  if (!source || seen.has(source)) return;
+  seen.add(source);
+  found.push({
+    kind: 'image',
+    name: String(name || 'Attached image').trim().slice(0, 180) || 'Attached image',
+    dataUrl: source,
+  });
+}
+
+function pushExtractedPathRefs(found, seen, text = '') {
+  const filePaths = [
+    ...extractVisionCachePaths(text),
+    ...extractImageRefs(text).map((item) => item.path),
+    ...extractMediaTagPaths(text).filter((item) => item.kind === 'image').map((item) => item.path),
+  ];
+  for (const filePath of filePaths) {
+    if (!filePath || seen.has(`path:${filePath}`)) continue;
+    seen.add(`path:${filePath}`);
+    found.push({
+      kind: 'image',
+      name: mediaFileName(filePath),
+      pathRef: filePath,
+    });
+  }
+}
+
+function visitHistoryMedia(value, found, seen) {
+  if (!value) return;
+  if (Array.isArray(value)) {
+    value.forEach((item) => visitHistoryMedia(item, found, seen));
+    return;
+  }
+  if (typeof value === 'string') {
+    pushExtractedMedia(found, seen, value);
+    return;
+  }
+  if (typeof value !== 'object') return;
+  const name = value.name || value.label || value.filename || 'Attached image';
+  pushExtractedMedia(
+    found,
+    seen,
+    value.dataUrl || value.source || value.url || value.image || value.image_url?.url || value.imageUrl,
+    name,
+  );
+  visitHistoryMedia(value.content, found, seen);
+  visitHistoryMedia(value.parts, found, seen);
+  visitHistoryMedia(value.attachments, found, seen);
+  visitHistoryMedia(value.image_url, found, seen);
+}
+
+export function extractHistoryMediaAttachments(message = {}) {
+  const found = [];
+  const seen = new Set();
+  visitHistoryMedia(message?.content, found, seen);
+  visitHistoryMedia(message?.parts, found, seen);
+  visitHistoryMedia(message?.attachments, found, seen);
+  visitHistoryMedia(message?.attachment_context, found, seen);
+  if (typeof message?.content === 'string') pushExtractedPathRefs(found, seen, message.content);
+  if (typeof message?.content === 'string') {
+    try {
+      const envelope = JSON.parse(message.content);
+      if (envelope && typeof envelope === 'object') {
+        visitHistoryMedia(envelope.attachment_context, found, seen);
+        visitHistoryMedia(envelope.attachments, found, seen);
+        visitHistoryMedia(envelope.human_input?.attachments, found, seen);
+      }
+    } catch {
+      // Content is not a turn envelope.
+    }
+  }
+  return found.slice(0, 8);
+}
+
+function userMessageMatchText(content = '') {
+  const raw = String(content ?? '');
+  try {
+    const envelope = JSON.parse(raw);
+    const text = envelope?.human_input?.text;
+    if (envelope?.protocol && String(envelope.protocol).startsWith('hermes.browser.turn') && typeof text === 'string') {
+      return String(text).replace(/\r\n/g, '\n').replace(/[\t ]+/g, ' ').trim();
+    }
+  } catch {
+    // Plain composer text.
+  }
+  return raw
     .replace(/\r\n/g, '\n')
     .replace(/[\t ]+/g, ' ')
+    .replace(/\n\n\[ATTACHMENTS\][\s\S]*$/i, '')
     .trim();
 }
 
+function attachmentMessageKey(message = {}) {
+  return userMessageMatchText(message?.content);
+}
+
 function matchingUserMessageContent(remoteContent = '', localContent = '') {
-  if (!remoteContent || !localContent) return false;
-  if (remoteContent === localContent) return true;
-  return remoteContent.startsWith(`${localContent}\n\n[ATTACHMENTS]`);
+  const remote = userMessageMatchText(remoteContent);
+  const local = userMessageMatchText(localContent);
+  if (!remote || !local) return false;
+  if (remote === local) return true;
+  return remote.startsWith(local) || local.startsWith(remote);
 }
 
 export function preserveUserImageAttachments(refreshedMessages = [], localMessages = []) {

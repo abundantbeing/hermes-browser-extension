@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { renderMarkdown } from '../extension/lib/common.mjs';
 import * as imageRender from '../extension/lib/image-render.mjs';
 
@@ -108,10 +108,52 @@ test('renderMarkdown renders a standalone remote MEDIA tag as a generated image'
   assert.match(html, /src="https:\/\/example\.com\/generated-image\.webp"/);
 });
 
-test('renderMarkdown hides an unresolved local MEDIA path instead of emitting a broken image or file path', () => {
+test('renderMarkdown keeps a local MEDIA path as a hydratable placeholder instead of a broken image', () => {
   const html = renderMarkdown('MEDIA:C:\\Users\\Jaybo\\.hermes\\cache\\images\\generated.png');
 
-  assert.match(html, /generated-image-unavailable/);
-  assert.doesNotMatch(html, /C:\\Users\\Jaybo/);
+  assert.match(html, /data-session-media="image"/);
   assert.doesNotMatch(html, /<img/);
+  assert.doesNotMatch(html, /generated-image-unavailable/);
+});
+
+test('history content parts keep screenshots and generated images as message attachments', () => {
+  const extracted = imageRender.extractHistoryMediaAttachments({
+    role: 'user',
+    content: [
+      { type: 'text', text: 'look at this screenshot' },
+      { type: 'image_url', image_url: { url: TRANSPARENT_PNG_DATA_URL } },
+      { type: 'image', source: 'https://cdn.example/generated.webp' },
+    ],
+  });
+  assert.deepEqual(extracted, [
+    { kind: 'image', name: 'Attached image', dataUrl: TRANSPARENT_PNG_DATA_URL },
+    { kind: 'image', name: 'Attached image', dataUrl: 'https://cdn.example/generated.webp' },
+  ]);
+});
+
+test('side panel stores user media on the message and restores it after history refresh', () => {
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(sidepanel, /attachments:\s*preparedAttachments/);
+  assert.match(sidepanel, /preserveUserImageAttachments/);
+  assert.match(sidepanel, /extractHistoryMediaAttachments/);
+  assert.match(sidepanel, /attachments:\s*message\.attachments/);
+});
+
+test('history refresh keeps composer screenshots when Hermes stored a turn envelope', () => {
+  const local = [{
+    role: 'user',
+    content: 'im not able to use DeepSeek V4 Flash Vision Exp',
+    attachments: [{ kind: 'image', name: 'image.png', dataUrl: TRANSPARENT_PNG_DATA_URL }],
+  }];
+  const refreshed = [{
+    role: 'user',
+    content: JSON.stringify({
+      protocol: 'hermes.browser.turn.v2',
+      human_input: { source: 'composer', text: 'im not able to use DeepSeek V4 Flash Vision Exp' },
+      attachment_context: { items: [{ kind: 'image', label: 'image.png', mime_type: '', detail: 'image/png · 44.9 KB', local_path: '', text: '' }] },
+    }),
+  }];
+  const merged = imageRender.preserveUserImageAttachments(refreshed, local);
+  assert.equal(merged[0].attachments[0].name, 'image.png');
+  assert.equal(merged[0].attachments[0].dataUrl, TRANSPARENT_PNG_DATA_URL);
 });

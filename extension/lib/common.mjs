@@ -6,6 +6,7 @@ import {
 } from './browser-context-protocol.mjs';
 import { formatPickedElementBlock } from './element-picker.mjs';
 import { normalizeImageAspectRatio, resolveImageSource } from './image-render.mjs';
+import { classifyMediaKind, splitInboundVisionMessage } from './media-persistence.mjs';
 import { hasCredentialBearingUrl, redactSensitiveText } from './redaction.mjs';
 import { CONNECTION_SCHEMA_VERSION, CONNECTION_TRANSPORTS } from './connection-modes.mjs';
 import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
@@ -142,7 +143,9 @@ export function messageDisplayText(role = '', content = '') {
   if (String(role || '').trim().toLowerCase() !== 'user') return text;
 
   const reveal = (value) => {
-    const source = String(value ?? '');
+    let source = String(value ?? '');
+    const vision = splitInboundVisionMessage(source);
+    if (vision.hadVisionBlock) source = vision.visibleText;
     if (!source.includes('HERMES_PAGE_COMMENTS')) return source;
     const stripped = source
       .replace(/<<<HERMES_PAGE_COMMENTS[\s\S]*?<<<END_HERMES_PAGE_COMMENTS>>>/g, '')
@@ -1858,11 +1861,24 @@ function safeHref(value = '') {
   }
 }
 
+function sessionMediaPlaceholderMarkup(kind = 'image', filePath = '') {
+  const safeKind = kind === 'video' ? 'video' : 'image';
+  const safePath = escapeHtml(filePath);
+  const name = escapeHtml(String(filePath || '').split(/[\\/]/).pop() || (safeKind === 'video' ? 'Video' : 'Image'));
+  const label = safeKind === 'video' ? 'Video' : 'Image';
+  return `<figure class="session-media" data-session-media="${safeKind}" data-media-path="${safePath}" role="status"><span class="session-media-label">${label}</span><span class="session-media-name">${name}</span></figure>`;
+}
+
 function generatedImageMarkup(source = '', alt = 'Generated image', { inline = false } = {}) {
   const safeSource = resolveImageSource(source);
-  if (!safeSource) return '';
-  const image = `<img src="${escapeHtml(safeSource)}" alt="${escapeHtml(alt || 'Generated image')}" loading="lazy" decoding="async" data-slot="aui_generated-image" />`;
-  return inline ? image : `<figure class="generated-image" data-slot="aui_generated-image">${image}</figure>`;
+  if (safeSource) {
+    const image = `<img src="${escapeHtml(safeSource)}" alt="${escapeHtml(alt || 'Generated image')}" loading="lazy" decoding="async" data-slot="aui_generated-image" />`;
+    return inline ? image : `<figure class="generated-image" data-slot="aui_generated-image">${image}</figure>`;
+  }
+  const filePath = String(source || '').trim();
+  const kind = classifyMediaKind(filePath);
+  if (kind === 'image' || kind === 'video') return sessionMediaPlaceholderMarkup(kind, filePath);
+  return '';
 }
 
 function generatedImageUnavailableMarkup() {
@@ -2187,6 +2203,26 @@ export function shouldOpenVoiceDictationPageForSpeechError(error = {}) {
     || message.includes('speech service')
     || message.includes('speech recognition service')
     || message.includes('network error');
+}
+
+// Web Speech can `start()` successfully and then never fire onstart/onresult/
+// onerror/onend — the silent-failure mode seen in Chromium-fork side panels
+// (Comet) where the mic prompt is suppressed or the speech service is dead.
+// The side panel uses this window to turn a started-but-dead session into a
+// real error and route to the granted-tab voice page instead of leaving the
+// mic button in a fake ON state.
+export const SPEECH_SILENT_START_TIMEOUT_MS = 6000;
+
+export function speechRecognitionSilentlyFailed({
+  elapsedMs = 0,
+  sawStart = false,
+  sawResult = false,
+  sawError = false,
+  sawEnd = false,
+} = {}) {
+  if (sawResult || sawError || sawEnd) return false;
+  void sawStart;
+  return Number(elapsedMs) >= SPEECH_SILENT_START_TIMEOUT_MS;
 }
 
 export function microphonePermissionHelp() {

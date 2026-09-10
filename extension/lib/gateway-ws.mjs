@@ -9,6 +9,8 @@
 // The pure helpers (URL building, frame classification) are exported separately
 // so they can be unit-tested without a live socket.
 
+import { extractHistoryMediaAttachments } from './image-render.mjs';
+
 export const WS_METHODS = Object.freeze({
   sessionCreate: 'session.create',
   sessionResume: 'session.resume',
@@ -97,10 +99,12 @@ export function normalizeGatewayHistoryMessages(payload = {}) {
     .map((message) => {
       const candidates = [message.content, message.text, message.context];
       const content = candidates.map(gatewayHistoryText).find(Boolean) || '';
+      const attachments = extractHistoryMediaAttachments(message);
       return {
         ...message,
         role: String(message.role || '').toLowerCase(),
         content,
+        ...(attachments.length ? { attachments } : {}),
       };
     })
     .filter((message) => message.role);

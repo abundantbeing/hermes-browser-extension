@@ -67,12 +67,15 @@ import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale
 import { mountContextMenuEditor } from './lib/context-menu-editor-client.mjs';
 import {
   MODEL_CATALOG_CACHE_STORAGE_KEY,
+  dashboardFileStreamUrl,
   dashboardModelDiscoveryBaseUrl,
   discoverCanonicalProviderCatalog,
   discoverGatewayVirtualModels,
   discoverModelsFromDashboard,
   discoverModelsFromRegistry,
   discoverModelsFromSessions,
+  fetchDashboardMediaDataUrl,
+  fetchDashboardSessionToken,
   mergeModelsWithRegistry,
   mergeVirtualModelRows,
   modelCatalogCacheKey,
@@ -86,7 +89,9 @@ import {
 import {
   appendGeneratedImageSourcesToMessages,
   appendUserImageAttachments,
+  extractHistoryMediaAttachments,
   extractMediaTags,
+  normalizeUserImageAttachments,
   preserveUserImageAttachments,
   resolveImageSource,
   resolvedGeneratedImageSources,
@@ -94,6 +99,7 @@ import {
   resolvedGeneratedImageSourcesFromResult,
   stripGeneratedImageEchoes,
 } from './lib/image-render.mjs';
+import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { modelLockRequestOutcome, readHermesSse, runSteerFailureState } from './lib/fulltab-runtime.mjs';
 import { parseBrowserCommand, resolveCommandPrompt } from './lib/commands.mjs';
 import { createDiffusionCanvas } from './lib/diffusion-canvas.mjs';
@@ -116,6 +122,7 @@ import {
   persistGroupProjectionAppend,
 } from './lib/bot-group-runtime.mjs';
 import { thinkingIndicatorMarkup } from './lib/web-thinking-indicator.mjs';
+import { clearComposerDraft, loadComposerDraft, persistComposerDraft } from './lib/composer-draft.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
 import { writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
@@ -147,7 +154,7 @@ import {
   turnRequestFailureState,
 } from './lib/turn-recovery.mjs';
 import { buildDashboardWsUrl, buildDashboardWsUrlWithCredential, buildSessionModelSwitchRequest, createGatewayClient, establishGatewaySession, normalizeGatewayHistoryMessages, runtimeModelFromSessionStatus, WS_EVENTS, WS_METHODS } from './lib/gateway-ws.mjs';
-import { createDashboardStreamWatchdog } from './lib/dashboard-stream-watchdog.mjs';
+import { createDashboardStreamWatchdog, dashboardWatchdogTimeoutAction, matchesDashboardSessionEvent, shouldReattachDashboardStream } from './lib/dashboard-stream-watchdog.mjs';
 import { isTrustedDashboardOrigin, mintWsTicket, originOf, ticketFailureHelp } from './lib/dashboard-bridge.mjs';
 import {
   CONTEXT_CONSENT_STORAGE_KEY,
@@ -401,6 +408,9 @@ let activeRunControl = null;
 let runControlGeneration = 0;
 let attachments = [];
 let queuedTurn = null;
+let composerDraftSaveTimer = 0;
+let restoringComposerDraft = false;
+const WEB_COMPOSER_DRAFT_INSTANCE = 'web';
 const approvedForeignSessionIds = new Set();
 let pendingForeignTurn = null;
 let availableSkills = [];
@@ -1180,17 +1190,42 @@ async function readAcceptedHermesSse(response, options = {}) {
 }
 
 async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } = {}) {
-  const connection = await ensureDashboardConnection();
+  let connection = await ensureDashboardConnection();
   if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
-  const sessionId = dashboardLiveSessionId;
+  let sessionId = dashboardLiveSessionId;
   onRun?.(sessionId);
+  let submitPrompt = true;
+  let reattachAttempts = 0;
+  while (true) {
+    try {
+      return await streamDashboardPromptAttempt(connection, sessionId, prompt, {
+        signal,
+        onDelta,
+        onTool,
+        submitPrompt,
+      });
+    } catch (error) {
+      if (shouldReattachDashboardStream(error) && reattachAttempts < 8) {
+        reattachAttempts += 1;
+        submitPrompt = false;
+        connection = await ensureDashboardConnection();
+        if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
+        sessionId = dashboardLiveSessionId;
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+async function streamDashboardPromptAttempt(connection, sessionId, prompt, { signal, onDelta, onTool, submitPrompt = true } = {}) {
   return new Promise((resolve, reject) => {
     let finalText = '';
     let submitAccepted = false;
     let settled = false;
     const offs = [];
-    const watchdog = createDashboardStreamWatchdog((error) => finish(reject, error));
-    const forThisSession = (event) => event.sessionId === sessionId;
+    const sessionIds = [sessionId, dashboardLiveSessionId, activeSessionId];
+    const forThisSession = (event) => matchesDashboardSessionEvent(event, sessionIds);
     const cleanup = () => {
       watchdog.stop();
       for (const off of offs) off();
@@ -1202,6 +1237,44 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
       cleanup();
       fn(value);
     };
+    const seedFromHistory = async () => {
+      const history = await connection.client.request(WS_METHODS.sessionHistory, {
+        session_id: sessionId,
+        profile: settings.activeProfile || '',
+      }).catch(() => null);
+      const rows = dashboardHistoryMessages(history);
+      const answer = latestAssistantAfterUser(rows, prompt)
+        || [...rows].reverse().find((row) => row.role === 'assistant')?.content
+        || '';
+      if (answer && answer !== finalText) {
+        finalText = answer;
+        onDelta?.(finalText);
+      }
+      return answer;
+    };
+    const handleIdleTimeout = async (error) => {
+      if (settled) return;
+      try {
+        const status = await connection.client.request(WS_METHODS.sessionStatus, { session_id: sessionId }).catch(() => null);
+        await seedFromHistory();
+        if (dashboardWatchdogTimeoutAction(status) === 'keep-listening') {
+          watchdog.ping();
+          return;
+        }
+        if (finalText) {
+          finish(resolve, finalText);
+          return;
+        }
+      } catch {
+        // Fall through to reattach.
+      }
+      error.requestAccepted = true;
+      error.reattach = true;
+      finish(reject, error);
+    };
+    const watchdog = createDashboardStreamWatchdog((error) => {
+      void handleIdleTimeout(error);
+    });
     const onAbort = () => {
       connection.client.request(WS_METHODS.sessionInterrupt, { session_id: sessionId }).catch(() => {});
       finish(reject, new DOMException('Hermes turn stopped by user', 'AbortError'));
@@ -1209,7 +1282,7 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
     if (signal?.aborted) return onAbort();
     signal?.addEventListener?.('abort', onAbort, { once: true });
     offs.push(connection.client.on('*', (event) => {
-      if (event.sessionId === sessionId) watchdog.ping();
+      if (forThisSession(event)) watchdog.ping();
     }));
     offs.push(connection.client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
@@ -1248,12 +1321,17 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
     }));
     offs.push(connection.client.on('close', () => {
       const error = new Error('Dashboard connection closed mid-turn.');
-      error.requestAccepted = submitAccepted;
+      error.requestAccepted = submitAccepted || !submitPrompt;
+      error.reattach = true;
       finish(reject, error);
     }));
-    connection.client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt })
-      .then(() => { submitAccepted = true; })
-      .catch((error) => finish(reject, error));
+    if (submitPrompt) {
+      connection.client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt })
+        .then(() => { submitAccepted = true; })
+        .catch((error) => finish(reject, error));
+    } else {
+      void seedFromHistory();
+    }
   });
 }
 
@@ -1777,9 +1855,95 @@ function renderLiveRun() {
   els.messageList.append(card);
 }
 
+function webHistoryMediaMessages(messages = []) {
+  return (Array.isArray(messages) ? messages : []).map((message) => {
+    const extracted = extractHistoryMediaAttachments(message);
+    if (!extracted.length || normalizeUserImageAttachments(message.attachments).length) return message;
+    return { ...message, attachments: extracted };
+  });
+}
+
+async function hydrateSessionMedia(messageList = []) {
+  const pending = [];
+  for (const message of Array.isArray(messageList) ? messageList : []) {
+    const extracted = extractHistoryMediaAttachments(message);
+    if (extracted.length && !normalizeUserImageAttachments(message.attachments).length) {
+      message.attachments = [...(Array.isArray(message.attachments) ? message.attachments : []), ...extracted];
+    }
+    if (!Array.isArray(message?.attachments)) continue;
+    for (const attachment of message.attachments) {
+      if (!attachment || attachment.dataUrl || !attachment.pathRef) continue;
+      if (resolveMediaFetchPlan({ pathRef: attachment.pathRef }).transport !== 'dashboard-media') continue;
+      pending.push(attachment);
+    }
+  }
+  if (!pending.length) return;
+  const baseUrl = dashboardModelDiscoveryBaseUrl({
+    gatewayMode: settings.gatewayMode,
+    gatewayUrl: settings.gatewayUrl,
+  });
+  if (!baseUrl) return;
+  const token = await fetchDashboardSessionToken({ baseUrl });
+  await Promise.all(pending.map(async (attachment) => {
+    const dataUrl = await fetchDashboardMediaDataUrl({
+      baseUrl,
+      filePath: attachment.pathRef,
+      token,
+    });
+    if (dataUrl) attachment.dataUrl = dataUrl;
+  }));
+}
+
+async function hydrateSessionMediaInElement(element) {
+  if (!element?.querySelectorAll) return;
+  const nodes = [...element.querySelectorAll('[data-session-media][data-media-path]')];
+  if (!nodes.length) return;
+  const baseUrl = dashboardModelDiscoveryBaseUrl({
+    gatewayMode: settings.gatewayMode,
+    gatewayUrl: settings.gatewayUrl,
+  });
+  if (!baseUrl) {
+    for (const node of nodes) node.classList.add('unavailable');
+    return;
+  }
+  const token = await fetchDashboardSessionToken({ baseUrl });
+  const doc = element.ownerDocument || document;
+  await Promise.all(nodes.map(async (node) => {
+    if (!node.isConnected) return;
+    const filePath = node.getAttribute('data-media-path') || '';
+    const kind = node.getAttribute('data-session-media') || classifyMediaKind(filePath);
+    const plan = resolveMediaFetchPlan({ pathRef: filePath });
+    if (kind === 'image' && plan.transport === 'dashboard-media') {
+      const dataUrl = await fetchDashboardMediaDataUrl({ baseUrl, filePath, token });
+      if (!dataUrl) {
+        node.classList.add('unavailable');
+        return;
+      }
+      const image = doc.createElement('img');
+      image.src = dataUrl;
+      image.alt = filePath.split(/[\\/]/).pop() || 'Image';
+      image.loading = 'lazy';
+      node.replaceWith(image);
+      return;
+    }
+    if (kind === 'video' && plan.transport === 'dashboard-stream') {
+      const video = doc.createElement('video');
+      video.className = 'session-media-player';
+      video.controls = true;
+      video.preload = 'metadata';
+      video.src = dashboardFileStreamUrl(baseUrl, filePath, token);
+      video.addEventListener('error', () => {
+        node.classList.add('unavailable');
+        if (video.isConnected) video.replaceWith(node);
+      }, { once: true });
+      node.replaceWith(video);
+    }
+  }));
+}
+
 function renderMessages(messages = []) {
   const recoveredImageSources = resolvedGeneratedImageSourcesFromMessages(messages);
-  const renderedMessages = appendGeneratedImageSourcesToMessages(messages, recoveredImageSources);
+  const renderedMessages = webHistoryMediaMessages(appendGeneratedImageSourcesToMessages(messages, recoveredImageSources));
   activeMessages = renderedMessages;
   els.messageList.replaceChildren();
   const visible = browserDisplayMessages(renderedMessages)
@@ -1800,8 +1964,12 @@ function renderMessages(messages = []) {
     const visibleText = messageDisplayText(role, rawText);
     const tagged = extractMediaTags(visibleText);
     const media = resolvedGeneratedImageSources(visibleText);
-    const displayText = stripGeneratedImageEchoes(tagged.text, media);
-    if (displayText) content.innerHTML = renderMarkdownSafe(displayText);
+    const displayText = stripGeneratedImageEchoes(visibleText, media);
+    if (displayText) {
+      const rendered = document.createElement('div');
+      rendered.innerHTML = renderMarkdownSafe(displayText);
+      content.append(...rendered.childNodes);
+    }
     if (role === 'user') {
       appendUserImageAttachments(content, message.attachments, {
         onOpen: (_image, preview) => openImageLightbox(preview.source, preview.name),
@@ -1838,6 +2006,8 @@ function renderMessages(messages = []) {
       content.append(group);
     }
     for (const item of tagged.media.filter((entry) => !resolveImageSource(entry.source))) {
+      const kind = classifyMediaKind(entry.source);
+      if (kind === 'image' || kind === 'video') continue;
       content.append(renderArtifactCard(describeArtifact(item.source)));
     }
     article.append(roleNode, content);
@@ -1846,6 +2016,16 @@ function renderMessages(messages = []) {
   renderLiveRun();
   renderContextWindow();
   requestAnimationFrame(() => { els.conversationScroll.scrollTop = els.conversationScroll.scrollHeight; });
+  const alreadyHydrated = renderedMessages.some((message) => (message.attachments || []).some((item) => item.dataUrl && item.pathRef));
+  void (async () => {
+    await hydrateSessionMedia(renderedMessages);
+    const nowHydrated = renderedMessages.some((message) => (message.attachments || []).some((item) => item.dataUrl && item.pathRef));
+    if (nowHydrated && !alreadyHydrated) {
+      renderMessages(renderedMessages);
+      return;
+    }
+    await hydrateSessionMediaInElement(els.messageList);
+  })();
 }
 
 function effectiveModel() {
@@ -3362,6 +3542,58 @@ function readFile(file, method) {
   });
 }
 
+function persistCurrentComposerDraft({ immediate = false } = {}) {
+  if (restoringComposerDraft) return;
+  const run = () => {
+    composerDraftSaveTimer = 0;
+    persistComposerDraft(globalThis.sessionStorage || null, {
+      instanceId: WEB_COMPOSER_DRAFT_INSTANCE,
+      text: els.prompt?.value || '',
+      attachments,
+    });
+  };
+  if (immediate) {
+    if (composerDraftSaveTimer) {
+      clearTimeout(composerDraftSaveTimer);
+      composerDraftSaveTimer = 0;
+    }
+    run();
+    return;
+  }
+  if (composerDraftSaveTimer) return;
+  composerDraftSaveTimer = setTimeout(run, 200);
+}
+
+function forgetComposerDraft() {
+  if (composerDraftSaveTimer) {
+    clearTimeout(composerDraftSaveTimer);
+    composerDraftSaveTimer = 0;
+  }
+  clearComposerDraft(globalThis.sessionStorage || null, { instanceId: WEB_COMPOSER_DRAFT_INSTANCE });
+}
+
+function restoreComposerDraft() {
+  const draft = loadComposerDraft(globalThis.sessionStorage || null, { instanceId: WEB_COMPOSER_DRAFT_INSTANCE });
+  if (!draft) return false;
+  restoringComposerDraft = true;
+  try {
+    if (els.prompt && !String(els.prompt.value || '').trim() && draft.text) {
+      els.prompt.value = draft.text;
+    }
+    if (!attachments.length && draft.attachments.length) {
+      attachments = draft.attachments.map((item) => ({
+        ...item,
+        name: item.name || item.label || 'attachment',
+      }));
+    }
+    renderAttachments();
+    updateBusyControls();
+    return true;
+  } finally {
+    restoringComposerDraft = false;
+  }
+}
+
 function renderAttachments() {
   els.attachmentList.replaceChildren();
   els.attachmentList.hidden = attachments.length === 0;
@@ -3377,6 +3609,7 @@ function renderAttachments() {
     remove.addEventListener('click', () => {
       attachments = attachments.filter((item) => item.id !== attachment.id);
       renderAttachments();
+      persistCurrentComposerDraft({ immediate: true });
     });
     chip.append(label, remove);
     els.attachmentList.append(chip);
@@ -3392,6 +3625,7 @@ async function attachFiles(fileList) {
     attachments.push({ id: `${Date.now()}:${Math.random()}`, kind: image ? 'image' : 'file', name: file.name || 'attachment', size: file.size, type: file.type, text: text.slice(0, 120_000), dataUrl });
   }
   renderAttachments();
+  persistCurrentComposerDraft({ immediate: true });
   els.prompt.focus();
 }
 
@@ -3597,6 +3831,7 @@ function queueCurrentDraft() {
   els.prompt.value = '';
   attachments = [];
   renderAttachments();
+  forgetComposerDraft();
   els.composerStatus.textContent = translateUiText('Message queued');
   updateBusyControls();
 }
@@ -4148,6 +4383,7 @@ async function sendPrompt(text) {
   els.composer.dataset.submitState = 'accepted';
   els.prompt.value = '';
   renderContextWindow();
+  forgetComposerDraft();
   const turnRunControlGeneration = ++runControlGeneration;
   activeRunControl = beginRunControl({
     runId: usesDashboardTicketTransport() ? String(dashboardLiveSessionId || '') : '',
@@ -4743,6 +4979,7 @@ els.prompt.addEventListener('input', () => {
   updateBusyControls();
   renderComposerSuggestions();
   renderContextWindow();
+  persistCurrentComposerDraft();
 });
 els.prompt.addEventListener('paste', (event) => {
   handleComposerPaste(event).catch((error) => { els.composerStatus.textContent = `Paste failed: ${error?.message || String(error)}`; });
@@ -5076,6 +5313,7 @@ initializeResponsiveShell();
 updateScrim();
 loadApp()
   .then(async () => {
+    restoreComposerDraft();
     renderWakeState(await browserApi.runtime.sendMessage({ type: WAKE_MESSAGES.getState }).catch(() => ({})));
     await consumePendingVoiceDraft();
     await consumePendingWakeTurn();

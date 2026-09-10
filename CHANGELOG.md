@@ -2,9 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Telegram and Desktop session images hydrate from Hermes cache paths (`image_url:` / `@image:` / `MEDIA:`) through the dashboard `/api/media` route. Local videos render as a player when `/api/files/stream` can serve them, otherwise as an honest file card. Pixels that were never stored in Hermes (only in Telegram itself) cannot be invented.
+- Composer text and attachments restore after you close and reopen the side panel in the same browser session. Images are saved to disk when attached so the draft stores a path instead of a huge image blob.
+
 ### Fixed
 
-- Dashboard chat no longer dies at a 5-minute wall clock while Hermes is still working. The idle watchdog resets on live session activity (tools, deltas, status), and a quiet timeout recovers the accepted turn instead of showing "Could not reach the Hermes dashboard."
+- Local Desktop dashboard transport now advertises and routes Steer (`session.steer`) so Comet is not stuck with a hidden/dead steer control while Hermes is working.
+- Side-panel voice dictation records until you stop, with a Dictating timer and live audio meter. Hermes speech-to-text runs after stop (same as Desktop). A microphone that delivers no audio still escalates to the Voice Dictation tab.
+- Side-panel mic that starts but never captures speech now errors and opens the Hermes Voice Dictation tab instead of staying fake-ON.
+- If the Browser socket goes quiet or drops while Hermes Desktop is still running the turn, Browser reconnects and keeps listening instead of showing "Could not reach the Hermes dashboard."
 - Mapped Codex ChatGPT 6 Astra context windows: 272k for the base model and 900k for the explicit 900k variant, matching the GPT-5.6 Codex OAuth tiers.
 - Restored Bot Mode Desktop roster parity: authenticated `profiles.list` supplies display names, avatars, last-activity stamps, group-chat projections, and canonical Bot Chat identity. Public status/health names are discovery only and no longer replace a rich roster.
 - Opening a bot resumes the confirmed existing Bot Chat and fails closed on lookup errors instead of creating a duplicate chat.

@@ -4527,6 +4527,10 @@
     "message": "傳送",
     "description": "Runtime interface message ui.send"
   },
+  "runtime_ui_send_comments": {
+    "message": "Send comments",
+    "description": "Runtime interface message ui.send.comments"
+  },
   "runtime_ui_send_it_when_the_current_hermes_run_finishes": {
     "message": "目前的 Hermes 執行完成時傳送它。",
     "description": "Runtime interface message ui.send.it.when.the.current.hermes.run.finishes"

@@ -154,7 +154,11 @@ test('Side Panel WebSocket streams accept only events scoped to the exact live s
         ? panel.match(/async function streamDashboardWsChatAttempt\([\s\S]*?\n\}/)?.[0] || ''
         : '',
     ].join('\n');
-    assert.match(body, /event\.sessionId === (?:sessionId|session\.liveId)/);
+    if (functionName === 'streamDashboardWsChat') {
+      assert.match(body, /matchesDashboardSessionEvent\(event, sessionIds\)/);
+    } else {
+      assert.match(body, /event\.sessionId === (?:sessionId|session\.liveId)/);
+    }
     assert.doesNotMatch(body, /!event\.sessionId/);
     assert.match(body, /WS_EVENTS\.error, \(event\) => \{\s*if \(!for(?:This)?Session\(event\)\) return;/);
   }
@@ -217,11 +221,28 @@ test('Dashboard chat streams have bounded completion timers on both Browser surf
     panel.match(/async function streamDashboardWsChat\([\s\S]*?\n\}/)?.[0] || '',
     panel.match(/async function streamDashboardWsChatAttempt\([\s\S]*?\n\}/)?.[0] || '',
   ].join('\n');
-  const webStream = web.match(/async function streamDashboardPrompt\([\s\S]*?\n\}/)?.[0] || '';
+  const webStream = [
+    web.match(/async function streamDashboardPrompt\([\s\S]*?\n\}/)?.[0] || '',
+    web.match(/async function streamDashboardPromptAttempt\([\s\S]*?\n\}/)?.[0] || '',
+  ].join('\n');
   for (const stream of [sideStream, webStream]) {
     assert.match(stream, /createDashboardStreamWatchdog/);
     assert.match(stream, /watchdog\.ping\(\)/);
     assert.match(stream, /watchdog\.stop\(\)/);
     assert.match(stream, /client\.on\('\*'/);
   }
+});
+
+test('local dashboard-ws advertises and routes active-run steering', () => {
+  const dashboardCapabilities = caps.match(/export function dashboardWsGatewayCapabilities[\s\S]*?\n\}/)?.[0] || '';
+  const canSteer = panel.match(/function canSteerActiveRun\(\)[\s\S]*?\n\}/)?.[0] || '';
+  const sender = panel.match(/async function sendSteerText\([\s\S]*?\n\}/)?.[0] || '';
+
+  assert.match(dashboardCapabilities, /runSteer:\s*true/);
+  assert.match(canSteer, /usesDashboardWsChatTransport\(\)/);
+  assert.match(canSteer, /gatewayCapabilities\.runSteer/);
+  assert.match(sender, /if \(usesDashboardWsChatTransport\(\)\)/);
+  assert.match(sender, /WS_METHODS\.sessionSteer/);
+  assert.match(sender, /session_id: sessionId/);
+  assert.match(sender, /text: steerText/);
 });

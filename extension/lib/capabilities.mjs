@@ -72,6 +72,7 @@ export function dashboardWsGatewayCapabilities({ health = false, source = 'dashb
     sessionChatStreaming: true,
     skills: true,
     profiles: true,
+    runSteer: true,
     dashboardWs: true,
     warnings: Object.freeze([
       'Dashboard WebSocket transport is active; REST-only API routes are not required.',

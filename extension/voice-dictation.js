@@ -14,9 +14,10 @@ import {
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
 import {
-  dashboardModelDiscoveryBaseUrl,
+  resolveDashboardTranscriptionBaseUrl,
   transcribeAudioViaDashboard,
 } from './lib/model-discovery.mjs';
+import { discoverLocalDashboardBaseUrl, readCachedRosterUrl } from './lib/desktop-roster.mjs';
 import { getBrowserApi } from './lib/browser-api.mjs';
 import { browserMicrophoneSettingsUrl, browserSpeechCloudFallbackAllowed, detectBrowserProduct } from './lib/browser-runtime.mjs';
 
@@ -54,6 +55,29 @@ let speechFinalText = '';
 let speechInterimText = '';
 let speechActive = false;
 let speechRecognitionError = '';
+let dashboardTranscriptionBaseUrl = '';
+
+// The Desktop dashboard is served on a discovered random loopback port. Resolve
+// it once per page so STT targets the live dashboard instead of the legacy
+// fixed port; the resolver keeps the fixed port as a last-resort fallback.
+async function resolveVoicePageDashboardBaseUrl() {
+  if (dashboardTranscriptionBaseUrl) return dashboardTranscriptionBaseUrl;
+  dashboardTranscriptionBaseUrl = await resolveDashboardTranscriptionBaseUrl({
+    gatewayMode: settings.gatewayMode,
+    gatewayUrl: settings.gatewayUrl,
+    discover: async () => {
+      const cached = await readCachedRosterUrl().catch(() => ({ url: '' }));
+      return discoverLocalDashboardBaseUrl({
+        cachedUrl: cached?.url || '',
+        cachedAt: Number(cached?.cachedAt || 0),
+        gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+        apiKey: settings.apiKey,
+        timeoutMs: 3_000,
+      });
+    },
+  });
+  return dashboardTranscriptionBaseUrl;
+}
 
 function setStatus(message) {
   if (statusEl) statusEl.textContent = translateUiText(message);
@@ -208,11 +232,9 @@ async function transcribeVoiceRecording(blob) {
   }
   const dataUrl = await blobToDataUrl(blob);
   if (canUseDashboardTranscription && !canUseApiTranscription) {
+    const baseUrl = await resolveVoicePageDashboardBaseUrl();
     const result = await transcribeAudioViaDashboard({
-      baseUrl: dashboardModelDiscoveryBaseUrl({
-        gatewayMode: settings.gatewayMode,
-        gatewayUrl: settings.gatewayUrl,
-      }),
+      baseUrl,
       profile: settings.activeProfile,
       dataUrl,
       mimeType: blob.type || 'audio/webm',
