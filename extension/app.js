@@ -18,6 +18,13 @@ import {
   skillSuggestionsForInput,
 } from './lib/common.mjs';
 import { renderMarkdownSafe } from './lib/sanitizer.mjs';
+import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
+import {
+  completionRevealPlan,
+  newestAssistantReply,
+  revealSlice,
+  trailingNewMessages,
+} from './lib/completion-reveal.mjs';
 import {
   assistModelRoutingSupported,
   resolveAssistModelBindingFromCatalog,
@@ -100,6 +107,19 @@ import {
   stripGeneratedImageEchoes,
 } from './lib/image-render.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
+import {
+  activeSubagentView,
+  applySubagentEvent,
+  formatSubagentElapsed,
+  isSubagentEventName,
+  pruneFinishedSubagents,
+  reconcileSubagentSnapshot,
+  SUBAGENT_STEER_ICON,
+  SUBAGENT_STOP_ICON,
+  subagentControlPayload,
+  subagentStackSummary,
+  subagentsFromListResult,
+} from './lib/subagent-stack.mjs';
 import { modelLockRequestOutcome, readHermesSse, runSteerFailureState } from './lib/fulltab-runtime.mjs';
 import { parseBrowserCommand, resolveCommandPrompt } from './lib/commands.mjs';
 import { createDiffusionCanvas } from './lib/diffusion-canvas.mjs';
@@ -293,6 +313,11 @@ const els = {
   taskStackSummary: $('#taskStackSummary'),
   taskStackProgress: $('#taskStackProgress'),
   taskStackList: $('#taskStackList'),
+  subagentStack: $('#subagentStack'),
+  subagentStackToggle: $('#subagentStackToggle'),
+  subagentStackSummary: $('#subagentStackSummary'),
+  subagentStackList: $('#subagentStackList'),
+  subagentStackDetail: $('#subagentStackDetail'),
   settingsButton: $('#settingsButton'),
   wakeButton: $('#wakeButton'),
   settingsDialog: $('#settingsDialog'),
@@ -397,6 +422,14 @@ let activeSessionId = handoff.sessionId;
 let activeMessages = [];
 let taskStackStore = {};
 let taskStackExpanded = true;
+let subagentState = {};
+let subagentExpanded = true;
+let subagentSelectedId = '';
+let subagentSteerDraft = '';
+let subagentControlBusy = false;
+let subagentControlError = '';
+let subagentTimer = null;
+const subagentBoundClients = new WeakSet();
 let availableModels = [];
 let selectedModelProvider = '';
 let modelSelectionTarget = 'chat';
@@ -476,7 +509,7 @@ const delegationWatchManager = createDelegationWatchManager({
     return { messages: await client.getSessionMessages(watch.durableSessionId) };
   },
   onComplete: async (watch, result) => {
-    await commitFullTabSessionMessages(result?.messages || [], {
+    await commitFullTabSessionMessagesWithReveal(result?.messages || [], {
       sessionId: watch.durableSessionId,
       requestId: webSessionLoadRequestId,
     });
@@ -664,6 +697,7 @@ async function ensureDashboardConnection() {
   });
   await gatewayClient.connect(buildDashboardWsUrl(settings.gatewayUrl, ticket.ticket));
   dashboardConnection = { client: gatewayClient, origin: desiredOrigin, tabId };
+  bindSubagentClient(gatewayClient);
   return dashboardConnection;
 }
 
@@ -1189,7 +1223,7 @@ async function readAcceptedHermesSse(response, options = {}) {
   }
 }
 
-async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } = {}) {
+async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun, attachments: turnAttachments = [] } = {}) {
   let connection = await ensureDashboardConnection();
   if (!dashboardLiveSessionId) await establishDashboardSession(activeSessionId);
   let sessionId = dashboardLiveSessionId;
@@ -1203,6 +1237,7 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
         onDelta,
         onTool,
         submitPrompt,
+        attachments: turnAttachments,
       });
     } catch (error) {
       if (shouldReattachDashboardStream(error) && reattachAttempts < 8) {
@@ -1218,7 +1253,7 @@ async function streamDashboardPrompt(prompt, { signal, onDelta, onTool, onRun } 
   }
 }
 
-async function streamDashboardPromptAttempt(connection, sessionId, prompt, { signal, onDelta, onTool, submitPrompt = true } = {}) {
+async function streamDashboardPromptAttempt(connection, sessionId, prompt, { signal, onDelta, onTool, submitPrompt = true, attachments: turnAttachments = [] } = {}) {
   return new Promise((resolve, reject) => {
     let finalText = '';
     let submitAccepted = false;
@@ -1283,6 +1318,7 @@ async function streamDashboardPromptAttempt(connection, sessionId, prompt, { sig
     signal?.addEventListener?.('abort', onAbort, { once: true });
     offs.push(connection.client.on('*', (event) => {
       if (forThisSession(event)) watchdog.ping();
+      ingestSubagentGatewayEvent(event);
     }));
     offs.push(connection.client.on(WS_EVENTS.messageDelta, (event) => {
       if (!forThisSession(event)) return;
@@ -1326,12 +1362,21 @@ async function streamDashboardPromptAttempt(connection, sessionId, prompt, { sig
       finish(reject, error);
     }));
     if (submitPrompt) {
-      connection.client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt })
-        .then(() => { submitAccepted = true; })
-        .catch((error) => finish(reject, error));
+      void (async () => {
+        try {
+          await attachDashboardPromptImages(connection.client, sessionId, turnAttachments);
+        } catch (error) {
+          console.warn('[Hermes Browser] Dashboard image attach failed:', error);
+        }
+        if (settled) return;
+        connection.client.request(WS_METHODS.promptSubmit, { session_id: sessionId, text: prompt })
+          .then(() => { submitAccepted = true; })
+          .catch((error) => finish(reject, error));
+      })();
     } else {
       void seedFromHistory();
     }
+    void hydrateSubagentSnapshot(connection.client, sessionId);
   });
 }
 
@@ -1395,6 +1440,229 @@ function renderTaskStack() {
     return item;
   });
   els.taskStackList.replaceChildren(...rows);
+}
+
+function currentSubagentSessionKeys() {
+  return [...new Set([
+    activeSessionId,
+    dashboardLiveSessionId,
+    dashboardConnection?.wsSessionId,
+    dashboardConnection?.wsStoredSessionId,
+  ].map((value) => String(value || '').trim()).filter(Boolean))];
+}
+
+function currentSubagentSessionKey() {
+  return currentSubagentSessionKeys()[0] || '';
+}
+
+function currentSubagentItems() {
+  for (const key of currentSubagentSessionKeys()) {
+    if (Array.isArray(subagentState[key]) && subagentState[key].length) return subagentState[key];
+  }
+  return [];
+}
+
+function ensureSubagentTimer(liveCount) {
+  if (liveCount && !subagentTimer) {
+    subagentTimer = setInterval(() => renderSubagentStack(), 1000);
+  } else if (!liveCount && subagentTimer) {
+    clearInterval(subagentTimer);
+    subagentTimer = null;
+  }
+}
+
+function ingestSubagentGatewayEvent(event) {
+  const type = String(event?.type || event?.name || '').trim();
+  const keys = currentSubagentSessionKeys();
+  const eventSession = String(
+    event?.sessionId
+    || event?.session_id
+    || event?.payload?.parent_session_id
+    || event?.payload?.session_id
+    || '',
+  ).trim();
+  if (type === 'message.start' && (eventSession || keys[0])) {
+    subagentState = pruneFinishedSubagents(subagentState, eventSession || keys[0]);
+    renderSubagentStack();
+    return;
+  }
+  if (!isSubagentEventName(type)) return;
+  if (eventSession && keys.length && !keys.includes(eventSession)) return;
+  const key = eventSession || keys[0] || '';
+  if (!key) return;
+  subagentState = applySubagentEvent(subagentState, key, event);
+  if (keys[0] && keys[0] !== key) {
+    subagentState = applySubagentEvent(subagentState, keys[0], event);
+  }
+  renderSubagentStack();
+}
+
+function bindSubagentClient(client) {
+  if (!client?.on || subagentBoundClients.has(client)) return;
+  subagentBoundClients.add(client);
+  client.on('*', (event) => ingestSubagentGatewayEvent(event));
+}
+
+async function hydrateSubagentSnapshot(client, sessionId = '') {
+  const sid = String(sessionId || currentSubagentSessionKey() || '').trim();
+  if (!client?.request || !sid) return;
+  try {
+    const result = await client.request(WS_METHODS.subagentList, { session_id: sid });
+    subagentState = reconcileSubagentSnapshot(subagentState, sid, subagentsFromListResult(result));
+    renderSubagentStack();
+  } catch {
+    // Older gateways omit subagent.list.
+  }
+}
+
+async function runSelectedSubagentControl(action, text = '') {
+  const connection = dashboardConnection;
+  const sessionId = String(dashboardLiveSessionId || currentSubagentSessionKey() || '').trim();
+  const payload = subagentControlPayload(action, {
+    sessionId,
+    subagentId: subagentSelectedId,
+    text,
+  });
+  if (!connection?.client || !payload.session_id || !payload.subagent_id) return;
+  if (action === 'steer' && !payload.text) return;
+  subagentControlBusy = true;
+  subagentControlError = '';
+  renderSubagentStack();
+  try {
+    const method = action === 'steer' ? WS_METHODS.subagentSteer : WS_METHODS.subagentInterrupt;
+    const result = await connection.client.request(method, payload);
+    if (action === 'interrupt' && result && result.found === false) {
+      throw new Error('Subagent is no longer running.');
+    }
+    if (action === 'steer') subagentSteerDraft = '';
+  } catch (error) {
+    subagentControlError = String(error?.message || error || 'Subagent control failed');
+  } finally {
+    subagentControlBusy = false;
+    renderSubagentStack();
+  }
+}
+
+function renderSubagentStack() {
+  if (!els.subagentStack) return;
+  const items = currentSubagentItems();
+  const live = activeSubagentView(items);
+  ensureSubagentTimer(live.length);
+  els.subagentStack.hidden = !live.length;
+  if (!live.length) {
+    els.subagentStackList.replaceChildren();
+    if (els.subagentStackDetail) {
+      els.subagentStackDetail.hidden = true;
+      els.subagentStackDetail.replaceChildren();
+    }
+    subagentSelectedId = '';
+    return;
+  }
+  if (subagentSelectedId && !live.some((item) => item.id === subagentSelectedId)) subagentSelectedId = '';
+  els.subagentStack.dataset.expanded = String(subagentExpanded);
+  els.subagentStackToggle?.setAttribute('aria-expanded', String(subagentExpanded));
+  if (els.subagentStackSummary) els.subagentStackSummary.textContent = subagentStackSummary(live);
+  const listScrollTop = els.subagentStackList.scrollTop;
+  const oldStream = els.subagentStackDetail?.querySelector('.subagent-stack-stream');
+  const streamScrollTop = oldStream?.scrollTop || 0;
+  const streamScrollLeft = oldStream?.scrollLeft || 0;
+  const keepFocus = document.activeElement?.id === 'subagentSteerInput';
+  const rows = live.map((item) => {
+    const row = document.createElement('li');
+    row.className = `task-stack-item subagent-stack-item ${item.status}`;
+    row.dataset.subagentId = item.id;
+    row.setAttribute('role', 'option');
+    row.setAttribute('aria-selected', String(item.id === subagentSelectedId));
+    const pulse = document.createElement('span');
+    pulse.className = 'subagent-stack-pulse';
+    pulse.setAttribute('aria-hidden', 'true');
+    const copy = document.createElement('span');
+    copy.className = 'subagent-stack-copy';
+    const goal = document.createElement('strong');
+    goal.textContent = item.goal;
+    goal.title = item.goal;
+    const tool = document.createElement('span');
+    const modelBit = String(item.model || '').split('/').pop();
+    tool.textContent = item.currentTool || modelBit || item.status;
+    copy.append(goal, tool);
+    const meta = document.createElement('span');
+    meta.className = 'subagent-stack-meta';
+    meta.textContent = `${item.status} · ${formatSubagentElapsed(item.startedAt)}`;
+    row.append(pulse, copy, meta);
+    row.addEventListener('click', () => {
+      subagentSelectedId = subagentSelectedId === item.id ? '' : item.id;
+      subagentControlError = '';
+      renderSubagentStack();
+    });
+    return row;
+  });
+  els.subagentStackList.replaceChildren(...rows);
+  els.subagentStackList.scrollTop = listScrollTop;
+  const selected = live.find((item) => item.id === subagentSelectedId);
+  if (!els.subagentStackDetail) return;
+  if (!selected || !subagentExpanded) {
+    els.subagentStackDetail.hidden = true;
+    els.subagentStackDetail.replaceChildren();
+    return;
+  }
+  els.subagentStackDetail.hidden = false;
+  const stream = document.createElement('ol');
+  stream.className = 'subagent-stack-stream';
+  for (const entry of selected.stream || []) {
+    const line = document.createElement('li');
+    if (entry.isError) line.className = 'is-error';
+    line.textContent = entry.text || '';
+    stream.append(line);
+  }
+  const controls = document.createElement('div');
+  controls.className = 'subagent-stack-controls';
+  const input = document.createElement('input');
+  input.id = 'subagentSteerInput';
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.placeholder = selected.acceptingSteer === false ? 'Not accepting steer' : 'Steer this subagent';
+  input.value = subagentSteerDraft;
+  input.disabled = subagentControlBusy || selected.acceptingSteer === false;
+  input.addEventListener('input', () => {
+    subagentSteerDraft = input.value;
+  });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      void runSelectedSubagentControl('steer', subagentSteerDraft);
+    }
+  });
+  const steerButton = document.createElement('button');
+  steerButton.type = 'button';
+  steerButton.className = 'subagent-stack-icon';
+  steerButton.title = 'Steer this subagent';
+  steerButton.setAttribute('aria-label', 'Steer this subagent');
+  steerButton.innerHTML = SUBAGENT_STEER_ICON;
+  steerButton.disabled = subagentControlBusy || selected.acceptingSteer === false;
+  steerButton.addEventListener('click', () => {
+    void runSelectedSubagentControl('steer', subagentSteerDraft);
+  });
+  const stopButton = document.createElement('button');
+  stopButton.type = 'button';
+  stopButton.className = 'subagent-stack-icon';
+  stopButton.title = 'Stop this subagent';
+  stopButton.setAttribute('aria-label', 'Stop this subagent');
+  stopButton.textContent = SUBAGENT_STOP_ICON;
+  stopButton.disabled = subagentControlBusy;
+  stopButton.addEventListener('click', () => {
+    void runSelectedSubagentControl('interrupt');
+  });
+  controls.append(input, steerButton, stopButton);
+  els.subagentStackDetail.replaceChildren(stream, controls);
+  if (subagentControlError) {
+    const error = document.createElement('p');
+    error.className = 'subagent-stack-error';
+    error.textContent = subagentControlError;
+    els.subagentStackDetail.append(error);
+  }
+  if (keepFocus) input.focus({ preventScroll: true });
+  stream.scrollTop = streamScrollTop;
+  stream.scrollLeft = streamScrollLeft;
 }
 
 async function captureTaskToolEvent(event) {
@@ -1969,6 +2237,10 @@ function renderMessages(messages = []) {
       const rendered = document.createElement('div');
       rendered.innerHTML = renderMarkdownSafe(displayText);
       content.append(...rendered.childNodes);
+      enhanceMarkdownCodeBlocks(content, {
+        copyLabel: translateUiText('Copy code'),
+        copiedLabel: translateUiText('Copied'),
+      });
     }
     if (role === 'user') {
       appendUserImageAttachments(content, message.attachments, {
@@ -2006,7 +2278,7 @@ function renderMessages(messages = []) {
       content.append(group);
     }
     for (const item of tagged.media.filter((entry) => !resolveImageSource(entry.source))) {
-      const kind = classifyMediaKind(entry.source);
+      const kind = classifyMediaKind(item.source);
       if (kind === 'image' || kind === 'video') continue;
       content.append(renderArtifactCard(describeArtifact(item.source)));
     }
@@ -3718,11 +3990,46 @@ async function handleAttachAction(action) {
   else if (action === 'snippet') insertPromptSnippet();
 }
 
-function attachmentPrompt() {
+function attachmentPrompt({ inlineImageData = !usesDashboardTicketTransport() } = {}) {
   if (!attachments.length) return '';
   return `\n\n[ATTACHMENTS]\n${attachments.map((item, index) => item.kind === 'image'
-    ? `Image ${index + 1}: ${item.name}\nInline image data: ${item.dataUrl}`
+    ? (inlineImageData
+      ? `Image ${index + 1}: ${item.name}\nInline image data: ${item.dataUrl}`
+      : `Image ${index + 1}: ${item.name}\nUploaded to the live Hermes session; vision opens the saved file.`)
     : `File ${index + 1}: ${item.name}\n${item.text || '[binary file metadata only]'}`).join('\n\n')}\n[/ATTACHMENTS]`;
+}
+
+// Dashboard turns carry no pixels through `prompt.submit`, so pasted images must
+// ride the gateway's session-scoped `image.attach_bytes` RPC (the same contract
+// Hermes Desktop uses) before the prompt submits. The gateway writes the file
+// next to the session, queues it, and the next prompt.submit routes it into the
+// run so the model can actually open the screenshot.
+async function attachDashboardPromptImages(client, sessionId, items = []) {
+  const pending = items.filter((attachment) => attachment.kind === 'image'
+    && attachment.dataUrl
+    && attachment.dashboardAttachedSessionId !== sessionId);
+  if (!pending.length || !client || !sessionId) return items;
+  let attached = 0;
+  for (const attachment of pending) {
+    try {
+      const result = await client.request(WS_METHODS.imageAttachBytes, {
+        session_id: sessionId,
+        content_base64: attachment.dataUrl,
+        filename: attachment.name || 'image.png',
+      });
+      if (result?.attached !== true) throw new Error(result?.message || 'Hermes did not confirm the image attach.');
+      attachment.dashboardAttachedSessionId = sessionId;
+      if (result.path) attachment.localPath = result.path;
+      attached += 1;
+    } catch (error) {
+      attachment.uploadError = error?.message || String(error);
+      console.warn('[Hermes Browser] Image attach failed:', attachment.name || 'image', error);
+    }
+  }
+  if (attached && els.composerStatus) {
+    els.composerStatus.textContent = translateUiText('Image attached for Hermes vision');
+  }
+  return items;
 }
 
 function voicePagePath() {
@@ -4426,6 +4733,7 @@ async function sendPrompt(text) {
     if (usesDashboardTicketTransport()) {
       const streamedAnswer = await streamDashboardPrompt(prompt, {
         signal: activeAbortController.signal,
+        attachments: turnAttachments,
         onDelta: (content) => {
           assistant.content = content;
           if (isRenderableAssistantMessage(assistant) && !activeMessages.includes(assistant)) activeMessages = [...activeMessages, assistant];
@@ -4667,6 +4975,60 @@ async function commitFullTabSessionMessages(messages = [], { sessionId, requestI
   if (requestId != null && requestId !== webSessionLoadRequestId) return false;
   if (String(activeSessionId || '').trim() !== String(sessionId || '').trim()) return false;
   return true;
+}
+
+let completionRevealSequence = 0;
+
+// Async delegation completion replies land through history reconciliation (no
+// live token stream attached), so a plain commit popped the finished reply in
+// fully formed. Reveal the new trailing reply with the same progressive
+// updates live turns use, then normalize the transcript once at the end.
+async function commitFullTabSessionMessagesWithReveal(rows = [], options = {}) {
+  const reply = newestAssistantReply(trailingNewMessages(activeMessages, rows));
+  const committed = commitFullTabSessionMessages(rows, options);
+  if (!committed || !reply || document.hidden) return committed;
+  const nodes = els.messageList.querySelectorAll('.web-message.assistant');
+  const node = nodes.length ? nodes[nodes.length - 1] : null;
+  if (node) revealWebCompletionReply(node, reply);
+  return committed;
+}
+
+function revealWebCompletionReply(node, fullText) {
+  // Reveal the same display text the committed renderer used, so the tail
+  // matches exactly when the reveal finishes.
+  const text = String(messageDisplayText('assistant', fullText) || '');
+  const plan = completionRevealPlan(text);
+  if (!text || !plan.total) return;
+  const content = node.querySelector('.web-message-content');
+  if (!content) return;
+  const token = ++completionRevealSequence;
+  const scroller = els.conversationScroll;
+  const paint = (piece) => {
+    const rendered = document.createElement('div');
+    rendered.innerHTML = renderMarkdownSafe(piece);
+    content.replaceChildren(...rendered.childNodes);
+    if (scroller && scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120) {
+      scroller.scrollTop = scroller.scrollHeight;
+    }
+  };
+  paint(revealSlice(text, plan.initialCount));
+  const startedAt = performance.now();
+  const step = (now) => {
+    if (token !== completionRevealSequence || !node.isConnected || sending) {
+      // Superseded, detached, or a new live turn started — normalize fully.
+      renderMessages(activeMessages);
+      return;
+    }
+    const progress = Math.min(1, (now - startedAt) / plan.durationMs);
+    if (progress >= 1) {
+      renderMessages(activeMessages);
+      return;
+    }
+    const eased = 1 - Math.pow(1 - progress, 2.4);
+    paint(revealSlice(text, Math.max(1, Math.floor(plan.total * eased))));
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 async function openSession(sessionId, { keepLoading = false } = {}) {
@@ -5035,6 +5397,10 @@ els.settingsLanguageSelect?.addEventListener('change', () => {
 els.taskStackToggle?.addEventListener('click', () => {
   taskStackExpanded = !taskStackExpanded;
   renderTaskStack();
+});
+els.subagentStackToggle?.addEventListener('click', () => {
+  subagentExpanded = !subagentExpanded;
+  renderSubagentStack();
 });
 els.closeSettings.addEventListener('click', () => els.settingsDialog.close());
 els.settingsDialog.addEventListener('click', (event) => {

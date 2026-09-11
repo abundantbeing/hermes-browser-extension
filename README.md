@@ -47,7 +47,7 @@ The release also keeps Hermes Assist, Hermes Web Alpha, session-scoped model rou
 
 ### Chat transcript
 
-Hermes-managed session images (cache/`@image:`/`MEDIA:` paths) hydrate when you reopen a chat. Unsent composer text and attachments come back after you close and reopen the side panel in the same browser session. If the Browser socket goes quiet while Hermes is still working, the panel reconnects to the live turn instead of showing a dashboard timeout.
+Hermes-managed session images (cache/`@image:`/`MEDIA:` paths) hydrate when you reopen a chat. Unsent composer text and attachments come back after you close and reopen the side panel in the same browser session. If Hermes spawns subagents, a live SUBAGENTS stack appears above the composer so you can watch, steer, or stop them. If the Browser socket goes quiet while Hermes is still working, the panel reconnects to the live turn instead of showing a dashboard timeout.
 
 ### Hermes Assist
 

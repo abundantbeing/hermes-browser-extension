@@ -4,11 +4,19 @@
 
 ### Added
 
+- Live subagent roster in the composer dock: queued/running children appear in a SUBAGENTS stack next to TASKS, with model, current tool, elapsed time, and a selected-row steer/stop control. Snapshot hydrate uses `subagent.list`; missing RPCs fail closed.
+- Fenced code blocks in chat get a hover copy-to-clipboard control, without overflowing the message card.
 - Telegram and Desktop session images hydrate from Hermes cache paths (`image_url:` / `@image:` / `MEDIA:`) through the dashboard `/api/media` route. Local videos render as a player when `/api/files/stream` can serve them, otherwise as an honest file card. Pixels that were never stored in Hermes (only in Telegram itself) cannot be invented.
 - Composer text and attachments restore after you close and reopen the side panel in the same browser session. Images are saved to disk when attached so the draft stores a path instead of a huge image blob.
 
 ### Fixed
 
+- Pasted screenshots now reach the agent on the local Desktop dashboard transport: Browser uploads each image to the live session over the gateway's `image.attach_bytes` RPC (the same contract Hermes Desktop uses) before the prompt submits, so vision opens the real file instead of hunting for a path that never arrived. The turn envelope now carries the gateway's saved image path for every attached image.
+- Steering now surfaces in the transcript itself: a dashed STEER QUEUED row ("arrives after the next tool call") with the steered text pins under the live turn the moment a steer is queued, and clears when the steered message lands in history or the turn settles. A steer the runtime rejects keeps the draft in the composer instead of clearing silently.
+- After a background subagent batch finishes, the transcript keeps the live thinking indicator until the gateway's parent completion reply lands, so the child-to-parent handoff never shows a dead moment.
+- The Chat only context chip hides in chat-only mode; the scope button already names the mode, so the chip row no longer wastes composer space.
+- Subagent completions now surface the parent completion reply even after the dashboard runtime reaps the stale live session id: Browser resumes the durable session before fetching history and keeps polling until the reply is actually in the transcript. Completed children leave the live roster and their timers stop.
+- Background completion replies now stream into the transcript with the same progressive reveal live turns use instead of popping in fully formed.
 - Local Desktop dashboard transport now advertises and routes Steer (`session.steer`) so Comet is not stuck with a hidden/dead steer control while Hermes is working.
 - Side-panel voice dictation records until you stop, with a Dictating timer and live audio meter. Hermes speech-to-text runs after stop (same as Desktop). A microphone that delivers no audio still escalates to the Voice Dictation tab.
 - Side-panel mic that starts but never captures speech now errors and opens the Hermes Voice Dictation tab instead of staying fake-ON.

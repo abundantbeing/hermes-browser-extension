@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   DELEGATION_WATCH_STORAGE_KEY,
+  delegationCompletionMarkerId,
   delegationCompletionState,
   delegationDispatchFromToolEvent,
   delegationDispatchesFromMessages,
@@ -27,6 +28,25 @@ const completionRows = (id = 'deleg_abc12345', marker = 'ASYNC DELEGATION BATCH 
   { role: 'user', content: `[${marker} — ${id}]\nStatus: completed` },
   { role: 'assistant', content: 'The delegated result has been integrated.' },
 ];
+
+test('completion marker id is extracted only from exact internal turns', () => {
+  assert.equal(delegationCompletionMarkerId({
+    role: 'user',
+    content: '[ASYNC DELEGATION COMPLETE — deleg_abc12345]\nStatus: completed',
+  }), 'deleg_abc12345');
+  assert.equal(delegationCompletionMarkerId({
+    role: 'user',
+    content: '[ASYNC DELEGATION BATCH COMPLETE - deleg_zzz99999]\nmore text',
+  }), 'deleg_zzz99999');
+  assert.equal(delegationCompletionMarkerId({
+    role: 'assistant',
+    content: '[ASYNC DELEGATION COMPLETE — deleg_abc12345]',
+  }), '');
+  assert.equal(delegationCompletionMarkerId({
+    role: 'user',
+    content: 'prose mentioning [ASYNC DELEGATION COMPLETE — deleg_abc12345] mid-line',
+  }), '');
+});
 
 test('delegation watch storage key is versioned and stable', () => {
   assert.equal(DELEGATION_WATCH_STORAGE_KEY, 'hermesAsyncDelegationWatchesV1');

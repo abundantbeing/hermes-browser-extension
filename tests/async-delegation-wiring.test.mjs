@@ -45,11 +45,37 @@ test('both dashboard paths observe tool.complete result payloads', () => {
 });
 
 test('dashboard history reconciliation uses live ids while watches remain durable scoped', () => {
-  assert.match(sidepanelSource, /liveSessionId:\s*remoteWsConnection\?\.wsSessionId/);
-  assert.match(sidepanelSource, /watch\.transport === 'dashboard-ws' \? watch\.liveSessionId : watch\.durableSessionId/);
+  assert.match(sidepanelSource, /liveSessionId:\s*String\(\s*remoteWsConnection\?\.wsSessionId/);
+  assert.match(sidepanelSource, /fetchDashboardHistoryWithResume\(watch\.durableSessionId\)/);
+  assert.doesNotMatch(sidepanelSource, /watch\.transport === 'dashboard-ws' \? watch\.liveSessionId/);
   assert.match(sidepanelSource, /session_id:\s*sessionId/);
   assert.match(appSource, /liveSessionId:\s*dashboardLiveSessionId/);
   assert.match(appSource, /session_id:\s*watch\.liveSessionId/);
+});
+
+test('completion replies reveal progressively instead of popping in', () => {
+  assert.match(sidepanelSource, /commitFetchedSessionMessagesWithReveal/);
+  assert.match(sidepanelSource, /revealCompletionReply/);
+  assert.match(appSource, /commitFullTabSessionMessagesWithReveal/);
+  assert.match(appSource, /revealWebCompletionReply/);
+  for (const source of [sidepanelSource, appSource]) {
+    assert.match(source, /from '\.\/lib\/completion-reveal\.mjs'/);
+    assert.match(source, /trailingNewMessages/);
+    assert.match(source, /revealSlice/);
+  }
+});
+
+test('subagent steering resumes the durable session before the control RPC', () => {
+  assert.match(sidepanelSource, /runSelectedSubagentControl[\s\S]*?establishGatewaySession\(\{[\s\S]*?storedSessionId: durableSessionId[\s\S]*?sessionId: liveId/);
+});
+
+test('background dashboard history resumes reaped runtimes before fetching', () => {
+  assert.match(sidepanelSource, /async function fetchDashboardHistoryWithResume\(/);
+  assert.match(sidepanelSource, /storedSessionId: sid/);
+  assert.match(sidepanelSource, /refreshSessionAfterSubagentsSettle[\s\S]*?fetchDashboardHistoryWithResume\(durableSessionId\)/);
+  assert.match(sidepanelSource, /refreshActiveSessionHistoryQuietly[\s\S]*?fetchDashboardHistoryWithResume\(sessionId\)/);
+  assert.match(sidepanelSource, /delegationCompletionMarkerId/);
+  assert.match(sidepanelSource, /delegationCompletionState\(rows, completionId\)/);
 });
 
 test('session identity is guarded before stale dashboard requests can mutate either surface', () => {

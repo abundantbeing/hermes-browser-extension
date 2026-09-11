@@ -376,6 +376,15 @@
           </button>
           <ol id="taskStackList" class="task-stack-list"></ol>
         </section>
+        <section id="subagentStack" class="task-stack subagent-stack" data-expanded="true" aria-label="Hermes subagent status" hidden>
+          <button id="subagentStackToggle" class="task-stack-toggle" type="button" aria-expanded="true">
+            <span class="task-stack-title"><span class="subagent-stack-spinner" aria-hidden="true"><span class="subagent-stack-spinner-strip"><span>⠋</span><span>⠙</span><span>⠹</span><span>⠸</span><span>⠼</span><span>⠴</span><span>⠦</span><span>⠧</span><span>⠇</span><span>⠏</span></span></span> SUBAGENTS</span>
+            <span id="subagentStackSummary" class="task-stack-summary" aria-live="polite"></span>
+            <span class="task-stack-chevron" aria-hidden="true">↑</span>
+          </button>
+          <ol id="subagentStackList" class="task-stack-list subagent-stack-list" role="listbox" aria-label="Live subagents"></ol>
+          <div id="subagentStackDetail" class="subagent-stack-detail" hidden></div>
+        </section>
         <div id="groupThreadActiveBanner" class="group-thread-active-banner" data-i18n-runtime hidden>
           <div class="group-thread-banner-copy">
             <span class="group-thread-badge" id="groupThreadBadge">🧵 NEW THREAD</span>

@@ -537,8 +537,11 @@ textarea::-webkit-scrollbar,
 .bot-mode-cron-list::-webkit-scrollbar,
 .group-thread-strip::-webkit-scrollbar,
 .group-thread-row::-webkit-scrollbar,
-.marketplace-theme-results::-webkit-scrollbar {
+.marketplace-theme-results::-webkit-scrollbar,
+.subagent-stack-list::-webkit-scrollbar,
+.subagent-stack-stream::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 .app-scroll::-webkit-scrollbar-thumb,
 .messages::-webkit-scrollbar-thumb,
@@ -561,7 +564,9 @@ textarea::-webkit-scrollbar-thumb,
 .bot-mode-cron-list::-webkit-scrollbar-thumb,
 .group-thread-strip::-webkit-scrollbar-thumb,
 .group-thread-row::-webkit-scrollbar-thumb,
-.marketplace-theme-results::-webkit-scrollbar-thumb {
+.marketplace-theme-results::-webkit-scrollbar-thumb,
+.subagent-stack-list::-webkit-scrollbar-thumb,
+.subagent-stack-stream::-webkit-scrollbar-thumb {
   background: rgba(var(--hermes-fg-rgb),0.45);
   border: 1px solid var(--hermes-line-strong);
 }
@@ -1756,6 +1761,7 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 
 .messages {
   min-height: 160px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1825,6 +1831,12 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 }
 .message {
   padding: 10px;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  box-sizing: border-box;
   background: color-mix(in srgb, var(--hermes-paper) 44%, transparent);
   -webkit-backdrop-filter: blur(1.5px) saturate(0.92);
   backdrop-filter: blur(1.5px) saturate(0.92);
@@ -1840,6 +1852,8 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 .message-content {
   line-height: 1.46;
   font-size: 12px;
+  min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
 }
 .message-content p { margin: 0 0 0.78em; }
@@ -2569,13 +2583,53 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 .message-content pre {
   margin: 0.85em 0;
   padding: 9px;
-  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: visible;
   border: 1px solid rgba(var(--hermes-ink-rgb),0.2);
   background: rgba(var(--hermes-ink-rgb),0.06);
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .message.user .message-content pre { border-color: rgba(var(--hermes-fg-rgb),0.34); background: rgba(var(--hermes-fg-rgb),0.10); }
 .message-content pre code { padding: 0; border: 0; background: transparent; }
+.md-code {
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+}
+.md-code > pre { margin: 0.85em 0; padding-right: 36px; }
+.md-code-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  min-height: 22px;
+  padding: 0;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.28);
+  background: var(--hermes-paper);
+  color: rgba(var(--hermes-ink-rgb),0.72);
+  opacity: 0;
+}
+.md-code:hover .md-code-copy,
+.md-code:focus-within .md-code-copy,
+.md-code-copy:focus-visible { opacity: 1; }
+.md-code-copy:hover,
+.md-code-copy.copied {
+  background: var(--hermes-primary-bg);
+  color: var(--hermes-primary-fg);
+  border-color: var(--hermes-primary-border);
+}
+.md-code-copy svg { display: block; }
+@media (hover: none) {
+  .md-code-copy { opacity: 1; }
+}
 .message-content blockquote {
   margin: 0.7em 0;
   padding: 0.15em 0 0.15em 0.8em;
@@ -5569,7 +5623,7 @@ h2,
 .task-stack[data-expanded="false"] .task-stack-chevron { transform: rotate(180deg); }
 .task-stack[data-expanded="false"] .task-stack-list { display: none; }
 .task-stack-list { display: grid; max-height: 164px; overflow: auto; margin: 0; padding: 0; border-top: 1px solid var(--hermes-line); list-style: none; scrollbar-gutter: stable; }
-.task-stack-list::-webkit-scrollbar { width: 8px; }
+.task-stack-list::-webkit-scrollbar { width: 8px; height: 8px; }
 .task-stack-list::-webkit-scrollbar-thumb { background: rgba(var(--hermes-fg-rgb),0.45); border: 1px solid var(--hermes-line-strong); }
 .task-stack-item { display: grid; grid-template-columns: 16px minmax(0,1fr) auto; align-items: center; gap: 7px; min-height: 31px; padding: 6px 9px; border-bottom: 1px solid rgba(var(--hermes-ink-rgb),0.1); font-size: 10px; line-height: 1.25; }
 .task-stack-item:last-child { border-bottom: 0; }
@@ -5583,6 +5637,160 @@ h2,
 @media (prefers-reduced-motion: reduce) {
   .task-stack-progress i,
   .task-stack-chevron { transition: none; }
+}
+.subagent-stack { contain: layout; }
+.subagent-stack-spinner {
+  --subagent-spinner-frames: 10;
+  --subagent-spinner-frame-height: 1em;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  margin-right: 6px;
+  vertical-align: -0.12em;
+  color: var(--hermes-accent);
+  font-family: var(--hermes-font-mono);
+  font-size: 11px;
+  line-height: 1;
+  user-select: none;
+}
+.subagent-stack-spinner-strip {
+  display: block;
+  animation: subagent-spinner-advance 800ms steps(10) infinite;
+}
+.subagent-stack-spinner-strip > span {
+  display: block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+}
+@keyframes subagent-spinner-advance {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(var(--subagent-spinner-frames) * -1 * var(--subagent-spinner-frame-height))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .subagent-stack-spinner-strip { animation: none; }
+}
+.subagent-stack > .task-stack-toggle {
+  grid-template-columns: auto minmax(0,1fr) 20px;
+}
+.task-stack[data-expanded="false"] .subagent-stack-detail { display: none; }
+.subagent-stack-list,
+.subagent-stack-stream {
+  max-height: 148px;
+}
+.subagent-stack-list {
+  scrollbar-gutter: auto;
+}
+.subagent-stack-stream {
+  max-height: 72px;
+  scrollbar-gutter: stable;
+}
+.subagent-stack-item {
+  grid-template-columns: 8px minmax(0,1fr) max-content;
+  padding-right: 6px;
+  cursor: pointer;
+}
+.subagent-stack-item[aria-selected="true"] {
+  background: rgba(var(--hermes-accent-rgb),0.12);
+  box-shadow: inset 3px 0 0 var(--hermes-accent);
+}
+.subagent-stack-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hermes-muted);
+}
+.subagent-stack-item.running .subagent-stack-pulse {
+  background: var(--hermes-accent);
+  box-shadow: 0 0 0 3px rgba(var(--hermes-accent-rgb),0.22);
+}
+.subagent-stack-item.queued .subagent-stack-pulse { background: var(--hermes-muted); }
+.subagent-stack-item.completed .subagent-stack-pulse { background: var(--hermes-accent); }
+.subagent-stack-item.completed .subagent-stack-meta { color: var(--hermes-accent); }
+.subagent-stack-item.failed .subagent-stack-pulse { background: var(--hermes-danger); }
+.subagent-stack-copy { min-width: 0; display: grid; gap: 1px; }
+.subagent-stack-copy strong {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.subagent-stack-copy span {
+  overflow: hidden;
+  color: var(--hermes-muted);
+  font: 8px/1.35 var(--hermes-font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.subagent-stack-meta {
+  color: var(--hermes-muted);
+  font: 8px var(--hermes-font-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.subagent-stack-detail {
+  display: grid;
+  gap: 8px;
+  padding: 8px 9px 10px;
+  border-top: 1px solid var(--hermes-line);
+  background: var(--hermes-paper);
+}
+.subagent-stack-detail[hidden] { display: none; }
+.subagent-stack-stream {
+  display: grid;
+  gap: 3px;
+  max-height: 72px;
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--hermes-muted);
+  font: 8px/1.4 var(--hermes-font-mono);
+}
+.subagent-stack-stream .is-error { color: var(--hermes-danger); }
+.subagent-stack-controls {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 32px 32px;
+  gap: 6px;
+  align-items: stretch;
+  height: 32px;
+}
+.subagent-stack-controls input,
+.subagent-stack-controls button {
+  height: 32px;
+  min-height: 32px;
+  margin: 0;
+  box-sizing: border-box;
+}
+.subagent-stack-controls input {
+  min-width: 0;
+  padding: 0 8px;
+  border: 1px solid var(--hermes-line-strong);
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  font: 10px var(--hermes-font-mono);
+}
+.subagent-stack-controls button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  padding: 0;
+  border: 1px solid var(--hermes-line-strong);
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.subagent-stack-controls button:hover { background: rgba(var(--hermes-accent-rgb),0.1); }
+.subagent-stack-controls button svg { display: block; }
+.subagent-stack-controls button[disabled] { opacity: .45; }
+.subagent-stack-error { color: var(--hermes-danger); font: 8px/1.4 var(--hermes-font-mono); }
+@media (prefers-reduced-motion: reduce) {
+  .subagent-stack-item.running .subagent-stack-pulse { box-shadow: none; }
 }
 .bot-mode-toggle-card { margin: 2px 0 8px; }
 .agent-roster-preview { display: grid; gap: 4px; margin-top: 8px; }
@@ -6258,6 +6466,22 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
 .message.user { align-self: flex-end; border-radius: 18px 18px 4px 18px; background: var(--hermes-blue, #0505e8); background: var(--hermes-user-bg, var(--hermes-blue, #0505e8)); color: var(--hermes-user-fg, #fff); border: 1px solid var(--hermes-user-border, transparent); padding: 10px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 .message.assistant { align-self: flex-start; border-radius: 18px 18px 18px 4px; background: var(--hermes-card-bg, color-mix(in srgb, var(--hermes-paper) 80%, transparent)); color: var(--hermes-ink, #ffffff); border: 1px solid var(--hermes-line, rgba(255,255,255,0.15)); padding: 12px 16px; -webkit-backdrop-filter: blur(8px) saturate(1.06); backdrop-filter: blur(8px) saturate(1.06); box-shadow: 0 2px 10px rgba(var(--hermes-shadow-rgb, 0, 0, 0), 0.12); }
 .message.user .message-role { display: none; }
+/* Transcript transients: the queued-steer row (dashed, user-side) and the
+   completion thinking row reuse the message shell so they read as part of the
+   thread instead of a composer toast. */
+.message.steer-pending-row {
+  border-style: dashed;
+  border-color: rgba(var(--hermes-accent-rgb), 0.72);
+  box-shadow: none;
+}
+.message.steer-pending-row .message-role {
+  display: block;
+  font: 700 9px/1.3 var(--hermes-font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  color: color-mix(in srgb, var(--hermes-user-fg, #fff) 76%, transparent);
+}
 /* Real agent identity on the assistant header (ROXAS / NAMINÉ / RIKU):
    compact tracked mono caps, subtle tint, no layout shift vs. the old label. */
 .message.assistant .message-role { font: 700 9px/1 var(--hermes-font-mono); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; color: color-mix(in srgb, var(--hermes-ink, #ffffff) 82%, transparent); }

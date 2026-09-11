@@ -107,13 +107,17 @@ export function normalizeDelegationId(value = '') {
   return DELEGATION_ID_PATTERN.test(id) ? id : '';
 }
 
-export function isDelegationCompletionMarkerMessage(message = {}) {
-  if (String(message?.role || '').trim().toLowerCase() !== 'user') return false;
+export function delegationCompletionMarkerId(message = {}) {
+  if (String(message?.role || '').trim().toLowerCase() !== 'user') return '';
   const content = textValue(message?.content).replaceAll(String.fromCharCode(13, 10), String.fromCharCode(10));
   const marker = content.match(
     /^\[ASYNC DELEGATION(?: BATCH)? COMPLETE\s*[—-]\s*(deleg_[A-Za-z0-9_-]{8,128})\](?:\n|$)/i,
   );
-  return Boolean(marker && normalizeDelegationId(marker[1]));
+  return marker ? normalizeDelegationId(marker[1]) : '';
+}
+
+export function isDelegationCompletionMarkerMessage(message = {}) {
+  return Boolean(delegationCompletionMarkerId(message));
 }
 
 export function isDelegationToolEvent(event = {}) {

@@ -508,8 +508,8 @@ test('bottom dock keeps baseline composer geometry while floating popovers remai
   const composerRule = css.match(/\.composer\s*\{[\s\S]*?\}/)?.[0] || '';
   const textareaRule = css.match(/textarea\s*\{\s*resize:\s*vertical;[\s\S]*?\}/)?.[0] || '';
   const commandMenuRule = css.match(/\.quick-more-menu\s*\{[\s\S]*?\}/)?.[0] || '';
-  const scrollbarRule = css.match(/\.app-scroll::-webkit-scrollbar,[\s\S]*?\{\s*width:\s*8px;\s*\}/)?.[0] || '';
-  const scrollbarThumbRule = css.match(/\.app-scroll::-webkit-scrollbar-thumb,[\s\S]*?\{[\s\S]*?border:\s*1px solid var\(--hermes-line-strong\);\s*\}/)?.[0] || '';
+  const scrollbarRule = css.match(/\.app-scroll::-webkit-scrollbar,[^}]*?\{[^}]*?width:\s*8px;[^}]*?\}/)?.[0] || '';
+  const scrollbarThumbRule = css.match(/\.app-scroll::-webkit-scrollbar-thumb,[^}]*?\{[^}]*?border:\s*1px solid var\(--hermes-line-strong\);[^}]*?\}/)?.[0] || '';
   const floatingRule = css.match(/\.model-menu,\s*\n\.context-popover\s*\{[\s\S]*?\}/)?.[0] || '';
 
   assert.match(dockRule, /grid-template-rows:\s*auto auto/);
