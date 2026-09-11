@@ -3778,12 +3778,19 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .context-popover {
   position: absolute;
   bottom: calc(var(--hermes-bottom-dock-height, 0px) + 6px);
+  /* Keep bottom-anchored popovers inside the viewport: the space above the
+     live dock is what is actually available, so reserve the live dock height
+     instead of a fixed guess (thanks @qinxianhahaha, #101). Otherwise a tall
+     composer pushes the popover's top rows (search box and provider picker)
+     above the viewport, where `overflow: hidden` makes them unreachable. */
+  max-height: calc(100vh - var(--hermes-bottom-dock-height, 0px) - 18px);
+  overflow-y: auto;
   z-index: 70;
 }
 .model-menu {
   display: grid;
-  grid-template-rows: auto minmax(58px, auto) minmax(96px, 1fr) auto auto;
-  max-height: min(480px, calc(100vh - 176px));
+  grid-template-rows: auto minmax(58px, auto) minmax(0, 1fr) minmax(0, auto) auto;
+  max-height: min(480px, calc(100vh - var(--hermes-bottom-dock-height, 0px) - 18px));
   overflow: hidden;
 }
 .model-menu-head { display: none; }
@@ -3792,7 +3799,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   inset: auto 12px auto 12px;
   width: auto;
   max-height: min(560px, calc(100vh - 96px));
-  grid-template-rows: auto auto minmax(58px, auto) minmax(120px, 1fr) auto auto;
+  grid-template-rows: auto auto minmax(58px, auto) minmax(0, 1fr) minmax(0, auto) auto;
   z-index: 100;
   box-shadow: 10px 10px 0 rgba(var(--hermes-shadow-rgb),0.2);
 }
@@ -3993,6 +4000,8 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .model-option-meta,
 .session-option-meta { color: rgba(var(--hermes-fg-rgb),0.58); font-size: 10px; }
 .model-options-list {
+  min-height: 0;
+  overflow-y: auto;
   border-top: 1px solid rgba(var(--hermes-fg-rgb),0.18);
   padding: 7px 10px 8px;
   background: rgba(0,0,0,0.10);
