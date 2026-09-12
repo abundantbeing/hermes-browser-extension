@@ -180,6 +180,7 @@ test('session.status runtime acknowledgement accepts structured fields and strip
 test('WS_METHODS exposes Desktop/TUI session steering instead of slash-command injection', () => {
   assert.equal(WS_METHODS.sessionSteer, 'session.steer');
   assert.equal(WS_METHODS.imageAttachBytes, 'image.attach_bytes');
+  assert.equal(WS_METHODS.promptBtw, 'prompt.btw');
   assert.equal(WS_METHODS.promptSubmit, 'prompt.submit');
   assert.equal(WS_METHODS.profilesCreate, 'profiles.create');
   assert.equal(WS_METHODS.profilesDescribe, 'profiles.describe');

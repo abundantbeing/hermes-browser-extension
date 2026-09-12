@@ -294,6 +294,58 @@ html[data-hermes-theme^="custom:"] [tabindex]:focus-visible {
 .session-row small { font: 9px var(--hermes-font-mono); }
 .session-row span { color: currentColor; }
 .session-row small { opacity: 0.7; }
+/* In-panel session rename editor — replaces the native window.prompt. Scoped
+   to the rename classes so the rail's row layout stays untouched. */
+.session-row .session-row-rename-form {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.session-row .session-row-rename-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(var(--hermes-white-rgb), 0.4);
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--hermes-white);
+  font: 11px var(--hermes-font-mono);
+}
+.session-row .session-row-rename-input:focus,
+.session-row .session-row-rename-input:focus-visible {
+  outline: none;
+  border-color: var(--hermes-white);
+}
+.session-row .session-row-rename-save,
+.session-row .session-row-rename-cancel {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(var(--hermes-white-rgb), 0.4);
+  background: transparent;
+  color: var(--hermes-white);
+  font: 9px var(--hermes-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.session-row .session-row-rename-cancel {
+  border-color: rgba(var(--hermes-white-rgb), 0.24);
+  color: var(--hermes-blue-muted);
+}
+.session-row .session-row-rename-save:hover,
+.session-row .session-row-rename-cancel:hover {
+  border-color: var(--hermes-white);
+  color: var(--hermes-white);
+}
+.session-row .session-row-rename-status {
+  grid-column: 1 / -1;
+  display: block;
+  margin: 0;
+  color: #d5a43f;
+  font: 9px/1.35 var(--hermes-font-mono);
+}
 .session-list-empty { padding: 18px 10px; color: var(--hermes-blue-muted); font: 11px/1.5 var(--hermes-font-mono); }
 .rail-footer { position: relative; flex: 0 0 230px; min-height: 230px; padding: 12px; overflow: hidden; border-top: 1px solid var(--hermes-blue-line); background: var(--hermes-blue); }
 .rail-globe-viewport { position: absolute !important; z-index: 0 !important; top: 72px; left: 50%; width: 110px; height: 76px; overflow: hidden; mix-blend-mode: screen; transform: translateX(-50%); pointer-events: none; }

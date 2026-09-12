@@ -411,10 +411,13 @@
             <strong data-i18n-runtime data-i18n="ui.preview.1aa787fe">preview</strong>
           </button>
           <div id="contextPreview" class="context-preview" data-i18n-runtime hidden></div>
-          <button id="explicitSiteCaptureButton" class="context-explicit-capture" type="button" hidden>
-            <strong data-i18n="ui.capture.visible.gmail.thread">Capture visible Gmail thread</strong>
-            <span data-i18n="ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded">Rendered message bodies only. Draft and input values stay excluded.</span>
-          </button>
+          <div id="explicitSiteCaptureWrap" class="context-explicit-capture-wrap" hidden>
+            <button id="explicitSiteCaptureButton" class="context-explicit-capture" type="button" hidden>
+              <strong data-i18n="ui.capture.visible.gmail.thread">Capture visible Gmail thread</strong>
+              <span data-i18n="ui.rendered.message.bodies.only.draft.and.input.values.stay.excluded">Rendered message bodies only. Draft and input values stay excluded.</span>
+            </button>
+            <button id="explicitSiteCaptureDismiss" class="context-explicit-capture-dismiss" type="button">✕</button>
+          </div>
           <div id="contextScopeMenu" class="context-scope-menu" hidden></div>
           <section id="localDocumentApprovalNotice" class="session-ownership-notice" aria-live="polite" hidden>
             <div class="session-ownership-copy">
@@ -963,6 +966,11 @@
             </summary>
             <div id="contextMenuEditor" data-context-menu-surface="side-panel"></div>
           </details>
+          <label class="settings-toggle-card compact-toggle-card">
+            <span class="settings-toggle-copy"><strong id="gmailCaptureToggleTitle"></strong><small id="gmailCaptureToggleHint"></small></span>
+            <input id="gmailCaptureEnabledInput" class="settings-switch-input" type="checkbox" role="switch" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
         </section>
 
         <section class="settings-section connection-settings" aria-labelledby="connectionTitle">

@@ -125,7 +125,7 @@ test('Gmail is ask-first and never captures field values', () => {
   assert.ok(explicit.actions.some((action) => action.id === 'draft-reply'));
 });
 
-test('explicit Gmail thread capture rejects hidden message nodes and field values', () => {
+test('explicit Gmail capture keeps collapsed (hidden but rendered) message bodies and still excludes field values', () => {
   const url = 'https://mail.google.com/mail/u/0/#inbox/thread-1';
   const document = doc(`<main role="main"><h2 data-thread-title>Project update</h2>
     <div data-message-id="m1"><span class="gD">Sender</span><div class="a3s">Visible message body.</div></div>
@@ -135,11 +135,189 @@ test('explicit Gmail thread capture rejects hidden message nodes and field value
     <textarea name="body">ORIGINAL USER DRAFT CONTENT</textarea>
     <input name="api_key" value="never-capture-me"></main>`, url);
   const explicit = inspectSite(document, { url, explicitCapture: true });
+  // Gmail collapses older messages by hiding already-rendered nodes; skipping
+  // hidden-but-present bodies truncates the thread to whatever is visible.
   assert.match(explicit.context.text, /Visible message body/);
+  assert.match(explicit.context.text, /HIDDEN ATTRIBUTE BODY/);
+  assert.match(explicit.context.text, /ARIA HIDDEN BODY/);
+  assert.match(explicit.context.text, /DISPLAY NONE BODY/);
+  assert.equal(explicit.context.itemCount, 4);
   assert.doesNotMatch(
     JSON.stringify(explicit),
-    /HIDDEN ATTRIBUTE BODY|ARIA HIDDEN BODY|DISPLAY NONE BODY|ORIGINAL USER DRAFT CONTENT|never-capture-me/,
+    /ORIGINAL USER DRAFT CONTENT|never-capture-me/,
   );
+});
+
+test('explicit Gmail capture returns the whole rendered thread in DOM order with sender and date', () => {
+  const url = 'https://mail.google.com/mail/u/0/#inbox/FMfcgzThread';
+  const document = doc(`<div role="main">
+    <h2 class="hP">Quarterly sync notes</h2>
+    <div class="adn ads" data-message-id="msg-1" hidden>
+      <div class="gE iv gt">
+        <span class="gD" name="Alice Nguyen" email="alice@example.com">Alice Nguyen</span>
+        <span class="g3" title="Fri, Sep 11, 2026, 9:04 AM">9:04 AM</span>
+      </div>
+      <div class="ii gt"><div class="a3s aiL aXjCH">ORBIT-ONE: agenda for the quarterly sync.</div></div>
+    </div>
+    <div class="adn ads" data-message-id="msg-2" aria-hidden="true">
+      <div class="gE iv gt">
+        <span email="ben@example.com">Ben Ortiz</span>
+        <span class="g3" title="Fri, Sep 11, 2026, 10:15 AM">10:15 AM</span>
+      </div>
+      <div class="ii gt"><div class="a3s aiL">ORBIT-TWO: one fix on slide 12.
+        <div class="gmail_quote">On Fri, Sep 11, 2026 at 9:04 AM Alice Nguyen &lt;alice@example.com&gt; wrote:<br>&gt; ORBIT-ONE: agenda for the quarterly sync.</div>
+      </div></div>
+    </div>
+    <div class="adn ads" data-message-id="msg-3">
+      <div class="gE iv gt">
+        <span class="gD" name="Carol Diaz" email="carol@example.com">Carol Diaz</span>
+        <span class="g3" title="Fri, Sep 11, 2026, 11:40 AM">11:40 AM</span>
+      </div>
+      <div class="ii gt"><div class="a3s aiL">ORBIT-THREE: ship it.</div></div>
+    </div>
+    <div class="adn ads" data-message-id="msg-4">
+      <div class="gE iv gt">
+        <span class="gD" name="Dana Ruiz" email="dana@example.com">Dana Ruiz</span>
+        <span class="g3">Sep 11</span>
+      </div>
+      <div class="ii gt"><div class="a3s aiL">Thanks!</div></div>
+    </div>
+    <div class="adn ads" data-message-id="msg-5">
+      <div class="gE iv gt">
+        <span class="gD" name="Dana Ruiz" email="dana@example.com">Dana Ruiz</span>
+        <span class="g3">Sep 11</span>
+      </div>
+      <div class="ii gt"><div class="a3s aiL">Thanks!</div></div>
+    </div>
+    <div class="adn ads" data-message-id="msg-6"><span class="gD" email="erin@example.com">Erin</span></div>
+    <div class="adn ads" data-message-id="msg-7"><span class="gD" email="frank@example.com">Frank</span><div class="a3s aiL"></div></div>
+    <form><textarea name="body">COMPOSE DRAFT TEXTAREA VALUE</textarea><input name="subjectbox" value="compose subject secret"></form>
+    <div contenteditable="true" role="textbox" aria-label="Message Body">INLINE REPLY DRAFT TEXT</div>
+  </div>`, url);
+
+  const explicit = inspectSite(document, { url, explicitCapture: true });
+  const text = explicit.context.text;
+
+  assert.equal(explicit.context.title, 'Quarterly sync notes');
+  assert.equal(explicit.context.itemCount, 5);
+  assert.ok(text.startsWith('Quarterly sync notes'), `subject should lead the capture: ${text.slice(0, 60)}`);
+  assert.match(text, /Alice Nguyen \(Fri, Sep 11, 2026, 9:04 AM\): ORBIT-ONE: agenda for the quarterly sync\./);
+  assert.match(text, /Ben Ortiz \(Fri, Sep 11, 2026, 10:15 AM\): ORBIT-TWO: one fix on slide 12\./);
+  assert.match(text, /Carol Diaz \(Fri, Sep 11, 2026, 11:40 AM\): ORBIT-THREE: ship it\./);
+  assert.match(text, /Dana Ruiz \(Sep 11\): Thanks!/);
+
+  const first = text.indexOf('ORBIT-ONE');
+  const second = text.indexOf('ORBIT-TWO');
+  const third = text.indexOf('ORBIT-THREE');
+  assert.ok(first > -1 && second > first && third > second, 'thread order was not preserved');
+  assert.ok(text.indexOf('Thanks!') > third, 'messages must be emitted in DOM order');
+
+  // Distinct message nodes with identical sender/date/body must both survive.
+  assert.equal((text.match(/Thanks!/g) || []).length, 2);
+  assert.equal((text.match(/Dana Ruiz \(Sep 11\): Thanks!/g) || []).length, 2);
+
+  // Quoted history is kept rather than over-cleaned. (linkedom pads angle
+  // brackets in text nodes, so match the spacing loosely.)
+  assert.match(text, /On Fri, Sep 11, 2026 at 9:04 AM Alice Nguyen <\s?alice@example\.com\s?> wrote:/);
+  assert.match(text, /wrote: > ORBIT-ONE: agenda for the quarterly sync\./);
+
+  // Compose drafts and field values never appear, and messages whose body is
+  // not in the DOM at all are skipped instead of being guessed.
+  assert.doesNotMatch(text, /COMPOSE DRAFT TEXTAREA VALUE|compose subject secret|INLINE REPLY DRAFT TEXT/);
+  assert.doesNotMatch(text, /Erin|Frank/);
+
+  const guarded = inspectSite(document, { url });
+  assert.equal(guarded.context.text, '');
+  assert.equal(guarded.context.itemCount, 0);
+});
+
+test('explicit Gmail capture never reads field controls nested inside a message body', () => {
+  const url = 'https://mail.google.com/mail/u/0/#inbox/FMfcgzNested';
+  const document = doc(`<div role="main"><h2 class="hP">Nested controls</h2>
+    <div class="adn ads" data-message-id="nested-1">
+      <span class="gD" email="ann@example.com">Ann</span>
+      <div class="a3s">Body text around a nested draft field.
+        <textarea name="draft">NESTED TEXTAREA DRAFT</textarea>
+        <input type="text" value="NESTED INPUT SECRET">
+        <select name="choice"><option selected>NESTED OPTION VALUE</option></select>
+        <div contenteditable="true" role="textbox">NESTED CONTENTEDITABLE DRAFT</div>
+      </div>
+    </div>
+  </div>`, url);
+  const explicit = inspectSite(document, { url, explicitCapture: true });
+  assert.match(explicit.context.text, /Body text around a nested draft field\./);
+  assert.doesNotMatch(
+    JSON.stringify(explicit),
+    /NESTED TEXTAREA DRAFT|NESTED INPUT SECRET|NESTED OPTION VALUE|NESTED CONTENTEDITABLE DRAFT/,
+  );
+});
+
+test('explicit Gmail capture falls back to the sender email and tolerates a collapsed subject', () => {
+  const url = 'https://mail.google.com/mail/u/0/#inbox/FMfcgzFallback';
+  const document = doc(`<div role="main">
+    <h2 class="hP" hidden>Hidden subject still captured</h2>
+    <div data-message-id="fb-1"><span class="gD" email="grace@example.com"></span><div class="a3s">FALLBACK BODY</div></div>
+  </div>`, url);
+  const explicit = inspectSite(document, { url, explicitCapture: true });
+  assert.ok(explicit.context.text.startsWith('Hidden subject still captured'));
+  assert.match(explicit.context.text, /grace@example\.com: FALLBACK BODY/);
+  assert.equal(explicit.context.itemCount, 1);
+});
+
+test('explicit Gmail capture stays inside the shared context budget at message boundaries', () => {
+  const url = 'https://mail.google.com/mail/u/0/#inbox/FMfcgzBudget';
+  const bodyFor = (index) => `CAP-${index} ${'x'.repeat(1_800)} CAP-${index}-END`;
+  const nodes = Array.from({ length: 12 }, (_, offset) => (
+    `<div class="adn ads" data-message-id="cap-${offset + 1}">
+      <span class="gD" email="sender${offset + 1}@example.com">Sender ${offset + 1}</span>
+      <span class="g3" title="Fri, Sep 11, 2026, 10:00 AM">10:00 AM</span>
+      <div class="a3s">${bodyFor(offset + 1)}</div>
+    </div>`
+  )).join('\n');
+  const document = doc(`<div role="main"><h2 class="hP">Budget thread</h2>${nodes}</div>`, url);
+
+  const explicit = inspectSite(document, { url, explicitCapture: true });
+  const text = explicit.context.text;
+  assert.ok(text.length <= 12_000, `capture exceeded the adapter budget: ${text.length}`);
+  const captured = explicit.context.itemCount;
+  assert.ok(captured >= 4 && captured < 12, `expected a bounded partial capture, got ${captured}`);
+  for (let index = 1; index <= captured; index += 1) {
+    assert.match(text, new RegExp(`CAP-${index}-END`), `message ${index} should be captured whole`);
+  }
+  assert.doesNotMatch(text, new RegExp(`CAP-${captured + 1}-END`), 'messages past the budget must not be half-included');
+});
+
+test('explicit Gmail capture truncates an oversized body and keeps later messages', () => {
+  const url = 'https://mail.google.com/mail/u/0/#inbox/FMfcgzLong';
+  const longBody = `HEAD-MARKER ${'y'.repeat(9_000)} TAIL-MARKER`;
+  const document = doc(`<div role="main"><h2 class="hP">Long message thread</h2>
+    <div class="adn ads" data-message-id="long-1">
+      <span class="gD" email="ann@example.com">Ann</span><span class="g3" title="Fri, Sep 11, 2026, 9:00 AM">9:00 AM</span>
+      <div class="a3s">${longBody}</div>
+    </div>
+    <div class="adn ads" data-message-id="long-2">
+      <span class="gD" email="bob@example.com">Bob</span><span class="g3" title="Fri, Sep 11, 2026, 9:30 AM">9:30 AM</span>
+      <div class="a3s">AFTER-MARKER</div>
+    </div>
+  </div>`, url);
+  const explicit = inspectSite(document, { url, explicitCapture: true });
+  assert.match(explicit.context.text, /HEAD-MARKER/);
+  assert.match(explicit.context.text, /\[truncated\]/);
+  assert.doesNotMatch(explicit.context.text, /TAIL-MARKER/);
+  assert.equal(explicit.context.itemCount, 2);
+  assert.match(explicit.context.text, /Bob \(Fri, Sep 11, 2026, 9:30 AM\): AFTER-MARKER/);
+});
+
+test('explicit Gmail capture honors the 60-message ceiling', () => {
+  const url = 'https://mail.google.com/mail/u/0/#inbox/FMfcgzMany';
+  const nodes = Array.from({ length: 65 }, (_, offset) => (
+    `<div data-message-id="many-${offset + 1}"><span class="gD" email="s${offset + 1}@example.com">S${offset + 1}</span><div class="a3s">TINY-${offset + 1}</div></div>`
+  )).join('');
+  const document = doc(`<div role="main"><h2 class="hP">Many messages</h2>${nodes}</div>`, url);
+  const explicit = inspectSite(document, { url, explicitCapture: true });
+  assert.equal(explicit.context.itemCount, 60);
+  assert.match(explicit.context.text, /S60: TINY-60/);
+  assert.doesNotMatch(explicit.context.text, /S61: TINY-61/);
 });
 
 test('explicit Gmail capture action is available only for a suppressed thread', () => {

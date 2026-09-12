@@ -539,7 +539,8 @@ textarea::-webkit-scrollbar,
 .group-thread-row::-webkit-scrollbar,
 .marketplace-theme-results::-webkit-scrollbar,
 .subagent-stack-list::-webkit-scrollbar,
-.subagent-stack-stream::-webkit-scrollbar {
+.subagent-stack-stream::-webkit-scrollbar,
+.side-question-answer::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
@@ -566,7 +567,8 @@ textarea::-webkit-scrollbar-thumb,
 .group-thread-row::-webkit-scrollbar-thumb,
 .marketplace-theme-results::-webkit-scrollbar-thumb,
 .subagent-stack-list::-webkit-scrollbar-thumb,
-.subagent-stack-stream::-webkit-scrollbar-thumb {
+.subagent-stack-stream::-webkit-scrollbar-thumb,
+.side-question-answer::-webkit-scrollbar-thumb {
   background: rgba(var(--hermes-fg-rgb),0.45);
   border: 1px solid var(--hermes-line-strong);
 }
@@ -2328,6 +2330,56 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
   font-family: var(--hermes-font-mono);
   font-size: 10px;
 }
+/* Extra generated pictures (alternates from the same tool call) get their own
+   card: a calm pending block while the dashboard hands over the bytes, then
+   the same dissolve the primary image uses. */
+.generated-image-card {
+  position: relative;
+  margin: 10px 0;
+  border: 1px solid var(--hermes-line);
+  background: rgba(var(--hermes-ink-rgb),0.04);
+  overflow: hidden;
+}
+.generated-image-card .generated-image-card-name {
+  display: block;
+  padding: 22px 10px;
+  overflow: hidden;
+  color: rgba(var(--hermes-ink-rgb),0.62);
+  font: 10px/1.3 var(--hermes-font-mono);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.generated-image-card.generated-image-card-revealed {
+  border-color: var(--hermes-line-strong);
+  background: none;
+}
+.generated-image-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  animation: generated-image-card-dissolve 900ms cubic-bezier(0.22,0.61,0.36,1) both;
+}
+.generated-image-card.generated-image-card-revealed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(var(--hermes-paper-rgb),0.92), transparent 62%);
+  animation: generated-image-card-scan 900ms ease-out both;
+}
+@keyframes generated-image-card-dissolve {
+  from { opacity: 0; filter: blur(14px) saturate(0.55) contrast(1.08); transform: scale(1.015); }
+  to { opacity: 1; filter: none; transform: none; }
+}
+@keyframes generated-image-card-scan {
+  from { opacity: 0.92; }
+  to { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .generated-image-card img,
+  .generated-image-card.generated-image-card-revealed::after { animation: none; }
+}
 .generated-image-lightbox {
   position: fixed;
   inset: 0;
@@ -2736,12 +2788,14 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
   line-height: 1.35;
   box-shadow: inset 0 0 0 1px rgba(var(--hermes-ink-rgb),0.04);
 }
+.context-explicit-capture-wrap { position: relative; margin: 0 0 7px; }
+.context-explicit-capture-wrap[hidden] { display: none; }
 .context-explicit-capture {
   width: 100%;
   display: grid;
   gap: 2px;
-  margin: 0 0 7px;
-  padding: 7px 8px;
+  margin: 0;
+  padding: 7px 26px 7px 8px;
   border: 1px solid var(--hermes-line-strong);
   background: rgba(var(--hermes-ink-rgb), 0.08);
   color: var(--hermes-ink);
@@ -2755,6 +2809,28 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 .context-explicit-capture:hover { background: rgba(var(--hermes-ink-rgb), 0.14); }
 .context-explicit-capture:focus-visible { outline: 2px solid var(--hermes-line-strong); outline-offset: 2px; }
 .context-explicit-capture:disabled { cursor: wait; opacity: 0.62; }
+.context-explicit-capture-dismiss {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-height: 18px;
+  min-width: 18px;
+  padding: 0 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hermes-muted);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+.context-explicit-capture-dismiss:hover {
+  color: var(--hermes-ink);
+  background: rgba(var(--hermes-ink-rgb), 0.12);
+  border-color: var(--hermes-line-strong);
+}
 .context-scope-button {
   flex: 0 1 auto;
   display: inline-flex;
@@ -3989,6 +4065,63 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   border-color: rgba(var(--hermes-accent-rgb),0.72);
   color: var(--hermes-fg);
   background: rgba(var(--hermes-accent-rgb),0.12);
+}
+/* In-panel session rename editor — replaces the native window.prompt. Scoped
+   to the rename classes only; the row keeps its list geometry (input is a
+   fixed 24px, actions reuse .session-action-button). */
+.session-option-row.renaming {
+  display: block;
+  padding: 2px 6px 4px 8px;
+  border-left-color: rgba(var(--hermes-accent-rgb),0.72);
+  background: rgba(var(--hermes-fg-rgb),0.04);
+}
+.session-rename-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+}
+.session-rename-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.session-rename-editor .session-rename-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  margin: 0;
+  padding: 0 8px;
+  border: 1px solid rgba(var(--hermes-accent-rgb),0.72);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.18);
+  color: rgba(var(--hermes-fg-rgb),0.96);
+  font: 12px var(--hermes-font-mono);
+  letter-spacing: 0;
+}
+.session-rename-editor .session-rename-input:focus,
+.session-rename-editor .session-rename-input:focus-visible {
+  outline: none;
+  border-color: var(--hermes-accent);
+  background: rgba(0,0,0,0.28);
+}
+.session-rename-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+.session-rename-editor .session-action-button.session-rename-save {
+  border-color: rgba(var(--hermes-accent-rgb),0.72);
+  background: rgba(var(--hermes-accent-rgb),0.12);
+  color: var(--hermes-fg);
+}
+.session-rename-status {
+  display: block;
+  margin: 0;
+  color: var(--hermes-warning);
+  font: 9px/1.35 var(--hermes-font-mono);
 }
 .model-option.observed { color: rgba(var(--hermes-fg-rgb),0.72); }
 .model-option.observed .model-option-meta {
@@ -6491,6 +6624,99 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   margin-bottom: 6px;
   color: color-mix(in srgb, var(--hermes-user-fg, #fff) 76%, transparent);
 }
+/* /btw side-question results: a persistent, dismissible card at the end of the
+   transcript so answers outlive the operation toast. Transient — never written
+   into the saved session messages. */
+.side-question-card {
+  position: relative;
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 10px 15px;
+  border: 1px solid rgba(var(--hermes-fg-rgb), 0.2);
+  border-radius: 12px;
+  background: var(--hermes-card-bg, color-mix(in srgb, var(--hermes-paper) 84%, transparent));
+  color: var(--hermes-ink);
+  box-shadow: 0 2px 10px rgba(var(--hermes-shadow-rgb, 0, 0, 0), 0.16);
+}
+.side-question-card::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--hermes-accent);
+}
+.side-question-card.warn::before { background: var(--hermes-warning); }
+.side-question-card.warn { border-color: color-mix(in srgb, var(--hermes-warning) 55%, transparent); }
+.side-question-head { display: flex; align-items: baseline; gap: 8px; }
+.side-question-label {
+  flex: 1 1 auto;
+  font: 700 9px/1 var(--hermes-font-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--hermes-accent) 68%, var(--hermes-ink));
+}
+.side-question-meta {
+  flex: 0 0 auto;
+  font: 700 9px/1 var(--hermes-font-mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--hermes-ink) 52%, transparent);
+}
+.side-question-close {
+  flex: 0 0 auto;
+  min-height: 16px;
+  min-width: 16px;
+  padding: 0 2px;
+  margin-left: 2px;
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--hermes-ink) 58%, transparent);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.side-question-close:hover { color: var(--hermes-ink); background: rgba(var(--hermes-fg-rgb), 0.1); }
+.side-question-question {
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(var(--hermes-fg-rgb), 0.12);
+  border-radius: 8px;
+  background: rgba(var(--hermes-fg-rgb), 0.07);
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  line-height: 1.45;
+  color: var(--hermes-ink);
+  overflow-wrap: anywhere;
+}
+.side-question-answer {
+  font-size: calc(12.5px * var(--hermes-text-zoom, 1));
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  max-height: 44vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.side-question-card.pending .side-question-answer { max-height: none; overflow: visible; }
+.side-question-actions { display: flex; gap: 6px; }
+.side-question-actions button {
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(var(--hermes-accent-rgb), 0.52);
+  background: rgba(var(--hermes-accent-rgb), 0.10);
+  color: var(--hermes-ink);
+  font: 700 9px/1 var(--hermes-font-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.side-question-actions button:hover { background: rgba(var(--hermes-accent-rgb), 0.2); }
 /* Real agent identity on the assistant header (ROXAS / NAMINÉ / RIKU):
    compact tracked mono caps, subtle tint, no layout shift vs. the old label. */
 .message.assistant .message-role { font: 700 9px/1 var(--hermes-font-mono); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; color: color-mix(in srgb, var(--hermes-ink, #ffffff) 82%, transparent); }

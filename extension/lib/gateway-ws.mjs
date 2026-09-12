@@ -18,6 +18,11 @@ export const WS_METHODS = Object.freeze({
   sessionHistory: 'session.history',
   sessionInfo: 'session.info',
   sessionStatus: 'session.status',
+  // Rename / read the session title. Desktop parity: this is the write path
+  // that resolves the LIVE runtime session (and persists its row on demand),
+  // so it succeeds for runtime-only sessions where a REST PATCH 404s. Read
+  // mode (no `title` param) returns the current title.
+  sessionTitle: 'session.title',
   sessionEventsSince: 'session.events.since',
   sessionEventsStats: 'session.events.stats',
   profilesList: 'profiles.list',
@@ -29,6 +34,8 @@ export const WS_METHODS = Object.freeze({
   promptSubmit: 'prompt.submit',
   sessionInterrupt: 'session.interrupt',
   sessionSteer: 'session.steer',
+  promptBtw: 'prompt.btw',
+  contextBreakdown: 'session.context_breakdown',
   imageAttachBytes: 'image.attach_bytes',
   subagentList: 'subagent.list',
   subagentSteer: 'subagent.steer',

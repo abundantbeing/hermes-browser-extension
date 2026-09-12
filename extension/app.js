@@ -1862,6 +1862,11 @@ function renderSessions(query = '') {
     for (const session of group.sessions) {
       const row = document.createElement('div');
       row.className = `session-row ${session.selected ? 'active' : ''}`.trim();
+      if (isWebSessionRenameEditorTarget(session)) {
+        renderWebSessionRenameEditor(row, session);
+        els.sessionList.append(row);
+        continue;
+      }
       const open = document.createElement('button');
       open.type = 'button';
       open.className = 'session-row-open';
@@ -1880,7 +1885,7 @@ function renderSessions(query = '') {
       rename.textContent = '✎';
       rename.addEventListener('click', (event) => {
         event.stopPropagation();
-        promptRenameHermesWebSession(session);
+        openWebSessionRenameEditor(session);
       });
       row.append(open, rename);
       els.sessionList.append(row);
@@ -4459,10 +4464,48 @@ function toggleSessionActionsMenu(force) {
   els.copySessionId.setAttribute('aria-expanded', String(visible));
 }
 
+// Desktop parity: the live runtime id of the session the dashboard socket is
+// attached to. `session.title` addresses runtime ids; REST addresses stored
+// row ids.
+function webSessionRenameLiveId(sessionId) {
+  if (!usesDashboardTicketTransport()) return '';
+  const id = String(sessionId || '').trim();
+  if (!id) return '';
+  if (id === String(activeSessionId || '').trim() && String(dashboardLiveSessionId || '').trim()) {
+    return String(dashboardLiveSessionId).trim();
+  }
+  const storedId = String(dashboardConnection?.wsStoredSessionId || '').trim();
+  const liveId = String(dashboardConnection?.wsSessionId || '').trim();
+  if (liveId && storedId && storedId === id) return liveId;
+  return '';
+}
+
 async function renameHermesWebSessionTitle(sessionId, title) {
   const cleanSessionId = String(sessionId || '').trim();
   const cleanTitle = String(title || '').trim();
   if (!cleanSessionId || !cleanTitle) return false;
+  // Prefer the gateway's `session.title` RPC (Desktop's rename path for the
+  // live session: resolves the runtime session and persists the row on
+  // demand). Fall back to the REST PATCH for any row that is not live here.
+  const liveId = webSessionRenameLiveId(cleanSessionId);
+  if (liveId) {
+    try {
+      const connection = await ensureDashboardConnection();
+      const result = await connection.client.request(WS_METHODS.sessionTitle, { session_id: liveId, title: cleanTitle });
+      const persisted = String(result?.title || '').trim() || cleanTitle;
+      sessions = sessions.map((session) => (String(session.id) === cleanSessionId ? { ...session, title: persisted } : session));
+      if (cleanSessionId === activeSessionId) {
+        settings = { ...settings, webSessionTitle: persisted };
+        await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+        els.sessionTitle.textContent = settings.webSessionTitle;
+      }
+      renderSessions(els.sessionSearch.value);
+      els.composerStatus.textContent = translateUiText('Session renamed and synced');
+      return true;
+    } catch (error) {
+      console.warn('[Hermes Web] session.title rename RPC failed; falling back to REST', error);
+    }
+  }
   const response = await client.fetch(`/api/sessions/${encodeURIComponent(cleanSessionId)}`, {
     method: 'PATCH',
     body: JSON.stringify({ title: cleanTitle }),
@@ -4482,15 +4525,138 @@ async function renameHermesWebSessionTitle(sessionId, title) {
   return true;
 }
 
-function promptRenameHermesWebSession(session = {}) {
-  const currentTitle = sessionTitle(session);
-  const nextTitle = window.prompt('Rename session', currentTitle);
-  if (nextTitle == null) return;
-  const cleanTitle = String(nextTitle).trim();
-  if (!cleanTitle || cleanTitle === currentTitle) return;
-  renameHermesWebSessionTitle(session.id, cleanTitle).catch((error) => {
-    els.composerStatus.textContent = `Could not rename session: ${error?.message || String(error)}`;
+// ── In-panel session rename editor ─────────────────────────────────────
+// Replaces the native window.prompt rename in the full-tab session rail:
+// input + Save/Cancel inside the row, Enter submits, Escape cancels, focus
+// lands in the input. The row renames optimistically; a rejected write
+// reverts it and shows the error inline.
+let webSessionRenameEditor = null; // { sessionId, draft, error }
+const WEB_SESSION_RENAME_MAX_CHARS = 80;
+
+function isWebSessionRenameEditorTarget(session = {}) {
+  return Boolean(webSessionRenameEditor?.sessionId)
+    && String(session.id || '') === String(webSessionRenameEditor.sessionId);
+}
+
+function openWebSessionRenameEditor(session = {}, { draft = '', error = '' } = {}) {
+  const sessionId = String(session.id || '').trim();
+  if (!sessionId) return false;
+  webSessionRenameEditor = {
+    sessionId,
+    draft: String(draft || sessionTitle(session) || '').slice(0, WEB_SESSION_RENAME_MAX_CHARS),
+    error: String(error || ''),
+  };
+  renderSessions(els.sessionSearch.value);
+  return true;
+}
+
+function closeWebSessionRenameEditor({ render = true } = {}) {
+  if (!webSessionRenameEditor) return;
+  webSessionRenameEditor = null;
+  if (render) renderSessions(els.sessionSearch.value);
+}
+
+function renderWebSessionRenameEditor(row, session = {}) {
+  const state = webSessionRenameEditor;
+
+  const form = document.createElement('form');
+  form.className = 'session-row-rename-form';
+  form.setAttribute('aria-label', translateUiText('Rename session'));
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'session-row-rename-input';
+  input.value = state?.draft || '';
+  input.maxLength = WEB_SESSION_RENAME_MAX_CHARS;
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.setAttribute('aria-label', t('session.rename_named', { title: sessionTitle(session) }));
+
+  const save = document.createElement('button');
+  save.type = 'submit';
+  save.className = 'session-row-rename-save';
+  save.textContent = translateUiText('Save');
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'session-row-rename-cancel';
+  cancel.textContent = translateUiText('Cancel');
+
+  input.addEventListener('input', () => {
+    if (webSessionRenameEditor && webSessionRenameEditor.sessionId === session.id) webSessionRenameEditor.draft = input.value;
   });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeWebSessionRenameEditor();
+    }
+  });
+  cancel.addEventListener('click', (event) => {
+    event.stopPropagation();
+    closeWebSessionRenameEditor();
+  });
+  form.addEventListener('click', (event) => event.stopPropagation());
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void submitWebSessionRename(session, input.value);
+  });
+
+  const status = document.createElement('small');
+  status.className = 'session-row-rename-status';
+  status.setAttribute('role', 'status');
+  status.hidden = !state?.error;
+  status.textContent = state?.error || '';
+
+  form.append(input, save, cancel);
+  row.replaceChildren(form, status);
+
+  queueMicrotask(() => {
+    try {
+      input.focus({ preventScroll: true });
+      input.select();
+    } catch {
+      /* focus is best-effort */
+    }
+  });
+}
+
+function applyWebSessionTitleLocally(sessionId, title) {
+  const id = String(sessionId || '').trim();
+  const clean = String(title || '').trim();
+  if (!id || !clean) return;
+  sessions = sessions.map((session) => (String(session.id) === id ? { ...session, title: clean } : session));
+  if (id === activeSessionId) {
+    settings = { ...settings, webSessionTitle: clean };
+    void browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    if (els.sessionTitle) els.sessionTitle.textContent = clean;
+  }
+}
+
+async function submitWebSessionRename(session = {}, rawTitle = '') {
+  const sessionId = String(session.id || '').trim();
+  const previousTitle = sessionTitle(session);
+  const nextTitle = String(rawTitle || '').trim().slice(0, WEB_SESSION_RENAME_MAX_CHARS);
+  if (!sessionId) return false;
+  if (!nextTitle || nextTitle === previousTitle) {
+    closeWebSessionRenameEditor();
+    return false;
+  }
+  // Optimistic: the rail shows the new name immediately; a rejected write
+  // reverts it and reopens the editor with the attempted name + error.
+  closeWebSessionRenameEditor({ render: false });
+  applyWebSessionTitleLocally(sessionId, nextTitle);
+  renderSessions(els.sessionSearch.value);
+  try {
+    await renameHermesWebSessionTitle(sessionId, nextTitle);
+    return true;
+  } catch (error) {
+    applyWebSessionTitleLocally(sessionId, previousTitle);
+    renderSessions(els.sessionSearch.value);
+    els.composerStatus.textContent = `Could not rename session: ${error?.message || String(error)}`;
+    openWebSessionRenameEditor({ id: sessionId, title: previousTitle }, { draft: nextTitle, error: error?.message || String(error) });
+    return false;
+  }
 }
 
 async function beginHermesWebDraft({ focus = true, keepLoading = false } = {}) {
@@ -5578,7 +5744,7 @@ els.sessionActionsMenu.addEventListener('click', (event) => {
   if (!action || !activeSessionId) return;
   toggleSessionActionsMenu(false);
   if (action === 'rename') {
-    promptRenameHermesWebSession(sessions.find((session) => session.id === activeSessionId) || { id: activeSessionId, title: settings.sessionTitle });
+    openWebSessionRenameEditor(sessions.find((session) => session.id === activeSessionId) || { id: activeSessionId, title: settings.sessionTitle });
     return;
   }
   navigator.clipboard.writeText(activeSessionId)

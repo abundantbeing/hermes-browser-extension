@@ -7,6 +7,7 @@ import {
 import { formatPickedElementBlock } from './element-picker.mjs';
 import { normalizeImageAspectRatio, resolveImageSource } from './image-render.mjs';
 import { classifyMediaKind, splitInboundVisionMessage } from './media-persistence.mjs';
+import { normalizeHistoryUserMessage } from './session-history-normalization.mjs';
 import { hasCredentialBearingUrl, redactSensitiveText } from './redaction.mjs';
 import { CONNECTION_SCHEMA_VERSION, CONNECTION_TRANSPORTS } from './connection-modes.mjs';
 import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
@@ -158,9 +159,23 @@ export function messageDisplayText(role = '', content = '') {
     return 'Page comments';
   };
 
-  // BCP v2 history is structured. Only a fully unambiguous typed envelope can
-  // hide its data sections; malformed lookalikes remain visible fail-closed.
-  try {
+  // Browser turns are stored as protocol payloads. The normalizer hands back
+    // the human prompt with every receipt, path and @image token removed — and
+    // recovers the prompt even from a truncated envelope. It only runs for text
+    // that actually carries a Browser-turn marker (or an inline media/vision
+    // reference); anything else — including a JSON snippet the user pasted — is
+    // returned byte-identical so this can never eat a real message.
+    const carriesBrowserTurn = /hermes\.browser\.turn|USER_REQUEST_START|UNTRUSTED_BROWSER_CONTEXT/i.test(text)
+      || /(^|\s)@(?:image|video):/i.test(text)
+      || /\[The user sent an image/i.test(text);
+    if (carriesBrowserTurn) {
+      const normalized = normalizeHistoryUserMessage({ role, content: text });
+      if (normalized.hadEnvelope || normalized.strippedProtocol) return reveal(normalized.text);
+    }
+
+    // BCP v2 history is structured. Only a fully unambiguous typed envelope can
+    // hide its data sections; malformed lookalikes remain visible fail-closed.
+    try {
     const envelope = JSON.parse(text);
     const input = envelope?.human_input;
     if (

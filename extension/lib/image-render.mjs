@@ -1,4 +1,5 @@
 import {
+  classifyMediaKind,
   extractImageRefs,
   extractMediaTagPaths,
   extractVisionCachePaths,
@@ -63,6 +64,29 @@ export function resolvedGeneratedImageSourcesFromResult(result) {
     .filter((source) => {
       if (!source || seen.has(source)) return false;
       seen.add(source);
+      return true;
+    });
+}
+
+/**
+ * Media candidates from an image_generate tool result, in source order, with
+ * local paths kept. `resolvedGeneratedImageSourcesFromResult` can only accept
+ * browser-safe sources (https/data URLs), but the gateway reports finished
+ * generations as local file paths; the panel resolves those through the
+ * dashboard media route at DOM time, which is what lets a finished generation
+ * dissolve into the real picture instead of parked forever in its animation.
+ */
+export function rawGeneratedImageCandidatesFromResult(result) {
+  const record = imageResultRecord(result);
+  if (!record || record.success === false) return [];
+  const seen = new Set();
+  return [record.host_image, record.image, record.agent_visible_image, record.url]
+    .filter((value) => typeof value === 'string' && value.trim())
+    .map((value) => stripWrappingQuotes(value))
+    .filter((candidate) => {
+      if (!candidate || seen.has(candidate)) return false;
+      if (!resolveImageSource(candidate) && classifyMediaKind(candidate) !== 'image') return false;
+      seen.add(candidate);
       return true;
     });
 }
@@ -194,12 +218,25 @@ function visitHistoryMedia(value, found, seen) {
   }
   if (typeof value !== 'object') return;
   const name = value.name || value.label || value.filename || 'Attached image';
-  pushExtractedMedia(
-    found,
-    seen,
-    value.dataUrl || value.source || value.url || value.image || value.image_url?.url || value.imageUrl,
-    name,
-  );
+  const inlineSource = value.dataUrl || value.source || value.url || value.image || value.image_url?.url || value.imageUrl;
+  pushExtractedMedia(found, seen, inlineSource, name);
+  if (!inlineSource) {
+    // Browser turn envelopes carry finished attachments as local disk paths
+    // (`attachment_context.items[].local_path`), not inline sources. Keep them
+    // as path refs so media hydration can serve the Hermes-managed ones —
+    // without this, every Desktop-attached image vanished from the transcript.
+    const localPath = String(value.local_path || value.localPath || value.pathRef || value.path || '').trim();
+    const kind = classifyMediaKind(localPath);
+    if (localPath && (kind === 'image' || kind === 'video') && !seen.has(`path:${localPath}`)) {
+      seen.add(`path:${localPath}`);
+      found.push({
+        kind,
+        name: mediaFileName(localPath) || name,
+        pathRef: localPath,
+        ...(value.detail ? { detail: String(value.detail) } : {}),
+      });
+    }
+  }
   visitHistoryMedia(value.content, found, seen);
   visitHistoryMedia(value.parts, found, seen);
   visitHistoryMedia(value.attachments, found, seen);

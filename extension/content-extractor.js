@@ -926,7 +926,7 @@ const APPEARANCE_RUNTIME_API = Object.freeze({
   hermesGlobal.HermesAppearance = APPEARANCE_RUNTIME_API;
 })(globalThis);
 
-/* extension/lib/site-adapters.mjs · SHA-256 a311d362efb010dc */
+/* extension/lib/site-adapters.mjs · SHA-256 a9d27835b5f0230c */
 (function hermesSiteAdapterRuntime(hermesGlobal) {
   'use strict';
 
@@ -1116,22 +1116,98 @@ function xAdapter(document, url) {
   });
 }
 
+// --- Gmail thread capture (explicit only) -----------------------------------
+//
+// Current Gmail keeps every message of an open thread in the DOM, including
+// older messages that are collapsed behind the "N older messages" expander, so
+// explicit capture selects every [data-message-id] node in document order and
+// reads its rendered body even when the node is currently hidden by CSS.
+// Messages whose body is not present in the DOM at all (Gmail can lazily hold
+// back very long threads) are skipped rather than fabricated, and itemCount
+// counts only captured messages. Compose surfaces are never read: only the
+// .a3s / [role="document"] message body is walked, and form-control tags are
+// skipped so draft textareas, inputs, and select values can never leak.
+const GMAIL_MESSAGE_LIMIT = 60;
+const GMAIL_BODY_LIMIT = 8_000;
+const GMAIL_BODY_SELECTOR = '.a3s, [role="document"]';
+const GMAIL_BODY_SKIP_TAGS = new Set([
+  'script', 'style', 'noscript', 'template', 'textarea', 'input', 'select',
+]);
+
+function gmailBodyText(root, max = GMAIL_BODY_LIMIT) {
+  if (!root) return '';
+  const parts = [];
+  let size = 0;
+  const visit = (node) => {
+    if (!node || size >= max) return;
+    if (node.nodeType === 3) {
+      const text = String(node.nodeValue || '').replace(/\s+/g, ' ').trim();
+      if (text) {
+        parts.push(text);
+        size += text.length + 1;
+      }
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const tag = String(node.tagName || '').toLowerCase();
+    if (GMAIL_BODY_SKIP_TAGS.has(tag)) return;
+    const editable = node.getAttribute?.('contenteditable');
+    if (node !== root && (node.isContentEditable === true || editable === '' || editable === 'true')) return;
+    for (const child of Array.from(node.childNodes || [])) visit(child);
+  };
+  visit(root);
+  return bounded(parts.join(' '), max);
+}
+
+function gmailSubject(document) {
+  const candidates = Array.from(document.querySelectorAll('[data-thread-title], h2.hP, .hP, main[role="main"] h2'));
+  let collapsed = '';
+  for (const node of candidates) {
+    const visible = visibleTextOf(node, 500);
+    if (visible) return visible;
+    const text = textOf(node, 500);
+    if (text && !collapsed) collapsed = text;
+  }
+  return collapsed;
+}
+
+function gmailMessageSender(message) {
+  const node = message.querySelector('.gD, [email]');
+  const sender = textOf(node, 200);
+  if (sender) return sender;
+  return bounded(node?.getAttribute?.('email') || '', 200);
+}
+
+function gmailMessageDate(message) {
+  const node = message.querySelector('.g3');
+  if (!node) return '';
+  return bounded(node.getAttribute?.('title') || textOf(node, 200), 200);
+}
+
 function gmail(document, url, explicitCapture) {
   const route = { kind: /#(?:inbox|all|sent)\//i.test(url.hash) ? 'thread' : 'mailbox' };
-  const title = explicitCapture
-    ? visibleTextOf(document.querySelector('[data-thread-title], h2.hP, main[role="main"] h2'), 500)
-    : '';
-  const messageNodes = explicitCapture
-    ? Array.from(document.querySelectorAll('[data-message-id]')).filter(isVisibleElement).slice(0, 30)
-    : [];
-  const messages = explicitCapture
-    ? uniqueTexts(messageNodes.map((message) => {
-      const body = visibleTextOf(message.querySelector('.a3s, [role="document"]'), 4_000);
-      if (!body) return '';
-      const sender = visibleTextOf(message.querySelector('.gD, [email]'), 500);
-      return [sender, body].filter(Boolean).join(': ');
-    }), 30)
-    : [];
+  const title = explicitCapture ? gmailSubject(document) : '';
+  const messages = [];
+  if (explicitCapture) {
+    // Total output stays within the shared adapter budget (MAX_CONTEXT_CHARS);
+    // capture stops at the last message that fully fits, so the result is
+    // truncated at a message boundary instead of mid-sentence when a thread
+    // exceeds the budget.
+    let size = title ? title.length + 2 : 0;
+    const messageNodes = Array.from(document.querySelectorAll('[data-message-id]'));
+    for (const message of messageNodes) {
+      if (messages.length >= GMAIL_MESSAGE_LIMIT) break;
+      const body = gmailBodyText(message.querySelector(GMAIL_BODY_SELECTOR));
+      if (!body) continue;
+      const sender = gmailMessageSender(message);
+      const date = gmailMessageDate(message);
+      const label = [sender, date ? `(${date})` : ''].filter(Boolean).join(' ');
+      const line = label ? `${label}: ${body}` : body;
+      if (size + line.length + 2 > MAX_CONTEXT_CHARS) break;
+      messages.push(line);
+      size += line.length + 2;
+    }
+  }
   return baseResult('gmail', 'Gmail', 'ask-first', route, ['thread-context', 'focused-draft'], [
     action('draft-reply', 'Draft reply', 'Draft a reply for preview and copy only.'),
     action('summarize-thread', 'Summarize thread', 'Summarize only after explicit capture.'),

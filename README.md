@@ -319,7 +319,11 @@ The DOM/context chip should show a non-zero page-context count on normal readabl
 
 ### Context window and compaction
 
-Context compression remains owned by Hermes Agent, using each runtime's effective `context_length` and configured compression threshold. The Browser and Web surfaces display the authoritative persisted/live fields when available: `last_prompt_tokens`, `threshold_tokens`, `context_length`, `usage_percent`, and `compression_count`.
+Context compression remains owned by Hermes Agent, using each runtime's effective context window and configured compression threshold.
+
+The side panel shows the numbers the runtime actually reports rather than a guess: it requests the session context breakdown over the dashboard socket (`session.context_breakdown`) and follows the live `session.usage` stream, rendering the runtime's used/limit figures plus its per-category breakdown (system prompt, tool definitions, subagent definitions, memory, conversation). `session.usage` reports its own provenance (`provider_usage`, `provider_usage_plus_estimate`, or `local_estimate`), and the panel labels which one it is showing. Gateway-reported compression counts are displayed as reported.
+
+When a gateway exposes only the classic session-row fields (`last_prompt_tokens`, `threshold_tokens`, `context_length`, `usage_percent`, `compression_count`), those are used instead, and gateways older still fall back to a clearly labelled local next-request estimate.
 
 - The extension does not hardcode an 85% threshold; it honors the connected user's/runtime's value.
 - Reaching the threshold is shown as **Compaction due on the next Hermes turn**. Hermes performs its normal pre-model-call compression and the client refreshes telemetry afterward.

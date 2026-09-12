@@ -4,6 +4,8 @@
 
 ### Added
 
+- `/btw` side questions now ride the gateway's native side-question flow over the dashboard socket (REST completions stays as the fallback for API-key connections) and land in a full-width result card at the end of the transcript: the card appears while Hermes is thinking, then fills in with the answer, a Copy action, a snapshot timing line, and a dismiss control instead of vanishing with the 5.2-second operation toast. The card stays out of the saved conversation and clears when you switch sessions.
+- The "Capture visible Gmail thread" button can be dismissed with a small ✕ that is remembered across reloads, and it can be turned back on any time under Settings → Right-click actions.
 - Live subagent roster in the composer dock: queued/running children appear in a SUBAGENTS stack next to TASKS, with model, current tool, elapsed time, and a selected-row steer/stop control. Snapshot hydrate uses `subagent.list`; missing RPCs fail closed.
 - Fenced code blocks in chat get a hover copy-to-clipboard control, without overflowing the message card.
 - Telegram and Desktop session images hydrate from Hermes cache paths (`image_url:` / `@image:` / `MEDIA:`) through the dashboard `/api/media` route. Local videos render as a player when `/api/files/stream` can serve them, otherwise as an honest file card. Pixels that were never stored in Hermes (only in Telegram itself) cannot be invented.
@@ -11,7 +13,9 @@
 
 ### Fixed
 
+- Generated images now actually appear in the side panel: the image-generation animation dissolves into the real picture, every picture a tool call produced gets its own card (primary plus alternates, not just the first), and each one opens in the zoomable lightbox with a Download action. Local Hermes cache paths are resolved through the dashboard media route instead of being silently dropped, which is what let the old animation run forever and then vanish. Paths outside the Hermes media roots still fall back to the honest filename chip.
 - Pasted screenshots now reach the agent on the local Desktop dashboard transport: Browser uploads each image to the live session over the gateway's `image.attach_bytes` RPC (the same contract Hermes Desktop uses) before the prompt submits, so vision opens the real file instead of hunting for a path that never arrived. The turn envelope now carries the gateway's saved image path for every attached image.
+- Explicit Gmail thread capture now reads the entire open thread instead of only the expanded messages: every message node is captured in document order with its sender and date, collapsed-but-rendered bodies are included, repeated messages are no longer de-duplicated away, the subject leads the capture, and output truncates at a message boundary when a thread exceeds the context budget. Compose drafts, textareas, inputs, and contenteditable reply fields are still never captured.
 - Steering now surfaces in the transcript itself: a dashed STEER QUEUED row ("arrives after the next tool call") with the steered text pins under the live turn the moment a steer is queued, and clears when the steered message lands in history or the turn settles. A steer the runtime rejects keeps the draft in the composer instead of clearing silently.
 - After a background subagent batch finishes, the transcript keeps the live thinking indicator until the gateway's parent completion reply lands, so the child-to-parent handoff never shows a dead moment.
 - The Chat only context chip hides in chat-only mode; the scope button already names the mode, so the chip row no longer wastes composer space.

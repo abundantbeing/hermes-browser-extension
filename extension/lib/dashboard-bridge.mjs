@@ -384,6 +384,133 @@ export async function discoverProfilesViaTab({ tabsApi, scriptingApi, baseUrl, p
   return injection?.result || { ok: false, reason: 'no_result' };
 }
 
+// URL for the session-row PATCH the Desktop's non-active rename uses
+// (rename_session_endpoint in hermes_cli/web_routers/sessions.py): the row id
+// resolves against the stored sessions table and `profile` scopes it. Kept as
+// an exported builder for tests; the in-page function carries its own copy
+// because chrome.scripting serializes it without module scope.
+export function dashboardSessionUrl(baseUrl = '', sessionId = '', profile = '') {
+  const id = String(sessionId || '').trim();
+  const name = String(profile || '').trim();
+  try {
+    const url = new URL(String(baseUrl || '').trim());
+    url.hash = '';
+    url.search = '';
+    if (name) url.searchParams.set('profile', name);
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/sessions/${encodeURIComponent(id)}`;
+    return url.toString();
+  } catch {
+    const params = new URLSearchParams();
+    if (name) params.set('profile', name);
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return `${String(baseUrl || '').replace(/\/+$/, '')}/api/sessions/${encodeURIComponent(id)}${suffix}`;
+  }
+}
+
+// Runs in the dashboard page. PATCH /api/sessions/{id} {title} — the same REST
+// write the Desktop performs for sessions that are not the active runtime
+// session (its REST surface sits behind the same session-token handshake as
+// the roster fetch). Returns a structured result so the caller can branch on
+// `reason`. MUST stay self-contained: chrome.scripting serializes it and runs
+// it in the page, so no module-scope closures.
+export async function renameSessionInPage({ baseUrl = '', sessionId = '', title = '', profile = '' } = {}) {
+  const sessionUrlFor = (base = '', id = '', profileName = '') => {
+    try {
+      const url = new URL(String(base || '').trim());
+      url.hash = '';
+      url.search = '';
+      const name = String(profileName || '').trim();
+      if (name) url.searchParams.set('profile', name);
+      url.pathname = `${url.pathname.replace(/\/+$/, '')}/api/sessions/${encodeURIComponent(String(id || '').trim())}`;
+      return url.toString();
+    } catch {
+      const params = new URLSearchParams();
+      const name = String(profileName || '').trim();
+      if (name) params.set('profile', name);
+      const suffix = params.toString() ? `?${params.toString()}` : '';
+      return `${String(base || '').replace(/\/+$/, '')}/api/sessions/${encodeURIComponent(String(id || '').trim())}${suffix}`;
+    }
+  };
+  try {
+    const rootUrl = String(baseUrl || '').trim().replace(/\/+$/, '');
+    const rootResponse = await fetch(rootUrl, {
+      method: 'GET',
+      headers: { Accept: 'text/html' },
+      credentials: 'include',
+    });
+    if (!rootResponse.ok) return { ok: false, reason: `dashboard_root_${rootResponse.status}`, status: rootResponse.status };
+    const html = await rootResponse.text();
+    const match = html.match(/window\.__HERMES_SESSION_TOKEN__\s*=\s*"([^"]+)"/);
+    const token = match?.[1] || '';
+    if (!token) return { ok: false, reason: 'no_dashboard_session_token' };
+
+    const cleanTitle = String(title || '').trim();
+    if (!cleanTitle) return { ok: false, reason: 'title_required' };
+    const payload = { title: cleanTitle };
+    const profileName = String(profile || '').trim();
+    if (profileName) payload.profile = profileName;
+
+    const response = await fetch(sessionUrlFor(baseUrl, sessionId, profileName), {
+      method: 'PATCH',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Hermes-Session-Token': token,
+      },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+    if (response.status === 401 || response.status === 403) {
+      return { ok: false, reason: 'not_signed_in', status: response.status };
+    }
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      return {
+        ok: false,
+        reason: `session_http_${response.status}`,
+        status: response.status,
+        detail: String(data?.detail || data?.error?.message || data?.error || ''),
+      };
+    }
+    return { ok: true, title: String(data?.title ?? cleanTitle) };
+  } catch (error) {
+    return { ok: false, reason: 'fetch_failed', detail: String(error?.message || error) };
+  }
+}
+
+// Rename a session by executing the first-party PATCH inside the trusted
+// signed-in dashboard tab (the extension origin is CORS-rejected by the
+// dashboard; the tab is same-origin and carries the session cookie).
+export async function renameSessionViaTab({
+  tabsApi,
+  scriptingApi,
+  baseUrl,
+  sessionId,
+  title,
+  profile = '',
+  tabId = null,
+  renameFn = renameSessionInPage,
+} = {}) {
+  const origin = originOf(baseUrl);
+  if (!origin) return { ok: false, reason: 'bad_base_url' };
+  if (!scriptingApi?.executeScript) return { ok: false, reason: 'scripting_unavailable' };
+
+  const tab = await findDashboardTab(tabsApi, origin, tabId);
+  if (!tab?.id) return { ok: false, reason: 'no_dashboard_tab', origin };
+
+  let injection;
+  try {
+    [injection] = await scriptingApi.executeScript({
+      target: { tabId: tab.id },
+      func: renameFn,
+      args: [{ baseUrl, sessionId, title, profile }],
+    });
+  } catch (error) {
+    return { ok: false, reason: 'inject_failed', detail: String(error?.message || error) };
+  }
+  return injection?.result || { ok: false, reason: 'no_result' };
+}
+
 // fetchFn-based discovery (no scripting) for unit tests and the local-dashboard
 // scraping fallback. Mirrors discoverModelsFromDashboard's token bootstrap.
 export async function discoverProfilesFromDashboard({ baseUrl = '', fetchFn = globalThis.fetch?.bind(globalThis), profile = '' } = {}) {

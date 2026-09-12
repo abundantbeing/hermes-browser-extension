@@ -255,13 +255,15 @@ test('messageDisplayText reveals only the human request from canonical Browser p
   );
 });
 
-test('messageDisplayText fails closed for malformed or ambiguous request boundaries', () => {
+test('messageDisplayText recovers the human prompt from malformed or ambiguous request boundaries', () => {
   const malformed = 'USER_REQUEST_START\nKeep this unchanged';
   const duplicated = 'USER_REQUEST_START\nOne\nUSER_REQUEST_END\nUSER_REQUEST_START\nTwo\nUSER_REQUEST_END';
 
   assert.equal(typeof common.messageDisplayText, 'function');
-  assert.equal(common.messageDisplayText('user', malformed), malformed);
-  assert.equal(common.messageDisplayText('user', duplicated), duplicated);
+  // A stray or duplicated marker must never hide the message: the human text is
+  // recovered and the protocol marker itself is dropped.
+  assert.equal(common.messageDisplayText('user', malformed), 'Keep this unchanged');
+  assert.equal(common.messageDisplayText('user', duplicated), 'One\n\nTwo');
 });
 
 test('messageDisplayText renders only typed BCP v2 human_input and rejects lookalikes', () => {
@@ -279,9 +281,17 @@ test('messageDisplayText renders only typed BCP v2 human_input and rejects looka
     attachment_context: {},
     source_receipt: {},
   });
+  const lookalike = JSON.stringify({
+    protocol: 'something.else',
+    human_input: { source: 'composer', text: 'nope' },
+  });
 
   assert.equal(common.messageDisplayText('user', v2), 'Only this composer text is history-visible.');
-  assert.equal(common.messageDisplayText('user', ambiguous), ambiguous);
+  // An envelope that carries extra keys still shows the human prompt instead of
+  // dumping raw JSON into the transcript.
+  assert.equal(common.messageDisplayText('user', ambiguous), 'one');
+  // Text without a Browser-turn marker is never treated as an envelope.
+  assert.equal(common.messageDisplayText('user', lookalike), lookalike);
 });
 
 test('sidepanel and Hermes Web share the display-only Browser request formatter', () => {
@@ -492,8 +502,8 @@ test('sidepanel wires Browser-scoped models and compact session copy/rename acti
   assert.match(source, /copyTextToClipboard/);
   assert.match(source, /navigator\.clipboard\.writeText/);
   assert.match(source, /Copy session ID/);
-  assert.match(source, /promptRenameSession/);
-  assert.match(source, /renameHermesSessionTitle\(session\.id/);
+  assert.match(source, /openSessionRenameEditor/);
+  assert.match(source, /renameHermesSessionTitle\(sessionId, nextTitle\)/);
   assert.match(source, /Rename session/);
   assert.doesNotMatch(source, /hermes config set/);
   assert.doesNotMatch(source, /model\.default/);
@@ -1694,7 +1704,8 @@ test('assistant thinking placeholder renders animated indicator markup and reduc
   assert.match(source, /<span class="thinking-word">\$\{escapeHtml\(word\)\}<\/span>/);
   assert.match(source, /<span class="thinking-dots" aria-hidden="true"><i><\/i><i><\/i><i><\/i><\/span>/);
   assert.match(source, /<span class="thinking-words" aria-hidden="true">\$\{phrases\}<\/span>/);
-  assert.match(source, /streamView\.updateText\(liveText \|\| THINKING_PLACEHOLDER\)/);
+  assert.match(source, /streamPacer\.push\(liveText\.slice\(pushedLive\)\);/);
+  assert.match(source, /streamView\.updateText\(text \|\| \(meta\.done \? '' : THINKING_PLACEHOLDER\)\);/);
   assert.match(css, /\.thinking-indicator[\s\S]*overflow: hidden/);
   assert.match(css, /\.thinking-words[\s\S]*overflow: hidden/);
   assert.match(css, /\.thinking-words[\s\S]*height: 1\.46em/);
@@ -1717,7 +1728,7 @@ test('tool activity strip is wired as runtime UI instead of raw tool markdown', 
   assert.match(source, /updateTool\(tool/);
   assert.match(source, /normalizeBrowserRuntimeEvent/);
   assert.match(source, /streamView\.updateTool\(activity\)/);
-  assert.match(source, /resolvedGeneratedImageSourcesFromResult\(activity\.result\)/);
+  assert.match(source, /rawGeneratedImageCandidatesFromResult\(activity\.result\)/);
   assert.doesNotMatch(source, /\\n\\n\[tool\]/);
   assert.match(css, /\.tool-activity\b/);
   for (const category of ['file', 'edit', 'terminal', 'browser', 'web', 'media', 'meta']) {

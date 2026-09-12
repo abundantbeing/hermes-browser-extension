@@ -176,7 +176,11 @@ import { createThemeMarketplaceController } from './lib/theme-marketplace-contro
 import { createThemeMarketplaceTransport } from './lib/theme-marketplace-transport.mjs';
 import { buildAgentThemePrompt, extractAgentThemeDocument } from './lib/agent-theme-authoring.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
-import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages, resolvedGeneratedImageSourcesFromResult } from './lib/image-render.mjs';
+import { createStreamPacer } from './lib/stream-pacing.mjs';
+import { contextTelemetryFromRuntime, formatTokenCount, mergeContextTelemetry } from './lib/session-context-telemetry.mjs';
+import { liveStateBadge, mergeLiveSignals } from './lib/session-live-state.mjs';
+import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
+import { mediaDisplayName, mediaSourcePlan } from './lib/media-source.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import {
   activeSubagentView,
@@ -242,6 +246,7 @@ import {
   isTrustedDashboardOrigin,
   mintWsTicket,
   originOf,
+  renameSessionViaTab,
   ticketFailureHelp,
 } from './lib/dashboard-bridge.mjs';
 import {
@@ -615,7 +620,12 @@ const els = {
   contextChip: $('#contextChip'),
   contextChipLabel: $('#contextChipLabel'),
   contextPreview: $('#contextPreview'),
+  explicitSiteCaptureWrap: $('#explicitSiteCaptureWrap'),
   explicitSiteCaptureButton: $('#explicitSiteCaptureButton'),
+  explicitSiteCaptureDismiss: $('#explicitSiteCaptureDismiss'),
+  gmailCaptureEnabledInput: $('#gmailCaptureEnabledInput'),
+  gmailCaptureToggleTitle: $('#gmailCaptureToggleTitle'),
+  gmailCaptureToggleHint: $('#gmailCaptureToggleHint'),
   contextScopeButton: $('#contextScopeButton'),
   contextScopeLabel: $('#contextScopeLabel'),
   contextScopeMenu: $('#contextScopeMenu'),
@@ -1060,6 +1070,21 @@ let activeRunControl = null;
 let runControlGeneration = 0;
 let pendingSteerText = '';
 let completionSettlePending = false;
+let sideQuestionCardState = null;
+let sideQuestionSequence = 0;
+// Hermes reports the real session context over the dashboard socket
+// (`session.context_breakdown` on open plus 1 Hz `session.usage` events). Those
+// numbers are the same ones the Desktop context widget shows; the panel's own
+// next-request estimate is only a fallback and is labelled as such.
+let reportedContextTelemetry = { sessionId: '', telemetry: null };
+
+function applyReportedContextTelemetry(sessionId = '', payload = null) {
+  const telemetry = contextTelemetryFromRuntime(payload);
+  if (!telemetry.reported) return false;
+  reportedContextTelemetry = { sessionId: String(sessionId || ''), telemetry };
+  if (String(settings.sessionId || '') === String(sessionId || '')) renderContextWindow();
+  return true;
+}
 let dragDepth = 0;
 let speechRecognition = null;
 let speechWatchdogTimer = null;
@@ -4018,6 +4043,217 @@ function renderCompletionPendingRow() {
   scrollMessageStreamToBottom();
 }
 
+// /btw answers must outlive the operation toast: the card appears the moment a
+// side question is asked (pending), then fills with the answer. It is a
+// transient row — never part of the saved session messages — and it clears
+// when the user switches sessions. Answers ride the gateway's native
+// `prompt.btw` -> `btw.complete` flow (the same contract Desktop uses) over
+// the authenticated dashboard socket; the REST completions route stays as the
+// fallback for API-key connections. The old REST-only path answered 401 on
+// local dashboard connections, which surfaced as an empty answer.
+function showSideQuestionCard(question) {
+  const seq = ++sideQuestionSequence;
+  sideQuestionCardState = {
+    seq,
+    question: String(question || ''),
+    answer: '',
+    error: '',
+    pending: true,
+    elapsedMs: 0,
+    sessionId: String(settings.sessionId || ''),
+  };
+  renderSideQuestionCard();
+  return seq;
+}
+
+function settleSideQuestionCard(seq, { answer = '', error = '', elapsedMs = 0 } = {}) {
+  const state = sideQuestionCardState;
+  if (!state || state.seq !== seq) return false;
+  state.pending = false;
+  state.answer = String(answer || '');
+  state.error = String(error || '');
+  state.elapsedMs = Number(elapsedMs) || 0;
+  renderSideQuestionCard();
+  if (state.error) setStatus('warn', 'Side question failed', state.error, { translateDetail: false });
+  else setStatus('ok', 'Side question answered', 'The result card stays at the end of the transcript until you dismiss it.');
+  return true;
+}
+
+function dismissSideQuestionCard() {
+  sideQuestionCardState = null;
+  renderSideQuestionCard();
+}
+
+function sideQuestionMetaLabel(state) {
+  if (!state) return '';
+  if (state.pending) return translateUiText('Asking…');
+  if (state.error || !state.answer) return translateUiText('Failed');
+  return `${translateUiText('Snapshot')} · ${Math.max(0.1, state.elapsedMs / 1000).toFixed(1)}s`;
+}
+
+function renderSideQuestionCard() {
+  if (!els.messages) return;
+  if (sideQuestionCardState && sideQuestionCardState.sessionId !== String(settings.sessionId || '')) {
+    sideQuestionCardState = null;
+  }
+  const existing = els.messages.querySelector('.side-question-card');
+  if (!sideQuestionCardState) {
+    existing?.remove();
+    return;
+  }
+  let card = existing;
+  if (!card) {
+    card = document.createElement('article');
+    card.className = 'side-question-card';
+    const head = document.createElement('div');
+    head.className = 'side-question-head';
+    const label = document.createElement('span');
+    label.className = 'side-question-label';
+    label.textContent = translateUiText('By the way');
+    const meta = document.createElement('span');
+    meta.className = 'side-question-meta';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'side-question-close';
+    close.setAttribute('aria-label', translateUiText('Dismiss side question result'));
+    close.title = translateUiText('Dismiss');
+    close.textContent = '✕';
+    close.addEventListener('click', () => dismissSideQuestionCard());
+    head.append(label, meta, close);
+    const question = document.createElement('p');
+    question.className = 'side-question-question';
+    const body = document.createElement('div');
+    body.className = 'side-question-answer';
+    const actions = document.createElement('div');
+    actions.className = 'side-question-actions';
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'side-question-copy';
+    copy.textContent = translateUiText('Copy');
+    copy.addEventListener('click', async () => {
+      const answerText = String(sideQuestionCardState?.answer || '');
+      if (!answerText) return;
+      try {
+        await navigator.clipboard.writeText(answerText);
+        copy.textContent = translateUiText('Copied');
+      } catch {
+        copy.textContent = translateUiText('Copy failed');
+      }
+      setTimeout(() => { copy.textContent = translateUiText('Copy'); }, 1600);
+    });
+    actions.append(copy);
+    card.append(head, question, body, actions);
+  }
+  const state = sideQuestionCardState;
+  card.classList.toggle('warn', Boolean(state.error));
+  card.classList.toggle('pending', Boolean(state.pending));
+  card.querySelector('.side-question-question').textContent = state.question;
+  card.querySelector('.side-question-meta').textContent = sideQuestionMetaLabel(state);
+  const bodyEl = card.querySelector('.side-question-answer');
+  const content = state.pending ? THINKING_PLACEHOLDER : (state.error || state.answer);
+  if (bodyEl.dataset.rendered !== content) {
+    bodyEl.dataset.rendered = content;
+    renderMessageContentElement(bodyEl, content);
+  }
+  card.querySelector('.side-question-copy').hidden = Boolean(state.pending) || Boolean(state.error) || !state.answer;
+  els.messages.appendChild(card);
+  scrollMessageStreamToBottom();
+}
+
+async function runSideQuestion(question, seq) {
+  const startedAt = Date.now();
+  if (usesDashboardWsChatTransport()) {
+    const outcome = await requestDashboardSideQuestion(question, seq, startedAt);
+    if (outcome !== 'unavailable') return;
+  }
+  await requestRestSideQuestion(question, seq, startedAt);
+}
+
+async function requestDashboardSideQuestion(question, seq, startedAt) {
+  let connection;
+  let sessionId = '';
+  try {
+    connection = await ensureActiveDashboardWsConnection();
+    sessionId = await ensureRemoteWsSession(connection);
+  } catch {
+    return 'unavailable';
+  }
+  return new Promise((resolve) => {
+    let taskId = '';
+    let settled = false;
+    const finish = (outcome) => {
+      if (settled) return;
+      settled = true;
+      off();
+      clearTimeout(timer);
+      resolve(outcome);
+    };
+    const timer = setTimeout(() => {
+      settleSideQuestionCard(seq, { error: 'The side question timed out. Try again.', elapsedMs: Date.now() - startedAt });
+      finish('timeout');
+    }, 120000);
+    const off = connection.client.on('btw.complete', (event) => {
+      const payload = event?.payload && typeof event.payload === 'object' ? event.payload : {};
+      if (!matchesDashboardSessionEvent(event, [sessionId, connection.wsSessionId, connection.wsStoredSessionId])) return;
+      if (taskId && payload.task_id && String(payload.task_id) !== taskId) return;
+      const text = String(payload.text || '').trim();
+      if (!text) return;
+      if (/^error:/i.test(text)) {
+        settleSideQuestionCard(seq, { error: text.replace(/^error:\s*/i, ''), elapsedMs: Date.now() - startedAt });
+      } else {
+        settleSideQuestionCard(seq, { answer: text, elapsedMs: Date.now() - startedAt });
+      }
+      finish('answered');
+    });
+    connection.client.request(WS_METHODS.promptBtw, { session_id: sessionId, text: question })
+      .then((result) => {
+        taskId = String(result?.task_id || '');
+      })
+      .catch((error) => {
+        const message = String(error?.message || error);
+        if (/method not found|not found|unknown method/i.test(message) || Number(error?.rpcCode ?? error?.code) === 4010) {
+          finish('unavailable');
+          return;
+        }
+        settleSideQuestionCard(seq, { error: message, elapsedMs: Date.now() - startedAt });
+        finish('failed');
+      });
+  });
+}
+
+async function requestRestSideQuestion(question, seq, startedAt) {
+  const recentContext = messages.slice(-10).map((m) => `${m.role}: ${m.content}`).join('\n');
+  try {
+    const res = await apiFetch('/v1/chat/completions', {
+      method: 'POST',
+      body: JSON.stringify({
+        model: currentModelRequestId(),
+        provider: currentModelProviderSlug() || undefined,
+        stream: false,
+        messages: [
+          { role: 'system', content: 'You are answering an inline side question (/btw) about this conversation snapshot. Answer concisely in 1-3 sentences without modifying context.' },
+          { role: 'user', content: `Conversation snapshot:\n${recentContext}\n\nSide question: ${question}` },
+        ],
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    const answer = data?.choices?.[0]?.message?.content
+      || data?.message?.content
+      || data?.output_text
+      || (typeof data?.output === 'string' ? data.output : '')
+      || '';
+    if (!answer) {
+      const detail = data?.error?.message || data?.error
+        || `Hermes returned no answer for this side question (${res?.status || 'no response'}).`;
+      settleSideQuestionCard(seq, { error: String(detail), elapsedMs: Date.now() - startedAt });
+      return;
+    }
+    settleSideQuestionCard(seq, { answer, elapsedMs: Date.now() - startedAt });
+  } catch (error) {
+    settleSideQuestionCard(seq, { error: error?.message || String(error), elapsedMs: Date.now() - startedAt });
+  }
+}
+
 function queueCurrentDraft() {
   const text = els.input.value.trim();
   if (!text && !attachments.length) return false;
@@ -4382,27 +4618,9 @@ async function executeNativeBrowserCommand(parsedCommand) {
     els.input.value = '';
     renderSkillSuggestions();
     updateComposerBusyState();
-    showOperationToast({ title: 'Side question (/btw)', detail: userInput });
-    setStatus('ok', 'Evaluating side question', `Answers from transcript snapshot without disturbing active run.`);
-    const recentContext = messages.slice(-10).map((m) => `${m.role}: ${m.content}`).join('\n');
-    void apiFetch('/v1/chat/completions', {
-      method: 'POST',
-      body: JSON.stringify({
-        model: currentModelRequestId(),
-        provider: currentModelProviderSlug() || undefined,
-        stream: false,
-        messages: [
-          { role: 'system', content: 'You are answering an inline side question (/btw) about this conversation snapshot. Answer concisely in 1-3 sentences without modifying context.' },
-          { role: 'user', content: `Conversation snapshot:\n${recentContext}\n\nSide question: ${userInput}` },
-        ],
-      }),
-    }).then(async (res) => {
-      const data = await res.json().catch(() => null);
-      const answer = data?.choices?.[0]?.message?.content || 'Side question completed.';
-      showOperationToast({ title: 'By the way (/btw)', detail: answer });
-    }).catch((err) => {
-      showOperationToast({ kind: 'warn', title: 'Side question', detail: err?.message || String(err) });
-    });
+    const seq = showSideQuestionCard(userInput);
+    setStatus('ok', 'Evaluating side question', 'Answers from a transcript snapshot without disturbing the active run.');
+    void runSideQuestion(userInput, seq);
     return true;
   }
 
@@ -7051,11 +7269,19 @@ function renderContextWindow(userText = els.input?.value || '') {
   const meter = contextMeterDisplay({ accounting, runtimeLabel, modelContextTokens: contextLimit });
   const compaction = contextCompactionState({ accounting, runtime, session });
 
+  const reportedDisplay = mergeContextTelemetry(
+    reportedContextTelemetry.sessionId === settings.sessionId ? reportedContextTelemetry.telemetry : null,
+    { usedTokens: localSessionContextTokens, limitTokens: contextLimit },
+  );
+  const meterPercent = reportedDisplay.reported && reportedDisplay.limitTokens ? reportedDisplay.percent : meter.percent;
+  const meterLimit = reportedDisplay.reported && reportedDisplay.limitTokens ? reportedDisplay.limitTokens : contextLimit;
   els.contextCompactLabel.textContent = meter.compactLabel;
-  els.contextPercentLabel.textContent = meter.percentLabel;
-  els.contextBarButton.title = meter.title;
+  els.contextPercentLabel.textContent = reportedDisplay.reported ? reportedDisplay.percentLabel : meter.percentLabel;
+  els.contextBarButton.title = reportedDisplay.reported
+    ? `${reportedDisplay.tokenSummaryLabel} · ${reportedDisplay.percentFullLabel || reportedDisplay.percentLabel}`
+    : meter.title;
   els.contextUsageDetail.textContent = compaction.detail;
-  els.contextMeterFill.style.width = contextLimit ? `${Math.min(100, Math.max(0, meter.percent))}%` : '0%';
+  els.contextMeterFill.style.width = meterLimit ? `${Math.min(100, Math.max(0, meterPercent))}%` : '0%';
 
   const compactionStateLabels = {
     healthy: 'Healthy',
@@ -7069,13 +7295,39 @@ function renderContextWindow(userText = els.input?.value || '') {
     'local-estimate': 'Local next-request estimate',
     unknown: 'Unavailable',
   };
+  const reportedSourceLabel = reportedDisplay.reported
+    ? (reportedDisplay.estimated ? 'Hermes runtime (estimate)' : 'Hermes runtime')
+    : '';
   const runtimeRows = [
-    [translateUiText(accounting.source === 'local-estimate' ? 'Next request estimate' : 'Session context'), `${formatNumber(compaction.usedTokens)} ${translateUiText('tokens')}`],
-    [translateUiText('Context limit'), compaction.contextLimitTokens ? `${formatNumber(compaction.contextLimitTokens)} ${translateUiText('tokens')}` : translateUiText('Not reported by Hermes')],
+    [
+      translateUiText(reportedDisplay.reported ? 'Session context' : (accounting.source === 'local-estimate' ? 'Next request estimate' : 'Session context')),
+      reportedDisplay.reported
+        ? `${reportedDisplay.usedLabel} ${translateUiText('tokens')}`
+        : `${formatNumber(compaction.usedTokens)} ${translateUiText('tokens')}`,
+    ],
+    [
+      translateUiText('Context limit'),
+      reportedDisplay.reported
+        ? `${reportedDisplay.limitLabel} ${translateUiText('tokens')}`
+        : (compaction.contextLimitTokens ? `${formatNumber(compaction.contextLimitTokens)} ${translateUiText('tokens')}` : translateUiText('Not reported by Hermes')),
+    ],
+    ...(reportedDisplay.reported && reportedDisplay.breakdown?.length
+      ? reportedDisplay.breakdown.map((row) => [translateUiText(String(row.label || '')), formatTokenCount(row.tokens)])
+      : []),
     [translateUiText('Auto-compact trigger'), compaction.thresholdTokens ? `${formatNumber(compaction.thresholdTokens)} ${translateUiText('tokens')} · ${compaction.thresholdPercent}%` : translateUiText('Not reported by Hermes')],
-    [translateUiText('Compactions'), compaction.compressionCountKnown ? formatNumber(compaction.compressionCount) : translateUiText('Not reported by Hermes')],
+    [
+      translateUiText('Compactions'),
+      reportedDisplay.reported && Number.isFinite(reportedDisplay.compressionCount)
+        ? formatNumber(reportedDisplay.compressionCount)
+        : (compaction.compressionCountKnown ? formatNumber(compaction.compressionCount) : translateUiText('Not reported by Hermes')),
+    ],
     [translateUiText('Compaction state'), translateUiText(compactionStateLabels[compaction.state] || compactionStateLabels.unknown)],
-    [translateUiText('Telemetry source'), translateUiText(telemetrySourceLabels[compaction.source] || telemetrySourceLabels.unknown)],
+    [
+      translateUiText('Telemetry source'),
+      reportedDisplay.reported
+        ? translateUiText(reportedSourceLabel)
+        : translateUiText(telemetrySourceLabels[compaction.source] || telemetrySourceLabels.unknown),
+    ],
   ];
   els.contextRuntimeBreakdown.innerHTML = runtimeRows.map(([label, value]) => `
     <dt>${escapeHtml(label)}</dt>
@@ -7118,10 +7370,11 @@ function renderContextWindow(userText = els.input?.value || '') {
     ].filter(Boolean).join('\n');
   }
 
-  if (els.explicitSiteCaptureButton) {
+  if (els.explicitSiteCaptureButton && els.explicitSiteCaptureWrap) {
     const action = contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY
       ? null
       : explicitSiteCaptureAction(pc);
+    els.explicitSiteCaptureWrap.hidden = !action || settings.gmailCaptureHidden === true;
     els.explicitSiteCaptureButton.hidden = !action;
     if (action) {
       els.explicitSiteCaptureButton.querySelector('strong').textContent = translateUiText(action.label);
@@ -11404,19 +11657,182 @@ async function copyTextToClipboard(text = '', { label = 'Text copied' } = {}) {
   }
 }
 
-async function promptRenameSession(session = {}) {
-  const currentTitle = sessionDisplayName(session);
-  const nextTitle = window.prompt(translateUiText('Rename session'), currentTitle);
-  if (nextTitle == null) return false;
-  const cleanTitle = String(nextTitle || '').trim();
-  if (!cleanTitle || cleanTitle === currentTitle) return false;
-  try {
-    await renameHermesSessionTitle(session.id, cleanTitle);
-    return true;
-  } catch (error) {
-    setStatus('warn', 'Could not rename session', error?.message || String(error), { translateDetail: false });
+// ── In-panel session rename editor ─────────────────────────────────────
+// Replaces the native window.prompt rename: a small editor row inside the
+// session menu (existing tokens + .session-action-button conventions), with
+// Save/Cancel, Enter=submit, Escape=cancel, and focus moved into the input.
+// The sidebar row updates optimistically; a rejected write reverts it and
+// surfaces the error inline (plus the panel status line).
+let sessionRenameEditor = null; // { sessionId, draft, error }
+const SESSION_RENAME_MAX_CHARS = 80;
+
+function isSessionRenameEditorTarget(session = {}) {
+  const state = sessionRenameEditor;
+  if (!state?.sessionId) return false;
+  const id = String(state.sessionId);
+  if (session.kind === 'group-thread') {
+    return session.threadId === 'main'
+      && Boolean(activeGroupProjection)
+      && String(activeGroupProjection.id) === id;
+  }
+  return String(session.id || '') === id;
+}
+
+function openSessionRenameEditor(session = {}, { draft = '', error = '' } = {}) {
+  const sessionId = String(session.id || '').trim();
+  if (!sessionId) return false;
+  const previousTitle = sessionDisplayName(session);
+  sessionRenameEditor = {
+    sessionId,
+    previousTitle,
+    draft: String(draft || previousTitle || '').slice(0, SESSION_RENAME_MAX_CHARS),
+    error: String(error || ''),
+  };
+  renderSessionMenu();
+  return true;
+}
+
+function closeSessionRenameEditor({ render = true } = {}) {
+  if (!sessionRenameEditor) return;
+  sessionRenameEditor = null;
+  if (render) renderSessionMenu();
+}
+
+function renderSessionRenameEditor(row, session = {}) {
+  const state = sessionRenameEditor;
+  // The rename target id is the editor state's (group rooms rename the room
+  // projection, not the row's synthetic bot-thread id).
+  const targetId = String(state?.sessionId || session.id || '');
+  row.classList.add('renaming');
+
+  const form = document.createElement('form');
+  form.className = 'session-rename-editor';
+  form.setAttribute('aria-label', translateUiText('Rename session'));
+
+  const line = document.createElement('span');
+  line.className = 'session-rename-line';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'session-rename-input';
+  input.value = state?.draft || '';
+  input.maxLength = SESSION_RENAME_MAX_CHARS;
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.setAttribute('aria-label', t('session.rename_named', { title: sessionDisplayName(session) }));
+
+  const actions = document.createElement('span');
+  actions.className = 'session-rename-actions';
+
+  const save = document.createElement('button');
+  save.type = 'submit';
+  save.className = 'session-action-button session-rename-save';
+  save.textContent = translateUiText('Save');
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'session-action-button session-rename-cancel';
+  cancel.textContent = translateUiText('Cancel');
+
+  const status = document.createElement('small');
+  status.className = 'session-rename-status';
+  status.setAttribute('role', 'status');
+  status.hidden = !state?.error;
+  status.textContent = state?.error || '';
+
+  input.addEventListener('input', () => {
+    if (sessionRenameEditor && String(sessionRenameEditor.sessionId) === targetId) sessionRenameEditor.draft = input.value;
+  });
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      closeSessionRenameEditor();
+    }
+  });
+  cancel.addEventListener('click', (event) => {
+    event.stopPropagation();
+    closeSessionRenameEditor();
+  });
+  form.addEventListener('click', (event) => event.stopPropagation());
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void submitSessionRename({ id: targetId, title: state?.previousTitle || sessionDisplayName(session) }, input.value);
+  });
+
+  actions.append(save, cancel);
+  line.append(input, actions);
+  form.append(line, status);
+  row.replaceChildren(form);
+
+  queueMicrotask(() => {
+    try {
+      input.focus({ preventScroll: true });
+      input.select();
+    } catch {
+      /* focus is best-effort */
+    }
+  });
+}
+
+async function submitSessionRename(session = {}, rawTitle = '') {
+  const sessionId = String(session.id || '').trim();
+  const previousTitle = sessionDisplayName(session);
+  const nextTitle = String(rawTitle || '').trim().slice(0, SESSION_RENAME_MAX_CHARS);
+  if (!sessionId) return false;
+  if (!nextTitle || nextTitle === previousTitle) {
+    closeSessionRenameEditor();
     return false;
   }
+  // Optimistic: the row shows the new name immediately; a rejected write
+  // reverts it and reopens the editor with the attempted name + the error.
+  closeSessionRenameEditor({ render: false });
+  applySessionTitleLocally(sessionId, nextTitle);
+  renderSessionMenu();
+  updateSessionLabel();
+  try {
+    await renameHermesSessionTitle(sessionId, nextTitle);
+    if (sessionId === String(settings.sessionId || '')) void loadSessions({ quiet: true }).catch(() => {});
+    return true;
+  } catch (error) {
+    applySessionTitleLocally(sessionId, previousTitle);
+    renderSessionMenu();
+    updateSessionLabel();
+    setStatus('warn', 'Could not rename session', error?.message || String(error), { translateDetail: false });
+    openSessionRenameEditor({ id: sessionId, title: previousTitle }, { draft: nextTitle, error: error?.message || String(error) });
+    return false;
+  }
+}
+
+// Local-only title projection shared by the optimistic render and the revert
+// path. Never pretends the write was persisted — persistence lives in
+// renameHermesSessionTitle.
+function applySessionTitleLocally(sessionId, title) {
+  const id = String(sessionId || '').trim();
+  const clean = String(title || '').trim();
+  if (!id || !clean) return;
+  if (activeGroupProjection && String(activeGroupProjection.id) === id) {
+    activeGroupProjection = {
+      ...activeGroupProjection,
+      displayName: clean,
+      title: clean,
+    };
+    botModeGroupChats = botModeGroupChats.map((room) => (
+      room.id === activeGroupProjection.id
+        ? { ...room, displayName: clean, title: clean }
+        : room
+    ));
+    renderBotModeGroupChats(els.botModeSearch?.value);
+  } else {
+    availableSessions = availableSessions.map((session) => (
+      String(session.id) === id ? { ...session, title: clean } : session
+    ));
+  }
+  if (String(settings.sessionId || '') === id) {
+    settings = { ...settings, sessionTitle: clean };
+    void browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  }
+  updateSessionLabel();
 }
 
 function groupThreadSessionsForMenu(query = '') {
@@ -11560,6 +11976,12 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
       row.className = `session-option-row ${session.selected ? 'selected' : ''}`.trim();
       row.dataset.sessionId = session.id;
 
+      if (isSessionRenameEditorTarget(session)) {
+        renderSessionRenameEditor(row, session);
+        els.sessionMenuList.appendChild(row);
+        continue;
+      }
+
       if (session.kind === 'group-thread') {
         row.classList.add('group-thread');
         row.setAttribute('data-group-thread-id', session.threadId);
@@ -11605,7 +12027,7 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
           renameButton.setAttribute('aria-label', translateUiText('Rename group room'));
           renameButton.addEventListener('click', (event) => {
             event.stopPropagation();
-            promptRenameSession({ id: activeGroupProjection.id, title: activeGroupProjection.displayName });
+            openSessionRenameEditor({ id: activeGroupProjection.id, title: activeGroupProjection.displayName });
           });
           actions.append(settingsButton, renameButton);
         }
@@ -11627,6 +12049,23 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
       meta.className = 'session-option-meta';
       const modelLabel = [session.provider, session.rawModelId || session.model].filter(Boolean).join(' · ');
       meta.textContent = session.selected ? '✓' : (modelLabel || (session.messageCount ? `${session.messageCount}` : ''));
+
+      // Honest liveness. Session rows and the REST payload carry no state field
+      // at all, so the only trustworthy evidence the panel currently holds is
+      // the local run signal plus the live subagent roster for the session it is
+      // attached to; anything else stays unmarked rather than guessed.
+      const isAttachedSession = String(session.id || '') === String(settings.sessionId || '');
+      const liveState = mergeLiveSignals({
+        row: session,
+        liveRun: isAttachedSession ? activeRunControl : null,
+        roster: isAttachedSession ? currentSubagentItems() : null,
+      });
+      if (liveState.live || liveState.state === 'error') {
+        const badge = liveStateBadge(liveState.state);
+        meta.dataset.liveState = liveState.state;
+        meta.title = liveState.label;
+        meta.textContent = ['● ' + badge.text.toUpperCase(), session.selected ? '' : meta.textContent].filter(Boolean).join(' · ');
+      }
 
       button.append(name, meta);
       button.addEventListener('click', () => openHermesSession(session));
@@ -11653,7 +12092,7 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
       renameButton.setAttribute('aria-label', t('session.rename_named', { title: sessionDisplayName(session) }));
       renameButton.addEventListener('click', (event) => {
         event.stopPropagation();
-        promptRenameSession(session);
+        openSessionRenameEditor(session);
       });
 
       actions.append(copyButton, renameButton);
@@ -11845,6 +12284,124 @@ async function refreshSessionsFromMenu() {
     : { kind: 'warn', title: 'Session refresh incomplete', detail: outcome?.error || 'Hermes kept the current session list.' });
 }
 
+// ── Session rename persistence (Desktop parity) ────────────────────────
+// Desktop renames the ACTIVE session through the gateway's `session.title`
+// WebSocket RPC — it resolves the live runtime session and persists the row on
+// demand, so it succeeds for runtime-only sessions where REST 404s — and every
+// other row through REST PATCH /api/sessions/{id} (rename_session_endpoint in
+// hermes_cli/web_routers/sessions.py). The extension mirrors that order and
+// only reaches the dashboard's session-token REST surface when the RPC cannot
+// run (session not live on this socket) or fails.
+
+// The runtime id is only known for the session the dashboard socket is
+// currently attached to; anything else resolves against the stored table.
+function sessionRenameRpcLiveId(sessionId) {
+  if (!usesDashboardWsChatTransport()) return '';
+  const connection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
+  if (connection?.client?.readyState !== 1) return '';
+  const liveId = String(connection.wsSessionId || '').trim();
+  const storedId = String(connection.wsStoredSessionId || '').trim();
+  if (!liveId || !storedId || storedId !== String(sessionId || '').trim()) return '';
+  return liveId;
+}
+
+// `session.title` { session_id: <runtime id>, title } -> { pending, title }.
+// Rejects an empty title (4021) and a runtime id the gateway no longer holds
+// (4001 "session not found"), which is what sends the caller to REST.
+async function renameSessionViaGatewayRpc(sessionId, title) {
+  const liveId = sessionRenameRpcLiveId(sessionId);
+  if (!liveId) return { ok: false, reason: 'session-not-live' };
+  const connection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
+  if (connection?.client?.readyState !== 1) return { ok: false, reason: 'dashboard-offline' };
+  try {
+    const result = await connection.client.request(WS_METHODS.sessionTitle, { session_id: liveId, title });
+    return {
+      ok: true,
+      title: String(result?.title || '').trim() || title,
+      pending: result?.pending === true,
+    };
+  } catch (error) {
+    console.warn('[Hermes Browser] session.title rename RPC failed:', error);
+    return { ok: false, reason: 'rpc-rejected', detail: error?.message || String(error) };
+  }
+}
+
+// REST with the api_server Bearer key (local-api / remote-api modes). Remote
+// dashboard mode skips this: its REST surface is CORS-gated against the
+// extension origin and lives behind the session token instead.
+async function renameSessionViaGatewayRest(sessionId, title) {
+  if (!settings.apiKey) return { ok: false, reason: 'no-api-key' };
+  const response = await apiFetch(`/api/sessions/${encodeSessionId(sessionId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ title }),
+  });
+  const payload = await readJsonResponse(response);
+  if (!response.ok) {
+    return {
+      ok: false,
+      reason: `rest-${response.status}`,
+      detail: payload?.error?.message || payload?.error || '',
+    };
+  }
+  const titleFromServer = String(payload?.session?.title || payload?.title || '').trim();
+  return { ok: true, title: titleFromServer || title };
+}
+
+// Dashboard session-token REST. Local dashboard: direct fetch from the
+// extension (the same origin the roster/model calls already use). Remote
+// dashboard: first-party PATCH executed inside the trusted signed-in tab,
+// because the dashboard's CORS rejects the extension origin.
+async function renameSessionViaDashboardRest(sessionId, title) {
+  if (isRemoteWsMode()) {
+    try {
+      const result = await renameSessionViaTab({
+        tabsApi: browserApi.tabs,
+        scriptingApi: browserApi.scripting,
+        baseUrl: normalizeGatewayUrl(settings.gatewayUrl),
+        tabId: Number.isFinite(trustedDashboardTabId) ? trustedDashboardTabId : null,
+        sessionId,
+        title,
+        profile: safeActiveProfile(),
+      });
+      if (result?.ok) return { ok: true, title: String(result.title || '').trim() || title };
+      return { ok: false, reason: result?.reason || 'tab-rename-failed', detail: result?.detail || '' };
+    } catch (error) {
+      return { ok: false, reason: 'tab-rename-error', detail: error?.message || String(error) };
+    }
+  }
+  if (!desktopDashboardUrl) return { ok: false, reason: 'no-dashboard' };
+  const profile = safeActiveProfile();
+  const path = `/api/sessions/${encodeSessionId(sessionId)}${profile ? `?profile=${encodeURIComponent(profile)}` : ''}`;
+  try {
+    const response = await dashboardApiRequest(path, {
+      method: 'PATCH',
+      body: { title, ...(profile ? { profile } : {}) },
+    });
+    const payload = await readJsonResponse(response);
+    return { ok: true, title: String(payload?.title || '').trim() || title };
+  } catch (error) {
+    return { ok: false, reason: `dashboard-rest-${error?.status || 'error'}`, detail: error?.message || '' };
+  }
+}
+
+function sessionRenameFailureMessage(failures = []) {
+  const reasons = failures.map((entry) => String(entry?.reason || ''));
+  if (isRemoteWsMode()) {
+    if (reasons.includes('no_dashboard_tab')) {
+      return 'Open and sign in to your Hermes dashboard tab, then retry. Hermes only holds a live runtime session while it is open in the panel.';
+    }
+    if (reasons.includes('not_signed_in')) return 'Sign in to your Hermes dashboard tab, then retry.';
+    if (reasons.some((reason) => reason.startsWith('rest-') || reason.startsWith('session_http_'))) {
+      return 'Hermes rejected the rename for this session. Reopen it in the panel, then retry.';
+    }
+    return 'Hermes did not confirm the rename. Check the dashboard connection and retry.';
+  }
+  if (reasons.some((reason) => reason.startsWith('rpc-rejected'))) {
+    return 'Hermes did not accept the rename. Reopen the session in the panel, then retry.';
+  }
+  return 'Hermes did not confirm the rename. Check the connection and retry.';
+}
+
 async function renameHermesSessionTitle(sessionId, title, { quiet = false } = {}) {
   if (activeGroupProjection && sessionId === activeGroupProjection.id) {
     const nextTitle = String(title || '').trim().slice(0, 64);
@@ -11880,30 +12437,47 @@ async function renameHermesSessionTitle(sessionId, title, { quiet = false } = {}
   }
   const nextTitle = String(title || '').trim();
   if (!sessionId || !nextTitle) return false;
-  if (isRemoteWsMode()) {
-    // Dashboard WS currently exposes create/resume/list/history but not rename.
-    availableSessions = availableSessions.map((session) => (session.id === sessionId ? { ...session, title: nextTitle } : session));
-    settings = { ...settings, sessionTitle: nextTitle };
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
-    updateSessionLabel();
-    renderSessionMenu();
-    if (!quiet) setStatus('warn', 'Session title saved locally', 'Remote dashboard rename RPC is not available yet.');
-    return false;
+
+  const failures = [];
+  let persisted = '';
+
+  // 1. Desktop's primary path: the gateway `session.title` RPC for the live
+  //    runtime session (persists the row on demand).
+  const rpc = await renameSessionViaGatewayRpc(sessionId, nextTitle);
+  if (rpc.ok) persisted = rpc.title;
+  else failures.push(rpc);
+
+  // 2. REST with the api_server Bearer key. Remote dashboard mode skips this:
+  //    its REST surface is CORS-gated against the extension origin.
+  if (!persisted && !isRemoteWsMode()) {
+    try {
+      const rest = await renameSessionViaGatewayRest(sessionId, nextTitle);
+      if (rest.ok) persisted = rest.title;
+      else failures.push(rest);
+    } catch (error) {
+      failures.push({ reason: 'rest-error', detail: error?.message || String(error) });
+    }
   }
-  if (!settings.apiKey) return false;
-  const response = await apiFetch(`/api/sessions/${encodeSessionId(sessionId)}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ title: nextTitle }),
-  });
-  const payload = await readJsonResponse(response);
-  if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Session rename failed (${response.status})`);
-  const updated = normalizeHermesSessions({ data: [payload.session || payload] })[0] || { id: sessionId, title: nextTitle, source: settings.sessionSource };
-  availableSessions = normalizeHermesSessions({ data: [updated, ...availableSessions.filter((session) => session.id !== sessionId)] });
-  settings = { ...settings, sessionTitle: updated.title || nextTitle };
-  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
-  updateSessionLabel();
+
+  // 3. Dashboard session-token REST (local: direct; remote: first-party in
+  //    the trusted tab).
+  if (!persisted) {
+    const dashboardRest = await renameSessionViaDashboardRest(sessionId, nextTitle);
+    if (dashboardRest.ok) persisted = dashboardRest.title;
+    else failures.push(dashboardRest);
+  }
+
+  if (!persisted) {
+    const message = sessionRenameFailureMessage(failures);
+    console.warn('[Hermes Browser] Session rename was not confirmed by Hermes:', failures);
+    if (!quiet) setStatus('warn', 'Could not rename session', message, { translateDetail: false });
+    throw new Error(message);
+  }
+
+  applySessionTitleLocally(sessionId, persisted);
   renderSessionMenu();
-  if (!quiet) setStatus('ok', 'Session title updated', settings.sessionTitle);
+  updateSessionLabel();
+  if (!quiet) setStatus('ok', 'Session renamed', persisted);
   return true;
 }
 
@@ -11924,6 +12498,7 @@ async function maybeRenameCurrentSessionTitle(previousSettings = {}, nextTitle =
 function autoTitleForCurrentTurn(userText = '') {
   if (settings.autoNameSessions === false || !String(userText || '').trim()) return '';
   if (messages.some((message) => message.role === 'user' && String(message.content || '').trim())) return '';
+  if (sessionRenameEditor && String(sessionRenameEditor.sessionId) === String(settings.sessionId || '')) return '';
   const current = availableSessions.find((session) => session.id === settings.sessionId);
   const currentTitle = current?.title || settings.sessionTitle || DEFAULT_SETTINGS.sessionTitle;
   if (!isDefaultBrowserSessionTitle(currentTitle)) return '';
@@ -11933,10 +12508,20 @@ function autoTitleForCurrentTurn(userText = '') {
 async function maybeAutoNameCurrentSession(title = '') {
   const cleanTitle = String(title || '').trim();
   if (!cleanTitle) return false;
+  // Revalidate at persist time (turn completion): the auto-name computed at
+  // turn start must still be eligible — an auto-name never overwrites a title
+  // the user chose, and a rename the user made mid-turn has already updated
+  // availableSessions, so the default-title guard now rejects it.
+  const current = availableSessions.find((session) => session.id === settings.sessionId);
+  const currentTitle = current?.title || settings.sessionTitle || DEFAULT_SETTINGS.sessionTitle;
+  if (!isDefaultBrowserSessionTitle(currentTitle)) return false;
+  if (sessionRenameEditor && String(sessionRenameEditor.sessionId) === String(settings.sessionId || '')) return false;
   try {
     return await renameHermesSessionTitle(settings.sessionId, cleanTitle, { quiet: true });
   } catch (error) {
-    setStatus('warn', 'Auto-name skipped', error?.message || String(error), { translateDetail: false });
+    // Auto-naming must not nag; keep it diagnosable for support instead.
+    const detail = error?.message || String(error);
+    console.warn('[Hermes Browser] Auto-name skipped:', detail);
     return false;
   }
 }
@@ -12459,6 +13044,7 @@ async function hydrateSessionMediaInElement(element) {
       image.dataset.slot = 'aui_generated-image';
       figure.append(image);
       node.replaceWith(figure);
+      wrapGeneratedImagesForInspection(figure.parentElement || figure);
       return;
     }
     if (kind === 'video' && plan.transport === 'dashboard-stream') {
@@ -12836,7 +13422,16 @@ function renderMessageContentElement(element, content = '') {
     copyLabel: translateUiText('Copy code'),
     copiedLabel: translateUiText('Copied'),
   });
-  for (const image of element.querySelectorAll('img[data-slot="aui_generated-image"]:not([data-inspect-wrapped])')) {
+  wrapGeneratedImagesForInspection(element);
+  void hydrateSessionMediaInElement(element);
+}
+
+// Any generated picture in the transcript gets the same inspect affordance the
+// lightbox uses — including pictures that only appear later, once media
+// hydration has replaced a filename chip with the real image.
+function wrapGeneratedImagesForInspection(root) {
+  if (!root?.querySelectorAll) return;
+  for (const image of root.querySelectorAll('img[data-slot="aui_generated-image"]:not([data-inspect-wrapped])')) {
     image.dataset.inspectWrapped = 'true';
     const wrapper = document.createElement('span');
     wrapper.className = 'generated-image-inspectable';
@@ -12855,7 +13450,6 @@ function renderMessageContentElement(element, content = '') {
       openGeneratedImageLightbox(image);
     });
   }
-  void hydrateSessionMediaInElement(element);
 }
 
 function closeGeneratedImageLightbox() {
@@ -12974,6 +13568,80 @@ function activeImageGenerationPlaceholder(node) {
   return node?.querySelector('.message-tool-activity .image-gen-placeholder') || null;
 }
 
+// A local media path is not a browser URL. Hermes-managed paths are served by
+// the dashboard's /api/media route (as a data URL), which is how a finished
+// generation can dissolve into the real picture in the panel. Anything else
+// stays an honest filename chip: the route refuses to read outside the media
+// roots, and inventing a source would be a lie.
+async function resolveGeneratedImageSource(source = '') {
+  const text = String(source || '').trim();
+  if (!text) return '';
+  const direct = resolveImageSource(text);
+  if (direct) return direct;
+  const plan = mediaSourcePlan(text);
+  if (plan.transport !== 'dashboard-media') return '';
+  try {
+    const baseUrl = await resolveDashboardMediaBaseUrl();
+    if (!baseUrl) return '';
+    const token = await fetchDashboardSessionToken({ baseUrl });
+    return await fetchDashboardMediaDataUrl({ baseUrl, filePath: text, token });
+  } catch {
+    return '';
+  }
+}
+
+// One image_generate call can deliver more than one picture (a primary plus
+// alternates). Reveal the first inside the live placeholder — the animation
+// dissolving into the real image — then append a card for every remaining
+// picture so nothing the user paid for stays invisible.
+async function revealGeneratedImages(node, placeholder, sources = []) {
+  const queue = [...new Set((Array.isArray(sources) ? sources : [])
+    .map((source) => String(source || '').trim())
+    .filter(Boolean))];
+  if (!queue.length) return false;
+  const [first, ...rest] = queue;
+  const revealed = await revealGeneratedImage(placeholder, first);
+  if (rest.length) appendGeneratedImageCards(node, rest);
+  return revealed;
+}
+
+// Extra pictures get their own card next to the live placeholder: a calm
+// pending block while the dashboard hands over the bytes, then the same
+// dissolve the primary image uses.
+function appendGeneratedImageCards(node, sources = []) {
+  const slot = node?.querySelector?.('.message-tool-activity') || node;
+  if (!slot) return;
+  for (const source of [...new Set((Array.isArray(sources) ? sources : []).map((value) => String(value || '').trim()).filter(Boolean))]) {
+    const name = mediaDisplayName(source);
+    const figure = document.createElement('figure');
+    figure.className = 'generated-image generated-image-card';
+    figure.dataset.slot = 'aui_generated-image';
+    figure.setAttribute('role', 'status');
+    figure.setAttribute('aria-label', name);
+    const label = document.createElement('span');
+    label.className = 'generated-image-card-name';
+    label.textContent = name;
+    figure.append(label);
+    slot.appendChild(figure);
+    void (async () => {
+      const displayable = await resolveGeneratedImageSource(source);
+      if (!displayable || !figure.isConnected) return;
+      const image = document.createElement('img');
+      image.src = displayable;
+      image.alt = name;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      image.dataset.slot = 'aui_generated-image';
+      figure.replaceChildren(image);
+      figure.removeAttribute('role');
+      figure.removeAttribute('aria-label');
+      figure.classList.add('generated-image-card-revealed');
+      wrapGeneratedImagesForInspection(figure);
+      scrollMessageStreamToBottom();
+    })();
+  }
+}
+
 function loadGeneratedImageForReveal(source = '') {
   return new Promise((resolve, reject) => {
     const image = new globalThis.Image();
@@ -12989,7 +13657,9 @@ function loadGeneratedImageForReveal(source = '') {
 async function revealGeneratedImage(placeholder, source = '') {
   if (!placeholder?._reveal || !source) return false;
   try {
-    const image = await loadGeneratedImageForReveal(source);
+    const displayable = await resolveGeneratedImageSource(source);
+    if (!displayable) return false;
+    const image = await loadGeneratedImageForReveal(displayable);
     const naturalRatio = image.naturalWidth / image.naturalHeight;
     if (Number.isFinite(naturalRatio) && naturalRatio > 0) {
       placeholder.style.aspectRatio = String(naturalRatio);
@@ -13170,8 +13840,8 @@ function setToolActivity(node, activity = null) {
     slot.dataset.imageActivityId = activity.activityId || previousImageActivity.activityId;
     slot.dataset.imageActivityStatus = activity.status || 'progress';
     existingImage.dataset.toolStatus = activity.status || 'progress';
-    const completedSource = resolvedGeneratedImageSourcesFromResult(activity.result)[0] || '';
-    if (completedSource) void revealGeneratedImage(existingImage, completedSource);
+    const completedSources = rawGeneratedImageCandidatesFromResult(activity.result);
+    if (completedSources.length) void revealGeneratedImages(node, existingImage, completedSources);
     return;
   }
   if (existingImage && !isImageGeneration) {
@@ -13194,8 +13864,8 @@ function setToolActivity(node, activity = null) {
   const toolActivity = renderToolActivity(nextActivity);
   slot.replaceChildren(toolActivity);
   toolActivity._start?.();
-  const completedSource = isImageGeneration ? resolvedGeneratedImageSourcesFromResult(activity.result)[0] || '' : '';
-  if (completedSource) void revealGeneratedImage(toolActivity, completedSource);
+  const completedSources = isImageGeneration ? rawGeneratedImageCandidatesFromResult(activity.result) : [];
+  if (completedSources.length) void revealGeneratedImages(node, toolActivity, completedSources);
   scrollMessageStreamToBottom();
 }
 
@@ -13296,6 +13966,7 @@ function createStreamingMessageUpdater(node) {
     const existingImage = activeImageGenerationPlaceholder(node);
     const imageSource = extractRenderableImageSource(pending);
     const recoveryImageSource = imageSource || imageSources[0] || '';
+    if (imageSources.length > 1) appendGeneratedImageCards(node, imageSources.slice(1));
     if (existingImage && recoveryImageSource) {
       revealPromise ||= imageSource
         ? revealGeneratedImageFromContent(node, pending)
@@ -13509,6 +14180,7 @@ function renderMessagesFromStorage() {
   renderActiveProfileIndicator();
   renderSteerNotice();
   renderCompletionPendingRow();
+  renderSideQuestionCard();
   const alreadyHydrated = messages.some((message) => (message.attachments || []).some((item) => item.dataUrl && item.pathRef));
   void (async () => {
     await hydrateSessionMedia(messages);
@@ -13560,6 +14232,9 @@ function syncSettingsForm() {
   if (els.wakeWordPhraseInput) els.wakeWordPhraseInput.value = settings.wakeWordPhrase || DEFAULT_SETTINGS.wakeWordPhrase;
   if (els.wakeWordBrowserFallbackInput) els.wakeWordBrowserFallbackInput.checked = settings.wakeWordBrowserFallback !== false;
   if (els.wakeWordSpeakRepliesInput) els.wakeWordSpeakRepliesInput.checked = settings.wakeWordSpeakReplies !== false;
+  if (els.gmailCaptureEnabledInput) els.gmailCaptureEnabledInput.checked = settings.gmailCaptureHidden !== true;
+  if (els.gmailCaptureToggleTitle) els.gmailCaptureToggleTitle.textContent = translateUiText('Gmail capture button');
+  if (els.gmailCaptureToggleHint) els.gmailCaptureToggleHint.textContent = translateUiText('Show the "Capture visible Gmail thread" button on Gmail threads.');
   renderWakeState();
   renderCompatibilityPanel();
   renderConnectionSecurity();
@@ -13642,6 +14317,7 @@ async function saveSettingsFromForm() {
     agentPorts: parseAgentPortsInput(els.agentPortsInput?.value || '').length ? parseAgentPortsInput(els.agentPortsInput?.value || '') : getAgentPorts(),
     customModelSources: normalizeExternalModelSourceList(els.customModelSourcesInput?.value?.split(/\n+/) || settings.customModelSources || []),
     transcriptProvider: els.transcriptProviderInput.value.trim() || DEFAULT_SETTINGS.transcriptProvider,
+    gmailCaptureHidden: els.gmailCaptureEnabledInput ? !els.gmailCaptureEnabledInput.checked : settings.gmailCaptureHidden === true,
     wakeWordEnabled: els.wakeWordEnabledInput ? els.wakeWordEnabledInput.checked : Boolean(settings.wakeWordEnabled),
     wakeWordPhrase: normalizeWakeWordSettings({ wakeWordPhrase: els.wakeWordPhraseInput?.value }).phrase,
     wakeWordPreferNative: settings.wakeWordPreferNative !== false,
@@ -15349,6 +16025,13 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
     offs.push(client.on('steer.queued', (event) => {
       if (forThisSession(event)) onSteerQueued?.(event.payload?.text || event.payload?.message || '');
     }));
+    offs.push(client.on('session.usage', (event) => {
+      if (!forThisSession(event)) return;
+      applyReportedContextTelemetry(sessionId, event.payload);
+    }));
+    void client.request(WS_METHODS.contextBreakdown, { session_id: sessionId })
+      .then((result) => applyReportedContextTelemetry(sessionId, result))
+      .catch(() => {});
     offs.push(client.on(WS_EVENTS.error, (event) => {
       if (!forThisSession(event)) return;
       finish(reject, hermesGatewayTurnError({ payload: event.payload }) || new Error('Dashboard stream error'));
@@ -15979,6 +16662,9 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   let didSend = false;
   let streamTerminalStatus = '';
   let streamView = null;
+  // Declared outside the turn's try block so the terminal error paths can also
+  // drain whatever the reveal still holds before the bubble is disposed.
+  let streamPacer = null;
   try {
     let preparedAttachments = await saveImageAttachmentsForTurn(turnAttachments);
     if (dashboardTransport && preparedAttachments.some((attachment) => attachment.kind === 'image' && attachment.dataUrl)) {
@@ -16113,6 +16799,22 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     streamView = createStreamingMessageUpdater(node);
     let answer = '';
     let liveText = '';
+    let pushedLive = 0;
+    let resolvePacerDrain = null;
+    const pacerDrained = new Promise((resolve) => { resolvePacerDrain = resolve; });
+    // Fast models (300-450 tok/s) hand over whole paragraphs in a couple of
+    // frames, so the live bubble lurches instead of reading as streaming. The
+    // pacer spreads every arrival into a steady reveal; the terminal flush
+    // still paints the exact final text, and we let the reveal finish first so
+    // the bubble never jumps to the full answer.
+    streamPacer = createStreamPacer({
+      onFrame: (text, meta) => {
+        streamView.updateText(text || (meta.done ? '' : THINKING_PLACEHOLDER));
+        if (meta.done) resolvePacerDrain?.();
+      },
+      schedule: (cb) => requestAnimationFrame(cb),
+      cancel: (id) => cancelAnimationFrame(id),
+    });
     let recoveredImageSources = [];
     let turnImageSources = [];
     try {
@@ -16121,13 +16823,20 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
         (partial) => {
           if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
           liveText = partial || '';
-          streamView.updateText(liveText || THINKING_PLACEHOLDER);
+          if (liveText.length < pushedLive) {
+            // The stream rewrote its cumulative text (retry/reattach): restart
+            // the reveal instead of duplicating what already painted.
+            streamPacer.reset();
+            pushedLive = 0;
+          }
+          streamPacer.push(liveText.slice(pushedLive));
+          pushedLive = liveText.length;
         },
         (tool) => {
           if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
           captureTaskToolEvent(tool).catch((error) => console.warn('[Hermes Browser] Task event persistence failed:', error));
           const activity = normalizeToolActivity(tool);
-          const sources = resolvedGeneratedImageSourcesFromResult(activity.result);
+          const sources = rawGeneratedImageCandidatesFromResult(activity.result);
           if (sources.length) turnImageSources = [...new Set([...turnImageSources, ...sources])];
           streamView.updateTool(activity);
         },
@@ -16209,6 +16918,10 @@ ${streamError.message}`);
       contextError.requestAccepted = true;
       throw contextError;
     }
+    if (streamPacer.pending() > 0) {
+      streamPacer.finish();
+      await Promise.race([pacerDrained, new Promise((resolve) => setTimeout(resolve, 3_500))]);
+    }
     await streamView.flush(finalAnswer, { imageSources: recoveredImageSources });
     messages.push({ role: 'assistant', content: finalAnswerForStorage, ts: Date.now() });
     await trimAndSaveMessages();
@@ -16259,7 +16972,10 @@ ${streamError.message}`);
     // diffusion canvas loop) running: dispose it wherever the turn ends without
     // a final flush. The requestAccepted branch below always flushes (which
     // disposes internally), so it is excluded here.
-    if (error?.requestAccepted !== true) streamView?.dispose?.();
+    if (error?.requestAccepted !== true) {
+      streamPacer?.flush?.();
+      streamView?.dispose?.();
+    }
     if (error?.requestAccepted === true) {
       if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
         els.input.value = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
@@ -16280,6 +16996,7 @@ ${streamError.message}`);
         // This path can be reached with requestAccepted=true (the stream's own
         // context-ceiling check throws before flush), so dispose the diffusion
         // placeholder explicitly here.
+        streamPacer?.flush?.();
         streamView?.dispose?.();
         markGatewayDegraded(error);
         if (!turnOptions.preserveComposer) {
@@ -17054,6 +17771,9 @@ function closeFloatingPanels() {
   els.inlineAssistModelButton?.setAttribute('aria-expanded', 'false');
   els.sessionMenu.hidden = true;
   els.sessionMenuButton.setAttribute('aria-expanded', 'false');
+  // Closing the session menu cancels an in-panel rename edit (the draft is not
+  // persisted anywhere else).
+  sessionRenameEditor = null;
   if (els.botModePanel) {
     els.botModePanel.hidden = true;
     if (els.botModeLoadingOverlay) els.botModeLoadingOverlay.hidden = true;
@@ -17489,6 +18209,17 @@ function bindEvents() {
       setStatus('warn', 'Gmail thread capture unavailable', error?.message || String(error), { translateDetail: false });
     }
   });
+  els.explicitSiteCaptureDismiss?.addEventListener('click', () => {
+    settings = { ...settings, gmailCaptureHidden: true };
+    browserApi.storage.local.set({ hermesBrowserSettings: settings });
+    if (els.explicitSiteCaptureWrap) els.explicitSiteCaptureWrap.hidden = true;
+    setStatus('ok', 'Gmail capture button hidden', 'Turn it back on any time under Settings → Right-click actions.');
+  });
+  if (els.explicitSiteCaptureDismiss) {
+    const captureDismissLabel = translateUiText('Hide the Gmail capture button');
+    els.explicitSiteCaptureDismiss.setAttribute('aria-label', captureDismissLabel);
+    els.explicitSiteCaptureDismiss.title = captureDismissLabel;
+  }
   els.stopButton?.addEventListener('click', () => {
     if (activeGroupAbortController) {
       activeGroupAbortController.abort();
