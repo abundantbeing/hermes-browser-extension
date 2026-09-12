@@ -8,9 +8,14 @@ import {
   buildReviewTargets,
   cwdGhBinaryRisk,
   githubToken,
+  latestCommentId,
+  newestExternalReply,
+  postedCommentIdFromReviewText,
   resolveGhBinary,
   reviewTargetSignature,
   shouldReviewTarget,
+  stateSeenCommentId,
+  stateSignature,
 } from '../scripts/hermes-review-watch.mjs';
 
 function withTempDir(fn) {
@@ -38,6 +43,36 @@ test('shouldReviewTarget skips unchanged signatures and reviews changed ones', (
   assert.equal(shouldReviewTarget(target, {}), true);
   assert.equal(shouldReviewTarget(target, { 'issue:2': signature }), false);
   assert.equal(shouldReviewTarget({ ...target, body: 'B' }, { 'issue:2': signature }), true);
+
+  // seenCommentId-era entries store an object; signature semantics must hold.
+  const entry = { signature, seenCommentId: 12345 };
+  assert.equal(stateSignature(entry), signature);
+  assert.equal(stateSeenCommentId(entry), 12345);
+  assert.equal(stateSeenCommentId(signature), 0, 'legacy string entries have no seen comment id');
+  assert.equal(shouldReviewTarget(target, { 'issue:2': entry }), false);
+  assert.equal(shouldReviewTarget({ ...target, body: 'B' }, { 'issue:2': entry }), true);
+});
+
+test('newestExternalReply only surfaces new human comments after the last processed review', () => {
+  const comments = [
+    { id: 100, body: '<!-- hermes-agent-review:issue -->\n## Hermes Agent Issue Triage\nreview', user: { login: 'abundantbeing' } },
+    { id: 101, body: 'still seeing this on 0.3.2', user: { login: 'yottyan55' } },
+    { id: 102, body: '<!-- hermes-agent-review:followup -->\nfollow-up', user: { login: 'abundantbeing' } },
+    { id: 103, body: 'any update here?', user: { login: 'someone' } },
+  ];
+  assert.equal(latestCommentId(comments), 103);
+  assert.equal(newestExternalReply(comments, 102)?.id, 103);
+  assert.equal(newestExternalReply(comments, 103), null, 'nothing newer than the last processed comment');
+  assert.equal(newestExternalReply(comments, 100)?.id, 103, 'newest external comment wins');
+  assert.equal(newestExternalReply(comments.slice(0, 3), 100)?.id, 101, 'the reviewer\'s own follow-up never counts as a reply');
+  assert.equal(newestExternalReply([], 0), null);
+});
+
+test('postedCommentIdFromReviewText detects a reviewer that posted the comment itself', () => {
+  const narration = 'Posted: https://github.com/abundantbeing/hermes-browser-extension/issues/102#issuecomment-5634333469';
+  assert.equal(postedCommentIdFromReviewText(narration), 5634333469);
+  assert.equal(postedCommentIdFromReviewText('## Summary\nAll good.'), 0);
+  assert.equal(postedCommentIdFromReviewText(''), 0);
 });
 
 test('buildReviewTargets normalizes PR and issue API payloads', () => {

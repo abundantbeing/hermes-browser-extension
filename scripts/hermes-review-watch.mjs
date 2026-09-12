@@ -8,10 +8,12 @@ import { pathToFileURL } from 'node:url';
 
 import {
   applyReviewLabels,
+  buildFollowUpReviewPrompt,
   buildHermesReviewPrompt,
   callHermesReview,
   deriveReviewLabels,
   fetchPullRequestDiff,
+  formatFollowUpComment,
   formatReviewComment,
   githubFetch,
   upsertReviewComment,
@@ -148,8 +150,39 @@ export function reviewTargetSignature(target = {}) {
   return crypto.createHash('sha256').update(JSON.stringify(stable)).digest('hex');
 }
 
+export function stateSignature(entry) {
+  return typeof entry === 'string' ? entry : (entry?.signature || '');
+}
+
+export function stateSeenCommentId(entry) {
+  return entry && typeof entry === 'object' ? Number(entry.seenCommentId || 0) : 0;
+}
+
 export function shouldReviewTarget(target, state = {}) {
-  return state[stateKey(target)] !== reviewTargetSignature(target);
+  return stateSignature(state[stateKey(target)]) !== reviewTargetSignature(target);
+}
+
+// The reviewer contract is writer-only, but a model that ignores it can post
+// the review itself and then quote the comment link in its answer. Detect that
+// link so the pipeline never posts a second review on top of it.
+export function postedCommentIdFromReviewText(reviewText = '') {
+  const match = String(reviewText || '').match(/#issuecomment-(\d+)/);
+  return match ? Number(match[1]) : 0;
+}
+
+export function latestCommentId(comments = []) {
+  return (Array.isArray(comments) ? comments : [])
+    .reduce((max, comment) => Math.max(max, Number(comment?.id || 0)), 0);
+}
+
+// "Someone replied to our review": a comment newer than everything we have
+// already processed, from anyone other than the reviewer itself.
+export function newestExternalReply(comments = [], seenCommentId = 0) {
+  const seen = Number(seenCommentId || 0);
+  const replies = (Array.isArray(comments) ? comments : [])
+    .filter((comment) => Number(comment?.id || 0) > seen)
+    .filter((comment) => !String(comment?.body || '').includes('hermes-agent-review'));
+  return replies.sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
 }
 
 export function buildReviewTargets({ prs = [], issues = [] } = {}) {
@@ -220,9 +253,34 @@ async function reviewTarget({ repo, target, token, env, dryRun = false }) {
   }
   await applyReviewLabels({ repo, target, token, labels });
   const review = await callHermesReview(prompt, env);
+  const agentPostedId = postedCommentIdFromReviewText(review);
+  if (agentPostedId) {
+    // The reviewer ignored its writer-only contract and posted the comment
+    // itself; skip the pipeline post so the target never gets two reviews.
+    return { action: 'skipped-agent-posted', id: agentPostedId, labels };
+  }
   const comment = `${formatReviewComment(target, review)}\n\nReviewed signature: \`${reviewTargetSignature(target)}\``;
   const result = await upsertReviewComment({ repo, target, token, body: comment });
   return { ...result, labels };
+}
+
+async function followUpTarget({ repo, target, token, env, reply }) {
+  const prompt = buildFollowUpReviewPrompt({
+    target,
+    repo,
+    title: target.title,
+    body: target.body,
+    reply,
+    url: target.url,
+  });
+  const review = await callHermesReview(prompt, env);
+  const body = formatFollowUpComment(target, reply, review);
+  const created = await githubFetch(`/repos/${repo}/issues/${target.number}/comments`, {
+    method: 'POST',
+    token,
+    body: { body },
+  });
+  return { action: 'created', id: created.id };
 }
 
 export async function runReviewWatch(rawEnv = process.env) {
@@ -231,6 +289,7 @@ export async function runReviewWatch(rawEnv = process.env) {
   const token = githubToken(env);
   const stateFile = env.HERMES_REVIEW_STATE_FILE || DEFAULT_STATE_FILE;
   const maxTargets = Number(env.HERMES_REVIEW_MAX_TARGETS || 3);
+  const maxFollowUps = Number(env.HERMES_REVIEW_MAX_FOLLOW_UPS || 2);
   const dryRun = env.HERMES_REVIEW_DRY_RUN === '1' || process.argv.includes('--dry-run');
 
   if (!token) throw new Error('Missing GitHub token. Run gh auth login or set GITHUB_TOKEN.');
@@ -240,28 +299,80 @@ export async function runReviewWatch(rawEnv = process.env) {
   const targets = await listOpenTargets({ repo, token });
   const pending = targets.filter((target) => shouldReviewTarget(target, state)).slice(0, maxTargets);
   const completed = [];
+  const followUps = [];
   const failed = [];
+  let dirty = false;
+
+  const fetchComments = (number) => githubFetch(`/repos/${repo}/issues/${number}/comments?per_page=100`, { token });
 
   for (const target of pending) {
     try {
       const result = await reviewTarget({ repo, target, token, env, dryRun });
       completed.push({ target, result });
-      if (!dryRun) state[stateKey(target)] = reviewTargetSignature(target);
+      if (!dryRun) {
+        const comments = await fetchComments(target.number).catch(() => []);
+        state[stateKey(target)] = {
+          signature: reviewTargetSignature(target),
+          seenCommentId: latestCommentId(comments),
+        };
+        dirty = true;
+      }
     } catch (error) {
       failed.push({ target, error: error?.message || String(error) });
       console.error(`failed ${target.kind} #${target.number}: ${error?.message || String(error)}`);
     }
   }
 
-  if (!dryRun && completed.length) saveState(stateFile, state);
-  return { completed, failed };
+  // One review per target; a follow-up only when someone replies to it. Targets
+  // reviewed before the seenCommentId era are baselined once without answering
+  // older comments.
+  if (!dryRun) {
+    const reviewedKeys = new Set(pending.map((target) => stateKey(target)));
+    for (const target of targets) {
+      if (followUps.length >= maxFollowUps) break;
+      if (reviewedKeys.has(stateKey(target))) continue;
+      const entry = state[stateKey(target)];
+      if (entry === undefined) continue;
+      try {
+        const comments = await fetchComments(target.number);
+        const seen = stateSeenCommentId(entry);
+        if (!seen) {
+          state[stateKey(target)] = {
+            signature: stateSignature(entry),
+            seenCommentId: latestCommentId(comments),
+          };
+          dirty = true;
+          continue;
+        }
+        const reply = newestExternalReply(comments, seen);
+        if (!reply) continue;
+        const result = await followUpTarget({ repo, target, token, env, reply });
+        followUps.push({ target, reply, result });
+        state[stateKey(target)] = {
+          signature: stateSignature(entry),
+          seenCommentId: Math.max(latestCommentId(comments), Number(result.id || 0)),
+        };
+        dirty = true;
+      } catch (error) {
+        failed.push({ target, error: error?.message || String(error) });
+        console.error(`failed follow-up ${target.kind} #${target.number}: ${error?.message || String(error)}`);
+      }
+    }
+  }
+
+  if (!dryRun && dirty) saveState(stateFile, state);
+  return { completed, failed, followUps };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  runReviewWatch().then(({ completed, failed }) => {
+  runReviewWatch().then(({ completed, failed, followUps = [] }) => {
     for (const item of completed) {
       const labelText = item.result.labels?.length ? ` labels=${item.result.labels.join(',')}` : '';
       console.log(`${item.result.action} ${item.target.kind} #${item.target.number}${labelText}`);
+    }
+    for (const item of followUps) {
+      const author = item.reply?.user?.login || 'unknown';
+      console.log(`${item.result.action} follow-up ${item.target.kind} #${item.target.number} (reply from @${author})`);
     }
     if (failed.length) {
       console.error(`Hermes review failed for ${failed.length} target${failed.length === 1 ? '' : 's'}.`);

@@ -2,12 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  buildFollowUpReviewPrompt,
   buildHermesReviewPrompt,
   callHermesReview,
   deriveReviewLabels,
   eventReviewTarget,
+  formatFollowUpComment,
   formatReviewComment,
   shouldSkipReview,
+  upsertReviewComment,
 } from '../scripts/hermes-review-github-event.mjs';
 
 test('eventReviewTarget supports PR and issue review events while skipping issue-backed PRs', () => {
@@ -119,6 +122,89 @@ test('callHermesReview times out stuck local Hermes requests', async () => {
       }),
       /timed out after 1ms/,
     );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('formatFollowUpComment carries its own marker and credits the replied-to author', () => {
+  const body = formatFollowUpComment(
+    { kind: 'issue', number: 102 },
+    { user: { login: 'yottyan55' } },
+    'Thanks, the toast issue is fixed on main.',
+  );
+  assert.match(body, /<!-- hermes-agent-review:followup -->/);
+  assert.doesNotMatch(body, /<!-- hermes-agent-review:issue -->/);
+  assert.match(body, /Hermes Agent Follow-up Review/);
+  assert.match(body, /@yottyan55/);
+  assert.match(body, /Thanks, the toast issue is fixed on main\./);
+});
+
+test('buildFollowUpReviewPrompt wraps the new comment as untrusted input', () => {
+  const prompt = buildFollowUpReviewPrompt({
+    target: { kind: 'issue', number: 102 },
+    repo: 'abundantbeing/hermes-browser-extension',
+    title: 'Make /btw results persistent',
+    body: 'original issue body',
+    reply: { user: { login: 'yottyan55' }, body: 'still broken on 0.3.2' },
+  });
+  assert.match(prompt, /UNTRUSTED_GITHUB_EVENT_START/);
+  assert.match(prompt, /New comment from @yottyan55/);
+  assert.match(prompt, /still broken on 0\.3\.2/);
+  assert.match(prompt, /- Response/);
+  assert.match(prompt, /- Next action/);
+});
+
+test('upsertReviewComment updates the existing marked comment instead of duplicating it', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), method: options.method || 'GET' });
+    if (String(url).includes('/comments?per_page=100')) {
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify([
+          { id: 500, body: '<!-- hermes-agent-review:issue -->\n## Hermes Agent Issue Triage\nold review', user: { login: 'abundantbeing', type: 'User' } },
+        ]),
+      };
+    }
+    return { ok: true, status: 200, text: async () => JSON.stringify({ id: 501 }) };
+  };
+  try {
+    const result = await upsertReviewComment({
+      repo: 'abundantbeing/hermes-browser-extension',
+      target: { kind: 'issue', number: 102 },
+      token: 'test-token',
+      body: 'updated review',
+    });
+    assert.deepEqual(result, { action: 'updated', id: 500 });
+    assert.equal(calls.filter((call) => call.method === 'PATCH').length, 1, 'existing review is patched');
+    assert.equal(calls.filter((call) => call.method === 'POST').length, 0, 'no duplicate review is created');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('upsertReviewComment creates the first review when none exists', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), method: options.method || 'GET' });
+    if (String(url).includes('/comments?per_page=100')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify([]) };
+    }
+    return { ok: true, status: 200, text: async () => JSON.stringify({ id: 777 }) };
+  };
+  try {
+    const result = await upsertReviewComment({
+      repo: 'abundantbeing/hermes-browser-extension',
+      target: { kind: 'pull_request', number: 42 },
+      token: 'test-token',
+      body: 'first review',
+    });
+    assert.deepEqual(result, { action: 'created', id: 777 });
+    assert.equal(calls.filter((call) => call.method === 'POST').length, 1);
   } finally {
     globalThis.fetch = originalFetch;
   }
