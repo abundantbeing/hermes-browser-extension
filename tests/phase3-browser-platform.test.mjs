@@ -246,6 +246,8 @@ test('manifest packaging assumptions are explicit for Chromium, Firefox, and Saf
 
   assert.equal(chromium.backgroundMode, 'service-worker-module');
   assert.equal(chromium.panelMode, 'side-panel');
+  assert.deepEqual(chromium.removedManifestKeys, ['sidebar_action']);
+  assert.deepEqual(chromium.removedCommands, ['_execute_sidebar_action']);
   assert.equal(firefox.backgroundMode, 'background-scripts-module');
   assert.equal(firefox.panelMode, 'sidebar-action');
   assert.deepEqual(firefox.removedPermissions, ['debugger', 'offscreen', 'sidePanel']);

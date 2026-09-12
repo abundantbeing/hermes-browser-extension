@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { writeContentExtractorRuntime } from './build-content-runtime.mjs';
 import { checkSelfContained } from './check-self-contained.mjs';
+import { MANIFEST_TARGETS, manifestAssumptionsFor } from './manifest-profiles.mjs';
 
 const root = process.cwd();
 const src = path.join(root, 'extension');
@@ -80,5 +81,15 @@ fs.writeFileSync(path.join(src, buildInfoFileName), infoJson);
 fs.rmSync(dest, { recursive: true, force: true });
 copyDir(src, dest);
 fs.writeFileSync(path.join(dest, buildInfoFileName), infoJson);
+
+const chromiumProfile = manifestAssumptionsFor(MANIFEST_TARGETS.CHROMIUM);
+const distManifestPath = path.join(dest, 'manifest.json');
+const distManifest = JSON.parse(fs.readFileSync(distManifestPath, 'utf8'));
+for (const key of chromiumProfile.removedManifestKeys) delete distManifest[key];
+for (const command of chromiumProfile.removedCommands || []) {
+  if (distManifest.commands) delete distManifest.commands[command];
+}
+fs.writeFileSync(distManifestPath, `${JSON.stringify(distManifest, null, 2)}\n`);
+
 console.log(`Built unpacked extension: ${dest}`);
 console.log(`Stamped build metadata: ${buildInfoFileName}, extension/${buildInfoFileName}, dist/${buildInfoFileName}`);
