@@ -661,9 +661,11 @@ export function inspectInlineSite(document, target, options = {}) {
     placement: {
       anchorElement,
       obstacleElements,
+      // Prefer a placement outside the field for every adapter, and keep inside-end
+      // last: the launcher must never cover the draft in a full-width composer.
       preferred: adapterId === 'chatgpt'
         ? ['outside-end', 'outside-start', 'above-end', 'below-end']
-        : ['inside-end'],
+        : ['outside-end', 'outside-start', 'above-end', 'below-end', 'inside-end'],
     },
   };
 }

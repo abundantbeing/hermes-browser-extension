@@ -2336,11 +2336,11 @@ async function main() {
       const field = document.querySelector('#draft').getBoundingClientRect();
       const launcher = document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('.launcher').getBoundingClientRect();
       const element = document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('.launcher');
-      return { rightGap: field.right - launcher.right, bottomGap: field.bottom - launcher.bottom, top: launcher.top, strategy: element.dataset.placement };
+      const overlapsDraft = launcher.left < field.right && launcher.right > field.left && launcher.top < field.bottom && launcher.bottom > field.top;
+      return { rightGap: field.right - launcher.right, bottomGap: field.bottom - launcher.bottom, top: launcher.top, strategy: element.dataset.placement, overlapsDraft };
     })()`);
-    assert.equal(launcherPlacementBeforeShift.strategy, 'inside-end');
-    assert.ok(Math.abs(launcherPlacementBeforeShift.rightGap - 6) <= 1, `Launcher right gap was ${launcherPlacementBeforeShift.rightGap}px.`);
-    assert.ok(Math.abs(launcherPlacementBeforeShift.bottomGap - 6) <= 1, `Launcher bottom gap was ${launcherPlacementBeforeShift.bottomGap}px.`);
+    assert.equal(launcherPlacementBeforeShift.strategy, 'outside-end');
+    assert.equal(launcherPlacementBeforeShift.overlapsDraft, false, 'The launcher must not cover the draft in a full-width composer.');
     await fixture.evaluate(`(() => {
       const field = document.querySelector('#draft');
       field.style.minHeight = '240px';
@@ -2354,9 +2354,11 @@ async function main() {
       const field = document.querySelector('#draft').getBoundingClientRect();
       const launcher = document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('.launcher').getBoundingClientRect();
       const element = document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('.launcher');
-      const state = { rightGap: field.right - launcher.right, bottomGap: field.bottom - launcher.bottom, top: launcher.top, strategy: element.dataset.placement };
-      return Math.abs(state.rightGap - 6) <= 1 && Math.abs(state.bottomGap - 6) <= 1 ? state : null;
+      const overlapsDraft = launcher.left < field.right && launcher.right > field.left && launcher.top < field.bottom && launcher.bottom > field.top;
+      const state = { rightGap: field.right - launcher.right, bottomGap: field.bottom - launcher.bottom, top: launcher.top, strategy: element.dataset.placement, overlapsDraft };
+      return state.top > ${launcherPlacementBeforeShift.top} + 80 ? state : null;
     })()`));
+    assert.equal(launcherPlacementAfterShift.overlapsDraft, false, 'The launcher must not cover the draft after the editor resizes.');
     assert.ok(launcherPlacementAfterShift.top > launcherPlacementBeforeShift.top + 80, 'Launcher did not follow the shifted/resized editor.');
     await saveScreenshot(fixture, INLINE_LAUNCHER_SCREENSHOT, { captureBeyondViewport: false });
     await fixture.evaluate(`(() => {
@@ -2366,7 +2368,8 @@ async function main() {
     await waitFor(() => fixture.evaluate(`(() => {
       const field = document.querySelector('#draft').getBoundingClientRect();
       const launcher = document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('.launcher').getBoundingClientRect();
-      return Math.abs((field.bottom - launcher.bottom) - 6) <= 1;
+      const overlapsDraft = launcher.left < field.right && launcher.right > field.left && launcher.top < field.bottom && launcher.bottom > field.top;
+      return overlapsDraft ? null : { ok: true };
     })()`));
 
     const chatgptUrl = `${mock.baseUrl}/qa-chatgpt`;
