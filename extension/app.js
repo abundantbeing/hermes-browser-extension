@@ -1,4 +1,5 @@
 import {
+  DEFAULT_SETTINGS,
   contextAccountingSnapshot,
   contextCompactionState,
   contextMeterDisplay,
@@ -93,6 +94,11 @@ import {
   shouldEnrichCanonicalProviderCatalog,
   shouldTrySessionModelFallback,
 } from './lib/model-discovery.mjs';
+import {
+  MODEL_PICKER_VISIBILITY_STORAGE_KEY,
+  normalizeModelPickerVisibility,
+  visibleModelsForPicker,
+} from './lib/model-picker-visibility.mjs';
 import {
   appendGeneratedImageSourcesToMessages,
   appendUserImageAttachments,
@@ -2451,7 +2457,8 @@ function modelProviderName(model = {}) {
 function groupModelsForPicker(query = '') {
   const needle = String(query || '').trim().toLowerCase();
   const groups = new Map();
-  for (const model of availableModels) {
+  const pickerModels = visibleModelsForPicker(availableModels, settings.modelPickerVisibility, { selectedModelId: settings.model });
+  for (const model of pickerModels) {
     const haystack = `${modelProviderName(model)} ${model.label || ''} ${model.rawModelId || ''}`.toLowerCase();
     if (needle && !haystack.includes(needle)) continue;
     const provider = modelProviderName(model);
@@ -5247,7 +5254,12 @@ async function loadApp() {
   showRuntimeLoadingState();
   renderSessions();
   await refreshWebCustomThemeStore({ render: false });
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, DELEGATION_WATCH_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', MODEL_PICKER_VISIBILITY_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, DELEGATION_WATCH_STORAGE_KEY]);
+  const modelPickerVisibility = normalizeModelPickerVisibility(
+    stored[MODEL_PICKER_VISIBILITY_STORAGE_KEY]
+      || stored.hermesBrowserSettings?.modelPickerVisibility
+      || DEFAULT_SETTINGS.modelPickerVisibility,
+  );
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -5267,7 +5279,14 @@ async function loadApp() {
     botModeEnabled: stored.hermesBrowserSettings?.botModeEnabled === true,
     botModeSelectedProfile: String(stored.hermesBrowserSettings?.botModeSelectedProfile || ''),
     browserContextConsentLedger: normalizeContextConsentLedger(stored[CONTEXT_CONSENT_STORAGE_KEY] || stored.hermesBrowserSettings?.browserContextConsentLedger),
+    modelPickerVisibility,
   };
+  if (!stored[MODEL_PICKER_VISIBILITY_STORAGE_KEY]) {
+    await browserApi.storage.local.set({
+      [MODEL_PICKER_VISIBILITY_STORAGE_KEY]: modelPickerVisibility,
+      hermesBrowserSettings: { ...(stored.hermesBrowserSettings || {}), modelPickerVisibility },
+    });
+  }
   await refreshContextConsentPrincipal({ settingsOverride: settings });
   await ensureContextMenuEditor();
   applyAppearance();
