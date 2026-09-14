@@ -260,9 +260,14 @@ test('settings header keeps a top Save action, compact close icon, and centered 
   // The top Save action is now the only save control: the footer button is gone.
   assert.match(html, /<form id="settingsForm"[\s\S]*id="saveSettingsTopButton"/);
   assert.doesNotMatch(html, /id="saveSettingsButton"/);
-  // Header save shares the unified accent-outline family with TEST.
-  assert.match(css, /#saveSettingsTopButton\s*\{[^}]*border-color:\s*rgba\(var\(--hermes-accent-rgb\)/s);
-  assert.match(css, /#saveSettingsTopButton:hover\s*\{[^}]*background:\s*rgba\(var\(--hermes-accent-rgb\)/s);
+  // Header save keeps a readable ink label and strong border at rest (it must not read as
+  // disabled on a light palette), then inverts into the action pair with a label-coloured outline.
+  assert.match(css, /#saveSettingsTopButton\s*\{[^}]*border-color:\s*var\(--hermes-line-strong\)/s);
+  assert.match(css, /#saveSettingsTopButton\s*\{[^}]*color:\s*var\(--hermes-ink\)/s);
+  assert.match(
+    css,
+    /#saveSettingsTopButton:hover,\s*#saveSettingsTopButton:focus-visible\s*\{[^}]*background:\s*var\(--hermes-primary-bg,\s*var\(--hermes-ink\)\)/s,
+  );
   assert.match(css, /\.settings-header-actions\s*>\s*button\s*\{[^}]*font-family:\s*var\(--hermes-font-mono\)/s);
   // Clear stored token and diagnostics buttons span the full card width with centered text.
   assert.match(css, /\.connection-security button\s*\{[^}]*justify-self:\s*stretch/s);

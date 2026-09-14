@@ -873,7 +873,7 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
   flex: 0 0 auto;
   background:
     linear-gradient(90deg, rgba(var(--hermes-panel-rgb),0.98) 0%, rgba(var(--hermes-panel-rgb),0.82) 55%, rgba(var(--hermes-panel-rgb),0.24) 100%),
-    url("assets/img/hermes-browse.webp") center / cover no-repeat,
+    var(--sidecar-art, url("assets/img/hermes-browse.webp")) center / cover no-repeat,
     var(--hermes-app-bg);
   background-blend-mode: normal, luminosity, normal;
 }
@@ -894,7 +894,12 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
   background: transparent;
   color: #fff;
 }
-.hero-dismiss:hover { background: transparent; color: rgba(255, 255, 255, 0.72); }
+.hero-dismiss:hover,
+.hero-dismiss:focus-visible {
+  border: 1px solid var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+}
 .hero-copy { position: relative; z-index: 1; max-width: 280px; }
 .hero-wordmark {
   display: block;
@@ -939,7 +944,11 @@ button {
   cursor: pointer;
   transition: transform 120ms ease, background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
-button:hover { background: rgba(var(--hermes-ink-rgb),0.08); color: var(--hermes-ink); }
+/* Outlined-inverted hover treatment. A hovered/focused control inverts its tile to the theme's
+   action surface and redraws its outline in the label colour, so the boundary and the glyph stay
+   readable on light and dark palettes (never a hardcoded white). */
+button:hover,
+button:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 button:active { transform: translateY(1px); }
 button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 .settings-button { min-width: 42px; min-height: 30px; padding: 7px 8px 5px; font-size: 10px; }
@@ -951,18 +960,20 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
   align-items: center;
   justify-content: center;
   background: var(--hermes-paper);
-  border-color: rgba(var(--hermes-accent-rgb),0.42);
-  color: var(--hermes-accent);
+  border-color: var(--hermes-line-strong);
+  color: var(--hermes-ink);
 }
-.settings-close-icon:hover {
-  border-color: var(--hermes-accent);
-  background: rgba(var(--hermes-accent-rgb),0.09);
-  color: var(--hermes-accent);
+.settings-close-icon:hover,
+.settings-close-icon:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .settings-close-icon svg { display: block; stroke-width: 1.6; }
 .settings-close-icon:hover svg { transform: none; }
 .settings-button { text-decoration: none; }
-.settings-button:hover { background: rgba(var(--hermes-ink-rgb),0.08); color: var(--hermes-ink); }
+.settings-button:hover,
+.settings-button:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .settings-button:active { transform: translateY(1px); }
 .icon-button {
   display: inline-flex;
@@ -976,7 +987,7 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
 .icon-button svg { display: block; width: 16px; height: 16px; }
 .icon-button .new-session-icon { width: 18px; height: 18px; }
 #newSessionButton:hover,
-#newSessionButton:focus-visible { border-color: var(--hermes-accent); color: var(--hermes-accent); }
+#newSessionButton:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .brand-mini img { display: block; width: 50px; max-height: 30px; object-fit: contain; object-position: left center; }
 
 .status-card,
@@ -1179,10 +1190,11 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]) {
   font: 700 calc(10px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
   letter-spacing: 0.1em;
 }
-body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
-  background: var(--hermes-paper);
-  color: var(--hermes-ink);
-  border-color: var(--hermes-line-strong);
+body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover,
+body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-visible {
+  background: var(--hermes-primary-fg, var(--hermes-paper));
+  color: var(--hermes-primary-bg, var(--hermes-ink));
+  border-color: var(--hermes-primary-bg, var(--hermes-ink));
 }
 @keyframes startup-field-breathe {
   0%, 100% { transform: scale(1.015); opacity: 0.1; }
@@ -1487,7 +1499,12 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
   background: transparent;
   color: var(--hermes-ink);
 }
-.browser-control-dismiss:hover { background: transparent; color: var(--hermes-accent); }
+.browser-control-dismiss:hover,
+.browser-control-dismiss:focus-visible {
+  border: 1px solid var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+}
 .browser-control-signal {
   width: 8px;
   height: 8px;
@@ -2316,9 +2333,9 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 }
 .generated-image-inspectable:hover .generated-image-inspect,
 .generated-image-inspectable:focus-visible .generated-image-inspect {
-  border-color: var(--hermes-accent);
-  background: var(--hermes-accent);
-  color: var(--hermes-paper);
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
   opacity: 1;
 }
 .generated-image-unavailable {
@@ -2674,9 +2691,9 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 .md-code-copy:focus-visible { opacity: 1; }
 .md-code-copy:hover,
 .md-code-copy.copied {
-  background: var(--hermes-primary-bg);
-  color: var(--hermes-primary-fg);
-  border-color: var(--hermes-primary-border);
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-bg, var(--hermes-ink));
 }
 .md-code-copy svg { display: block; }
 @media (hover: none) {
@@ -3059,10 +3076,11 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
   background: var(--hermes-ink);
   color: var(--hermes-paper);
 }
-.session-ownership-actions button[data-session-ownership-action="new-browser"]:hover {
-  border-color: var(--hermes-accent);
-  background: var(--hermes-accent);
-  color: var(--hermes-paper);
+.session-ownership-actions button[data-session-ownership-action="new-browser"]:hover,
+.session-ownership-actions button[data-session-ownership-action="new-browser"]:focus-visible {
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .profile-switch-dialog {
   position: fixed;
@@ -3225,10 +3243,11 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
   text-transform: none;
 }
 .composer-icon:hover,
-.composer-icon.active {
-  background: var(--hermes-primary-bg);
-  color: var(--hermes-primary-fg);
-  border-color: var(--hermes-primary-border);
+.composer-icon.active,
+.composer-icon:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .composer-icon[hidden] { display: none; }
 .composer-icon:disabled { cursor: not-allowed; opacity: 0.42; }
@@ -3308,9 +3327,11 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover {
 .composer-queue svg,
 .composer-steer svg { transform: translateY(-1px); }
 .attach-menu-button.composer-plus:hover,
-.attach-menu-button.composer-plus[aria-expanded="true"] {
-  background: var(--hermes-primary-bg);
-  color: var(--hermes-primary-fg);
+.attach-menu-button.composer-plus[aria-expanded="true"],
+.attach-menu-button.composer-plus:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .attach-menu {
   position: absolute;
@@ -3609,14 +3630,15 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 #saveSettingsTopButton {
   padding: 6px 10px 5px;
-  border-color: rgba(var(--hermes-accent-rgb),0.42);
+  border-color: var(--hermes-line-strong);
   background: var(--hermes-paper);
-  color: var(--hermes-accent);
+  color: var(--hermes-ink);
 }
-#saveSettingsTopButton:hover {
-  border-color: var(--hermes-accent);
-  background: rgba(var(--hermes-accent-rgb),0.09);
-  color: var(--hermes-accent);
+#saveSettingsTopButton:hover,
+#saveSettingsTopButton:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 #saveSettingsTopButton:active { transform: translateY(1px); }
 .settings-connection-test {
@@ -3625,17 +3647,18 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border-color: rgba(var(--hermes-accent-rgb),0.42);
+  border-color: var(--hermes-line-strong);
   background: var(--hermes-paper);
-  color: var(--hermes-accent);
+  color: var(--hermes-ink);
   font-family: var(--hermes-font-mono);
   font-size: 9px;
   letter-spacing: 0.12em;
 }
-.settings-connection-test:hover {
-  border-color: var(--hermes-accent);
-  background: rgba(var(--hermes-accent-rgb),0.09);
-  color: var(--hermes-accent);
+.settings-connection-test:hover,
+.settings-connection-test:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .settings-connection-test-icon {
   width: 14px;
@@ -3705,7 +3728,9 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   border-color: var(--danger);
 }
 #sendButton, #saveSettingsButton, #connectButton { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); border-color: var(--hermes-primary-border); }
-#sendButton:hover, #saveSettingsButton:hover, #connectButton:hover { background: var(--hermes-paper); color: var(--hermes-ink); border-color: var(--hermes-line-strong); }
+/* send/save/connect rest on a filled action tile, so the hover outlines it: the fill flips to the
+   label colour and the outline/label take the action colour (visible on light and dark palettes). */
+#sendButton:hover, #saveSettingsButton:hover, #connectButton:hover, #sendButton:focus-visible, #saveSettingsButton:focus-visible, #connectButton:focus-visible { background: var(--hermes-primary-fg, var(--hermes-paper)); color: var(--hermes-primary-bg, var(--hermes-ink)); border-color: var(--hermes-primary-bg, var(--hermes-ink)); }
 
 .desktop-bar {
   display: grid;
@@ -3952,9 +3977,9 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 .model-provider-option:hover,
 .model-provider-option.selected {
-  background: var(--hermes-primary-bg);
-  border-color: var(--hermes-primary-border);
-  color: var(--hermes-primary-fg);
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .model-provider-name {
   min-width: 0;
@@ -4679,7 +4704,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   border-bottom: 1px solid var(--hermes-line);
   background:
     linear-gradient(90deg, rgba(var(--hermes-panel-rgb),0.98) 0%, rgba(var(--hermes-panel-rgb),0.82) 55%, rgba(var(--hermes-panel-rgb),0.24) 100%),
-    url("assets/img/hermes-browse.webp") center / cover no-repeat,
+    var(--sidecar-art, url("assets/img/hermes-browse.webp")) center / cover no-repeat,
     var(--hermes-app-bg);
   background-blend-mode: normal, luminosity, normal;
   color: var(--hermes-fg);
@@ -4882,9 +4907,11 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   place-items: center;
   font-family: var(--hermes-font-mono);
 }
-.operation-toast button:hover {
-  background: var(--hermes-line-subtle);
-  border-color: var(--hermes-line-strong);
+.operation-toast button:hover,
+.operation-toast button:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 @keyframes operationToastIn {
   from { transform: translate(-50%, 10px); opacity: 0; }
@@ -5087,8 +5114,8 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 .mode-choice:first-child { border-left: 0; }
 .mode-choice:hover,
 .mode-choice.selected {
-  background: var(--hermes-primary-bg);
-  color: var(--hermes-primary-fg);
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .appearance-control-stack {
   display: grid;
@@ -5118,10 +5145,11 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   letter-spacing: 0.04em;
 }
 #textZoomPresetGrid [data-text-zoom-percent]:hover,
+#textZoomPresetGrid [data-text-zoom-percent]:focus-visible,
 #textZoomPresetGrid [data-text-zoom-percent].selected {
-  border-color: var(--hermes-accent);
-  background: var(--hermes-primary-bg);
-  color: var(--hermes-primary-fg);
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .text-zoom-stepper {
   display: grid;
@@ -5148,8 +5176,7 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 }
 #textZoomDecreaseButton { border-right: 1px solid var(--hermes-line); }
 #textZoomIncreaseButton { border-left: 1px solid var(--hermes-line); }
-#textZoomDecreaseButton:hover,
-#textZoomIncreaseButton:hover { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); }
+#textZoomDecreaseButton:hover, #textZoomIncreaseButton:hover, #textZoomDecreaseButton:focus-visible, #textZoomIncreaseButton:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .text-zoom-input-wrap { position: relative; display: block; min-width: 0; height: 38px; }
 .text-zoom-input-wrap #textZoomInput {
   width: 100%;
@@ -5417,9 +5444,9 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
 }
 .custom-theme-card-actions button:last-child { border-bottom: 0; }
 .custom-theme-card-actions button:hover,
-.custom-theme-card-actions button:focus-visible { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); }
+.custom-theme-card-actions button:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .custom-theme-card-actions .danger-action:hover,
-.custom-theme-card-actions .danger-action:focus-visible { background: var(--hermes-danger); color: var(--hermes-on-danger); }
+.custom-theme-card-actions .danger-action:focus-visible { background: var(--hermes-danger, #b3261e); color: var(--hermes-on-danger, var(--hermes-paper)); }
 
 .custom-theme-manager { margin-top: 12px; border: 1px solid var(--hermes-line); background: var(--hermes-paper); }
 .custom-theme-summary {
@@ -5447,8 +5474,7 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
 .settings-dialog .marketplace-theme-search button { box-sizing: border-box; min-width: 0; width: 100%; height: 42px; min-height: 42px; margin-top: 0; }
 .settings-dialog .marketplace-theme-search input { font: 10.5px/1.3 var(--hermes-font-mono); }
 .marketplace-theme-search button { padding: 7px 10px; border: 1px solid #f4f2eb; background: #f4f2eb; color: #111; font: 700 8.5px/1 var(--hermes-font-mono); }
-.marketplace-theme-search button:hover,
-.marketplace-theme-search button:focus-visible { border-color: #fff; background: #fff; color: #0505e8; }
+.marketplace-theme-search button:hover, .marketplace-theme-search button:focus-visible { border-color: var(--hermes-primary-fg, var(--hermes-paper)); background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .marketplace-theme-status { font: 9.5px/1.4 var(--hermes-font-mono); }
 .marketplace-theme-results { display: grid; gap: 7px; max-height: 330px; overflow: auto; scrollbar-gutter: stable; }
 .marketplace-theme-loading { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 4px; height: 7px; }
@@ -5465,7 +5491,7 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
 .marketplace-theme-card-copy span, .marketplace-theme-card-copy p { color: var(--hermes-muted); font: 8px/1.35 var(--hermes-font-mono); }
 .marketplace-theme-card-copy p { margin: 5px 0 0; overflow-wrap: anywhere; }
 .marketplace-theme-card button { min-width: 82px; border: 0; border-left: 1px solid var(--hermes-line); background: var(--hermes-paper); color: var(--hermes-ink); }
-.marketplace-theme-card button:hover, .marketplace-theme-card button:focus-visible { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); }
+.marketplace-theme-card button:hover, .marketplace-theme-card button:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .marketplace-theme-empty { margin: 0; color: var(--hermes-muted); font: 9px/1.4 var(--hermes-font-mono); }
 .custom-theme-local-divider { display: flex; align-items: center; gap: 8px; color: var(--hermes-muted); font: 8px/1 var(--hermes-font-mono); text-transform: uppercase; }
 .custom-theme-local-divider::before, .custom-theme-local-divider::after { content: ''; height: 1px; flex: 1; background: var(--hermes-line); }
@@ -5480,7 +5506,7 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
 #agentThemeDescription { padding: 8px 10px; border: 1px solid var(--hermes-line-strong); background: var(--hermes-paper); color: var(--hermes-ink); font: 10.5px/1.3 var(--hermes-font-mono); }
 #agentThemeCreateButton { padding: 0 10px; border: 1px solid #03038f; background: #0505e8; color: #fff; font: 700 8.5px/1 var(--hermes-font-mono); text-transform: uppercase; }
 #agentThemeCreateButton:hover,
-#agentThemeCreateButton:focus-visible { border-color: #03038f; background: #03038f; color: #fff; }
+#agentThemeCreateButton:focus-visible { border-color: var(--hermes-primary-fg, var(--hermes-paper)); background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); }
 #agentThemeCreateButton:disabled { opacity: .55; cursor: wait; }
 .agent-theme-status { min-height: 0; }
 html[data-hermes-theme="mono"][data-hermes-mode="dark"] .agent-theme-head span,
@@ -5511,11 +5537,11 @@ html[data-hermes-theme="mono"][data-hermes-mode="light"] .agent-theme-status { c
 .settings-dialog .custom-theme-file-control { position: relative; display: grid; place-items: center; flex: 1; cursor: pointer; }
 #customThemeFileInput { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 #customThemePreviewButton { display: grid; place-items: center; flex: 1; }
-#customThemeInstallButton { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); border-color: var(--hermes-primary-border); }
+#customThemeInstallButton { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-bg, var(--hermes-ink)); }
 #customThemeInstallButton:disabled { opacity: 0.5; }
 #customThemeResetButton { color: var(--hermes-danger); border-color: var(--hermes-danger); }
 #customThemeResetButton:hover,
-#customThemeResetButton:focus-visible { background: var(--hermes-danger); color: var(--hermes-on-danger); }
+#customThemeResetButton:focus-visible { background: var(--hermes-danger, #b3261e); color: var(--hermes-on-danger, var(--hermes-paper)); }
 .custom-theme-preview-card { display: grid; gap: 9px; padding: 10px; border: 1px solid var(--hermes-line); background: var(--hermes-canvas); color: var(--hermes-ink); }
 .custom-theme-preview-card[hidden] { display: none; }
 .custom-theme-preview-head { display: flex; align-items: start; justify-content: space-between; gap: 8px; }
@@ -6092,9 +6118,12 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   box-sizing: border-box;
 }
 .bot-mode-head button:hover,
-.bot-mode-head .bot-mode-head-action:hover {
-  border-color: var(--hermes-fg);
-  background: rgba(var(--hermes-fg-rgb), 0.12);
+.bot-mode-head button:focus-visible,
+.bot-mode-head .bot-mode-head-action:hover,
+.bot-mode-head .bot-mode-head-action:focus-visible {
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
   transform: scale(1.04);
 }
 /* ── Group Chat Active Thread Banner & Typing Indicator ─────────────────── */
@@ -6589,10 +6618,11 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   font-weight: 700;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, box-shadow 0.2s ease;
 }
-.bot-mode-action.primary:hover:not(:disabled) {
-  background: #fff;
-  color: var(--hermes-blue);
-  border-color: #fff;
+.bot-mode-action.primary:hover:not(:disabled),
+.bot-mode-action.primary:focus-visible {
+  background: var(--hermes-primary-fg, var(--hermes-paper));
+  color: var(--hermes-primary-bg, var(--hermes-ink));
+  border-color: var(--hermes-primary-bg, var(--hermes-ink));
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   transform: scale(1.015);
 }
@@ -6682,7 +6712,8 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   cursor: pointer;
   border-radius: 3px;
 }
-.side-question-close:hover { color: var(--hermes-ink); background: rgba(var(--hermes-fg-rgb), 0.1); }
+.side-question-close:hover,
+.side-question-close:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .side-question-question {
   margin: 0;
   padding: 6px 10px;
@@ -6716,7 +6747,7 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   text-transform: uppercase;
   cursor: pointer;
 }
-.side-question-actions button:hover { background: rgba(var(--hermes-accent-rgb), 0.2); }
+.side-question-actions button:hover, .side-question-actions button:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 /* Real agent identity on the assistant header (ROXAS / NAMINÉ / RIKU):
    compact tracked mono caps, subtle tint, no layout shift vs. the old label. */
 .message.assistant .message-role { font: 700 9px/1 var(--hermes-font-mono); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; color: color-mix(in srgb, var(--hermes-ink, #ffffff) 82%, transparent); }
@@ -6727,7 +6758,7 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
 .bot-mode-roster--compact .bot-mode-row { min-height: 46px; padding: 4px 8px; }
 .bot-mode-roster--compact .bot-mode-row-preview { display: none; }
 .bot-mode-head-action { width: 38px; height: 38px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--hermes-panel-border); background: transparent; color: var(--hermes-fg); font-size: 18px; cursor: pointer; transition: transform 0.2s, background 0.15s; }
-.bot-mode-head-action:hover, .bot-mode-head-action:focus-visible { border-color: var(--hermes-fg); background: rgba(255, 255, 255, 0.1); outline: none; }
+.bot-mode-head-action:hover, .bot-mode-head-action:focus-visible { border-color: var(--hermes-primary-fg, var(--hermes-paper)); background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); outline: none; }
 .bot-mode-head-action.is-refreshing svg, .bot-mode-head-action.is-refreshing span, .bot-mode-head-action.is-refreshing { animation: botRefreshSpin 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 @keyframes botRefreshSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .bot-mode-empty-note { margin-top: 4px; text-transform: none; letter-spacing: 0; opacity: .78; }

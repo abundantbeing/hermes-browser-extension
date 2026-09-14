@@ -4051,7 +4051,11 @@ test('composer plus, command pill, and topbar new-session icons are SVG-centered
   assert.match(newSession, /<svg[\s\S]*?class="new-session-icon"[\s\S]*?viewBox="0 0 24 24"/, 'topbar new-session must use a real SVG plus, not a baseline-riding text glyph');
   assert.doesNotMatch(newSession, />\+</, 'new-session must not render a bare + text glyph');
   assert.match(css, /\.icon-button \.new-session-icon\s*\{\s*width:\s*18px;[\s\S]*?height:\s*18px;/, 'new-session icon must be visibly larger than the 16px utility icons');
-  assert.match(css, /#newSessionButton:hover,[\s\S]*?#newSessionButton:focus-visible\s*\{\s*border-color:\s*var\(--hermes-accent\);\s*color:\s*var\(--hermes-accent\);\s*\}/, 'new-session hover must read as the primary action');
+  assert.match(
+    css,
+    /#newSessionButton:hover,\s*#newSessionButton:focus-visible\s*\{\s*background:\s*var\(--hermes-primary-bg,\s*var\(--hermes-ink\)\);\s*color:\s*var\(--hermes-primary-fg,\s*var\(--hermes-paper\)\);\s*border-color:\s*var\(--hermes-primary-fg,\s*var\(--hermes-paper\)\);\s*\}/,
+    'new-session hover must invert into the outlined primary action so it stays visible on light palettes',
+  );
   const attach = html.match(/<button[^>]*id="attachMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
   assert.match(attach, /<svg[\s\S]*?viewBox="0 0 24 24"/, 'composer attach plus must be a real SVG, not a text glyph');
   assert.doesNotMatch(attach, />\+</, 'composer attach must not render a bare + text glyph');

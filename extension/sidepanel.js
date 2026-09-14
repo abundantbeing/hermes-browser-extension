@@ -182,6 +182,7 @@ import { liveStateBadge, mergeLiveSignals } from './lib/session-live-state.mjs';
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { mediaDisplayName, mediaSourcePlan } from './lib/media-source.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
+import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
 import {
   activeSubagentView,
   applySubagentEvent,
@@ -7234,6 +7235,19 @@ async function syncSessionModelOptions({
     return { state: 'failed', error };
   }
 }
+
+// The LOCAL SIDECAR card art (and the same hero art in settings) shows a
+// different illustration every time the panel opens. One CSS variable drives
+// both surfaces, so there is a single pick per panel load.
+let lastSidecarArt = '';
+function applySidecarArt() {
+  const entry = pickSidecarArt(Math.random, lastSidecarArt);
+  if (typeof entry !== 'string' || !entry) return '';
+  lastSidecarArt = entry;
+  document.documentElement.style.setProperty('--sidecar-art', sidecarArtCssValue(entry));
+  return entry;
+}
+applySidecarArt();
 
 function renderContextWindow(userText = els.input?.value || '') {
   const stats = estimateContextWindow({

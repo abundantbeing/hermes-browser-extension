@@ -122,6 +122,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Wraps webpage text as untrusted context before sending it to Hermes.
 - Streams Hermes responses and falls back to non-streaming chat when needed.
 - Includes Desktop-style appearance settings with Light/Dark/System mode and nine themes: Nous, Midnight, Ember, Mono, Cyberpunk, Slate, Senter Space, Aphrodite, and Solstice.
+- The start screen's local sidecar card shows a different illustration on every panel open, drawn from the bundled art set, and button hovers keep a visible outline in Light and Dark modes alike.
 - Adds generated-image reveal animation plus a lightbox with zoom, reset, open, and explicit download controls.
 - Omits credential-bearing tab URLs from prompt-facing context, including decoded/nested query or hash parameters and common signed-URL credentials/signatures.
 - Includes a localhost agent picker for switching between trusted local Hermes API gateway ports.
