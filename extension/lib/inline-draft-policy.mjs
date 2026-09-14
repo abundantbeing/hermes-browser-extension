@@ -300,21 +300,39 @@ export function inlineLauncherPlacement(anchorRect = {}, viewport = {}, options 
     ? options.preferred
     : ['inside-end'];
   const obstacles = Array.isArray(options.obstacleRects) ? options.obstacleRects : [];
-  for (const strategy of preferred) {
-    const raw = launcherCandidate(strategy, anchor, target, size, gap, viewport);
-    if (!raw) continue;
-    const candidate = {
-      left: Math.round(raw.left),
-      top: Math.round(raw.top),
-      right: Math.round(raw.left) + size,
-      bottom: Math.round(raw.top) + size,
-    };
-    const insideViewport = candidate.left >= viewportRect.left
-      && candidate.top >= viewportRect.top
-      && candidate.right <= viewportRect.right
-      && candidate.bottom <= viewportRect.bottom;
-    if (!insideViewport || obstacles.some((obstacle) => rectsOverlap(candidate, obstacle))) continue;
-    return { left: candidate.left, top: candidate.top, strategy };
+  const prefersInsideEnd = preferred.includes('inside-end');
+  const outsideStrategies = preferred.filter((strategy) => strategy !== 'inside-end');
+  // Two passes. A placement outside the field always wins over one inside it, so the
+  // launcher can never sit on top of the text the user is typing (facebook.com and
+  // messenger.com put the whole composer in one full-width contenteditable, and the
+  // old default sent every non-ChatGPT adapter straight to inside-end). inside-end is
+  // kept as the last resort for a compact, edge-to-edge field that leaves no room
+  // outside, and any candidate that still overlaps the field is rejected.
+  for (const pass of [outsideStrategies, prefersInsideEnd ? ['inside-end'] : []]) {
+    for (const strategy of pass) {
+      const raw = launcherCandidate(strategy, anchor, target, size, gap, viewport);
+      if (!raw) continue;
+      // Clamp a candidate that only just pokes out of the safe area back inside it
+      // instead of rejecting the strategy outright. An edge-to-edge composer would
+      // otherwise exhaust every outside placement and fall back into the field.
+      const maxLeft = Math.max(viewportRect.left, viewportRect.right - size);
+      const maxTop = Math.max(viewportRect.top, viewportRect.bottom - size);
+      const left = Math.max(viewportRect.left, Math.min(maxLeft, Math.round(raw.left)));
+      const top = Math.max(viewportRect.top, Math.min(maxTop, Math.round(raw.top)));
+      const candidate = {
+        left,
+        top,
+        right: left + size,
+        bottom: top + size,
+      };
+      const insideViewport = candidate.left >= viewportRect.left
+        && candidate.top >= viewportRect.top
+        && candidate.right <= viewportRect.right
+        && candidate.bottom <= viewportRect.bottom;
+      if (!insideViewport || obstacles.some((obstacle) => rectsOverlap(candidate, obstacle))) continue;
+      if (strategy !== 'inside-end' && rectsOverlap(candidate, target)) continue;
+      return { left: candidate.left, top: candidate.top, strategy };
+    }
   }
   return null;
 }

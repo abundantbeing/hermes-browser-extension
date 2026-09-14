@@ -371,7 +371,8 @@ test('inline site adapters cover the requested sites with distinct surfaces and 
     assert.ok(profile.surface && profile.surface !== 'generic', `${adapterId} surface was generic`);
     assert.ok(profile.confidence >= 0.7, `${adapterId} confidence was ${profile.confidence}`);
     assert.match(profile.actions.map((action) => action.label).join(' '), actionPattern, `${adapterId} actions were not site-aware`);
-    assert.equal(profile.placement.preferred[0], adapterId === 'chatgpt' ? 'outside-end' : 'inside-end', `${adapterId} launcher placement regressed`);
+    assert.equal(profile.placement.preferred[0], 'outside-end', `${adapterId} launcher placement regressed`);
+    if (adapterId !== 'chatgpt') assert.equal(profile.placement.preferred.at(-1), 'inside-end', `${adapterId} lost its inside-end fallback`);
     if (adapterId !== 'chatgpt') assert.equal(profile.placement.anchorElement, target, `${adapterId} should anchor to the editable itself`);
   }
 });
@@ -461,7 +462,8 @@ test('inline adapters cover common work, developer, publishing, social, and mess
     assert.ok(profile.surface && profile.surface !== 'generic', `${adapterId} surface was generic`);
     assert.match(`${profile.label} ${profile.actions.map((item) => item.label).join(' ')}`, actionPattern);
     assert.equal(profile.contextMode, contextMode, `${adapterId} context default was wrong`);
-    assert.equal(profile.placement.preferred[0], 'inside-end', `${adapterId} launcher should stay inside the editable boundary`);
+    assert.equal(profile.placement.preferred[0], 'outside-end', `${adapterId} launcher should not sit inside the editable boundary`);
+    assert.equal(profile.placement.preferred.at(-1), 'inside-end', `${adapterId} launcher needs an inside-end fallback`);
     assert.equal(profile.placement.anchorElement, target, `${adapterId} should anchor to the editable itself`);
   }
 });
