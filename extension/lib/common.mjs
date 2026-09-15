@@ -5,6 +5,7 @@ import {
   buildChatOnlyPrompt as protocolBuildChatOnlyPrompt,
 } from './browser-context-protocol.mjs';
 import { formatPickedElementBlock } from './element-picker.mjs';
+import { artifactFileChipMarkup } from './artifact-card.mjs';
 import { normalizeImageAspectRatio, resolveImageSource } from './image-render.mjs';
 import { classifyMediaKind, splitInboundVisionMessage } from './media-persistence.mjs';
 import { normalizeHistoryUserMessage } from './session-history-normalization.mjs';
@@ -1893,7 +1894,13 @@ function generatedImageMarkup(source = '', alt = 'Generated image', { inline = f
   const filePath = String(source || '').trim();
   const kind = classifyMediaKind(filePath);
   if (kind === 'image' || kind === 'video') return sessionMediaPlaceholderMarkup(kind, filePath);
-  return '';
+  // Not a picture and not a clip: a produced file (PDF, spreadsheet, HTML page,
+  // archive…) still gets an honest card chip carrying its path, which the
+  // surfaces upgrade into Open / Open on computer / Save once they can read it.
+  // Inline positions stay plain text — a block card cannot live inside a link
+  // or a sentence — while full-line MEDIA tags render the chip.
+  if (inline) return '';
+  return artifactFileChipMarkup(filePath);
 }
 
 function generatedImageUnavailableMarkup() {

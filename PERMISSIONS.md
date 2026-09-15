@@ -12,7 +12,7 @@ This document describes the shipped v0.3.0 permission model.
 | `alarms` | Maintains bounded service-worker lifecycle and wake/reconnect timers. |
 | `contextMenus` | Provides user-invoked Hermes actions from the browser context menu. |
 | `debugger` | Enables opt-in, leased-tab browser control through the Chromium DevTools Protocol. The controller attaches only while control is enabled and detaches when control stops or the lease ends. |
-| `downloads` | Saves generated images or artifacts only after the user explicitly chooses Download. It is not used to inspect download history. |
+| `downloads` | Saves or opens returned files only after the user explicitly picks an action on a returned-file card: Save opens the browser's save dialog, and Open on computer downloads the file and hands it to the OS default application. It is not used to inspect download history. |
 | `offscreen` | Hosts bounded extension-owned wake/listener support where Chromium requires an offscreen document. It has no browser-control authority. |
 | `scripting` | Lets the extension inject its bounded context collector and Hermes Assist runtime into approved `http://`, `https://`, and local-file pages when the content script is missing/stale. |
 | `sidePanel` | Provides the browser side-panel UI. |

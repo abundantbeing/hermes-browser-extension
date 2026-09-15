@@ -119,6 +119,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Captures active tab title/URL, open tabs, selected text, readable page text, metadata, headings, forms, links, and buttons where available.
 - Supports voice dictation through Hermes audio transcription when available: the side panel shows Dictating with a timer and live meter, then transcribes on stop. Browser speech fallback is used when the connected runtime does not expose STT.
 - Reopens session images from Hermes-managed cache/image paths, including Telegram sessions that stored `image_url` cache files. Hermes-sent `MEDIA:` videos play when the dashboard can stream them.
+- Turns returned files into one-click cards: a produced PDF, HTML page, spreadsheet, document, archive, CSV, or image shows its name and type with **Open** (viewable kinds render in a new tab), **Open on computer** (downloads the file and launches the OS default app), and **Save**. A file the dashboard cannot read stays honest — the buttons are disabled and the reason is printed on the card.
 - Wraps webpage text as untrusted context before sending it to Hermes.
 - Streams Hermes responses and falls back to non-streaming chat when needed.
 - Includes Desktop-style appearance settings with Light/Dark/System mode and nine themes: Nous, Midnight, Ember, Mono, Cyberpunk, Slate, Senter Space, Aphrodite, and Solstice.

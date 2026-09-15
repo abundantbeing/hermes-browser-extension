@@ -180,8 +180,10 @@ import { createStreamPacer } from './lib/stream-pacing.mjs';
 import { contextTelemetryFromRuntime, formatTokenCount, mergeContextTelemetry } from './lib/session-context-telemetry.mjs';
 import { liveStateBadge, mergeLiveSignals } from './lib/session-live-state.mjs';
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
-import { mediaDisplayName, mediaSourcePlan } from './lib/media-source.mjs';
+import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactFileSource } from './lib/media-source.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
+import { artifactActionPlan, artifactFailureNotice, artifactFileDownloadUrl } from './lib/artifact-actions.mjs';
+import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
 import {
   activeSubagentView,
@@ -13076,6 +13078,204 @@ async function hydrateSessionMediaInElement(element) {
   }));
 }
 
+// ── Returned-file cards ──────────────────────────────────────────────────────
+// A finished turn often hands back a file — a PDF report, a spreadsheet, an
+// HTML page, an archive. The transcript used to answer with nothing but the
+// path it sits at. These cards make the file actionable: Open renders viewable
+// kinds in a new tab from bytes fetched over the same authenticated dashboard
+// transport the media routes use, Open on computer hands the file to the OS
+// default app through downloads.download + downloads.open, and Save keeps a
+// copy. Every state is honest — when the dashboard cannot read the file, the
+// buttons are disabled and say why instead of failing on click.
+const ARTIFACT_CARD_LIMIT = 6;
+const ARTIFACT_PROBE_CACHE_MS = 30_000;
+const ARTIFACT_BLOB_TTL_MS = 120_000;
+const ARTIFACT_DOWNLOAD_TIMEOUT_MS = 120_000;
+const artifactProbeCache = new Map();
+let artifactDashboardContext = { baseUrl: '', token: '' };
+
+function artifactCardLabels() {
+  return {
+    open: translateUiText('Open'),
+    'open-on-computer': translateUiText('Open on computer'),
+    save: translateUiText('Save'),
+    localSource: translateUiText('On this computer'),
+    remoteSource: translateUiText('Returned by Hermes'),
+    checking: translateUiText('Checking whether Hermes can read this file…'),
+    opening: translateUiText('Opening…'),
+    openingOnComputer: translateUiText('Opening on this computer…'),
+    saving: translateUiText('Saving…'),
+  };
+}
+
+async function resolveArtifactDashboardContext() {
+  const baseUrl = await resolveDashboardMediaBaseUrl();
+  if (!baseUrl) {
+    artifactDashboardContext = { baseUrl: '', token: '' };
+    return artifactDashboardContext;
+  }
+  const token = await fetchDashboardSessionToken({ baseUrl });
+  artifactDashboardContext = { baseUrl, token };
+  return artifactDashboardContext;
+}
+
+// One HEAD probe decides whether a card may offer buttons at all; the result is
+// cached briefly so a streaming render does not re-ask per token.
+async function probeArtifactReadable(filePath) {
+  if (!artifactDashboardContext.baseUrl) await resolveArtifactDashboardContext();
+  const { baseUrl, token } = artifactDashboardContext;
+  if (!baseUrl) return { ok: false, reason: 'missing-base-url' };
+  const key = `${baseUrl}|${filePath}`;
+  const cached = artifactProbeCache.get(key);
+  if (cached && Date.now() - cached.at < ARTIFACT_PROBE_CACHE_MS) return cached.state;
+  const state = await probeArtifactFileSource(filePath, { baseUrl, token });
+  artifactProbeCache.set(key, { at: Date.now(), state });
+  return state;
+}
+
+async function artifactPlanForFile(filePath) {
+  const probe = await probeArtifactReadable(filePath);
+  if (probe.ok) return { plan: artifactActionPlan(filePath, { readable: true }), size: probe.size };
+  return { plan: artifactActionPlan(filePath, { readable: false, reason: probe.reason }), size: null };
+}
+
+function scheduleArtifactBlobRevoke(url) {
+  if (!String(url || '').startsWith('blob:')) return;
+  setTimeout(() => {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      /* the opened tab already holds the bytes */
+    }
+  }, ARTIFACT_BLOB_TTL_MS);
+}
+
+async function openArtifactUrlInTab(url) {
+  if (browserApi?.tabs?.create) {
+    try {
+      await browserApi.tabs.create({ url, active: true });
+      return;
+    } catch (error) {
+      // Some Chromium forks reject tabs.create from a side panel; a normal
+      // window.open keeps the click useful.
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      if (opened) return;
+      throw error;
+    }
+  }
+  if (!window.open(url, '_blank', 'noopener,noreferrer')) {
+    throw new Error('This browser would not open a new tab for the file.');
+  }
+}
+
+async function openArtifactCardInBrowser(plan) {
+  const { baseUrl, token } = artifactDashboardContext.baseUrl
+    ? artifactDashboardContext
+    : await resolveArtifactDashboardContext();
+  const result = await resolveArtifactFileSource(plan.source, { baseUrl, token });
+  if (!result.ok) throw new Error(artifactFailureNotice(result.reason));
+  scheduleArtifactBlobRevoke(result.url);
+  await openArtifactUrlInTab(result.url);
+}
+
+function artifactInterruptedMessage(delta = {}) {
+  const reason = delta.error?.current;
+  return reason ? `The download was interrupted (${reason}).` : 'The download was interrupted.';
+}
+
+function waitForArtifactDownload(downloadId) {
+  return new Promise((resolve, reject) => {
+    const downloads = browserApi?.downloads;
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      try {
+        downloads?.onChanged?.removeListener?.(listener);
+      } catch {
+        /* the listener registry is gone — nothing left to detach */
+      }
+      clearTimeout(timer);
+      if (error) reject(error);
+      else resolve();
+    };
+    const listener = (delta = {}) => {
+      if (delta.id !== downloadId) return;
+      const state = delta.state?.current;
+      if (state === 'complete') finish();
+      else if (state === 'interrupted') finish(new Error(artifactInterruptedMessage(delta)));
+    };
+    const timer = setTimeout(() => finish(new Error('The download did not finish in time.')), ARTIFACT_DOWNLOAD_TIMEOUT_MS);
+    downloads?.onChanged?.addListener?.(listener);
+    // The download can already be complete before the listener attaches.
+    Promise.resolve(downloads?.search?.({ id: downloadId })).then((items) => {
+      const state = Array.isArray(items) ? items[0]?.state : '';
+      if (state === 'complete') finish();
+      else if (state === 'interrupted') finish(new Error('The download was interrupted.'));
+    }).catch(() => {});
+  });
+}
+
+async function openArtifactCardOnComputer(plan) {
+  const { baseUrl, token } = artifactDashboardContext.baseUrl
+    ? artifactDashboardContext
+    : await resolveArtifactDashboardContext();
+  const url = artifactFileDownloadUrl({ baseUrl, filePath: plan.source, token });
+  if (!url) throw new Error(artifactFailureNotice('missing-base-url'));
+  const downloadId = await browserApi.downloads.download({ url, filename: plan.name });
+  if (!Number.isInteger(Number(downloadId))) throw new Error('The browser did not start the download.');
+  await waitForArtifactDownload(Number(downloadId));
+  await browserApi.downloads.open(Number(downloadId));
+}
+
+async function saveArtifactCardFile(plan) {
+  const { baseUrl, token } = artifactDashboardContext.baseUrl
+    ? artifactDashboardContext
+    : await resolveArtifactDashboardContext();
+  const url = artifactFileDownloadUrl({ baseUrl, filePath: plan.source, token });
+  if (!url) throw new Error(artifactFailureNotice('missing-base-url'));
+  await browserApi.downloads.download({ url, filename: plan.name, saveAs: true });
+}
+
+async function runArtifactCardAction(plan, card, busyLabelKey, action) {
+  if (card?.dataset?.artifactBusy === 'true') return;
+  const labels = artifactCardLabels();
+  setArtifactCardBusy(card, true, { note: labels[busyLabelKey] || '' });
+  try {
+    await action();
+    if (card?.isConnected !== false) {
+      setArtifactCardBusy(card, false);
+      setArtifactCardNote(card, '');
+    }
+  } catch (error) {
+    if (card?.isConnected !== false) {
+      setArtifactCardBusy(card, false);
+      setArtifactCardNote(card, String(error?.message || error || 'The file action failed.'));
+    }
+  }
+}
+
+function artifactCardHandlers() {
+  return {
+    open: (plan, card) => runArtifactCardAction(plan, card, 'opening', () => openArtifactCardInBrowser(plan)),
+    'open-on-computer': (plan, card) => runArtifactCardAction(plan, card, 'openingOnComputer', () => openArtifactCardOnComputer(plan)),
+    save: (plan, card) => runArtifactCardAction(plan, card, 'saving', () => saveArtifactCardFile(plan)),
+  };
+}
+
+// Chips from the markdown renderer plus paths written as ordinary text both
+// become the same card; the shared hydrator owns the mechanics so the side
+// panel and the full tab cannot drift apart.
+async function hydrateArtifactFileCards(root, { scanText = true } = {}) {
+  return hydrateArtifactCards(root, {
+    buildPlan: artifactPlanForFile,
+    labels: artifactCardLabels,
+    handlers: artifactCardHandlers,
+    scanText,
+    limit: ARTIFACT_CARD_LIMIT,
+  });
+}
+
 async function commitFetchedSessionMessages(result, { sessionId, requestId = null, scopeRevisionId = scopeRevision.current() } = {}) {
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   if (requestId != null && requestId !== sessionLoadRequestId) return false;
@@ -13438,6 +13638,9 @@ function renderMessageContentElement(element, content = '') {
   });
   wrapGeneratedImagesForInspection(element);
   void hydrateSessionMediaInElement(element);
+  // Only Hermes' own replies can name a file it just produced; a path the user
+  // typed stays ordinary text.
+  if (!element?.closest?.('.message.user')) void hydrateArtifactFileCards(element);
 }
 
 // Any generated picture in the transcript gets the same inspect affordance the
@@ -14204,6 +14407,7 @@ function renderMessagesFromStorage() {
       return;
     }
     await hydrateSessionMediaInElement(els.messages);
+    await hydrateArtifactFileCards(els.messages);
   })();
 }
 

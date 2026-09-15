@@ -466,6 +466,9 @@
 .artifact-card-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .artifact-card-actions button { min-height: 29px; padding: 0 8px; border: 1px solid var(--hermes-line-strong); background: transparent; color: var(--hermes-ink); font: 8px var(--hermes-font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
 .artifact-card-actions button:hover { background: var(--hermes-blue); color: var(--hermes-white); }
+.artifact-card-actions button:disabled { cursor: not-allowed; opacity: 0.48; }
+.artifact-card[data-artifact-state="unreadable"] { border-style: dashed; }
+.artifact-card-pending { opacity: 0.94; }
 .artifact-card > p { margin: 0; color: var(--hermes-muted); font: 9px/1.45 var(--hermes-font-mono); }
 
 /* Text settings scale readable content and controls without scaling layout boxes. */
