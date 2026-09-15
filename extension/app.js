@@ -107,8 +107,8 @@ import {
   stripGeneratedImageEchoes,
 } from './lib/image-render.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
-import { probeArtifactFileSource, resolveArtifactFileSource } from './lib/media-source.mjs';
-import { artifactActionPlan, artifactFailureNotice, artifactFileDownloadUrl } from './lib/artifact-actions.mjs';
+import { probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
+import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
 import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import {
   activeSubagentView,
@@ -2131,12 +2131,22 @@ function waitForFulltabArtifactDownload(downloadId) {
   });
 }
 
-async function openArtifactCardOnComputer(plan) {
+// downloads.download cannot set request headers, so the blob route is what
+// keeps the session token out of the URL (see resolveArtifactDownloadSource);
+// the token-carrying query URL is the deliberate fallback for a surface that
+// cannot hold the bytes at all.
+async function fulltabArtifactDownloadUrlFor(plan) {
   const { baseUrl, token } = fulltabArtifactContext.baseUrl
     ? fulltabArtifactContext
     : await resolveFulltabArtifactContext();
-  const url = artifactFileDownloadUrl({ baseUrl, filePath: plan.source, token });
-  if (!url) throw new Error(artifactFailureNotice('missing-base-url'));
+  const source = await resolveArtifactDownloadSource(plan.source, { baseUrl, token });
+  if (!source.ok) throw new Error(artifactFailureNotice(source.reason));
+  scheduleFulltabArtifactBlobRevoke(source.url);
+  return source.url;
+}
+
+async function openArtifactCardOnComputer(plan) {
+  const url = await fulltabArtifactDownloadUrlFor(plan);
   const downloadId = await browserApi.downloads.download({ url, filename: plan.name });
   if (!Number.isInteger(Number(downloadId))) throw new Error('The browser did not start the download.');
   await waitForFulltabArtifactDownload(Number(downloadId));
@@ -2144,11 +2154,7 @@ async function openArtifactCardOnComputer(plan) {
 }
 
 async function saveArtifactCardFile(plan) {
-  const { baseUrl, token } = fulltabArtifactContext.baseUrl
-    ? fulltabArtifactContext
-    : await resolveFulltabArtifactContext();
-  const url = artifactFileDownloadUrl({ baseUrl, filePath: plan.source, token });
-  if (!url) throw new Error(artifactFailureNotice('missing-base-url'));
+  const url = await fulltabArtifactDownloadUrlFor(plan);
   await browserApi.downloads.download({ url, filename: plan.name, saveAs: true });
 }
 

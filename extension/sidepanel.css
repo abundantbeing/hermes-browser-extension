@@ -2262,22 +2262,38 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   max-height: min(68vh, 680px);
   background: #000;
 }
-/* Returned-file card: badge, file name, the path it lives at, and the actions
-   the dashboard probe says are actually available. The buttons inherit the
-   panel's outlined-inverted hover treatment; a card whose bytes cannot be read
-   draws a dashed boundary and explains itself instead of offering dead
-   buttons. */
+/* Returned-file card: a leading type token, the file name with its extension
+   de-emphasised in place, one mono meta line ('On this computer · 402 KB'), and
+   the action row — the primary action filled with the theme's action pair, the
+   rest outlined. Every colour here is a theme token, and the token's tint comes
+   from the file's family, so the card lands on all nine palettes in light and
+   dark. A card whose bytes cannot be read draws a dashed boundary and prints
+   the exact reason instead of offering dead buttons. */
 .artifact-card {
+  --artifact-card-surface: var(--hermes-paper);
+  --artifact-card-line: rgba(var(--hermes-ink-rgb, var(--hermes-blue-rgb, 0, 0, 242)), 0.42);
+  --artifact-card-fill: rgba(var(--hermes-ink-rgb, var(--hermes-blue-rgb, 0, 0, 242)), 0.07);
   display: grid;
-  gap: 8px;
+  gap: 7px;
   width: min(100%, 720px);
+  max-width: 100%;
+  min-width: 0;
   margin: 12px 0 4px;
-  padding: 8px 10px;
+  padding: 8px 10px 9px;
   border: 1px solid var(--hermes-line-strong);
   border-radius: 8px;
+  background: var(--artifact-card-surface);
   color: var(--hermes-ink);
   font: 11px/1.3 var(--hermes-font-ui);
 }
+/* One tint depth per family, all cut from the same ink token so the fill moves
+   away from the card surface in light AND dark palettes: spreadsheets are the
+   deepest, then media, documents, archives, and an unmapped file barely tints. */
+.artifact-card[data-artifact-family="document"] { --artifact-card-fill: rgba(var(--hermes-ink-rgb, var(--hermes-blue-rgb, 0, 0, 242)), 0.08); }
+.artifact-card[data-artifact-family="media"] { --artifact-card-fill: rgba(var(--hermes-ink-rgb, var(--hermes-blue-rgb, 0, 0, 242)), 0.13); }
+.artifact-card[data-artifact-family="sheet"] { --artifact-card-fill: rgba(var(--hermes-ink-rgb, var(--hermes-blue-rgb, 0, 0, 242)), 0.19); }
+.artifact-card[data-artifact-family="archive"] { --artifact-card-fill: rgba(var(--hermes-ink-rgb, var(--hermes-blue-rgb, 0, 0, 242)), 0.08); }
+.artifact-card[data-artifact-family="unknown"] { --artifact-card-fill: rgba(var(--hermes-ink-rgb, var(--hermes-blue-rgb, 0, 0, 242)), 0.03); }
 .artifact-card-head {
   min-width: 0;
   display: grid;
@@ -2286,12 +2302,22 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   align-items: center;
 }
 .artifact-card-kind {
-  padding: 4px 5px;
-  border: 1px solid var(--hermes-line-strong);
-  color: var(--hermes-muted);
-  font: 8px var(--hermes-font-mono);
-  letter-spacing: 0.08em;
+  padding: 3px 6px;
+  border: 1px solid var(--artifact-card-line);
+  background: var(--artifact-card-fill);
+  color: var(--hermes-ink);
+  font: 9px/1 var(--hermes-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
+/* The family also reads in the token's boundary, so the five buckets stay
+   tellable apart without leaning on colour alone: a ruled spreadsheet, a media
+   spine, a dashed archive, a dotted unmapped file. */
+.artifact-card[data-artifact-family="sheet"] .artifact-card-kind { box-shadow: inset 0 0 0 1px var(--artifact-card-line); }
+.artifact-card[data-artifact-family="media"] .artifact-card-kind { border-left-width: 3px; }
+.artifact-card[data-artifact-family="archive"] .artifact-card-kind { border-style: dashed; }
+.artifact-card[data-artifact-family="unknown"] .artifact-card-kind { border-style: dotted; }
 .artifact-card-copy { min-width: 0; }
 .artifact-card-copy strong,
 .artifact-card-copy small {
@@ -2301,19 +2327,62 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   white-space: nowrap;
 }
 .artifact-card-copy strong { font-size: 12px; }
-.artifact-card-copy small { margin-top: 3px; color: var(--hermes-muted); font: 9px var(--hermes-font-mono); }
-.artifact-card-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+/* The extension is de-emphasised by size and weight, never by a faded colour:
+   the name keeps the card's contrast ratio in every palette. */
+.artifact-card-name-ext { font-size: 0.82em; font-weight: 400; letter-spacing: 0.06em; }
+.artifact-card-copy small { margin-top: 3px; color: var(--hermes-ink); opacity: 0.8; font: 9px var(--hermes-font-mono); }
+.artifact-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
 .artifact-card-actions button {
   min-height: 26px;
+  max-width: 100%;
   padding: 0 9px;
+  overflow: hidden;
+  border: 1px solid var(--hermes-line-strong);
+  background: transparent;
+  color: var(--hermes-ink);
   font: 9px var(--hermes-font-mono);
   letter-spacing: 0.08em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+/* Secondary actions outline themselves in the label colour and invert into the
+   action pair — the treatment the rest of the app standardised on, so the
+   boundary never disappears on a light palette. */
+.artifact-card-actions button:not(:disabled):hover,
+.artifact-card-actions button:not(:disabled):focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+.artifact-card-actions .artifact-card-action-primary {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+.artifact-card-actions .artifact-card-action-primary:not(:disabled):hover,
+.artifact-card-actions .artifact-card-action-primary:not(:disabled):focus-visible {
+  background: var(--hermes-primary-fg, var(--hermes-paper));
+  color: var(--hermes-primary-bg, var(--hermes-ink));
+  border-color: var(--hermes-primary-bg, var(--hermes-ink));
 }
 .artifact-card-actions button:disabled { cursor: not-allowed; opacity: 0.48; }
-.artifact-card-note { margin: 0; color: var(--hermes-muted); font: 9px/1.45 var(--hermes-font-mono); }
+.artifact-card-note { margin: 0; color: var(--hermes-ink); opacity: 0.82; font: 9px/1.45 var(--hermes-font-mono); }
 .artifact-card[data-artifact-state="unreadable"] { border-style: dashed; }
-.artifact-card-pending { opacity: 0.94; }
+/* A refusal is a fact: the reason keeps the full ink, not the quiet tone. */
+.artifact-card[data-artifact-state="unreadable"] .artifact-card-note { color: var(--hermes-ink); }
+/* The pending chip is a promise, not a result: same object, softer boundary. */
+.artifact-card-pending { border-color: var(--hermes-line); }
+@keyframes artifact-card-reveal {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: none; }
+}
+.artifact-card[data-artifact-reveal="enter"] {
+  animation: artifact-card-reveal 155ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .artifact-card[data-artifact-reveal="enter"] { animation: none; }
+}
 .generated-image img {
   display: block;
   width: 100%;

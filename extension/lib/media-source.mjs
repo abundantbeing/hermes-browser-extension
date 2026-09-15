@@ -8,13 +8,25 @@
 // never touch the network or the platform.
 
 import { resolveImageSource } from './image-render.mjs';
-import { artifactFileDownloadUrl } from './artifact-actions.mjs';
+import { artifactFileDownloadUrl, artifactFileFetchUrl } from './artifact-actions.mjs';
 import { classifyMediaKind, isHermesManagedMediaPath } from './media-persistence.mjs';
 
 const DASHBOARD_MEDIA_ROUTE = '/api/media';
 const DASHBOARD_STREAM_ROUTE = '/api/files/stream';
 const DASHBOARD_IMAGE_DATA_URL_PREFIX = 'data:image/';
 const OBJECT_URL_PREFIX = 'blob:';
+
+// Reasons the blob download route may hand the job back to the query-token URL:
+// each one means "this page cannot hold the bytes", never "the dashboard
+// refused the file". A server-side refusal (http-401/403/404/413/415), an empty
+// file, or an abort stays a failure — the download route would answer the same
+// way, and a second request would only blur the honest reason.
+const BLOB_DOWNLOAD_FALLBACK_REASONS = Object.freeze(new Set([
+  'fetch-unavailable',
+  'object-url-unavailable',
+  'fetch-failed',
+  'file-read-failed',
+]));
 
 function normalizePathRef(pathRef) {
   if (typeof pathRef !== 'string') return '';
@@ -185,7 +197,10 @@ export async function resolveArtifactFileSource(pathRef, {
 } = {}) {
   const filePath = normalizePathRef(pathRef);
   if (!filePath) return { ok: false, reason: 'missing-file-path' };
-  const url = artifactFileDownloadUrl({ baseUrl, filePath, token });
+  // The token rides in the header, never in the URL: this request is the
+  // extension's own read, and the blob it produces is what the browser's
+  // download machinery sees later on.
+  const url = artifactFileFetchUrl({ baseUrl, filePath });
   if (!url) return { ok: false, reason: 'missing-base-url' };
 
   const fetchFn = typeof fetchImpl === 'function' ? fetchImpl : globalThis.fetch?.bind(globalThis);
@@ -243,7 +258,7 @@ export async function probeArtifactFileSource(pathRef, {
 } = {}) {
   const filePath = normalizePathRef(pathRef);
   if (!filePath) return { ok: false, reason: 'missing-file-path' };
-  const url = artifactFileDownloadUrl({ baseUrl, filePath, token });
+  const url = artifactFileFetchUrl({ baseUrl, filePath });
   if (!url) return { ok: false, reason: 'missing-base-url' };
 
   const fetchFn = typeof fetchImpl === 'function' ? fetchImpl : globalThis.fetch?.bind(globalThis);
@@ -284,6 +299,46 @@ export async function probeArtifactFileSource(pathRef, {
   const rawLength = response.headers?.get?.('content-length');
   const length = rawLength === null || rawLength === undefined || rawLength === '' ? NaN : Number(rawLength);
   return { ok: true, size: Number.isFinite(length) && length >= 0 ? length : null };
+}
+
+/**
+ * URL for a `downloads.download` call that must not carry the session token.
+ *
+ * Primary route: the file's bytes are fetched over the same header-authenticated
+ * transport `resolveArtifactFileSource` uses and handed to the browser's
+ * download machinery as a blob object URL, so the token never lands in a URL —
+ * not in the download history, not in a logged request line. `downloads.download`
+ * cannot set request headers, which is the whole reason this fallback exists,
+ * so the blob stays the only way to keep the token out of the URL.
+ *
+ * Fallback: `/api/files/download?path=…&token=…`. It stays for the cases where
+ * this page simply cannot hold the bytes (no fetch in this surface, no object
+ * URL), which is a property of the surface rather than of the file — and it is
+ * reachable only for those reasons, deliberately: when the dashboard itself
+ * refused the file (HTTP 401/403/404/413/415) or the file is empty, the query
+ * URL would be refused exactly the same way, so the honest reason is returned
+ * instead of firing a second doomed request.
+ *
+ * @param {unknown} pathRef Local path of the returned file.
+ * @param {{ baseUrl?: string, token?: string, fetchImpl?: typeof fetch, createObjectUrl?: (blob: Blob) => string, signal?: AbortSignal }} [options]
+ * @returns {Promise<{ ok: true, url: string, route: 'blob', size: number }
+ *   | { ok: true, url: string, route: 'query-token', reason: string }
+ *   | { ok: false, reason: string }>}
+ */
+export async function resolveArtifactDownloadSource(pathRef, {
+  baseUrl = '',
+  token = '',
+  fetchImpl,
+  createObjectUrl,
+  signal,
+} = {}) {
+  const blobRoute = await resolveArtifactFileSource(pathRef, { baseUrl, token, fetchImpl, createObjectUrl, signal });
+  if (blobRoute.ok) return { ok: true, url: blobRoute.url, route: 'blob', size: blobRoute.size };
+  if (!BLOB_DOWNLOAD_FALLBACK_REASONS.has(blobRoute.reason)) return { ok: false, reason: blobRoute.reason };
+  const filePath = normalizePathRef(pathRef);
+  const url = artifactFileDownloadUrl({ baseUrl, filePath, token });
+  if (!url) return { ok: false, reason: blobRoute.reason };
+  return { ok: true, url, route: 'query-token', reason: blobRoute.reason };
 }
 
 /**

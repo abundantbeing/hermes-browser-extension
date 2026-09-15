@@ -107,6 +107,41 @@ const KIND_BADGES = Object.freeze({
 
 export const ARTIFACT_KINDS = Object.freeze(Object.keys(KIND_BADGES));
 
+// Kind -> family: the coarse visual bucket the card's type token is tinted by.
+// Five families, five distinct token treatments (see sidepanel.css /
+// app-parity.css): nothing here is a colour, so every theme keeps its own
+// palette and the surface only has to map the family name to a tint.
+const KIND_FAMILIES = Object.freeze({
+  pdf: 'document',
+  html: 'document',
+  text: 'document',
+  markdown: 'document',
+  json: 'document',
+  document: 'document',
+  presentation: 'document',
+  sheet: 'sheet',
+  csv: 'sheet',
+  image: 'media',
+  video: 'media',
+  audio: 'media',
+  archive: 'archive',
+  binary: 'unknown',
+});
+
+export const ARTIFACT_FAMILIES = Object.freeze(['document', 'sheet', 'media', 'archive', 'unknown']);
+
+/** Family an unknown kind falls back to. */
+export const UNKNOWN_ARTIFACT_FAMILY = 'unknown';
+
+/**
+ * Visual family for a kind: document | sheet | media | archive | unknown.
+ * @param {string} kind
+ * @returns {string}
+ */
+export function artifactKindFamily(kind = '') {
+  return KIND_FAMILIES[String(kind || '')] || UNKNOWN_ARTIFACT_FAMILY;
+}
+
 /** Kind used for anything without a mapped extension. */
 export const UNKNOWN_ARTIFACT_KIND = 'binary';
 
@@ -232,6 +267,7 @@ export function describeArtifactFile(pathRef) {
     extension,
     kind,
     badge: KIND_BADGES[kind] || KIND_BADGES[UNKNOWN_ARTIFACT_KIND],
+    family: artifactKindFamily(kind),
     mime: artifactMimeForExtension(extension),
     viewable: isInlineViewableKind(kind),
     local: isLocalArtifactPath(source),
@@ -241,8 +277,15 @@ export function describeArtifactFile(pathRef) {
 /**
  * Dashboard URL that streams a file's bytes as a download. `/api/files/download`
  * is the one route that also accepts the dashboard session token as `?token=`,
- * which is what lets the browser's own download machinery (and `downloads.open`)
- * read the file without the extension re-fetching it.
+ * which is what lets the browser's own download machinery read a file without
+ * the extension fetching it first.
+ *
+ * This is the fallback route for the OS-open / Save actions, not the default:
+ * a token in a URL lands in the browser's download history and in any log that
+ * records the request line. The surfaces prefer `resolveArtifactDownloadSource`
+ * (media-source.mjs), which hands `downloads.download` a blob object URL built
+ * from bytes fetched over the header-authenticated transport, and only come
+ * back here when the page cannot hold the bytes at all.
  *
  * @param {{ baseUrl?: string, filePath?: string, token?: string }} options
  * @returns {string}
@@ -254,6 +297,20 @@ export function artifactFileDownloadUrl({ baseUrl = '', filePath = '', token = '
   const params = new URLSearchParams({ path: pathRef });
   if (token) params.set('token', String(token));
   return `${base}/api/files/download?${params.toString()}`;
+}
+
+/**
+ * URL for the extension's own read of a file's bytes. The request carries the
+ * session token in the `X-Hermes-Session-Token` header (the transport the media
+ * routes use), and `/api/files/download` accepts either that header or the
+ * query parameter — so the URL stays free of the token, which is where it would
+ * otherwise be copied into access logs.
+ *
+ * @param {{ baseUrl?: string, filePath?: string }} options
+ * @returns {string}
+ */
+export function artifactFileFetchUrl({ baseUrl = '', filePath = '' } = {}) {
+  return artifactFileDownloadUrl({ baseUrl, filePath });
 }
 
 /**
@@ -279,6 +336,9 @@ function actionEntry(id, enabled, reason = '') {
  * exists for inline-viewable kinds; `open-on-computer` and `save` exist for
  * every kind. Pass `readable: false` once a read has failed and every action
  * comes back disabled with the reason, so the card never shows a dead button.
+ *
+ * Order is meaningful: the first action is the primary one the card emphasises
+ * (`open` when the file can be shown inline, otherwise `open-on-computer`).
  *
  * @param {unknown} pathRef
  * @param {{ readable?: boolean|null, reason?: string }} [options]

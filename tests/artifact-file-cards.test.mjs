@@ -5,25 +5,35 @@ import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 import {
+  ARTIFACT_FAMILIES,
+  ARTIFACT_KINDS,
   artifactActionPlan,
   artifactExtension,
   artifactFailureNotice,
   artifactFileDownloadUrl,
+  artifactFileFetchUrl,
   artifactFileName,
+  artifactKindFamily,
   artifactKindForExtension,
   artifactMimeForExtension,
   describeArtifactFile,
   extractArtifactPaths,
 } from '../extension/lib/artifact-actions.mjs';
 import {
+  ARTIFACT_CARD_PRIMARY_CLASS,
   DEFAULT_ARTIFACT_CARD_LIMIT,
   buildArtifactFileCard,
   formatArtifactBytes,
   hydrateArtifactCards,
   setArtifactCardBusy,
   setArtifactCardNote,
+  splitArtifactFileName,
 } from '../extension/lib/artifact-card.mjs';
-import { probeArtifactFileSource, resolveArtifactFileSource } from '../extension/lib/media-source.mjs';
+import {
+  probeArtifactFileSource,
+  resolveArtifactDownloadSource,
+  resolveArtifactFileSource,
+} from '../extension/lib/media-source.mjs';
 
 // The card markup reaches the DOM through renderMarkdownSafe, so this suite
 // runs against a jsdom window the way tests/sanitizer.test.mjs does.
@@ -99,6 +109,61 @@ test('every returned-file kind maps to its viewability, MIME type, and action li
     for (const action of plan.actions) {
       assert.equal(action.enabled, true, `${kind}/${action.id} should be enabled before a read is attempted`);
     }
+  }
+});
+
+test('every kind lands in one of the five card families, and the family is carried on the plan', () => {
+  const expected = {
+    pdf: 'document',
+    html: 'document',
+    text: 'document',
+    markdown: 'document',
+    json: 'document',
+    document: 'document',
+    presentation: 'document',
+    sheet: 'sheet',
+    csv: 'sheet',
+    image: 'media',
+    video: 'media',
+    audio: 'media',
+    archive: 'archive',
+    binary: 'unknown',
+  };
+  // A kind is not an extension: sample each kind with a real extension so the
+  // descriptor path is exercised too.
+  const sampleExtension = {
+    pdf: 'pdf',
+    html: 'html',
+    text: 'txt',
+    markdown: 'md',
+    json: 'json',
+    document: 'docx',
+    presentation: 'pptx',
+    sheet: 'xlsx',
+    csv: 'csv',
+    image: 'png',
+    video: 'mp4',
+    audio: 'mp3',
+    archive: 'zip',
+    binary: 'qqq',
+  };
+  for (const [kind, family] of Object.entries(expected)) {
+    assert.equal(artifactKindFamily(kind), family, `${kind} -> ${family}`);
+    const extension = sampleExtension[kind];
+    assert.ok(extension, `${kind} needs a sample extension in this test`);
+    const descriptor = describeArtifactFile(`C:\\a\\x.${extension}`);
+    assert.equal(descriptor.kind, kind, `x.${extension} should classify as ${kind}`);
+    assert.equal(descriptor.family, family, `the descriptor should carry ${family}`);
+  }
+  assert.deepEqual(Object.keys(expected).sort(), [...ARTIFACT_KINDS].sort(), 'every artifact kind must be mapped to a family');
+  assert.equal(artifactKindFamily('not-a-kind'), 'unknown', 'an unmapped kind falls back to the unknown family');
+  assert.equal(artifactKindFamily(''), 'unknown');
+  assert.equal(artifactActionPlan(PDF_PATH).family, 'document', 'the action plan carries the family for the surface to tint by');
+
+  // Every family must be reachable from a real extension, or a tint is dead.
+  const reachable = new Set(ARTIFACT_KINDS.map((kind) => artifactKindFamily(kind)));
+  for (const family of ARTIFACT_FAMILIES) {
+    assert.equal(reachable.has(family), true, `no kind maps to the ${family} family`);
   }
 });
 
@@ -187,13 +252,20 @@ test('plain-text paths are found, de-duplicated, capped, and never mistaken for 
 // 3. bytes through the authenticated dashboard transport
 // ---------------------------------------------------------------------------
 
-test('the download URL carries the path plus the session token the OS-open path needs', () => {
+test('the fallback download URL is the only place the session token travels in a URL', () => {
   assert.equal(
     artifactFileDownloadUrl({ baseUrl: `${BASE_URL}/`, filePath: 'C:\\a b\\x.pdf', token: 'tok 1' }),
     `${BASE_URL}/api/files/download?path=C%3A%5Ca+b%5Cx.pdf&token=tok+1`,
   );
   assert.equal(artifactFileDownloadUrl({ baseUrl: '', filePath: 'C:\\a.pdf' }), '');
   assert.equal(artifactFileDownloadUrl({ baseUrl: BASE_URL, filePath: '' }), '');
+  // The extension's own read of the bytes never carries the token in the URL:
+  // the same route authenticates on the X-Hermes-Session-Token header.
+  assert.equal(
+    artifactFileFetchUrl({ baseUrl: `${BASE_URL}/`, filePath: 'C:\\a b\\x.pdf' }),
+    `${BASE_URL}/api/files/download?path=C%3A%5Ca+b%5Cx.pdf`,
+  );
+  assert.equal(artifactFileFetchUrl({ baseUrl: '', filePath: 'C:\\a.pdf' }), '');
 });
 
 test('resolveArtifactFileSource fetches the file with the session header and returns a blob URL', async () => {
@@ -220,7 +292,8 @@ test('resolveArtifactFileSource fetches the file with the session header and ret
     size: 4,
   });
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, `${BASE_URL}/api/files/download?path=${encodeURIComponent(PDF_PATH)}&token=session-token`);
+  assert.equal(calls[0].url, `${BASE_URL}/api/files/download?path=${encodeURIComponent(PDF_PATH)}`);
+  assert.doesNotMatch(calls[0].url, /token/, 'the token must not be copied into the request URL');
   assert.equal(calls[0].options.method, 'GET');
   assert.equal(calls[0].options.headers['X-Hermes-Session-Token'], 'session-token');
   assert.equal(calls[0].options.credentials, 'include');
@@ -276,13 +349,15 @@ test('the readability probe HEADs the same URL and falls back to a ranged GET', 
     baseUrl: BASE_URL,
     token: 'tok',
     fetchImpl: async (url, options) => {
-      seen.push({ url, method: options.method, range: options.headers.Range });
+      seen.push({ url, method: options.method, range: options.headers.Range, token: options.headers['X-Hermes-Session-Token'] });
       return { ok: true, status: 200, headers: { get: (name) => (name === 'content-length' ? '4096' : null) } };
     },
   });
   assert.deepEqual(headOk, { ok: true, size: 4096 });
   assert.equal(seen[0].method, 'HEAD');
-  assert.equal(seen[0].url, `${BASE_URL}/api/files/download?path=${encodeURIComponent(PDF_PATH)}&token=tok`);
+  assert.equal(seen[0].url, `${BASE_URL}/api/files/download?path=${encodeURIComponent(PDF_PATH)}`);
+  assert.doesNotMatch(seen[0].url, /token/, 'the probe URL must not carry the session token either');
+  assert.equal(seen[0].token, 'tok', 'the probe authenticates with the session header');
 
   const ranged = [];
   const fallback = await probeArtifactFileSource(PDF_PATH, {
@@ -312,20 +387,38 @@ test('the readability probe HEADs the same URL and falls back to a ranged GET', 
 // 4. the card itself
 // ---------------------------------------------------------------------------
 
-test('a viewable file gets Open, Open on computer and Save with its badge and path', () => {
+test('a viewable file gets a leading type token, a de-emphasised extension, the meta line, and its actions', () => {
   const plan = artifactActionPlan(PDF_PATH, { readable: true });
   const card = buildArtifactFileCard(document, plan, { size: 4096 });
   assert.equal(card.className, 'artifact-card');
   assert.equal(card.dataset.artifactPath, PDF_PATH);
   assert.equal(card.dataset.artifactKind, 'pdf');
+  assert.equal(card.dataset.artifactFamily, 'document');
   assert.equal(card.dataset.artifactState, 'ready');
   assert.equal(card.querySelector('.artifact-card-kind').textContent, 'PDF');
-  assert.equal(card.querySelector('.artifact-card-name').textContent, 'quarterly-report.pdf');
-  assert.match(card.querySelector('.artifact-card-source').textContent, /quarterly-report\.pdf/);
-  assert.match(card.querySelector('.artifact-card-source').textContent, /4 KB/);
+  // The name reads as one string, but the extension is its own element so the
+  // surface can de-emphasise it by size and weight.
+  const name = card.querySelector('.artifact-card-name');
+  assert.equal(name.textContent, 'quarterly-report.pdf');
+  assert.equal(name.title, PDF_PATH, 'the whole path stays available on hover');
+  assert.equal(name.querySelector('.artifact-card-name-ext').textContent, '.pdf');
+  assert.equal(name.firstChild.textContent, 'quarterly-report');
+  // One mono meta line: where it lives and how big it is. The path itself is
+  // not printed — it is one hover away, on both the name and the meta line.
+  const meta = card.querySelector('.artifact-card-source');
+  assert.equal(meta.textContent, 'On this computer · 4 KB');
+  assert.equal(meta.title, PDF_PATH);
+  assert.equal(card.getAttribute('title'), null, 'the card root carries no title of its own');
+  assert.equal(card.dataset.artifactReveal, 'enter', 'a freshly built card is marked for the short reveal');
   assert.deepEqual(actionIds(card), ['open', 'open-on-computer', 'save']);
   assert.equal(buttons(card).every((button) => button.disabled === false), true);
   assert.equal(card.querySelector('.artifact-card-note'), null, 'a readable card has no note');
+
+  // The first action of the plan is the primary tile, the rest are outlined.
+  const primary = card.querySelector(`.${ARTIFACT_CARD_PRIMARY_CLASS}`);
+  assert.equal(primary.dataset.artifactAction, 'open');
+  assert.equal(buttons(card).filter((button) => button.classList.contains(ARTIFACT_CARD_PRIMARY_CLASS)).length, 1);
+  assert.equal(card.querySelector(`[data-artifact-action="save"]`).classList.contains(ARTIFACT_CARD_PRIMARY_CLASS), false);
 
   const clicked = [];
   const wired = buildArtifactFileCard(document, plan, {
@@ -333,6 +426,27 @@ test('a viewable file gets Open, Open on computer and Save with its badge and pa
   });
   buttons(wired)[0].click();
   assert.deepEqual(clicked, [[PDF_PATH, true]]);
+});
+
+test('a kind the browser cannot preview leads with Open on computer instead of Open', () => {
+  const card = buildArtifactFileCard(document, artifactActionPlan('C:\\a\\book.xlsx', { readable: true }), { size: 2048 });
+  assert.equal(card.dataset.artifactFamily, 'sheet');
+  const primary = card.querySelector(`.${ARTIFACT_CARD_PRIMARY_CLASS}`);
+  assert.equal(primary.dataset.artifactAction, 'open-on-computer');
+  assert.equal(primary.textContent, 'Open on computer');
+  assert.equal(card.querySelector(`[data-artifact-action="open"]`), null);
+  assert.equal(card.querySelector('.artifact-card-source').textContent, 'On this computer · 2 KB');
+  assert.equal(card.querySelector('.artifact-card-name-ext').textContent, '.xlsx');
+});
+
+test('file names split into a base and an extension without losing a character', () => {
+  assert.deepEqual(splitArtifactFileName('quarterly-report.pdf', 'pdf'), { base: 'quarterly-report', extension: '.pdf' });
+  assert.deepEqual(splitArtifactFileName('ARCHIVE.ZIP', 'zip'), { base: 'ARCHIVE', extension: '.ZIP' });
+  assert.deepEqual(splitArtifactFileName('notes', ''), { base: 'notes', extension: '' });
+  assert.deepEqual(splitArtifactFileName('odd.name.pdf', 'pdf'), { base: 'odd.name', extension: '.pdf' });
+  const plan = artifactActionPlan('C:\\a\\book.xlsx', { readable: true });
+  const card = buildArtifactFileCard(document, plan);
+  assert.equal(card.querySelector('.artifact-card-name').textContent, plan.name, 'splitting never changes what the name reads as');
 });
 
 test('a file the browser cannot preview offers no Open button at all', () => {
@@ -518,7 +632,11 @@ test('hydration ignores code blocks and content it has already processed', async
 
 test('the side panel hydrates returned-file cards and keeps the honest chip fallback', () => {
   assert.match(sidepanelSource, /import \{ hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote \} from '\.\/lib\/artifact-card\.mjs';/);
-  assert.match(sidepanelSource, /import \{ mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactFileSource \} from '\.\/lib\/media-source\.mjs';/);
+  const sourceImport = sidepanelSource.match(/import\s*\{([\s\S]*?)\}\s*from '\.\/lib\/media-source\.mjs';/);
+  assert.ok(sourceImport, 'the side panel should import from the media-source module');
+  for (const name of ['mediaDisplayName', 'mediaSourcePlan', 'probeArtifactFileSource', 'resolveArtifactFileSource']) {
+    assert.ok(sourceImport[1].includes(name), `the media-source import should bring in ${name}`);
+  }
   assert.match(sidepanelSource, /async function hydrateArtifactFileCards\(root, \{ scanText = true \} = \{\}\)/);
   assert.match(sidepanelSource, /if \(!element\?\.closest\?\.\('\.message\.user'\)\) void hydrateArtifactFileCards\(element\);/);
   assert.match(sidepanelSource, /await hydrateArtifactFileCards\(els\.messages\);/);

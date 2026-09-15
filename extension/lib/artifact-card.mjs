@@ -1,17 +1,22 @@
 // File-card DOM for returned files.
 //
-// One card vocabulary shared by the side panel and the full tab: a type badge,
-// the file name, where the file lives, and the action row the pure planner
-// produced (Open / Open on computer / Save). The markdown renderer emits the
-// same card as a button-less "chip" so an un-hydrated transcript still names
-// the file honestly; surfaces enrich that chip once they know whether the
-// bytes can actually be read. No global DOM access — every entry point takes an
-// explicit document, so this module stays testable in node.
+// One card vocabulary shared by the side panel and the full tab. A returned
+// file is a Hermes Browser object, not a chat bubble: a leading type token in
+// the mono font sits in a chip tinted by the file's family (document / sheet /
+// media / archive / unknown), the name de-emphasises its own extension, a
+// single mono meta line carries where the file lives and how big it is, and
+// the action row leads with a filled primary tile. The markdown renderer emits
+// the same card as a button-less "chip" so an un-hydrated transcript still
+// names the file honestly; surfaces enrich that chip once they know whether
+// the bytes can actually be read. No global DOM access — every entry point
+// takes an explicit document, so this module stays testable in node.
 
-import { artifactActionPlan, extractArtifactPaths } from './artifact-actions.mjs';
+import { artifactActionPlan, artifactKindFamily, extractArtifactPaths } from './artifact-actions.mjs';
 
 export const ARTIFACT_CARD_CLASS = 'artifact-card';
 export const ARTIFACT_CARD_CHIP_CLASS = 'artifact-card-pending';
+export const ARTIFACT_CARD_REVEAL_ATTRIBUTE = 'data-artifact-reveal';
+export const ARTIFACT_CARD_PRIMARY_CLASS = 'artifact-card-action-primary';
 
 const DEFAULT_LABELS = Object.freeze({
   open: 'Open',
@@ -58,10 +63,25 @@ export function formatArtifactBytes(bytes) {
   return `${rounded} ${units[unit]}`;
 }
 
+// 'On this computer · 402 KB' — where the file lives and how big it is, never
+// the raw path: the whole path stays one hover away in the title attribute.
 function cardSourceLine(plan = {}, size = null, labels = DEFAULT_LABELS) {
   const where = plan.local ? labels.localSource : labels.remoteSource;
   const sizeLabel = formatArtifactBytes(size);
-  return [where, plan.source, sizeLabel].filter(Boolean).join(' · ');
+  return [where, sizeLabel].filter(Boolean).join(' · ');
+}
+
+// 'quarterly-report' + '.pdf', so the extension can be de-emphasised by size
+// and weight while the name element still reads as one string.
+export function splitArtifactFileName(name = '', extension = '') {
+  const value = String(name || '');
+  const suffix = String(extension || '');
+  if (!suffix) return { base: value, extension: '' };
+  const dotted = `.${suffix}`;
+  if (value.toLowerCase().endsWith(dotted.toLowerCase())) {
+    return { base: value.slice(0, value.length - dotted.length), extension: value.slice(value.length - dotted.length) };
+  }
+  return { base: value, extension: '' };
 }
 
 function findNote(card) {
@@ -132,6 +152,11 @@ export function setArtifactCardBusy(card, busy = false, { note = '' } = {}) {
 /**
  * Build the interactive card for a returned file.
  *
+ * Structure (top to bottom): a leading type token, the file name with its
+ * extension de-emphasised in place, one mono meta line (where it lives · how
+ * big it is) whose title carries the full path, then the action row. The first
+ * action of the plan is rendered as the filled primary tile.
+ *
  * @param {Document} doc
  * @param {ReturnType<typeof artifactActionPlan>} plan
  * @param {{ labels?: Record<string, string>, handlers?: Record<string, (plan: any) => void>, size?: number|null }} [options]
@@ -143,7 +168,11 @@ export function buildArtifactFileCard(doc, plan, { labels = {}, handlers = {}, s
   card.className = ARTIFACT_CARD_CLASS;
   card.dataset.artifactPath = plan.source;
   card.dataset.artifactKind = plan.kind;
+  card.dataset.artifactFamily = plan.family || artifactKindFamily(plan.kind);
   card.dataset.artifactState = plan.readable === false ? 'unreadable' : plan.readable === true ? 'ready' : 'pending';
+  // The card is new to the DOM (a chip just became one, or the hydrator placed
+  // it after its paragraph) — mark it so the surface plays the short reveal.
+  card.dataset.artifactReveal = 'enter';
 
   const head = doc.createElement('div');
   head.className = 'artifact-card-head';
@@ -157,19 +186,29 @@ export function buildArtifactFileCard(doc, plan, { labels = {}, handlers = {}, s
   name.className = 'artifact-card-name';
   name.textContent = plan.name;
   name.title = plan.source;
+  const { base, extension } = splitArtifactFileName(plan.name, plan.extension);
+  if (extension) {
+    name.textContent = base;
+    const tail = doc.createElement('span');
+    tail.className = 'artifact-card-name-ext';
+    tail.textContent = extension;
+    name.append(tail);
+  }
   const source = doc.createElement('small');
   source.className = 'artifact-card-source';
   source.textContent = cardSourceLine(plan, size, text);
+  source.title = plan.source;
   copy.append(name, source);
   head.append(badge, copy);
   card.append(head);
 
   const actions = doc.createElement('div');
   actions.className = 'artifact-card-actions';
-  for (const action of Array.isArray(plan.actions) ? plan.actions : []) {
+  const planActions = Array.isArray(plan.actions) ? plan.actions : [];
+  for (const [index, action] of planActions.entries()) {
     const button = doc.createElement('button');
     button.type = 'button';
-    button.className = 'artifact-card-action';
+    button.className = index === 0 ? `artifact-card-action ${ARTIFACT_CARD_PRIMARY_CLASS}` : 'artifact-card-action';
     button.dataset.artifactAction = action.id;
     button.textContent = text[action.id] || action.label;
     if (!action.enabled) {
@@ -203,7 +242,7 @@ export function artifactFileChipMarkup(pathRef) {
   const name = escapeHtml(plan.name);
   const source = escapeHtml(plan.source);
   return `<section class="${ARTIFACT_CARD_CLASS} ${ARTIFACT_CARD_CHIP_CLASS}" data-artifact-path="${source}"`
-    + ` data-artifact-kind="${escapeHtml(plan.kind)}" data-artifact-state="pending" role="status" aria-label="${name}">`
+    + ` data-artifact-kind="${escapeHtml(plan.kind)}" data-artifact-family="${escapeHtml(plan.family)}" data-artifact-state="pending" role="status" aria-label="${name}">`
     + `<div class="artifact-card-head"><span class="artifact-card-kind" aria-hidden="true">${escapeHtml(plan.badge)}</span>`
     + `<div class="artifact-card-copy"><strong class="artifact-card-name" title="${source}">${name}</strong>`
     + `<small class="artifact-card-source">${source}</small></div></div></section>`;
