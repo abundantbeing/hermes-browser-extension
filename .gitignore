@@ -23,6 +23,7 @@ tmp/
 
 # Private backups and local secrets
 backups/
+/dist.pem
 .env
 .env.*
 *.bak
