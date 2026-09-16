@@ -643,6 +643,10 @@
               </div>
             </div>
             <p id="updateStatus" class="hint">Updates are checked against the public GitHub repo.</p>
+            <div id="updateReloadPending" class="update-reload-pending" hidden>
+              <p id="updateReloadPendingText" class="update-reload-pending-text">A newer build is on disk. Reload to run it.</p>
+              <button id="reloadBuildButton" class="secondary" type="button">Reload now</button>
+            </div>
           </div>
         </section>
         <section class="settings-section bot-mode-settings" aria-labelledby="botModeSettingsTitle">
@@ -1226,6 +1230,7 @@
           <button id="maybeLaterButton" class="secondary" type="button">Maybe later</button>
         </div>
         <p id="updateInstallNote" class="update-install-note">Load-unpacked installs update through a guarded Hermes agent turn, then reload the built dist/ folder.</p>
+        <p id="updateReleaseFallback" class="update-install-note">No local checkout of the repository on this machine? <a id="updateReleaseLink" class="update-release-link" href="https://github.com/abundantbeing/hermes-browser-extension/releases/latest" target="_blank" rel="noreferrer noopener">Download the latest release</a>.</p>
       </div>
     </section>
 

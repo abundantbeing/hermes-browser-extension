@@ -4976,6 +4976,50 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 .update-dialog-actions { display: grid; gap: 8px; margin-top: 20px; }
 .update-dialog-actions button { min-height: 38px; }
 .update-install-note { margin: 12px 0 0; color: var(--hermes-muted); text-align: center; font-size: 9.5px; line-height: 1.4; }
+/* Release-download fallback for the in-place route that needs a local checkout. */
+.update-release-link {
+  color: var(--hermes-ink);
+  font-size: inherit;
+  text-decoration: underline;
+}
+.update-release-link:hover,
+.update-release-link:focus-visible {
+  border: 1px solid var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+/* Reload pending: dist/ was rebuilt under the running panel. Persistent until the
+   user presses Reload now — nothing here reloads by itself. */
+.update-reload-pending {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px dashed var(--hermes-line-strong);
+  background: rgba(var(--hermes-accent-rgb), 0.08);
+}
+.update-reload-pending[hidden] { display: none; }
+.update-reload-pending-text {
+  margin: 0;
+  color: var(--hermes-ink);
+  font-family: var(--hermes-font-ui);
+  font-size: 10px;
+  line-height: 1.35;
+}
+.update-reload-pending button { min-height: 28px; padding: 6px 8px 5px; font-size: 9px; }
+/* The Update button becomes the primary action once a check finds this build behind main. */
+#reviewUpdateButton[data-update-action="primary"] {
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+#reviewUpdateButton[data-update-action="primary"]:hover,
+#reviewUpdateButton[data-update-action="primary"]:focus-visible {
+  border-color: var(--hermes-primary-bg, var(--hermes-ink));
+  background: var(--hermes-primary-fg, var(--hermes-paper));
+  color: var(--hermes-primary-bg, var(--hermes-ink));
+}
 .operation-toast {
   position: fixed;
   right: auto;

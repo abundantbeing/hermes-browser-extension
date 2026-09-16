@@ -218,6 +218,7 @@ test('side panel keeps Browser onboarding, refresh feedback, updates, and messag
   const html = read('extension/sidepanel.html');
   const css = read('extension/sidepanel.css');
   const js = read('extension/sidepanel.js');
+  const updateFlow = read('extension/lib/update-flow.mjs');
   const buildScript = read('scripts/build.mjs');
   const refreshModels = js.match(/async function refreshModelsFromMenu\(\)[\s\S]*?\n\}/)?.[0] || '';
   const refreshSessions = js.match(/async function refreshSessionsFromMenu\(\)[\s\S]*?\n\}/)?.[0] || '';
@@ -271,8 +272,11 @@ test('side panel keeps Browser onboarding, refresh feedback, updates, and messag
   assert.match(js, /function launchBrowserUpdateWithHermes/);
   assert.match(js, /function currentHermesBrowserSystemPrompt\(\)/);
   assert.ok((js.match(/currentHermesBrowserSystemPrompt\(\)/g) || []).length >= 6);
-  assert.match(js, /If the checkout has uncommitted changes, stop and report them/);
-  assert.match(js, /npm run build/);
+  // The prepared update prompt lives in lib/update-flow.mjs so the unit tests
+  // assert the exact string the panel hands to the agent.
+  assert.match(js, /buildUpdateAgentPrompt\(\{ review \}\)/);
+  assert.match(updateFlow, /If the checkout has uncommitted changes, stop and report them/);
+  assert.match(updateFlow, /run npm run build/);
   assert.match(js, /els\.composer\.requestSubmit\(\)/);
 });
 
