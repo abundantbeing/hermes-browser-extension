@@ -100,6 +100,23 @@ import {
   agentDiscoveryAppliesToMode,
   agentDiscoveryModeNote,
 } from './lib/common.mjs';
+import {
+  BUILD_RELOAD_BOOT_RECHECK_MS,
+  BUILD_RELOAD_WATCH_INTERVAL_MS,
+  HBE_RELEASES_URL,
+  RELEASES_DOWNLOAD_LABEL,
+  RELOAD_NOW_LABEL,
+  UPDATE_CHECK_CACHE_KEY,
+  buildIdentityChanged,
+  buildIdentityFromInfo,
+  buildUpdateAgentPrompt,
+  reloadPendingNotice,
+  shouldAutoCheckUpdates,
+  shouldRefreshBuildIdentity,
+  updateButtonEmphasis,
+  updateCheckCacheEntry,
+  updateInstallNoteText,
+} from './lib/update-flow.mjs';
 import { resolveCanonicalBotSession } from './lib/bot-canonical-session.mjs';
 import {
   discoverLocalDashboardBaseUrl,
@@ -790,6 +807,10 @@ const els = {
   maybeLaterButton: $('#maybeLaterButton'),
   closeUpdateDialogButton: $('#closeUpdateDialogButton'),
   updateInstallNote: $('#updateInstallNote'),
+  updateReleaseLink: $('#updateReleaseLink'),
+  updateReloadPending: $('#updateReloadPending'),
+  updateReloadPendingText: $('#updateReloadPendingText'),
+  reloadBuildButton: $('#reloadBuildButton'),
   operationToast: $('#operationToast'),
   operationToastTitle: $('#operationToastTitle'),
   operationToastDetail: $('#operationToastDetail'),
@@ -3724,27 +3745,20 @@ function renderUpdateDialog(review = { loading: true }) {
   }
   els.updateNowButton.hidden = !review.available;
   els.maybeLaterButton.textContent = translateUiText(review.available ? 'MAYBE LATER' : 'CLOSE');
-  els.updateInstallNote.textContent = review.available
-    ? translateUiText('Update now starts a guarded Hermes agent turn. It will stop on local changes, build dist/, and reload through computer-use when available.')
-    : translateUiText('This check compares the loaded build metadata with the public Hermes Browser repository.');
+  els.updateInstallNote.textContent = translateUiText(updateInstallNoteText({ available: Boolean(review.available) }));
   (review.available ? els.updateNowButton : els.maybeLaterButton)?.focus({ preventScroll: true });
 }
 
 function launchBrowserUpdateWithHermes() {
   const review = latestUpdateReview || {};
-  const updatePrompt = [
-    'Update my Hermes Browser Extension from the official repository: https://github.com/abundantbeing/hermes-browser-extension',
-    `The Browser update review reports ${review.commitCount || 'new'} public commit${review.commitCount === 1 ? '' : 's'} available.`,
-    'First locate the existing Hermes Browser Extension checkout that this user intends to update.',
-    'If the checkout has uncommitted changes, stop and report them. Do not discard, overwrite, commit, or push any local work.',
-    'If it is clean, fetch and fast-forward the current branch from the official remote, install dependencies only if required, and run npm run build.',
-    'After a successful build, use computer-use to reload the unpacked dist/ extension from chrome://extensions when available. Otherwise tell me exactly how to reload it manually.',
-    'Verify the extension build before reporting success.',
-  ].join('\n\n');
+  const updatePrompt = buildUpdateAgentPrompt({ review });
   closeUpdateDialog({ restoreFocus: false });
   closeSettingsDialog();
   els.input.value = updatePrompt;
   els.input.dispatchEvent(new Event('input', { bubbles: true }));
+  // The agent's rebuild lands as a new build on disk: watch for it as soon as
+  // this turn finishes so the panel can offer Reload now.
+  updateTurnAwaitingBuild = true;
   if (!isConnected() || sending) {
     showOperationToast({ kind: 'warn', title: 'Update prompt ready', detail: sending ? 'Send it when the current Hermes run finishes.' : 'Connect to Hermes, then send the prepared update request.' });
     els.input.focus();
@@ -3754,13 +3768,17 @@ function launchBrowserUpdateWithHermes() {
   requestAnimationFrame(() => els.composer.requestSubmit());
 }
 
-async function checkForUpdates({ openReview = false } = {}) {
-  if (!els.checkUpdatesButton) return;
-  els.checkUpdatesButton.disabled = true;
-  if (els.reviewUpdateButton) els.reviewUpdateButton.disabled = true;
-  els.checkUpdatesButton.textContent = translateUiText('Checking...');
-  renderVersionInfo('Checking GitHub main and this loaded build commit...');
-  if (openReview) renderUpdateDialog({ loading: true });
+async function checkForUpdates({ openReview = false, silent = false } = {}) {
+  // silent: the automatic once-a-day check. No dialog, no toast, no button
+  // churn, and a failure leaves the manual Check path exactly as it was.
+  if (!silent) {
+    if (!els.checkUpdatesButton) return;
+    els.checkUpdatesButton.disabled = true;
+    if (els.reviewUpdateButton) els.reviewUpdateButton.disabled = true;
+    els.checkUpdatesButton.textContent = translateUiText('Checking...');
+    renderVersionInfo('Checking GitHub main and this loaded build commit...');
+    if (openReview) renderUpdateDialog({ loading: true });
+  }
   try {
     const [buildInfo, latestInfo] = await Promise.all([
       loadExtensionBuildInfo(),
@@ -3807,18 +3825,177 @@ async function checkForUpdates({ openReview = false } = {}) {
       sourceMatchesMain,
     };
     renderVersionInfo(status);
-    if (openReview) renderUpdateDialog(latestUpdateReview);
+    renderUpdateActionEmphasis(latestUpdateReview);
+    if (openReview && !silent) renderUpdateDialog(latestUpdateReview);
     return latestUpdateReview;
   } catch (error) {
+    if (silent) {
+      console.warn('[Hermes Browser] Silent update check failed:', error?.message || error);
+      return null;
+    }
     const detail = `${error?.message || String(error)} Open ${REPO_URL} for manual update instructions.`;
     renderVersionInfo(detail);
     if (openReview) renderUpdateDialog({ title: 'Update check unavailable', summary: 'Hermes Browser could not read public update metadata.', error: detail });
     return null;
   } finally {
-    els.checkUpdatesButton.disabled = false;
-    if (els.reviewUpdateButton) els.reviewUpdateButton.disabled = false;
-    els.checkUpdatesButton.textContent = translateUiText('Check');
+    if (!silent) {
+      els.checkUpdatesButton.disabled = false;
+      if (els.reviewUpdateButton) els.reviewUpdateButton.disabled = false;
+      els.checkUpdatesButton.textContent = translateUiText('Check');
+    }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Update trust: the build this panel booted from vs the build now on disk, the
+// honest no-checkout fallback, and the silent once-a-day check. The pure rules
+// live in lib/update-flow.mjs so the tests assert the same strings the panel
+// renders without needing a browser.
+// ---------------------------------------------------------------------------
+
+let loadedBuildIdentity = null;
+let buildIdentityCheckInFlight = false;
+let buildIdentityCheckedAt = 0;
+let updateTurnAwaitingBuild = false;
+
+async function readBuildIdentityFromDisk() {
+  // loadExtensionBuildInfo reads build-info.json over an extension URL with
+  // cache: 'no-store', so this is the patched dist/ file, never a cached copy.
+  const info = await loadExtensionBuildInfo().catch(() => null);
+  return buildIdentityFromInfo(info);
+}
+
+/**
+ * Re-read build-info.json and compare it with the identity this panel booted
+ * from. The first read establishes the baseline. A later change means dist/ was
+ * rebuilt under the running panel, so the panel offers Reload now — it never
+ * reloads on its own.
+ */
+async function checkLoadedBuildIdentity({ reason = 'interval', force = false } = {}) {
+  if (buildIdentityCheckInFlight) return false;
+  if (!force && !shouldRefreshBuildIdentity({ lastCheckedAt: buildIdentityCheckedAt })) return false;
+  buildIdentityCheckInFlight = true;
+  buildIdentityCheckedAt = Date.now();
+  try {
+    const nextIdentity = await readBuildIdentityFromDisk();
+    if (!loadedBuildIdentity) {
+      loadedBuildIdentity = nextIdentity;
+      return false;
+    }
+    if (!buildIdentityChanged(loadedBuildIdentity, nextIdentity)) return false;
+    renderUpdateReloadPending(nextIdentity);
+    console.info(`[Hermes Browser] A newer build is on disk; reload offered (${reason}).`);
+    return true;
+  } catch (error) {
+    console.warn('[Hermes Browser] Build identity re-read skipped:', error?.message || error);
+    return false;
+  } finally {
+    buildIdentityCheckInFlight = false;
+  }
+}
+
+function renderUpdateReloadPending(identity = null) {
+  if (!els.updateReloadPending) return;
+  if (els.updateReloadPendingText) els.updateReloadPendingText.textContent = translateUiText(reloadPendingNotice(identity));
+  els.updateReloadPending.hidden = false;
+}
+
+function reloadBrowserRuntimeForNewBuild() {
+  const runtime = browserApi?.runtime;
+  if (typeof runtime?.reload !== 'function') {
+    showOperationToast({ kind: 'warn', title: 'Reload unavailable', detail: 'Reload this extension from your browser extensions page to run the new build.' });
+    return;
+  }
+  try {
+    // Load-unpacked reloads re-read the files from disk, so the rebuilt dist/
+    // is what runs on the next paint of this panel.
+    runtime.reload();
+  } catch (error) {
+    showOperationToast({ kind: 'warn', title: 'Reload failed', detail: error?.message || String(error) });
+  }
+}
+
+async function readUpdateCheckCache() {
+  try {
+    const stored = await browserApi.storage.local.get([UPDATE_CHECK_CACHE_KEY]);
+    return stored?.[UPDATE_CHECK_CACHE_KEY] || null;
+  } catch (error) {
+    console.warn('[Hermes Browser] Update check cache read failed:', error?.message || error);
+    return null;
+  }
+}
+
+async function writeUpdateCheckCache(review = null) {
+  if (!review) return false;
+  try {
+    await browserApi.storage.local.set({ [UPDATE_CHECK_CACHE_KEY]: updateCheckCacheEntry({ review }) });
+    return true;
+  } catch (error) {
+    console.warn('[Hermes Browser] Update check cache write failed:', error?.message || error);
+    return false;
+  }
+}
+
+/**
+ * Silent automatic check: at most once every 24h, no dialog, no toast. Any
+ * failure returns false without touching the status line, so the manual Check
+ * button remains the only thing that can claim anything.
+ */
+async function runAutomaticUpdateCheck() {
+  try {
+    const cached = await readUpdateCheckCache();
+    if (!shouldAutoCheckUpdates({ entry: cached })) return false;
+    const review = await checkForUpdates({ silent: true });
+    if (!review) return false;
+    await writeUpdateCheckCache(review);
+    return true;
+  } catch (error) {
+    console.warn('[Hermes Browser] Automatic update check skipped:', error?.message || error);
+    return false;
+  }
+}
+
+function renderUpdateActionEmphasis(review = null) {
+  if (!els.reviewUpdateButton) return;
+  const emphasis = updateButtonEmphasis(review);
+  if (emphasis) els.reviewUpdateButton.setAttribute('data-update-action', emphasis);
+  else els.reviewUpdateButton.removeAttribute('data-update-action');
+}
+
+function applyUpdateFlowStatics() {
+  if (els.updateReleaseLink) {
+    els.updateReleaseLink.href = HBE_RELEASES_URL;
+    els.updateReleaseLink.textContent = translateUiText(RELEASES_DOWNLOAD_LABEL);
+  }
+  if (els.reloadBuildButton) els.reloadBuildButton.textContent = translateUiText(RELOAD_NOW_LABEL);
+}
+
+/**
+ * Boot wiring for the update path. Never awaited by the boot sequence: the
+ * panel must paint whether or not GitHub, storage, or build-info.json answer.
+ */
+async function initializeUpdateFlow() {
+  applyUpdateFlowStatics();
+  await checkLoadedBuildIdentity({ reason: 'boot', force: true });
+  window.setTimeout(() => { void checkLoadedBuildIdentity({ reason: 'boot-recheck', force: true }); }, BUILD_RELOAD_BOOT_RECHECK_MS);
+  window.setInterval(() => { void checkLoadedBuildIdentity({ reason: 'interval' }); }, BUILD_RELOAD_WATCH_INTERVAL_MS);
+  window.addEventListener('focus', () => { void checkLoadedBuildIdentity({ reason: 'focus' }); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') void checkLoadedBuildIdentity({ reason: 'visible' });
+  });
+  void runAutomaticUpdateCheck();
+}
+
+/**
+ * Called when a turn settles. A turn that started from the prepared update
+ * prompt is the one most likely to have rebuilt dist/, so re-read the identity
+ * right away instead of waiting for the next interval.
+ */
+function recheckBuildIdentityAfterUpdateTurn() {
+  if (!updateTurnAwaitingBuild) return;
+  void checkLoadedBuildIdentity({ reason: 'update-turn', force: true }).then((changed) => {
+    if (changed) updateTurnAwaitingBuild = false;
+  });
 }
 
 function updateConnectionPrompt() {
@@ -4476,6 +4653,7 @@ async function settleActiveRunTerminal() {
   sending = false;
   updateComposerBusyState();
   renderContextWindow();
+  recheckBuildIdentityAfterUpdateTurn();
   const shouldFlushQueue = shouldAutoFlushQueuedTurn(queuedTurn, settledRunControl);
   if (!shouldFlushQueue) return true;
   const next = queuedTurn;
@@ -17324,6 +17502,7 @@ ${streamError.message}`);
         renderContextWindow();
       }
       els.input.focus();
+      recheckBuildIdentityAfterUpdateTurn();
     }
   }
   return didSend;
@@ -18571,6 +18750,7 @@ function bindEvents() {
   els.closeUpdateDialogButton?.addEventListener('click', () => closeUpdateDialog());
   els.maybeLaterButton?.addEventListener('click', () => closeUpdateDialog());
   els.updateNowButton?.addEventListener('click', launchBrowserUpdateWithHermes);
+  els.reloadBuildButton?.addEventListener('click', reloadBrowserRuntimeForNewBuild);
   els.closeOperationToastButton?.addEventListener('click', hideOperationToast);
   els.refreshModelsButton.addEventListener('click', refreshModelsFromMenu);
   renderModelRefreshState();
@@ -19477,3 +19657,5 @@ renderVersionInfo();
 renderContextScopeControls();
 updateVoiceButtonState();
 renderEmptyState();
+// Not awaited: the update watch and the silent check must never delay boot.
+void initializeUpdateFlow();
