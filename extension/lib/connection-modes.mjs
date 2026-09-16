@@ -144,8 +144,26 @@ export function connectionSettingsAfterTokenClear(input = {}) {
   return { ...cleared, gatewayMode: legacyGatewayModeForConnection(cleared) };
 }
 
+// True only when the gateway itself refused the credential that was presented.
+// This decides whether a saved pairing token is dropped, so it must never match
+// the local "no credential saved" preflight, a gateway that has no API key
+// configured, or a 403 that refused the request *after* accepting the token
+// (an unknown session, a disabled feature): clearing the token on those leaves
+// the browser unable to reconnect even though the stored token was fine.
 export function isGatewayAuthRejection(detail = '') {
-  return /401|403|credential|api key|token|unauthorized|forbidden|auth/i.test(String(detail || ''));
+  return /invalid gateway api key|gateway_auth_failed|unauthorized|\bHTTP 401\b/i.test(String(detail || ''));
+}
+
+// True for the local/gateway states that mean "there is no usable credential
+// here", which need a pairing/connect flow rather than a token reset.
+export function isMissingGatewayCredential(detail = '') {
+  return /requires an api credential|requires a configured api key/i.test(String(detail || ''));
+}
+
+// The gateway refuses every browser-control registration until an API key is
+// configured there (no client-side credential can fix it).
+export function isGatewayControlKeyUnconfigured(detail = '') {
+  return /requires a configured api key/i.test(String(detail || ''));
 }
 
 export function resolvePhaseATransport({ connectionMode, currentTransport, apiKey = '' } = {}) {

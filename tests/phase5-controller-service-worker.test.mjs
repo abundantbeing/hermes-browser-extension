@@ -501,6 +501,38 @@ test('settings changes rebind immediately, advance registry/worker generations t
   assert.equal(connector.connections.length, 2, 'unrelated settings must not churn the controller socket');
 });
 
+test('a replaced gateway credential alone rebinds the socket from a storage-style settings update', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: controllerSettings({ browserControlEnabled: true }) });
+  const connector = fakeConnector();
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    now: () => 1_000,
+  });
+  const boot = await worker.boot();
+  assert.equal(boot.connected, true);
+  assert.equal(connector.connections.length, 1);
+
+  // Enabling control/attaching a tab sends an explicit refresh, which bumps the
+  // settings revision — this is the state every user reaches right after enabling.
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.settingsRefresh }, extensionSender());
+
+  // The pairing flow then saves a fresh token (and nothing else changes); the
+  // background storage listener rebinds through syncSettings() with no revision.
+  const replacement = ['replacement', 'pairing', 'token'].join('-');
+  const nextSettings = controllerSettings({ apiKey: replacement, browserControlEnabled: true });
+  storage.state.hermesBrowserSettings = structuredClone(nextSettings);
+  const rebound = await worker.syncSettings(nextSettings);
+
+  assert.equal(rebound.staleSettingsRevision, undefined, 'a revisionless rebind must never be dropped as stale');
+  assert.equal(rebound.connected, true);
+  assert.equal(connector.connections.length, 2, 'the new credential must reconnect the controller socket');
+  assert.equal(connector.connections[1].options.settings.apiKey, replacement);
+});
+
 test('an in-flight old-generation command never sends its terminal result on a rebound socket', async () => {
   const storage = memoryStorage({ hermesBrowserSettings: controllerSettings() });
   const connector = fakeConnector();

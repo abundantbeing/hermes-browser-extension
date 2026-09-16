@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "Subagen aktif",
+  "a11y.subagent_status": "Status subagen Hermes",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "SUBAGEN",
+  "update.no_local_checkout": "Tidak ada checkout lokal repositori di mesin ini?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "Setujui sekali",
+  "browser_control.authorize": "Izinkan kontrol",
   "browser_control.control_ready": "Kontrol siap",
   "browser_control.detach": "Lepaskan",
   "browser_control.detached_detail": "Tindakan browser dihentikan dan semua sewa tab yang dikontrol telah dilepaskan.",

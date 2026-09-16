@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "เอเจนต์ย่อยที่ทำงานอยู่",
+  "a11y.subagent_status": "สถานะเอเจนต์ย่อยของ Hermes",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "เอเจนต์ย่อย",
+  "update.no_local_checkout": "ไม่มีสำเนาในเครื่องของที่เก็บโค้ดบนเครื่องนี้?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "อนุมัติครั้งเดียว",
+  "browser_control.authorize": "อนุญาตการควบคุม",
   "browser_control.control_ready": "พร้อมควบคุม",
   "browser_control.detach": "แยกออก",
   "browser_control.detached_detail": "การดำเนินการของเบราว์เซอร์หยุดลงและปล่อยแท็บที่ถูกควบคุมทั้งหมดแล้ว",

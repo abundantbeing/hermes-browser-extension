@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "सक्रिय सब-एजेंट",
+  "a11y.subagent_status": "Hermes सब-एजेंट स्थिति",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "सब-एजेंट",
+  "update.no_local_checkout": "इस मशीन पर रिपॉज़िटरी का स्थानीय चेकआउट नहीं है?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "एक बार स्वीकृत करें",
+  "browser_control.authorize": "नियंत्रण अधिकृत करें",
   "browser_control.control_ready": "नियंत्रण तैयार",
   "browser_control.detach": "अलग करें",
   "browser_control.detached_detail": "ब्राउज़र क्रियाएँ रोक दी गईं और सभी नियंत्रित-टैब लीज़ें जारी कर दी गईं।",

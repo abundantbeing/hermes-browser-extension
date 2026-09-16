@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "Tiểu tác nhân đang chạy",
+  "a11y.subagent_status": "Trạng thái tiểu tác nhân Hermes",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "TIỂU TÁC NHÂN",
+  "update.no_local_checkout": "Không có bản sao cục bộ của kho trên máy này?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "Cho phép một lần",
+  "browser_control.authorize": "Cho phép điều khiển",
   "browser_control.control_ready": "Điều khiển đã sẵn sàng",
   "browser_control.detach": "Tách rời",
   "browser_control.detached_detail": "Các hành động trình duyệt đã dừng và mọi quyền thuê tab được kiểm soát đã được giải phóng.",

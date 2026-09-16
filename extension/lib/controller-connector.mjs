@@ -266,6 +266,12 @@ export function createControllerConnector({
    * Create the draft session server-side so the controller can register
    * against it. Mirrors the panel's ensureHermesSession() materialization.
    * Returns true when the session now exists (created or already present).
+   *
+   * The gateway enforces unique session titles, and the plain default title is
+   * already owned by the extension's own long-lived session — a create with it
+   * is refused with invalid_title, which used to leave the controller unable to
+   * register forever. The session id is unique, so embed it in the title and
+   * retry once with a timestamped title if the gateway still refuses.
    */
   async function materializeDraftSession({
     fetchImpl,
@@ -276,16 +282,31 @@ export function createControllerConnector({
     headers,
     signal,
   }) {
-    try {
-      const createResponse = await fetchImpl(`${String(baseUrl).replace(/\/+$/, '')}/api/sessions`, {
+    const createUrl = `${String(baseUrl).replace(/\/+$/, '')}/api/sessions`;
+    const baseTitle = String(title || '').trim() || 'Hermes Browser Extension';
+    const uniqueTitle = baseTitle.includes(sessionId)
+      ? baseTitle.slice(0, 120)
+      : `${baseTitle} · ${sessionId}`.slice(0, 120);
+    const create = async (candidateTitle) => {
+      const response = await fetchImpl(createUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ id: sessionId, title, source }),
+        body: JSON.stringify({ id: sessionId, title: candidateTitle, source }),
         redirect: 'error',
         cache: 'no-store',
         signal,
       });
-      return createResponse.ok || createResponse.status === 409;
+      const payload = await response.json().catch(() => ({}));
+      return { response, payload };
+    };
+    try {
+      const { response, payload } = await create(uniqueTitle);
+      if (response.ok || response.status === 409) return true;
+      if (payload?.error?.code === 'invalid_title') {
+        const { response: retryResponse } = await create(`${baseTitle} · ${sessionId} · ${Date.now()}`.slice(0, 120));
+        return retryResponse.ok || retryResponse.status === 409;
+      }
+      return false;
     } catch {
       return false;
     }

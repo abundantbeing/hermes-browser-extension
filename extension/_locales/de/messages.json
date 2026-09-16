@@ -27,6 +27,14 @@
     "message": "Kopfzeile der Hermes Browser Extension",
     "description": "Runtime interface message a11y.extension_header"
   },
+  "runtime_a11y_live_subagents": {
+    "message": "Aktive Subagenten",
+    "description": "Runtime interface message a11y.live_subagents"
+  },
+  "runtime_a11y_subagent_status": {
+    "message": "Hermes-Subagent-Status",
+    "description": "Runtime interface message a11y.subagent_status"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -582,6 +590,10 @@
   "runtime_browser_control_approve_once": {
     "message": "Einmal genehmigen",
     "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_authorize": {
+    "message": "Steuerung autorisieren",
+    "description": "Runtime interface message browser_control.authorize"
   },
   "runtime_browser_control_control_ready": {
     "message": "Steuerung bereit",
@@ -4835,6 +4847,10 @@
     "message": "Stream",
     "description": "Runtime interface message ui.stream"
   },
+  "runtime_ui_subagents": {
+    "message": "SUBAGENTEN",
+    "description": "Runtime interface message ui.subagents"
+  },
   "runtime_ui_submit": {
     "message": "Absenden",
     "description": "Runtime interface message ui.submit"
@@ -5410,6 +5426,10 @@
   "runtime_ui_zoom_out": {
     "message": "Herauszoomen",
     "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_update_no_local_checkout": {
+    "message": "Kein lokaler Checkout des Repositorys auf diesem Rechner?",
+    "description": "Runtime interface message update.no_local_checkout"
   },
   "runtime_voice_browser_preview": {
     "message": "Sprachmodus: Browser-Sprach-Fallback\n\n{preview}",

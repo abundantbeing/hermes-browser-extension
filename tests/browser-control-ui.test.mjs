@@ -64,6 +64,7 @@ test('Phase 6 visible state is derived from worker authority and exposes no argu
     detail: 'Hermes can read approved context but cannot operate tabs.',
     canEnable: true,
     canAttach: false,
+    canAuthorize: false,
     canPause: false,
     canStop: false,
     canDetach: false,
@@ -214,7 +215,38 @@ test('reconnecting state explains the last controller failure with actionable re
     ...base,
     status: { connected: false, lastConnectFailure: { reason: 'connect_failed', detail: 'Controller registration failed (HTTP 401).' } },
   });
-  assert.match(token.detail, /Settings|token/i);
+  assert.match(token.detail, /token|gateway/i);
+  assert.equal(token.canAuthorize, true, 'a rejected control token is re-authorized from the strip');
+
+  // A controller with no saved credential must never claim the gateway rejected
+  // one, and must never push the reader back through the first-run connect flow:
+  // the strip owns the one authorization action instead.
+  const missingCredential = browserControlView({
+    settings: { browserControlEnabled: true, apiKey: '' },
+    ...base,
+    status: { connected: false, lastConnectFailure: { reason: 'connect_failed', detail: 'Controller API registration requires an API credential.' } },
+  });
+  assert.equal(missingCredential.state, 'reconnecting');
+  assert.equal(missingCredential.canAuthorize, true, 'the strip must offer the authorization action');
+  assert.match(missingCredential.detail, /authorization/i);
+  assert.doesNotMatch(missingCredential.detail, /gateway rejected|Connect to Hermes|no hermes token is saved/i);
+
+  const gatewayMisconfigured = browserControlView({
+    settings: { browserControlEnabled: true, apiKey: '' },
+    ...base,
+    status: { connected: false, lastConnectFailure: { reason: 'connect_failed', detail: 'Browser control registration requires a configured API key.' } },
+  });
+  assert.doesNotMatch(gatewayMisconfigured.detail, /gateway rejected the saved token/i);
+  assert.match(gatewayMisconfigured.detail, /API_SERVER_KEY/);
+  assert.equal(gatewayMisconfigured.canAuthorize, false, 'a gateway-side key problem is not the reader\'s to authorize');
+
+  const sessionRefused = browserControlView({
+    settings: { browserControlEnabled: true, apiKey: 'fixture-token' },
+    ...base,
+    status: { connected: false, lastConnectFailure: { reason: 'connect_failed', detail: 'Browser control may register only for an existing server session.' } },
+  });
+  assert.doesNotMatch(sessionRefused.detail, /gateway rejected the saved token/i);
+  assert.match(sessionRefused.detail, /existing server session|Could not reach the controller/i);
 
   const network = browserControlView({
     settings,

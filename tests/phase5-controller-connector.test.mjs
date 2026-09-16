@@ -331,6 +331,60 @@ test('local API connector materializes a ghost session on browser_control_sessio
   assert.ok(connection.send, 'connection must resolve after the retried register');
 });
 
+test('ghost-session materialization uses a title the gateway cannot collide on', async () => {
+  FakeSocket.instances = [];
+  const sessionCreates = [];
+  let registerCalls = 0;
+  const fetchImpl = async (url, options) => {
+    if (url.endsWith('/v1/browser-control/register')) {
+      registerCalls += 1;
+      if (registerCalls === 1) {
+        return jsonResponse(403, {
+          error: { message: 'Browser control may register only for an existing server session.', code: 'browser_control_session_forbidden' },
+        });
+      }
+      return jsonResponse(201, {
+        ticket: 'api-ticket-title-unique',
+        ticket_expires_in_seconds: 30,
+        ws_path: '/v1/browser-control/ws',
+      });
+    }
+    if (url.endsWith('/api/sessions')) {
+      const body = JSON.parse(options.body);
+      sessionCreates.push(body);
+      // The gateway enforces per-title uniqueness and still refuses the first
+      // attempt in this fixture, so the retry must pick a different title.
+      return sessionCreates.length === 1
+        ? jsonResponse(400, { error: { message: 'Title already in use by session hermes-browser-extension', code: 'invalid_title' } })
+        : jsonResponse(201, { session: { id: body.id } });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  const connector = createControllerConnector({ fetchImpl, WebSocketImpl: FakeSocket });
+  const connecting = connector.connect({
+    settings: {
+      connectionTransport: 'local-api',
+      gatewayUrl: 'http://127.0.0.1:8642',
+      apiKey: ['fixture', 'access', 'value'].join('-'),
+      sessionTitle: 'Hermes Browser Extension',
+      sessionSource: 'hermes_browser',
+    },
+    identity: IDENTITY,
+  });
+  await settle();
+
+  assert.equal(sessionCreates.length, 2, 'an invalid_title refusal must be retried with a unique title');
+  assert.notEqual(sessionCreates[0].title, 'Hermes Browser Extension', 'the bare default title collides with the extension session');
+  assert.match(sessionCreates[0].title, /stored-session-fixture/);
+  assert.notEqual(sessionCreates[0].title, sessionCreates[1].title);
+  assert.equal(registerCalls, 2, 'register is retried once the session exists');
+
+  const socket = FakeSocket.instances[0];
+  socket.open();
+  const connection = await connecting;
+  assert.ok(connection.send, 'connection must resolve after the retried register');
+});
+
 test('local API connector fails when the ghost-session materialize POST is refused', async () => {
   FakeSocket.instances = [];
   let registerCalls = 0;

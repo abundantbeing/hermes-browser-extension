@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "Aktive underagenter",
+  "a11y.subagent_status": "Hermes-underagentstatus",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "UNDERAGENTER",
+  "update.no_local_checkout": "Ingen lokal klon af repositoryet på denne maskine?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "Godkend én gang",
+  "browser_control.authorize": "Tillad kontrol",
   "browser_control.control_ready": "Styring klar",
   "browser_control.detach": "Frakobl",
   "browser_control.detached_detail": "Browserhandlinger stoppet, og alle leases på styrede faner blev frigivet.",

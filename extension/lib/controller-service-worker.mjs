@@ -780,6 +780,9 @@ export function createControllerServiceWorker({
           retryAfterMs: lifecycle.nextBackoffDelay(),
         };
         if (isGatewayAuthRejection(lastConnectFailure.detail) && String(settings.tokenSource || '') === 'pairing') {
+          // The gateway refused the credential itself: drop it so the next
+          // pairing can mint a fresh one. Never fire on "no credential saved"
+          // or on a 403 that was decided after the token authenticated.
           settings = { ...settings, tokenSource: '', lastConnectionTestedAt: 0 };
           settings.apiKey = '';
           const stored = await storageArea.get('hermesBrowserSettings');
@@ -930,9 +933,14 @@ export function createControllerServiceWorker({
   }
 
   function syncSettings(nextSettings = {}, { revision = null } = {}) {
-    const requestedRevision = Number.isInteger(Number(revision))
-      ? Number(revision)
-      : settingsRevision + 1;
+    // Callers without a revision are "latest wins" writers: the background
+    // storage.onChanged rebind is one of them. Number(null) is 0, so testing
+    // Number.isInteger(Number(revision)) treated a missing revision as revision 0
+    // and dropped every storage rebind as stale once any explicit refresh had
+    // bumped the counter — a freshly paired token then never reached the socket.
+    const hasRevision = revision !== null && revision !== undefined && revision !== ''
+      && Number.isInteger(Number(revision));
+    const requestedRevision = hasRevision ? Number(revision) : settingsRevision + 1;
     settingsRevision = Math.max(settingsRevision, requestedRevision);
     return runTransition(() => {
       if (requestedRevision !== settingsRevision) {

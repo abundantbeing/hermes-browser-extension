@@ -19,9 +19,12 @@ import {
   transportRequiresApiKey,
   transportUsesDashboardTicket,
   isGatewayAuthRejection,
+  isGatewayControlKeyUnconfigured,
+  isMissingGatewayCredential,
 } from '../extension/lib/connection-modes.mjs';
 
 const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+const sidepanelHtmlSource = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
 
 test('connection modes expose Desktop-aligned product choices', () => {
   assert.deepEqual(CONNECTION_MODES.map((mode) => mode.value), ['local', 'cloud', 'remote']);
@@ -170,6 +173,61 @@ test('automatic API pairing is loopback-only and enforced by the side-panel conn
   assert.match(connectBody, /Automatic pairing is available only for a loopback Local gateway/);
 });
 
+test('a completed pairing rebinds the controller instead of leaving it on stale settings', () => {
+  const pairingBody = sidepanelSource.match(/async function connectApiWithPairing\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(pairingBody, /tokenSource = 'pairing'/, 'the pairing success path must persist the token');
+  assert.match(pairingBody, /HERMES_CONTROLLER_SETTINGS_REFRESH/, 'the pairing success path must rebind the controller');
+  assert.ok(
+    pairingBody.indexOf("tokenSource = 'pairing'") < pairingBody.indexOf('HERMES_CONTROLLER_SETTINGS_REFRESH'),
+    'the controller refresh must follow the stored token',
+  );
+});
+
+test('creating the browser session never reuses the colliding default title', () => {
+  const ensureBody = sidepanelSource.match(/async function ensureHermesSession\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(ensureBody, /isDefaultBrowserSessionTitle\(settings\.sessionTitle\)/, 'the default title must be detected before the create');
+  assert.match(ensureBody, /makeBrowserSessionTitle\(\)/);
+  assert.ok(
+    ensureBody.indexOf('makeBrowserSessionTitle()') < ensureBody.indexOf("apiFetch('/api/sessions'"),
+    'a unique title must be minted before the create POST',
+  );
+});
+
+test('tab control keeps its credential path reachable when chat runs on the desktop dashboard', () => {
+  // Chat can be "connected" over the local Desktop dashboard transport with no
+  // API credential, while the controller still needs one. The repair must live
+  // on the control surface, never on the first-run setup card, and it must not
+  // depend on the panel's own connection state.
+  assert.match(
+    sidepanelSource,
+    /els\.connectPanel\.hidden = connected;/,
+    'the first-run setup card must never reappear for a connected panel',
+  );
+  assert.doesNotMatch(
+    sidepanelSource,
+    /els\.connectPanel\.hidden = connected &&/,
+    'connection state alone decides the setup card',
+  );
+  assert.match(
+    sidepanelSource,
+    /function controllerCredentialMissing\(\) \{[^}]*transportRequiresApiKey\(settings\.connectionTransport\)[^}]*apiCredentialSatisfied\(settings\)/s,
+    'the credential check must be transport-aware and credential-aware',
+  );
+  assert.match(
+    sidepanelSource,
+    /els\.browserControlAuthorizeButton\.hidden = !view\.canAuthorize/,
+    'the strip must show the authorize action for exactly the missing-credential views',
+  );
+  const authorizeHandler = sidepanelSource.match(/els\.browserControlAuthorizeButton\?\.addEventListener\('click', async \(\) => \{([\s\S]*?)\n {2}\}\);/)?.[1] || '';
+  assert.match(authorizeHandler, /ensureControllerCredentialForControl\(\)/, 'the strip action must run the pairing flow');
+  assert.match(authorizeHandler, /attachBrowserControlToCurrentTab\(\)/, 'the strip action must continue into attaching the tab');
+  const enableBody = sidepanelSource.match(/async function enableBrowserControl\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(enableBody, /ensureControllerCredentialForControl\(\)/, 'enabling control must run the pairing flow when no credential is saved');
+  const attachBody = sidepanelSource.match(/async function attachBrowserControlToCurrentTab\(\) \{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(attachBody, /ensureControllerCredentialForControl\(\)/, 'attaching a tab must run the pairing flow when no credential is saved');
+  assert.match(sidepanelHtmlSource, /id="browserControlAuthorizeButton"[^>]*data-i18n="browser_control\.authorize"/, 'the authorize button needs an i18n-owned label');
+});
+
 test('Cloud sanitization rejects loopback, insecure, and credential-bearing origins', () => {
   assert.equal(isLoopbackGatewayUrl('http://127.0.0.1:8642'), true);
   assert.equal(isLoopbackGatewayUrl('https://agent.example.test'), false);
@@ -234,4 +292,20 @@ test('loadSkills uses the profile dashboard socket and never REST-falls-back ont
 test('isGatewayAuthRejection classifies pairing and HTTP auth failures', () => {
   assert.equal(isGatewayAuthRejection('Controller registration failed (HTTP 401).'), true);
   assert.equal(isGatewayAuthRejection('Network unreachable.'), false);
+  // Only a credential the gateway actually rejected may clear a saved token.
+  assert.equal(isGatewayAuthRejection('Invalid gateway API key (API_SERVER_KEY)'), true);
+  assert.equal(isGatewayAuthRejection('gateway_auth_failed'), true);
+  assert.equal(isGatewayAuthRejection('Controller API registration requires an API credential.'), false);
+  assert.equal(isGatewayAuthRejection('Browser control registration requires a configured API key.'), false);
+  assert.equal(isGatewayAuthRejection('Browser control may register only for an existing server session.'), false);
+  assert.equal(isGatewayAuthRejection('Controller registration failed (HTTP 403).'), false);
+});
+
+test('isMissingGatewayCredential names the local no-token states', () => {
+  assert.equal(isMissingGatewayCredential('Controller API registration requires an API credential.'), true);
+  assert.equal(isMissingGatewayCredential('Browser control registration requires a configured API key.'), true);
+  assert.equal(isMissingGatewayCredential('Controller registration failed (HTTP 401).'), false);
+  assert.equal(isMissingGatewayCredential('Network unreachable.'), false);
+  assert.equal(isGatewayControlKeyUnconfigured('Browser control registration requires a configured API key.'), true);
+  assert.equal(isGatewayControlKeyUnconfigured('Controller API registration requires an API credential.'), false);
 });

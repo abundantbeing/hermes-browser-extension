@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "実行中のサブエージェント",
+  "a11y.subagent_status": "Hermes サブエージェントの状態",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "サブエージェント",
+  "update.no_local_checkout": "このマシンにリポジトリのローカルチェックアウトがありませんか?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "1回だけ許可",
+  "browser_control.authorize": "操作を許可",
   "browser_control.control_ready": "操作の準備完了",
   "browser_control.detach": "切り離す",
   "browser_control.detached_detail": "ブラウザー操作を停止し、すべての制御タブの貸出を解放しました。",

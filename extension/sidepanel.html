@@ -350,6 +350,7 @@
             <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           </button>
           <div class="browser-control-strip-actions">
+            <button id="browserControlAuthorizeButton" class="browser-control-action" type="button" hidden data-i18n="browser_control.authorize">Authorize control</button>
             <button id="browserControlAttachButton" class="browser-control-action" type="button" hidden data-i18n-runtime data-i18n="ui.attach">Attach</button>
             <button id="browserControlPauseButton" class="browser-control-action icon-only secondary" type="button" aria-label="Pause" title="Pause" data-i18n-aria-label="browser_control.pause" data-i18n-title="browser_control.pause">
               <svg class="glyph-pause" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3.2 2h2.2v8H3.2zM6.6 2h2.2v8H6.6z" fill="currentColor"/></svg>
@@ -376,13 +377,13 @@
           </button>
           <ol id="taskStackList" class="task-stack-list"></ol>
         </section>
-        <section id="subagentStack" class="task-stack subagent-stack" data-expanded="true" aria-label="Hermes subagent status" hidden>
+        <section id="subagentStack" class="task-stack subagent-stack" data-expanded="true" aria-label="Hermes subagent status" data-i18n-aria-label="a11y.subagent_status" hidden>
           <button id="subagentStackToggle" class="task-stack-toggle" type="button" aria-expanded="true">
-            <span class="task-stack-title"><span class="subagent-stack-spinner" aria-hidden="true"><span class="subagent-stack-spinner-strip"><span>⠋</span><span>⠙</span><span>⠹</span><span>⠸</span><span>⠼</span><span>⠴</span><span>⠦</span><span>⠧</span><span>⠇</span><span>⠏</span></span></span> SUBAGENTS</span>
+            <span class="task-stack-title"><span class="subagent-stack-spinner" aria-hidden="true"><span class="subagent-stack-spinner-strip"><span>⠋</span><span>⠙</span><span>⠹</span><span>⠸</span><span>⠼</span><span>⠴</span><span>⠦</span><span>⠧</span><span>⠇</span><span>⠏</span></span></span> <span data-i18n="ui.subagents">SUBAGENTS</span></span>
             <span id="subagentStackSummary" class="task-stack-summary" aria-live="polite"></span>
             <span class="task-stack-chevron" aria-hidden="true">↑</span>
           </button>
-          <ol id="subagentStackList" class="task-stack-list subagent-stack-list" role="listbox" aria-label="Live subagents"></ol>
+          <ol id="subagentStackList" class="task-stack-list subagent-stack-list" role="listbox" aria-label="Live subagents" data-i18n-aria-label="a11y.live_subagents"></ol>
           <div id="subagentStackDetail" class="subagent-stack-detail" hidden></div>
         </section>
         <div id="groupThreadActiveBanner" class="group-thread-active-banner" data-i18n-runtime hidden>
@@ -1230,7 +1231,7 @@
           <button id="maybeLaterButton" class="secondary" type="button">Maybe later</button>
         </div>
         <p id="updateInstallNote" class="update-install-note">Load-unpacked installs update through a guarded Hermes agent turn, then reload the built dist/ folder.</p>
-        <p id="updateReleaseFallback" class="update-install-note">No local checkout of the repository on this machine? <a id="updateReleaseLink" class="update-release-link" href="https://github.com/abundantbeing/hermes-browser-extension/releases/latest" target="_blank" rel="noreferrer noopener">Download the latest release</a>.</p>
+        <p id="updateReleaseFallback" class="update-install-note"><span data-i18n="update.no_local_checkout">No local checkout of the repository on this machine?</span> <a id="updateReleaseLink" class="update-release-link" href="https://github.com/abundantbeing/hermes-browser-extension/releases/latest" target="_blank" rel="noreferrer noopener">Download the latest release</a>.</p>
       </div>
     </section>
 

@@ -27,6 +27,14 @@
     "message": "Hermes Browser 擴充功能標頭",
     "description": "Runtime interface message a11y.extension_header"
   },
+  "runtime_a11y_live_subagents": {
+    "message": "活動中子代理",
+    "description": "Runtime interface message a11y.live_subagents"
+  },
+  "runtime_a11y_subagent_status": {
+    "message": "Hermes 子代理狀態",
+    "description": "Runtime interface message a11y.subagent_status"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -582,6 +590,10 @@
   "runtime_browser_control_approve_once": {
     "message": "核准一次",
     "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_authorize": {
+    "message": "授權控制",
+    "description": "Runtime interface message browser_control.authorize"
   },
   "runtime_browser_control_control_ready": {
     "message": "控制已就緒",
@@ -4835,6 +4847,10 @@
     "message": "流",
     "description": "Runtime interface message ui.stream"
   },
+  "runtime_ui_subagents": {
+    "message": "子代理",
+    "description": "Runtime interface message ui.subagents"
+  },
   "runtime_ui_submit": {
     "message": "提交",
     "description": "Runtime interface message ui.submit"
@@ -5410,6 +5426,10 @@
   "runtime_ui_zoom_out": {
     "message": "縮小",
     "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_update_no_local_checkout": {
+    "message": "此機器上沒有倉庫的本機簽出?",
+    "description": "Runtime interface message update.no_local_checkout"
   },
   "runtime_voice_browser_preview": {
     "message": "語音模式：瀏覽器語音後備方案\n\n{preview}",

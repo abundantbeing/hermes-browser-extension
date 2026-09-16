@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "Aktywne subagenty",
+  "a11y.subagent_status": "Status subagentów Hermes",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "SUBAGENCI",
+  "update.no_local_checkout": "Brak lokalnego checkoutu repozytorium na tej maszynie?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "Zatwierdź raz",
+  "browser_control.authorize": "Autoryzuj kontrolę",
   "browser_control.control_ready": "Sterowanie gotowe",
   "browser_control.detach": "Odłącz",
   "browser_control.detached_detail": "Akcje przeglądarki zatrzymane, a wszystkie dzierżawy sterowanych kart zostały zwolnione.",

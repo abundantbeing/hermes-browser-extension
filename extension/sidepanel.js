@@ -500,6 +500,7 @@ import {
   normalizeConnectionMode,
   resolvePhaseATransport,
   sanitizeGatewayUrlForConnectionMode,
+  transportRequiresApiKey,
   transportUsesDashboardTicket,
 } from './lib/connection-modes.mjs';
 import { CONNECTION_ACTIONS, connectionActionForSettings } from './lib/connection-dispatch.mjs';
@@ -833,6 +834,7 @@ const els = {
   browserControlStripTitle: $('#browserControlStripTitle'),
   browserControlStripDetail: $('#browserControlStripDetail'),
   browserControlAttachButton: $('#browserControlAttachButton'),
+  browserControlAuthorizeButton: $('#browserControlAuthorizeButton'),
   browserControlDismissButton: $('#browserControlDismissButton'),
   browserControlPauseButton: $('#browserControlPauseButton'),
   browserControlStopButton: $('#browserControlStopButton'),
@@ -1732,6 +1734,25 @@ function minimumConnectionReady() {
   return isConnected() && (usesDashboardWsChatTransport() || apiCredentialSatisfied(settings));
 }
 
+// The browser controller registers through the API transport (local-api /
+// remote-api) and needs a saved credential for it. Chat can be connected over
+// the local Desktop dashboard fallback with no credential at all, so "chat is
+// connected" says nothing about tab control.
+function controllerCredentialMissing() {
+  return settings?.browserControlEnabled === true
+    && transportRequiresApiKey(settings.connectionTransport)
+    && !apiCredentialSatisfied(settings);
+}
+
+// Run the loopback pairing flow when tab control needs a credential it does not
+// have. The approval page stays the user's consent gate; this only replaces the
+// dead end ("no token saved", connect panel hidden) with the flow that mints one.
+async function ensureControllerCredentialForControl() {
+  if (!controllerCredentialMissing() || !automaticApiPairingAllowed(settings)) return false;
+  await connectApiWithPairing();
+  return true;
+}
+
 function positionStartupSettings(active = document.body?.classList.contains('startup-active')) {
   const topbar = els.settingsButton?.closest('.topbar') || document.querySelector('.topbar');
   const actions = els.startupActions || document.getElementById('startupActions');
@@ -2024,7 +2045,8 @@ function renderBrowserControl() {
     && Array.isArray(browserControlStatus?.leasedTabIds)
     && browserControlStatus.leasedTabIds.some((tabId) => Number(tabId) === activeTabIdForStrip);
   const stripToggleMode = stripTabAttached ? 'detach' : 'attach';
-  els.browserControlAttachButton.hidden = !(view.canAttach || stripTabAttached);
+  els.browserControlAttachButton.hidden = !(view.canAttach || stripTabAttached) || view.canAuthorize;
+  els.browserControlAuthorizeButton.hidden = !view.canAuthorize;
   els.browserControlAttachButton.dataset.mode = stripToggleMode;
   els.browserControlAttachButton.textContent = t(stripToggleMode === 'detach' ? 'browser_control.detach' : 'ui.attach');
   els.browserControlAttachButton.title = t(stripToggleMode === 'detach' ? 'browser_control.detach' : 'ui.attach.to.current.tab');
@@ -2097,22 +2119,28 @@ async function attachBrowserControlToCurrentTab() {
     throw new Error('Start or select a Hermes session, then attach this tab.');
   }
   const replacement = currentTabLeaseReplacement({ status: browserControlStatus || {}, activeTab: tab, allowLocalFiles: true });
-  if (!replacement.ok) {
+  let resolvedReplacement = replacement;
+  if (!replacement.ok && replacement.error === 'controller_unavailable'
+    && await ensureControllerCredentialForControl().catch(() => false)) {
+    await refreshBrowserControlStatus({ follow: false });
+    resolvedReplacement = currentTabLeaseReplacement({ status: browserControlStatus || {}, activeTab: tab, allowLocalFiles: true });
+  }
+  if (!resolvedReplacement.ok) {
     const messages = {
       controller_busy: 'Wait for the current browser action to finish before attaching another tab.',
       controller_unavailable: 'Hermes Control is still reconnecting. Try Attach this tab again in a moment.',
       restricted_url: 'Open a normal HTTP or HTTPS page before attaching Hermes Control.',
     };
-    throw new Error(messages[replacement.error] || 'This tab cannot be attached right now.');
+    throw new Error(messages[resolvedReplacement.error] || 'This tab cannot be attached right now.');
   }
-  if (replacement.releaseTabIds.length) {
+  if (resolvedReplacement.releaseTabIds.length) {
     const released = await browserControlMessage('HERMES_CONTROLLER_LEASE_RELEASE', {
-      ownerId: replacement.ownerId,
-      tabIds: replacement.releaseTabIds,
+      ownerId: resolvedReplacement.ownerId,
+      tabIds: resolvedReplacement.releaseTabIds,
     });
     if (!released?.ok) throw new Error(released?.error || 'Could not release the previous tab lease.');
   }
-  const acquired = await browserControlMessage('HERMES_CONTROLLER_LEASE_ACQUIRE', replacement.acquire);
+  const acquired = await browserControlMessage('HERMES_CONTROLLER_LEASE_ACQUIRE', resolvedReplacement.acquire);
   if (!acquired?.ok) throw new Error(acquired?.error || 'Could not lease this tab.');
   const candidate = browserControlCandidate({
     context: { activeTab: tab },
@@ -2162,8 +2190,11 @@ async function enableBrowserControl() {
       browserControlPaused: false,
       browserControlScope: scope,
     });
-    const rebound = await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH');
+    let rebound = await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH');
     if (!rebound?.ok) throw new Error(rebound?.error || 'Controller capability refresh failed.');
+    if (!rebound.connected && await ensureControllerCredentialForControl()) {
+      rebound = await browserControlMessage('HERMES_CONTROLLER_STATUS').catch(() => null) || rebound;
+    }
     const acquired = await browserControlMessage('HERMES_CONTROLLER_LEASE_ACQUIRE', {
       ...leaseRequest,
       ownership: 'owned',
@@ -4002,6 +4033,9 @@ function updateConnectionPrompt() {
   const state = currentConnectionState();
   const connected = state.connected;
   const summary = currentGatewaySummary();
+  // Connected is connected: the first-run setup card never comes back for a
+  // working panel. Tab control's own credential step lives in the control strip
+  // ("Authorize control"), not in this card.
   els.connectPanel.hidden = connected;
   els.connectionPill.textContent = '●';
   els.connectionPill.className = `connection-pill ${state.pillClass || 'warn'}`;
@@ -15888,6 +15922,14 @@ async function ensureHermesSession() {
     });
   }
 
+  // Session titles are unique on the gateway, and the bare default title is
+  // already owned by this extension's long-lived session: creating a new session
+  // with it is refused (invalid_title) and the chat never starts. Mint a unique
+  // title first — auto-naming still treats the stamped title as a default.
+  if (!String(settings.sessionTitle || '').trim() || isDefaultBrowserSessionTitle(settings.sessionTitle)) {
+    settings = { ...settings, sessionTitle: makeBrowserSessionTitle() };
+    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  }
   const createResponse = await apiFetch('/api/sessions', {
     method: 'POST',
     body: JSON.stringify({
@@ -16899,6 +16941,12 @@ async function connectApiWithPairing() {
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     syncSettingsForm();
     updateConnectionPrompt();
+    // The controller keeps its own copy of the settings; without an explicit
+    // refresh a freshly paired token only reaches it through the background
+    // storage listener, which is not reliable (an idle MV3 worker may not be
+    // awake for the write). Then tab control stays in "reconnecting" until the
+    // extension is reloaded, so ask for the rebind here.
+    await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH').catch(() => null);
     await runPanelConnectionReadiness({ restoreSettings: false });
     if (!connectionController.transition(generation, CONNECTION_STATES.READY, { gateway: 'hermes' })) return;
     els.connectStatus.textContent = translateUiText('Connected to Hermes. You can start chatting with page context.');
@@ -19033,6 +19081,22 @@ function bindEvents() {
       renderBrowserControl();
     }
   });
+  els.browserControlAuthorizeButton?.addEventListener('click', async () => {
+    // One-time Hermes authorization for tab control. The panel is (usually)
+    // already connected for chat, so this is scoped to the control surface and
+    // never re-runs the first-run connect flow.
+    els.browserControlAuthorizeButton.disabled = true;
+    try {
+      await ensureControllerCredentialForControl();
+      await refreshBrowserControlStatus({ follow: false });
+      if (settings.browserControlEnabled === true) await attachBrowserControlToCurrentTab().catch(() => null);
+    } catch (error) {
+      showOperationToast({ kind: 'warn', title: 'Control not authorized', detail: error?.message || String(error) });
+    } finally {
+      els.browserControlAuthorizeButton.disabled = false;
+      renderBrowserControl();
+    }
+  });
   els.browserControlDetachButton?.addEventListener('click', () => {
     detachBrowserControl().catch((error) => showOperationToast({ kind: 'warn', title: 'Detach incomplete', detail: error?.message || String(error) }));
   });
@@ -19183,6 +19247,31 @@ function bindEvents() {
   });
   browserApi.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
+    if (Object.hasOwn(changes, 'hermesBrowserSettings')) {
+      const next = changes.hermesBrowserSettings?.newValue;
+      if (next && typeof next === 'object') {
+        // The controller worker and the pairing flow rewrite this record (a
+        // rejected pairing token is dropped, the transport can flip). Without
+        // adopting those writes the panel keeps a stale apiKey and keeps hiding
+        // the connect panel that owns the "Connect to Hermes" repair button,
+        // which leaves tab control stuck with no reachable way to reconnect.
+        const tracked = [
+          'apiKey', 'tokenSource', 'lastConnectionTestedAt',
+          'browserControlEnabled', 'browserControlPaused',
+          'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
+          'trustedDashboardOrigin', 'trustedDashboardTabId', 'remoteDashboardSession',
+        ];
+        const patch = {};
+        for (const key of tracked) {
+          if (Object.hasOwn(next, key)) patch[key] = next[key];
+        }
+        if (Object.keys(patch).length) {
+          settings = { ...settings, ...patch };
+          updateConnectionPrompt();
+          renderBrowserControl();
+        }
+      }
+    }
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
     if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {
       settings = {

@@ -27,6 +27,14 @@
     "message": "Hermes Browser Extension ヘッダー",
     "description": "Runtime interface message a11y.extension_header"
   },
+  "runtime_a11y_live_subagents": {
+    "message": "実行中のサブエージェント",
+    "description": "Runtime interface message a11y.live_subagents"
+  },
+  "runtime_a11y_subagent_status": {
+    "message": "Hermes サブエージェントの状態",
+    "description": "Runtime interface message a11y.subagent_status"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -582,6 +590,10 @@
   "runtime_browser_control_approve_once": {
     "message": "1回だけ許可",
     "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_authorize": {
+    "message": "操作を許可",
+    "description": "Runtime interface message browser_control.authorize"
   },
   "runtime_browser_control_control_ready": {
     "message": "操作の準備完了",
@@ -4835,6 +4847,10 @@
     "message": "ストリーム",
     "description": "Runtime interface message ui.stream"
   },
+  "runtime_ui_subagents": {
+    "message": "サブエージェント",
+    "description": "Runtime interface message ui.subagents"
+  },
   "runtime_ui_submit": {
     "message": "提出する",
     "description": "Runtime interface message ui.submit"
@@ -5410,6 +5426,10 @@
   "runtime_ui_zoom_out": {
     "message": "ズームアウト",
     "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_update_no_local_checkout": {
+    "message": "このマシンにリポジトリのローカルチェックアウトがありませんか?",
+    "description": "Runtime interface message update.no_local_checkout"
   },
   "runtime_voice_browser_preview": {
     "message": "音声モード: ブラウザ音声フォールバック\n\n{preview}",

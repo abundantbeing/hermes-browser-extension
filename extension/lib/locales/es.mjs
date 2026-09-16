@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "Subagentes activos",
+  "a11y.subagent_status": "Estado de subagentes de Hermes",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "SUBAGENTES",
+  "update.no_local_checkout": "¿No hay un clon local del repositorio en esta máquina?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "Aprobar una vez",
+  "browser_control.authorize": "Autorizar control",
   "browser_control.control_ready": "Control listo",
   "browser_control.detach": "Separar",
   "browser_control.detached_detail": "Las acciones del navegador se detuvieron y se liberaron todas las cesiones de pestañas controladas.",

@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "Aktive Subagenten",
+  "a11y.subagent_status": "Hermes-Subagent-Status",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "SUBAGENTEN",
+  "update.no_local_checkout": "Kein lokaler Checkout des Repositorys auf diesem Rechner?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "Einmal genehmigen",
+  "browser_control.authorize": "Steuerung autorisieren",
   "browser_control.control_ready": "Steuerung bereit",
   "browser_control.detach": "Ablösen",
   "browser_control.detached_detail": "Browseraktionen wurden gestoppt und alle Leihverträge für gesteuerte Tabs wurden freigegeben.",

@@ -27,6 +27,14 @@
     "message": "Hermes Browser Extension हेडर",
     "description": "Runtime interface message a11y.extension_header"
   },
+  "runtime_a11y_live_subagents": {
+    "message": "सक्रिय सब-एजेंट",
+    "description": "Runtime interface message a11y.live_subagents"
+  },
+  "runtime_a11y_subagent_status": {
+    "message": "Hermes सब-एजेंट स्थिति",
+    "description": "Runtime interface message a11y.subagent_status"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -582,6 +590,10 @@
   "runtime_browser_control_approve_once": {
     "message": "एक बार स्वीकृत करें",
     "description": "Runtime interface message browser_control.approve_once"
+  },
+  "runtime_browser_control_authorize": {
+    "message": "नियंत्रण अधिकृत करें",
+    "description": "Runtime interface message browser_control.authorize"
   },
   "runtime_browser_control_control_ready": {
     "message": "नियंत्रण तैयार",
@@ -4835,6 +4847,10 @@
     "message": "धारा",
     "description": "Runtime interface message ui.stream"
   },
+  "runtime_ui_subagents": {
+    "message": "सब-एजेंट",
+    "description": "Runtime interface message ui.subagents"
+  },
   "runtime_ui_submit": {
     "message": "जमा करना",
     "description": "Runtime interface message ui.submit"
@@ -5410,6 +5426,10 @@
   "runtime_ui_zoom_out": {
     "message": "ज़ूम आउट",
     "description": "Runtime interface message ui.zoom.out"
+  },
+  "runtime_update_no_local_checkout": {
+    "message": "इस मशीन पर रिपॉज़िटरी का स्थानीय चेकआउट नहीं है?",
+    "description": "Runtime interface message update.no_local_checkout"
   },
   "runtime_voice_browser_preview": {
     "message": "वॉयस मोड: ब्राउज़र स्पीच फ़ॉलबैक\n\n{preview}",

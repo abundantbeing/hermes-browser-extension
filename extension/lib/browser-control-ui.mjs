@@ -1,5 +1,5 @@
 import { validateBrowserControlUrl } from './browser-control-safety.mjs';
-import { isGatewayAuthRejection } from './connection-modes.mjs';
+import { isGatewayAuthRejection, isGatewayControlKeyUnconfigured, isMissingGatewayCredential } from './connection-modes.mjs';
 
 const CONTROL_SCOPES = new Set(['this-tab', 'selected-tabs', 'task-set']);
 const VIEW_BEHAVIORS = new Set(['stay', 'follow']);
@@ -93,6 +93,7 @@ function baseView(overrides = {}) {
     detail: 'Hermes can read approved context but cannot operate tabs.',
     canEnable: true,
     canAttach: false,
+    canAuthorize: false,
     canPause: false,
     canStop: false,
     canDetach: false,
@@ -105,10 +106,21 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
   if (status?.connected !== true) {
     const failure = status?.lastConnectFailure;
     let detail = 'Hermes is restoring the controller connection. No tab actions can run yet.';
+    let canAuthorize = false;
     if (failure?.reason === 'missing_session') {
       detail = 'No Hermes session is active yet. Start or select a session, then attach this tab.';
+    } else if (failure?.reason === 'connect_failed' && isGatewayControlKeyUnconfigured(failure.detail)) {
+      detail = 'This Hermes gateway has no browser-control API key configured. Set API_SERVER_KEY on the gateway, then reconnect.';
+    } else if (failure?.reason === 'connect_failed' && isMissingGatewayCredential(failure.detail)) {
+      // Tab control needs its own credential. The panel is already connected for
+      // chat (often over the local Desktop dashboard), so never send the reader
+      // back through the first-run connect flow; the control strip owns the one
+      // action that fixes this.
+      canAuthorize = true;
+      detail = 'Browser control needs one authorization from Hermes before it can operate tabs.';
     } else if (failure?.reason === 'connect_failed' && isGatewayAuthRejection(failure.detail)) {
-      detail = 'The gateway rejected the saved token. Reconnect from Settings, then attach this tab.';
+      canAuthorize = true;
+      detail = "Hermes rejected this browser's saved control token. Authorize again to restore control.";
     } else if (failure?.reason === 'connect_failed' && failure?.detail) {
       detail = `Could not reach the controller. ${String(failure.detail).slice(0, 140)}`;
     }
@@ -119,6 +131,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       detail,
       canEnable: false,
       canDetach: true,
+      canAuthorize,
     });
   }
   if (status?.controlEnabled !== true) {

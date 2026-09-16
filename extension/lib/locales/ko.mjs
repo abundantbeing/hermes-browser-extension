@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "활성 하위 에이전트",
+  "a11y.subagent_status": "Hermes 하위 에이전트 상태",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "하위 에이전트",
+  "update.no_local_checkout": "이 컴퓨터에 저장소의 로컬 체크아웃이 없나요?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "한 번만 승인",
+  "browser_control.authorize": "제어 승인",
   "browser_control.control_ready": "제어 준비 완료",
   "browser_control.detach": "분리",
   "browser_control.detached_detail": "브라우저 작업이 중지되고 모든 제어 탭의 임대가 해제되었습니다.",

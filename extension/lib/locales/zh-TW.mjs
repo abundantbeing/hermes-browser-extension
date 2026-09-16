@@ -1,4 +1,6 @@
 export default Object.freeze({
+  "a11y.live_subagents": "活動中子代理",
+  "a11y.subagent_status": "Hermes 子代理狀態",
   "bot_mode.syncing": "SYNCING BOT",
   "bot_mode.syncing_detail": "Loading profile, model, and Bot Chat session…",
   "bot_mode.chat_empty": "Say something to get started.",
@@ -126,8 +128,11 @@ export default Object.freeze({
   "ui.send.comments": "Send comments",
   "ui.select.area": "Area",
   "ui.select.element": "Element",
+  "ui.subagents": "子代理",
+  "update.no_local_checkout": "此機器上沒有倉庫的本機簽出?",
   "wake.turn_on": "Turn on wake word",
   "browser_control.approve_once": "核准一次",
+  "browser_control.authorize": "授權控制",
   "browser_control.control_ready": "控制已就緒",
   "browser_control.detach": "分離",
   "browser_control.detached_detail": "瀏覽器操作已停止，所有受控分頁的租用均已釋放。",
