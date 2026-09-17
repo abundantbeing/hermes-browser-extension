@@ -12,6 +12,10 @@ import { normalizeHistoryUserMessage } from './session-history-normalization.mjs
 import { hasCredentialBearingUrl, redactSensitiveText } from './redaction.mjs';
 import { CONNECTION_SCHEMA_VERSION, CONNECTION_TRANSPORTS } from './connection-modes.mjs';
 import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
+import {
+  DEFAULT_MODEL_PICKER_VISIBLE_MODEL_IDS,
+  modelPickerVisibilityFromAllowlist,
+} from './model-picker-visibility.mjs';
 export { redactSensitiveText };
 
 export const GATEWAY_MODES = Object.freeze([
@@ -129,6 +133,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   maxTabs: 12,
   maxLocalMessages: 40,
   customModelSources: [],
+  modelPickerVisibility: modelPickerVisibilityFromAllowlist(DEFAULT_MODEL_PICKER_VISIBLE_MODEL_IDS),
   trustedDashboardOrigin: '',
   trustedDashboardTabId: null,
   remoteDashboardSession: null,

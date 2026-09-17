@@ -351,6 +351,11 @@ import {
   unionCachedModelCatalogs,
   } from './lib/model-discovery.mjs';
 import {
+  MODEL_PICKER_VISIBILITY_STORAGE_KEY,
+  normalizeModelPickerVisibility,
+  visibleModelsForPicker,
+} from './lib/model-picker-visibility.mjs';
+import {
   VOICE_CAPTURE_SAMPLE_INTERVAL_MS,
   VOICE_CAPTURE_TIMESLICE_MS,
   joinDictationTranscript,
@@ -7131,6 +7136,10 @@ function renderModelOptions(models = availableModels) {
   renderContextWindow();
 }
 
+function pickerModels(selectedModelId = settings.model) {
+  return visibleModelsForPicker(availableModels, settings.modelPickerVisibility, { selectedModelId });
+}
+
 async function applyAssistSelectedModel(model) {
   if (!model || !isModelRuntimeSelectable(model)) return;
   settings = {
@@ -7214,9 +7223,10 @@ function setModelSelectionTarget(target = 'chat') {
 
 function renderModelMenu(query = els.modelSearchInput?.value || '') {
   const menuModelId = modelSelectionTarget === 'assist' ? (settings.inlineAssistModel || settings.model) : settings.model;
-  const allGroups = groupModelsForMenu(availableModels, menuModelId, '');
+  const models = pickerModels(menuModelId);
+  const allGroups = groupModelsForMenu(models, menuModelId, '');
   const needle = String(query || '').trim().toLowerCase();
-  const matchingGroups = needle ? groupModelsForMenu(availableModels, menuModelId, needle) : allGroups;
+  const matchingGroups = needle ? groupModelsForMenu(models, menuModelId, needle) : allGroups;
   els.modelProviderList.innerHTML = '';
   els.modelMenuList.innerHTML = '';
 
@@ -14465,7 +14475,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', MODEL_PICKER_VISIBILITY_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -14473,6 +14483,12 @@ async function loadSettings({ restoreMessages = false } = {}) {
   renderBrowserIntroVisibility();
   const migrateConnectionSchema = stored.hermesBrowserSettings?.connectionSchemaVersion !== DEFAULT_SETTINGS.connectionSchemaVersion;
   const storedSettings = migrateConnectionSettings(stored.hermesBrowserSettings || {});
+  const storedModelPickerVisibility = normalizeModelPickerVisibility(
+    stored[MODEL_PICKER_VISIBILITY_STORAGE_KEY]
+      || storedSettings.modelPickerVisibility
+      || DEFAULT_SETTINGS.modelPickerVisibility,
+  );
+  const migrateModelPickerVisibility = !stored[MODEL_PICKER_VISIBILITY_STORAGE_KEY];
   const storedWakeSettings = normalizeWakeWordSettings({ ...DEFAULT_SETTINGS, ...storedSettings });
   const migrateDesktopOptionDefaults = !storedSettings.modelOptionsVersion && storedSettings.reasoningEffort === 'medium';
   const migrateModelOptionScope = !storedSettings.extensionPreferredModelOptions || !storedSettings.sessionModelOptionBindings;
@@ -14540,6 +14556,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
       .map(([sessionId, options]) => [sessionId, resolveAcknowledgedSessionModelOptions({ sessionOptions: options })])
       .filter(([, options]) => Boolean(options))),
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
+    modelPickerVisibility: storedModelPickerVisibility,
   };
   if (hasUnboundProfileContextHandoff) {
     settings = {
@@ -14573,8 +14590,11 @@ async function loadSettings({ restoreMessages = false } = {}) {
     settings.fastMode = effectiveOptions.fastMode;
   }
   applyAppearanceSettings();
-  if (migrateConnectionSchema || migrateDesktopOptionDefaults || migrateModelOptionScope || hasUnboundProfileContextHandoff) {
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  if (migrateConnectionSchema || migrateDesktopOptionDefaults || migrateModelOptionScope || hasUnboundProfileContextHandoff || migrateModelPickerVisibility) {
+    await browserApi.storage.local.set({
+      hermesBrowserSettings: settings,
+      [MODEL_PICKER_VISIBILITY_STORAGE_KEY]: settings.modelPickerVisibility,
+    });
   }
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
   syncSettingsForm();
