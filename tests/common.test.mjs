@@ -64,6 +64,7 @@ import {
   skillCommandForName,
   isNamedHermesProfileName,
   restSkillsFallbackAllowed,
+  shouldRecoverSkillsFromDashboard,
   skillSuggestionsForInput,
   shouldStopSessionPaging,
   shouldFallbackToWebSpeechForTranscription,
@@ -2564,6 +2565,28 @@ test('named profiles never inherit the default REST skills catalog', () => {
   assert.equal(restSkillsFallbackAllowed({ profileName: 'default', dashboardReady: false }), true);
   assert.equal(restSkillsFallbackAllowed({ profileName: 'research', dashboardReady: false }), false);
   assert.equal(restSkillsFallbackAllowed({ profileName: 'default', dashboardReady: true }), false);
+});
+
+test('empty or failed REST skill catalogs recover from the dashboard profile snapshot', () => {
+  assert.equal(shouldRecoverSkillsFromDashboard({ restOutcome: 'ok' }), false);
+  assert.equal(shouldRecoverSkillsFromDashboard({ restOutcome: 'error' }), true);
+  assert.equal(shouldRecoverSkillsFromDashboard({ restOutcome: 'empty' }), true);
+  assert.equal(shouldRecoverSkillsFromDashboard({ restOutcome: 'skipped' }), true);
+  assert.equal(shouldRecoverSkillsFromDashboard({}), true);
+});
+
+test('normalizeHermesSkills reads profiles.describe rows without descriptions', () => {
+  const skills = normalizeHermesSkills({
+    name: 'default',
+    skills: [
+      { name: 'hermes-browser-development', enabled: true },
+      { name: 'systematic-debugging', enabled: true },
+    ],
+  });
+  assert.deepEqual(skills.map((skill) => skill.command), [
+    '/hermes-browser-development',
+    '/systematic-debugging',
+  ]);
 });
 
 test('normalizeHermesProfiles marks active profile and keeps useful metadata', () => {

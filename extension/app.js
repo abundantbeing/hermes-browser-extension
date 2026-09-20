@@ -16,6 +16,8 @@ import {
   shouldAutoOpenSessionGroup,
   shouldRequireModelLock,
   skillSuggestionsForInput,
+  restSkillsFallbackAllowed,
+  shouldRecoverSkillsFromDashboard,
 } from './lib/common.mjs';
 import { renderMarkdownSafe } from './lib/sanitizer.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
@@ -2979,35 +2981,59 @@ async function refreshModelsFromPicker() {
 }
 
 async function loadSkills({ quiet = false } = {}) {
-  if (usesDashboardTicketTransport()) {
-    try {
-      const connection = await ensureDashboardConnection();
-      const profile = String(settings.activeProfile || 'default').trim() || 'default';
-      const payload = await connection.client.request(WS_METHODS.profilesDescribe, { name: profile });
-      availableSkills = normalizeHermesSkills({ data: payload?.skills || [] });
-      renderComposerSuggestions();
-      if (!quiet) els.composerStatus.textContent = `${availableSkills.length} skills synced`;
-      return { ok: true, count: availableSkills.length, source: 'dashboard-ws' };
-    } catch (error) {
-      if (!settings.apiKey) {
-        availableSkills = [];
-        renderComposerSuggestions();
-        if (!quiet) els.composerStatus.textContent = `Skill sync failed: ${error?.message || String(error)}`;
-        return { ok: false, count: 0, error: error?.message || String(error) };
-      }
-    }
-  }
-  try {
-    const response = await client.fetch('/v1/skills', { method: 'GET' });
-    const payload = await client.readJson(response);
-    if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Skills list failed (${response.status}).`);
+  const profile = String(settings.activeProfile || 'default').trim() || 'default';
+  const applyDashboardSkills = (payload) => {
     availableSkills = normalizeHermesSkills(payload);
     renderComposerSuggestions();
     if (!quiet) els.composerStatus.textContent = `${availableSkills.length} skills synced`;
-  } catch (error) {
+    return { ok: true, count: availableSkills.length, source: 'dashboard-ws' };
+  };
+  const failSkills = (error) => {
     availableSkills = [];
     renderComposerSuggestions();
     if (!quiet) els.composerStatus.textContent = `Skill sync failed: ${error?.message || String(error)}`;
+    return { ok: false, count: 0, error: error?.message || String(error) };
+  };
+
+  if (usesDashboardTicketTransport()) {
+    try {
+      const connection = await ensureDashboardConnection();
+      const payload = await connection.client.request(WS_METHODS.profilesDescribe, { name: profile });
+      return applyDashboardSkills(payload);
+    } catch (error) {
+      if (!settings.apiKey) return failSkills(error);
+    }
+  }
+
+  let restOutcome = 'skipped';
+  if (settings.apiKey && restSkillsFallbackAllowed({ profileName: profile })) {
+    try {
+      const response = await client.fetch('/v1/skills', { method: 'GET' });
+      const payload = await client.readJson(response);
+      if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Skills list failed (${response.status}).`);
+      const skills = normalizeHermesSkills(payload);
+      if (skills.length) {
+        availableSkills = skills;
+        renderComposerSuggestions();
+        if (!quiet) els.composerStatus.textContent = `${availableSkills.length} skills synced`;
+        return { ok: true, count: availableSkills.length, source: 'rest' };
+      }
+      restOutcome = 'empty';
+    } catch {
+      restOutcome = 'error';
+    }
+  }
+
+  if (!shouldRecoverSkillsFromDashboard({ restOutcome })) {
+    return { ok: true, count: availableSkills.length, source: 'rest' };
+  }
+
+  try {
+    const connection = await ensureDashboardConnection();
+    const payload = await connection.client.request(WS_METHODS.profilesDescribe, { name: profile });
+    return applyDashboardSkills(payload);
+  } catch (error) {
+    return failSkills(error);
   }
 }
 

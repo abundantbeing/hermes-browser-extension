@@ -296,6 +296,18 @@ export function profileDefaultModelFromOptions(payload = {}) {
   return { model, provider };
 }
 
+export function resolveProfileSessionModel({
+  rosterModel = '',
+  rosterProvider = '',
+  optionsPayload = null,
+} = {}) {
+  const fromOptions = profileDefaultModelFromOptions(optionsPayload || {});
+  if (fromOptions) return fromOptions;
+  const model = String(rosterModel || '').trim();
+  if (!model) return null;
+  return { model, provider: String(rosterProvider || '').trim() };
+}
+
 export function modelRowsFromGatewayOptions(payload = {}) {
   const providerModels = modelsFromModelOptionsPayload(payload);
   if (providerModels.length || Array.isArray(payload?.providers)) return providerModels;

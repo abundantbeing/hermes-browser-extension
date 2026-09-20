@@ -128,7 +128,7 @@ test('Bot Mode exposes a session-menu Threads control and clears stale bot sessi
   assert.match(sidepanelSource, /bot_mode\.group_threads/);
   assert.match(sidepanelSource, /data-group-thread-id/);
   assert.match(sidepanelSource, /sessionId:\s*''/);
-  assert.match(sidepanelSource, /m\.provider === pinnedModel\.provider/);
+  assert.match(sidepanelSource, /!pinnedModel\.provider \|\| model\.provider === pinnedModel\.provider/);
   assert.match(sidepanelCss, /\.bot-mode-threads-button/);
 });
 
@@ -177,9 +177,18 @@ test('authenticated local dashboards reuse the explicit Dashboard ticket transpo
 });
 
 test('profile switching and bot opening use cached row metadata before slow model options', () => {
-  assert.match(sidepanelSource, /void refreshModelCatalogInBackground\(\)\.then/);
-  assert.match(sidepanelSource, /let pinnedModel = row\.model \? \{ model: row\.model/);
+  assert.match(sidepanelSource, /syncProfileModelSelection/);
+  assert.match(sidepanelSource, /const rosterPin = resolveProfileSessionModel/);
   assert.match(sidepanelSource, /timeoutMs: 3_000/);
+});
+
+test('settings profile switches reload that profile catalog and pin its live default model', () => {
+  const applyBody = sidepanelSource.match(/async function applySelectedProfile\([\s\S]*?(?=\n\/\/ ── Active Cron Jobs)/)?.[0] || '';
+  assert.match(applyBody, /syncProfileModelSelection/);
+  assert.match(sidepanelSource, /async function syncProfileModelSelection/);
+  assert.match(sidepanelSource, /loadModels\(\{ quiet: true, refresh: true \}\)/);
+  assert.match(sidepanelSource, /resolveProfileSessionModel/);
+  assert.match(sidepanelSource, /\/api\/model\/options\?profile=/);
 });
 
 test('Bot Mode preserves the first regular profile and isolates generic session controls', () => {

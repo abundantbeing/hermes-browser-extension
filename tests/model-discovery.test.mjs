@@ -14,6 +14,8 @@ import {
   MODEL_CATALOG_SHARED_CACHE_PROFILE,
   globalModelCatalogCacheKey,
   unionCachedModelCatalogs,
+  profileDefaultModelFromOptions,
+  resolveProfileSessionModel,
 } from '../extension/lib/model-discovery.mjs';
 
 test('the shared catalog cache key is profile-independent and distinct from every profile key', () => {
@@ -307,4 +309,29 @@ test('canonical catalog does not overlay authenticated direct providers', async 
   assert.ok(ids.includes('deepseek::deepseek-v4-pro'));
   assert.ok(!ids.includes('deepseek::deepseek-chat-fake'));
   assert.equal(result.models.filter((model) => model.provider === 'deepseek').length, 1);
+});
+
+test('resolveProfileSessionModel prefers the live /api/model/options default over a stale roster row', () => {
+  assert.deepEqual(profileDefaultModelFromOptions({ model: 'deepseek-v4', provider: 'nous' }), {
+    model: 'deepseek-v4',
+    provider: 'nous',
+  });
+  assert.equal(profileDefaultModelFromOptions({ model: '', provider: 'nous' }), null);
+  assert.deepEqual(
+    resolveProfileSessionModel({
+      rosterModel: 'z-ai/glm-5.3-flash',
+      rosterProvider: 'nous',
+      optionsPayload: { model: 'grok-4.6', provider: 'xai' },
+    }),
+    { model: 'grok-4.6', provider: 'xai' },
+  );
+  assert.deepEqual(
+    resolveProfileSessionModel({
+      rosterModel: 'z-ai/glm-5.3-flash',
+      rosterProvider: 'nous',
+      optionsPayload: { model: '', provider: '' },
+    }),
+    { model: 'z-ai/glm-5.3-flash', provider: 'nous' },
+  );
+  assert.equal(resolveProfileSessionModel({ rosterModel: '', optionsPayload: {} }), null);
 });

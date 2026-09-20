@@ -91,6 +91,7 @@ import {
   resolveCatalogModelIdForBinding,
   skillSuggestionsForInput,
   restSkillsFallbackAllowed,
+  shouldRecoverSkillsFromDashboard,
   updateBrowserModelScope,
   updateBrowserModelOptionScope,
   updateReviewState,
@@ -345,7 +346,7 @@ import {
   normalizeCachedModelCatalog,
   normalizeExternalModelSourceList,
   selectModelCatalogFallback,
-  profileDefaultModelFromOptions,
+  resolveProfileSessionModel,
   shouldEnrichCanonicalProviderCatalog,
   shouldTrySessionModelFallback,
   unionCachedModelCatalogs,
@@ -7958,6 +7959,83 @@ function refreshModelCatalogInBackground() {
   return modelCatalogSyncPromise;
 }
 
+const profileModelSync = { name: '', promise: null, token: 0 };
+
+function profileModelRosterRow(profileName = '') {
+  const name = String(profileName || '').trim();
+  if (!name) return null;
+  return botModeRoster.find((entry) => entry?.profileName === name)
+    || availableProfiles.find((profile) => profile?.name === name)
+    || null;
+}
+
+function pinProfileDefaultModel(pinnedModel, { persist = true } = {}) {
+  if (!pinnedModel?.model) return;
+  const matched = availableModels.find((model) => (
+    (model.rawModelId === pinnedModel.model || model.id === pinnedModel.model)
+    && (!pinnedModel.provider || model.provider === pinnedModel.provider)
+  )) || {
+    id: pinnedModel.model,
+    rawModelId: pinnedModel.model,
+    provider: pinnedModel.provider || '',
+    name: pinnedModel.model,
+  };
+  settings = {
+    ...settings,
+    model: matched.id,
+    provider: matched.provider || pinnedModel.provider || settings.provider,
+    extensionPreferredModel: null,
+  };
+  renderModelOptions(availableModels);
+  renderModelRuntimeOptions();
+  updateModelButtonMeta();
+  if (persist) void browserApi.storage.local.set({ hermesBrowserSettings: settings });
+}
+
+async function syncProfileModelSelection(profileName = '', { row = null } = {}) {
+  const name = String(profileName || '').trim();
+  if (!name) return { ok: true, skipped: true };
+  if (profileModelSync.promise && profileModelSync.name === name) return profileModelSync.promise;
+  const token = ++profileModelSync.token;
+  profileModelSync.name = name;
+  profileModelSync.promise = (async () => {
+    const rosterRow = row || profileModelRosterRow(name);
+    const rosterPin = resolveProfileSessionModel({
+      rosterModel: rosterRow?.model || '',
+      rosterProvider: rosterRow?.provider || '',
+    });
+    if (rosterPin) pinProfileDefaultModel(rosterPin, { persist: false });
+
+    const modelSync = await loadModels({ quiet: true, refresh: true });
+    if (token !== profileModelSync.token) return { ok: false, stale: true };
+
+    let optionsPayload = null;
+    if (desktopDashboardUrl) {
+      try {
+        const optionsResponse = await dashboardApiRequest(`/api/model/options?profile=${encodeURIComponent(name)}`, { timeoutMs: 3_000 });
+        optionsPayload = await optionsResponse.json();
+      } catch {
+        optionsPayload = null;
+      }
+    }
+    if (token !== profileModelSync.token) return { ok: false, stale: true };
+
+    const pin = resolveProfileSessionModel({
+      rosterModel: rosterRow?.model || '',
+      rosterProvider: rosterRow?.provider || '',
+      optionsPayload,
+    });
+    if (pin) pinProfileDefaultModel(pin, { persist: true });
+    return modelSync || { ok: Boolean(pin) };
+  })().finally(() => {
+    if (profileModelSync.token === token) {
+      profileModelSync.promise = null;
+      profileModelSync.name = '';
+    }
+  });
+  return profileModelSync.promise;
+}
+
 async function loadModels({ quiet = false, payload = null, refresh = false, startup = false } = {}) {
   const previousSelectedModel = settings.model;
   const previousAvailableModels = availableModels;
@@ -8209,48 +8287,70 @@ async function refreshModelsFromMenu() {
 }
 
 async function loadSkills({ quiet = false } = {}) {
-  if (usesDashboardWsChatTransport()) {
-    const connection = isRemoteWsMode()
-      ? remoteWsConnection
-      : (profileWsConnection?.client?.readyState === 1 ? profileWsConnection : activeDashboardWsConnection);
-    if (connection?.client?.readyState === 1) {
-      try {
-        const profile = safeActiveProfile() || 'default';
-        const payload = await connection.client.request(WS_METHODS.profilesDescribe, { name: profile });
-        availableSkills = normalizeHermesSkills({ data: payload?.skills || [] });
-        renderSkillSuggestions();
-        if (!quiet) setStatus('ok', 'Hermes skills synced', `${availableSkills.length} /skill commands available`);
-        return { ok: true, count: availableSkills.length, source: 'dashboard-ws' };
-      } catch (error) {
-        if (!settings.apiKey || !restSkillsFallbackAllowed({ profileName: safeActiveProfile() || 'default' })) {
-          availableSkills = [];
-          renderSkillSuggestions();
-          if (!quiet) setStatus('warn', 'Skill sync failed', error?.message || String(error), { translateDetail: false });
-          return { ok: false, count: 0, error: error?.message || String(error) };
-        }
-      }
-    }
-  }
-  if (!settings.apiKey || !restSkillsFallbackAllowed({ profileName: safeActiveProfile() || 'default' })) {
-    availableSkills = [];
-    renderSkillSuggestions();
-    return { ok: false, count: 0, error: 'Connect to Hermes before refreshing skills.' };
-  }
-  try {
-    const response = await apiFetch('/v1/skills', {
-      method: 'GET',
-      signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(2_000) : undefined,
-    });
-    const payload = await readJsonResponse(response);
-    if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Skills list failed (${response.status})`);
+  const profile = safeActiveProfile() || 'default';
+  const applyDashboardSkills = (payload, source = 'dashboard-ws') => {
     availableSkills = normalizeHermesSkills(payload);
     renderSkillSuggestions();
     if (!quiet) setStatus('ok', 'Hermes skills synced', `${availableSkills.length} /skill commands available`);
-  } catch (error) {
+    return { ok: true, count: availableSkills.length, source };
+  };
+  const failSkills = (error) => {
     availableSkills = [];
     renderSkillSuggestions();
     if (!quiet) setStatus('warn', 'Skill sync failed', error?.message || String(error), { translateDetail: false });
     return { ok: false, count: 0, error: error?.message || String(error) };
+  };
+  const describeFromConnection = async (connection) => {
+    if (connection?.client?.readyState !== 1) return null;
+    const payload = await connection.client.request(WS_METHODS.profilesDescribe, { name: profile });
+    return applyDashboardSkills(payload);
+  };
+
+  const readyConnection = isRemoteWsMode()
+    ? remoteWsConnection
+    : (profileWsConnection?.client?.readyState === 1 ? profileWsConnection : activeDashboardWsConnection);
+  try {
+    const ready = await describeFromConnection(readyConnection);
+    if (ready) return ready;
+  } catch {
+    // Ready-socket describe failed; REST and dashboard recovery still run.
+  }
+
+  let restOutcome = 'skipped';
+  if (settings.apiKey && restSkillsFallbackAllowed({ profileName: profile })) {
+    try {
+      const response = await apiFetch('/v1/skills', {
+        method: 'GET',
+        signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(2_000) : undefined,
+      });
+      const payload = await readJsonResponse(response);
+      if (!response.ok) throw new Error(payload?.error?.message || payload?.error || `Skills list failed (${response.status})`);
+      const skills = normalizeHermesSkills(payload);
+      if (skills.length) {
+        availableSkills = skills;
+        renderSkillSuggestions();
+        if (!quiet) setStatus('ok', 'Hermes skills synced', `${availableSkills.length} /skill commands available`);
+        return { ok: true, count: availableSkills.length, source: 'rest' };
+      }
+      restOutcome = 'empty';
+    } catch {
+      restOutcome = 'error';
+    }
+  }
+
+  if (!shouldRecoverSkillsFromDashboard({ restOutcome })) {
+    return { ok: true, count: availableSkills.length, source: 'rest' };
+  }
+
+  try {
+    const connection = isRemoteWsMode()
+      ? await ensureRemoteWsClient()
+      : await ensureProfileWsConnection({ readyTimeoutMs: 8_000, allowDashboardTrust: !quiet });
+    const recovered = await describeFromConnection(connection);
+    if (recovered) return recovered;
+    return failSkills(new Error('Skill catalog unavailable.'));
+  } catch (error) {
+    return failSkills(error);
   }
 }
 
@@ -8715,6 +8815,7 @@ async function ensureDesktopDashboardUrl({ timeoutMs = 8_000 } = {}) {
     desktopDashboardUrl = url;
     void writeCachedRosterUrl(url);
     void loadProfiles({ quiet: true, allowDashboardTrust: true });
+    void loadSkills({ quiet: true });
   });
   return desktopDashboardUrl || '';
 }
@@ -10251,8 +10352,8 @@ async function applySelectedProfile(profileName = '', { quiet = false, viaBotMod
       { translateDetail: false },
     );
   }
-  void refreshModelCatalogInBackground().then((modelSync) => {
-    if (!modelSync?.ok && !quiet && !viaBotMode) {
+  void syncProfileModelSelection(profileName).then((modelSync) => {
+    if (!modelSync?.ok && !modelSync?.stale && !quiet && !viaBotMode) {
       // The switch itself succeeded — messaging on the new profile is already
       // wired. Only the model metadata sync degraded; say so without implying
       // the agent switch failed.
@@ -10519,34 +10620,7 @@ async function openBotProfile(row) {
   // returns what `hermes <profile>` runs (verified against the live gateway:
   // default→gemini-3.7-flash-high, namine→z-ai/glm-5.3-flash, riku→deepseek-v4).
   // Falls back to the roster row's model when the dashboard route is offline.
-  let pinnedModel = row.model ? { model: row.model, provider: row.provider || '' } : null;
-  if (!pinnedModel && desktopDashboardUrl) {
-    try {
-      const optionsPayload = await dashboardApiRequest(`/api/model/options?profile=${encodeURIComponent(row.profileName)}`, { timeoutMs: 3_000 });
-      pinnedModel = profileDefaultModelFromOptions(await optionsPayload.json());
-    } catch {
-      pinnedModel = null;
-    }
-  }
-  if (pinnedModel) {
-    const matched = availableModels.find((m) => (
-      (m.rawModelId === pinnedModel.model || m.id === pinnedModel.model)
-      && (!pinnedModel.provider || m.provider === pinnedModel.provider)
-    ))
-      || { id: pinnedModel.model, rawModelId: pinnedModel.model, provider: pinnedModel.provider || '', name: pinnedModel.model };
-    settings = {
-      ...settings,
-      model: matched.id,
-      provider: matched.provider || pinnedModel.provider || settings.provider,
-      // Clear the old session's model binding so the new Bot Chat session
-      // adopts the profile default, and the model menu stays user-changeable
-      // for the rest of the session (per-session override, not a lock).
-      extensionPreferredModel: null,
-    };
-    renderModelOptions(availableModels);
-    renderModelRuntimeOptions();
-    updateModelButtonMeta();
-  }
+  await syncProfileModelSelection(row.profileName, { row });
 
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
 

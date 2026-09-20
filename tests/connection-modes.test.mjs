@@ -289,6 +289,17 @@ test('loadSkills uses the profile dashboard socket and never REST-falls-back ont
   assert.match(sidepanelSource, /restSkillsFallbackAllowed/);
 });
 
+test('loadSkills recovers dashboard skills when the REST catalog fails', () => {
+  const loadBody = sidepanelSource.match(/async function loadSkills\([\s\S]*?\nfunction replaceActiveSkillToken/)?.[0] || '';
+  assert.match(loadBody, /ensureProfileWsConnection/);
+  assert.match(loadBody, /shouldRecoverSkillsFromDashboard/);
+  assert.match(loadBody, /WS_METHODS\.profilesDescribe/);
+  assert.match(
+    sidepanelSource,
+    /void loadProfiles\(\{ quiet: true, allowDashboardTrust: true \}\);\s*void loadSkills\(\{ quiet: true \}\);/s,
+  );
+});
+
 test('isGatewayAuthRejection classifies pairing and HTTP auth failures', () => {
   assert.equal(isGatewayAuthRejection('Controller registration failed (HTTP 401).'), true);
   assert.equal(isGatewayAuthRejection('Network unreachable.'), false);

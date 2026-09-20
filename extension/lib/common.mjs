@@ -2508,6 +2508,10 @@ export function restSkillsFallbackAllowed({ profileName = '', dashboardReady = f
   return true;
 }
 
+export function shouldRecoverSkillsFromDashboard({ restOutcome = 'skipped' } = {}) {
+  return String(restOutcome || 'skipped') !== 'ok';
+}
+
 export function normalizeHermesSkills(payload = {}) {
   const rawSkills = Array.isArray(payload)
     ? payload

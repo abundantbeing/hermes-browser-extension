@@ -26,7 +26,7 @@ This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/
 ### New in v0.3.2: Hermes Bot Mode, Multi-Agent Threads and Intelligent Tab Scoping
 
 v0.3.2 introduces **Hermes Bot Mode**, bringing your full Hermes multi-agent roster directly into the browser side panel:
-- **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles with lazy model hydration and Desktop dashboard discovery from known candidates, cached URLs, and open dashboard tabs.
+- **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles. Switching an agent reloads that profile's model catalog and starts on its live default model (`/api/model/options?profile=`), and Desktop dashboard discovery uses known candidates, cached URLs, and open dashboard tabs.
 - **Desktop Names, Avatars, and Last Activity**: Bot Mode uses authenticated Desktop `profiles.list` metadata for display names, avatars, last-activity stamps, and existing Bot Chat identity instead of internal profile ids or public health-name lists.
 - **Existing Bot Chat Resume**: Opening a bot resumes that profile's existing hidden Bot Chat. Lookup failures stay fail-closed so the extension does not mint a duplicate chat.
 - **Group Chats & Collaborative Threads**: Synced multi-agent room projections, room-level thread tracking, and synchronized conversation histories without blank chat states.
@@ -314,7 +314,8 @@ After a Local or Remote API connection, the side panel loads from the connected 
 
 - `/v1/models` — all providers/models Hermes can enumerate, including provider-qualified IDs.
 - `/api/sessions` — recent Hermes sessions grouped by source.
-- `/v1/skills` — slash-command skill suggestions in the composer.
+- `/v1/skills` — slash-command skill suggestions in the composer. If that route is empty or unavailable, Local connections recover the catalog from the dashboard profile snapshot (`profiles.describe`). Named profiles never inherit the default catalog; switching profiles refreshes that profile's own skills.
+- `/api/model/options` — provider/model catalog, including the live default for the active profile. Switching profiles in Settings or Bot Mode reloads this catalog and pins that profile's default model.
 - `/v1/profiles` — profile picker when the gateway exposes profile metadata.
 - `/v1/capabilities` — feature flags such as audio transcription and Browser upload support.
 
