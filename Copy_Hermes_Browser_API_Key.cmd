@@ -1,6 +1,16 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-set "ENVFILE=%USERPROFILE%\.hermes\.env"
+rem Hermes supports relocating its data dir (and named profiles) via HERMES_HOME.
+rem On native Windows the default lives under %LOCALAPPDATA%\hermes; ~/.hermes is
+rem the Linux/WSL layout, kept here as a fallback for older installs.
+if defined HERMES_HOME (
+  set "HERMESHOME=%HERMES_HOME%"
+) else if exist "%LOCALAPPDATA%\hermes\.env" (
+  set "HERMESHOME=%LOCALAPPDATA%\hermes"
+) else (
+  set "HERMESHOME=%USERPROFILE%\.hermes"
+)
+set "ENVFILE=!HERMESHOME!\.env"
 
 if not exist "%ENVFILE%" (
   echo Could not find %ENVFILE%

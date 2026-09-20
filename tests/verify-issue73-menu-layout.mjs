@@ -9,6 +9,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
+import { hermesHomePath } from '../scripts/hermes-home.mjs';
+
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const PROFILE = path.join(ROOT, 'tmp', `verify-issue73-${process.pid}`);
@@ -112,11 +114,11 @@ async function saveScreenshot(client, filePath) {
 }
 
 function readGatewayConfig() {
-  const envPath = path.join(process.env.USERPROFILE || '', '.hermes', '.env');
+  const envPath = hermesHomePath('.env');
   const key = readFileSync(envPath, 'utf8').split(/\r?\n/)
     .find((line) => line.startsWith('API_SERVER_KEY='))?.split('=').slice(1).join('=')
     .replace(/^["']|["']$/g, '') || '';
-  assert.ok(key, 'API_SERVER_KEY not found in ~/.hermes/.env');
+  assert.ok(key, `API_SERVER_KEY not found in ${envPath}`);
   return { gatewayUrl: 'http://127.0.0.1:8642', apiKey: key };
 }
 

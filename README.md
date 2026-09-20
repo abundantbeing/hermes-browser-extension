@@ -215,7 +215,7 @@ Existing installations migrate automatically: prior `local-api` settings become 
 
 ### Local API server
 
-Local-only is the safest default. Put this in `~/.hermes/.env` on the machine running Hermes:
+Local-only is the safest default. Put this in your Hermes `.env` on the machine running Hermes — `%LOCALAPPDATA%\hermes\.env` on native Windows, `~/.hermes/.env` on Linux/macOS/WSL, or `$HERMES_HOME/.env` if you relocated the data dir or use a named profile:
 
 ```bash
 API_SERVER_ENABLED=true
