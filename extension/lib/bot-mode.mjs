@@ -75,15 +75,18 @@ function metadataForProfile(profile) {
   const botMeta = asObject(uiMeta['hermes-bots']);
   const revisions = asObject(profile.ui_meta_revisions);
   const image = typeof botMeta.image === 'string' ? botMeta.image.trim() : '';
-  return {
-    title: clean(botMeta.title || profile.title),
-    // Desktop persists image as a data URL; keep the HBE avatar envelope that
-    // the renderers already consume while accepting the canonical field.
-    avatar: image
-      ? { image }
-      : botMeta.avatar && typeof botMeta.avatar === 'object' ? botMeta.avatar : null,
-    revision: Math.max(0, Math.floor(finiteNumber(revisions['hermes-bots'], 0))),
-  };
+    return {
+      title: clean(botMeta.title || profile.title),
+      // Desktop persists image as a data URL; keep the HBE avatar envelope that
+      // the renderers already consume while accepting the canonical field.
+      avatar: image
+        ? { image }
+        : botMeta.avatar && typeof botMeta.avatar === 'object' ? botMeta.avatar : null,
+      // Classic shape selections the desktop picker writes (shape + color).
+      shape: clean(botMeta.shape),
+      color: clean(botMeta.color),
+      revision: Math.max(0, Math.floor(finiteNumber(revisions['hermes-bots'], 0))),
+    };
 }
 
 export function botModeRouteKey({ connectionId = '', gatewayUrl = '', transport = '', profile = '' } = {}) {
@@ -173,8 +176,10 @@ export function normalizeBotProfileList(payload = {}, {
       model: clean(profile.model),
       skillCount: Math.max(0, Math.floor(finiteNumber(profile.skill_count ?? profile.skillCount, 0))),
       hasAvatar: profile.has_avatar === true,
-      avatar: meta.avatar,
-      metadataRevision: meta.revision,
+            avatar: meta.avatar,
+            shape: meta.shape,
+            color: meta.color,
+            metadataRevision: meta.revision,
       canonical,
       preview: previewText,
       lastActive,

@@ -18,6 +18,7 @@ import {
   skillSuggestionsForInput,
   restSkillsFallbackAllowed,
   shouldRecoverSkillsFromDashboard,
+  interceptChatLinkClick,
 } from './lib/common.mjs';
 import { renderMarkdownSafe } from './lib/sanitizer.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
@@ -5636,6 +5637,9 @@ function updateScrim() {
   els.drawerScrim.hidden = !visible;
 }
 
+els.messageList?.addEventListener('click', (event) => {
+  interceptChatLinkClick(event, { tabsApi: browserApi?.tabs, windowOpen: window.open.bind(window) });
+});
 els.messageList?.addEventListener('copy', (event) => {
   writeAssistantClipboardEvent(event, {
     selection: globalThis.getSelection?.(),

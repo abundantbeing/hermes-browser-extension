@@ -434,6 +434,7 @@ html[data-hermes-theme^="custom:"] [tabindex]:focus-visible {
 .web-message.user { align-self: flex-end; border-color: var(--hermes-blue); border-radius: 18px 18px 4px 18px; background: var(--hermes-blue); color: var(--hermes-white); }
 .web-message.user .web-message-role { display: none; }
 .web-message-content { min-width: 0; color: currentColor; font: calc(14px * var(--hermes-text-zoom, 1))/1.65 var(--hermes-font-ui); overflow-wrap: anywhere; }
+.web-message-content a { color: currentColor; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .web-message-content > :first-child { margin-top: 0; }
 .web-message-content > :last-child { margin-bottom: 0; }
 .web-message-content h1,

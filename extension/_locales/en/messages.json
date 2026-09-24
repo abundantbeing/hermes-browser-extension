@@ -116,7 +116,7 @@
     "description": "Runtime interface message appearance.font_cinzel"
   },
   "runtime_appearance_font_collapse": {
-    "message": "Collapse",
+    "message": "Hermes Legacy",
     "description": "Runtime interface message appearance.font_collapse"
   },
   "runtime_appearance_font_family": {
@@ -231,6 +231,10 @@
     "message": "Text zoom",
     "description": "Runtime interface message appearance.text_zoom"
   },
+  "runtime_appearance_theme_font_overlay": {
+    "message": "This theme is using its own font. Your saved font comes back when you leave it.",
+    "description": "Runtime interface message appearance.theme_font_overlay"
+  },
   "runtime_assist_options_heading": {
     "message": "Hermes Assist options",
     "description": "Runtime interface message assist.options_heading"
@@ -255,9 +259,21 @@
     "message": "Active now",
     "description": "Runtime interface message bot_mode.active_now"
   },
+  "runtime_bot_mode_advanced": {
+    "message": "Advanced",
+    "description": "Runtime interface message bot_mode.advanced"
+  },
+  "runtime_bot_mode_advanced_sections": {
+    "message": "Advanced sections",
+    "description": "Runtime interface message bot_mode.advanced_sections"
+  },
   "runtime_bot_mode_agents": {
     "message": "Bots",
     "description": "Runtime interface message bot_mode.agents"
+  },
+  "runtime_bot_mode_animate_avatars": {
+    "message": "Animate avatars",
+    "description": "Runtime interface message bot_mode.animate_avatars"
   },
   "runtime_bot_mode_avatar_preview": {
     "message": "Avatar preview",
@@ -267,6 +283,10 @@
     "message": "Official blobatar face",
     "description": "Runtime interface message bot_mode.blobatar_title"
   },
+  "runtime_bot_mode_caps_gate_hint": {
+    "message": "Name the bot first. Capabilities save with the bot.",
+    "description": "Runtime interface message bot_mode.caps_gate_hint"
+  },
   "runtime_bot_mode_chat_empty": {
     "message": "Say something to get started.",
     "description": "Runtime interface message bot_mode.chat_empty"
@@ -275,13 +295,33 @@
     "message": "Clear avatar",
     "description": "Runtime interface message bot_mode.clear_avatar"
   },
+  "runtime_bot_mode_clone_from_profile": {
+    "message": "Clone from profile",
+    "description": "Runtime interface message bot_mode.clone_from_profile"
+  },
+  "runtime_bot_mode_clone_hint": {
+    "message": "Leave both on inherited to use the cloned profile. Pick a provider and model to pin this bot.",
+    "description": "Runtime interface message bot_mode.clone_hint"
+  },
   "runtime_bot_mode_close": {
     "message": "Close Bot Mode",
     "description": "Runtime interface message bot_mode.close"
   },
+  "runtime_bot_mode_color_picker_label": {
+    "message": "Shape color",
+    "description": "Runtime interface message bot_mode.color_picker_label"
+  },
   "runtime_bot_mode_connected_instance": {
     "message": "Current connected Hermes instance",
     "description": "Runtime interface message bot_mode.connected_instance"
+  },
+  "runtime_bot_mode_create_empty": {
+    "message": "Create empty (skip bundled skills)",
+    "description": "Runtime interface message bot_mode.create_empty"
+  },
+  "runtime_bot_mode_create_empty_hint": {
+    "message": "A fresh bot with no bundled skills copied in.",
+    "description": "Runtime interface message bot_mode.create_empty_hint"
   },
   "runtime_bot_mode_cron_copy": {
     "message": "Scheduled tasks running on this agent's profile (review-watch, scouts, digests).",
@@ -322,6 +362,34 @@
   "runtime_bot_mode_enable_label": {
     "message": "Enable Hermes Browser Bot Mode",
     "description": "Runtime interface message bot_mode.enable_label"
+  },
+  "runtime_bot_mode_face_blobatar": {
+    "message": "Blobatar",
+    "description": "Runtime interface message bot_mode.face_blobatar"
+  },
+  "runtime_bot_mode_face_classic_follows_name": {
+    "message": "Classic shape. Color follows the name.",
+    "description": "Runtime interface message bot_mode.face_classic_follows_name"
+  },
+  "runtime_bot_mode_face_classic_label": {
+    "message": "Classic shape",
+    "description": "Runtime interface message bot_mode.face_classic_label"
+  },
+  "runtime_bot_mode_face_classic_picked_color": {
+    "message": "Classic shape with a picked color.",
+    "description": "Runtime interface message bot_mode.face_classic_picked_color"
+  },
+  "runtime_bot_mode_face_classic_shapes": {
+    "message": "Classic shapes",
+    "description": "Runtime interface message bot_mode.face_classic_shapes"
+  },
+  "runtime_bot_mode_face_follows_name": {
+    "message": "Face follows the name.",
+    "description": "Runtime interface message bot_mode.face_follows_name"
+  },
+  "runtime_bot_mode_face_style": {
+    "message": "Face style",
+    "description": "Runtime interface message bot_mode.face_style"
   },
   "runtime_bot_mode_field_description": {
     "message": "Description",
@@ -423,6 +491,10 @@
     "message": "Main room",
     "description": "Runtime interface message bot_mode.main_thread"
   },
+  "runtime_bot_mode_match_the_name": {
+    "message": "Match the name",
+    "description": "Runtime interface message bot_mode.match_the_name"
+  },
   "runtime_bot_mode_mcp_servers": {
     "message": "MCP servers",
     "description": "Runtime interface message bot_mode.mcp_servers"
@@ -430,6 +502,22 @@
   "runtime_bot_mode_mcp_servers_hint": {
     "message": "Capability-gated MCP integrations for this connected runtime.",
     "description": "Runtime interface message bot_mode.mcp_servers_hint"
+  },
+  "runtime_bot_mode_model_switch_confirm": {
+    "message": "Switch anyway",
+    "description": "Runtime interface message bot_mode.model_switch_confirm"
+  },
+  "runtime_bot_mode_model_switch_detail": {
+    "message": "This session holds about {tokens} tokens of context. Switching now makes the next Hermes reply re-read all of it without a cache, so expect roughly that many extra input tokens once.",
+    "description": "Runtime interface message bot_mode.model_switch_detail"
+  },
+  "runtime_bot_mode_model_switch_kicker": {
+    "message": "MODEL SWITCH",
+    "description": "Runtime interface message bot_mode.model_switch_kicker"
+  },
+  "runtime_bot_mode_model_switch_title": {
+    "message": "Switch to {model}?",
+    "description": "Runtime interface message bot_mode.model_switch_title"
   },
   "runtime_bot_mode_new_agent": {
     "message": "New Bot",
@@ -462,6 +550,34 @@
   "runtime_bot_mode_pet_clear": {
     "message": "Clear",
     "description": "Runtime interface message bot_mode.pet_clear"
+  },
+  "runtime_bot_mode_pet_gallery_empty": {
+    "message": "No pets in the petdex gallery yet.",
+    "description": "Runtime interface message bot_mode.pet_gallery_empty"
+  },
+  "runtime_bot_mode_pet_gallery_failed": {
+    "message": "Hermes could not load the pet gallery. Stay connected and open this again.",
+    "description": "Runtime interface message bot_mode.pet_gallery_failed"
+  },
+  "runtime_bot_mode_pet_grid_label": {
+    "message": "Petdex pets",
+    "description": "Runtime interface message bot_mode.pet_grid_label"
+  },
+  "runtime_bot_mode_pet_loading_installed": {
+    "message": "Loading installed pets…",
+    "description": "Runtime interface message bot_mode.pet_loading_installed"
+  },
+  "runtime_bot_mode_pet_loading_rest": {
+    "message": "Loading the rest of the petdex…",
+    "description": "Runtime interface message bot_mode.pet_loading_rest"
+  },
+  "runtime_bot_mode_pet_no_match": {
+    "message": "No pets match this search.",
+    "description": "Runtime interface message bot_mode.pet_no_match"
+  },
+  "runtime_bot_mode_pet_none": {
+    "message": "None",
+    "description": "Runtime interface message bot_mode.pet_none"
   },
   "runtime_bot_mode_pet_picker_moved": {
     "message": "Profile pictures (petdex pets, custom images) are edited per agent in Bot Mode via Edit Profile.",
@@ -507,9 +623,17 @@
     "message": "Search bots",
     "description": "Runtime interface message bot_mode.search"
   },
+  "runtime_bot_mode_search_mcp": {
+    "message": "Search MCP servers",
+    "description": "Runtime interface message bot_mode.search_mcp"
+  },
   "runtime_bot_mode_search_skills": {
     "message": "Search skills",
     "description": "Runtime interface message bot_mode.search_skills"
+  },
+  "runtime_bot_mode_search_tools": {
+    "message": "Search tools",
+    "description": "Runtime interface message bot_mode.search_tools"
   },
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "Turn on the optional profile roster and canonical Bot Chat navigator for this browser.",
@@ -522,6 +646,14 @@
   "runtime_bot_mode_settings_title": {
     "message": "Bots & Bot Mode",
     "description": "Runtime interface message bot_mode.settings_title"
+  },
+  "runtime_bot_mode_share_keys": {
+    "message": "Share keys and accounts with the main profile",
+    "description": "Runtime interface message bot_mode.share_keys"
+  },
+  "runtime_bot_mode_share_keys_hint": {
+    "message": "Subscriptions, OAuth logins, and API keys stay shared, not copied. Uncheck for an isolated copy.",
+    "description": "Runtime interface message bot_mode.share_keys_hint"
   },
   "runtime_bot_mode_sheet_create_failed": {
     "message": "Hermes could not create the agent: {reason}",
@@ -579,6 +711,10 @@
     "message": "Profile editor sections",
     "description": "Runtime interface message bot_mode.sheet_tabs_label"
   },
+  "runtime_bot_mode_soul_auto_placeholder": {
+    "message": "Leave blank to auto-generate from the name, title, and description.",
+    "description": "Runtime interface message bot_mode.soul_auto_placeholder"
+  },
   "runtime_bot_mode_soul_hint": {
     "message": "The core personality and architectural directive for this agent.",
     "description": "Runtime interface message bot_mode.soul_hint"
@@ -587,9 +723,21 @@
     "message": "SOUL.md instruction",
     "description": "Runtime interface message bot_mode.soul_instruction"
   },
+  "runtime_bot_mode_soul_md": {
+    "message": "SOUL.md",
+    "description": "Runtime interface message bot_mode.soul_md"
+  },
+  "runtime_bot_mode_soul_optional_hint": {
+    "message": "Optional. Replaces the generated persona. Leave blank to build it from the name, title, and description.",
+    "description": "Runtime interface message bot_mode.soul_optional_hint"
+  },
   "runtime_bot_mode_soul_placeholder": {
     "message": "Enter custom SOUL prompt...",
     "description": "Runtime interface message bot_mode.soul_placeholder"
+  },
+  "runtime_bot_mode_switch_profile": {
+    "message": "Switch profile",
+    "description": "Runtime interface message bot_mode.switch_profile"
   },
   "runtime_bot_mode_syncing": {
     "message": "SYNCING BOT",
@@ -602,6 +750,10 @@
   "runtime_bot_mode_tab_avatar": {
     "message": "Avatar",
     "description": "Runtime interface message bot_mode.tab_avatar"
+  },
+  "runtime_bot_mode_tab_bot": {
+    "message": "Bot",
+    "description": "Runtime interface message bot_mode.tab_bot"
   },
   "runtime_bot_mode_tab_general": {
     "message": "General",

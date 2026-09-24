@@ -31,6 +31,8 @@ export default [
         URLSearchParams: 'readonly',
         DOMParser: 'readonly',
         MutationObserver: 'readonly',
+        IntersectionObserver: 'readonly',
+        IntersectionObserverEntry: 'readonly',
         AbortController: 'readonly',
         AbortSignal: 'readonly',
         TextEncoder: 'readonly',

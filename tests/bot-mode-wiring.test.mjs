@@ -215,12 +215,15 @@ test('the petdex picker moved out of Settings into the profile sheet', () => {
   assert.match(sidepanelSource, /from '\.\/lib\/pet-avatar\.mjs'/);
 });
 
-test('active-now chips render above the roster rows', () => {
-  assert.match(sidepanelHtml, /id="botModeActiveStrip"/);
-  assert.match(sidepanelHtml, /id="botModeActiveStrip"[^>]*hidden/s);
-  assert.match(sidepanelSource, /renderBotModeActiveStrip/);
+test('the roster carries no active-now chip strip', () => {
+  // Jon removed the mockup chip strip: the roster row already carries the
+  // presence dot, so a second activity surface above the rows is noise.
+  assert.doesNotMatch(sidepanelHtml, /botModeActiveStrip/);
+  assert.doesNotMatch(sidepanelSource, /renderBotModeActiveStrip/);
+  assert.doesNotMatch(sidepanelCss, /\.bot-mode-chip/);
+  assert.doesNotMatch(sidepanelCss, /bot-mode-active-strip/);
+  // The row-level presence dot stays.
   assert.match(sidepanelSource, /activity\.activeNow/);
-  assert.match(sidepanelCss, /\.bot-mode-chip/);
 });
 
 test('Bot Mode settings expose an Active Cron Jobs viewer card', () => {
@@ -429,4 +432,41 @@ test('opening a bot resumes the confirmed canonical Bot Chat and never forks on 
   assert.doesNotMatch(openBody, /creating local fallback/);
 });
 
+test('the petdex never hangs a tile or requires a profile name before staging', () => {
+  const iconBody = sidepanelSource.match(/async function petIconFor\([\s\S]*?\r?\n\}/)?.[0] || '';
+  assert.match(iconBody, /PET_THUMB_TIMEOUT_MS/);
+  assert.match(iconBody, /setTimeout/);
+  assert.match(iconBody, /petIconJobs\.delete\(key\)/);
+  const applyBody = sidepanelSource.match(/async function applyPetSelection\([\s\S]*?\r?\n\}/)?.[0] || '';
+  assert.doesNotMatch(applyBody, /if \(!profile/);
+  assert.match(applyBody, /petSelection\.slug/);
+  assert.match(applyBody, /syncPetPickerState\(\)/);
+});
 
+test('leaving a Bot Mode group chat clears the composer cluster sizing', () => {
+  const indicatorBody = sidepanelSource.match(/function renderActiveProfileIndicator\([\s\S]*?\r?\n\}/)?.[0] || '';
+  assert.match(indicatorBody, /classList\.remove\('group-roster'\)/);
+  assert.match(indicatorBody, /style\.maxWidth = ''/);
+  assert.match(indicatorBody, /style\.flexBasis = ''/);
+});
+
+test('the signature display face lifts section headlines back to optical size', async () => {
+  const appearanceSource = await read('extension/lib/appearance-preferences.mjs');
+  assert.match(appearanceSource, /--hermes-display-scale/);
+  assert.match(appearanceSource, /1\.3/);
+  assert.match(sidepanelCss, /var\(--hermes-display-scale, 1\)/);
+});
+
+test('pet thumbs paint the first screenful eagerly and top up on open', () => {
+  assert.match(sidepanelSource, /eager: index < 12/);
+  assert.match(sidepanelSource, /function primePetThumbs/);
+  assert.match(sidepanelSource, /primePetThumbs\(\)/);
+  assert.match(sidepanelSource, /root: null, rootMargin/);
+});
+
+test('the profile switch menu pins its mode header above the scrolling list', () => {
+  assert.match(sidepanelSource, /profile-switch-options/);
+  assert.match(sidepanelCss, /\.profile-switch-modes \{[\s\S]*?flex: 0 0 auto/);
+  assert.match(sidepanelCss, /\.profile-switch-options \{[\s\S]*?overflow-y: auto/);
+  assert.match(sidepanelCss, /\.profile-switch-menu \{[\s\S]*?overflow: hidden/);
+});

@@ -79,14 +79,13 @@
             </button>
           </div>
         </header>
-        <div class="bot-mode-search-row">
+                <div class="bot-mode-search-row">
           <input id="botModeSearch" type="search" data-i18n-placeholder="bot_mode.search" data-i18n-aria-label="bot_mode.search" placeholder="Search agents" aria-label="Search agents" autocomplete="off" />
           <div class="bot-mode-view-toggle" role="group" data-i18n-aria-label="bot_mode.view_toggle_label" aria-label="Roster view">
             <button id="botModeViewAgents" class="bot-mode-view-tab" type="button" aria-pressed="true" data-i18n="bot_mode.agents">Agents</button>
             <button id="botModeViewGroups" class="bot-mode-view-tab" type="button" aria-pressed="false" data-i18n="bot_mode.tab_groups">Group Chats</button>
           </div>
         </div>
-        <div id="botModeActiveStrip" class="bot-mode-active-strip" data-i18n-aria-label="bot_mode.active_now" aria-label="Active now" hidden></div>
         <div id="botModeRoster" class="bot-mode-roster" role="listbox" data-i18n-aria-label="bot_mode.roster_label" aria-label="Hermes agents"></div>
         <div id="botModeGroupList" class="bot-mode-roster bot-mode-group-list" role="listbox" data-i18n-aria-label="bot_mode.group_roster_label" aria-label="Hermes group chats" hidden></div>
         <footer class="bot-mode-foot">
@@ -110,59 +109,136 @@
           <button id="botModeSheetCloseButton" type="button" data-i18n-aria-label="bot_mode.close" aria-label="Close Bot Mode">&times;</button>
         </header>
         <nav class="bot-mode-sheet-tabs" id="botModeSheetTabs" data-i18n-aria-label="bot_mode.sheet_tabs_label" aria-label="Profile editor sections">
-          <button class="bot-mode-sheet-tab on" type="button" data-sheet-tab="avatar" data-i18n="bot_mode.tab_avatar">Avatar</button>
-          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="general" data-i18n="bot_mode.tab_general">General</button>
-          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="skills" data-i18n="bot_mode.tab_skills">Skills</button>
-          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="tools" data-i18n="bot_mode.tab_tools">Tools</button>
-          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="mcp" data-i18n="bot_mode.tab_mcp">MCP</button>
-          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="soul" data-i18n="bot_mode.tab_soul">SOUL</button>
-        </nav>
+                          <button class="bot-mode-sheet-tab on" type="button" data-sheet-tab="avatar" data-i18n="bot_mode.tab_bot">Bot</button>
+                          <button class="bot-mode-sheet-tab" type="button" data-sheet-tab="skills" data-i18n="bot_mode.tab_skills">Skills</button>
+                        </nav>
         <div class="bot-mode-sheet-body">
           <div class="bot-mode-sheet-pane" data-sheet-pane="avatar">
-            <div class="bot-mode-sheet-field">
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.avatar_preview">Avatar preview</span>
-              <span id="botModeSheetAvatarPreview" class="bot-mode-avatar bot-mode-avatar-sheet"></span>
-            </div>
-            <div class="bot-mode-sheet-field">
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.blobatar_title">Official blobatar face</span>
-              <div id="botModeSheetFaceGrid" class="bot-mode-face-grid" role="listbox" data-i18n-aria-label="bot_mode.blobatar_title" aria-label="Official blobatar face"></div>
-            </div>
-            <div class="bot-mode-sheet-field bot-mode-pet-picker">
-              <div class="bot-mode-pet-head">
-                <span data-i18n="bot_mode.pet_title">Pet avatar</span>
-                <button id="botModePetClear" class="secondary" type="button" hidden data-i18n="bot_mode.pet_clear">Clear</button>
-              </div>
-              <p class="hint" id="botModePetHint">Pick a petdex mascot as this agent's profile picture.</p>
-              <div class="bot-mode-pet-controls">
-                <input id="botModePetSearch" type="search" placeholder="Search pets" autocomplete="off" data-i18n-placeholder="bot_mode.pet_search" data-i18n-aria-label="bot_mode.pet_search" aria-label="Search pets" />
-                <button id="botModePetApply" class="secondary" type="button" disabled data-i18n="bot_mode.pet_apply">Apply to selected agent</button>
-              </div>
-              <div id="botModePetGrid" class="bot-mode-pet-grid" role="listbox" data-i18n-aria-label="bot_mode.pet_title" aria-label="Petdex pets"></div>
-            </div>
+            <div class="bot-mode-avatar-stage">
+                          <span class="bot-mode-sheet-label" data-i18n="bot_mode.avatar_preview">Avatar preview</span>
+                          <span id="botModeSheetAvatarPreview" class="bot-mode-avatar bot-mode-avatar-sheet"></span>
+                          <p class="hint" id="botModeSheetFaceHint" data-i18n-runtime>Face follows the name.</p>
+                                                    <div class="bot-mode-face-switch" role="group" data-i18n-aria-label="bot_mode.face_style" aria-label="Face style">
+                                                      <button id="botModeBlobFacesButton" class="on" type="button" aria-pressed="true" data-i18n="bot_mode.face_blobatar">Blobatar</button>
+                                                      <button id="botModeClassicShapesButton" type="button" aria-pressed="false" data-i18n="bot_mode.face_classic_shapes">Classic shapes</button>
+                                                    </div>
+                        </div>
+                        <div class="bot-mode-name-row">
+                          <label class="bot-mode-sheet-field" id="botModeSheetNameField" hidden>
+                            <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_name">Profile name</span>
+                            <input id="botModeSheetNameInput" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="bot_mode.field_name" data-i18n-aria-label="bot_mode.field_name" aria-label="Profile name" />
+                          </label>
+                          <label class="bot-mode-sheet-field">
+                            <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_title">Display title</span>
+                            <input id="botModeSheetTitleInput" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="bot_mode.field_title" data-i18n-aria-label="bot_mode.field_title" aria-label="Display title" />
+                          </label>
+                        </div>
+                                    <label class="bot-mode-sheet-field">
+                          <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_description">Description</span>
+                          <textarea id="botModeSheetDescriptionInput" rows="3" spellcheck="false" data-i18n-placeholder="bot_mode.field_description" data-i18n-aria-label="bot_mode.field_description" aria-label="Description"></textarea>
+                        </label>
+                        <div class="bot-mode-sheet-field">
+                          <span class="bot-mode-sheet-label" id="botModeSheetFaceLabel" data-i18n="bot_mode.blobatar_title">Official blobatar face</span>
+                          <div id="botModeSheetFaceGrid" class="bot-mode-face-grid" role="listbox" data-i18n-aria-label="bot_mode.blobatar_title" aria-label="Official blobatar face"></div>
+                          <div id="botModeClassicShapeGrid" class="bot-mode-face-grid" hidden></div>
+                                                    <div id="botModeClassicColorRow" class="bot-mode-color-row" hidden>
+                                                                                                          <div id="botModeClassicSwatches" class="bot-mode-swatches" role="group" data-i18n-aria-label="bot_mode.color_picker_label" aria-label="Shape color"></div>
+                                                                                                          <button id="botModeClassicNameColor" class="bot-mode-color-name" type="button" aria-pressed="true" data-i18n-aria-label="bot_mode.match_the_name" aria-label="Match the name">
+                                                                                                            <span class="bot-mode-color-name-glyph" aria-hidden="true"></span>
+                                                                                                            <span class="bot-mode-color-name-label" data-i18n="bot_mode.match_the_name">Match the name</span>
+                                                                                                          </button>
+                                                                                                        </div>
+                                                  </div>
+                        <details id="botModeCreateAdvanced" class="bot-mode-advanced">
+                                      <summary>
+                                                                              <span class="bot-mode-advanced-caret" aria-hidden="true"></span>
+                                                                              <span data-i18n="bot_mode.advanced">Advanced</span>
+                                                                            </summary>
+                                                                            <div class="bot-mode-advanced-panel">
+                                                                              <div class="bot-mode-face-switch" id="botModeAdvancedSwitch" role="group" data-i18n-aria-label="bot_mode.advanced_sections" aria-label="Advanced sections">
+                                                                                <button type="button" data-advanced-tab="general" class="on" aria-pressed="true" data-i18n="bot_mode.tab_general">General</button>
+                                                                                <button type="button" data-advanced-tab="capabilities" aria-pressed="false" data-i18n="ui.capabilities">Capabilities</button>
+                                                                              </div>
+                                        <div data-advanced-pane="general">
+                                          <label class="bot-mode-sheet-field" id="botModeCloneField" hidden>
+                                                                                      <span class="bot-mode-sheet-label" data-i18n="bot_mode.clone_from_profile">Clone from profile</span>
+                                                                                      <select id="botModeSheetCloneFrom" data-i18n-aria-label="bot_mode.clone_from_profile" aria-label="Clone from profile"></select>
+                                                                                    </label>
+                                          <div id="botModeModelFields" class="bot-mode-advanced-models" hidden>
+                                            <label class="bot-mode-sheet-field">
+                                                                                          <span class="bot-mode-sheet-label" data-i18n="ui.provider">Provider</span>
+                                                                                          <select id="botModeSheetProvider" data-i18n-aria-label="ui.provider" aria-label="Provider"></select>
+                                                                                        </label>
+                                                                                        <label class="bot-mode-sheet-field">
+                                                                                          <span class="bot-mode-sheet-label" data-i18n="ui.model.68c2cc7f">Model</span>
+                                                                                          <select id="botModeSheetModel" data-i18n-aria-label="ui.model.68c2cc7f" aria-label="Model"></select>
+                                                                                        </label>
+                                                                                        <p class="hint" data-i18n="bot_mode.clone_hint">Leave both on inherited to use the cloned profile. Pick a provider and model to pin this bot.</p>
+                                          </div>
+                                          <label class="bot-mode-sheet-field">
+                                                                                      <span class="bot-mode-sheet-label" data-i18n="bot_mode.soul_md">SOUL.md</span>
+                                                                                      <p class="hint" data-i18n="bot_mode.soul_optional_hint">Optional. Replaces the generated persona. Leave blank to build it from the name, title, and description.</p>
+                                                                                      <textarea id="botModeSheetSoulInput" rows="5" spellcheck="false" data-i18n-placeholder="bot_mode.soul_auto_placeholder" placeholder="Leave blank to auto-generate from the name, title, and description." data-i18n-aria-label="bot_mode.soul_md" aria-label="SOUL.md"></textarea>
+                                                                                    </label>
+                                          <div id="botModeCreateFlags" class="bot-mode-check-grid bot-mode-advanced-flags" hidden>
+                                                                                      <label class="bot-mode-check-item">
+                                                                                                                                                                              <input id="botModeSheetShareKeys" type="checkbox" checked />
+                                                                                                                                                                              <span data-i18n="bot_mode.share_keys">Share keys and accounts with the main profile</span>
+                                                                                                                                                                            </label>
+                                                                                                                                                                            <p class="hint" data-i18n="bot_mode.share_keys_hint">Subscriptions, OAuth logins, and API keys stay shared, not copied. Uncheck for an isolated copy.</p>
+                                                                                                                                                                            <label class="bot-mode-check-item">
+                                                                                                                                                                              <input id="botModeSheetNoSkills" type="checkbox" />
+                                                                                                                                                                              <span data-i18n="bot_mode.create_empty">Create empty (skip bundled skills)</span>
+                                                                                                                                                                            </label>
+                                                                                                                                                                            <p class="hint" data-i18n="bot_mode.create_empty_hint">A fresh bot with no bundled skills copied in.</p>
+                                                                                                                                </div>
+                                                                                                                              </div>
+                                                                                                                              <div data-advanced-pane="capabilities" hidden>
+                                          <p class="hint" id="botModeCapsGate" data-i18n="bot_mode.caps_gate_hint" hidden>Name the bot first. Capabilities save with the bot.</p>
+                                                                                    <div id="botModeCapsLists">
+                                                                                      <div class="bot-mode-sheet-field">
+                                                                                        <span class="bot-mode-sheet-label" data-i18n="bot_mode.toolsets">Toolsets</span>
+                                                                                        <div class="bot-mode-check-tools">
+                                                                                          <input id="botModeSheetToolsSearch" type="search" data-i18n-placeholder="bot_mode.search_tools" placeholder="Search tools" data-i18n-aria-label="bot_mode.search_tools" aria-label="Search tools" autocomplete="off" spellcheck="false">
+                                                                                          <span id="botModeSheetToolsCount" class="bot-mode-check-count"></span>
+                                                                                        </div>
+                                                                                        <div id="botModeSheetToolsList" class="bot-mode-check-grid"></div>
+                                                                                      </div>
+                                                                                      <div class="bot-mode-sheet-field">
+                                                                                        <span class="bot-mode-sheet-label" data-i18n="bot_mode.mcp_servers">MCP servers</span>
+                                                                                        <div class="bot-mode-check-tools">
+                                                                                          <input id="botModeSheetMcpSearch" type="search" data-i18n-placeholder="bot_mode.search_mcp" placeholder="Search MCP servers" data-i18n-aria-label="bot_mode.search_mcp" aria-label="Search MCP servers" autocomplete="off" spellcheck="false">
+                                                                                          <span id="botModeSheetMcpCount" class="bot-mode-check-count"></span>
+                                                                                        </div>
+                                                                                        <div id="botModeSheetMcpList" class="bot-mode-check-grid"></div>
+                                                                                      </div>
+                                                                                    </div>
+                                        </div>
+                                      </div>
+                                    </details>
+            <details class="bot-mode-pet-picker" id="botModePetPicker">
+                          <summary class="bot-mode-pet-summary">
+                            <span data-i18n="bot_mode.pet_title">Pet avatar</span>
+                                                        <span id="botModePetSummaryValue" data-i18n-runtime>None</span>
+                                                      </summary>
+                                                      <div class="bot-mode-pet-body">
+                                                        <input id="botModePetSearch" type="search" placeholder="Search pets" autocomplete="off" data-i18n-placeholder="bot_mode.pet_search" data-i18n-aria-label="bot_mode.pet_search" aria-label="Search pets" />
+                                                        <p class="hint" id="botModePetHint" data-i18n-runtime></p>
+                                                        <div id="botModePetGrid" class="bot-mode-pet-grid" role="listbox" data-i18n-aria-label="bot_mode.pet_grid_label" aria-label="Petdex pets"></div>
+                                                        <button id="botModePetApply" class="secondary" type="button" data-i18n="ui.apply" hidden>Apply</button>
+                                                        <button id="botModePetClear" class="bot-mode-action" type="button" data-i18n="bot_mode.pet_clear" hidden>Clear pet</button>
+                                                      </div>
+                        </details>
             <div class="bot-mode-sheet-field">
               <span class="bot-mode-sheet-label" data-i18n="bot_mode.custom_image">Custom image</span>
-              <label class="bot-mode-upload-card" for="botModeSheetImageInput">
-                <input id="botModeSheetImageInput" class="bot-mode-sheet-file" type="file" accept="image/*" data-i18n-aria-label="bot_mode.custom_image" aria-label="Custom image" />
-                <span class="bot-mode-upload-text" id="botModeSheetUploadText">Choose an image…</span>
-              </label>
+              <button id="botModeSheetImageButton" class="bot-mode-upload-card" type="button">
+                              <span class="bot-mode-upload-text" id="botModeSheetUploadText">Choose an image…</span>
+                            </button>
+                            <input id="botModeSheetImageInput" class="bot-mode-sheet-file" type="file" accept="image/*" tabindex="-1" aria-hidden="true" />
               <button id="botModeSheetAvatarClear" class="bot-mode-action" type="button" data-i18n="bot_mode.clear_avatar">Clear avatar</button>
             </div>
           </div>
-          <div class="bot-mode-sheet-pane" data-sheet-pane="general" hidden>
-            <label class="bot-mode-sheet-field" id="botModeSheetNameField" hidden>
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_name">Profile name</span>
-              <input id="botModeSheetNameInput" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="bot_mode.field_name" data-i18n-aria-label="bot_mode.field_name" aria-label="Profile name" />
-            </label>
-            <label class="bot-mode-sheet-field">
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_title">Display title</span>
-              <input id="botModeSheetTitleInput" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="bot_mode.field_title" data-i18n-aria-label="bot_mode.field_title" aria-label="Display title" />
-            </label>
-            <label class="bot-mode-sheet-field">
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.field_description">Description</span>
-              <textarea id="botModeSheetDescriptionInput" rows="4" spellcheck="false" data-i18n-placeholder="bot_mode.field_description" data-i18n-aria-label="bot_mode.field_description" aria-label="Description"></textarea>
-            </label>
-          </div>
-          <div class="bot-mode-sheet-pane" data-sheet-pane="skills" hidden>
+                    <div class="bot-mode-sheet-pane" data-sheet-pane="skills" hidden>
             <div class="bot-mode-sheet-field">
               <span class="bot-mode-sheet-label" data-i18n="bot_mode.installed_skills">Installed skills</span>
               <p class="hint" data-i18n="bot_mode.installed_skills_hint">Active skills configured on this agent profile.</p>
@@ -171,29 +247,8 @@
                 <span id="botModeSheetSkillsCount" class="bot-mode-check-count" aria-live="polite"></span>
               </div>
               <div id="botModeSheetSkillsList" class="bot-mode-check-grid"></div>
-            </div>
-          </div>
-          <div class="bot-mode-sheet-pane" data-sheet-pane="tools" hidden>
-            <div class="bot-mode-sheet-field">
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.toolsets">Toolsets</span>
-              <p class="hint" data-i18n="bot_mode.toolsets_hint">Enabled tool capabilities for this agent profile.</p>
-              <div id="botModeSheetToolsList" class="bot-mode-check-grid"></div>
-            </div>
-          </div>
-          <div class="bot-mode-sheet-pane" data-sheet-pane="mcp" hidden>
-            <div class="bot-mode-sheet-field">
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.mcp_servers">MCP servers</span>
-              <p class="hint" data-i18n="bot_mode.mcp_servers_hint">Capability-gated MCP integrations for this connected runtime.</p>
-              <div id="botModeSheetMcpList" class="bot-mode-check-grid"></div>
-            </div>
-          </div>
-          <div class="bot-mode-sheet-pane" data-sheet-pane="soul" hidden>
-            <label class="bot-mode-sheet-field">
-              <span class="bot-mode-sheet-label" data-i18n="bot_mode.soul_instruction">SOUL.md instruction</span>
-              <p class="hint" data-i18n="bot_mode.soul_hint">The core personality and architectural directive for this agent.</p>
-              <textarea id="botModeSheetSoulInput" rows="7" spellcheck="false" placeholder="Enter custom SOUL prompt..." data-i18n-placeholder="bot_mode.soul_placeholder" data-i18n-aria-label="bot_mode.soul_placeholder"></textarea>
-            </label>
-          </div>
+                          </div>
+                        </div>
         </div>
         <footer class="bot-mode-sheet-foot">
           <p id="botModeSheetWarning" class="bot-mode-sheet-warning" role="status" aria-live="polite" hidden></p>
@@ -489,6 +544,7 @@
             </button>
             <section id="quickMoreMenu" class="quick-more-menu" hidden role="menu" aria-label="Quick commands" data-i18n-aria-label="ui.quick.commands"></section>
             <section id="skillMenu" class="skill-menu" role="listbox" aria-label="Hermes skill suggestions" hidden data-i18n-aria-label="ui.hermes.skill.suggestions"></section>
+            <section id="profileSwitchMenu" class="profile-switch-menu" hidden role="menu" data-i18n-aria-label="bot_mode.switch_profile" aria-label="Switch profile"></section>
             <section id="attachMenu" class="attach-menu" role="dialog" aria-label="Attach context" hidden data-i18n-aria-label="ui.attach.context">
               <p class="attach-menu-heading" data-i18n="ui.attach">Attach</p>
               <button type="button" data-attach="files" data-i18n="ui.files">▧ Files...</button>
@@ -543,7 +599,7 @@
           </section>
           <div class="composer-actions">
             <button id="refreshButton" class="secondary icon-refresh" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-title="context.refresh_page" data-i18n-aria-label="context.refresh_page"><span class="refresh-glyph" aria-hidden="true">↻</span></button>
-            <span id="activeProfileIndicator" class="active-profile-indicator" title="Active profile" hidden></span>
+                        <button type="button" id="activeProfileIndicator" class="active-profile-indicator" data-i18n-title="bot_mode.switch_profile" title="Switch profile" hidden aria-haspopup="menu" aria-expanded="false"></button>
             <button id="botModeThreadsButton" class="secondary bot-mode-threads-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" data-i18n="bot_mode.threads" data-i18n-title="bot_mode.threads_title" data-i18n-aria-label="bot_mode.threads_title">Threads</button>
             <button id="botModeNewThreadButton" class="secondary bot-mode-new-thread-button" type="button" hidden data-i18n-runtime title="Start a new thread in this group" aria-label="Start a new thread in this group">+ New Thread</button>
             <button id="pageCommentTrayButton" class="secondary page-comment-tray-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="pageCommentTray" data-i18n="ui.page.comments">Comments</button>
@@ -663,6 +719,7 @@
             <span class="settings-switch" aria-hidden="true"></span>
           </label>
           <label class="bot-mode-density-row" for="botModeDisplayDensity"><span data-i18n="bot_mode.density">Roster density</span><select id="botModeDisplayDensity"><option value="comfortable" data-i18n="bot_mode.density_comfortable">Comfortable</option><option value="compact" data-i18n="bot_mode.density_compact">Compact</option></select></label>
+          <label class="bot-mode-density-row" for="botModeAnimateAvatars"><span data-i18n="bot_mode.animate_avatars">Animate avatars</span><select id="botModeAnimateAvatars"><option value="off">Off</option><option value="on">On</option></select></label>
           <p class="hint" data-i18n="bot_mode.pet_picker_moved">Profile pictures (petdex pets, custom images) are edited per agent in Bot Mode via Edit Profile.</p>
           <details class="bot-mode-cron-card" id="botModeCronCard">
             <summary class="bot-mode-cron-head">
@@ -1294,7 +1351,19 @@
       </div>
     </section>
 
-    <section id="webDeprecationDialog" class="profile-switch-dialog" role="dialog" aria-modal="true" aria-labelledby="webDeprecationTitle" aria-describedby="webDeprecationDetail" tabindex="-1" hidden>
+        <section id="modelSwitchDialog" class="profile-switch-dialog" role="dialog" aria-modal="true" aria-labelledby="modelSwitchTitle" aria-describedby="modelSwitchDetail" tabindex="-1" hidden>
+          <div class="profile-switch-card">
+            <span class="session-ownership-kicker" data-i18n="bot_mode.model_switch_kicker">MODEL SWITCH</span>
+                        <h2 id="modelSwitchTitle">Switch models?</h2>
+                        <p id="modelSwitchDetail"></p>
+                        <div class="profile-switch-actions">
+                          <button id="modelSwitchConfirmButton" class="primary" type="button" data-i18n="bot_mode.model_switch_confirm">Switch anyway</button>
+              <button id="modelSwitchCancelButton" class="ghost" type="button" data-i18n="ui.cancel">Cancel</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="webDeprecationDialog" class="profile-switch-dialog" role="dialog" aria-modal="true" aria-labelledby="webDeprecationTitle" aria-describedby="webDeprecationDetail" tabindex="-1" hidden>
       <div class="profile-switch-card">
         <span class="session-ownership-kicker" data-i18n="ui.hermes.web">Hermes Web</span>
         <h2 id="webDeprecationTitle" data-i18n="web.deprecation_title">A new surface is being worked on</h2>

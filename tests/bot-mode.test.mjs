@@ -102,6 +102,8 @@ test('Bot Mode normalizes a bounded verified roster without leaking profile path
       unread: 0,
       attention: false,
     },
+    color: '#d7d594',
+    shape: '',
   });
   assert.equal('path' in result.rows[0], false);
   assert.equal(result.rows[1].canonical.status, 'missing');

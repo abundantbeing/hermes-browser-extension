@@ -116,7 +116,7 @@
     "description": "Runtime interface message appearance.font_cinzel"
   },
   "runtime_appearance_font_collapse": {
-    "message": "Collapse",
+    "message": "Hermes Legacy",
     "description": "Runtime interface message appearance.font_collapse"
   },
   "runtime_appearance_font_family": {
@@ -231,6 +231,10 @@
     "message": "テキストのズーム",
     "description": "Runtime interface message appearance.text_zoom"
   },
+  "runtime_appearance_theme_font_overlay": {
+    "message": "This theme is using its own font. Your saved font comes back when you leave it.",
+    "description": "Runtime interface message appearance.theme_font_overlay"
+  },
   "runtime_assist_options_heading": {
     "message": "Hermes Assist オプション",
     "description": "Runtime interface message assist.options_heading"
@@ -255,9 +259,21 @@
     "message": "Active now",
     "description": "Runtime interface message bot_mode.active_now"
   },
+  "runtime_bot_mode_advanced": {
+    "message": "詳細設定",
+    "description": "Runtime interface message bot_mode.advanced"
+  },
+  "runtime_bot_mode_advanced_sections": {
+    "message": "詳細設定のセクション",
+    "description": "Runtime interface message bot_mode.advanced_sections"
+  },
   "runtime_bot_mode_agents": {
     "message": "エージェント",
     "description": "Runtime interface message bot_mode.agents"
+  },
+  "runtime_bot_mode_animate_avatars": {
+    "message": "アバターをアニメーション",
+    "description": "Runtime interface message bot_mode.animate_avatars"
   },
   "runtime_bot_mode_avatar_preview": {
     "message": "Avatar preview",
@@ -267,6 +283,10 @@
     "message": "Official blobatar face",
     "description": "Runtime interface message bot_mode.blobatar_title"
   },
+  "runtime_bot_mode_caps_gate_hint": {
+    "message": "先にボットに名前を付けます。機能はボットと一緒に保存されます。",
+    "description": "Runtime interface message bot_mode.caps_gate_hint"
+  },
   "runtime_bot_mode_chat_empty": {
     "message": "Say something to get started.",
     "description": "Runtime interface message bot_mode.chat_empty"
@@ -275,13 +295,33 @@
     "message": "Clear avatar",
     "description": "Runtime interface message bot_mode.clear_avatar"
   },
+  "runtime_bot_mode_clone_from_profile": {
+    "message": "プロフィールから複製",
+    "description": "Runtime interface message bot_mode.clone_from_profile"
+  },
+  "runtime_bot_mode_clone_hint": {
+    "message": "複製したプロフィールを使うには両方とも「継承」のままにします。このボットを固定するにはプロバイダーとモデルを選びます。",
+    "description": "Runtime interface message bot_mode.clone_hint"
+  },
   "runtime_bot_mode_close": {
     "message": "ボットモードを閉じる",
     "description": "Runtime interface message bot_mode.close"
   },
+  "runtime_bot_mode_color_picker_label": {
+    "message": "シェイプの色",
+    "description": "Runtime interface message bot_mode.color_picker_label"
+  },
   "runtime_bot_mode_connected_instance": {
     "message": "現在接続中の Hermes インスタンス",
     "description": "Runtime interface message bot_mode.connected_instance"
+  },
+  "runtime_bot_mode_create_empty": {
+    "message": "空で作成（同梱スキルをスキップ）",
+    "description": "Runtime interface message bot_mode.create_empty"
+  },
+  "runtime_bot_mode_create_empty_hint": {
+    "message": "同梱スキルを一切コピーしない新しいボット。",
+    "description": "Runtime interface message bot_mode.create_empty_hint"
   },
   "runtime_bot_mode_cron_copy": {
     "message": "このエージェントのプロファイルで実行される予定タスク(review-watch、scouts、digests)。",
@@ -322,6 +362,34 @@
   "runtime_bot_mode_enable_label": {
     "message": "Hermes Browser ボットモードを有効化",
     "description": "Runtime interface message bot_mode.enable_label"
+  },
+  "runtime_bot_mode_face_blobatar": {
+    "message": "ブロブ顔",
+    "description": "Runtime interface message bot_mode.face_blobatar"
+  },
+  "runtime_bot_mode_face_classic_follows_name": {
+    "message": "クラシックシェイプ。色は名前につられて変わります。",
+    "description": "Runtime interface message bot_mode.face_classic_follows_name"
+  },
+  "runtime_bot_mode_face_classic_label": {
+    "message": "クラシックシェイプ",
+    "description": "Runtime interface message bot_mode.face_classic_label"
+  },
+  "runtime_bot_mode_face_classic_picked_color": {
+    "message": "クラシックシェイプ（選択した色）。",
+    "description": "Runtime interface message bot_mode.face_classic_picked_color"
+  },
+  "runtime_bot_mode_face_classic_shapes": {
+    "message": "クラシックシェイプ",
+    "description": "Runtime interface message bot_mode.face_classic_shapes"
+  },
+  "runtime_bot_mode_face_follows_name": {
+    "message": "顔は名前につられて変わります。",
+    "description": "Runtime interface message bot_mode.face_follows_name"
+  },
+  "runtime_bot_mode_face_style": {
+    "message": "顔のスタイル",
+    "description": "Runtime interface message bot_mode.face_style"
   },
   "runtime_bot_mode_field_description": {
     "message": "Description",
@@ -423,6 +491,10 @@
     "message": "Main room",
     "description": "Runtime interface message bot_mode.main_thread"
   },
+  "runtime_bot_mode_match_the_name": {
+    "message": "名前に合わせる",
+    "description": "Runtime interface message bot_mode.match_the_name"
+  },
   "runtime_bot_mode_mcp_servers": {
     "message": "MCP servers",
     "description": "Runtime interface message bot_mode.mcp_servers"
@@ -430,6 +502,22 @@
   "runtime_bot_mode_mcp_servers_hint": {
     "message": "Capability-gated MCP integrations for this connected runtime.",
     "description": "Runtime interface message bot_mode.mcp_servers_hint"
+  },
+  "runtime_bot_mode_model_switch_confirm": {
+    "message": "それでも切り替える",
+    "description": "Runtime interface message bot_mode.model_switch_confirm"
+  },
+  "runtime_bot_mode_model_switch_detail": {
+    "message": "このセッションには約 {tokens} トークンのコンテキストがあります。今切り替えると、次の Hermes の返信はキャッシュなしで全文を読み直します。追加の入力トークンが一度だけおおよそその分かかります。",
+    "description": "Runtime interface message bot_mode.model_switch_detail"
+  },
+  "runtime_bot_mode_model_switch_kicker": {
+    "message": "モデル切り替え",
+    "description": "Runtime interface message bot_mode.model_switch_kicker"
+  },
+  "runtime_bot_mode_model_switch_title": {
+    "message": "{model} に切り替えますか？",
+    "description": "Runtime interface message bot_mode.model_switch_title"
   },
   "runtime_bot_mode_new_agent": {
     "message": "New Agent",
@@ -462,6 +550,34 @@
   "runtime_bot_mode_pet_clear": {
     "message": "クリア",
     "description": "Runtime interface message bot_mode.pet_clear"
+  },
+  "runtime_bot_mode_pet_gallery_empty": {
+    "message": "petdex ギャラリーにはまだペットがいません。",
+    "description": "Runtime interface message bot_mode.pet_gallery_empty"
+  },
+  "runtime_bot_mode_pet_gallery_failed": {
+    "message": "Hermes はペットギャラリーを読み込めませんでした。接続を保ち、もう一度開いてください。",
+    "description": "Runtime interface message bot_mode.pet_gallery_failed"
+  },
+  "runtime_bot_mode_pet_grid_label": {
+    "message": "petdex のペット",
+    "description": "Runtime interface message bot_mode.pet_grid_label"
+  },
+  "runtime_bot_mode_pet_loading_installed": {
+    "message": "インストール済みのペットを読み込み中…",
+    "description": "Runtime interface message bot_mode.pet_loading_installed"
+  },
+  "runtime_bot_mode_pet_loading_rest": {
+    "message": "petdex の残りを読み込み中…",
+    "description": "Runtime interface message bot_mode.pet_loading_rest"
+  },
+  "runtime_bot_mode_pet_no_match": {
+    "message": "この検索に一致するペットはありません。",
+    "description": "Runtime interface message bot_mode.pet_no_match"
+  },
+  "runtime_bot_mode_pet_none": {
+    "message": "なし",
+    "description": "Runtime interface message bot_mode.pet_none"
   },
   "runtime_bot_mode_pet_picker_moved": {
     "message": "Profile pictures (petdex pets, custom images) are edited per agent in Bot Mode via Edit Profile.",
@@ -507,9 +623,17 @@
     "message": "エージェントを検索",
     "description": "Runtime interface message bot_mode.search"
   },
+  "runtime_bot_mode_search_mcp": {
+    "message": "MCP サーバーを検索",
+    "description": "Runtime interface message bot_mode.search_mcp"
+  },
   "runtime_bot_mode_search_skills": {
     "message": "Search skills",
     "description": "Runtime interface message bot_mode.search_skills"
+  },
+  "runtime_bot_mode_search_tools": {
+    "message": "ツールを検索",
+    "description": "Runtime interface message bot_mode.search_tools"
   },
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "このブラウザーで、オプションのプロファイルリストと正規の Bot Chat ナビゲーションを有効にします。",
@@ -522,6 +646,14 @@
   "runtime_bot_mode_settings_title": {
     "message": "エージェントとボットモード",
     "description": "Runtime interface message bot_mode.settings_title"
+  },
+  "runtime_bot_mode_share_keys": {
+    "message": "キーとアカウントをメインプロフィールと共有",
+    "description": "Runtime interface message bot_mode.share_keys"
+  },
+  "runtime_bot_mode_share_keys_hint": {
+    "message": "サブスクリプション、OAuth ログイン、API キーはコピーされず共有されます。独立したコピーにするにはチェックを外します。",
+    "description": "Runtime interface message bot_mode.share_keys_hint"
   },
   "runtime_bot_mode_sheet_create_failed": {
     "message": "Hermes could not create the agent: {reason}",
@@ -579,6 +711,10 @@
     "message": "Profile editor sections",
     "description": "Runtime interface message bot_mode.sheet_tabs_label"
   },
+  "runtime_bot_mode_soul_auto_placeholder": {
+    "message": "名前・タイトル・説明から自動生成する場合は空欄のままにします。",
+    "description": "Runtime interface message bot_mode.soul_auto_placeholder"
+  },
   "runtime_bot_mode_soul_hint": {
     "message": "The core personality and architectural directive for this agent.",
     "description": "Runtime interface message bot_mode.soul_hint"
@@ -587,9 +723,21 @@
     "message": "SOUL.md instruction",
     "description": "Runtime interface message bot_mode.soul_instruction"
   },
+  "runtime_bot_mode_soul_md": {
+    "message": "SOUL.md",
+    "description": "Runtime interface message bot_mode.soul_md"
+  },
+  "runtime_bot_mode_soul_optional_hint": {
+    "message": "任意。生成されたペルソナを置き換えます。名前・タイトル・説明から作成する場合は空欄のままにします。",
+    "description": "Runtime interface message bot_mode.soul_optional_hint"
+  },
   "runtime_bot_mode_soul_placeholder": {
     "message": "Enter custom SOUL prompt...",
     "description": "Runtime interface message bot_mode.soul_placeholder"
+  },
+  "runtime_bot_mode_switch_profile": {
+    "message": "プロフィールを切り替え",
+    "description": "Runtime interface message bot_mode.switch_profile"
   },
   "runtime_bot_mode_syncing": {
     "message": "SYNCING BOT",
@@ -602,6 +750,10 @@
   "runtime_bot_mode_tab_avatar": {
     "message": "Avatar",
     "description": "Runtime interface message bot_mode.tab_avatar"
+  },
+  "runtime_bot_mode_tab_bot": {
+    "message": "ボット",
+    "description": "Runtime interface message bot_mode.tab_bot"
   },
   "runtime_bot_mode_tab_general": {
     "message": "General",

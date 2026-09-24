@@ -248,10 +248,16 @@ export function applyAppearancePreferences(root, preferences) {
     // tokens authoritative again.
     root.style.removeProperty('--hermes-font-ui');
     root.style.removeProperty('--hermes-font-display');
+    // Rules Gothic Compressed is a much narrower face than the UI families, so
+    // a headline printed in it reads smaller at the same px than the same
+    // headline in Georgia or Calibri. Scale the display headlines up for this
+    // profile only, so section titles keep reading as titles.
+    root.style.setProperty('--hermes-display-scale', '1.3');
   } else {
     const stack = fontStackForProfile(normalized.fontProfile, normalized.customFontFamily);
     root.style.setProperty('--hermes-font-ui', stack);
     root.style.setProperty('--hermes-font-display', stack);
+    root.style.removeProperty('--hermes-display-scale');
   }
   // --hermes-font-mono is intentionally never touched.
   return normalized;

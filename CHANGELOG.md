@@ -19,6 +19,8 @@
 - Fenced code blocks in chat get a hover copy-to-clipboard control, without overflowing the message card.
 - Telegram and Desktop session images hydrate from Hermes cache paths (`image_url:` / `@image:` / `MEDIA:`) through the dashboard `/api/media` route. Local videos render as a player when `/api/files/stream` can serve them, otherwise as an honest file card. Pixels that were never stored in Hermes (only in Telegram itself) cannot be invented.
 - Composer text and attachments restore after you close and reopen the side panel in the same browser session. Images are saved to disk when attached so the draft stores a path instead of a huge image blob.
+- Classic shapes pair a colour with the name. The classic face tiles offer the same twelve profile swatches the Desktop app uses, laid out six per row, plus a **Match the name** row that derives the colour from whatever you type. The tile, the avatar preview, the roster avatar, and the saved profile all read the same value, so a colour chosen on Desktop shows up here and a colour chosen here shows up there.
+- A model switch that would drop the prompt cache now asks first. Switching the session model while the transcript holds context opens the same kind of confirmation the Bot Mode exits use, with a kicker, a title naming the model, the context size it would re-read, and **Switch anyway** and **Cancel**. Cancel leaves the model untouched, and switching model for Hermes Assist still bypasses the prompt.
 
 ### Fixed
 
@@ -48,10 +50,17 @@
 - Dashboard discovery uses explicit URLs, cached URLs, open loopback tabs, sidecar candidate ports, and documented default ports. It no longer scans arbitrary ephemeral port ranges or treats gateway health names as a complete roster.
 - Disabled the broad loopback CORS header rewrite. Loopback GET discovery can still proxy through the service worker without rewriting every localhost response.
 - Fixed Local gateway Bot Mode profile discovery when Dashboard authentication replaces the token-bearing root page with sign-in HTML; public status now identifies the dashboard, while the existing explicitly trusted signed-in tab and one-use WebSocket ticket flow authenticates the usable profile roster (#99).
+- The profile switcher pins its two modes. **Browser chat** and **Bot chat** are a fixed header and only the agent rows scroll, so the way you switch modes can no longer scroll out of reach, and the popup shell itself never scrolls.
+- The pet avatar picker works end to end again. Thumbnails paint the first screenful immediately and fill in as you scroll instead of waiting on a lazy observer that never fired inside a closed picker, the gateway thumbnail call is capped at 12 seconds and a failed thumbnail is never cached, and a pet can be chosen for a brand-new agent before it has a name, exactly like a classic face. A thumbnail that cannot load resets the tile and says so instead of leaving a tile that looks picked while the avatar never changes.
+- Leaving a Bot Mode group chat no longer leaves the composer avatar in a wide empty box. The group cluster's leftover sizing is cleared when the panel returns to a regular session, so the avatar sits as one button again.
+- Settings headlines keep their weight with the Hermes signature face. Rules Gothic Compressed has a much smaller optical size than the other families, so the signature profile scales its display headlines up (both **Bots & Bot Mode** and **Browser updates**) to read as headlines at the same size the other fonts read at.
+- The model switch guard prints its title in one font instead of mixing the display face with a monospace segment.
+- Every runtime string the panel prints is i18n-owned in all 21 locale packs, including the pet picker's loading and empty states and the model switch guard, so no raw key and no hardcoded English can reach the panel.
 
 ### Changed
 
 - The old full-page workspace is retired. The side panel is the supported browser surface, and the old full-view button no longer opens that workspace.
+- The Bot Mode roster no longer stacks an active-now chip strip above the agent rows. Each row's own presence dot is the only activity signal, so a working agent is marked once instead of twice.
 
 ## [0.3.2] - 2026-09-05
 

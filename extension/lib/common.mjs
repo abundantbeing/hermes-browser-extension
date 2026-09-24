@@ -1903,6 +1903,68 @@ export function escapeHtml(value = '') {
     .replace(/'/g, '&#39;');
 }
 
+function splitBareUrlTrail(raw = '') {
+  let url = String(raw || '');
+  let trail = '';
+  while (url) {
+    const last = url.slice(-1);
+    if (!/[.,;:!?]/.test(last) && last !== ')') break;
+    if (last === ')') {
+      const opens = (url.match(/\(/g) || []).length;
+      const closes = (url.match(/\)/g) || []).length;
+      if (closes <= opens) break;
+    }
+    trail = last + trail;
+    url = url.slice(0, -1);
+  }
+  return { url, trail };
+}
+
+function autolinkBareUrls(html = '') {
+  return String(html || '').split(/(<a\b[^>]*>[\s\S]*?<\/a>)/gi).map((part) => {
+    if (part.startsWith('<a')) return part;
+    return part.replace(/https?:\/\/[^\s<>"']+/gi, (match) => {
+      const decoded = match
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      const { url, trail } = splitBareUrlTrail(decoded);
+      const safe = safeHref(url);
+      if (!safe) return match;
+      const visible = escapeHtml(url);
+      const escapedTrail = escapeHtml(trail);
+      return `<a href="${safe}" target="_blank" rel="noopener noreferrer">${visible}</a>${escapedTrail}`;
+    });
+  }).join('');
+}
+
+export async function openChatLinkInNewTab(url, { tabsApi, windowOpen } = {}) {
+  const raw = String(url || '').trim();
+  if (!safeHref(raw)) return false;
+  if (typeof tabsApi?.create === 'function') {
+    try {
+      await tabsApi.create({ url: raw, active: true });
+      return true;
+    } catch {
+      // Some Chromium forks reject tabs.create from a side panel.
+    }
+  }
+  if (typeof windowOpen === 'function') return Boolean(windowOpen(raw, '_blank', 'noopener,noreferrer'));
+  return false;
+}
+
+export function interceptChatLinkClick(event, openers = {}) {
+  const link = event?.target?.closest?.('a[href]');
+  if (!link?.closest?.('.message-content, .web-message-content')) return false;
+  const href = String(link.getAttribute('href') || '').trim();
+  if (!safeHref(href)) return false;
+  event.preventDefault();
+  void openChatLinkInNewTab(href, openers);
+  return true;
+}
+
 function safeHref(value = '') {
   try {
     const url = new URL(String(value || '').trim());
@@ -1957,9 +2019,10 @@ function renderInlineMarkdown(value = '') {
     let html = escapeHtml(withImageTokens);
     html = html.replace(/@@HERMES_IMAGE_(\d+)@@/g, (_match, index) => images[Number(index)] || '');
     html = html.replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, (_match, text, href) => {
-      const safe = safeHref(href);
-      return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
-    });
+          const safe = safeHref(href);
+          return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
+        });
+        html = autolinkBareUrls(html);
     html = html.replace(/\*\*([^*\n][\s\S]*?[^*\n])\*\*/g, '<strong>$1</strong>');
     html = html.replace(/__([^_\n][\s\S]*?[^_\n])__/g, '<strong>$1</strong>');
     html = html.replace(/~~([^~\n][\s\S]*?[^~\n])~~/g, '<del>$1</del>');

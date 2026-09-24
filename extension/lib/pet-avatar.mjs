@@ -23,7 +23,12 @@ export async function petFrameIcon(spriteUrl, fetchFn = globalThis.fetch?.bind(g
     const response = await fetchFn(spriteUrl, { signal: AbortSignal.timeout(15000) });
     if (!response.ok) return null;
     const blob = await response.blob();
-    const bitmap = await createImageBitmap(blob, 0, 0, PET_FRAME_W, PET_FRAME_H);
+        let bitmap;
+        try {
+          bitmap = await createImageBitmap(blob, 0, 0, PET_FRAME_W, PET_FRAME_H);
+        } catch {
+          bitmap = await createImageBitmap(blob);
+        }
     const canvas = document.createElement('canvas');
     canvas.width = PET_THUMB_EDGE;
     canvas.height = PET_THUMB_EDGE;
@@ -96,7 +101,7 @@ export async function writePetAvatar(profileName, entry, storageApi = globalThis
   const stored = await storageApi.get(PET_AVATAR_KEY);
   const map = stored?.[PET_AVATAR_KEY] || {};
   if (entry) {
-    map[profileName] = { slug: entry.slug, displayName: entry.displayName || entry.slug, icon: entry.icon, cachedAt: Date.now() };
+    map[profileName] = { slug: entry.slug, displayName: entry.displayName || entry.slug, icon: entry.icon, spritesheetUrl: entry.spritesheetUrl || '', cachedAt: Date.now() };
   } else {
     delete map[profileName];
   }

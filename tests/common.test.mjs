@@ -1747,6 +1747,16 @@ test('tool activity strip is wired as runtime UI instead of raw tool markdown', 
   assert.match(css, /\.tool-activity \*/);
 });
 
+test('renderMarkdown turns bare session URLs into new-tab links', () => {
+  const html = renderMarkdown('- https://openrouter.ai/provider/stealth\n- See https://example.com/docs.');
+  assert.match(html, /<a href="https:\/\/openrouter\.ai\/provider\/stealth" target="_blank" rel="noopener noreferrer">https:\/\/openrouter\.ai\/provider\/stealth<\/a>/);
+  assert.match(html, /<a href="https:\/\/example\.com\/docs" target="_blank" rel="noopener noreferrer">https:\/\/example\.com\/docs<\/a>\./);
+  assert.doesNotMatch(html, /href="https:\/\/example\.com\/docs\."/);
+  const linked = renderMarkdown('[Docs](https://hermes-agent.nousresearch.com/docs)');
+  assert.equal((linked.match(/<a /g) || []).length, 1);
+  assert.doesNotMatch(renderMarkdown('`https://example.com/secret`'), /<a /);
+});
+
 test('renderMarkdown produces safe rich text for headings, lists, tables, and links', () => {
   const html = renderMarkdown(`# Title\n\n**Quick read:**\n- One\n- [x] Two\n\n---\n\n| Name | Value |\n|---|---:|\n| MiniMax | 1M |\n\n[Docs](https://hermes-agent.nousresearch.com/docs) <script>alert(1)</script>`);
   assert.match(html, /<h1>Title<\/h1>/);
