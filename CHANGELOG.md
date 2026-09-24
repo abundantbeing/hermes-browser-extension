@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.3] - 2026-09-24
 
 ### Added
 
@@ -19,7 +19,7 @@
 - Fenced code blocks in chat get a hover copy-to-clipboard control, without overflowing the message card.
 - Telegram and Desktop session images hydrate from Hermes cache paths (`image_url:` / `@image:` / `MEDIA:`) through the dashboard `/api/media` route. Local videos render as a player when `/api/files/stream` can serve them, otherwise as an honest file card. Pixels that were never stored in Hermes (only in Telegram itself) cannot be invented.
 - Composer text and attachments restore after you close and reopen the side panel in the same browser session. Images are saved to disk when attached so the draft stores a path instead of a huge image blob.
-- Classic shapes pair a colour with the name. The classic face tiles offer the same twelve profile swatches the Desktop app uses, laid out six per row, plus a **Match the name** row that derives the colour from whatever you type. The tile, the avatar preview, the roster avatar, and the saved profile all read the same value, so a colour chosen on Desktop shows up here and a colour chosen here shows up there.
+- Classic shapes take a colour as well as a face. The classic tiles offer twelve profile swatches, six per row, plus a **Match the name** row that derives the colour from whatever you type. The tile, the avatar preview, the roster avatar, and the saved profile all read the same value, so the colour you pick is the colour you keep.
 - A model switch that would drop the prompt cache now asks first. Switching the session model while the transcript holds context opens the same kind of confirmation the Bot Mode exits use, with a kicker, a title naming the model, the context size it would re-read, and **Switch anyway** and **Cancel**. Cancel leaves the model untouched, and switching model for Hermes Assist still bypasses the prompt.
 
 ### Fixed
@@ -45,7 +45,7 @@
 - Side-panel mic that starts but never captures speech now errors and opens the Hermes Voice Dictation tab instead of staying fake-ON.
 - If the Browser socket goes quiet or drops while Hermes Desktop is still running the turn, Browser reconnects and keeps listening instead of showing "Could not reach the Hermes dashboard."
 - Mapped Codex ChatGPT 6 context windows: 272k for the base model and 872k for the large window, matching Hermes Agent. A stale 900k advertisement is repaired to 872k.
-- Restored Bot Mode Desktop roster parity: authenticated `profiles.list` supplies display names, avatars, last-activity stamps, group-chat projections, and canonical Bot Chat identity. Public status/health names are discovery only and no longer replace a rich roster.
+- Bot Mode reads the full roster: authenticated `profiles.list` supplies display names, avatars, last-activity stamps, group-chat projections, and canonical Bot Chat identity. Public status/health names are discovery only and no longer replace a rich roster.
 - Opening a bot resumes the confirmed existing Bot Chat and fails closed on lookup errors instead of creating a duplicate chat.
 - Dashboard discovery uses explicit URLs, cached URLs, open loopback tabs, sidecar candidate ports, and documented default ports. It no longer scans arbitrary ephemeral port ranges or treats gateway health names as a complete roster.
 - Disabled the broad loopback CORS header rewrite. Loopback GET discovery can still proxy through the service worker without rewriting every localhost response.
@@ -61,6 +61,8 @@
 
 - The old full-page workspace is retired. The side panel is the supported browser surface, and the old full-view button no longer opens that workspace.
 - The Bot Mode roster no longer stacks an active-now chip strip above the agent rows. Each row's own presence dot is the only activity signal, so a working agent is marked once instead of twice.
+
+Contributors: [@kidclone3](https://github.com/kidclone3) for authenticated profile discovery ([#100](https://github.com/abundantbeing/hermes-browser-extension/pull/100)), [@qinxianhahaha](https://github.com/qinxianhahaha) for the model-picker viewport fix ([#101](https://github.com/abundantbeing/hermes-browser-extension/pull/101)), and [@khoalx18](https://github.com/khoalx18) for reporting the Assist composer overlap ([#96](https://github.com/abundantbeing/hermes-browser-extension/issues/96)).
 
 ## [0.3.2] - 2026-09-05
 
