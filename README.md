@@ -13,7 +13,7 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 </p>
 
 <p align="center">
-  <strong>Public v0.3.3 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
+  <strong>Public v0.3.2 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
   Not on the Chrome Web Store yet.
 </p>
 
@@ -23,19 +23,12 @@ Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium 
 
 This repo is specifically for the **Hermes Browser Extension**: the Chrome/Edge/Chromium side-panel integration for Hermes Agent.
 
-### New in v0.3.3
-
-- **Pet avatars**: the agent avatar picker loads the pet gallery through your own gateway, with search, paging, and thumbnails that paint as you scroll.
-- **Shape colours**: classic faces take one of twelve profile colours, six per row, or follow the name you type with **Match the name**.
-- **A guard before a model switch costs you context**: switching the model while the transcript holds context asks first, in the same dialog style the Bot Mode exits use.
-- **Pinned switcher**: the profile switcher keeps **Browser chat** and **Bot chat** fixed while the agent list scrolls.
-
 ### New in v0.3.2: Hermes Bot Mode, Multi-Agent Threads and Intelligent Tab Scoping
 
 v0.3.2 introduces **Hermes Bot Mode**, bringing your full Hermes multi-agent roster directly into the browser side panel:
 - **Instant Multi-Agent Switching**: Seamlessly toggle between default and named agent profiles. Switching an agent reloads that profile's model catalog and starts on its live default model (`/api/model/options?profile=`), and Desktop dashboard discovery uses known candidates, cached URLs, and open dashboard tabs.
 - **Desktop Names, Avatars, and Last Activity**: Bot Mode uses authenticated Desktop `profiles.list` metadata for display names, avatars, last-activity stamps, and existing Bot Chat identity instead of internal profile ids or public health-name lists.
-- **Avatar choices**: a new or edited agent can take a pet avatar from the pet gallery (searchable, paged, served through your own gateway), a classic face shape with twelve profile colours plus **Match the name**, or an uploaded image. The profile switcher keeps **Browser chat** and **Bot chat** pinned while the agent list scrolls.
+- **Avatar Choices That Match Desktop**: a new or edited agent can take a pet avatar from the Desktop petdex gallery (searchable, paged, and served through the gateway), a classic face shape with the same twelve profile colours Desktop uses plus **Match the name**, or an uploaded image. The profile switcher keeps **Browser chat** and **Bot chat** pinned while the agent list scrolls.
 - **Existing Bot Chat Resume**: Opening a bot resumes that profile's existing hidden Bot Chat. Lookup failures stay fail-closed so the extension does not mint a duplicate chat.
 - **Group Chats & Collaborative Threads**: Synced multi-agent room projections, room-level thread tracking, and synchronized conversation histories without blank chat states.
 - **Truthful Page-Only Scoping & Zero Token Bloat**: By default, only the active browser tab is included (`1/N` tabs in prompt) and sent in the prompt envelope. All other open tabs remain strictly excluded, preventing context bloat and token waste.
@@ -127,7 +120,7 @@ The old full-page Hermes Web workspace is retired. The side panel is the support
 
 ## Compatibility matrix
 
-| Surface | Supported in v0.3.3 | Fallback / note |
+| Surface | Supported in v0.3.2 | Fallback / note |
 | --- | --- | --- |
 | Chrome / Edge / Chromium 114+ side panel | Yes | Primary public support target. |
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API and extension clipboard permissions for Copy Diagnostics. |
@@ -354,14 +347,14 @@ Make sure you loaded `dist/`, not the repo root. The selected folder must contai
 
 ### Chrome still shows an older version after updating
 
-The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.3.3, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.3.3`.
+The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.3.2, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.3.2`.
 
 Fix:
 
-1. Extract/download the v0.3.3 release or run `npm run build` locally.
+1. Extract/download the v0.3.2 release or run `npm run build` locally.
 2. Open `chrome://extensions` or `edge://extensions`.
 3. On the Hermes Browser Extension card, click **Reload**.
-4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.3.3 `dist/` folder.
+4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.3.2 `dist/` folder.
 5. Click **service worker** / **Inspect views** only for debugging; it is not the version source.
 
 ### Filing a support issue
