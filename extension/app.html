@@ -7,14 +7,21 @@
     <meta name="color-scheme" content="dark" />
     <title data-i18n="ui.hermes.web">Hermes Web</title>
     <link rel="icon" href="assets/icons/icon-32.png" />
+    <link rel="stylesheet" href="lib/fonts.css" />
+    <link rel="stylesheet" href="lib/branded-select.css" />
     <link rel="stylesheet" href="lib/design-tokens.css" />
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="app-parity.css" />
     <link rel="stylesheet" href="fulltab-themes.css" />
     <link rel="stylesheet" href="context-menu-editor.css" />
+    <link rel="stylesheet" href="lib/surface-text-zoom.css" />
   </head>
   <body>
     <main class="web-shell" data-state="loading">
+      <div id="webDeprecationBanner" class="web-deprecation-banner" role="status">
+        <strong data-i18n="web.deprecation_title">A new surface is being worked on</strong>
+        <span data-i18n="web.deprecation_banner">Hermes Web stays available if you already have this tab open. New buttons no longer open it.</span>
+      </div>
       <header class="web-topbar">
         <button id="navToggle" class="icon-control mobile-only" type="button" aria-label="Open navigation" aria-expanded="false" data-i18n-aria-label="ui.open.navigation">☰</button>
         <a class="web-brand" href="app.html" aria-label="Hermes Web home" data-i18n-aria-label="ui.hermes.web.home">
@@ -290,8 +297,25 @@
               <label for="settingsFontProfileSelect"><strong data-i18n="appearance.font_family">Font family</strong></label>
               <select id="settingsFontProfileSelect" aria-label="Font family" data-i18n-aria-label="appearance.font_family">
                 <option value="signature" data-i18n="appearance.font_signature">Hermes signature</option>
+                <option value="collapse" data-i18n="appearance.font_collapse">Hermes Legacy</option>
                 <option value="system-sans" data-i18n="appearance.font_system_sans">System sans</option>
+                <option value="times-new-roman" data-i18n="appearance.font_times">Times New Roman</option>
+                <option value="georgia" data-i18n="appearance.font_georgia">Georgia</option>
+                <option value="palatino" data-i18n="appearance.font_palatino">Palatino</option>
+                <option value="garamond" data-i18n="appearance.font_garamond">Garamond</option>
+                <option value="cambria" data-i18n="appearance.font_cambria">Cambria</option>
+                <option value="calibri" data-i18n="appearance.font_calibri">Calibri</option>
+                <option value="trebuchet" data-i18n="appearance.font_trebuchet">Trebuchet MS</option>
                 <option value="high-legibility" data-i18n="appearance.font_high_legibility">High legibility</option>
+                <option value="montserrat" data-i18n="appearance.font_montserrat">Montserrat</option>
+                <option value="source-sans-3" data-i18n="appearance.font_source_sans">Source Sans 3</option>
+                <option value="ibm-plex-sans" data-i18n="appearance.font_ibm_plex">IBM Plex Sans</option>
+                <option value="outfit" data-i18n="appearance.font_outfit">Outfit</option>
+                <option value="space-grotesk" data-i18n="appearance.font_space_grotesk">Space Grotesk</option>
+                <option value="playfair-display" data-i18n="appearance.font_playfair">Playfair Display</option>
+                <option value="libre-baskerville" data-i18n="appearance.font_libre_baskerville">Libre Baskerville</option>
+                <option value="fraunces" data-i18n="appearance.font_fraunces">Fraunces</option>
+                <option value="cinzel" data-i18n="appearance.font_cinzel">Cinzel</option>
                 <option value="mono" data-i18n="appearance.font_monospace">Monospace</option>
                 <option value="custom-local" data-i18n="appearance.font_installed_local">Installed local font</option>
               </select>

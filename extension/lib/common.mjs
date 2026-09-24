@@ -12,6 +12,7 @@ import { normalizeHistoryUserMessage } from './session-history-normalization.mjs
 import { hasCredentialBearingUrl, redactSensitiveText } from './redaction.mjs';
 import { CONNECTION_SCHEMA_VERSION, CONNECTION_TRANSPORTS } from './connection-modes.mjs';
 import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
+import { hermesContextForModel, HERMES_DEFAULT_FALLBACK_CONTEXT } from './hermes-context-windows.mjs';
 export { redactSensitiveText };
 
 export const GATEWAY_MODES = Object.freeze([
@@ -1295,17 +1296,48 @@ export function autoSessionTitleFromText(value = '', { maxChars = 58 } = {}) {
 }
 
 const MODEL_CONTEXT_FALLBACKS = Object.freeze([
-  ['claude-fable', 1_000_000],
+  ['claude-opus-5.5', 1_000_000],
+  ['claude-opus-5-5', 1_000_000],
+  ['opus-5.5', 1_000_000],
+  ['opus-5-5', 1_000_000],
+  ['claude-fable-5', 1_000_000],
+  ['fable-5', 1_000_000],
+  ['claude-mythos', 1_000_000],
+  ['mythos-5', 1_000_000],
+  ['claude-opus-5', 1_000_000],
+  ['opus-5', 1_000_000],
+  ['claude-sonnet-5', 1_000_000],
+  ['sonnet-5', 1_000_000],
   ['claude-opus-4.8', 1_000_000],
   ['claude-opus-4-8', 1_000_000],
+  ['opus-4.8', 1_000_000],
+  ['opus-4-8', 1_000_000],
+  ['claude-opus-4.7', 1_000_000],
+  ['claude-opus-4-7', 1_000_000],
+  ['opus-4.7', 1_000_000],
+  ['claude-opus-4.6', 1_000_000],
+  ['claude-opus-4-6', 1_000_000],
   ['claude-sonnet-4.6', 1_000_000],
   ['claude-sonnet-4-6', 1_000_000],
+  ['sonnet-4.6', 1_000_000],
+  ['claude-fable', 1_000_000],
+  ['opus-4.5', 200_000],
+  ['opus-4-5', 200_000],
+  ['sonnet-4.5', 200_000],
+  ['sonnet-4-5', 200_000],
+  ['opus-4', 200_000],
+  ['sonnet-4', 200_000],
+  ['claude-haiku', 200_000],
+  ['haiku', 200_000],
+  ['claude', 200_000],
   ['openai-codex:gpt-5.5', 272_000],
   ['openai-codex::gpt-5.5', 272_000],
   ['openai-codex-gpt-5-5', 272_000],
   ['openai/gpt-5.5', 1_050_000],
   ['openai-gpt-5-5', 1_050_000],
   ['gpt-5.5', 1_050_000],
+  ['gpt-5.4-nano', 400_000],
+  ['gpt-5.4-mini', 400_000],
   ['gpt-5.4', 1_050_000],
   ['gpt-5.3-codex-spark', 128_000],
   ['gpt-5', 400_000],
@@ -1321,20 +1353,30 @@ const MODEL_CONTEXT_FALLBACKS = Object.freeze([
   ['minimax-m3', 1_000_000],
   ['minimax/m3', 1_000_000],
   ['minimax', 204_800],
+  ['glm-5.3', 1_310_720],
   ['glm-5.2', 1_048_576],
   ['glm', 202_752],
   ['grok-4-fast', 2_000_000],
   ['grok-4.20', 2_000_000],
+  ['grok-4.7', 500_000],
+  ['grok-4-7', 500_000],
   ['grok-4.6', 500_000],
   ['grok-4-6', 500_000],
+  ['grok-4.5', 500_000],
+  ['grok-4-5', 500_000],
   ['grok-4.3', 1_000_000],
   ['grok-4', 256_000],
   ['grok-3', 131_072],
   ['kimi-k3', 1_048_576],
   ['kimi', 262_144],
   ['deepseek-v4', 1_000_000],
+  ['deepseek-chat', 1_000_000],
+  ['deepseek-reasoner', 1_000_000],
+  ['deepseek-flash', 1_000_000],
   ['deepseek', 128_000],
 ]);
+
+const CODEX_LARGE_CONTEXT_TOKENS = 872_000;
 
 function modelProviderIdentity(model = {}) {
   const normalize = (value) => String(value || '').trim().toLowerCase().replace(/[\s_]+/g, '-');
@@ -1371,28 +1413,22 @@ function fallbackModelContextTokens(model = {}) {
   const isCodexOAuth = providerIdentity === 'openai-codex' || providerIdentity === 'codex';
   const isDirectOpenAi = providerIdentity === 'openai';
   const isGpt56 = /\bgpt-5\.6(?:-|\b)/.test(providerHint);
-  const isGpt6Astra = /\b(?:chat)?gpt[- .]?6[- .]?astra(?:-|\b)/.test(providerHint);
+  const isGpt6Tier = /\b(?:chat)?gpt[- .]?6[- .]?(?:sol|luna|terra|astra)(?:-|\b)/.test(providerHint);
   const isExactGpt54 = /\bgpt-5\.4\b(?!-)/.test(providerHint);
   const isGpt54Mini = /\bgpt-5\.4-mini\b/.test(providerHint);
   const has900kVariant = variants.some((value) => /(?:^|[-_/:\\s])900k(?:$|[-_/:\\s])/.test(value));
-  if (isGpt56 || isGpt6Astra) {
-    // Codex OAuth exposes two GPT-5.6 / GPT-6 Astra subscription tiers. The
-    // explicit 900K suffix is the source of truth; the base family uses the
-    // 272K tier. Direct OpenAI keeps its 1.05M API window, and provider-less
-    // rows stay unknown.
-    if (isCodexOAuth) return has900kVariant ? 900_000 : 272_000;
+  if (isGpt56 || isGpt6Tier) {
+    // Codex keeps the advertised 272K window on the base slug. The Hermes
+    // -900k picker alias is the large window, capped at the Codex catalog
+    // max (872K) instead of the old uncapped 900K bump. Direct OpenAI keeps
+    // its 1.05M API window. A row with no provider stays unknown.
+    if (isCodexOAuth) return has900kVariant ? CODEX_LARGE_CONTEXT_TOKENS : 272_000;
     if (isDirectOpenAi) return 1_050_000;
-    return 0;
   }
   if (isCodexOAuth && isGpt54Mini) return 272_000;
-  if (isCodexOAuth && isExactGpt54) return 900_000;
+  if (isCodexOAuth && isExactGpt54) return CODEX_LARGE_CONTEXT_TOKENS;
   if (/\bgpt-5\.5\b/.test(providerHint) && isCodexOAuth) return 272_000;
-  for (const [needle, tokens] of MODEL_CONTEXT_FALLBACKS) {
-    const key = String(needle).toLowerCase();
-    const keySlug = key.replace(/[\s_./:]+/g, '-');
-    if (variants.some((value) => value.includes(key) || value.includes(keySlug))) return tokens;
-  }
-  return 0;
+  return hermesContextForModel(model) || HERMES_DEFAULT_FALLBACK_CONTEXT;
 }
 
 export function normalizeReasoningEffort(value = DEFAULT_SETTINGS.reasoningEffort) {
@@ -1623,8 +1659,8 @@ export function contextAccountingSnapshot({
     provider: runtime?.provider || session?.provider,
     providerLabel: runtime?.providerLabel || runtime?.provider_label || session?.providerLabel || session?.provider_label,
   });
-  const staleCodexAdvertisedLimit = reportedContextLimitTokens === 272_000
-    && effectiveCodexFallback === 900_000;
+  const staleCodexAdvertisedLimit = (reportedContextLimitTokens === 272_000 || reportedContextLimitTokens === 900_000)
+    && effectiveCodexFallback === CODEX_LARGE_CONTEXT_TOKENS;
   const contextLimitTokens = staleCodexAdvertisedLimit ? effectiveCodexFallback : reportedContextLimitTokens;
 
   const runtimePromptTokens = firstPositiveToken(
@@ -2087,12 +2123,11 @@ function modelContextTokens(model = {}) {
     model.metadata?.context_window;
   const number = Number(value || 0);
   const fallback = fallbackModelContextTokens(model);
-  // Codex still advertises 272K for GPT-5.6, GPT-6 Astra, and exact GPT-5.4,
-  // although Hermes has live-verified and reports a 900K effective window.
-  // Override only that known-stale advertisement. Any other positive runtime
-  // value is authoritative.
+  // Codex still advertises 272K for the GPT-5.6 and GPT-6 families, and older
+  // Browser builds stored the uncapped 900K bump. Hermes caps that opt-in
+  // window at the catalog max, 872K. Repair only those two stale values.
   if (Number.isFinite(number) && number > 0) {
-    if (number === 272_000 && fallback === 900_000) return fallback;
+    if ((number === 272_000 || number === 900_000) && fallback === CODEX_LARGE_CONTEXT_TOKENS) return fallback;
     // Qwen Token Plan slugs (qwen3.6/3.7/3.8 max/plus/flash) are 1M, but a
     // stale Hermes runtime or cached model catalog often reports the generic
     // qwen family default (131072) instead. When the curated table knows the
@@ -2102,11 +2137,12 @@ function modelContextTokens(model = {}) {
       const haystack = `${model.id ?? ''} ${model.rawModelId ?? ''} ${model.raw_model_id ?? ''} ${model.model ?? ''} ${model.name ?? ''}`.toLowerCase();
       if (/qwen3\.[6-9]-/.test(haystack)) return fallback;
     }
-    // Grok 4.6 is 500k. The older grok-4 catch-all (256k) used to win via
-    // substring match, and some catalogs still advertise that stale window.
+    // Grok 4.5, 4.6, and 4.7 are 500k. The older grok-4 catch-all (256k) used
+    // to win via substring match, and some catalogs still advertise that stale
+    // window. xAI's live catalog confirms 4.7 at 500k as well.
     if (fallback === 500_000 && number > 0 && number < fallback) {
-      const haystack = `${model.id ?? ''} ${model.rawModelId ?? ''} ${model.raw_model_id ?? ''} ${model.model ?? ''} ${model.name ?? ''}`.toLowerCase();
-      if (haystack.includes('grok-4.6') || haystack.includes('grok-4-6')) return fallback;
+      const haystack = `${model.id ?? ''} ${model.rawModelId ?? ''} ${model.raw_model_id ?? ''} ${model.model ?? ''} ${model.name ?? ''} ${model.label ?? ''}`.toLowerCase();
+      if (/grok-4[.-][5-7]/.test(haystack) || /grok 4\.[5-7]/.test(haystack)) return fallback;
     }
     return number;
   }

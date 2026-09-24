@@ -868,14 +868,21 @@ function modelDedupeKey(model = {}) {
 }
 
 export function mergeModelsByRawId(arrays = []) {
-  const seen = new Set();
+  const seen = new Map();
   const merged = [];
   for (const models of arrays) {
     if (!Array.isArray(models)) continue;
     for (const model of models) {
       const key = modelDedupeKey(model);
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
+      if (!key) continue;
+      const existing = seen.get(key);
+      const incomingContext = Number(model?.contextTokens || model?.context_length || 0);
+      if (existing) {
+        const existingContext = Number(existing.contextTokens || existing.context_length || 0);
+        if (!(existingContext > 0) && incomingContext > 0) existing.contextTokens = incomingContext;
+        continue;
+      }
+      seen.set(key, model);
       merged.push(model);
     }
   }

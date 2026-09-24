@@ -1,0 +1,66 @@
+/* Text zoom for extension surfaces whose own rules use absolute px.
+   This does not use the zoom property, so rules that already multiply
+   --hermes-text-zoom are not scaled twice. Host pages never load this file. */
+
+html[data-hermes-text-zoom] .permission-card,
+html[data-hermes-text-zoom] .voice-card {
+  font-size: calc(15px * var(--hermes-text-zoom, 1));
+}
+
+html[data-hermes-text-zoom] .permission-card h1,
+html[data-hermes-text-zoom] .voice-card h1 {
+  font-size: calc(28px * var(--hermes-text-zoom, 1));
+  font-family: var(--hermes-font-display, Georgia, serif);
+}
+
+html[data-hermes-text-zoom] .permission-card p,
+html[data-hermes-text-zoom] .voice-card p,
+html[data-hermes-text-zoom] .permission-card button,
+html[data-hermes-text-zoom] .voice-card button,
+html[data-hermes-text-zoom] #permissionStatus,
+html[data-hermes-text-zoom] #voiceStatus {
+  font-size: calc(14px * var(--hermes-text-zoom, 1));
+}
+
+html[data-hermes-text-zoom] .web-shell h1,
+html[data-hermes-text-zoom] .web-shell h2,
+html[data-hermes-text-zoom] .web-shell h3,
+html[data-hermes-text-zoom] .web-shell h4 {
+  font-family: var(--hermes-font-display, Georgia, serif);
+}
+html[data-hermes-text-zoom] .web-message-content h1,
+html[data-hermes-text-zoom] .web-message-content h2,
+html[data-hermes-text-zoom] .web-message-content h3,
+html[data-hermes-text-zoom] .web-message-content h4 {
+  font-family: var(--hermes-font-display, "HermesDisplay", Georgia, serif);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.03em;
+  text-transform: none;
+}
+html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6),
+html[data-hermes-font-profile="cinzel"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "HermesDisplay", "Sigurd", Georgia, serif;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+.web-deprecation-banner {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: baseline;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--hermes-line, rgba(0, 0, 242, 0.24));
+  background: color-mix(in srgb, var(--hermes-paper, #fbfcff) 90%, transparent);
+  color: var(--hermes-ink, currentColor);
+  font: 600 calc(13px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-ui, system-ui, sans-serif);
+}
+
+.web-deprecation-banner span {
+  color: var(--hermes-muted, currentColor);
+  font-weight: 400;
+}

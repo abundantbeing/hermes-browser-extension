@@ -168,12 +168,16 @@ import {
 import {
   ZOOM_PRESETS,
   appearancePreferencesForSurface,
+  appearancePreferencesForTheme,
   applyAppearancePreferences,
+  fontFamilyPreview,
   normalizeTextZoomPercent,
   sanitizeLocalFontFamily,
   stepTextZoomPercent,
+  themeOwnsFont,
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
+import { mountBrandedSelect } from './lib/branded-select.mjs';
 import {
   CUSTOM_THEME_MAX_INPUT_BYTES,
   CUSTOM_THEME_STORAGE_KEY,
@@ -976,6 +980,8 @@ const els = {
 let settings = { ...DEFAULT_SETTINGS };
 let appearanceMutationId = 0;
 let appearanceSaveStatus = '';
+let themeFontPinned = false;
+let themeFontPinnedFor = '';
 let appearanceWriteQueue = Promise.resolve();
 let customThemeStoreState = { ok: true, status: 'empty', themes: [] };
 let customThemePreviewState = null;
@@ -2695,6 +2701,20 @@ async function openFullView() {
     runtimeApi: browserApi.runtime,
     windowOpen: globalThis.open?.bind(globalThis),
   });
+}
+
+function showWebDeprecationNotice() {
+  const dialog = document.getElementById('webDeprecationDialog');
+  if (!dialog) return;
+  dialog.hidden = false;
+  document.getElementById('webDeprecationClose')?.focus();
+}
+
+function hideWebDeprecationNotice() {
+  const dialog = document.getElementById('webDeprecationDialog');
+  if (!dialog || dialog.hidden) return;
+  dialog.hidden = true;
+  els.openFullViewButton?.focus();
 }
 
 function contextScopeSessionKey() {
@@ -6383,6 +6403,25 @@ function panelAppearanceSnapshot() {
   };
 }
 
+function mountSettingsBrandedSelects() {
+  const root = document.getElementById('settingsDialog');
+  if (!root) return;
+  for (const select of root.querySelectorAll('select')) {
+    if (select.hidden || select.hasAttribute('hidden')) continue;
+    if (select.id === 'languageSelect') {
+      mountBrandedSelect(select, { language: true });
+      continue;
+    }
+    if (select.id === 'fontProfileSelect') {
+      mountBrandedSelect(select, {
+        previewFont: (value) => fontFamilyPreview(value, settings.customFontFamily),
+      });
+      continue;
+    }
+    mountBrandedSelect(select);
+  }
+}
+
 function applyAppearanceSettings() {
   const colorMode = normalizeColorMode(settings.colorMode);
   const resolvedMode = resolvedColorMode(colorMode);
@@ -6404,7 +6443,12 @@ function applyAppearanceSettings() {
     ? 'light'
     : resolvedMode;
   root.style.colorScheme = effectiveColorScheme;
-  applyAppearancePreferences(root, appearancePreferencesForSurface(settings, 'panel'));
+  const visualTheme = selection.kind === 'custom' ? '' : theme;
+  applyAppearancePreferences(root, appearancePreferencesForTheme(
+    appearancePreferencesForSurface(settings, 'panel'),
+    visualTheme,
+    { pinThemeFont: themeFontPinned && themeFontPinnedFor === visualTheme },
+  ));
 }
 
 function renderAppearanceControls() {
@@ -6434,11 +6478,17 @@ function renderAppearanceControls() {
     els.textZoomInput.setAttribute('aria-valuetext', t('appearance.percent_value', { percent: preferences.textZoomPercent }));
   }
   if (els.fontProfileSelect) els.fontProfileSelect.value = requestedProfile;
+  mountSettingsBrandedSelects();
   if (els.customFontFamilyField) els.customFontFamilyField.hidden = requestedProfile !== 'custom-local';
   if (els.customFontFamilyInput && document.activeElement !== els.customFontFamilyInput) {
     els.customFontFamilyInput.value = settings.customFontFamily || preferences.customFontFamily;
   }
-  if (els.appearanceSaveStatus) els.appearanceSaveStatus.textContent = appearanceSaveStatus;
+  if (els.appearanceSaveStatus) {
+    const overlay = themeOwnsFont(activeTheme) && !(themeFontPinned && themeFontPinnedFor === activeTheme)
+      ? t('appearance.theme_font_overlay')
+      : '';
+    els.appearanceSaveStatus.textContent = [appearanceSaveStatus, overlay].filter(Boolean).join(' ');
+  }
   renderCustomThemeManagement();
   if (!els.themeGrid) return;
   const builtInCards = APPEARANCE_THEMES.map((theme) => {
@@ -7296,7 +7346,9 @@ function renderModelMenu(query = els.modelSearchInput?.value || '') {
 
       const meta = document.createElement('span');
       meta.className = 'model-option-meta';
-      meta.textContent = model.id === menuModelId ? '✓' : (!requestable ? 'observed' : (model.contextTokens ? formatTokens(model.contextTokens).replace(' tokens', '') : runtimeStatus.label));
+      meta.textContent = model.id === menuModelId
+        ? '✓'
+        : (!requestable ? 'observed' : formatTokens(model.contextTokens || 256_000).replace(' tokens', ''));
 
       button.append(name, meta);
       button.addEventListener('click', async () => {
@@ -18597,7 +18649,14 @@ function bindEvents() {
     renderSubagentStack();
   });
   els.openFullViewButton?.addEventListener('click', () => {
-    openFullView().catch((error) => setStatus('warn', 'Could not open full view', error?.message || String(error), { translateDetail: false }));
+    showWebDeprecationNotice();
+  });
+  document.getElementById('webDeprecationClose')?.addEventListener('click', hideWebDeprecationNotice);
+  document.getElementById('webDeprecationDialog')?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      hideWebDeprecationNotice();
+    }
   });
   els.manualSettingsButton.addEventListener('click', openSettingsDialog);
   [els.modelMenu, els.sessionMenu, els.botModePanel, els.contextPopover, els.attachMenu, els.skillMenu].filter(Boolean).forEach((panel) => {
@@ -19260,6 +19319,11 @@ function bindEvents() {
     void setAppearanceOption('textZoomPercent', stepTextZoomPercent(current, 'up'));
   });
   els.fontProfileSelect?.addEventListener('change', () => {
+    const theme = normalizedPanelThemeId(settings.appearanceTheme);
+    if (themeOwnsFont(theme)) {
+      themeFontPinned = true;
+      themeFontPinnedFor = theme;
+    }
     void setAppearanceOption('fontProfile', els.fontProfileSelect.value);
   });
   els.customFontFamilyInput?.addEventListener('change', () => {
@@ -19286,6 +19350,8 @@ function bindEvents() {
     const card = event.target.closest('[data-theme]');
     if (!card) return;
     customThemeDeleteArmedId = '';
+    themeFontPinned = false;
+    themeFontPinnedFor = '';
     void setAppearanceOption('appearanceTheme', card.dataset.theme);
   });
   els.customThemeImportTextarea?.addEventListener('input', () => {

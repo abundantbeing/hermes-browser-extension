@@ -1,4 +1,19 @@
 @font-face {
+  font-family: "Rules Variable";
+  src: url("../assets/fonts/RulesVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Rules Gothic Compressed";
+  src: url("../assets/fonts/RulesGothicCmp-Medium.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Collapse";
   src: url("../assets/fonts/Collapse-Regular.woff2") format("woff2");
   font-weight: 400;
@@ -50,8 +65,8 @@
   --hermes-success: #0a8f54;
   --hermes-warning: #a96800;
   --hermes-danger: #d51f4e;
-  --hermes-font-ui: "Collapse", "Segoe UI", system-ui, sans-serif;
-  --hermes-font-display: "HermesDisplay", "Collapse", Georgia, serif;
+  --hermes-font-ui: "Rules Variable", "Segoe UI", system-ui, sans-serif;
+  --hermes-font-display: "Rules Gothic Compressed", "Rules Variable", sans-serif;
   --hermes-font-mono: "HermesMono", "Courier Prime", "Cascadia Code", monospace;
   --fulltab-left-rail: 280px;
   --fulltab-inspector: 280px;

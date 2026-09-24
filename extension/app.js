@@ -48,12 +48,16 @@ import {
 } from './lib/appearance-themes.mjs';
 import {
   appearancePreferencesForSurface,
+  appearancePreferencesForTheme,
   applyAppearancePreferences,
+  fontFamilyPreview,
   normalizeTextZoomPercent,
   sanitizeLocalFontFamily,
   stepTextZoomPercent,
+  themeOwnsFont,
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
+import { mountBrandedSelect } from './lib/branded-select.mjs';
 import {
   CUSTOM_THEME_MAX_INPUT_BYTES,
   CUSTOM_THEME_STORAGE_KEY,
@@ -400,6 +404,8 @@ let settings = {};
 let contextConsentPrincipalBinding = { origin: '', transport: '', principal: '' };
 let webAppearanceMutationId = 0;
 let webAppearanceSaveStatus = '';
+let webThemeFontPinned = false;
+let webThemeFontPinnedFor = '';
 let webAppearanceWriteQueue = Promise.resolve();
 let webCustomThemeStoreState = { ok: true, status: 'empty', themes: [] };
 let webCustomThemePreviewState = null;
@@ -3817,7 +3823,12 @@ function applyAppearance() {
   root.dataset.hermesColorMode = mode;
   root.dataset.hermesTheme = theme;
   root.style.colorScheme = selection.kind === 'custom' && resolved === 'dark' && !selection.document.darkColors ? 'light' : resolved;
-  applyAppearancePreferences(root, webAppearancePreferences());
+  const visualTheme = selection.kind === 'custom' ? '' : theme;
+  applyAppearancePreferences(root, appearancePreferencesForTheme(
+    webAppearancePreferences(),
+    visualTheme,
+    { pinThemeFont: webThemeFontPinned && webThemeFontPinnedFor === visualTheme },
+  ));
 }
 
 function renderAppearanceSettings() {
@@ -3847,11 +3858,20 @@ function renderAppearanceSettings() {
     els.settingsTextZoomInput.setAttribute('aria-valuetext', t('appearance.percent_value', { percent: preferences.textZoomPercent }));
   }
   if (els.settingsFontProfileSelect) els.settingsFontProfileSelect.value = preferences.fontProfile;
+  mountBrandedSelect(els.settingsFontProfileSelect, {
+    previewFont: (value) => fontFamilyPreview(value, preferences.customFontFamily),
+  });
+  mountBrandedSelect(els.settingsLanguageSelect, { language: true });
+  if (els.settingsAppearanceSaveStatus) {
+    const overlay = themeOwnsFont(theme) && !(webThemeFontPinned && webThemeFontPinnedFor === theme)
+      ? t('appearance.theme_font_overlay')
+      : '';
+    els.settingsAppearanceSaveStatus.textContent = [webAppearanceSaveStatus, overlay].filter(Boolean).join(' ');
+  }
   if (els.settingsCustomFontFamilyField) els.settingsCustomFontFamilyField.hidden = preferences.fontProfile !== 'custom-local';
   if (els.settingsCustomFontFamilyInput && document.activeElement !== els.settingsCustomFontFamilyInput) {
     els.settingsCustomFontFamilyInput.value = preferences.customFontFamily;
   }
-  if (els.settingsAppearanceSaveStatus) els.settingsAppearanceSaveStatus.textContent = webAppearanceSaveStatus;
   renderWebCustomThemeManager();
   els.settingsThemeGrid.replaceChildren();
   for (const item of APPEARANCE_THEMES) {
@@ -5847,6 +5867,11 @@ els.settingsTextZoomIncreaseButton?.addEventListener('click', () => {
   void applyAndPersistAppearance({ textZoomPercent: stepTextZoomPercent(webAppearancePreferences().textZoomPercent, 'up') });
 });
 els.settingsFontProfileSelect?.addEventListener('change', () => {
+  const theme = normalizeAppearanceTheme(els.settingsTheme?.value || settings.webAppearanceTheme || 'nous');
+  if (themeOwnsFont(theme)) {
+    webThemeFontPinned = true;
+    webThemeFontPinnedFor = theme;
+  }
   const fontProfile = els.settingsFontProfileSelect.value;
   const customFontFamily = sanitizeLocalFontFamily(els.settingsCustomFontFamilyInput?.value || webAppearancePreferences().customFontFamily);
   if (fontProfile === 'custom-local' && !customFontFamily) {
@@ -5883,6 +5908,8 @@ els.settingsThemeGrid.addEventListener('click', (event) => {
   const card = event.target.closest('[data-theme]');
   if (!card) return;
   webCustomThemeDeleteArmedId = '';
+  webThemeFontPinned = false;
+  webThemeFontPinnedFor = '';
   els.settingsTheme.value = card.dataset.theme;
   applyAndPersistAppearance();
 });

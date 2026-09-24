@@ -8,7 +8,7 @@ const js = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), '
 const dir = new URL('../extension/', import.meta.url);
 
 test('every sidecar art entry ships and stays lean enough for the panel', () => {
-  assert.equal(SIDECAR_ART.length, 7);
+  assert.equal(SIDECAR_ART.length, 14);
   let total = 0;
   for (const entry of SIDECAR_ART) {
     const size = statSync(new URL(entry, dir)).size;

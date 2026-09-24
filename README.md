@@ -39,7 +39,7 @@ v0.3.2 introduces **Hermes Bot Mode**, bringing your full Hermes multi-agent ros
 
 v0.3.0 added an opt-in MV3 controller for leased browser tabs, explicit approval gates for consequential or privileged actions, local HTML/PDF/localhost document access after approval, scoped artifact transfer, and reviewed workflow-to-skill drafts. Control remains bound to the exact controller, tab lease, frame, and document generation, and a Browser-bound request never falls back to an isolated browser backend.
 
-The release also keeps Hermes Assist, Hermes Web Alpha, session-scoped model routing, and the Browser Context Protocol introduced in v0.2.0.
+The release also keeps Hermes Assist, session-scoped model routing, and the Browser Context Protocol introduced in v0.2.0.
 
 ### Page comments
 
@@ -65,33 +65,12 @@ Private surfaces use per-site context controls and conservative defaults. Browse
 | Browser behavior | Page-only context | Hermes compatibility |
 | <img src="./assets/readme/hermes-browser-browser-behavior.png" alt="Hermes Browser Extension browser behavior settings for auto naming, prompt context, and tab-attached panels" width="300" /> | <img src="./assets/readme/hermes-browser-context-scope.png" alt="Hermes Browser Extension context scope menu with Chat only, Follow active tab, and Page only controls" width="300" /> | <img src="./assets/readme/hermes-browser-compatibility.png" alt="Hermes Browser Extension compatibility panel showing fallback modes and connection security" width="300" /> |
 
-### Hermes Web
+### Full-page view
 
-Open the extension's full view for canonical Hermes sessions, model/runtime control, rich messages, generated media, and accurate session context telemetry in a browser-native workspace.
-
-Hermes Web Alpha currently uses token-backed **Local or Remote API** connections. Hermes Cloud Preview and ticketed remote-dashboard transports remain Chat-only in the side panel; live full-view dashboard handoff is not shipped yet.
-
-<p align="center">
-  <img src="./assets/readme/hermes-web-new-session.png" alt="Hermes Web in Nous Light mode showing a connected new-session workspace with session rail, composer, and context inspector" width="100%" />
-</p>
-
-<p align="center"><strong>Start a fresh canonical Hermes Web session</strong></p>
-
-<p align="center">
-  <img src="./assets/readme/hermes-web-settings-nine-themes.png" alt="Hermes Web settings in Nous Light mode showing all nine appearance themes" width="100%" />
-</p>
-
-<p align="center"><strong>Choose from nine themes with Light and Dark modes</strong></p>
-
-<p align="center">
-  <img src="./assets/readme/hermes-web-rich-chat.png" alt="Hermes Web in Nous Light mode showing user messages on the right, Hermes messages on the left, rich Markdown, a table, session rail, composer, and context meter" width="100%" />
-</p>
-
-<p align="center"><strong>Read rich Hermes responses while canonical history stays attached</strong></p>
+The old full-page Hermes Web workspace is retired. The side panel is the supported browser surface, and the old full-view button no longer opens that workspace.
 
 ## Highlights
 
-- Adds **Hermes Web Alpha**, a full-page browser workspace for canonical Hermes sessions with a session rail, user-right/Hermes-left messages, safe rich Markdown, model/runtime controls, tools, skills, attachments, voice, active-run steering, generated media, and a context/activity/diagnostics inspector.
 - Chrome/Edge/Chromium MV3 side panel powered by the Side Panel API.
 - Matches Hermes Desktop's three connection choices: **Local gateway**, **Hermes Cloud**, and **Remote gateway**.
 - Connects to a configurable local or self-hosted remote Hermes API server. Default: `http://127.0.0.1:8642`.
@@ -122,7 +101,8 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 - Turns returned files into one-click cards: a produced PDF, HTML page, spreadsheet, document, archive, CSV, or image shows its name and type with **Open** (viewable kinds render in a new tab), **Open on computer** (downloads the file and launches the OS default app), and **Save**. A file the dashboard cannot read stays honest — the buttons are disabled and the reason is printed on the card.
 - Wraps webpage text as untrusted context before sending it to Hermes.
 - Streams Hermes responses and falls back to non-streaming chat when needed.
-- Includes Desktop-style appearance settings with Light/Dark/System mode and nine themes: Nous, Midnight, Ember, Mono, Cyberpunk, Slate, Senter Space, Aphrodite, and Solstice.
+- Includes appearance settings with Light/Dark/System mode, nine themes, text zoom, and a font list. Headlines use the selected display face. Labels, settings controls, Hermes Control, and Bot Mode buttons use that font's readable UI face.
+- The model menu shows the context window Hermes Agent uses for that model. A model Hermes has not named yet still gets Hermes Agent's own default window. The menu does not print "requestable".
 - The start screen's local sidecar card shows a different illustration on every panel open, drawn from the bundled art set, and button hovers keep a visible outline in Light and Dark modes alike.
 - The update card watches its own build: when a rebuilt `dist/` is sitting on disk, the panel says **A newer build is on disk (built …). Reload to run it.** with a **Reload now** button instead of leaving you on stale code, checks the public repository once a day on its own, and states plainly that the in-place update needs a local checkout of this repository — with a **Download the latest release** link for anyone without one.
 - Adds generated-image reveal animation plus a lightbox with zoom, reset, open, and explicit download controls.
@@ -149,7 +129,7 @@ Hermes Web Alpha currently uses token-backed **Local or Remote API** connections
 | Hermes Cloud | Yes, Trusted Dashboard Attach | Requires an active signed-in HTTPS Hermes Cloud agent tab. Uses a single-use WebSocket ticket and enforces Chat-only context. This is not a general cookie import or background account-discovery flow. |
 | Remote API server | Yes, explicit URL/token only | Use trusted LAN/Tailscale/VPN or HTTPS reverse proxy; do not expose Hermes naked to the internet. |
 | Self-hosted remote dashboard WebSocket | Best-effort | Select Remote gateway with an HTTPS dashboard URL and no API key. Chat/session/model path only; REST-only profile/skills/image-upload surfaces remain unavailable. |
-| Hermes Web full view | Local/Remote API alpha | Requires a token-backed Local or Remote API connection. Cloud Preview and ticketed remote-dashboard transports remain Chat-only in the side panel. |
+| Full-page Hermes Web view | Retired | The side panel is the supported browser surface. The old full-view button no longer opens that workspace. |
 | Browser Context Protocol | Yes | Extension emits typed `hermes.browser.turn.v2` envelopes while retaining the v1 payload compatibility path. |
 | Hermes Assist | Yes, site-aware preview/review | 31 writing environments are recognized. Safe plain-text composers may apply after explicit review; structured/private surfaces can fall back to copy-only. Hermes Assist never submits. |
 | Page comments | Yes | Attach menu. Uses the red element picker. Queues beside Ask Hermes; chat shows a compact summary. |
@@ -479,9 +459,9 @@ Project layout:
 ```text
 extension/
   manifest.json       MV3 extension manifest
-  app.html            Hermes Web full-page workspace
-  app.css             Hermes Web shell and conversation styling
-  app.js              canonical sessions, models, tools, media, and full-view runtime
+  app.html            retired full-page workspace, not opened from the side panel
+  app.css             retired full-page workspace styling
+  app.js              retired full-page runtime
   background.js       side panel behavior
   content.js          page context collector
   sidepanel.html      side panel UI
@@ -490,7 +470,7 @@ extension/
   voice-dictation.*   visible extension voice recorder fallback for blocked side-panel mic capture
   request-permissions.* visible extension mic-permission helper page
   sidepanel-preview.html static visual QA preview
-  assets/             local Hermes fonts, icons, and imagery
+  assets/             icons, imagery, OFL font subsets, and local-only signature font files
   lib/browser-context-protocol.mjs versioned read-only browser context protocol helpers
   lib/runtime-events.mjs stable runtime/tool event names for Browser UI normalization
   lib/support-diagnostics.mjs redacted Copy Diagnostics support report helpers

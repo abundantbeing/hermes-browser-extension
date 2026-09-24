@@ -6,6 +6,8 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src http: https: wss: ws://127.0.0.1:* ws://localhost:*;" />
     <title data-i18n="manifest.extension_name">Hermes Browser Extension</title>
     <link rel="icon" href="assets/icons/icon-32.png" />
+    <link rel="stylesheet" href="lib/fonts.css" />
+    <link rel="stylesheet" href="lib/branded-select.css" />
     <link rel="stylesheet" href="sidepanel.css" />
     <link rel="stylesheet" href="sidepanel-themes.css" />
     <link rel="stylesheet" href="context-menu-editor.css" />
@@ -30,12 +32,12 @@
             <path d="M9.8 15.2c1.4 1 3 1 4.4 0" />
           </svg><span class="sr-only" data-i18n="bot_mode.title">Bot Mode</span>
         </button>
-        <button id="openFullViewButton" class="settings-button icon-button" type="button" title="Open Hermes Web in a full tab" aria-label="Open full view" data-i18n-title="ui.open.hermes.web.in.a.full.tab" data-i18n-aria-label="ui.open.full.view">
+        <button id="openFullViewButton" class="settings-button icon-button" type="button" title="A new surface is being worked on" aria-label="Hermes Web" data-i18n-title="web.deprecation_title" data-i18n-aria-label="ui.hermes.web">
           <svg class="web-view-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none">
             <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/>
             <path d="M4.5 12h15M12 4c2.1 2.2 3.2 4.9 3.2 8S14.1 17.8 12 20M12 4c-2.1 2.2-3.2 4.9-3.2 8S9.9 17.8 12 20" stroke="currentColor" stroke-width="1.45" stroke-linecap="square"/>
           </svg>
-          <span class="sr-only" data-i18n="ui.open.full.view">Open full view</span>
+          <span class="sr-only" data-i18n="web.deprecation_title">A new surface is being worked on</span>
         </button>
         <button id="settingsButton" class="settings-button icon-button" type="button" title="Settings" aria-label="Open settings" data-i18n-title="ui.settings" data-i18n-aria-label="ui.open.settings">
           <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
@@ -774,7 +776,7 @@
           <div class="appearance-control-stack text-zoom-setting">
             <div>
               <strong data-i18n="appearance.text_zoom">Text zoom</strong>
-              <span data-i18n="ui.adjust.the.side.panel.for.readability.without.changing.browser.zoom">Adjust the side panel for readability without changing browser zoom.</span>
+              <span data-i18n="ui.adjust.extension.text.without.changing.browser.zoom">Adjust text across Hermes Browser surfaces without changing browser zoom.</span>
             </div>
             <div id="textZoomPresetGrid" class="text-zoom-preset-grid" role="radiogroup" aria-label="Text zoom" data-i18n-aria-label="appearance.text_zoom">
               <button type="button" data-text-zoom-percent="90" role="radio" aria-checked="false">90%</button>
@@ -801,8 +803,25 @@
             </label>
             <select id="fontProfileSelect" aria-label="Font family" data-i18n-aria-label="appearance.font_family">
               <option value="signature" data-i18n="appearance.font_signature">Hermes signature</option>
+              <option value="collapse" data-i18n="appearance.font_collapse">Hermes Legacy</option>
               <option value="system-sans" data-i18n="appearance.font_system_sans">System sans</option>
+              <option value="times-new-roman" data-i18n="appearance.font_times">Times New Roman</option>
+              <option value="georgia" data-i18n="appearance.font_georgia">Georgia</option>
+              <option value="palatino" data-i18n="appearance.font_palatino">Palatino</option>
+              <option value="garamond" data-i18n="appearance.font_garamond">Garamond</option>
+              <option value="cambria" data-i18n="appearance.font_cambria">Cambria</option>
+              <option value="calibri" data-i18n="appearance.font_calibri">Calibri</option>
+              <option value="trebuchet" data-i18n="appearance.font_trebuchet">Trebuchet MS</option>
               <option value="high-legibility" data-i18n="appearance.font_high_legibility">High legibility</option>
+              <option value="montserrat" data-i18n="appearance.font_montserrat">Montserrat</option>
+              <option value="source-sans-3" data-i18n="appearance.font_source_sans">Source Sans 3</option>
+              <option value="ibm-plex-sans" data-i18n="appearance.font_ibm_plex">IBM Plex Sans</option>
+              <option value="outfit" data-i18n="appearance.font_outfit">Outfit</option>
+              <option value="space-grotesk" data-i18n="appearance.font_space_grotesk">Space Grotesk</option>
+              <option value="playfair-display" data-i18n="appearance.font_playfair">Playfair Display</option>
+              <option value="libre-baskerville" data-i18n="appearance.font_libre_baskerville">Libre Baskerville</option>
+              <option value="fraunces" data-i18n="appearance.font_fraunces">Fraunces</option>
+              <option value="cinzel" data-i18n="appearance.font_cinzel">Cinzel</option>
               <option value="mono" data-i18n="appearance.font_monospace">Monospace</option>
               <option value="custom-local" data-i18n="appearance.font_installed_local">Installed local font</option>
             </select>
@@ -1271,6 +1290,17 @@
         <div class="profile-switch-actions">
           <button id="botModeLeaveConfirmButton" class="primary" type="button" data-i18n="bot_mode.leave_confirm">Return to Regular Sessions</button>
           <button id="botModeLeaveCancelButton" class="ghost" type="button" data-i18n="ui.cancel">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="webDeprecationDialog" class="profile-switch-dialog" role="dialog" aria-modal="true" aria-labelledby="webDeprecationTitle" aria-describedby="webDeprecationDetail" tabindex="-1" hidden>
+      <div class="profile-switch-card">
+        <span class="session-ownership-kicker" data-i18n="ui.hermes.web">Hermes Web</span>
+        <h2 id="webDeprecationTitle" data-i18n="web.deprecation_title">A new surface is being worked on</h2>
+        <p id="webDeprecationDetail" data-i18n="web.deprecation_body">This button no longer opens Hermes Web. A new surface is being worked on.</p>
+        <div class="profile-switch-actions">
+          <button id="webDeprecationClose" class="primary" type="button" data-i18n="ui.close">Close</button>
         </div>
       </div>
     </section>

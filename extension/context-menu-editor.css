@@ -36,7 +36,7 @@
   min-width: 0;
   overflow: hidden;
   color: var(--hermes-ink);
-  font: 10px/1.25 var(--hermes-font-mono);
+  font: calc(10px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-mono);
   letter-spacing: 0.08em;
   text-overflow: ellipsis;
   text-transform: uppercase;
@@ -56,7 +56,7 @@
 }
 
 .context-menu-enabled-label {
-  font: 8px/1 var(--hermes-font-mono);
+  font: calc(8px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -126,7 +126,7 @@
   border-radius: 0 !important;
   background: transparent !important;
   color: var(--hermes-ink) !important;
-  font: 15px/1 var(--hermes-font-mono) !important;
+  font: calc(15px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono) !important;
 }
 
 .context-menu-icon-button:hover:not(:disabled),
@@ -164,7 +164,7 @@
 
 .context-menu-editor-field-label {
   color: var(--hermes-muted);
-  font: 8px/1.2 var(--hermes-font-mono);
+  font: calc(8px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -182,7 +182,7 @@
   border-radius: 0 !important;
   background: transparent !important;
   color: var(--hermes-ink) !important;
-  font: 10px/1.35 var(--hermes-font-mono) !important;
+  font: calc(10px * var(--hermes-text-zoom, 1))/1.35 var(--hermes-font-mono) !important;
   letter-spacing: 0 !important;
   text-align: left !important;
   text-transform: none !important;
@@ -291,7 +291,7 @@ html[data-hermes-mode="dark"] .context-menu-editor-select {
 .context-menu-context-label {
   min-width: 0;
   overflow: hidden;
-  font: 9px/1.2 var(--hermes-font-mono);
+  font: calc(9px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-mono);
   letter-spacing: 0.04em;
   text-overflow: ellipsis;
   text-transform: none;
@@ -306,7 +306,7 @@ html[data-hermes-mode="dark"] .context-menu-editor-select {
   padding: 8px 9px;
   border: 1px solid var(--hermes-line);
   color: var(--hermes-muted);
-  font: 9px/1.4 var(--hermes-font-mono);
+  font: calc(9px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-mono);
 }
 
 .context-menu-editor-error,
@@ -333,7 +333,7 @@ html[data-hermes-mode="dark"] .context-menu-editor-select {
   padding: 0 10px;
   border: 1px solid var(--hermes-line-strong);
   border-radius: 0;
-  font: 9px/1 var(--hermes-font-mono);
+  font: calc(9px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -431,7 +431,7 @@ html[data-hermes-mode="dark"] .context-menu-editor-select {
 .context-menu-editor-card-chevron {
   flex: 0 0 auto;
   color: var(--hermes-muted);
-  font: 14px/1 var(--hermes-font-mono);
+  font: calc(14px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
 }
 
 .context-menu-editor .hermes-switch-input:checked + .hermes-switch-track {
@@ -461,7 +461,7 @@ html[data-hermes-mode="dark"] .context-menu-editor-select {
 .context-menu-editor .context-menu-context-input:checked + .context-menu-context-box::after {
   content: "✓";
   color: var(--hermes-primary-fg, var(--hermes-paper));
-  font: 10px/1 var(--hermes-font-mono);
+  font: calc(10px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
 }
 
 .context-menu-settings > label > span {

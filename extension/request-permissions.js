@@ -1,4 +1,5 @@
 import { initI18n, t, translateUiText } from './lib/i18n.mjs';
+import { applyStoredPanelAppearance } from './lib/apply-stored-appearance.mjs';
 import { getBrowserApi } from './lib/browser-api.mjs';
 import { browserMicrophoneSettingsUrl, detectBrowserProduct } from './lib/browser-runtime.mjs';
 
@@ -74,6 +75,7 @@ settingsButton?.addEventListener('click', openMicrophoneSettings);
 closeButton?.addEventListener('click', () => window.close());
 
 await initI18n();
+await applyStoredPanelAppearance(document.documentElement);
 
 (async () => {
   const state = await microphonePermissionState();

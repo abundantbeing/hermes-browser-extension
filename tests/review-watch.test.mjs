@@ -5,6 +5,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  fetchPullRequestDiff,
+  formatPullRequestFilesDiff,
+} from '../scripts/hermes-review-github-event.mjs';
+
+import {
   buildReviewTargets,
   cwdGhBinaryRisk,
   githubToken,
@@ -163,3 +168,46 @@ test('githubToken refuses to execute gh when the current directory is risky', ()
     },
   }), /Refusing to execute gh/);
 }));
+
+test('formatPullRequestFilesDiff preserves file metadata and available patches', () => {
+  const diff = formatPullRequestFilesDiff([
+    { filename: 'src/new.mjs', status: 'added', additions: 2, deletions: 0, changes: 2, patch: '@@ -0,0 +1,2 @@' },
+    { filename: 'assets/logo.png', status: 'modified', additions: 0, deletions: 0, changes: 0 },
+  ]);
+  assert.match(diff, /GitHub file-list fallback: 2 changed files/);
+  assert.match(diff, /src\/new\.mjs \| status=added \| additions=2/);
+  assert.match(diff, /@@ -0,0 \+1,2 @@/);
+  assert.match(diff, /assets\/logo\.png \| status=modified/);
+  assert.match(diff, /patch unavailable for this file \(modified\)/);
+});
+
+test('fetchPullRequestDiff falls back to paginated files for GitHub oversized diffs', async () => {
+  const originalFetch = globalThis.fetch;
+  const requests = [];
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url: String(url), options });
+    if (requests.length === 1) {
+      return new Response(JSON.stringify({
+        message: 'Sorry, the diff exceeded the maximum number of files (300).',
+        errors: [{ code: 'too_large' }],
+      }), { status: 406, headers: { 'content-type': 'application/json' } });
+    }
+    if (requests.length === 2) {
+      return new Response(JSON.stringify([
+        { filename: 'a.mjs', status: 'modified', additions: 1, deletions: 0, changes: 1, patch: '@@ -1 +1 @@' },
+      ]), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    throw new Error(`unexpected request: ${url}`);
+  };
+  try {
+    const diff = await fetchPullRequestDiff({ repo: 'owner/repo', number: 97, token: 'secret' });
+    assert.match(diff, /GitHub file-list fallback: 1 changed files/);
+    assert.match(diff, /a\.mjs/);
+    assert.equal(requests.length, 2);
+    assert.match(requests[0].url, /\/repos\/owner\/repo\/pulls\/97$/);
+    assert.match(requests[1].url, /\/repos\/owner\/repo\/pulls\/97\/files\?per_page=100&page=1$/);
+    assert.equal(requests[1].options.headers.Accept, 'application/vnd.github+json');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

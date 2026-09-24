@@ -100,7 +100,7 @@ test('Hermes Web Marketplace locks duplicate install gestures and keeps polished
 test('Hermes Web composer command pill centers its label without glyph hacks', () => {
   const parity = read('extension/app-parity.css');
   assert.match(parity, /\.composer-topline-actions button\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/s, 'Web composer command must center its label vertically and horizontally');
-  assert.match(parity, /\.composer-topline-actions button\s*\{[^}]*font:\s*9px\/1 var\(--hermes-font-mono\);/s, 'Web composer command label must use a readable 9px mono with exact line height');
+  assert.match(parity, /\.composer-topline-actions button\s*\{[^}]*font:\s*calc\(9px \* var\(--hermes-text-zoom, 1\)\)\/1 var\(--hermes-font-mono\);/s, 'Web composer command label must use a readable 9px mono with exact line height');
 });
 
 test('Hermes Web delegates all zoom and font behavior to the shared preference module without inline named-size validators', () => {
@@ -160,6 +160,10 @@ test('side panel exposes an explicit full-view handoff', () => {
   assert.match(html, /<button id="openFullViewButton"[^>]*type="button"/);
   assert.match(html, /id="openFullViewButton"[\s\S]*class="web-view-icon"/);
   assert.match(html, /id="newSessionButton"[\s\S]*id="openFullViewButton"[\s\S]*id="settingsButton"[\s\S]*id="connectionPill"/);
+  assert.match(html, /id="webDeprecationDialog"/);
+  assert.match(html, /web\.deprecation_title/);
+  assert.match(js, /showWebDeprecationNotice/);
+  assert.doesNotMatch(js, /openFullViewButton\?\.addEventListener\('click', \(\) => \{\s*openFullView\(/);
   assert.match(js, /buildFullTabHandoffUrl/);
   assert.match(js, /openHermesFullView/);
   assert.match(read('extension/background.js'), /HERMES_OPEN_FULL_VIEW/);
@@ -772,8 +776,8 @@ test('composer places its smaller online indicator beside CHAT and keeps model d
   assert.match(html, /class="composer-chat-label"[\s\S]*class="read-only-indicator online"[\s\S]*CHAT/, 'the composer status dot should live beside CHAT');
   assert.doesNotMatch(html, /class="composer-state">\s*<span class="read-only-indicator/, 'the status dot should not compete with the model control');
   assert.match(css, /\.read-only-indicator\s*\{[^}]*width:\s*5px;[^}]*height:\s*5px;/s, 'the relocated dot should be smaller');
-  assert.match(css, /\.composer-runtime-control strong\s*\{[^}]*font:\s*(?:[^;]*\s)?11px\//s, 'the model name should use a readable 11px line');
-  assert.match(css, /\.composer-runtime-control small\s*\{[^}]*font:\s*(?:[^;]*\s)?9px\//s, 'runtime metadata should use a readable 9px line');
+  assert.match(css, /\.composer-runtime-control strong\s*\{[^}]*font:\s*(?:[^;]*\s)?calc\(11px \* var\(--hermes-text-zoom, 1\)\)\//s, 'the model name should use a readable 11px line');
+  assert.match(css, /\.composer-runtime-control small\s*\{[^}]*font:\s*(?:[^;]*\s)?calc\(9px \* var\(--hermes-text-zoom, 1\)\)\//s, 'runtime metadata should use a readable 9px line');
 });
 
 test('Hermes Web keeps status beside the model, preserves light Cyberpunk, and uses theme-safe model search fields', () => {

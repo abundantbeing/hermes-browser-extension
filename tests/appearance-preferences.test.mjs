@@ -15,6 +15,8 @@ import {
   appearancePreferencesForSurface,
   withAppearancePreferenceUpdate,
   applyAppearancePreferences,
+  appearancePreferencesForTheme,
+  fontFamilyPreview,
 } from '../extension/lib/appearance-preferences.mjs';
 
 // ---------------------------------------------------------------------------
@@ -65,8 +67,25 @@ test('zoom constants encode the canonical presets, bounds, and step', () => {
 test('FONT_PROFILES lists every supported profile in canonical order', () => {
   assert.deepEqual(FONT_PROFILES, [
     'signature',
+    'collapse',
     'system-sans',
+    'times-new-roman',
+    'georgia',
+    'palatino',
+    'garamond',
+    'cambria',
+    'calibri',
+    'trebuchet',
     'high-legibility',
+    'montserrat',
+    'source-sans-3',
+    'ibm-plex-sans',
+    'outfit',
+    'space-grotesk',
+    'playfair-display',
+    'libre-baskerville',
+    'fraunces',
+    'cinzel',
     'mono',
     'custom-local',
   ]);
@@ -458,6 +477,17 @@ test('apply sets the normalized data-hermes-text-zoom and stable multiplier', ()
   assert.equal(bounds.style.getPropertyValue('--hermes-text-zoom'), '2');
 });
 
+test('bundled font profiles keep code mono and use the named family for UI text', () => {
+  const root = fakeRoot();
+  applyAppearancePreferences(root, { textZoomPercent: 100, fontProfile: 'montserrat' });
+  assert.equal(root.style.getPropertyValue('--hermes-font-ui'), '"Montserrat", "Segoe UI", sans-serif');
+  assert.equal(root.style.getPropertyValue('--hermes-font-display'), '"Montserrat", "Segoe UI", sans-serif');
+  applyAppearancePreferences(root, { textZoomPercent: 100, fontProfile: 'times-new-roman' });
+  assert.match(root.style.getPropertyValue('--hermes-font-ui'), /Times New Roman/);
+  applyAppearancePreferences(root, { textZoomPercent: 100, fontProfile: 'smokum' });
+  assert.equal(root.dataset.hermesFontProfile, 'signature', 'a removed poster face falls back to signature');
+});
+
 test('apply sets ui/display font variables for non-signature profiles', () => {
   for (const profile of ['system-sans', 'high-legibility', 'mono']) {
     const root = fakeRoot();
@@ -512,4 +542,13 @@ test('apply returns the normalized preferences it applied', () => {
     applyAppearancePreferences(root, { textZoomPercent: 999, fontProfile: 'high-legibility' }),
     { textZoomPercent: 200, fontProfile: 'high-legibility', customFontFamily: '' },
   );
+  assert.equal(root.dataset.hermesFontProfile, 'high-legibility');
+});
+
+test('a theme-owned font overlays the saved face until the user pins one', () => {
+  const saved = { textZoomPercent: 100, fontProfile: 'georgia', customFontFamily: '' };
+  assert.equal(appearancePreferencesForTheme(saved, 'cyberpunk').fontProfile, 'signature');
+  assert.equal(appearancePreferencesForTheme(saved, 'cyberpunk', { pinThemeFont: true }).fontProfile, 'georgia');
+  assert.equal(appearancePreferencesForTheme(saved, 'nous').fontProfile, 'georgia');
+  assert.equal(fontFamilyPreview('collapse'), '"Collapse", "Segoe UI", system-ui, sans-serif');
 });

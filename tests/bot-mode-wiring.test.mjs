@@ -380,7 +380,7 @@ test('the shared message renderer is the universal iMessage-style bubble layer',
   assert.match(sidepanelCss, /\.message\.assistant \{[^}]*border-radius: 18px 18px 18px 4px/);
   // User role labels are hidden; assistant headers keep real agent identity.
   assert.match(sidepanelCss, /\.message\.user \.message-role \{ display: none/);
-  assert.match(sidepanelCss, /\.message\.assistant \.message-role \{ font: 700 9px\/1 var\(--hermes-font-mono\)/);
+  assert.match(sidepanelCss, /\.message\.assistant \.message-role \{ font: 700 calc\(9px \* var\(--hermes-text-zoom, 1\)\)\/1 var\(--hermes-font-mono\)/);
   assert.match(sidepanelSource, /function assistantMessageRoleLabel/);
   // Markdown/streaming pipeline stays intact underneath the bubble layer.
   assert.match(sidepanelSource, /patchRenderedMessageContent/);

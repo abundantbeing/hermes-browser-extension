@@ -1805,6 +1805,28 @@ test('normalizeHermesModels applies curated context fallback when provider rows 
   assert.equal(models[0].contextTokens, 1000000);
 });
 
+test('normalizeHermesModels pairs Claude, Grok, and Nous rows with Hermes windows instead of requestable', () => {
+  const rows = [
+    { id: 'anthropic::claude-opus-5.5', rawModelId: 'claude-opus-5.5', label: 'Opus 5.5', provider: 'anthropic', context_length: 0 },
+    { id: 'anthropic::claude-sonnet-5', rawModelId: 'claude-sonnet-5', label: 'Sonnet 5', provider: 'anthropic', context_length: 0 },
+    { id: 'xai::grok-4.7', rawModelId: 'grok-4.7', label: 'Grok 4.7', provider: 'xai', context_length: 0 },
+    { id: 'xai::grok-4.6', rawModelId: 'grok-4.6', label: 'Grok 4.6', provider: 'xai', context_length: 256_000 },
+    { id: 'nous::mimo-v2.6-pro', rawModelId: 'mimo-v2.6-pro', label: 'MiMo V2.6 Pro', provider: 'nous', context_length: 0 },
+    { id: 'nous::mimo-v2.6-flash', rawModelId: 'mimo-v2.6-flash', label: 'MiMo V2.6 Flash', provider: 'nous', context_length: 0 },
+    { id: 'openai-codex::gpt-6-sol', rawModelId: 'gpt-6-sol', label: 'GPT-6 Sol', provider: 'openai-codex', context_length: 0 },
+    { id: 'openai-codex::gpt-6-sol-900k', rawModelId: 'gpt-6-sol-900k', label: 'GPT-6 Sol', provider: 'openai-codex', context_length: 900_000 },
+  ];
+  const models = normalizeHermesModels({ data: rows }, rows[0].id);
+  assert.equal(models.find((model) => model.rawModelId === 'claude-opus-5.5')?.contextTokens, 1_000_000);
+  assert.equal(models.find((model) => model.rawModelId === 'claude-sonnet-5')?.contextTokens, 1_000_000);
+  assert.equal(models.find((model) => model.rawModelId === 'grok-4.7')?.contextTokens, 500_000);
+  assert.equal(models.find((model) => model.rawModelId === 'grok-4.6')?.contextTokens, 500_000);
+  assert.equal(models.find((model) => model.rawModelId === 'mimo-v2.6-pro')?.contextTokens, 1_048_576);
+  assert.equal(models.find((model) => model.rawModelId === 'mimo-v2.6-flash')?.contextTokens, 1_048_576);
+  assert.equal(models.find((model) => model.rawModelId === 'gpt-6-sol')?.contextTokens, 272_000);
+  assert.equal(models.find((model) => model.rawModelId === 'gpt-6-sol-900k')?.contextTokens, 872_000);
+});
+
 test('normalizeHermesModels gives Grok 4.6 a 500k window instead of the grok-4 256k catch-all', () => {
   const omitted = normalizeHermesModels({ data: [{ id: 'x-ai/grok-4.6', rawModelId: 'grok-4.6', provider: 'x-ai', context_length: 0 }] }, 'x-ai/grok-4.6');
   assert.equal(omitted[0].contextTokens, 500_000);
@@ -1854,7 +1876,7 @@ test('normalizeHermesModels maps tiered Codex GPT-5.6 context variants by explic
 
     const largeVariant = `${model}-900k`;
     const largeCodexModels = normalizeHermesModels({ data: [{ id: `openai-codex::${largeVariant}`, rawModelId: largeVariant, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${largeVariant}`);
-    assert.equal(largeCodexModels[0].contextTokens, 900_000, `${largeVariant} should use the 900K Codex OAuth limit`);
+    assert.equal(largeCodexModels[0].contextTokens, 872_000, `${largeVariant} should use the 872K Codex catalog cap`);
 
     const directModels = normalizeHermesModels({ data: [{ id: `openai::${model}`, rawModelId: model, provider: 'openai', context_length: 0 }] }, `openai::${model}`);
     assert.equal(directModels[0].contextTokens, 1_050_000, `${model} should use the direct OpenAI limit`);
@@ -1867,10 +1889,10 @@ test('normalizeHermesModels maps tiered Codex GPT-5.6 context variants by explic
     provider: 'openai-codex',
     context_length: 0,
   }] }, 'openai-codex::gpt-5.6-luna');
-  assert.equal(labeledVariant[0].contextTokens, 900_000, 'a visible 900K model label should select the large Codex window');
+  assert.equal(labeledVariant[0].contextTokens, 872_000, 'a visible 900K model label should select the capped Codex window');
 
   const codexGpt54 = normalizeHermesModels({ data: [{ id: 'openai-codex::gpt-5.4', rawModelId: 'gpt-5.4', provider: 'openai-codex', context_length: 0 }] }, 'openai-codex::gpt-5.4');
-  assert.equal(codexGpt54[0].contextTokens, 900_000, 'exact gpt-5.4 should use the effective Codex OAuth limit');
+  assert.equal(codexGpt54[0].contextTokens, 872_000, 'exact gpt-5.4 should use the capped Codex catalog window');
 });
 
 test('normalizeHermesModels maps Codex ChatGPT 6 Astra context to 272k and 900k', () => {
@@ -1880,7 +1902,7 @@ test('normalizeHermesModels maps Codex ChatGPT 6 Astra context to 272k and 900k'
 
     const largeVariant = `${model}-900k`;
     const large = normalizeHermesModels({ data: [{ id: `openai-codex::${largeVariant}`, rawModelId: largeVariant, provider: 'openai-codex', context_length: 0 }] }, `openai-codex::${largeVariant}`);
-    assert.equal(large[0].contextTokens, 900_000, `${largeVariant} should use the 900K Codex OAuth limit`);
+    assert.equal(large[0].contextTokens, 872_000, `${largeVariant} should use the 872K Codex catalog cap`);
   }
 
   const labeled = normalizeHermesModels({ data: [{
@@ -1899,7 +1921,7 @@ test('normalizeHermesModels maps Codex ChatGPT 6 Astra context to 272k and 900k'
     provider: 'openai-codex',
     context_length: 272_000,
   }] }, 'openai-codex::gpt-6-astra');
-  assert.equal(labeled900k[0].contextTokens, 900_000, 'a visible 900K Astra label should repair the stale 272K advertisement');
+  assert.equal(labeled900k[0].contextTokens, 872_000, 'a visible 900K Astra label should repair the stale 272K advertisement');
 
   const alias = normalizeHermesModels({ data: [{
     id: 'codex::gpt-6-astra',
@@ -1910,7 +1932,7 @@ test('normalizeHermesModels maps Codex ChatGPT 6 Astra context to 272k and 900k'
   assert.equal(alias[0].contextTokens, 272_000);
 
   const unknownProvider = normalizeHermesModels({ data: [{ id: 'gpt-6-astra', context_length: 0 }] }, 'gpt-6-astra');
-  assert.equal(unknownProvider[0].contextTokens, 0, 'Astra must not invent a window without a provider');
+  assert.equal(unknownProvider[0].contextTokens, 1_050_000, 'Astra without a provider uses the Hermes direct-API window');
 });
 
 test('normalizeHermesModels keeps Codex OAuth exclusions at 272k', () => {
@@ -1928,7 +1950,7 @@ test('normalizeHermesModels keeps provider identity scoped and consistent for Co
     owned_by: 'codex',
     context_length: 0,
   }] }, 'xai::gpt-5.6-sol');
-  assert.equal(falsePositive[0].contextTokens, 0, 'incidental Codex metadata must not override an explicit non-Codex provider');
+  assert.equal(falsePositive[0].contextTokens, 1_050_000, 'a non-Codex provider keeps the Hermes model window instead of the Codex cap');
 
   const labelOnly = normalizeHermesModels({ data: [{
     id: 'gpt-5.6-terra',
@@ -1949,7 +1971,7 @@ test('normalizeHermesModels keeps provider identity scoped and consistent for Co
 
 test('normalizeHermesModels never invents a GPT-5.6 limit without a provider and trusts non-stale runtime metadata', () => {
   const unknownProvider = normalizeHermesModels({ data: [{ id: 'gpt-5.6-sol', context_length: 0 }] }, 'gpt-5.6-sol');
-  assert.equal(unknownProvider[0].contextTokens, 0);
+  assert.equal(unknownProvider[0].contextTokens, 1_050_000);
 
   const authoritativeRuntime = normalizeHermesModels({ data: [{ id: 'openai-codex::gpt-5.6-sol', rawModelId: 'gpt-5.6-sol', provider: 'openai-codex', context_length: 300_000 }] }, 'openai-codex::gpt-5.6-sol');
   assert.equal(authoritativeRuntime[0].contextTokens, 300_000);
@@ -1974,7 +1996,7 @@ test('normalizeHermesModels repairs only the known-stale Codex context advertise
       context_length: 272_000,
     }],
   }, 'openai-codex::gpt-5.6-luna-900k');
-  assert.equal(largeCodex[0].contextTokens, 900_000, 'the 900K Luna row must repair the stale 272K advertisement');
+  assert.equal(largeCodex[0].contextTokens, 872_000, 'the 900K Luna row must repair the stale 272K advertisement');
 
   const codexGpt54 = normalizeHermesModels({
     data: [{
@@ -1984,7 +2006,7 @@ test('normalizeHermesModels repairs only the known-stale Codex context advertise
       context_length: 272_000,
     }],
   }, 'openai-codex::gpt-5.4');
-  assert.equal(codexGpt54[0].contextTokens, 900_000, 'exact gpt-5.4 keeps its existing effective Codex limit');
+  assert.equal(codexGpt54[0].contextTokens, 872_000, 'exact gpt-5.4 keeps the capped Codex catalog window');
 
   const unrelated = normalizeHermesModels({
     data: [{ id: 'custom::gpt-5', rawModelId: 'gpt-5', provider: 'custom', context_length: 272_000 }],
@@ -3011,14 +3033,14 @@ test('context accounting reconciles the stale Codex advertisement even when cata
     });
 
     assert.equal(result.liveContextTokens, 7_000);
-    assert.equal(result.contextLimitTokens, 900_000);
+    assert.equal(result.contextLimitTokens, 872_000);
   }
 
   const alias = contextAccountingSnapshot({
     runtime: { provider: 'codex', model: 'gpt-5.6-sol-900k', context_length: 272_000 },
     modelContextTokens: 272_000,
   });
-  assert.equal(alias.contextLimitTokens, 900_000);
+  assert.equal(alias.contextLimitTokens, 872_000);
 
   const authoritative = contextAccountingSnapshot({
     runtime: { provider: 'openai-codex', model: 'gpt-5.6-sol', context_length: 300_000 },
@@ -3347,7 +3369,7 @@ test('discoverModelsFromRegistry flattens /api/model/options provider inventory'
   const normalized = normalizeHermesModels(result.models, 'openai-codex::gpt-5.6-sol');
   assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.5')?.contextTokens, 272_000);
   assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.6-sol')?.contextTokens, 272_000);
-  assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.6-sol-900k')?.contextTokens, 900_000);
+  assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.6-sol-900k')?.contextTokens, 872_000);
   assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.6-terra')?.contextTokens, 272_000);
   assert.equal(normalized.find((model) => model.rawModelId === 'gpt-5.6-luna')?.contextTokens, 272_000);
   assert.equal(result.models.at(-1).contextTokens, 1_000_000);
@@ -3859,7 +3881,30 @@ test('settings appearance defaults pin the zoom/font schema and keep textSize on
   assert.equal(ZOOM_MIN_PERCENT, 75);
   assert.equal(ZOOM_MAX_PERCENT, 200);
   assert.equal(ZOOM_STEP_PERCENT, 5);
-  assert.deepEqual(FONT_PROFILES, ['signature', 'system-sans', 'high-legibility', 'mono', 'custom-local']);
+  assert.deepEqual(FONT_PROFILES, [
+    'signature',
+    'collapse',
+    'system-sans',
+    'times-new-roman',
+    'georgia',
+    'palatino',
+    'garamond',
+    'cambria',
+    'calibri',
+    'trebuchet',
+    'high-legibility',
+    'montserrat',
+    'source-sans-3',
+    'ibm-plex-sans',
+    'outfit',
+    'space-grotesk',
+    'playfair-display',
+    'libre-baskerville',
+    'fraunces',
+    'cinzel',
+    'mono',
+    'custom-local',
+  ]);
 });
 
 test('settings text-zoom markup pins preset grid, numeric input, stepper, font select, and status IDs', () => {
@@ -4061,7 +4106,7 @@ test('side-panel Marketplace browser is localized, revision guarded, debounced, 
   assert.match(css, /\.settings-dialog \.marketplace-theme-search\s*\{[^}]*gap:\s*12px/s, 'search input and action need professional separation');
   assert.match(css, /\.settings-dialog \.marketplace-theme-search input,[\s\S]*?margin-top:\s*0/s, 'search input and action must share one visual baseline');
   assert.match(css, /\.marketplace-theme-search button\s*\{[^}]*background:\s*#f4f2eb[^}]*color:\s*#111/s, 'Search Themes must use the approved white action treatment');
-  assert.match(css, /\.marketplace-theme-head div > strong\s*\{[^}]*font:[^;}]*13px\/1\.15/s, 'Marketplace heading must retain the readable example scale');
+  assert.match(css, /\.marketplace-theme-head div > strong\s*\{[^}]*font:[^;}]*calc\(13px \* var\(--hermes-text-zoom, 1\)\)\/1\.15/s, 'Marketplace heading must retain the readable example scale');
   assert.match(css, /\.marketplace-theme-loading\s*\{[^}]*grid-template-columns:\s*repeat\(5/s, 'loading state must retain the example progress bars');
   assert.match(source, /marketplace-theme-loading/);
   assert.doesNotMatch(source, /marketplaceThemeResults\.innerHTML/);
@@ -4104,8 +4149,8 @@ test('side-panel Agent Theme Studio uses the validated theme pipeline and polish
   assert.match(css, /#customThemePreviewButton\s*\{[^}]*display:\s*grid[^}]*place-items:\s*center/s);
   assert.match(css, /#agentThemeCreateButton\s*\{[^}]*background:\s*#0505e8[^}]*color:\s*#fff/s, 'Ask Hermes must stay cobalt in Mono instead of becoming black');
   assert.match(css, /#agentThemeDescription,[\s\S]*?#agentThemeCreateButton\s*\{[^}]*height:\s*42px[^}]*margin-top:\s*0/s, 'Ask Hermes and its prompt must be exactly the same height');
-  assert.match(css, /\.agent-theme-studio > p\s*\{[^}]*font:[^;}]*9px\/1\.45/s, 'Agent Theme Studio helper copy must match the readable example');
-  assert.match(css, /\.custom-theme-json-field > strong\s*\{[^}]*font:[^;}]*10px\/1\.25/s, 'Paste Theme JSON heading must remain clearly separated and readable');
+  assert.match(css, /\.agent-theme-studio > p\s*\{[^}]*font:[^;}]*calc\(9px \* var\(--hermes-text-zoom, 1\)\)\/1\.45/s, 'Agent Theme Studio helper copy must match the readable example');
+  assert.match(css, /\.custom-theme-json-field > strong\s*\{[^}]*font:[^;}]*calc\(10px \* var\(--hermes-text-zoom, 1\)\)\/1\.25/s, 'Paste Theme JSON heading must remain clearly separated and readable');
   assert.match(css, /html\[data-hermes-theme="mono"\]\[data-hermes-mode="dark"\][\s\S]*?\.agent-theme-studio > p,[\s\S]*?\.agent-theme-status\s*\{\s*color:\s*#36ff7a/s, 'Mono dark must restore the green Agent Theme Studio copy');
 });
 

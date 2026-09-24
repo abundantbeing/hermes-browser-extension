@@ -14,8 +14,25 @@ export const ZOOM_DEFAULT_PERCENT = 100;
 
 export const FONT_PROFILES = Object.freeze([
   'signature',
+  'collapse',
   'system-sans',
+  'times-new-roman',
+  'georgia',
+  'palatino',
+  'garamond',
+  'cambria',
+  'calibri',
+  'trebuchet',
   'high-legibility',
+  'montserrat',
+  'source-sans-3',
+  'ibm-plex-sans',
+  'outfit',
+  'space-grotesk',
+  'playfair-display',
+  'libre-baskerville',
+  'fraunces',
+  'cinzel',
   'mono',
   'custom-local',
 ]);
@@ -25,6 +42,28 @@ export const FONT_PROFILE_DEFAULT = 'signature';
 const SYSTEM_SANS_STACK = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
 const HIGH_LEGIBILITY_STACK = 'Verdana, Tahoma, Arial, sans-serif';
 const MONO_STACK = 'var(--hermes-font-mono)';
+const PROFILE_STACKS = Object.freeze({
+  collapse: '"Collapse", "Segoe UI", system-ui, sans-serif',
+  'system-sans': SYSTEM_SANS_STACK,
+  'times-new-roman': '"Times New Roman", Times, "Liberation Serif", serif',
+  georgia: 'Georgia, "Times New Roman", serif',
+  palatino: 'Palatino, "Palatino Linotype", "Book Antiqua", Palatino, serif',
+  garamond: 'Garamond, "EB Garamond", "Times New Roman", serif',
+  cambria: 'Cambria, Georgia, serif',
+  calibri: 'Calibri, "Segoe UI", sans-serif',
+  trebuchet: '"Trebuchet MS", "Segoe UI", sans-serif',
+  'high-legibility': HIGH_LEGIBILITY_STACK,
+  montserrat: '"Montserrat", "Segoe UI", sans-serif',
+  'source-sans-3': '"Source Sans 3", "Segoe UI", sans-serif',
+  'ibm-plex-sans': '"IBM Plex Sans", "Segoe UI", sans-serif',
+  outfit: '"Outfit", "Segoe UI", sans-serif',
+  'space-grotesk': '"Space Grotesk", "Segoe UI", sans-serif',
+  'playfair-display': '"Playfair Display", Georgia, serif',
+  'libre-baskerville': '"Libre Baskerville", Georgia, serif',
+  fraunces: '"Fraunces", Georgia, serif',
+  cinzel: '"Cinzel", Georgia, serif',
+  mono: MONO_STACK,
+});
 
 const LEGACY_TEXT_SIZE_ZOOM = Object.freeze({
   default: 100,
@@ -103,6 +142,29 @@ export function stepTextZoomPercent(value, direction) {
   return current;
 }
 
+export function fontFamilyPreview(profile, customFontFamily = '') {
+  if (profile === 'signature') return '"Rules Gothic Compressed", "Rules Variable", sans-serif';
+  if (profile === 'custom-local') {
+    const family = sanitizeLocalFontFamily(customFontFamily);
+    return family ? `"${family}", ${SYSTEM_SANS_STACK}` : SYSTEM_SANS_STACK;
+  }
+  return PROFILE_STACKS[profile] || SYSTEM_SANS_STACK;
+}
+
+export const THEME_OWNED_FONTS = Object.freeze(['cyberpunk']);
+
+export function themeOwnsFont(themeId) {
+  return THEME_OWNED_FONTS.includes(String(themeId || ''));
+}
+
+export function appearancePreferencesForTheme(preferences, themeId, { pinThemeFont = false } = {}) {
+  const normalized = normalizedPreferences(preferences);
+  if (!pinThemeFont && themeOwnsFont(themeId)) {
+    return { ...normalized, fontProfile: 'signature' };
+  }
+  return normalized;
+}
+
 export function sanitizeLocalFontFamily(value) {
   if (typeof value !== 'string') return '';
   // Control characters are rejected before trimming so a value that only
@@ -168,23 +230,22 @@ export function withAppearancePreferenceUpdate(settings, surface, patch) {
 }
 
 function fontStackForProfile(profile, customFontFamily) {
-  if (profile === 'system-sans') return SYSTEM_SANS_STACK;
-  if (profile === 'high-legibility') return HIGH_LEGIBILITY_STACK;
-  if (profile === 'mono') return MONO_STACK;
   if (profile === 'custom-local') {
     return `"${customFontFamily}", ${SYSTEM_SANS_STACK}`;
   }
-  return SYSTEM_SANS_STACK;
+  return PROFILE_STACKS[profile] || SYSTEM_SANS_STACK;
 }
 
 export function applyAppearancePreferences(root, preferences) {
   const normalized = normalizedPreferences(preferences);
   root.dataset.hermesTextZoom = String(normalized.textZoomPercent);
+  root.dataset.hermesFontProfile = normalized.fontProfile;
   root.style.setProperty('--hermes-text-zoom', String(normalized.textZoomPercent / 100));
 
   if (normalized.fontProfile === 'signature') {
-    // Signature restores theme-controlled typography by removing the inline
-    // overrides, making built-in theme font variables authoritative again.
+    // Signature restores the site pair: Rules Variable for UI, Rules Gothic
+    // Compressed for headlines. Removing the inline overrides makes those
+    // tokens authoritative again.
     root.style.removeProperty('--hermes-font-ui');
     root.style.removeProperty('--hermes-font-display');
   } else {

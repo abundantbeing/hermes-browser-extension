@@ -28,6 +28,10 @@ backups/
 .env.*
 *.bak
 
+# Licensed signature faces stay on the build machine. Do not publish them.
+extension/assets/fonts/Rules*.woff2
+extension/assets/fonts/google/Smokum-400.woff2
+
 # Logs
 *.log
 npm-debug.log*

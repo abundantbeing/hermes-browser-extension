@@ -103,29 +103,101 @@
     "message": "Riduci zoom del testo",
     "description": "Runtime interface message appearance.decrease_text_zoom"
   },
+  "runtime_appearance_font_calibri": {
+    "message": "Calibri",
+    "description": "Runtime interface message appearance.font_calibri"
+  },
+  "runtime_appearance_font_cambria": {
+    "message": "Cambria",
+    "description": "Runtime interface message appearance.font_cambria"
+  },
+  "runtime_appearance_font_cinzel": {
+    "message": "Cinzel",
+    "description": "Runtime interface message appearance.font_cinzel"
+  },
+  "runtime_appearance_font_collapse": {
+    "message": "Collapse",
+    "description": "Runtime interface message appearance.font_collapse"
+  },
   "runtime_appearance_font_family": {
     "message": "Famiglia di caratteri",
     "description": "Runtime interface message appearance.font_family"
+  },
+  "runtime_appearance_font_fraunces": {
+    "message": "Fraunces",
+    "description": "Runtime interface message appearance.font_fraunces"
+  },
+  "runtime_appearance_font_garamond": {
+    "message": "Garamond",
+    "description": "Runtime interface message appearance.font_garamond"
+  },
+  "runtime_appearance_font_georgia": {
+    "message": "Georgia",
+    "description": "Runtime interface message appearance.font_georgia"
   },
   "runtime_appearance_font_high_legibility": {
     "message": "Elevata leggibilità",
     "description": "Runtime interface message appearance.font_high_legibility"
   },
+  "runtime_appearance_font_ibm_plex": {
+    "message": "IBM Plex Sans",
+    "description": "Runtime interface message appearance.font_ibm_plex"
+  },
   "runtime_appearance_font_installed_local": {
     "message": "Carattere locale installato",
     "description": "Runtime interface message appearance.font_installed_local"
+  },
+  "runtime_appearance_font_libre_baskerville": {
+    "message": "Libre Baskerville",
+    "description": "Runtime interface message appearance.font_libre_baskerville"
   },
   "runtime_appearance_font_monospace": {
     "message": "Monospace",
     "description": "Runtime interface message appearance.font_monospace"
   },
+  "runtime_appearance_font_montserrat": {
+    "message": "Montserrat",
+    "description": "Runtime interface message appearance.font_montserrat"
+  },
+  "runtime_appearance_font_outfit": {
+    "message": "Outfit",
+    "description": "Runtime interface message appearance.font_outfit"
+  },
+  "runtime_appearance_font_palatino": {
+    "message": "Palatino",
+    "description": "Runtime interface message appearance.font_palatino"
+  },
+  "runtime_appearance_font_playfair": {
+    "message": "Playfair Display",
+    "description": "Runtime interface message appearance.font_playfair"
+  },
   "runtime_appearance_font_signature": {
     "message": "Firma Hermes",
     "description": "Runtime interface message appearance.font_signature"
   },
+  "runtime_appearance_font_smokum": {
+    "message": "Smokum",
+    "description": "Runtime interface message appearance.font_smokum"
+  },
+  "runtime_appearance_font_source_sans": {
+    "message": "Source Sans 3",
+    "description": "Runtime interface message appearance.font_source_sans"
+  },
+  "runtime_appearance_font_space_grotesk": {
+    "message": "Space Grotesk",
+    "description": "Runtime interface message appearance.font_space_grotesk"
+  },
   "runtime_appearance_font_system_sans": {
     "message": "Sans di sistema",
     "description": "Runtime interface message appearance.font_system_sans"
+  },
+  "runtime_appearance_font_times": {
+    "message": "Times New Roman",
+    "description": "Runtime interface message appearance.font_times"
+  },
+  "runtime_appearance_font_trebuchet": {
+    "message": "Trebuchet MS",
+    "description": "Runtime interface message appearance.font_trebuchet"
   },
   "runtime_appearance_increase_text_zoom": {
     "message": "Aumenta zoom del testo",
@@ -1458,6 +1530,10 @@
   "runtime_ui_adjust": {
     "message": "Regolare",
     "description": "Runtime interface message ui.adjust"
+  },
+  "runtime_ui_adjust_extension_text_without_changing_browser_zoom": {
+    "message": "Adjust text across Hermes Browser surfaces without changing browser zoom.",
+    "description": "Runtime interface message ui.adjust.extension.text.without.changing.browser.zoom"
   },
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
     "message": "Regola la leggibilità del pannello laterale senza modificare lo zoom del browser.",
@@ -5482,5 +5558,17 @@
   "runtime_wake_turn_on": {
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
+  },
+  "runtime_web_deprecation_banner": {
+    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
+    "description": "Runtime interface message web.deprecation_banner"
+  },
+  "runtime_web_deprecation_body": {
+    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
+    "description": "Runtime interface message web.deprecation_body"
+  },
+  "runtime_web_deprecation_title": {
+    "message": "A new surface is being worked on",
+    "description": "Runtime interface message web.deprecation_title"
   }
 }

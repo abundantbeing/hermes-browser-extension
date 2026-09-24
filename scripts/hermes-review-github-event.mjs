@@ -233,6 +233,50 @@ export async function githubFetch(path, { method = 'GET', token, body, headers =
   return payload;
 }
 
+const MAX_PULL_REQUEST_FILE_PAGES = 30;
+
+export async function fetchPullRequestFiles({ repo, number, token }) {
+  const files = [];
+  for (let page = 1; page <= MAX_PULL_REQUEST_FILE_PAGES; page += 1) {
+    const response = await fetch(`https://api.github.com/repos/${repo}/pulls/${number}/files?per_page=100&page=${page}`, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        ...authHeaders(token),
+      },
+    });
+    const text = await response.text();
+    if (!response.ok) throw new Error(`GitHub pull request files fetch failed (${response.status}): ${text.slice(0, 500)}`);
+    let payload = [];
+    try {
+      payload = text ? JSON.parse(text) : [];
+    } catch {
+      throw new Error('GitHub pull request files fetch returned invalid JSON.');
+    }
+    if (!Array.isArray(payload) || payload.length === 0) break;
+    files.push(...payload);
+    if (payload.length < 100) break;
+  }
+  return files;
+}
+
+export function formatPullRequestFilesDiff(files = []) {
+  const list = Array.isArray(files) ? files : [];
+  const blocks = [`[GitHub file-list fallback: ${list.length} changed files]`];
+  for (const file of list) {
+    const filename = String(file?.filename || file?.previous_filename || '(unknown file)');
+    const previous = file?.previous_filename && file.previous_filename !== file.filename
+      ? ` from ${file.previous_filename}`
+      : '';
+    const metadata = `${filename}${previous} | status=${file?.status || 'modified'} | additions=${Number(file?.additions || 0)} | deletions=${Number(file?.deletions || 0)} | changes=${Number(file?.changes || 0)}`;
+    const patch = typeof file?.patch === 'string' && file.patch
+      ? file.patch
+      : `[patch unavailable for this file${file?.status ? ` (${file.status})` : ''}]`;
+    blocks.push(`\nFILE: ${metadata}\n${patch}`);
+  }
+  return blocks.join('\n');
+}
+
 export async function fetchPullRequestDiff({ repo, number, token }) {
   const response = await fetch(`https://api.github.com/repos/${repo}/pulls/${number}`, {
     headers: {
@@ -241,8 +285,17 @@ export async function fetchPullRequestDiff({ repo, number, token }) {
     },
   });
   const text = await response.text();
-  if (!response.ok) throw new Error(`GitHub diff fetch failed (${response.status}): ${text.slice(0, 500)}`);
-  return text;
+  if (response.ok) return text;
+
+  // GitHub returns 406 for very large PR diffs (notably PRs with more than
+  // 300 changed files). The documented recovery is the paginated file-list
+  // endpoint, whose `patch` fields preserve reviewable hunks when available.
+  if (response.status === 406 && /too_large|max(?:imum)? number of files/i.test(text)) {
+    const files = await fetchPullRequestFiles({ repo, number, token });
+    return formatPullRequestFilesDiff(files);
+  }
+
+  throw new Error(`GitHub diff fetch failed (${response.status}): ${text.slice(0, 500)}`);
 }
 
 // Parse raw SSE lines from a streaming /v1/chat/completions review response.

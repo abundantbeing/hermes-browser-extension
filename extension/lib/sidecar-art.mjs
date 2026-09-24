@@ -10,6 +10,13 @@ export const SIDECAR_ART = Object.freeze([
   'assets/img/sidecar-art/sandbox.webp',
   'assets/img/sidecar-art/footer.webp',
   'assets/img/sidecar-art/slate.webp',
+  'assets/img/sidecar-art/cloud-always-on.webp',
+  'assets/img/sidecar-art/cloud-connect.webp',
+  'assets/img/sidecar-art/cloud-deploy.webp',
+  'assets/img/sidecar-art/cloud-scale.webp',
+  'assets/img/sidecar-art/cloud-schedule.webp',
+  'assets/img/sidecar-art/cloud-vaporwave.webp',
+  'assets/img/sidecar-art/cloud-footer.webp',
 ]);
 
 /** Pick the art for this panel load, never repeating the previous choice. */

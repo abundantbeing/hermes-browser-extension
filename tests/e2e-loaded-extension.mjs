@@ -2785,16 +2785,17 @@ async function main() {
     assert.ok(openDestinationState.labels.some((label) => label.includes('Hermes Web')));
     await saveScreenshot(fixture, INLINE_OPEN_SESSION_SCREENSHOT, { captureBeyondViewport: false });
     await fixture.evaluate(`document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('[data-session-surface="web"]').click()`);
-    const openedWebSession = await waitFor(() => setup.evaluate(`(async () => {
-      const tabs = await chrome.tabs.query({});
-      const tab = tabs.find((item) => String(item.url || '').includes('sourceSurfaceId=inline-assist'));
-      if (!tab) return null;
-      const parsed = new URL(tab.url);
-      return { sessionId: parsed.searchParams.get('sessionId'), path: parsed.pathname };
+    const webNotice = await waitFor(() => fixture.evaluate(`(() => {
+      const root = document.querySelector('#hermes-inline-draft-host')?.shadowRoot;
+      const title = root?.querySelector('.route-title')?.textContent || '';
+      return title.includes('new surface') ? title : null;
     })()`));
-    assert.equal(openedWebSession.sessionId, retainedAssistSessionId);
-    assert.match(openedWebSession.path, /\/app\.html$/);
-    await waitFor(() => fixture.evaluate(`document.querySelector('#hermes-inline-draft-host')?.shadowRoot?.querySelector('.panel')?.hidden === true`));
+    assert.match(webNotice, /new surface/i);
+    const openedWebSession = await setup.evaluate(`(async () => {
+      const tabs = await chrome.tabs.query({});
+      return tabs.some((item) => String(item.url || '').includes('sourceSurfaceId=inline-assist'));
+    })()`);
+    assert.equal(openedWebSession, false, 'the Hermes Web choice must show the deprecation notice instead of opening a tab');
 
     await fixture.evaluate(`document.querySelector('#hermes-inline-draft-host').shadowRoot.querySelector('.close').click()`);
     await setup.evaluate(`(async () => {
