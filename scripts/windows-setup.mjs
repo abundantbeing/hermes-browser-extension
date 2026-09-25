@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { hermesHomePath } from './hermes-home.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(scriptDir, '..');
@@ -217,7 +218,7 @@ async function probePairing() {
 }
 
 function readApiServerKey() {
-  const envFile = path.join(os.homedir(), '.hermes', '.env');
+  const envFile = hermesHomePath('.env');
   if (!fs.existsSync(envFile)) return { envFile, key: '', reason: 'env-not-found' };
   const text = fs.readFileSync(envFile, 'utf8');
   const match = text.match(/^API_SERVER_KEY=(.+)$/m);
@@ -278,7 +279,7 @@ async function main() {
       } else {
         recordSkippedSecretCopy('copy-api-server-key-fallback-to-clipboard');
       }
-      pairing.fallback = { envFile: path.join(os.homedir(), '.hermes', '.env'), reason: 'dry-run', copied: false };
+      pairing.fallback = { envFile: hermesHomePath('.env'), reason: 'dry-run', copied: false };
     } else {
       const key = readApiServerKey();
       if (useClip) {

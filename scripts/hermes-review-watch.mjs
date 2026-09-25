@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
+
+import { hermesHomePath } from './hermes-home.mjs';
 
 import {
   applyReviewLabels,
@@ -21,10 +22,10 @@ import {
 
 const DEFAULT_REPO = 'abundantbeing/hermes-browser-extension';
 const DEFAULT_GATEWAY_URL = 'http://127.0.0.1:8642';
-const DEFAULT_STATE_FILE = path.join(os.homedir(), '.hermes', 'hermes-browser-review-state.json');
+const DEFAULT_STATE_FILE = hermesHomePath('hermes-browser-review-state.json');
 
 function readEnvFileValue(name) {
-  const envPath = path.join(os.homedir(), '.hermes', '.env');
+  const envPath = hermesHomePath('.env');
   if (!fs.existsSync(envPath)) return '';
   const match = fs.readFileSync(envPath, 'utf8').match(new RegExp(`^${name}=(.*)$`, 'm'));
   return match?.[1]?.trim() || '';
