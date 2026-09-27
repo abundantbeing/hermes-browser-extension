@@ -294,7 +294,7 @@ test('Hermes Web recovers accepted local stream turns without replaying and pres
 test('both Browser surfaces preserve provider-rejected drafts without marking Hermes unreachable', () => {
   assert.match(sidepanelSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*text/);
   const sidepanelRejectionStart = sidepanelSource.lastIndexOf('const requestFailure = turnRequestFailureState(error)');
-  const sidepanelRejectionBranch = sidepanelSource.slice(sidepanelRejectionStart, sidepanelSource.indexOf('const diagnostic = classifyGatewayError(error)', sidepanelRejectionStart));
+  const sidepanelRejectionBranch = sidepanelSource.slice(sidepanelRejectionStart, sidepanelSource.indexOf('const diagnostic = classifyGatewayError(error,', sidepanelRejectionStart));
   assert.match(sidepanelRejectionBranch, /Gateway remains connected/);
   assert.match(sidepanelRejectionBranch, /streamView\.update/);
   assert.doesNotMatch(sidepanelRejectionBranch, /addMessage\('system'/);

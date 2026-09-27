@@ -68,6 +68,7 @@ export function buildSupportDiagnostics({
   selectedModel = {},
   contextScope = {},
   lastError = null,
+  gatewayDiagnostic = null,
   extractorMode = '',
 } = {}) {
   const product = browserProduct || detectBrowserProduct({ userAgent, extensionUrl: extensionOrigin });
@@ -138,6 +139,17 @@ export function buildSupportDiagnostics({
   if (warnings.length) {
     lines.push('', '## Capability warnings');
     for (const warning of warnings.slice(0, 8)) lines.push(`- ${safeLine(warning)}`);
+  }
+
+  if (gatewayDiagnostic && gatewayDiagnostic.kind) {
+    lines.push('', '## Gateway failure classification');
+    lines.push(bullet('Kind', gatewayDiagnostic.kind));
+    lines.push(bullet('HTTP status', gatewayDiagnostic.status ? String(gatewayDiagnostic.status) : 'none reported'));
+    lines.push(bullet('Evidence', gatewayDiagnostic.evidence || 'message'));
+    lines.push(bullet('Server reachable', typeof gatewayDiagnostic.serverReachable === 'boolean' ? yesNo(gatewayDiagnostic.serverReachable) : 'unknown'));
+    lines.push(bullet('Retryable', yesNo(gatewayDiagnostic.retryable)));
+    lines.push(bullet('Recovery', gatewayDiagnostic.recovery || 'none'));
+    lines.push(bullet('Detail', gatewayDiagnostic.detail || NOT_AVAILABLE));
   }
 
   if (lastError) {

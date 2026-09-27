@@ -434,28 +434,30 @@ export function gatewayConnectionTroubleshooting({
   gatewayUrl = DEFAULT_SETTINGS.gatewayUrl,
   state = 'unreachable',
   probeDetail = '',
+  probeDiagnostic = null,
 } = {}) {
   const mode = normalizeGatewayMode(gatewayMode);
   const normalizedUrl = normalizeGatewayUrl(gatewayUrl || DEFAULT_SETTINGS.gatewayUrl);
   if (state === 'connected') return '';
+  const diagnostic = probeDiagnostic && probeDiagnostic.kind
+    ? probeDiagnostic
+    : classifyGatewayError(probeDetail, { url: normalizedUrl });
   if (state === 'degraded') {
-    const diagnostic = classifyGatewayError(probeDetail);
-    if (diagnostic.kind === 'upstream-runtime') return diagnostic.detail;
-    const detail = String(probeDetail || '').trim();
+    if (diagnostic.kind !== 'unknown') return diagnostic.detail;
+    const detail = sanitizeGatewayDiagnosticText(probeDetail, { maxLength: 200 });
     const suffix = detail ? ` Last degraded probe: ${detail}.` : '';
-    return `Hermes API server is reachable at ${normalizedUrl}, but a secondary Browser capability is degraded.${suffix}`;
+    return `Hermes API server is reachable at ${normalizedUrl}, but a secondary Browser capability reported a problem. Run a connection check to confirm the gateway still answers.${suffix}`;
   }
-  const diagnostic = classifyGatewayError(probeDetail);
-  if (diagnostic.kind !== 'unknown' && !(mode === 'local-api' && diagnostic.kind === 'network-cors')) return diagnostic.detail;
+  if (diagnostic.kind !== 'unknown') return diagnostic.detail;
   if (mode === 'remote-dashboard') {
     return `Remote Hermes dashboard is not connected at ${normalizedUrl}. Open the dashboard in a browser tab and sign in, then reconnect.`;
   }
   if (mode === 'remote-api') {
     return `Remote Hermes API is not reachable at ${normalizedUrl}. Check API_SERVER_ENABLED, host/port, firewall or VPN routing, and CORS for this extension origin.`;
   }
-  const detail = String(probeDetail || '').trim();
+  const detail = sanitizeGatewayDiagnosticText(probeDetail, { maxLength: 200 });
   const suffix = detail ? ` Last probe: ${detail}.` : '';
-  return `Hermes API server is not listening at ${normalizedUrl}. If this started after updating to Hermes Agent v0.18, restart Hermes Gateway after the update; if it still stays disconnected, the Hermes API server dependency aiohttp may be missing from the Hermes venv. Run Hermes status/doctor or reinstall/update Hermes, then reconnect.${suffix}`;
+  return `Hermes API server at ${normalizedUrl} did not answer the Browser connection probe. Start Hermes Gateway (Hermes status/doctor can verify it), confirm the API server URL and port, then run a connection check again.${suffix}`;
 }
 
 function gatewayErrorText(value = '') {
@@ -474,57 +476,357 @@ function gatewayErrorText(value = '') {
   return String(value);
 }
 
-export function classifyGatewayError(value = '') {
-  const rawText = gatewayErrorText(value);
-  const text = rawText.replace(/\s+/g, ' ').trim();
-  const lower = text.toLowerCase();
+/**
+ * Reduce arbitrary gateway failure text to a short, display-safe sentence.
+ * Browser must never show a raw traceback, a local filesystem path, a wheel
+ * path, or a credential, so every diagnostic surface runs its evidence text
+ * through here first.
+ */
+export function sanitizeGatewayDiagnosticText(value = '', { maxLength = 240 } = {}) {
+  const limit = Math.max(40, Number(maxLength) || 240);
+  let text = String(value ?? '')
+    .replace(/\r\n?/g, ' ')
+    .replace(/Traceback \(most recent call last\):?/gi, ' ')
+    .replace(/File\s+["'][^"']*["'],\s+line\s+\d+(?:,\s+in\s+[^\s]+)?/gi, ' ')
+    .replace(/\bat [A-Za-z0-9_./\\:-]+\.py:\d+/g, ' ');
+  text = redactSensitiveText(text)
+    .replace(/(?:Authorization|Cookie|X-Api-Key|api[_-]?key|token)\s*[:=]\s*[^\s]+/gi, '[redacted]')
+    .replace(/[A-Za-z]:\\[^\s'"]+/g, '[path]')
+    .replace(/(^|[\s"'=(])(?:[A-Za-z]:)?\/(?:home|Users|usr|opt|tmp|var|root|etc|mnt|Library)\/[^\s'"]*/g, '$1[path]')
+    .replace(/\/[^\s'"]*site-packages[^\s'"]*/gi, '[path]')
+    .replace(/\b[\w.+-]*\.(?:pyd|so|dll|whl|py)\b/gi, '[module]')
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  if (text.length > limit) text = `${text.slice(0, limit)}...`;
+  return text;
+}
 
-  if (/int\(\).*nonetype|nonetype|traceback|cua-driver|computer_use|computer-use/.test(lower)) {
+function gatewayStructuredStatus(value = null, explicitStatus = null) {
+  const record = value && typeof value === 'object' ? value : {};
+  for (const candidate of [explicitStatus, record.httpStatus, record.status]) {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed) && parsed >= 100 && parsed <= 599) return Math.trunc(parsed);
+  }
+  return null;
+}
+
+// Only parse a status from text that actually frames a status: a leading bare
+// code (for example "404: Not Found") or a code introduced by a status word.
+// A three-digit number used for anything else (ports, ids, byte counts) must
+// not be mistaken for an HTTP status.
+function gatewayStatusFromText(text = '') {
+  const source = String(text || '');
+  const contextual = source.match(/(?:^|[\s(])(?:http(?:\s+status)?|status(?:\s+code)?|error(?:\s+code)?|response(?:\s+code)?|code|returned)\s*[:=#]?\s*([1-5]\d\d)(?:[\s:).,]|$)/i);
+  const leading = source.match(/^\s*(?:HTTP\s+)?([1-5]\d\d)(?:[\s:).,]|$)/i);
+  const match = contextual || leading;
+  if (!match) return null;
+  const parsed = Number(match[1]);
+  return parsed >= 100 && parsed <= 599 ? parsed : null;
+}
+
+const GATEWAY_INIT_SIGNATURE = /traceback|pydantic|failed to initialize|\bmodulenotfounderror\b|\bimporterror\b|no module named|cannot import|site-packages|\.pyd\b|incompatible wheel|invalid win32/;
+const GATEWAY_RUNTIME_SIGNATURE = /\battributeerror\b|\bruntimeerror\b|int\(\) argument|nonetype|computer_use|cua-driver|computer-use/;
+const GATEWAY_CORS_SIGNATURE = /\bcors\b|cross-origin|cross origin/;
+// Pre-flight refusals: the browser never opened a connection, so delivery is
+// provably not attempted and the draft is safe to resend.
+const GATEWAY_REFUSAL_SIGNATURE = /connection refused|econnrefused|err_connection_refused|err_address_unreachable|err_name_not_resolved|enotfound|err_internet_disconnected/;
+// Mid-flight interruptions: the request may already have reached Hermes before
+// the socket dropped, so delivery is uncertain and must never be reported as
+// "nothing was delivered".
+const GATEWAY_INTERRUPT_SIGNATURE = /econnreset|err_connection_reset|err_connection_closed|err_connection_aborted|err_network_changed|socket hang up|connection reset|other side closed|broken pipe|epipe/;
+const GATEWAY_TIMEOUT_SIGNATURE = /timed out|timeout|etimedout|err_connection_timed_out|err_timed_out|deadline exceeded/;
+const GATEWAY_FETCH_SIGNATURE = /failed to fetch|networkerror|network error|load failed|fetch failed|typeerror: fetch|could not fetch|http2 protocol error|err_http2/;
+
+function gatewayTargetLabel(url = '') {
+  return String(url || '').trim() || 'the Hermes gateway';
+}
+
+/**
+ * Classify a gateway failure from the strongest available evidence.
+ *
+ * Structured HTTP status/body always wins over message text. A bare fetch
+ * failure is genuinely ambiguous: the browser does not report whether the
+ * connection was refused or the cross-origin request was blocked. An answered
+ * /health probe cannot prove how a later request failed. No branch exposes
+ * raw exception text, and none of them restarts or silently switches
+ * transports.
+ */
+export function classifyGatewayError(value = '', {
+  status = null,
+  body = '',
+  url = '',
+  healthOk = null,
+} = {}) {
+  const remoteDiagnostic = value && typeof value === 'object' ? value.remoteDiagnostic : null;
+  if (remoteDiagnostic && typeof remoteDiagnostic === 'object' && remoteDiagnostic.kind && remoteDiagnostic.kind !== 'unknown') {
+    const remoteDetail = sanitizeGatewayDiagnosticText(
+      remoteDiagnostic.detail || 'The Browser Extension could not classify this remote gateway response.',
+      { maxLength: 400 },
+    );
     return {
-      kind: 'upstream-runtime',
-      probeStatus: 'degraded',
-      title: 'Hermes runtime exception',
-      detail: 'Hermes API server is reachable, but upstream Hermes Agent raised a runtime exception. This often points at an optional runtime/tool issue such as computer_use/cua-driver, not Browser auth, pairing, CORS, or packaging.',
-      userMessage: 'Hermes gateway traceback detected inside upstream Hermes Agent. Browser can stay connected; check Hermes logs and run `hermes computer-use doctor` if computer_use/cua-driver appears in the traceback.',
+      kind: remoteDiagnostic.kind,
+      probeStatus: 'unreachable',
+      title: remoteDiagnostic.title || 'Remote setup issue',
+      detail: remoteDetail,
+      userMessage: remoteDetail,
+      status: gatewayStructuredStatus(value, status),
+      evidence: 'remote-diagnostic',
+      serverReachable: null,
+      retryable: true,
+      recovery: remoteDiagnostic.kind === 'api-auth' ? 'fix-auth' : 'fix-origin',
+      hint: '',
     };
   }
 
-  if (/\b(401|403)\b|unauthorized|forbidden|invalid api key|invalid token|permission denied/.test(lower)) {
+  const rawText = gatewayErrorText(value);
+  const bodyText = gatewayErrorText(body);
+  const text = `${rawText} ${bodyText}`.replace(/\s+/g, ' ').trim();
+  const lower = text.toLowerCase();
+  const structuredStatus = gatewayStructuredStatus(value, status);
+  const httpStatus = structuredStatus ?? gatewayStatusFromText(text);
+  const evidence = structuredStatus ? 'http-status' : (String(rawText || '').trim() ? 'message' : (String(bodyText || '').trim() ? 'body' : 'none'));
+  const target = gatewayTargetLabel(url);
+
+  if (httpStatus === 401 || httpStatus === 403
+    || (!httpStatus && /\b(401|403)\b|unauthorized|forbidden|invalid api key|invalid token|permission denied/.test(lower))) {
     return {
       kind: 'auth',
       probeStatus: 'unreachable',
       title: 'Hermes authentication failed',
       detail: 'Hermes API rejected the request. Check the Browser API token in Settings and make sure it matches the running Hermes gateway.',
       userMessage: 'Hermes API token was rejected. Update the Browser Settings token, then reconnect.',
+      status: httpStatus,
+      evidence,
+      serverReachable: true,
+      retryable: false,
+      recovery: 'fix-auth',
+      hint: '',
     };
   }
 
-  if (/cors|cross-origin|failed to fetch|networkerror|load failed|typeerror: fetch/.test(lower)) {
-    return {
-      kind: 'network-cors',
-      probeStatus: 'unreachable',
-      title: 'Hermes network/CORS failure',
-      detail: 'Browser could not reach the Hermes API. Check the gateway URL, firewall/VPN routing, and CORS/origin settings for this extension.',
-      userMessage: 'Browser could not reach Hermes because the request failed at the network/CORS layer.',
-    };
-  }
-
-  if (/\b(404|405)\b|not found|method not allowed|route missing|missing route/.test(lower)) {
+  if (httpStatus === 404 || httpStatus === 405
+    || (!httpStatus && /not found|method not allowed|route missing|missing route/.test(lower))) {
     return {
       kind: 'route-missing',
       probeStatus: 'unreachable',
       title: 'Hermes route unavailable',
-      detail: 'The Hermes gateway route is unavailable on this runtime. Update/restart Hermes or use the documented fallback mode when available.',
+      detail: `The Hermes gateway on this runtime does not expose the requested route${httpStatus ? ` (HTTP ${httpStatus})` : ''}. Update or restart Hermes Agent so the route exists, then retry.`,
       userMessage: 'This Hermes runtime does not expose the requested Browser route yet.',
+      status: httpStatus,
+      evidence,
+      serverReachable: true,
+      retryable: false,
+      recovery: 'check-route',
+      hint: '',
     };
   }
 
+  const initSignature = GATEWAY_INIT_SIGNATURE.test(lower);
+  const runtimeSignature = initSignature || GATEWAY_RUNTIME_SIGNATURE.test(lower);
+  const statusSuffix = httpStatus ? ` (HTTP ${httpStatus})` : '';
+  // Rate limiting and a server-side request timeout are distinct, retryable
+  // outcomes: the gateway answered, so they must not be folded into the
+  // server-runtime bucket that covers only 5xx.
+  if (httpStatus === 429) {
+    return {
+      kind: 'rate-limited',
+      probeStatus: 'degraded',
+      title: 'Hermes gateway rate limited',
+      detail: `Hermes answered the request${statusSuffix} with a rate limit, so the gateway is running but is throttling this client. Wait for the limit to reset, then send the turn again.`,
+      userMessage: 'Hermes is rate limiting this client. The gateway is running; wait a moment, then resend.',
+      status: httpStatus,
+      evidence,
+      serverReachable: true,
+      retryable: true,
+      recovery: 'retry-later',
+      hint: '',
+      deliveryUnknown: false,
+    };
+  }
+  if (httpStatus === 408) {
+    return {
+      kind: 'request-timeout',
+      probeStatus: 'degraded',
+      title: 'Hermes gateway request timed out',
+      detail: `Hermes answered the request${statusSuffix}: the gateway accepted the connection but did not finish handling it in time. The gateway is running; the request may or may not have been processed, so a manual resend could duplicate the turn.`,
+      userMessage: 'Hermes accepted the connection but timed out handling the request. It may have been processed, so resending could duplicate the turn.',
+      status: httpStatus,
+      evidence,
+      serverReachable: true,
+      retryable: true,
+      recovery: 'retry',
+      hint: '',
+      deliveryUnknown: true,
+    };
+  }
+  if (httpStatus === 502 || httpStatus === 503 || httpStatus === 504) {
+    return {
+      kind: 'upstream-unconfirmed',
+      probeStatus: 'unreachable',
+      title: 'Hermes gateway status unconfirmed',
+      detail: `A server or proxy answered this request (HTTP ${httpStatus}), but Browser cannot prove that Hermes Gateway itself is running. Check the gateway process and its logs, then run Check connection before retrying.`,
+      userMessage: 'A server or proxy answered, but Browser could not confirm the Hermes gateway is running. The draft is preserved; check the gateway and session before sending again.',
+      status: httpStatus,
+      evidence,
+      serverReachable: null,
+      retryable: true,
+      recovery: 'probe-health',
+      hint: '',
+      deliveryUnknown: true,
+    };
+  }
+  const serverStatus = Boolean(httpStatus && httpStatus >= 500);
+  if (serverStatus || (runtimeSignature && !httpStatus)) {
+    return gatewayServerRuntimeDiagnostic({
+      httpStatus,
+      evidence,
+      initFlavor: initSignature,
+      pydantic: /pydantic/.test(lower),
+      computerUse: /computer_use|cua-driver|computer-use/.test(lower),
+    });
+  }
+
+  if (GATEWAY_CORS_SIGNATURE.test(lower)) {
+    return {
+      kind: 'network-cors',
+      probeStatus: 'unreachable',
+      title: 'Hermes origin blocked the request',
+      detail: healthOk === true
+        ? 'The gateway answered the health probe from this extension origin, but this request was blocked before Hermes could see it. Allow this extension origin in the gateway CORS/origin settings (API_SERVER_CORS_ORIGINS), then run a connection check again.'
+        : 'Browser blocked this cross-origin request before Hermes could see it. Allow this extension origin in the gateway CORS/origin settings (API_SERVER_CORS_ORIGINS), then run a connection check again.',
+      userMessage: 'Browser blocked this request at the origin layer. Update the gateway CORS allowlist for this extension origin, then retry.',
+      status: httpStatus,
+      evidence,
+      serverReachable: healthOk === true ? true : null,
+      retryable: true,
+      recovery: 'fix-origin',
+      hint: '',
+      deliveryUnknown: false,
+    };
+  }
+
+  if (GATEWAY_REFUSAL_SIGNATURE.test(lower)) {
+    return {
+      kind: 'network-refused',
+      probeStatus: 'unreachable',
+      title: 'Hermes API connection refused',
+      detail: `Nothing accepted a connection at ${target}. The browser reached the host and the connection was refused there, so the Hermes gateway is probably not running on that port, or a firewall, proxy, or VPN refused the request. Start Hermes Gateway, confirm the API server URL and port, then run a connection check again.`,
+      userMessage: 'Browser could not open a connection to the Hermes API. Nothing was delivered, so your message stays in the composer.',
+      status: httpStatus,
+      evidence,
+      serverReachable: false,
+      retryable: true,
+      recovery: 'check-network',
+      hint: '',
+      deliveryUnknown: false,
+    };
+  }
+
+  if (GATEWAY_INTERRUPT_SIGNATURE.test(lower)) {
+    return {
+      kind: 'network-interrupted',
+      probeStatus: 'unreachable',
+      title: 'Hermes API connection interrupted',
+      detail: `The connection to ${target} was reset or closed before Hermes finished answering. The browser cannot tell whether Hermes received the request, so delivery is unconfirmed. Run Check connection to probe /health and see whether the gateway is still reachable.`,
+      userMessage: 'The connection to Hermes was interrupted, so Browser cannot confirm whether the turn was delivered. The draft is preserved, but sending it again could duplicate the turn.',
+      status: httpStatus,
+      evidence,
+      serverReachable: null,
+      retryable: true,
+      recovery: 'probe-health',
+      hint: '',
+      deliveryUnknown: true,
+    };
+  }
+
+  if (GATEWAY_TIMEOUT_SIGNATURE.test(lower)) {
+    return {
+      kind: 'network-timeout',
+      probeStatus: 'unreachable',
+      title: 'Hermes API connection timed out',
+      detail: `The connection attempt to ${target} timed out before Hermes answered. Check that the gateway is running, that the host is reachable over LAN, VPN, or tailnet, and that a firewall or proxy is not dropping the request.`,
+      userMessage: 'Browser could not reach the Hermes API before the request timed out. The request may already have reached Hermes, so resending the draft could duplicate the turn. It was kept in the composer and never resent automatically.',
+      status: httpStatus,
+      evidence,
+      serverReachable: false,
+      retryable: true,
+      recovery: 'check-network',
+      hint: '',
+      deliveryUnknown: true,
+    };
+  }
+
+  if (GATEWAY_FETCH_SIGNATURE.test(lower)) {
+    if (healthOk === true) {
+      return {
+        kind: 'network-ambiguous',
+        probeStatus: 'unreachable',
+        title: 'Hermes request outcome unknown',
+        detail: 'The gateway answered the health probe, but this request failed before Hermes answered. The browser cannot confirm whether Hermes received it or why it failed. Run Check connection and inspect the gateway log before resending.',
+        userMessage: 'The gateway answered a health probe, but Browser cannot confirm whether this turn was delivered. The draft is preserved; resending could duplicate the turn.',
+        status: httpStatus,
+        evidence,
+        serverReachable: true,
+        retryable: true,
+        recovery: 'probe-health',
+        hint: '',
+        deliveryUnknown: true,
+      };
+    }
+    return {
+      kind: 'network-ambiguous',
+      probeStatus: 'unreachable',
+      title: 'Hermes gateway did not answer',
+      detail: `The request to ${target} failed before Hermes answered. The browser does not report whether the connection was refused or the cross-origin request was blocked, so Browser cannot tell those apart on its own. Run Check connection to probe /health and see which layer fails.`,
+      userMessage: 'Browser could not reach the Hermes API, and the browser did not say whether the connection was refused or blocked by CORS. It also cannot confirm whether the turn was delivered, so resending the draft could duplicate the turn. The draft is preserved and was not sent again automatically.',
+      status: httpStatus,
+      evidence,
+      serverReachable: null,
+      retryable: true,
+      recovery: 'probe-health',
+      hint: '',
+      deliveryUnknown: true,
+    };
+  }
+
+  const detail = sanitizeGatewayDiagnosticText(text, { maxLength: 320 });
   return {
     kind: 'unknown',
     probeStatus: 'unreachable',
     title: 'Hermes gateway error',
-    detail: text || 'Hermes gateway is not reachable.',
-    userMessage: text || 'Hermes gateway is not reachable.',
+    detail: detail || 'Hermes gateway is not reachable.',
+    userMessage: detail || 'Hermes gateway is not reachable.',
+    status: httpStatus,
+    evidence,
+    serverReachable: null,
+    retryable: true,
+    recovery: 'probe-health',
+    hint: '',
+  };
+}
+
+function gatewayServerRuntimeDiagnostic({ httpStatus = null, evidence = 'message', initFlavor = false, pydantic = false, computerUse = false } = {}) {
+  const statusSuffix = httpStatus ? ` (HTTP ${httpStatus})` : '';
+  const detail = initFlavor || !httpStatus
+    ? `Hermes answered the request, so the gateway is running, but the gateway process could not initialize a runtime dependency${statusSuffix}. This is a server-side Hermes Agent problem, not a Browser auth, pairing, or CORS problem. Check the Hermes gateway log for the failing import or wheel, then reinstall or update Hermes Agent in the gateway environment and restart the gateway.${pydantic ? ' The log names pydantic_core, which usually means the installed wheel was built for a different Python version than the gateway is running.' : ''}`
+    : `Hermes answered the request${statusSuffix}, so the gateway is running, but the request failed inside the gateway process. Check the Hermes gateway log for the failing component, then update or restart Hermes Agent and retry.`;
+  return {
+    kind: 'server-runtime',
+    probeStatus: 'degraded',
+    title: 'Hermes gateway runtime failure',
+    detail,
+    userMessage: initFlavor || !httpStatus
+      ? 'Hermes is running but a gateway runtime dependency failed to initialize. Browser stays connected; check the Hermes gateway log for the failing import or wheel.'
+      : 'Hermes answered but the request failed inside the gateway process. Browser stays connected; check the Hermes gateway log.',
+    status: httpStatus,
+    evidence,
+    serverReachable: true,
+    retryable: Boolean(httpStatus && httpStatus >= 500),
+    recovery: 'update-runtime',
+    hint: computerUse
+      ? 'The gateway log names computer_use/cua-driver; run `hermes computer-use doctor` in the gateway environment.'
+      : '',
   };
 }
 

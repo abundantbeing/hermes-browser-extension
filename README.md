@@ -368,7 +368,7 @@ Fix:
 
 Open Settings → **Support diagnostics** → **Copy Diagnostics** and paste the report into the GitHub issue or support thread.
 
-The copied block includes version/build, browser family, gateway origin, connection state, runtime capability flags, selected model/provider, context mode, extractor mode, and last visible error. It intentionally excludes API keys, bearer tokens, cookies, page text, selected text, tab titles, and full tab URLs.
+The copied block includes version/build, browser family, gateway origin, connection state, runtime capability flags, selected model/provider, context mode, extractor mode, last visible error, and a bounded gateway failure classification when available. It intentionally excludes API keys, bearer tokens, cookies, page text, selected text, tab titles, raw tracebacks, local paths, and full tab URLs.
 
 ### The side panel says it cannot connect
 
@@ -382,9 +382,11 @@ curl http://<trusted-remote-host>:8642/health
 
 If `/v1/models` fails, check `API_SERVER_KEY`, the extension's stored API key/browser token, and `API_SERVER_CORS_ORIGINS`. For remote mode, the browser extension origin (`chrome-extension://<id>`) must be allowlisted on the Hermes machine.
 
+If the browser only reports a failed fetch, it cannot prove whether the gateway refused the connection, blocked the request, or received a turn before the response was lost. The side panel keeps the draft and offers **Check connection**. It never resends automatically. Check the session history before manually sending again, since a dropped response can leave delivery unconfirmed and a second send could duplicate the turn. An answered `/health` probe confirms reachability at probe time, not that the earlier turn failed because of CORS.
+
 ### The side panel shows a runtime warning but still says connected
 
-v0.3.0 separates gateway reachability from upstream Hermes runtime/tool failures. If `/health` works but Hermes raises a runtime traceback, the Browser stays connected and shows the warning instead of turning the whole connection red.
+v0.3.0 introduced separate connection and runtime warnings. When a gateway answers a request with a runtime error, the Browser stays connected and shows a warning instead of labeling the gateway unreachable. Check the Hermes Agent logs for the failing dependency or component.
 
 For tracebacks like `int() argument must be a string, a bytes-like object or a real number, not 'NoneType'`, check the Hermes Agent logs on the machine running the gateway. If the traceback mentions `computer_use` or `cua-driver`, run:
 
