@@ -31,7 +31,7 @@ const INIT_FAILURE_BODY = [
   '  File "C:\\Users\\example\\AppData\\Local\\hermes\\venv\\Lib\\site-packages\\openai\\_client.py", line 42, in __init__',
   '    raise OpenAIError("Failed to initialize OpenAI client")',
   'ImportError: pydantic_core/_pydantic_core.cp311-win_amd64.pyd is not a valid Win32 application',
-  'gateway runs Python 3.14',
+  'the installed pydantic_core wheel does not match the running interpreter',
 ].join('\n');
 
 function chromeExecutable() {

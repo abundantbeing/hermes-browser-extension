@@ -30,7 +30,7 @@ function diagnosticCopy(diagnostic) {
 test('sanitizeGatewayDiagnosticText strips tracebacks, local paths, and secrets', () => {
   const raw = [
     'Traceback (most recent call last):',
-    '  File "/home/example/hermes/.venv/lib/python3.14/site-packages/openai/_client.py", line 42, in __init__',
+    '  File "/home/example/hermes/.venv/lib/python3.11/site-packages/openai/_client.py", line 42, in __init__',
     '    raise OpenAIError("Failed to initialize OpenAI client")',
     'ImportError: pydantic_core/_pydantic_core.cp311-win_amd64.pyd is not a valid Win32 application',
     'C:\\Users\\Example\\AppData\\Local\\hermes\\venv\\Lib\\site-packages\\pydantic_core\\_pydantic_core.cp311-win_amd64.pyd',
