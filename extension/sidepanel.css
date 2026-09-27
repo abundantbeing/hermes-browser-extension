@@ -1392,6 +1392,15 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   line-height: 0.96;
 }
 .status-copy span { margin-top: 4px; color: var(--hermes-muted); font-size: calc(11px * var(--hermes-text-zoom, 1)); line-height: 1.25; }
+/* Error diagnoses must remain readable without relying on a hover tooltip. */
+.status-card:has(.status-dot.error) .status-copy span,
+.status-card:has(.status-dot.warn) .status-copy span {
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  font-size: calc(12px * var(--hermes-text-zoom, 1));
+  line-height: 1.4;
+}
 .status-actions {
   margin-top: 2px;
   display: flex;

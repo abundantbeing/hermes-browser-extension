@@ -699,14 +699,16 @@ test('pairingFailureMessage explains a missing pairing route instead of a bare 4
   assert.equal(pairingFailureMessage(503, {}), 'Pairing failed (503)');
 });
 
-test('gateway diagnostics classify upstream runtime, auth, CORS, and missing route failures', () => {
+test('gateway diagnostics classify server runtime, auth, CORS, and missing route failures', () => {
   const upstream = classifyGatewayError(new Error("int() argument must be a string, a bytes-like object or a real number, not 'NoneType'"));
-  assert.equal(upstream.kind, 'upstream-runtime');
+  assert.equal(upstream.kind, 'server-runtime');
   assert.equal(upstream.probeStatus, 'degraded');
-  assert.match(upstream.title, /runtime exception/i);
-  assert.match(upstream.detail, /upstream Hermes Agent/i);
-  assert.match(upstream.detail, /computer_use/i);
-  assert.match(upstream.userMessage, /gateway traceback/i);
+  assert.equal(upstream.serverReachable, true);
+  assert.match(upstream.title, /runtime failure/i);
+  assert.match(upstream.detail, /gateway is running/i);
+  assert.match(upstream.detail, /gateway log/i);
+  assert.doesNotMatch(upstream.detail, /computer_use|cua-driver/i);
+  assert.doesNotMatch(upstream.userMessage, /traceback|NoneType/i);
   assert.doesNotMatch(upstream.userMessage, /api\/model\/options/i);
 
   const auth = classifyGatewayError('401: Unauthorized');
@@ -765,8 +767,17 @@ test('connection diagnostics can represent connected-but-degraded optional failu
     state: 'degraded',
     probeDetail: "int() argument must be a string, a bytes-like object or a real number, not 'NoneType'",
   });
-  assert.match(copy, /Hermes API server is reachable/i);
-  assert.match(copy, /upstream Hermes Agent/i);
+  assert.match(copy, /gateway is running/i);
+  assert.match(copy, /gateway log/i);
+  assert.doesNotMatch(copy, /NoneType|Traceback|aiohttp/i);
+
+  const genericCopy = gatewayConnectionTroubleshooting({
+    gatewayMode: 'local-api',
+    gatewayUrl: 'http://127.0.0.1:8642',
+    state: 'degraded',
+    probeDetail: 'provider validation failure',
+  });
+  assert.match(genericCopy, /Hermes API server is reachable/i);
 });
 
 test('clampText preserves short text and clearly marks truncation', () => {
@@ -2842,19 +2853,28 @@ test('connectionStateForGateway uses live reachability instead of config presenc
   );
 });
 
-test('gatewayConnectionTroubleshooting explains local v0.18 API server dependency failures', () => {
+test('gatewayConnectionTroubleshooting never invents a cause for an ambiguous local probe', () => {
   const message = gatewayConnectionTroubleshooting({
     gatewayMode: 'local-api',
     gatewayUrl: 'http://127.0.0.1:8642',
     state: 'unreachable',
     probeDetail: 'http://127.0.0.1:8642 · Failed to fetch',
   });
-  assert.match(message, /API server is not listening/i);
   assert.match(message, /127\.0\.0\.1:8642/);
-  assert.match(message, /Hermes Agent v0\.18/i);
-  assert.match(message, /aiohttp/i);
-  assert.match(message, /restart Hermes Gateway/i);
+  assert.match(message, /cannot tell/i);
+  assert.match(message, /check connection/i);
+  assert.doesNotMatch(message, /API server is not listening/i);
+  assert.doesNotMatch(message, /aiohttp|Hermes Agent v0\.18/i);
   assert.doesNotMatch(message, /API_SERVER_KEY|Bearer|token/i);
+
+  const refused = gatewayConnectionTroubleshooting({
+    gatewayMode: 'local-api',
+    gatewayUrl: 'http://127.0.0.1:8642',
+    state: 'unreachable',
+    probeDetail: 'net::ERR_CONNECTION_REFUSED',
+  });
+  assert.match(refused, /refused/i);
+  assert.doesNotMatch(refused, /aiohttp/i);
 
   const remote = gatewayConnectionTroubleshooting({
     gatewayMode: 'remote-api',
@@ -2862,7 +2882,7 @@ test('gatewayConnectionTroubleshooting explains local v0.18 API server dependenc
     state: 'unreachable',
     probeDetail: 'timeout',
   });
-  assert.match(remote, /Remote Hermes API is not reachable/i);
+  assert.match(remote, /timed out/i);
   assert.doesNotMatch(remote, /aiohttp|v0\.18/i);
 });
 

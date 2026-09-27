@@ -113,6 +113,30 @@ export function turnRequestFailureState(error = {}) {
   };
 }
 
+/**
+ * Decide what Browser may restore after a gateway failure.
+ *
+ * A turn that provably never reached Hermes is safe to keep as a draft for a
+ * manual resend. A turn Hermes already accepted, or one whose delivery is
+ * unconfirmed because the connection dropped mid-flight, must never be
+ * replayed; Browser never resends on its own either way, and the panel warns
+ * that a manual resend could duplicate the turn.
+ */
+export function gatewayFailureRecoveryPlan({ error = {}, diagnostic = {} } = {}) {
+  const accepted = error?.requestAccepted === true;
+  const deliveryUnknown = accepted || diagnostic.deliveryUnknown === true;
+  return {
+    kind: diagnostic.kind || 'unknown',
+    preserveDraft: !accepted,
+    resendSafe: !deliveryUnknown,
+    duplicateSendRisk: deliveryUnknown,
+    autoRetry: false,
+    recoveryAction: diagnostic.recovery || 'probe-health',
+    detail: diagnostic.detail || '',
+    userMessage: diagnostic.userMessage || '',
+  };
+}
+
 export function sessionContextFailureRecovery(error = {}, capabilities = {}) {
   const text = recoveryErrorText(error).replace(/\s+/g, ' ').trim().toLowerCase();
   const contextExceeded = /context length exceeded|request payload too large|context window exceeded/.test(text);

@@ -70,6 +70,7 @@ import {
   reasoningEffortShortLabel,
   runtimeValueMatches,
   safeTab,
+  sanitizeGatewayDiagnosticText,
   shouldRequireModelLock,
   shouldReuseImageGenerationActivity,
   shouldStopSessionPaging,
@@ -310,6 +311,7 @@ import {
 import {
   acceptedTurnRecoveryPolicy,
   classifyTurnRecovery,
+  gatewayFailureRecoveryPlan,
   hermesGatewayTurnError,
   hermesRequestError,
   latestAssistantAfterUser,
@@ -832,6 +834,7 @@ const els = {
   activeUrl: $('#activeUrl'),
   statusDot: $('#statusDot'),
   statusActions: $('#statusActions'),
+  statusRetryProbeButton: $('#statusRetryProbeButton'),
   statusCopyDiagnosticsButton: $('#statusCopyDiagnosticsButton'),
   browserControlCard: $('#browserControlCard'),
   browserControlCardDetail: $('#browserControlCardDetail'),
@@ -1694,6 +1697,10 @@ async function clearContextDeliveryState() {
 let trustedDashboardTabId = null;
 let connectionProbeStatus = 'connecting';
 let connectionProbeDetail = '';
+// Structured classification of the last probe or gateway failure. Recovery copy
+// is built from this evidence so the panel never claims a cause it cannot prove.
+let connectionProbeDiagnostic = null;
+let lastGatewayDiagnostic = null;
 let connectionProbeTimer = null;
 let connectionProbeInFlight = false;
 const connectionController = createConnectionController();
@@ -1863,6 +1870,7 @@ function connectionStateTitle(state, summary) {
     gatewayUrl: settings.gatewayUrl,
     state: state.state,
     probeDetail: connectionProbeDetail,
+    probeDiagnostic: connectionProbeDiagnostic,
   });
   return 'Not connected to Hermes';
 }
@@ -1873,12 +1881,16 @@ function currentConnectionTroubleshooting(state = currentConnectionState()) {
     gatewayUrl: settings.gatewayUrl,
     state: state.state,
     probeDetail: connectionProbeDetail,
+    probeDiagnostic: connectionProbeDiagnostic,
   });
 }
 
-function markConnectionProbe(status, detail = '') {
+function markConnectionProbe(status, detail = '', diagnostic = null) {
   connectionProbeStatus = status;
   connectionProbeDetail = detail;
+  connectionProbeDiagnostic = diagnostic && diagnostic.kind ? diagnostic : null;
+  if (connectionProbeDiagnostic) lastGatewayDiagnostic = connectionProbeDiagnostic;
+  if (status === 'connected') lastGatewayDiagnostic = null;
   updateConnectionPrompt();
 }
 
@@ -1895,12 +1907,23 @@ function setStatus(kind, title, detail, { translateTitle = true, translateDetail
 }
 
 function renderStatusActions() {
-  if (!els.statusActions || !els.statusCopyDiagnosticsButton) return;
-  const shouldShow = lastVisibleStatus?.kind === 'error'
-    && isRemoteMode()
-    && lastRemoteDiagnostic
-    && lastRemoteDiagnostic.kind !== 'unknown';
+  if (!els.statusActions) return;
+  // Gateway failures get their own recovery action. The panel only offers it
+  // while it is showing a failure it could actually classify, and the retry
+  // probe never sends a turn.
+  const gatewayFailure = Boolean(lastGatewayDiagnostic && lastGatewayDiagnostic.kind !== 'unknown');
+  const remoteFailure = Boolean(isRemoteMode() && lastRemoteDiagnostic && lastRemoteDiagnostic.kind !== 'unknown');
+  const shouldShow = ['error', 'warn'].includes(lastVisibleStatus?.kind || '')
+    && (gatewayFailure || remoteFailure);
   els.statusActions.hidden = !shouldShow;
+  if (!shouldShow) return;
+  if (els.statusRetryProbeButton) {
+    els.statusRetryProbeButton.hidden = !gatewayFailure;
+    els.statusRetryProbeButton.textContent = translateUiText('Check connection');
+    const detail = 'Runs the connection check again. Nothing is sent to Hermes.';
+    els.statusRetryProbeButton.title = translateUiText(detail);
+    els.statusRetryProbeButton.setAttribute('aria-label', translateUiText(detail));
+  }
 }
 
 function applyRemoteDiagnostic(diagnostic, { statusKind = 'error' } = {}) {
@@ -2599,6 +2622,7 @@ async function copySupportDiagnostics() {
       selectedModel: currentSelectedModel() || {},
       contextScope,
       lastError: lastVisibleStatus,
+      gatewayDiagnostic: lastGatewayDiagnostic,
       currentContext,
       extractorMode: currentContext?.pageContext?.source || 'extension-dom',
     });
@@ -4095,9 +4119,14 @@ function updateConnectionPrompt() {
     }
   } else {
     els.sendButton.textContent = translateUiText(sending ? 'Hermes running' : 'Ask Hermes');
-    els.connectStatus.textContent = state.state === 'degraded'
-      ? `Connected to Hermes with a runtime warning. ${currentConnectionTroubleshooting(state)}`
-      : 'Connected to Hermes. You can start chatting with page context.';
+    if (state.state === 'degraded') {
+      els.connectStatus.textContent = `Connected to Hermes with a runtime warning. ${currentConnectionTroubleshooting(state)}`;
+      // Surface a degraded runtime as a warning status so the recovery action
+      // (Check connection) is offered after a server-runtime failure.
+      setStatus('warn', 'Hermes connected with a runtime warning', currentConnectionTroubleshooting(state), { translateDetail: false });
+    } else {
+      els.connectStatus.textContent = 'Connected to Hermes. You can start chatting with page context.';
+    }
   }
   updateComposerBusyState();
 }
@@ -8387,10 +8416,10 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     if (!quiet) setStatus(
       'warn',
       diagnostic.kind === 'unknown' ? 'Model sync failed' : diagnostic.title,
-      diagnostic.kind === 'unknown' ? (error?.message || String(error)) : translateUiText(diagnostic.detail),
+      diagnostic.kind === 'unknown' ? sanitizeGatewayDiagnosticText(error?.message || String(error)) : translateUiText(diagnostic.detail),
       { translateDetail: false },
     );
-    return { ok: false, count: availableModels.length, error: diagnostic.kind === 'unknown' ? (error?.message || String(error)) : diagnostic.detail };
+    return { ok: false, count: availableModels.length, error: diagnostic.kind === 'unknown' ? sanitizeGatewayDiagnosticText(error?.message || String(error)) : diagnostic.detail };
   } finally {
     if (trackRefresh) {
       modelsRefreshing = false;
@@ -16668,10 +16697,15 @@ async function probeGatewayLiveness({ quiet = false } = {}) {
   if (!quiet) markConnectionProbe('connecting', normalizeGatewayUrl(settings.gatewayUrl));
   try {
     const response = await apiFetch('/health', { method: 'GET', cache: 'no-store' });
-    if (!response.ok) throw new Error(`health returned ${response.status}`);
+    if (!response.ok) {
+      const probeError = new Error(`health returned ${response.status}`);
+      probeError.httpStatus = response.status;
+      throw probeError;
+    }
     markConnectionProbe('connected', normalizeGatewayUrl(settings.gatewayUrl));
   } catch (error) {
-    markConnectionProbe('unreachable', `${normalizeGatewayUrl(settings.gatewayUrl)} · ${error?.message || String(error)}`);
+    const diagnostic = classifyGatewayError(error, { url: normalizeGatewayUrl(settings.gatewayUrl) });
+    markConnectionProbe('unreachable', `${diagnostic.title}: ${diagnostic.detail}`, diagnostic);
   } finally {
     connectionProbeInFlight = false;
     scheduleConnectionProbe();
@@ -16684,19 +16718,18 @@ function markGatewayReachable(detail = normalizeGatewayUrl(settings.gatewayUrl))
   scheduleConnectionProbe();
 }
 
-function markGatewayUnreachable(error) {
-  markConnectionProbe('unreachable', error?.message || String(error || 'Gateway disconnected'));
+function markGatewayUnreachable(error, diagnostic = null) {
+  const resolved = diagnostic && diagnostic.kind
+    ? diagnostic
+    : classifyGatewayError(error, { url: normalizeGatewayUrl(settings.gatewayUrl) });
+  markConnectionProbe('unreachable', resolved.detail, resolved);
   scheduleConnectionProbe();
+  return resolved;
 }
 
 function markGatewayDegraded(error) {
-  const diagnostic = classifyGatewayError(error);
-  markConnectionProbe('degraded', diagnostic.kind === 'unknown' ? (error?.message || String(error || 'Gateway degraded')) : gatewayConnectionTroubleshooting({
-    gatewayMode: settings.gatewayMode,
-    gatewayUrl: settings.gatewayUrl,
-    state: 'degraded',
-    probeDetail: error?.message || String(error || ''),
-  }));
+  const diagnostic = classifyGatewayError(error, { url: normalizeGatewayUrl(settings.gatewayUrl) });
+  markConnectionProbe('degraded', diagnostic.detail, diagnostic);
   scheduleConnectionProbe();
   return diagnostic;
 }
@@ -17682,11 +17715,11 @@ async function connectTicketTransport({ cloud = false } = {}) {
     updateConnectionPrompt();
     renderEmptyState();
   } catch (error) {
-    const diagnostic = classifyGatewayError(error);
+    const diagnostic = classifyGatewayError(error, { url: normalizeGatewayUrl(settings.gatewayUrl) });
     if (connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) {
-      markGatewayUnreachable(error);
-      els.connectStatus.textContent = error?.message || String(error);
-      setStatus('error', cloud ? 'Hermes Cloud Preview failed' : 'Dashboard Attach failed', error?.message || String(error), { translateDetail: false });
+      markGatewayUnreachable(error, diagnostic);
+      els.connectStatus.textContent = diagnostic.detail;
+      setStatus('error', cloud ? 'Hermes Cloud Preview failed' : 'Dashboard Attach failed', diagnostic.userMessage, { translateDetail: false });
     }
   } finally {
     if (connectionController.isCurrent(generation)) {
@@ -17726,10 +17759,18 @@ async function connectApiWithPairing() {
   els.connectButton.disabled = true;
   els.connectButton.textContent = translateUiText('Connecting...');
   els.connectStatus.textContent = `Looking for ${summary.title} at ${summary.normalizedUrl}...`;
+  // A failing request can only be blamed on the origin/CORS layer when the
+  // health probe already answered from this extension origin.
+  let healthProbeAnswered = false;
   try {
     const health = await publicApiFetch('/health', { method: 'GET' });
     if (!connectionController.isCurrent(generation)) return;
-    if (!health.ok) throw new Error(`Hermes API server is not reachable (${health.status}).`);
+    if (!health.ok) {
+      const healthError = new Error(`Hermes API server is not reachable (${health.status}).`);
+      healthError.httpStatus = health.status;
+      throw healthError;
+    }
+    healthProbeAnswered = true;
 
     const capabilities = await loadGatewayCapabilities({ quiet: true, publicOnly: true, healthOk: true });
     if (!connectionController.isCurrent(generation)) return;
@@ -17799,10 +17840,13 @@ async function connectApiWithPairing() {
     setStatus('ok', 'Hermes Browser Extension connected', normalizeGatewayUrl(settings.gatewayUrl));
     renderEmptyState();
   } catch (error) {
-    const diagnostic = classifyGatewayError(error);
+    const diagnostic = classifyGatewayError(error, {
+      url: normalizeGatewayUrl(settings.gatewayUrl),
+      healthOk: healthProbeAnswered,
+    });
     if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
-    markGatewayUnreachable(error);
-    els.connectStatus.textContent = `${currentConnectionTroubleshooting() || error?.message || String(error)} Manual setup is still available in settings.`;
+    markGatewayUnreachable(error, diagnostic);
+    els.connectStatus.textContent = `${currentConnectionTroubleshooting() || diagnostic.detail} Manual setup is still available in settings.`;
     openSettingsDialog();
   } finally {
     if (connectionController.isCurrent(generation)) {
@@ -18344,15 +18388,34 @@ ${streamError.message}`);
         });
         return didSend;
       }
-      const diagnostic = classifyGatewayError(error);
+      const diagnostic = classifyGatewayError(error, { url: normalizeGatewayUrl(settings.gatewayUrl) });
+      const recoveryPlan = gatewayFailureRecoveryPlan({ error, diagnostic });
+      if (recoveryPlan.preserveDraft && !turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
+        // Either the turn provably never reached Hermes, or its delivery is
+        // unconfirmed because the connection dropped mid-flight. Either way the
+        // composer text belongs to the user, so restore it and keep it
+        // persisted across panel reloads; the recovery plan never resends it on
+        // its own.
+        els.input.value = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
+        attachments = commentPack.consumed
+          ? [...turnAttachments].filter((item) => item?.source !== 'page-annotations')
+          : [...turnAttachments];
+        renderAttachments();
+        renderSkillSuggestions();
+        renderContextWindow('');
+        persistCurrentComposerDraft({ immediate: true });
+      }
       if (diagnostic.probeStatus === 'degraded') {
         markGatewayDegraded(error);
       } else {
-        markGatewayUnreachable(error);
+        markGatewayUnreachable(error, diagnostic);
       }
-      addMessage('system', diagnostic.kind === 'unknown'
-        ? `Hermes Browser Extension error: ${error?.message || String(error)}`
-        : `Hermes Browser Extension warning: ${diagnostic.userMessage}`);
+      // A mid-flight drop may have delivered the turn even though Browser never
+      // saw a response. Say so before the user resends the preserved draft.
+      const duplicateWarning = recoveryPlan.duplicateSendRisk
+        ? ' Hermes may already have received this turn before the connection dropped, so sending the draft again could duplicate it.'
+        : '';
+      addMessage('system', `Hermes Browser Extension warning: ${recoveryPlan.userMessage || diagnostic.userMessage}${duplicateWarning}`);
     } else {
       addMessage('system', `Hermes Browser Extension error: ${error?.message || String(error)}`);
     }
@@ -19038,12 +19101,12 @@ async function testConnection() {
 
     ok = true;
   } catch (error) {
-    const diagnostic = classifyGatewayError(error);
+    const diagnostic = classifyGatewayError(error, { url: normalizeGatewayUrl(settings.gatewayUrl) });
     if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
     if (error?.remoteDiagnostic && applyRemoteDiagnostic(error.remoteDiagnostic, { statusKind: 'error' })) {
       return;
     }
-    markGatewayUnreachable(error);
+    markGatewayUnreachable(error, diagnostic);
     if (isRemoteMode()) {
       const diagnostic = classifyRemoteGatewaySetup({
         url: settings.gatewayUrl,
@@ -19983,6 +20046,11 @@ function bindEvents() {
   });
   els.statusCopyDiagnosticsButton?.addEventListener('click', () => {
     copySupportDiagnostics().catch((error) => setStatus('warn', 'Diagnostics copy failed', error?.message || String(error), { translateDetail: false }));
+  });
+  // Recovery action: re-probe /health with the structured diagnostic so the
+  // panel can replace an ambiguous failure with real evidence.
+  els.statusRetryProbeButton?.addEventListener('click', () => {
+    probeGatewayLiveness({ quiet: false }).catch(() => {});
   });
   els.clearTokenButton?.addEventListener('click', () => {
     clearStoredToken().catch((error) => setStatus('warn', 'Could not clear token', error?.message || String(error), { translateDetail: false }));
