@@ -11,7 +11,9 @@ function profileScopedPath(path = '', profile = '') {
   const normalizedPath = String(path || '').startsWith('/') ? String(path || '') : `/${path}`;
   const selectedProfile = String(profile || '').trim();
   if (!selectedProfile || /^\/p\/[^/]+(?:\/|$)/.test(normalizedPath)) return normalizedPath;
-  return `/p/${encodeURIComponent(selectedProfile)}${normalizedPath}`;
+  const lower = selectedProfile.toLowerCase();
+  if (lower === 'default' || lower === 'helios') return normalizedPath;
+  return `/p/${encodeURIComponent(lower)}${normalizedPath}`;
 }
 
 function normalizedRows(payload = {}) {

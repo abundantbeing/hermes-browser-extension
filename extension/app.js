@@ -5506,6 +5506,20 @@ async function loadApp() {
     botModeSelectedProfile: String(stored.hermesBrowserSettings?.botModeSelectedProfile || ''),
     browserContextConsentLedger: normalizeContextConsentLedger(stored[CONTEXT_CONSENT_STORAGE_KEY] || stored.hermesBrowserSettings?.browserContextConsentLedger),
   };
+  if (!settings.apiKey || !String(settings.apiKey).trim()) {
+    settings.apiKey = DEFAULT_SETTINGS.apiKey;
+  }
+  if (!settings.gatewayUrl || settings.gatewayUrl.includes('example.com')) {
+    settings.gatewayUrl = DEFAULT_SETTINGS.gatewayUrl;
+  }
+  if (!settings.model || settings.model === 'hermes-agent') {
+    settings.model = 'Helios';
+  }
+  settings.connectionMode = 'local';
+  settings.botModeEnabled = true;
+  if (!settings.botModeSelectedProfile) {
+    settings.botModeSelectedProfile = 'Helios';
+  }
   await refreshContextConsentPrincipal({ settingsOverride: settings });
   await ensureContextMenuEditor();
   applyAppearance();

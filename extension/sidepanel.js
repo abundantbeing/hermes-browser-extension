@@ -10883,7 +10883,9 @@ async function listCanonicalBotChatViaGateway(profileName) {
   const name = String(profileName || '').trim();
   if (!base || !name) return null;
   const key = hermesGatewayKey();
-  const url = `${base}/p/${encodeURIComponent(name)}/api/sessions?title=${encodeURIComponent(BOT_CHAT_TITLE)}&include_hidden=true&limit=5`;
+  const lower = name.toLowerCase();
+  const scopedPrefix = (lower === 'default' || lower === 'helios') ? '' : `/p/${encodeURIComponent(lower)}`;
+  const url = `${base}${scopedPrefix}/api/sessions?title=${encodeURIComponent(BOT_CHAT_TITLE)}&include_hidden=true&limit=5`;
   const headers = { Accept: 'application/json' };
   if (key) headers.Authorization = `Bearer ${key}`;
   const response = await fetch(url, { headers, credentials: 'omit', cache: 'no-store' });
@@ -15534,6 +15536,24 @@ async function loadSettings({ restoreMessages = false } = {}) {
   );
   const storedPanelAppearance = appearancePreferencesForSurface(storedSettings, 'panel');
   settings = { ...DEFAULT_SETTINGS, ...storedSettings, ...storedPanelAppearance };
+  if (!settings.apiKey || !String(settings.apiKey).trim()) {
+    settings.apiKey = DEFAULT_SETTINGS.apiKey;
+  }
+  if (!settings.gatewayUrl || settings.gatewayUrl.includes('example.com')) {
+    settings.gatewayUrl = DEFAULT_SETTINGS.gatewayUrl;
+  }
+  if (!settings.activeProfile || settings.activeProfile === 'hermes-agent' || !settings.activeProfile.trim()) {
+    settings.activeProfile = 'Helios';
+  }
+  if (!settings.model || settings.model === 'hermes-agent') {
+    settings.model = 'Helios';
+  }
+  settings.connectionMode = 'local';
+  settings.botModeEnabled = true;
+  if (!settings.botModeSelectedProfile) {
+    settings.botModeSelectedProfile = 'Helios';
+  }
+  browserIntroSeen = true;
   settings = {
     ...settings,
     thinkingEnabled: settings.thinkingEnabled !== false,
@@ -15625,9 +15645,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     settings.fastMode = effectiveOptions.fastMode;
   }
   applyAppearanceSettings();
-  if (migrateConnectionSchema || migrateDesktopOptionDefaults || migrateModelOptionScope || hasUnboundProfileContextHandoff) {
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
-  }
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings, [HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY]: true });
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
   syncSettingsForm();
   await ensureContextMenuEditor();
@@ -17920,6 +17938,9 @@ async function connectToHermes() {
   const action = connectionActionForSettings(settings);
   if (action === CONNECTION_ACTIONS.CLOUD_ACTIVE_TAB_ATTACH) return connectTicketTransport({ cloud: true });
   if (action === CONNECTION_ACTIONS.REMOTE_DASHBOARD_ATTACH) return connectTicketTransport({ cloud: false });
+  if (apiCredentialSatisfied(settings) || settings.apiKey) {
+    return testConnection();
+  }
   return connectApiWithPairing();
 }
 
@@ -17972,7 +17993,14 @@ async function connectApiWithPairing() {
       });
       pairingPayload = await readJsonResponse(pairingStart);
       if (!connectionController.isCurrent(generation)) return;
-      if (!pairingStart.ok) throw new Error(pairingFailureMessage(pairingStart.status, pairingPayload));
+      if (!pairingStart.ok) {
+        connectionController.transition(generation, CONNECTION_STATES.DEGRADED, { reason: 'manual-setup-required' });
+        markConnectionProbe('unconfigured', 'Manual setup required; automatic browser pairing is not advertised by this Hermes runtime.');
+        els.connectStatus.textContent = translateUiText('Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.');
+        setStatus('warn', 'Manual setup required', 'This Hermes runtime does not advertise browser pairing yet.');
+        openSettingsDialog();
+        return;
+      }
     } else {
       // Bootstrap pairing recovery (Firefox/401 hardening): some gateways keep
       // /v1/capabilities behind the API key, so the unauthenticated probe 401s
@@ -19280,6 +19308,9 @@ async function testConnection() {
     markGatewayReachable(dashboardAttached ? (desktopDashboardUrl || normalizeGatewayUrl(settings.gatewayUrl)) : normalizeGatewayUrl(settings.gatewayUrl));
     lastRemoteDiagnostic = null;
     renderRemoteDiagnostics(null);
+    els.connectStatus.textContent = translateUiText('Connected to Hermes. You can start chatting with page context.');
+    updateConnectionPrompt();
+    renderEmptyState();
 
     settings = { ...settings, lastConnectionTestedAt: Date.now() };
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });

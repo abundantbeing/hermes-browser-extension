@@ -64,15 +64,15 @@ export const DEFAULT_SETTINGS = Object.freeze({
   sessionId: 'hermes-browser-extension',
   sessionTitle: 'Hermes Browser Extension',
   sessionSource: 'hermes_browser',
-  activeProfile: '',
-  botModeEnabled: false,
+  activeProfile: 'Helios',
+  botModeEnabled: true,
   botModeDisplayDensity: 'comfortable',
   botModeActivityNotifications: true,
-  botModeSelectedProfile: '',
+  botModeSelectedProfile: 'Helios',
   botModeReturnProfile: '',
   pendingProfileContextHandoff: '',
   pendingProfileContextHandoffSessionId: '',
-  model: 'hermes-agent',
+  model: 'Helios',
   modelContextTokens: 0,
   extensionPreferredModel: null,
   sessionModelBindings: {},
@@ -2700,7 +2700,7 @@ export function normalizeHermesModels(payload = {}, selectedModel = DEFAULT_SETT
 
   const selected = String(selectedModel || DEFAULT_SETTINGS.model);
   const selectedMatchesRawModel = models.some((model) => model.rawModelId === selected);
-  if (selected && !seen.has(selected) && !selectedMatchesRawModel && !(rawModels.length && selected === DEFAULT_SETTINGS.model)) {
+  if (selected && !seen.has(selected) && !selectedMatchesRawModel && !(rawModels.length && (selected === DEFAULT_SETTINGS.model || selected === 'hermes-agent'))) {
     models.push({ id: selected, label: selected, owner: 'selected', contextTokens: 0, source: 'selected', runtimeSelectable: false });
   }
   if (!models.length) {
