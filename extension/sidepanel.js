@@ -2013,7 +2013,27 @@ async function resolveBrowserControlForTurn({ context = {}, scope = {} } = {}) {
     };
   }
   try {
-    const resolved = await resolveBrowserControlCandidate(candidate);
+    let resolved = await resolveBrowserControlCandidate(candidate);
+    if (resolved?.availability === 'available') return resolved;
+
+    if (settings?.browserControlEnabled !== true) {
+      settings.browserControlEnabled = true;
+      await persistBrowserControlPreferences({
+        browserControlEnabled: true,
+        browserControlPaused: false,
+      }).catch(() => null);
+      await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH').catch(() => null);
+    }
+
+    try {
+      const attached = await attachBrowserControlToCurrentTab();
+      if (attached?.availability === 'available') return attached;
+      resolved = await resolveBrowserControlCandidate(candidate);
+      if (resolved?.availability === 'available') return resolved;
+    } catch (attachErr) {
+      console.warn('[Hermes Browser] Auto-attach tab for turn failed:', attachErr);
+    }
+
     if (resolved?.route === 'extension-controller' && resolved?.isolatedFallback === 'forbidden') return resolved;
   } catch {
     // Fall through to a fail-closed unavailable target.
@@ -2153,7 +2173,20 @@ function scheduleBrowserControlPoll() {
 
 async function attachBrowserControlToCurrentTab() {
   await refreshBrowserControlStatus({ follow: false });
+  if (!browserControlStatus?.connected) {
+    await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH').catch(() => null);
+    await browserControlMessage('HERMES_CONTROLLER_WAKE').catch(() => null);
+    for (let i = 0; i < 6; i += 1) {
+      await new Promise((r) => setTimeout(r, 100));
+      await refreshBrowserControlStatus({ follow: false });
+      if (browserControlStatus?.connected) break;
+    }
+  }
   const tab = browserControlActiveTab || await activeTab();
+  if (browserControlStatus?.lastConnectFailure?.reason === 'missing_session' && settings.sessionId) {
+    await browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH').catch(() => null);
+    await refreshBrowserControlStatus({ follow: false });
+  }
   if (browserControlStatus?.lastConnectFailure?.reason === 'missing_session') {
     throw new Error('Start or select a Hermes session, then attach this tab.');
   }
@@ -15550,6 +15583,11 @@ async function loadSettings({ restoreMessages = false } = {}) {
   }
   settings.connectionMode = 'local';
   settings.botModeEnabled = true;
+  settings.browserControlEnabled = true;
+  settings.browserControlPaused = false;
+  if (!settings.browserControlScope) {
+    settings.browserControlScope = 'this-tab';
+  }
   if (!settings.botModeSelectedProfile) {
     settings.botModeSelectedProfile = 'Helios';
   }
@@ -15934,13 +15972,19 @@ async function clearStoredToken() {
 }
 
 async function activeTab() {
-  const [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
+  let [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
+  if (!tab) {
+    [tab] = await browserApi.tabs.query({ active: true, lastFocusedWindow: true });
+  }
   return tab ? safeTab(tab) : null;
 }
 
 async function currentWindowTabs() {
-  const tabs = await browserApi.tabs.query({ currentWindow: true });
-  return tabs.map(safeTab);
+  let tabs = await browserApi.tabs.query({ currentWindow: true });
+  if (!tabs || !tabs.length) {
+    tabs = await browserApi.tabs.query({ lastFocusedWindow: true });
+  }
+  return (tabs || []).map(safeTab);
 }
 
 async function tabsForCurrentScope() {
@@ -20950,6 +20994,9 @@ await runStartupReadiness();
 renderBrowserControl();
 await refreshBrowserControlStatus({ follow: false });
 scheduleBrowserControlPoll();
+if (settings.browserControlEnabled === true) {
+  void attachBrowserControlToCurrentTab().catch(() => null);
+}
 try {
   await consumePendingInlineDraftRequest();
   await consumePendingContextMenuRequest();

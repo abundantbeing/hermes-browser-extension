@@ -478,7 +478,10 @@ async function setActionClickSidePanelBehavior() {
 
 async function activeBrowserTabId() {
   try {
-    const [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
+    let [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
+    if (!tab) {
+      [tab] = await browserApi.tabs.query({ active: true, lastFocusedWindow: true });
+    }
     const tabId = Number(tab?.id);
     return Number.isFinite(tabId) && tabId > 0 ? tabId : null;
   } catch {

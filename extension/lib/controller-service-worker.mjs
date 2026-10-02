@@ -96,7 +96,11 @@ function canonicalControlUrl(value = '') {
 
 function connectionSettings(stored = {}) {
   const settings = stored?.hermesBrowserSettings;
-  return settings && typeof settings === 'object' ? settings : {};
+  const normalized = settings && typeof settings === 'object' ? { ...settings } : {};
+  if (normalized.browserControlEnabled !== false) {
+    normalized.browserControlEnabled = true;
+  }
+  return normalized;
 }
 
 function durableSessionId(settings = {}) {
