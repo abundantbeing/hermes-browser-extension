@@ -926,6 +926,7 @@ const els = {
   browserContextConsentInput: $('#browserContextConsentInput'),
   browserContextConsentIdentity: $('#browserContextConsentIdentity'),
   inlineAssistEnabled: $('#inlineAssistEnabled'),
+  browserControlUnattendedInput: $('#browserControlUnattendedInput'),
   inlineAssistDefaultRoute: $('#inlineAssistDefaultRoute'),
   inlineAssistModel: $('#inlineAssistModel'),
   inlineAssistModelButton: $('#inlineAssistModelButton'),
@@ -15662,6 +15663,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     autoNameSessions: settings.autoNameSessions !== false,
     sessionStartupMode: normalizeSessionStartupMode(settings.sessionStartupMode),
     inlineAssistEnabled: settings.inlineAssistEnabled !== false,
+    browserControlUnattended: settings.browserControlUnattended === true,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute),
     inlineAssistModel: String(settings.inlineAssistModel || ''),
     inlineAssistRawModel: String(settings.inlineAssistRawModel || ''),
@@ -15819,6 +15821,7 @@ function syncSettingsForm() {
   els.includePageTextInput.checked = Boolean(settings.includePageText);
   els.includeSelectedTextInput.checked = Boolean(settings.includeSelectedText);
   if (els.inlineAssistEnabled) els.inlineAssistEnabled.checked = settings.inlineAssistEnabled !== false;
+  if (els.browserControlUnattendedInput) els.browserControlUnattendedInput.checked = settings.browserControlUnattended === true;
   if (els.inlineAssistDefaultRoute) els.inlineAssistDefaultRoute.value = normalizeInlineDraftRoutePreference(settings.inlineAssistDefaultRoute);
   renderInlineAssistModelOptions();
   if (els.inlineAssistSessionRetention) els.inlineAssistSessionRetention.value = settings.inlineAssistSessionRetention === 'delete' ? 'delete' : 'keep';
@@ -15910,6 +15913,7 @@ async function saveSettingsFromForm() {
     includePageText: els.includePageTextInput.checked,
     includeSelectedText: els.includeSelectedTextInput.checked,
     inlineAssistEnabled: els.inlineAssistEnabled ? els.inlineAssistEnabled.checked : settings.inlineAssistEnabled !== false,
+    browserControlUnattended: els.browserControlUnattendedInput ? els.browserControlUnattendedInput.checked === true : settings.browserControlUnattended === true,
     inlineAssistDefaultRoute: normalizeInlineDraftRoutePreference(els.inlineAssistDefaultRoute?.value || settings.inlineAssistDefaultRoute),
     ...assistBinding,
     inlineAssistSessionRetention: els.inlineAssistSessionRetention?.value === 'delete' ? 'delete' : 'keep',

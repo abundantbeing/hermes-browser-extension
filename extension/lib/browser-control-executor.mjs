@@ -2,6 +2,7 @@ import {
   BROWSER_CONTROL_RISKS,
   classifyBrowserControlAction,
   standingApprovalAllows,
+  STANDING_APPROVAL_REASONS,
 } from './browser-control-safety.mjs';
 import { redactSensitiveText } from './browser-context-protocol.mjs';
 import { redactSensitiveTextWithCount } from './content-extraction-core.mjs';
@@ -334,8 +335,12 @@ export function createBrowserControlExecutor({
       const approvalOrigin = pageOrigin(pageState.currentUrl);
       // A rule David created in the side panel ("Always allow on this site")
       // stands in for the per-command click, so unattended jobs don't stall.
-      const standingAllowed = policy.risk === BROWSER_CONTROL_RISKS.APPROVAL
-        && standingApprovalAllows(context?.standingApprovals, { origin: approvalOrigin, reason: policy.reason });
+      // ...or David's "Let Hermes jobs act without asking" switch (same eligible
+      // reasons only; privileged actions, tab close and drag always ask).
+      const unattended = (context?.settings?.browserControlUnattended ?? context?.browserControlUnattended) === true
+        && STANDING_APPROVAL_REASONS.includes(policy.reason);
+      const standingAllowed = policy.risk === BROWSER_CONTROL_RISKS.APPROVAL && (unattended
+        || standingApprovalAllows(context?.standingApprovals, { origin: approvalOrigin, reason: policy.reason }));
       if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL && !standingAllowed) {
         const binding = action === 'browser_upload' ? compact(args.artifact_id, 200) : '';
         const approval = {

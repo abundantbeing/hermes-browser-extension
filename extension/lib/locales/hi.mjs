@@ -168,6 +168,8 @@ export default Object.freeze({
   "browser_control.note": "Chromium नियंत्रक पहुँच इस एक्सटेंशन या अपडेट की स्थापना के समय प्रदान की गई थी। Hermes केवल किसी अधिकृत लीज़्ड कार्रवाई के दौरान जुड़ता है, कभी भी ब्राउज़र विंडो को ऊपर नहीं लाता है, और क्रेडेंशियल, MFA, भुगतान फ़ील्ड और गोपनीय टेक्स्ट को ब्लॉक करता है।",
   "browser_control.pause": "विराम दें",
   "browser_control.reject": "अस्वीकार करें",
+  "browser_control.unattended_title": "Let Hermes jobs act without asking",
+  "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",
   "browser_control.standing_rules_title": "Always allowed for unattended jobs",
   "browser_control.standing_rule_remove": "Remove",

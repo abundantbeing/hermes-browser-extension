@@ -168,6 +168,8 @@ export default Object.freeze({
   "browser_control.note": "Adgang til Chromium-controlleren blev givet, da denne udvidelse eller opdatering blev installeret. Hermes tilkobles kun under en autoriseret leasehandling, åbner aldrig et browservindue og blokerer legitimationsoplysninger, MFA, betalingsfelter og hemmelig tekst.",
   "browser_control.pause": "Pause",
   "browser_control.reject": "Afvis",
+  "browser_control.unattended_title": "Let Hermes jobs act without asking",
+  "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",
   "browser_control.standing_rules_title": "Always allowed for unattended jobs",
   "browser_control.standing_rule_remove": "Remove",

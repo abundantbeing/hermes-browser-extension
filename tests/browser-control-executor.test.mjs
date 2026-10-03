@@ -371,3 +371,20 @@ test('standing per-site approval rules skip the pause only for their own origin 
   }
   assert.equal(presses, 1);
 });
+
+test('the unattended switch skips eligible approvals but never privileged ones', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const approvals = createBrowserControlApprovalStore();
+  let presses = 0;
+  const adapter = fullAdapter(async () => { presses += 1; return { status: 'pressed' }; });
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore() });
+  const on = await executor.execute(frame('browser_press', { key: 'Enter' }), { scope, settings: { browserControlUnattended: true } });
+  assert.equal(on.ok, true);
+  assert.equal(presses, 1);
+  const off = executor.execute(frame('browser_press', { key: 'Enter' }, { command_id: 'off-1' }), { scope, settings: { browserControlUnattended: false } });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(approvals.count(), 1);
+  approvals.cancelRequest(approvals.pending()[0].approvalId, 'approval_denied');
+  assert.equal((await off).ok, false);
+  assert.equal(presses, 1);
+});

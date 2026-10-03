@@ -168,6 +168,8 @@ export default Object.freeze({
   "browser_control.note": "Dostęp do kontrolera Chromium został przyznany podczas instalacji tego rozszerzenia lub aktualizacji. Hermes dołącza się wyłącznie podczas autoryzowanej akcji dzierżawy, nigdy nie podnosi okna przeglądarki oraz blokuje dane logowania, MFA, pola płatności i tajny tekst.",
   "browser_control.pause": "Wstrzymaj",
   "browser_control.reject": "Odrzuć",
+  "browser_control.unattended_title": "Let Hermes jobs act without asking",
+  "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",
   "browser_control.standing_rules_title": "Always allowed for unattended jobs",
   "browser_control.standing_rule_remove": "Remove",

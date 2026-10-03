@@ -927,6 +927,14 @@
     "message": "Operate leased tabs",
     "description": "Runtime interface message browser_control.title"
   },
+  "runtime_browser_control_unattended_detail": {
+    "message": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
+    "description": "Runtime interface message browser_control.unattended_detail"
+  },
+  "runtime_browser_control_unattended_title": {
+    "message": "Let Hermes jobs act without asking",
+    "description": "Runtime interface message browser_control.unattended_title"
+  },
   "runtime_browser_control_waiting": {
     "message": "Waiting for Hermes.",
     "description": "Runtime interface message browser_control.waiting"

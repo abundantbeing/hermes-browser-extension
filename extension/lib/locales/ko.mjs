@@ -168,6 +168,8 @@ export default Object.freeze({
   "browser_control.note": "이 확장 프로그램 또는 업데이트를 설치할 때 Chromium 컨트롤러 액세스 권한이 부여되었습니다. Hermes는 승인된 임대 작업 중에만 연결되며, 브라우저 창을 절대 앞으로 가져오지 않고 자격 증명, MFA, 결제 입력란, 비밀 텍스트를 차단합니다.",
   "browser_control.pause": "일시 중지",
   "browser_control.reject": "거부",
+  "browser_control.unattended_title": "Let Hermes jobs act without asking",
+  "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",
   "browser_control.standing_rules_title": "Always allowed for unattended jobs",
   "browser_control.standing_rule_remove": "Remove",

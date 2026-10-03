@@ -168,6 +168,8 @@ export default Object.freeze({
   "browser_control.note": "Quyền truy cập bộ điều khiển Chromium đã được cấp khi cài đặt tiện ích hoặc bản cập nhật này. Hermes chỉ kết nối trong một hành động thuê đã được phép, không bao giờ đưa cửa sổ trình duyệt lên trước, đồng thời chặn thông tin đăng nhập, MFA, trường thanh toán và văn bản bí mật.",
   "browser_control.pause": "Tạm dừng",
   "browser_control.reject": "Từ chối",
+  "browser_control.unattended_title": "Let Hermes jobs act without asking",
+  "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",
   "browser_control.standing_rules_title": "Always allowed for unattended jobs",
   "browser_control.standing_rule_remove": "Remove",
