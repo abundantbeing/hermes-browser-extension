@@ -213,12 +213,22 @@ function directionDelta(direction = '') {
 
 function pageProbe(mode, direction = '') {
   if (mode === 'inspect') {
+    // Only fields a person could have edited count as unsaved work. Sites fill
+    // hidden/readonly inputs from script (tokens, tracking ids), which would
+    // otherwise make every page look dirty and stall cross-site navigation on
+    // an approval nobody is there to give.
+    const NON_EDITABLE_TYPES = new Set(['hidden', 'submit', 'button', 'reset', 'image', 'file']);
+    const userEditable = (element) => !NON_EDITABLE_TYPES.has(String(element.type || '').toLowerCase())
+      && !element.disabled
+      && !element.readOnly
+      && element.getClientRects().length > 0;
     const dirtyText = [...document.querySelectorAll('input, textarea')].some((element) => {
-      if (element.type === 'password') return false;
+      if (element.type === 'password' || element.type === 'checkbox' || element.type === 'radio') return false;
+      if (!userEditable(element)) return false;
       return String(element.value ?? '') !== String(element.defaultValue ?? '');
     });
     const dirtyChecks = [...document.querySelectorAll('input[type="checkbox"], input[type="radio"]')]
-      .some((element) => element.checked !== element.defaultChecked);
+      .some((element) => userEditable(element) && element.checked !== element.defaultChecked);
     return { hasUnsavedContent: dirtyText || dirtyChecks };
   }
   if (mode === 'scroll') {
