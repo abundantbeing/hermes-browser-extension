@@ -300,7 +300,12 @@ export function createControllerServiceWorker({
     const action = String(frame?.action || '').trim();
     const actionArgs = frame?.arguments && typeof frame.arguments === 'object' ? frame.arguments : {};
     const tabId = Number(frame?.tab_id);
-    const isControlPlane = tabId === CONTROL_PLANE_TAB_ID || tabId <= 0 || action === 'browser_tabs';
+    const noTab = !Number.isInteger(tabId) || tabId <= 0 || tabId === CONTROL_PLANE_TAB_ID;
+    // Only listing and opening tabs may run without a target tab.
+    if (noTab && !['browser_tabs', 'browser_tab_create'].includes(action)) {
+      return terminalError('lease_required', 'This action needs a leased target tab.');
+    }
+    const isControlPlane = noTab || action === 'browser_tabs';
     let lease = null;
     let frameId = 0;
     let authoritative = 1;
@@ -644,7 +649,10 @@ export function createControllerServiceWorker({
         },
       };
     }
-    if (String(params.action || '') === 'controller.noop' || String(params.action || '') === 'browser_tabs') {
+    // Control-plane actions never need a target tab: listing tabs, and opening a
+    // new one (each job opens its own window even when the controller already
+    // owns several tabs and David is focused elsewhere).
+    if (['controller.noop', 'browser_tabs', 'browser_tab_create'].includes(String(params.action || ''))) {
       return { ok: true, params };
     }
 

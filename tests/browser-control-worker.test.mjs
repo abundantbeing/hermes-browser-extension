@@ -909,3 +909,33 @@ test('worker drops a rejected pairing token so reconnect can mint a fresh ticket
   assert.equal(String(store.state.hermesBrowserSettings.tokenSource || ''), '');
   assert.equal(String(store.state.hermesBrowserSettings.apiKey || ''), '');
 });
+
+
+test('opening a job tab needs no target even when several owned tabs are live', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: settings() });
+  const transport = connector();
+  const calls = [];
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: async (frame) => { calls.push(frame.action); return { ok: true, result: { tab: { id: 950, windowId: 9 } } }; },
+  });
+  const boot = await worker.boot();
+  assert.equal((await worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.leaseAcquire,
+    kind: TAB_LEASE_KINDS.SELECTED_TABS,
+    ownership: TAB_LEASE_OWNERSHIPS.OWNED,
+    ownerId: boot.controllerId,
+    tabIds: [902, 903],
+  }, extensionSender())).ok, true);
+  await transport.connections[0].emit({
+    method: 'browser.controller.command',
+    params: { command_id: 'job-tab', action: 'browser_tab_create', arguments: { url: 'https://example.test/', new_window: true } },
+  });
+  await settle();
+  assert.deepEqual(calls, ['browser_tab_create']);
+  assert.equal(transport.connections[0].sent.at(-1).params.ok, true);
+});
