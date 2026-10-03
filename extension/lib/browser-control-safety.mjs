@@ -100,7 +100,7 @@ export function classifyBrowserControlAction({
   if (normalizedAction === 'browser_tab_close') {
     return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'tab-close');
   }
-  if (normalizedAction !== 'browser_navigate' && currentUrl && isRestrictedUrl(currentUrl, { allowLocalDocuments })) {
+  if (normalizedAction !== 'browser_navigate' && normalizedAction !== 'browser_tab_create' && currentUrl && isRestrictedUrl(currentUrl, { allowLocalDocuments })) {
     return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'restricted_current_page');
   }
 

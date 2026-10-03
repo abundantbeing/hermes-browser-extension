@@ -35,6 +35,9 @@ function boundedScreenshot(dataUrl = '') {
 
 function privacySafeLeasedTabs(tabs = [], leasedTabIds = []) {
   const allowed = new Set(Array.from(leasedTabIds || []).map(Number));
+  if (allowed.size === 0) {
+    return tabs.map(privacySafeTabForPrompt);
+  }
   return tabs
     .filter((tab) => allowed.has(Number(tab?.id)))
     .map(privacySafeTabForPrompt);
@@ -305,7 +308,6 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Chromium adapter.`);
     assertNotAborted(signal);
-    const tabId = tabIdFrom(scope);
     if (action === 'browser_tabs') {
       const tabs = await browserApi.tabs.query({});
       return { tabs: privacySafeLeasedTabs(tabs, leasedTabIds) };
@@ -316,7 +318,12 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
       return browserApi.tabs.update(targetTabId, { active: true });
     }
     if (action === 'browser_tab_create') {
-      const windowId = Number(currentWindowId) || Number((await browserApi.tabs.get(tabId))?.windowId) || null;
+      let windowId = Number(currentWindowId) || null;
+      if (!windowId && Number(scope?.tabId) > 0) {
+        try {
+          windowId = Number((await browserApi.tabs.get(Number(scope.tabId)))?.windowId) || null;
+        } catch (_) {}
+      }
       const tab = await browserApi.tabs.create({
         url: String(args.url || ''),
         active: args.active !== false,
@@ -326,10 +333,11 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
     }
     if (action === 'browser_tab_close') {
       const targetTabId = Number(args.tab_id);
-      if (!ownedTabIds.includes(targetTabId)) throw new Error('The target tab is not owned by this controller.');
+      if (ownedTabIds?.length && !ownedTabIds.includes(targetTabId)) throw new Error('The target tab is not owned by this controller.');
       await browserApi.tabs.remove(targetTabId);
       return { status: 'tab-closed' };
     }
+    const tabId = tabIdFrom(scope);
     if (action === 'browser_tab_group' || action === 'browser_tab_ungroup') {
       const tabIds = [...new Set((Array.isArray(args.tab_ids) ? args.tab_ids : []).map(Number))];
       if (!tabIds.length || tabIds.some((tabIdValue) => !ownedTabIds.includes(tabIdValue))) {
@@ -342,6 +350,14 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
       if (typeof browserApi.tabs.ungroup !== 'function') throw new Error('Native tab ungrouping is unavailable.');
       await browserApi.tabs.ungroup(tabIds);
       return { status: 'tabs-ungrouped' };
+    }
+    // Navigate via the tabs API, not CDP Page.navigate: a cross-site navigation
+    // swaps renderer processes and the debugger reply can be lost, hanging the
+    // command until the broker times out.
+    if (action === 'browser_navigate') {
+      const url = String(args.url || '');
+      await browserApi.tabs.update(tabId, { url });
+      return { url };
     }
 
     return withDebugger(browserApi.debugger, scope, signal, async (send) => {
@@ -479,10 +495,6 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
         });
         return { status: 'scrolled' };
       }
-      if (action === 'browser_navigate') {
-        await send('Page.navigate', { url: String(args.url || '') });
-        return { url: String(args.url || '') };
-      }
       if (action === 'browser_back') {
         const history = await send('Page.getNavigationHistory');
         const previous = history?.entries?.[Number(history.currentIndex) - 1];
@@ -551,6 +563,35 @@ function createFirefoxWebExtensionAdapter({ browserApi } = {}) {
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Firefox adapter.`);
     assertNotAborted(signal);
+    if (action === 'browser_tabs') {
+      const tabs = await browserApi.tabs.query({});
+      return { tabs: privacySafeLeasedTabs(tabs, leasedTabIds) };
+    }
+    if (action === 'browser_tab_activate') {
+      const targetTabId = Number(args.tab_id);
+      if (!Number.isInteger(targetTabId) || targetTabId <= 0) throw new Error('A valid tab id is required.');
+      return browserApi.tabs.update(targetTabId, { active: true });
+    }
+    if (action === 'browser_tab_create') {
+      let windowId = Number(currentWindowId) || null;
+      if (!windowId && Number(scope?.tabId) > 0) {
+        try {
+          windowId = Number((await browserApi.tabs.get(Number(scope.tabId)))?.windowId) || null;
+        } catch (_) {}
+      }
+      const tab = await browserApi.tabs.create({
+        url: String(args.url || ''),
+        active: args.active !== false,
+        ...(windowId ? { windowId } : {}),
+      });
+      return { tab };
+    }
+    if (action === 'browser_tab_close') {
+      const targetTabId = Number(args.tab_id);
+      if (ownedTabIds?.length && !ownedTabIds.includes(targetTabId)) throw new Error('The target tab is not owned by this controller.');
+      await browserApi.tabs.remove(targetTabId);
+      return { status: 'tab-closed' };
+    }
     const tabId = tabIdFrom(scope);
     if (action === 'browser_snapshot') return script(scope, signal, 'snapshot');
     if (action === 'browser_scroll') return script(scope, signal, 'scroll', String(args.direction || ''));
@@ -566,30 +607,6 @@ function createFirefoxWebExtensionAdapter({ browserApi } = {}) {
       const dataUrl = await browserApi.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
       assertNotAborted(signal);
       return boundedScreenshot(dataUrl);
-    }
-    if (action === 'browser_tabs') {
-      const tabs = await browserApi.tabs.query({});
-      return { tabs: privacySafeLeasedTabs(tabs, leasedTabIds) };
-    }
-    if (action === 'browser_tab_activate') {
-      const targetTabId = Number(args.tab_id);
-      if (!Number.isInteger(targetTabId) || targetTabId <= 0) throw new Error('A valid tab id is required.');
-      return browserApi.tabs.update(targetTabId, { active: true });
-    }
-    if (action === 'browser_tab_create') {
-      const windowId = Number(currentWindowId) || Number((await browserApi.tabs.get(tabId))?.windowId) || null;
-      const tab = await browserApi.tabs.create({
-        url: String(args.url || ''),
-        active: args.active !== false,
-        ...(windowId ? { windowId } : {}),
-      });
-      return { tab };
-    }
-    if (action === 'browser_tab_close') {
-      const targetTabId = Number(args.tab_id);
-      if (!ownedTabIds.includes(targetTabId)) throw new Error('The target tab is not owned by this controller.');
-      await browserApi.tabs.remove(targetTabId);
-      return { status: 'tab-closed' };
     }
     throw new Error(`Action ${action} is not implemented by the Firefox adapter.`);
   }

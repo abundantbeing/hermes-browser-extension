@@ -113,6 +113,16 @@ const controllerWorker = typeof browserApi.storage?.local?.set === 'function'
       getControllerCapabilities: async (settings) => (await browserControlRuntime.status(settings)).capabilities,
       executeBrowserCommand: (frame, context) => browserControlRuntime.execute(frame, context, context.settings),
       getTab: (tabId) => browserApi.tabs.get(tabId),
+      getActiveTab: async () => {
+        let [tab] = await browserApi.tabs.query({ active: true, lastFocusedWindow: true });
+        if (!tab) [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
+        if (!tab) [tab] = await browserApi.tabs.query({ active: true });
+        if (!tab) {
+          const allTabs = await browserApi.tabs.query({});
+          tab = allTabs.find((t) => t.url && !t.url.startsWith('chrome-extension://')) || allTabs[0] || null;
+        }
+        return tab || null;
+      },
     })
   : null;
 browserControlRuntime.setDebuggerDetachHandler((event) => {

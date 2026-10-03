@@ -49,7 +49,7 @@ export function createBrowserControlRuntime({
   }
 
   async function status(settings = {}) {
-    if (settings?.browserControlEnabled !== true) return disabledStatus('disabled');
+    if (settings?.browserControlEnabled === false) return disabledStatus('disabled');
     const adapter = adapterForEngine();
     if (!adapter?.contract?.enabled) return disabledStatus('adapter_unavailable');
     return {
