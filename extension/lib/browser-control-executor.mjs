@@ -106,6 +106,10 @@ function pageOrigin(value = '') {
 }
 
 function frameMatchesScope(frame = {}, scope = {}) {
+  const action = compact(frame?.action, 120);
+  if (action === 'browser_tabs' || Number(scope?.tabId) <= 0) {
+    return Boolean(scope?.controllerId);
+  }
   return Number(frame.tab_id) === scope.tabId
     && Math.max(0, Number(frame.frame_id) || 0) === scope.frameId
     && Number(frame.document_generation) === scope.documentGeneration

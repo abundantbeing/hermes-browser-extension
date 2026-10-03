@@ -29,6 +29,7 @@ import {
   mintWsTicket,
 } from './dashboard-bridge.mjs';
 import { CONNECTION_TRANSPORTS } from './connection-modes.mjs';
+import { HERMES_BROWSER_SYSTEM_PROMPT } from './common.mjs';
 
 const API_TRANSPORTS = new Set([
   CONNECTION_TRANSPORTS.LOCAL_API,
@@ -291,7 +292,7 @@ export function createControllerConnector({
       const response = await fetchImpl(createUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ id: sessionId, title: candidateTitle, source }),
+        body: JSON.stringify({ id: sessionId, title: candidateTitle, source, system_prompt: HERMES_BROWSER_SYSTEM_PROMPT }),
         redirect: 'error',
         cache: 'no-store',
         signal,

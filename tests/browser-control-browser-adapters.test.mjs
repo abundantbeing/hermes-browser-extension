@@ -186,10 +186,10 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
     'DOM.focus', 'Input.insertText', 'DOM.resolveNode',
     'Input.dispatchKeyEvent', 'Input.dispatchKeyEvent',
     'Runtime.evaluate',
-    'Page.navigate',
     'Page.getNavigationHistory', 'Page.navigateToHistoryEntry',
     'Page.captureScreenshot',
   ]);
+  assert.deepEqual(calls.find((call) => call[0] === 'tabs.update'), ['tabs.update', 7, { url: 'https://example.test/next' }]);
   const mouse = calls.find((call) => call[0] === 'command' && call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed');
   assert.deepEqual({ x: mouse[3].x, y: mouse[3].y, button: mouse[3].button }, { x: 20, y: 30, button: 'left' });
   const typed = calls.find((call) => call[0] === 'command' && call[2] === 'Input.insertText');
@@ -199,8 +199,9 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
   assert.match(scroll[3].expression, /top:600/);
   assert.doesNotMatch(scroll[3].expression, /down|args|direction|javascript:/i);
   assert.equal(screenshot.dataUrl, 'data:image/png;base64,ZmFrZS1wbmc=');
-  assert.equal(calls.filter((call) => call[0] === 'attach').length, 7);
-  assert.equal(calls.filter((call) => call[0] === 'detach').length, 7);
+  // Navigation goes through tabs.update, so it opens no debugger session.
+  assert.equal(calls.filter((call) => call[0] === 'attach').length, 6);
+  assert.equal(calls.filter((call) => call[0] === 'detach').length, 6);
 });
 
 test('Chromium parity primitives hover drag scroll-to modifiers clipped screenshots and reactive typing', async () => {

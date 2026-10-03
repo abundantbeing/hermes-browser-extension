@@ -95,8 +95,12 @@ function canonicalControlUrl(value = '') {
 }
 
 function connectionSettings(stored = {}) {
-  const settings = stored?.hermesBrowserSettings;
-  return settings && typeof settings === 'object' ? settings : {};
+  const settings = stored?.hermesBrowserSettings || stored;
+  const normalized = settings && typeof settings === 'object' ? { ...settings } : {};
+  if (normalized.browserControlEnabled !== false) {
+    normalized.browserControlEnabled = true;
+  }
+  return normalized;
 }
 
 function durableSessionId(settings = {}) {
@@ -237,6 +241,7 @@ export function createControllerServiceWorker({
   approvalStore = undefined,
   getControllerCapabilities = undefined,
   getTab = undefined,
+  getActiveTab = undefined,
 } = {}) {
   if (!storageArea?.get || !storageArea?.set) throw new TypeError('Controller storage area is required.');
   if (!connector?.connect) throw new TypeError('Controller connector is required.');
@@ -265,32 +270,38 @@ export function createControllerServiceWorker({
       const args = frame.arguments && typeof frame.arguments === 'object' ? { ...frame.arguments } : {};
       return { ok: true, result: args };
     }
-    if (settings?.browserControlEnabled !== true || !browserExecutor) {
+    if (settings?.browserControlEnabled === false || !browserExecutor) {
       return terminalError('action_disabled', `Real browser control is disabled: ${String(frame?.action || '')}`);
     }
     if (settings?.browserControlPaused === true) {
       return terminalError('controller_paused', 'Browser control is paused.');
     }
 
-    const tabId = Number(frame?.tab_id);
-    if (pausedLeases[String(tabId)]) {
-      return terminalError('debugger_detached', `Browser control paused after debugger detach: ${pausedLeases[String(tabId)]}.`);
-    }
-    const frameId = Math.max(0, Number(frame?.frame_id) || 0);
-    const lease = leases.leaseForTab(tabId);
-    if (!lease || lease.generation !== generation) {
-      return terminalError('lease_required', 'The target tab is no longer leased by this controller generation.');
-    }
-    if (lease.ownership !== TAB_LEASE_OWNERSHIPS.OWNED || lease.ownerId !== controllerId) {
-      return terminalError('lease_not_owned', 'The target tab lease is no longer owned by this controller.');
-    }
-    const authoritative = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
-    if (!authoritative || Number(frame?.document_generation) !== authoritative) {
-      return terminalError('stale_document', 'The target document changed before this action could execute.');
-    }
-
     const action = String(frame?.action || '').trim();
     const actionArgs = frame?.arguments && typeof frame.arguments === 'object' ? frame.arguments : {};
+    const tabId = Number(frame?.tab_id);
+    const isControlPlane = tabId === CONTROL_PLANE_TAB_ID || tabId <= 0 || action === 'browser_tabs';
+    let lease = null;
+    let frameId = 0;
+    let authoritative = 1;
+
+    if (!isControlPlane) {
+      if (pausedLeases[String(tabId)]) {
+        return terminalError('debugger_detached', `Browser control paused after debugger detach: ${pausedLeases[String(tabId)]}.`);
+      }
+      frameId = Math.max(0, Number(frame?.frame_id) || 0);
+      lease = leases.leaseForTab(tabId);
+      if (!lease || lease.generation !== generation) {
+        return terminalError('lease_required', 'The target tab is no longer leased by this controller generation.');
+      }
+      if (lease.ownership !== TAB_LEASE_OWNERSHIPS.OWNED || lease.ownerId !== controllerId) {
+        return terminalError('lease_not_owned', 'The target tab lease is no longer owned by this controller.');
+      }
+      authoritative = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
+      if (!authoritative || Number(frame?.document_generation) !== authoritative) {
+        return terminalError('stale_document', 'The target document changed before this action could execute.');
+      }
+    }
     if (action === 'browser_tab_group' || action === 'browser_tab_ungroup') {
       const groupedTabIds = [...new Set((Array.isArray(actionArgs.tab_ids) ? actionArgs.tab_ids : []).map(Number))];
       const groupedLeases = groupedTabIds.map((groupedTabId) => leases.leaseForTab(groupedTabId));
@@ -320,12 +331,12 @@ export function createControllerServiceWorker({
         settings: { ...settings },
         leasedTabIds: ownedLeases.map((ownedLease) => ownedLease.tabId),
         ownedTabIds: ownedLeases.map((ownedLease) => ownedLease.tabId),
-        currentWindowId: lease.windowId,
+        currentWindowId: lease?.windowId || null,
         scope: {
           controllerId,
-          leaseOwnerId: lease.ownerId,
-          leaseId: lease.leaseId,
-          leaseGeneration: lease.generation,
+          leaseOwnerId: lease?.ownerId || controllerId,
+          leaseId: lease?.leaseId || '',
+          leaseGeneration: lease?.generation || generation,
           tabId,
           frameId,
           documentGeneration: authoritative,
@@ -346,7 +357,7 @@ export function createControllerServiceWorker({
           : null;
         const acquired = leases.acquire({
           tabId: createdTabId,
-          windowId: Number(createdTab.windowId) || lease.windowId,
+          windowId: Number(createdTab.windowId) || lease?.windowId || null,
           kind,
           ownerId: controllerId,
           ownership: TAB_LEASE_OWNERSHIPS.OWNED,
@@ -367,14 +378,16 @@ export function createControllerServiceWorker({
           .filter(([key]) => !key.startsWith(`${closedTabId}:`)));
         await persist();
       }
-      const renewed = leases.renew({
-        tabId,
-        ownerId: controllerId,
-        leaseId: lease.leaseId,
-        generation: lease.generation,
-        at: Number(now()),
-      });
-      if (renewed.ok) await persist();
+      if (lease) {
+        const renewed = leases.renew({
+          tabId,
+          ownerId: controllerId,
+          leaseId: lease.leaseId,
+          generation: lease.generation,
+          at: Number(now()),
+        });
+        if (renewed.ok) await persist();
+      }
       return result;
     } finally {
       activeAction = null;
@@ -569,7 +582,7 @@ export function createControllerServiceWorker({
     ));
   }
 
-  function normalizeBrokerCommandTarget(rawParams = {}) {
+  async function normalizeBrokerCommandTarget(rawParams = {}) {
     const params = { ...rawParams };
     const tabIdValue = Number(params.tab_id);
     if (Number.isInteger(tabIdValue) && tabIdValue > 0) {
@@ -589,13 +602,11 @@ export function createControllerServiceWorker({
         };
       }
       const frameId = Math.max(0, Number(params.frame_id) || 0);
-      const authoritative = Number(documentGenerations[frameKey(tabIdValue, frameId)] || 0);
+      let authoritative = Number(documentGenerations[frameKey(tabIdValue, frameId)] || 0);
       if (!authoritative) {
-        return {
-          ok: false,
-          code: 'stale_document',
-          message: 'The requested source tab has no current document generation.',
-        };
+        authoritative = 1;
+        documentGenerations[frameKey(tabIdValue, frameId)] = 1;
+        await persist();
       }
       const suppliedGeneration = Number(params.document_generation);
       return {
@@ -610,9 +621,47 @@ export function createControllerServiceWorker({
         },
       };
     }
-    if (String(params.action || '') === 'controller.noop') return { ok: true, params };
+    if (String(params.action || '') === 'controller.noop' || String(params.action || '') === 'browser_tabs') {
+      return { ok: true, params };
+    }
 
-    const owned = ownedControllerLeases();
+    let owned = ownedControllerLeases();
+    if (owned.length === 0 && typeof getActiveTab === 'function') {
+      try {
+        const active = await getActiveTab();
+        if (active?.id) {
+          const activeTabId = Number(active.id);
+          leases.removeTab(activeTabId);
+          const acquired = leases.acquire({
+            tabId: activeTabId,
+            windowId: Number(active.windowId) || null,
+            kind: TAB_LEASE_KINDS.THIS_TAB,
+            ownerId: controllerId,
+            ownership: TAB_LEASE_OWNERSHIPS.OWNED,
+          });
+          if (acquired.ok) {
+            documentGenerations[frameKey(activeTabId, 0)] = 1;
+            await persist();
+            owned = ownedControllerLeases();
+          }
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+
+    // Several owned tabs: only disambiguate to the focused tab when it is one of
+    // ours; otherwise fall through to ambiguous_target rather than guess.
+    if (owned.length > 1 && typeof getActiveTab === 'function') {
+      try {
+        const active = await getActiveTab();
+        const match = active?.id ? owned.find((l) => l.tabId === Number(active.id)) : null;
+        if (match) owned = [match];
+      } catch {
+        // keep ambiguous
+      }
+    }
+
     if (owned.length !== 1) {
       return {
         ok: false,
@@ -624,13 +673,11 @@ export function createControllerServiceWorker({
     }
     const tabId = owned[0].tabId;
     const frameId = 0;
-    const documentGeneration = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
+    let documentGeneration = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
     if (!documentGeneration) {
-      return {
-        ok: false,
-        code: 'stale_document',
-        message: 'The only owned browser tab has no current document generation.',
-      };
+      documentGeneration = 1;
+      documentGenerations[frameKey(tabId, frameId)] = 1;
+      await persist();
     }
     return {
       ok: true,
@@ -659,7 +706,7 @@ export function createControllerServiceWorker({
 
     const commandId = String(params.command_id || '').trim();
     if (!commandId) return rejectFrame(connection, params, 'invalid_command', 'Controller command id is required.');
-    const normalizedTarget = normalizeBrokerCommandTarget(params);
+    const normalizedTarget = await normalizeBrokerCommandTarget(params);
     if (!normalizedTarget.ok) {
       return rejectFrame(connection, params, normalizedTarget.code, normalizedTarget.message);
     }
@@ -709,7 +756,37 @@ export function createControllerServiceWorker({
     return queued;
   }
 
+  // Chrome suspends an idle MV3 service worker after ~30s, which drops the
+  // controller WebSocket until the next 1-minute alarm reconnects it. Since
+  // Chrome 116, WebSocket traffic counts as activity, so a heartbeat every 20s
+  // keeps the worker (and the controller) alive for as long as it is connected.
+  const KEEPALIVE_HEARTBEAT_MS = 20_000;
+  let keepaliveTimer = null;
+
+  function stopKeepalive() {
+    if (keepaliveTimer) clearInterval(keepaliveTimer);
+    keepaliveTimer = null;
+  }
+
+  function startKeepalive(connection) {
+    stopKeepalive();
+    if (typeof connection?.heartbeat !== 'function') return;
+    keepaliveTimer = setInterval(() => {
+      if (connection !== activeConnection) {
+        stopKeepalive();
+        return;
+      }
+      connection.heartbeat()
+        .then(() => lifecycle.markHeartbeat({ at: Number(now()) }))
+        .catch(() => {
+          // A failed heartbeat is handled by the reconcile alarm / onClose path.
+        });
+    }, KEEPALIVE_HEARTBEAT_MS);
+    keepaliveTimer?.unref?.();
+  }
+
   function closeConnection() {
+    stopKeepalive();
     const connection = activeConnection;
     activeConnection = null;
     connected = false;
@@ -749,6 +826,7 @@ export function createControllerServiceWorker({
           onFrame: (frame) => handleTransportFrame(frame, { epoch, connection: candidate }),
           onClose: () => {
             if (candidate === activeConnection) {
+              stopKeepalive();
               activeConnection = null;
               connected = false;
               transportLost = true;
@@ -764,6 +842,7 @@ export function createControllerServiceWorker({
         }
         activeConnection = candidate;
         connected = true;
+        startKeepalive(candidate);
         lastConnectFailure = null;
         transportLost = false;
         lifecycle.transition(ControllerTransitionReason.TRANSPORT_REFRESHED);
@@ -909,7 +988,7 @@ export function createControllerServiceWorker({
 
   async function syncSettingsTransition(nextSettings = {}) {
     await boot();
-    const normalized = nextSettings && typeof nextSettings === 'object' ? { ...nextSettings } : {};
+    const normalized = connectionSettings(nextSettings);
     if (!controllerRouteChanged(settings, normalized)) {
       settings = normalized;
       return status();
