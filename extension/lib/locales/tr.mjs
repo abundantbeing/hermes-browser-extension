@@ -168,6 +168,7 @@ export default Object.freeze({
   "browser_control.note": "Chromium denetleyicisi erişimi, bu eklenti veya güncelleme yüklendiğinde verildi. Hermes yalnızca yetkili bir kiralama işlemi sırasında bağlanır, asla bir tarayıcı penceresi açmaz ve kimlik bilgilerini, MFA'yı, ödeme alanlarını ve gizli metinleri engeller.",
   "browser_control.pause": "Duraklat",
   "browser_control.reject": "Reddet",
+  "browser_control.automation_section": "Browser automation",
   "browser_control.unattended_title": "Let Hermes jobs act without asking",
   "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",

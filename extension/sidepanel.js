@@ -20454,6 +20454,13 @@ function bindEvents() {
   els.browserControlApproveButton?.addEventListener('click', () => {
     decideBrowserControlApproval(true).catch((error) => showOperationToast({ kind: 'warn', title: 'Approval not accepted', detail: error?.message || String(error) }));
   });
+  els.browserControlUnattendedInput?.addEventListener('change', () => {
+    const enabled = els.browserControlUnattendedInput.checked === true;
+    persistBrowserControlPreferences({ browserControlUnattended: enabled })
+      .then(() => browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH'))
+      .then(() => showOperationToast({ kind: 'ok', title: enabled ? 'Hermes jobs will act without asking' : 'Hermes jobs will ask before acting' }))
+      .catch((error) => showOperationToast({ kind: 'warn', title: 'Setting not saved', detail: error?.message || String(error) }));
+  });
   els.browserControlAlwaysAllowButton?.addEventListener('click', () => {
     decideBrowserControlApproval(true, { always: true }).catch((error) => showOperationToast({ kind: 'warn', title: 'Rule not saved', detail: error?.message || String(error) }));
   });

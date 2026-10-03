@@ -168,6 +168,7 @@ export default Object.freeze({
   "browser_control.note": "この拡張機能またはアップデートのインストール時に、Chromium コントローラーのアクセスが許可されました。Hermes は承認された貸出アクション中のみ接続し、ブラウザーウィンドウを前面に出すことはなく、認証情報・MFA・支払い欄・機密テキストをブロックします。",
   "browser_control.pause": "一時停止",
   "browser_control.reject": "拒否",
+  "browser_control.automation_section": "Browser automation",
   "browser_control.unattended_title": "Let Hermes jobs act without asking",
   "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",

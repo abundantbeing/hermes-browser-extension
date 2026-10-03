@@ -168,6 +168,7 @@ export default Object.freeze({
   "browser_control.note": "Akses pengontrol Chromium diberikan saat ekstensi atau pembaruan ini dipasang. Hermes hanya terhubung selama tindakan sewaan yang sah, tidak pernah memunculkan jendela browser, dan memblokir kredensial, MFA, kolom pembayaran, serta teks rahasia.",
   "browser_control.pause": "Jeda",
   "browser_control.reject": "Tolak",
+  "browser_control.automation_section": "Browser automation",
   "browser_control.unattended_title": "Let Hermes jobs act without asking",
   "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",

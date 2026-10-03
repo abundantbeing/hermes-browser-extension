@@ -713,6 +713,20 @@
             </div>
           </div>
         </section>
+        <section class="settings-section browser-automation-settings" aria-labelledby="browserAutomationTitle">
+          <div class="settings-section-head">
+            <h3 id="browserAutomationTitle" data-i18n="browser_control.automation_section">Browser automation</h3>
+          </div>
+          <label class="settings-toggle-card">
+            <span class="settings-toggle-copy">
+              <strong data-i18n="browser_control.unattended_title">Let Hermes jobs act without asking</strong>
+              <small data-i18n="browser_control.unattended_detail">Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.</small>
+            </span>
+            <input id="browserControlUnattendedInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+        </section>
+
         <section class="settings-section bot-mode-settings" aria-labelledby="botModeSettingsTitle">
           <div class="settings-section-head"><div><h3 id="botModeSettingsTitle" data-i18n="bot_mode.settings_title">Agents &amp; Bot Mode</h3><p data-i18n="bot_mode.settings_copy_sidepanel">Turn on the optional profile roster and canonical Bot Chat navigator for this browser.</p></div></div>
           <label class="settings-toggle-card bot-mode-toggle-card" for="botModeEnabledInput">
@@ -1006,14 +1020,6 @@
               <small data-i18n="ui.turn.the.field.bound.launcher.on.or.off.across.normal.web.pages">Turn the field-bound launcher on or off across normal web pages.</small>
             </span>
             <input id="inlineAssistEnabled" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-          <label class="settings-toggle-card">
-            <span class="settings-toggle-copy">
-              <strong data-i18n="browser_control.unattended_title">Let Hermes jobs act without asking</strong>
-              <small data-i18n="browser_control.unattended_detail">Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.</small>
-            </span>
-            <input id="browserControlUnattendedInput" class="settings-switch-input" type="checkbox" />
             <span class="settings-switch" aria-hidden="true"></span>
           </label>
           <label>

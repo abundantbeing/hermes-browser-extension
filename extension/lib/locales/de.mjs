@@ -168,6 +168,7 @@ export default Object.freeze({
   "browser_control.note": "Der Zugriff auf den Chromium-Controller wurde bei der Installation dieser Erweiterung oder dieses Updates gewährt. Hermes verbindet sich nur während einer autorisierten Leihaktion, öffnet nie ein Browserfenster und blockiert Anmeldedaten, MFA, Zahlungsfelder und geheime Texte.",
   "browser_control.pause": "Pausieren",
   "browser_control.reject": "Ablehnen",
+  "browser_control.automation_section": "Browser automation",
   "browser_control.unattended_title": "Let Hermes jobs act without asking",
   "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",

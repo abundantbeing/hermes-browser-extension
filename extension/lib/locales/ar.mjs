@@ -168,6 +168,7 @@ export default Object.freeze({
   "browser_control.note": "تم منح الوصول إلى وحدة تحكم Chromium عند تثبيت هذه الإضافة أو هذا التحديث. يتصل Hermes فقط أثناء إجراء مستأجر مصرح به، ولا يرفع نافذة المتصفح أبدًا، ويحظر بيانات الاعتماد وMFA وحقول الدفع والنصوص السرية.",
   "browser_control.pause": "إيقاف مؤقت",
   "browser_control.reject": "رفض",
+  "browser_control.automation_section": "Browser automation",
   "browser_control.unattended_title": "Let Hermes jobs act without asking",
   "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",

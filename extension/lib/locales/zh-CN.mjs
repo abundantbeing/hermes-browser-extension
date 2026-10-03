@@ -146,6 +146,7 @@ export default Object.freeze({
   "browser_control.note": "安装此扩展或更新时已授予 Chromium 控制器访问权限。Hermes 仅在获授权的租用操作期间接入，绝不弹出浏览器窗口，并会阻止凭据、MFA、支付字段和机密文本。",
   "browser_control.pause": "暂停",
   "browser_control.reject": "拒绝",
+  "browser_control.automation_section": "Browser automation",
   "browser_control.unattended_title": "Let Hermes jobs act without asking",
   "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",

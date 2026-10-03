@@ -168,6 +168,7 @@ export default Object.freeze({
   "browser_control.note": "สิทธิ์เข้าถึงตัวควบคุม Chromium ถูกอนุญาตเมื่อติดตั้งส่วนขยายหรืออัปเดตนี้ Hermes จะเชื่อมต่อเฉพาะระหว่างการดำเนินการที่เช่าซึ่งได้รับอนุญาตเท่านั้น ไม่เคยเปิดหน้าต่างเบราว์เซอร์ขึ้นมา และบล็อกข้อมูลรับรอง MFA ช่องชำระเงิน และข้อความลับ",
   "browser_control.pause": "หยุดชั่วคราว",
   "browser_control.reject": "ปฏิเสธ",
+  "browser_control.automation_section": "Browser automation",
   "browser_control.unattended_title": "Let Hermes jobs act without asking",
   "browser_control.unattended_detail": "Scheduled jobs can press Enter, click Send/Post-type buttons, leave edited pages and upload files without an approval prompt.",
   "browser_control.always_allow_site": "Always allow on this site",

@@ -823,6 +823,10 @@
     "message": "제어 승인",
     "description": "Runtime interface message browser_control.authorize"
   },
+  "runtime_browser_control_automation_section": {
+    "message": "Browser automation",
+    "description": "Runtime interface message browser_control.automation_section"
+  },
   "runtime_browser_control_control_ready": {
     "message": "제어 준비 완료",
     "description": "Runtime interface message browser_control.control_ready"
