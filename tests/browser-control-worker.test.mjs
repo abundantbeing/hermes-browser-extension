@@ -939,3 +939,42 @@ test('opening a job tab needs no target even when several owned tabs are live', 
   assert.deepEqual(calls, ['browser_tab_create']);
   assert.equal(transport.connections[0].sent.at(-1).params.ok, true);
 });
+
+
+test('opening a job tab passes the real executor scope checks with several owned tabs', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: settings() });
+  const transport = connector();
+  const created = [];
+  const executor = createBrowserControlExecutor({
+    adapter: {
+      contract: { enabled: true, actions: ['browser_tab_create'] },
+      async execute(action, args) { created.push(args.url); return { tab: { id: 951, windowId: 9, active: true, url: args.url } }; },
+    },
+    approvals: createBrowserControlApprovalStore(),
+    refs: createBrowserControlRefStore(),
+  });
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    executeBrowserCommand: (frame, context) => executor.execute(frame, context),
+  });
+  const boot = await worker.boot();
+  await worker.handleMessage({
+    type: CONTROLLER_WORKER_MESSAGES.leaseAcquire,
+    kind: TAB_LEASE_KINDS.SELECTED_TABS,
+    ownership: TAB_LEASE_OWNERSHIPS.OWNED,
+    ownerId: boot.controllerId,
+    tabIds: [902, 903],
+  }, extensionSender());
+  await transport.connections[0].emit({
+    method: 'browser.controller.command',
+    params: { command_id: 'job-tab-2', action: 'browser_tab_create', arguments: { url: 'https://example.test/', new_window: true } },
+  });
+  await settle();
+  const sent = transport.connections[0].sent.at(-1).params;
+  assert.equal(sent.ok, true, JSON.stringify(sent.error));
+  assert.deepEqual(created, ['https://example.test/']);
+});

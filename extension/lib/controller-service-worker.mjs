@@ -299,8 +299,11 @@ export function createControllerServiceWorker({
 
     const action = String(frame?.action || '').trim();
     const actionArgs = frame?.arguments && typeof frame.arguments === 'object' ? frame.arguments : {};
-    const tabId = Number(frame?.tab_id);
-    const noTab = !Number.isInteger(tabId) || tabId <= 0 || tabId === CONTROL_PLANE_TAB_ID;
+    const rawTabId = Number(frame?.tab_id);
+    const noTab = !Number.isInteger(rawTabId) || rawTabId <= 0 || rawTabId === CONTROL_PLANE_TAB_ID;
+    // Control-plane commands run with tab 0 so the executor's scope check treats
+    // them as controller-scoped rather than as a mismatched tab.
+    const tabId = noTab ? 0 : rawTabId;
     // Only listing and opening tabs may run without a target tab.
     if (noTab && !['browser_tabs', 'browser_tab_create'].includes(action)) {
       return terminalError('lease_required', 'This action needs a leased target tab.');
