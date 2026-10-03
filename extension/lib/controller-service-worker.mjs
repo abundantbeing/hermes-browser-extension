@@ -357,7 +357,7 @@ export function createControllerServiceWorker({
           : null;
         const acquired = leases.acquire({
           tabId: createdTabId,
-          windowId: Number(createdTab.windowId) || lease.windowId,
+          windowId: Number(createdTab.windowId) || lease?.windowId || null,
           kind,
           ownerId: controllerId,
           ownership: TAB_LEASE_OWNERSHIPS.OWNED,
