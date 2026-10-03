@@ -756,7 +756,37 @@ export function createControllerServiceWorker({
     return queued;
   }
 
+  // Chrome suspends an idle MV3 service worker after ~30s, which drops the
+  // controller WebSocket until the next 1-minute alarm reconnects it. Since
+  // Chrome 116, WebSocket traffic counts as activity, so a heartbeat every 20s
+  // keeps the worker (and the controller) alive for as long as it is connected.
+  const KEEPALIVE_HEARTBEAT_MS = 20_000;
+  let keepaliveTimer = null;
+
+  function stopKeepalive() {
+    if (keepaliveTimer) clearInterval(keepaliveTimer);
+    keepaliveTimer = null;
+  }
+
+  function startKeepalive(connection) {
+    stopKeepalive();
+    if (typeof connection?.heartbeat !== 'function') return;
+    keepaliveTimer = setInterval(() => {
+      if (connection !== activeConnection) {
+        stopKeepalive();
+        return;
+      }
+      connection.heartbeat()
+        .then(() => lifecycle.markHeartbeat({ at: Number(now()) }))
+        .catch(() => {
+          // A failed heartbeat is handled by the reconcile alarm / onClose path.
+        });
+    }, KEEPALIVE_HEARTBEAT_MS);
+    keepaliveTimer?.unref?.();
+  }
+
   function closeConnection() {
+    stopKeepalive();
     const connection = activeConnection;
     activeConnection = null;
     connected = false;
@@ -796,6 +826,7 @@ export function createControllerServiceWorker({
           onFrame: (frame) => handleTransportFrame(frame, { epoch, connection: candidate }),
           onClose: () => {
             if (candidate === activeConnection) {
+              stopKeepalive();
               activeConnection = null;
               connected = false;
               transportLost = true;
@@ -811,6 +842,7 @@ export function createControllerServiceWorker({
         }
         activeConnection = candidate;
         connected = true;
+        startKeepalive(candidate);
         lastConnectFailure = null;
         transportLost = false;
         lifecycle.transition(ControllerTransitionReason.TRANSPORT_REFRESHED);
