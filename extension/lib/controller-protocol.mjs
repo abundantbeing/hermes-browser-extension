@@ -47,6 +47,7 @@ export const CONTROLLER_BROWSER_CAPABILITIES = Object.freeze([
   'browser_tab_ungroup',
   'browser_tabs',
   'browser_type',
+  'browser_upload_file',
 ]);
 
 const KNOWN_CONTROLLER_CAPABILITIES = new Set([

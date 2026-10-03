@@ -27,7 +27,7 @@ import {
   createTabLeaseStore,
 } from './tab-leases.mjs';
 import { CONTROLLER_METHODS } from './controller-protocol.mjs';
-import { createBrowserControlApprovalStore } from './browser-control-safety.mjs';
+import { createBrowserControlApprovalStore, STANDING_APPROVAL_REASONS } from './browser-control-safety.mjs';
 import { isGatewayAuthRejection, transportUsesDashboardTicket } from './connection-modes.mjs';
 
 export const CONTROLLER_WORKER_VERSION = 1;
@@ -43,6 +43,8 @@ export const CONTROLLER_WORKER_MESSAGES = Object.freeze({
   leaseRelease: 'HERMES_CONTROLLER_LEASE_RELEASE',
   documentReady: 'HERMES_CONTROLLER_DOCUMENT_READY',
   approvalGrant: 'HERMES_CONTROLLER_APPROVAL_GRANT',
+  approvalAlwaysAllow: 'HERMES_CONTROLLER_APPROVAL_ALWAYS_ALLOW',
+  standingApprovalRemove: 'HERMES_CONTROLLER_STANDING_APPROVAL_REMOVE',
   approvalReject: 'HERMES_CONTROLLER_APPROVAL_REJECT',
   pause: 'HERMES_CONTROLLER_PAUSE',
   resume: 'HERMES_CONTROLLER_RESUME',
@@ -78,6 +80,21 @@ function cleanPausedLeases(raw = {}) {
     .map(([tabId, reason]) => [String(Number(tabId)), String(reason || '').trim().slice(0, 120)])
     .filter(([tabId, reason]) => /^\d+$/.test(tabId) && Number(tabId) > 0 && reason)
     .slice(-32));
+}
+
+function cleanStandingApprovals(raw = []) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  return raw.map((rule) => ({
+    origin: String(rule?.origin || '').trim().slice(0, 300),
+    reason: String(rule?.reason || '').trim().slice(0, 80),
+    createdAt: Number(rule?.createdAt) || 0,
+  })).filter((rule) => {
+    const key = `${rule.origin}\u0000${rule.reason}`;
+    if (!/^https:\/\/[^/]+$/.test(rule.origin) || !STANDING_APPROVAL_REASONS.includes(rule.reason) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(-64);
 }
 
 function frameKey(tabId, frameId = 0) {
@@ -254,6 +271,9 @@ export function createControllerServiceWorker({
   let generation = 1;
   let documentGenerations = {};
   let pausedLeases = {};
+  // Per-site rules David created with "Always allow on this site"; only the
+  // trusted side panel can add or remove them.
+  let standingApprovals = [];
   let terminalOutbox = [];
   let recoveredPending = [];
   let registry = createControllerRegistry({ now });
@@ -331,6 +351,7 @@ export function createControllerServiceWorker({
         settings: { ...settings },
         leasedTabIds: ownedLeases.map((ownedLease) => ownedLease.tabId),
         ownedTabIds: ownedLeases.map((ownedLease) => ownedLease.tabId),
+        standingApprovals: [...standingApprovals],
         currentWindowId: lease?.windowId || null,
         scope: {
           controllerId,
@@ -427,6 +448,7 @@ export function createControllerServiceWorker({
       routeKey: controllerRouteKey(settings),
       documentGenerations: cleanDocumentGenerations(documentGenerations),
       pausedLeases: cleanPausedLeases(pausedLeases),
+      standingApprovals: cleanStandingApprovals(standingApprovals),
       terminalOutbox: normalizeTerminalOutbox(terminalOutbox, { at: Number(now()) }),
       updatedAt: Number(now()),
     };
@@ -459,6 +481,7 @@ export function createControllerServiceWorker({
       pendingCommands: lifecycle.pendingCount(),
       pendingApprovals: approvals.count(),
       pendingApproval: approvals.pending?.()[0] || null,
+      standingApprovals: standingApprovals.map((rule) => ({ ...rule })),
       activeAction: activeAction ? { ...activeAction } : null,
       settingsRevision,
       lastConnectFailure: lastConnectFailure ? { ...lastConnectFailure } : null,
@@ -913,6 +936,7 @@ export function createControllerServiceWorker({
         pausedLeases = Number(previousWorker?.version) === CONTROLLER_WORKER_VERSION
           ? cleanPausedLeases(previousWorker.pausedLeases)
           : {};
+        standingApprovals = cleanStandingApprovals(previousWorker?.standingApprovals);
         const routeKey = controllerRouteKey(settings);
         const previousRouteKey = String(previousWorker?.routeKey || '').trim();
         const sameDurableRoute = Boolean(identity && routeKey && previousRouteKey === routeKey);
@@ -1162,6 +1186,29 @@ export function createControllerServiceWorker({
     return approvals.grant(pending);
   }
 
+  async function alwaysAllowApproval(message = {}) {
+    const pending = approvals.pending?.().find((entry) => entry.approvalId === String(message.approvalId || '').trim());
+    const origin = String(pending?.origin || '').trim();
+    const reason = String(pending?.policyReason || '').trim();
+    if (!pending || !/^https:\/\/[^/]+$/.test(origin) || !STANDING_APPROVAL_REASONS.includes(reason)) {
+      return { ok: false, error: 'standing_approval_ineligible' };
+    }
+    const granted = grantApproval(message);
+    if (!granted?.ok) return granted;
+    standingApprovals = cleanStandingApprovals([...standingApprovals, { origin, reason, createdAt: Number(now()) }]);
+    await persist();
+    return { ...granted, standingApproval: { origin, reason } };
+  }
+
+  async function removeStandingApproval(message = {}) {
+    const origin = String(message.origin || '').trim();
+    const reason = String(message.reason || '').trim();
+    const before = standingApprovals.length;
+    standingApprovals = standingApprovals.filter((rule) => !(rule.origin === origin && rule.reason === reason));
+    if (standingApprovals.length !== before) await persist();
+    return { ok: true, removed: before - standingApprovals.length, standingApprovals: standingApprovals.map((rule) => ({ ...rule })) };
+  }
+
   function rejectApproval(message = {}) {
     const approvalId = String(message.approvalId || '').trim();
     const commandId = String(message.commandId || '').trim();
@@ -1332,6 +1379,8 @@ export function createControllerServiceWorker({
     if (type === CONTROLLER_WORKER_MESSAGES.leaseRelease) return releaseLeases(message);
     if (type === CONTROLLER_WORKER_MESSAGES.targetResolve) return resolveControlTarget(message);
     if (type === CONTROLLER_WORKER_MESSAGES.approvalGrant) return grantApproval(message);
+    if (type === CONTROLLER_WORKER_MESSAGES.approvalAlwaysAllow) return alwaysAllowApproval(message);
+    if (type === CONTROLLER_WORKER_MESSAGES.standingApprovalRemove) return removeStandingApproval(message);
     if (type === CONTROLLER_WORKER_MESSAGES.approvalReject) return rejectApproval(message);
     if (type === CONTROLLER_WORKER_MESSAGES.pause) return setPaused(true);
     if (type === CONTROLLER_WORKER_MESSAGES.resume) return setPaused(false);

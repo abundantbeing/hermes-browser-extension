@@ -328,6 +328,14 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
       return browserApi.tabs.update(targetTabId, { active: true });
     }
     if (action === 'browser_tab_create') {
+      // Unattended jobs get their own unfocused window: as the front tab of that
+      // window the page keeps rendering, where a background tab would be throttled.
+      if (args.new_window === true && typeof browserApi.windows?.create === 'function') {
+        const created = await browserApi.windows.create({ url: String(args.url || ''), focused: false, state: 'normal' });
+        const tab = created?.tabs?.[0] || null;
+        if (!tab?.id) throw new Error('The browser did not return the tab of the new window.');
+        return { tab };
+      }
       let windowId = Number(currentWindowId) || null;
       if (!windowId && Number(scope?.tabId) > 0) {
         try {
@@ -505,6 +513,22 @@ function createChromiumCdpAdapter({ browserApi, onDebuggerDetach = () => {} } = 
         });
         return { status: 'scrolled' };
       }
+      if (action === 'browser_upload_file') {
+        // Same machine as Hermes: attach the local files directly to the page's file input.
+        const files = (Array.isArray(args.paths) ? args.paths : []).map(String).filter((path) => path.startsWith('/'));
+        if (!files.length) throw new Error('At least one absolute file path is required.');
+        const backendNodeId = Number(target?.backendDOMNodeId);
+        if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
+          await send('DOM.setFileInputFiles', { files, backendNodeId });
+        } else {
+          const documentNode = await send('DOM.getDocument', { depth: -1, pierce: true });
+          const found = await send('DOM.querySelectorAll', { nodeId: documentNode?.root?.nodeId, selector: 'input[type="file"]' });
+          const nodeIds = Array.isArray(found?.nodeIds) ? found.nodeIds : [];
+          if (!nodeIds.length) throw new Error("No file input on the page; click the site's upload button first.");
+          await send('DOM.setFileInputFiles', { files, nodeId: nodeIds[nodeIds.length - 1] });
+        }
+        return { status: 'uploaded', count: files.length };
+      }
       if (action === 'browser_back') {
         const history = await send('Page.getNavigationHistory');
         const previous = history?.entries?.[Number(history.currentIndex) - 1];
@@ -583,6 +607,14 @@ function createFirefoxWebExtensionAdapter({ browserApi } = {}) {
       return browserApi.tabs.update(targetTabId, { active: true });
     }
     if (action === 'browser_tab_create') {
+      // Unattended jobs get their own unfocused window: as the front tab of that
+      // window the page keeps rendering, where a background tab would be throttled.
+      if (args.new_window === true && typeof browserApi.windows?.create === 'function') {
+        const created = await browserApi.windows.create({ url: String(args.url || ''), focused: false, state: 'normal' });
+        const tab = created?.tabs?.[0] || null;
+        if (!tab?.id) throw new Error('The browser did not return the tab of the new window.');
+        return { tab };
+      }
       let windowId = Number(currentWindowId) || null;
       if (!windowId && Number(scope?.tabId) > 0) {
         try {

@@ -26,6 +26,7 @@ const CHROMIUM_ACTIONS = [
   'browser_tab_ungroup',
   'browser_tabs',
   'browser_type',
+  'browser_upload_file',
 ];
 
 const FIREFOX_ACTIONS = [

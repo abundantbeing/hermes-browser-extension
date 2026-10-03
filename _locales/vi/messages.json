@@ -811,6 +811,10 @@
     "message": "Xem danh sách",
     "description": "Runtime interface message bot_mode.view_toggle_label"
   },
+  "runtime_browser_control_always_allow_site": {
+    "message": "Always allow on this site",
+    "description": "Runtime interface message browser_control.always_allow_site"
+  },
   "runtime_browser_control_approve_once": {
     "message": "Cho phép một lần",
     "description": "Runtime interface message browser_control.approve_once"
@@ -878,6 +882,14 @@
   "runtime_browser_control_selected_tabs": {
     "message": "Các tab đã chọn",
     "description": "Runtime interface message browser_control.selected_tabs"
+  },
+  "runtime_browser_control_standing_rule_remove": {
+    "message": "Remove",
+    "description": "Runtime interface message browser_control.standing_rule_remove"
+  },
+  "runtime_browser_control_standing_rules_title": {
+    "message": "Always allowed for unattended jobs",
+    "description": "Runtime interface message browser_control.standing_rules_title"
   },
   "runtime_browser_control_state_active": {
     "message": "Đang hoạt động",

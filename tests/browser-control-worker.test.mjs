@@ -435,6 +435,71 @@ test('Phase 6 approval grants require a trusted extension sender and bind exact 
   });
 });
 
+test('Always allow saves a per-site rule from the trusted panel and later identical actions run unattended', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: settings() });
+  const transport = connector();
+  const approvals = createBrowserControlApprovalStore();
+  let sideEffects = 0;
+  const executor = createBrowserControlExecutor({
+    adapter: {
+      contract: { enabled: true, actions: ['browser_press'] },
+      async inspect() { return { currentUrl: 'https://teams.example.test/form' }; },
+      async execute() { sideEffects += 1; return { status: 'pressed' }; },
+    },
+    approvals,
+    refs: createBrowserControlRefStore(),
+  });
+  const worker = createControllerServiceWorker({
+    storageArea: storage.area,
+    connector: transport,
+    product: PRODUCT,
+    randomUUID: uuids(),
+    extensionOrigin: 'chrome-extension://fixture',
+    approvalStore: approvals,
+    executeBrowserCommand: (frame, context) => executor.execute(frame, context),
+  });
+  await worker.boot();
+  const ready = await ownedReady(worker, 80);
+  await transport.connections[0].emit({
+    method: 'browser.controller.command',
+    params: {
+      command_id: 'press-1',
+      action: 'browser_press',
+      arguments: { key: 'Enter' },
+      tab_id: 80,
+      document_generation: ready.documentGeneration,
+    },
+  });
+  await settle();
+  assert.equal(worker.status().pendingApprovals, 1);
+  assert.equal(sideEffects, 0);
+  const pendingApproval = worker.status().pendingApproval;
+  assert.equal(pendingApproval.origin, 'https://teams.example.test');
+  assert.equal(pendingApproval.policyReason, 'submission-key');
+  const request = { type: CONTROLLER_WORKER_MESSAGES.approvalAlwaysAllow, ...pendingApproval, documentGeneration: ready.documentGeneration };
+  assert.equal((await worker.handleMessage(request, extensionSender({ extension: false }))).error, 'untrusted_sender');
+  assert.equal((await worker.handleMessage(request, extensionSender())).ok, true);
+  await settle();
+  assert.equal(sideEffects, 1);
+  assert.deepEqual(worker.status().standingApprovals.map(({ origin, reason }) => ({ origin, reason })),
+    [{ origin: 'https://teams.example.test', reason: 'submission-key' }]);
+
+  await transport.connections[0].emit({ method: 'browser.controller.command', params: {
+    command_id: 'press-2', action: 'browser_press', arguments: { key: 'Enter' }, tab_id: 80, document_generation: ready.documentGeneration } });
+  await settle();
+  assert.equal(worker.status().pendingApprovals, 0);
+  assert.equal(sideEffects, 2);
+
+  const removed = await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.standingApprovalRemove,
+    origin: 'https://teams.example.test', reason: 'submission-key' }, extensionSender());
+  assert.equal(removed.removed, 1);
+  await transport.connections[0].emit({ method: 'browser.controller.command', params: {
+    command_id: 'press-3', action: 'browser_press', arguments: { key: 'Enter' }, tab_id: 80, document_generation: ready.documentGeneration } });
+  await settle();
+  assert.equal(worker.status().pendingApprovals, 1);
+  assert.equal(sideEffects, 2);
+});
+
 test('recoverable reconnect preserves a paused approval without auto-approving it', async () => {
   const fixture = await waitingApprovalWorker();
   fixture.transport.connections[0].disconnect('recoverable approval reconnect');

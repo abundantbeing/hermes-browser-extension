@@ -7882,3 +7882,8 @@ html[data-hermes-font-profile="signature"] .bot-mode-sheet-tab {
 @media (prefers-reduced-motion: reduce) {
   .page-annotation-panel * { transition: none; }
 }
+
+.browser-control-standing-rules { margin-top: 6px; font-size: 12px; }
+.browser-control-standing-title { opacity: 0.75; margin-bottom: 4px; }
+.browser-control-standing-rules ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.browser-control-standing-rules li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

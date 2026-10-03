@@ -33,6 +33,27 @@ const MFA_RE = /\b(?:one.?time|otp|mfa|2fa|verification.?code|security.?code)\b/
 const SECRET_TEXT_RE = /(?:\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|password|secret)\s*[:=]\s*\S+|\b(?:sk|pk|ghp|xox[baprs])[-_][A-Za-z0-9_-]{12,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,})/i;
 const DIALOG_CONSEQUENTIAL_RE = /\b(?:delete|remove|reset|overwrite|submit|send|post|publish|approve|confirm|pay|checkout|buy|purchase|transfer|subscribe|sign.?out|log.?out|discard|close)\b/i;
 
+/**
+ * Approval reasons David may turn into a standing per-site rule from the side
+ * panel ("Always allow on this site"). Privileged/developer actions, tab close
+ * and drag are deliberately excluded and always ask.
+ */
+export const STANDING_APPROVAL_REASONS = Object.freeze([
+  'submission-key',
+  'consequential-action',
+  'cross-origin-unsaved-content',
+  'file-upload',
+]);
+
+export function standingApprovalAllows(rules = [], { origin = '', reason = '' } = {}) {
+  const normalizedOrigin = compact(origin);
+  const normalizedReason = compact(reason);
+  if (!normalizedOrigin || !STANDING_APPROVAL_REASONS.includes(normalizedReason)) return false;
+  return (Array.isArray(rules) ? rules : []).some((rule) => (
+    compact(rule?.origin) === normalizedOrigin && compact(rule?.reason) === normalizedReason
+  ));
+}
+
 /** Phase 8 privileged actions that are never safe by default. */
 export const BROWSER_CONTROL_PRIVILEGED_ACTIONS = Object.freeze([
   'browser_console',
@@ -119,6 +140,11 @@ export function classifyBrowserControlAction({
   }
   if (normalizedAction === 'browser_pdf') {
     return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'pdf-generation');
+  }
+  if (normalizedAction === 'browser_upload_file') {
+    const paths = Array.isArray(args?.paths) ? args.paths.map(compact).filter(Boolean) : [];
+    if (!paths.length || paths.some((path) => !path.startsWith('/'))) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'absolute-paths-required');
+    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'file-upload');
   }
   if (normalizedAction === 'browser_upload') {
     if (!compact(args?.artifact_id)) return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'artifact-id-required');
@@ -310,6 +336,8 @@ export function createBrowserControlApprovalStore({
       ...normalized,
       reason: compact(value.reason).slice(0, 300),
       ...(compact(value.detail) ? { detail: compact(value.detail).slice(0, 1_000) } : {}),
+      ...(compact(value.policyReason) ? { policyReason: compact(value.policyReason).slice(0, 80) } : {}),
+      ...(compact(value.origin) ? { origin: compact(value.origin).slice(0, 300) } : {}),
       createdAt: Number(now()),
       promise,
       resolve,
@@ -326,7 +354,7 @@ export function createBrowserControlApprovalStore({
   function pending() {
     return [...requests.values()].map(({
       approvalId, approvalNonce, commandId, controllerId, leaseId, leaseGeneration,
-      tabId, documentGeneration, action, state, reason, binding, detail,
+      tabId, documentGeneration, action, state, reason, binding, detail, policyReason, origin,
     }) => ({
       approvalId,
       ...(approvalNonce ? { approvalNonce } : {}),
@@ -341,6 +369,8 @@ export function createBrowserControlApprovalStore({
       reason,
       ...(binding ? { binding } : {}),
       ...(detail ? { detail } : {}),
+      ...(policyReason ? { policyReason } : {}),
+      ...(origin ? { origin } : {}),
     }));
   }
 

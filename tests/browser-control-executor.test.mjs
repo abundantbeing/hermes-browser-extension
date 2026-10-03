@@ -338,3 +338,36 @@ test('Phase 6 executor rejects an adapter that bypasses the screenshot transport
   const result = await executor.execute(frame('browser_screenshot'), { scope, leasedTabIds: [7] });
   assert.deepEqual(result, { ok: false, error: { code: 'screenshot_too_large', message: 'The screenshot exceeds the inline Phase 6 transport cap.' } });
 });
+
+test('standing per-site approval rules skip the pause only for their own origin and reason', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  const approvals = createBrowserControlApprovalStore();
+  let presses = 0;
+  const adapter = fullAdapter(async (action) => { if (action === 'browser_press') presses += 1; return { status: 'pressed' }; });
+  adapter.inspect = async () => ({ currentUrl: 'https://teams.example.test/chat', hasUnsavedContent: false });
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore() });
+
+  const allowed = await executor.execute(frame('browser_press', { key: 'Enter' }), {
+    scope, standingApprovals: [{ origin: 'https://teams.example.test', reason: 'submission-key' }],
+  });
+  assert.equal(allowed.ok, true);
+  assert.equal(presses, 1);
+  assert.equal(approvals.count(), 0);
+
+  // Same reason on another site, or another reason on this site, still pauses for David.
+  for (const rules of [
+    [{ origin: 'https://other.example.test', reason: 'submission-key' }],
+    [{ origin: 'https://teams.example.test', reason: 'file-upload' }],
+    [],
+  ]) {
+    const pending = executor.execute(frame('browser_press', { key: 'Enter' }, { command_id: `c-${approvals.count()}-${rules.length}` }), { scope, standingApprovals: rules });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(approvals.count(), 1);
+    const [request] = approvals.pending();
+    assert.equal(request.policyReason, 'submission-key');
+    assert.equal(request.origin, 'https://teams.example.test');
+    approvals.cancelRequest(request.approvalId, 'approval_denied');
+    assert.equal((await pending).ok, false);
+  }
+  assert.equal(presses, 1);
+});

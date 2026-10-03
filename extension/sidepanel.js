@@ -856,6 +856,9 @@ const els = {
   browserControlStopButton: $('#browserControlStopButton'),
   browserControlApproveButton: $('#browserControlApproveButton'),
   browserControlRejectButton: $('#browserControlRejectButton'),
+  browserControlAlwaysAllowButton: $('#browserControlAlwaysAllowButton'),
+  browserControlStandingRules: $('#browserControlStandingRules'),
+  browserControlStandingRulesList: $('#browserControlStandingRulesList'),
   modelMenuButton: $('#modelMenuButton'),
   currentModelName: $('#currentModelName'),
   currentModelEffort: $('#currentModelEffort'),
@@ -2123,6 +2126,53 @@ function renderBrowserControl() {
   els.browserControlStopButton.hidden = !view.canStop;
   els.browserControlApproveButton.hidden = !pendingApproval;
   els.browserControlRejectButton.hidden = !pendingApproval;
+  renderStandingApprovals(pendingApproval);
+}
+
+const STANDING_RULE_LABELS = Object.freeze({
+  'submission-key': 'Press Enter to submit',
+  'consequential-action': 'Click Send / Post / Submit-type buttons',
+  'cross-origin-unsaved-content': 'Leave a page with edited fields',
+  'file-upload': 'Upload files',
+});
+
+function standingApprovalEligible(pendingApproval) {
+  return Boolean(pendingApproval?.origin && /^https:\/\//.test(pendingApproval.origin)
+    && Object.hasOwn(STANDING_RULE_LABELS, String(pendingApproval.policyReason || '')));
+}
+
+function renderStandingApprovals(pendingApproval) {
+  const button = els.browserControlAlwaysAllowButton;
+  if (button) {
+    const eligible = standingApprovalEligible(pendingApproval);
+    button.hidden = !eligible;
+    if (eligible) {
+      const host = new URL(pendingApproval.origin).host;
+      button.textContent = `${t('browser_control.always_allow_site')}: ${host}`;
+      button.title = `${STANDING_RULE_LABELS[pendingApproval.policyReason]} on ${host}, without asking, for unattended jobs`;
+    }
+  }
+  const rules = Array.isArray(browserControlStatus?.standingApprovals) ? browserControlStatus.standingApprovals : [];
+  if (!els.browserControlStandingRules || !els.browserControlStandingRulesList) return;
+  els.browserControlStandingRules.hidden = rules.length === 0;
+  els.browserControlStandingRulesList.replaceChildren(...rules.map((rule) => {
+    const item = document.createElement('li');
+    const label = document.createElement('span');
+    let host = rule.origin;
+    try { host = new URL(rule.origin).host; } catch {}
+    label.textContent = `${host}: ${STANDING_RULE_LABELS[rule.reason] || rule.reason}`;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'browser-control-action secondary';
+    remove.textContent = t('browser_control.standing_rule_remove');
+    remove.addEventListener('click', () => {
+      browserControlMessage('HERMES_CONTROLLER_STANDING_APPROVAL_REMOVE', { origin: rule.origin, reason: rule.reason })
+        .then(() => refreshBrowserControlStatus())
+        .catch((error) => showOperationToast({ kind: 'warn', title: 'Rule not removed', detail: error?.message || String(error) }));
+    });
+    item.append(label, remove);
+    return item;
+  }));
 }
 
 async function refreshBrowserControlStatus({ follow = true } = {}) {
@@ -2306,10 +2356,11 @@ async function toggleBrowserControlPause() {
   renderBrowserControl();
 }
 
-async function decideBrowserControlApproval(approved) {
+async function decideBrowserControlApproval(approved, { always = false } = {}) {
   const pendingApproval = browserControlStatus?.pendingApproval;
   if (!pendingApproval) return;
-  const type = approved ? 'HERMES_CONTROLLER_APPROVAL_GRANT' : 'HERMES_CONTROLLER_APPROVAL_REJECT';
+  const type = !approved ? 'HERMES_CONTROLLER_APPROVAL_REJECT'
+    : (always ? 'HERMES_CONTROLLER_APPROVAL_ALWAYS_ALLOW' : 'HERMES_CONTROLLER_APPROVAL_GRANT');
   const result = await browserControlMessage(type, {
     approvalId: pendingApproval.approvalId,
     approvalNonce: pendingApproval.approvalNonce,
@@ -20398,6 +20449,9 @@ function bindEvents() {
   });
   els.browserControlApproveButton?.addEventListener('click', () => {
     decideBrowserControlApproval(true).catch((error) => showOperationToast({ kind: 'warn', title: 'Approval not accepted', detail: error?.message || String(error) }));
+  });
+  els.browserControlAlwaysAllowButton?.addEventListener('click', () => {
+    decideBrowserControlApproval(true, { always: true }).catch((error) => showOperationToast({ kind: 'warn', title: 'Rule not saved', detail: error?.message || String(error) }));
   });
   els.browserControlRejectButton?.addEventListener('click', () => {
     decideBrowserControlApproval(false).catch((error) => showOperationToast({ kind: 'warn', title: 'Rejection not accepted', detail: error?.message || String(error) }));

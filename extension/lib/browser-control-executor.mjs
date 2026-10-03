@@ -1,6 +1,7 @@
 import {
   BROWSER_CONTROL_RISKS,
   classifyBrowserControlAction,
+  standingApprovalAllows,
 } from './browser-control-safety.mjs';
 import { redactSensitiveText } from './browser-context-protocol.mjs';
 import { redactSensitiveTextWithCount } from './content-extraction-core.mjs';
@@ -38,7 +39,7 @@ const APPROVAL_MESSAGES = Object.freeze({
   'network-metadata': 'Read network request metadata for this page?',
   'response-body': 'Read the response body for this network request?',
   'pdf-generation': 'Generate a PDF of this page and store it as an artifact?',
-  'file-upload': 'Upload the approved artifact to this page?',
+  'file-upload': 'Upload these files to this page?',
   'evaluate-code': 'Run this evaluate code on the page?',
   'cdp-command': 'Send this raw CDP command to the page?',
   'dialog-consequence': 'Approve this page dialog?',
@@ -154,6 +155,7 @@ function sanitizedActionResult(action, value) {
   if (action === 'browser_back') return { status: 'navigated-back' };
   if (action === 'browser_tab_activate') return { status: 'tab-activated' };
   if (action === 'browser_tab_close') return { status: 'tab-closed' };
+  if (action === 'browser_upload_file') return { status: 'uploaded', count: Number(value?.count) || 0 };
   if (action === 'browser_tab_create') {
     const tab = value?.tab || {};
     return { tab: {
@@ -284,7 +286,7 @@ export function createBrowserControlExecutor({
     const operation = (async () => {
       let target = null;
       let destination = null;
-      if (['browser_click', 'browser_drag', 'browser_fill', 'browser_hover', 'browser_scroll_to', 'browser_select', 'browser_type'].includes(action) && args.ref) {
+      if (['browser_click', 'browser_drag', 'browser_fill', 'browser_hover', 'browser_scroll_to', 'browser_select', 'browser_type', 'browser_upload_file'].includes(action) && args.ref) {
         const resolved = refs.resolve({ ...scope, ref: args.ref });
         if (!resolved.ok) return errorOutcome(resolved.error, 'The target ref is not valid for this document.');
         target = resolved.target;
@@ -311,7 +313,7 @@ export function createBrowserControlExecutor({
         'browser_back', 'browser_click', 'browser_drag', 'browser_fill', 'browser_hover', 'browser_navigate', 'browser_press',
         'browser_screenshot', 'browser_scroll', 'browser_scroll_to', 'browser_select', 'browser_snapshot', 'browser_type',
         'browser_console', 'browser_network_requests', 'browser_response_body', 'browser_pdf', 'browser_upload',
-        'browser_evaluate', 'browser_cdp', 'browser_dialog',
+        'browser_evaluate', 'browser_cdp', 'browser_dialog', 'browser_upload_file',
       ].includes(action)) {
         pageState = await adapter.inspect({ tabId: scope.tabId, frameId: scope.frameId, signal: controller.signal }) || {};
       }
@@ -329,7 +331,12 @@ export function createBrowserControlExecutor({
       if (policy.risk === BROWSER_CONTROL_RISKS.BLOCKED) {
         return errorOutcome('sensitive_action_blocked', policy.reason || 'This action is blocked.');
       }
-      if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL) {
+      const approvalOrigin = pageOrigin(pageState.currentUrl);
+      // A rule David created in the side panel ("Always allow on this site")
+      // stands in for the per-command click, so unattended jobs don't stall.
+      const standingAllowed = policy.risk === BROWSER_CONTROL_RISKS.APPROVAL
+        && standingApprovalAllows(context?.standingApprovals, { origin: approvalOrigin, reason: policy.reason });
+      if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL && !standingAllowed) {
         const binding = action === 'browser_upload' ? compact(args.artifact_id, 200) : '';
         const approval = {
           approvalId: compact(frame.approval_id || frame.command_id, 160),
@@ -346,6 +353,9 @@ export function createBrowserControlExecutor({
         };
         let approvalReason = APPROVAL_MESSAGES[policy.reason] || 'This browser action requires approval.';
         let approvalDetail = '';
+        if (action === 'browser_upload_file') {
+          approvalDetail = compact((Array.isArray(args.paths) ? args.paths : []).map((path) => String(path).split('/').pop()).join(', '), 800);
+        }
         if (action === 'browser_evaluate') {
           const preview = compact(String(args.code ?? args.expression ?? ''), 800);
           approvalReason = `Run this evaluate code on the page?\n\n\`\`\`\n${preview}\n\`\`\``;
@@ -358,6 +368,8 @@ export function createBrowserControlExecutor({
             ...approval,
             reason: approvalReason,
             ...(approvalDetail ? { detail: approvalDetail } : {}),
+            policyReason: policy.reason,
+            ...(approvalOrigin ? { origin: approvalOrigin } : {}),
           });
           if (!requested?.ok) {
             return errorOutcome(requested?.error || 'approval_cancelled', 'The approval request was cancelled.');

@@ -62,6 +62,8 @@ test('Phase 6 approval-required command waits in-flight, exposes minimal request
     action: 'browser_press',
     state: 'paused',
     reason: 'Press Enter to submit the current form or message?',
+    policyReason: 'submission-key',
+    origin: 'https://example.test',
   }]);
 
   const granted = approvals.grant({

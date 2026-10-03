@@ -417,7 +417,12 @@
               <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.6 2.6h6.8v6.8H2.6z" fill="currentColor"/></svg>
             </button>
             <button id="browserControlApproveButton" class="browser-control-action" type="button" hidden data-i18n="browser_control.approve_once">Approve once</button>
+            <button id="browserControlAlwaysAllowButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.always_allow_site">Always allow on this site</button>
             <button id="browserControlRejectButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.reject">Reject</button>
+          </div>
+          <div id="browserControlStandingRules" class="browser-control-standing-rules" hidden>
+            <div class="browser-control-standing-title" data-i18n="browser_control.standing_rules_title">Always allowed for unattended jobs</div>
+            <ul id="browserControlStandingRulesList"></ul>
           </div>
         </section>
 
