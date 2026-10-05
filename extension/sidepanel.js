@@ -235,6 +235,7 @@ import {
   SUBAGENT_STEER_ICON,
   SUBAGENT_STOP_ICON,
   subagentControlPayload,
+  subagentGatewayEventFromSse,
   subagentStackSummary,
   subagentsFromListResult,
 } from './lib/subagent-stack.mjs';
@@ -1385,18 +1386,69 @@ async function hydrateSubagentSnapshot(client, sessionId = '') {
   }
 }
 
+async function hydrateRestSubagentSnapshot(sessionId = settings.sessionId) {
+  const sid = String(sessionId || '').trim();
+  if (!sid || usesDashboardWsChatTransport()) return;
+  try {
+    const response = await apiFetch(`/api/sessions/${encodeSessionId(sid)}/subagents`, { method: 'GET' });
+    if (!response.ok) return;
+    const payload = await readJsonResponse(response);
+    subagentState = reconcileSubagentSnapshot(subagentState, sid, subagentsFromListResult(payload));
+    renderSubagentStack();
+  } catch {
+    // Older gateways have no session subagent roster. Live SSE events still paint the dock.
+  }
+}
+
+async function restSubagentControl(action, payload) {
+  const path = action === 'steer' ? 'steer' : 'interrupt';
+  const response = await apiFetch(
+    `/api/sessions/${encodeSessionId(payload.session_id)}/subagents/${encodeURIComponent(payload.subagent_id)}/${path}`,
+    {
+      method: 'POST',
+      body: JSON.stringify(action === 'steer' ? { text: payload.text } : {}),
+    },
+  );
+  const body = await readJsonResponse(response);
+  if (!response.ok) {
+    throw new Error(body?.error?.message || body?.error || 'Subagent control failed');
+  }
+  if (action === 'steer' && body?.status === 'rejected') {
+    throw new Error('Subagent is no longer accepting a steer.');
+  }
+  if (action === 'interrupt' && body?.found === false) {
+    throw new Error('Subagent is no longer running.');
+  }
+  return body;
+}
+
 async function runSelectedSubagentControl(action, text = '') {
-  const connection = await ensureActiveDashboardWsConnection().catch(() => null);
-  if (!connection?.client) return;
   if (action === 'steer' && !String(text || '').trim()) return;
+  const durableSessionId = String(settings.sessionId || '').trim();
+  const payload = subagentControlPayload(action, {
+    sessionId: durableSessionId,
+    subagentId: subagentSelectedId,
+    text,
+  });
+  if (!payload.session_id || !payload.subagent_id) return;
   subagentControlBusy = true;
   subagentControlError = '';
   renderSubagentStack();
   try {
+    if (!usesDashboardWsChatTransport()) {
+      await restSubagentControl(action, payload);
+      if (action === 'steer') subagentSteerDraft = '';
+      return;
+    }
+    const connection = await ensureActiveDashboardWsConnection().catch(() => null);
+    if (!connection?.client) {
+      await restSubagentControl(action, payload);
+      if (action === 'steer') subagentSteerDraft = '';
+      return;
+    }
     // Steering authority requires an ATTACHED live runtime. The session-scoped
     // subagent.* RPCs fail with 4001 "session not found" when the stored id has
     // been reaped, so resume the durable session first to mint a fresh live id.
-    const durableSessionId = String(settings.sessionId || '').trim();
     const { liveId } = await establishGatewaySession({
       client: connection.client,
       storedSessionId: durableSessionId,
@@ -1405,14 +1457,13 @@ async function runSelectedSubagentControl(action, text = '') {
     connection.wsSessionId = liveId;
     connection.wsStoredSessionId = durableSessionId;
     connection.profile = safeActiveProfile();
-    const payload = subagentControlPayload(action, {
+    const livePayload = subagentControlPayload(action, {
       sessionId: liveId,
       subagentId: subagentSelectedId,
       text,
     });
-    if (!payload.session_id || !payload.subagent_id) return;
     const method = action === 'steer' ? WS_METHODS.subagentSteer : WS_METHODS.subagentInterrupt;
-    const result = await connection.client.request(method, payload);
+    const result = await connection.client.request(method, livePayload);
     if (action === 'interrupt' && result && result.found === false) {
       throw new Error('Subagent is no longer running.');
     }
@@ -15188,6 +15239,7 @@ async function openHermesSession(selectedSession) {
   });
   if (!isCurrentRequest()) return false;
   setStatus(loaded ? 'ok' : 'warn', loaded ? 'Session opened' : 'Session opened without history', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`, { translateDetail: false });
+  void hydrateRestSubagentSnapshot(session.id);
   return true;
 }
 
@@ -18574,6 +18626,9 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
       onTool(normalizeBrowserRuntimeEvent({ type: event.type, data }));
     } else if (event.type === 'hermes.tool.progress' && onTool) {
       onTool(normalizeBrowserRuntimeEvent({ type: event.type, data }));
+    } else if (isSubagentEventName(event.type)) {
+      const mapped = subagentGatewayEventFromSse(event, settings.sessionId);
+      if (mapped) ingestSubagentGatewayEvent(mapped);
     } else if (event.type === 'error') {
       const streamErr = new Error(data.message || event.data || 'Hermes stream error');
       streamErr.requestRejected = true;

@@ -17,6 +17,7 @@
 ### Fixed
 
 - Leaving Bot Mode while a group chat is still replying no longer waits for every member to finish. Regular Sessions opens immediately, and that group chat keeps running in the background.
+- Subagents started from a browser chat now show up in the live dock while they work. You can steer or stop them from that session, including on a local API connection.
 
 - Approving local-document access on a tab that is still loading no longer leaks an uncaught error. Hermes Control shows a "Control not attached" notice instead. Thanks to @LeahyCC (#97).
 

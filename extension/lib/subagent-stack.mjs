@@ -237,6 +237,17 @@ export function formatSubagentElapsed(startedAt, now = Date.now()) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+export function subagentGatewayEventFromSse(event = {}, sessionId = '') {
+  const type = String(event?.type || '').trim();
+  if (!isSubagentEventName(type)) return null;
+  const payload = event.json && typeof event.json === 'object' ? event.json : {};
+  return {
+    type,
+    sessionId: String(payload.session_id || payload.sessionId || sessionId || '').trim(),
+    payload,
+  };
+}
+
 export function subagentControlPayload(action = '', {
   sessionId = '',
   subagentId = '',

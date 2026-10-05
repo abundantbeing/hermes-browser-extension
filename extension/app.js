@@ -133,6 +133,7 @@ import {
   SUBAGENT_STEER_ICON,
   SUBAGENT_STOP_ICON,
   subagentControlPayload,
+  subagentGatewayEventFromSse,
   subagentStackSummary,
   subagentsFromListResult,
 } from './lib/subagent-stack.mjs';
@@ -1582,8 +1583,30 @@ async function runSelectedSubagentControl(action, text = '') {
     subagentId: subagentSelectedId,
     text,
   });
-  if (!connection?.client || !payload.session_id || !payload.subagent_id) return;
+  if (!payload.session_id || !payload.subagent_id) return;
   if (action === 'steer' && !payload.text) return;
+  if (!connection?.client) {
+    subagentControlBusy = true;
+    subagentControlError = '';
+    renderSubagentStack();
+    try {
+      const path = action === 'steer' ? 'steer' : 'interrupt';
+      const response = await client.fetch(
+        `/api/sessions/${encodeURIComponent(payload.session_id)}/subagents/${encodeURIComponent(payload.subagent_id)}/${path}`,
+        { method: 'POST', body: JSON.stringify(action === 'steer' ? { text: payload.text } : {}) },
+      );
+      const body = await client.readJson(response);
+      if (!response.ok) throw new Error(body?.error?.message || 'Subagent control failed');
+      if (action === 'steer' && body?.status === 'rejected') throw new Error('Subagent is no longer accepting a steer.');
+      if (action === 'steer') subagentSteerDraft = '';
+    } catch (error) {
+      subagentControlError = String(error?.message || error || 'Subagent control failed');
+    } finally {
+      subagentControlBusy = false;
+      renderSubagentStack();
+    }
+    return;
+  }
   subagentControlBusy = true;
   subagentControlError = '';
   renderSubagentStack();
@@ -5361,6 +5384,10 @@ async function sendPrompt(text) {
         activeRunControl = withRunControlId(activeRunControl, activeRunId);
         if (liveRun) liveRun.seed = activeRunId || liveRun.seed;
         updateBusyControls();
+      },
+      onSubagent: (event) => {
+        const mapped = subagentGatewayEventFromSse(event, activeSessionId);
+        if (mapped) ingestSubagentGatewayEvent(mapped);
       },
       onRuntime: (runtime) => {
         if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;

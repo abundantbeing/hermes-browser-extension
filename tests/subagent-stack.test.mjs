@@ -11,6 +11,7 @@ import {
   pruneFinishedSubagents,
   reconcileSubagentSnapshot,
   subagentControlPayload,
+  subagentGatewayEventFromSse,
   subagentStackSummary,
   visibleSubagentView,
   subagentsFromListResult,
@@ -28,6 +29,19 @@ test('known subagent event names are locked', () => {
     'subagent.progress',
     'subagent.complete',
   ]);
+});
+
+test('session SSE subagent frames become dock events for the open session', () => {
+  const mapped = subagentGatewayEventFromSse({
+    type: 'subagent.start',
+    json: { subagent_id: 'child-1', goal: 'Watch the room', session_id: 'sess-live' },
+  }, 'fallback');
+  assert.equal(mapped.type, 'subagent.start');
+  assert.equal(mapped.sessionId, 'sess-live');
+  assert.equal(mapped.payload.goal, 'Watch the room');
+  assert.equal(subagentGatewayEventFromSse({ type: 'tool.started', json: {} }), null);
+  const applied = applySubagentEvent({}, mapped.sessionId, mapped);
+  assert.equal(applied['sess-live'][0].goal, 'Watch the room');
 });
 
 test('start + tool + complete become one child with model and ticker', () => {
