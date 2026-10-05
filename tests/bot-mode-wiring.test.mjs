@@ -150,6 +150,27 @@ test('Bot Mode exposes a session-menu Threads control and clears stale bot sessi
   assert.match(sidepanelCss, /\.bot-mode-threads-button/);
 });
 
+test('leaving Bot Mode during a group reply detaches the turn instead of waiting or aborting it', () => {
+  const leave = sidepanelSource.slice(
+    sidepanelSource.indexOf('async function leaveBotModeForRegularSession('),
+    sidepanelSource.indexOf('function renderActiveProfileIndicator('),
+  );
+  assert.match(leave, /botModeLeaveDecision\(/);
+  assert.match(leave, /detachActiveGroupTurnForBackground\(/);
+  assert.ok(leave.indexOf('detachActiveGroupTurnForBackground') < leave.indexOf('abortAttachedGroupTurn'));
+  assert.doesNotMatch(leave, /activeGroupAbortController\?\.abort/);
+  const send = sidepanelSource.slice(
+    sidepanelSource.indexOf('async function sendActiveGroupMessage('),
+    sidepanelSource.indexOf('async function retryFailedGroupMember('),
+  );
+  assert.match(send, /claimGroupComposer\(/);
+  assert.match(send, /backgroundGroupTurn\?\.abortController === abortController/);
+  assert.doesNotMatch(send, /sending = false;/);
+  assert.match(sidepanelSource, /function reattachBackgroundGroupTurn\(/);
+  assert.match(sidepanelSource, /abortAttachedGroupTurn\(\)/);
+  assert.match(sidepanelSource, /abortBackgroundGroupTurn\(\)/);
+});
+
 test('regular profile changes show a context choice and panel boot does not resurrect Bot Chats', () => {
   assert.match(sidepanelHtml, /id="profileSwitchDialog"/);
   assert.match(sidepanelHtml, /id="profileSwitchCarryButton"/);

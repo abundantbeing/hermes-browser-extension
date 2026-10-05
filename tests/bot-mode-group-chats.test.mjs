@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   botModeExitStateForRegularSession,
+  botModeLeaveDecision,
   groupProjectionMessagesForDisplay,
   groupThreadMenuEntries,
   mergeGroupChatLists,
@@ -147,6 +148,13 @@ test('group thread menu entries retain room identity, previews, counts, and stab
   assert.equal(entries[1].replyCount, 1);
   assert.equal(entries[1].preview, 'I am on it');
   assert.equal(entries[1].lastActive, NOW - 1000);
+});
+
+test('leaving Bot Mode during a live group turn detaches instead of blocking or aborting', () => {
+  assert.deepEqual(botModeLeaveDecision({ engaged: false, groupTurnLive: true, canLeave: false }), { action: 'noop' });
+  assert.deepEqual(botModeLeaveDecision({ engaged: true, groupTurnLive: true, canLeave: false }), { action: 'detach-group' });
+  assert.deepEqual(botModeLeaveDecision({ engaged: true, groupTurnLive: false, canLeave: false }), { action: 'blocked' });
+  assert.deepEqual(botModeLeaveDecision({ engaged: true, groupTurnLive: false, canLeave: true }), { action: 'leave' });
 });
 
 test('Bot Mode exit state clears bot-only identity while preserving the saved regular profile target', () => {

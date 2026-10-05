@@ -384,6 +384,20 @@ export function groupThreadMenuEntries(row = {}) {
   });
 }
 
+// Leaving Bot Mode while a group room is mid-reply must not wait out the
+// typing loop or abort it. The room keeps running detached; a solo Bot Chat
+// turn still owns the writer and stays blocked.
+export function botModeLeaveDecision({
+  engaged = false,
+  groupTurnLive = false,
+  canLeave = true,
+} = {}) {
+  if (!engaged) return { action: 'noop' };
+  if (groupTurnLive) return { action: 'detach-group' };
+  if (!canLeave) return { action: 'blocked' };
+  return { action: 'leave' };
+}
+
 export function botModeExitStateForRegularSession(settings = {}, fallbackProfile = '') {
   const current = asObject(settings);
   const remoteDashboardSession = asObject(current.remoteDashboardSession);

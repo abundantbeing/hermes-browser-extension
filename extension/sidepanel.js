@@ -256,6 +256,7 @@ import { clearComposerDraft, loadComposerDraft, persistComposerDraft } from './l
 import {
   BOT_CHAT_TITLE,
   botModeExitStateForRegularSession,
+  botModeLeaveDecision,
   botModeRouteKey,
   botProfileRowsToHermesProfiles,
   canSwitchBotProfile,
@@ -1144,6 +1145,12 @@ let activeGroupRuntime = null;
 let activeGroupGeneration = 0;
 let activeGroupMessages = [];
 let activeGroupAbortController = null;
+// A group turn the user left behind. The room keeps replying on the shared
+// dashboard socket; navigation must not abort this controller or paint into
+// the regular session that replaced the room.
+let backgroundGroupTurn = null;
+let groupComposerSerial = 0;
+let activeComposerLease = null;
 // Desktop-parity threading: the room log groups by `thread` id. The strip
 // renders collapsed rows (first message + reply count + recency); clicking a
 // row expands it into the iMessage stream. '' = show the flat room view.
@@ -10455,6 +10462,95 @@ function resetActiveGroupTypingIndicator({ clearPresence = true } = {}) {
   renderGroupTypingIndicator();
 }
 
+function claimGroupComposer() {
+  const lease = { id: ++groupComposerSerial };
+  activeComposerLease = lease;
+  sending = true;
+  updateComposerBusyState();
+  return lease;
+}
+
+function releaseGroupComposer(lease) {
+  if (!lease || activeComposerLease !== lease) return false;
+  activeComposerLease = null;
+  sending = false;
+  updateComposerBusyState();
+  return true;
+}
+
+function backgroundTurnFor(runtime) {
+  return backgroundGroupTurn?.runtime === runtime ? backgroundGroupTurn : null;
+}
+
+function commitDetachedGroupTranscript(projection, displayMessages) {
+  if (!projection) return;
+  projection.messages = (Array.isArray(displayMessages) ? displayMessages : [])
+    .map(groupProjectionEntryFromDisplayMessage)
+    .filter(Boolean);
+}
+
+function abortAttachedGroupTurn() {
+  const controller = activeGroupAbortController;
+  if (!controller || controller === backgroundGroupTurn?.abortController) return;
+  controller.abort();
+  if (activeGroupAbortController === controller) activeGroupAbortController = null;
+}
+
+function abortBackgroundGroupTurn() {
+  const controller = backgroundGroupTurn?.abortController;
+  if (!controller) return;
+  controller.abort();
+  backgroundGroupTurn = null;
+}
+
+function detachActiveGroupTurnForBackground() {
+  const controller = activeGroupAbortController;
+  const runtime = activeGroupRuntime;
+  const projection = activeGroupProjection;
+  if (!controller || !runtime || !projection || !sending) return false;
+  backgroundGroupTurn = {
+    abortController: controller,
+    runtime,
+    generation: activeGroupGeneration,
+    roomId: String(projection.roomId || projection.id || ''),
+    projection,
+    composerLease: activeComposerLease,
+    lastActivity: null,
+  };
+  activeGroupAbortController = null;
+  releaseGroupComposer(activeComposerLease);
+  resetActiveGroupTypingIndicator();
+  return true;
+}
+
+function reattachBackgroundGroupTurn(row) {
+  const turn = backgroundGroupTurn;
+  const roomId = String(row?.roomId || row?.id || '');
+  if (!turn || !roomId || turn.roomId !== roomId || turn.abortController?.signal?.aborted) return false;
+  backgroundGroupTurn = null;
+  activeGroupGeneration = turn.generation;
+  activeGroupAbortController = turn.abortController;
+  activeGroupRuntime = turn.runtime;
+  activeGroupProjection = turn.projection;
+  activeGroupMessages = [...groupProjectionMessagesForDisplay(turn.projection), ...activeGroupDisplayEvents]
+    .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  messages = activeGroupMessages;
+  activeComposerLease = turn.composerLease;
+  sending = true;
+  updateComposerBusyState();
+  document.body.classList.add('bot-mode-engaged');
+  if (els.botModePanel) els.botModePanel.hidden = true;
+  els.botModeButton?.setAttribute?.('aria-expanded', 'false');
+  renderGroupThreadStrip();
+  renderMessagesFromStorage();
+  updateSessionLabel();
+  renderActiveProfileIndicator();
+  if (turn.lastActivity && ['turn_start', 'working', 'typing'].includes(turn.lastActivity.kind)) {
+    updateActiveGroupActivity(turn.lastActivity);
+  }
+  return true;
+}
+
 async function persistActiveGroupProjection(client, displayMessages) {
   const row = activeGroupProjection;
   const message = Array.isArray(displayMessages) ? displayMessages.at(-1) : null;
@@ -10489,8 +10585,7 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
   const groupGeneration = activeGroupGeneration;
   const abortController = new AbortController();
   activeGroupAbortController = abortController;
-  sending = true;
-  updateComposerBusyState();
+  const composerLease = claimGroupComposer();
   els.input.value = '';
   renderAttachments();
   try {
@@ -10520,11 +10615,16 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     // Staleness is the generation/runtime token only. An in-place roster sync
     // replaces the projection object for the SAME open room, so identity here
     // would silently discard a legitimate completed turn mid-send.
-    if (
-      abortController.signal.aborted
-      || groupGeneration !== activeGroupGeneration
+    const detached = backgroundGroupTurn?.abortController === abortController;
+    if (abortController.signal.aborted) return false;
+    if (!detached && (
+      groupGeneration !== activeGroupGeneration
       || activeGroupRuntime !== groupRuntime
-    ) return false;
+    )) return false;
+    if (detached) {
+      commitDetachedGroupTranscript(backgroundGroupTurn.projection, result.messages);
+      return result.ok;
+    }
     if (isStartingNewThread) {
       activeGroupThreadId = targetThreadId;
       activeGroupExpandedThreads.add(targetThreadId);
@@ -10564,10 +10664,14 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     }
     return false;
   } finally {
+    const stillBackground = backgroundGroupTurn?.abortController === abortController;
     if (activeGroupAbortController === abortController) activeGroupAbortController = null;
-    sending = false;
-    resetActiveGroupTypingIndicator({ clearPresence: activeGroupPresence.phase !== 'done' });
-    updateComposerBusyState();
+    if (stillBackground) {
+      backgroundGroupTurn = null;
+    } else {
+      releaseGroupComposer(composerLease);
+      resetActiveGroupTypingIndicator({ clearPresence: activeGroupPresence.phase !== 'done' });
+    }
   }
 }
 
@@ -10585,8 +10689,7 @@ async function retryFailedGroupMember(memberName) {
   const generation = activeGroupGeneration;
   const abortController = new AbortController();
   activeGroupAbortController = abortController;
-  sending = true;
-  updateComposerBusyState();
+  const composerLease = claimGroupComposer();
   // Immediate feedback: the notice's Retry button disables on the next paint.
   renderGroupTypingIndicator();
   try {
@@ -10602,11 +10705,16 @@ async function retryFailedGroupMember(memberName) {
       thread: activeGroupThreadId || 'main',
       signal: abortController.signal,
     });
-    if (
-      abortController.signal.aborted
-      || generation !== activeGroupGeneration
+    const detached = backgroundGroupTurn?.abortController === abortController;
+    if (abortController.signal.aborted) return false;
+    if (!detached && (
+      generation !== activeGroupGeneration
       || activeGroupRuntime !== runtime
-    ) return false;
+    )) return false;
+    if (detached) {
+      commitDetachedGroupTranscript(backgroundGroupTurn.projection, result?.messages);
+      return result?.ok !== false;
+    }
     if (result?.ok === false) return false;
     activeGroupMessages = [...result.messages, ...activeGroupDisplayEvents].sort((a, b) => (a.ts || 0) - (b.ts || 0));
     messages = activeGroupMessages;
@@ -10629,10 +10737,14 @@ async function retryFailedGroupMember(memberName) {
     }
     return false;
   } finally {
+    const stillBackground = backgroundGroupTurn?.abortController === abortController;
     if (activeGroupAbortController === abortController) activeGroupAbortController = null;
-    sending = false;
-    updateComposerBusyState();
-    renderGroupTypingIndicator();
+    if (stillBackground) {
+      backgroundGroupTurn = null;
+    } else {
+      releaseGroupComposer(composerLease);
+      renderGroupTypingIndicator();
+    }
   }
 }
 
@@ -11064,6 +11176,10 @@ async function openBotGroupChat(row) {
     setStatus('warn', 'Group chat unavailable', 'Group chats require the connected Hermes Dashboard. Switch to Dashboard mode to open this room.', { translateDetail: false });
     return false;
   }
+  if (!sending && reattachBackgroundGroupTurn(row)) {
+    setStatus('ok', 'Group chat still running', `${row.displayName || 'This room'} kept replying in the background.`, { translateDetail: false });
+    return true;
+  }
   if (sending) {
     setStatus('warn', 'Hermes is working…', 'Stop the active run before opening a group chat.');
     return false;
@@ -11116,7 +11232,13 @@ async function openBotGroupChat(row) {
     groupRuntime = createBotGroupRuntime({
       client: connection.client,
       onMessage: (message, meta = {}) => {
-        if (!isCurrentRuntime()) return;
+        const background = backgroundTurnFor(groupRuntime);
+        if (!isCurrentRuntime()) {
+          if (!background) return;
+          const entry = groupProjectionEntryFromDisplayMessage(message);
+          if (entry) background.projection.messages = [...(background.projection.messages || []), entry];
+          return;
+        }
         activeGroupMessages = [...activeGroupMessages, message];
         messages = activeGroupMessages;
         const entry = groupProjectionEntryFromDisplayMessage(message);
@@ -11143,7 +11265,11 @@ async function openBotGroupChat(row) {
         renderActiveProfileIndicator();
       },
       onActivity: (activity) => {
-        if (!isCurrentRuntime()) return;
+        const background = backgroundTurnFor(groupRuntime);
+        if (!isCurrentRuntime()) {
+          if (background) background.lastActivity = activity;
+          return;
+        }
         updateActiveGroupActivity(activity);
         const projection = liveProjection();
         if (activity.kind === 'working') {
@@ -11156,9 +11282,20 @@ async function openBotGroupChat(row) {
           setStatus('ok', 'Tool running', `${activity.roleLabel || activity.member} is using ${activity.tool || 'a tool'}…`, { translateDetail: false });
         }
       },
-      persist: (displayMessages) => isCurrentRuntime()
-        ? persistActiveGroupProjection(connection.client, displayMessages)
-        : undefined,
+      persist: (displayMessages) => {
+        const background = backgroundTurnFor(groupRuntime);
+        const attached = isCurrentRuntime();
+        if (!attached && !background) return undefined;
+        const rowForPersist = attached ? liveProjection() : background.projection;
+        const message = Array.isArray(displayMessages) ? displayMessages.at(-1) : null;
+        if (!rowForPersist || !message) return undefined;
+        return persistGroupProjectionAppend(connection.client, {
+          roomId: rowForPersist.roomId || rowForPersist.id,
+          roomKey: rowForPersist.roomKey,
+          message,
+          now: Date.now(),
+        });
+      },
       // B3.3 Outcome R: a room session drops its --session model pick on
       // resume, so the stored binding is re-verified and re-applied before
       // EVERY submission attempt. An unverified switch fails the member's
@@ -11231,10 +11368,10 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     activeConversationTransport = 'rest';
     activeDashboardWsConnection = null;
     activeGroupGeneration += 1;
+    abortAttachedGroupTurn();
+    abortBackgroundGroupTurn();
     const clearedActiveGroup = Boolean(activeGroupProjection);
     if (clearedActiveGroup) {
-      activeGroupAbortController?.abort?.();
-      activeGroupAbortController = null;
       activeGroupProjection = null;
       activeGroupRuntime = null;
       activeGroupMessages = [];
@@ -11779,8 +11916,7 @@ async function openBotProfile(row) {
     els.botModeLoadingOverlay.hidden = false;
   }
   activeGroupGeneration += 1;
-  activeGroupAbortController?.abort?.();
-  activeGroupAbortController = null;
+  abortAttachedGroupTurn();
   activeGroupProjection = null;
   activeGroupRuntime = null;
   activeGroupMessages = [];
@@ -11871,9 +12007,26 @@ async function openBotProfile(row) {
 
 async function leaveBotModeForRegularSession() {
   if (!document.body.classList.contains('bot-mode-engaged')) return true;
-  if (!canSwitchActiveSession({ sending, runControl: activeRunControl })) {
+  const groupTurnLive = Boolean(activeGroupProjection && activeGroupAbortController && sending);
+  const decision = botModeLeaveDecision({
+    engaged: true,
+    groupTurnLive,
+    canLeave: canSwitchActiveSession({ sending, runControl: activeRunControl }),
+  });
+  if (decision.action === 'blocked') {
     setStatus('warn', 'Hermes is working…', 'Stop the active Bot Mode turn before returning to Regular Sessions.');
     return false;
+  }
+  const detachedRoomName = groupTurnLive
+    ? String(activeGroupProjection?.displayName || 'Group chat')
+    : '';
+  if (decision.action === 'detach-group') {
+    detachActiveGroupTurnForBackground();
+    // A stale writer lease must not trap the session switch the user just asked
+    // for. The group turn does not own activeRunControl.
+    if (activeRunControl && activeRunControl.phase !== 'terminal') {
+      activeRunControl = markRunTerminal(activeRunControl, 'failed');
+    }
   }
 
   if (els.botModeLoadingOverlay) {
@@ -11900,8 +12053,7 @@ async function leaveBotModeForRegularSession() {
     const nextProfile = returnProfile || String(settings.activeProfile || '').trim();
 
     activeGroupGeneration += 1;
-    activeGroupAbortController?.abort?.();
-    activeGroupAbortController = null;
+    abortAttachedGroupTurn();
     activeGroupProjection = null;
     activeGroupRuntime = null;
     activeGroupMessages = [];
@@ -11958,7 +12110,9 @@ async function leaveBotModeForRegularSession() {
     renderActiveProfileIndicator();
     updateSessionLabel();
     updateConnectionPrompt();
-    setStatus('ok', 'Regular Sessions restored', `Started a fresh Hermes Browser session for ${profileSwitchDisplayName(nextProfile)}.`, { translateDetail: false });
+    setStatus('ok', 'Regular Sessions restored', detachedRoomName
+      ? `${detachedRoomName} keeps running in the background. Open it again from Bot Mode whenever you want.`
+      : `Started a fresh Hermes Browser session for ${profileSwitchDisplayName(nextProfile)}.`, { translateDetail: false });
     return true;
   } finally {
     if (els.botModeLoadingOverlay) els.botModeLoadingOverlay.hidden = true;
@@ -14732,8 +14886,7 @@ function preferredModelOptionsForNewSession() {
 async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), focus = true, hidden = false, transport = '', source = '', scopeRevisionId = scopeRevision.current() } = {}) {
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   activeGroupGeneration += 1;
-  activeGroupAbortController?.abort?.();
-  activeGroupAbortController = null;
+  abortAttachedGroupTurn();
   activeGroupProjection = null;
   activeGroupRuntime = null;
   activeGroupMessages = [];
@@ -14924,8 +15077,7 @@ async function openHermesSession(selectedSession) {
     return false;
   }
   activeGroupGeneration += 1;
-  activeGroupAbortController?.abort?.();
-  activeGroupAbortController = null;
+  abortAttachedGroupTurn();
   activeGroupProjection = null;
   activeGroupRuntime = null;
   activeGroupMessages = [];
