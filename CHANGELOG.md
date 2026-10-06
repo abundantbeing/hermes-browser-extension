@@ -4,6 +4,8 @@
 
 ### Added
 
+- A Tab screenshot action in the attachment menu captures the current tab only when you ask, and Bot Mode group turns on a local Hermes connection can include approved, redacted page context. Chat-only and remote group turns never capture page context.
+- `scripts/enable-bot-companion-tools.mjs` previews, and with `--apply` enables, the optional companion tools for a profile you choose.
 - Code blocks in messages are now syntax highlighted for common languages (Python, JavaScript, TypeScript, JSON, YAML, SQL, Bash, C#, CSS, HTML and Markdown) in the side panel and the full tab, in light and dark themes. Languages Hermes does not recognize stay plain. Thanks to @kidclone3 (#91).
 
 ### Changed
@@ -16,6 +18,9 @@
 
 ### Fixed
 
+- Open on computer now reveals the original file in its folder on a local connection instead of downloading a second copy, and refuses on remote connections. Save remains a separate download.
+- A file mentioned more than once in the same reply shows a single file card; later replies can still show it.
+- Media files report their full size when the server answers with a ranged response.
 - Hermes signature chat headlines now use the signature display face, the same condensed face shown on the font menu, instead of a serif stand-in. Code and monospace use Aeonik Fono when that face is installed, and fall back to the bundled mono face otherwise.
 - Leaving Bot Mode while a group chat is still replying no longer waits for every member to finish. Regular Sessions opens immediately, and that group chat keeps running in the background.
 - Subagents started from a browser chat now show up in the live dock while they work. You can steer or stop them from that session, including on a local API connection.
