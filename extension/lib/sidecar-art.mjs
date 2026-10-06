@@ -17,6 +17,9 @@ export const SIDECAR_ART = Object.freeze([
   'assets/img/sidecar-art/cloud-schedule.webp',
   'assets/img/sidecar-art/cloud-vaporwave.webp',
   'assets/img/sidecar-art/cloud-footer.webp',
+  'assets/img/sidecar-art/dither-edits-23.webp',
+  'assets/img/sidecar-art/dither-edits-93.webp',
+  'assets/img/sidecar-art/one-account-everywhere.webp',
 ]);
 
 /** Pick the art for this panel load, never repeating the previous choice. */

@@ -224,6 +224,7 @@ import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistenc
 import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
 import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
+import { createBackgroundArtRotation } from './lib/background-art.mjs';
 import {
   activeSubagentView,
   applySubagentEvent,
@@ -7836,6 +7837,11 @@ function applySidecarArt() {
   return entry;
 }
 applySidecarArt();
+createBackgroundArtRotation({
+  root: document.documentElement,
+  document,
+  storage: browserApi?.storage?.local,
+});
 
 function renderContextWindow(userText = els.input?.value || '') {
   const stats = estimateContextWindow({

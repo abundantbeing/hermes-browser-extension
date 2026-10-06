@@ -25,7 +25,7 @@ Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium 
 - **Message tools**: Copy, Edit, and Restore checkpoint on supported turns, with day dividers, message times, and theme-aware bubbles.
 - **Hermes Assist** drafts beside supported text composers and never sends, posts, or submits for you.
 - **Page comments**: pick an element, write a note, and queue pins beside Ask Hermes.
-- **Appearance**: Light, Dark, or System mode, nine themes, text zoom, and a font list. Nous Light is a white theme with Nous Blue accents.
+- **Appearance**: Light, Dark, or System mode, nine themes, text zoom, and a font list. Nous Light is a white theme with Nous Blue accents. Centered background artwork changes when you open the panel and scales with its width; sidecar illustrations rotate independently.
 
 
 The full list of changes per version lives in the [changelog](./CHANGELOG.md) and the [releases](https://github.com/abundantbeing/hermes-browser-extension/releases).

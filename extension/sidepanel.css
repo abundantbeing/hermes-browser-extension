@@ -490,8 +490,8 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
   inset: 0;
   z-index: -2;
   background: color-mix(in srgb, var(--hermes-fg) 45%, var(--hermes-paper) 55%);
-  -webkit-mask: url("assets/img/hermes-browser-enter-gate-ink.png") center / cover no-repeat;
-  mask: url("assets/img/hermes-browser-enter-gate-ink.png") center / cover no-repeat;
+  -webkit-mask: var(--background-art, url("assets/img/hermes-browser-enter-gate-ink.png")) center / cover no-repeat;
+  mask: var(--background-art, url("assets/img/hermes-browser-enter-gate-ink.png")) center / cover no-repeat;
   opacity: 0.13;
   mix-blend-mode: normal;
   pointer-events: none;
@@ -1163,8 +1163,8 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
   inset: -2%;
   z-index: -2;
   background: var(--hermes-fg);
-  -webkit-mask: url("assets/img/hermes-browser-enter-gate-ink.png") center / cover no-repeat;
-  mask: url("assets/img/hermes-browser-enter-gate-ink.png") center / cover no-repeat;
+  -webkit-mask: var(--background-art, url("assets/img/hermes-browser-enter-gate-ink.png")) center / cover no-repeat;
+  mask: var(--background-art, url("assets/img/hermes-browser-enter-gate-ink.png")) center / cover no-repeat;
   opacity: 0.15;
   mix-blend-mode: soft-light;
   transform-origin: center;
