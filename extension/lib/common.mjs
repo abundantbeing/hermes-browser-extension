@@ -14,7 +14,9 @@ import { CONNECTION_SCHEMA_VERSION, CONNECTION_TRANSPORTS } from './connection-m
 import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
 import { hermesContextForModel, HERMES_DEFAULT_FALLBACK_CONTEXT } from './hermes-context-windows.mjs';
 import { contextFromHermesRegistry } from './hermes-context-sync.mjs';
-export { redactSensitiveText };
+import { shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams } from './bot-browser-bridge.mjs';
+import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
+export { redactSensitiveText, shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams, formatGroupTurnWithBrowserContext };
 
 export const GATEWAY_MODES = Object.freeze([
   {

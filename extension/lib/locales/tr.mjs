@@ -1302,6 +1302,7 @@ export default Object.freeze({
   "ui.update.prompt.ready": "Güncelleme istemi hazır",
   "ui.updates.are.checked.against.the.public.github.repo": "Güncellemeler genel GitHub deposuna göre kontrol edilir.",
   "ui.upload": "Yükle",
+  "ui.tab.screenshot": "▣ Tab screenshot",
   "ui.url": "↗URL...",
   "ui.url.0e2d9b07": "URL",
   "ui.url.19911671": "↗URL…",

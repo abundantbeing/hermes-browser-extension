@@ -222,6 +222,9 @@ import { createUserFileAttachment, appendUserFileAttachments, stageUserFiles, at
 import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
+import { revealArtifactOnComputer } from './lib/artifact-folder.mjs';
+import { captureBotTabScreenshot, collectBotPageContext } from './lib/bot-browser-capture.mjs';
+import { prepareBotBrowserTurn } from './lib/bot-browser-turn.mjs';
 import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
 import { createBackgroundArtRotation } from './lib/background-art.mjs';
@@ -10626,8 +10629,8 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     setStatus('warn', 'Group chat unavailable', 'This room has no verified Dashboard transport on the current Hermes runtime.', { translateDetail: false });
     return false;
   }
-  if (Array.isArray(turnAttachments) && turnAttachments.length) {
-    setStatus('warn', 'Group attachments unavailable', 'Group attachments require the official portable group-operations contract. Remove the attachment or open an agent chat.', { translateDetail: false });
+  if (Array.isArray(turnAttachments) && turnAttachments.some((item) => item?.browserTabScreenshot !== true)) {
+    setStatus('warn', 'Group attachments unavailable', 'Only explicitly captured tab screenshots are supported here. Remove other attachments or open an agent chat.', { translateDetail: false });
     return false;
   }
   if (sending) {
@@ -10660,12 +10663,28 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     } else {
       targetThreadId = 'main';
     }
+    const browserScope = { ...effectiveContextGate(contextScope).scope };
+    const browserScopeKey = JSON.stringify(browserScope);
+    const turnGatewayUrl = settings.gatewayUrl;
     const result = await groupRuntime.send({
       roomId: groupProjection.roomId || groupProjection.id,
       groupName: groupProjection.displayName,
       members: groupRuntimeMembers(groupProjection),
       messages: groupMessages,
       text: value,
+      ...(await prepareBotBrowserTurn({
+        group: true,
+        scope: browserScope,
+        settings,
+        gatewayUrl: turnGatewayUrl,
+        attachments: turnAttachments,
+        getContext: () => collectBotPageContext({ browserApi, scope: browserScope, settings }),
+        isCurrent: () => !abortController.signal.aborted
+          && groupGeneration === activeGroupGeneration
+          && activeGroupRuntime === groupRuntime
+          && settings.gatewayUrl === turnGatewayUrl
+          && JSON.stringify(effectiveContextGate(contextScope).scope) === browserScopeKey,
+      })),
       signal: abortController.signal,
       thread: targetThreadId,
     });
@@ -15417,9 +15436,9 @@ async function hydrateSessionMediaInElement(element) {
 // HTML page, an archive. The transcript used to answer with nothing but the
 // path it sits at. These cards make the file actionable: Open renders viewable
 // kinds in a new tab from bytes fetched over the same authenticated dashboard
-// transport the media routes use, Open on computer hands the file to the OS
-// default app through downloads.download + downloads.open, and Save keeps a
-// copy. Every state is honest — when the dashboard cannot read the file, the
+// transport the media routes use, Open on computer reveals the original file
+// in its containing folder through local Hermes, and Save downloads a copy.
+// Every state is honest: when the dashboard cannot read the file, the
 // buttons are disabled and say why instead of failing on click.
 const ARTIFACT_CARD_LIMIT = 6;
 const ARTIFACT_PROBE_CACHE_MS = 30_000;
@@ -15569,16 +15588,24 @@ async function artifactDownloadUrlFor(plan) {
 }
 
 async function openArtifactCardOnComputer(plan) {
-  const url = await artifactDownloadUrlFor(plan);
-  const downloadId = await browserApi.downloads.download({ url, filename: plan.name });
-  if (!Number.isInteger(Number(downloadId))) throw new Error('The browser did not start the download.');
-  await waitForArtifactDownload(Number(downloadId));
-  await browserApi.downloads.open(Number(downloadId));
+  const gatewayUrl = settings.gatewayUrl;
+  await revealArtifactOnComputer(plan.source, {
+    gatewayUrl,
+    platform: (await browserApi.runtime.getPlatformInfo()).os,
+    getClient: () => ensureProfileWsConnection(),
+    verifyFile: async (filePath) => {
+      const { baseUrl, token } = await resolveArtifactDashboardContext();
+      return probeArtifactFileSource(filePath, { baseUrl, token });
+    },
+    isCurrent: () => settings.gatewayUrl === gatewayUrl,
+  });
 }
 
 async function saveArtifactCardFile(plan) {
   const url = await artifactDownloadUrlFor(plan);
-  await browserApi.downloads.download({ url, filename: plan.name, saveAs: true });
+  const downloadId = await browserApi.downloads.download({ url, filename: plan.name, saveAs: true });
+  if (!Number.isInteger(downloadId)) throw new Error('The browser did not start the download.');
+  await waitForArtifactDownload(downloadId);
 }
 
 async function runArtifactCardAction(plan, card, busyLabelKey, action) {
@@ -21781,6 +21808,13 @@ function bindEvents() {
       if (kind === 'images') els.imageInput.click();
       if (kind === 'paste-image') await pasteClipboardImage();
       if (kind === 'url') attachUrl();
+      if (kind === 'tab-screenshot') {
+        const gate = effectiveContextGate(contextScope);
+        const target = gate.scope.mode === 'pinned-tab'
+          ? await browserApi.tabs.get(Number(gate.scope.pinnedTabId))
+          : (await browserApi.tabs.query({ active: true, lastFocusedWindow: true }))[0];
+        addAttachment(await captureBotTabScreenshot({ browserApi, tab: target, scopeMode: gate.scope.mode, allowed: gate.allowed }));
+      }
     } catch (error) {
       addMessage('system', `Attach failed: ${error?.message || String(error)}`);
     }

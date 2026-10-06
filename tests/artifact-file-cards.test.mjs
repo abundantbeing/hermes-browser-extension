@@ -643,8 +643,8 @@ test('the side panel hydrates returned-file cards and keeps the honest chip fall
   // The three actions, on the one authenticated transport the panel already uses.
   assert.match(sidepanelSource, /await probeArtifactFileSource\(filePath, \{ baseUrl, token \}\)/);
   assert.match(sidepanelSource, /await resolveArtifactFileSource\(plan\.source, \{ baseUrl, token \}\)/);
-  assert.match(sidepanelSource, /browserApi\.downloads\.download\(\{ url, filename: plan\.name \}\)/);
-  assert.match(sidepanelSource, /await browserApi\.downloads\.open\(Number\(downloadId\)\);/);
+  assert.match(sidepanelSource, /await revealArtifactOnComputer\(plan\.source,/);
+  assert.doesNotMatch(sidepanelSource, /browserApi\.downloads\.open\(/);
   assert.match(sidepanelSource, /saveAs: true/);
   // The old honest chip is still what an unreadable media path gets.
   assert.match(sidepanelSource, /stays an honest filename chip/);

@@ -254,6 +254,30 @@ export function artifactFileChipMarkup(pathRef) {
 
 export const DEFAULT_ARTIFACT_CARD_LIMIT = 6;
 
+const artifactHydrations = new WeakMap();
+
+function artifactPathKey(value = '') {
+  const path = String(value).trim();
+  return /^(?:[a-z]:[\\/]|\\\\)/i.test(path) ? path.replace(/\\/g, '/').toLowerCase() : path;
+}
+
+function uniqueArtifactCards(root, cap) {
+  const cards = new Map();
+  for (const card of root.querySelectorAll('.artifact-card[data-artifact-path]')) {
+    const key = artifactPathKey(card.getAttribute('data-artifact-path'));
+    if (!key) continue;
+    const previous = cards.get(key);
+    if (previous) {
+      if (previous.classList.contains(ARTIFACT_CARD_CHIP_CLASS) && !card.classList.contains(ARTIFACT_CARD_CHIP_CLASS)) {
+        previous.remove();
+        cards.set(key, card);
+      } else card.remove();
+    } else if (cards.size < cap) cards.set(key, card);
+    else card.remove();
+  }
+  return cards;
+}
+
 function labelSet(labels) {
   return cardLabels(typeof labels === 'function' ? labels() : labels);
 }
@@ -312,26 +336,44 @@ export async function hydrateArtifactCards(root, {
   limit = DEFAULT_ARTIFACT_CARD_LIMIT,
 } = {}) {
   if (typeof buildPlan !== 'function' || !root?.querySelectorAll) return 0;
+  const options = { buildPlan, labels, handlers, scanText, limit };
+  const messages = [...root.querySelectorAll('.message')].filter((message) => !message.closest('.message .message'));
+  if (messages.length) {
+    const counts = await Promise.all(messages.filter((message) => !message.classList.contains('user'))
+      .map((message) => hydrateArtifactCards(message, options)));
+    return counts.reduce((total, count) => total + count, 0);
+  }
+  const scope = root.closest?.('.message') || root;
+  if (scope.classList?.contains('user')) return 0;
+  if (artifactHydrations.has(scope)) return artifactHydrations.get(scope);
+  const pending = hydrateArtifactScope(scope, options);
+  artifactHydrations.set(scope, pending);
+  try {
+    return await pending;
+  } finally {
+    if (artifactHydrations.get(scope) === pending) artifactHydrations.delete(scope);
+  }
+}
+
+async function hydrateArtifactScope(root, { buildPlan, labels, handlers, scanText, limit }) {
   const doc = root.ownerDocument || root.parentDocument || null;
   if (!doc?.createElement) return 0;
   const text = labelSet(labels);
   const actionHandlers = handlerSet(handlers);
   const cap = Math.max(1, Number(limit) || DEFAULT_ARTIFACT_CARD_LIMIT);
-  let budget = cap;
+  uniqueArtifactCards(root, cap);
   let placed = 0;
 
   const buildCard = (plan, size) => buildArtifactFileCard(doc, plan, { labels: text, handlers: actionHandlers, size });
 
   const chips = [...root.querySelectorAll(`.${ARTIFACT_CARD_CHIP_CLASS}[data-artifact-path]`)].slice(0, cap);
   for (const chip of chips) {
-    if (budget <= 0) break;
     const filePath = chip.getAttribute('data-artifact-path') || '';
     if (!filePath) continue;
     const { plan, size } = (await buildPlan(filePath)) || {};
-    if (!plan || !chip.parentNode) continue;
+    if (!plan || !root.contains(chip)) continue;
     chip.replaceWith(buildCard(plan, size));
     placed += 1;
-    budget -= 1;
   }
 
   // A card rendered before the surface could read files heals itself once a
@@ -340,15 +382,15 @@ export async function hydrateArtifactCards(root, {
     .filter((card) => card.dataset?.artifactBusy !== 'true')
     .slice(0, cap);
   for (const card of stranded) {
-    if (budget <= 0) break;
     const filePath = card.getAttribute('data-artifact-path') || '';
     if (!filePath) continue;
     const { plan, size } = (await buildPlan(filePath)) || {};
-    if (!plan || plan.readable !== true || !card.parentNode) continue;
+    if (!plan || plan.readable !== true || !root.contains(card)) continue;
     card.replaceWith(buildCard(plan, size));
     placed += 1;
-    budget -= 1;
   }
+  const existing = uniqueArtifactCards(root, cap);
+  let budget = cap - existing.size;
   if (!scanText || budget <= 0) return placed;
 
   for (const block of artifactTextBlocks(root)) {
@@ -360,14 +402,18 @@ export async function hydrateArtifactCards(root, {
     const cards = artifactCardsAfter(anchor);
     for (const descriptor of paths) {
       if (budget <= 0) break;
-      if (cards.has(descriptor.source)) continue;
+      const key = artifactPathKey(descriptor.source);
+      if (existing.has(key)) continue;
       const { plan, size } = (await buildPlan(descriptor.source)) || {};
-      if (!plan) continue;
+      if (!plan || !root.contains(block)) continue;
+      const current = uniqueArtifactCards(root, cap);
+      if (current.has(key) || current.size >= cap) continue;
       const card = buildCard(plan, size);
       const tail = [...cards.values()].at(-1) || anchor;
       if (typeof tail.after === 'function') tail.after(card);
       else tail.insertAdjacentElement?.('afterend', card);
       cards.set(descriptor.source, card);
+      existing.set(key, card);
       placed += 1;
       budget -= 1;
     }

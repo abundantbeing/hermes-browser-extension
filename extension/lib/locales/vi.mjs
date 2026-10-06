@@ -1302,6 +1302,7 @@ export default Object.freeze({
   "ui.update.prompt.ready": "Lời nhắc cập nhật đã sẵn sàng",
   "ui.updates.are.checked.against.the.public.github.repo": "Các bản cập nhật được kiểm tra dựa trên kho lưu trữ GitHub công khai.",
   "ui.upload": "Tải lên",
+  "ui.tab.screenshot": "▣ Tab screenshot",
   "ui.url": "↗ URL...",
   "ui.url.0e2d9b07": "URL",
   "ui.url.19911671": "↗ URL…",
