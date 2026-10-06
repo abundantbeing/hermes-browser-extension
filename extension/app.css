@@ -445,11 +445,17 @@ html[data-hermes-theme^="custom:"] [tabindex]:focus-visible {
 .web-message-content h3,
 .web-message-content h4,
 .web-message-content h5,
-.web-message-content h6 { font-family: var(--hermes-font-display); font-weight: 500; line-height: 1.2; letter-spacing: 0.03em; text-transform: none; font-size: calc(26px * var(--hermes-text-zoom, 1)); }
-.web-message-content h1 { font-size: calc(34px * var(--hermes-text-zoom, 1)); }
+.web-message-content h6 { font-family: var(--hermes-font-display); font-weight: 500; line-height: 1.2; letter-spacing: 0.03em; text-transform: none; font-size: calc(26px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+.web-message-content h1 { font-size: calc(34px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 .web-message-content h3,
-.web-message-content h4 { font-size: calc(22px * var(--hermes-text-zoom, 1)); }
-html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6),
+.web-message-content h4 { font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "Rules Gothic Compressed", "Collapse", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 0.92;
+  text-transform: none;
+}
 html[data-hermes-font-profile="cinzel"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
   font-family: "HermesDisplay", "Sigurd", Georgia, serif;
   letter-spacing: 0.01em;
@@ -491,6 +497,7 @@ html[data-hermes-font-profile="cinzel"] .web-message-content :is(h1, h2, h3, h4,
 @media (hover: none) {
   .md-code-copy { opacity: 1; }
 }
+.web-message-content pre,
 .web-message-content code { font-family: var(--hermes-font-mono); }
 .web-message-content pre code.hljs {
   --syntax-comment: #52606d;

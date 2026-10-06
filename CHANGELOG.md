@@ -16,6 +16,7 @@
 
 ### Fixed
 
+- Hermes signature chat headlines now use the signature display face, the same condensed face shown on the font menu, instead of a serif stand-in. Code and monospace use Aeonik Fono when that face is installed, and fall back to the bundled mono face otherwise.
 - Leaving Bot Mode while a group chat is still replying no longer waits for every member to finish. Regular Sessions opens immediately, and that group chat keeps running in the background.
 - Subagents started from a browser chat now show up in the live dock while they work. You can steer or stop them from that session, including on a local API connection.
 

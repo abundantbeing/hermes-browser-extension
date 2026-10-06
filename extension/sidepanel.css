@@ -119,7 +119,9 @@
   --ok: var(--hermes-accent);
   --radius: 0px;
   --hermes-font-ui: "Rules Variable", "Space Grotesk", "Segoe UI", system-ui, sans-serif;
-  --hermes-font-mono: "HermesMono", "Courier Prime", "Cascadia Code", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  /* Aeonik Fono is the Hermes code face. It is licensed, not bundled, so these
+     names resolve only when the face is installed. HermesMono is the fallback. */
+  --hermes-font-mono: "Aeonik Fono", "Aeonik Fono Pro", "Aeonik Fono Pro TRIAL", "HermesMono", "Courier Prime", "Cascadia Code", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
   --hermes-font-brand: "Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif;
   --hermes-font-display: "Rules Gothic Compressed", "HermesDisplay", "Rules Variable", "Space Grotesk", sans-serif;
   --hermes-text-zoom: 1;
@@ -3317,13 +3319,19 @@ html[data-hermes-font-profile="signature"] .browser-control-dialog-title {
 .message-content h4:first-child,
 .message-content h5:first-child,
 .message-content h6:first-child { margin-top: 0; }
-.message-content h1 { font-size: calc(32px * var(--hermes-text-zoom, 1)); }
-.message-content h2 { font-size: calc(26px * var(--hermes-text-zoom, 1)); }
-.message-content h3 { font-size: calc(22px * var(--hermes-text-zoom, 1)); }
+.message-content h1 { font-size: calc(32px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+.message-content h2 { font-size: calc(26px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+.message-content h3 { font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 .message-content h4,
-.message-content h5 { font-size: calc(18px * var(--hermes-text-zoom, 1)); }
-.message-content h6 { font-size: calc(15px * var(--hermes-text-zoom, 1)); letter-spacing: 0.04em; text-transform: none; }
-html[data-hermes-font-profile="signature"] .message-content :is(h1, h2, h3, h4, h5, h6),
+.message-content h5 { font-size: calc(18px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+.message-content h6 { font-size: calc(15px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); letter-spacing: 0.04em; text-transform: none; }
+html[data-hermes-font-profile="signature"] .message-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "Rules Gothic Compressed", "Collapse", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 0.92;
+  text-transform: none;
+}
 html[data-hermes-font-profile="cinzel"] .message-content :is(h1, h2, h3, h4, h5, h6) {
   font-family: "HermesDisplay", "Sigurd", Georgia, serif;
   letter-spacing: 0.01em;
@@ -3344,6 +3352,7 @@ html[data-hermes-font-profile="signature"] .web-message-content ol {
   padding: 0.08em 0.28em;
   border: 1px solid rgba(var(--hermes-ink-rgb),0.18);
   background: rgba(var(--hermes-ink-rgb),0.06);
+  font-family: var(--hermes-font-mono);
   font-size: 0.92em;
 }
 .message.user .message-content code { border-color: rgba(var(--hermes-fg-rgb),0.34); background: rgba(var(--hermes-fg-rgb),0.11); }
@@ -3356,6 +3365,7 @@ html[data-hermes-font-profile="signature"] .web-message-content ol {
   overflow: visible;
   border: 1px solid rgba(var(--hermes-ink-rgb),0.2);
   background: rgba(var(--hermes-ink-rgb),0.06);
+  font-family: var(--hermes-font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -6806,12 +6816,12 @@ h2,
 .message-content h2,
 .message-content h3,
 .message-content h4 { font-family: var(--hermes-font-display); font-weight: 500; line-height: 1.2; letter-spacing: 0.03em; text-transform: none; }
-.message-content h1 { font-size: calc(32px * var(--hermes-text-zoom, 1)); }
-.message-content h2 { font-size: calc(26px * var(--hermes-text-zoom, 1)); }
-.message-content h3 { font-size: calc(22px * var(--hermes-text-zoom, 1)); }
+.message-content h1 { font-size: calc(32px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+.message-content h2 { font-size: calc(26px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+.message-content h3 { font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 .message-content h4,
-.message-content h5 { font-size: calc(18px * var(--hermes-text-zoom, 1)); }
-.message-content h6 { font-size: calc(15px * var(--hermes-text-zoom, 1)); }
+.message-content h5 { font-size: calc(18px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
+.message-content h6 { font-size: calc(15px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 
 @media (max-height: 720px) {
   .hero-card { min-height: 118px; }

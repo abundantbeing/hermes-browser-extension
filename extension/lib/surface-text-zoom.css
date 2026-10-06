@@ -38,7 +38,13 @@ html[data-hermes-text-zoom] .web-message-content h4 {
   letter-spacing: 0.03em;
   text-transform: none;
 }
-html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6),
+html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: "Rules Gothic Compressed", "Collapse", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 0.92;
+  text-transform: none;
+}
 html[data-hermes-font-profile="cinzel"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
   font-family: "HermesDisplay", "Sigurd", Georgia, serif;
   letter-spacing: 0.01em;
