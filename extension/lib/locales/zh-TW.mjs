@@ -1302,6 +1302,7 @@ export default Object.freeze({
   "ui.update.prompt.ready": "更新提示已準備好",
   "ui.updates.are.checked.against.the.public.github.repo": "更新會與公開 GitHub 存放庫核對。",
   "ui.upload": "上傳",
+  "ui.tab.screenshot": "▣ Tab screenshot",
   "ui.url": "↗ URL...",
   "ui.url.0e2d9b07": "URL",
   "ui.url.19911671": "↗ URL…",

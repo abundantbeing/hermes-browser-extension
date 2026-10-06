@@ -1302,6 +1302,7 @@ export default Object.freeze({
   "ui.update.prompt.ready": "업데이트 프롬프트 준비됨",
   "ui.updates.are.checked.against.the.public.github.repo": "업데이트는 공개 GitHub 저장소를 기준으로 확인됩니다.",
   "ui.upload": "업로드",
+  "ui.tab.screenshot": "▣ Tab screenshot",
   "ui.url": "↗ URL...",
   "ui.url.0e2d9b07": "URL",
   "ui.url.19911671": "↗ URL…",

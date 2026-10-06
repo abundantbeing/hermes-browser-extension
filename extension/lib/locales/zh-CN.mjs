@@ -1330,6 +1330,7 @@ export default Object.freeze({
   "ui.update.prompt.ready": "更新请求已准备就绪",
   "ui.updates.are.checked.against.the.public.github.repo": "更新会与公共 GitHub 仓库核对。",
   "ui.upload": "上传",
+  "ui.tab.screenshot": "▣ Tab screenshot",
   "ui.url": "↗ URL...",
   "ui.url.0e2d9b07": "URL",
   "ui.url.19911671": "↗ URL…",

@@ -296,7 +296,9 @@ export async function probeArtifactFileSource(pathRef, {
     return { ok: false, reason: Number.isInteger(status) && status > 0 ? `http-${status}` : 'http-error' };
   }
 
-  const rawLength = response.headers?.get?.('content-length');
+  const contentRange = response.headers?.get?.('content-range') || '';
+  const rangeTotal = /^bytes\s+\d+-\d+\/(\d+)$/i.exec(contentRange)?.[1];
+  const rawLength = Number(response.status) === 206 ? rangeTotal : response.headers?.get?.('content-length');
   const length = rawLength === null || rawLength === undefined || rawLength === '' ? NaN : Number(rawLength);
   return { ok: true, size: Number.isFinite(length) && length >= 0 ? length : null };
 }

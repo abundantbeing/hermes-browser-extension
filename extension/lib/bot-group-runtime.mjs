@@ -1,5 +1,7 @@
 import { remoteSessionIdentity, runtimeModelFromSessionStatus, buildSessionModelSwitchRequest } from './gateway-ws.mjs';
 import { profileDefaultModelFromOptions } from './model-discovery.mjs';
+import { screenshotAttachParams } from './bot-browser-bridge.mjs';
+import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
 
 const GROUP_PROJECTION_MAX_CHARS = 48_000;
 const GROUP_MEMBER_MIN = 2;
@@ -603,11 +605,41 @@ async function resolveMemberSession(client, roomId, member, { createIfMissing = 
 }
 
 
-function waitForMemberCompletion(client, liveId, { signal, timeoutMs = GROUP_TURN_TIMEOUT_MS, text = '', onActivity } = {}) {
+// Stage this turn's explicit tab screenshots on the member session through the
+// gateway image RPC. Runs AFTER the model re-apply and BEFORE prompt.submit on
+// every attempt. A partial failure rolls back whatever was already staged and
+// rethrows, so a member is never prompted with a silently missing screenshot
+// (text-only downgrade). Returns the staged gateway paths for later rollback.
+async function stageMemberScreenshots(client, sessionId, attachments = []) {
+  const staged = [];
+  try {
+    for (const attachment of attachments) {
+      const params = screenshotAttachParams(attachment, sessionId);
+      if (!params) throw new Error('A browser tab screenshot attachment was invalid.');
+      const result = await client.request('image.attach_bytes', params);
+      if (result?.attached !== true) throw new Error('Hermes did not attach the browser tab screenshot.');
+      if (result?.path) staged.push(String(result.path));
+    }
+    return staged;
+  } catch (error) {
+    for (const path of staged) {
+      try {
+        await client.request('image.detach', { session_id: sessionId, path });
+      } catch {
+        /* best-effort rollback */
+      }
+    }
+    throw error;
+  }
+}
+
+function waitForMemberCompletion(client, liveId, { signal, timeoutMs = GROUP_TURN_TIMEOUT_MS, text = '', onActivity, attachImages } = {}) {
   if (typeof client?.on !== 'function') return Promise.reject(new Error('The Hermes dashboard transport cannot stream group turns.'));
   return new Promise((resolve, reject) => {
     let finalText = '';
     let settled = false;
+    let promptSubmitted = false;
+    const stagedPaths = [];
     const offs = [];
     const timer = globalThis.setTimeout(() => finish(reject, new Error('Group member response timed out.')), timeoutMs);
     const matches = (event) => clean(event?.sessionId || event?.session_id) === liveId;
@@ -622,9 +654,20 @@ function waitForMemberCompletion(client, liveId, { signal, timeoutMs = GROUP_TUR
       cleanup();
       fn(value);
     };
+    // A staged screenshot that never made it into a submitted turn is removed
+    // from the member session so it cannot leak into the NEXT turn.
+    const detachStaged = async () => {
+      for (const path of stagedPaths.splice(0)) {
+        try {
+          await client.request('image.detach', { session_id: liveId, path });
+        } catch {
+          /* best-effort rollback */
+        }
+      }
+    };
     const onAbort = () => {
       client.request('session.interrupt', { session_id: liveId }).catch(() => {});
-      finish(reject, new DOMException('Group turn stopped by user', 'AbortError'));
+      detachStaged().finally(() => finish(reject, new DOMException('Group turn stopped by user', 'AbortError')));
     };
     if (signal?.aborted) {
       onAbort();
@@ -666,14 +709,35 @@ function waitForMemberCompletion(client, liveId, { signal, timeoutMs = GROUP_TUR
     offs.push(client.on('error', (event) => {
       if (matches(event)) finish(reject, new Error(safeFailure(event.payload || event)));
     }));
-    client.request('prompt.submit', {
-      session_id: liveId,
-      text,
-    }).catch((error) => finish(reject, error));
+    const submit = async () => {
+      if (signal?.aborted) {
+        onAbort();
+        return;
+      }
+      if (typeof attachImages === 'function') {
+        const staged = await attachImages();
+        if (Array.isArray(staged)) stagedPaths.push(...staged.filter(Boolean));
+      }
+      if (signal?.aborted) {
+        await detachStaged();
+        finish(reject, new DOMException('Group turn stopped by user', 'AbortError'));
+        return;
+      }
+      const accepted = await client.request('prompt.submit', {
+        session_id: liveId,
+        text,
+      });
+      promptSubmitted = true;
+      return accepted;
+    };
+    submit().catch(async (error) => {
+      if (!promptSubmitted) await detachStaged();
+      finish(reject, error);
+    });
   });
 }
 
-async function submitMemberPrompt(client, session, prompt, { signal, timeoutMs, onActivity, onAttempt } = {}) {
+async function submitMemberPrompt(client, session, prompt, { signal, timeoutMs, onActivity, onAttempt, screenshotAttachments = [] } = {}) {
   let current = session;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     // The per-attempt hook runs before EVERY submission attempt — including a
@@ -683,7 +747,18 @@ async function submitMemberPrompt(client, session, prompt, { signal, timeoutMs, 
     // member's turn) without submitting a prompt.
     if (typeof onAttempt === 'function') await onAttempt({ ...current });
     try {
-      return await waitForMemberCompletion(client, current.liveId, { signal, timeoutMs, text: prompt, onActivity });
+      return await waitForMemberCompletion(client, current.liveId, {
+        signal,
+        timeoutMs,
+        text: prompt,
+        onActivity,
+        // Screenshots attach AFTER the model re-apply hook above and BEFORE
+        // prompt.submit, on every attempt. A failed attach rejects the attempt
+        // instead of silently downgrading to a text-only prompt.
+        attachImages: screenshotAttachments.length
+          ? () => stageMemberScreenshots(client, current.liveId, screenshotAttachments)
+          : null,
+      });
     } catch (error) {
       if (attempt > 0 || !isSessionGoneError(error) || !current.storedId) throw error;
       current = await resumeMemberSession(client, current.storedId, current.profile, current.title);
@@ -709,6 +784,11 @@ export function createBotGroupRuntime({
   // missing session is never cached as an absent one), and an entry is dropped
   // whenever the live session is gone and cannot be recovered.
   const sessionCache = new Map();
+  // Per-room cache of the exact browser context and screenshots captured for the
+  // most recent turn. Runtime-only: a retry reuses them verbatim rather than
+  // capturing a different page later, and they are never persisted.
+  const turnContextByRoom = new Map();
+  const turnScreenshotsByRoom = new Map();
   let activeMember = '';
   // A turn (send or retry) is "running" for its whole member loop, not just
   // during one member's submit, so a retry can be refused while ANY turn runs.
@@ -766,7 +846,7 @@ export function createBotGroupRuntime({
     return { ok: failures.length === 0, sessions, failures };
   }
 
-  async function send({ roomId = '', groupName = '', members = [], messages = [], text = '', signal, thread = '' } = {}) {
+  async function send({ roomId = '', groupName = '', members = [], messages = [], text = '', signal, thread = '', browserContext = null, screenshotAttachments = [] } = {}) {
     const roster0 = normalizeMembers(members);
     // Thread id for this turn's entries: an explicit thread (reply inside an
     // expanded thread) or a fresh generated id (new thread from the room view).
@@ -807,6 +887,15 @@ export function createBotGroupRuntime({
     // "@everyone" or no mention prompts all members.
     const roster = groupMembersForTurn(trimmed, roster0);
 
+    // The exact browser context + screenshots for this turn are resolved ONCE
+    // and cached per room (runtime-only). A disabled context is normalized to
+    // null so the group prompt stays byte-identical to a session with no
+    // browser context at all. Never written into `working` or the projection.
+    const effectiveContext = browserContext?.enabled === true ? browserContext : null;
+    const screenshots = Array.isArray(screenshotAttachments) ? screenshotAttachments : [];
+    turnContextByRoom.set(clean(roomId), effectiveContext);
+    turnScreenshotsByRoom.set(clean(roomId), screenshots);
+
     // Announce the full routed roster up front so the presence strip can show
     // who is queued before the first member begins (B2.1).
     await onActivity({
@@ -824,10 +913,14 @@ export function createBotGroupRuntime({
       activeMember = member.name;
       try {
         const session = await memberSessionFor(roomId, member);
-        const prompt = buildGroupMemberPrompt({ roomId, groupName, members: roster, viewer: member, messages: working });
+        const basePrompt = buildGroupMemberPrompt({ roomId, groupName, members: roster, viewer: member, messages: working });
+        // Same turn context for EVERY addressed member; a full BCP v2 envelope
+        // (byte-identical base prompt when the context is disabled).
+        const prompt = formatGroupTurnWithBrowserContext(basePrompt, effectiveContext);
         const reply = await submitMemberPrompt(client, session, prompt, {
           signal,
           timeoutMs,
+          screenshotAttachments: screenshots,
           onActivity: (act) => onActivity({ ...act, member: member.name, roleLabel: member.title || member.name }),
           // Outcome R guard: a per-room model pick is dropped on session.resume,
           // so the surface re-applies it before EVERY submission attempt (the
@@ -883,7 +976,7 @@ export function createBotGroupRuntime({
   // (retry/queued -> working/typing -> reply|pass|failed -> idle). Refused
   // while any turn runs (`turn-busy`) and against a second in-flight retry
   // (`retry-busy`) so it cannot overlap a turn or double-fire.
-  async function retryMember({ roomId = '', groupName = '', members = [], messages = [], member, text = '', thread = '', signal } = {}) {
+  async function retryMember({ roomId = '', groupName = '', members = [], messages = [], member, text = '', thread = '', signal, browserContext = null, screenshotAttachments = [] } = {}) {
     const roster = normalizeMembers(members);
     const target = normalizeMember(member);
     const found = target ? roster.find((entry) => entry.name === target.name) : null;
@@ -916,6 +1009,15 @@ export function createBotGroupRuntime({
 
     const failures = [];
     const syncFailures = [];
+    // Reuse the runtime-only per-room context from the most recent turn. A
+    // retry MUST NOT capture a different page later: an explicitly-supplied
+    // enabled context wins, otherwise the cached one is used verbatim.
+    const cachedContext = turnContextByRoom.get(clean(roomId)) || null;
+    const effectiveContext = browserContext?.enabled === true ? browserContext : cachedContext;
+    const requestedShots = Array.isArray(screenshotAttachments) ? screenshotAttachments : [];
+    const screenshots = requestedShots.length ? requestedShots : (turnScreenshotsByRoom.get(clean(roomId)) || []);
+    turnContextByRoom.set(clean(roomId), effectiveContext);
+    if (screenshots.length) turnScreenshotsByRoom.set(clean(roomId), screenshots);
     // Also used as the double-fire guard: set BEFORE the first await so a
     // re-entrant or duplicate retry is rejected synchronously.
     retryMemberName = name;
@@ -933,10 +1035,15 @@ export function createBotGroupRuntime({
       await onActivity({ kind: 'working', member: name, roleLabel: label });
       activeMember = name;
       const session = await memberSessionFor(roomId, found);
-      const prompt = buildGroupMemberPrompt({ roomId, groupName, members: roster, viewer: found, messages: working });
+      const basePrompt = buildGroupMemberPrompt({ roomId, groupName, members: roster, viewer: found, messages: working });
+      // A retry MUST answer on the exact context the failed turn used, so it
+      // reuses the runtime-only per-room cache instead of capturing a page
+      // later. An explicitly-supplied enabled context still wins.
+      const prompt = formatGroupTurnWithBrowserContext(basePrompt, effectiveContext);
       const reply = await submitMemberPrompt(client, session, prompt, {
         signal,
         timeoutMs,
+        screenshotAttachments: screenshots,
         onActivity: (act) => onActivity({ ...act, member: name, roleLabel: label }),
         // Same Outcome R guard as a normal turn: the stored room binding is
         // re-applied and verified before EVERY submission attempt, including a

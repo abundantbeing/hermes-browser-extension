@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
+import { installGroupLifecycleHarness } from './helpers/group-lifecycle-harness.mjs';
 
 import {
   readRoomDisplayEvents,
@@ -182,6 +183,7 @@ test('reopening a room merges durable display rows back into the transcript', as
     createBotGroupRuntime: () => ({ prepare: async () => ({ ok: true, failures: [] }) }),
   };
   vm.createContext(context);
+  installGroupLifecycleHarness(context, source);
   vm.runInContext(`${openSource}\nthis.open = openBotGroupChat;`, context);
   await context.open(row);
   assert.deepEqual(

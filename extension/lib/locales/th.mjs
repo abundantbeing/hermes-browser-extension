@@ -1302,6 +1302,7 @@ export default Object.freeze({
   "ui.update.prompt.ready": "พรอมป์ต์อัปเดตพร้อมแล้ว",
   "ui.updates.are.checked.against.the.public.github.repo": "การอัปเดตจะถูกตรวจสอบกับ repo GitHub สาธารณะ",
   "ui.upload": "อัปโหลด",
+  "ui.tab.screenshot": "▣ Tab screenshot",
   "ui.url": "↗ URL...",
   "ui.url.0e2d9b07": "URL",
   "ui.url.19911671": "↗ URL…",

@@ -5383,6 +5383,10 @@
     "message": "вкладка",
     "description": "Runtime interface message ui.tab"
   },
+  "runtime_ui_tab_screenshot": {
+    "message": "▣ Tab screenshot",
+    "description": "Runtime interface message ui.tab.screenshot"
+  },
   "runtime_ui_tabs": {
     "message": "Вкладки",
     "description": "Runtime interface message ui.tabs"

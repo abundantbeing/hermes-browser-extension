@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
+import { installGroupLifecycleHarness } from './helpers/group-lifecycle-harness.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const loadSource = source.slice(source.indexOf('async function loadProfiles('), source.indexOf('\nfunction profileSwitchDisplayName('));
@@ -90,6 +91,7 @@ function harness({ fail = false, profiles = [{ name: 'default' }], previous = []
     clearTimeout, console,
   };
   vm.createContext(context);
+  installGroupLifecycleHarness(context, source);
   vm.runInContext(`${loadSource}\nthis.run = loadProfiles;`, context);
   return {
     context, writes, statuses, connectionRequests, rosterSyncCalls, uiRenders,
@@ -309,10 +311,18 @@ test('Remote API-only group cleanup cannot let an aborted in-flight send restore
     resetActiveGroupTypingIndicator() {},
     groupProjectionEntryFromDisplayMessage: (message) => message,
     setStatus: (...args) => statuses.push(args),
+    contextScope: { mode: 'chat-only' },
+    settings: { gatewayUrl: 'http://127.0.0.1:8642' },
+    browserApi: {},
+    effectiveContextGate: (scope) => ({ allowed: false, scope: { mode: 'chat-only' } }),
+    prepareBotBrowserTurn: async () => ({ browserContext: { enabled: false }, screenshotAttachments: [] }),
+    collectBotPageContext: async () => ({ activeTab: null, tabs: [], pageContext: null }),
   };
   vm.createContext(context);
+  installGroupLifecycleHarness(context, source);
   vm.runInContext(`${sendSource}\nthis.run = sendActiveGroupMessage;`, context);
   const pending = context.run('new message');
+  for (let attempt = 0; attempt < 5 && !resolveTurn; attempt += 1) await Promise.resolve();
   const abortController = context.activeGroupAbortController;
   assert.ok(abortController);
   abortController.abort();
@@ -485,7 +495,7 @@ test('an in-place roster sync keeps the open room runtime callbacks live', async
     document: { body: { classList: { add() {} } } },
     els: { botModePanel: {}, botModeButton: { setAttribute() {} }, input: { focus() {} } },
     ensureActiveDashboardWsConnection: async () => ({ baseUrl: 'http://dash', client: {} }),
-    persistActiveGroupProjection: async (_client, displayMessages) => { persisted.push(displayMessages); },
+    persistGroupProjectionAppend: async (_client, entry) => { persisted.push(entry); },
     groupProjectionMessagesForDisplay: (target) => (target?.messages || []).map((entry) => ({ ...entry })),
     groupRuntimeMembers: (target) => target?.members || [],
     groupProjectionEntryFromDisplayMessage: (message) => ({ ...message }),
@@ -503,6 +513,7 @@ test('an in-place roster sync keeps the open room runtime callbacks live', async
     },
   };
   vm.createContext(context);
+  installGroupLifecycleHarness(context, source);
   vm.runInContext(`${openGroupSource}\nthis.open = openBotGroupChat;`, context);
 
   const opened = await context.open(row);
@@ -567,8 +578,15 @@ test('an in-place roster sync mid-turn does not discard a completed group turn',
     renderActiveProfileIndicator() {},
     resetActiveGroupTypingIndicator() {},
     setStatus: (...args) => statuses.push(args),
+    contextScope: { mode: 'chat-only' },
+    settings: { gatewayUrl: 'http://127.0.0.1:8642' },
+    browserApi: {},
+    effectiveContextGate: (scope) => ({ allowed: false, scope: { mode: 'chat-only' } }),
+    prepareBotBrowserTurn: async () => ({ browserContext: { enabled: false }, screenshotAttachments: [] }),
+    collectBotPageContext: async () => ({ activeTab: null, tabs: [], pageContext: null }),
   };
   vm.createContext(context);
+  installGroupLifecycleHarness(context, source);
   vm.runInContext(`${sendSource}\nthis.run = sendActiveGroupMessage;`, context);
 
   const pending = context.run('room prompt');
