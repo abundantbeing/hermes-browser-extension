@@ -227,6 +227,7 @@ import { captureBotTabScreenshot, collectBotPageContext } from './lib/bot-browse
 import { prepareBotBrowserTurn } from './lib/bot-browser-turn.mjs';
 import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
+import { createBackgroundArtRotation } from './lib/background-art.mjs';
 import {
   activeSubagentView,
   applySubagentEvent,
@@ -7839,6 +7840,11 @@ function applySidecarArt() {
   return entry;
 }
 applySidecarArt();
+createBackgroundArtRotation({
+  root: document.documentElement,
+  document,
+  storage: browserApi?.storage?.local,
+});
 
 function renderContextWindow(userText = els.input?.value || '') {
   const stats = estimateContextWindow({

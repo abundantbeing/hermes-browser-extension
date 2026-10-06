@@ -8,7 +8,12 @@ const js = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), '
 const dir = new URL('../extension/', import.meta.url);
 
 test('every sidecar art entry ships and stays lean enough for the panel', () => {
-  assert.equal(SIDECAR_ART.length, 14);
+  assert.equal(SIDECAR_ART.length, 17);
+  assert.deepEqual(SIDECAR_ART.slice(-3), [
+    'assets/img/sidecar-art/dither-edits-23.webp',
+    'assets/img/sidecar-art/dither-edits-93.webp',
+    'assets/img/sidecar-art/one-account-everywhere.webp',
+  ]);
   let total = 0;
   for (const entry of SIDECAR_ART) {
     const size = statSync(new URL(entry, dir)).size;
@@ -16,7 +21,7 @@ test('every sidecar art entry ships and stays lean enough for the panel', () => 
     assert.ok(size <= 1_200_000, entry + ' should stay under 1.2MB, got ' + size);
     total += size;
   }
-  assert.ok(total <= 4_000_000, 'rotation should stay under 4MB total, got ' + total);
+  assert.ok(total <= 4_500_000, 'rotation should stay under 4.5MB total, got ' + total);
 });
 
 test('the picker never repeats the previous choice and clamps injected randoms', () => {
