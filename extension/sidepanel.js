@@ -11144,20 +11144,19 @@ function syncBotModeThreadsButton() {
     return;
   }
   const threads = groupThreadsFromProjection(activeGroupProjection);
-  const narrow = (els.composerActions?.clientWidth || 400) < 360;
-    if (button) {
-      button.hidden = false;
-      button.disabled = false;
-      const count = threads.length ? ` (${threads.length})` : '';
-      button.textContent = narrow ? (threads.length ? String(threads.length) : 'Threads') : `Threads${count}`;
-      button.title = threads.length ? `Threads (${threads.length})` : 'Threads';
-      button.setAttribute('aria-label', button.title);
-    }
-    if (newThreadBtn) {
-      newThreadBtn.hidden = false;
-      newThreadBtn.disabled = false;
-      newThreadBtn.textContent = narrow ? '+' : '+ New Thread';
-    }
+  if (button) {
+    button.hidden = false;
+    button.disabled = false;
+    const count = threads.length ? ` (${threads.length})` : '';
+    button.title = `${translateUiText('Threads')}${count}`;
+    button.setAttribute('aria-label', button.title);
+  }
+  if (newThreadBtn) {
+    newThreadBtn.hidden = false;
+    newThreadBtn.disabled = false;
+    newThreadBtn.title = translateUiText('Start a new thread in this group');
+    newThreadBtn.setAttribute('aria-label', newThreadBtn.title);
+  }
 }
 
 function renderGroupThreadStrip() {
@@ -22555,7 +22554,8 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
       },
       selectModel: async () => selectedModelReadiness({ settings, availableModels, activeSessionRuntime }),
       loadSkills: async () => {
-        await loadSkills({ quiet: true });
+        const outcome = await loadSkills({ quiet: true });
+        if (outcome?.ok === false) return { status: 'fallback', detail: outcome.error || 'Skill catalog unavailable.' };
         return gatewayCapabilities.skills
           ? { status: 'ready', detail: `${availableSkills.length} skills available.` }
           : { status: 'skipped', detail: 'Skills route unavailable on this runtime.' };

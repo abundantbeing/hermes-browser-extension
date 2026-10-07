@@ -20,7 +20,7 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 
 Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium side panel for the real Hermes Agent runtime. Choose a local gateway, attach to a signed-in Hermes Cloud agent tab, or connect to a self-hosted remote API/dashboard. Local and remote API connections can use the models, tools, skills, sessions, memory, and MCP servers already configured in Hermes; Cloud and dashboard-ticket connections are intentionally Chat-only.
 
-- **Bot Mode** brings your Hermes agent roster into the panel: switch agents, edit profiles, and run group chats where several agents reply in one room. Local group turns can include approved browser context. Chat-only and remote group turns do not capture page context.
+- **Bot Mode** brings your Hermes agent roster into the panel: switch agents, edit profiles, and run group chats where several agents reply in one room. **Current group-chat limitation:** page-context delivery is not yet reliable; do not assume group bots can see the active page. Hermes Control is not shown in group chats. Individual bot chats retain their existing page-context and control behavior. Chat-only and remote group turns do not capture page context.
 - **File attachments** show one card per file per message. Open previews the file, Open on computer reveals the original file's containing folder through local Hermes, and Save downloads a copy.
 - **Tab screenshot** stages the visible, approved page as an image attachment when you choose it from the attachment menu. Screenshots are never captured automatically.
 - **Browser Control** changes which tabs a turn reads from the composer: This tab, Selected tabs, or a Task set of tabs you pick explicitly.
@@ -182,6 +182,12 @@ Fix:
 3. On the Hermes Browser Extension card, click **Reload**.
 4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.3.4 `dist/` folder.
 5. Click **service worker** / **Inspect views** only for debugging; it is not the version source.
+
+### Skills or profiles do not load
+
+Startup shows Skills and Profiles separately. If either catalog stalls, the panel reports a fallback instead of waiting indefinitely; chat still requires a working connection and session binding. A connected gateway does not guarantee that its catalog routes are working.
+
+After the Hermes backend is responding again, reopen the panel or use **Test connection** to retry. Existing skills and profiles are not deleted by a catalog timeout.
 
 ### Filing a support issue
 

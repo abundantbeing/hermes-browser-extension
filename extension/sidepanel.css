@@ -4373,18 +4373,46 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   .composer-actions #browserControlMenuButton:active { transform: none; }
   .browser-control-launcher.just-enabled::before { display: none; }
 }
-.bot-mode-threads-button,
-.bot-mode-new-thread-button {
-  min-width: 0;
-  max-width: 42%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 0 1 auto;
+.composer-actions .bot-mode-threads-button,
+.composer-actions .bot-mode-new-thread-button {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 36px;
+}
+.composer-actions .bot-mode-threads-button:hover,
+.composer-actions .bot-mode-new-thread-button:hover,
+.composer-actions .bot-mode-threads-button[aria-expanded="true"] {
+  background: transparent;
+  box-shadow: none;
+}
+.composer-actions .bot-mode-threads-button:focus-visible,
+.composer-actions .bot-mode-new-thread-button:focus-visible {
+  background: transparent;
+  outline: 2px solid var(--hermes-accent);
+  outline-offset: 2px;
+}
+.composer-actions:has(#botModeThreadsButton:not([hidden])) #browserControlMenuButton { display: none; }
+.composer-actions .bot-mode-threads-button[hidden],
+.composer-actions .bot-mode-new-thread-button[hidden] { display: none; }
+.bot-mode-threads-button svg,
+.bot-mode-new-thread-button svg { width: 18px; height: 18px; }
+@media (max-width: 360px) {
+  .composer-actions:has(.bot-mode-threads-button:not([hidden])) { flex-wrap: wrap; }
 }
 .composer-actions #sendButton { margin-left: auto; }
 .composer-actions:has(.bot-mode-threads-button:not([hidden])) #sendButton,
 .composer-actions:has(#pageCommentTrayButton:not([hidden])) #sendButton { margin-left: 0; }
+@media (max-width: 360px) {
+  .composer-actions:has(#botModeThreadsButton:not([hidden])) #sendButton { margin-left: auto; }
+}
 .bot-mode-threads-button:not([hidden]),
 #pageCommentTrayButton:not([hidden]) { margin-left: auto; }
 .page-comment-tray-button {
@@ -4639,6 +4667,7 @@ button.active-profile-indicator {
   background: transparent !important;
 }
 .active-profile-indicator.group-roster .group-more-badge {
+  margin-inline-start: 6px;
   font: 700 calc(8.5px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
   letter-spacing: 0;
   color: var(--hermes-ink);

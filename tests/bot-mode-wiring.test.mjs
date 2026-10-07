@@ -141,7 +141,7 @@ test('Bot Mode profile sheet owns the editor surface with avatar/general tabs an
 
 test('Bot Mode exposes a session-menu Threads control and clears stale bot session identity before default pinning', () => {
   assert.match(sidepanelHtml, /id="botModeThreadsButton"[^>]*hidden/);
-  assert.match(sidepanelHtml, /id="botModeThreadsButton"[^>]*data-i18n="bot_mode\.threads"/);
+  assert.match(sidepanelHtml, /id="botModeThreadsButton"[^>]*data-i18n-aria-label="bot_mode\.threads_title"/);
   assert.match(sidepanelSource, /groupThreadMenuEntries\(activeGroupProjection\)/);
   assert.match(sidepanelSource, /bot_mode\.group_threads/);
   assert.match(sidepanelSource, /data-group-thread-id/);

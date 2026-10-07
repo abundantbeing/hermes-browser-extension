@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import { setTimeout as delay } from 'node:timers/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -220,6 +222,70 @@ test('ticket socket close reports reconnecting while preserving the durable sess
     detail: 'Dashboard socket closed. Reconnect to resume the bound session.',
     sessionId: 'stored-cloud-session',
   });
+});
+
+test('skills endpoint failure plus hung dashboard recovery cannot strand startup', async () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const start = source.indexOf('async function loadSkills(');
+  const loader = source.slice(start, source.indexOf('\nfunction replaceActiveSkillToken', start));
+  let requested = false;
+  let recovering = false;
+  const context = {
+    settings: { apiKey: 'fixture-only' }, availableSkills: [],
+    safeActiveProfile: () => 'default', normalizeHermesSkills: () => [],
+    renderSkillSuggestions() {}, setStatus() {}, isRemoteWsMode: () => false,
+    remoteWsConnection: null, profileWsConnection: null, activeDashboardWsConnection: null,
+    restSkillsFallbackAllowed: () => true, shouldRecoverSkillsFromDashboard: () => true,
+    apiFetch: async () => { requested = true; return { ok: false, status: 500 }; },
+    readJsonResponse: async () => ({ error: { message: 'Skills list failed' } }),
+    ensureProfileWsConnection: () => { recovering = true; return new Promise(() => {}); },
+    WS_METHODS: { profilesDescribe: 'profiles.describe' }, AbortSignal,
+  };
+  vm.createContext(context);
+  vm.runInContext(`${loader}\nthis.load = loadSkills;`, context);
+  const events = [];
+  const pending = runCanonicalConnectionReadiness({
+    stageTimeoutMs: { skills: 20 },
+    operations: successfulOperations({ loadSkills: () => context.load({ quiet: true }) }),
+    onEvent: (event) => events.push(event),
+  });
+  const outcome = await Promise.race([pending, delay(250).then(() => null)]);
+  assert.ok(outcome, 'startup must stop awaiting an optional catalog');
+  assert.equal(requested, true);
+  assert.equal(recovering, true);
+  assert.equal(outcome.ready, true);
+  assert.equal(outcome.sessionId, 'durable-session-1');
+  assert.equal(events.find((event) => event.step === 'skills' && event.status !== 'active')?.status, 'fallback');
+});
+
+test('a hung required binding times out visibly and never claims ready', async () => {
+  const events = [];
+  const pending = runCanonicalConnectionReadiness({
+    stageTimeoutMs: { sessionBinding: 20 },
+    operations: successfulOperations({ bindSession: () => new Promise(() => {}) }),
+    onEvent: (event) => events.push(event),
+  }).then(() => null, (error) => error);
+  const error = await Promise.race([pending, delay(250).then(() => null)]);
+  assert.ok(error instanceof ReadinessStageError);
+  assert.equal(error.stage, 'sessionBinding');
+  assert.match(error.message, /timed out/);
+  assert.equal(events.some((event) => event.type === 'ready'), false);
+});
+
+test('profile timeout is fallback and a late resolution cannot emit a second readiness result', async () => {
+  const events = [];
+  let finish;
+  const pending = runCanonicalConnectionReadiness({
+    stageTimeoutMs: { profiles: 20 },
+    operations: successfulOperations({ loadProfiles: () => new Promise((resolve) => { finish = resolve; }) }),
+    onEvent: (event) => events.push(event),
+  });
+  const result = await Promise.race([pending, delay(250).then(() => null)]);
+  assert.ok(result?.ready);
+  const count = events.length;
+  finish({ status: 'ready', detail: 'Profiles loaded.' });
+  await delay(0);
+  assert.equal(events.length, count);
 });
 
 test('sidepanel routes startup, ticket attach, ticket test, and socket close through canonical readiness', () => {

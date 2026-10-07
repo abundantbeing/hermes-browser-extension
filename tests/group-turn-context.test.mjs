@@ -60,3 +60,29 @@ test('formatGroupTurnWithBrowserContext redacts secrets and bounds the page text
   assert.equal(pageText.includes('sk-abcdefghijklmnopqrstuvwx'), false);
   assert.match(pageText, /\[REDACTED_SECRET\]/);
 });
+test('a long group prompt keeps its header, newest messages and rules instead of losing its tail', () => {
+  const history = Array.from({ length: 16 }, (_, index) => `  You: message ${index} ${'filler '.repeat(120)}`).join('\n');
+  const prompt = [
+    '[Group chat: "Core Team"] You are @alpha, one participant in a group chat with @beta and the user.',
+    '',
+    'New messages in the room since your last turn (oldest first):',
+    history,
+    '  You: @alpha can you see my screen now?',
+    '',
+    'Rules for this room:',
+    '- IMPORTANT: The user explicitly called @alpha in this turn.',
+  ].join('\n');
+  assert.ok(prompt.length > 9_000);
+  const parsed = JSON.parse(formatGroupTurnWithBrowserContext(prompt, enabledContext()));
+  const kept = parsed.human_input.text;
+  assert.ok(kept.length <= 6_000);
+  assert.match(kept, /^\[Group chat: "Core Team"\] You are @alpha/);
+  assert.match(kept, /can you see my screen now\?/);
+  assert.match(kept, /The user explicitly called @alpha/);
+  assert.equal(parsed.source_receipt.truncation.sources.human_input, undefined, 'the envelope itself cuts nothing');
+});
+
+test('a short group prompt is passed through unchanged', () => {
+  const parsed = JSON.parse(formatGroupTurnWithBrowserContext(GROUP_PROMPT, enabledContext()));
+  assert.equal(parsed.human_input.text, GROUP_PROMPT);
+});

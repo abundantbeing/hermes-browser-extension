@@ -62,6 +62,7 @@ export async function runCanonicalConnectionReadiness({
   transport = 'local-api',
   operations = {},
   onEvent = () => {},
+  stageTimeoutMs = {},
 } = {}) {
   let resolvedMode = mode;
   let resolvedTransport = transport;
@@ -72,8 +73,18 @@ export async function runCanonicalConnectionReadiness({
   const runStage = async (stage, operation, { allowFallback = false } = {}) => {
     currentStage = stage;
     emit(eventFor(stage, 'active'));
+    let timer;
     try {
-      const result = await requireOperation(operations, operation)();
+      const defaultTimeout = stage === 'skills' ? 4_000 : stage === 'profiles' ? 8_000 : 30_000;
+      const requestedTimeout = Number(stageTimeoutMs[stage]);
+      const timeoutMs = Number.isFinite(requestedTimeout) && requestedTimeout > 0 ? requestedTimeout : defaultTimeout;
+      // Optional catalogs may settle later as background enrichment. Only this
+      // awaited lifecycle may publish stage completion or claim session readiness.
+      const operationResult = Promise.resolve().then(() => requireOperation(operations, operation)());
+      const deadline = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${stage} timed out after ${timeoutMs} ms.`)), timeoutMs);
+      });
+      const result = await Promise.race([operationResult, deadline]);
       const requestedStatus = String(result?.status || '').trim();
       const status = requestedStatus || (result?.ok === false && allowFallback ? 'fallback' : 'ready');
       const detail = detailFor(result);
@@ -89,6 +100,8 @@ export async function runCanonicalConnectionReadiness({
         return { ok: false, status: 'fallback', detail };
       }
       throw error;
+    } finally {
+      clearTimeout(timer);
     }
   };
 
@@ -106,8 +119,8 @@ export async function runCanonicalConnectionReadiness({
       emit(eventFor('skills', 'skipped', 'Ticket transport does not expose REST skills.'));
       emit(eventFor('profiles', 'skipped', 'Ticket transport does not expose REST profiles.'));
     } else {
-      await runStage('skills', 'loadSkills');
-      await runStage('profiles', 'loadProfiles');
+      await runStage('skills', 'loadSkills', { allowFallback: true });
+      await runStage('profiles', 'loadProfiles', { allowFallback: true });
     }
 
     await runStage('sessions', 'loadSessions', { allowFallback: true });

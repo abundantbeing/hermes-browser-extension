@@ -578,8 +578,12 @@
           <div class="composer-actions">
             <button id="refreshButton" class="secondary icon-refresh" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-title="context.refresh_page" data-i18n-aria-label="context.refresh_page"><svg class="refresh-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 8a7 7 0 0 1 11.55-2.6L20 8M4 16l2.35 2.6A7 7 0 0 0 17.9 16"/></svg></button>
                         <button type="button" id="activeProfileIndicator" class="active-profile-indicator" data-i18n-title="bot_mode.switch_profile" title="Switch profile" hidden aria-haspopup="menu" aria-expanded="false"></button>
-            <button id="botModeThreadsButton" class="secondary bot-mode-threads-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" data-i18n="bot_mode.threads" data-i18n-title="bot_mode.threads_title" data-i18n-aria-label="bot_mode.threads_title">Threads</button>
-            <button id="botModeNewThreadButton" class="secondary bot-mode-new-thread-button" type="button" hidden data-i18n-runtime title="Start a new thread in this group" aria-label="Start a new thread in this group">+ New Thread</button>
+            <button id="botModeThreadsButton" class="secondary bot-mode-threads-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" title="Threads" aria-label="Threads" data-i18n-title="bot_mode.threads_title" data-i18n-aria-label="bot_mode.threads_title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h13v10l-4-3H7zM4 8H2v12l4-3h9v-3"/></svg>
+            </button>
+            <button id="botModeNewThreadButton" class="secondary bot-mode-new-thread-button" type="button" hidden data-i18n-runtime title="Start a new thread in this group" aria-label="Start a new thread in this group">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14v3H8l-5 4V4h12M19 2v8M15 6h8"/></svg>
+            </button>
             <button id="pageCommentTrayButton" class="secondary page-comment-tray-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="pageCommentTray" data-i18n="ui.page.comments">Comments</button>
             <section id="pageCommentTray" class="page-comment-tray" hidden>
               <div id="pageCommentTrayList"></div>

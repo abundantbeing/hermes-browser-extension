@@ -12,15 +12,28 @@
  * When the context is disabled the base prompt is returned byte-identical, so a
  * chat-only or consent-denied turn behaves exactly as it did before.
  */
-import { serializeBrowserTurnEnvelope } from './browser-context-protocol.mjs';
+import { BROWSER_CONTEXT_TURN_BUDGETS, serializeBrowserTurnEnvelope } from './browser-context-protocol.mjs';
 import { CONTEXT_SCOPE_MODES } from './context-scope.mjs';
+
+// The envelope caps human input and cuts from the END, which would drop the
+// room's newest message and its reply rules. Trim the oldest history instead.
+const GROUP_PROMPT_HEAD_CHARS = 700;
+const GROUP_PROMPT_TRIM_MARKER = '\n  [earlier room history omitted]\n';
+
+export function fitGroupPromptToBudget(prompt, limit = BROWSER_CONTEXT_TURN_BUDGETS.humanInputChars) {
+  const text = String(prompt ?? '');
+  if (text.length <= limit) return text;
+  const head = text.slice(0, GROUP_PROMPT_HEAD_CHARS);
+  const tail = text.slice(text.length - (limit - head.length - GROUP_PROMPT_TRIM_MARKER.length));
+  return `${head}${GROUP_PROMPT_TRIM_MARKER}${tail}`;
+}
 
 export function formatGroupTurnWithBrowserContext(basePrompt, browserContext = null) {
   const base = String(basePrompt ?? '');
   if (!browserContext || browserContext.enabled !== true) return base;
   const contextScope = browserContext.contextScope || { mode: browserContext.scopeMode || CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE };
   return serializeBrowserTurnEnvelope({
-    humanInput: base,
+    humanInput: fitGroupPromptToBudget(base),
     activeTab: browserContext.activeTab || {},
     tabs: Array.isArray(browserContext.tabs) ? browserContext.tabs : [],
     selectedTabs: Array.isArray(browserContext.selectedTabs) ? browserContext.selectedTabs : null,
