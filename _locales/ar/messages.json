@@ -1659,6 +1659,106 @@
     "message": "إعادة تسمية الجلسة {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_settings_back_to_top": {
+    "message": "العودة إلى الأعلى",
+    "description": "Runtime interface message settings.back_to_top"
+  },
+  "runtime_settings_categories_about_summary": {
+    "message": "التوافق وأمان الرموز وتقارير الدعم.",
+    "description": "Runtime interface message settings.categories.about.summary"
+  },
+  "runtime_settings_categories_about_title": {
+    "message": "حول والتشخيص",
+    "description": "Runtime interface message settings.categories.about.title"
+  },
+  "runtime_settings_categories_agents_summary": {
+    "message": "قائمة الوكلاء ومحادثات Bot والمهام المجدولة.",
+    "description": "Runtime interface message settings.categories.agents.summary"
+  },
+  "runtime_settings_categories_agents_title": {
+    "message": "الوكلاء ووضع Bot",
+    "description": "Runtime interface message settings.categories.agents.title"
+  },
+  "runtime_settings_categories_appearance_summary": {
+    "message": "الألوان والخطوط وحجم النص وصور الخلفية.",
+    "description": "Runtime interface message settings.categories.appearance.summary"
+  },
+  "runtime_settings_categories_appearance_title": {
+    "message": "المظهر والسمات",
+    "description": "Runtime interface message settings.categories.appearance.title"
+  },
+  "runtime_settings_categories_assist_summary": {
+    "message": "Assist المضمّن وإجراءات النقر بزر الماوس الأيمن.",
+    "description": "Runtime interface message settings.categories.assist.summary"
+  },
+  "runtime_settings_categories_assist_title": {
+    "message": "Assist والإجراءات",
+    "description": "Runtime interface message settings.categories.assist.title"
+  },
+  "runtime_settings_categories_back": {
+    "message": "الفئات",
+    "description": "Runtime interface message settings.categories.back"
+  },
+  "runtime_settings_categories_connections_summary": {
+    "message": "البوابة وملف الوكيل وكيف يصل هذا المتصفح إلى Hermes.",
+    "description": "Runtime interface message settings.categories.connections.summary"
+  },
+  "runtime_settings_categories_connections_title": {
+    "message": "الاتصالات",
+    "description": "Runtime interface message settings.categories.connections.title"
+  },
+  "runtime_settings_categories_edited": {
+    "message": "معدّل",
+    "description": "Runtime interface message settings.categories.edited"
+  },
+  "runtime_settings_categories_edited_hint": {
+    "message": "تغييرات غير محفوظة",
+    "description": "Runtime interface message settings.categories.edited_hint"
+  },
+  "runtime_settings_categories_home_copy": {
+    "message": "كل ما يستطيع Hermes Browser فعله، مجمّعًا حسب الغرض.",
+    "description": "Runtime interface message settings.categories.home_copy"
+  },
+  "runtime_settings_categories_home_title": {
+    "message": "اختر فئة",
+    "description": "Runtime interface message settings.categories.home_title"
+  },
+  "runtime_settings_categories_models_summary": {
+    "message": "أي نموذج يجيب، مع تحديث الكتالوج.",
+    "description": "Runtime interface message settings.categories.models.summary"
+  },
+  "runtime_settings_categories_models_title": {
+    "message": "النماذج ووقت التشغيل",
+    "description": "Runtime interface message settings.categories.models.title"
+  },
+  "runtime_settings_categories_permissions_summary": {
+    "message": "التحكم في المتصفح ونطاق علامات التبويب وموافقة مشاركة الصفحة.",
+    "description": "Runtime interface message settings.categories.permissions.summary"
+  },
+  "runtime_settings_categories_permissions_title": {
+    "message": "الأذونات والتحكم",
+    "description": "Runtime interface message settings.categories.permissions.title"
+  },
+  "runtime_settings_categories_sessions_summary": {
+    "message": "أسماء الجلسات وسياق الصفحة ومكان فتح اللوحة.",
+    "description": "Runtime interface message settings.categories.sessions.summary"
+  },
+  "runtime_settings_categories_sessions_title": {
+    "message": "الجلسات والسياق",
+    "description": "Runtime interface message settings.categories.sessions.title"
+  },
+  "runtime_settings_categories_voice_summary": {
+    "message": "كلمة التنبيه والردود المنطوقة.",
+    "description": "Runtime interface message settings.categories.voice.summary"
+  },
+  "runtime_settings_categories_voice_title": {
+    "message": "الصوت والتنبيه",
+    "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_custom_theme_help": {
+    "message": "أضف المزيد من السمات: تصفّح سمات VS Code أو استورد ملف سمة أو اطلب من وكيل تصميم سمة. تظهر السمات المثبّتة في الشبكة أعلاه.",
+    "description": "Runtime interface message settings.custom_theme_help"
+  },
   "runtime_settings_language_description": {
     "message": "اختر لغة الواجهة.",
     "description": "Runtime interface message settings.language.description"
@@ -1670,6 +1770,106 @@
   "runtime_settings_local_api_setup_hint": {
     "message": "خادم API المحلي (http://127.0.0.1:8642 الافتراضي). الصق مفتاحه أدناه.",
     "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_mode_dark": {
+    "message": "داكن",
+    "description": "Runtime interface message settings.mode.dark"
+  },
+  "runtime_settings_mode_light": {
+    "message": "فاتح",
+    "description": "Runtime interface message settings.mode.light"
+  },
+  "runtime_settings_mode_system": {
+    "message": "النظام",
+    "description": "Runtime interface message settings.mode.system"
+  },
+  "runtime_settings_models_catalog_count": {
+    "message": "{count} نموذجًا متاحًا",
+    "description": "Runtime interface message settings.models.catalog_count"
+  },
+  "runtime_settings_models_catalog_title": {
+    "message": "كتالوج النماذج",
+    "description": "Runtime interface message settings.models.catalog_title"
+  },
+  "runtime_settings_models_copy": {
+    "message": "النموذج الذي يجيب في هذه المحادثة. غيّره هنا أو من الشريط العلوي.",
+    "description": "Runtime interface message settings.models.copy"
+  },
+  "runtime_settings_models_current": {
+    "message": "النموذج الحالي",
+    "description": "Runtime interface message settings.models.current"
+  },
+  "runtime_settings_models_desktop_hint": {
+    "message": "أضف النماذج أو أزلها في Hermes Desktop أو بأمر النموذج في Hermes، ثم حدّث هنا.",
+    "description": "Runtime interface message settings.models.desktop_hint"
+  },
+  "runtime_settings_models_effort_high": {
+    "message": "مرتفع",
+    "description": "Runtime interface message settings.models.effort.high"
+  },
+  "runtime_settings_models_effort_low": {
+    "message": "منخفض",
+    "description": "Runtime interface message settings.models.effort.low"
+  },
+  "runtime_settings_models_effort_max": {
+    "message": "الأقصى",
+    "description": "Runtime interface message settings.models.effort.max"
+  },
+  "runtime_settings_models_effort_medium": {
+    "message": "متوسط",
+    "description": "Runtime interface message settings.models.effort.medium"
+  },
+  "runtime_settings_models_effort_minimal": {
+    "message": "الأدنى",
+    "description": "Runtime interface message settings.models.effort.minimal"
+  },
+  "runtime_settings_models_effort_ultra": {
+    "message": "Ultra",
+    "description": "Runtime interface message settings.models.effort.ultra"
+  },
+  "runtime_settings_models_effort_xhigh": {
+    "message": "مرتفع جدًا",
+    "description": "Runtime interface message settings.models.effort.xhigh"
+  },
+  "runtime_settings_models_fast_hint": {
+    "message": "فضّل السرعة عندما يدعمها المزوّد.",
+    "description": "Runtime interface message settings.models.fast_hint"
+  },
+  "runtime_settings_models_none": {
+    "message": "لم يتم اختيار نموذج",
+    "description": "Runtime interface message settings.models.none"
+  },
+  "runtime_settings_models_open_picker": {
+    "message": "فتح محدّد النموذج",
+    "description": "Runtime interface message settings.models.open_picker"
+  },
+  "runtime_settings_models_refresh": {
+    "message": "تحديث النماذج",
+    "description": "Runtime interface message settings.models.refresh"
+  },
+  "runtime_settings_models_runtime_copy": {
+    "message": "كيف يستدل النموذج. تُطبَّق التغييرات فورًا.",
+    "description": "Runtime interface message settings.models.runtime_copy"
+  },
+  "runtime_settings_models_runtime_title": {
+    "message": "وقت التشغيل",
+    "description": "Runtime interface message settings.models.runtime_title"
+  },
+  "runtime_settings_models_thinking_hint": {
+    "message": "دع النموذج يفكر قبل أن يجيب.",
+    "description": "Runtime interface message settings.models.thinking_hint"
+  },
+  "runtime_settings_models_title": {
+    "message": "النموذج النشط",
+    "description": "Runtime interface message settings.models.title"
+  },
+  "runtime_settings_permissions_copy": {
+    "message": "ما يمكن لـ Hermes تشغيله في متصفحك، وأي الاتصالات يمكنها رؤية سياق الصفحة.",
+    "description": "Runtime interface message settings.permissions.copy"
+  },
+  "runtime_settings_permissions_title": {
+    "message": "التحكم والموافقات",
+    "description": "Runtime interface message settings.permissions.title"
   },
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· ألفا العامة / تحميل تفكيكها",
@@ -4900,7 +5100,7 @@
     "description": "Runtime interface message ui.safety"
   },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
-    "message": "نفس لوحات سطح المكتب، ناقص شفافية النافذة.",
+    "message": "اختر لوحة ألوان لمساحة عملك.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
   },
   "runtime_ui_save": {

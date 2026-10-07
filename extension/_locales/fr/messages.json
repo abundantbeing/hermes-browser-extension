@@ -1659,6 +1659,106 @@
     "message": "Renommer la session {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_settings_back_to_top": {
+    "message": "Haut de page",
+    "description": "Runtime interface message settings.back_to_top"
+  },
+  "runtime_settings_categories_about_summary": {
+    "message": "Compatibilité, sécurité des jetons et rapports d'assistance.",
+    "description": "Runtime interface message settings.categories.about.summary"
+  },
+  "runtime_settings_categories_about_title": {
+    "message": "À propos & diagnostics",
+    "description": "Runtime interface message settings.categories.about.title"
+  },
+  "runtime_settings_categories_agents_summary": {
+    "message": "Liste des agents, discussions Bot et tâches planifiées.",
+    "description": "Runtime interface message settings.categories.agents.summary"
+  },
+  "runtime_settings_categories_agents_title": {
+    "message": "Agents & mode Bot",
+    "description": "Runtime interface message settings.categories.agents.title"
+  },
+  "runtime_settings_categories_appearance_summary": {
+    "message": "Couleurs, polices, taille du texte et images d'arrière-plan.",
+    "description": "Runtime interface message settings.categories.appearance.summary"
+  },
+  "runtime_settings_categories_appearance_title": {
+    "message": "Apparence & thèmes",
+    "description": "Runtime interface message settings.categories.appearance.title"
+  },
+  "runtime_settings_categories_assist_summary": {
+    "message": "Assist intégré et actions du clic droit.",
+    "description": "Runtime interface message settings.categories.assist.summary"
+  },
+  "runtime_settings_categories_assist_title": {
+    "message": "Assist & actions",
+    "description": "Runtime interface message settings.categories.assist.title"
+  },
+  "runtime_settings_categories_back": {
+    "message": "Catégories",
+    "description": "Runtime interface message settings.categories.back"
+  },
+  "runtime_settings_categories_connections_summary": {
+    "message": "Passerelle, profil d'agent et manière dont ce navigateur joint Hermes.",
+    "description": "Runtime interface message settings.categories.connections.summary"
+  },
+  "runtime_settings_categories_connections_title": {
+    "message": "Connexions",
+    "description": "Runtime interface message settings.categories.connections.title"
+  },
+  "runtime_settings_categories_edited": {
+    "message": "Modifié",
+    "description": "Runtime interface message settings.categories.edited"
+  },
+  "runtime_settings_categories_edited_hint": {
+    "message": "Modifications non enregistrées",
+    "description": "Runtime interface message settings.categories.edited_hint"
+  },
+  "runtime_settings_categories_home_copy": {
+    "message": "Tout ce que Hermes Browser sait faire, regroupé par usage.",
+    "description": "Runtime interface message settings.categories.home_copy"
+  },
+  "runtime_settings_categories_home_title": {
+    "message": "Choisir une catégorie",
+    "description": "Runtime interface message settings.categories.home_title"
+  },
+  "runtime_settings_categories_models_summary": {
+    "message": "Quel modèle répond, plus l'actualisation du catalogue.",
+    "description": "Runtime interface message settings.categories.models.summary"
+  },
+  "runtime_settings_categories_models_title": {
+    "message": "Modèles & exécution",
+    "description": "Runtime interface message settings.categories.models.title"
+  },
+  "runtime_settings_categories_permissions_summary": {
+    "message": "Contrôle du navigateur, portée des onglets et approbation du partage de page.",
+    "description": "Runtime interface message settings.categories.permissions.summary"
+  },
+  "runtime_settings_categories_permissions_title": {
+    "message": "Autorisations & contrôle",
+    "description": "Runtime interface message settings.categories.permissions.title"
+  },
+  "runtime_settings_categories_sessions_summary": {
+    "message": "Noms des sessions, contexte de page et lieu d'ouverture du panneau.",
+    "description": "Runtime interface message settings.categories.sessions.summary"
+  },
+  "runtime_settings_categories_sessions_title": {
+    "message": "Sessions & contexte",
+    "description": "Runtime interface message settings.categories.sessions.title"
+  },
+  "runtime_settings_categories_voice_summary": {
+    "message": "Mot de réveil et réponses parlées.",
+    "description": "Runtime interface message settings.categories.voice.summary"
+  },
+  "runtime_settings_categories_voice_title": {
+    "message": "Voix & réveil",
+    "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_custom_theme_help": {
+    "message": "Ajoutez des thèmes : parcourez les thèmes VS Code, importez un fichier de thème ou faites-en concevoir un par un agent. Les thèmes installés apparaissent dans la grille ci-dessus.",
+    "description": "Runtime interface message settings.custom_theme_help"
+  },
   "runtime_settings_language_description": {
     "message": "Choisissez la langue de l’interface.",
     "description": "Runtime interface message settings.language.description"
@@ -1670,6 +1770,106 @@
   "runtime_settings_local_api_setup_hint": {
     "message": "Serveur d’API local (par défaut : http://127.0.0.1:8642). Collez sa clé ci-dessous.",
     "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_mode_dark": {
+    "message": "Sombre",
+    "description": "Runtime interface message settings.mode.dark"
+  },
+  "runtime_settings_mode_light": {
+    "message": "Clair",
+    "description": "Runtime interface message settings.mode.light"
+  },
+  "runtime_settings_mode_system": {
+    "message": "Système",
+    "description": "Runtime interface message settings.mode.system"
+  },
+  "runtime_settings_models_catalog_count": {
+    "message": "{count} modèles disponibles",
+    "description": "Runtime interface message settings.models.catalog_count"
+  },
+  "runtime_settings_models_catalog_title": {
+    "message": "Catalogue de modèles",
+    "description": "Runtime interface message settings.models.catalog_title"
+  },
+  "runtime_settings_models_copy": {
+    "message": "Le modèle qui répond dans ce chat. Changez-le ici ou depuis la barre du haut.",
+    "description": "Runtime interface message settings.models.copy"
+  },
+  "runtime_settings_models_current": {
+    "message": "Modèle actuel",
+    "description": "Runtime interface message settings.models.current"
+  },
+  "runtime_settings_models_desktop_hint": {
+    "message": "Ajoutez ou retirez des modèles dans Hermes Desktop ou avec la commande de modèle Hermes, puis actualisez ici.",
+    "description": "Runtime interface message settings.models.desktop_hint"
+  },
+  "runtime_settings_models_effort_high": {
+    "message": "Élevé",
+    "description": "Runtime interface message settings.models.effort.high"
+  },
+  "runtime_settings_models_effort_low": {
+    "message": "Faible",
+    "description": "Runtime interface message settings.models.effort.low"
+  },
+  "runtime_settings_models_effort_max": {
+    "message": "Max",
+    "description": "Runtime interface message settings.models.effort.max"
+  },
+  "runtime_settings_models_effort_medium": {
+    "message": "Moyen",
+    "description": "Runtime interface message settings.models.effort.medium"
+  },
+  "runtime_settings_models_effort_minimal": {
+    "message": "Minimal",
+    "description": "Runtime interface message settings.models.effort.minimal"
+  },
+  "runtime_settings_models_effort_ultra": {
+    "message": "Ultra",
+    "description": "Runtime interface message settings.models.effort.ultra"
+  },
+  "runtime_settings_models_effort_xhigh": {
+    "message": "Très élevé",
+    "description": "Runtime interface message settings.models.effort.xhigh"
+  },
+  "runtime_settings_models_fast_hint": {
+    "message": "Privilégier la vitesse quand le fournisseur le permet.",
+    "description": "Runtime interface message settings.models.fast_hint"
+  },
+  "runtime_settings_models_none": {
+    "message": "Aucun modèle sélectionné",
+    "description": "Runtime interface message settings.models.none"
+  },
+  "runtime_settings_models_open_picker": {
+    "message": "Ouvrir le sélecteur de modèle",
+    "description": "Runtime interface message settings.models.open_picker"
+  },
+  "runtime_settings_models_refresh": {
+    "message": "Actualiser les modèles",
+    "description": "Runtime interface message settings.models.refresh"
+  },
+  "runtime_settings_models_runtime_copy": {
+    "message": "La façon dont le modèle raisonne. Les changements s'appliquent immédiatement.",
+    "description": "Runtime interface message settings.models.runtime_copy"
+  },
+  "runtime_settings_models_runtime_title": {
+    "message": "Exécution",
+    "description": "Runtime interface message settings.models.runtime_title"
+  },
+  "runtime_settings_models_thinking_hint": {
+    "message": "Laisser le modèle réfléchir avant de répondre.",
+    "description": "Runtime interface message settings.models.thinking_hint"
+  },
+  "runtime_settings_models_title": {
+    "message": "Modèle actif",
+    "description": "Runtime interface message settings.models.title"
+  },
+  "runtime_settings_permissions_copy": {
+    "message": "Ce que Hermes peut piloter dans votre navigateur, et quelles connexions peuvent voir le contexte de page.",
+    "description": "Runtime interface message settings.permissions.copy"
+  },
+  "runtime_settings_permissions_title": {
+    "message": "Contrôle et approbations",
+    "description": "Runtime interface message settings.permissions.title"
   },
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· alpha publique / charger l’extension non empaquetée",
@@ -4900,7 +5100,7 @@
     "description": "Runtime interface message ui.safety"
   },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
-    "message": "Mêmes palettes du bureau, moins la transparence de la fenêtre.",
+    "message": "Choisissez une palette de couleurs pour votre espace de travail.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
   },
   "runtime_ui_save": {

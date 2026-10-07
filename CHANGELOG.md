@@ -4,6 +4,8 @@
 
 ### Added
 
+- Everforest, Classic Hermes, and Anti-Nous themes, each with light and dark palettes. Anti-Nous combines crimson and berry accents with navy reading panels and fine gold trim; its light palette uses white panels and crimson controls.
+- Settings now opens to a category grid. Each category has its own view and Back navigation, edited categories are marked, and related controls open the section they belong to. Models has a runtime summary and opens the model picker above Settings.
 - A Tab screenshot action in the attachment menu captures the current tab only when you ask, and Bot Mode group turns on a local Hermes connection can include approved, redacted page context. Chat-only and remote group turns never capture page context.
 - `scripts/enable-bot-companion-tools.mjs` previews, and with `--apply` enables, the optional companion tools for a profile you choose.
 - Code blocks in messages are now syntax highlighted for common languages (Python, JavaScript, TypeScript, JSON, YAML, SQL, Bash, C#, CSS, HTML and Markdown) in the side panel and the full tab, in light and dark themes. Languages Hermes does not recognize stay plain. Thanks to @kidclone3 (#91).

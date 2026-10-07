@@ -1659,6 +1659,106 @@
     "message": "Zmień nazwę sesji {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_settings_back_to_top": {
+    "message": "Do góry",
+    "description": "Runtime interface message settings.back_to_top"
+  },
+  "runtime_settings_categories_about_summary": {
+    "message": "Zgodność, bezpieczeństwo tokenów i raporty pomocy.",
+    "description": "Runtime interface message settings.categories.about.summary"
+  },
+  "runtime_settings_categories_about_title": {
+    "message": "O programie i diagnostyka",
+    "description": "Runtime interface message settings.categories.about.title"
+  },
+  "runtime_settings_categories_agents_summary": {
+    "message": "Lista agentów, czaty Bot i zaplanowane zadania.",
+    "description": "Runtime interface message settings.categories.agents.summary"
+  },
+  "runtime_settings_categories_agents_title": {
+    "message": "Agenci i tryb Bot",
+    "description": "Runtime interface message settings.categories.agents.title"
+  },
+  "runtime_settings_categories_appearance_summary": {
+    "message": "Kolory, czcionki, rozmiar tekstu i obrazy tła.",
+    "description": "Runtime interface message settings.categories.appearance.summary"
+  },
+  "runtime_settings_categories_appearance_title": {
+    "message": "Wygląd i motywy",
+    "description": "Runtime interface message settings.categories.appearance.title"
+  },
+  "runtime_settings_categories_assist_summary": {
+    "message": "Assist w tekście i akcje menu kontekstowego.",
+    "description": "Runtime interface message settings.categories.assist.summary"
+  },
+  "runtime_settings_categories_assist_title": {
+    "message": "Assist i akcje",
+    "description": "Runtime interface message settings.categories.assist.title"
+  },
+  "runtime_settings_categories_back": {
+    "message": "Kategorie",
+    "description": "Runtime interface message settings.categories.back"
+  },
+  "runtime_settings_categories_connections_summary": {
+    "message": "Brama, profil agenta i sposób, w jaki ta przeglądarka łączy się z Hermes.",
+    "description": "Runtime interface message settings.categories.connections.summary"
+  },
+  "runtime_settings_categories_connections_title": {
+    "message": "Połączenia",
+    "description": "Runtime interface message settings.categories.connections.title"
+  },
+  "runtime_settings_categories_edited": {
+    "message": "Zmieniono",
+    "description": "Runtime interface message settings.categories.edited"
+  },
+  "runtime_settings_categories_edited_hint": {
+    "message": "Niezapisane zmiany",
+    "description": "Runtime interface message settings.categories.edited_hint"
+  },
+  "runtime_settings_categories_home_copy": {
+    "message": "Wszystko, co potrafi Hermes Browser, pogrupowane według przeznaczenia.",
+    "description": "Runtime interface message settings.categories.home_copy"
+  },
+  "runtime_settings_categories_home_title": {
+    "message": "Wybierz kategorię",
+    "description": "Runtime interface message settings.categories.home_title"
+  },
+  "runtime_settings_categories_models_summary": {
+    "message": "Który model odpowiada, plus odświeżanie katalogu.",
+    "description": "Runtime interface message settings.categories.models.summary"
+  },
+  "runtime_settings_categories_models_title": {
+    "message": "Modele i środowisko",
+    "description": "Runtime interface message settings.categories.models.title"
+  },
+  "runtime_settings_categories_permissions_summary": {
+    "message": "Sterowanie przeglądarką, zakres kart i zgoda na udostępnianie strony.",
+    "description": "Runtime interface message settings.categories.permissions.summary"
+  },
+  "runtime_settings_categories_permissions_title": {
+    "message": "Uprawnienia i kontrola",
+    "description": "Runtime interface message settings.categories.permissions.title"
+  },
+  "runtime_settings_categories_sessions_summary": {
+    "message": "Nazwy sesji, kontekst strony i miejsce otwierania panelu.",
+    "description": "Runtime interface message settings.categories.sessions.summary"
+  },
+  "runtime_settings_categories_sessions_title": {
+    "message": "Sesje i kontekst",
+    "description": "Runtime interface message settings.categories.sessions.title"
+  },
+  "runtime_settings_categories_voice_summary": {
+    "message": "Fraza aktywująca i odpowiedzi głosowe.",
+    "description": "Runtime interface message settings.categories.voice.summary"
+  },
+  "runtime_settings_categories_voice_title": {
+    "message": "Głos i aktywacja",
+    "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_custom_theme_help": {
+    "message": "Dodaj więcej motywów: przeglądaj motywy VS Code, zaimportuj plik motywu lub poproś agenta o zaprojektowanie własnego. Zainstalowane motywy pojawią się w siatce powyżej.",
+    "description": "Runtime interface message settings.custom_theme_help"
+  },
   "runtime_settings_language_description": {
     "message": "Wybierz język interfejsu.",
     "description": "Runtime interface message settings.language.description"
@@ -1670,6 +1770,106 @@
   "runtime_settings_local_api_setup_hint": {
     "message": "Lokalny serwer API (domyślny http://127.0.0.1:8642). Wklej poniżej jego klucz.",
     "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_mode_dark": {
+    "message": "Ciemno",
+    "description": "Runtime interface message settings.mode.dark"
+  },
+  "runtime_settings_mode_light": {
+    "message": "Światło",
+    "description": "Runtime interface message settings.mode.light"
+  },
+  "runtime_settings_mode_system": {
+    "message": "System",
+    "description": "Runtime interface message settings.mode.system"
+  },
+  "runtime_settings_models_catalog_count": {
+    "message": "Dostępne modele: {count}",
+    "description": "Runtime interface message settings.models.catalog_count"
+  },
+  "runtime_settings_models_catalog_title": {
+    "message": "Katalog modeli",
+    "description": "Runtime interface message settings.models.catalog_title"
+  },
+  "runtime_settings_models_copy": {
+    "message": "Model odpowiadający w tym czacie. Zmień go tutaj lub na górnym pasku.",
+    "description": "Runtime interface message settings.models.copy"
+  },
+  "runtime_settings_models_current": {
+    "message": "Bieżący model",
+    "description": "Runtime interface message settings.models.current"
+  },
+  "runtime_settings_models_desktop_hint": {
+    "message": "Dodaj lub usuń modele w Hermes Desktop albo poleceniem modelu Hermes, a potem odśwież tutaj.",
+    "description": "Runtime interface message settings.models.desktop_hint"
+  },
+  "runtime_settings_models_effort_high": {
+    "message": "Wysoki",
+    "description": "Runtime interface message settings.models.effort.high"
+  },
+  "runtime_settings_models_effort_low": {
+    "message": "Niski",
+    "description": "Runtime interface message settings.models.effort.low"
+  },
+  "runtime_settings_models_effort_max": {
+    "message": "Maks.",
+    "description": "Runtime interface message settings.models.effort.max"
+  },
+  "runtime_settings_models_effort_medium": {
+    "message": "Średni",
+    "description": "Runtime interface message settings.models.effort.medium"
+  },
+  "runtime_settings_models_effort_minimal": {
+    "message": "Minimalny",
+    "description": "Runtime interface message settings.models.effort.minimal"
+  },
+  "runtime_settings_models_effort_ultra": {
+    "message": "Ultra",
+    "description": "Runtime interface message settings.models.effort.ultra"
+  },
+  "runtime_settings_models_effort_xhigh": {
+    "message": "Bardzo wysoki",
+    "description": "Runtime interface message settings.models.effort.xhigh"
+  },
+  "runtime_settings_models_fast_hint": {
+    "message": "Stawiaj na szybkość, gdy dostawca to obsługuje.",
+    "description": "Runtime interface message settings.models.fast_hint"
+  },
+  "runtime_settings_models_none": {
+    "message": "Nie wybrano modelu",
+    "description": "Runtime interface message settings.models.none"
+  },
+  "runtime_settings_models_open_picker": {
+    "message": "Otwórz selektor modelu",
+    "description": "Runtime interface message settings.models.open_picker"
+  },
+  "runtime_settings_models_refresh": {
+    "message": "Odśwież modele",
+    "description": "Runtime interface message settings.models.refresh"
+  },
+  "runtime_settings_models_runtime_copy": {
+    "message": "Jak model rozumuje. Zmiany działają od razu.",
+    "description": "Runtime interface message settings.models.runtime_copy"
+  },
+  "runtime_settings_models_runtime_title": {
+    "message": "Środowisko",
+    "description": "Runtime interface message settings.models.runtime_title"
+  },
+  "runtime_settings_models_thinking_hint": {
+    "message": "Pozwól modelowi rozumować przed odpowiedzią.",
+    "description": "Runtime interface message settings.models.thinking_hint"
+  },
+  "runtime_settings_models_title": {
+    "message": "Aktywny model",
+    "description": "Runtime interface message settings.models.title"
+  },
+  "runtime_settings_permissions_copy": {
+    "message": "Czym Hermes może sterować w przeglądarce i które połączenia mogą widzieć kontekst strony.",
+    "description": "Runtime interface message settings.permissions.copy"
+  },
+  "runtime_settings_permissions_title": {
+    "message": "Kontrola i zatwierdzenia",
+    "description": "Runtime interface message settings.permissions.title"
   },
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· publiczna alfa / wczytaj rozpakowane rozszerzenie",
@@ -4900,7 +5100,7 @@
     "description": "Runtime interface message ui.safety"
   },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
-    "message": "Te same palety pulpitu, ale minus przezroczystość okna.",
+    "message": "Wybierz paletę kolorów dla swojego obszaru roboczego.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
   },
   "runtime_ui_save": {

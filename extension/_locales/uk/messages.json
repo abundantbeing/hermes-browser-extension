@@ -1659,6 +1659,106 @@
     "message": "Перейменувати сеанс {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_settings_back_to_top": {
+    "message": "Нагору",
+    "description": "Runtime interface message settings.back_to_top"
+  },
+  "runtime_settings_categories_about_summary": {
+    "message": "Сумісність, безпека токенів і звіти для підтримки.",
+    "description": "Runtime interface message settings.categories.about.summary"
+  },
+  "runtime_settings_categories_about_title": {
+    "message": "Про програму та діагностика",
+    "description": "Runtime interface message settings.categories.about.title"
+  },
+  "runtime_settings_categories_agents_summary": {
+    "message": "Список агентів, чати Bot і заплановані завдання.",
+    "description": "Runtime interface message settings.categories.agents.summary"
+  },
+  "runtime_settings_categories_agents_title": {
+    "message": "Агенти та режим Bot",
+    "description": "Runtime interface message settings.categories.agents.title"
+  },
+  "runtime_settings_categories_appearance_summary": {
+    "message": "Кольори, шрифти, розмір тексту та фонові зображення.",
+    "description": "Runtime interface message settings.categories.appearance.summary"
+  },
+  "runtime_settings_categories_appearance_title": {
+    "message": "Вигляд і теми",
+    "description": "Runtime interface message settings.categories.appearance.title"
+  },
+  "runtime_settings_categories_assist_summary": {
+    "message": "Вбудований Assist і дії правого кліка.",
+    "description": "Runtime interface message settings.categories.assist.summary"
+  },
+  "runtime_settings_categories_assist_title": {
+    "message": "Assist і дії",
+    "description": "Runtime interface message settings.categories.assist.title"
+  },
+  "runtime_settings_categories_back": {
+    "message": "Категорії",
+    "description": "Runtime interface message settings.categories.back"
+  },
+  "runtime_settings_categories_connections_summary": {
+    "message": "Шлюз, профіль агента і те, як цей браузер зв'язується з Hermes.",
+    "description": "Runtime interface message settings.categories.connections.summary"
+  },
+  "runtime_settings_categories_connections_title": {
+    "message": "Підключення",
+    "description": "Runtime interface message settings.categories.connections.title"
+  },
+  "runtime_settings_categories_edited": {
+    "message": "Змінено",
+    "description": "Runtime interface message settings.categories.edited"
+  },
+  "runtime_settings_categories_edited_hint": {
+    "message": "Незбережені зміни",
+    "description": "Runtime interface message settings.categories.edited_hint"
+  },
+  "runtime_settings_categories_home_copy": {
+    "message": "Усе, що вміє Hermes Browser, згруповано за призначенням.",
+    "description": "Runtime interface message settings.categories.home_copy"
+  },
+  "runtime_settings_categories_home_title": {
+    "message": "Оберіть категорію",
+    "description": "Runtime interface message settings.categories.home_title"
+  },
+  "runtime_settings_categories_models_summary": {
+    "message": "Яка модель відповідає, плюс оновлення каталогу.",
+    "description": "Runtime interface message settings.categories.models.summary"
+  },
+  "runtime_settings_categories_models_title": {
+    "message": "Моделі та середовище",
+    "description": "Runtime interface message settings.categories.models.title"
+  },
+  "runtime_settings_categories_permissions_summary": {
+    "message": "Керування браузером, охоплення вкладок і дозвіл на передавання сторінки.",
+    "description": "Runtime interface message settings.categories.permissions.summary"
+  },
+  "runtime_settings_categories_permissions_title": {
+    "message": "Дозволи та керування",
+    "description": "Runtime interface message settings.categories.permissions.title"
+  },
+  "runtime_settings_categories_sessions_summary": {
+    "message": "Назви сесій, контекст сторінки і місце відкриття панелі.",
+    "description": "Runtime interface message settings.categories.sessions.summary"
+  },
+  "runtime_settings_categories_sessions_title": {
+    "message": "Сесії та контекст",
+    "description": "Runtime interface message settings.categories.sessions.title"
+  },
+  "runtime_settings_categories_voice_summary": {
+    "message": "Слово активації та голосові відповіді.",
+    "description": "Runtime interface message settings.categories.voice.summary"
+  },
+  "runtime_settings_categories_voice_title": {
+    "message": "Голос і активація",
+    "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_custom_theme_help": {
+    "message": "Додайте теми: перегляньте теми VS Code, імпортуйте файл теми або попросіть агента створити її. Встановлені теми з'являться в сітці вище.",
+    "description": "Runtime interface message settings.custom_theme_help"
+  },
   "runtime_settings_language_description": {
     "message": "Виберіть мову інтерфейсу.",
     "description": "Runtime interface message settings.language.description"
@@ -1670,6 +1770,106 @@
   "runtime_settings_local_api_setup_hint": {
     "message": "Локальний сервер API (за замовчуванням http://127.0.0.1:8642). Вставте його ключ нижче.",
     "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_mode_dark": {
+    "message": "Темна",
+    "description": "Runtime interface message settings.mode.dark"
+  },
+  "runtime_settings_mode_light": {
+    "message": "Світла",
+    "description": "Runtime interface message settings.mode.light"
+  },
+  "runtime_settings_mode_system": {
+    "message": "Системна",
+    "description": "Runtime interface message settings.mode.system"
+  },
+  "runtime_settings_models_catalog_count": {
+    "message": "Доступно моделей: {count}",
+    "description": "Runtime interface message settings.models.catalog_count"
+  },
+  "runtime_settings_models_catalog_title": {
+    "message": "Каталог моделей",
+    "description": "Runtime interface message settings.models.catalog_title"
+  },
+  "runtime_settings_models_copy": {
+    "message": "Модель, що відповідає в цьому чаті. Змінюйте її тут або на верхній панелі.",
+    "description": "Runtime interface message settings.models.copy"
+  },
+  "runtime_settings_models_current": {
+    "message": "Поточна модель",
+    "description": "Runtime interface message settings.models.current"
+  },
+  "runtime_settings_models_desktop_hint": {
+    "message": "Додавайте або видаляйте моделі в Hermes Desktop чи командою моделі Hermes, потім оновіть тут.",
+    "description": "Runtime interface message settings.models.desktop_hint"
+  },
+  "runtime_settings_models_effort_high": {
+    "message": "Високий",
+    "description": "Runtime interface message settings.models.effort.high"
+  },
+  "runtime_settings_models_effort_low": {
+    "message": "Низький",
+    "description": "Runtime interface message settings.models.effort.low"
+  },
+  "runtime_settings_models_effort_max": {
+    "message": "Макс.",
+    "description": "Runtime interface message settings.models.effort.max"
+  },
+  "runtime_settings_models_effort_medium": {
+    "message": "Середній",
+    "description": "Runtime interface message settings.models.effort.medium"
+  },
+  "runtime_settings_models_effort_minimal": {
+    "message": "Мінімальний",
+    "description": "Runtime interface message settings.models.effort.minimal"
+  },
+  "runtime_settings_models_effort_ultra": {
+    "message": "Ультра",
+    "description": "Runtime interface message settings.models.effort.ultra"
+  },
+  "runtime_settings_models_effort_xhigh": {
+    "message": "Дуже високий",
+    "description": "Runtime interface message settings.models.effort.xhigh"
+  },
+  "runtime_settings_models_fast_hint": {
+    "message": "Віддавати перевагу швидкості, якщо провайдер підтримує.",
+    "description": "Runtime interface message settings.models.fast_hint"
+  },
+  "runtime_settings_models_none": {
+    "message": "Модель не вибрано",
+    "description": "Runtime interface message settings.models.none"
+  },
+  "runtime_settings_models_open_picker": {
+    "message": "Відкрити вибір моделі",
+    "description": "Runtime interface message settings.models.open_picker"
+  },
+  "runtime_settings_models_refresh": {
+    "message": "Оновити моделі",
+    "description": "Runtime interface message settings.models.refresh"
+  },
+  "runtime_settings_models_runtime_copy": {
+    "message": "Як модель міркує. Зміни застосовуються одразу.",
+    "description": "Runtime interface message settings.models.runtime_copy"
+  },
+  "runtime_settings_models_runtime_title": {
+    "message": "Середовище",
+    "description": "Runtime interface message settings.models.runtime_title"
+  },
+  "runtime_settings_models_thinking_hint": {
+    "message": "Дати моделі подумати перед відповіддю.",
+    "description": "Runtime interface message settings.models.thinking_hint"
+  },
+  "runtime_settings_models_title": {
+    "message": "Активна модель",
+    "description": "Runtime interface message settings.models.title"
+  },
+  "runtime_settings_permissions_copy": {
+    "message": "Чим Hermes може керувати в браузері та які підключення можуть бачити контекст сторінки.",
+    "description": "Runtime interface message settings.permissions.copy"
+  },
+  "runtime_settings_permissions_title": {
+    "message": "Керування та дозволи",
+    "description": "Runtime interface message settings.permissions.title"
   },
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· публічна альфа-версія / завантажити розпаковане",
@@ -4900,7 +5100,7 @@
     "description": "Runtime interface message ui.safety"
   },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
-    "message": "Ті самі палітри робочого столу, мінус прозорість вікна.",
+    "message": "Виберіть палітру кольорів для робочого простору.",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
   },
   "runtime_ui_save": {

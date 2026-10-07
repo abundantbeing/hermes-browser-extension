@@ -1659,6 +1659,106 @@
     "message": "重命名会话 {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_settings_back_to_top": {
+    "message": "返回顶部",
+    "description": "Runtime interface message settings.back_to_top"
+  },
+  "runtime_settings_categories_about_summary": {
+    "message": "兼容性、令牌安全和支持报告。",
+    "description": "Runtime interface message settings.categories.about.summary"
+  },
+  "runtime_settings_categories_about_title": {
+    "message": "关于与诊断",
+    "description": "Runtime interface message settings.categories.about.title"
+  },
+  "runtime_settings_categories_agents_summary": {
+    "message": "代理列表、Bot 聊天和计划任务。",
+    "description": "Runtime interface message settings.categories.agents.summary"
+  },
+  "runtime_settings_categories_agents_title": {
+    "message": "代理与 Bot 模式",
+    "description": "Runtime interface message settings.categories.agents.title"
+  },
+  "runtime_settings_categories_appearance_summary": {
+    "message": "颜色、字体、文字大小和背景图。",
+    "description": "Runtime interface message settings.categories.appearance.summary"
+  },
+  "runtime_settings_categories_appearance_title": {
+    "message": "外观与主题",
+    "description": "Runtime interface message settings.categories.appearance.title"
+  },
+  "runtime_settings_categories_assist_summary": {
+    "message": "内联 Assist 和右键操作。",
+    "description": "Runtime interface message settings.categories.assist.summary"
+  },
+  "runtime_settings_categories_assist_title": {
+    "message": "Assist 与操作",
+    "description": "Runtime interface message settings.categories.assist.title"
+  },
+  "runtime_settings_categories_back": {
+    "message": "类别",
+    "description": "Runtime interface message settings.categories.back"
+  },
+  "runtime_settings_categories_connections_summary": {
+    "message": "网关、代理配置文件，以及此浏览器如何连接 Hermes。",
+    "description": "Runtime interface message settings.categories.connections.summary"
+  },
+  "runtime_settings_categories_connections_title": {
+    "message": "连接",
+    "description": "Runtime interface message settings.categories.connections.title"
+  },
+  "runtime_settings_categories_edited": {
+    "message": "已修改",
+    "description": "Runtime interface message settings.categories.edited"
+  },
+  "runtime_settings_categories_edited_hint": {
+    "message": "未保存的更改",
+    "description": "Runtime interface message settings.categories.edited_hint"
+  },
+  "runtime_settings_categories_home_copy": {
+    "message": "Hermes Browser 的全部功能，按用途分组。",
+    "description": "Runtime interface message settings.categories.home_copy"
+  },
+  "runtime_settings_categories_home_title": {
+    "message": "选择类别",
+    "description": "Runtime interface message settings.categories.home_title"
+  },
+  "runtime_settings_categories_models_summary": {
+    "message": "由哪个模型作答，以及目录刷新。",
+    "description": "Runtime interface message settings.categories.models.summary"
+  },
+  "runtime_settings_categories_models_title": {
+    "message": "模型与运行时",
+    "description": "Runtime interface message settings.categories.models.title"
+  },
+  "runtime_settings_categories_permissions_summary": {
+    "message": "浏览器控制、标签页范围和页面共享批准。",
+    "description": "Runtime interface message settings.categories.permissions.summary"
+  },
+  "runtime_settings_categories_permissions_title": {
+    "message": "权限与控制",
+    "description": "Runtime interface message settings.categories.permissions.title"
+  },
+  "runtime_settings_categories_sessions_summary": {
+    "message": "会话名称、页面上下文，以及面板打开的位置。",
+    "description": "Runtime interface message settings.categories.sessions.summary"
+  },
+  "runtime_settings_categories_sessions_title": {
+    "message": "会话与上下文",
+    "description": "Runtime interface message settings.categories.sessions.title"
+  },
+  "runtime_settings_categories_voice_summary": {
+    "message": "唤醒词和语音回复。",
+    "description": "Runtime interface message settings.categories.voice.summary"
+  },
+  "runtime_settings_categories_voice_title": {
+    "message": "语音与唤醒",
+    "description": "Runtime interface message settings.categories.voice.title"
+  },
+  "runtime_settings_custom_theme_help": {
+    "message": "添加更多主题：浏览 VS Code 主题、导入主题文件，或让代理设计一个。已安装的主题会显示在上方网格中。",
+    "description": "Runtime interface message settings.custom_theme_help"
+  },
   "runtime_settings_language_description": {
     "message": "选择界面语言。",
     "description": "Runtime interface message settings.language.description"
@@ -1670,6 +1770,106 @@
   "runtime_settings_local_api_setup_hint": {
     "message": "本地 API 服务器（默认 http://127.0.0.1:8642）。请在下方粘贴其密钥。",
     "description": "Runtime interface message settings.local_api_setup_hint"
+  },
+  "runtime_settings_mode_dark": {
+    "message": "深色",
+    "description": "Runtime interface message settings.mode.dark"
+  },
+  "runtime_settings_mode_light": {
+    "message": "浅色",
+    "description": "Runtime interface message settings.mode.light"
+  },
+  "runtime_settings_mode_system": {
+    "message": "跟随系统",
+    "description": "Runtime interface message settings.mode.system"
+  },
+  "runtime_settings_models_catalog_count": {
+    "message": "{count} 个可用模型",
+    "description": "Runtime interface message settings.models.catalog_count"
+  },
+  "runtime_settings_models_catalog_title": {
+    "message": "模型目录",
+    "description": "Runtime interface message settings.models.catalog_title"
+  },
+  "runtime_settings_models_copy": {
+    "message": "在此聊天中作答的模型。可在此处或顶部栏更改。",
+    "description": "Runtime interface message settings.models.copy"
+  },
+  "runtime_settings_models_current": {
+    "message": "当前模型",
+    "description": "Runtime interface message settings.models.current"
+  },
+  "runtime_settings_models_desktop_hint": {
+    "message": "在 Hermes Desktop 中或用 Hermes 模型命令添加或移除模型，然后在此刷新。",
+    "description": "Runtime interface message settings.models.desktop_hint"
+  },
+  "runtime_settings_models_effort_high": {
+    "message": "高",
+    "description": "Runtime interface message settings.models.effort.high"
+  },
+  "runtime_settings_models_effort_low": {
+    "message": "低",
+    "description": "Runtime interface message settings.models.effort.low"
+  },
+  "runtime_settings_models_effort_max": {
+    "message": "最大",
+    "description": "Runtime interface message settings.models.effort.max"
+  },
+  "runtime_settings_models_effort_medium": {
+    "message": "中",
+    "description": "Runtime interface message settings.models.effort.medium"
+  },
+  "runtime_settings_models_effort_minimal": {
+    "message": "最低",
+    "description": "Runtime interface message settings.models.effort.minimal"
+  },
+  "runtime_settings_models_effort_ultra": {
+    "message": "Ultra",
+    "description": "Runtime interface message settings.models.effort.ultra"
+  },
+  "runtime_settings_models_effort_xhigh": {
+    "message": "极高",
+    "description": "Runtime interface message settings.models.effort.xhigh"
+  },
+  "runtime_settings_models_fast_hint": {
+    "message": "提供方支持时优先速度。",
+    "description": "Runtime interface message settings.models.fast_hint"
+  },
+  "runtime_settings_models_none": {
+    "message": "未选择模型",
+    "description": "Runtime interface message settings.models.none"
+  },
+  "runtime_settings_models_open_picker": {
+    "message": "打开模型选择器",
+    "description": "Runtime interface message settings.models.open_picker"
+  },
+  "runtime_settings_models_refresh": {
+    "message": "刷新模型",
+    "description": "Runtime interface message settings.models.refresh"
+  },
+  "runtime_settings_models_runtime_copy": {
+    "message": "模型如何推理。更改立即生效。",
+    "description": "Runtime interface message settings.models.runtime_copy"
+  },
+  "runtime_settings_models_runtime_title": {
+    "message": "运行时",
+    "description": "Runtime interface message settings.models.runtime_title"
+  },
+  "runtime_settings_models_thinking_hint": {
+    "message": "让模型先思考再回答。",
+    "description": "Runtime interface message settings.models.thinking_hint"
+  },
+  "runtime_settings_models_title": {
+    "message": "当前模型",
+    "description": "Runtime interface message settings.models.title"
+  },
+  "runtime_settings_permissions_copy": {
+    "message": "Hermes 可在你的浏览器中操作什么，以及哪些连接可以查看页面上下文。",
+    "description": "Runtime interface message settings.permissions.copy"
+  },
+  "runtime_settings_permissions_title": {
+    "message": "控制与批准",
+    "description": "Runtime interface message settings.permissions.title"
   },
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· 公开测试版 / 加载未打包扩展",
@@ -4900,7 +5100,7 @@
     "description": "Runtime interface message ui.safety"
   },
   "runtime_ui_same_desktop_palettes_minus_window_transparency": {
-    "message": "与桌面端相同的调色板，不含窗口透明度。",
+    "message": "为你的工作区选择配色。",
     "description": "Runtime interface message ui.same.desktop.palettes.minus.window.transparency"
   },
   "runtime_ui_save": {

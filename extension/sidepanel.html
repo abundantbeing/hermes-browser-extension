@@ -100,7 +100,6 @@
         </footer>
       </section>
 
-
       <section id="botModeSheet" class="bot-mode-sheet" role="dialog" aria-modal="true" data-i18n-aria-label="bot_mode.sheet_label" aria-label="Edit agent profile" hidden>
         <header class="bot-mode-sheet-head">
           <div>
@@ -702,125 +701,68 @@
             </div>
           </div>
         </section>
-        <section class="settings-section bot-mode-settings" aria-labelledby="botModeSettingsTitle">
-          <div class="settings-section-head"><div><h3 id="botModeSettingsTitle" data-i18n="bot_mode.settings_title">Agents &amp; Bot Mode</h3><p data-i18n="bot_mode.settings_copy_sidepanel">Turn on the optional profile roster and canonical Bot Chat navigator for this browser.</p></div></div>
-          <label class="settings-toggle-card bot-mode-toggle-card" for="botModeEnabledInput">
-            <input id="botModeEnabledInput" class="settings-switch-input" type="checkbox" role="switch" />
-            <span class="bot-mode-toggle-copy settings-toggle-copy">
-              <strong data-i18n="bot_mode.enable_label">Enable Hermes Browser Bot Mode</strong>
-              <small data-i18n="bot_mode.off_hint_sidepanel">Off by default. Uses the currently connected Hermes instance.</small>
-            </span>
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-          <label class="bot-mode-density-row" for="botModeDisplayDensity"><span data-i18n="bot_mode.density">Roster density</span><select id="botModeDisplayDensity"><option value="comfortable" data-i18n="bot_mode.density_comfortable">Comfortable</option><option value="compact" data-i18n="bot_mode.density_compact">Compact</option></select></label>
-          <label class="bot-mode-density-row" for="botModeAnimateAvatars"><span data-i18n="bot_mode.animate_avatars">Animate avatars</span><select id="botModeAnimateAvatars"><option value="off">Off</option><option value="on">On</option></select></label>
-          <p class="hint" data-i18n="bot_mode.pet_picker_moved">Profile pictures (petdex pets, custom images) are edited per agent in Bot Mode via Edit Profile.</p>
-          <details class="bot-mode-cron-card" id="botModeCronCard">
-            <summary class="bot-mode-cron-head">
-              <div class="bot-mode-cron-title">
-                <h4 data-i18n="bot_mode.cron_title">Active Cron Jobs</h4>
-                <small data-i18n="bot_mode.cron_copy">Scheduled tasks running on this agent's profile (review-watch, scouts, digests).</small>
-              </div>
-              <button id="botModeCronRefreshButton" class="icon-button bot-mode-cron-refresh" type="button" title="Refresh cron jobs" data-i18n-title="profile.refresh_title" aria-label="Refresh cron jobs" data-i18n-aria-label="profile.refresh_title">
-                <span class="session-refresh-icon" aria-hidden="true">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                  </svg>
-                </span>
-              </button>
-            </summary>
-            <div class="bot-mode-cron-body">
-              <ul id="botModeCronList" class="bot-mode-cron-list" aria-live="polite"></ul>
-              <p id="botModeCronStatus" class="hint" role="status">Cron schedule loads when Hermes is connected.</p>
-            </div>
-          </details>
-          <p id="botModeSettingsStatus" class="hint" role="status" aria-live="polite">Bot Mode is off.</p>
-        </section>
-
-        <section class="settings-section profile-settings" aria-labelledby="profileTitle">
-          <div class="settings-section-head">
-            <div>
-              <h3 id="profileTitle" data-i18n="ui.agent.profile">Agent Profile</h3>
-              <p data-i18n="ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401">Choose which Hermes agent profile the Browser should use when the local gateway exposes profiles.</p>
-            </div>
+        <nav id="settingsCategoryHome" class="settings-category-home" aria-labelledby="settingsCategoryHomeTitle">
+          <div class="settings-section-head compact"><div><h4 id="settingsCategoryHomeTitle" data-i18n="settings.categories.home_title">Choose a category</h4><p data-i18n="settings.categories.home_copy">Everything Hermes Browser can do, grouped by what it is for.</p></div></div>
+          <div class="settings-category-grid">
+            <button type="button" class="settings-category-card" data-settings-category="appearance" aria-describedby="settingsCategorySummary-appearance">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10a7 7 0 1 1 7 7c-1 0-1.6-.6-1.6-1.4 0-.5.3-.9.3-1.4 0-.7-.6-1.2-1.3-1.2H6.5A3.5 3.5 0 0 1 3 10Z"></path><path d="M6.8 8.2h.01"></path><path d="M9.6 6.2h.01"></path><path d="M13 7.4h.01"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.appearance.title">Appearance &amp; Themes</strong><small id="settingsCategorySummary-appearance" data-i18n="settings.categories.appearance.summary">Colors, fonts, text size and background art.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="connections" aria-describedby="settingsCategorySummary-connections">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 12.5 5 15a2.5 2.5 0 0 1-3.5-3.5L4 9"></path><path d="M12.5 7.5 15 5a2.5 2.5 0 0 1 3.5 3.5L16 11"></path><path d="M7.5 12.5l5-5"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.connections.title">Connections</strong><small id="settingsCategorySummary-connections" data-i18n="settings.categories.connections.summary">Gateway, agent profile and how this browser reaches Hermes.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="agents" aria-describedby="settingsCategorySummary-agents">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.2v2"></path><path d="M5.5 7.5h9a2 2 0 0 1 2 2v4.3a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2Z"></path><path d="M7.8 11h.01"></path><path d="M12.2 11h.01"></path><path d="M8 14h4"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.agents.title">Agents &amp; Bot Mode</strong><small id="settingsCategorySummary-agents" data-i18n="settings.categories.agents.summary">Agent roster, Bot Chats and scheduled jobs.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="models" aria-describedby="settingsCategorySummary-models">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8 16.4 6.4v7.2L10 17.2 3.6 13.6V6.4Z"></path><path d="M10 10 16.2 6.6"></path><path d="M10 10v7"></path><path d="M10 10 3.8 6.6"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.models.title">Models &amp; Runtime</strong><small id="settingsCategorySummary-models" data-i18n="settings.categories.models.summary">Which model answers, plus catalog refresh.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="sessions" aria-describedby="settingsCategorySummary-sessions">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4.5h12v8.2H9.2L6 15.5v-2.8H4Z"></path><path d="M7 7.6h6"></path><path d="M7 10h4"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.sessions.title">Sessions &amp; Context</strong><small id="settingsCategorySummary-sessions" data-i18n="settings.categories.sessions.summary">Session names, page context and where the panel opens.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="permissions" aria-describedby="settingsCategorySummary-permissions">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8 16 5v4.6c0 3.6-2.4 6.2-6 7.6-3.6-1.4-6-4-6-7.6V5Z"></path><path d="M7.2 10.1 9.2 12l3.6-3.8"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.permissions.title">Permissions &amp; Control</strong><small id="settingsCategorySummary-permissions" data-i18n="settings.categories.permissions.summary">Browser control, tab scope and page-sharing approval.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="assist" aria-describedby="settingsCategorySummary-assist">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3l1.6 3.9 3.9 1.6-3.9 1.6L10 14l-1.6-3.9L4.5 8.5l3.9-1.6Z"></path><path d="M15.5 13.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7Z"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.assist.title">Assist &amp; Actions</strong><small id="settingsCategorySummary-assist" data-i18n="settings.categories.assist.summary">Inline Assist and the right-click actions.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="voice" aria-describedby="settingsCategorySummary-voice">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8a2.4 2.4 0 0 1 2.4 2.4v4.6a2.4 2.4 0 0 1-4.8 0V5.2A2.4 2.4 0 0 1 10 2.8Z"></path><path d="M5 9.6a5 5 0 0 0 10 0"></path><path d="M10 14.6v2.6"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.voice.title">Voice &amp; Wake</strong><small id="settingsCategorySummary-voice" data-i18n="settings.categories.voice.summary">Wake word and spoken replies.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
+            <button type="button" class="settings-category-card" data-settings-category="about" aria-describedby="settingsCategorySummary-about">
+              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z"></path><path d="M10 9.2v4.2"></path><path d="M10 6.6h.01"></path></svg></span>
+              <span class="settings-category-copy"><strong data-i18n="settings.categories.about.title">About &amp; Diagnostics</strong><small id="settingsCategorySummary-about" data-i18n="settings.categories.about.summary">Compatibility, token safety and support reports.</small></span>
+              <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
+            </button>
           </div>
-          <section class="settings-section agent-profile-card">
-            <div class="settings-row profile-control-stack">
-              <label>
-                <span data-i18n="ui.active.profile">Active profile</span>
-                <select id="profileSelect" name="profileSelect">
-                  <option value="" data-i18n="ui.detect.from.hermes.gateway">Detect from Hermes gateway</option>
-                </select>
-              </label>
-              <div class="profile-action-row">
-                <button id="refreshProfilesButton" class="secondary" type="button" title="Refresh profiles" data-i18n-title="profile.refresh_title" aria-label="Refresh profiles" data-i18n-aria-label="profile.refresh_title">
-                  <span class="session-refresh-icon" aria-hidden="true">↻</span>
-                  <span data-i18n="bot_mode.profiles_title">Profiles</span>
-                </button>
-                <span id="profileVerifiedCount" class="profile-verified-count" aria-live="polite"></span>
-              </div>
-            </div>
-            <p id="profileStatus" class="hint">Profiles sync after connecting to Hermes.</p>
-            <div id="profileRosterPreview" class="agent-roster-preview" role="list" aria-label="Verified Hermes agents" data-i18n-aria-label="bot_mode.roster_label"></div>
-          </section>
-          <section class="settings-section agent-connected-card">
-            <h3 data-i18n="ui.connected.agent">Connected agent</h3>
-            <p class="hint" data-i18n="ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655">
-              Scans a trusted Hermes API host for running sidecar gateways on
-              8642-8646. This is for Local/Remote API mode only. In Remote
-              dashboard mode Dashboard Attach connects over the dashboard
-              WebSocket (port 443), so this scan is skipped and its status
-              never reflects Dashboard Attach availability.
-            </p>
-            <div id="agentList" class="agent-list" role="list" aria-label="Discovered Hermes agents" data-i18n-aria-label="ui.discovered.hermes.agents"></div>
-            <div class="settings-row agent-scan-row">
-              <button id="refreshAgentsButton" class="secondary" type="button" data-i18n="agent.scan">↻ Scan agents</button>
-              <button id="scanAgentRosterButton" class="secondary" type="button" data-i18n="bot_mode.refresh_agents">↻ Sync live roster</button>
-            </div>
-            <details class="agent-discovery-advanced">
-              <summary data-i18n="ui.agent.host">Agent host</summary>
-              <label>
-                <span data-i18n="ui.agent.host">Agent host</span>
-                <input id="agentHostInput" type="text" autocomplete="off" placeholder="127.0.0.1 or macbook.tailnet.ts.net" data-i18n-invariant />
-              </label>
-              <label>
-                <span data-i18n="ui.agent.scheme">Agent scheme</span>
-                <select id="agentSchemeInput">
-                  <option value="http">http</option>
-                  <option value="https">https</option>
-                </select>
-              </label>
-              <label>
-                <span data-i18n="ui.agent.ports.comma.separated.default.8642.8646">Agent ports (comma-separated, default 8642-8646)</span>
-                <input id="agentPortsInput" type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />
-              </label>
-              <p id="agentPickerStatus" class="hint" data-i18n-runtime data-i18n="ui.agent.discovery.has.not.run.yet">Agent discovery has not run yet.</p>
-            </details>
-            <label>
-              <span data-i18n="ui.custom.model.source.urls">Custom model source URLs</span>
-              <textarea id="customModelSourcesInput" rows="3" placeholder="http://wimpy:8080/v1&#10;http://192.168.1.50:11434/v1" autocomplete="off" data-i18n-invariant></textarea>
-            </label>
-            <p class="hint" data-i18n="ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6">Optional discovery only: Browser probes each OpenAI-compatible `/v1/models` endpoint and shows matches in the model picker. Runtime routing still comes from the connected Hermes gateway.</p>
-          </section>
-        </section>
+        </nav>
 
+        <section id="settingsPane-appearance" class="settings-pane" data-settings-pane="appearance" aria-labelledby="settingsPaneTitle-appearance" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-appearance" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.appearance.title">Appearance &amp; Themes</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
         <section class="settings-section appearance-settings" aria-labelledby="appearanceTitle">
           <div class="settings-section-head">
             <div>
               <h3 id="appearanceTitle" data-i18n="ui.appearance">Appearance</h3>
               <p data-i18n="ui.mode.controls.brightness.theme.controls.the.accent.palette.and.0d9c3d47">Mode controls brightness. Theme controls the accent palette and chat surface styling.</p>
-            </div>
-          </div>
-
-          <div class="appearance-row">
-            <div>
-              <strong data-i18n="ui.color.mode">Color Mode</strong>
-              <span data-i18n="ui.pick.a.fixed.mode.or.follow.your.system.setting">Pick a fixed mode or follow your system setting.</span>
-            </div>
-            <div class="segmented-control" role="radiogroup" aria-label="Color mode" data-i18n-aria-label="ui.color.mode.588a2981">
-              <button class="mode-choice" type="button" data-color-mode="light" role="radio" aria-checked="false" data-i18n="ui.light">☼ Light</button>
-              <button class="mode-choice" type="button" data-color-mode="dark" role="radio" aria-checked="false" data-i18n="ui.dark">☾ Dark</button>
-              <button class="mode-choice" type="button" data-color-mode="system" role="radio" aria-checked="false" data-i18n="ui.system">▱ System</button>
             </div>
           </div>
 
@@ -898,12 +840,18 @@
 
           <div class="theme-setting">
             <strong data-i18n="ui.theme">Theme</strong>
-            <span data-i18n="ui.same.desktop.palettes.minus.window.transparency">Same Desktop palettes, minus window transparency.</span>
+            <span data-i18n="ui.same.desktop.palettes.minus.window.transparency">Choose a color palette for your workspace.</span>
+            <div class="segmented-control mode-switch" role="radiogroup" aria-label="Color mode" data-i18n-aria-label="ui.color.mode.588a2981">
+              <button class="mode-choice" type="button" data-color-mode="light" role="radio" aria-checked="false"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.2"></circle><path d="M10 2.8v1.7M10 15.5v1.7M2.8 10h1.7M15.5 10h1.7M4.9 4.9l1.2 1.2M13.9 13.9l1.2 1.2M15.1 4.9l-1.2 1.2M6.1 13.9l-1.2 1.2"></path></svg><span data-i18n="settings.mode.light">Light</span></button>
+              <button class="mode-choice" type="button" data-color-mode="dark" role="radio" aria-checked="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.2 11.6A6.6 6.6 0 0 1 8.4 3.8a6.6 6.6 0 1 0 7.8 7.8Z"></path></svg><span data-i18n="settings.mode.dark">Dark</span></button>
+              <button class="mode-choice" type="button" data-color-mode="system" role="radio" aria-checked="false"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="9.5" rx="0"></rect><path d="M7.5 16.5h5M10 13.5v3"></path></svg><span data-i18n="settings.mode.system">System</span></button>
+            </div>
             <div id="themeGrid" class="theme-grid" role="radiogroup" aria-label="Theme" data-i18n-aria-label="ui.theme"></div>
 
             <details id="customThemeManager" class="custom-theme-manager">
-              <summary class="custom-theme-summary">
-                <span data-i18n="custom_theme.custom_themes">Custom themes</span>
+              <summary class="custom-theme-summary" aria-describedby="customThemeHelp">
+                <span class="custom-theme-title"><span data-i18n="custom_theme.custom_themes">Custom themes</span><span class="help-dot" aria-hidden="true">?</span></span>
+                <span id="customThemeHelp" class="help-tip" role="tooltip" data-i18n="settings.custom_theme_help">Add more themes: browse VS Code themes, import a theme file, or have an agent design one. Installed themes appear in the grid above.</span>
                 <span class="custom-theme-summary-meta" data-i18n="custom_theme.user_installed">User-installed</span>
               </summary>
               <div class="custom-theme-manager-body">
@@ -950,39 +898,424 @@
             </details>
           </div>
         </section>
-
-        <section class="settings-section wake-word-settings" aria-labelledby="wakeWordTitle">
-          <div class="settings-section-head">
-            <div>
-              <h3 id="wakeWordTitle" data-i18n="ui.wake.word">Wake word</h3>
-              <p data-i18n="ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae">Say “Hey Hermes” for a hands-free, one-turn voice request. Always-on detection stays on this machine.</p>
-            </div>
-          </div>
-          <label class="settings-toggle-card">
-            <span class="settings-toggle-copy">
-              <strong data-i18n="ui.enable.wake.word">Enable wake word</strong>
-              <small data-i18n="ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e">Prefers Hermes’ native wake engine locally and uses available on-device browser speech for Cloud Preview.</small>
-            </span>
-            <input id="wakeWordEnabledInput" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-          <label>
-            <span data-i18n="ui.browser.fallback.phrase">Browser fallback phrase</span>
-            <input id="wakeWordPhraseInput" type="text" maxlength="64" autocomplete="off" placeholder="hey hermes" data-i18n-invariant />
-          </label>
-          <label class="settings-toggle-card compact-toggle-card">
-            <span class="settings-toggle-copy"><strong data-i18n="ui.browser.local.fallback">Browser-local fallback</strong><small data-i18n="ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b">Required for Cloud Preview and older Hermes builds. It refuses cloud speech recognition.</small></span>
-            <input id="wakeWordBrowserFallbackInput" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-          <label class="settings-toggle-card compact-toggle-card">
-            <span class="settings-toggle-copy"><strong data-i18n="ui.speak.wake.replies">Speak wake replies</strong><small data-i18n="ui.uses.hermes.tts.on.the.native.path.and.local.browser.speech.on.acf402bd">Uses Hermes TTS on the native path and local browser speech on the fallback path.</small></span>
-            <input id="wakeWordSpeakRepliesInput" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-          <p id="wakeWordStatus" class="hint" role="status" aria-live="polite">Wake word is off.</p>
         </section>
 
+        <section id="settingsPane-connections" class="settings-pane" data-settings-pane="connections" aria-labelledby="settingsPaneTitle-connections" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-connections" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.connections.title">Connections</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
+        <section class="settings-section connection-settings" aria-labelledby="connectionTitle">
+          <div class="settings-section-head">
+            <div>
+              <h3 id="connectionTitle" data-i18n="ui.gateway.connection">Gateway Connection</h3>
+              <p data-i18n="ui.choose.where.this.browser.session.reaches.hermes">Choose where this Browser session reaches Hermes.</p>
+            </div>
+          </div>
+
+        <div class="gateway-mode" role="radiogroup" aria-label="Connection mode" data-i18n-aria-label="ui.connection.mode">
+          <button class="conn-mode-card" type="button" data-connection-mode="local" role="radio" aria-checked="true">
+            <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.local.gateway">Local gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+            <span class="conn-mode-desc" data-i18n="ui.hermes.on.this.machine.default.and.offline.capable">Hermes on this machine. Default and offline-capable.</span>
+          </button>
+          <button class="conn-mode-card" type="button" data-connection-mode="cloud" role="radio" aria-checked="false">
+            <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.hermes.cloud.preview">Hermes Cloud Preview</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+            <span class="conn-mode-desc" data-i18n="ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket">Attach the active signed-in Hermes Cloud agent tab with a one-use ticket.</span>
+          </button>
+          <button class="conn-mode-card" type="button" data-connection-mode="remote" role="radio" aria-checked="false">
+            <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.remote.gateway">Remote gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
+            <span class="conn-mode-desc" data-i18n="ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c">Self-hosted API or dashboard. API can use trusted LAN http; dashboard uses https.</span>
+          </button>
+          <select id="connectionModeInput" name="connectionMode" hidden>
+            <option value="local" data-i18n="ui.local.gateway">Local gateway</option>
+            <option value="cloud" data-i18n="ui.hermes.cloud">Hermes Cloud</option>
+            <option value="remote" data-i18n="ui.remote.gateway">Remote gateway</option>
+          </select>
+          <select id="gatewayModeInput" name="gatewayMode" hidden>
+            <option value="local-api" data-i18n="ui.local.api.server">Local API server</option>
+            <option value="remote-api" data-i18n="ui.remote.api.server">Remote API server</option>
+            <option value="remote-dashboard" data-i18n="ui.remote.dashboard.websocket">Remote dashboard (WebSocket)</option>
+          </select>
+        </div>
+
+        <label id="gatewayUrlField">
+          <span data-i18n="ui.gateway.url">Gateway URL</span>
+          <input id="gatewayUrlInput" name="gatewayUrl" type="url" placeholder="http://127.0.0.1:8642" />
+        </label>
+        <p id="cloudPreviewHelp" class="hint" hidden data-i18n="ui.open.the.signed.in.hermes.cloud.agent.in.the.active.tab.wait.fo.b7be52ec">Open the signed-in Hermes Cloud agent in the active tab, wait for it to finish loading, then choose Connect to Hermes. No API token or localhost fallback is used.</p>
+        <p id="gatewayHelp" class="hint">Local setup: keep Hermes Gateway/API Server running on this machine.</p>
+
+        <label id="apiKeyField">
+          <span data-i18n="ui.api.key.browser.token">API key / browser token</span>
+          <input id="apiKeyInput" name="apiKey" type="password" autocomplete="off" placeholder="API key (blank = dashboard)" data-i18n-placeholder="ui.api.key.blank.dashboard" />
+        </label>
+
+        <p class="hint connection-flow-note" data-i18n="ui.public.flow.connect.to.hermes.creates.a.scoped.browser.token.wh.9184ad4d">Public flow: Connect to Hermes creates a scoped browser token when the API server supports pairing. For remote hosts, set API_SERVER_CORS_ORIGINS to this extension origin and use a strong API_SERVER_KEY or scoped token.</p>
+        </section>
+
+        <section class="settings-section remote-diagnostics-panel" id="remoteDiagnosticsPanel" hidden>
+          <div class="settings-section-head compact">
+            <div>
+              <h4 data-i18n="ui.remote.setup.diagnostics">Remote setup diagnostics</h4>
+              <p data-i18n="ui.use.this.when.a.remote.dashboard.url.bearer.token.or.cors.origi.9956db87">Use this when a remote dashboard URL, bearer token, or CORS origin is misconfigured.</p>
+            </div>
+          </div>
+          <dl class="remote-diagnostics-list" id="remoteDiagnosticsList"></dl>
+          <pre id="remoteEnvBlock" class="remote-env-block" aria-label="Remote API server environment variables" data-i18n-aria-label="ui.remote.api.server.environment.variables"></pre>
+          <button type="button" id="copyRemoteEnvButton" class="secondary" data-i18n="ui.copy.server.env">Copy server env</button>
+        </section>
+
+        <section class="settings-section profile-settings" aria-labelledby="profileTitle">
+          <div class="settings-section-head">
+            <div>
+              <h3 id="profileTitle" data-i18n="ui.agent.profile">Agent Profile</h3>
+              <p data-i18n="ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401">Choose which Hermes agent profile the Browser should use when the local gateway exposes profiles.</p>
+            </div>
+          </div>
+          <section class="settings-section agent-profile-card">
+            <div class="settings-row profile-control-stack">
+              <label>
+                <span data-i18n="ui.active.profile">Active profile</span>
+                <select id="profileSelect" name="profileSelect">
+                  <option value="" data-i18n="ui.detect.from.hermes.gateway">Detect from Hermes gateway</option>
+                </select>
+              </label>
+              <div class="profile-action-row">
+                <button id="refreshProfilesButton" class="secondary" type="button" title="Refresh profiles" data-i18n-title="profile.refresh_title" aria-label="Refresh profiles" data-i18n-aria-label="profile.refresh_title">
+                  <span class="session-refresh-icon" aria-hidden="true">↻</span>
+                  <span data-i18n="bot_mode.profiles_title">Profiles</span>
+                </button>
+                <span id="profileVerifiedCount" class="profile-verified-count" aria-live="polite"></span>
+              </div>
+            </div>
+            <p id="profileStatus" class="hint">Profiles sync after connecting to Hermes.</p>
+            <div id="profileRosterPreview" class="agent-roster-preview" role="list" aria-label="Verified Hermes agents" data-i18n-aria-label="bot_mode.roster_label"></div>
+          </section>
+
+
+        </section>
+
+        <section class="settings-section agent-connected-card" aria-labelledby="connectedAgentTitle">
+          <div class="settings-section-head">
+            <div>
+              <h3 id="connectedAgentTitle" data-i18n="ui.connected.agent">Connected agent</h3>
+              <p id="agentPickerStatus" class="agent-status-line" data-i18n-runtime data-i18n="ui.agent.discovery.has.not.run.yet">Agent discovery has not run yet.</p>
+            </div>
+          </div>
+          <div id="agentList" class="agent-list" role="list" aria-label="Discovered Hermes agents" data-i18n-aria-label="ui.discovered.hermes.agents"></div>
+          <div class="agent-scan-row">
+            <button id="refreshAgentsButton" class="agent-scan-action" type="button" data-i18n="agent.scan">↻ Scan agents</button>
+            <button id="scanAgentRosterButton" class="agent-scan-action secondary" type="button" data-i18n="bot_mode.refresh_agents">↻ Sync live roster</button>
+          </div>
+          <p class="agent-scan-note settings-prose" data-i18n="ui.scans.a.trusted.hermes.api.host.for.running.gateways.use.localh.7f61d655">Scans a trusted Hermes API host for running sidecar gateways on 8642-8646. This is for Local/Remote API mode only. In Remote dashboard mode Dashboard Attach connects over the dashboard WebSocket (port 443), so this scan is skipped and its status never reflects Dashboard Attach availability.</p>
+          <details class="agent-discovery-advanced">
+            <summary data-i18n="ui.agent.host">Agent host</summary>
+            <div class="agent-host-fields">
+              <label>
+                <span data-i18n="ui.agent.host">Agent host</span>
+                <input id="agentHostInput" type="text" autocomplete="off" placeholder="127.0.0.1 or macbook.tailnet.ts.net" data-i18n-invariant />
+              </label>
+              <label>
+                <span data-i18n="ui.agent.scheme">Agent scheme</span>
+                <select id="agentSchemeInput">
+                  <option value="http">http</option>
+                  <option value="https">https</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="ui.agent.ports.comma.separated.default.8642.8646">Agent ports (comma-separated, default 8642-8646)</span>
+                <input id="agentPortsInput" type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />
+              </label>
+            </div>
+          </details>
+        </section>
+
+        <div class="connection-security" aria-labelledby="connectionSecurityTitle">
+          <div class="settings-section-head">
+            <div>
+              <h4 id="connectionSecurityTitle" data-i18n="ui.connection.security">Connection security</h4>
+              <p data-i18n="ui.tokens.are.stored.in.chrome.storage.local.and.never.displayed.after.save">Tokens are stored in chrome.storage.local and never displayed after save.</p>
+            </div>
+          </div>
+          <div id="connectionSecuritySummary" class="connection-security-summary"></div>
+          <button id="clearTokenButton" class="secondary" type="button" data-i18n="ui.clear.stored.token">Clear stored token</button>
+        </div>
+        </section>
+<section id="settingsPane-agents" class="settings-pane" data-settings-pane="agents" aria-labelledby="settingsPaneTitle-agents" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-agents" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.agents.title">Agents &amp; Bot Mode</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
+        <section class="settings-section bot-mode-settings" aria-labelledby="botModeSettingsTitle">
+          <div class="settings-section-head"><div><h3 id="botModeSettingsTitle" data-i18n="bot_mode.settings_title">Agents &amp; Bot Mode</h3><p data-i18n="bot_mode.settings_copy_sidepanel">Turn on the optional profile roster and canonical Bot Chat navigator for this browser.</p></div></div>
+          <label class="settings-toggle-card bot-mode-toggle-card" for="botModeEnabledInput">
+            <input id="botModeEnabledInput" class="settings-switch-input" type="checkbox" role="switch" />
+            <span class="bot-mode-toggle-copy settings-toggle-copy">
+              <strong data-i18n="bot_mode.enable_label">Enable Hermes Browser Bot Mode</strong>
+              <small data-i18n="bot_mode.off_hint_sidepanel">Off by default. Uses the currently connected Hermes instance.</small>
+            </span>
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <label class="bot-mode-density-row" for="botModeDisplayDensity"><span data-i18n="bot_mode.density">Roster density</span><select id="botModeDisplayDensity"><option value="comfortable" data-i18n="bot_mode.density_comfortable">Comfortable</option><option value="compact" data-i18n="bot_mode.density_compact">Compact</option></select></label>
+          <label class="bot-mode-density-row" for="botModeAnimateAvatars"><span data-i18n="bot_mode.animate_avatars">Animate avatars</span><select id="botModeAnimateAvatars"><option value="off">Off</option><option value="on">On</option></select></label>
+          <p class="hint" data-i18n="bot_mode.pet_picker_moved">Profile pictures (petdex pets, custom images) are edited per agent in Bot Mode via Edit Profile.</p>
+          <details class="bot-mode-cron-card" id="botModeCronCard">
+            <summary class="bot-mode-cron-head">
+              <div class="bot-mode-cron-title">
+                <h4 data-i18n="bot_mode.cron_title">Active Cron Jobs</h4>
+                <small data-i18n="bot_mode.cron_copy">Scheduled tasks running on this agent's profile (review-watch, scouts, digests).</small>
+              </div>
+              <button id="botModeCronRefreshButton" class="icon-button bot-mode-cron-refresh" type="button" title="Refresh cron jobs" data-i18n-title="profile.refresh_title" aria-label="Refresh cron jobs" data-i18n-aria-label="profile.refresh_title">
+                <span class="session-refresh-icon" aria-hidden="true">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                  </svg>
+                </span>
+              </button>
+            </summary>
+            <div class="bot-mode-cron-body">
+              <ul id="botModeCronList" class="bot-mode-cron-list" aria-live="polite"></ul>
+              <p id="botModeCronStatus" class="hint" role="status">Cron schedule loads when Hermes is connected.</p>
+            </div>
+          </details>
+          <p id="botModeSettingsStatus" class="hint" role="status" aria-live="polite">Bot Mode is off.</p>
+        </section>
+        </section>
+
+        <section id="settingsPane-models" class="settings-pane" data-settings-pane="models" aria-labelledby="settingsPaneTitle-models" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-models" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.models.title">Models &amp; Runtime</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
+          <section class="settings-section models-settings" aria-labelledby="modelsSettingsTitle">
+            <div class="settings-section-head"><div><h3 id="modelsSettingsTitle" data-i18n="settings.models.title">Active model</h3><p data-i18n="settings.models.copy">The model answering this chat. Change it here or from the top bar.</p></div></div>
+            <button id="settingsOpenModelPickerButton" type="button" class="models-select-card" aria-haspopup="dialog" title="Open model picker" data-i18n-title="settings.models.open_picker">
+              <span class="models-select-copy">
+                <small class="models-select-label" data-i18n="settings.models.current">Current model</small>
+                <strong id="settingsCurrentModel" class="models-select-name" data-i18n-runtime>&mdash;</strong>
+                <span id="settingsCurrentModelMeta" class="models-select-meta" data-i18n-runtime></span>
+              </span>
+              <span class="models-select-mark" aria-hidden="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 8 4.5 4.5L14.5 8"></path></svg></span>
+            </button>
+          </section>
+          <section class="settings-section models-runtime-settings" aria-labelledby="modelsRuntimeTitle">
+            <div class="settings-section-head"><div><h3 id="modelsRuntimeTitle" data-i18n="settings.models.runtime_title">Runtime</h3><p data-i18n="settings.models.runtime_copy">How the model reasons. Changes apply immediately.</p></div></div>
+            <div class="models-runtime-toggles">
+              <button type="button" class="settings-toggle-card runtime-toggle" role="switch" aria-checked="false" data-runtime-toggle="thinking">
+                <span class="settings-toggle-copy"><strong data-i18n="ui.thinking">Thinking</strong><small data-i18n="settings.models.thinking_hint">Let the model reason before it answers.</small></span>
+                <span class="settings-switch" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="settings-toggle-card runtime-toggle" role="switch" aria-checked="false" data-runtime-toggle="fast">
+                <span class="settings-toggle-copy"><strong data-i18n="ui.fast.mode">Fast mode</strong><small data-i18n="settings.models.fast_hint">Prioritize speed when the provider supports it.</small></span>
+                <span class="settings-switch" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div class="settings-choice-group" role="radiogroup" aria-labelledby="modelsEffortLegend">
+              <span id="modelsEffortLegend" class="models-legend" data-i18n="ui.reasoning.effort">Reasoning effort</span>
+              <div class="settings-choice-grid models-effort-grid">
+              <button type="button" class="settings-choice-card runtime-effort" role="radio" aria-checked="false" data-runtime-effort="minimal"><span class="settings-choice-copy"><strong data-i18n="settings.models.effort.minimal">Minimal</strong></span><span class="settings-choice-mark" aria-hidden="true"></span></button>
+              <button type="button" class="settings-choice-card runtime-effort" role="radio" aria-checked="false" data-runtime-effort="low"><span class="settings-choice-copy"><strong data-i18n="settings.models.effort.low">Low</strong></span><span class="settings-choice-mark" aria-hidden="true"></span></button>
+              <button type="button" class="settings-choice-card runtime-effort" role="radio" aria-checked="false" data-runtime-effort="medium"><span class="settings-choice-copy"><strong data-i18n="settings.models.effort.medium">Medium</strong></span><span class="settings-choice-mark" aria-hidden="true"></span></button>
+              <button type="button" class="settings-choice-card runtime-effort" role="radio" aria-checked="false" data-runtime-effort="high"><span class="settings-choice-copy"><strong data-i18n="settings.models.effort.high">High</strong></span><span class="settings-choice-mark" aria-hidden="true"></span></button>
+              <button type="button" class="settings-choice-card runtime-effort" role="radio" aria-checked="false" data-runtime-effort="xhigh"><span class="settings-choice-copy"><strong data-i18n="settings.models.effort.xhigh">Extra high</strong></span><span class="settings-choice-mark" aria-hidden="true"></span></button>
+              <button type="button" class="settings-choice-card runtime-effort" role="radio" aria-checked="false" data-runtime-effort="max"><span class="settings-choice-copy"><strong data-i18n="settings.models.effort.max">Max</strong></span><span class="settings-choice-mark" aria-hidden="true"></span></button>
+              <button type="button" class="settings-choice-card runtime-effort" role="radio" aria-checked="false" data-runtime-effort="ultra"><span class="settings-choice-copy"><strong data-i18n="settings.models.effort.ultra">Ultra</strong></span><span class="settings-choice-mark" aria-hidden="true"></span></button>
+              </div>
+            </div>
+          </section>
+          <section class="settings-section models-catalog-settings" aria-labelledby="modelsCatalogTitle">
+            <div class="settings-section-head"><div><h3 id="modelsCatalogTitle" data-i18n="settings.models.catalog_title">Model catalog</h3><p id="settingsModelCatalogCount" data-i18n-runtime>&mdash;</p></div></div>
+            <button id="settingsRefreshModelsButton" type="button" class="secondary models-refresh-row"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.4 7.1A6.2 6.2 0 0 1 15 5.7l1.2 1.4"></path><path d="m16.5 3.8-.3 3.3-3.3-.3"></path><path d="M15.6 12.9A6.2 6.2 0 0 1 5 14.3l-1.2-1.4"></path><path d="m3.5 16.2.3-3.3 3.3.3"></path></svg><span data-i18n="settings.models.refresh">Refresh models</span></button>
+            <p id="settingsModelRefreshStatus" class="settings-prose" role="status" aria-live="polite" hidden></p>
+            <p class="hint settings-prose" data-i18n="settings.models.desktop_hint">Add or remove models in Hermes Desktop or with the Hermes model command, then refresh here.</p>
+          </section>
+          <section class="settings-section model-sources-settings" aria-labelledby="modelSourcesTitle">
+            <div class="settings-section-head"><div><h3 id="modelSourcesTitle" data-i18n="ui.custom.model.source.urls">Custom model source URLs</h3><p class="settings-prose" data-i18n="ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6">Optional discovery only: Browser probes each OpenAI-compatible `/v1/models` endpoint and shows matches in the model picker. Runtime routing still comes from the connected Hermes gateway.</p></div></div>
+            <textarea id="customModelSourcesInput" class="model-sources-input" rows="4" spellcheck="false" placeholder="http://wimpy:8080/v1&#10;http://192.168.1.50:11434/v1" autocomplete="off" aria-label="Custom model source URLs" data-i18n-aria-label="ui.custom.model.source.urls" data-i18n-invariant></textarea>
+          </section>
+        </section>
+
+        <section id="settingsPane-sessions" class="settings-pane" data-settings-pane="sessions" aria-labelledby="settingsPaneTitle-sessions" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-sessions" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.sessions.title">Sessions &amp; Context</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
+        <label>
+          <span data-i18n="ui.session.id">Session ID</span>
+          <input id="sessionIdInput" name="sessionId" type="text" placeholder="hermes-browser-extension" data-i18n-invariant />
+        </label>
+
+        <label>
+          <span data-i18n="ui.session.title">Session title</span>
+          <input id="sessionTitleInput" name="sessionTitle" type="text" placeholder="Hermes Browser Extension" data-i18n-placeholder="manifest.extension_name" />
+        </label>
+
+        <section class="settings-subsection browser-behavior-settings" aria-labelledby="browserBehaviorTitle">
+          <div class="settings-section-head compact">
+            <div>
+              <h4 id="browserBehaviorTitle" data-i18n="ui.browser.behavior">Browser Behavior</h4>
+              <p data-i18n="ui.session.naming.prompt.context.and.side.panel.residency.live.together">Session naming, prompt context, and side-panel residency live together.</p>
+            </div>
+          </div>
+
+          <label class="settings-toggle-card auto-name-toggle">
+            <span class="settings-toggle-copy">
+              <strong data-i18n="ui.auto.name.browser.sessions">Auto-name browser sessions</strong>
+              <small data-i18n="ui.rename.a.fresh.browser.session.from.the.first.real.message">Rename a fresh browser session from the first real message.</small>
+            </span>
+            <input id="autoNameSessionsInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+
+          <label class="settings-toggle-card auto-name-toggle">
+            <span class="settings-toggle-copy">
+              <strong data-i18n="ui.show.message.times">Show message times</strong>
+              <small data-i18n="ui.show.message.times.hint">Show the time on your messages when you hover or tap them.</small>
+            </span>
+            <input id="showMessageTimesInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+
+          <div class="settings-control-group" aria-label="Prompt context settings" data-i18n-aria-label="ui.prompt.context.settings">
+            <div class="settings-control-group-head">
+              <strong data-i18n="ui.prompt.context">Prompt context</strong>
+              <small data-i18n="ui.choose.what.browser.context.is.allowed.into.each.prompt">Choose what browser context is allowed into each prompt.</small>
+            </div>
+            <div class="settings-toggle-grid settings-toggle-grid-three">
+              <label class="settings-toggle-card compact-toggle">
+                <span class="settings-toggle-copy"><strong data-i18n="ui.open.tabs">Open tabs</strong><small data-i18n="ui.window.tab.list">Window tab list</small></span>
+                <input id="includeTabsInput" class="settings-switch-input" type="checkbox" />
+                <span class="settings-switch" aria-hidden="true"></span>
+              </label>
+              <label class="settings-toggle-card compact-toggle">
+                <span class="settings-toggle-copy"><strong data-i18n="ui.page.text">Page text</strong><small data-i18n="ui.readable.dom.text">Readable DOM text</small></span>
+                <input id="includePageTextInput" class="settings-switch-input" type="checkbox" />
+                <span class="settings-switch" aria-hidden="true"></span>
+              </label>
+              <label class="settings-toggle-card compact-toggle">
+                <span class="settings-toggle-copy"><strong data-i18n="ui.selection">Selection</strong><small data-i18n="ui.highlighted.text">Highlighted text</small></span>
+                <input id="includeSelectedTextInput" class="settings-switch-input" type="checkbox" />
+                <span class="settings-switch" aria-hidden="true"></span>
+              </label>
+            </div>
+          </div>
+
+          <fieldset class="panel-residency-options settings-choice-group">
+            <legend data-i18n="ui.panel.opening">Panel opening</legend>
+            <div class="settings-choice-grid">
+              <label class="settings-choice-card">
+                <input type="radio" name="panelResidencyMode" value="tab-attached" />
+                <span class="settings-choice-copy">
+                  <strong data-i18n="ui.attach.to.current.tab">Attach to current tab</strong>
+                  <small data-i18n="ui.hermes.appears.only.on.tabs.where.you.open.it">Hermes appears only on tabs where you open it.</small>
+                </span>
+                <span class="settings-choice-mark" aria-hidden="true"></span>
+              </label>
+              <label class="settings-choice-card">
+                <input type="radio" name="panelResidencyMode" value="global" />
+                <span class="settings-choice-copy">
+                  <strong data-i18n="ui.keep.open.across.tabs">Keep open across tabs</strong>
+                  <small data-i18n="ui.existing.attached.panels.stay.as.they.are.other.and.new.tabs.us.fb9a0ba6">Existing attached panels stay as they are. Other and new tabs use the shared panel.</small>
+                </span>
+                <span class="settings-choice-mark" aria-hidden="true"></span>
+              </label>
+            </div>
+          </fieldset>
+        </section>
+
+        <label>
+          <span data-i18n="ui.page.context.depth">Page context depth</span>
+          <select id="contextDepthInput" name="contextDepth">
+            <option value="minimal" data-i18n="ui.minimal.selected.text.short.page.text">Minimal - selected text + short page text</option>
+            <option value="normal" data-i18n="ui.normal.good.default">Normal - good default</option>
+            <option value="full" data-i18n="ui.full.largest.payload">Full - largest payload</option>
+          </select>
+        </label>
+
+        <label>
+          <span data-i18n="ui.youtube.transcript.provider">YouTube transcript provider</span>
+          <input id="transcriptProviderInput" name="transcriptProvider" type="text" placeholder="default, off, or https://provider.example/transcript?video_id={video_id}" data-i18n-invariant />
+        </label>
+        </section>
+
+        <section id="settingsPane-permissions" class="settings-pane" data-settings-pane="permissions" aria-labelledby="settingsPaneTitle-permissions" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-permissions" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.permissions.title">Permissions &amp; Control</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
+          <section class="settings-section permissions-settings" aria-labelledby="permissionsSettingsTitle">
+            <div class="settings-section-head"><div><h3 id="permissionsSettingsTitle" data-i18n="settings.permissions.title">Control and approvals</h3><p data-i18n="settings.permissions.copy">What Hermes may operate in your browser, and which connections may see page context.</p></div></div>
+          <section id="statusCard" class="status-card settings-active-tab" aria-live="polite" aria-label="Active tab status" data-i18n-aria-label="ui.active.tab.status">
+            <div class="status-label">
+              <span class="status-dot" id="statusDot"></span>
+              <span data-i18n="ui.active.tab.2bc454c2">ACTIVE TAB</span>
+            </div>
+            <div class="status-copy">
+              <strong id="activeTitle">No tab detected</strong>
+              <span id="activeUrl">Open a normal http/https tab, then refresh context.</span>
+            </div>
+            <div id="statusActions" class="status-actions" hidden>
+              <button id="statusRetryProbeButton" class="secondary tiny" type="button" hidden></button>
+              <button id="statusCopyDiagnosticsButton" class="secondary tiny" type="button" data-i18n="ui.copy.diagnostics">Copy Diagnostics</button>
+            </div>
+          </section>
+
+          <section id="browserControlCard" class="browser-control-card" aria-labelledby="browserControlTitle">
+            <div class="browser-control-card-head">
+              <span class="browser-control-kicker" data-i18n="browser_control.kicker">HERMES CONTROL</span>
+              <div class="browser-control-title-row">
+                <h5 id="browserControlTitle" data-i18n="browser_control.title">Operate leased tabs</h5>
+                <span id="browserControlState" class="browser-control-state">OFF</span>
+              </div>
+              <p id="browserControlCardDetail">Off by default. Enabling control grants temporary browser-debugging access on Chromium.</p>
+            </div>
+            <div class="browser-control-config">
+              <label class="browser-control-field">
+                <span data-i18n="browser_control.scope">Control scope</span>
+                <select id="browserControlScopeInput">
+                  <option value="this-tab" data-i18n="browser_control.this_tab">This tab</option>
+                  <option value="selected-tabs" data-i18n="browser_control.selected_tabs">Selected tabs</option>
+                  <option value="task-set" data-i18n="browser_control.task_set">Task set</option>
+                </select>
+              </label>
+              <fieldset class="browser-control-view">
+                <legend data-i18n="browser_control.while_working">While Hermes works</legend>
+                <div>
+                  <button id="browserControlStayButton" class="browser-control-action secondary" type="button" aria-pressed="true" data-i18n="browser_control.stay">Stay on my tab</button>
+                  <button id="browserControlFollowButton" class="browser-control-action secondary" type="button" aria-pressed="false" data-i18n="browser_control.follow">Follow Hermes</button>
+                </div>
+              </fieldset>
+            </div>
+            <div class="browser-control-card-actions">
+              <button id="browserControlEnableButton" class="browser-control-action" type="button" data-i18n="browser_control.enable">Enable control</button>
+              <button id="browserControlDetachButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.turn_off">Turn off</button>
+            </div>
+            <p class="browser-control-note" data-i18n="browser_control.note">Chromium controller access was granted when this extension or update was installed. Hermes attaches only during an authorized leased action, never raises a browser window, and blocks credentials, MFA, payment fields, and secret text.</p>
+          </section>
+
+          <label id="browserContextConsentControl" class="settings-toggle-card browser-context-consent" hidden>
+            <span class="settings-toggle-copy">
+              <strong data-i18n="context_consent.share_label">Share page context with this connection</strong>
+              <small data-i18n="context_consent.share_detail">Chat only until you approve this exact connection. Consent is isolated by endpoint, account, profile, and Browser controller.</small>
+              <small id="browserContextConsentIdentity" class="browser-context-consent-identity" data-i18n-runtime>Verifying connection identity…</small>
+            </span>
+            <input id="browserContextConsentInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          </section>
+        </section>
+
+        <section id="settingsPane-assist" class="settings-pane" data-settings-pane="assist" aria-labelledby="settingsPaneTitle-assist" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-assist" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.assist.title">Assist &amp; Actions</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
         <section class="settings-section inline-assist-settings" aria-labelledby="inlineAssistTitle">
           <div class="settings-section-head">
             <div>
@@ -1048,221 +1381,53 @@
             <span class="settings-switch" aria-hidden="true"></span>
           </label>
         </section>
+        </section>
 
-        <section class="settings-section connection-settings" aria-labelledby="connectionTitle">
+        <section id="settingsPane-voice" class="settings-pane" data-settings-pane="voice" aria-labelledby="settingsPaneTitle-voice" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-voice" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.voice.title">Voice &amp; Wake</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+          </div>
+        <section class="settings-section wake-word-settings" aria-labelledby="wakeWordTitle">
           <div class="settings-section-head">
             <div>
-              <h3 id="connectionTitle" data-i18n="ui.gateway.connection">Gateway Connection</h3>
-              <p data-i18n="ui.choose.where.this.browser.session.reaches.hermes">Choose where this Browser session reaches Hermes.</p>
+              <h3 id="wakeWordTitle" data-i18n="ui.wake.word">Wake word</h3>
+              <p data-i18n="ui.say.hey.hermes.for.a.hands.free.one.turn.voice.request.always.o.cd7ebfae">Say “Hey Hermes” for a hands-free, one-turn voice request. Always-on detection stays on this machine.</p>
             </div>
           </div>
-
-        <div class="gateway-mode" role="radiogroup" aria-label="Connection mode" data-i18n-aria-label="ui.connection.mode">
-          <button class="conn-mode-card" type="button" data-connection-mode="local" role="radio" aria-checked="true">
-            <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.local.gateway">Local gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
-            <span class="conn-mode-desc" data-i18n="ui.hermes.on.this.machine.default.and.offline.capable">Hermes on this machine. Default and offline-capable.</span>
-          </button>
-          <button class="conn-mode-card" type="button" data-connection-mode="cloud" role="radio" aria-checked="false">
-            <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.hermes.cloud.preview">Hermes Cloud Preview</span><span class="conn-mode-check" aria-hidden="true"></span></span>
-            <span class="conn-mode-desc" data-i18n="ui.attach.the.active.signed.in.hermes.cloud.agent.tab.with.a.one.use.ticket">Attach the active signed-in Hermes Cloud agent tab with a one-use ticket.</span>
-          </button>
-          <button class="conn-mode-card" type="button" data-connection-mode="remote" role="radio" aria-checked="false">
-            <span class="conn-mode-head"><span class="conn-mode-title" data-i18n="ui.remote.gateway">Remote gateway</span><span class="conn-mode-check" aria-hidden="true"></span></span>
-            <span class="conn-mode-desc" data-i18n="ui.self.hosted.api.or.dashboard.api.can.use.trusted.lan.http.dashb.152b7f4c">Self-hosted API or dashboard. API can use trusted LAN http; dashboard uses https.</span>
-          </button>
-          <select id="connectionModeInput" name="connectionMode" hidden>
-            <option value="local" data-i18n="ui.local.gateway">Local gateway</option>
-            <option value="cloud" data-i18n="ui.hermes.cloud">Hermes Cloud</option>
-            <option value="remote" data-i18n="ui.remote.gateway">Remote gateway</option>
-          </select>
-          <select id="gatewayModeInput" name="gatewayMode" hidden>
-            <option value="local-api" data-i18n="ui.local.api.server">Local API server</option>
-            <option value="remote-api" data-i18n="ui.remote.api.server">Remote API server</option>
-            <option value="remote-dashboard" data-i18n="ui.remote.dashboard.websocket">Remote dashboard (WebSocket)</option>
-          </select>
-        </div>
-
-        <label id="gatewayUrlField">
-          <span data-i18n="ui.gateway.url">Gateway URL</span>
-          <input id="gatewayUrlInput" name="gatewayUrl" type="url" placeholder="http://127.0.0.1:8642" />
-        </label>
-        <p id="cloudPreviewHelp" class="hint" hidden data-i18n="ui.open.the.signed.in.hermes.cloud.agent.in.the.active.tab.wait.fo.b7be52ec">Open the signed-in Hermes Cloud agent in the active tab, wait for it to finish loading, then choose Connect to Hermes. No API token or localhost fallback is used.</p>
-        <p id="gatewayHelp" class="hint">Local setup: keep Hermes Gateway/API Server running on this machine.</p>
-
-        <label id="apiKeyField">
-          <span data-i18n="ui.api.key.browser.token">API key / browser token</span>
-          <input id="apiKeyInput" name="apiKey" type="password" autocomplete="off" placeholder="API key (blank = dashboard)" data-i18n-placeholder="ui.api.key.blank.dashboard" />
-        </label>
-
-        <section class="settings-section remote-diagnostics-panel" id="remoteDiagnosticsPanel" hidden>
-          <div class="settings-section-head compact">
-            <div>
-              <h4 data-i18n="ui.remote.setup.diagnostics">Remote setup diagnostics</h4>
-              <p data-i18n="ui.use.this.when.a.remote.dashboard.url.bearer.token.or.cors.origi.9956db87">Use this when a remote dashboard URL, bearer token, or CORS origin is misconfigured.</p>
-            </div>
-          </div>
-          <dl class="remote-diagnostics-list" id="remoteDiagnosticsList"></dl>
-          <pre id="remoteEnvBlock" class="remote-env-block" aria-label="Remote API server environment variables" data-i18n-aria-label="ui.remote.api.server.environment.variables"></pre>
-          <button type="button" id="copyRemoteEnvButton" class="secondary" data-i18n="ui.copy.server.env">Copy server env</button>
+          <label class="settings-toggle-card">
+            <span class="settings-toggle-copy">
+              <strong data-i18n="ui.enable.wake.word">Enable wake word</strong>
+              <small data-i18n="ui.prefers.hermes.native.wake.engine.locally.and.uses.chromium.on.42c1439e">Prefers Hermes’ native wake engine locally and uses available on-device browser speech for Cloud Preview.</small>
+            </span>
+            <input id="wakeWordEnabledInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <label>
+            <span data-i18n="ui.browser.fallback.phrase">Browser fallback phrase</span>
+            <input id="wakeWordPhraseInput" type="text" maxlength="64" autocomplete="off" placeholder="hey hermes" data-i18n-invariant />
+          </label>
+          <label class="settings-toggle-card compact-toggle-card">
+            <span class="settings-toggle-copy"><strong data-i18n="ui.browser.local.fallback">Browser-local fallback</strong><small data-i18n="ui.required.for.cloud.preview.and.older.hermes.builds.it.refuses.c.f0bdad5b">Required for Cloud Preview and older Hermes builds. It refuses cloud speech recognition.</small></span>
+            <input id="wakeWordBrowserFallbackInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <label class="settings-toggle-card compact-toggle-card">
+            <span class="settings-toggle-copy"><strong data-i18n="ui.speak.wake.replies">Speak wake replies</strong><small data-i18n="ui.uses.hermes.tts.on.the.native.path.and.local.browser.speech.on.acf402bd">Uses Hermes TTS on the native path and local browser speech on the fallback path.</small></span>
+            <input id="wakeWordSpeakRepliesInput" class="settings-switch-input" type="checkbox" />
+            <span class="settings-switch" aria-hidden="true"></span>
+          </label>
+          <p id="wakeWordStatus" class="hint" role="status" aria-live="polite">Wake word is off.</p>
+        </section>
         </section>
 
-        <label>
-          <span data-i18n="ui.session.id">Session ID</span>
-          <input id="sessionIdInput" name="sessionId" type="text" placeholder="hermes-browser-extension" data-i18n-invariant />
-        </label>
-
-        <label>
-          <span data-i18n="ui.session.title">Session title</span>
-          <input id="sessionTitleInput" name="sessionTitle" type="text" placeholder="Hermes Browser Extension" data-i18n-placeholder="manifest.extension_name" />
-        </label>
-
-        <section class="settings-subsection browser-behavior-settings" aria-labelledby="browserBehaviorTitle">
-          <div class="settings-section-head compact">
-            <div>
-              <h4 id="browserBehaviorTitle" data-i18n="ui.browser.behavior">Browser Behavior</h4>
-              <p data-i18n="ui.session.naming.prompt.context.and.side.panel.residency.live.together">Session naming, prompt context, and side-panel residency live together.</p>
-            </div>
+        <section id="settingsPane-about" class="settings-pane" data-settings-pane="about" aria-labelledby="settingsPaneTitle-about" hidden>
+          <div class="settings-pane-bar">
+            <button type="button" class="secondary settings-pane-back" data-settings-back><span aria-hidden="true">&larr;</span><span data-i18n="settings.categories.back">Categories</span></button>
+            <h3 id="settingsPaneTitle-about" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.about.title">About &amp; Diagnostics</h3>
+            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
           </div>
-
-          <section id="statusCard" class="status-card settings-active-tab" aria-live="polite" aria-label="Active tab status" data-i18n-aria-label="ui.active.tab.status">
-            <div class="status-label">
-              <span class="status-dot" id="statusDot"></span>
-              <span data-i18n="ui.active.tab.2bc454c2">ACTIVE TAB</span>
-            </div>
-            <div class="status-copy">
-              <strong id="activeTitle">No tab detected</strong>
-              <span id="activeUrl">Open a normal http/https tab, then refresh context.</span>
-            </div>
-            <div id="statusActions" class="status-actions" hidden>
-              <button id="statusRetryProbeButton" class="secondary tiny" type="button" hidden></button>
-              <button id="statusCopyDiagnosticsButton" class="secondary tiny" type="button" data-i18n="ui.copy.diagnostics">Copy Diagnostics</button>
-            </div>
-          </section>
-
-          <section id="browserControlCard" class="browser-control-card" aria-labelledby="browserControlTitle">
-            <div class="browser-control-card-head">
-              <span class="browser-control-kicker" data-i18n="browser_control.kicker">HERMES CONTROL</span>
-              <div class="browser-control-title-row">
-                <h5 id="browserControlTitle" data-i18n="browser_control.title">Operate leased tabs</h5>
-                <span id="browserControlState" class="browser-control-state">OFF</span>
-              </div>
-              <p id="browserControlCardDetail">Off by default. Enabling control grants temporary browser-debugging access on Chromium.</p>
-            </div>
-            <div class="browser-control-config">
-              <label class="browser-control-field">
-                <span data-i18n="browser_control.scope">Control scope</span>
-                <select id="browserControlScopeInput">
-                  <option value="this-tab" data-i18n="browser_control.this_tab">This tab</option>
-                  <option value="selected-tabs" data-i18n="browser_control.selected_tabs">Selected tabs</option>
-                  <option value="task-set" data-i18n="browser_control.task_set">Task set</option>
-                </select>
-              </label>
-              <fieldset class="browser-control-view">
-                <legend data-i18n="browser_control.while_working">While Hermes works</legend>
-                <div>
-                  <button id="browserControlStayButton" class="browser-control-action secondary" type="button" aria-pressed="true" data-i18n="browser_control.stay">Stay on my tab</button>
-                  <button id="browserControlFollowButton" class="browser-control-action secondary" type="button" aria-pressed="false" data-i18n="browser_control.follow">Follow Hermes</button>
-                </div>
-              </fieldset>
-            </div>
-            <div class="browser-control-card-actions">
-              <button id="browserControlEnableButton" class="browser-control-action" type="button" data-i18n="browser_control.enable">Enable control</button>
-              <button id="browserControlDetachButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.turn_off">Turn off</button>
-            </div>
-            <p class="browser-control-note" data-i18n="browser_control.note">Chromium controller access was granted when this extension or update was installed. Hermes attaches only during an authorized leased action, never raises a browser window, and blocks credentials, MFA, payment fields, and secret text.</p>
-          </section>
-
-          <label class="settings-toggle-card auto-name-toggle">
-            <span class="settings-toggle-copy">
-              <strong data-i18n="ui.auto.name.browser.sessions">Auto-name browser sessions</strong>
-              <small data-i18n="ui.rename.a.fresh.browser.session.from.the.first.real.message">Rename a fresh browser session from the first real message.</small>
-            </span>
-            <input id="autoNameSessionsInput" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-
-          <label class="settings-toggle-card auto-name-toggle">
-            <span class="settings-toggle-copy">
-              <strong data-i18n="ui.show.message.times">Show message times</strong>
-              <small data-i18n="ui.show.message.times.hint">Show the time on your messages when you hover or tap them.</small>
-            </span>
-            <input id="showMessageTimesInput" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-
-          <div class="settings-control-group" aria-label="Prompt context settings" data-i18n-aria-label="ui.prompt.context.settings">
-            <div class="settings-control-group-head">
-              <strong data-i18n="ui.prompt.context">Prompt context</strong>
-              <small data-i18n="ui.choose.what.browser.context.is.allowed.into.each.prompt">Choose what browser context is allowed into each prompt.</small>
-            </div>
-            <div class="settings-toggle-grid settings-toggle-grid-three">
-              <label class="settings-toggle-card compact-toggle">
-                <span class="settings-toggle-copy"><strong data-i18n="ui.open.tabs">Open tabs</strong><small data-i18n="ui.window.tab.list">Window tab list</small></span>
-                <input id="includeTabsInput" class="settings-switch-input" type="checkbox" />
-                <span class="settings-switch" aria-hidden="true"></span>
-              </label>
-              <label class="settings-toggle-card compact-toggle">
-                <span class="settings-toggle-copy"><strong data-i18n="ui.page.text">Page text</strong><small data-i18n="ui.readable.dom.text">Readable DOM text</small></span>
-                <input id="includePageTextInput" class="settings-switch-input" type="checkbox" />
-                <span class="settings-switch" aria-hidden="true"></span>
-              </label>
-              <label class="settings-toggle-card compact-toggle">
-                <span class="settings-toggle-copy"><strong data-i18n="ui.selection">Selection</strong><small data-i18n="ui.highlighted.text">Highlighted text</small></span>
-                <input id="includeSelectedTextInput" class="settings-switch-input" type="checkbox" />
-                <span class="settings-switch" aria-hidden="true"></span>
-              </label>
-            </div>
-          </div>
-
-          <label id="browserContextConsentControl" class="settings-toggle-card browser-context-consent" hidden>
-            <span class="settings-toggle-copy">
-              <strong data-i18n="context_consent.share_label">Share page context with this connection</strong>
-              <small data-i18n="context_consent.share_detail">Chat only until you approve this exact connection. Consent is isolated by endpoint, account, profile, and Browser controller.</small>
-              <small id="browserContextConsentIdentity" class="browser-context-consent-identity" data-i18n-runtime>Verifying connection identity…</small>
-            </span>
-            <input id="browserContextConsentInput" class="settings-switch-input" type="checkbox" />
-            <span class="settings-switch" aria-hidden="true"></span>
-          </label>
-
-          <fieldset class="panel-residency-options settings-choice-group">
-            <legend data-i18n="ui.panel.opening">Panel opening</legend>
-            <div class="settings-choice-grid">
-              <label class="settings-choice-card">
-                <input type="radio" name="panelResidencyMode" value="tab-attached" />
-                <span class="settings-choice-copy">
-                  <strong data-i18n="ui.attach.to.current.tab">Attach to current tab</strong>
-                  <small data-i18n="ui.hermes.appears.only.on.tabs.where.you.open.it">Hermes appears only on tabs where you open it.</small>
-                </span>
-                <span class="settings-choice-mark" aria-hidden="true"></span>
-              </label>
-              <label class="settings-choice-card">
-                <input type="radio" name="panelResidencyMode" value="global" />
-                <span class="settings-choice-copy">
-                  <strong data-i18n="ui.keep.open.across.tabs">Keep open across tabs</strong>
-                  <small data-i18n="ui.existing.attached.panels.stay.as.they.are.other.and.new.tabs.us.fb9a0ba6">Existing attached panels stay as they are. Other and new tabs use the shared panel.</small>
-                </span>
-                <span class="settings-choice-mark" aria-hidden="true"></span>
-              </label>
-            </div>
-          </fieldset>
-        </section>
-
-        <label>
-          <span data-i18n="ui.page.context.depth">Page context depth</span>
-          <select id="contextDepthInput" name="contextDepth">
-            <option value="minimal" data-i18n="ui.minimal.selected.text.short.page.text">Minimal - selected text + short page text</option>
-            <option value="normal" data-i18n="ui.normal.good.default">Normal - good default</option>
-            <option value="full" data-i18n="ui.full.largest.payload">Full - largest payload</option>
-          </select>
-        </label>
-
-        <label>
-          <span data-i18n="ui.youtube.transcript.provider">YouTube transcript provider</span>
-          <input id="transcriptProviderInput" name="transcriptProvider" type="text" placeholder="default, off, or https://provider.example/transcript?video_id={video_id}" data-i18n-invariant />
-        </label>
-
-        <p class="hint" data-i18n="ui.public.flow.connect.to.hermes.creates.a.scoped.browser.token.wh.9184ad4d">Public flow: Connect to Hermes creates a scoped browser token when the API server supports pairing. For remote hosts, set API_SERVER_CORS_ORIGINS to this extension origin and use a strong API_SERVER_KEY or scoped token.</p>
-
         <details id="compatibilityPanel" class="compatibility-panel" aria-labelledby="compatibilityTitle">
           <summary class="compatibility-summary" aria-controls="compatibilityList">
             <span class="compatibility-summary-copy">
@@ -1273,17 +1438,6 @@
           </summary>
           <ul id="compatibilityList" class="compatibility-list"></ul>
         </details>
-
-        <div class="connection-security" aria-labelledby="connectionSecurityTitle">
-          <div class="settings-section-head">
-            <div>
-              <h4 id="connectionSecurityTitle" data-i18n="ui.connection.security">Connection security</h4>
-              <p data-i18n="ui.tokens.are.stored.in.chrome.storage.local.and.never.displayed.after.save">Tokens are stored in chrome.storage.local and never displayed after save.</p>
-            </div>
-          </div>
-          <div id="connectionSecuritySummary" class="connection-security-summary"></div>
-          <button id="clearTokenButton" class="secondary" type="button" data-i18n="ui.clear.stored.token">Clear stored token</button>
-        </div>
 
         <div class="support-diagnostics" aria-labelledby="supportDiagnosticsTitle">
           <div class="settings-section-head">
@@ -1296,6 +1450,8 @@
           <p id="diagnosticsCopyStatus" class="hint">Use this when filing GitHub issues or support reports.</p>
         </div>
         </section>
+
+        <button id="settingsBackToTop" class="settings-back-to-top" type="button" hidden aria-label="Back to top" data-i18n-aria-label="settings.back_to_top"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 12 4.5-4.5 4.5 4.5"></path></svg><span data-i18n="settings.back_to_top">Back to top</span></button>
       </form>
     </section>
 

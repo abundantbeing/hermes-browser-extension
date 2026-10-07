@@ -81,12 +81,20 @@ test('canonical Hermes appearance themes stay ordered with Nous first', () => {
     'senter-space',
     'aurora',
     'solstice',
+    'everforest',
+    'classic',
+    'anti-nous',
   ]);
   assert.equal(APPEARANCE_THEMES[0].name, 'Nous');
-  assert.deepEqual(APPEARANCE_THEMES.slice(-3).map((theme) => theme.name), [
+  assert.deepEqual(APPEARANCE_THEMES.slice(6, 9).map((theme) => theme.name), [
     'Senter Space',
     'Aphrodite',
     'Solstice',
+  ]);
+  assert.deepEqual(APPEARANCE_THEMES.slice(-3).map((theme) => theme.name), [
+    'Everforest',
+    'Classic Hermes',
+    'Anti-Nous',
   ]);
   assert.equal(DEFAULT_APPEARANCE_THEME, 'nous');
   assert.equal(DEFAULT_COLOR_MODE, 'dark');

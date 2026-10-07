@@ -27,7 +27,8 @@ Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium 
 - **Message tools**: Copy, Edit, and Restore checkpoint on supported turns, with day dividers, message times, and theme-aware bubbles.
 - **Hermes Assist** drafts beside supported text composers and never sends, posts, or submits for you.
 - **Page comments**: pick an element, write a note, and queue pins beside Ask Hermes.
-- **Appearance**: Light, Dark, or System mode, nine themes, text zoom, and a font list. Nous Light is a white theme with Nous Blue accents. Centered background artwork changes when you open the panel and scales with its width; sidecar illustrations rotate independently.
+- **Settings**: a category home opens one section at a time, with Back navigation, edited-category markers, and direct links from related controls.
+- **Appearance**: Light, Dark, or System mode, twelve themes, text zoom, and a font list. Everforest has forest greens and warm parchment; Classic Hermes has amber gold and navy; Anti-Nous has crimson, navy reading panels, and fine gold trim. Nous Light keeps its white shell and Nous Blue accents. Centered background artwork changes when you open the panel and scales with its width; sidecar illustrations rotate independently.
 
 
 The full list of changes per version lives in the [changelog](./CHANGELOG.md) and the [releases](https://github.com/abundantbeing/hermes-browser-extension/releases).
@@ -40,7 +41,7 @@ Screenshots use the Mono theme in Dark mode.
 | --- | --- | --- |
 | <img src="./assets/readme/hermes-browser-sidepanel.png" alt="Hermes Browser side panel in Mono Dark, answering a question about the attached page" width="300" /> | <img src="./assets/readme/hermes-browser-bot-chats.png" alt="Bot Mode group chat with four demo agents replying in one room" width="300" /> | <img src="./assets/readme/hermes-browser-bot-profile.png" alt="Bot Mode profile editor with avatar, display title, and description" width="300" /> |
 | Theme settings | Local agents | Hermes Control |
-| <img src="./assets/readme/hermes-browser-theme-settings.png" alt="Appearance settings with color mode, text zoom, and the nine theme previews" width="300" /> | <img src="./assets/readme/hermes-browser-local-agents.png" alt="Agent Profile settings listing the verified agents from the connected gateway" width="300" /> | <img src="./assets/readme/hermes-browser-control.png" alt="Hermes Control dialog with scope, stay or follow, and turn off controls" width="300" /> |
+| <img src="./assets/readme/hermes-browser-theme-settings.png" alt="Appearance settings with color mode, text zoom, and built-in theme previews" width="300" /> | <img src="./assets/readme/hermes-browser-local-agents.png" alt="Agent Profile settings listing the verified agents from the connected gateway" width="300" /> | <img src="./assets/readme/hermes-browser-control.png" alt="Hermes Control dialog with scope, stay or follow, and turn off controls" width="300" /> |
 
 ## Requirements
 

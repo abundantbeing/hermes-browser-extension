@@ -782,7 +782,7 @@ const CONTENT_EXTRACTION_API = Object.freeze({
   hermesGlobal.HermesContentExtractor = CONTENT_EXTRACTION_API;
 })(globalThis);
 
-/* extension/lib/appearance-themes.mjs · SHA-256 667a76786cb4f8cd */
+/* extension/lib/appearance-themes.mjs · SHA-256 c319e3ac90fb50c3 */
 (function hermesAppearanceRuntime(hermesGlobal) {
   'use strict';
 
@@ -841,6 +841,24 @@ const APPEARANCE_THEMES = Object.freeze([
     description: 'Quiet graphite with sun-warmed brass',
     preview: { bg: '#181715', panel: '#25211b', text: '#f1dfbc', muted: '#c4a77c', accent: '#e5b96c' },
   },
+  {
+    value: 'everforest',
+    name: 'Everforest',
+    description: 'Forest greens, warm parchment, and soft sage',
+    preview: { bg: '#2d353b', panel: '#373e42', text: '#d3c6aa', muted: '#a4ada1', accent: '#a7c080' },
+  },
+  {
+    value: 'classic',
+    name: 'Classic Hermes',
+    description: 'Original amber gold, bronze, and midnight navy',
+    preview: { bg: '#1a1a2e', panel: '#232335', text: '#fff8dc', muted: '#b8860b', accent: '#ffbf00' },
+  },
+  {
+    value: 'anti-nous',
+    name: 'Anti-Nous',
+    description: 'Blood red and berry, navy reading surfaces, and fine gold trim',
+    preview: { bg: '#53172b', panel: '#101b30', text: '#f5ece6', muted: '#d4af6c', accent: '#f06b65' },
+  },
 ]);
 
 const INLINE_ASSIST_THEME_TOKENS = Object.freeze({
@@ -879,6 +897,18 @@ const INLINE_ASSIST_THEME_TOKENS = Object.freeze({
   solstice: Object.freeze({
     dark: Object.freeze({ surface: '#181715', panel: '#28231b', ink: '#f0dfbb', fg: '#f7ebd7', accent: '#e2b366', primary: '#6b4d22' }),
     light: Object.freeze({ surface: '#6b4d22', panel: '#fffbf3', ink: '#58401f', fg: '#58401f', accent: '#bd7d2d', primary: '#6b4d22' }),
+  }),
+  everforest: Object.freeze({
+    dark: Object.freeze({ surface: '#2d353b', panel: '#2d353b', ink: '#d3c6aa', fg: '#d3c6aa', accent: '#a7c080', primary: '#586b35' }),
+    light: Object.freeze({ surface: '#586b35', panel: '#fdf6e3', ink: '#5c6a72', fg: '#fdf6e3', accent: '#586b35', primary: '#586b35' }),
+  }),
+  classic: Object.freeze({
+    dark: Object.freeze({ surface: '#1a1a2e', panel: '#232335', ink: '#fff8dc', fg: '#fff8dc', accent: '#ffbf00', primary: '#825d02' }),
+    light: Object.freeze({ surface: '#825d02', panel: '#f0f0ef', ink: '#2b2109', fg: '#fff8dc', accent: '#825d02', primary: '#825d02' }),
+  }),
+  'anti-nous': Object.freeze({
+    dark: Object.freeze({ surface: '#53172b', panel: '#101b30', ink: '#f5ece6', fg: '#f5ece6', accent: '#f06b65', primary: '#b52b3d' }),
+    light: Object.freeze({ surface: '#a52232', panel: '#ffffff', ink: '#a52232', fg: '#fff7f0', accent: '#a52232', primary: '#b52b3d' }),
   }),
 });
 

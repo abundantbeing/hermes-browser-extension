@@ -512,6 +512,12 @@ import {
   parseSidePanelParams,
 } from './lib/panel-residency.mjs';
 import {
+  SETTINGS_PANES,
+  changedPanes,
+  resolveSettingsTarget,
+  snapshotControls,
+} from './lib/settings-panes.mjs';
+import {
   INLINE_DRAFT_ROUTES,
   buildInlineDraftPrompt,
   normalizeInlineDraftRequest,
@@ -2077,7 +2083,166 @@ function applyRemoteDiagnostic(diagnostic, { statusKind = 'error' } = {}) {
   return true;
 }
 
-function openSettingsDialog() {
+let settingsActivePane = '';
+let settingsBaseline = null;
+let settingsReturnFocus = null;
+
+function settingsControlEntries() {
+  const entries = [];
+  for (const paneEl of els.settingsForm.querySelectorAll('[data-settings-pane]')) {
+    const pane = paneEl.dataset.settingsPane;
+    paneEl.querySelectorAll('input, select, textarea').forEach((control, index) => {
+      if (control.type === 'file' || control.type === 'button' || control.type === 'search') return;
+      const key = control.id || control.name || `${control.type}-${index}`;
+      const value = control.type === 'checkbox' || control.type === 'radio' ? String(control.checked) : control.value;
+      entries.push([pane, `${key}:${control.type === 'radio' ? control.value : ''}`, value]);
+    });
+  }
+  return entries;
+}
+
+function captureSettingsBaseline() {
+  settingsBaseline = snapshotControls(settingsControlEntries());
+  renderSettingsEditedMarkers();
+}
+
+function renderSettingsEditedMarkers() {
+  const dirty = settingsBaseline ? changedPanes(settingsBaseline, settingsControlEntries()) : new Set();
+  for (const card of els.settingsForm.querySelectorAll('[data-settings-category]')) {
+    const edited = dirty.has(card.dataset.settingsCategory);
+    card.classList.toggle('is-edited', edited);
+    card.querySelector('.settings-category-edited')?.toggleAttribute('hidden', !edited);
+  }
+  for (const paneEl of els.settingsForm.querySelectorAll('[data-settings-pane]')) {
+    paneEl.querySelector('.settings-pane-edited')?.toggleAttribute('hidden', !dirty.has(paneEl.dataset.settingsPane));
+  }
+}
+
+function renderSettingsModelSummary() {
+  const nameEl = document.getElementById('settingsCurrentModel');
+  if (!nameEl) return;
+  const selected = availableModels.find((model) => model.id === settings.model || model.rawModelId === settings.model) || null;
+  const label = selected ? modelDisplayName(selected) : String(settings.model || '').trim();
+  nameEl.textContent = label || t('settings.models.none');
+  const meta = [];
+  const provider = selected ? modelProviderLabel(selected) : '';
+  if (provider) meta.push(provider);
+  const contextTokens = Number(selected?.contextTokens || settings.modelContextTokens || 0);
+  if (contextTokens > 0) meta.push(`${formatTokens(contextTokens).replace(' tokens', '')} ${t('ui.context.window').toLowerCase()}`);
+  const metaEl = document.getElementById('settingsCurrentModelMeta');
+  if (metaEl) {
+    metaEl.textContent = meta.join(' · ');
+    metaEl.hidden = !meta.length;
+  }
+  const thinking = settings.thinkingEnabled !== false;
+  const fast = normalizeFastMode(settings.fastMode);
+  const effort = normalizeReasoningEffort(settings.reasoningEffort);
+  for (const toggle of document.querySelectorAll('[data-runtime-toggle]')) {
+    toggle.setAttribute('aria-checked', String(toggle.dataset.runtimeToggle === 'fast' ? fast : thinking));
+  }
+  for (const card of document.querySelectorAll('[data-runtime-effort]')) {
+    card.setAttribute('aria-checked', String(card.dataset.runtimeEffort === effort));
+  }
+  const countEl = document.getElementById('settingsModelCatalogCount');
+  if (countEl) countEl.textContent = t('settings.models.catalog_count', { count: availableModels.filter(isModelRuntimeSelectable).length });
+}
+
+function handleSettingsRuntimeClick(event) {
+  const toggle = event.target.closest?.('[data-runtime-toggle]');
+  const effort = event.target.closest?.('[data-runtime-effort]');
+  if (toggle) {
+    if (toggle.dataset.runtimeToggle === 'fast') setModelRuntimeOption('fastMode', !normalizeFastMode(settings.fastMode));
+    else setModelRuntimeOption('thinkingEnabled', settings.thinkingEnabled === false);
+  } else if (effort) {
+    setModelRuntimeOption('reasoningEffort', normalizeReasoningEffort(effort.dataset.runtimeEffort));
+  } else {
+    return;
+  }
+  renderSettingsModelSummary();
+}
+
+function updateSettingsBackToTop() {
+  const button = document.getElementById('settingsBackToTop');
+  const dialog = els.settingsDialog;
+  if (!button || !dialog) return;
+  const scrollable = dialog.scrollHeight > dialog.clientHeight + 24;
+  button.hidden = dialog.hidden || !(scrollable && dialog.scrollTop > 24);
+}
+
+function scrollSettingsToTop() {
+  const reduce = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  els.settingsDialog.scrollTo({ top: 0, left: 0, behavior: reduce ? 'auto' : 'smooth' });
+  const title = settingsActivePane ? document.querySelector(`#settingsPane-${settingsActivePane} .settings-pane-title`) : null;
+  (title || els.settingsForm.querySelector('[data-settings-category]'))?.focus({ preventScroll: true });
+}
+
+function positionSettingsModelMenu(anchor) {
+  const viewport = globalThis.innerHeight || document.documentElement.clientHeight || 800;
+  const rect = anchor.getBoundingClientRect();
+  const below = viewport - rect.bottom - 12;
+  const above = rect.top - 12;
+  const openBelow = below >= 300 || below >= above;
+  const room = Math.max(240, Math.min(560, openBelow ? below : above));
+  els.modelMenu.style.maxHeight = `${Math.floor(room)}px`;
+  if (openBelow) {
+    els.modelMenu.style.top = `${Math.round(rect.bottom + 6)}px`;
+    els.modelMenu.style.bottom = 'auto';
+  } else {
+    els.modelMenu.style.top = 'auto';
+    els.modelMenu.style.bottom = `${Math.round(viewport - rect.top + 6)}px`;
+  }
+}
+
+function openSettingsModelPicker(event) {
+  event.stopPropagation();
+  const anchor = event.currentTarget;
+  const wasOpen = !els.modelMenu.hidden && els.modelMenu.dataset.floating === 'settings';
+  closeFloatingPanels();
+  if (wasOpen) return;
+  setModelSelectionTarget('chat');
+  document.body.append(els.modelMenu);
+  els.modelMenu.dataset.floating = 'settings';
+  if (els.modelMenuTitle) els.modelMenuTitle.textContent = t('ui.choose.hermes.model');
+  els.modelMenu.hidden = false;
+  positionSettingsModelMenu(anchor);
+  els.modelMenuButton.setAttribute('aria-expanded', 'true');
+  els.modelSearchInput.focus();
+}
+
+function showSettingsPane(pane, { field = '', focus = true } = {}) {
+  const home = document.getElementById('settingsCategoryHome');
+  const release = els.settingsForm.querySelector('.release-settings');
+  settingsActivePane = SETTINGS_PANES.includes(pane) ? pane : '';
+  home.hidden = Boolean(settingsActivePane);
+  if (release) release.hidden = Boolean(settingsActivePane);
+  for (const paneEl of els.settingsForm.querySelectorAll('[data-settings-pane]')) {
+    paneEl.hidden = paneEl.dataset.settingsPane !== settingsActivePane;
+  }
+  els.settingsDialog.dataset.settingsView = settingsActivePane || 'home';
+  els.settingsDialog.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  if (settingsActivePane === 'models') renderSettingsModelSummary();
+  renderSettingsEditedMarkers();
+  requestAnimationFrame(updateSettingsBackToTop);
+  if (!focus) return;
+  if (!settingsActivePane) {
+    const origin = settingsReturnFocus && home.contains(settingsReturnFocus) ? settingsReturnFocus : home.querySelector('[data-settings-category]');
+    origin?.focus({ preventScroll: true });
+    return;
+  }
+  const paneEl = document.getElementById(`settingsPane-${settingsActivePane}`);
+  const fieldEl = field ? document.getElementById(field) : null;
+  if (fieldEl && paneEl.contains(fieldEl)) {
+    requestAnimationFrame(() => {
+      fieldEl.scrollIntoView({ block: 'center', behavior: 'auto' });
+      fieldEl.focus({ preventScroll: true });
+    });
+    return;
+  }
+  paneEl.querySelector('.settings-pane-title')?.focus({ preventScroll: true });
+}
+
+function openSettingsDialog(arg) {
+  const target = resolveSettingsTarget(arg);
   renderVersionInfo();
   syncSettingsForm();
   renderCompatibilityPanel();
@@ -2091,15 +2256,30 @@ function openSettingsDialog() {
   if (isConnected()) void loadCronJobs({ quiet: true });
   els.settingsDialog.hidden = false;
   els.settingsDialog.setAttribute('aria-hidden', 'false');
-  els.settingsDialog.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  const mode = normalizeConnectionMode(settings.connectionMode);
-  (mode === 'cloud' ? els.connectButton : els.gatewayUrlInput)?.focus({ preventScroll: true });
+  settingsReturnFocus = null;
+  showSettingsPane(target.pane, { field: target.field, focus: false });
+  captureSettingsBaseline();
+  if (target.pane) {
+    showSettingsPane(target.pane, { field: target.field });
+    return;
+  }
+  els.settingsForm.querySelector('[data-settings-category]')?.focus({ preventScroll: true });
 }
 
 function closeSettingsDialog() {
   els.settingsDialog.hidden = true;
   els.settingsDialog.setAttribute('aria-hidden', 'true');
   els.settingsButton.focus();
+}
+
+function handleSettingsCategoryNavigation(event) {
+  const card = event.target.closest?.('[data-settings-category]');
+  if (card) {
+    settingsReturnFocus = card;
+    showSettingsPane(card.dataset.settingsCategory);
+    return;
+  }
+  if (event.target.closest?.('[data-settings-back]')) showSettingsPane('');
 }
 
 function browserControlMessage(type, payload = {}) {
@@ -5141,7 +5321,7 @@ async function executeNativeBrowserCommand(parsedCommand) {
     return true;
   }
   if (action === 'provider-settings') {
-    openSettingsDialog();
+    openSettingsDialog({ pane: 'models' });
     setStatus('ok', 'Provider settings opened', 'Connection and model provider controls are available in Settings.');
     return true;
   }
@@ -7567,6 +7747,7 @@ function setModelSelectionTarget(target = 'chat') {
       modelMenuHome.parent.insertBefore(els.modelMenu, modelMenuHome.next);
     }
     delete els.modelMenu.dataset.selectionTarget;
+    delete els.modelMenu.dataset.floating;
     els.modelMenu.style.removeProperty('top');
     els.modelMenu.style.removeProperty('bottom');
     els.modelMenu.style.removeProperty('max-height');
@@ -18582,7 +18763,7 @@ async function ensureHermesSession() {
 
 function parseSseBlock(block) {
   const event = { type: 'message', data: '' };
-  for (const line of block.split(/\r?\n/)) {
+  for (const line of block.split(/\cM?\n/)) {
     if (!line || line.startsWith(':')) continue;
     if (line.startsWith('event:')) event.type = line.slice(6).trim();
     if (line.startsWith('data:')) event.data += `${line.slice(5).trim()}\n`;
@@ -18600,7 +18781,7 @@ function parseSseBlock(block) {
 function sseBlocksFromBuffer(buffer, { flush = false } = {}) {
   const blocks = [];
   let match;
-  const boundary = /\r?\n\r?\n/g;
+  const boundary = /\cM?\n\cM?\n/g;
   let start = 0;
   while ((match = boundary.exec(buffer)) !== null) {
     blocks.push(buffer.slice(start, match.index));
@@ -19520,7 +19701,7 @@ async function connectApiWithPairing() {
     const message = 'Automatic pairing is available only for a loopback Local gateway. Remote API connections require an explicitly configured URL and token; dashboard connections use Trusted Dashboard Attach.';
     els.connectStatus.textContent = message;
     setStatus('warn', 'Manual setup required', message);
-    openSettingsDialog();
+    openSettingsDialog({ pane: 'connections' });
     return;
   }
   const generation = connectionController.begin({
@@ -19581,7 +19762,7 @@ async function connectApiWithPairing() {
         markConnectionProbe('unconfigured', 'Manual setup required; automatic browser pairing is not advertised by this Hermes runtime.');
         els.connectStatus.textContent = translateUiText('Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.');
         setStatus('warn', 'Manual setup required', 'This Hermes runtime does not advertise browser pairing yet.');
-        openSettingsDialog();
+        openSettingsDialog({ pane: 'connections' });
         return;
       }
     }
@@ -19620,7 +19801,7 @@ async function connectApiWithPairing() {
     if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
     markGatewayUnreachable(error, diagnostic);
     els.connectStatus.textContent = `${currentConnectionTroubleshooting() || diagnostic.detail} Manual setup is still available in settings.`;
-    openSettingsDialog();
+    openSettingsDialog({ pane: 'connections' });
   } finally {
     if (connectionController.isCurrent(generation)) {
       els.connectButton.disabled = false;
@@ -21018,6 +21199,40 @@ function bindEvents() {
   });
   watchTopbarHeight();
   els.settingsButton.addEventListener('click', openSettingsDialog);
+  els.settingsForm.addEventListener('click', handleSettingsCategoryNavigation);
+  els.settingsForm.addEventListener('input', renderSettingsEditedMarkers);
+  els.settingsForm.addEventListener('change', renderSettingsEditedMarkers);
+  document.getElementById('settingsOpenModelPickerButton')?.addEventListener('click', openSettingsModelPicker);
+  document.getElementById('settingsRefreshModelsButton')?.addEventListener('click', (event) => {
+    const button = event.currentTarget;
+    button.classList.add('is-refreshing');
+    els.refreshModelsButton?.click();
+    window.setTimeout(() => {
+      button.classList.remove('is-refreshing');
+      renderSettingsModelSummary();
+    }, 900);
+  });
+  document.getElementById('settingsPane-models')?.addEventListener('click', handleSettingsRuntimeClick);
+  const settingsRefreshStatus = document.getElementById('settingsModelRefreshStatus');
+  if (els.modelRefreshStatus && settingsRefreshStatus) {
+    new MutationObserver(() => {
+      const text = els.modelRefreshStatus.hidden ? '' : (els.modelRefreshStatus.textContent || '').trim();
+      settingsRefreshStatus.textContent = text;
+      settingsRefreshStatus.hidden = !text;
+      if (!els.settingsDialog.hidden && settingsActivePane === 'models') renderSettingsModelSummary();
+    }).observe(els.modelRefreshStatus, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+  }
+  els.settingsDialog.addEventListener('scroll', updateSettingsBackToTop, { passive: true });
+  window.addEventListener('resize', updateSettingsBackToTop);
+  document.getElementById('settingsBackToTop')?.addEventListener('click', scrollSettingsToTop);
+  if (typeof ResizeObserver === 'function') new ResizeObserver(updateSettingsBackToTop).observe(els.settingsForm);
+  const modelSummaryObserver = new MutationObserver(() => {
+    if (!els.settingsDialog.hidden && settingsActivePane === 'models') renderSettingsModelSummary();
+  });
+  for (const id of ['currentModelName', 'currentModelEffort']) {
+    const node = document.getElementById(id);
+    if (node) modelSummaryObserver.observe(node, { childList: true, characterData: true, subtree: true });
+  }
   els.botModeButton?.addEventListener('click', async (event) => {
     event.stopPropagation();
     const opening = els.botModePanel.hidden;
@@ -21409,6 +21624,15 @@ function bindEvents() {
         closeUpdateDialog();
         return;
       }
+      if (!els.modelMenu.hidden && els.modelMenu.dataset.floating === 'settings') {
+        closeFloatingPanels();
+        document.getElementById('settingsOpenModelPickerButton')?.focus({ preventScroll: true });
+        return;
+      }
+      if (!els.settingsDialog.hidden && settingsActivePane) {
+        showSettingsPane('');
+        return;
+      }
       if (!els.settingsDialog.hidden) closeSettingsDialog();
       closeFloatingPanels();
     }
@@ -21709,7 +21933,7 @@ function bindEvents() {
   });
   els.editModelsButton.addEventListener('click', () => {
     closeFloatingPanels();
-    openSettingsDialog();
+    openSettingsDialog({ pane: 'models' });
     setStatus('warn', 'Edit models in Hermes Desktop', 'Use Hermes Desktop model settings or the Hermes model command, then Refresh Models here.');
   });
   els.contextMenuRouteNotice?.addEventListener('click', (event) => {
@@ -21738,7 +21962,8 @@ function bindEvents() {
     els.modelSearchInput.focus();
   });
   els.modelMenuCloseButton?.addEventListener('click', () => {
-    const focusTarget = modelSelectionTarget === 'assist' ? els.inlineAssistModelButton : els.modelMenuButton;
+    const floatingAnchor = els.modelMenu.dataset.floating === 'settings' ? document.getElementById('settingsOpenModelPickerButton') : null;
+    const focusTarget = floatingAnchor || (modelSelectionTarget === 'assist' ? els.inlineAssistModelButton : els.modelMenuButton);
     closeFloatingPanels();
     focusTarget?.focus();
   });
@@ -22380,15 +22605,12 @@ function bindEvents() {
       const gateReason = button.dataset.contextConsentReason || '';
       els.contextScopeMenu.hidden = true;
       renderContextScopeControls();
-      openSettingsDialog();
-      requestAnimationFrame(() => {
-        if (gateReason === 'principal-unavailable') {
-          els.testConnectionButton?.focus({ preventScroll: true });
-          return;
-        }
-        els.browserContextConsentControl?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        els.browserContextConsentInput?.focus({ preventScroll: true });
-      });
+      if (gateReason === 'principal-unavailable') {
+        openSettingsDialog({ pane: 'connections' });
+        requestAnimationFrame(() => els.testConnectionButton?.focus({ preventScroll: true }));
+        return;
+      }
+      openSettingsDialog({ pane: 'permissions', field: 'browserContextConsentInput' });
       return;
     }
 

@@ -8,13 +8,15 @@ const [html, source, css] = await Promise.all([
   readFile(new URL('../extension/sidepanel.css', import.meta.url), 'utf8'),
 ]);
 
-test('Phase 6 Hermes Control card is target-locked inside Browser Behavior after Active Tab', () => {
-  const browserBehavior = html.indexOf('id="browserBehaviorTitle"');
+test('Phase 6 Hermes Control card is target-locked inside the Permissions pane after Active Tab', () => {
+  const pane = html.indexOf('data-settings-pane="permissions"');
+  const nextPane = html.indexOf('data-settings-pane="assist"');
   const activeTab = html.indexOf('id="statusCard"');
   const controlCard = html.indexOf('id="browserControlCard"');
-  const promptContext = html.indexOf('class="settings-control-group"');
-  assert.ok(browserBehavior >= 0 && activeTab > browserBehavior);
-  assert.ok(controlCard > activeTab && controlCard < promptContext);
+  const consent = html.indexOf('id="browserContextConsentControl"');
+  assert.ok(pane >= 0 && nextPane > pane);
+  assert.ok(activeTab > pane && activeTab < nextPane, 'Active Tab status lives in Permissions');
+  assert.ok(controlCard > activeTab && controlCard < consent && controlCard < nextPane);
   assert.match(html, /id="browserControlEnableButton"/);
   assert.match(html, /id="browserControlScopeInput"/);
   assert.match(html, /id="browserControlStayButton"/);

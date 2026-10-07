@@ -149,6 +149,7 @@ test('Hermes Web uses multiplier-based full-tab typography without legacy select
   assert.match(css, /#settingsTextZoomInput\s*\{[^}]*min-width:\s*0/s);
   assert.deepEqual(APPEARANCE_THEMES.map((theme) => theme.value), [
     'nous', 'midnight', 'ember', 'mono', 'cyberpunk', 'slate', 'senter-space', 'aurora', 'solstice',
+    'everforest', 'classic', 'anti-nous',
   ]);
 });
 

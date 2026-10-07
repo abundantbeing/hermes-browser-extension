@@ -55,7 +55,7 @@ test('tab-scope actions render an inline consent warning instead of appearing to
   assert.match(guard, /renderContextScopeMenu\('', \{ consentScope: requested \}\)/);
   assert.match(guard, /open-context-consent/);
   assert.doesNotMatch(guard, /openSettingsDialog\(\)/);
-  assert.match(sidepanel, /action === 'open-context-consent'[\s\S]*contextConsentReason[\s\S]*openSettingsDialog\(\)/);
+  assert.match(sidepanel, /action === 'open-context-consent'[\s\S]*contextConsentReason[\s\S]*openSettingsDialog\(\{ pane: 'permissions', field: 'browserContextConsentInput' \}\)/);
   assert.match(sidepanelCss, /\.context-scope-consent-notice/);
   assert.match(sidepanelCss, /\.context-scope-consent-action/);
   assert.ok(pin.indexOf('requireContextConsentForScope(') !== -1);

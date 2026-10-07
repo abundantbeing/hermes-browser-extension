@@ -325,3 +325,414 @@ html[data-hermes-theme="cyberpunk"] .proof-card { border-color: rgba(var(--herme
   .web-settings-dialog .segmented-control { width: 100%; }
   .web-settings-dialog .segmented-control button { min-width: 0; flex: 1; }
 }
+
+/* Everforest and Classic use the Desktop palette seeds. Muted text is
+   lifted where needed for small Browser labels. Anti-Nous is first-party. */
+html[data-hermes-theme="everforest"][data-hermes-mode="dark"] {
+  color-scheme: dark;
+  --hermes-blue: #2d353b;
+  --hermes-blue-deep: #232a2e;
+  --hermes-blue-rgb: 45, 53, 59;
+  --hermes-app-bg: #2d353b;
+  --hermes-app-bg-deep: #232a2e;
+  --hermes-canvas: #2d353b;
+  --hermes-paper: #2d353b;
+  --hermes-card-bg: #2d353b;
+  --hermes-ink: #d3c6aa;
+  --hermes-fg: #d3c6aa;
+  --hermes-muted: #a4ada1;
+  --hermes-accent: #a7c080;
+  --hermes-trim: #dbbc7f;
+  --hermes-shell-fg: #d3c6aa;
+  --hermes-shell-fg-rgb: 211, 198, 170;
+  --hermes-white: #d3c6aa;
+  --hermes-white-rgb: 211, 198, 170;
+  --hermes-bg-rgb: 45, 53, 59;
+  --hermes-panel-rgb: 45, 53, 59;
+  --hermes-paper-rgb: 45, 53, 59;
+  --hermes-fg-rgb: 211, 198, 170;
+  --hermes-ink-rgb: 211, 198, 170;
+  --hermes-accent-rgb: 167, 192, 128;
+  --hermes-shadow-rgb: 35, 42, 46;
+  --hermes-menu-bg: #2d353b;
+  --hermes-panel-bg: #2d353b;
+  --hermes-panel-border: #536457;
+  --hermes-line: #536457;
+  --hermes-line-strong: #a7c080;
+  --hermes-blue-line: rgba(211, 198, 170, 0.34);
+  --hermes-blue-muted: #d3c6aa;
+  --hermes-control-bg: #232a2e;
+  --hermes-control-fg: #d3c6aa;
+  --hermes-control-border: #536457;
+  --hermes-input-bg: #232a2e;
+  --hermes-primary-bg: #a7c080;
+  --hermes-primary-fg: #20291b;
+  --hermes-primary-border: #a7c080;
+  --hermes-user-bg: #a7c080;
+  --hermes-user-fg: #20291b;
+  --hermes-user-border: #a7c080;
+  --hermes-system-bg: #2d353b;
+  --hermes-system-fg: #d3c6aa;
+  --hermes-pill-bg: #232a2e;
+  --hermes-pill-fg: #d3c6aa;
+  --hermes-pill-border: #536457;
+  --hermes-pill-ok-bg: #232a2e;
+  --hermes-pill-ok-fg: #a7c080;
+  --hermes-pill-ok-border: #a7c080;
+  --hermes-meter-fill: #a7c080;
+  --hermes-danger: #f29897;
+  --hermes-on-danger: #2d353b;
+  --hermes-success: #a7c080;
+  --hermes-warning: #dbbc7f;
+  --danger: #f29897;
+  --ok: #a7c080;
+}
+
+html[data-hermes-theme="everforest"][data-hermes-mode="light"] {
+  color-scheme: light;
+  --hermes-blue: #586b35;
+  --hermes-blue-deep: #586b35;
+  --hermes-blue-rgb: 88, 107, 53;
+  --hermes-app-bg: #fdf6e3;
+  --hermes-app-bg-deep: #e6e3cb;
+  --hermes-canvas: #fdf6e3;
+  --hermes-paper: #fdf6e3;
+  --hermes-card-bg: #fdf6e3;
+  --hermes-ink: #5c6a72;
+  --hermes-fg: #5c6a72;
+  --hermes-muted: #65705f;
+  --hermes-accent: #586b35;
+  --hermes-trim: #957433;
+  --hermes-shell-fg: #fdf6e3;
+  --hermes-shell-fg-rgb: 253, 246, 227;
+  --hermes-white: #fdf6e3;
+  --hermes-white-rgb: 253, 246, 227;
+  --hermes-bg-rgb: 88, 107, 53;
+  --hermes-panel-rgb: 253, 246, 227;
+  --hermes-paper-rgb: 253, 246, 227;
+  --hermes-fg-rgb: 92, 106, 114;
+  --hermes-ink-rgb: 92, 106, 114;
+  --hermes-accent-rgb: 88, 107, 53;
+  --hermes-shadow-rgb: 230, 227, 203;
+  --hermes-menu-bg: #fdf6e3;
+  --hermes-panel-bg: #fdf6e3;
+  --hermes-panel-border: #a8ad91;
+  --hermes-line: #a8ad91;
+  --hermes-line-strong: #586b35;
+  --hermes-blue-line: rgba(253, 246, 227, 0.34);
+  --hermes-blue-muted: #fdf6e3;
+  --hermes-control-bg: #f7f0de;
+  --hermes-control-fg: #5c6a72;
+  --hermes-control-border: #a8ad91;
+  --hermes-input-bg: #f7f0de;
+  --hermes-primary-bg: #586b35;
+  --hermes-primary-fg: #ffffff;
+  --hermes-primary-border: #586b35;
+  --hermes-user-bg: #586b35;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #586b35;
+  --hermes-system-bg: #fdf6e3;
+  --hermes-system-fg: #5c6a72;
+  --hermes-pill-bg: #f7f0de;
+  --hermes-pill-fg: #5c6a72;
+  --hermes-pill-border: #a8ad91;
+  --hermes-pill-ok-bg: #f7f0de;
+  --hermes-pill-ok-fg: #48632e;
+  --hermes-pill-ok-border: #48632e;
+  --hermes-meter-fill: #586b35;
+  --hermes-danger: #b63836;
+  --hermes-on-danger: #fdf6e3;
+  --hermes-success: #48632e;
+  --hermes-warning: #8a6500;
+  --danger: #b63836;
+  --ok: #48632e;
+}
+
+html[data-hermes-theme="classic"][data-hermes-mode="dark"] {
+  color-scheme: dark;
+  --hermes-blue: #1a1a2e;
+  --hermes-blue-deep: #121221;
+  --hermes-blue-rgb: 26, 26, 46;
+  --hermes-app-bg: #1a1a2e;
+  --hermes-app-bg-deep: #121221;
+  --hermes-canvas: #1a1a2e;
+  --hermes-paper: #232335;
+  --hermes-card-bg: #232335;
+  --hermes-ink: #fff8dc;
+  --hermes-fg: #fff8dc;
+  --hermes-muted: #b8860b;
+  --hermes-accent: #ffbf00;
+  --hermes-trim: #cd7f32;
+  --hermes-shell-fg: #fff8dc;
+  --hermes-shell-fg-rgb: 255, 248, 220;
+  --hermes-white: #fff8dc;
+  --hermes-white-rgb: 255, 248, 220;
+  --hermes-bg-rgb: 26, 26, 46;
+  --hermes-panel-rgb: 35, 35, 53;
+  --hermes-paper-rgb: 35, 35, 53;
+  --hermes-fg-rgb: 255, 248, 220;
+  --hermes-ink-rgb: 255, 248, 220;
+  --hermes-accent-rgb: 255, 191, 0;
+  --hermes-shadow-rgb: 18, 18, 33;
+  --hermes-menu-bg: #232335;
+  --hermes-panel-bg: #232335;
+  --hermes-panel-border: #805336;
+  --hermes-line: #805336;
+  --hermes-line-strong: #ffbf00;
+  --hermes-blue-line: rgba(255, 248, 220, 0.34);
+  --hermes-blue-muted: #fff8dc;
+  --hermes-control-bg: #1a1a2e;
+  --hermes-control-fg: #fff8dc;
+  --hermes-control-border: #805336;
+  --hermes-input-bg: #1a1a2e;
+  --hermes-primary-bg: #ffbf00;
+  --hermes-primary-fg: #161616;
+  --hermes-primary-border: #ffbf00;
+  --hermes-user-bg: #ffbf00;
+  --hermes-user-fg: #161616;
+  --hermes-user-border: #ffbf00;
+  --hermes-system-bg: #232335;
+  --hermes-system-fg: #fff8dc;
+  --hermes-pill-bg: #1a1a2e;
+  --hermes-pill-fg: #fff8dc;
+  --hermes-pill-border: #805336;
+  --hermes-pill-ok-bg: #1a1a2e;
+  --hermes-pill-ok-fg: #a7c080;
+  --hermes-pill-ok-border: #a7c080;
+  --hermes-meter-fill: #ffbf00;
+  --hermes-danger: #ef7770;
+  --hermes-on-danger: #1a1a2e;
+  --hermes-success: #a7c080;
+  --hermes-warning: #e8bb67;
+  --danger: #ef7770;
+  --ok: #a7c080;
+}
+
+html[data-hermes-theme="classic"][data-hermes-mode="light"] {
+  color-scheme: light;
+  --hermes-blue: #825d02;
+  --hermes-blue-deep: #825d02;
+  --hermes-blue-rgb: 130, 93, 2;
+  --hermes-app-bg: #f5f5f5;
+  --hermes-app-bg-deep: #e5e0d3;
+  --hermes-canvas: #f5f5f5;
+  --hermes-paper: #f0f0ef;
+  --hermes-card-bg: #f0f0ef;
+  --hermes-ink: #2b2109;
+  --hermes-fg: #2b2109;
+  --hermes-muted: #74634b;
+  --hermes-accent: #825d02;
+  --hermes-trim: #956025;
+  --hermes-shell-fg: #fff8dc;
+  --hermes-shell-fg-rgb: 255, 248, 220;
+  --hermes-white: #fff8dc;
+  --hermes-white-rgb: 255, 248, 220;
+  --hermes-bg-rgb: 130, 93, 2;
+  --hermes-panel-rgb: 240, 240, 239;
+  --hermes-paper-rgb: 240, 240, 239;
+  --hermes-fg-rgb: 43, 33, 9;
+  --hermes-ink-rgb: 43, 33, 9;
+  --hermes-accent-rgb: 130, 93, 2;
+  --hermes-shadow-rgb: 229, 224, 211;
+  --hermes-menu-bg: #f0f0ef;
+  --hermes-panel-bg: #f0f0ef;
+  --hermes-panel-border: #b59265;
+  --hermes-line: #b59265;
+  --hermes-line-strong: #825d02;
+  --hermes-blue-line: rgba(255, 248, 220, 0.34);
+  --hermes-blue-muted: #fff8dc;
+  --hermes-control-bg: #f5f5f5;
+  --hermes-control-fg: #2b2109;
+  --hermes-control-border: #b59265;
+  --hermes-input-bg: #f5f5f5;
+  --hermes-primary-bg: #825d02;
+  --hermes-primary-fg: #ffffff;
+  --hermes-primary-border: #825d02;
+  --hermes-user-bg: #825d02;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #825d02;
+  --hermes-system-bg: #f0f0ef;
+  --hermes-system-fg: #2b2109;
+  --hermes-pill-bg: #f5f5f5;
+  --hermes-pill-fg: #2b2109;
+  --hermes-pill-border: #b59265;
+  --hermes-pill-ok-bg: #f5f5f5;
+  --hermes-pill-ok-fg: #48632e;
+  --hermes-pill-ok-border: #48632e;
+  --hermes-meter-fill: #825d02;
+  --hermes-danger: #c62828;
+  --hermes-on-danger: #f5f5f5;
+  --hermes-success: #48632e;
+  --hermes-warning: #825d02;
+  --danger: #c62828;
+  --ok: #48632e;
+}
+
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] {
+  color-scheme: dark;
+  --hermes-blue: #53172b;
+  --hermes-blue-deep: #07101e;
+  --hermes-blue-rgb: 83, 23, 43;
+  --hermes-app-bg: #0b1425;
+  --hermes-app-bg-deep: #07101e;
+  --hermes-canvas: #0b1425;
+  --hermes-paper: #101b30;
+  --hermes-card-bg: #101b30;
+  --hermes-ink: #f5ece6;
+  --hermes-fg: #f5ece6;
+  --hermes-muted: #ada7ad;
+  --hermes-accent: #f06b65;
+  --hermes-trim: #d4af6c;
+  --hermes-shell-fg: #f5ece6;
+  --hermes-shell-fg-rgb: 245, 236, 230;
+  --hermes-white: #f5ece6;
+  --hermes-white-rgb: 245, 236, 230;
+  --hermes-bg-rgb: 83, 23, 43;
+  --hermes-panel-rgb: 16, 27, 48;
+  --hermes-paper-rgb: 16, 27, 48;
+  --hermes-fg-rgb: 245, 236, 230;
+  --hermes-ink-rgb: 245, 236, 230;
+  --hermes-accent-rgb: 240, 107, 101;
+  --hermes-shadow-rgb: 7, 16, 30;
+  --hermes-menu-bg: #101b30;
+  --hermes-panel-bg: #101b30;
+  --hermes-panel-border: #63434b;
+  --hermes-line: #63434b;
+  --hermes-line-strong: #f06b65;
+  --hermes-blue-line: rgba(245, 236, 230, 0.34);
+  --hermes-blue-muted: #f5ece6;
+  --hermes-control-bg: #0b1425;
+  --hermes-control-fg: #f5ece6;
+  --hermes-control-border: #63434b;
+  --hermes-input-bg: #0b1425;
+  --hermes-primary-bg: #b52b3d;
+  --hermes-primary-fg: #fff7f0;
+  --hermes-primary-border: #f06b65;
+  --hermes-user-bg: #b52b3d;
+  --hermes-user-fg: #fff7f0;
+  --hermes-user-border: #f06b65;
+  --hermes-system-bg: #101b30;
+  --hermes-system-fg: #f5ece6;
+  --hermes-pill-bg: #0b1425;
+  --hermes-pill-fg: #f5ece6;
+  --hermes-pill-border: #63434b;
+  --hermes-pill-ok-bg: #0b1425;
+  --hermes-pill-ok-fg: #a4c5a0;
+  --hermes-pill-ok-border: #a4c5a0;
+  --hermes-meter-fill: #f06b65;
+  --hermes-danger: #ffad82;
+  --hermes-on-danger: #0b1425;
+  --hermes-success: #a4c5a0;
+  --hermes-warning: #e4c98d;
+  --danger: #ffad82;
+  --ok: #a4c5a0;
+}
+
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] {
+  color-scheme: light;
+  --hermes-blue: #a52232;
+  --hermes-blue-deep: #a52232;
+  --hermes-blue-rgb: 165, 34, 50;
+  --hermes-app-bg: #ffffff;
+  --hermes-app-bg-deep: #fff1f0;
+  --hermes-canvas: #ffffff;
+  --hermes-paper: #ffffff;
+  --hermes-card-bg: #ffffff;
+  --hermes-ink: #a52232;
+  --hermes-fg: #a52232;
+  --hermes-muted: #854951;
+  --hermes-accent: #a52232;
+  --hermes-trim: #8d681d;
+  --hermes-shell-fg: #fff7f0;
+  --hermes-shell-fg-rgb: 255, 247, 240;
+  --hermes-white: #fff7f0;
+  --hermes-white-rgb: 255, 247, 240;
+  --hermes-bg-rgb: 165, 34, 50;
+  --hermes-panel-rgb: 255, 255, 255;
+  --hermes-paper-rgb: 255, 255, 255;
+  --hermes-fg-rgb: 165, 34, 50;
+  --hermes-ink-rgb: 165, 34, 50;
+  --hermes-accent-rgb: 165, 34, 50;
+  --hermes-shadow-rgb: 255, 241, 240;
+  --hermes-menu-bg: #ffffff;
+  --hermes-panel-bg: #ffffff;
+  --hermes-panel-border: #c97982;
+  --hermes-line: #c97982;
+  --hermes-line-strong: #a52232;
+  --hermes-blue-line: rgba(255, 247, 240, 0.34);
+  --hermes-blue-muted: #fff7f0;
+  --hermes-control-bg: #fff8f7;
+  --hermes-control-fg: #a52232;
+  --hermes-control-border: #c97982;
+  --hermes-input-bg: #fff8f7;
+  --hermes-primary-bg: #a52232;
+  --hermes-primary-fg: #ffffff;
+  --hermes-primary-border: #a52232;
+  --hermes-user-bg: #a52232;
+  --hermes-user-fg: #ffffff;
+  --hermes-user-border: #a52232;
+  --hermes-system-bg: #ffffff;
+  --hermes-system-fg: #a52232;
+  --hermes-pill-bg: #fff8f7;
+  --hermes-pill-fg: #a52232;
+  --hermes-pill-border: #c97982;
+  --hermes-pill-ok-bg: #fff8f7;
+  --hermes-pill-ok-fg: #38684a;
+  --hermes-pill-ok-border: #38684a;
+  --hermes-meter-fill: #a52232;
+  --hermes-danger: #9d3516;
+  --hermes-on-danger: #ffffff;
+  --hermes-success: #38684a;
+  --hermes-warning: #8d681d;
+  --danger: #9d3516;
+  --ok: #38684a;
+}
+
+/* Keep the original mark shape; masks prevent fixed-blue logo leakage. */
+html:is([data-hermes-theme="everforest"], [data-hermes-theme="classic"], [data-hermes-theme="anti-nous"]) .web-brand-logo-base { display: none; }
+html:is([data-hermes-theme="everforest"], [data-hermes-theme="classic"], [data-hermes-theme="anti-nous"]) .web-brand::before {
+  content: "";
+  display: block;
+  width: 128px;
+  height: 54px;
+  flex: 0 0 128px;
+  background: var(--hermes-shell-fg);
+  -webkit-mask: url("assets/img/hermes-web-logo-white-dark.svg") left center / contain no-repeat;
+  mask: url("assets/img/hermes-web-logo-white-dark.svg") left center / contain no-repeat;
+}
+html[data-hermes-theme="everforest"] .rail-brand-video { filter: grayscale(1) sepia(1) saturate(1.2) hue-rotate(32deg); }
+html[data-hermes-theme="classic"] .rail-brand-video { filter: grayscale(1) sepia(1) saturate(2.2); }
+html[data-hermes-theme="anti-nous"] .rail-brand-video { filter: grayscale(1) sepia(1) saturate(5) hue-rotate(316deg); }
+html:is([data-hermes-theme="everforest"], [data-hermes-theme="classic"], [data-hermes-theme="anti-nous"]) .web-message.user {
+  background: var(--hermes-primary-bg);
+  color: var(--hermes-primary-fg);
+  border-color: var(--hermes-primary-border);
+}
+html:is([data-hermes-theme="everforest"], [data-hermes-theme="classic"], [data-hermes-theme="anti-nous"])[data-hermes-mode="light"] .web-message.user {
+  background: color-mix(in srgb, var(--hermes-primary-bg) 10%, var(--hermes-paper));
+  color: var(--hermes-ink);
+}
+html:is([data-hermes-theme="everforest"], [data-hermes-theme="classic"], [data-hermes-theme="anti-nous"]) .web-message.user .web-message-role {
+  color: inherit;
+}
+html:is([data-hermes-theme="everforest"], [data-hermes-theme="classic"], [data-hermes-theme="anti-nous"]) .fulltab-composer textarea::placeholder {
+  color: var(--hermes-muted);
+  opacity: 1;
+}
+html[data-hermes-theme="anti-nous"] .web-topbar,
+html[data-hermes-theme="anti-nous"] .session-rail { border-color: var(--hermes-trim); }
+html[data-hermes-theme="anti-nous"] .fulltab-composer { border-top-color: var(--hermes-trim); }
+html[data-hermes-theme="anti-nous"] :focus-visible { outline-color: var(--hermes-trim); }
+html[data-hermes-theme="anti-nous"] ::selection { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); }
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .conversation-scroll { background-color: var(--hermes-app-bg); }
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .web-message.user {
+  background: #3b1d30;
+  color: var(--hermes-ink);
+  border-color: #a64b58;
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .web-message,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .fulltab-composer,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .fulltab-composer-wrap {
+  background: #ffffff;
+  backdrop-filter: none;
+}
