@@ -3251,6 +3251,38 @@
     "message": "Edite modelos em Hermes Desktop",
     "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
   },
+  "runtime_ui_effort_buttons": {
+    "message": "Botões",
+    "description": "Runtime interface message ui.effort.buttons"
+  },
+  "runtime_ui_effort_display": {
+    "message": "Seletor de esforço",
+    "description": "Runtime interface message ui.effort.display"
+  },
+  "runtime_ui_effort_help": {
+    "message": "Um esforço maior pode exigir mais tempo e tokens.",
+    "description": "Runtime interface message ui.effort.help"
+  },
+  "runtime_ui_effort_higher": {
+    "message": "Mais esforço",
+    "description": "Runtime interface message ui.effort.higher"
+  },
+  "runtime_ui_effort_lower": {
+    "message": "Menos esforço",
+    "description": "Runtime interface message ui.effort.lower"
+  },
+  "runtime_ui_effort_save_error": {
+    "message": "Não foi possível salvar o seletor de esforço.",
+    "description": "Runtime interface message ui.effort.save_error"
+  },
+  "runtime_ui_effort_slider": {
+    "message": "Controle deslizante",
+    "description": "Runtime interface message ui.effort.slider"
+  },
+  "runtime_ui_effort_title": {
+    "message": "Esforço",
+    "description": "Runtime interface message ui.effort.title"
+  },
   "runtime_ui_element": {
     "message": "Elemento",
     "description": "Runtime interface message ui.element"

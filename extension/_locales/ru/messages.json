@@ -3251,6 +3251,38 @@
     "message": "Редактировать модели в Hermes Desktop",
     "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
   },
+  "runtime_ui_effort_buttons": {
+    "message": "Кнопки",
+    "description": "Runtime interface message ui.effort.buttons"
+  },
+  "runtime_ui_effort_display": {
+    "message": "Вид выбора усилия",
+    "description": "Runtime interface message ui.effort.display"
+  },
+  "runtime_ui_effort_help": {
+    "message": "Более высокое усилие может потребовать больше времени и токенов.",
+    "description": "Runtime interface message ui.effort.help"
+  },
+  "runtime_ui_effort_higher": {
+    "message": "Больше усилий",
+    "description": "Runtime interface message ui.effort.higher"
+  },
+  "runtime_ui_effort_lower": {
+    "message": "Меньше усилий",
+    "description": "Runtime interface message ui.effort.lower"
+  },
+  "runtime_ui_effort_save_error": {
+    "message": "Не удалось сохранить вид выбора усилия.",
+    "description": "Runtime interface message ui.effort.save_error"
+  },
+  "runtime_ui_effort_slider": {
+    "message": "Ползунок",
+    "description": "Runtime interface message ui.effort.slider"
+  },
+  "runtime_ui_effort_title": {
+    "message": "Усилие",
+    "description": "Runtime interface message ui.effort.title"
+  },
   "runtime_ui_element": {
     "message": "Элемент",
     "description": "Runtime interface message ui.element"

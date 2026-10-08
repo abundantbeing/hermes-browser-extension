@@ -1312,5 +1312,95 @@ export function createBotGroupRuntime({
     return modelSwitchOutcome(verification, { targetModel, targetProvider, scope, extra: { source: 'profile-default' } });
   }
 
-  return Object.freeze({ prepare, send, retryMember, getMemberSession, readMemberModel, setMemberModel, resetMemberModel });
+  // Per-member runtime options (Thinking / reasoning effort / Fast) read from the
+  // MEMBER'S OWN session via the gateway's session-scoped `config.get`. These are
+  // never the 1:1 chat's settings: a room member keeps its own effort, so the
+  // picker must show and change that value, not the browser chat's.
+  function parseMemberRuntimeOptions(reasoning, fast) {
+    const raw = clean(asObject(reasoning).value).toLowerCase();
+    if (!raw) return null;
+    const thinkingEnabled = !['none', 'false', 'off', 'disabled'].includes(raw);
+    const fastWord = clean(asObject(fast).value).toLowerCase();
+    return {
+      thinkingEnabled,
+      reasoningEffort: thinkingEnabled ? raw : null,
+      fastMode: fastWord === 'fast' || fastWord === 'ultrafast',
+      fastKnown: Boolean(fastWord),
+    };
+  }
+
+  async function readMemberRuntimeOptions(roomId, member) {
+    const normalized = normalizeMember(member);
+    if (!normalized) throw new Error('A group member is required.');
+    let session;
+    try {
+      session = await memberSessionFor(roomId, normalized, { createIfMissing: false });
+    } catch (error) {
+      if (error?.code === 'no-session') return { state: 'no-session' };
+      return { state: 'unknown', error: safeFailure(error) };
+    }
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const reasoning = await client.request('config.get', { session_id: session.liveId, key: 'reasoning' });
+        let fast = null;
+        try { fast = await client.request('config.get', { session_id: session.liveId, key: 'fast' }); } catch { /* fast is optional */ }
+        const options = parseMemberRuntimeOptions(reasoning, fast);
+        if (!options) return { state: 'unknown', error: 'The member session did not report a reasoning effort.' };
+        return { state: 'ok', ...options };
+      } catch (error) {
+        if (attempt === 0 && isSessionGoneError(error) && session.storedId) {
+          sessionCache.delete(normalized.name);
+          try {
+            session = rememberSession(await resumeMemberSession(client, session.storedId, session.profile, session.title));
+          } catch (resumeError) {
+            return { state: 'unknown', error: safeFailure(resumeError) };
+          }
+          continue;
+        }
+        if (isSessionGoneError(error)) sessionCache.delete(normalized.name);
+        return { state: 'unknown', error: safeFailure(error) };
+      }
+    }
+    return { state: 'unknown', error: 'The member session did not report a reasoning effort.' };
+  }
+
+  // Session-scoped write of ONE option, verified by reading it back. `reasoning`
+  // and `fast` are session-scoped gateway keys, so this never touches the global
+  // config or the 1:1 chat. `option` is one of:
+  //   { reasoningEffort: 'high' } | { thinkingEnabled: false | true, reasoningEffort } | { fastMode: boolean }
+  async function setMemberRuntimeOption(roomId, member, option = {}) {
+    const normalized = normalizeMember(member);
+    if (!normalized) throw new Error('A group member is required.');
+    assertMemberIdle(normalized.name);
+    const session = await memberSessionFor(roomId, normalized, { createIfMissing: true });
+    let key = '';
+    let value = '';
+    if (typeof option.fastMode === 'boolean') {
+      key = 'fast';
+      value = option.fastMode ? 'fast' : 'normal';
+    } else if (option.thinkingEnabled === false) {
+      key = 'reasoning';
+      value = 'none';
+    } else if (clean(option.reasoningEffort)) {
+      key = 'reasoning';
+      value = clean(option.reasoningEffort).toLowerCase();
+    } else {
+      throw new Error('A runtime option is required.');
+    }
+    if (/\s/.test(value) || value.startsWith('-')) throw new Error('Hermes option values cannot contain command flags or whitespace.');
+    try {
+      await client.request('config.set', { session_id: session.liveId, key, value });
+    } catch (error) {
+      return { state: 'unavailable', error: safeFailure(error) };
+    }
+    const read = await readMemberRuntimeOptions(roomId, normalized);
+    if (read.state !== 'ok') return { state: 'unverified', error: read.error || 'The member session did not confirm the option.' };
+    const matches = key === 'fast'
+      ? read.fastMode === (value === 'fast')
+      : value === 'none' ? read.thinkingEnabled === false : read.reasoningEffort === value;
+    if (!matches) return { state: 'unverified', observed: read, error: 'The member session did not confirm the requested option.' };
+    return { state: 'ok', ...read };
+  }
+
+  return Object.freeze({ prepare, send, retryMember, getMemberSession, readMemberModel, setMemberModel, resetMemberModel, readMemberRuntimeOptions, setMemberRuntimeOption });
 }

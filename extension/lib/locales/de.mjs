@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Denkaufwand",
+  "ui.effort.slider": "Schieberegler",
+  "ui.effort.buttons": "Schaltflächen",
+  "ui.effort.display": "Anzeige des Denkaufwands",
+  "ui.effort.lower": "Weniger Aufwand",
+  "ui.effort.higher": "Mehr Aufwand",
+  "ui.effort.help": "Mehr Denkaufwand kann mehr Zeit und Tokens benötigen.",
+  "ui.effort.save_error": "Die Anzeige des Denkaufwands konnte nicht gespeichert werden.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

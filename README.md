@@ -25,6 +25,7 @@ Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium 
 - **Tab screenshot** stages the visible, approved page as an image attachment when you choose it from the attachment menu. Screenshots are never captured automatically.
 - **Browser Control** changes which tabs a turn reads from the composer: This tab, Selected tabs, or a Task set of tabs you pick explicitly.
 - **Message tools**: Copy, Edit, and Restore checkpoint on supported turns, with day dividers, message times, and theme-aware bubbles.
+- **Reasoning effort**: a slider with tick marks, or buttons if you prefer. The choice is remembered. In a group chat each bot keeps its own effort.
 - **Hermes Assist** drafts beside supported text composers and never sends, posts, or submits for you.
 - **Page comments**: pick an element, write a note, and queue pins beside Ask Hermes.
 - **Settings**: a category home opens one section at a time, with Back navigation, edited-category markers, and direct links from related controls.

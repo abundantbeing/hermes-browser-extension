@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Inspanning",
+  "ui.effort.slider": "Schuifregelaar",
+  "ui.effort.buttons": "Knoppen",
+  "ui.effort.display": "Inspanningsweergave",
+  "ui.effort.lower": "Minder inspanning",
+  "ui.effort.higher": "Meer inspanning",
+  "ui.effort.help": "Meer inspanning kan meer tijd en tokens kosten.",
+  "ui.effort.save_error": "De inspanningsweergave kon niet worden opgeslagen.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

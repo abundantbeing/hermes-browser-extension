@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "ระดับการใช้เหตุผล",
+  "ui.effort.slider": "แถบเลื่อน",
+  "ui.effort.buttons": "ปุ่ม",
+  "ui.effort.display": "รูปแบบตัวเลือกระดับการใช้เหตุผล",
+  "ui.effort.lower": "ใช้เหตุผลน้อยลง",
+  "ui.effort.higher": "ใช้เหตุผลมากขึ้น",
+  "ui.effort.help": "ระดับการใช้เหตุผลที่สูงขึ้นอาจใช้เวลาและโทเค็นมากขึ้น",
+  "ui.effort.save_error": "บันทึกรูปแบบตัวเลือกระดับการใช้เหตุผลไม่ได้",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

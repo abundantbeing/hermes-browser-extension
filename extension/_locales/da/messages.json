@@ -3251,6 +3251,38 @@
     "message": "Rediger modeller i Hermes Desktop",
     "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
   },
+  "runtime_ui_effort_buttons": {
+    "message": "Knapper",
+    "description": "Runtime interface message ui.effort.buttons"
+  },
+  "runtime_ui_effort_display": {
+    "message": "Visning af indsats",
+    "description": "Runtime interface message ui.effort.display"
+  },
+  "runtime_ui_effort_help": {
+    "message": "En større indsats kan kræve mere tid og flere tokens.",
+    "description": "Runtime interface message ui.effort.help"
+  },
+  "runtime_ui_effort_higher": {
+    "message": "Mere indsats",
+    "description": "Runtime interface message ui.effort.higher"
+  },
+  "runtime_ui_effort_lower": {
+    "message": "Mindre indsats",
+    "description": "Runtime interface message ui.effort.lower"
+  },
+  "runtime_ui_effort_save_error": {
+    "message": "Visningen af indsats kunne ikke gemmes.",
+    "description": "Runtime interface message ui.effort.save_error"
+  },
+  "runtime_ui_effort_slider": {
+    "message": "Skyder",
+    "description": "Runtime interface message ui.effort.slider"
+  },
+  "runtime_ui_effort_title": {
+    "message": "Indsats",
+    "description": "Runtime interface message ui.effort.title"
+  },
   "runtime_ui_element": {
     "message": "Element",
     "description": "Runtime interface message ui.element"

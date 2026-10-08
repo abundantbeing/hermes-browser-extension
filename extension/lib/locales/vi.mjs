@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Mức suy luận",
+  "ui.effort.slider": "Thanh trượt",
+  "ui.effort.buttons": "Nút",
+  "ui.effort.display": "Cách hiển thị mức suy luận",
+  "ui.effort.lower": "Suy luận ít hơn",
+  "ui.effort.higher": "Suy luận nhiều hơn",
+  "ui.effort.help": "Mức suy luận cao hơn có thể cần nhiều thời gian và token hơn.",
+  "ui.effort.save_error": "Không thể lưu cách hiển thị mức suy luận.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

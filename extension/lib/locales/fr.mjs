@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Effort",
+  "ui.effort.slider": "Curseur",
+  "ui.effort.buttons": "Boutons",
+  "ui.effort.display": "Affichage de l’effort",
+  "ui.effort.lower": "Moins d’effort",
+  "ui.effort.higher": "Plus d’effort",
+  "ui.effort.help": "Un effort plus élevé peut demander plus de temps et de tokens.",
+  "ui.effort.save_error": "Impossible d’enregistrer l’affichage de l’effort.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

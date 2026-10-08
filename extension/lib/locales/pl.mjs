@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Wysiłek",
+  "ui.effort.slider": "Suwak",
+  "ui.effort.buttons": "Przyciski",
+  "ui.effort.display": "Widok poziomu wysiłku",
+  "ui.effort.lower": "Mniejszy wysiłek",
+  "ui.effort.higher": "Większy wysiłek",
+  "ui.effort.help": "Większy wysiłek może wymagać więcej czasu i tokenów.",
+  "ui.effort.save_error": "Nie udało się zapisać widoku poziomu wysiłku.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

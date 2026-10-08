@@ -820,7 +820,7 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
 }
 .new-group-bot-copy { display: grid; gap: 2px; min-width: 0; }
 .new-group-bot-copy strong { font-size: calc(11px * var(--hermes-text-zoom, 1)); }
-.new-group-bot-copy span { font: calc(8px * var(--hermes-text-zoom, 1)) var(--hermes-font-mono); opacity: .6; }
+.new-group-bot-copy span { font: calc(8px * var(--hermes-text-zoom, 1)) var(--hermes-font-mono); opacity: .85; }
 .new-group-bot-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--hermes-blue); }
 
 .group-picture-section {
@@ -904,6 +904,7 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
 .new-group-secondary:hover {
   border-color: var(--hermes-fg);
   background: rgba(var(--hermes-fg-rgb), 0.1);
+  color: var(--hermes-fg);
 }
 .new-group-primary {
   border: 1px solid var(--hermes-blue);
@@ -5003,7 +5004,8 @@ button.active-profile-indicator {
   overflow: hidden;
 }
 .model-menu-head { display: none; }
-.model-menu[data-selection-target="assist"] {
+.model-menu[data-selection-target="assist"],
+.model-menu[data-selection-target="room-member"] {
   position: fixed;
   inset: auto 12px auto 12px;
   width: auto;
@@ -5012,7 +5014,16 @@ button.active-profile-indicator {
   z-index: 100;
   box-shadow: 10px 10px 0 rgba(var(--hermes-shadow-rgb),0.2);
 }
-.model-menu[data-selection-target="assist"] .model-menu-head {
+.model-menu[data-selection-target="room-member"] {
+  /* CSS-anchored: the room picker has no trigger button to measure, so it sits
+     under the top bar instead of relying on JS to place it. */
+  top: 56px;
+  bottom: auto;
+  max-height: calc(100vh - 68px);
+  border-radius: 0;
+}
+.model-menu[data-selection-target="assist"] .model-menu-head,
+.model-menu[data-selection-target="room-member"] .model-menu-head {
   min-height: 42px;
   padding: 7px 8px 7px 10px;
   display: flex;
@@ -5099,6 +5110,30 @@ button.active-profile-indicator {
   opacity: 0.72;
   font-size: calc(10px * var(--hermes-text-zoom, 1));
 }
+/* Pair light picker hover/focus colors above palette-specific label overrides. */
+html[data-hermes-mode="light"] .model-menu .model-provider-option:hover,
+html[data-hermes-mode="light"] .model-menu .model-provider-option:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+html[data-hermes-mode="light"] .model-menu .model-provider-count { opacity: 1; }
+html[data-hermes-mode="light"] .model-menu .model-effort-option:hover {
+  background: var(--hermes-menu-bg);
+  color: var(--hermes-fg);
+}
+html[data-hermes-mode="light"] .model-menu .model-effort-option:hover strong { color: inherit; }
+html[data-hermes-mode="light"] .model-menu .model-option:focus-visible,
+html[data-hermes-mode="light"] .model-menu .model-option.observed:focus-visible,
+html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+html[data-hermes-mode="light"] .model-menu .model-option:hover .model-option-meta,
+html[data-hermes-mode="light"] .model-menu .model-option.selected .model-option-meta { color: rgba(var(--hermes-fg-rgb),1); }
+html[data-hermes-mode="light"] .model-menu .model-option:focus-visible .model-option-name,
+html[data-hermes-mode="light"] .model-menu .model-option:focus-visible .model-option-meta,
+html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible strong { color: inherit; }
 .model-menu-list,
 .session-menu-list {
   min-height: 0;
@@ -5304,32 +5339,41 @@ button.active-profile-indicator {
 .model-effort-option.selected {
   color: var(--hermes-fg);
 }
+.model-menu .model-toggle-option:hover,
+.model-menu .model-toggle-option:focus-visible {
+  background: rgba(var(--hermes-fg-rgb),0.06);
+  color: var(--hermes-fg);
+}
+/* Same switch as Settings (.settings-switch): square track and thumb, primary
+   fill when on. Keep the two in sync; tests/toggle-switch-parity.test.mjs checks it. */
 .toggle-switch {
   position: relative;
-  width: 28px;
-  height: 16px;
-  border: 1px solid rgba(var(--hermes-fg-rgb),0.36);
-  border-radius: 999px;
-  background: rgba(var(--hermes-fg-rgb),0.18);
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 31px;
+  height: 17px;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.42);
+  border-radius: 0;
+  background: rgba(var(--hermes-ink-rgb),0.06);
 }
 .toggle-switch::after {
   content: "";
   position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(var(--hermes-fg-rgb),0.92);
-  transition: transform 140ms ease, background 140ms ease;
+  top: 3px;
+  left: 3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 0;
+  background: var(--hermes-muted);
+  transition: transform 120ms ease, background 120ms ease;
 }
 .toggle-switch.on {
-  background: rgba(var(--hermes-accent-rgb),0.82);
-  border-color: rgba(var(--hermes-accent-rgb),0.9);
+  border-color: var(--hermes-accent);
+  background: var(--hermes-primary-bg);
 }
 .toggle-switch.on::after {
-  transform: translateX(12px);
-  background: var(--hermes-menu-bg);
+  transform: translateX(14px);
+  background: var(--hermes-primary-fg);
 }
 .model-effort-list {
   display: grid;
@@ -8269,6 +8313,7 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
 }
 .group-settings-close:hover {
   border-color: var(--hermes-ink);
+  color: var(--hermes-ink);
   background: rgba(var(--hermes-ink-rgb), 0.14);
   transform: scale(1.05);
 }
@@ -8329,6 +8374,7 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
 .group-settings-action-btn:hover {
   border-color: var(--hermes-ink);
   background: rgba(var(--hermes-ink-rgb), 0.14);
+  color: var(--hermes-ink);
 }
 .group-settings-action-btn.remove {
   color: #ff5e5e;
@@ -8364,6 +8410,7 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
 .group-settings-btn-secondary:hover {
   border-color: var(--hermes-ink);
   background: rgba(var(--hermes-ink-rgb), 0.14);
+  color: var(--hermes-ink);
 }
 .group-settings-btn-primary {
   border: 1px solid var(--hermes-blue, #0505e8);
@@ -8967,7 +9014,7 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--hermes-line-strong);
-  border-radius: 12px;
+  border-radius: 0;
   background: var(--hermes-menu-bg, var(--hermes-paper));
   color: var(--hermes-ink);
   box-shadow: 0 -12px 30px rgba(var(--hermes-shadow-rgb), 0.26);
@@ -8977,30 +9024,35 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
 .room-member-popover-title { padding: 10px 12px 8px; font: 700 calc(11px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--hermes-muted); }
 .room-member-popover-list { display: grid; gap: 2px; overflow-y: auto; padding: 2px 6px 6px; }
 .room-member-row {
+  /* Avatar + name/model stack, actions on their own line: Reset and Change can
+     never squeeze or overlap the name and model text. */
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  column-gap: 10px;
+  row-gap: 2px;
   min-height: 38px;
-  padding: 4px 6px;
+  padding: 8px 8px 10px;
   border: 0;
-  border-radius: 8px;
+  border-bottom: 1px solid rgba(var(--hermes-fg-rgb), 0.12);
+  border-radius: 0;
   background: transparent;
   color: inherit;
   text-align: start;
 }
-.room-member-actions { display: inline-flex; align-items: center; gap: 6px; }
+.room-member-actions { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
 .room-member-row:hover,
 .room-member-row:focus-visible { background: rgba(var(--hermes-fg-rgb), 0.08); outline: none; }
-.room-member-avatar { width: 24px; height: 24px; border-radius: 6px; overflow: hidden; display: inline-grid; place-items: center; }
+.room-member-avatar { grid-row: 1 / span 2; align-self: start; width: 28px; height: 28px; border-radius: 0; overflow: hidden; display: inline-grid; place-items: center; }
 .room-member-avatar > * { width: 100%; height: 100%; }
 .room-member-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 calc(12px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-ui); color: var(--bot-ink, var(--hermes-ink)); }
-.room-member-model { grid-column: 2; font: 400 calc(10px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-mono); color: color-mix(in srgb, var(--hermes-ink) 62%, transparent); }
+.room-member-model { grid-column: 2; min-width: 0; overflow-wrap: anywhere; font: 400 calc(10px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-mono); color: color-mix(in srgb, var(--hermes-ink) 62%, transparent); }
 .room-member-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--hermes-accent); }
 .room-member-change {
   min-height: 26px;
   padding: 0 10px;
-  border-radius: 6px;
+  border-radius: 0;
+  white-space: nowrap;
   border: 1px solid var(--hermes-primary-bg);
   background: var(--hermes-primary-bg);
   color: var(--hermes-primary-fg);
@@ -9351,7 +9403,7 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
 .settings-back-to-top[hidden] { display: none; }
 .settings-back-to-top svg { inline-size: 14px; block-size: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .settings-back-to-top:hover,
-.settings-back-to-top:focus-visible { background: var(--hermes-accent); color: var(--hermes-paper); border-color: var(--hermes-accent); }
+.settings-back-to-top:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-bg, var(--hermes-ink)); }
 .settings-dialog form { padding-block-end: 72px; }
 
 /* Primary vs secondary weight on Settings action rows (theme primary tokens stay readable in every theme) */
@@ -9611,3 +9663,130 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
 .mode-switch .mode-choice svg { inline-size: 18px; block-size: 18px; display: block; margin: 0; }
 .mode-switch .mode-choice > span { display: block; line-height: 1; text-align: center; }
 @media (max-width: 300px) { .mode-switch .mode-choice svg { display: block; } }
+
+/* Neutral hover for list rows, tiles, cards and picker options. The generic
+   button:hover rule fills every button with the primary action colour, which
+   made bot rows, pet tiles, settings cards and model options unreadable on
+   light themes. These surfaces keep a neutral fill and ink text instead; their
+   child labels inherit the foreground so nothing vanishes. */
+button.bot-mode-row:hover, button.bot-mode-row:focus-visible,
+button.bot-mode-pet-tile:hover, button.bot-mode-pet-tile:focus-visible,
+button.bot-mode-face-tile:hover, button.bot-mode-face-tile:focus-visible,
+button.bot-mode-swatch:hover, button.bot-mode-swatch:focus-visible,
+.room-member-row:hover, .room-member-row:focus-visible,
+.group-row:hover, .group-row:focus-visible,
+.settings-category-card:hover, .settings-category-card:focus-visible,
+.branded-select-option:hover, .branded-select-option:focus-visible,
+.model-option:hover, .model-option:focus-visible,
+.model-effort-option:hover, .model-effort-option:focus-visible {
+  background: rgba(var(--hermes-fg-rgb), 0.08) !important;
+  color: var(--hermes-fg, inherit) !important;
+  border-color: rgba(var(--hermes-fg-rgb), 0.45) !important;
+}
+button.bot-mode-row:hover *:not(button, button *), button.bot-mode-row:focus-visible *:not(button, button *),
+button.bot-mode-pet-tile:hover *:not(button, button *), button.bot-mode-pet-tile:focus-visible *:not(button, button *),
+.room-member-row:hover *:not(button, button *), .room-member-row:focus-visible *:not(button, button *),
+.group-row:hover *:not(button, button *), .group-row:focus-visible *:not(button, button *),
+.settings-category-card:hover *:not(button, button *), .settings-category-card:focus-visible *:not(button, button *),
+.model-option:hover *:not(button, button *), .model-option:focus-visible *:not(button, button *),
+.model-effort-option:hover *:not(button, button *), .model-effort-option:focus-visible *:not(button, button *) {
+  color: inherit;
+}
+
+/* Composer dock controls keep their own surface on hover. The global
+   button:hover rule would flood them with the primary action colour, which
+   hides the effort badge, token count and the segmented context meter. */
+.model-menu-button:hover, .model-menu-button:focus-visible, .model-menu-button[aria-expanded="true"],
+.context-bar:hover, .context-bar:focus-visible, .context-bar[aria-expanded="true"],
+.session-menu-button:hover, .session-menu-button:focus-visible, .session-menu-button[aria-expanded="true"] {
+  background: color-mix(in srgb, var(--hermes-control-bg) 88%, var(--hermes-fg)) !important;
+  color: var(--hermes-fg, var(--hermes-control-fg)) !important;
+  border-color: rgba(var(--hermes-fg-rgb), 0.55) !important;
+}
+.model-menu-button:hover .model-button-copy strong,
+.model-menu-button:focus-visible .model-button-copy strong,
+.model-menu-button[aria-expanded="true"] .model-button-copy strong {
+  color: var(--hermes-fg);
+  border-color: rgba(var(--hermes-fg-rgb), 0.45);
+}
+.context-bar:hover .context-track, .context-bar:focus-visible .context-track, .context-bar[aria-expanded="true"] .context-track {
+  border-color: rgba(var(--hermes-fg-rgb), 0.55);
+}
+
+/* Light-theme hover ink: some light palettes (Everforest) have a base text
+   colour that sits near 4.5:1 on paper, so a tinted hover fill pushes it
+   under. Darken the ink and keep the tint light on hover/focus. */
+html[data-hermes-mode="light"] :is(.model-menu-button, .context-bar, .session-menu-button):is(:hover, :focus-visible, [aria-expanded="true"]) {
+  background: color-mix(in srgb, var(--hermes-control-bg) 94%, var(--hermes-fg)) !important;
+  color: color-mix(in srgb, var(--hermes-fg) 72%, #000) !important;
+}
+html[data-hermes-mode="light"] :is(.model-menu-button, .context-bar):is(:hover, :focus-visible, [aria-expanded="true"]) * {
+  color: inherit;
+}
+html[data-hermes-mode="light"] :is(.model-effort-option, .model-option, .room-member-row, .bot-mode-row, .group-row, .settings-category-card, .branded-select-option):is(:hover, :focus-visible) {
+  background: rgba(var(--hermes-fg-rgb), 0.06) !important;
+  color: color-mix(in srgb, var(--hermes-fg) 72%, #000) !important;
+}
+html[data-hermes-mode="light"] :is(.model-effort-option, .model-option, .room-member-row, .bot-mode-row, .group-row, .settings-category-card, .branded-select-option):is(:hover, :focus-visible) *:not(button, button *) {
+  color: inherit !important;
+}
+
+/* Bot Mode view tabs: neutral hover. The global button:hover fill is the primary
+   action colour (Nous light: blue), and these tabs only repainted the label, so
+   the unselected tab became blue text on a blue fill. Selected tab keeps its
+   own inverse pair from the [aria-pressed="true"] rule. */
+.bot-mode-view-tab:not([aria-pressed="true"]):hover,
+.bot-mode-view-tab:not([aria-pressed="true"]):focus-visible {
+  background: rgba(var(--hermes-fg-rgb), 0.1);
+  color: var(--hermes-fg);
+}
+.bot-mode-view-tab[aria-pressed="true"]:hover,
+.bot-mode-view-tab[aria-pressed="true"]:focus-visible {
+  background: var(--hermes-fg);
+  color: var(--hermes-app-bg);
+}
+
+/* Hover label pairs for older components. The global button:hover paints the
+   primary label colour; these rules repaint the FILL with a pale tint of the
+   foreground, so the label must be repainted too or it is primary-fg on pale
+   (white on pale blue/red). Enforced by tests/hover-pair-contract.test.mjs. */
+.generated-image-lightbox-actions a:hover,
+.generated-image-lightbox-actions a:focus-visible,
+.generated-image-lightbox-actions button:hover,
+.generated-image-lightbox-actions button:focus-visible,
+.context-scope-menu button:hover,
+.context-scope-menu button:focus-visible,
+.composer-actions #browserControlMenuButton:hover,
+.composer-actions #browserControlMenuButton:focus-visible,
+.composer-actions .bot-mode-threads-button:hover,
+.composer-actions .bot-mode-threads-button:focus-visible,
+.composer-actions .bot-mode-new-thread-button:hover,
+.composer-actions .bot-mode-new-thread-button:focus-visible,
+#refreshProfilesButton:hover,
+#refreshProfilesButton:focus-visible,
+.task-stack-toggle:hover,
+.task-stack-toggle:focus-visible,
+.subagent-stack-controls button:hover,
+.subagent-stack-controls button:focus-visible,
+.group-thread-exit-btn:hover,
+.group-thread-exit-btn:focus-visible,
+.group-settings-btn:hover,
+.group-settings-btn:focus-visible,
+.bot-mode-new-thread-button:hover,
+.bot-mode-new-thread-button:focus-visible {
+  color: var(--hermes-fg);
+}
+
+/* Status line shown above a room member's options while they load or when the
+   bot has no readable session. */
+.model-options-note {
+  margin: 0 0 6px;
+  padding: 0 2px;
+  color: var(--hermes-muted);
+  font: 500 calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-ui);
+}
+.model-menu[data-selection-target="room-member"] .model-toggle-option:disabled,
+.model-menu[data-selection-target="room-member"] .model-effort-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

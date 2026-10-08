@@ -3251,6 +3251,38 @@
     "message": "Modifica i modelli nel desktop Hermes",
     "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
   },
+  "runtime_ui_effort_buttons": {
+    "message": "Pulsanti",
+    "description": "Runtime interface message ui.effort.buttons"
+  },
+  "runtime_ui_effort_display": {
+    "message": "Selettore dello sforzo",
+    "description": "Runtime interface message ui.effort.display"
+  },
+  "runtime_ui_effort_help": {
+    "message": "Uno sforzo maggiore può richiedere più tempo e token.",
+    "description": "Runtime interface message ui.effort.help"
+  },
+  "runtime_ui_effort_higher": {
+    "message": "Più sforzo",
+    "description": "Runtime interface message ui.effort.higher"
+  },
+  "runtime_ui_effort_lower": {
+    "message": "Meno sforzo",
+    "description": "Runtime interface message ui.effort.lower"
+  },
+  "runtime_ui_effort_save_error": {
+    "message": "Impossibile salvare il selettore dello sforzo.",
+    "description": "Runtime interface message ui.effort.save_error"
+  },
+  "runtime_ui_effort_slider": {
+    "message": "Cursore",
+    "description": "Runtime interface message ui.effort.slider"
+  },
+  "runtime_ui_effort_title": {
+    "message": "Sforzo",
+    "description": "Runtime interface message ui.effort.title"
+  },
   "runtime_ui_element": {
     "message": "Elemento",
     "description": "Runtime interface message ui.element"

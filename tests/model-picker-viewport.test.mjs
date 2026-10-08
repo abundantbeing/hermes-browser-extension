@@ -19,6 +19,7 @@ test('bottom-anchored popovers reserve the live composer dock height (#101)', ()
   assert.match(optionsList, /min-height:\s*0/);
   assert.match(optionsList, /overflow-y:\s*auto/);
 
-  const assist = css.match(/\.model-menu\[data-selection-target="assist"\]\s*\{[\s\S]*?\}/)?.[0] || '';
+  const assist = css.match(/\.model-menu\[data-selection-target="assist"\](?:,\s*\.model-menu\[data-selection-target="room-member"\])?\s*\{[\s\S]*?\}/)?.[0] || '';
   assert.match(assist, /grid-template-rows:\s*auto auto minmax\(58px, auto\) minmax\(0, 1fr\) minmax\(0, auto\) auto/);
+  assert.match(assist, /data-selection-target="room-member"/, 'room-member picks share the floating picker layout');
 });

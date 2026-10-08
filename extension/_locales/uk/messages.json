@@ -3251,6 +3251,38 @@
     "message": "Редагувати моделі в Hermes Desktop",
     "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
   },
+  "runtime_ui_effort_buttons": {
+    "message": "Кнопки",
+    "description": "Runtime interface message ui.effort.buttons"
+  },
+  "runtime_ui_effort_display": {
+    "message": "Вигляд вибору зусиль",
+    "description": "Runtime interface message ui.effort.display"
+  },
+  "runtime_ui_effort_help": {
+    "message": "Більші зусилля можуть потребувати більше часу й токенів.",
+    "description": "Runtime interface message ui.effort.help"
+  },
+  "runtime_ui_effort_higher": {
+    "message": "Більше зусиль",
+    "description": "Runtime interface message ui.effort.higher"
+  },
+  "runtime_ui_effort_lower": {
+    "message": "Менше зусиль",
+    "description": "Runtime interface message ui.effort.lower"
+  },
+  "runtime_ui_effort_save_error": {
+    "message": "Не вдалося зберегти вигляд вибору зусиль.",
+    "description": "Runtime interface message ui.effort.save_error"
+  },
+  "runtime_ui_effort_slider": {
+    "message": "Повзунок",
+    "description": "Runtime interface message ui.effort.slider"
+  },
+  "runtime_ui_effort_title": {
+    "message": "Зусилля",
+    "description": "Runtime interface message ui.effort.title"
+  },
   "runtime_ui_element": {
     "message": "елемент",
     "description": "Runtime interface message ui.element"

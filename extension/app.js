@@ -23,6 +23,7 @@ import {
 } from './lib/common.mjs';
 import { createUserFileAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
 import { renderMarkdownSafe } from './lib/sanitizer.mjs';
+import { createEffortControl } from './lib/effort-control.mjs';
 import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
 import {
@@ -2683,6 +2684,10 @@ function renderComposerRuntimeControl() {
 
 function renderModelRuntimeOptions() {
   if (!els.modelOptionsList) return;
+  const restoreRangeFocus = els.modelOptionsList.contains(document.activeElement)
+    && document.activeElement?.matches('.effort-control-range');
+  const renderTarget = modelSelectionTarget;
+  const renderSessionId = activeSessionId;
   const assistTarget = modelSelectionTarget === 'assist';
   const options = assistTarget ? inlineAssistRuntimeOptions() : activeModelRuntimeOptions();
   const selectedAssistModel = availableModels.find((model) => model.id === (settings.inlineAssistModel || settings.model));
@@ -2706,7 +2711,26 @@ function renderModelRuntimeOptions() {
       button.textContent = option.label;
       effort.append(button);
     }
-    els.modelOptionsList.append(effort);
+    els.modelOptionsList.append(createEffortControl({
+      value: options.reasoningEffort,
+      buttons: effort,
+      storage: browserApi.storage,
+      translate: translateUiText,
+      effortLabel: (option) => t(`settings.models.effort.${option.value}`),
+      surface: 'web',
+      onCommit: (value) => {
+        if (renderTarget !== modelSelectionTarget || renderSessionId !== activeSessionId || els.modelPicker.hidden) return;
+        if (assistTarget) {
+          settings.inlineAssistReasoningEffort = value;
+          browserApi.storage.local.set({ hermesBrowserSettings: settings });
+          renderModelRuntimeOptions();
+        } else {
+          setModelRuntimeOptions({ reasoningEffort: value }).catch((error) => {
+            els.composerStatus.textContent = `Runtime option save failed: ${error?.message || String(error)}`;
+          });
+        }
+      },
+    }));
   }
 
   const toggles = document.createElement('div');
@@ -2738,6 +2762,7 @@ function renderModelRuntimeOptions() {
     els.modelOptionsList.append(unavailable);
   }
   renderComposerRuntimeControl();
+  if (restoreRangeFocus) els.modelOptionsList.querySelector('.effort-control-range')?.focus({ preventScroll: true });
 }
 
 async function setModelRuntimeOptions(partial = {}) {

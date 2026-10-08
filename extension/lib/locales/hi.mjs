@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "प्रयास",
+  "ui.effort.slider": "स्लाइडर",
+  "ui.effort.buttons": "बटन",
+  "ui.effort.display": "प्रयास का प्रदर्शन",
+  "ui.effort.lower": "कम प्रयास",
+  "ui.effort.higher": "अधिक प्रयास",
+  "ui.effort.help": "अधिक प्रयास में ज़्यादा समय और टोकन लग सकते हैं।",
+  "ui.effort.save_error": "प्रयास का प्रदर्शन सहेजा नहीं जा सका।",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

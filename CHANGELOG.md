@@ -27,6 +27,9 @@
 - Leaving Bot Mode while a group chat is still replying no longer waits for every member to finish. Regular Sessions opens immediately, and that group chat keeps running in the background.
 - Subagents started from a browser chat now show up in the live dock while they work. You can steer or stop them from that session, including on a local API connection.
 
+- The reasoning effort control is now a slider with tick marks and a Slider or Buttons choice that is remembered. Max and Ultra glow while selected. In a group chat, each bot shows and saves its own effort, so changing one never changes the others.
+- Model menus use the same square on/off switch as Settings, and hovering a control in any theme keeps its label readable.
+- Anti-Nous reds are brighter in both modes, and the effort slider in Anti-Nous Dark is red instead of pink. Light themes keep paper banners with faint artwork, and the Anti-Nous Dark top bar title is white.
 - Approving local-document access on a tab that is still loading no longer leaks an uncaught error. Hermes Control shows a "Control not attached" notice instead. Thanks to @LeahyCC (#97).
 
 - Choosing Pin current tab or Follow active tab on a remote connection that has not approved page context sharing now explains why and offers an Open Settings button that goes straight to the approval switch, instead of silently staying on Chat only. Approval is never granted automatically. Thanks to @jdot-dev (#92, #93).

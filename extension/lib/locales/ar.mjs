@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "الجهد",
+  "ui.effort.slider": "شريط تمرير",
+  "ui.effort.buttons": "أزرار",
+  "ui.effort.display": "عرض الجهد",
+  "ui.effort.lower": "جهد أقل",
+  "ui.effort.higher": "جهد أكبر",
+  "ui.effort.help": "قد يتطلب الجهد الأعلى مزيدًا من الوقت والرموز.",
+  "ui.effort.save_error": "تعذر حفظ طريقة عرض الجهد.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

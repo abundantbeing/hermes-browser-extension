@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "추론 강도",
+  "ui.effort.slider": "슬라이더",
+  "ui.effort.buttons": "버튼",
+  "ui.effort.display": "추론 강도 표시",
+  "ui.effort.lower": "낮은 강도",
+  "ui.effort.higher": "높은 강도",
+  "ui.effort.help": "추론 강도가 높을수록 더 많은 시간과 토큰이 필요할 수 있습니다.",
+  "ui.effort.save_error": "추론 강도 표시를 저장하지 못했습니다.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

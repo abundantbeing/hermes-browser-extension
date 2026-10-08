@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Çaba",
+  "ui.effort.slider": "Kaydırıcı",
+  "ui.effort.buttons": "Düğmeler",
+  "ui.effort.display": "Çaba görünümü",
+  "ui.effort.lower": "Daha az çaba",
+  "ui.effort.higher": "Daha fazla çaba",
+  "ui.effort.help": "Daha yüksek çaba daha fazla zaman ve token gerektirebilir.",
+  "ui.effort.save_error": "Çaba görünümü kaydedilemedi.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Sforzo",
+  "ui.effort.slider": "Cursore",
+  "ui.effort.buttons": "Pulsanti",
+  "ui.effort.display": "Selettore dello sforzo",
+  "ui.effort.lower": "Meno sforzo",
+  "ui.effort.higher": "Più sforzo",
+  "ui.effort.help": "Uno sforzo maggiore può richiedere più tempo e token.",
+  "ui.effort.save_error": "Impossibile salvare il selettore dello sforzo.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

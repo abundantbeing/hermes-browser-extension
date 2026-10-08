@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Indsats",
+  "ui.effort.slider": "Skyder",
+  "ui.effort.buttons": "Knapper",
+  "ui.effort.display": "Visning af indsats",
+  "ui.effort.lower": "Mindre indsats",
+  "ui.effort.higher": "Mere indsats",
+  "ui.effort.help": "En større indsats kan kræve mere tid og flere tokens.",
+  "ui.effort.save_error": "Visningen af indsats kunne ikke gemmes.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

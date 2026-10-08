@@ -782,7 +782,7 @@ const CONTENT_EXTRACTION_API = Object.freeze({
   hermesGlobal.HermesContentExtractor = CONTENT_EXTRACTION_API;
 })(globalThis);
 
-/* extension/lib/appearance-themes.mjs · SHA-256 c319e3ac90fb50c3 */
+/* extension/lib/appearance-themes.mjs · SHA-256 7f168bee787d3a77 */
 (function hermesAppearanceRuntime(hermesGlobal) {
   'use strict';
 
@@ -857,7 +857,7 @@ const APPEARANCE_THEMES = Object.freeze([
     value: 'anti-nous',
     name: 'Anti-Nous',
     description: 'Blood red and berry, navy reading surfaces, and fine gold trim',
-    preview: { bg: '#53172b', panel: '#101b30', text: '#f5ece6', muted: '#d4af6c', accent: '#f06b65' },
+    preview: { bg: '#8a1a2d', panel: '#101b30', text: '#f5ece6', muted: '#d4af6c', accent: '#ff4d4d' },
   },
 ]);
 
@@ -907,8 +907,8 @@ const INLINE_ASSIST_THEME_TOKENS = Object.freeze({
     light: Object.freeze({ surface: '#825d02', panel: '#f0f0ef', ink: '#2b2109', fg: '#fff8dc', accent: '#825d02', primary: '#825d02' }),
   }),
   'anti-nous': Object.freeze({
-    dark: Object.freeze({ surface: '#53172b', panel: '#101b30', ink: '#f5ece6', fg: '#f5ece6', accent: '#f06b65', primary: '#b52b3d' }),
-    light: Object.freeze({ surface: '#a52232', panel: '#ffffff', ink: '#a52232', fg: '#fff7f0', accent: '#a52232', primary: '#b52b3d' }),
+    dark: Object.freeze({ surface: '#8a1a2d', panel: '#101b30', ink: '#f5ece6', fg: '#f5ece6', accent: '#ff4d4d', primary: '#d42a40' }),
+    light: Object.freeze({ surface: '#d4182d', panel: '#ffffff', ink: '#d4182d', fg: '#fff7f0', accent: '#d4182d', primary: '#d42a40' }),
   }),
 });
 

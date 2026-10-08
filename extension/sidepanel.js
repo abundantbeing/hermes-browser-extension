@@ -191,6 +191,7 @@ import {
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
 import { mountBrandedSelect } from './lib/branded-select.mjs';
+import { createEffortControl } from './lib/effort-control.mjs';
 import { probeSignatureFonts } from './lib/font-availability.mjs';
 import { refreshHermesContextRegistry } from './lib/hermes-context-sync.mjs';
 import {
@@ -7688,7 +7689,12 @@ async function applyAssistSelectedModel(model) {
 
 function modelForSelectionTarget(target = modelSelectionTarget) {
   if (target === 'room-member') {
-    return availableModels.find(isModelRuntimeSelectable)
+    // Start on the member's own model/provider when it is known.
+    const own = roomModelPickTarget?.model
+      ? availableModels.find((model) => model.id === roomModelPickTarget.model || model.rawModelId === roomModelPickTarget.model)
+      : null;
+    return own
+      || availableModels.find(isModelRuntimeSelectable)
       || availableModels[0]
       || null;
   }
@@ -7740,8 +7746,13 @@ function setModelSelectionTarget(target = 'chat') {
     // session only, never the 1:1 chat model.
     if (els.modelMenu.parentElement !== document.body) document.body.append(els.modelMenu);
     els.modelMenu.dataset.selectionTarget = 'room-member';
+    delete els.modelMenu.dataset.floating;
+    // Placement is CSS-owned for room picks; drop inline offsets left by an
+    // earlier Assist open so they can not push the picker off-screen.
+    els.modelMenu.style.removeProperty('top');
+    els.modelMenu.style.removeProperty('bottom');
+    els.modelMenu.style.removeProperty('max-height');
     if (els.modelMenuTitle) els.modelMenuTitle.textContent = `${t('ui.room.bots.title')} · ${roomMemberModelLabel()}`;
-    positionAssistModelMenu();
   } else {
     if (modelMenuHome.parent && els.modelMenu.parentElement !== modelMenuHome.parent) {
       modelMenuHome.parent.insertBefore(els.modelMenu, modelMenuHome.next);
@@ -7868,27 +7879,75 @@ function renderModelMenu(query = els.modelSearchInput?.value || '') {
 
 function renderModelRuntimeOptions() {
   if (!els.modelOptionsList) return;
+  const restoreRangeFocus = els.modelOptionsList.contains(document.activeElement)
+    && document.activeElement?.matches('.effort-control-range');
+  const renderTarget = modelSelectionTarget;
+  const renderSessionId = settings.sessionId;
   const assistTarget = modelSelectionTarget === 'assist';
+  const roomTarget = modelSelectionTarget === 'room-member';
   const assistOptions = inlineAssistRuntimeOptions();
-  const thinkingEnabled = assistTarget ? assistOptions.thinkingEnabled : settings.thinkingEnabled !== false;
-  const fastMode = assistTarget ? assistOptions.fastMode : normalizeFastMode(settings.fastMode);
-  const effort = assistTarget ? assistOptions.reasoningEffort : normalizeReasoningEffort(settings.reasoningEffort);
+  // A room member shows its OWN session options. Until they are read they are
+  // shown as unavailable, never borrowed from the 1:1 chat.
+  const memberOptions = roomTarget ? currentRoomMemberRuntimeOptions() : null;
+  const memberReady = Boolean(memberOptions && memberOptions.state === 'ok');
+  const thinkingEnabled = roomTarget
+    ? (memberReady ? memberOptions.thinkingEnabled : true)
+    : assistTarget ? assistOptions.thinkingEnabled : settings.thinkingEnabled !== false;
+  const fastMode = roomTarget
+    ? (memberReady && memberOptions.fastMode === true)
+    : assistTarget ? assistOptions.fastMode : normalizeFastMode(settings.fastMode);
+  const memberEffortListed = memberReady && MODEL_EFFORTS.some((item) => item.value === memberOptions.reasoningEffort);
+  const effort = roomTarget
+    ? (memberEffortListed ? memberOptions.reasoningEffort : 'medium')
+    : assistTarget ? assistOptions.reasoningEffort : normalizeReasoningEffort(settings.reasoningEffort);
+  const roomLocked = roomTarget && !memberReady;
+  const showSelectedEffort = !roomTarget || (memberReady && memberEffortListed && thinkingEnabled);
+  const roomStatusText = !roomTarget ? ''
+    : !memberOptions ? translateUiText('Reading this bot’s settings…')
+      : memberOptions.state === 'no-session' ? translateUiText('This bot has no active session in this room yet. Its settings apply once it has replied.')
+        : memberOptions.state !== 'ok' ? translateUiText('Could not read this bot’s settings.')
+          : (!memberEffortListed && thinkingEnabled ? `${translateUiText('Effort')}: ${memberOptions.reasoningEffort}` : '');
   const effortRows = MODEL_EFFORTS.map((item) => `
-    <button class="model-effort-option ${item.value === effort ? 'selected' : ''}" type="button" data-effort="${item.value}">
-      <span>${item.label}</span><strong>${item.value === effort ? '✓' : ''}</strong>
+    <button class="model-effort-option ${showSelectedEffort && item.value === effort ? 'selected' : ''}" type="button" data-effort="${item.value}"${roomLocked ? ' disabled' : ''}>
+      <span>${item.label}</span><strong>${showSelectedEffort && item.value === effort ? '✓' : ''}</strong>
     </button>
   `).join('');
   els.modelOptionsList.innerHTML = `
-    <div class="model-options-heading">${assistTarget ? 'Hermes Assist options' : 'Options'}</div>
-    <button class="model-toggle-option" type="button" data-toggle="thinking" aria-pressed="${String(thinkingEnabled)}">
+    <div class="model-options-heading">${assistTarget ? 'Hermes Assist options' : roomTarget ? 'Bot options' : 'Options'}</div>
+    ${roomStatusText ? `<p class="model-options-note" role="status">${roomStatusText}</p>` : ''}
+    <button class="model-toggle-option" type="button" data-toggle="thinking" aria-pressed="${String(thinkingEnabled)}"${roomLocked ? ' disabled' : ''}>
       <span>Thinking</span><strong class="toggle-switch ${thinkingEnabled ? 'on' : ''}" aria-hidden="true"></strong>
     </button>
-    <button class="model-toggle-option" type="button" data-toggle="fast" aria-pressed="${String(fastMode)}">
+    <button class="model-toggle-option" type="button" data-toggle="fast" aria-pressed="${String(fastMode)}"${roomLocked ? ' disabled' : ''}>
       <span>Fast</span><strong class="toggle-switch ${fastMode ? 'on' : ''}" aria-hidden="true"></strong>
     </button>
-    <div class="model-options-heading effort-heading">Effort</div>
     <div class="model-effort-list">${effortRows}</div>
   `;
+  const effortButtons = els.modelOptionsList.querySelector('.model-effort-list');
+  const control = createEffortControl({
+    value: effort,
+    buttons: effortButtons,
+    storage: browserApi.storage,
+    translate: translateUiText,
+    effortLabel: (option) => t(`settings.models.effort.${option.value}`),
+    disabled: roomLocked,
+    onCommit: (value) => {
+      if (renderTarget !== modelSelectionTarget || renderSessionId !== settings.sessionId || els.modelMenu.hidden) return;
+      if (roomTarget) {
+        void setRoomMemberRuntimeOption({ reasoningEffort: normalizeReasoningEffort(value), thinkingEnabled: true });
+        return;
+      }
+      if (assistTarget) {
+        settings.inlineAssistReasoningEffort = normalizeReasoningEffort(value);
+        renderModelRuntimeOptions();
+        browserApi.storage.local.set({ hermesBrowserSettings: settings });
+      } else {
+        setModelRuntimeOption('reasoningEffort', normalizeReasoningEffort(value));
+      }
+    },
+  });
+  els.modelOptionsList.append(control);
+  if (restoreRangeFocus) control.querySelector('.effort-control-range')?.focus({ preventScroll: true });
 }
 
 function persistModelRuntimeOptions() {
@@ -10157,6 +10216,76 @@ function clearActiveGroupLiveMessage() {
 let roomPopoverOpen = false;
 let roomPopoverMemberReads = 0;
 let roomModelPickTarget = null;
+// Last confirmed { model, provider } per room member, filled by the popover's
+// status reads. Lets the model picker open on the provider the bot really uses.
+const roomMemberModelReads = new Map();
+// Each room member's OWN Thinking/effort/Fast, read from its session. The 1:1
+// chat's settings.reasoningEffort must never be shown for (or written by) a bot.
+const roomMemberRuntimeOptions = new Map();
+function roomMemberReadKey(roomId, name) { return `${roomId}::${name}`; }
+
+function currentRoomMemberRuntimeOptions() {
+  const target = roomModelPickTarget;
+  if (!target) return null;
+  return roomMemberRuntimeOptions.get(roomMemberReadKey(target.roomId, target.member.name)) || null;
+}
+
+// Read the bot's own Thinking / effort / Fast from its session and repaint the
+// picker if it is still showing that same bot.
+async function refreshRoomMemberRuntimeOptions(roomId, member) {
+  let read;
+  try { read = await activeGroupRuntime?.readMemberRuntimeOptions(roomId, member); }
+  catch (error) { read = { state: 'unknown', error: String(error?.message || error) }; }
+  if (!read) return;
+  roomMemberRuntimeOptions.set(roomMemberReadKey(roomId, member.name), read);
+  const target = roomModelPickTarget;
+  if (!target || target.roomId !== roomId || target.member?.name !== member.name) return;
+  if (els.modelMenu.hidden || modelSelectionTarget !== 'room-member') return;
+  renderModelRuntimeOptions();
+}
+
+// Write ONE option to the bot's own session (never the 1:1 chat) and show what
+// the session confirms, not what was requested.
+async function setRoomMemberRuntimeOption(option) {
+  const target = roomModelPickTarget;
+  if (!target || !activeGroupRuntime) return;
+  const { roomId, member } = target;
+  const key = roomMemberReadKey(roomId, member.name);
+  const previous = roomMemberRuntimeOptions.get(key);
+  if (roomMemberBusyNow(member.name)) {
+    setStatus('warn', t('ui.room.busy'), `${member.title || member.name} is replying right now; wait for its turn to finish.`, { translateDetail: false });
+    renderModelRuntimeOptions();
+    return;
+  }
+  let result;
+  try { result = await activeGroupRuntime.setMemberRuntimeOption(roomId, member, option); }
+  catch (error) { result = { state: 'unavailable', error: String(error?.message || error) }; }
+  if (result?.state === 'ok') {
+    roomMemberRuntimeOptions.set(key, result);
+  } else {
+    if (previous) roomMemberRuntimeOptions.set(key, previous);
+    setStatus('warn', t('ui.room.unknown'), result?.error || 'The bot did not confirm that setting.', { translateDetail: false });
+    await refreshRoomMemberRuntimeOptions(roomId, member);
+  }
+  if (!els.modelMenu.hidden && modelSelectionTarget === 'room-member') renderModelRuntimeOptions();
+}
+
+// Find the catalog entry for a bot's confirmed model so the picker can start on
+// that provider. Prefers an exact model+provider match, then model, then any
+// model from the same provider.
+function modelForMemberRead(read = {}) {
+  const wantModel = String(read.model || '').trim();
+  const wantProvider = String(read.provider || '').trim().toLowerCase();
+  if (!wantModel && !wantProvider) return null;
+  const sameProvider = (m) => [m.provider, m.providerLabel, m.owner]
+    .some((v) => String(v || '').trim().toLowerCase() === wantProvider);
+  const sameModel = (m) => [m.id, m.rawModelId, m.model]
+    .some((v) => String(v || '').trim() === wantModel);
+  return availableModels.find((m) => sameModel(m) && wantProvider && sameProvider(m))
+    || availableModels.find((m) => wantModel && sameModel(m))
+    || availableModels.find((m) => wantProvider && sameProvider(m))
+    || null;
+}
 
 function activeRoomId() {
   return String(activeGroupProjection?.roomId || activeGroupProjection?.id || '');
@@ -10317,6 +10446,7 @@ function renderRoomPopover() {
       ? `${read.model}${read.provider ? ` · ${read.provider}` : ''}`
       : t(read?.state === 'no-session' ? 'ui.room.profile.default' : 'ui.room.unknown');
     entry.model.textContent = label;
+    if (read?.state === 'ok') roomMemberModelReads.set(roomMemberReadKey(roomId, member.name), { model: read.model, provider: read.provider });
     if (read?.state === 'ok' && entry.binding?.model === read.model) {
       entry.row.title = t('ui.room.model.note');
     }
@@ -10356,18 +10486,49 @@ function toggleRoomPopover() {
 }
 
 function openRoomMemberModelMenu(roomId, member) {
-  if (!activeGroupRuntime) return;
+  if (!activeGroupRuntime) {
+    // Never fail silently: a Change click with no live room runtime used to do nothing.
+    setStatus('warn', t('ui.room.unknown'), 'This room is not connected to a live Hermes session yet. Reopen the group chat and try again.', { translateDetail: false });
+    return;
+  }
   if (roomMemberBusyNow(member.name)) {
     setStatus('warn', t('ui.room.busy'), `${member.title || member.name} is replying right now; wait for its turn to finish.`, { translateDetail: false });
     return;
   }
   const binding = readRoomModelBinding(roomMemberBindings(), roomId, member.name);
-  roomModelPickTarget = { roomId, member, model: binding?.model || '', hasBinding: Boolean(binding) };
+  // Start on the provider the bot already uses: its room pick, else the last
+  // confirmed read, else a fresh read below. Never the first catalog provider.
+  const known = modelForMemberRead({ model: binding?.model, provider: binding?.provider })
+    || modelForMemberRead(roomMemberModelReads.get(roomMemberReadKey(roomId, member.name)));
+  roomModelPickTarget = { roomId, member, model: known?.id || binding?.model || '', hasBinding: Boolean(binding) };
   setModelSelectionTarget('room-member');
   closeFloatingPanels();
   els.modelMenu.hidden = false;
   els.modelMenuButton.setAttribute('aria-expanded', 'true');
   els.modelSearchInput?.focus();
+  if (!known) void alignRoomPickerToMemberProvider(roomId, member);
+  roomMemberRuntimeOptions.delete(roomMemberReadKey(roomId, member.name));
+  renderModelRuntimeOptions();
+  void refreshRoomMemberRuntimeOptions(roomId, member);
+}
+
+async function alignRoomPickerToMemberProvider(roomId, member) {
+  let read;
+  try { read = await activeGroupRuntime?.readMemberModel(roomId, member); } catch { return; }
+  if (read?.state !== 'ok') return;
+  roomMemberModelReads.set(roomMemberReadKey(roomId, member.name), { model: read.model, provider: read.provider });
+  const target = roomModelPickTarget;
+  // Only realign if the same picker is still open and the user has not searched
+  // or already moved to another provider.
+  if (!target || target.roomId !== roomId || target.member?.name !== member.name) return;
+  if (els.modelMenu.hidden || modelSelectionTarget !== 'room-member') return;
+  if (els.modelSearchInput?.value) return;
+  const found = modelForMemberRead(read);
+  if (!found) return;
+  roomModelPickTarget = { ...target, model: found.id };
+  selectedModelProvider = modelProviderLabel(found);
+  renderModelMenu('');
+  els.modelProviderList.querySelector('.model-provider-option.selected')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
 }
 
 function roomMemberModelLabel() {
@@ -10440,6 +10601,11 @@ function openRoomModelConfirm({ member, model, provider, message, onConfirm }) {
   confirmButton.focus?.();
 }
 
+function closeRoomModelMenu() {
+  els.modelMenu.hidden = true;
+  els.modelMenuButton.setAttribute('aria-expanded', 'false');
+}
+
 async function setRoomMemberModel(model, { confirm = false } = {}) {
   const target = roomModelPickTarget;
   if (!target || !activeGroupRuntime) return;
@@ -10453,6 +10619,9 @@ async function setRoomMemberModel(model, { confirm = false } = {}) {
     provider: requestedProvider,
     confirm,
   });
+  // Close the picker once the gateway answered so the updated member row in the
+  // popover is what the user sees; keep it open on errors so they can retry.
+  if (result?.state === 'ok' || result?.state === 'confirm') closeRoomModelMenu();
   if (result?.state === 'confirm') {
     // The gateway asked for an explicit confirmation (e.g. an expensive model).
     // Name the member/model/provider and retry only when the user confirms.
@@ -10481,6 +10650,8 @@ async function setRoomMemberModel(model, { confirm = false } = {}) {
   appendRoomEventLine(content);
   setStatus('ok', content, '', { translateDetail: false });
   roomModelPickTarget = { roomId, member, model: result.model || modelId, hasBinding: true };
+  roomMemberRuntimeOptions.delete(roomMemberReadKey(roomId, member.name));
+  void refreshRoomMemberRuntimeOptions(roomId, member);
   renderRoomPopover();
 }
 
@@ -21445,7 +21616,7 @@ function bindEvents() {
     });
   document.addEventListener('click', (event) => {
     if (!event.target.closest('#profileSwitchMenu, #activeProfileIndicator')) closeProfileSwitchMenu();
-    if (roomPopoverOpen && !event.target.closest('#roomMemberPopover, #activeProfileIndicator')) closeRoomPopover();
+    if (roomPopoverOpen && !event.target.closest('#roomMemberPopover, #activeProfileIndicator, #modelMenu')) closeRoomPopover();
   });
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || !roomPopoverOpen) return;
@@ -21970,6 +22141,21 @@ function bindEvents() {
   els.modelOptionsList.addEventListener('click', (event) => {
     const toggle = event.target.closest('[data-toggle]');
     const effort = event.target.closest('[data-effort]');
+    if (modelSelectionTarget === 'room-member') {
+      // A room member's options belong to that bot's session, never the 1:1 chat.
+      const own = currentRoomMemberRuntimeOptions();
+      if (!own || own.state !== 'ok') return;
+      if (toggle?.dataset.toggle === 'thinking') {
+        void setRoomMemberRuntimeOption(own.thinkingEnabled
+          ? { thinkingEnabled: false }
+          : { thinkingEnabled: true, reasoningEffort: own.reasoningEffort || 'medium' });
+      } else if (toggle?.dataset.toggle === 'fast') {
+        void setRoomMemberRuntimeOption({ fastMode: !own.fastMode });
+      } else if (effort) {
+        void setRoomMemberRuntimeOption({ reasoningEffort: normalizeReasoningEffort(effort.dataset.effort), thinkingEnabled: true });
+      }
+      return;
+    }
     if (modelSelectionTarget === 'assist') {
       if (toggle?.dataset.toggle === 'thinking') settings.inlineAssistThinkingEnabled = settings.inlineAssistThinkingEnabled === false;
       if (toggle?.dataset.toggle === 'fast') settings.inlineAssistFastMode = !normalizeFastMode(settings.inlineAssistFastMode);

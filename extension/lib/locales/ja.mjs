@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "推論の強度",
+  "ui.effort.slider": "スライダー",
+  "ui.effort.buttons": "ボタン",
+  "ui.effort.display": "推論強度の表示",
+  "ui.effort.lower": "低い強度",
+  "ui.effort.higher": "高い強度",
+  "ui.effort.help": "推論の強度を上げると、時間とトークンをより多く使用する場合があります。",
+  "ui.effort.save_error": "推論強度の表示を保存できませんでした。",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

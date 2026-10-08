@@ -1,0 +1,293 @@
+/* Shared native effort control. All color comes from the active Hermes palette. */
+.effort-control {
+  --effort-ink: var(--hermes-ink);
+  --effort-paper: var(--hermes-paper);
+  --effort-color: color-mix(in srgb, var(--hermes-accent) 35%, var(--effort-ink));
+  --effort-thumb: var(--effort-ink);
+  position: relative;
+  min-width: 0;
+  margin-top: 9px;
+  padding: 10px 12px 6px;
+  border: 1px solid color-mix(in srgb, var(--effort-ink) 20%, transparent);
+  background: color-mix(in srgb, var(--effort-ink) 3%, transparent);
+  color: var(--effort-ink);
+  isolation: isolate;
+}
+.effort-control[data-effort-surface="panel"] {
+  --effort-ink: var(--hermes-fg, var(--hermes-ink));
+  --effort-paper: var(--hermes-menu-bg, var(--hermes-paper));
+}
+.effort-control [hidden] { display: none !important; }
+.effort-control-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.effort-control-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+.effort-control-title {
+  font: calc(10px * var(--hermes-text-zoom, 1))/1.25 var(--hermes-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--effort-ink) 72%, transparent);
+}
+.effort-control-value { font-size: calc(13px * var(--hermes-text-zoom, 1)); line-height: 1.3; font-weight: 600; }
+html[data-hermes-font-profile="signature"] .effort-control-value {
+  font-size: calc(11.5px * var(--hermes-text-zoom, 1));
+  font-weight: 500;
+}
+.effort-control-views { display: inline-flex; align-items: stretch; min-width: 0; border: 1px solid color-mix(in srgb, var(--effort-ink) 22%, transparent); }
+.effort-control .effort-control-view {
+  display: block;
+  min-width: 0;
+  min-height: 28px;
+  margin: 0;
+  padding: 4px 7px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--effort-ink) 75%, transparent);
+  font: calc(10px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-mono);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.effort-control .effort-control-view[aria-checked="true"] { background: var(--effort-ink); color: var(--effort-paper); }
+.effort-control .effort-control-view:hover:not([aria-checked="true"]) { background: color-mix(in srgb, var(--effort-ink) 10%, transparent); color: var(--effort-ink); }
+.effort-control .effort-control-view:focus-visible { outline: 2px solid var(--effort-ink); outline-offset: 3px; }
+.effort-control-slider { position: relative; margin-top: 12px; }
+.effort-control-ends {
+  display: flex;
+  direction: ltr;
+  justify-content: space-between;
+  gap: 12px;
+  color: color-mix(in srgb, var(--effort-ink) 72%, transparent);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  line-height: 1.35;
+}
+.effort-control-track { position: relative; height: 44px; direction: ltr; }
+.effort-control-lane {
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 7px;
+  right: 7px;
+  border: 1px solid color-mix(in srgb, var(--effort-ink) 22%, transparent);
+  background: color-mix(in srgb, var(--effort-ink) 7%, transparent);
+  pointer-events: none;
+}
+.effort-control-fill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--effort-ink) 19%, transparent);
+  transform: scaleX(var(--effort-progress));
+  transform-origin: left center;
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 160ms ease;
+}
+.effort-control-stop {
+  position: absolute;
+  top: 50%;
+  left: clamp(2px, var(--effort-stop), calc(100% - 2px));
+  width: 3px;
+  height: 3px;
+  background: color-mix(in srgb, var(--effort-ink) 55%, transparent);
+  transform: translate(-50%, -50%);
+}
+.effort-control-stop[data-reached="true"] { background: var(--effort-ink); }
+.effort-control input.effort-control-range {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--effort-ink);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+.effort-control-range:focus-visible { outline: 2px solid var(--effort-ink); outline-offset: 1px; }
+.effort-control-range::-webkit-slider-runnable-track { height: 18px; border: 0; background: transparent; }
+.effort-control-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 28px;
+  margin-top: -5px;
+  border: 1px solid var(--effort-ink);
+  border-radius: 0;
+  background: var(--effort-thumb);
+  box-shadow: 0 0 0 3px var(--effort-paper);
+  transition: transform 120ms ease, background-color 180ms ease;
+}
+.effort-control-range::-moz-range-track { height: 18px; border: 0; background: transparent; }
+.effort-control-range::-moz-range-progress { background: transparent; }
+.effort-control-range::-moz-range-thumb {
+  width: 12px;
+  height: 26px;
+  border: 1px solid var(--effort-ink);
+  border-radius: 0;
+  background: var(--effort-thumb);
+  box-shadow: 0 0 0 3px var(--effort-paper);
+  transition: transform 120ms ease, background-color 180ms ease;
+}
+.effort-control-range:active::-webkit-slider-thumb { transform: scaleX(0.85) scaleY(1.06); }
+.effort-control-range:active::-moz-range-thumb { transform: scaleX(0.85) scaleY(1.06); }
+.effort-control[data-effort-dragging] .effort-control-fill { transition: none; }
+.effort-control[data-effort-charge="max"],
+.effort-control[data-effort-charge="ultra"] {
+  --effort-thumb: var(--effort-color);
+  --charge-duration: 3600ms;
+  --flow-duration: 3200ms;
+  --charge-density: 16px;
+}
+.effort-control[data-effort-charge="ultra"] {
+  --charge-duration: 2800ms;
+  --flow-duration: 2400ms;
+  --charge-density: 7px;
+}
+.effort-control[data-effort-charge="max"] .effort-control-fill,
+.effort-control[data-effort-charge="ultra"] .effort-control-fill { background: color-mix(in srgb, var(--effort-color) 32%, transparent); }
+.effort-control[data-effort-charge="max"] .effort-control-fill::before,
+.effort-control[data-effort-charge="ultra"] .effort-control-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--effort-color) 52%, transparent) 0 2px, transparent 2px var(--charge-density));
+  transform-origin: left center;
+  animation: effort-bar-charge var(--charge-duration) cubic-bezier(0.2, 0.7, 0.2, 1) infinite;
+}
+.effort-control[data-effort-charge="max"] .effort-control-fill::after,
+.effort-control[data-effort-charge="ultra"] .effort-control-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--effort-color) 38%, transparent) 72%, color-mix(in srgb, var(--effort-ink) 85%, transparent) 86%, transparent 89%);
+  animation: effort-bar-flow var(--flow-duration) linear infinite;
+}
+.effort-control[data-effort-charge="ultra"] .effort-control-lane {
+  border-color: var(--effort-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--effort-color) 24%, transparent), inset 0 0 8px color-mix(in srgb, var(--effort-color) 14%, transparent);
+}
+.effort-control[data-effort-charge="ultra"] .effort-control-fill { background: color-mix(in srgb, var(--effort-color) 44%, transparent); }
+.effort-control[data-effort-charge="ultra"] .effort-control-fill::after { width: 46%; }
+.effort-control[data-effort-charge="ultra"] .effort-control-lane::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  pointer-events: none;
+  border-block: 1px solid color-mix(in srgb, var(--effort-ink) 54%, transparent);
+  background: repeating-linear-gradient(90deg, transparent 0 5px, color-mix(in srgb, var(--effort-color) 24%, transparent) 5px 7px);
+  animation: effort-ultra-current 3600ms ease-in-out infinite alternate;
+}
+@keyframes effort-bar-charge {
+  0% { transform: scaleX(0.03); opacity: 0.3; }
+  65% { transform: scaleX(1); opacity: 0.85; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+@keyframes effort-bar-flow {
+  from { transform: translate3d(-105%, 0, 0); }
+  to { transform: translate3d(460%, 0, 0); }
+}
+@keyframes effort-ultra-current {
+  from { transform: scaleX(0.9); opacity: 0.15; }
+  to { transform: scaleX(1); opacity: 0.6; }
+}
+.effort-control-sparks {
+  position: absolute;
+  inset: 16px auto 0 8px;
+  width: calc((100% - 16px) * var(--effort-progress));
+  overflow: hidden;
+  pointer-events: none;
+}
+.effort-control-spark {
+  position: absolute;
+  left: var(--spark-x);
+  bottom: 16px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--effort-color);
+  opacity: 0;
+  pointer-events: none;
+}
+.effort-control[data-effort-charge="max"] .effort-control-spark { animation: effort-charge-spark 3600ms var(--spark-delay) linear infinite both; }
+.effort-control[data-effort-charge="max"] .effort-control-spark:nth-child(n+21) { display: none; }
+.effort-control[data-effort-charge="ultra"] .effort-control-spark { animation: effort-ultra-spark 3200ms var(--spark-delay) linear infinite both; }
+.effort-control[data-effort-charge="ultra"] .effort-control-spark:nth-child(n+41) { display: none; }
+.effort-control[data-effort-charge="ultra"] .effort-control-spark:nth-child(3n) { width: 1.5px; height: 1.5px; }
+.effort-control[data-effort-charge="ultra"] .effort-control-spark:nth-child(7n) { width: 2.5px; height: 2.5px; }
+@keyframes effort-charge-spark {
+  0% { opacity: 0; transform: translate3d(0, 4px, 0) scale(0.9); }
+  20% { opacity: 0.65; }
+  72% { opacity: 0.4; }
+  100% { opacity: 0; transform: translate3d(calc(var(--spark-drift) * 0.6), calc(-1 * var(--spark-rise)), 0) scale(0.8); }
+}
+@keyframes effort-ultra-spark {
+  0% { opacity: 0; transform: translate3d(0, 4px, 0) scale(0.8); }
+  20% { opacity: 0.8; }
+  72% { opacity: 0.45; }
+  100% { opacity: 0; transform: translate3d(calc(var(--spark-drift) * 0.7), calc(-1.3 * var(--spark-rise)), 0) scale(0.7); }
+}
+.effort-control[data-effort-presentation="buttons"] { border: 0; padding: 0; background: transparent; }
+.effort-control[data-effort-presentation="buttons"] > .model-effort-list,
+.effort-control[data-effort-presentation="buttons"] > .model-effort-options { margin-top: 8px; }
+.effort-control-status { margin: 6px 0; font-size: calc(11px * var(--hermes-text-zoom, 1)); line-height: 1.4; color: var(--effort-ink); }
+.effort-control-range:disabled { cursor: not-allowed; opacity: 0.6; }
+@media (max-width: 299px) {
+  .effort-control-header { grid-template-columns: minmax(0, 1fr); }
+  .effort-control-views { justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .effort-control *, .effort-control *::before, .effort-control *::after { animation: none !important; transition: none !important; }
+  .effort-control-range:active::-webkit-slider-thumb, .effort-control-range:active::-moz-range-thumb { transform: none; }
+}
+@media (forced-colors: active) {
+  .effort-control { border-color: CanvasText; color: CanvasText; }
+  .effort-control-lane, .effort-control-sparks { display: none; }
+  .effort-control input.effort-control-range { appearance: auto; -webkit-appearance: auto; forced-color-adjust: auto; }
+  .effort-control-range::-webkit-slider-thumb { -webkit-appearance: auto; background: Highlight; box-shadow: none; }
+  .effort-control-range::-moz-range-thumb { background: Highlight; box-shadow: none; }
+  .effort-control .effort-control-view[aria-checked="true"] { background: Highlight; color: HighlightText; }
+}
+
+/* Anti-Nous dark: signature red. The generic effort colour mixes the accent into
+   cream ink, and the theme accent (#ff4d4d) still carries enough green/blue to read
+   coral on navy. Use a true red for every slider element so nothing reads pink. */
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control {
+  --effort-red: #ff2020;
+  --effort-red-deep: #d4121f;
+  --effort-color: var(--effort-red);
+  --effort-thumb: var(--effort-red);
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control-fill {
+  background: color-mix(in srgb, var(--effort-red-deep) 62%, transparent);
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control[data-effort-charge="max"] .effort-control-fill,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control[data-effort-charge="ultra"] .effort-control-fill {
+  background: color-mix(in srgb, var(--effort-red-deep) 78%, transparent);
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control[data-effort-charge="max"] .effort-control-fill::before,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control[data-effort-charge="ultra"] .effort-control-fill::before {
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--effort-red) 70%, transparent) 0 2px, transparent 2px var(--charge-density));
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control[data-effort-charge="max"] .effort-control-fill::after,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control[data-effort-charge="ultra"] .effort-control-fill::after {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--effort-red) 45%, transparent) 72%, var(--effort-red) 86%, transparent 89%);
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control[data-effort-charge="ultra"] .effort-control-lane::after {
+  border-block-color: color-mix(in srgb, var(--effort-red) 60%, transparent);
+  background: repeating-linear-gradient(90deg, transparent 0 5px, color-mix(in srgb, var(--effort-red) 30%, transparent) 5px 7px);
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control-spark { background: var(--effort-red); }
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control-stop[data-reached="true"] { background: var(--effort-red); }
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control-range::-webkit-slider-thumb { border-color: var(--effort-red); }
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .effort-control-range::-moz-range-thumb { border-color: var(--effort-red); }

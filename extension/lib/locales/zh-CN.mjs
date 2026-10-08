@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "推理强度",
+  "ui.effort.slider": "滑块",
+  "ui.effort.buttons": "按钮",
+  "ui.effort.display": "推理强度显示方式",
+  "ui.effort.lower": "较低强度",
+  "ui.effort.higher": "较高强度",
+  "ui.effort.help": "更高的推理强度可能需要更多时间和 token。",
+  "ui.effort.save_error": "无法保存推理强度的显示方式。",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

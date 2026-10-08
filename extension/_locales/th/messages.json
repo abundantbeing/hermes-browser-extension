@@ -3251,6 +3251,38 @@
     "message": "แก้ไขโมเดลใน Hermes Desktop",
     "description": "Runtime interface message ui.edit.models.in.hermes.desktop"
   },
+  "runtime_ui_effort_buttons": {
+    "message": "ปุ่ม",
+    "description": "Runtime interface message ui.effort.buttons"
+  },
+  "runtime_ui_effort_display": {
+    "message": "รูปแบบตัวเลือกระดับการใช้เหตุผล",
+    "description": "Runtime interface message ui.effort.display"
+  },
+  "runtime_ui_effort_help": {
+    "message": "ระดับการใช้เหตุผลที่สูงขึ้นอาจใช้เวลาและโทเค็นมากขึ้น",
+    "description": "Runtime interface message ui.effort.help"
+  },
+  "runtime_ui_effort_higher": {
+    "message": "ใช้เหตุผลมากขึ้น",
+    "description": "Runtime interface message ui.effort.higher"
+  },
+  "runtime_ui_effort_lower": {
+    "message": "ใช้เหตุผลน้อยลง",
+    "description": "Runtime interface message ui.effort.lower"
+  },
+  "runtime_ui_effort_save_error": {
+    "message": "บันทึกรูปแบบตัวเลือกระดับการใช้เหตุผลไม่ได้",
+    "description": "Runtime interface message ui.effort.save_error"
+  },
+  "runtime_ui_effort_slider": {
+    "message": "แถบเลื่อน",
+    "description": "Runtime interface message ui.effort.slider"
+  },
+  "runtime_ui_effort_title": {
+    "message": "ระดับการใช้เหตุผล",
+    "description": "Runtime interface message ui.effort.title"
+  },
   "runtime_ui_element": {
     "message": "องค์ประกอบ",
     "description": "Runtime interface message ui.element"

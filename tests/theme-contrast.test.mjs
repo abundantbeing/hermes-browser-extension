@@ -189,8 +189,9 @@ test('every built-in theme declares a light and a dark palette, and the paper to
       assert.ok(paper, `${theme}/${mode} should define --hermes-paper`);
       assert.ok(ink, `${theme}/${mode} should define --hermes-ink`);
       (luminance(paper) > 0.5 ? light : dark).push(theme);
-      // Everforest preserves its original softer ink while still meeting AA.
-      const minimum = theme === 'everforest' ? 4.5 : 7;
+      // Everforest keeps its softer ink and Anti-Nous uses a bright signature red
+      // as its ink; both still meet AA (4.5:1).
+      const minimum = theme === 'everforest' || theme === 'anti-nous' ? 4.5 : 7;
       assert.ok(contrast(paper, ink) >= minimum, `${theme}/${mode} paper and ink should be a readable pair`);
     }
   }

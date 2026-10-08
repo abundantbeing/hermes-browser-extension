@@ -75,12 +75,12 @@ for (const { file, css } of layers) {
     const dark = palette(css, 'anti-nous', 'dark');
     const light = palette(css, 'anti-nous', 'light');
     assert.equal(dark['--hermes-paper'], '#101b30');
-    assert.equal(dark['--hermes-primary-bg'], '#b52b3d');
+    assert.equal(dark['--hermes-primary-bg'], '#d42a40');
     assert.equal(dark['--hermes-trim'], '#d4af6c');
     assert.notEqual(dark['--hermes-trim'], dark['--hermes-accent']);
     assert.notEqual(dark['--hermes-danger'], dark['--hermes-accent']);
     assert.equal(light['--hermes-app-bg'], '#ffffff');
     assert.equal(light['--hermes-paper'], '#ffffff');
-    assert.equal(light['--hermes-ink'], '#a52232');
+    assert.equal(light['--hermes-ink'], '#d4182d');
   });
 }

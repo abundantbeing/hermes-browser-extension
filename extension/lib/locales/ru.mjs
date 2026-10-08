@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Усилие",
+  "ui.effort.slider": "Ползунок",
+  "ui.effort.buttons": "Кнопки",
+  "ui.effort.display": "Вид выбора усилия",
+  "ui.effort.lower": "Меньше усилий",
+  "ui.effort.higher": "Больше усилий",
+  "ui.effort.help": "Более высокое усилие может потребовать больше времени и токенов.",
+  "ui.effort.save_error": "Не удалось сохранить вид выбора усилия.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",

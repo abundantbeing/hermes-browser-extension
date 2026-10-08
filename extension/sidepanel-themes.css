@@ -280,10 +280,7 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-screen .icon-b
   border-color: rgba(0, 0, 242, 0.55);
 }
 
-/* Nous light: the Local Sidecar / Chrome Panel hero keeps its original blue
-   treatment. Its gradient and text read the shell tokens, which are white in
-   the new light shell, so pin the original values here. */
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .hero-card,
+/* Keep the Settings banner's original blue treatment separate from the intro. */
 html[data-hermes-theme="nous"][data-hermes-mode="light"] .release-sidecar {
   color: #f8faff;
   --hermes-fg: #f8faff;
@@ -296,6 +293,45 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .release-sidecar {
   --hermes-bg-rgb: 5, 5, 232;
   --hermes-app-bg: #0505e8;
   --hermes-shadow-rgb: 0, 0, 0;
+}
+
+/* Front intro stays on paper; brand ink and grayscale artwork carry the theme. */
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .hero-card {
+  --hermes-fg: #0000f2;
+  --hermes-fg-rgb: 0, 0, 242;
+  --hermes-ink: #0000f2;
+  --hermes-ink-rgb: 0, 0, 242;
+  --hermes-panel-rgb: 255, 255, 255;
+  --hermes-bg-rgb: 255, 255, 255;
+  --hermes-app-bg: #ffffff;
+}
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .hero-card {
+  --hermes-fg: #d4182d;
+  --hermes-fg-rgb: 212, 24, 45;
+  --hermes-ink: #d4182d;
+  --hermes-ink-rgb: 212, 24, 45;
+  --hermes-panel-rgb: 255, 255, 255;
+  --hermes-bg-rgb: 255, 255, 255;
+  --hermes-app-bg: #ffffff;
+}
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .hero-card,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .hero-card {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.9) 55%, rgba(255,255,255,0.68) 100%),
+    var(--sidecar-art, url("assets/img/hermes-browse.webp")) center / cover no-repeat,
+    var(--hermes-app-bg);
+}
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .hero-badge,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .hero-badge { background: var(--hermes-paper); }
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .hero-dismiss,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .hero-dismiss { color: var(--hermes-fg); }
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .hero-dismiss:hover,
+html[data-hermes-theme="nous"][data-hermes-mode="light"] .hero-dismiss:focus-visible,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .hero-dismiss:hover,
+html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .hero-dismiss:focus-visible {
+  border-color: var(--hermes-fg);
+  background: var(--hermes-fg);
+  color: var(--hermes-paper);
 }
 
 /* Everforest and Classic use the Desktop palette seeds. Muted text is
@@ -542,9 +578,9 @@ html[data-hermes-theme="classic"][data-hermes-mode="light"] {
 
 html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] {
   color-scheme: dark;
-  --hermes-blue: #53172b;
+  --hermes-blue: #8a1a2d;
   --hermes-blue-deep: #07101e;
-  --hermes-blue-rgb: 83, 23, 43;
+  --hermes-blue-rgb: 138, 26, 45;
   --hermes-app-bg: #0b1425;
   --hermes-app-bg-deep: #07101e;
   --hermes-canvas: #0b1425;
@@ -553,36 +589,36 @@ html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] {
   --hermes-ink: #f5ece6;
   --hermes-fg: #f5ece6;
   --hermes-muted: #ada7ad;
-  --hermes-accent: #f06b65;
+  --hermes-accent: #ff4d4d;
   --hermes-trim: #d4af6c;
   --hermes-shell-fg: #f5ece6;
   --hermes-shell-fg-rgb: 245, 236, 230;
   --hermes-white: #f5ece6;
   --hermes-white-rgb: 245, 236, 230;
-  --hermes-bg-rgb: 83, 23, 43;
+  --hermes-bg-rgb: 138, 26, 45;
   --hermes-panel-rgb: 16, 27, 48;
   --hermes-paper-rgb: 16, 27, 48;
   --hermes-fg-rgb: 245, 236, 230;
   --hermes-ink-rgb: 245, 236, 230;
-  --hermes-accent-rgb: 240, 107, 101;
+  --hermes-accent-rgb: 255, 77, 77;
   --hermes-shadow-rgb: 7, 16, 30;
   --hermes-menu-bg: #101b30;
   --hermes-panel-bg: #101b30;
   --hermes-panel-border: #63434b;
   --hermes-line: #63434b;
-  --hermes-line-strong: #f06b65;
+  --hermes-line-strong: #ff4d4d;
   --hermes-blue-line: rgba(245, 236, 230, 0.34);
   --hermes-blue-muted: #f5ece6;
   --hermes-control-bg: #0b1425;
   --hermes-control-fg: #f5ece6;
   --hermes-control-border: #63434b;
   --hermes-input-bg: #0b1425;
-  --hermes-primary-bg: #b52b3d;
+  --hermes-primary-bg: #d42a40;
   --hermes-primary-fg: #fff7f0;
-  --hermes-primary-border: #f06b65;
-  --hermes-user-bg: #b52b3d;
+  --hermes-primary-border: #ff4d4d;
+  --hermes-user-bg: #d42a40;
   --hermes-user-fg: #fff7f0;
-  --hermes-user-border: #f06b65;
+  --hermes-user-border: #ff4d4d;
   --hermes-system-bg: #101b30;
   --hermes-system-fg: #f5ece6;
   --hermes-pill-bg: #0b1425;
@@ -591,7 +627,7 @@ html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] {
   --hermes-pill-ok-bg: #0b1425;
   --hermes-pill-ok-fg: #a4c5a0;
   --hermes-pill-ok-border: #a4c5a0;
-  --hermes-meter-fill: #f06b65;
+  --hermes-meter-fill: #ff4d4d;
   --hermes-danger: #ffad82;
   --hermes-on-danger: #0b1425;
   --hermes-success: #a4c5a0;
@@ -602,56 +638,56 @@ html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] {
 
 html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] {
   color-scheme: light;
-  --hermes-blue: #a52232;
-  --hermes-blue-deep: #a52232;
-  --hermes-blue-rgb: 165, 34, 50;
+  --hermes-blue: #d4182d;
+  --hermes-blue-deep: #d4182d;
+  --hermes-blue-rgb: 212, 24, 45;
   --hermes-app-bg: #ffffff;
   --hermes-app-bg-deep: #fff1f0;
   --hermes-canvas: #ffffff;
   --hermes-paper: #ffffff;
   --hermes-card-bg: #ffffff;
-  --hermes-ink: #a52232;
-  --hermes-fg: #a52232;
-  --hermes-muted: #854951;
-  --hermes-accent: #a52232;
+  --hermes-ink: #d4182d;
+  --hermes-fg: #d4182d;
+  --hermes-muted: #a13a46;
+  --hermes-accent: #d4182d;
   --hermes-trim: #8d681d;
   --hermes-shell-fg: #fff7f0;
   --hermes-shell-fg-rgb: 255, 247, 240;
   --hermes-white: #fff7f0;
   --hermes-white-rgb: 255, 247, 240;
-  --hermes-bg-rgb: 165, 34, 50;
+  --hermes-bg-rgb: 212, 24, 45;
   --hermes-panel-rgb: 255, 255, 255;
   --hermes-paper-rgb: 255, 255, 255;
-  --hermes-fg-rgb: 165, 34, 50;
-  --hermes-ink-rgb: 165, 34, 50;
-  --hermes-accent-rgb: 165, 34, 50;
+  --hermes-fg-rgb: 212, 24, 45;
+  --hermes-ink-rgb: 212, 24, 45;
+  --hermes-accent-rgb: 212, 24, 45;
   --hermes-shadow-rgb: 255, 241, 240;
   --hermes-menu-bg: #ffffff;
   --hermes-panel-bg: #ffffff;
-  --hermes-panel-border: #c97982;
-  --hermes-line: #c97982;
-  --hermes-line-strong: #a52232;
+  --hermes-panel-border: #e8838d;
+  --hermes-line: #e8838d;
+  --hermes-line-strong: #d4182d;
   --hermes-blue-line: rgba(255, 247, 240, 0.34);
   --hermes-blue-muted: #fff7f0;
   --hermes-control-bg: #fff8f7;
-  --hermes-control-fg: #a52232;
-  --hermes-control-border: #c97982;
+  --hermes-control-fg: #d4182d;
+  --hermes-control-border: #e8838d;
   --hermes-input-bg: #fff8f7;
-  --hermes-primary-bg: #a52232;
+  --hermes-primary-bg: #d4182d;
   --hermes-primary-fg: #ffffff;
-  --hermes-primary-border: #a52232;
-  --hermes-user-bg: #a52232;
+  --hermes-primary-border: #d4182d;
+  --hermes-user-bg: #d4182d;
   --hermes-user-fg: #ffffff;
-  --hermes-user-border: #a52232;
+  --hermes-user-border: #d4182d;
   --hermes-system-bg: #ffffff;
-  --hermes-system-fg: #a52232;
+  --hermes-system-fg: #d4182d;
   --hermes-pill-bg: #fff8f7;
-  --hermes-pill-fg: #a52232;
-  --hermes-pill-border: #c97982;
+  --hermes-pill-fg: #d4182d;
+  --hermes-pill-border: #e8838d;
   --hermes-pill-ok-bg: #fff8f7;
   --hermes-pill-ok-fg: #38684a;
   --hermes-pill-ok-border: #38684a;
-  --hermes-meter-fill: #a52232;
+  --hermes-meter-fill: #d4182d;
   --hermes-danger: #9d3516;
   --hermes-on-danger: #ffffff;
   --hermes-success: #38684a;
@@ -663,14 +699,14 @@ html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] {
 /* Red chrome surrounds navy reading areas. Brass is reserved for key edges. */
 html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .topbar,
 html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-dialog > form > header {
-  background: #53172b;
+  background: #8a1a2d;
   border-bottom-color: var(--hermes-trim);
 }
 html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-section h3 {
   color: var(--hermes-accent);
 }
 html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .brand-mini-mark {
-  background-color: var(--hermes-accent);
+  background-color: #ffffff;
 }
 html[data-hermes-theme="anti-nous"] .composer {
   border-top-color: var(--hermes-trim);

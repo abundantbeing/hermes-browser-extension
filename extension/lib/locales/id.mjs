@@ -1,4 +1,13 @@
 export default Object.freeze({
+  "ui.effort.title": "Upaya",
+  "ui.effort.slider": "Penggeser",
+  "ui.effort.buttons": "Tombol",
+  "ui.effort.display": "Tampilan upaya",
+  "ui.effort.lower": "Lebih sedikit upaya",
+  "ui.effort.higher": "Lebih banyak upaya",
+  "ui.effort.help": "Upaya yang lebih tinggi dapat membutuhkan lebih banyak waktu dan token.",
+  "ui.effort.save_error": "Tidak dapat menyimpan tampilan upaya.",
+
   "appearance.font_calibri": "Calibri",
   "appearance.font_cambria": "Cambria",
   "appearance.font_cinzel": "Cinzel",
