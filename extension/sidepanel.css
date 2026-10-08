@@ -4031,6 +4031,19 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   position: relative;
   min-width: 0;
 }
+/* Padding provides scroll room; this strip also hides text while reading an
+   older part of a draft. Leave the native scrollbar and resize grip exposed. */
+.composer-input-wrap::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 12px;
+  bottom: 1px;
+  height: 43px;
+  z-index: 1;
+  background: var(--hermes-input-bg, var(--hermes-paper));
+  pointer-events: none;
+}
 .composer-input-wrap.dragging textarea {
   border-color: var(--hermes-accent);
   box-shadow: 0 0 0 2px var(--hermes-accent), inset 0 0 0 1px rgba(var(--hermes-accent-rgb),0.65);
@@ -4296,6 +4309,7 @@ textarea, input, select {
   outline: none;
 }
 textarea { resize: vertical; min-height: 76px; max-height: 28vh; padding: 10px 68px 34px 36px; line-height: 1.35; }
+#promptInput { display: block; padding-bottom: 44px; }
 .composer-input-wrap.busy-draft.can-steer textarea { padding-right: 98px; }
 input, select { padding: 9px; margin-top: 6px; }
 textarea::placeholder, input::placeholder { color: rgba(var(--hermes-ink-rgb),0.48); }
