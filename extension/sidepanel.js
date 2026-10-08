@@ -2963,9 +2963,40 @@ let composerDraftSaveTimer = 0;
 let restoringComposerDraft = false;
 let composerFrame = null;
 
+function bindComposerResize(area) {
+  const grip = area.parentElement?.querySelector('.composer-resize span');
+  if (!grip || grip.dataset.bound) return;
+  grip.dataset.bound = '1';
+  grip.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = area.getBoundingClientRect().height;
+    const styles = area.ownerDocument.defaultView.getComputedStyle(area);
+    const min = Number.parseFloat(styles.minHeight) || 0;
+    const max = Number.parseFloat(styles.maxHeight);
+    grip.setPointerCapture(event.pointerId);
+    const move = (moveEvent) => {
+      const next = startHeight + (moveEvent.clientY - startY);
+      const clamped = Math.max(min, Number.isFinite(max) ? Math.min(next, max) : next);
+      area.style.height = `${Math.round(clamped)}px`;
+      area.style.overflowY = area.scrollHeight > area.clientHeight + 1 ? 'auto' : 'hidden';
+    };
+    const stop = () => {
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', stop);
+      grip.removeEventListener('pointercancel', stop);
+    };
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', stop);
+    grip.addEventListener('pointercancel', stop);
+  });
+}
+
 function syncComposerFrame(options = {}) {
   if (!els.input) return;
   composerFrame ||= bindComposerFrame(els.input);
+  bindComposerResize(els.input);
   composerFrame.sync(options);
 }
 

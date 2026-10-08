@@ -21,6 +21,7 @@
 ### Fixed
 
 - The message box grows as you type, and once it is as tall as it can get your latest text stays in view above the commands button instead of sliding under it. The same happens after voice dictation.
+- Scrolling back up through a long draft shows the lines passing under the composer controls through a tinted glass band instead of a hard cutoff. The band only appears while text sits below the visible area, the controls stay solid, and the message box can still be dragged taller.
 - Open on computer now reveals the original file in its folder on a local connection instead of downloading a second copy, and refuses on remote connections. Save remains a separate download.
 - A file mentioned more than once in the same reply shows a single file card; later replies can still show it.
 - Media files report their full size when the server answers with a ranged response.

@@ -4031,19 +4031,72 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   position: relative;
   min-width: 0;
 }
-/* Padding provides scroll room; this strip also hides text while reading an
-   older part of a draft. Leave the native scrollbar and resize grip exposed. */
+/* Padding provides scroll room; this strip sits under the controls. At the end
+   of a draft it is plain input color. Once the user scrolls back up, text
+   passes under the controls and the strip turns to tinted glass: the lines stay
+   faintly visible, the buttons above it stay solid. The scrollbar and resize
+   grip are never covered. */
+.composer-input-wrap {
+  --composer-glass-tint: 84%;
+  --composer-glass-blur: 1.5px;
+  --composer-glass-color: color-mix(in srgb, var(--hermes-input-bg, var(--hermes-paper)) 95%, rgb(var(--hermes-ink-rgb)));
+}
 .composer-input-wrap::before {
   content: "";
   position: absolute;
   left: 1px;
-  right: 12px;
+  right: 1px;
   bottom: 1px;
   height: 43px;
   z-index: 1;
+  border-top: 1px solid transparent;
   background: var(--hermes-input-bg, var(--hermes-paper));
   pointer-events: none;
+  transition: border-color 160ms ease;
 }
+.composer-input-wrap.composer-text-below::before {
+  border-top-color: rgba(var(--hermes-ink-rgb), 0.14);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--composer-glass-color) calc(var(--composer-glass-tint) - 30%), transparent),
+    color-mix(in srgb, var(--composer-glass-color) var(--composer-glass-tint), transparent) 16px
+  );
+  box-shadow: inset 0 1px 0 rgba(var(--hermes-fg-rgb), 0.07);
+  backdrop-filter: blur(var(--composer-glass-blur)) saturate(1.2);
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  .composer-input-wrap.composer-text-below::before {
+    background: var(--hermes-input-bg, var(--hermes-paper));
+    backdrop-filter: none;
+  }
+}
+/* The glass strip covers the textarea's own corner, so the resize grip is
+   drawn on a transparent overlay above it. The overlay is pointer-transparent
+   except for the grip itself. */
+.composer-resize {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 12px;
+  height: 12px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(135deg, transparent 55%, rgba(var(--hermes-ink-rgb), 0.55) 55% 62%, transparent 62% 70%, rgba(var(--hermes-ink-rgb), 0.55) 70% 77%, transparent 77%);
+}
+.composer-resize span {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nwse-resize;
+  pointer-events: auto;
+}
+html[dir="rtl"] .composer-resize { right: auto; left: 1px; transform: scaleX(-1); }
+html[dir="rtl"] .composer-resize span { cursor: nesw-resize; }
+
+textarea::-webkit-scrollbar-track { background: transparent; }
+
 .composer-input-wrap.dragging textarea {
   border-color: var(--hermes-accent);
   box-shadow: 0 0 0 2px var(--hermes-accent), inset 0 0 0 1px rgba(var(--hermes-accent-rgb),0.65);

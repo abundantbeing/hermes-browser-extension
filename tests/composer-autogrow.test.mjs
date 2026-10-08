@@ -90,3 +90,33 @@ test('unchanged render preserves a manual resize and scroll position', () => {
   frame.disconnect();
   dom.window.close();
 });
+
+test('glass state follows whether draft text is hidden below the controls', () => {
+  const dom = new JSDOM('<div class="composer-input-wrap"><textarea style="box-sizing:border-box;min-height:76px;max-height:200px;padding:10px 68px 44px 36px;font:12px/16px monospace;border:1px solid"></textarea></div>');
+  const field = dom.window.document.querySelector('textarea');
+  const wrap = field.parentElement;
+  let scrollHeight = 600;
+  Object.defineProperties(field, {
+    scrollHeight: { get: () => scrollHeight },
+    clientWidth: { get: () => 320 },
+    clientHeight: { get: () => 198 },
+  });
+  field.getBoundingClientRect = () => ({ width: 322, height: Number.parseFloat(field.style.height) || 76 });
+  const frame = bindComposerFrame(field);
+  field.value = 'a long draft';
+  field.scrollTop = 0;
+  frame.sync();
+  field.scrollTop = 0;
+  field.dispatchEvent(new dom.window.Event('scroll'));
+  assert.ok(wrap.classList.contains('composer-text-below'), 'scrolled up: text passes under the controls');
+  field.scrollTop = 600 - 198;
+  field.dispatchEvent(new dom.window.Event('scroll'));
+  assert.ok(!wrap.classList.contains('composer-text-below'), 'at the end: nothing under the controls');
+  field.scrollTop = 0;
+  scrollHeight = 120;
+  field.value = 'short';
+  frame.sync();
+  assert.ok(!wrap.classList.contains('composer-text-below'), 'a short draft never shows glass');
+  frame.disconnect();
+  dom.window.close();
+});

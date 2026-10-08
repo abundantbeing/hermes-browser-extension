@@ -9,7 +9,12 @@ test('only the prompt reserves enough bottom padding for the overlaid controls',
   const block = css.match(/#promptInput\s*\{([^}]*)\}/)?.[1] || '';
   assert.match(block, /padding-bottom:\s*44px;/);
   assert.match(css, /textarea\s*\{[^}]*resize:\s*vertical;[^}]*max-height:\s*28vh;/);
-  assert.match(css, /\.composer-input-wrap::before\s*\{[^}]*pointer-events:\s*none;/, 'opaque control strip prevents scrolled text painting below controls');
+  assert.match(css, /\.composer-input-wrap::before\s*\{[^}]*pointer-events:\s*none;/);
+  assert.match(css, /\.composer-input-wrap::before\s*\{[^}]*background:\s*var\(--hermes-input-bg, var\(--hermes-paper\)\);/, 'the strip is solid when nothing is scrolled under it');
+  const glass = css.match(/\.composer-input-wrap\.composer-text-below::before\s*\{([^}]*)\}/)?.[1] || '';
+  assert.match(glass, /backdrop-filter:\s*blur\(var\(--composer-glass-blur\)\)/, 'scrolled-up drafts frost under the controls');
+  assert.match(glass, /var\(--composer-glass-tint\)/);
+  assert.match(css, /prefers-reduced-transparency: reduce[^{]*\{\s*\.composer-input-wrap\.composer-text-below::before\s*\{[^}]*backdrop-filter:\s*none;/);
 });
 
 test('the composer input handler synchronizes height and caret after a user edit', () => {

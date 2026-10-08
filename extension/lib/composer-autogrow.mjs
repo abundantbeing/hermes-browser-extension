@@ -77,10 +77,26 @@ export function measureCaretRect(area) {
   return rect;
 }
 
+// True while part of the draft sits below the visible area, i.e. the user has
+// scrolled back up and text is passing under the overlaid controls.
+export function hasTextBelow(area) {
+  return area.scrollHeight - area.clientHeight - area.scrollTop > 1;
+}
+
 export function bindComposerFrame(area) {
   const view = area.ownerDocument.defaultView;
   const state = { lastValue: null, geometry: '', applying: false };
+  const markTextBelow = () => {
+    area.parentElement?.classList.toggle('composer-text-below', hasTextBelow(area));
+  };
   const sync = ({ followCaret = false } = {}) => {
+    try {
+      syncFrame({ followCaret });
+    } finally {
+      markTextBelow();
+    }
+  };
+  const syncFrame = ({ followCaret = false } = {}) => {
     if (state.applying || !area.clientWidth) return;
     const styles = view.getComputedStyle(area);
     // The outer width stays stable when a scrollbar appears. Height is omitted
@@ -114,9 +130,11 @@ export function bindComposerFrame(area) {
   appearance?.observe(area.ownerDocument.documentElement, { attributes: true });
   view.addEventListener('resize', onLayout);
   area.ownerDocument.fonts?.addEventListener('loadingdone', onLayout);
+  area.addEventListener('scroll', markTextBelow, { passive: true });
   return {
     sync,
     disconnect() {
+      area.removeEventListener('scroll', markTextBelow);
       observer?.disconnect();
       appearance?.disconnect();
       view.removeEventListener('resize', onLayout);
