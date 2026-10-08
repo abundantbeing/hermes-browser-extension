@@ -259,6 +259,7 @@ import {
 } from './lib/gateway-ws.mjs';
 import { createDashboardStreamWatchdog, dashboardWatchdogTimeoutAction, isDashboardIdleTimeout, matchesDashboardSessionEvent, shouldReattachDashboardStream } from './lib/dashboard-stream-watchdog.mjs';
 import { clearComposerDraft, loadComposerDraft, persistComposerDraft } from './lib/composer-draft.mjs';
+import { bindComposerFrame } from './lib/composer-autogrow.mjs';
 import {
   BOT_CHAT_TITLE,
   botModeExitStateForRegularSession,
@@ -2960,6 +2961,13 @@ function ensureSidepanelInstanceId() {
 
 let composerDraftSaveTimer = 0;
 let restoringComposerDraft = false;
+let composerFrame = null;
+
+function syncComposerFrame(options = {}) {
+  if (!els.input) return;
+  composerFrame ||= bindComposerFrame(els.input);
+  composerFrame.sync(options);
+}
 
 function composerDraftStorage() {
   return globalThis.sessionStorage || null;
@@ -3002,6 +3010,7 @@ function restoreComposerDraft() {
   try {
     if (els.input && !String(els.input.value || '').trim() && draft.text) {
       els.input.value = draft.text;
+      els.input.setSelectionRange(els.input.value.length, els.input.value.length);
     }
     if (!attachments.length && draft.attachments.length) {
       attachments = draft.attachments;
@@ -3013,6 +3022,7 @@ function restoreComposerDraft() {
     return true;
   } finally {
     restoringComposerDraft = false;
+    syncComposerFrame({ followCaret: true });
   }
 }
 
@@ -4535,6 +4545,7 @@ function updateComposerBusyState() {
   renderQueueNotice();
   renderSteerNotice();
   renderCompletionPendingRow();
+  syncComposerFrame();
 }
 
 function activeBotProfileName() {
@@ -5449,6 +5460,8 @@ function insertExternalVoiceTranscript(transcript = '', source = 'voice dictatio
   if (!spoken) return false;
   const current = els.input.value.trim();
   els.input.value = [current, spoken].filter(Boolean).join(current && spoken ? ' ' : '');
+  els.input.setSelectionRange(els.input.value.length, els.input.value.length);
+  syncComposerFrame({ followCaret: true });
   renderContextWindow();
   renderSkillSuggestions();
   els.input.focus();
@@ -5681,6 +5694,8 @@ function renderVoiceActivity() {
 function applyDictationTranscript(transcript = '') {
   const spoken = String(transcript || '').trim();
   els.input.value = [dictationBaseText, spoken].filter(Boolean).join(dictationBaseText && spoken ? ' ' : '');
+  els.input.setSelectionRange(els.input.value.length, els.input.value.length);
+  syncComposerFrame({ followCaret: true });
   renderContextWindow();
   renderSkillSuggestions();
 }
@@ -8133,6 +8148,7 @@ function renderContextWindow(userText = els.input?.value || '') {
     : meter.title;
   els.contextUsageDetail.textContent = compaction.detail;
   els.contextMeterFill.style.width = meterLimit ? `${Math.min(100, Math.max(0, meterPercent))}%` : '0%';
+  syncComposerFrame();
 
   const compactionStateLabels = {
     healthy: 'Healthy',
@@ -9182,24 +9198,7 @@ function setQuickCommandMenuOpen(open) {
 }
 
 function scrollInputToCaret() {
-  const input = els.input;
-  if (!input) return;
-  requestAnimationFrame(() => {
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const pos = (typeof start === 'number' && Number.isInteger(start)) ? start : (input.value ? input.value.length : 0);
-    if (typeof input.setSelectionRange === 'function' && typeof start === 'number' && typeof end === 'number') {
-      input.setSelectionRange(start, end);
-    }
-    if (pos >= (input.value?.length || 0)) {
-      input.scrollTop = input.scrollHeight;
-    } else {
-      const textBefore = String(input.value || '').slice(0, pos);
-      const lines = textBefore.split('\n').length;
-      const totalLines = Math.max(1, String(input.value || '').split('\n').length);
-      input.scrollTop = Math.max(0, Math.round((lines / totalLines) * input.scrollHeight - input.clientHeight / 2));
-    }
-  });
+  requestAnimationFrame(() => syncComposerFrame({ followCaret: true }));
 }
 
 function clearQuickCommandDetail() {
@@ -22711,6 +22710,7 @@ function bindEvents() {
     renderSkillSuggestions();
     updateComposerBusyState();
     persistCurrentComposerDraft();
+    syncComposerFrame({ followCaret: true });
   });
   document.querySelectorAll('[data-prompt]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -23063,5 +23063,6 @@ renderVersionInfo();
 renderContextScopeControls();
 updateVoiceButtonState();
 renderEmptyState();
+syncComposerFrame({ followCaret: true });
 // Not awaited: the update watch and the silent check must never delay boot.
 void initializeUpdateFlow();

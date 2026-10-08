@@ -39,6 +39,7 @@ import { verifyLightThemeTakeover } from './light-theme-takeover-probes.mjs';
 import { verifyHoverContrastEverywhere } from './hover-contrast-guard-probes.mjs';
 import { verifyRoomMemberLayout } from './room-member-layout-probes.mjs';
 import { probeEffortColors } from './effort-color-probe.mjs';
+import { verifyComposerAutogrow } from './composer-autogrow-probe.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -276,10 +277,19 @@ class CdpClient {
   call(method, params = {}) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) throw new Error('CDP socket is not open.');
     const id = this.nextId++;
-    return new Promise((resolve, reject) => {
+    const command = new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
       this.socket.send(JSON.stringify({ id, method, params }));
     });
+    if (process.env.COMPOSER_QA_ONLY !== '1') return command;
+    let timer;
+    const timeout = new Promise((_resolve, reject) => {
+      timer = setTimeout(() => {
+        this.pending.delete(id);
+        reject(new Error(`Composer QA CDP command timed out: ${method} ${method === 'Runtime.evaluate' ? String(params.expression).slice(0, 180) : ''}`));
+      }, 15_000);
+    });
+    return Promise.race([command, timeout]).finally(() => clearTimeout(timer));
   }
 
   async evaluate(expression) {
@@ -409,11 +419,24 @@ async function seedSettings(worker, mock, overrides = {}) {
   return settings;
 }
 
-async function openPage(devtoolsBase, extensionId, file, { width = 420, height = 900 } = {}) {
-  const target = await fetchJson(
-    `${devtoolsBase}/json/new?${encodeURIComponent(`chrome-extension://${extensionId}/${file}`)}`,
-    { method: 'PUT' },
-  );
+async function openPage(devtoolsBase, extensionId, file, { width = 420, height = 900, bootstrapScript = '', openerClient = null } = {}) {
+  const url = `chrome-extension://${extensionId}/${file}`;
+  let target;
+  if (bootstrapScript) {
+    const existingIds = new Set((await fetchJson(`${devtoolsBase}/json/list`)).map(item => item.id));
+    assert.ok(openerClient, 'draft fixture requires an extension-page opener');
+    // window.open copies this origin's sessionStorage into the new panel.
+    await openerClient.evaluate(`(() => {
+      const previous = sessionStorage.getItem('hermesBrowserInstanceId');
+      ${bootstrapScript}
+      window.open(${JSON.stringify(url)}, '_blank');
+      if (previous) sessionStorage.setItem('hermesBrowserInstanceId', previous);
+      else sessionStorage.removeItem('hermesBrowserInstanceId');
+    })()`);
+    target = await waitFor(async () => (await fetchJson(`${devtoolsBase}/json/list`)).find(item => !existingIds.has(item.id) && item.url === url), { label: 'restored-draft panel target' });
+  } else {
+    target = await fetchJson(`${devtoolsBase}/json/new?${encodeURIComponent(url)}`, { method: 'PUT' });
+  }
   const client = new CdpClient(target.webSocketDebuggerUrl);
   await client.connect();
   await client.call('Runtime.enable');
@@ -422,6 +445,7 @@ async function openPage(devtoolsBase, extensionId, file, { width = 420, height =
   if (width) {
     await client.call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
   }
+  if (bootstrapScript) await client.call('Page.bringToFront');
   return { client, targetId: target.id };
 }
 
@@ -849,7 +873,13 @@ async function main() {
 
     panel = await openPage(devtoolsBase, extensionId, 'sidepanel.html', { width: 420, height: 900 });
 
-    if (BASELINE) {
+    if (process.env.COMPOSER_QA_ONLY === '1') {
+      await verifyComposerAutogrow({
+        client: panel.client, worker, saveScreenshot,
+        baseline: process.env.COMPOSER_QA_BASELINE === '1',
+        openPanel: (file, bootstrapScript) => openPage(devtoolsBase, extensionId, file, { width: 420, height: 900, bootstrapScript, openerClient: panel.client }),
+      });
+    } else if (BASELINE) {
       const evidence = await runBaseline({ panel, worker, extensionId });
       log('BASELINE complete');
       log('evidence:', JSON.stringify({ model: evidence.model, screenshots: evidence.screenshots }, null, 2));
