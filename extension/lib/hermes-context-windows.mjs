@@ -6,12 +6,20 @@ import {
 export { HERMES_DEFAULT_FALLBACK_CONTEXT };
 
 // Display names and live ids Hermes's slug table does not spell out, but
-// resolves to the same window. Longer keys are listed first by the matcher.
+// resolves to the same window. Versioned keys outrank family catch-alls.
 export const DISPLAY_CONTEXT_ALIASES = Object.freeze({
   'claude-opus-5.5': 1_000_000,
   'claude-opus-5-5': 1_000_000,
+  'claude-sonnet-5.5': 1_000_000,
+  'claude-sonnet-5-5': 1_000_000,
+  'claude-haiku-5.5': 1_000_000,
+  'claude-haiku-5-5': 1_000_000,
   'opus-5.5': 1_000_000,
   'opus-5-5': 1_000_000,
+  'sonnet-5.5': 1_000_000,
+  'sonnet-5-5': 1_000_000,
+  'haiku-5.5': 1_000_000,
+  'haiku-5-5': 1_000_000,
   'opus-5': 1_000_000,
   'sonnet-5': 1_000_000,
   'space-bunny-alpha': 1_000_000,
@@ -40,10 +48,6 @@ const CONTEXT_TABLE = Object.freeze({
   ...DISPLAY_CONTEXT_ALIASES,
 });
 
-const CONTEXT_KEYS = Object.freeze(
-  Object.keys(CONTEXT_TABLE).sort((left, right) => right.length - left.length || left.localeCompare(right)),
-);
-
 function normalizeContextSlug(value = '') {
   return String(value || '')
     .trim()
@@ -51,6 +55,19 @@ function normalizeContextSlug(value = '') {
     .replace(/[\s_]+/g, '-')
     .replace(/\./g, '-');
 }
+
+// A versioned id must beat a family catch-all even when the catch-all string
+// is longer. "claude-haiku" (12) is longer than "haiku-5.5" (8), so a pure
+// longest-key scan labels every new Haiku 200k until someone hand-adds it.
+function keySpecificity(key = '') {
+  const normalized = normalizeContextSlug(key);
+  const versioned = /(?:^|-)(?:\d+)(?:-\d+)+$/.test(normalized) || /\d+\.\d+/.test(key);
+  return (versioned ? 1_000 : 0) + key.length;
+}
+
+const CONTEXT_KEYS = Object.freeze(
+  Object.keys(CONTEXT_TABLE).sort((left, right) => keySpecificity(right) - keySpecificity(left) || left.localeCompare(right)),
+);
 
 function keyMatches(key, haystack, normalizedHaystack) {
   const normalizedKey = normalizeContextSlug(key);
@@ -84,9 +101,9 @@ export function hermesContextForModel(model = {}) {
     const haystack = String(field).trim().toLowerCase();
     const normalizedHaystack = normalizeContextSlug(haystack);
     for (const key of CONTEXT_KEYS) {
-      if (key.length <= bestLength) break;
+      if (keySpecificity(key) <= bestLength) break;
       if (!keyMatches(key, haystack, normalizedHaystack)) continue;
-      bestLength = key.length;
+      bestLength = keySpecificity(key);
       bestTokens = CONTEXT_TABLE[key];
       break;
     }

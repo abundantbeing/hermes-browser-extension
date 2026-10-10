@@ -1827,6 +1827,27 @@ test('normalizeHermesModels applies curated context fallback when provider rows 
   assert.equal(models[0].contextTokens, 1000000);
 });
 
+test('normalizeHermesModels keeps Haiku 5.5 at 1M across provider spellings and Haiku 4.5 at 200k', () => {
+  const rows = [
+    { id: 'anthropic::claude-haiku-5.5', rawModelId: 'claude-haiku-5.5', label: 'Haiku 5.5', provider: 'anthropic', context_length: 0 },
+    { id: 'anthropic::claude-haiku-5-5', rawModelId: 'claude-haiku-5-5', label: 'Haiku 5.5', provider: 'anthropic', context_length: 0 },
+    { id: 'nous::anthropic/claude-haiku-5.5', rawModelId: 'anthropic/claude-haiku-5.5', label: 'Claude Haiku 5.5', provider: 'nous', context_length: 0 },
+    { id: 'claude-subscription-directsdk-experimental::claude-haiku-5-5[1m]', rawModelId: 'claude-haiku-5-5[1m]', label: 'Claude Haiku 5.5', provider: 'claude-subscription-directsdk-experimental', context_length: 0 },
+    { id: 'anthropic::claude-haiku-4-5', rawModelId: 'claude-haiku-4-5', label: 'Haiku 4.5', provider: 'anthropic', context_length: 0 },
+    { id: 'anthropic::claude-sonnet-5.5', rawModelId: 'claude-sonnet-5.5', label: 'Sonnet 5.5', provider: 'anthropic', context_length: 0 },
+  ];
+  const models = normalizeHermesModels({ data: rows }, rows[0].id);
+  for (const id of ['claude-haiku-5.5', 'claude-haiku-5-5', 'anthropic/claude-haiku-5.5', 'claude-haiku-5-5[1m]', 'claude-sonnet-5.5']) {
+    assert.equal(models.find((model) => model.rawModelId === id)?.contextTokens, 1_000_000, id);
+  }
+  assert.equal(models.find((model) => model.rawModelId === 'claude-haiku-4-5')?.contextTokens, 200_000);
+});
+
+test('a live gateway context window still wins over the Haiku 5.5 display alias', () => {
+  const rows = [{ id: 'anthropic::claude-haiku-5.5', rawModelId: 'claude-haiku-5.5', provider: 'anthropic', context_length: 200_000 }];
+  assert.equal(normalizeHermesModels({ data: rows }, rows[0].id)[0].contextTokens, 200_000);
+});
+
 test('normalizeHermesModels pairs Claude, Grok, and Nous rows with Hermes windows instead of requestable', () => {
   const rows = [
     { id: 'anthropic::claude-opus-5.5', rawModelId: 'claude-opus-5.5', label: 'Opus 5.5', provider: 'anthropic', context_length: 0 },

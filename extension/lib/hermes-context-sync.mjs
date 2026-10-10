@@ -48,8 +48,14 @@ export function parseHermesContextRegistry(source) {
   return { defaults, codex, verifiedPrefixes, verifiedExact, eligibleBases, snapshotBases, suffix, fallback, source: 'hermes-upstream' };
 }
 
+function keySpecificity(key = '') {
+  const normalized = String(key).toLowerCase().replace(/[\s_]+/g, '-').replace(/\./g, '-');
+  const versioned = /(?:^|-)(?:\d+)(?:-\d+)+$/.test(normalized) || /\d+\.\d+/.test(String(key));
+  return (versioned ? 1_000 : 0) + String(key).length;
+}
+
 function longest(table, value) {
-  const key = Object.keys(table).sort((a, b) => b.length - a.length).find(key => value.includes(key));
+  const key = Object.keys(table).sort((left, right) => keySpecificity(right) - keySpecificity(left)).find(key => value.includes(key));
   return key ? table[key] : 0;
 }
 

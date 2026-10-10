@@ -1642,6 +1642,14 @@ const MODEL_CONTEXT_FALLBACKS = Object.freeze([
   ['mythos-5', 1_000_000],
   ['claude-opus-5', 1_000_000],
   ['opus-5', 1_000_000],
+  ['claude-sonnet-5.5', 1_000_000],
+  ['claude-sonnet-5-5', 1_000_000],
+  ['sonnet-5.5', 1_000_000],
+  ['sonnet-5-5', 1_000_000],
+  ['claude-haiku-5.5', 1_000_000],
+  ['claude-haiku-5-5', 1_000_000],
+  ['haiku-5.5', 1_000_000],
+  ['haiku-5-5', 1_000_000],
   ['claude-sonnet-5', 1_000_000],
   ['sonnet-5', 1_000_000],
   ['claude-opus-4.8', 1_000_000],
@@ -1720,8 +1728,17 @@ function modelProviderIdentity(model = {}) {
 }
 
 function fallbackModelContextTokens(model = {}) {
-  return contextFromHermesRegistry({ ...model, provider: modelProviderIdentity(model) })
-    || hermesContextForModel(model) || HERMES_DEFAULT_FALLBACK_CONTEXT;
+  const fromRegistry = contextFromHermesRegistry({ ...model, provider: modelProviderIdentity(model) });
+  const fromTable = hermesContextForModel(model);
+  // The bundled Hermes table still has no Haiku 5.5 key, so its generic
+  // "claude-haiku" catch-all resolves 200k. A versioned Haiku alias wins
+  // that one conflict. Other families keep the registry (Codex OAuth caps
+  // are lower than the direct-API window on purpose).
+  const identity = String(model.rawModelId || model.raw_model_id || model.model || model.id || model.label || '').toLowerCase();
+  if (fromTable && /haiku/.test(identity) && /\d+(?:[.-]\d+)+/.test(identity) && fromTable !== fromRegistry) {
+    return fromTable;
+  }
+  return fromRegistry || fromTable || HERMES_DEFAULT_FALLBACK_CONTEXT;
 }
 
 export function normalizeReasoningEffort(value = DEFAULT_SETTINGS.reasoningEffort) {
