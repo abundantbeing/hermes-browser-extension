@@ -4212,11 +4212,13 @@ textarea::-webkit-scrollbar-track { background: transparent; }
 .voice-activity-bars i {
   display: block;
   width: 2px;
-  height: 25%;
+  height: 100%;
   border-radius: 99px;
   background: currentColor;
   opacity: 0.85;
-  transition: height 80ms ease-out;
+  /* Level changes scale the bar instead of resizing it: no layout per update. */
+  transform: scaleY(0.25);
+  transition: transform 80ms ease-out;
 }
 @keyframes voice-activity-pulse {
   0%, 100% { opacity: 0.45; }

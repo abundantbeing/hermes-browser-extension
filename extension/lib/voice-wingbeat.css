@@ -1,0 +1,26 @@
+/* Decorative and pointer-transparent. The canvas covers only the lower band of
+   the composer plus a short spill below it, and has no backing store while
+   idle, so it costs nothing until someone dictates. */
+.voice-wingbeat {
+  position: absolute;
+  left: 0;
+  bottom: -40px;
+  width: 100%;
+  height: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+.voice-wingbeat[data-voice-state="recording"],
+.voice-wingbeat[data-voice-state="processing"] { opacity: 1; transition-duration: 120ms; }
+.composer:has(.voice-wingbeat) .composer-actions { z-index: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-wingbeat { transition: none; }
+  .voice-activity-dot { animation: none !important; }
+  .voice-activity-bars i { transition: none; }
+}
+@media (forced-colors: active) {
+  .voice-wingbeat { display: none; }
+}

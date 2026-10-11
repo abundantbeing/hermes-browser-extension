@@ -8,6 +8,7 @@
 - Settings now opens to a category grid. Each category has its own view and Back navigation, edited categories are marked, and related controls open the section they belong to. Models has a runtime summary and opens the model picker above Settings.
 - A Tab screenshot action in the attachment menu captures the current tab only when you ask, and Bot Mode group turns on a local Hermes connection can include approved, redacted page context. Chat-only and remote group turns never capture page context.
 - `scripts/enable-bot-companion-tools.mjs` previews, and with `--apply` enables, the optional companion tools for a profile you choose.
+- Voice dictation has a glow that rises from the bottom edge of the message box while you speak. It follows your voice, takes its colours from your theme, and a light sweeps along the edge while Hermes transcribes. Nothing runs while you are not dictating, and on a slower computer the glow lowers its own resolution instead of slowing the panel down. With reduced motion on it holds still, and it is hidden in high contrast mode.
 - Code blocks in messages are now syntax highlighted for common languages (Python, JavaScript, TypeScript, JSON, YAML, SQL, Bash, C#, CSS, HTML and Markdown) in the side panel and the full tab, in light and dark themes. Languages Hermes does not recognize stay plain. Thanks to @kidclone3 (#91).
 
 ### Changed
@@ -17,6 +18,8 @@
 - The README is shorter: version-by-version notes point to the changelog and releases, and remote setup plus extended troubleshooting moved to guides/connection-guide.md and guides/troubleshooting.md. The visual tour has fresh Mono Dark screenshots, including Bot Mode group chats and profile editing.
 - The composer's DOM preview and Attached-tab controls share one row, and a slim handle on the composer border hides or shows them. The choice is remembered, the DOM preview always reopens closed, and hovering DOM explains what it is.
 - The chat intro banner now matches the Settings banner's spacing and keeps white text on blue in Nous Light.
+- The Voice Dictation tab, which opens when the side panel cannot use the microphone, now looks like the side panel: the Hermes banner, a dictation timer, the same glow, and a short status instead of paragraphs of setup notes. It uses your theme, including custom themes.
+- The dictation meter beside the message box updates without recalculating the panel layout.
 
 ### Fixed
 

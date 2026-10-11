@@ -5,85 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title data-i18n="ui.hermes.voice.dictation">Hermes Voice Dictation</title>
     <link rel="stylesheet" href="sidepanel.css" />
+    <link rel="stylesheet" href="sidepanel-themes.css" />
+    <link rel="stylesheet" href="lib/voice-wingbeat.css" />
     <link rel="stylesheet" href="lib/fonts.css" />
     <link rel="stylesheet" href="lib/surface-text-zoom.css" />
     <style>
-      body {
+      /* The voice tab is a slice of the side panel: its hero card, the dictation
+         strip, a composer-style box the glow rises from, and one primary action.
+         Everything else is the panel's own CSS. */
+      body.voice-page {
         min-height: 100vh;
+        min-height: 100dvh;
         display: grid;
         place-items: center;
-        padding: 24px;
-        background: var(--bg, #080719);
-        color: var(--text, #f2eeff);
+        padding: 24px 16px;
+        overflow: auto;
       }
-      .voice-card {
-        width: min(560px, 100%);
-        border: 1px solid color-mix(in srgb, var(--border, #8d7cff) 50%, transparent);
-        border-radius: 24px;
-        padding: 28px;
-        background: color-mix(in srgb, var(--panel, #100d29) 92%, transparent);
-        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      .voice-shell {
+        width: min(420px, 100%);
+        display: grid;
+        gap: 8px;
       }
-      .voice-card h1 {
-        margin: 0 0 12px;
-        font-size: 30px;
-        letter-spacing: -0.05em;
+      .voice-hero { min-height: 128px; }
+      .voice-hero .hero-dismiss { color: var(--hermes-fg); }
+      .voice-composer { border: 1px solid var(--hermes-line); }
+      .voice-stage {
+        position: relative;
+        min-height: 128px;
+        padding: 12px 14px 40px;
+        border: 1px solid var(--hermes-line-strong);
+        background: var(--hermes-input-bg, var(--hermes-paper));
+        color: var(--hermes-ink);
       }
-      .voice-card p {
-        margin: 0 0 18px;
-        color: var(--muted, #a9a1d7);
-        line-height: 1.5;
+      .voice-status-title,
+      .voice-status {
+        position: relative;
+        z-index: 2; /* text stays crisp above the glow */
+        margin: 0;
       }
-      .voice-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 20px;
+      .voice-status-title {
+        margin-bottom: 6px;
+        font-family: var(--hermes-font-ui);
+        font-size: calc(10px * var(--hermes-text-zoom, 1));
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        line-height: 1.35;
+        text-transform: uppercase;
       }
-      .voice-meter {
-        height: 6px;
-        overflow: hidden;
-        border-radius: 999px;
-        background: color-mix(in srgb, var(--border, #8d7cff) 18%, transparent);
-        margin: 18px 0;
-      }
-      .voice-meter span {
-        display: block;
-        width: 0%;
-        height: 100%;
-        border-radius: inherit;
-        background: var(--accent, #8d7cff);
-        transition: width 160ms ease;
-      }
-      body.recording .voice-meter span {
-        width: 100%;
-        animation: pulse-meter 1.2s ease-in-out infinite;
-      }
-      @keyframes pulse-meter {
-        0%, 100% { transform: translateX(-65%); opacity: 0.45; }
-        50% { transform: translateX(65%); opacity: 1; }
-      }
-      #voiceStatus {
-        margin-top: 18px;
-        font-size: 13px;
-        color: var(--muted, #a9a1d7);
+      .voice-status {
+        font-size: calc(13px * var(--hermes-text-zoom, 1));
+        line-height: 1.45;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .voice-actions { flex-wrap: wrap; }
+      .voice-actions #startVoiceButton {
+        margin-left: auto;
+        background: var(--hermes-primary-bg);
+        color: var(--hermes-primary-fg);
+        border-color: var(--hermes-primary-border);
+      }
+      .voice-actions #startVoiceButton:hover,
+      .voice-actions #startVoiceButton:focus-visible {
+        background: var(--hermes-primary-fg, var(--hermes-paper));
+        color: var(--hermes-primary-bg, var(--hermes-ink));
+        border-color: var(--hermes-primary-bg, var(--hermes-ink));
       }
     </style>
   </head>
-  <body data-hermes-theme="nous" data-hermes-mode="dark" data-hermes-color-mode="dark">
-    <main class="voice-card" aria-labelledby="voiceTitle">
-      <p class="eyebrow" data-i18n="ui.hermes.browser.extension">HERMES BROWSER EXTENSION</p>
-      <h1 id="voiceTitle" data-i18n="ui.voice.dictation">Voice dictation</h1>
-      <p data-i18n="ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971">Some browsers block microphone capture inside extension sidebars. This visible extension tab records from the same Hermes extension origin when Hermes STT is available, or uses browser speech fallback when the connected runtime does not expose audio transcription.</p>
-      <p data-i18n="ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc">No audio is saved by this page. In Hermes STT mode, audio is sent once to your configured Hermes transcription endpoint when you stop recording. In Browser speech fallback mode, only the transcript is sent back to the side panel.</p>
-      <div class="voice-meter" aria-hidden="true"><span></span></div>
-      <div class="voice-actions">
-        <button id="startVoiceButton" type="button" data-i18n="ui.start.dictation">Start dictation</button>
-        <button id="openMicSettingsButton" class="secondary" type="button" data-i18n="ui.open.microphone.settings">Open microphone settings</button>
-        <button id="closeVoiceButton" class="secondary" type="button" data-i18n="ui.close">Close</button>
-      </div>
-      <div id="voiceStatus" role="status" aria-live="polite" data-i18n="ui.click.start.dictation.to.grant.microphone.access.and.record">Click Start dictation to grant microphone access and record.</div>
+  <body class="voice-page">
+    <main class="voice-shell" aria-labelledby="voiceTitle">
+      <section class="hero-card voice-hero">
+        <button id="closeVoiceButton" class="hero-dismiss" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">
+          <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <div class="hero-copy">
+          <h1 id="voiceTitle" class="eyebrow" data-i18n="ui.voice.dictation">Voice dictation</h1>
+          <svg class="hero-wordmark" viewBox="0 0 2918.77 1206.98" role="img" aria-label="Hermes Browser" data-i18n-aria-label="ui.hermes.browser">
+            <use href="assets/img/hermes-browser-logo-left.svg#Layer_1"></use>
+          </svg>
+        </div>
+        <img class="hero-badge" src="assets/img/hermes-badge.webp" alt="Hermes Agent badge" data-i18n-alt="ui.hermes.agent.badge" />
+      </section>
+      <section class="composer voice-composer">
+        <div id="voiceActivity" class="voice-activity" hidden aria-hidden="true">
+          <span class="voice-activity-dot"></span>
+          <strong id="voiceActivityLabel"></strong>
+          <span id="voiceActivityTimer" class="voice-activity-timer">0:00</span>
+        </div>
+        <div id="voiceGlow" class="voice-stage">
+          <p id="voiceStatusTitle" class="voice-status-title" hidden></p>
+          <div id="voiceStatus" class="voice-status" role="status" aria-live="polite" data-i18n="ui.click.start.dictation.to.grant.microphone.access.and.record">Click Start dictation to grant microphone access and record.</div>
+        </div>
+        <div class="composer-actions voice-actions">
+          <button id="openMicSettingsButton" class="secondary" type="button" data-i18n="ui.open.microphone.settings">Open microphone settings</button>
+          <button id="startVoiceButton" type="button" data-i18n="ui.start.dictation">Start dictation</button>
+        </div>
+      </section>
     </main>
     <script type="module" src="voice-dictation.js"></script>
   </body>

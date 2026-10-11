@@ -10,6 +10,11 @@ import {
 } from './lib/common.mjs';
 import { initI18n, t, translateUiText } from './lib/i18n.mjs';
 import { applyStoredPanelAppearance } from './lib/apply-stored-appearance.mjs';
+import { createVoiceWingbeat, createVoiceLevelSource } from './lib/voice-wingbeat.mjs';
+import { formatVoiceElapsed } from './lib/voice-capture.mjs';
+import { normalizeAppearanceTheme, normalizeColorMode, resolveColorMode } from './lib/appearance-themes.mjs';
+import { customThemeSelection, customThemePaletteForMode, customThemeEffectiveMode, themeCssVariables } from './lib/custom-themes.mjs';
+import { readCustomThemeStore } from './lib/custom-theme-store.mjs';
 import {
   DEFAULT_GATEWAY_CAPABILITIES,
   normalizeGatewayCapabilities,
@@ -34,6 +39,17 @@ const startButton = document.getElementById('startVoiceButton');
 const settingsButton = document.getElementById('openMicSettingsButton');
 const closeButton = document.getElementById('closeVoiceButton');
 const statusEl = document.getElementById('voiceStatus');
+const statusTitleEl = document.getElementById('voiceStatusTitle');
+const activityEl = document.getElementById('voiceActivity');
+const activityLabelEl = document.getElementById('voiceActivityLabel');
+const activityTimerEl = document.getElementById('voiceActivityTimer');
+let activityStartedAt = 0;
+let activityTimer = 0;
+let voiceLevelSource = null;
+const voiceWingbeat = createVoiceWingbeat(document.getElementById('voiceGlow'), {
+  level: () => voiceLevelSource?.level() || 0,
+  analyser: () => voiceLevelSource?.analyser || null,
+});
 
 const VOICE_DRAFT_STORAGE_KEY = 'hermesVoiceDraft';
 const VOICE_AUDIO_MIME_TYPES = Object.freeze([
@@ -80,13 +96,68 @@ async function resolveVoicePageDashboardBaseUrl() {
   return dashboardTranscriptionBaseUrl;
 }
 
+async function applyVoiceTheme() {
+  const root = document.documentElement;
+  const store = await readCustomThemeStore(browserApi?.storage?.local);
+  const selection = customThemeSelection(settings.appearanceTheme, store.themes);
+  const colorMode = normalizeColorMode(settings.colorMode);
+  const mode = resolveColorMode(colorMode, window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (selection.kind === 'custom') {
+    const variables = themeCssVariables(customThemePaletteForMode(selection.document, mode));
+    for (const [property, value] of Object.entries(variables)) root.style.setProperty(property, value);
+  }
+  root.dataset.hermesTheme = selection.kind === 'custom' ? selection.id : normalizeAppearanceTheme(settings.appearanceTheme);
+  root.dataset.hermesColorMode = colorMode;
+  root.dataset.hermesMode = mode;
+  const effectiveMode = selection.kind === 'custom' ? customThemeEffectiveMode(selection.document, mode) : mode;
+  root.dataset.hermesEffectiveMode = effectiveMode;
+  root.style.colorScheme = effectiveMode;
+}
+
+// Composite statuses read "Headline\n\nDetail" in every locale. The headline
+// becomes the small label above the detail, so the box never shows a wall of text.
 function setStatus(message) {
-  if (statusEl) statusEl.textContent = translateUiText(message);
+  const text = String(translateUiText(message) ?? '');
+  const split = text.indexOf('\n\n');
+  const title = split > 0 ? text.slice(0, split) : '';
+  if (statusTitleEl) {
+    statusTitleEl.textContent = title;
+    statusTitleEl.hidden = !title;
+  }
+  if (statusEl) statusEl.textContent = title ? text.slice(split + 2) : text;
+}
+
+function renderActivityTimer() {
+  const elapsed = formatVoiceElapsed((Date.now() - activityStartedAt) / 1000);
+  if (activityTimerEl && activityTimerEl.textContent !== elapsed) activityTimerEl.textContent = elapsed;
+}
+
+// One place drives the glow and the dictation strip, the same pair the side
+// panel shows. The timer ticks once a second and only while recording.
+function showVoiceState(active, processing = false) {
+  voiceWingbeat.set({ active, processing });
+  const listening = active && !processing;
+  if (activityEl) {
+    activityEl.hidden = !(active || processing);
+    activityEl.classList.toggle('recording', listening);
+    activityEl.classList.toggle('transcribing', processing);
+  }
+  const label = translateUiText(processing ? 'Transcribing' : 'Dictating');
+  if (activityLabelEl && activityLabelEl.textContent !== label) activityLabelEl.textContent = label;
+  if (listening && !activityTimer) {
+    activityStartedAt = Date.now();
+    renderActivityTimer();
+    activityTimer = setInterval(renderActivityTimer, 1000);
+  } else if (!listening && activityTimer) {
+    clearInterval(activityTimer);
+    activityTimer = 0;
+  }
 }
 
 function setRecording(value, label = '') {
   recording = Boolean(value);
   document.body.classList.toggle('recording', recording);
+  showVoiceState(recording);
   if (startButton) startButton.textContent = recording
     ? `${translateUiText('Stop')}${label ? ` ${label}` : ''}`
     : translateUiText('Start dictation');
@@ -142,6 +213,8 @@ function canUseLocalDashboardStt() {
 }
 
 function stopStream() {
+  voiceLevelSource?.close();
+  voiceLevelSource = null;
   stream?.getTracks?.().forEach((track) => track.stop());
   stream = null;
 }
@@ -400,6 +473,7 @@ async function startRecording() {
   setStatus('Voice mode: Hermes STT\n\nRequesting microphone access…');
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+    voiceLevelSource = createVoiceLevelSource(stream);
     chunks = [];
     const mimeType = preferredVoiceMimeType();
     recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -424,6 +498,7 @@ async function startRecording() {
       }
       try {
         startButton.disabled = true;
+        showVoiceState(true, true);
         setStatus('Transcribing through your local Hermes gateway…');
         const transcript = await transcribeVoiceRecording(new Blob(recordingChunks, { type: recordingType }));
         if (!transcript) {
@@ -437,6 +512,7 @@ async function startRecording() {
         if (error?.fallbackToWebSpeech && await startBrowserSpeechFallback()) return;
         setStatus(t('voice.transcription_failed', { error: error?.message || String(error) }));
       } finally {
+        showVoiceState(recording);
         startButton.disabled = false;
       }
     };
@@ -493,9 +569,11 @@ startButton?.addEventListener('click', () => {
 });
 settingsButton?.addEventListener('click', openMicrophoneSettings);
 closeButton?.addEventListener('click', () => window.close());
+window.addEventListener('pagehide', stopStream);
 
 try {
   const loadedFromExtensionStorage = await loadSettings();
+  await applyVoiceTheme();
   await loadCapabilities();
   if (!loadedFromExtensionStorage) {
     setStatus('Preview mode: load this page from the installed Hermes Browser Extension to use connected Hermes settings and voice dictation.');

@@ -1228,6 +1228,8 @@ let voiceRecorder = null;
 let voiceRecorderStream = null;
 let voiceRecorderChunks = [];
 let voiceCaptureSession = null;
+let voiceWingbeat = null;
+let voiceWingbeatLoading = null;
 let dictating = false;
 let transcribingVoice = false;
 let voiceTransitionInFlight = false;
@@ -5704,22 +5706,55 @@ function renderVoiceActivity() {
   const session = voiceCaptureSession;
   const recording = Boolean(dictating && session && !session.stopRequested);
   const transcribing = Boolean(transcribingVoice);
-  meter.hidden = !(recording || transcribing);
+  syncVoiceGlow();
+  // This runs four times a second while dictating. Write only what changed, and
+  // move the level bars with transforms, so the meter never re-lays out the panel.
+  const hidden = !(recording || transcribing);
+  if (meter.hidden !== hidden) meter.hidden = hidden;
   meter.classList.toggle('recording', recording);
   meter.classList.toggle('transcribing', transcribing);
   if (els.voiceActivityLabel) {
-    els.voiceActivityLabel.textContent = transcribing ? 'Transcribing' : 'Dictating';
+    const label = transcribing ? 'Transcribing' : 'Dictating';
+    if (els.voiceActivityLabel.textContent !== label) els.voiceActivityLabel.textContent = label;
   }
   if (els.voiceActivityTimer) {
     const startedAt = Number(session?.startedAt || 0);
-    const seconds = startedAt ? (Date.now() - startedAt) / 1000 : 0;
-    els.voiceActivityTimer.textContent = formatVoiceElapsed(seconds);
+    const elapsed = formatVoiceElapsed(startedAt ? (Date.now() - startedAt) / 1000 : 0);
+    if (els.voiceActivityTimer.textContent !== elapsed) els.voiceActivityTimer.textContent = elapsed;
   }
   const bars = els.voiceActivityBars?.querySelectorAll('i') || [];
   const heights = voiceLevelBarHeights(Number(session?.level || 0), { active: recording && !transcribing });
   bars.forEach((bar, index) => {
-    bar.style.height = `${Math.round((heights[index] || 0.25) * 100)}%`;
+    const scale = `scaleY(${(heights[index] || 0.25).toFixed(2)})`;
+    if (bar.style.transform !== scale) bar.style.transform = scale;
   });
+}
+
+// The glow module loads on first use, or as the pointer heads for the mic, so
+// opening the panel never parses it. It is decorative: if it fails to load,
+// dictation carries on without it.
+function loadVoiceWingbeat() {
+  voiceWingbeatLoading ||= import('./lib/voice-wingbeat.mjs').then(({ createVoiceWingbeat }) => {
+    const host = document.getElementById('composerDropZone');
+    if (!voiceWingbeat && host) {
+      voiceWingbeat = createVoiceWingbeat(host, {
+        level: () => Number(voiceCaptureSession?.level || 0),
+        analyser: () => voiceCaptureSession?.analyser || null,
+      });
+    }
+    return voiceWingbeat;
+  }, () => null);
+  return voiceWingbeatLoading;
+}
+
+function syncVoiceGlow() {
+  const active = Boolean(dictating || transcribingVoice);
+  if (voiceWingbeat) voiceWingbeat.set({ active, processing: Boolean(transcribingVoice) });
+  else if (active) loadVoiceWingbeat().then((glow) => { if (glow) syncVoiceGlow(); });
+}
+
+function prewarmVoiceWingbeat() {
+  loadVoiceWingbeat().then((glow) => glow?.prepare?.());
 }
 
 function applyDictationTranscript(transcript = '') {
@@ -22009,6 +22044,9 @@ function bindEvents() {
       refreshWakeState();
     });
   });
+  // Warm the glow while the pointer (or keyboard focus) is on its way to the mic.
+  els.voiceButton?.addEventListener('pointerenter', prewarmVoiceWingbeat, { once: true, passive: true });
+  els.voiceButton?.addEventListener('focus', prewarmVoiceWingbeat, { once: true });
   els.voiceButton?.addEventListener('click', () => {
     toggleVoiceDictation().catch((error) => {
       voiceTransitionInFlight = false;

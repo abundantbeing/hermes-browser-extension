@@ -35,6 +35,8 @@ const requiredFiles = [
   'request-permissions.js',
   'voice-dictation.html',
   'voice-dictation.js',
+  'lib/voice-wingbeat.mjs',
+  'lib/voice-wingbeat.css',
   'lib/browser-context-protocol.mjs',
   'lib/runtime-events.mjs',
   'lib/support-diagnostics.mjs',
