@@ -55,7 +55,7 @@ and browser-context consent settings remain in place.
 
 - `web_search` accepts an `objective` and `search_queries` and returns source
   URLs with relevant excerpts.
-- `web_fetch` accepts a `url` and an optional `objective` and returns page excerpts.
+- `web_fetch` accepts a `urls` list and an optional `objective` and returns page excerpts.
 
 Connection testing checks MCP discovery. It does not run a model turn or verify
 which tools a model will select in a browser conversation.
