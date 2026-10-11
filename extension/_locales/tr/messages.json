@@ -1403,6 +1403,26 @@
     "message": "Yüzey",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "Bu onay zaten yanıtlandı veya süresi doldu.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Komutun çalışması için burada yanıt verin. İstek yanıtlanmadan süresi dolarsa komut çalışmaz.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "KOMUT ONAYI",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "Kararınız gönderilemedi: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes bir komut çalıştırmak istiyor",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "{source} konumundan açıldı.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

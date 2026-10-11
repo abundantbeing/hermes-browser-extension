@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Donker",
   "settings.mode.system": "Systeem",
   "settings.custom_theme_help": "Voeg meer thema's toe: bekijk VS Code-thema's, importeer een themabestand of laat een agent er een ontwerpen. Geïnstalleerde thema's verschijnen in het raster hierboven.",
+  "exec_approval.kicker": "COMMANDO-GOEDKEURING",
+  "exec_approval.title": "Hermes wil een commando uitvoeren",
+  "exec_approval.hint": "Antwoord hier om het commando uit te voeren. Verloopt het verzoek zonder antwoord, dan wordt het commando niet uitgevoerd.",
+  "exec_approval.expired": "Deze goedkeuring is al beantwoord of verlopen.",
+  "exec_approval.send_failed": "Kon je keuze niet verzenden: {error}",
 });

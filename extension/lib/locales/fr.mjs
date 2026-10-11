@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Sombre",
   "settings.mode.system": "Système",
   "settings.custom_theme_help": "Ajoutez des thèmes : parcourez les thèmes VS Code, importez un fichier de thème ou faites-en concevoir un par un agent. Les thèmes installés apparaissent dans la grille ci-dessus.",
+  "exec_approval.kicker": "APPROBATION DE COMMANDE",
+  "exec_approval.title": "Hermes veut exécuter une commande",
+  "exec_approval.hint": "Répondez ici pour autoriser la commande. Si la demande expire sans réponse, la commande ne sera pas exécutée.",
+  "exec_approval.expired": "Cette approbation a déjà été traitée ou a expiré.",
+  "exec_approval.send_failed": "Impossible d'envoyer votre décision : {error}",
 });

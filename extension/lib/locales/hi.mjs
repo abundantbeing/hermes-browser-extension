@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "अंधेरा",
   "settings.mode.system": "सिस्टम",
   "settings.custom_theme_help": "और थीम जोड़ें: VS Code थीम ब्राउज़ करें, थीम फ़ाइल आयात करें, या एजेंट से बनवाएँ। इंस्टॉल की गई थीम ऊपर ग्रिड में दिखती हैं।",
+  "exec_approval.kicker": "कमांड स्वीकृति",
+  "exec_approval.title": "Hermes एक कमांड चलाना चाहता है",
+  "exec_approval.hint": "कमांड चलाने के लिए यहाँ उत्तर दें। बिना उत्तर के अनुरोध समाप्त हो जाने पर कमांड नहीं चलेगी।",
+  "exec_approval.expired": "यह स्वीकृति पहले ही उत्तरित हो चुकी है या समाप्त हो गई है।",
+  "exec_approval.send_failed": "आपका निर्णय भेजा नहीं जा सका: {error}",
 });

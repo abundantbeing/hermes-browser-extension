@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Темна",
   "settings.mode.system": "Системна",
   "settings.custom_theme_help": "Додайте теми: перегляньте теми VS Code, імпортуйте файл теми або попросіть агента створити її. Встановлені теми з'являться в сітці вище.",
+  "exec_approval.kicker": "ПІДТВЕРДЖЕННЯ КОМАНДИ",
+  "exec_approval.title": "Hermes хоче виконати команду",
+  "exec_approval.hint": "Відповідьте тут, щоб команда виконалася. Якщо запит мине без відповіді, команда не виконається.",
+  "exec_approval.expired": "Це підтвердження вже оброблено або воно минуло.",
+  "exec_approval.send_failed": "Не вдалося надіслати ваше рішення: {error}",
 });

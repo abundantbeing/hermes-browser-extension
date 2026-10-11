@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Dunkel",
   "settings.mode.system": "System",
   "settings.custom_theme_help": "Weitere Themes hinzufügen: VS-Code-Themes durchsuchen, eine Theme-Datei importieren oder von einem Agenten gestalten lassen. Installierte Themes erscheinen oben im Raster.",
+  "exec_approval.kicker": "BEFEHLSFREIGABE",
+  "exec_approval.title": "Hermes möchte einen Befehl ausführen",
+  "exec_approval.hint": "Antworte hier, damit der Befehl ausgeführt wird. Läuft die Anfrage unbeantwortet ab, wird der Befehl nicht ausgeführt.",
+  "exec_approval.expired": "Diese Freigabe wurde bereits beantwortet oder ist abgelaufen.",
+  "exec_approval.send_failed": "Deine Entscheidung konnte nicht gesendet werden: {error}",
 });

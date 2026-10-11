@@ -1403,6 +1403,26 @@
     "message": "サーフェス",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "この承認はすでに回答済みか、期限切れです。",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "ここで応答するとコマンドが実行されます。無応答のまま期限が切れると、コマンドは実行されません。",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "コマンド承認",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "判断を送信できませんでした: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes がコマンドを実行しようとしています",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "{source} から開きました。",
     "description": "Runtime interface message fulltab.handoff.opened_from"

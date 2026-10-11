@@ -1403,6 +1403,26 @@
     "message": "界面",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "该批准已被应答或已过期。",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "在这里应答即可允许命令运行。若请求在无应答的情况下过期，命令将不会运行。",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "命令批准",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "无法发送你的决定：{error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes 想要运行一条命令",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "已从 {source} 打开。",
     "description": "Runtime interface message fulltab.handoff.opened_from"

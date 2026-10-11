@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "داكن",
   "settings.mode.system": "النظام",
   "settings.custom_theme_help": "أضف المزيد من السمات: تصفّح سمات VS Code أو استورد ملف سمة أو اطلب من وكيل تصميم سمة. تظهر السمات المثبّتة في الشبكة أعلاه.",
+  "exec_approval.kicker": "الموافقة على أمر",
+  "exec_approval.title": "يريد Hermes تشغيل أمر",
+  "exec_approval.hint": "أجب هنا لتشغيل الأمر. إذا انتهت صلاحية الطلب دون إجابة، فلن يُشغَّل الأمر.",
+  "exec_approval.expired": "تمت الإجابة على هذه الموافقة بالفعل أو انتهت صلاحيتها.",
+  "exec_approval.send_failed": "تعذّر إرسال قرارك: {error}",
 });

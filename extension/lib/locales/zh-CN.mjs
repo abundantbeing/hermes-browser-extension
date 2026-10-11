@@ -1553,4 +1553,9 @@ export default Object.freeze({
   "settings.mode.dark": "深色",
   "settings.mode.system": "跟随系统",
   "settings.custom_theme_help": "添加更多主题：浏览 VS Code 主题、导入主题文件，或让代理设计一个。已安装的主题会显示在上方网格中。",
+  "exec_approval.kicker": "命令批准",
+  "exec_approval.title": "Hermes 想要运行一条命令",
+  "exec_approval.hint": "在这里应答即可允许命令运行。若请求在无应答的情况下过期，命令将不会运行。",
+  "exec_approval.expired": "该批准已被应答或已过期。",
+  "exec_approval.send_failed": "无法发送你的决定：{error}",
 });

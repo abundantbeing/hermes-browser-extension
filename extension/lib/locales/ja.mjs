@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "ダーク",
   "settings.mode.system": "システム",
   "settings.custom_theme_help": "テーマを追加: VS Code テーマを検索する、テーマファイルを取り込む、またはエージェントに作らせることができます。インストール済みテーマは上のグリッドに表示されます。",
+  "exec_approval.kicker": "コマンド承認",
+  "exec_approval.title": "Hermes がコマンドを実行しようとしています",
+  "exec_approval.hint": "ここで応答するとコマンドが実行されます。無応答のまま期限が切れると、コマンドは実行されません。",
+  "exec_approval.expired": "この承認はすでに回答済みか、期限切れです。",
+  "exec_approval.send_failed": "判断を送信できませんでした: {error}",
 });

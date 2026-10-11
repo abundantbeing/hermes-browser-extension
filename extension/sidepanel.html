@@ -455,6 +455,21 @@
             <button id="explicitSiteCaptureDismiss" class="context-explicit-capture-dismiss" type="button">✕</button>
           </div>
           <div id="contextScopeMenu" class="context-scope-menu" hidden></div>
+          <section id="execApprovalNotice" class="session-ownership-notice exec-approval-notice" aria-live="polite" hidden>
+            <div class="session-ownership-copy">
+              <span class="session-ownership-kicker" data-i18n="exec_approval.kicker">COMMAND APPROVAL</span>
+              <strong id="execApprovalTitle" data-i18n="exec_approval.title">Hermes wants to run a command</strong>
+              <code id="execApprovalCommand" class="exec-approval-command"></code>
+              <span id="execApprovalReason" class="exec-approval-reason"></span>
+              <span id="execApprovalHint" class="exec-approval-hint" data-i18n="exec_approval.hint">Answer here to let the command run. If the request expires unanswered, the command will not run.</span>
+            </div>
+            <div class="session-ownership-actions" id="execApprovalActions">
+              <button id="execApprovalOnceButton" type="button" data-i18n="browser_control.approve_once">Approve once</button>
+              <button id="execApprovalSessionButton" type="button" data-i18n="ui.session.f7f1997c">Session</button>
+              <button id="execApprovalAlwaysButton" type="button" data-i18n="ui.always">Always</button>
+              <button id="execApprovalDenyButton" class="secondary" type="button" data-i18n="browser_control.reject">Reject</button>
+            </div>
+          </section>
           <section id="localDocumentApprovalNotice" class="session-ownership-notice" aria-live="polite" hidden>
             <div class="session-ownership-copy">
               <span class="session-ownership-kicker" data-i18n="ui.local_document_access">LOCAL DOCUMENT ACCESS</span>

@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Tối",
   "settings.mode.system": "Hệ thống",
   "settings.custom_theme_help": "Thêm chủ đề: duyệt chủ đề VS Code, nhập tệp chủ đề hoặc nhờ tác tử thiết kế. Chủ đề đã cài hiển thị trong lưới phía trên.",
+  "exec_approval.kicker": "PHÊ DUYỆT LỆNH",
+  "exec_approval.title": "Hermes muốn chạy một lệnh",
+  "exec_approval.hint": "Trả lời ở đây để lệnh được chạy. Nếu yêu cầu hết hạn mà không có phản hồi, lệnh sẽ không được chạy.",
+  "exec_approval.expired": "Lượt phê duyệt này đã được trả lời hoặc đã hết hạn.",
+  "exec_approval.send_failed": "Không thể gửi quyết định của bạn: {error}",
 });

@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "다크",
   "settings.mode.system": "시스템",
   "settings.custom_theme_help": "테마 추가: VS Code 테마를 둘러보거나 테마 파일을 가져오거나 에이전트에게 만들게 할 수 있습니다. 설치된 테마는 위 그리드에 표시됩니다.",
+  "exec_approval.kicker": "명령 승인",
+  "exec_approval.title": "Hermes가 명령을 실행하려고 합니다",
+  "exec_approval.hint": "여기에서 응답하면 명령이 실행됩니다. 응답 없이 요청이 만료되면 명령은 실행되지 않습니다.",
+  "exec_approval.expired": "이 승인은 이미 응답되었거나 만료되었습니다.",
+  "exec_approval.send_failed": "결정을 보내지 못했습니다: {error}",
 });

@@ -1403,6 +1403,26 @@
     "message": "Інтерфейс",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "Це підтвердження вже оброблено або воно минуло.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Відповідьте тут, щоб команда виконалася. Якщо запит мине без відповіді, команда не виконається.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "ПІДТВЕРДЖЕННЯ КОМАНДИ",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "Не вдалося надіслати ваше рішення: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes хоче виконати команду",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "Відкрито з {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

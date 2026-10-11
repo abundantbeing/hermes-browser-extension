@@ -1403,6 +1403,26 @@
     "message": "सतह",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "यह स्वीकृति पहले ही उत्तरित हो चुकी है या समाप्त हो गई है।",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "कमांड चलाने के लिए यहाँ उत्तर दें। बिना उत्तर के अनुरोध समाप्त हो जाने पर कमांड नहीं चलेगी।",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "कमांड स्वीकृति",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "आपका निर्णय भेजा नहीं जा सका: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes एक कमांड चलाना चाहता है",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "{source} से खोला गया।",
     "description": "Runtime interface message fulltab.handoff.opened_from"

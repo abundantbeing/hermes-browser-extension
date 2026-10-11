@@ -143,6 +143,12 @@ import {
 import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
 import { renderMarkdownSafe, sanitizeHtml } from './lib/sanitizer.mjs';
 import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
+import {
+  EXEC_APPROVAL_CHOICES,
+  execApprovalRequestPayload,
+  isExecApprovalRetired,
+  normalizeExecApprovalChoices,
+} from './lib/exec-approval.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
 import {
   completionRevealPlan,
@@ -727,6 +733,14 @@ const els = {
   localDocumentApprovalTitle: $('#localDocumentApprovalTitle'),
   localDocumentApprovalDetail: $('#localDocumentApprovalDetail'),
   localDocumentApproveButton: $('#localDocumentApproveButton'),
+  execApprovalNotice: $('#execApprovalNotice'),
+  execApprovalCommand: $('#execApprovalCommand'),
+  execApprovalReason: $('#execApprovalReason'),
+  execApprovalActions: $('#execApprovalActions'),
+  execApprovalOnceButton: $('#execApprovalOnceButton'),
+  execApprovalSessionButton: $('#execApprovalSessionButton'),
+  execApprovalAlwaysButton: $('#execApprovalAlwaysButton'),
+  execApprovalDenyButton: $('#execApprovalDenyButton'),
   localDocumentDismissButton: $('#localDocumentDismissButton'),
   sessionOwnershipNotice: $('#sessionOwnershipNotice'),
   contextMenuRouteNotice: $('#contextMenuRouteNotice'),
@@ -19388,7 +19402,75 @@ function sseBlocksFromBuffer(buffer, { flush = false } = {}) {
   return { blocks, rest };
 }
 
-async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [] } = {}) {
+let pendingExecApproval = null;
+let execApprovalHideTimer = 0;
+
+function execApprovalChoiceButtons() {
+  return [
+    [els.execApprovalOnceButton, 'once'],
+    [els.execApprovalSessionButton, 'session'],
+    [els.execApprovalAlwaysButton, 'always'],
+    [els.execApprovalDenyButton, 'deny'],
+  ];
+}
+
+function hideExecApprovalNotice() {
+  pendingExecApproval = null;
+  if (execApprovalHideTimer) {
+    clearTimeout(execApprovalHideTimer);
+    execApprovalHideTimer = 0;
+  }
+  const notice = els.execApprovalNotice;
+  if (!notice) return;
+  notice.hidden = true;
+  for (const [button] of execApprovalChoiceButtons()) button.disabled = false;
+}
+
+function showExecApprovalRequest(data) {
+  if (!els.execApprovalNotice || !data) return;
+  const runId = String(data.run_id || '');
+  if (!runId) return;
+  pendingExecApproval = { runId, requestId: String(data.request_id || '') };
+  els.execApprovalCommand.textContent = String(data.command || '');
+  els.execApprovalReason.textContent = String(data.description || data.reason || '');
+  const offered = normalizeExecApprovalChoices(data.choices);
+  for (const [button, choice] of execApprovalChoiceButtons()) {
+    button.hidden = !offered.includes(choice);
+    button.disabled = false;
+  }
+  if (execApprovalHideTimer) clearTimeout(execApprovalHideTimer);
+  execApprovalHideTimer = setTimeout(hideExecApprovalNotice, 15 * 60 * 1000);
+  els.execApprovalNotice.hidden = false;
+}
+
+async function decideExecApproval(choice) {
+  const approval = pendingExecApproval;
+  const payload = execApprovalRequestPayload(choice, approval?.requestId);
+  if (!approval || !payload) return;
+  const buttons = execApprovalChoiceButtons().map(([button]) => button);
+  for (const button of buttons) button.disabled = true;
+  try {
+    const response = await apiFetch(`/v1/runs/${encodeURIComponent(approval.runId)}/approval`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    const payloadResult = await readJsonResponse(response);
+    if (!response.ok) {
+      throw Object.assign(new Error(payloadResult?.error?.message || payloadResult?.message || `HTTP ${response.status}`), { httpStatus: response.status });
+    }
+    hideExecApprovalNotice();
+  } catch (error) {
+    if (isExecApprovalRetired(error?.httpStatus ?? error?.status, error?.message)) {
+      hideExecApprovalNotice();
+      setStatus('warn', t('exec_approval.kicker'), t('exec_approval.expired'), { translateDetail: false });
+      return;
+    }
+    for (const button of buttons) button.disabled = false;
+    setStatus('warn', t('exec_approval.kicker'), t('exec_approval.send_failed', { error: error?.message || String(error) }), { translateDetail: false });
+  }
+}
+
+async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onApproval, knownAssistantTexts = [] } = {}) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -19400,6 +19482,10 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
   async function processBlock(block) {
     const event = parseSseBlock(block);
     const data = event.json || {};
+    if (event.type === 'approval.request' && data.run_id) {
+      onApproval?.(data);
+      return false;
+    }
     if (event.type === 'run.started' && data.run_id) {
       sawRunStarted = true;
       onRun?.(data.run_id);
@@ -19959,13 +20045,14 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null } = {}) {
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onApproval, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null } = {}) {
   if (usesDashboardWsChatTransport()) return streamDashboardWsChat(prompt, onDelta, onTool, {
     signal,
     attachments: turnAttachments,
     onRun,
     onSteerQueued,
     onRuntime,
+    onApproval,
     knownAssistantTexts,
     truncate,
     onSubmitResponse,
@@ -19981,14 +20068,14 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
     if (Number(setupError?.httpStatus ?? setupError?.status) === 401 && desktopDashboardUrl && safeActiveProfile()) {
       activeConversationTransport = 'dashboard-ws';
       return streamDashboardWsChat(prompt, onDelta, onTool, {
-        signal, attachments: turnAttachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts, voiceLive,
+        signal, attachments: turnAttachments, onRun, onSteerQueued, onRuntime, onApproval, knownAssistantTexts, voiceLive,
       });
     }
     throw setupError;
   }
-  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, knownAssistantTexts, voiceLive });
+  if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onApproval, knownAssistantTexts, voiceLive });
   try {
-    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts, voiceLive });
+    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onApproval, knownAssistantTexts, voiceLive });
   } catch (error) {
     // Profile-scoped 401: the gateway multiplexer requires each named
     // profile's own API key. Named-profile sessions still stream over the
@@ -20011,7 +20098,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   }
 }
 
-async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts, voiceLive = null }) {
+async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onApproval, knownAssistantTexts, voiceLive = null }) {
 
   let response;
   try {
@@ -20047,7 +20134,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
     });
   }
   try {
-    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts });
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onApproval, knownAssistantTexts });
   } catch (error) {
     if (!error.requestRejected && !error.streamError) {
       error.requestAccepted = true;
@@ -20056,7 +20143,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
   }
 }
 
-async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, knownAssistantTexts = [], voiceLive = null } = {}) {
+async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onApproval, knownAssistantTexts = [], voiceLive = null } = {}) {
   let response;
   try {
     response = await apiFetch('/v1/chat/completions', {
@@ -20092,7 +20179,7 @@ async function streamChatCompletions(prompt, onDelta, onTool, { signal, attachme
     });
   }
   try {
-    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun, knownAssistantTexts });
+    const result = await readSseResponse(response, onDelta, onTool, { signal, onRun, onApproval, knownAssistantTexts });
     await captureDelegationDispatchesFromCurrentRestHistory();
     return result;
   } catch (error) {
@@ -20789,10 +20876,17 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             activeRunControl = withRunControlId(activeRunControl, runId);
           },
           onSteerQueued: restoreBackendQueuedSteerDraft,
+          onApproval: (approvalData) => {
+            if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
+            showExecApprovalRequest(approvalData);
+          },
           onRuntime: (payload) => {
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             const status = String(payload?.status || '').trim().toLowerCase();
-            if (['completed', 'failed', 'cancelled'].includes(status)) streamTerminalStatus = status;
+            if (['completed', 'failed', 'cancelled'].includes(status)) {
+              streamTerminalStatus = status;
+              hideExecApprovalNotice();
+            }
             applyTurnRuntimePayload(payload);
           },
           knownAssistantTexts: priorAssistantTexts,
@@ -21029,6 +21123,7 @@ ${streamError.message}`);
     }
   } finally {
     if (turnRunControlGeneration === runControlGeneration) {
+      hideExecApprovalNotice();
       activeRunControl = markRunStreamClosed(activeRunControl);
       if ([RUN_CONTROL_PHASES.RUNNING, RUN_CONTROL_PHASES.UNCONFIRMED].includes(activeRunControl?.phase)) {
         if (!activeRunId) {
@@ -23085,6 +23180,16 @@ function bindEvents() {
   els.localDocumentDismissButton?.addEventListener('click', () => {
     dismissLocalDocumentApprovalNotice();
   });
+  for (const [button, choice] of [
+    [els.execApprovalOnceButton, 'once'],
+    [els.execApprovalSessionButton, 'session'],
+    [els.execApprovalAlwaysButton, 'always'],
+    [els.execApprovalDenyButton, 'deny'],
+  ]) {
+    button?.addEventListener('click', () => {
+      void decideExecApproval(choice);
+    });
+  }
   els.sessionOwnershipNotice?.addEventListener('click', handleSessionOwnershipDecision);
   els.composer.addEventListener('submit', async (event) => {
     event.preventDefault();

@@ -1403,6 +1403,26 @@
     "message": "Powierzchnia",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "To zatwierdzenie zostało już rozstrzygnięte lub wygasło.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Odpowiedz tutaj, aby polecenie zostało wykonane. Jeśli prośba wygaśnie bez odpowiedzi, polecenie nie zostanie wykonane.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "ZATWIERDZENIE POLECENIA",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "Nie udało się wysłać Twojej decyzji: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes chce wykonać polecenie",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "Otworzono z {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

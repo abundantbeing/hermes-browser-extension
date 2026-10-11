@@ -1403,6 +1403,26 @@
     "message": "سطح",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "تمت الإجابة على هذه الموافقة بالفعل أو انتهت صلاحيتها.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "أجب هنا لتشغيل الأمر. إذا انتهت صلاحية الطلب دون إجابة، فلن يُشغَّل الأمر.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "الموافقة على أمر",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "تعذّر إرسال قرارك: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "يريد Hermes تشغيل أمر",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "تم الفتح من {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

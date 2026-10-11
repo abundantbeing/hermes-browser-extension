@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Ciemno",
   "settings.mode.system": "System",
   "settings.custom_theme_help": "Dodaj więcej motywów: przeglądaj motywy VS Code, zaimportuj plik motywu lub poproś agenta o zaprojektowanie własnego. Zainstalowane motywy pojawią się w siatce powyżej.",
+  "exec_approval.kicker": "ZATWIERDZENIE POLECENIA",
+  "exec_approval.title": "Hermes chce wykonać polecenie",
+  "exec_approval.hint": "Odpowiedz tutaj, aby polecenie zostało wykonane. Jeśli prośba wygaśnie bez odpowiedzi, polecenie nie zostanie wykonane.",
+  "exec_approval.expired": "To zatwierdzenie zostało już rozstrzygnięte lub wygasło.",
+  "exec_approval.send_failed": "Nie udało się wysłać Twojej decyzji: {error}",
 });

@@ -1403,6 +1403,26 @@
     "message": "Oppervlak",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "Deze goedkeuring is al beantwoord of verlopen.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Antwoord hier om het commando uit te voeren. Verloopt het verzoek zonder antwoord, dan wordt het commando niet uitgevoerd.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "COMMANDO-GOEDKEURING",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "Kon je keuze niet verzenden: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes wil een commando uitvoeren",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "Geopend vanuit {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

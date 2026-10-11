@@ -1403,6 +1403,26 @@
     "message": "Oberfläche",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "Diese Freigabe wurde bereits beantwortet oder ist abgelaufen.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Antworte hier, damit der Befehl ausgeführt wird. Läuft die Anfrage unbeantwortet ab, wird der Befehl nicht ausgeführt.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "BEFEHLSFREIGABE",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "Deine Entscheidung konnte nicht gesendet werden: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes möchte einen Befehl ausführen",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "Geöffnet von {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

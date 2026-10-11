@@ -1403,6 +1403,26 @@
     "message": "Overflade",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "Denne godkendelse er allerede besvaret eller udløbet.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Svar her for at lade kommandoen køre. Udløber anmodningen uden svar, køres kommandoen ikke.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "KOMANDOGODKENDELSE",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "Kunne ikke sende din beslutning: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes vil køre en kommando",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "Åbnet fra {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

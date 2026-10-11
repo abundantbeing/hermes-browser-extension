@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Koyu",
   "settings.mode.system": "Sistem",
   "settings.custom_theme_help": "Daha fazla tema ekleyin: VS Code temalarına göz atın, bir tema dosyası içe aktarın veya bir ajana tasarlatın. Yüklü temalar yukarıdaki ızgarada görünür.",
+  "exec_approval.kicker": "KOMUT ONAYI",
+  "exec_approval.title": "Hermes bir komut çalıştırmak istiyor",
+  "exec_approval.hint": "Komutun çalışması için burada yanıt verin. İstek yanıtlanmadan süresi dolarsa komut çalışmaz.",
+  "exec_approval.expired": "Bu onay zaten yanıtlandı veya süresi doldu.",
+  "exec_approval.send_failed": "Kararınız gönderilemedi: {error}",
 });

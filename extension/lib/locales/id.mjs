@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Gelap",
   "settings.mode.system": "Sistem",
   "settings.custom_theme_help": "Tambahkan tema: jelajahi tema VS Code, impor file tema, atau minta agen merancang satu. Tema yang terpasang muncul di kisi di atas.",
+  "exec_approval.kicker": "PERSETUJUAN PERINTAH",
+  "exec_approval.title": "Hermes ingin menjalankan perintah",
+  "exec_approval.hint": "Jawab di sini agar perintah dijalankan. Jika permintaan kedaluwarsa tanpa jawaban, perintah tidak akan dijalankan.",
+  "exec_approval.expired": "Persetujuan ini sudah dijawab atau kedaluwarsa.",
+  "exec_approval.send_failed": "Keputusan Anda tidak dapat dikirim: {error}",
 });

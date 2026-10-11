@@ -1403,6 +1403,26 @@
     "message": "พื้นผิว",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "คำขออนุมัตินี้ถูกตอบแล้วหรือหมดอายุแล้ว",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "ตอบที่นี่เพื่อให้คำสั่งทำงาน หากคำขอหมดอายุโดยไม่มีคำตอบ คำสั่งจะไม่ทำงาน",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "การอนุมัติคำสั่ง",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "ส่งการตัดสินใจของคุณไม่สำเร็จ: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes ต้องการเรียกใช้คำสั่ง",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "เปิดจาก {source}",
     "description": "Runtime interface message fulltab.handoff.opened_from"

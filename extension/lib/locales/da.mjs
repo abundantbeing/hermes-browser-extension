@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "Mørkt",
   "settings.mode.system": "System",
   "settings.custom_theme_help": "Tilføj flere temaer: gennemse VS Code-temaer, importér en temafil, eller lad en agent designe et. Installerede temaer vises i gitteret ovenfor.",
+  "exec_approval.kicker": "KOMANDOGODKENDELSE",
+  "exec_approval.title": "Hermes vil køre en kommando",
+  "exec_approval.hint": "Svar her for at lade kommandoen køre. Udløber anmodningen uden svar, køres kommandoen ikke.",
+  "exec_approval.expired": "Denne godkendelse er allerede besvaret eller udløbet.",
+  "exec_approval.send_failed": "Kunne ikke sende din beslutning: {error}",
 });

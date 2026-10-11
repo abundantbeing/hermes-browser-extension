@@ -1554,4 +1554,9 @@ export default Object.freeze({
   "settings.mode.dark": "มืด",
   "settings.mode.system": "ระบบ",
   "settings.custom_theme_help": "เพิ่มธีม: เรียกดูธีม VS Code นำเข้าไฟล์ธีม หรือให้เอเจนต์ออกแบบให้ ธีมที่ติดตั้งแล้วจะแสดงในตารางด้านบน",
+  "exec_approval.kicker": "การอนุมัติคำสั่ง",
+  "exec_approval.title": "Hermes ต้องการเรียกใช้คำสั่ง",
+  "exec_approval.hint": "ตอบที่นี่เพื่อให้คำสั่งทำงาน หากคำขอหมดอายุโดยไม่มีคำตอบ คำสั่งจะไม่ทำงาน",
+  "exec_approval.expired": "คำขออนุมัตินี้ถูกตอบแล้วหรือหมดอายุแล้ว",
+  "exec_approval.send_failed": "ส่งการตัดสินใจของคุณไม่สำเร็จ: {error}",
 });

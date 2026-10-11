@@ -1403,6 +1403,26 @@
     "message": "Permukaan",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "Persetujuan ini sudah dijawab atau kedaluwarsa.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Jawab di sini agar perintah dijalankan. Jika permintaan kedaluwarsa tanpa jawaban, perintah tidak akan dijalankan.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "PERSETUJUAN PERINTAH",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "Keputusan Anda tidak dapat dikirim: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes ingin menjalankan perintah",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "Dibuka dari {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"

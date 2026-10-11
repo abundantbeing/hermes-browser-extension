@@ -1403,6 +1403,26 @@
     "message": "Superficie",
     "description": "Runtime interface message diagnostics.surface"
   },
+  "runtime_exec_approval_expired": {
+    "message": "Esta aprobación ya fue respondida o caducó.",
+    "description": "Runtime interface message exec_approval.expired"
+  },
+  "runtime_exec_approval_hint": {
+    "message": "Responde aquí para permitir la ejecución. Si la solicitud caduca sin respuesta, el comando no se ejecutará.",
+    "description": "Runtime interface message exec_approval.hint"
+  },
+  "runtime_exec_approval_kicker": {
+    "message": "APROBACIÓN DE COMANDO",
+    "description": "Runtime interface message exec_approval.kicker"
+  },
+  "runtime_exec_approval_send_failed": {
+    "message": "No se pudo enviar tu decisión: {error}",
+    "description": "Runtime interface message exec_approval.send_failed"
+  },
+  "runtime_exec_approval_title": {
+    "message": "Hermes quiere ejecutar un comando",
+    "description": "Runtime interface message exec_approval.title"
+  },
   "runtime_fulltab_handoff_opened_from": {
     "message": "Abierto desde {source}.",
     "description": "Runtime interface message fulltab.handoff.opened_from"
