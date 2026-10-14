@@ -43,7 +43,10 @@ async function connectedWorker() {
       },
     },
     product: { id: 'chromium', engine: 'chromium', label: 'Chromium browser' },
-    randomUUID: () => ids.shift(),
+    randomUUID: () => {
+      assert.ok(ids.length > 0, 'fixture ids exhausted');
+      return ids.shift();
+    },
     extensionOrigin: 'chrome-extension://fixture',
     now: () => 1_000,
   });
@@ -51,6 +54,8 @@ async function connectedWorker() {
   return { worker, state, settings, connections };
 }
 
+// Keep each missing-revision representation covered: null and '' coerce to zero,
+// while omitted and explicit undefined must also remain latest-wins updates.
 for (const { label, options } of [
   { label: 'omitted', options: undefined },
   { label: 'null', options: { revision: null } },
@@ -75,6 +80,7 @@ for (const { label, options } of [
     assert.equal(connections.length, 2);
     assert.equal(connections[0].closed, true);
     assert.equal(connections[1].options.identity.hermesSessionId, nextSettings.sessionId);
+    assert.equal(Reflect.get(state, CONTROLLER_REGISTRY_STORAGE_KEY).entries.length, 1);
     assert.equal(Reflect.get(state, CONTROLLER_REGISTRY_STORAGE_KEY).entries[0].hermesSessionId, nextSettings.sessionId);
   });
 }
@@ -98,10 +104,11 @@ test('successive implicit settings updates increase revisions and bind the lates
   assert.equal(sameRoute.generation, second.generation);
   assert.equal(connections.length, 3, 'unrelated settings must not reconnect the socket');
   assert.equal(connections.at(-1).options.identity.hermesSessionId, 'stored-session-3');
+  assert.equal(Reflect.get(state, CONTROLLER_REGISTRY_STORAGE_KEY).entries.length, 1);
   assert.equal(Reflect.get(state, CONTROLLER_REGISTRY_STORAGE_KEY).entries[0].hermesSessionId, 'stored-session-3');
 });
 
-test('explicit revision zero stays stale after a newer session binding', async () => {
+test('explicit revision zero below the current revision is ignored without rebinding', async () => {
   const { worker, state, settings, connections } = await connectedWorker();
   const newest = await worker.syncSettings({ ...settings, sessionId: 'newest-session' }, { revision: 2 });
 
@@ -113,5 +120,6 @@ test('explicit revision zero stays stale after a newer session binding', async (
   assert.equal(connections.length, 2, 'an explicit stale revision must not open another socket');
   assert.equal(connections.at(-1).closed, false);
   assert.equal(connections.at(-1).options.identity.hermesSessionId, 'newest-session');
+  assert.equal(Reflect.get(state, CONTROLLER_REGISTRY_STORAGE_KEY).entries.length, 1);
   assert.equal(Reflect.get(state, CONTROLLER_REGISTRY_STORAGE_KEY).entries[0].hermesSessionId, 'newest-session');
 });
