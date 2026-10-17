@@ -18,7 +18,7 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 
 ## What it is
 
-Hermes Browser Extension is not a browser chatbot. It is a Chrome/Edge/Chromium side panel for the real Hermes Agent runtime. Choose a local gateway, attach to a signed-in Hermes Cloud agent tab, or connect to a self-hosted remote API/dashboard. Local and remote API connections can use the models, tools, skills, sessions, memory, and MCP servers already configured in Hermes; Cloud and dashboard-ticket connections are intentionally Chat-only.
+Hermes Browser Extension is not a browser chatbot. It is a Chrome/Firefox/Edge/Chromium side panel for the real Hermes Agent runtime. Choose a local gateway, attach to a signed-in Hermes Cloud agent tab, or connect to a self-hosted remote API/dashboard. Local and remote API connections can use the models, tools, skills, sessions, memory, and MCP servers already configured in Hermes; Cloud and dashboard-ticket connections are intentionally Chat-only.
 
 - **Bot Mode** brings your Hermes agent roster into the panel: switch agents, edit profiles, and run group chats where several agents reply in one room. **Current group-chat limitation:** page-context delivery is not yet reliable; do not assume group bots can see the active page. Hermes Control is not shown in group chats. Individual bot chats retain their existing page-context and control behavior. Chat-only and remote group turns do not capture page context.
 - **File attachments** show one card per file per message. Open previews the file, Open on computer reveals the original file's containing folder through local Hermes, and Save downloads a copy.
@@ -51,7 +51,7 @@ Screenshots use the Mono theme in Dark mode.
 - Hermes Agent installed and working.
 - For Local or Remote API mode: Hermes Gateway/API server enabled locally or on a reachable remote machine. Hermes Cloud instead requires a signed-in HTTPS agent tab.
 - Node.js 20+.
-- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 116+ baseline). Firefox 142+ is supported via [AMO](https://addons.mozilla.org/en-US/firefox/addon/hermes-browser-extension/), the Mozilla Add-ons listing. `npm run build:firefox` is for local/dev Firefox builds only.
+- Chrome, Edge, Brave, Comet, or another Chromium browser with Side Panel API support (Chrome 116+ baseline). Firefox 142+ is supported via [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/), the Mozilla Add-ons listing. `npm run build:firefox` is for local/dev Firefox builds only.
 
 ## Firefox scope
 
@@ -88,7 +88,7 @@ After code updates, run `npm run build` again and click **Reload** on the Hermes
 
 ### 3. Install in Firefox
 
-1. Open [AMO](https://addons.mozilla.org/en-US/firefox/addon/hermes-browser-extension/) in Firefox.
+1. Open [AMO](https://addons.mozilla.org/firefox/addon/hermes-browser-extension/) in Firefox.
 2. Click **Add to Firefox** and confirm the permission prompt.
 3. The extension opens in the Firefox sidebar (Ctrl+Shift+H).
 
