@@ -134,6 +134,8 @@ async function main() {
   try {
     chrome = spawn(chromeExecutable(), [
       '--headless=new',
+      // A test browser never makes noise. A page with a video stays silent.
+      '--mute-audio',
       '--no-sandbox',
       '--disable-gpu',
       '--no-first-run',

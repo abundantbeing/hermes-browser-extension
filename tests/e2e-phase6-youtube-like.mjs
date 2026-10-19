@@ -44,6 +44,8 @@ async function main() {
     const extensionId = unpackedExtensionId(DIST);
     chrome = spawn(chromeExecutable(), [
       '--headless=new',
+      // This check opens a real YouTube video. It must never be audible.
+      '--mute-audio',
       '--no-sandbox',
       '--disable-gpu',
       '--no-first-run',

@@ -352,6 +352,14 @@ function axValue(value) {
   return value;
 }
 
+// A tab's real UI is often inside a child frame: YouTube's live chat is a
+// separate `live_chat` frame, and a paywall or an embedded app is another.
+// `Accessibility.getFullAXTree` without a frameId only ever describes the main
+// frame, so that content is invisible to the agent: no ref, no way to type.
+// These bounds keep one frame from flooding the snapshot.
+const MAX_SNAPSHOT_FRAMES = 8;
+const MAX_FRAME_NODES = 400;
+
 function axProperty(properties = [], name = '') {
   const found = properties.find((property) => property?.name === name);
   return found ? axValue(found.value) : undefined;
@@ -410,8 +418,10 @@ function fieldValueNodeIds(rawNodes = []) {
   return hidden;
 }
 
-function chromiumSnapshot(tree = {}, tab = {}, { full = false } = {}) {
-  const rawNodes = Array.isArray(tree.nodes) ? tree.nodes : [];
+function chromiumSnapshot(trees, tab = {}, { full = false } = {}) {
+  const segments = Array.isArray(trees) ? trees : [{ frameId: '', tree: trees }];
+  const first = segments[0]?.tree || {};
+  const rawNodes = Array.isArray(first.nodes) ? first.nodes : [];
   const valueNodeIds = fieldValueNodeIds(rawNodes);
   const textLimit = full ? FULL_TEXT_LIMIT : COMPACT_TEXT_LIMIT;
   const nodes = [];
@@ -419,37 +429,51 @@ function chromiumSnapshot(tree = {}, tab = {}, { full = false } = {}) {
   const landmarks = [];
   const text = [];
   let textLength = 0;
-  for (const node of rawNodes) {
-    if (!node || node.ignored === true) continue;
-    const role = compact(axValue(node.role), 80).toLowerCase();
-    const name = compact(axValue(node.name), 500);
-    const properties = Array.isArray(node.properties) ? node.properties : [];
-    if (name && ['statictext', 'heading', 'paragraph'].includes(role)
-      && !valueNodeIds.has(String(node.nodeId))
-      && text[text.length - 1] !== name && textLength < textLimit) {
-      text.push(name);
-      textLength += name.length + 1;
+  let elementCount = 0;
+  // Nodes from a child frame are ref'd and acted on like any other, but they
+  // are capped so one heavy frame (a live chat with a thousand messages)
+  // cannot crowd out the page the agent is actually looking at.
+  for (const segment of segments) {
+    const frameId = compact(segment?.frameId || '', 160);
+    const segmentNodes = Array.isArray(segment?.tree?.nodes) ? segment.tree.nodes : [];
+    const segmentValueNodeIds = segment === segments[0] ? valueNodeIds : fieldValueNodeIds(segmentNodes);
+    let keptInFrame = 0;
+    for (const node of segmentNodes) {
+      if (!node || node.ignored === true) continue;
+      const role = compact(axValue(node.role), 80).toLowerCase();
+      const name = compact(axValue(node.name), 500);
+      const properties = Array.isArray(node.properties) ? node.properties : [];
+      if (name && ['statictext', 'heading', 'paragraph'].includes(role)
+        && !segmentValueNodeIds.has(String(node.nodeId))
+        && text[text.length - 1] !== name && textLength < textLimit) {
+        text.push(name);
+        textLength += name.length + 1;
+      }
+      if (name && role === 'heading' && headings.length < MAX_SNAPSHOT_HEADINGS) {
+        const level = Number(axProperty(properties, 'level'));
+        headings.push({ level: Number.isInteger(level) && level >= 1 && level <= 6 ? level : 2, name: name.slice(0, 200) });
+      }
+      if (name && LANDMARK_AX_ROLES.has(role) && landmarks.length < MAX_SNAPSHOT_LANDMARKS) {
+        landmarks.push({ role, name: name.slice(0, 200) });
+      }
+      const backendDOMNodeId = Number(node.backendDOMNodeId);
+      if (!ACTIONABLE_AX_ROLES.has(role) || !Number.isInteger(backendDOMNodeId) || backendDOMNodeId <= 0) continue;
+      elementCount += 1;
+      // Compact view drops unlabeled images but keeps every input, so an unnamed
+      // password field still gets a ref and the sensitive treatment.
+      if (!full && !name && IMAGE_AX_ROLES.has(role)) continue;
+      if (frameId && keptInFrame >= MAX_FRAME_NODES) continue;
+      keptInFrame += 1;
+      const autocomplete = compact(axProperty(properties, 'autocomplete'), 120);
+      nodes.push({
+        role,
+        name,
+        backendDOMNodeId,
+        ...(autocomplete ? { autocomplete } : {}),
+        ...(frameId ? { frameId } : {}),
+        ...axStateFlags(node, properties, role),
+      });
     }
-    if (name && role === 'heading' && headings.length < MAX_SNAPSHOT_HEADINGS) {
-      const level = Number(axProperty(properties, 'level'));
-      headings.push({ level: Number.isInteger(level) && level >= 1 && level <= 6 ? level : 2, name: name.slice(0, 200) });
-    }
-    if (name && LANDMARK_AX_ROLES.has(role) && landmarks.length < MAX_SNAPSHOT_LANDMARKS) {
-      landmarks.push({ role, name: name.slice(0, 200) });
-    }
-    const backendDOMNodeId = Number(node.backendDOMNodeId);
-    if (!ACTIONABLE_AX_ROLES.has(role) || !Number.isInteger(backendDOMNodeId) || backendDOMNodeId <= 0) continue;
-    // Compact view drops unlabeled images but keeps every input, so an unnamed
-    // password field still gets a ref and the sensitive treatment.
-    if (!full && !name && IMAGE_AX_ROLES.has(role)) continue;
-    const autocomplete = compact(axProperty(properties, 'autocomplete'), 120);
-    nodes.push({
-      role,
-      name,
-      backendDOMNodeId,
-      ...(autocomplete ? { autocomplete } : {}),
-      ...axStateFlags(node, properties, role),
-    });
   }
   return {
     title: compact(tab.title, 500),
@@ -458,6 +482,7 @@ function chromiumSnapshot(tree = {}, tab = {}, { full = false } = {}) {
     nodes,
     headings,
     landmarks,
+    element_count: elementCount,
     full,
   };
 }
@@ -979,6 +1004,54 @@ function createChromiumCdpAdapter({
 
   const { watchLoad, waitForLoad } = createLoadWaiter({ browserApi, now, sleep, subscribe: subscribeTab });
 
+  // Child frames of the main frame, in tree order. The main frame itself is
+  // excluded: it is always described first, without a frameId.
+  async function childFrames(send) {
+    try {
+      const tree = await send('Page.getFrameTree');
+      const frames = [];
+      const walk = (node) => {
+        for (const child of node?.childFrames || []) {
+          frames.push(child.frame);
+          walk(child);
+        }
+      };
+      walk(tree?.frameTree);
+      return frames
+        .filter((frame) => frame?.id)
+        // A browser or extension frame is never part of the page the person is
+        // looking at. A frame with no URL yet is not excluded on that basis.
+        .filter((frame) => {
+          const url = String(frame.url || '');
+          return !url || /^https?:/i.test(url);
+        })
+        .slice(0, MAX_SNAPSHOT_FRAMES);
+    } catch {
+      // A tab that cannot report its frame tree still describes its main frame.
+      return [];
+    }
+  }
+
+  // The AX tree of every frame in the tab, main frame first. Each entry keeps
+  // the frame it came from so its nodes can be ref'd and acted on.
+  async function collectAxTrees(send) {
+    // The frame tree comes first: it says which frames exist, so the main
+    // frame is described before any child frame is looked up.
+    const children = await childFrames(send);
+    const trees = [{ frameId: '', tree: await send('Accessibility.getFullAXTree') }];
+    for (const [index, frame] of children.entries()) {
+      try {
+        const tree = await send('Accessibility.getFullAXTree', { frameId: frame.id });
+        const nodes = Array.isArray(tree?.nodes) ? tree.nodes : [];
+        // An empty or trivial child frame (an ad slot, a tracker) adds nothing.
+        if (nodes.length > 1) trees.push({ frameId: String(index + 1), tree });
+      } catch {
+        // A frame that vanished or is out of process is simply left out.
+      }
+    }
+    return trees;
+  }
+
   async function nodeCenter(send, backendNodeId) {
     await send('DOM.scrollIntoViewIfNeeded', { backendNodeId });
     return quadCenter(await send('DOM.getBoxModel', { backendNodeId }));
@@ -1197,10 +1270,11 @@ function createChromiumCdpAdapter({
       const { send, enable } = session;
       if (action === 'browser_snapshot') {
         await enable('Accessibility');
-        const tree = await send('Accessibility.getFullAXTree');
+        await enable('Page');
+        const trees = await collectAxTrees(send);
         const tab = await browserApi.tabs.get(session.tabId);
         assertNotAborted(signal);
-        return chromiumSnapshot(tree, tab, { full: args.full === true });
+        return chromiumSnapshot(trees, tab, { full: args.full === true });
       }
       if (action === 'browser_click') {
         let point;
