@@ -4420,6 +4420,10 @@ test('REST sessions are created under a source the gateway runs turns on', async
   assert.equal(restSessionCreateSource('api_server'), 'api_server');
   assert.equal(restSessionCreateSource(' Bot_Room '), 'bot_room');
   assert.equal(common.REST_TURN_SOURCES, REST_TURN_SOURCES);
+  // The id, not the stored source, marks them as the Browser's (side panel and Hermes Assist).
+  assert.equal(common.isHermesBrowserOwnedSession({ id: 'hermes-browser-extension-20261019-abc123', source: 'api_server' }), true);
+  assert.equal(common.isHermesBrowserOwnedSession({ id: 'hermes-assist-mf3k2-0123456789ab', source: 'api_server' }), true);
+  assert.equal(common.isHermesBrowserOwnedSession({ id: 'telegram-42', source: 'api_server' }), false);
   // Every side panel REST create uses it (first send, new chat, Hermes Assist).
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const creates = sidepanel.split("apiFetch('/api/sessions', {").slice(1).map((rest) => rest.slice(0, 400))
