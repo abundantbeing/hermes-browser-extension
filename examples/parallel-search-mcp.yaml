@@ -1,0 +1,9 @@
+# Merge this server into the connected Hermes profile's config.yaml.
+# Keep existing mcp_servers entries and other settings.
+mcp_servers:
+  parallel-search:
+    url: "https://search.parallel.ai/mcp"
+    headers:
+      User-Agent: "hermes-browser-extension/parallel-search-mcp"
+    tools:
+      include: [web_search, web_fetch]
