@@ -27,6 +27,7 @@ import {
 import { CONTEXT_CONSENT_STORAGE_KEY } from './lib/context-consent.mjs';
 import { gateInlineDraftRequestContext } from './lib/inline-draft-consent.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
+import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
   assertAssistModelSelectionAcknowledged,
@@ -167,7 +168,6 @@ const INLINE_DRAFT_STORAGE_KEY = 'hermesBrowserInlineDraftRequest';
 const INLINE_SESSION_STATE_KEY = 'hermesBrowserInlineSessionState';
 const OPEN_SESSION_STORAGE_KEY = 'hermesBrowserOpenSessionRequest';
 const INLINE_DRAFT_TTL_MS = 5 * 60 * 1000;
-const HERMES_ASSIST_SOURCE = 'hermes_browser';
 
 const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
   WAKE_MESSAGES.claimTurn,
@@ -297,7 +297,8 @@ async function runInlineDraftInServiceWorker(request, sender, tabId) {
           body: JSON.stringify({
             id: sessionId,
             title: sessionTitle,
-            source: HERMES_ASSIST_SOURCE,
+            // Hermes runs API-server turns only on api_server/bot_room sessions.
+            source: restSessionCreateSource(),
             ...attemptRouteRequest,
           }),
         });

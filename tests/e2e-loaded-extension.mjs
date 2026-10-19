@@ -2820,7 +2820,7 @@ async function main() {
     const afterBackground = await setup.evaluate(`chrome.storage.local.get('hermesBrowserSettings')`);
     assert.equal(afterBackground.hermesBrowserSettings.sessionId, panelSessionIdAfterReadability);
     await saveScreenshot(fixture, INLINE_RESULT_SCREENSHOT, { captureBeyondViewport: false });
-    const retainedAssistCreate = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser').at(-1);
+    const retainedAssistCreate = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server').at(-1);
     const retainedAssistSessionId = retainedAssistCreate?.body?.id || retainedAssistCreate?.body?.session_id || '';
     assert.match(retainedAssistSessionId, /^hermes-assist-/);
     await assistClick(fixture, '.result-actions button:last-child');
@@ -2927,7 +2927,7 @@ async function main() {
     const smartRequest = mock.getChatRequest();
     assert.match(String(smartRequest?.message || ''), /Draft the text that belongs in the focused field/);
     assert.match(String(smartRequest?.message || ''), /"page_context":"[^"]+/);
-    const assistCreates = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
+    const assistCreates = mock.requests.filter((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server');
     assert.ok(assistCreates.length >= 2);
     assert.equal(new Set(assistCreates.map((request) => request.body.title)).size, assistCreates.length);
     for (const request of assistCreates) {
@@ -3148,7 +3148,7 @@ async function main() {
     await startAssistImprove(fixture, { text: 'Route this draft with the newly selected model.', closeFirst: true });
     const switchedAssistRequests = await waitFor(() => {
       const recent = mock.requests.slice(switchedAssistRequestStart);
-      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
+      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server');
       const chat = recent.find((request) => request.method === 'POST' && /^\/api\/sessions\/[^/]+\/chat$/.test(request.path));
       return create && chat ? { create, chat } : null;
     });
@@ -3240,7 +3240,7 @@ async function main() {
     await startAssistImprove(fixture, { text: 'Draft through an unmodified released Hermes gateway.' });
     const releasedGatewayState = await waitFor(async () => {
       const recent = mock.requests.slice(releasedGatewayRequestStart);
-      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'hermes_browser');
+      const create = recent.find((request) => request.method === 'POST' && request.path === '/api/sessions' && request.body?.source === 'api_server');
       const chat = recent.find((request) => request.method === 'POST' && /\/chat$/.test(request.path));
       const state = await assistEvaluate(fixture, `__assistRoot?.querySelector('.context span:last-child')?.textContent || ''`);
       return create && chat && state === 'COMPLETE' ? { create, chat } : null;
@@ -3253,7 +3253,7 @@ async function main() {
       assert.equal(Object.hasOwn(request, 'reasoning_effort'), false);
       assert.equal(Object.hasOwn(request, 'fast'), false);
     }
-    assert.equal(releasedGatewayState.create.body.source, 'hermes_browser');
+    assert.equal(releasedGatewayState.create.body.source, 'api_server');
     assert.match(releasedGatewayState.chat.body.message, /Draft through an unmodified released Hermes gateway/);
 
     await panel.call('Page.reload', { ignoreCache: true });

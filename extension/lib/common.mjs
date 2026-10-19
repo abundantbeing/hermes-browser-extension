@@ -16,6 +16,8 @@ import { hermesContextForModel, HERMES_DEFAULT_FALLBACK_CONTEXT } from './hermes
 import { contextFromHermesRegistry } from './hermes-context-sync.mjs';
 import { shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams } from './bot-browser-bridge.mjs';
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
+import { REST_TURN_SOURCES } from './session-materialization.mjs';
+import { isSidePanelSessionId } from './session-ownership.mjs';
 export { redactSensitiveText, shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams, formatGroupTurnWithBrowserContext };
 
 export const GATEWAY_MODES = Object.freeze([
@@ -245,10 +247,9 @@ export function messageDisplayText(role = '', content = '') {
   return current;
 }
 
-// Gateways from Oct 2026 admit a REST/SSE turn only for sessions stored as
-// api_server or bot_room; any other stored source answers permission_denied.
-// Older gateways accept every source, so repairing is always safe to attempt.
-export const REST_TURN_SOURCES = Object.freeze(['api_server', 'bot_room']);
+// REST_TURN_SOURCES lives with the other API server session rules. Repairing a
+// stored source is always safe to attempt: older gateways accept every source.
+export { REST_TURN_SOURCES };
 
 export function restTurnSourceRepair(session = {}) {
   const row = session?.session && typeof session.session === 'object' ? session.session : session;
@@ -258,11 +259,8 @@ export function restTurnSourceRepair(session = {}) {
 }
 
 export function isHermesBrowserOwnedSession(session = {}) {
-  const sessionId = String(session?.id || '').trim().toLowerCase();
   const source = String(session?.source || '').trim().toLowerCase();
-  return source === DEFAULT_SETTINGS.sessionSource
-    || sessionId === DEFAULT_SETTINGS.sessionId
-    || sessionId.startsWith(`${DEFAULT_SETTINGS.sessionId}-`);
+  return source === DEFAULT_SETTINGS.sessionSource || isSidePanelSessionId(session?.id);
 }
 
 export function requiresForeignSessionConfirmation(session = {}, approvedSessionIds = []) {
