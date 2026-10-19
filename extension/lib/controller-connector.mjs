@@ -29,6 +29,7 @@ import {
   mintWsTicket,
 } from './dashboard-bridge.mjs';
 import { CONNECTION_TRANSPORTS } from './connection-modes.mjs';
+import { restSessionCreateSource } from './session-materialization.mjs';
 
 const API_TRANSPORTS = new Set([
   CONNECTION_TRANSPORTS.LOCAL_API,
@@ -221,7 +222,7 @@ export function createControllerConnector({
           baseUrl,
           sessionId: String(identity.hermesSessionId).trim(),
           title: String(settings?.sessionTitle || 'Hermes Browser Extension'),
-          source: String(settings?.sessionSource || 'hermes_browser'),
+          source: restSessionCreateSource(settings?.sessionSource),
           headers: apiHeaders(settings),
           signal: controller.signal,
         });

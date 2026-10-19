@@ -11,6 +11,20 @@
 // and do not mark the connection unreachable.
 
 export const CORS_ORIGINS_SETTING = 'API_SERVER_CORS_ORIGINS';
+
+// Gateways from Oct 2026 admit a REST/SSE turn only for sessions stored as
+// api_server or bot_room; any other stored source answers permission_denied.
+// Older gateways accept every source.
+export const REST_TURN_SOURCES = Object.freeze(['api_server', 'bot_room']);
+
+// The source to store when creating a session over the API server. Those same
+// gateways also refuse to relabel a session afterwards, so one created under the
+// Browser's own label (hermes_browser) could never take a turn. The Browser still
+// recognises its own sessions by their id prefix (isHermesBrowserOwnedSession).
+export function restSessionCreateSource(source = '') {
+  const value = String(source || '').trim().toLowerCase();
+  return REST_TURN_SOURCES.includes(value) ? value : 'api_server';
+}
 const FALLBACK_EXTENSION_ORIGIN = 'chrome-extension://<extension-id>';
 
 function defaultReadText(response) {
