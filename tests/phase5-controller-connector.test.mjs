@@ -296,7 +296,8 @@ test('local API connector materializes a ghost session on browser_control_sessio
     if (url.endsWith('/api/sessions')) {
       const body = JSON.parse(options.body);
       assert.equal(body.id, 'stored-session-fixture');
-      assert.equal(body.source, 'hermes_browser');
+      // Created under a label the gateway runs REST turns on, not hermes_browser.
+      assert.equal(body.source, 'api_server');
       return jsonResponse(201, { session: { id: body.id } });
     }
     throw new Error(`Unexpected request: ${url}`);

@@ -4408,6 +4408,27 @@ test('Connected agent section copy clarifies the scan is remote-dashboard-inappl
   assert.match(html, /Remote[\s\S]*?dashboard mode Dashboard Attach connects over the dashboard[\s\S]*?WebSocket/i);
 });
 
+test('REST sessions are created under a source the gateway runs turns on', async () => {
+  const { restSessionCreateSource, REST_TURN_SOURCES } = await import('../extension/lib/session-materialization.mjs');
+  const common = await import('../extension/lib/common.mjs');
+  // Since Oct 2026 Hermes refuses every REST turn on a session stored as hermes_browser
+  // and refuses to relabel it, so the side panel must never create one.
+  assert.equal(restSessionCreateSource('hermes_browser'), 'api_server');
+  assert.equal(restSessionCreateSource('desktop'), 'api_server');
+  assert.equal(restSessionCreateSource(''), 'api_server');
+  assert.equal(restSessionCreateSource(undefined), 'api_server');
+  assert.equal(restSessionCreateSource('api_server'), 'api_server');
+  assert.equal(restSessionCreateSource(' Bot_Room '), 'bot_room');
+  assert.equal(common.REST_TURN_SOURCES, REST_TURN_SOURCES);
+  // Every side panel REST create uses it (first send, new chat, Hermes Assist).
+  const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const creates = sidepanel.split("apiFetch('/api/sessions', {").slice(1).map((rest) => rest.slice(0, 400))
+    .filter((body) => !body.includes("source: 'hermes_browser_bg'")); // /bg dispatch: never takes a turn here
+  assert.equal(creates.length, 2);
+  for (const body of creates) assert.match(body, /source: restSessionCreateSource\(settings\.sessionSource\)/);
+  assert.match(sidepanel, /createBody: \(\) => \(\{[^}]*source: restSessionCreateSource\(settings\.sessionSource\)/);
+});
+
 test('restTurnSourceRepair relabels sessions the gateway would refuse to run a REST turn on', async () => {
   const { restTurnSourceRepair } = await import('../extension/lib/common.mjs');
   assert.deepEqual(restTurnSourceRepair({ id: 'a', source: 'hermes_browser' }), { source: 'api_server' });

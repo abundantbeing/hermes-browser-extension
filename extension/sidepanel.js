@@ -261,7 +261,7 @@ import { sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMes
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
 import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAGE_LIMIT } from './lib/session-paging.mjs';
-import { materializeSessionRoute, sessionRouteError } from './lib/session-materialization.mjs';
+import { materializeSessionRoute, restSessionCreateSource, sessionRouteError } from './lib/session-materialization.mjs';
 import { createUserFileAttachment, createPageContextAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
 import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArtifactDownloadSource, resolveArtifactFileSource } from './lib/media-source.mjs';
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
@@ -17297,7 +17297,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
       id: sessionId,
       title,
       hidden,
-      source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
+      source: restSessionCreateSource(settings.sessionSource),
       model: requestModel,
       provider: requestProvider || undefined,
       model_options: buildHermesModelOptions(preferredOptions),
@@ -21389,7 +21389,7 @@ async function ensureHermesSession() {
     createBody: () => ({
       id: settings.sessionId,
       title: settings.sessionTitle,
-      source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
+      source: restSessionCreateSource(settings.sessionSource),
       model: currentModelRequestId(),
       provider: currentModelProviderSlug() || undefined,
       system_prompt: currentHermesBrowserSystemPrompt(),
@@ -23478,7 +23478,7 @@ async function createInlineBackgroundSession(request) {
     body: JSON.stringify({
       id,
       title,
-      source: settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
+      source: restSessionCreateSource(settings.sessionSource),
       model: currentModelRequestId(),
       provider: currentModelProviderSlug() || undefined,
       model_options: currentModelOptionsPayload(),

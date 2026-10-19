@@ -142,7 +142,7 @@ test('background queues sender-bound requests, exposes session status, and regis
   assert.match(source, /sender\?\.tab\?\.id/);
   assert.match(source, /runInlineDraftInServiceWorker/);
   assert.match(source, /\[INLINE_DRAFT_ROUTES\.BACKGROUND, INLINE_DRAFT_ROUTES\.NEW\]\.includes\(request\.route\)/);
-  assert.match(source, /source: HERMES_ASSIST_SOURCE/);
+  assert.match(source, /source: restSessionCreateSource\(\)/);
   assert.match(source, /buildAssistModelRouteRequest/);
   assert.match(source, /normalizeGatewayCapabilities/);
   assert.match(source, /\/v1\/capabilities/);
