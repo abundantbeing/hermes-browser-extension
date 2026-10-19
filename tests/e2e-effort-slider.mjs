@@ -348,6 +348,8 @@ async function dispatchKey(client, type, key, code, windowsVirtualKeyCode) {
 async function launchExtension({ extensionId }) {
   const chrome = spawn(chromeExecutable(), [
     '--headless=new',
+    // A test browser never makes noise. A page with a video stays silent.
+    '--mute-audio',
     '--no-sandbox',
     '--disable-gpu',
     '--no-first-run',

@@ -305,7 +305,9 @@ const chrome = spawn(CHROME, [
   '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
   '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`,
   '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', `--use-file-for-fake-audio-capture=${wav}`,
-  '--autoplay-policy=no-user-gesture-required', '--disable-features=WebRtcHideLocalIpsWithMdns',
+  // The peer speaks through a WebRTC track. The browser still mutes its own
+  // output so a test never reaches the speakers.
+  '--mute-audio', '--autoplay-policy=no-user-gesture-required', '--disable-features=WebRtcHideLocalIpsWithMdns',
   `chrome-extension://${extensionId(EXT)}/request-permissions.html`,
 ], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
 chrome.stderr.on('data', (chunk) => { chromeErrors = (chromeErrors + chunk.toString()).slice(-16000); });

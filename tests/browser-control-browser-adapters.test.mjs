@@ -62,7 +62,14 @@ function chromiumApis({ failMethod = '' } = {}) {
           return {};
         }
         if (method === 'Page.getLayoutMetrics') return { cssVisualViewport: { clientWidth: 1000, clientHeight: 800 } };
+        if (method === 'Page.getFrameTree') {
+          // A tab with no child frames unless a test says otherwise.
+          return { frameTree: { frame: { id: 'MAIN' } } };
+        }
         if (method === 'Accessibility.getFullAXTree') {
+          // A child frame is described by its own tree. The shared mock has
+          // nothing to say about one, so it stays empty.
+          if (params.frameId) return { nodes: [] };
           return {
             nodes: [
               { nodeId: '1', backendDOMNodeId: 44, role: { value: 'button' }, name: { value: 'Search' }, ignored: false },
@@ -205,6 +212,8 @@ test('Chromium Phase 6 adapter snapshots AX refs through one persistent session 
   assert.deepEqual(calls.map((call) => call[0] === 'command' ? `${call[0]}:${call[2]}` : call[0]), [
     'attach',
     'command:Accessibility.enable',
+    'command:Page.enable',
+    'command:Page.getFrameTree',
     'command:Accessibility.getFullAXTree',
   ]);
   assert.equal(await adapter.releaseTab(7), true);
@@ -212,6 +221,48 @@ test('Chromium Phase 6 adapter snapshots AX refs through one persistent session 
   // Chrome refuses to detach a tab that is not attached, which is what makes releasing an unattached tab a no-op.
   api.debugger.detach = async () => { throw new Error('Debugger is not attached to the tab with id: 7.'); };
   assert.equal(await adapter.releaseTab(7), false, 'releasing an unattached tab is a no-op');
+});
+
+test('Chromium snapshot includes a child frame so framed UI is reachable, and skips a frame that cannot be read', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls, handlers } = chromiumApis();
+  // A live chat is its own frame: the main frame never holds the composer.
+  handlers['Page.getFrameTree'] = () => ({
+    frameTree: {
+      frame: { id: 'MAIN' },
+      childFrames: [{ frame: { id: 'CHAT' } }, { frame: { id: 'DEAD' } }],
+    },
+  });
+  handlers['Accessibility.getFullAXTree'] = (params) => {
+    if (params?.frameId === 'CHAT') {
+      return {
+        nodes: [
+          { nodeId: '1', backendDOMNodeId: 46, role: { value: 'textbox' }, name: { value: 'Chat message' }, properties: [{ name: 'editable', value: { value: 'plaintext' } }], ignored: false },
+          { nodeId: '2', role: { value: 'StaticText' }, name: { value: 'Live chat text' }, ignored: false },
+        ],
+      };
+    }
+    if (params?.frameId === 'DEAD') throw new Error('Session with given id not found');
+    return {
+      nodes: [
+        { nodeId: '1', backendDOMNodeId: 44, role: { value: 'button' }, name: { value: 'Search' }, ignored: false },
+        { nodeId: '2', role: { value: 'StaticText' }, name: { value: 'Public page text' }, ignored: false },
+      ],
+    };
+  };
+
+  const adapter = createChromiumCdpAdapter({ browserApi: api });
+  const snapshot = await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.match(snapshot.text, /Public page text/);
+  assert.match(snapshot.text, /Live chat text/, 'the child frame text reaches the page view');
+  assert.deepEqual(snapshot.nodes.map((node) => [node.role, node.name, node.backendDOMNodeId, node.frameId || '']), [
+    ['button', 'Search', 44, ''],
+    ['textbox', 'Chat message', 46, '1'],
+  ], 'a child-frame node is ref-able and keeps the frame it came from');
+  const axCalls = calls.filter((call) => call[0] === 'command' && call[2] === 'Accessibility.getFullAXTree');
+  assert.deepEqual(axCalls.map((call) => call[3]?.frameId || ''), ['', 'CHAT', 'DEAD'],
+    'the main frame and every child frame are described, and an unreadable frame does not fail the snapshot');
 });
 
 test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigation, back, and screenshot sequences on one attach', async () => {
@@ -316,7 +367,11 @@ test('Chromium adapter does not idle-detach while a command is still running', a
   await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
   const firstIdleTimer = timers.at(-1);
   let finish;
-  chromium.handlers['Accessibility.getFullAXTree'] = () => new Promise((resolve) => { finish = resolve; });
+  chromium.handlers['Accessibility.getFullAXTree'] = (params) => (
+    params?.frameId
+      ? { nodes: [{ nodeId: '1', role: { value: 'StaticText' }, name: { value: 'Frame page text' }, ignored: false }] }
+      : new Promise((resolve) => { finish = resolve; })
+  );
   const pending = adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
   await new Promise((resolve) => setTimeout(resolve, 0));
   const before = timers.length;

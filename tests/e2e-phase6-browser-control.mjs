@@ -489,6 +489,9 @@ async function main() {
     const extensionId = unpackedExtensionId(DIST);
     chrome = spawn(chromeExecutable(), [
       '--headless=new',
+      // A test browser never makes noise. Audio is muted and media is not
+      // allowed to start on its own, so a page with a video stays silent.
+      '--mute-audio',
       '--no-sandbox',
       '--disable-gpu',
       '--no-first-run',
