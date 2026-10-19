@@ -96,6 +96,7 @@ test('Phase 6 visible state is derived from worker authority and exposes no argu
     canPause: false,
     canStop: false,
     canDetach: false,
+    attention: false,
   });
   const active = browserControlView({
     settings: { browserControlEnabled: true },
@@ -282,6 +283,44 @@ test('reconnecting state explains the last controller failure with actionable re
     status: { connected: false, lastConnectFailure: { reason: 'connect_failed', detail: 'Network unreachable.' } },
   });
   assert.match(network.detail, /Network unreachable/);
+});
+
+test('the status light is on only while Hermes can act on the attached tab, and the person is asked to act only when needed', async () => {
+  const { browserControlView, browserControlLightState } = await uiModule();
+  const enabled = { browserControlEnabled: true };
+  const tab = { id: 10, url: 'https://example.test/' };
+  const leased = { connected: true, controlEnabled: true, leasedTabIds: [10] };
+  const ready = { availability: 'available', tabId: 10, leaseOwned: true };
+  const cases = [
+    ['turned off', browserControlView({ settings: { browserControlEnabled: false }, status: {} }), 'off', false],
+    ['reconnecting', browserControlView({ settings: enabled, status: { connected: false }, activeTab: tab }), 'off', false],
+    ['reconnecting, no session', browserControlView({ settings: enabled, status: { connected: false, lastConnectFailure: { reason: 'missing_session' } }, activeTab: tab }), 'off', true],
+    ['debugger access unavailable', browserControlView({ settings: enabled, status: { connected: true, controlEnabled: false }, activeTab: tab }), 'off', true],
+    ['page cannot be controlled', browserControlView({ settings: enabled, status: { ...leased, leasedTabIds: [] }, activeTab: { id: 11, url: 'chrome://newtab/' } }), 'off', true],
+    ['this tab not attached', browserControlView({ settings: enabled, status: { ...leased, leasedTabIds: [] }, activeTab: tab }), 'off', true],
+    ['preparing', browserControlView({ settings: enabled, status: leased, activeTab: tab, currentTarget: {} }), 'off', false],
+    ['paused', browserControlView({ settings: enabled, status: { ...leased, paused: true }, activeTab: tab, currentTarget: ready }), 'off', false],
+    ['approval waiting', browserControlView({ settings: enabled, status: { ...leased, pendingApproval: { approvalId: 'a1', reason: 'Press Enter to submit?' } }, activeTab: tab }), 'on', true],
+    ['working', browserControlView({ settings: enabled, status: { ...leased, activeAction: { action: 'browser_click', tabId: 10 }, pendingCommands: 1 }, activeTab: tab }), 'on', false],
+    ['ready', browserControlView({ settings: enabled, status: leased, activeTab: tab, currentTarget: ready }), 'on', false],
+  ];
+  for (const [name, view, light, attention] of cases) {
+    assert.equal(browserControlLightState(view), light, `${name}: light`);
+    assert.equal(view.attention, attention, `${name}: attention`);
+  }
+  assert.equal(browserControlLightState(undefined), 'off', 'no view is off');
+  // A pause wins over a waiting approval: the view reads "approval", but the controller is blocked, so the light is off.
+  const pausedApproval = browserControlView({ settings: enabled, status: { ...leased, paused: true, pendingApproval: { approvalId: 'a1', reason: 'Press Enter to submit?' } }, activeTab: tab });
+  assert.equal(pausedApproval.state, 'approval');
+  assert.equal(browserControlLightState(pausedApproval, { paused: true }), 'off', 'paused with an approval waiting: light');
+});
+
+test('the status line is the title and detail as one sentence pair, without doubled punctuation', async () => {
+  const { browserControlStatusLine } = await uiModule();
+  assert.equal(browserControlStatusLine({ title: 'This tab is ready', detail: 'This exact tab is leased.' }), 'This tab is ready. This exact tab is leased.');
+  assert.equal(browserControlStatusLine({ title: 'Approval needed.', detail: 'Press Enter?' }), 'Approval needed. Press Enter?');
+  assert.equal(browserControlStatusLine({ title: '', detail: 'Only the detail.' }), 'Only the detail.');
+  assert.equal(browserControlStatusLine({ title: 'Only the title', detail: '  ' }), 'Only the title');
 });
 
 test('browser control strip typography scales with the Hermes text zoom setting', () => {

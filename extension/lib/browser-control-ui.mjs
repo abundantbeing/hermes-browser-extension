@@ -110,8 +110,29 @@ function baseView(overrides = {}) {
     canPause: false,
     canStop: false,
     canDetach: false,
+    // True only when the person must act (approve, attach, authorize, or fix a blocker).
+    attention: false,
     ...overrides,
   };
+}
+
+// The status light is on only while Hermes can act on the attached tab now: ready,
+// working, or waiting for an approval that would let it act. Every other state is off.
+// A pause blocks new actions, so the light is off while paused even if an approval waits.
+const LIGHT_ON_STATES = new Set(['ready', 'active', 'approval']);
+
+export function browserControlLightState(view = {}, { paused = false } = {}) {
+  if (paused === true) return 'off';
+  return LIGHT_ON_STATES.has(String(view?.state || '')) ? 'on' : 'off';
+}
+
+// One line for the status light's tooltip and accessible name: the title, then the detail.
+export function browserControlStatusLine({ title = '', detail = '' } = {}) {
+  const head = String(title || '').trim();
+  const body = String(detail || '').trim();
+  if (!head) return body;
+  if (!body) return head;
+  return /[.!?。！？…]$/.test(head) ? `${head} ${body}` : `${head}. ${body}`;
 }
 
 export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null } = {}) {
@@ -145,6 +166,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       canEnable: false,
       canDetach: true,
       canAuthorize,
+      attention: canAuthorize || failure?.reason === 'missing_session',
     });
   }
   if (status?.controlEnabled !== true) {
@@ -155,6 +177,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       detail: 'Chromium debugger access is not available for this browser profile, so Hermes cannot operate tabs.',
       canEnable: false,
       canDetach: true,
+      attention: true,
     });
   }
   const pendingApproval = status?.pendingApproval;
@@ -168,6 +191,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       canPause: true,
       canStop: true,
       canDetach: true,
+      attention: true,
     });
   }
   if (status?.paused === true) {
@@ -210,6 +234,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       detail: 'Open a normal HTTP or HTTPS page before attaching Hermes Control.',
       canEnable: false,
       canDetach: true,
+      attention: true,
     });
   }
   if (!leasedTabIds.includes(activeTabId)) {
@@ -223,6 +248,7 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       canEnable: false,
       canAttach: true,
       canDetach: true,
+      attention: true,
     });
   }
   if (currentTarget?.availability !== 'available'

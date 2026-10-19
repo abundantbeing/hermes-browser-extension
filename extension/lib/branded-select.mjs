@@ -19,6 +19,8 @@ export function mountBrandedSelect(select, { previewFont, language = false } = {
   // every such select shares "Button" and "List" and aria-controls is ambiguous.
   const baseId = select.id || `brandedSelect${anonymousSelectCount += 1}`;
   button.id = `${baseId}Button`;
+  // Opt-in help belongs to the visible picker too; the native select is hidden behind it.
+  if (select.dataset.controlHelp) button.dataset.controlHelp = select.dataset.controlHelp;
   button.setAttribute('aria-haspopup', 'listbox');
   button.setAttribute('aria-expanded', 'false');
   const list = document.createElement('div');

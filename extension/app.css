@@ -450,14 +450,14 @@ html[data-hermes-theme^="custom:"] [tabindex]:focus-visible {
 .web-message-content h3,
 .web-message-content h4 { font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1)); }
 html[data-hermes-font-profile="signature"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
-  font-family: "Rules Gothic Compressed", "Collapse", sans-serif;
+  font-family: var(--hermes-font-display);
   font-weight: 500;
   letter-spacing: 0.02em;
   line-height: 0.92;
   text-transform: none;
 }
 html[data-hermes-font-profile="cinzel"] .web-message-content :is(h1, h2, h3, h4, h5, h6) {
-  font-family: "HermesDisplay", "Sigurd", Georgia, serif;
+  font-family: var(--hermes-font-display);
   letter-spacing: 0.01em;
   line-height: 1.15;
 }

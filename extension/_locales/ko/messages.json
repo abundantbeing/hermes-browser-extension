@@ -931,9 +931,21 @@
     "message": "Hermes 컨트롤을 켜기 전에 Hermes 세션을 시작하거나 선택하세요.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "선택한 범위를 Hermes가 제어할 수 있는 탭에 적용합니다.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "대기 중인 이 브라우저 동작을 한 번 허용합니다. Hermes는 다음 동작에서 다시 묻습니다.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "이전에 연결된 탭을 대체하고 Hermes가 이 탭을 제어하도록 허용합니다.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "이 브라우저가 Hermes에서 제어 토큰을 받아 탭을 조작할 수 있게 합니다.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "제어를 일시 중지하거나 끄지 않고 이 패널을 닫습니다.",
@@ -947,13 +959,25 @@
     "message": "Hermes 컨트롤을 끄지 않고 일시 중지합니다. 연결된 탭은 유지됩니다.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "대기 중인 이 브라우저 동작을 한 번 거부합니다. Hermes가 실행하지 않습니다.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "계속 연결되어 있는 탭에서 Hermes 컨트롤을 재개합니다.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Hermes가 조작할 탭을 고르세요. 적용을 눌러 확인합니다.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "아래에서 선택한 탭만 제어합니다. 각 탭을 개별적으로 선택하며, 나머지 탭은 범위에 포함되지 않습니다.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "이 탭을 범위에 포함합니다. 원하는 탭을 고른 뒤 적용을 누르세요.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "아래에서 선택한 탭만 하나의 공유 작업으로 제어합니다. Hermes는 브라우저에서 이 탭들을 그룹화할 수 있습니다. 열려 있는 다른 탭은 포함되지 않습니다.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "준비됨",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "켜짐",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "중지",

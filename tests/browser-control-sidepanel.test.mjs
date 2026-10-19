@@ -149,6 +149,20 @@ test('Hermes Control settings use a readable single-column hierarchy with propor
   assert.match(css, /\.browser-control-card-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/s);
 });
 
+test('Hermes Control shows its status as a light in the title row, after the heading and before the close button', () => {
+  const titlebar = html.indexOf('class="browser-control-titlebar"');
+  const heading = html.indexOf('id="browserControlDialogTitle"');
+  const light = html.indexOf('id="browserControlLight"');
+  const close = html.indexOf('id="browserControlDismissButton"');
+  const strip = html.indexOf('id="browserControlStrip"');
+  assert.ok(titlebar > 0 && heading > titlebar && light > heading && close > light && strip > close);
+  assert.doesNotMatch(html, /THIS TAB IS READY|browser-control-live-indicator/);
+  assert.match(html, /id="browserControlLight"[^>]*tabindex="0"/);
+  assert.match(html, /id="browserControlLight"[^>]*data-control-help="status"/);
+  assert.match(source, /browserControlLightState\(view, \{ paused \}\)/);
+  assert.match(source, /dataset\.attention = String\(view\.attention === true\)/);
+});
+
 test('Phase 6 approval reason remains fully readable in narrow Browser panels', () => {
   assert.match(css, /\.browser-control-strip-copy span\s*\{[^}]*white-space:\s*normal[^}]*overflow-wrap:\s*anywhere/s);
   assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.browser-control-strip\s*\{[^}]*grid-template-columns:\s*32px minmax\(0,\s*1fr\)[^}]*\}[^}]*\.[\s\S]*?grid-column:\s*2/s);

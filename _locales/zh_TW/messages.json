@@ -931,9 +931,21 @@
     "message": "開啟 Hermes 控制前，請先開始或選擇一個 Hermes 工作階段。",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "將所選範圍套用到 Hermes 可以控制的分頁。",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "允許這一項等待中的瀏覽器操作。下一項操作時，Hermes 會再次詢問。",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "允許 Hermes 操作此分頁，取代先前連接的分頁。",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "允許此瀏覽器從 Hermes 取得控制權杖，以便操作分頁。",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "關閉此面板，但不暫停或關閉控制。",
@@ -947,13 +959,25 @@
     "message": "暫停 Hermes 控制但不關閉它。已連接的分頁會保留。",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "拒絕這一項等待中的瀏覽器操作。Hermes 不會執行它。",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "在仍然連接的分頁上恢復 Hermes 控制。",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "選擇 Hermes 可以操作的分頁。按「套用」確認。",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "僅控制你在下方選擇的分頁。每個分頁需個別選取，其他分頁不在控制範圍內。",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "將此分頁加入範圍。選擇需要的分頁，然後按「套用」。",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "僅控制你在下方選擇的分頁，將它們視為一個共享任務。Hermes 可以在瀏覽器中將它們分組。其他已開啟的分頁不包括在內。",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "就緒",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "開啟",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "停止",

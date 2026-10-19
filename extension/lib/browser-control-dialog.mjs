@@ -68,8 +68,16 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
         const option = dialog.ownerDocument.createElement('label');
         option.className = 'browser-control-tab-option';
         if (restricted) option.classList.add('is-restricted');
+        // Each selectable tab explains its checkbox on hover and focus. A restricted row already
+        // says in its own text why it cannot be chosen, so it gets no second explanation.
+        const checkboxHelp = restricted ? '' : translate('browser_control.help_scope_tab');
+        if (checkboxHelp) {
+          option.dataset.controlHelp = 'scope_tab';
+          option.dataset.help = checkboxHelp;
+        }
         const checkbox = dialog.ownerDocument.createElement('input');
         checkbox.type = 'checkbox';
+        if (checkboxHelp) checkbox.setAttribute('aria-description', checkboxHelp);
         checkbox.checked = !restricted && draftTabIds.has(tab.id);
         if (restricted) checkbox.dataset.restricted = 'true';
         checkbox.addEventListener('change', () => {
@@ -130,18 +138,31 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
   // Hover and focus help is for the icon-style buttons only; scope choices read their helper text on screen.
   const tooltip = dialog.querySelector('#browserControlTooltip');
   let helpTarget = null;
+  // aria-describedby is a list of ids. Help adds the tooltip's id to that list and removes only that id,
+  // so a control that also points at a hint (the scope picker) keeps the hint.
+  const setHelpDescription = (button, shown) => {
+    const ids = (button.getAttribute('aria-describedby') || '').split(/\s+/).filter((id) => id && id !== tooltip.id);
+    if (shown) ids.push(tooltip.id);
+    if (ids.length) button.setAttribute('aria-describedby', ids.join(' '));
+    else button.removeAttribute('aria-describedby');
+  };
   const hideHelp = () => {
     if (tooltip?.matches(':popover-open')) tooltip.hidePopover();
-    helpTarget?.removeAttribute('aria-describedby');
+    if (helpTarget) setHelpDescription(helpTarget, false);
     helpTarget = null;
   };
   const showHelp = (button) => {
     if (!tooltip || !dialog.open || !button?.dataset.help) return;
+    if (helpTarget && helpTarget !== button) setHelpDescription(helpTarget, false);
     helpTarget = button;
     tooltip.textContent = button.dataset.help;
     if (!tooltip.matches(':popover-open')) tooltip.showPopover();
-    button.setAttribute('aria-describedby', tooltip.id);
-    const target = button.getBoundingClientRect();
+    // A control named by its help text already says it; describing it with the same text would repeat it.
+    if (!button.hasAttribute('data-help-as-name')) setHelpDescription(button, true);
+    // Anchor option help to the picker, so a lower option's explanation cannot
+    // cover the choices above it while the user moves through the menu.
+    const picker = button.getAttribute('role') === 'option' ? button.closest('.branded-select') : null;
+    const target = (picker || button).getBoundingClientRect();
     const rect = tooltip.getBoundingClientRect();
     const edge = 16;
     const left = Math.max(edge, Math.min(target.left + target.width / 2 - rect.width / 2, window.innerWidth - rect.width - edge));
@@ -216,10 +237,13 @@ export function createBrowserControlDialog({ dialog, launcher, closeButton, focu
       dialog.dataset.state = view.state;
       dialog.dataset.tone = view.tone;
       for (const button of dialog.querySelectorAll('[data-control-help]')) {
-        const text = help[button.dataset.controlHelp] || '';
+        const key = button.dataset.controlHelp;
+        const text = help[key] || (key.startsWith('scope_') ? translate(`browser_control.help_${key}`) : '');
         if (text !== button.dataset.help) {
           button.dataset.help = text;
-          button.setAttribute('aria-description', text);
+          // The status light is named by its help text (the full status), so the text is its name, not a description.
+          if (button.hasAttribute('data-help-as-name')) button.setAttribute('aria-label', text);
+          else button.setAttribute('aria-description', text);
           if (helpTarget === button) showHelp(button);
         }
       }

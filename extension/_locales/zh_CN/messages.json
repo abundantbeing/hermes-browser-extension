@@ -931,9 +931,21 @@
     "message": "开启 Hermes 控制前，请先开始或选择一个 Hermes 会话。",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "将所选范围应用到 Hermes 可以控制的标签页。",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "允许这一项等待中的浏览器操作。下一项操作时，Hermes 会再次询问。",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "允许 Hermes 操作此标签页，替换此前连接的标签页。",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "允许此浏览器从 Hermes 获取控制令牌，以便操作标签页。",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "关闭此面板，但不暂停或关闭控制。",
@@ -947,13 +959,25 @@
     "message": "暂停 Hermes 控制但不关闭它。已连接的标签页会保留。",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "拒绝这一项等待中的浏览器操作。Hermes 不会执行它。",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "在仍然连接的标签页上恢复 Hermes 控制。",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "选择 Hermes 可以操作的标签页。按“应用”确认。",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "仅控制你在下方选择的标签页。每个标签页需单独选择，其他标签页不在控制范围内。",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "将此标签页加入范围。选择需要的标签页，然后按“应用”。",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "仅控制你在下方选择的标签页，将它们视为一个共享任务。Hermes 可以在浏览器中将它们编组。其他已打开的标签页不包括在内。",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "就绪",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "开启",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "停止",

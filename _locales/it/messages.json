@@ -931,9 +931,21 @@
     "message": "Avvia o seleziona una sessione Hermes prima di attivare Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Applica l'ambito scelto alle schede che Hermes può controllare.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Consente questa sola azione del browser in attesa. Hermes chiederà di nuovo per la successiva.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Consenti a Hermes di controllare questa scheda al posto di quella collegata in precedenza.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Consente a questo browser di ottenere da Hermes un token di controllo per usare le schede.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Chiudi questo pannello senza mettere in pausa o disattivare il controllo.",
@@ -947,13 +959,25 @@
     "message": "Metti in pausa Hermes Control senza disattivarlo. Le schede collegate restano attive.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Rifiuta questa sola azione del browser in attesa. Hermes non la eseguirà.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Riprendi Hermes Control sulle schede ancora collegate.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Scegli le schede che Hermes può usare. Premi Applica per confermare.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Controlla solo le schede che scegli qui sotto. Ogni scheda viene selezionata singolarmente; le altre restano fuori dall’ambito.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Includi questa scheda nell'ambito. Scegli le schede che vuoi, poi premi Applica.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Controlla solo le schede che scegli qui sotto, come un’unica attività condivisa. Hermes può raggrupparle nel browser. Le altre schede aperte non sono incluse.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Pronto",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Attivo",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Ferma",

@@ -931,9 +931,21 @@
     "message": "ابدأ جلسة Hermes أو اختر واحدة قبل تشغيل Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "طبّق النطاق المختار على التبويبات التي يستطيع Hermes التحكم فيها.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "اسمح بإجراء المتصفح المنتظر هذا مرة واحدة. سيسأل Hermes مجددًا عن الإجراء التالي.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "اسمح لـ Hermes بالتحكم في علامة التبويب هذه بدلًا من علامة التبويب المرتبطة سابقًا.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "اسمح لهذا المتصفح بالحصول من Hermes على رمز تحكّم، ليتمكن من تشغيل التبويبات.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "أغلق هذه اللوحة دون إيقاف التحكم مؤقتًا أو تعطيله.",
@@ -947,13 +959,25 @@
     "message": "أوقف Hermes Control مؤقتًا دون تعطيله. تبقى التبويبات المرفقة كما هي.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "ارفض إجراء المتصفح المنتظر هذا مرة واحدة. لن يُنفّذه Hermes.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "استأنف Hermes Control على التبويبات المرفقة التي لا تزال متصلة.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "اختر التبويبات التي يستطيع Hermes تشغيلها. اضغط زر «تطبيق» للتأكيد.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "التحكم فقط في علامات التبويب التي تختارها أدناه. تُختار كل علامة بشكل منفصل؛ وتبقى العلامات الأخرى خارج النطاق.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "أدرِج هذا التبويب في النطاق. اختر التبويبات التي تريدها، ثم اضغط زر «تطبيق».",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "تحكّم فقط في علامات التبويب التي تختارها أدناه كمهمة مشتركة واحدة. يمكن لـ Hermes تجميعها في المتصفح. لا تُشمل علامات التبويب المفتوحة الأخرى.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "جاهز",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "تشغيل",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "إيقاف",

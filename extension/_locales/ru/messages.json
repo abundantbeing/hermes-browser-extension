@@ -931,9 +931,21 @@
     "message": "Запустите или выберите сеанс Hermes, прежде чем включать Управление Hermes.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Применяет выбранную область к вкладкам, которыми может управлять Hermes.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Разрешает одно ожидающее действие браузера. Hermes спросит снова перед следующим.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Разрешите Hermes управлять этой вкладкой вместо ранее подключённой.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Позволяет этому браузеру получить от Hermes токен управления, чтобы работать с вкладками.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Закройте эту панель, не приостанавливая и не выключая управление.",
@@ -947,13 +959,25 @@
     "message": "Приостановите Управление Hermes, не выключая его. Подключённые вкладки сохранятся.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Отклоняет одно ожидающее действие браузера. Hermes его не выполнит.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Возобновите Управление Hermes на вкладках, которые всё ещё подключены.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Выберите вкладки, с которыми может работать Hermes. Нажмите «Применить», чтобы подтвердить.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Управлять только вкладками, выбранными ниже. Каждая вкладка выбирается отдельно; остальные остаются вне области управления.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Добавьте эту вкладку в область. Выберите нужные вкладки и нажмите «Применить».",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Управление только вкладками, выбранными ниже, как одной общей задачей. Hermes может сгруппировать их в браузере. Остальные открытые вкладки не включаются.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Готово",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Включено",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Остановить",

@@ -931,9 +931,21 @@
     "message": "Hermes Control चालू करने से पहले एक Hermes सत्र शुरू करें या चुनें।",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "चुना गया दायरा उन टैब पर लागू करें जिन्हें Hermes नियंत्रित कर सकता है।",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "प्रतीक्षारत इस एक ब्राउज़र कार्रवाई की अनुमति दें। अगली कार्रवाई के लिए Hermes फिर पूछेगा।",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Hermes को इस टैब को नियंत्रित करने दें। यह पहले जुड़े टैब की जगह लेगा।",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "इस ब्राउज़र को Hermes से नियंत्रण टोकन लेने दें, ताकि वह टैब चला सके।",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "नियंत्रण रोके या बंद किए बिना यह पैनल बंद करें।",
@@ -947,13 +959,25 @@
     "message": "Hermes Control बंद किए बिना रोकें। जुड़े टैब बने रहते हैं।",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "प्रतीक्षारत इस एक ब्राउज़र कार्रवाई को अस्वीकार करें। Hermes इसे नहीं चलाएगा।",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "अभी भी जुड़े टैब पर Hermes Control फिर शुरू करें।",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "चुनें कि Hermes कौन-से टैब चला सकता है। पुष्टि के लिए लागू करें दबाएँ।",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "केवल नीचे चुने गए टैब नियंत्रित करें। हर टैब अलग से चुना जाता है; बाकी टैब दायरे से बाहर रहते हैं।",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "इस टैब को दायरे में शामिल करें। जो टैब चाहिए चुनें, फिर लागू करें दबाएँ।",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "नीचे चुने गए टैब को केवल एक साझा कार्य के रूप में नियंत्रित करें। Hermes उन्हें ब्राउज़र में समूहित कर सकता है। खुले अन्य टैब शामिल नहीं हैं।",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "तैयार",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "चालू",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "रोकें",

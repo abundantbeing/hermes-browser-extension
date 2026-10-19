@@ -931,9 +931,21 @@
     "message": "Start of selecteer een Hermes-sessie voordat je Hermes-bediening inschakelt.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Past het gekozen bereik toe op de tabs die Hermes kan bedienen.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Sta deze ene wachtende browseractie toe. Hermes vraagt opnieuw bij de volgende.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Laat Hermes dit tabblad besturen in plaats van het eerder gekoppelde tabblad.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Laat deze browser een besturingstoken van Hermes ophalen, zodat hij tabs kan bedienen.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Sluit dit paneel zonder de besturing te pauzeren of uit te schakelen.",
@@ -947,13 +959,25 @@
     "message": "Pauzeer Hermes-bediening zonder deze uit te schakelen. Gekoppelde tabbladen blijven behouden.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Weiger deze ene wachtende browseractie. Hermes voert hem niet uit.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Hervat Hermes-bediening op de tabbladen die nog gekoppeld zijn.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Kies welke tabs Hermes kan bedienen. Tik op Toepassen om te bevestigen.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Bestuur alleen de tabbladen die je hieronder kiest. Elk tabblad wordt afzonderlijk gekozen; alle andere vallen buiten het bereik.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Neem deze tab in het bereik op. Kies de gewenste tabs en tik daarna op Toepassen.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Bestuur alleen de tabbladen die je hieronder kiest, als één gedeelde taak. Hermes kan ze in de browser groeperen. Andere open tabbladen zijn niet inbegrepen.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Klaar",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Aan",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Stoppen",

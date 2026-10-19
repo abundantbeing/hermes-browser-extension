@@ -1499,19 +1499,24 @@
     <dialog id="browserControlDialog" class="browser-control-dialog" aria-labelledby="browserControlDialogTitle" aria-describedby="browserControlStripDetail">
       <span class="browser-control-energy" aria-hidden="true"></span>
       <span class="browser-control-flare" aria-hidden="true"></span>
-      <h2 id="browserControlDialogTitle" class="browser-control-dialog-title" tabindex="-1" autofocus data-i18n="browser_control.kicker">HERMES CONTROL</h2>
+      <div class="browser-control-titlebar">
+        <h2 id="browserControlDialogTitle" class="browser-control-dialog-title" tabindex="-1" autofocus data-i18n="browser_control.kicker">HERMES CONTROL</h2>
+        <span id="browserControlLight" class="browser-control-light" role="img" tabindex="0" data-state="off" data-control-help="status" data-help-as-name>
+          <span class="browser-control-light-dot" aria-hidden="true"></span>
+          <span id="browserControlLightWord" class="browser-control-light-word" aria-hidden="true" data-i18n-runtime data-i18n="browser_control.state_off">Off</span>
+        </span>
+        <button id="browserControlDismissButton" class="browser-control-dismiss" type="button" data-control-help="close" aria-label="Close" data-i18n-aria-label="ui.close">
+          <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
         <section id="browserControlStrip" class="browser-control-strip" aria-live="polite" hidden>
           <div class="browser-control-strip-copy">
-            <span class="browser-control-live-indicator" aria-hidden="true"></span>
             <strong id="browserControlStripTitle" data-i18n-runtime data-i18n="browser_control.control_ready">Control ready</strong>
             <span id="browserControlStripDetail" data-i18n-runtime data-i18n="browser_control.waiting">Waiting for Hermes.</span>
           </div>
-          <button id="browserControlDismissButton" class="browser-control-dismiss" type="button" data-control-help="close" aria-label="Close" data-i18n-aria-label="ui.close">
-            <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          </button>
           <div class="browser-control-strip-actions">
             <button id="browserControlDialogShowTabButton" class="browser-control-action secondary" type="button" hidden data-control-help="show-tab" aria-label="Show the tab Hermes is using" data-i18n-aria-label="browser_control.show_tab_aria" data-i18n="browser_control.show_tab">Show tab</button>
-            <button id="browserControlAuthorizeButton" class="browser-control-action" type="button" hidden data-i18n="browser_control.authorize">Authorize control</button>
+            <button id="browserControlAuthorizeButton" class="browser-control-action" type="button" hidden data-control-help="authorize" data-i18n="browser_control.authorize">Authorize control</button>
             <button id="browserControlAttachButton" data-control-help="attach" class="browser-control-action" type="button" hidden data-i18n-runtime data-i18n="ui.attach">Attach</button>
             <button id="browserControlOffButton" data-control-help="off" class="browser-control-action secondary" type="button" data-i18n="browser_control.turn_off">Turn off</button>
             <button id="browserControlPauseButton" class="browser-control-action secondary" type="button" data-control-help="pause" aria-label="Pause" data-i18n-aria-label="browser_control.pause">
@@ -1523,13 +1528,13 @@
               <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.6 2.6h6.8v6.8H2.6z" fill="currentColor"/></svg>
               <span data-i18n="browser_control.stop">Stop</span>
             </button>
-            <button id="browserControlApproveButton" class="browser-control-action" type="button" hidden data-i18n="browser_control.approve_once">Approve once</button>
-            <button id="browserControlRejectButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.reject">Reject</button>
+            <button id="browserControlApproveButton" class="browser-control-action" type="button" hidden data-control-help="approve" data-i18n="browser_control.approve_once">Approve once</button>
+            <button id="browserControlRejectButton" class="browser-control-action secondary" type="button" hidden data-control-help="reject" data-i18n="browser_control.reject">Reject</button>
           </div>
           <div class="browser-control-dialog-config browser-control-config">
             <label class="browser-control-field">
               <span id="browserControlDialogScopeLabel" data-i18n="browser_control.scope">Control scope</span>
-              <select id="browserControlDialogScopeInput" aria-labelledby="browserControlDialogScopeLabel" aria-describedby="browserControlDialogScopeHelp browserControlDialogScopeHint">
+              <select id="browserControlDialogScopeInput" data-control-help="scope" aria-labelledby="browserControlDialogScopeLabel" aria-describedby="browserControlDialogScopeHelp browserControlDialogScopeHint">
                 <option value="this-tab" data-i18n="browser_control.this_tab">This tab</option>
                 <option value="selected-tabs" data-i18n="browser_control.selected_tabs">Selected tabs</option>
                 <option value="task-set" data-i18n="browser_control.task_set">Task set</option>
@@ -1541,7 +1546,7 @@
               <legend data-i18n="browser_control.scope_tabs">Tabs in this scope</legend>
               <div id="browserControlDialogTabList" class="browser-control-tab-list"></div>
             </fieldset>
-            <button id="browserControlDialogApplyScope" class="browser-control-action secondary browser-control-apply-scope" type="button" data-i18n="ui.apply">Apply</button>
+            <button id="browserControlDialogApplyScope" class="browser-control-action secondary browser-control-apply-scope" type="button" data-control-help="apply" data-i18n="ui.apply">Apply</button>
           </div>
         </section>
       <p id="browserControlTooltip" class="browser-control-tooltip" role="tooltip" popover="manual"></p>

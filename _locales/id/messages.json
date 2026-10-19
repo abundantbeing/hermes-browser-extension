@@ -931,9 +931,21 @@
     "message": "Mulai atau pilih sesi Hermes sebelum mengaktifkan Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Terapkan cakupan yang dipilih ke tab yang dapat dikendalikan Hermes.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Izinkan satu tindakan browser yang menunggu ini. Hermes akan bertanya lagi untuk tindakan berikutnya.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Izinkan Hermes mengendalikan tab ini, menggantikan tab yang sebelumnya terhubung.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Izinkan browser ini mendapatkan token kontrol dari Hermes agar dapat mengoperasikan tab.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Tutup panel ini tanpa menjeda atau menonaktifkan kontrol.",
@@ -947,13 +959,25 @@
     "message": "Jeda Hermes Control tanpa menonaktifkannya. Tab yang terhubung tetap dipertahankan.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Tolak satu tindakan browser yang menunggu ini. Hermes tidak akan menjalankannya.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Lanjutkan Hermes Control pada tab yang masih terhubung.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Pilih tab mana yang dapat dioperasikan Hermes. Tekan Terapkan untuk mengonfirmasi.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Kendalikan hanya tab yang Anda pilih di bawah. Setiap tab dipilih satu per satu; tab lain tetap di luar cakupan.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Sertakan tab ini dalam cakupan. Pilih tab yang diinginkan, lalu tekan Terapkan.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Kendalikan hanya tab yang Anda pilih di bawah sebagai satu tugas bersama. Hermes dapat mengelompokkannya di browser. Tab terbuka lainnya tidak disertakan.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Siap",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Aktif",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Berhenti",

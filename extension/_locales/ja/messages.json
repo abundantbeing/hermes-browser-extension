@@ -931,9 +931,21 @@
     "message": "Hermes コントロールをオンにする前に、Hermes のセッションを開始または選択してください。",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "選んだ範囲を、Hermes が操作できるタブに適用します。",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "待機中のこのブラウザー操作を一度だけ許可します。Hermes は次の操作で改めて確認します。",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "以前のタブの接続を置き換えて、Hermes がこのタブを操作できるようにします。",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "このブラウザーが Hermes から操作用のトークンを取得し、タブを操作できるようにします。",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "制御を一時停止したりオフにしたりせず、このパネルを閉じます。",
@@ -947,13 +959,25 @@
     "message": "Hermes コントロールをオフにせず一時停止します。接続中のタブは維持されます。",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "待機中のこのブラウザー操作を一度だけ拒否します。Hermes は実行しません。",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "接続中のタブで Hermes コントロールを再開します。",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Hermes が操作できるタブを選びます。「適用」を押して確定してください。",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "下で選んだタブだけを操作します。タブは個別に選択し、それ以外のタブは対象外です。",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "このタブを範囲に含めます。必要なタブを選び、「適用」を押してください。",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "下で選んだタブだけを、共有タスクとして操作します。Hermes はブラウザーでそれらをグループ化できます。開いているほかのタブは含まれません。",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "準備完了",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "オン",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "停止",

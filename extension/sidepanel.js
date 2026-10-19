@@ -622,6 +622,8 @@ import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
 import {
+  browserControlLightState,
+  browserControlStatusLine,
   browserControlView,
   controlLeaseRequest,
   currentTabLeaseReplacement,
@@ -957,6 +959,8 @@ const els = {
   browserControlStripSignal: $('#browserControlStripSignal'),
   browserControlStripTitle: $('#browserControlStripTitle'),
   browserControlStripDetail: $('#browserControlStripDetail'),
+  browserControlLight: $('#browserControlLight'),
+  browserControlLightWord: $('#browserControlLightWord'),
   browserControlAttachButton: $('#browserControlAttachButton'),
   browserControlAuthorizeButton: $('#browserControlAuthorizeButton'),
   browserControlDismissButton: $('#browserControlDismissButton'),
@@ -2462,6 +2466,8 @@ function renderBrowserControl() {
   const enabled = settings.browserControlEnabled === true;
   const paused = browserControlStatus?.paused === true;
   const pendingApproval = browserControlStatus?.pendingApproval || null;
+  const lightState = browserControlLightState(view, { paused });
+  const statusLine = browserControlStatusLine({ title: translateUiText(view.title), detail: translateUiText(view.detail) });
 
   const stateKey = {
     off: 'browser_control.state_off',
@@ -2500,12 +2506,22 @@ function renderBrowserControl() {
       attach: t('browser_control.help_attach'), off: t('browser_control.help_off'),
       pause: t(paused ? 'browser_control.help_resume' : 'browser_control.help_pause'),
       stop: t('browser_control.help_stop'), close: t('browser_control.help_close'),
+      apply: t('browser_control.help_apply'), authorize: t('browser_control.help_authorize'),
+      approve: t('browser_control.help_approve'), reject: t('browser_control.help_reject'),
+      scope: t('browser_control.help_scope'),
+      status: statusLine,
     },
   });
   els.browserControlStrip.hidden = !enabled;
   els.browserControlStrip.dataset.tone = view.tone;
+  // The title and detail stay in the DOM for screen readers; the window shows the detail only when the person must act.
+  els.browserControlStrip.dataset.attention = String(view.attention === true);
   els.browserControlStripTitle.textContent = translateUiText(view.title);
   els.browserControlStripDetail.textContent = translateUiText(view.detail);
+  if (els.browserControlLight) els.browserControlLight.dataset.state = lightState;
+  if (els.browserControlLightWord) {
+    els.browserControlLightWord.textContent = t(lightState === 'on' ? 'browser_control.status_on' : 'browser_control.state_off');
+  }
   els.browserControlAttachButton.hidden = !view.canAttach || view.canAuthorize;
   els.browserControlAuthorizeButton.hidden = !view.canAuthorize;
   // Stable across actions: the target is the attached tab Hermes last used, and

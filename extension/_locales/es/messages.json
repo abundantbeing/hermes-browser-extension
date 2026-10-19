@@ -931,9 +931,21 @@
     "message": "Inicia o selecciona una sesión de Hermes antes de activar Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Aplica el ámbito elegido a las pestañas que Hermes puede controlar.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Permite esta única acción del navegador que está en espera. Hermes volverá a preguntar en la siguiente.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Permite que Hermes controle esta pestaña en lugar de la pestaña vinculada anteriormente.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Permite que este navegador obtenga de Hermes un token de control para operar pestañas.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Cierra este panel sin pausar ni desactivar el control.",
@@ -947,13 +959,25 @@
     "message": "Pausa Hermes Control sin desactivarlo. Las pestañas vinculadas se mantienen.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Rechaza esta única acción del navegador que está en espera. Hermes no la ejecutará.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Reanuda Hermes Control en las pestañas que siguen vinculadas.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Elige las pestañas que Hermes puede operar. Pulsa Aplicar para confirmar.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Controla solo las pestañas que elijas abajo. Cada pestaña se selecciona individualmente; las demás quedan fuera del alcance.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Incluye esta pestaña en el ámbito. Elige las pestañas que quieras y pulsa Aplicar.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Controla solo las pestañas que elijas abajo, como una tarea compartida. Hermes puede agruparlas en el navegador. No se incluyen las demás pestañas abiertas.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Listo",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Activado",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Detener",

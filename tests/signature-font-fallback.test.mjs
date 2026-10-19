@@ -36,15 +36,16 @@ test('side panel tokens fall back to bundled faces before system fonts', () => {
   assert.match(tokenValue(sidepanelCss, 'hermes-font-brand'), /^"Rules Gothic Compressed",\s*"HermesDisplay"/);
 });
 
-test('signature chat headlines use the display stack, not the Sigurd stand-in', () => {
+test('signature chat headlines use the chosen display font, not the Sigurd stand-in or a named face', () => {
   for (const file of ['extension/sidepanel.css', 'extension/app.css', 'extension/lib/surface-text-zoom.css']) {
-    const css = read(file);
     assert.doesNotMatch(
-      css,
+      read(file),
       /data-hermes-font-profile="signature"[^}]*"HermesDisplay", "Sigurd"/,
       `${file} must not force Sigurd onto signature headlines`,
     );
-    assert.match(css, /data-hermes-font-profile="signature"[^}]*"Rules Gothic Compressed", "Collapse"/);
+    // Chat headlines take the display token, which the profile sets; no chat sheet names the Rules face itself.
+    assert.match(read(file), /data-hermes-font-profile="signature"[^}]*font-family:\s*var\(--hermes-font-display\)/, `${file} must take the display token`);
+    assert.doesNotMatch(read(file), /data-hermes-font-profile="signature"[^}]*"Rules Gothic Compressed", "Collapse"/, `${file} must not name the Rules face and Collapse`);
   }
 });
 

@@ -931,9 +931,21 @@
     "message": "Hermes Kontrolü'nü açmadan önce bir Hermes oturumu başlatın veya seçin.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Seçilen kapsamı Hermes'in kontrol edebileceği sekmelere uygular.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Bekleyen bu tek tarayıcı işlemine izin verir. Sonraki işlem için Hermes yeniden sorar.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Hermes’in önceki bağlı sekme yerine bu sekmeyi kontrol etmesine izin verin.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Bu tarayıcının sekmeleri kullanabilmesi için Hermes'ten bir kontrol belirteci almasına izin verir.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Kontrolü duraklatmadan veya kapatmadan bu paneli kapatın.",
@@ -947,13 +959,25 @@
     "message": "Hermes Kontrolü'nü kapatmadan duraklatın. Bağlı sekmeler korunur.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Bekleyen bu tek tarayıcı işlemini reddeder. Hermes bunu çalıştırmaz.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Hâlâ bağlı olan sekmelerde Hermes Kontrolü'nü sürdürün.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Hermes'in işletebileceği sekmeleri seçin. Onaylamak için Uygula'ya basın.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Yalnızca aşağıda seçtiğiniz sekmeleri kontrol edin. Her sekme ayrı ayrı seçilir; diğer tüm sekmeler kapsam dışında kalır.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Bu sekmeyi kapsama ekler. İstediğiniz sekmeleri seçin, sonra Uygula'ya basın.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Yalnızca aşağıda seçtiğiniz sekmeleri tek bir ortak görev olarak kontrol edin. Hermes bu sekmeleri tarayıcıda gruplayabilir. Açık olan diğer sekmeler dahil edilmez.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Hazır",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Açık",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Durdur",

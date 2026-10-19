@@ -931,9 +931,21 @@
     "message": "Start eller vælg en Hermes-session, før du slår Hermes-styring til.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Anvend det valgte omfang på de faner, Hermes kan styre.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Tillad denne ene ventende browserhandling. Hermes spørger igen ved den næste.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Lad Hermes styre denne fane i stedet for den tidligere tilknyttede fane.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Lad denne browser hente et styringstoken fra Hermes, så den kan betjene faner.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Luk panelet uden at sætte styringen på pause eller slå den fra.",
@@ -947,13 +959,25 @@
     "message": "Sæt Hermes-styring på pause uden at slå den fra. Tilknyttede faner beholdes.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Afvis denne ene ventende browserhandling. Hermes udfører den ikke.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Genoptag Hermes-styring på de faner, der stadig er tilknyttet.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Vælg, hvilke faner Hermes kan betjene. Tryk på Anvend for at bekræfte.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Styr kun de faner, du vælger nedenfor. Hver fane vælges enkeltvis; alle andre faner er uden for omfanget.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Tag denne fane med i omfanget. Vælg de faner, du vil have, og tryk derefter på Anvend.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Styr kun de faner, du vælger nedenfor, som én fælles opgave. Hermes kan gruppere dem i browseren. Andre åbne faner er ikke med.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Klar",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Til",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Stop",

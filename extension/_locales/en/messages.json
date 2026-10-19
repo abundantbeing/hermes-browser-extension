@@ -931,9 +931,21 @@
     "message": "Start or select a Hermes session before turning on Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Apply the chosen scope to the tabs Hermes can control.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Allow this one waiting browser action. Hermes asks again for the next one.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Allow Hermes to operate this tab, replacing the previous tab attachment.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Let this browser get a control token from Hermes, so it can operate tabs.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Close this panel without pausing or turning control off.",
@@ -947,13 +959,25 @@
     "message": "Pause Hermes Control without turning it off. Attached tabs are kept.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Refuse this one waiting browser action. Hermes will not run it.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Resume Hermes Control on the tabs that are still attached.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Choose which tabs Hermes can operate. Press Apply to confirm.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Control only the tabs you choose below. Each tab is selected individually; all other tabs stay outside the scope.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Include this tab in the scope. Choose the tabs you want, then press Apply.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Control only the tabs you choose below, as one shared task. Hermes can group them in the browser. Other open tabs are not included.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Ready",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "On",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Stop",

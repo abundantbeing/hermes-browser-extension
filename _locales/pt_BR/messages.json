@@ -931,9 +931,21 @@
     "message": "Inicie ou selecione uma sessão do Hermes antes de ativar o Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_help_apply": {
+    "message": "Aplica o escopo escolhido às abas que o Hermes pode controlar.",
+    "description": "Runtime interface message browser_control.help_apply"
+  },
+  "runtime_browser_control_help_approve": {
+    "message": "Permite esta única ação pendente do navegador. O Hermes perguntará de novo na próxima.",
+    "description": "Runtime interface message browser_control.help_approve"
+  },
   "runtime_browser_control_help_attach": {
     "message": "Permita que o Hermes controle esta aba no lugar da aba conectada anteriormente.",
     "description": "Runtime interface message browser_control.help_attach"
+  },
+  "runtime_browser_control_help_authorize": {
+    "message": "Permite que este navegador obtenha do Hermes um token de controle para operar abas.",
+    "description": "Runtime interface message browser_control.help_authorize"
   },
   "runtime_browser_control_help_close": {
     "message": "Feche este painel sem pausar nem desativar o controle.",
@@ -947,13 +959,25 @@
     "message": "Pause o Hermes Control sem desativá-lo. As abas conectadas são mantidas.",
     "description": "Runtime interface message browser_control.help_pause"
   },
+  "runtime_browser_control_help_reject": {
+    "message": "Recusa esta única ação pendente do navegador. O Hermes não a executará.",
+    "description": "Runtime interface message browser_control.help_reject"
+  },
   "runtime_browser_control_help_resume": {
     "message": "Retome o Hermes Control nas abas que continuam conectadas.",
     "description": "Runtime interface message browser_control.help_resume"
   },
+  "runtime_browser_control_help_scope": {
+    "message": "Escolha as abas que o Hermes pode operar. Toque em Aplicar para confirmar.",
+    "description": "Runtime interface message browser_control.help_scope"
+  },
   "runtime_browser_control_help_scope_selected_tabs": {
     "message": "Controle apenas as abas que você escolher abaixo. Cada aba é selecionada individualmente; as demais ficam fora do escopo.",
     "description": "Runtime interface message browser_control.help_scope_selected_tabs"
+  },
+  "runtime_browser_control_help_scope_tab": {
+    "message": "Inclua esta aba no escopo. Escolha as abas desejadas e toque em Aplicar.",
+    "description": "Runtime interface message browser_control.help_scope_tab"
   },
   "runtime_browser_control_help_scope_task_set": {
     "message": "Controle apenas as abas que você escolher abaixo, como uma tarefa compartilhada. O Hermes pode agrupá-las no navegador. As demais abas abertas não são incluídas.",
@@ -1054,6 +1078,10 @@
   "runtime_browser_control_state_ready": {
     "message": "Pronto",
     "description": "Runtime interface message browser_control.state_ready"
+  },
+  "runtime_browser_control_status_on": {
+    "message": "Ligado",
+    "description": "Runtime interface message browser_control.status_on"
   },
   "runtime_browser_control_stop": {
     "message": "Parar",
