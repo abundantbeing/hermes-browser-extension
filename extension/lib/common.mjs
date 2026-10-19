@@ -17,6 +17,7 @@ import { contextFromHermesRegistry } from './hermes-context-sync.mjs';
 import { shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams } from './bot-browser-bridge.mjs';
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
 import { REST_TURN_SOURCES } from './session-materialization.mjs';
+import { isSidePanelSessionId } from './session-ownership.mjs';
 export { redactSensitiveText, shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams, formatGroupTurnWithBrowserContext };
 
 export const GATEWAY_MODES = Object.freeze([
@@ -258,11 +259,8 @@ export function restTurnSourceRepair(session = {}) {
 }
 
 export function isHermesBrowserOwnedSession(session = {}) {
-  const sessionId = String(session?.id || '').trim().toLowerCase();
   const source = String(session?.source || '').trim().toLowerCase();
-  return source === DEFAULT_SETTINGS.sessionSource
-    || sessionId === DEFAULT_SETTINGS.sessionId
-    || sessionId.startsWith(`${DEFAULT_SETTINGS.sessionId}-`);
+  return source === DEFAULT_SETTINGS.sessionSource || isSidePanelSessionId(session?.id);
 }
 
 export function requiresForeignSessionConfirmation(session = {}, approvedSessionIds = []) {
