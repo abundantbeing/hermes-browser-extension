@@ -3,7 +3,7 @@
 // exercise actual getUserMedia, MediaRecorder, stop, transcript insertion and paint.
 // No paid inference, production test hooks, personal browser profiles or accounts.
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
@@ -11,6 +11,7 @@ import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { APPEARANCE_THEMES } from '../extension/lib/appearance-themes.mjs';
+import { launchChrome } from './e2e-chrome-env.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const QA = process.env.VOICE_QA_DIR || path.join(os.tmpdir(), 'hbe-voice-wingbeat-qa');
@@ -251,7 +252,7 @@ assert.ok(CHROME && existsSync(CHROME), 'Set CHROME_PATH to a Chrome for Testing
 const wav = await wavFixture();
 const gateway = await mockGateway();
 let chromeErrors = '';
-const chrome = spawn(CHROME, ['--headless=new', '--no-sandbox', ...(GPU ? [] : ['--disable-gpu']), '--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', `--use-file-for-fake-audio-capture=${wav}`, `chrome-extension://${extensionId(EXT)}/request-permissions.html`], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+const chrome = launchChrome(CHROME, ['--headless=new', '--no-sandbox', ...(GPU ? [] : ['--disable-gpu']), '--no-first-run', '--no-default-browser-check', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', `--use-file-for-fake-audio-capture=${wav}`, `chrome-extension://${extensionId(EXT)}/request-permissions.html`], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
 chrome.stderr.on('data', (chunk) => { chromeErrors = (chromeErrors + chunk.toString()).slice(-16000); });
 const clients = [];
 const evidence = { baseline: BASELINE, extension: EXT, audio: 'controlled WAV, not the user microphone', transcription: 'local deterministic STT fixture, not a live model', themes: [], screenshots: [] };

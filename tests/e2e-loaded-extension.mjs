@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -9,7 +9,7 @@ import process from 'node:process';
 
 import { crc32 } from '../extension/lib/vsix-theme-extractor.mjs';
 import { assistClick, assistClickWhenVisible, assistEvaluate } from './e2e-assist-driver.mjs';
-import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable } from './e2e-chrome-env.mjs';
+import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable, launchChrome } from './e2e-chrome-env.mjs';
 import { AGENT_THEME_END, AGENT_THEME_START } from '../extension/lib/agent-theme-authoring.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -844,10 +844,8 @@ async function main() {
   let chromeStderr = '';
   try {
     const extensionId = unpackedExtensionId(DIST);
-    chrome = spawn(chromeExecutable(), [
+    chrome = launchChrome(chromeExecutable(), [
       '--headless=new',
-      // A test browser never makes noise. A page with a video stays silent.
-      '--mute-audio',
       '--no-sandbox',
       '--disable-gpu',
       '--no-first-run',

@@ -7,13 +7,13 @@
  * and completes readiness on its own.
  */
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
+import { launchChrome } from './e2e-chrome-env.mjs';
 
 import {
   DIST,
@@ -224,10 +224,8 @@ async function main() {
   let chromeStderr = '';
   try {
     const extensionId = unpackedExtensionId(DIST);
-    chrome = spawn(chromeExecutable(), [
+    chrome = launchChrome(chromeExecutable(), [
       '--headless=new',
-      // A test browser never makes noise. A page with a video stays silent.
-      '--mute-audio',
       '--no-sandbox',
       '--disable-gpu',
       '--no-first-run',

@@ -3,13 +3,14 @@
 // Boots isolated Chrome-for-Testing with dist/, connects to the live local
 // gateway, then geometrically asserts menu placement with a long prompt.
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
 import { hermesHomePath } from '../scripts/hermes-home.mjs';
+import { launchChrome } from './e2e-chrome-env.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -132,10 +133,8 @@ async function main() {
   let chrome;
   let panel;
   try {
-    chrome = spawn(chromeExecutable(), [
+    chrome = launchChrome(chromeExecutable(), [
       '--headless=new',
-      // A test browser never makes noise. A page with a video stays silent.
-      '--mute-audio',
       '--no-sandbox',
       '--disable-gpu',
       '--no-first-run',

@@ -32,7 +32,7 @@
  */
 
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, writeFile, rm, cp } from 'node:fs/promises';
@@ -40,6 +40,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { launchChrome as spawnMutedChrome } from '../tests/e2e-chrome-env.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_EXT = process.env.HBE_BENCH_EXT || path.join(ROOT, 'dist');
@@ -331,7 +332,7 @@ async function launchChrome(profileDir) {
   // Reused profiles carry a stale DevToolsActivePort from the previous instance;
   // the authoritative source is chrome's own stderr announcement.
   await rm(path.join(profileDir, 'DevToolsActivePort'), { force: true });
-  const child = spawn(chromeExe, [
+  const child = spawnMutedChrome(chromeExe, [
     '--headless=new',
     '--no-sandbox',
     '--disable-gpu',
