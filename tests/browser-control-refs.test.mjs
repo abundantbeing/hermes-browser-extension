@@ -196,3 +196,111 @@ test('Phase 6 stable refs still honour the per-document cap', async () => {
   assert.deepEqual(shifted.refs.map((item) => [item.name, item.ref]), [['B3', '@e3'], ['B1', '@e1']]);
   assert.equal(refs.resolve({ ...scope, ref: '@e2' }).ok, false);
 });
+
+// --- child frames ----------------------------------------------------------------------------------------------------
+
+const CHAT_FRAME = 'D5F1A8C2B7E34F6A9C0D1E2F3A4B5C6D';
+const AD_FRAME = '0A1B2C3D4E5F60718293A4B5C6D7E8F9';
+const NEWS_FRAME = 'FFEEDDCCBBAA99887766554433221100';
+const framed = (frameId, ...nodes) => nodes.map((node) => ({ ...node, frameId }));
+
+test('Phase 6 a control in a child frame is ref\'d with the frame\'s short key, never its CDP id', async () => {
+  const { createBrowserControlRefStore } = await refsModule();
+  const refs = createBrowserControlRefStore();
+
+  const snapshot = refs.replace({
+    ...scope,
+    nodes: [
+      { role: 'button', name: 'Subscribe', backendDOMNodeId: 1 },
+      ...framed(CHAT_FRAME, { role: 'textbox', name: 'Chat', backendDOMNodeId: 5, editable: true }, { role: 'button', name: 'Send', backendDOMNodeId: 6 }),
+    ],
+  });
+
+  assert.deepEqual(snapshot.refs.map((item) => [item.ref, item.frameId || '']), [['@e1', ''], ['@f1e2', '1'], ['@f1e3', '1']]);
+  assert.doesNotMatch(JSON.stringify(snapshot), new RegExp(CHAT_FRAME));
+  const resolved = refs.resolve({ ...scope, ref: '@f1e2' });
+  assert.equal(resolved.ok, true);
+  assert.equal(resolved.target.backendDOMNodeId, 5);
+});
+
+test('Phase 6 a frame keeps its short key when other frames leave or arrive, and a departed frame\'s key is never reused', async () => {
+  const { createBrowserControlRefStore } = await refsModule();
+  const refs = createBrowserControlRefStore();
+  const chat = () => framed(CHAT_FRAME, { role: 'textbox', name: 'Chat', backendDOMNodeId: 5 }, { role: 'button', name: 'Send', backendDOMNodeId: 6 });
+  const ad = () => framed(AD_FRAME, { role: 'link', name: 'Sponsored', backendDOMNodeId: 9 });
+  const refOf = (result, name) => result.refs.find((item) => item.name === name)?.ref;
+
+  const first = refs.replace({ ...scope, nodes: [{ role: 'button', name: 'Subscribe', backendDOMNodeId: 1 }, ...ad(), ...chat()] });
+  const composer = refOf(first, 'Chat');
+  assert.equal(refOf(first, 'Sponsored').startsWith('@f1e'), true, 'the first frame seen is frame 1');
+  assert.equal(composer.startsWith('@f2e'), true);
+
+  const afterAdLeaves = refs.replace({ ...scope, nodes: [{ role: 'button', name: 'Subscribe', backendDOMNodeId: 1 }, ...chat()] });
+  assert.equal(refOf(afterAdLeaves, 'Chat'), composer, 'the chat control is still the same control');
+  assert.equal(refOf(afterAdLeaves, 'Send'), refOf(first, 'Send'));
+  assert.equal(refs.resolve({ ...scope, ref: refOf(first, 'Sponsored') }).error, 'unknown_ref', 'the departed frame\'s refs are gone');
+
+  const afterNewsArrives = refs.replace({ ...scope, nodes: [{ role: 'button', name: 'Subscribe', backendDOMNodeId: 1 }, ...framed(NEWS_FRAME, { role: 'link', name: 'Breaking news', backendDOMNodeId: 12 }), ...chat()] });
+  assert.equal(refOf(afterNewsArrives, 'Chat'), composer);
+  assert.equal(refOf(afterNewsArrives, 'Breaking news').startsWith('@f3e'), true, 'a new frame gets a key nobody has had');
+
+  const adReturns = refs.replace({ ...scope, nodes: [...ad(), ...chat()] });
+  assert.equal(refOf(adReturns, 'Sponsored').startsWith('@f1e'), true, 'a frame that comes back is still frame 1');
+});
+
+test('Phase 6 frame keys start again with a new document, and a frame id of 0 is the main frame', async () => {
+  const { createBrowserControlRefStore } = await refsModule();
+  const refs = createBrowserControlRefStore();
+  refs.replace({ ...scope, nodes: framed(AD_FRAME, { role: 'link', name: 'Ad', backendDOMNodeId: 9 }) });
+
+  const next = refs.replace({ ...scope, documentGeneration: 4, nodes: [...framed(CHAT_FRAME, { role: 'button', name: 'Send', backendDOMNodeId: 6 }), { role: 'link', name: 'Home', backendDOMNodeId: 2, frameId: 0 }, { role: 'link', name: 'Top', backendDOMNodeId: 3, frameId: '0' }] });
+
+  assert.deepEqual(next.refs.map((item) => item.ref), ['@f1e1', '@e2', '@e3']);
+  assert.equal('frameId' in next.refs[1], false);
+});
+
+test('Phase 6 a long-lived document never keeps more than a bounded number of frame keys', async () => {
+  const { createBrowserControlRefStore } = await refsModule();
+  const refs = createBrowserControlRefStore();
+  let last;
+  for (let index = 0; index < 100; index += 1) {
+    last = refs.replace({ ...scope, nodes: framed(`FRAME-${index}`, { role: 'button', name: `Button ${index}`, backendDOMNodeId: 10 + index }) });
+  }
+  assert.equal(last.refs[0].ref, '@f100e100'.replace('e100', `e${100}`), 'keys keep counting up');
+  // a frame seen long ago has been forgotten and comes back under a fresh key rather than a recycled one
+  const back = refs.replace({ ...scope, nodes: framed('FRAME-0', { role: 'button', name: 'Button 0', backendDOMNodeId: 10 }) });
+  assert.match(back.refs[0].ref, /^@f10[1-9]e\d+$/);
+});
+
+test('Phase 6 with more nodes than refs, child-frame controls keep a share and the page\'s own controls the rest', async () => {
+  const { createBrowserControlRefStore } = await refsModule();
+  const own = (count) => Array.from({ length: count }, (_, index) => ({ role: 'link', name: `Own ${index}`, backendDOMNodeId: 100 + index }));
+  const chat = (count) => framed(CHAT_FRAME, ...Array.from({ length: count }, (_, index) => ({ role: 'button', name: `Chat ${index}`, backendDOMNodeId: 900 + index })));
+  const split = (result) => [result.refs.filter((item) => !item.frameId).length, result.refs.filter((item) => item.frameId).length];
+  const store = () => createBrowserControlRefStore({ maxRefsPerDocument: 10 });
+
+  assert.deepEqual(split(store().replace({ ...scope, nodes: [...own(20), ...chat(4)] })), [8, 2], 'a long page keeps a quarter of the refs for its frames');
+  assert.deepEqual(split(store().replace({ ...scope, nodes: [...own(8), ...chat(6)] })), [8, 2]);
+  assert.deepEqual(split(store().replace({ ...scope, nodes: [...own(4), ...chat(20)] })), [4, 6], 'a short page leaves the rest to its frames');
+  assert.deepEqual(split(store().replace({ ...scope, nodes: [...own(20), ...chat(1)] })), [9, 1], 'a share that is not needed is not held back');
+  assert.deepEqual(split(store().replace({ ...scope, nodes: [...own(5), ...chat(5)] })), [5, 5], 'everything that fits is kept');
+  assert.equal(store().replace({ ...scope, nodes: [...own(20), ...chat(4)] }).truncated, true);
+  assert.equal(store().replace({ ...scope, nodes: [...own(5), ...chat(5)] }).truncated, false);
+});
+
+test('Phase 6 the kept nodes stay in input order when child-frame controls are favoured, and with no frames the first nodes win as before', async () => {
+  const { createBrowserControlRefStore } = await refsModule();
+  const store = createBrowserControlRefStore({ maxRefsPerDocument: 4 });
+  const result = store.replace({
+    ...scope,
+    nodes: [
+      { role: 'link', name: 'A', backendDOMNodeId: 1 }, { role: 'link', name: 'B', backendDOMNodeId: 2 },
+      ...framed(CHAT_FRAME, { role: 'button', name: 'F1', backendDOMNodeId: 8 }),
+      { role: 'link', name: 'C', backendDOMNodeId: 3 }, { role: 'link', name: 'D', backendDOMNodeId: 4 }, { role: 'link', name: 'E', backendDOMNodeId: 5 },
+    ],
+  });
+  assert.deepEqual(result.refs.map((item) => item.name), ['A', 'B', 'F1', 'C'], 'the nodes that are kept stay in the order they came in');
+
+  const plain = createBrowserControlRefStore({ maxRefsPerDocument: 3 }).replace({ ...scope, nodes: [1, 2, 3, 4, 5].map((id) => ({ role: 'link', name: `L${id}`, backendDOMNodeId: id })) });
+  assert.deepEqual(plain.refs.map((item) => item.name), ['L1', 'L2', 'L3']);
+});

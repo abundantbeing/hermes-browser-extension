@@ -30,7 +30,7 @@ test('Phase 6 control modules and debugger permission ship in VERSION 0.3.0', ()
   }
   assert.equal(
     packageJson.scripts['test:e2e:browser-control'],
-    'npm run build && node tests/e2e-phase6-browser-control.mjs && node tests/e2e-phase6-browser-control-reconnect.mjs && node tests/e2e-phase6-agent-route.mjs && node tests/e2e-phase6-youtube-like.mjs',
+    'npm run build && node tests/e2e-phase6-browser-control.mjs && node tests/e2e-phase6-browser-control-reconnect.mjs && node tests/e2e-phase6-agent-route.mjs && node tests/e2e-phase6-child-frames.mjs && node tests/e2e-phase6-youtube-like.mjs',
   );
   assert.equal(
     packageJson.scripts['test:e2e:browser-control:reconnect'],
@@ -39,6 +39,10 @@ test('Phase 6 control modules and debugger permission ship in VERSION 0.3.0', ()
   assert.equal(
     packageJson.scripts['test:e2e:browser-control:agent-route'],
     'npm run build && node tests/e2e-phase6-agent-route.mjs',
+  );
+  assert.equal(
+    packageJson.scripts['test:e2e:browser-control:child-frames'],
+    'npm run build && node tests/e2e-phase6-child-frames.mjs',
   );
   assert.equal(
     packageJson.scripts['test:e2e:browser-control:youtube'],

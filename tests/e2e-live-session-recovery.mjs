@@ -1,12 +1,13 @@
 // Real unpacked extension UI, deterministic local REST/SSE and Dashboard WS.
 // No personal browser profile, real credentials, or model-provider requests.
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import path from 'node:path';
+import { launchChrome } from './e2e-chrome-env.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -162,7 +163,7 @@ let chrome, setup, panel;
 const proof = {};
 try {
   assert.ok(existsSync(process.env.CHROME_PATH), 'Set CHROME_PATH to the isolated Chrome-for-Testing executable.');
-  chrome = spawn(process.env.CHROME_PATH, ['--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, `chrome-extension://${EXT}/request-permissions.html`], { stdio: 'ignore', windowsHide: true });
+  chrome = launchChrome(process.env.CHROME_PATH, ['--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-background-networking', '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${DIST}`, `--load-extension=${DIST}`, `chrome-extension://${EXT}/request-permissions.html`], { stdio: 'ignore', windowsHide: true });
   const portFile = path.join(PROFILE, 'DevToolsActivePort');
   await wait(() => existsSync(portFile), 'CFT debugging port');
   const port = (await readFile(portFile, 'utf8')).split('\n')[0];

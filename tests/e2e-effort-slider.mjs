@@ -26,7 +26,7 @@
 // artifacts and a throwaway tmp profile.
 
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
@@ -40,6 +40,7 @@ import { verifyHoverContrastEverywhere } from './hover-contrast-guard-probes.mjs
 import { verifyRoomMemberLayout } from './room-member-layout-probes.mjs';
 import { probeEffortColors } from './effort-color-probe.mjs';
 import { verifyComposerAutogrow } from './composer-autogrow-probe.mjs';
+import { launchChrome } from './e2e-chrome-env.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -346,7 +347,7 @@ async function dispatchKey(client, type, key, code, windowsVirtualKeyCode) {
 // ---------------------------------------------------------------------------
 
 async function launchExtension({ extensionId }) {
-  const chrome = spawn(chromeExecutable(), [
+  const chrome = launchChrome(chromeExecutable(), [
     '--headless=new',
     '--no-sandbox',
     '--disable-gpu',
