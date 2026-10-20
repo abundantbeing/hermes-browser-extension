@@ -323,9 +323,11 @@ function safeResultTitle(value = '') {
 function safeSnapshotResult(value = {}, refResult = {}, { maxChars, fullText = false } = {}) {
   const view = renderControlSnapshot({
     text: value.text,
+    frameText: value.frameText,
     headings: value.headings,
     refs: Array.isArray(refResult.refs) ? refResult.refs : [],
-    element_count: Array.isArray(value.nodes) ? value.nodes.length : 0,
+    // The browser may know of more controls than it returned (a child frame cut at its cap).
+    element_count: Math.max(Array.isArray(value.nodes) ? value.nodes.length : 0, Math.floor(Number(value.element_count)) || 0),
     truncated: Boolean(value.truncated || refResult.truncated),
   }, { maxChars, fullText });
   return {

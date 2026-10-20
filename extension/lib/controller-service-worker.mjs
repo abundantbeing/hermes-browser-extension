@@ -280,6 +280,10 @@ export function createControllerServiceWorker({
     : createBrowserControlApprovalStore({ now });
   let activeAction = null;
   let scopeChanging = false;
+  // The turn's page read runs outside the command lifecycle, so it is tracked here: tabId -> its abort controllers.
+  // Anything that takes control away from Hermes (a debugger detach, a closed tab, Pause, Turn off, releasing the
+  // tab) stops the read at once, rather than letting it attach again to finish.
+  const turnReads = new Map();
   const browserExecutor = typeof executeBrowserCommand === 'function' ? executeBrowserCommand : null;
 
   function executorContext(base = {}, { lease, tabId, frameId, authoritative }) {
@@ -1158,7 +1162,15 @@ export function createControllerServiceWorker({
 
   // Lease ended or paused: let the adapter detach its debugger session now
   // instead of waiting for the idle timeout. Best effort, never blocks.
+  function stopTurnReads(tabId) {
+    const tabIds = tabId === undefined ? [...turnReads.keys()] : [Number(tabId)];
+    for (const id of tabIds) {
+      for (const read of [...(turnReads.get(id) || [])]) read.abort(new Error('Browser control stopped.'));
+    }
+  }
+
   function releaseDebuggerSession(tabId) {
+    stopTurnReads(tabId);
     if (typeof releaseTabDebugger !== 'function') return;
     Promise.resolve().then(() => releaseTabDebugger(tabId)).catch(() => undefined);
   }
@@ -1185,6 +1197,7 @@ export function createControllerServiceWorker({
   }
 
   async function setPaused(paused) {
+    if (paused === true) stopTurnReads();
     settings = { ...settings, browserControlPaused: paused === true };
     await storageArea.set({ hermesBrowserSettings: { ...settings } });
     await persist();
@@ -1195,12 +1208,14 @@ export function createControllerServiceWorker({
   }
 
   async function stopCommands() {
+    stopTurnReads();
     const stopped = lifecycle.cancelAll();
     await persist();
     return { ...stopped, pendingCommands: lifecycle.pendingCount() };
   }
 
   async function detachControl() {
+    stopTurnReads();
     const stopped = lifecycle.cancelAll();
     const releasedTabIds = [];
     for (const tabId of leases.leasedTabIds()) {
@@ -1362,6 +1377,9 @@ export function createControllerServiceWorker({
       deadline_at: Number(now()) + PREPARE_TURN_SNAPSHOT_MS,
     };
     const abort = new AbortController();
+    const reads = turnReads.get(target.tabId) || new Set();
+    reads.add(abort);
+    turnReads.set(target.tabId, reads);
     let backstop = null;
     try {
       const outcome = await Promise.race([
@@ -1395,6 +1413,8 @@ export function createControllerServiceWorker({
     } finally {
       clearTimeout(backstop);
       abort.abort();
+      reads.delete(abort);
+      if (!reads.size && turnReads.get(target.tabId) === reads) turnReads.delete(target.tabId);
     }
   }
 
@@ -1447,6 +1467,7 @@ export function createControllerServiceWorker({
   }
 
   async function handleTabRemoved(tabId) {
+    stopTurnReads(tabId);
     await boot();
     const normalizedTabId = Number(tabId);
     if (!Number.isInteger(normalizedTabId) || normalizedTabId <= 0) return { ok: false, error: 'invalid_tab' };
@@ -1471,6 +1492,9 @@ export function createControllerServiceWorker({
   }
 
   async function handleDebuggerDetach({ tabId, reason = 'unknown' } = {}) {
+    // First and synchronously: the adapter reports a detach and the person's choice is already made, so a page
+    // read in flight must not get another command in before boot() resolves.
+    stopTurnReads(tabId);
     await boot();
     const normalizedTabId = Number(tabId);
     const normalizedReason = String(reason || 'unknown').trim().slice(0, 120) || 'unknown';

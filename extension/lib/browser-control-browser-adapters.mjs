@@ -2,6 +2,7 @@ import {
   controllerAdapterContractFor,
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
+import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, readableChildFrames } from './browser-control-frames.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
 const CDP_VERSION = '1.3';
@@ -352,14 +353,6 @@ function axValue(value) {
   return value;
 }
 
-// A tab's real UI is often inside a child frame: YouTube's live chat is a
-// separate `live_chat` frame, and a paywall or an embedded app is another.
-// `Accessibility.getFullAXTree` without a frameId only ever describes the main
-// frame, so that content is invisible to the agent: no ref, no way to type.
-// These bounds keep one frame from flooding the snapshot.
-const MAX_SNAPSHOT_FRAMES = 8;
-const MAX_FRAME_NODES = 400;
-
 function axProperty(properties = [], name = '') {
   const found = properties.find((property) => property?.name === name);
   return found ? axValue(found.value) : undefined;
@@ -418,25 +411,35 @@ function fieldValueNodeIds(rawNodes = []) {
   return hidden;
 }
 
+// A tab's real UI is often inside a child frame: YouTube's live chat is a separate `live_chat` frame, and a
+// paywall or an embedded app is another. `Accessibility.getFullAXTree` without a frameId only describes the main
+// frame, so `trees` carries one `{ frameId, tree }` per frame read, the main frame first with an empty frameId. A
+// child frame's nodes keep the CDP id of the frame they came from, and the ref store turns it into a stable short
+// key. When child frames are read, part of the text, element and ref budgets is held back for them, so a long page
+// of its own cannot leave a chat composer without a ref or its messages without room.
 function chromiumSnapshot(trees, tab = {}, { full = false } = {}) {
   const segments = Array.isArray(trees) ? trees : [{ frameId: '', tree: trees }];
-  const first = segments[0]?.tree || {};
-  const rawNodes = Array.isArray(first.nodes) ? first.nodes : [];
-  const valueNodeIds = fieldValueNodeIds(rawNodes);
   const textLimit = full ? FULL_TEXT_LIMIT : COMPACT_TEXT_LIMIT;
+  const hasFrames = segments.length > 1;
+  const mainTextLimit = hasFrames ? Math.floor(textLimit * (1 - FRAME_TEXT_SHARE)) : textLimit;
   const nodes = [];
   const headings = [];
   const landmarks = [];
-  const text = [];
+  const mainText = [];
+  const frameText = [];
   let textLength = 0;
   let elementCount = 0;
-  // Nodes from a child frame are ref'd and acted on like any other, but they
-  // are capped so one heavy frame (a live chat with a thousand messages)
-  // cannot crowd out the page the agent is actually looking at.
-  for (const segment of segments) {
+  let cut = false;
+  for (const [index, segment] of segments.entries()) {
     const frameId = compact(segment?.frameId || '', 160);
     const segmentNodes = Array.isArray(segment?.tree?.nodes) ? segment.tree.nodes : [];
-    const segmentValueNodeIds = segment === segments[0] ? valueNodeIds : fieldValueNodeIds(segmentNodes);
+    const valueNodeIds = fieldValueNodeIds(segmentNodes);
+    // The main frame may use its share; each child frame an equal part of what is left, so one heavy frame
+    // (an ad, a long chat) leaves room for the next.
+    const allowance = index === 0
+      ? mainTextLimit
+      : textLength + Math.floor((textLimit - textLength) / (segments.length - index));
+    const lines = frameId ? frameText : mainText;
     let keptInFrame = 0;
     for (const node of segmentNodes) {
       if (!node || node.ignored === true) continue;
@@ -444,9 +447,9 @@ function chromiumSnapshot(trees, tab = {}, { full = false } = {}) {
       const name = compact(axValue(node.name), 500);
       const properties = Array.isArray(node.properties) ? node.properties : [];
       if (name && ['statictext', 'heading', 'paragraph'].includes(role)
-        && !segmentValueNodeIds.has(String(node.nodeId))
-        && text[text.length - 1] !== name && textLength < textLimit) {
-        text.push(name);
+        && !valueNodeIds.has(String(node.nodeId))
+        && lines[lines.length - 1] !== name && textLength < allowance) {
+        lines.push(name);
         textLength += name.length + 1;
       }
       if (name && role === 'heading' && headings.length < MAX_SNAPSHOT_HEADINGS) {
@@ -458,11 +461,15 @@ function chromiumSnapshot(trees, tab = {}, { full = false } = {}) {
       }
       const backendDOMNodeId = Number(node.backendDOMNodeId);
       if (!ACTIONABLE_AX_ROLES.has(role) || !Number.isInteger(backendDOMNodeId) || backendDOMNodeId <= 0) continue;
-      elementCount += 1;
       // Compact view drops unlabeled images but keeps every input, so an unnamed
       // password field still gets a ref and the sensitive treatment.
       if (!full && !name && IMAGE_AX_ROLES.has(role)) continue;
-      if (frameId && keptInFrame >= MAX_FRAME_NODES) continue;
+      // Counted before the per-frame cap, so the true number of controls survives to the page view.
+      elementCount += 1;
+      if (frameId && keptInFrame >= MAX_FRAME_NODES) {
+        cut = true;
+        continue;
+      }
       keptInFrame += 1;
       const autocomplete = compact(axProperty(properties, 'autocomplete'), 120);
       nodes.push({
@@ -478,11 +485,13 @@ function chromiumSnapshot(trees, tab = {}, { full = false } = {}) {
   return {
     title: compact(tab.title, 500),
     url: compact(tab.url || tab.pendingUrl),
-    text: text.join('\n').slice(0, textLimit),
+    text: mainText.join('\n').slice(0, textLimit),
+    ...(frameText.length ? { frameText: frameText.join('\n').slice(0, textLimit) } : {}),
     nodes,
     headings,
     landmarks,
     element_count: elementCount,
+    ...(cut ? { truncated: true } : {}),
     full,
   };
 }
@@ -1004,49 +1013,38 @@ function createChromiumCdpAdapter({
 
   const { watchLoad, waitForLoad } = createLoadWaiter({ browserApi, now, sleep, subscribe: subscribeTab });
 
-  // Child frames of the main frame, in tree order. The main frame itself is
-  // excluded: it is always described first, without a frameId.
-  async function childFrames(send) {
-    try {
-      const tree = await send('Page.getFrameTree');
-      const frames = [];
-      const walk = (node) => {
-        for (const child of node?.childFrames || []) {
-          frames.push(child.frame);
-          walk(child);
-        }
-      };
-      walk(tree?.frameTree);
-      return frames
-        .filter((frame) => frame?.id)
-        // A browser or extension frame is never part of the page the person is
-        // looking at. A frame with no URL yet is not excluded on that basis.
-        .filter((frame) => {
-          const url = String(frame.url || '');
-          return !url || /^https?:/i.test(url);
-        })
-        .slice(0, MAX_SNAPSHOT_FRAMES);
-    } catch {
-      // A tab that cannot report its frame tree still describes its main frame.
-      return [];
-    }
-  }
+  // Whether Hermes still has a debugger attached to the tab. A command that was running when the person
+  // detached it (the Chrome banner's Cancel, DevTools, Turn off, Pause) must not attach again to go on reading.
+  const attached = (tabId) => sessions.has(tabId) || recovering.has(tabId) || inflight.has(tabId);
 
-  // The AX tree of every frame in the tab, main frame first. Each entry keeps
-  // the frame it came from so its nodes can be ref'd and acted on.
-  async function collectAxTrees(send) {
-    // The frame tree comes first: it says which frames exist, so the main
-    // frame is described before any child frame is looked up.
-    const children = await childFrames(send);
+  // Whether a failed read ends the whole read: the command was cancelled, or the attachment is gone.
+  const readEnded = (error, signal, tabId) => Boolean(abortError(signal))
+    || !attached(tabId)
+    || NOT_ATTACHED_RE.test(String(error?.message || error || ''))
+    || error?.code === 'debugger_conflict'
+    || error?.code === 'debugger_detached';
+
+  // The accessibility tree of every frame Hermes may read in the tab, the main frame first. Each entry keeps the
+  // CDP id of the frame it came from so its nodes can be ref'd and acted on.
+  async function collectAxTrees({ send, tabId, signal }) {
+    let children = [];
+    try {
+      children = readableChildFrames((await send('Page.getFrameTree'))?.frameTree);
+    } catch (error) {
+      // A tab that cannot report its frame tree still describes its main frame.
+      if (readEnded(error, signal, tabId)) throw error;
+    }
     const trees = [{ frameId: '', tree: await send('Accessibility.getFullAXTree') }];
-    for (const [index, frame] of children.entries()) {
+    for (const frame of children) {
+      assertNotAborted(signal);
+      if (!attached(tabId)) throw codedError('debugger_detached', 'The debugger was detached, so Hermes stopped reading the page.');
       try {
         const tree = await send('Accessibility.getFullAXTree', { frameId: frame.id });
-        const nodes = Array.isArray(tree?.nodes) ? tree.nodes : [];
         // An empty or trivial child frame (an ad slot, a tracker) adds nothing.
-        if (nodes.length > 1) trees.push({ frameId: String(index + 1), tree });
-      } catch {
-        // A frame that vanished or is out of process is simply left out.
+        if ((Array.isArray(tree?.nodes) ? tree.nodes.length : 0) > 1) trees.push({ frameId: frame.id, tree });
+      } catch (error) {
+        // A frame that vanished or runs out of process is left out; losing the attachment is not that.
+        if (readEnded(error, signal, tabId)) throw error;
       }
     }
     return trees;
@@ -1270,8 +1268,7 @@ function createChromiumCdpAdapter({
       const { send, enable } = session;
       if (action === 'browser_snapshot') {
         await enable('Accessibility');
-        await enable('Page');
-        const trees = await collectAxTrees(send);
+        const trees = await collectAxTrees({ send, tabId: session.tabId, signal });
         const tab = await browserApi.tabs.get(session.tabId);
         assertNotAborted(signal);
         return chromiumSnapshot(trees, tab, { full: args.full === true });
