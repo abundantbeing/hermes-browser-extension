@@ -4,6 +4,7 @@
 
 ### Added
 
+- Hermes Control reaches controls inside the frames of an attached page, such as a live stream's chat box, an embedded player or a comment box, so Hermes can read the chat, click Send and type into the composer. The page view lists them after the page's own, with refs like `@f1e12` that keep their number when another frame comes or goes, and part of the view is reserved for them so a long page cannot push the chat out. Frames follow the page's rules: a frame on a restricted page (a checkout or banking page inside an allowed page) is never read, and nothing is read once you detach the debugger, press Pause or Stop, turn control off or release the tab. A frame from another site that Chrome runs in its own process is not covered yet, and at most 8 frames of 400 controls each are read.
 - Approval and question cards also work on session-authority gateways, using their prompt events and resume snapshot.
 - A note under a long paste says how much is sent as a head and tail excerpt and how much stays on this device (#94). Thanks to @Isneezekittens and @MingChunWing (#95).
 - A one-time note when a session passes 100 messages, since long shared sessions can fall out of sync with other Hermes clients. Thanks to @iamformlesslol (#76) and @RawNuke (#70).

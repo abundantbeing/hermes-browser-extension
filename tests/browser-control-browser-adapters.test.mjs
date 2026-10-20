@@ -212,7 +212,6 @@ test('Chromium Phase 6 adapter snapshots AX refs through one persistent session 
   assert.deepEqual(calls.map((call) => call[0] === 'command' ? `${call[0]}:${call[2]}` : call[0]), [
     'attach',
     'command:Accessibility.enable',
-    'command:Page.enable',
     'command:Page.getFrameTree',
     'command:Accessibility.getFullAXTree',
   ]);
@@ -223,46 +222,227 @@ test('Chromium Phase 6 adapter snapshots AX refs through one persistent session 
   assert.equal(await adapter.releaseTab(7), false, 'releasing an unattached tab is a no-op');
 });
 
+// --- child frames: a live chat, an embedded player, a comment box --------------------------------------------------
+
+const axNode = (nodeId, role, name, backendDOMNodeId, extra = {}) => ({
+  nodeId: String(nodeId), role: { value: role }, name: { value: name }, ignored: false,
+  ...(backendDOMNodeId ? { backendDOMNodeId } : {}), ...extra,
+});
+const editable = [{ name: 'editable', value: { value: 'plaintext' } }];
+const frameNode = (id, url, childFrames = []) => ({ frame: { id, url }, ...(childFrames.length ? { childFrames } : {}) });
+const frameTreeOf = (...children) => ({ frameTree: { frame: { id: 'MAIN', url: 'https://example.test/start' }, childFrames: children } });
+const mainFrameTree = () => ({
+  nodes: [axNode(1, 'button', 'Search', 44), axNode(2, 'StaticText', 'Public page text')],
+});
+const axFrameIds = (calls) => calls
+  .filter((call) => call[0] === 'command' && call[2] === 'Accessibility.getFullAXTree')
+  .map((call) => call[3]?.frameId || '');
+
+// The adapter with `frames` as the page's frame tree and `trees[frameId]` as each child's accessibility tree.
+function chromiumWithFrames(frames, trees = {}) {
+  const chromium = chromiumApis();
+  chromium.handlers['Page.getFrameTree'] = () => frameTreeOf(...frames);
+  chromium.handlers['Accessibility.getFullAXTree'] = (params) => {
+    if (!params?.frameId) return mainFrameTree();
+    const tree = trees[params.frameId];
+    if (typeof tree === 'function') return tree(params);
+    if (tree instanceof Error) throw tree;
+    return tree || { nodes: [axNode(1, 'StaticText', `Text of ${params.frameId}`), axNode(2, 'button', `Button of ${params.frameId}`, 900)] };
+  };
+  return chromium;
+}
+
 test('Chromium snapshot includes a child frame so framed UI is reachable, and skips a frame that cannot be read', async () => {
   const { createChromiumCdpAdapter } = await adaptersModule();
-  const { api, calls, handlers } = chromiumApis();
-  // A live chat is its own frame: the main frame never holds the composer.
-  handlers['Page.getFrameTree'] = () => ({
-    frameTree: {
-      frame: { id: 'MAIN' },
-      childFrames: [{ frame: { id: 'CHAT' } }, { frame: { id: 'DEAD' } }],
+  const { api, calls } = chromiumWithFrames(
+    [frameNode('CHAT', 'https://example.test/live_chat?v=1'), frameNode('DEAD', 'https://example.test/gone')],
+    {
+      // A live chat is its own frame: the main frame never holds the composer.
+      CHAT: { nodes: [axNode(1, 'textbox', 'Chat message', 46, { properties: editable }), axNode(2, 'StaticText', 'Live chat text')] },
+      DEAD: new Error('No frame for given id found'),
     },
-  });
-  handlers['Accessibility.getFullAXTree'] = (params) => {
-    if (params?.frameId === 'CHAT') {
-      return {
-        nodes: [
-          { nodeId: '1', backendDOMNodeId: 46, role: { value: 'textbox' }, name: { value: 'Chat message' }, properties: [{ name: 'editable', value: { value: 'plaintext' } }], ignored: false },
-          { nodeId: '2', role: { value: 'StaticText' }, name: { value: 'Live chat text' }, ignored: false },
-        ],
-      };
-    }
-    if (params?.frameId === 'DEAD') throw new Error('Session with given id not found');
-    return {
-      nodes: [
-        { nodeId: '1', backendDOMNodeId: 44, role: { value: 'button' }, name: { value: 'Search' }, ignored: false },
-        { nodeId: '2', role: { value: 'StaticText' }, name: { value: 'Public page text' }, ignored: false },
-      ],
-    };
-  };
+  );
 
   const adapter = createChromiumCdpAdapter({ browserApi: api });
   const snapshot = await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
 
   assert.match(snapshot.text, /Public page text/);
-  assert.match(snapshot.text, /Live chat text/, 'the child frame text reaches the page view');
+  assert.doesNotMatch(snapshot.text, /Live chat text/, 'the page text and the frames\' text are kept apart');
+  assert.match(snapshot.frameText, /Live chat text/, 'the child frame text reaches the page view');
   assert.deepEqual(snapshot.nodes.map((node) => [node.role, node.name, node.backendDOMNodeId, node.frameId || '']), [
     ['button', 'Search', 44, ''],
-    ['textbox', 'Chat message', 46, '1'],
-  ], 'a child-frame node is ref-able and keeps the frame it came from');
-  const axCalls = calls.filter((call) => call[0] === 'command' && call[2] === 'Accessibility.getFullAXTree');
-  assert.deepEqual(axCalls.map((call) => call[3]?.frameId || ''), ['', 'CHAT', 'DEAD'],
+    ['textbox', 'Chat message', 46, 'CHAT'],
+  ], 'a child-frame node is ref-able and keeps the CDP id of the frame it came from');
+  assert.deepEqual(axFrameIds(calls), ['', 'CHAT', 'DEAD'],
     'the main frame and every child frame are described, and an unreadable frame does not fail the snapshot');
+  assert.equal(snapshot.truncated, undefined, 'nothing was cut');
+});
+
+test('Chromium snapshot describes the main frame before it asks for any child frame', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames([frameNode('CHAT', 'https://example.test/live_chat')]);
+
+  await createChromiumCdpAdapter({ browserApi: api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(commandMethods(calls).filter((method) => method.startsWith('Accessibility.getFull') || method === 'Page.getFrameTree'),
+    ['Page.getFrameTree', 'Accessibility.getFullAXTree', 'Accessibility.getFullAXTree']);
+  assert.equal(axFrameIds(calls)[0], '');
+});
+
+test('Chromium snapshot never reads a child frame on a restricted page, or anything inside one', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames([
+    // An allowed page can embed a checkout; that frame is not read, and neither is what it embeds.
+    frameNode('PAY', 'https://example.test/checkout/pay', [frameNode('HELP', 'https://widget.test/help'), frameNode('BLANKIN', 'about:blank')]),
+    frameNode('BANK', 'https://mybank.example/accounts'),
+    frameNode('EXT', 'chrome-extension://abcdef/page.html'),
+    frameNode('DATA', 'data:text/html,hello'),
+    frameNode('BLOB', 'blob:https://example.test/1234'),
+    frameNode('NEW', ''),
+    frameNode('CHAT', 'https://example.test/live_chat?v=1'),
+  ]);
+
+  const adapter = createChromiumCdpAdapter({ browserApi: api });
+  const snapshot = await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(axFrameIds(calls), ['', 'CHAT'], 'only the frame on an ordinary page is asked for its tree');
+  assert.doesNotMatch(JSON.stringify(snapshot), /PAY|BANK|HELP|EXT|DATA|BLOB|BLANKIN|NEW/);
+  assert.match(snapshot.frameText, /Text of CHAT/);
+});
+
+test('Chromium snapshot reads inline frames (srcdoc and scripted blank frames) under their parent\'s rules', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames([
+    frameNode('SRCDOC', 'about:srcdoc'),
+    frameNode('BLANK', 'about:blank'),
+    frameNode('CHAT', 'https://example.test/live_chat', [frameNode('NESTED', 'about:srcdoc')]),
+    // an inline frame inside a restricted page is part of that page
+    frameNode('PAY', 'https://example.test/checkout', [frameNode('PAYBLANK', 'about:blank')]),
+  ]);
+
+  const snapshot = await createChromiumCdpAdapter({ browserApi: api })
+    .execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(axFrameIds(calls), ['', 'SRCDOC', 'BLANK', 'CHAT', 'NESTED']);
+  assert.deepEqual([...new Set(snapshot.nodes.map((node) => node.frameId || ''))], ['', 'SRCDOC', 'BLANK', 'CHAT', 'NESTED']);
+});
+
+test('Chromium snapshot reads at most eight child frames', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api, calls } = chromiumWithFrames(Array.from({ length: 12 }, (_, index) => frameNode(`F${index}`, `https://example.test/frame-${index}`)));
+
+  await createChromiumCdpAdapter({ browserApi: api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.deepEqual(axFrameIds(calls), ['', ...Array.from({ length: 8 }, (_, index) => `F${index}`)]);
+});
+
+test('Chromium snapshot of a tab that cannot report its frame tree still describes the main frame', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  chromium.handlers['Page.getFrameTree'] = () => { throw new Error('Not allowed'); };
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+
+  const snapshot = await adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.match(snapshot.text, /Public page text/);
+  assert.deepEqual(axFrameIds(chromium.calls), ['']);
+});
+
+test('Chromium snapshot stops reading when the person detaches the debugger, and never attaches again to finish', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const frames = [frameNode('ONE', 'https://example.test/one'), frameNode('TWO', 'https://example.test/two'), frameNode('THREE', 'https://example.test/three')];
+
+  // The detach arrives while a child frame's tree is being read, and the in-flight command fails with it.
+  for (const failure of ['Detached while handling command.', 'Some unrelated failure text']) {
+    const chromium = chromiumWithFrames(frames, {
+      ONE: () => { chromium.emitDetach(7, 'canceled_by_user'); throw new Error(failure); },
+    });
+    const detached = [];
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, onDebuggerDetach: (event) => detached.push(event) });
+
+    await assert.rejects(adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() }));
+
+    assert.deepEqual(axFrameIds(chromium.calls), ['', 'ONE'], `no further frame is read after the detach (${failure})`);
+    assert.equal(countCalls(chromium.calls, 'attach'), 1, `the debugger is not attached again (${failure})`);
+    assert.equal(detached.length, 1);
+  }
+});
+
+test('Chromium snapshot does not carry on to the next frame after a detach that lands between two frames', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumWithFrames(
+    [frameNode('ONE', 'https://example.test/one'), frameNode('TWO', 'https://example.test/two')],
+    { ONE: () => { chromium.emitDetach(7, 'replaced_with_devtools'); return { nodes: [axNode(1, 'button', 'One', 51), axNode(2, 'StaticText', 'One text')] }; } },
+  );
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+
+  await assert.rejects(adapter.execute('browser_snapshot', {}, { scope, signal: openSignal() }), { code: 'debugger_detached' });
+
+  assert.deepEqual(axFrameIds(chromium.calls), ['', 'ONE']);
+  assert.equal(countCalls(chromium.calls, 'attach'), 1);
+});
+
+test('Chromium snapshot stops reading frames once its command is cancelled', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const controller = new AbortController();
+  const chromium = chromiumWithFrames(
+    [frameNode('ONE', 'https://example.test/one'), frameNode('TWO', 'https://example.test/two')],
+    { ONE: () => { controller.abort(new Error('Browser control stopped.')); return { nodes: [axNode(1, 'button', 'One', 51), axNode(2, 'StaticText', 'x')] }; } },
+  );
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+
+  await assert.rejects(adapter.execute('browser_snapshot', {}, { scope, signal: controller.signal }), /Browser control stopped/);
+
+  assert.deepEqual(axFrameIds(chromium.calls), ['', 'ONE']);
+});
+
+test('Chromium snapshot reports a child frame cut at its cap as cut, with the true number of controls', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const buttons = (count) => ({ nodes: [axNode(0, 'StaticText', 'Emoji picker'), ...Array.from({ length: count }, (_, index) => axNode(index + 1, 'button', `Emoji ${index}`, 1000 + index))] });
+  for (const full of [false, true]) {
+    const over = chromiumWithFrames([frameNode('BIG', 'https://example.test/emoji')], { BIG: buttons(401) });
+    const snapshot = await createChromiumCdpAdapter({ browserApi: over.api })
+      .execute('browser_snapshot', { full }, { scope, signal: openSignal() });
+
+    assert.equal(snapshot.nodes.filter((node) => node.frameId === 'BIG').length, 400, `the frame keeps 400 controls (full=${full})`);
+    assert.equal(snapshot.truncated, true, `the cut is marked (full=${full})`);
+    assert.equal(snapshot.element_count, 1 + 401, `every control is counted, kept or not (full=${full})`);
+  }
+
+  const exact = chromiumWithFrames([frameNode('BIG', 'https://example.test/emoji')], { BIG: buttons(400) });
+  const whole = await createChromiumCdpAdapter({ browserApi: exact.api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+  assert.equal(whole.truncated, undefined, 'a frame at exactly the cap lost nothing');
+  assert.equal(whole.element_count, 1 + 400);
+});
+
+test('Chromium snapshot keeps room for a child frame\'s text when the page\'s own text is long', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumWithFrames([frameNode('CHAT', 'https://example.test/live_chat')], {
+    CHAT: { nodes: [axNode(1, 'textbox', 'Chat', 46, { properties: editable }), ...Array.from({ length: 30 }, (_, index) => axNode(index + 2, 'StaticText', `chat message ${index}`))] },
+  });
+  const mainTexts = Array.from({ length: 400 }, (_, index) => axNode(index + 10, 'StaticText', `recommended video number ${index} with a long sample title to fill the budget`));
+  const original = chromium.handlers['Accessibility.getFullAXTree'];
+  chromium.handlers['Accessibility.getFullAXTree'] = (params) => (params?.frameId ? original(params) : { nodes: [axNode(1, 'button', 'Search', 44), ...mainTexts] });
+
+  const compactView = await createChromiumCdpAdapter({ browserApi: chromium.api })
+    .execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.ok(compactView.text.length <= 6_000 * 0.7 + 200, `the page's own text stays within its share (${compactView.text.length})`);
+  assert.match(compactView.frameText, /chat message 0/);
+  assert.match(compactView.frameText, /chat message 29/);
+  assert.ok(compactView.nodes.some((node) => node.frameId === 'CHAT' && node.name === 'Chat'));
+});
+
+test('Chromium snapshot without child frames is what it was before they were read', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { api } = chromiumApis();
+
+  const snapshot = await createChromiumCdpAdapter({ browserApi: api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+  assert.equal('frameText' in snapshot, false);
+  assert.equal('truncated' in snapshot, false);
+  assert.equal(snapshot.element_count, 2);
+  assert.ok(snapshot.nodes.every((node) => !('frameId' in node)));
 });
 
 test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigation, back, and screenshot sequences on one attach', async () => {

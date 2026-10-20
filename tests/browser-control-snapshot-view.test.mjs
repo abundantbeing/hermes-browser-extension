@@ -118,3 +118,89 @@ test('does not repeat element and heading text in the excerpt', () => {
   assert.equal(view.text.endsWith('\n\nPlans start at ten dollars.'), true);
   assert.equal((view.text.match(/Pricing/g) || []).length, 1);
 });
+
+// --- child frames ----------------------------------------------------------------------------------------------------
+
+const frameRef = (number, role, name, key = '1') => ({ ref: `@f${key}e${number}`, role, name, sensitive: false, frameId: key });
+const ownLinks = (count) => Array.from({ length: count }, (_, index) => ref(index + 1, 'link', `Recommended video ${index} with a sample title`));
+
+test('child-frame controls are listed after the page\'s own, with part of the list held back for them', () => {
+  const view = renderControlSnapshot({
+    refs: [...ownLinks(200), frameRef(201, 'textbox', 'Chat'), frameRef(202, 'button', 'Send')],
+    element_count: 202,
+  }, { maxChars: 1_500 });
+
+  assert.match(view.text, /\[@f1e201\] textbox "Chat"\n\[@f1e202\] button "Send"/);
+  assert.ok(view.text.indexOf('[@e1]') < view.text.indexOf('[@f1e201]'), 'the page\'s own controls come first');
+  assert.ok(view.text.length <= 1_500);
+  assert.equal(view.truncated, true);
+  assert.deepEqual(view.refs.slice(-2).map((item) => [item.ref, item.frameId]), [['@f1e201', '1'], ['@f1e202', '1']]);
+  assert.match(view.text, /\d+ more elements/);
+});
+
+test('the share held back for child frames is no more than they need, and no more than a quarter of the list', () => {
+  const small = renderControlSnapshot({ refs: [...ownLinks(200), frameRef(201, 'button', 'Send')], element_count: 201 }, { maxChars: 1_500 });
+  const withoutFrame = renderControlSnapshot({ refs: ownLinks(200), element_count: 200 }, { maxChars: 1_500 });
+  const ownShown = (text) => (text.match(/\[@e\d+\]/g) || []).length;
+  assert.ok(ownShown(small.text) >= ownShown(withoutFrame.text) - 2, 'one framed control costs the page about one line');
+
+  const manyFramed = renderControlSnapshot({
+    refs: [...ownLinks(200), ...Array.from({ length: 150 }, (_, index) => frameRef(201 + index, 'button', `Emoji ${index}`))],
+    element_count: 350,
+  }, { maxChars: 1_500 });
+  assert.ok(ownShown(manyFramed.text) >= ownShown(withoutFrame.text) * 0.6, 'the page keeps most of its list');
+  assert.ok((manyFramed.text.match(/\[@f1e\d+\]/g) || []).length > 0);
+});
+
+test('a page whose controls all fit lists every one of them, framed or not, in order', () => {
+  const view = renderControlSnapshot({
+    refs: [ref(1, 'button', 'Subscribe'), frameRef(2, 'textbox', 'Chat'), frameRef(3, 'button', 'Send', '2')],
+    element_count: 3,
+  });
+
+  assert.equal(view.text, '[@e1] button "Subscribe"\n[@f1e2] textbox "Chat"\n[@f2e3] button "Send"');
+  assert.equal(view.truncated, false);
+});
+
+test('text inside child frames follows the page\'s own text under its own heading, with room held back for it', () => {
+  const longPage = Array.from({ length: 200 }, (_, index) => `Recommended video ${index} with a long sample title that fills the page text`).join('\n');
+  const view = renderControlSnapshot({
+    refs: [ref(1, 'button', 'Subscribe')],
+    text: longPage,
+    frameText: 'viewer1 first chat message\nviewer2 second chat message',
+    element_count: 1,
+  }, { maxChars: 3_000 });
+
+  assert.match(view.text, /\[text inside embedded frames\]\nviewer1 first chat message\nviewer2 second chat message$/);
+  assert.ok(view.text.length <= 3_000);
+  assert.equal(view.truncated, true, 'the page text was cut');
+});
+
+test('text inside child frames is redacted, deduplicated against element names, and marks a cut', () => {
+  const secret = 'sk-live-' + 'a'.repeat(30);
+  const view = renderControlSnapshot({
+    refs: [frameRef(1, 'button', 'Send')],
+    text: '',
+    frameText: `Send\nmy key is ${secret}\n${'chat line that is rather long '.repeat(40)}`,
+    element_count: 1,
+  }, { maxChars: 700 });
+
+  assert.doesNotMatch(view.text, new RegExp(secret));
+  assert.equal(view.text.split('Send').length - 1, 1, 'the button name is not repeated in the frame text');
+  assert.equal(view.truncated, true);
+});
+
+test('there is no frame section when no child frame has text', () => {
+  const view = renderControlSnapshot({ refs: [ref(1, 'button', 'Subscribe')], text: 'Live stream', frameText: '', element_count: 1 });
+
+  assert.doesNotMatch(view.text, /embedded frames/);
+  assert.equal(renderControlSnapshot({ refs: [ref(1, 'button', 'Subscribe')], text: 'Live stream', element_count: 1 }).text, view.text);
+});
+
+test('a count the browser reports beyond the controls it returned is shown as omitted', () => {
+  const view = renderControlSnapshot({ refs: [ref(1, 'button', 'One'), frameRef(2, 'button', 'Two')], element_count: 12 }, { fullText: true });
+
+  assert.match(view.text, /… 10 more elements/);
+  assert.equal(view.element_count, 12);
+  assert.equal(view.truncated, true);
+});
