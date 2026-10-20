@@ -10,13 +10,13 @@
 //   CHROME_PATH=<chrome for testing> npm run test:e2e:voice-live
 //   VOICE_QA_DIR=<dir> keeps screenshots and evidence (default: OS temp dir)
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
+import { launchChrome } from './e2e-chrome-env.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const QA = path.resolve(process.env.VOICE_QA_DIR || path.join(os.tmpdir(), 'hbe-voice-live-qa'));
@@ -301,13 +301,12 @@ await rm(PROFILE, { recursive: true, force: true });
 const wav = await wavFixture();
 const mock = await servers();
 let chromeErrors = '';
-const chrome = spawn(CHROME, [
+const chrome = launchChrome(CHROME, [
   '--headless=new', '--no-sandbox', '--disable-gpu', '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
   '--remote-debugging-port=0', `--user-data-dir=${PROFILE}`, `--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`,
   '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', `--use-file-for-fake-audio-capture=${wav}`,
-  // The peer speaks through a WebRTC track. The browser still mutes its own
-  // output so a test never reaches the speakers.
-  '--mute-audio', '--autoplay-policy=no-user-gesture-required', '--disable-features=WebRtcHideLocalIpsWithMdns',
+  // The peer speaks through a WebRTC track; launchChrome mutes the browser's own output.
+  '--autoplay-policy=no-user-gesture-required', '--disable-features=WebRtcHideLocalIpsWithMdns',
   `chrome-extension://${extensionId(EXT)}/request-permissions.html`,
 ], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
 chrome.stderr.on('data', (chunk) => { chromeErrors = (chromeErrors + chunk.toString()).slice(-16000); });

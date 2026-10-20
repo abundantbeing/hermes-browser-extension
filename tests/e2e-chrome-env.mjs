@@ -10,7 +10,10 @@
 //     elsewhere.
 //   - ensureExtensionStartupPage() recovers the startup tab when Chromium
 //     navigates it before the unpacked extension is registered.
-import { spawnSync } from 'node:child_process';
+//   - launchChrome() is the one way a check starts a browser, so every browser
+//     it opens is muted. tests/test-browser-silence.test.mjs fails any script
+//     that spawns Chrome another way.
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -47,6 +50,20 @@ export function resolveChromeExecutable(extraCandidates = []) {
   const found = candidates.find((candidate) => existsSync(candidate));
   if (!found) throw new Error('Chrome for Testing not found. Set CHROME_PATH.');
   return found;
+}
+
+// A check's browser never makes noise: a page with a video or a live stream
+// would otherwise play through the speakers of whoever runs the check.
+export const MUTE_AUDIO_FLAG = '--mute-audio';
+
+/** `args` with the mute flag first and exactly once, whatever the caller passed. */
+export function chromeLaunchArgs(args = []) {
+  return [MUTE_AUDIO_FLAG, ...args.filter((arg) => arg !== MUTE_AUDIO_FLAG)];
+}
+
+/** Starts Chrome muted. Same arguments as `spawn(executable, args, options)`; `start` is only for tests. */
+export function launchChrome(executable, args = [], options = {}, start = spawn) {
+  return start(executable, chromeLaunchArgs(args), options);
 }
 
 export function killProcessTree(child) {
