@@ -5038,11 +5038,20 @@ button.active-profile-indicator {
   background: rgba(var(--hermes-accent-rgb),0.09);
   cursor: progress;
 }
-.settings-connection-test.is-testing .settings-connection-test-icon {
-  animation: settings-connection-orbit 0.9s linear infinite;
+/* While testing (or still connecting) the bars climb like a phone finding
+   signal: one, two, three, two, one. A two-wide mask with a hard edge steps
+   between the gaps in the stock glyph (its bars end at 35% and 65%). */
+.settings-connection-test.is-testing .settings-connection-test-icon,
+#testConnectionButton[data-signal="searching"] .settings-connection-test-icon {
+  -webkit-mask: linear-gradient(90deg, #000 0 50%, rgba(0, 0, 0, 0.25) 50% 100%) 64.6% 0 / 200% 100% no-repeat;
+  mask: linear-gradient(90deg, #000 0 50%, rgba(0, 0, 0, 0.25) 50% 100%) 64.6% 0 / 200% 100% no-repeat;
+  animation: settings-connection-climb 1.2s step-end infinite;
 }
-@keyframes settings-connection-orbit {
-  to { transform: rotate(360deg); }
+@keyframes settings-connection-climb {
+  0%, 100% { -webkit-mask-position: 64.6% 0; mask-position: 64.6% 0; }
+  25% { -webkit-mask-position: 35.4% 0; mask-position: 35.4% 0; }
+  50% { -webkit-mask-position: 0 0; mask-position: 0 0; }
+  75% { -webkit-mask-position: 35.4% 0; mask-position: 35.4% 0; }
 }
 .icon-refresh {
   display: inline-flex;
@@ -5078,10 +5087,31 @@ button.active-profile-indicator {
   .icon-refresh.is-refreshing .refresh-glyph {
     animation: none;
   }
-  .settings-connection-test.is-testing .settings-connection-test-icon {
+  /* Hold at two bars instead of climbing. */
+  .settings-connection-test.is-testing .settings-connection-test-icon,
+  #testConnectionButton[data-signal="searching"] .settings-connection-test-icon {
     animation: none;
+    -webkit-mask-position: 35.4% 0;
+    mask-position: 35.4% 0;
   }
 }
+/* Settings test button: icon only. The signal glyph shows the connection: full
+   bars in the accent when connected, one bar in the danger colour when the
+   gateway is unreachable, the bars climbing while testing, all dim when
+   nothing is set up. Masks light the bars, so the glyph itself stays stock. */
+#testConnectionButton { padding-inline: 7px; }
+#testConnectionButton .settings-connection-test-icon { transition: color 180ms ease, opacity 180ms ease; }
+#testConnectionButton[data-signal="none"] .settings-connection-test-icon { opacity: 0.4; }
+#testConnectionButton[data-signal="strong"] .settings-connection-test-icon { color: var(--hermes-accent, currentColor); }
+#testConnectionButton[data-signal="lost"] .settings-connection-test-icon {
+  color: var(--hermes-danger, #ff6b6b);
+  /* The first bar spans the left third of the glyph. */
+  -webkit-mask: linear-gradient(90deg, #000 0 34%, rgba(0, 0, 0, 0.3) 34%);
+  mask: linear-gradient(90deg, #000 0 34%, rgba(0, 0, 0, 0.3) 34%);
+}
+:root[data-hermes-effective-mode="light"] #testConnectionButton[data-signal="lost"] .settings-connection-test-icon { color: var(--hermes-danger, #b3261e); }
+#testConnectionButton:hover .settings-connection-test-icon,
+#testConnectionButton:focus-visible .settings-connection-test-icon { color: currentColor; opacity: 1; }
 .secondary { background: var(--hermes-paper); color: var(--hermes-ink); }
 #testConnectionButton.success {
   background: rgba(var(--hermes-accent-rgb), 0.18);
