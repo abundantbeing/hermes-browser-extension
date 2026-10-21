@@ -1144,189 +1144,297 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
   overflow: visible;
   flex: 0 0 auto;
 }
+/* Startup screen: the Meander. A Greek key border draws itself around the
+   panel as the readiness progress bar (lib/startup-screen.mjs). Every colour
+   comes from the active theme, so it holds in all themes and modes. */
 .startup-screen {
+  --startup-fg: var(--hermes-fg);
+  --startup-fg-rgb: var(--hermes-fg-rgb);
+  --startup-bg: var(--hermes-app-bg);
+  --startup-line: var(--hermes-accent, var(--startup-fg));
+  --startup-line-rgb: var(--hermes-accent-rgb, var(--startup-fg-rgb));
+  --startup-error: var(--hermes-danger, #ff9a9a);
   position: fixed;
   inset: 0;
   z-index: 60;
   display: grid;
   place-items: center;
-  padding: clamp(20px, 6vw, 32px);
-  color: var(--hermes-fg);
+  padding: 44px 40px 96px;
+  color: var(--startup-fg);
   background:
-    repeating-linear-gradient(0deg, rgba(var(--hermes-fg-rgb),0.026) 0 1px, transparent 1px 5px),
-    radial-gradient(circle at 50% 24%, rgba(var(--hermes-fg-rgb),0.16), transparent 27%),
-    linear-gradient(160deg, rgba(var(--hermes-panel-rgb),0.98), rgba(var(--hermes-bg-rgb),0.96)),
+    radial-gradient(130% 100% at 50% 42%, transparent 52%, rgba(var(--hermes-shadow-rgb), 0.32) 100%),
+    radial-gradient(120% 85% at 50% 32%, rgba(var(--hermes-panel-rgb), 0.98), rgba(var(--hermes-bg-rgb), 0.98)),
     var(--hermes-app-bg);
   overflow: hidden;
   isolation: isolate;
 }
 .startup-screen[hidden] { display: none; }
+/* The panel's rotating background art stays faintly visible behind the screen. */
 .startup-screen::before {
   content: '';
   position: absolute;
-  inset: -2%;
+  inset: -3%;
   z-index: -2;
-  background: var(--hermes-fg);
+  background: var(--startup-fg);
   -webkit-mask: var(--background-art, url("assets/img/hermes-browser-enter-gate-ink.png")) center / cover no-repeat;
   mask: var(--background-art, url("assets/img/hermes-browser-enter-gate-ink.png")) center / cover no-repeat;
-  opacity: 0.15;
-  mix-blend-mode: soft-light;
+  opacity: 0.12;
   transform-origin: center;
   animation: startup-field-breathe 9s ease-in-out infinite;
   pointer-events: none;
 }
-.startup-screen::after {
-  content: '';
+/* Light modes: --hermes-fg is the text colour on filled bars there, so the
+   screen switches to ink on paper to stay readable in every light palette. */
+html[data-hermes-mode="light"] .startup-screen {
+  --startup-fg: var(--hermes-ink);
+  --startup-fg-rgb: var(--hermes-ink-rgb);
+  --startup-bg: var(--hermes-paper);
+  --startup-error: var(--hermes-danger, #c62828);
+  background:
+    radial-gradient(circle at 50% 24%, rgba(var(--hermes-ink-rgb), 0.06), transparent 42%),
+    linear-gradient(180deg, var(--hermes-paper) 0%, color-mix(in srgb, var(--hermes-paper) 94%, var(--hermes-ink)) 100%),
+    var(--hermes-paper);
+}
+html[data-hermes-mode="light"] .startup-screen::before { opacity: 0.07; }
+.startup-backtype {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+.startup-backtype text {
+  font: 360px "Rules Gothic Compressed", "HermesDisplay", sans-serif;
+  fill: rgba(var(--startup-fg-rgb), 0.042);
+  stroke: rgba(var(--startup-fg-rgb), 0.042);
+  stroke-width: 5;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.startup-meander {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(180deg,
-    transparent 0 43%,
-    rgba(var(--hermes-fg-rgb),0.018) 46%,
-    rgba(var(--hermes-fg-rgb),0.06) 49%,
-    rgba(var(--hermes-fg-rgb),0.16) 50%,
-    rgba(var(--hermes-accent-rgb),0.055) 51%,
-    rgba(var(--hermes-fg-rgb),0.024) 54%,
-    transparent 58%);
-  mix-blend-mode: soft-light;
-  will-change: transform, opacity;
-  animation: startup-scan-refined 5.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
 }
+.startup-meander-rule { fill: none; stroke: rgba(var(--startup-fg-rgb), 0.12); stroke-width: 0.8; }
+.startup-meander-ghost { fill: none; stroke: rgba(var(--startup-fg-rgb), 0.15); stroke-width: 1.1; }
+.startup-meander-line {
+  fill: none;
+  stroke: var(--startup-line);
+  stroke-width: 1.6;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  filter: drop-shadow(0 0 3px rgba(var(--startup-line-rgb), 0.7));
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.3, 0.7, 0.2, 1), stroke 0.4s ease;
+}
+.startup-meander-head {
+  fill: var(--startup-line);
+  filter: drop-shadow(0 0 6px var(--startup-line)) drop-shadow(0 0 2px var(--startup-line));
+  transition: opacity 0.6s ease;
+}
+.startup-meander-corner { fill: none; stroke: var(--startup-line); stroke-width: 1.2; opacity: 0; transition: opacity 0.6s ease; }
+.startup-meander-corner.is-lit { opacity: 1; }
+.startup-screen.is-error .startup-meander-line { stroke: var(--startup-error); filter: none; }
+.startup-screen.is-error .startup-meander-head { fill: var(--startup-error); filter: none; }
+.startup-screen.is-ready .startup-meander-head { opacity: 0; }
 .startup-stage {
-  width: min(100%, 390px);
-  max-height: 100%;
+  position: relative;
+  z-index: 1;
+  width: min(100%, 300px);
   display: grid;
-  gap: 12px;
-  align-content: center;
-  overflow-y: auto;
-  overscroll-contain: contain;
+  justify-items: center;
 }
 .startup-brand-lockup {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
+  gap: 18px;
   justify-items: center;
   align-items: center;
   text-align: center;
 }
 .startup-brand-icon {
-  position: relative;
   display: block;
-  width: 132px;
-  aspect-ratio: 1062 / 1332;
-  background: var(--hermes-fg);
-  -webkit-mask: url("assets/img/hermes-browser-extension-icon-ink.png") center / contain no-repeat;
-  mask: url("assets/img/hermes-browser-extension-icon-ink.png") center / contain no-repeat;
-  filter: drop-shadow(0 0 16px rgba(var(--hermes-fg-rgb),0.24));
-  animation: startup-icon-drift 2.8s ease-in-out infinite;
+  width: 140px;
+  aspect-ratio: 4519 / 4895;
+  background: var(--startup-fg);
+  -webkit-mask: url("assets/img/hermes-badge-line.svg") center / contain no-repeat;
+  mask: url("assets/img/hermes-badge-line.svg") center / contain no-repeat;
 }
-.startup-copy { width: 100%; }
-.startup-copy p:not(.eyebrow) {
-  margin: 0 auto;
-  max-width: 29ch;
-  max-height: 8.7em;
-  overflow: hidden;
-  color: rgba(var(--hermes-fg-rgb),0.72);
-  font: calc(10px * var(--hermes-text-zoom, 1))/1.45 var(--hermes-font-mono);
+html[data-hermes-mode="light"] .startup-brand-icon {
+  -webkit-mask-image: url("assets/img/hermes-badge-solid.svg");
+  mask-image: url("assets/img/hermes-badge-solid.svg");
 }
-.startup-progress {
-  height: 3px;
-  border: 1px solid rgba(var(--hermes-fg-rgb),0.34);
-  background: rgba(var(--hermes-shadow-rgb),0.2);
-  overflow: hidden;
-}
-.startup-progress span {
+.startup-wordmark {
   display: block;
-  width: 0;
-  height: 100%;
-  background: var(--hermes-fg);
-  box-shadow: 0 0 12px rgba(var(--hermes-fg-rgb),0.48);
-  transition: width 220ms ease-out;
+  width: 156px;
+  aspect-ratio: 2918.77 / 1453.88;
+  background: var(--startup-fg);
+  -webkit-mask: url("assets/img/hermes-browser-extension-logo.svg") center / contain no-repeat;
+  mask: url("assets/img/hermes-browser-extension-logo.svg") center / contain no-repeat;
 }
-.startup-step-list {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+.startup-copy {
+  width: 100%;
+  margin-top: 30px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(var(--startup-fg-rgb), 0.3);
+  text-align: left;
 }
-.startup-step {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-  padding: 7px 9px;
-  border: 1px solid rgba(var(--hermes-fg-rgb),0.16);
-  background: rgba(var(--hermes-shadow-rgb),0.1);
-  font-family: var(--hermes-font-mono);
-  font-size: calc(10px * var(--hermes-text-zoom, 1));
+.startup-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font: 400 calc(10px * var(--hermes-text-zoom, 1))/16px var(--hermes-font-mono);
+  letter-spacing: 0.1em;
+}
+.startup-count { opacity: 0.7; white-space: nowrap; }
+/* An accent too pale for text keeps its colour on the key but not the label. */
+.startup-screen.startup-quiet-accent .startup-state { color: var(--startup-fg); }
+.startup-state { color: var(--startup-line); letter-spacing: 0.14em; text-transform: uppercase; text-align: right; }
+.startup-label {
+  display: -webkit-box;
+  min-height: 19px;
+  margin: 4px 0 0;
+  overflow: hidden;
+  font: 600 calc(13px * var(--hermes-text-zoom, 1))/19px "Space Grotesk", var(--hermes-font-ui);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
-.startup-step strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.startup-step span { color: rgba(var(--hermes-fg-rgb),0.66); }
+.startup-detail {
+  display: -webkit-box;
+  margin: 4px 0 0;
+  overflow: hidden;
+  font: 400 calc(11px * var(--hermes-text-zoom, 1))/18px "Cinzel", "Libre Baskerville", serif;
+  letter-spacing: 0.08em;
+  opacity: 0.72;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.startup-screen.is-error .startup-state,
+.startup-screen.is-error .startup-label { color: var(--startup-error); }
+.startup-screen.is-error .startup-detail,
+.startup-screen.is-setup .startup-detail {
+  font: 400 calc(10px * var(--hermes-text-zoom, 1))/18px var(--hermes-font-mono);
+  letter-spacing: 0.03em;
+  opacity: 0.88;
+}
+.startup-swap { animation: startup-swap 0.45s cubic-bezier(0.3, 0.7, 0.2, 1); }
+.startup-progress { display: none; }
 .startup-step-ready,
 .startup-step-legacy,
 .startup-step-fallback,
 .startup-step-observed,
-.startup-step-skipped { border-color: rgba(var(--hermes-fg-rgb),0.42); }
+.startup-step-skipped,
 .startup-step-error,
 .startup-step-unreachable,
-.startup-step-unconfigured { border-color: rgba(255, 96, 96, 0.72); }
+.startup-step-unconfigured { list-style: none; }
 .startup-blocked { opacity: 0.72; }
 body.startup-active .topbar {
   display: none;
 }
+/* The dock: settings and test connection as icon buttons, Connect to Hermes
+   as the one labelled action when the panel is not paired yet. */
 .startup-actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  z-index: 2;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  width: 100%;
-  margin-top: 4px;
+  gap: 8px;
   pointer-events: auto;
 }
 .startup-actions[hidden] { display: none; }
+.startup-actions [data-tip] { position: relative; }
+.startup-actions [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 3;
+  padding: 5px 8px 4px;
+  white-space: nowrap;
+  background: var(--startup-fg);
+  color: var(--startup-bg);
+  font: 14px/1 var(--hermes-font-display);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+.startup-actions [data-tip]:hover::after,
+.startup-actions [data-tip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
 body.startup-active .startup-actions #settingsButton {
   display: grid;
+  place-items: center;
   visibility: visible;
   pointer-events: auto;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
   margin: 0;
-  background: rgba(var(--hermes-panel-rgb),0.72);
-  color: var(--hermes-fg);
-  border-color: rgba(var(--hermes-fg-rgb),0.42);
+  padding: 0;
+  background: rgba(var(--startup-fg-rgb), 0.07);
+  color: var(--startup-fg);
+  border: 1px solid rgba(var(--startup-fg-rgb), 0.32);
 }
-body.startup-active .startup-actions #startupTestConnectionButton {
-  display: block;
+body.startup-active .startup-actions #startupTestConnectionButton:not([hidden]) {
+  display: grid;
+  place-items: center;
   visibility: visible;
   pointer-events: auto;
-  min-width: 142px;
-  min-height: 30px;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
   margin: 0;
-  padding: 7px 12px;
-  border-color: rgba(var(--hermes-fg-rgb),0.42);
-  background: rgba(var(--hermes-panel-rgb),0.72);
-  color: var(--hermes-fg);
-  font: 700 calc(10px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
-  letter-spacing: 0.1em;
+  padding: 0;
+  border: 1px solid rgba(var(--startup-fg-rgb), 0.32);
+  background: rgba(var(--startup-fg-rgb), 0.07);
+  color: var(--startup-fg);
+}
+body.startup-active .startup-actions #settingsButton:hover,
+body.startup-active .startup-actions #settingsButton:focus-visible,
+body.startup-active .startup-actions #startupTestConnectionButton:not([hidden]):hover,
+body.startup-active .startup-actions #startupTestConnectionButton:not([hidden]):focus-visible {
+  background: rgba(var(--startup-fg-rgb), 0.16);
+  color: var(--startup-fg);
+  border-color: rgba(var(--startup-fg-rgb), 0.62);
+}
+.startup-screen.is-error .startup-actions #startupTestConnectionButton:not([hidden]) {
+  border-color: var(--startup-error);
+  color: var(--startup-error);
 }
 body:not(.startup-active) #startupTestConnectionButton { display: none; }
 body:not(.startup-active) #startupConnectButton { display: none; }
 body.startup-active .startup-actions #startupConnectButton:not([hidden]) {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   visibility: visible;
   pointer-events: auto;
-  min-width: 142px;
   min-height: 30px;
   margin: 0;
-  padding: 7px 12px;
+  padding: 0 12px 0 9px;
   background: var(--hermes-primary-bg);
   color: var(--hermes-primary-fg);
   border-color: var(--hermes-primary-border);
-  font: 700 calc(10px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
-  letter-spacing: 0.1em;
+  font: 15px/1 var(--hermes-font-display);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 body.startup-active .startup-actions #startupConnectButton:not([hidden]):hover,
 body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-visible {
@@ -1334,25 +1442,29 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   color: var(--hermes-primary-bg, var(--hermes-ink));
   border-color: var(--hermes-primary-bg, var(--hermes-ink));
 }
+/* The screen switches on like an old TV: a bright line that opens up. */
+.startup-screen:not([hidden]) > * {
+  animation: startup-crt-on 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes startup-crt-on {
+  0% { transform: scale(0.55, 0.004); filter: brightness(5); }
+  30% { transform: scale(1, 0.004); filter: brightness(4); }
+  65% { transform: scale(1, 1.02); filter: brightness(1.6); }
+  100% { transform: none; filter: none; }
+}
 @keyframes startup-field-breathe {
-  0%, 100% { transform: scale(1.015); opacity: 0.1; }
-  50% { transform: scale(1.035); opacity: 0.16; }
+  0%, 100% { transform: scale(1.015); }
+  50% { transform: scale(1.045); }
 }
-@keyframes startup-icon-drift {
-  0%, 100% { transform: translateY(0); opacity: 0.88; }
-  50% { transform: translateY(-4px); opacity: 1; }
-}
-@keyframes startup-scan-refined {
-  0%, 10% { transform: translate3d(0, -52%, 0); opacity: 0; }
-  16% { opacity: 0.42; }
-  74% { transform: translate3d(0, 52%, 0); opacity: 0.42; }
-  82%, 100% { transform: translate3d(0, 52%, 0); opacity: 0; }
+@keyframes startup-swap {
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .startup-screen::before,
-  .startup-screen::after,
-  .startup-brand-icon { animation: none; }
-  .startup-progress span { transition: none; }
+  .startup-screen:not([hidden]) > *,
+  .startup-swap { animation: none; }
+  .startup-meander-line,
+  .startup-meander-head { transition: none; }
 }
 .connect-panel h2 { margin-bottom: 10px; }
 .connect-panel ol {
