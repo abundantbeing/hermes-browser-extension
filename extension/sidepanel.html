@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="lib/agent-prompt-card.css" />
     <link rel="stylesheet" href="lib/effort-control.css" />
     <link rel="stylesheet" href="lib/voice-wingbeat.css" />
+    <link rel="stylesheet" href="lib/pixel-icons.css" />
   </head>
   <body>
     <main class="shell">
@@ -25,28 +26,17 @@
           <span aria-hidden="true">⌄</span>
         </button>
         <button id="newSessionButton" class="settings-button icon-button" type="button" title="New Hermes Browser Extension session" aria-label="New session" data-i18n-title="ui.new.hermes.browser.extension.session" data-i18n-aria-label="ui.new.session">
-          <svg class="new-session-icon" aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg>
+          <svg class="new-session-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="plus"><path d="M13 11h7v2h-7v7h-2v-7H4v-2h7V4h2v7Z"/></svg>
         </button>
         <button id="botModeButton" class="settings-button icon-button bot-mode-button" type="button" data-i18n-title="bot_mode.open_title" data-i18n-aria-label="bot_mode.open_title" aria-label="Open Bot Mode" title="Open Bot Mode" aria-expanded="false" hidden>
-          <svg class="bot-mode-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square">
-            <rect x="4.5" y="7" width="15" height="11" />
-            <path d="M12 7V3.8M9.6 3.8h4.8" />
-            <circle cx="9.4" cy="12.2" r="1.15" fill="currentColor" stroke="none" />
-            <circle cx="14.6" cy="12.2" r="1.15" fill="currentColor" stroke="none" />
-            <path d="M9.8 15.2c1.4 1 3 1 4.4 0" />
-          </svg><span class="sr-only" data-i18n="bot_mode.title">Bot Mode</span>
+          <svg class="bot-mode-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="avatar-circle"><path d="M6 2h12v2H6zm0 18h12v2H6zM2 6h2v12H2zm18 0h2v12h-2zM6 18h2v2H6zm10 0h2v2h-2zm2-14h2v2h-2zM4 4h2v2H4zm0 14h2v2H4zm14 0h2v2h-2zM8 16h8v2H8zm2-4h4v2h-4zM8 8h2v4H8zm2-2h4v2h-4zm4 2h2v4h-2z"/></svg><span class="sr-only" data-i18n="bot_mode.title">Bot Mode</span>
         </button>
         <button id="openFullViewButton" class="settings-button icon-button" type="button" title="A new surface is being worked on" aria-label="Hermes Web" data-i18n-title="web.deprecation_title" data-i18n-aria-label="ui.hermes.web">
-          <svg class="web-view-icon" aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none">
-            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/>
-            <path d="M4.5 12h15M12 4c2.1 2.2 3.2 4.9 3.2 8S14.1 17.8 12 20M12 4c-2.1 2.2-3.2 4.9-3.2 8S9.9 17.8 12 20" stroke="currentColor" stroke-width="1.45" stroke-linecap="square"/>
-          </svg>
+          <svg class="web-view-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="globe"><path d="M6 2h12v2H6zm0 18h12v2H6zM4 4h2v2H4zm5 0h2v2H9zm0 14h2v2H9zm4 0h2v2h-2zM7 6h2v12H7zm8 0h2v12h-2zm-2-2h2v2h-2zm7 0h-2v2h2zM2 6h2v12H2zm20 0h-2v12h2zM4 18h2v2H4zm16 0h-2v2h2z"/><path d="M3 11h18v2H3z"/></svg>
           <span class="sr-only" data-i18n="web.deprecation_title">A new surface is being worked on</span>
         </button>
         <button id="settingsButton" class="settings-button icon-button" type="button" title="Settings" aria-label="Open settings" data-i18n-title="ui.settings" data-i18n-aria-label="ui.open.settings">
-          <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16">
-            <path d="M12 8.3a3.7 3.7 0 1 1 0 7.4 3.7 3.7 0 0 1 0-7.4Zm7.3 3.7c0-.5-.1-1-.2-1.5l2-1.5-2-3.5-2.4 1a8.5 8.5 0 0 0-2.6-1.5L13.8 2H10l-.4 3a8.5 8.5 0 0 0-2.6 1.5l-2.4-1-2 3.5 2 1.5a8.5 8.5 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a8.5 8.5 0 0 0 2.6 1.5l.4 3h3.8l.4-3a8.5 8.5 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5c.1-.5.2-1 .2-1.5Z" fill="currentColor"/>
-          </svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="settings-cog"><path d="M4 20h3v-2h4v4h2v-4h4v2h-2v4H9v-4H7v2H2v-5h2v3Zm18 2h-5v-2h3v-3h2v5ZM6 11H2v2h4v4H4v-2H0V9h4V7h2v4Zm14-2h4v6h-4v2h-2v-4h4v-2h-4V7h2v2Zm-6 7h-4v-2h4v2Zm-4-2H8v-4h2v4Zm6 0h-2v-4h2v4Zm-2-4h-4V8h4v2ZM7 4H4v3H2V2h5v2Zm8 0h2V2h5v5h-2V4h-3v2h-4V2h-2v4H7V4h2V0h6v4Z"/></svg>
           <span class="sr-only" data-i18n="ui.settings">Settings</span>
         </button>
         <button id="startupTestConnectionButton" class="startup-test-connection" type="button" data-i18n="ui.test.connection.f7dafbab">TEST CONNECTION</button>
@@ -76,10 +66,10 @@
           </div>
           <div class="bot-mode-head-controls">
             <button id="botModeRefreshButton" class="bot-mode-head-action" type="button" data-i18n-aria-label="ui.refresh" aria-label="Refresh">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="reload"><path d="M16 4h2v6h-2zm-2-2h2v2h-2zm0 2h2v8h-2zM4 8H2v5h2z"/><path d="M4 6h16v2H4zm4 14H6v-6h2zm2 2H8v-2h2zm0-2H8v-8h2zm10-4h2v-5h-2z"/><path d="M20 18H4v-2h16z"/></svg>
             </button>
             <button id="botModeCloseButton" class="bot-mode-head-action" type="button" data-i18n-aria-label="bot_mode.close" aria-label="Close Bot Mode">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"></path></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
             </button>
           </div>
         </header>
@@ -264,7 +254,7 @@
           <div class="new-group-title-row">
             <h2 data-i18n="bot_mode.group_sheet_label">New group chat</h2>
             <button id="newGroupCloseButton" class="group-settings-close" type="button" aria-label="Close" data-i18n-aria-label="ui.close">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"></path></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
             </button>
           </div>
           <p data-i18n="bot_mode.group_sheet_meta">Creates a bot group chat on this device</p>
@@ -303,7 +293,7 @@
             <div class="group-settings-title-row">
               <h2 class="group-settings-title">Group settings</h2>
               <button id="groupSettingsCloseButton" class="group-settings-close" type="button" aria-label="Close" data-i18n-aria-label="ui.close">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"></path></svg>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
               </button>
             </div>
             <p class="group-settings-subtitle">Rename the group or set a room picture. Members and history are kept.</p>
@@ -388,7 +378,7 @@
 
         <section id="browserIntroHero" class="hero-card" aria-label="Hermes Browser intro" data-i18n-aria-label="ui.hermes.browser.intro">
           <button id="browserIntroDismissButton" class="hero-dismiss" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">
-            <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
           </button>
           <div class="hero-copy">
             <p class="eyebrow" data-i18n="ui.local.sidecar.chrome.panel">LOCAL SIDECAR / CHROME PANEL</p>
@@ -428,7 +418,7 @@
             <span class="group-thread-hint" id="groupThreadHint">Next message will start a new thread in this group</span>
           </div>
           <button id="groupThreadExitButton" class="group-thread-exit-btn" type="button" aria-label="Exit thread view" title="Exit thread view">
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg>
           </button>
         </div>
         <div id="groupPresence" class="group-presence" data-i18n-runtime hidden>
@@ -436,7 +426,7 @@
           <div class="group-presence-status" id="groupPresenceStatus" aria-live="polite"></div>
         </div>
         <form id="composer" class="composer">
-          <button id="statusStackToggle" class="status-stack-toggle" type="button" aria-expanded="true" aria-controls="composerStatusStack" title="Show or hide status" aria-label="Show or hide status" data-i18n-title="ui.show.or.hide.status" data-i18n-aria-label="ui.show.or.hide.status"><svg viewBox="0 0 16 8" width="16" height="8" aria-hidden="true"><path d="M2 2l6 4 6-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button id="statusStackToggle" class="status-stack-toggle" type="button" aria-expanded="true" aria-controls="composerStatusStack" title="Show or hide status" aria-label="Show or hide status" data-i18n-title="ui.show.or.hide.status" data-i18n-aria-label="ui.show.or.hide.status"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="chevron-down"><path d="M13 16h-2v-2h2v2Zm-2-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-6-2H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 10H5V8h2v2Zm12 0h-2V8h2v2Z"/></svg></button>
           <div class="composer-header" id="composerStatusStack">
             <label class="composer-label sr-only" id="composerLabel" for="promptInput" data-i18n="ui.ask.hermes.36d55d5a">ASK HERMES</label>
             <button id="contextChip" class="context-chip" type="button" aria-expanded="false">
@@ -502,29 +492,29 @@
             <div class="composer-resize" aria-hidden="true"><span></span></div>
             <div id="dropOverlay" class="drop-overlay" hidden data-i18n="ui.drop.files.to.attach">Drop files to attach</div>
             <button id="attachMenuButton" class="attach-menu-button composer-plus" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Attach context" title="Attach context" data-i18n-title="ui.attach.context" data-i18n-aria-label="ui.attach.context">
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path d="M12 5.5v13M5.5 12h13" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="attachment"><path d="M7 7v10H5V7zm12 0v12h-2V7zm-8 2v10H9V9zm4 0v8h-2V9zm0-6v2H9V3zm-2 4v2h-2V7zm4 12v2h-6v-2zm0-14v2h-2V5zM9 5v2H7V5z"/></svg>
             </button>
             <button id="commandMenuButton" class="composer-command" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="quickMoreMenu" aria-label="Open quick commands" title="Open quick commands" data-i18n-title="ui.open.quick.commands" data-i18n-aria-label="ui.open.quick.commands">
               <span aria-hidden="true">/</span><strong data-i18n="ui.commands">commands</strong>
             </button>
             <button id="wakeButton" class="composer-icon composer-wake" type="button" hidden aria-label="Turn on wake word" title="Turn on wake word" data-i18n-title="wake.turn_on" data-i18n-aria-label="wake.turn_on">
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="2" fill="currentColor"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8.7 8.7a4.7 4.7 0 0 0 0 6.6m6.6-6.6a4.7 4.7 0 0 1 0 6.6M5.9 5.9a8.6 8.6 0 0 0 0 12.2m12.2-12.2a8.6 8.6 0 0 1 0 12.2"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="headphone"><path d="M14 13h7v2h-7zm2 6h3v2h-3z"/><path d="M14 13h2v8h-2zm5-6h2v12h-2zM3 13h7v2H3zm2 6h3v2H5z"/><path d="M3 7h2v12H3zm5 6h2v8H8zM7 3h10v2H7zM5 5h2v2H5zm12 0h2v2h-2z"/></svg>
             </button>
             <button id="liveVoiceButton" class="composer-icon composer-live" type="button" hidden aria-pressed="false" data-i18n-runtime>
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" d="M4 10v4M8 6.5v11M12 3.5v17M16 6.5v11M20 10v4"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="audio-waveform"><path d="M3 7h2v5H3zm4 0h2v13H7zm4-3h2v16h-2zm4 0h2v13h-2zM5 5h2v2H5zm4 15h2v2H9zm4-18h2v2h-2zm4 15h2v2h-2zm2-5h2v5h-2zm2-2h2v2h-2zM1 12h2v2H1z"/></svg>
             </button>
             <button id="voiceButton" class="composer-icon composer-mic" type="button" aria-label="Start voice dictation" title="Start voice dictation" data-i18n-title="ui.start.voice.dictation" data-i18n-aria-label="ui.start.voice.dictation">
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21H8v2h8v-2h-3v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="mic"><path d="M10 2h4v2h-4zM8 4h2v10H8zm2 10h4v2h-4zm4-10h2v10h-2zM4 10h2v6H4zm2 6h2v2H6zm2 2h8v2H8zm8-2h2v2h-2zm2-6h2v6h-2zm-7 10h2v2h-2z"/></svg>
             </button>
             <button id="inlineSendButton" class="composer-icon composer-send" type="submit" aria-label="Send message" title="Send message" data-i18n-title="ui.send.message" data-i18n-aria-label="ui.send.message">
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 4 5.5 10.5l1.4 1.4L11 7.82V20h2V7.82l4.1 4.08 1.4-1.4L12 4Z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="send"><path d="M4 19h4v2H2v-8h2v6Zm8 0H8v-2h4v2Zm4-2h-4v-2h4v2Zm4-2h-4v-2h4v2Zm-10-2H4v-2h6v2Zm12 0h-2v-2h2v2ZM8 5H4v6H2V3h6v2Zm12 6h-4V9h4v2Zm-4-2h-4V7h4v2Zm-4-2H8V5h4v2Z"/></svg>
             </button>
             <button id="stopButton" class="composer-icon composer-stop" type="button" aria-label="Stop Hermes" title="Stop Hermes" hidden data-i18n-title="ui.stop.hermes" data-i18n-aria-label="ui.stop.hermes">■</button>
             <button id="queueButton" class="composer-icon composer-queue" type="button" aria-label="Queue message" title="Queue message" hidden data-i18n-title="composer.queue_message" data-i18n-aria-label="composer.queue_message">
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7 4h10a2 2 0 0 1 2 2v8h-2V6H7v12h6v2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm3 4h4v2h-4V8Zm0 4h4v2h-4v-2Zm6 4v-3h2v3h3v2h-3v3h-2v-3h-3v-2h3Z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="bulletlist"><path d="M10 5h12v2H10zm0 4h8v2h-8zm0 4h12v2H10zm0 4h8v2h-8zm-4-6H4V9h2v2ZM4 9H2V7h2v2Zm4 0H6V7h2v2ZM6 7H4V5h2v2Zm-2 6h2v2H4zm0 4h2v2H4zm-2 0v-2h2v2zm4 0v-2h2v2z"/></svg>
             </button>
             <button id="steerButton" class="composer-icon composer-steer" type="button" aria-label="Steer the current run" title="Steer the current run" hidden data-i18n-title="ui.steer.the.current.run" data-i18n-aria-label="ui.steer.the.current.run">
-              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 4 6 10h4v4a4 4 0 0 0 4 4h4v-2h-4a2 2 0 0 1-2-2v-4h4L12 4Z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="compass"><path d="M18 22H6V20H18V22ZM6 20H4V18H6V20ZM20 20H18V18H20V20ZM10 16H12V18H10V19H8V10H10V16ZM4 18H2V6H4V18ZM22 18H20V6H22V18ZM14 16H12V14H14V16ZM16 14H14V8H12V6H14V5H16V14ZM13 13H11V11H13V13ZM12 10H10V8H12V10ZM6 6H4V4H6V6ZM20 6H18V4H20V6ZM18 4H6V2H18V4Z"/></svg>
             </button>
             <section id="quickMoreMenu" class="quick-more-menu" hidden role="menu" aria-label="Quick commands" data-i18n-aria-label="ui.quick.commands"></section>
             <section id="skillMenu" class="skill-menu" role="listbox" aria-label="Hermes skill suggestions" hidden data-i18n-aria-label="ui.hermes.skill.suggestions"></section>
@@ -538,7 +528,7 @@
               <button type="button" data-attach="url" data-i18n="ui.url">↗ URL...</button>
               <button type="button" data-attach="tab-screenshot" data-i18n="ui.tab.screenshot">▣ Tab screenshot</button>
               <button type="button" data-attach="pick-element" data-i18n="ui.pick.page.element">◈ Pick page element</button>
-              <button type="button" data-attach="comment-page" id="commentPageAttachButton"><svg class="attach-menu-icon" aria-hidden="true" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M5 4.5h14v11H9l-4 3.5V4.5Z"/><path d="M8.5 9h7M8.5 12h4"/></svg><span data-i18n="ui.comment.on.page">Comment on page</span></button>
+              <button type="button" data-attach="comment-page" id="commentPageAttachButton"><svg class="attach-menu-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="comment-text"><path d="M4 2h16v2H4zm0 14h14v2H4zm2-6h6v2H6zm0-4h12v2H6zM2 4h2v12H2zm18 0h2v18h-2zm-2 14h2v2h-2z"/></svg><span data-i18n="ui.comment.on.page">Comment on page</span></button>
               <button type="button" data-attach="clear-pick" id="clearPickAttachButton" hidden data-i18n="ui.clear.picked.element">✕ Clear picked element</button>
               <hr />
               <button type="button" data-snippet="Summarize the attached context and call out the important takeaways." data-i18n="ui.prompt.snippets">▤ Prompt snippets...</button>
@@ -584,13 +574,13 @@
             </div>
           </section>
           <div class="composer-actions">
-            <button id="refreshButton" class="secondary icon-refresh" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-title="context.refresh_page" data-i18n-aria-label="context.refresh_page"><svg class="refresh-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 8a7 7 0 0 1 11.55-2.6L20 8M4 16l2.35 2.6A7 7 0 0 0 17.9 16"/></svg></button>
+            <button id="refreshButton" class="secondary icon-refresh" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-title="context.refresh_page" data-i18n-aria-label="context.refresh_page"><svg class="refresh-glyph" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="refresh"><path d="M13 20H9V18H13V20ZM19 16H21V18H19V20H17V18H15V16H17V8H19V16ZM9 18H7V16H9V18ZM7 6H9V8H7V16H5V8H3V6H5V4H7V6ZM15 16H13V14H15V16ZM23 16H21V14H23V16ZM3 10H1V8H3V10ZM11 10H9V8H11V10ZM17 8H15V6H17V8ZM15 6H11V4H15V6Z"/></svg></button>
                         <button type="button" id="activeProfileIndicator" class="active-profile-indicator" data-i18n-title="bot_mode.switch_profile" title="Switch profile" hidden aria-haspopup="menu" aria-expanded="false"></button>
             <button id="botModeThreadsButton" class="secondary bot-mode-threads-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" title="Threads" aria-label="Threads" data-i18n-title="bot_mode.threads_title" data-i18n-aria-label="bot_mode.threads_title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h13v10l-4-3H7zM4 8H2v12l4-3h9v-3"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="message"><path d="M20 2H4v2h16zm0 14H6v2h14zm2-12h-2v12h2zM4 4H2v18h2zm2 14H4v2h2z"/></svg>
             </button>
             <button id="botModeNewThreadButton" class="secondary bot-mode-new-thread-button" type="button" hidden data-i18n-runtime title="Start a new thread in this group" aria-label="Start a new thread in this group">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14v3H8l-5 4V4h12M19 2v8M15 6h8"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="message-reply"><path d="M4 18h2v2H4v2H2V4h2v14Zm6 0H6v-2h4v2Zm6-6h4v2h-4v4h-2v-2h-2v-2h-2v-2h2v-2h2V8h2v4Zm6 4h-2v-2h2v2Zm0-6h-2V4h2v6Zm-2-6H4V2h16v2Z"/></svg>
             </button>
             <button id="pageCommentTrayButton" class="secondary page-comment-tray-button" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="pageCommentTray" data-i18n="ui.page.comments">Comments</button>
             <section id="pageCommentTray" class="page-comment-tray" hidden>
@@ -598,7 +588,7 @@
               <button id="pageCommentTraySend" type="button" data-i18n="ui.send.comments">Send comments</button>
             </section>
             <button id="browserControlMenuButton" class="secondary browser-control-launcher" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="browserControlDialog" title="Hermes Control" aria-label="Hermes Control" data-i18n-runtime data-i18n-title="browser_control.kicker" data-i18n-aria-label="browser_control.kicker">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 9.5h18M7 7.25h.01M10 7.25h.01"/><path d="m9 12 6 2.5-2.5 1-1 2.5z"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="pointer"><path d="M17 9h2v3h-2zm-4-2h2v4h-2zM9 3h2v8H9zM5 3h2v10H5zm14 6h2v2h-2zm-4-2h2v2h-2zm-4 0h2v2h-2zM7 1h2v2H7zM3 11h2v2H3zm-2 2h2v2H1zm0 2h2v2H1zm2 2h2v2H3zm2 2h2v2H5zm2 2h12v2H7zm12-2h2v2h-2zm2-8h2v8h-2zM5 13h2v2H5zm2 2h2v2H7z"/></svg>
               <span class="browser-control-launcher-indicator" aria-hidden="true"></span>
             </button>
             <button id="sendButton" type="submit" data-i18n="ui.ask.hermes">Ask Hermes</button>
@@ -667,16 +657,11 @@
           <div class="settings-header-actions">
             <button id="saveSettingsTopButton" class="settings-button" type="submit" title="Save settings" data-i18n-title="ui.save.settings" data-i18n="ui.save">Save</button>
             <button id="testConnectionButton" class="settings-connection-test secondary" type="button" aria-busy="false" title="Test the current Hermes connection" data-i18n-title="ui.test.the.current.hermes.connection">
-              <svg class="settings-connection-test-icon" viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M4.4 7.1A6.2 6.2 0 0 1 15 5.7l1.2 1.4"></path>
-                <path d="m16.5 3.8-.3 3.3-3.3-.3"></path>
-                <path d="M15.6 12.9A6.2 6.2 0 0 1 5 14.3l-1.2-1.4"></path>
-                <path d="m3.5 16.2.3-3.3 3.3.3"></path>
-              </svg>
+              <svg class="settings-connection-test-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="cellular-signal-3"><path d="M4 14h2v4H4zm7-4h2v8h-2zm7-6h2v14h-2zM2 16h2v3H2zm7-4h2v6H9zm7-6h2v12h-2zM6 14h2v5H6zm7-4h2v8h-2zm7-6h2v14h-2z"/><path d="M2 18h6v2H2zm7 0h6v2H9zm7 0h6v2h-6z"/></svg>
               <span class="settings-connection-test-label" data-i18n="ui.test.984816fd">TEST</span>
             </button>
             <button id="closeSettingsButton" class="settings-button settings-close-icon" type="button" aria-label="Close settings" title="Close settings" data-i18n-aria-label="ui.close.settings" data-i18n-title="ui.close.settings">
-              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
             </button>
           </div>
         </header>
@@ -714,47 +699,47 @@
           <div class="settings-section-head compact"><div><h4 id="settingsCategoryHomeTitle" data-i18n="settings.categories.home_title">Choose a category</h4><p data-i18n="settings.categories.home_copy">Everything Hermes Browser can do, grouped by what it is for.</p></div></div>
           <div class="settings-category-grid">
             <button type="button" class="settings-category-card" data-settings-category="appearance" aria-describedby="settingsCategorySummary-appearance">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10a7 7 0 1 1 7 7c-1 0-1.6-.6-1.6-1.4 0-.5.3-.9.3-1.4 0-.7-.6-1.2-1.3-1.2H6.5A3.5 3.5 0 0 1 3 10Z"></path><path d="M6.8 8.2h.01"></path><path d="M9.6 6.2h.01"></path><path d="M13 7.4h.01"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="brush"><path d="M7 2h10v2H7zM5 4h2v10H5zm12-2h2v12h-2z"/><path d="M13 2h2v6h-2zM9 2h2v4H9zm-4 8h14v2H5zm2 4h10v2H7zm2 2h2v4H9zm4 0h2v4h-2zm-4 4h6v2H9z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.appearance.title">Appearance &amp; Themes</strong><small id="settingsCategorySummary-appearance" data-i18n="settings.categories.appearance.summary">Colors, fonts, text size and background art.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="connections" aria-describedby="settingsCategorySummary-connections">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 12.5 5 15a2.5 2.5 0 0 1-3.5-3.5L4 9"></path><path d="M12.5 7.5 15 5a2.5 2.5 0 0 1 3.5 3.5L16 11"></path><path d="M7.5 12.5l5-5"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="link"><path d="M4 6h7v2H4zm0 10h7v2H4zM2 8h2v8H2zm18-2h-7v2h7zm0 10h-7v2h7zm2-8h-2v8h2zM7 11h10v2H7z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.connections.title">Connections</strong><small id="settingsCategorySummary-connections" data-i18n="settings.categories.connections.summary">Gateway, agent profile and how this browser reaches Hermes.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="agents" aria-describedby="settingsCategorySummary-agents">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.2v2"></path><path d="M5.5 7.5h9a2 2 0 0 1 2 2v4.3a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2Z"></path><path d="M7.8 11h.01"></path><path d="M12.2 11h.01"></path><path d="M8 14h4"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="robot"><path d="M5 7h14v2H5zm0 12h14v2H5zM3 9h2v10H3zm16 0h2v10h-2zM1 13h2v2H1zm20 0h2v2h-2zM11 5h2v2h-2zM7 3h4v2H7zm1 9h2v4H8zm6 0h2v4h-2z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.agents.title">Agents &amp; Bot Mode</strong><small id="settingsCategorySummary-agents" data-i18n="settings.categories.agents.summary">Agent roster, Bot Chats and scheduled jobs.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="models" aria-describedby="settingsCategorySummary-models">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8 16.4 6.4v7.2L10 17.2 3.6 13.6V6.4Z"></path><path d="M10 10 16.2 6.6"></path><path d="M10 10v7"></path><path d="M10 10 3.8 6.6"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="cpu"><path d="M5 3h14v2H5zm0 16h14v2H5zM3 5h2v14H3zm16 0h2v14h-2zM9 7h6v2H9zm0 8h6v2H9zM7 9h2v6H7zm8 0h2v6h-2zm-4-8h2v2h-2zm0 20h2v2h-2zM1 11h2v2H1zm20 0h2v2h-2zm0-4h2v2h-2zm0 8h2v2h-2zM1 15h2v2H1zm0-8h2v2H1zm6-6h2v2H7zm8 0h2v2h-2zm0 20h2v2h-2zm-8 0h2v2H7z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.models.title">Models &amp; Runtime</strong><small id="settingsCategorySummary-models" data-i18n="settings.categories.models.summary">Which model answers, plus catalog refresh.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="sessions" aria-describedby="settingsCategorySummary-sessions">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 4.5h12v8.2H9.2L6 15.5v-2.8H4Z"></path><path d="M7 7.6h6"></path><path d="M7 10h4"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="book-open"><path d="M2 3h9v2H2zM0 19h11v2H0zM13 3h9v2h-9zm0 16h11v2H13zM11 5h2v18h-2zM0 5h2v14H0zm22 0h2v14h-2zm-7 2h5v2h-5zm0 4h5v2h-5zm0 4h2v2h-2z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.sessions.title">Sessions &amp; Context</strong><small id="settingsCategorySummary-sessions" data-i18n="settings.categories.sessions.summary">Session names, page context and where the panel opens.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="permissions" aria-describedby="settingsCategorySummary-permissions">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8 16 5v4.6c0 3.6-2.4 6.2-6 7.6-3.6-1.4-6-4-6-7.6V5Z"></path><path d="M7.2 10.1 9.2 12l3.6-3.8"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="shield"><path d="M4 2h16v2H4zM2 4h2v10H2zm18 0h2v10h-2zM4 14h2v2H4zm2 2h2v2H6zm4 4h4v2h-4zm10-6h-2v2h2zm-2 2h-2v2h2zm-2 2h-2v2h2zm-6 0H8v2h2z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.permissions.title">Permissions &amp; Control</strong><small id="settingsCategorySummary-permissions" data-i18n="settings.categories.permissions.summary">Hermes Control, tab scope and page-sharing approval.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="assist" aria-describedby="settingsCategorySummary-assist">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3l1.6 3.9 3.9 1.6-3.9 1.6L10 14l-1.6-3.9L4.5 8.5l3.9-1.6Z"></path><path d="M15.5 13.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7Z"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="magic-edit"><path d="M16 2h4v2h-4zm2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2H8zm-2 2h2v2H6zm-2 2h2v2H4zm-2-2h2v4H2zm2-2h2v2H4zm2-2h2v2H6zm2-2h2v2H8zm2-2h2v2h-2zm2-2h2v2h-2zm2-2h2v2h-2zm0 2h2v2h-2zm2-2h2v2h-2zm0 8h2v2h-2zm0 8h2v2h-2zm-4-4h2v2h-2zm8 0h2v2h-2zm-6-2h2v2h-2zm4 0h2v2h-2zm0 4h2v2h-2zm-4 0h2v2h-2zM4 2h2v2H4zM2 4h2v2H2zm2 2h2v2H4zm2-2h2v2H6zm14 6h2v2h-2zM8 20h2v2H8z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.assist.title">Assist &amp; Actions</strong><small id="settingsCategorySummary-assist" data-i18n="settings.categories.assist.summary">Inline Assist and the right-click actions.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="voice" aria-describedby="settingsCategorySummary-voice">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.8a2.4 2.4 0 0 1 2.4 2.4v4.6a2.4 2.4 0 0 1-4.8 0V5.2A2.4 2.4 0 0 1 10 2.8Z"></path><path d="M5 9.6a5 5 0 0 0 10 0"></path><path d="M10 14.6v2.6"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="mic"><path d="M10 2h4v2h-4zM8 4h2v10H8zm2 10h4v2h-4zm4-10h2v10h-2zM4 10h2v6H4zm2 6h2v2H6zm2 2h8v2H8zm8-2h2v2h-2zm2-6h2v6h-2zm-7 10h2v2h-2z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.voice.title">Voice &amp; Wake</strong><small id="settingsCategorySummary-voice" data-i18n="settings.categories.voice.summary">Wake word and spoken replies.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
             <button type="button" class="settings-category-card" data-settings-category="about" aria-describedby="settingsCategorySummary-about">
-              <span class="settings-category-icon"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Z"></path><path d="M10 9.2v4.2"></path><path d="M10 6.6h.01"></path></svg></span>
+              <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="circle-info"><path d="M18 22H6V20H18V22ZM6 20H4V18H6V20ZM20 20H18V18H20V20ZM4 18H2V6H4V18ZM22 18H20V6H22V18ZM13 17H11V11H13V17ZM13 9H11V7H13V9ZM6 6H4V4H6V6ZM20 6H18V4H20V6ZM18 4H6V2H18V4Z"/></svg></span>
               <span class="settings-category-copy"><strong data-i18n="settings.categories.about.title">About &amp; Diagnostics</strong><small id="settingsCategorySummary-about" data-i18n="settings.categories.about.summary">Compatibility, token safety and support reports.</small></span>
               <span class="settings-category-edited" hidden data-i18n="settings.categories.edited">Edited</span>
             </button>
@@ -851,9 +836,9 @@
             <strong data-i18n="ui.theme">Theme</strong>
             <span data-i18n="ui.same.desktop.palettes.minus.window.transparency">Choose a color palette for your workspace.</span>
             <div class="segmented-control mode-switch" role="radiogroup" aria-label="Color mode" data-i18n-aria-label="ui.color.mode.588a2981">
-              <button class="mode-choice" type="button" data-color-mode="light" role="radio" aria-checked="false"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.2"></circle><path d="M10 2.8v1.7M10 15.5v1.7M2.8 10h1.7M15.5 10h1.7M4.9 4.9l1.2 1.2M13.9 13.9l1.2 1.2M15.1 4.9l-1.2 1.2M6.1 13.9l-1.2 1.2"></path></svg><span data-i18n="settings.mode.light">Light</span></button>
-              <button class="mode-choice" type="button" data-color-mode="dark" role="radio" aria-checked="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16.2 11.6A6.6 6.6 0 0 1 8.4 3.8a6.6 6.6 0 1 0 7.8 7.8Z"></path></svg><span data-i18n="settings.mode.dark">Dark</span></button>
-              <button class="mode-choice" type="button" data-color-mode="system" role="radio" aria-checked="false"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="9.5" rx="0"></rect><path d="M7.5 16.5h5M10 13.5v3"></path></svg><span data-i18n="settings.mode.system">System</span></button>
+              <button class="mode-choice" type="button" data-color-mode="light" role="radio" aria-checked="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="sun"><path d="M13 22h-2v-3h2v3Zm-6-3H5v-2h2v2Zm12 0h-2v-2h2v2Zm-4-2H9v-2h6v2Zm-6-2H7V9h2v6Zm8 0h-2V9h2v6ZM5 13H2v-2h3v2Zm17 0h-3v-2h3v2Zm-7-4H9V7h6v2ZM7 7H5V5h2v2Zm12 0h-2V5h2v2Zm-6-2h-2V2h2v3Z"/></svg><span data-i18n="settings.mode.light">Light</span></button>
+              <button class="mode-choice" type="button" data-color-mode="dark" role="radio" aria-checked="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="moon"><path d="M18 22H8v-2h10v2ZM8 20H6v-2h2v2Zm12 0h-2v-2h2v2ZM6 18H4v-2h2v2Zm16 0h-2v-4h-2v-2h2v-2h2v8ZM4 16H2V6h2v10Zm14 0h-6v-2h6v2Zm-6-2h-2v-2h2v2Zm-2-2H8V6h2v6ZM6 6H4V4h2v2Zm8-2h-2v2h-2V4H6V2h8v2Z"/></svg><span data-i18n="settings.mode.dark">Dark</span></button>
+              <button class="mode-choice" type="button" data-color-mode="system" role="radio" aria-checked="false"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="monitor"><path d="M4 2h16v2H4zm0 14h16v2H4zM2 4h2v12H2zm18 0h2v12h-2zm-9 14h2v2h-2zm-3 2h8v2H8z"/></svg><span data-i18n="settings.mode.system">System</span></button>
             </div>
             <div id="themeGrid" class="theme-grid" role="radiogroup" aria-label="Theme" data-i18n-aria-label="ui.theme"></div>
 
@@ -1078,9 +1063,7 @@
               </div>
               <button id="botModeCronRefreshButton" class="icon-button bot-mode-cron-refresh" type="button" title="Refresh cron jobs" data-i18n-title="profile.refresh_title" aria-label="Refresh cron jobs" data-i18n-aria-label="profile.refresh_title">
                 <span class="session-refresh-icon" aria-hidden="true">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
-                  </svg>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="reload"><path d="M16 4h2v6h-2zm-2-2h2v2h-2zm0 2h2v8h-2zM4 8H2v5h2z"/><path d="M4 6h16v2H4zm4 14H6v-6h2zm2 2H8v-2h2zm0-2H8v-8h2zm10-4h2v-5h-2z"/><path d="M20 18H4v-2h16z"/></svg>
                 </span>
               </button>
             </summary>
@@ -1107,7 +1090,7 @@
                 <strong id="settingsCurrentModel" class="models-select-name" data-i18n-runtime>&mdash;</strong>
                 <span id="settingsCurrentModelMeta" class="models-select-meta" data-i18n-runtime></span>
               </span>
-              <span class="models-select-mark" aria-hidden="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 8 4.5 4.5L14.5 8"></path></svg></span>
+              <span class="models-select-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="chevron-down"><path d="M13 16h-2v-2h2v2Zm-2-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-6-2H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 10H5V8h2v2Zm12 0h-2V8h2v2Z"/></svg></span>
             </button>
           </section>
           <section class="settings-section models-runtime-settings" aria-labelledby="modelsRuntimeTitle">
@@ -1137,7 +1120,7 @@
           </section>
           <section class="settings-section models-catalog-settings" aria-labelledby="modelsCatalogTitle">
             <div class="settings-section-head"><div><h3 id="modelsCatalogTitle" data-i18n="settings.models.catalog_title">Model catalog</h3><p id="settingsModelCatalogCount" data-i18n-runtime>&mdash;</p></div></div>
-            <button id="settingsRefreshModelsButton" type="button" class="secondary models-refresh-row"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.4 7.1A6.2 6.2 0 0 1 15 5.7l1.2 1.4"></path><path d="m16.5 3.8-.3 3.3-3.3-.3"></path><path d="M15.6 12.9A6.2 6.2 0 0 1 5 14.3l-1.2-1.4"></path><path d="m3.5 16.2.3-3.3 3.3.3"></path></svg><span data-i18n="settings.models.refresh">Refresh models</span></button>
+            <button id="settingsRefreshModelsButton" type="button" class="secondary models-refresh-row"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="reload"><path d="M16 4h2v6h-2zm-2-2h2v2h-2zm0 2h2v8h-2zM4 8H2v5h2z"/><path d="M4 6h16v2H4zm4 14H6v-6h2zm2 2H8v-2h2zm0-2H8v-8h2zm10-4h2v-5h-2z"/><path d="M20 18H4v-2h16z"/></svg><span data-i18n="settings.models.refresh">Refresh models</span></button>
             <p id="settingsModelRefreshStatus" class="settings-prose" role="status" aria-live="polite" hidden></p>
             <p class="hint settings-prose" data-i18n="settings.models.desktop_hint">Add or remove models in Hermes Desktop or with the Hermes model command, then refresh here.</p>
           </section>
@@ -1457,7 +1440,7 @@
         </div>
         </section>
 
-        <button id="settingsBackToTop" class="settings-back-to-top" type="button" hidden aria-label="Back to top" data-i18n-aria-label="settings.back_to_top"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.5 12 4.5-4.5 4.5 4.5"></path></svg><span data-i18n="settings.back_to_top">Back to top</span></button>
+        <button id="settingsBackToTop" class="settings-back-to-top" type="button" hidden aria-label="Back to top" data-i18n-aria-label="settings.back_to_top"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-up"><path d="M11 20h2V4h-2zm2-12h2V6h-2zm2 2h2V8h-2zm2 2h2v-2h-2zm-6-4H9V6h2z"/><path d="M15 10H7V8h8zm2 2H5v-2h12z"/></svg><span data-i18n="settings.back_to_top">Back to top</span></button>
       </form>
     </section>
 
@@ -1479,12 +1462,12 @@
     </section>
 
     <section id="operationToast" class="operation-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
-      <span class="operation-toast-signal" aria-hidden="true"><svg class="icon-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="icon-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v6M12 17h.01"/></svg><svg class="icon-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span>
+      <span class="operation-toast-signal" aria-hidden="true"><svg class="icon-ok" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="check"><path d="M10 18H8v-2h2v2Zm-2-2H6v-2h2v2Zm4-2v2h-2v-2h2Zm-6 0H4v-2h2v2Zm8 0h-2v-2h2v2Zm2-2h-2v-2h2v2Zm2-2h-2V8h2v2Zm2-2h-2V6h2v2Z"/></svg><svg class="icon-warn" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="warning-diamond"><path d="M2 10h2v2H2zm0 4h2v-2H2zm20-4h-2v2h2zm0 4h-2v-2h2zM4 8h2v2H4zm0 8h2v-2H4zm16-8h-2v2h2zm0 8h-2v-2h2zM6 6h2v2H6zm0 12h2v-2H6zM18 6h-2v2h2zm0 12h-2v-2h2zM8 4h2v2H8zm0 16h2v-2H8zm8-16h-2v2h2zm0 16h-2v-2h2zM10 2h2v2h-2zm0 20h2v-2h-2zm4-20h-2v2h2zm0 20h-2v-2h2zm-3-5h2v-2h-2zm0-4h2V7h-2z"/></svg><svg class="icon-error" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="square-alert"><path d="M4 2h16v2H4zm0 18h16v2H4zM20 4h2v16h-2zM2 4h2v16H2zm9 2h2v8h-2zm0 10h2v2h-2z"/></svg></span>
       <div>
         <strong id="operationToastTitle">Hermes Browser</strong>
         <span id="operationToastDetail"></span>
       </div>
-      <button id="closeOperationToastButton" type="button" aria-label="Dismiss notification" data-i18n-aria-label="ui.dismiss.notification">×</button>
+      <button id="closeOperationToastButton" type="button" aria-label="Dismiss notification" data-i18n-aria-label="ui.dismiss.notification"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg></button>
     </section>
 
     <template id="messageTemplate">
@@ -1506,7 +1489,7 @@
           <span id="browserControlLightWord" class="browser-control-light-word" aria-hidden="true" data-i18n-runtime data-i18n="browser_control.state_off">Off</span>
         </span>
         <button id="browserControlDismissButton" class="browser-control-dismiss" type="button" data-control-help="close" aria-label="Close" data-i18n-aria-label="ui.close">
-          <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
         </button>
       </div>
         <section id="browserControlStrip" class="browser-control-strip" aria-live="polite" hidden>
@@ -1520,12 +1503,12 @@
             <button id="browserControlAttachButton" data-control-help="attach" class="browser-control-action" type="button" hidden data-i18n-runtime data-i18n="ui.attach">Attach</button>
             <button id="browserControlOffButton" data-control-help="off" class="browser-control-action secondary" type="button" data-i18n="browser_control.turn_off">Turn off</button>
             <button id="browserControlPauseButton" class="browser-control-action secondary" type="button" data-control-help="pause" aria-label="Pause" data-i18n-aria-label="browser_control.pause">
-              <svg class="glyph-pause" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M3.2 2h2.2v8H3.2zM6.6 2h2.2v8H6.6z" fill="currentColor"/></svg>
-              <svg class="glyph-play" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true" hidden><path d="M3.2 2l7 4-7 4z" fill="currentColor"/></svg>
+              <svg class="glyph-pause" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="pause"><path d="M10 20H4V4h6v16Zm8-16v16h-6V4h6Zm-4 2v12h2V6h-2ZM6 18h2V6H6v12Z"/></svg>
+              <svg class="glyph-play" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="play" hidden><path d="M15 11h-2V9h2zm0 4h-2v-2h2zm-2 2h-2v-2h2zm0-8h-2V7h2zm-2-2H9V5h2zM9 21H7V3h2zm6-8h2v-2h-2zm-6 4h2v2H9z"/></svg>
               <span id="browserControlPauseLabel" data-i18n-runtime data-i18n="browser_control.pause">Pause</span>
             </button>
             <button id="browserControlStopButton" class="browser-control-action secondary" type="button" data-control-help="stop" hidden aria-label="Stop" data-i18n-aria-label="browser_control.stop">
-              <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.6 2.6h6.8v6.8H2.6z" fill="currentColor"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="stop"><path d="M20 20H4V4H20V20ZM6 18H18V6H6V18ZM14 14H10V10H14V14Z"/></svg>
               <span data-i18n="browser_control.stop">Stop</span>
             </button>
             <button id="browserControlApproveButton" class="browser-control-action" type="button" hidden data-control-help="approve" data-i18n="browser_control.approve_once">Approve once</button>
