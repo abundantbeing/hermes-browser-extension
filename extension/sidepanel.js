@@ -2387,6 +2387,18 @@ function setSaveSettingsState(state) {
   }
 }
 
+// Boxes that apply on their own (text zoom, local font, theme search) live
+// inside #settingsForm, so Enter in them would submit the whole form: a full
+// Save that re-probes the gateway and closes Settings mid-edit. Run the box's
+// own action on Enter instead.
+function handleEnterInSettingsField(input, onEnter) {
+  input?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    event.preventDefault();
+    onEnter();
+  });
+}
+
 let settingsInvalidRevealPending = false;
 
 // A field that fails the browser's own check (a Gateway URL without http://, say)
@@ -24537,6 +24549,9 @@ function bindEvents() {
   els.textZoomInput?.addEventListener('change', () => {
     void setAppearanceOption('textZoomPercent', els.textZoomInput.value);
   });
+  handleEnterInSettingsField(els.textZoomInput, () => {
+    void setAppearanceOption('textZoomPercent', els.textZoomInput.value);
+  });
   els.textZoomDecreaseButton?.addEventListener('click', () => {
     const current = appearancePreferencesForSurface(settings, 'panel').textZoomPercent;
     void setAppearanceOption('textZoomPercent', stepTextZoomPercent(current, 'down'));
@@ -24553,7 +24568,7 @@ function bindEvents() {
     }
     void setAppearanceOption('fontProfile', els.fontProfileSelect.value);
   });
-  els.customFontFamilyInput?.addEventListener('change', () => {
+  const commitCustomFontFamily = () => {
     const family = sanitizeLocalFontFamily(els.customFontFamilyInput.value);
     if (!family) {
       appearanceMutationId += 1;
@@ -24562,7 +24577,9 @@ function bindEvents() {
       return;
     }
     void setAppearanceOption('customFontFamily', family);
-  });
+  };
+  els.customFontFamilyInput?.addEventListener('change', commitCustomFontFamily);
+  handleEnterInSettingsField(els.customFontFamilyInput, commitCustomFontFamily);
   els.themeGrid?.addEventListener('click', (event) => {
     const exportButton = event.target.closest('[data-custom-theme-export]');
     if (exportButton) {
@@ -24606,6 +24623,10 @@ function bindEvents() {
     marketplaceThemeError = '';
     renderMarketplaceThemes();
     marketplaceThemeDebounceTimer = setTimeout(() => void loadMarketplaceThemes(), 300);
+  });
+  handleEnterInSettingsField(els.marketplaceThemeSearchInput, () => {
+    clearTimeout(marketplaceThemeDebounceTimer);
+    void loadMarketplaceThemes();
   });
   els.marketplaceThemeSearchButton?.addEventListener('click', () => void loadMarketplaceThemes());
   els.marketplaceThemeResults?.addEventListener('click', (event) => {
