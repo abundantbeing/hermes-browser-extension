@@ -19,16 +19,23 @@ export function reviewRoutes(env = process.env) {
   return routes;
 }
 
+// Credentials and interpreter overrides that a model-facing child must never see.
+// Only provider auth stays available to the child.
+const CHILD_STRIPPED_KEYS = ['GITHUB_TOKEN', 'GH_TOKEN', 'HERMES_REVIEW_API_KEY', 'API_SERVER_KEY', 'PYTHONHOME', 'PYTHONPATH'];
+
+export function reviewChildEnv(env = process.env) {
+  const childEnv = { ...env, PYTHONIOENCODING: 'utf-8' };
+  for (const key of CHILD_STRIPPED_KEYS) delete childEnv[key];
+  return childEnv;
+}
+
 export async function callNativeReview(prompt, env = process.env) {
   if (!env.HERMES_REVIEW_PYTHON || !env.HERMES_REVIEW_RUNTIME_ROOT) throw new Error('No-tools review writer is not configured');
   const timeout = Number(env.HERMES_REVIEW_TIMEOUT_MS || 480000);
   if (!Number.isFinite(timeout) || timeout < 1) throw new Error('Invalid writer timeout');
   const request = { routes: reviewRoutes(env), timeout: timeout / 1000, expect_json: prompt.startsWith('Return ONLY valid JSON'), messages: [{ role: 'system', content: REVIEW_SYSTEM }, { role: 'user', content: prompt }] };
-  // Never pass GitHub credentials to the model process. Only provider auth stays available.
-  const childEnv = { ...env, PYTHONIOENCODING: 'utf-8' };
-  for (const key of ['GITHUB_TOKEN', 'GH_TOKEN', 'HERMES_REVIEW_API_KEY', 'API_SERVER_KEY', 'PYTHONHOME', 'PYTHONPATH']) delete childEnv[key];
   return new Promise((resolve, reject) => {
-    const child = spawn(env.HERMES_REVIEW_PYTHON, [fileURLToPath(new URL('./hermes-review-writer.py', import.meta.url))], { env: childEnv, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(env.HERMES_REVIEW_PYTHON, [fileURLToPath(new URL('./hermes-review-writer.py', import.meta.url))], { env: reviewChildEnv(env), windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     const timer = setTimeout(() => { child.kill(); reject(new Error('No-tools writer timed out')); }, timeout * request.routes.length + 30000);
     child.stdout.setEncoding('utf8');
