@@ -39,8 +39,8 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="settings-cog"><path d="M4 20h3v-2h4v4h2v-4h4v2h-2v4H9v-4H7v2H2v-5h2v3Zm18 2h-5v-2h3v-3h2v5ZM6 11H2v2h4v4H4v-2H0V9h4V7h2v4Zm14-2h4v6h-4v2h-2v-4h4v-2h-4V7h2v2Zm-6 7h-4v-2h4v2Zm-4-2H8v-4h2v4Zm6 0h-2v-4h2v4Zm-2-4h-4V8h4v2ZM7 4H4v3H2V2h5v2Zm8 0h2V2h5v5h-2V4h-3v2h-4V2h-2v4H7V4h2V0h6v4Z"/></svg>
           <span class="sr-only" data-i18n="ui.settings">Settings</span>
         </button>
-        <button id="startupTestConnectionButton" class="startup-test-connection" type="button" data-i18n="ui.test.connection.f7dafbab">TEST CONNECTION</button>
-        <button id="startupConnectButton" class="startup-test-connection startup-connect-action" type="button" hidden data-i18n="ui.connect.to.hermes">Connect to Hermes</button>
+        <button id="startupTestConnectionButton" class="startup-test-connection" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="cellular-signal-3"><path d="M4 14h2v4H4zm7-4h2v8h-2zm7-6h2v14h-2zM2 16h2v3H2zm7-4h2v6H9zm7-6h2v12h-2zM6 14h2v5H6zm7-4h2v8h-2zm7-6h2v14h-2z"/><path d="M2 18h6v2H2zm7 0h6v2H9zm7 0h6v2h-6z"/></svg><span class="settings-connection-test-label sr-only" data-i18n="ui.test.connection.f7dafbab">TEST CONNECTION</span></button>
+        <button id="startupConnectButton" class="startup-test-connection startup-connect-action" type="button" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="plug"><path d="M16 18h-3v4h-2v-4H8v-2h8v2Zm-8-2H6v-2h2v2Zm10 0h-2v-2h2v2Zm-8-9h4V2h2v5h5v2h-1v5h-2V9H6v5H4V9H3V7h5V2h2v5Z"/></svg><span data-i18n="ui.connect.to.hermes">Connect to Hermes</span></button>
         <div class="topbar-status">
           <span id="connectionPill" class="connection-pill" role="status" aria-label="Hermes connection status" title="Hermes connection status" data-i18n-title="ui.hermes.connection.status" data-i18n-aria-label="ui.hermes.connection.status">●</span>
         </div>
@@ -339,14 +339,17 @@
           <div class="startup-stage">
             <div class="startup-brand-lockup">
               <span class="startup-brand-icon" aria-hidden="true"></span>
-              <div class="startup-copy">
-                <p id="startupDetail">Checking settings, gateway, capabilities, models, and sessions.</p>
-              </div>
+              <span class="startup-wordmark" role="img" aria-label="Hermes Browser Extension" data-i18n-aria-label="manifest.extension_name"></span>
+            </div>
+            <div class="startup-copy">
+              <div class="startup-meta"><span id="startupCount" class="startup-count"></span><span id="startupState" class="startup-state"></span></div>
+              <p id="startupLabel" class="startup-label"></p>
+              <p id="startupDetail" class="startup-detail" data-i18n-runtime>Checking settings, gateway, capabilities, models, and sessions.</p>
             </div>
             <div class="startup-progress" aria-hidden="true"><span id="startupProgress"></span></div>
-            <ol id="startupStepList" class="startup-step-list" aria-label="Startup readiness checks" data-i18n-aria-label="ui.startup.readiness.checks"></ol>
-            <div id="startupActions" class="startup-actions" hidden></div>
+            <ol id="startupStepList" class="startup-step-list sr-only" aria-label="Startup readiness checks" data-i18n-aria-label="ui.startup.readiness.checks"></ol>
           </div>
+          <div id="startupActions" class="startup-actions" hidden></div>
         </section>
 
         <section id="connectPanel" class="connect-panel" hidden>
