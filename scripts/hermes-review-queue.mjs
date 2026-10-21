@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
-import { callNativeReview } from './hermes-review-client.mjs';
+import { callNativeReview, reviewChildEnv } from './hermes-review-client.mjs';
 import { buildHermesReviewPrompt, buildFollowUpReviewPrompt, deriveReviewLabels, formatFollowUpComment, formatReviewComment } from './hermes-review-github-event.mjs';
 import { assertReviewRepo, collectPullReview, generatePullReview, publishPullReview, reconcileReviewLabels, renderPullReview, reviewGithub, reviewIdentity, reviewList, readReviewArtifact, saveReviewArtifact, PR_MARKER } from './hermes-review-pipeline.mjs';
 
@@ -21,9 +21,22 @@ export function localFileSize(filename) {
   }
 }
 
+// The hosts hermes-review-art.py uploads to. Only these are ever fetched, so a
+// URL that reaches this module from anywhere else cannot make the watcher
+// request an arbitrary host.
+const ART_HOSTS = new Set(['catbox.moe', 'files.catbox.moe', 'litter.catbox.moe', 'litterbox.catbox.moe', 'uguu.se', 'a.uguu.se']);
+
+export function isArtHostUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && ART_HOSTS.has(parsed.hostname);
+  } catch { return false; }
+}
+
 export async function hostedFileSize(url) {
   // A host can accept an upload and still serve a truncated body, which renders
   // as a broken image. The served length is the only honest check.
+  if (!isArtHostUrl(url)) return -1;
   try {
     const response = await fetch(url, { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(45000) });
     if (!response.ok) return -1;
@@ -32,7 +45,7 @@ export async function hostedFileSize(url) {
   } catch { return -1; }
 }
 
-export async function generateReviewArt(request, env, cacheFile) {
+export async function generateReviewArt(request, env, cacheFile, { spawnChild = spawn } = {}) {
   // Art is decoration for the review, never a reason to withhold or fail it.
   if (!env.HERMES_REVIEW_PYTHON || env.HERMES_REVIEW_ART === '0') return null;
   if (cacheFile && fs.existsSync(cacheFile)) {
@@ -54,7 +67,7 @@ export async function generateReviewArt(request, env, cacheFile) {
   }
   return new Promise((resolve) => {
     const script = path.join(path.dirname(fileURLToPath(import.meta.url)), 'hermes-review-art.py');
-    const child = spawn(env.HERMES_REVIEW_PYTHON, [script], { env, windowsHide: true });
+    const child = spawnChild(env.HERMES_REVIEW_PYTHON, [script], { env: reviewChildEnv(env), windowsHide: true });
     let out = '';
     const done = (value) => { child.removeAllListeners(); resolve(value); };
     const timer = setTimeout(() => { child.kill(); done(null); }, 420000);
@@ -229,17 +242,19 @@ export async function repairReviewArt({ repo, target, token, env }) {
   const owned = comments.filter((c) => c.user?.login === user.login && (c.body || '').includes(PR_MARKER));
   const comment = owned.sort((a, b) => b.id - a.id)[0];
   if (!comment) return null;
-  const match = (comment.body || '').match(/!\[PR #\d+ review art\]\((https?:\/\/[^)]+)\)/);
-  if (!match) return null;
-  const current = match[1];
+  // The URL to check comes from the art record this watcher wrote when it
+  // generated the image, never from the comment text: comment bodies carry
+  // model output. The comment must still contain that exact URL to be edited.
+  const artifactDir = env.HERMES_REVIEW_ARTIFACT_DIR || '';
+  const cached = artifactDir ? path.join(artifactDir, `art-${target.number}-${target.headSha}.json`) : '';
+  const record = cached && fs.existsSync(cached) ? readReviewArtifact(cached) : null;
+  const current = record?.ok && record.url ? record.url : '';
+  if (!current || !(comment.body || '').includes(current)) return null;
   if (await hostedFileSize(current) > 0) return null;
 
   // The local source is what the generator produced. Upload it again and point
   // the comment at the new copy.
-  const artifactDir = env.HERMES_REVIEW_ARTIFACT_DIR || '';
-  const cached = artifactDir ? path.join(artifactDir, `art-${target.number}-${target.headSha}.json`) : '';
-  const record = cached && fs.existsSync(cached) ? readReviewArtifact(cached) : null;
-  const local = record?.file && fs.existsSync(record.file) ? record.file : '';
+  const local = record.file && fs.existsSync(record.file) ? record.file : '';
   if (!local) return null;
   const art = await generateReviewArt(
     JSON.stringify({ kind: target.kind, number: target.number, title: target.title, body: target.body, headSha: target.headSha, paths: [], directory: env.HERMES_REVIEW_ART_DIR || '' }),
