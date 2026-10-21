@@ -4961,6 +4961,51 @@ button.active-profile-indicator {
   border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 #saveSettingsTopButton:active { transform: translateY(1px); }
+/* Saving: the button locks and a block of accent marches across it, pixel-style.
+   Saved / failed flash for a moment before it settles back to Save. */
+#saveSettingsTopButton.is-saving {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb), 0.09);
+  color: var(--hermes-ink);
+  cursor: progress;
+  opacity: 1;
+}
+#saveSettingsTopButton.is-saving::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 25%;
+  height: 2px;
+  background: var(--hermes-accent);
+  animation: settings-save-march 0.8s steps(4, jump-none) infinite;
+}
+@keyframes settings-save-march {
+  from { transform: translateX(0); }
+  to { transform: translateX(300%); }
+}
+#saveSettingsTopButton.is-saved {
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb), 0.18);
+  color: var(--hermes-ink);
+}
+#saveSettingsTopButton.is-failed {
+  border-color: #df5f56;
+  background: rgba(223, 95, 86, 0.14);
+  color: var(--hermes-ink);
+  animation: settings-save-nudge 0.32s steps(4, jump-none);
+}
+@keyframes settings-save-nudge {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #saveSettingsTopButton.is-saving::after { animation: none; width: 100%; }
+  #saveSettingsTopButton.is-failed { animation: none; }
+}
 .settings-connection-test {
   min-height: 30px;
   padding: 6px 9px 5px;
