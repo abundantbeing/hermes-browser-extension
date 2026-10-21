@@ -4378,7 +4378,8 @@ test('settings header owns the animated connection test control', () => {
   assert.equal((html.match(/id="testConnectionButton"/g) || []).length, 1);
   assert.match(html, /settings-header-actions[\s\S]*?testConnectionButton[\s\S]*?closeSettingsButton/);
   assert.match(html, /settings-connection-test-icon/);
-  assert.match(css, /\.settings-connection-test\.is-testing \.settings-connection-test-icon[\s\S]*?animation:\s*settings-connection-orbit/);
+  assert.match(css, /\.settings-connection-test\.is-testing \.settings-connection-test-icon[\s\S]*?animation:\s*settings-connection-climb/);
+  assert.doesNotMatch(css, /settings-connection-orbit/, 'the signal bars climb while testing; they never spin');
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?settings-connection-test/);
   assert.match(source, /function setTestConnectionBusy\(busy\)/);
   assert.match(source, /setTestConnectionButtonLabel\('TESTING'\)/);
