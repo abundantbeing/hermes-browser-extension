@@ -4209,7 +4209,8 @@ test('composer plus, command pill, and topbar new-session icons are SVG-centered
   const newSession = html.match(/<button[^>]*id="newSessionButton"[\s\S]*?<\/button>/)?.[0] || '';
   assert.match(newSession, /<svg[\s\S]*?class="new-session-icon"[\s\S]*?viewBox="0 0 24 24"/, 'topbar new-session must use a real SVG plus, not a baseline-riding text glyph');
   assert.doesNotMatch(newSession, />\+</, 'new-session must not render a bare + text glyph');
-  assert.match(css, /\.icon-button \.new-session-icon\s*\{\s*width:\s*18px;[\s\S]*?height:\s*18px;/, 'new-session icon must be visibly larger than the 16px utility icons');
+  assert.match(css, /\.icon-button svg\s*\{\s*display:\s*block;\s*width:\s*16px;\s*height:\s*16px;\s*\}/, 'topbar icons share the 16px pixel-icon size');
+  assert.doesNotMatch(css, /\.icon-button \.new-session-icon\s*\{/, 'new-session plus must not override the shared 16px pixel-icon size');
   assert.match(
     css,
     /#newSessionButton:hover,\s*#newSessionButton:focus-visible\s*\{\s*background:\s*var\(--hermes-primary-bg,\s*var\(--hermes-ink\)\);\s*color:\s*var\(--hermes-primary-fg,\s*var\(--hermes-paper\)\);\s*border-color:\s*var\(--hermes-primary-fg,\s*var\(--hermes-paper\)\);\s*\}/,
@@ -4218,7 +4219,7 @@ test('composer plus, command pill, and topbar new-session icons are SVG-centered
   const attach = html.match(/<button[^>]*id="attachMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
   assert.match(attach, /<svg[\s\S]*?viewBox="0 0 24 24"/, 'composer attach plus must be a real SVG, not a text glyph');
   assert.doesNotMatch(attach, />\+</, 'composer attach must not render a bare + text glyph');
-  assert.match(css, /\.attach-menu-button\.composer-plus svg\s*\{\s*display:\s*block;\s*width:\s*14px;\s*height:\s*14px;\s*\}/, 'composer plus SVG must be block-centered at 14px');
+  assert.match(css, /\.attach-menu-button\.composer-plus svg\s*\{\s*display:\s*block;\s*width:\s*16px;\s*height:\s*16px;\s*\}/, 'composer plus SVG must be block-centered at 16px');
   assert.match(css, /\.attach-menu-button\.composer-plus\s*\{[^}]*padding:\s*0;/s, 'composer plus must not use a bottom-padding baseline hack');
   const command = html.match(/<button[^>]*id="commandMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
   assert.match(command, /<span aria-hidden="true">\/<\/span><strong[\s\S]*?commands<\/strong>/, 'command pill keeps its accessible slash + label structure');
