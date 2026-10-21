@@ -23137,13 +23137,31 @@ function setTestConnectionButtonLabel(label) {
   }
 }
 
+// The Settings test button is a signal glyph that shows where the connection
+// stands: all bars lit when connected, bars climbing while connecting or
+// testing, one bar in the danger colour when unreachable, dim when unset.
+function testConnectionSignalLevel() {
+  const state = currentConnectionState();
+  if (state.connected) return 'strong';
+  if (state.state === 'connecting') return 'searching';
+  if (state.state === 'unreachable') return 'lost';
+  return 'none';
+}
+
+function renderTestConnectionSignal(level = testConnectionSignalLevel()) {
+  if (els.testConnectionButton) els.testConnectionButton.dataset.signal = level;
+}
+
 function setTestConnectionBusy(busy) {
   for (const button of connectionTestButtons()) {
     button.disabled = Boolean(busy);
     button.classList.toggle('is-testing', Boolean(busy));
     button.setAttribute('aria-busy', String(Boolean(busy)));
   }
-  if (busy) setTestConnectionButtonLabel('TESTING');
+  if (busy) {
+    setTestConnectionButtonLabel('TESTING');
+    renderTestConnectionSignal('searching');
+  }
 }
 
 function flashTestConnectionResult(ok) {
@@ -23154,9 +23172,11 @@ function flashTestConnectionResult(ok) {
     button.setAttribute('aria-busy', 'false');
   }
   setTestConnectionButtonLabel(ok ? 'ONLINE' : 'FAILED');
+  renderTestConnectionSignal(ok ? 'strong' : 'lost');
   testConnectionFlashTimer = setTimeout(() => {
     for (const button of connectionTestButtons()) button.classList.remove('success', 'error');
     setTestConnectionButtonLabel('TEST');
+    renderTestConnectionSignal();
   }, 2600);
 }
 
@@ -24373,6 +24393,11 @@ function bindEvents() {
     compactCurrentSessionContext().catch((error) => setStatus('warn', 'Context compaction failed', error?.message || String(error), { translateDetail: false }));
   });
   els.testConnectionButton.addEventListener('click', testConnection);
+  // Read the connection afresh whenever Settings opens, so the bars are live
+  // without the button needing a click first.
+  new MutationObserver(() => {
+    if (!els.settingsDialog.hidden && !els.testConnectionButton.classList.contains('is-testing')) renderTestConnectionSignal();
+  }).observe(els.settingsDialog, { attributes: true, attributeFilter: ['hidden'] });
   els.copyDiagnosticsButton?.addEventListener('click', () => {
     copySupportDiagnostics().catch((error) => setStatus('warn', 'Diagnostics copy failed', error?.message || String(error), { translateDetail: false }));
   });
