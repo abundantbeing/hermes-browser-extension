@@ -1108,7 +1108,7 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
   color: var(--hermes-primary-fg, var(--hermes-paper));
   border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
-.settings-close-icon svg { display: block; stroke-width: 1.6; }
+.settings-close-icon svg { display: block; }
 .settings-close-icon:hover svg { transform: none; }
 .settings-button { text-decoration: none; }
 .settings-button:hover,
@@ -1124,7 +1124,6 @@ button:disabled { cursor: wait; opacity: 0.55; transform: none; }
   padding: 0;
 }
 .icon-button svg { display: block; width: 16px; height: 16px; }
-.icon-button .new-session-icon { width: 18px; height: 18px; }
 #newSessionButton:hover,
 #newSessionButton:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 .brand-mini img { display: block; width: 50px; max-height: 30px; object-fit: contain; object-position: left center; }
@@ -4191,7 +4190,7 @@ textarea::-webkit-scrollbar-track { background: transparent; }
   color: rgba(var(--hermes-ink-rgb),0.72);
   line-height: 1;
 }
-.attach-menu-button.composer-plus svg { display: block; width: 14px; height: 14px; }
+.attach-menu-button.composer-plus svg { display: block; width: 16px; height: 16px; }
 .composer-icon {
   position: absolute;
   bottom: 9px;
@@ -4293,7 +4292,6 @@ textarea::-webkit-scrollbar-track { background: transparent; }
   100% { opacity: 0.3; }
 }
 .composer-send { right: 9px; }
-.composer-send svg { transform: translateY(-1px); }
 .composer-stop { right: 9px; color: var(--danger); border-color: var(--danger); font-size: calc(11px * var(--hermes-text-zoom, 1)); }
 .composer-input-wrap.busy-draft .composer-stop { right: 38px; }
 .composer-stop:not([hidden]) { display: inline-flex; }
@@ -4302,8 +4300,6 @@ textarea::-webkit-scrollbar-track { background: transparent; }
 .composer-input-wrap.busy-draft.can-steer .composer-stop { right: 67px; }
 .composer-input-wrap.busy-draft.can-steer .composer-queue { right: 38px; }
 .composer-steer { right: 9px; color: var(--hermes-accent); border-color: rgba(var(--hermes-accent-rgb),0.48); }
-.composer-queue svg,
-.composer-steer svg { transform: translateY(-1px); }
 .attach-menu-button.composer-plus:hover,
 .attach-menu-button.composer-plus[aria-expanded="true"],
 .attach-menu-button.composer-plus:focus-visible {
@@ -4382,10 +4378,10 @@ textarea::-webkit-scrollbar-track { background: transparent; }
 }
 .attach-menu-icon {
   display: inline-block;
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   margin-inline-end: 6px;
-  vertical-align: -1px;
+  vertical-align: -4px;
 }
 .attach-menu button:hover { background: rgba(var(--hermes-fg-rgb),0.08); color: var(--hermes-fg); }
 .attach-menu hr { border: 0; border-top: 1px solid rgba(var(--hermes-fg-rgb),0.16); margin: 5px 0; }
@@ -4470,7 +4466,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   line-height: 1;
   transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1), background 120ms ease;
 }
-.composer-actions #browserControlMenuButton svg { display: block; width: 22px; height: 22px; }
+.composer-actions #browserControlMenuButton svg { display: block; width: 16px; height: 16px; }
 .composer-actions #browserControlMenuButton:hover,
 .composer-actions #browserControlMenuButton[aria-expanded="true"] { background: rgba(var(--hermes-ink-rgb), 0.06); }
 .composer-actions #browserControlMenuButton:active { transform: scale(0.97); }
@@ -4544,7 +4540,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .composer-actions .bot-mode-threads-button[hidden],
 .composer-actions .bot-mode-new-thread-button[hidden] { display: none; }
 .bot-mode-threads-button svg,
-.bot-mode-new-thread-button svg { width: 18px; height: 18px; }
+.bot-mode-new-thread-button svg { width: 16px; height: 16px; }
 @media (max-width: 360px) {
   .composer-actions:has(.bot-mode-threads-button:not([hidden])) { flex-wrap: wrap; }
 }
@@ -4873,14 +4869,11 @@ button.active-profile-indicator {
   border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .settings-connection-test-icon {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.55;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-inline: -1px; /* the glyph's own side padding keeps the button at its 14px-icon width */
+  fill: currentColor;
   transform-origin: 50% 50%;
 }
 .settings-connection-test.is-testing {
@@ -4907,8 +4900,8 @@ button.active-profile-indicator {
 }
 .refresh-glyph {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   flex: 0 0 auto;
   transform-box: fill-box;
   transform-origin: 50% 50%;
@@ -6244,9 +6237,10 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   background: var(--hermes-primary-fg, var(--hermes-paper));
   color: var(--hermes-primary-bg, var(--hermes-ink));
 }
-/* Notification toast: a floating glass card docked under the header. One
-   component for every refresh / enable / status message; all colors come from
-   theme tokens so it reads on every theme in light and dark. */
+/* Notification toast, docked under the header. One component for every
+   refresh / enable / status message, drawn like a settings category card: square
+   edges, a 1px rule, a framed pixel icon and a mono eyebrow title. Colors come
+   from theme tokens so it reads on every theme in light and dark. */
 .operation-toast {
   --toast-tone: var(--hermes-accent, var(--hermes-ink));
   position: fixed;
@@ -6256,72 +6250,76 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   left: 50%;
   z-index: 120;
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 30px;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
   align-items: center;
-  gap: 11px;
+  gap: 10px;
   width: min(380px, calc(100% - 24px));
   margin: 0;
-  padding: 10px 10px 10px 11px;
-  border: 1px solid color-mix(in srgb, var(--toast-tone) 38%, var(--hermes-line-strong, var(--hermes-ink)));
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--hermes-paper) 90%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
+  padding: 10px 8px 10px 10px;
+  border: 1px solid var(--hermes-line-strong, var(--hermes-ink));
+  /* Same ink mix as the icon, so a pale accent (mono light) still draws a visible edge. */
+  border-top: 2px solid color-mix(in srgb, var(--toast-tone) 55%, var(--hermes-ink));
+  border-radius: 0;
+  background: var(--hermes-paper);
   color: var(--hermes-ink);
-  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.26), 0 1px 0 color-mix(in srgb, var(--hermes-ink) 8%, transparent) inset;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.32);
   transform: translateX(-50%);
-  animation: operationToastIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: operationToastIn 200ms steps(4, jump-none) both;
 }
 .operation-toast[hidden] { display: none; }
 .operation-toast.warn { --toast-tone: #d5a43f; }
 .operation-toast.error { --toast-tone: #df5f56; }
 .operation-toast-signal {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--toast-tone) 22%, transparent);
+  border: 1px solid var(--hermes-line, var(--hermes-line-strong));
+  border-radius: 0;
   /* Mix toward ink so the glyph stays readable on pale accents in light themes. */
   color: color-mix(in srgb, var(--toast-tone) 55%, var(--hermes-ink));
 }
-.operation-toast-signal svg { width: 17px; height: 17px; display: none; stroke-width: 2.8; }
+.operation-toast-signal svg { width: 16px; height: 16px; display: none; }
 .operation-toast:not(.warn):not(.error) .operation-toast-signal .icon-ok,
 .operation-toast.warn .operation-toast-signal .icon-warn,
 .operation-toast.error .operation-toast-signal .icon-error { display: block; }
 .operation-toast strong,
 .operation-toast span:not(.operation-toast-signal) { display: block; }
 .operation-toast strong {
-  font-family: var(--hermes-font-ui);
-  font-size: calc(13px * var(--hermes-text-zoom, 1));
-  font-weight: 650;
-  line-height: 1.25;
+  font-family: var(--hermes-font-mono);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.3;
+  text-transform: uppercase;
   color: var(--hermes-ink);
 }
 .operation-toast div > span {
-  margin-top: 2px;
+  margin-top: 3px;
   color: color-mix(in srgb, var(--hermes-ink) 74%, transparent);
+  font-family: var(--hermes-font-ui);
   font-size: calc(11.5px * var(--hermes-text-zoom, 1));
   line-height: 1.4;
 }
 .operation-toast button {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
   padding: 0;
-  border: 0;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: 0;
   background: transparent;
   color: color-mix(in srgb, var(--hermes-ink) 72%, transparent);
   cursor: pointer;
   display: grid;
   place-items: center;
-  font-family: var(--hermes-font-ui);
-  font-size: 18px;
   line-height: 1;
 }
+.operation-toast button svg { width: 16px; height: 16px; fill: currentColor; }
 .operation-toast button:hover,
 .operation-toast button:focus-visible {
-  background: color-mix(in srgb, var(--hermes-ink) 12%, transparent);
+  border-color: var(--hermes-line-strong, var(--hermes-ink));
+  background: transparent;
   color: var(--hermes-ink);
   outline: none;
 }
@@ -7481,8 +7479,8 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
 }
 .bot-mode-cron-refresh svg {
   display: block;
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
 }
 .bot-mode-cron-refresh:hover {
   background: rgba(var(--hermes-ink-rgb), 0.08);
@@ -8248,7 +8246,7 @@ body.bot-mode-compact .message.assistant .message-role .room-avatar { width: 16p
 .bot-mode-empty-note { margin-top: 4px; text-transform: none; letter-spacing: 0; opacity: .78; }
 .bot-mode-settings .settings-toggle-row { grid-template-columns: minmax(0,1fr) auto auto; }
 .bot-mode-button > span:not(.sr-only) { display: grid; place-items: center; }
-.bot-mode-button svg { width: 18px; height: 18px; display: block; }
+.bot-mode-button svg { width: 16px; height: 16px; display: block; }
 html[dir="rtl"] .bot-mode-row { text-align: right; }
 
 .bot-mode-loading-overlay {
@@ -8489,12 +8487,8 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
 }
 .group-settings-close svg {
   display: block;
-  width: 12px;
-  height: 12px;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 16px;
+  height: 16px;
 }
 .group-settings-close:hover {
   border-color: var(--hermes-ink);
@@ -9315,11 +9309,7 @@ html[data-hermes-mode="light"] .room-mention { background: color-mix(in srgb, va
 .settings-category-icon svg {
   inline-size: 16px;
   block-size: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  fill: currentColor;
 }
 .settings-category-copy { display: grid; gap: 3px; min-width: 0; }
 .settings-category-copy strong {
@@ -9586,7 +9576,7 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
   text-transform: uppercase;
 }
 .settings-back-to-top[hidden] { display: none; }
-.settings-back-to-top svg { inline-size: 14px; block-size: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.settings-back-to-top svg { inline-size: 16px; block-size: 16px; fill: currentColor; }
 .settings-back-to-top:hover,
 .settings-back-to-top:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-bg, var(--hermes-ink)); }
 .settings-dialog form { padding-block-end: 72px; }
@@ -9747,7 +9737,7 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
   border: 1px solid var(--hermes-line);
   color: var(--hermes-accent);
 }
-.models-select-mark svg, .models-refresh-row svg { inline-size: 14px; block-size: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.models-select-mark svg, .models-refresh-row svg { inline-size: 16px; block-size: 16px; flex: none; fill: currentColor; }
 .models-runtime-toggles { display: grid; gap: 7px; }
 .models-legend {
   display: block;
@@ -9810,7 +9800,7 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
   min-height: 38px; padding: 8px 6px 6px;
   font-size: calc(10px * var(--hermes-text-zoom, 1)); letter-spacing: 0.08em; text-transform: uppercase;
 }
-.mode-switch .mode-choice svg { inline-size: 15px; block-size: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.mode-switch .mode-choice svg { inline-size: 16px; block-size: 16px; flex: none; fill: currentColor; }
 .mode-switch .mode-choice > span { min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 300px) { .mode-switch .mode-choice svg { display: none; } }
 
@@ -9845,7 +9835,7 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
   text-align: center;
   line-height: 1;
 }
-.mode-switch .mode-choice svg { inline-size: 18px; block-size: 18px; display: block; margin: 0; }
+.mode-switch .mode-choice svg { inline-size: 16px; block-size: 16px; display: block; margin: 0; }
 .mode-switch .mode-choice > span { display: block; line-height: 1; text-align: center; }
 @media (max-width: 300px) { .mode-switch .mode-choice svg { display: block; } }
 
