@@ -87,7 +87,7 @@ test('deriveReviewLabels classifies Linux gateway/browser support bugs', () => {
   }
 });
 
-test('deriveReviewLabels flags external GitHub docs links for security review', () => {
+test('deriveReviewLabels does not treat an external documentation link as a security defect', () => {
   const diff = `diff --git a/README.md b/README.md
 +++- [Hermes Tweet](https://github.com/Xquik-dev/hermes-tweet) can add context.`;
   const labels = deriveReviewLabels({
@@ -100,8 +100,8 @@ test('deriveReviewLabels flags external GitHub docs links for security review', 
 
   assert.ok(labels.includes('type/docs'));
   assert.ok(labels.includes('comp/docs'));
-  assert.ok(labels.includes('needs/security-review'));
-  assert.ok(labels.includes('p3'));
+  assert.ok(!labels.includes('needs/security-review'));
+  assert.ok(!labels.includes('p3'));
 });
 
 test('callHermesReview times out stuck local Hermes requests', async () => {

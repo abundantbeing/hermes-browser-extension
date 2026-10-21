@@ -7,29 +7,9 @@ import { pathToFileURL } from 'node:url';
 
 import { hermesHomePath } from './hermes-home.mjs';
 
-import {
-  applyReviewLabels,
-  buildFollowUpReviewPrompt,
-  buildHermesReviewPrompt,
-  callHermesReview,
-  deriveReviewLabels,
-  fetchPullRequestDiff,
-  formatFollowUpComment,
-  formatReviewComment,
-  githubFetch,
-  upsertReviewComment,
-} from './hermes-review-github-event.mjs';
+import { runReviewQueue } from './hermes-review-queue.mjs';
 
-const DEFAULT_REPO = 'abundantbeing/hermes-browser-extension';
-const DEFAULT_GATEWAY_URL = 'http://127.0.0.1:8642';
 const DEFAULT_STATE_FILE = hermesHomePath('hermes-browser-review-state.json');
-
-function readEnvFileValue(name) {
-  const envPath = hermesHomePath('.env');
-  if (!fs.existsSync(envPath)) return '';
-  const match = fs.readFileSync(envPath, 'utf8').match(new RegExp(`^${name}=(.*)$`, 'm'));
-  return match?.[1]?.trim() || '';
-}
 
 function normalizedExecutableExtensions(command, { platform = process.platform, pathext = process.env.PATHEXT || '.COM;.EXE;.BAT;.CMD;.PS1' } = {}) {
   if (platform !== 'win32' || path.extname(command)) return [''];
@@ -128,14 +108,6 @@ export function githubToken(env = process.env, options = {}) {
   }
 }
 
-function reviewEnv(env = process.env) {
-  return {
-    ...env,
-    HERMES_REVIEW_GATEWAY_URL: env.HERMES_REVIEW_GATEWAY_URL || DEFAULT_GATEWAY_URL,
-    HERMES_REVIEW_API_KEY: env.HERMES_REVIEW_API_KEY || readEnvFileValue('API_SERVER_KEY'),
-  };
-}
-
 function stateKey(target) {
   return `${target.kind}:${target.number}`;
 }
@@ -147,6 +119,7 @@ export function reviewTargetSignature(target = {}) {
     title: target.title || '',
     body: target.body || '',
     headSha: target.kind === 'pull_request' ? target.headSha || '' : '',
+    ...(target.kind === 'pull_request' && (target.baseRef || target.baseSha) ? { baseRef: target.baseRef || '', baseSha: target.baseSha || '' } : {}),
   };
   return crypto.createHash('sha256').update(JSON.stringify(stable)).digest('hex');
 }
@@ -182,12 +155,13 @@ export function newestExternalReply(comments = [], seenCommentId = 0) {
   const seen = Number(seenCommentId || 0);
   const replies = (Array.isArray(comments) ? comments : [])
     .filter((comment) => Number(comment?.id || 0) > seen)
+    .filter((comment) => comment?.user?.type !== 'Bot' && !String(comment?.user?.login || '').endsWith('[bot]'))
     .filter((comment) => !String(comment?.body || '').includes('hermes-agent-review'));
   return replies.sort((a, b) => Number(b.id) - Number(a.id))[0] || null;
 }
 
 export function buildReviewTargets({ prs = [], issues = [] } = {}) {
-  const prTargets = prs.map((pr) => ({
+  const prTargets = prs.filter((pr) => !pr.draft).map((pr) => ({
     kind: 'pull_request',
     number: Number(pr.number || 0),
     title: pr.title || '',
@@ -195,6 +169,8 @@ export function buildReviewTargets({ prs = [], issues = [] } = {}) {
     url: pr.html_url || '',
     author: pr.user?.login || '',
     headSha: pr.head?.sha || '',
+    baseRef: pr.base?.ref || '',
+    baseSha: pr.base?.sha || '',
     labels: Array.isArray(pr.labels) ? pr.labels : [],
   })).filter((target) => target.number);
 
@@ -214,155 +190,12 @@ export function buildReviewTargets({ prs = [], issues = [] } = {}) {
   return [...prTargets, ...issueTargets];
 }
 
-function loadState(file) {
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch {
-    return {};
-  }
-}
-
-function saveState(file, state) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`);
-}
-
-async function listOpenTargets({ repo, token }) {
-  const [prs, issues] = await Promise.all([
-    githubFetch(`/repos/${repo}/pulls?state=open&per_page=20&sort=updated&direction=desc`, { token }),
-    githubFetch(`/repos/${repo}/issues?state=open&per_page=20&sort=updated&direction=desc`, { token }),
-  ]);
-  return buildReviewTargets({ prs: Array.isArray(prs) ? prs : [], issues: Array.isArray(issues) ? issues : [] });
-}
-
-async function reviewTarget({ repo, target, token, env, dryRun = false }) {
-  const diff = target.kind === 'pull_request'
-    ? await fetchPullRequestDiff({ repo, number: target.number, token })
-    : '';
-  const labels = deriveReviewLabels(target, diff);
-  const prompt = buildHermesReviewPrompt({
-    target,
-    repo,
-    title: target.title,
-    author: target.author,
-    body: target.body,
-    diff,
-    url: target.url,
-  });
-  if (dryRun) {
-    return { action: 'dry-run', body: prompt, labels };
-  }
-  await applyReviewLabels({ repo, target, token, labels });
-  const review = await callHermesReview(prompt, env);
-  const agentPostedId = postedCommentIdFromReviewText(review);
-  if (agentPostedId) {
-    // The reviewer ignored its writer-only contract and posted the comment
-    // itself; skip the pipeline post so the target never gets two reviews.
-    return { action: 'skipped-agent-posted', id: agentPostedId, labels };
-  }
-  const comment = `${formatReviewComment(target, review)}\n\nReviewed signature: \`${reviewTargetSignature(target)}\``;
-  const result = await upsertReviewComment({ repo, target, token, body: comment });
-  return { ...result, labels };
-}
-
-async function followUpTarget({ repo, target, token, env, reply }) {
-  const prompt = buildFollowUpReviewPrompt({
-    target,
-    repo,
-    title: target.title,
-    body: target.body,
-    reply,
-    url: target.url,
-  });
-  const review = await callHermesReview(prompt, env);
-  const body = formatFollowUpComment(target, reply, review);
-  const created = await githubFetch(`/repos/${repo}/issues/${target.number}/comments`, {
-    method: 'POST',
-    token,
-    body: { body },
-  });
-  return { action: 'created', id: created.id };
-}
-
 export async function runReviewWatch(rawEnv = process.env) {
-  const env = reviewEnv(rawEnv);
-  const repo = env.GITHUB_REPOSITORY || rawEnv.HERMES_REVIEW_REPO || DEFAULT_REPO;
-  const token = githubToken(env);
-  const stateFile = env.HERMES_REVIEW_STATE_FILE || DEFAULT_STATE_FILE;
-  const maxTargets = Number(env.HERMES_REVIEW_MAX_TARGETS || 3);
-  const maxFollowUps = Number(env.HERMES_REVIEW_MAX_FOLLOW_UPS || 2);
-  const dryRun = env.HERMES_REVIEW_DRY_RUN === '1' || process.argv.includes('--dry-run');
-
-  if (!token) throw new Error('Missing GitHub token. Run gh auth login or set GITHUB_TOKEN.');
-  if (!dryRun && !env.HERMES_REVIEW_API_KEY) throw new Error('Missing HERMES_REVIEW_API_KEY or API_SERVER_KEY in ~/.hermes/.env.');
-
-  const state = loadState(stateFile);
-  const targets = await listOpenTargets({ repo, token });
-  const pending = targets.filter((target) => shouldReviewTarget(target, state)).slice(0, maxTargets);
-  const completed = [];
-  const followUps = [];
-  const failed = [];
-  let dirty = false;
-
-  const fetchComments = (number) => githubFetch(`/repos/${repo}/issues/${number}/comments?per_page=100`, { token });
-
-  for (const target of pending) {
-    try {
-      const result = await reviewTarget({ repo, target, token, env, dryRun });
-      completed.push({ target, result });
-      if (!dryRun) {
-        const comments = await fetchComments(target.number).catch(() => []);
-        state[stateKey(target)] = {
-          signature: reviewTargetSignature(target),
-          seenCommentId: latestCommentId(comments),
-        };
-        dirty = true;
-      }
-    } catch (error) {
-      failed.push({ target, error: error?.message || String(error) });
-      console.error(`failed ${target.kind} #${target.number}: ${error?.message || String(error)}`);
-    }
-  }
-
-  // One review per target; a follow-up only when someone replies to it. Targets
-  // reviewed before the seenCommentId era are baselined once without answering
-  // older comments.
-  if (!dryRun) {
-    const reviewedKeys = new Set(pending.map((target) => stateKey(target)));
-    for (const target of targets) {
-      if (followUps.length >= maxFollowUps) break;
-      if (reviewedKeys.has(stateKey(target))) continue;
-      const entry = state[stateKey(target)];
-      if (entry === undefined) continue;
-      try {
-        const comments = await fetchComments(target.number);
-        const seen = stateSeenCommentId(entry);
-        if (!seen) {
-          state[stateKey(target)] = {
-            signature: stateSignature(entry),
-            seenCommentId: latestCommentId(comments),
-          };
-          dirty = true;
-          continue;
-        }
-        const reply = newestExternalReply(comments, seen);
-        if (!reply) continue;
-        const result = await followUpTarget({ repo, target, token, env, reply });
-        followUps.push({ target, reply, result });
-        state[stateKey(target)] = {
-          signature: stateSignature(entry),
-          seenCommentId: Math.max(latestCommentId(comments), Number(result.id || 0)),
-        };
-        dirty = true;
-      } catch (error) {
-        failed.push({ target, error: error?.message || String(error) });
-        console.error(`failed follow-up ${target.kind} #${target.number}: ${error?.message || String(error)}`);
-      }
-    }
-  }
-
-  if (!dryRun && dirty) saveState(stateFile, state);
-  return { completed, failed, followUps };
+  return runReviewQueue(rawEnv, {
+    githubToken, buildReviewTargets, shouldReviewTarget, reviewTargetSignature,
+    latestCommentId, stateSeenCommentId, stateSignature, newestExternalReply,
+    defaultStateFile: DEFAULT_STATE_FILE,
+  });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
