@@ -917,6 +917,7 @@ const els = {
   closeSettingsButton: $('#closeSettingsButton'),
   settingsDialog: $('#settingsDialog'),
   settingsForm: $('#settingsForm'),
+  saveSettingsTopButton: $('#saveSettingsTopButton'),
   testConnectionButton: $('#testConnectionButton'),
   versionLabel: $('#versionLabel'),
   checkUpdatesButton: $('#checkUpdatesButton'),
@@ -2363,6 +2364,46 @@ function closeSettingsDialog() {
   els.settingsDialog.hidden = true;
   els.settingsDialog.setAttribute('aria-hidden', 'true');
   els.settingsButton.focus();
+}
+
+let saveSettingsResetTimer = null;
+
+// Save re-probes the gateway and reloads models, skills and sessions before the
+// dialog closes, which can take a few seconds. The button locks and animates for
+// that whole run, then flashes Saved (or the error style) so a click always shows.
+function setSaveSettingsState(state) {
+  const button = els.saveSettingsTopButton;
+  if (!button) return;
+  clearTimeout(saveSettingsResetTimer);
+  const saving = state === 'saving';
+  button.disabled = saving;
+  button.setAttribute('aria-busy', String(saving));
+  button.classList.toggle('is-saving', saving);
+  button.classList.toggle('is-saved', state === 'saved');
+  button.classList.toggle('is-failed', state === 'failed');
+  button.textContent = saving ? t('appearance.saving') : state === 'saved' ? t('appearance.saved') : t('ui.save');
+  if (state === 'saved' || state === 'failed') {
+    saveSettingsResetTimer = setTimeout(() => setSaveSettingsState('idle'), 2400);
+  }
+}
+
+let settingsInvalidRevealPending = false;
+
+// A field that fails the browser's own check (a Gateway URL without http://, say)
+// inside a closed pane blocks the submit with no message at all. Open its pane and
+// let the browser point at the field instead.
+function revealInvalidSettingsField(event) {
+  const field = event.target;
+  const pane = field?.closest?.('[data-settings-pane]')?.dataset.settingsPane;
+  if (!pane || settingsInvalidRevealPending) return;
+  settingsInvalidRevealPending = true;
+  setSaveSettingsState('failed');
+  if (pane !== settingsActivePane) showSettingsPane(pane, { focus: false });
+  requestAnimationFrame(() => {
+    field.scrollIntoView({ block: 'center', behavior: 'auto' });
+    field.reportValidity(); // fires 'invalid' again; the pending flag keeps that from looping
+    settingsInvalidRevealPending = false;
+  });
 }
 
 function handleSettingsCategoryNavigation(event) {
@@ -24611,10 +24652,15 @@ function bindEvents() {
   systemColorQuery?.addEventListener?.('change', () => {
     if (normalizeColorMode(settings.colorMode) === 'system') renderAppearanceControls();
   });
+  els.settingsForm.addEventListener('invalid', revealInvalidSettingsField, true);
   els.settingsForm.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (els.saveSettingsTopButton?.getAttribute('aria-busy') === 'true') return;
+    setSaveSettingsState('saving');
+    let persisted = false;
     try {
       await saveSettingsFromForm();
+      persisted = true;
       await probeGatewayLiveness({ quiet: false });
       if (minimumConnectionReady()) {
         await loadGatewayCapabilities({ quiet: true, healthOk: true });
@@ -24624,10 +24670,18 @@ function bindEvents() {
         await loadSessions({ quiet: true });
         await initializeSessionForPanelOpen({ focus: false });
       }
-      closeSettingsDialog();
+      // Stay open: closing straight after Save hid the only sign that it had
+      // worked. The button flashes Saved, the edited markers clear, and the
+      // close button dismisses Settings.
+      setSaveSettingsState('saved');
+      captureSettingsBaseline();
       await refreshContext();
     } catch (error) {
-      setStatus('warn', 'Settings not saved', error?.message || String(error), { translateDetail: false });
+      const detail = error?.message || String(error);
+      setSaveSettingsState(persisted ? 'saved' : 'failed');
+      setStatus('warn', 'Settings not saved', detail, { translateDetail: false });
+      // The status line sits behind the open dialog, so say it where it can be seen.
+      if (!persisted) showOperationToast({ kind: 'error', title: 'Settings not saved', detail });
     }
   });
   els.localDocumentApproveButton?.addEventListener('click', async () => {
