@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 import { runReviewWatch, buildReviewTargets, reviewTargetSignature } from '../scripts/hermes-review-watch.mjs';
 
 function temporary(t) {
@@ -36,6 +37,58 @@ test('a dead art URL in a published review is detected and re-hosted', async (t)
   // rather than editing the comment with a broken link.
   assert.equal(result, null);
   assert.equal(patched.length, 0, 'the comment must not be edited when no replacement art exists');
+});
+
+test('the art child never inherits GitHub or runtime credentials', async () => {
+  const module = await import('../scripts/hermes-review-queue.mjs');
+  const spawned = [];
+  const spawnChild = (command, args, options) => {
+    spawned.push(options.env);
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stdin = { end() {} };
+    child.kill = () => {};
+    queueMicrotask(() => child.emit('close', 1));
+    return child;
+  };
+  const env = {
+    HERMES_REVIEW_PYTHON: process.execPath, HERMES_REVIEW_ART: '1', HERMES_REVIEW_RUNTIME_ROOT: 'runtime',
+    GITHUB_TOKEN: 'leak-github', GH_TOKEN: 'leak-gh', HERMES_REVIEW_API_KEY: 'leak-review', API_SERVER_KEY: 'leak-api', PYTHONHOME: 'leak-home', PYTHONPATH: 'leak-path',
+  };
+  await module.generateReviewArt(JSON.stringify({ kind: 'pull_request', number: 7 }), env, undefined, { spawnChild });
+  assert.equal(spawned.length, 1);
+  for (const key of ['GITHUB_TOKEN', 'GH_TOKEN', 'HERMES_REVIEW_API_KEY', 'API_SERVER_KEY', 'PYTHONHOME', 'PYTHONPATH']) {
+    assert.equal(key in spawned[0], false, `${key} reached the art child`);
+  }
+  assert.equal(spawned[0].HERMES_REVIEW_RUNTIME_ROOT, 'runtime');
+});
+
+test('a comment-supplied art URL is never fetched or edited', async (t) => {
+  const module = await import('../scripts/hermes-review-queue.mjs');
+  const directory = temporary(t);
+  const headSha = 'a'.repeat(40);
+  const attacker = 'https://attacker.example/beacon.png';
+  const comment = { id: 78, user: { login: 'reviewer' }, body: `<!-- hermes-agent-review:pull_request -->\n![PR #42 review art](${attacker})\n\nmodel text` };
+  // The watcher's own record of what it published. The comment never carried it.
+  fs.writeFileSync(path.join(directory, `art-42-${headSha}.json`), JSON.stringify({ ok: true, url: 'https://files.catbox.moe/published.png', bytes: 100, file: path.join(directory, 'missing.png') }));
+  const fetched = [];
+  t.mock.method(globalThis, 'fetch', async (url, init) => {
+    fetched.push(String(url));
+    const route = new URL(url).pathname;
+    if (init?.method === 'PATCH') throw new Error('the comment must not be edited');
+    if (route.endsWith('/user')) return Response.json({ login: 'reviewer' });
+    if (route.includes('/issues/42/comments')) return Response.json([comment]);
+    return new Response('x', { status: 200 });
+  });
+  const result = await module.repairReviewArt({
+    repo: 'abundantbeing/hermes-browser-extension',
+    target: { kind: 'pull_request', number: 42, title: 't', body: 'b', headSha },
+    token: 'fixture', env: { HERMES_REVIEW_ART: '1', HERMES_REVIEW_PYTHON: process.execPath, HERMES_REVIEW_ARTIFACT_DIR: directory },
+  });
+  assert.equal(result, null);
+  assert.equal(fetched.some((url) => url.startsWith(attacker)), false, 'a URL parsed from comment text must never be fetched');
+  assert.equal(await module.hostedFileSize(attacker), -1, 'hosts outside the art uploader allowlist are never fetched');
+  assert.equal(fetched.some((url) => url.startsWith(attacker)), false);
 });
 
 test('base-aware ledger migration preserves old review receipts without posting historical reviews', async (t) => {
