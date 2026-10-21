@@ -1,8 +1,8 @@
 // Copy control for fenced markdown blocks. Pure DOM helper — call after
 // sanitized markdown is in the tree so DOMPurify never has to allow <button>.
 
-export const CODE_COPY_ICON = '<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><rect x="9" y="9" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
-export const CODE_COPIED_ICON = '<svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14"><path d="M5 12.5 9.5 17 19 7.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+export const CODE_COPY_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="copy"><path d="M8 6h12v2H8zM4 2h12v2H4zm2 6h2v12H6zM2 4h2v12H2zm6 16h12v2H8zM20 8h2v12h-2zm-4-4h2v2h-2zM4 16h2v2H4z"/></svg>';
+export const CODE_COPIED_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="check"><path d="M10 18H8v-2h2v2Zm-2-2H6v-2h2v2Zm4-2v2h-2v-2h2Zm-6 0H4v-2h2v2Zm8 0h-2v-2h2v2Zm2-2h-2v-2h2v2Zm2-2h-2V8h2v2Zm2-2h-2V6h2v2Z"/></svg>';
 
 const COPIED_RESET_MS = 1500;
 
