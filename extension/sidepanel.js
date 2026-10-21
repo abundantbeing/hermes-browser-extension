@@ -247,6 +247,7 @@ import { prepareBotBrowserTurn } from './lib/bot-browser-turn.mjs';
 import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
 import { createBackgroundArtRotation } from './lib/background-art.mjs';
+import { createStartupScreen } from './lib/startup-screen.mjs';
 import {
   activeSubagentView,
   applySubagentEvent,
@@ -709,6 +710,9 @@ const els = {
   startupScreen: $('#startupScreen'),
   startupTitle: $('#startupTitle'),
   startupDetail: $('#startupDetail'),
+  startupCount: $('#startupCount'),
+  startupState: $('#startupState'),
+  startupLabel: $('#startupLabel'),
   startupProgress: $('#startupProgress'),
   startupStepList: $('#startupStepList'),
   startupConnectButton: $('#startupConnectButton'),
@@ -2036,26 +2040,32 @@ function watchTopbarHeight() {
   topbarHeightObserver.observe(topbar);
 }
 
+let startupScreenView = null;
+
+// The Meander startup screen paints the Greek key progress border, the
+// current check and the screen-reader step list. Built on first use so the
+// panel already has a size to fit the border to.
+function startupScreenUi() {
+  if (!startupScreenView && els.startupScreen) {
+    startupScreenView = createStartupScreen({
+      root: els.startupScreen,
+      count: els.startupCount,
+      state: els.startupState,
+      label: els.startupLabel,
+      detail: els.startupDetail,
+      stepList: els.startupStepList,
+      actions: els.startupActions || document.getElementById('startupActions'),
+      translate: translateUiText,
+    });
+  }
+  return startupScreenView;
+}
+
 function renderStartupReadiness() {
   const view = deriveStartupView(startupReadiness);
   if (els.startupScreen) els.startupScreen.hidden = !view.visible;
   if (els.startupTitle) els.startupTitle.textContent = translateUiText(view.title);
-  if (els.startupDetail) els.startupDetail.textContent = translateUiText(view.detail);
   if (els.startupProgress) els.startupProgress.style.width = `${Math.max(0, Math.min(100, view.progress))}%`;
-  if (els.startupStepList) {
-    els.startupStepList.textContent = '';
-    for (const step of view.steps) {
-      const item = document.createElement('li');
-      item.className = `startup-step startup-step-${step.status}`;
-      item.dataset.status = step.status;
-      const label = document.createElement('strong');
-      label.textContent = translateUiText(step.label);
-      const detail = document.createElement('span');
-      detail.textContent = translateUiText(step.detail || step.status);
-      item.append(label, detail);
-      els.startupStepList.appendChild(item);
-    }
-  }
   if (els.startupConnectButton) {
     els.startupConnectButton.hidden = view.phase !== 'setup-needed';
   }
@@ -2064,6 +2074,7 @@ function renderStartupReadiness() {
   }
   document.body?.classList.toggle('startup-active', view.visible);
   positionStartupSettings(view.visible);
+  startupScreenUi()?.render(view);
   els.composer?.classList.toggle('startup-blocked', view.visible);
   if (els.input) els.input.disabled = view.visible;
   if (els.sendButton) els.sendButton.disabled = view.visible || els.sendButton.disabled;
@@ -23069,6 +23080,7 @@ function setTestConnectionButtonLabel(label) {
       : label;
     if (target) target.textContent = nextLabel;
     else button.textContent = nextLabel;
+    if (button.dataset.tip) button.dataset.tip = nextLabel;
   }
 }
 
