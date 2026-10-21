@@ -695,7 +695,7 @@ html[data-hermes-theme^="custom:"] .web-message.user .web-message-content pre co
 .read-only-indicator { width: 5px; height: 5px; flex: 0 0 auto; border: 1px solid var(--hermes-blue); border-radius: 50%; background: transparent; }
 .read-only-indicator.online { background: var(--hermes-blue); }
 .composer-icon { width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0; border-radius: 0; font: calc(16px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono); }
-.composer-icon svg { width: 17px; height: 17px; overflow: visible; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.composer-icon svg { width: 16px; height: 16px; fill: currentColor; }
 .composer-mic { border: 1px solid var(--hermes-line-strong); background: transparent; color: var(--hermes-ink); }
 .composer-mic:hover { border-color: var(--hermes-blue); background: rgba(var(--hermes-blue-rgb), 0.08); }
 .composer-send { border: 1px solid var(--hermes-blue); background: var(--hermes-blue); color: var(--hermes-white); }

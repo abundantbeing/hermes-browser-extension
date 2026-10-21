@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="lib/user-file-attachments.css" />
     <link rel="stylesheet" href="lib/agent-prompt-card.css" />
     <link rel="stylesheet" href="lib/effort-control.css" />
+    <link rel="stylesheet" href="lib/pixel-icons.css" />
   </head>
   <body>
     <main class="web-shell" data-state="loading">
@@ -47,7 +48,7 @@
           </div>
           <div class="truth-control static session-truth">
             <span><small data-i18n="ui.session">SESSION</small><strong id="sessionTitle">Hermes Web</strong></span>
-            <button id="copySessionId" class="topbar-copy" type="button" aria-label="Session actions" aria-expanded="false" title="Session actions" data-i18n-title="ui.session.actions" data-i18n-aria-label="ui.session.actions"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg></button>
+            <button id="copySessionId" class="topbar-copy" type="button" aria-label="Session actions" aria-expanded="false" title="Session actions" data-i18n-title="ui.session.actions" data-i18n-aria-label="ui.session.actions"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="more-vertical"><path d="M15 3v2h-2V3zm0 8v2h-2v-2zm0 8v2h-2v-2zM13 1v2h-2V1zm0 8v2h-2V9zm0 8v2h-2v-2zM11 3v2H9V3zm0 8v2H9v-2zm0 8v2H9v-2zm2-14v2h-2V5zm0 8v2h-2v-2zm0 8v2h-2v-2z"/></svg></button>
             <section id="sessionActionsMenu" class="session-actions-menu" aria-label="Session actions" hidden data-i18n-aria-label="ui.session.actions">
               <button type="button" data-session-action="rename" data-i18n="ui.rename.session">Rename session</button>
               <button type="button" data-session-action="copy" data-i18n="ui.copy.session.id">Copy session ID</button>
@@ -84,7 +85,7 @@
         </div>
         <nav class="rail-nav" aria-label="Web UI sections" data-i18n-aria-label="ui.web.ui.sections">
           <button id="chatsRailButton" class="rail-nav-item active" type="button"><span aria-hidden="true">▤</span><span data-i18n="ui.chats">Chats</span></button>
-          <button id="agentsRailButton" class="rail-nav-item" type="button" hidden><svg class="bot-mode-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"><rect x="4.5" y="7" width="15" height="11" /><path d="M12 7V3.8M9.6 3.8h4.8" /><circle cx="9.4" cy="12.2" r="1.15" fill="currentColor" stroke="none" /><circle cx="14.6" cy="12.2" r="1.15" fill="currentColor" stroke="none" /><path d="M9.8 15.2c1.4 1 3 1 4.4 0" /></svg><span data-i18n="bot_mode.agents">Agents</span></button>
+          <button id="agentsRailButton" class="rail-nav-item" type="button" hidden><svg class="bot-mode-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="avatar-circle"><path d="M6 2h12v2H6zm0 18h12v2H6zM2 6h2v12H2zm18 0h2v12h-2zM6 18h2v2H6zm10 0h2v2h-2zm2-14h2v2h-2zM4 4h2v2H4zm0 14h2v2H4zm14 0h2v2h-2zM8 16h8v2H8zm2-4h4v2h-4zM8 8h2v4H8zm2-2h4v2h-4zm4 2h2v4h-2z"/></svg><span data-i18n="bot_mode.agents">Agents</span></button>
           <button class="rail-nav-item" type="button" disabled><span aria-hidden="true">▦</span><span data-i18n="ui.workspaces">Workspaces</span><small data-i18n="ui.later">LATER</small></button>
           <button class="rail-nav-item" type="button" disabled><span aria-hidden="true">↯</span><span data-i18n="ui.runs">Runs</span><small data-i18n="ui.later">LATER</small></button>
           <button class="rail-nav-item" type="button" disabled><span aria-hidden="true">◇</span><span data-i18n="ui.artifacts">Artifacts</span><small data-i18n="ui.later">LATER</small></button>
@@ -199,7 +200,7 @@
                 <button id="steerDraft" type="button" hidden data-i18n="ui.steer">Steer</button>
                 <button id="stopRun" type="button" hidden data-i18n="run.stop">■ Stop</button>
               </div>
-              <div class="composer-state"><span id="composerStatus" class="composer-status" role="status" aria-live="polite"></span><button id="composerModelControl" class="composer-runtime-control" type="button" aria-haspopup="dialog" aria-label="Change model and runtime options" data-i18n-aria-label="ui.change.model.and.runtime.options"><strong id="composerModelName">Gateway default</strong><small id="composerRuntimeMeta">Thinking off · Standard</small></button><button id="voiceButton" class="composer-icon composer-mic" type="button" aria-label="Start voice dictation" title="Start voice dictation" data-i18n-title="ui.start.voice.dictation" data-i18n-aria-label="ui.start.voice.dictation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="3" width="8" height="12" rx="4"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"></path></svg></button><button id="fullTabSend" class="composer-icon composer-send" type="submit" aria-label="Send message" data-i18n-aria-label="ui.send.message">↑</button></div>
+              <div class="composer-state"><span id="composerStatus" class="composer-status" role="status" aria-live="polite"></span><button id="composerModelControl" class="composer-runtime-control" type="button" aria-haspopup="dialog" aria-label="Change model and runtime options" data-i18n-aria-label="ui.change.model.and.runtime.options"><strong id="composerModelName">Gateway default</strong><small id="composerRuntimeMeta">Thinking off · Standard</small></button><button id="voiceButton" class="composer-icon composer-mic" type="button" aria-label="Start voice dictation" title="Start voice dictation" data-i18n-title="ui.start.voice.dictation" data-i18n-aria-label="ui.start.voice.dictation"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="mic" focusable="false"><path d="M10 2h4v2h-4zM8 4h2v10H8zm2 10h4v2h-4zm4-10h2v10h-2zM4 10h2v6H4zm2 6h2v2H6zm2 2h8v2H8zm8-2h2v2h-2zm2-6h2v6h-2zm-7 10h2v2h-2z"/></svg></button><button id="fullTabSend" class="composer-icon composer-send" type="submit" aria-label="Send message" data-i18n-aria-label="ui.send.message">↑</button></div>
             </div>
             <section id="attachMenu" class="attach-menu" role="dialog" aria-label="Attach context" hidden data-i18n-aria-label="ui.attach.context">
               <p data-i18n="ui.attach">Attach</p>
