@@ -241,51 +241,6 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .message-row.room-messa
   box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--bot-tint, transparent) 6%, transparent);
 }
 
-/* Nous light loading screen: white field, Nous Blue logo/text/rules, the
-   background art stays as a faint blue watermark. */
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-screen {
-  color: #0000f2;
-  background:
-    radial-gradient(circle at 50% 22%, rgba(0, 0, 242, 0.06), transparent 40%),
-    linear-gradient(180deg, #ffffff 0%, #f4f6ff 100%),
-    #ffffff;
-}
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-screen::before {
-  background: #0000f2;
-  opacity: 0.09;
-  mix-blend-mode: normal;
-}
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-screen::after { display: none; }
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-brand-icon {
-  background: #0000f2;
-  filter: none;
-}
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-brand-lockup,
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-copy,
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-copy h1,
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-copy .eyebrow { color: #0000f2; }
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-copy p:not(.eyebrow) { color: rgba(0, 0, 242, 0.8); }
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-progress {
-  border-color: rgba(0, 0, 242, 0.4);
-  background: rgba(0, 0, 242, 0.08);
-}
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-progress span {
-  background: #0000f2;
-  box-shadow: none;
-}
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-step {
-  border-color: rgba(0, 0, 242, 0.28);
-  background: #ffffff;
-  color: #0000f2;
-}
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-step span { color: rgba(0, 0, 242, 0.72); }
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-screen button,
-html[data-hermes-theme="nous"][data-hermes-mode="light"] .startup-screen .icon-button {
-  background: #ffffff;
-  color: #0000f2;
-  border-color: rgba(0, 0, 242, 0.55);
-}
-
 /* Keep the Settings banner's original blue treatment separate from the intro. */
 html[data-hermes-theme="nous"][data-hermes-mode="light"] .release-sidecar {
   color: #f8faff;
@@ -735,19 +690,4 @@ html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .message.assistant
 html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .composer {
   background: #ffffff;
   backdrop-filter: none;
-}
-html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .startup-screen {
-  background: #ffffff;
-  color: var(--hermes-ink);
-}
-html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .startup-screen::before {
-  background: var(--hermes-ink);
-  opacity: 0.09;
-  mix-blend-mode: normal;
-}
-html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .startup-screen::after { display: none; }
-html[data-hermes-theme="anti-nous"][data-hermes-mode="light"] .startup-screen button {
-  color: var(--hermes-ink);
-  background: var(--hermes-paper);
-  border-color: var(--hermes-line-strong);
 }
