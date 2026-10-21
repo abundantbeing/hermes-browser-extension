@@ -136,7 +136,8 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
 
   assert.match(html, /assets\/img\/hermes-browser-logo-left\.svg/);
   assert.match(html, /class="startup-brand-icon"/);
-  assert.match(css, /assets\/img\/hermes-browser-extension-icon-ink\.png/);
+  assert.match(css, /assets\/img\/hermes-badge-line\.svg/);
+  assert.match(css, /assets\/img\/hermes-browser-extension-logo\.svg/);
   assert.match(css, /\.startup-screen\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*place-items:\s*center;[^}]*overflow:\s*hidden;/s);
   assert.match(html, /id="startupActions"/);
   assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*display:\s*none;/s);
@@ -145,12 +146,15 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
   assert.match(css, /body\.startup-active\s+\.startup-actions\s+#settingsButton\s*\{[^}]*pointer-events:\s*auto;/s);
   assert.match(css, /\.startup-brand-lockup\s*\{[^}]*justify-items:\s*center;/s);
   assert.doesNotMatch(html, /Connecting Browser Extension/i);
-  assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*132px;/s);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*140px;/s);
   assert.match(css, /assets\/img\/hermes-browser-enter-gate-ink\.png/);
   assert.match(css, /\.shell::before\s*\{[^}]*hermes-browser-enter-gate-ink\.png[^}]*opacity:\s*0\.13;[^}]*mix-blend-mode:\s*normal;/s);
-  assert.match(css, /\.startup-screen::after\s*\{[^}]*mix-blend-mode:\s*soft-light;[^}]*animation:\s*startup-scan-refined/s);
-  assert.match(css, /@keyframes\s+startup-scan-refined/);
-  assert.doesNotMatch(css, /@keyframes\s+startup-scan-refined\s*\{[^}]*opacity:\s*0\.72/s);
+  // The Meander: a Greek key border is the progress bar, and the screen
+  // switches on like an old TV.
+  assert.match(js, /import \{ createStartupScreen \} from '\.\/lib\/startup-screen\.mjs'/);
+  assert.match(css, /\.startup-meander-line\s*\{[^}]*stroke:\s*var\(--startup-line\)/s);
+  assert.match(css, /@keyframes\s+startup-crt-on/);
+  assert.doesNotMatch(css, /startup-scan-refined/);
   assert.match(css, /\.hero-wordmark\s*\{[^}]*width:\s*min\(205px,/s);
   assert.match(css, /\.app-scroll:has\(\.message\.user\)\s+\.hero-card\s*\{[^}]*display:\s*none;/s);
 

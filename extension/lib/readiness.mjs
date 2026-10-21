@@ -131,6 +131,7 @@ export function deriveStartupView(state = initialStartupReadiness()) {
     visible: !state.ready,
     ready: Boolean(state.ready),
     phase: state.phase || 'boot',
+    errored,
     title: state.ready
       ? 'Hermes Browser ready'
       : setupNeeded
