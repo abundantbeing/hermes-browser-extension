@@ -523,7 +523,7 @@ test('supplied Hermes Web and Agent vector logos are wired to their respective s
   const panelCss = read('extension/sidepanel.css');
   assert.match(app, /assets\/img\/hermes-web-logo-white-dark\.svg/);
   assert.match(panel, /class="brand-mini-mark"/);
-  assert.match(panelCss, /hermes-agent-logo\.svg/);
+  assert.match(panelCss, /hermes-wing-mark\.svg/);
   assert.match(app, /class="web-brand-girl"/);
   assert.doesNotMatch(read('extension/assets/img/ray-field.svg'), />HERMES<\/text>/);
 });

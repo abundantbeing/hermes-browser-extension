@@ -11,12 +11,12 @@ const designTokensCss = readFileSync(path.join(root, 'extension', 'lib', 'design
 const fulltabThemesCss = readFileSync(path.join(root, 'extension', 'fulltab-themes.css'), 'utf8');
 const themeCss = readFileSync(path.join(root, 'extension', 'sidepanel-themes.css'), 'utf8');
 const contextMenuEditorCss = readFileSync(path.join(root, 'extension', 'context-menu-editor.css'), 'utf8');
-const logoPath = path.join(root, 'extension', 'assets', 'img', 'hermes-agent-logo.svg');
+const logoPath = path.join(root, 'extension', 'assets', 'img', 'hermes-wing-mark.svg');
 
-test('extension uses the supplied Hermes Agent logo as a theme-colored vector mask', () => {
-  assert.equal(existsSync(logoPath), true, 'the supplied Hermes Agent SVG should ship with the extension');
+test('extension uses the Hermes wing as a theme-colored vector mask', () => {
+  assert.equal(existsSync(logoPath), true, 'the Hermes wing SVG should ship with the extension');
   assert.match(sidepanelHtml, /class="brand-mini-mark"/, 'brand header should render the themed vector mark');
-  assert.match(sidepanelCss, /mask:\s*url\("assets\/img\/hermes-agent-logo\.svg"\)/, 'brand mark should use the supplied vector asset');
+  assert.match(sidepanelCss, /mask:\s*url\("assets\/img\/hermes-wing-mark\.svg"\)/, 'brand mark should use the wing vector asset');
   assert.match(sidepanelCss, /background:\s*var\(--hermes-brand-mark/, 'brand mark should resolve through a theme color token');
 });
 
