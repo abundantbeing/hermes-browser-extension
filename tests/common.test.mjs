@@ -394,7 +394,7 @@ test('startup exposes one-click connection testing and Cloud reconnect uses the 
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
   assert.match(html, /id="settingsButton"[\s\S]*id="startupTestConnectionButton"/);
-  assert.match(html, /id="startupTestConnectionButton"[^>]*>\s*TEST CONNECTION\s*</);
+  assert.match(html, /id="startupTestConnectionButton"[^>]*><svg[^>]*data-icon="cellular-signal-3"[\s\S]*?<span class="settings-connection-test-label sr-only"[^>]*>TEST CONNECTION<\/span><\/button>/);
   assert.match(css, /body\.startup-active \.startup-actions #startupTestConnectionButton/);
   assert.doesNotMatch(css, /--startup-settings-top/);
   assert.match(source, /startupTestConnectionButton:\s*\$\('#startupTestConnectionButton'\)/);
