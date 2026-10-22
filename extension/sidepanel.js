@@ -2521,6 +2521,17 @@ function updateSettingsBackToTop() {
   button.hidden = dialog.hidden || !(scrollable && dialog.scrollTop > 24);
 }
 
+// The sticky Settings header's height, as --settings-header-height on the
+// dialog, so a theme with a coloured header can carry it under the scrollbar.
+function trackSettingsHeaderHeight() {
+  const dialog = els.settingsDialog;
+  const header = els.settingsForm?.querySelector(':scope > header');
+  if (!dialog || !header || typeof ResizeObserver !== 'function') return;
+  new ResizeObserver(() => {
+    dialog.style.setProperty('--settings-header-height', `${header.offsetHeight}px`);
+  }).observe(header);
+}
+
 function scrollSettingsToTop() {
   const reduce = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   els.settingsDialog.scrollTo({ top: 0, left: 0, behavior: reduce ? 'auto' : 'smooth' });
@@ -24037,6 +24048,7 @@ function bindEvents() {
   window.addEventListener('resize', updateSettingsBackToTop);
   document.getElementById('settingsBackToTop')?.addEventListener('click', scrollSettingsToTop);
   if (typeof ResizeObserver === 'function') new ResizeObserver(updateSettingsBackToTop).observe(els.settingsForm);
+  trackSettingsHeaderHeight();
   const modelSummaryObserver = new MutationObserver(() => {
     if (!els.settingsDialog.hidden && settingsActivePane === 'models') renderSettingsModelSummary();
   });

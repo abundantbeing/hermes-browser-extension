@@ -671,6 +671,13 @@ html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-dialog > 
   margin-inline: -14px;
   padding-inline: 14px;
 }
+/* The scrollbar column sits outside the form, so the dialog paints the same
+   band behind it (fixed while the dialog scrolls) and the thumb runs over it. */
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-dialog {
+  background:
+    linear-gradient(#8a1a2d calc(100% - 1px), var(--hermes-trim) 0) 0 0 / 100% var(--settings-header-height, 0px) no-repeat,
+    var(--hermes-paper);
+}
 html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-section h3 {
   color: var(--hermes-accent);
 }
