@@ -19,7 +19,7 @@ import { escapeHtml, redactSensitiveText, renderMarkdown } from './common.mjs';
 export const HAUI_SCHEMA = 'hermes.adaptive-ui';
 export const HAUI_VERSION = 1;
 export const HAUI_FENCE_LANGS = Object.freeze(['hermes-ui', 'vivid']);
-export const HAUI_BLOCK_TYPES = Object.freeze(['stat', 'comparison', 'key_value', 'table', 'chart', 'disclosure', 'actions']);
+export const HAUI_BLOCK_TYPES = Object.freeze(['stat', 'comparison', 'key_value', 'table', 'chart', 'list', 'notice', 'disclosure', 'actions']);
 export const HAUI_ACTIONS = Object.freeze(['copy', 'open_url', 'ask']);
 export const HAUI_LIMITS = Object.freeze({
   maxFenceBytes: 32 * 1024,
@@ -49,6 +49,7 @@ export const HAUI_DEFAULT_LABELS = Object.freeze({
 
 const ID_PATTERN = /^[A-Za-z0-9_.:-]{1,64}$/;
 const TRENDS = new Set(['up', 'down', 'flat']);
+const NOTICE_TONES = new Set(['info', 'warning', 'error', 'success']);
 const CHART_KINDS = Object.freeze({
   bar: 'bar', bars: 'bar', column: 'bar', columns: 'bar', histogram: 'bar',
   line: 'line', lines: 'line', trend: 'line', area: 'line', sparkline: 'line',
@@ -218,6 +219,25 @@ function normalizeChart(raw) {
   return { block: { title: clampText(raw.title, 80), kind, labels, series, unit: clampText(raw.unit, 12) } };
 }
 
+function normalizeList(raw) {
+  if (!Array.isArray(raw.items)) return { error: 'list needs items' };
+  const items = raw.items.slice(0, HAUI_LIMITS.maxItems)
+    .map((item) => (isPlainObject(item)
+      ? { text: clampText(item.text ?? item.title ?? item.label, 240), meta: clampText(item.meta ?? item.time ?? item.timestamp, 24) }
+      : { text: clampText(item, 240), meta: '' }))
+    .filter((item) => item.text);
+  if (!items.length) return { error: 'list needs text items' };
+  return { block: { title: clampText(raw.title, 80), ordered: raw.ordered === true, items } };
+}
+
+function normalizeNotice(raw) {
+  const title = clampText(raw.title, 120);
+  const body = clampText(raw.body ?? raw.text, 600);
+  if (!title && !body) return { error: 'notice needs title or body' };
+  const tone = NOTICE_TONES.has(String(raw.tone || '').toLowerCase()) ? String(raw.tone).toLowerCase() : 'info';
+  return { block: { tone, title: title || body, body: title ? body : '' } };
+}
+
 function normalizeActions(raw) {
   if (!Array.isArray(raw.items)) return { error: 'actions needs items' };
   const items = [];
@@ -249,6 +269,8 @@ const NORMALIZERS = {
   key_value: normalizeKeyValue,
   table: normalizeTable,
   chart: normalizeChart,
+  list: normalizeList,
+  notice: normalizeNotice,
   actions: normalizeActions,
 };
 
@@ -544,6 +566,13 @@ function renderBlock(block, scope, labels) {
       }).join('');
       return `<div class="haui-block haui-actions" ${blockAttrs(block, scope)}>${items}</div>`;
     }
+    case 'list': {
+      const tag = block.ordered ? 'ol' : 'ul';
+      const items = block.items.map((item) => `<li>${item.meta ? `<span class="haui-list-meta">${esc(item.meta)}</span>` : ''}<span class="haui-list-text">${esc(item.text)}</span></li>`).join('');
+      return `<div class="haui-block haui-list" ${blockAttrs(block, scope)}>${title(block.title)}<${tag} class="haui-list-items">${items}</${tag}></div>`;
+    }
+    case 'notice':
+      return `<div class="haui-block haui-notice" ${blockAttrs(block, scope, ` data-tone="${block.tone}" role="note"`)}><div class="haui-notice-title">${esc(block.title)}</div>${block.body ? `<p class="haui-notice-body">${esc(block.body)}</p>` : ''}</div>`;
     case 'markdown':
       return `<div class="haui-block haui-fallback" ${blockAttrs(block, scope)}>${renderMarkdown(block.text)}</div>`;
     default:

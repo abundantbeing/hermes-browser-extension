@@ -41,6 +41,8 @@ in its place. An envelope with no usable block falls back as a whole.
 | `key_value` | Optional `title`; `items`: up to 20 of `{key, value}`. |
 | `table` | Optional `title`; `columns`: up to 8 texts; `rows`: up to 50 arrays (cells are text or numbers; short rows are padded). Numeric columns align right. |
 | `chart` | Optional `title`, `kind` (`bar` or `line`), `labels` (1 to 24 texts), `series` (1 to 4 of `{name, values}`, one finite number or `null` per label), optional `unit`. Any other value rejects the block. Drawn as native SVG with a Chart/Table toggle; the table view holds the same numbers. |
+| `list` | Optional `title`; `items`: 1 to 12 texts, or `{text, meta?}` where `meta` is a short tag such as a timestamp; optional `ordered: true`. For summaries, takeaways and steps. |
+| `notice` | `tone` (`info`, `warning`, `error` or `success`; default `info`), `title`, optional `body`. For missing sources or transcripts and failed tools. |
 | `disclosure` | `title`, `body` (Markdown) and/or `blocks` (nested, at most two levels). Closed by default. |
 | `actions` | `items`: up to 6 of `{label, action, value}` (see below). Invalid items are dropped. |
 

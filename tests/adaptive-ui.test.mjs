@@ -37,7 +37,7 @@ const STATS = envelope([
 const CHART = { id: 'sales', type: 'chart', kind: 'bar', title: 'Sales', labels: ['Q1', 'Q2', 'Q3'], series: [{ name: '2025', values: [10, 20, 15] }] };
 
 test('the block allowlist is exactly the HAUI v1 set', () => {
-  assert.deepEqual([...HAUI_BLOCK_TYPES], ['stat', 'comparison', 'key_value', 'table', 'chart', 'disclosure', 'actions']);
+  assert.deepEqual([...HAUI_BLOCK_TYPES], ['stat', 'comparison', 'key_value', 'table', 'chart', 'list', 'notice', 'disclosure', 'actions']);
 });
 
 test('schema validation accepts v1 envelopes and rejects everything else', () => {
