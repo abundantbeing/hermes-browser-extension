@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "ユーザーの吹き出しのみ",
   "responses.layout.user_bubble_hint": "あなたのメッセージは吹き出し、Hermesの回答は通常の文章で表示します。",
   "responses.setup_again": "セットアップをやり直す",
+  "haui.view_chart": "グラフ",
+  "haui.view_table": "表",
+  "haui.view_as_chart": "グラフで表示",
+  "haui.copy": "コピー",
+  "haui.copied": "コピーしました",
+  "haui.building": "ビューを作成中…",
+  "haui.opens_new_tab": "新しいタブで開きます",
+  "haui.ask_hint": "この質問をメッセージ欄に入れます",
 });
