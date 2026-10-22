@@ -37,7 +37,10 @@ from .schemas import (
 from .text_utilities import run_text_utility
 
 _UNAVAILABLE = {"available": False, "reason": "Browser context unavailable."}
-_LEASE_TTL_SECONDS = 5.0
+# Hermes may park an authorized call behind earlier tool calls' approvals (its
+# concurrent start-order gate) before the handler runs, so the lease lives as long
+# as the cached context record it was cut from.
+_LEASE_TTL_SECONDS = 300.0
 _MAX_PENDING_LEASES = 64
 
 
@@ -55,8 +58,9 @@ class _AuthorizationLease:
 _LEASES: ContextVar[dict[str, _AuthorizationLease]] = ContextVar("browser_companion_leases", default={})
 
 # Cross-context lease table.  Key: (session_id, task_id, operation, parameter)
-# where session_id/task_id are the trusted runtime identity.  Values are FIFO
-# lists so two same-shaped parallel calls each receive exactly one lease.
+# where session_id/task_id are the trusted runtime identity.  Values are lists
+# so two same-shaped parallel calls each receive exactly one lease; the newest
+# grant is served first so an abandoned older grant can never shadow a fresh one.
 _RUNTIME_LEASES: dict[tuple[str, str, str, str], list[_AuthorizationLease]] = {}
 _RUNTIME_LEASES_LOCK = threading.Lock()
 
@@ -154,7 +158,7 @@ def _take_runtime_lease(
         rows = _RUNTIME_LEASES.get(runtime_key)
         if not rows:
             return None
-        lease = rows.pop(0)
+        lease = rows.pop()
         if not rows:
             del _RUNTIME_LEASES[runtime_key]
     return lease.result

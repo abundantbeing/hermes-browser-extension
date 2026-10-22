@@ -172,7 +172,7 @@ test('leases are one-shot, short-lived, and bounded', () => {
 module, hooks, tools, _store_module = load_plugin()
 hooks.set_store(module.STORE)
 
-# A grant that no handler claims expires; two grants are served first-in first-out once each.
+# Two grants are served once each; an abandoned older grant never shadows a fresh one.
 hooks.pre_llm_call(user_message=json.dumps(envelope()), **capture())
 assert run_like_hermes_bounded_hook(hooks.pre_tool_call, tool_name="browser_context_status", args={}, **ids()) is None
 assert run_like_hermes_bounded_hook(hooks.pre_tool_call, tool_name="browser_context_status", args={}, **ids()) is None
@@ -180,15 +180,25 @@ assert json.loads(tools.browser_context_status({}, **runtime_kwargs()))["availab
 assert json.loads(tools.browser_context_status({}, **runtime_kwargs()))["available"] is True
 assert json.loads(tools.browser_context_status({}, **runtime_kwargs())) == UNAVAILABLE
 
-# Expired leases are never served.
+# A call Hermes parked behind earlier tools' approvals still gets its lease later,
+# but never after the cached record's own lifetime.
 real_monotonic = tools.monotonic
 try:
     assert run_like_hermes_bounded_hook(hooks.pre_tool_call, tool_name="browser_context_status", args={}, **ids()) is None
     base = real_monotonic()
-    tools.monotonic = lambda: base + tools._LEASE_TTL_SECONDS + 1
+    tools.monotonic = lambda: base + 120
+    assert json.loads(tools.browser_context_status({}, **runtime_kwargs()))["available"] is True
+    assert run_like_hermes_bounded_hook(hooks.pre_tool_call, tool_name="browser_context_status", args={}, **ids()) is None
+    tools.monotonic = lambda: base + 120 + tools._LEASE_TTL_SECONDS + 1
     assert json.loads(tools.browser_context_status({}, **runtime_kwargs())) == UNAVAILABLE
 finally:
     tools.monotonic = real_monotonic
+
+# An abandoned grant (its call was blocked later in Hermes' pipeline) never shadows a fresh one.
+assert run_like_hermes_bounded_hook(hooks.pre_tool_call, tool_name="browser_context_status", args={}, **ids()) is None
+module.STORE.clear_for_owner(hooks.owner_from_hook_kwargs(ids()))
+assert run_like_hermes_bounded_hook(hooks.pre_tool_call, tool_name="browser_context_status", args={}, **ids()) is None
+assert json.loads(tools.browser_context_status({}, **runtime_kwargs())) == UNAVAILABLE
 
 # Unclaimed grants cannot accumulate without bound.
 for index in range(tools._MAX_PENDING_LEASES * 3):
