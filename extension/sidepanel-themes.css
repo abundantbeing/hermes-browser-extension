@@ -663,6 +663,14 @@ html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-dialog > 
   background: #8a1a2d;
   border-bottom-color: var(--hermes-trim);
 }
+/* The Settings header sits inside the form's 14px inset. Its red runs to the
+   panel edges, so it doesn't read as a block floating on the navy; the
+   contents keep their place over the divider. */
+html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-dialog > form > header {
+  max-width: none;
+  margin-inline: -14px;
+  padding-inline: 14px;
+}
 html[data-hermes-theme="anti-nous"][data-hermes-mode="dark"] .settings-section h3 {
   color: var(--hermes-accent);
 }
