@@ -102,7 +102,8 @@ test('buildSupportDiagnostics creates a public-safe copy block without secrets o
   assert.match(diagnostics.markdown, /Controller adapter: chromium-cdp \(disabled\)/);
   assert.match(diagnostics.markdown, /Gateway URL origin: https:\/\/agent\.example\.com:8642/);
   assert.match(diagnostics.markdown, /Connection state: degraded/);
-  assert.match(diagnostics.markdown, /Companion plugin: missing/);
+  assert.match(diagnostics.markdown, /Companion plugin: not advertised by this gateway \(the extension cannot tell whether it is loaded\)/);
+  assert.doesNotMatch(diagnostics.markdown, /Companion plugin: (missing|unavailable)/);
   assert.match(diagnostics.markdown, /Browser control: disabled/);
   assert.match(diagnostics.markdown, /Context source mode: pinned-tab/);
   assert.match(diagnostics.markdown, /Extractor mode: dom-fallback/);
