@@ -64,3 +64,30 @@ test('the top bar carries no connection light', () => {
   assert.doesNotMatch(js, /els\.connectionPill/, 'nothing writes to the removed pill');
   assert.doesNotMatch(css, /connection-pill|topbar-status/);
 });
+
+test('the commands, skill, context and model popovers share one placement above the composer card', () => {
+  const shared = css.match(/#quickMoreMenu,\s*#skillMenu,\s*#contextPopover,[\s\S]*?\n\}/)?.[0] || '';
+  assert.ok(shared, 'one shared rule places the four popovers');
+  assert.match(shared, /position:\s*absolute;/);
+  assert.match(shared, /left:\s*var\(--hermes-composer-left/, 'the popovers take the composer card left edge');
+  assert.match(shared, /width:\s*var\(--hermes-composer-width/, 'the popovers take the composer card width');
+  assert.match(shared, /bottom:\s*var\(--hermes-composer-bottom/, 'the popovers hang from the composer card top edge');
+  assert.match(css, /#quickMoreMenu\s*\{[^}]*max-height:\s*min\(386px,\s*var\(--hermes-composer-space/s, 'the commands popup caps its height to the space above the composer');
+  assert.match(css, /#contextPopover\s*\{[^}]*max-height:\s*var\(--hermes-composer-space/s, 'the context popover caps its height to the space above the composer');
+  assert.doesNotMatch(css, /--hermes-composer-anchor-height/, 'the old per-control anchor is gone');
+});
+
+test('one helper measures the composer card and drives every popover on open, resize and text-area size', () => {
+  const helper = js.match(/function positionComposerPopovers\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(helper, /getElementById\('composer'\)\?\.getBoundingClientRect\(\)/, 'measures the composer card itself');
+  for (const name of ['--hermes-composer-left', '--hermes-composer-width', '--hermes-composer-bottom', '--hermes-composer-space']) {
+    assert.ok(helper.includes(`'${name}'`), `${name} is set from the live card`);
+  }
+  assert.match(helper, /viewportHeight - card\.top \+ COMPOSER_POPOVER_GAP/, 'the bottom edge sits a gap above the card');
+  const observer = js.match(/function observeComposerPopovers\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(observer, /globalThis\.addEventListener\?\.\('resize', positionComposerPopovers\)/, 're-measures on window resize');
+  assert.match(observer, /new globalThis\.ResizeObserver\(positionComposerPopovers\)/, 're-measures when the card, top bar or text area changes size');
+  assert.match(observer, /attributeFilter: \['hidden'\]/, 're-measures whenever a popover opens, from a button or from typing /');
+  assert.match(js, /\nobserveComposerPopovers\(\);\n/, 'the helper starts at boot');
+  assert.doesNotMatch(js, /observeComposerAnchor/, 'the old per-control anchor helper is gone');
+});
