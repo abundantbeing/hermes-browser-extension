@@ -322,7 +322,7 @@ const paneldState = `(() => {
     title: document.querySelector('#activeTitle')?.textContent || '',
     detail: document.querySelector('#activeUrl')?.textContent || '',
     connectStatus: document.querySelector('#connectStatus')?.textContent || '',
-    connection: document.querySelector('#connectionPill')?.getAttribute('aria-label') || '',
+    connection: (document.querySelector('#connectPanel')?.hidden ? 'Hermes connected' : 'not connected'),
     retryVisible: (() => {
       const button = document.querySelector('#statusRetryProbeButton');
       if (!button) return false;

@@ -1205,7 +1205,7 @@ async function main() {
       const input = document.querySelector('#promptInput');
       const title = document.querySelector('#activeTitle')?.textContent || '';
       const detail = document.querySelector('#activeUrl')?.textContent || '';
-      const connection = document.querySelector('#connectionPill')?.getAttribute('aria-label') || '';
+      const connection = (document.querySelector('#connectPanel')?.hidden ? 'Hermes connected' : 'not connected');
       if (input?.value !== ${JSON.stringify(rejectionPrompt)} || title !== 'Model option rejected' || !messages.includes(${JSON.stringify(rejectionDetail)})) return null;
       return { messages, detail, connection };
     })()`));
@@ -1236,7 +1236,7 @@ async function main() {
       const input = document.querySelector('#promptInput');
       const title = document.querySelector('#activeTitle')?.textContent || '';
       const detail = document.querySelector('#activeUrl')?.textContent || '';
-      const connection = document.querySelector('#connectionPill')?.getAttribute('aria-label') || '';
+      const connection = (document.querySelector('#connectPanel')?.hidden ? 'Hermes connected' : 'not connected');
       if (input?.value !== ${JSON.stringify(fallbackRejectionPrompt)} || title !== 'Model option rejected' || !messages.includes(${JSON.stringify(fallbackRejectionDetail)})) return null;
       return { messages, detail, connection };
     })()`));
