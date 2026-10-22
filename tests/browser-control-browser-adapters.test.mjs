@@ -461,7 +461,7 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
   const screenshot = await adapter.execute('browser_screenshot', {}, { scope, signal });
 
   assert.deepEqual(commandMethods(calls), [
-    'DOM.enable', 'DOM.scrollIntoViewIfNeeded', 'DOM.getBoxModel', 'DOM.getNodeForLocation', 'DOM.resolveNode',
+    'DOM.enable', 'DOM.scrollIntoViewIfNeeded', 'DOM.getBoxModel', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'DOM.resolveNode',
     'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent',
     'DOM.focus', 'DOM.resolveNode', 'Input.insertText',
     'Input.dispatchKeyEvent', 'Input.dispatchKeyEvent',
@@ -615,6 +615,7 @@ test('Chromium parity primitives hover drag scroll-to modifiers clipped screensh
     chromium.calls.push(['command', target, method, params]);
     if (method === 'DOM.getBoxModel') return { model: { content: [10, 20, 30, 20, 30, 40, 10, 40] } };
     if (method === 'DOM.resolveNode') return { object: { objectId: 'object-44' } };
+    if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'MAIN' } } };
     if (method === 'Page.captureScreenshot') return { data: 'ZmFrZS1wbmc=' };
     return {};
   };
@@ -2047,4 +2048,133 @@ test('Chromium leaves a control in the page itself to the page check the executo
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
   await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget });
   assert.equal(chromium.calls.some((call) => call[2] === 'DOM.getDocument'), false);
+});
+
+// A pointer action lands on whatever is under the point, which can be in another frame than the control it was
+// aimed at: the frame under the point is judged too, and a control covered by another frame is not clicked.
+const FRAME_OWNERS = { CHAT: 100, PAY: 102, AD: 103, INNER: 104 };
+function pointerApis({ hit, chain = ['https://chat.example.test/live_chat'] } = {}) {
+  const chromium = framedApis(chain);
+  const frame = (id, url, childFrames) => ({ frame: { id, url, ...(id === 'INNER' ? {} : { urlFragment: '' }) }, ...(childFrames ? { childFrames } : {}) });
+  chromium.handlers['Page.getFrameTree'] = () => ({
+    frameTree: frame('MAIN', 'https://example.test/start', [
+      frame('CHAT', 'https://chat.example.test/live_chat'),
+      frame('PAY', 'https://pay.example.test/checkout', [frame('INNER', 'about:srcdoc')]),
+      frame('AD', 'https://ads.example.test/'),
+    ]),
+  });
+  chromium.handlers['DOM.getFrameOwner'] = (params) => ({ backendNodeId: FRAME_OWNERS[params.frameId] });
+  chromium.handlers['DOM.getNodeForLocation'] = () => hit;
+  return chromium;
+}
+const noPointerInput = (calls) => assert.deepEqual(inputEvents(calls), []);
+
+test('Chromium clicks a framed control when the frame under the point is the control\'s own', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = pointerApis({ hit: { backendNodeId: 5002, frameId: 'CHAT' } });
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  assert.deepEqual(
+    await adapter.execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+    { status: 'clicked' },
+  );
+  assert.ok(mouseEvents(chromium.calls).length > 0);
+});
+
+test('Chromium refuses a click whose point lands in a restricted frame, however the click was aimed', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const hit of [
+    { backendNodeId: 77, frameId: 'PAY' },
+    { backendNodeId: 78, frameId: 'INNER' },
+  ]) {
+    const aims = [
+      ['a ref in the page', 'browser_click', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+      ['a ref in a readable frame', 'browser_click', { ref: '@f1e2' }, framedTarget],
+      ['a coordinate', 'browser_click', { x: 25, y: 35 }, undefined],
+    ];
+    for (const [label, action, args, target] of aims) {
+      const chromium = pointerApis({ hit });
+      const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+      await assert.rejects(
+        adapter.execute(action, args, { scope, signal: openSignal(), target }),
+        (error) => error?.code === 'restricted_frame',
+        `${label} landing in ${hit.frameId}`,
+      );
+      noPointerInput(chromium.calls);
+    }
+  }
+});
+
+test('Chromium refuses a click on a control that another frame covers, even a readable one', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const cases = [
+    ['a framed control covered by another readable frame', { ref: '@f1e2' }, framedTarget, { backendNodeId: 90, frameId: 'AD' }],
+    ['a framed control covered by the page itself', { ref: '@f1e2' }, framedTarget, { backendNodeId: 91, frameId: 'MAIN' }],
+    ['a control in the page covered by a readable frame', { ref: '@e1' }, { backendDOMNodeId: 44 }, { backendNodeId: 92, frameId: 'CHAT' }],
+  ];
+  for (const [label, args, target, hit] of cases) {
+    const chromium = pointerApis({ hit });
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+    await assert.rejects(
+      adapter.execute('browser_click', args, { scope, signal: openSignal(), target }),
+      (error) => error?.code === 'restricted_frame' && /covered/.test(error.message),
+      label,
+    );
+    noPointerInput(chromium.calls);
+  }
+});
+
+test('Chromium still clicks a coordinate in a readable frame, and a control in the page that nothing covers', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const inFrame = pointerApis({ hit: { backendNodeId: 90, frameId: 'AD' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: inFrame.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+  const inPage = pointerApis({ hit: { backendNodeId: 44, frameId: 'MAIN' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: inPage.api }).execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: { backendDOMNodeId: 44 } }),
+    { status: 'clicked' },
+  );
+});
+
+test('Chromium refuses a pointer action whose frame it cannot tell on a page with frames, and allows it on one without', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const hit of [{ backendNodeId: 90 }, undefined]) {
+    const framed = pointerApis({ hit });
+    if (hit === undefined) framed.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: framed.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+    );
+    noPointerInput(framed.calls);
+  }
+  const plain = chromiumApis();
+  plain.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+});
+
+test('Chromium refuses to hover or drag when either point lands in a restricted frame, before pressing anything', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const restrictedHit = { backendNodeId: 77, frameId: 'PAY' };
+  const hover = pointerApis({ hit: restrictedHit });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: hover.api }).execute('browser_hover', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  noPointerInput(hover.calls);
+
+  // Source in the page, destination under a restricted frame: nothing is pressed.
+  const drag = pointerApis({ hit: { backendNodeId: 44, frameId: 'MAIN' } });
+  let calls = 0;
+  drag.handlers['DOM.getNodeForLocation'] = () => (calls++ === 0 ? { backendNodeId: 44, frameId: 'MAIN' } : restrictedHit);
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: drag.api }).execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, {
+      scope, signal: openSignal(), target: { backendDOMNodeId: 44 }, destination: { backendDOMNodeId: 46 },
+    }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.equal(drag.calls.some((call) => call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed'), false);
 });

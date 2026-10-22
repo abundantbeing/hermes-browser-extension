@@ -1056,7 +1056,7 @@ function createChromiumCdpAdapter({
   }
 
   // Reports whether another element covers the click point, given the node under it
-  // (see nodeAtPoint). A failed check must never block the click, so every error
+  // (see checkedHit). A failed check must never block the click, so every error
   // except cancellation is ignored.
   async function pointIsObscured(send, signal, backendNodeId, hitNodeId) {
     if (!Number.isInteger(hitNodeId) || hitNodeId <= 0 || hitNodeId === backendNodeId) return false;
@@ -1147,20 +1147,53 @@ function createChromiumCdpAdapter({
     return owners;
   }
 
-  // The node under a viewport point, for a coordinate click. Never blocks the click.
-  async function nodeAtPoint(send, signal, point) {
+  // The node under a viewport point, which is where a pointer action actually lands. The frame it is in must be
+  // on pages Hermes may act on (a restricted frame laid over the control is such a frame), and for a control
+  // with a known frame it must be the control's own frame, since a click on a covered control lands in
+  // whatever covers it. A hit test that fails is left alone on a page with no child frames, where nothing from
+  // another frame can be under the pointer, and otherwise refused. Returns the hit node id, or 0 when unknown.
+  async function checkedHit(send, enable, signal, point, expectedOwner) {
+    await enable('DOM');
+    let hit = null;
     try {
-      const hit = await send('DOM.getNodeForLocation', {
+      hit = await send('DOM.getNodeForLocation', {
         x: Math.round(point.x),
         y: Math.round(point.y),
         includeUserAgentShadowDOM: true,
       });
-      const hitNodeId = Number(hit?.backendNodeId);
-      return Number.isInteger(hitNodeId) && hitNodeId > 0 ? hitNodeId : 0;
     } catch (error) {
       if (abortError(signal)) throw error;
-      return 0;
     }
+    const hitNodeId = Number(hit?.backendNodeId);
+    const hitId = Number.isInteger(hitNodeId) && hitNodeId > 0 ? hitNodeId : 0;
+    let tree = null;
+    try {
+      tree = (await send('Page.getFrameTree'))?.frameTree || null;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+    }
+    const hasChildFrames = !tree || (Array.isArray(tree.childFrames) && tree.childFrames.length > 0);
+    const hitFrameId = String(hit?.frameId || '');
+    if (!hitFrameId) {
+      if (hasChildFrames) throw restrictedFrameError('Hermes could not tell which frame is under that point.');
+      return hitId;
+    }
+    if (tree?.frame?.id === hitFrameId) {
+      if (expectedOwner !== undefined && expectedOwner !== 0) throw restrictedFrameError('The control is covered by content from another frame.');
+      return hitId;
+    }
+    const path = tree ? frameTreePath(tree, hitFrameId) : null;
+    if (!path || !frameChainReadable(path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`))) throw restrictedFrameError();
+    if (expectedOwner !== undefined) {
+      let owner = -1;
+      try {
+        owner = Number((await send('DOM.getFrameOwner', { frameId: hitFrameId }))?.backendNodeId) || -1;
+      } catch (error) {
+        if (abortError(signal)) throw error;
+      }
+      if (owner !== expectedOwner) throw restrictedFrameError('The control is covered by content from another frame.');
+    }
+    return hitId;
   }
 
   // Whether a click on this node would open a new tab (see clickTargetOpensNewTab).
@@ -1336,7 +1369,7 @@ function createChromiumCdpAdapter({
   async function runWithSession(action, args, scope, signal, target, destination) {
     return withSession(scope, signal, async (session) => {
       const { send, enable } = session;
-      if (action !== 'browser_snapshot') await assertFramedTargetsReadable(send, enable, signal, { target, destination });
+      const framing = action === 'browser_snapshot' ? {} : await assertFramedTargetsReadable(send, enable, signal, { target, destination });
       if (action === 'browser_snapshot') {
         await enable('Accessibility');
         const trees = await collectAxTrees({ send, tabId: session.tabId, signal });
@@ -1352,12 +1385,11 @@ function createChromiumCdpAdapter({
         if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
           await enable('DOM');
           point = await nodeCenter(send, backendNodeId);
-          hitNodeId = await nodeAtPoint(send, signal, point);
+          hitNodeId = await checkedHit(send, enable, signal, point, framing.target);
           obscured = await pointIsObscured(send, signal, backendNodeId, hitNodeId);
         } else {
           point = pointForArgs(args);
-          await enable('DOM');
-          hitNodeId = await nodeAtPoint(send, signal, point);
+          hitNodeId = await checkedHit(send, enable, signal, point, undefined);
         }
         // A link that opens a new tab gets the background-tab modifier, so Chrome opens
         // it behind the tab the person is looking at. The click lands on whatever is under
@@ -1382,11 +1414,13 @@ function createChromiumCdpAdapter({
         const sourcePoint = await nodeCenter(send, sourceNodeId);
         if (action === 'browser_scroll_to') return { status: 'scrolled-to-target' };
         if (await pageIsHidden(send, signal)) throw hiddenTabError();
+        await checkedHit(send, enable, signal, sourcePoint, framing.target);
         await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...sourcePoint, button: 'none', buttons: 0 });
         if (action === 'browser_hover') return { status: 'hovered' };
         const destinationNodeId = Number(destination?.backendDOMNodeId);
         if (!Number.isInteger(destinationNodeId) || destinationNodeId <= 0) throw new Error('The destination ref has no DOM node.');
         const destinationPoint = await nodeCenter(send, destinationNodeId);
+        await checkedHit(send, enable, signal, destinationPoint, framing.destination);
         await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...sourcePoint, button: 'left', buttons: 1, clickCount: 1 });
         await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
         await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
