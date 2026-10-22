@@ -4674,7 +4674,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 }
 .composer-actions .composer-commands-button svg { display: block; width: 16px; height: 16px; }
 .composer-actions .composer-commands-button:hover,
-.composer-actions .composer-commands-button[aria-expanded="true"] { background: rgba(var(--hermes-ink-rgb), 0.06); }
+.composer-actions .composer-commands-button[aria-expanded="true"] { background: rgba(var(--hermes-ink-rgb), 0.06); color: var(--hermes-ink); }
 .composer-actions .composer-commands-button:active { transform: scale(0.97); }
 .composer-actions .composer-commands-button:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: 2px; }
 .composer-actions #browserControlMenuButton:hover,
