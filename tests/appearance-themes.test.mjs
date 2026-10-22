@@ -10,6 +10,7 @@ import {
   normalizeAppearanceTheme,
   normalizeColorMode,
   resolveColorMode,
+  themePreviewForMode,
 } from '../extension/lib/appearance-themes.mjs';
 import * as appearance from '../extension/lib/appearance-themes.mjs';
 
@@ -161,4 +162,17 @@ test('sidepanel implements every canonical palette and shares the Hermes Web Nou
     assert.equal(cssValue(sidepanelNousLight, token), cssValue(fulltabNousLight, token), `Nous Light must match Hermes Web ${token}`);
   }
   assert.equal(cssValue(sidepanelNousLight, '--hermes-fg'), '#0000f2');
+});
+
+test('every built-in theme card has light colours, and the card follows the mode', () => {
+  const keys = ['bg', 'panel', 'text', 'muted', 'accent'];
+  for (const theme of APPEARANCE_THEMES) {
+    assert.deepEqual(Object.keys(theme.previewLight || {}).sort(), [...keys].sort(), theme.value);
+    for (const key of keys) assert.match(theme.previewLight[key], /^#[0-9a-f]{6}$/, `${theme.value} ${key}`);
+    assert.notEqual(theme.previewLight.bg, theme.preview.bg, `${theme.value} light card differs from dark`);
+    assert.equal(themePreviewForMode(theme, 'light'), theme.previewLight);
+    assert.equal(themePreviewForMode(theme, 'dark'), theme.preview);
+  }
+  assert.deepEqual(themePreviewForMode({ preview: { bg: '#000' } }, 'light'), { bg: '#000' }, 'a theme without light colours keeps its card');
+  assert.deepEqual(themePreviewForMode(null, 'light'), {});
 });
