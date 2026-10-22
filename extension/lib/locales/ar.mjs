@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "فقاعة للمستخدم فقط",
   "responses.layout.user_bubble_hint": "رسائلك داخل فقاعة، وردود Hermes نص متدفق.",
   "responses.setup_again": "إعادة الإعداد",
+  "haui.view_chart": "مخطط",
+  "haui.view_table": "جدول",
+  "haui.view_as_chart": "عرض كمخطط",
+  "haui.copy": "نسخ",
+  "haui.copied": "تم النسخ",
+  "haui.building": "جارٍ إنشاء العرض…",
+  "haui.opens_new_tab": "يُفتح في تبويب جديد",
+  "haui.ask_hint": "يضع هذا السؤال في مربع الرسالة",
 });
