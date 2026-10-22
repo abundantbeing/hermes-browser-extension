@@ -745,7 +745,7 @@
           </div>
         </nav>
 
-        <section id="settingsPane-appearance" class="settings-pane" data-settings-pane="appearance" aria-labelledby="settingsPaneTitle-appearance" hidden>
+        <section id="settingsPane-appearance" class="settings-pane" data-settings-pane="appearance" data-settings-live aria-labelledby="settingsPaneTitle-appearance" hidden>
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-appearance" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.appearance.title">Appearance &amp; Themes</h3></div>
@@ -942,7 +942,7 @@
             <option value="cloud" data-i18n="ui.hermes.cloud">Hermes Cloud</option>
             <option value="remote" data-i18n="ui.remote.gateway">Remote gateway</option>
           </select>
-          <select id="gatewayModeInput" name="gatewayMode" hidden>
+          <select id="gatewayModeInput" data-settings-live name="gatewayMode" hidden>
             <option value="local-api" data-i18n="ui.local.api.server">Local API server</option>
             <option value="remote-api" data-i18n="ui.remote.api.server">Remote API server</option>
             <option value="remote-dashboard" data-i18n="ui.remote.dashboard.websocket">Remote dashboard (WebSocket)</option>
@@ -987,7 +987,7 @@
             <div class="settings-row profile-control-stack">
               <label>
                 <span data-i18n="ui.active.profile">Active profile</span>
-                <select id="profileSelect" name="profileSelect">
+                <select id="profileSelect" data-settings-live name="profileSelect">
                   <option value="" data-i18n="ui.detect.from.hermes.gateway">Detect from Hermes gateway</option>
                 </select>
               </label>
@@ -1024,18 +1024,18 @@
             <div class="agent-host-fields">
               <label>
                 <span data-i18n="ui.agent.host">Agent host</span>
-                <input id="agentHostInput" type="text" autocomplete="off" placeholder="127.0.0.1 or macbook.tailnet.ts.net" data-i18n-invariant />
+                <input id="agentHostInput" data-settings-live type="text" autocomplete="off" placeholder="127.0.0.1 or macbook.tailnet.ts.net" data-i18n-invariant />
               </label>
               <label>
                 <span data-i18n="ui.agent.scheme">Agent scheme</span>
-                <select id="agentSchemeInput">
+                <select id="agentSchemeInput" data-settings-live>
                   <option value="http">http</option>
                   <option value="https">https</option>
                 </select>
               </label>
               <label>
                 <span data-i18n="ui.agent.ports.comma.separated.default.8642.8646">Agent ports (comma-separated, default 8642-8646)</span>
-                <input id="agentPortsInput" type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />
+                <input id="agentPortsInput" data-settings-live type="text" inputmode="numeric" placeholder="8642,8643,8644,8645,8646" />
               </label>
             </div>
           </details>
@@ -1052,7 +1052,7 @@
           <button id="clearTokenButton" class="secondary" type="button" data-i18n="ui.clear.stored.token">Clear stored token</button>
         </div>
         </section>
-<section id="settingsPane-agents" class="settings-pane" data-settings-pane="agents" aria-labelledby="settingsPaneTitle-agents" hidden>
+<section id="settingsPane-agents" class="settings-pane" data-settings-pane="agents" data-settings-live aria-labelledby="settingsPaneTitle-agents" hidden>
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-agents" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.agents.title">Agents &amp; Bot Mode</h3></div>
@@ -1335,7 +1335,7 @@
             <div class="browser-control-config">
               <label class="browser-control-field">
                 <span id="browserControlScopeLabel" data-i18n="browser_control.scope">Control scope</span>
-                <select id="browserControlScopeInput" aria-labelledby="browserControlScopeLabel" aria-describedby="browserControlScopeHelp browserControlScopeLock">
+                <select id="browserControlScopeInput" data-settings-live aria-labelledby="browserControlScopeLabel" aria-describedby="browserControlScopeHelp browserControlScopeLock">
                   <option value="this-tab" data-i18n="browser_control.this_tab">This tab</option>
                   <option value="selected-tabs" data-i18n="browser_control.selected_tabs">Selected tabs</option>
                   <option value="task-set" data-i18n="browser_control.task_set">Task set</option>
@@ -1358,7 +1358,7 @@
               <small data-i18n="context_consent.share_detail">Chat only until you approve this exact connection. Consent is isolated by endpoint, account, profile, and Browser controller.</small>
               <small id="browserContextConsentIdentity" class="browser-context-consent-identity" data-i18n-runtime>Verifying connection identity…</small>
             </span>
-            <input id="browserContextConsentInput" class="settings-switch-input" type="checkbox" />
+            <input id="browserContextConsentInput" data-settings-live class="settings-switch-input" type="checkbox" />
             <span class="settings-switch" aria-hidden="true"></span>
           </label>
           </section>
@@ -1432,7 +1432,7 @@
           </details>
           <label class="settings-toggle-card compact-toggle-card">
             <span class="settings-toggle-copy"><strong id="gmailCaptureToggleTitle"></strong><small id="gmailCaptureToggleHint"></small></span>
-            <input id="gmailCaptureEnabledInput" class="settings-switch-input" type="checkbox" role="switch" />
+            <input id="gmailCaptureEnabledInput" data-settings-live class="settings-switch-input" type="checkbox" role="switch" />
             <span class="settings-switch" aria-hidden="true"></span>
           </label>
         </section>

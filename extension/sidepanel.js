@@ -2381,12 +2381,15 @@ let settingsActivePane = '';
 let settingsBaseline = null;
 let settingsReturnFocus = null;
 
+// The controls Save is for. Anything marked data-settings-live (on the control
+// or a wrapper) saves itself when it changes, so it never counts as unsaved.
 function settingsControlEntries() {
   const entries = [];
   for (const paneEl of els.settingsForm.querySelectorAll('[data-settings-pane]')) {
     const pane = paneEl.dataset.settingsPane;
     paneEl.querySelectorAll('input, select, textarea').forEach((control, index) => {
       if (control.type === 'file' || control.type === 'button' || control.type === 'search') return;
+      if (control.closest('[data-settings-live]')) return;
       const key = control.id || control.name || `${control.type}-${index}`;
       const value = control.type === 'checkbox' || control.type === 'radio' ? String(control.checked) : control.value;
       entries.push([pane, `${key}:${control.type === 'radio' ? control.value : ''}`, value]);
