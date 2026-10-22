@@ -15769,11 +15769,12 @@ function setOnboardingOpen(open) {
 }
 
 // New users get the setup once, before their first message. Setup preselects
-// Vivid UI when no style was ever chosen.
+// Vivid UI when no style was ever chosen, and saves it at once: an appearance
+// pick saved before it would otherwise reload the settings without it.
 function maybeOpenOnboarding() {
   if (!onboardingStateLoaded || onboardingFlow?.isOpen) return;
   if (!shouldShowOnboarding({ completed: onboardingCompleted, legacyIntroSeen: browserIntroSeen, messageCount: messages.length })) return;
-  if (!settings.responseStyle) settings = withResponsePresentationUpdate(settings, { responseStyle: RESPONSE_STYLE_SETUP_DEFAULT });
+  if (!settings.responseStyle) void setResponsePresentation({ responseStyle: RESPONSE_STYLE_SETUP_DEFAULT });
   openOnboarding();
 }
 
