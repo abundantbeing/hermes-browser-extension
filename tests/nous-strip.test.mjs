@@ -21,15 +21,15 @@ test('the Nous strip is the supplied three-card artwork, white on transparent, u
   assert.equal(existsSync(new URL('../extension/assets/img/nous-strip-mark.svg', import.meta.url)), false, 'the hand-drawn stand-in is gone');
 });
 
-test('the strip is at the foot of About & Diagnostics and under its card on the categories page', () => {
+test('the strip is above Hermes compatibility in About & Diagnostics and under its card on the categories page', () => {
   const strips = [...document.querySelectorAll('.nous-strip')];
   assert.equal(strips.length, 2);
   const pane = about.querySelector('.nous-strip-pane');
-  assert.ok(pane, 'strip at the bottom of the About pane');
-  assert.equal(pane.previousElementSibling.classList.contains('support-diagnostics'), true, 'it follows the Support diagnostics card');
-  assert.equal(pane.nextElementSibling, null, 'and is the last thing in the pane');
+  assert.ok(pane, 'strip in the About pane');
+  assert.equal(pane.nextElementSibling?.id, 'compatibilityPanel', 'directly above Hermes compatibility');
+  assert.equal(pane.previousElementSibling.classList.contains('settings-pane-bar'), true, 'after the pane heading');
   assert.equal(about.querySelector('.support-diagnostics .nous-strip'), null, 'not inside the Support diagnostics card');
-  assert.equal(about.querySelector('.settings-pane-bar + .nous-strip'), null, 'not under the pane heading');
+  assert.equal(about.lastElementChild.classList.contains('support-diagnostics'), true, 'nothing after the Support diagnostics card');
 
   const homeStrip = home.querySelector('.nous-strip-home');
   assert.ok(homeStrip, 'strip on the categories page');
