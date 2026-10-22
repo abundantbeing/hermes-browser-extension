@@ -25617,7 +25617,7 @@ function observeComposerPopovers() {
   // from typing "/", or from a render, so re-measuring there covers all paths.
   if (typeof globalThis.MutationObserver === 'function') {
     const opens = new globalThis.MutationObserver(positionComposerPopovers);
-    for (const element of [els.quickMoreMenu, els.skillMenu, els.modelMenu, els.contextPopover]) {
+    for (const element of [els.quickMoreMenu, els.skillMenu, els.modelMenu, els.contextPopover, els.roomMemberPopover, document.getElementById('profileSwitchMenu')]) {
       if (element) opens.observe(element, { attributes: true, attributeFilter: ['hidden'] });
     }
   }
