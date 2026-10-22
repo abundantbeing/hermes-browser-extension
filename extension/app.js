@@ -22,7 +22,8 @@ import {
   interceptChatLinkClick,
 } from './lib/common.mjs';
 import { createUserFileAttachment, appendUserFileAttachments, stageUserFiles, attachmentFileContext, attachmentSourceKey, rememberUserFileAttachments, restoreUserFileAttachments, openUserFileAttachment, downloadUserFileAttachment } from './lib/user-file-attachments.mjs';
-import { renderMarkdownSafe } from './lib/sanitizer.mjs';
+import { renderMarkdownSafe, renderResponseSafe } from './lib/sanitizer.mjs';
+import { dispatchAdaptiveAction, readAdaptiveAction } from './lib/adaptive-ui.mjs';
 import { createEffortControl } from './lib/effort-control.mjs';
 import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
@@ -2693,7 +2694,7 @@ function renderMessages(messages = []) {
     const displayText = stripGeneratedImageEchoes(visibleText, media);
     if (displayText) {
       const rendered = document.createElement('div');
-      rendered.innerHTML = renderMarkdownSafe(displayText);
+      rendered.innerHTML = renderWebReply(role, displayText);
       highlightCodeBlocks(rendered);
       content.append(...rendered.childNodes);
       enhanceMarkdownCodeBlocks(content, {
@@ -4141,6 +4142,42 @@ function applyWebResponsePresentation() {
   const { responseStyle, messageLayout } = responsePresentationFromSettings(settings);
   document.documentElement.dataset.responseStyle = responseStyle;
   document.documentElement.dataset.messageLayout = messageLayout;
+}
+
+function webAdaptiveUiLabels() {
+  return {
+    viewChart: t('haui.view_chart'),
+    viewTable: t('haui.view_table'),
+    viewAsChart: t('haui.view_as_chart'),
+    copy: t('haui.copy'),
+    copied: t('haui.copied'),
+    building: t('haui.building'),
+    opensNewTab: t('haui.opens_new_tab'),
+    askHint: t('haui.ask_hint'),
+  };
+}
+
+// Hermes' replies follow the shared response style; every other role keeps
+// the Markdown renderer.
+function renderWebReply(role, text) {
+  if (role !== 'assistant') return renderMarkdownSafe(text);
+  const { responseStyle } = responsePresentationFromSettings(settings);
+  return renderResponseSafe(text, { style: responseStyle, labels: webAdaptiveUiLabels() });
+}
+
+function handleWebAdaptiveUiClick(event) {
+  const action = readAdaptiveAction(event.target);
+  if (!action) return;
+  event.preventDefault();
+  void dispatchAdaptiveAction(action, {
+    labels: webAdaptiveUiLabels(),
+    copyText: (text) => navigator.clipboard.writeText(text),
+    askHermes: (text) => {
+      els.prompt.value = text;
+      els.prompt.dispatchEvent(new Event('input', { bubbles: true }));
+      els.prompt.focus();
+    },
+  }).catch(() => {});
 }
 
 function syncWebResponsePresentation(nextSettings = {}) {
@@ -5925,7 +5962,7 @@ function revealWebCompletionReply(node, fullText) {
   const scroller = els.conversationScroll;
   const paint = (piece) => {
     const rendered = document.createElement('div');
-    rendered.innerHTML = renderMarkdownSafe(piece);
+    rendered.innerHTML = renderWebReply('assistant', piece);
     highlightCodeBlocks(rendered);
     content.replaceChildren(...rendered.childNodes);
     if (scroller && scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120) {
@@ -6548,6 +6585,7 @@ globalThis.addEventListener('resize', () => {
   setNavigationOpen(els.shell.classList.contains('nav-open'));
   updateScrim();
 });
+els.messageList?.addEventListener('click', handleWebAdaptiveUiClick);
 browserApi.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.hermesBrowserSettings?.newValue) syncWebResponsePresentation(changes.hermesBrowserSettings.newValue);
   if (area === 'local' && Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) {
