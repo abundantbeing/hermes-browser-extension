@@ -1307,8 +1307,32 @@ html[data-hermes-mode="light"] .startup-brand-icon {
 }
 .startup-count { opacity: 0.7; white-space: nowrap; }
 /* An accent too pale for text keeps its colour on the key but not the label. */
-.startup-screen.startup-quiet-accent .startup-state { color: var(--startup-fg); }
-.startup-state { color: var(--startup-line); letter-spacing: 0.14em; text-transform: uppercase; text-align: right; }
+.startup-screen.startup-quiet-accent .startup-state { --startup-state-ink: var(--startup-fg); }
+.startup-state { --startup-state-ink: var(--startup-line); color: var(--startup-state-ink); letter-spacing: 0.14em; text-transform: uppercase; text-align: right; }
+/* A check in progress: the desktop app's braille glyph spins in a fixed cell
+   in front of the state (lib/startup-screen.mjs sets the frame), and a dim
+   band scans across the letters like a slow pass of the CRT beam. */
+.startup-screen.is-loading .startup-state::before {
+  content: var(--startup-glyph, "");
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.3em;
+  font-size: 1.3em;
+  line-height: 1;
+  vertical-align: -0.08em;
+  letter-spacing: 0;
+  text-align: center;
+}
+.startup-screen.is-loading .startup-state {
+  background: linear-gradient(100deg, var(--startup-state-ink) 0 40%, color-mix(in srgb, var(--startup-state-ink) 38%, transparent) 50%, var(--startup-state-ink) 60% 100%) 100% 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: startup-state-scan 2.8s linear infinite;
+}
+.startup-screen.is-loading .startup-state.startup-swap {
+  animation: startup-swap 0.45s cubic-bezier(0.3, 0.7, 0.2, 1), startup-state-scan 2.8s linear infinite;
+}
 .startup-label {
   display: -webkit-box;
   min-height: 19px;
@@ -1495,10 +1519,15 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
 @keyframes startup-swap {
   from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
 }
+@keyframes startup-state-scan {
+  to { background-position: 0 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .startup-screen::before,
   .startup-screen:not([hidden]) > *,
   .startup-screen:not([hidden]) .startup-brand-icon,
+  .startup-screen.is-loading .startup-state,
+  .startup-screen.is-loading .startup-state.startup-swap,
   .startup-swap { animation: none; }
   .startup-logo-veil { display: none; }
   .startup-brand-icon.is-veiled { background: var(--startup-fg); }
