@@ -529,7 +529,6 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
 }
 .topbar > * { flex: 0 0 auto; }
 .topbar .session-menu-button { flex: 1 1 auto; min-width: 0; }
-.topbar .topbar-status { flex: 0 0 auto; margin-left: auto; }
 .brand-mini {
   display: flex;
   align-items: center;
@@ -551,34 +550,7 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
   -webkit-mask: url("assets/img/hermes-wing-mark.svg") left center / contain no-repeat;
   mask: url("assets/img/hermes-wing-mark.svg") left center / contain no-repeat;
 }
-.topbar-status { min-width: 0; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 #currentSessionName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.connection-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 13px;
-  min-width: 13px;
-  height: 13px;
-  padding: 0;
-  border: 1px solid var(--hermes-pill-border);
-  border-radius: 999px;
-  background: var(--hermes-pill-bg);
-  color: transparent;
-  font-size: 0;
-  line-height: 1;
-  overflow: hidden;
-}
-.connection-pill::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: currentColor;
-}
-.connection-pill.ok { background: rgba(var(--hermes-accent-rgb),0.14); color: var(--hermes-accent); border-color: var(--hermes-accent); }
-.connection-pill.warn { background: var(--hermes-pill-bg); color: rgba(var(--hermes-fg-rgb),0.76); border-color: var(--hermes-pill-border); }
-.connection-pill.error { background: rgba(255,77,114,0.16); color: var(--danger); border-color: var(--danger); }
 
 .app-scroll {
   min-height: 0;

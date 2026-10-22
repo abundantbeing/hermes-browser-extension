@@ -160,7 +160,8 @@ test('side panel exposes an explicit full-view handoff', () => {
   assert.match(html, /id="openFullViewButton"/);
   assert.match(html, /<button id="openFullViewButton"[^>]*type="button"/);
   assert.match(html, /id="openFullViewButton"[\s\S]*class="web-view-icon"/);
-  assert.match(html, /id="newSessionButton"[\s\S]*id="openFullViewButton"[\s\S]*id="settingsButton"[\s\S]*id="connectionPill"/);
+  assert.match(html, /id="newSessionButton"[\s\S]*id="openFullViewButton"[\s\S]*id="settingsButton"/);
+  assert.doesNotMatch(html, /connectionPill|topbar-status/, 'the top bar carries no connection light; Settings owns connection state');
   assert.match(html, /id="webDeprecationDialog"/);
   assert.match(html, /web\.deprecation_title/);
   assert.match(js, /showWebDeprecationNotice/);
@@ -171,7 +172,7 @@ test('side panel exposes an explicit full-view handoff', () => {
   assert.match(read('extension/background.js'), /browserApi\.tabs\.create/);
   assert.match(css, /\.topbar\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/s, 'topbar must lay out as a single-row flex bar');
   assert.match(css, /\.topbar \.session-menu-button\s*\{\s*flex:\s*1 1 auto;\s*min-width:\s*0;\s*\}/, 'session name must take the remaining topbar space');
-  assert.match(css, /\.topbar \.topbar-status\s*\{\s*flex:\s*0 0 auto;\s*margin-left:\s*auto;\s*\}/, 'status must stay pinned to the trailing topbar edge');
+  assert.doesNotMatch(css, /topbar-status|connection-pill/, 'the connection light and its styles are gone from the top bar');
   assert.doesNotMatch(css, /\.session-menu-button\s*\{[^}]*max-width:/s);
   assert.match(js, /newChat:\s*true/);
 });

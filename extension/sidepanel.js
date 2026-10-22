@@ -729,7 +729,6 @@ const els = {
   connectButton: $('#connectButton'),
   manualSettingsButton: $('#manualSettingsButton'),
   connectStatus: $('#connectStatus'),
-  connectionPill: $('#connectionPill'),
   browserIntroHero: $('#browserIntroHero'),
   browserIntroDismissButton: $('#browserIntroDismissButton'),
   onboardingFlow: $('#onboardingFlow'),
@@ -4754,10 +4753,6 @@ function updateConnectionPrompt() {
   // working panel. Tab control's own credential step lives in the control strip
   // ("Authorize control"), not in this card.
   els.connectPanel.hidden = connected;
-  els.connectionPill.textContent = '●';
-  els.connectionPill.className = `connection-pill ${state.pillClass || 'warn'}`;
-  els.connectionPill.title = connectionStateTitle(state, summary);
-  els.connectionPill.setAttribute('aria-label', connected ? 'Hermes connected' : `Hermes ${state.state}`);
   if (!connected) {
     if (state.state === 'connecting') {
       els.sendButton.textContent = translateUiText('Checking...');
