@@ -1255,30 +1255,23 @@ html[data-hermes-mode="light"] .startup-screen::before { opacity: 0.07; }
 .startup-brand-lockup {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
   justify-items: center;
   align-items: center;
   text-align: center;
 }
+/* The logo carries the wordmark: outline art on dark modes, solid on light. */
 .startup-brand-icon {
   display: block;
-  width: 140px;
-  aspect-ratio: 4519 / 4895;
+  width: 190px;
+  aspect-ratio: 600 / 764;
   background: var(--startup-fg);
-  -webkit-mask: url("assets/img/hermes-badge-line.svg") center / contain no-repeat;
-  mask: url("assets/img/hermes-badge-line.svg") center / contain no-repeat;
+  -webkit-mask: url("assets/img/hermes-extension-icon-outline.png") center / contain no-repeat;
+  mask: url("assets/img/hermes-extension-icon-outline.png") center / contain no-repeat;
 }
 html[data-hermes-mode="light"] .startup-brand-icon {
-  -webkit-mask-image: url("assets/img/hermes-badge-solid.svg");
-  mask-image: url("assets/img/hermes-badge-solid.svg");
-}
-.startup-wordmark {
-  display: block;
-  width: 156px;
-  aspect-ratio: 2918.77 / 1453.88;
-  background: var(--startup-fg);
-  -webkit-mask: url("assets/img/hermes-browser-extension-logo.svg") center / contain no-repeat;
-  mask: url("assets/img/hermes-browser-extension-logo.svg") center / contain no-repeat;
+  aspect-ratio: 600 / 749;
+  -webkit-mask-image: url("assets/img/hermes-extension-icon-solid.png");
+  mask-image: url("assets/img/hermes-extension-icon-solid.png");
 }
 .startup-copy {
   width: 100%;
