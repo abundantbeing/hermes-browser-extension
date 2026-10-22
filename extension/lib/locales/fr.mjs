@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Bulle pour l'utilisateur uniquement",
   "responses.layout.user_bubble_hint": "Vos messages en bulle, les réponses d'Hermes en texte continu.",
   "responses.setup_again": "Relancer la configuration",
+  "haui.view_chart": "Graphique",
+  "haui.view_table": "Tableau",
+  "haui.view_as_chart": "Afficher en graphique",
+  "haui.copy": "Copier",
+  "haui.copied": "Copié",
+  "haui.building": "Création de l'affichage…",
+  "haui.opens_new_tab": "S'ouvre dans un nouvel onglet",
+  "haui.ask_hint": "Place cette question dans la zone de message",
 });
