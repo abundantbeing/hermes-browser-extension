@@ -465,7 +465,10 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
 
   assert.deepEqual(commandMethods(calls), [
     'DOM.enable', 'DOM.scrollIntoViewIfNeeded', 'DOM.getBoxModel', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'DOM.resolveNode',
-    'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent',
+    // The frame under the point is judged again right after the page-script checks (Runtime.evaluate), before the
+    // pointer moves, and before it presses.
+    'Runtime.evaluate', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent',
+    'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent',
     'DOM.focus', 'DOM.resolveNode', 'Input.insertText',
     'Input.dispatchKeyEvent', 'Input.dispatchKeyEvent',
     'Page.getLayoutMetrics', 'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Runtime.evaluate',
@@ -979,7 +982,7 @@ test('Chromium coordinate clicks report no obscured state; their one hit test on
   const { api, calls } = chromiumApis();
   const result = await createChromiumCdpAdapter({ browserApi: api }).execute('browser_click', { x: 25.4, y: 35 }, { scope, signal: openSignal() });
   assert.deepEqual(result, { status: 'clicked' });
-  assert.equal(calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 1);
+  assert.equal(calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 3, 'the early look, then the last look before the pointer moves and before it presses');
   assert.deepEqual(mouseEvents(calls).map(({ type, buttons }) => [type, buttons]), [
     ['mouseMoved', 0], ['mousePressed', 1], ['mouseReleased', 0],
   ]);
@@ -1102,7 +1105,7 @@ test('a ref click whose centre is covered by a new-tab link is sent with the mod
   chromium.handlers['Runtime.callFunctionOn'] = ({ objectId, arguments: args }) => ({ result: { value: !args && objectId === 'object-46' } });
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, hostPlatform: 'Linux' });
   assert.deepEqual(await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget }), { status: 'clicked', obscured: true });
-  assert.equal(chromium.calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 1, 'one hit test serves both the obscured check and the new-tab check');
+  assert.equal(chromium.calls.filter((call) => call[2] === 'DOM.getNodeForLocation').length, 3, 'the early hit test serves both the obscured check and the new-tab check; two more judge the frame again');
   assert.deepEqual(mouseEvents(chromium.calls).map((event) => [event.type, event.modifiers ?? null]), [
     ['mouseMoved', null], ['mousePressed', 2], ['mouseReleased', 2],
   ]);
@@ -2308,4 +2311,79 @@ test('a failed hit test is refused when any element embeds a frame, including on
     await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
     { status: 'clicked' },
   );
+});
+
+// The page-script checks before a click (obscured, new tab, hidden) can move things. The frame under the point is
+// judged again as the last step before the pointer moves, and once more before it presses.
+const PAY_HIT = { backendNodeId: 77, frameId: 'PAY' };
+const AD_HIT = { backendNodeId: 90, frameId: 'AD' };
+
+test('Chromium judges the frame under the point again after its page-script checks, before the pointer moves', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const [label, args, target] of [
+    ['a coordinate', { x: 25, y: 35 }, undefined],
+    ['a ref in the page', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+  ]) {
+    const chromium = pointerApis({ hit: label === 'a coordinate' ? AD_HIT : { backendNodeId: 44, frameId: 'MAIN' } });
+    let hit = chromium.handlers['DOM.getNodeForLocation']();
+    chromium.handlers['DOM.getNodeForLocation'] = () => hit;
+    // The page-script check that follows the first look moves a restricted frame under the point.
+    chromium.handlers['Runtime.evaluate'] = () => { hit = PAY_HIT; return {}; };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', args, { scope, signal: openSignal(), target }),
+      (error) => error?.code === 'restricted_frame',
+      label,
+    );
+    noPointerInput(chromium.calls);
+  }
+});
+
+test('Chromium judges the frame under the point again after the pointer moved and before it presses', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = pointerApis({ hit: AD_HIT });
+  let hit = AD_HIT;
+  chromium.handlers['DOM.getNodeForLocation'] = () => hit;
+  // Moving the pointer runs the page's handlers, which put a restricted frame under it.
+  chromium.handlers['Input.dispatchMouseEvent'] = (params) => { if (params.type === 'mouseMoved') hit = PAY_HIT; return {}; };
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.deepEqual(mouseEvents(chromium.calls).map((event) => event.type), ['mouseMoved'], 'nothing is pressed');
+});
+
+test('Chromium runs no page script between its last frame check and the first pointer event', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.resolveNode'] = () => ({ object: { objectId: 'obj' } });
+  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: false } });
+  await createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget });
+  const methods = commandMethods(chromium.calls);
+  const firstInput = methods.indexOf('Input.dispatchMouseEvent');
+  const lastScript = Math.max(...['Runtime.evaluate', 'Runtime.callFunctionOn', 'DOM.resolveNode'].map((method) => methods.lastIndexOf(method)));
+  assert.ok(lastScript >= 0 && lastScript < firstInput, 'the page-script checks ran first');
+  assert.deepEqual(
+    methods.slice(lastScript + 1, firstInput),
+    ['DOM.getNodeForLocation', 'Page.getFrameTree'],
+    'only the frame check sits between the last page script and the first pointer event',
+  );
+  const pressed = methods.indexOf('Input.dispatchMouseEvent', firstInput + 1);
+  assert.deepEqual(methods.slice(firstInput + 1, pressed), ['DOM.getNodeForLocation', 'Page.getFrameTree'], 'and again between the move and the press');
+});
+
+test('Chromium judges a drag\'s source again right before it presses, after scrolling to the destination', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = pointerApis({ hit: { backendNodeId: 44, frameId: 'MAIN' } });
+  // Looks at the source, then the destination, then the source again; only that last look finds a restricted
+  // frame (the destination's scroll moved it over the source).
+  let looks = 0;
+  chromium.handlers['DOM.getNodeForLocation'] = () => (++looks < 3 ? { backendNodeId: 44, frameId: 'MAIN' } : PAY_HIT);
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, {
+      scope, signal: openSignal(), target: { backendDOMNodeId: 44 }, destination: { backendDOMNodeId: 46 },
+    }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.equal(looks, 3);
+  assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed'), false);
 });

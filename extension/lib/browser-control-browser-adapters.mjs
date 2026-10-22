@@ -1445,8 +1445,14 @@ function createChromiumCdpAdapter({
         const modifierFields = modifiers ? { modifiers } : {};
         // Chrome holds a mouseMoved until the next frame, which a hidden tab
         // never draws; the press and release are delivered regardless.
-        if (!await pageIsHidden(send, signal)) {
+        const hidden = await pageIsHidden(send, signal);
+        // The checks above ran page script, which can move things. The frame under the point is judged again as
+        // the last step before the pointer moves, and once more before it presses, with nothing of ours running
+        // in the page in between.
+        await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
+        if (!hidden) {
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point, button: 'none', buttons: 0 });
+          await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
         }
         await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1, ...modifierFields });
         await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1, ...modifierFields });
@@ -1466,6 +1472,8 @@ function createChromiumCdpAdapter({
         if (!Number.isInteger(destinationNodeId) || destinationNodeId <= 0) throw new Error('The destination ref has no DOM node.');
         const destinationPoint = await nodeCenter(send, destinationNodeId);
         await checkedHit(send, enable, signal, destinationPoint, framing.destination);
+        // Scrolling to the destination can move the source: it is judged again right before the press.
+        await checkedHit(send, enable, signal, sourcePoint, framing.target);
         await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...sourcePoint, button: 'left', buttons: 1, clickCount: 1 });
         await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
         await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
