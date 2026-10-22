@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Лише бульбашка користувача",
   "responses.layout.user_bubble_hint": "Ваші повідомлення в бульбашці, відповіді Hermes — звичайним текстом.",
   "responses.setup_again": "Пройти налаштування ще раз",
+  "haui.view_chart": "Графік",
+  "haui.view_table": "Таблиця",
+  "haui.view_as_chart": "Показати як графік",
+  "haui.copy": "Копіювати",
+  "haui.copied": "Скопійовано",
+  "haui.building": "Створення подання…",
+  "haui.opens_new_tab": "Відкривається в новій вкладці",
+  "haui.ask_hint": "Вставляє це запитання в поле повідомлення",
 });
