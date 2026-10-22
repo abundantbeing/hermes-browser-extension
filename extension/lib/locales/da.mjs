@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Kun brugerboble",
   "responses.layout.user_bubble_hint": "Dine beskeder i en boble, Hermes svarer som flydende tekst.",
   "responses.setup_again": "Kør opsætningen igen",
+  "haui.view_chart": "Diagram",
+  "haui.view_table": "Tabel",
+  "haui.view_as_chart": "Vis som diagram",
+  "haui.copy": "Kopiér",
+  "haui.copied": "Kopieret",
+  "haui.building": "Bygger visning…",
+  "haui.opens_new_tab": "Åbnes i en ny fane",
+  "haui.ask_hint": "Sætter dette spørgsmål i beskedfeltet",
 });
