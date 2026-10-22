@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   deriveStartupView,
   initialStartupReadiness,
@@ -136,8 +136,10 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
 
   assert.match(html, /assets\/img\/hermes-browser-logo-left\.svg/);
   assert.match(html, /class="startup-brand-icon"/);
-  assert.match(css, /assets\/img\/hermes-badge-line\.svg/);
-  assert.match(css, /assets\/img\/hermes-browser-extension-logo\.svg/);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*assets\/img\/hermes-extension-icon-outline\.png/s);
+  assert.match(css, /html\[data-hermes-mode="light"\] \.startup-brand-icon\s*\{[^}]*assets\/img\/hermes-extension-icon-solid\.png/s);
+  assert.ok(existsSync(new URL('../extension/assets/img/hermes-extension-icon-outline.png', import.meta.url)));
+  assert.ok(existsSync(new URL('../extension/assets/img/hermes-extension-icon-solid.png', import.meta.url)));
   assert.match(css, /\.startup-screen\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0;[^}]*place-items:\s*center;[^}]*overflow:\s*hidden;/s);
   assert.match(html, /id="startupActions"/);
   assert.match(css, /body\.startup-active\s+\.topbar\s*\{[^}]*display:\s*none;/s);
@@ -146,7 +148,7 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
   assert.match(css, /body\.startup-active\s+\.startup-actions\s+#settingsButton\s*\{[^}]*pointer-events:\s*auto;/s);
   assert.match(css, /\.startup-brand-lockup\s*\{[^}]*justify-items:\s*center;/s);
   assert.doesNotMatch(html, /Connecting Browser Extension/i);
-  assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*140px;/s);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*190px;/s);
   assert.match(css, /assets\/img\/hermes-browser-enter-gate-ink\.png/);
   assert.match(css, /\.shell::before\s*\{[^}]*hermes-browser-enter-gate-ink\.png[^}]*opacity:\s*0\.13;[^}]*mix-blend-mode:\s*normal;/s);
   // The Meander: a Greek key border is the progress bar, and the screen
