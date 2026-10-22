@@ -1819,6 +1819,74 @@
     "message": "รูปแบบไฟล์เก็บถาวรที่ไม่รองรับ",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "ตั้งค่า Hermes",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "กลับ",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_finish_body": {
+    "message": "ถามเกี่ยวกับหน้าที่คุณเปิดอยู่ Hermes เห็นแท็บที่ใช้งานอยู่ ข้อความที่เลือก และแท็บที่เปิดอยู่ คุณเปลี่ยนการตั้งค่าเหล่านี้ได้ภายหลังในการตั้งค่า ภายใต้ลักษณะที่ปรากฏและธีม",
+    "description": "Runtime interface message onboarding.finish.body"
+  },
+  "runtime_onboarding_finish_title": {
+    "message": "พร้อมแล้ว",
+    "description": "Runtime interface message onboarding.finish.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "ข้อความของคุณและคำตอบของ Hermes จะแสดงตรงไหน",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "เลือกรูปแบบแชท",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "ถัดไป",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_skip": {
+    "message": "ข้าม",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "เริ่มแชท",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "ขั้นที่ {current} จาก {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Hermes จะแสดงคำตอบอย่างไร",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "เลือกรูปแบบการตอบกลับ",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_summary_layout": {
+    "message": "รูปแบบแชท",
+    "description": "Runtime interface message onboarding.summary.layout"
+  },
+  "runtime_onboarding_summary_style": {
+    "message": "รูปแบบการตอบกลับ",
+    "description": "Runtime interface message onboarding.summary.style"
+  },
+  "runtime_onboarding_summary_theme": {
+    "message": "ธีม",
+    "description": "Runtime interface message onboarding.summary.theme"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "สีสำหรับแผงด้านข้างและแท็บเต็ม",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "เลือกธีม",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
   "runtime_permissions_not_granted": {
     "message": "ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน\n\n{error}\n\nคลิก เปิดการตั้งค่าไมโครโฟน ตั้งค่าไมโครโฟนเป็นอนุญาตสำหรับ Hermes Browser Extension กลับมาที่นี่ แล้วลองอีกครั้ง",
     "description": "Runtime interface message permissions.not_granted"
@@ -1886,6 +1954,66 @@
   "runtime_profile_using": {
     "message": "กำลังใช้ {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "บับเบิลทั้งสองฝั่ง",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "คุณและ Hermes อยู่ในบับเบิลของตัวเอง เหมือนแอปส่งข้อความ",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "ข้อความจะแสดงอยู่ตรงไหนในแชท",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "รูปแบบแชท",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "เฉพาะบับเบิลของผู้ใช้",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "ข้อความของคุณอยู่ในบับเบิล ส่วนคำตอบของ Hermes เป็นข้อความต่อเนื่อง",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "ตั้งค่าอีกครั้ง",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_style_description": {
+    "message": "Hermes จะแสดงคำตอบอย่างไร",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "รูปแบบการตอบกลับ",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "ข้อความธรรมดา",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "เฉพาะตัวอักษร ไม่มีการจัดรูปแบบ",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "ข้อความแบบจัดรูปแบบ",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "Markdown ที่จัดรูปแบบแล้ว: หัวข้อ รายการ และโค้ด",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "การ์ด ตาราง และแผนภูมิเมื่อจำเป็น",
+    "description": "Runtime interface message responses.style.vivid_hint"
   },
   "runtime_run_release": {
     "message": "Release",
