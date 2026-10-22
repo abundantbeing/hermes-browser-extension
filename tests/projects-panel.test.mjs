@@ -229,3 +229,24 @@ test('a live turn is confirmed explicitly in an alert dialog before anything is 
   assert.match(dialog.textContent, /Nothing has been changed yet/);
   assert.equal(sent.includes('session.mutate'), false);
 });
+
+test('an unchanged state does not rebuild the DOM, and an input method mid-composition is never interrupted', async () => {
+  const { container, controller } = setup();
+  await controller.activate();
+  const first = container.querySelector('.projects-row');
+  renderProjectsPanel({ container, controller, t, locale: 'en' });
+  assert.equal(container.querySelector('.projects-row'), first, 'a repaint with the same state keeps the same nodes');
+
+  controller.startCreate();
+  const name = container.querySelector('#projectsCreateName');
+  const view = container.ownerDocument.defaultView;
+  name.dispatchEvent(new view.Event('compositionstart', { bubbles: true }));
+  assert.equal(container.getAttribute('data-composing'), '1');
+  controller.updateCreate('name', 'ア');
+  assert.equal(container.querySelector('#projectsCreateName'), name, 'typing mid-composition leaves the field in place');
+  name.value = 'アトラス';
+  name.dispatchEvent(new view.Event('compositionend', { bubbles: true }));
+  assert.equal(container.getAttribute('data-composing'), null);
+  assert.equal(controller.state.create.name, 'アトラス');
+  assert.equal(container.querySelector('#projectsCreateName').value, 'アトラス', 'the composed text is what the repainted field shows');
+});

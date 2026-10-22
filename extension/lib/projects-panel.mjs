@@ -39,10 +39,21 @@ function hostOf(endpoint = '') {
   }
 }
 
+// What the last render of each container drew, so an unchanged state (the
+// drawer repaints on every live-roster tick) does not rebuild the DOM.
+const lastDrawn = new WeakMap();
+
 export function renderProjectsPanel({ container, controller, t, locale = 'en', now = Date.now() } = {}) {
   if (!container || !controller) return;
+  // An input method mid-composition would be cancelled by a rebuild; the
+  // composition's end repaints.
+  if (container.getAttribute('data-composing') === '1') return;
   const doc = container.ownerDocument;
   const state = controller.state;
+  const gate = controller.availability();
+  const signature = JSON.stringify([state, locale, gate.available, gate.reason || '']);
+  if (lastDrawn.get(container) === signature && container.childNodes.length) return;
+  lastDrawn.set(container, signature);
 
   // Remember focus so typing in a field survives the rebuild.
   const active = doc.activeElement;
@@ -418,6 +429,11 @@ function field({ doc, id, fk, label, value, error, disabled, autofocus, mono, hi
     'aria-invalid': error ? 'true' : undefined,
     'aria-describedby': describedBy || undefined,
     onInput: (event) => onInput(event.target.value),
+    onCompositionstart: (event) => { event.target.closest('[data-view]')?.setAttribute('data-composing', '1'); },
+    onCompositionend: (event) => {
+      event.target.closest('[data-view]')?.removeAttribute('data-composing');
+      onInput(event.target.value);
+    },
   });
   input.value = value;
   return h(doc, 'div', { class: 'projects-field' },
