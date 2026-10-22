@@ -5223,18 +5223,7 @@ button.active-profile-indicator {
    label colour and the outline/label take the action colour (visible on light and dark palettes). */
 #sendButton:hover, #saveSettingsButton:hover, #connectButton:hover, #sendButton:focus-visible, #saveSettingsButton:focus-visible, #connectButton:focus-visible { background: var(--hermes-primary-fg, var(--hermes-paper)); color: var(--hermes-primary-bg, var(--hermes-ink)); border-color: var(--hermes-primary-bg, var(--hermes-ink)); }
 
-.desktop-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 7px 0 0;
-  color: var(--hermes-fg);
-}
 .model-menu-button,
-.context-bar,
 .session-menu-button {
   min-width: 0;
   min-height: 30px;
@@ -5358,15 +5347,6 @@ button.active-profile-indicator {
 #inlineAssistModelButton:disabled span:last-child {
   opacity: 0.35;
 }
-.context-bar {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 5px;
-  padding: 6px;
-  overflow: hidden;
-  font-variant-numeric: tabular-nums;
-}
 .context-track {
   position: relative;
   display: block;
@@ -5386,7 +5366,6 @@ button.active-profile-indicator {
   box-shadow: inset 0 0 0 1px rgba(var(--hermes-ink-rgb),0.22);
   transition: width 160ms ease;
 }
-.context-bar strong { font-size: calc(11px * var(--hermes-text-zoom, 1)); font-weight: 400; }
 
 .model-menu,
 .context-popover,
@@ -7316,7 +7295,6 @@ input,
 select,
 .model-menu-button,
 .session-menu-button,
-.context-bar,
 .skill-option,
 .attach-menu button,
 .context-scope-search,
@@ -10163,7 +10141,6 @@ button.bot-mode-pet-tile:hover *:not(button, button *), button.bot-mode-pet-tile
    button:hover rule would flood them with the primary action colour, which
    hides the effort badge, token count and the segmented context meter. */
 .model-menu-button:hover, .model-menu-button:focus-visible, .model-menu-button[aria-expanded="true"],
-.context-bar:hover, .context-bar:focus-visible, .context-bar[aria-expanded="true"],
 .session-menu-button:hover, .session-menu-button:focus-visible, .session-menu-button[aria-expanded="true"] {
   background: color-mix(in srgb, var(--hermes-control-bg) 88%, var(--hermes-fg)) !important;
   color: var(--hermes-fg, var(--hermes-control-fg)) !important;
@@ -10175,18 +10152,15 @@ button.bot-mode-pet-tile:hover *:not(button, button *), button.bot-mode-pet-tile
   color: var(--hermes-fg);
   border-color: rgba(var(--hermes-fg-rgb), 0.45);
 }
-.context-bar:hover .context-track, .context-bar:focus-visible .context-track, .context-bar[aria-expanded="true"] .context-track {
-  border-color: rgba(var(--hermes-fg-rgb), 0.55);
-}
 
 /* Light-theme hover ink: some light palettes (Everforest) have a base text
    colour that sits near 4.5:1 on paper, so a tinted hover fill pushes it
    under. Darken the ink and keep the tint light on hover/focus. */
-html[data-hermes-mode="light"] :is(.model-menu-button, .context-bar, .session-menu-button):is(:hover, :focus-visible, [aria-expanded="true"]) {
+html[data-hermes-mode="light"] :is(.model-menu-button, .session-menu-button):is(:hover, :focus-visible, [aria-expanded="true"]) {
   background: color-mix(in srgb, var(--hermes-control-bg) 94%, var(--hermes-fg)) !important;
   color: color-mix(in srgb, var(--hermes-fg) 72%, #000) !important;
 }
-html[data-hermes-mode="light"] :is(.model-menu-button, .context-bar):is(:hover, :focus-visible, [aria-expanded="true"]) * {
+html[data-hermes-mode="light"] :is(.model-menu-button):is(:hover, :focus-visible, [aria-expanded="true"]) * {
   color: inherit;
 }
 html[data-hermes-mode="light"] :is(.model-effort-option, .model-option, .room-member-row, .bot-mode-row, .group-row, .settings-category-card, .branded-select-option):is(:hover, :focus-visible) {
