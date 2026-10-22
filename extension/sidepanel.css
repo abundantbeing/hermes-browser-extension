@@ -563,7 +563,10 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
   -webkit-mask: url("assets/img/nous-boxes.png") center / contain no-repeat;
   mask: url("assets/img/nous-boxes.png") center / contain no-repeat;
 }
-.nous-strip-pane { margin: 4px auto 2px; }
+/* About & Diagnostics is short, so its strip rides the foot of the screen
+   rather than sitting under the last card. */
+#settingsPane-about { min-height: calc(100dvh - 140px); grid-template-rows: auto auto auto 1fr; padding-bottom: 16px; }
+.nous-strip-pane { align-self: end; margin: 18px auto 0; }
 #currentSessionName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .app-scroll {
