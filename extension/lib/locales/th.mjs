@@ -1596,6 +1596,7 @@ export default Object.freeze({
   "settings.categories.home_title": "เลือกหมวดหมู่",
   "settings.categories.home_copy": "ทุกสิ่งที่ Hermes Browser ทำได้ จัดกลุ่มตามจุดประสงค์",
   "settings.categories.back": "หมวดหมู่",
+  "settings.categories.back_to": "กลับไปที่หมวดหมู่",
   "settings.categories.edited": "แก้ไขแล้ว",
   "settings.categories.edited_hint": "มีการเปลี่ยนแปลงที่ยังไม่บันทึก",
   "settings.categories.appearance.title": "รูปลักษณ์และธีม",

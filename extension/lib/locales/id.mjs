@@ -1596,6 +1596,7 @@ export default Object.freeze({
   "settings.categories.home_title": "Pilih kategori",
   "settings.categories.home_copy": "Semua yang bisa dilakukan Hermes Browser, dikelompokkan menurut fungsinya.",
   "settings.categories.back": "Kategori",
+  "settings.categories.back_to": "Kembali ke kategori",
   "settings.categories.edited": "Diubah",
   "settings.categories.edited_hint": "Perubahan belum disimpan",
   "settings.categories.appearance.title": "Tampilan & tema",

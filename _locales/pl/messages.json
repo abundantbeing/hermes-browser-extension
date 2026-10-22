@@ -2183,6 +2183,10 @@
     "message": "Kategorie",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Wróć do kategorii",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Brama, profil agenta i sposób, w jaki ta przeglądarka łączy się z Hermes.",
     "description": "Runtime interface message settings.categories.connections.summary"

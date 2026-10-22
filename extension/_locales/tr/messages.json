@@ -2183,6 +2183,10 @@
     "message": "Kategoriler",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Kategorilere dön",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Ağ geçidi, ajan profili ve bu tarayıcının Hermes'e nasıl ulaştığı.",
     "description": "Runtime interface message settings.categories.connections.summary"

@@ -2183,6 +2183,10 @@
     "message": "類別",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "返回類別",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "閘道、代理程式設定檔，以及此瀏覽器如何連線到 Hermes。",
     "description": "Runtime interface message settings.categories.connections.summary"

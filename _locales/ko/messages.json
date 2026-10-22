@@ -2183,6 +2183,10 @@
     "message": "카테고리",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "카테고리로 돌아가기",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "게이트웨이, 에이전트 프로필, 이 브라우저가 Hermes에 연결하는 방식.",
     "description": "Runtime interface message settings.categories.connections.summary"

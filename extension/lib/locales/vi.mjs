@@ -1596,6 +1596,7 @@ export default Object.freeze({
   "settings.categories.home_title": "Chọn một danh mục",
   "settings.categories.home_copy": "Mọi thứ Hermes Browser làm được, được nhóm theo mục đích.",
   "settings.categories.back": "Danh mục",
+  "settings.categories.back_to": "Quay lại danh mục",
   "settings.categories.edited": "Đã sửa",
   "settings.categories.edited_hint": "Thay đổi chưa lưu",
   "settings.categories.appearance.title": "Giao diện & chủ đề",

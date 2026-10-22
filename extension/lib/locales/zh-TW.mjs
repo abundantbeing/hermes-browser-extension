@@ -1596,6 +1596,7 @@ export default Object.freeze({
   "settings.categories.home_title": "選擇類別",
   "settings.categories.home_copy": "Hermes Browser 的所有功能，依用途分組。",
   "settings.categories.back": "類別",
+  "settings.categories.back_to": "返回類別",
   "settings.categories.edited": "已修改",
   "settings.categories.edited_hint": "未儲存的變更",
   "settings.categories.appearance.title": "外觀與主題",

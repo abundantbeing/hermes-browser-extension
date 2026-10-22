@@ -1596,6 +1596,7 @@ export default Object.freeze({
   "settings.categories.home_title": "カテゴリを選択",
   "settings.categories.home_copy": "Hermes Browser でできることを用途別にまとめました。",
   "settings.categories.back": "カテゴリ",
+  "settings.categories.back_to": "カテゴリに戻る",
   "settings.categories.edited": "編集済み",
   "settings.categories.edited_hint": "未保存の変更",
   "settings.categories.appearance.title": "外観とテーマ",

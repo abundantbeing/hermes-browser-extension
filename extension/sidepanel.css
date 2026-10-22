@@ -9784,32 +9784,51 @@ html[data-hermes-mode="light"] .room-mention { background: color-mix(in srgb, va
 }
 .settings-pane { display: grid; gap: 14px; align-content: start; }
 .settings-pane[hidden] { display: none; }
+/* Inside a category: an icon-only back button on the left edge (the same 30px
+   square as the close button on the right edge of the header), then the
+   category title as the pane heading in the display face, with a small
+   "Settings /" crumb above it. */
 .settings-pane-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  column-gap: 12px;
   min-width: 0;
 }
 .settings-pane-back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex: none;
-  min-height: 32px;
-  padding: 6px 10px 5px;
+  justify-content: center;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border-color: var(--hermes-line-strong);
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
 }
-html[dir="rtl"] .settings-pane-back > span[aria-hidden] { transform: scaleX(-1); }
+.settings-pane-back svg { display: block; }
+html[dir="rtl"] .settings-pane-back svg { transform: scaleX(-1); }
+.settings-pane-heading { display: grid; gap: 4px; min-width: 0; }
+.settings-pane-crumb {
+  color: var(--hermes-muted);
+  font: 600 calc(9px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.settings-pane-crumb::after { content: " /"; }
 .settings-pane-title {
-  flex: 1 1 auto;
   min-width: 0;
   margin: 0;
   color: var(--hermes-ink);
+  font-family: var(--hermes-font-display);
   font-weight: 500;
   font-synthesis: none;
-  font-size: calc(18px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
-  line-height: 1.15;
+  font-size: calc(22px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
+  line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   overflow-wrap: anywhere;
 }
 .settings-pane-title:focus-visible { outline: 1px solid var(--hermes-accent); outline-offset: 3px; }
@@ -9830,7 +9849,7 @@ html[dir="rtl"] .settings-pane-back > span[aria-hidden] { transform: scaleX(-1);
 .settings-category-card:focus-visible .settings-category-copy small { color: var(--hermes-ink); opacity: 1; }
 .settings-category-card:hover .settings-category-icon,
 .settings-category-card:focus-visible .settings-category-icon { color: var(--hermes-accent); border-color: var(--hermes-accent); }
-.settings-pane-back:hover, .settings-pane-back:focus-visible { background: rgba(var(--hermes-ink-rgb), 0.07); color: var(--hermes-ink); border-color: var(--hermes-accent); }
+.settings-pane-back:hover, .settings-pane-back:focus-visible { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
 
 /* ---- Settings polish pass: Models, Connections, Connected agent, back-to-top ---- */
 .settings-prose,

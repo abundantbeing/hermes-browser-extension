@@ -2183,6 +2183,10 @@
     "message": "カテゴリ",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "カテゴリに戻る",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "ゲートウェイ、エージェントプロファイル、このブラウザーが Hermes に接続する方法。",
     "description": "Runtime interface message settings.categories.connections.summary"

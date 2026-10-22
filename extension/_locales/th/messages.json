@@ -2183,6 +2183,10 @@
     "message": "หมวดหมู่",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "กลับไปที่หมวดหมู่",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "เกตเวย์ โปรไฟล์เอเจนต์ และวิธีที่เบราว์เซอร์นี้เชื่อมต่อกับ Hermes",
     "description": "Runtime interface message settings.categories.connections.summary"

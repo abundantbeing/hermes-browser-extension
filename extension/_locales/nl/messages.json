@@ -2183,6 +2183,10 @@
     "message": "Categorieën",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Terug naar categorieën",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Gateway, agentprofiel en hoe deze browser Hermes bereikt.",
     "description": "Runtime interface message settings.categories.connections.summary"

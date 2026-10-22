@@ -1596,6 +1596,7 @@ export default Object.freeze({
   "settings.categories.home_title": "Vælg en kategori",
   "settings.categories.home_copy": "Alt hvad Hermes Browser kan, grupperet efter formål.",
   "settings.categories.back": "Kategorier",
+  "settings.categories.back_to": "Tilbage til kategorier",
   "settings.categories.edited": "Redigeret",
   "settings.categories.edited_hint": "Ugemte ændringer",
   "settings.categories.appearance.title": "Udseende og temaer",

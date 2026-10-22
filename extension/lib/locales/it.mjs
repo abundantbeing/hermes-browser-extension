@@ -1596,6 +1596,7 @@ export default Object.freeze({
   "settings.categories.home_title": "Scegli una categoria",
   "settings.categories.home_copy": "Tutto ciò che Hermes Browser sa fare, raggruppato per scopo.",
   "settings.categories.back": "Categorie",
+  "settings.categories.back_to": "Torna alle categorie",
   "settings.categories.edited": "Modificato",
   "settings.categories.edited_hint": "Modifiche non salvate",
   "settings.categories.appearance.title": "Aspetto e temi",

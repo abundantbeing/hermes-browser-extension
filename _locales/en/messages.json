@@ -2183,6 +2183,10 @@
     "message": "Categories",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Back to categories",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Gateway, agent profile and how this browser reaches Hermes.",
     "description": "Runtime interface message settings.categories.connections.summary"

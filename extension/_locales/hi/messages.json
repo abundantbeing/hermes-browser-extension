@@ -2183,6 +2183,10 @@
     "message": "श्रेणियाँ",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "श्रेणियों पर वापस जाएँ",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "गेटवे, एजेंट प्रोफ़ाइल और यह ब्राउज़र Hermes तक कैसे पहुँचता है।",
     "description": "Runtime interface message settings.categories.connections.summary"

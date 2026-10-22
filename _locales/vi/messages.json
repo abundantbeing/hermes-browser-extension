@@ -2183,6 +2183,10 @@
     "message": "Danh mục",
     "description": "Runtime interface message settings.categories.back"
   },
+  "runtime_settings_categories_back_to": {
+    "message": "Quay lại danh mục",
+    "description": "Runtime interface message settings.categories.back_to"
+  },
   "runtime_settings_categories_connections_summary": {
     "message": "Cổng, hồ sơ tác tử và cách trình duyệt này kết nối tới Hermes.",
     "description": "Runtime interface message settings.categories.connections.summary"
