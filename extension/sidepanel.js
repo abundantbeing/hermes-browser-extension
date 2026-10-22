@@ -146,13 +146,15 @@ import {
   writePetAvatar,
 } from './lib/pet-avatar.mjs';
 import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
-import { renderMarkdownSafe, sanitizeHtml } from './lib/sanitizer.mjs';
+import { renderMarkdownSafe, renderResponseSafe, sanitizeHtml } from './lib/sanitizer.mjs';
+import { dispatchAdaptiveAction, readAdaptiveAction } from './lib/adaptive-ui.mjs';
 import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
 import {
   ONBOARDING_COMPLETED_STORAGE_KEY,
   RESPONSE_STYLE_SETUP_DEFAULT,
   responsePresentationFromSettings,
+  responseStyleInstructions,
   shouldShowOnboarding,
   withResponsePresentationUpdate,
 } from './lib/response-presentation.mjs';
@@ -17975,6 +17977,10 @@ function patchRenderedMessageContent(element, html = '') {
     }
     if (live.nodeType === Node.ELEMENT_NODE && next.nodeType === Node.ELEMENT_NODE) {
       if (live.outerHTML === next.outerHTML) { stable += 1; continue; }
+      // A Vivid UI block is unchanged when its content signature is: the user
+      // may have switched its view or opened it, and that must survive.
+      if (live.dataset?.hauiSig && live.dataset.hauiSig === next.dataset?.hauiSig
+        && live.dataset.hauiId === next.dataset.hauiId) { stable += 1; continue; }
       if (
         live.tagName === next.tagName
         && stable === incoming.length - 1
@@ -17994,12 +18000,45 @@ function patchRenderedMessageContent(element, html = '') {
   if (fragment.childNodes.length) element.append(fragment);
 }
 
+function adaptiveUiLabels() {
+  return {
+    viewChart: t('haui.view_chart'),
+    viewTable: t('haui.view_table'),
+    viewAsChart: t('haui.view_as_chart'),
+    copy: t('haui.copy'),
+    copied: t('haui.copied'),
+    building: t('haui.building'),
+    opensNewTab: t('haui.opens_new_tab'),
+    askHint: t('haui.ask_hint'),
+  };
+}
+
+// Vivid UI actions go through the typed dispatcher: switch a chart view, copy
+// text, or put a follow-up question in the composer. Nothing sends by itself.
+function handleAdaptiveUiClick(event) {
+  const action = readAdaptiveAction(event.target);
+  if (!action) return;
+  event.preventDefault();
+  void dispatchAdaptiveAction(action, {
+    labels: adaptiveUiLabels(),
+    copyText: (text) => navigator.clipboard.writeText(text),
+    askHermes: (text) => {
+      if (!els.input) return;
+      els.input.value = text;
+      els.input.dispatchEvent(new Event('input', { bubbles: true }));
+      els.input.focus();
+    },
+  }).catch(() => {});
+}
+
 function renderMessageContentElement(element, content = '') {
   if (String(content || '').trim() === THINKING_PLACEHOLDER) {
     renderThinkingIndicator(element);
     return;
   }
-  patchRenderedMessageContent(element, renderMarkdownSafe(content || ''));
+  // Response style shapes Hermes' replies; the user's own words stay Markdown.
+  const style = element?.closest?.('.message.user') ? 'rich' : responsePresentationFromSettings(settings).responseStyle;
+  patchRenderedMessageContent(element, renderResponseSafe(content || '', { style, labels: adaptiveUiLabels() }));
   enhanceMarkdownCodeBlocks(element, {
     copyLabel: translateUiText('Copy code'),
     copiedLabel: translateUiText('Copied'),
@@ -21019,7 +21058,8 @@ function currentHermesBrowserSystemPrompt() {
     provider: currentModelProviderSlug() || 'Hermes runtime',
     modelOptions: currentModelOptionsPayload(),
   });
-  return `${HERMES_BROWSER_SYSTEM_PROMPT}\n\n${runtimeSelection}`;
+  const styleNote = responseStyleInstructions(settings.responseStyle);
+  return `${HERMES_BROWSER_SYSTEM_PROMPT}\n\n${runtimeSelection}${styleNote ? `\n\n${styleNote}` : ''}`;
 }
 
 // REST turns carry per-turn notes in the system message. A GPT-Live delegation
@@ -24635,6 +24675,7 @@ function bindEvents() {
     const choice = event.target.closest('[data-message-layout]');
     if (choice) void setResponsePresentation({ messageLayout: choice.dataset.messageLayout });
   });
+  els.messages?.addEventListener('click', handleAdaptiveUiClick);
   els.rerunOnboardingButton?.addEventListener('click', () => {
     closeSettingsDialog();
     openOnboarding();
