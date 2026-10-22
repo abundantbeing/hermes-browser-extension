@@ -6,6 +6,8 @@ import {
   FRAME_TEXT_SHARE,
   MAX_FRAME_NODES,
   MAX_SNAPSHOT_FRAMES,
+  frameChainReadable,
+  frameUrlReadable,
   readableChildFrames,
 } from '../extension/lib/browser-control-frames.mjs';
 
@@ -100,4 +102,24 @@ test('the rule for a restricted page can be replaced, and sees only web addresse
 
   assert.deepEqual(ids(frames), ['A', 'C']);
   assert.deepEqual(seen, ['https://example.test/a', 'https://blocked.test/b']);
+});
+
+test('a frame address is readable only as an ordinary web page, or as an inline frame that counts as its parent', () => {
+  for (const url of ['https://chat.example.test/live_chat', 'http://chat.example.test/', 'about:blank', 'about:srcdoc', ' ABOUT:BLANK ']) {
+    assert.equal(frameUrlReadable(url), true, url);
+  }
+  for (const url of ['https://shop.example.test/checkout', 'chrome://settings/', 'chrome-extension://abc/p.html', 'data:text/html,x', 'blob:https://a.test/1', 'file:///C:/x.html', 'chrome-error://chromewebdata/', 'about:newtab', '', undefined]) {
+    assert.equal(frameUrlReadable(url), false, String(url));
+  }
+});
+
+test('a chain of frames is readable only when every frame in it is', () => {
+  assert.equal(frameChainReadable([]), true, 'a control in the page itself has no frame above it');
+  assert.equal(frameChainReadable(['https://a.test/chat', 'about:srcdoc']), true);
+  assert.equal(frameChainReadable(['https://a.test/chat', 'https://b.test/embed', 'about:blank']), true);
+  assert.equal(frameChainReadable(['https://a.test/checkout', 'about:srcdoc']), false, 'an inline frame is its parent');
+  assert.equal(frameChainReadable(['https://a.test/chat', 'https://b.test/payment', 'about:srcdoc']), false);
+  assert.equal(frameChainReadable(['https://a.test/chat', '']), false);
+  assert.equal(frameChainReadable(null), false);
+  assert.equal(frameChainReadable(['https://a.test/chat'], (url) => url.includes('chat')), false, 'the rule can be replaced');
 });

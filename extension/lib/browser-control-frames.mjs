@@ -31,6 +31,17 @@ export function frameUrlReadable(url, restricted = (value) => isRestrictedUrl(va
   return /^https?:/i.test(text) && !restricted(text);
 }
 
+/**
+ * Whether every frame between the page and a control may be acted on. `urls` are the addresses of the
+ * documents from the outermost child frame to the one the control is in (the page itself is checked by the
+ * executor). An inline frame (`about:blank`, `about:srcdoc`) has no page of its own and counts as the frame
+ * around it, which is already in the list; every other frame must be an ordinary readable web page, so one
+ * restricted frame anywhere above a control makes it unreadable.
+ */
+export function frameChainReadable(urls, restricted = (value) => isRestrictedUrl(value)) {
+  return Array.isArray(urls) && urls.every((url) => frameUrlReadable(url, restricted));
+}
+
 function frameAllowed(frame, restricted) {
   if (!frame?.id) return false;
   return frameUrlReadable(frame.url, restricted);

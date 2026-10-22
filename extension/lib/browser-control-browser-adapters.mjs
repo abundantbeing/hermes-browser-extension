@@ -2,7 +2,7 @@ import {
   controllerAdapterContractFor,
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
-import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameUrlReadable, readableChildFrames } from './browser-control-frames.mjs';
+import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameChainReadable, readableChildFrames } from './browser-control-frames.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
 const CDP_VERSION = '1.3';
@@ -169,9 +169,6 @@ function quietWindowExpression(quietMs, capMs) {
   capTimer = setTimeout(() => finish(false), ${cap});
 })`;
 }
-
-// The address of the document the node it runs on belongs to (a node in a child frame answers for its frame).
-const FRAME_DOCUMENT_URL_FUNCTION = 'function(){try{return String((this.ownerDocument||this).location.href);}catch(e){return "";}}';
 
 function abortError(signal) {
   if (!signal?.aborted) return null;
@@ -1080,6 +1077,76 @@ function createChromiumCdpAdapter({
     }
   }
 
+  // Where a frame stands in the page, from what the browser itself reports (never from page script, which a
+  // page can answer for): the addresses of the documents from the outermost child frame down to it, and the
+  // element that owns the innermost one (0 for the page itself).
+  function frameTreePath(tree, frameId, trail = []) {
+    if (tree?.frame?.id === frameId) return trail;
+    for (const child of Array.isArray(tree?.childFrames) ? tree.childFrames : []) {
+      const found = frameTreePath(child, frameId, [...trail, child.frame]);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  // The documents above a node, read from the live DOM including the documents of its frames. A node that is
+  // not in any document of the page (gone, or in a frame that runs in another process) has no path.
+  async function documentPathOfNode(send, backendNodeId) {
+    const document = await send('DOM.getDocument', { depth: -1, pierce: true });
+    const stack = document?.root ? [{ node: document.root, urls: [], owner: 0 }] : [];
+    while (stack.length) {
+      const { node, urls, owner } = stack.pop();
+      if (Number(node?.backendNodeId) === backendNodeId) return { urls, owner };
+      const children = [
+        ...(Array.isArray(node?.children) ? node.children : []),
+        ...(Array.isArray(node?.shadowRoots) ? node.shadowRoots : []),
+        ...(Array.isArray(node?.pseudoElements) ? node.pseudoElements : []),
+        ...(node?.templateContent ? [node.templateContent] : []),
+      ];
+      for (const child of children) stack.push({ node: child, urls, owner });
+      if (node?.contentDocument) {
+        stack.push({
+          node: node.contentDocument,
+          urls: [...urls, String(node.contentDocument.documentURL || '')],
+          owner: Number(node.backendNodeId) || -1,
+        });
+      }
+    }
+    return null;
+  }
+
+  function restrictedFrameError(reason) {
+    return codedError('restricted_frame', reason || 'The frame this control is in is on a page Hermes will not act on.');
+  }
+
+  // Before any action on a control in a child frame: the frame must still be on pages Hermes may act on, and so
+  // must every frame above it. A frame readable when the page was snapshotted can have moved since (a checkout
+  // path pushed into its history keeps its controls), and the executor's probe only describes the page itself.
+  // Returns the element that owns each target's frame (0 for the page itself, undefined for no target), which
+  // the click, hover and drag hit tests compare against what is actually under the pointer.
+  async function assertFramedTargetsReadable(send, enable, signal, { target, destination }) {
+    const owners = {};
+    for (const [key, node] of [['target', target], ['destination', destination]]) {
+      if (!node) continue;
+      owners[key] = 0;
+      if (!node.frameId) continue;
+      const backendNodeId = Number(node.backendDOMNodeId);
+      let path = null;
+      if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
+        await enable('DOM');
+        try {
+          path = await documentPathOfNode(send, backendNodeId);
+        } catch (error) {
+          if (abortError(signal)) throw error;
+        }
+      }
+      // Unknown counts as restricted.
+      if (!path || !frameChainReadable(path.urls)) throw restrictedFrameError();
+      owners[key] = path.owner;
+    }
+    return owners;
+  }
+
   // The node under a viewport point, for a coordinate click. Never blocks the click.
   async function nodeAtPoint(send, signal, point) {
     try {
@@ -1266,43 +1333,10 @@ function createChromiumCdpAdapter({
     });
   }
 
-  // The address of the document a framed control lives in, read at the moment of the action. A frame that was
-  // readable when the page was snapshotted can have moved to a restricted address since (a checkout path
-  // pushed into its history keeps its nodes alive), and the executor's probe only describes the main frame.
-  // Unknown counts as restricted. A control in the main frame has no frame key and needs no check.
-  async function assertFramedTargetReadable(send, enable, signal, targets) {
-    for (const target of targets) {
-      if (!target?.frameId) continue;
-      const backendNodeId = Number(target.backendDOMNodeId);
-      let url = '';
-      if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
-        await enable('DOM');
-        try {
-          const resolved = await send('DOM.resolveNode', { backendNodeId });
-          const objectId = String(resolved?.object?.objectId || '');
-          if (objectId) {
-            const read = await send('Runtime.callFunctionOn', {
-              objectId,
-              functionDeclaration: FRAME_DOCUMENT_URL_FUNCTION,
-              returnByValue: true,
-            });
-            url = String(read?.result?.value || '');
-          }
-        } catch (error) {
-          // A control that is gone is stale; any other failure leaves the address unknown.
-          if (abortError(signal) || error?.code === 'stale_ref') throw error;
-        }
-      }
-      if (!frameUrlReadable(url)) {
-        throw codedError('restricted_frame', 'The frame this control is in is on a page Hermes will not act on.');
-      }
-    }
-  }
-
   async function runWithSession(action, args, scope, signal, target, destination) {
     return withSession(scope, signal, async (session) => {
       const { send, enable } = session;
-      if (action !== 'browser_snapshot') await assertFramedTargetReadable(send, enable, signal, [target, destination]);
+      if (action !== 'browser_snapshot') await assertFramedTargetsReadable(send, enable, signal, { target, destination });
       if (action === 'browser_snapshot') {
         await enable('Accessibility');
         const trees = await collectAxTrees({ send, tabId: session.tabId, signal });

@@ -1894,101 +1894,157 @@ test('Chromium navigate treats a different fragment as a real navigation so hash
   assert.equal(same.status, 'already-open');
 });
 
-// A frame that was readable when the page was snapshotted can have moved to a restricted address since. A cross
-// document move destroys the node (a stale_ref); a same-document move (history.pushState to a checkout path)
-// keeps it, so the address of the document a framed control lives in is read again at action time.
-function framedTargetApis(frameUrl) {
+// A frame that was readable when the page was snapshotted can have moved to a restricted address since. A move to
+// another document destroys the control (a stale_ref), but a same-document move (history.pushState to a checkout
+// path) keeps it, so before an action on a framed control the adapter reads, from the browser's own DOM and not from
+// page script, the documents above the control, and every one of them must be readable.
+function documentTree(chain, nodeId) {
+  // chain: the address of each document from the outermost child frame to the one holding the control.
+  let content = { nodeType: 1, nodeName: 'INPUT', backendNodeId: nodeId };
+  let owner = 100 + chain.length;
+  for (let index = chain.length - 1; index >= 0; index -= 1) {
+    const doc = { nodeType: 9, nodeName: '#document', backendNodeId: 200 + index, documentURL: chain[index], children: [content] };
+    content = { nodeType: 1, nodeName: 'IFRAME', backendNodeId: (owner -= 1), contentDocument: doc };
+  }
+  return { nodeType: 9, nodeName: '#document', backendNodeId: 1, documentURL: 'https://example.test/start', children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: [content] }] };
+}
+function framedApis(chain, nodeId = 5002) {
   const chromium = chromiumApis();
-  chromium.handlers['DOM.resolveNode'] = () => ({ object: { objectId: 'node-1' } });
-  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: frameUrl } });
+  chromium.handlers['DOM.getDocument'] = () => ({ root: documentTree(chain, nodeId) });
+  // What page script would answer if it were asked: always something readable.
+  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: 'https://chat.example.test/live_chat' } });
   return chromium;
 }
 const framedTarget = { backendDOMNodeId: 5002, frameId: '1' };
 const inputEvents = (calls) => calls.filter((call) => call[2]?.startsWith('Input.'));
+const framedActions = [
+  ['browser_click', { ref: '@f1e2' }],
+  ['browser_type', { ref: '@f1e2', text: 'hello' }],
+  ['browser_fill', { ref: '@f1e2', value: 'hello' }],
+  ['browser_select', { ref: '@f1e2', value: 'a' }],
+  ['browser_hover', { ref: '@f1e2' }],
+  ['browser_scroll_to', { ref: '@f1e2' }],
+  ['browser_screenshot', { ref: '@f1e2' }],
+];
 
-test('Chromium acts on a control in a frame that is still on an ordinary page', async () => {
+test('Chromium acts on a control in frames that are all still on ordinary pages, inline frames included', async () => {
   const { createChromiumCdpAdapter } = await adaptersModule();
-  for (const frameUrl of ['https://chat.example.test/live_chat', 'about:blank', 'about:srcdoc']) {
-    const chromium = framedTargetApis(frameUrl);
+  for (const chain of [
+    ['https://chat.example.test/live_chat'],
+    ['https://chat.example.test/live_chat', 'about:srcdoc'],
+    ['https://chat.example.test/live_chat#room', 'https://widget.example.test/embed', 'about:blank'],
+    ['about:srcdoc'],
+  ]) {
+    const chromium = framedApis(chain);
     const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
     assert.deepEqual(
       await adapter.execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
       { status: 'clicked' },
-      frameUrl,
+      chain.join(' > '),
     );
-    assert.ok(mouseEvents(chromium.calls).length > 0, frameUrl);
+    assert.ok(mouseEvents(chromium.calls).length > 0, chain.join(' > '));
   }
 });
 
 test('Chromium refuses every framed action once the frame has moved to a restricted or unreadable address', async () => {
   const { createChromiumCdpAdapter } = await adaptersModule();
-  const restricted = [
+  for (const frameUrl of [
     'https://chat.example.test/checkout',
     'https://shop.example.test/payment/card',
+    'https://chat.example.test/live_chat#/checkout',
     'https://login.example.test/signin?password=1',
     'chrome://settings/',
     'chrome-extension://abc/page.html',
+    'chrome-error://chromewebdata/',
     'data:text/html,<input>',
     'blob:https://chat.example.test/1',
     'file:///C:/secret.html',
     '',
-  ];
-  for (const frameUrl of restricted) {
-    for (const [action, args] of [
-      ['browser_click', { ref: '@f1e2' }],
-      ['browser_type', { ref: '@f1e2', text: 'hello' }],
-      ['browser_fill', { ref: '@f1e2', value: 'hello' }],
-      ['browser_select', { ref: '@f1e2', value: 'a' }],
-      ['browser_hover', { ref: '@f1e2' }],
-      ['browser_scroll_to', { ref: '@f1e2' }],
-      ['browser_screenshot', { ref: '@f1e2' }],
-    ]) {
-      const chromium = framedTargetApis(frameUrl);
+  ]) {
+    for (const [action, args] of framedActions) {
+      const chromium = framedApis([frameUrl]);
       const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+      const label = `${action} on ${frameUrl || '(no address)'}`;
       await assert.rejects(
         adapter.execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
         (error) => error?.code === 'restricted_frame',
-        `${action} on ${frameUrl || '(no address)'}`,
+        label,
       );
-      assert.deepEqual(inputEvents(chromium.calls), [], `${action} on ${frameUrl || '(no address)'} sent input`);
-      assert.equal(chromium.calls.some((call) => ['DOM.focus', 'Page.captureScreenshot'].includes(call[2])), false, action);
+      assert.deepEqual(inputEvents(chromium.calls), [], `${label} sent input`);
+      assert.equal(chromium.calls.some((call) => ['DOM.focus', 'Page.captureScreenshot', 'DOM.scrollIntoViewIfNeeded'].includes(call[2])), false, label);
     }
   }
 });
 
-test('Chromium refuses a drag whose destination is in a frame that has moved to a restricted address', async () => {
+test('Chromium refuses a framed control when any frame above it is restricted, an inline frame counting as its parent', async () => {
   const { createChromiumCdpAdapter } = await adaptersModule();
-  const chromium = chromiumApis();
-  chromium.handlers['DOM.resolveNode'] = (params) => ({ object: { objectId: `node-${params.backendNodeId}` } });
-  chromium.handlers['Runtime.callFunctionOn'] = (params) => ({
-    result: { value: params.objectId === 'node-5002' ? 'https://chat.example.test/checkout' : 'https://chat.example.test/live_chat' },
-  });
+  for (const chain of [
+    ['https://checkout.example.test/checkout', 'https://chat.example.test/live_chat'],
+    ['https://chat.example.test/live_chat', 'https://shop.example.test/payment', 'about:srcdoc'],
+    ['https://chat.example.test/checkout', 'about:srcdoc'],
+    ['https://chat.example.test/checkout', 'about:blank', 'about:srcdoc'],
+    ['chrome://settings/', 'about:srcdoc'],
+  ]) {
+    for (const [action, args] of framedActions) {
+      const chromium = framedApis(chain);
+      const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+      await assert.rejects(
+        adapter.execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+        (error) => error?.code === 'restricted_frame',
+        `${action} in ${chain.join(' > ')}`,
+      );
+      assert.deepEqual(inputEvents(chromium.calls), []);
+    }
+  }
+});
+
+test('Chromium takes the frame\'s address from the browser, never from script the page can answer for', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = framedApis(['https://chat.example.test/checkout']);
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
   await assert.rejects(
-    adapter.execute('browser_drag', { ref: '@f1e1', to_ref: '@f1e2' }, {
-      scope, signal: openSignal(), target: { backendDOMNodeId: 5001, frameId: '1' }, destination: framedTarget,
+    adapter.execute('browser_type', { ref: '@f1e2', text: 'x' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.equal(chromium.calls.some((call) => call[2] === 'Runtime.callFunctionOn'), false);
+  assert.equal(chromium.calls.some((call) => call[2] === 'DOM.getDocument' && call[3].pierce === true), true);
+});
+
+test('Chromium treats a framed control it cannot place in any document as restricted', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const missing = framedApis(['https://chat.example.test/live_chat'], 9999);
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: missing.api }).execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  const failing = chromiumApis();
+  failing.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: failing.api }).execute('browser_type', { ref: '@f1e2', text: 'x' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.deepEqual(inputEvents(failing.calls), []);
+});
+
+test('Chromium refuses a drag whose destination is in a restricted frame', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  const tree = documentTree(['https://chat.example.test/checkout'], 5002);
+  chromium.handlers['DOM.getDocument'] = () => ({ root: tree });
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  await assert.rejects(
+    adapter.execute('browser_drag', { ref: '@e1', to_ref: '@f1e2' }, {
+      scope, signal: openSignal(), target: { backendDOMNodeId: 5001 }, destination: framedTarget,
     }),
     (error) => error?.code === 'restricted_frame',
   );
   assert.deepEqual(inputEvents(chromium.calls), []);
 });
 
-test('Chromium leaves a control in the page itself to the main-frame check the executor already makes', async () => {
+test('Chromium leaves a control in the page itself to the page check the executor already makes', async () => {
   const { createChromiumCdpAdapter } = await adaptersModule();
   const chromium = chromiumApis();
-  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: 'https://example.test/checkout' } });
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
   await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget });
-  assert.equal(chromium.calls.some((call) => call[2] === 'Runtime.callFunctionOn' && /ownerDocument/.test(call[3]?.functionDeclaration || '')), false);
-});
-
-test('Chromium reports a framed control that is gone as stale, not as restricted', async () => {
-  const { createChromiumCdpAdapter } = await adaptersModule();
-  const chromium = chromiumApis();
-  chromium.handlers['DOM.resolveNode'] = () => { throw new Error('No node with given id found'); };
-  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
-  await assert.rejects(
-    adapter.execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
-    (error) => error?.code === 'stale_ref',
-  );
+  assert.equal(chromium.calls.some((call) => call[2] === 'DOM.getDocument'), false);
 });
