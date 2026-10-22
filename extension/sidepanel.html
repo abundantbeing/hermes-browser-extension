@@ -45,14 +45,23 @@
       </header>
 
       <section id="sessionMenu" class="session-menu" role="dialog" aria-label="Open Hermes session" hidden data-i18n-aria-label="ui.open.hermes.session">
+        <div id="sessionMenuTabs" class="session-menu-tabs" role="group" aria-label="Sessions view" data-i18n-aria-label="projects.tab.label">
+          <button id="sessionMenuTabRecents" class="session-menu-tab" type="button" aria-pressed="true" data-i18n="projects.tab.recents">Recents</button>
+          <button id="sessionMenuTabProjects" class="session-menu-tab" type="button" aria-pressed="false" data-i18n="projects.tab.projects">Projects</button>
+        </div>
         <input id="sessionSearchInput" type="search" placeholder="Search sessions" autocomplete="off" data-i18n-placeholder="ui.search.sessions" />
         <div id="sessionMenuList" class="session-menu-list"></div>
-        <footer>
+        <div id="projectsPanel" class="session-menu-list projects-panel" aria-live="off" hidden></div>
+        <footer id="sessionRecentsFooter">
           <button id="createSessionButton" class="secondary" type="button" data-i18n="session.new_extension_session">＋ New Hermes Browser Extension Session</button>
           <button id="refreshSessionsButton" class="secondary" type="button">
             <span id="sessionRefreshIcon" class="session-refresh-icon" aria-hidden="true">↻</span>
             <span id="refreshSessionsLabel">Refresh Sessions</span>
           </button>
+        </footer>
+        <footer id="projectsFooter" hidden>
+          <button id="newProjectButton" class="secondary" type="button" data-i18n="projects.new">New project</button>
+          <button id="refreshProjectsButton" class="secondary" type="button" data-i18n="projects.refresh">Refresh Projects</button>
         </footer>
       </section>
 
