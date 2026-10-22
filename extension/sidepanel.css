@@ -10270,3 +10270,19 @@ body.onboarding-active #messages { display: none; }
 }
 .response-presentation-setting > div > span { display: block; color: var(--hermes-muted); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
 .rerun-onboarding-button { justify-self: start; }
+
+/* Chat layout (Settings > Appearance & Themes). "Bubbles both sides" is the
+   default bubble pair above. "User bubble only" keeps the user's bubble and
+   lets Hermes reply as flowing text across the column. Group rooms keep their
+   bubbles so each bot's identity colour stays visible. */
+html[data-message-layout="user-bubble"] .message-row:not(.room-message) > .message.assistant {
+  align-self: stretch;
+  width: 100%;
+  padding: 2px 2px 4px;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+}
