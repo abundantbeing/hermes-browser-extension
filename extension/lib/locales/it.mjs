@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Solo bolla utente",
   "responses.layout.user_bubble_hint": "I tuoi messaggi in una bolla, Hermes risponde come testo continuo.",
   "responses.setup_again": "Ripeti la configurazione",
+  "haui.view_chart": "Grafico",
+  "haui.view_table": "Tabella",
+  "haui.view_as_chart": "Visualizza come grafico",
+  "haui.copy": "Copia",
+  "haui.copied": "Copiato",
+  "haui.building": "Creazione della vista…",
+  "haui.opens_new_tab": "Si apre in una nuova scheda",
+  "haui.ask_hint": "Inserisce questa domanda nella casella del messaggio",
 });
