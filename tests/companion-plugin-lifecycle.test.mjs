@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 import {
   browserContextPayloadHash,
@@ -670,4 +671,114 @@ with tempfile.TemporaryDirectory() as home:
     assert len({event["owner"] for event in events}) == 1
 `;
   runPluginPython(script);
+});
+
+// ── Docs, manifest and code agree ─────────────────────────────────────────
+
+const COMPANION_TOOLS = [
+  'browser_context_status',
+  'browser_get_context',
+  'browser_clear_context',
+  'browser_event_log',
+  'browser_control_status',
+  'browser_context_journal',
+  'browser_text_utility',
+];
+
+function manifestList(manifest, key) {
+  const block = manifest.split(/\r?\n/);
+  const start = block.findIndex((line) => line.startsWith(`${key}:`));
+  assert.ok(start >= 0, `${key} missing`);
+  const items = [];
+  for (const line of block.slice(start + 1)) {
+    const match = /^\s+-\s+(\S+)\s*$/.exec(line);
+    if (!match) break;
+    items.push(match[1]);
+  }
+  return items;
+}
+
+test('plugin.yaml, register(), the bundled skill and install.md all list the same seven tools', () => {
+  const manifest = readFileSync('companion-plugin/plugin.yaml', 'utf8');
+  assert.deepEqual(manifestList(manifest, 'provides_tools'), COMPANION_TOOLS);
+  assert.deepEqual(manifestList(manifest, 'provides_hooks'), ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
+
+  const registered = JSON.parse(runPluginPython(`${harness}
+module, _hooks, _tools, _store = load_plugin()
+class State:
+    data_dir = None
+    def get(self, key, default=None): return default
+    def set(self, key, value): pass
+class Ctx:
+    state = State()
+    def __init__(self): self.tools = []; self.hooks = []
+    def get_config(self, key, default=None): return default
+    def register_tool(self, **kwargs): self.tools.append(kwargs["name"])
+    def register_hook(self, name, callback): self.hooks.append(name)
+    def register_skill(self, name, path): pass
+ctx = Ctx()
+module.register(ctx)
+print(json.dumps({"tools": ctx.tools, "hooks": ctx.hooks}))
+`));
+  assert.deepEqual(registered.tools, COMPANION_TOOLS);
+  assert.deepEqual(registered.hooks, ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
+
+  const skill = readFileSync('companion-plugin/skills/hermes-browser/SKILL.md', 'utf8');
+  const install = readFileSync('companion-plugin/install.md', 'utf8');
+  for (const name of COMPANION_TOOLS) {
+    assert.ok(skill.includes(`\`${name}\``), `SKILL.md lists ${name}`);
+    assert.ok(install.includes(`\`${name}\``), `install.md lists ${name}`);
+  }
+  assert.match(skill, /\bseven tools\b/);
+  assert.match(install, /\bseven tools\b/);
+  assert.doesNotMatch(`${skill}\n${install}`, /\b(six|four|five|6|4|5) (companion )?tools\b/i);
+});
+
+test('plugin.yaml version is a release version and matches the extension package version', () => {
+  const manifest = readFileSync('companion-plugin/plugin.yaml', 'utf8');
+  const version = /^version:\s*(\S+)\s*$/m.exec(manifest)?.[1];
+  assert.match(version, /^\d+\.\d+\.\d+$/);
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  assert.equal(version, pkg.version, 'bump companion-plugin/plugin.yaml together with package.json');
+  const install = readFileSync('companion-plugin/install.md', 'utf8');
+  assert.doesNotMatch(install, /\bv?\d+\.\d+\.\d+\s+—|\*\*v\d+\.\d+\.\d+\*\*/, 'install.md must not pin a stale plugin version');
+});
+
+test('tool status fields are exactly what the documentation promises', () => {
+  const script = `${harness}
+module, hooks, tools, _store = load_plugin()
+hooks.set_store(module.STORE)
+module.STORE.configure_journal(None)
+notice = hooks.pre_llm_call(user_message=json.dumps(envelope(control={"route": "extension-controller", "availability": "available", "isolated_fallback": "forbidden", "controller_id": "controller-a", "browser_profile_id": "profile-a", "tab_id": 3, "frame_id": 0, "document_generation": 2, "lease_owned": False})), **capture())
+context_id = context_id_from(notice)
+def call(name, args=None):
+    assert hooks.pre_tool_call(tool_name=name, args=args or {}, **ids()) is None
+    return json.loads(getattr(tools, name)(args or {}, **runtime_kwargs()))
+
+assert set(call("browser_context_status")) == {"available", "context_id", "protocol", "payload_hash", "scope", "created_at", "expires_at"}
+control = call("browser_control_status")
+assert set(control) == {"context_id", "observed_at", "age_ms", "live", "control"} and control["live"] is False
+assert set(control["control"]) == {"availability", "lease_owned", "controller_id", "browser_profile_id", "tab_id", "frame_id", "document_generation"}
+journal = call("browser_context_journal")
+assert set(journal) == {"available", "rows"}
+assert set(journal["rows"][0]) == {"ts", "context_id", "payload_hash", "scope", "controller_id", "browser_profile_id", "tab_id", "lease_owned", "delivery"}
+events = call("browser_event_log")
+assert set(events) == {"available", "events"} and set(events["events"][0]) == {"name", "data", "ts", "owner"}
+got = call("browser_get_context", {"context_id": context_id})
+assert set(got) == {"available", "context_id", "protocol", "payload_hash", "scope", "created_at", "expires_at", "payload", "provenance"}
+assert call("browser_clear_context") == UNAVAILABLE
+`;
+  runPluginPython(script);
+});
+
+test('a metadata-only plugin never claims routes, live browser control or a status endpoint', () => {
+  const claims = ['companion-plugin/install.md', 'companion-plugin/skills/hermes-browser/SKILL.md', 'companion-plugin/plugin.yaml', 'DATA-FLOW.md']
+    .map((file) => readFileSync(file, 'utf8')).join('\n');
+  assert.doesNotMatch(claims, /\/v1\/browser|\/api\/browser|browser_context_upload|browser_context_provider|plugin_actions/);
+  const install = readFileSync('companion-plugin/install.md', 'utf8');
+  assert.match(install, /does \*\*not\*\* control the browser, register API-server routes/);
+  const skill = readFileSync('companion-plugin/skills/hermes-browser/SKILL.md', 'utf8');
+  assert.match(skill, /Never claim browser control from this plugin/);
+  assert.match(skill, /always `live: false`/);
+  assert.match(readFileSync('companion-plugin/policy.py', 'utf8'), /ALLOW_API_SERVER_ROUTES\s*=\s*False/);
 });

@@ -19,8 +19,8 @@ registered:
 
 | Tool | Purpose |
 |---|---|
-| `browser_context_status` | Check if cached browser context is available |
-| `browser_get_context` | Retrieve the full context envelope |
+| `browser_context_status` | Check if this turn has cached browser context (metadata only) |
+| `browser_get_context` | Retrieve this turn's stored context payload for a `context_id`, once (consume-on-read) |
 | `browser_clear_context` | Clear the cached context |
 | `browser_event_log` | Return recent companion events for diagnostics |
 | `browser_control_status` | Return historical owner-scoped control-envelope metadata; always `live: false` |
@@ -33,15 +33,22 @@ registered:
    Browser Context Protocol envelope in the user message. Use it directly;
    do not call `browser_context_status()` or `browser_get_context()` just to
    re-read what is already in front of you.
-2. **Use the side channel only when it adds something.** If a companion
+2. **Reference turns carry no payload.** A turn whose browser context has
+   `delivery: "reference"` repeats only the context hash: the same context was
+   already delivered in full earlier in this session. Use that earlier turn; the
+   companion tools hold nothing for a reference turn and will answer
+   "unavailable". If the earlier full payload is no longer in your context
+   (for example after compaction), say so and ask the user to refresh the page
+   context instead of guessing.
+3. **Use the side channel only when it adds something.** If a companion
    notice names a `context_id`, `browser_get_context()` returns the stored
    envelope once. If nothing is available, continue normally — the
    extension embeds context in prompts when allowed.
-3. **Use Chat only** when the user does not want page/tab context
+4. **Use Chat only** when the user does not want page/tab context
    attached (the extension sends `[Mode: chat-only]` in that case).
-4. **Clear explicitly** — call `browser_clear_context()` only when the
+5. **Clear explicitly** — call `browser_clear_context()` only when the
    user asks to clear side-channel context.
-5. **Treat control status as historical** — `browser_control_status()`
+6. **Treat control status as historical** — `browser_control_status()`
    reports only the last validated envelope for this exact owner. Active
    action and pending approval truth require the side panel or broker supervision surface.
 

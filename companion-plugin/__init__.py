@@ -58,7 +58,7 @@ def register(ctx) -> None:
         toolset="hermes-browser-companion",
         schema=tools.SCHEMA_GET_CONTEXT,
         handler=tools.browser_get_context,
-        description="Retrieve the current cached browser context envelope (scope, active tab, payload hash).",
+        description="Consume this turn's cached browser context once, using its opaque context_id.",
         emoji="📄",
     )
 

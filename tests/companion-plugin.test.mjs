@@ -552,7 +552,7 @@ test('no network, route, or browser-control capability in companion plugin files
 test('install.md documents the plugin correctly', () => {
   const install = readFileSync('companion-plugin/install.md', 'utf8');
   assert.match(install, /hermes plugins enable hermes-browser-companion/);
-  assert.match(install, /v0\.3\.0/);
+  assert.match(install, /plugin\.yaml/);
   assert.doesNotMatch(install, /v0\.1\.10/);
   assert.match(install, /fail-soft/i);
   assert.ok(install.length > 400);
