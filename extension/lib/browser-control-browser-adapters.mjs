@@ -1150,14 +1150,22 @@ function createChromiumCdpAdapter({
   // Elements that embed another document. A frame that Chrome runs in its own process (a cross-site
   // iframe) is missing from Page.getFrameTree, but its owner element is still in the DOM, so this is the source
   // that cannot miss one.
-  const FRAME_OWNER_NAMES = new Set(['IFRAME', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED']);
+  const FRAME_OWNER_NAMES = new Set(['IFRAME', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED', 'FENCEDFRAME', 'PORTAL']);
+
+  // Whether the browser describes a node as embedding a document, whatever its tag: the names above are only a
+  // floor, and a node that carries a frame id or a content document of its own is an owner too.
+  function embedsFrame(node) {
+    return FRAME_OWNER_NAMES.has(String(node?.nodeName || '').toUpperCase())
+      || Boolean(node?.frameId) || Boolean(node?.contentDocument);
+  }
 
   async function pageEmbedsFrames(send) {
     const document = await send('DOM.getDocument', { depth: -1, pierce: true });
     const stack = document?.root ? [document.root] : [];
     while (stack.length) {
       const node = stack.pop();
-      if (FRAME_OWNER_NAMES.has(String(node?.nodeName || '').toUpperCase())) return true;
+      // A document node carries the id of its own frame; only the nodes that embed one count.
+      if (Number(node?.nodeType) !== 9 && embedsFrame(node)) return true;
       for (const list of [node?.children, node?.shadowRoots, node?.pseudoElements]) {
         if (Array.isArray(list)) stack.push(...list);
       }
@@ -1215,7 +1223,7 @@ function createChromiumCdpAdapter({
         if (abortError(signal)) throw error;
       }
       if (!described) throw restrictedFrameError('Hermes could not tell what is under that point.');
-      if (FRAME_OWNER_NAMES.has(String(described.nodeName || '').toUpperCase())) {
+      if (embedsFrame(described)) {
         const owned = String(described.frameId || '');
         const ownedPath = owned && tree ? frameTreePath(tree, owned) : null;
         if (!ownedPath || !frameChainReadable(framePathUrls(ownedPath))) {

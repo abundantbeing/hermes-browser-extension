@@ -2387,3 +2387,76 @@ test('Chromium judges a drag\'s source again right before it presses, after scro
   assert.equal(looks, 3);
   assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed'), false);
 });
+
+// The tag list of embedding elements is only a floor: whatever the browser describes as owning a frame or a
+// document is treated as one, so an element added to the platform later (or a custom one) fails closed.
+test('Chromium treats any node the browser describes as owning a frame as a frame owner, whatever its tag', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const described = [
+    ['a fenced frame', { nodeName: 'FENCEDFRAME', frameId: 'OOPIF' }],
+    ['a portal', { nodeName: 'PORTAL' }],
+    ['an unknown tag with a frame id', { nodeName: 'X-WIDGET', frameId: 'OOPIF' }],
+    ['an unknown tag with a content document', { nodeName: 'X-WIDGET', contentDocument: { nodeName: '#document', nodeType: 9 } }],
+    ['a lower-case tag', { nodeName: 'fencedframe', frameId: 'OOPIF' }],
+  ];
+  for (const [label, node] of described) {
+    // Out of process: the owned frame is not in the frame tree.
+    const chromium = oopifApis();
+    chromium.handlers['DOM.describeNode'] = () => ({ node });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      label,
+    );
+    assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false, label);
+  }
+  // In the frame tree and readable: allowed, whatever the tag.
+  const inTree = oopifApis({ inTree: true });
+  inTree.handlers['DOM.describeNode'] = () => ({ node: { nodeName: 'X-WIDGET', frameId: 'OOPIF' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: inTree.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+  // In the frame tree and restricted: refused.
+  const restricted = oopifApis({ inTree: true, treeUrl: 'https://cross.example.test/checkout' });
+  restricted.handlers['DOM.describeNode'] = () => ({ node: { nodeName: 'X-WIDGET', frameId: 'OOPIF' } });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: restricted.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  // An ordinary node (no frame data) is not an owner.
+  const plain = oopifApis();
+  plain.handlers['DOM.describeNode'] = () => ({ node: { nodeName: 'BUTTON' } });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+});
+
+test('a failed hit test counts a page with a node that carries frame data, or a fenced frame or portal, as having frames', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const bodyWith = (node) => ({ nodeType: 9, nodeName: '#document', backendNodeId: 1, frameId: 'MAIN', children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: [node] }] });
+  for (const [label, node] of [
+    ['a fenced frame', { nodeType: 1, nodeName: 'FENCEDFRAME', backendNodeId: 61 }],
+    ['a portal', { nodeType: 1, nodeName: 'PORTAL', backendNodeId: 61 }],
+    ['a custom tag with a frame id', { nodeType: 1, nodeName: 'X-WIDGET', backendNodeId: 61, frameId: 'OOPIF' }],
+    ['a custom tag with a content document', { nodeType: 1, nodeName: 'X-WIDGET', backendNodeId: 61, contentDocument: { nodeType: 9, nodeName: '#document' } }],
+  ]) {
+    const chromium = chromiumApis();
+    chromium.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    chromium.handlers['DOM.getDocument'] = () => ({ root: bodyWith(node) });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      label,
+    );
+  }
+  // The page's own document carries its frame id and is not an embedding node.
+  const plain = chromiumApis();
+  plain.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  plain.handlers['DOM.getDocument'] = () => ({ root: bodyWith({ nodeType: 1, nodeName: 'DIV', backendNodeId: 61 }) });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+});
