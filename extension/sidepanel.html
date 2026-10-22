@@ -509,6 +509,11 @@
             <button id="liveVoiceButton" class="composer-icon composer-live" type="button" hidden aria-pressed="false" data-i18n-runtime>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="audio-waveform"><path d="M3 7h2v5H3zm4 0h2v13H7zm4-3h2v16h-2zm4 0h2v13h-2zM5 5h2v2H5zm4 15h2v2H9zm4-18h2v2h-2zm4 15h2v2h-2zm2-5h2v5h-2zm2-2h2v2h-2zM1 12h2v2H1z"/></svg>
             </button>
+            <button id="contextBarButton" class="composer-context-ring" type="button" aria-expanded="false" aria-controls="contextPopover" aria-label="Context window" data-i18n-aria-label="ui.context.window">
+              <span id="contextCompactLabel" hidden>0/∞</span>
+              <span class="context-track" aria-hidden="true"><span id="contextMeterFill"></span></span>
+              <strong id="contextPercentLabel">—</strong>
+            </button>
             <button id="voiceButton" class="composer-icon composer-mic" type="button" aria-label="Start voice dictation" title="Start voice dictation" data-i18n-title="ui.start.voice.dictation" data-i18n-aria-label="ui.start.voice.dictation">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="mic"><path d="M10 2h4v2h-4zM8 4h2v10H8zm2 10h4v2h-4zm4-10h2v10h-2zM4 10h2v6H4zm2 6h2v2H6zm2 2h8v2H8zm8-2h2v2h-2zm2-6h2v6h-2zm-7 10h2v2h-2z"/></svg>
             </button>
@@ -612,13 +617,6 @@
           </div>
         </div>
 
-        <div class="desktop-bar">
-          <button id="contextBarButton" class="context-bar" type="button" aria-expanded="false" aria-controls="contextPopover">
-            <span id="contextCompactLabel">0/∞</span>
-            <span class="context-track" aria-hidden="true"><span id="contextMeterFill"></span></span>
-            <strong id="contextPercentLabel">—</strong>
-          </button>
-        </div>
 
         <section id="modelMenu" class="model-menu" role="dialog" aria-label="Choose Hermes model" hidden data-i18n-aria-label="ui.choose.hermes.model">
           <header class="model-menu-head">

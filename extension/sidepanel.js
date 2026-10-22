@@ -9074,6 +9074,7 @@ function renderContextWindow(userText = els.input?.value || '') {
     : meter.title;
   els.contextUsageDetail.textContent = compaction.detail;
   els.contextMeterFill.style.width = meterLimit ? `${Math.min(100, Math.max(0, meterPercent))}%` : '0%';
+  renderContextRing(meterLimit ? meterPercent : 0, compaction);
   syncComposerFrame();
 
   const compactionStateLabels = {
@@ -25386,4 +25387,18 @@ function observeComposerAnchor() {
   if (els.bottomDock && typeof globalThis.ResizeObserver === 'function') {
     new globalThis.ResizeObserver(update).observe(els.bottomDock);
   }
+}
+
+// The composer's context ring shows the same percent as the meter. It turns
+// warning-coloured near the auto-compact point and danger when the window is full.
+function renderContextRing(percent, compaction) {
+  const button = els.contextBarButton;
+  if (!button) return;
+  const value = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
+  const threshold = Number(compaction?.thresholdPercent) || 0;
+  let level = 'ok';
+  if (value >= 100) level = 'full';
+  else if (threshold && value >= threshold - 5) level = 'warn';
+  button.style.setProperty('--context-pct', String(value));
+  button.dataset.level = level;
 }
