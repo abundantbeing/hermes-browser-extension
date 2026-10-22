@@ -839,7 +839,7 @@ const CONTENT_EXTRACTION_API = Object.freeze({
   hermesGlobal.HermesContentExtractor = CONTENT_EXTRACTION_API;
 })(globalThis);
 
-/* extension/lib/appearance-themes.mjs · SHA-256 7f168bee787d3a77 */
+/* extension/lib/appearance-themes.mjs · SHA-256 668c0366c68e7abe */
 (function hermesAppearanceRuntime(hermesGlobal) {
   'use strict';
 
@@ -849,72 +849,84 @@ const APPEARANCE_THEMES = Object.freeze([
     name: 'Nous',
     description: 'Ink blue with soft-white Desktop accents',
     preview: { bg: '#0505e8', panel: '#0505e8', text: '#f8faff', muted: '#dbe6ff', accent: '#f8faff' },
+    previewLight: { bg: '#ffffff', panel: '#eef0ff', text: '#0000f2', muted: '#7a7af7', accent: '#0000f2' },
   },
   {
     value: 'midnight',
     name: 'Midnight',
     description: 'Deep blue-violet with cool accents',
     preview: { bg: '#07061a', panel: '#0d0b25', text: '#d9d2ff', muted: '#8e88bd', accent: '#1d1850' },
+    previewLight: { bg: '#f0eeff', panel: '#ffffff', text: '#2a1a69', muted: '#8a7fc0', accent: '#2a1a69' },
   },
   {
     value: 'ember',
     name: 'Ember',
     description: 'Warm crimson and bronze forge',
     preview: { bg: '#1a0600', panel: '#250800', text: '#ffd0a4', muted: '#c98f65', accent: '#4b1603' },
+    previewLight: { bg: '#fff1e4', panel: '#fffaf6', text: '#651b00', muted: '#b0703f', accent: '#ff9d4d' },
   },
   {
     value: 'mono',
     name: 'Mono',
     description: 'Clean grayscale minimal focus',
     preview: { bg: '#0d0d0d', panel: '#111111', text: '#eeeeee', muted: '#9b9b9b', accent: '#1f1f1f' },
+    previewLight: { bg: '#f2f2f2', panel: '#ffffff', text: '#202020', muted: '#8a8a8a', accent: '#1d1d1d' },
   },
   {
     value: 'cyberpunk',
     name: 'Cyberpunk',
     description: 'Neon green terminal',
     preview: { bg: '#001004', panel: '#001b08', text: '#12ff68', muted: '#00a947', accent: '#002d10' },
+    previewLight: { bg: '#eaffef', panel: '#fbfffc', text: '#005e25', muted: '#37a95f', accent: '#005e25' },
   },
   {
     value: 'slate',
     name: 'Slate',
     description: 'Cool slate blue developer focus',
     preview: { bg: '#081015', panel: '#0e171e', text: '#d0dbe2', muted: '#94a3ad', accent: '#172c3d' },
+    previewLight: { bg: '#f4f8fb', panel: '#ffffff', text: '#1d3848', muted: '#7d97a8', accent: '#1d3848' },
   },
   {
     value: 'senter-space',
     name: 'Senter Space',
     description: 'Deep space, sea glass, and warm starlight',
     preview: { bg: '#091716', panel: '#112722', text: '#e9d1a5', muted: '#87c6b7', accent: '#c79a55' },
+    previewLight: { bg: '#fbf8ef', panel: '#f3eedf', text: '#174f48', muted: '#b77c38', accent: '#103b35' },
   },
   {
     value: 'aurora',
     name: 'Aphrodite',
     description: 'Hot pink, orchid, and rose with a polished dark-plum counterpart.',
     preview: { bg: '#3b0928', panel: '#5f123d', text: '#fff0f7', muted: '#d89ab7', accent: '#ff4fa3' },
+    previewLight: { bg: '#fff7fb', panel: '#ffe9f3', text: '#42142f', muted: '#c76a99', accent: '#e8358b' },
   },
   {
     value: 'solstice',
     name: 'Solstice',
     description: 'Quiet graphite with sun-warmed brass',
     preview: { bg: '#181715', panel: '#25211b', text: '#f1dfbc', muted: '#c4a77c', accent: '#e5b96c' },
+    previewLight: { bg: '#fffbf3', panel: '#f6ecd8', text: '#58401f', muted: '#bd7d2d', accent: '#513a1b' },
   },
   {
     value: 'everforest',
     name: 'Everforest',
     description: 'Forest greens, warm parchment, and soft sage',
     preview: { bg: '#2d353b', panel: '#373e42', text: '#d3c6aa', muted: '#a4ada1', accent: '#a7c080' },
+    previewLight: { bg: '#fdf6e3', panel: '#f4eed6', text: '#5c6a72', muted: '#939f91', accent: '#586b35' },
   },
   {
     value: 'classic',
     name: 'Classic Hermes',
     description: 'Original amber gold, bronze, and midnight navy',
     preview: { bg: '#1a1a2e', panel: '#232335', text: '#fff8dc', muted: '#b8860b', accent: '#ffbf00' },
+    previewLight: { bg: '#f5f5f5', panel: '#f0f0ef', text: '#2b2109', muted: '#74634b', accent: '#825d02' },
   },
   {
     value: 'anti-nous',
     name: 'Anti-Nous',
     description: 'Blood red and berry, navy reading surfaces, and fine gold trim',
     preview: { bg: '#8a1a2d', panel: '#101b30', text: '#f5ece6', muted: '#d4af6c', accent: '#ff4d4d' },
+    previewLight: { bg: '#ffffff', panel: '#fff1f2', text: '#d4182d', muted: '#e0808a', accent: '#d4182d' },
   },
 ]);
 
@@ -968,6 +980,12 @@ const INLINE_ASSIST_THEME_TOKENS = Object.freeze({
     light: Object.freeze({ surface: '#d4182d', panel: '#ffffff', ink: '#d4182d', fg: '#fff7f0', accent: '#d4182d', primary: '#d42a40' }),
   }),
 });
+
+// The colours a theme card draws in the given resolved mode, so the theme
+// grid shows each palette as it will look in light or dark.
+function themePreviewForMode(theme, mode = DEFAULT_COLOR_MODE) {
+  return (mode === 'light' && theme?.previewLight) || theme?.preview || {};
+}
 
 const DEFAULT_APPEARANCE_THEME = 'nous';
 const DEFAULT_COLOR_MODE = 'dark';
