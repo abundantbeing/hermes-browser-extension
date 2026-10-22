@@ -563,6 +563,12 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
   -webkit-mask: url("assets/img/nous-boxes.png") center / contain no-repeat;
   mask: url("assets/img/nous-boxes.png") center / contain no-repeat;
 }
+/* The middle card has two outlines: the dark-mode art suits dark surfaces and
+   this one suits light surfaces. */
+html[data-hermes-mode="light"] .nous-strip {
+  -webkit-mask-image: url("assets/img/nous-boxes-light.png");
+  mask-image: url("assets/img/nous-boxes-light.png");
+}
 /* About & Diagnostics is short, so its strip rides the foot of the screen
    rather than sitting under the last card. */
 #settingsPane-about { min-height: calc(100dvh - 140px); grid-template-rows: auto auto auto 1fr; padding-bottom: 16px; }

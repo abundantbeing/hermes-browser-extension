@@ -57,3 +57,16 @@ test('the strip takes the theme colour like the top-bar wing mark, centred and q
   assert.ok(height >= 40 && height <= 56, `strip height ${height}px should stay between 40 and 56`);
   assert.doesNotMatch(css, /nous-strip-mark\.svg/);
 });
+
+test('light mode uses its own artwork for the strip, dark mode keeps the original', () => {
+  const file = new URL('../extension/assets/img/nous-boxes-light.png', import.meta.url);
+  assert.ok(existsSync(file), 'nous-boxes-light.png ships with the extension');
+  const png = readFileSync(file);
+  assert.equal(png.readUInt32BE(16), 197);
+  assert.equal(png[25], 6, 'RGBA, so the transparent background can be a mask');
+  assert.ok(png.length < 20_000, 'small enough to ship');
+  const light = css.match(/html\[data-hermes-mode="light"\] \.nous-strip\s*\{[^}]*\}/)?.[0] || '';
+  assert.match(light, /(?<!-webkit-)mask-image:\s*url\("assets\/img\/nous-boxes-light\.png"\)/);
+  assert.match(light, /-webkit-mask-image:\s*url\("assets\/img\/nous-boxes-light\.png"\)/);
+  assert.match(css.match(/\.nous-strip\s*\{[^}]*\}/)[0], /nous-boxes\.png/, 'the base rule stays the dark-mode art');
+});
