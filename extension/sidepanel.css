@@ -7285,22 +7285,29 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The selected-theme mark is the same square radio mark as the response
+   styles: an empty box, filled with a small square dot when chosen. */
 .theme-check {
   position: absolute;
   right: 6px;
   bottom: 5px;
   display: grid;
   place-items: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 999px;
-  border: 1px solid var(--hermes-accent);
-  background: var(--hermes-primary-bg);
-  color: var(--hermes-primary-fg);
-  font-size: calc(10px * var(--hermes-text-zoom, 1));
-  line-height: 1;
+  width: 17px;
+  height: 17px;
+  border: 1px solid rgba(var(--hermes-ink-rgb),0.42);
+  background: rgba(var(--hermes-ink-rgb),0.05);
 }
-.theme-check:empty { display: none; }
+.theme-card.selected .theme-check {
+  border-color: var(--hermes-accent);
+  background: var(--hermes-primary-bg);
+}
+.theme-card.selected .theme-check::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: var(--hermes-primary-fg);
+}
 
 .custom-theme-card-shell {
   grid-column: 1 / -1;

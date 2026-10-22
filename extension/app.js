@@ -4277,7 +4277,6 @@ function renderAppearanceSettings() {
     copy.append(name);
     const check = document.createElement('span');
     check.className = 'theme-check';
-    check.textContent = selected ? '✓' : '';
     button.append(preview, copy, check);
     els.settingsThemeGrid.append(button);
   }

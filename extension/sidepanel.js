@@ -8078,7 +8078,7 @@ function renderAppearanceControls() {
       <button class="theme-card ${selected ? 'selected' : ''}" type="button" data-theme="${theme.value}" role="radio" aria-checked="${selected}" aria-label="${theme.name}: ${theme.description}" title="${theme.name}: ${theme.description}" style="--preview-bg:${p.bg};--preview-panel:${p.panel};--preview-text:${p.text};--preview-muted:${p.muted};--preview-accent:${p.accent};">
         <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
         <span class="theme-card-copy"><strong>${theme.name}</strong></span>
-        <span class="theme-check" aria-hidden="true">${selected ? '✓' : ''}</span>
+        <span class="theme-check" aria-hidden="true"></span>
       </button>
     `;
   }).join('');

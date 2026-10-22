@@ -232,8 +232,9 @@ html[data-hermes-theme^="custom:"] .web-brand::before {
 .theme-preview span:nth-child(3) { right: 8%; left: auto; bottom: 15%; width: 35%; height: 15px; border: 1px solid var(--preview-accent); background: color-mix(in srgb, var(--preview-accent) 24%, transparent); }
 .theme-card-copy { min-width: 0; padding-right: 17px; }
 .theme-card-copy strong { display: block; overflow: hidden; color: var(--hermes-ink); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
-.theme-check { position: absolute; right: 6px; bottom: 5px; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 999px; border: 1px solid var(--hermes-accent); background: var(--hermes-blue); color: var(--hermes-white); font-size: calc(10px * var(--hermes-text-zoom, 1)); }
-.theme-check:empty { display: none; }
+.theme-check { position: absolute; right: 6px; bottom: 5px; display: grid; place-items: center; width: 17px; height: 17px; border: 1px solid rgba(var(--hermes-ink-rgb),0.42); background: rgba(var(--hermes-ink-rgb),0.05); }
+.theme-card.selected .theme-check { border-color: var(--hermes-accent); background: var(--hermes-primary-bg, var(--hermes-blue)); }
+.theme-card.selected .theme-check::after { content: ""; width: 7px; height: 7px; background: var(--hermes-primary-fg, var(--hermes-white)); }
 @media (max-width: 620px) { .theme-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .appearance-row { grid-template-columns: 1fr; } .segmented-control { display: grid; grid-template-columns: repeat(3, 1fr); } }
 
 .web-settings-dialog .appearance-row > div:first-child strong,
