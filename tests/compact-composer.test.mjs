@@ -24,8 +24,8 @@ test('the side panel has no bottom status row under the composer', () => {
 test('the model chip and context ring live in the composer field, beside the mic', () => {
   assert.ok(fieldStart > 0 && actionsStart > fieldStart, 'composer field and action row are both present');
   for (const id of ['modelMenuButton', 'contextBarButton', 'voiceButton']) {
-    assert.match(field, new RegExp(`id="${id}"`), `${id} sits inside the composer field`);
-    assert.doesNotMatch(actions, new RegExp(`id="${id}"`), `${id} is not in the action row`);
+    assert.ok(field.includes(`id="${id}"`), `${id} sits inside the composer field`);
+    assert.ok(!actions.includes(`id="${id}"`), `${id} is not in the action row`);
   }
   assert.ok(
     field.indexOf('id="contextBarButton"') < field.indexOf('id="voiceButton"'),
@@ -52,7 +52,7 @@ test('Commands is an icon button beside Hermes Control, with its popup anchored 
 
 test('the context readout lives in Settings, under Sessions & Context', () => {
   for (const id of ['settingsContextSummary', 'settingsContextRuntime', 'settingsContextPayload']) {
-    assert.match(settingsSessions, new RegExp(`id="${id}"`), `${id} is in the Sessions & Context pane`);
+    assert.ok(settingsSessions.includes(`id="${id}"`), `${id} is in the Sessions & Context pane`);
   }
   assert.match(js, /els\.settingsContextPayload\.replaceChildren/, 'the Settings readout is filled from the same context state');
 });
