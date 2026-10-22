@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "User bubble only",
   "responses.layout.user_bubble_hint": "Your messages in a bubble, Hermes replies as flowing text.",
   "responses.setup_again": "Run setup again",
+  "haui.view_chart": "Chart",
+  "haui.view_table": "Table",
+  "haui.view_as_chart": "View as chart",
+  "haui.copy": "Copy",
+  "haui.copied": "Copied",
+  "haui.building": "Building view…",
+  "haui.opens_new_tab": "Opens in a new tab",
+  "haui.ask_hint": "Puts this question in the message box",
 });
