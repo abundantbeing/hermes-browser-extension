@@ -73,17 +73,17 @@ export function createMutationRequestId(prefix = 'hbe-workspace', cryptoImpl = g
 // The gateway host's path, which the browser cannot resolve. Absolute (POSIX,
 // drive-letter, UNC) or ~-relative only: a relative path would resolve against
 // the gateway's own cwd and move the session somewhere unintended.
-function isGatewayHostPath(path) {
+export function isGatewayHostPath(path) {
   return /^(\/|~(?:[\\/]|$)|[A-Za-z]:[\\/]|\\\\)/.test(path);
 }
 
-function comparablePath(path = '') {
+export function comparablePath(path = '') {
   let text = clean(path).replace(/\\/g, '/');
   if (text.length > 1) text = text.replace(/\/+$/, '');
   return /^[A-Za-z]:/.test(text) ? text.toLowerCase() : text;
 }
 
-function samePath(a, b) {
+export function samePath(a, b) {
   const left = comparablePath(a);
   return Boolean(left) && left === comparablePath(b);
 }
