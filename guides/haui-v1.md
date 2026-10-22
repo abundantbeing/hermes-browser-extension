@@ -30,7 +30,14 @@ Every block has a `type` from the allowlist below and an `id`
 (`[A-Za-z0-9_.:-]{1,64}`). A missing or invalid id becomes `b<index>`, and a
 repeated id gets `-<index>` added. A block may also carry `fallback` (Markdown);
 if its type is unknown or its props are invalid, the fallback text is shown
-in its place. An envelope with no usable block falls back as a whole.
+in its place. Without a fallback, the block's own words are shown as text
+under a short "Shown as text" note. An envelope with no usable block is shown
+the same way as a whole.
+
+Common slips are repaired before a fence is given up on: the fence spelled
+`hermes_ui`, `hermesui` or `haui`; a ```` ```json ```` fence whose body names the
+HAUI schema; curly quotes and trailing commas; a bare array of blocks or a
+single block; a missing or quoted `version` 1. Any other version is rejected.
 
 ## Block types
 
@@ -76,8 +83,13 @@ handlers and network requests are never run.
 
 - A block's DOM id is `<fence offset>:<block id>`. Appending text never moves
   an earlier fence, so ids stay stable while a reply streams.
-- An unclosed `hermes-ui` fence draws a fixed-height placeholder, never partial
-  JSON. It's replaced once, when the closing fence arrives.
+- While a reply streams, an unclosed `hermes-ui` fence draws a fixed-height
+  placeholder, never partial JSON. It's replaced once, when the closing fence
+  arrives. A settled reply never keeps a placeholder: a fence that runs to the
+  end of the reply is read as it stands, and drawn or shown as text. The
+  side panel's stream updater tells the renderer which reply is still
+  streaming (`renderResponseSafe(text, { streaming })`); a caller that doesn't
+  say keeps the old behaviour and treats an open fence as still arriving.
 - Each block carries a content signature (`data-haui-sig`). The side panel's
   streaming patcher keeps a finished block in place, along with its chart or
   table view and open/closed state, while later text streams in.

@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "ビューを作成中…",
   "haui.opens_new_tab": "新しいタブで開きます",
   "haui.ask_hint": "この質問をメッセージ欄に入れます",
+  "haui.unreadable": "テキストで表示しています：このカードは描画できませんでした。",
   "settings.save.hint": "外観、エージェント、権限と実行のスイッチは、変更するとすぐに反映されます。そのほかの設定は「保存」を押すと反映されます。",
   "settings.save.saved_connected": "保存しました。Hermes に接続しています。",
   "settings.save.saved_offline": "保存しましたが、Hermes に接続できませんでした: {detail}",

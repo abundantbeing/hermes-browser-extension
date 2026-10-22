@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "व्यू बनाया जा रहा है…",
   "haui.opens_new_tab": "नए टैब में खुलता है",
   "haui.ask_hint": "यह सवाल संदेश बॉक्स में डालता है",
+  "haui.unreadable": "टेक्स्ट के रूप में दिखाया गया: यह कार्ड नहीं बन सका।",
   "settings.save.hint": "दिखावट, एजेंट तथा अनुमति और रनटाइम स्विच बदलते ही लागू हो जाते हैं। बाकी सब कुछ सहेजें दबाने पर लागू होता है।",
   "settings.save.saved_connected": "सहेज लिया गया। Hermes से कनेक्ट है।",
   "settings.save.saved_offline": "सहेज लिया गया, लेकिन Hermes तक पहुँचा नहीं जा सका: {detail}",

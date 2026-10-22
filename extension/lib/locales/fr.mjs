@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "Création de l'affichage…",
   "haui.opens_new_tab": "S'ouvre dans un nouvel onglet",
   "haui.ask_hint": "Place cette question dans la zone de message",
+  "haui.unreadable": "Affiché en texte : cette carte n’a pas pu être dessinée.",
   "settings.save.hint": "L’apparence, les agents ainsi que les interrupteurs d’autorisations et d’exécution s’appliquent dès que vous les modifiez. Tout le reste s’applique quand vous appuyez sur Enregistrer.",
   "settings.save.saved_connected": "Enregistré. Hermes est connecté.",
   "settings.save.saved_offline": "Enregistré, mais Hermes est injoignable : {detail}",

@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "Creazione della vista…",
   "haui.opens_new_tab": "Si apre in una nuova scheda",
   "haui.ask_hint": "Inserisce questa domanda nella casella del messaggio",
+  "haui.unreadable": "Mostrato come testo: non è stato possibile disegnare questa scheda.",
   "settings.save.hint": "Aspetto, agenti e gli interruttori di autorizzazioni ed esecuzione si applicano appena li modifichi. Tutto il resto si applica quando premi Salva.",
   "settings.save.saved_connected": "Salvato. Hermes è connesso.",
   "settings.save.saved_offline": "Salvato, ma Hermes non è raggiungibile: {detail}",

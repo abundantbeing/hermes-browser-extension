@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "Creando vista…",
   "haui.opens_new_tab": "Se abre en una pestaña nueva",
   "haui.ask_hint": "Coloca esta pregunta en el cuadro de mensaje",
+  "haui.unreadable": "Se muestra como texto: no se pudo dibujar esta tarjeta.",
   "settings.save.hint": "La apariencia, los agentes y los interruptores de permisos y de ejecución se aplican al cambiarlos. Todo lo demás se aplica al pulsar Guardar.",
   "settings.save.saved_connected": "Guardado. Hermes está conectado.",
   "settings.save.saved_offline": "Guardado, pero no se pudo contactar con Hermes: {detail}",

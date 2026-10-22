@@ -77,7 +77,8 @@ test('bad chart data falls back instead of drawing invented numbers', () => {
   }
   const html = renderResponseSafe(`Intro\n\n${fence(envelope([{ ...CHART, kind: 'pie' }]))}`, { style: 'vivid' });
   assert.doesNotMatch(html, /<svg/);
-  assert.match(html, /<pre><code data-lang="hermes-ui">/, 'malformed blocks stay readable as their source');
+  assert.doesNotMatch(html, /<pre>|"schema"/, 'a malformed block never shows its JSON');
+  assert.match(html, /class="haui-block haui-salvage"/, 'its words show as text instead');
 });
 
 test('valid blocks render native, accessible components', () => {
@@ -154,7 +155,7 @@ test('size and nesting limits hold', () => {
 test('streaming: an open block never shows JSON, finished parts keep their identity', () => {
   const body = JSON.stringify(STATS);
   const partial = `Numbers below.\n\n\`\`\`hermes-ui\n${body.slice(0, 40)}`;
-  const streaming = renderResponseSafe(partial, { style: 'vivid' });
+  const streaming = renderResponseSafe(partial, { style: 'vivid', streaming: true });
   assert.doesNotMatch(streaming, /schema|hermes\.adaptive-ui/);
   assert.match(streaming, /class="haui-pending"/);
   const done = renderResponseSafe(`${partial}${body.slice(40)}\n\`\`\`\n\nMore text`, { style: 'vivid' });
@@ -306,5 +307,5 @@ test('vivid fences with repeated or looping child ids stay bounded', () => {
 
 test('only Hermes replies take the response style in the side panel', () => {
   const panel = fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(panel, /const style = element\?\.closest\?\.\('\.message\.assistant'\) \? responsePresentationFromSettings\(settings\)\.responseStyle : 'rich';/);
+  assert.match(panel, /const assistant = element\?\.closest\?\.\('\.message\.assistant'\);\s*const style = assistant \? responsePresentationFromSettings\(settings\)\.responseStyle : 'rich';/);
 });

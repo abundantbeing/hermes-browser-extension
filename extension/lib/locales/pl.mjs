@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "Tworzenie widoku…",
   "haui.opens_new_tab": "Otwiera się w nowej karcie",
   "haui.ask_hint": "Wstawia to pytanie do pola wiadomości",
+  "haui.unreadable": "Pokazano jako tekst: nie udało się narysować tej karty.",
   "settings.save.hint": "Wygląd, agenci oraz przełączniki uprawnień i środowiska uruchomieniowego działają od razu po zmianie. Wszystko inne zaczyna działać po naciśnięciu Zapisz.",
   "settings.save.saved_connected": "Zapisano. Hermes jest połączony.",
   "settings.save.saved_offline": "Zapisano, ale nie udało się połączyć z Hermes: {detail}",

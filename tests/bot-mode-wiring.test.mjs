@@ -345,7 +345,7 @@ test('the model catalog survives agent switches via the profile-union cache', ()
 test('streaming renders with prefix-stable patches, sticky autoscroll, and agent headers', () => {
   assert.match(sidepanelSource, /function patchRenderedMessageContent/);
   // Replies render in the chosen response style (Rich text is renderMarkdownSafe).
-  assert.match(sidepanelSource, /patchRenderedMessageContent\(element, renderResponseSafe\(content \|\| '', \{ style, labels: adaptiveUiLabels\(\) \}\)\)/);
+  assert.match(sidepanelSource, /patchRenderedMessageContent\(element, renderResponseSafe\(content \|\| '', \{ style, labels: adaptiveUiLabels\(\), streaming \}\)\)/);
   assert.match(sidepanelSource, /function isMessageStreamNearBottom/);
   assert.match(sidepanelSource, /function scrollMessageStreamToBottom/);
   assert.match(sidepanelSource, /assistantMessageRoleLabel/);

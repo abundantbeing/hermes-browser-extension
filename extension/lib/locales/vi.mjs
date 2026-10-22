@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "Đang tạo chế độ xem…",
   "haui.opens_new_tab": "Mở trong thẻ mới",
   "haui.ask_hint": "Đưa câu hỏi này vào ô tin nhắn",
+  "haui.unreadable": "Hiển thị dạng văn bản: không thể vẽ thẻ này.",
   "settings.save.hint": "Giao diện, tác tử cùng các công tắc quyền và thời gian chạy có hiệu lực ngay khi bạn thay đổi. Mọi thứ khác có hiệu lực khi bạn nhấn Lưu.",
   "settings.save.saved_connected": "Đã lưu. Hermes đã kết nối.",
   "settings.save.saved_offline": "Đã lưu, nhưng không thể kết nối tới Hermes: {detail}",

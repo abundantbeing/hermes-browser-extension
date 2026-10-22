@@ -19,6 +19,11 @@ import { escapeHtml, redactSensitiveText, renderMarkdown } from './common.mjs';
 export const HAUI_SCHEMA = 'hermes.adaptive-ui';
 export const HAUI_VERSION = 1;
 export const HAUI_FENCE_LANGS = Object.freeze(['hermes-ui', 'vivid']);
+// Spellings models use for the same fence. A ```json fence counts only when
+// its body names the HAUI schema.
+const HAUI_FENCE_ALIASES = Object.freeze({ 'hermes-ui': 'hermes-ui', hermes_ui: 'hermes-ui', hermesui: 'hermes-ui', haui: 'hermes-ui', 'hermes-adaptive-ui': 'hermes-ui', vivid: 'vivid' });
+const JSON_FENCE_LANGS = new Set(['json', 'jsonc', 'json5']);
+const SCHEMA_MARKER = /"schema"\s*:\s*"hermes\.adaptive-ui"/;
 export const HAUI_BLOCK_TYPES = Object.freeze(['stat', 'comparison', 'key_value', 'table', 'chart', 'list', 'notice', 'disclosure', 'actions']);
 export const HAUI_ACTIONS = Object.freeze(['copy', 'open_url', 'ask']);
 export const HAUI_LIMITS = Object.freeze({
@@ -45,6 +50,7 @@ export const HAUI_DEFAULT_LABELS = Object.freeze({
   building: 'Building view…',
   opensNewTab: 'Opens in a new tab',
   askHint: 'Puts this question in the message box',
+  unreadable: 'Shown as text: this card could not be drawn.',
 });
 
 const ID_PATTERN = /^[A-Za-z0-9_.:-]{1,64}$/;
@@ -57,9 +63,17 @@ const CHART_KINDS = Object.freeze({
 
 // ---------------------------------------------------------------------------
 // Fence splitting. Same fence rule as renderMarkdown: a line starting with ```
-// opens a fence and the next such line closes it.
+// opens a fence and the next such line closes it. While a reply streams, an
+// open fence is unfinished; once it has settled, an open fence ran to the end
+// of the reply and is read as it stands.
 
-export function splitAdaptiveSegments(text = '') {
+function adaptiveFenceLang(lang, body, closed) {
+  if (HAUI_FENCE_ALIASES[lang]) return HAUI_FENCE_ALIASES[lang];
+  if (closed && JSON_FENCE_LANGS.has(lang) && body.length <= HAUI_LIMITS.maxFenceBytes && SCHEMA_MARKER.test(body)) return 'hermes-ui';
+  return '';
+}
+
+export function splitAdaptiveSegments(text = '', { streaming = true } = {}) {
   const source = String(text || '').replace(/\r\n/g, '\n');
   const lines = source.split('\n');
   const offsets = [];
@@ -87,20 +101,24 @@ export function splitAdaptiveSegments(text = '') {
     for (let next = index + 1; next < lines.length; next += 1) {
       if (lines[next].trim().startsWith('```')) { close = next; break; }
     }
-    const lang = trimmed.slice(3).trim().split(/\s+/)[0].toLowerCase();
-    if (HAUI_FENCE_LANGS.includes(lang)) {
+    const rawLang = trimmed.slice(3).trim().split(/\s+/)[0].toLowerCase();
+    const closed = close >= 0;
+    const bodyLines = lines.slice(index + 1, closed ? close : lines.length);
+    const lang = adaptiveFenceLang(rawLang, closed ? bodyLines.join('\n') : '', closed);
+    if (lang) {
       flush();
-      const end = close < 0 ? lines.length : close + 1;
+      const end = closed ? close + 1 : lines.length;
+      const complete = closed || !streaming;
       segments.push({
         kind: 'ui',
         id: `u${offsets[index]}`,
         lang,
-        complete: close >= 0,
+        complete,
         // An open fence is still streaming: never expose half-written JSON.
-        body: close >= 0 ? lines.slice(index + 1, close).join('\n') : '',
+        body: complete ? bodyLines.join('\n') : '',
         raw: lines.slice(index, end).join('\n'),
       });
-      if (close < 0) return segments;
+      if (!closed) return segments;
       index = close;
       continue;
     }
@@ -116,7 +134,7 @@ export function splitAdaptiveSegments(text = '') {
 // Copy and search see the reply as prose: structured blocks are dropped (the
 // model is asked to state their facts in prose too).
 export function stripAdaptiveFences(text = '') {
-  return splitAdaptiveSegments(text)
+  return splitAdaptiveSegments(text, { streaming: false })
     .filter((segment) => segment.kind === 'markdown')
     .map((segment) => segment.text.trim())
     .join('\n\n');
@@ -301,9 +319,14 @@ function normalizeBlocks(rawBlocks, { depth = 1, errors, seen }) {
     } else {
       errors.push(`block ${id}: ${result.error}`);
       // A newer agent may send a type this build does not know; its own
-      // fallback text keeps the answer readable.
+      // fallback text keeps the answer readable. Without one, the block's own
+      // words are shown as text rather than dropped.
       const fallback = longText(raw.fallback);
       if (fallback) out.push({ id, type: 'markdown', text: fallback });
+      else {
+        const lines = salvageLines(raw);
+        if (lines.length) out.push({ id, type: 'salvage', lines });
+      }
     }
   }
   if (rawBlocks.length > HAUI_LIMITS.maxBlocks) errors.push(`only the first ${HAUI_LIMITS.maxBlocks} blocks are shown`);
@@ -317,7 +340,8 @@ export function validateAdaptiveEnvelope(value) {
   if (value.version !== HAUI_VERSION) return { ok: false, blocks: [], errors: [`version must be ${HAUI_VERSION}`] };
   if (!Array.isArray(value.blocks) || !value.blocks.length) return { ok: false, blocks: [], errors: ['blocks must be a non-empty array'] };
   const blocks = normalizeBlocks(value.blocks, { errors, seen: new Set() });
-  return { ok: blocks.length > 0, blocks, errors };
+  // Text kept from invalid blocks rides along, but alone it isn't a valid card.
+  return { ok: blocks.some((block) => block.type !== 'salvage'), blocks, errors };
 }
 
 // ---------------------------------------------------------------------------
@@ -392,17 +416,83 @@ export function vividToEnvelope(body = '') {
   return { schema: HAUI_SCHEMA, version: HAUI_VERSION, blocks };
 }
 
+// Human words inside a block or envelope, in order, for the text fallback.
+// Bounded: at most 40 lines from four levels.
+// A cut-off fence can end on a key with no colon after it.
+const HAUI_PROP_NAMES = new Set(['schema', 'version', 'blocks', 'id', 'type', 'label', 'value', 'title', 'items', 'points', 'columns', 'rows', 'labels', 'series', 'values', 'body', 'text', 'meta', 'caption', 'delta']);
+const SALVAGE_SKIP_KEYS = new Set(['schema', 'version', 'id', 'type', 'kind', 'action', 'tone', 'trend', 'ordered', 'highlight', 'unit']);
+
+function salvageLines(value, lines = [], depth = 0, key = '') {
+  if (lines.length >= 40 || depth > 4 || SALVAGE_SKIP_KEYS.has(key)) return lines;
+  if (typeof value === 'string' || (typeof value === 'number' && Number.isFinite(value))) {
+    const text = clampText(value, 240);
+    if (text) lines.push(text);
+  } else if (Array.isArray(value)) {
+    if (value.length && value.every((entry) => typeof entry === 'number' || entry === null)) {
+      lines.push(value.map((entry) => (entry === null ? '–' : formatNumber(entry))).join(', '));
+    } else {
+      for (const entry of value.slice(0, 24)) salvageLines(entry, lines, depth + 1);
+    }
+  } else if (isPlainObject(value)) {
+    const name = ['label', 'key', 'title', 'name'].map((field) => value[field]).find((entry) => typeof entry === 'string' && entry.trim());
+    if (name && (typeof value.value === 'string' || typeof value.value === 'number')) {
+      lines.push(`${clampText(name, 80)}: ${clampText(value.value, 160)}`);
+      return lines;
+    }
+    for (const [field, entry] of Object.entries(value).slice(0, 24)) salvageLines(entry, lines, depth + 1, field);
+  }
+  return lines;
+}
+
+// When the JSON can't be read at all, its string values still carry the
+// card's words. Keys and the values of enum-like keys are skipped.
+function salvageFromBrokenJson(source) {
+  const lines = [];
+  const pattern = /"((?:[^"\\\n]|\\.){0,600})"(\s*:)?/g;
+  let previousKey = '';
+  let match;
+  while ((match = pattern.exec(source)) && lines.length < 40) {
+    let text = match[1];
+    try { text = JSON.parse(`"${text}"`); } catch { /* keep the raw spelling */ }
+    if (match[2]) { previousKey = text; continue; }
+    if (!SALVAGE_SKIP_KEYS.has(previousKey) && !HAUI_PROP_NAMES.has(text)) {
+      const clean = clampText(text, 240);
+      if (clean) lines.push(clean);
+    }
+    previousKey = '';
+  }
+  return lines;
+}
+
+// Small, common slips are repaired before giving up: curly quotes, trailing
+// commas, a bare block list or block, and a missing or quoted version.
+function repairedEnvelope(source) {
+  const attempts = [source, source.replace(/[\u201c\u201d]/g, '"').replace(/,(\s*[}\]])/g, '$1')];
+  for (const attempt of attempts) {
+    let value;
+    try { value = JSON.parse(attempt); } catch { continue; }
+    if (Array.isArray(value)) return { schema: HAUI_SCHEMA, version: HAUI_VERSION, blocks: value };
+    if (isPlainObject(value) && !Array.isArray(value.blocks) && typeof value.type === 'string') return { schema: HAUI_SCHEMA, version: HAUI_VERSION, blocks: [value] };
+    if (isPlainObject(value) && Array.isArray(value.blocks) && (value.version === undefined || value.version === '1')) return { ...value, version: HAUI_VERSION };
+    return value;
+  }
+  return undefined;
+}
+
 export function parseAdaptiveFence(lang, body = '') {
-  const source = String(body || '');
+  const source = String(body || '').replace(/^\uFEFF/, '');
   if (new TextEncoder().encode(source).length > HAUI_LIMITS.maxFenceBytes) {
-    return { ok: false, blocks: [], errors: [`block is larger than ${HAUI_LIMITS.maxFenceBytes} bytes`] };
+    return { ok: false, blocks: [], errors: [`block is larger than ${HAUI_LIMITS.maxFenceBytes} bytes`], salvage: [] };
   }
+  let envelope;
   try {
-    const envelope = lang === 'vivid' ? vividToEnvelope(source) : JSON.parse(source);
-    return validateAdaptiveEnvelope(envelope);
+    envelope = lang === 'vivid' ? vividToEnvelope(source) : repairedEnvelope(source);
   } catch (error) {
-    return { ok: false, blocks: [], errors: [`not valid JSON: ${error?.message || error}`] };
+    return { ok: false, blocks: [], errors: [`not valid JSON: ${error?.message || error}`], salvage: salvageFromBrokenJson(source) };
   }
+  if (envelope === undefined) return { ok: false, blocks: [], errors: ['not valid JSON'], salvage: salvageFromBrokenJson(source) };
+  const result = validateAdaptiveEnvelope(envelope);
+  return result.ok ? result : { ...result, salvage: salvageLines(envelope) };
 }
 
 // ---------------------------------------------------------------------------
@@ -573,6 +663,9 @@ function renderBlock(block, scope, labels) {
     }
     case 'notice':
       return `<div class="haui-block haui-notice" ${blockAttrs(block, scope, ` data-tone="${block.tone}" role="note"`)}><div class="haui-notice-title">${esc(block.title)}</div>${block.body ? `<p class="haui-notice-body">${esc(block.body)}</p>` : ''}</div>`;
+    case 'salvage':
+      // A card this build could not draw: its own words, as text, never JSON.
+      return `<div class="haui-block haui-salvage" ${blockAttrs(block, scope)}><p class="haui-salvage-note">${esc(labels.unreadable)}</p>${block.lines.length ? `<ul>${block.lines.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>` : ''}</div>`;
     case 'markdown':
       return `<div class="haui-block haui-fallback" ${blockAttrs(block, scope)}>${renderMarkdown(block.text)}</div>`;
     default:
@@ -710,11 +803,13 @@ export function renderPendingBlock(id, labels = HAUI_DEFAULT_LABELS) {
 }
 
 // The Vivid UI renderer: Markdown with HAUI blocks and the deterministic
-// presentation layer. Returns unsanitized HTML; callers run DOMPurify.
-export function renderAdaptiveMarkdown(value = '', { labels = HAUI_DEFAULT_LABELS, enhance = true } = {}) {
+// presentation layer. Returns unsanitized HTML; callers run DOMPurify. Only a
+// reply that is still streaming may hold an unfinished block; a settled reply
+// shows every block it has, and a block that can't be drawn shows its words.
+export function renderAdaptiveMarkdown(value = '', { labels = HAUI_DEFAULT_LABELS, enhance = true, streaming = false } = {}) {
   const merged = { ...HAUI_DEFAULT_LABELS, ...labels };
   const source = redactSensitiveText(String(value || ''));
-  const segments = splitAdaptiveSegments(source);
+  const segments = splitAdaptiveSegments(source, { streaming });
   const html = [];
   segments.forEach((segment, position) => {
     if (segment.kind === 'markdown') {
@@ -728,7 +823,9 @@ export function renderAdaptiveMarkdown(value = '', { labels = HAUI_DEFAULT_LABEL
       return;
     }
     const parsed = parseAdaptiveFence(segment.lang, segment.body);
-    html.push(parsed.ok ? renderAdaptiveBlocksHtml(parsed.blocks, { scope: segment.id, labels: merged }) : renderMarkdown(segment.raw));
+    html.push(parsed.ok
+      ? renderAdaptiveBlocksHtml(parsed.blocks, { scope: segment.id, labels: merged })
+      : renderBlock({ id: 'x', type: 'salvage', lines: parsed.salvage || [] }, segment.id, merged));
   });
   return html.join('');
 }

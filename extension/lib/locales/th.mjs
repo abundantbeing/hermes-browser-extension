@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "กำลังสร้างมุมมอง…",
   "haui.opens_new_tab": "เปิดในแท็บใหม่",
   "haui.ask_hint": "ใส่คำถามนี้ในช่องข้อความ",
+  "haui.unreadable": "แสดงเป็นข้อความ: ไม่สามารถวาดการ์ดนี้ได้",
   "settings.save.hint": "รูปลักษณ์ เอเจนต์ รวมถึงสวิตช์สิทธิ์และรันไทม์จะมีผลทันทีที่คุณเปลี่ยน ส่วนอื่นทั้งหมดจะมีผลเมื่อกด บันทึก",
   "settings.save.saved_connected": "บันทึกแล้ว Hermes เชื่อมต่ออยู่",
   "settings.save.saved_offline": "บันทึกแล้ว แต่ไม่สามารถเชื่อมต่อ Hermes ได้: {detail}",

@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "보기 만드는 중…",
   "haui.opens_new_tab": "새 탭에서 열립니다",
   "haui.ask_hint": "이 질문을 메시지 입력창에 넣습니다",
+  "haui.unreadable": "텍스트로 표시됨: 이 카드를 그릴 수 없었습니다.",
   "settings.save.hint": "모양, 에이전트, 권한 및 런타임 스위치는 바꾸는 즉시 적용됩니다. 나머지는 저장을 누르면 적용됩니다.",
   "settings.save.saved_connected": "저장했습니다. Hermes에 연결되어 있습니다.",
   "settings.save.saved_offline": "저장했지만 Hermes에 연결할 수 없습니다: {detail}",

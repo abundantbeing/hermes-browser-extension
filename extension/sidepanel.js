@@ -18299,6 +18299,7 @@ function adaptiveUiLabels() {
     building: t('haui.building'),
     opensNewTab: t('haui.opens_new_tab'),
     askHint: t('haui.ask_hint'),
+    unreadable: t('haui.unreadable'),
   };
 }
 
@@ -18327,8 +18328,11 @@ function renderMessageContentElement(element, content = '') {
   }
   // Response style shapes Hermes' own replies only; user, system and side
   // cards keep the Markdown renderer, matching the full tab.
-  const style = element?.closest?.('.message.assistant') ? responsePresentationFromSettings(settings).responseStyle : 'rich';
-  patchRenderedMessageContent(element, renderResponseSafe(content || '', { style, labels: adaptiveUiLabels() }));
+  const assistant = element?.closest?.('.message.assistant');
+  const style = assistant ? responsePresentationFromSettings(settings).responseStyle : 'rich';
+  // Only a reply the stream updater is still writing may hold an unfinished block.
+  const streaming = assistant?.hermesStreaming === true;
+  patchRenderedMessageContent(element, renderResponseSafe(content || '', { style, labels: adaptiveUiLabels(), streaming }));
   enhanceMarkdownCodeBlocks(element, {
     copyLabel: translateUiText('Copy code'),
     copiedLabel: translateUiText('Copied'),
@@ -19242,6 +19246,7 @@ function setMessageContent(node, content) {
 
 function createStreamingMessageUpdater(node, record = {role:'assistant',content:''}) {
   node.hermesStreamRecord = record;
+  node.hermesStreaming = true;
   let pending = '';
   let activity = null;
   let calls = [];
@@ -19271,6 +19276,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     }
     const renderedRecoveredImage = Boolean(existingImage?.querySelector('.generated-image-reveal-source'));
     if (!renderedRecoveredImage || imageSource) setToolActivity(node, null);
+    node.hermesStreaming = false;
     setMessageContent(node, pending);
     const row = node.closest('.message-row');
     panelMessageThread?.setStreaming(row, false);

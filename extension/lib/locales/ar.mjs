@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "جارٍ إنشاء العرض…",
   "haui.opens_new_tab": "يُفتح في تبويب جديد",
   "haui.ask_hint": "يضع هذا السؤال في مربع الرسالة",
+  "haui.unreadable": "معروضة كنص: تعذّر رسم هذه البطاقة.",
   "settings.save.hint": "المظهر والوكلاء ومفاتيح الأذونات ووقت التشغيل تُطبَّق فور تغييرها. أما بقية الإعدادات فتُطبَّق عند الضغط على «حفظ».",
   "settings.save.saved_connected": "تم الحفظ. Hermes متصل.",
   "settings.save.saved_offline": "تم الحفظ، لكن تعذّر الوصول إلى Hermes: {detail}",

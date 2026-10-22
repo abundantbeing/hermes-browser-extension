@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "Building view…",
   "haui.opens_new_tab": "Opens in a new tab",
   "haui.ask_hint": "Puts this question in the message box",
+  "haui.unreadable": "Shown as text: this card could not be drawn.",
   "settings.save.hint": "Appearance, Agents and the permission and runtime switches apply as you change them. Everything else applies when you press Save.",
   "settings.save.saved_connected": "Saved. Hermes is connected.",
   "settings.save.saved_offline": "Saved, but Hermes could not be reached: {detail}",

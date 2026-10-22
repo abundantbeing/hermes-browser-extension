@@ -1706,6 +1706,7 @@ export default Object.freeze({
   "haui.building": "Membuat tampilan…",
   "haui.opens_new_tab": "Dibuka di tab baru",
   "haui.ask_hint": "Memasukkan pertanyaan ini ke kotak pesan",
+  "haui.unreadable": "Ditampilkan sebagai teks: kartu ini tidak dapat digambar.",
   "settings.save.hint": "Tampilan, agen, serta sakelar izin dan runtime berlaku saat Anda mengubahnya. Semua yang lain berlaku saat Anda menekan Simpan.",
   "settings.save.saved_connected": "Tersimpan. Hermes terhubung.",
   "settings.save.saved_offline": "Tersimpan, tetapi Hermes tidak dapat dijangkau: {detail}",

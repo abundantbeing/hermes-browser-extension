@@ -1705,6 +1705,7 @@ export default Object.freeze({
   "haui.building": "正在生成视图…",
   "haui.opens_new_tab": "在新标签页中打开",
   "haui.ask_hint": "将此问题放入消息框",
+  "haui.unreadable": "以文本显示：无法绘制此卡片。",
   "settings.save.hint": "外观、智能体以及权限和运行时开关会在更改时立即生效。其他设置在点击“保存”后生效。",
   "settings.save.saved_connected": "已保存。Hermes 已连接。",
   "settings.save.saved_offline": "已保存，但无法连接到 Hermes：{detail}",

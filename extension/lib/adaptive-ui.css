@@ -338,3 +338,9 @@ ol.haui-list-items > li::before {
 .haui-notice[data-tone="success"] { --haui-tone: var(--hermes-success, #1f9d63); }
 .haui-notice-title { font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
 .haui-notice-body { margin: 0.3em 0 0; color: var(--hermes-muted); line-height: 1.45; overflow-wrap: anywhere; }
+
+/* A card that could not be drawn: its words as text, never its JSON. */
+.haui-salvage { padding: 0.6em 0.85em; border: 1px dashed rgba(var(--hermes-ink-rgb), 0.22); border-radius: var(--haui-radius); }
+.haui-salvage-note { margin: 0; color: var(--hermes-muted); font: 600 0.78em/1.3 var(--hermes-font-mono); letter-spacing: 0.04em; }
+.haui-salvage ul { margin: 0.45em 0 0; padding-left: 1.1em; }
+.haui-salvage li { margin: 0.15em 0; overflow-wrap: anywhere; }
