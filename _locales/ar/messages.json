@@ -2243,6 +2243,30 @@
     "message": "الصوت والتنبيه",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_context_depth_full": {
+    "message": "كامل",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "أكبر قدر من محتوى الصفحة",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "أدنى",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "التحديد ومقتطف قصير",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "عادي",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "خيار افتراضي جيد",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
+  },
   "runtime_settings_custom_theme_help": {
     "message": "أضف المزيد من السمات: تصفّح سمات VS Code أو استورد ملف سمة أو اطلب من وكيل تصميم سمة. تظهر السمات المثبّتة في الشبكة أعلاه.",
     "description": "Runtime interface message settings.custom_theme_help"
@@ -2362,6 +2386,38 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· ألفا العامة / تحميل تفكيكها",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "تلقائي",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "ترجمات YouTube، ثم الصفحة",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "مخصص",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "خدمتك الخاصة",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "عدم جلب النصوص أبدًا",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "نصوص YouTube",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "عنوان URL للخدمة",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "يضيف Hermes معرّف الفيديو إلى هذا العنوان.",
+    "description": "Runtime interface message settings.transcript.url_hint"
   },
   "runtime_status_connection_not_responding": {
     "message": "{summary} لا يستجيب. ابدأ Hermes Desktop/Gateway، ثم أعد الاتصال.",

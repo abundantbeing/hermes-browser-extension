@@ -1210,6 +1210,51 @@
                 <span class="settings-switch" aria-hidden="true"></span>
               </label>
             </div>
+            <fieldset id="contextDepthOptions" class="settings-choice-group context-depth-options">
+              <legend data-i18n="ui.page.context.depth">Page context depth</legend>
+              <div class="settings-choice-grid settings-choice-grid-three">
+                <label class="settings-choice-card compact-choice">
+                  <input type="radio" name="contextDepth" value="minimal" />
+                  <span class="settings-choice-copy"><strong data-i18n="settings.context_depth.minimal">Minimal</strong><small data-i18n="settings.context_depth.minimal_hint">Selection and a short excerpt</small></span>
+                  <span class="settings-choice-mark" aria-hidden="true"></span>
+                </label>
+                <label class="settings-choice-card compact-choice">
+                  <input type="radio" name="contextDepth" value="normal" />
+                  <span class="settings-choice-copy"><strong data-i18n="settings.context_depth.normal">Normal</strong><small data-i18n="settings.context_depth.normal_hint">Good default</small></span>
+                  <span class="settings-choice-mark" aria-hidden="true"></span>
+                </label>
+                <label class="settings-choice-card compact-choice">
+                  <input type="radio" name="contextDepth" value="full" />
+                  <span class="settings-choice-copy"><strong data-i18n="settings.context_depth.full">Full</strong><small data-i18n="settings.context_depth.full_hint">Largest page payload</small></span>
+                  <span class="settings-choice-mark" aria-hidden="true"></span>
+                </label>
+              </div>
+            </fieldset>
+            <fieldset id="transcriptModeOptions" class="settings-choice-group transcript-mode-options">
+              <legend data-i18n="settings.transcript.title">YouTube transcripts</legend>
+              <div class="settings-choice-grid settings-choice-grid-three">
+                <label class="settings-choice-card compact-choice">
+                  <input type="radio" name="transcriptMode" value="default" />
+                  <span class="settings-choice-copy"><strong data-i18n="settings.transcript.auto">Automatic</strong><small data-i18n="settings.transcript.auto_hint">YouTube captions, then the page</small></span>
+                  <span class="settings-choice-mark" aria-hidden="true"></span>
+                </label>
+                <label class="settings-choice-card compact-choice">
+                  <input type="radio" name="transcriptMode" value="off" />
+                  <span class="settings-choice-copy"><strong data-i18n="ui.off">Off</strong><small data-i18n="settings.transcript.off_hint">Never fetch transcripts</small></span>
+                  <span class="settings-choice-mark" aria-hidden="true"></span>
+                </label>
+                <label class="settings-choice-card compact-choice">
+                  <input type="radio" name="transcriptMode" value="custom" />
+                  <span class="settings-choice-copy"><strong data-i18n="settings.transcript.custom">Custom</strong><small data-i18n="settings.transcript.custom_hint">Your own service</small></span>
+                  <span class="settings-choice-mark" aria-hidden="true"></span>
+                </label>
+              </div>
+              <label id="transcriptProviderField" class="transcript-provider-field" hidden>
+                <span data-i18n="settings.transcript.url">Service URL</span>
+                <input id="transcriptProviderInput" name="transcriptProvider" type="url" inputmode="url" placeholder="https://provider.example/transcript?video_id={video_id}" data-i18n-invariant />
+                <small data-i18n="settings.transcript.url_hint">Hermes adds the video ID to this address.</small>
+              </label>
+            </fieldset>
           </div>
 
           <fieldset id="panelResidencyOptions" class="panel-residency-options settings-choice-group">
@@ -1235,20 +1280,24 @@
             </div>
           </fieldset>
         </section>
+        <section class="settings-subsection context-window-settings" aria-labelledby="settingsContextTitle">
+          <div class="settings-section-head compact">
+            <div>
+              <h4 id="settingsContextTitle" data-i18n="ui.context.window">Context window</h4>
+              <p id="settingsContextSession" class="settings-context-session" data-i18n-runtime></p>
+              <p id="settingsContextSummary"></p>
+            </div>
+          </div>
+          <div id="settingsContextUsage" class="context-usage-card" data-i18n-runtime></div>
+          <details class="context-window-details">
+            <summary data-i18n="ui.details">Details</summary>
+            <p class="context-section-label" data-i18n="ui.session.runtime">Session runtime</p>
+            <dl id="settingsContextRuntime" class="context-runtime-breakdown"></dl>
+            <p class="context-section-label" data-i18n="ui.next.prompt.payload">Next prompt payload</p>
+            <dl id="settingsContextPayload"></dl>
+          </details>
+        </section>
 
-        <label>
-          <span data-i18n="ui.page.context.depth">Page context depth</span>
-          <select id="contextDepthInput" name="contextDepth">
-            <option value="minimal" data-i18n="ui.minimal.selected.text.short.page.text">Minimal - selected text + short page text</option>
-            <option value="normal" data-i18n="ui.normal.good.default">Normal - good default</option>
-            <option value="full" data-i18n="ui.full.largest.payload">Full - largest payload</option>
-          </select>
-        </label>
-
-        <label>
-          <span data-i18n="ui.youtube.transcript.provider">YouTube transcript provider</span>
-          <input id="transcriptProviderInput" name="transcriptProvider" type="text" placeholder="default, off, or https://provider.example/transcript?video_id={video_id}" data-i18n-invariant />
-        </label>
         </section>
 
         <section id="settingsPane-permissions" class="settings-pane" data-settings-pane="permissions" aria-labelledby="settingsPaneTitle-permissions" hidden>
@@ -1314,22 +1363,6 @@
           </label>
           </section>
 
-          <section class="settings-subsection context-window-settings" aria-labelledby="settingsContextTitle">
-            <div class="settings-section-head compact">
-              <div>
-                <h4 id="settingsContextTitle" data-i18n="ui.context.window">Context window</h4>
-                <p id="settingsContextSummary"></p>
-              </div>
-            </div>
-            <div id="settingsContextUsage" class="context-usage-card" data-i18n-runtime></div>
-            <details class="context-window-details">
-              <summary data-i18n="ui.details">Details</summary>
-              <p class="context-section-label" data-i18n="ui.session.runtime">Session runtime</p>
-              <dl id="settingsContextRuntime" class="context-runtime-breakdown"></dl>
-              <p class="context-section-label" data-i18n="ui.next.prompt.payload">Next prompt payload</p>
-              <dl id="settingsContextPayload"></dl>
-            </details>
-          </section>
         </section>
 
         <section id="settingsPane-assist" class="settings-pane" data-settings-pane="assist" aria-labelledby="settingsPaneTitle-assist" hidden>

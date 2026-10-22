@@ -2243,6 +2243,30 @@
     "message": "Stimme & Aktivierung",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_context_depth_full": {
+    "message": "Vollständig",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "Größte Seitenmenge",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "Minimal",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "Auswahl und ein kurzer Auszug",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "Normal",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "Gute Standardeinstellung",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
+  },
   "runtime_settings_custom_theme_help": {
     "message": "Weitere Themes hinzufügen: VS-Code-Themes durchsuchen, eine Theme-Datei importieren oder von einem Agenten gestalten lassen. Installierte Themes erscheinen oben im Raster.",
     "description": "Runtime interface message settings.custom_theme_help"
@@ -2362,6 +2386,38 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· öffentliche Alpha / entpackt laden",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "Automatisch",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "YouTube-Untertitel, dann die Seite",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "Eigener",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "Dein eigener Dienst",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "Nie Transkripte abrufen",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "YouTube-Transkripte",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "Dienst-URL",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes hängt die Video-ID an diese Adresse an.",
+    "description": "Runtime interface message settings.transcript.url_hint"
   },
   "runtime_status_connection_not_responding": {
     "message": "{summary} antwortet nicht. Starten Sie Hermes Desktop/Gateway und verbinden Sie sich erneut.",

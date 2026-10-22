@@ -2243,6 +2243,30 @@
     "message": "Голос и активация",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_context_depth_full": {
+    "message": "Полностью",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "Максимум содержимого страницы",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "Минимум",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "Выделение и короткий фрагмент",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "Обычно",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "Хороший вариант по умолчанию",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
+  },
   "runtime_settings_custom_theme_help": {
     "message": "Добавьте темы: просмотрите темы VS Code, импортируйте файл темы или попросите агента создать её. Установленные темы появятся в сетке выше.",
     "description": "Runtime interface message settings.custom_theme_help"
@@ -2362,6 +2386,38 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· публичная альфа-версия / загрузить распакованное",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "Автоматически",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "Субтитры YouTube, затем страница",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "Свой",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "Ваш собственный сервис",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "Никогда не загружать расшифровки",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "Расшифровки YouTube",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "URL сервиса",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes добавляет ID видео к этому адресу.",
+    "description": "Runtime interface message settings.transcript.url_hint"
   },
   "runtime_status_connection_not_responding": {
     "message": "{summary} не отвечает. Запустите Hermes Desktop/Gateway, затем подключитесь снова.",

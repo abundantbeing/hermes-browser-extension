@@ -2243,6 +2243,30 @@
     "message": "语音与唤醒",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_context_depth_full": {
+    "message": "完整",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "最多的页面内容",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "最少",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "所选内容和简短摘录",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "标准",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "推荐的默认值",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
+  },
   "runtime_settings_custom_theme_help": {
     "message": "添加更多主题：浏览 VS Code 主题、导入主题文件，或让代理设计一个。已安装的主题会显示在上方网格中。",
     "description": "Runtime interface message settings.custom_theme_help"
@@ -2362,6 +2386,38 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· 公开测试版 / 加载未打包扩展",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "自动",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "先用 YouTube 字幕，再读取页面",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "自定义",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "你自己的服务",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "从不获取字幕文稿",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "YouTube 字幕文稿",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "服务 URL",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes 会把视频 ID 加到这个地址中。",
+    "description": "Runtime interface message settings.transcript.url_hint"
   },
   "runtime_status_connection_not_responding": {
     "message": "{summary} 无响应。请启动 Hermes Desktop/Gateway，然后重新连接。",

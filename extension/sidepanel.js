@@ -285,7 +285,7 @@ import {
   subagentStackSummary,
   subagentsFromListResult,
 } from './lib/subagent-stack.mjs';
-import { extractYouTubeVideoId } from './lib/transcript.mjs';
+import { extractYouTubeVideoId, transcriptModeFromProvider, transcriptProviderFromMode } from './lib/transcript.mjs';
 import {
   buildDashboardWsUrl,
   buildDashboardWsUrlWithCredential,
@@ -1040,6 +1040,7 @@ const els = {
   contextUsageCard: $('#contextUsageCard'),
   contextRefreshButton: $('#contextRefreshButton'),
   settingsContextUsage: $('#settingsContextUsage'),
+  settingsContextSession: $('#settingsContextSession'),
   settingsContextSummary: $('#settingsContextSummary'),
   settingsContextRuntime: $('#settingsContextRuntime'),
   settingsContextPayload: $('#settingsContextPayload'),
@@ -1061,7 +1062,7 @@ const els = {
   copyRemoteEnvButton: $('#copyRemoteEnvButton'),
   sessionIdInput: $('#sessionIdInput'),
   sessionTitleInput: $('#sessionTitleInput'),
-  contextDepthInput: $('#contextDepthInput'),
+  contextDepthInputs: Array.from(document.querySelectorAll('input[name="contextDepth"]')),
   includeTabsInput: $('#includeTabsInput'),
   includePageTextInput: $('#includePageTextInput'),
   includeSelectedTextInput: $('#includeSelectedTextInput'),
@@ -1081,6 +1082,8 @@ const els = {
   autoNameSessionsInput: $('#autoNameSessionsInput'),
   showMessageTimesInput: $('#showMessageTimesInput'),
   transcriptProviderInput: $('#transcriptProviderInput'),
+  transcriptProviderField: $('#transcriptProviderField'),
+  transcriptModeInputs: Array.from(document.querySelectorAll('input[name="transcriptMode"]')),
   wakeWordEnabledInput: $('#wakeWordEnabledInput'),
   wakeWordPhraseInput: $('#wakeWordPhraseInput'),
   wakeWordBrowserFallbackInput: $('#wakeWordBrowserFallbackInput'),
@@ -2508,6 +2511,8 @@ function showSettingsPane(pane, { field = '', focus = true } = {}) {
   els.settingsDialog.dataset.settingsView = settingsActivePane || 'home';
   els.settingsDialog.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   if (settingsActivePane === 'models') renderSettingsModelSummary();
+  // The pane shows the open session's context; ask for a fresh reading (no-op when recent).
+  if (settingsActivePane === 'sessions') refreshSessionContextTelemetry();
   renderSettingsEditedMarkers();
   requestAnimationFrame(updateSettingsBackToTop);
   if (!focus) return;
@@ -9261,6 +9266,12 @@ function renderContextWindow(userText = els.input?.value || '') {
   syncComposerFrame();
   renderContextUsageCard(els.contextUsageCard, contextView);
   renderContextUsageCard(els.settingsContextUsage, contextView);
+  if (els.settingsContextSession) {
+    const sessionName = String(settings.sessionTitle || settings.sessionId || '').trim();
+    els.settingsContextSession.textContent = sessionName;
+    els.settingsContextSession.title = String(settings.sessionId || '');
+    els.settingsContextSession.hidden = !sessionName;
+  }
   if (els.contextRefreshButton) {
     const refreshLabel = translateUiText('Refresh context');
     els.contextRefreshButton.hidden = !dashboardContextTarget();
@@ -19625,6 +19636,19 @@ function renderMessagesFromStorage() {
   })();
 }
 
+// YouTube transcripts: Automatic / Off / Custom. The URL field shows only for
+// Custom; a URL typed earlier is kept in the field when the choice changes.
+function syncTranscriptModeControls({ mode = 'default', url = '' } = {}) {
+  for (const input of els.transcriptModeInputs) input.checked = input.value === mode;
+  if (url || mode !== 'custom') els.transcriptProviderInput.value = url;
+  renderTranscriptProviderField();
+}
+
+function renderTranscriptProviderField() {
+  const custom = els.transcriptModeInputs.find((input) => input.checked)?.value === 'custom';
+  if (els.transcriptProviderField) els.transcriptProviderField.hidden = !custom;
+}
+
 function syncSettingsForm() {
   renderAppearanceControls();
   renderProfiles();
@@ -19641,7 +19665,7 @@ function syncSettingsForm() {
   els.apiKeyInput.value = settings.apiKey || '';
   els.sessionIdInput.value = settings.sessionId;
   els.sessionTitleInput.value = settings.sessionTitle;
-  els.contextDepthInput.value = settings.contextDepth;
+  for (const input of els.contextDepthInputs) input.checked = input.value === (settings.contextDepth || DEFAULT_SETTINGS.contextDepth);
   els.includeTabsInput.checked = Boolean(settings.includeTabs);
   els.includePageTextInput.checked = Boolean(settings.includePageText);
   els.includeSelectedTextInput.checked = Boolean(settings.includeSelectedText);
@@ -19662,7 +19686,7 @@ function syncSettingsForm() {
   if (els.customModelSourcesInput) {
     els.customModelSourcesInput.value = normalizeExternalModelSourceList(settings.customModelSources || []).join('\n');
   }
-  els.transcriptProviderInput.value = settings.transcriptProvider || DEFAULT_SETTINGS.transcriptProvider;
+  syncTranscriptModeControls(transcriptModeFromProvider(settings.transcriptProvider || DEFAULT_SETTINGS.transcriptProvider));
   if (els.wakeWordEnabledInput) els.wakeWordEnabledInput.checked = Boolean(settings.wakeWordEnabled);
   if (els.wakeWordPhraseInput) els.wakeWordPhraseInput.value = settings.wakeWordPhrase || DEFAULT_SETTINGS.wakeWordPhrase;
   if (els.wakeWordBrowserFallbackInput) els.wakeWordBrowserFallbackInput.checked = settings.wakeWordBrowserFallback !== false;
@@ -19734,7 +19758,7 @@ async function saveSettingsFromForm() {
     botModeEnabled: els.botModeEnabledInput ? els.botModeEnabledInput.checked : settings.botModeEnabled === true,
     botModeDisplayDensity: els.botModeDisplayDensity?.value === 'compact' ? 'compact' : 'comfortable',
     botModeAnimateAvatars: els.botModeAnimateAvatars?.value === 'on',
-    contextDepth: els.contextDepthInput.value,
+    contextDepth: els.contextDepthInputs.find((input) => input.checked)?.value || settings.contextDepth || DEFAULT_SETTINGS.contextDepth,
     includeTabs: els.includeTabsInput.checked,
     includePageText: els.includePageTextInput.checked,
     includeSelectedText: els.includeSelectedTextInput.checked,
@@ -19753,7 +19777,10 @@ async function saveSettingsFromForm() {
     agentDiscoveryScheme: normalizeAgentDiscoveryScheme(els.agentSchemeInput?.value || settings.agentDiscoveryScheme || DEFAULT_SETTINGS.agentDiscoveryScheme),
     agentPorts: parseAgentPortsInput(els.agentPortsInput?.value || '').length ? parseAgentPortsInput(els.agentPortsInput?.value || '') : getAgentPorts(),
     customModelSources: normalizeExternalModelSourceList(els.customModelSourcesInput?.value?.split(/\n+/) || settings.customModelSources || []),
-    transcriptProvider: els.transcriptProviderInput.value.trim() || DEFAULT_SETTINGS.transcriptProvider,
+    transcriptProvider: transcriptProviderFromMode(
+      els.transcriptModeInputs.find((input) => input.checked)?.value,
+      els.transcriptProviderInput.value,
+    ),
     gmailCaptureEnabled: els.gmailCaptureEnabledInput ? els.gmailCaptureEnabledInput.checked : settings.gmailCaptureEnabled === true,
     wakeWordEnabled: els.wakeWordEnabledInput ? els.wakeWordEnabledInput.checked : Boolean(settings.wakeWordEnabled),
     wakeWordPhrase: normalizeWakeWordSettings({ wakeWordPhrase: els.wakeWordPhraseInput?.value }).phrase,
@@ -24757,6 +24784,7 @@ function bindEvents() {
     // Opening asks for a fresh reading unless one arrived in the last 30 s.
     if (!nextHidden) refreshSessionContextTelemetry();
   });
+  for (const input of els.transcriptModeInputs) input.addEventListener('change', renderTranscriptProviderField);
   els.contextRefreshButton?.addEventListener('click', (event) => {
     event.stopPropagation();
     refreshSessionContextTelemetry({ force: true });

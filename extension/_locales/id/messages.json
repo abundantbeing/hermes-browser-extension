@@ -2243,6 +2243,30 @@
     "message": "Suara & pemicu",
     "description": "Runtime interface message settings.categories.voice.title"
   },
+  "runtime_settings_context_depth_full": {
+    "message": "Penuh",
+    "description": "Runtime interface message settings.context_depth.full"
+  },
+  "runtime_settings_context_depth_full_hint": {
+    "message": "Muatan halaman terbesar",
+    "description": "Runtime interface message settings.context_depth.full_hint"
+  },
+  "runtime_settings_context_depth_minimal": {
+    "message": "Minimal",
+    "description": "Runtime interface message settings.context_depth.minimal"
+  },
+  "runtime_settings_context_depth_minimal_hint": {
+    "message": "Pilihan dan kutipan singkat",
+    "description": "Runtime interface message settings.context_depth.minimal_hint"
+  },
+  "runtime_settings_context_depth_normal": {
+    "message": "Normal",
+    "description": "Runtime interface message settings.context_depth.normal"
+  },
+  "runtime_settings_context_depth_normal_hint": {
+    "message": "Bawaan yang baik",
+    "description": "Runtime interface message settings.context_depth.normal_hint"
+  },
   "runtime_settings_custom_theme_help": {
     "message": "Tambahkan tema: jelajahi tema VS Code, impor file tema, atau minta agen merancang satu. Tema yang terpasang muncul di kisi di atas.",
     "description": "Runtime interface message settings.custom_theme_help"
@@ -2362,6 +2386,38 @@
   "runtime_settings_public_alpha_load_unpacked": {
     "message": "· alpha publik / beban dibongkar",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
+  },
+  "runtime_settings_transcript_auto": {
+    "message": "Otomatis",
+    "description": "Runtime interface message settings.transcript.auto"
+  },
+  "runtime_settings_transcript_auto_hint": {
+    "message": "Teks YouTube, lalu halaman",
+    "description": "Runtime interface message settings.transcript.auto_hint"
+  },
+  "runtime_settings_transcript_custom": {
+    "message": "Kustom",
+    "description": "Runtime interface message settings.transcript.custom"
+  },
+  "runtime_settings_transcript_custom_hint": {
+    "message": "Layanan Anda sendiri",
+    "description": "Runtime interface message settings.transcript.custom_hint"
+  },
+  "runtime_settings_transcript_off_hint": {
+    "message": "Jangan pernah ambil transkrip",
+    "description": "Runtime interface message settings.transcript.off_hint"
+  },
+  "runtime_settings_transcript_title": {
+    "message": "Transkrip YouTube",
+    "description": "Runtime interface message settings.transcript.title"
+  },
+  "runtime_settings_transcript_url": {
+    "message": "URL layanan",
+    "description": "Runtime interface message settings.transcript.url"
+  },
+  "runtime_settings_transcript_url_hint": {
+    "message": "Hermes menambahkan ID video ke alamat ini.",
+    "description": "Runtime interface message settings.transcript.url_hint"
   },
   "runtime_status_connection_not_responding": {
     "message": "{summary} tidak merespons. Mulai Hermes Desktop/Gateway, lalu sambungkan kembali.",
