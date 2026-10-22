@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Tylko dymek użytkownika",
   "responses.layout.user_bubble_hint": "Twoje wiadomości w dymku, a odpowiedzi Hermesa jako zwykły tekst.",
   "responses.setup_again": "Uruchom konfigurację ponownie",
+  "haui.view_chart": "Wykres",
+  "haui.view_table": "Tabela",
+  "haui.view_as_chart": "Pokaż jako wykres",
+  "haui.copy": "Kopiuj",
+  "haui.copied": "Skopiowano",
+  "haui.building": "Tworzenie widoku…",
+  "haui.opens_new_tab": "Otwiera się w nowej karcie",
+  "haui.ask_hint": "Wstawia to pytanie do pola wiadomości",
 });
