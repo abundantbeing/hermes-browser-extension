@@ -2387,6 +2387,30 @@
     "message": "· 公开测试版 / 加载未打包扩展",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "未保存：{detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "外观、智能体以及权限和运行时开关会在更改时立即生效。其他设置在点击“保存”后生效。",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "智能体端口必须是 1 到 65535 之间的数字，用逗号分隔。",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "已保存。Hermes 已连接。",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "已保存，但无法连接到 Hermes：{detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "以下模型来源地址无效：{sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "自动",
     "description": "Runtime interface message settings.transcript.auto"

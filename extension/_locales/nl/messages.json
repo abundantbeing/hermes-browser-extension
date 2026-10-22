@@ -2387,6 +2387,30 @@
     "message": "· openbare alpha / niet-uitgepakte extensie laden",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Niet opgeslagen: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Uiterlijk, agenten en de schakelaars voor rechten en runtime gelden direct. Al het andere geldt zodra je op Opslaan drukt.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Agentpoorten moeten getallen van 1 tot 65535 zijn, gescheiden door komma’s.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Opgeslagen. Hermes is verbonden.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Opgeslagen, maar Hermes was niet bereikbaar: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Deze modelbronadressen zijn ongeldig: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Automatisch",
     "description": "Runtime interface message settings.transcript.auto"

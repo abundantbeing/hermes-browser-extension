@@ -2387,6 +2387,30 @@
     "message": "· alpha pubblica / carica estensione non pacchettizzata",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Non salvato: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Aspetto, agenti e gli interruttori di autorizzazioni ed esecuzione si applicano appena li modifichi. Tutto il resto si applica quando premi Salva.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Le porte degli agenti devono essere numeri da 1 a 65535, separati da virgole.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Salvato. Hermes è connesso.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Salvato, ma Hermes non è raggiungibile: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Questi indirizzi di origine dei modelli non sono validi: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Automatico",
     "description": "Runtime interface message settings.transcript.auto"

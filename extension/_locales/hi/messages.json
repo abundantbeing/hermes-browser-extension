@@ -2387,6 +2387,30 @@
     "message": "· सार्वजनिक अल्फ़ा / लोड अनपैक्ड",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "सहेजा नहीं गया: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "दिखावट, एजेंट तथा अनुमति और रनटाइम स्विच बदलते ही लागू हो जाते हैं। बाकी सब कुछ सहेजें दबाने पर लागू होता है।",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "एजेंट पोर्ट 1 से 65535 तक की संख्याएँ होने चाहिए, अल्पविराम से अलग किए हुए।",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "सहेज लिया गया। Hermes से कनेक्ट है।",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "सहेज लिया गया, लेकिन Hermes तक पहुँचा नहीं जा सका: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "ये मॉडल स्रोत पते मान्य नहीं हैं: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "स्वचालित",
     "description": "Runtime interface message settings.transcript.auto"

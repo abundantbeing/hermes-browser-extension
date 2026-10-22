@@ -2387,6 +2387,30 @@
     "message": "· อัลฟ่าสาธารณะ / โหลดที่แยกออกมา",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "ยังไม่ได้บันทึก: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "รูปลักษณ์ เอเจนต์ รวมถึงสวิตช์สิทธิ์และรันไทม์จะมีผลทันทีที่คุณเปลี่ยน ส่วนอื่นทั้งหมดจะมีผลเมื่อกด บันทึก",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "พอร์ตของเอเจนต์ต้องเป็นตัวเลขตั้งแต่ 1 ถึง 65535 คั่นด้วยจุลภาค",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "บันทึกแล้ว Hermes เชื่อมต่ออยู่",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "บันทึกแล้ว แต่ไม่สามารถเชื่อมต่อ Hermes ได้: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "ที่อยู่แหล่งโมเดลเหล่านี้ไม่ถูกต้อง: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "อัตโนมัติ",
     "description": "Runtime interface message settings.transcript.auto"

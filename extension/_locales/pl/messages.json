@@ -2387,6 +2387,30 @@
     "message": "· publiczna alfa / wczytaj rozpakowane rozszerzenie",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Nie zapisano: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Wygląd, agenci oraz przełączniki uprawnień i środowiska uruchomieniowego działają od razu po zmianie. Wszystko inne zaczyna działać po naciśnięciu Zapisz.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Porty agentów muszą być liczbami od 1 do 65535, oddzielonymi przecinkami.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Zapisano. Hermes jest połączony.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Zapisano, ale nie udało się połączyć z Hermes: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Te adresy źródeł modeli są nieprawidłowe: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Automatycznie",
     "description": "Runtime interface message settings.transcript.auto"

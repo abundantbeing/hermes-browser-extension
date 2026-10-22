@@ -2387,6 +2387,30 @@
     "message": "· публічна альфа-версія / завантажити розпаковане",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Не збережено: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Вигляд, агенти, а також перемикачі дозволів і середовища виконання застосовуються одразу. Усе інше застосовується після натискання «Зберегти».",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Порти агентів мають бути числами від 1 до 65535, розділеними комами.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Збережено. Hermes підключено.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Збережено, але зв’язатися з Hermes не вдалося: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Ці адреси джерел моделей недійсні: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Автоматично",
     "description": "Runtime interface message settings.transcript.auto"

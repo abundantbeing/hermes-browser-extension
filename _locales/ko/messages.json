@@ -2387,6 +2387,30 @@
     "message": "· 공개 알파/로드 언팩",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "저장하지 못했습니다: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "모양, 에이전트, 권한 및 런타임 스위치는 바꾸는 즉시 적용됩니다. 나머지는 저장을 누르면 적용됩니다.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "에이전트 포트는 1~65535 사이의 숫자여야 하며 쉼표로 구분합니다.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "저장했습니다. Hermes에 연결되어 있습니다.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "저장했지만 Hermes에 연결할 수 없습니다: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "다음 모델 소스 주소가 올바르지 않습니다: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "자동",
     "description": "Runtime interface message settings.transcript.auto"

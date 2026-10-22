@@ -2387,6 +2387,30 @@
     "message": "· ألفا العامة / تحميل تفكيكها",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "لم يتم الحفظ: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "المظهر والوكلاء ومفاتيح الأذونات ووقت التشغيل تُطبَّق فور تغييرها. أما بقية الإعدادات فتُطبَّق عند الضغط على «حفظ».",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "يجب أن تكون منافذ الوكلاء أرقامًا من 1 إلى 65535، مفصولة بفواصل.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "تم الحفظ. Hermes متصل.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "تم الحفظ، لكن تعذّر الوصول إلى Hermes: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "عناوين مصادر النماذج هذه غير صالحة: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "تلقائي",
     "description": "Runtime interface message settings.transcript.auto"

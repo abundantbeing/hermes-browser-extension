@@ -2387,6 +2387,30 @@
     "message": "· 公開 Alpha / 載入未封裝擴充功能",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "未儲存：{detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "外觀、代理程式以及權限與執行階段開關會在變更時立即生效。其他設定在按下「儲存」後生效。",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "代理程式連接埠必須是 1 到 65535 之間的數字，以逗號分隔。",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "已儲存。Hermes 已連線。",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "已儲存，但無法連線到 Hermes：{detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "以下模型來源位址無效：{sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "自動",
     "description": "Runtime interface message settings.transcript.auto"

@@ -2387,6 +2387,30 @@
     "message": "· öffentliche Alpha / entpackt laden",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Nicht gespeichert: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Darstellung, Agenten sowie die Schalter für Berechtigungen und Laufzeit gelten sofort. Alles andere gilt, sobald Sie auf Speichern drücken.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Agent-Ports müssen Zahlen von 1 bis 65535 sein, durch Kommas getrennt.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Gespeichert. Hermes ist verbunden.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Gespeichert, aber Hermes war nicht erreichbar: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Diese Modellquellen-Adressen sind ungültig: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Automatisch",
     "description": "Runtime interface message settings.transcript.auto"

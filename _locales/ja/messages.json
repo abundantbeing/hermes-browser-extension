@@ -2387,6 +2387,30 @@
     "message": "· パブリックアルファ / 解凍されたロード",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "保存できませんでした: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "外観、エージェント、権限と実行のスイッチは、変更するとすぐに反映されます。そのほかの設定は「保存」を押すと反映されます。",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "エージェントのポートは、カンマ区切りの 1〜65535 の数字にしてください。",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "保存しました。Hermes に接続しています。",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "保存しましたが、Hermes に接続できませんでした: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "次のモデルソースのアドレスは無効です: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "自動",
     "description": "Runtime interface message settings.transcript.auto"

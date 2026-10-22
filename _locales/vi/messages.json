@@ -2387,6 +2387,30 @@
     "message": "· giải nén alpha / tải công khai",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Chưa lưu: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Giao diện, tác tử cùng các công tắc quyền và thời gian chạy có hiệu lực ngay khi bạn thay đổi. Mọi thứ khác có hiệu lực khi bạn nhấn Lưu.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Cổng của tác tử phải là số từ 1 đến 65535, phân tách bằng dấu phẩy.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Đã lưu. Hermes đã kết nối.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Đã lưu, nhưng không thể kết nối tới Hermes: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Các địa chỉ nguồn mô hình này không hợp lệ: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Tự động",
     "description": "Runtime interface message settings.transcript.auto"

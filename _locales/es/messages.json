@@ -2387,6 +2387,30 @@
     "message": "· alfa público/carga desempaquetada",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "No se guardó: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "La apariencia, los agentes y los interruptores de permisos y de ejecución se aplican al cambiarlos. Todo lo demás se aplica al pulsar Guardar.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Los puertos de los agentes deben ser números del 1 al 65535, separados por comas.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Guardado. Hermes está conectado.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Guardado, pero no se pudo contactar con Hermes: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Estas direcciones de fuentes de modelos no son válidas: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Automático",
     "description": "Runtime interface message settings.transcript.auto"

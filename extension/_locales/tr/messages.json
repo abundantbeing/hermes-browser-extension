@@ -2387,6 +2387,30 @@
     "message": "· genel alfa / yük paketi açıldı",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Kaydedilmedi: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Görünüm, aracılar ile izin ve çalışma zamanı anahtarları değiştirdiğiniz anda uygulanır. Geri kalan her şey Kaydet’e bastığınızda uygulanır.",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Aracı portları, virgülle ayrılmış 1 ile 65535 arasında sayılar olmalıdır.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Kaydedildi. Hermes bağlı.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Kaydedildi, ancak Hermes’e ulaşılamadı: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Bu model kaynağı adresleri geçerli değil: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Otomatik",
     "description": "Runtime interface message settings.transcript.auto"

@@ -2387,6 +2387,30 @@
     "message": "· публичная альфа-версия / загрузить распакованное",
     "description": "Runtime interface message settings.public_alpha_load_unpacked"
   },
+  "runtime_settings_save_failed": {
+    "message": "Не сохранено: {detail}",
+    "description": "Runtime interface message settings.save.failed"
+  },
+  "runtime_settings_save_hint": {
+    "message": "Оформление, агенты, а также переключатели разрешений и среды выполнения применяются сразу. Всё остальное применяется после нажатия «Сохранить».",
+    "description": "Runtime interface message settings.save.hint"
+  },
+  "runtime_settings_save_ports_invalid": {
+    "message": "Порты агентов должны быть числами от 1 до 65535, разделёнными запятыми.",
+    "description": "Runtime interface message settings.save.ports_invalid"
+  },
+  "runtime_settings_save_saved_connected": {
+    "message": "Сохранено. Hermes подключён.",
+    "description": "Runtime interface message settings.save.saved_connected"
+  },
+  "runtime_settings_save_saved_offline": {
+    "message": "Сохранено, но связаться с Hermes не удалось: {detail}",
+    "description": "Runtime interface message settings.save.saved_offline"
+  },
+  "runtime_settings_save_sources_invalid": {
+    "message": "Эти адреса источников моделей недействительны: {sources}",
+    "description": "Runtime interface message settings.save.sources_invalid"
+  },
   "runtime_settings_transcript_auto": {
     "message": "Автоматически",
     "description": "Runtime interface message settings.transcript.auto"
