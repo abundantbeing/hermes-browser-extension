@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "사용자 말풍선만",
   "responses.layout.user_bubble_hint": "내 메시지는 말풍선에, Hermes 답변은 일반 글로 표시됩니다.",
   "responses.setup_again": "설정 다시 실행",
+  "haui.view_chart": "차트",
+  "haui.view_table": "표",
+  "haui.view_as_chart": "차트로 보기",
+  "haui.copy": "복사",
+  "haui.copied": "복사됨",
+  "haui.building": "보기 만드는 중…",
+  "haui.opens_new_tab": "새 탭에서 열립니다",
+  "haui.ask_hint": "이 질문을 메시지 입력창에 넣습니다",
 });
