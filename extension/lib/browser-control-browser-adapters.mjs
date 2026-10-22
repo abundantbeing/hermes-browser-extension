@@ -1147,11 +1147,35 @@ function createChromiumCdpAdapter({
     return owners;
   }
 
+  // Elements that embed another document. A frame that Chrome runs in its own process (a cross-site
+  // iframe) is missing from Page.getFrameTree, but its owner element is still in the DOM, so this is the source
+  // that cannot miss one.
+  const FRAME_OWNER_NAMES = new Set(['IFRAME', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED']);
+
+  async function pageEmbedsFrames(send) {
+    const document = await send('DOM.getDocument', { depth: -1, pierce: true });
+    const stack = document?.root ? [document.root] : [];
+    while (stack.length) {
+      const node = stack.pop();
+      if (FRAME_OWNER_NAMES.has(String(node?.nodeName || '').toUpperCase())) return true;
+      for (const list of [node?.children, node?.shadowRoots, node?.pseudoElements]) {
+        if (Array.isArray(list)) stack.push(...list);
+      }
+      if (node?.templateContent) stack.push(node.templateContent);
+      if (node?.contentDocument) stack.push(node.contentDocument);
+    }
+    return false;
+  }
+
+  const framePathUrls = (path) => path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`);
+
   // The node under a viewport point, which is where a pointer action actually lands. The frame it is in must be
   // on pages Hermes may act on (a restricted frame laid over the control is such a frame), and for a control
   // with a known frame it must be the control's own frame, since a click on a covered control lands in
-  // whatever covers it. A hit test that fails is left alone on a page with no child frames, where nothing from
-  // another frame can be under the pointer, and otherwise refused. Returns the hit node id, or 0 when unknown.
+  // whatever covers it. When the node is itself the element that embeds a frame, the pointer lands inside that
+  // frame, so the frame it owns is judged too, and one that cannot be found in the frame tree (a frame in its
+  // own process) is refused. A hit test that fails is left alone only on a page with no element that embeds a
+  // frame, and refused otherwise or when that cannot be told. Returns the hit node id, or 0 when unknown.
   async function checkedHit(send, enable, signal, point, expectedOwner) {
     await enable('DOM');
     let hit = null;
@@ -1172,18 +1196,39 @@ function createChromiumCdpAdapter({
     } catch (error) {
       if (abortError(signal)) throw error;
     }
-    const hasChildFrames = !tree || (Array.isArray(tree.childFrames) && tree.childFrames.length > 0);
     const hitFrameId = String(hit?.frameId || '');
     if (!hitFrameId) {
-      if (hasChildFrames) throw restrictedFrameError('Hermes could not tell which frame is under that point.');
+      let embeds = true;
+      try {
+        embeds = await pageEmbedsFrames(send);
+      } catch (error) {
+        if (abortError(signal)) throw error;
+      }
+      if (embeds) throw restrictedFrameError('Hermes could not tell which frame is under that point.');
       return hitId;
+    }
+    if (hitId) {
+      let described = null;
+      try {
+        described = (await send('DOM.describeNode', { backendNodeId: hitId }))?.node || null;
+      } catch (error) {
+        if (abortError(signal)) throw error;
+      }
+      if (!described) throw restrictedFrameError('Hermes could not tell what is under that point.');
+      if (FRAME_OWNER_NAMES.has(String(described.nodeName || '').toUpperCase())) {
+        const owned = String(described.frameId || '');
+        const ownedPath = owned && tree ? frameTreePath(tree, owned) : null;
+        if (!ownedPath || !frameChainReadable(framePathUrls(ownedPath))) {
+          throw restrictedFrameError('The pointer would land in a frame Hermes cannot read.');
+        }
+      }
     }
     if (tree?.frame?.id === hitFrameId) {
       if (expectedOwner !== undefined && expectedOwner !== 0) throw restrictedFrameError('The control is covered by content from another frame.');
       return hitId;
     }
     const path = tree ? frameTreePath(tree, hitFrameId) : null;
-    if (!path || !frameChainReadable(path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`))) throw restrictedFrameError();
+    if (!path || !frameChainReadable(framePathUrls(path))) throw restrictedFrameError();
     if (expectedOwner !== undefined) {
       let owner = -1;
       try {

@@ -81,6 +81,9 @@ function chromiumApis({ failMethod = '' } = {}) {
         if (method === 'DOM.getBoxModel') {
           return { model: { content: [10, 20, 30, 20, 30, 40, 10, 40] } };
         }
+        // The frame under a point, and what kind of element is there: an ordinary one in the page itself.
+        if (method === 'DOM.getNodeForLocation') return { frameId: 'MAIN' };
+        if (method === 'DOM.describeNode') return { node: { nodeName: 'DIV' } };
         if (method === 'Page.getNavigationHistory') {
           return { currentIndex: 1, entries: [{ id: 2, url: 'https://example.test/old' }, { id: 3, url: 'https://example.test/start' }] };
         }
@@ -616,6 +619,7 @@ test('Chromium parity primitives hover drag scroll-to modifiers clipped screensh
     if (method === 'DOM.getBoxModel') return { model: { content: [10, 20, 30, 20, 30, 40, 10, 40] } };
     if (method === 'DOM.resolveNode') return { object: { objectId: 'object-44' } };
     if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'MAIN' } } };
+    if (method === 'DOM.getNodeForLocation') return { frameId: 'MAIN' };
     if (method === 'Page.captureScreenshot') return { data: 'ZmFrZS1wbmc=' };
     return {};
   };
@@ -1912,6 +1916,14 @@ function documentTree(chain, nodeId) {
 function framedApis(chain, nodeId = 5002) {
   const chromium = chromiumApis();
   chromium.handlers['DOM.getDocument'] = () => ({ root: documentTree(chain, nodeId) });
+  // The frame tree and the frame under the point agree with the documents: the control's own, innermost frame.
+  let tree = null;
+  for (let index = chain.length - 1; index >= 0; index -= 1) {
+    tree = { frame: { id: `FR${index}`, url: chain[index], urlFragment: '' }, ...(tree ? { childFrames: [tree] } : {}) };
+  }
+  chromium.handlers['Page.getFrameTree'] = () => ({ frameTree: { frame: { id: 'MAIN', url: 'https://example.test/start' }, ...(tree ? { childFrames: [tree] } : {}) } });
+  chromium.handlers['DOM.getNodeForLocation'] = () => ({ frameId: `FR${chain.length - 1}` });
+  chromium.handlers['DOM.getFrameOwner'] = () => ({ backendNodeId: 99 + chain.length });
   // What page script would answer if it were asked: always something readable.
   chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: 'https://chat.example.test/live_chat' } });
   return chromium;
@@ -2177,4 +2189,123 @@ test('Chromium refuses to hover or drag when either point lands in a restricted 
     (error) => error?.code === 'restricted_frame',
   );
   assert.equal(drag.calls.some((call) => call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed'), false);
+});
+
+// A frame Chrome runs in its own process (a cross-site iframe) is not in Page.getFrameTree, and a point over it
+// hits the element that embeds it, in the page's own frame. Real Chrome reports exactly that for a frame from
+// another site: no child frame in the tree, the hit on the IFRAME in the main frame, and an owned frame id that
+// is not in the tree.
+function oopifApis({ owner = 'IFRAME', ownedFrameId = 'OOPIF', inTree = false, treeUrl = 'https://cross.example.test/embed' } = {}) {
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.getNodeForLocation'] = () => ({ backendNodeId: 61, frameId: 'MAIN' });
+  chromium.handlers['DOM.describeNode'] = () => ({ node: { nodeName: owner, frameId: ownedFrameId } });
+  chromium.handlers['Page.getFrameTree'] = () => ({
+    frameTree: {
+      frame: { id: 'MAIN', url: 'https://example.test/start' },
+      ...(inTree ? { childFrames: [{ frame: { id: ownedFrameId, url: treeUrl, urlFragment: '' } }] } : {}),
+    },
+  });
+  return chromium;
+}
+
+test('Chromium refuses a pointer action that lands on a frame in its own process, which the frame tree does not list', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const owner of ['IFRAME', 'FRAME', 'FRAMESET', 'OBJECT', 'EMBED', 'iframe']) {
+    for (const [action, args, target] of [
+      ['browser_click', { x: 25, y: 35 }, undefined],
+      ['browser_click', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+      ['browser_hover', { ref: '@e1' }, { backendDOMNodeId: 44 }],
+      ['browser_drag', { ref: '@e1', to_ref: '@e2' }, { backendDOMNodeId: 44 }],
+    ]) {
+      const chromium = oopifApis({ owner });
+      await assert.rejects(
+        createChromiumCdpAdapter({ browserApi: chromium.api }).execute(action, args, {
+          scope, signal: openSignal(), target, destination: { backendDOMNodeId: 46 },
+        }),
+        (error) => error?.code === 'restricted_frame',
+        `${action} on ${owner}`,
+      );
+      assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false, `${action} on ${owner} sent input`);
+    }
+  }
+  // A frame owner that names no frame at all cannot be judged either.
+  const unnamed = oopifApis({ ownedFrameId: '' });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: unnamed.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+});
+
+test('Chromium judges the frame an embedding element owns when that frame is in the frame tree', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const readable = oopifApis({ inTree: true });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: readable.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
+  for (const treeUrl of ['https://cross.example.test/checkout', 'chrome-error://chromewebdata/', 'data:text/html,x']) {
+    const restricted = oopifApis({ inTree: true, treeUrl });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: restricted.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      treeUrl,
+    );
+    assert.equal(restricted.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false);
+  }
+});
+
+test('Chromium refuses a point it cannot describe', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const describe of [() => { throw new Error('No node with given id found'); }, () => ({})]) {
+    const chromium = oopifApis({ inTree: true });
+    chromium.handlers['DOM.describeNode'] = describe;
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+    );
+  }
+});
+
+test('a failed hit test is refused when any element embeds a frame, including one the frame tree omits', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const withEmbed = (name) => ({
+    nodeType: 9, nodeName: '#document', backendNodeId: 1,
+    children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: [{ nodeType: 1, nodeName: name, backendNodeId: 61 }] }],
+  });
+  for (const name of ['IFRAME', 'OBJECT', 'EMBED', 'FRAME']) {
+    // The frame tree lists nothing (the frame is in its own process); the DOM still has its owner.
+    const chromium = chromiumApis();
+    chromium.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    chromium.handlers['DOM.getDocument'] = () => ({ root: withEmbed(name) });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      (error) => error?.code === 'restricted_frame',
+      name,
+    );
+    assert.equal(chromium.calls.some((call) => call[2] === 'Input.dispatchMouseEvent'), false);
+  }
+  // An embedding element inside a shadow root or an inner document counts too.
+  const nested = chromiumApis();
+  nested.handlers['DOM.getNodeForLocation'] = () => ({});
+  nested.handlers['DOM.getDocument'] = () => ({ root: { nodeName: '#document', children: [{ nodeName: 'DIV', shadowRoots: [{ nodeName: '#shadow-root', children: [{ nodeName: 'IFRAME' }] }] }] } });
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: nested.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  // A DOM that cannot be read is not evidence that there is no frame.
+  const unreadable = chromiumApis();
+  unreadable.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  unreadable.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: unreadable.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  // A page with no element that embeds a frame keeps the old behaviour: the click still goes out.
+  const plain = chromiumApis();
+  plain.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  plain.handlers['DOM.getDocument'] = () => ({ root: withEmbed('DIV') });
+  assert.deepEqual(
+    await createChromiumCdpAdapter({ browserApi: plain.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+    { status: 'clicked' },
+  );
 });
