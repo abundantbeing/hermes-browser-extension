@@ -274,7 +274,9 @@ test('side panel keeps Browser onboarding, refresh feedback, updates, and messag
   assert.match(refreshSessions, /sessionsRefreshing\s*=\s*true/);
   assert.doesNotMatch(js, /positionOperationToast/);
   assert.match(js, /HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY/);
-  assert.match(renderEmpty, /shouldShowBrowserIntro\(/);
+  // The old first-run block is gone; an empty chat hands over to the setup flow.
+  assert.doesNotMatch(renderEmpty, /THE PAGE IS THE PROMPT/);
+  assert.match(renderEmpty, /maybeOpenOnboarding\(\)/);
   assert.match(js, /await persistBrowserIntroSeen\(\)/);
   assert.match(js, /function launchBrowserUpdateWithHermes/);
   assert.match(js, /function currentHermesBrowserSystemPrompt\(\)/);
