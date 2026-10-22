@@ -2,8 +2,16 @@
 
 ``browser_get_context`` never consults the process-global store.  The trusted
 ``pre_tool_call`` hook atomically consumes a context capability and hands the
-payload to this module through a short-lived :class:`contextvars.ContextVar`
-lease keyed by the opaque context ID.
+payload to this module through a short-lived, one-shot lease.
+
+Hermes runs ``pre_tool_call`` callbacks on a bounded worker thread inside a
+*copy* of the caller's :mod:`contextvars` context (``plugins.hook_callback_timeout``,
+default 30 s).  A ``ContextVar`` set by the hook is therefore invisible to the
+tool handler that Hermes dispatches afterwards.  The hook consequently grants
+each lease twice: once in a ``ContextVar`` (same-context callers) and once in a
+small lock-protected table keyed by the trusted runtime identity that Hermes
+passes to the handler as ``session_id``/``task_id`` keyword arguments (never by
+anything in the model-controlled tool arguments).
 """
 
 from __future__ import annotations
@@ -11,8 +19,11 @@ from __future__ import annotations
 from contextvars import ContextVar
 from dataclasses import dataclass
 import json
+import threading
 from time import monotonic
 from typing import Any
+
+from .context_store import _trusted_identifier
 
 from .schemas import (
     SCHEMA_CLEAR_CONTEXT,
@@ -27,6 +38,7 @@ from .text_utilities import run_text_utility
 
 _UNAVAILABLE = {"available": False, "reason": "Browser context unavailable."}
 _LEASE_TTL_SECONDS = 5.0
+_MAX_PENDING_LEASES = 64
 
 
 @dataclass(frozen=True)
@@ -42,6 +54,12 @@ class _AuthorizationLease:
 # overwrite one another's payload lease.
 _LEASES: ContextVar[dict[str, _AuthorizationLease]] = ContextVar("browser_companion_leases", default={})
 
+# Cross-context lease table.  Key: (session_id, task_id, operation, parameter)
+# where session_id/task_id are the trusted runtime identity.  Values are FIFO
+# lists so two same-shaped parallel calls each receive exactly one lease.
+_RUNTIME_LEASES: dict[tuple[str, str, str, str], list[_AuthorizationLease]] = {}
+_RUNTIME_LEASES_LOCK = threading.Lock()
+
 
 def set_store(_store: Any) -> None:
     """Retained registration seam; handlers intentionally do not read stores."""
@@ -51,20 +69,72 @@ def _lease_key(operation: str, context_id: str = "") -> str:
     return f"{operation}:{context_id}"
 
 
-def grant_lease(operation: str, result: dict[str, Any], context_id: str = "") -> None:
-    """Set a short-lived, execution-local lease from trusted hook code."""
+def runtime_identity(kwargs: dict[str, Any] | None) -> tuple[str, str] | None:
+    """Return the trusted ``(session_id, task_id)`` Hermes passed to a handler.
+
+    Hermes injects these keyword arguments itself when it dispatches a tool;
+    they are never read from the model-controlled ``args`` mapping.  ``None``
+    means the runtime did not supply an identity, in which case only the
+    same-context lease can authorize the call.
+    """
+    values = kwargs if isinstance(kwargs, dict) else {}
+    session_id = _trusted_identifier(values.get("session_id"))
+    task_id = _trusted_identifier(values.get("task_id"))
+    if not session_id or not task_id:
+        return None
+    return session_id, task_id
+
+
+def _purge_runtime_leases_locked(now: float) -> None:
+    for key in list(_RUNTIME_LEASES):
+        live = [lease for lease in _RUNTIME_LEASES[key] if lease.expires_at >= now]
+        if live:
+            _RUNTIME_LEASES[key] = live
+        else:
+            del _RUNTIME_LEASES[key]
+    pending = sum(len(rows) for rows in _RUNTIME_LEASES.values())
+    while pending > _MAX_PENDING_LEASES and _RUNTIME_LEASES:
+        oldest_key = min(_RUNTIME_LEASES, key=lambda item: _RUNTIME_LEASES[item][0].expires_at)
+        _RUNTIME_LEASES[oldest_key].pop(0)
+        if not _RUNTIME_LEASES[oldest_key]:
+            del _RUNTIME_LEASES[oldest_key]
+        pending -= 1
+
+
+def grant_lease(
+    operation: str,
+    result: dict[str, Any],
+    context_id: str = "",
+    *,
+    identity: tuple[str, str] | None = None,
+    parameter: str = "",
+) -> None:
+    """Set a short-lived, one-shot lease from trusted hook code.
+
+    ``identity`` is the trusted ``(session_id, task_id)`` of the call being
+    authorized; ``parameter`` is the normalized argument the handler will
+    recompute (for example the clamped ``limit``).
+    """
+    now = monotonic()
     key = _lease_key(operation, context_id)
-    leases = dict(_LEASES.get())
-    leases[key] = _AuthorizationLease(
+    lease = _AuthorizationLease(
         operation=operation,
         key=key,
         result=result,
-        expires_at=monotonic() + _LEASE_TTL_SECONDS,
+        expires_at=now + _LEASE_TTL_SECONDS,
     )
+    leases = dict(_LEASES.get())
+    leases[key] = lease
     _LEASES.set(leases)
+    if identity is None:
+        return
+    runtime_key = (identity[0], identity[1], operation, context_id or parameter)
+    with _RUNTIME_LEASES_LOCK:
+        _RUNTIME_LEASES.setdefault(runtime_key, []).append(lease)
+        _purge_runtime_leases_locked(now)
 
 
-def _take_lease(operation: str, context_id: str = "") -> dict[str, Any] | None:
+def _take_context_lease(operation: str, context_id: str = "") -> dict[str, Any] | None:
     key = _lease_key(operation, context_id)
     leases = dict(_LEASES.get())
     lease = leases.pop(key, None)
@@ -72,6 +142,39 @@ def _take_lease(operation: str, context_id: str = "") -> dict[str, Any] | None:
     if lease is None or lease.expires_at < monotonic():
         return None
     return lease.result
+
+
+def _take_runtime_lease(
+    identity: tuple[str, str], operation: str, parameter: str
+) -> dict[str, Any] | None:
+    now = monotonic()
+    runtime_key = (identity[0], identity[1], operation, parameter)
+    with _RUNTIME_LEASES_LOCK:
+        _purge_runtime_leases_locked(now)
+        rows = _RUNTIME_LEASES.get(runtime_key)
+        if not rows:
+            return None
+        lease = rows.pop(0)
+        if not rows:
+            del _RUNTIME_LEASES[runtime_key]
+    return lease.result
+
+
+def _take_lease(
+    operation: str,
+    context_id: str = "",
+    *,
+    identity: tuple[str, str] | None = None,
+    parameter: str = "",
+) -> dict[str, Any] | None:
+    """Take one lease; both stores are drained so a grant is never reusable."""
+    context_result = _take_context_lease(operation, context_id)
+    runtime_result = (
+        _take_runtime_lease(identity, operation, context_id or parameter)
+        if identity is not None
+        else None
+    )
+    return runtime_result if runtime_result is not None else context_result
 
 
 def _context_id(args: dict[str, Any] | None) -> str:
@@ -88,17 +191,17 @@ def _json(result: dict[str, Any] | None) -> str:
 
 def browser_context_status(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
     """Return current-owner metadata authorized by ``pre_tool_call``."""
-    return _json(_take_lease("status"))
+    return _json(_take_lease("status", identity=runtime_identity(kwargs)))
 
 
 def browser_get_context(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
     """Return only a pre-authorized, consume-once BCP payload lease."""
-    return _json(_take_lease("get", _context_id(args)))
+    return _json(_take_lease("get", _context_id(args), identity=runtime_identity(kwargs)))
 
 
 def browser_clear_context(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
     """Return an exact-owner clear result authorized by ``pre_tool_call``."""
-    return _json(_take_lease("clear"))
+    return _json(_take_lease("clear", identity=runtime_identity(kwargs)))
 
 
 def _event_log_limit(args: dict[str, Any] | None = None) -> int:
@@ -125,12 +228,18 @@ def _journal_limit(args: dict[str, Any] | None = None) -> int:
 
 def browser_event_log(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
     """Return only a pre-authorized current-owner diagnostic event view."""
-    return _json(_take_lease("event_log"))
+    return _json(
+        _take_lease(
+            "event_log",
+            identity=runtime_identity(kwargs),
+            parameter=str(_event_log_limit(args)),
+        )
+    )
 
 
 def browser_control_status(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
     """Return only pre-authorized historical control-envelope metadata."""
-    return _json(_take_lease("control_status"))
+    return _json(_take_lease("control_status", identity=runtime_identity(kwargs)))
 
 
 def browser_context_journal(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
@@ -140,7 +249,13 @@ def browser_context_journal(args: dict[str, Any] | None = None, **kwargs: Any) -
     live context retrieval still requires a live in-memory record and the
     pre-tool ContextVar lease (see ``browser_get_context``).
     """
-    return _json(_take_lease("journal"))
+    return _json(
+        _take_lease(
+            "journal",
+            identity=runtime_identity(kwargs),
+            parameter=str(_journal_limit(args)),
+        )
+    )
 
 
 def browser_text_utility(args: dict[str, Any] | None = None, **kwargs: Any) -> str:
