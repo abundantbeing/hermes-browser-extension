@@ -1667,6 +1667,38 @@
     "message": "Geopend vanuit {source} op browsertabblad {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_haui_ask_hint": {
+    "message": "Zet deze vraag in het berichtenveld",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "Weergave maken…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "Gekopieerd",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "Kopiëren",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "Opent in een nieuw tabblad",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "Weergeven als grafiek",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "Grafiek",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "Tabel",
+    "description": "Runtime interface message haui.view_table"
+  },
   "runtime_image_generated": {
     "message": "Gegenereerde afbeelding",
     "description": "Runtime interface message image.generated"

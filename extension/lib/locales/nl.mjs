@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Alleen gebruikersbubbel",
   "responses.layout.user_bubble_hint": "Jouw berichten in een bubbel, Hermes antwoordt als lopende tekst.",
   "responses.setup_again": "Installatie opnieuw uitvoeren",
+  "haui.view_chart": "Grafiek",
+  "haui.view_table": "Tabel",
+  "haui.view_as_chart": "Weergeven als grafiek",
+  "haui.copy": "Kopiëren",
+  "haui.copied": "Gekopieerd",
+  "haui.building": "Weergave maken…",
+  "haui.opens_new_tab": "Opent in een nieuw tabblad",
+  "haui.ask_hint": "Zet deze vraag in het berichtenveld",
 });
