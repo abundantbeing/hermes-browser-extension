@@ -5621,8 +5621,10 @@ async function sendPrompt(text) {
   const prompt = `${requestText}${attachmentPrompt()}`;
   attachments = [];
   renderAttachments();
-  const user = { role: 'user', content: text, attachments: turnAttachments };
+  const user = { role: 'user', content: text, attachments: turnAttachments, ts: Date.now() };
   const assistant = { role: 'assistant', content: '' };
+  // The reply's time is when it finished; until then its rail shows no time.
+  const stampReply = () => { assistant.ts ??= Date.now(); };
   activeMessages = [...activeMessages, user];
   liveRun = { phase: 'THINKING', title: 'Hermes is thinking', detail: 'Preparing a response', image: false, seed: Date.now() };
   renderMessages(activeMessages);
@@ -5658,6 +5660,7 @@ async function sendPrompt(text) {
           updateBusyControls();
         },
       });
+      stampReply();
       if (sessionContextFailureRecovery(streamedAnswer, gatewayCapabilities)) {
         const contextError = new Error(streamedAnswer);
         contextError.requestAccepted = true;
@@ -5776,6 +5779,7 @@ async function sendPrompt(text) {
         renderContextWindow();
       },
     });
+    stampReply();
     if (sessionContextFailureRecovery(streamedAnswer, gatewayCapabilities)) {
       const contextError = new Error(streamedAnswer);
       contextError.requestAccepted = true;
@@ -5823,6 +5827,7 @@ async function sendPrompt(text) {
       activeMessages = activeMessages.filter((message) => message !== assistant);
       if (recoveredText || recoveredImageSources.length) {
         assistant.content = [recoveredText, imageMarkdown].filter(Boolean).join('\n\n');
+        stampReply();
         activeMessages = [...activeMessages, assistant];
         clearLiveRun();
         renderMessages(activeMessages);

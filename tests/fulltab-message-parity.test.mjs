@@ -40,6 +40,15 @@ test('full-tab rails carry copy and time on user messages and replies', () => {
   assert.match(app, /buildCleanClipboardPayload/);
 });
 
+test('full-tab live turns stamp the send time and the reply finish time', () => {
+  assert.match(app, /const user = \{[^}]*\bts:\s*Date\.now\(\)/);
+  assert.match(app, /const stampReply = \(\) => \{\s*assistant\.ts \?\?= Date\.now\(\);\s*\}/);
+  // Both stream transports and the accepted-turn recovery stamp the reply.
+  const send = app.slice(app.indexOf('async function sendPrompt('), app.indexOf('function showError('));
+  assert.equal(send.match(/stampReply\(\);/g)?.length, 3);
+  assert.ok(send.indexOf('stampReply();') < send.indexOf('client.getSessionMessages(runSessionId)'));
+});
+
 test('full-tab does not build edit or restore actions', () => {
   // canRewind defaults to false and the full tab never overrides it.
   assert.doesNotMatch(app, /canRewind/);
