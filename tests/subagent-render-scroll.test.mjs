@@ -20,6 +20,7 @@ for (const surface of ['sidepanel', 'app']) {
       let subagentSelectedId = 'live', subagentExpanded = true, subagentControlBusy = false, subagentControlError = '', subagentSteerDraft = '';
       const currentSubagentItems = () => items;
       const ensureSubagentTimer = () => {};
+      const scheduleSubagentRosterPoll = () => {};
       const runSelectedSubagentControl = () => {};
       ${renderer}
       return renderSubagentStack;

@@ -1581,6 +1581,27 @@ function ensureSubagentTimer(liveCount) {
   }
 }
 
+// While subagents run, re-read the gateway's roster now and then. It is the
+// authority on which children are still alive, and a child's own events can
+// be missed across a resume or a socket swap (Hermes Mobile polls the same way).
+const SUBAGENT_ROSTER_POLL_MS = 3_000;
+let subagentRosterTimer = null;
+function scheduleSubagentRosterPoll(liveCount) {
+  if (!liveCount) {
+    clearTimeout(subagentRosterTimer);
+    subagentRosterTimer = null;
+    return;
+  }
+  if (subagentRosterTimer) return;
+  subagentRosterTimer = setTimeout(() => {
+    subagentRosterTimer = null;
+    if (document.hidden) return;
+    const target = dashboardContextTarget();
+    if (target) void hydrateSubagentSnapshot(target.client, target.liveId);
+    else if (!usesDashboardWsChatTransport()) void hydrateRestSubagentSnapshot(settings.sessionId);
+  }, SUBAGENT_ROSTER_POLL_MS);
+}
+
 function ingestSubagentGatewayEvent(event) {
   const type = String(event?.type || event?.name || '').trim();
   const keys = currentSubagentSessionKeys();
@@ -1597,8 +1618,11 @@ function ingestSubagentGatewayEvent(event) {
     return;
   }
   if (!isSubagentEventName(type)) return;
-  if (eventSession && keys.length && !keys.includes(eventSession)) return;
-  const key = eventSession || keys[0] || '';
+  // A child spawned before the last resume still reports its owner's older live id.
+  const viewedOwner = eventSession && !keys.includes(eventSession)
+    && durableContextSessionId(eventSession) === String(settings.sessionId || '').trim();
+  if (eventSession && keys.length && !keys.includes(eventSession) && !viewedOwner) return;
+  const key = (viewedOwner ? keys[0] : eventSession) || keys[0] || '';
   if (!key) return;
   const beforeLive = activeSubagentView(currentSubagentItems()).length;
   subagentState = applySubagentEvent(subagentState, key, event);
@@ -1626,7 +1650,10 @@ async function hydrateSubagentSnapshot(client, sessionId = '') {
   if (!client?.request || !sid) return;
   try {
     const result = await client.request(WS_METHODS.subagentList, { session_id: sid });
-    subagentState = reconcileSubagentSnapshot(subagentState, sid, subagentsFromListResult(result));
+    // File the roster under the durable session, the same list live events
+    // feed and the dock reads first. Filed under the live id, it was hidden
+    // as soon as one event arrived.
+    subagentState = reconcileSubagentSnapshot(subagentState, durableContextSessionId(sid), subagentsFromListResult(result));
     renderSubagentStack();
   } catch {
     // Older gateways omit subagent.list. Live events still populate the stack.
@@ -1729,6 +1756,7 @@ function renderSubagentStack() {
   const live = activeSubagentView(items);
   const visible = live;
   ensureSubagentTimer(live.length);
+  scheduleSubagentRosterPoll(live.length);
   els.subagentStack.hidden = !visible.length;
   if (!visible.length) {
     els.subagentStackList.replaceChildren();
@@ -1980,7 +2008,11 @@ async function refreshSessionAfterSubagentsSettle() {
         && delegationCompletionState(rows, completionId).state === 'completed') {
         // The batch summary is in the transcript; reconcile any roster rows the
         // live events missed so nothing keeps ticking after the reply is visible.
-        void hydrateSubagentSnapshot(activeDashboardWsConnection?.client, durableSessionId);
+        // subagent.list resolves the session by its live id on this socket.
+        const rosterSessionId = activeDashboardWsConnection?.wsStoredSessionId === durableSessionId
+          ? activeDashboardWsConnection.wsSessionId || durableSessionId
+          : durableSessionId;
+        void hydrateSubagentSnapshot(activeDashboardWsConnection?.client, rosterSessionId);
         return;
       }
     }
