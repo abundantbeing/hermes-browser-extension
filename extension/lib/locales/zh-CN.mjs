@@ -1681,4 +1681,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "仅用户消息使用气泡",
   "responses.layout.user_bubble_hint": "你的消息放在气泡中，Hermes 的回复以连续文本显示。",
   "responses.setup_again": "重新运行设置",
+  "haui.view_chart": "图表",
+  "haui.view_table": "表格",
+  "haui.view_as_chart": "以图表查看",
+  "haui.copy": "复制",
+  "haui.copied": "已复制",
+  "haui.building": "正在生成视图…",
+  "haui.opens_new_tab": "在新标签页中打开",
+  "haui.ask_hint": "将此问题放入消息框",
 });

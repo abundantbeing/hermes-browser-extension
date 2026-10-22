@@ -1667,6 +1667,38 @@
     "message": "已从 {source} 打开，来源为浏览器标签页 {tabId}。",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_haui_ask_hint": {
+    "message": "将此问题放入消息框",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "正在生成视图…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "已复制",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "复制",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "在新标签页中打开",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "以图表查看",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "图表",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "表格",
+    "description": "Runtime interface message haui.view_table"
+  },
   "runtime_image_generated": {
     "message": "生成的图像",
     "description": "Runtime interface message image.generated"
