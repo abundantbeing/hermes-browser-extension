@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "केवल उपयोगकर्ता का बबल",
   "responses.layout.user_bubble_hint": "आपके संदेश बबल में, Hermes के जवाब सामान्य टेक्स्ट में।",
   "responses.setup_again": "सेटअप फिर से चलाएँ",
+  "haui.view_chart": "चार्ट",
+  "haui.view_table": "टेबल",
+  "haui.view_as_chart": "चार्ट के रूप में देखें",
+  "haui.copy": "कॉपी करें",
+  "haui.copied": "कॉपी हो गया",
+  "haui.building": "व्यू बनाया जा रहा है…",
+  "haui.opens_new_tab": "नए टैब में खुलता है",
+  "haui.ask_hint": "यह सवाल संदेश बॉक्स में डालता है",
 });

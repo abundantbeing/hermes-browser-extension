@@ -1667,6 +1667,38 @@
     "message": "ब्राउज़र टैब {tabId} पर {source} से खोला गया।",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_haui_ask_hint": {
+    "message": "यह सवाल संदेश बॉक्स में डालता है",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "व्यू बनाया जा रहा है…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "कॉपी हो गया",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "कॉपी करें",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "नए टैब में खुलता है",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "चार्ट के रूप में देखें",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "चार्ट",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "टेबल",
+    "description": "Runtime interface message haui.view_table"
+  },
   "runtime_image_generated": {
     "message": "जनरेट की गई छवि",
     "description": "Runtime interface message image.generated"
