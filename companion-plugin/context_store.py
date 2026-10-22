@@ -13,7 +13,9 @@ from collections import OrderedDict
 from copy import deepcopy
 from dataclasses import dataclass, field
 import hashlib
+import hmac
 import json
+import re
 import secrets
 import threading
 from time import time
@@ -33,6 +35,24 @@ _MAX_BCP_TURN_CHARS = 64_000
 _MAX_IDENTIFIER_CHARS = 256
 
 _UNAVAILABLE = {"available": False, "reason": "Browser context unavailable."}
+
+# Browser-supplied metadata that is copied into diagnostics, receipts and the
+# journal must look like an opaque identifier: a UUID, a hex hash or a short
+# slug.  The extension redacts the whole envelope before sending it, but this
+# plugin does not rely on that: anything with spaces, URL punctuation, redaction
+# placeholders or a well-known credential prefix is dropped instead of being
+# persisted or shown to the agent.
+_OPAQUE_UUID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+_OPAQUE_HEX = re.compile(r"[0-9a-fA-F]{8,128}")
+_OPAQUE_SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:\-]{0,63}")
+_CREDENTIAL_SHAPE = re.compile(
+    r"(?i)^(?:(?:sk|pk|rk|api|key|tok|token|secret|pass|pwd|bearer|basic|auth)[-_.:]"
+    r"|gh[pousr]_|github_pat_|xox[abprs]-|akia[0-9a-z]{8}|asia[0-9a-z]{8}|eyj[a-z0-9_-]{6})"
+)
+
+# Per-process salt: owner correlation values shown to the agent cannot be
+# brute-forced back into a private session id, yet stay stable within a run.
+_FINGERPRINT_SALT = secrets.token_bytes(16)
 
 
 @dataclass(frozen=True)
@@ -82,7 +102,14 @@ def _is_string_list(value: Any) -> bool:
 
 
 def _bounded_identifier(value: Any, limit: int = 160) -> str:
-    return value[:limit] if isinstance(value, str) else ""
+    """Return ``value`` only when it is a short opaque token, else ``""``."""
+    if not isinstance(value, str) or not value or len(value) > limit:
+        return ""
+    if _OPAQUE_UUID.fullmatch(value) or _OPAQUE_HEX.fullmatch(value):
+        return value
+    if _OPAQUE_SLUG.fullmatch(value) and not _CREDENTIAL_SHAPE.match(value):
+        return value
+    return ""
 
 
 def _unknown_control() -> dict[str, Any]:
@@ -185,6 +212,8 @@ def parse_bcp_v2_turn(text: str) -> dict[str, Any] | None:
     scope = payload["contextScope"].get("mode", "unknown")
     if not isinstance(scope, str):
         return None
+    context_hash = _bounded_identifier(context_hash, 80)
+    scope = _bounded_identifier(scope, 80) or "unknown"
 
     # json.loads already created only JSON-safe values. Deep-copy so a caller
     # cannot mutate a cached payload after this function returns.
@@ -194,16 +223,16 @@ def parse_bcp_v2_turn(text: str) -> dict[str, Any] | None:
         "provenance": {
             "protocol": BCP_TURN_PROTOCOL_ID,
             "delivery": "full",
-            "context_hash": context_hash[:80],
+            "context_hash": context_hash,
         },
-        "payload_hash": context_hash[:80],
-        "scope": scope[:80] or "unknown",
+        "payload_hash": context_hash,
+        "scope": scope,
     }
 
 
 def _principal_fingerprint(owner: ContextOwner) -> str:
     """Return a diagnostic-safe owner correlation value, never a raw ID."""
-    return hashlib.sha256(owner.principal_id.encode("utf-8")).hexdigest()[:16]
+    return hmac.new(_FINGERPRINT_SALT, owner.principal_id.encode("utf-8"), hashlib.sha256).hexdigest()[:16]
 
 
 def _owner_fingerprint(owner: ContextOwner) -> str:
