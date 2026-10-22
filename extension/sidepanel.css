@@ -4303,7 +4303,7 @@ textarea::-webkit-scrollbar-track { background: transparent; }
   padding: 0 6px 0 8px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.4em;
   overflow: hidden;
   border: 1px solid var(--hermes-line-strong);
   border-radius: var(--radius);
@@ -4321,7 +4321,17 @@ textarea::-webkit-scrollbar-track { background: transparent; }
 }
 .composer-model-chip .model-button-copy { min-width: 0; }
 .composer-model-chip #currentModelName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.composer-model-chip > span[aria-hidden="true"] { flex: 0 0 auto; }
+/* The caret is drawn, not typed: a text glyph sits low in the line box, while a drawn chevron
+   centres on the name and scales with the text at every zoom. */
+.composer-model-caret {
+  flex: 0 0 auto;
+  width: 0.4em;
+  height: 0.4em;
+  margin: 0 0.1em 0 0.15em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-0.12em) rotate(45deg);
+}
 .composer-model-chip:hover,
 .composer-model-chip[aria-expanded="true"] {
   border-color: var(--hermes-accent);
