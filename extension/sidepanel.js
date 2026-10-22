@@ -85,7 +85,6 @@ import {
   shouldAutoOpenSessionGroup,
   shouldAutoFlushQueuedTurn,
   shouldCreateFreshSessionOnOpen,
-  shouldShowBrowserIntro,
   sourceBlobMapsMatch,
   sessionModelBindingFromRuntime,
   resolveAcknowledgedSessionModelBinding,
@@ -150,6 +149,14 @@ import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
 import { renderMarkdownSafe, sanitizeHtml } from './lib/sanitizer.mjs';
 import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
+import {
+  ONBOARDING_COMPLETED_STORAGE_KEY,
+  RESPONSE_STYLE_SETUP_DEFAULT,
+  responsePresentationFromSettings,
+  shouldShowOnboarding,
+  withResponsePresentationUpdate,
+} from './lib/response-presentation.mjs';
+import { createOnboardingFlow } from './lib/onboarding-flow.mjs';
 import { isClarifyToolEvent, isPromptEventName, isPromptRequestEvent, isRunStatusTerminal } from './lib/gateway-prompts.mjs';
 import { createPromptCard } from './lib/prompt-card.mjs';
 import { createPendingControlsPoller, createPromptController } from './lib/prompt-controller.mjs';
@@ -723,6 +730,10 @@ const els = {
   connectionPill: $('#connectionPill'),
   browserIntroHero: $('#browserIntroHero'),
   browserIntroDismissButton: $('#browserIntroDismissButton'),
+  onboardingFlow: $('#onboardingFlow'),
+  responseStyleChoices: $('#responseStyleChoices'),
+  messageLayoutChoices: $('#messageLayoutChoices'),
+  rerunOnboardingButton: $('#rerunOnboardingButton'),
   sessionMenuButton: $('#sessionMenuButton'),
   currentSessionName: $('#currentSessionName'),
   newSessionButton: $('#newSessionButton'),
@@ -1312,6 +1323,11 @@ const LONG_SESSION_NOTICE_STORAGE_KEY = 'hermesBrowserLongSessionNoticeSeen';
 let longSessionNoticeHandledId = '';
 let browserIntroSeen = false;
 let browserIntroDismissedForPanel = false;
+// First-run setup: loaded with the settings so an existing user never sees it
+// flash before storage answers.
+let onboardingCompleted = false;
+let onboardingStateLoaded = false;
+let onboardingFlow = null;
 let operationToastTimer = null;
 let browserControlStatus = null;
 let browserControlActiveTab = null;
@@ -7735,6 +7751,7 @@ function applyAppearanceSettings() {
     visualTheme,
     { pinThemeFont: themeFontPinned && themeFontPinnedFor === visualTheme },
   ));
+  applyResponsePresentation();
 }
 
 // The signature profile renders the bundled fallback face when the licensed
@@ -7797,6 +7814,8 @@ function renderAppearanceControls() {
     els.appearanceSaveStatus.textContent = [appearanceSaveStatus, overlay].filter(Boolean).join(' ');
   }
   renderCustomThemeManagement();
+  renderResponsePresentationControls();
+  onboardingFlow?.render();
   if (!els.themeGrid) return;
   const builtInCards = APPEARANCE_THEMES.map((theme) => {
     const selected = theme.value === activeTheme;
@@ -15403,18 +15422,120 @@ function renderBrowserIntroVisibility() {
   renderBotChatIntro();
   if (!els.browserIntroHero) return;
   const botIntroVisible = Boolean(els.botChatIntro && !els.botChatIntro.hidden);
-  els.browserIntroHero.hidden = browserIntroDismissedForPanel || messages.length > 0 || botIntroVisible;
+  els.browserIntroHero.hidden = browserIntroDismissedForPanel || messages.length > 0 || botIntroVisible || Boolean(onboardingFlow?.isOpen);
 }
 
 function renderEmptyState() {
   renderBrowserIntroVisibility();
   if (messages.length) return;
   els.messages.innerHTML = '';
-  if (!shouldShowBrowserIntro({ seen: browserIntroSeen, connected: isConnected(), messageCount: messages.length })) return;
-  const setupCopy = settings.apiKey
-    ? 'Ask Hermes about what you are viewing. Active tab, selected text, page text, and open tabs are attached as untrusted context.'
-    : 'Click Connect to Hermes, approve locally, then start chatting with page context. Manual API key setup is still available in settings.';
-  els.messages.innerHTML = `<div class="empty-state"><strong>${escapeHtml(translateUiText('THE PAGE IS THE PROMPT'))}</strong><span>${escapeHtml(translateUiText(setupCopy))}</span></div>`;
+  maybeOpenOnboarding();
+}
+
+function onboardingState() {
+  return { theme: normalizedPanelThemeId(settings.appearanceTheme), ...responsePresentationFromSettings(settings) };
+}
+
+function ensureOnboardingFlow() {
+  if (onboardingFlow || !els.onboardingFlow) return onboardingFlow;
+  onboardingFlow = createOnboardingFlow({
+    host: els.onboardingFlow,
+    themes: APPEARANCE_THEMES,
+    translate: (key, values) => t(key, values),
+    getState: onboardingState,
+    onSelectTheme: (theme) => {
+      customThemeDeleteArmedId = '';
+      themeFontPinned = false;
+      themeFontPinnedFor = '';
+      void setAppearanceOption('appearanceTheme', theme).then(() => persistSetupFullTabTheme(theme));
+    },
+    onSelectStyle: (responseStyle) => { void setResponsePresentation({ responseStyle }); },
+    onSelectLayout: (messageLayout) => { void setResponsePresentation({ messageLayout }); },
+    onFinish: () => { void completeOnboarding(); },
+  });
+  return onboardingFlow;
+}
+
+// Setup picks one theme for both surfaces; afterwards each keeps its own
+// Settings choice.
+function persistSetupFullTabTheme(theme) {
+  const write = async () => {
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
+    const current = stored.hermesBrowserSettings || {};
+    await browserApi.storage.local.set({ hermesBrowserSettings: { ...current, webAppearanceTheme: normalizedPanelThemeId(theme) } });
+  };
+  const pendingWrite = appearanceWriteQueue.then(write, write);
+  appearanceWriteQueue = pendingWrite.catch(() => undefined);
+  return pendingWrite;
+}
+
+function setOnboardingOpen(open) {
+  document.body.classList.toggle('onboarding-active', open);
+  renderBrowserIntroVisibility();
+}
+
+// New users get the setup once, before their first message. Setup preselects
+// Vivid UI when no style was ever chosen.
+function maybeOpenOnboarding() {
+  if (!onboardingStateLoaded || onboardingFlow?.isOpen) return;
+  if (!shouldShowOnboarding({ completed: onboardingCompleted, legacyIntroSeen: browserIntroSeen, messageCount: messages.length })) return;
+  if (!settings.responseStyle) settings = withResponsePresentationUpdate(settings, { responseStyle: RESPONSE_STYLE_SETUP_DEFAULT });
+  openOnboarding();
+}
+
+function openOnboarding({ step = 'theme' } = {}) {
+  const flow = ensureOnboardingFlow();
+  if (!flow) return;
+  flow.open({ step });
+  setOnboardingOpen(true);
+}
+
+async function completeOnboarding() {
+  setOnboardingOpen(false);
+  onboardingCompleted = true;
+  await setResponsePresentation(responsePresentationFromSettings(settings));
+  await browserApi.storage.local.set({ [ONBOARDING_COMPLETED_STORAGE_KEY]: true });
+  els.input?.focus();
+}
+
+function renderResponsePresentationControls() {
+  const { responseStyle, messageLayout } = responsePresentationFromSettings(settings);
+  for (const button of els.responseStyleChoices?.querySelectorAll('[data-response-style]') || []) {
+    const selected = button.dataset.responseStyle === responseStyle;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  }
+  for (const button of els.messageLayoutChoices?.querySelectorAll('[data-message-layout]') || []) {
+    const selected = button.dataset.messageLayout === messageLayout;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-checked', String(selected));
+  }
+}
+
+function applyResponsePresentation() {
+  const { responseStyle, messageLayout } = responsePresentationFromSettings(settings);
+  document.documentElement.dataset.responseStyle = responseStyle;
+  document.documentElement.dataset.messageLayout = messageLayout;
+}
+
+// Instant-apply like the rest of Appearance: the choice shows at once and is
+// written through the same queue, so it never races a theme or zoom write.
+async function setResponsePresentation(patch = {}) {
+  const before = responsePresentationFromSettings(settings);
+  settings = withResponsePresentationUpdate(settings, patch);
+  const after = responsePresentationFromSettings(settings);
+  applyResponsePresentation();
+  renderResponsePresentationControls();
+  onboardingFlow?.render();
+  if (before.responseStyle !== after.responseStyle && messages.length && !sending) renderMessagesFromStorage();
+  const write = async () => {
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
+    const next = withResponsePresentationUpdate(stored.hermesBrowserSettings || {}, after);
+    await browserApi.storage.local.set({ hermesBrowserSettings: next });
+  };
+  const pendingWrite = appearanceWriteQueue.then(write, write);
+  appearanceWriteQueue = pendingWrite.catch(() => undefined);
+  return pendingWrite;
 }
 
 async function persistBrowserIntroSeen() {
@@ -19023,7 +19144,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -19031,6 +19152,8 @@ async function loadSettings({ restoreMessages = false } = {}) {
     ? stored[ROOM_EVENTS_STORAGE_KEY]
     : {};
   browserIntroSeen = stored[HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY] === true;
+  onboardingCompleted = stored[ONBOARDING_COMPLETED_STORAGE_KEY] === true;
+  onboardingStateLoaded = true;
   renderBrowserIntroVisibility();
   const migrateConnectionSchema = stored.hermesBrowserSettings?.connectionSchemaVersion !== DEFAULT_SETTINGS.connectionSchemaVersion;
   const storedSettings = migrateConnectionSettings(stored.hermesBrowserSettings || {});
@@ -24503,6 +24626,18 @@ function bindEvents() {
   }
   els.browserIntroDismissButton?.addEventListener('click', () => {
     persistBrowserIntroSeen();
+  });
+  els.responseStyleChoices?.addEventListener('click', (event) => {
+    const choice = event.target.closest('[data-response-style]');
+    if (choice) void setResponsePresentation({ responseStyle: choice.dataset.responseStyle });
+  });
+  els.messageLayoutChoices?.addEventListener('click', (event) => {
+    const choice = event.target.closest('[data-message-layout]');
+    if (choice) void setResponsePresentation({ messageLayout: choice.dataset.messageLayout });
+  });
+  els.rerunOnboardingButton?.addEventListener('click', () => {
+    closeSettingsDialog();
+    openOnboarding();
   });
   els.browserControlScopeInput?.addEventListener('change', () => {
     if (settings.browserControlEnabled === true) {
