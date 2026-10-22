@@ -25366,24 +25366,48 @@ renderEmptyState();
 syncComposerFrame({ followCaret: true });
 // Not awaited: the update watch and the silent check must never delay boot.
 void initializeUpdateFlow();
-observeComposerAnchor();
 
-// The chat model menu and the context popover open just above the composer
-// chip and ring, so they sit beside the control that opened them.
-function observeComposerAnchor() {
-  const update = () => {
-    const rect = els.modelMenuButton?.getBoundingClientRect();
-    const viewportHeight = globalThis.innerHeight || document.documentElement.clientHeight || 0;
-    if (!rect?.height || !viewportHeight) {
-      document.documentElement.style.removeProperty('--hermes-composer-anchor-height');
-      return;
+// The commands popup, the slash skill menu, the model menu and the context
+// popover share one placement. Each hangs above the composer card, matches its
+// width, and is capped to the space between the top bar and the card. The card
+// moves when the text area is dragged, so the values are re-measured on open,
+// on resize and on any size change of the card, the top bar or the text area.
+const COMPOSER_POPOVER_GAP = 8;
+
+function positionComposerPopovers() {
+  const style = document.documentElement.style;
+  const viewportHeight = globalThis.innerHeight || document.documentElement.clientHeight || 0;
+  const card = document.getElementById('composer')?.getBoundingClientRect();
+  if (!card?.height || !viewportHeight) {
+    for (const name of ['--hermes-composer-left', '--hermes-composer-width', '--hermes-composer-bottom', '--hermes-composer-space']) {
+      style.removeProperty(name);
     }
-    document.documentElement.style.setProperty('--hermes-composer-anchor-height', `${Math.max(0, Math.round(viewportHeight - rect.top))}px`);
-  };
-  update();
-  globalThis.addEventListener?.('resize', update);
-  if (els.bottomDock && typeof globalThis.ResizeObserver === 'function') {
-    new globalThis.ResizeObserver(update).observe(els.bottomDock);
+    return;
+  }
+  const topbar = document.querySelector('.topbar')?.getBoundingClientRect();
+  const floor = topbar?.height ? topbar.bottom : 0;
+  style.setProperty('--hermes-composer-left', `${Math.round(card.left)}px`);
+  style.setProperty('--hermes-composer-width', `${Math.round(card.width)}px`);
+  style.setProperty('--hermes-composer-bottom', `${Math.round(viewportHeight - card.top + COMPOSER_POPOVER_GAP)}px`);
+  style.setProperty('--hermes-composer-space', `${Math.max(64, Math.round(card.top - floor - 2 * COMPOSER_POPOVER_GAP))}px`);
+}
+
+function observeComposerPopovers() {
+  positionComposerPopovers();
+  globalThis.addEventListener?.('resize', positionComposerPopovers);
+  if (typeof globalThis.ResizeObserver === 'function') {
+    const sizes = new globalThis.ResizeObserver(positionComposerPopovers);
+    for (const element of [document.getElementById('composer'), document.querySelector('.topbar'), els.input]) {
+      if (element) sizes.observe(element);
+    }
+  }
+  // Every popover opens by losing its hidden attribute, whether from a button,
+  // from typing "/", or from a render, so re-measuring there covers all paths.
+  if (typeof globalThis.MutationObserver === 'function') {
+    const opens = new globalThis.MutationObserver(positionComposerPopovers);
+    for (const element of [els.quickMoreMenu, els.skillMenu, els.modelMenu, els.contextPopover]) {
+      if (element) opens.observe(element, { attributes: true, attributeFilter: ['hidden'] });
+    }
   }
 }
 
@@ -25404,3 +25428,5 @@ function renderContextMeters(percent, compaction) {
   els.settingsContextRuntime.replaceChildren(...els.contextRuntimeBreakdown.cloneNode(true).childNodes);
   els.settingsContextPayload.replaceChildren(...els.contextBreakdown.cloneNode(true).childNodes);
 }
+
+observeComposerPopovers();
