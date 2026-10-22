@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Membuat tampilan…",
   "haui.opens_new_tab": "Dibuka di tab baru",
   "haui.ask_hint": "Memasukkan pertanyaan ini ke kotak pesan",
+  "settings.save.hint": "Tampilan, agen, serta sakelar izin dan runtime berlaku saat Anda mengubahnya. Semua yang lain berlaku saat Anda menekan Simpan.",
+  "settings.save.saved_connected": "Tersimpan. Hermes terhubung.",
+  "settings.save.saved_offline": "Tersimpan, tetapi Hermes tidak dapat dijangkau: {detail}",
+  "settings.save.failed": "Tidak tersimpan: {detail}",
+  "settings.save.ports_invalid": "Port agen harus berupa angka dari 1 sampai 65535, dipisahkan koma.",
+  "settings.save.sources_invalid": "Alamat sumber model ini tidak valid: {sources}",
 });

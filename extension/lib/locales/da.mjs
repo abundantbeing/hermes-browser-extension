@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Bygger visning…",
   "haui.opens_new_tab": "Åbnes i en ny fane",
   "haui.ask_hint": "Sætter dette spørgsmål i beskedfeltet",
+  "settings.save.hint": "Udseende, agenter samt tilladelses- og kørselskontakter gælder med det samme. Alt andet gælder, når du trykker på Gem.",
+  "settings.save.saved_connected": "Gemt. Hermes er forbundet.",
+  "settings.save.saved_offline": "Gemt, men Hermes kunne ikke nås: {detail}",
+  "settings.save.failed": "Ikke gemt: {detail}",
+  "settings.save.ports_invalid": "Agentporte skal være tal fra 1 til 65535, adskilt af kommaer.",
+  "settings.save.sources_invalid": "Disse modelkildeadresser er ikke gyldige: {sources}",
 });

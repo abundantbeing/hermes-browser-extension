@@ -9791,6 +9791,41 @@ html[data-hermes-mode="light"] .room-mention { background: color-mix(in srgb, va
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+/* Unsaved edits (needs Save) and Saved (a control that saved itself) stack
+   in the corner of the pane bar. */
+.settings-pane-flags {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  min-width: 0;
+  text-align: end;
+}
+.settings-pane-saved {
+  color: var(--hermes-muted);
+  font-family: var(--hermes-font-mono);
+  font-size: calc(9px * var(--hermes-text-zoom, 1));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.settings-pane-saved[data-state="saved"] { color: var(--hermes-accent); }
+.settings-pane-saved[data-state="failed"] {
+  max-width: 18em;
+  color: #df5f56;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+.settings-save-status {
+  flex: 0 0 100%;
+  margin: 0;
+  color: var(--hermes-muted);
+  font: calc(9px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-mono);
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+.settings-save-status:empty { display: none; }
+.settings-save-status[data-state="saved"] { color: var(--hermes-accent); }
+.settings-save-status[data-state="warn"],
+.settings-save-status[data-state="failed"] { color: #df5f56; }
 .settings-category-edited {
   position: absolute;
   inset-block-start: 8px;

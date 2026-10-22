@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Building view…",
   "haui.opens_new_tab": "Opens in a new tab",
   "haui.ask_hint": "Puts this question in the message box",
+  "settings.save.hint": "Appearance, Agents and the permission and runtime switches apply as you change them. Everything else applies when you press Save.",
+  "settings.save.saved_connected": "Saved. Hermes is connected.",
+  "settings.save.saved_offline": "Saved, but Hermes could not be reached: {detail}",
+  "settings.save.failed": "Not saved: {detail}",
+  "settings.save.ports_invalid": "Agent ports must be numbers from 1 to 65535, separated by commas.",
+  "settings.save.sources_invalid": "These model source addresses are not valid: {sources}",
 });

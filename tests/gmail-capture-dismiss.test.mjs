@@ -36,7 +36,7 @@ test('enabling thread capture once stays on until it is turned off again', () =>
   // The settings checkbox persists immediately on change so a later unrelated
   // Settings save cannot silently write gmailCaptureEnabled back to false.
   assert.match(source, /els\.gmailCaptureEnabledInput\?\.addEventListener\('change', async \(\) => \{/);
-  assert.match(source, /await persistGmailCaptureEnabled\(enabled\)/);
+  assert.match(source, /await trackInstantSave\('assist', persistGmailCaptureEnabled\(enabled\)\)/);
   // The send-time gate honors the persisted setting on every thread send, so
   // there is no second consent click after the first enable.
   assert.match(source, /explicitSiteCapture: Boolean\(options\.explicitSiteCapture\) \|\| \(settings\.gmailCaptureEnabled === true && isGmailThreadUrl\(tab\.url\)\),/);

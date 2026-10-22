@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "กำลังสร้างมุมมอง…",
   "haui.opens_new_tab": "เปิดในแท็บใหม่",
   "haui.ask_hint": "ใส่คำถามนี้ในช่องข้อความ",
+  "settings.save.hint": "รูปลักษณ์ เอเจนต์ รวมถึงสวิตช์สิทธิ์และรันไทม์จะมีผลทันทีที่คุณเปลี่ยน ส่วนอื่นทั้งหมดจะมีผลเมื่อกด บันทึก",
+  "settings.save.saved_connected": "บันทึกแล้ว Hermes เชื่อมต่ออยู่",
+  "settings.save.saved_offline": "บันทึกแล้ว แต่ไม่สามารถเชื่อมต่อ Hermes ได้: {detail}",
+  "settings.save.failed": "ยังไม่ได้บันทึก: {detail}",
+  "settings.save.ports_invalid": "พอร์ตของเอเจนต์ต้องเป็นตัวเลขตั้งแต่ 1 ถึง 65535 คั่นด้วยจุลภาค",
+  "settings.save.sources_invalid": "ที่อยู่แหล่งโมเดลเหล่านี้ไม่ถูกต้อง: {sources}",
 });

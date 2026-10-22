@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Création de l'affichage…",
   "haui.opens_new_tab": "S'ouvre dans un nouvel onglet",
   "haui.ask_hint": "Place cette question dans la zone de message",
+  "settings.save.hint": "L’apparence, les agents ainsi que les interrupteurs d’autorisations et d’exécution s’appliquent dès que vous les modifiez. Tout le reste s’applique quand vous appuyez sur Enregistrer.",
+  "settings.save.saved_connected": "Enregistré. Hermes est connecté.",
+  "settings.save.saved_offline": "Enregistré, mais Hermes est injoignable : {detail}",
+  "settings.save.failed": "Non enregistré : {detail}",
+  "settings.save.ports_invalid": "Les ports des agents doivent être des nombres de 1 à 65535, séparés par des virgules.",
+  "settings.save.sources_invalid": "Ces adresses de sources de modèles ne sont pas valides : {sources}",
 });

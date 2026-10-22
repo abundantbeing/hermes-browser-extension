@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Создание представления…",
   "haui.opens_new_tab": "Открывается в новой вкладке",
   "haui.ask_hint": "Помещает этот вопрос в поле сообщения",
+  "settings.save.hint": "Оформление, агенты, а также переключатели разрешений и среды выполнения применяются сразу. Всё остальное применяется после нажатия «Сохранить».",
+  "settings.save.saved_connected": "Сохранено. Hermes подключён.",
+  "settings.save.saved_offline": "Сохранено, но связаться с Hermes не удалось: {detail}",
+  "settings.save.failed": "Не сохранено: {detail}",
+  "settings.save.ports_invalid": "Порты агентов должны быть числами от 1 до 65535, разделёнными запятыми.",
+  "settings.save.sources_invalid": "Эти адреса источников моделей недействительны: {sources}",
 });

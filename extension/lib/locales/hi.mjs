@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "व्यू बनाया जा रहा है…",
   "haui.opens_new_tab": "नए टैब में खुलता है",
   "haui.ask_hint": "यह सवाल संदेश बॉक्स में डालता है",
+  "settings.save.hint": "दिखावट, एजेंट तथा अनुमति और रनटाइम स्विच बदलते ही लागू हो जाते हैं। बाकी सब कुछ सहेजें दबाने पर लागू होता है।",
+  "settings.save.saved_connected": "सहेज लिया गया। Hermes से कनेक्ट है।",
+  "settings.save.saved_offline": "सहेज लिया गया, लेकिन Hermes तक पहुँचा नहीं जा सका: {detail}",
+  "settings.save.failed": "सहेजा नहीं गया: {detail}",
+  "settings.save.ports_invalid": "एजेंट पोर्ट 1 से 65535 तक की संख्याएँ होने चाहिए, अल्पविराम से अलग किए हुए।",
+  "settings.save.sources_invalid": "ये मॉडल स्रोत पते मान्य नहीं हैं: {sources}",
 });

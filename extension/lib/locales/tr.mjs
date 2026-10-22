@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Görünüm oluşturuluyor…",
   "haui.opens_new_tab": "Yeni sekmede açılır",
   "haui.ask_hint": "Bu soruyu mesaj kutusuna koyar",
+  "settings.save.hint": "Görünüm, aracılar ile izin ve çalışma zamanı anahtarları değiştirdiğiniz anda uygulanır. Geri kalan her şey Kaydet’e bastığınızda uygulanır.",
+  "settings.save.saved_connected": "Kaydedildi. Hermes bağlı.",
+  "settings.save.saved_offline": "Kaydedildi, ancak Hermes’e ulaşılamadı: {detail}",
+  "settings.save.failed": "Kaydedilmedi: {detail}",
+  "settings.save.ports_invalid": "Aracı portları, virgülle ayrılmış 1 ile 65535 arasında sayılar olmalıdır.",
+  "settings.save.sources_invalid": "Bu model kaynağı adresleri geçerli değil: {sources}",
 });

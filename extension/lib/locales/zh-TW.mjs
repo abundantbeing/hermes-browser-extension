@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "正在產生檢視…",
   "haui.opens_new_tab": "在新分頁中開啟",
   "haui.ask_hint": "將此問題放入訊息框",
+  "settings.save.hint": "外觀、代理程式以及權限與執行階段開關會在變更時立即生效。其他設定在按下「儲存」後生效。",
+  "settings.save.saved_connected": "已儲存。Hermes 已連線。",
+  "settings.save.saved_offline": "已儲存，但無法連線到 Hermes：{detail}",
+  "settings.save.failed": "未儲存：{detail}",
+  "settings.save.ports_invalid": "代理程式連接埠必須是 1 到 65535 之間的數字，以逗號分隔。",
+  "settings.save.sources_invalid": "以下模型來源位址無效：{sources}",
 });

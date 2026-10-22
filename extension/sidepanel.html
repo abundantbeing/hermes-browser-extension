@@ -663,6 +663,7 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
             </button>
           </div>
+          <p id="settingsSaveStatus" class="settings-save-status" role="status" aria-live="polite" data-i18n-runtime></p>
         </header>
 
         <section class="settings-section release-settings browser-release-card" aria-labelledby="releaseTitle">
@@ -749,7 +750,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-appearance" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.appearance.title">Appearance &amp; Themes</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
         <section class="settings-section appearance-settings" aria-labelledby="appearanceTitle">
           <div class="settings-section-head">
@@ -914,7 +915,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-connections" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.connections.title">Connections</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
         <section class="settings-section connection-settings" aria-labelledby="connectionTitle">
           <div class="settings-section-head">
@@ -1056,7 +1057,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-agents" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.agents.title">Agents &amp; Bot Mode</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
         <section class="settings-section bot-mode-settings" aria-labelledby="botModeSettingsTitle">
           <div class="settings-section-head"><div><h3 id="botModeSettingsTitle" data-i18n="bot_mode.settings_title">Agents &amp; Bot Mode</h3><p data-i18n="bot_mode.settings_copy_sidepanel">Turn on the optional profile roster and canonical Bot Chat navigator for this browser.</p></div></div>
@@ -1096,7 +1097,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-models" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.models.title">Models &amp; Runtime</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
           <section class="settings-section models-settings" aria-labelledby="modelsSettingsTitle">
             <div class="settings-section-head"><div><h3 id="modelsSettingsTitle" data-i18n="settings.models.title">Active model</h3><p data-i18n="settings.models.copy">The model answering this chat. Change it here or from the top bar.</p></div></div>
@@ -1150,7 +1151,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-sessions" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.sessions.title">Sessions &amp; Context</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
         <label>
           <span data-i18n="ui.session.id">Session ID</span>
@@ -1304,7 +1305,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-permissions" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.permissions.title">Permissions &amp; Control</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
           <section class="settings-section permissions-settings" aria-labelledby="permissionsSettingsTitle">
             <div class="settings-section-head"><div><h3 id="permissionsSettingsTitle" data-i18n="settings.permissions.title">Control and approvals</h3><p data-i18n="settings.permissions.copy">What Hermes may operate in your browser, and which connections may see page context.</p></div></div>
@@ -1369,7 +1370,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-assist" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.assist.title">Assist &amp; Actions</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
         <section class="settings-section inline-assist-settings" aria-labelledby="inlineAssistTitle">
           <div class="settings-section-head">
@@ -1442,7 +1443,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-voice" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.voice.title">Voice &amp; Wake</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
         <section class="settings-section wake-word-settings" aria-labelledby="wakeWordTitle">
           <div class="settings-section-head">
@@ -1481,7 +1482,7 @@
           <div class="settings-pane-bar">
             <button type="button" class="settings-pane-back" data-settings-back aria-label="Back to categories" title="Back to categories" data-i18n-aria-label="settings.categories.back_to" data-i18n-title="settings.categories.back_to"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg></button>
             <div class="settings-pane-heading"><span class="settings-pane-crumb" aria-hidden="true" data-i18n="ui.settings">Settings</span><h3 id="settingsPaneTitle-about" class="settings-pane-title" tabindex="-1" data-i18n="settings.categories.about.title">About &amp; Diagnostics</h3></div>
-            <span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span>
+            <span class="settings-pane-flags"><span class="settings-pane-edited" hidden data-i18n="settings.categories.edited_hint">Unsaved edits</span><span class="settings-pane-saved" role="status" aria-live="polite" hidden></span></span>
           </div>
         <details id="compatibilityPanel" class="compatibility-panel" aria-labelledby="compatibilityTitle">
           <summary class="compatibility-summary" aria-controls="compatibilityList">

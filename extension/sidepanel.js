@@ -1134,6 +1134,7 @@ const els = {
   customFontFamilyField: $('#customFontFamilyField'),
   customFontFamilyInput: $('#customFontFamilyInput'),
   appearanceSaveStatus: $('#appearanceSaveStatus'),
+  settingsSaveStatus: $('#settingsSaveStatus'),
   signatureFontFallbackNote: $('#signatureFontFallbackNote'),
   quickMoreMenu: $('#quickMoreMenu'),
   commandMenuButton: $('#commandMenuButton'),
@@ -2415,6 +2416,59 @@ function renderSettingsEditedMarkers() {
   }
 }
 
+// The line under the Settings title says what Save is for until it is pressed,
+// then what that Save did.
+let settingsSaveNote = { kind: 'idle', text: '' };
+
+function renderSettingsSaveStatus() {
+  const el = els.settingsSaveStatus;
+  if (!el) return;
+  el.dataset.state = settingsSaveNote.kind;
+  el.textContent = settingsSaveNote.kind === 'idle' ? t('settings.save.hint') : settingsSaveNote.text;
+}
+
+function setSettingsSaveNote(kind, text = '') {
+  settingsSaveNote = { kind, text };
+  renderSettingsSaveStatus();
+}
+
+function handleSettingsFormEdit(event) {
+  renderSettingsEditedMarkers();
+  // The last Save's result is stale once something that needs Save changes again.
+  const stale = !['idle', 'saving'].includes(settingsSaveNote.kind);
+  if (stale && !event.target.closest?.('[data-settings-live]')) setSettingsSaveNote('idle');
+}
+
+// Controls that save themselves show Saving…, then Saved (or what went wrong),
+// in their own pane, so every pane confirms in the same place.
+const settingsPaneSavedTimers = new Map();
+
+function flashSettingsPaneSaved(pane, state = 'saved', detail = '') {
+  const chip = document.querySelector(`#settingsPane-${pane} .settings-pane-saved`);
+  if (!chip) return;
+  clearTimeout(settingsPaneSavedTimers.get(pane));
+  chip.dataset.state = state;
+  chip.textContent = state === 'saving'
+    ? t('appearance.saving')
+    : state === 'failed' ? t('settings.save.failed', { detail }) : t('appearance.saved');
+  chip.hidden = false;
+  if (state === 'saving') return;
+  settingsPaneSavedTimers.set(pane, setTimeout(() => { chip.hidden = true; }, state === 'failed' ? 6000 : 2400));
+}
+
+async function trackInstantSave(pane, work) {
+  flashSettingsPaneSaved(pane, 'saving');
+  try {
+    const result = await work;
+    flashSettingsPaneSaved(pane, 'saved');
+    return result;
+  } catch (error) {
+    const detail = error?.message || String(error);
+    flashSettingsPaneSaved(pane, 'failed', detail);
+    throw error;
+  }
+}
+
 function renderSettingsModelSummary() {
   const nameEl = document.getElementById('settingsCurrentModel');
   if (!nameEl) return;
@@ -2558,6 +2612,7 @@ function openSettingsDialog(arg) {
   settingsReturnFocus = null;
   showSettingsPane(target.pane, { field: target.field, focus: false });
   captureSettingsBaseline();
+  setSettingsSaveNote('idle');
   if (target.pane) {
     showSettingsPane(target.pane, { field: target.field });
     return;
@@ -2572,6 +2627,15 @@ function closeSettingsDialog() {
 }
 
 let saveSettingsResetTimer = null;
+
+// Saved is only half the answer: say whether Hermes answered at the saved address.
+function settingsSavedNote(state = currentConnectionState()) {
+  if (state?.state === 'connected' || state?.state === 'degraded') {
+    return { kind: 'saved', text: t('settings.save.saved_connected') };
+  }
+  const detail = currentConnectionTroubleshooting(state) || connectionProbeDetail || translateUiText('Not connected to Hermes');
+  return { kind: 'warn', text: t('settings.save.saved_offline', { detail }) };
+}
 
 // Save re-probes the gateway and reloads models, skills and sessions before the
 // dialog closes, which can take a few seconds. The button locks and animates for
@@ -2615,6 +2679,7 @@ function revealInvalidSettingsField(event) {
   if (!pane || settingsInvalidRevealPending) return;
   settingsInvalidRevealPending = true;
   setSaveSettingsState('failed');
+  setSettingsSaveNote('failed', t('settings.save.failed', { detail: field.validationMessage || '' }));
   if (pane !== settingsActivePane) showSettingsPane(pane, { focus: false });
   requestAnimationFrame(() => {
     field.scrollIntoView({ block: 'center', behavior: 'auto' });
@@ -8058,6 +8123,7 @@ async function setAppearanceOption(key, value, { persist = true } = {}) {
   appearanceSaveStatus = persist ? t('appearance.saving') : '';
   renderAppearanceControls();
   if (!persist) return;
+  flashSettingsPaneSaved('appearance', 'saving');
 
   try {
     const savedSettings = await persistAppearanceSettings(panelAppearanceSnapshot());
@@ -8065,6 +8131,7 @@ async function setAppearanceOption(key, value, { persist = true } = {}) {
       settings = savedSettings;
       appearanceSaveStatus = t('appearance.saved');
       renderAppearanceControls();
+      flashSettingsPaneSaved('appearance', 'saved');
     }
   } catch (error) {
     if (mutationId === appearanceMutationId) {
@@ -8078,6 +8145,7 @@ async function setAppearanceOption(key, value, { persist = true } = {}) {
       };
       appearanceSaveStatus = `${t('appearance.change_not_saved')} ${error?.message || ''}`.trim();
       renderAppearanceControls();
+      flashSettingsPaneSaved('appearance', 'failed', error?.message || '');
     }
   }
 }
@@ -9080,7 +9148,7 @@ function renderModelRuntimeOptions() {
 }
 
 function persistModelRuntimeOptions() {
-  browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  return browserApi.storage.local.set({ hermesBrowserSettings: settings });
 }
 
 function setModelRuntimeOption(key, value) {
@@ -9111,7 +9179,7 @@ function setModelRuntimeOption(key, value) {
   };
   renderModelRuntimeOptions();
   updateModelButtonMeta();
-  persistModelRuntimeOptions();
+  trackInstantSave('models', persistModelRuntimeOptions()).catch(() => undefined);
   modelOptionSelectionVersion += 1;
   void syncSessionModelOptions({
     sessionId: settings.sessionId,
@@ -19713,7 +19781,19 @@ function syncSettingsForm() {
   renderBrowserControl();
 }
 
+// Save names what it could not keep instead of quietly dropping it.
+function assertSettingsFormValid() {
+  const ports = els.agentPortsInput?.value || '';
+  if (ports.trim() && !parseAgentPortsInput(ports).length) throw new Error(t('settings.save.ports_invalid'));
+  const rejected = (els.customModelSourcesInput?.value || '')
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter((line) => line && !normalizeExternalModelSourceList([line]).length);
+  if (rejected.length) throw new Error(t('settings.save.sources_invalid', { sources: rejected.join(', ') }));
+}
+
 async function saveSettingsFromForm() {
+  assertSettingsFormValid();
   const previousSettings = { ...settings };
   const selected = availableModels.find((model) => model.id === settings.model);
   const apiKey = els.apiKeyInput.value.trim();
@@ -23900,8 +23980,8 @@ function bindEvents() {
   watchTopbarHeight();
   els.settingsButton.addEventListener('click', openSettingsDialog);
   els.settingsForm.addEventListener('click', handleSettingsCategoryNavigation);
-  els.settingsForm.addEventListener('input', renderSettingsEditedMarkers);
-  els.settingsForm.addEventListener('change', renderSettingsEditedMarkers);
+  els.settingsForm.addEventListener('input', handleSettingsFormEdit);
+  els.settingsForm.addEventListener('change', handleSettingsFormEdit);
   document.getElementById('settingsOpenModelPickerButton')?.addEventListener('click', openSettingsModelPicker);
   document.getElementById('settingsRefreshModelsButton')?.addEventListener('click', (event) => {
     const button = event.currentTarget;
@@ -24182,7 +24262,7 @@ function bindEvents() {
     // the deck button visibility, and start the roster fetch when enabling.
     const enabled = els.botModeEnabledInput.checked === true;
     settings = { ...settings, botModeEnabled: enabled };
-    void browserApi.storage.local.set({ hermesBrowserSettings: settings }).then(() => {
+    void trackInstantSave('agents', browserApi.storage.local.set({ hermesBrowserSettings: settings })).catch(() => undefined).then(() => {
       renderBotModeRoster(els.botModeSearch?.value);
       if (enabled && !botModeRoster.length) void loadProfiles({ quiet: true });
     });
@@ -24190,13 +24270,13 @@ function bindEvents() {
   els.botModeDisplayDensity?.addEventListener('change', () => {
       const density = els.botModeDisplayDensity?.value === 'compact' ? 'compact' : 'comfortable';
       settings = { ...settings, botModeDisplayDensity: density };
-      void browserApi.storage.local.set({ hermesBrowserSettings: settings }).then(() => {
+      void trackInstantSave('agents', browserApi.storage.local.set({ hermesBrowserSettings: settings })).catch(() => undefined).then(() => {
         renderBotModeRoster(els.botModeSearch?.value);
       });
     });
     els.botModeAnimateAvatars?.addEventListener('change', () => {
       settings = { ...settings, botModeAnimateAvatars: els.botModeAnimateAvatars.value === 'on' };
-          void browserApi.storage.local.set({ hermesBrowserSettings: settings }).then(async () => {
+          void trackInstantSave('agents', browserApi.storage.local.set({ hermesBrowserSettings: settings })).catch(() => undefined).then(async () => {
             if (settings.botModeAnimateAvatars) await ensurePetGallery().catch(() => undefined);
             renderBotModeRoster(els.botModeSearch?.value);
             renderActiveProfileIndicator();
@@ -24208,7 +24288,7 @@ function bindEvents() {
     void loadCronJobs();
   });
   els.languageSelect?.addEventListener('change', () => {
-    setLocale(els.languageSelect.value).catch((error) => {
+    trackInstantSave('appearance', setLocale(els.languageSelect.value)).catch((error) => {
       console.warn('[Hermes Browser] Language change failed:', error);
     });
   });
@@ -24393,7 +24473,7 @@ function bindEvents() {
     // it is turned off again here. Doing it live keeps the settings form merge
     // in sync and stops an unrelated Save from silently re-arming consent.
     const enabled = els.gmailCaptureEnabledInput.checked === true;
-    await persistGmailCaptureEnabled(enabled).catch(() => undefined);
+    await trackInstantSave('assist', persistGmailCaptureEnabled(enabled)).catch(() => undefined);
     setStatus(
       enabled ? 'ok' : 'warn',
       enabled ? 'Gmail thread context on' : 'Gmail thread context off',
@@ -24640,23 +24720,23 @@ function bindEvents() {
       setStatus('warn', 'No agent ports', 'Enter at least one port number, e.g. 8642,8643,8644,8645,8646');
       return;
     }
-    persistAgentDiscoverySettings({
+    trackInstantSave('connections', persistAgentDiscoverySettings({
       ports,
       host: els.agentHostInput?.value || settings.agentDiscoveryHost,
       scheme: els.agentSchemeInput?.value || settings.agentDiscoveryScheme,
-    }).then(() => loadAgents()).catch((error) => setStatus('warn', 'Agent settings invalid', error?.message || String(error), { translateDetail: false }));
+    })).then(() => loadAgents()).catch((error) => setStatus('warn', 'Agent settings invalid', error?.message || String(error), { translateDetail: false }));
   });
   els.agentPortsInput?.addEventListener('change', () => {
     const ports = parseAgentPortsInput(els.agentPortsInput.value);
     if (ports.length) {
-      persistAgentDiscoverySettings({ ports }).catch((error) => setStatus('warn', 'Agent ports invalid', error?.message || String(error), { translateDetail: false }));
+      trackInstantSave('connections', persistAgentDiscoverySettings({ ports })).catch((error) => setStatus('warn', 'Agent ports invalid', error?.message || String(error), { translateDetail: false }));
     }
   });
   els.agentHostInput?.addEventListener('change', () => {
-    persistAgentDiscoverySettings({ host: els.agentHostInput.value }).catch((error) => setStatus('warn', 'Agent host invalid', error?.message || String(error), { translateDetail: false }));
+    trackInstantSave('connections', persistAgentDiscoverySettings({ host: els.agentHostInput.value })).catch((error) => setStatus('warn', 'Agent host invalid', error?.message || String(error), { translateDetail: false }));
   });
   els.agentSchemeInput?.addEventListener('change', () => {
-    persistAgentDiscoverySettings({ scheme: els.agentSchemeInput.value }).catch((error) => setStatus('warn', 'Agent scheme invalid', error?.message || String(error), { translateDetail: false }));
+    trackInstantSave('connections', persistAgentDiscoverySettings({ scheme: els.agentSchemeInput.value })).catch((error) => setStatus('warn', 'Agent scheme invalid', error?.message || String(error), { translateDetail: false }));
   });
   els.editModelsButton.addEventListener('click', () => {
     closeFloatingPanels();
@@ -24876,7 +24956,7 @@ function bindEvents() {
     clearStoredToken().catch((error) => setStatus('warn', 'Could not clear token', error?.message || String(error), { translateDetail: false }));
   });
   els.browserContextConsentInput?.addEventListener('change', () => {
-    setBrowserContextConsent(els.browserContextConsentInput.checked).catch((error) => {
+    trackInstantSave('permissions', setBrowserContextConsent(els.browserContextConsentInput.checked)).catch((error) => {
       renderBrowserContextConsentControl();
       setStatus('warn', 'Context sharing unchanged', error?.message || String(error), { translateDetail: false });
     });
@@ -24987,7 +25067,7 @@ function bindEvents() {
       renderBrowserControl();
       return;
     }
-    persistBrowserControlPreferences({ browserControlScope: els.browserControlScopeInput.value })
+    trackInstantSave('permissions', persistBrowserControlPreferences({ browserControlScope: els.browserControlScopeInput.value }))
       .then(renderBrowserControl)
       .catch((error) => showOperationToast({ kind: 'warn', title: t('browser_control.toast_scope_unchanged'), detail: error?.message || String(error) }));
   });
@@ -25181,11 +25261,12 @@ function bindEvents() {
     event.preventDefault();
     if (els.saveSettingsTopButton?.getAttribute('aria-busy') === 'true') return;
     setSaveSettingsState('saving');
+    setSettingsSaveNote('saving', t('appearance.saving'));
     let persisted = false;
     try {
       await saveSettingsFromForm();
       persisted = true;
-      await probeGatewayLiveness({ quiet: false });
+      const probed = await probeGatewayLiveness({ quiet: false });
       if (minimumConnectionReady()) {
         await loadGatewayCapabilities({ quiet: true, healthOk: true });
         await loadModels({ quiet: true });
@@ -25199,13 +25280,23 @@ function bindEvents() {
       // close button dismisses Settings.
       setSaveSettingsState('saved');
       captureSettingsBaseline();
+      const outcome = settingsSavedNote(probed);
+      setSettingsSaveNote(outcome.kind, outcome.text);
       await refreshContext();
     } catch (error) {
       const detail = error?.message || String(error);
       setSaveSettingsState(persisted ? 'saved' : 'failed');
+      if (persisted) {
+        // The values are stored; what failed is the reconnect that follows.
+        captureSettingsBaseline();
+        setSettingsSaveNote('warn', t('settings.save.saved_offline', { detail }));
+        setStatus('warn', 'Settings saved', detail, { translateDetail: false });
+        return;
+      }
+      setSettingsSaveNote('failed', t('settings.save.failed', { detail }));
       setStatus('warn', 'Settings not saved', detail, { translateDetail: false });
       // The status line sits behind the open dialog, so say it where it can be seen.
-      if (!persisted) showOperationToast({ kind: 'error', title: 'Settings not saved', detail });
+      showOperationToast({ kind: 'error', title: 'Settings not saved', detail });
     }
   });
   els.localDocumentApproveButton?.addEventListener('click', async () => {

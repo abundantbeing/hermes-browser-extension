@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "جارٍ إنشاء العرض…",
   "haui.opens_new_tab": "يُفتح في تبويب جديد",
   "haui.ask_hint": "يضع هذا السؤال في مربع الرسالة",
+  "settings.save.hint": "المظهر والوكلاء ومفاتيح الأذونات ووقت التشغيل تُطبَّق فور تغييرها. أما بقية الإعدادات فتُطبَّق عند الضغط على «حفظ».",
+  "settings.save.saved_connected": "تم الحفظ. Hermes متصل.",
+  "settings.save.saved_offline": "تم الحفظ، لكن تعذّر الوصول إلى Hermes: {detail}",
+  "settings.save.failed": "لم يتم الحفظ: {detail}",
+  "settings.save.ports_invalid": "يجب أن تكون منافذ الوكلاء أرقامًا من 1 إلى 65535، مفصولة بفواصل.",
+  "settings.save.sources_invalid": "عناوين مصادر النماذج هذه غير صالحة: {sources}",
 });

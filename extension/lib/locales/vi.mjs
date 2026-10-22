@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Đang tạo chế độ xem…",
   "haui.opens_new_tab": "Mở trong thẻ mới",
   "haui.ask_hint": "Đưa câu hỏi này vào ô tin nhắn",
+  "settings.save.hint": "Giao diện, tác tử cùng các công tắc quyền và thời gian chạy có hiệu lực ngay khi bạn thay đổi. Mọi thứ khác có hiệu lực khi bạn nhấn Lưu.",
+  "settings.save.saved_connected": "Đã lưu. Hermes đã kết nối.",
+  "settings.save.saved_offline": "Đã lưu, nhưng không thể kết nối tới Hermes: {detail}",
+  "settings.save.failed": "Chưa lưu: {detail}",
+  "settings.save.ports_invalid": "Cổng của tác tử phải là số từ 1 đến 65535, phân tách bằng dấu phẩy.",
+  "settings.save.sources_invalid": "Các địa chỉ nguồn mô hình này không hợp lệ: {sources}",
 });

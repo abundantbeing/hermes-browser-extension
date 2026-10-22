@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Weergave maken…",
   "haui.opens_new_tab": "Opent in een nieuw tabblad",
   "haui.ask_hint": "Zet deze vraag in het berichtenveld",
+  "settings.save.hint": "Uiterlijk, agenten en de schakelaars voor rechten en runtime gelden direct. Al het andere geldt zodra je op Opslaan drukt.",
+  "settings.save.saved_connected": "Opgeslagen. Hermes is verbonden.",
+  "settings.save.saved_offline": "Opgeslagen, maar Hermes was niet bereikbaar: {detail}",
+  "settings.save.failed": "Niet opgeslagen: {detail}",
+  "settings.save.ports_invalid": "Agentpoorten moeten getallen van 1 tot 65535 zijn, gescheiden door komma’s.",
+  "settings.save.sources_invalid": "Deze modelbronadressen zijn ongeldig: {sources}",
 });

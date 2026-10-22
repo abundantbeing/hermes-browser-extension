@@ -1705,4 +1705,10 @@ export default Object.freeze({
   "haui.building": "正在生成视图…",
   "haui.opens_new_tab": "在新标签页中打开",
   "haui.ask_hint": "将此问题放入消息框",
+  "settings.save.hint": "外观、智能体以及权限和运行时开关会在更改时立即生效。其他设置在点击“保存”后生效。",
+  "settings.save.saved_connected": "已保存。Hermes 已连接。",
+  "settings.save.saved_offline": "已保存，但无法连接到 Hermes：{detail}",
+  "settings.save.failed": "未保存：{detail}",
+  "settings.save.ports_invalid": "智能体端口必须是 1 到 65535 之间的数字，用逗号分隔。",
+  "settings.save.sources_invalid": "以下模型来源地址无效：{sources}",
 });

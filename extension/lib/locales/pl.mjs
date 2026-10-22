@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Tworzenie widoku…",
   "haui.opens_new_tab": "Otwiera się w nowej karcie",
   "haui.ask_hint": "Wstawia to pytanie do pola wiadomości",
+  "settings.save.hint": "Wygląd, agenci oraz przełączniki uprawnień i środowiska uruchomieniowego działają od razu po zmianie. Wszystko inne zaczyna działać po naciśnięciu Zapisz.",
+  "settings.save.saved_connected": "Zapisano. Hermes jest połączony.",
+  "settings.save.saved_offline": "Zapisano, ale nie udało się połączyć z Hermes: {detail}",
+  "settings.save.failed": "Nie zapisano: {detail}",
+  "settings.save.ports_invalid": "Porty agentów muszą być liczbami od 1 do 65535, oddzielonymi przecinkami.",
+  "settings.save.sources_invalid": "Te adresy źródeł modeli są nieprawidłowe: {sources}",
 });

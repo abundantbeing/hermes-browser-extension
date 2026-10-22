@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Ansicht wird erstellt…",
   "haui.opens_new_tab": "Öffnet sich in einem neuen Tab",
   "haui.ask_hint": "Fügt diese Frage in das Nachrichtenfeld ein",
+  "settings.save.hint": "Darstellung, Agenten sowie die Schalter für Berechtigungen und Laufzeit gelten sofort. Alles andere gilt, sobald Sie auf Speichern drücken.",
+  "settings.save.saved_connected": "Gespeichert. Hermes ist verbunden.",
+  "settings.save.saved_offline": "Gespeichert, aber Hermes war nicht erreichbar: {detail}",
+  "settings.save.failed": "Nicht gespeichert: {detail}",
+  "settings.save.ports_invalid": "Agent-Ports müssen Zahlen von 1 bis 65535 sein, durch Kommas getrennt.",
+  "settings.save.sources_invalid": "Diese Modellquellen-Adressen sind ungültig: {sources}",
 });

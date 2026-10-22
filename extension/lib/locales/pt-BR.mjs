@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "Criando a visualização…",
   "haui.opens_new_tab": "Abre em uma nova aba",
   "haui.ask_hint": "Coloca esta pergunta na caixa de mensagem",
+  "settings.save.hint": "Aparência, agentes e as chaves de permissões e de execução são aplicados assim que você os altera. Todo o resto é aplicado quando você clica em Salvar.",
+  "settings.save.saved_connected": "Salvo. O Hermes está conectado.",
+  "settings.save.saved_offline": "Salvo, mas não foi possível alcançar o Hermes: {detail}",
+  "settings.save.failed": "Não salvo: {detail}",
+  "settings.save.ports_invalid": "As portas dos agentes devem ser números de 1 a 65535, separados por vírgulas.",
+  "settings.save.sources_invalid": "Estes endereços de fontes de modelos não são válidos: {sources}",
 });

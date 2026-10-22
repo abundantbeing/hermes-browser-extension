@@ -1706,4 +1706,10 @@ export default Object.freeze({
   "haui.building": "보기 만드는 중…",
   "haui.opens_new_tab": "새 탭에서 열립니다",
   "haui.ask_hint": "이 질문을 메시지 입력창에 넣습니다",
+  "settings.save.hint": "모양, 에이전트, 권한 및 런타임 스위치는 바꾸는 즉시 적용됩니다. 나머지는 저장을 누르면 적용됩니다.",
+  "settings.save.saved_connected": "저장했습니다. Hermes에 연결되어 있습니다.",
+  "settings.save.saved_offline": "저장했지만 Hermes에 연결할 수 없습니다: {detail}",
+  "settings.save.failed": "저장하지 못했습니다: {detail}",
+  "settings.save.ports_invalid": "에이전트 포트는 1~65535 사이의 숫자여야 하며 쉼표로 구분합니다.",
+  "settings.save.sources_invalid": "다음 모델 소스 주소가 올바르지 않습니다: {sources}",
 });
