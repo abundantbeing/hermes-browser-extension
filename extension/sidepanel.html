@@ -393,6 +393,8 @@
           <img class="hero-badge" src="assets/img/hermes-badge.webp" alt="Hermes Agent badge" data-i18n-alt="ui.hermes.agent.badge" />
         </section>
 
+        <section id="onboardingFlow" class="onboarding" aria-label="Set up Hermes" data-i18n-aria-label="onboarding.aria" hidden></section>
+
         <section id="messages" class="messages" aria-live="polite"></section>
       </section>
 
@@ -822,6 +824,27 @@
             </label>
             <p id="signatureFontFallbackNote" class="appearance-signature-font-fallback-note" data-i18n="appearance.font_fallback_note" hidden>Licensed signature font not installed — showing the bundled fallback face.</p>
             <p id="appearanceSaveStatus" class="appearance-save-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="appearance-control-stack response-presentation-setting">
+            <div>
+              <strong data-i18n="responses.style.label">Response style</strong>
+              <span data-i18n="responses.style.description">How Hermes draws its replies.</span>
+            </div>
+            <div id="responseStyleChoices" class="segmented-control response-choice-group" role="radiogroup" aria-label="Response style" data-i18n-aria-label="responses.style.label">
+              <button class="response-choice" type="button" role="radio" aria-checked="false" data-response-style="vivid" data-i18n-title="responses.style.vivid_hint" title="Cards, tables and charts when they help."><span data-i18n="responses.style.vivid">Vivid UI</span></button>
+              <button class="response-choice" type="button" role="radio" aria-checked="false" data-response-style="rich" data-i18n-title="responses.style.rich_hint" title="Formatted Markdown: headings, lists and code."><span data-i18n="responses.style.rich">Rich text</span></button>
+              <button class="response-choice" type="button" role="radio" aria-checked="false" data-response-style="plain" data-i18n-title="responses.style.plain_hint" title="Just the words, no formatting."><span data-i18n="responses.style.plain">Plain text</span></button>
+            </div>
+            <div>
+              <strong data-i18n="responses.layout.label">Chat layout</strong>
+              <span data-i18n="responses.layout.description">Where messages sit in the chat.</span>
+            </div>
+            <div id="messageLayoutChoices" class="segmented-control response-choice-group" role="radiogroup" aria-label="Chat layout" data-i18n-aria-label="responses.layout.label">
+              <button class="response-choice" type="button" role="radio" aria-checked="false" data-message-layout="bubbles" data-i18n-title="responses.layout.bubbles_hint" title="You and Hermes each in a bubble, like a messaging app."><span data-i18n="responses.layout.bubbles">Bubbles both sides</span></button>
+              <button class="response-choice" type="button" role="radio" aria-checked="false" data-message-layout="user-bubble" data-i18n-title="responses.layout.user_bubble_hint" title="Your messages in a bubble, Hermes replies as flowing text."><span data-i18n="responses.layout.user_bubble">User bubble only</span></button>
+            </div>
+            <button id="rerunOnboardingButton" class="secondary rerun-onboarding-button" type="button" data-i18n="responses.setup_again">Run setup again</button>
           </div>
 
           <div class="appearance-row language-row">
