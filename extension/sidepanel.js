@@ -149,6 +149,7 @@ import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
 import { renderMarkdownSafe, renderResponseSafe, sanitizeHtml } from './lib/sanitizer.mjs';
 import { dispatchAdaptiveAction, readAdaptiveAction } from './lib/adaptive-ui.mjs';
 import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
+import { contextPreviewEventApplies, createContextPreviewScheduler, previewKeepsPageContext, sessionSwitchedFromSettings, WINDOW_ID_NONE } from './lib/context-preview-refresh.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
 import {
   ONBOARDING_COMPLETED_STORAGE_KEY,
@@ -2127,6 +2128,10 @@ function hermesGatewayKey() {
 }
 let modelsRefreshing = false;
 let contextRefreshingFromUser = false;
+const contextPreviewScheduler = createContextPreviewScheduler({
+  run: runContextPreviewEvents,
+  isStreaming: () => sending,
+});
 const CONNECTION_PROBE_INTERVAL_MS = 30_000;
 
 // remote-dashboard mode authenticates over the dashboard WebSocket with a
@@ -20765,6 +20770,70 @@ async function refreshContextFromUser() {
   }
 }
 
+// Light path for the preview. It reads the active tab and tab list only and
+// runs no content script, so it captures no page text. The previous page text
+// survives only while the tab and URL are unchanged.
+async function refreshContextPreview() {
+  const scopeRevisionId = scopeRevision.current();
+  const refreshRevisionId = contextRefreshRevision.current();
+  let scope = effectiveContextGate(contextScope).scope;
+  if (scope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return currentContext;
+  const [active, tabs] = await Promise.all([activeTab(), tabsForCurrentScope()]);
+  // A full capture that started meanwhile owns currentContext; leave it alone.
+  if (!scopeRevision.isCurrent(scopeRevisionId) || contextRefreshRevision.current() !== refreshRevisionId) return currentContext;
+  const tab = resolveContextTargetTab({ activeTab: active, tabs, scope });
+  if (scope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB && tab) {
+    const nextScope = contextScopeFromTab(tab, contextScope);
+    if (JSON.stringify(nextScope) !== JSON.stringify(contextScope)) {
+      contextScope = nextScope;
+      scope = normalizeContextScope(nextScope);
+      saveContextScopeForInstance();
+    }
+  }
+  const tabChanged = !previewKeepsPageContext(currentContext.activeTab, tab);
+  syncSelectedTabsFromContextScope(tabs);
+  const promptTabs = filterPromptTabs(tabs, scope, { activeTab: tab, targetTab: tab });
+  currentContext = {
+    activeTab: tab,
+    tabs,
+    selectedTabs: Array.isArray(scope.selectedTabIds) ? promptTabs : tabs,
+    pageContext: tabChanged ? null : currentContext.pageContext,
+    contextScope: scope,
+  };
+  if (tab && tabChanged) {
+    if (isRestrictedUrl(tab.url, { allowLocalDocuments: isLocalDocumentUrl(tab.url) })) {
+      setStatus('warn', tab.title || translateUiText('Restricted page'), t('status.page_context_restricted', { url: tab.url }), { translateTitle: false, translateDetail: false });
+    } else {
+      setStatus('ok', tab.title || translateUiText('Active tab ready'), tab.url || '', { translateTitle: false, translateDetail: false });
+    }
+  }
+  renderLocalDocumentApproval(tab);
+  renderContextScopeControls();
+  renderContextWindow();
+  return currentContext;
+}
+
+async function runContextPreviewEvents(events) {
+  try {
+    const scopeMode = effectiveContextGate(contextScope).scope.mode;
+    if (scopeMode === CONTEXT_SCOPE_MODES.CHAT_ONLY) return currentContext;
+    const active = await activeTab();
+    const applies = events.some((event) => contextPreviewEventApplies(event, {
+      scopeMode,
+      pinnedTabId: contextScope.pinnedTabId,
+      activeTabId: active?.id ?? null,
+    }));
+    return applies ? await refreshContextPreview() : currentContext;
+  } catch (error) {
+    console.warn('[Hermes Browser] Context preview refresh failed:', error);
+    return currentContext;
+  }
+}
+
+function scheduleContextPreviewRefresh(event = {}) {
+  contextPreviewScheduler.schedule(event);
+}
+
 async function apiFetch(path, options = {}) {
   return hermesClient.fetch(path, options);
 }
@@ -25371,11 +25440,15 @@ function bindEvents() {
     }
   });
   browserApi.tabs?.onActivated?.addListener?.((activeInfo) => {
-    if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'activated', eventTabId: activeInfo?.tabId })) refreshContext();
+    scheduleContextPreviewRefresh({ kind: 'activated', tabId: activeInfo?.tabId });
   });
   browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
     if (!(changeInfo.status === 'complete' || changeInfo.title || changeInfo.url)) return;
-    if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'updated', eventTabId: tabId })) refreshContext();
+    scheduleContextPreviewRefresh({ kind: 'updated', tabId });
+  });
+  browserApi.windows?.onFocusChanged?.addListener?.((windowId) => {
+    if (windowId === WINDOW_ID_NONE) return;
+    scheduleContextPreviewRefresh({ kind: 'focus' });
   });
   browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
     if (shouldRefreshForTabEvent({ scope: contextScope, eventType: 'removed', eventTabId: tabId })) refreshContext();
@@ -25406,6 +25479,9 @@ function bindEvents() {
   });
   browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     if (areaName !== 'local') return;
+    if (changes?.hermesBrowserSettings && sessionSwitchedFromSettings(changes.hermesBrowserSettings.oldValue, changes.hermesBrowserSettings.newValue)) {
+      scheduleContextPreviewRefresh({ kind: 'session' });
+    }
     if (changes?.[WAKE_STORAGE_KEYS.state]?.newValue) renderWakeState(changes[WAKE_STORAGE_KEYS.state].newValue);
     if (changes?.[WAKE_STORAGE_KEYS.turn]?.newValue) {
       consumeWakeTurn(changes[WAKE_STORAGE_KEYS.turn].newValue).catch((error) => {
