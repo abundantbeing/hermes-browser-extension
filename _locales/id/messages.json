@@ -1687,6 +1687,10 @@
     "message": "Dibuka di tab baru",
     "description": "Runtime interface message haui.opens_new_tab"
   },
+  "runtime_haui_unreadable": {
+    "message": "Ditampilkan sebagai teks: kartu ini tidak dapat digambar.",
+    "description": "Runtime interface message haui.unreadable"
+  },
   "runtime_haui_view_as_chart": {
     "message": "Lihat sebagai grafik",
     "description": "Runtime interface message haui.view_as_chart"
@@ -1859,13 +1863,37 @@
     "message": "Kembali",
     "description": "Runtime interface message onboarding.back"
   },
-  "runtime_onboarding_finish_body": {
-    "message": "Tanyakan tentang halaman yang sedang Anda buka. Hermes melihat tab aktif, teks yang dipilih, dan tab yang terbuka. Ubah semua ini nanti di Pengaturan, pada Tampilan & tema.",
-    "description": "Runtime interface message onboarding.finish.body"
+  "runtime_onboarding_connect_body": {
+    "message": "Pemasangan menautkan panel ini ke agen Hermes Anda. Setujui sekali, lalu Hermes dapat melihat halaman yang Anda buka dan menjawab di sini.",
+    "description": "Runtime interface message onboarding.connect.body"
   },
-  "runtime_onboarding_finish_title": {
-    "message": "Semua siap",
-    "description": "Runtime interface message onboarding.finish.title"
+  "runtime_onboarding_connect_connected": {
+    "message": "Terhubung ke Hermes",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "Hubungkan nanti",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "Belum dipasangkan",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "Hubungkan ke Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "Coba prompt pertama",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "Jenis huruf untuk panel dan balasan Hermes.",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "Pilih font",
+    "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_layout_body": {
     "message": "Letak pesan Anda dan balasan Hermes.",
@@ -1878,6 +1906,30 @@
   "runtime_onboarding_next": {
     "message": "Berikutnya",
     "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "Waktu muat (dtk)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "Tiga hal menonjol di halaman ini.",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "Dimuat dua kali lebih cepat",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "Membuat lebih sedikit permintaan",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "Bundelnya lebih kecil",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "Ringkas halaman ini",
+    "description": "Runtime interface message onboarding.preview.user"
   },
   "runtime_onboarding_skip": {
     "message": "Lewati",
@@ -1898,18 +1950,6 @@
   "runtime_onboarding_style_title": {
     "message": "Pilih gaya respons",
     "description": "Runtime interface message onboarding.style.title"
-  },
-  "runtime_onboarding_summary_layout": {
-    "message": "Tata letak chat",
-    "description": "Runtime interface message onboarding.summary.layout"
-  },
-  "runtime_onboarding_summary_style": {
-    "message": "Gaya respons",
-    "description": "Runtime interface message onboarding.summary.style"
-  },
-  "runtime_onboarding_summary_theme": {
-    "message": "Tema",
-    "description": "Runtime interface message onboarding.summary.theme"
   },
   "runtime_onboarding_theme_body": {
     "message": "Warna untuk panel samping dan tab penuh.",
@@ -1986,6 +2026,402 @@
   "runtime_profile_using": {
     "message": "Menggunakan {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_projects_back": {
+    "message": "Kembali",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "Batal",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_creating": {
+    "message": "Membuat…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "Proyek {name} dibuat.",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "Masukkan nama proyek.",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "Folder itu sudah menjadi bagian dari proyek {project}.",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "Gunakan path absolut di host gateway: diawali garis miring, huruf drive, atau ~.",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "Masukkan folder proyek di host gateway.",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_name": {
+    "message": "Nama proyek",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_path": {
+    "message": "Folder di host gateway",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "Path ini ada di mesin tempat Hermes berjalan ({host}), bukan di komputer ini. Browser tidak dapat membuka pemilih folder mesin itu, jadi ketik path-nya.",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "Buat proyek",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "gateway",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "Proyek baru",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "Gunakan \"{name}\"",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "Proyek bernama {name} sudah ada ({folder}). Proyek dibedakan menurut folder, tetapi nama yang berbeda lebih mudah dibedakan.",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "Tutup",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "Proyek mengelompokkan sesi yang berjalan di dalam folder pada mesin tempat Hermes berjalan. Buat satu untuk memulai.",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "Belum ada proyek",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "Koneksi ke Hermes terputus.",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes tidak dapat menyelesaikan permintaan.",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes menolak nilai itu.",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes menjawab dengan sesuatu yang tidak dipahami ekstensi ini.",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes tidak mengembalikan proyek yang diminta untuk dibuat.",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "Proyek itu sudah tidak ada.",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "Profil ini tidak lagi tersedia di gateway.",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes tidak menjawab tepat waktu.",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "Proyek mengalami masalah",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "Folder di host gateway:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "Folder terdeteksi",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "Beranda",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "Proyek",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_loading": {
+    "message": "Memuat proyek…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "Memuat sesi proyek ini…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "Pindahkan",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "Pindahkan {title} ke proyek",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "Pindahkan ke proyek",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "Sesi sudah berada di {cwd}.",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes menolak pemindahan karena sesi sedang sibuk. Tunggu giliran selesai, atau hentikan, lalu coba lagi.",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes menolak pemindahan karena sesi sedang dipadatkan. Coba lagi setelah selesai.",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "Periksa lagi",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "Periksa folder",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "Bertanya ke Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "Sementara itu sesi diubah oleh hal lain, jadi pemindahan tidak diterapkan.",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "saat ini",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "Folder saat ini:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes tidak mengizinkan pemindahan ini untuk login atau profil Anda.",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "Pindahkan ke",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "Dipindahkan. Hermes melaporkan folder sesi sebagai {cwd}.",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "Memindahkan sesi mengubah ruang kerjanya dan dapat mengubah folder tempat perintahnya berjalan. Sesi termasuk dalam proyek karena foldernya; tidak ada yang disimpan di browser ini.",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes tidak dapat memindahkan sesi. {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "Folder ini milik proyek {name}.",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "Folder ini tidak ada di proyek mana pun, jadi sesi akan muncul di Beranda.",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "Folder di host gateway",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "Koneksi terputus sebelum Hermes mengonfirmasi. Pemindahan mungkin sudah terjadi atau belum, jadi periksa lagi sebelum memindahkan apa pun.",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "Folder itu bukan direktori di host gateway Hermes.",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "Tetap minta Hermes memindahkannya",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "Sebuah giliran sedang berjalan di sesi ini",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "Memindahkannya mengubah folder tempat perintahnya berjalan, dan Hermes menolak pemindahan selama giliran aktif. Belum ada yang diubah.",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "Memindahkan…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes belum menerapkan pemindahan. Periksa lagi untuk membaca sesi; pemindahan diulang hanya jika tidak ada yang diterapkan.",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "Hermes tidak dapat dibaca, jadi tidak ada yang dikirim.",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "Folder lain…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "Memindahkan sesi ke folder yang tidak ada di proyek mana pun akan mengeluarkannya dari proyeknya.",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "Gunakan path absolut di host gateway: diawali garis miring, huruf drive, atau ~.",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "Masukkan folder di host gateway.",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "Sesi",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "Sesi berubah saat dipindahkan, jadi tidak ada yang dipindahkan. Buka pemindahan lagi untuk memakai keadaan terbarunya.",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "Pindahkan ke {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "Pindahkan ke proyek",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes menerima pemindahan, tetapi folder sesi terbaca sebagai {cwd}, bukan yang Anda minta. Periksa sesi sebelum mengandalkannya.",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "Proyek baru",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "Sesi baru di proyek ini",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "Memulai sesi yang berjalan di folder proyek ini.",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "Tidak dapat memulai sesi di proyek ini. {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes tidak memulai sesi.",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "Sesi baru di {name}",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "Tidak ada proyek yang cocok dengan pencarian Anda.",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_reason_code": {
+    "message": "Alasan: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "Segarkan proyek",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "Coba lagi",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "Profil {profile} di {host}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "Cari proyek",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "Cari di sesi proyek ini",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} sesi",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "Mulai satu di atas, atau pindahkan sesi yang ada ke sini dari Terbaru.",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "Belum ada sesi di proyek ini",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "Tidak ada sesi di proyek ini yang cocok dengan pencarian Anda.",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "Sesi",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "Tampilan sesi",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "Proyek",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "Terbaru",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "Gateway Hermes yang terhubung menjawab \"method not found\" (-32601) untuk {method}.",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "Gateway Hermes ini tidak mengumumkan otoritas sesi, sehingga proyek dan pemindahan sesi tidak tersedia. Perbarui Hermes ke versi dengan mutasi sesi kanonis.",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "Proyek tidak tersedia sampai WebSocket dasbor Hermes terhubung.",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "Terbaru masih berfungsi.",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "Proyek memerlukan WebSocket dasbor Hermes. Koneksi ini hanya menjangkau REST API.",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "Proyek tidak tersedia di sini",
+    "description": "Runtime interface message projects.unavailable.title"
   },
   "runtime_responses_layout_bubbles": {
     "message": "Balon di kedua sisi",

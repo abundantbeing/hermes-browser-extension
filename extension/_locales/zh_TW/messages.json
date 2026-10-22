@@ -1687,6 +1687,10 @@
     "message": "在新分頁中開啟",
     "description": "Runtime interface message haui.opens_new_tab"
   },
+  "runtime_haui_unreadable": {
+    "message": "以文字顯示：無法繪製此卡片。",
+    "description": "Runtime interface message haui.unreadable"
+  },
   "runtime_haui_view_as_chart": {
     "message": "以圖表檢視",
     "description": "Runtime interface message haui.view_as_chart"
@@ -1859,13 +1863,37 @@
     "message": "返回",
     "description": "Runtime interface message onboarding.back"
   },
-  "runtime_onboarding_finish_body": {
-    "message": "詢問你目前所在的頁面。Hermes 可以看到目前的分頁、選取的文字和已開啟的分頁。之後可以在「設定」的「外觀與主題」中變更這些選項。",
-    "description": "Runtime interface message onboarding.finish.body"
+  "runtime_onboarding_connect_body": {
+    "message": "配對會將此面板連結到你的 Hermes 代理程式。核准一次後，Hermes 就能看到你所在的頁面並在這裡回答。",
+    "description": "Runtime interface message onboarding.connect.body"
   },
-  "runtime_onboarding_finish_title": {
-    "message": "全部設定完成",
-    "description": "Runtime interface message onboarding.finish.title"
+  "runtime_onboarding_connect_connected": {
+    "message": "已連線至 Hermes",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "稍後連線",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "尚未配對",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "連線至 Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "試試第一個提示",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "面板和 Hermes 回覆使用的字型。",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "選擇字型",
+    "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_layout_body": {
     "message": "你的訊息與 Hermes 的回覆所在的位置。",
@@ -1878,6 +1906,30 @@
   "runtime_onboarding_next": {
     "message": "下一步",
     "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "載入時間（秒）",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "這個頁面有三點值得注意。",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "載入速度快一倍",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "請求更少",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "套件體積更小",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "摘要這個頁面",
+    "description": "Runtime interface message onboarding.preview.user"
   },
   "runtime_onboarding_skip": {
     "message": "跳過",
@@ -1898,18 +1950,6 @@
   "runtime_onboarding_style_title": {
     "message": "選擇回覆樣式",
     "description": "Runtime interface message onboarding.style.title"
-  },
-  "runtime_onboarding_summary_layout": {
-    "message": "聊天版面",
-    "description": "Runtime interface message onboarding.summary.layout"
-  },
-  "runtime_onboarding_summary_style": {
-    "message": "回覆樣式",
-    "description": "Runtime interface message onboarding.summary.style"
-  },
-  "runtime_onboarding_summary_theme": {
-    "message": "主題",
-    "description": "Runtime interface message onboarding.summary.theme"
   },
   "runtime_onboarding_theme_body": {
     "message": "側邊欄與整個分頁的配色。",
@@ -1986,6 +2026,402 @@
   "runtime_profile_using": {
     "message": "正在使用 {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_projects_back": {
+    "message": "返回",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "取消",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_creating": {
+    "message": "正在建立…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "已建立專案 {name}。",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "請輸入專案名稱。",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "該資料夾已屬於專案 {project}。",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "請使用閘道主機上的絕對路徑：以斜線、磁碟機代號或 ~ 開頭。",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "請輸入專案在閘道主機上的資料夾。",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_name": {
+    "message": "專案名稱",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_path": {
+    "message": "閘道主機上的資料夾",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "此路徑位於執行 Hermes 的機器（{host}）上，而不是這台電腦。瀏覽器無法開啟那台機器的資料夾選取器，所以請直接輸入路徑。",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "建立專案",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "閘道",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "新增專案",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "使用「{name}」",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "已存在名為 {name} 的專案（{folder}）。專案靠資料夾區分，但使用不同的名稱更容易區分。",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "關閉",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "專案會將在執行 Hermes 的機器上某個資料夾內執行的工作階段歸為一組。建立一個即可開始。",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "還沒有專案",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "與 Hermes 的連線已中斷。",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes 無法完成該要求。",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes 拒絕了該值。",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes 回傳了此擴充功能無法理解的回應。",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes 沒有回傳被要求建立的專案。",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "該專案已不存在。",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "此設定檔在閘道上已無法使用。",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes 未能及時回應。",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "專案發生問題",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "閘道主機上的資料夾：",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "偵測到的資料夾",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "首頁",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "專案",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_loading": {
+    "message": "正在載入專案…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "正在載入此專案的工作階段…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "移動",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "將 {title} 移動到專案",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "移動到專案",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "工作階段已在 {cwd} 中。",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes 拒絕了移動，因為工作階段正忙。請等待回合結束或停止它，然後重試。",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes 拒絕了移動，因為工作階段正在壓縮。請在完成後重試。",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "再次檢查",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "檢查資料夾",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "正在詢問 Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "在此期間工作階段被其他操作變更，因此移動未被套用。",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "目前",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "目前的資料夾：",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes 不允許你的登入或設定檔進行此次移動。",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "移動到",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "已移動。Hermes 回報工作階段的資料夾為 {cwd}。",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "移動工作階段會變更其工作區，也可能變更其指令執行所在的資料夾。工作階段因其資料夾而屬於某個專案；此瀏覽器中不會儲存任何內容。",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes 無法移動該工作階段。{detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "此資料夾屬於專案 {name}。",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "此資料夾不屬於任何專案，因此該工作階段會顯示在首頁下。",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "閘道主機上的資料夾",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "在 Hermes 確認之前連線中斷了。移動可能已發生，也可能沒有，所以在移動任何內容之前請再次檢查。",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "該資料夾不是 Hermes 閘道主機上的目錄。",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "仍然要求 Hermes 移動",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "此工作階段中有一個回合正在執行",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "移動會變更其指令執行所在的資料夾，而且回合進行期間 Hermes 會拒絕移動。目前尚未變更任何內容。",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "正在移動…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes 尚未套用此次移動。請再次檢查以讀取工作階段；只有在沒有套用任何內容時才會重試移動。",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "無法讀取 Hermes，因此沒有傳送任何內容。",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "其他資料夾…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "將工作階段移到不屬於任何專案的資料夾，會使它脫離原本的專案。",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "請使用閘道主機上的絕對路徑：以斜線、磁碟機代號或 ~ 開頭。",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "請輸入閘道主機上的資料夾。",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "工作階段",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "工作階段在移動期間發生了變化，因此沒有移動任何內容。請重新開啟移動以使用其最新狀態。",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "移動到 {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "移動到專案",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes 接受了移動，但工作階段的資料夾讀回為 {cwd}，而不是你要求的那個。請在依賴它之前檢查該工作階段。",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "新增專案",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "在此專案中新增工作階段",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "啟動一個在此專案資料夾中執行的工作階段。",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "無法在此專案中啟動工作階段。{detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes 沒有啟動工作階段。",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "{name} 中的新工作階段",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "沒有符合搜尋的專案。",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_reason_code": {
+    "message": "原因：{reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "重新整理專案",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "重試",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "{host} 上的設定檔 {profile}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "搜尋專案",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "搜尋此專案的工作階段",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} 個工作階段",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "在上方啟動一個，或從「最近」將現有的工作階段移到這裡。",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "此專案中還沒有工作階段",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "此專案中沒有符合搜尋的工作階段。",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "工作階段",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "工作階段檢視",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "專案",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "最近",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "已連線的 Hermes 閘道對 {method} 回應了 \"method not found\" (-32601)。",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "此 Hermes 閘道沒有宣告工作階段權限，因此無法使用專案與移動工作階段。請將 Hermes 更新至支援標準工作階段變更的版本。",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "在 Hermes 儀表板的 WebSocket 連線之前，專案無法使用。",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "「最近」仍可使用。",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "專案需要 Hermes 儀表板的 WebSocket。此連線只能存取 REST API。",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "此處無法使用專案",
+    "description": "Runtime interface message projects.unavailable.title"
   },
   "runtime_responses_layout_bubbles": {
     "message": "兩側都使用泡泡",

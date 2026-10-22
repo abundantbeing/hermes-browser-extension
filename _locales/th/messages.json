@@ -1687,6 +1687,10 @@
     "message": "เปิดในแท็บใหม่",
     "description": "Runtime interface message haui.opens_new_tab"
   },
+  "runtime_haui_unreadable": {
+    "message": "แสดงเป็นข้อความ: ไม่สามารถวาดการ์ดนี้ได้",
+    "description": "Runtime interface message haui.unreadable"
+  },
   "runtime_haui_view_as_chart": {
     "message": "ดูเป็นแผนภูมิ",
     "description": "Runtime interface message haui.view_as_chart"
@@ -1859,13 +1863,37 @@
     "message": "กลับ",
     "description": "Runtime interface message onboarding.back"
   },
-  "runtime_onboarding_finish_body": {
-    "message": "ถามเกี่ยวกับหน้าที่คุณเปิดอยู่ Hermes เห็นแท็บที่ใช้งานอยู่ ข้อความที่เลือก และแท็บที่เปิดอยู่ คุณเปลี่ยนการตั้งค่าเหล่านี้ได้ภายหลังในการตั้งค่า ภายใต้ลักษณะที่ปรากฏและธีม",
-    "description": "Runtime interface message onboarding.finish.body"
+  "runtime_onboarding_connect_body": {
+    "message": "การจับคู่จะเชื่อมแผงนี้กับเอเจนต์ Hermes ของคุณ อนุมัติเพียงครั้งเดียว แล้ว Hermes จะเห็นหน้าที่คุณเปิดอยู่และตอบที่นี่",
+    "description": "Runtime interface message onboarding.connect.body"
   },
-  "runtime_onboarding_finish_title": {
-    "message": "พร้อมแล้ว",
-    "description": "Runtime interface message onboarding.finish.title"
+  "runtime_onboarding_connect_connected": {
+    "message": "เชื่อมต่อกับ Hermes แล้ว",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "เชื่อมต่อภายหลัง",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "ยังไม่ได้จับคู่",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "เชื่อมต่อกับ Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "ลองพรอมต์แรก",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "แบบอักษรของแผงและคำตอบของ Hermes",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "เลือกฟอนต์",
+    "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_layout_body": {
     "message": "ข้อความของคุณและคำตอบของ Hermes จะแสดงตรงไหน",
@@ -1878,6 +1906,30 @@
   "runtime_onboarding_next": {
     "message": "ถัดไป",
     "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "เวลาโหลด (วินาที)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "หน้านี้มีสามเรื่องที่โดดเด่น",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "โหลดเร็วขึ้นสองเท่า",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "ส่งคำขอน้อยลง",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "บันเดิลเล็กลง",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "สรุปหน้านี้",
+    "description": "Runtime interface message onboarding.preview.user"
   },
   "runtime_onboarding_skip": {
     "message": "ข้าม",
@@ -1898,18 +1950,6 @@
   "runtime_onboarding_style_title": {
     "message": "เลือกรูปแบบการตอบกลับ",
     "description": "Runtime interface message onboarding.style.title"
-  },
-  "runtime_onboarding_summary_layout": {
-    "message": "รูปแบบแชท",
-    "description": "Runtime interface message onboarding.summary.layout"
-  },
-  "runtime_onboarding_summary_style": {
-    "message": "รูปแบบการตอบกลับ",
-    "description": "Runtime interface message onboarding.summary.style"
-  },
-  "runtime_onboarding_summary_theme": {
-    "message": "ธีม",
-    "description": "Runtime interface message onboarding.summary.theme"
   },
   "runtime_onboarding_theme_body": {
     "message": "สีสำหรับแผงด้านข้างและแท็บเต็ม",
@@ -1986,6 +2026,402 @@
   "runtime_profile_using": {
     "message": "กำลังใช้ {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_projects_back": {
+    "message": "กลับ",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "ยกเลิก",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_creating": {
+    "message": "กำลังสร้าง…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "สร้างโปรเจกต์ {name} แล้ว",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "กรอกชื่อโปรเจกต์",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "โฟลเดอร์นั้นเป็นของโปรเจกต์ {project} อยู่แล้ว",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "ใช้พาธแบบสัมบูรณ์บนโฮสต์เกตเวย์: ขึ้นต้นด้วยเครื่องหมายทับ อักษรไดรฟ์ หรือ ~",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "กรอกโฟลเดอร์ของโปรเจกต์บนโฮสต์เกตเวย์",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_name": {
+    "message": "ชื่อโปรเจกต์",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_path": {
+    "message": "โฟลเดอร์บนโฮสต์เกตเวย์",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "พาธนี้อยู่บนเครื่องที่รัน Hermes ({host}) ไม่ใช่คอมพิวเตอร์เครื่องนี้ เบราว์เซอร์ไม่สามารถเปิดตัวเลือกโฟลเดอร์ของเครื่องนั้นได้ จึงต้องพิมพ์พาธเอง",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "สร้างโปรเจกต์",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "เกตเวย์",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "โปรเจกต์ใหม่",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "ใช้ \"{name}\"",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "มีโปรเจกต์ชื่อ {name} อยู่แล้ว ({folder}) โปรเจกต์แยกกันด้วยโฟลเดอร์ แต่ชื่อที่ต่างกันจะแยกแยะได้ง่ายกว่า",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "ปิด",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "โปรเจกต์จะจัดกลุ่มเซสชันที่ทำงานในโฟลเดอร์บนเครื่องที่รัน Hermes สร้างสักโปรเจกต์เพื่อเริ่มต้น",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "ยังไม่มีโปรเจกต์",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "การเชื่อมต่อกับ Hermes ขาดหาย",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes ไม่สามารถทำคำขอให้เสร็จได้",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes ปฏิเสธค่านั้น",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes ตอบกลับด้วยสิ่งที่ส่วนขยายนี้ไม่เข้าใจ",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes ไม่ได้ส่งโปรเจกต์ที่ถูกขอให้สร้างกลับมา",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "ไม่มีโปรเจกต์นั้นอีกต่อไป",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "โปรไฟล์นี้ไม่มีอยู่บนเกตเวย์อีกต่อไป",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes ตอบไม่ทันเวลา",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "โปรเจกต์พบปัญหา",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "โฟลเดอร์บนโฮสต์เกตเวย์:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "โฟลเดอร์ที่ตรวจพบ",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "หน้าแรก",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "โปรเจกต์",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_loading": {
+    "message": "กำลังโหลดโปรเจกต์…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "กำลังโหลดเซสชันของโปรเจกต์นี้…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "ย้าย",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "ย้าย {title} ไปยังโปรเจกต์",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "ย้ายไปยังโปรเจกต์",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "เซสชันอยู่ใน {cwd} แล้ว",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes ปฏิเสธการย้ายเพราะเซสชันไม่ว่าง รอให้เทิร์นเสร็จ หรือหยุดมัน แล้วลองอีกครั้ง",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes ปฏิเสธการย้ายเพราะเซสชันกำลังถูกบีบอัด ลองอีกครั้งเมื่อเสร็จแล้ว",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "ตรวจสอบอีกครั้ง",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "ตรวจสอบโฟลเดอร์",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "กำลังถาม Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "ระหว่างนั้นเซสชันถูกเปลี่ยนโดยสิ่งอื่น จึงไม่ได้ใช้การย้าย",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "ปัจจุบัน",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "โฟลเดอร์ปัจจุบัน:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes ไม่อนุญาตการย้ายนี้สำหรับการลงชื่อเข้าใช้หรือโปรไฟล์ของคุณ",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "ย้ายไปที่",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "ย้ายแล้ว Hermes รายงานว่าโฟลเดอร์ของเซสชันคือ {cwd}",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "การย้ายเซสชันจะเปลี่ยนพื้นที่ทำงานของเซสชัน และอาจเปลี่ยนโฟลเดอร์ที่คำสั่งทำงาน เซสชันอยู่ในโปรเจกต์เพราะโฟลเดอร์ของมัน ไม่มีสิ่งใดถูกเก็บในเบราว์เซอร์นี้",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes ไม่สามารถย้ายเซสชันได้ {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "โฟลเดอร์นี้เป็นของโปรเจกต์ {name}",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "โฟลเดอร์นี้ไม่อยู่ในโปรเจกต์ใด เซสชันจึงจะแสดงใต้หน้าแรก",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "โฟลเดอร์บนโฮสต์เกตเวย์",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "การเชื่อมต่อขาดก่อนที่ Hermes จะยืนยัน การย้ายอาจเกิดขึ้นแล้วหรือยังไม่เกิด โปรดตรวจสอบอีกครั้งก่อนย้ายสิ่งใด",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "โฟลเดอร์นั้นไม่ใช่ไดเรกทอรีบนโฮสต์เกตเวย์ Hermes",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "ขอให้ Hermes ย้ายอยู่ดี",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "มีเทิร์นกำลังทำงานในเซสชันนี้",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "การย้ายจะเปลี่ยนโฟลเดอร์ที่คำสั่งทำงาน และ Hermes จะปฏิเสธการย้ายขณะที่เทิร์นยังทำงานอยู่ ยังไม่มีสิ่งใดถูกเปลี่ยนแปลง",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "กำลังย้าย…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes ยังไม่ได้ใช้การย้าย ตรวจสอบอีกครั้งเพื่ออ่านเซสชัน การย้ายจะถูกลองใหม่เฉพาะเมื่อไม่มีสิ่งใดถูกใช้",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "อ่านค่า Hermes ไม่ได้ จึงไม่ได้ส่งสิ่งใด",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "โฟลเดอร์อื่น…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "การย้ายเซสชันไปยังโฟลเดอร์ที่ไม่อยู่ในโปรเจกต์ใดจะนำเซสชันออกจากโปรเจกต์ของมัน",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "ใช้พาธแบบสัมบูรณ์บนโฮสต์เกตเวย์: ขึ้นต้นด้วยเครื่องหมายทับ อักษรไดรฟ์ หรือ ~",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "กรอกโฟลเดอร์บนโฮสต์เกตเวย์",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "เซสชัน",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "เซสชันเปลี่ยนไประหว่างการย้าย จึงไม่มีสิ่งใดถูกย้าย เปิดการย้ายอีกครั้งเพื่อใช้สถานะล่าสุด",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "ย้ายไปที่ {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "ย้ายไปยังโปรเจกต์",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes รับการย้ายแล้ว แต่โฟลเดอร์ของเซสชันอ่านกลับมาเป็น {cwd} ไม่ใช่โฟลเดอร์ที่คุณขอ โปรดตรวจสอบเซสชันก่อนเชื่อถือ",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "โปรเจกต์ใหม่",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "เซสชันใหม่ในโปรเจกต์นี้",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "เริ่มเซสชันที่ทำงานในโฟลเดอร์ของโปรเจกต์นี้",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "ไม่สามารถเริ่มเซสชันในโปรเจกต์นี้ได้ {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes ไม่ได้เริ่มเซสชัน",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "เซสชันใหม่ใน {name}",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "ไม่มีโปรเจกต์ที่ตรงกับคำค้นหาของคุณ",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_reason_code": {
+    "message": "เหตุผล: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "รีเฟรชโปรเจกต์",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "ลองอีกครั้ง",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "โปรไฟล์ {profile} บน {host}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "ค้นหาโปรเจกต์",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "ค้นหาในเซสชันของโปรเจกต์นี้",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} เซสชัน",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "เริ่มเซสชันด้านบน หรือย้ายเซสชันที่มีอยู่มาที่นี่จากล่าสุด",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "โปรเจกต์นี้ยังไม่มีเซสชัน",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "ไม่มีเซสชันในโปรเจกต์นี้ที่ตรงกับคำค้นหาของคุณ",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "เซสชัน",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "มุมมองเซสชัน",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "โปรเจกต์",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "ล่าสุด",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "เกตเวย์ Hermes ที่เชื่อมต่อตอบ \"method not found\" (-32601) สำหรับ {method}",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "เกตเวย์ Hermes นี้ไม่ได้ประกาศอำนาจเซสชัน โปรเจกต์และการย้ายเซสชันจึงใช้งานไม่ได้ โปรดอัปเดต Hermes เป็นเวอร์ชันที่รองรับการเปลี่ยนแปลงเซสชันแบบมาตรฐาน",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "โปรเจกต์จะใช้งานไม่ได้จนกว่า WebSocket ของแดชบอร์ด Hermes จะเชื่อมต่อ",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "ล่าสุดยังใช้งานได้",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "โปรเจกต์ต้องใช้ WebSocket ของแดชบอร์ด Hermes การเชื่อมต่อนี้เข้าถึงได้เฉพาะ REST API",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "โปรเจกต์ใช้งานไม่ได้ที่นี่",
+    "description": "Runtime interface message projects.unavailable.title"
   },
   "runtime_responses_layout_bubbles": {
     "message": "บับเบิลทั้งสองฝั่ง",

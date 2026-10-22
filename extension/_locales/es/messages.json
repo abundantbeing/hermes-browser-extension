@@ -1687,6 +1687,10 @@
     "message": "Se abre en una pestaña nueva",
     "description": "Runtime interface message haui.opens_new_tab"
   },
+  "runtime_haui_unreadable": {
+    "message": "Se muestra como texto: no se pudo dibujar esta tarjeta.",
+    "description": "Runtime interface message haui.unreadable"
+  },
   "runtime_haui_view_as_chart": {
     "message": "Ver como gráfico",
     "description": "Runtime interface message haui.view_as_chart"
@@ -1859,13 +1863,37 @@
     "message": "Atrás",
     "description": "Runtime interface message onboarding.back"
   },
-  "runtime_onboarding_finish_body": {
-    "message": "Pregunta sobre la página en la que estás. Hermes ve la pestaña activa, el texto seleccionado y las pestañas abiertas. Puedes cambiar todo esto más tarde en Configuración, en Apariencia y temas.",
-    "description": "Runtime interface message onboarding.finish.body"
+  "runtime_onboarding_connect_body": {
+    "message": "El emparejamiento vincula este panel con tu agente Hermes. Apruébalo una vez y Hermes podrá ver la página en la que estás y responder aquí.",
+    "description": "Runtime interface message onboarding.connect.body"
   },
-  "runtime_onboarding_finish_title": {
-    "message": "Todo listo",
-    "description": "Runtime interface message onboarding.finish.title"
+  "runtime_onboarding_connect_connected": {
+    "message": "Conectado a Hermes",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "Conectar más tarde",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "Aún no emparejado",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "Conectar con Hermes",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "Prueba un primer prompt",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "La tipografía del panel y de las respuestas de Hermes.",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "Elige una fuente",
+    "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_layout_body": {
     "message": "Dónde se ubican tus mensajes y las respuestas de Hermes.",
@@ -1878,6 +1906,30 @@
   "runtime_onboarding_next": {
     "message": "Siguiente",
     "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "Tiempo de carga (s)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "Tres cosas destacan en esta página.",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "Carga el doble de rápido",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "Hace menos solicitudes",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "Su paquete es más pequeño",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "Resume esta página",
+    "description": "Runtime interface message onboarding.preview.user"
   },
   "runtime_onboarding_skip": {
     "message": "Omitir",
@@ -1898,18 +1950,6 @@
   "runtime_onboarding_style_title": {
     "message": "Elige un estilo de respuesta",
     "description": "Runtime interface message onboarding.style.title"
-  },
-  "runtime_onboarding_summary_layout": {
-    "message": "Diseño del chat",
-    "description": "Runtime interface message onboarding.summary.layout"
-  },
-  "runtime_onboarding_summary_style": {
-    "message": "Estilo de respuesta",
-    "description": "Runtime interface message onboarding.summary.style"
-  },
-  "runtime_onboarding_summary_theme": {
-    "message": "Tema",
-    "description": "Runtime interface message onboarding.summary.theme"
   },
   "runtime_onboarding_theme_body": {
     "message": "Colores para el panel lateral y la pestaña completa.",
@@ -1986,6 +2026,402 @@
   "runtime_profile_using": {
     "message": "Usando {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_projects_back": {
+    "message": "Atrás",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "Cancelar",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_creating": {
+    "message": "Creando…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "Proyecto {name} creado.",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "Escribe un nombre de proyecto.",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "Esa carpeta ya pertenece al proyecto {project}.",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "Usa una ruta absoluta en el host del gateway: empieza con una barra, una letra de unidad o ~.",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "Escribe la carpeta del proyecto en el host del gateway.",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_name": {
+    "message": "Nombre del proyecto",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_path": {
+    "message": "Carpeta en el host del gateway",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "Esta ruta está en la máquina donde corre Hermes ({host}), no en este equipo. Un navegador no puede abrir el selector de carpetas de esa máquina, así que escribe la ruta.",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "Crear proyecto",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "el gateway",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "Nuevo proyecto",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "Usar «{name}»",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "Ya existe un proyecto llamado {name} ({folder}). Los proyectos se distinguen por su carpeta, pero un nombre distinto es más fácil de distinguir.",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "Cerrar",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "Un proyecto agrupa las sesiones que se ejecutan dentro de una carpeta de la máquina donde corre Hermes. Crea uno para empezar.",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "Aún no hay proyectos",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "Se perdió la conexión con Hermes.",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes no pudo completar la solicitud.",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes rechazó ese valor.",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes respondió con algo que esta extensión no entiende.",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes no devolvió el proyecto que se le pidió crear.",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "Ese proyecto ya no existe.",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "Este perfil ya no está disponible en el gateway.",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes no respondió a tiempo.",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "Los proyectos tuvieron un problema",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "Carpeta en el host del gateway:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "Carpetas detectadas",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "Inicio",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "Proyectos",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_loading": {
+    "message": "Cargando proyectos…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "Cargando las sesiones de este proyecto…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "Mover",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "Mover {title} a un proyecto",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "Mover a un proyecto",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "La sesión ya está en {cwd}.",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes rechazó el movimiento porque la sesión está ocupada. Espera a que termine el turno, o deténlo, y vuelve a intentarlo.",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes rechazó el movimiento porque la sesión se está compactando. Vuelve a intentarlo cuando termine.",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "Comprobar de nuevo",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "Comprobar carpeta",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "Consultando a Hermes…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "Mientras tanto otra cosa cambió la sesión, así que el movimiento no se aplicó.",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "actual",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "Carpeta actual:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes no permitió este movimiento para tu inicio de sesión o perfil.",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "Mover a",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "Movida. Hermes informa de que la carpeta de la sesión es {cwd}.",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "Mover una sesión cambia su espacio de trabajo y puede cambiar la carpeta en la que se ejecutan sus comandos. Una sesión pertenece a un proyecto por su carpeta; no se guarda nada en este navegador.",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes no pudo mover la sesión. {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "Esta carpeta pertenece al proyecto {name}.",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "Esta carpeta no está en ningún proyecto, así que la sesión aparecerá en Inicio.",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "Carpeta en el host del gateway",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "La conexión se cortó antes de que Hermes confirmara. El movimiento puede haberse hecho o no, así que comprueba de nuevo antes de mover nada.",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "Esa carpeta no es un directorio en el host del gateway de Hermes.",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "Pedir a Hermes que la mueva de todos modos",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "Hay un turno en ejecución en esta sesión",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "Moverla cambia la carpeta en la que se ejecutan sus comandos, y Hermes rechaza un movimiento mientras el turno está activo. Todavía no se ha cambiado nada.",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "Moviendo…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes aún no ha aplicado el movimiento. Comprueba de nuevo para leer la sesión; el movimiento solo se reintenta si no se aplicó nada.",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "No se pudo leer Hermes, así que no se envió nada.",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "Otra carpeta…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "Mover una sesión a una carpeta que no está en ningún proyecto la saca de su proyecto.",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "Usa una ruta absoluta en el host del gateway: empieza con una barra, una letra de unidad o ~.",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "Escribe una carpeta en el host del gateway.",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "Sesión",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "La sesión cambió mientras se movía, así que no se movió nada. Abre el movimiento de nuevo para usar su estado más reciente.",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "Mover a {name}",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "Mover a un proyecto",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes aceptó el movimiento, pero la carpeta de la sesión se leyó como {cwd}, no la que pediste. Revisa la sesión antes de fiarte de ella.",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "Nuevo proyecto",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "Nueva sesión en este proyecto",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "Inicia una sesión que se ejecuta en la carpeta de este proyecto.",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "No se pudo iniciar una sesión en este proyecto. {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes no inició la sesión.",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "Nueva sesión en {name}",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "Ningún proyecto coincide con tu búsqueda.",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_reason_code": {
+    "message": "Motivo: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "Actualizar proyectos",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "Reintentar",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "Perfil {profile} en {host}",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "Buscar proyectos",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "Buscar en las sesiones de este proyecto",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} sesiones",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "Inicia una arriba, o mueve aquí una sesión existente desde Recientes.",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "Aún no hay sesiones en este proyecto",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "Ninguna sesión de este proyecto coincide con tu búsqueda.",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "Sesiones",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "Vista de sesiones",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "Proyectos",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "Recientes",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "El gateway de Hermes conectado respondió «method not found» (-32601) para {method}.",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "Este gateway de Hermes no anunció la autoridad de sesión, así que los proyectos y el movimiento de sesiones no están disponibles. Actualiza Hermes a una versión con mutaciones de sesión canónicas.",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "Los proyectos no están disponibles hasta que se conecte el WebSocket del panel de Hermes.",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "Recientes sigue funcionando.",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "Los proyectos necesitan el WebSocket del panel de Hermes. Esta conexión solo llega a la REST API.",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "Los proyectos no están disponibles aquí",
+    "description": "Runtime interface message projects.unavailable.title"
   },
   "runtime_responses_layout_bubbles": {
     "message": "Burbujas en ambos lados",

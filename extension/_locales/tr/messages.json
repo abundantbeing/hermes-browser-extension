@@ -1687,6 +1687,10 @@
     "message": "Yeni sekmede açılır",
     "description": "Runtime interface message haui.opens_new_tab"
   },
+  "runtime_haui_unreadable": {
+    "message": "Metin olarak gösterildi: bu kart çizilemedi.",
+    "description": "Runtime interface message haui.unreadable"
+  },
   "runtime_haui_view_as_chart": {
     "message": "Grafik olarak görüntüle",
     "description": "Runtime interface message haui.view_as_chart"
@@ -1859,13 +1863,37 @@
     "message": "Geri",
     "description": "Runtime interface message onboarding.back"
   },
-  "runtime_onboarding_finish_body": {
-    "message": "Bulunduğun sayfa hakkında soru sor. Hermes etkin sekmeyi, seçili metni ve açık sekmeleri görür. Bunların hepsini daha sonra Ayarlar'da, Görünüm ve temalar altından değiştirebilirsin.",
-    "description": "Runtime interface message onboarding.finish.body"
+  "runtime_onboarding_connect_body": {
+    "message": "Eşleştirme bu paneli Hermes ajanınıza bağlar. Bir kez onaylayın; Hermes bulunduğunuz sayfayı görüp burada yanıt verebilir.",
+    "description": "Runtime interface message onboarding.connect.body"
   },
-  "runtime_onboarding_finish_title": {
-    "message": "Hepsi hazır",
-    "description": "Runtime interface message onboarding.finish.title"
+  "runtime_onboarding_connect_connected": {
+    "message": "Hermes'e bağlı",
+    "description": "Runtime interface message onboarding.connect.connected"
+  },
+  "runtime_onboarding_connect_later": {
+    "message": "Daha sonra bağlan",
+    "description": "Runtime interface message onboarding.connect.later"
+  },
+  "runtime_onboarding_connect_not_paired": {
+    "message": "Henüz eşleştirilmedi",
+    "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_title": {
+    "message": "Hermes'e bağlan",
+    "description": "Runtime interface message onboarding.connect.title"
+  },
+  "runtime_onboarding_first_prompt": {
+    "message": "İlk istemi deneyin",
+    "description": "Runtime interface message onboarding.first_prompt"
+  },
+  "runtime_onboarding_font_body": {
+    "message": "Panel ve Hermes yanıtları için yazı tipi.",
+    "description": "Runtime interface message onboarding.font.body"
+  },
+  "runtime_onboarding_font_title": {
+    "message": "Bir yazı tipi seçin",
+    "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_layout_body": {
     "message": "Mesajlarının ve Hermes'in yanıtlarının konumu.",
@@ -1878,6 +1906,30 @@
   "runtime_onboarding_next": {
     "message": "İleri",
     "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_preview_chart": {
+    "message": "Yükleme süresi (sn)",
+    "description": "Runtime interface message onboarding.preview.chart"
+  },
+  "runtime_onboarding_preview_lead": {
+    "message": "Bu sayfada üç şey öne çıkıyor.",
+    "description": "Runtime interface message onboarding.preview.lead"
+  },
+  "runtime_onboarding_preview_point_1": {
+    "message": "İki kat hızlı yükleniyor",
+    "description": "Runtime interface message onboarding.preview.point_1"
+  },
+  "runtime_onboarding_preview_point_2": {
+    "message": "Daha az istek yapıyor",
+    "description": "Runtime interface message onboarding.preview.point_2"
+  },
+  "runtime_onboarding_preview_point_3": {
+    "message": "Paketi daha küçük",
+    "description": "Runtime interface message onboarding.preview.point_3"
+  },
+  "runtime_onboarding_preview_user": {
+    "message": "Bu sayfayı özetle",
+    "description": "Runtime interface message onboarding.preview.user"
   },
   "runtime_onboarding_skip": {
     "message": "Atla",
@@ -1898,18 +1950,6 @@
   "runtime_onboarding_style_title": {
     "message": "Bir yanıt stili seç",
     "description": "Runtime interface message onboarding.style.title"
-  },
-  "runtime_onboarding_summary_layout": {
-    "message": "Sohbet düzeni",
-    "description": "Runtime interface message onboarding.summary.layout"
-  },
-  "runtime_onboarding_summary_style": {
-    "message": "Yanıt stili",
-    "description": "Runtime interface message onboarding.summary.style"
-  },
-  "runtime_onboarding_summary_theme": {
-    "message": "Tema",
-    "description": "Runtime interface message onboarding.summary.theme"
   },
   "runtime_onboarding_theme_body": {
     "message": "Yan panel ve tam sekme için renkler.",
@@ -1986,6 +2026,402 @@
   "runtime_profile_using": {
     "message": "Kullanılıyor {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_projects_back": {
+    "message": "Geri",
+    "description": "Runtime interface message projects.back"
+  },
+  "runtime_projects_cancel": {
+    "message": "İptal",
+    "description": "Runtime interface message projects.cancel"
+  },
+  "runtime_projects_create_creating": {
+    "message": "Oluşturuluyor…",
+    "description": "Runtime interface message projects.create.creating"
+  },
+  "runtime_projects_create_done": {
+    "message": "{name} projesi oluşturuldu.",
+    "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_error_name_required": {
+    "message": "Bir proje adı girin.",
+    "description": "Runtime interface message projects.create.error.name_required"
+  },
+  "runtime_projects_create_error_path_in_use": {
+    "message": "Bu klasör zaten {project} projesine ait.",
+    "description": "Runtime interface message projects.create.error.path_in_use"
+  },
+  "runtime_projects_create_error_path_invalid": {
+    "message": "Ağ geçidi ana makinesinde mutlak bir yol kullanın: eğik çizgi, sürücü harfi veya ~ ile başlar.",
+    "description": "Runtime interface message projects.create.error.path_invalid"
+  },
+  "runtime_projects_create_error_path_required": {
+    "message": "Projenin ağ geçidi ana makinesindeki klasörünü girin.",
+    "description": "Runtime interface message projects.create.error.path_required"
+  },
+  "runtime_projects_create_name": {
+    "message": "Proje adı",
+    "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_path": {
+    "message": "Ağ geçidi ana makinesindeki klasör",
+    "description": "Runtime interface message projects.create.path"
+  },
+  "runtime_projects_create_path_hint": {
+    "message": "Bu yol, Hermes'in çalıştığı makinede ({host}), bu bilgisayarda değil. Tarayıcı o makinenin klasör seçicisini açamaz, bu yüzden yolu yazın.",
+    "description": "Runtime interface message projects.create.path_hint"
+  },
+  "runtime_projects_create_path_placeholder": {
+    "message": "/home/you/code/my-project",
+    "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_submit": {
+    "message": "Proje oluştur",
+    "description": "Runtime interface message projects.create.submit"
+  },
+  "runtime_projects_create_the_gateway": {
+    "message": "ağ geçidi",
+    "description": "Runtime interface message projects.create.the_gateway"
+  },
+  "runtime_projects_create_title": {
+    "message": "Yeni proje",
+    "description": "Runtime interface message projects.create.title"
+  },
+  "runtime_projects_create_use_suggestion": {
+    "message": "\"{name}\" kullan",
+    "description": "Runtime interface message projects.create.use_suggestion"
+  },
+  "runtime_projects_create_warn_name_duplicate": {
+    "message": "{name} adında bir proje zaten var ({folder}). Projeler klasörlerine göre ayırt edilir, ancak farklı bir ad ayırt etmeyi kolaylaştırır.",
+    "description": "Runtime interface message projects.create.warn.name_duplicate"
+  },
+  "runtime_projects_dismiss": {
+    "message": "Kapat",
+    "description": "Runtime interface message projects.dismiss"
+  },
+  "runtime_projects_empty_text": {
+    "message": "Proje, Hermes'in çalıştığı makinedeki bir klasörde çalışan oturumları gruplar. Başlamak için bir tane oluşturun.",
+    "description": "Runtime interface message projects.empty.text"
+  },
+  "runtime_projects_empty_title": {
+    "message": "Henüz proje yok",
+    "description": "Runtime interface message projects.empty.title"
+  },
+  "runtime_projects_error_disconnected": {
+    "message": "Hermes ile bağlantı kesildi.",
+    "description": "Runtime interface message projects.error.disconnected"
+  },
+  "runtime_projects_error_gateway_error": {
+    "message": "Hermes isteği tamamlayamadı.",
+    "description": "Runtime interface message projects.error.gateway_error"
+  },
+  "runtime_projects_error_invalid_argument": {
+    "message": "Hermes bu değeri reddetti.",
+    "description": "Runtime interface message projects.error.invalid_argument"
+  },
+  "runtime_projects_error_malformed": {
+    "message": "Hermes, bu uzantının anlamadığı bir yanıt verdi.",
+    "description": "Runtime interface message projects.error.malformed"
+  },
+  "runtime_projects_error_not_created": {
+    "message": "Hermes, oluşturması istenen projeyi döndürmedi.",
+    "description": "Runtime interface message projects.error.not_created"
+  },
+  "runtime_projects_error_not_found": {
+    "message": "Bu proje artık yok.",
+    "description": "Runtime interface message projects.error.not_found"
+  },
+  "runtime_projects_error_profile_unavailable": {
+    "message": "Bu profil artık ağ geçidinde kullanılamıyor.",
+    "description": "Runtime interface message projects.error.profile_unavailable"
+  },
+  "runtime_projects_error_timeout": {
+    "message": "Hermes zamanında yanıt vermedi.",
+    "description": "Runtime interface message projects.error.timeout"
+  },
+  "runtime_projects_error_title": {
+    "message": "Projelerde bir sorun oluştu",
+    "description": "Runtime interface message projects.error.title"
+  },
+  "runtime_projects_folder": {
+    "message": "Ağ geçidi ana makinesindeki klasör:",
+    "description": "Runtime interface message projects.folder"
+  },
+  "runtime_projects_group_detected": {
+    "message": "Algılanan klasörler",
+    "description": "Runtime interface message projects.group.detected"
+  },
+  "runtime_projects_group_home": {
+    "message": "Ana sayfa",
+    "description": "Runtime interface message projects.group.home"
+  },
+  "runtime_projects_group_projects": {
+    "message": "Projeler",
+    "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_loading": {
+    "message": "Projeler yükleniyor…",
+    "description": "Runtime interface message projects.loading"
+  },
+  "runtime_projects_loading_sessions": {
+    "message": "Bu projenin oturumları yükleniyor…",
+    "description": "Runtime interface message projects.loading_sessions"
+  },
+  "runtime_projects_move_action": {
+    "message": "Taşı",
+    "description": "Runtime interface message projects.move.action"
+  },
+  "runtime_projects_move_action_for": {
+    "message": "{title} oturumunu bir projeye taşı",
+    "description": "Runtime interface message projects.move.action_for"
+  },
+  "runtime_projects_move_action_title": {
+    "message": "Bir projeye taşı",
+    "description": "Runtime interface message projects.move.action_title"
+  },
+  "runtime_projects_move_already_there": {
+    "message": "Oturum zaten {cwd} içinde.",
+    "description": "Runtime interface message projects.move.already_there"
+  },
+  "runtime_projects_move_busy": {
+    "message": "Hermes, oturum meşgul olduğu için taşımayı reddetti. Turun bitmesini bekleyin ya da durdurun, sonra tekrar deneyin.",
+    "description": "Runtime interface message projects.move.busy"
+  },
+  "runtime_projects_move_busy_compressing": {
+    "message": "Hermes, oturum sıkıştırıldığı için taşımayı reddetti. Bu bitince tekrar deneyin.",
+    "description": "Runtime interface message projects.move.busy_compressing"
+  },
+  "runtime_projects_move_check_again": {
+    "message": "Tekrar denetle",
+    "description": "Runtime interface message projects.move.check_again"
+  },
+  "runtime_projects_move_check_folder": {
+    "message": "Klasörü denetle",
+    "description": "Runtime interface message projects.move.check_folder"
+  },
+  "runtime_projects_move_checking": {
+    "message": "Hermes'e soruluyor…",
+    "description": "Runtime interface message projects.move.checking"
+  },
+  "runtime_projects_move_conflict": {
+    "message": "Bu sırada oturum başka bir şey tarafından değiştirildi, bu yüzden taşıma uygulanmadı.",
+    "description": "Runtime interface message projects.move.conflict"
+  },
+  "runtime_projects_move_current": {
+    "message": "geçerli",
+    "description": "Runtime interface message projects.move.current"
+  },
+  "runtime_projects_move_current_folder": {
+    "message": "Geçerli klasör:",
+    "description": "Runtime interface message projects.move.current_folder"
+  },
+  "runtime_projects_move_denied": {
+    "message": "Hermes bu taşımaya oturumunuz veya profiliniz için izin vermedi.",
+    "description": "Runtime interface message projects.move.denied"
+  },
+  "runtime_projects_move_destination": {
+    "message": "Taşınacak yer",
+    "description": "Runtime interface message projects.move.destination"
+  },
+  "runtime_projects_move_done": {
+    "message": "Taşındı. Hermes oturumun klasörünü {cwd} olarak bildiriyor.",
+    "description": "Runtime interface message projects.move.done"
+  },
+  "runtime_projects_move_explainer": {
+    "message": "Bir oturumu taşımak çalışma alanını değiştirir ve komutlarının çalıştığı klasörü değiştirebilir. Bir oturum klasörü sayesinde bir projeye aittir; bu tarayıcıda hiçbir şey saklanmaz.",
+    "description": "Runtime interface message projects.move.explainer"
+  },
+  "runtime_projects_move_failed": {
+    "message": "Hermes oturumu taşıyamadı. {detail}",
+    "description": "Runtime interface message projects.move.failed"
+  },
+  "runtime_projects_move_folder_in_project": {
+    "message": "Bu klasör {name} projesine ait.",
+    "description": "Runtime interface message projects.move.folder_in_project"
+  },
+  "runtime_projects_move_folder_no_project": {
+    "message": "Bu klasör hiçbir projede değil, bu yüzden oturum Ana sayfa altında görünecek.",
+    "description": "Runtime interface message projects.move.folder_no_project"
+  },
+  "runtime_projects_move_folder_path": {
+    "message": "Ağ geçidi ana makinesindeki klasör",
+    "description": "Runtime interface message projects.move.folder_path"
+  },
+  "runtime_projects_move_indeterminate": {
+    "message": "Bağlantı, Hermes onaylamadan önce koptu. Taşıma gerçekleşmiş olabilir de olmayabilir de; herhangi bir şeyi taşımadan önce tekrar denetleyin.",
+    "description": "Runtime interface message projects.move.indeterminate"
+  },
+  "runtime_projects_move_invalid": {
+    "message": "Bu klasör, Hermes ağ geçidi ana makinesinde bir dizin değil.",
+    "description": "Runtime interface message projects.move.invalid"
+  },
+  "runtime_projects_move_live_confirm": {
+    "message": "Yine de Hermes'ten taşımasını iste",
+    "description": "Runtime interface message projects.move.live_confirm"
+  },
+  "runtime_projects_move_live_title": {
+    "message": "Bu oturumda bir tur çalışıyor",
+    "description": "Runtime interface message projects.move.live_title"
+  },
+  "runtime_projects_move_live_turn": {
+    "message": "Taşımak komutlarının çalıştığı klasörü değiştirir ve tur etkinken Hermes taşımayı reddeder. Henüz hiçbir şey değiştirilmedi.",
+    "description": "Runtime interface message projects.move.live_turn"
+  },
+  "runtime_projects_move_moving": {
+    "message": "Taşınıyor…",
+    "description": "Runtime interface message projects.move.moving"
+  },
+  "runtime_projects_move_not_committed": {
+    "message": "Hermes taşımayı henüz uygulamadı. Oturumu okumak için tekrar denetleyin; taşıma yalnızca hiçbir şey uygulanmadıysa yeniden denenir.",
+    "description": "Runtime interface message projects.move.not_committed"
+  },
+  "runtime_projects_move_not_sent": {
+    "message": "Hermes okunamadı, bu yüzden hiçbir şey gönderilmedi.",
+    "description": "Runtime interface message projects.move.not_sent"
+  },
+  "runtime_projects_move_other_folder": {
+    "message": "Başka bir klasör…",
+    "description": "Runtime interface message projects.move.other_folder"
+  },
+  "runtime_projects_move_other_folder_hint": {
+    "message": "Bir oturumu hiçbir projede olmayan bir klasöre taşımak onu projesinden çıkarır.",
+    "description": "Runtime interface message projects.move.other_folder_hint"
+  },
+  "runtime_projects_move_path_invalid": {
+    "message": "Ağ geçidi ana makinesinde mutlak bir yol kullanın: eğik çizgi, sürücü harfi veya ~ ile başlar.",
+    "description": "Runtime interface message projects.move.path_invalid"
+  },
+  "runtime_projects_move_path_required": {
+    "message": "Ağ geçidi ana makinesinde bir klasör girin.",
+    "description": "Runtime interface message projects.move.path_required"
+  },
+  "runtime_projects_move_session": {
+    "message": "Oturum",
+    "description": "Runtime interface message projects.move.session"
+  },
+  "runtime_projects_move_stale": {
+    "message": "Oturum taşınırken değişti, bu yüzden hiçbir şey taşınmadı. En son durumunu kullanmak için taşımayı yeniden açın.",
+    "description": "Runtime interface message projects.move.stale"
+  },
+  "runtime_projects_move_submit": {
+    "message": "{name} içine taşı",
+    "description": "Runtime interface message projects.move.submit"
+  },
+  "runtime_projects_move_title": {
+    "message": "Projeye taşı",
+    "description": "Runtime interface message projects.move.title"
+  },
+  "runtime_projects_move_unconfirmed": {
+    "message": "Hermes taşımayı kabul etti, ancak oturumun klasörü istediğiniz klasör değil, {cwd} olarak okundu. Güvenmeden önce oturumu denetleyin.",
+    "description": "Runtime interface message projects.move.unconfirmed"
+  },
+  "runtime_projects_new": {
+    "message": "Yeni proje",
+    "description": "Runtime interface message projects.new"
+  },
+  "runtime_projects_new_session": {
+    "message": "Bu projede yeni oturum",
+    "description": "Runtime interface message projects.new_session"
+  },
+  "runtime_projects_new_session_hint": {
+    "message": "Bu projenin klasöründe çalışan bir oturum başlatır.",
+    "description": "Runtime interface message projects.new_session_hint"
+  },
+  "runtime_projects_new_session_failed": {
+    "message": "Bu projede oturum başlatılamadı. {detail}",
+    "description": "Runtime interface message projects.new_session.failed"
+  },
+  "runtime_projects_new_session_not_started": {
+    "message": "Hermes oturumu başlatmadı.",
+    "description": "Runtime interface message projects.new_session.not_started"
+  },
+  "runtime_projects_new_session_started": {
+    "message": "{name} içinde yeni oturum",
+    "description": "Runtime interface message projects.new_session.started"
+  },
+  "runtime_projects_no_match": {
+    "message": "Aramanızla eşleşen proje yok.",
+    "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_reason_code": {
+    "message": "Neden: {reason}",
+    "description": "Runtime interface message projects.reason_code"
+  },
+  "runtime_projects_refresh": {
+    "message": "Projeleri yenile",
+    "description": "Runtime interface message projects.refresh"
+  },
+  "runtime_projects_retry": {
+    "message": "Tekrar dene",
+    "description": "Runtime interface message projects.retry"
+  },
+  "runtime_projects_scope": {
+    "message": "{host} üzerinde {profile} profili",
+    "description": "Runtime interface message projects.scope"
+  },
+  "runtime_projects_search": {
+    "message": "Projelerde ara",
+    "description": "Runtime interface message projects.search"
+  },
+  "runtime_projects_search_sessions": {
+    "message": "Bu projenin oturumlarında ara",
+    "description": "Runtime interface message projects.search_sessions"
+  },
+  "runtime_projects_session_count": {
+    "message": "{count} oturum",
+    "description": "Runtime interface message projects.session_count"
+  },
+  "runtime_projects_sessions_empty_text": {
+    "message": "Yukarıdan bir tane başlatın ya da Son kullanılanlar'dan mevcut bir oturumu buraya taşıyın.",
+    "description": "Runtime interface message projects.sessions.empty_text"
+  },
+  "runtime_projects_sessions_empty_title": {
+    "message": "Bu projede henüz oturum yok",
+    "description": "Runtime interface message projects.sessions.empty_title"
+  },
+  "runtime_projects_sessions_no_match": {
+    "message": "Bu projedeki hiçbir oturum aramanızla eşleşmiyor.",
+    "description": "Runtime interface message projects.sessions.no_match"
+  },
+  "runtime_projects_sessions_title": {
+    "message": "Oturumlar",
+    "description": "Runtime interface message projects.sessions.title"
+  },
+  "runtime_projects_tab_label": {
+    "message": "Oturum görünümü",
+    "description": "Runtime interface message projects.tab.label"
+  },
+  "runtime_projects_tab_projects": {
+    "message": "Projeler",
+    "description": "Runtime interface message projects.tab.projects"
+  },
+  "runtime_projects_tab_recents": {
+    "message": "Son kullanılanlar",
+    "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_method_not_found": {
+    "message": "Bağlı Hermes ağ geçidi {method} için \"method not found\" (-32601) yanıtı verdi.",
+    "description": "Runtime interface message projects.unavailable.method_not_found"
+  },
+  "runtime_projects_unavailable_no_authority": {
+    "message": "Bu Hermes ağ geçidi oturum yetkisini bildirmedi, bu yüzden projeler ve oturum taşıma kullanılamıyor. Hermes'i kanonik oturum değişikliklerini destekleyen bir sürüme güncelleyin.",
+    "description": "Runtime interface message projects.unavailable.no_authority"
+  },
+  "runtime_projects_unavailable_not_connected": {
+    "message": "Hermes panosunun WebSocket bağlantısı kurulana kadar projeler kullanılamaz.",
+    "description": "Runtime interface message projects.unavailable.not_connected"
+  },
+  "runtime_projects_unavailable_recents_ok": {
+    "message": "Son kullanılanlar hâlâ çalışıyor.",
+    "description": "Runtime interface message projects.unavailable.recents_ok"
+  },
+  "runtime_projects_unavailable_rest_only": {
+    "message": "Projeler için Hermes panosunun WebSocket bağlantısı gerekir. Bu bağlantı yalnızca REST API'ye ulaşıyor.",
+    "description": "Runtime interface message projects.unavailable.rest_only"
+  },
+  "runtime_projects_unavailable_title": {
+    "message": "Projeler burada kullanılamıyor",
+    "description": "Runtime interface message projects.unavailable.title"
   },
   "runtime_responses_layout_bubbles": {
     "message": "İki tarafta baloncuklar",
