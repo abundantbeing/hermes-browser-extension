@@ -10043,7 +10043,10 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
 .model-sources-input::placeholder { color: rgba(var(--hermes-ink-rgb), 0.62); }
 
 /* Long translated labels or large text: header actions wrap instead of spilling off the edge */
-.settings-dialog header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 10px; padding-inline: 14px; }
+/* The form already insets the dialog by 14px, so the header adds no side
+   padding of its own: "Settings" starts and the close button ends exactly at
+   the ends of the divider under them, in every pane. */
+.settings-dialog header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 10px; padding-inline: 0; }
 .settings-dialog header > div:first-child { min-width: 0; flex: 1 1 auto; }
 .settings-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; margin-inline-start: auto; }
 .settings-header-actions .settings-button, .settings-header-actions .settings-connection-test { min-width: 0; }
