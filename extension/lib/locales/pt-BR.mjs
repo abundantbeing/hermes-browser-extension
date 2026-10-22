@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Somente balão do usuário",
   "responses.layout.user_bubble_hint": "Suas mensagens em balão; as respostas do Hermes em texto corrido.",
   "responses.setup_again": "Executar a configuração novamente",
+  "haui.view_chart": "Gráfico",
+  "haui.view_table": "Tabela",
+  "haui.view_as_chart": "Ver como gráfico",
+  "haui.copy": "Copiar",
+  "haui.copied": "Copiado",
+  "haui.building": "Criando a visualização…",
+  "haui.opens_new_tab": "Abre em uma nova aba",
+  "haui.ask_hint": "Coloca esta pergunta na caixa de mensagem",
 });
