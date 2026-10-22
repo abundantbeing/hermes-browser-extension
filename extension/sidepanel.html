@@ -784,6 +784,17 @@
             </div>
           </div>
 
+          <div class="appearance-control-stack language-setting">
+            <label for="languageSelect">
+              <strong data-i18n="settings.language.label">Language</strong>
+              <span data-i18n="settings.language.description">Choose the interface language.</span>
+            </label>
+            <select id="languageSelect" class="language-select" data-language-select data-i18n-aria-label="settings.language.label" aria-label="Language">
+              <option value="en">English</option>
+              <option value="zh-CN">简体中文</option>
+            </select>
+          </div>
+
           <div class="appearance-control-stack font-profile-setting">
             <label for="fontProfileSelect">
               <strong data-i18n="appearance.font_family">Font family</strong>
@@ -891,17 +902,6 @@
             <strong data-i18n="responses.layout.label">Chat layout</strong>
             <span data-i18n="responses.layout.description">Where messages sit in the chat.</span>
             <div id="messageLayoutChoices" class="presentation-choices" role="radiogroup" aria-label="Chat layout" data-i18n-aria-label="responses.layout.label"></div>
-          </div>
-
-          <div class="appearance-row language-row">
-            <div>
-              <strong data-i18n="settings.language.label">Language</strong>
-              <span data-i18n="settings.language.description">Choose the interface language.</span>
-            </div>
-            <select id="languageSelect" class="language-select" data-language-select data-i18n-aria-label="settings.language.label" aria-label="Language">
-              <option value="en">English</option>
-              <option value="zh-CN">简体中文</option>
-            </select>
           </div>
 
           <button id="rerunOnboardingButton" class="settings-setup-row" type="button">

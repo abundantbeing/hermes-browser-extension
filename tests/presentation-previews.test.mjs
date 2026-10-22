@@ -99,15 +99,29 @@ test('arrow keys move and select like a radio group', () => {
   assert.equal(press('a'), false, 'other keys pass through');
 });
 
-test('Appearance & Themes runs Font family, Theme, Response style, Chat layout', () => {
+test('Appearance & Themes runs Language, Font family, Theme, Response style, Chat layout', () => {
   const html = read('extension/sidepanel.html');
   const pane = html.slice(html.indexOf('id="settingsPane-appearance"'), html.indexOf('id="settingsPane-connections"'));
-  const order = ['font-profile-setting', 'class="theme-setting"', 'id="responseStyleChoices"', 'id="messageLayoutChoices"', 'language-row', 'id="rerunOnboardingButton"']
+  const order = ['language-setting', 'font-profile-setting', 'class="theme-setting"', 'id="responseStyleChoices"', 'id="messageLayoutChoices"', 'id="rerunOnboardingButton"']
     .map((marker) => pane.indexOf(marker));
   assert.ok(order.every((index) => index > 0), `all present: ${order}`);
   assert.deepEqual([...order].sort((a, b) => a - b), order, 'in this order');
   assert.doesNotMatch(pane, /response-choice|segmented-control response/, 'no more segmented buttons');
   assert.match(pane, /id="responseStyleChoices" class="presentation-choices" role="radiogroup"/);
+});
+
+test('Language is a full-width block like Font family', () => {
+  const html = read('extension/sidepanel.html');
+  const block = html.match(/<div class="appearance-control-stack language-setting">[\s\S]*?<\/select>\s*<\/div>/)?.[0] || '';
+  assert.match(block, /<label for="languageSelect">\s*<strong data-i18n="settings\.language\.label">Language<\/strong>\s*<span data-i18n="settings\.language\.description">/);
+  assert.match(block, /<select id="languageSelect" class="language-select" data-language-select/);
+  assert.doesNotMatch(html, /language-row/, 'no more label-and-box row');
+  const css = read('extension/sidepanel.css');
+  assert.match(css, /\.language-select \{\s*width: 100%;\s*min-height: 44px;/);
+  assert.match(css, /#fontProfileSelect,\s*#customFontFamilyInput \{\s*width: 100%;\s*min-height: 44px;/, 'same size as Font family');
+  assert.match(css, /\.language-setting > label > span \{[^}]*font-weight: 400;/, 'the hint is not bold like the label');
+  const js = read('extension/sidepanel.js');
+  assert.match(js, /if \(select\.id === 'languageSelect'\) \{\s*mountBrandedSelect\(select, \{ language: true \}\);/);
 });
 
 test('Run first-time setup again is a quiet row with an icon and a description', () => {

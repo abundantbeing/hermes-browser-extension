@@ -6875,8 +6875,8 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
   gap: 10px;
 }
 .language-select {
-  width: min(100%, 220px);
-  min-height: 36px;
+  width: 100%;
+  min-height: 44px;
   padding: 8px 34px 7px 10px;
   border: 1px solid var(--hermes-line-strong);
   border-radius: var(--radius);
@@ -6890,6 +6890,16 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 .language-select option {
   background: var(--hermes-input-bg, var(--hermes-paper));
   color: var(--hermes-ink);
+}
+/* Language sits above Font family as the same kind of block: bold label, a
+   one-line hint, then a full-width branded dropdown. */
+.language-setting > label > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--hermes-muted);
+  font-size: calc(11px * var(--hermes-text-zoom, 1));
+  font-weight: 400;
+  line-height: 1.35;
 }
 :lang(zh-CN) [data-i18n],
 :lang(zh-CN) .task-stack-status,
@@ -6914,10 +6924,6 @@ html[data-hermes-theme="nous"][data-hermes-mode="light"] .update-dialog-mark {
 :lang(ar) [data-i18n] {
   letter-spacing: 0;
   text-transform: none;
-}
-@media (max-width: 420px) {
-  .language-row { grid-template-columns: 1fr; align-items: stretch; }
-  .language-select { width: 100%; }
 }
 .profile-control-stack {
   display: grid;
