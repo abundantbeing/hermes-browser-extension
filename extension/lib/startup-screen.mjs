@@ -143,6 +143,57 @@ function svgEl(tag, attrs, parent) {
   return el;
 }
 
+// The Hermes desktop app's default GlyphSpinner (unicode-animations "braille"),
+// so a check in progress reads the same here as it does there.
+export const STARTUP_SPINNER = Object.freeze({
+  frames: Object.freeze(['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']),
+  interval: 80,
+});
+export const STARTUP_SPINNER_STILL = '⠿';
+
+/**
+ * Drives the glyph in front of the state label through a CSS custom property,
+ * so swapping the label's text never touches it. sync(true) starts it,
+ * sync(false) clears the timer and the glyph; reduced motion gets a still one.
+ */
+export function createStateSpinner(target, {
+  setInterval: every = globalThis.setInterval?.bind(globalThis),
+  clearInterval: cancel = globalThis.clearInterval?.bind(globalThis),
+  reducedMotion = () => false,
+} = {}) {
+  let timer = null;
+  let frame = 0;
+  const show = (glyph) => target?.style?.setProperty('--startup-glyph', `"${glyph}"`);
+  const stop = () => {
+    if (timer !== null) cancel?.(timer);
+    timer = null;
+    frame = 0;
+    target?.style?.removeProperty('--startup-glyph');
+  };
+  return {
+    sync(active) {
+      if (!active || !target) {
+        stop();
+        return;
+      }
+      if (reducedMotion()) {
+        if (timer !== null) cancel?.(timer);
+        timer = null;
+        show(STARTUP_SPINNER_STILL);
+        return;
+      }
+      if (timer !== null || !every) return;
+      show(STARTUP_SPINNER.frames[frame]);
+      timer = every(() => {
+        frame = (frame + 1) % STARTUP_SPINNER.frames.length;
+        show(STARTUP_SPINNER.frames[frame]);
+      }, STARTUP_SPINNER.interval);
+    },
+    stop,
+    get running() { return timer !== null; },
+  };
+}
+
 // Swap text with a short fade so each check reads as a new line, not a flicker.
 function swapText(el, text) {
   if (!el || el.textContent === text) return;
@@ -168,6 +219,11 @@ export function createStartupScreen({ root, meander, count, state, label, detail
   svgEl('text', { x: 170, y: 262, 'text-anchor': 'middle', textLength: 344, lengthAdjust: 'spacingAndGlyphs' }, back).textContent = 'HERMES';
   root.prepend(back);
   const veil = createLogoVeil(root.querySelector('.startup-brand-icon'));
+  const spinner = createStateSpinner(state, {
+    setInterval: doc.defaultView?.setInterval?.bind(doc.defaultView),
+    clearInterval: doc.defaultView?.clearInterval?.bind(doc.defaultView),
+    reducedMotion: () => Boolean(doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
+  });
   if (!meander) {
     meander = doc.createElementNS(SVG_NS, 'svg');
     meander.setAttribute('class', 'startup-meander');
@@ -307,6 +363,10 @@ export function createStartupScreen({ root, meander, count, state, label, detail
       root.classList.toggle('is-error', model.tone === 'error');
       root.classList.toggle('is-setup', model.tone === 'setup');
       root.classList.toggle('is-ready', model.tone === 'ready');
+      // Only a check still running animates; settled states hold still.
+      const loading = Boolean(view?.visible) && model.tone === 'loading';
+      root.classList.toggle('is-loading', loading);
+      spinner.sync(loading);
       swapText(count, model.count);
       swapText(state, model.state);
       swapText(label, model.label);
