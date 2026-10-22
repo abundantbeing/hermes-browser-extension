@@ -1819,6 +1819,74 @@
     "message": "Неподдерживаемый формат архива",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "Настроить Hermes",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "Назад",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_finish_body": {
+    "message": "Спрашивайте о странице, которую вы открыли. Hermes видит активную вкладку, выделенный текст и открытые вкладки. Всё это можно изменить позже в Настройках, в разделе «Оформление и темы».",
+    "description": "Runtime interface message onboarding.finish.body"
+  },
+  "runtime_onboarding_finish_title": {
+    "message": "Всё готово",
+    "description": "Runtime interface message onboarding.finish.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "Где располагаются ваши сообщения и ответы Hermes.",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "Выберите макет чата",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "Далее",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_skip": {
+    "message": "Пропустить",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "Начать общение",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "Шаг {current} из {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Как Hermes оформляет свои ответы.",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "Выберите стиль ответов",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_summary_layout": {
+    "message": "Макет чата",
+    "description": "Runtime interface message onboarding.summary.layout"
+  },
+  "runtime_onboarding_summary_style": {
+    "message": "Стиль ответов",
+    "description": "Runtime interface message onboarding.summary.style"
+  },
+  "runtime_onboarding_summary_theme": {
+    "message": "Тема",
+    "description": "Runtime interface message onboarding.summary.theme"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "Цвета боковой панели и полной вкладки.",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "Выберите тему",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
   "runtime_permissions_not_granted": {
     "message": "Разрешение на использование микрофона не было предоставлено.\n\n{error}\n\nНажмите «Открыть настройки микрофона», установите для параметра «Микрофон» значение «Разрешить» для Hermes Browser Extension, вернитесь сюда и повторите попытку.",
     "description": "Runtime interface message permissions.not_granted"
@@ -1886,6 +1954,66 @@
   "runtime_profile_using": {
     "message": "Используется {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "Пузыри с обеих сторон",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "Вы и Hermes в отдельных пузырях, как в мессенджере.",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "Где сообщения располагаются в чате.",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "Макет чата",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "Только пузырь пользователя",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "Ваши сообщения в пузыре, ответы Hermes — обычным текстом.",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "Пройти настройку снова",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_style_description": {
+    "message": "Как Hermes оформляет свои ответы.",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "Стиль ответов",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "Простой текст",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "Только слова, без оформления.",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "Форматированный текст",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "Оформленный Markdown: заголовки, списки и код.",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "Карточки, таблицы и графики, когда они полезны.",
+    "description": "Runtime interface message responses.style.vivid_hint"
   },
   "runtime_run_release": {
     "message": "Release",
