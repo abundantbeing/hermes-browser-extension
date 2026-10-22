@@ -1393,3 +1393,15 @@ body.hide-message-times .message-time { display: none; }
 html[data-hermes-mode="light"] .room-mention { background: color-mix(in srgb, var(--_mention) 12%, transparent); }
 .message.user .room-mention { color: inherit; background: color-mix(in srgb, currentColor 18%, transparent); }
 @media (forced-colors: active) { .room-mention { color: LinkText; background: transparent; } }
+
+/* Chat layout, shared with the side panel: "User bubble only" lets Hermes
+   reply as flowing text across the column. */
+html[data-message-layout="user-bubble"] body .web-message.assistant {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
