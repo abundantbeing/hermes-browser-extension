@@ -1260,16 +1260,19 @@ html[data-hermes-mode="light"] .startup-screen::before { opacity: 0.07; }
   text-align: center;
 }
 /* The logo carries the wordmark: outline art on dark modes, solid on light.
-   The second mask layer lists are for the entrance below; with one image they
-   are ignored. */
+   The second, solid mask layer is where the entrance below swaps in its
+   scanline and dither patterns; at rest it leaves the logo whole. */
 .startup-brand-icon {
   --startup-logo: url("assets/img/hermes-extension-icon-outline.png");
+  --startup-logo-fill: linear-gradient(#000, #000);
   display: block;
   width: 190px;
   aspect-ratio: 600 / 790;
   background: var(--startup-fg);
-  -webkit-mask: var(--startup-logo) center / contain no-repeat;
-  mask: var(--startup-logo) center / contain no-repeat;
+  -webkit-mask-image: var(--startup-logo), var(--startup-logo-fill);
+  mask-image: var(--startup-logo), var(--startup-logo-fill);
+  -webkit-mask-size: contain, 100% 100%;
+  mask-size: contain, 100% 100%;
   -webkit-mask-position: center, 0 0;
   mask-position: center, 0 0;
   -webkit-mask-repeat: no-repeat, repeat;
@@ -1475,7 +1478,7 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   50% { -webkit-mask-image: var(--startup-logo), var(--startup-dither-12); mask-image: var(--startup-logo), var(--startup-dither-12); -webkit-mask-size: contain, 12px 12px; mask-size: contain, 12px 12px; }
   62% { -webkit-mask-image: var(--startup-logo), var(--startup-dither-14); mask-image: var(--startup-logo), var(--startup-dither-14); -webkit-mask-size: contain, 8px 8px; mask-size: contain, 8px 8px; }
   72% { opacity: 0.55; transform: translateX(-2px); -webkit-mask-image: var(--startup-logo), linear-gradient(#000 67%, transparent 67%); mask-image: var(--startup-logo), linear-gradient(#000 67%, transparent 67%); -webkit-mask-size: contain, 100% 3px; mask-size: contain, 100% 3px; }
-  80% { opacity: 1; transform: none; -webkit-mask-image: var(--startup-logo); mask-image: var(--startup-logo); -webkit-mask-size: contain; mask-size: contain; }
+  80% { opacity: 1; transform: none; -webkit-mask-image: var(--startup-logo), var(--startup-logo-fill); mask-image: var(--startup-logo), var(--startup-logo-fill); -webkit-mask-size: contain, 100% 100%; mask-size: contain, 100% 100%; }
   100% { opacity: 1; transform: none; }
 }
 @keyframes startup-field-breathe {
