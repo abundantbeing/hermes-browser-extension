@@ -317,6 +317,34 @@ async function main() {
       await waitFor(() => panel.evaluate(`document.querySelector(${JSON.stringify(panelSelector)})?.hidden === true`));
     }
 
+    // ── Check 5: the avatar's profile menu (Browser chat / Bot chat) also sits above the card ──
+    // The avatar only opens this menu in solo mode (aria-haspopup="menu"); in a room it opens the roster instead.
+    const avatarState = await panel.evaluate(`(() => {
+      const button = document.querySelector('#activeProfileIndicator');
+      return { visible: Boolean(button && !button.hidden), opensMenu: button?.getAttribute('aria-haspopup') === 'menu' };
+    })()`);
+    if (avatarState.visible && avatarState.opensMenu) {
+      await panel.evaluate(`document.querySelector('#activeProfileIndicator')?.click()`);
+      const profileGeometry = await waitFor(() => panel.evaluate(`(() => {
+        const el = document.querySelector('#profileSwitchMenu');
+        if (!el || el.hidden) return null;
+        const r = el.getBoundingClientRect();
+        const card = document.querySelector('#composer').getBoundingClientRect();
+        const topbar = document.querySelector('.topbar')?.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, height: r.height, composerTop: card.top, topbarBottom: topbar ? topbar.bottom : 0 };
+      })()`));
+      popoverChecks.profile = profileGeometry;
+      assert.ok(profileGeometry.height > 0, 'The profile menu must render with height.');
+      assert.ok(profileGeometry.bottom <= profileGeometry.composerTop + 1,
+        `Profile menu bottom (${profileGeometry.bottom.toFixed(1)}px) must sit above the composer card (top ${profileGeometry.composerTop.toFixed(1)}px).`);
+      assert.ok(profileGeometry.top >= profileGeometry.topbarBottom - 1,
+        `Profile menu top (${profileGeometry.top.toFixed(1)}px) must stay below the top bar.`);
+      await panel.evaluate(`document.querySelector('#activeProfileIndicator')?.click()`);
+      await waitFor(() => panel.evaluate(`document.querySelector('#profileSwitchMenu')?.hidden === true`));
+    } else {
+      popoverChecks.profile = 'skipped: the avatar is hidden or opens the room roster in this session';
+    }
+
     // ── Check 3: the shipped CSS rules anchor the popovers above the composer card ──
     // Computed styles resolve calc() to pixels while visible, so verify the
     // declared rule text from the stylesheets themselves.
