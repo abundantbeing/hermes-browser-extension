@@ -2249,50 +2249,6 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
   .browser-control-action:active { transform: none; }
 }
 
-.composer-command {
-  position: absolute;
-  left: 37px;
-  bottom: 9px;
-  z-index: 2;
-  height: 22px;
-  min-height: 22px;
-  padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border: 1px solid var(--hermes-line-strong);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(var(--hermes-ink-rgb),0.04), rgba(var(--hermes-ink-rgb),0.015)),
-    var(--hermes-input-bg, var(--hermes-paper));
-  color: rgba(var(--hermes-ink-rgb),0.72);
-  box-shadow: inset 0 1px 0 rgba(var(--hermes-fg-rgb),0.08);
-  font-size: calc(9px * var(--hermes-text-zoom, 1));
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
-}
-.composer-command span {
-  font-family: var(--hermes-font-mono);
-  font-size: calc(10px * var(--hermes-text-zoom, 1));
-  line-height: 1;
-  letter-spacing: 0;
-  color: var(--hermes-accent);
-  display: inline-flex;
-  align-items: center;
-  height: 100%;
-}
-.composer-command strong { display: inline-flex; align-items: center; height: 100%; line-height: 1; font-weight: 500; }
-.composer-command:hover,
-.composer-command[aria-expanded="true"] {
-  border-color: var(--hermes-accent);
-  background: rgba(var(--hermes-accent-rgb),0.12);
-  color: var(--hermes-ink);
-}
-.composer-command:active { transform: translateY(1px); }
 .quick-more-menu {
   position: absolute;
   left: 9px;
@@ -4554,14 +4510,14 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   gap: 10px;
 }
 .composer-actions { margin-top: 8px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; position: relative; flex-wrap: nowrap; min-width: 0; }
-.composer-actions #sendButton { margin-left: auto; flex: 0 0 auto; }
+.composer-actions #sendButton { margin-left: 0; flex: 0 0 auto; }
 .composer-actions #browserControlMenuButton {
   position: relative;
   flex: 0 0 36px;
   width: 36px;
   height: 36px;
   min-height: 36px;
-  margin-left: auto;
+  margin-left: 0;
   padding: 0;
   display: inline-grid;
   place-items: center;
@@ -4574,6 +4530,34 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
   transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1), background 120ms ease;
 }
 .composer-actions #browserControlMenuButton svg { display: block; width: 16px; height: 16px; }
+/* Commands sits beside Hermes Control. The popup anchors to the row, so it opens above the actions. */
+.composer-commands { display: inline-flex; flex: 0 0 auto; margin-left: auto; }
+.composer-commands > .quick-more-menu { left: auto; right: 0; width: min(318px, 100%); }
+.composer-actions:has(.bot-mode-threads-button:not([hidden])) .composer-commands,
+.composer-actions:has(#pageCommentTrayButton:not([hidden])) .composer-commands { margin-left: 0; }
+.composer-actions .composer-commands-button {
+  position: relative;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--hermes-ink);
+  background: transparent;
+  box-shadow: none;
+  line-height: 1;
+  transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1), background 120ms ease;
+}
+.composer-actions .composer-commands-button svg { display: block; width: 16px; height: 16px; }
+.composer-actions .composer-commands-button:hover,
+.composer-actions .composer-commands-button[aria-expanded="true"] { background: rgba(var(--hermes-ink-rgb), 0.06); }
+.composer-actions .composer-commands-button:active { transform: scale(0.97); }
+.composer-actions .composer-commands-button:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: 2px; }
 .composer-actions #browserControlMenuButton:hover,
 .composer-actions #browserControlMenuButton[aria-expanded="true"] { background: rgba(var(--hermes-ink-rgb), 0.06); }
 .composer-actions #browserControlMenuButton:active { transform: scale(0.97); }
@@ -4651,7 +4635,7 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 @media (max-width: 360px) {
   .composer-actions:has(.bot-mode-threads-button:not([hidden])) { flex-wrap: wrap; }
 }
-.composer-actions #sendButton { margin-left: auto; }
+.composer-actions #sendButton { margin-left: 0; }
 .composer-actions:has(.bot-mode-threads-button:not([hidden])) #sendButton,
 .composer-actions:has(#pageCommentTrayButton:not([hidden])) #sendButton { margin-left: 0; }
 @media (max-width: 360px) {

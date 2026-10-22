@@ -4222,9 +4222,10 @@ test('composer plus, command pill, and topbar new-session icons are SVG-centered
   assert.match(css, /\.attach-menu-button\.composer-plus svg\s*\{\s*display:\s*block;\s*width:\s*16px;\s*height:\s*16px;\s*\}/, 'composer plus SVG must be block-centered at 16px');
   assert.match(css, /\.attach-menu-button\.composer-plus\s*\{[^}]*padding:\s*0;/s, 'composer plus must not use a bottom-padding baseline hack');
   const command = html.match(/<button[^>]*id="commandMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
-  assert.match(command, /<span aria-hidden="true">\/<\/span><strong[\s\S]*?commands<\/strong>/, 'command pill keeps its accessible slash + label structure');
-  assert.match(css, /\.composer-command\s*\{[^}]*height:\s*22px;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;/s, 'command pill must center its content vertically and horizontally');
-  assert.doesNotMatch(css, /\.composer-command span\s*\{[^}]*transform:\s*translateY/, 'command pill slash must not rely on a translateY glyph hack');
+  assert.match(command, /data-icon="terminal"/, 'commands button shows the vendored terminal glyph beside Hermes Control');
+  assert.doesNotMatch(html, /class="composer-command"/, 'the slash-commands chip is gone from the composer field');
+  assert.match(css, /\.composer-actions \.composer-commands-button\s*\{[^}]*width:\s*36px;/s, 'commands button is a 36px icon button in the action row');
+  assert.doesNotMatch(css, /\.composer-command\b/, 'the slash-commands chip styles are gone');
 });
 
 test('side-panel Agent Theme Studio uses the validated theme pipeline and polished equal-size actions', () => {
