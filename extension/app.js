@@ -63,6 +63,7 @@ import {
   themeOwnsFont,
   withAppearancePreferenceUpdate,
 } from './lib/appearance-preferences.mjs';
+import { responsePresentationFromSettings } from './lib/response-presentation.mjs';
 import { mountBrandedSelect } from './lib/branded-select.mjs';
 import { probeSignatureFonts } from './lib/font-availability.mjs';
 import { refreshHermesContextRegistry } from './lib/hermes-context-sync.mjs';
@@ -4131,6 +4132,26 @@ function applyAppearance() {
     visualTheme,
     { pinThemeFont: webThemeFontPinned && webThemeFontPinnedFor === visualTheme },
   ));
+  applyWebResponsePresentation();
+}
+
+// Response style and chat layout are one choice shared with the side panel
+// (set in its setup or Settings), so the full tab follows it live.
+function applyWebResponsePresentation() {
+  const { responseStyle, messageLayout } = responsePresentationFromSettings(settings);
+  document.documentElement.dataset.responseStyle = responseStyle;
+  document.documentElement.dataset.messageLayout = messageLayout;
+}
+
+function syncWebResponsePresentation(nextSettings = {}) {
+  const before = responsePresentationFromSettings(settings);
+  const after = responsePresentationFromSettings(nextSettings);
+  if (before.responseStyle === after.responseStyle && before.messageLayout === after.messageLayout) return;
+  settings = { ...settings, ...after };
+  applyWebResponsePresentation();
+  if (before.responseStyle !== after.responseStyle && !sending) {
+    renderMessages(activeGroupProjection ? activeGroupMessages : activeMessages);
+  }
 }
 
 // The signature profile renders the bundled fallback face when the licensed
@@ -6528,6 +6549,7 @@ globalThis.addEventListener('resize', () => {
   updateScrim();
 });
 browserApi.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.hermesBrowserSettings?.newValue) syncWebResponsePresentation(changes.hermesBrowserSettings.newValue);
   if (area === 'local' && Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) {
     void handleWebCustomThemeStoreChange();
   }
