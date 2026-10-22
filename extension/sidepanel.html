@@ -349,22 +349,26 @@
           <div id="startupActions" class="startup-actions" hidden></div>
         </section>
 
-        <section id="connectPanel" class="connect-panel" hidden>
-          <p class="eyebrow" data-i18n="ui.public.setup">PUBLIC SETUP</p>
-          <h2 data-i18n="ui.connect.to.hermes">Connect to Hermes</h2>
-          <ol>
-            <li data-i18n="ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine">Start the Hermes API server locally or on a reachable remote machine.</li>
-            <li><span data-i18n="connect.clone_build_load">Clone this repo, build it, and load the</span> <code data-i18n-invariant>dist/</code> <span data-i18n="connect.folder_unpacked">folder unpacked.</span></li>
-            <li data-i18n="ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar">Open the Hermes extension side panel from your browser toolbar.</li>
-            <li data-i18n="ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482">Click Connect to Hermes, or use Manual setup with a local/remote Gateway URL and token.</li>
-            <li><span data-i18n="connect.approve_or_paste">Approve pairing when available, or paste</span> <code data-i18n-invariant>API_SERVER_KEY</code> <span data-i18n="connect.manual_setup_suffix">for manual setup.</span></li>
-            <li data-i18n="ui.ask.hermes.about.the.active.page.context">Ask Hermes about the active page context.</li>
-          </ol>
-          <div class="connect-actions">
-            <button id="connectButton" type="button" data-i18n="ui.connect.to.hermes">Connect to Hermes</button>
-            <button id="manualSettingsButton" class="secondary" type="button" data-i18n="ui.manual.setup">Manual setup</button>
+        <!-- Hidden while connected (updateConnectionPrompt); otherwise a
+             pop-up the user can dismiss until it is needed again. -->
+        <section id="connectPanel" class="connect-panel" role="dialog" aria-modal="true" aria-labelledby="connectPanelTitle" aria-describedby="connectPanelLead" hidden>
+          <div class="connect-panel-card">
+            <button id="connectPanelCloseButton" class="connect-panel-close" type="button" aria-label="Close" title="Close" data-i18n-aria-label="ui.close" data-i18n-title="ui.close">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
+            </button>
+            <h2 id="connectPanelTitle" data-i18n="ui.connect.to.hermes">Connect to Hermes</h2>
+            <p id="connectPanelLead" class="connect-panel-lead" data-i18n="onboarding.connect.body">Pairing links this panel to your Hermes agent. Approve it once, and Hermes can see the page you are on and answer here.</p>
+            <ol>
+              <li data-i18n="ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine">Start the Hermes API server locally or on a reachable remote machine.</li>
+              <li data-i18n="ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482">Click Connect to Hermes, or use Manual setup with a local/remote Gateway URL and token.</li>
+              <li><span data-i18n="connect.approve_or_paste">Approve pairing when available, or paste</span> <code data-i18n-invariant>API_SERVER_KEY</code> <span data-i18n="connect.manual_setup_suffix">for manual setup.</span></li>
+            </ol>
+            <div class="connect-actions">
+              <button id="connectButton" type="button" data-i18n="ui.connect.to.hermes">Connect to Hermes</button>
+              <button id="manualSettingsButton" class="secondary" type="button" data-i18n="ui.manual.setup">Manual setup</button>
+            </div>
+            <p id="connectStatus" class="hint">Public alpha: load unpacked, local or remote Hermes API server, full Hermes tools when the connected runtime supports them.</p>
           </div>
-          <p id="connectStatus" class="hint">Public alpha: load unpacked, local or remote Hermes API server, full Hermes tools when the connected runtime supports them.</p>
         </section>
 
         <div id="botChatIntro" class="bot-chat-intro" hidden>

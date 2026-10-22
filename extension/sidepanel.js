@@ -742,6 +742,7 @@ const els = {
   startupStepList: $('#startupStepList'),
   startupConnectButton: $('#startupConnectButton'),
   connectPanel: $('#connectPanel'),
+  connectPanelCloseButton: $('#connectPanelCloseButton'),
   connectButton: $('#connectButton'),
   manualSettingsButton: $('#manualSettingsButton'),
   connectStatus: $('#connectStatus'),
@@ -1480,6 +1481,9 @@ let browserIntroDismissedForPanel = false;
 let onboardingCompleted = false;
 let onboardingStateLoaded = false;
 let onboardingFlow = null;
+// The user closed the connect pop-up; it stays closed until it is needed
+// again (the connection drops) or asked for.
+let connectDialogDismissed = false;
 let operationToastTimer = null;
 let browserControlStatus = null;
 let browserControlActiveTab = null;
@@ -5054,6 +5058,86 @@ function updateConnectionPrompt() {
   updateComposerBusyState();
 }
 
+// The connect card is a pop-up, never a card in the chat. updateConnectionPrompt
+// still owns whether a connection is needed (the panel's hidden attribute);
+// this owns whether the pop-up shows: not under the startup screen or setup,
+// and not after the user closed it, until the connection drops again or they
+// ask for it (the startup dock, Settings > Connections, a send while unpaired).
+let connectDialogReturnFocus = null;
+
+function connectDialogShowing() {
+  return Boolean(els.connectPanel && !els.connectPanel.hidden && !connectDialogDismissed
+    && !document.body.classList.contains('startup-active')
+    && !document.body.classList.contains('onboarding-active'));
+}
+
+function renderConnectDialog() {
+  els.connectPanel?.classList.toggle('is-dismissed', connectDialogDismissed);
+}
+
+function openConnectDialog() {
+  connectDialogDismissed = false;
+  renderConnectDialog();
+  if (!connectDialogShowing()) return;
+  const active = document.activeElement;
+  if (active && !els.connectPanel.contains(active)) connectDialogReturnFocus = active;
+  els.connectButton?.focus({ preventScroll: true });
+}
+
+function dismissConnectDialog() {
+  connectDialogDismissed = true;
+  renderConnectDialog();
+  const target = connectDialogReturnFocus?.isConnected ? connectDialogReturnFocus : els.input;
+  connectDialogReturnFocus = null;
+  target?.focus?.({ preventScroll: true });
+}
+
+function bindConnectDialog() {
+  if (!els.connectPanel) return;
+  els.connectPanelCloseButton?.addEventListener('click', dismissConnectDialog);
+  els.sendButton?.addEventListener('click', (event) => {
+    if (isConnected() || isRemoteWsMode()) return;
+    event.preventDefault();
+    openConnectDialog();
+  }, { capture: true });
+  // A click on the dimmed backdrop, outside the card, closes it too.
+  els.connectPanel.addEventListener('click', (event) => {
+    if (event.target === els.connectPanel) dismissConnectDialog();
+  });
+  els.connectPanel.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && connectDialogShowing()) {
+      event.preventDefault();
+      dismissConnectDialog();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...els.connectPanel.querySelectorAll('button:not([disabled])')];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  });
+  // A connection that drops (or a pairing token that stops working) brings
+  // the pop-up back; setup's Connect step follows the same live state.
+  const MutationObserverCtor = globalThis.MutationObserver;
+  if (typeof MutationObserverCtor !== 'function') return;
+  let needed = !els.connectPanel.hidden;
+  new MutationObserverCtor(() => {
+    const nowNeeded = !els.connectPanel.hidden;
+    if (nowNeeded && !needed) {
+      connectDialogDismissed = false;
+      renderConnectDialog();
+    }
+    needed = nowNeeded;
+    if (onboardingFlow?.isOpen) onboardingFlow.render();
+  }).observe(els.connectPanel, { attributes: true, attributeFilter: ['hidden', 'disabled'], subtree: true, childList: true, characterData: true });
+}
+
 function setComposerButtonState(button, state = {}) {
   if (!button) return;
   button.hidden = Boolean(state.hidden);
@@ -5132,6 +5216,9 @@ function updateComposerBusyState() {
   els.composerDropZone?.classList.toggle('can-steer', state.busyDraft && !state.controls.steer.hidden);
   if (els.sendButton) {
     els.sendButton.disabled = startupBlocking || state.mainButton.disabled;
+    // Unpaired once the startup screen is gone: "Connect first" stays live and
+    // opens the connect pop-up (bindConnectDialog).
+    if (!isConnected() && !document.body.classList.contains('startup-active')) els.sendButton.disabled = false;
     if (isConnected()) {
       if (viewedSessionIsRunning()) {
         const botName = activeBotProfileName();
@@ -22536,7 +22623,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     addMessage('system', isRemoteWsMode()
       ? 'Remote setup needed: enter your dashboard https URL in Settings and sign in to that dashboard in a browser tab. Your draft is still in the composer.'
       : 'Connection setup needed: click Connect to Hermes if your install supports pairing, or open Settings and use Manual setup with your Gateway URL and token. Your draft is still in the composer.');
-    els.connectButton.focus();
+    openConnectDialog();
     return false;
   }
 
@@ -24382,7 +24469,7 @@ function bindEvents() {
   els.newSessionButton.addEventListener('click', async () => {
     if (!isConnected()) {
       updateConnectionPrompt();
-      els.connectButton.focus();
+      openConnectDialog();
       return;
     }
     if (isBotModeEngaged()) {
@@ -25107,6 +25194,7 @@ function bindEvents() {
     closeSettingsDialog();
     openOnboarding();
   });
+  bindConnectDialog();
   els.browserControlScopeInput?.addEventListener('change', () => {
     if (settings.browserControlEnabled === true) {
       renderBrowserControl();
