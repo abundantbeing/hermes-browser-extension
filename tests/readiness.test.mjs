@@ -161,6 +161,8 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
   // switches on like an old TV.
   assert.match(js, /import \{ createStartupScreen \} from '\.\/lib\/startup-screen\.mjs'/);
   assert.match(css, /\.startup-meander-line\s*\{[^}]*stroke:\s*var\(--startup-line\)/s);
+  // The ghosted HERMES caps rise above the backdrop's viewBox; it must not clip them.
+  assert.match(css, /\.startup-backtype\s*\{[^}]*bottom:\s*0;[^}]*overflow:\s*visible;/s);
   assert.match(css, /@keyframes\s+startup-crt-on/);
   assert.doesNotMatch(css, /startup-scan-refined/);
   assert.match(css, /\.hero-wordmark\s*\{[^}]*width:\s*min\(205px,/s);
