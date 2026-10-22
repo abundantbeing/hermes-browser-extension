@@ -33,11 +33,42 @@ test('one shared observer watches bubble and row; reset releases detached nodes'
   assert.equal(f.observers.length, 1); assert.equal(f.observers[0].targets.length, 4);
   f.controller.reset(); assert.equal(f.observers[0].targets.length, 0);
 });
-test('1:1 user rails carry a time; 1:1 assistant replies keep copy without a time', () => {
+test('1:1 user and restored assistant rails both carry their time and copy', () => {
   const f = fixture(); const a = f.add({ role: 'user', ts }); const b = f.add({ role: 'assistant', ts });
   assert.ok(a.row.querySelector('time'), 'a 1:1 user message shows its time');
-  assert.equal(Boolean(b.row.querySelector('time')), false, '1:1 assistant replies stay uncluttered (BUILD-00 D1/X1)');
+  const time = b.row.querySelector('.message-rail > time.message-time');
+  assert.ok(time, 'a restored 1:1 assistant reply shows its stored time');
+  assert.equal(time.getAttribute('datetime'), new Date(ts).toISOString());
+  assert.equal(time.textContent, a.row.querySelector('time').textContent, 'same format as the user time');
   assert.ok(b.row.querySelector('.message-action-copy'), 'a 1:1 assistant reply still gets copy');
+});
+test('a live reply shows no time while streaming, then the time it finished', () => {
+  let clock = ts; const f = fixture({ now: () => clock });
+  const record = { role: 'assistant', ts: null };
+  const a = f.add(record, { streaming: true });
+  assert.equal(a.row.querySelector('time'), null, 'no time while the reply streams');
+  assert.ok(a.row.querySelector('.message-rail .message-action-copy'), 'the rail is already there, so the time adds no row');
+  clock = ts + 90_000;
+  f.controller.setStreaming(a.row, false);
+  const time = a.row.querySelector('.message-rail > time.message-time');
+  assert.ok(time, 'the finished reply shows its time');
+  assert.equal(time.getAttribute('datetime'), new Date(ts + 90_000).toISOString());
+  assert.equal(record.ts, ts + 90_000, 'the finish time stays on the record for later rail renders');
+  assert.equal(a.row.querySelectorAll('.message-rail').length, 1);
+  assert.equal(a.row.querySelector('.message-action-copy').disabled, false);
+  f.controller.refreshActions();
+  assert.equal(a.row.querySelector('time').getAttribute('datetime'), new Date(ts + 90_000).toISOString());
+});
+test('a streamed reply that already has a known time keeps it', () => {
+  let clock = ts; const f = fixture({ now: () => clock });
+  const a = f.add({ role: 'assistant', ts }, { streaming: true });
+  assert.equal(a.row.querySelector('time'), null);
+  clock = ts + 60_000; f.controller.setStreaming(a.row, false);
+  assert.equal(a.row.querySelector('time').getAttribute('datetime'), new Date(ts).toISOString());
+});
+test('restored assistant without a stored time stays timeless', () => {
+  const f = fixture(); const a = f.add({ role: 'assistant', ts: null });
+  assert.equal(a.row.querySelector('time'), null, 'unknown stays unknown, never the load time');
 });
 test('room assistant receives its known time without gaining edit controls', () => {
   const f = fixture({ canRewind: () => true }); const a = f.add({ role: 'assistant', ts }, { room: true });

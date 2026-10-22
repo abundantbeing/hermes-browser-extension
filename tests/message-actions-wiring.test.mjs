@@ -23,6 +23,15 @@ test('gateway history never substitutes the load time for a missing timestamp', 
   assert.match(panel, /ts:\s*normalizeMessageTimestamp\(message\.timestamp\s*\?\?\s*message\.ts\)/);
 });
 
+test('a live panel reply gets its time when the stream finishes and keeps it when saved', () => {
+  // The live bubble streams without a time; flushing the stream ends streaming
+  // on the shared thread, which stamps the finish time on the shown record.
+  const updater = panel.slice(panel.indexOf('function createStreamingMessageUpdater('), panel.indexOf('const paintStream = '));
+  assert.match(updater, /panelMessageThread\?\.setStreaming\(row,\s*false\)/);
+  assert.match(panel, /addMessage\('assistant', THINKING_PLACEHOLDER, \{ persist: false, roleLabel: assistantMessageRoleLabel\(\), streaming: true \}\)/);
+  assert.match(panel, /messages\.push\(\{ role: 'assistant', content: finalAnswerForStorage, ts: Date\.now\(\) \}\)/);
+});
+
 test('history replay passes stored time and row identity rather than inventing them', () => {
   const replay = panel.slice(panel.indexOf('function renderMessagesFromStorage()'), panel.indexOf('function syncSettingsForm()'));
   assert.match(replay, /ts:\s*message\.ts/);

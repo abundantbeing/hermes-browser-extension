@@ -31,12 +31,11 @@ test('full-tab rows wrap the article so the shared rail has a row to attach to',
   assert.match(app, /row\.append\(article\)/);
 });
 
-test('full-tab rails carry copy on replies and time on user messages', () => {
+test('full-tab rails carry copy and time on user messages and replies', () => {
   assert.match(threadUi, /buildMessageRail/);
-  // Time is role/room scoped: always on user messages, also on bot-room replies,
-  // but not on 1:1 assistant replies (BUILD-00 D1/X1, BUILD-B D7). Never unconditional.
-  assert.match(threadUi, /showTime:\s*[^,}\n]*\brole\b[^,}\n]*/);
-  assert.doesNotMatch(threadUi, /showTime:\s*true\b/);
+  // Every user message and reply shows its time; a reply only once it has
+  // finished streaming.
+  assert.match(threadUi, /showTime:\s*!streaming\b/);
   assert.match(actions, /message-action-copy/);
   assert.match(app, /buildCleanClipboardPayload/);
 });
