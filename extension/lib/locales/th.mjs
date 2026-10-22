@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "เฉพาะบับเบิลของผู้ใช้",
   "responses.layout.user_bubble_hint": "ข้อความของคุณอยู่ในบับเบิล ส่วนคำตอบของ Hermes เป็นข้อความต่อเนื่อง",
   "responses.setup_again": "ตั้งค่าอีกครั้ง",
+  "haui.view_chart": "แผนภูมิ",
+  "haui.view_table": "ตาราง",
+  "haui.view_as_chart": "ดูเป็นแผนภูมิ",
+  "haui.copy": "คัดลอก",
+  "haui.copied": "คัดลอกแล้ว",
+  "haui.building": "กำลังสร้างมุมมอง…",
+  "haui.opens_new_tab": "เปิดในแท็บใหม่",
+  "haui.ask_hint": "ใส่คำถามนี้ในช่องข้อความ",
 });
