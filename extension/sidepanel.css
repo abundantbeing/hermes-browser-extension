@@ -5907,6 +5907,19 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 .context-popover .context-runtime-breakdown { margin-top: 7px; }
 .context-popover dt { color: rgba(var(--hermes-fg-rgb),0.62); }
 .context-popover dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+/* Settings repeats the popover's readout with the same rows and type. */
+.context-window-settings #settingsContextSummary { margin: 4px 0 0; color: rgba(var(--hermes-fg-rgb),0.72); font-size: calc(11px * var(--hermes-text-zoom, 1)); }
+.context-window-settings dl {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.8fr) minmax(0, 1.2fr);
+  gap: 6px 8px;
+  margin: 10px 0 0;
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  line-height: 1.25;
+}
+.context-window-settings .context-runtime-breakdown { margin-top: 7px; }
+.context-window-settings dt { color: rgba(var(--hermes-fg-rgb),0.62); }
+.context-window-settings dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
 .context-control-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

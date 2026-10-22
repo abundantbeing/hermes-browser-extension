@@ -1026,6 +1026,9 @@ const els = {
   contextUsageDetail: $('#contextUsageDetail'),
   contextMeterFill: $('#contextMeterFill'),
   contextPopover: $('#contextPopover'),
+  settingsContextSummary: $('#settingsContextSummary'),
+  settingsContextRuntime: $('#settingsContextRuntime'),
+  settingsContextPayload: $('#settingsContextPayload'),
   contextRuntimeBreakdown: $('#contextRuntimeBreakdown'),
   contextBreakdown: $('#contextBreakdown'),
   contextControlStatus: $('#contextControlStatus'),
@@ -9074,7 +9077,6 @@ function renderContextWindow(userText = els.input?.value || '') {
     : meter.title;
   els.contextUsageDetail.textContent = compaction.detail;
   els.contextMeterFill.style.width = meterLimit ? `${Math.min(100, Math.max(0, meterPercent))}%` : '0%';
-  renderContextRing(meterLimit ? meterPercent : 0, compaction);
   syncComposerFrame();
 
   const compactionStateLabels = {
@@ -9197,6 +9199,7 @@ function renderContextWindow(userText = els.input?.value || '') {
     <dt>${escapeHtml(label)}</dt>
     <dd title="${part.enabled ? 'included' : 'disabled'}">${part.enabled ? `${formatNumber(part.estimatedTokens)} tok · ${formatNumber(part.chars)} chars` : 'disabled'}</dd>
   `).join('');
+  renderContextMeters(meterLimit ? meterPercent : 0, compaction);
 }
 
 // Desktop parity (hermes-agent model switch guard): switching the session
@@ -25391,7 +25394,8 @@ function observeComposerAnchor() {
 
 // The composer's context ring shows the same percent as the meter. It turns
 // warning-coloured near the auto-compact point and danger when the window is full.
-function renderContextRing(percent, compaction) {
+// Settings repeats the popover's readout, so both always show the same numbers.
+function renderContextMeters(percent, compaction) {
   const button = els.contextBarButton;
   if (!button) return;
   const value = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
@@ -25401,4 +25405,7 @@ function renderContextRing(percent, compaction) {
   else if (threshold && value >= threshold - 5) level = 'warn';
   button.style.setProperty('--context-pct', String(value));
   button.dataset.level = level;
+  els.settingsContextSummary.textContent = els.contextUsageDetail.textContent;
+  els.settingsContextRuntime.replaceChildren(...els.contextRuntimeBreakdown.cloneNode(true).childNodes);
+  els.settingsContextPayload.replaceChildren(...els.contextBreakdown.cloneNode(true).childNodes);
 }
