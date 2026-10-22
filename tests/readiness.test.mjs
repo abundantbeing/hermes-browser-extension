@@ -149,6 +149,12 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
   assert.match(css, /\.startup-brand-lockup\s*\{[^}]*justify-items:\s*center;/s);
   assert.doesNotMatch(html, /Connecting Browser Extension/i);
   assert.match(css, /\.startup-brand-icon\s*\{[^}]*width:\s*190px;/s);
+  // The logo resolves once per showing: scanlines, then a coarse-to-fine
+  // ordered dither, held frame by frame; reduced motion shows it at once.
+  assert.match(css, /\.startup-screen:not\(\[hidden\]\) \.startup-brand-icon\s*\{[^}]*animation:\s*startup-logo-resolve 1s step-end 0\.2s both;/s);
+  assert.match(css, /@keyframes startup-logo-resolve\s*\{[\s\S]*?var\(--startup-dither-2\)[\s\S]*?var\(--startup-dither-14\)/);
+  assert.match(css, /\.startup-brand-icon\s*\{[^}]*mask-composite:\s*intersect;/s);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.startup-screen:not\(\[hidden\]\) \.startup-brand-icon,[^}]*animation:\s*none;/s);
   assert.match(css, /assets\/img\/hermes-browser-enter-gate-ink\.png/);
   assert.match(css, /\.shell::before\s*\{[^}]*hermes-browser-enter-gate-ink\.png[^}]*opacity:\s*0\.13;[^}]*mix-blend-mode:\s*normal;/s);
   // The Meander: a Greek key border is the progress bar, and the screen
