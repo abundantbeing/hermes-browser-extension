@@ -499,6 +499,10 @@
             <button id="attachMenuButton" class="attach-menu-button composer-plus" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Attach context" title="Attach context" data-i18n-title="ui.attach.context" data-i18n-aria-label="ui.attach.context">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="attachment"><path d="M7 7v10H5V7zm12 0v12h-2V7zm-8 2v10H9V9zm4 0v8h-2V9zm0-6v2H9V3zm-2 4v2h-2V7zm4 12v2h-6v-2zm0-14v2h-2V5zM9 5v2H7V5z"/></svg>
             </button>
+            <button id="modelMenuButton" class="model-menu-button composer-model-chip" type="button" aria-haspopup="dialog" aria-expanded="false">
+              <span class="model-button-copy"><span id="currentModelName">Select model</span><strong id="currentModelEffort" class="sr-only">Med</strong></span>
+              <span aria-hidden="true">⌄</span>
+            </button>
             <button id="wakeButton" class="composer-icon composer-wake" type="button" hidden aria-label="Turn on wake word" title="Turn on wake word" data-i18n-title="wake.turn_on" data-i18n-aria-label="wake.turn_on">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="headphone"><path d="M14 13h7v2h-7zm2 6h3v2h-3z"/><path d="M14 13h2v8h-2zm5-6h2v12h-2zM3 13h7v2H3zm2 6h3v2H5z"/><path d="M3 7h2v12H3zm5 6h2v8H8zM7 3h10v2H7zM5 5h2v2H5zm12 0h2v2h-2z"/></svg>
             </button>
@@ -609,10 +613,6 @@
         </div>
 
         <div class="desktop-bar">
-          <button id="modelMenuButton" class="model-menu-button" type="button" aria-haspopup="dialog" aria-expanded="false">
-            <span class="model-button-copy"><span id="currentModelName">Select model</span><strong id="currentModelEffort">Med</strong></span>
-            <span aria-hidden="true">⌄</span>
-          </button>
           <button id="contextBarButton" class="context-bar" type="button" aria-expanded="false" aria-controls="contextPopover">
             <span id="contextCompactLabel">0/∞</span>
             <span class="context-track" aria-hidden="true"><span id="contextMeterFill"></span></span>

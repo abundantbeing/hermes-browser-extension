@@ -4282,6 +4282,47 @@ textarea::-webkit-scrollbar-track { background: transparent; }
   border-color: var(--hermes-primary-fg, var(--hermes-paper));
 }
 .composer-icon[hidden] { display: none; }
+/* The model picker is a chip in the field's bottom row, where /commands used to sit. */
+.composer-input-wrap .composer-model-chip {
+  position: absolute;
+  left: 37px;
+  bottom: 9px;
+  z-index: 2;
+  width: auto;
+  min-width: 0;
+  max-width: calc(100% - 150px);
+  height: 22px;
+  min-height: 22px;
+  padding: 0 6px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  border: 1px solid var(--hermes-line-strong);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(var(--hermes-ink-rgb),0.04), rgba(var(--hermes-ink-rgb),0.015)),
+    var(--hermes-input-bg, var(--hermes-paper));
+  color: rgba(var(--hermes-ink-rgb),0.72);
+  box-shadow: inset 0 1px 0 rgba(var(--hermes-fg-rgb),0.08);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+.composer-model-chip .model-button-copy { min-width: 0; }
+.composer-model-chip #currentModelName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.composer-model-chip > span[aria-hidden="true"] { flex: 0 0 auto; }
+.composer-model-chip:hover,
+.composer-model-chip[aria-expanded="true"] {
+  border-color: var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb),0.12);
+  color: var(--hermes-ink);
+}
+.composer-model-chip:active { transform: translateY(1px); }
+.composer-model-chip:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: 2px; }
 .composer-icon:disabled { cursor: not-allowed; opacity: 0.42; }
 .composer-wake { right: 67px; }
 .composer-mic { right: 38px; }
@@ -5303,6 +5344,15 @@ button.active-profile-indicator {
   overflow: hidden;
 }
 .model-menu-head { display: none; }
+/* Chat-side menus open just above the chip or ring that opened them, not above the whole dock. */
+.model-menu:not([data-floating]):not([data-selection-target="assist"]):not([data-selection-target="room-member"]) {
+  bottom: calc(var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) + 6px);
+  max-height: min(480px, calc(100vh - var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) - 18px));
+}
+.context-popover {
+  bottom: calc(var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) + 6px);
+  max-height: calc(100vh - var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) - 18px);
+}
 .model-menu[data-selection-target="assist"],
 .model-menu[data-selection-target="room-member"] {
   position: fixed;

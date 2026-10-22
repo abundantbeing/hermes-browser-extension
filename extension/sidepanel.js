@@ -25367,3 +25367,23 @@ renderEmptyState();
 syncComposerFrame({ followCaret: true });
 // Not awaited: the update watch and the silent check must never delay boot.
 void initializeUpdateFlow();
+observeComposerAnchor();
+
+// The chat model menu and the context popover open just above the composer
+// chip and ring, so they sit beside the control that opened them.
+function observeComposerAnchor() {
+  const update = () => {
+    const rect = els.modelMenuButton?.getBoundingClientRect();
+    const viewportHeight = globalThis.innerHeight || document.documentElement.clientHeight || 0;
+    if (!rect?.height || !viewportHeight) {
+      document.documentElement.style.removeProperty('--hermes-composer-anchor-height');
+      return;
+    }
+    document.documentElement.style.setProperty('--hermes-composer-anchor-height', `${Math.max(0, Math.round(viewportHeight - rect.top))}px`);
+  };
+  update();
+  globalThis.addEventListener?.('resize', update);
+  if (els.bottomDock && typeof globalThis.ResizeObserver === 'function') {
+    new globalThis.ResizeObserver(update).observe(els.bottomDock);
+  }
+}
