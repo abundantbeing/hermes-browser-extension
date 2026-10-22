@@ -1176,7 +1176,9 @@ export function contextMeterDisplay({ accounting = {}, runtimeLabel = '', modelC
 
 export function contextControlState({ capabilities = {}, percentUsed = 0, contextSource = '' } = {}) {
   const canInspect = Boolean(capabilities.sessionContext || capabilities.contextStatus || capabilities.context_status);
-  const canCompact = Boolean(capabilities.sessionCompress || capabilities.contextCompress || capabilities.context_compress);
+  // A session-authority dashboard compacts through session.mutate (sessionCompactCanonical)
+  // while its legacy session.compress stays suppressed (sessionCompress false).
+  const canCompact = Boolean(capabilities.sessionCompress || capabilities.sessionCompactCanonical || capabilities.contextCompress || capabilities.context_compress);
   const compactRecommended = canCompact && Number(percentUsed || 0) >= 70;
   const localEstimateOnly = contextSource === 'local-estimate';
   return {

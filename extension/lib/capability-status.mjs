@@ -93,13 +93,15 @@ export const CAPABILITY_REASONS = Object.freeze({
   'legacy-ws-compress': () => 'This dashboard gateway has no session authority, so the legacy session.compress serves compaction.',
   'authority-compress': () => 'Compaction runs as session.mutate operation compress, which a session-authority gateway serves.',
   'legacy-compress-suppressed': () => 'A session-authority gateway does not route the legacy session.compress.',
+  'token-present': () => 'A token or auth context is present. This check has not proven it valid.',
+  'ws-contract': () => 'Part of the dashboard WebSocket contract. This gateway does not advertise it separately.',
   'rest-no-compress': () => 'This connection only reaches the REST API, which does not advertise a compact route. Compaction needs the dashboard WebSocket with session authority.',
   'connection-closed': ({ ageMs } = {}) => `The connection closed. Last confirmed ${formatAge(ageMs)} ago. Shown, not used to run anything.`,
   stale: ({ ageMs } = {}) => `Last confirmed ${formatAge(ageMs)} ago. An old answer is shown, not used to run anything.`,
   revoked: ({ detail } = {}) => `Turned off: ${clean(detail) || 'revoked'}.`,
   'legacy-gateway': () => 'This gateway has no /v1/capabilities, so the extension cannot see what it offers.',
   'legacy-assumed': () => 'Assumed because /health answered with a token. /v1/capabilities was unavailable, so this is not confirmed.',
-  'extension-side': () => 'Provided by this extension. This gateway has not confirmed that it accepts it.',
+  'extension-side': () => 'Built and sent by this extension inside the prompt. It does not depend on a gateway route.',
   'operation-ok': () => 'Worked the last time it was used.',
   'operation-refused': ({ detail } = {}) => `Hermes refused the last attempt: ${clean(detail) || 'no reason given'}.`,
   'identity-changed': () => 'The connection, account or profile changed. Not checked again yet.',
@@ -389,9 +391,12 @@ export function createCapabilityLedger({ now = Date.now } = {}) {
 
 // ---- Presentation helpers ---------------------------------------------------
 
-const POSITIVE_STATES = new Set([CAPABILITY_STATES.available]);
+// `ok` means the extension will use the feature. A degraded record is used with
+// its caveat shown; a cached, blocked, unsupported or unknown one is not used.
+const USABLE_STATES = new Set([CAPABILITY_STATES.available, CAPABILITY_STATES.degraded]);
+const POSITIVE_STATES = USABLE_STATES;
 
-/** The two-state view the older rows used: `ok` only for a current available record. */
+/** The two-state view the older rows used: `ok` when the feature is in use, `warn` when it is not. */
 export function capabilityRowStatus(record) {
   return record && POSITIVE_STATES.has(record.state) ? 'ok' : 'warn';
 }

@@ -3334,6 +3334,8 @@ test('context controls are capability gated and recommend compaction near the co
     compactRecommended: true,
     label: 'Compact context',
   });
+  assert.equal(contextControlState({ capabilities: { sessionCompactCanonical: true }, percentUsed: 72 }).canCompact, true, 'a session-authority dashboard compacts through session.mutate');
+  assert.equal(contextControlState({ capabilities: { sessionCompactCanonical: true }, percentUsed: 72 }).compactRecommended, true);
   assert.deepEqual(contextControlState({ capabilities: { sessionContext: true }, percentUsed: 72 }), {
     canInspect: true,
     canCompact: false,

@@ -222,8 +222,10 @@ test('closing the connection demotes the ledger to cached without losing the ans
   assert.equal(ledger.canExecute('contextCompact').allowed, true);
 });
 
-test('rows report ok only for a current available record', () => {
+test('rows report ok for a feature in use (available or degraded) and warn otherwise', () => {
   assert.equal(capabilityRowStatus(record()), 'ok');
+  assert.equal(capabilityRowStatus(record({ state: 'degraded', reasonCode: 'legacy-assumed' })), 'ok');
+  assert.equal(capabilityRowStatus(record({ state: 'unknown', reasonCode: 'not-advertised' })), 'warn');
   assert.equal(capabilityRowStatus(record({ state: 'cached', reasonCode: 'stale' })), 'warn');
   assert.equal(capabilityRowStatus(null), 'warn');
   const described = describeCapability(record({ checkedAt: 4_000 }), { now: 9_000 });

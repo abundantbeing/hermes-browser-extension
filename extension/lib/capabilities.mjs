@@ -1,5 +1,13 @@
 import { DEFAULT_SETTINGS, normalizeGatewayMode, normalizeGatewayUrl } from './common.mjs';
 import { buildBrowserContextReceipt } from './browser-context-protocol.mjs';
+import {
+  CAPABILITY_SOURCES,
+  CAPABILITY_STATES,
+  capabilityRowStatus,
+  createCapabilityRecord,
+  effectiveCapability,
+} from './capability-status.mjs';
+import { gatewayAuthorityAvailability } from './projects-client.mjs';
 
 const WARNING_CAPABILITY_COPY = Object.freeze({
   profiles: 'Profile API unavailable — using the currently running Hermes profile.',
@@ -45,10 +53,25 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   sessionModelLock: false,
   sessionContext: false,
   sessionCompress: false,
+  // Manual compaction as session.mutate operation=compress: a dashboard
+  // WebSocket whose gateway.ready carries session_authority serves it. The
+  // legacy `sessionCompress` flag keeps meaning "a REST /compress route or the
+  // legacy WS session.compress exists" and stays false on an authority gateway.
+  sessionCompactCanonical: false,
+  // gateway.ready carried session_authority: true on the dashboard WebSocket.
+  sessionAuthority: false,
   audioTranscription: false,
+  // GET /api/media: stored IMAGE read only (data URLs). Not video, not upload.
   mediaRead: false,
   browserPairing: false,
+  // An HTTP image-upload route the gateway advertises. The dashboard WebSocket
+  // has its own session-scoped image.attach_bytes RPC; see imageSessionAttach.
   imageUpload: false,
+  imageSessionAttach: false,
+  // True when the EXTENSION can build hermes.browser.context.v1 payloads, which
+  // it always can (they ride inline in the prompt). It is not a statement that
+  // the gateway has a side-channel for them; browserContextUpload says that. A
+  // gateway that advertises browser_context_provider: false turns it off.
   browserContextProvider: true,
   browserContextUpload: false,
   browserContextStatus: false,
@@ -73,6 +96,12 @@ export function dashboardWsSupportsCompress(readyPayload = null) {
   return Boolean(readyPayload && typeof readyPayload === 'object' && readyPayload.session_authority !== true);
 }
 
+// What the authority gateway serves instead: session.mutate operation=compress
+// (see session-compact.mjs). Only a ready payload that says so counts.
+export function dashboardWsSupportsCanonicalCompact(readyPayload = null) {
+  return Boolean(readyPayload && typeof readyPayload === 'object' && readyPayload.session_authority === true);
+}
+
 export function dashboardWsGatewayCapabilities({ health = false, source = 'dashboard-ws', readyPayload = null } = {}) {
   return {
     ...DEFAULT_GATEWAY_CAPABILITIES,
@@ -87,11 +116,18 @@ export function dashboardWsGatewayCapabilities({ health = false, source = 'dashb
     profiles: true,
     runSteer: true,
     sessionCompress: dashboardWsSupportsCompress(readyPayload),
+    sessionCompactCanonical: dashboardWsSupportsCanonicalCompact(readyPayload),
+    sessionAuthority: dashboardWsSupportsCanonicalCompact(readyPayload),
+    // image.attach_bytes is part of the dashboard WebSocket contract (the legacy
+    // handlers and the canonical session controls both define it). There is no
+    // HTTP upload route on this transport, and the old warning that pasted
+    // images "stay inline only" was wrong: they attach to the live session.
+    imageSessionAttach: true,
     dashboardWs: true,
     warnings: Object.freeze([
       'Dashboard WebSocket transport is active; REST-only API routes are not required.',
       'Voice transcription unavailable - using browser speech fallback when available.',
-      'Image upload unavailable - pasted images stay inline only.',
+      'HTTP image upload is not used on this transport - pasted images attach to the live session over the dashboard WebSocket.',
     ]),
   };
 }
@@ -206,7 +242,7 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
     mediaRead: inferredFeature(features, endpoints, ['media_api', 'mediaRead'], ['media_read']),
     browserPairing: inferredFeature(features, endpoints, ['browser_extension_pairing', 'browserPairing'], ['browser_extension_pair_start', 'browser_pairing', 'pair_start']),
     imageUpload: inferredFeature(features, endpoints, ['browser_image_upload', 'image_upload', 'imageUpload'], ['browser_image_upload', 'image_upload', 'uploads_images']),
-    browserContextProvider: true,
+    browserContextProvider: boolFeature(features, [BROWSER_CAPABILITY_FLAGS.browserContextProvider, 'browserContextProvider']) ?? true,
     browserContextUpload: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.browserContextUpload, 'browserContextUpload'], ['browser_context_update', 'browser_context']),
     browserContextStatus: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.browserContextStatus, 'browserContextStatus'], ['browser_context_status']),
     browserCompanionPlugin: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.browserCompanionPlugin, 'browserCompanionPlugin'], ['browser_companion_status', 'browser_context_status']),
@@ -229,36 +265,251 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
   return caps;
 }
 
-function statusFor(value, unavailableDetail, availableDetail = 'Available on the connected Hermes runtime.') {
-  return value
-    ? { status: 'ok', detail: availableDetail }
-    : { status: 'warn', detail: unavailableDetail };
+// ---- Capability records ------------------------------------------------------
+//
+// The booleans above are what the rest of the extension branches on. The records
+// below say, for the same connection, who reported each one, when, and why it is
+// off. They are DERIVED from the booleans plus the gateway.ready handshake, so
+// there is one place the facts come from and no view keeps a flag of its own.
+//
+// Companion plugin: no gateway source advertises browser_companion_plugin,
+// browser_context_status, browser_context_upload or plugin_actions (checked
+// against the installed api_server `_STATIC_FEATURE_FLAGS` and
+// `_CAPABILITY_ENDPOINTS`), and the plugin registers no HTTP route. So the
+// honest answer for all four is "not advertised by this gateway", never
+// "unavailable": the plugin may well be loaded.
+//
+// Narrow upstream ask (not implemented here, and no route is invented for it):
+// when the plugin registry loads hermes-browser-companion for the profile that
+// serves this connection, publish `features.browser_companion_plugin: true` (and
+// its version) in /v1/capabilities, or answer it from `runtime.describe`
+// `capabilities`. Until Hermes does, the only signals are `hermes plugins list
+// --profile <p>` on the host and a successful companion tool call in a live turn.
+
+// One entry per flag whose value comes from /v1/capabilities. `features` and
+// `endpoints` are the same names normalizeGatewayCapabilities reads above; a
+// test keeps the two in step.
+export const ADVERTISED_FLAG_SPECS = Object.freeze([
+  { id: 'models', key: 'models', features: ['models_api', 'models'], endpoints: ['models'] },
+  { id: 'sessions', key: 'sessions', features: ['session_resources', 'sessions_api'], endpoints: ['sessions', 'session', 'session_create'] },
+  { id: 'skills', key: 'skills', features: ['skills_api', 'skills'], endpoints: ['skills'] },
+  { id: 'profiles', key: 'profiles', features: ['profiles_api', 'profile_api'], endpoints: ['profiles', 'profile_active', 'profiles_active'] },
+  { id: 'runs', key: 'runs', features: ['run_submission', 'runs_api'], endpoints: ['runs'] },
+  { id: 'runSteer', key: 'runSteer', features: ['run_steer'], endpoints: ['run_steer'] },
+  { id: 'sessionContext', key: 'sessionContext', features: ['session_context', 'context_status', 'contextStatus'], endpoints: ['session_context', 'session_context_get', 'context_status'] },
+  { id: 'sessionModelLock', key: 'sessionModelLock', features: ['session_model_lock', 'sessionModelLock'], endpoints: ['session_model_lock', 'session_model'] },
+  { id: 'audioTranscription', key: 'audioTranscription', features: ['audio_api', 'audio_transcription', 'audioTranscription'], endpoints: ['audio_transcribe', 'audio_transcription'] },
+  { id: 'mediaRead', key: 'mediaRead', features: ['media_api', 'mediaRead'], endpoints: ['media_read'] },
+  { id: 'browserPairing', key: 'browserPairing', features: ['browser_extension_pairing', 'browserPairing'], endpoints: ['browser_extension_pair_start', 'browser_pairing', 'pair_start'] },
+  { id: 'imageUpload', key: 'imageUpload', features: ['browser_image_upload', 'image_upload', 'imageUpload'], endpoints: ['browser_image_upload', 'image_upload', 'uploads_images'] },
+  { id: 'browserContextUpload', key: 'browserContextUpload', features: [BROWSER_CAPABILITY_FLAGS.browserContextUpload, 'browserContextUpload'], endpoints: ['browser_context_update', 'browser_context'] },
+  { id: 'browserContextStatus', key: 'browserContextStatus', features: [BROWSER_CAPABILITY_FLAGS.browserContextStatus, 'browserContextStatus'], endpoints: ['browser_context_status'] },
+  { id: 'browserCompanionPlugin', key: 'browserCompanionPlugin', features: [BROWSER_CAPABILITY_FLAGS.browserCompanionPlugin, 'browserCompanionPlugin'], endpoints: ['browser_companion_status', 'browser_context_status'], absentCode: 'not-advertised-plugin' },
+  { id: 'pluginActions', key: 'pluginActions', features: [BROWSER_CAPABILITY_FLAGS.pluginActions, 'pluginActions'], endpoints: ['browser_actions', 'plugin_actions'] },
+  { id: 'approvalEvents', key: 'approvalEvents', features: [BROWSER_CAPABILITY_FLAGS.approvalEvents, 'approvalEvents'], endpoints: ['approval_events'] },
+]);
+
+const WS_SOURCES = new Set(['dashboard-ws', 'remote-dashboard']);
+
+function transportOf(caps = {}) {
+  if (WS_SOURCES.has(caps.source)) return 'ws';
+  if (caps.source === 'api-server') return 'rest';
+  if (caps.source === 'legacy') return 'legacy';
+  return 'none';
 }
 
-export function capabilityStatusRows(caps = DEFAULT_GATEWAY_CAPABILITIES, { browserSpeechAvailable = false } = {}) {
-  const audioDetail = caps.audioTranscription
-    ? 'Hermes STT route available.'
-    : browserSpeechAvailable
-      ? 'Hermes STT unavailable — browser speech fallback will be used.'
-      : 'Hermes STT unavailable and this browser does not expose Web Speech.';
+function methodSet(unsupported) {
+  return unsupported instanceof Set ? unsupported : new Set(Array.isArray(unsupported) ? unsupported : []);
+}
+
+/**
+ * The evidence records for one connection, derived from its capability booleans
+ * and its gateway.ready payload. `identityKey` (capabilityIdentity().key) ties
+ * them to the endpoint + principal + profile they were read under;
+ * `unsupportedMethods` carries methods already answered -32601.
+ *
+ * It never invents a positive: a flag that is false is reported as unsupported
+ * only when the gateway said so, and as unknown ("not advertised") otherwise.
+ */
+export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
+  identityKey = '',
+  readyPayload = null,
+  checkedAt = Date.now(),
+  unsupportedMethods = [],
+} = {}) {
+  const transport = transportOf(caps);
+  const features = caps.raw?.features && typeof caps.raw.features === 'object' ? caps.raw.features : {};
+  const unsupported = methodSet(unsupportedMethods);
+  const records = [];
+  const make = (id, state, source, reasonCode, params = {}) => {
+    records.push(createCapabilityRecord({ id, state, source, checkedAt, identityKey, reasonCode, params }));
+  };
+  const S = CAPABILITY_STATES;
+  const O = CAPABILITY_SOURCES;
+  const hasReady = Boolean(readyPayload && typeof readyPayload === 'object');
+
+  function flag(id, value, { explicit, absentCode = 'not-advertised' } = {}) {
+    if (transport === 'none') return make(id, S.unknown, O.none, 'no-record');
+    if (transport === 'legacy') {
+      return value === true
+        ? make(id, S.degraded, O.derived, 'legacy-assumed')
+        : make(id, S.unknown, O.derived, 'legacy-gateway');
+    }
+    if (transport === 'ws') {
+      if (value === true) return hasReady ? make(id, S.available, O.ready, 'ws-connected') : make(id, S.unknown, O.none, 'not-connected');
+      return make(id, S.unknown, O.derived, id === 'browserCompanionPlugin' ? 'not-advertised-plugin' : 'ws-not-reported');
+    }
+    if (value === true) return make(id, S.available, O.capabilities, 'advertised');
+    if (explicit === false) return make(id, S.unsupported, O.capabilities, 'advertised-off');
+    return make(id, S.unknown, O.capabilities, absentCode);
+  }
+
+  // Health and auth are observations of this extension's own calls, not features.
+  if (caps.health === true) make('health', S.available, O.probe, 'operation-ok');
+  else make('health', S.unknown, O.none, 'no-record');
+  if (caps.auth === true) make('auth', transport === 'legacy' ? S.degraded : S.available, O.extension, 'token-present');
+  else make('auth', S.unknown, O.none, 'no-record');
+
+  for (const spec of ADVERTISED_FLAG_SPECS) {
+    const explicit = boolFeature(features, spec.features);
+    flag(spec.id, caps[spec.key] === true, { explicit, absentCode: spec.absentCode });
+  }
+
+  // The extension builds BCP v2 payloads itself and sends them inline. That is
+  // true whatever the gateway says; only an explicit "off" from the gateway
+  // changes it, and nothing here claims the gateway has a side-channel for it.
+  if (caps.browserContextProvider === false) make('browserContextProvider', S.unsupported, O.capabilities, 'advertised-off');
+  else if (boolFeature(features, [BROWSER_CAPABILITY_FLAGS.browserContextProvider, 'browserContextProvider']) === true) {
+    make('browserContextProvider', S.available, O.capabilities, 'advertised');
+  } else make('browserContextProvider', S.available, O.extension, 'extension-side');
+
+  // Browser control is negotiated from features.browser_extension_control.
+  if (transport === 'rest' && caps.browserControl === true) make('browserControl', S.available, O.capabilities, 'advertised');
+  else if (transport === 'rest' && features?.browser_extension_control?.enabled === false) make('browserControl', S.unsupported, O.capabilities, 'advertised-off');
+  else make('browserControl', S.unknown, transport === 'none' ? O.none : O.derived, transport === 'legacy' ? 'legacy-gateway' : (transport === 'ws' ? 'ws-not-reported' : 'not-advertised'));
+
+  // Session authority and what hangs off it.
+  const authority = gatewayAuthorityAvailability({ dashboardWs: transport === 'ws', readyPayload, unsupportedMethods: unsupported, method: 'session.mutate' });
+  if (transport === 'none') {
+    make('sessionAuthority', S.unknown, O.none, 'no-record');
+    make('projects', S.unknown, O.none, 'no-record');
+  } else if (transport !== 'ws') {
+    make('sessionAuthority', S.unsupported, O.derived, 'rest-only');
+    make('projects', S.unsupported, O.derived, 'rest-only');
+  } else if (authority.reason === 'not-connected') {
+    make('sessionAuthority', S.unknown, O.none, 'not-connected');
+    make('projects', S.unknown, O.none, 'not-connected');
+  } else if (authority.reason === 'no-session-authority') {
+    make('sessionAuthority', S.unsupported, O.ready, 'no-session-authority');
+    make('projects', S.unsupported, O.ready, 'no-session-authority');
+  } else {
+    make('sessionAuthority', S.available, O.ready, 'authority-ready');
+    if (unsupported.has('projects.list')) make('projects', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'projects.list' });
+    else make('projects', S.available, O.ready, 'authority-ready');
+  }
+
+  // Manual compaction, by whichever route this connection has.
+  if (transport === 'ws' && !hasReady) {
+    make('sessionCompress', S.unknown, O.none, 'not-connected');
+  } else if (transport === 'ws' && caps.sessionCompactCanonical === true) {
+    if (unsupported.has('session.mutate')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.mutate' });
+    else make('sessionCompress', S.available, O.ready, 'authority-compress');
+  } else if (transport === 'ws' && caps.sessionCompress === true) {
+    if (unsupported.has('session.compress')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.compress' });
+    else make('sessionCompress', S.available, O.ready, 'legacy-ws-compress');
+  } else if (transport === 'rest') {
+    if (caps.sessionCompress === true) make('sessionCompress', S.available, O.capabilities, 'advertised');
+    else if (boolFeature(features, ['session_compress']) === false) make('sessionCompress', S.unsupported, O.capabilities, 'advertised-off');
+    else make('sessionCompress', S.unsupported, O.capabilities, 'rest-no-compress');
+  } else if (transport === 'legacy') {
+    make('sessionCompress', S.unknown, O.derived, 'legacy-gateway');
+  } else {
+    make('sessionCompress', S.unknown, O.none, 'no-record');
+  }
+
+  // Images, kept apart: an advertised HTTP upload route (imageUpload), the
+  // dashboard WebSocket's own session attach RPC, and the stored-image read
+  // (mediaRead, handled in the loop above). None implies another.
+  if (transport === 'ws' && caps.imageSessionAttach === true) make('imageSessionAttach', S.available, O.derived, 'ws-contract');
+  else if (transport === 'none') make('imageSessionAttach', S.unknown, O.none, 'no-record');
+  else make('imageSessionAttach', S.unsupported, O.derived, 'rest-only');
+
+  return records;
+}
+
+// Each row: the record it reads, a label, and the English consequence shown
+// when the record says the feature is not in use (what the extension does
+// instead) or in use.
+function rowDefinitions({ browserSpeechAvailable = false } = {}) {
+  const audioOff = browserSpeechAvailable
+    ? 'Hermes STT unavailable — browser speech fallback will be used.'
+    : 'Hermes STT unavailable and this browser does not expose Web Speech.';
   return [
-    { key: 'health', label: 'Health', ...statusFor(caps.health, 'Gateway has not responded yet.') },
-    { key: 'auth', label: 'Auth', ...statusFor(caps.auth, 'No token/auth context proven yet.', 'Bearer token/auth context present.') },
-    { key: 'models', label: 'Models', ...statusFor(caps.models, 'Model list unavailable.') },
-    { key: 'sessions', label: 'Sessions', ...statusFor(caps.sessions, 'Session API unavailable — chat completions fallback will be used.') },
-    { key: 'skills', label: 'Skills', ...statusFor(caps.skills, 'Skills API unavailable.') },
-    { key: 'profiles', label: 'Profiles', ...statusFor(caps.profiles, WARNING_CAPABILITY_COPY.profiles) },
-    { key: 'audioTranscription', label: 'Voice transcription', status: caps.audioTranscription ? 'ok' : 'warn', detail: audioDetail },
-    { key: 'imageUpload', label: 'Image upload', ...statusFor(caps.imageUpload, WARNING_CAPABILITY_COPY.imageUpload, 'Pasted images can be saved for local path-backed Hermes vision.') },
-    { key: 'browserPairing', label: 'Browser pairing', ...statusFor(caps.browserPairing, WARNING_CAPABILITY_COPY.browserPairing, 'Automatic pairing route available.') },
-    { key: 'runs', label: 'Runs API', ...statusFor(caps.runs, 'Runs API unavailable — chat/session routes will be used.') },
-    { key: 'runSteer', label: 'Run steering', ...statusFor(caps.runSteer, 'Run steering unavailable — queued drafts can still send after the current turn.', 'Active-run steering route available.') },
-    { key: 'browserContextProvider', label: 'Browser Context Protocol', ...statusFor(caps.browserContextProvider !== false, 'Browser context protocol unavailable.', 'Extension can emit hermes.browser.context.v1 payloads.') },
-    { key: 'browserContextUpload', label: 'Browser context upload', ...statusFor(caps.browserContextUpload, 'Side-channel browser context route missing — prompt-embedded fallback stays active.', 'Side-channel browser context upload route available.') },
-    { key: 'browserCompanionPlugin', label: 'Browser Companion Plugin', ...statusFor(caps.browserCompanionPlugin, 'Optional companion plugin missing — extension remains fully usable with prompt-embedded context.', 'Companion plugin capability detected.') },
-    { key: 'sessionContext', label: 'Context status', ...statusFor(caps.sessionContext, 'Native session context status unavailable — Browser uses local/runtime estimates.', 'Native session context inspection available.') },
-    { key: 'sessionCompress', label: 'Context compaction', ...statusFor(caps.sessionCompress, 'Native session compaction unavailable — Browser will not show an active compact action.', 'Native session compaction available.') },
+    { key: 'health', label: 'Health', off: 'Gateway has not responded yet.' },
+    { key: 'auth', label: 'Auth', off: 'No token/auth context proven yet.', on: 'Bearer token/auth context present.' },
+    { key: 'models', label: 'Models', off: 'Model list unavailable.' },
+    { key: 'sessions', label: 'Sessions', off: 'Session API unavailable — chat completions fallback will be used.' },
+    { key: 'skills', label: 'Skills', off: 'Skills API unavailable.' },
+    { key: 'profiles', label: 'Profiles', off: WARNING_CAPABILITY_COPY.profiles },
+    { key: 'audioTranscription', label: 'Voice transcription', off: audioOff, on: 'Hermes STT route available.' },
+    { key: 'imageUpload', label: 'Image upload (HTTP)', off: WARNING_CAPABILITY_COPY.imageUpload, on: 'Pasted images can be saved for local path-backed Hermes vision.' },
+    { key: 'imageSessionAttach', label: 'Image attach (session)', off: 'Pasted images cannot attach to the live session on this connection.', on: 'Pasted images attach to the live session so Hermes vision can open them.' },
+    { key: 'mediaRead', label: 'Stored image read', off: 'Stored images are read through the Desktop dashboard when it is reachable. Video has its own route and is not covered here.', on: 'Stored images (not video) can be read through this gateway.' },
+    { key: 'browserPairing', label: 'Browser pairing', off: WARNING_CAPABILITY_COPY.browserPairing, on: 'Automatic pairing route available.' },
+    { key: 'runs', label: 'Runs API', off: 'Runs API unavailable — chat/session routes will be used.' },
+    { key: 'runSteer', label: 'Run steering', off: 'Run steering unavailable — queued drafts can still send after the current turn.', on: 'Active-run steering route available.' },
+    { key: 'browserContextProvider', label: 'Browser Context Protocol', off: 'The gateway turned the browser context protocol off.', on: 'Extension can emit hermes.browser.context.v1 payloads.' },
+    { key: 'browserContextUpload', label: 'Browser context upload', off: 'Side-channel browser context route not advertised — prompt-embedded context stays active.', on: 'Side-channel browser context upload route available.' },
+    { key: 'browserContextStatus', label: 'Browser context status', off: 'No browser context status route is advertised.', on: 'Browser context status route available.' },
+    { key: 'browserCompanionPlugin', label: 'Browser Companion Plugin', off: 'Optional companion plugin: the gateway does not advertise it, so the extension cannot tell whether it is loaded. Context still goes inline with each message.', on: 'Companion plugin capability advertised.' },
+    { key: 'pluginActions', label: 'Plugin actions', off: 'Plugin actions are not advertised. The extension does not run plugin actions.', on: 'Plugin actions advertised.' },
+    { key: 'sessionContext', label: 'Context status', off: 'Native session context status unavailable — Browser uses local/runtime estimates.', on: 'Native session context inspection available.' },
+    { key: 'sessionCompress', label: 'Context compaction', off: 'Manual compaction is not available on this connection — Hermes compacts on its own.', on: 'Manual compaction available.' },
+    { key: 'sessionAuthority', label: 'Session authority', off: 'Projects and canonical session edits need session authority.', on: 'Canonical session edits (move, compact) are available.' },
+    { key: 'projects', label: 'Projects', off: 'Projects are unavailable on this connection. Recents still works.', on: 'Projects are available.' },
+    { key: 'sessionModelLock', label: 'Per-session model lock', off: 'The gateway did not offer a per-session model lock, so a model choice applies to the next message only and is not locked.', on: 'The gateway can lock a model to a session.' },
+    { key: 'approvalEvents', label: 'Approval events', off: 'Approval events are not advertised — approval cards stay informational.', on: 'Approval events advertised.' },
   ];
+}
+
+/**
+ * The rows the compatibility panel shows. Each carries the record's state,
+ * exact reason, source and age next to the older `status`/`detail`, so the panel
+ * and the support diagnostics read one source. Pass `records` (the ledger's) to
+ * show the connection's observed and cached state; without it they are derived
+ * from `caps` alone.
+ */
+export function capabilityStatusRows(caps = DEFAULT_GATEWAY_CAPABILITIES, {
+  browserSpeechAvailable = false,
+  records = null,
+  now = Date.now(),
+  checkedAt = now,
+  identityKey = '',
+  readyPayload = null,
+  unsupportedMethods = [],
+} = {}) {
+  const supplied = Array.isArray(records) ? records : null;
+  const derived = supplied || deriveCapabilityRecords(caps, { identityKey, readyPayload, checkedAt, unsupportedMethods });
+  const byId = new Map(derived.map((record) => [record.id, supplied ? record : effectiveCapability(record, { now })]));
+  return rowDefinitions({ browserSpeechAvailable }).map((definition) => {
+    const record = byId.get(definition.key) || null;
+    const status = capabilityRowStatus(record);
+    return {
+      key: definition.key,
+      label: definition.label,
+      status,
+      detail: status === 'ok'
+        ? (definition.on || 'Available on the connected Hermes runtime.')
+        : definition.off,
+      state: record?.state || 'unknown',
+      reason: record?.reason || '',
+      reasonCode: record?.reasonCode || '',
+      params: record?.params || {},
+      source: record?.source || 'none',
+      checkedAt: record?.checkedAt ?? null,
+      ageMs: record?.checkedAt === null || record?.checkedAt === undefined ? null : Math.max(0, Number(now) - record.checkedAt),
+    };
+  });
 }
 
 function modeLabelFor(mode = DEFAULT_SETTINGS.gatewayMode) {
