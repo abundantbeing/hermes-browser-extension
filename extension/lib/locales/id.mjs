@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Hanya balon pengguna",
   "responses.layout.user_bubble_hint": "Pesan Anda dalam balon, balasan Hermes berupa teks mengalir.",
   "responses.setup_again": "Jalankan penyiapan lagi",
+  "haui.view_chart": "Grafik",
+  "haui.view_table": "Tabel",
+  "haui.view_as_chart": "Lihat sebagai grafik",
+  "haui.copy": "Salin",
+  "haui.copied": "Disalin",
+  "haui.building": "Membuat tampilan…",
+  "haui.opens_new_tab": "Dibuka di tab baru",
+  "haui.ask_hint": "Memasukkan pertanyaan ini ke kotak pesan",
 });
