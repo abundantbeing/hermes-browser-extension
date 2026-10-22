@@ -10154,3 +10154,119 @@ html[data-hermes-mode="light"] :is(.model-effort-option, .model-option, .room-me
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* First-run setup (lib/onboarding-flow.mjs): theme, response style, chat
+   layout, finish. It sits where the chat would be and hides the stream. */
+body.onboarding-active #messages { display: none; }
+.onboarding {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 10px;
+  padding: 14px 12px 12px;
+  border: 1px solid var(--hermes-line-strong);
+  background: color-mix(in srgb, var(--hermes-paper) 92%, transparent);
+  color: var(--hermes-ink);
+  min-width: 0;
+}
+.onboarding[hidden] { display: none; }
+.onboarding-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.onboarding-progress { display: inline-flex; gap: 4px; }
+.onboarding-progress i { width: 14px; height: 4px; background: rgba(var(--hermes-ink-rgb), 0.18); }
+.onboarding-progress i.done { background: rgba(var(--hermes-ink-rgb), 0.5); }
+.onboarding-progress i.active { width: 22px; background: var(--hermes-ink); }
+.onboarding-count { flex: 1; color: var(--hermes-muted); font: 600 calc(9.5px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.onboarding-skip { min-height: 26px; padding: 4px 9px; font-size: calc(10px * var(--hermes-text-zoom, 1)); }
+.onboarding-title {
+  margin: 2px 0 0;
+  font-family: var(--hermes-font-display);
+  font-size: calc(30px * var(--hermes-text-zoom, 1));
+  font-weight: 300;
+  line-height: 0.95;
+  text-transform: uppercase;
+  outline: none;
+}
+.onboarding-body { margin: 0; color: var(--hermes-muted); font-size: calc(11.5px * var(--hermes-text-zoom, 1)); line-height: 1.4; }
+.onboarding .onboarding-theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 2px; }
+.onboarding-theme-grid .theme-card { aspect-ratio: 5 / 4; padding: 5px; }
+.onboarding-options { display: grid; gap: 7px; }
+.onboarding-option {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--hermes-line);
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.onboarding-option:hover { border-color: var(--hermes-accent); }
+.onboarding-option.selected { border-color: var(--hermes-accent); box-shadow: inset 0 0 0 1px var(--hermes-accent); }
+.onboarding-option-copy { display: grid; gap: 3px; min-width: 0; }
+.onboarding-option-copy strong { font-size: calc(12px * var(--hermes-text-zoom, 1)); }
+.onboarding-option-copy small { color: var(--hermes-muted); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); line-height: 1.3; }
+.onboarding-preview {
+  position: relative;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  height: 52px;
+  padding: 6px;
+  border: 1px solid var(--hermes-line);
+  background: rgba(var(--hermes-ink-rgb), 0.04);
+  overflow: hidden;
+}
+.onboarding-preview i { display: block; height: 4px; background: rgba(var(--hermes-ink-rgb), 0.32); }
+.preview-plain i:nth-child(2) { width: 86%; }
+.preview-plain i:nth-child(4) { width: 58%; }
+.preview-rich .pv-head { width: 60%; height: 6px; background: var(--hermes-ink); }
+.preview-rich .pv-bullet { width: 76%; margin-left: 8px; }
+.preview-rich .pv-code { height: 10px; background: rgba(var(--hermes-ink-rgb), 0.16); }
+.preview-vivid { grid-template-columns: 1fr 1fr; grid-template-rows: 16px 1fr; }
+.preview-vivid .pv-stat { height: 16px; border: 1px solid rgba(var(--hermes-ink-rgb), 0.35); background: transparent; }
+.preview-vivid .pv-bars { grid-column: 1 / -1; display: flex; align-items: flex-end; gap: 4px; height: 20px; background: none; }
+.preview-vivid .pv-bars b { flex: 1; background: var(--hermes-ink); }
+.preview-vivid .pv-bars b:nth-child(1) { height: 40%; }
+.preview-vivid .pv-bars b:nth-child(2) { height: 75%; }
+.preview-vivid .pv-bars b:nth-child(3) { height: 55%; }
+.preview-vivid .pv-bars b:nth-child(4) { height: 100%; }
+.preview-layout { gap: 3px; }
+.preview-layout .pv-user-bubble { justify-self: end; width: 58%; height: 9px; border-radius: 6px 6px 2px 6px; background: var(--hermes-user-bg, var(--hermes-blue, #0505e8)); }
+.preview-layout .pv-user-bubble.short { width: 36%; }
+.preview-layout .pv-reply-bubble { width: 70%; height: 14px; border-radius: 6px 6px 6px 2px; border: 1px solid rgba(var(--hermes-ink-rgb), 0.3); background: var(--hermes-paper); }
+.preview-layout .pv-reply-flow { width: 92%; height: 4px; }
+.preview-layout .pv-reply-flow.short { width: 64%; }
+.onboarding-summary { display: grid; gap: 0; margin: 0; border: 1px solid var(--hermes-line); }
+.onboarding-summary div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-top: 1px solid var(--hermes-line); }
+.onboarding-summary div:first-child { border-top: 0; }
+.onboarding-summary dt { color: var(--hermes-muted); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
+.onboarding-summary dd { margin: 0; font-weight: 600; font-size: calc(11px * var(--hermes-text-zoom, 1)); text-align: right; }
+.onboarding-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 2px; }
+.onboarding-nav button { min-height: 32px; padding: 6px 14px; }
+
+/* Settings > Appearance: response style and chat layout. */
+.response-choice-group { display: flex; flex-wrap: wrap; width: 100%; }
+.response-choice-group .response-choice {
+  flex: 1 1 0;
+  min-height: 32px;
+  border: 0;
+  border-left: 1px solid var(--hermes-line);
+  background: transparent;
+  color: var(--hermes-muted);
+  padding: 6px 8px;
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  line-height: 1.1;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.response-choice-group .response-choice:first-child { border-left: 0; }
+.response-choice-group .response-choice:hover,
+.response-choice-group .response-choice.selected {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+.response-presentation-setting > div > span { display: block; color: var(--hermes-muted); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
+.rerun-onboarding-button { justify-self: start; }
