@@ -201,6 +201,7 @@ import {
   APPEARANCE_THEMES,
   normalizeAppearanceTheme,
   normalizeColorMode,
+  themePreviewForMode,
 } from './lib/appearance-themes.mjs';
 import {
   ZOOM_PRESETS,
@@ -8085,7 +8086,7 @@ function renderAppearanceControls() {
   if (!els.themeGrid) return;
   const builtInCards = APPEARANCE_THEMES.map((theme) => {
     const selected = theme.value === activeTheme;
-    const p = theme.preview;
+    const p = themePreviewForMode(theme, resolvedColorMode(colorMode));
     return `
       <button class="theme-card ${selected ? 'selected' : ''}" type="button" data-theme="${theme.value}" role="radio" aria-checked="${selected}" aria-label="${theme.name}: ${theme.description}" title="${theme.name}: ${theme.description}" style="--preview-bg:${p.bg};--preview-panel:${p.panel};--preview-text:${p.text};--preview-muted:${p.muted};--preview-accent:${p.accent};">
         <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
