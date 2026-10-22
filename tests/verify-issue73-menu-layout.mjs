@@ -239,6 +239,8 @@ async function main() {
     await saveScreenshot(panel, MENU_OPEN_SHOT);
 
     assert.ok(quickState.menuItems > 0, 'Quick commands menu rendered no items.');
+    assert.ok(quickState.menuBottom <= quickState.composerTop + 1,
+      `Quick menu bottom (${quickState.menuBottom.toFixed(1)}px) must sit above the composer card (top ${quickState.composerTop.toFixed(1)}px).`);
     // Issue #73 contract: the menu must never cover the prompt textarea.
     assert.ok(quickState.menuBottom <= quickState.textareaTop + 1,
       `Quick menu bottom (${quickState.menuBottom.toFixed(1)}px) must not cover the textarea (top ${quickState.textareaTop.toFixed(1)}px).`);
@@ -285,9 +287,37 @@ async function main() {
       await saveScreenshot(panel, SKILL_MENU_SHOT);
       assert.ok(skillState.menuBottom <= skillState.textareaTop + 1,
         `Skill menu bottom (${skillState.menuBottom.toFixed(1)}px) must not cover the textarea (top ${skillState.textareaTop.toFixed(1)}px).`);
+      assert.ok(skillState.menuBottom <= skillState.composerTop + 1,
+        `Skill menu bottom (${skillState.menuBottom.toFixed(1)}px) must sit above the composer card (top ${skillState.composerTop.toFixed(1)}px).`);
     }
 
-    // ── Check 3: the shipped CSS rules anchor both menus upward ──
+    // ── Check 4: the model menu and the context popover also sit above the composer card ──
+    // Both open from their own control; the card is the edge they must clear, and the top bar the edge they must stay under.
+    const popoverChecks = {};
+    for (const [name, panelSelector, opener, closer] of [
+      ['model', '#modelMenu', `document.querySelector('#modelMenuButton')?.click()`, `document.querySelector('#modelMenuCloseButton')?.click()`],
+      ['context', '#contextPopover', `document.querySelector('#contextBarButton')?.click()`, `document.querySelector('#contextBarButton')?.click()`],
+    ]) {
+      await panel.evaluate(opener);
+      const geometry = await waitFor(() => panel.evaluate(`(() => {
+        const el = document.querySelector(${JSON.stringify(panelSelector)});
+        if (!el || el.hidden) return null;
+        const r = el.getBoundingClientRect();
+        const card = document.querySelector('#composer').getBoundingClientRect();
+        const topbar = document.querySelector('.topbar')?.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, height: r.height, composerTop: card.top, topbarBottom: topbar ? topbar.bottom : 0 };
+      })()`));
+      popoverChecks[name] = geometry;
+      assert.ok(geometry.height > 0, `${name} popover must render with height.`);
+      assert.ok(geometry.bottom <= geometry.composerTop + 1,
+        `${name} popover bottom (${geometry.bottom.toFixed(1)}px) must sit above the composer card (top ${geometry.composerTop.toFixed(1)}px).`);
+      assert.ok(geometry.top >= geometry.topbarBottom - 1,
+        `${name} popover top (${geometry.top.toFixed(1)}px) must stay below the top bar (bottom ${geometry.topbarBottom.toFixed(1)}px).`);
+      await panel.evaluate(closer);
+      await waitFor(() => panel.evaluate(`document.querySelector(${JSON.stringify(panelSelector)})?.hidden === true`));
+    }
+
+    // ── Check 3: the shipped CSS rules anchor the popovers above the composer card ──
     // Computed styles resolve calc() to pixels while visible, so verify the
     // declared rule text from the stylesheets themselves.
     const cssContract = await panel.evaluate(`(() => {
@@ -296,9 +326,12 @@ async function main() {
         let rules;
         try { rules = sheet.cssRules; } catch { continue; }
         for (const rule of rules) {
-          if (rule.selectorText === '.quick-more-menu' || rule.selectorText === '.skill-menu') {
-            declared[rule.selectorText] = {
+          const selector = rule.selectorText || '';
+          if (selector.includes('#quickMoreMenu') && selector.includes('#skillMenu') && selector.includes('#contextPopover')) {
+            declared.shared = {
               position: rule.style.position,
+              left: rule.style.left,
+              width: rule.style.width,
               bottom: rule.style.bottom,
               zIndex: rule.style.zIndex,
             };
@@ -307,18 +340,20 @@ async function main() {
       }
       return declared;
     })()`);
-    assert.equal(cssContract['.quick-more-menu']?.position, 'absolute', 'Quick menu rule must be absolutely positioned.');
-    assert.equal(cssContract['.skill-menu']?.position, 'absolute', 'Skill menu rule must be absolutely positioned.');
-    assert.match(String(cssContract['.quick-more-menu']?.bottom), /calc\(100% \+ 6px\)/,
-      `Quick menu bottom declaration broken: ${cssContract['.quick-more-menu']?.bottom}`);
-    assert.match(String(cssContract['.skill-menu']?.bottom), /calc\(100% \+ 6px\)/,
-      `Skill menu bottom declaration broken: ${cssContract['.skill-menu']?.bottom}`);
+    assert.equal(cssContract.shared?.position, 'absolute', 'The shared popover rule must be absolutely positioned in the shell.');
+    assert.match(String(cssContract.shared?.bottom), /var\(--hermes-composer-bottom/,
+      `Popover bottom must hang from the composer card: ${cssContract.shared?.bottom}`);
+    assert.match(String(cssContract.shared?.left), /var\(--hermes-composer-left/,
+      `Popover left must follow the composer card: ${cssContract.shared?.left}`);
+    assert.match(String(cssContract.shared?.width), /var\(--hermes-composer-width/,
+      `Popover width must match the composer card: ${cssContract.shared?.width}`);
 
     console.log(JSON.stringify({
       verdict: 'PASS',
       issue: 73,
       promptLines: typed,
       quickMenu: quickState,
+      popovers: popoverChecks,
       skillMenu: skillOpened ? skillState : 'not-rendered (no gateway suggestions matched "/")',
       cssContract,
       screenshots: [MENU_OPEN_SHOT, ...(skillOpened ? [SKILL_MENU_SHOT] : [])],
