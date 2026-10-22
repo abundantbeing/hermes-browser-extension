@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Solo burbuja del usuario",
   "responses.layout.user_bubble_hint": "Tus mensajes en una burbuja; Hermes responde como texto corrido.",
   "responses.setup_again": "Volver a configurar",
+  "haui.view_chart": "Gráfico",
+  "haui.view_table": "Tabla",
+  "haui.view_as_chart": "Ver como gráfico",
+  "haui.copy": "Copiar",
+  "haui.copied": "Copiado",
+  "haui.building": "Creando vista…",
+  "haui.opens_new_tab": "Se abre en una pestaña nueva",
+  "haui.ask_hint": "Coloca esta pregunta en el cuadro de mensaje",
 });
