@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "僅使用者訊息使用泡泡",
   "responses.layout.user_bubble_hint": "你的訊息放在泡泡中，Hermes 的回覆以連續文字顯示。",
   "responses.setup_again": "重新執行設定",
+  "haui.view_chart": "圖表",
+  "haui.view_table": "表格",
+  "haui.view_as_chart": "以圖表檢視",
+  "haui.copy": "複製",
+  "haui.copied": "已複製",
+  "haui.building": "正在產生檢視…",
+  "haui.opens_new_tab": "在新分頁中開啟",
+  "haui.ask_hint": "將此問題放入訊息框",
 });
