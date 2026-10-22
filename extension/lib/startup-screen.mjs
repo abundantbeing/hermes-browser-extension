@@ -3,6 +3,8 @@
 // name and detail in the middle. sidepanel.js owns when the screen shows; this
 // module only paints it from deriveStartupView().
 
+import { createLogoVeil } from './startup-logo-veil.mjs';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const GREEK = ['Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 'Ν', 'Ξ', 'Ο', 'Π'];
 
@@ -165,6 +167,7 @@ export function createStartupScreen({ root, meander, count, state, label, detail
   back.setAttribute('aria-hidden', 'true');
   svgEl('text', { x: 170, y: 262, 'text-anchor': 'middle', textLength: 344, lengthAdjust: 'spacingAndGlyphs' }, back).textContent = 'HERMES';
   root.prepend(back);
+  const veil = createLogoVeil(root.querySelector('.startup-brand-icon'));
   if (!meander) {
     meander = doc.createElementNS(SVG_NS, 'svg');
     meander.setAttribute('class', 'startup-meander');
@@ -312,6 +315,7 @@ export function createStartupScreen({ root, meander, count, state, label, detail
       progress = model.progress;
       if (!root.hidden && build()) paint(progress);
       syncTooltips(Boolean(view?.visible));
+      if (!view?.visible) veil.rest();
       if (stepList) {
         stepList.textContent = '';
         for (const step of view?.steps || []) {
