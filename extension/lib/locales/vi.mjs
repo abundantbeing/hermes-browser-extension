@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Chỉ bong bóng người dùng",
   "responses.layout.user_bubble_hint": "Tin nhắn của bạn trong bong bóng, Hermes trả lời dạng văn bản liền mạch.",
   "responses.setup_again": "Chạy lại thiết lập",
+  "haui.view_chart": "Biểu đồ",
+  "haui.view_table": "Bảng",
+  "haui.view_as_chart": "Xem dạng biểu đồ",
+  "haui.copy": "Sao chép",
+  "haui.copied": "Đã sao chép",
+  "haui.building": "Đang tạo chế độ xem…",
+  "haui.opens_new_tab": "Mở trong thẻ mới",
+  "haui.ask_hint": "Đưa câu hỏi này vào ô tin nhắn",
 });
