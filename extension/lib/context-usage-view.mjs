@@ -45,8 +45,13 @@ const SOURCE_LABELS = Object.freeze({
   provider_usage_plus_estimate: 'Provider measurement plus newer messages',
   local_estimate: 'Hermes estimate, no request has run in this runtime yet',
   reported: 'Reported by Hermes',
+  runtime: 'Reported by the last Hermes turn',
+  session: 'Saved with the session',
   local: 'Panel estimate',
 });
+// Where a non-gateway reading came from: the extension's own accounting
+// (lib/common.mjs contextAccountingSnapshot) names these three.
+const LOCAL_SOURCES = new Set(['runtime', 'session']);
 
 function fill(template, vars = {}) {
   return String(template).replace(/\{([A-Za-z][A-Za-z0-9_]*)\}/g, (match, name) => (
@@ -104,13 +109,15 @@ export function resolveContextOccupancy(entry = null, local = {}) {
   const localLimit = finite(local?.limitTokens) && local.limitTokens > 0 ? local.limitTokens : null;
 
   if (!chosen) {
+    const localSource = LOCAL_SOURCES.has(local?.source) ? local.source : '';
     return {
       reported: false,
       origin: 'local',
       usedTokens: localUsed !== null && localUsed >= 0 ? Math.round(localUsed) : null,
       limitTokens: localLimit,
-      source: '',
-      estimated: true,
+      source: localSource,
+      // A turn's own last_prompt_tokens is a provider count; anything else is the panel's guess.
+      estimated: localSource ? local.estimated === true : true,
       at: 0,
     };
   }
@@ -190,7 +197,8 @@ function contextLevel(percent, overLimit, autoCompactPercent) {
  *
  * @param {object} options
  * @param {object|null} options.entry       lib/session-context-store.mjs entry for the viewed session
- * @param {{usedTokens?: number, limitTokens?: number}} options.local  the panel's own estimate
+ * @param {{usedTokens?: number, limitTokens?: number, source?: string, estimated?: boolean}} options.local
+ *   the panel's own reading: its estimate, or a REST turn's runtime / saved-session count
  * @param {{percent?: number, tokens?: number}|null} options.autoCompact  reported auto-compact point
  * @param {boolean} options.breakdownSupported  the connection can answer session.context_breakdown
  * @param {boolean} options.loading       a context request is in flight
@@ -301,8 +309,8 @@ export function buildContextUsageView({
     note('no-breakdown', 'info', 'This connection does not report a category breakdown.');
   }
 
-  let sourceKey = 'local';
-  if (occupancy.reported) sourceKey = SOURCE_LABELS[occupancy.source] ? occupancy.source : 'reported';
+  let sourceKey = occupancy.source || 'local';
+  if (occupancy.reported) sourceKey = Object.hasOwn(SOURCE_LABELS, occupancy.source) ? occupancy.source : 'reported';
   const age = formatRelativeAge(occupancy.at, now);
 
   return {

@@ -632,13 +632,12 @@
         <section id="contextPopover" class="context-popover" role="dialog" aria-label="Context window details" hidden data-i18n-aria-label="ui.context.window.details">
           <header>
             <span data-i18n="ui.context.window">CONTEXT WINDOW</span>
-            <strong id="contextUsageDetail">Refresh context to calculate the next prompt payload.</strong>
+            <button id="contextRefreshButton" class="context-refresh-button" type="button" aria-label="Refresh context" title="Refresh context" data-i18n-runtime>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="refresh"><path d="M13 20H9V18H13V20ZM19 16H21V18H19V20H17V18H15V16H17V8H19V16ZM9 18H7V16H9V18ZM7 6H9V8H7V16H5V8H3V6H5V4H7V6ZM15 16H13V14H15V16ZM23 16H21V14H23V16ZM3 10H1V8H3V10ZM11 10H9V8H11V10ZM17 8H15V6H17V8ZM15 6H11V4H15V6Z"/></svg>
+            </button>
           </header>
-          <p class="context-section-label" data-i18n="ui.session.runtime">Session runtime</p>
-          <dl id="contextRuntimeBreakdown" class="context-runtime-breakdown"></dl>
-          <p class="context-section-label" data-i18n="ui.next.prompt.payload">Next prompt payload</p>
-          <dl id="contextBreakdown"></dl>
-          <div class="context-control-row">
+          <div id="contextUsageCard" class="context-usage-card" data-compact="true" data-i18n-runtime></div>
+          <div id="contextControlRow" class="context-control-row">
             <span id="contextControlStatus">Native context controls unavailable.</span>
             <button id="contextCompactButton" class="secondary context-compact-button" type="button" disabled>Compact context</button>
           </div>
@@ -1322,10 +1321,14 @@
                 <p id="settingsContextSummary"></p>
               </div>
             </div>
-            <p class="context-section-label" data-i18n="ui.session.runtime">Session runtime</p>
-            <dl id="settingsContextRuntime" class="context-runtime-breakdown"></dl>
-            <p class="context-section-label" data-i18n="ui.next.prompt.payload">Next prompt payload</p>
-            <dl id="settingsContextPayload"></dl>
+            <div id="settingsContextUsage" class="context-usage-card" data-i18n-runtime></div>
+            <details class="context-window-details">
+              <summary data-i18n="ui.details">Details</summary>
+              <p class="context-section-label" data-i18n="ui.session.runtime">Session runtime</p>
+              <dl id="settingsContextRuntime" class="context-runtime-breakdown"></dl>
+              <p class="context-section-label" data-i18n="ui.next.prompt.payload">Next prompt payload</p>
+              <dl id="settingsContextPayload"></dl>
+            </details>
           </section>
         </section>
 

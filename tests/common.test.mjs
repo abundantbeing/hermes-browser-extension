@@ -3361,7 +3361,8 @@ test('context controls are capability gated and recommend compaction near the co
 
 test('sidepanel passes context accounting source into context status copy', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(source, /contextControlState\(\{ capabilities: gatewayCapabilities, percentUsed: meter\.percent, contextSource: accounting\.source \}\)/);
+  // The percent is the context card's (Hermes's reading when it has one), the panel estimate otherwise.
+  assert.match(source, /contextControlState\(\{ capabilities: gatewayCapabilities, percentUsed: contextView\.percent \?\? meter\.percent, contextSource: accounting\.source \}\)/);
 });
 
 test('sidepanel adopts rotated session id returned by native context compaction', () => {

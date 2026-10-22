@@ -12,6 +12,7 @@ function harness(statusRequest = async () => ({ output: 'Agent Running: Yes' }))
   const paints = [];
   const calls = [];
   let refreshes = 0;
+  const restores = [];
   const client = { readyState: 1, request: async (method, params) => { calls.push({ method, params }); return statusRequest(); },
     on: (type, fn) => { if (!listeners.has(type)) listeners.set(type, new Set()); listeners.get(type).add(fn); return () => listeners.get(type).delete(fn); } };
   const context = vm.createContext({
@@ -29,10 +30,12 @@ function harness(statusRequest = async () => ({ output: 'Agent Running: Yes' }))
     WS_EVENTS: { messageDelta: 'message.delta', messageComplete: 'message.complete', error: 'error' },
     setStatus: () => {}, renderSessionMenu: () => {}, updateComposerBusyState: () => {}, renderContextWindow: () => {},
     reconcileAttachedLiveSession: async () => {},
+    hydrateSubagentSnapshot: async (_client, sessionId) => { restores.push(['subagents', sessionId]); },
+    refreshSessionContextTelemetry: (options) => { restores.push(['context', options]); },
     refreshActiveSessionHistoryQuietly: async () => { refreshes += 1; },
   });
   vm.runInContext(attachSource, context);
-  return { context, calls, paints, listeners,
+  return { context, calls, paints, listeners, restores,
     attach: () => vm.runInContext("attachLiveSessionIfRunning('runtime-1')", context),
     emit: (type, sessionId, payload) => { for (const listener of listeners.get(type) || []) listener({ sessionId, payload }); },
     refreshes: () => refreshes,
@@ -56,6 +59,13 @@ test('real attachment addresses the live ID, but binds the view to the durable I
   assert.equal(h.count(), 0);
   assert.equal(h.context.liveAttach, null);
   assert.equal(h.refreshes(), 1);
+});
+
+test('attaching to a live run restores its subagents and context from the gateway at once', async () => {
+  const h = harness();
+  assert.equal(await h.attach(), true);
+  assert.equal(JSON.stringify(h.restores), JSON.stringify([['subagents', 'runtime-1'], ['context', { force: true }]]),
+    'subagent.list goes to the live id; the context is re-read even if a recent reading exists');
 });
 
 test('navigation invalidates an attachment still awaiting status, including an A-B-A switch', async () => {

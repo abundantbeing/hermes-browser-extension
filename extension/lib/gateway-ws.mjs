@@ -40,6 +40,9 @@ export const WS_METHODS = Object.freeze({
   sessionSteer: 'session.steer',
   promptBtw: 'prompt.btw',
   contextBreakdown: 'session.context_breakdown',
+  // Live usage snapshot: context occupancy, compressions, cache hits. The same
+  // payload the gateway pushes as the `session.usage` event while a turn runs.
+  sessionUsage: 'session.usage',
   imageAttachBytes: 'image.attach_bytes',
   subagentList: 'subagent.list',
   subagentSteer: 'subagent.steer',

@@ -56,7 +56,7 @@ test('the context readout lives in Settings, under Sessions & Context', () => {
   for (const id of ['settingsContextSummary', 'settingsContextRuntime', 'settingsContextPayload']) {
     assert.ok(settingsSessions.includes(`id="${id}"`), `${id} is in the Sessions & Context pane`);
   }
-  assert.match(js, /els\.settingsContextPayload\.replaceChildren/, 'the Settings readout is filled from the same context state');
+  assert.match(js, /renderContextDefinitionRows\(els\.settingsContextPayload,/, 'the Settings readout is filled from the same context state');
 });
 
 test('the top bar carries no connection light', () => {

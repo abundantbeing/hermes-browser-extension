@@ -238,7 +238,19 @@ import { createThemeMarketplaceTransport } from './lib/theme-marketplace-transpo
 import { buildAgentThemePrompt, extractAgentThemeDocument } from './lib/agent-theme-authoring.mjs';
 import { createImageViewerState, imageViewerReducer } from './lib/image-viewer.mjs';
 import { createStreamPacer, pacerFramePaint } from './lib/stream-pacing.mjs';
-import { contextTelemetryFromRuntime, formatTokenCount, mergeContextTelemetry } from './lib/session-context-telemetry.mjs';
+import { formatTokenCount } from './lib/session-context-telemetry.mjs';
+import {
+  SESSION_CONTEXT_STORAGE_KEY,
+  emptySessionContextStore,
+  markContextBreakdownStale,
+  pruneSessionContextStore,
+  recordContextBreakdown,
+  recordContextUsage,
+  renameSessionContextEntry,
+  restoreSessionContextStore,
+  sessionContextEntry,
+} from './lib/session-context-store.mjs';
+import { buildContextUsageView, resolveContextOccupancy } from './lib/context-usage-view.mjs';
 import { liveStateBadge, mergeLiveSignals } from './lib/session-live-state.mjs';
 import { friendlyModelName } from './lib/model-friendly-name.mjs';
 import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToolHistoryMessages, mergeToolCallActivity } from './lib/tool-call-group.mjs';
@@ -1023,14 +1035,15 @@ const els = {
   folderInput: $('#folderInput'),
   contextCompactLabel: $('#contextCompactLabel'),
   contextPercentLabel: $('#contextPercentLabel'),
-  contextUsageDetail: $('#contextUsageDetail'),
   contextMeterFill: $('#contextMeterFill'),
   contextPopover: $('#contextPopover'),
+  contextUsageCard: $('#contextUsageCard'),
+  contextRefreshButton: $('#contextRefreshButton'),
+  settingsContextUsage: $('#settingsContextUsage'),
   settingsContextSummary: $('#settingsContextSummary'),
   settingsContextRuntime: $('#settingsContextRuntime'),
   settingsContextPayload: $('#settingsContextPayload'),
-  contextRuntimeBreakdown: $('#contextRuntimeBreakdown'),
-  contextBreakdown: $('#contextBreakdown'),
+  contextControlRow: $('#contextControlRow'),
   contextControlStatus: $('#contextControlStatus'),
   contextCompactButton: $('#contextCompactButton'),
   connectionModeInput: $('#connectionModeInput'),
@@ -1284,17 +1297,144 @@ let completionSettlePending = false;
 let sideQuestionCardState = null;
 let sideQuestionSequence = 0;
 // Hermes reports the real session context over the dashboard socket
-// (`session.context_breakdown` on open plus 1 Hz `session.usage` events). Those
-// numbers are the same ones the Desktop context widget shows; the panel's own
-// next-request estimate is only a fallback and is labelled as such.
-let reportedContextTelemetry = { sessionId: '', telemetry: null };
+// (`session.context_breakdown` on request plus `session.usage` events while a
+// turn runs). Those numbers are the same ones the Desktop context widget shows;
+// the panel's own next-request estimate is only a fallback and is labelled as
+// such. Readings are kept per DURABLE session id (lib/session-context-store.mjs)
+// and persisted, so a session shows its last known context the moment it opens.
+let sessionContextStore = emptySessionContextStore();
+let sessionContextPersistTimer = null;
+// The gateway addresses a session by a live runtime id that changes on every
+// resume; its events carry that id. Map each one back to the durable id.
+const liveSessionAliases = new Map();
+// Per durable session: the breakdown request in flight and its retry timer.
+const sessionContextRefreshes = new Map();
+// Sessions whose breakdown this panel has fetched since it opened.
+const sessionContextFetched = new Set();
+const CONTEXT_BREAKDOWN_RETRY_MS = [1_000, 4_000, 12_000];
+const CONTEXT_BREAKDOWN_FRESH_MS = 30_000;
+const contextTelemetryBoundClients = new WeakSet();
 
-function applyReportedContextTelemetry(sessionId = '', payload = null) {
-  const telemetry = contextTelemetryFromRuntime(payload);
-  if (!telemetry.reported) return false;
-  reportedContextTelemetry = { sessionId: String(sessionId || ''), telemetry };
-  if (String(settings.sessionId || '') === String(sessionId || '')) renderContextWindow();
+function rememberLiveSessionAlias(liveId = '', storedId = '') {
+  const live = String(liveId || '').trim();
+  const stored = String(storedId || '').trim();
+  if (!live || !stored) return;
+  liveSessionAliases.set(live, stored);
+  if (liveSessionAliases.size > 200) liveSessionAliases.delete(liveSessionAliases.keys().next().value);
+}
+
+function durableContextSessionId(sessionId = '') {
+  const id = String(sessionId || '').trim();
+  return liveSessionAliases.get(id) || id;
+}
+
+async function loadSessionContextStore() {
+  try {
+    const stored = await browserApi.storage.local.get([SESSION_CONTEXT_STORAGE_KEY]);
+    // Readings that arrived while storage was answering win over the saved copy.
+    const restored = restoreSessionContextStore(stored?.[SESSION_CONTEXT_STORAGE_KEY]);
+    sessionContextStore = { ...restored, entries: { ...restored.entries, ...sessionContextStore.entries } };
+  } catch {
+    // Storage is a convenience here; live readings still arrive.
+  }
+  renderContextWindow();
+}
+
+function scheduleSessionContextPersist() {
+  if (sessionContextPersistTimer) return;
+  sessionContextPersistTimer = setTimeout(() => {
+    sessionContextPersistTimer = null;
+    sessionContextStore = pruneSessionContextStore(sessionContextStore);
+    void browserApi.storage.local.set({ [SESSION_CONTEXT_STORAGE_KEY]: sessionContextStore }).catch(() => {});
+  }, 750);
+}
+
+// Record one gateway reading. `sessionId` may be live or durable.
+function recordSessionContextReading(kind, sessionId = '', payload = null) {
+  const durableId = durableContextSessionId(sessionId);
+  if (!durableId) return false;
+  const record = kind === 'breakdown' ? recordContextBreakdown : recordContextUsage;
+  const result = record(sessionContextStore, durableId, payload);
+  if (!result.recorded) return false;
+  sessionContextStore = result.store;
+  scheduleSessionContextPersist();
+  if (String(settings.sessionId || '').trim() === durableId) renderContextWindow();
   return true;
+}
+
+function viewedSessionContextEntry() {
+  return sessionContextEntry(sessionContextStore, settings.sessionId);
+}
+
+function dashboardContextTarget() {
+  const connection = activeDashboardWsConnection;
+  const durableId = String(settings.sessionId || '').trim();
+  if (activeConversationTransport !== 'dashboard-ws' || connection?.client?.readyState !== 1 || !durableId) return null;
+  if (String(connection.wsStoredSessionId || '').trim() !== durableId || !connection.wsSessionId) return null;
+  return { client: connection.client, liveId: connection.wsSessionId, durableId };
+}
+
+// Ask the gateway for the viewed session's breakdown and usage. A failed or
+// zeroed breakdown retries on the desktop app's bounded ladder; the last good
+// reading stays on screen meanwhile.
+function refreshSessionContextTelemetry({ force = false } = {}) {
+  const target = dashboardContextTarget();
+  if (!target) return false;
+  const { client, liveId, durableId } = target;
+  const previous = sessionContextRefreshes.get(durableId);
+  if (previous?.inFlight && previous.liveId === liveId) return true;
+  if (previous?.timer) clearTimeout(previous.timer);
+  const entry = sessionContextEntry(sessionContextStore, durableId);
+  const breakdownAge = Date.now() - (entry?.breakdown?.at || 0);
+  if (!force && sessionContextFetched.has(durableId) && !entry?.breakdownStale && breakdownAge < CONTEXT_BREAKDOWN_FRESH_MS) return true;
+  const state = { inFlight: true, liveId, attempt: previous?.liveId === liveId ? previous.attempt : 0, timer: null };
+  sessionContextRefreshes.set(durableId, state);
+  renderContextWindow();
+  const stillTarget = () => sessionContextRefreshes.get(durableId) === state;
+  void client.request(WS_METHODS.sessionUsage, { session_id: liveId })
+    .then((result) => recordSessionContextReading('usage', durableId, result))
+    .catch(() => {});
+  void client.request(WS_METHODS.contextBreakdown, { session_id: liveId })
+    .then((result) => recordSessionContextReading('breakdown', durableId, result))
+    .catch(() => false)
+    .then((recorded) => {
+      if (!stillTarget()) return;
+      state.inFlight = false;
+      if (recorded) {
+        sessionContextFetched.add(durableId);
+        sessionContextRefreshes.delete(durableId);
+      } else if (state.attempt < CONTEXT_BREAKDOWN_RETRY_MS.length) {
+        state.timer = setTimeout(() => {
+          if (!stillTarget()) return;
+          state.attempt += 1;
+          state.timer = null;
+          refreshSessionContextTelemetry({ force: true });
+        }, CONTEXT_BREAKDOWN_RETRY_MS[state.attempt]);
+      } else {
+        sessionContextRefreshes.delete(durableId);
+      }
+      renderContextWindow();
+    });
+  return true;
+}
+
+// Usage ticks and turn completions for any session this socket serves. Events
+// carry the live id; the alias map files them under the durable session.
+function bindContextTelemetryClient(client) {
+  if (!client?.on || contextTelemetryBoundClients.has(client)) return;
+  contextTelemetryBoundClients.add(client);
+  const eventSessionId = (event) => String(event?.sessionId || event?.session_id || event?.payload?.session_id || '').trim();
+  client.on('session.usage', (event) => {
+    recordSessionContextReading('usage', eventSessionId(event), event?.payload);
+  });
+  client.on(WS_EVENTS.messageComplete, (event) => {
+    const sessionId = eventSessionId(event);
+    recordSessionContextReading('usage', sessionId, event?.payload);
+    // The transcript just grew: re-measure the categories for the viewed session.
+    if (durableContextSessionId(sessionId) === String(settings.sessionId || '').trim()) {
+      setTimeout(() => refreshSessionContextTelemetry({ force: true }), 250);
+    }
+  });
 }
 let dragDepth = 0;
 let speechRecognition = null;
@@ -9060,20 +9200,42 @@ function renderContextWindow(userText = els.input?.value || '') {
   const meter = contextMeterDisplay({ accounting, runtimeLabel, modelContextTokens: contextLimit });
   const compaction = contextCompactionState({ accounting, runtime, session });
 
-  const reportedDisplay = mergeContextTelemetry(
-    reportedContextTelemetry.sessionId === settings.sessionId ? reportedContextTelemetry.telemetry : null,
-    { usedTokens: localSessionContextTokens, limitTokens: contextLimit },
-  );
-  const meterPercent = reportedDisplay.reported && reportedDisplay.limitTokens ? reportedDisplay.percent : meter.percent;
-  const meterLimit = reportedDisplay.reported && reportedDisplay.limitTokens ? reportedDisplay.limitTokens : contextLimit;
+  const durableSessionId = String(settings.sessionId || '').trim();
+  const contextView = buildContextUsageView({
+    entry: viewedSessionContextEntry(),
+    local: {
+      usedTokens: compaction.usedTokens || localSessionContextTokens,
+      limitTokens: contextLimit,
+      source: accounting.source,
+      estimated: accounting.source === 'local-estimate',
+    },
+    autoCompact: compaction.thresholdTokens
+      ? { percent: compaction.thresholdPercent, tokens: compaction.thresholdTokens }
+      : null,
+    breakdownSupported: activeConversationTransport === 'dashboard-ws',
+    loading: Boolean(sessionContextRefreshes.get(durableSessionId)?.inFlight),
+    translate: translateUiText,
+  });
+  const meterPercent = contextView.percent ?? 0;
+  const meterLimit = contextView.limitTokens || 0;
   els.contextCompactLabel.textContent = meter.compactLabel;
-  els.contextPercentLabel.textContent = reportedDisplay.reported ? reportedDisplay.percentLabel : meter.percentLabel;
-  els.contextBarButton.title = reportedDisplay.reported
-    ? `${reportedDisplay.tokenSummaryLabel} · ${reportedDisplay.percentFullLabel || reportedDisplay.percentLabel}`
+  els.contextPercentLabel.textContent = contextView.percent === null ? meter.percentLabel : `${contextView.percent}%`;
+  els.contextBarButton.title = contextView.summaryLabel
+    ? [contextView.summaryLabel, contextView.percentLabel, contextView.sourceLabel].filter(Boolean).join(' · ')
     : meter.title;
-  els.contextUsageDetail.textContent = compaction.detail;
+  // The accounting note describes the panel's own estimate; it would contradict a reported reading.
+  els.settingsContextSummary.textContent = contextView.reported ? '' : compaction.detail;
   els.contextMeterFill.style.width = meterLimit ? `${Math.min(100, Math.max(0, meterPercent))}%` : '0%';
   syncComposerFrame();
+  renderContextUsageCard(els.contextUsageCard, contextView);
+  renderContextUsageCard(els.settingsContextUsage, contextView);
+  if (els.contextRefreshButton) {
+    const refreshLabel = translateUiText('Refresh context');
+    els.contextRefreshButton.hidden = !dashboardContextTarget();
+    els.contextRefreshButton.disabled = Boolean(sessionContextRefreshes.get(durableSessionId)?.inFlight);
+    els.contextRefreshButton.title = refreshLabel;
+    els.contextRefreshButton.setAttribute('aria-label', refreshLabel);
+  }
 
   const compactionStateLabels = {
     healthy: 'Healthy',
@@ -9087,46 +9249,41 @@ function renderContextWindow(userText = els.input?.value || '') {
     'local-estimate': 'Local next-request estimate',
     unknown: 'Unavailable',
   };
-  const reportedSourceLabel = reportedDisplay.reported
-    ? (reportedDisplay.estimated ? 'Hermes runtime (estimate)' : 'Hermes runtime')
-    : '';
+  // Category rows live in the card above; these rows add what the card does not show.
   const runtimeRows = [
     [
-      translateUiText(reportedDisplay.reported ? 'Session context' : (accounting.source === 'local-estimate' ? 'Next request estimate' : 'Session context')),
-      reportedDisplay.reported
-        ? `${reportedDisplay.usedLabel} ${translateUiText('tokens')}`
+      translateUiText(contextView.reported ? 'Session context' : (accounting.source === 'local-estimate' ? 'Next request estimate' : 'Session context')),
+      contextView.reported
+        ? `${contextView.usedLabel} ${translateUiText('tokens')}`
         : `${formatNumber(compaction.usedTokens)} ${translateUiText('tokens')}`,
     ],
     [
       translateUiText('Context limit'),
-      reportedDisplay.reported
-        ? `${reportedDisplay.limitLabel} ${translateUiText('tokens')}`
+      contextView.reported && contextView.limitLabel
+        ? `${contextView.limitLabel} ${translateUiText('tokens')}`
         : (compaction.contextLimitTokens ? `${formatNumber(compaction.contextLimitTokens)} ${translateUiText('tokens')}` : translateUiText('Not reported by Hermes')),
     ],
-    ...(reportedDisplay.reported && reportedDisplay.breakdown?.length
-      ? reportedDisplay.breakdown.map((row) => [translateUiText(String(row.label || '')), formatTokenCount(row.tokens)])
-      : []),
     [translateUiText('Auto-compact trigger'), compaction.thresholdTokens ? `${formatNumber(compaction.thresholdTokens)} ${translateUiText('tokens')} · ${compaction.thresholdPercent}%` : translateUiText('Not reported by Hermes')],
     [
       translateUiText('Compactions'),
-      reportedDisplay.reported && Number.isFinite(reportedDisplay.compressionCount)
-        ? formatNumber(reportedDisplay.compressionCount)
+      contextView.compressions !== null
+        ? formatNumber(contextView.compressions)
         : (compaction.compressionCountKnown ? formatNumber(compaction.compressionCount) : translateUiText('Not reported by Hermes')),
     ],
     [translateUiText('Compaction state'), translateUiText(compactionStateLabels[compaction.state] || compactionStateLabels.unknown)],
     [
       translateUiText('Telemetry source'),
-      reportedDisplay.reported
-        ? translateUiText(reportedSourceLabel)
+      contextView.reported
+        ? contextView.sourceLabel
         : translateUiText(telemetrySourceLabels[compaction.source] || telemetrySourceLabels.unknown),
     ],
   ];
-  els.contextRuntimeBreakdown.innerHTML = runtimeRows.map(([label, value]) => `
-    <dt>${escapeHtml(label)}</dt>
-    <dd>${escapeHtml(value)}</dd>
-  `).join('');
+  // The popover shows only the card; these rows live in Settings > Sessions & Context.
+  renderContextDefinitionRows(els.settingsContextRuntime, runtimeRows);
 
-  const controls = contextControlState({ capabilities: gatewayCapabilities, percentUsed: meter.percent, contextSource: accounting.source });
+  const controls = contextControlState({ capabilities: gatewayCapabilities, percentUsed: contextView.percent ?? meter.percent, contextSource: accounting.source });
+  // Without native compaction there is nothing to do here; Hermes compacts on its own.
+  if (els.contextControlRow) els.contextControlRow.hidden = !controls.canCompact;
   if (els.contextControlStatus) {
     els.contextControlStatus.textContent = translateUiText(controls.canCompact
       ? controls.label
@@ -9191,11 +9348,12 @@ function renderContextWindow(userText = els.input?.value || '') {
     [translateUiText('YouTube transcript'), stats.parts.youtubeTranscript],
     [translateUiText('Page text'), stats.parts.pageText],
   ];
-  els.contextBreakdown.innerHTML = rows.map(([label, part]) => `
-    <dt>${escapeHtml(label)}</dt>
-    <dd title="${part.enabled ? 'included' : 'disabled'}">${part.enabled ? `${formatNumber(part.estimatedTokens)} tok · ${formatNumber(part.chars)} chars` : 'disabled'}</dd>
-  `).join('');
-  renderContextMeters(meterLimit ? meterPercent : 0, compaction);
+  renderContextDefinitionRows(els.settingsContextPayload, rows.map(([label, part]) => [
+    label,
+    part.enabled ? `${formatNumber(part.estimatedTokens)} tok · ${formatNumber(part.chars)} chars` : 'disabled',
+    part.enabled ? 'included' : 'disabled',
+  ]));
+  renderContextMeters(meterLimit ? meterPercent : 0, contextView.level);
 }
 
 // Desktop parity (hermes-agent model switch guard): switching the session
@@ -9219,11 +9377,8 @@ function currentSessionContextUsedTokens() {
     loadedContextTokens: loaded.contextTokens,
     loadedVisibleTokens: loaded.visibleTokens,
   });
-  const merged = mergeContextTelemetry(
-    reportedContextTelemetry.sessionId === settings.sessionId ? reportedContextTelemetry.telemetry : null,
-    { usedTokens: localSessionContextTokens, limitTokens: 0 },
-  );
-  return Math.max(0, Math.floor(Number(merged.usedTokens) || 0));
+  const occupancy = resolveContextOccupancy(viewedSessionContextEntry(), { usedTokens: localSessionContextTokens });
+  return Math.max(0, Math.floor(Number(occupancy.usedTokens) || 0));
 }
 
 function requestSelectedModelWithContextConfirm(model) {
@@ -10597,6 +10752,7 @@ async function ensureActiveDashboardWsConnection() {
   const connection = isRemoteWsMode() ? await ensureRemoteWsClient() : await ensureProfileWsConnection();
   activeDashboardWsConnection = connection;
   bindSubagentClient(connection?.client);
+  bindContextTelemetryClient(connection?.client);
   return connection;
 }
 
@@ -10609,6 +10765,7 @@ async function activateLocalDashboardTransport({ timeoutMs = 5_000 } = {}) {
   try {
     const connection = await ensureProfileWsConnection({ readyTimeoutMs: Math.min(8_000, Math.max(2_500, timeoutMs)) });
     activeDashboardWsConnection = connection;
+    bindContextTelemetryClient(connection?.client);
     activeConversationTransport = 'dashboard-ws';
     markConnectionProbe('connected', connection.baseUrl || desktopDashboardUrl);
     updateConnectionPrompt();
@@ -16949,6 +17106,7 @@ async function openHermesSession(selectedSession) {
       connection.profile = safeActiveProfile();
       liveSessionId = liveId;
       session = { ...session, id: storedId };
+      rememberLiveSessionAlias(liveId, storedId);
       availableSessions = normalizeHermesSessions({
         sessions: [session, ...availableSessions.filter((item) => item.id !== requestedSessionId && item.id !== storedId)],
       });
@@ -17000,6 +17158,8 @@ async function openHermesSession(selectedSession) {
   applyModelOptionsForSession(session);
   renderModelOptions(availableModels);
   activeSessionRuntime = { ...activeSessionRuntime, sessionId: session.id, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
+  // Show the session's context as it was last reported while the rest loads.
+  if (viewedSessionContextEntry()) renderContextWindow();
   sessionRoutesAvailable = true;
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   if (!isCurrentRequest()) return false;
@@ -17009,6 +17169,13 @@ async function openHermesSession(selectedSession) {
   if (!isCurrentRequest()) return false;
   updateSessionLabel();
   renderSessionMenu();
+  // Restore what the gateway still runs for this session alongside its
+  // history: the context reading and the subagent roster (async children can
+  // outlive the turn that spawned them, so this is not gated on a live run).
+  if (activeConversationTransport === 'dashboard-ws' && activeDashboardWsConnection?.client) {
+    void hydrateSubagentSnapshot(activeDashboardWsConnection.client, liveSessionId);
+  }
+  refreshSessionContextTelemetry();
   const loaded = await loadSessionMessages(liveSessionId, {
     requestId,
     scopeRevisionId,
@@ -17128,6 +17295,10 @@ async function attachLiveSessionIfRunning(sessionId, { scopeRevisionId = scopeRe
   };
   renderSessionMenu();
   updateComposerBusyState();
+  // The run may have spawned subagents and grown its context before this panel
+  // looked; read both from the gateway instead of waiting for the next event.
+  void hydrateSubagentSnapshot(connection.client, liveId);
+  refreshSessionContextTelemetry({ force: true });
   // Reuse the released resume snapshot contract to recover pre-attach text.
   // Polling also reconciles a missed completion without replaying any prompt.
   void reconcileAttachedLiveSession();
@@ -20578,6 +20749,7 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
     }
     const compactedSessionId = String(payload?.rotated_session_id || payload?.session_id || '').trim();
     if (compactedSessionId && compactedSessionId !== settings.sessionId) {
+      sessionContextStore = renameSessionContextEntry(sessionContextStore, settings.sessionId, compactedSessionId);
       settings = { ...settings, sessionId: compactedSessionId };
       await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     }
@@ -20622,6 +20794,9 @@ async function compactDashboardSessionContext({ automaticRecovery = false } = {}
       setStatus('warn', 'Context compaction failed', detail, { translateDetail: false });
       return { ok: false, reason: result.reason, error: new Error(detail) };
     }
+    // The breakdown measured the transcript that was just replaced.
+    sessionContextStore = markContextBreakdownStale(sessionContextStore, settings.sessionId);
+    refreshSessionContextTelemetry({ force: true });
     setStatus('ok', automaticRecovery ? 'Context recovered' : 'Context compacted', result.detail || 'Hermes compacted the active session context.', { translateDetail: false });
     await clearContextDeliveryState();
     await loadSessions({ quiet: true });
@@ -21266,6 +21441,7 @@ async function ensureRemoteWsSession(connection) {
   connection.wsStoredSessionId = storedId;
   connection.profile = desiredProfile;
   promptController.bindSession(liveId, storedId);
+  rememberLiveSessionAlias(liveId, storedId);
   // Persist only the durable identity. Every socket replacement resumes it and
   // receives a fresh live id for prompt/history/steer/interrupt RPCs.
   settings = {
@@ -21488,13 +21664,11 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
     offs.push(client.on('steer.queued', (event) => {
       if (forThisSession(event)) onSteerQueued?.(event.payload?.text || event.payload?.message || '');
     }));
-    offs.push(client.on('session.usage', (event) => {
-      if (!forThisSession(event)) return;
-      applyReportedContextTelemetry(sessionId, event.payload);
-    }));
-    void client.request(WS_METHODS.contextBreakdown, { session_id: sessionId })
-      .then((result) => applyReportedContextTelemetry(sessionId, result))
-      .catch(() => {});
+    // session.usage ticks are recorded by the socket-wide listener
+    // (bindContextTelemetryClient) under the durable session id.
+    rememberLiveSessionAlias(sessionId, connection.wsStoredSessionId);
+    bindContextTelemetryClient(client);
+    refreshSessionContextTelemetry();
     offs.push(client.on(WS_EVENTS.error, (event) => {
       if (!forThisSession(event)) return;
       finish(reject, hermesGatewayTurnError({ payload: event.payload }) || new Error('Dashboard stream error'));
@@ -24548,6 +24722,12 @@ function bindEvents() {
     updateDockFloatingAnchor();
     els.contextPopover.hidden = nextHidden;
     els.contextBarButton.setAttribute('aria-expanded', String(!nextHidden));
+    // Opening asks for a fresh reading unless one arrived in the last 30 s.
+    if (!nextHidden) refreshSessionContextTelemetry();
+  });
+  els.contextRefreshButton?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    refreshSessionContextTelemetry({ force: true });
   });
   els.contextCompactButton?.addEventListener('click', () => {
     compactCurrentSessionContext().catch((error) => setStatus('warn', 'Context compaction failed', error?.message || String(error), { translateDetail: false }));
@@ -25201,6 +25381,7 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
           await loadSettings({ restoreMessages: false });
           await loadElementPickState();
           await loadPageAnnotationState();
+          await loadSessionContextStore();
         }
         settings = migrateConnectionSettings(settings);
         return {
@@ -25410,22 +25591,109 @@ function observeComposerPopovers() {
   }
 }
 
-// The composer's context ring shows the same percent as the meter. It turns
-// warning-coloured near the auto-compact point and danger when the window is full.
-// Settings repeats the popover's readout, so both always show the same numbers.
-function renderContextMeters(percent, compaction) {
+// The composer's context ring shows the same percent as the card. Its level
+// comes from the card's model: warning above 80% or near the auto-compact
+// point, danger above 95% or over the window.
+function renderContextMeters(percent, level = 'ok') {
   const button = els.contextBarButton;
   if (!button) return;
   const value = Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0;
-  const threshold = Number(compaction?.thresholdPercent) || 0;
-  let level = 'ok';
-  if (value >= 100) level = 'full';
-  else if (threshold && value >= threshold - 5) level = 'warn';
   button.style.setProperty('--context-pct', String(value));
-  button.dataset.level = level;
-  els.settingsContextSummary.textContent = els.contextUsageDetail.textContent;
-  els.settingsContextRuntime.replaceChildren(...els.contextRuntimeBreakdown.cloneNode(true).childNodes);
-  els.settingsContextPayload.replaceChildren(...els.contextBreakdown.cloneNode(true).childNodes);
+  button.dataset.level = level === 'warn' || level === 'full' ? level : 'ok';
+}
+
+// Settings > Sessions & Context lists the runtime and payload rows under Details.
+function renderContextDefinitionRows(list, rows) {
+  if (!list) return;
+  const nodes = [];
+  for (const [label, value, title] of rows) {
+    const term = document.createElement('dt');
+    term.textContent = label;
+    const detail = document.createElement('dd');
+    detail.textContent = value;
+    if (title) detail.title = title;
+    nodes.push(term, detail);
+  }
+  list.replaceChildren(...nodes);
+}
+
+function contextUsageNode(tag, className, text = '') {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
+// The context window card (lib/context-usage-view.mjs builds the model). Built
+// with textContent only: category labels and file names come from the gateway.
+// The composer popover is the compact card: the chart and legend, a warning
+// only when one applies, and a source line only when the numbers are not
+// Hermes's own. Settings shows every insight. (Constants stay inside: this
+// runs during module start-up, before later top-level bindings exist.)
+function renderContextUsageCard(root, view) {
+  if (!root || !view) return;
+  const compact = root.dataset.compact === 'true';
+  const compactInsightLimit = 2;
+  root.dataset.level = view.level;
+  root.dataset.reported = String(view.reported);
+
+  const head = contextUsageNode('div', 'context-usage-head');
+  head.append(
+    contextUsageNode('strong', 'context-usage-summary', view.summaryLabel || translateUiText('Not reported by Hermes')),
+    contextUsageNode('span', 'context-usage-percent', view.percentLabel),
+  );
+  const meta = contextUsageNode('div', 'context-usage-meta');
+  if (view.compressionsLabel) meta.append(contextUsageNode('span', '', view.compressionsLabel));
+  if (view.freeLabel) meta.append(contextUsageNode('span', '', `${view.freeLabel} ${translateUiText('free')}`));
+
+  const bar = contextUsageNode('div', 'context-usage-bar');
+  bar.dataset.mode = view.bar.mode;
+  bar.setAttribute('role', 'img');
+  bar.setAttribute('aria-label', [view.summaryLabel, view.percentLabel].filter(Boolean).join(', ') || translateUiText('Context window'));
+  for (const segment of view.bar.segments) {
+    const part = contextUsageNode('span', 'context-usage-segment');
+    part.dataset.category = segment.key;
+    part.style.width = `${segment.width}%`;
+    part.title = `${segment.label} ~${formatTokenCount(segment.tokens)}`;
+    bar.append(part);
+  }
+  if (view.autoCompactMarker !== null) {
+    const marker = contextUsageNode('i', 'context-usage-marker');
+    marker.style.left = `${view.autoCompactMarker}%`;
+    marker.title = translateUiText('Auto-compact trigger');
+    bar.append(marker);
+  }
+
+  const parts = [head];
+  if (meta.childNodes.length) parts.push(meta);
+  parts.push(bar);
+  if (view.legend.length) {
+    const legend = contextUsageNode('ul', 'context-usage-legend');
+    for (const row of view.legend) {
+      const item = contextUsageNode('li');
+      item.dataset.category = row.key;
+      const swatch = contextUsageNode('i', 'context-usage-swatch');
+      swatch.setAttribute('aria-hidden', 'true');
+      item.append(swatch, contextUsageNode('span', 'context-usage-label', row.label), contextUsageNode('span', 'context-usage-tokens', row.tokensLabel), contextUsageNode('span', 'context-usage-share', `${row.sharePercent}%`));
+      legend.append(item);
+    }
+    parts.push(legend);
+  }
+  const shownInsights = compact
+    ? view.insights.filter((insight) => insight.tone !== 'info' || insight.id === 'no-breakdown').slice(0, compactInsightLimit)
+    : view.insights;
+  if (shownInsights.length) {
+    const insights = contextUsageNode('ul', 'context-usage-insights');
+    for (const insight of shownInsights) {
+      const item = contextUsageNode('li', '', insight.text);
+      item.dataset.tone = insight.tone;
+      insights.append(item);
+    }
+    parts.push(insights);
+  }
+  const source = [view.sourceLabel, view.updatedLabel].filter(Boolean).join(' · ');
+  if (source && (!compact || !view.reported)) parts.push(contextUsageNode('p', 'context-usage-source', source));
+  root.replaceChildren(...parts);
 }
 
 observeComposerPopovers();

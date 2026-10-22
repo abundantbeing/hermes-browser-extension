@@ -162,3 +162,14 @@ test('relative ages', () => {
   assert.equal(formatRelativeAge(1, 3 * 3_600_000), '3 h ago');
   assert.equal(formatRelativeAge(1, 49 * 3_600_000), '2 d ago');
 });
+
+test('a REST turn\'s own runtime count is labelled as that, not as a panel estimate', () => {
+  const runtime = buildContextUsageView({ local: { usedTokens: 42_000, limitTokens: 200_000, source: 'runtime', estimated: false } });
+  assert.equal(runtime.reported, false);
+  assert.equal(runtime.sourceLabel, 'Reported by the last Hermes turn');
+  assert.equal(runtime.summaryLabel, '42k / 200k Tokens');
+  const saved = buildContextUsageView({ local: { usedTokens: 42_000, limitTokens: 200_000, source: 'session' } });
+  assert.equal(saved.sourceLabel, 'Saved with the session');
+  assert.equal(saved.summaryLabel, '42k / 200k Tokens', 'a saved last_prompt_tokens is a provider count too');
+  assert.equal(buildContextUsageView({ local: { usedTokens: 1, source: 'bogus' } }).sourceLabel, 'Panel estimate');
+});

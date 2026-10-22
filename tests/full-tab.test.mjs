@@ -319,13 +319,14 @@ test('opening an old session paints an in-chat history loader before storage or 
   );
 });
 
-test('side-panel context chip stays compact while the menu owns accurate compaction details', () => {
+test('side-panel context chip stays compact while Settings owns accurate compaction details', () => {
   const html = read('extension/sidepanel.html');
   const js = read('extension/sidepanel.js');
   const render = js.match(/function renderContextWindow\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
 
-  assert.match(html, /id="contextRuntimeBreakdown"/);
-  assert.match(render, /contextRuntimeBreakdown\.innerHTML/);
+  // The popover is just the context card; the runtime rows sit under Settings > Details.
+  assert.match(html, /<details class="context-window-details">[\s\S]*?id="settingsContextRuntime"/);
+  assert.match(render, /renderContextDefinitionRows\(els\.settingsContextRuntime, runtimeRows\)/);
   assert.match(render, /compaction\.compressionCountKnown\s*\?\s*formatNumber\(compaction\.compressionCount\)\s*:\s*translateUiText\('Not reported by Hermes'\)/);
   assert.match(render, /contextAccountingSnapshot\(\{[\s\S]*?session,/);
   assert.match(render, /const runtime = activeSessionRuntime\.sessionId === settings\.sessionId/);
