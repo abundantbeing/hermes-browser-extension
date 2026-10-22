@@ -42,24 +42,24 @@ export const LEGACY_WORKSPACE_MOVE_METHOD = 'session.workspace.move';
 
 const LIVE_EXECUTION_STATES = new Set(['running', 'waiting', 'unknown']);
 
-function clean(value = '') {
+export function clean(value = '') {
   return String(value ?? '').trim();
 }
 
-function rpcCodeOf(error) {
+export function rpcCodeOf(error) {
   const code = Number(error?.rpcCode ?? error?.code);
   return Number.isFinite(code) ? code : null;
 }
 
-function refusalReason(error) {
+export function refusalReason(error) {
   return clean(error?.data?.reason || '').toLowerCase();
 }
 
-function isMethodNotFound(error) {
+export function isMethodNotFound(error) {
   return rpcCodeOf(error) === -32601 || refusalReason(error) === 'unknown_method';
 }
 
-function isInteger(value) {
+export function isInteger(value) {
   return Number.isInteger(value) && value >= 0;
 }
 
@@ -130,6 +130,7 @@ export function normalizeCanonicalSession(raw = null) {
     executionState,
     running: raw.running === true || LIVE_EXECUTION_STATES.has(executionState),
     cwd: clean(info.cwd),
+    messageCount: isInteger(raw.message_count) ? raw.message_count : null,
     title: clean(info.title),
     profileName: clean(info.profile_name),
   };
@@ -146,7 +147,7 @@ export async function readCanonicalSession(request, sessionId) {
   return snapshot;
 }
 
-function describeTransportFailure(error) {
+export function describeTransportFailure(error) {
   const message = clean(error?.message) || 'Hermes could not be reached.';
   return { reason: /timed out/i.test(message) ? 'timeout' : 'disconnected', message };
 }
