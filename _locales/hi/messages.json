@@ -1819,6 +1819,74 @@
     "message": "असमर्थित संग्रह प्रारूप",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "Hermes सेट करें",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "वापस",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_finish_body": {
+    "message": "जिस पेज पर आप हैं, उसके बारे में पूछें। Hermes सक्रिय टैब, चुना हुआ टेक्स्ट और खुले टैब देखता है। यह सब बाद में सेटिंग्स में 'रूप और थीम' के अंतर्गत बदला जा सकता है।",
+    "description": "Runtime interface message onboarding.finish.body"
+  },
+  "runtime_onboarding_finish_title": {
+    "message": "सब तैयार है",
+    "description": "Runtime interface message onboarding.finish.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "आपके संदेश और Hermes के जवाब कहाँ दिखेंगे।",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "चैट लेआउट चुनें",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "आगे",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_skip": {
+    "message": "छोड़ें",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "चैट शुरू करें",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "चरण {current} / {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Hermes अपने जवाब कैसे दिखाता है।",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "जवाब की शैली चुनें",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_summary_layout": {
+    "message": "चैट लेआउट",
+    "description": "Runtime interface message onboarding.summary.layout"
+  },
+  "runtime_onboarding_summary_style": {
+    "message": "जवाब की शैली",
+    "description": "Runtime interface message onboarding.summary.style"
+  },
+  "runtime_onboarding_summary_theme": {
+    "message": "थीम",
+    "description": "Runtime interface message onboarding.summary.theme"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "साइड पैनल और पूरे टैब के रंग।",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "थीम चुनें",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
   "runtime_permissions_not_granted": {
     "message": "माइक्रोफ़ोन की अनुमति नहीं दी गई थी.\n\n{error}\n\nमाइक्रोफ़ोन सेटिंग खोलें पर क्लिक करें, माइक्रोफ़ोन को Hermes Browser Extension के लिए अनुमति दें पर सेट करें, यहां वापस आएं और पुनः प्रयास करें।",
     "description": "Runtime interface message permissions.not_granted"
@@ -1886,6 +1954,66 @@
   "runtime_profile_using": {
     "message": "उपयोग में: {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "दोनों तरफ़ बबल",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "आप और Hermes, हर कोई अपने बबल में, मैसेजिंग ऐप की तरह।",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "चैट में संदेश कहाँ दिखें।",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "चैट लेआउट",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "केवल उपयोगकर्ता का बबल",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "आपके संदेश बबल में, Hermes के जवाब सामान्य टेक्स्ट में।",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "सेटअप फिर से चलाएँ",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_style_description": {
+    "message": "Hermes अपने जवाब कैसे दिखाता है।",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "जवाब की शैली",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "सादा टेक्स्ट",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "सिर्फ़ शब्द, कोई फ़ॉर्मैटिंग नहीं।",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "रिच टेक्स्ट",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "फ़ॉर्मैट किया हुआ Markdown: शीर्षक, सूचियाँ और कोड।",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "मदद करें तो कार्ड, टेबल और चार्ट।",
+    "description": "Runtime interface message responses.style.vivid_hint"
   },
   "runtime_run_release": {
     "message": "Release",
