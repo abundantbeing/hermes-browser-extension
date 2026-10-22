@@ -50,8 +50,8 @@ Actions go through a typed dispatcher with an explicit allowlist:
 
 | Action | Effect |
 | --- | --- |
-| `open_url` | An `http`/`https` URL without credentials, drawn as a normal link (`target="_blank"`, `rel="noopener noreferrer"`). Any other scheme drops the item. |
-| `copy` | Copies `value` (up to 4000 characters) to the clipboard. |
+| `open_url` | An `http`/`https` URL without credentials, drawn as a normal link (`target="_blank"`, `rel="noopener noreferrer"`) that shows its host next to the label and the full URL on hover. Any other scheme drops the item. |
+| `copy` | Copies `value` (up to 4000 characters) to the clipboard. The button shows a preview of that exact text next to the model's label, with the full text on hover, so a label can't hide what gets copied. |
 | `ask` | Puts `value` in the message box. The user still sends it. |
 
 The extension also has one local action of its own: switching a chart between
@@ -65,6 +65,10 @@ handlers and network requests are never run.
   characters, Markdown bodies to 4000).
 - Every string is HTML-escaped. The whole output then goes through DOMPurify.
 - The sensitive-text redaction used for Markdown runs on the whole reply first.
+- Only Hermes' own replies use a response style. User, system and side-question
+  messages keep the Markdown renderer on both surfaces.
+- A `vivid` fence is walked with a visited set and a 200-node cap, so child
+  ids that repeat or loop can't multiply the work.
 
 ## Streaming and restore
 

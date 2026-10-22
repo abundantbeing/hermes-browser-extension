@@ -240,6 +240,20 @@
   cursor: pointer;
 }
 .haui-actions .haui-action:hover, .haui-actions .haui-action:focus-visible { background: var(--hermes-ink); color: var(--hermes-paper); outline: none; }
+/* A copy button shows the clipboard text itself; a link shows its host. */
+.haui-actions .haui-action { gap: 0.5em; max-width: 100%; }
+.haui-action-label { flex: 0 0 auto; }
+.haui-action-preview {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--hermes-muted);
+  font: 400 0.88em/1.2 var(--hermes-font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.haui-actions .haui-action:hover .haui-action-preview,
+.haui-actions .haui-action:focus-visible .haui-action-preview { color: inherit; }
+code.haui-action-preview { padding: 0; background: none; border: 0; }
 .haui-action.is-copied { border-color: color-mix(in srgb, var(--hermes-success, #1f9d63) 72%, var(--hermes-ink)); }
 
 /* A block still streaming: a fixed-height placeholder, never raw JSON. */

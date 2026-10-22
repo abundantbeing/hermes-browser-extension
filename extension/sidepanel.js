@@ -18036,8 +18036,9 @@ function renderMessageContentElement(element, content = '') {
     renderThinkingIndicator(element);
     return;
   }
-  // Response style shapes Hermes' replies; the user's own words stay Markdown.
-  const style = element?.closest?.('.message.user') ? 'rich' : responsePresentationFromSettings(settings).responseStyle;
+  // Response style shapes Hermes' own replies only; user, system and side
+  // cards keep the Markdown renderer, matching the full tab.
+  const style = element?.closest?.('.message.assistant') ? responsePresentationFromSettings(settings).responseStyle : 'rich';
   patchRenderedMessageContent(element, renderResponseSafe(content || '', { style, labels: adaptiveUiLabels() }));
   enhanceMarkdownCodeBlocks(element, {
     copyLabel: translateUiText('Copy code'),

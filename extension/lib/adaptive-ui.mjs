@@ -302,11 +302,17 @@ export function validateAdaptiveEnvelope(value) {
 // Hermes Mobile `vivid` fences: A2UI v0.9 lines. Components that map onto
 // HAUI are kept; layout containers are walked; the rest is left to the prose.
 
-function vividText(component, byId) {
-  if (!component) return '';
-  if (typeof component.text === 'string') return component.text;
-  const children = Array.isArray(component.children) ? component.children : [];
-  return children.map((childId) => vividText(byId.get(childId), byId)).filter(Boolean).join(' ');
+const VIVID_MAX_NODES = 200;
+
+// Text under a component, for Compare points. Bounded: a component is read at
+// most once, three levels deep, and the result is capped, so a fence whose ids
+// repeat or loop cannot fan out.
+function vividText(component, byId, seen = new Set(), depth = 0) {
+  if (!component || depth > 3 || seen.has(component) || seen.size >= VIVID_MAX_NODES) return '';
+  seen.add(component);
+  if (typeof component.text === 'string') return component.text.slice(0, 300);
+  const children = Array.isArray(component.children) ? component.children.slice(0, 12) : [];
+  return children.map((childId) => vividText(byId.get(childId), byId, seen, depth + 1)).filter(Boolean).join(' ').slice(0, 300);
 }
 
 export function vividToEnvelope(body = '') {
@@ -320,8 +326,13 @@ export function vividToEnvelope(body = '') {
   }
   const byId = new Map(components.map((component) => [String(component.id || ''), component]));
   const blocks = [];
+  // Each component is walked once and the walk stops after a fixed number of
+  // nodes, so repeated or cyclic child ids cannot multiply the work.
+  const visited = new Set();
   const visit = (component, depth) => {
     if (!component || depth > 6 || blocks.length >= HAUI_LIMITS.maxBlocks) return;
+    if (visited.has(component) || visited.size >= VIVID_MAX_NODES) return;
+    visited.add(component);
     const id = String(component.id || `v${blocks.length}`);
     const name = String(component.component || '');
     if (name === 'Stat') blocks.push({ id, type: 'stat', label: component.label, value: component.value });
@@ -344,7 +355,7 @@ export function vividToEnvelope(body = '') {
     } else if (name === 'Compare') {
       const items = (Array.isArray(component.items) ? component.items : []).map((item) => ({
         title: item?.title,
-        points: (Array.isArray(item?.children) ? item.children : []).map((childId) => vividText(byId.get(childId), byId)).filter(Boolean),
+        points: (Array.isArray(item?.children) ? item.children.slice(0, HAUI_LIMITS.maxPoints) : []).map((childId) => vividText(byId.get(childId), byId)).filter(Boolean),
       }));
       blocks.push({ id, type: 'comparison', items });
       return;
@@ -519,9 +530,17 @@ function renderBlock(block, scope, labels) {
     }
     case 'actions': {
       const items = block.items.map((item) => {
-        if (item.action === 'open_url') return `<a class="haui-action" href="${esc(item.value)}" target="_blank" rel="noopener noreferrer" title="${esc(labels.opensNewTab)}">${esc(item.label)}<span aria-hidden="true"> ↗</span></a>`;
-        const hint = item.action === 'ask' ? ` title="${esc(labels.askHint)}"` : '';
-        return `<button type="button" class="haui-action" data-haui-action="${item.action}" data-haui-value="${esc(item.value)}"${hint}>${esc(item.label)}</button>`;
+        if (item.action === 'open_url') {
+          const host = new URL(item.value).host;
+          return `<a class="haui-action" href="${esc(item.value)}" target="_blank" rel="noopener noreferrer" title="${esc(`${labels.opensNewTab}: ${item.value}`)}"><span class="haui-action-label">${esc(item.label)}</span><span class="haui-action-preview">${esc(host)} ↗</span></a>`;
+        }
+        if (item.action === 'copy') {
+          // The label is the model's; the preview is the clipboard text itself,
+          // so a button can never copy something other than what it shows.
+          const preview = clampText(item.value, 60);
+          return `<button type="button" class="haui-action haui-action-copy" data-haui-action="copy" data-haui-value="${esc(item.value)}" title="${esc(item.value.slice(0, 600))}"><span class="haui-action-label">${esc(item.label)}</span><code class="haui-action-preview">${esc(preview)}</code></button>`;
+        }
+        return `<button type="button" class="haui-action" data-haui-action="${item.action}" data-haui-value="${esc(item.value)}" title="${esc(labels.askHint)}"><span class="haui-action-label">${esc(item.label)}</span></button>`;
       }).join('');
       return `<div class="haui-block haui-actions" ${blockAttrs(block, scope)}>${items}</div>`;
     }
@@ -777,10 +796,11 @@ export async function dispatchAdaptiveAction(action, { copyText, askHermes, labe
     if (!copyText) return false;
     await copyText(action.value);
     const { button } = action;
-    const original = button.textContent;
+    const label = button.querySelector('.haui-action-label') || button;
+    const original = label.textContent;
     button.classList.add('is-copied');
-    button.textContent = labels.copied || HAUI_DEFAULT_LABELS.copied;
-    setTimer(() => { button.classList.remove('is-copied'); button.textContent = original; }, 1400);
+    label.textContent = labels.copied || HAUI_DEFAULT_LABELS.copied;
+    setTimer(() => { button.classList.remove('is-copied'); label.textContent = original; }, 1400);
     return true;
   }
   if (action.type === 'ask') {

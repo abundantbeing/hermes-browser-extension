@@ -133,6 +133,8 @@ test('script, HTML and handler injection is neutralized', () => {
   const buttons = [...host.querySelectorAll('button.haui-action')].map((button) => button.dataset.hauiAction);
   assert.deepEqual(buttons, ['copy'], 'unsupported actions never render');
   assert.equal(host.querySelector('button.haui-action').dataset.hauiValue, '"><svg onload=alert(1)>');
+  assert.equal(host.querySelector('button.haui-action .haui-action-preview').textContent, '"><svg onload=alert(1)>', 'copied text is shown, not hidden behind a label');
+  assert.equal(links[0].querySelector('.haui-action-preview').textContent, 'example.com ↗', 'a link shows where it goes');
   assert.equal(safeAdaptiveUrl('https://example.com'), 'https://example.com/');
   assert.equal(safeAdaptiveUrl('chrome://settings'), '');
 });
@@ -251,9 +253,10 @@ test('the typed dispatcher allows view, copy and ask only, and never sends', asy
   const copyButton = host.querySelector('[data-haui-action="copy"]');
   await dispatchAdaptiveAction(readAdaptiveAction(copyButton), handlers);
   assert.deepEqual(copied, ['Revenue up 12%']);
-  assert.equal(copyButton.textContent, 'Copied');
+  assert.equal(copyButton.querySelector('.haui-action-label').textContent, 'Copied');
   timers.forEach((fn) => fn());
-  assert.equal(copyButton.textContent, 'Copy summary');
+  assert.equal(copyButton.querySelector('.haui-action-label').textContent, 'Copy summary');
+  assert.equal(copyButton.querySelector('.haui-action-preview').textContent, 'Revenue up 12%', 'the button shows exactly what it copies');
   await dispatchAdaptiveAction(readAdaptiveAction(host.querySelector('[data-haui-action="ask"]')), handlers);
   assert.deepEqual(asked, ['Break it down by region']);
 
@@ -281,4 +284,27 @@ test('card titles stay readable in every font profile', () => {
   assert.match(rule, /line-height: 1\.25/);
   assert.match(css, /\.haui-stat-value \{[^}]*calc\(2em \* var\(--hermes-display-scale, 1\)\)/, 'stat numbers get the narrow-face scale');
   assert.doesNotMatch(renderResponseSafe(fence(envelope([{ id: 'c', type: 'comparison', items: [{ title: 'A' }, { title: 'B' }] }])), { style: 'vivid' }), /<h[1-6]/);
+});
+
+test('vivid fences with repeated or looping child ids stay bounded', () => {
+  const fan = Array.from({ length: 10 }, () => 'n');
+  const components = [
+    { id: 'root', component: 'Stack', children: ['loop', 'cmp', ...fan] },
+    { id: 'loop', component: 'Stack', children: ['loop', 'root'] },
+    { id: 'n', component: 'Stack', children: fan },
+    { id: 'cmp', component: 'Compare', items: [{ title: 'A', children: ['t', 't', 'self'] }, { title: 'B', children: ['self'] }] },
+    { id: 't', component: 'Text', text: 'fast' },
+    { id: 'self', component: 'Card', children: ['self', 'self', 't'] },
+  ];
+  const body = JSON.stringify({ version: 'v0.9', updateComponents: { surfaceId: 's', components } });
+  const started = performance.now();
+  const result = parseAdaptiveFence('vivid', body);
+  assert.ok(performance.now() - started < 200, 'no exponential walk');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.blocks.map((block) => block.type), ['comparison']);
+});
+
+test('only Hermes replies take the response style in the side panel', () => {
+  const panel = fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(panel, /const style = element\?\.closest\?\.\('\.message\.assistant'\) \? responsePresentationFromSettings\(settings\)\.responseStyle : 'rich';/);
 });
