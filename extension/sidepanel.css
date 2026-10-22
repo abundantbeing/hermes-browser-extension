@@ -550,21 +550,19 @@ button { text-transform: uppercase; letter-spacing: 0.14em; }
   -webkit-mask: url("assets/img/hermes-wing-mark.svg") left center / contain no-repeat;
   mask: url("assets/img/hermes-wing-mark.svg") left center / contain no-repeat;
 }
-/* The Nous three-card mark (orb and hand, NOUS badge, Hermes wing), the footer
-   mark on hermes-agent.nousresearch.com. A mask like the wing above, so the
-   theme sets its colour in light and dark. */
+/* The Nous three-card mark (orb and hand, NOUS badge, Hermes wing) from
+   hermes-agent.nousresearch.com, white on transparent. Masked over the theme's
+   brand colour like the wing above, so it follows light and dark. Quiet,
+   centred, at the foot of a view. */
 .nous-strip {
-  --nous-strip-height: 56px;
   display: block;
-  height: var(--nous-strip-height);
-  width: calc(var(--nous-strip-height) * 204 / 84);
-  max-width: 100%;
+  height: 52px;
+  aspect-ratio: 197 / 78;
+  margin: 18px auto 6px;
   background: var(--hermes-brand-mark, var(--hermes-fg));
-  -webkit-mask: url("assets/img/nous-strip-mark.svg") left center / contain no-repeat;
-  mask: url("assets/img/nous-strip-mark.svg") left center / contain no-repeat;
+  -webkit-mask: url("assets/img/nous-boxes.png") center / contain no-repeat;
+  mask: url("assets/img/nous-boxes.png") center / contain no-repeat;
 }
-.nous-strip-banner { --nous-strip-height: 56px; margin: -2px 0 2px; }
-.nous-strip-support { --nous-strip-height: 60px; margin: 2px auto 12px; -webkit-mask-position: center; mask-position: center; }
 #currentSessionName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .app-scroll {
