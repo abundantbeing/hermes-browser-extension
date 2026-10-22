@@ -1207,8 +1207,10 @@ body.onboarding-active .connect-panel { display: none; }
   isolation: isolate;
 }
 .startup-screen[hidden] { display: none; }
-/* The panel's rotating background art stays faintly visible behind the screen. */
-.startup-screen::before {
+/* The panel's rotating background art stays faintly visible behind the
+   screen, and behind first-run setup, which carries on from it. */
+.startup-screen::before,
+.onboarding::before {
   content: '';
   position: absolute;
   inset: -3%;
@@ -1520,6 +1522,15 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   color: var(--hermes-primary-bg, var(--hermes-ink));
   border-color: var(--hermes-primary-bg, var(--hermes-ink));
 }
+/* 4x4 ordered dither steps: the startup logo resolves through them and
+   first-run setup repaints and dissolves through them. */
+:root {
+  --startup-dither-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM2 2h1v1H2z'/%3E%3C/svg%3E");
+  --startup-dither-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM2 0h1v1H2zM0 2h1v1H0zM2 2h1v1H2z'/%3E%3C/svg%3E");
+  --startup-dither-8: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM2 0h1v1H2zM1 1h1v1H1zM3 1h1v1H3zM0 2h1v1H0zM2 2h1v1H2zM1 3h1v1H1zM3 3h1v1H3z'/%3E%3C/svg%3E");
+  --startup-dither-12: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM1 0h1v1H1zM2 0h1v1H2zM3 0h1v1H3zM1 1h1v1H1zM3 1h1v1H3zM0 2h1v1H0zM1 2h1v1H1zM2 2h1v1H2zM3 2h1v1H3zM1 3h1v1H1zM3 3h1v1H3z'/%3E%3C/svg%3E");
+  --startup-dither-14: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM1 0h1v1H1zM2 0h1v1H2zM3 0h1v1H3zM0 1h1v1H0zM1 1h1v1H1zM3 1h1v1H3zM0 2h1v1H0zM1 2h1v1H1zM2 2h1v1H2zM3 2h1v1H3zM1 3h1v1H1zM2 3h1v1H2zM3 3h1v1H3z'/%3E%3C/svg%3E");
+}
 /* The screen switches on like an old TV: a bright line that opens up. */
 .startup-screen:not([hidden]) > * {
   animation: startup-crt-on 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -1534,11 +1545,6 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
    dither that fills in as its grain gets finer, then a last CRT flicker.
    step-end holds each frame, so it reads as discrete signal, not a fade. */
 .startup-screen:not([hidden]) .startup-brand-icon {
-  --startup-dither-2: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM2 2h1v1H2z'/%3E%3C/svg%3E");
-  --startup-dither-4: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM2 0h1v1H2zM0 2h1v1H0zM2 2h1v1H2z'/%3E%3C/svg%3E");
-  --startup-dither-8: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM2 0h1v1H2zM1 1h1v1H1zM3 1h1v1H3zM0 2h1v1H0zM2 2h1v1H2zM1 3h1v1H1zM3 3h1v1H3z'/%3E%3C/svg%3E");
-  --startup-dither-12: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM1 0h1v1H1zM2 0h1v1H2zM3 0h1v1H3zM1 1h1v1H1zM3 1h1v1H3zM0 2h1v1H0zM1 2h1v1H1zM2 2h1v1H2zM3 2h1v1H3zM1 3h1v1H1zM3 3h1v1H3z'/%3E%3C/svg%3E");
-  --startup-dither-14: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 4' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM1 0h1v1H1zM2 0h1v1H2zM3 0h1v1H3zM0 1h1v1H0zM1 1h1v1H1zM3 1h1v1H3zM0 2h1v1H0zM1 2h1v1H1zM2 2h1v1H2zM3 2h1v1H3zM1 3h1v1H1zM2 3h1v1H2zM3 3h1v1H3z'/%3E%3C/svg%3E");
   animation: startup-logo-resolve 1s step-end 0.2s both;
 }
 @keyframes startup-logo-resolve {
@@ -10580,29 +10586,119 @@ html[data-hermes-mode="light"] :is(.model-effort-option, .model-option, .room-me
   cursor: not-allowed;
 }
 
-/* First-run setup (lib/onboarding-flow.mjs): theme, response style, chat
-   layout, finish. It sits where the chat would be and hides the stream. */
+/* First-run setup (lib/onboarding-flow.mjs): theme and mode, font, response
+   style, chat layout, then Connect to Hermes. It fills the panel and carries
+   on from the startup screen: the same field, the Meander border as the
+   setup's progress, the logo small at the top. No chat chrome shows under it. */
 body.onboarding-active #messages { display: none; }
+body.onboarding-active .topbar,
+body.onboarding-active .bottom-dock { visibility: hidden; }
 .onboarding {
+  --startup-fg: var(--hermes-fg);
+  --startup-fg-rgb: var(--hermes-fg-rgb);
+  --startup-bg: var(--hermes-app-bg);
+  --startup-line: var(--hermes-accent, var(--startup-fg));
+  --startup-line-rgb: var(--hermes-accent-rgb, var(--startup-fg-rgb));
+  position: fixed;
+  inset: 0;
+  z-index: 62;
   display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 10px;
-  margin: 4px 0 10px;
-  padding: 14px 12px 12px;
-  border: 1px solid var(--hermes-line-strong);
-  background: color-mix(in srgb, var(--hermes-paper) 92%, transparent);
-  color: var(--hermes-ink);
+  padding: 24px 24px 20px;
+  color: var(--startup-fg);
+  background:
+    radial-gradient(130% 100% at 50% 42%, transparent 52%, rgba(var(--hermes-shadow-rgb), 0.32) 100%),
+    radial-gradient(120% 85% at 50% 32%, rgba(var(--hermes-panel-rgb), 0.98), rgba(var(--hermes-bg-rgb), 0.98)),
+    var(--hermes-app-bg);
+  overflow: hidden;
+  isolation: isolate;
   min-width: 0;
 }
 .onboarding[hidden] { display: none; }
-.onboarding-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.onboarding::before { opacity: 0.08; animation: none; }
+html[data-hermes-mode="light"] .onboarding {
+  --startup-fg: var(--hermes-ink);
+  --startup-fg-rgb: var(--hermes-ink-rgb);
+  --startup-bg: var(--hermes-paper);
+  background:
+    radial-gradient(circle at 50% 24%, rgba(var(--hermes-ink-rgb), 0.06), transparent 42%),
+    linear-gradient(180deg, var(--hermes-paper) 0%, color-mix(in srgb, var(--hermes-paper) 94%, var(--hermes-ink)) 100%),
+    var(--hermes-paper);
+}
+html[data-hermes-mode="light"] .onboarding::before { opacity: 0.05; }
+.onboarding > :not(.onboarding-meander):not(.sr-only) { position: relative; z-index: 1; min-width: 0; }
+.onboarding-meander { z-index: 0; }
+.onboarding-meander .startup-meander-line { transition: stroke-dashoffset 0.6s cubic-bezier(0.3, 0.7, 0.2, 1), filter 0.4s ease; }
+.onboarding.is-finishing .startup-meander-line { filter: drop-shadow(0 0 7px rgba(var(--startup-line-rgb), 0.95)); }
+
+.onboarding-top { display: grid; justify-items: center; gap: 8px; }
+.onboarding-logo {
+  --startup-logo: url("assets/img/hermes-extension-icon-outline.png");
+  display: block;
+  width: 34px;
+  aspect-ratio: 600 / 790;
+  background: var(--startup-fg);
+  -webkit-mask: var(--startup-logo) center / contain no-repeat;
+  mask: var(--startup-logo) center / contain no-repeat;
+  transform-origin: center;
+}
+html[data-hermes-mode="light"] .onboarding-logo {
+  --startup-logo: url("assets/img/hermes-extension-icon-solid.png");
+  aspect-ratio: 600 / 779;
+}
+.onboarding-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(var(--startup-fg-rgb), 0.3);
+}
 .onboarding-progress { display: inline-flex; gap: 4px; }
-.onboarding-progress i { width: 14px; height: 4px; background: rgba(var(--hermes-ink-rgb), 0.18); }
-.onboarding-progress i.done { background: rgba(var(--hermes-ink-rgb), 0.5); }
-.onboarding-progress i.active { width: 22px; background: var(--hermes-ink); }
-.onboarding-count { flex: 1; color: var(--hermes-muted); font: 600 calc(9.5px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.onboarding-progress i { width: 12px; height: 3px; background: rgba(var(--startup-fg-rgb), 0.22); transition: width 0.3s ease, background 0.3s ease; }
+.onboarding-progress i.done { background: rgba(var(--startup-line-rgb), 0.6); }
+.onboarding-progress i.active { width: 22px; background: var(--startup-line); box-shadow: 0 0 6px rgba(var(--startup-line-rgb), 0.6); }
+.onboarding-count {
+  flex: 1;
+  min-width: 0;
+  color: rgba(var(--startup-fg-rgb), 0.72);
+  font: 600 calc(9.5px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .onboarding-skip { min-height: 26px; padding: 4px 9px; font-size: calc(10px * var(--hermes-text-zoom, 1)); }
+
+/* The live preview: real message components at a smaller scale, laid out
+   by the page's own chat layout and response style. */
+.onboarding-preview {
+  max-height: min(30vh, 210px);
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 82%, transparent);
+  mask-image: linear-gradient(#000 82%, transparent);
+}
+.onboarding-preview-thread { display: flex; flex-direction: column; gap: 8px; zoom: 0.84; }
+.onboarding-preview .message { max-width: 92%; }
+.onboarding-preview .message-row[data-role="user"] > .message { max-width: 78%; }
+.onboarding-preview .message-content p:last-child { margin-bottom: 0; }
+.onboarding-preview .haui-view-toggle { display: none; }
+.onboarding-preview .haui-chart-svg { display: block; width: 100%; max-height: 76px; }
+
+.onboarding-stage {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 2px 6px;
+}
 .onboarding-title {
-  margin: 2px 0 0;
+  margin: 0;
   font-family: var(--hermes-font-display);
   font-size: calc(30px * var(--hermes-text-zoom, 1));
   font-weight: 300;
@@ -10610,16 +10706,140 @@ body.onboarding-active #messages { display: none; }
   text-transform: uppercase;
   outline: none;
 }
-.onboarding-body { margin: 0; color: var(--hermes-muted); font-size: calc(11.5px * var(--hermes-text-zoom, 1)); line-height: 1.4; }
-.onboarding .onboarding-theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 2px; }
+.onboarding-body { margin: 0; color: rgba(var(--startup-fg-rgb), 0.76); font-size: calc(11.5px * var(--hermes-text-zoom, 1)); line-height: 1.4; }
+.onboarding-mode { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+.onboarding .onboarding-mode .mode-choice { flex-direction: row; gap: 7px; min-height: 34px; padding: 7px 6px 6px; }
+.onboarding .onboarding-theme-grid { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
 .onboarding-theme-grid .theme-card { aspect-ratio: 5 / 4; padding: 5px; }
-.onboarding-summary { display: grid; gap: 0; margin: 0; border: 1px solid var(--hermes-line); }
-.onboarding-summary div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-top: 1px solid var(--hermes-line); }
-.onboarding-summary div:first-child { border-top: 0; }
-.onboarding-summary dt { color: var(--hermes-muted); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
-.onboarding-summary dd { margin: 0; font-weight: 600; font-size: calc(11px * var(--hermes-text-zoom, 1)); text-align: right; }
-.onboarding-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 2px; }
-.onboarding-nav button { min-height: 32px; padding: 6px 14px; }
+.onboarding .presentation-selected-hint { color: rgba(var(--startup-fg-rgb), 0.72); }
+
+.onboarding-font-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.onboarding-font-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 6px 22px 6px 8px;
+  border: 1px solid var(--hermes-line);
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.onboarding-font-card:hover { border-color: var(--hermes-accent); background: var(--hermes-paper); color: var(--hermes-ink); }
+.onboarding-font-card.selected { border-color: var(--hermes-accent); box-shadow: inset 0 0 0 1px var(--hermes-accent); }
+.onboarding-font-card:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: 2px; }
+.onboarding-font-sample { font-family: var(--onboarding-font); font-size: calc(22px * var(--hermes-text-zoom, 1)); line-height: 1; }
+.onboarding-font-name {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--onboarding-font);
+  font-size: calc(11px * var(--hermes-text-zoom, 1));
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.onboarding-font-card .presentation-card-check { top: 50%; bottom: auto; margin-top: -6px; }
+.onboarding-font-card.selected .presentation-card-check {
+  border-color: var(--hermes-accent);
+  background: var(--hermes-accent);
+  box-shadow: inset 0 0 0 2px var(--hermes-paper);
+}
+
+.onboarding-connect {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(var(--startup-fg-rgb), 0.3);
+  background: rgba(var(--startup-fg-rgb), 0.05);
+}
+.onboarding-connect-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: rgba(var(--startup-fg-rgb), 0.8);
+  font-size: calc(11px * var(--hermes-text-zoom, 1));
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.onboarding-connect.is-connected .onboarding-connect-status { color: var(--startup-fg); font-weight: 600; }
+.onboarding-connect.is-connected .onboarding-connect-status svg { flex: none; color: var(--control-on); }
+.onboarding-connect-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.onboarding-connect-actions[hidden] { display: none; }
+.onboarding-connect-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px 0 9px;
+  font: calc(15px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-display);
+  letter-spacing: 0.07em;
+}
+.onboarding-connect-button svg { flex: none; }
+.onboarding-connect.is-busy .onboarding-connect-button svg { animation: onboarding-pulse 1s steps(2, jump-none) infinite; }
+
+.onboarding-nav { display: flex; justify-content: space-between; gap: 8px; }
+.onboarding-nav button { min-height: 34px; padding: 6px 16px; }
+
+/* Motion: the screen switches on like the startup screen, each step flips in
+   like a new channel, a pick repaints the preview through an ordered dither,
+   and the way out dithers the whole screen away. */
+.onboarding.is-entering > :not(.onboarding-meander):not(.onboarding-top) { animation: startup-crt-on 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.onboarding.is-entering .onboarding-head { animation: startup-swap 0.6s cubic-bezier(0.3, 0.7, 0.2, 1) 0.3s both; }
+.onboarding-stage.is-switching { animation: onboarding-switch 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.onboarding-stage[data-direction="back"].is-switching { --onboarding-switch-from: -14px; }
+.onboarding-preview.is-repainting .onboarding-preview-thread { animation: onboarding-dither-in 0.5s step-end both; }
+.onboarding.is-exiting { animation: onboarding-dither-out 0.72s step-end both; pointer-events: none; }
+@keyframes onboarding-switch {
+  0% { opacity: 0.4; transform: translateX(var(--onboarding-switch-from, 14px)) scale(1, 0.006); filter: brightness(4); }
+  35% { opacity: 1; transform: translateX(0) scale(1, 0.006); filter: brightness(3); }
+  70% { transform: scale(1, 1.02); filter: brightness(1.4); }
+  100% { transform: none; filter: none; }
+}
+@keyframes onboarding-dither-in {
+  0% { -webkit-mask-image: var(--startup-dither-2); mask-image: var(--startup-dither-2); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; }
+  20% { -webkit-mask-image: var(--startup-dither-4); mask-image: var(--startup-dither-4); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; }
+  40% { -webkit-mask-image: var(--startup-dither-8); mask-image: var(--startup-dither-8); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; }
+  60% { -webkit-mask-image: var(--startup-dither-12); mask-image: var(--startup-dither-12); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; }
+  80% { -webkit-mask-image: var(--startup-dither-14); mask-image: var(--startup-dither-14); -webkit-mask-size: 8px 8px; mask-size: 8px 8px; }
+  100% { -webkit-mask-image: none; mask-image: none; }
+}
+@keyframes onboarding-dither-out {
+  0% { -webkit-mask-image: var(--startup-dither-14); mask-image: var(--startup-dither-14); -webkit-mask-size: 12px 12px; mask-size: 12px 12px; }
+  18% { -webkit-mask-image: var(--startup-dither-12); mask-image: var(--startup-dither-12); -webkit-mask-size: 12px 12px; mask-size: 12px 12px; }
+  36% { -webkit-mask-image: var(--startup-dither-8); mask-image: var(--startup-dither-8); -webkit-mask-size: 12px 12px; mask-size: 12px 12px; }
+  54% { -webkit-mask-image: var(--startup-dither-4); mask-image: var(--startup-dither-4); -webkit-mask-size: 12px 12px; mask-size: 12px 12px; }
+  72% { -webkit-mask-image: var(--startup-dither-2); mask-image: var(--startup-dither-2); -webkit-mask-size: 12px 12px; mask-size: 12px 12px; }
+  90%, 100% { opacity: 0; visibility: hidden; }
+}
+@keyframes onboarding-pulse { 50% { opacity: 0.35; } }
+@keyframes onboarding-fade-out { to { opacity: 0; } }
+
+/* The way in: the top bar and the dock slide in under the dissolving setup. */
+body.onboarding-entering .topbar { animation: onboarding-chrome-down 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+body.onboarding-entering .bottom-dock { animation: onboarding-chrome-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.06s both; }
+@keyframes onboarding-chrome-down { from { opacity: 0; transform: translateY(-100%); } }
+@keyframes onboarding-chrome-up { from { opacity: 0; transform: translateY(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding.is-entering > *,
+  .onboarding.is-entering .onboarding-head,
+  .onboarding-stage.is-switching,
+  .onboarding-preview.is-repainting .onboarding-preview-thread,
+  body.onboarding-entering .topbar,
+  body.onboarding-entering .bottom-dock,
+  .onboarding-connect.is-busy .onboarding-connect-button svg { animation: none; }
+  .onboarding.is-exiting { animation: onboarding-fade-out 0.2s ease both; }
+  .onboarding-meander .startup-meander-line,
+  .onboarding-progress i { transition: none; }
+}
 
 /* Settings > Appearance & Themes: Response style and Chat layout sit under
    Theme as visual option cards (lib/presentation-previews.mjs). Setup uses the

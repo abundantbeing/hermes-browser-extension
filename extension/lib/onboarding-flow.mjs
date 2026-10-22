@@ -1,12 +1,64 @@
-// First-run setup: theme, response style, chat layout, then a finish step.
+// First-run setup: theme and colour mode, font, response style, chat layout,
+// then Connect to Hermes last. It fills the whole side panel and continues the
+// startup screen's world: the Meander border (drawn as the setup's progress),
+// the logo small at the top, steps switching on like an old screen. A small
+// fake conversation at the top of every step shows each pick at once.
 // Every choice applies live through the callbacks (the same code paths the
 // Settings controls use), so leaving the flow early keeps what was picked.
 // DOM only through the host and document passed in; no storage here.
 
 import { escapeHtml } from './common.mjs';
+import { themePreviewForMode } from './appearance-themes.mjs';
+import { fontFamilyPreview } from './appearance-preferences.mjs';
 import { handleRadioCardKeydown, presentationCardsHtml, presentationOptionLabelKey } from './presentation-previews.mjs';
+import { meanderGeometry } from './startup-screen.mjs';
 
-export const ONBOARDING_STEPS = Object.freeze(['theme', 'style', 'layout', 'finish']);
+export const ONBOARDING_STEPS = Object.freeze(['theme', 'font', 'style', 'layout', 'connect']);
+
+export function onboardingSteps({ includeConnect = true } = {}) {
+  return includeConnect ? [...ONBOARDING_STEPS] : ONBOARDING_STEPS.filter((step) => step !== 'connect');
+}
+
+// Unmodified pixelarticons glyphs (tests/pixel-icons.test.mjs checks them).
+export const ONBOARDING_ICONS = Object.freeze({
+  light: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="sun"><path d="M13 22h-2v-3h2v3Zm-6-3H5v-2h2v2Zm12 0h-2v-2h2v2Zm-4-2H9v-2h6v2Zm-6-2H7V9h2v6Zm8 0h-2V9h2v6ZM5 13H2v-2h3v2Zm17 0h-3v-2h3v2Zm-7-4H9V7h6v2ZM7 7H5V5h2v2Zm12 0h-2V5h2v2Zm-6-2h-2V2h2v3Z"/></svg>',
+  dark: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="moon"><path d="M18 22H8v-2h10v2ZM8 20H6v-2h2v2Zm12 0h-2v-2h2v2ZM6 18H4v-2h2v2Zm16 0h-2v-4h-2v-2h2v-2h2v8ZM4 16H2V6h2v10Zm14 0h-6v-2h6v2Zm-6-2h-2v-2h2v2Zm-2-2H8V6h2v6ZM6 6H4V4h2v2Zm8-2h-2v2h-2V4H6V2h8v2Z"/></svg>',
+  system: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="monitor"><path d="M4 2h16v2H4zm0 14h16v2H4zM2 4h2v12H2zm18 0h2v12h-2zm-9 14h2v2h-2zm-3 2h8v2H8z"/></svg>',
+  connect: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="plug"><path d="M16 18h-3v4h-2v-4H8v-2h8v2Zm-8-2H6v-2h2v2Zm10 0h-2v-2h2v2Zm-8-9h4V2h2v5h5v2h-1v5h-2V9H6v5H4V9H3V7h5V2h2v5Z"/></svg>',
+  connected: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="check"><path d="M10 18H8v-2h2v2Zm-2-2H6v-2h2v2Zm4-2v2h-2v-2h2Zm-6 0H4v-2h2v2Zm8 0h-2v-2h2v2Zm2-2h-2v-2h2v2Zm2-2h-2V8h2v2Zm2-2h-2V6h2v2Z"/></svg>',
+});
+
+export const ONBOARDING_COLOR_MODES = Object.freeze([
+  { value: 'light', label: 'settings.mode.light' },
+  { value: 'dark', label: 'settings.mode.dark' },
+  { value: 'system', label: 'settings.mode.system' },
+]);
+
+// Every font Settings offers except an installed local font, which needs a
+// typed family name; Hermes signature first.
+export const ONBOARDING_FONTS = Object.freeze([
+  { value: 'signature', label: 'appearance.font_signature' },
+  { value: 'collapse', label: 'appearance.font_collapse' },
+  { value: 'system-sans', label: 'appearance.font_system_sans' },
+  { value: 'high-legibility', label: 'appearance.font_high_legibility' },
+  { value: 'space-grotesk', label: 'appearance.font_space_grotesk' },
+  { value: 'ibm-plex-sans', label: 'appearance.font_ibm_plex' },
+  { value: 'source-sans-3', label: 'appearance.font_source_sans' },
+  { value: 'outfit', label: 'appearance.font_outfit' },
+  { value: 'montserrat', label: 'appearance.font_montserrat' },
+  { value: 'mono', label: 'appearance.font_monospace' },
+  { value: 'georgia', label: 'appearance.font_georgia' },
+  { value: 'libre-baskerville', label: 'appearance.font_libre_baskerville' },
+  { value: 'fraunces', label: 'appearance.font_fraunces' },
+  { value: 'playfair-display', label: 'appearance.font_playfair' },
+  { value: 'cinzel', label: 'appearance.font_cinzel' },
+  { value: 'garamond', label: 'appearance.font_garamond' },
+  { value: 'palatino', label: 'appearance.font_palatino' },
+  { value: 'times-new-roman', label: 'appearance.font_times' },
+  { value: 'cambria', label: 'appearance.font_cambria' },
+  { value: 'calibri', label: 'appearance.font_calibri' },
+  { value: 'trebuchet', label: 'appearance.font_trebuchet' },
+]);
 
 export function responseStyleLabelKey(style) {
   return presentationOptionLabelKey('style', style);
@@ -16,35 +68,107 @@ export function messageLayoutLabelKey(layout) {
   return presentationOptionLabelKey('layout', layout);
 }
 
-function themeCard(theme, selected) {
-  const p = theme.preview || {};
+// The reply in the preview, as each response style would draw it. Vivid UI
+// carries a static Adaptive UI block, so the real renderer draws a real card.
+export function onboardingPreviewReply(style, t = (key) => key) {
+  const points = [t('onboarding.preview.point_1'), t('onboarding.preview.point_2'), t('onboarding.preview.point_3')];
+  if (style === 'plain') return `${t('onboarding.preview.lead')}\n\n${points.map((point, index) => `${index + 1}. ${point}`).join('\n')}`;
+  if (style === 'vivid') {
+    const envelope = {
+      schema: 'hermes.adaptive-ui',
+      version: 1,
+      blocks: [{ id: 'onboarding-chart', type: 'chart', title: t('onboarding.preview.chart'), kind: 'bar', labels: ['Q1', 'Q2', 'Q3', 'Q4'], series: [{ name: t('onboarding.preview.chart'), values: [3.1, 2.4, 1.8, 1.2] }] }],
+    };
+    return `${t('onboarding.preview.lead')}\n\n\`\`\`hermes-ui\n${JSON.stringify(envelope)}\n\`\`\``;
+  }
+  return `**${t('onboarding.preview.lead')}**\n\n${points.map((point) => `- ${point}`).join('\n')}`;
+}
+
+function themeCard(theme, selected, mode) {
+  const p = themePreviewForMode(theme, mode);
   const style = `--preview-bg:${p.bg};--preview-panel:${p.panel};--preview-text:${p.text};--preview-muted:${p.muted};--preview-accent:${p.accent};`;
   return `
     <button class="theme-card${selected ? ' selected' : ''}" type="button" data-onboarding-theme="${escapeHtml(theme.value)}" data-radio-key="${escapeHtml(`theme:${theme.value}`)}" role="radio" aria-checked="${selected}" tabindex="${selected ? 0 : -1}" aria-label="${escapeHtml(theme.name)}" title="${escapeHtml(`${theme.name}: ${theme.description || ''}`)}" style="${escapeHtml(style)}">
       <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
       <span class="theme-card-copy"><strong>${escapeHtml(theme.name)}</strong></span>
-      <span class="theme-check" aria-hidden="true">${selected ? '✓' : ''}</span>
+      <span class="theme-check" aria-hidden="true"></span>
     </button>`;
 }
+
+const SWIPE_DISTANCE = 56;
+const CONNECTED_FINISH_MS = 1400;
 
 export function createOnboardingFlow({
   host,
   themes = [],
+  fonts = ONBOARDING_FONTS,
   translate = (key) => key,
   getState = () => ({}),
+  renderReply = (style, text) => `<p>${escapeHtml(text)}</p>`,
+  roleLabels = { user: 'You', assistant: 'Hermes' },
   onSelectTheme = () => {},
+  onSelectMode = () => {},
+  onSelectFont = () => {},
   onSelectStyle = () => {},
   onSelectLayout = () => {},
+  onConnect = () => {},
+  onManualSetup = () => {},
   onFinish = () => {},
+  onReveal = () => {},
+  onExited = () => {},
+  reducedMotion = () => Boolean(host?.ownerDocument?.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
+  wait = (ms) => new Promise((resolve) => (host?.ownerDocument?.defaultView || globalThis).setTimeout(resolve, ms)),
 } = {}) {
+  const doc = host?.ownerDocument;
+  let steps = onboardingSteps();
   let stepIndex = 0;
   let open = false;
+  let exiting = false;
+  let parts = null;
+  let previewKey = '';
+  let wasConnected = false;
+  let connectedTimer = 0;
+  let meanderSize = '';
+  let meanderParts = null;
   const t = (key, values) => translate(key, values);
+  const view = () => doc?.defaultView || globalThis;
+
+  function shellHtml() {
+    return `
+      <svg class="startup-meander onboarding-meander" aria-hidden="true"></svg>
+      <header class="onboarding-top">
+        <span class="onboarding-logo" role="img" aria-label="${escapeHtml(t('manifest.extension_name'))}"></span>
+        <div class="onboarding-head">
+          <span class="onboarding-progress" aria-hidden="true"></span>
+          <span class="onboarding-count"></span>
+          <button type="button" class="onboarding-skip secondary" data-onboarding-skip>${escapeHtml(t('onboarding.skip'))}</button>
+        </div>
+      </header>
+      <div class="onboarding-preview" aria-hidden="true"></div>
+      <div class="onboarding-stage" role="group" aria-labelledby="onboardingStepTitle"></div>
+      <nav class="onboarding-nav" aria-label="${escapeHtml(t('onboarding.aria'))}"></nav>
+      <p class="onboarding-announce sr-only" aria-live="polite"></p>`;
+  }
 
   function stepBody(step, state) {
     if (step === 'theme') {
-      const cards = themes.map((theme) => themeCard(theme, theme.value === state.theme)).join('');
-      return `<div class="theme-grid onboarding-theme-grid" role="radiogroup" aria-label="${escapeHtml(t('onboarding.theme.title'))}">${cards}</div>`;
+      const mode = state.resolvedMode === 'light' ? 'light' : 'dark';
+      const modes = ONBOARDING_COLOR_MODES.map((option) => {
+        const selected = option.value === (state.colorMode || 'dark');
+        return `<button class="mode-choice${selected ? ' selected' : ''}" type="button" role="radio" aria-checked="${selected}" tabindex="${selected ? 0 : -1}" data-onboarding-mode="${option.value}" data-radio-key="mode:${option.value}">${ONBOARDING_ICONS[option.value]}<span>${escapeHtml(t(option.label))}</span></button>`;
+      }).join('');
+      const cards = themes.map((theme) => themeCard(theme, theme.value === state.theme, mode)).join('');
+      return `
+        <div class="segmented-control mode-switch onboarding-mode" role="radiogroup" aria-label="${escapeHtml(t('ui.color.mode.588a2981'))}">${modes}</div>
+        <div class="theme-grid onboarding-theme-grid" role="radiogroup" aria-label="${escapeHtml(t('onboarding.theme.title'))}" data-preview-mode="${mode}">${cards}</div>`;
+    }
+    if (step === 'font') {
+      const cards = fonts.map((font) => {
+        const selected = font.value === (state.fontProfile || 'signature');
+        const family = fontFamilyPreview(font.value);
+        return `<button class="onboarding-font-card${selected ? ' selected' : ''}" type="button" role="radio" aria-checked="${selected}" tabindex="${selected ? 0 : -1}" data-onboarding-font="${escapeHtml(font.value)}" data-radio-key="font:${escapeHtml(font.value)}" style="${escapeHtml(`--onboarding-font:${family}`)}"><span class="onboarding-font-sample" aria-hidden="true">Aa</span><span class="onboarding-font-name">${escapeHtml(t(font.label))}</span><span class="presentation-card-check" aria-hidden="true"></span></button>`;
+      }).join('');
+      return `<div class="onboarding-font-grid" role="radiogroup" aria-label="${escapeHtml(t('onboarding.font.title'))}">${cards}</div>`;
     }
     // The same visual cards Settings shows, so setup and Settings match.
     if (step === 'style') {
@@ -55,40 +179,175 @@ export function createOnboardingFlow({
       const cards = presentationCardsHtml('layout', { selected: state.messageLayout, attribute: 'data-onboarding-layout', translate: t });
       return `<div class="presentation-choices onboarding-options" role="radiogroup" aria-label="${escapeHtml(t('onboarding.layout.title'))}">${cards}</div>`;
     }
-    const themeName = themes.find((theme) => theme.value === state.theme)?.name || state.theme || '';
-    const rows = [
-      [t('onboarding.summary.theme'), themeName],
-      [t('onboarding.summary.style'), t(responseStyleLabelKey(state.responseStyle))],
-      [t('onboarding.summary.layout'), t(messageLayoutLabelKey(state.messageLayout))],
-    ].map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
-    return `<dl class="onboarding-summary">${rows}</dl>`;
+    const connection = state.connection || {};
+    const connected = Boolean(connection.connected);
+    const status = connected ? t('onboarding.connect.connected') : (connection.status || t('onboarding.connect.not_paired'));
+    return `
+      <div class="onboarding-connect${connected ? ' is-connected' : ''}${connection.busy ? ' is-busy' : ''}">
+        <p class="onboarding-connect-status" role="status">${connected ? ONBOARDING_ICONS.connected : ''}<span>${escapeHtml(status)}</span></p>
+        <div class="onboarding-connect-actions"${connected ? ' hidden' : ''}>
+          <button type="button" class="onboarding-connect-button" data-onboarding-connect${connection.busy ? ' disabled' : ''}>${ONBOARDING_ICONS.connect}<span>${escapeHtml(connection.busy ? (connection.busyLabel || t('ui.connect.to.hermes')) : t('ui.connect.to.hermes'))}</span></button>
+          <button type="button" class="secondary" data-onboarding-manual>${escapeHtml(t('ui.manual.setup'))}</button>
+        </div>
+      </div>`;
+  }
+
+  function previewHtml(state) {
+    const style = state.responseStyle || 'rich';
+    const reply = renderReply(style, onboardingPreviewReply(style, t));
+    return `
+      <div class="onboarding-preview-thread">
+        <div class="message-row" data-role="user"><article class="message user"><div class="message-role">${escapeHtml(roleLabels.user)}</div><div class="message-content"><p>${escapeHtml(t('onboarding.preview.user'))}</p></div></article></div>
+        <div class="message-row" data-role="assistant"><article class="message assistant"><div class="message-role">${escapeHtml(roleLabels.assistant)}</div><div class="message-content">${reply}</div></article></div>
+      </div>`;
+  }
+
+  // Replays a CSS animation by toggling its class.
+  function replay(node, className) {
+    if (!node || reducedMotion()) return;
+    node.classList.remove(className);
+    void node.offsetWidth;
+    node.classList.add(className);
+  }
+
+  function renderPreview(state, { force = false } = {}) {
+    if (!parts) return;
+    const key = JSON.stringify([state.theme, state.resolvedMode, state.fontProfile, state.responseStyle, state.messageLayout]);
+    if (!force && key === previewKey) return;
+    const repaint = previewKey && key !== previewKey;
+    previewKey = key;
+    parts.preview.innerHTML = previewHtml(state);
+    parts.preview.dataset.style = state.responseStyle || 'rich';
+    if (repaint) replay(parts.preview, 'is-repainting');
+  }
+
+  function renderMeta(step) {
+    const total = steps.length;
+    parts.progress.innerHTML = steps.map((_, index) => `<i class="${index === stepIndex ? 'active' : ''}${index < stepIndex ? ' done' : ''}"></i>`).join('');
+    parts.count.textContent = t('onboarding.step_count', { current: stepIndex + 1, total });
+    host.dataset.step = step;
+  }
+
+  function renderNav(step, state) {
+    const last = stepIndex === steps.length - 1;
+    const connected = Boolean(state.connection?.connected);
+    const nextLabel = !last ? t('onboarding.next') : step === 'connect' && !connected ? t('onboarding.connect.later') : t('onboarding.start');
+    parts.nav.innerHTML = `
+      ${stepIndex > 0 ? `<button type="button" class="secondary" data-onboarding-back>${escapeHtml(t('onboarding.back'))}</button>` : '<span></span>'}
+      <button type="button" class="onboarding-next${last && step === 'connect' && !connected ? ' secondary' : ''}" data-onboarding-next>${escapeHtml(nextLabel)}</button>`;
+  }
+
+  function renderStage(step, state) {
+    parts.stage.dataset.step = step;
+    parts.stage.innerHTML = `
+      <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1">${escapeHtml(t(`onboarding.${step}.title`))}</h2>
+      <p class="onboarding-body">${escapeHtml(t(`onboarding.${step}.body`))}</p>
+      ${stepBody(step, state)}`;
+  }
+
+  function focusKey() {
+    const active = doc?.activeElement;
+    if (!active || !host.contains(active)) return null;
+    if (active.dataset?.radioKey) return { radio: active.dataset.radioKey };
+    for (const attribute of ['data-onboarding-next', 'data-onboarding-back', 'data-onboarding-skip', 'data-onboarding-connect', 'data-onboarding-manual']) {
+      if (active.hasAttribute?.(attribute)) return { attribute };
+    }
+    return null;
+  }
+
+  function restoreFocus(key) {
+    if (!key) return;
+    const target = key.radio
+      ? [...host.querySelectorAll('[data-radio-key]')].find((node) => node.dataset.radioKey === key.radio)
+      : host.querySelector(`[${key.attribute}]`);
+    target?.focus?.({ preventScroll: true });
+  }
+
+  function syncConnection(state) {
+    const connected = Boolean(state.connection?.connected);
+    const onConnectStep = steps[stepIndex] === 'connect';
+    if (connected && !wasConnected && onConnectStep && open && !exiting) {
+      view().clearTimeout?.(connectedTimer);
+      connectedTimer = view().setTimeout?.(() => { if (open && !exiting && steps[stepIndex] === 'connect') finish('connected'); }, CONNECTED_FINISH_MS);
+    }
+    wasConnected = connected;
+  }
+
+  function buildMeander() {
+    const svg = parts?.meander;
+    const width = Math.round(host.clientWidth || 0);
+    const height = Math.round(host.clientHeight || 0);
+    if (!svg || width < 120 || height < 160) return;
+    const key = `${width}x${height}`;
+    if (key !== meanderSize || !meanderParts) {
+      meanderSize = key;
+      const geometry = meanderGeometry(width, height, { inset: 6, cell: 1.6, unitWidth: 16 });
+      const ns = 'http://www.w3.org/2000/svg';
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.textContent = '';
+      const ghost = doc.createElementNS(ns, 'path');
+      ghost.setAttribute('class', 'startup-meander-ghost');
+      ghost.setAttribute('d', geometry.d);
+      const line = doc.createElementNS(ns, 'path');
+      line.setAttribute('class', 'startup-meander-line');
+      line.setAttribute('d', geometry.d);
+      line.style.strokeDasharray = `${geometry.total.toFixed(1)} ${geometry.total.toFixed(1)}`;
+      svg.append(ghost, line);
+      meanderParts = { line, total: geometry.total };
+    }
+    paintMeander();
+  }
+
+  // The border is the setup's progress: a step's share of the loop, and the
+  // whole loop once setup is done.
+  function paintMeander(fraction = exiting ? 1 : (stepIndex + 1) / (steps.length + 1)) {
+    if (!meanderParts) return;
+    meanderParts.line.style.strokeDashoffset = (meanderParts.total * (1 - fraction)).toFixed(1);
   }
 
   function render() {
     if (!host) return;
-    host.hidden = !open;
     if (!open) {
-      host.innerHTML = '';
+      if (!exiting) {
+        host.hidden = true;
+        host.classList.remove('is-entering');
+        host.innerHTML = '';
+        parts = null;
+        meanderParts = null;
+        meanderSize = '';
+        previewKey = '';
+      }
       return;
     }
-    const step = ONBOARDING_STEPS[stepIndex];
+    host.hidden = false;
+    if (!parts) {
+      host.innerHTML = shellHtml();
+      parts = {
+        meander: host.querySelector('.onboarding-meander'),
+        logo: host.querySelector('.onboarding-logo'),
+        progress: host.querySelector('.onboarding-progress'),
+        count: host.querySelector('.onboarding-count'),
+        preview: host.querySelector('.onboarding-preview'),
+        stage: host.querySelector('.onboarding-stage'),
+        nav: host.querySelector('.onboarding-nav'),
+        announce: host.querySelector('.onboarding-announce'),
+      };
+    }
+    const step = steps[stepIndex];
     const state = getState() || {};
-    const last = stepIndex === ONBOARDING_STEPS.length - 1;
-    const dots = ONBOARDING_STEPS.map((_, index) => `<i class="${index === stepIndex ? 'active' : ''}${index < stepIndex ? ' done' : ''}"></i>`).join('');
-    host.dataset.step = step;
-    host.innerHTML = `
-      <div class="onboarding-head">
-        <span class="onboarding-progress" aria-hidden="true">${dots}</span>
-        <span class="onboarding-count">${escapeHtml(t('onboarding.step_count', { current: stepIndex + 1, total: ONBOARDING_STEPS.length }))}</span>
-        ${last ? '' : `<button type="button" class="onboarding-skip secondary" data-onboarding-skip>${escapeHtml(t('onboarding.skip'))}</button>`}
-      </div>
-      <h2 class="onboarding-title" tabindex="-1">${escapeHtml(t(`onboarding.${step}.title`))}</h2>
-      <p class="onboarding-body">${escapeHtml(t(`onboarding.${step}.body`))}</p>
-      ${stepBody(step, state)}
-      <div class="onboarding-nav">
-        ${stepIndex > 0 ? `<button type="button" class="secondary" data-onboarding-back>${escapeHtml(t('onboarding.back'))}</button>` : '<span></span>'}
-        <button type="button" class="onboarding-next" data-onboarding-next>${escapeHtml(t(last ? 'onboarding.start' : 'onboarding.next'))}</button>
-      </div>`;
+    const keep = focusKey();
+    renderMeta(step);
+    renderStage(step, state);
+    renderNav(step, state);
+    renderPreview(state);
+    restoreFocus(keep);
+    syncConnection(state);
+    buildMeander();
+  }
+
+  function announce() {
+    if (!parts) return;
+    parts.announce.textContent = `${t('onboarding.step_count', { current: stepIndex + 1, total: steps.length })}: ${t(`onboarding.${steps[stepIndex]}.title`)}`;
   }
 
   function focusTitle() {
@@ -96,62 +355,155 @@ export function createOnboardingFlow({
   }
 
   function go(index) {
-    stepIndex = Math.max(0, Math.min(ONBOARDING_STEPS.length - 1, index));
+    const next = Math.max(0, Math.min(steps.length - 1, index));
+    if (next === stepIndex) return;
+    const direction = next > stepIndex ? 'next' : 'back';
+    stepIndex = next;
     render();
+    if (parts) {
+      parts.stage.dataset.direction = direction;
+      replay(parts.stage, 'is-switching');
+    }
+    announce();
     focusTitle();
   }
 
-  function finish(reason) {
-    open = false;
-    render();
-    onFinish({ reason });
+  // From the logo's place on the startup screen to its small place at the top.
+  function flyLogo(origin) {
+    const logo = parts?.logo;
+    if (!origin || !logo?.animate || reducedMotion()) return;
+    const target = logo.getBoundingClientRect();
+    if (!target.width || !origin.width) return;
+    const dx = origin.left + origin.width / 2 - (target.left + target.width / 2);
+    const dy = origin.top + origin.height / 2 - (target.top + target.height / 2);
+    const scale = origin.width / target.width;
+    logo.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
+      { transform: 'none' },
+    ], { duration: 720, easing: 'cubic-bezier(0.3, 0.7, 0.2, 1)' });
   }
 
-  // A choice re-renders the step; focus stays on the card that was chosen.
-  function choose(select, value, key) {
+  // The way out: the border closes its loop, then the whole screen dithers
+  // away while the panel's own chrome comes in underneath (onReveal).
+  async function finish(reason) {
+    if (!open || exiting) return;
+    view().clearTimeout?.(connectedTimer);
+    open = false;
+    exiting = true;
+    host.classList.add('is-finishing');
+    paintMeander(1);
+    onFinish({ reason });
+    const still = reducedMotion();
+    if (!still) await wait(560);
+    host.classList.add('is-exiting');
+    onReveal({ reason });
+    await wait(still ? 220 : 720);
+    exiting = false;
+    host.classList.remove('is-finishing', 'is-exiting');
+    render();
+    onExited({ reason });
+  }
+
+  function next() {
+    if (stepIndex === steps.length - 1) void finish(steps[stepIndex] === 'connect' && !getState()?.connection?.connected ? 'later' : 'done');
+    else go(stepIndex + 1);
+  }
+
+  function choose(select, value) {
     select(value);
     render();
-    [...host.querySelectorAll('[data-radio-key]')].find((node) => node.dataset.radioKey === key)?.focus({ preventScroll: true });
   }
 
   host?.addEventListener('click', (event) => {
     const target = event.target?.closest?.('button');
-    if (!target || !host.contains(target)) return;
-    if (target.dataset.onboardingTheme) {
-      choose(onSelectTheme, target.dataset.onboardingTheme, target.dataset.radioKey);
+    if (!open || exiting || !target || !host.contains(target)) return;
+    const data = target.dataset;
+    if (data.onboardingTheme) return choose(onSelectTheme, data.onboardingTheme);
+    if (data.onboardingMode) return choose(onSelectMode, data.onboardingMode);
+    if (data.onboardingFont) return choose(onSelectFont, data.onboardingFont);
+    if (data.onboardingStyle) return choose(onSelectStyle, data.onboardingStyle);
+    if (data.onboardingLayout) return choose(onSelectLayout, data.onboardingLayout);
+    if (target.hasAttribute('data-onboarding-connect')) return onConnect();
+    if (target.hasAttribute('data-onboarding-manual')) return onManualSetup();
+    if (target.hasAttribute('data-onboarding-back')) return go(stepIndex - 1);
+    if (target.hasAttribute('data-onboarding-skip')) return void finish('skip');
+    if (target.hasAttribute('data-onboarding-next')) return next();
+    return undefined;
+  });
+
+  // Radio groups keep their arrow keys; elsewhere Left and Right turn the
+  // page. Tab stays inside the screen while it is up.
+  host?.addEventListener('keydown', (event) => {
+    if (!open || exiting) return;
+    if (handleRadioCardKeydown(event, host)) return;
+    const target = event.target;
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName || '') || target?.isContentEditable;
+    if (!typing && (event.key === 'ArrowRight' || event.key === 'ArrowLeft') && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault();
+      if (event.key === 'ArrowRight') next();
+      else go(stepIndex - 1);
       return;
     }
-    if (target.dataset.onboardingStyle) {
-      choose(onSelectStyle, target.dataset.onboardingStyle, target.dataset.radioKey);
-      return;
-    }
-    if (target.dataset.onboardingLayout) {
-      choose(onSelectLayout, target.dataset.onboardingLayout, target.dataset.radioKey);
-      return;
-    }
-    if (target.hasAttribute('data-onboarding-back')) go(stepIndex - 1);
-    else if (target.hasAttribute('data-onboarding-skip')) finish('skip');
-    else if (target.hasAttribute('data-onboarding-next')) {
-      if (stepIndex === ONBOARDING_STEPS.length - 1) finish('done');
-      else go(stepIndex + 1);
+    if (event.key === 'Tab') {
+      const focusable = [...host.querySelectorAll('button:not([disabled])')].filter((node) => node.tabIndex >= 0 && !node.closest('[hidden]'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (target === first || !host.contains(target))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && target === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
   });
 
-  host?.addEventListener('keydown', (event) => handleRadioCardKeydown(event, host));
+  // A horizontal swipe turns the page; vertical movement scrolls as usual.
+  let swipe = null;
+  host?.addEventListener('pointerdown', (event) => {
+    swipe = open && !exiting && event.isPrimary !== false ? { x: event.clientX, y: event.clientY } : null;
+  });
+  host?.addEventListener('pointerup', (event) => {
+    if (!swipe) return;
+    const dx = event.clientX - swipe.x;
+    const dy = event.clientY - swipe.y;
+    swipe = null;
+    if (Math.abs(dx) < SWIPE_DISTANCE || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    if (dx < 0) next();
+    else go(stepIndex - 1);
+  });
+  host?.addEventListener('pointercancel', () => { swipe = null; });
+
+  const ResizeObserverCtor = view().ResizeObserver;
+  if (host && typeof ResizeObserverCtor === 'function') {
+    new ResizeObserverCtor(() => { if (open || exiting) buildMeander(); }).observe(host);
+  }
 
   return {
     get isOpen() { return open; },
-    get step() { return ONBOARDING_STEPS[stepIndex]; },
-    open({ step = 'theme' } = {}) {
+    get isExiting() { return exiting; },
+    get step() { return steps[stepIndex]; },
+    get steps() { return [...steps]; },
+    open({ step = 'theme', includeConnect = true, origin = null } = {}) {
+      steps = onboardingSteps({ includeConnect });
+      stepIndex = Math.max(0, steps.indexOf(step));
       open = true;
-      stepIndex = Math.max(0, ONBOARDING_STEPS.indexOf(step));
+      exiting = false;
+      wasConnected = Boolean(getState()?.connection?.connected);
       render();
+      replay(host, 'is-entering');
+      flyLogo(origin);
+      announce();
       focusTitle();
     },
     close() {
+      view().clearTimeout?.(connectedTimer);
       open = false;
+      exiting = false;
       render();
     },
+    finish,
     render,
   };
 }

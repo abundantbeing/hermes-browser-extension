@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { CODE_COPIED_ICON, CODE_COPY_ICON } from '../extension/lib/markdown-code-copy.mjs';
 import { SUBAGENT_STEER_ICON } from '../extension/lib/subagent-stack.mjs';
+import { ONBOARDING_ICONS } from '../extension/lib/onboarding-flow.mjs';
 
 // UI icons come from pixelarticons 2.4.2, the set hermes-agent.nousresearch.com
 // uses. The vendored SVGs are the source of truth for every inlined copy.
@@ -59,4 +60,17 @@ test('pixel icons snap to device pixels on every surface that shows them', () =>
 test('every vendored pixel icon is in use', () => {
   const used = new Set(allIcons.map(([, svg]) => vendored.get(innerOf(svg))));
   for (const name of vendored.values()) assert.ok(used.has(name), `${name}.svg is vendored but unused`);
+});
+
+test('first-run setup draws only unmodified vendored pixelarticons glyphs', () => {
+  const icons = Object.entries(ONBOARDING_ICONS);
+  assert.ok(icons.length >= 5);
+  for (const [name, svg] of icons) {
+    const head = svg.match(/^<svg[^>]*>/)[0];
+    for (const attribute of ['viewBox="0 0 24 24"', 'width="16"', 'height="16"', 'fill="currentColor"', 'aria-hidden="true"']) {
+      assert.ok(head.includes(attribute), `${name}: ${head} is missing ${attribute}`);
+    }
+    assert.ok(vendored.has(innerOf(svg)), `${name} must match a vendored pixelarticons SVG`);
+    assert.equal(head.match(/\bdata-icon="([^"]+)"/)?.[1], vendored.get(innerOf(svg)), `${name}: data-icon must name the vendored glyph`);
+  }
 });

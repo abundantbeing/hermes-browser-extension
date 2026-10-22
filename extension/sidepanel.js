@@ -1481,6 +1481,9 @@ let browserIntroDismissedForPanel = false;
 let onboardingCompleted = false;
 let onboardingStateLoaded = false;
 let onboardingFlow = null;
+// Setup ended without a connection: the startup screen steps aside for this
+// panel session instead of holding at "Not paired".
+let connectDeferred = false;
 // The user closed the connect pop-up; it stays closed until it is needed
 // again (the connection drops) or asked for.
 let connectDialogDismissed = false;
@@ -2271,6 +2274,12 @@ function startupScreenUi() {
 
 function renderStartupReadiness() {
   const view = deriveStartupView(startupReadiness);
+  // First-run setup takes over while the screen is still up, so its logo can
+  // fly from here; "Connect later" lets the panel open unpaired.
+  if (view.ready || view.phase === 'setup-needed' || view.phase === 'error') {
+    maybeOpenOnboarding();
+    if (connectDeferred && !view.ready) view.visible = false;
+  }
   if (els.startupScreen) els.startupScreen.hidden = !view.visible;
   if (els.startupTitle) els.startupTitle.textContent = translateUiText(view.title);
   if (els.startupProgress) els.startupProgress.style.width = `${Math.max(0, Math.min(100, view.progress))}%`;
@@ -15814,7 +15823,19 @@ function renderEmptyState() {
 }
 
 function onboardingState() {
-  return { theme: normalizedPanelThemeId(settings.appearanceTheme), ...responsePresentationFromSettings(settings) };
+  return {
+    theme: normalizedPanelThemeId(settings.appearanceTheme),
+    colorMode: normalizeColorMode(settings.colorMode),
+    resolvedMode: resolvedColorMode(),
+    fontProfile: settings.fontProfile || 'signature',
+    ...responsePresentationFromSettings(settings),
+    connection: {
+      connected: isConnected(),
+      busy: Boolean(els.connectButton?.disabled),
+      busyLabel: els.connectButton?.textContent?.trim() || '',
+      status: els.connectStatus?.textContent?.trim() || '',
+    },
+  };
 }
 
 function ensureOnboardingFlow() {
@@ -15824,15 +15845,34 @@ function ensureOnboardingFlow() {
     themes: APPEARANCE_THEMES,
     translate: (key, values) => t(key, values),
     getState: onboardingState,
+    renderReply: (style, text) => renderResponseSafe(text, { style, labels: adaptiveUiLabels(), streaming: false }),
+    roleLabels: { user: 'user', assistant: assistantMessageRoleLabel() },
     onSelectTheme: (theme) => {
       customThemeDeleteArmedId = '';
       themeFontPinned = false;
       themeFontPinnedFor = '';
       void setAppearanceOption('appearanceTheme', theme).then(() => persistSetupFullTabTheme(theme));
     },
+    onSelectMode: (mode) => { void setAppearanceOption('colorMode', mode); },
+    onSelectFont: (fontProfile) => {
+      const theme = normalizedPanelThemeId(settings.appearanceTheme);
+      if (themeOwnsFont(theme)) {
+        themeFontPinned = true;
+        themeFontPinnedFor = theme;
+      }
+      void setAppearanceOption('fontProfile', fontProfile);
+    },
     onSelectStyle: (responseStyle) => { void setResponsePresentation({ responseStyle }); },
     onSelectLayout: (messageLayout) => { void setResponsePresentation({ messageLayout }); },
-    onFinish: () => { void completeOnboarding(); },
+    onConnect: () => {
+      connectToHermes().catch((error) => {
+        setStatus('warn', 'Connect failed', error?.message || String(error), { translateDetail: false });
+      });
+    },
+    onManualSetup: () => openSettingsDialog({ pane: 'connections' }),
+    onFinish: ({ reason }) => { void completeOnboarding(reason); },
+    onReveal: () => revealPanelAfterOnboarding(),
+    onExited: () => settlePanelAfterOnboarding(),
   });
   return onboardingFlow;
 }
@@ -15855,29 +15895,61 @@ function setOnboardingOpen(open) {
   renderBrowserIntroVisibility();
 }
 
-// New users get the setup once, before their first message. Setup preselects
-// Vivid UI when no style was ever chosen, and saves it at once: an appearance
-// pick saved before it would otherwise reload the settings without it.
+// The startup screen has had its say: ready, or stopped on a check that
+// needs the user (not paired, or an error).
+function startupReadinessSettled() {
+  const view = deriveStartupView(startupReadiness);
+  return view.ready || view.phase === 'setup-needed' || view.phase === 'error';
+}
+
+// New users get the setup once, before their first message, as soon as the
+// startup screen settles. Setup preselects Vivid UI when no style was ever
+// chosen, and saves it at once: an appearance pick saved before it would
+// otherwise reload the settings without it.
 function maybeOpenOnboarding() {
-  if (!onboardingStateLoaded || onboardingFlow?.isOpen) return;
+  if (!onboardingStateLoaded || onboardingFlow?.isOpen || onboardingFlow?.isExiting) return;
+  if (!startupReadinessSettled()) return;
   if (!shouldShowOnboarding({ completed: onboardingCompleted, legacyIntroSeen: browserIntroSeen, messageCount: messages.length })) return;
   if (!settings.responseStyle) void setResponsePresentation({ responseStyle: RESPONSE_STYLE_SETUP_DEFAULT });
   openOnboarding();
 }
 
-function openOnboarding({ step = 'theme' } = {}) {
+// A paired panel skips the Connect step. The logo flies up from the startup
+// screen when setup takes over from it.
+function openOnboarding({ step = 'theme', includeConnect = !isConnected() } = {}) {
   const flow = ensureOnboardingFlow();
   if (!flow) return;
-  flow.open({ step });
+  const startupLogo = els.startupScreen && !els.startupScreen.hidden ? els.startupScreen.querySelector('.startup-brand-icon') : null;
+  const origin = startupLogo?.getBoundingClientRect?.() || null;
   setOnboardingOpen(true);
+  flow.open({ step, includeConnect, origin });
 }
 
-async function completeOnboarding() {
-  setOnboardingOpen(false);
+// Finishing without a connection ("Connect later", or Skip) lets the panel
+// open unpaired for this session; the connect pop-up stays closed until the
+// user asks for it or a send needs it.
+async function completeOnboarding(reason = 'done') {
   onboardingCompleted = true;
+  if (!isConnected()) {
+    connectDeferred = true;
+    connectDialogDismissed = true;
+    renderConnectDialog();
+  }
   await setResponsePresentation(responsePresentationFromSettings(settings));
   await browserApi.storage.local.set({ [ONBOARDING_COMPLETED_STORAGE_KEY]: true });
-  els.input?.focus();
+  hbeBootEmit(`panel:onboarding-${reason}`);
+}
+
+// The way in: setup dithers away while the top bar and the dock slide in.
+function revealPanelAfterOnboarding() {
+  renderStartupReadiness();
+  document.body.classList.add('onboarding-entering');
+  setOnboardingOpen(false);
+}
+
+function settlePanelAfterOnboarding() {
+  document.body.classList.remove('onboarding-entering');
+  els.input?.focus({ preventScroll: true });
 }
 
 // Visual option cards, the same ones setup shows. They rebuild only when the
