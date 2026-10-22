@@ -111,6 +111,11 @@ without a second model call:
 - A table with a text label column and numeric columns (3 to 24 rows) gets a
   closed "View as chart" disclosure under it. The table stays as written.
 
+Every Vivid reply, with or without blocks, also gets the Vivid prose surface
+(`adaptive-ui.css`, under `:root[data-response-style="vivid"]`): a lead
+paragraph, display-face section headings, callout quotes and quiet list
+markers. Code blocks keep their normal rendering.
+
 Prose is never changed and no number is invented. A structure at the tail of a
 reply that is still streaming is left alone until more text follows it.
 
