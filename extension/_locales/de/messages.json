@@ -1667,6 +1667,38 @@
     "message": "Geöffnet von {source} auf der Browser-Registerkarte {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_haui_ask_hint": {
+    "message": "Fügt diese Frage in das Nachrichtenfeld ein",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "Ansicht wird erstellt…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "Kopiert",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "Kopieren",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "Öffnet sich in einem neuen Tab",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "Als Diagramm anzeigen",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "Diagramm",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "Tabelle",
+    "description": "Runtime interface message haui.view_table"
+  },
   "runtime_image_generated": {
     "message": "Generiertes Bild",
     "description": "Runtime interface message image.generated"

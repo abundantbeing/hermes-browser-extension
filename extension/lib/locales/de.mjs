@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Nur Blase für Nutzer",
   "responses.layout.user_bubble_hint": "Deine Nachrichten in einer Blase, Hermes antwortet als fließender Text.",
   "responses.setup_again": "Einrichtung erneut starten",
+  "haui.view_chart": "Diagramm",
+  "haui.view_table": "Tabelle",
+  "haui.view_as_chart": "Als Diagramm anzeigen",
+  "haui.copy": "Kopieren",
+  "haui.copied": "Kopiert",
+  "haui.building": "Ansicht wird erstellt…",
+  "haui.opens_new_tab": "Öffnet sich in einem neuen Tab",
+  "haui.ask_hint": "Fügt diese Frage in das Nachrichtenfeld ein",
 });
