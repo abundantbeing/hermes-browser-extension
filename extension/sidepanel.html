@@ -524,7 +524,6 @@
             <button id="steerButton" class="composer-icon composer-steer" type="button" aria-label="Steer the current run" title="Steer the current run" hidden data-i18n-title="ui.steer.the.current.run" data-i18n-aria-label="ui.steer.the.current.run">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="compass"><path d="M18 22H6V20H18V22ZM6 20H4V18H6V20ZM20 20H18V18H20V20ZM10 16H12V18H10V19H8V10H10V16ZM4 18H2V6H4V18ZM22 18H20V6H22V18ZM14 16H12V14H14V16ZM16 14H14V8H12V6H14V5H16V14ZM13 13H11V11H13V13ZM12 10H10V8H12V10ZM6 6H4V4H6V6ZM20 6H18V4H20V6ZM18 4H6V2H18V4Z"/></svg>
             </button>
-            <section id="profileSwitchMenu" class="profile-switch-menu" hidden role="menu" data-i18n-aria-label="bot_mode.switch_profile" aria-label="Switch profile"></section>
             <section id="attachMenu" class="attach-menu" role="dialog" aria-label="Attach context" hidden data-i18n-aria-label="ui.attach.context">
               <p class="attach-menu-heading" data-i18n="ui.attach">Attach</p>
               <button type="button" data-attach="files" data-i18n="ui.files">▧ Files...</button>
@@ -604,13 +603,6 @@
           </div>
         </form>
 
-        <div id="roomMemberPopover" class="room-member-popover" role="dialog" aria-modal="false" aria-labelledby="roomMemberPopoverTitle" hidden>
-          <div class="room-member-popover-card">
-            <strong id="roomMemberPopoverTitle" class="room-member-popover-title" data-i18n="ui.room.bots.title">Bots in this room</strong>
-            <div id="roomMemberPopoverList" class="room-member-popover-list" role="list"></div>
-            <p class="room-member-popover-note" data-i18n="ui.room.model.note">Model changes apply to this room only.</p>
-          </div>
-        </div>
 
 
         <section id="modelMenu" class="model-menu" role="dialog" aria-label="Choose Hermes model" hidden data-i18n-aria-label="ui.choose.hermes.model">
@@ -645,6 +637,14 @@
       </footer>
       <section id="skillMenu" class="skill-menu" role="listbox" aria-label="Hermes skill suggestions" hidden data-i18n-aria-label="ui.hermes.skill.suggestions"></section>
       <section id="quickMoreMenu" class="quick-more-menu" hidden role="menu" aria-label="Quick commands" data-i18n-aria-label="ui.quick.commands"></section>
+      <section id="profileSwitchMenu" class="profile-switch-menu" hidden role="menu" data-i18n-aria-label="bot_mode.switch_profile" aria-label="Switch profile"></section>
+      <div id="roomMemberPopover" class="room-member-popover" role="dialog" aria-modal="false" aria-labelledby="roomMemberPopoverTitle" hidden>
+        <div class="room-member-popover-card">
+          <strong id="roomMemberPopoverTitle" class="room-member-popover-title" data-i18n="ui.room.bots.title">Bots in this room</strong>
+          <div id="roomMemberPopoverList" class="room-member-popover-list" role="list"></div>
+          <p class="room-member-popover-note" data-i18n="ui.room.model.note">Model changes apply to this room only.</p>
+        </div>
+      </div>
     </main>
 
     <section id="settingsDialog" class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>

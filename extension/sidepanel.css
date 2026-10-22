@@ -5402,6 +5402,8 @@ button.active-profile-indicator {
 #quickMoreMenu,
 #skillMenu,
 #contextPopover,
+#profileSwitchMenu,
+#roomMemberPopover,
 #modelMenu:not([data-floating]):not([data-selection-target="assist"]):not([data-selection-target="room-member"]) {
   position: absolute;
   left: var(--hermes-composer-left, 8px);
@@ -5415,6 +5417,8 @@ button.active-profile-indicator {
   max-height: min(480px, var(--hermes-composer-space, 70vh));
 }
 #contextPopover { max-height: var(--hermes-composer-space, 70vh); }
+#profileSwitchMenu { max-height: min(280px, var(--hermes-composer-space, 280px)); }
+#roomMemberPopover { max-height: min(60vh, var(--hermes-composer-space, 60vh)); }
 .model-menu[data-selection-target="assist"],
 .model-menu[data-selection-target="room-member"] {
   position: fixed;
