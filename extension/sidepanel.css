@@ -7285,27 +7285,24 @@ html[dir="rtl"] .composer-input-wrap.busy-draft.can-steer textarea { padding-rig
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* The selected-theme mark is the same square radio mark as the response
-   styles: an empty box, filled with a small square dot when chosen. */
-.theme-check {
+/* Only the chosen theme carries a mark: the square radio mark from the
+   response styles, kept small, with a square dot inside. */
+.theme-check { display: none; }
+.theme-card.selected .theme-check {
   position: absolute;
   right: 6px;
   bottom: 5px;
   display: grid;
   place-items: center;
-  width: 17px;
-  height: 17px;
-  border: 1px solid rgba(var(--hermes-ink-rgb),0.42);
-  background: rgba(var(--hermes-ink-rgb),0.05);
-}
-.theme-card.selected .theme-check {
-  border-color: var(--hermes-accent);
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--hermes-accent);
   background: var(--hermes-primary-bg);
 }
 .theme-card.selected .theme-check::after {
   content: "";
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background: var(--hermes-primary-fg);
 }
 
