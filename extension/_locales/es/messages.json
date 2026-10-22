@@ -1819,6 +1819,74 @@
     "message": "Formato de archivo no compatible",
     "description": "Runtime interface message marketplace.unsupported_archive"
   },
+  "runtime_onboarding_aria": {
+    "message": "Configurar Hermes",
+    "description": "Runtime interface message onboarding.aria"
+  },
+  "runtime_onboarding_back": {
+    "message": "Atrás",
+    "description": "Runtime interface message onboarding.back"
+  },
+  "runtime_onboarding_finish_body": {
+    "message": "Pregunta sobre la página en la que estás. Hermes ve la pestaña activa, el texto seleccionado y las pestañas abiertas. Puedes cambiar todo esto más tarde en Configuración, en Apariencia y temas.",
+    "description": "Runtime interface message onboarding.finish.body"
+  },
+  "runtime_onboarding_finish_title": {
+    "message": "Todo listo",
+    "description": "Runtime interface message onboarding.finish.title"
+  },
+  "runtime_onboarding_layout_body": {
+    "message": "Dónde se ubican tus mensajes y las respuestas de Hermes.",
+    "description": "Runtime interface message onboarding.layout.body"
+  },
+  "runtime_onboarding_layout_title": {
+    "message": "Elige un diseño de chat",
+    "description": "Runtime interface message onboarding.layout.title"
+  },
+  "runtime_onboarding_next": {
+    "message": "Siguiente",
+    "description": "Runtime interface message onboarding.next"
+  },
+  "runtime_onboarding_skip": {
+    "message": "Omitir",
+    "description": "Runtime interface message onboarding.skip"
+  },
+  "runtime_onboarding_start": {
+    "message": "Empezar a chatear",
+    "description": "Runtime interface message onboarding.start"
+  },
+  "runtime_onboarding_step_count": {
+    "message": "Paso {current} de {total}",
+    "description": "Runtime interface message onboarding.step_count"
+  },
+  "runtime_onboarding_style_body": {
+    "message": "Cómo dibuja Hermes sus respuestas.",
+    "description": "Runtime interface message onboarding.style.body"
+  },
+  "runtime_onboarding_style_title": {
+    "message": "Elige un estilo de respuesta",
+    "description": "Runtime interface message onboarding.style.title"
+  },
+  "runtime_onboarding_summary_layout": {
+    "message": "Diseño del chat",
+    "description": "Runtime interface message onboarding.summary.layout"
+  },
+  "runtime_onboarding_summary_style": {
+    "message": "Estilo de respuesta",
+    "description": "Runtime interface message onboarding.summary.style"
+  },
+  "runtime_onboarding_summary_theme": {
+    "message": "Tema",
+    "description": "Runtime interface message onboarding.summary.theme"
+  },
+  "runtime_onboarding_theme_body": {
+    "message": "Colores para el panel lateral y la pestaña completa.",
+    "description": "Runtime interface message onboarding.theme.body"
+  },
+  "runtime_onboarding_theme_title": {
+    "message": "Elige un tema",
+    "description": "Runtime interface message onboarding.theme.title"
+  },
   "runtime_permissions_not_granted": {
     "message": "No se concedió el permiso para el micrófono.\n\n{error}\n\nHaga clic en Abrir configuración del micrófono, configure Micrófono en Permitir para Hermes Browser Extension, regrese aquí e inténtelo nuevamente.",
     "description": "Runtime interface message permissions.not_granted"
@@ -1886,6 +1954,66 @@
   "runtime_profile_using": {
     "message": "Usando {name}{model}{skills}",
     "description": "Runtime interface message profile.using"
+  },
+  "runtime_responses_layout_bubbles": {
+    "message": "Burbujas en ambos lados",
+    "description": "Runtime interface message responses.layout.bubbles"
+  },
+  "runtime_responses_layout_bubbles_hint": {
+    "message": "Tú y Hermes, cada uno en una burbuja, como una app de mensajería.",
+    "description": "Runtime interface message responses.layout.bubbles_hint"
+  },
+  "runtime_responses_layout_description": {
+    "message": "Dónde se colocan los mensajes en el chat.",
+    "description": "Runtime interface message responses.layout.description"
+  },
+  "runtime_responses_layout_label": {
+    "message": "Diseño del chat",
+    "description": "Runtime interface message responses.layout.label"
+  },
+  "runtime_responses_layout_user_bubble": {
+    "message": "Solo burbuja del usuario",
+    "description": "Runtime interface message responses.layout.user_bubble"
+  },
+  "runtime_responses_layout_user_bubble_hint": {
+    "message": "Tus mensajes en una burbuja; Hermes responde como texto corrido.",
+    "description": "Runtime interface message responses.layout.user_bubble_hint"
+  },
+  "runtime_responses_setup_again": {
+    "message": "Volver a configurar",
+    "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_style_description": {
+    "message": "Cómo dibuja Hermes sus respuestas.",
+    "description": "Runtime interface message responses.style.description"
+  },
+  "runtime_responses_style_label": {
+    "message": "Estilo de respuesta",
+    "description": "Runtime interface message responses.style.label"
+  },
+  "runtime_responses_style_plain": {
+    "message": "Texto sin formato",
+    "description": "Runtime interface message responses.style.plain"
+  },
+  "runtime_responses_style_plain_hint": {
+    "message": "Solo las palabras, sin formato.",
+    "description": "Runtime interface message responses.style.plain_hint"
+  },
+  "runtime_responses_style_rich": {
+    "message": "Texto enriquecido",
+    "description": "Runtime interface message responses.style.rich"
+  },
+  "runtime_responses_style_rich_hint": {
+    "message": "Markdown con formato: títulos, listas y código.",
+    "description": "Runtime interface message responses.style.rich_hint"
+  },
+  "runtime_responses_style_vivid": {
+    "message": "Vivid UI",
+    "description": "Runtime interface message responses.style.vivid"
+  },
+  "runtime_responses_style_vivid_hint": {
+    "message": "Tarjetas, tablas y gráficos cuando ayudan.",
+    "description": "Runtime interface message responses.style.vivid_hint"
   },
   "runtime_run_release": {
     "message": "Release",
