@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Yalnızca kullanıcı baloncuğu",
   "responses.layout.user_bubble_hint": "Mesajların baloncukta, Hermes'in yanıtları akan metin olarak.",
   "responses.setup_again": "Kurulumu yeniden çalıştır",
+  "haui.view_chart": "Grafik",
+  "haui.view_table": "Tablo",
+  "haui.view_as_chart": "Grafik olarak görüntüle",
+  "haui.copy": "Kopyala",
+  "haui.copied": "Kopyalandı",
+  "haui.building": "Görünüm oluşturuluyor…",
+  "haui.opens_new_tab": "Yeni sekmede açılır",
+  "haui.ask_hint": "Bu soruyu mesaj kutusuna koyar",
 });
