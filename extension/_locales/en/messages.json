@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Run setup again",
+    "message": "Run first-time setup again",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Step through theme, response style and chat layout again.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "How Hermes draws its replies.",

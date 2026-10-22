@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "ตั้งค่าอีกครั้ง",
+    "message": "เรียกใช้การตั้งค่าครั้งแรกอีกครั้ง",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "เลือกธีม รูปแบบคำตอบ และเลย์เอาต์แชตอีกครั้งทีละขั้นตอน",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Hermes จะแสดงคำตอบอย่างไร",

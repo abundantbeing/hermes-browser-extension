@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "إعادة الإعداد",
+    "message": "تشغيل الإعداد الأولي مرة أخرى",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "مرّ مجددًا على السمة ونمط الردود وتخطيط المحادثة.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "كيف يعرض Hermes ردوده.",

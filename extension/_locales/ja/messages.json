@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "セットアップをやり直す",
+    "message": "初回セットアップをもう一度実行",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "テーマ、応答スタイル、チャットレイアウトをもう一度順に選びます。",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Hermesが回答を表示する方法です。",

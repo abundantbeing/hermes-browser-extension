@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Kør opsætningen igen",
+    "message": "Kør førstegangsopsætningen igen",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Gå igennem tema, svarstil og chatlayout igen.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Sådan tegner Hermes sine svar.",

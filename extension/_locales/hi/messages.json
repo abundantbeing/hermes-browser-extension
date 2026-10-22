@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "सेटअप फिर से चलाएँ",
+    "message": "पहली बार वाला सेटअप फिर से चलाएँ",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "थीम, जवाब की शैली और चैट लेआउट को फिर से चरण-दर-चरण चुनें।",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Hermes अपने जवाब कैसे दिखाता है।",

@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Executar a configuração novamente",
+    "message": "Executar a configuração inicial de novo",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Escolha de novo, passo a passo, o tema, o estilo de resposta e o layout do chat.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Como o Hermes formata as respostas.",

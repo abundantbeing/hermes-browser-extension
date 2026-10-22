@@ -10426,7 +10426,38 @@ body.onboarding-active #messages { display: none; }
 }
 .presentation-preview .pv-reply-flow { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 1px 0; }
 
-.rerun-onboarding-button { justify-self: start; }
+/* Run first-time setup again: a quiet row closing the section, not a box. */
+.settings-setup-row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  min-height: 0;
+  margin: 2px 0 0;
+  padding: 12px 2px 2px;
+  border: 0;
+  border-top: 1px solid var(--hermes-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--hermes-ink);
+  font: inherit;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.settings-setup-row:hover,
+.settings-setup-row:focus-visible { background: transparent; color: var(--hermes-ink); }
+.settings-setup-row svg { margin-top: 1px; color: var(--hermes-muted); }
+.settings-setup-row:hover svg,
+.settings-setup-row:focus-visible svg { color: var(--hermes-ink); }
+.settings-setup-row:focus-visible { outline: 1px solid var(--hermes-accent); outline-offset: 2px; }
+.settings-setup-copy { display: grid; gap: 2px; min-width: 0; }
+.settings-setup-copy strong { font-size: calc(11.5px * var(--hermes-text-zoom, 1)); font-weight: 600; line-height: 1.25; }
+.settings-setup-row:hover .settings-setup-copy strong,
+.settings-setup-row:focus-visible .settings-setup-copy strong { text-decoration: underline; text-underline-offset: 2px; }
+.settings-setup-copy small { color: var(--hermes-muted); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); line-height: 1.35; }
 
 /* Chat layout (Settings > Appearance & Themes). "Bubbles both sides" is the
    default bubble pair above. "User bubble only" keeps the user's bubble and

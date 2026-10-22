@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Пройти налаштування ще раз",
+    "message": "Пройти початкове налаштування знову",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Знову виберіть крок за кроком тему, стиль відповідей і вигляд чату.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Як Hermes оформлює свої відповіді.",

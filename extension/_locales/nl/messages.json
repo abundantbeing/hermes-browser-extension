@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Installatie opnieuw uitvoeren",
+    "message": "Eerste installatie opnieuw doorlopen",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Kies thema, antwoordstijl en chatindeling opnieuw, stap voor stap.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Hoe Hermes zijn antwoorden weergeeft.",

@@ -110,6 +110,20 @@ test('Appearance & Themes runs Font family, Theme, Response style, Chat layout',
   assert.match(pane, /id="responseStyleChoices" class="presentation-choices" role="radiogroup"/);
 });
 
+test('Run first-time setup again is a quiet row with an icon and a description', () => {
+  const html = read('extension/sidepanel.html');
+  const row = html.match(/<button id="rerunOnboardingButton"[\s\S]*?<\/button>/)?.[0] || '';
+  assert.match(row, /class="settings-setup-row"/);
+  assert.doesNotMatch(row, /class="[^"]*secondary/, 'not an outlined secondary button');
+  assert.match(row, /data-icon="reload"/);
+  assert.match(row, /data-i18n="responses\.setup_again"/);
+  assert.match(row, /data-i18n="responses\.setup_again_description"/);
+  const css = read('extension/sidepanel.css');
+  assert.match(css, /\.settings-setup-row \{[^}]*border: 0;[^}]*border-top: 1px solid var\(--hermes-line\);[^}]*background: transparent;/);
+  const english = read('extension/lib/locales/en.mjs');
+  assert.match(english, /"responses\.setup_again": "Run first-time setup again"/);
+});
+
 test('setup and Settings draw the same cards', () => {
   const flow = read('extension/lib/onboarding-flow.mjs');
   const panel = read('extension/sidepanel.js');

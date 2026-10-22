@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Chạy lại thiết lập",
+    "message": "Chạy lại thiết lập lần đầu",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Chọn lại từng bước giao diện, kiểu phản hồi và bố cục trò chuyện.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Cách Hermes hiển thị các câu trả lời.",

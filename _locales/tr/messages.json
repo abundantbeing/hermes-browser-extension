@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Kurulumu yeniden çalıştır",
+    "message": "İlk kurulumu yeniden çalıştır",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Temayı, yanıt stilini ve sohbet düzenini adım adım yeniden seçin.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Hermes yanıtlarını nasıl gösterir.",

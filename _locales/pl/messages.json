@@ -2012,8 +2012,12 @@
     "description": "Runtime interface message responses.layout.user_bubble_hint"
   },
   "runtime_responses_setup_again": {
-    "message": "Uruchom konfigurację ponownie",
+    "message": "Uruchom ponownie konfigurację początkową",
     "description": "Runtime interface message responses.setup_again"
+  },
+  "runtime_responses_setup_again_description": {
+    "message": "Wybierz ponownie krok po kroku motyw, styl odpowiedzi i układ czatu.",
+    "description": "Runtime interface message responses.setup_again_description"
   },
   "runtime_responses_style_description": {
     "message": "Jak Hermes wyświetla swoje odpowiedzi.",
