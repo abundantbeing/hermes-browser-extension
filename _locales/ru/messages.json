@@ -1667,6 +1667,38 @@
     "message": "Открыто из {source} на вкладке браузера {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_haui_ask_hint": {
+    "message": "Помещает этот вопрос в поле сообщения",
+    "description": "Runtime interface message haui.ask_hint"
+  },
+  "runtime_haui_building": {
+    "message": "Создание представления…",
+    "description": "Runtime interface message haui.building"
+  },
+  "runtime_haui_copied": {
+    "message": "Скопировано",
+    "description": "Runtime interface message haui.copied"
+  },
+  "runtime_haui_copy": {
+    "message": "Копировать",
+    "description": "Runtime interface message haui.copy"
+  },
+  "runtime_haui_opens_new_tab": {
+    "message": "Открывается в новой вкладке",
+    "description": "Runtime interface message haui.opens_new_tab"
+  },
+  "runtime_haui_view_as_chart": {
+    "message": "Показать как график",
+    "description": "Runtime interface message haui.view_as_chart"
+  },
+  "runtime_haui_view_chart": {
+    "message": "График",
+    "description": "Runtime interface message haui.view_chart"
+  },
+  "runtime_haui_view_table": {
+    "message": "Таблица",
+    "description": "Runtime interface message haui.view_table"
+  },
   "runtime_image_generated": {
     "message": "Созданное изображение",
     "description": "Runtime interface message image.generated"

@@ -1682,4 +1682,12 @@ export default Object.freeze({
   "responses.layout.user_bubble": "Только пузырь пользователя",
   "responses.layout.user_bubble_hint": "Ваши сообщения в пузыре, ответы Hermes — обычным текстом.",
   "responses.setup_again": "Пройти настройку снова",
+  "haui.view_chart": "График",
+  "haui.view_table": "Таблица",
+  "haui.view_as_chart": "Показать как график",
+  "haui.copy": "Копировать",
+  "haui.copied": "Скопировано",
+  "haui.building": "Создание представления…",
+  "haui.opens_new_tab": "Открывается в новой вкладке",
+  "haui.ask_hint": "Помещает этот вопрос в поле сообщения",
 });
