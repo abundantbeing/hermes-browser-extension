@@ -194,6 +194,22 @@ export function createStateSpinner(target, {
   };
 }
 
+// True when a button shows its own name: text that is neither an icon, hidden
+// from view (sr-only) nor hidden from assistive tech.
+export function hasVisibleLabel(button) {
+  for (const node of button?.childNodes || []) {
+    if (node.nodeType === 3) {
+      if (node.textContent.trim()) return true;
+      continue;
+    }
+    if (node.nodeType !== 1) continue;
+    if (String(node.tagName).toLowerCase() === 'svg') continue;
+    if (node.classList?.contains('sr-only') || node.getAttribute?.('aria-hidden') === 'true') continue;
+    if (node.textContent.trim()) return true;
+  }
+  return false;
+}
+
 // Swap text with a short fade so each check reads as a new line, not a flicker.
 function swapText(el, text) {
   if (!el || el.textContent === text) return;
@@ -313,13 +329,18 @@ export function createStartupScreen({ root, meander, count, state, label, detail
   }
 
   // Icon-only dock buttons show their name in a tooltip; park the native title
-  // while the screen is up so the two tooltips never stack.
+  // while the screen is up so the two tooltips never stack. A button that
+  // already shows its label gets neither, so the name never reads twice.
   const syncTooltips = (visible) => {
     for (const button of actions?.querySelectorAll?.('button') || []) {
       if (visible) {
         if (button.title) {
           button.dataset.startupTitle = button.title;
           button.removeAttribute('title');
+        }
+        if (hasVisibleLabel(button)) {
+          delete button.dataset.tip;
+          continue;
         }
         const tip = button.dataset.startupTitle || button.getAttribute('aria-label') || button.textContent.trim();
         if (tip) button.dataset.tip = tip;
