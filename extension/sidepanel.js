@@ -159,6 +159,7 @@ import {
   withResponsePresentationUpdate,
 } from './lib/response-presentation.mjs';
 import { createOnboardingFlow } from './lib/onboarding-flow.mjs';
+import { handleRadioCardKeydown, syncPresentationCards } from './lib/presentation-previews.mjs';
 import { isClarifyToolEvent, isPromptEventName, isPromptRequestEvent, isRunStatusTerminal } from './lib/gateway-prompts.mjs';
 import { createPromptCard } from './lib/prompt-card.mjs';
 import { createPendingControlsPoller, createPromptController } from './lib/prompt-controller.mjs';
@@ -15499,18 +15500,14 @@ async function completeOnboarding() {
   els.input?.focus();
 }
 
+// Visual option cards, the same ones setup shows. They rebuild only when the
+// copy changes (a language switch) and otherwise update in place, so focus
+// and keyboard navigation survive every appearance re-render.
 function renderResponsePresentationControls() {
   const { responseStyle, messageLayout } = responsePresentationFromSettings(settings);
-  for (const button of els.responseStyleChoices?.querySelectorAll('[data-response-style]') || []) {
-    const selected = button.dataset.responseStyle === responseStyle;
-    button.classList.toggle('selected', selected);
-    button.setAttribute('aria-checked', String(selected));
-  }
-  for (const button of els.messageLayoutChoices?.querySelectorAll('[data-message-layout]') || []) {
-    const selected = button.dataset.messageLayout === messageLayout;
-    button.classList.toggle('selected', selected);
-    button.setAttribute('aria-checked', String(selected));
-  }
+  const translate = (key) => t(key);
+  syncPresentationCards(els.responseStyleChoices, 'style', { selected: responseStyle, attribute: 'data-response-style', translate, sanitize: sanitizeHtml });
+  syncPresentationCards(els.messageLayoutChoices, 'layout', { selected: messageLayout, attribute: 'data-message-layout', translate, sanitize: sanitizeHtml });
 }
 
 function applyResponsePresentation() {
@@ -24675,6 +24672,8 @@ function bindEvents() {
     const choice = event.target.closest('[data-message-layout]');
     if (choice) void setResponsePresentation({ messageLayout: choice.dataset.messageLayout });
   });
+  els.responseStyleChoices?.addEventListener('keydown', (event) => handleRadioCardKeydown(event, els.responseStyleChoices));
+  els.messageLayoutChoices?.addEventListener('keydown', (event) => handleRadioCardKeydown(event, els.messageLayoutChoices));
   els.messages?.addEventListener('click', handleAdaptiveUiClick);
   els.rerunOnboardingButton?.addEventListener('click', () => {
     closeSettingsDialog();

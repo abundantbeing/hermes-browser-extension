@@ -4,60 +4,23 @@
 // DOM only through the host and document passed in; no storage here.
 
 import { escapeHtml } from './common.mjs';
-import { MESSAGE_LAYOUTS, RESPONSE_STYLES } from './response-presentation.mjs';
+import { handleRadioCardKeydown, presentationCardsHtml, presentationOptionLabelKey } from './presentation-previews.mjs';
 
 export const ONBOARDING_STEPS = Object.freeze(['theme', 'style', 'layout', 'finish']);
 
-const STYLE_COPY = Object.freeze({
-  vivid: { title: 'responses.style.vivid', hint: 'responses.style.vivid_hint' },
-  rich: { title: 'responses.style.rich', hint: 'responses.style.rich_hint' },
-  plain: { title: 'responses.style.plain', hint: 'responses.style.plain_hint' },
-});
-
-const LAYOUT_COPY = Object.freeze({
-  bubbles: { title: 'responses.layout.bubbles', hint: 'responses.layout.bubbles_hint' },
-  'user-bubble': { title: 'responses.layout.user_bubble', hint: 'responses.layout.user_bubble_hint' },
-});
-
 export function responseStyleLabelKey(style) {
-  return STYLE_COPY[style]?.title || STYLE_COPY.rich.title;
+  return presentationOptionLabelKey('style', style);
 }
 
 export function messageLayoutLabelKey(layout) {
-  return LAYOUT_COPY[layout]?.title || LAYOUT_COPY.bubbles.title;
-}
-
-// Small drawn previews: no text, so they read the same in every language.
-function stylePreview(style) {
-  if (style === 'vivid') {
-    return '<span class="onboarding-preview preview-vivid" aria-hidden="true"><i class="pv-stat"></i><i class="pv-stat"></i><i class="pv-bars"><b></b><b></b><b></b><b></b></i></span>';
-  }
-  if (style === 'plain') {
-    return '<span class="onboarding-preview preview-plain" aria-hidden="true"><i></i><i></i><i></i><i></i></span>';
-  }
-  return '<span class="onboarding-preview preview-rich" aria-hidden="true"><i class="pv-head"></i><i class="pv-bullet"></i><i class="pv-bullet"></i><i class="pv-code"></i></span>';
-}
-
-function layoutPreview(layout) {
-  const reply = layout === 'user-bubble'
-    ? '<i class="pv-reply-flow"></i><i class="pv-reply-flow short"></i>'
-    : '<i class="pv-reply-bubble"></i>';
-  return `<span class="onboarding-preview preview-layout preview-${layout}" aria-hidden="true"><i class="pv-user-bubble"></i>${reply}<i class="pv-user-bubble short"></i></span>`;
-}
-
-function optionCard({ group, value, selected, title, hint, preview }) {
-  return `
-    <button type="button" class="onboarding-option${selected ? ' selected' : ''}" role="radio" aria-checked="${selected}" data-onboarding-${group}="${escapeHtml(value)}">
-      ${preview}
-      <span class="onboarding-option-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(hint)}</small></span>
-    </button>`;
+  return presentationOptionLabelKey('layout', layout);
 }
 
 function themeCard(theme, selected) {
   const p = theme.preview || {};
   const style = `--preview-bg:${p.bg};--preview-panel:${p.panel};--preview-text:${p.text};--preview-muted:${p.muted};--preview-accent:${p.accent};`;
   return `
-    <button class="theme-card${selected ? ' selected' : ''}" type="button" data-onboarding-theme="${escapeHtml(theme.value)}" role="radio" aria-checked="${selected}" aria-label="${escapeHtml(theme.name)}" title="${escapeHtml(`${theme.name}: ${theme.description || ''}`)}" style="${escapeHtml(style)}">
+    <button class="theme-card${selected ? ' selected' : ''}" type="button" data-onboarding-theme="${escapeHtml(theme.value)}" data-radio-key="${escapeHtml(`theme:${theme.value}`)}" role="radio" aria-checked="${selected}" tabindex="${selected ? 0 : -1}" aria-label="${escapeHtml(theme.name)}" title="${escapeHtml(`${theme.name}: ${theme.description || ''}`)}" style="${escapeHtml(style)}">
       <span class="theme-preview" aria-hidden="true"><span></span><span></span><span></span></span>
       <span class="theme-card-copy"><strong>${escapeHtml(theme.name)}</strong></span>
       <span class="theme-check" aria-hidden="true">${selected ? '✓' : ''}</span>
@@ -83,19 +46,14 @@ export function createOnboardingFlow({
       const cards = themes.map((theme) => themeCard(theme, theme.value === state.theme)).join('');
       return `<div class="theme-grid onboarding-theme-grid" role="radiogroup" aria-label="${escapeHtml(t('onboarding.theme.title'))}">${cards}</div>`;
     }
+    // The same visual cards Settings shows, so setup and Settings match.
     if (step === 'style') {
-      const cards = RESPONSE_STYLES.map((style) => optionCard({
-        group: 'style', value: style, selected: style === state.responseStyle,
-        title: t(STYLE_COPY[style].title), hint: t(STYLE_COPY[style].hint), preview: stylePreview(style),
-      })).join('');
-      return `<div class="onboarding-options" role="radiogroup" aria-label="${escapeHtml(t('onboarding.style.title'))}">${cards}</div>`;
+      const cards = presentationCardsHtml('style', { selected: state.responseStyle, attribute: 'data-onboarding-style', translate: t });
+      return `<div class="presentation-choices onboarding-options" role="radiogroup" aria-label="${escapeHtml(t('onboarding.style.title'))}">${cards}</div>`;
     }
     if (step === 'layout') {
-      const cards = MESSAGE_LAYOUTS.map((layout) => optionCard({
-        group: 'layout', value: layout, selected: layout === state.messageLayout,
-        title: t(LAYOUT_COPY[layout].title), hint: t(LAYOUT_COPY[layout].hint), preview: layoutPreview(layout),
-      })).join('');
-      return `<div class="onboarding-options" role="radiogroup" aria-label="${escapeHtml(t('onboarding.layout.title'))}">${cards}</div>`;
+      const cards = presentationCardsHtml('layout', { selected: state.messageLayout, attribute: 'data-onboarding-layout', translate: t });
+      return `<div class="presentation-choices onboarding-options" role="radiogroup" aria-label="${escapeHtml(t('onboarding.layout.title'))}">${cards}</div>`;
     }
     const themeName = themes.find((theme) => theme.value === state.theme)?.name || state.theme || '';
     const rows = [
@@ -149,22 +107,26 @@ export function createOnboardingFlow({
     onFinish({ reason });
   }
 
+  // A choice re-renders the step; focus stays on the card that was chosen.
+  function choose(select, value, key) {
+    select(value);
+    render();
+    [...host.querySelectorAll('[data-radio-key]')].find((node) => node.dataset.radioKey === key)?.focus({ preventScroll: true });
+  }
+
   host?.addEventListener('click', (event) => {
     const target = event.target?.closest?.('button');
     if (!target || !host.contains(target)) return;
     if (target.dataset.onboardingTheme) {
-      onSelectTheme(target.dataset.onboardingTheme);
-      render();
+      choose(onSelectTheme, target.dataset.onboardingTheme, target.dataset.radioKey);
       return;
     }
     if (target.dataset.onboardingStyle) {
-      onSelectStyle(target.dataset.onboardingStyle);
-      render();
+      choose(onSelectStyle, target.dataset.onboardingStyle, target.dataset.radioKey);
       return;
     }
     if (target.dataset.onboardingLayout) {
-      onSelectLayout(target.dataset.onboardingLayout);
-      render();
+      choose(onSelectLayout, target.dataset.onboardingLayout, target.dataset.radioKey);
       return;
     }
     if (target.hasAttribute('data-onboarding-back')) go(stepIndex - 1);
@@ -174,6 +136,8 @@ export function createOnboardingFlow({
       else go(stepIndex + 1);
     }
   });
+
+  host?.addEventListener('keydown', (event) => handleRadioCardKeydown(event, host));
 
   return {
     get isOpen() { return open; },
