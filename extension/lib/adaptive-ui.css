@@ -1,0 +1,278 @@
+/* Hermes Adaptive UI (the Vivid UI response style), shared by the side panel
+   and the full tab. Every colour comes from the Hermes theme tokens, so each
+   theme and both modes carry it; sizes are in em so text zoom applies. The
+   side panel stacks vertically; the full tab (.web-message-content) widens
+   comparisons into a grid and caps chart width. */
+
+.haui-block {
+  --haui-line: rgba(var(--hermes-ink-rgb, 255, 255, 255), 0.16);
+  --haui-fill: rgba(var(--hermes-ink-rgb, 255, 255, 255), 0.045);
+  --haui-radius: 10px;
+  margin: 0.75em 0;
+  min-width: 0;
+  max-width: 100%;
+  color: inherit;
+}
+.haui-block:first-child { margin-top: 0; }
+.haui-block:last-child { margin-bottom: 0; }
+.haui-title {
+  margin: 0 0 0.5em;
+  color: var(--hermes-muted);
+  font: 600 0.8em/1.2 var(--hermes-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Metric cards */
+.haui-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5em), 1fr));
+  gap: 6px;
+}
+.haui-stat {
+  display: grid;
+  align-content: start;
+  gap: 0.3em;
+  min-width: 0;
+  padding: 0.75em 0.85em;
+  border: 1px solid var(--haui-line);
+  border-radius: var(--haui-radius);
+  background: var(--haui-fill);
+}
+.haui-stat-label {
+  color: var(--hermes-muted);
+  font: 600 0.78em/1.2 var(--hermes-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.haui-stat-value {
+  font-family: var(--hermes-font-display);
+  /* The headline face is narrow under Hermes signature; the profile's display
+     scale keeps the number as big as it reads in the other fonts. */
+  font-size: calc(2em * var(--hermes-display-scale, 1));
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.haui-stat-delta { font-size: 0.88em; font-weight: 600; font-variant-numeric: tabular-nums; }
+.haui-stat[data-trend="up"] .haui-stat-delta { color: color-mix(in srgb, var(--hermes-success, #1f9d63) 72%, var(--hermes-ink)); }
+.haui-stat[data-trend="down"] .haui-stat-delta { color: color-mix(in srgb, var(--hermes-danger, #d64545) 72%, var(--hermes-ink)); }
+.haui-stat-caption { color: var(--hermes-muted); font-size: 0.86em; line-height: 1.3; }
+
+/* Comparison: a swipeable row in the side panel, a grid in the full tab. */
+.haui-compare-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(13em, 82%);
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+}
+.haui-compare-track[data-count="2"] {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: visible;
+}
+.web-message-content .haui-compare-track {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(auto-fit, minmax(14em, 1fr));
+  overflow: visible;
+}
+.haui-compare-card {
+  min-width: 0;
+  padding: 0.8em 0.9em;
+  border: 1px solid var(--haui-line);
+  border-radius: var(--haui-radius);
+  background: var(--haui-fill);
+  scroll-snap-align: start;
+}
+.haui-compare-card[data-highlight="true"] {
+  border-color: var(--hermes-ink);
+  box-shadow: inset 0 0 0 1px var(--hermes-ink);
+}
+/* Card titles are not <h4> elements, so the chat heading rules (and each
+   font profile's heading overrides) never reach them: they use the UI text
+   face of every profile, at a readable size, never the compressed display
+   face that reads tiny and cramped at card size. */
+.haui-compare-card .haui-card-title {
+  margin: 0;
+  font-family: var(--hermes-font-ui, inherit);
+  font-size: 1.12em;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.haui-compare-card .haui-sub { margin: 0.25em 0 0; color: var(--hermes-muted); font-size: 0.9em; }
+.haui-compare-card ul { margin: 0.55em 0 0; padding-left: 1.1em; }
+.haui-compare-card li { margin: 0.2em 0; }
+
+/* Key and value */
+.haui-kv {
+  margin: 0;
+  border: 1px solid var(--haui-line);
+  border-radius: var(--haui-radius);
+  overflow: hidden;
+}
+.haui-kv > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.55em 0.8em;
+  border-top: 1px solid var(--haui-line);
+}
+.haui-kv > div:first-child { border-top: 0; }
+.haui-kv dt { color: var(--hermes-muted); }
+.haui-kv dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+
+/* Tables */
+.haui-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--haui-line, rgba(var(--hermes-ink-rgb), 0.16));
+  border-radius: var(--haui-radius, 10px);
+}
+.haui-table-scroll:focus-visible { outline: 1px solid var(--hermes-accent); outline-offset: 2px; }
+.haui-data-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.haui-data-table th {
+  padding: 0.55em 0.75em;
+  background: rgba(var(--hermes-ink-rgb), 0.06);
+  color: var(--hermes-muted);
+  font: 600 0.78em/1.2 var(--hermes-font-mono);
+  letter-spacing: 0.05em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.haui-data-table td { padding: 0.5em 0.75em; border-top: 1px solid rgba(var(--hermes-ink-rgb), 0.1); vertical-align: top; }
+.haui-data-table tbody tr:nth-child(even) td { background: rgba(var(--hermes-ink-rgb), 0.025); }
+.haui-data-table .haui-num { text-align: right; white-space: nowrap; }
+
+/* Charts: native SVG in a fixed box, so drawing never shifts the layout. */
+.haui-chart {
+  --haui-s0: var(--hermes-ink);
+  --haui-s1: color-mix(in srgb, var(--hermes-ink) 52%, transparent);
+  --haui-s2: color-mix(in srgb, var(--hermes-ink) 30%, transparent);
+  --haui-s3: color-mix(in srgb, var(--hermes-ink) 76%, transparent);
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0.75em;
+  border: 1px solid var(--haui-line);
+  border-radius: var(--haui-radius);
+  background: var(--haui-fill);
+}
+.haui-chart-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 0.4em; }
+.haui-chart-head .haui-title { margin: 0; }
+.haui-view-toggle { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--haui-line); border-radius: 999px; overflow: hidden; }
+.haui-view-toggle button {
+  min-height: 0;
+  padding: 0.3em 0.75em;
+  border: 0;
+  background: transparent;
+  color: var(--hermes-muted);
+  font: 600 0.78em/1.2 var(--hermes-font-ui, inherit);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.haui-view-toggle button[aria-pressed="true"] { background: var(--hermes-ink); color: var(--hermes-paper); }
+.haui-view-toggle button:focus-visible { outline: 1px solid var(--hermes-accent); outline-offset: -2px; }
+.haui-chart-canvas[hidden], .haui-chart-table[hidden] { display: none; }
+.haui-chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.web-message-content .haui-chart-svg { max-width: 40em; }
+.haui-chart-svg .haui-grid { stroke: rgba(var(--hermes-ink-rgb), 0.12); stroke-width: 1; }
+.haui-chart-svg .haui-zero { stroke: rgba(var(--hermes-ink-rgb), 0.38); }
+.haui-chart-svg .haui-axis { fill: var(--hermes-muted); font: 9px var(--hermes-font-mono); }
+.haui-chart-svg rect.haui-s0, .haui-chart-svg circle.haui-s0 { fill: var(--haui-s0); }
+.haui-chart-svg rect.haui-s1, .haui-chart-svg circle.haui-s1 { fill: var(--haui-s1); }
+.haui-chart-svg rect.haui-s2, .haui-chart-svg circle.haui-s2 { fill: var(--haui-s2); }
+.haui-chart-svg rect.haui-s3, .haui-chart-svg circle.haui-s3 { fill: var(--haui-s3); }
+.haui-chart-svg .haui-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.haui-chart-svg .haui-line.haui-s0 { stroke: var(--haui-s0); }
+.haui-chart-svg .haui-line.haui-s1 { stroke: var(--haui-s1); stroke-dasharray: 5 3; }
+.haui-chart-svg .haui-line.haui-s2 { stroke: var(--haui-s2); }
+.haui-chart-svg .haui-line.haui-s3 { stroke: var(--haui-s3); stroke-dasharray: 2 3; }
+.haui-chart-svg .haui-dot { stroke: var(--hermes-paper); stroke-width: 1; }
+.haui-legend { display: flex; flex-wrap: wrap; gap: 0.4em 1em; margin-top: 0.5em; color: var(--hermes-muted); font-size: 0.85em; }
+.haui-legend span { display: inline-flex; align-items: center; gap: 0.4em; }
+.haui-swatch { display: inline-block; width: 0.75em; height: 0.75em; border-radius: 2px; }
+.haui-swatch.haui-s0 { background: var(--haui-s0); }
+.haui-swatch.haui-s1 { background: var(--haui-s1); }
+.haui-swatch.haui-s2 { background: var(--haui-s2); }
+.haui-swatch.haui-s3 { background: var(--haui-s3); }
+
+/* Disclosure */
+.haui-disclosure { border: 1px solid var(--haui-line); border-radius: var(--haui-radius); }
+.haui-disclosure > summary { padding: 0.6em 0.85em; font-weight: 600; cursor: pointer; }
+.haui-disclosure > summary:focus-visible { outline: 1px solid var(--hermes-accent); outline-offset: -2px; }
+.haui-disclosure-body { padding: 0 0.85em 0.85em; }
+.haui-disclosure.haui-derived { border: 0; }
+.haui-disclosure.haui-derived > summary {
+  width: max-content;
+  padding: 0.2em 0;
+  color: var(--hermes-muted);
+  font: 600 0.78em/1.2 var(--hermes-font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.haui-disclosure.haui-derived .haui-disclosure-body { padding: 0.4em 0 0; }
+
+/* Actions */
+.haui-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.haui-actions .haui-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.3em;
+  padding: 0.35em 0.95em;
+  border: 1px solid rgba(var(--hermes-ink-rgb), 0.32);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hermes-ink);
+  font: 600 0.9em/1.2 var(--hermes-font-ui, inherit);
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: none;
+  cursor: pointer;
+}
+.haui-actions .haui-action:hover, .haui-actions .haui-action:focus-visible { background: var(--hermes-ink); color: var(--hermes-paper); outline: none; }
+.haui-action.is-copied { border-color: color-mix(in srgb, var(--hermes-success, #1f9d63) 72%, var(--hermes-ink)); }
+
+/* A block still streaming: a fixed-height placeholder, never raw JSON. */
+.haui-pending {
+  display: grid;
+  gap: 7px;
+  min-height: 4.5em;
+  margin: 0.75em 0;
+  padding: 0.85em;
+  border: 1px dashed rgba(var(--hermes-ink-rgb), 0.22);
+  border-radius: 10px;
+}
+.haui-pending span {
+  display: block;
+  height: 0.55em;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(var(--hermes-ink-rgb), 0.08), rgba(var(--hermes-ink-rgb), 0.2), rgba(var(--hermes-ink-rgb), 0.08));
+  background-size: 200% 100%;
+  animation: hauiPending 1.4s ease-in-out infinite;
+}
+.haui-pending span:nth-child(2) { width: 78%; }
+.haui-pending span:nth-child(3) { width: 52%; }
+@keyframes hauiPending { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .haui-pending span { animation: none; } }
+
+/* Plain text style */
+.plain-response { margin: 0 0 0.78em; }
+.plain-response:last-child { margin-bottom: 0; }
+.plain-response-code {
+  margin: 0 0 0.78em;
+  padding: 0.6em 0.75em;
+  background: rgba(var(--hermes-ink-rgb), 0.05);
+  font: 0.92em/1.45 var(--hermes-font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
