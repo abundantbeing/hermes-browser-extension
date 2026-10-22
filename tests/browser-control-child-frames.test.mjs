@@ -86,7 +86,7 @@ const CHAT = {
   text: 'viewer1 first chat message\nviewer2 second chat message',
 };
 
-async function controlledWorker({ snapshot }) {
+async function controlledWorker({ snapshot, act }) {
   const calls = [];
   const adapter = {
     calls,
@@ -95,6 +95,7 @@ async function controlledWorker({ snapshot }) {
     async execute(action, args, context) {
       calls.push({ action, args: { ...args }, target: context.target || null, signal: context.signal });
       if (action === 'browser_snapshot') return snapshot(args, context);
+      if (act) return act(action, args, context);
       return { status: 'ok' };
     },
   };
@@ -188,6 +189,21 @@ test('commands act on a framed ref: type into the chat composer and open its emo
   assert.equal(calls.find((call) => call.action === 'browser_type').target.backendDOMNodeId, 5001);
   assert.equal(calls.find((call) => call.action === 'browser_click').target.backendDOMNodeId, 5003);
   assert.equal(calls.find((call) => call.action === 'browser_type').target.frameId, '1', 'the target names its frame by short key, not by CDP id');
+});
+
+test('an action on a framed ref whose frame has since moved to a restricted page is refused with its own error code', async () => {
+  const { prepare, command } = await controlledWorker({
+    snapshot: () => page({ own: 3, frames: { CHAT } }),
+    act: () => { throw Object.assign(new Error('The frame this control is in is on a page Hermes will not act on.'), { code: 'restricted_frame' }); },
+  });
+  const prepared = await prepare();
+  const composer = refOf(prepared.controlSnapshot.text, 'textbox', 'Chat');
+  const typed = await command({
+    command_id: 'type-moved', action: 'browser_type', arguments: { ref: composer, text: 'hello chat' },
+    tab_id: prepared.tabId, document_generation: prepared.documentGeneration,
+  });
+  assert.equal(typed.ok, false);
+  assert.equal(typed.error?.code ?? typed.error, 'restricted_frame', JSON.stringify(typed));
 });
 
 test('a snapshot command keeps the frame refs of a control, and never exposes the CDP frame id', async () => {

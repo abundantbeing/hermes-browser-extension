@@ -67,7 +67,7 @@ const BATCH_FATAL_CODES = new Set([
 
 // Adapter errors that carry a model-actionable code keep it; everything else
 // is reported as a generic command_error.
-const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden']);
+const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden', 'restricted_frame']);
 
 const APPROVAL_MESSAGES = Object.freeze({
   'cross-origin-unsaved-content': 'Leave this page while unsaved content may be present?',

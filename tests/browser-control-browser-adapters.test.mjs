@@ -1893,3 +1893,102 @@ test('Chromium navigate treats a different fragment as a real navigation so hash
   const same = await adapter.execute('browser_navigate', { url: 'https://app.example.test/#/settings' }, { scope, signal: openSignal() });
   assert.equal(same.status, 'already-open');
 });
+
+// A frame that was readable when the page was snapshotted can have moved to a restricted address since. A cross
+// document move destroys the node (a stale_ref); a same-document move (history.pushState to a checkout path)
+// keeps it, so the address of the document a framed control lives in is read again at action time.
+function framedTargetApis(frameUrl) {
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.resolveNode'] = () => ({ object: { objectId: 'node-1' } });
+  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: frameUrl } });
+  return chromium;
+}
+const framedTarget = { backendDOMNodeId: 5002, frameId: '1' };
+const inputEvents = (calls) => calls.filter((call) => call[2]?.startsWith('Input.'));
+
+test('Chromium acts on a control in a frame that is still on an ordinary page', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const frameUrl of ['https://chat.example.test/live_chat', 'about:blank', 'about:srcdoc']) {
+    const chromium = framedTargetApis(frameUrl);
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+    assert.deepEqual(
+      await adapter.execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+      { status: 'clicked' },
+      frameUrl,
+    );
+    assert.ok(mouseEvents(chromium.calls).length > 0, frameUrl);
+  }
+});
+
+test('Chromium refuses every framed action once the frame has moved to a restricted or unreadable address', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const restricted = [
+    'https://chat.example.test/checkout',
+    'https://shop.example.test/payment/card',
+    'https://login.example.test/signin?password=1',
+    'chrome://settings/',
+    'chrome-extension://abc/page.html',
+    'data:text/html,<input>',
+    'blob:https://chat.example.test/1',
+    'file:///C:/secret.html',
+    '',
+  ];
+  for (const frameUrl of restricted) {
+    for (const [action, args] of [
+      ['browser_click', { ref: '@f1e2' }],
+      ['browser_type', { ref: '@f1e2', text: 'hello' }],
+      ['browser_fill', { ref: '@f1e2', value: 'hello' }],
+      ['browser_select', { ref: '@f1e2', value: 'a' }],
+      ['browser_hover', { ref: '@f1e2' }],
+      ['browser_scroll_to', { ref: '@f1e2' }],
+      ['browser_screenshot', { ref: '@f1e2' }],
+    ]) {
+      const chromium = framedTargetApis(frameUrl);
+      const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+      await assert.rejects(
+        adapter.execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+        (error) => error?.code === 'restricted_frame',
+        `${action} on ${frameUrl || '(no address)'}`,
+      );
+      assert.deepEqual(inputEvents(chromium.calls), [], `${action} on ${frameUrl || '(no address)'} sent input`);
+      assert.equal(chromium.calls.some((call) => ['DOM.focus', 'Page.captureScreenshot'].includes(call[2])), false, action);
+    }
+  }
+});
+
+test('Chromium refuses a drag whose destination is in a frame that has moved to a restricted address', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.resolveNode'] = (params) => ({ object: { objectId: `node-${params.backendNodeId}` } });
+  chromium.handlers['Runtime.callFunctionOn'] = (params) => ({
+    result: { value: params.objectId === 'node-5002' ? 'https://chat.example.test/checkout' : 'https://chat.example.test/live_chat' },
+  });
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  await assert.rejects(
+    adapter.execute('browser_drag', { ref: '@f1e1', to_ref: '@f1e2' }, {
+      scope, signal: openSignal(), target: { backendDOMNodeId: 5001, frameId: '1' }, destination: framedTarget,
+    }),
+    (error) => error?.code === 'restricted_frame',
+  );
+  assert.deepEqual(inputEvents(chromium.calls), []);
+});
+
+test('Chromium leaves a control in the page itself to the main-frame check the executor already makes', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: 'https://example.test/checkout' } });
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget });
+  assert.equal(chromium.calls.some((call) => call[2] === 'Runtime.callFunctionOn' && /ownerDocument/.test(call[3]?.functionDeclaration || '')), false);
+});
+
+test('Chromium reports a framed control that is gone as stale, not as restricted', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const chromium = chromiumApis();
+  chromium.handlers['DOM.resolveNode'] = () => { throw new Error('No node with given id found'); };
+  const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
+  await assert.rejects(
+    adapter.execute('browser_click', { ref: '@f1e2' }, { scope, signal: openSignal(), target: framedTarget }),
+    (error) => error?.code === 'stale_ref',
+  );
+});

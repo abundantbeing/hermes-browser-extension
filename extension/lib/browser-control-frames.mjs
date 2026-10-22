@@ -19,13 +19,21 @@ export const FRAME_ELEMENT_SHARE = 0.25;
 // (`iframe.srcdoc`, or an empty iframe a script fills in), so it is read under that frame's rules.
 const INHERITING_FRAME_URLS = new Set(['about:blank', 'about:srcdoc']);
 
+/**
+ * Whether a frame whose document is at `url` may be read or acted on. Only ordinary web pages: a browser or
+ * extension page, a data: or blob: document and a frame that has not committed an address yet are not part of
+ * the page the person is looking at. The same rule applies when a snapshot reads a frame and when a command
+ * acts on a control in it, because a frame can move to a restricted address between the two.
+ */
+export function frameUrlReadable(url, restricted = (value) => isRestrictedUrl(value)) {
+  const text = String(url || '').trim();
+  if (INHERITING_FRAME_URLS.has(text.toLowerCase())) return true;
+  return /^https?:/i.test(text) && !restricted(text);
+}
+
 function frameAllowed(frame, restricted) {
   if (!frame?.id) return false;
-  const url = String(frame.url || '').trim();
-  if (INHERITING_FRAME_URLS.has(url.toLowerCase())) return true;
-  // Only ordinary web pages. A browser or extension page, a data: or blob: document and a frame that has not
-  // committed an address yet are not part of the page the person is looking at.
-  return /^https?:/i.test(url) && !restricted(url);
+  return frameUrlReadable(frame.url, restricted);
 }
 
 /**

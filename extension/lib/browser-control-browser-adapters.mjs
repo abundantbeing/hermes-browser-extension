@@ -2,7 +2,7 @@ import {
   controllerAdapterContractFor,
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
-import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, readableChildFrames } from './browser-control-frames.mjs';
+import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameUrlReadable, readableChildFrames } from './browser-control-frames.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
 const CDP_VERSION = '1.3';
@@ -169,6 +169,9 @@ function quietWindowExpression(quietMs, capMs) {
   capTimer = setTimeout(() => finish(false), ${cap});
 })`;
 }
+
+// The address of the document the node it runs on belongs to (a node in a child frame answers for its frame).
+const FRAME_DOCUMENT_URL_FUNCTION = 'function(){try{return String((this.ownerDocument||this).location.href);}catch(e){return "";}}';
 
 function abortError(signal) {
   if (!signal?.aborted) return null;
@@ -1263,9 +1266,43 @@ function createChromiumCdpAdapter({
     });
   }
 
+  // The address of the document a framed control lives in, read at the moment of the action. A frame that was
+  // readable when the page was snapshotted can have moved to a restricted address since (a checkout path
+  // pushed into its history keeps its nodes alive), and the executor's probe only describes the main frame.
+  // Unknown counts as restricted. A control in the main frame has no frame key and needs no check.
+  async function assertFramedTargetReadable(send, enable, signal, targets) {
+    for (const target of targets) {
+      if (!target?.frameId) continue;
+      const backendNodeId = Number(target.backendDOMNodeId);
+      let url = '';
+      if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
+        await enable('DOM');
+        try {
+          const resolved = await send('DOM.resolveNode', { backendNodeId });
+          const objectId = String(resolved?.object?.objectId || '');
+          if (objectId) {
+            const read = await send('Runtime.callFunctionOn', {
+              objectId,
+              functionDeclaration: FRAME_DOCUMENT_URL_FUNCTION,
+              returnByValue: true,
+            });
+            url = String(read?.result?.value || '');
+          }
+        } catch (error) {
+          // A control that is gone is stale; any other failure leaves the address unknown.
+          if (abortError(signal) || error?.code === 'stale_ref') throw error;
+        }
+      }
+      if (!frameUrlReadable(url)) {
+        throw codedError('restricted_frame', 'The frame this control is in is on a page Hermes will not act on.');
+      }
+    }
+  }
+
   async function runWithSession(action, args, scope, signal, target, destination) {
     return withSession(scope, signal, async (session) => {
       const { send, enable } = session;
+      if (action !== 'browser_snapshot') await assertFramedTargetReadable(send, enable, signal, [target, destination]);
       if (action === 'browser_snapshot') {
         await enable('Accessibility');
         const trees = await collectAxTrees({ send, tabId: session.tabId, signal });
