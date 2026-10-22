@@ -64,11 +64,9 @@ test('setup shows once for a new user only', () => {
   assert.equal(shouldShowOnboarding({ completed: true, forced: true }), true, 'Settings can run it again');
 });
 
-test('response style instructions: rich adds nothing, vivid documents HAUI, plain asks for no Markdown', () => {
+test('response style system notes: rich and vivid add nothing (Vivid rides in each turn), plain asks for no Markdown', () => {
   assert.equal(responseStyleInstructions('rich'), '');
-  assert.match(responseStyleInstructions('vivid'), /hermes-ui/);
-  assert.match(responseStyleInstructions('vivid'), /"schema":"hermes.adaptive-ui","version":1/);
-  assert.match(responseStyleInstructions('vivid'), /never invent data/);
+  assert.equal(responseStyleInstructions('vivid'), '', 'a session prompt saved under Vivid could not follow a later switch');
   assert.match(responseStyleInstructions('plain'), /no Markdown/);
 });
 

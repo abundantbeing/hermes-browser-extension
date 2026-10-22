@@ -11,6 +11,7 @@ export const BROWSER_CONTEXT_TURN_BUDGETS = Object.freeze({
   totalSerializedChars: 48_000,
   humanInputChars: 6_000,
   instructionTransformChars: 6_000,
+  responseStyleChars: 6_000,
   pageTextChars: 30_000,
   selectedTextChars: 6_000,
   transcriptChars: 6_000,
@@ -1008,6 +1009,22 @@ function reduceEnvelopeToSerializedBudget(envelope, state) {
   if (size() > BROWSER_CONTEXT_TURN_BUDGETS.totalSerializedChars) throw new RangeError('BCP v2 serialized envelope exceeds the shared total budget.');
 }
 
+// The user's response style setting (response-presentation.mjs). It is the
+// extension's own text, never page content, and has a fixed size, so the
+// budget reducer leaves it alone.
+function responseStyleForTurn(value) {
+  if (!value || typeof value !== 'object' || !value.id || !value.contract) return {};
+  return {
+    response_style: {
+      id: String(value.id).slice(0, 24),
+      name: String(value.name || value.id).slice(0, 40),
+      source: 'user_setting',
+      required: value.required === true,
+      contract: String(value.contract).slice(0, BROWSER_CONTEXT_TURN_BUDGETS.responseStyleChars),
+    },
+  };
+}
+
 /**
  * Construct a typed, provenance-separated Browser turn. This deliberately
  * contains no prose wrapper assembled from page or attachment strings.
@@ -1025,8 +1042,9 @@ export function buildBrowserTurnEnvelope({
   contextHash = '',
   contextDelivery = 'full',
   browserControl = {},
+  responseStyle = null,
 } = {}) {
-  assertSupportedExternalValue({ humanInput, instructionTransform, activeTab, tabs, selectedTabs, pageContext, contextScope, attachments, settings, contextHash, contextDelivery, browserControl });
+  assertSupportedExternalValue({ humanInput, instructionTransform, activeTab, tabs, selectedTabs, pageContext, contextScope, attachments, settings, contextHash, contextDelivery, browserControl, responseStyle });
   const truncation = createBudgetState();
   const composerText = boundedText(String(humanInput || '').trim(), BROWSER_CONTEXT_TURN_BUDGETS.humanInputChars, truncation, 'human_input');
   const transformText = instructionTransform?.text == null
@@ -1039,6 +1057,7 @@ export function buildBrowserTurnEnvelope({
     protocol: BROWSER_CONTEXT_TURN_PROTOCOL_ID,
     human_input: { source: 'composer', text: composerText || 'Attachment-only turn.' },
     ...(transformText ? { instruction_transform: { kind: 'slash-command', text: transformText } } : {}),
+    ...responseStyleForTurn(responseStyle),
     browser_context: browserContext,
     browser_control: browserControlTarget,
     attachment_context: attachmentContext,

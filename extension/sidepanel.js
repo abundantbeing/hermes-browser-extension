@@ -147,7 +147,7 @@ import {
 } from './lib/pet-avatar.mjs';
 import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
 import { renderMarkdownSafe, renderResponseSafe, sanitizeHtml } from './lib/sanitizer.mjs';
-import { dispatchAdaptiveAction, readAdaptiveAction } from './lib/adaptive-ui.mjs';
+import { containsAdaptiveBlocks, dispatchAdaptiveAction, readAdaptiveAction } from './lib/adaptive-ui.mjs';
 import { highlightCodeBlocks } from './lib/code-highlighting.mjs';
 import { contextPreviewEventApplies, createContextPreviewScheduler, previewKeepsPageContext, sessionSwitchedFromSettings, WINDOW_ID_NONE } from './lib/context-preview-refresh.mjs';
 import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
@@ -156,6 +156,7 @@ import {
   RESPONSE_STYLE_SETUP_DEFAULT,
   responsePresentationFromSettings,
   responseStyleInstructions,
+  responseStyleTurnContract,
   shouldShowOnboarding,
   withResponsePresentationUpdate,
 } from './lib/response-presentation.mjs';
@@ -21457,6 +21458,13 @@ function currentHermesBrowserSystemPrompt() {
   return `${HERMES_BROWSER_SYSTEM_PROMPT}\n\n${runtimeSelection}${styleNote ? `\n\n${styleNote}` : ''}`;
 }
 
+// The response style contract each Browser turn carries (response_style):
+// every transport delivers the turn, while only REST has a system message.
+function currentResponseStyleTurnContract() {
+  const conversationHasVivid = messages.some((message) => message?.role === 'assistant' && containsAdaptiveBlocks(message.content));
+  return responseStyleTurnContract(settings.responseStyle, { conversationHasVivid });
+}
+
 // REST turns carry per-turn notes in the system message. A GPT-Live delegation
 // adds the voice note there; the dashboard socket sends surface "voice-live"
 // and the gateway adds the same note itself.
@@ -22771,6 +22779,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       contextHash,
       contextDelivery,
       browserControl,
+      responseStyle: currentResponseStyleTurnContract(),
     });
 
     const receipt = buildContextReceipt({
@@ -23574,6 +23583,7 @@ function serializePreparedContextMenuTurn(turn, browserControl) {
     contextHash,
     contextDelivery: CONTEXT_DELIVERY_MODES.FULL,
     browserControl,
+    responseStyle: currentResponseStyleTurnContract(),
   });
 }
 

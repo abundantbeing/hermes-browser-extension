@@ -1,10 +1,12 @@
 # Hermes Adaptive UI (HAUI) v1
 
 HAUI is the protocol behind the **Vivid UI** response style. A reply stays
-ordinary Markdown. When structure makes an answer clearer, the model may add a
-fenced block labelled `hermes-ui` that holds one JSON envelope. The extension
-validates the envelope and draws native components. Anything it can't
-validate shows as the original Markdown, so a reply is always readable.
+ordinary Markdown prose, and fenced blocks labelled `hermes-ui` hold JSON
+envelopes that the extension validates and draws as native components. When
+the user picks Vivid UI, it's an output contract for every reply, not a hint:
+each turn tells the model so, and the renderer keeps the reply in Vivid
+presentation even when the model leaves blocks out or gets one wrong. A reply
+is always readable, and model JSON is never shown as text.
 
 Code: `extension/lib/adaptive-ui.mjs` (parser, validator, renderer, action
 dispatcher), `extension/lib/adaptive-ui.css` (styles), and
@@ -128,11 +130,28 @@ including `Tool` and `Form`, is left to the reply's prose.
 
 ## How the model is asked
 
-With Vivid UI selected, the side panel adds a short guide to the Hermes
-Browser system prompt (`responseStyleInstructions()` in
-`extension/lib/response-presentation.mjs`). Rich text adds nothing. Plain text
-asks for replies without Markdown. The full tab sends turns without a system
-prompt, so it renders blocks when they're present but doesn't ask for them.
+The choice is saved as `responseStyle` in `hermesBrowserSettings` (setup or
+Appearance in Settings) and read on every turn, so it holds for new turns,
+restored sessions and a reopened panel. A panel in another window adopts the
+change from storage.
+
+With Vivid UI on, every side panel turn (composer and right-click) carries
+the contract (`VIVID_CONTRACT` in `extension/lib/response-presentation.mjs`) as
+a `response_style` section of the Browser turn (BCP v2), marked as the user's
+own setting and placed before the page data. This reaches the model on every
+transport, including the dashboard socket, which has no system message. It is
+the extension's fixed text, so it is never trimmed for budget.
+
+The contract makes blocks required on substantive replies, maps question types
+to components (articles, YouTube, weather, numbers, steps, code, failures),
+allows brief replies to stay prose, forbids decorative padding, and forbids
+invented data or claimed actions.
+
+The session's stored system prompt never carries Vivid text, and inline drafts
+(text written into page fields) never get it. When Vivid UI is turned off in a
+conversation that already has Vivid replies, Rich text turns carry a short note
+asking for no more blocks; otherwise Rich text sends nothing, as before. Plain
+text keeps its system prompt note.
 
 ## Future work
 

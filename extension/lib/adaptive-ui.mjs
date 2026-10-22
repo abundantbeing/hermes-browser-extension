@@ -140,6 +140,11 @@ export function stripAdaptiveFences(text = '') {
     .join('\n\n');
 }
 
+// Whether a reply carries Vivid UI blocks: the conversation used Vivid UI.
+export function containsAdaptiveBlocks(text = '') {
+  return splitAdaptiveSegments(text, { streaming: false }).some((segment) => segment.kind === 'ui');
+}
+
 // ---------------------------------------------------------------------------
 // Validation.
 
