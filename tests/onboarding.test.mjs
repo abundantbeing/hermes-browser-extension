@@ -335,16 +335,28 @@ test('Skip and finish both mark setup done and play the way into the chat', () =
   assert.match(js, /onReveal: \(\) => revealPanelAfterOnboarding\(\)/);
   assert.match(js, /onExited: \(\) => settlePanelAfterOnboarding\(\)/);
   assert.match(js, /function revealPanelAfterOnboarding\(\) \{[\s\S]*?classList\.add\('onboarding-entering'\)/);
+  assert.match(js, /function settlePanelAfterOnboarding\(\) \{[\s\S]*?showFirstPrompt\(\);/);
   assert.match(css, /body\.onboarding-entering \.topbar \{ animation: onboarding-chrome-down/);
   assert.match(css, /body\.onboarding-entering \.bottom-dock \{ animation: onboarding-chrome-up/);
   assert.match(css, /\.onboarding\.is-exiting \{ animation: onboarding-dither-out/);
   assert.match(css, /\.onboarding\.is-finishing \.startup-meander-line/, 'the Meander closes its loop first');
 });
 
+test('the first suggested prompt fills the composer and never sends', () => {
+  const html = fs.readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
+  const js = fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(html, /id="firstPromptChips"[^>]*hidden/);
+  assert.match(html, /id="firstPromptChip"[^>]*data-i18n="onboarding\.preview\.user"/);
+  const use = js.match(/function useFirstPrompt\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(use, /els\.input\.value = t\('onboarding\.preview\.user'\)/);
+  assert.doesNotMatch(use, /askHermes|requestSubmit|submit\(/);
+  assert.match(js, /els\.composer\?\.addEventListener\('submit', hideFirstPrompt, \{ capture: true \}\)/);
+});
+
 test('reduced motion swaps every setup animation for a plain fade', () => {
   const css = fs.readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
   const block = css.match(/@media \(prefers-reduced-motion: reduce\) \{\n {2}\.onboarding\.is-entering > \*,[\s\S]*?\n\}/)?.[0] || '';
-  for (const selector of ['.onboarding-stage.is-switching', '.onboarding-preview.is-repainting', 'body.onboarding-entering .topbar', 'body.onboarding-entering .bottom-dock']) {
+  for (const selector of ['.onboarding-stage.is-switching', '.onboarding-preview.is-repainting', 'body.onboarding-entering .topbar', 'body.onboarding-entering .bottom-dock', '.first-prompt-chip']) {
     assert.ok(block.includes(selector), selector);
   }
   assert.match(block, /\.onboarding\.is-exiting \{ animation: onboarding-fade-out 0\.2s ease both; \}/);

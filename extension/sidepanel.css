@@ -10822,11 +10822,27 @@ html[data-hermes-mode="light"] .onboarding-logo {
 @keyframes onboarding-pulse { 50% { opacity: 0.35; } }
 @keyframes onboarding-fade-out { to { opacity: 0; } }
 
-/* The way in: the top bar and the dock slide in under the dissolving setup. */
+/* The way in: the top bar and the dock slide in under the dissolving setup,
+   then one suggested prompt switches on above the composer. */
 body.onboarding-entering .topbar { animation: onboarding-chrome-down 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 body.onboarding-entering .bottom-dock { animation: onboarding-chrome-up 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.06s both; }
 @keyframes onboarding-chrome-down { from { opacity: 0; transform: translateY(-100%); } }
 @keyframes onboarding-chrome-up { from { opacity: 0; transform: translateY(100%); } }
+.first-prompt-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; padding: 0 0 8px; }
+.first-prompt-chips[hidden] { display: none; }
+.first-prompt-chip {
+  min-height: 28px;
+  padding: 6px 11px 5px;
+  border: 1px solid var(--hermes-accent);
+  background: rgba(var(--hermes-accent-rgb), 0.12);
+  color: var(--hermes-fg);
+  font-size: calc(11px * var(--hermes-text-zoom, 1));
+  letter-spacing: 0.02em;
+  text-transform: none;
+  animation: startup-crt-on 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.first-prompt-chip:hover,
+.first-prompt-chip:focus-visible { background: var(--hermes-primary-bg); color: var(--hermes-primary-fg); border-color: var(--hermes-primary-border, var(--hermes-accent)); }
 
 @media (prefers-reduced-motion: reduce) {
   .onboarding.is-entering > *,
@@ -10835,6 +10851,7 @@ body.onboarding-entering .bottom-dock { animation: onboarding-chrome-up 0.6s cub
   .onboarding-preview.is-repainting .onboarding-preview-thread,
   body.onboarding-entering .topbar,
   body.onboarding-entering .bottom-dock,
+  .first-prompt-chip,
   .onboarding-connect.is-busy .onboarding-connect-button svg { animation: none; }
   .onboarding.is-exiting { animation: onboarding-fade-out 0.2s ease both; }
   .onboarding-meander .startup-meander-line,

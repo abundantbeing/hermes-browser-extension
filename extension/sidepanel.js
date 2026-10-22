@@ -749,6 +749,8 @@ const els = {
   browserIntroHero: $('#browserIntroHero'),
   browserIntroDismissButton: $('#browserIntroDismissButton'),
   onboardingFlow: $('#onboardingFlow'),
+  firstPromptChips: $('#firstPromptChips'),
+  firstPromptChip: $('#firstPromptChip'),
   responseStyleChoices: $('#responseStyleChoices'),
   messageLayoutChoices: $('#messageLayoutChoices'),
   rerunOnboardingButton: $('#rerunOnboardingButton'),
@@ -15921,6 +15923,7 @@ function openOnboarding({ step = 'theme', includeConnect = !isConnected() } = {}
   if (!flow) return;
   const startupLogo = els.startupScreen && !els.startupScreen.hidden ? els.startupScreen.querySelector('.startup-brand-icon') : null;
   const origin = startupLogo?.getBoundingClientRect?.() || null;
+  hideFirstPrompt();
   setOnboardingOpen(true);
   flow.open({ step, includeConnect, origin });
 }
@@ -15949,7 +15952,26 @@ function revealPanelAfterOnboarding() {
 
 function settlePanelAfterOnboarding() {
   document.body.classList.remove('onboarding-entering');
+  showFirstPrompt();
   els.input?.focus({ preventScroll: true });
+}
+
+// One suggested prompt after setup. It fills the composer; it never sends.
+function showFirstPrompt() {
+  if (!els.firstPromptChips || messages.length) return;
+  els.firstPromptChips.hidden = false;
+}
+
+function hideFirstPrompt() {
+  if (els.firstPromptChips) els.firstPromptChips.hidden = true;
+}
+
+function useFirstPrompt() {
+  if (!els.input) return;
+  els.input.value = t('onboarding.preview.user');
+  els.input.dispatchEvent(new Event('input', { bubbles: true }));
+  hideFirstPrompt();
+  els.input.focus();
 }
 
 // Visual option cards, the same ones setup shows. They rebuild only when the
@@ -25266,6 +25288,8 @@ function bindEvents() {
     closeSettingsDialog();
     openOnboarding();
   });
+  els.firstPromptChip?.addEventListener('click', useFirstPrompt);
+  els.composer?.addEventListener('submit', hideFirstPrompt, { capture: true });
   bindConnectDialog();
   els.browserControlScopeInput?.addEventListener('change', () => {
     if (settings.browserControlEnabled === true) {
