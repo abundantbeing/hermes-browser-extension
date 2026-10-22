@@ -255,6 +255,9 @@ import {
 } from './lib/session-context-store.mjs';
 import { buildContextUsageView, resolveContextOccupancy } from './lib/context-usage-view.mjs';
 import { liveStateBadge, mergeLiveSignals } from './lib/session-live-state.mjs';
+import { createProjectsController } from './lib/projects-controller.mjs';
+import { renderProjectsPanel } from './lib/projects-panel.mjs';
+import { SESSION_MENU_TABS, SESSION_MENU_TAB_KEY, normalizeSessionMenuTab } from './lib/projects-view.mjs';
 import { friendlyModelName } from './lib/model-friendly-name.mjs';
 import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToolHistoryMessages, mergeToolCallActivity } from './lib/tool-call-group.mjs';
 import { sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
@@ -760,6 +763,14 @@ const els = {
   sessionMenu: $('#sessionMenu'),
   sessionSearchInput: $('#sessionSearchInput'),
   sessionMenuList: $('#sessionMenuList'),
+  sessionMenuTabs: $('#sessionMenuTabs'),
+  sessionMenuTabRecents: $('#sessionMenuTabRecents'),
+  sessionMenuTabProjects: $('#sessionMenuTabProjects'),
+  projectsPanel: $('#projectsPanel'),
+  sessionRecentsFooter: $('#sessionRecentsFooter'),
+  projectsFooter: $('#projectsFooter'),
+  newProjectButton: $('#newProjectButton'),
+  refreshProjectsButton: $('#refreshProjectsButton'),
   createSessionButton: $('#createSessionButton'),
   refreshSessionsButton: $('#refreshSessionsButton'),
   sessionRefreshIcon: $('#sessionRefreshIcon'),
@@ -1281,6 +1292,12 @@ let lastRemoteDiagnostic = null;
 let lastVisibleStatus = null;
 const openSessionGroups = new Set();
 const closedSessionGroups = new Set();
+// Sessions drawer tab (Recents | Projects). The Projects tab's state lives in
+// projectsController (lib/projects-controller.mjs); sidepanel only wires it.
+let sessionMenuTab = SESSION_MENU_TABS.recents;
+let projectsController = null;
+let projectsActivating = false;
+let projectsConnectError = '';
 const approvedForeignSessionIds = new Set();
 let pendingForeignTurn = null;
 let pendingContextMenuRequest = null;
@@ -6198,6 +6215,7 @@ async function executeNativeBrowserCommand(parsedCommand) {
     closeFloatingPanels();
     els.sessionMenu.hidden = false;
     els.sessionMenuButton.setAttribute('aria-expanded', 'true');
+    applySessionMenuTabOnOpen();
     await loadSessions({ quiet: true });
     els.sessionSearchInput.focus();
     return true;
@@ -16350,10 +16368,200 @@ async function openGroupThreadMenu() {
   return true;
 }
 
+// ── Sessions drawer: Recents | Projects ───────────────────────────────────
+// Thin wiring around lib/projects-controller.mjs and lib/projects-panel.mjs.
+// Projects need the dashboard WebSocket with session authority; without it the
+// tab says exactly why (PROJECTS_UNAVAILABLE) and Recents is unaffected.
+
+function projectsTabActive() {
+  return sessionMenuTab === SESSION_MENU_TABS.projects && !isBotModeEngaged();
+}
+
+function readStoredSessionMenuTab() {
+  try {
+    return normalizeSessionMenuTab(localStorage.getItem(SESSION_MENU_TAB_KEY));
+  } catch {
+    return SESSION_MENU_TABS.recents;
+  }
+}
+
+function storeSessionMenuTab(tab) {
+  try {
+    localStorage.setItem(SESSION_MENU_TAB_KEY, tab);
+  } catch {
+    /* storage unavailable: the tab is just not remembered */
+  }
+}
+
+// What the Projects tab needs to know about the connection, read fresh each
+// time. The identity (endpoint + signed-in principal + profile) scopes every
+// cache and answer, so another profile or host never shows these projects.
+function projectsConnectionSnapshot() {
+  const remote = isRemoteWsMode();
+  const connection = remote ? remoteWsConnection : activeDashboardWsConnection;
+  const client = connection?.client || null;
+  const endpoint = connection?.baseUrl || (remote ? settings.gatewayUrl : (desktopDashboardUrl || settings.gatewayUrl));
+  return {
+    token: client,
+    identityInput: {
+      endpoint,
+      principal: contextConsentBindingMatches() ? contextConsentPrincipalBinding.principal : '',
+      profile: safeActiveProfile(),
+    },
+    dashboardWs: Boolean(client) || remote,
+    request: client ? (method, params) => client.request(method, params) : null,
+    getReadyPayload: () => (client?.readyState === 1 ? client.readyPayload || null : null),
+    connectError: projectsConnectError,
+  };
+}
+
+// Opens the dashboard socket when this connection can have one (remote
+// dashboard mode, or a local dashboard that discovery already found). A plain
+// REST connection has none, and Projects then reports "rest-only".
+async function prepareProjectsConnection() {
+  const remote = isRemoteWsMode();
+  const connection = remote ? remoteWsConnection : activeDashboardWsConnection;
+  if (connection?.client?.readyState === 1) {
+    projectsConnectError = '';
+    return;
+  }
+  if (!remote && !desktopDashboardUrl) {
+    projectsConnectError = '';
+    return;
+  }
+  try {
+    await ensureActiveDashboardWsConnection();
+    projectsConnectError = '';
+  } catch (error) {
+    projectsConnectError = error?.message || String(error);
+  }
+}
+
+function getProjectsController() {
+  if (!projectsController) {
+    projectsController = createProjectsController({
+      getConnection: projectsConnectionSnapshot,
+      prepareConnection: prepareProjectsConnection,
+      openSession: openProjectSessionFromDrawer,
+      createSessionInFolder: createSessionInProjectFolder,
+      onSessionMoved: () => { void loadSessions({ quiet: true }); },
+      onReturnToRecents: () => setSessionMenuTab(SESSION_MENU_TABS.recents),
+      onChange: () => {
+        if (!els.sessionMenu.hidden && projectsTabActive()) renderProjectsTab();
+      },
+    });
+  }
+  return projectsController;
+}
+
+function openProjectSessionFromDrawer(row) {
+  const known = availableSessions.find((item) => item.id === row.id);
+  return openHermesSession(known || {
+    id: row.id,
+    title: row.title,
+    source: row.source || '',
+    model: row.model || '',
+    profile: row.profile || safeActiveProfile(),
+    messageCount: row.messageCount || 0,
+  });
+}
+
+async function createSessionInProjectFolder({ cwd, projectName }) {
+  await persistBrowserIntroSeen();
+  detachLiveSession();
+  sessionLoadRequestId += 1;
+  const created = await createHermesBrowserSession({ transport: 'dashboard-ws', cwd, focus: true });
+  if (!created) throw new Error(t('projects.new_session.not_started'));
+  els.sessionMenu.hidden = true;
+  els.sessionMenuButton.setAttribute('aria-expanded', 'false');
+  showOperationToast({ title: t('projects.new_session.started', { name: projectName }), detail: cwd });
+  void loadSessions({ quiet: true });
+}
+
+function syncSessionMenuChrome() {
+  const botEngaged = isBotModeEngaged();
+  const projectsActive = sessionMenuTab === SESSION_MENU_TABS.projects && !botEngaged;
+  els.sessionMenuTabs.hidden = botEngaged;
+  els.sessionMenuTabRecents.setAttribute('aria-pressed', String(!projectsActive));
+  els.sessionMenuTabProjects.setAttribute('aria-pressed', String(projectsActive));
+  els.sessionMenuList.hidden = projectsActive;
+  els.projectsPanel.hidden = !projectsActive;
+  els.sessionRecentsFooter.hidden = projectsActive;
+  els.projectsFooter.hidden = !projectsActive;
+  if (!projectsActive) {
+    els.sessionSearchInput.hidden = false;
+    els.sessionSearchInput.placeholder = t('ui.search.sessions');
+  }
+}
+
+function renderProjectsTab() {
+  const controller = getProjectsController();
+  controller.resolve();
+  if (controller.state.list.status === 'idle' && !projectsActivating) void activateProjectsTab();
+  const { state } = controller;
+  const listShown = state.list.status === 'ready' || state.list.status === 'refreshing';
+  const searchable = (state.view === 'list' && listShown) || state.view === 'project';
+  const footerShown = state.view === 'list' || state.view === 'project';
+  els.sessionSearchInput.hidden = !searchable;
+  els.sessionSearchInput.placeholder = t(state.view === 'project' ? 'projects.search_sessions' : 'projects.search');
+  if (els.sessionSearchInput.value !== state.query) els.sessionSearchInput.value = state.query;
+  els.projectsFooter.hidden = !footerShown;
+  els.newProjectButton.disabled = !controller.availability('projects.create').available;
+  renderProjectsPanel({ container: els.projectsPanel, controller, t, locale: getLocale() });
+}
+
+async function activateProjectsTab({ force = false } = {}) {
+  if (projectsActivating) return;
+  projectsActivating = true;
+  try {
+    await getProjectsController().activate({ force });
+  } finally {
+    projectsActivating = false;
+  }
+}
+
+function setSessionMenuTab(tab, { persist = false } = {}) {
+  sessionMenuTab = normalizeSessionMenuTab(tab);
+  if (persist) storeSessionMenuTab(sessionMenuTab);
+  els.sessionSearchInput.value = '';
+  if (projectsTabActive()) getProjectsController().setQuery('');
+  renderSessionMenu('');
+  if (projectsTabActive()) void activateProjectsTab();
+}
+
+// The remembered tab is used only on a connection that has, or is about to
+// open, a dashboard socket (remote dashboard mode, a discovered local
+// dashboard, or one already connected). A plain REST connection opens on
+// Recents and the preference stays for the next connection.
+function applySessionMenuTabOnOpen() {
+  const controller = getProjectsController();
+  controller.resetView();
+  const remembered = readStoredSessionMenuTab();
+  const usable = remembered === SESSION_MENU_TABS.projects
+    && !isBotModeEngaged()
+    && (controller.availability().available || isRemoteWsMode() || Boolean(desktopDashboardUrl));
+  setSessionMenuTab(usable ? SESSION_MENU_TABS.projects : SESSION_MENU_TABS.recents);
+}
+
+function openMoveToProjectFromRecents(session) {
+  sessionMenuTab = SESSION_MENU_TABS.projects;
+  els.sessionSearchInput.value = '';
+  const controller = getProjectsController();
+  controller.setQuery('');
+  renderSessionMenu('');
+  void controller.startMove(session, { returnTo: 'recents' });
+}
+
 function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
   scheduleLiveSessionPoll();
+  syncSessionMenuChrome();
+  if (projectsTabActive()) {
+    renderProjectsTab();
+    return;
+  }
   const groups = sessionMenuGroups(query);
   const searching = Boolean(String(query || '').trim());
+  const canMoveToProject = getProjectsController().availability().available;
   els.sessionMenuList.innerHTML = '';
   if (!groups.length) {
     const empty = document.createElement('div');
@@ -16543,6 +16751,19 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
       });
 
       actions.append(copyButton, renameButton);
+      if (canMoveToProject) {
+        const moveButton = document.createElement('button');
+        moveButton.type = 'button';
+        moveButton.className = 'session-action-button';
+        moveButton.textContent = t('projects.move.action');
+        moveButton.title = t('projects.move.action_title');
+        moveButton.setAttribute('aria-label', t('projects.move.action_for', { title: sessionDisplayName(session) }));
+        moveButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          openMoveToProjectFromRecents(session);
+        });
+        actions.append(moveButton);
+      }
       row.append(button, actions);
       els.sessionMenuList.appendChild(row);
     }
@@ -17187,7 +17408,7 @@ function preferredModelOptionsForNewSession() {
   });
 }
 
-async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), focus = true, hidden = false, transport = '', source = '', scopeRevisionId = scopeRevision.current() } = {}) {
+async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), focus = true, hidden = false, transport = '', source = '', cwd = '', scopeRevisionId = scopeRevision.current() } = {}) {
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   activeGroupGeneration += 1;
   abortAttachedGroupTurn();
@@ -17215,6 +17436,8 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
           title,
           hidden,
           ...(source === 'hermes_bot_mode' ? { follow_profile_config: true } : {}),
+          // A session started inside a project: the gateway-host folder is a deliberate pick.
+          ...(cwd ? { cwd, cwd_explicit: true } : {}),
           source: source || settings.sessionSource || DEFAULT_SETTINGS.sessionSource,
           ...dashboardSessionModelParams({
             model: requestModel,
@@ -17280,7 +17503,8 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
         connectionReadyState: connection?.client?.readyState || activeDashboardWsConnection?.client?.readyState,
         error: wsError,
       });
-      if (source === 'hermes_bot_mode' || preserveDashboardTransport || isRemoteWsMode()) {
+      // A session meant for a project folder must never fall back to REST, which would create it elsewhere.
+      if (source === 'hermes_bot_mode' || preserveDashboardTransport || isRemoteWsMode() || cwd) {
         console.warn('[Hermes Browser] dashboard-ws session creation failed; preserving the active transport:', wsError?.message || wsError);
         throw wsError;
       }
@@ -24542,6 +24766,15 @@ function bindEvents() {
     panel.addEventListener('click', (event) => event.stopPropagation());
     panel.addEventListener('pointerdown', (event) => event.stopPropagation());
   });
+  // Escape inside a project, the create form or the move picker steps back to the project list first.
+  els.sessionMenu.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !projectsTabActive()) return;
+    const controller = getProjectsController();
+    if (controller.state.view === 'list' || controller.state.move?.step === 'working' || controller.state.create?.status === 'submitting') return;
+    event.preventDefault();
+    event.stopPropagation();
+    controller.back();
+  });
   els.connectButton.addEventListener('click', connectToHermes);
   els.startupConnectButton?.addEventListener('click', () => {
     connectToHermes().catch((error) => {
@@ -24555,6 +24788,7 @@ function bindEvents() {
     els.sessionMenu.hidden = nextHidden;
     els.sessionMenuButton.setAttribute('aria-expanded', String(!nextHidden));
     if (!nextHidden) {
+      applySessionMenuTabOnOpen();
       await loadSessions({ quiet: true });
       els.sessionSearchInput.focus();
       els.sessionSearchInput.select();
@@ -24596,7 +24830,14 @@ function bindEvents() {
     }
   });
   els.refreshSessionsButton.addEventListener('click', refreshSessionsFromMenu);
-  els.sessionSearchInput.addEventListener('input', () => renderSessionMenu(els.sessionSearchInput.value));
+  els.sessionSearchInput.addEventListener('input', () => {
+    if (projectsTabActive()) getProjectsController().setQuery(els.sessionSearchInput.value);
+    else renderSessionMenu(els.sessionSearchInput.value);
+  });
+  els.sessionMenuTabRecents.addEventListener('click', () => setSessionMenuTab(SESSION_MENU_TABS.recents, { persist: true }));
+  els.sessionMenuTabProjects.addEventListener('click', () => setSessionMenuTab(SESSION_MENU_TABS.projects, { persist: true }));
+  els.newProjectButton.addEventListener('click', () => getProjectsController().startCreate());
+  els.refreshProjectsButton.addEventListener('click', () => { void activateProjectsTab({ force: true }); });
   els.closeSettingsButton.addEventListener('click', closeSettingsDialog);
   els.messages.addEventListener('click', (event) => {
       if (interceptChatLinkClick(event, { tabsApi: browserApi?.tabs, windowOpen: window.open.bind(window) })) return;
