@@ -54,6 +54,7 @@ function freshState() {
  * @param {(session: object) => any} options.openSession  open a session in the chat
  * @param {(args: {cwd: string, projectName: string}) => Promise<any>} options.createSessionInFolder
  * @param {(move: object) => void} [options.onSessionMoved]  a move was read back and committed
+ * @param {() => void} [options.onReturnToRecents]  Back from a move that was started in Recents
  * @param {() => void} options.onChange
  */
 export function createProjectsController({
@@ -62,6 +63,7 @@ export function createProjectsController({
   openSession,
   createSessionInFolder,
   onSessionMoved = () => {},
+  onReturnToRecents = () => {},
   onChange = () => {},
 } = {}) {
   let state = freshState();
@@ -91,20 +93,22 @@ export function createProjectsController({
     if (!entry || entry.key !== key || entry.token !== (connection?.token ?? null)) {
       generation += 1;
       const unsupported = new Set();
+      const holder = { connection };
       const request = (method, params) => {
-        if (!connection?.request) return Promise.reject(new Error('Hermes dashboard is not connected.'));
-        return connection.request(method, params);
+        if (!holder.connection?.request) return Promise.reject(new Error('Hermes dashboard is not connected.'));
+        return holder.connection.request(method, params);
       };
       entry = {
         key,
         token: connection?.token ?? null,
+        holder,
         connection,
         unsupported,
         request,
         client: createProjectsClient({
           request,
           dashboardWs: connection?.dashboardWs === true,
-          getReadyPayload: () => connection?.getReadyPayload?.() || null,
+          getReadyPayload: () => holder.connection?.getReadyPayload?.() || null,
           endpoint: connection?.identityInput?.endpoint || '',
           principal: connection?.identityInput?.principal || '',
           profile: connection?.identityInput?.profile || '',
@@ -117,6 +121,7 @@ export function createProjectsController({
       };
     }
     entry.connection = connection;
+    entry.holder.connection = connection;
     return entry;
   }
 
@@ -202,14 +207,14 @@ export function createProjectsController({
 
   // ---- A project's sessions --------------------------------------------
 
-  async function loadProject(id, { force = false } = {}) {
+  async function loadProject(id, { force = false, keepView = false } = {}) {
     const current = resolve();
     const token = generation;
     const row = state.list.rows.find((item) => item.id === id) || null;
     const previous = state.project?.id === id ? state.project : null;
     state = {
       ...state,
-      view: 'project',
+      view: keepView ? state.view : 'project',
       project: {
         id,
         row,
@@ -247,11 +252,21 @@ export function createProjectsController({
   function back() {
     const returnTo = state.move?.returnTo || 'list';
     if (state.view === 'move') {
-      state = { ...state, view: returnTo === 'project' && state.project ? 'project' : 'list', move: null };
+      state = { ...state, view: returnTo === 'project' && state.project ? 'project' : 'list', move: null, query: '' };
+      if (returnTo === 'recents') {
+        emit();
+        onReturnToRecents();
+        return;
+      }
     } else {
       state = { ...state, view: 'list', project: null, create: null, query: '' };
     }
     emit();
+  }
+
+  /** Back to the project list with nothing half-open: used each time the drawer opens. */
+  function resetView() {
+    state = { ...state, view: 'list', project: null, create: null, move: null, notice: null, query: '' };
   }
 
   function dismissNotice() {
@@ -313,6 +328,7 @@ export function createProjectsController({
     const created = result.data.project;
     state = {
       ...state,
+      view: 'list',
       create: null,
       notice: { tone: 'ok', key: 'projects.create.done', params: { name: created.name } },
     };
@@ -454,7 +470,7 @@ export function createProjectsController({
         // The drawer refresh below does not depend on the host's hook.
       }
       await loadList({ force: true });
-      if (stillCurrent(token) && state.project) await loadProject(state.project.id, { force: true });
+      if (stillCurrent(token) && state.project) await loadProject(state.project.id, { force: true, keepView: true });
     }
   }
 
@@ -505,6 +521,7 @@ export function createProjectsController({
     setQuery,
     openProject,
     back,
+    resetView,
     dismissNotice,
     startCreate,
     updateCreate,

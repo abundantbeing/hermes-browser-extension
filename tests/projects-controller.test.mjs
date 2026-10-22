@@ -385,3 +385,78 @@ test('opening a project session goes through the panel callback', async () => {
   await controller.openProjectSession({ id: 'S1', title: 'Fix login' });
   assert.deepEqual(events.opened, [{ id: 'S1', title: 'Fix login' }]);
 });
+
+test('a move started inside a project keeps its result on screen while the project re-reads', async () => {
+  const { controller } = harness({ gatewayOptions: { cwd: '/srv/atlas/src' } });
+  await controller.activate();
+  await controller.openProject('p_a');
+  await controller.startMove({ id: 'S1', title: 'Fix login', cwd: '/srv/atlas/src' }, { returnTo: 'project' });
+  controller.chooseMoveTarget('p_b');
+  await controller.confirmMove();
+  assert.equal(controller.state.view, 'move', 'the confirmation is not replaced by the refreshed project');
+  assert.equal(controller.state.move.outcome.status, 'moved');
+  assert.equal(controller.state.project.status, 'ready');
+  assert.equal(controller.state.project.node.sessionCount, 0, 'the project it left no longer holds the session');
+  controller.back();
+  assert.equal(controller.state.view, 'project');
+});
+
+test('Back from a move started in Recents hands control back to Recents', async () => {
+  const calls = [];
+  const gateway = fakeGateway();
+  const controller = createProjectsController({
+    getConnection: () => ({
+      token: 1,
+      identityInput: { endpoint: 'https://hermes.example.com', principal: 'u', profile: 'work' },
+      dashboardWs: true,
+      request: gateway.request,
+      getReadyPayload: () => READY,
+    }),
+    openSession() {},
+    createSessionInFolder: async () => {},
+    onReturnToRecents: () => calls.push('recents'),
+  });
+  await controller.startMove({ id: 'S1', title: 'x', cwd: '' }, { returnTo: 'recents' });
+  controller.back();
+  assert.deepEqual(calls, ['recents']);
+  assert.equal(controller.state.view, 'list');
+});
+
+test('resetView returns to the project list but keeps the loaded rows', async () => {
+  const { controller } = harness();
+  await controller.activate();
+  await controller.openProject('p_a');
+  controller.setQuery('x');
+  controller.resetView();
+  assert.equal(controller.state.view, 'list');
+  assert.equal(controller.state.project, null);
+  assert.equal(controller.state.query, '');
+  assert.equal(controller.state.list.rows.length, 2);
+});
+
+test('a lost move answer is reconciled by reading, never by a blind second write', async () => {
+  const gateway = fakeGateway();
+  const original = gateway.request;
+  let mutates = 0;
+  let dropNext = true;
+  gateway.request = async (method, params) => {
+    if (method === 'session.mutate') {
+      mutates += 1;
+      const receipt = await original(method, params);
+      if (dropNext) {
+        dropNext = false;
+        throw new Error('WebSocket is not open');
+      }
+      return receipt;
+    }
+    return original(method, params);
+  };
+  const { controller, events } = harness({ gateway });
+  await controller.activate();
+  await controller.startMove({ id: 'S1', title: 'Fix login', cwd: '/srv/scratch' });
+  controller.chooseMoveTarget('p_a');
+  await controller.confirmMove();
+  assert.equal(mutates, 1);
+  assert.equal(controller.state.move.outcome.status, 'moved', 'the write landed and was found by reading');
+  assert.equal(events.moved.length, 1);
+});
