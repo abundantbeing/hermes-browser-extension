@@ -4623,7 +4623,6 @@ textarea:focus, input:focus, select:focus { border-color: var(--hermes-accent); 
 .composer-actions #browserControlMenuButton svg { display: block; width: 16px; height: 16px; }
 /* Commands sits beside Hermes Control. The popup anchors to the row, so it opens above the actions. */
 .composer-commands { display: inline-flex; flex: 0 0 auto; margin-left: auto; }
-.composer-commands > .quick-more-menu { left: auto; right: 0; width: min(318px, 100%); }
 .composer-actions:has(.bot-mode-threads-button:not([hidden])) .composer-commands,
 .composer-actions:has(#pageCommentTrayButton:not([hidden])) .composer-commands { margin-left: 0; }
 .composer-actions .composer-commands-button {
@@ -5373,15 +5372,25 @@ button.active-profile-indicator {
   overflow: hidden;
 }
 .model-menu-head { display: none; }
-/* Chat-side menus open just above the chip or ring that opened them, not above the whole dock. */
-.model-menu:not([data-floating]):not([data-selection-target="assist"]):not([data-selection-target="room-member"]) {
-  bottom: calc(var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) + 6px);
-  max-height: min(480px, calc(100vh - var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) - 18px));
+/* Composer popovers share one placement. Each hangs above the composer card and matches its width.
+   JS (positionComposerPopovers) sets the --hermes-composer-* values from the card's live rect; the
+   fallback is the dock height. They live in the shell, outside the dock, so no ancestor clips them. */
+#quickMoreMenu,
+#skillMenu,
+#contextPopover,
+#modelMenu:not([data-floating]):not([data-selection-target="assist"]):not([data-selection-target="room-member"]) {
+  position: absolute;
+  left: var(--hermes-composer-left, 8px);
+  right: auto;
+  width: var(--hermes-composer-width, calc(100% - 16px));
+  bottom: var(--hermes-composer-bottom, calc(var(--hermes-bottom-dock-height, 0px) + 6px));
 }
-.context-popover {
-  bottom: calc(var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) + 6px);
-  max-height: calc(100vh - var(--hermes-composer-anchor-height, var(--hermes-bottom-dock-height, 0px)) - 18px);
+#quickMoreMenu { max-height: min(386px, var(--hermes-composer-space, 70vh)); }
+#skillMenu { max-height: min(180px, var(--hermes-composer-space, 180px)); }
+#modelMenu:not([data-floating]):not([data-selection-target="assist"]):not([data-selection-target="room-member"]) {
+  max-height: min(480px, var(--hermes-composer-space, 70vh));
 }
+#contextPopover { max-height: var(--hermes-composer-space, 70vh); }
 .model-menu[data-selection-target="assist"],
 .model-menu[data-selection-target="room-member"] {
   position: fixed;

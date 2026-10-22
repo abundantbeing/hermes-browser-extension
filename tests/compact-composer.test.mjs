@@ -43,7 +43,9 @@ test('Commands is an icon button beside Hermes Control, with its popup anchored 
   const commands = html.match(/<button id="commandMenuButton"[\s\S]*?<\/button>/)?.[0] || '';
   assert.match(commands, /class="composer-commands-button"/);
   assert.match(commands, /data-icon="terminal"/);
-  assert.match(actions, /<span class="composer-commands">\s*<button id="commandMenuButton"[\s\S]*?<section id="quickMoreMenu"[\s\S]*?<\/span>/);
+  assert.match(actions, /<span class="composer-commands">\s*<button id="commandMenuButton"[\s\S]*?<\/span>/);
+  // The popup itself lives in the shell, outside the dock, so the dock's backdrop filter cannot clip or re-anchor it.
+  assert.match(html, /<\/footer>\s*<section id="skillMenu"[\s\S]*?<section id="quickMoreMenu"[\s\S]*?<\/main>/);
   assert.ok(
     actions.indexOf('id="commandMenuButton"') < actions.indexOf('id="browserControlMenuButton"'),
     'Commands sits directly before Hermes Control',
