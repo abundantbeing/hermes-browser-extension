@@ -72,6 +72,9 @@ test('the commands, skill, context and model popovers share one placement above 
   assert.match(shared, /left:\s*var\(--hermes-composer-left/, 'the popovers take the composer card left edge');
   assert.match(shared, /width:\s*var\(--hermes-composer-width/, 'the popovers take the composer card width');
   assert.match(shared, /bottom:\s*var\(--hermes-composer-bottom/, 'the popovers hang from the composer card top edge');
+  assert.match(shared, /#profileSwitchMenu,\s*#roomMemberPopover,/, 'the avatar menus join the shared placement');
+  assert.match(css, /#profileSwitchMenu\s*\{[^}]*max-height:\s*min\(280px,\s*var\(--hermes-composer-space/s, 'the profile menu caps its height to the space above the composer');
+  assert.match(css, /#roomMemberPopover\s*\{[^}]*max-height:\s*min\(60vh,\s*var\(--hermes-composer-space/s, 'the room roster caps its height to the space above the composer');
   assert.match(css, /#quickMoreMenu\s*\{[^}]*max-height:\s*min\(386px,\s*var\(--hermes-composer-space/s, 'the commands popup caps its height to the space above the composer');
   assert.match(css, /#contextPopover\s*\{[^}]*max-height:\s*var\(--hermes-composer-space/s, 'the context popover caps its height to the space above the composer');
   assert.doesNotMatch(css, /--hermes-composer-anchor-height/, 'the old per-control anchor is gone');
@@ -88,6 +91,8 @@ test('one helper measures the composer card and drives every popover on open, re
   assert.match(observer, /globalThis\.addEventListener\?\.\('resize', positionComposerPopovers\)/, 're-measures on window resize');
   assert.match(observer, /new globalThis\.ResizeObserver\(positionComposerPopovers\)/, 're-measures when the card, top bar or text area changes size');
   assert.match(observer, /attributeFilter: \['hidden'\]/, 're-measures whenever a popover opens, from a button or from typing /');
+  assert.match(observer, /els\.roomMemberPopover/, 'the room roster re-measures when it opens');
+  assert.match(observer, /getElementById\('profileSwitchMenu'\)/, 'the avatar profile menu re-measures when it opens');
   assert.match(js, /\nobserveComposerPopovers\(\);\n/, 'the helper starts at boot');
   assert.doesNotMatch(js, /observeComposerAnchor/, 'the old per-control anchor helper is gone');
 });
