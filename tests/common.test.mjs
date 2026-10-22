@@ -3038,21 +3038,16 @@ test('sidepanel CSS constrains narrow panel overflow and keeps Hermes scrollbars
   assert.doesNotMatch(scrollbarBlock, /repeating-linear-gradient/, 'scrollbars should not use the mistaken textured replacement');
 });
 
-test('refresh page context button animates while refreshContext is running', () => {
+test('composer has no refresh button; the context popover owns the manual refresh', () => {
   const html = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
-  assert.match(html, /id="refreshButton"[\s\S]*?<svg class="refresh-glyph"[^>]*viewBox="0 0 24 24"/);
-  assert.match(css, /@keyframes hermesRefreshSpin/);
-  assert.match(css, /\.icon-refresh\.is-refreshing/);
-  assert.match(css, /\.icon-refresh\.is-refreshing\s+\.refresh-glyph\s*\{[^}]*animation:\s*hermesRefreshSpin/s);
-  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\.icon-refresh\.is-refreshing\s+\.refresh-glyph\s*\{[^}]*animation:\s*none/s);
-  assert.doesNotMatch(css, /\.icon-refresh\.is-refreshing::before/);
-  assert.doesNotMatch(css, /\.icon-refresh\.is-refreshing\s*\{[^}]*font-size:\s*0/s);
-  assert.match(source, /const REFRESH_BUTTON_MIN_BUSY_MS = 520/);
-  assert.match(source, /await waitForRefreshButtonSpin\(startedAt\)/);
-  assert.match(source, /function setRefreshButtonBusy\(busy\)/);
-  assert.match(source, /refreshButton\.addEventListener\('click',[\s\S]*?refreshContextWithSpin\(\)/);
+  assert.doesNotMatch(html, /id="refreshButton"/);
+  assert.doesNotMatch(css, /\.icon-refresh/);
+  assert.doesNotMatch(css, /hermesRefreshSpin/);
+  assert.doesNotMatch(source, /refreshButton|REFRESH_BUTTON_MIN_BUSY_MS|waitForRefreshButtonSpin|setRefreshButtonBusy|refreshContextWithSpin/);
+  assert.match(html, /<section id="contextPopover"[\s\S]*?id="contextPageRefreshButton"/);
+  assert.match(source, /els\.contextPageRefreshButton\?\.addEventListener\('click',[\s\S]*?refreshContextFromUser\(\)/);
 });
 
 test('browser session auto-name helpers identify default titles and summarize first turn', () => {

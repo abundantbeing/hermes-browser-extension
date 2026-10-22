@@ -839,7 +839,6 @@ const els = {
   voiceActivityLabel: $('#voiceActivityLabel'),
   voiceActivityTimer: $('#voiceActivityTimer'),
   voiceActivityBars: $('#voiceActivityBars'),
-  refreshButton: $('#refreshButton'),
   contextPageRefreshButton: $('#contextPageRefreshButton'),
   settingsButton: $('#settingsButton'),
   botModeButton: $('#botModeButton'),
@@ -2127,8 +2126,7 @@ function hermesGatewayKey() {
   return settings[String.fromCharCode(97, 112, 105) + String.fromCharCode(75, 101, 121)] || "";
 }
 let modelsRefreshing = false;
-let contextRefreshingFromButton = false;
-const REFRESH_BUTTON_MIN_BUSY_MS = 520;
+let contextRefreshingFromUser = false;
 const CONNECTION_PROBE_INTERVAL_MS = 30_000;
 
 // remote-dashboard mode authenticates over the dashboard WebSocket with a
@@ -6005,7 +6003,7 @@ async function executeNativeBrowserCommand(parsedCommand) {
   }
 
   if (action === 'refresh') {
-    refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
+    refreshContextFromUser().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
     return true;
   }
   if (action === 'command-help') {
@@ -20745,37 +20743,25 @@ async function refreshContext(options = {}) {
   return currentContext;
 }
 
-function setRefreshButtonBusy(busy) {
-  if (els.refreshButton) {
-    els.refreshButton.classList.toggle('is-refreshing', Boolean(busy));
-    els.refreshButton.setAttribute('aria-busy', String(Boolean(busy)));
-    els.refreshButton.disabled = Boolean(busy);
-  }
-  if (els.explicitSiteCaptureButton) {
-    els.explicitSiteCaptureButton.setAttribute('aria-busy', String(Boolean(busy)));
-    els.explicitSiteCaptureButton.disabled = Boolean(busy);
-  }
+function setContextPageRefreshBusy(busy) {
+  if (!els.contextPageRefreshButton) return;
+  els.contextPageRefreshButton.disabled = Boolean(busy);
+  els.contextPageRefreshButton.setAttribute('aria-busy', String(Boolean(busy)));
 }
 
-function waitForRefreshButtonSpin(startedAt) {
-  const elapsed = performance.now() - startedAt;
-  const remaining = Math.max(0, REFRESH_BUTTON_MIN_BUSY_MS - elapsed);
-  return remaining ? new Promise((resolve) => setTimeout(resolve, remaining)) : Promise.resolve();
-}
-
-async function refreshContextWithSpin(options = {}) {
-  if (contextRefreshingFromButton) return currentContext;
-  contextRefreshingFromButton = true;
-  const startedAt = performance.now();
-  setRefreshButtonBusy(true);
+// The manual escape hatch (popover Refresh and /refresh): a full capture, and
+// the next send re-delivers the whole context even when its hash is unchanged.
+async function refreshContextFromUser() {
+  if (contextRefreshingFromUser) return currentContext;
+  contextRefreshingFromUser = true;
+  setContextPageRefreshBusy(true);
   try {
-    const refreshed = await refreshContext(options);
+    const refreshed = await refreshContext();
     forceFullContextNextTurn = true;
     return refreshed;
   } finally {
-    await waitForRefreshButtonSpin(startedAt);
-    contextRefreshingFromButton = false;
-    setRefreshButtonBusy(false);
+    contextRefreshingFromUser = false;
+    setContextPageRefreshBusy(false);
   }
 }
 
@@ -24300,11 +24286,8 @@ function bindEvents() {
       els.contextBarButton.setAttribute('aria-expanded', 'false');
     }
   });
-  els.refreshButton.addEventListener('click', () => {
-    refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
-  });
   els.contextPageRefreshButton?.addEventListener('click', () => {
-    refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
+    refreshContextFromUser().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
   });
   els.explicitSiteCaptureButton?.addEventListener('click', async () => {
     try {

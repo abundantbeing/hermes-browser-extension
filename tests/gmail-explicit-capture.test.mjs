@@ -18,8 +18,8 @@ test('production side panel exposes one explicit Gmail thread-capture action', (
   assert.match(source, /explicitSiteCapture:\s*Boolean\(options\.explicitSiteCapture\)/);
   assert.match(source, /function refreshContext\(options = \{\}\)/);
   assert.match(source, /getPageContext\(tab, options\)/);
-  assert.match(source, /function refreshContextWithSpin\(options = \{\}\)/);
-  assert.match(source, /await refreshContext\(options\)/);
+  assert.match(source, /async function refreshContextFromUser\(\)/);
+  assert.match(source, /const refreshed = await refreshContext\(\);/);
   assert.match(
     source,
     /els\.explicitSiteCaptureButton\?\.addEventListener\('click',[\s\S]*?await persistGmailCaptureEnabled\(true\);[\s\S]*?refreshContext\(\{ explicitSiteCapture: true \}\)/,
@@ -29,7 +29,7 @@ test('production side panel exposes one explicit Gmail thread-capture action', (
 
 test('normal context refresh derives approval from settings instead of unconditionally enabling it', () => {
   const source = read('extension/sidepanel.js');
-  const handler = source.match(/els\.refreshButton\.addEventListener\('click', \(\) => \{[\s\S]*?\n\x20{2}\}\);/)?.[0] || '';
-  assert.match(handler, /refreshContextWithSpin\(\)/);
+  const handler = source.match(/els\.contextPageRefreshButton\?\.addEventListener\('click', \(\) => \{[\s\S]*?\n\x20{2}\}\);/)?.[0] || '';
+  assert.match(handler, /refreshContextFromUser\(\)/);
   assert.doesNotMatch(handler, /explicitSiteCapture/);
 });

@@ -145,7 +145,7 @@ test('sidepanel async scope publication is revision-guarded at storage and captu
   const loadStart = source.indexOf('async function loadMessagesForActiveScope');
   const loadEnd = source.indexOf('\nasync function saveMessagesForActiveScope', loadStart);
   const refreshStart = source.indexOf('async function refreshContext(options');
-  const refreshEnd = source.indexOf('\nfunction setRefreshButtonBusy', refreshStart);
+  const refreshEnd = source.indexOf('\nfunction setContextPageRefreshBusy', refreshStart);
   const loadRegion = source.slice(loadStart, loadEnd);
   const refreshRegion = source.slice(refreshStart, refreshEnd);
   assert.match(loadRegion, /scopeRevision/);

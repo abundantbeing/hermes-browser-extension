@@ -16,8 +16,8 @@ test('/refresh is one native command that every surface can run', () => {
 
 test('side panel /refresh runs the same refresh as the context popover action', () => {
   const source = read('extension/sidepanel.js');
-  assert.match(source, /if \(action === 'refresh'\) \{[\s\S]{0,200}refreshContextWithSpin\(\)/);
-  assert.match(source, /els\.contextPageRefreshButton\?\.addEventListener\('click', \(\) => \{[\s\S]{0,200}refreshContextWithSpin\(\)/);
+  assert.match(source, /if \(action === 'refresh'\) \{[\s\S]{0,200}refreshContextFromUser\(\)/);
+  assert.match(source, /els\.contextPageRefreshButton\?\.addEventListener\('click', \(\) => \{[\s\S]{0,200}refreshContextFromUser\(\)/);
 });
 
 test('full tab /refresh still refreshes synced sessions', () => {

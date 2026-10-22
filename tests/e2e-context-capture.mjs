@@ -132,7 +132,7 @@ try {
   await panel.call('Emulation.setDeviceMetricsOverride', { width: 440, height: 900, deviceScaleFactor: 1, mobile: false });
   await wait(() => panel.eval('document.querySelector("#startupScreen")?.hidden && !document.querySelector("#promptInput")?.disabled'));
   await worker.eval(`chrome.tabs.update(${mailTab.id}, {active: true})`);
-  await panel.eval('document.querySelector("#refreshButton").click()');
+  await panel.eval('document.querySelector("#contextPageRefreshButton").click()');
   await wait(() => panel.eval(articleCase ? 'document.querySelector("#contextPreview").innerText.includes("LONG_ARTICLE_START")' : '!document.querySelector("#explicitSiteCaptureWrap").hidden'));
   await panel.eval('document.querySelector("#contextScopeButton").click()');
   await wait(() => panel.eval(`Boolean(document.querySelector('[data-scope-action="pin-tab:${mailTab.id}"]'))`));

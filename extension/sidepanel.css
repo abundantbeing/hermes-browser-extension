@@ -5146,17 +5146,6 @@ button.active-profile-indicator {
   50% { -webkit-mask-position: 0 0; mask-position: 0 0; }
   75% { -webkit-mask-position: 35.4% 0; mask-position: 35.4% 0; }
 }
-.icon-refresh {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  min-width: 36px;
-  height: 36px;
-  min-height: 36px;
-  padding: 0 !important;
-  line-height: 1;
-}
 .refresh-glyph {
   display: block;
   width: 16px;
@@ -5165,21 +5154,7 @@ button.active-profile-indicator {
   transform-box: fill-box;
   transform-origin: 50% 50%;
 }
-.icon-refresh.is-refreshing {
-  color: var(--hermes-accent);
-  border-color: var(--hermes-accent);
-  cursor: progress;
-}
-.icon-refresh.is-refreshing .refresh-glyph {
-  animation: hermesRefreshSpin 520ms linear infinite;
-}
-@keyframes hermesRefreshSpin {
-  to { transform: rotate(360deg); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .icon-refresh.is-refreshing .refresh-glyph {
-    animation: none;
-  }
   /* Hold at two bars instead of climbing. */
   .settings-connection-test.is-testing .settings-connection-test-icon,
   #testConnectionButton[data-signal="searching"] .settings-connection-test-icon {
