@@ -1178,6 +1178,8 @@ html[data-hermes-mode="light"] .startup-screen::before { opacity: 0.07; }
   z-index: -1;
   width: 100%;
   height: auto;
+  /* The caps rise above the viewBox top; the screen itself does the clipping. */
+  overflow: visible;
   pointer-events: none;
 }
 .startup-backtype text {
@@ -5947,6 +5949,149 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
   padding: 6px 9px;
   font-size: calc(10px * var(--hermes-text-zoom, 1));
   white-space: nowrap;
+}
+
+/* Context window card: the popover and Settings > Sessions & Context render the
+   same model (lib/context-usage-view.mjs). Categories are told apart by pixel
+   fill patterns in the surface's own foreground colour, so every theme, light
+   or dark, keeps them legible without a palette of its own. */
+.context-usage-card {
+  --context-usage-ink: rgba(var(--hermes-fg-rgb), 0.92);
+  --context-usage-line: rgba(var(--hermes-fg-rgb), 0.44);
+  display: grid;
+  gap: 7px;
+  margin-top: 9px;
+  min-width: 0;
+  color: rgba(var(--hermes-fg-rgb), 0.92);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  line-height: 1.25;
+}
+.context-usage-card:empty { display: none; }
+.context-usage-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.context-usage-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 700 calc(12px * var(--hermes-text-zoom, 1))/1.2 var(--hermes-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.context-usage-percent { flex: 0 0 auto; font-family: var(--hermes-font-mono); font-variant-numeric: tabular-nums; }
+.context-usage-card[data-level="warn"] .context-usage-percent { color: var(--hermes-warning); }
+.context-usage-card[data-level="full"] .context-usage-percent { color: var(--danger); }
+.context-usage-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  color: rgba(var(--hermes-fg-rgb), 0.62);
+  font-family: var(--hermes-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.context-usage-bar {
+  position: relative;
+  display: flex;
+  height: 10px;
+  border: 1px solid var(--context-usage-line);
+  background: rgba(var(--hermes-fg-rgb), 0.08);
+}
+.context-usage-card[data-level="warn"] .context-usage-bar { border-color: var(--hermes-warning); }
+.context-usage-card[data-level="full"] .context-usage-bar { border-color: var(--danger); }
+.context-usage-segment {
+  flex: 0 0 auto;
+  min-width: 2px;
+  height: 100%;
+  background: var(--context-usage-fill, var(--context-usage-ink));
+}
+.context-usage-segment + .context-usage-segment { box-shadow: inset 1px 0 0 var(--hermes-menu-bg); }
+.context-usage-marker {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--hermes-warning);
+}
+.context-usage-legend,
+.context-usage-insights { margin: 0; padding: 0; list-style: none; }
+.context-usage-legend { display: grid; gap: 4px; }
+.context-usage-legend li {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto 3.4em;
+  align-items: center;
+  gap: 7px;
+}
+.context-usage-swatch {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--context-usage-line);
+  background: var(--context-usage-fill, var(--context-usage-ink));
+}
+.context-usage-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(var(--hermes-fg-rgb), 0.72); }
+.context-usage-tokens,
+.context-usage-share { font-family: var(--hermes-font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.context-usage-share { color: rgba(var(--hermes-fg-rgb), 0.55); }
+.context-usage-card [data-category="conversation"] { --context-usage-fill: var(--context-usage-ink); }
+.context-usage-card [data-category="system_prompt"] { --context-usage-fill: rgba(var(--hermes-fg-rgb), 0.5); }
+.context-usage-card [data-category="tool_definitions"] { --context-usage-fill: repeating-conic-gradient(var(--context-usage-ink) 0 25%, transparent 0 50%) 0 0 / 4px 4px; }
+.context-usage-card [data-category="rules"] { --context-usage-fill: repeating-linear-gradient(0deg, var(--context-usage-ink) 0 2px, transparent 2px 4px); }
+.context-usage-card [data-category="skills"] { --context-usage-fill: repeating-linear-gradient(90deg, var(--context-usage-ink) 0 2px, transparent 2px 4px); }
+.context-usage-card [data-category="mcp"] { --context-usage-fill: repeating-linear-gradient(45deg, var(--context-usage-ink) 0 2px, transparent 2px 4px); }
+.context-usage-card [data-category="subagent_definitions"] { --context-usage-fill: conic-gradient(var(--context-usage-ink) 0 25%, transparent 0) 0 0 / 4px 4px; }
+.context-usage-card [data-category="memory"] { --context-usage-fill: repeating-linear-gradient(-45deg, var(--context-usage-ink) 0 2px, transparent 2px 4px); }
+.context-usage-card [data-category="other"],
+.context-usage-card [data-category="in_use"] { --context-usage-fill: rgba(var(--hermes-fg-rgb), 0.36); }
+.context-usage-insights { display: grid; gap: 4px; }
+.context-usage-insights li {
+  position: relative;
+  padding-left: 12px;
+  color: rgba(var(--hermes-fg-rgb), 0.78);
+}
+.context-usage-insights li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 6px;
+  height: 6px;
+  background: rgba(var(--hermes-fg-rgb), 0.45);
+}
+.context-usage-insights li[data-tone="warn"]::before { background: var(--hermes-warning); }
+.context-usage-insights li[data-tone="danger"]::before { background: var(--danger); }
+.context-usage-insights li[data-tone="danger"] { color: rgba(var(--hermes-fg-rgb), 0.95); }
+.context-usage-source {
+  margin: 0;
+  color: rgba(var(--hermes-fg-rgb), 0.55);
+  font: calc(9px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-mono);
+}
+.context-usage-detail {
+  margin: 8px 0 0;
+  color: rgba(var(--hermes-fg-rgb), 0.62);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  line-height: 1.3;
+}
+.context-refresh-button {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(var(--hermes-fg-rgb), 0.72);
+  cursor: pointer;
+}
+.context-refresh-button:hover { border-color: var(--context-usage-line, rgba(var(--hermes-fg-rgb), 0.44)); color: rgba(var(--hermes-fg-rgb), 0.95); }
+.context-refresh-button:disabled { opacity: 0.45; cursor: progress; }
+.context-refresh-button[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .context-usage-segment { transition: width 160ms ease; }
 }
 
 .settings-dialog {
