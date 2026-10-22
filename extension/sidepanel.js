@@ -15797,6 +15797,21 @@ function applyResponsePresentation() {
 
 // Instant-apply like the rest of Appearance: the choice shows at once and is
 // written through the same queue, so it never races a theme or zoom write.
+// A panel in another window (or its setup) chose a style: follow it, so this
+// panel's next full settings write can't put the old style back. A setup
+// preselection that was never saved is left alone.
+function adoptStoredResponsePresentation(stored = {}) {
+  if (!Object.hasOwn(stored, 'responseStyle') && !Object.hasOwn(stored, 'messageLayout')) return;
+  const before = responsePresentationFromSettings(settings);
+  const after = responsePresentationFromSettings({ ...settings, ...stored });
+  if (before.responseStyle === after.responseStyle && before.messageLayout === after.messageLayout) return;
+  settings = withResponsePresentationUpdate(settings, after);
+  applyResponsePresentation();
+  renderResponsePresentationControls();
+  onboardingFlow?.render();
+  if (before.responseStyle !== after.responseStyle && messages.length && !sending) renderMessagesFromStorage();
+}
+
 async function setResponsePresentation(patch = {}) {
   const before = responsePresentationFromSettings(settings);
   settings = withResponsePresentationUpdate(settings, patch);
@@ -25247,6 +25262,7 @@ function bindEvents() {
           updateConnectionPrompt();
           renderBrowserControl();
         }
+        adoptStoredResponsePresentation(next);
       }
     }
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
