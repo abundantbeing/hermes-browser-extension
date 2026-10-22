@@ -725,6 +725,37 @@ function metricRun(lines, start) {
   return items.length ? { items, end: index } : null;
 }
 
+// A run of `- **Label:** short text` lines that are not all numbers: facts as
+// label and value. Values holding links, code or emphasis stay Markdown.
+function keyValueRun(lines, start) {
+  const items = [];
+  let index = start;
+  while (index < lines.length && shortLine(lines[index]) && METRIC_LINE.test(lines[index])) {
+    const [, label, rest] = METRIC_LINE.exec(lines[index]);
+    const value = rest.trim();
+    if (!value || value.length > 120 || /[[\]`*]|\]\(/.test(value)) return null;
+    items.push({ key: label.trim(), value });
+    index += 1;
+  }
+  return items.length ? { items, end: index } : null;
+}
+
+// A list whose every item is just a link: the sources of an answer.
+const LINK_LINE = /^\s{0,3}[-*+]\s+\[([^\]\n]{1,120})\]\((https?:\/\/[^\s)]{1,2000})\)\s*$/;
+
+function linkRun(lines, start) {
+  const items = [];
+  let index = start;
+  while (index < lines.length && shortLine(lines[index], 2200) && LINK_LINE.test(lines[index])) {
+    const [, label, href] = LINK_LINE.exec(lines[index]);
+    const url = safeAdaptiveUrl(href);
+    if (!url) return null;
+    items.push({ label: clampText(label, 40), action: 'open_url', value: url });
+    index += 1;
+  }
+  return items.length ? { items, end: index } : null;
+}
+
 function chartFromTable(headerLine, rowLines) {
   const columns = tableCells(headerLine);
   const rows = rowLines.map(tableCells);
@@ -761,11 +792,28 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
     if (line.trim().startsWith('```')) inFence = !inFence;
     if (inFence) { markdown.push(line); continue; }
     const previousBlank = index === 0 || !lines[index - 1].trim();
+    const standalone = (run) => (run.end >= lines.length || !lines[run.end].trim()) && followed(run.end);
     if (previousBlank && shortLine(line) && METRIC_LINE.test(line)) {
       const run = metricRun(lines, index);
-      if (run && run.items.length >= 2 && run.items.length <= 6 && (run.end >= lines.length || !lines[run.end].trim()) && followed(run.end)) {
+      if (run && run.items.length >= 2 && run.items.length <= 6 && standalone(run)) {
         flush();
         parts.push({ kind: 'blocks', derived: 'metrics', blocks: run.items.map((item, offset) => ({ id: `l${index + offset}`, type: 'stat', label: clampText(item.label, 60), value: item.value, caption: item.caption, delta: '', trend: '' })) });
+        index = run.end - 1;
+        continue;
+      }
+      const facts = run ? null : keyValueRun(lines, index);
+      if (facts && facts.items.length >= 3 && facts.items.length <= 12 && standalone(facts)) {
+        flush();
+        parts.push({ kind: 'blocks', derived: 'facts', blocks: [{ id: `k${index}`, type: 'key_value', title: '', items: facts.items.map((item) => ({ key: clampText(item.key, 60), value: clampText(item.value, 200) })) }] });
+        index = facts.end - 1;
+        continue;
+      }
+    }
+    if (previousBlank && shortLine(line, 2200) && LINK_LINE.test(line)) {
+      const run = linkRun(lines, index);
+      if (run && run.items.length >= 2 && run.items.length <= HAUI_LIMITS.maxActions && standalone(run)) {
+        flush();
+        parts.push({ kind: 'blocks', derived: 'links', blocks: [{ id: `a${index}`, type: 'actions', items: run.items }] });
         index = run.end - 1;
         continue;
       }
@@ -790,12 +838,11 @@ export function presentMarkdownParts(text = '', { settled = false } = {}) {
 }
 
 function renderDerived(part, scope, labels) {
-  if (part.derived === 'table-chart') {
-    // The table stays as written; the chart is one click away.
-    const disclosure = { ...part.blocks[0], title: labels.viewAsChart };
-    return renderBlock(disclosure, scope, labels).replace('class="haui-block haui-disclosure"', 'class="haui-block haui-disclosure haui-derived"');
-  }
-  return renderBlockList(part.blocks, scope, labels).replace('class="haui-block haui-stat-grid"', 'class="haui-block haui-stat-grid haui-derived"');
+  // The table stays as written; the chart is one click away.
+  const html = part.derived === 'table-chart'
+    ? renderBlock({ ...part.blocks[0], title: labels.viewAsChart }, scope, labels)
+    : renderBlockList(part.blocks, scope, labels);
+  return html.replace('class="haui-block ', 'class="haui-block haui-derived ');
 }
 
 export function renderPendingBlock(id, labels = HAUI_DEFAULT_LABELS) {

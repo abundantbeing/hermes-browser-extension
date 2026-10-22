@@ -98,11 +98,16 @@ handlers and network requests are never run.
 
 ## Presentation layer for plain Markdown
 
-With Vivid UI on, two unambiguous shapes in ordinary Markdown are improved
+With Vivid UI on, unambiguous shapes in ordinary Markdown are improved
 without a second model call:
 
 - A standalone list of 2 to 6 items shaped like `- **Label:** <number>` (with an
   optional `(note)`) becomes metric cards.
+- A standalone list of 3 to 12 items shaped like `- **Label:** short text`
+  becomes a key and value card. Values holding links, code or emphasis stay
+  Markdown.
+- A standalone list of 2 to 6 items that are each only an `https` link becomes
+  link buttons.
 - A table with a text label column and numeric columns (3 to 24 rows) gets a
   closed "View as chart" disclosure under it. The table stays as written.
 
