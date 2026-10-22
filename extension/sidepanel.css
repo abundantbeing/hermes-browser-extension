@@ -6102,6 +6102,8 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 .context-refresh-button:hover { border-color: var(--context-usage-line, rgba(var(--hermes-fg-rgb), 0.44)); color: rgba(var(--hermes-fg-rgb), 0.95); }
 .context-refresh-button:disabled { opacity: 0.45; cursor: progress; }
 .context-refresh-button[hidden] { display: none; }
+.context-page-refresh-button { display: inline-flex; align-items: center; gap: 6px; }
+.context-page-refresh-button[aria-busy="true"] { cursor: progress; opacity: 0.7; }
 @media (prefers-reduced-motion: no-preference) {
   .context-usage-segment { transition: width 160ms ease; }
 }

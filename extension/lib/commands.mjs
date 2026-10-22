@@ -175,7 +175,7 @@ export const NATIVE_COMMANDS = Object.freeze([
   { name: 'queue', description: 'Queue a message after the active run.', category: 'Run', icon: '≡', requiresInput: true, action: 'queue-message' },
   { name: 'skills', description: 'Open installed Hermes skills.', category: 'Agent', icon: '✦', requiresInput: false, action: 'skill-list' },
   { name: 'quit', aliases: ['exit'], description: 'Quit an interactive Hermes client.', category: 'Agent', icon: '×', requiresInput: false, action: 'unsupported', unsupportedReason: 'Browser surfaces stay attached to the browser; close the side panel or tab to leave.' },
-  { name: 'refresh', description: 'Refresh synced Hermes sessions.', category: 'Session', icon: '↻', requiresInput: false, action: 'refresh-sessions', surfaces: ['fulltab'] },
+  { name: 'refresh', description: 'Refresh the page context here, or the synced sessions on the full tab.', category: 'Session', icon: '↻', requiresInput: false, action: 'refresh' },
   { name: 'context', description: 'Open context-window details.', category: 'Runtime', icon: '◫', requiresInput: false, action: 'context-window', surfaces: ['fulltab'] },
   { name: 'activity', description: 'Open live tool activity.', category: 'Runtime', icon: '⌁', requiresInput: false, action: 'activity', surfaces: ['fulltab'] },
   { name: 'attach', aliases: ['files'], description: 'Open the file attachment picker.', category: 'Agent', icon: '+', requiresInput: false, action: 'attach-files', surfaces: ['fulltab'] },

@@ -3468,7 +3468,7 @@ async function executeNativeBrowserCommand(parsedCommand) {
     els.prompt.focus();
     return true;
   }
-  if (action === 'refresh-sessions') {
+  if (action === 'refresh') {
     await loadApp();
     return true;
   }

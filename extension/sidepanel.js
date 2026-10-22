@@ -840,6 +840,7 @@ const els = {
   voiceActivityTimer: $('#voiceActivityTimer'),
   voiceActivityBars: $('#voiceActivityBars'),
   refreshButton: $('#refreshButton'),
+  contextPageRefreshButton: $('#contextPageRefreshButton'),
   settingsButton: $('#settingsButton'),
   botModeButton: $('#botModeButton'),
   botModePanel: $('#botModePanel'),
@@ -6003,6 +6004,10 @@ async function executeNativeBrowserCommand(parsedCommand) {
     return true;
   }
 
+  if (action === 'refresh') {
+    refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
+    return true;
+  }
   if (action === 'command-help') {
     addMessage('system', `Hermes Browser commands\n\n${nativeCommandCatalogText('sidepanel')}`);
     return true;
@@ -24296,6 +24301,9 @@ function bindEvents() {
     }
   });
   els.refreshButton.addEventListener('click', () => {
+    refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
+  });
+  els.contextPageRefreshButton?.addEventListener('click', () => {
     refreshContextWithSpin().catch((error) => setStatus('warn', 'Context refresh unavailable', error?.message || String(error), { translateDetail: false }));
   });
   els.explicitSiteCaptureButton?.addEventListener('click', async () => {
