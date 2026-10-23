@@ -26,7 +26,8 @@ const scriptIcons = [
   ['CODE_COPY_ICON', CODE_COPY_ICON],
   ['CODE_COPIED_ICON', CODE_COPIED_ICON],
 ];
-const allIcons = [...pageIcons, ...scriptIcons];
+const onboardingIcons = Object.entries(ONBOARDING_ICONS).map(([name, svg]) => [`ONBOARDING_ICONS.${name}`, svg]);
+const allIcons = [...pageIcons, ...scriptIcons, ...onboardingIcons];
 
 test('pixelarticons ship vendored with their MIT license', () => {
   const license = read(`${PIXEL_DIR}/pixelarticons-2.4.2.LICENSE`);

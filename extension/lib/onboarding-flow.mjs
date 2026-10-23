@@ -25,6 +25,8 @@ export const ONBOARDING_ICONS = Object.freeze({
   dark: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="moon"><path d="M18 22H8v-2h10v2ZM8 20H6v-2h2v2Zm12 0h-2v-2h2v2ZM6 18H4v-2h2v2Zm16 0h-2v-4h-2v-2h2v-2h2v8ZM4 16H2V6h2v10Zm14 0h-6v-2h6v2Zm-6-2h-2v-2h2v2Zm-2-2H8V6h2v6ZM6 6H4V4h2v2Zm8-2h-2v2h-2V4H6V2h8v2Z"/></svg>',
   system: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="monitor"><path d="M4 2h16v2H4zm0 14h16v2H4zM2 4h2v12H2zm18 0h2v12h-2zm-9 14h2v2h-2zm-3 2h8v2H8z"/></svg>',
   connect: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="plug"><path d="M16 18h-3v4h-2v-4H8v-2h8v2Zm-8-2H6v-2h2v2Zm10 0h-2v-2h2v2Zm-8-9h4V2h2v5h5v2h-1v5h-2V9H6v5H4V9H3V7h5V2h2v5Z"/></svg>',
+  back: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg>',
+  next: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-right"><path d="M4 11v2h16v-2zm12 2v2h2v-2zm-2 2v2h2v-2zm-2 2v2h2v-2zm4-6V9h2v2z"/><path d="M14 15V7h2v8zm-2 2V5h2v12z"/></svg>',
   connected: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="check"><path d="M10 18H8v-2h2v2Zm-2-2H6v-2h2v2Zm4-2v2h-2v-2h2Zm-6 0H4v-2h2v2Zm8 0h-2v-2h2v2Zm2-2h-2v-2h2v2Zm2-2h-2V8h2v2Zm2-2h-2V6h2v2Z"/></svg>',
 });
 
@@ -139,14 +141,17 @@ export function createOnboardingFlow({
       <header class="onboarding-top">
         <span class="onboarding-logo" role="img" aria-label="${escapeHtml(t('manifest.extension_name'))}"></span>
         <div class="onboarding-head">
-          <span class="onboarding-progress" aria-hidden="true"></span>
           <span class="onboarding-count"></span>
           <button type="button" class="onboarding-skip secondary" data-onboarding-skip>${escapeHtml(t('onboarding.skip'))}</button>
         </div>
       </header>
       <div class="onboarding-preview" aria-hidden="true"></div>
       <div class="onboarding-stage" role="group" aria-labelledby="onboardingStepTitle"></div>
-      <nav class="onboarding-nav" aria-label="${escapeHtml(t('onboarding.aria'))}"></nav>
+      <nav class="onboarding-nav" aria-label="${escapeHtml(t('onboarding.aria'))}">
+        <button type="button" class="onboarding-nav-button" data-onboarding-back></button>
+        <span class="onboarding-progress" aria-hidden="true"></span>
+        <button type="button" class="onboarding-nav-button onboarding-nav-next" data-onboarding-next></button>
+      </nav>
       <p class="onboarding-announce sr-only" aria-live="polite"></p>`;
   }
 
@@ -228,13 +233,26 @@ export function createOnboardingFlow({
     host.dataset.step = step;
   }
 
+  // Back and Next are icon buttons set into the border, named for screen
+  // readers and labelled on hover and focus. The last step finishes with a
+  // check, or moves on with the arrow when Connect is left for later.
+  function setNavButton(button, label, icon) {
+    button.setAttribute('aria-label', label);
+    button.dataset.tip = label;
+    if (button.dataset.icon !== icon) {
+      button.innerHTML = ONBOARDING_ICONS[icon];
+      button.dataset.icon = icon;
+    }
+  }
+
   function renderNav(step, state) {
     const last = stepIndex === steps.length - 1;
-    const connected = Boolean(state.connection?.connected);
-    const nextLabel = !last ? t('onboarding.next') : step === 'connect' && !connected ? t('onboarding.connect.later') : t('onboarding.start');
-    parts.nav.innerHTML = `
-      ${stepIndex > 0 ? `<button type="button" class="secondary" data-onboarding-back>${escapeHtml(t('onboarding.back'))}</button>` : '<span></span>'}
-      <button type="button" class="onboarding-next${last && step === 'connect' && !connected ? ' secondary' : ''}" data-onboarding-next>${escapeHtml(nextLabel)}</button>`;
+    const later = last && step === 'connect' && !state.connection?.connected;
+    const nextLabel = !last ? t('onboarding.next') : later ? t('onboarding.connect.later') : t('onboarding.start');
+    setNavButton(parts.back, t('onboarding.back'), 'back');
+    parts.back.hidden = stepIndex === 0;
+    setNavButton(parts.next, nextLabel, last && !later ? 'connected' : 'next');
+    parts.next.classList.toggle('is-finish', last && !later);
   }
 
   function renderStage(step, state) {
@@ -330,6 +348,8 @@ export function createOnboardingFlow({
         preview: host.querySelector('.onboarding-preview'),
         stage: host.querySelector('.onboarding-stage'),
         nav: host.querySelector('.onboarding-nav'),
+        back: host.querySelector('[data-onboarding-back]'),
+        next: host.querySelector('[data-onboarding-next]'),
         announce: host.querySelector('.onboarding-announce'),
       };
     }

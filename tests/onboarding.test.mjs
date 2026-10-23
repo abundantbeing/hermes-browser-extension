@@ -97,7 +97,12 @@ test('setup walks theme, font, style, layout and Connect last, applying each cho
   assert.equal(flow.step, 'theme');
   assert.equal(host.querySelectorAll('[data-onboarding-theme]').length, 2);
   assert.equal(host.querySelector('[data-onboarding-theme="nous"]').getAttribute('aria-checked'), 'true');
-  assert.equal(host.querySelector('[data-onboarding-back]'), null, 'no Back on the first step');
+  assert.equal(host.querySelector('[data-onboarding-back]').hidden, true, 'no Back on the first step');
+  assert.equal(host.querySelector('[data-onboarding-next]').getAttribute('aria-label'), 'onboarding.next');
+  assert.equal(host.querySelector('[data-onboarding-next]').dataset.tip, 'onboarding.next', 'hover and focus say what it does');
+  assert.equal(host.querySelector('[data-onboarding-next] svg').dataset.icon, 'arrow-right', 'an icon, not a boxed word');
+  assert.equal(host.querySelector('[data-onboarding-next]').textContent.trim(), '');
+  assert.ok(host.querySelector('.onboarding-nav .onboarding-progress'), 'the progress sits between Back and Next');
   assert.ok(host.querySelector('[data-onboarding-skip]'), 'Skip on every step');
 
   click(host.querySelector('[data-onboarding-theme="mono"]'), window);
@@ -140,7 +145,9 @@ test('setup walks theme, font, style, layout and Connect last, applying each cho
   click(host.querySelector('[data-onboarding-connect]'), window);
   click(host.querySelector('[data-onboarding-manual]'), window);
   assert.deepEqual(calls.slice(-2), [['connect'], ['manual']]);
-  assert.equal(host.querySelector('[data-onboarding-next]').textContent.trim(), 'onboarding.connect.later');
+  assert.equal(host.querySelector('[data-onboarding-next]').getAttribute('aria-label'), 'onboarding.connect.later');
+  assert.equal(host.querySelector('[data-onboarding-back]').hidden, false);
+  assert.equal(host.querySelector('[data-onboarding-back] svg').dataset.icon, 'arrow-left');
 
   click(host.querySelector('[data-onboarding-next]'), window);
   assert.equal(flow.isOpen, false);
@@ -156,7 +163,8 @@ test('an already paired panel skips the Connect step', async () => {
   assert.deepEqual(flow.steps, ['theme', 'font', 'style', 'layout']);
   assert.deepEqual(onboardingSteps({ includeConnect: false }), flow.steps);
   flow.open({ step: 'layout', includeConnect: false });
-  assert.equal(host.querySelector('[data-onboarding-next]').textContent.trim(), 'onboarding.start');
+  assert.equal(host.querySelector('[data-onboarding-next]').getAttribute('aria-label'), 'onboarding.start');
+  assert.equal(host.querySelector('[data-onboarding-next] svg').dataset.icon, 'check', 'finishing shows a check');
   click(host.querySelector('[data-onboarding-next]'), window);
   await settle();
   assert.deepEqual(calls.at(0), ['finish', 'done']);
@@ -275,7 +283,8 @@ test('connecting on the last step shows it and lets the user straight in', async
   state.connection = { connected: true };
   flow.render();
   assert.ok(host.querySelector('.onboarding-connect.is-connected'));
-  assert.equal(host.querySelector('[data-onboarding-next]').textContent.trim(), 'onboarding.start');
+  assert.equal(host.querySelector('[data-onboarding-next]').getAttribute('aria-label'), 'onboarding.start');
+  assert.equal(host.querySelector('[data-onboarding-next] svg').dataset.icon, 'check', 'finishing shows a check');
   click(host.querySelector('[data-onboarding-next]'), window);
   await settle();
   assert.deepEqual(calls.at(0), ['finish', 'done']);

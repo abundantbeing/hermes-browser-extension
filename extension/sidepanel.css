@@ -10797,8 +10797,89 @@ html[data-hermes-mode="light"] .onboarding-logo {
 .onboarding-connect-button svg { flex: none; }
 .onboarding-connect.is-busy .onboarding-connect-button svg { animation: onboarding-pulse 1s steps(2, jump-none) infinite; }
 
-.onboarding-nav { display: flex; justify-content: space-between; gap: 8px; }
-.onboarding-nav button { min-height: 34px; padding: 6px 16px; }
+/* Back and Next are icon tiles in the bottom band, square inside square like
+   the Meander's corner tiles, with the progress between them. Each names
+   itself on hover and focus in the startup dock's tooltip style. */
+.onboarding-nav {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(var(--startup-fg-rgb), 0.3);
+}
+.onboarding-nav .onboarding-progress { grid-column: 2; justify-self: center; }
+.onboarding .onboarding-nav-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  margin: 4px;
+  padding: 0;
+  border: 1px solid rgba(var(--startup-fg-rgb), 0.42);
+  border-radius: 0;
+  background: rgba(var(--startup-fg-rgb), 0.06);
+  color: var(--startup-fg);
+  outline: 1px solid rgba(var(--startup-fg-rgb), 0.16);
+  outline-offset: 3px;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, outline-color 0.18s ease, box-shadow 0.18s ease;
+}
+.onboarding .onboarding-nav-button[hidden] { display: grid; visibility: hidden; }
+.onboarding .onboarding-nav-button[data-onboarding-back] { grid-column: 1; }
+.onboarding .onboarding-nav-button[data-onboarding-next] { grid-column: 3; }
+.onboarding .onboarding-nav-button svg { transition: transform 0.18s ease; }
+.onboarding .onboarding-nav-next {
+  border-color: var(--startup-line);
+  color: var(--startup-line);
+  outline-color: rgba(var(--startup-line-rgb), 0.4);
+  box-shadow: 0 0 10px rgba(var(--startup-line-rgb), 0.22);
+}
+.onboarding .onboarding-nav-next.is-finish {
+  background: var(--startup-line);
+  color: var(--startup-bg);
+}
+.onboarding .onboarding-nav-button:hover,
+.onboarding .onboarding-nav-button:focus-visible {
+  border-color: var(--startup-fg);
+  background: rgba(var(--startup-fg-rgb), 0.16);
+  color: var(--startup-fg);
+  outline: 1px solid rgba(var(--startup-fg-rgb), 0.5);
+  outline-offset: 3px;
+}
+.onboarding .onboarding-nav-next:hover,
+.onboarding .onboarding-nav-next:focus-visible {
+  border-color: var(--startup-line);
+  background: var(--startup-line);
+  color: var(--startup-bg);
+  outline-color: var(--startup-line);
+  box-shadow: 0 0 14px rgba(var(--startup-line-rgb), 0.6);
+}
+.onboarding .onboarding-nav-button[data-onboarding-back]:hover svg { transform: translateX(-2px); }
+.onboarding .onboarding-nav-button[data-onboarding-next]:hover svg { transform: translateX(2px); }
+.onboarding .onboarding-nav-next.is-finish:hover svg { transform: none; }
+.onboarding-nav-button[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  z-index: 3;
+  padding: 5px 8px 4px;
+  white-space: nowrap;
+  background: var(--startup-fg);
+  color: var(--startup-bg);
+  font: 14px/1 var(--hermes-font-display);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+.onboarding-nav-button[data-onboarding-back][data-tip]::after { left: -4px; }
+.onboarding-nav-button[data-onboarding-next][data-tip]::after { right: -4px; }
+.onboarding-nav-button[data-tip]:hover::after,
+.onboarding-nav-button[data-tip]:focus-visible::after { opacity: 1; transform: none; }
 
 /* Motion: the screen switches on like the startup screen, each step flips in
    like a new channel, a pick repaints the preview through an ordered dither,
