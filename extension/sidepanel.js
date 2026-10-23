@@ -23121,6 +23121,7 @@ async function pollPairing(pairingId, { attempts = 90, delay = 1500 } = {}) {
     const response = await publicApiFetch(`/api/browser-extension/pair/status/${encodeURIComponent(pairingId)}`, { method: 'GET' });
     const payload = await readJsonResponse(response);
     if (payload.status === 'approved' && payload.token) return payload.token;
+    if (payload?.error?.code === 'pairing_denied') throw new Error(t('pairing.denied'));
     if (payload.status === 'expired' || response.status === 410) throw new Error('Pairing expired. Click Connect again.');
     if (response.status === 404) throw new Error('Pairing request was not found. Click Connect again.');
     if (!pairingApproval?.showing) els.connectStatus.textContent = translateUiText('Waiting for Hermes Desktop approval...');

@@ -69,3 +69,10 @@ test('the pop-up and setup make room for the page, and the page has a size', () 
   assert.match(css, /\.pairing-approval-frame \{[^}]*width: 100%;[^}]*height: min\(380px, 56dvh\);/s);
   assert.match(css, /\.pairing-approval\[hidden\] \{ display: none; \}/);
 });
+
+test('a pairing denied in the panel says so, not that it expired', () => {
+  const denied = poll.indexOf("payload?.error?.code === 'pairing_denied'");
+  const expired = poll.indexOf("response.status === 410");
+  assert.ok(denied >= 0 && denied < expired, 'the gateway answers a denial with 410 too, so it is told apart first');
+  assert.match(poll, /throw new Error\(t\('pairing\.denied'\)\)/);
+});
