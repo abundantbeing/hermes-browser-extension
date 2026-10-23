@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes aceptó la compactación, pero la relectura de la sesión no la confirmó. Actualiza antes de fiarte.",
   "compact.result.aborted": "Hermes no pudo resumir la sesión, así que no se sustituyó nada.",
   "compact.result.failed": "Hermes no completó la compactación. {detail}",
+  "session.replay.truncated": "El historial se truncó; recargando",
 });

@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes 接受了壓縮，但回讀工作階段時未能確認。使用前請先重新整理。",
   "compact.result.aborted": "Hermes 無法為工作階段產生摘要，因此未取代任何內容。",
   "compact.result.failed": "Hermes 未完成壓縮。{detail}",
+  "session.replay.truncated": "歷史記錄已被截斷，正在重新載入",
 });

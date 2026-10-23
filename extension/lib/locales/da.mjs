@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes accepterede komprimeringen, men genlæsning af sessionen bekræftede den ikke. Opdater, før du stoler på den.",
   "compact.result.aborted": "Hermes kunne ikke opsummere sessionen, så intet blev erstattet.",
   "compact.result.failed": "Hermes fuldførte ikke komprimeringen. {detail}",
+  "session.replay.truncated": "Historikken blev afkortet, genindlæser",
 });

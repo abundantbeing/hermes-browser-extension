@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes accepteerde het comprimeren, maar het teruglezen van de sessie bevestigde het niet. Vernieuw voordat je erop vertrouwt.",
   "compact.result.aborted": "Hermes kon de sessie niet samenvatten, dus er is niets vervangen.",
   "compact.result.failed": "Hermes heeft het comprimeren niet voltooid. {detail}",
+  "session.replay.truncated": "De geschiedenis is ingekort, wordt opnieuw geladen",
 });

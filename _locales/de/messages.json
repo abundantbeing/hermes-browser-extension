@@ -2955,6 +2955,10 @@
     "message": "Sitzung {title} umbenennen",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_session_replay_truncated": {
+    "message": "Der Verlauf wurde gekürzt, wird neu geladen",
+    "description": "Runtime interface message session.replay.truncated"
+  },
   "runtime_settings_back_to_top": {
     "message": "Nach oben",
     "description": "Runtime interface message settings.back_to_top"

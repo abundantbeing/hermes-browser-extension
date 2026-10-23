@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes ha accettato la compattazione, ma la rilettura della sessione non l'ha confermata. Aggiorna prima di fidartene.",
   "compact.result.aborted": "Hermes non è riuscito a riassumere la sessione, quindi non è stato sostituito nulla.",
   "compact.result.failed": "Hermes non ha completato la compattazione. {detail}",
+  "session.replay.truncated": "La cronologia è stata troncata, ricaricamento in corso",
 });

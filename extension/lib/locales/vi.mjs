@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes đã chấp nhận việc nén, nhưng lần đọc lại phiên không xác nhận. Hãy làm mới trước khi tin vào nó.",
   "compact.result.aborted": "Hermes không thể tóm tắt phiên, nên không có gì bị thay thế.",
   "compact.result.failed": "Hermes chưa hoàn tất việc nén. {detail}",
+  "session.replay.truncated": "Lịch sử đã bị cắt bớt, đang tải lại",
 });

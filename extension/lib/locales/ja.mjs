@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes は圧縮を受け付けましたが、セッションの読み戻しでは確認できませんでした。頼る前に更新してください。",
   "compact.result.aborted": "Hermes はセッションを要約できなかったため、何も置き換えていません。",
   "compact.result.failed": "Hermes は圧縮を完了できませんでした。{detail}",
+  "session.replay.truncated": "履歴が切り詰められました。再読み込みしています",
 });

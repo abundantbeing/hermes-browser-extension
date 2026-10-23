@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes ने संपीड़न स्वीकार किया, पर सत्र दोबारा पढ़ने से पुष्टि नहीं हुई। भरोसा करने से पहले रीफ़्रेश करें।",
   "compact.result.aborted": "Hermes सत्र का सारांश नहीं बना सका, इसलिए कुछ नहीं बदला गया।",
   "compact.result.failed": "Hermes ने संपीड़न पूरा नहीं किया। {detail}",
+  "session.replay.truncated": "इतिहास छोटा हो गया था, फिर से लोड हो रहा है",
 });

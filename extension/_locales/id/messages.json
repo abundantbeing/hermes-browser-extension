@@ -2955,6 +2955,10 @@
     "message": "Ganti nama sesi {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_session_replay_truncated": {
+    "message": "Riwayat terpotong, memuat ulang",
+    "description": "Runtime interface message session.replay.truncated"
+  },
   "runtime_settings_back_to_top": {
     "message": "Kembali ke atas",
     "description": "Runtime interface message settings.back_to_top"

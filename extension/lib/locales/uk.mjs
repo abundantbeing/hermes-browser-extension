@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes прийняв стиснення, але повторне читання сеансу його не підтвердило. Оновіть, перш ніж покладатися на результат.",
   "compact.result.aborted": "Hermes не зміг скласти підсумок сеансу, тож нічого не замінено.",
   "compact.result.failed": "Hermes не завершив стиснення. {detail}",
+  "session.replay.truncated": "Історію було обрізано, завантажую знову",
 });

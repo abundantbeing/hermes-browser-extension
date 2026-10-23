@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes menerima pemadatan, tetapi pembacaan ulang sesi tidak membenarkannya. Segarkan sebelum mengandalkannya.",
   "compact.result.aborted": "Hermes tidak dapat meringkas sesi, jadi tidak ada yang diganti.",
   "compact.result.failed": "Hermes tidak menyelesaikan pemadatan. {detail}",
+  "session.replay.truncated": "Riwayat terpotong, memuat ulang",
 });

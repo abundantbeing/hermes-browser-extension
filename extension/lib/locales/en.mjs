@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes accepted the compaction, but reading the session back did not confirm it. Refresh before relying on it.",
   "compact.result.aborted": "Hermes could not summarize the session, so nothing was replaced.",
   "compact.result.failed": "Hermes did not complete the compaction. {detail}",
+  "session.replay.truncated": "History was truncated, reloading",
 });

@@ -2955,6 +2955,10 @@
     "message": "Zmień nazwę sesji {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_session_replay_truncated": {
+    "message": "Historia została obcięta, ponowne wczytywanie",
+    "description": "Runtime interface message session.replay.truncated"
+  },
   "runtime_settings_back_to_top": {
     "message": "Do góry",
     "description": "Runtime interface message settings.back_to_top"

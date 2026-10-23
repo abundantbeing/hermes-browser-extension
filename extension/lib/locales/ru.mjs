@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes принял сжатие, но повторное чтение сеанса его не подтвердило. Обновите, прежде чем полагаться на результат.",
   "compact.result.aborted": "Hermes не смог составить сводку сеанса, поэтому ничего не заменено.",
   "compact.result.failed": "Hermes не завершил сжатие. {detail}",
+  "session.replay.truncated": "История была усечена, загружаю заново",
 });

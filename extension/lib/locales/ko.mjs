@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes가 압축을 받아들였지만 세션을 다시 읽어도 확인되지 않았습니다. 의존하기 전에 새로 고치세요.",
   "compact.result.aborted": "Hermes가 세션을 요약하지 못해 아무것도 바꾸지 않았습니다.",
   "compact.result.failed": "Hermes가 압축을 완료하지 못했습니다. {detail}",
+  "session.replay.truncated": "기록이 잘려 다시 불러오는 중입니다",
 });

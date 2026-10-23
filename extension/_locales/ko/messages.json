@@ -2955,6 +2955,10 @@
     "message": "세션 {title} 이름 바꾸기",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_session_replay_truncated": {
+    "message": "기록이 잘려 다시 불러오는 중입니다",
+    "description": "Runtime interface message session.replay.truncated"
+  },
   "runtime_settings_back_to_top": {
     "message": "맨 위로",
     "description": "Runtime interface message settings.back_to_top"

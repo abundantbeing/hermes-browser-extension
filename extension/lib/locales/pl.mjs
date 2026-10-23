@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes przyjął kompaktowanie, ale ponowny odczyt sesji tego nie potwierdził. Odśwież, zanim na tym polegasz.",
   "compact.result.aborted": "Hermes nie mógł podsumować sesji, więc nic nie zastąpiono.",
   "compact.result.failed": "Hermes nie dokończył kompaktowania. {detail}",
+  "session.replay.truncated": "Historia została obcięta, ponowne wczytywanie",
 });

@@ -2955,6 +2955,10 @@
     "message": "セッション {title} の名前を変更",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_session_replay_truncated": {
+    "message": "履歴が切り詰められました。再読み込みしています",
+    "description": "Runtime interface message session.replay.truncated"
+  },
   "runtime_settings_back_to_top": {
     "message": "トップへ戻る",
     "description": "Runtime interface message settings.back_to_top"

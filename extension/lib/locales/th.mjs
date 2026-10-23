@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes รับการบีบอัดแล้ว แต่การอ่านเซสชันกลับไม่ยืนยัน รีเฟรชก่อนจะเชื่อถือ",
   "compact.result.aborted": "Hermes สรุปเซสชันไม่ได้ จึงไม่มีอะไรถูกแทนที่",
   "compact.result.failed": "Hermes ทำการบีบอัดไม่สำเร็จ {detail}",
+  "session.replay.truncated": "ประวัติถูกตัดทอน กำลังโหลดใหม่",
 });

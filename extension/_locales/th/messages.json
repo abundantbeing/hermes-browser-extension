@@ -2955,6 +2955,10 @@
     "message": "เปลี่ยนชื่อเซสชัน {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_session_replay_truncated": {
+    "message": "ประวัติถูกตัดทอน กำลังโหลดใหม่",
+    "description": "Runtime interface message session.replay.truncated"
+  },
   "runtime_settings_back_to_top": {
     "message": "กลับด้านบน",
     "description": "Runtime interface message settings.back_to_top"

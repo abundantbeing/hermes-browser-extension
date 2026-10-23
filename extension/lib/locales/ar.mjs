@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "قبل Hermes الضغط، لكن إعادة قراءة الجلسة لم تؤكده. حدّث قبل الاعتماد عليه.",
   "compact.result.aborted": "لم يتمكن Hermes من تلخيص الجلسة، لذلك لم يُستبدل شيء.",
   "compact.result.failed": "لم يُكمل Hermes الضغط. {detail}",
+  "session.replay.truncated": "تم اقتطاع السجل، جارٍ إعادة التحميل",
 });

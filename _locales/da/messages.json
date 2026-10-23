@@ -2955,6 +2955,10 @@
     "message": "Omdøb session {title}",
     "description": "Runtime interface message session.rename_named"
   },
+  "runtime_session_replay_truncated": {
+    "message": "Historikken blev afkortet, genindlæser",
+    "description": "Runtime interface message session.replay.truncated"
+  },
   "runtime_settings_back_to_top": {
     "message": "Tilbage til toppen",
     "description": "Runtime interface message settings.back_to_top"

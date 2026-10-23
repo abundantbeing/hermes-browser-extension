@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes hat die Verdichtung angenommen, aber das erneute Lesen der Sitzung hat sie nicht bestätigt. Aktualisiere, bevor du dich darauf verlässt.",
   "compact.result.aborted": "Hermes konnte die Sitzung nicht zusammenfassen, daher wurde nichts ersetzt.",
   "compact.result.failed": "Hermes hat die Verdichtung nicht abgeschlossen. {detail}",
+  "session.replay.truncated": "Der Verlauf wurde gekürzt, wird neu geladen",
 });

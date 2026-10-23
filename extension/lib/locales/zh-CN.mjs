@@ -1914,4 +1914,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes 接受了压缩，但回读会话时未能确认。使用前请先刷新。",
   "compact.result.aborted": "Hermes 无法为会话生成摘要，因此未替换任何内容。",
   "compact.result.failed": "Hermes 未完成压缩。{detail}",
+  "session.replay.truncated": "历史记录已被截断，正在重新加载",
 });

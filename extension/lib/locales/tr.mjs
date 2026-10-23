@@ -1915,4 +1915,5 @@ export default Object.freeze({
   "compact.result.unconfirmed": "Hermes sıkıştırmayı kabul etti, ancak oturumu yeniden okumak bunu doğrulamadı. Güvenmeden önce yenile.",
   "compact.result.aborted": "Hermes oturumu özetleyemedi, bu yüzden hiçbir şey değiştirilmedi.",
   "compact.result.failed": "Hermes sıkıştırmayı tamamlamadı. {detail}",
+  "session.replay.truncated": "Geçmiş kısaltıldı, yeniden yükleniyor",
 });
