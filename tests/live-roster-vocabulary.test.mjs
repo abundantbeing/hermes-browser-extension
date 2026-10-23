@@ -102,7 +102,8 @@ function pollHarness(requests) {
     activeDashboardWsConnection: { client, wsStoredSessionId: 'A', wsSessionId: 'live-A' }, desktopDashboardUrl: 'http://127.0.0.1:9119',
     isRemoteWsMode: () => false, scheduleLiveSessionPoll: () => {}, ensureActiveDashboardWsConnection: async () => ({ client }),
     unsupportedLiveRosterClients: new WeakSet(), sessionLiveRoster, readIdleRowSubagents, rosterAfterFailure,
-    liveSubagentCache: new Map(),
+    liveSubagentCache: new Map(), discoverLiveSessions, liveDiscoveredSessions: [], safeActiveProfile: () => '',
+    normalizeHermesSessions: (payload) => payload.sessions.map((row) => ({ id: row.id, title: row.title || row.id, source: row.source })),
     availableSessions: [{ id: 'A' }], settings: { sessionId: 'A' }, renderSessionMenu: () => {}, liveAttach: null,
     reconcileAttachedLiveSession: async () => {}, sending: false, activeConversationTransport: 'dashboard-ws',
     attachLiveSessionIfRunning: async () => false, refreshActiveSessionHistoryQuietly: async () => {},
@@ -132,4 +133,107 @@ test('a poll that succeeds again resets the failure count', async () => {
   const h = pollHarness([ok, () => { throw new Error('x'); }, ok, () => { throw new Error('x'); }]);
   await h.poll(); await h.poll(); await h.poll(); await h.poll();
   assert.equal(h.context.liveSessionRows.get('A')?.live, true);
+});
+
+// ---------------------------------------------------------------------------------------------
+// Discovery: a session running elsewhere (the CLI, Desktop, another window) that the panel's
+// loaded list does not contain.
+// ---------------------------------------------------------------------------------------------
+import { discoverLiveSessions } from '../extension/lib/live-session-attach.mjs';
+
+const discoveryPayload = { sessions: [
+  { id: 'known', session_key: 'known', status: 'working', title: 'already listed', source: 'tui' },
+  { id: 'cli-run', session_key: 'cli-run', status: 'working', title: 'Started in the CLI', source: 'cli', message_count: 4, last_active: 1790000000 },
+  { id: 'starting-run', session_key: 'starting-run', status: 'starting', title: '', source: 'tui' },
+  { id: 'waiting-run', session_key: 'waiting-run', status: 'waiting', source: 'tui' },
+  { id: 'idle-run', session_key: 'idle-run', status: 'idle', source: 'tui' },
+  { id: 'kanban-run', session_key: 'kanban-run', status: 'working', source: 'kanban' },
+  { id: 'tool-run', session_key: 'tool-run', status: 'working', source: 'tool' },
+  { id: 'oneshot-run', session_key: 'oneshot-run', status: 'working', source: 'oneshot' },
+  { id: '', session_key: '', status: 'working' },
+] };
+
+test('discovery returns live, unlisted, non-internal sessions of a profile-scoped connection', () => {
+  const found = discoverLiveSessions(discoveryPayload, { knownIds: ['known'], scoped: true });
+  assert.deepEqual(found.map((row) => row.id).sort(), ['cli-run', 'starting-run', 'waiting-run']);
+  const cli = found.find((row) => row.id === 'cli-run');
+  assert.equal(cli.title, 'Started in the CLI');
+  assert.equal(cli.source, 'cli');
+  assert.equal(cli.message_count, 4);
+  assert.equal(cli.last_active, 1790000000);
+});
+
+test('discovery returns nothing on a connection that is not scoped to the profile', () => {
+  assert.deepEqual(discoverLiveSessions(discoveryPayload, { knownIds: ['known'], scoped: false }), []);
+  assert.deepEqual(discoverLiveSessions(discoveryPayload, { knownIds: ['known'] }), []);
+});
+
+test('discovery tolerates an empty or malformed payload', () => {
+  assert.deepEqual(discoverLiveSessions({}, { knownIds: [], scoped: true }), []);
+  assert.deepEqual(discoverLiveSessions(null, { knownIds: [], scoped: true }), []);
+  assert.deepEqual(discoverLiveSessions({ sessions: [null, 3, 'x'] }, { knownIds: [], scoped: true }), []);
+});
+
+function discoveryHarness({ authority = true, connectionProfile = '', activeProfile = '' } = {}) {
+  const h = pollHarness([{ sessions: discoveryPayload.sessions }]);
+  const client = h.context.activeDashboardWsConnection.client;
+  client.readyPayload = authority ? { session_authority: true } : {};
+  h.context.activeDashboardWsConnection.profile = connectionProfile;
+  Object.assign(h.context, { safeActiveProfile: () => activeProfile, availableSessions: [{ id: 'known' }] });
+  return h;
+}
+
+test('the poll surfaces discovered sessions on an authority connection for the active profile, and gives them a roster row', async () => {
+  const h = discoveryHarness();
+  await h.poll();
+  assert.deepEqual(h.context.liveDiscoveredSessions.map((row) => row.id).sort(), ['cli-run', 'starting-run', 'waiting-run']);
+  assert.ok(h.context.liveDiscoveredSessions.every((row) => row.liveElsewhere === true));
+  assert.equal(h.context.liveSessionRows.get('cli-run')?.live, true, 'the drawer badge needs a roster row for it');
+  assert.equal(h.context.liveSessionRows.has('idle-run'), false);
+});
+
+test('a legacy sidecar socket never discovers (its active_list lists every profile)', async () => {
+  const h = discoveryHarness({ authority: false });
+  await h.poll();
+  assert.equal(h.context.liveDiscoveredSessions.length, 0);
+  assert.equal(h.context.liveSessionRows.has('cli-run'), false);
+});
+
+test('a connection established under another profile never discovers', async () => {
+  const h = discoveryHarness({ connectionProfile: 'work', activeProfile: 'personal' });
+  await h.poll();
+  assert.equal(h.context.liveDiscoveredSessions.length, 0);
+});
+
+test('discovered sessions follow the roster: kept through one failed poll, gone after two', async () => {
+  const h = discoveryHarness();
+  const client = h.context.activeDashboardWsConnection.client;
+  const original = client.request;
+  await h.poll();
+  assert.equal(h.context.liveDiscoveredSessions.length, 3);
+  client.request = async () => { throw new Error('active_list timed out'); };
+  await h.poll();
+  assert.equal(h.context.liveDiscoveredSessions.length, 3);
+  await h.poll();
+  assert.equal(h.context.liveDiscoveredSessions.length, 0);
+  client.request = original;
+});
+
+const menuSource = source.slice(
+  source.indexOf('function sessionMenuGroups(query = \'\')'),
+  source.indexOf('function selectGroupThreadFromMenu('),
+);
+
+test('the drawer lists discovered sessions beside the loaded ones, once each', () => {
+  const grouped = [];
+  const context = vm.createContext({
+    availableSessions: [{ id: 'known', title: 'Known', source: 'tui' }],
+    liveDiscoveredSessions: [{ id: 'cli-run', title: 'CLI', source: 'cli', liveElsewhere: true }, { id: 'known', title: 'dup', source: 'tui', liveElsewhere: true }],
+    settings: { sessionId: 'known' },
+    groupSessionsForMenu: (sessions) => { grouped.push(...sessions); return [{ label: 'all', sessions }]; },
+    groupThreadSessionsForMenu: () => [], isBotModeEngaged: () => false, t: (key) => key,
+  });
+  vm.runInContext(menuSource, context);
+  vm.runInContext("sessionMenuGroups('')", context);
+  assert.deepEqual(grouped.map((row) => row.id), ['known', 'cli-run']);
 });

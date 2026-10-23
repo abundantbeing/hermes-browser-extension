@@ -260,7 +260,7 @@ import { renderProjectsPanel } from './lib/projects-panel.mjs';
 import { SESSION_MENU_TABS, SESSION_MENU_TAB_KEY, normalizeSessionMenuTab } from './lib/projects-view.mjs';
 import { friendlyModelName } from './lib/model-friendly-name.mjs';
 import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToolHistoryMessages, mergeToolCallActivity } from './lib/tool-call-group.mjs';
-import { readIdleRowSubagents, readLiveAttachSnapshot, rosterAfterFailure, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
+import { discoverLiveSessions, readIdleRowSubagents, readLiveAttachSnapshot, rosterAfterFailure, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
 import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAGE_LIMIT } from './lib/session-paging.mjs';
@@ -1327,6 +1327,8 @@ let liveAttach = null;
 let liveAttachGeneration = 0;
 let localSessionStream = null;
 let liveSessionRows = new Map();
+// Sessions the gateway reports live that are not in availableSessions (see discoverLiveSessions).
+let liveDiscoveredSessions = [];
 let liveSessionPollTimer = null;
 let liveSessionPollInFlight = false;
 let liveSessionRosterScope = '';
@@ -16424,7 +16426,12 @@ function isBotModeEngaged() {
 }
 
 function sessionMenuGroups(query = '') {
-  const groups = groupSessionsForMenu(availableSessions, settings.sessionId, query);
+  // A session running elsewhere that the loaded page of history lacks is listed beside it, once.
+  const loadedIds = new Set(availableSessions.map((item) => item.id));
+  const listed = liveDiscoveredSessions.length
+    ? [...availableSessions, ...liveDiscoveredSessions.filter((item) => !loadedIds.has(item.id))]
+    : availableSessions;
+  const groups = groupSessionsForMenu(listed, settings.sessionId, query);
   const threadSessions = groupThreadSessionsForMenu(query);
   if (isBotModeEngaged()) {
     return threadSessions.length
@@ -16940,7 +16947,7 @@ async function refreshLiveSessionRoster() {
   if (liveSessionPollInFlight || document.hidden) return;
   void followRestSessionTick();
   const scopeKey = liveSessionScopeKey();
-  if (scopeKey !== liveSessionRosterScope) liveSessionRows = new Map();
+  if (scopeKey !== liveSessionRosterScope) { liveSessionRows = new Map(); liveDiscoveredSessions = []; }
   // A local REST connection can observe the authenticated local Dashboard
   // without changing its chat transport. Never mint sessions just to list them.
   if (!activeDashboardWsConnection && !desktopDashboardUrl && !isRemoteWsMode()) {
@@ -16957,7 +16964,17 @@ async function refreshLiveSessionRoster() {
     }
     const result = await connection.client.request('session.active_list', {});
     if (scopeKey !== liveSessionScopeKey()) return;
-    const knownIds = [...availableSessions.map(row => row.id), settings.sessionId];
+    const loadedIds = [...availableSessions.map(row => row.id), settings.sessionId];
+    // Live sessions the loaded list lacks. Only a socket scoped to the active profile may surface
+    // them: a session authority scopes active_list to the actor server-side, and this connection was
+    // established under the profile now active. A legacy sidecar lists every profile's runs, so it
+    // never discovers. Opening one still goes through openHermesSession's profile check.
+    const discovered = discoverLiveSessions(result, {
+      knownIds: loadedIds,
+      scoped: connection.client?.readyPayload?.session_authority === true
+        && String(connection.profile || '') === String(safeActiveProfile() || ''),
+    });
+    const knownIds = [...loadedIds, ...discovered.map(row => row.id)];
     const listed = sessionLiveRoster(result, knownIds);
     // A turn that ended while its subagents still run keeps its session live, for every row, not
     // only the one being viewed.
@@ -16969,6 +16986,9 @@ async function refreshLiveSessionRoster() {
     const viewedRunSettled = turnLive(liveSessionRows.get(settings.sessionId))
       && !turnLive(next.get(settings.sessionId));
     liveSessionRows = next;
+    liveDiscoveredSessions = discovered.length
+      ? normalizeHermesSessions({ sessions: discovered }).map(row => ({ ...row, liveElsewhere: true }))
+      : [];
     liveSessionRosterScope = scopeKey;
     liveSessionRosterFailures = 0;
     renderSessionMenu();
@@ -16983,6 +17003,7 @@ async function refreshLiveSessionRoster() {
     liveSessionRosterFailures += 1;
     // One failed poll (a timeout, a dropped frame) does not make every Running badge wrong.
     liveSessionRows = rosterAfterFailure({ rows: liveSessionRows, failures: liveSessionRosterFailures, error });
+    if (!liveSessionRows.size) liveDiscoveredSessions = [];
     // Older gateways do not offer active_list. Keep their sessions unmarked,
     // and stop probing the unsupported RPC for this socket.
     if (Number(error?.rpcCode ?? error?.code) === -32601 && activeDashboardWsConnection?.client) {

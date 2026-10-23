@@ -31,6 +31,42 @@ export function sessionLiveRoster(payload, allowedIds = [], { subagentRosters = 
   return result;
 }
 
+// Sources the gateway never lists in a session picker (hermes_state_sessions INTERNAL_LISTING_SOURCES).
+const INTERNAL_LISTING_SOURCES = new Set(['kanban', 'tool', 'oneshot']);
+
+/**
+ * Live sessions the gateway reports that the panel's loaded list does not contain: a run started in
+ * the CLI, Desktop or another window, beyond the page of history the panel fetched. Rows are shaped
+ * like session-list rows (normalizeHermesSessions input) with the durable id as `id`.
+ *
+ * Only a connection scoped to the profile may discover: a session authority scopes active_list to
+ * the actor on the server. The legacy sidecar's active_list lists every profile's live sessions for
+ * a launch ticket and its rows name no profile, so there `scoped` is false and nothing is returned;
+ * those sessions are still only ever shown when they are already in the profile's own list.
+ */
+export function discoverLiveSessions(payload, { knownIds = [], scoped = false } = {}) {
+  if (scoped !== true) return [];
+  const known = new Set(Array.from(knownIds || []).map(String));
+  const found = [];
+  for (const row of Array.isArray(payload?.sessions) ? payload.sessions : []) {
+    if (!row || typeof row !== 'object') continue;
+    const id = String(row.session_key || '').trim();
+    if (!id || known.has(id) || INTERNAL_LISTING_SOURCES.has(String(row.source || '').toLowerCase())) continue;
+    if (!liveStateFromSessionRow(row).live) continue;
+    found.push({
+      id,
+      title: String(row.title || ''),
+      source: String(row.source || ''),
+      preview: String(row.preview || ''),
+      model: String(row.model || ''),
+      message_count: Number(row.message_count || 0),
+      last_active: Number(row.last_active || row.started_at || 0),
+    });
+    known.add(id);
+  }
+  return found;
+}
+
 const SUBAGENT_READ_LIMIT = 6;
 const SUBAGENT_READ_MAX_AGE_MS = 8_000;
 
