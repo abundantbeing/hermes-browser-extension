@@ -40,7 +40,7 @@ function harness({ fail = false, profiles = [{ name: 'default' }], previous = []
     messages: activeGroupState?.messages || [],
     availableProfiles, botModeRosterNote: '', rosterRetryCount: 0,
     profileRichRosterPromise: null, profileRichRosterAllowsTrust: false,
-    desktopDashboardUrl: '', botModeRemoteAvatarCache: new Map(),
+    desktopDashboardUrl: '', localDashboardUrl: () => '', botModeRemoteAvatarCache: new Map(),
     els: {
       botModePanel: { hidden: true },
       botModeButton: { setAttribute(name, value) { this[name] = value; } },
@@ -431,7 +431,7 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
   const wsSource = source.slice(source.indexOf('async function ensureProfileWsConnection('), source.indexOf('\nfunction usesDashboardWsChatTransport('));
   const client = { readyState: 1, on() {}, connect: async () => {}, close() {} };
   const context = {
-    isRemoteWsMode: () => false, isLocalApiMode: () => true, desktopDashboardUrl: 'http://127.0.0.1:43210',
+    isRemoteWsMode: () => false, isLocalApiMode: () => true, desktopDashboardUrl: 'http://127.0.0.1:43210', localDashboardUrl: () => 'http://127.0.0.1:43210',
     normalizeGatewayUrl: (url) => url, profileConnectionKey: () => 'profile-route',
     profileWsConnection: null, trustedDashboardTabId: null,
     dashboardTicketOriginMatches: () => false,
@@ -453,7 +453,7 @@ test('remote API mode reports the missing companion and never looks for a dashbo
   const wsSource = source.slice(source.indexOf('async function ensureProfileWsConnection('), source.indexOf('\nfunction usesDashboardWsChatTransport('));
   const probes = [];
   const context = {
-    isRemoteWsMode: () => false, isLocalApiMode: () => false, desktopDashboardUrl: '',
+    isRemoteWsMode: () => false, isLocalApiMode: () => false, desktopDashboardUrl: '', localDashboardUrl: () => '',
     normalizeGatewayUrl: (url) => url, profileConnectionKey: () => 'profile-route',
     profileWsConnection: null, trustedDashboardTabId: null,
     dashboardTicketOriginMatches: () => false,

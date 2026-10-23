@@ -421,6 +421,7 @@ import {
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
 import { connectionIdentityChanged } from './lib/settings-save-effects.mjs';
+import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
 import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
@@ -2210,6 +2211,43 @@ function isLocalApiMode() {
 
 function isRemoteMode() {
   return !isLocalApiMode();
+}
+
+// The discovered local Desktop dashboard. Every reader goes through this, so a remote connection
+// can never reach 127.0.0.1 through a value discovered while the connection was local.
+function localDashboardUrl() {
+  return localDashboardUrlFor(normalizeGatewayMode(settings.gatewayMode), desktopDashboardUrl);
+}
+
+// The only writer outside discovery: a remote connection can never hold a local dashboard URL.
+function setLocalDashboardUrl(url = '') {
+  desktopDashboardUrl = localDashboardUrlFor(normalizeGatewayMode(settings.gatewayMode), url);
+}
+
+// Called wherever the connection mode can change (Connect, Save, token clear, another panel's write).
+// A remote connection drops the discovered URL, the socket opened to it and the roster built from it.
+function resetLocalDashboardState() {
+  const plan = localDashboardResetPlan({
+    gatewayMode: normalizeGatewayMode(settings.gatewayMode),
+    discoveredUrl: desktopDashboardUrl,
+    profileConnection: profileWsConnection,
+    activeConnection: activeDashboardWsConnection,
+    conversationTransport: activeConversationTransport,
+  });
+  if (!plan.reset) return false;
+  if (plan.clearUrl) desktopDashboardUrl = '';
+  const local = profileWsConnection;
+  if (plan.closeProfileConnection) {
+    profileWsConnection = null;
+    try { local?.client?.close?.(); } catch { /* ignore */ }
+  }
+  if (plan.clearActiveConnection) activeDashboardWsConnection = null;
+  activeConversationTransport = plan.conversationTransport;
+  if (plan.clearRoster) {
+    liveSessionRows = new Map();
+    liveDiscoveredSessions = [];
+  }
+  return true;
 }
 
 function currentConnectionState() {
@@ -4638,9 +4676,9 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
     // to authenticate with its own key. Retry through the desktop dashboard
     // session-token surface before degrading to legacy mode so non-default
     // profiles still get real capability detection.
-    if (Number(error?.httpStatus ?? error?.status) === 401 && !isRemoteWsMode() && desktopDashboardUrl) {
+    if (Number(error?.httpStatus ?? error?.status) === 401 && !isRemoteWsMode() && localDashboardUrl()) {
       try {
-        const base = desktopDashboardUrl.replace(/\/+$/, '');
+        const base = localDashboardUrl().replace(/\/+$/, '');
         const rootResponse = await fetch(base, {
           headers: { Accept: 'text/html' },
           cache: 'no-store',
@@ -6781,7 +6819,7 @@ function voiceLiveSupported() {
 
 function voiceLiveDashboardBaseUrl() {
   return resolveDashboardTranscriptionBaseUrl({
-    desktopDashboardUrl,
+    desktopDashboardUrl: localDashboardUrl(),
     gatewayMode: normalizeGatewayMode(settings.gatewayMode),
     gatewayUrl: settings.gatewayUrl,
     discover: () => ensureDesktopDashboardUrl({ timeoutMs: 2_500 }),
@@ -7095,7 +7133,7 @@ async function dashboardVoiceTranscriptionReachable() {
   let ok = false;
   try {
     const baseUrl = await resolveDashboardTranscriptionBaseUrl({
-      desktopDashboardUrl,
+      desktopDashboardUrl: localDashboardUrl(),
       gatewayMode: normalizeGatewayMode(settings.gatewayMode),
       gatewayUrl: settings.gatewayUrl,
       discover: () => ensureDesktopDashboardUrl({ timeoutMs: 1_500 }),
@@ -7121,7 +7159,7 @@ async function transcribeVoiceRecording(blob) {
     // The Desktop dashboard lives on a discovered random loopback port; the
     // fixed 9119 constant is only the last-resort fallback.
     const baseUrl = await resolveDashboardTranscriptionBaseUrl({
-      desktopDashboardUrl,
+      desktopDashboardUrl: localDashboardUrl(),
       gatewayMode: normalizeGatewayMode(settings.gatewayMode),
       gatewayUrl: settings.gatewayUrl,
       discover: () => ensureDesktopDashboardUrl({ timeoutMs: 2_500 }),
@@ -10176,7 +10214,7 @@ async function syncProfileModelSelection(profileName = '', { row = null } = {}) 
     if (token !== profileModelSync.token) return { ok: false, stale: true };
 
     let optionsPayload = null;
-    if (desktopDashboardUrl) {
+    if (localDashboardUrl()) {
       try {
         const optionsResponse = await dashboardApiRequest(`/api/model/options?profile=${encodeURIComponent(name)}`, { timeoutMs: 3_000 });
         optionsPayload = await optionsResponse.json();
@@ -10259,13 +10297,13 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
       if (registryResult.ok && registryResult.models.length) {
         registryModels = normalizeHermesModels(registryResult.models, settings.model);
         registrySource = 'registry';
-      } else if (!registryResult.ok && desktopDashboardUrl && settings.activeProfile) {
+      } else if (!registryResult.ok && localDashboardUrl() && settings.activeProfile) {
         // Gateway /p/<profile>/ needs that profile's own API_SERVER_KEY; the
         // desktop dashboard honors ?profile= with the session token, so a
         // profile key gap never blocks model discovery for named profiles.
         const dashRetry = await Promise.race([
           discoverModelsFromDashboard({
-            baseUrl: desktopDashboardUrl,
+            baseUrl: localDashboardUrl(),
             refresh,
             profile: settings.activeProfile,
           }),
@@ -10903,7 +10941,7 @@ function dashboardCompanionNotConfiguredError() {
   return error;
 }
 
-function profileConnectionKey(baseUrl = desktopDashboardUrl || settings.gatewayUrl) {
+function profileConnectionKey(baseUrl = localDashboardUrl() || settings.gatewayUrl) {
   return botModeRouteKey({
     connectionId: normalizeGatewayUrl(baseUrl),
     transport: 'dashboard-ws',
@@ -10994,11 +11032,11 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
   // the 8642 sidecar has no such route and a connect attempt there hangs
   // waiting gateway.ready. When no dashboard URL is known yet, discover it
   // first so every WS transport lands on the real endpoint.
-  if (!desktopDashboardUrl) {
-    desktopDashboardUrl = await ensureDesktopDashboardUrl({ timeoutMs: Math.max(2_500, readyTimeoutMs) });
+  if (!localDashboardUrl()) {
+    await ensureDesktopDashboardUrl({ timeoutMs: Math.max(2_500, readyTimeoutMs) });
   }
-  if (!desktopDashboardUrl) throw new Error('desktop-dashboard-not-found');
-  const baseUrl = normalizeGatewayUrl(desktopDashboardUrl || settings.gatewayUrl);
+  if (!localDashboardUrl()) throw new Error('desktop-dashboard-not-found');
+  const baseUrl = normalizeGatewayUrl(localDashboardUrl() || settings.gatewayUrl);
   const key = profileConnectionKey(baseUrl);
   if (profileWsConnection?.client?.readyState === 1 && profileWsConnection.key === key) {
     return profileWsConnection;
@@ -11082,7 +11120,7 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
   });
   const wsUrl = dashboardToken
     ? buildDashboardWsUrlWithCredential(baseUrl, 'token', dashboardToken)
-    : (!desktopDashboardUrl && settings.apiKey
+    : (!localDashboardUrl() && settings.apiKey
       ? buildDashboardWsUrlWithCredential(baseUrl, 'token', settings.apiKey)
       : buildDashboardWsUrl(baseUrl));
   try {
@@ -11092,12 +11130,12 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
   } catch (connectError) {
     // Port re-binding resilience: if the cached desktop dashboard port is down,
     // clear the cache, probe dynamically for the new active port, and reconnect.
-    if (desktopDashboardUrl) {
-      desktopDashboardUrl = '';
+    if (localDashboardUrl()) {
+      setLocalDashboardUrl('');
       try {
         const freshUrl = await ensureDesktopDashboardUrl({ timeoutMs: Math.max(2_500, readyTimeoutMs) });
-        if (freshUrl && freshUrl !== baseUrl) {
-          desktopDashboardUrl = freshUrl;
+        if (freshUrl && freshUrl !== baseUrl && isLocalApiMode()) {
+          setLocalDashboardUrl(freshUrl);
           await writeCachedRosterUrl(freshUrl);
           const freshBase = normalizeGatewayUrl(freshUrl);
           const rootRes = await dashboardFetch(freshBase, { headers: { Accept: 'text/html' }, cache: 'no-store', redirect: 'error' });
@@ -11129,16 +11167,16 @@ async function ensureActiveDashboardWsConnection() {
 
 async function activateLocalDashboardTransport({ timeoutMs = 5_000 } = {}) {
   if (!isLocalApiMode()) return null;
-  if (!desktopDashboardUrl) {
-    desktopDashboardUrl = await ensureDesktopDashboardUrl({ timeoutMs });
+  if (!localDashboardUrl()) {
+    await ensureDesktopDashboardUrl({ timeoutMs });
   }
-  if (!desktopDashboardUrl) return null;
+  if (!localDashboardUrl()) return null;
   try {
     const connection = await ensureProfileWsConnection({ readyTimeoutMs: Math.min(8_000, Math.max(2_500, timeoutMs)) });
     activeDashboardWsConnection = connection;
     bindContextTelemetryClient(connection?.client);
     activeConversationTransport = 'dashboard-ws';
-    markConnectionProbe('connected', connection.baseUrl || desktopDashboardUrl);
+    markConnectionProbe('connected', connection.baseUrl || localDashboardUrl());
     updateConnectionPrompt();
     return connection;
   } catch {
@@ -11333,7 +11371,7 @@ async function fetchBotModeRemoteAvatar(row) {
     let dataUrl = '';
     try {
       // With no Desktop dashboard, the gateway serves the image itself.
-      if (!desktopDashboardUrl && !isRemoteWsMode() && settings.apiKey) {
+      if (!localDashboardUrl() && !isRemoteWsMode() && settings.apiKey) {
         dataUrl = await fetchGatewayProfileAvatar({
           gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
           apiKey: settings.apiKey,
@@ -11350,8 +11388,8 @@ async function fetchBotModeRemoteAvatar(row) {
         const remote = await ensureRemoteWsClient();
         const asset = await remote.client.request(WS_METHODS.profilesGetAsset, { name: row.profileName, asset: 'avatar' });
         dataUrl = botModeAvatarDataUrlFromAsset(asset);
-      } else if (desktopDashboardUrl) {
-        const base = String(desktopDashboardUrl).replace(/\/+$/, '');
+      } else if (localDashboardUrl()) {
+        const base = String(localDashboardUrl()).replace(/\/+$/, '');
         const rootResponse = await fetch(base, {
           headers: { Accept: 'text/html' },
           cache: 'no-store',
@@ -13444,10 +13482,10 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     // The unified gateway no longer spawns a Desktop dashboard on a random
     // port. Look for one briefly; when none answers, list the profiles the
     // gateway itself serves instead of waiting out the dashboard handshake.
-    if (!desktopDashboardUrl) {
+    if (!localDashboardUrl()) {
       await ensureDesktopDashboardUrl({ timeoutMs: 2_500 }).catch(() => '');
     }
-    if (!desktopDashboardUrl) {
+    if (!localDashboardUrl()) {
       const served = await loadProfilesFromGatewayRoutes({ quiet, generation, gatewayUrl });
       if (served) return served;
     }
@@ -14139,7 +14177,7 @@ async function leaveBotModeForRegularSession() {
     botHistoryVisibleCount = BOT_HISTORY_PAGE_SIZE;
     // If we're connected to a local Desktop dashboard runtime, keep the dashboard-ws transport active
     // so regular sessions don't revert to unconfigured local-api REST and trigger a disconnect.
-    if (desktopDashboardUrl) {
+    if (localDashboardUrl()) {
       activeConversationTransport = 'dashboard-ws';
       activeDashboardWsConnection = profileWsConnection || null;
     } else {
@@ -15167,7 +15205,7 @@ function closeBotModeSheet() {
 // Dashboard REST helper. The desktop dashboard gates /api/* behind its session
 // token (bootstrapped from the root HTML, same handshake as the roster fetch).
 async function dashboardApiRequest(path, { method = 'GET', body = null, timeoutMs = 10000 } = {}) {
-  const base = String(desktopDashboardUrl || '').replace(/\/+$/, '');
+  const base = String(localDashboardUrl()).replace(/\/+$/, '');
   if (!base) {
     const error = new Error('no-dashboard-url');
     error.status = 0;
@@ -16525,7 +16563,7 @@ function projectsConnectionSnapshot() {
   const remote = isRemoteWsMode();
   const connection = remote ? remoteWsConnection : activeDashboardWsConnection;
   const client = connection?.client || null;
-  const endpoint = connection?.baseUrl || (remote ? settings.gatewayUrl : (desktopDashboardUrl || settings.gatewayUrl));
+  const endpoint = connection?.baseUrl || (remote ? settings.gatewayUrl : (localDashboardUrl() || settings.gatewayUrl));
   return {
     token: client,
     identityInput: {
@@ -16550,7 +16588,7 @@ async function prepareProjectsConnection() {
     projectsConnectError = '';
     return;
   }
-  if (!remote && !desktopDashboardUrl) {
+  if (!remote && !localDashboardUrl()) {
     projectsConnectError = '';
     return;
   }
@@ -16664,7 +16702,7 @@ function applySessionMenuTabOnOpen() {
   const remembered = readStoredSessionMenuTab();
   const usable = remembered === SESSION_MENU_TABS.projects
     && !isBotModeEngaged()
-    && (controller.availability().available || isRemoteWsMode() || Boolean(desktopDashboardUrl));
+    && (controller.availability().available || isRemoteWsMode() || Boolean(localDashboardUrl()));
   setSessionMenuTab(usable ? SESSION_MENU_TABS.projects : SESSION_MENU_TABS.recents);
 }
 
@@ -16896,7 +16934,7 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
 }
 
 function liveSessionScopeKey() {
-  return JSON.stringify([settings.gatewayUrl, desktopDashboardUrl, safeActiveProfile()]);
+  return JSON.stringify([settings.gatewayUrl, localDashboardUrl(), safeActiveProfile()]);
 }
 
 // A plain API connection has no dashboard socket to announce a running chat, so a
@@ -16950,7 +16988,7 @@ async function refreshLiveSessionRoster() {
   if (scopeKey !== liveSessionRosterScope) { liveSessionRows = new Map(); liveDiscoveredSessions = []; }
   // A local REST connection can observe the authenticated local Dashboard
   // without changing its chat transport. Never mint sessions just to list them.
-  if (!activeDashboardWsConnection && !desktopDashboardUrl && !isRemoteWsMode()) {
+  if (!activeDashboardWsConnection && !localDashboardUrl() && !isRemoteWsMode()) {
     scheduleLiveSessionPoll();
     return;
   }
@@ -17101,7 +17139,7 @@ async function loadAllHermesSessions() {
 // API_SERVER_KEY; the desktop dashboard's session-token surface accepts
 // ?profile= for sessions and model options, so it is the universal fallback.
 async function loadDashboardSessionsForProfile(profile = '') {
-  const base = String(desktopDashboardUrl || '').replace(/\/+$/, '');
+  const base = String(localDashboardUrl()).replace(/\/+$/, '');
   if (!base) throw Object.assign(new Error('no-dashboard-url'), { status: 0 });
   const rootResponse = await fetch(base, {
     headers: { Accept: 'text/html' },
@@ -17208,11 +17246,11 @@ async function loadSessions({ quiet = false } = {}) {
       payload = await loadAllHermesSessions();
     } catch (error) {
       lastError = error;
-      if (desktopDashboardUrl && error?.status === 401) {
+      if (localDashboardUrl() && error?.status === 401) {
         payload = await loadDashboardSessionsForProfile(safeActiveProfile());
       }
     }
-    if (!payload && desktopDashboardUrl && safeActiveProfile()) {
+    if (!payload && localDashboardUrl() && safeActiveProfile()) {
       payload = await loadDashboardSessionsForProfile(safeActiveProfile());
     }
     if (!payload) throw lastError || new Error('Hermes did not return sessions.');
@@ -17339,7 +17377,7 @@ async function renameSessionViaDashboardRest(sessionId, title) {
       return { ok: false, reason: 'tab-rename-error', detail: error?.message || String(error) };
     }
   }
-  if (!desktopDashboardUrl) return { ok: false, reason: 'no-dashboard' };
+  if (!localDashboardUrl()) return { ok: false, reason: 'no-dashboard' };
   const profile = safeActiveProfile();
   const path = `/api/sessions/${encodeSessionId(sessionId)}${profile ? `?profile=${encodeURIComponent(profile)}` : ''}`;
   try {
@@ -18113,7 +18151,7 @@ async function fetchDashboardHistoryWithResume(durableSessionId = '') {
 
 async function resolveDashboardMediaBaseUrl() {
   return resolveDashboardTranscriptionBaseUrl({
-    desktopDashboardUrl,
+    desktopDashboardUrl: localDashboardUrl(),
     gatewayMode: normalizeGatewayMode(settings.gatewayMode),
     gatewayUrl: settings.gatewayUrl,
     discover: () => ensureDesktopDashboardUrl({ timeoutMs: 2_500 }),
@@ -19999,20 +20037,20 @@ function attachGatewayRestartAction(node) {
     document,
     translate: translateUiText,
     restart: async ({ onProgress } = {}) => {
-      const baseUrl = desktopDashboardUrl || await ensureDesktopDashboardUrl({ timeoutMs: 4_000 });
+      const baseUrl = localDashboardUrl() || await ensureDesktopDashboardUrl({ timeoutMs: 4_000 });
       // Plain fetch: dashboardFetch is a GET-only loopback proxy and rejects POST.
       return restartGatewayViaDashboard({ baseUrl, onProgress });
     },
     // A slow restart must not fall back to the restart button: re-poll for the
     // new process instead of issuing a second restart.
     check: async ({ beforeBootId, onProgress } = {}) => {
-      const baseUrl = desktopDashboardUrl || await ensureDesktopDashboardUrl({ timeoutMs: 4_000 });
+      const baseUrl = localDashboardUrl() || await ensureDesktopDashboardUrl({ timeoutMs: 4_000 });
       return waitForGatewayReturn({ baseUrl, beforeBootId, onProgress });
     },
     // Follow a restart that did not come from this button (terminal, Desktop)
     // so the bubble resolves itself instead of leaving a stale prompt.
     watch: async ({ shouldStop, onProgress } = {}) => {
-      const baseUrl = desktopDashboardUrl || await ensureDesktopDashboardUrl({ timeoutMs: 4_000 });
+      const baseUrl = localDashboardUrl() || await ensureDesktopDashboardUrl({ timeoutMs: 4_000 });
       return watchGatewayRestart({ baseUrl, shouldStop, onProgress });
     },
     onRestarted: () => {
@@ -20511,8 +20549,8 @@ async function saveSettingsFromForm() {
     remoteWsConnection = null;
     profileWsConnection?.client?.close?.();
     profileWsConnection = null;
-    if (!isLocalApiMode()) desktopDashboardUrl = '';
   }
+  resetLocalDashboardState();
   if (previousSettings.botModeEnabled === true && settings.botModeEnabled !== true) {
     botModeRosterGeneration += 1;
     botModeRoster = [];
@@ -20567,7 +20605,8 @@ async function clearStoredToken() {
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   if (els.apiKeyInput) els.apiKeyInput.value = '';
   sessionRoutesAvailable = null;
-  desktopDashboardUrl = '';
+  setLocalDashboardUrl('');
+  resetLocalDashboardState();
   await clearCachedRosterUrl(browserApi.storage.local).catch(() => undefined);
   connectionController.cancel('stored token cleared');
   try { remoteWsConnection?.client?.close?.(); } catch { /* ignore */ }
@@ -22671,7 +22710,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
     // Profile-scoped 401 during session setup: fall back to the dashboard WS
     // transport (session-token auth) so named profiles can chat in regular
     // mode without their own gateway API key.
-    if (Number(setupError?.httpStatus ?? setupError?.status) === 401 && desktopDashboardUrl && safeActiveProfile()) {
+    if (Number(setupError?.httpStatus ?? setupError?.status) === 401 && localDashboardUrl() && safeActiveProfile()) {
       activeConversationTransport = 'dashboard-ws';
       return streamDashboardWsChat(prompt, onDelta, onTool, {
         signal, attachments: turnAttachments, onRun, onSteerQueued, onRuntime, knownAssistantTexts, voiceLive,
@@ -22688,7 +22727,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
     // desktop dashboard WS (session-token auth), so fall back once before
     // surfacing the failure — regular profile switching keeps working even
     // with Bot Mode off.
-    if (Number(error?.status ?? error?.httpStatus) === 401 && desktopDashboardUrl) {
+    if (Number(error?.status ?? error?.httpStatus) === 401 && localDashboardUrl()) {
       activeConversationTransport = 'dashboard-ws';
       return streamDashboardWsChat(prompt, onDelta, onTool, {
         signal,
@@ -22971,6 +23010,9 @@ async function connectTicketTransport({ cloud = false } = {}) {
       };
     }
 
+    // This connection is remote now: nothing discovered for the local gateway (its dashboard URL, the
+    // socket opened to it, the roster read from it) may be used from here on.
+    resetLocalDashboardState();
     await browserApi.storage.local.set({ hermesBrowserSettings: settings });
     syncSettingsForm();
     const readiness = await runPanelConnectionReadiness({ restoreSettings: false });
@@ -23030,6 +23072,7 @@ function adoptUnsavedGatewayUrlForConnect() {
   remoteWsConnection = null;
   profileWsConnection?.client?.close?.();
   profileWsConnection = null;
+  resetLocalDashboardState();
   if (!settings.trustedDashboardOrigin) trustedDashboardTabId = null;
 }
 
@@ -24518,7 +24561,7 @@ async function testConnection() {
     let response = null;
     let text = '';
     let dashboardAttached = false;
-    if (usesDashboardWsChatTransport() && (activeDashboardWsConnection?.client?.readyState === 1 || desktopDashboardUrl)) {
+    if (usesDashboardWsChatTransport() && (activeDashboardWsConnection?.client?.readyState === 1 || localDashboardUrl())) {
       const dashboard = await activateLocalDashboardTransport({ timeoutMs: 5_000 });
       if (dashboard) {
         dashboardAttached = true;
@@ -24591,9 +24634,9 @@ async function testConnection() {
     setStatus(
       'ok',
       dashboardAttached ? 'Hermes Desktop connected' : (hasSessionRoutes ? 'Hermes gateway + session API connected' : 'Hermes gateway connected'),
-      dashboardAttached ? (desktopDashboardUrl || normalizeGatewayUrl(settings.gatewayUrl)) : (hasSessionRoutes ? normalizeGatewayUrl(settings.gatewayUrl) : `${normalizeGatewayUrl(settings.gatewayUrl)} - OpenAI-compatible fallback mode`),
+      dashboardAttached ? (localDashboardUrl() || normalizeGatewayUrl(settings.gatewayUrl)) : (hasSessionRoutes ? normalizeGatewayUrl(settings.gatewayUrl) : `${normalizeGatewayUrl(settings.gatewayUrl)} - OpenAI-compatible fallback mode`),
     );
-    markGatewayReachable(dashboardAttached ? (desktopDashboardUrl || normalizeGatewayUrl(settings.gatewayUrl)) : normalizeGatewayUrl(settings.gatewayUrl));
+    markGatewayReachable(dashboardAttached ? (localDashboardUrl() || normalizeGatewayUrl(settings.gatewayUrl)) : normalizeGatewayUrl(settings.gatewayUrl));
     lastRemoteDiagnostic = null;
     renderRemoteDiagnostics(null);
 
@@ -26002,6 +26045,8 @@ function bindEvents() {
         }
         if (Object.keys(patch).length) {
           settings = { ...settings, ...patch };
+          // Another panel may have moved the connection to a remote mode.
+          resetLocalDashboardState();
           updateConnectionPrompt();
           renderBrowserControl();
         }
