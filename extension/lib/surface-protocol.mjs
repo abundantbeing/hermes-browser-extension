@@ -1,3 +1,7 @@
+// Surface ids and the side-panel -> full-tab handoff URL, and nothing else. This module mints and parses
+// identifiers; it is not a window registry, a lease, or a cross-surface lock, and nothing here makes a
+// claim about which surface owns a session (the gateway is the only writer). The `sourceSurfaceId` it
+// carries is only printed as "opened from" text by the full tab.
 export const SURFACE_KINDS = Object.freeze({
   SIDE_PANEL: 'sidepanel',
   FULL_TAB: 'fulltab',
@@ -61,10 +65,4 @@ export function parseFullTabHandoff(search = '') {
     sourceTabId: Number.isInteger(sourceTabId) && sourceTabId > 0 ? sourceTabId : null,
     sourceSurfaceId: safeSurfaceId(params.get('sourceSurfaceId')),
   };
-}
-
-export function shouldAcceptSurfaceRevision({ currentRevision = 0, incomingRevision = 0 } = {}) {
-  const current = Number(currentRevision);
-  const incoming = Number(incomingRevision);
-  return Number.isFinite(incoming) && incoming > (Number.isFinite(current) ? current : 0);
 }
