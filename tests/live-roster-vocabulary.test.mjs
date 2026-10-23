@@ -109,7 +109,9 @@ function pollHarness(requests) {
     attachLiveSessionIfRunning: async () => false, refreshActiveSessionHistoryQuietly: async () => {},
     liveSessionRosterFailures: 0, liveSessionPollTimer: null,
     setTimeout: () => 0, clearTimeout: () => {},
+    composerRefreshes: 0, updateComposerBusyState: () => {},
   });
+  vm.runInContext("function viewedSessionIsRunning() { return liveSessionRows.get(settings.sessionId)?.live === true; }", context);
   vm.runInContext(refreshSource, context);
   return { context, poll: () => vm.runInContext('refreshLiveSessionRoster()', context) };
 }
@@ -236,4 +238,19 @@ test('the drawer lists discovered sessions beside the loaded ones, once each', (
   vm.runInContext(menuSource, context);
   vm.runInContext("sessionMenuGroups('')", context);
   assert.deepEqual(grouped.map((row) => row.id), ['known', 'cli-run']);
+});
+
+test('the composer follows the roster when the viewed session starts or stops running', async () => {
+  const running = { sessions: [{ id: 'live-A', session_key: 'A', status: 'working' }] };
+  const idle = { sessions: [{ id: 'live-A', session_key: 'A', status: 'idle' }] };
+  const h = pollHarness([idle, running, running, idle]);
+  h.context.updateComposerBusyState = () => { h.context.composerRefreshes += 1; };
+  await h.poll();
+  assert.equal(h.context.composerRefreshes, 0, 'nothing changed');
+  await h.poll();
+  assert.equal(h.context.composerRefreshes, 1, 'the session started running: busy state');
+  await h.poll();
+  assert.equal(h.context.composerRefreshes, 1, 'still running: no churn');
+  await h.poll();
+  assert.equal(h.context.composerRefreshes, 2, 'the session stopped: the composer is released');
 });

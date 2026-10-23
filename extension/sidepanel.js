@@ -16955,6 +16955,8 @@ async function refreshLiveSessionRoster() {
     return;
   }
   liveSessionPollInFlight = true;
+  // The roster now decides whether the viewed session reads as running, so the composer follows it.
+  const composerWasBusy = viewedSessionIsRunning();
   try {
     const connection = activeDashboardWsConnection?.client?.readyState === 1
       ? activeDashboardWsConnection : await ensureActiveDashboardWsConnection();
@@ -17012,6 +17014,7 @@ async function refreshLiveSessionRoster() {
     renderSessionMenu();
   } finally {
     liveSessionPollInFlight = false;
+    if (viewedSessionIsRunning() !== composerWasBusy) updateComposerBusyState();
     if (liveSessionPollTimer) clearTimeout(liveSessionPollTimer);
     liveSessionPollTimer = null;
     if (!document.hidden) {
