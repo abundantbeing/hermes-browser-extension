@@ -1155,6 +1155,278 @@
     "message": "Warte auf Hermes.",
     "description": "Runtime interface message browser_control.waiting"
   },
+  "runtime_capability_feature_approvalEvents": {
+    "message": "Freigabe-Ereignisse",
+    "description": "Runtime interface message capability.feature.approvalEvents"
+  },
+  "runtime_capability_feature_audioTranscription": {
+    "message": "Sprachtranskription",
+    "description": "Runtime interface message capability.feature.audioTranscription"
+  },
+  "runtime_capability_feature_auth": {
+    "message": "Authentifizierung",
+    "description": "Runtime interface message capability.feature.auth"
+  },
+  "runtime_capability_feature_browserCompanionPlugin": {
+    "message": "Browser-Companion-Plugin",
+    "description": "Runtime interface message capability.feature.browserCompanionPlugin"
+  },
+  "runtime_capability_feature_browserContextProvider": {
+    "message": "Browser Context Protocol",
+    "description": "Runtime interface message capability.feature.browserContextProvider"
+  },
+  "runtime_capability_feature_browserContextStatus": {
+    "message": "Browser-Kontext-Status",
+    "description": "Runtime interface message capability.feature.browserContextStatus"
+  },
+  "runtime_capability_feature_browserContextUpload": {
+    "message": "Browser-Kontext-Upload",
+    "description": "Runtime interface message capability.feature.browserContextUpload"
+  },
+  "runtime_capability_feature_browserPairing": {
+    "message": "Browser-Kopplung",
+    "description": "Runtime interface message capability.feature.browserPairing"
+  },
+  "runtime_capability_feature_health": {
+    "message": "Zustand",
+    "description": "Runtime interface message capability.feature.health"
+  },
+  "runtime_capability_feature_imageSessionAttach": {
+    "message": "Bildanhang (Sitzung)",
+    "description": "Runtime interface message capability.feature.imageSessionAttach"
+  },
+  "runtime_capability_feature_imageUpload": {
+    "message": "Bild-Upload (HTTP)",
+    "description": "Runtime interface message capability.feature.imageUpload"
+  },
+  "runtime_capability_feature_mediaRead": {
+    "message": "Gespeicherte Bilder lesen",
+    "description": "Runtime interface message capability.feature.mediaRead"
+  },
+  "runtime_capability_feature_models": {
+    "message": "Modelle",
+    "description": "Runtime interface message capability.feature.models"
+  },
+  "runtime_capability_feature_pluginActions": {
+    "message": "Plugin-Aktionen",
+    "description": "Runtime interface message capability.feature.pluginActions"
+  },
+  "runtime_capability_feature_profiles": {
+    "message": "Profile",
+    "description": "Runtime interface message capability.feature.profiles"
+  },
+  "runtime_capability_feature_projects": {
+    "message": "Projekte",
+    "description": "Runtime interface message capability.feature.projects"
+  },
+  "runtime_capability_feature_runs": {
+    "message": "Runs-API",
+    "description": "Runtime interface message capability.feature.runs"
+  },
+  "runtime_capability_feature_runSteer": {
+    "message": "Lauf steuern",
+    "description": "Runtime interface message capability.feature.runSteer"
+  },
+  "runtime_capability_feature_sessionAuthority": {
+    "message": "Sitzungsautorität",
+    "description": "Runtime interface message capability.feature.sessionAuthority"
+  },
+  "runtime_capability_feature_sessionCompress": {
+    "message": "Kontextverdichtung",
+    "description": "Runtime interface message capability.feature.sessionCompress"
+  },
+  "runtime_capability_feature_sessionContext": {
+    "message": "Kontextstatus",
+    "description": "Runtime interface message capability.feature.sessionContext"
+  },
+  "runtime_capability_feature_sessionModelLock": {
+    "message": "Modellsperre pro Sitzung",
+    "description": "Runtime interface message capability.feature.sessionModelLock"
+  },
+  "runtime_capability_feature_sessions": {
+    "message": "Sitzungen",
+    "description": "Runtime interface message capability.feature.sessions"
+  },
+  "runtime_capability_feature_skills": {
+    "message": "Skills",
+    "description": "Runtime interface message capability.feature.skills"
+  },
+  "runtime_capability_meta_checked": {
+    "message": "Geprüft {age}",
+    "description": "Runtime interface message capability.meta.checked"
+  },
+  "runtime_capability_meta_never": {
+    "message": "Nie geprüft",
+    "description": "Runtime interface message capability.meta.never"
+  },
+  "runtime_capability_meta_source": {
+    "message": "Quelle: {source}",
+    "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_advertised": {
+    "message": "Vom Gateway angekündigt.",
+    "description": "Runtime interface message capability.reason.advertised"
+  },
+  "runtime_capability_reason_advertised_off": {
+    "message": "Das Gateway kündigt sie als ausgeschaltet an.",
+    "description": "Runtime interface message capability.reason.advertised_off"
+  },
+  "runtime_capability_reason_authority_compress": {
+    "message": "Die Verdichtung läuft als session.mutate mit der Operation compress, die ein Gateway mit Sitzungsautorität bereitstellt.",
+    "description": "Runtime interface message capability.reason.authority_compress"
+  },
+  "runtime_capability_reason_authority_ready": {
+    "message": "gateway.ready meldet Sitzungsautorität.",
+    "description": "Runtime interface message capability.reason.authority_ready"
+  },
+  "runtime_capability_reason_connection_closed": {
+    "message": "Die Verbindung wurde geschlossen. Zuletzt bestätigt {age}. Wird angezeigt, aber für nichts verwendet.",
+    "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_extension_side": {
+    "message": "Wird von dieser Erweiterung erstellt und im Prompt gesendet. Es hängt von keiner Gateway-Route ab.",
+    "description": "Runtime interface message capability.reason.extension_side"
+  },
+  "runtime_capability_reason_identity_changed": {
+    "message": "Verbindung, Konto oder Profil haben sich geändert. Noch nicht erneut geprüft.",
+    "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_legacy_assumed": {
+    "message": "Angenommen, weil /health mit einem Token geantwortet hat. /v1/capabilities war nicht verfügbar, daher ist das nicht bestätigt.",
+    "description": "Runtime interface message capability.reason.legacy_assumed"
+  },
+  "runtime_capability_reason_legacy_gateway": {
+    "message": "Dieses Gateway hat kein /v1/capabilities, deshalb sieht die Erweiterung nicht, was es anbietet.",
+    "description": "Runtime interface message capability.reason.legacy_gateway"
+  },
+  "runtime_capability_reason_legacy_ws_compress": {
+    "message": "Dieses Dashboard-Gateway hat keine Sitzungsautorität, deshalb übernimmt das ältere session.compress die Verdichtung.",
+    "description": "Runtime interface message capability.reason.legacy_ws_compress"
+  },
+  "runtime_capability_reason_method_not_found": {
+    "message": "Das Gateway hat für {method} mit „method not found“ (-32601) geantwortet.",
+    "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_record": {
+    "message": "Noch nicht geprüft.",
+    "description": "Runtime interface message capability.reason.no_record"
+  },
+  "runtime_capability_reason_no_session_authority": {
+    "message": "gateway.ready hat keine Sitzungsautorität gemeldet.",
+    "description": "Runtime interface message capability.reason.no_session_authority"
+  },
+  "runtime_capability_reason_not_advertised": {
+    "message": "Vom Gateway nicht angekündigt.",
+    "description": "Runtime interface message capability.reason.not_advertised"
+  },
+  "runtime_capability_reason_not_advertised_plugin": {
+    "message": "Vom Gateway nicht angekündigt. Hermes Browser kann nicht erkennen, ob das Companion-Plugin geladen ist; das heißt also nicht, dass es fehlt.",
+    "description": "Runtime interface message capability.reason.not_advertised_plugin"
+  },
+  "runtime_capability_reason_not_connected": {
+    "message": "Der Dashboard-WebSocket hat gateway.ready noch nicht geliefert.",
+    "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_operation_ok": {
+    "message": "Hat beim letzten Mal funktioniert.",
+    "description": "Runtime interface message capability.reason.operation_ok"
+  },
+  "runtime_capability_reason_operation_refused": {
+    "message": "Hermes hat den letzten Versuch abgelehnt: {detail}.",
+    "description": "Runtime interface message capability.reason.operation_refused"
+  },
+  "runtime_capability_reason_rest_no_compress": {
+    "message": "Diese Verbindung erreicht nur die REST-API, die keine Verdichtungsroute ankündigt. Die Verdichtung braucht den Dashboard-WebSocket mit Sitzungsautorität.",
+    "description": "Runtime interface message capability.reason.rest_no_compress"
+  },
+  "runtime_capability_reason_rest_only": {
+    "message": "Diese Verbindung erreicht nur die REST-API. Der Dashboard-WebSocket wird benötigt.",
+    "description": "Runtime interface message capability.reason.rest_only"
+  },
+  "runtime_capability_reason_revoked": {
+    "message": "Ausgeschaltet: {detail}.",
+    "description": "Runtime interface message capability.reason.revoked"
+  },
+  "runtime_capability_reason_stale": {
+    "message": "Zuletzt bestätigt {age}. Eine alte Antwort wird angezeigt, aber für nichts verwendet.",
+    "description": "Runtime interface message capability.reason.stale"
+  },
+  "runtime_capability_reason_token_present": {
+    "message": "Ein Token oder Auth-Kontext ist vorhanden. Diese Prüfung hat nicht bewiesen, dass er gültig ist.",
+    "description": "Runtime interface message capability.reason.token_present"
+  },
+  "runtime_capability_reason_ws_connected": {
+    "message": "Der WebSocket des Hermes-Dashboards ist verbunden.",
+    "description": "Runtime interface message capability.reason.ws_connected"
+  },
+  "runtime_capability_reason_ws_contract": {
+    "message": "Teil des Dashboard-WebSocket-Vertrags. Das Gateway kündigt ihn nicht separat an.",
+    "description": "Runtime interface message capability.reason.ws_contract"
+  },
+  "runtime_capability_reason_ws_not_reported": {
+    "message": "Der Dashboard-WebSocket meldet das nicht, und diese Verbindung liest /v1/capabilities nicht.",
+    "description": "Runtime interface message capability.reason.ws_not_reported"
+  },
+  "runtime_capability_source_derived": {
+    "message": "aus der Verbindung abgeleitet",
+    "description": "Runtime interface message capability.source.derived"
+  },
+  "runtime_capability_source_extension": {
+    "message": "diese Erweiterung",
+    "description": "Runtime interface message capability.source.extension"
+  },
+  "runtime_capability_source_method_not_found": {
+    "message": "eine Ablehnung von Hermes",
+    "description": "Runtime interface message capability.source.method_not_found"
+  },
+  "runtime_capability_source_none": {
+    "message": "noch kein Nachweis",
+    "description": "Runtime interface message capability.source.none"
+  },
+  "runtime_capability_source_operation": {
+    "message": "der letzte Versuch",
+    "description": "Runtime interface message capability.source.operation"
+  },
+  "runtime_capability_source_probe": {
+    "message": "eine Prüfung",
+    "description": "Runtime interface message capability.source.probe"
+  },
+  "runtime_capability_source_revocation": {
+    "message": "ausgeschaltet",
+    "description": "Runtime interface message capability.source.revocation"
+  },
+  "runtime_capability_state_available": {
+    "message": "Verfügbar",
+    "description": "Runtime interface message capability.state.available"
+  },
+  "runtime_capability_state_blocked": {
+    "message": "Blockiert",
+    "description": "Runtime interface message capability.state.blocked"
+  },
+  "runtime_capability_state_cached": {
+    "message": "Zwischengespeichert",
+    "description": "Runtime interface message capability.state.cached"
+  },
+  "runtime_capability_state_degraded": {
+    "message": "Eingeschränkt",
+    "description": "Runtime interface message capability.state.degraded"
+  },
+  "runtime_capability_state_unknown": {
+    "message": "Unbekannt",
+    "description": "Runtime interface message capability.state.unknown"
+  },
+  "runtime_capability_state_unsupported": {
+    "message": "Nicht unterstützt",
+    "description": "Runtime interface message capability.state.unsupported"
+  },
+  "runtime_capability_summary_all": {
+    "message": "Jede hier geprüfte Funktion ist in Gebrauch.",
+    "description": "Runtime interface message capability.summary.all"
+  },
+  "runtime_capability_summary_some": {
+    "message": "Funktionen, die bei dieser Verbindung nicht genutzt werden: {count}",
+    "description": "Runtime interface message capability.summary.some"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"
@@ -1246,6 +1518,110 @@
   "runtime_common_using": {
     "message": "Verwendung",
     "description": "Runtime interface message common.using"
+  },
+  "runtime_compact_button": {
+    "message": "Kontext verdichten",
+    "description": "Runtime interface message compact.button"
+  },
+  "runtime_compact_button_recommended": {
+    "message": "Verdichten empfohlen",
+    "description": "Runtime interface message compact.button_recommended"
+  },
+  "runtime_compact_result_aborted": {
+    "message": "Hermes konnte die Sitzung nicht zusammenfassen, daher wurde nichts ersetzt.",
+    "description": "Runtime interface message compact.result.aborted"
+  },
+  "runtime_compact_result_blocked": {
+    "message": "Hermes verdichtet diese Sitzung gerade nicht ({reason}).",
+    "description": "Runtime interface message compact.result.blocked"
+  },
+  "runtime_compact_result_busy": {
+    "message": "Hermes hat abgelehnt, weil die Sitzung beschäftigt ist. Nichts wurde geändert.",
+    "description": "Runtime interface message compact.result.busy"
+  },
+  "runtime_compact_result_busy_compressing": {
+    "message": "Hermes verdichtet diese Sitzung bereits.",
+    "description": "Runtime interface message compact.result.busy_compressing"
+  },
+  "runtime_compact_result_busy_turn": {
+    "message": "In dieser Sitzung läuft gerade ein Zug. Stoppe ihn vor dem Verdichten. Es wurde nichts gesendet.",
+    "description": "Runtime interface message compact.result.busy_turn"
+  },
+  "runtime_compact_result_compacted": {
+    "message": "Hermes hat diese Sitzung verdichtet und das erneute Lesen bestätigt es. {detail}",
+    "description": "Runtime interface message compact.result.compacted"
+  },
+  "runtime_compact_result_denied": {
+    "message": "Hermes hat die Verdichtung für dieses Konto oder Profil verweigert.",
+    "description": "Runtime interface message compact.result.denied"
+  },
+  "runtime_compact_result_failed": {
+    "message": "Hermes hat die Verdichtung nicht abgeschlossen. {detail}",
+    "description": "Runtime interface message compact.result.failed"
+  },
+  "runtime_compact_result_indeterminate": {
+    "message": "Die Antwort ging verloren und die Sitzung hat sich weiterbewegt. Hermes hat sie vielleicht verdichtet; es wurde nichts erneut gesendet.",
+    "description": "Runtime interface message compact.result.indeterminate"
+  },
+  "runtime_compact_result_noop": {
+    "message": "Die Sitzung ist schon kurz genug, um sie ganz zu behalten. Nichts wurde geändert.",
+    "description": "Runtime interface message compact.result.noop"
+  },
+  "runtime_compact_result_not_committed": {
+    "message": "Die Antwort ging verloren, und Hermes zeigt die Sitzung unverändert. Drücke erneut auf Verdichten, um dieselbe Anfrage zu senden.",
+    "description": "Runtime interface message compact.result.not_committed"
+  },
+  "runtime_compact_result_not_sent": {
+    "message": "Hermes war nicht erreichbar, um die Sitzung zuerst zu lesen. Es wurde nichts gesendet.",
+    "description": "Runtime interface message compact.result.not_sent"
+  },
+  "runtime_compact_result_rotated": {
+    "message": "Die Sitzung behält ihre ID; Hermes setzt sie in einem neuen gespeicherten Abschnitt fort.",
+    "description": "Runtime interface message compact.result.rotated"
+  },
+  "runtime_compact_result_stale": {
+    "message": "Die Sitzung hat sich beim Verdichten geändert, zweimal hintereinander. Nichts wurde geändert. Versuche es erneut.",
+    "description": "Runtime interface message compact.result.stale"
+  },
+  "runtime_compact_result_unconfirmed": {
+    "message": "Hermes hat die Verdichtung angenommen, aber das erneute Lesen der Sitzung hat sie nicht bestätigt. Aktualisiere, bevor du dich darauf verlässt.",
+    "description": "Runtime interface message compact.result.unconfirmed"
+  },
+  "runtime_compact_status_no_session": {
+    "message": "Öffne oder erstelle eine Sitzung, bevor du verdichtest.",
+    "description": "Runtime interface message compact.status.no_session"
+  },
+  "runtime_compact_status_ready": {
+    "message": "Ältere Nachrichten durch eine Zusammenfassung ersetzen, um Platz zu schaffen.",
+    "description": "Runtime interface message compact.status.ready"
+  },
+  "runtime_compact_status_running": {
+    "message": "Stoppe den aktiven Lauf, bevor du diese Sitzung verdichtest.",
+    "description": "Runtime interface message compact.status.running"
+  },
+  "runtime_compact_status_unavailable": {
+    "message": "Verdichtung nicht verfügbar: {reason}",
+    "description": "Runtime interface message compact.status.unavailable"
+  },
+  "runtime_compact_title_failed": {
+    "message": "Kontextverdichtung fehlgeschlagen",
+    "description": "Runtime interface message compact.title.failed"
+  },
+  "runtime_compact_title_noop": {
+    "message": "Nichts zu verdichten",
+    "description": "Runtime interface message compact.title.noop"
+  },
+  "runtime_compact_title_ok": {
+    "message": "Kontext verdichtet",
+    "description": "Runtime interface message compact.title.ok"
+  },
+  "runtime_compact_title_unavailable": {
+    "message": "Kontextverdichtung nicht verfügbar",
+    "description": "Runtime interface message compact.title.unavailable"
+  },
+  "runtime_compact_working": {
+    "message": "Verdichte…",
+    "description": "Runtime interface message compact.working"
   },
   "runtime_composer_attach": {
     "message": "＋ Anhängen",

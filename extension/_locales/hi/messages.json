@@ -1155,6 +1155,278 @@
     "message": "Hermes की प्रतीक्षा में",
     "description": "Runtime interface message browser_control.waiting"
   },
+  "runtime_capability_feature_approvalEvents": {
+    "message": "अनुमोदन घटनाएँ",
+    "description": "Runtime interface message capability.feature.approvalEvents"
+  },
+  "runtime_capability_feature_audioTranscription": {
+    "message": "वॉइस ट्रांसक्रिप्शन",
+    "description": "Runtime interface message capability.feature.audioTranscription"
+  },
+  "runtime_capability_feature_auth": {
+    "message": "प्रमाणीकरण",
+    "description": "Runtime interface message capability.feature.auth"
+  },
+  "runtime_capability_feature_browserCompanionPlugin": {
+    "message": "ब्राउज़र सहायक प्लगइन",
+    "description": "Runtime interface message capability.feature.browserCompanionPlugin"
+  },
+  "runtime_capability_feature_browserContextProvider": {
+    "message": "Browser Context Protocol",
+    "description": "Runtime interface message capability.feature.browserContextProvider"
+  },
+  "runtime_capability_feature_browserContextStatus": {
+    "message": "ब्राउज़र संदर्भ स्थिति",
+    "description": "Runtime interface message capability.feature.browserContextStatus"
+  },
+  "runtime_capability_feature_browserContextUpload": {
+    "message": "ब्राउज़र संदर्भ अपलोड",
+    "description": "Runtime interface message capability.feature.browserContextUpload"
+  },
+  "runtime_capability_feature_browserPairing": {
+    "message": "ब्राउज़र पेयरिंग",
+    "description": "Runtime interface message capability.feature.browserPairing"
+  },
+  "runtime_capability_feature_health": {
+    "message": "स्वास्थ्य",
+    "description": "Runtime interface message capability.feature.health"
+  },
+  "runtime_capability_feature_imageSessionAttach": {
+    "message": "छवि संलग्नक (सत्र)",
+    "description": "Runtime interface message capability.feature.imageSessionAttach"
+  },
+  "runtime_capability_feature_imageUpload": {
+    "message": "छवि अपलोड (HTTP)",
+    "description": "Runtime interface message capability.feature.imageUpload"
+  },
+  "runtime_capability_feature_mediaRead": {
+    "message": "संग्रहीत छवि पढ़ना",
+    "description": "Runtime interface message capability.feature.mediaRead"
+  },
+  "runtime_capability_feature_models": {
+    "message": "मॉडल",
+    "description": "Runtime interface message capability.feature.models"
+  },
+  "runtime_capability_feature_pluginActions": {
+    "message": "प्लगइन क्रियाएँ",
+    "description": "Runtime interface message capability.feature.pluginActions"
+  },
+  "runtime_capability_feature_profiles": {
+    "message": "प्रोफ़ाइल",
+    "description": "Runtime interface message capability.feature.profiles"
+  },
+  "runtime_capability_feature_projects": {
+    "message": "प्रोजेक्ट",
+    "description": "Runtime interface message capability.feature.projects"
+  },
+  "runtime_capability_feature_runs": {
+    "message": "Runs API",
+    "description": "Runtime interface message capability.feature.runs"
+  },
+  "runtime_capability_feature_runSteer": {
+    "message": "रन संचालन",
+    "description": "Runtime interface message capability.feature.runSteer"
+  },
+  "runtime_capability_feature_sessionAuthority": {
+    "message": "सत्र अधिकार",
+    "description": "Runtime interface message capability.feature.sessionAuthority"
+  },
+  "runtime_capability_feature_sessionCompress": {
+    "message": "संदर्भ संपीड़न",
+    "description": "Runtime interface message capability.feature.sessionCompress"
+  },
+  "runtime_capability_feature_sessionContext": {
+    "message": "संदर्भ स्थिति",
+    "description": "Runtime interface message capability.feature.sessionContext"
+  },
+  "runtime_capability_feature_sessionModelLock": {
+    "message": "प्रति-सत्र मॉडल लॉक",
+    "description": "Runtime interface message capability.feature.sessionModelLock"
+  },
+  "runtime_capability_feature_sessions": {
+    "message": "सत्र",
+    "description": "Runtime interface message capability.feature.sessions"
+  },
+  "runtime_capability_feature_skills": {
+    "message": "स्किल",
+    "description": "Runtime interface message capability.feature.skills"
+  },
+  "runtime_capability_meta_checked": {
+    "message": "जाँच {age}",
+    "description": "Runtime interface message capability.meta.checked"
+  },
+  "runtime_capability_meta_never": {
+    "message": "कभी जाँचा नहीं गया",
+    "description": "Runtime interface message capability.meta.never"
+  },
+  "runtime_capability_meta_source": {
+    "message": "स्रोत: {source}",
+    "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_advertised": {
+    "message": "इस गेटवे ने घोषित किया।",
+    "description": "Runtime interface message capability.reason.advertised"
+  },
+  "runtime_capability_reason_advertised_off": {
+    "message": "यह गेटवे इसे बंद के रूप में घोषित करता है।",
+    "description": "Runtime interface message capability.reason.advertised_off"
+  },
+  "runtime_capability_reason_authority_compress": {
+    "message": "संपीड़न session.mutate के compress ऑपरेशन के रूप में चलता है, जिसे सत्र अधिकार वाला गेटवे सर्व करता है।",
+    "description": "Runtime interface message capability.reason.authority_compress"
+  },
+  "runtime_capability_reason_authority_ready": {
+    "message": "gateway.ready सत्र अधिकार की रिपोर्ट करता है।",
+    "description": "Runtime interface message capability.reason.authority_ready"
+  },
+  "runtime_capability_reason_connection_closed": {
+    "message": "कनेक्शन बंद हो गया। अंतिम पुष्टि {age}। दिखाया गया है, कुछ चलाने के लिए उपयोग नहीं होता।",
+    "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_extension_side": {
+    "message": "इस एक्सटेंशन द्वारा प्रॉम्प्ट के भीतर बनाया और भेजा गया। यह किसी गेटवे रूट पर निर्भर नहीं है।",
+    "description": "Runtime interface message capability.reason.extension_side"
+  },
+  "runtime_capability_reason_identity_changed": {
+    "message": "कनेक्शन, खाता या प्रोफ़ाइल बदल गया। अभी दोबारा नहीं जाँचा गया।",
+    "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_legacy_assumed": {
+    "message": "माना गया क्योंकि /health ने टोकन के साथ उत्तर दिया। /v1/capabilities उपलब्ध नहीं था, इसलिए इसकी पुष्टि नहीं हुई।",
+    "description": "Runtime interface message capability.reason.legacy_assumed"
+  },
+  "runtime_capability_reason_legacy_gateway": {
+    "message": "इस गेटवे में /v1/capabilities नहीं है, इसलिए एक्सटेंशन नहीं देख सकता कि वह क्या देता है।",
+    "description": "Runtime interface message capability.reason.legacy_gateway"
+  },
+  "runtime_capability_reason_legacy_ws_compress": {
+    "message": "इस डैशबोर्ड गेटवे के पास सत्र अधिकार नहीं है, इसलिए पुराना session.compress संपीड़न सँभालता है।",
+    "description": "Runtime interface message capability.reason.legacy_ws_compress"
+  },
+  "runtime_capability_reason_method_not_found": {
+    "message": "गेटवे ने {method} के लिए \"method not found\" (-32601) उत्तर दिया।",
+    "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_record": {
+    "message": "अभी जाँचा नहीं गया।",
+    "description": "Runtime interface message capability.reason.no_record"
+  },
+  "runtime_capability_reason_no_session_authority": {
+    "message": "gateway.ready ने सत्र अधिकार की रिपोर्ट नहीं की।",
+    "description": "Runtime interface message capability.reason.no_session_authority"
+  },
+  "runtime_capability_reason_not_advertised": {
+    "message": "इस गेटवे ने घोषित नहीं किया।",
+    "description": "Runtime interface message capability.reason.not_advertised"
+  },
+  "runtime_capability_reason_not_advertised_plugin": {
+    "message": "इस गेटवे ने घोषित नहीं किया। Hermes Browser यह नहीं बता सकता कि सहायक प्लगइन लोड है या नहीं, इसलिए इसका मतलब यह नहीं कि वह गायब है।",
+    "description": "Runtime interface message capability.reason.not_advertised_plugin"
+  },
+  "runtime_capability_reason_not_connected": {
+    "message": "डैशबोर्ड WebSocket ने अभी तक gateway.ready नहीं भेजा।",
+    "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_operation_ok": {
+    "message": "पिछली बार उपयोग करने पर काम किया।",
+    "description": "Runtime interface message capability.reason.operation_ok"
+  },
+  "runtime_capability_reason_operation_refused": {
+    "message": "Hermes ने पिछला प्रयास अस्वीकार किया: {detail}।",
+    "description": "Runtime interface message capability.reason.operation_refused"
+  },
+  "runtime_capability_reason_rest_no_compress": {
+    "message": "यह कनेक्शन केवल REST API तक पहुँचता है, जो संपीड़न रूट घोषित नहीं करता। संपीड़न के लिए सत्र अधिकार वाला डैशबोर्ड WebSocket चाहिए।",
+    "description": "Runtime interface message capability.reason.rest_no_compress"
+  },
+  "runtime_capability_reason_rest_only": {
+    "message": "यह कनेक्शन केवल REST API तक पहुँचता है। डैशबोर्ड WebSocket की ज़रूरत है।",
+    "description": "Runtime interface message capability.reason.rest_only"
+  },
+  "runtime_capability_reason_revoked": {
+    "message": "बंद किया गया: {detail}।",
+    "description": "Runtime interface message capability.reason.revoked"
+  },
+  "runtime_capability_reason_stale": {
+    "message": "अंतिम पुष्टि {age}। पुराना उत्तर दिखाया गया है, कुछ चलाने के लिए उपयोग नहीं होता।",
+    "description": "Runtime interface message capability.reason.stale"
+  },
+  "runtime_capability_reason_token_present": {
+    "message": "एक टोकन या प्रमाणीकरण संदर्भ मौजूद है। इस जाँच ने उसके वैध होने की पुष्टि नहीं की।",
+    "description": "Runtime interface message capability.reason.token_present"
+  },
+  "runtime_capability_reason_ws_connected": {
+    "message": "Hermes डैशबोर्ड का WebSocket जुड़ा हुआ है।",
+    "description": "Runtime interface message capability.reason.ws_connected"
+  },
+  "runtime_capability_reason_ws_contract": {
+    "message": "डैशबोर्ड WebSocket अनुबंध का हिस्सा। यह गेटवे इसे अलग से घोषित नहीं करता।",
+    "description": "Runtime interface message capability.reason.ws_contract"
+  },
+  "runtime_capability_reason_ws_not_reported": {
+    "message": "डैशबोर्ड WebSocket यह रिपोर्ट नहीं करता, और यह कनेक्शन /v1/capabilities नहीं पढ़ता।",
+    "description": "Runtime interface message capability.reason.ws_not_reported"
+  },
+  "runtime_capability_source_derived": {
+    "message": "कनेक्शन से अनुमानित",
+    "description": "Runtime interface message capability.source.derived"
+  },
+  "runtime_capability_source_extension": {
+    "message": "यह एक्सटेंशन",
+    "description": "Runtime interface message capability.source.extension"
+  },
+  "runtime_capability_source_method_not_found": {
+    "message": "Hermes की ओर से अस्वीकार",
+    "description": "Runtime interface message capability.source.method_not_found"
+  },
+  "runtime_capability_source_none": {
+    "message": "अभी कोई प्रमाण नहीं",
+    "description": "Runtime interface message capability.source.none"
+  },
+  "runtime_capability_source_operation": {
+    "message": "पिछला प्रयास",
+    "description": "Runtime interface message capability.source.operation"
+  },
+  "runtime_capability_source_probe": {
+    "message": "एक जाँच",
+    "description": "Runtime interface message capability.source.probe"
+  },
+  "runtime_capability_source_revocation": {
+    "message": "बंद किया गया",
+    "description": "Runtime interface message capability.source.revocation"
+  },
+  "runtime_capability_state_available": {
+    "message": "उपलब्ध",
+    "description": "Runtime interface message capability.state.available"
+  },
+  "runtime_capability_state_blocked": {
+    "message": "अवरुद्ध",
+    "description": "Runtime interface message capability.state.blocked"
+  },
+  "runtime_capability_state_cached": {
+    "message": "कैश्ड",
+    "description": "Runtime interface message capability.state.cached"
+  },
+  "runtime_capability_state_degraded": {
+    "message": "सीमित",
+    "description": "Runtime interface message capability.state.degraded"
+  },
+  "runtime_capability_state_unknown": {
+    "message": "अज्ञात",
+    "description": "Runtime interface message capability.state.unknown"
+  },
+  "runtime_capability_state_unsupported": {
+    "message": "असमर्थित",
+    "description": "Runtime interface message capability.state.unsupported"
+  },
+  "runtime_capability_summary_all": {
+    "message": "यहाँ जाँची गई हर सुविधा उपयोग में है।",
+    "description": "Runtime interface message capability.summary.all"
+  },
+  "runtime_capability_summary_some": {
+    "message": "इस कनेक्शन पर उपयोग में नहीं सुविधाएँ: {count}",
+    "description": "Runtime interface message capability.summary.some"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"
@@ -1246,6 +1518,110 @@
   "runtime_common_using": {
     "message": "उपयोग में",
     "description": "Runtime interface message common.using"
+  },
+  "runtime_compact_button": {
+    "message": "संदर्भ संपीड़ित करें",
+    "description": "Runtime interface message compact.button"
+  },
+  "runtime_compact_button_recommended": {
+    "message": "संपीड़न की सलाह",
+    "description": "Runtime interface message compact.button_recommended"
+  },
+  "runtime_compact_result_aborted": {
+    "message": "Hermes सत्र का सारांश नहीं बना सका, इसलिए कुछ नहीं बदला गया।",
+    "description": "Runtime interface message compact.result.aborted"
+  },
+  "runtime_compact_result_blocked": {
+    "message": "Hermes अभी इस सत्र को संपीड़ित नहीं करेगा ({reason})।",
+    "description": "Runtime interface message compact.result.blocked"
+  },
+  "runtime_compact_result_busy": {
+    "message": "सत्र व्यस्त होने के कारण Hermes ने अस्वीकार किया। कुछ नहीं बदला।",
+    "description": "Runtime interface message compact.result.busy"
+  },
+  "runtime_compact_result_busy_compressing": {
+    "message": "Hermes पहले से इस सत्र को संपीड़ित कर रहा है।",
+    "description": "Runtime interface message compact.result.busy_compressing"
+  },
+  "runtime_compact_result_busy_turn": {
+    "message": "इस सत्र में एक टर्न चल रहा है। संपीड़ित करने से पहले उसे रोकें। कुछ नहीं भेजा गया।",
+    "description": "Runtime interface message compact.result.busy_turn"
+  },
+  "runtime_compact_result_compacted": {
+    "message": "Hermes ने इस सत्र को संपीड़ित किया और दोबारा पढ़ने से इसकी पुष्टि हुई। {detail}",
+    "description": "Runtime interface message compact.result.compacted"
+  },
+  "runtime_compact_result_denied": {
+    "message": "Hermes ने इस खाते या प्रोफ़ाइल के लिए संपीड़न अस्वीकार किया।",
+    "description": "Runtime interface message compact.result.denied"
+  },
+  "runtime_compact_result_failed": {
+    "message": "Hermes ने संपीड़न पूरा नहीं किया। {detail}",
+    "description": "Runtime interface message compact.result.failed"
+  },
+  "runtime_compact_result_indeterminate": {
+    "message": "उत्तर खो गया और सत्र आगे बढ़ चुका है। हो सकता है Hermes ने उसे संपीड़ित कर दिया हो; कुछ दोबारा नहीं भेजा गया।",
+    "description": "Runtime interface message compact.result.indeterminate"
+  },
+  "runtime_compact_result_noop": {
+    "message": "सत्र पहले से इतना छोटा है कि पूरा रखा जा सके। कुछ नहीं बदला।",
+    "description": "Runtime interface message compact.result.noop"
+  },
+  "runtime_compact_result_not_committed": {
+    "message": "उत्तर खो गया, और Hermes सत्र को अपरिवर्तित दिखाता है। वही अनुरोध भेजने के लिए संपीड़ित करें फिर दबाएँ।",
+    "description": "Runtime interface message compact.result.not_committed"
+  },
+  "runtime_compact_result_not_sent": {
+    "message": "पहले सत्र पढ़ने के लिए Hermes तक पहुँचा नहीं जा सका। कुछ नहीं भेजा गया।",
+    "description": "Runtime interface message compact.result.not_sent"
+  },
+  "runtime_compact_result_rotated": {
+    "message": "सत्र अपनी आईडी रखता है; Hermes उसे एक नए संग्रहीत खंड में जारी रखता है।",
+    "description": "Runtime interface message compact.result.rotated"
+  },
+  "runtime_compact_result_stale": {
+    "message": "संपीड़न के दौरान सत्र लगातार दो बार बदला। कुछ नहीं बदला। फिर कोशिश करें।",
+    "description": "Runtime interface message compact.result.stale"
+  },
+  "runtime_compact_result_unconfirmed": {
+    "message": "Hermes ने संपीड़न स्वीकार किया, पर सत्र दोबारा पढ़ने से पुष्टि नहीं हुई। भरोसा करने से पहले रीफ़्रेश करें।",
+    "description": "Runtime interface message compact.result.unconfirmed"
+  },
+  "runtime_compact_status_no_session": {
+    "message": "संपीड़ित करने से पहले कोई सत्र खोलें या बनाएँ।",
+    "description": "Runtime interface message compact.status.no_session"
+  },
+  "runtime_compact_status_ready": {
+    "message": "जगह खाली करने के लिए पुराने संदेशों को सारांश से बदलें।",
+    "description": "Runtime interface message compact.status.ready"
+  },
+  "runtime_compact_status_running": {
+    "message": "इस सत्र को संपीड़ित करने से पहले सक्रिय रन रोकें।",
+    "description": "Runtime interface message compact.status.running"
+  },
+  "runtime_compact_status_unavailable": {
+    "message": "संपीड़न उपलब्ध नहीं: {reason}",
+    "description": "Runtime interface message compact.status.unavailable"
+  },
+  "runtime_compact_title_failed": {
+    "message": "संदर्भ संपीड़न विफल रहा",
+    "description": "Runtime interface message compact.title.failed"
+  },
+  "runtime_compact_title_noop": {
+    "message": "संपीड़ित करने को कुछ नहीं",
+    "description": "Runtime interface message compact.title.noop"
+  },
+  "runtime_compact_title_ok": {
+    "message": "संदर्भ संपीड़ित हुआ",
+    "description": "Runtime interface message compact.title.ok"
+  },
+  "runtime_compact_title_unavailable": {
+    "message": "संदर्भ संपीड़न उपलब्ध नहीं",
+    "description": "Runtime interface message compact.title.unavailable"
+  },
+  "runtime_compact_working": {
+    "message": "संपीड़ित हो रहा है…",
+    "description": "Runtime interface message compact.working"
   },
   "runtime_composer_attach": {
     "message": "＋ संलग्न करें",
