@@ -1,6 +1,6 @@
 # Security Notes
 
-Hermes Browser Extension v0.3.0 combines review-first browser context with opt-in live control for tabs you explicitly attach. Browser-bound requests stay on the authenticated extension controller and never fall back to another browser backend.
+Hermes Browser Extension combines review-first browser context with opt-in live control for tabs you explicitly attach. Browser-bound requests stay on the authenticated extension controller and never fall back to another browser backend.
 
 ## Current permission model
 
@@ -38,7 +38,7 @@ Page text is wrapped in a block labeled `UNTRUSTED_BROWSER_CONTEXT_START` / `UNT
 
 ## Restricted pages and credentials
 
-v0.3.0 blocks browser internals, extension pages, and obvious banking, wallet, password-manager, payment, health, and government-account categories. It decodes credential-bearing URL parameters before classification and redacts restricted tab identity across active, selected, open-tab, pinned-scope, prompt, receipt, and payload-hash surfaces.
+The extension blocks browser internals, extension pages, and obvious banking, wallet, password-manager, payment, health, and government-account categories. It decodes credential-bearing URL parameters before classification and redacts restricted tab identity across active, selected, open-tab, pinned-scope, prompt, receipt, and payload-hash surfaces.
 
 ## Persistence boundaries
 

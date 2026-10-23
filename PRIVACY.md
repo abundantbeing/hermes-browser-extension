@@ -2,11 +2,11 @@
 
 Hermes Browser Extension is a load-unpacked public alpha that sends browser context to the Hermes Agent runtime you configure.
 
-This document describes shipped v0.3.0 behavior.
+This document describes the shipped behavior of the current release.
 
 ## No analytics
 
-Hermes Browser Extension v0.3.0 does not include analytics, telemetry, ads, tracking pixels, or third-party reporting SDKs.
+Hermes Browser Extension does not include analytics, telemetry, ads, tracking pixels, or third-party reporting SDKs.
 
 ## Local storage
 
@@ -39,7 +39,7 @@ The extension does not request or read:
 
 It reads page context from the active/current browser surface for the purpose of asking Hermes about what you are viewing, unless you choose **Chat only** mode.
 
-v0.3.0 can also attach the side panel to a specific tab or pin context to a specific tab. In tab-attached or pinned mode, the extension keeps that tab's local chat cache separate from the follow-active chat cache. In Chat only mode, it does not attach active tab title/URL, open tabs, selected text, page metadata, YouTube transcript, or page text to the prompt. Sensitive and credential-bearing tab URLs are omitted before prompt assembly, including decoded/nested parameters and signed-URL credentials/signatures.
+The extension can also attach the side panel to a specific tab or pin context to a specific tab. In tab-attached or pinned mode, the extension keeps that tab's local chat cache separate from the follow-active chat cache. In Chat only mode, it does not attach active tab title/URL, open tabs, selected text, page metadata, YouTube transcript, or page text to the prompt. Sensitive and credential-bearing tab URLs are omitted before prompt assembly, including decoded/nested parameters and signed-URL credentials/signatures.
 
 ## Live Hermes Control
 
@@ -67,7 +67,7 @@ Formatting cleanup, bullets, text statistics, and diffs are deterministic local 
 
 ## Voice privacy
 
-v0.3.0 supports two voice modes:
+The extension supports two voice modes:
 
 - **Hermes STT**: audio is captured in the extension page and sent once to the configured Hermes audio transcription endpoint when you stop recording.
 - **Browser speech fallback**: when Hermes STT is unavailable and Chromium exposes Web Speech, speech recognition runs in the browser and only transcript text is returned to the side panel.
@@ -76,13 +76,13 @@ No audio is intentionally saved by the voice dictation page.
 
 ## Runtime activity visibility
 
-v0.3.0 displays live tool activity reported by Hermes during streaming turns. Tool labels/previews are sanitized locally before display and are not analytics, telemetry, or extra data collection. They reflect runtime events from the configured Hermes session.
+The panel displays live tool activity reported by Hermes during streaming turns. Tool labels/previews are sanitized locally before display and are not analytics, telemetry, or extra data collection. They reflect runtime events from the configured Hermes session.
 
 ## Attachments
 
 Text files can be included as text. Images can be included inline; when the connected Hermes runtime advertises image upload support, the extension can save image attachments through Hermes so the agent receives a local path-backed image reference.
 
-If image upload is unavailable, v0.3.0 keeps images inline and shows a fallback warning. Generated images can be opened in a local lightbox and downloaded only after an explicit user action.
+If image upload is unavailable, the extension keeps images inline and shows a fallback warning. Generated images can be opened in a local lightbox and downloaded only after an explicit user action.
 
 ## Remove extension data
 

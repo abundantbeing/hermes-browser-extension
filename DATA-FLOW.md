@@ -1,6 +1,6 @@
 # Data Flow
 
-Hermes Browser Extension connects browser context to the Hermes Agent runtime you configure. This document describes the shipped v0.3.0 data flow.
+Hermes Browser Extension connects browser context to the Hermes Agent runtime you configure. This document describes the data flow of the current release.
 
 ## Connection modes
 
@@ -57,7 +57,7 @@ Hermes Web uses the same configured Local or Remote API connection and canonical
 
 ## Browser Context Protocol and optional companion cache
 
-v0.3.0 emits typed `hermes.browser.turn.v2` envelopes with owner/conversation/session/turn identity while retaining the prompt-embedded v1 compatibility path.
+The extension emits typed `hermes.browser.turn.v2` envelopes with owner/conversation/session/turn identity while retaining the prompt-embedded v1 compatibility path.
 
 ## Controller and artifact flow
 
@@ -67,7 +67,7 @@ Artifact upload/download is scoped, TTL-bounded, checksum-verified, and one-shot
 
 ## What Hermes saw receipt
 
-v0.3.0 includes a collapsible “What Hermes saw” receipt after each sent turn. It summarizes:
+The panel includes a collapsible “What Hermes saw” receipt after each sent turn. It summarizes:
 
 - context scope, including Chat only when no browser context was attached
 - active tab
@@ -83,24 +83,24 @@ This receipt is for transparency and debugging. It is generated locally by the e
 
 ## Tool activity while streaming
 
-When Hermes reports a tool call during a streaming turn, v0.3.0 renders it as an in-message Tool Activity Strip with a sanitized short preview. Tool names and previews are generated locally from normalized runtime events; sensitive token shapes are redacted before display. Tool activity is UI state only and is not extra browser context sent to Hermes.
+When Hermes reports a tool call during a streaming turn, the panel renders it as an in-message Tool Activity Strip with a sanitized short preview. Tool names and previews are generated locally from normalized runtime events; sensitive token shapes are redacted before display. Tool activity is UI state only and is not extra browser context sent to Hermes.
 
 ## Redaction and untrusted context
 
 Before page text is sent to Hermes, the extension redacts common secret/token shapes such as bearer tokens, provider API keys, private keys, GitHub tokens, Slack tokens, JWTs, and common `key=value` secret assignments.
 
-Before tab titles/URLs are included in the prompt, v0.3.0 redacts restricted categories such as browser internals, banking, crypto wallets, password managers, checkout/payment, health, and government tax/account pages. It also decodes and blocks credential-bearing query/hash parameters—including nested encodings and common signed-URL credentials/signatures—across active, selected, open-tab, pinned-scope, prompt, receipt, and payload-hash surfaces.
+Before tab titles/URLs are included in the prompt, the extension redacts restricted categories such as browser internals, banking, crypto wallets, password managers, checkout/payment, health, and government tax/account pages. It also decodes and blocks credential-bearing query/hash parameters—including nested encodings and common signed-URL credentials/signatures—across active, selected, open-tab, pinned-scope, prompt, receipt, and payload-hash surfaces.
 
 Browser page content is wrapped as untrusted context in the prompt. Hermes is instructed not to follow instructions from the page unless the human user explicitly asks.
 
 ## Capability detection
 
-The extension reads `/v1/capabilities` when available. If an older Hermes runtime does not expose that endpoint, v0.3.0 enters legacy compatibility mode:
+The extension reads `/v1/capabilities` when available. If an older Hermes runtime does not expose that endpoint, the extension enters legacy compatibility mode:
 
 - core chat/session features are attempted when the Gateway is connected and authenticated
 - browser-specific routes such as audio transcription, browser pairing, profile list, and image upload stay in fallback/manual mode unless advertised
 
-v0.3.0 also separates gateway reachability from upstream Hermes runtime/tool tracebacks. If the API server is reachable but an upstream Hermes tool/runtime raises a Python traceback, the side panel can show a connected-with-warning diagnostic instead of treating the whole Browser connection as broken. Settings also include Copy Diagnostics, which creates a redacted support block without API keys, bearer tokens, cookies, page text, selected text, tab titles, or full tab URLs.
+The extension also separates gateway reachability from upstream Hermes runtime/tool tracebacks. If the API server is reachable but an upstream Hermes tool/runtime raises a Python traceback, the side panel can show a connected-with-warning diagnostic instead of treating the whole Browser connection as broken. Settings also include Copy Diagnostics, which creates a redacted support block without API keys, bearer tokens, cookies, page text, selected text, tab titles, or full tab URLs.
 
 ## Related docs
 
