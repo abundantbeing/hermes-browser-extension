@@ -34,7 +34,10 @@ of the turn that delivered it. A later turn, a new session, a delegated
 subagent, a sibling task or another profile cannot read it, and a hash
 reference turn (`delivery: "reference"`) carries no payload to store. The cache
 is in memory only (300 seconds, bounded); the journal and receipts hold
-metadata only.
+metadata only. Browser-supplied scope, context hash, controller and
+browser-profile ids are kept only when they look like opaque ids (a UUID, a hex
+hash or a short slug without a credential-style prefix); anything else is
+dropped.
 
 ## Install (per profile)
 
@@ -48,7 +51,7 @@ plugin is installed and enabled for each profile that should use it.
 cp -r companion-plugin ~/.hermes/profiles/<profile>/plugins/hermes-browser-companion
 
 # 2. Preview, then enable for exactly one profile
-node scripts/enable-bot-companion-tools.mjs --list
+node scripts/enable-bot-companion-tools.mjs --list     # read-only: where it is staged, its version, whether it is enabled
 node scripts/enable-bot-companion-tools.mjs --profile <profile>            # dry run
 node scripts/enable-bot-companion-tools.mjs --apply --profile <profile>    # applies
 
@@ -59,13 +62,19 @@ hermes plugins enable hermes-browser-companion --profile <profile>
 hermes plugins list --profile <profile>
 ```
 
-Enabling the plugin in one profile never changes another profile's config.
+Enabling the plugin in one profile never changes another profile's config. The script acts on exactly one profile per run (lists, `all` and wildcards are refused), treats `default` as the Hermes root, and refuses to enable a staged copy whose version differs from this repository's unless you pass `--allow-stale`.
 
 ## Upgrading
 
 Replace the staged directory with the new copy and restart the profile's
 gateway. A stale copy keeps its old tools and hooks until then; compare the
-`version` in `plugin.yaml` with the repository copy.
+`version` in `plugin.yaml` with the repository copy (`--list` prints both).
+Copies staged before the hook-worker fix cannot pass a tool's authorization
+across Hermes' bounded hook worker, so their owner-gated tools answer
+"unavailable" and `browser_get_context` can use up the cached context without
+returning it. If the plugin is nested inside a clone of this repository, move
+the old copy aside rather than leaving both: both manifests would match the
+enabled name and register the same tools twice.
 
 ## Requirements
 
