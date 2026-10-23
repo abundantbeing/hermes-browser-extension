@@ -8,6 +8,8 @@ The writer makes a single completion at a time through Hermes' provider clients.
 
 The local wrapper explicitly selects GPT-6.1-SOL-900K through OpenAI Codex with `xhigh` reasoning. Its only fallback is `deepseek/deepseek-v4.1-flash-1017` through Nous Portal. These routes belong to this job; changing the interactive chat model does not change them. The route is recorded in internal execution metadata and logs, and is not printed in the published review.
 
+Child processes the watcher starts (the writer and the illustration generator) run with an environment that has no GitHub token, review API key, API server key or Python path overrides; only provider authentication stays available to them. The watcher only fetches illustration URLs on a short list of known image hosts, and takes the URL to re-check from its own record of the generated image, never from text in a comment.
+
 Provider credentials remain in Hermes' existing credential stores. Never put them in the repository, cron prompt, review comments, or preview artifacts.
 
 The GitHub credential is verified against the API before use. An inherited `GITHUB_TOKEN` that no longer authenticates is replaced by the Git Credential Manager credential, and the run fails with a clear error when neither works. A stale token must never turn into a silent no-op or a published review against the wrong identity.
