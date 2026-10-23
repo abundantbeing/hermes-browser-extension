@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
+import {rosterStopTarget} from '../extension/lib/live-session-attach.mjs';
 const panel=await readFile(new URL('../extension/sidepanel.js',import.meta.url),'utf8');
 const web=await readFile(new URL('../extension/app.js',import.meta.url),'utf8');
 const fn=(source,name)=>source.match(new RegExp(`(?:async )?function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}`))[0];
@@ -11,7 +12,7 @@ test('a local writer in A does not make the viewed session B running',()=>{
  assert.equal(vm.runInContext(`${fn(panel,'viewedSessionIsRunning')};viewedSessionIsRunning()`,ctx),false);
 });
 test('Stop from B refuses before touching the local writer in A',async()=>{
- const ctx=vm.createContext({sending:true,settings:{sessionId:'B'},liveAttach:null,localRunIsViewed:()=>false,usesDashboardWsChatTransport:()=>false,activeRunControl:{phase:'running'},requestRunStop:()=>{throw new Error('Wrong-session Stop reached the writer');}});
+ const ctx=vm.createContext({sending:true,settings:{sessionId:'B'},liveAttach:null,liveSessionRows:new Map(),liveSessionRosterScope:'',liveSessionScopeKey:()=>'',activeDashboardWsConnection:null,rosterStopTarget,localRunIsViewed:()=>false,usesDashboardWsChatTransport:()=>false,activeRunControl:{phase:'running'},requestRunStop:()=>{throw new Error('Wrong-session Stop reached the writer');}});
  assert.equal(await vm.runInContext(`${fn(panel,'stopCurrentTurn')};stopCurrentTurn()`,ctx),false);
 });
 test('settling A cannot flush its queued message into B',async()=>{

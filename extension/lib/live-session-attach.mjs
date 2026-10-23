@@ -8,6 +8,7 @@
 import { liveStateFromSessionRow } from './session-live-state.mjs';
 import { browserDisplayMessages } from './web-run-state.mjs';
 import { sanitizeToolPreview } from './common.mjs';
+import { WS_METHODS, isUnknownMethodError, readGatewaySessionStatus } from './gateway-ws.mjs';
 
 // Only decorate sessions from the current profile's historical list. The
 // process-wide active_list RPC is not itself a profile-scoped session browser.
@@ -28,6 +29,52 @@ export function sessionIsLiveFromStatus(statusPayload = null) {
   if (state !== 'unknown') return state === 'running';
   // session.status is a human-readable RPC on released gateways.
   return /^Agent Running:\s*Yes\s*$/mi.test(String(statusPayload.output || ''));
+}
+
+/**
+ * Read a running session's state for an attached view. A released gateway answers
+ * `session.activate` with the inflight text and display history. A session authority
+ * does not serve it (-32601) or `session.status`: there the run state comes from the
+ * authority reader (its `session.active_list` row, or the resume snapshot) and the
+ * transcript from `session.history`. Pass `activateUnsupported` once a client has
+ * answered -32601, so the later polls skip the call; `includeMessages: false` skips
+ * the transcript read on those polls, since only the run state changes.
+ * Never submits, steers or interrupts anything.
+ */
+export async function readLiveAttachSnapshot({
+  client,
+  liveId,
+  storedId = '',
+  profile = '',
+  activateUnsupported = false,
+  includeMessages = true,
+} = {}) {
+  if (!activateUnsupported) {
+    try {
+      return { snapshot: await client.request('session.activate', { session_id: liveId }), activateUnsupported: false };
+    } catch (error) {
+      if (!isUnknownMethodError(error)) throw error;
+    }
+  }
+  const status = await readGatewaySessionStatus(client, liveId, { storedSessionId: storedId });
+  const running = sessionIsLiveFromStatus(status);
+  const history = includeMessages || !running
+    ? await client.request(WS_METHODS.sessionHistory, { session_id: liveId, ...(profile ? { profile } : {}) })
+    : {};
+  return { snapshot: { ...history, running }, activateUnsupported: true };
+}
+
+/**
+ * The live run to Stop for the viewed session when this panel is neither running it
+ * nor attached to it yet: the roster says it is live on the connection the roster was
+ * read from. Null when there is nothing the roster can prove.
+ */
+export function rosterStopTarget({ rows, sessionId = '', client = null, scopeMatches = false } = {}) {
+  const id = String(sessionId || '').trim();
+  const row = id && rows instanceof Map ? rows.get(id) : null;
+  if (!scopeMatches || !row || row.live !== true || client?.readyState !== 1) return null;
+  const liveId = String(row.liveId || '').trim();
+  return liveId ? { client, liveId, sessionId: id } : null;
 }
 
 export function shouldAttachLiveSession({

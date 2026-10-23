@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { setImmediate } from 'node:timers';
 import { sessionIsLiveFromStatus, shouldAttachLiveSession } from '../extension/lib/live-session-attach.mjs';
+import { readGatewaySessionStatus } from '../extension/lib/gateway-ws.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const attachSource = source.slice(source.indexOf('async function attachLiveSessionIfRunning('), source.indexOf('async function fetchSessionMessagesQuietly('));
@@ -21,7 +22,7 @@ function harness(statusRequest = async () => ({ output: 'Agent Running: Yes' }))
     liveAttach: null, liveAttachGeneration: 0, sessionLoadRequestId: 1, liveSessionRows: new Map(),
     completeAttachedRun: async () => { refreshes += 1; },
     scopeRevision: { current: () => 1, isCurrent: id => id === 1 },
-    shouldAttachLiveSession, sessionIsLiveFromStatus,
+    shouldAttachLiveSession, sessionIsLiveFromStatus, readGatewaySessionStatus,
     THINKING_PLACEHOLDER: 'Thinking', addMessage: () => ({ node: {} }), assistantMessageRoleLabel: () => 'Hermes',
     createStreamingMessageUpdater: () => ({ updateText: value => paints.push(value), updateTool: value => paints.push(value), flush: async value => paints.push(value), dispose: () => {} }),
     matchesDashboardSessionEvent: (event, ids) => ids.includes(event.sessionId),

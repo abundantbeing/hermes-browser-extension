@@ -260,7 +260,7 @@ import { renderProjectsPanel } from './lib/projects-panel.mjs';
 import { SESSION_MENU_TABS, SESSION_MENU_TAB_KEY, normalizeSessionMenuTab } from './lib/projects-view.mjs';
 import { friendlyModelName } from './lib/model-friendly-name.mjs';
 import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToolHistoryMessages, mergeToolCallActivity } from './lib/tool-call-group.mjs';
-import { sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
+import { readLiveAttachSnapshot, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
 import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAGE_LIMIT } from './lib/session-paging.mjs';
@@ -1328,6 +1328,8 @@ let liveSessionPollInFlight = false;
 let liveSessionRosterScope = '';
 let liveSessionRosterFailures = 0;
 const unsupportedLiveRosterClients = new WeakSet();
+// Sockets that answered -32601 to session.activate (a session authority does not serve it).
+const unsupportedActivateClients = new WeakSet();
 let activeRunId = '';
 let activeRunControl = null;
 let runControlGeneration = 0;
@@ -6012,20 +6014,32 @@ async function settleActiveRunTerminal() {
 }
 
 async function stopCurrentTurn() {
-  if (liveAttach?.sessionId === String(settings.sessionId || '').trim()) {
-    const attach = liveAttach;
+  const viewedSessionId = String(settings.sessionId || '').trim();
+  // A run this panel only watches (attached), or one the roster lists as live in the viewed session
+  // before the next poll has attached to it, is stopped through the gateway by its live id.
+  const attach = liveAttach?.sessionId === viewedSessionId ? liveAttach : null;
+  const watched = attach || (sending && localRunIsViewed() ? null : rosterStopTarget({
+    rows: liveSessionRows,
+    sessionId: viewedSessionId,
+    client: activeDashboardWsConnection?.client,
+    scopeMatches: liveSessionRosterScope === liveSessionScopeKey(),
+  }));
+  if (watched) {
     try {
       await interruptGatewaySession({
-        client: attach.client,
-        sessionId: attach.liveId,
-        storedSessionId: attach.sessionId,
+        client: watched.client,
+        sessionId: watched.liveId,
+        storedSessionId: watched.sessionId,
         withTimeout: (operation) => runControlRequestWithTimeout(operation, { timeoutMs: RUN_CONTROL_REQUEST_TIMEOUT_MS }),
       });
-      attach.stopRequested = true;
-      attach.userStopped = true;
-      if (queuedTurn?.sessionId === attach.sessionId) { queuedTurn.autoSend = false; renderQueueNotice(); }
+      if (attach) {
+        attach.stopRequested = true;
+        attach.userStopped = true;
+      }
+      if (queuedTurn?.sessionId === watched.sessionId) { queuedTurn.autoSend = false; renderQueueNotice(); }
       setStatus('warn', 'Stop accepted', 'Waiting for Hermes to confirm the run has stopped.');
-      void reconcileAttachedLiveSession();
+      if (attach) void reconcileAttachedLiveSession();
+      else void refreshLiveSessionRoster();
       return true;
     } catch (error) {
       setStatus('warn', 'Runtime stop unconfirmed', error?.message || String(error), { translateDetail: false });
@@ -16973,15 +16987,19 @@ async function reconcileAttachedLiveSession() {
   try {
     // activate returns the existing runtime's inflight text and display history.
     // It does not submit a prompt, stop a run, or create a replacement session.
-    let snapshot;
-    try {
-      snapshot = await attach.client.request('session.activate', { session_id: attach.liveId });
-    } catch (error) {
-      if (Number(error?.rpcCode ?? error?.code) !== -32601) throw error;
-      const status = await attach.client.request(WS_METHODS.sessionStatus, { session_id: attach.liveId });
-      const history = await attach.client.request(WS_METHODS.sessionHistory, { session_id: attach.liveId, profile: safeActiveProfile() });
-      snapshot = { ...history, running: sessionIsLiveFromStatus(status) };
-    }
+    // A session authority serves neither session.activate nor session.status: its run state comes
+    // from active_list and its transcript from session.history, read once per attach while it runs.
+    const read = await readLiveAttachSnapshot({
+      client: attach.client,
+      liveId: attach.liveId,
+      storedId: attach.sessionId,
+      profile: safeActiveProfile(),
+      activateUnsupported: unsupportedActivateClients.has(attach.client),
+      includeMessages: !attach.historySeeded,
+    });
+    if (read.activateUnsupported) unsupportedActivateClients.add(attach.client);
+    const snapshot = read.snapshot;
+    if (read.activateUnsupported && Array.isArray(snapshot.messages)) attach.historySeeded = true;
     if (!isCurrent() || revision !== attach.eventRevision) return;
     const rows = normalizeGatewayHistoryMessages(snapshot).map(message => ({ ...message,
       ts: normalizeMessageTimestamp(message.timestamp ?? message.ts) }));
@@ -17847,7 +17865,9 @@ async function attachLiveSessionIfRunning(sessionId, { scopeRevisionId = scopeRe
   if (!attachable) return false;
   let statusPayload = null;
   try {
-    statusPayload = await connection.client.request(WS_METHODS.sessionStatus, { session_id: liveId });
+    // A session authority does not serve session.status (-32601); the reader falls back to its
+    // session.active_list row, as Stop and terminal reconciliation already do.
+    statusPayload = await readGatewaySessionStatus(connection.client, liveId, { storedSessionId: target });
   } catch {
     return false;
   }
