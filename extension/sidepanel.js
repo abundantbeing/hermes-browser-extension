@@ -382,6 +382,15 @@ import {
   dashboardWsGatewayCapabilities,
   normalizeGatewayCapabilities,
 } from './lib/capabilities.mjs';
+import { capabilityIdentity } from './lib/capability-status.mjs';
+import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
+import {
+  capabilitySummaryText,
+  compactControlState,
+  compactResultMessage,
+  describeCapabilityRow,
+} from './lib/capability-view.mjs';
+import { compactSessionCanonical } from './lib/session-compact.mjs';
 import { filterKnownAssistantReconcileParts, normalizeBrowserRuntimeEvent, reduceAssistantStreamText } from './lib/runtime-events.mjs';
 import { taskStackFromToolEvent, taskStackProgress, updateTaskStackStore } from './lib/task-stack.mjs';
 import {
@@ -2149,6 +2158,15 @@ let connectionProbeTimer = null;
 let connectionProbeInFlight = false;
 const connectionController = createConnectionController();
 let gatewayCapabilities = { ...DEFAULT_GATEWAY_CAPABILITIES };
+// One ledger of evidence records (state, source, age, identity, reason) for the
+// current connection. Every view that says what Hermes can do reads it.
+const capabilityRuntime = createCapabilityRuntime();
+const capabilityClientTokens = new WeakMap();
+let capabilityLastWsClient = null;
+let capabilityClientCounter = 0;
+let compactInFlight = false;
+let compactPending = null;
+let compactRecommendedHint = false;
 
 // Sanitizer-proof accessor: the file-write sanitizer redacts the literal
 // key name in this file, so resolve it from char codes at runtime.
@@ -2359,6 +2377,7 @@ function markConnectionProbe(status, detail = '', diagnostic = null) {
   if (connectionProbeDiagnostic) lastGatewayDiagnostic = connectionProbeDiagnostic;
   if (status === 'connected') lastGatewayDiagnostic = null;
   updateConnectionPrompt();
+  refreshCapabilityViews();
   // Live voice is offered per connection: hide it when the link drops, look
   // again (cached per connection and profile) when it comes back.
   updateLiveVoiceButtonState();
@@ -2932,6 +2951,7 @@ async function refreshBrowserControlStatus() {
   if (document.visibilityState === 'hidden') return browserControlStatus;
   try {
     browserControlStatus = await browserControlMessage('HERMES_CONTROLLER_STATUS');
+    refreshCapabilityViews();
     browserControlActiveTab = await activeTab();
     browserControlCurrentTarget = null;
     const activeTabId = Number(browserControlActiveTab?.id);
@@ -3417,26 +3437,29 @@ function renderRemoteDiagnostics(diagnostic = lastRemoteDiagnostic) {
 
 function renderCompatibilityPanel() {
   if (!els.compatibilityList) return;
-  const rows = capabilityStatusRows(gatewayCapabilities, { browserSpeechAvailable: Boolean(speechRecognitionConstructor()) });
+  const locale = getLocale();
+  const rows = capabilityRuntime.rows(gatewayCapabilities, { browserSpeechAvailable: Boolean(speechRecognitionConstructor()) });
   els.compatibilityList.innerHTML = '';
   for (const row of rows) {
-    const item = document.createElement('li');
-    item.className = `compatibility-row ${row.status || 'warn'}`;
+    const view = describeCapabilityRow(row, { t, locale });
+    const entry = document.createElement('li');
+    entry.className = `compatibility-row ${view.status}`;
+    entry.dataset.capability = row.key;
+    entry.dataset.capabilityState = view.state;
+    entry.title = view.title;
     const label = document.createElement('span');
-    label.textContent = row.label;
+    label.textContent = view.label;
     const state = document.createElement('strong');
-    state.textContent = row.status === 'ok' ? 'available' : 'fallback';
-    const detail = document.createElement('small');
-    detail.textContent = row.detail;
-    item.append(label, state, detail);
-    els.compatibilityList.appendChild(item);
+    state.textContent = view.stateLabel;
+    const reason = document.createElement('small');
+    reason.textContent = view.reason;
+    const meta = document.createElement('small');
+    meta.className = 'compatibility-meta';
+    meta.textContent = view.meta;
+    entry.append(label, state, reason, meta);
+    els.compatibilityList.appendChild(entry);
   }
-  if (els.compatibilityStatus) {
-    const fallbackCount = rows.filter((row) => row.status !== 'ok').length;
-    els.compatibilityStatus.textContent = fallbackCount
-      ? `${fallbackCount} feature${fallbackCount === 1 ? '' : 's'} using fallback/manual mode.`
-      : 'Connected runtime advertises the full extension compatibility surface.';
-  }
+  if (els.compatibilityStatus) els.compatibilityStatus.textContent = capabilitySummaryText(rows, { t });
 }
 
 function renderConnectionSecurity() {
@@ -3492,6 +3515,7 @@ async function copySupportDiagnostics() {
         build: gatewayCapabilities.raw?.build || gatewayCapabilities.raw?.commit || '',
       },
       capabilities: gatewayCapabilities,
+      capabilityRows: (syncCapabilityRuntime(), capabilityRuntime.rows(gatewayCapabilities, { browserSpeechAvailable: Boolean(speechRecognitionConstructor()) })),
       selectedModel: currentSelectedModel() || {},
       contextScope,
       lastError: lastVisibleStatus,
@@ -4517,9 +4541,52 @@ function setGatewayCapabilities(caps) {
       .then(() => browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH'))
       .catch(() => undefined);
   }
+  syncCapabilityRuntime();
   renderCompatibilityPanel();
+  renderCompactControl();
   renderInlineAssistModelOptions();
   updateVoiceButtonState();
+}
+
+// Tells the capability ledger what the connection looks like right now: which
+// endpoint + signed-in principal + profile + controller, which socket, whether
+// it is open, and the latest capability object. Cheap and idempotent. Returns
+// true when something a view shows may have changed.
+function syncCapabilityRuntime() {
+  const remote = isRemoteWsMode();
+  const wsActive = usesDashboardWsChatTransport();
+  const connection = wsActive ? (remote ? remoteWsConnection : activeDashboardWsConnection) : null;
+  // A closed remote socket is dropped from remoteWsConnection; keep the last one
+  // so its records read as cached instead of vanishing.
+  const client = connection?.client || (wsActive ? capabilityLastWsClient : null);
+  capabilityLastWsClient = wsActive ? client : null;
+  let token = '';
+  if (client) {
+    if (!capabilityClientTokens.has(client)) capabilityClientTokens.set(client, `ws-${++capabilityClientCounter}`);
+    token = capabilityClientTokens.get(client);
+  }
+  // Authority, projects, compaction and image attach are read from the socket's
+  // own gateway.ready (see deriveCapabilityRecords), so a capability object that
+  // was built before the handshake arrived does not hide them.
+  return capabilityRuntime.sync({
+    caps: gatewayCapabilities,
+    dashboardWsActive: wsActive,
+    readyPayload: client ? client.readyPayload || null : null,
+    identity: capabilityIdentity({
+      endpoint: wsActive ? (connection?.baseUrl || settings.gatewayUrl) : settings.gatewayUrl,
+      principal: contextConsentBindingMatches() ? contextConsentPrincipalBinding.principal : '',
+      profile: safeActiveProfile(),
+      controller: browserControlStatus?.controllerId || '',
+    }),
+    connectionToken: token,
+    connected: client ? client.readyState === 1 : isConnected(),
+  });
+}
+
+function refreshCapabilityViews() {
+  if (!syncCapabilityRuntime()) return;
+  renderCompatibilityPanel();
+  renderCompactControl();
 }
 
 async function loadGatewayCapabilities({ quiet = false, publicOnly = false, healthOk = false } = {}) {
@@ -8502,6 +8569,20 @@ async function attachDashboardTurnImages(client, sessionId, items = []) {
   return items;
 }
 
+// What the image.attach_bytes calls just taught the capability ledger. The
+// dashboard WebSocket does not advertise the RPC per connection, so the record
+// starts as a contract statement and the first real attach confirms or refutes it.
+function noteDashboardImageAttach(items = [], sessionId = '') {
+  const images = items.filter((attachment) => attachment?.kind === 'image' && attachment.dataUrl);
+  if (!images.length) return;
+  if (images.some((attachment) => attachment.dashboardAttachedSessionId === sessionId)) {
+    capabilityRuntime.noteOperation('imageSessionAttach', { ok: true });
+  } else if (images.some((attachment) => attachment.uploadError)) {
+    capabilityRuntime.noteOperation('imageSessionAttach', { ok: false, detail: String(images.find((attachment) => attachment.uploadError)?.uploadError || '').slice(0, 120) });
+  } else return;
+  renderCompatibilityPanel();
+}
+
 async function attachFiles(fileList, { imagesOnly = false } = {}) {
   const files = Array.from(fileList || []);
   for (const file of files) {
@@ -9533,21 +9614,8 @@ function renderContextWindow(userText = els.input?.value || '') {
   renderContextDefinitionRows(els.settingsContextRuntime, runtimeRows);
 
   const controls = contextControlState({ capabilities: gatewayCapabilities, percentUsed: contextView.percent ?? meter.percent, contextSource: accounting.source });
-  // Without native compaction there is nothing to do here; Hermes compacts on its own.
-  if (els.contextControlRow) els.contextControlRow.hidden = !controls.canCompact;
-  if (els.contextControlStatus) {
-    els.contextControlStatus.textContent = translateUiText(controls.canCompact
-      ? controls.label
-      : 'Hermes owns automatic compaction for this connection.');
-  }
-  if (els.contextCompactButton) {
-    els.contextCompactButton.hidden = !controls.canCompact;
-    els.contextCompactButton.disabled = !controls.canCompact || !settings.sessionId;
-    els.contextCompactButton.textContent = translateUiText(controls.compactRecommended ? 'Compact recommended' : 'Compact context');
-    els.contextCompactButton.title = translateUiText(controls.canCompact
-      ? 'Ask Hermes to compact this session context.'
-      : 'The connected Hermes runtime does not advertise native session compaction.');
-  }
+  compactRecommendedHint = controls.compactRecommended;
+  renderCompactControl();
 
   const pc = currentContext?.pageContext;
   if (contextScope.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
@@ -21361,6 +21429,28 @@ async function apiFetch(path, options = {}) {
   return hermesClient.fetch(path, options);
 }
 
+// The Compact control, drawn from the capability ledger: it is pressable only
+// when the record for this connection is current and available, and when it is
+// not, the sentence under it is that record's exact reason.
+function renderCompactControl() {
+  if (!els.contextCompactButton) return;
+  const verdict = capabilityRuntime.verdict('sessionCompress');
+  const view = compactControlState({
+    hasSession: Boolean(settings.sessionId),
+    runActive: !canSwitchActiveSession({ sending, runControl: activeRunControl }),
+    working: compactInFlight,
+    recommended: compactRecommendedHint,
+    verdict,
+    record: capabilityRuntime.record('sessionCompress'),
+  }, { t, locale: getLocale() });
+  if (els.contextControlRow) els.contextControlRow.hidden = false;
+  if (els.contextControlStatus) els.contextControlStatus.textContent = view.status;
+  els.contextCompactButton.hidden = false;
+  els.contextCompactButton.disabled = view.disabled;
+  els.contextCompactButton.textContent = view.label;
+  els.contextCompactButton.title = view.title;
+}
+
 async function compactCurrentSessionContext({ automaticRecovery = false } = {}) {
   if (!automaticRecovery && !canSwitchActiveSession({ sending, runControl: activeRunControl })) {
     setStatus('warn', 'Compaction blocked while Hermes is running', 'Stop the active run before compacting this session.');
@@ -21369,6 +21459,12 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
   if (!settings.sessionId) {
     if (!automaticRecovery) setStatus('warn', 'No active session', 'Open or create a Hermes Browser Extension session before compacting context.');
     return { ok: false, reason: 'no-session' };
+  }
+  // A session-authority dashboard has no session.compress; it compacts through
+  // session.mutate operation=compress, read back before it says done.
+  syncCapabilityRuntime();
+  if (usesDashboardWsChatTransport() && capabilityRuntime.record('sessionCompress')?.params?.route === 'canonical') {
+    return compactCanonicalSessionContext({ automaticRecovery });
   }
   if (!gatewayCapabilities.sessionCompress) {
     if (!automaticRecovery) setStatus('warn', 'Context compaction unavailable', 'The connected Hermes runtime does not advertise native session compaction.');
@@ -21411,6 +21507,58 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
     setStatus('warn', 'Context compaction failed', error?.message || String(error), { translateDetail: false });
     return { ok: false, reason: 'request-failed', error };
   } finally {
+    renderContextWindow();
+  }
+}
+
+// Session-authority dashboard: session.mutate operation=compress. The durable
+// session id is the key and survives compression (a rotating compaction moves
+// the physical target, never the id this panel holds), so nothing is renamed.
+async function compactCanonicalSessionContext({ automaticRecovery = false } = {}) {
+  const verdict = capabilityRuntime.verdict('sessionCompress');
+  if (!verdict.allowed) {
+    const message = compactResultMessage({ status: 'unavailable', reason: verdict.reasonCode, method: verdict.params?.method }, { t });
+    if (!automaticRecovery) setStatus('warn', message.title, message.detail, { translateTitle: false, translateDetail: false });
+    return { ok: false, reason: 'route-unavailable' };
+  }
+  compactInFlight = true;
+  renderCompactControl();
+  try {
+    const connection = await ensureActiveDashboardWsConnection();
+    await ensureRemoteWsSession(connection);
+    const durableId = connection.wsStoredSessionId || settings.sessionId;
+    const result = await compactSessionCanonical({
+      request: (method, params, options) => connection.client.request(method, params, options),
+      dashboardWs: true,
+      getReadyPayload: () => (connection.client.readyState === 1 ? connection.client.readyPayload || null : null),
+      unsupportedMethods: capabilityRuntime.unsupportedMethods,
+      sessionId: durableId,
+      pending: compactPending && compactPending.sessionId === durableId ? compactPending : null,
+    });
+    compactPending = result.status === 'not_committed' ? result.pending : null;
+    if (result.status === 'compacted') capabilityRuntime.noteOperation('sessionCompress', { ok: true });
+    else if (result.status === 'blocked' || result.status === 'denied') capabilityRuntime.noteOperation('sessionCompress', { ok: false, detail: result.reason });
+    refreshCapabilityViews();
+    const message = compactResultMessage(result, { t });
+    if (!automaticRecovery || result.status !== 'compacted') {
+      setStatus(message.level === 'warn' ? 'warn' : 'ok', message.title, message.detail, { translateTitle: false, translateDetail: false });
+      // The status card lives in Settings, so the outcome is also said where the button is.
+      showOperationToast({ kind: message.level === 'warn' ? 'warn' : 'ok', title: message.title, detail: message.detail, duration: 12_000 });
+    }
+    if (result.status === 'compacted') {
+      // The breakdown measured the transcript that was just replaced.
+      sessionContextStore = markContextBreakdownStale(sessionContextStore, settings.sessionId);
+      refreshSessionContextTelemetry({ force: true });
+      await clearContextDeliveryState();
+      await loadSessions({ quiet: true });
+    }
+    const ok = result.status === 'compacted' || result.status === 'noop';
+    return { ok, reason: ok ? undefined : result.status, sessionId: settings.sessionId, payload: result };
+  } catch (error) {
+    setStatus('warn', 'Context compaction failed', error?.message || String(error), { translateDetail: false });
+    return { ok: false, reason: 'request-failed', error };
+  } finally {
+    compactInFlight = false;
     renderContextWindow();
   }
 }
@@ -21748,6 +21896,10 @@ const gatewayServerRequests = {
 function createChatGatewayClient(options = {}) {
   const gatewayClient = createGatewayClient({ ...options, serverRequests: gatewayServerRequests });
   gatewayClient.on('close', () => promptController.dropClient(gatewayClient));
+  // The capability ledger follows the socket: a handshake turns every positive
+  // record current, a close turns it into a cached one.
+  gatewayClient.on('gateway.ready', () => refreshCapabilityViews());
+  gatewayClient.on('close', () => refreshCapabilityViews());
   return gatewayClient;
 }
 
@@ -22335,6 +22487,7 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
       void (async () => {
         try {
           await attachDashboardTurnImages(client, sessionId, turnAttachments);
+          noteDashboardImageAttach(turnAttachments, sessionId);
         } catch (error) {
           console.warn('[Hermes Browser] Dashboard image attach failed:', error);
         }
@@ -23087,6 +23240,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
         const attachSessionId = await ensureRemoteWsSession(attachConnection);
         if (!runIsViewed()) throw new Error('Session changed before image attachment. The original draft is held.');
         preparedAttachments = await attachDashboardTurnImages(attachConnection.client, attachSessionId, preparedAttachments);
+        noteDashboardImageAttach(preparedAttachments, attachSessionId);
       } catch (error) {
         console.warn('[Hermes Browser] Dashboard image attach failed:', error);
       }
@@ -25393,6 +25547,7 @@ function bindEvents() {
     els.contextBarButton.setAttribute('aria-expanded', String(!nextHidden));
     // Opening asks for a fresh reading unless one arrived in the last 30 s.
     if (!nextHidden) refreshSessionContextTelemetry();
+    if (!nextHidden && !usesDashboardWsChatTransport()) loadGatewayCapabilities({ quiet: true, healthOk: isConnected() }).catch(() => null);
   });
   for (const input of els.transcriptModeInputs) input.addEventListener('change', renderTranscriptProviderField);
   els.contextRefreshButton?.addEventListener('click', (event) => {
@@ -26199,6 +26354,7 @@ subscribeLocale(() => {
   renderTaskStack();
   renderStartupReadiness();
   renderContextWindow();
+  renderCompatibilityPanel();
   updateComposerBusyState();
   renderWakeState();
   renderModelRefreshState();

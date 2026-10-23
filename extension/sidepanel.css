@@ -6523,6 +6523,14 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 .compatibility-row small { grid-column: 1 / -1; color: var(--hermes-muted); line-height: 1.3; }
 .compatibility-row.ok strong { color: var(--hermes-accent); }
 .compatibility-row.warn strong { color: var(--hermes-muted); }
+.compatibility-row small.compatibility-meta { font-size: calc(10px * var(--hermes-text-zoom, 1)); opacity: 0.85; overflow-wrap: anywhere; }
+.compatibility-row small { overflow-wrap: anywhere; }
+/* The state word says what the evidence is, not just on or off. */
+.compatibility-row[data-capability-state="degraded"] strong { color: var(--hermes-warning); }
+.compatibility-row[data-capability-state="cached"] strong { color: var(--hermes-warning); font-style: italic; }
+.compatibility-row[data-capability-state="blocked"] strong,
+.compatibility-row[data-capability-state="unsupported"] strong { color: var(--hermes-danger); }
+.compatibility-row[data-capability-state="unknown"] strong { color: var(--hermes-muted); }
 .connection-security-summary {
   display: grid;
   gap: 5px;

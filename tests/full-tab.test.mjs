@@ -337,7 +337,13 @@ test('side-panel context chip stays compact while Settings owns accurate compact
   );
   assert.match(render, /contextCompactLabel\.textContent\s*=\s*meter\.compactLabel/);
   assert.doesNotMatch(render, /contextCompactLabel\.textContent[^;]*compacts/);
-  assert.match(render, /contextCompactButton\.hidden\s*=\s*!controls\.canCompact/);
+  // The control is drawn from the capability ledger, not hidden by a boolean: a disabled
+  // button states the exact reason (REST-only, no authority, cached, ...).
+  assert.match(render, /renderCompactControl\(\)/);
+  const compactControl = js.match(/function renderCompactControl\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
+  assert.match(compactControl, /capabilityRuntime\.verdict\('sessionCompress'\)/);
+  assert.match(compactControl, /contextCompactButton\.disabled\s*=\s*view\.disabled/);
+  assert.doesNotMatch(compactControl, /contextCompactButton\.hidden\s*=\s*!/);
   assert.match(render, /Auto-compact trigger/);
   assert.match(render, /Compactions/);
   assert.match(render, /Telemetry source/);
