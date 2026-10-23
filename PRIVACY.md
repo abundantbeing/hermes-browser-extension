@@ -17,9 +17,12 @@ The extension stores settings in `chrome.storage.local`, including:
 - selected session/model/profile settings, including Browser-scoped preferred model and per-session model bindings
 - context settings such as include-tabs/page-text/selected-text, selected prompt tabs, and Chat only/follow/pinned scope
 - panel opening preference for tab-attached or global side panels
-- appearance settings
+- appearance settings, including the response style and chat layout you chose and whether first-time setup has been completed
 - Hermes Assist model/provider/reasoning preferences (used only when the connected gateway advertises per-session model locking), session-route, and per-site context preferences
 - local side-panel message history cache
+- each session's last known context-window reading (token counts, the gateway's category estimates and the names of context files it reports, for up to 100 sessions), so a session shows its context the moment it opens
+- replay positions (event sequence numbers and the gateway's replay epoch, no message text) for up to 8 gateways and 64 sessions each, kept in session storage so a reconnect can ask Hermes for the events it missed
+- which sessions-drawer tab (Recents or Projects) you last used
 - Hermes Web appearance, session rail, and canonical session handoff settings
 - per-tab local message caches and per-tab Hermes session bindings when the panel is tab-attached or you pin a browser tab
 - bounded controller identity, tab attachment metadata, paused state, document-generation counters, and redacted terminal receipts required to recover safely across MV3 service-worker suspension
@@ -47,6 +50,10 @@ Hermes Control is opt-in and limited to tabs you explicitly attach. The extensio
 
 Local HTML, browser-rendered PDF, and localhost pages use the same model. A local file is not exposed until the browser permits file URL access and the user approves local-document access inside the extension.
 
+## Projects and session management
+
+The Projects tab of the sessions drawer, Move, Compact context and the capability rows talk to the Hermes gateway you configured, over the dashboard connection, and nowhere else. Project names, folder paths on the Hermes host, session titles and counts are read from the gateway and kept in memory only. A project name and folder path you type, and the folder you choose for a move, are sent to that gateway. Nothing about projects or moves is stored in the browser, and none of it is sent to any third party. Capability states are derived in memory from the connection and are included in the support report as state, source, age and reason only.
+
 ## Local vs remote privacy boundary
 
 ### Local API mode
@@ -57,7 +64,7 @@ Hermes itself may then call models/tools/providers according to your Hermes conf
 
 ### Remote API/dashboard mode
 
-If you configure a remote Hermes URL, browser context is sent to that remote Hermes runtime. Only configure remote endpoints you control and trust.
+If you configure a remote Hermes URL, browser context is sent to that remote Hermes runtime. Only configure remote endpoints you control and trust. A remote connection never contacts a Hermes Dashboard on this computer.
 
 ## Hermes Assist privacy
 
