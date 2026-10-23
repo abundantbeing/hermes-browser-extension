@@ -9923,6 +9923,12 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
       },
       runtime,
     });
+    // A lock the gateway calls accepted does not stand when the runtime it reports
+    // is a different provider or model from the one that was asked for.
+    if (ack.state === 'mismatch') {
+      setStatus('warn', 'Model mismatch', ack.detail);
+      return { state: 'mismatch', payload };
+    }
     if (ack.state === 'confirmed' || String(runtime.model_lock || '').toLowerCase() === 'accepted') {
       setStatus('ok', 'Hermes model lock accepted', ack.detail || requestedDetail || 'Backend accepted the session model lock.');
       if (runtime.provider || runtime.model) applyPendingModelRuntimeAck(runtime);

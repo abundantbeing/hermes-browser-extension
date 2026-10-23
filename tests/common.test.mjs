@@ -1117,6 +1117,29 @@ test('model selection stays local while the active Browser draft is unsaved', ()
   );
 });
 
+test('a runtime that does not name the serving provider or model has not confirmed the requested pair', () => {
+  const requested = { provider: 'nous', model: 'x-ai/grok-4.5' };
+  const modelOnly = modelRuntimeAckState({ requested, runtime: { model: 'x-ai/grok-4.5' } });
+  assert.equal(modelOnly.state, 'pending');
+  assert.match(modelOnly.detail, /but not the provider/);
+  const providerOnly = modelRuntimeAckState({ requested, runtime: { provider: 'nous' } });
+  assert.equal(providerOnly.state, 'pending');
+  assert.match(providerOnly.detail, /but not the model/);
+  assert.equal(modelRuntimeAckState({ requested, runtime: { provider: 'nous', model: 'x-ai/grok-4.5' } }).state, 'confirmed');
+  // Nothing was asked of the provider, so a model-only answer is complete.
+  assert.equal(modelRuntimeAckState({ requested: { provider: '', model: 'gpt-5.5' }, runtime: { model: 'gpt-5.5' } }).state, 'confirmed');
+  // A different provider serving the same model is still a mismatch, not a pending.
+  assert.equal(modelRuntimeAckState({ requested, runtime: { provider: 'openai', model: 'x-ai/grok-4.5' } }).state, 'mismatch');
+});
+
+test('the side panel does not call a model lock accepted when the runtime reports a different model', () => {
+  const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const block = source.slice(source.indexOf("setStatus('warn', 'Model lock pending', `${requestedDetail"));
+  const mismatchAt = block.indexOf("if (ack.state === 'mismatch')");
+  const acceptedAt = block.indexOf("setStatus('ok', 'Hermes model lock accepted'");
+  assert.ok(mismatchAt > 0 && acceptedAt > mismatchAt, 'the mismatch check comes before the accepted claim');
+});
+
 test('model runtime ack helper distinguishes pending confirmed and mismatch states', () => {
   assert.equal(modelRuntimeAckState({ requested: { provider: 'nous', model: 'x-ai/grok-4.5' }, runtime: {} }).state, 'pending');
   assert.equal(modelRuntimeAckState({ requested: { provider: 'nous', model: 'x-ai/grok-4.5' }, runtime: { provider: 'nous', model: 'x-ai/grok-4.5' } }).state, 'confirmed');

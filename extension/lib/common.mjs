@@ -1596,6 +1596,18 @@ export function modelRuntimeAckState({ requested = {}, runtime = {} } = {}) {
     return { state: 'pending', detail: 'Waiting for Hermes runtime metadata.' };
   }
   if (modelOk && providerOk) {
+    // Confirmed only when every part that was asked for was acknowledged. A
+    // runtime that names the model but not the provider (or the reverse) has not
+    // said which provider is serving, so a silent provider swap would pass.
+    const unreported = [];
+    if (!gatewayAlias && requestedModel && !effective.model) unreported.push('model');
+    if (requestedProvider && !effective.provider) unreported.push('provider');
+    if (unreported.length) {
+      return {
+        state: 'pending',
+        detail: `Hermes reported ${[effective.provider, effective.model].filter(Boolean).join(' · ')} but not the ${unreported.join(' or ')} that is serving.`,
+      };
+    }
     return {
       state: 'confirmed',
       detail: [effective.provider, effective.model].filter(Boolean).join(' · '),
