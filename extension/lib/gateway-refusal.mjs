@@ -107,6 +107,9 @@ export function refusalFailureState(error) {
       detail: 'Hermes no longer has this session, so the message was not sent. It was kept as a draft. Open another session or start a new one, then send it again.',
       preserveDraft: true,
       gatewayStatus: 'connected',
+      // The history refresh that follows a failed turn rebuilds the transcript, so a message placed
+      // in it does not last; the panel also raises a toast for these.
+      toast: true,
     };
   }
   if (error?.turnNotDelivered) {
@@ -116,6 +119,9 @@ export function refusalFailureState(error) {
       detail: 'The connection dropped before Hermes recorded this message, and the session shows no sign of it. It was kept as a draft. Nothing was sent twice; send it again when you are ready.',
       preserveDraft: true,
       gatewayStatus: 'connected',
+      // The history refresh that follows a failed turn rebuilds the transcript, so a message placed
+      // in it does not last; the panel also raises a toast for these.
+      toast: true,
     };
   }
   const kind = classifyPromptRefusal(error);
@@ -126,6 +132,9 @@ export function refusalFailureState(error) {
       detail: 'Another window or surface is running a turn in this session, so Hermes did not take this message. It was kept as a draft. Send it when that turn finishes, or steer or queue it once this panel shows the run.',
       preserveDraft: true,
       gatewayStatus: 'connected',
+      // The history refresh that follows a failed turn rebuilds the transcript, so a message placed
+      // in it does not last; the panel also raises a toast for these.
+      toast: true,
     };
   }
   if (kind === 'refused') {
@@ -135,6 +144,9 @@ export function refusalFailureState(error) {
       detail: `Hermes answered ${refusalDetailText(error)}. Nothing was sent, and the message was kept as a draft.`,
       preserveDraft: true,
       gatewayStatus: 'connected',
+      // The history refresh that follows a failed turn rebuilds the transcript, so a message placed
+      // in it does not last; the panel also raises a toast for these.
+      toast: true,
     };
   }
   return null;

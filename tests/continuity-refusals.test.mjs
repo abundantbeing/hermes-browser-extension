@@ -144,7 +144,14 @@ test('failure states keep the draft and leave the gateway connected', () => {
     assert.ok(state, error.message);
     assert.equal(state.preserveDraft, true);
     assert.equal(state.gatewayStatus, 'connected');
+    assert.equal(state.toast, true, 'the transcript is rebuilt after a failed turn, so these also raise a toast');
     assert.deepEqual(state, refusalFailureState(error));
   }
   assert.equal(turnRequestFailureState(new Error('socket closed')), null);
+});
+
+test('the send path raises the toast for a failure that asks for one', async () => {
+  const { readFile: read } = await import('node:fs/promises');
+  const panel = await read(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(requestFailure\.toast === true\) showOperationToast\(\{ kind: 'warn', title: requestFailure\.title, detail: requestFailure\.detail/);
 });

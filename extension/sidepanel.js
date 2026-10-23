@@ -23858,6 +23858,7 @@ ${streamError.message}`);
         }
         streamView.update(`**${requestFailure.title}**\n\n${requestFailure.detail}`);
         if (requestFailure.kind === 'hermes-update-restart') attachGatewayRestartAction(streamView.node);
+        if (requestFailure.toast === true) showOperationToast({ kind: 'warn', title: requestFailure.title, detail: requestFailure.detail, duration: 14_000 });
         setStatus('error', requestFailure.title, `${requestFailure.detail} Gateway remains connected.`, {
           translateTitle: false,
           translateDetail: false,
