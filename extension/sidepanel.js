@@ -5283,7 +5283,10 @@ function canSteerActiveRun() {
 
 function viewedSessionIsRunning() {
   const sessionId = String(settings.sessionId || '').trim();
-  return (sending && localRunIsViewed()) || Boolean(liveAttach && liveAttach.sessionId === sessionId) || liveSessionRows.get(sessionId)?.running === true;
+  if ((sending && localRunIsViewed()) || Boolean(liveAttach && liveAttach.sessionId === sessionId)) return true;
+  // The roster row carries `live`/`busy`/`state` (sessionLiveRoster), never `running`. The scope is
+  // only compared when a row exists, so this stays safe before start-up has set anything up.
+  return liveSessionRows.get(sessionId)?.live === true && liveSessionRosterScope === liveSessionScopeKey();
 }
 
 function currentComposerDraftState() {
