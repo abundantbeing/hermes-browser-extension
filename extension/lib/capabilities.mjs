@@ -336,6 +336,7 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   readyPayload = null,
   checkedAt = Date.now(),
   unsupportedMethods = [],
+  dashboardWsActive = false,
 } = {}) {
   const transport = transportOf(caps);
   const features = caps.raw?.features && typeof caps.raw.features === 'object' ? caps.raw.features : {};
@@ -347,6 +348,12 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   const S = CAPABILITY_STATES;
   const O = CAPABILITY_SOURCES;
   const hasReady = Boolean(readyPayload && typeof readyPayload === 'object');
+  // Session authority, projects, compaction and image attach belong to the
+  // dashboard WebSocket. They are read from its own gateway.ready whenever the
+  // panel actually talks over it, even if the capability flags came from REST
+  // (a named profile chats over the WebSocket while /v1/capabilities answers on
+  // the API port).
+  const wsRoute = transport === 'ws' || (dashboardWsActive === true && hasReady);
 
   function flag(id, value, { explicit, absentCode = 'not-advertised' } = {}) {
     if (transport === 'none') return make(id, S.unknown, O.none, 'no-record');
@@ -389,11 +396,11 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   else make('browserControl', S.unknown, transport === 'none' ? O.none : O.derived, transport === 'legacy' ? 'legacy-gateway' : (transport === 'ws' ? 'ws-not-reported' : 'not-advertised'));
 
   // Session authority and what hangs off it.
-  const authority = gatewayAuthorityAvailability({ dashboardWs: transport === 'ws', readyPayload, unsupportedMethods: unsupported, method: 'session.mutate' });
-  if (transport === 'none') {
+  const authority = gatewayAuthorityAvailability({ dashboardWs: wsRoute, readyPayload, unsupportedMethods: unsupported, method: 'session.mutate' });
+  if (transport === 'none' && !wsRoute) {
     make('sessionAuthority', S.unknown, O.none, 'no-record');
     make('projects', S.unknown, O.none, 'no-record');
-  } else if (transport !== 'ws') {
+  } else if (!wsRoute) {
     make('sessionAuthority', S.unsupported, O.derived, 'rest-only');
     make('projects', S.unsupported, O.derived, 'rest-only');
   } else if (authority.reason === 'not-connected') {
@@ -409,14 +416,16 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   }
 
   // Manual compaction, by whichever route this connection has.
+  // `route` says which verb the panel will use, so the control and the record
+  // can never disagree about it.
   if (transport === 'ws' && !hasReady) {
     make('sessionCompress', S.unknown, O.none, 'not-connected');
-  } else if (transport === 'ws' && caps.sessionCompactCanonical === true) {
-    if (unsupported.has('session.mutate')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.mutate' });
-    else make('sessionCompress', S.available, O.ready, 'authority-compress');
-  } else if (transport === 'ws' && caps.sessionCompress === true) {
-    if (unsupported.has('session.compress')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.compress' });
-    else make('sessionCompress', S.available, O.ready, 'legacy-ws-compress');
+  } else if (wsRoute && readyPayload.session_authority === true) {
+    if (unsupported.has('session.mutate')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.mutate', route: 'canonical' });
+    else make('sessionCompress', S.available, O.ready, 'authority-compress', { route: 'canonical' });
+  } else if (wsRoute) {
+    if (unsupported.has('session.compress')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.compress', route: 'legacy-ws' });
+    else make('sessionCompress', S.available, O.ready, 'legacy-ws-compress', { route: 'legacy-ws' });
   } else if (transport === 'rest') {
     if (caps.sessionCompress === true) make('sessionCompress', S.available, O.capabilities, 'advertised');
     else if (boolFeature(features, ['session_compress']) === false) make('sessionCompress', S.unsupported, O.capabilities, 'advertised-off');
@@ -430,7 +439,7 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   // Images, kept apart: an advertised HTTP upload route (imageUpload), the
   // dashboard WebSocket's own session attach RPC, and the stored-image read
   // (mediaRead, handled in the loop above). None implies another.
-  if (transport === 'ws' && caps.imageSessionAttach === true) make('imageSessionAttach', S.available, O.derived, 'ws-contract');
+  if (wsRoute && (caps.imageSessionAttach === true || transport !== 'ws')) make('imageSessionAttach', S.available, O.derived, 'ws-contract');
   else if (transport === 'none') make('imageSessionAttach', S.unknown, O.none, 'no-record');
   else make('imageSessionAttach', S.unsupported, O.derived, 'rest-only');
 

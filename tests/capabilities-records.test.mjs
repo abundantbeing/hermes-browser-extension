@@ -259,3 +259,23 @@ test('records for a different identity are rejected by the ledger instead of bei
   assert.ok(result.rejected > 5);
   assert.deepEqual(ledger.all(), []);
 });
+
+test('REST capability flags plus a live authority dashboard socket: compaction follows the socket the panel talks over', () => {
+  const rest = restCaps({ session_chat: true }, { sessions: { method: 'GET', path: '/api/sessions' } });
+  const ready = { session_authority: true };
+  const talkingOverWs = recordsOf(rest, { readyPayload: ready, dashboardWsActive: true });
+  assert.equal(talkingOverWs.sessionCompress.state, 'available');
+  assert.equal(talkingOverWs.sessionCompress.reasonCode, 'authority-compress');
+  assert.equal(talkingOverWs.sessionCompress.params.route, 'canonical');
+  assert.equal(talkingOverWs.sessionAuthority.state, 'available');
+  assert.equal(talkingOverWs.imageSessionAttach.state, 'available');
+  assert.equal(talkingOverWs.profiles.state, 'unknown', 'REST flags keep their REST meaning');
+
+  const socketOnlyForProjects = recordsOf(rest, { readyPayload: ready, dashboardWsActive: false });
+  assert.equal(socketOnlyForProjects.sessionCompress.reasonCode, 'rest-no-compress', 'chat is on REST, so compaction is a REST question');
+  assert.equal(socketOnlyForProjects.sessionAuthority.reasonCode, 'rest-only');
+
+  const legacy = recordsOf(rest, { readyPayload: { heartbeat: true }, dashboardWsActive: true });
+  assert.equal(legacy.sessionCompress.params.route, 'legacy-ws');
+  assert.equal(legacy.sessionCompress.reasonCode, 'legacy-ws-compress');
+});

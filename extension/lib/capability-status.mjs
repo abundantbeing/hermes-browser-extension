@@ -63,7 +63,10 @@ export const CAPABILITY_MAX_AGE_MS = Object.freeze({
   [CAPABILITY_SOURCES.capabilities]: 5 * 60_000,
   [CAPABILITY_SOURCES.operation]: 5 * 60_000,
   [CAPABILITY_SOURCES.probe]: 60_000,
-  [CAPABILITY_SOURCES.derived]: 5 * 60_000,
+  // Derived from the connection itself (no socket, no REST route, the WebSocket
+  // contract): true for as long as the connection is, and the ledger demotes it
+  // when the connection closes.
+  [CAPABILITY_SOURCES.derived]: Infinity,
   [CAPABILITY_SOURCES.extension]: Infinity,
   [CAPABILITY_SOURCES.methodNotFound]: Infinity,
   [CAPABILITY_SOURCES.revocation]: Infinity,
@@ -265,9 +268,23 @@ export function createCapabilityLedger({ now = Date.now } = {}) {
     return Number.isFinite(options.checkedAt) ? options.checkedAt : now();
   }
 
-  function resolve(id) {
+  // Which record speaks for a feature right now. A revocation always does. What
+  // an operation or a refusal taught us outranks the advertisement when it is
+  // negative; a positive result only stands in when the advertisement is not
+  // itself current (a successful call does not outlive the socket it ran on, and
+  // it must not expire a still-valid handshake either).
+  function resolve(id, at = now()) {
     const key = clean(id);
-    return revoked.get(key) || observed.get(key) || advertised.get(key) || null;
+    const revocation = revoked.get(key);
+    if (revocation) return revocation;
+    const seen = observed.get(key) || null;
+    const told = advertised.get(key) || null;
+    if (seen && seen.state !== CAPABILITY_STATES.available) return seen;
+    const toldNow = effectiveCapability(told, { now: at, connected });
+    if (toldNow?.state === CAPABILITY_STATES.available) return told;
+    const seenNow = effectiveCapability(seen, { now: at, connected });
+    if (seenNow?.state === CAPABILITY_STATES.available) return seen;
+    return told || seen;
   }
 
   const ledger = {
@@ -341,7 +358,7 @@ export function createCapabilityLedger({ now = Date.now } = {}) {
         checkedAt: stamp(options),
         identityKey: ledger.identityKey,
         reasonCode: ok ? 'operation-ok' : 'operation-refused',
-        params: ok ? {} : { detail: clean(outcome.detail) },
+        params: { ...(options.params && typeof options.params === 'object' ? options.params : {}), ...(ok ? {} : { detail: clean(outcome.detail) }) },
       });
       observed.set(record.id, record);
       return record;
@@ -366,9 +383,10 @@ export function createCapabilityLedger({ now = Date.now } = {}) {
     },
 
     get(id, options = {}) {
-      const record = resolve(id);
+      const at = options.now ?? now();
+      const record = resolve(id, at);
       if (!record) return null;
-      return effectiveCapability(record, { now: options.now ?? now(), maxAgeMs: options.maxAgeMs, connected });
+      return effectiveCapability(record, { now: at, maxAgeMs: options.maxAgeMs, connected });
     },
 
     all(options = {}) {
@@ -377,8 +395,9 @@ export function createCapabilityLedger({ now = Date.now } = {}) {
     },
 
     canExecute(id, options = {}) {
-      return canExecute(resolve(id), {
-        now: options.now ?? now(),
+      const at = options.now ?? now();
+      return canExecute(resolve(id, at), {
+        now: at,
         maxAgeMs: options.maxAgeMs,
         identityKey: options.identityKey ?? ledger.identityKey,
         connected,

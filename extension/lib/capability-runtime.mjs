@@ -30,18 +30,22 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
   const unsupportedMethods = new Set();
   let lastCaps = null;
   let lastReady = null;
+  let lastToken = '';
+  let lastWsActive = false;
   let lastUnsupportedSize = -1;
   let lastCheckedAt = 0;
 
-  function derive(caps, readyPayload) {
+  function derive(caps, readyPayload, dashboardWsActive) {
     ledger.ingest(deriveCapabilityRecords(caps, {
       identityKey: ledger.identityKey,
       readyPayload,
+      dashboardWsActive,
       checkedAt: lastCheckedAt,
       unsupportedMethods,
     }));
     lastCaps = caps;
     lastReady = readyPayload;
+    lastWsActive = dashboardWsActive;
     lastUnsupportedSize = unsupportedMethods.size;
   }
 
@@ -51,7 +55,7 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
     unsupportedMethods,
 
     /** @returns {boolean} whether the ledger changed in a way a view should redraw for */
-    sync({ caps = null, readyPayload = null, identity = null, connectionToken = '', connected = true } = {}) {
+    sync({ caps = null, readyPayload = null, identity = null, connectionToken = '', connected = true, dashboardWsActive = false } = {}) {
       let changed = false;
       const nextIdentity = identity && typeof identity === 'object' && 'key' in identity ? identity : capabilityIdentity(identity || {});
       if (ledger.rebind(nextIdentity)) {
@@ -64,13 +68,18 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
         lastCaps = null;
         changed = true;
       }
+      // A socket drops its gateway.ready payload when it closes. Keep the one it
+      // had, so the records turn `cached` instead of forgetting what they knew;
+      // a different socket starts from nothing.
+      const ready = readyPayload ?? (connectionToken === lastToken ? lastReady : null);
+      lastToken = connectionToken;
       if (ledger.connected !== (connected !== false)) {
         ledger.setConnected(connected);
         changed = true;
       }
-      if (caps && (caps !== lastCaps || readyPayload !== lastReady || unsupportedMethods.size !== lastUnsupportedSize)) {
+      if (caps && (caps !== lastCaps || ready !== lastReady || dashboardWsActive !== lastWsActive || unsupportedMethods.size !== lastUnsupportedSize)) {
         if (caps !== lastCaps) lastCheckedAt = now();
-        derive(caps, readyPayload);
+        derive(caps, ready, dashboardWsActive);
         changed = true;
       }
       return changed;
@@ -91,7 +100,10 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
 
     /** The compact control's verdict, and what an operation's result taught us. */
     noteOperation(id, outcome) {
-      return ledger.observeOperation(id, outcome);
+      // The route (which verb the panel uses) is a property of the connection,
+      // not of the last result, so it rides along.
+      const route = ledger.get(id)?.params?.route;
+      return ledger.observeOperation(id, outcome, route ? { params: { route } } : {});
     },
 
     revoke(id, detail) {

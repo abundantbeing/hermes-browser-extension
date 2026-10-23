@@ -142,3 +142,47 @@ test('rows before anything was synced are all unknown, not available', () => {
   assert.ok(rows.length > 20);
   assert.ok(rows.every((row) => row.state === 'unknown' && row.status === 'warn'));
 });
+
+test('a closing socket that drops its ready payload leaves the records cached, not forgotten', () => {
+  const { runtime, advance } = harness();
+  const caps = wsCaps();
+  runtime.sync({ caps, readyPayload: READY, identity: A, connectionToken: 's1', connected: true });
+  advance(30_000);
+  runtime.sync({ caps, readyPayload: null, identity: A, connectionToken: 's1', connected: false });
+  const record = runtime.record('sessionCompress');
+  assert.equal(record.state, 'cached');
+  assert.equal(record.reasonCode, 'connection-closed');
+  assert.equal(runtime.verdict('sessionCompress').allowed, false);
+  runtime.sync({ caps: wsCaps(null), readyPayload: null, identity: A, connectionToken: 's2', connected: true });
+  assert.equal(runtime.record('sessionCompress').reasonCode, 'not-connected', 'a new socket does not inherit the previous ready payload');
+});
+
+test('an operation result keeps the compaction route, so the next press uses the same verb', () => {
+  const { runtime, advance } = harness();
+  const caps = wsCaps();
+  runtime.sync({ caps, readyPayload: READY, identity: A, connectionToken: 's1', connected: true, dashboardWsActive: true });
+  assert.equal(runtime.record('sessionCompress').params.route, 'canonical');
+  runtime.noteOperation('sessionCompress', { ok: true });
+  assert.equal(runtime.record('sessionCompress').source, 'gateway.ready', 'a success does not replace a handshake that is still current');
+  assert.equal(runtime.record('sessionCompress').params.route, 'canonical');
+  advance(30 * 60_000);
+  assert.equal(runtime.verdict('sessionCompress').allowed, true, 'a live socket handshake does not expire with the clock');
+  runtime.noteOperation('sessionCompress', { ok: false, detail: 'compression_checkpoint_required' });
+  assert.equal(runtime.record('sessionCompress').params.route, 'canonical');
+  assert.equal(runtime.record('sessionCompress').params.detail, 'compression_checkpoint_required');
+});
+
+test('a fresh success stands in for a stale REST advertisement', () => {
+  const { runtime, advance } = harness();
+  const caps = normalizeGatewayCapabilities({
+    object: 'hermes.api_server.capabilities',
+    features: { session_chat: true },
+    endpoints: { session_compress: { method: 'POST', path: '/api/sessions/{session_id}/compress' } },
+  }, { healthOk: true, hasApiKey: true });
+  runtime.sync({ caps, identity: A, connectionToken: '', connected: true });
+  advance(6 * 60_000);
+  assert.equal(runtime.verdict('sessionCompress').allowed, false);
+  runtime.noteOperation('sessionCompress', { ok: true });
+  assert.equal(runtime.verdict('sessionCompress').allowed, true);
+  assert.equal(runtime.record('sessionCompress').source, 'operation-result');
+});
