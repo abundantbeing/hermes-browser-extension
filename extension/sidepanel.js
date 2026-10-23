@@ -586,6 +586,8 @@ import {
   waitForTerminalStatus,
   withRunControlId,
   withRunGeneration,
+  withRunLiveSession,
+  liveIdForRunSettle,
 } from './lib/run-control-lifecycle.mjs';
 import {
   PANEL_RESIDENCY_MODES,
@@ -6046,7 +6048,8 @@ async function settleActiveRunTerminal() {
   // A turn that is over is not waiting on anyone. A session authority does not
   // always announce that to the prompts the turn left open (Stop is the common
   // way a turn ends mid-question), so this view withdraws them itself.
-  const endedLiveSessionId = String(activeDashboardWsConnection?.wsSessionId || '').trim();
+  // The prompts that go are the run's OWN session's, not those of whatever session is selected now.
+  const endedLiveSessionId = liveIdForRunSettle(settledRunControl, activeDashboardWsConnection);
   if (endedLiveSessionId) promptController.settleScope('ws-authority', endedLiveSessionId);
   activeAbortController?.abort();
   activeAbortController = null;
@@ -23671,6 +23674,10 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             // The generation the gateway admitted this run under: Stop is fenced with it, so a Stop
             // for this run can never land on a newer one.
             if (activeRunControl && runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) {
+              // The live id of this run's session, so its prompt cards can be withdrawn by id when it ends.
+              if (activeDashboardWsConnection?.wsStoredSessionId === runSessionId) {
+                activeRunControl = withRunLiveSession(activeRunControl, activeDashboardWsConnection.wsSessionId);
+              }
               const generation = executionGenerationFrom(response);
               if (generation !== null) activeRunControl = withRunGeneration(activeRunControl, generation);
             }

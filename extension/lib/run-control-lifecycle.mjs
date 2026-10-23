@@ -59,6 +59,31 @@ export function withRunGeneration(state, generation) {
   return freeze({ ...state, executionGeneration: generation });
 }
 
+/**
+ * Record the live (gateway-side) id of the session this run belongs to. The run's own prompts are
+ * withdrawn by this id when it ends; the live id of whatever session is on screen then is not it.
+ */
+export function withRunLiveSession(state, liveSessionId = '') {
+  const live = String(liveSessionId || '').trim();
+  if (!state || !live || state.liveSessionId === live) return state;
+  return freeze({ ...state, liveSessionId: live });
+}
+
+/**
+ * The live id whose prompt cards a finished run may withdraw: the run's OWN session, never the one
+ * currently selected. The connection is believed only while it is still bound to the run's durable
+ * id; once the view has moved on, the id recorded when the run started is used, and with neither,
+ * nothing is withdrawn.
+ */
+export function liveIdForRunSettle(runControl = null, connection = null) {
+  const durable = String(runControl?.sessionId || '').trim();
+  if (!durable) return '';
+  const boundDurable = String(connection?.wsStoredSessionId || '').trim();
+  const boundLive = String(connection?.wsSessionId || '').trim();
+  if (boundLive && boundDurable === durable) return boundLive;
+  return String(runControl?.liveSessionId || '').trim();
+}
+
 export function withRunControlId(state, runId = '') {
   return freeze({ ...state, runId: String(runId || state?.runId || '') });
 }

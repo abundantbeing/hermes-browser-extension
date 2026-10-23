@@ -422,7 +422,8 @@ test('an answer for a prompt whose connection is gone is refused, not sent anywh
 test('a turn that ends, by Stop or otherwise, withdraws the authority prompts it left open', () => {
   const panelSettle = sidepanel.match(/async function settleActiveRunTerminal\(\) \{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(panelSettle, /promptController\.settleScope\('ws-authority', endedLiveSessionId\)/);
-  assert.match(panelSettle, /activeDashboardWsConnection\?\.wsSessionId/);
+  // The run's own session, not whichever session is selected when it settles (D11).
+  assert.match(panelSettle, /liveIdForRunSettle\(settledRunControl, activeDashboardWsConnection\)/);
   const webSettle = app.match(/async function settleWebRunTerminal\(\) \{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(webSettle, /promptController\.settleScope\('ws-authority', endedLiveSessionId\)/);
   assert.match(webSettle, /dashboardLiveSessionId/);

@@ -127,7 +127,7 @@ test('the panel Stop for the current run is delivered with that run\'s generatio
 });
 
 test('the run start records the generation the gateway admitted it under', () => {
-  assert.match(source, /onSubmitResponse: \(response\) => \{[\s\S]{0,400}executionGenerationFrom\(response\)[\s\S]{0,200}withRunGeneration\(activeRunControl, generation\)/);
+  assert.match(source, /onSubmitResponse: \(response\) => \{[\s\S]{0,700}executionGenerationFrom\(response\)[\s\S]{0,200}withRunGeneration\(activeRunControl, generation\)/);
 });
 
 test('an unused WS method name stays defined for the interrupt', () => {
