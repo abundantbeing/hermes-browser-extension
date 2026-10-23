@@ -416,6 +416,7 @@ import {
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
+import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError } from './lib/gateway-refusal.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
@@ -22324,6 +22325,11 @@ async function streamDashboardWsChat(prompt, onDelta, onTool, options = {}) {
   let sessionId = await ensureRemoteWsSession(connection);
   let submitPrompt = true;
   let reattachAttempts = 0;
+  // A refused submit is re-resumed and resubmitted at most once per turn, and only
+  // when the refusal says the live id is stale. A session that is still unknown
+  // after that is gone: the turn ends here instead of starting a different session
+  // under the transcript on screen.
+  let staleIdResumes = 0;
   while (true) {
     try {
       return await streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, {
@@ -22331,20 +22337,15 @@ async function streamDashboardWsChat(prompt, onDelta, onTool, options = {}) {
         submitPrompt,
       });
     } catch (error) {
-      if (Number(error?.rpcCode ?? error?.code) === 4001) {
+      if (classifyPromptRefusal(error) === 'stale-session') {
+        if (staleIdResumes >= 1) throw sessionGoneError(error);
+        staleIdResumes += 1;
         connection.wsSessionId = '';
         try {
           sessionId = await ensureRemoteWsSession(connection);
         } catch (resumeError) {
-          if (Number(resumeError?.rpcCode ?? resumeError?.code) !== 4001) throw resumeError;
-          const previousBinding = settings.remoteDashboardSession || {};
-          connection.wsStoredSessionId = '';
-          settings = {
-            ...settings,
-            sessionId: '',
-            remoteDashboardSession: { ...previousBinding, storedSessionId: '' },
-          };
-          sessionId = await ensureRemoteWsSession(connection);
+          if (isStaleLiveSessionRefusal(resumeError)) throw sessionGoneError(resumeError);
+          throw resumeError;
         }
         submitPrompt = true;
         continue;

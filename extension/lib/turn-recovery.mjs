@@ -1,4 +1,5 @@
 import { redactSensitiveText } from './redaction.mjs';
+import { refusalFailureState } from './gateway-refusal.mjs';
 
 export const ACCEPTED_TURN_RECOVERY_MAX_MS = 180_000;
 export const ACCEPTED_TURN_RECOVERY_MAX_DELAY_MS = 4_000;
@@ -100,6 +101,10 @@ export function hermesGatewayTurnError({ payload = {}, operation = 'Hermes dashb
 }
 
 export function turnRequestFailureState(error = {}) {
+  // A refusal the gateway answered with (stale or gone session, busy session, a
+  // named reason) never reached the model and says nothing about reachability.
+  const refusal = refusalFailureState(error);
+  if (refusal) return refusal;
   const status = Number(error?.httpStatus || 0);
   const providerFailure = error?.turnFailureLayer === 'provider';
   if ((!error?.requestRejected && !providerFailure) || error?.fallbackSafe || [401, 403].includes(status)) return null;
