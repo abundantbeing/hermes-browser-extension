@@ -140,7 +140,9 @@ the contract (`VIVID_CONTRACT` in `extension/lib/response-presentation.mjs`) as
 a `response_style` section of the Browser turn (BCP v2), marked as the user's
 own setting and placed before the page data. This reaches the model on every
 transport, including the dashboard socket, which has no system message. It is
-the extension's fixed text, so it is never trimmed for budget.
+the extension's fixed text, so it is never trimmed for budget. Only the side
+panel sends it; the full tab draws a chosen style and layout but does not
+send the contract.
 
 The contract makes blocks required on substantive replies, maps question types
 to components (articles, YouTube, weather, numbers, steps, code, failures),
