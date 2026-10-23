@@ -1183,6 +1183,22 @@ body.onboarding-active .connect-panel { display: none; }
 }
 .connect-panel h2 { margin: 0 34px 6px 0; }
 .connect-panel-lead { margin: 0 0 10px; color: var(--hermes-muted); font-size: calc(11.5px * var(--hermes-text-zoom, 1)); line-height: 1.4; }
+/* The gateway's pairing approval page, framed while Connect waits for it
+   (lib/pairing-approval.mjs): in the pop-up, or in setup's Connect step. */
+.pairing-approval { display: grid; gap: 6px; min-width: 0; }
+.pairing-approval[hidden] { display: none; }
+.pairing-approval-frame {
+  display: block;
+  width: 100%;
+  height: min(380px, 56dvh);
+  border: 1px solid var(--hermes-line-strong);
+  color-scheme: normal;
+  background: var(--hermes-paper);
+}
+.pairing-approval-tab { justify-self: end; min-height: 26px; padding: 4px 9px; font-size: calc(10px * var(--hermes-text-zoom, 1)); }
+.connect-panel-card.is-approving { width: min(100%, 420px); }
+.connect-panel-card.is-approving > ol { display: none; }
+.connect-panel-card.is-approving .connect-panel-lead { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .connect-panel-card { animation: none; }
 }
@@ -10784,6 +10800,10 @@ html[data-hermes-mode="light"] .onboarding-logo {
 .onboarding-connect.is-connected .onboarding-connect-status svg { flex: none; color: var(--control-on); }
 .onboarding-connect-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 .onboarding-connect-actions[hidden] { display: none; }
+.onboarding.is-approving .onboarding-preview,
+.onboarding-connect.is-approving .onboarding-connect-actions { display: none; }
+.onboarding-approval-slot { display: grid; min-width: 0; }
+.onboarding-approval-slot .pairing-approval-frame { height: min(360px, 44dvh); }
 .onboarding-connect-button {
   display: inline-flex;
   align-items: center;

@@ -161,6 +161,7 @@ import {
   withResponsePresentationUpdate,
 } from './lib/response-presentation.mjs';
 import { createOnboardingFlow } from './lib/onboarding-flow.mjs';
+import { approvalFrameUrl, createApprovalFrame, pairingStartBody } from './lib/pairing-approval.mjs';
 import { handleRadioCardKeydown, syncPresentationCards } from './lib/presentation-previews.mjs';
 import { isClarifyToolEvent, isPromptEventName, isPromptRequestEvent, isRunStatusTerminal } from './lib/gateway-prompts.mjs';
 import { createPromptCard } from './lib/prompt-card.mjs';
@@ -772,6 +773,7 @@ const els = {
   connectButton: $('#connectButton'),
   manualSettingsButton: $('#manualSettingsButton'),
   connectStatus: $('#connectStatus'),
+  connectApprovalSlot: $('#connectApprovalSlot'),
   browserIntroHero: $('#browserIntroHero'),
   browserIntroDismissButton: $('#browserIntroDismissButton'),
   onboardingFlow: $('#onboardingFlow'),
@@ -23068,6 +23070,52 @@ async function openApprovalUrl(url) {
   }
 }
 
+// The pairing approval page is shown in the panel (the Connect pop-up, or
+// setup's Connect step) when the gateway says it can be framed. An older
+// gateway, or no pop-up on screen, opens a tab as it always did.
+let pairingApproval = null;
+let pairingApprovalTabUrl = '';
+
+function showPairingApproval(payload) {
+  const url = approvalFrameUrl(payload, settings.gatewayUrl);
+  if (!url) return false;
+  pairingApproval ||= createApprovalFrame({
+    doc: document,
+    translate: (key) => t(key),
+    onOpenTab: () => { void openApprovalUrl(pairingApprovalTabUrl); },
+  });
+  pairingApprovalTabUrl = String(payload.approval_url || '');
+  const card = els.connectPanel?.querySelector('.connect-panel-card');
+  if (onboardingFlow?.isOpen) {
+    if (!onboardingFlow.setApproval(pairingApproval.node)) {
+      onboardingFlow.setApproval(null);
+      return false;
+    }
+  } else if (connectDialogShowing() && els.connectApprovalSlot) {
+    els.connectApprovalSlot.append(pairingApproval.node);
+    card?.classList.add('is-approving');
+  } else {
+    return false;
+  }
+  pairingApproval.show(url);
+  return true;
+}
+
+function dismissPairingApproval() {
+  if (!pairingApproval) return;
+  onboardingFlow?.setApproval(null);
+  els.connectPanel?.querySelector('.connect-panel-card')?.classList.remove('is-approving');
+  pairingApproval.hide();
+}
+
+// A frame the extension's own policy refuses must not leave a blank box.
+document.addEventListener('securitypolicyviolation', (event) => {
+  if (!pairingApproval?.showing || !String(event.violatedDirective || '').startsWith('frame-src')) return;
+  const url = pairingApprovalTabUrl;
+  dismissPairingApproval();
+  void openApprovalUrl(url);
+});
+
 async function pollPairing(pairingId, { attempts = 90, delay = 1500 } = {}) {
   for (let index = 0; index < attempts; index += 1) {
     const response = await publicApiFetch(`/api/browser-extension/pair/status/${encodeURIComponent(pairingId)}`, { method: 'GET' });
@@ -23075,7 +23123,7 @@ async function pollPairing(pairingId, { attempts = 90, delay = 1500 } = {}) {
     if (payload.status === 'approved' && payload.token) return payload.token;
     if (payload.status === 'expired' || response.status === 410) throw new Error('Pairing expired. Click Connect again.');
     if (response.status === 404) throw new Error('Pairing request was not found. Click Connect again.');
-    els.connectStatus.textContent = translateUiText('Waiting for Hermes Desktop approval...');
+    if (!pairingApproval?.showing) els.connectStatus.textContent = translateUiText('Waiting for Hermes Desktop approval...');
     await sleep(delay);
   }
   throw new Error('Timed out waiting for Hermes Desktop approval.');
@@ -23254,10 +23302,7 @@ async function connectApiWithPairing() {
     try {
       pairingStart = await publicApiFetch('/api/browser-extension/pair/start', {
         method: 'POST',
-        body: JSON.stringify({
-          name: 'Hermes Browser Extension',
-          extensionId: browserApi.runtime?.id || '',
-        }),
+        body: JSON.stringify(pairingStartBody(browserApi.runtime)),
       });
       pairingPayload = await readJsonResponse(pairingStart).catch(() => null);
     } catch {
@@ -23278,9 +23323,16 @@ async function connectApiWithPairing() {
 
     let pairedToken = pairingPayload.token || '';
     if (!pairedToken) {
-      els.connectStatus.textContent = translateUiText('Approval opened. Approve Hermes Browser Extension, then return here.');
-      await openApprovalUrl(pairingPayload.approval_url);
-      pairedToken = await pollPairing(pairingPayload.pairing_id);
+      const inPanel = showPairingApproval(pairingPayload);
+      els.connectStatus.textContent = inPanel
+        ? t('pairing.approve_below')
+        : translateUiText('Approval opened. Approve Hermes Browser Extension, then return here.');
+      if (!inPanel) await openApprovalUrl(pairingPayload.approval_url);
+      try {
+        pairedToken = await pollPairing(pairingPayload.pairing_id);
+      } finally {
+        dismissPairingApproval();
+      }
     }
     if (!connectionController.isCurrent(generation)) return;
     settings.apiKey = pairedToken;

@@ -372,6 +372,8 @@
               <li data-i18n="ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482">Click Connect to Hermes, or use Manual setup with a local/remote Gateway URL and token.</li>
               <li><span data-i18n="connect.approve_or_paste">Approve pairing when available, or paste</span> <code data-i18n-invariant>API_SERVER_KEY</code> <span data-i18n="connect.manual_setup_suffix">for manual setup.</span></li>
             </ol>
+            <!-- The gateway's approval page is shown here while pairing waits (lib/pairing-approval.mjs). -->
+            <div id="connectApprovalSlot" class="pairing-approval-slot"></div>
             <div class="connect-actions">
               <button id="connectButton" type="button" data-i18n="ui.connect.to.hermes">Connect to Hermes</button>
               <button id="manualSettingsButton" class="secondary" type="button" data-i18n="ui.manual.setup">Manual setup</button>
