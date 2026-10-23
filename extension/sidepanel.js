@@ -12682,7 +12682,7 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     if (result.failures.length) {
       setStatus('warn', 'Group message partially delivered', `${result.failures.length} member${result.failures.length === 1 ? '' : 's'} did not complete a reply.${contextNote ? ` ${contextNote}` : ''}`, { translateDetail: false });
     } else if (syncFailures.length) {
-      setStatus('warn', 'Group room not synced', `Members replied, but ${syncFailures.length} message${syncFailures.length === 1 ? '' : 's'} could not be saved to the synced room. ${syncFailures.at(-1)?.error || ''}`.trim(), { translateDetail: false });
+      setStatus('warn', 'Group room not synced', `Members replied, but ${syncFailures.length} message${syncFailures.length === 1 ? '' : 's'} could not be saved to the synced room. ${syncFailures.at(-1)?.error || ''}${contextNote ? ` ${contextNote}` : ''}`.trim(), { translateDetail: false });
     } else {
       setStatus(contextNote ? 'warn' : 'ok', 'Group message sent', `${groupProjection.displayName} · ${result.messages.length} messages in the current room view.${contextNote ? ` ${contextNote}` : ''}`, { translateDetail: false });
     }

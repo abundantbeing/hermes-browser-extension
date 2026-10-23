@@ -145,3 +145,13 @@ test('a member retry drops cached page context once the panel is chat-only or th
   await context.retry('alpha');
   assert.equal(retries.at(-1).allowCachedContext, false);
 });
+
+test('the omitted-context note is not lost when the room also failed to sync', async () => {
+  const { context, statuses } = composerHarness({ gatewayUrl: 'https://hermes.example' });
+  context.attachments = [];
+  context.activeGroupRuntime.send = async () => ({ ok: true, failures: [], syncFailures: [{ error: 'no projection' }], messages: [] });
+  context.renderBotModeGroupChats = () => {};
+  await context.send('Review this page', []);
+  assert.match(statuses.at(-1)[2], /not shared/i);
+  assert.match(statuses.at(-1)[2], /no projection/);
+});
