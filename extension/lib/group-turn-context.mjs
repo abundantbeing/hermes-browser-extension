@@ -28,7 +28,7 @@ export function fitGroupPromptToBudget(prompt, limit = BROWSER_CONTEXT_TURN_BUDG
   return `${head}${GROUP_PROMPT_TRIM_MARKER}${tail}`;
 }
 
-export function formatGroupTurnWithBrowserContext(basePrompt, browserContext = null) {
+export function formatGroupTurnWithBrowserContext(basePrompt, browserContext = null, { attachments = [] } = {}) {
   const base = String(basePrompt ?? '');
   if (!browserContext || browserContext.enabled !== true) return base;
   const contextScope = browserContext.contextScope || { mode: browserContext.scopeMode || CONTEXT_SCOPE_MODES.FOLLOW_ACTIVE };
@@ -38,6 +38,10 @@ export function formatGroupTurnWithBrowserContext(basePrompt, browserContext = n
     tabs: Array.isArray(browserContext.tabs) ? browserContext.tabs : [],
     selectedTabs: Array.isArray(browserContext.selectedTabs) ? browserContext.selectedTabs : null,
     pageContext: browserContext.pageContext || {},
+    // Metadata only (kind, name, type): the pixels travel through image.attach_bytes.
+    attachments: (Array.isArray(attachments) ? attachments : []).map((item) => ({
+      kind: 'image', label: item?.name || '', mimeType: item?.mime || '', detail: item?.title || '',
+    })),
     contextScope,
     settings: browserContext.settings || {},
     contextHash: browserContext.contextHash || '',

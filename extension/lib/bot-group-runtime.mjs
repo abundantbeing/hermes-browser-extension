@@ -2,6 +2,7 @@ import { remoteSessionIdentity, runtimeModelFromSessionStatus, buildSessionModel
 import { profileDefaultModelFromOptions } from './model-discovery.mjs';
 import { screenshotAttachParams } from './bot-browser-bridge.mjs';
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
+import { buildGroupContextReceipt } from './group-context-receipt.mjs';
 
 const GROUP_PROJECTION_MAX_CHARS = 48_000;
 const GROUP_MEMBER_MIN = 2;
@@ -859,12 +860,26 @@ export function createBotGroupRuntime({
     if (!trimmed) return { ok: false, reason: 'empty', messages: baseMessages, failures: [] };
     if (signal?.aborted) return { ok: false, reason: 'aborted', messages: baseMessages, failures: [] };
 
+    // Desktop-parity @mention routing: "@name" directs the turn at one member,
+    // "@everyone" or no mention prompts all members.
+    const roster = groupMembersForTurn(trimmed, roster0);
+    // The exact browser context + screenshots for this turn are resolved ONCE
+    // and cached per room (runtime-only). A disabled context is normalized to
+    // null so the group prompt stays byte-identical to a session with no
+    // browser context at all. Never written into the projection.
+    const effectiveContext = browserContext?.enabled === true ? browserContext : null;
+    const screenshots = Array.isArray(screenshotAttachments) ? screenshotAttachments : [];
+    // Display-only receipt of what the addressed members are about to see. It is
+    // dropped by normalizeDisplayMessage and the projection entry, so it can
+    // never reach a prompt or the synced room.
+    const contextReceipt = buildGroupContextReceipt({ browserContext: effectiveContext, screenshots, members: roster });
     const working = [...baseMessages, {
       role: 'user',
       roleLabel: 'You',
       content: trimmed,
       ts: Number(now()) || Date.now(),
       thread: turnThread,
+      ...(contextReceipt ? { contextReceipt } : {}),
     }];
     await onMessage(working.at(-1), { kind: 'user' });
     const failures = [];
@@ -883,16 +898,6 @@ export function createBotGroupRuntime({
     };
     await mirror({ kind: 'user', roomId: clean(roomId) });
 
-    // Desktop-parity @mention routing: "@name" directs the turn at one member,
-    // "@everyone" or no mention prompts all members.
-    const roster = groupMembersForTurn(trimmed, roster0);
-
-    // The exact browser context + screenshots for this turn are resolved ONCE
-    // and cached per room (runtime-only). A disabled context is normalized to
-    // null so the group prompt stays byte-identical to a session with no
-    // browser context at all. Never written into `working` or the projection.
-    const effectiveContext = browserContext?.enabled === true ? browserContext : null;
-    const screenshots = Array.isArray(screenshotAttachments) ? screenshotAttachments : [];
     turnContextByRoom.set(clean(roomId), effectiveContext);
     turnScreenshotsByRoom.set(clean(roomId), screenshots);
 
@@ -916,7 +921,7 @@ export function createBotGroupRuntime({
         const basePrompt = buildGroupMemberPrompt({ roomId, groupName, members: roster, viewer: member, messages: working });
         // Same turn context for EVERY addressed member; a full BCP v2 envelope
         // (byte-identical base prompt when the context is disabled).
-        const prompt = formatGroupTurnWithBrowserContext(basePrompt, effectiveContext);
+        const prompt = formatGroupTurnWithBrowserContext(basePrompt, effectiveContext, { attachments: screenshots });
         const reply = await submitMemberPrompt(client, session, prompt, {
           signal,
           timeoutMs,
@@ -976,7 +981,7 @@ export function createBotGroupRuntime({
   // (retry/queued -> working/typing -> reply|pass|failed -> idle). Refused
   // while any turn runs (`turn-busy`) and against a second in-flight retry
   // (`retry-busy`) so it cannot overlap a turn or double-fire.
-  async function retryMember({ roomId = '', groupName = '', members = [], messages = [], member, text = '', thread = '', signal, browserContext = null, screenshotAttachments = [] } = {}) {
+  async function retryMember({ roomId = '', groupName = '', members = [], messages = [], member, text = '', thread = '', signal, browserContext = null, screenshotAttachments = [], allowCachedContext = true } = {}) {
     const roster = normalizeMembers(members);
     const target = normalizeMember(member);
     const found = target ? roster.find((entry) => entry.name === target.name) : null;
@@ -1012,10 +1017,10 @@ export function createBotGroupRuntime({
     // Reuse the runtime-only per-room context from the most recent turn. A
     // retry MUST NOT capture a different page later: an explicitly-supplied
     // enabled context wins, otherwise the cached one is used verbatim.
-    const cachedContext = turnContextByRoom.get(clean(roomId)) || null;
+    const cachedContext = allowCachedContext === false ? null : (turnContextByRoom.get(clean(roomId)) || null);
     const effectiveContext = browserContext?.enabled === true ? browserContext : cachedContext;
     const requestedShots = Array.isArray(screenshotAttachments) ? screenshotAttachments : [];
-    const screenshots = requestedShots.length ? requestedShots : (turnScreenshotsByRoom.get(clean(roomId)) || []);
+    const screenshots = requestedShots.length ? requestedShots : (allowCachedContext === false ? [] : (turnScreenshotsByRoom.get(clean(roomId)) || []));
     turnContextByRoom.set(clean(roomId), effectiveContext);
     if (screenshots.length) turnScreenshotsByRoom.set(clean(roomId), screenshots);
     // Also used as the double-fire guard: set BEFORE the first await so a
@@ -1039,7 +1044,7 @@ export function createBotGroupRuntime({
       // A retry MUST answer on the exact context the failed turn used, so it
       // reuses the runtime-only per-room cache instead of capturing a page
       // later. An explicitly-supplied enabled context still wins.
-      const prompt = formatGroupTurnWithBrowserContext(basePrompt, effectiveContext);
+      const prompt = formatGroupTurnWithBrowserContext(basePrompt, effectiveContext, { attachments: screenshots });
       const reply = await submitMemberPrompt(client, session, prompt, {
         signal,
         timeoutMs,
