@@ -130,6 +130,9 @@ export function createOnboardingFlow({
   let previewKey = '';
   let wasConnected = false;
   let connectedTimer = 0;
+  // The pairing approval page, shown in the Connect step while it waits. One
+  // element for the whole approval: rebuilding the step would reload it.
+  let approvalNode = null;
   let meanderSize = '';
   let meanderParts = null;
   const t = (key, values) => translate(key, values);
@@ -189,8 +192,9 @@ export function createOnboardingFlow({
     const connected = Boolean(connection.connected);
     const status = connected ? t('onboarding.connect.connected') : (connection.status || t('onboarding.connect.not_paired'));
     return `
-      <div class="onboarding-connect${connected ? ' is-connected' : ''}${connection.busy ? ' is-busy' : ''}">
+      <div class="onboarding-connect${connected ? ' is-connected' : ''}${connection.busy ? ' is-busy' : ''}${approvalNode ? ' is-approving' : ''}">
         <p class="onboarding-connect-status" role="status">${connected ? ONBOARDING_ICONS.connected : ''}<span>${escapeHtml(status)}</span></p>
+        ${approvalNode ? '<div class="onboarding-approval-slot"></div>' : ''}
         <div class="onboarding-connect-actions"${connected ? ' hidden' : ''}>
           <button type="button" class="onboarding-connect-button" data-onboarding-connect${connection.busy ? ' disabled' : ''}>${ONBOARDING_ICONS.connect}<span>${escapeHtml(connection.busy ? (connection.busyLabel || t('ui.connect.to.hermes')) : t('ui.connect.to.hermes'))}</span></button>
           <button type="button" class="secondary" data-onboarding-manual>${escapeHtml(t('ui.manual.setup'))}</button>
@@ -256,12 +260,33 @@ export function createOnboardingFlow({
     parts.next.classList.toggle('is-finish', last && !later);
   }
 
+  // While the approval page is up, a status update changes the words and the
+  // buttons in place; replacing the step would reload the page being read.
+  function patchConnectStage(state) {
+    const connection = state.connection || {};
+    const connected = Boolean(connection.connected);
+    const root = parts.stage.querySelector('.onboarding-connect');
+    root.classList.toggle('is-connected', connected);
+    root.classList.toggle('is-busy', Boolean(connection.busy));
+    const label = parts.stage.querySelector('.onboarding-connect-status span');
+    if (label) label.textContent = connected ? t('onboarding.connect.connected') : (connection.status || t('onboarding.connect.not_paired'));
+    const actions = parts.stage.querySelector('.onboarding-connect-actions');
+    if (actions) actions.hidden = connected;
+    const button = parts.stage.querySelector('[data-onboarding-connect]');
+    if (button) button.disabled = Boolean(connection.busy);
+  }
+
   function renderStage(step, state) {
+    if (step === 'connect' && approvalNode && parts.stage.dataset.step === 'connect' && parts.stage.contains(approvalNode)) {
+      patchConnectStage(state);
+      return;
+    }
     parts.stage.dataset.step = step;
     parts.stage.innerHTML = `
       <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1">${escapeHtml(t(`onboarding.${step}.title`))}</h2>
       <p class="onboarding-body">${escapeHtml(t(`onboarding.${step}.body`))}</p>
       ${stepBody(step, state)}`;
+    if (step === 'connect' && approvalNode) parts.stage.querySelector('.onboarding-approval-slot')?.append(approvalNode);
   }
 
   function focusKey() {
@@ -382,6 +407,7 @@ export function createOnboardingFlow({
     const step = steps[stepIndex];
     const state = getState() || {};
     const keep = focusKey();
+    host.classList.toggle('is-approving', Boolean(approvalNode) && step === 'connect');
     renderMeta(step);
     renderStage(step, state);
     renderNav(step, state);
@@ -549,6 +575,15 @@ export function createOnboardingFlow({
       open = false;
       exiting = false;
       render();
+    },
+    // Show the pairing approval page in the Connect step (a node), or take it
+    // away (null). Returns whether the step is on screen to hold it.
+    setApproval(node = null) {
+      approvalNode = node || null;
+      if (!open || !parts) return false;
+      if (!approvalNode && parts.stage.dataset.step === 'connect') parts.stage.dataset.step = '';
+      render();
+      return Boolean(approvalNode) && steps[stepIndex] === 'connect' && parts.stage.contains(approvalNode);
     },
     finish,
     render,
