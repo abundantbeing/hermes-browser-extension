@@ -497,13 +497,21 @@ export function isUnknownMethodError(error) {
  * read from the resume snapshot. Anything unreadable throws, so a caller waiting
  * for Stop to land keeps the run held instead of assuming it ended.
  */
+// Session-authority sockets that answered -32601 to session.status: it is not asked again on them
+// (an attached view reads the status on every roster poll).
+const statusNotServedClients = new WeakSet();
+
 export async function readGatewaySessionStatus(client, sessionId, { storedSessionId = '' } = {}) {
   const target = String(sessionId || '').trim();
   if (!client?.request || !target) throw new Error('A live Hermes session is required to read its status.');
-  try {
-    return await client.request(WS_METHODS.sessionStatus, { session_id: target });
-  } catch (error) {
-    if (client.readyPayload?.session_authority !== true || !isUnknownMethodError(error)) throw error;
+  const authority = client.readyPayload?.session_authority === true;
+  if (!(authority && statusNotServedClients.has(client))) {
+    try {
+      return await client.request(WS_METHODS.sessionStatus, { session_id: target });
+    } catch (error) {
+      if (!authority || !isUnknownMethodError(error)) throw error;
+      statusNotServedClients.add(client);
+    }
   }
   const stored = String(storedSessionId || target).trim();
   const listed = await client.request(WS_METHODS.sessionActiveList, { current_session_id: stored });

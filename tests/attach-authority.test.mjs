@@ -174,3 +174,21 @@ test('an attached view records the generation of the run it follows, and its Sto
   assert.deepEqual(interrupts.map((call) => call.params.execution_generation), [4], 'one interrupt, for the followed run');
   assert.match(h.statuses.at(-1)[1], /already ended/i);
 });
+
+test('a session authority that answered -32601 to session.status is not asked for it again', async () => {
+  const h = authorityHarness();
+  const client = h.context.activeDashboardWsConnection.client;
+  await readGatewaySessionStatus(client, 'A', { storedSessionId: 'A' });
+  await readGatewaySessionStatus(client, 'A', { storedSessionId: 'A' });
+  await readGatewaySessionStatus(client, 'A', { storedSessionId: 'A' });
+  assert.equal(h.calls.filter((call) => call.method === 'session.status').length, 1, 'asked once, then remembered');
+  assert.equal(h.calls.filter((call) => call.method === 'session.active_list').length, 3);
+});
+
+test('a legacy gateway keeps being asked for session.status', async () => {
+  const calls = [];
+  const client = { readyPayload: {}, request: async (method) => { calls.push(method); return { output: 'Agent Running: Yes' }; } };
+  await readGatewaySessionStatus(client, 'live-1');
+  await readGatewaySessionStatus(client, 'live-1');
+  assert.deepEqual(calls, ['session.status', 'session.status']);
+});
