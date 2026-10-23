@@ -24,7 +24,11 @@ Hermes Browser Extension is not a browser chatbot. It is a Chromium side panel o
 - **File attachments** show one card per file per message. Open previews the file, Open on computer reveals the original file's containing folder through local Hermes, and Save downloads a copy.
 - **Tab screenshot** stages the visible, approved page as an image attachment when you choose it from the attachment menu. Screenshots are never captured automatically.
 - **Hermes Control** sets which tabs Hermes may operate: This tab, Selected tabs, or a Task set of tabs you pick explicitly.
-- **Live sessions**: running chats are highlighted in Sessions. On gateways that expose live sessions, reopen a working chat to follow its reply and tool activity. Supported live sessions offer Steer, Queue, and Stop instead of idle send controls, and steers sent from another client appear in the followed transcript.
+- **Live sessions**: running chats are highlighted in Sessions. On gateways that expose live sessions, reopen a working chat to follow its reply and tool activity. Supported live sessions offer Steer, Queue, and Stop instead of idle send controls, and steers sent from another client appear in the followed transcript. On gateways with session authority, chats running in the CLI, Desktop or another window are listed too, and Stop is aimed at the run it was started for.
+- **Projects**: on a dashboard connection to a gateway with session authority, the sessions drawer has a Recents | Projects strip. List projects, open one, start a session in its folder, create a project from a folder path on the machine running Hermes, or move a session to another project or folder. Where the gateway cannot do this, the tab says why and Recents keeps working.
+- **Response style and chat layout**: Vivid UI (cards, tables and charts when they help), Rich text or Plain text, with bubbles on both sides or for your messages only. First-time setup walks through theme, font, style and layout, and ends with Connect to Hermes. Settings > Appearance & Themes can run it again. See [guides/haui-v1.md](./guides/haui-v1.md).
+- **Context**: each session's own context window, read from the gateway, with a ring in the composer. On gateways with session authority, Compact context replaces older messages with a summary and reads the session back before it says it worked.
+- **Capability states**: Settings > About & Diagnostics shows what this connection can do (available, cached, unsupported and so on), with the reason, source and age, and the support report prints the same rows.
 - **Tool activity**: a compact expandable list keeps calls out of the reply. Inspect individual calls, close the list without hiding thinking, and keep your place while activity updates.
 - **Message tools**: Copy, Edit, and Restore checkpoint on supported turns, with day dividers, message times, and theme-aware bubbles.
 - **Reasoning effort**: a slider with tick marks, or buttons if you prefer. The choice is remembered. In a group chat each bot keeps its own effort.
@@ -55,7 +59,7 @@ Screenshots use the Mono theme in Dark mode.
 
 ## Firefox scope
 
-Hermes Browser Extension on Firefox is a chat-and-context client: pairing, the side panel, streaming replies, attachments, and page-context capture all work, but real-tab attach ("Hermes Control") is Chromium-only. Firefox WebExtensions have no equivalent to Chromium's `debugger` API, so the Firefox package omits that permission and the panel reports Control unavailable with an explanation instead of failing silently.
+Hermes Browser Extension on Firefox is a chat-and-context client: pairing, the sidebar (declared with `sidebar_action`, not the Chromium side panel), streaming replies, attachments, and page-context capture all work, but real-tab attach ("Hermes Control") is Chromium-only. Firefox WebExtensions have no equivalent to Chromium's `debugger` API, so the Firefox package omits that permission and the panel reports Control unavailable with an explanation instead of failing silently. That also means no trusted input and no control of controls inside frames on Firefox. The newer panel screens (first-time setup, Projects, capability states, Compact context) use no Chromium-only API, but they were not exercised in the Firefox sidebar for this release.
 
 If you need Hermes to click, type, scroll, or operate tabs on your behalf, load the extension in Chrome, Edge, Brave, or another Chromium browser. The full compatibility matrix is in [guides/connection-guide.md](./guides/connection-guide.md).
 
@@ -67,6 +71,7 @@ Hermes Control lets Hermes operate a tab you attach. It is opt-in, off until you
 - **Every action returns the updated page.** Click, type, scroll, and navigate give back a compact, redacted view of the page with fresh refs, so Hermes can chain steps.
 - **One debugger session per attached tab.** Chrome shows its debugging banner while a tab is attached. The session detaches when you detach the tab, pause or turn off control, or after 60 seconds without a command.
 - **Approvals still gate risky actions.** Consequential or privileged actions wait for your approval, and restricted pages and sensitive fields stay blocked.
+- **Frames are read and judged again at action time.** Hermes can reach controls inside same-site frames of an attached page, such as a live chat box. A frame on a restricted page is never read, and a click, type or hover is refused if the frame it would land in has moved to a restricted address since the page was read or is covered by one. Frames from another site, which Chrome runs in their own process, are not read or acted on.
 
 ## Quick start
 
@@ -148,7 +153,7 @@ curl -H "Authorization: Bearer $HERMES_API_TOKEN" "$HERMES_GATEWAY_URL/v1/models
 
 Then in the extension side panel:
 
-1. Click **Connect to Hermes** and approve locally if your Hermes Desktop/gateway supports the approval flow.
+1. Click **Connect to Hermes**, the last step of first-time setup or the pop-up that opens when the panel is not paired, and approve locally if your Hermes Desktop/gateway supports the approval flow. **Connect later** or the pop-up's X dismisses it.
 2. If approval is not available yet, click **Manual setup**.
 3. Choose **Local gateway**.
 4. Use Gateway URL `http://127.0.0.1:8642`.
@@ -166,7 +171,7 @@ Full setup for remote API servers, self-hosted dashboards, and what syncs after 
 
 ## Security model
 
-Hermes Browser Extension is intentionally conservative in v0.3.0:
+Hermes Browser Extension is intentionally conservative:
 
 - Local gateway by default; remote API server support requires an explicit URL, token, and CORS allowlist.
 - Hermes Cloud and self-hosted dashboard attach require an explicit HTTPS origin, the exact active signed-in tab, and a short-lived single-use WebSocket ticket kept only in memory.
@@ -214,7 +219,7 @@ Hermes transcription needs an advertised API transcription route or a reachable 
 
 Open Settings → **Support diagnostics** → **Copy Diagnostics** and paste the report into the GitHub issue or support thread.
 
-The copied block includes version/build, browser family, gateway origin, connection state, runtime capability flags, selected model/provider, context mode, extractor mode, last visible error, and a bounded gateway failure classification when available. It intentionally excludes API keys, bearer tokens, cookies, page text, selected text, tab titles, raw tracebacks, local paths, and full tab URLs.
+The copied block includes version/build, browser family, gateway origin, connection state, each capability's state, source, age and reason, selected model/provider, context mode, extractor mode, last visible error, and a bounded gateway failure classification when available. It intentionally excludes API keys, bearer tokens, cookies, page text, selected text, tab titles, raw tracebacks, local paths, and full tab URLs.
 
 ### The side panel says it cannot connect
 
@@ -273,7 +278,7 @@ Useful links:
 
 ## Contributors
 
-External contributions that have shipped are credited in [`CONTRIBUTORS.md`](CONTRIBUTORS.md).
+External contributions that have shipped are credited in [`CONTRIBUTORS.md`](CONTRIBUTORS.md). Interface icons are [pixelarticons](https://github.com/halfmage/pixelarticons) (MIT); its licence ships in `extension/assets/icons/pixel/`.
 
 ## Author
 
