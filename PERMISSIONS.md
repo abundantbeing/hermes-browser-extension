@@ -21,6 +21,8 @@ This document describes the permission model of the current release. Chromium bu
 | `tabs` | Reads tab titles/URLs for the active-tab state, context refreshes, tab summaries, and remote dashboard WebSocket ticket flow. |
 | `unlimitedStorage` | Lifts the browser's default quota for local extension storage so original file attachments (up to 25 MB each, kept in IndexedDB) and page-comment data stay on your device. The permission uploads nothing; attachments leave the browser only when you send a message that includes them. |
 
+The Projects tab, Move, Compact context, capability states and first-time setup need no extra permission: they use the connection to the Hermes gateway you configured. Reading controls inside frames of an attached page uses the same `debugger` permission and the same attached tabs as the rest of Hermes Control.
+
 ## Optional permissions
 
 The extension declares no optional permissions. Voice dictation uses the browser's normal microphone prompt, not an extension permission.
