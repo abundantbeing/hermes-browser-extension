@@ -151,6 +151,7 @@ test('rosterStopTarget: only a live row of the viewed session on a ready connect
   assert.equal(rosterStopTarget({ ...base, client: { readyState: 3 } }), null);
   assert.equal(rosterStopTarget({ ...base, rows: new Map([['A', { live: false, liveId: 'x' }]]) }), null);
   assert.equal(rosterStopTarget({ ...base, rows: new Map([['A', { live: true, liveId: '' }]]) }), null);
+  assert.equal(rosterStopTarget({ ...base, rows: new Map([['A', { live: true, childrenOnly: true, liveId: 'live-A' }]]) }), null, 'only its subagents run: nothing of its own to Stop');
 });
 
 test('readLiveAttachSnapshot: legacy gateways keep using session.activate', async () => {

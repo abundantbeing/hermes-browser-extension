@@ -260,7 +260,7 @@ import { renderProjectsPanel } from './lib/projects-panel.mjs';
 import { SESSION_MENU_TABS, SESSION_MENU_TAB_KEY, normalizeSessionMenuTab } from './lib/projects-view.mjs';
 import { friendlyModelName } from './lib/model-friendly-name.mjs';
 import { classicThinkingFace, createToolCallGroup, updateToolCallGroup, groupToolHistoryMessages, mergeToolCallActivity } from './lib/tool-call-group.mjs';
-import { readLiveAttachSnapshot, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
+import { readIdleRowSubagents, readLiveAttachSnapshot, rosterAfterFailure, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession, sessionToolDisplayMessages, sessionLiveRoster } from './lib/live-session-attach.mjs';
 import { appendUserImageAttachments, extractHistoryMediaAttachments, normalizeUserImageAttachments, preserveUserImageAttachments, rawGeneratedImageCandidatesFromResult, resolveImageSource, resolvedGeneratedImageSources, resolvedGeneratedImageSourcesFromMessages } from './lib/image-render.mjs';
 import { createRestFollowState, messageCountFromSessionPayload, restFollowDue, restFollowStep } from './lib/session-follow.mjs';
 import { collectSessionPages, DASHBOARD_SESSION_MAX_PAGES, DASHBOARD_SESSION_PAGE_LIMIT } from './lib/session-paging.mjs';
@@ -1334,6 +1334,8 @@ let liveSessionRosterFailures = 0;
 const unsupportedLiveRosterClients = new WeakSet();
 // Sockets that answered -32601 to session.activate (a session authority does not serve it).
 const unsupportedActivateClients = new WeakSet();
+// Last subagent.list answer per live id, so the roster poll reads a few idle rows per tick, not all of them.
+const liveSubagentCache = new Map();
 let activeRunId = '';
 let activeRunControl = null;
 let runControlGeneration = 0;
@@ -5292,7 +5294,10 @@ function viewedSessionIsRunning() {
   if ((sending && localRunIsViewed()) || Boolean(liveAttach && liveAttach.sessionId === sessionId)) return true;
   // The roster row carries `live`/`busy`/`state` (sessionLiveRoster), never `running`. The scope is
   // only compared when a row exists, so this stays safe before start-up has set anything up.
-  return liveSessionRows.get(sessionId)?.live === true && liveSessionRosterScope === liveSessionScopeKey();
+  // A row that is live only because its subagents run (childrenOnly) has no turn of its own: the
+  // composer stays open for it.
+  const row = liveSessionRows.get(sessionId);
+  return row?.live === true && row.childrenOnly !== true && liveSessionRosterScope === liveSessionScopeKey();
 }
 
 function currentComposerDraftState() {
@@ -16952,9 +16957,17 @@ async function refreshLiveSessionRoster() {
     }
     const result = await connection.client.request('session.active_list', {});
     if (scopeKey !== liveSessionScopeKey()) return;
-    const next = sessionLiveRoster(result, [...availableSessions.map(row => row.id), settings.sessionId]);
-    const viewedRunSettled = liveSessionRows.get(settings.sessionId)?.live === true
-      && next.get(settings.sessionId)?.live !== true;
+    const knownIds = [...availableSessions.map(row => row.id), settings.sessionId];
+    const listed = sessionLiveRoster(result, knownIds);
+    // A turn that ended while its subagents still run keeps its session live, for every row, not
+    // only the one being viewed.
+    const subagentRosters = await readIdleRowSubagents(connection.client, listed, { cache: liveSubagentCache });
+    if (scopeKey !== liveSessionScopeKey()) return;
+    const next = subagentRosters.size ? sessionLiveRoster(result, knownIds, { subagentRosters }) : listed;
+    // A session's own turn: a row that is live only for its subagents does not count.
+    const turnLive = (row) => row?.live === true && row.childrenOnly !== true;
+    const viewedRunSettled = turnLive(liveSessionRows.get(settings.sessionId))
+      && !turnLive(next.get(settings.sessionId));
     liveSessionRows = next;
     liveSessionRosterScope = scopeKey;
     liveSessionRosterFailures = 0;
@@ -16962,13 +16975,14 @@ async function refreshLiveSessionRoster() {
     if (liveAttach) await reconcileAttachedLiveSession();
     else if (viewedRunSettled && !sending) await refreshActiveSessionHistoryQuietly();
     else if (!sending && activeConversationTransport === 'dashboard-ws'
-      && next.get(settings.sessionId)?.live && connection.wsStoredSessionId === settings.sessionId) {
+      && turnLive(next.get(settings.sessionId)) && connection.wsStoredSessionId === settings.sessionId) {
       await attachLiveSessionIfRunning(connection.wsSessionId);
     }
   } catch (error) {
-    liveSessionRows = new Map();
     liveSessionRosterScope = scopeKey;
     liveSessionRosterFailures += 1;
+    // One failed poll (a timeout, a dropped frame) does not make every Running badge wrong.
+    liveSessionRows = rosterAfterFailure({ rows: liveSessionRows, failures: liveSessionRosterFailures, error });
     // Older gateways do not offer active_list. Keep their sessions unmarked,
     // and stop probing the unsupported RPC for this socket.
     if (Number(error?.rpcCode ?? error?.code) === -32601 && activeDashboardWsConnection?.client) {

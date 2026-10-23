@@ -12,8 +12,9 @@ const fnSource = source.slice(
 
 // viewedSessionIsRunning as the panel runs it, fed with a roster built by the real
 // sessionLiveRoster from a session.active_list payload.
-function viewed(status, { sessionId = 'A', scopeMatches = true, attach = null, sending = false } = {}) {
-  const roster = sessionLiveRoster({ sessions: [{ id: 'live-A', session_key: 'A', status }] }, ['A']);
+function viewed(status, { sessionId = 'A', scopeMatches = true, attach = null, sending = false, children = null } = {}) {
+  const roster = sessionLiveRoster({ sessions: [{ id: 'live-A', session_key: 'A', status }] }, ['A'],
+    children ? { subagentRosters: new Map([['A', children]]) } : {});
   const context = vm.createContext({
     settings: { sessionId },
     sending, liveAttach: attach,
@@ -46,4 +47,9 @@ test('a roster read for another connection scope is ignored', () => {
 
 test('the panel\'s own attach still counts', () => {
   assert.equal(viewed('idle', { attach: { sessionId: 'A' } }), true);
+});
+
+test('a session that is live only because its subagents run leaves the composer open', () => {
+  assert.equal(viewed('idle', { children: [{ id: 's', status: 'running' }] }), false);
+  assert.equal(viewed('working', { children: [{ id: 's', status: 'running' }] }), true, 'its own running turn still counts');
 });
