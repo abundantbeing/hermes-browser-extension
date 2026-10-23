@@ -423,6 +423,7 @@ import {
 import { connectionIdentityChanged } from './lib/settings-save-effects.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
 import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './lib/session-lineage.mjs';
+import { createReplayWatermarks } from './lib/replay-watermarks.mjs';
 import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
@@ -1362,6 +1363,10 @@ let sessionContextPersistTimer = null;
 const liveSessionAliases = new Map();
 // A legacy gateway moves a compressed session's key to its successor; the parent id keeps resolving.
 const sessionLineage = createSessionLineage();
+// Replay epoch and per-session sequence marks, kept outside any one gateway client: every reconnect builds
+// a new client, which would otherwise start knowing nothing and ask for nothing.
+const replayWatermarks = createReplayWatermarks({ storage: browserApi?.storage?.session || null });
+void replayWatermarks.hydrate();
 // Per durable session: the breakdown request in flight and its retry timer.
 const sessionContextRefreshes = new Map();
 // Sessions whose breakdown this panel has fetched since it opened.
@@ -11117,7 +11122,7 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
       throw error;
     }
     profileWsConnection?.client?.close?.();
-    const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs });
+    const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs, replayEndpoint: baseUrl });
     gatewayClient.on('close', () => {
       if (profileWsConnection?.client === gatewayClient) profileWsConnection = null;
     });
@@ -11145,7 +11150,7 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
     return profileWsConnection;
   }
   profileWsConnection?.client?.close?.();
-  const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs });
+  const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs, replayEndpoint: baseUrl });
   gatewayClient.on('close', () => {
     if (profileWsConnection?.client === gatewayClient) profileWsConnection = null;
   });
@@ -22108,8 +22113,13 @@ const gatewayServerRequests = {
 
 // Only chat connections answer server requests: they are the ones that can
 // show the card. The gateway is told so once the connection is ready.
-function createChatGatewayClient(options = {}) {
-  const gatewayClient = createGatewayClient({ ...options, serverRequests: gatewayServerRequests });
+function createChatGatewayClient({ replayEndpoint = '', ...options } = {}) {
+  const gatewayClient = createGatewayClient({
+    ...options,
+    serverRequests: gatewayServerRequests,
+    replayStore: replayWatermarks.forEndpoint(replayEndpoint),
+  });
+  gatewayClient.on('session.replay.truncated', onReplayTruncated);
   gatewayClient.on('close', () => promptController.dropClient(gatewayClient));
   // The capability ledger follows the socket: a handshake turns every positive
   // record current, a close turns it into a cached one.
@@ -22134,6 +22144,24 @@ function createRestPromptPoller({ getRunId, sessionId, isCurrent }) {
     },
     isTerminal: isRunStatusTerminal,
   });
+}
+
+// The gateway could not replay what this view missed (its event ring overflowed): rebuild the viewed
+// session from stored history, and say so. A turn this view is running reads its own history when it
+// ends, so it is left alone. Returns whether anything was done.
+function onReplayTruncated(event = {}) {
+  const liveId = String(event?.sessionId || '').trim();
+  const viewed = String(settings.sessionId || '').trim();
+  if (!liveId || !viewed || durableContextSessionId(liveId) !== viewed) return false;
+  if (sending) return false;
+  showOperationToast({ kind: 'warn', title: t('session.replay.truncated'), duration: 6000 });
+  if (liveAttach?.sessionId === viewed) {
+    liveAttach.historySeeded = false;
+    void reconcileAttachedLiveSession();
+  } else {
+    void refreshActiveSessionHistoryQuietly();
+  }
+  return true;
 }
 
 function bindPromptCard() {
@@ -22386,7 +22414,7 @@ async function ensureRemoteWsClient() {
     throw error;
   }
   await refreshContextConsentPrincipal({ dashboardPrincipal: ticket.principal });
-  const client = createChatGatewayClient();
+  const client = createChatGatewayClient({ replayEndpoint: baseUrl });
   try {
     await connectGatewayWithTicket(client, baseUrl, ticket.ticket, {
       refreshTicket: async () => {

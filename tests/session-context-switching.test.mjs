@@ -16,6 +16,7 @@ import * as store from '../extension/lib/session-context-store.mjs';
 import * as subagents from '../extension/lib/subagent-stack.mjs';
 import { resolveContextOccupancy } from '../extension/lib/context-usage-view.mjs';
 import { createSessionLineage } from '../extension/lib/session-lineage.mjs';
+import { createReplayWatermarks } from '../extension/lib/replay-watermarks.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const between = (from, to) => {
@@ -77,6 +78,7 @@ function panel({ answers = {} } = {}) {
     ...subagents,
     resolveContextOccupancy,
     createSessionLineage,
+    createReplayWatermarks,
     console,
     Date,
     browserApi: {

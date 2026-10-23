@@ -604,6 +604,9 @@ export function createGatewayClient({
   serverRequests = null,
   heartbeatIntervalMs = GATEWAY_HEARTBEAT_INTERVAL_MS,
   heartbeatDeadlineMs = GATEWAY_HEARTBEAT_DEADLINE_MS,
+  // Optional {load() -> {epoch, watermarks}, save({epoch, watermarks})}: replay state that outlives this
+  // client (the panel builds a new client for every reconnect). Without it nothing changes.
+  replayStore = null,
 } = {}) {
   const SocketCtor = WebSocketImpl || (typeof WebSocket !== 'undefined' ? WebSocket : null);
   const serverRequestHandler = typeof serverRequests?.handle === 'function' ? serverRequests : null;
@@ -620,6 +623,36 @@ export function createGatewayClient({
   let replayEpoch = '';
   let replayInFlight = false;
   let replayHold = null;
+  // Marks a previous client left behind are only believed once this gateway's epoch is known to match.
+  let seededFromStore = false;
+  const WATERMARK_CAP = replayStore ? 64 : Number.POSITIVE_INFINITY;
+
+  function persistReplay() {
+    if (!replayStore?.save) return;
+    try {
+      replayStore.save({ epoch: replayEpoch, watermarks: Object.fromEntries(lastSeenSeq) });
+    } catch {
+      /* the store is a convenience; replay still works from memory */
+    }
+  }
+
+  function markSeen(sessionId, seq) {
+    lastSeenSeq.delete(sessionId);
+    lastSeenSeq.set(sessionId, seq);
+    while (lastSeenSeq.size > WATERMARK_CAP) lastSeenSeq.delete(lastSeenSeq.keys().next().value);
+  }
+
+  const seed = replayStore?.load?.();
+  if (seed?.epoch && seed.watermarks && typeof seed.watermarks === 'object') {
+    for (const [sessionId, seq] of Object.entries(seed.watermarks)) {
+      const number = Number(seq);
+      if (sessionId && Number.isFinite(number) && number > 0) markSeen(sessionId, Math.floor(number));
+    }
+    if (lastSeenSeq.size) {
+      replayEpoch = String(seed.epoch);
+      seededFromStore = true;
+    }
+  }
 
   function emit(type, event) {
     for (const handler of listeners.get(type) || []) {
@@ -754,7 +787,15 @@ export function createGatewayClient({
         connectAttempt = null;
         clearTimeout(attempt.timer);
         readyPayload = frame.payload;
-        adoptReplayEpoch(String(frame.payload?.replay_epoch || ''));
+        const readyEpoch = String(frame.payload?.replay_epoch || '');
+        // A gateway that names no epoch cannot vouch for marks left by an earlier client.
+        if (seededFromStore && !readyEpoch) {
+          lastSeenSeq.clear();
+          replayEpoch = '';
+        }
+        seededFromStore = false;
+        adoptReplayEpoch(readyEpoch);
+        persistReplay();
         // Sent before the connect promise settles, so it precedes every request
         // the caller makes next on this socket.
         if (serverRequestHandler) advertiseServerRequests();
@@ -778,6 +819,7 @@ export function createGatewayClient({
     if (!epoch || replayEpoch === epoch) return;
     if (replayEpoch) lastSeenSeq.clear();
     replayEpoch = epoch;
+    persistReplay();
   }
 
   function dispatchIfNewer(event = {}) {
@@ -786,7 +828,9 @@ export function createGatewayClient({
     if (sessionId && Number.isFinite(seq)) {
       const previous = lastSeenSeq.get(sessionId) || 0;
       if (seq <= previous) return;
-      lastSeenSeq.set(sessionId, seq);
+      if (replayStore) markSeen(sessionId, seq);
+      else lastSeenSeq.set(sessionId, seq);
+      persistReplay();
     }
     emit(event.type, {
       type: event.type,
@@ -825,6 +869,13 @@ export function createGatewayClient({
           });
         }
         if (result?.truncated === true) {
+          // The owner reloads history for the hole, so the mark moves past it: the next reconnect does
+          // not report the same hole again.
+          const latest = Number(result?.latest_seq);
+          if (replayStore && Number.isFinite(latest) && latest > (lastSeenSeq.get(sessionId) || 0)) {
+            markSeen(sessionId, Math.floor(latest));
+            persistReplay();
+          }
           emit('session.replay.truncated', {
             type: 'session.replay.truncated',
             sessionId,
