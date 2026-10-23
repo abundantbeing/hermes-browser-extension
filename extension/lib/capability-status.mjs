@@ -92,7 +92,6 @@ export const CAPABILITY_REASONS = Object.freeze({
   'method-not-found': ({ method } = {}) => `The gateway answered "method not found" (-32601) for ${clean(method) || 'this method'}.`,
   'legacy-ws-compress': () => 'This dashboard gateway has no session authority, so the legacy session.compress serves compaction.',
   'authority-compress': () => 'Compaction runs as session.mutate operation compress, which a session-authority gateway serves.',
-  'legacy-compress-suppressed': () => 'A session-authority gateway does not route the legacy session.compress.',
   'token-present': () => 'A token or auth context is present. This check has not proven it valid.',
   'ws-contract': () => 'Part of the dashboard WebSocket contract. This gateway does not advertise it separately.',
   'rest-no-compress': () => 'This connection only reaches the REST API, which does not advertise a compact route. Compaction needs the dashboard WebSocket with session authority.',
