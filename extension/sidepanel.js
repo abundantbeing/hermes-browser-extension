@@ -12484,6 +12484,17 @@ function abortAttachedGroupTurn() {
   if (activeGroupAbortController === controller) activeGroupAbortController = null;
 }
 
+// Navigating to a regular session while a group turn runs: the view lets go, the turn does not. An abort
+// would send session.interrupt to every member (bot-group-runtime), which is a cancellation nobody asked
+// for; the room keeps replying and the turn is reattached when its room is opened again. Only the Stop
+// button cancels it. Must run before activeGroupGeneration moves, so the turn keeps the generation its
+// callbacks were bound with. A turn that is not in flight has nothing to keep.
+function detachGroupTurnForNavigation() {
+  if (activeGroupProjection && activeGroupAbortController && sending) return detachActiveGroupTurnForBackground();
+  abortAttachedGroupTurn();
+  return false;
+}
+
 function abortBackgroundGroupTurn() {
   const controller = backgroundGroupTurn?.abortController;
   if (!controller) return;
@@ -17650,8 +17661,8 @@ function preferredModelOptionsForNewSession() {
 
 async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), focus = true, hidden = false, transport = '', source = '', cwd = '', scopeRevisionId = scopeRevision.current() } = {}) {
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  detachGroupTurnForNavigation();
   activeGroupGeneration += 1;
-  abortAttachedGroupTurn();
   activeGroupProjection = null;
   activeGroupRuntime = null;
   activeGroupMessages = [];
@@ -17847,8 +17858,8 @@ async function openHermesSession(selectedSession) {
   // Leaving a live run is allowed: the gateway keeps running it and its reply
   // is saved to its own session (see sendPrompt).
   detachLiveSession();
+  detachGroupTurnForNavigation();
   activeGroupGeneration += 1;
-  abortAttachedGroupTurn();
   activeGroupProjection = null;
   activeGroupRuntime = null;
   activeGroupMessages = [];
