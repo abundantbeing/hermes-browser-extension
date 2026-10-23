@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import {
   readIdleRowSubagents, rosterAfterFailure, sessionIsLiveFromStatus, sessionLiveRoster,
 } from '../extension/lib/live-session-attach.mjs';
+import { rosterSuccessor } from '../extension/lib/session-lineage.mjs';
 import { liveStateFromSessionRow } from '../extension/lib/session-live-state.mjs';
 
 test('"starting" (admitted, agent not started: both gateways emit it) is a live session', () => {
@@ -103,6 +104,7 @@ function pollHarness(requests) {
     isRemoteWsMode: () => false, scheduleLiveSessionPoll: () => {}, ensureActiveDashboardWsConnection: async () => ({ client }),
     unsupportedLiveRosterClients: new WeakSet(), sessionLiveRoster, readIdleRowSubagents, rosterAfterFailure,
     liveSubagentCache: new Map(), discoverLiveSessions, liveDiscoveredSessions: [], safeActiveProfile: () => '',
+    rosterSuccessor, adoptSessionSuccessor: async () => false, loadSessions: async () => {},
     normalizeHermesSessions: (payload) => payload.sessions.map((row) => ({ id: row.id, title: row.title || row.id, source: row.source })),
     availableSessions: [{ id: 'A' }], settings: { sessionId: 'A' }, renderSessionMenu: () => {}, liveAttach: null,
     reconcileAttachedLiveSession: async () => {}, sending: false, activeConversationTransport: 'dashboard-ws',

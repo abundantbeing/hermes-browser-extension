@@ -422,6 +422,7 @@ import {
 } from './lib/turn-recovery.mjs';
 import { connectionIdentityChanged } from './lib/settings-save-effects.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
+import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './lib/session-lineage.mjs';
 import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
@@ -1359,6 +1360,8 @@ let sessionContextPersistTimer = null;
 // The gateway addresses a session by a live runtime id that changes on every
 // resume; its events carry that id. Map each one back to the durable id.
 const liveSessionAliases = new Map();
+// A legacy gateway moves a compressed session's key to its successor; the parent id keeps resolving.
+const sessionLineage = createSessionLineage();
 // Per durable session: the breakdown request in flight and its retry timer.
 const sessionContextRefreshes = new Map();
 // Sessions whose breakdown this panel has fetched since it opened.
@@ -1373,6 +1376,37 @@ function rememberLiveSessionAlias(liveId = '', storedId = '') {
   if (!live || !stored) return;
   liveSessionAliases.set(live, stored);
   if (liveSessionAliases.size > 200) liveSessionAliases.delete(liveSessionAliases.keys().next().value);
+}
+
+// A compression on a legacy dashboard socket moved the live runtime's session key to its successor.
+// The viewed session is the same conversation: its durable identity follows (context entry, stored
+// binding, held draft, prompt alias), and the parent id keeps resolving to it. Never on a session
+// authority, whose durable key does not rotate. Returns whether anything changed.
+async function adoptSessionSuccessor(parentId = '', childId = '', connection = null) {
+  const parent = String(parentId || '').trim();
+  const child = String(childId || '').trim();
+  if (!parent || !child || parent === child) return false;
+  if (String(settings.sessionId || '').trim() !== parent) return false;
+  if (!sessionLineage.adopt(parent, child)) return false;
+  sessionContextStore = renameSessionContextEntry(sessionContextStore, parent, child);
+  scheduleSessionContextPersist();
+  if (connection) {
+    connection.wsStoredSessionId = child;
+    promptController.bindSession(connection.wsSessionId, child);
+    rememberLiveSessionAlias(connection.wsSessionId, child);
+  }
+  const binding = settings.remoteDashboardSession;
+  settings = {
+    ...settings,
+    sessionId: child,
+    ...(binding?.storedSessionId === parent ? { remoteDashboardSession: { ...binding, storedSessionId: child } } : {}),
+  };
+  if (queuedTurn?.sessionId === parent) queuedTurn = { ...queuedTurn, sessionId: child };
+  if (activeSessionRuntime?.sessionId === parent) activeSessionRuntime = { ...activeSessionRuntime, sessionId: child };
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await saveSessionBindingForActiveScope({ id: child, title: settings.sessionTitle || child }).catch(() => false);
+  updateSessionLabel();
+  return true;
 }
 
 function durableContextSessionId(sessionId = '') {
@@ -17007,6 +17041,16 @@ async function refreshLiveSessionRoster() {
     }
     const result = await connection.client.request('session.active_list', {});
     if (scopeKey !== liveSessionScopeKey()) return;
+    // An automatic compression moved this runtime's session key to its successor. Follow it, but not
+    // under a turn this view is running or watching (its ids are in use); the next poll does it.
+    const rotatedKey = rosterSuccessor(result, {
+      liveId: connection.wsSessionId,
+      storedId: connection.wsStoredSessionId,
+      authority: connection.client?.readyPayload?.session_authority === true,
+    });
+    if (rotatedKey && !sending && !liveAttach && connection.wsStoredSessionId === settings.sessionId) {
+      if (await adoptSessionSuccessor(settings.sessionId, rotatedKey, connection)) void loadSessions({ quiet: true });
+    }
     const loadedIds = [...availableSessions.map(row => row.id), settings.sessionId];
     // Live sessions the loaded list lacks. Only a socket scoped to the active profile may surface
     // them: a session authority scopes active_list to the actor server-side, and this connection was
@@ -17815,7 +17859,9 @@ async function openHermesSession(selectedSession) {
     if (requestId !== sessionLoadRequestId) return;
     return scopeRevision.isCurrent(scopeRevisionId);
   };
-  let session = selectedSession;
+  // A session compressed on a legacy gateway lives on under its successor's id.
+  const followedId = sessionLineage.resolve(selectedSession.id);
+  let session = followedId && followedId !== selectedSession.id ? { ...selectedSession, id: followedId } : selectedSession;
   renderSessionHistoryLoading(session);
   const requestedSessionId = session.id;
   let liveSessionId = session.id;
@@ -21739,6 +21785,9 @@ async function compactDashboardSessionContext({ automaticRecovery = false } = {}
       setStatus('warn', 'Context compaction failed', detail, { translateDetail: false });
       return { ok: false, reason: result.reason, error: new Error(detail) };
     }
+    // A legacy gateway moves the session's key to the compression's successor: follow it.
+    const successor = compressionSuccessor(result.payload, connection.wsStoredSessionId || settings.sessionId);
+    if (successor) await adoptSessionSuccessor(settings.sessionId, successor, connection);
     // The breakdown measured the transcript that was just replaced.
     sessionContextStore = markContextBreakdownStale(sessionContextStore, settings.sessionId);
     refreshSessionContextTelemetry({ force: true });
