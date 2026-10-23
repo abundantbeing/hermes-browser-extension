@@ -418,6 +418,7 @@ import {
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
+import { connectionIdentityChanged } from './lib/settings-save-effects.mjs';
 import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
@@ -20435,6 +20436,7 @@ async function saveSettingsFromForm() {
   const connectionChanged = previousSettings.connectionMode !== settings.connectionMode
     || previousSettings.connectionTransport !== settings.connectionTransport
     || normalizeGatewayUrl(previousSettings.gatewayUrl) !== normalizeGatewayUrl(settings.gatewayUrl);
+  const identityChanged = connectionIdentityChanged(previousSettings, settings, normalizeGatewayUrl);
   if (connectionChanged) {
     connectionController.cancel('connection settings changed');
     try {
@@ -20477,6 +20479,21 @@ async function saveSettingsFromForm() {
   await maybeRenameCurrentSessionTitle(previousSettings, settings.sessionTitle);
   syncSettingsForm();
   updateConnectionPrompt();
+  return { connectionIdentityChanged: identityChanged };
+}
+
+// After Save: re-read what the gateway offers, and re-establish the session only when the connection
+// it belongs to changed. Under the default startup mode initializeSessionForPanelOpen starts a fresh
+// draft, which would replace the session being viewed (and detach it from a run in progress) just
+// because an unrelated setting was saved.
+async function refreshAfterSettingsSave(saved) {
+  if (!minimumConnectionReady()) return;
+  await loadGatewayCapabilities({ quiet: true, healthOk: true });
+  await loadModels({ quiet: true });
+  await loadSkills({ quiet: true });
+  await loadProfiles({ quiet: true });
+  await loadSessions({ quiet: true });
+  if (saved?.connectionIdentityChanged === true) await initializeSessionForPanelOpen({ focus: false });
 }
 
 async function clearStoredToken() {
@@ -25939,17 +25956,10 @@ function bindEvents() {
     setSettingsSaveNote('saving', t('appearance.saving'));
     let persisted = false;
     try {
-      await saveSettingsFromForm();
+      const saved = await saveSettingsFromForm();
       persisted = true;
       const probed = await probeGatewayLiveness({ quiet: false });
-      if (minimumConnectionReady()) {
-        await loadGatewayCapabilities({ quiet: true, healthOk: true });
-        await loadModels({ quiet: true });
-        await loadSkills({ quiet: true });
-        await loadProfiles({ quiet: true });
-        await loadSessions({ quiet: true });
-        await initializeSessionForPanelOpen({ focus: false });
-      }
+      await refreshAfterSettingsSave(saved);
       // Stay open: closing straight after Save hid the only sign that it had
       // worked. The button flashes Saved, the edited markers clear, and the
       // close button dismisses Settings.

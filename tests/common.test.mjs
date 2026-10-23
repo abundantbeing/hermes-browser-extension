@@ -1676,7 +1676,11 @@ test('speech silent-start watchdog treats started-but-mute recognition as a fail
 
 test('connect and startup sync Hermes models, sessions, skills, and profiles from the gateway', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(source, /await loadModels\(\{ quiet: true \}\);\s*await loadSkills\(\{ quiet: true \}\);\s*await loadProfiles\(\{ quiet: true \}\);\s*await loadSessions\(\{ quiet: true \}\);\s*await initializeSessionForPanelOpen\(\{ focus: false \}\);/s);
+  // Both the connect path and Settings Save re-read the catalogs in this order. Connecting always
+  // binds the session; Save binds it only when the connection identity changed (an unrelated Save
+  // used to swap the viewed session for a fresh draft; tests/settings-save-session.test.mjs).
+  assert.match(source, /await loadModels\(\{ quiet: true \}\);\s*await loadSkills\(\{ quiet: true \}\);\s*await loadProfiles\(\{ quiet: true \}\);\s*await loadSessions\(\{ quiet: true \}\);\s*if \(saved\?\.connectionIdentityChanged === true\) await initializeSessionForPanelOpen\(\{ focus: false \}\);/s);
+  assert.match(source, /bindSession: async \(\) => \{\s*await initializeSessionForPanelOpen\(\{ focus: false \}\);/);
   // Models no longer load from /v1/models REST: the recovered source uses
   // WS model discovery (discoverModelsFromRegistry / discoverModelsFromDashboard).
   assert.match(source, /WS_METHODS\.modelsList|discoverModelsFromRegistry\(|discoverModelsFromDashboard\(/);
