@@ -413,10 +413,12 @@ import {
   hermesRequestError,
   latestAssistantAfterUser,
   sessionContextFailureRecovery,
+  sessionStatusKnownIdle,
+  turnDeliveryFromHistory,
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
-import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError } from './lib/gateway-refusal.mjs';
+import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
@@ -22383,26 +22385,38 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
       cleanup();
       fn(value);
     };
+    // Paint the answer that follows THIS prompt's user row, if the gateway recorded
+    // one. An answer to an earlier turn is never this turn's answer.
     const seedFromHistory = async () => {
       const history = await client.request(WS_METHODS.sessionHistory, {
         session_id: sessionId,
         profile: safeActiveProfile(),
       }).catch(() => null);
-      const rows = normalizeGatewayHistoryMessages(history);
-      const answer = latestAssistantAfterUser(rows, prompt)
-        || [...rows].reverse().find((row) => row.role === 'assistant')?.content
-        || '';
+      if (!history) return { read: false, delivered: false, answer: '' };
+      const { delivered, answer } = turnDeliveryFromHistory(
+        normalizeGatewayHistoryMessages(history),
+        [prompt, messageDisplayText('user', prompt)],
+        { displayText: messageDisplayText },
+      );
       if (answer && answer !== finalText) {
         finalText = answer;
         onDelta(finalText);
       }
-      return answer;
+      return { read: true, delivered, answer };
     };
+    // The gateway has no record of the message and nothing is running: it never
+    // arrived. End the turn as not delivered (the draft comes back) rather than wait
+    // for an answer that cannot come. Never resent from here.
+    const undelivered = (seeded, status) => seeded.read && !seeded.delivered && sessionStatusKnownIdle(status);
     const handleIdleTimeout = async (error) => {
       if (settled) return;
       try {
-        const status = await client.request(WS_METHODS.sessionStatus, { session_id: sessionId }).catch(() => null);
-        await seedFromHistory();
+        const status = await readGatewaySessionStatus(client, sessionId, { storedSessionId: connection.wsStoredSessionId }).catch(() => null);
+        const seeded = await seedFromHistory();
+        if (undelivered(seeded, status)) {
+          finish(reject, turnNotDeliveredError());
+          return;
+        }
         if (dashboardWatchdogTimeoutAction(status) === 'keep-listening') {
           watchdog.ping();
           return;
@@ -22523,7 +22537,12 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
         }).catch((error) => finish(reject, error));
       })();
     } else {
-      void seedFromHistory();
+      void (async () => {
+        const seeded = await seedFromHistory();
+        if (settled || !seeded.read || seeded.delivered) return;
+        const status = await readGatewaySessionStatus(client, sessionId, { storedSessionId: connection.wsStoredSessionId }).catch(() => null);
+        if (!settled && undelivered(seeded, status)) finish(reject, turnNotDeliveredError());
+      })();
     }
     void hydrateSubagentSnapshot(client, sessionId);
   });

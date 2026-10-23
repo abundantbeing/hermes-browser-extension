@@ -1,5 +1,6 @@
 import { redactSensitiveText } from './redaction.mjs';
 import { refusalFailureState } from './gateway-refusal.mjs';
+import { isDashboardTurnActive } from './dashboard-stream-watchdog.mjs';
 
 export const ACCEPTED_TURN_RECOVERY_MAX_MS = 180_000;
 export const ACCEPTED_TURN_RECOVERY_MAX_DELAY_MS = 4_000;
@@ -240,4 +241,43 @@ export function latestAssistantAfterUser(rows = [], userContent = '') {
 export function isDisplayTextRejection(error) {
   const text = String(error?.message || error || '');
   return /invalid params for prompt\.submit/i.test(text) && /display_text/i.test(text);
+}
+
+/**
+ * Did the gateway record this turn's user message, and is there an answer after
+ * it? `candidates` are the texts the row may carry: the prompt as sent and its
+ * display form. Only an answer that follows the matching user row counts. An
+ * answer to an older turn is never the answer to this one, so when the row is
+ * absent there is nothing to show.
+ */
+export function turnDeliveryFromHistory(rows = [], candidates = [], { displayText = null } = {}) {
+  const texts = [...new Set((Array.isArray(candidates) ? candidates : [candidates])
+    .map((value) => String(value ?? ''))
+    .filter((value) => comparableTurnContent(value)))];
+  if (!Array.isArray(rows)) return { delivered: false, answer: '' };
+  // A row may hold the prompt as sent or the readable form of it, so compare both.
+  const readable = typeof displayText === 'function'
+    ? rows.map((row) => (row?.role === 'user' ? { ...row, content: String(displayText('user', row.content) ?? '') } : row))
+    : null;
+  let delivered = false;
+  for (const text of texts) {
+    for (const candidateRows of readable ? [rows, readable] : [rows]) {
+      if (!candidateRows.some((row) => row?.role === 'user' && turnContentMatches(row.content, text))) continue;
+      delivered = true;
+      const answer = latestAssistantAfterUser(candidateRows, text);
+      if (answer) return { delivered, answer };
+    }
+  }
+  return { delivered, answer: '' };
+}
+
+/**
+ * Positive evidence that no turn is running: a status with an idle-like state,
+ * or the legacy `session.status` text "Agent Running: No". An unreadable or
+ * unrecognised status is not evidence of anything.
+ */
+export function sessionStatusKnownIdle(status = null) {
+  if (!status || typeof status !== 'object') return false;
+  if (isDashboardTurnActive(status) === false) return true;
+  return /^Agent Running:\s*No\s*$/mi.test(String(status.output || ''));
 }
