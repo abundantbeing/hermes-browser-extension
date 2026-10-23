@@ -20831,7 +20831,8 @@ async function persistGmailCaptureEnabled(enabled) {
   const stored = await browserApi.storage.local.get('hermesBrowserSettings');
   const next = { ...(stored.hermesBrowserSettings || {}), gmailCaptureEnabled: desired };
   await browserApi.storage.local.set({ hermesBrowserSettings: next });
-  settings = { ...settings, ...next };
+  // Only this key: the stored record also holds other panels' session bindings.
+  settings = { ...settings, gmailCaptureEnabled: desired };
   if (els.gmailCaptureEnabledInput) els.gmailCaptureEnabledInput.checked = desired;
   // Once capture is on it stays on for every thread send until it is
   // explicitly turned off again, so hide the one-shot consent affordance.
@@ -26132,7 +26133,10 @@ function bindEvents() {
           'apiKey', 'tokenSource', 'lastConnectionTestedAt',
           'browserControlEnabled', 'browserControlPaused',
           'connectionMode', 'connectionTransport', 'gatewayMode', 'gatewayUrl',
-          'trustedDashboardOrigin', 'trustedDashboardTabId', 'remoteDashboardSession',
+          'trustedDashboardOrigin', 'trustedDashboardTabId',
+          // Not 'remoteDashboardSession': that is the writing panel's own session binding. Every tab has a
+          // panel, they share this record, and adopting another panel's binding would make this one resume
+          // (and then write into) the other panel's session on its next reconnect.
         ];
         const patch = {};
         for (const key of tracked) {
