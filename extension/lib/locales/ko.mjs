@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes가 세션을 요약하지 못해 아무것도 바꾸지 않았습니다.",
   "compact.result.failed": "Hermes가 압축을 완료하지 못했습니다. {detail}",
   "session.replay.truncated": "기록이 잘려 다시 불러오는 중입니다",
+  "pairing.approve_below": "아래 연결을 승인하세요.",
+  "pairing.open_tab": "탭에서 열기",
+  "pairing.frame_title": "Hermes 연결 승인",
+  "pairing.denied": "페어링이 거부되었습니다.",
 });

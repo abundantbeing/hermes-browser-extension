@@ -1915,4 +1915,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes 无法为会话生成摘要，因此未替换任何内容。",
   "compact.result.failed": "Hermes 未完成压缩。{detail}",
   "session.replay.truncated": "历史记录已被截断，正在重新加载",
+  "pairing.approve_below": "请在下方批准连接。",
+  "pairing.open_tab": "在标签页中打开",
+  "pairing.frame_title": "批准 Hermes 连接",
+  "pairing.denied": "配对已被拒绝。",
 });

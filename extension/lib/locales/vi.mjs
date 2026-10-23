@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes không thể tóm tắt phiên, nên không có gì bị thay thế.",
   "compact.result.failed": "Hermes chưa hoàn tất việc nén. {detail}",
   "session.replay.truncated": "Lịch sử đã bị cắt bớt, đang tải lại",
+  "pairing.approve_below": "Hãy phê duyệt kết nối bên dưới.",
+  "pairing.open_tab": "Mở trong thẻ",
+  "pairing.frame_title": "Phê duyệt kết nối Hermes",
+  "pairing.denied": "Đã từ chối ghép nối.",
 });

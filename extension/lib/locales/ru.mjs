@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes не смог составить сводку сеанса, поэтому ничего не заменено.",
   "compact.result.failed": "Hermes не завершил сжатие. {detail}",
   "session.replay.truncated": "История была усечена, загружаю заново",
+  "pairing.approve_below": "Подтвердите подключение ниже.",
+  "pairing.open_tab": "Открыть во вкладке",
+  "pairing.frame_title": "Подтвердить подключение к Hermes",
+  "pairing.denied": "Сопряжение отклонено.",
 });

@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes はセッションを要約できなかったため、何も置き換えていません。",
   "compact.result.failed": "Hermes は圧縮を完了できませんでした。{detail}",
   "session.replay.truncated": "履歴が切り詰められました。再読み込みしています",
+  "pairing.approve_below": "下の接続を承認してください。",
+  "pairing.open_tab": "タブで開く",
+  "pairing.frame_title": "Hermes の接続を承認",
+  "pairing.denied": "ペアリングが拒否されました。",
 });

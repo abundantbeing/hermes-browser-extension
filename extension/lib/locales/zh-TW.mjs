@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes 無法為工作階段產生摘要，因此未取代任何內容。",
   "compact.result.failed": "Hermes 未完成壓縮。{detail}",
   "session.replay.truncated": "歷史記錄已被截斷，正在重新載入",
+  "pairing.approve_below": "請在下方核准連線。",
+  "pairing.open_tab": "在分頁中開啟",
+  "pairing.frame_title": "核准 Hermes 連線",
+  "pairing.denied": "配對已遭拒絕。",
 });

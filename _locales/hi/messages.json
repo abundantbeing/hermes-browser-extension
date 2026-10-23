@@ -2335,6 +2335,22 @@
     "message": "थीम चुनें",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_pairing_approve_below": {
+    "message": "नीचे दिए गए कनेक्शन को स्वीकृत करें।",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "पेयरिंग अस्वीकार कर दी गई।",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Hermes कनेक्शन स्वीकृत करें",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "टैब में खोलें",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "माइक्रोफ़ोन की अनुमति नहीं दी गई थी.\n\n{error}\n\nमाइक्रोफ़ोन सेटिंग खोलें पर क्लिक करें, माइक्रोफ़ोन को Hermes Browser Extension के लिए अनुमति दें पर सेट करें, यहां वापस आएं और पुनः प्रयास करें।",
     "description": "Runtime interface message permissions.not_granted"

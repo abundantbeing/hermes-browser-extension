@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes nie mógł podsumować sesji, więc nic nie zastąpiono.",
   "compact.result.failed": "Hermes nie dokończył kompaktowania. {detail}",
   "session.replay.truncated": "Historia została obcięta, ponowne wczytywanie",
+  "pairing.approve_below": "Zatwierdź połączenie poniżej.",
+  "pairing.open_tab": "Otwórz w karcie",
+  "pairing.frame_title": "Zatwierdź połączenie z Hermes",
+  "pairing.denied": "Parowanie zostało odrzucone.",
 });

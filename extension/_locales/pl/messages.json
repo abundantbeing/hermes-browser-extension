@@ -2335,6 +2335,22 @@
     "message": "Wybierz motyw",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_pairing_approve_below": {
+    "message": "Zatwierdź połączenie poniżej.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "Parowanie zostało odrzucone.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Zatwierdź połączenie z Hermes",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "Otwórz w karcie",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "Nie przyznano pozwolenia na korzystanie z mikrofonu.\n\n{error}\n\nKliknij Otwórz ustawienia mikrofonu, ustaw Mikrofon na Zezwalaj na Hermes Browser Extension, wróć tutaj i spróbuj ponownie.",
     "description": "Runtime interface message permissions.not_granted"

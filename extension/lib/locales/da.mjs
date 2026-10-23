@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes kunne ikke opsummere sessionen, så intet blev erstattet.",
   "compact.result.failed": "Hermes fuldførte ikke komprimeringen. {detail}",
   "session.replay.truncated": "Historikken blev afkortet, genindlæser",
+  "pairing.approve_below": "Godkend forbindelsen herunder.",
+  "pairing.open_tab": "Åbn i en fane",
+  "pairing.frame_title": "Godkend Hermes-forbindelsen",
+  "pairing.denied": "Parringen blev afvist.",
 });

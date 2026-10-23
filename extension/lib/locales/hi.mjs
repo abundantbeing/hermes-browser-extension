@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes सत्र का सारांश नहीं बना सका, इसलिए कुछ नहीं बदला गया।",
   "compact.result.failed": "Hermes ने संपीड़न पूरा नहीं किया। {detail}",
   "session.replay.truncated": "इतिहास छोटा हो गया था, फिर से लोड हो रहा है",
+  "pairing.approve_below": "नीचे दिए गए कनेक्शन को स्वीकृत करें।",
+  "pairing.open_tab": "टैब में खोलें",
+  "pairing.frame_title": "Hermes कनेक्शन स्वीकृत करें",
+  "pairing.denied": "पेयरिंग अस्वीकार कर दी गई।",
 });

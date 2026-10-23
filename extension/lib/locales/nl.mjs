@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes kon de sessie niet samenvatten, dus er is niets vervangen.",
   "compact.result.failed": "Hermes heeft het comprimeren niet voltooid. {detail}",
   "session.replay.truncated": "De geschiedenis is ingekort, wordt opnieuw geladen",
+  "pairing.approve_below": "Keur de verbinding hieronder goed.",
+  "pairing.open_tab": "Openen in een tabblad",
+  "pairing.frame_title": "Hermes-verbinding goedkeuren",
+  "pairing.denied": "Koppelen is geweigerd.",
 });

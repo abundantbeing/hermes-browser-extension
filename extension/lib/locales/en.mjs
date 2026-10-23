@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes could not summarize the session, so nothing was replaced.",
   "compact.result.failed": "Hermes did not complete the compaction. {detail}",
   "session.replay.truncated": "History was truncated, reloading",
+  "pairing.approve_below": "Approve the connection below.",
+  "pairing.open_tab": "Open in a tab",
+  "pairing.frame_title": "Approve the Hermes connection",
+  "pairing.denied": "Pairing was denied.",
 });

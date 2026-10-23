@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "لم يتمكن Hermes من تلخيص الجلسة، لذلك لم يُستبدل شيء.",
   "compact.result.failed": "لم يُكمل Hermes الضغط. {detail}",
   "session.replay.truncated": "تم اقتطاع السجل، جارٍ إعادة التحميل",
+  "pairing.approve_below": "وافق على الاتصال أدناه.",
+  "pairing.open_tab": "فتح في علامة تبويب",
+  "pairing.frame_title": "الموافقة على اتصال Hermes",
+  "pairing.denied": "تم رفض الاقتران.",
 });

@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "O Hermes não conseguiu resumir a sessão, então nada foi substituído.",
   "compact.result.failed": "O Hermes não concluiu a compactação. {detail}",
   "session.replay.truncated": "O histórico foi truncado; recarregando",
+  "pairing.approve_below": "Aprove a conexão abaixo.",
+  "pairing.open_tab": "Abrir em uma guia",
+  "pairing.frame_title": "Aprovar a conexão com o Hermes",
+  "pairing.denied": "O pareamento foi negado.",
 });

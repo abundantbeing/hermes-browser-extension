@@ -2335,6 +2335,22 @@
     "message": "테마 선택",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_pairing_approve_below": {
+    "message": "아래 연결을 승인하세요.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "페어링이 거부되었습니다.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Hermes 연결 승인",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "탭에서 열기",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "마이크 권한이 부여되지 않았습니다.\n\n{error}\n\n마이크 설정 열기를 클릭하고 Hermes Browser Extension에 대해 마이크를 허용으로 설정한 후 여기로 돌아와 다시 시도하세요.",
     "description": "Runtime interface message permissions.not_granted"

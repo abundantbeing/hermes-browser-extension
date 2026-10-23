@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes tidak dapat meringkas sesi, jadi tidak ada yang diganti.",
   "compact.result.failed": "Hermes tidak menyelesaikan pemadatan. {detail}",
   "session.replay.truncated": "Riwayat terpotong, memuat ulang",
+  "pairing.approve_below": "Setujui koneksi di bawah ini.",
+  "pairing.open_tab": "Buka di tab",
+  "pairing.frame_title": "Setujui koneksi Hermes",
+  "pairing.denied": "Pemasangan ditolak.",
 });

@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes oturumu özetleyemedi, bu yüzden hiçbir şey değiştirilmedi.",
   "compact.result.failed": "Hermes sıkıştırmayı tamamlamadı. {detail}",
   "session.replay.truncated": "Geçmiş kısaltıldı, yeniden yükleniyor",
+  "pairing.approve_below": "Aşağıdaki bağlantıyı onaylayın.",
+  "pairing.open_tab": "Sekmede aç",
+  "pairing.frame_title": "Hermes bağlantısını onayla",
+  "pairing.denied": "Eşleştirme reddedildi.",
 });

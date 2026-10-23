@@ -2335,6 +2335,22 @@
     "message": "Kies een thema",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_pairing_approve_below": {
+    "message": "Keur de verbinding hieronder goed.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "Koppelen is geweigerd.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Hermes-verbinding goedkeuren",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "Openen in een tabblad",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "Microfoontoestemming is niet verleend.\n\n{error}\n\nKlik op Microfooninstellingen openen, stel Microfoon in op Toestaan voor Hermes Browser Extension, kom hier terug en probeer het opnieuw.",
     "description": "Runtime interface message permissions.not_granted"

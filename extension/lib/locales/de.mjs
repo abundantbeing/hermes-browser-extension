@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes konnte die Sitzung nicht zusammenfassen, daher wurde nichts ersetzt.",
   "compact.result.failed": "Hermes hat die Verdichtung nicht abgeschlossen. {detail}",
   "session.replay.truncated": "Der Verlauf wurde gekürzt, wird neu geladen",
+  "pairing.approve_below": "Genehmige die Verbindung unten.",
+  "pairing.open_tab": "In einem Tab öffnen",
+  "pairing.frame_title": "Hermes-Verbindung genehmigen",
+  "pairing.denied": "Die Kopplung wurde abgelehnt.",
 });

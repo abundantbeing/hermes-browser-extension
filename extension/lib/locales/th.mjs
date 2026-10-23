@@ -1916,4 +1916,8 @@ export default Object.freeze({
   "compact.result.aborted": "Hermes สรุปเซสชันไม่ได้ จึงไม่มีอะไรถูกแทนที่",
   "compact.result.failed": "Hermes ทำการบีบอัดไม่สำเร็จ {detail}",
   "session.replay.truncated": "ประวัติถูกตัดทอน กำลังโหลดใหม่",
+  "pairing.approve_below": "อนุมัติการเชื่อมต่อด้านล่าง",
+  "pairing.open_tab": "เปิดในแท็บ",
+  "pairing.frame_title": "อนุมัติการเชื่อมต่อ Hermes",
+  "pairing.denied": "การจับคู่ถูกปฏิเสธ",
 });

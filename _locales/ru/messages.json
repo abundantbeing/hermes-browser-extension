@@ -2335,6 +2335,22 @@
     "message": "Выберите тему",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_pairing_approve_below": {
+    "message": "Подтвердите подключение ниже.",
+    "description": "Runtime interface message pairing.approve_below"
+  },
+  "runtime_pairing_denied": {
+    "message": "Сопряжение отклонено.",
+    "description": "Runtime interface message pairing.denied"
+  },
+  "runtime_pairing_frame_title": {
+    "message": "Подтвердить подключение к Hermes",
+    "description": "Runtime interface message pairing.frame_title"
+  },
+  "runtime_pairing_open_tab": {
+    "message": "Открыть во вкладке",
+    "description": "Runtime interface message pairing.open_tab"
+  },
   "runtime_permissions_not_granted": {
     "message": "Разрешение на использование микрофона не было предоставлено.\n\n{error}\n\nНажмите «Открыть настройки микрофона», установите для параметра «Микрофон» значение «Разрешить» для Hermes Browser Extension, вернитесь сюда и повторите попытку.",
     "description": "Runtime interface message permissions.not_granted"
