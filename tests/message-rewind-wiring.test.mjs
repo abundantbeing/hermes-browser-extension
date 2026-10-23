@@ -78,7 +78,7 @@ test('askHermes reuses the standing user record on a rewind and never adds a sec
   assert.match(panel, /truncate: turnOptions\.truncate \|\| null/);
   // The submit response still reaches the caller's hook; the panel also reads the run's execution
   // generation from it first (tests/stop-generation-fence.test.mjs).
-  assert.match(panel, /onSubmitResponse: \(response\) => \{[\s\S]{0,500}turnOptions\.onSubmitResponse\?\.\(response\);/);
+  assert.match(panel, /onSubmitResponse: \(response\) => \{[\s\S]{0,900}turnOptions\.onSubmitResponse\?\.\(response\);/);
 });
 
 test('post-turn history refresh binds durable row ids by display text', () => {
