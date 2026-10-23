@@ -20,6 +20,30 @@ Pictures attached to a message are stored on the machine running Hermes. Reopeni
 
 Voice dictation uses the API transcription route first, then the dashboard route, then browser speech. A dashboard that does not provide its session token is skipped. Browser speech can still fail independently when the browser has not finished installing its language pack or does not support the requested recognition mode.
 
+### The Projects tab says projects are not available
+
+Projects and Move need the Hermes dashboard WebSocket and a gateway that advertises session authority. The tab names which of these is missing: a REST-only connection, a gateway that did not report session authority (update Hermes), a connection that has not finished connecting, or a gateway that answered "method not found" for a projects call. Recents keeps working in every case. A project's folder is a path on the machine running Hermes, so type it; a browser cannot browse that machine's folders. If a move says it was not confirmed, or that the connection dropped, open the move again and check the session's folder before relying on it.
+
+### Compact context is disabled, or says it did nothing
+
+The button is disabled with its reason when the connection is REST-only, the gateway has no session authority, Hermes answered "method not found", or a turn is running (stop it first). "Nothing to compact" means the session is already short enough. If the answer was lost, nothing is sent twice: check the session, then press Compact again. Compaction waits up to three minutes for the summary.
+
+### A capability row reads Cached, Unknown or "Not advertised by this gateway"
+
+Cached means the answer is old or its connection has closed; it is shown for information and never used to start anything. Reconnect and open Settings again to renew it. "Not advertised" means the gateway did not say, which is different from unsupported. The Browser Companion Plugin row always reads this way today, because no gateway route reports whether the plugin is loaded; run `node scripts/enable-bot-companion-tools.mjs --list` on the Hermes machine to see where it is staged.
+
+### My message says it was not delivered, refused, busy, or the session is gone
+
+Your draft is kept and the reason appears in a toast. A busy session is another window or client running a turn in it, and the gateway stays connected. A refused message is sent once, never in a loop. "Not delivered" means Hermes has no record of the message and the session is idle; nothing is resent automatically, so send it again yourself, but check the history first if Hermes stores messages in a form this panel might not recognise. "Session gone" means the gateway no longer has the session, and no new session is created under it.
+
+### Hermes Control refuses with `restricted_frame`
+
+A frame on the attached page is on a restricted address, has moved to one since the page was read, or is laid over the control, or the click would land in a frame from another site that Chrome runs in its own process. Those frames are not read or acted on. Ask Hermes for a fresh view of the page, or act on the control yourself.
+
+### Companion plugin tools say "unavailable"
+
+A copy of the plugin staged before the hook-worker fix cannot hand its authorization to its tools under Hermes' hook worker, so every owner-gated tool reports unavailable. Compare the `version` in the staged `plugin.yaml` with this repository's (`node scripts/enable-bot-companion-tools.mjs --list` does it for every profile), replace the staged directory and restart that profile's gateway. See [companion-plugin/install.md](../companion-plugin/install.md).
+
 ### Native Hermes computer use is not working
 
 Hermes Browser Extension does not control your desktop. Chromium builds request the `debugger` permission only for opt-in Hermes Control, which drives tabs you attach; Firefox builds omit it. Native desktop control is separate and comes from Hermes Agent's `computer_use` toolset via `cua-driver`.
