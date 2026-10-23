@@ -11,7 +11,7 @@ import { escapeHtml } from './common.mjs';
 import { themePreviewForMode } from './appearance-themes.mjs';
 import { fontFamilyPreview } from './appearance-preferences.mjs';
 import { handleRadioCardKeydown, presentationCardsHtml, presentationOptionLabelKey } from './presentation-previews.mjs';
-import { meanderGeometry } from './startup-screen.mjs';
+import { contrastRatio, meanderGeometry } from './startup-screen.mjs';
 
 export const ONBOARDING_STEPS = Object.freeze(['theme', 'font', 'style', 'layout', 'connect']);
 
@@ -152,7 +152,8 @@ export function createOnboardingFlow({
         <span class="onboarding-progress" aria-hidden="true"></span>
         <button type="button" class="onboarding-nav-button onboarding-nav-next" data-onboarding-next></button>
       </nav>
-      <p class="onboarding-announce sr-only" aria-live="polite"></p>`;
+      <p class="onboarding-announce sr-only" aria-live="polite"></p>
+      <i class="onboarding-probe" hidden></i>`;
   }
 
   function stepBody(step, state) {
@@ -291,6 +292,29 @@ export function createOnboardingFlow({
     wasConnected = connected;
   }
 
+  // Like the startup screen: a pale accent (several light palettes) would
+  // draw a near-invisible border and Next tile, so fall back to the text
+  // colour when it lacks contrast against the field.
+  let paletteKey = '';
+  function tuneContrast() {
+    const css = view().getComputedStyle?.bind(view());
+    if (!css || !parts) return;
+    const html = doc.documentElement;
+    const key = `${html.dataset.hermesTheme}|${html.dataset.hermesMode}|${html.getAttribute('style') || ''}`;
+    if (key === paletteKey) return;
+    paletteKey = key;
+    host.style.removeProperty('--startup-line');
+    host.style.removeProperty('--startup-line-rgb');
+    const probe = parts.probe;
+    const colorOf = (value) => { probe.style.color = value; return css(probe).color; };
+    const ratio = contrastRatio(colorOf('var(--startup-line)'), colorOf('var(--startup-bg)'));
+    if (ratio < 3) {
+      host.style.setProperty('--startup-line', 'var(--startup-fg)');
+      host.style.setProperty('--startup-line-rgb', 'var(--startup-fg-rgb)');
+    }
+    host.classList.toggle('startup-quiet-accent', ratio < 4.5);
+  }
+
   function buildMeander() {
     const svg = parts?.meander;
     const width = Math.round(host.clientWidth || 0);
@@ -331,6 +355,7 @@ export function createOnboardingFlow({
         host.classList.remove('is-entering');
         host.innerHTML = '';
         parts = null;
+        paletteKey = '';
         meanderParts = null;
         meanderSize = '';
         previewKey = '';
@@ -351,6 +376,7 @@ export function createOnboardingFlow({
         back: host.querySelector('[data-onboarding-back]'),
         next: host.querySelector('[data-onboarding-next]'),
         announce: host.querySelector('.onboarding-announce'),
+        probe: host.querySelector('.onboarding-probe'),
       };
     }
     const step = steps[stepIndex];
@@ -362,6 +388,7 @@ export function createOnboardingFlow({
     renderPreview(state);
     restoreFocus(keep);
     syncConnection(state);
+    tuneContrast();
     buildMeander();
   }
 
