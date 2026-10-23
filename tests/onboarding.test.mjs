@@ -371,3 +371,14 @@ test('reduced motion: setup still runs every callback, without waiting on the lo
   assert.deepEqual(waits, [220], 'one short fade, no Meander beat');
   assert.deepEqual(calls.map(([name]) => name), ['finish', 'reveal', 'exited']);
 });
+
+test("setup's scroll areas use the panel's own scrollbar, never the browser default", () => {
+  const css = fs.readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  const width = css.match(/\.app-scroll::-webkit-scrollbar,[^{]*\{\s*width: 8px;/)?.[0] || '';
+  const thumb = css.match(/\.app-scroll::-webkit-scrollbar-thumb,[^{]*\{/)?.[0] || '';
+  for (const selector of ['.onboarding-stage', '.connect-panel-card']) {
+    assert.ok(width.includes(`${selector}::-webkit-scrollbar,`), `${selector} scrollbar width`);
+    assert.ok(thumb.includes(`${selector}::-webkit-scrollbar-thumb,`), `${selector} scrollbar thumb`);
+  }
+  assert.match(css, /\.onboarding \{[^}]*overflow: clip;/s, 'the screen itself never scrolls');
+});

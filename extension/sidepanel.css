@@ -620,6 +620,8 @@ textarea::-webkit-scrollbar,
 .marketplace-theme-results::-webkit-scrollbar,
 .subagent-stack-list::-webkit-scrollbar,
 .subagent-stack-stream::-webkit-scrollbar,
+.onboarding-stage::-webkit-scrollbar,
+.connect-panel-card::-webkit-scrollbar,
 .side-question-answer::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -659,6 +661,8 @@ textarea::-webkit-scrollbar-thumb,
 .marketplace-theme-results::-webkit-scrollbar-thumb,
 .subagent-stack-list::-webkit-scrollbar-thumb,
 .subagent-stack-stream::-webkit-scrollbar-thumb,
+.onboarding-stage::-webkit-scrollbar-thumb,
+.connect-panel-card::-webkit-scrollbar-thumb,
 .side-question-answer::-webkit-scrollbar-thumb {
   background: rgba(var(--hermes-fg-rgb),0.45);
   border: 1px solid var(--hermes-line-strong);
@@ -10619,7 +10623,7 @@ body.onboarding-active .bottom-dock { visibility: hidden; }
     radial-gradient(130% 100% at 50% 42%, transparent 52%, rgba(var(--hermes-shadow-rgb), 0.32) 100%),
     radial-gradient(120% 85% at 50% 32%, rgba(var(--hermes-panel-rgb), 0.98), rgba(var(--hermes-bg-rgb), 0.98)),
     var(--hermes-app-bg);
-  overflow: hidden;
+  overflow: clip;
   isolation: isolate;
   min-width: 0;
 }
