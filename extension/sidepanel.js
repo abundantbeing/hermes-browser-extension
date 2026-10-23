@@ -23771,7 +23771,7 @@ ${streamError.message}`);
       }
       if (diagnostic.probeStatus === 'degraded') {
         markGatewayDegraded(error);
-      } else {
+      } else if (diagnostic.probeStatus !== 'connected') {
         markGatewayUnreachable(error, diagnostic);
       }
       // A mid-flight drop may have delivered the turn even though Browser never

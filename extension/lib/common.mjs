@@ -18,6 +18,7 @@ import { shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareT
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
 import { REST_TURN_SOURCES } from './session-materialization.mjs';
 import { isSidePanelSessionId } from './session-ownership.mjs';
+import { isSessionBusyRefusal } from './gateway-refusal.mjs';
 export { redactSensitiveText, shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams, formatGroupTurnWithBrowserContext };
 
 export const GATEWAY_MODES = Object.freeze([
@@ -624,6 +625,25 @@ export function classifyGatewayError(value = '', {
       retryable: true,
       recovery: remoteDiagnostic.kind === 'api-auth' ? 'fix-auth' : 'fix-origin',
       hint: '',
+    };
+  }
+
+  // The gateway is the single writer of a session. A refusal because another view or
+  // surface holds it says nothing about whether the gateway is reachable.
+  if (value && typeof value === 'object' && isSessionBusyRefusal(value)) {
+    return {
+      kind: 'session-busy',
+      probeStatus: 'connected',
+      title: 'This session is busy',
+      detail: 'Hermes is running a turn in this session from another window or surface, so it did not take this message. The gateway itself is reachable; send the message again when that turn finishes.',
+      userMessage: 'This session is busy with another turn. The gateway is reachable; your message was kept as a draft.',
+      status: null,
+      evidence: 'rpc-refusal',
+      serverReachable: true,
+      retryable: true,
+      recovery: 'retry-later',
+      hint: '',
+      deliveryUnknown: false,
     };
   }
 
