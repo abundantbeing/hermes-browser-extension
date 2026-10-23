@@ -38,7 +38,7 @@ Control is disabled by default. Enabling it registers one authenticated MV3 cont
 
 ## Prompt injection handling
 
-Extension pages carry a content security policy with `object-src 'none'`, `base-uri 'none'`, `form-action 'none'` and `frame-src 'none'`. Response styles do not widen this: Vivid UI blocks are validated JSON drawn by the extension, never HTML, script or network requests, and no block action can send a message, run a Hermes Control command or skip an approval.
+Extension pages carry a content security policy with `object-src 'none'`, `base-uri 'none'`, `form-action 'none'` and a `frame-src` limited to `http://127.0.0.1:*` and `http://localhost:*`. The one thing framed there is a local gateway's pairing approval page, which only the extension that asked to pair is allowed to frame, in an iframe sandboxed to `allow-forms allow-same-origin`; a gateway that does not offer that opens the page in a tab instead. Response styles do not widen this: Vivid UI blocks are validated JSON drawn by the extension, never HTML, script or network requests, and no block action can send a message, run a Hermes Control command or skip an approval.
 
 Page text is wrapped in a block labeled `UNTRUSTED_BROWSER_CONTEXT_START` / `UNTRUSTED_BROWSER_CONTEXT_END`. Webpage text cannot authorize control, alter policy, or grant approvals. Browser actions require a user request plus controller policy, and privileged actions still require the separate approval flow.
 
