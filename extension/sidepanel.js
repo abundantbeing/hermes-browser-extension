@@ -270,8 +270,10 @@ import { mediaDisplayName, mediaSourcePlan, probeArtifactFileSource, resolveArti
 import { classifyMediaKind, resolveMediaFetchPlan } from './lib/media-persistence.mjs';
 import { artifactActionPlan, artifactFailureNotice } from './lib/artifact-actions.mjs';
 import { revealArtifactOnComputer } from './lib/artifact-folder.mjs';
-import { captureBotTabScreenshot, collectBotPageContext } from './lib/bot-browser-capture.mjs';
-import { prepareBotBrowserTurn } from './lib/bot-browser-turn.mjs';
+import { captureBotTabScreenshot, collectBotPageContext, queryPanelActiveTab } from './lib/bot-browser-capture.mjs';
+import { MAX_TURN_SCREENSHOTS } from './lib/screenshot-limits.mjs';
+import { settleGroupComposer } from './lib/group-composer-settle.mjs';
+import { describeGroupContextOutcome, groupBrowserContextAllowed, prepareBotBrowserTurn } from './lib/bot-browser-turn.mjs';
 import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
 import { createBackgroundArtRotation } from './lib/background-art.mjs';
@@ -12582,7 +12584,12 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     return false;
   }
   const value = String(text || '').trim();
-  if (!value) return false;
+  if (!value) {
+    if (Array.isArray(turnAttachments) && turnAttachments.length) {
+      setStatus('warn', 'Add a message', 'A tab screenshot is sent together with a message to the room.', { translateDetail: false });
+    }
+    return false;
+  }
   const groupProjection = activeGroupProjection;
   const groupRuntime = activeGroupRuntime;
   const groupMessages = activeGroupMessages;
@@ -12590,15 +12597,16 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
   const abortController = new AbortController();
   activeGroupAbortController = abortController;
   const composerLease = claimGroupComposer();
-  els.input.value = '';
-  renderAttachments();
+  // The draft and its attachments stay in the composer until the turn is fully
+  // prepared (see settleGroupComposerUi): a refused preflight must not eat them.
+  let contextNote = '';
+  let draftSettled = false;
   try {
     if (groupProjection.syncState === 'local-only' || groupProjection.syncState === 'sync-failed') {
       await syncLocalGroupRoom(groupProjection);
       renderBotModeGroupChats(els.botModeSearch?.value);
     }
     const isStartingNewThread = Boolean(activeGroupPendingNewThread);
-    activeGroupPendingNewThread = false;
     let targetThreadId = '';
     if (isStartingNewThread) {
       targetThreadId = `t${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -12610,25 +12618,31 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     const browserScope = { ...effectiveContextGate(contextScope).scope };
     const browserScopeKey = JSON.stringify(browserScope);
     const turnGatewayUrl = settings.gatewayUrl;
+    const browserTurn = await prepareBotBrowserTurn({
+      group: true,
+      scope: browserScope,
+      settings,
+      gatewayUrl: turnGatewayUrl,
+      attachments: turnAttachments,
+      getContext: () => collectBotPageContext({ browserApi, scope: browserScope, settings }),
+      isCurrent: () => !abortController.signal.aborted
+        && groupGeneration === activeGroupGeneration
+        && activeGroupRuntime === groupRuntime
+        && settings.gatewayUrl === turnGatewayUrl
+        && JSON.stringify(effectiveContextGate(contextScope).scope) === browserScopeKey,
+    });
+    contextNote = describeGroupContextOutcome({ scope: browserScope, gatewayUrl: turnGatewayUrl, browserContext: browserTurn.browserContext }).note;
+    // From here the turn is dispatched: the draft, its attachments and a pending new-thread intent are spent.
+    activeGroupPendingNewThread = false;
+    settleGroupComposerUi(value, turnAttachments);
+    draftSettled = true;
     const result = await groupRuntime.send({
       roomId: groupProjection.roomId || groupProjection.id,
       groupName: groupProjection.displayName,
       members: groupRuntimeMembers(groupProjection),
       messages: groupMessages,
       text: value,
-      ...(await prepareBotBrowserTurn({
-        group: true,
-        scope: browserScope,
-        settings,
-        gatewayUrl: turnGatewayUrl,
-        attachments: turnAttachments,
-        getContext: () => collectBotPageContext({ browserApi, scope: browserScope, settings }),
-        isCurrent: () => !abortController.signal.aborted
-          && groupGeneration === activeGroupGeneration
-          && activeGroupRuntime === groupRuntime
-          && settings.gatewayUrl === turnGatewayUrl
-          && JSON.stringify(effectiveContextGate(contextScope).scope) === browserScopeKey,
-      })),
+      ...browserTurn,
       signal: abortController.signal,
       thread: targetThreadId,
     });
@@ -12666,11 +12680,11 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
       renderBotModeGroupChats(els.botModeSearch?.value);
     }
     if (result.failures.length) {
-      setStatus('warn', 'Group message partially delivered', `${result.failures.length} member${result.failures.length === 1 ? '' : 's'} did not complete a reply.`, { translateDetail: false });
+      setStatus('warn', 'Group message partially delivered', `${result.failures.length} member${result.failures.length === 1 ? '' : 's'} did not complete a reply.${contextNote ? ` ${contextNote}` : ''}`, { translateDetail: false });
     } else if (syncFailures.length) {
       setStatus('warn', 'Group room not synced', `Members replied, but ${syncFailures.length} message${syncFailures.length === 1 ? '' : 's'} could not be saved to the synced room. ${syncFailures.at(-1)?.error || ''}`.trim(), { translateDetail: false });
     } else {
-      setStatus('ok', 'Group message sent', `${groupProjection.displayName} · ${result.messages.length} messages in the current room view.`, { translateDetail: false });
+      setStatus(contextNote ? 'warn' : 'ok', 'Group message sent', `${groupProjection.displayName} · ${result.messages.length} messages in the current room view.${contextNote ? ` ${contextNote}` : ''}`, { translateDetail: false });
     }
     return result.ok;
   } catch (error) {
@@ -12680,7 +12694,7 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
       && activeGroupProjection === groupProjection
       && activeGroupRuntime === groupRuntime
     ) {
-      setStatus('error', 'Group message failed', String(error?.message || error), { translateDetail: false });
+      setStatus('error', 'Group message failed', `${String(error?.message || error)}${draftSettled ? '' : ' Your message and attachments are still in the composer.'}`, { translateDetail: false });
     }
     return false;
   } finally {
@@ -12693,6 +12707,19 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
       resetActiveGroupTypingIndicator({ clearPresence: activeGroupPresence.phase !== 'done' });
     }
   }
+}
+
+// Removes what a dispatched group turn carried from the composer: the sent text, and exactly the
+// attachments (tab screenshots) it consumed, so a screenshot can never ride along with the next
+// message. Text or attachments added while the turn was being prepared stay.
+function settleGroupComposerUi(text, sentAttachments) {
+  const settled = settleGroupComposer({ draft: els.input.value, attachments }, { text, attachments: sentAttachments });
+  els.input.value = settled.draft;
+  attachments = settled.attachments;
+  renderAttachments();
+  renderContextWindow();
+  if (settled.empty) forgetComposerDraft();
+  else persistCurrentComposerDraft({ immediate: true });
 }
 
 // Per-member Retry for a failed room member. Runs ONLY that member's turn on
@@ -12724,6 +12751,9 @@ async function retryFailedGroupMember(memberName) {
       text: lastUser ? String(lastUser.content || '') : '',
       thread: activeGroupThreadId || 'main',
       signal: abortController.signal,
+      // The retry may answer on the context the failed turn used only while the panel still permits
+      // it; a chat-only switch or a connection change since then withdraws the cached page and shots.
+      allowCachedContext: groupBrowserContextAllowed({ scope: effectiveContextGate(contextScope).scope, gatewayUrl: settings.gatewayUrl }),
     });
     const detached = backgroundGroupTurn?.abortController === abortController;
     if (abortController.signal.aborted) return false;
@@ -25755,9 +25785,12 @@ function bindEvents() {
       if (kind === 'url') attachUrl();
       if (kind === 'tab-screenshot') {
         const gate = effectiveContextGate(contextScope);
+        if (attachments.filter((item) => item.browserTabScreenshot === true).length >= MAX_TURN_SCREENSHOTS) {
+          throw new Error(`A turn carries at most ${MAX_TURN_SCREENSHOTS} tab screenshots. Remove one first.`);
+        }
         const target = gate.scope.mode === 'pinned-tab'
           ? await browserApi.tabs.get(Number(gate.scope.pinnedTabId))
-          : (await browserApi.tabs.query({ active: true, lastFocusedWindow: true }))[0];
+          : await queryPanelActiveTab(browserApi);
         addAttachment(await captureBotTabScreenshot({ browserApi, tab: target, scopeMode: gate.scope.mode, allowed: gate.allowed }));
       }
     } catch (error) {
