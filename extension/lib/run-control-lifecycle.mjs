@@ -43,7 +43,20 @@ export function beginRunControl({ runId = '', transport = '', now = Date.now() }
     stopRequestedAt: 0,
     terminalAt: 0,
     detail: '',
+    // The execution generation the gateway admitted this run under (session authority only). Stop is
+    // fenced with it, so it can never be applied to a newer run. Null until the gateway says.
+    executionGeneration: null,
   });
+}
+
+/**
+ * Record the generation the run was admitted under. Set once: the run keeps the generation it
+ * started with, and anything that is not a non-negative integer is not a generation.
+ */
+export function withRunGeneration(state, generation) {
+  if (!state || Number.isInteger(state.executionGeneration)) return state;
+  if (!Number.isInteger(generation) || generation < 0) return state;
+  return freeze({ ...state, executionGeneration: generation });
 }
 
 export function withRunControlId(state, runId = '') {

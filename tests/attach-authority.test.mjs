@@ -9,7 +9,7 @@ import {
   readLiveAttachSnapshot, rosterStopTarget, sessionIsLiveFromStatus, shouldAttachLiveSession,
 } from '../extension/lib/live-session-attach.mjs';
 import {
-  WS_EVENTS, WS_METHODS, interruptGatewaySession, isUnknownMethodError, normalizeGatewayHistoryMessages, readGatewaySessionStatus,
+  WS_EVENTS, WS_METHODS, interruptGatewaySession, isUnknownMethodError, normalizeGatewayHistoryMessages, readGatewaySessionStatus, readSessionExecutionGeneration,
 } from '../extension/lib/gateway-ws.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
@@ -37,7 +37,12 @@ function authorityHarness({ rowStatus = 'working', generation = 4 } = {}) {
       }
       if (method === 'session.history') return { count: 2, messages: [{ role: 'user', content: 'q' }, { role: 'assistant', content: 'partial' }] };
       if (method === 'session.resume') return { running: state.rowStatus !== 'idle', execution_state: state.rowStatus === 'idle' ? 'idle' : 'running', execution_generation: state.generation };
-      if (method === 'session.interrupt') return { status: 'interrupted', execution_generation: params.execution_generation };
+      if (method === 'session.interrupt') {
+        if (params.execution_generation !== undefined && params.execution_generation !== state.generation) {
+          throw Object.assign(new Error('stale_generation'), { rpcCode: 4001, data: { reason: 'stale_generation', execution_generation: state.generation } });
+        }
+        return { status: 'interrupted', execution_generation: params.execution_generation };
+      }
       return {};
     },
   };
@@ -54,7 +59,7 @@ function authorityHarness({ rowStatus = 'working', generation = 4 } = {}) {
     completeAttachedRun: async () => {},
     scopeRevision: { current: () => 1, isCurrent: (id) => id === 1 },
     shouldAttachLiveSession, sessionIsLiveFromStatus, readLiveAttachSnapshot, rosterStopTarget, readGatewaySessionStatus,
-    interruptGatewaySession, isUnknownMethodError, normalizeGatewayHistoryMessages,
+    interruptGatewaySession, isUnknownMethodError, normalizeGatewayHistoryMessages, readSessionExecutionGeneration,
     THINKING_PLACEHOLDER: 'Thinking', addMessage: () => ({ node: {}, record: {} }), assistantMessageRoleLabel: () => 'Hermes',
     createStreamingMessageUpdater: () => ({ updateText: (v) => painted.push(v), updateTool: () => {}, flush: async (v) => painted.push(v), dispose: () => {} }),
     matchesDashboardSessionEvent: (event, ids) => ids.includes(event.sessionId),
@@ -155,4 +160,16 @@ test('readLiveAttachSnapshot: legacy gateways keep using session.activate', asyn
   assert.deepEqual(calls, ['session.activate']);
   assert.equal(result.snapshot.running, true);
   assert.equal(result.activateUnsupported, false);
+});
+
+test('an attached view records the generation of the run it follows, and its Stop cannot land on a newer run', async () => {
+  const h = authorityHarness();
+  assert.equal(await h.attach(), true);
+  await tick(); await tick();
+  assert.equal(h.context.liveAttach.executionGeneration, 4);
+  h.state.generation = 5; // the followed run ended and a newer one started
+  assert.equal(await h.stop(), true);
+  const interrupts = h.calls.filter((call) => call.method === 'session.interrupt');
+  assert.deepEqual(interrupts.map((call) => call.params.execution_generation), [4], 'one interrupt, for the followed run');
+  assert.match(h.statuses.at(-1)[1], /already ended/i);
 });

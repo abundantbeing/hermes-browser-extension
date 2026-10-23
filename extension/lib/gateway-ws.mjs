@@ -394,15 +394,25 @@ export async function readSessionExecutionGeneration(client, sessionId, { stored
 }
 
 /**
- * Interrupt a gateway session with its execution generation. A stale
- * generation is re-read and retried once; a gateway that rejects the params
- * falls back to `restFallback` (REST stop by run id) when one is supplied.
- * Anything else throws so the caller keeps the run in its unconfirmed state.
+ * Interrupt a gateway session, fenced by an execution generation.
+ *
+ * `expectedGeneration` is the generation of the run the person chose to stop, recorded when that
+ * run was admitted. It is sent as is, with no read of the current generation first. A gateway that
+ * refuses it as `stale_generation` is saying that run already ended (a newer run may be live): the
+ * result is `{ ended: true }`, nothing was interrupted, and it is never retried onto the newer run.
+ *
+ * Without it the generation is unknown. The current one is read just before sending (and re-read
+ * once on `stale_generation`), which only protects the read-to-send window: that Stop is
+ * best-effort (`bestEffort: true`) and may land on a newer run.
+ *
+ * A gateway that rejects the params falls back to `restFallback` (REST stop by run id) when one is
+ * supplied. Anything else throws so the caller keeps the run in its unconfirmed state.
  */
 export async function interruptGatewaySession({
   client,
   sessionId,
   storedSessionId = '',
+  expectedGeneration = null,
   withTimeout = (operation) => operation(),
   restFallback = null,
 } = {}) {
@@ -426,9 +436,19 @@ export async function interruptGatewaySession({
     if (typeof restFallback !== 'function') throw error;
     return { via: 'rest', generation: null, retried: false, result: await restFallback() };
   };
+  const known = integerGeneration(expectedGeneration);
+  if (known !== null) {
+    try {
+      return { via: 'ws', generation: known, retried: false, bestEffort: false, ended: false, result: await send(known) };
+    } catch (error) {
+      if (isStaleGenerationError(error)) return { via: 'ws', generation: known, retried: false, bestEffort: false, ended: true, result: null };
+      if (isInvalidParamsError(error)) return fallBack(error);
+      throw error;
+    }
+  }
   let generation = await read();
   try {
-    return { via: 'ws', generation, retried: false, result: await send(generation) };
+    return { via: 'ws', generation, retried: false, bestEffort: true, result: await send(generation) };
   } catch (error) {
     if (isInvalidParamsError(error)) return fallBack(error);
     if (!isStaleGenerationError(error)) throw error;
@@ -436,7 +456,7 @@ export async function interruptGatewaySession({
     if (fresh === null) throw error;
     generation = fresh;
     try {
-      return { via: 'ws', generation, retried: true, result: await send(generation) };
+      return { via: 'ws', generation, retried: true, bestEffort: true, result: await send(generation) };
     } catch (retryError) {
       if (isInvalidParamsError(retryError)) return fallBack(retryError);
       throw retryError;

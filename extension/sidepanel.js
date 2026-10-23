@@ -300,7 +300,9 @@ import {
   buildSessionModelSwitchRequest,
   createGatewayClient,
   establishGatewaySession,
+  executionGenerationFrom,
   interruptGatewaySession,
+  readSessionExecutionGeneration,
   isUnknownMethodError,
   normalizeGatewayHistoryMessages,
   normalizeSessionCompressResult,
@@ -582,6 +584,7 @@ import {
   runStopFailureTerminalStatus,
   waitForTerminalStatus,
   withRunControlId,
+  withRunGeneration,
 } from './lib/run-control-lifecycle.mjs';
 import {
   PANEL_RESIDENCY_MODES,
@@ -6027,12 +6030,21 @@ async function stopCurrentTurn() {
   }));
   if (watched) {
     try {
-      await interruptGatewaySession({
+      const stopped = await interruptGatewaySession({
         client: watched.client,
         sessionId: watched.liveId,
         storedSessionId: watched.sessionId,
+        expectedGeneration: attach?.executionGeneration ?? null,
         withTimeout: (operation) => runControlRequestWithTimeout(operation, { timeoutMs: RUN_CONTROL_REQUEST_TIMEOUT_MS }),
       });
+      if (stopped.ended) {
+        // The run this view was following ended before Stop reached the gateway. Nothing was
+        // interrupted, and Stop is not re-aimed at whatever run is current.
+        setStatus('ok', 'Run already ended', 'That run finished before Stop reached Hermes, so nothing was interrupted.');
+        if (attach) void reconcileAttachedLiveSession();
+        else void refreshLiveSessionRoster();
+        return true;
+      }
       if (attach) {
         attach.stopRequested = true;
         attach.userStopped = true;
@@ -6086,6 +6098,9 @@ async function stopCurrentTurn() {
         client: connection.client,
         sessionId: dashboardSessionId,
         storedSessionId: connection.wsStoredSessionId,
+        // The generation this run was admitted under; unknown on a gateway that does not report one,
+        // where Stop falls back to the best-effort read-then-send.
+        expectedGeneration: activeRunControl?.executionGeneration ?? null,
         withTimeout: (operation) => runControlRequestWithTimeout(operation, { timeoutMs: RUN_CONTROL_REQUEST_TIMEOUT_MS }),
         restFallback: stopRunId ? async () => {
           const response = await runControlRequestWithTimeout(
@@ -6100,6 +6115,9 @@ async function stopCurrentTurn() {
         } : null,
       });
       if (!runControlGenerationMatches(stopGeneration, runControlGeneration)) return false;
+      // The gateway refused the generation as stale: this run already ended (a newer one may be live).
+      // Release it; waiting for a terminal state would wait on the newer run instead.
+      if (interrupted.ended) return await releaseAlreadyTerminal('completed');
       if (interrupted.via === 'rest' && interrupted.result?.terminalStatus) return await releaseAlreadyTerminal(interrupted.result.terminalStatus);
     } else {
       if (!stopRunId) {
@@ -17952,6 +17970,14 @@ async function attachLiveSessionIfRunning(sessionId, { scopeRevisionId = scopeRe
   };
   renderSessionMenu();
   updateComposerBusyState();
+  // The generation of the run being followed, so a Stop from this view cannot land on a newer run.
+  // Unknown (best-effort Stop) on a gateway that does not report one.
+  if (connection.client.readyPayload?.session_authority === true) {
+    const followed = liveAttach;
+    void readSessionExecutionGeneration(connection.client, liveId, { storedSessionId: target }).then((followedGeneration) => {
+      if (followed && liveAttach === followed && followedGeneration !== null) followed.executionGeneration = followedGeneration;
+    }).catch(() => {});
+  }
   // The run may have spawned subagents and grown its context before this panel
   // looked; read both from the gateway instead of waiting for the next event.
   void hydrateSubagentSnapshot(connection.client, liveId);
@@ -23560,7 +23586,15 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           },
           knownAssistantTexts: priorAssistantTexts,
           truncate: turnOptions.truncate || null,
-          onSubmitResponse: turnOptions.onSubmitResponse || null,
+          onSubmitResponse: (response) => {
+            // The generation the gateway admitted this run under: Stop is fenced with it, so a Stop
+            // for this run can never land on a newer one.
+            if (activeRunControl && runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) {
+              const generation = executionGenerationFrom(response);
+              if (generation !== null) activeRunControl = withRunGeneration(activeRunControl, generation);
+            }
+            turnOptions.onSubmitResponse?.(response);
+          },
         },
       );
     } catch (streamError) {
