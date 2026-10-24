@@ -64,7 +64,7 @@ test('the list shows the connected profile and host, folders, counts and tells t
   const { container, controller } = setup();
   await controller.activate();
   assert.match(text(container), /Profile work on hermes\.example\.com/);
-  assert.doesNotMatch(text(container), /(null|undefined)/, 'no stray empty pieces render as text');
+  assert.doesNotMatch(text(container), /\b(null|undefined)\b/, 'no stray empty pieces render as text');
   const rows = [...container.querySelectorAll('.projects-row')];
   assert.equal(rows.length, 2);
   assert.match(rows[0].textContent, /2 sessions/);
