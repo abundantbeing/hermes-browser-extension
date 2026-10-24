@@ -33,6 +33,7 @@ function harness({ results }) {
     dashboardWsActive: true,
   });
   const sent = [];
+  const staleMarks = [];
   const control = { disabled: null, title: '', textContent: '', hidden: true };
   const status = { textContent: '' };
   const context = vm.createContext({
@@ -57,16 +58,17 @@ function harness({ results }) {
     ensureRemoteWsSession: async () => {},
     compactSessionCanonical: async ({ sessionId }) => {
       sent.push(sessionId);
+      if (results[sessionId]?.switchViewTo) context.settings = { sessionId: results[sessionId].switchViewTo };
       return results[sessionId] || { status: 'compacted' };
     },
-    markContextBreakdownStale: (store) => store,
+    markContextBreakdownStale: (store, id) => { staleMarks.push(id); return store; },
     sessionContextStore: {},
     refreshSessionContextTelemetry() {},
     clearContextDeliveryState: async () => {},
     loadSessions: async () => {},
   });
   vm.runInContext(`${functionSource('renderCompactControl')}\n${functionSource('compactCanonicalSessionContext')}`, context);
-  return { context, sent, control, capabilityRuntime };
+  return { context, sent, control, capabilityRuntime, staleMarks };
 }
 
 test('a refused compaction of session A leaves Compact working for session B', async () => {
@@ -95,4 +97,15 @@ test('a refused compaction of session A leaves Compact working for session B', a
   const again = await context.compactCanonicalSessionContext();
   assert.equal(again.reason, 'route-unavailable');
   assert.deepEqual(sent, ['session-a', 'session-b']);
+});
+
+// Review finding 8: the outcome belongs to the session that was compacted, not to whatever is viewed when the answer arrives.
+test('a compaction that finishes after the view moved on marks the compacted session stale', async () => {
+  const { context, staleMarks } = harness({
+    results: { 'session-a': { status: 'compacted', switchViewTo: 'session-b' } },
+  });
+  const outcome = await context.compactCanonicalSessionContext();
+  assert.equal(outcome.ok, true);
+  assert.deepEqual(staleMarks, ['session-a']);
+  assert.equal(outcome.sessionId, 'session-a');
 });

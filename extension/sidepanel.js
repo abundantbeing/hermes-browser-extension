@@ -21838,13 +21838,14 @@ async function compactCanonicalSessionContext({ automaticRecovery = false } = {}
     }
     if (result.status === 'compacted') {
       // The breakdown measured the transcript that was just replaced.
-      sessionContextStore = markContextBreakdownStale(sessionContextStore, settings.sessionId);
+      // The one that was compacted, which is not necessarily the one on screen now.
+      sessionContextStore = markContextBreakdownStale(sessionContextStore, durableId);
       refreshSessionContextTelemetry({ force: true });
       await clearContextDeliveryState();
       await loadSessions({ quiet: true });
     }
     const ok = result.status === 'compacted' || result.status === 'noop';
-    return { ok, reason: ok ? undefined : result.status, sessionId: settings.sessionId, payload: result };
+    return { ok, reason: ok ? undefined : result.status, sessionId: durableId, payload: result };
   } catch (error) {
     setStatus('warn', 'Context compaction failed', error?.message || String(error), { translateDetail: false });
     return { ok: false, reason: 'request-failed', error };
