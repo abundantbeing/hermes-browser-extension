@@ -2673,3 +2673,25 @@ test('a screenshot is withheld when the frames cannot be checked, or one turned 
   await assert.rejects(takeShot(late), shotRejected);
   assert.equal(didCapture(late), true, 'it was taken, then thrown away');
 });
+
+test('a ref from a frame that was replaced is stale, not a restricted frame; a node that still exists but cannot be placed stays restricted', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  for (const [action, args] of framedActions) {
+    // The frame the ref came from is gone: its node is in no document, and the browser no longer knows it.
+    const gone = framedApis(['https://chat.example.test/live_chat'], 9999);
+    gone.handlers['DOM.describeNode'] = () => { throw new Error('Could not find node with given id'); };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: gone.api }).execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+      (error) => error?.code === 'stale_ref' && /browser_snapshot/.test(error.message),
+      action,
+    );
+    assert.deepEqual(inputEvents(gone.calls), []);
+    // The node exists but no document of the page holds it: still unknown, still refused.
+    const unplaced = framedApis(['https://chat.example.test/live_chat'], 9999);
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: unplaced.api }).execute(action, args, { scope, signal: openSignal(), target: framedTarget }),
+      (error) => error?.code === 'restricted_frame',
+      action,
+    );
+  }
+});

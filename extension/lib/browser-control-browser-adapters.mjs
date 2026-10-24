@@ -1109,6 +1109,18 @@ function createChromiumCdpAdapter({
           if (abortError(signal)) throw error;
         }
       }
+      // A node that is in no document is either gone (its frame was replaced since the snapshot) or unplaceable.
+      // Gone is a stale ref; anything the browser still knows but cannot place counts as restricted.
+      if (!path && Number.isInteger(backendNodeId) && backendNodeId > 0) {
+        try {
+          await send('DOM.describeNode', { backendNodeId });
+        } catch (error) {
+          if (abortError(signal)) throw error;
+          if (error?.code === 'stale_ref' || STALE_NODE_RE.test(String(error?.message || error || ''))) {
+            throw codedError('stale_ref', STALE_REF_MESSAGE);
+          }
+        }
+      }
       // Unknown counts as restricted.
       if (!path || !frameChainReadable(path.urls)) throw restrictedFrameError();
       owners[key] = path.owner;
