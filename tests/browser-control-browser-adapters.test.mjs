@@ -2154,16 +2154,26 @@ test('Chromium still clicks a coordinate in a readable frame, and a control in t
   );
 });
 
-test('Chromium refuses a pointer action whose frame it cannot tell on a page with frames, and allows it on one without', async () => {
+test('Chromium refuses a pointer action whose frame it cannot tell when a restricted frame could be under it, and allows it otherwise', async () => {
   const { createChromiumCdpAdapter } = await adaptersModule();
+  // The frame the page embeds is a checkout (its box, in the fake, includes the point): nothing is sent.
   for (const hit of [{ backendNodeId: 90 }, undefined]) {
-    const framed = pointerApis({ hit });
+    const framed = pointerApis({ hit, chain: ['https://shop.example.test/checkout'] });
     if (hit === undefined) framed.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
     await assert.rejects(
       createChromiumCdpAdapter({ browserApi: framed.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
       (error) => error?.code === 'restricted_frame',
     );
     noPointerInput(framed.calls);
+  }
+  // A page whose only frame is readable is an ordinary page: the click goes out, whatever the hit test said.
+  for (const hit of [{ backendNodeId: 90 }, undefined]) {
+    const readable = pointerApis({ hit });
+    if (hit === undefined) readable.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+    assert.deepEqual(
+      await createChromiumCdpAdapter({ browserApi: readable.api }).execute('browser_click', { x: 25, y: 35 }, { scope, signal: openSignal() }),
+      { status: 'clicked' },
+    );
   }
   const plain = chromiumApis();
   plain.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
@@ -2812,3 +2822,86 @@ test('a scroll never sends the wheel into a frame Hermes may not read, and scrol
     assert.equal(wheels(chromium.calls).length, 1, JSON.stringify(hit));
   }
 });
+
+// Real Chrome can answer DOM.getNodeForLocation with a node and no frame id (a tab in the background, a node
+// the page just re-rendered), or not answer at all. An ordinary click on an ordinary page, whose frames are all
+// readable or nowhere near the point, must still go out; one a restricted frame could receive must not.
+function clickPage({ hit, hitFails = false, owners = [], boxes = {}, describe = null, frames = null }) {
+  const chromium = chromiumApis();
+  const link = { nodeType: 1, nodeName: 'A', backendNodeId: 44 };
+  chromium.handlers['DOM.getDocument'] = () => pageWithFrames([link, ...owners]);
+  chromium.handlers['DOM.getNodeForLocation'] = () => {
+    if (hitFails) throw new Error('No node found at given location');
+    return hit;
+  };
+  // The link is at 20,30. Frame owners are where the test puts them (default: far away).
+  chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => {
+    const [x, y, w, h] = boxes[backendNodeId] || (backendNodeId === 44 ? [10, 20, 20, 20] : [600, 500, 100, 100]);
+    return { model: { content: [x, y, x + w, y, x + w, y + h, x, y + h], border: [x, y, x + w, y, x + w, y + h, x, y + h] } };
+  };
+  if (describe) chromium.handlers['DOM.describeNode'] = describe;
+  if (frames) chromium.handlers['Page.getFrameTree'] = () => ({ frameTree: frames });
+  return chromium;
+}
+const clickLink = (chromium) => adaptersModule().then(({ createChromiumCdpAdapter }) => createChromiumCdpAdapter({ browserApi: chromium.api })
+  .execute('browser_click', { ref: '@e1' }, { scope, signal: openSignal(), target: clickTarget }));
+const pressed = (chromium) => mouseEvents(chromium.calls).some((event) => event.type === 'mousePressed');
+
+test('a click whose hit has no frame id goes out when the node is in the page and its frames are readable', async () => {
+  const readableFrame = ownerWithDocument(31, 'https://ads.example/slot');
+  for (const [label, chromium] of [
+    ['a readable frame elsewhere on the page', clickPage({ hit: { backendNodeId: 44 }, owners: [readableFrame] })],
+    ['a frame in another process far from the point', clickPage({ hit: { backendNodeId: 44 }, owners: [outOfProcessOwner(32)] })],
+    ['no frames at all', clickPage({ hit: { backendNodeId: 44 } })],
+  ]) {
+    assert.deepEqual(await clickLink(chromium), { status: 'clicked' }, label);
+    assert.equal(pressed(chromium), true, label);
+  }
+});
+
+test('a click whose hit has no frame id is refused when the node is in a restricted frame, owns one, or cannot be placed under a restricted frame', async () => {
+  const restricted = ownerWithDocument(31, 'https://bank.example/checkout', [{ nodeType: 1, nodeName: 'BUTTON', backendNodeId: 77 }]);
+  const cases = [
+    ['the hit node is inside a restricted frame', clickPage({ hit: { backendNodeId: 77 }, owners: [restricted] })],
+    ['the hit node is the owner of a frame in another process', clickPage({
+      hit: { backendNodeId: 32 },
+      owners: [outOfProcessOwner(32)],
+      describe: ({ backendNodeId }) => ({ node: backendNodeId === 32 ? { nodeName: 'IFRAME', frameId: 'OOPIF32' } : { nodeName: 'A' } }),
+    })],
+    ['the hit node is in a readable frame but the control is in the page', clickPage({ hit: { backendNodeId: 55 }, owners: [ownerWithDocument(31, 'https://ads.example/slot', [{ nodeType: 1, nodeName: 'DIV', backendNodeId: 55 }])] })],
+  ];
+  for (const [label, chromium] of cases) {
+    await assert.rejects(clickLink(chromium), (error) => error?.code === 'restricted_frame', label);
+    assert.equal(pressed(chromium), false, label);
+  }
+});
+
+test('a click whose hit test failed goes out unless a frame Hermes may not read is over the point', async () => {
+  const fine = clickPage({ hitFails: true, owners: [ownerWithDocument(31, 'https://ads.example/slot'), outOfProcessOwner(32)] });
+  assert.deepEqual(await clickLink(fine), { status: 'clicked' });
+
+  for (const [label, chromium] of [
+    ['a restricted frame over the point', clickPage({ hitFails: true, owners: [ownerWithDocument(31, 'https://bank.example/checkout')], boxes: { 31: [0, 0, 200, 200] } })],
+    ['a frame in another process over the point', clickPage({ hitFails: true, owners: [outOfProcessOwner(32)], boxes: { 32: [0, 0, 200, 200] } })],
+    ['a frame whose box cannot be measured', clickPage({ hitFails: true, owners: [outOfProcessOwner(32)] })],
+  ]) {
+    if (label === 'a frame whose box cannot be measured') {
+      chromiumBoxFails(chromium);
+    }
+    await assert.rejects(clickLink(chromium), (error) => error?.code === 'restricted_frame', label);
+    assert.equal(pressed(chromium), false, label);
+  }
+
+  const unreadable = chromiumApis();
+  unreadable.handlers['DOM.getNodeForLocation'] = () => { throw new Error('No node found at given location'); };
+  unreadable.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(clickLink(unreadable), (error) => error?.code === 'restricted_frame');
+  assert.equal(pressed(unreadable), false);
+});
+function chromiumBoxFails(chromium) {
+  const original = chromium.handlers['DOM.getBoxModel'];
+  chromium.handlers['DOM.getBoxModel'] = (params) => {
+    if (params.backendNodeId !== 44) throw new Error('Node does not have a layout object');
+    return original(params);
+  };
+}

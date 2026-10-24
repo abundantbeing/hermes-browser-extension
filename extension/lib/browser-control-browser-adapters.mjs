@@ -1140,22 +1140,6 @@ function createChromiumCdpAdapter({
       || Boolean(node?.frameId) || Boolean(node?.contentDocument);
   }
 
-  async function pageEmbedsFrames(send) {
-    const document = await send('DOM.getDocument', { depth: -1, pierce: true });
-    const stack = document?.root ? [document.root] : [];
-    while (stack.length) {
-      const node = stack.pop();
-      // A document node carries the id of its own frame; only the nodes that embed one count.
-      if (Number(node?.nodeType) !== 9 && embedsFrame(node)) return true;
-      for (const list of [node?.children, node?.shadowRoots, node?.pseudoElements]) {
-        if (Array.isArray(list)) stack.push(...list);
-      }
-      if (node?.templateContent) stack.push(node.templateContent);
-      if (node?.contentDocument) stack.push(node.contentDocument);
-    }
-    return false;
-  }
-
   const framePathUrls = (path) => path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`);
 
   // The owner elements of every frame on the page that Hermes may not read (see frameUrlReadable), from the live
@@ -1248,8 +1232,9 @@ function createChromiumCdpAdapter({
   // with a known frame it must be the control's own frame, since a click on a covered control lands in
   // whatever covers it. When the node is itself the element that embeds a frame, the pointer lands inside that
   // frame, so the frame it owns is judged too, and one that cannot be found in the frame tree (a frame in its
-  // own process) is refused. A hit test that fails is left alone only on a page with no element that embeds a
-  // frame, and refused otherwise or when that cannot be told. Returns the hit node id, or 0 when unknown.
+  // own process) is refused. When the browser names no frame (or no node), the node is placed through the DOM,
+  // and with nothing to place the point is refused only when a frame Hermes may not read could be under it,
+  // or when that cannot be told. Returns the hit node id, or 0 when unknown.
   async function checkedHit(send, enable, signal, point, expectedOwner) {
     await enable('DOM');
     let hit = null;
@@ -1272,13 +1257,52 @@ function createChromiumCdpAdapter({
     }
     const hitFrameId = String(hit?.frameId || '');
     if (!hitFrameId) {
-      let embeds = true;
+      // The browser did not say which frame the point is in (a tab in the background, a node the page just
+      // re-rendered, or no hit at all). Ask the DOM instead of refusing every page that has a frame: a node it
+      // can place is judged by the documents above it, like a control is; with nothing to place, the point is
+      // refused only when a frame Hermes may not read could be under it.
+      let placed = null;
+      if (hitId) {
+        try {
+          placed = await documentPathOfNode(send, hitId);
+        } catch (error) {
+          if (abortError(signal)) throw error;
+        }
+      }
+      if (placed) {
+        let described = null;
+        try {
+          described = (await send('DOM.describeNode', { backendNodeId: hitId }))?.node || null;
+        } catch (error) {
+          if (abortError(signal)) throw error;
+        }
+        if (!described) throw restrictedFrameError('Hermes could not tell what is under that point.');
+        if (embedsFrame(described)) {
+          const owned = String(described.frameId || '');
+          const ownedPath = owned && tree ? frameTreePath(tree, owned) : null;
+          if (!ownedPath || !frameChainReadable(framePathUrls(ownedPath))) {
+            throw restrictedFrameError('The pointer would land in a frame Hermes cannot read.');
+          }
+        }
+        if (!frameChainReadable(placed.urls)) throw restrictedFrameError();
+        if (expectedOwner !== undefined && placed.owner !== expectedOwner) {
+          throw restrictedFrameError('The control is covered by content from another frame.');
+        }
+        return hitId;
+      }
+      let unreadableAtPoint = true;
       try {
-        embeds = await pageEmbedsFrames(send);
+        const owners = await unreadableFrameOwners(send, signal);
+        const here = { x: point.x - 0.5, y: point.y - 0.5, width: 1, height: 1 };
+        unreadableAtPoint = false;
+        for (const owner of owners) {
+          if (await ownerInRegion(send, signal, owner, here)) { unreadableAtPoint = true; break; }
+        }
       } catch (error) {
         if (abortError(signal)) throw error;
+        unreadableAtPoint = true;
       }
-      if (embeds) throw restrictedFrameError('Hermes could not tell which frame is under that point.');
+      if (unreadableAtPoint) throw restrictedFrameError('Hermes could not tell which frame is under that point.');
       return hitId;
     }
     if (hitId) {
