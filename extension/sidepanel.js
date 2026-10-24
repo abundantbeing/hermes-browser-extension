@@ -278,7 +278,7 @@ import { settleGroupComposer } from './lib/group-composer-settle.mjs';
 import { describeGroupContextOutcome, groupBrowserContextAllowed, prepareBotBrowserTurn } from './lib/bot-browser-turn.mjs';
 import { hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote } from './lib/artifact-card.mjs';
 import { pickSidecarArt, sidecarArtCssValue } from './lib/sidecar-art.mjs';
-import { createBackgroundArtRotation } from './lib/background-art.mjs';
+import { createBackgroundArtRotation, isFirstRunStorage } from './lib/background-art.mjs';
 import { createStartupScreen } from './lib/startup-screen.mjs';
 import {
   activeSubagentView,
@@ -9659,9 +9659,18 @@ function applySidecarArt() {
   return entry;
 }
 applySidecarArt();
-createBackgroundArtRotation({
+// First-run setup draws on only seven of the backgrounds, and a main four are
+// drawn more often than the rest everywhere. Whether this is a first run comes
+// from storage before the first picture is chosen (an absent completed flag with
+// no legacy intro-seen flag), so a first-run user never sees any other image,
+// not even for a frame.
+const backgroundArtRotation = createBackgroundArtRotation({
   root: document.documentElement,
   storage: browserApi?.storage?.local,
+  firstRun: async () => isFirstRunStorage(
+    await browserApi.storage.local.get([ONBOARDING_COMPLETED_STORAGE_KEY, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY]),
+    { completedKey: ONBOARDING_COMPLETED_STORAGE_KEY, introSeenKey: HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY },
+  ),
 });
 
 function renderContextWindow(userText = els.input?.value || '') {
@@ -16319,6 +16328,9 @@ function maybeOpenOnboarding() {
 function openOnboarding({ step = 'language', includeConnect = !isConnected(), rerun = false, welcome = false } = {}) {
   const flow = ensureOnboardingFlow();
   if (!flow) return;
+  // Setup only ever shows its seven backgrounds, a rerun from Settings included;
+  // the picture on screen is kept when it is one of them and when setup ends.
+  void backgroundArtRotation.ensureOnboardingArt();
   // A first run with no saved language preselects the browser's suggestion; a
   // rerun, or a run after the language was already chosen, preselects theirs.
   onboardingLanguage = (rerun || explicitLocaleStored)

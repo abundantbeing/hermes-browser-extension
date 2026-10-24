@@ -1261,6 +1261,10 @@ body.onboarding-active .connect-panel { display: none; }
 }
 /* Light modes: --hermes-fg is the text colour on filled bars there, so the
    screen switches to ink on paper to stay readable in every light palette. */
+/* Until the panel has picked its picture (from storage, before the first paint),
+   neither screen shows the fallback gate image, so a first-run user can never
+   see an image outside setup's seven. */
+html:not([data-background-art-ready]) :is(.startup-screen, .onboarding)::before { visibility: hidden; }
 html[data-hermes-mode="light"] .startup-screen {
   --startup-fg: var(--hermes-ink);
   --startup-fg-rgb: var(--hermes-ink-rgb);
