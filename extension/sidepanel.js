@@ -1568,6 +1568,9 @@ let browserIntroDismissedForPanel = false;
 let onboardingCompleted = false;
 let onboardingStateLoaded = false;
 let onboardingFlow = null;
+// Why the last Connect pressed inside setup failed ('' when it has not). Setup's
+// Connect step shows it inline; Settings opens only when the person asks.
+let onboardingConnectFailure = '';
 // Setup ended without a connection: the startup screen steps aside for this
 // panel session instead of holding at "Not paired".
 let connectDeferred = false;
@@ -16098,6 +16101,7 @@ function renderEmptyState() {
 }
 
 function onboardingState() {
+  const failed = Boolean(onboardingConnectFailure) && !isConnected();
   return {
     theme: normalizedPanelThemeId(settings.appearanceTheme),
     colorMode: normalizeColorMode(settings.colorMode),
@@ -16108,7 +16112,8 @@ function onboardingState() {
       connected: isConnected(),
       busy: Boolean(els.connectButton?.disabled),
       busyLabel: els.connectButton?.textContent?.trim() || '',
-      status: els.connectStatus?.textContent?.trim() || '',
+      status: failed ? onboardingConnectFailure : (els.connectStatus?.textContent?.trim() || ''),
+      failed,
     },
   };
 }
@@ -23310,7 +23315,20 @@ async function connectToHermes() {
   return connectApiWithPairing();
 }
 
+// A Connect that needs the manual route. Inside setup it stays in setup: the
+// Connect step shows the reason and its Manual setup button opens Settings when
+// pressed. Anywhere else the pop-up's old behaviour stands: Settings opens.
+function offerManualSetup(reason = '') {
+  if (onboardingFlow?.isOpen) {
+    onboardingConnectFailure = String(reason || '');
+    onboardingFlow.render();
+    return;
+  }
+  openSettingsDialog({ pane: 'connections' });
+}
+
 async function connectApiWithPairing() {
+  onboardingConnectFailure = '';
   if (transportUsesDashboardTicket(settings.connectionTransport)) {
     throw new Error('Ticket-based Hermes connections must use Dashboard Attach.');
   }
@@ -23320,7 +23338,7 @@ async function connectApiWithPairing() {
     const message = t('connect.status.loopback_only');
     els.connectStatus.textContent = message;
     setStatus('warn', 'Manual setup required', message, { translateDetail: false });
-    openSettingsDialog({ pane: 'connections' });
+    offerManualSetup(message);
     return;
   }
   const generation = connectionController.begin({
@@ -23372,7 +23390,7 @@ async function connectApiWithPairing() {
       markConnectionProbe('unconfigured', 'Manual setup required; automatic browser pairing is not advertised by this Hermes runtime.');
       els.connectStatus.textContent = translateUiText('Automatic pairing is not available on this Hermes runtime. Open Settings and use Manual setup with your Gateway URL and API token.');
       setStatus('warn', 'Manual setup required', detail);
-      openSettingsDialog({ pane: 'connections' });
+      offerManualSetup(els.connectStatus.textContent);
       return;
     }
 
@@ -23417,7 +23435,7 @@ async function connectApiWithPairing() {
     if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
     markGatewayUnreachable(error, diagnostic);
     els.connectStatus.textContent = t('connect.status.failed', { reason: currentConnectionTroubleshooting() || diagnostic.detail });
-    openSettingsDialog({ pane: 'connections' });
+    offerManualSetup(currentConnectionTroubleshooting() || diagnostic.detail);
   } finally {
     if (connectionController.isCurrent(generation)) {
       els.connectButton.disabled = false;

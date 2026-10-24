@@ -10798,6 +10798,11 @@ html[data-hermes-mode="light"] .onboarding-logo {
 }
 .onboarding-connect.is-connected .onboarding-connect-status { color: var(--startup-fg); font-weight: 600; }
 .onboarding-connect.is-connected .onboarding-connect-status svg { flex: none; color: var(--control-on); }
+/* A failed Connect stays on this step: the reason reads at full strength under
+   an error-coloured edge, and Manual setup is the way on. */
+.onboarding-connect.is-failed { border-color: var(--startup-error); }
+.onboarding-connect.is-failed .onboarding-connect-status { color: var(--startup-fg); }
+.onboarding-connect.is-failed [data-onboarding-manual] { border-color: var(--startup-fg); color: var(--startup-fg); font-weight: 600; }
 .onboarding-connect-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
 .onboarding-connect-actions[hidden] { display: none; }
 .onboarding.is-approving .onboarding-preview,

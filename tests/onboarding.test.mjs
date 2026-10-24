@@ -433,3 +433,111 @@ test('the Back and Next arrows are mirrored in right-to-left text', () => {
   assert.match(css, /html\[dir="rtl"\] \.onboarding \.onboarding-nav-button:not\(\.is-finish\) svg \{ transform: scaleX\(-1\); \}/);
   assert.match(css, /html\[dir="rtl"\] \.onboarding \.onboarding-nav-button\[data-onboarding-back\]:hover svg \{ transform: translateX\(2px\) scaleX\(-1\); \}/);
 });
+
+test('a failed Connect stays on the Connect step: the reason shows inline and Manual setup is one press away', () => {
+  const { host, flow, state, calls, window } = mountFlow();
+  flow.open({ step: 'connect' });
+  assert.ok(!host.querySelector('.onboarding-connect.is-failed'), 'no failure before an attempt');
+  state.connection = { connected: false, failed: true, status: 'Hermes API server at http://127.0.0.1:8642 did not answer.' };
+  flow.render();
+  const connect = host.querySelector('.onboarding-connect');
+  assert.ok(connect.classList.contains('is-failed'));
+  assert.equal(host.querySelector('.onboarding-connect-status span').textContent, 'Hermes API server at http://127.0.0.1:8642 did not answer.', 'the exact reason, not a generic line');
+  assert.equal(flow.step, 'connect', 'setup is still where the person is');
+  assert.ok(host.querySelector('[data-onboarding-connect]'), 'Connect is there to try again');
+  assert.ok(host.querySelector('[data-onboarding-manual]'), 'Manual setup is there');
+  assert.deepEqual(calls.filter((call) => call[0] === 'manual'), [], 'nothing opened Settings on its own');
+  click(host.querySelector('[data-onboarding-manual]'), window);
+  assert.deepEqual(calls.filter((call) => call[0] === 'manual'), [['manual']], 'only the press opens it');
+  state.connection = { connected: false, busy: true, failed: true, status: 'Looking for the server...' };
+  flow.render();
+  assert.ok(!host.querySelector('.onboarding-connect.is-failed'), 'a new attempt clears the failure look');
+  state.connection = { connected: true, failed: true };
+  flow.render();
+  assert.ok(!host.querySelector('.onboarding-connect.is-failed'), 'a connected panel is never shown as failed');
+});
+
+test('patching the Connect step in place (while the approval page is up) follows the failure state too', () => {
+  const { host, flow, state } = mountFlow();
+  flow.open({ step: 'connect' });
+  flow.setApproval(host.ownerDocument.createElement('div'));
+  const before = host.querySelector('.onboarding-connect');
+  state.connection = { connected: false, failed: true, status: 'Reason one.' };
+  flow.render();
+  assert.equal(host.querySelector('.onboarding-connect'), before, 'patched in place, the approval page was not rebuilt');
+  assert.ok(before.classList.contains('is-failed'));
+  assert.equal(before.querySelector('.onboarding-connect-status span').textContent, 'Reason one.');
+  state.connection = { connected: false, failed: false, status: 'Waiting.' };
+  flow.render();
+  assert.ok(!before.classList.contains('is-failed'));
+});
+
+function sidepanelFunction(name) {
+  const js = fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const start = js.indexOf(`function ${name}(`);
+  assert.ok(start >= 0, `${name} exists`);
+  return js.slice(start, js.indexOf('\n}\n', start) + 3);
+}
+
+test('the panel never opens Settings over setup after a failed Connect, and opens it on its own everywhere else', async () => {
+  const vm = await import('node:vm');
+  const run = (flowOpen) => {
+    const opened = [];
+    const renders = [];
+    const context = {
+      onboardingConnectFailure: '',
+      onboardingFlow: { isOpen: flowOpen, render: () => renders.push('render') },
+      openSettingsDialog: (arg) => opened.push(arg),
+    };
+    vm.createContext(context);
+    vm.runInContext(sidepanelFunction('offerManualSetup'), context);
+    vm.runInContext("offerManualSetup('The reason.')", context);
+    return { opened, renders, failure: vm.runInContext('onboardingConnectFailure', context) };
+  };
+  const inSetup = run(true);
+  assert.deepEqual(inSetup.opened, [], 'setup stays on top');
+  assert.equal(inSetup.failure, 'The reason.');
+  assert.deepEqual(inSetup.renders, ['render'], 'setup redraws with the reason');
+  const outside = run(false);
+  assert.deepEqual(JSON.parse(JSON.stringify(outside.opened)), [{ pane: 'connections' }], 'the pop-up path still opens Settings > Connections');
+  assert.equal(outside.failure, '');
+});
+
+test('connectApiWithPairing routes all three manual-setup exits through offerManualSetup and clears an old failure first', () => {
+  const connect = sidepanelFunction('connectApiWithPairing');
+  assert.doesNotMatch(connect, /openSettingsDialog\(/, 'no exit opens Settings by itself');
+  assert.equal((connect.match(/offerManualSetup\(/g) || []).length, 3);
+  assert.match(connect, /^function connectApiWithPairing\(\) \{\n {2}onboardingConnectFailure = '';/, 'a new attempt starts without the old reason');
+  assert.match(connect, /offerManualSetup\(message\);/, 'the loopback refusal');
+  assert.match(connect, /offerManualSetup\(els\.connectStatus\.textContent\);/, 'automatic pairing unavailable');
+  assert.match(connect, /offerManualSetup\(currentConnectionTroubleshooting\(\) \|\| diagnostic\.detail\);/, 'the same reason the pop-up shows');
+});
+
+test("setup's Connect step is told about a failure and shows the reason, but never for a connected panel", async () => {
+  const vm = await import('node:vm');
+  const read = (patch) => {
+    const context = {
+      settings: { appearanceTheme: 'nous', colorMode: 'dark', fontProfile: 'signature' },
+      els: { connectButton: { disabled: false, textContent: 'Connect to Hermes' }, connectStatus: { textContent: 'The pop-up line.' } },
+      onboardingConnectFailure: '',
+      ...patch,
+      normalizedPanelThemeId: (value) => value,
+      normalizeColorMode: (value) => value,
+      resolvedColorMode: () => 'dark',
+      responsePresentationFromSettings: () => ({ responseStyle: 'vivid', messageLayout: 'bubbles' }),
+      isConnected: () => Boolean(patch.connected),
+    };
+    vm.createContext(context);
+    vm.runInContext(sidepanelFunction('onboardingState'), context);
+    return vm.runInContext('onboardingState().connection', context);
+  };
+  assert.deepEqual({ ...read({}) }, { connected: false, busy: false, busyLabel: 'Connect to Hermes', status: 'The pop-up line.', failed: false });
+  assert.deepEqual({ ...read({ onboardingConnectFailure: 'Why it failed.' }) }, { connected: false, busy: false, busyLabel: 'Connect to Hermes', status: 'Why it failed.', failed: true });
+  assert.equal(read({ onboardingConnectFailure: 'Why it failed.', connected: true }).failed, false);
+});
+
+test('the failed Connect step is drawn with the error edge and an emphasised Manual setup', () => {
+  const css = fs.readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  assert.match(css, /\.onboarding-connect\.is-failed \{ border-color: var\(--startup-error\); \}/);
+  assert.match(css, /\.onboarding-connect\.is-failed \[data-onboarding-manual\] \{[^}]*font-weight: 600;/);
+});

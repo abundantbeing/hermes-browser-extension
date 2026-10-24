@@ -192,7 +192,7 @@ export function createOnboardingFlow({
     const connected = Boolean(connection.connected);
     const status = connected ? t('onboarding.connect.connected') : (connection.status || t('onboarding.connect.not_paired'));
     return `
-      <div class="onboarding-connect${connected ? ' is-connected' : ''}${connection.busy ? ' is-busy' : ''}${approvalNode ? ' is-approving' : ''}">
+      <div class="onboarding-connect${connected ? ' is-connected' : ''}${connection.busy ? ' is-busy' : ''}${connectFailed(connection) ? ' is-failed' : ''}${approvalNode ? ' is-approving' : ''}">
         <p class="onboarding-connect-status" role="status">${connected ? ONBOARDING_ICONS.connected : ''}<span>${escapeHtml(status)}</span></p>
         ${approvalNode ? '<div class="onboarding-approval-slot"></div>' : ''}
         <div class="onboarding-connect-actions"${connected ? ' hidden' : ''}>
@@ -200,6 +200,12 @@ export function createOnboardingFlow({
           <button type="button" class="secondary" data-onboarding-manual>${escapeHtml(t('ui.manual.setup'))}</button>
         </div>
       </div>`;
+  }
+
+  // A failed attempt stays on the Connect step: the reason is the status line
+  // and Manual setup is the way on. Nothing here opens Settings by itself.
+  function connectFailed(connection) {
+    return Boolean(connection.failed) && !connection.connected && !connection.busy;
   }
 
   function previewHtml(state) {
@@ -268,6 +274,7 @@ export function createOnboardingFlow({
     const root = parts.stage.querySelector('.onboarding-connect');
     root.classList.toggle('is-connected', connected);
     root.classList.toggle('is-busy', Boolean(connection.busy));
+    root.classList.toggle('is-failed', connectFailed(connection));
     const label = parts.stage.querySelector('.onboarding-connect-status span');
     if (label) label.textContent = connected ? t('onboarding.connect.connected') : (connection.status || t('onboarding.connect.not_paired'));
     const actions = parts.stage.querySelector('.onboarding-connect-actions');
