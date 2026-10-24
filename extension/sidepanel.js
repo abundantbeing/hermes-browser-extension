@@ -16716,10 +16716,31 @@ function openProjectSessionFromDrawer(row) {
 
 async function createSessionInProjectFolder({ cwd, projectName }) {
   await persistBrowserIntroSeen();
+  // Creating forces the dashboard transport and drops the live attach before the gateway has
+  // agreed. If it refuses, the panel is still viewing the same session, so put back the transport
+  // (and the socket) it had and let the roster re-attach a run that was being watched.
+  const previousTransport = activeConversationTransport;
+  const previousConnection = activeDashboardWsConnection;
+  const viewedBefore = settings.sessionId;
+  const restoreAfterFailure = () => {
+    if (settings.sessionId !== viewedBefore) return;
+    activeConversationTransport = previousTransport;
+    activeDashboardWsConnection = previousConnection;
+    void refreshLiveSessionRoster();
+  };
   detachLiveSession();
   sessionLoadRequestId += 1;
-  const created = await createHermesBrowserSession({ transport: 'dashboard-ws', cwd, focus: true });
-  if (!created) throw new Error(t('projects.new_session.not_started'));
+  let created;
+  try {
+    created = await createHermesBrowserSession({ transport: 'dashboard-ws', cwd, focus: true });
+  } catch (error) {
+    restoreAfterFailure();
+    throw error;
+  }
+  if (!created) {
+    restoreAfterFailure();
+    throw new Error(t('projects.new_session.not_started'));
+  }
   els.sessionMenu.hidden = true;
   els.sessionMenuButton.setAttribute('aria-expanded', 'false');
   showOperationToast({ title: t('projects.new_session.started', { name: projectName }), detail: cwd });
