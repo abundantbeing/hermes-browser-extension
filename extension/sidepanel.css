@@ -10698,7 +10698,7 @@ html[data-hermes-mode="light"] .onboarding-logo {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.onboarding-skip { min-height: 26px; padding: 4px 9px; font-size: calc(10px * var(--hermes-text-zoom, 1)); }
+.onboarding-skip { white-space: nowrap; }
 
 /* The live preview: real message components at a smaller scale, laid out
    by the page's own chat layout and response style. */
@@ -10794,15 +10794,75 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
 @media (prefers-reduced-motion: reduce) { .onboarding-welcome-greetings span { animation: none; } }
 .onboarding-welcome-actions { display: grid; gap: 8px; width: 100%; margin-top: 10px; }
 .onboarding-welcome-actions button {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  min-height: 44px;
-  padding: 8px 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   text-align: center;
 }
-.onboarding-welcome-start { font: calc(16px * var(--hermes-text-zoom, 1))/1.1 var(--hermes-font-display); letter-spacing: 0.05em; }
-.onboarding-welcome-skip { border-color: rgba(var(--startup-fg-rgb), 0.4); font-size: calc(11px * var(--hermes-text-zoom, 1)); }
+/* One type and colour recipe for every setup button, so the welcome, the steps
+   and Connect read the same. Primary and secondary buttons share size, weight,
+   tracking, height and padding; only the fill tells them apart.
+   - The face is the compressed display face the setup already uses, in capitals
+     at 18px (scaled by the text-zoom setting), weight 500, tracked 0.02em. The
+     user picked this from side-by-side samples.
+   - Primary (Get started, Connect to Hermes): filled with the theme's primary
+     pair, which every built-in palette holds at 4.5:1 or better.
+   - Secondary (Skip setup, Manual setup, the header's Skip): the same size,
+     outlined and unfilled in the setup's text colour, which holds 4.5:1 against
+     the setup's paper in every palette (tests/setup-button-contrast.test.mjs).
+   - Arabic and the other non-Latin locales get no tracking and no forced capitals
+     (:lang on the button itself, because the welcome is drawn in the suggested
+     language before the document's language is chosen).
+   - Long Latin translations (German, Russian) balance across lines and every
+     button steps down to 16px on the narrowest panels, so they fit without
+     clipping. Every button is at least 44px tall. The compressed face sits its
+     capitals high in its line box, so the padding is split 0.05em top-heavy
+     (measured). */
+.onboarding {
+  --setup-button-size: calc(18px * var(--hermes-text-zoom, 1));
+}
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip) {
+  min-height: 44px;
+  /* The compressed face sits its capitals about 0.05em high in the line box;
+     moving that much padding from the bottom to the top centres the ink. */
+  padding: calc(6px + 0.05em) 14px calc(6px - 0.05em);
+  font-family: var(--hermes-font-display);
+  font-size: var(--setup-button-size);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+  text-transform: uppercase;
+}
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button) {
+  background: var(--hermes-primary-bg, var(--hermes-ink));
+  color: var(--hermes-primary-fg, var(--hermes-paper));
+  border-color: var(--hermes-primary-fg, var(--hermes-paper));
+}
+.onboarding :is(.onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip) {
+  background: transparent;
+  color: var(--startup-fg);
+  border-color: rgba(var(--startup-fg-rgb), 0.6);
+}
+.onboarding :is(.onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip):is(:hover, :focus-visible) {
+  background: rgba(var(--startup-fg-rgb), 0.08);
+  color: var(--startup-fg);
+  border-color: var(--startup-fg);
+}
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button):hover:not(:disabled) { filter: brightness(1.12); }
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button):hover:not(:disabled) { filter: brightness(1.12); }
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip):is(:dir(rtl), :lang(ar), :lang(he), :lang(fa), :lang(ur), :lang(hi), :lang(th), :lang(ja), :lang(ko), :lang(zh), :lang(ru), :lang(uk)) {
+  letter-spacing: 0;
+  text-transform: none;
+  /* These scripts draw in a fallback face, not the compressed one: no nudge. */
+  padding-block: 6px;
+}
+@media (max-width: 340px) {
+  .onboarding { --setup-button-size: calc(16px * var(--hermes-text-zoom, 1)); }
+}
+
 .onboarding-welcome-english { font-family: var(--hermes-font-ui, inherit); font-size: calc(9.5px * var(--hermes-text-zoom, 1)); font-weight: 400; line-height: 1.2; letter-spacing: 0; opacity: 0.72; text-transform: none; }
 
 /* Language step: every supported language by its own name, in a grid that
@@ -10913,7 +10973,8 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
 .onboarding-connect.is-failed { border-color: var(--startup-error); }
 .onboarding-connect.is-failed .onboarding-connect-status { color: var(--startup-fg); }
 .onboarding-connect.is-failed [data-onboarding-manual] { border-color: var(--startup-fg); color: var(--startup-fg); font-weight: 600; }
-.onboarding-connect-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+/* Stacked and equal width: a long translated label gets the whole line instead of a narrow column. */
+.onboarding-connect-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .onboarding-connect-actions[hidden] { display: none; }
 .onboarding.is-approving .onboarding-preview,
 .onboarding-connect.is-approving .onboarding-connect-actions { display: none; }
@@ -10924,10 +10985,6 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 0 12px 0 9px;
-  font: calc(15px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-display);
-  letter-spacing: 0.07em;
 }
 .onboarding-connect-button svg { flex: none; }
 .onboarding-connect.is-busy .onboarding-connect-button svg { animation: onboarding-pulse 1s steps(2, jump-none) infinite; }
