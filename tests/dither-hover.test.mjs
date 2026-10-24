@@ -191,8 +191,11 @@ test('the first and last frames are exactly the resting and the hover faces, wit
 test('the module runs one rAF loop with time-based progress, no timers, and tears down', () => {
   assert.equal((moduleSource.match(/requestAnimationFrame\(/g) || []).length >= 2, true);
   assert.doesNotMatch(moduleSource, /setTimeout|setInterval/, 'no timers left running');
-  assert.match(moduleSource, /const dt = Math\.min\(64, now - last\);/, 'time-based, capped so a stalled tab does not jump');
-  assert.match(moduleSource, /progress \+= \(direction \* dt\) \/ \(direction > 0 \? IN_MS : OUT_MS\);/);
+  assert.match(moduleSource, /const dt = last === null \? 0 : Math\.max\(0, Math\.min\(64, now - last\)\);/, 'one clock (the rAF timestamps), never negative, capped so a stalled tab does not jump');
+  assert.doesNotMatch(moduleSource.replace(/\/\/.*$/gm, ''), /performance\.now/, 'performance.now() is not mixed into the loop');
+  assert.match(moduleSource, /\(direction > 0 && progress >= 1\) \|\| \(direction < 0 && progress <= 0\)/, 'each direction ends only at its own end');
+  assert.match(moduleSource, /if \(direction > 0\) progress \+= dt \/ IN_MS;/);
+  assert.match(moduleSource, /else progress -= dt \/ OUT_MS \/ Math\.max\(0\.2, 3 \* \(1 - Math\.min\(1, Math\.max\(0, progress\)\)\) \*\* 2\);/, 'the fill drops linearly over the out time');
   assert.match(moduleSource, /cancelAnimationFrame\(frame\);\s*frame = 0;/);
   assert.match(moduleSource, /button\.style\.removeProperty\('will-change'\);/, 'will-change only while active');
   assert.match(moduleSource, /canvas\.remove\(\);/);
@@ -218,10 +221,16 @@ test('the stylesheet pins the static hover state, the touch, forced-colour and p
   assert.match(css, /\.onboarding :is\([^)]*\):active \{ transform: translateY\(1px\); transition: none; \}/, 'an instant 1px press');
 });
 
-test('the setup wires the effect once, by delegation, to primary and quieter secondary buttons', () => {
+test('the setup buttons have no CSS transition of their own: the effect reads their hover colours at enter', () => {
+  assert.match(css, /\.onboarding :is\(\.onboarding-welcome-start, \.onboarding-connect-button, \.onboarding-welcome-skip, \[data-onboarding-manual\], \.onboarding-skip\) \{ position: relative; transition: none; \}/);
+  assert.match(moduleSource, /animation\.transitionProperty !== undefined\) animation\.finish\(\);/, 'and a running transition is finished before the colours are read');
+});
+
+test('the setup wires the effect once, by delegation, to the primary and the quieter secondary text buttons', () => {
   const flow = read('extension/lib/onboarding-flow.mjs');
   assert.match(flow, /import \{ installDitherHover \} from '\.\/dither-hover\.mjs';/);
-  assert.match(flow, /installDitherHover\(host, \{\s*selector: '\.onboarding-welcome-start, \.onboarding-connect-button, \.onboarding-welcome-skip, \[data-onboarding-manual\], \.onboarding-skip, \.onboarding-nav-button',\s*quietSelector: '\.onboarding-welcome-skip, \[data-onboarding-manual\], \.onboarding-skip, \.onboarding-nav-button',/);
+  assert.match(flow, /installDitherHover\(host, \{\s*selector: '\.onboarding-welcome-start, \.onboarding-connect-button, \.onboarding-welcome-skip, \[data-onboarding-manual\], \.onboarding-skip',\s*quietSelector: '\.onboarding-welcome-skip, \[data-onboarding-manual\], \.onboarding-skip',/);
+  assert.doesNotMatch(flow.split('installDitherHover(host')[1].split('});')[0], /nav-button/, 'the 32px icon tiles keep their own translucent hover: an inverted-pair fill does not fit them');
 });
 
 test('the module is syntax-checked with the rest of the extension', () => {

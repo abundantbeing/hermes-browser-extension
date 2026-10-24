@@ -208,10 +208,19 @@ const REDUCED = '(prefers-reduced-motion: reduce)';
 const FORCED = '(forced-colors: active)';
 const CAN_HOVER = '(hover: hover)';
 
-function specFor(button, origin, quiet, seed) {
+export function specFor(button, origin, quiet, seed) {
   // At enter the button is already in its hover state, so its computed colours
-  // are the hover face; the resting face is the same pair the other way round.
-  const style = getComputedStyle(button);
+  // are the hover face. But getComputedStyle reports a running CSS transition's
+  // current value, which at that instant is still the resting colour, so any
+  // transition is finished first (and the setup buttons have none). The resting
+  // face is the same pair the other way round, except for a quiet button, which
+  // rests transparent over whatever is behind it.
+  if (typeof button.getAnimations === 'function') {
+    for (const animation of button.getAnimations()) {
+      if (animation.transitionProperty !== undefined) animation.finish();
+    }
+  }
+  const style = window.getComputedStyle(button);
   const rect = button.getBoundingClientRect();
   const hoverBg = style.backgroundColor;
   const hoverFg = style.color;
@@ -229,7 +238,7 @@ function specFor(button, origin, quiet, seed) {
     if (lines.length !== 1) return null; // a wrapped label stays on the static hover
     const line = lines[0];
     const owner = node.parentElement;
-    const ownerStyle = getComputedStyle(owner);
+    const ownerStyle = window.getComputedStyle(owner);
     text = ownerStyle.textTransform === 'uppercase' ? node.nodeValue.trim().toUpperCase() : node.nodeValue.trim();
     const probe = document.createElement('canvas').getContext('2d');
     font = `${ownerStyle.fontStyle} ${ownerStyle.fontWeight} ${ownerStyle.fontSize} ${ownerStyle.fontFamily}`;
@@ -249,7 +258,7 @@ function specFor(button, origin, quiet, seed) {
     hoverBg,
     hoverFg,
     hoverBorder,
-    restBg: hoverFg,
+    restBg: quiet ? 'rgba(0, 0, 0, 0)' : hoverFg,
     restFg: hoverBg,
     restBorder: quiet ? `color-mix(in srgb, ${hoverBg} 60%, transparent)` : hoverBg,
     text,
@@ -270,7 +279,7 @@ function createController(button, { quiet }) {
   let specKey = '';
   let spec = null;
   let progress = 0;
-  let last = 0;
+  let last = null;
   let direction = 0;
   let hovered = false;
   let count = 0;
@@ -290,10 +299,19 @@ function createController(button, { quiet }) {
   }
 
   function loop(now) {
-    const dt = Math.min(64, now - last);
+    // One clock: the timestamps requestAnimationFrame hands in. The first frame
+    // only fixes the origin. (Mixing in performance.now() was a bug: a frame's
+    // timestamp can be a couple of milliseconds earlier than a performance.now()
+    // taken just before it, which made dt negative and ended the effect at once.)
+    const dt = last === null ? 0 : Math.max(0, Math.min(64, now - last));
     last = now;
-    progress += (direction * dt) / (direction > 0 ? IN_MS : OUT_MS);
-    if (progress >= 1 || progress <= 0 || !button.isConnected) {
+    // In: progress is linear in time and the fill follows the ease-out curve.
+    // Out: the fill (that curve of progress) drops linearly over OUT_MS, so the
+    // dissolve starts at once instead of waiting out the curve's flat end; a
+    // reversal from any point continues from the fill that is on screen.
+    if (direction > 0) progress += dt / IN_MS;
+    else progress -= dt / OUT_MS / Math.max(0.2, 3 * (1 - Math.min(1, Math.max(0, progress))) ** 2);
+    if ((direction > 0 && progress >= 1) || (direction < 0 && progress <= 0) || !button.isConnected) {
       // The last frame is the static hover face; it is removed in the same frame
       // the button's own label comes back, so there is no gap and no pop.
       teardown();
@@ -324,7 +342,7 @@ function createController(button, { quiet }) {
 
   function run(dir) {
     direction = dir;
-    last = performance.now();
+    last = null;
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(loop);
   }
@@ -404,7 +422,7 @@ export function installDitherHover(host, { selector, quietSelector }) {
     const button = buttonFor(event);
     if (!button || button.disabled || !button.matches(':focus-visible')) return;
     const rect = button.getBoundingClientRect();
-    const rtl = getComputedStyle(button).direction === 'rtl';
+    const rtl = window.getComputedStyle(button).direction === 'rtl';
     controllerFor(button).enter({ x: rtl ? rect.width : 0, y: rect.height / 2 });
   };
   const onBlur = (event) => {

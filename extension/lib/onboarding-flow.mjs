@@ -651,8 +651,8 @@ export function createOnboardingFlow({
   // tears a little and settles into the button's static hover state.
   if (host) {
     installDitherHover(host, {
-      selector: '.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button',
-      quietSelector: '.onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button',
+      selector: '.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip',
+      quietSelector: '.onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip',
     });
   }
 
