@@ -2546,3 +2546,46 @@ test('Firefox screenshot still captures the leased tab when it is the visible, r
   assert.equal(shot.dataUrl, 'data:image/png;base64,ZmFrZQ==');
   assert.deepEqual(calls.filter((call) => call[0] === 'captureVisibleTab'), [['captureVisibleTab', 4, { format: 'png' }]]);
 });
+
+// The classifier and the adapter must read a key string the same way: whatever the adapter
+// sends as Enter, as a paste shortcut, or refuses, the classifier must judge accordingly.
+test('browser_press: the classifier and the adapter agree on every key spelling', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await import('../extension/lib/browser-control-safety.mjs');
+  const spellings = [];
+  const spaces = ['', ' ', '\t', ' '];
+  for (const lead of spaces) for (const tail of spaces) {
+    for (const key of ['Enter', 'enter', 'Return', 'v', 'V', 'Insert', 'a', 'Tab']) {
+      for (const mod of ['Control', 'ctrl', 'Meta', 'cmd', 'Shift', 'Alt']) spellings.push({ key: `${mod}${lead}+${tail}${key}` });
+      spellings.push({ key: `${lead}${key}${tail}` });
+      spellings.push({ key: `${lead}${key}${tail}`, modifiers: ['Control'] });
+      spellings.push({ key: `${lead}${key}${tail}`, modifiers: ['Shift'] });
+    }
+  }
+  spellings.push({ key: 'Hyper+Enter' }, { key: '' }, { key: 'Control+' }, { key: 'a', modifiers: ['Hyper'] });
+
+  for (const args of spellings) {
+    const chromium = chromiumApis();
+    let dispatched = null;
+    let refused = false;
+    try {
+      await createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_press', args, { scope, signal: openSignal() });
+      dispatched = chromium.calls.filter((call) => call[2] === 'Input.dispatchKeyEvent').map((call) => call[3])[0];
+    } catch {
+      refused = true;
+    }
+    const decision = classifyBrowserControlAction({ action: 'browser_press', arguments: args, focused: { role: '', name: '', inputType: '' } });
+    const label = JSON.stringify(args);
+    if (refused) {
+      assert.equal(decision.risk, BROWSER_CONTROL_RISKS.BLOCKED, `${label} cannot be sent, so it is blocked`);
+      continue;
+    }
+    const ctrlOrMeta = (dispatched.modifiers & 6) !== 0;
+    const sendsEnter = dispatched.key === 'Enter';
+    const sendsPaste = (ctrlOrMeta && String(dispatched.key).toLowerCase() === 'v')
+      || (dispatched.key === 'Insert' && (dispatched.modifiers & 8) !== 0);
+    if (sendsEnter) assert.equal(decision.reason, 'submission-key', `${label} sends Enter`);
+    else if (sendsPaste) assert.equal(decision.reason, 'clipboard-paste', `${label} sends a paste shortcut`);
+    else assert.equal(decision.risk, BROWSER_CONTROL_RISKS.SAFE, `${label} sends ${dispatched.key}`);
+  }
+});

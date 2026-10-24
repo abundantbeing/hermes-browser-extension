@@ -72,6 +72,7 @@ const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidd
 const APPROVAL_MESSAGES = Object.freeze({
   'cross-origin-unsaved-content': 'Leave this page while unsaved content may be present?',
   'submission-key': 'Press Enter to submit the current form or message?',
+  'activation-key': 'Press Space? It may activate whatever has focus on the page.',
   'clipboard-paste': 'Paste your clipboard into this page?',
   'consequential-action': 'Run this consequential browser action?',
   'coordinate-click': 'Click these exact viewport coordinates?',
@@ -743,6 +744,8 @@ export function createBrowserControlExecutor({
         target: target || {},
         currentUrl: pageState.currentUrl,
         hasUnsavedContent: pageState.hasUnsavedContent === true,
+        // A key press goes to whatever has focus, so the probe's reading of it is judged.
+        ...(action === 'browser_press' ? { focused: pageState.focused } : {}),
         developerMode: boundedDeveloperMode,
         allowLocalDocuments: Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments),
       });

@@ -2,6 +2,7 @@ import {
   controllerAdapterContractFor,
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
+import { resolveKeyPress } from './browser-control-keys.mjs';
 import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameChainReadable, readableChildFrames } from './browser-control-frames.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
@@ -530,86 +531,17 @@ function quadRect(model = {}) {
   };
 }
 
-const KEY_ALIASES = Object.freeze({
-  enter: { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' },
-  return: { key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' },
-  tab: { key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 },
-  escape: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
-  esc: { key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 },
-  backspace: { key: 'Backspace', code: 'Backspace', windowsVirtualKeyCode: 8 },
-  delete: { key: 'Delete', code: 'Delete', windowsVirtualKeyCode: 46 },
-  insert: { key: 'Insert', code: 'Insert', windowsVirtualKeyCode: 45 },
-  home: { key: 'Home', code: 'Home', windowsVirtualKeyCode: 36 },
-  end: { key: 'End', code: 'End', windowsVirtualKeyCode: 35 },
-  pageup: { key: 'PageUp', code: 'PageUp', windowsVirtualKeyCode: 33 },
-  pagedown: { key: 'PageDown', code: 'PageDown', windowsVirtualKeyCode: 34 },
-  arrowup: { key: 'ArrowUp', code: 'ArrowUp', windowsVirtualKeyCode: 38 },
-  arrowdown: { key: 'ArrowDown', code: 'ArrowDown', windowsVirtualKeyCode: 40 },
-  arrowleft: { key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37 },
-  arrowright: { key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 },
-  space: { key: ' ', code: 'Space', windowsVirtualKeyCode: 32, text: ' ' },
-});
-const MODIFIER_NAMES = Object.freeze({
-  alt: 'alt', option: 'alt', ctrl: 'ctrl', control: 'ctrl', meta: 'meta', cmd: 'meta', command: 'meta', shift: 'shift',
-});
-
-function keyDescriptor(value = '') {
-  const raw = String(value ?? '');
-  if (!compact(raw, 80) && raw !== ' ') throw new Error('A key is required.');
-  const key = raw === ' ' ? raw : compact(raw, 80);
-  const alias = KEY_ALIASES[key.toLowerCase()];
-  if (alias) return { ...alias };
-  if (key.length === 1) {
-    const upper = key.toUpperCase();
-    const alphanumeric = /^[a-z0-9]$/i.test(key);
-    return {
-      key,
-      code: /^[a-z]$/i.test(key) ? `Key${upper}` : (/^[0-9]$/.test(key) ? `Digit${key}` : key),
-      ...(alphanumeric ? { windowsVirtualKeyCode: upper.charCodeAt(0) } : {}),
-      text: key,
-    };
-  }
-  const functionKey = /^f([1-9]|1[0-2])$/i.exec(key);
-  if (functionKey) return { key: key.toUpperCase(), code: key.toUpperCase(), windowsVirtualKeyCode: 111 + Number(functionKey[1]) };
-  return { key, code: key };
-}
-
-// "Control+a", "Meta+a", "Shift+Tab", "Control++": the last part is the key,
-// everything before it is a modifier.
-function parseKeyCombo(value = '') {
-  const raw = String(value ?? '');
-  if (raw === ' ' || !raw.includes('+') || raw.trim() === '+') return { key: raw, modifiers: [] };
-  const parts = raw.split('+');
-  const last = parts.pop();
-  const key = last === '' ? '+' : last;
-  const modifiers = parts.filter(Boolean).map((part) => {
-    const name = MODIFIER_NAMES[compact(part, 20).toLowerCase()];
-    if (!name) throw new Error(`Unsupported key modifier: ${compact(part, 20) || 'missing'}.`);
-    return name;
-  });
-  return { key, modifiers };
-}
-
-function modifierMask(values = []) {
-  const bits = { alt: 1, ctrl: 2, meta: 4, shift: 8 };
-  return [...new Set(Array.isArray(values) ? values : [])]
-    .reduce((mask, value) => mask | (bits[MODIFIER_NAMES[compact(value, 20).toLowerCase()]] || 0), 0);
-}
-
 function keyEventFields(args = {}) {
-  const combo = parseKeyCombo(args.key);
-  const modifiers = modifierMask([
-    ...combo.modifiers,
-    ...(Array.isArray(args.modifiers) ? args.modifiers : []),
-  ]);
-  const descriptor = keyDescriptor(combo.key);
+  const resolved = resolveKeyPress(args);
+  const { descriptor } = resolved;
+  const modifiers = resolved.mask;
   // Characters are typed only without Alt/Ctrl/Meta; otherwise it is a shortcut.
   const typed = (modifiers & 7) === 0 && descriptor.text !== undefined;
   const shiftedLetter = typed && (modifiers & 8) !== 0 && /^[a-z]$/.test(descriptor.text);
   const text = shiftedLetter ? descriptor.text.toUpperCase() : descriptor.text;
   const base = { ...descriptor, ...(shiftedLetter ? { key: text } : {}) };
   delete base.text;
-  const command = modifiers & 4 ? MAC_EDIT_COMMANDS[String(combo.key).toLowerCase()] : '';
+  const command = modifiers & 4 ? MAC_EDIT_COMMANDS[resolved.keyName] : '';
   return {
     down: {
       type: typed ? 'keyDown' : 'rawKeyDown',
@@ -662,7 +594,25 @@ function pageProbe(mode, direction = '') {
     });
     const dirtyChecks = [...document.querySelectorAll('input[type="checkbox"], input[type="radio"]')]
       .some((element) => element.checked !== element.defaultChecked);
-    return { hasUnsavedContent: dirtyText || dirtyChecks };
+    // What has keyboard focus, so a Space press can be judged as the click it is. An
+    // element inside an open shadow root is followed; an embedded frame is reported as one.
+    let active = document.activeElement;
+    while (active && active.shadowRoot && active.shadowRoot.activeElement) active = active.shadowRoot.activeElement;
+    let focused = { role: '', name: '', inputType: '' };
+    if (active && active !== document.body && active !== document.documentElement) {
+      const tag = String(active.tagName || '').toUpperCase();
+      const inputType = String(active.type || '').toLowerCase();
+      const embeds = ['IFRAME', 'FRAME', 'OBJECT', 'EMBED', 'FENCEDFRAME'].includes(tag);
+      const inputRole = { button: 'button', submit: 'button', reset: 'button', image: 'button', checkbox: 'checkbox', radio: 'radio' }[inputType] || 'textbox';
+      const role = active.getAttribute('role')
+        || (embeds ? 'frame' : ({ A: 'link', BUTTON: 'button', INPUT: inputRole, SELECT: 'combobox', TEXTAREA: 'textbox', SUMMARY: 'button' }[tag]
+          || (active.isContentEditable ? 'textbox' : 'generic')));
+      const labelled = [...(active.labels || [])].map((label) => label.innerText).join(' ');
+      const name = String(active.getAttribute('aria-label') || labelled || (tag === 'INPUT' ? active.value : '') || active.innerText || active.title || active.alt || active.placeholder || active.name || '')
+        .replace(/\s+/g, ' ').trim().slice(0, 200);
+      focused = { role, name, inputType: tag === 'INPUT' || tag === 'BUTTON' ? inputType : '', ...(embeds ? { inFrame: true } : {}) };
+    }
+    return { hasUnsavedContent: dirtyText || dirtyChecks, focused };
   }
   if (mode === 'scroll') {
     const deltas = {
@@ -711,6 +661,7 @@ async function inspectPage(browserApi, scope, signal, { light = false } = {}) {
   const title = isRestrictedUrl(currentUrl) ? '' : compact(tab?.title, 500);
   if (light || isRestrictedUrl(currentUrl)) return { currentUrl, hasUnsavedContent: false, title };
   let hasUnsavedContent = false;
+  let focused = null;
   if (browserApi.scripting?.executeScript) {
     try {
       const response = await browserApi.scripting.executeScript({
@@ -719,11 +670,20 @@ async function inspectPage(browserApi, scope, signal, { light = false } = {}) {
         args: ['inspect'],
       });
       hasUnsavedContent = response?.[0]?.result?.hasUnsavedContent === true;
+      const read = response?.[0]?.result?.focused;
+      if (read && typeof read === 'object') {
+        focused = {
+          role: compact(read.role, 80),
+          name: compact(read.name, 200),
+          inputType: compact(read.inputType, 40),
+          ...(read.inFrame === true ? { inFrame: true } : {}),
+        };
+      }
     } catch {
       // Inspection is a conservative enhancement; the action policy still runs.
     }
   }
-  return { currentUrl, hasUnsavedContent, title };
+  return { currentUrl, hasUnsavedContent, title, ...(focused ? { focused } : {}) };
 }
 
 function createChromiumCdpAdapter({

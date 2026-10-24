@@ -327,3 +327,57 @@ test('Phase 8 approval grants bind artifact ids so upload approvals are single-a
   assert.deepEqual(approvals.consume({ ...exact, binding: 'artifact-41' }), { ok: false, error: 'approval_mismatch' });
   assert.deepEqual(approvals.consume(exact), { ok: true, approvalId: 'approval-upload', binding: 'artifact-42' });
 });
+
+// The classifier reads a key request the way the adapter dispatches it: spaces and tabs
+// around "+", letter case and the modifiers list change nothing about what is judged.
+test('browser_press classifies every spelling of a submit or paste shortcut the adapter would send', async () => {
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
+  const reasonOf = (args) => classifyBrowserControlAction({ action: 'browser_press', arguments: args, focused: { role: '', name: '', inputType: '' } });
+
+  for (const key of ['Control+ Enter', 'Control+\tEnter', 'Control + Enter', ' Control+Enter ', 'CTRL+ENTER', 'Shift+ Return', 'Meta+  Enter', 'Control+NumpadEnter', 'NumpadEnter']) {
+    assert.deepEqual(reasonOf({ key }).reason, 'submission-key', JSON.stringify(key));
+  }
+  assert.equal(reasonOf({ key: 'Enter', modifiers: ['Control'] }).reason, 'submission-key');
+  for (const args of [
+    { key: 'Control+ v' }, { key: 'Meta+ v' }, { key: 'Shift+ Insert' }, { key: 'Ctrl + v' }, { key: 'CONTROL+V' },
+    { key: 'Control+Shift+ V' }, { key: 'Cmd+\tv' }, { key: 'Command + V' }, { key: ' v', modifiers: ['ctrl'] },
+    { key: 'Control+KeyV' }, { key: 'Insert', modifiers: [' shift '] },
+  ]) {
+    assert.equal(reasonOf(args).reason, 'clipboard-paste', JSON.stringify(args));
+  }
+  for (const args of [{ key: 'Control+ a' }, { key: 'Shift+ Tab' }, { key: 'Control + c' }, { key: 'Alt+ArrowLeft' }, { key: 'v' }, { key: ' Insert' }]) {
+    assert.equal(reasonOf(args).risk, BROWSER_CONTROL_RISKS.SAFE, JSON.stringify(args));
+  }
+});
+
+test('browser_press fails closed on a key it cannot read', async () => {
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
+  for (const args of [{}, { key: '' }, { key: '   ' }, { key: 'Hyper+a' }, { key: 'Control+Hyper+Enter' }, { key: 'a', modifiers: ['Hyper'] }, { key: 'Enter', modifiers: ['Mod'] }]) {
+    const decision = classifyBrowserControlAction({ action: 'browser_press', arguments: args });
+    assert.equal(decision.risk, BROWSER_CONTROL_RISKS.BLOCKED, JSON.stringify(args));
+    assert.equal(decision.reason, 'invalid-key');
+  }
+});
+
+test('Space presses whatever has focus, so it is judged as the click it is', async () => {
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
+  const press = (key, focused) => classifyBrowserControlAction({ action: 'browser_press', arguments: { key }, focused });
+
+  // A focused button with a consequential label needs the same approval as clicking it.
+  for (const key of ['Space', ' ', 'space', 'Shift+Space']) {
+    const decision = press(key, { role: 'button', name: 'Delete account', inputType: '' });
+    assert.deepEqual(decision, { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'consequential-action' }, key);
+  }
+  assert.equal(press(' ', { role: 'checkbox', name: 'Subscribe to the newsletter', inputType: 'checkbox' }).reason, 'consequential-action');
+  assert.equal(press(' ', { role: 'button', name: 'Pay now', inputType: 'submit' }).reason, 'consequential-action');
+  // Harmless controls, text fields and the bare page stay free.
+  assert.equal(press(' ', { role: 'button', name: 'Open menu', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.equal(press(' ', { role: 'textbox', name: 'Send a message to the team', inputType: 'text' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.equal(press(' ', { role: '', name: '', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  // Other keys are not an activation, whatever has focus.
+  assert.equal(press('ArrowDown', { role: 'button', name: 'Delete account', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  assert.equal(press('Control+ ', { role: 'button', name: 'Delete account', inputType: '' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+  // Focus that could not be read: Space might activate anything, so it asks.
+  assert.deepEqual(press(' ', undefined), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'activation-key' });
+  assert.equal(press('Tab', undefined).risk, BROWSER_CONTROL_RISKS.SAFE);
+});

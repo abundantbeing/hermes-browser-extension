@@ -1,4 +1,5 @@
 import { isRestrictedUrl } from './browser-context-protocol.mjs';
+import { isPasteShortcut, isSpaceActivation, isSubmissionKey, resolveKeyPress } from './browser-control-keys.mjs';
 
 export const BROWSER_CONTROL_RISKS = Object.freeze({
   SAFE: 'safe',
@@ -24,20 +25,17 @@ const SAFE_ACTIONS = new Set([
   'browser_tabs',
 ]);
 
-// Matches combos too ("Control+Enter"), since the adapter accepts "Mod+Key".
-const SUBMISSION_KEY_RE = /(?:^|\+)(?:enter|return)$/i;
-// Paste shortcuts insert the user's own clipboard into the page, so they need approval.
-const PASTE_KEY_RE = /^(?:(?:control|ctrl|meta|cmd|command)\+(?:shift\+)?v|shift\+insert)$/i;
-const PASTE_MODIFIER_RE = /^(?:control|ctrl|meta|cmd|command)$/i;
+// What a focused control does with Space: roles and input types that act on it. Text
+// fields take the space as a character; the bare page scrolls.
+const SPACE_INERT_ROLES = new Set(['', 'textbox', 'searchbox', 'document', 'body', 'generic', 'none', 'presentation', 'text']);
+const SPACE_ACTIVATING_INPUT_TYPES = new Set(['button', 'submit', 'reset', 'image', 'checkbox', 'radio', 'file', 'color']);
 
-function isPasteShortcut(args = {}) {
-  const key = compact(args?.key);
-  if (PASTE_KEY_RE.test(key)) return true;
-  const modifiers = Array.isArray(args?.modifiers) ? args.modifiers : [];
-  if (/^v$/i.test(key)) return modifiers.some((value) => PASTE_MODIFIER_RE.test(compact(value)));
-  if (/^insert$/i.test(key)) return modifiers.some((value) => /^shift$/i.test(compact(value)));
-  return false;
+function spaceActivatesFocus(focused = {}) {
+  const role = compact(focused?.role).toLowerCase();
+  if (SPACE_ACTIVATING_INPUT_TYPES.has(compact(focused?.inputType).toLowerCase())) return true;
+  return !SPACE_INERT_ROLES.has(role);
 }
+
 const APPROVAL_LABEL_RE = /\b(?:submit|send|post|publish|delete|remove|revoke|reset|buy|pay|checkout|transfer|subscribe|invite|approve|merge|deploy|download|upload|overwrite)\b/i;
 const PAYMENT_RE = /\b(?:credit.?card|card.?number|cvv|cvc|expiry|payment|billing|bank|banking|crypto|wallet|checkout)\b/i;
 const CREDENTIAL_RE = /\b(?:password|passwd|passcode|api.?(?:key|token)|access.?token|auth.?token|session.?token|private.?key|seed.?phrase|recovery.?phrase|secret)\b/i;
@@ -104,6 +102,8 @@ export function classifyBrowserControlAction({
   hasUnsavedContent = false,
   developerMode = false,
   allowLocalDocuments = false,
+  // What has keyboard focus ({ role, name, inputType }); undefined when it could not be read.
+  focused,
 } = {}) {
   const normalizedAction = compact(action);
   if (normalizedAction === 'browser_drag') {
@@ -199,13 +199,27 @@ export function classifyBrowserControlAction({
     return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
 
-  if (normalizedAction === 'browser_press' && SUBMISSION_KEY_RE.test(compact(args?.key))) {
-    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'submission-key');
+  if (normalizedAction === 'browser_press') {
+    // The key is read once, the way the adapter dispatches it. A request the adapter
+    // cannot read is one it cannot send, so it is refused here too.
+    let resolved;
+    try {
+      resolved = resolveKeyPress(args);
+    } catch {
+      return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'invalid-key');
+    }
+    if (isSubmissionKey(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'submission-key');
+    if (isPasteShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'clipboard-paste');
+    // Space presses the focused button or toggles the focused control: judge it as that click.
+    if (isSpaceActivation(resolved)) {
+      if (!focused || typeof focused !== 'object') return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'activation-key');
+      if (spaceActivatesFocus(focused) && APPROVAL_LABEL_RE.test(targetDescriptor(focused))) {
+        return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
+      }
+    }
+    return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
-  if (normalizedAction === 'browser_press' && isPasteShortcut(args)) {
-    return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'clipboard-paste');
-  }
-  if ((normalizedAction === 'browser_click' || normalizedAction === 'browser_press') && APPROVAL_LABEL_RE.test(descriptor)) {
+  if (normalizedAction === 'browser_click' && APPROVAL_LABEL_RE.test(descriptor)) {
     return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
   }
   return decision(BROWSER_CONTROL_RISKS.SAFE);
