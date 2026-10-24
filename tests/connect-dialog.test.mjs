@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
+import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
 
 const read = (file) => fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
@@ -55,4 +56,64 @@ test('a send while unpaired opens the pop-up instead of focusing a hidden button
 test('the startup dock and Manual setup keep their own way to connect', () => {
   assert.match(js, /els\.startupConnectButton\?\.addEventListener\('click', \(\) => \{\s*connectToHermes\(\)/);
   assert.match(js, /els\.manualSettingsButton\.addEventListener\('click', openSettingsDialog\)/);
+});
+
+function dialogFunctions() {
+  const grab = (name) => {
+    const start = js.indexOf(`function ${name}(`);
+    assert.ok(start >= 0, `${name} exists`);
+    return js.slice(start, js.indexOf('\n}\n', start) + 3);
+  };
+  return ['connectDialogShowing', 'renderConnectDialog', 'connectDialogEditableFocus', 'focusConnectDialogWhenIdle'].map(grab).join('\n');
+}
+
+function dialogHarness({ active, dismissed = false, hidden = false, bodyClasses = [] }) {
+  const focused = [];
+  const connectButton = { focus: (options) => focused.push(['connect', options?.preventScroll]) };
+  const els = {
+    connectPanel: { hidden, classList: { toggle() {} }, contains: (node) => node === connectButton },
+    connectButton,
+  };
+  const body = { classList: { contains: (name) => bodyClasses.includes(name) } };
+  const context = {
+    els,
+    document: { body, activeElement: active === 'body' ? body : active },
+    connectDialogDismissed: dismissed,
+    connectDialogReturnFocus: null,
+  };
+  vm.createContext(context);
+  vm.runInContext(dialogFunctions(), context);
+  vm.runInContext('focusConnectDialogWhenIdle()', context);
+  return { focused, returnFocus: context.connectDialogReturnFocus };
+}
+
+test('a pop-up that appears on its own takes focus only when nobody is typing', () => {
+  const composer = { tagName: 'TEXTAREA', isContentEditable: false };
+  const typed = dialogHarness({ active: composer });
+  assert.deepEqual(typed.focused, [], 'the composer keeps the keys');
+  assert.equal(typed.returnFocus, null);
+  for (const element of [{ tagName: 'INPUT' }, { tagName: 'SELECT' }, { tagName: 'DIV', isContentEditable: true }]) {
+    assert.deepEqual(dialogHarness({ active: element }).focused, [], `${element.tagName} keeps focus`);
+  }
+  const idle = dialogHarness({ active: 'body' });
+  assert.deepEqual(idle.focused, [['connect', true]], 'nothing focused: the pop-up is where the keyboard goes');
+  assert.equal(idle.returnFocus, null, 'there was nothing to go back to');
+  const button = { tagName: 'BUTTON', isContentEditable: false };
+  const onButton = dialogHarness({ active: button });
+  assert.deepEqual(onButton.focused, [['connect', true]]);
+  assert.equal(onButton.returnFocus, button, 'closing it puts focus back where it was');
+});
+
+test('the focus move never happens when the pop-up is not actually showing', () => {
+  assert.deepEqual(dialogHarness({ active: 'body', dismissed: true }).focused, []);
+  assert.deepEqual(dialogHarness({ active: 'body', hidden: true }).focused, []);
+  assert.deepEqual(dialogHarness({ active: 'body', bodyClasses: ['onboarding-active'] }).focused, [], 'not under setup');
+  assert.deepEqual(dialogHarness({ active: 'body', bodyClasses: ['startup-active'] }).focused, [], 'not under the startup screen');
+});
+
+test('the observer that brings the pop-up back calls the idle-focus helper; explicit opens still focus unconditionally', () => {
+  const bind = js.match(/function bindConnectDialog\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(bind, /if \(nowNeeded && !needed\) \{\s*connectDialogDismissed = false;\s*renderConnectDialog\(\);\s*focusConnectDialogWhenIdle\(\);\s*\}/);
+  const open = js.match(/function openConnectDialog\(\) \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(open, /els\.connectButton\?\.focus\(\{ preventScroll: true \}\);/, 'a press on Connect first, a send or New session still moves focus in');
 });

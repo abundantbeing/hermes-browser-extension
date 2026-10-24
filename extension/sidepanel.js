@@ -5290,6 +5290,25 @@ function openConnectDialog() {
   els.connectButton?.focus({ preventScroll: true });
 }
 
+// Typing surfaces: a person in one of these has the keys, whatever else happens.
+function connectDialogEditableFocus(element) {
+  if (!element) return false;
+  return /^(INPUT|TEXTAREA|SELECT)$/.test(String(element.tagName || '').toUpperCase()) || Boolean(element.isContentEditable);
+}
+
+// The pop-up came back on its own (a connection dropped or a token stopped
+// working), so nobody asked for it. Its aria-modal promise is kept when focus
+// is free (nothing focused, or on a button or link): the keyboard goes in and
+// closing it returns to where it was. A person typing in the composer or any
+// field keeps their keys; the pop-up just shows, as it did.
+function focusConnectDialogWhenIdle() {
+  if (!connectDialogShowing()) return;
+  const active = document.activeElement;
+  if (connectDialogEditableFocus(active)) return;
+  if (active && active !== document.body && !els.connectPanel.contains(active)) connectDialogReturnFocus = active;
+  els.connectButton?.focus({ preventScroll: true });
+}
+
 function dismissConnectDialog() {
   connectDialogDismissed = true;
   renderConnectDialog();
@@ -5338,6 +5357,7 @@ function bindConnectDialog() {
     if (nowNeeded && !needed) {
       connectDialogDismissed = false;
       renderConnectDialog();
+      focusConnectDialogWhenIdle();
     }
     needed = nowNeeded;
     if (onboardingFlow?.isOpen) onboardingFlow.render();
