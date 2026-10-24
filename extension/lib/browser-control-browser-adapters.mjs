@@ -1393,7 +1393,7 @@ function createChromiumCdpAdapter({
     });
   }
 
-  async function performScroll({ send, enable }, args, target, signal) {
+  async function performScroll({ send, enable }, args, target, signal, framing = {}) {
     const { axis, sign } = scrollDirection(args.direction);
     let metrics = {};
     try {
@@ -1420,7 +1420,19 @@ function createChromiumCdpAdapter({
     // A hidden tab never produces frames, so Chrome would hold the wheel event
     // until the tab is shown again and the action would hang. Scroll through
     // the page instead.
-    if (await pageIsHidden(send, signal)) {
+    // The wheel is delivered to whatever is under its point, so that point is judged like a click's: a frame
+    // Hermes may not read (or one that cannot be told) under it gets no wheel, and the page is scrolled itself.
+    let wheelAllowed = true;
+    const hidden = await pageIsHidden(send, signal);
+    if (!hidden) {
+      try {
+        await checkedHit(send, enable, signal, point, hasNode ? framing.target : undefined);
+      } catch (error) {
+        if (error?.code !== 'restricted_frame') throw error;
+        wheelAllowed = false;
+      }
+    }
+    if (!wheelAllowed || hidden) {
       await scrollWithoutWheel(send, signal, hasNode ? backendNodeId : 0, deltaX, deltaY);
     } else {
       try {
@@ -1691,7 +1703,7 @@ function createChromiumCdpAdapter({
         await send('Input.dispatchKeyEvent', up);
         return { status: 'pressed' };
       }
-      if (action === 'browser_scroll') return performScroll(session, args, target, signal);
+      if (action === 'browser_scroll') return performScroll(session, args, target, signal, framing);
       if (action === 'browser_screenshot') {
         let clip;
         const backendNodeId = Number(target?.backendDOMNodeId);

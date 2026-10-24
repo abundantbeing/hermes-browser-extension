@@ -471,7 +471,8 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
     'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent',
     'DOM.focus', 'DOM.resolveNode', 'Input.insertText',
     'Input.dispatchKeyEvent', 'Input.dispatchKeyEvent',
-    'Page.getLayoutMetrics', 'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Runtime.evaluate',
+    // The wheel's point is judged like a click's before the wheel goes out.
+    'Page.getLayoutMetrics', 'Runtime.evaluate', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent', 'Runtime.evaluate',
     'Page.enable', 'Page.navigate',
     'Page.getNavigationHistory', 'Page.navigateToHistoryEntry',
     // The screenshot reads the page's frames before the capture and again after it.
@@ -2784,4 +2785,30 @@ test('a drag presses where the source is after scrolling to the destination, and
   const covered = await dragWith({ coveredBy: 77 });
   assert.match(covered.error?.message || '', /nothing was pressed/);
   assert.equal(mouseEvents(covered.chromium.calls).some((event) => event.type === 'mousePressed'), false);
+});
+
+test('a scroll never sends the wheel into a frame Hermes may not read, and scrolls the page itself instead', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const scrollWith = async (hit) => {
+    const chromium = pointerApis({ hit });
+    chromium.handlers['Runtime.evaluate'] = () => ({ result: { value: { scrollX: 0, scrollY: 680, maxY: 4_000, atTop: false, atBottom: false } } });
+    const adapter = createChromiumCdpAdapter({ browserApi: chromium.api, sleep: async () => {} });
+    const result = await adapter.execute('browser_scroll', { direction: 'down' }, { scope, signal: openSignal() });
+    return { result, chromium };
+  };
+  const wheels = (calls) => mouseEvents(calls).filter((event) => event.type === 'mouseWheel');
+  const scrolledByScript = (calls) => calls.some((call) => call[2] === 'Runtime.evaluate' && /scrollBy/.test(call[3]?.expression || ''));
+
+  // The viewport centre is over a checkout frame, or a frame that cannot be told apart: no wheel there.
+  for (const hit of [{ backendNodeId: 77, frameId: 'PAY' }, { backendNodeId: 77, frameId: 'INNER' }, { backendNodeId: 77, frameId: 'UNKNOWN' }]) {
+    const { result, chromium } = await scrollWith(hit);
+    assert.equal(result.status, 'scrolled', JSON.stringify(hit));
+    assert.deepEqual(wheels(chromium.calls), [], `${JSON.stringify(hit)} got a wheel`);
+    assert.equal(scrolledByScript(chromium.calls), true, 'the page still scrolls');
+  }
+  // Over a readable frame, or the page's own content, the wheel goes as before.
+  for (const hit of [{ backendNodeId: 5002, frameId: 'CHAT' }, { backendNodeId: 5, frameId: 'MAIN' }]) {
+    const { chromium } = await scrollWith(hit);
+    assert.equal(wheels(chromium.calls).length, 1, JSON.stringify(hit));
+  }
 });
