@@ -442,13 +442,18 @@ async function main() {
       return !targets.some((target) => target.id === oldWorker.id);
     });
 
+    // A plain service-worker restart keeps the durable route, so the generation is
+    // kept (it only advances when the controller route changes, see
+    // phase5-controller-service-worker.test.mjs): the proof of a new worker is the
+    // second controller socket under the same identity and leases. The status
+    // message is what wakes the stopped worker, so it is polled first.
     const statusAfter = await waitFor(() => page.evaluate(`chrome.runtime.sendMessage({ type: 'HERMES_CONTROLLER_STATUS' })`).then((value) => (
-      value?.connected && value?.generation > statusBefore.generation ? value : null
+      value?.connected && value?.controllerId ? value : null
     )), 30_000);
-    await waitFor(() => fixture.connections.length >= 2);
+    await waitFor(() => fixture.connections.length >= 2, 30_000);
     assert.equal(statusAfter.controllerId, statusBefore.controllerId);
     assert.equal(statusAfter.browserProfileId, statusBefore.browserProfileId);
-    assert.ok(statusAfter.generation > statusBefore.generation);
+    assert.equal(statusAfter.generation, statusBefore.generation);
     assert.deepEqual(statusAfter.leasedTabIds, [4242]);
     assert.equal(fixture.registrations.at(-1).controller_id, fixture.registrations[0].controller_id);
     assert.equal(fixture.registrations.at(-1).browser_profile_id, fixture.registrations[0].browser_profile_id);
