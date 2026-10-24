@@ -2695,3 +2695,60 @@ test('a ref from a frame that was replaced is stale, not a restricted frame; a n
     );
   }
 });
+
+test('a stop between the press and the release still releases the mouse button', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const stopAfter = (type) => {
+    const chromium = chromiumApis();
+    const controller = new AbortController();
+    chromium.handlers['Input.dispatchMouseEvent'] = (params) => {
+      if (params.type === type) controller.abort(new Error('Browser control stopped.'));
+      return {};
+    };
+    return { chromium, controller };
+  };
+
+  const click = stopAfter('mousePressed');
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: click.chromium.api }).execute('browser_click', { ref: '@e1' }, {
+      scope, signal: click.controller.signal, target: clickTarget,
+    }),
+    /stopped/,
+  );
+  let events = mouseEvents(click.chromium.calls);
+  assert.equal(events.at(-1).type, 'mouseReleased');
+  assert.equal(events.filter((event) => event.type === 'mousePressed').length, 1);
+  assert.deepEqual({ x: events.at(-1).x, y: events.at(-1).y, buttons: events.at(-1).buttons }, { x: 20, y: 30, buttons: 0 });
+
+  for (const type of ['mousePressed', 'mouseMoved']) {
+    const drag = stopAfter(type);
+    drag.chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => (backendNodeId === 44
+      ? { model: { content: [10, 20, 30, 20, 30, 40, 10, 40] } }
+      : { model: { content: [110, 20, 130, 20, 130, 40, 110, 40] } });
+    // The mouseMoved that carries a held button is the drag's move to the destination.
+    drag.chromium.handlers['Input.dispatchMouseEvent'] = (params) => {
+      if (params.type === type && (type === 'mousePressed' || params.buttons === 1)) drag.controller.abort(new Error('Browser control stopped.'));
+      return {};
+    };
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: drag.chromium.api }).execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, {
+        scope, signal: drag.controller.signal, target: clickTarget, destination: { backendDOMNodeId: 45 },
+      }),
+      /stopped/,
+      type,
+    );
+    events = mouseEvents(drag.chromium.calls);
+    assert.equal(events.at(-1).type, 'mouseReleased', `drag stopped after ${type}`);
+    assert.equal(events.at(-1).buttons, 0);
+  }
+
+  // A stop before anything was pressed sends no release.
+  const early = new AbortController();
+  early.abort(new Error('Browser control stopped.'));
+  const idle = chromiumApis();
+  await assert.rejects(
+    createChromiumCdpAdapter({ browserApi: idle.api }).execute('browser_click', { ref: '@e1' }, { scope, signal: early.signal, target: clickTarget }),
+    /stopped/,
+  );
+  assert.deepEqual(mouseEvents(idle.calls), []);
+});

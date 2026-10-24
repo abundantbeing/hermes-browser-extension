@@ -1485,6 +1485,27 @@ function createChromiumCdpAdapter({
     });
   }
 
+  // Runs a press and its release. A Stop, a detach or a failure after the button went down must not leave it
+  // down (a drag in progress, a hold-on-mousedown control firing), so the release is sent again, straight to the
+  // browser and without the cancellation check, whenever the normal release did not complete. A release for a
+  // button that is not down does nothing.
+  async function pressAndRelease(session, position, modifierFields, press, release) {
+    let down = false;
+    try {
+      down = true;
+      await press();
+      await release();
+      down = false;
+    } finally {
+      if (down) {
+        const at = position?.at || position;
+        await rawSend(session.tabId, 'Input.dispatchMouseEvent', {
+          type: 'mouseReleased', x: at.x, y: at.y, button: 'left', buttons: 0, clickCount: 1, ...modifierFields,
+        }).catch(() => {});
+      }
+    }
+  }
+
   async function runWithSession(action, args, scope, signal, target, destination) {
     return withSession(scope, signal, async (session) => {
       const { send, enable } = session;
@@ -1528,8 +1549,11 @@ function createChromiumCdpAdapter({
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point, button: 'none', buttons: 0 });
           await checkedHit(send, enable, signal, point, backendNodeId > 0 ? framing.target : undefined);
         }
-        await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1, ...modifierFields });
-        await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1, ...modifierFields });
+        await pressAndRelease(session, point, modifierFields, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', buttons: 1, clickCount: 1, ...modifierFields });
+        }, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', buttons: 0, clickCount: 1, ...modifierFields });
+        });
         return { status: 'clicked', ...(obscured ? { obscured: true } : {}) };
       }
       if (action === 'browser_hover' || action === 'browser_scroll_to' || action === 'browser_drag') {
@@ -1548,9 +1572,14 @@ function createChromiumCdpAdapter({
         await checkedHit(send, enable, signal, destinationPoint, framing.destination);
         // Scrolling to the destination can move the source: it is judged again right before the press.
         await checkedHit(send, enable, signal, sourcePoint, framing.target);
-        await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...sourcePoint, button: 'left', buttons: 1, clickCount: 1 });
-        await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
-        await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
+        const held = { at: sourcePoint };
+        await pressAndRelease(session, held, {}, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...sourcePoint, button: 'left', buttons: 1, clickCount: 1 });
+          held.at = destinationPoint;
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
+        }, async () => {
+          await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
+        });
         return { status: 'dragged' };
       }
       if (action === 'browser_type') {
