@@ -423,7 +423,7 @@ import {
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
-import { connectionIdentityChanged } from './lib/settings-save-effects.mjs';
+import { connectionIdentityChanged, sessionIdForSave } from './lib/settings-save-effects.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
 import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './lib/session-lineage.mjs';
 import { createReplayWatermarks } from './lib/replay-watermarks.mjs';
@@ -20483,6 +20483,8 @@ function syncSettingsForm() {
   renderConnectionModePanel();
   els.apiKeyInput.value = settings.apiKey || '';
   els.sessionIdInput.value = settings.sessionId;
+  // What the field was filled with, so Save can tell a typed id from a stale copy.
+  els.sessionIdInput.dataset.syncedValue = settings.sessionId;
   els.sessionTitleInput.value = settings.sessionTitle;
   for (const input of els.contextDepthInputs) input.checked = input.value === (settings.contextDepth || DEFAULT_SETTINGS.contextDepth);
   els.includeTabsInput.checked = Boolean(settings.includeTabs);
@@ -20583,7 +20585,12 @@ async function saveSettingsFromForm() {
     tokenSource: connectionMode === 'cloud' ? '' : tokenSource,
     model: settings.model || DEFAULT_SETTINGS.model,
     modelContextTokens: selected?.contextTokens || settings.modelContextTokens || 0,
-    sessionId: els.sessionIdInput.value.trim() || DEFAULT_SETTINGS.sessionId,
+    sessionId: sessionIdForSave({
+      typed: els.sessionIdInput.value,
+      synced: els.sessionIdInput.dataset.syncedValue,
+      viewed: settings.sessionId,
+      fallback: DEFAULT_SETTINGS.sessionId,
+    }),
     sessionTitle: els.sessionTitleInput.value.trim() || DEFAULT_SETTINGS.sessionTitle,
     activeProfile: settings.activeProfile || DEFAULT_SETTINGS.activeProfile,
     botModeEnabled: els.botModeEnabledInput ? els.botModeEnabledInput.checked : settings.botModeEnabled === true,

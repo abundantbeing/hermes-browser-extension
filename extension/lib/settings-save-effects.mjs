@@ -14,3 +14,17 @@ export function connectionIdentityChanged(previous = {}, next = {}, normalizeUrl
   if (normalizeUrl(before.gatewayUrl) !== normalizeUrl(after.gatewayUrl)) return true;
   return IDENTITY_FIELDS.some((field) => String(before[field] ?? '') !== String(after[field] ?? ''));
 }
+
+/**
+ * The session id Save persists. The form's Session ID field is a copy taken when the form was
+ * synced; the viewed session can move on while Settings is open (a legacy compression adopts a
+ * successor, a roster switch, a new draft). An untouched field must not write that stale copy
+ * back over the session on screen, because busy state, Stop, roster matching and context
+ * numbers all key on settings.sessionId. Only a value the user typed replaces it.
+ */
+export function sessionIdForSave({ typed = '', synced, viewed = '', fallback = '' } = {}) {
+  const value = String(typed ?? '').trim();
+  const untouched = typeof synced === 'string' && value === synced.trim();
+  if (untouched) return String(viewed ?? '').trim() || fallback;
+  return value || fallback;
+}
