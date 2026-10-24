@@ -84,7 +84,11 @@ export function renderProjectsPanel({ container, controller, t, locale = 'en', n
   // A new answer (the live-turn question, the move result) is scrolled into view.
   const stepChanged = previousStep !== step && (step === 'result' || step === 'confirm-live');
   if (stepChanged) container.scrollTop = 0;
-  let target = focusKey && !stepChanged ? container.querySelector(`[data-fk="${focusKey}"]`) : null;
+  // Compared as text, never spliced into a selector: a project id is a gateway path and may
+  // hold quotes, brackets or a trailing backslash.
+  let target = focusKey && !stepChanged
+    ? [...container.querySelectorAll('[data-fk]')].find((node) => node.getAttribute('data-fk') === focusKey) || null
+    : null;
   if (!target && (previousView !== state.view || stepChanged)) target = container.querySelector('[data-autofocus]');
   if (target && typeof target.focus === 'function') {
     target.focus({ preventScroll: false });
