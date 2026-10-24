@@ -5608,7 +5608,7 @@
     "description": "Runtime interface message ui.manual"
   },
   "runtime_ui_manual_setup": {
-    "message": "स्वतः व्यवस्था",
+    "message": "मैन्युअल सेटअप",
     "description": "Runtime interface message ui.manual.setup"
   },
   "runtime_ui_manual_setup_required": {

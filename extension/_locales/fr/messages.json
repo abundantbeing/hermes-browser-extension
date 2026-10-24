@@ -4232,11 +4232,11 @@
     "description": "Runtime interface message ui.connected.to.hermes.you.can.start.chatting.with.page.context"
   },
   "runtime_ui_connecting": {
-    "message": "De liaison...",
+    "message": "Connexion...",
     "description": "Runtime interface message ui.connecting"
   },
   "runtime_ui_connecting_c1f3b71f": {
-    "message": "De liaison",
+    "message": "Connexion",
     "description": "Runtime interface message ui.connecting.c1f3b71f"
   },
   "runtime_ui_connection": {
