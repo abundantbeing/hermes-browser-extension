@@ -621,6 +621,16 @@ export function createBrowserControlExecutor({
           state.snapshot_error = 'snapshot_timeout';
           return state;
         }
+        // The page was judged before the debugger attached and the page settled, so it can have moved to a
+        // restricted address since. The address the snapshot was read under decides, and a restricted one
+        // discards everything read.
+        if (restrictedPageUrl(raw?.url, allowLocalDocuments)) {
+          state.snapshot_error = 'restricted_page';
+          state.url = safeResultUrl(pageOrigin(raw.url));
+          delete state.title;
+          refs.invalidateTab(scope.tabId);
+          return state;
+        }
         // The generation may have moved while the snapshot ran; refs must be
         // minted under the one the next command will carry.
         const mintGeneration = readDocumentGeneration(generation);
@@ -975,6 +985,12 @@ export function createBrowserControlExecutor({
       }
 
       if (action === 'browser_snapshot') {
+        // Same as after an action: the page was judged before it was read, and the address it was read
+        // under decides. A page that became restricted meanwhile is dropped, not described.
+        if (restrictedPageUrl(value?.url, Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments))) {
+          refs.invalidateTab(scope.tabId);
+          return errorOutcome('sensitive_action_blocked', 'The page moved to one Hermes will not read, so nothing was read from it.');
+        }
         const full = args.full === true;
         const minted = refs.replace({ ...scope, nodes: Array.isArray(value?.nodes) ? value.nodes : [] });
         if (!minted.ok) return errorOutcome(minted.error, 'Could not bind snapshot refs.');
