@@ -2383,6 +2383,26 @@
     "message": "เลือกธีม",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_onboarding_welcome_body": {
+    "message": "มาตั้งค่ากันเลย ใช้เวลาประมาณหนึ่งนาที",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "ยินดีต้อนรับ",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "ข้ามการตั้งค่า",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "เริ่มต้นใช้งาน",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "ยินดีต้อนรับสู่ Hermes Browser",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
   "runtime_pairing_approve_below": {
     "message": "อนุมัติการเชื่อมต่อด้านล่าง",
     "description": "Runtime interface message pairing.approve_below"

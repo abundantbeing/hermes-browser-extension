@@ -2383,6 +2383,26 @@
     "message": "थीम चुनें",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_onboarding_welcome_body": {
+    "message": "चलिए इसे सेट करते हैं। इसमें लगभग एक मिनट लगेगा।",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "स्वागत है",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "सेटअप छोड़ें",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "शुरू करें",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "Hermes Browser में आपका स्वागत है",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
   "runtime_pairing_approve_below": {
     "message": "नीचे दिए गए कनेक्शन को स्वीकृत करें।",
     "description": "Runtime interface message pairing.approve_below"

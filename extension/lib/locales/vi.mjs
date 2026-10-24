@@ -1932,4 +1932,9 @@ export default Object.freeze({
   "onboarding.language.title": "Chọn ngôn ngữ của bạn",
   "onboarding.language.body": "Hermes Browser sẽ dùng ngôn ngữ này ở mọi nơi. Bạn có thể đổi sau trong phần Cài đặt.",
   "onboarding.language.body_suggested": "Gợi ý từ trình duyệt của bạn: {language}. Chọn ngôn ngữ khác nếu bạn muốn; bạn có thể đổi sau trong phần Cài đặt.",
+  "onboarding.welcome.title": "Chào mừng bạn đến với Hermes Browser",
+  "onboarding.welcome.body": "Hãy cùng thiết lập. Chỉ mất khoảng một phút.",
+  "onboarding.welcome.greeting": "Chào mừng",
+  "onboarding.welcome.start": "Bắt đầu",
+  "onboarding.welcome.skip": "Bỏ qua thiết lập",
 });

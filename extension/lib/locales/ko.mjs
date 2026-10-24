@@ -1932,4 +1932,9 @@ export default Object.freeze({
   "onboarding.language.title": "언어를 선택하세요",
   "onboarding.language.body": "Hermes Browser가 모든 화면에서 이 언어를 사용합니다. 나중에 설정에서 변경할 수 있습니다.",
   "onboarding.language.body_suggested": "브라우저 설정에 따른 추천 언어: {language}. 원하면 다른 언어를 선택하세요. 나중에 설정에서 변경할 수 있습니다.",
+  "onboarding.welcome.title": "Hermes Browser에 오신 것을 환영합니다",
+  "onboarding.welcome.body": "지금 설정해 볼까요? 1분 정도 걸립니다.",
+  "onboarding.welcome.greeting": "환영합니다",
+  "onboarding.welcome.start": "시작하기",
+  "onboarding.welcome.skip": "설정 건너뛰기",
 });

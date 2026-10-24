@@ -1932,4 +1932,9 @@ export default Object.freeze({
   "onboarding.language.title": "Dilinizi seçin",
   "onboarding.language.body": "Hermes Browser bu dili her yerde kullanır. Daha sonra Ayarlar'dan değiştirebilirsiniz.",
   "onboarding.language.body_suggested": "Tarayıcınıza göre önerilen: {language}. İsterseniz başka bir dil seçin; daha sonra Ayarlar'dan değiştirebilirsiniz.",
+  "onboarding.welcome.title": "Hermes Browser'a hoş geldiniz",
+  "onboarding.welcome.body": "Birlikte kuralım. Yaklaşık bir dakika sürer.",
+  "onboarding.welcome.greeting": "Hoş geldiniz",
+  "onboarding.welcome.start": "Başlayın",
+  "onboarding.welcome.skip": "Kurulumu atla",
 });

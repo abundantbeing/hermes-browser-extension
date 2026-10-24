@@ -1931,4 +1931,9 @@ export default Object.freeze({
   "onboarding.language.title": "选择您的语言",
   "onboarding.language.body": "Hermes Browser 会在所有界面使用该语言。您可以稍后在设置中更改。",
   "onboarding.language.body_suggested": "根据您的浏览器推荐：{language}。如需使用其他语言，请在下方选择；您可以稍后在设置中更改。",
+  "onboarding.welcome.title": "欢迎使用 Hermes Browser",
+  "onboarding.welcome.body": "我们来设置一下，大约只需一分钟。",
+  "onboarding.welcome.greeting": "欢迎",
+  "onboarding.welcome.start": "开始使用",
+  "onboarding.welcome.skip": "跳过设置",
 });

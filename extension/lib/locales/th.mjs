@@ -1932,4 +1932,9 @@ export default Object.freeze({
   "onboarding.language.title": "เลือกภาษาของคุณ",
   "onboarding.language.body": "Hermes Browser จะใช้ภาษานี้ทุกที่ คุณเปลี่ยนภาษาได้ภายหลังในการตั้งค่า",
   "onboarding.language.body_suggested": "แนะนำจากเบราว์เซอร์ของคุณ: {language} เลือกภาษาอื่นได้ตามต้องการ และเปลี่ยนภายหลังได้ในการตั้งค่า",
+  "onboarding.welcome.title": "ยินดีต้อนรับสู่ Hermes Browser",
+  "onboarding.welcome.body": "มาตั้งค่ากันเลย ใช้เวลาประมาณหนึ่งนาที",
+  "onboarding.welcome.greeting": "ยินดีต้อนรับ",
+  "onboarding.welcome.start": "เริ่มต้นใช้งาน",
+  "onboarding.welcome.skip": "ข้ามการตั้งค่า",
 });

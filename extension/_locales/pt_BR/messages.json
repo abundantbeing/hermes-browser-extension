@@ -2383,6 +2383,26 @@
     "message": "Escolha um tema",
     "description": "Runtime interface message onboarding.theme.title"
   },
+  "runtime_onboarding_welcome_body": {
+    "message": "Vamos configurá-lo. Leva cerca de um minuto.",
+    "description": "Runtime interface message onboarding.welcome.body"
+  },
+  "runtime_onboarding_welcome_greeting": {
+    "message": "Bem-vindo",
+    "description": "Runtime interface message onboarding.welcome.greeting"
+  },
+  "runtime_onboarding_welcome_skip": {
+    "message": "Pular configuração",
+    "description": "Runtime interface message onboarding.welcome.skip"
+  },
+  "runtime_onboarding_welcome_start": {
+    "message": "Começar",
+    "description": "Runtime interface message onboarding.welcome.start"
+  },
+  "runtime_onboarding_welcome_title": {
+    "message": "Boas-vindas ao Hermes Browser",
+    "description": "Runtime interface message onboarding.welcome.title"
+  },
   "runtime_pairing_approve_below": {
     "message": "Aprove a conexão abaixo.",
     "description": "Runtime interface message pairing.approve_below"

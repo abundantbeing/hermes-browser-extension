@@ -1932,4 +1932,9 @@ export default Object.freeze({
   "onboarding.language.title": "Wählen Sie Ihre Sprache",
   "onboarding.language.body": "Hermes Browser verwendet sie überall. Sie können sie später in den Einstellungen ändern.",
   "onboarding.language.body_suggested": "Vorschlag Ihres Browsers: {language}. Wählen Sie eine andere, wenn Sie möchten; Sie können sie später in den Einstellungen ändern.",
+  "onboarding.welcome.title": "Willkommen bei Hermes Browser",
+  "onboarding.welcome.body": "Richten wir alles ein. Das dauert etwa eine Minute.",
+  "onboarding.welcome.greeting": "Willkommen",
+  "onboarding.welcome.start": "Los geht’s",
+  "onboarding.welcome.skip": "Einrichtung überspringen",
 });

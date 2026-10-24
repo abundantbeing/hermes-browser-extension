@@ -1932,4 +1932,9 @@ export default Object.freeze({
   "onboarding.language.title": "Pilih bahasa Anda",
   "onboarding.language.body": "Hermes Browser akan memakainya di mana-mana. Anda dapat mengubahnya nanti di Pengaturan.",
   "onboarding.language.body_suggested": "Disarankan dari browser Anda: {language}. Pilih bahasa lain jika Anda mau; Anda dapat mengubahnya nanti di Pengaturan.",
+  "onboarding.welcome.title": "Selamat datang di Hermes Browser",
+  "onboarding.welcome.body": "Mari kita siapkan. Hanya butuh sekitar satu menit.",
+  "onboarding.welcome.greeting": "Selamat datang",
+  "onboarding.welcome.start": "Mulai",
+  "onboarding.welcome.skip": "Lewati pengaturan",
 });
