@@ -165,11 +165,12 @@ function loadingBlock({ doc, t, text }) {
     h(doc, 'span', { text: text || t('projects.loading') }));
 }
 
-function backButton({ doc, t, controller, label }) {
+function backButton({ doc, t, controller, label, disabled = false }) {
   return h(doc, 'button', {
     type: 'button',
     class: 'projects-back',
     'data-fk': 'back',
+    disabled,
     onClick: () => controller.back(),
   }, h(doc, 'span', { 'aria-hidden': 'true', class: 'projects-back-arrow', text: '←' }), h(doc, 'span', { text: label }));
 }
@@ -448,7 +449,7 @@ function field({ doc, id, fk, label, value, error, disabled, autofocus, mono, hi
 function renderMove({ doc, state, controller, t }) {
   const move = state.move;
   const out = [
-    backButton({ doc, t, controller, label: t('projects.back') }),
+    backButton({ doc, t, controller, label: t('projects.back'), disabled: move.step === 'working' }),
     heading({ doc, text: t('projects.move.title'), fk: 'move-title', autofocus: true }),
     h(doc, 'div', { class: 'projects-move-session', title: move.session.title },
       h(doc, 'span', { class: 'projects-label', text: t('projects.move.session') }),

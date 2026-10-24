@@ -460,3 +460,97 @@ test('a lost move answer is reconciled by reading, never by a blind second write
   assert.equal(controller.state.move.outcome.status, 'moved', 'the write landed and was found by reading');
   assert.equal(events.moved.length, 1);
 });
+
+// A move that is in flight can outlive the view that started it: Back, a reopened drawer, another
+// session's Move pill. The gateway still commits it, so the panel must still learn about it.
+function gatedGateway(options) {
+  const gateway = fakeGateway(options);
+  const original = gateway.request;
+  let release = () => {};
+  const gate = new Promise((resolve) => { release = resolve; });
+  let started = () => {};
+  const mutateStarted = new Promise((resolve) => { started = resolve; });
+  let holdMutate = true;
+  gateway.request = async (method, params) => {
+    if (method === 'session.mutate' && holdMutate) {
+      holdMutate = false;
+      const receipt = await original(method, params);
+      started();
+      await gate;
+      return receipt;
+    }
+    return original(method, params);
+  };
+  return { gateway, release: () => release(), mutateStarted };
+}
+
+test('move: Back and a drawer reopen do nothing while a move is working', async () => {
+  const { gateway, release, mutateStarted } = gatedGateway();
+  const { controller, events } = harness({ gateway });
+  await controller.activate();
+  await controller.startMove({ id: 'S1', title: 'Fix login', cwd: '/srv/scratch' });
+  controller.chooseMoveTarget('p_a');
+  const done = controller.confirmMove();
+  await mutateStarted;
+  assert.equal(controller.state.move.step, 'working');
+  controller.back();
+  controller.resetView();
+  assert.equal(controller.state.view, 'move', 'the move view stays until the gateway answers');
+  assert.equal(controller.state.move.step, 'working');
+  release();
+  await done;
+  assert.equal(controller.state.move.outcome.status, 'moved');
+  assert.equal(events.moved.length, 1);
+});
+
+test('move: a committed result still reaches Recents and the caches when the view moved on', async () => {
+  const { gateway, release, mutateStarted } = gatedGateway();
+  const { controller, events } = harness({ gateway });
+  await controller.activate();
+  await controller.startMove({ id: 'S1', title: 'Fix login', cwd: '/srv/scratch' });
+  controller.chooseMoveTarget('p_a');
+  const done = controller.confirmMove();
+  await mutateStarted;
+  // Another session's Move pill (Recents) replaces the move view while the first is still committing.
+  await controller.startMove({ id: 'S2', title: 'Other', cwd: '/srv/scratch' });
+  const listCallsBefore = methods(gateway).filter((method) => method === 'projects.list').length;
+  release();
+  await done;
+  assert.deepEqual(events.moved, [{ sessionId: 'S1', cwd: '/srv/atlas', previousCwd: '/srv/scratch' }], 'Recents learns the new folder');
+  assert.ok(methods(gateway).filter((method) => method === 'projects.list').length > listCallsBefore, 'the project list is re-read');
+  assert.equal(controller.state.move.session.id, 'S2', 'the other session\'s move view is untouched');
+  assert.equal(controller.state.notice.key, 'projects.move.done');
+});
+
+test('move: an uncertain result is shown as a notice when the view moved on', async () => {
+  const gateway = fakeGateway();
+  const original = gateway.request;
+  let afterMutate = false;
+  let release = () => {};
+  const gate = new Promise((resolve) => { release = resolve; });
+  let started = () => {};
+  const mutateStarted = new Promise((resolve) => { started = resolve; });
+  gateway.request = async (method, params) => {
+    if (afterMutate) throw new Error('WebSocket is not open');
+    if (method === 'session.mutate') {
+      afterMutate = true;
+      await original(method, params);
+      started();
+      await gate;
+      throw new Error('WebSocket is not open');
+    }
+    return original(method, params);
+  };
+  const { controller, events } = harness({ gateway });
+  await controller.activate();
+  await controller.startMove({ id: 'S1', title: 'Fix login', cwd: '/srv/scratch' });
+  controller.chooseMoveTarget('p_a');
+  const done = controller.confirmMove();
+  await mutateStarted;
+  await controller.startMove({ id: 'S2', title: 'Other', cwd: '/srv/scratch' });
+  release();
+  await done;
+  assert.equal(events.moved.length, 0, 'nothing was confirmed');
+  assert.equal(controller.state.notice?.tone, 'error');
+  assert.equal(controller.state.notice?.key, 'projects.move.indeterminate');
+});

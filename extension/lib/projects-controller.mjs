@@ -29,6 +29,9 @@ import {
 
 const TREE_PREVIEW_LIMIT = 3;
 const PROJECT_SESSION_LIMIT = 200;
+// Results worth a notice when the move view is no longer on screen: the move
+// happened, or it may have (nothing else changed anything).
+const MOVE_NOTICE_STATUSES = new Set(['moved', 'indeterminate', 'conflict', 'unconfirmed']);
 
 function clean(value = '') {
   return String(value ?? '').trim();
@@ -250,6 +253,8 @@ export function createProjectsController({
   }
 
   function back() {
+    // A move that is being committed owns the view until the gateway answers.
+    if (state.move?.step === 'working') return;
     const returnTo = state.move?.returnTo || 'list';
     if (state.view === 'move') {
       state = { ...state, view: returnTo === 'project' && state.project ? 'project' : 'list', move: null, query: '' };
@@ -266,6 +271,7 @@ export function createProjectsController({
 
   /** Back to the project list with nothing half-open: used each time the drawer opens. */
   function resetView() {
+    if (state.move?.step === 'working') return;
     state = { ...state, view: 'list', project: null, create: null, move: null, notice: null, query: '' };
   }
 
@@ -448,22 +454,36 @@ export function createProjectsController({
     } catch (error) {
       result = { status: 'failed', reason: 'exception', message: clean(error?.message) };
     }
-    if (!stillCurrent(token) || state.view !== 'move' || state.move?.session.id !== move.session.id) return;
+    // The gateway decided this move whatever the drawer shows now (Back, a reopened
+    // drawer and another session's Move pill all replace the view). What this
+    // identity cached is stale either way, and while the identity is current the
+    // host and the lists must still hear about a committed move.
+    if (result.status === 'moved') current.client.invalidate();
+    if (!stillCurrent(token)) return;
     const outcome = describeMoveOutcome(result);
-    const step = outcome.confirmable ? 'confirm-live' : 'result';
-    state = {
-      ...state,
-      move: {
-        ...state.move,
-        step,
-        outcome: { ...outcome, destinationLabel: destination.label },
-        pending: result.pending || null,
-        session: result.status === 'moved' ? { ...state.move.session, cwd: result.cwd } : state.move.session,
-      },
-    };
-    emit();
+    const onMoveView = state.view === 'move' && state.move?.session.id === move.session.id;
+    if (onMoveView) {
+      const step = outcome.confirmable ? 'confirm-live' : 'result';
+      state = {
+        ...state,
+        move: {
+          ...state.move,
+          step,
+          outcome: { ...outcome, destinationLabel: destination.label },
+          pending: result.pending || null,
+          session: result.status === 'moved' ? { ...state.move.session, cwd: result.cwd } : state.move.session,
+        },
+      };
+      emit();
+    } else if (MOVE_NOTICE_STATUSES.has(result.status)) {
+      // Nobody is looking at the result: say what happened where the drawer is now.
+      state = {
+        ...state,
+        notice: { tone: outcome.tone === 'ok' ? 'ok' : 'error', key: outcome.key, params: outcome.params },
+      };
+      emit();
+    }
     if (result.status === 'moved') {
-      current.client.invalidate();
       try {
         onSessionMoved({ sessionId: move.session.id, cwd: result.cwd, previousCwd: result.previousCwd });
       } catch {
