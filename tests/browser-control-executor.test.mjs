@@ -482,3 +482,20 @@ test('Phase 6 keeps the stale_ref, navigation_failed and tab_hidden codes adapte
   failure = new Error('plain failure');
   assert.equal((await executor.execute(frame('browser_scroll', { direction: 'down' }), { scope })).error.code, 'command_error');
 });
+
+test('a screenshot the adapter withheld keeps its code: not_active_tab and restricted_page reach the model', async () => {
+  const { createBrowserControlExecutor } = await executorModule();
+  let failure = null;
+  const executor = createBrowserControlExecutor({
+    adapter: fullAdapter(async () => { throw failure; }),
+    approvals: createBrowserControlApprovalStore(),
+    refs: createBrowserControlRefStore(),
+    now: () => 5_000,
+  });
+  for (const code of ['not_active_tab', 'restricted_page']) {
+    failure = Object.assign(new Error(`withheld: ${code}`), { code });
+    const result = await executor.execute(frame('browser_screenshot'), { scope, leasedTabIds: [7] });
+    assert.equal(result.ok, false);
+    assert.equal(result.error.code, code);
+  }
+});

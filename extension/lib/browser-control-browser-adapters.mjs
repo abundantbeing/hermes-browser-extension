@@ -237,6 +237,15 @@ function hiddenScreenshotError() {
   );
 }
 
+// Firefox can only photograph the tab its window is showing. When the leased tab is not that
+// tab, a capture would be of someone else's page, so none is taken.
+function notActiveTabError() {
+  return codedError(
+    'not_active_tab',
+    "The leased tab is not the tab the window is showing, so a screenshot would capture a different page and was not taken. Ask the user to bring it to the front with Show tab in Hermes Control, then try again.",
+  );
+}
+
 // Rejects with makeError() when the promise has not settled in time. The
 // original promise is left to settle on its own.
 function withTimeout(promise, ms, makeError, setTimer, clearTimer) {
@@ -1831,8 +1840,19 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
     return response?.[0]?.result || {};
   }
 
+  // The leased tab, only when the window is showing it and its page is one Hermes may read.
+  async function visibleLeasedTab(tabId, allowLocalDocuments = false) {
+    const tab = await browserApi.tabs.get(tabId);
+    const shown = (await browserApi.tabs.query({ active: true, windowId: tab?.windowId }))?.[0];
+    if (!tab?.active || shown?.id !== tabId) throw notActiveTabError();
+    if (isRestrictedUrl(tab.url || '', { allowLocalDocuments })) {
+      throw codedError('restricted_page', 'This page is one Hermes will not capture.');
+    }
+    return tab;
+  }
+
   async function execute(action, args = {}, {
-    scope = {}, signal, leasedTabIds = [], ownedTabIds = [], currentWindowId = null,
+    scope = {}, signal, leasedTabIds = [], ownedTabIds = [], currentWindowId = null, allowLocalDocuments = false,
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Firefox adapter.`);
     assertNotAborted(signal);
@@ -1846,10 +1866,16 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
       return { status: 'navigated-back' };
     }
     if (action === 'browser_screenshot') {
-      const tab = await browserApi.tabs.get(tabId);
+      // captureVisibleTab photographs the WINDOW's active tab, whichever tab that is. The
+      // leased tab must be that tab, on a page Hermes may read, before and after the capture.
+      const before = await visibleLeasedTab(tabId, allowLocalDocuments);
       assertNotAborted(signal);
-      const dataUrl = await browserApi.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+      const dataUrl = await browserApi.tabs.captureVisibleTab(before.windowId, { format: 'png' });
       assertNotAborted(signal);
+      const after = await visibleLeasedTab(tabId, allowLocalDocuments).catch(() => null);
+      if (!after || after.url !== before.url) {
+        throw codedError('not_active_tab', 'The tab changed while the screenshot was taken, so it was discarded. Try again.');
+      }
       return boundedScreenshot(dataUrl);
     }
     if (action === 'browser_tabs') {

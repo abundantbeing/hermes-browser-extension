@@ -2460,3 +2460,89 @@ test('a failed hit test counts a page with a node that carries frame data, or a 
     { status: 'clicked' },
   );
 });
+
+// A Firefox window with the given tabs; query honours the active and windowId filters the
+// way the real API does, so a test can tell "the leased tab" from "the visible tab".
+function firefoxWindowApis(tabList) {
+  const base = firefoxApis();
+  const tabs = new Map(tabList.map((tab) => [tab.id, { ...tab }]));
+  base.api.tabs.get = async (tabId) => ({ ...tabs.get(tabId) });
+  base.api.tabs.query = async (filter = {}) => [...tabs.values()]
+    .filter((tab) => (filter.active === undefined || Boolean(tab.active) === filter.active)
+      && (filter.windowId === undefined || tab.windowId === filter.windowId))
+    .map((tab) => ({ ...tab }));
+  return { ...base, tabs };
+}
+
+test('Firefox screenshot refuses when the leased tab is not the tab the window shows', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  // The leased tab 8 sits in the background; tab 7 (someone's banking page) is visible.
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Bank', url: 'https://bank.example/home' },
+    { id: 8, windowId: 4, active: false, title: 'Leased', url: 'https://example.test/leased' },
+  ]);
+  await assert.rejects(
+    createFirefoxWebExtensionAdapter({ browserApi: api }).execute(
+      'browser_screenshot', {}, { scope: { tabId: 8, frameId: 0 }, signal: openSignal() },
+    ),
+    (error) => error?.code === 'not_active_tab' && /not the tab the window is showing/i.test(error.message),
+  );
+  assert.equal(calls.some((call) => call[0] === 'captureVisibleTab'), false, 'never captured the visible tab');
+});
+
+test('Firefox screenshot refuses when the window shows another tab than the one that says it is active', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Leased', url: 'https://example.test/a' },
+  ]);
+  // The leased tab reports active, but the window's active-tab query names another tab.
+  api.tabs.query = async () => [{ id: 9, windowId: 4, active: true, url: 'https://bank.example/home' }];
+  await assert.rejects(
+    createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope, signal: openSignal() }),
+    (error) => error?.code === 'not_active_tab',
+  );
+  assert.equal(calls.some((call) => call[0] === 'captureVisibleTab'), false);
+});
+
+test('Firefox screenshot refuses a restricted page and does not capture it', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Wallet', url: 'https://example.test/account/wallet' },
+  ]);
+  await assert.rejects(
+    createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope, signal: openSignal() }),
+    (error) => error?.code === 'restricted_page',
+  );
+  assert.equal(calls.some((call) => call[0] === 'captureVisibleTab'), false);
+});
+
+test('Firefox screenshot throws the capture away when the visible tab changed while it was taken', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  for (const change of [
+    (tabs) => { tabs.get(7).active = false; tabs.get(8).active = true; },
+    (tabs) => { tabs.get(7).url = 'https://example.test/checkout'; },
+  ]) {
+    const { api, tabs } = firefoxWindowApis([
+      { id: 7, windowId: 4, active: true, title: 'Leased', url: 'https://example.test/a' },
+      { id: 8, windowId: 4, active: false, title: 'Other', url: 'https://bank.example/home' },
+    ]);
+    api.tabs.captureVisibleTab = async () => { change(tabs); return 'data:image/png;base64,ZmFrZQ=='; };
+    await assert.rejects(
+      createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope, signal: openSignal() }),
+      (error) => error?.code === 'not_active_tab' || error?.code === 'restricted_page',
+    );
+  }
+});
+
+test('Firefox screenshot still captures the leased tab when it is the visible, readable one', async () => {
+  const { createFirefoxWebExtensionAdapter } = await adaptersModule();
+  const { api, calls } = firefoxWindowApis([
+    { id: 7, windowId: 4, active: true, title: 'Leased', url: 'https://example.test/a' },
+    { id: 8, windowId: 4, active: false, title: 'Other', url: 'https://other.test/' },
+  ]);
+  const shot = await createFirefoxWebExtensionAdapter({ browserApi: api }).execute(
+    'browser_screenshot', {}, { scope, signal: openSignal() },
+  );
+  assert.equal(shot.dataUrl, 'data:image/png;base64,ZmFrZQ==');
+  assert.deepEqual(calls.filter((call) => call[0] === 'captureVisibleTab'), [['captureVisibleTab', 4, { format: 'png' }]]);
+});
