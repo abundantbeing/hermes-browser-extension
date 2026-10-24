@@ -391,3 +391,45 @@ test("setup's scroll areas use the panel's own scrollbar, never the browser defa
   }
   assert.match(css, /\.onboarding \{[^}]*overflow: clip;/s, 'the screen itself never scrolls');
 });
+
+// Review finding 9: in a right-to-left locale the page turns the other way.
+test('in a right-to-left locale ArrowLeft goes forward and ArrowRight goes back', () => {
+  const { document, host, flow, window } = mountFlow();
+  document.documentElement.setAttribute('dir', 'rtl');
+  flow.open();
+  key(host.querySelector('.onboarding-title'), window, 'ArrowLeft');
+  assert.equal(flow.step, 'font', 'Left is forward in RTL');
+  key(host.querySelector('.onboarding-title'), window, 'ArrowRight');
+  assert.equal(flow.step, 'theme', 'Right is back in RTL');
+});
+
+test('in a right-to-left locale a swipe toward the right goes forward', () => {
+  const { document, host, flow, window } = mountFlow();
+  document.documentElement.setAttribute('dir', 'rtl');
+  flow.open();
+  const pointer = (type, x, y) => {
+    const event = new window.Event(type, { bubbles: true });
+    Object.assign(event, { clientX: x, clientY: y, isPrimary: true });
+    host.querySelector('.onboarding-stage').dispatchEvent(event);
+  };
+  pointer('pointerdown', 100, 200);
+  pointer('pointerup', 260, 205);
+  assert.equal(flow.step, 'font');
+  pointer('pointerdown', 300, 200);
+  pointer('pointerup', 180, 210);
+  assert.equal(flow.step, 'theme');
+});
+
+test('a left-to-right locale keeps the original directions', () => {
+  const { document, host, flow, window } = mountFlow();
+  document.documentElement.setAttribute('dir', 'ltr');
+  flow.open();
+  key(host.querySelector('.onboarding-title'), window, 'ArrowRight');
+  assert.equal(flow.step, 'font');
+});
+
+test('the Back and Next arrows are mirrored in right-to-left text', () => {
+  const css = fs.readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
+  assert.match(css, /html\[dir="rtl"\] \.onboarding \.onboarding-nav-button:not\(\.is-finish\) svg \{ transform: scaleX\(-1\); \}/);
+  assert.match(css, /html\[dir="rtl"\] \.onboarding \.onboarding-nav-button\[data-onboarding-back\]:hover svg \{ transform: translateX\(2px\) scaleX\(-1\); \}/);
+});

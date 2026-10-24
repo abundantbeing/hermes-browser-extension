@@ -10879,6 +10879,10 @@ html[data-hermes-mode="light"] .onboarding-logo {
 .onboarding .onboarding-nav-button[data-onboarding-back]:hover svg { transform: translateX(-2px); }
 .onboarding .onboarding-nav-button[data-onboarding-next]:hover svg { transform: translateX(2px); }
 .onboarding .onboarding-nav-next.is-finish:hover svg { transform: none; }
+/* Right-to-left: the arrows face the way the buttons now sit (Back on the right, Next on the left). */
+html[dir="rtl"] .onboarding .onboarding-nav-button:not(.is-finish) svg { transform: scaleX(-1); }
+html[dir="rtl"] .onboarding .onboarding-nav-button[data-onboarding-back]:hover svg { transform: translateX(2px) scaleX(-1); }
+html[dir="rtl"] .onboarding .onboarding-nav-button[data-onboarding-next]:not(.is-finish):hover svg { transform: translateX(-2px) scaleX(-1); }
 .onboarding-nav-button[data-tip]::after {
   content: attr(data-tip);
   position: absolute;

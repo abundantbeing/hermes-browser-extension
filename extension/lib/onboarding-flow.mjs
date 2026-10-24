@@ -504,6 +504,11 @@ export function createOnboardingFlow({
     return undefined;
   });
 
+  const isRtl = () => {
+    const direction = host?.closest?.('[dir]')?.getAttribute('dir') || host?.ownerDocument?.documentElement?.getAttribute('dir') || '';
+    return direction.toLowerCase() === 'rtl';
+  };
+
   // Radio groups keep their arrow keys; elsewhere Left and Right turn the
   // page. Tab stays inside the screen while it is up.
   host?.addEventListener('keydown', (event) => {
@@ -513,7 +518,9 @@ export function createOnboardingFlow({
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName || '') || target?.isContentEditable;
     if (!typing && (event.key === 'ArrowRight' || event.key === 'ArrowLeft') && !event.altKey && !event.ctrlKey && !event.metaKey) {
       event.preventDefault();
-      if (event.key === 'ArrowRight') next();
+      // The arrow that points toward the Next button: Right in left-to-right text, Left in right-to-left.
+      const forwardKey = isRtl() ? 'ArrowLeft' : 'ArrowRight';
+      if (event.key === forwardKey) next();
       else go(stepIndex - 1);
       return;
     }
@@ -543,7 +550,8 @@ export function createOnboardingFlow({
     const dy = event.clientY - swipe.y;
     swipe = null;
     if (Math.abs(dx) < SWIPE_DISTANCE || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-    if (dx < 0) next();
+    // Dragging toward the start of the line goes forward: left in LTR, right in RTL.
+    if (isRtl() ? dx > 0 : dx < 0) next();
     else go(stepIndex - 1);
   });
   host?.addEventListener('pointercancel', () => { swipe = null; });
