@@ -10867,8 +10867,6 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
   color: var(--startup-fg);
   border-color: var(--startup-fg);
 }
-.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button):hover:not(:disabled) { filter: brightness(1.12); }
-.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button):hover:not(:disabled) { filter: brightness(1.12); }
 .onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip):is(:dir(rtl), :lang(ar), :lang(he), :lang(fa), :lang(ur), :lang(hi), :lang(th), :lang(ja), :lang(ko), :lang(zh), :lang(ru), :lang(uk)) {
   letter-spacing: 0;
   text-transform: none;
@@ -10879,6 +10877,41 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
   .onboarding { --setup-button-size: calc(16px * var(--hermes-text-zoom, 1)); }
 }
 
+/* Hover and keyboard focus: the dither-glitch effect (lib/dither-hover.mjs).
+   The hover state itself is static and always correct: the button's colour pair
+   inverted (primary: fill and label swap; secondary: the setup's text colour
+   fills it). The module paints a canvas over the button for about 420ms that
+   fills that state in with a fine ordered dither from the pointer (from the
+   inline-start edge for the keyboard), tears sideways in a few short frames,
+   and settles into exactly this state. Without the module (reduced motion,
+   forced colours, touch, a wrapped label) this static state is all there is.
+   Hover only where a real pointer hovers; focus-visible everywhere. */
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button) { position: relative; }
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button):is(:focus-visible, :hover:not(:disabled)) {
+  background: var(--hermes-primary-fg, var(--hermes-paper));
+  color: var(--hermes-primary-bg, var(--hermes-ink));
+  border-color: var(--hermes-primary-bg, var(--hermes-ink));
+}
+.onboarding :is(.onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip):is(:focus-visible, :hover:not(:disabled)) {
+  background: var(--startup-fg);
+  color: var(--startup-bg, var(--hermes-paper));
+  border-color: var(--startup-fg);
+}
+@media (hover: none) {
+  .onboarding :is(.onboarding-welcome-start, .onboarding-connect-button):hover:not(:focus-visible) { background: var(--hermes-primary-bg, var(--hermes-ink)); color: var(--hermes-primary-fg, var(--hermes-paper)); border-color: var(--hermes-primary-fg, var(--hermes-paper)); }
+  .onboarding :is(.onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip):hover:not(:focus-visible) { background: transparent; color: var(--startup-fg); border-color: rgba(var(--startup-fg-rgb), 0.6); }
+}
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button):focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button):active { transform: translateY(1px); transition: none; }
+.dither-hover-canvas { position: absolute; z-index: 2; pointer-events: none; image-rendering: pixelated; }
+.onboarding [data-dither="run"] { color: transparent !important; background: transparent !important; border-color: transparent !important; transition: none !important; }
+.onboarding [data-dither="run"] svg { color: var(--dither-icon); }
+@media (forced-colors: active) {
+  .onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button) { background: ButtonFace; color: ButtonText; border-color: ButtonText; }
+  .onboarding :is(.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button):is(:focus-visible, :hover) { background: Highlight; color: HighlightText; border-color: HighlightText; }
+  .dither-hover-canvas { display: none; }
+  .onboarding [data-dither="run"] { color: ButtonText !important; background: ButtonFace !important; border-color: ButtonText !important; }
+}
 .onboarding-welcome-english { font-family: var(--hermes-font-ui, inherit); font-size: calc(9.5px * var(--hermes-text-zoom, 1)); font-weight: 400; line-height: 1.2; letter-spacing: 0; opacity: 0.72; text-transform: none; }
 
 /* Language step: every supported language by its own name, in a grid that

@@ -13,6 +13,7 @@ import { themePreviewForMode } from './appearance-themes.mjs';
 import { fontFamilyPreview } from './appearance-preferences.mjs';
 import { handleRadioCardKeydown, presentationCardsHtml, presentationOptionLabelKey } from './presentation-previews.mjs';
 import { contrastRatio, meanderGeometry } from './startup-screen.mjs';
+import { installDitherHover } from './dither-hover.mjs';
 
 export const ONBOARDING_STEPS = Object.freeze(['language', 'theme', 'font', 'style', 'layout', 'connect']);
 
@@ -644,6 +645,15 @@ export function createOnboardingFlow({
   function choose(select, value) {
     select(value);
     render();
+  }
+
+  // Hover and keyboard focus on the setup's buttons: a fine dither fill that
+  // tears a little and settles into the button's static hover state.
+  if (host) {
+    installDitherHover(host, {
+      selector: '.onboarding-welcome-start, .onboarding-connect-button, .onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button',
+      quietSelector: '.onboarding-welcome-skip, [data-onboarding-manual], .onboarding-skip, .onboarding-nav-button',
+    });
   }
 
   host?.addEventListener('click', (event) => {
