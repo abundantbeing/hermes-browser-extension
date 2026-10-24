@@ -1,5 +1,5 @@
 import { isRestrictedUrl } from './browser-context-protocol.mjs';
-import { isPasteShortcut, isSpaceActivation, isSubmissionKey, resolveKeyPress } from './browser-control-keys.mjs';
+import { isNavigationKey, isPasteShortcut, isSpaceActivation, isSubmissionKey, resolveKeyPress } from './browser-control-keys.mjs';
 
 export const BROWSER_CONTROL_RISKS = Object.freeze({
   SAFE: 'safe',
@@ -210,6 +210,11 @@ export function classifyBrowserControlAction({
     }
     if (isSubmissionKey(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'submission-key');
     if (isPasteShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'clipboard-paste');
+    // A key goes to whatever has focus. When that is an embedded frame, which the page can fill with a
+    // payment or sign-in form, anything that types or acts asks first; Hermes cannot judge the frame from here.
+    if (focused?.inFrame === true && !isNavigationKey(resolved)) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'framed-focus');
+    }
     // Space presses the focused button or toggles the focused control: judge it as that click.
     if (isSpaceActivation(resolved)) {
       if (!focused || typeof focused !== 'object') return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'activation-key');

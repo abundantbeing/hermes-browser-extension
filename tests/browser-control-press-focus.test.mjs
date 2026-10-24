@@ -127,3 +127,17 @@ test('inspect reports what has focus: role, name, input type and whether it is a
   const bare = await probeFor(null);
   assert.deepEqual(bare.focused, { role: '', name: '', inputType: '' });
 });
+
+test('typing while an embedded frame has focus waits for approval, and says why', async () => {
+  const { approvals, executor, presses } = pressFixture({ role: 'frame', name: 'Payment', inputType: '', inFrame: true });
+  const running = executor.execute(frame({ key: '4' }), { scope: SCOPE });
+  await settle();
+  const [shown] = approvals.pending();
+  assert.equal(shown.reason, 'Press this key inside an embedded frame on the page?');
+  assert.equal(presses(), 0);
+  approvals.cancelRequest(shown.approvalId);
+  await running;
+
+  const navigation = pressFixture({ role: 'frame', name: 'Payment', inputType: '', inFrame: true });
+  assert.equal((await navigation.executor.execute(frame({ key: 'Tab' }), { scope: SCOPE })).ok, true);
+});

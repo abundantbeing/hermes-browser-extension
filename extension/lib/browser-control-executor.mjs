@@ -73,6 +73,7 @@ const APPROVAL_MESSAGES = Object.freeze({
   'cross-origin-unsaved-content': 'Leave this page while unsaved content may be present?',
   'submission-key': 'Press Enter to submit the current form or message?',
   'activation-key': 'Press Space? It may activate whatever has focus on the page.',
+  'framed-focus': 'Press this key inside an embedded frame on the page?',
   'clipboard-paste': 'Paste your clipboard into this page?',
   'consequential-action': 'Run this consequential browser action?',
   'coordinate-click': 'Click these exact viewport coordinates?',

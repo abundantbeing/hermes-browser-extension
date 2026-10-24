@@ -381,3 +381,21 @@ test('Space presses whatever has focus, so it is judged as the click it is', asy
   assert.deepEqual(press(' ', undefined), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'activation-key' });
   assert.equal(press('Tab', undefined).risk, BROWSER_CONTROL_RISKS.SAFE);
 });
+
+test('a key that types or acts, pressed while an embedded frame has focus, asks first', async () => {
+  const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
+  const inFrame = { role: 'frame', name: 'Payment', inputType: '', inFrame: true };
+  const press = (args, focused = inFrame) => classifyBrowserControlAction({ action: 'browser_press', arguments: args, focused });
+
+  for (const args of [{ key: 'a' }, { key: '4' }, { key: 'Backspace' }, { key: 'Delete' }, { key: ' ' }, { key: 'Control+a' }, { key: 'Alt+ArrowLeft' }]) {
+    assert.deepEqual(press(args), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'framed-focus' }, JSON.stringify(args));
+  }
+  // Moving around, or leaving, writes nothing into the frame.
+  for (const key of ['Tab', 'Shift+Tab', 'Escape', 'ArrowDown', 'PageDown', 'Home', 'F5']) {
+    assert.equal(press({ key }).risk, BROWSER_CONTROL_RISKS.SAFE, key);
+  }
+  // Enter and paste keep their own reasons; focus outside a frame is as before.
+  assert.equal(press({ key: 'Enter' }).reason, 'submission-key');
+  assert.equal(press({ key: 'Control+v' }).reason, 'clipboard-paste');
+  assert.equal(press({ key: 'a' }, { role: 'textbox', name: 'Search', inputType: 'text' }).risk, BROWSER_CONTROL_RISKS.SAFE);
+});

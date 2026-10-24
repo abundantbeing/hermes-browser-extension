@@ -113,3 +113,14 @@ export function isSpaceActivation(resolved) {
   if (resolved.mask & 7) return false;
   return resolved.keyName === ' ' || resolved.codeName === 'space';
 }
+
+const NAVIGATION_KEYS = new Set([
+  'tab', 'escape', 'home', 'end', 'pageup', 'pagedown', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright',
+]);
+
+// Keys that only move focus or the viewport and write nothing: Tab, Escape, arrows, Home/End, Page keys and
+// function keys, without Ctrl, Alt or Meta (Shift is fine, as in Shift+Tab).
+export function isNavigationKey(resolved) {
+  if (resolved.mask & 7) return false;
+  return NAVIGATION_KEYS.has(resolved.keyName) || /^f([1-9]|1[0-2])$/.test(resolved.keyName);
+}
