@@ -289,7 +289,7 @@ test("the step's state: the suggestion, flagged as one, in its own language; the
 
 test('setup opens at the language step; first run suggests, a rerun or a stored choice preselects the saved language', () => {
   const open = fn('openOnboarding');
-  assert.match(open, /\{ step = 'language', includeConnect = !isConnected\(\), rerun = false \} = \{\}/);
+  assert.match(open, /\{ step = 'language', includeConnect = !isConnected\(\), rerun = false, welcome = false \} = \{\}/);
   assert.match(open, /\(rerun \|\| explicitLocaleStored\)\s*\? \{ suggested: getLocale\(\), picked: '', suggestionActive: false \}\s*: \{ suggested: browserLanguageSuggestion\(\), picked: '', suggestionActive: true \}/);
   assert.match(js, /els\.rerunOnboardingButton\?\.addEventListener\('click', \(\) => \{\s*closeSettingsDialog\(\);\s*openOnboarding\(\{ rerun: true \}\);/);
   assert.match(js, /onSelectLanguage: \(locale\) => chooseOnboardingLanguage\(locale\),\s*onLeaveStep: \(step\) => \{ if \(step === 'language'\) keepSuggestedOnboardingLanguage\(\); \}/);

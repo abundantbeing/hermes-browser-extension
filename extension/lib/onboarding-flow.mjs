@@ -1,5 +1,6 @@
-// First-run setup: language, theme and colour mode, font, response style, chat
-// layout, then Connect to Hermes last. It fills the whole side panel and continues the
+// First-run setup: a welcome screen (not a step: no count, no Back), then
+// language, theme and colour mode, font, response style, chat layout, then
+// Connect to Hermes last. It fills the whole side panel and continues the
 // startup screen's world: the Meander border (drawn as the setup's progress),
 // the logo small at the top, steps switching on like an old screen. A small
 // fake conversation at the top of every step shows each pick at once.
@@ -133,6 +134,9 @@ export function createOnboardingFlow({
   let stepIndex = 0;
   let open = false;
   let exiting = false;
+  // The welcome screen before the first step. It is not one of `steps`: the
+  // count and the progress start at the language step, and Back never returns.
+  let welcoming = false;
   let parts = null;
   let previewKey = '';
   let wasConnected = false;
@@ -183,6 +187,46 @@ export function createOnboardingFlow({
       body: language.copy?.body || t('onboarding.language.body'),
       english: selected === 'en' ? '' : (language.english?.title || ''),
     };
+  }
+
+  // The welcome reads before any language is chosen: in the one the browser
+  // suggests, with the English words beneath, and a row of "Welcome" in a few
+  // scripts as decoration (hidden from screen readers; the heading says it).
+  function welcomeView(state) {
+    const welcome = state.welcome || {};
+    const copy = welcome.copy || {};
+    const english = welcome.english || {};
+    const locale = copy.locale || state.language?.selected || 'en';
+    const known = languages.find((entry) => entry.id === locale);
+    return {
+      lang: locale,
+      dir: known?.direction === 'rtl' ? 'rtl' : 'ltr',
+      title: copy.title || t('onboarding.welcome.title'),
+      body: copy.body || t('onboarding.welcome.body'),
+      start: copy.start || t('onboarding.welcome.start'),
+      skip: copy.skip || t('onboarding.welcome.skip'),
+      showEnglish: locale !== 'en' && Boolean(english.title),
+      english,
+      greetings: Array.isArray(welcome.greetings) ? welcome.greetings : [],
+    };
+  }
+
+  function welcomeHtml(state) {
+    const view = welcomeView(state);
+    const sub = (text) => (view.showEnglish && text ? `<small class="onboarding-welcome-english" lang="en" dir="ltr">${escapeHtml(text)}</small>` : '');
+    const greetings = view.greetings.map((entry) => `<span lang="${escapeHtml(entry.lang)}" dir="${entry.dir === 'rtl' ? 'rtl' : 'ltr'}">${escapeHtml(entry.text)}</span>`).join('');
+    return `
+      <div class="onboarding-welcome">
+        ${greetings ? `<p class="onboarding-welcome-greetings" aria-hidden="true">${greetings}</p>` : ''}
+        <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.title)}</h2>
+        ${view.showEnglish ? `<p class="onboarding-title-english" lang="en" dir="ltr">${escapeHtml(view.english.title)}</p>` : ''}
+        <p class="onboarding-body" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.body)}</p>
+        ${view.showEnglish && view.english.body ? `<p class="onboarding-body onboarding-body-english" lang="en" dir="ltr">${escapeHtml(view.english.body)}</p>` : ''}
+        <div class="onboarding-welcome-actions">
+          <button type="button" class="onboarding-welcome-start" data-onboarding-start lang="${escapeHtml(view.lang)}" dir="${view.dir}"><span>${escapeHtml(view.start)}</span>${sub(view.english.start)}</button>
+          <button type="button" class="secondary onboarding-welcome-skip" data-onboarding-skip-setup lang="${escapeHtml(view.lang)}" dir="${view.dir}"><span>${escapeHtml(view.skip)}</span>${sub(view.english.skip)}</button>
+        </div>
+      </div>`;
   }
 
   function stepBody(step, state) {
@@ -272,6 +316,12 @@ export function createOnboardingFlow({
   }
 
   function renderMeta(step) {
+    if (welcoming) {
+      parts.progress.innerHTML = '';
+      parts.count.textContent = '';
+      host.dataset.step = 'welcome';
+      return;
+    }
     const total = steps.length;
     parts.progress.innerHTML = steps.map((_, index) => `<i class="${index === stepIndex ? 'active' : ''}${index < stepIndex ? ' done' : ''}"></i>`).join('');
     parts.count.textContent = t('onboarding.step_count', { current: stepIndex + 1, total });
@@ -291,6 +341,11 @@ export function createOnboardingFlow({
   }
 
   function renderNav(step, state) {
+    // The welcome has its own buttons; Back, Next, Skip and the count belong to the steps.
+    parts.nav.hidden = welcoming;
+    parts.skip.hidden = welcoming;
+    parts.count.hidden = welcoming;
+    if (welcoming) return;
     const last = stepIndex === steps.length - 1;
     const later = last && step === 'connect' && !state.connection?.connected;
     const nextLabel = !last ? t('onboarding.next') : later ? t('onboarding.connect.later') : t('onboarding.start');
@@ -318,6 +373,11 @@ export function createOnboardingFlow({
   }
 
   function renderStage(step, state) {
+    if (welcoming) {
+      parts.stage.dataset.step = 'welcome';
+      parts.stage.innerHTML = welcomeHtml(state);
+      return;
+    }
     if (step === 'connect' && approvalNode && parts.stage.dataset.step === 'connect' && parts.stage.contains(approvalNode)) {
       patchConnectStage(state);
       return;
@@ -343,7 +403,7 @@ export function createOnboardingFlow({
     const active = doc?.activeElement;
     if (!active || !host.contains(active)) return null;
     if (active.dataset?.radioKey) return { radio: active.dataset.radioKey };
-    for (const attribute of ['data-onboarding-next', 'data-onboarding-back', 'data-onboarding-skip', 'data-onboarding-connect', 'data-onboarding-manual']) {
+    for (const attribute of ['data-onboarding-next', 'data-onboarding-back', 'data-onboarding-skip', 'data-onboarding-connect', 'data-onboarding-manual', 'data-onboarding-start', 'data-onboarding-skip-setup']) {
       if (active.hasAttribute?.(attribute)) return { attribute };
     }
     return null;
@@ -417,7 +477,7 @@ export function createOnboardingFlow({
 
   // The border is the setup's progress: a step's share of the loop, and the
   // whole loop once setup is done.
-  function paintMeander(fraction = exiting ? 1 : (stepIndex + 1) / (steps.length + 1)) {
+  function paintMeander(fraction = exiting ? 1 : (welcoming ? 0.04 : (stepIndex + 1) / (steps.length + 1))) {
     if (!meanderParts) return;
     meanderParts.line.style.strokeDashoffset = (meanderParts.total * (1 - fraction)).toFixed(1);
   }
@@ -464,6 +524,7 @@ export function createOnboardingFlow({
         nav: host.querySelector('.onboarding-nav'),
         back: host.querySelector('[data-onboarding-back]'),
         next: host.querySelector('[data-onboarding-next]'),
+        skip: host.querySelector('[data-onboarding-skip]'),
         announce: host.querySelector('.onboarding-announce'),
         probe: host.querySelector('.onboarding-probe'),
       };
@@ -482,6 +543,10 @@ export function createOnboardingFlow({
 
   function announce() {
     if (!parts) return;
+    if (welcoming) {
+      parts.announce.textContent = welcomeView(getState() || {}).title;
+      return;
+    }
     parts.announce.textContent = `${t('onboarding.step_count', { current: stepIndex + 1, total: steps.length })}: ${t(`onboarding.${steps[stepIndex]}.title`)}`;
   }
 
@@ -493,7 +558,27 @@ export function createOnboardingFlow({
   }
 
   function focusTitle() {
+    // The welcome puts the keyboard on its one primary action.
+    if (welcoming) {
+      host?.querySelector('[data-onboarding-start]')?.focus({ preventScroll: true });
+      return;
+    }
     host?.querySelector('.onboarding-title')?.focus({ preventScroll: true });
+  }
+
+  // Welcome to the first step. Nothing is committed here: the language the
+  // welcome was drawn in is only a suggestion until the language step is left.
+  function startFromWelcome() {
+    if (!welcoming) return;
+    welcoming = false;
+    render();
+    if (parts) {
+      parts.stage.dataset.direction = 'next';
+      replay(parts.stage, 'is-switching');
+    }
+    announce();
+    focusTitle();
+    revealSelectedLanguage();
   }
 
   function go(index) {
@@ -533,6 +618,7 @@ export function createOnboardingFlow({
     if (!open || exiting) return;
     view().clearTimeout?.(connectedTimer);
     onLeaveStep(steps[stepIndex]);
+    welcoming = false;
     open = false;
     exiting = true;
     host.classList.add('is-finishing');
@@ -550,6 +636,7 @@ export function createOnboardingFlow({
   }
 
   function next() {
+    if (welcoming) return startFromWelcome();
     if (stepIndex === steps.length - 1) void finish(steps[stepIndex] === 'connect' && !getState()?.connection?.connected ? 'later' : 'done');
     else go(stepIndex + 1);
   }
@@ -563,6 +650,8 @@ export function createOnboardingFlow({
     const target = event.target?.closest?.('button');
     if (!open || exiting || !target || !host.contains(target)) return;
     const data = target.dataset;
+    if (target.hasAttribute('data-onboarding-start')) return startFromWelcome();
+    if (target.hasAttribute('data-onboarding-skip-setup')) return void finish('skip');
     if (data.onboardingLanguage) return choose(onSelectLanguage, data.onboardingLanguage);
     if (data.onboardingTheme) return choose(onSelectTheme, data.onboardingTheme);
     if (data.onboardingMode) return choose(onSelectMode, data.onboardingMode);
@@ -588,8 +677,9 @@ export function createOnboardingFlow({
     if (!open || exiting) return;
     if (handleRadioCardKeydown(event, host)) return;
     const target = event.target;
+    // Escape closes nothing here, and the arrows do not skip past the welcome.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(target?.tagName || '') || target?.isContentEditable;
-    if (!typing && (event.key === 'ArrowRight' || event.key === 'ArrowLeft') && !event.altKey && !event.ctrlKey && !event.metaKey) {
+    if (!typing && !welcoming && (event.key === 'ArrowRight' || event.key === 'ArrowLeft') && !event.altKey && !event.ctrlKey && !event.metaKey) {
       event.preventDefault();
       // The arrow that points toward the Next button: Right in left-to-right text, Left in right-to-left.
       const forwardKey = isRtl() ? 'ArrowLeft' : 'ArrowRight';
@@ -622,7 +712,7 @@ export function createOnboardingFlow({
     const dx = event.clientX - swipe.x;
     const dy = event.clientY - swipe.y;
     swipe = null;
-    if (Math.abs(dx) < SWIPE_DISTANCE || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    if (welcoming || Math.abs(dx) < SWIPE_DISTANCE || Math.abs(dy) > Math.abs(dx) * 0.6) return;
     // Dragging toward the start of the line goes forward: left in LTR, right in RTL.
     if (isRtl() ? dx > 0 : dx < 0) next();
     else go(stepIndex - 1);
@@ -637,11 +727,13 @@ export function createOnboardingFlow({
   return {
     get isOpen() { return open; },
     get isExiting() { return exiting; },
-    get step() { return steps[stepIndex]; },
+    get step() { return welcoming ? 'welcome' : steps[stepIndex]; },
+    get welcoming() { return welcoming; },
     get steps() { return [...steps]; },
-    open({ step = 'language', includeConnect = true, origin = null } = {}) {
+    open({ step = 'language', includeConnect = true, origin = null, welcome = false } = {}) {
       steps = onboardingSteps({ includeConnect });
       stepIndex = Math.max(0, steps.indexOf(step));
+      welcoming = Boolean(welcome);
       open = true;
       exiting = false;
       wasConnected = Boolean(getState()?.connection?.connected);

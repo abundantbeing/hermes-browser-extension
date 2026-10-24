@@ -16152,10 +16152,42 @@ function onboardingLanguageState() {
   };
 }
 
+// The welcome screen before the first step: drawn in the language the browser
+// suggests (no language is chosen yet), the English words beneath it, and
+// "Welcome" in a few scripts as decoration.
+function onboardingWelcomeState() {
+  const greetingLocales = ['en', 'ar', 'zh-CN', 'es', 'hi', 'ja'];
+  const locale = onboardingLanguage.picked || onboardingLanguage.suggested || getLocale();
+  const messages = localeMetadata(locale).messages;
+  const english = localeMetadata('en').messages;
+  const say = (catalog, key) => formatMessage(catalog[key] ?? english[key], {}, locale);
+  return {
+    copy: {
+      locale,
+      title: say(messages, 'onboarding.welcome.title'),
+      body: say(messages, 'onboarding.welcome.body'),
+      start: say(messages, 'onboarding.welcome.start'),
+      skip: say(messages, 'onboarding.welcome.skip'),
+    },
+    english: {
+      title: english['onboarding.welcome.title'],
+      body: english['onboarding.welcome.body'],
+      start: english['onboarding.welcome.start'],
+      skip: english['onboarding.welcome.skip'],
+    },
+    greetings: greetingLocales.map((id) => ({
+      lang: id,
+      dir: SUPPORTED_LOCALES.find((entry) => entry.id === id)?.direction === 'rtl' ? 'rtl' : 'ltr',
+      text: localeMetadata(id).messages['onboarding.welcome.greeting'] || english['onboarding.welcome.greeting'],
+    })),
+  };
+}
+
 function onboardingState() {
   const failed = Boolean(onboardingConnectFailure) && !isConnected();
   return {
     language: onboardingLanguageState(),
+    welcome: onboardingWelcomeState(),
     theme: normalizedPanelThemeId(settings.appearanceTheme),
     colorMode: normalizeColorMode(settings.colorMode),
     resolvedMode: resolvedColorMode(),
@@ -16278,12 +16310,13 @@ function maybeOpenOnboarding() {
   if (!startupReadinessSettled()) return;
   if (!shouldShowOnboarding({ completed: onboardingCompleted, legacyIntroSeen: browserIntroSeen, messageCount: messages.length })) return;
   if (!settings.responseStyle) void setResponsePresentation({ responseStyle: RESPONSE_STYLE_SETUP_DEFAULT });
-  openOnboarding();
+  // A first run opens on the welcome; a rerun from Settings goes straight to the language step.
+  openOnboarding({ welcome: true });
 }
 
 // A paired panel skips the Connect step. The logo flies up from the startup
 // screen when setup takes over from it.
-function openOnboarding({ step = 'language', includeConnect = !isConnected(), rerun = false } = {}) {
+function openOnboarding({ step = 'language', includeConnect = !isConnected(), rerun = false, welcome = false } = {}) {
   const flow = ensureOnboardingFlow();
   if (!flow) return;
   // A first run with no saved language preselects the browser's suggestion; a
@@ -16295,7 +16328,7 @@ function openOnboarding({ step = 'language', includeConnect = !isConnected(), re
   const origin = startupLogo?.getBoundingClientRect?.() || null;
   hideFirstPrompt();
   setOnboardingOpen(true);
-  flow.open({ step, includeConnect, origin });
+  flow.open({ step, includeConnect, origin, welcome });
 }
 
 // Finishing without a connection ("Connect later", or Skip) lets the panel

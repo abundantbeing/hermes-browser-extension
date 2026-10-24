@@ -10741,6 +10741,70 @@ html[data-hermes-mode="light"] .onboarding-logo {
 .onboarding-theme-grid .theme-card { aspect-ratio: 5 / 4; padding: 5px; }
 .onboarding .presentation-selected-hint { color: rgba(var(--startup-fg-rgb), 0.72); }
 
+/* Welcome: the screen before step one. The panel's own ink art (the gate, the
+   same mask the startup screen uses) comes up to full strength, a coarse
+   ordered-dither field rises from the bottom in the theme's ink, and the words
+   sit in the middle. The checker is a gradient (no image, no script), static
+   by default; only the row of greetings breathes, and not under reduced
+   motion. Nothing runs once the screen closes: it is just this markup. */
+.onboarding[data-step="welcome"]::before { opacity: 0.27; }
+html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacity: 0.16; }
+.onboarding[data-step="welcome"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: repeating-conic-gradient(var(--startup-fg) 0 25%, transparent 0 50%) 0 0 / 4px 4px;
+  -webkit-mask: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent 52%);
+  mask: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent 52%);
+  opacity: 0.1;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.onboarding[data-step="welcome"] .onboarding-preview { max-height: 0; visibility: hidden; }
+.onboarding[data-step="welcome"] .onboarding-stage { align-content: center; justify-items: center; }
+.onboarding-welcome {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  width: min(100%, 340px);
+  text-align: center;
+}
+.onboarding-welcome .onboarding-title { font-size: calc(34px * var(--hermes-text-zoom, 1)); }
+.onboarding-welcome .onboarding-title-english { margin: -4px 0 0; text-align: center; }
+.onboarding-welcome .onboarding-body { max-width: 30ch; }
+.onboarding-welcome .onboarding-body-english { margin-top: -6px; color: rgba(var(--startup-fg-rgb), 0.6); font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
+.onboarding-welcome-greetings {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  margin: 0 0 6px;
+  color: var(--startup-fg);
+  font-size: calc(13px * var(--hermes-text-zoom, 1));
+  line-height: 1.3;
+}
+.onboarding-welcome-greetings span { opacity: 0.55; animation: onboarding-greet 12s ease-in-out infinite; }
+.onboarding-welcome-greetings span:nth-child(2) { animation-delay: 2s; }
+.onboarding-welcome-greetings span:nth-child(3) { animation-delay: 4s; }
+.onboarding-welcome-greetings span:nth-child(4) { animation-delay: 6s; }
+.onboarding-welcome-greetings span:nth-child(5) { animation-delay: 8s; }
+.onboarding-welcome-greetings span:nth-child(6) { animation-delay: 10s; }
+@keyframes onboarding-greet { 0%, 70%, 100% { opacity: 0.55; } 8%, 24% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .onboarding-welcome-greetings span { animation: none; } }
+.onboarding-welcome-actions { display: grid; gap: 8px; width: 100%; margin-top: 10px; }
+.onboarding-welcome-actions button {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 8px 12px 6px;
+  text-align: center;
+}
+.onboarding-welcome-start { font: calc(16px * var(--hermes-text-zoom, 1))/1.1 var(--hermes-font-display); letter-spacing: 0.05em; }
+.onboarding-welcome-skip { border-color: rgba(var(--startup-fg-rgb), 0.4); font-size: calc(11px * var(--hermes-text-zoom, 1)); }
+.onboarding-welcome-english { font-family: var(--hermes-font-ui, inherit); font-size: calc(9.5px * var(--hermes-text-zoom, 1)); font-weight: 400; line-height: 1.2; letter-spacing: 0; opacity: 0.72; text-transform: none; }
+
 /* Language step: every supported language by its own name, in a grid that
    wraps long names instead of clipping them. Logical properties, so the check
    and the padding follow the reading direction. */

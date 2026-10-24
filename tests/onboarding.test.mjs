@@ -528,6 +528,7 @@ test("setup's Connect step is told about a failure and shows the reason, but nev
       els: { connectButton: { disabled: false, textContent: 'Connect to Hermes' }, connectStatus: { textContent: 'The pop-up line.' } },
       onboardingConnectFailure: '',
       onboardingLanguageState: () => ({}),
+      onboardingWelcomeState: () => ({}),
       ...patch,
       normalizedPanelThemeId: (value) => value,
       normalizeColorMode: (value) => value,
