@@ -95,7 +95,11 @@ export function handleRadioCardKeydown(event, root) {
   if (!card || !group) return false;
   const cards = [...group.querySelectorAll('[role="radio"][data-radio-key]')];
   const index = cards.indexOf(card);
-  const moves = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+  // Left and Right follow the reading direction: in right-to-left text the
+  // next card is the one on the left.
+  const direction = (group.closest('[dir]')?.getAttribute('dir') || group.ownerDocument?.documentElement?.getAttribute('dir') || '').toLowerCase();
+  const horizontal = direction === 'rtl' ? -1 : 1;
+  const moves = { ArrowRight: horizontal, ArrowDown: 1, ArrowLeft: -horizontal, ArrowUp: -1 };
   let next = null;
   if (event.key in moves) next = cards[(index + moves[event.key] + cards.length) % cards.length];
   else if (event.key === 'Home') next = cards[0];

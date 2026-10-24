@@ -8,7 +8,7 @@ import {
 
 import { getBrowserApi } from './browser-api.mjs';
 
-export { DEFAULT_LOCALE, localeDirection, normalizeLocale } from './i18n-registry.mjs';
+export { DEFAULT_LOCALE, localeDirection, matchSupportedLocale, normalizeLocale, suggestLocale } from './i18n-registry.mjs';
 
 export const LOCALE_STORAGE_KEY = 'hermesBrowserLocale';
 

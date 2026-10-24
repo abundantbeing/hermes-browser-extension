@@ -172,7 +172,8 @@ import {
   revealSlice,
   trailingNewMessages,
 } from './lib/completion-reveal.mjs';
-import { getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, t, translateUiText } from './lib/i18n.mjs';
+import { LOCALE_STORAGE_KEY, formatMessage, getLocale, initI18n, populateLanguageSelect, setLocale, subscribeLocale, suggestLocale, t, translateUiText } from './lib/i18n.mjs';
+import { SUPPORTED_LOCALES, localeMetadata } from './lib/i18n-registry.mjs';
 import {
   buildContextMenuTurn,
   contextMenuRequestMatchesTab,
@@ -1571,6 +1572,12 @@ let onboardingFlow = null;
 // Why the last Connect pressed inside setup failed ('' when it has not). Setup's
 // Connect step shows it inline; Settings opens only when the person asks.
 let onboardingConnectFailure = '';
+// Setup's language step. `suggested` is the browser's best match (or the saved
+// language on a rerun); `suggestionActive` while it is only a suggestion that
+// nothing has picked or kept yet; `picked` once a card was chosen. A stored
+// choice means the person (or an earlier run) already chose.
+let onboardingLanguage = { suggested: '', picked: '', suggestionActive: false };
+let explicitLocaleStored = false;
 // Setup ended without a connection: the startup screen steps aside for this
 // panel session instead of holding at "Not paired".
 let connectDeferred = false;
@@ -16120,9 +16127,35 @@ function renderEmptyState() {
   maybeOpenOnboarding();
 }
 
+// The language step's view of the world: the card in force (the browser's
+// suggestion until something is picked or kept), and the step's heading and
+// body drawn in that language with the heading repeated in English.
+function onboardingLanguageState() {
+  const current = getLocale();
+  const selected = onboardingLanguage.picked || onboardingLanguage.suggested || current;
+  const messages = localeMetadata(selected).messages;
+  const english = localeMetadata('en').messages;
+  const suggestion = onboardingLanguage.suggestionActive && !onboardingLanguage.picked;
+  const nativeName = SUPPORTED_LOCALES.find((entry) => entry.id === selected)?.nativeName || selected;
+  return {
+    current,
+    selected,
+    suggested: onboardingLanguage.suggested,
+    copy: {
+      locale: selected,
+      title: formatMessage(messages['onboarding.language.title'] ?? english['onboarding.language.title'], {}, selected),
+      body: suggestion
+        ? formatMessage(messages['onboarding.language.body_suggested'] ?? english['onboarding.language.body_suggested'], { language: nativeName }, selected)
+        : formatMessage(messages['onboarding.language.body'] ?? english['onboarding.language.body'], {}, selected),
+    },
+    english: { title: english['onboarding.language.title'] },
+  };
+}
+
 function onboardingState() {
   const failed = Boolean(onboardingConnectFailure) && !isConnected();
   return {
+    language: onboardingLanguageState(),
     theme: normalizedPanelThemeId(settings.appearanceTheme),
     colorMode: normalizeColorMode(settings.colorMode),
     resolvedMode: resolvedColorMode(),
@@ -16143,10 +16176,13 @@ function ensureOnboardingFlow() {
   onboardingFlow = createOnboardingFlow({
     host: els.onboardingFlow,
     themes: APPEARANCE_THEMES,
+    languages: SUPPORTED_LOCALES,
     translate: (key, values) => t(key, values),
     getState: onboardingState,
     renderReply: (style, text) => renderResponseSafe(text, { style, labels: adaptiveUiLabels(), streaming: false }),
     roleLabels: { user: 'user', assistant: assistantMessageRoleLabel() },
+    onSelectLanguage: (locale) => chooseOnboardingLanguage(locale),
+    onLeaveStep: (step) => { if (step === 'language') keepSuggestedOnboardingLanguage(); },
     onSelectTheme: (theme) => {
       customThemeDeleteArmedId = '';
       themeFontPinned = false;
@@ -16175,6 +16211,37 @@ function ensureOnboardingFlow() {
     onExited: () => settlePanelAfterOnboarding(),
   });
   return onboardingFlow;
+}
+
+// A card in the language step: applied at once and live, through the same call
+// Settings > Language makes, so the whole panel (setup included) redraws in it,
+// the document direction follows, and the choice is saved.
+function chooseOnboardingLanguage(locale) {
+  onboardingLanguage = { ...onboardingLanguage, picked: locale, suggestionActive: false };
+  trackInstantSave('appearance', setLocale(locale)).catch((error) => {
+    console.warn('[Hermes Browser] Language change failed:', error);
+  });
+}
+
+// Leaving the language step (Next, or Skip on it) keeps the suggestion nobody
+// picked: it becomes the language, saved like a pick.
+function keepSuggestedOnboardingLanguage() {
+  if (!onboardingLanguage.suggestionActive) return;
+  const suggested = onboardingLanguage.suggested;
+  onboardingLanguage = { ...onboardingLanguage, picked: suggested, suggestionActive: false };
+  if (suggested && suggested !== getLocale()) {
+    trackInstantSave('appearance', setLocale(suggested)).catch((error) => {
+      console.warn('[Hermes Browser] Language change failed:', error);
+    });
+  }
+}
+
+// What the browser says its people read: its UI language, then the ordered
+// language list, falling back to English.
+function browserLanguageSuggestion() {
+  let ui = '';
+  try { ui = browserApi.i18n?.getUILanguage?.() || ''; } catch { ui = ''; }
+  return suggestLocale([ui, ...(globalThis.navigator?.languages || [])]);
 }
 
 // Setup picks one theme for both surfaces; afterwards each keeps its own
@@ -16216,9 +16283,14 @@ function maybeOpenOnboarding() {
 
 // A paired panel skips the Connect step. The logo flies up from the startup
 // screen when setup takes over from it.
-function openOnboarding({ step = 'theme', includeConnect = !isConnected() } = {}) {
+function openOnboarding({ step = 'language', includeConnect = !isConnected(), rerun = false } = {}) {
   const flow = ensureOnboardingFlow();
   if (!flow) return;
+  // A first run with no saved language preselects the browser's suggestion; a
+  // rerun, or a run after the language was already chosen, preselects theirs.
+  onboardingLanguage = (rerun || explicitLocaleStored)
+    ? { suggested: getLocale(), picked: '', suggestionActive: false }
+    : { suggested: browserLanguageSuggestion(), picked: '', suggestionActive: true };
   const startupLogo = els.startupScreen && !els.startupScreen.hidden ? els.startupScreen.querySelector('.startup-brand-icon') : null;
   const origin = startupLogo?.getBoundingClientRect?.() || null;
   hideFirstPrompt();
@@ -20280,7 +20352,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
   loadContextScopeForInstance();
   await refreshCustomThemeStore({ render: false });
   const messageKey = activeMessagesStorageKey(previousConversationScope);
-  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
+  const stored = await browserApi.storage.local.get(['hermesBrowserSettings', LOCALE_STORAGE_KEY, CONTEXT_CONSENT_STORAGE_KEY, messageKey, HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY, ONBOARDING_COMPLETED_STORAGE_KEY, TASK_STACKS_STORAGE_KEY, ROOM_EVENTS_STORAGE_KEY]);
   taskStackStore = stored[TASK_STACKS_STORAGE_KEY] && typeof stored[TASK_STACKS_STORAGE_KEY] === 'object'
     ? stored[TASK_STACKS_STORAGE_KEY]
     : {};
@@ -20289,6 +20361,7 @@ async function loadSettings({ restoreMessages = false } = {}) {
     : {};
   browserIntroSeen = stored[HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY] === true;
   onboardingCompleted = stored[ONBOARDING_COMPLETED_STORAGE_KEY] === true;
+  explicitLocaleStored = typeof stored[LOCALE_STORAGE_KEY] === 'string' && stored[LOCALE_STORAGE_KEY] !== '';
   onboardingStateLoaded = true;
   renderBrowserIntroVisibility();
   const migrateConnectionSchema = stored.hermesBrowserSettings?.connectionSchemaVersion !== DEFAULT_SETTINGS.connectionSchemaVersion;
@@ -26138,7 +26211,7 @@ function bindEvents() {
   els.messages?.addEventListener('click', handleAdaptiveUiClick);
   els.rerunOnboardingButton?.addEventListener('click', () => {
     closeSettingsDialog();
-    openOnboarding();
+    openOnboarding({ rerun: true });
   });
   els.firstPromptChip?.addEventListener('click', useFirstPrompt);
   els.composer?.addEventListener('submit', hideFirstPrompt, { capture: true });

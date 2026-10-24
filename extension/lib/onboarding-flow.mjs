@@ -1,5 +1,5 @@
-// First-run setup: theme and colour mode, font, response style, chat layout,
-// then Connect to Hermes last. It fills the whole side panel and continues the
+// First-run setup: language, theme and colour mode, font, response style, chat
+// layout, then Connect to Hermes last. It fills the whole side panel and continues the
 // startup screen's world: the Meander border (drawn as the setup's progress),
 // the logo small at the top, steps switching on like an old screen. A small
 // fake conversation at the top of every step shows each pick at once.
@@ -13,7 +13,7 @@ import { fontFamilyPreview } from './appearance-preferences.mjs';
 import { handleRadioCardKeydown, presentationCardsHtml, presentationOptionLabelKey } from './presentation-previews.mjs';
 import { contrastRatio, meanderGeometry } from './startup-screen.mjs';
 
-export const ONBOARDING_STEPS = Object.freeze(['theme', 'font', 'style', 'layout', 'connect']);
+export const ONBOARDING_STEPS = Object.freeze(['language', 'theme', 'font', 'style', 'layout', 'connect']);
 
 export function onboardingSteps({ includeConnect = true } = {}) {
   return includeConnect ? [...ONBOARDING_STEPS] : ONBOARDING_STEPS.filter((step) => step !== 'connect');
@@ -103,11 +103,18 @@ const CONNECTED_FINISH_MS = 1400;
 export function createOnboardingFlow({
   host,
   themes = [],
+  // The supported locales ({ id, nativeName, direction }) from the locale
+  // registry, the same list Settings > Language shows.
+  languages = [],
   fonts = ONBOARDING_FONTS,
   translate = (key) => key,
   getState = () => ({}),
   renderReply = (style, text) => `<p>${escapeHtml(text)}</p>`,
   roleLabels = { user: 'You', assistant: 'Hermes' },
+  onSelectLanguage = () => {},
+  // Called with the step's name just before setup leaves it (Next, Back or
+  // finishing), so a suggestion that was never picked can be kept.
+  onLeaveStep = () => {},
   onSelectTheme = () => {},
   onSelectMode = () => {},
   onSelectFont = () => {},
@@ -135,6 +142,8 @@ export function createOnboardingFlow({
   let approvalNode = null;
   let meanderSize = '';
   let meanderParts = null;
+  // The language the static shell (Skip, the nav's label) was last drawn in.
+  let shellLocale = '';
   const t = (key, values) => translate(key, values);
   const view = () => doc?.defaultView || globalThis;
 
@@ -159,7 +168,32 @@ export function createOnboardingFlow({
       <i class="onboarding-probe" hidden></i>`;
   }
 
+  // The language step reads before a choice: its heading and body come in the
+  // language that is about to be used (the browser's suggestion, or the one in
+  // force), with the heading repeated in English beneath it.
+  function languageView(state) {
+    const language = state.language || {};
+    const selected = language.selected || language.current || 'en';
+    const known = languages.find((entry) => entry.id === selected);
+    return {
+      selected,
+      lang: selected,
+      dir: known?.direction || 'ltr',
+      title: language.copy?.title || t('onboarding.language.title'),
+      body: language.copy?.body || t('onboarding.language.body'),
+      english: selected === 'en' ? '' : (language.english?.title || ''),
+    };
+  }
+
   function stepBody(step, state) {
+    if (step === 'language') {
+      const { selected } = languageView(state);
+      const cards = languages.map((entry) => {
+        const isSelected = entry.id === selected;
+        return `<button class="onboarding-language-card${isSelected ? ' selected' : ''}" type="button" role="radio" aria-checked="${isSelected}" tabindex="${isSelected ? 0 : -1}" lang="${escapeHtml(entry.id)}" dir="${entry.direction === 'rtl' ? 'rtl' : 'ltr'}" data-onboarding-language="${escapeHtml(entry.id)}" data-radio-key="language:${escapeHtml(entry.id)}"><span class="onboarding-language-name">${escapeHtml(entry.nativeName)}</span><span class="presentation-card-check" aria-hidden="true"></span></button>`;
+      }).join('');
+      return `<div class="onboarding-language-grid" role="radiogroup" aria-label="${escapeHtml(languageView(state).title)}">${cards}</div>`;
+    }
     if (step === 'theme') {
       const mode = state.resolvedMode === 'light' ? 'light' : 'dark';
       const modes = ONBOARDING_COLOR_MODES.map((option) => {
@@ -228,7 +262,7 @@ export function createOnboardingFlow({
 
   function renderPreview(state, { force = false } = {}) {
     if (!parts) return;
-    const key = JSON.stringify([state.theme, state.resolvedMode, state.fontProfile, state.responseStyle, state.messageLayout]);
+    const key = JSON.stringify([state.theme, state.resolvedMode, state.fontProfile, state.responseStyle, state.messageLayout, state.language?.current || '']);
     if (!force && key === previewKey) return;
     const repaint = previewKey && key !== previewKey;
     previewKey = key;
@@ -289,6 +323,15 @@ export function createOnboardingFlow({
       return;
     }
     parts.stage.dataset.step = step;
+    if (step === 'language') {
+      const view = languageView(state);
+      parts.stage.innerHTML = `
+        <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.title)}</h2>
+        ${view.english ? `<p class="onboarding-title-english" lang="en" dir="ltr">${escapeHtml(view.english)}</p>` : ''}
+        <p class="onboarding-body" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.body)}</p>
+        ${stepBody(step, state)}`;
+      return;
+    }
     parts.stage.innerHTML = `
       <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1">${escapeHtml(t(`onboarding.${step}.title`))}</h2>
       <p class="onboarding-body">${escapeHtml(t(`onboarding.${step}.body`))}</p>
@@ -395,6 +438,20 @@ export function createOnboardingFlow({
       return;
     }
     host.hidden = false;
+    const state = getState() || {};
+    const keep = focusKey();
+    // A new language redraws the shell too: Skip and the nav's name were drawn
+    // once, in the old language.
+    const localeKey = String(state.language?.current || '');
+    if (parts && localeKey !== shellLocale) {
+      host.innerHTML = '';
+      parts = null;
+      meanderParts = null;
+      meanderSize = '';
+      previewKey = '';
+      paletteKey = '';
+    }
+    shellLocale = localeKey;
     if (!parts) {
       host.innerHTML = shellHtml();
       parts = {
@@ -412,8 +469,6 @@ export function createOnboardingFlow({
       };
     }
     const step = steps[stepIndex];
-    const state = getState() || {};
-    const keep = focusKey();
     host.classList.toggle('is-approving', Boolean(approvalNode) && step === 'connect');
     renderMeta(step);
     renderStage(step, state);
@@ -430,6 +485,13 @@ export function createOnboardingFlow({
     parts.announce.textContent = `${t('onboarding.step_count', { current: stepIndex + 1, total: steps.length })}: ${t(`onboarding.${steps[stepIndex]}.title`)}`;
   }
 
+  // The language list is long: arriving on the step brings the card in force
+  // (the suggestion, or the saved language) into view.
+  function revealSelectedLanguage() {
+    if (steps[stepIndex] !== 'language') return;
+    parts?.stage.querySelector('[role="radio"][aria-checked="true"]')?.scrollIntoView?.({ block: 'nearest' });
+  }
+
   function focusTitle() {
     host?.querySelector('.onboarding-title')?.focus({ preventScroll: true });
   }
@@ -438,6 +500,7 @@ export function createOnboardingFlow({
     const next = Math.max(0, Math.min(steps.length - 1, index));
     if (next === stepIndex) return;
     const direction = next > stepIndex ? 'next' : 'back';
+    onLeaveStep(steps[stepIndex]);
     stepIndex = next;
     render();
     if (parts) {
@@ -446,6 +509,7 @@ export function createOnboardingFlow({
     }
     announce();
     focusTitle();
+    revealSelectedLanguage();
   }
 
   // From the logo's place on the startup screen to its small place at the top.
@@ -468,6 +532,7 @@ export function createOnboardingFlow({
   async function finish(reason) {
     if (!open || exiting) return;
     view().clearTimeout?.(connectedTimer);
+    onLeaveStep(steps[stepIndex]);
     open = false;
     exiting = true;
     host.classList.add('is-finishing');
@@ -498,6 +563,7 @@ export function createOnboardingFlow({
     const target = event.target?.closest?.('button');
     if (!open || exiting || !target || !host.contains(target)) return;
     const data = target.dataset;
+    if (data.onboardingLanguage) return choose(onSelectLanguage, data.onboardingLanguage);
     if (data.onboardingTheme) return choose(onSelectTheme, data.onboardingTheme);
     if (data.onboardingMode) return choose(onSelectMode, data.onboardingMode);
     if (data.onboardingFont) return choose(onSelectFont, data.onboardingFont);
@@ -573,7 +639,7 @@ export function createOnboardingFlow({
     get isExiting() { return exiting; },
     get step() { return steps[stepIndex]; },
     get steps() { return [...steps]; },
-    open({ step = 'theme', includeConnect = true, origin = null } = {}) {
+    open({ step = 'language', includeConnect = true, origin = null } = {}) {
       steps = onboardingSteps({ includeConnect });
       stepIndex = Math.max(0, steps.indexOf(step));
       open = true;
@@ -584,6 +650,7 @@ export function createOnboardingFlow({
       flyLogo(origin);
       announce();
       focusTitle();
+      revealSelectedLanguage();
     },
     close() {
       view().clearTimeout?.(connectedTimer);

@@ -58,6 +58,10 @@ function mountFlow(overrides = {}) {
     wait: () => Promise.resolve(),
     ...overrides,
   });
+  // Most of these tests walk the steps after the language one, so the helper
+  // opens at Theme unless a test asks for a step.
+  const open = flow.open;
+  flow.open = (options = {}) => open({ step: 'theme', ...options });
   return { document, window, host, flow, state, calls };
 }
 
@@ -88,15 +92,13 @@ test('response style system notes: rich and vivid add nothing (Vivid rides in ea
   assert.match(responseStyleInstructions('plain'), /no Markdown/);
 });
 
-test('setup walks theme, font, style, layout and Connect last, applying each choice live', async () => {
+test('setup walks language, theme, font, style, layout and Connect last, applying each choice live', async () => {
   const { host, flow, calls, window } = mountFlow();
-  assert.deepEqual(ONBOARDING_STEPS, ['theme', 'font', 'style', 'layout', 'connect']);
+  assert.deepEqual(ONBOARDING_STEPS, ['language', 'theme', 'font', 'style', 'layout', 'connect']);
   assert.equal(host.hidden, true);
-  flow.open();
+  flow.open({ step: 'language' });
   assert.equal(host.hidden, false);
-  assert.equal(flow.step, 'theme');
-  assert.equal(host.querySelectorAll('[data-onboarding-theme]').length, 2);
-  assert.equal(host.querySelector('[data-onboarding-theme="nous"]').getAttribute('aria-checked'), 'true');
+  assert.equal(flow.step, 'language', 'language is the first step');
   assert.equal(host.querySelector('[data-onboarding-back]').hidden, true, 'no Back on the first step');
   assert.equal(host.querySelector('[data-onboarding-next]').getAttribute('aria-label'), 'onboarding.next');
   assert.equal(host.querySelector('[data-onboarding-next]').dataset.tip, 'onboarding.next', 'hover and focus say what it does');
@@ -105,6 +107,11 @@ test('setup walks theme, font, style, layout and Connect last, applying each cho
   assert.ok(host.querySelector('.onboarding-nav .onboarding-progress'), 'the progress sits between Back and Next');
   assert.ok(host.querySelector('[data-onboarding-skip]'), 'Skip on every step');
 
+  click(host.querySelector('[data-onboarding-next]'), window);
+  assert.equal(flow.step, 'theme');
+  assert.equal(host.querySelector('[data-onboarding-back]').hidden, false);
+  assert.equal(host.querySelectorAll('[data-onboarding-theme]').length, 2);
+  assert.equal(host.querySelector('[data-onboarding-theme="nous"]').getAttribute('aria-checked'), 'true');
   click(host.querySelector('[data-onboarding-theme="mono"]'), window);
   assert.deepEqual(calls.at(-1), ['theme', 'mono']);
   assert.equal(host.querySelector('[data-onboarding-theme="mono"]').getAttribute('aria-checked'), 'true');
@@ -160,7 +167,7 @@ test('an already paired panel skips the Connect step', async () => {
   const { host, flow, calls, window, state } = mountFlow();
   state.connection = { connected: true };
   flow.open({ includeConnect: false });
-  assert.deepEqual(flow.steps, ['theme', 'font', 'style', 'layout']);
+  assert.deepEqual(flow.steps, ['language', 'theme', 'font', 'style', 'layout']);
   assert.deepEqual(onboardingSteps({ includeConnect: false }), flow.steps);
   flow.open({ step: 'layout', includeConnect: false });
   assert.equal(host.querySelector('[data-onboarding-next]').getAttribute('aria-label'), 'onboarding.start');
@@ -309,7 +316,7 @@ test('side panel replaces the old first-run block with setup and offers it again
   assert.match(html, /id="rerunOnboardingButton"/);
   assert.doesNotMatch(js, /THE PAGE IS THE PROMPT/);
   assert.match(js, /ONBOARDING_COMPLETED_STORAGE_KEY/);
-  assert.match(js, /els\.rerunOnboardingButton\?\.addEventListener\('click'[\s\S]{0,120}openOnboarding\(\)/);
+  assert.match(js, /els\.rerunOnboardingButton\?\.addEventListener\('click'[\s\S]{0,120}openOnboarding\(\{ rerun: true \}\)/);
 });
 
 test('setup fills the panel after the startup screen settles, with no chat chrome under it', () => {
@@ -520,6 +527,7 @@ test("setup's Connect step is told about a failure and shows the reason, but nev
       settings: { appearanceTheme: 'nous', colorMode: 'dark', fontProfile: 'signature' },
       els: { connectButton: { disabled: false, textContent: 'Connect to Hermes' }, connectStatus: { textContent: 'The pop-up line.' } },
       onboardingConnectFailure: '',
+      onboardingLanguageState: () => ({}),
       ...patch,
       normalizedPanelThemeId: (value) => value,
       normalizeColorMode: (value) => value,

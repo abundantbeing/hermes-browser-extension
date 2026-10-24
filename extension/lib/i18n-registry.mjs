@@ -88,6 +88,32 @@ export function normalizeLocale(value) {
   return ALIAS_TO_ID.get(language) || DEFAULT_LOCALE;
 }
 
+// The supported locale a language tag names, or '' when none does (unlike
+// normalizeLocale, which falls back to English). Region and script subtags are
+// peeled off from the right until something matches, so zh-Hant-TW finds
+// zh-Hant (Traditional) before it would fall to zh.
+export function matchSupportedLocale(value) {
+  const canonical = canonicalCandidate(value);
+  if (!canonical) return '';
+  const parts = canonical.toLowerCase().split('-');
+  while (parts.length) {
+    const found = ALIAS_TO_ID.get(parts.join('-'));
+    if (found) return found;
+    parts.pop();
+  }
+  return '';
+}
+
+// The best supported locale for an ordered list of language tags (a browser's
+// UI language, then navigator.languages): the first that matches, else English.
+export function suggestLocale(candidates = []) {
+  for (const candidate of Array.isArray(candidates) ? candidates : [candidates]) {
+    const found = matchSupportedLocale(candidate);
+    if (found) return found;
+  }
+  return DEFAULT_LOCALE;
+}
+
 export function localeMetadata(value) {
   return LOCALE_BY_ID.get(normalizeLocale(value)) || LOCALE_BY_ID.get(DEFAULT_LOCALE);
 }
