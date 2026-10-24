@@ -41,6 +41,8 @@ export function createReplayWatermarks({
 } = {}) {
   // endpoint -> { epoch, marks: Map<sessionId, seq> }, least recently used first.
   const endpoints = new Map();
+  // Endpoints this page dropped: they must also leave the shared record when it is merged.
+  const removed = new Set();
   let timer = null;
 
   function touch(key, entry) {
@@ -56,10 +58,51 @@ export function createReplayWatermarks({
     }]));
   }
 
+  // Every panel of the browser shares one storage.session record. Writing this page's snapshot over
+  // it would drop the other panels' endpoints, so what is stored is read first and merged: other
+  // endpoints stay, and on the same endpoint and epoch the higher mark per session wins (a gateway's
+  // seq only grows within an epoch). A different epoch is a restarted gateway: this page's wins.
+  function mergeWithStored(stored, ours) {
+    const merged = new Map();
+    if (stored && typeof stored === 'object') {
+      for (const [key, entry] of Object.entries(stored)) {
+        const endpoint = clean(key);
+        const epoch = clean(entry?.epoch);
+        const marks = cleanMarks(entry?.watermarks, maxSessions);
+        if (!endpoint || !epoch || !marks.size || removed.has(endpoint)) continue;
+        merged.set(endpoint, { epoch, marks });
+      }
+    }
+    for (const [key, entry] of Object.entries(ours)) {
+      const prior = merged.get(key);
+      const marks = new Map();
+      if (prior && prior.epoch === entry.epoch) for (const [id, seq] of prior.marks) marks.set(id, seq);
+      for (const [id, seq] of Object.entries(entry.watermarks)) marks.set(id, Math.max(Number(seq), marks.get(id) || 0));
+      while (marks.size > maxSessions) marks.delete(marks.keys().next().value);
+      merged.delete(key);
+      merged.set(key, { epoch: entry.epoch, marks });
+    }
+    while (merged.size > maxEndpoints) merged.delete(merged.keys().next().value);
+    return Object.fromEntries([...merged].map(([key, entry]) => [key, { epoch: entry.epoch, watermarks: Object.fromEntries(entry.marks) }]));
+  }
+
+  async function persistMerged() {
+    let value = snapshot();
+    try {
+      value = mergeWithStored((await storage.get(storageKey))?.[storageKey], value);
+    } catch {
+      // Unreadable storage: write this page's own snapshot, as before.
+    }
+    await storage.set({ [storageKey]: value });
+    removed.clear();
+    return true;
+  }
+
   function persistNow() {
     timer = null;
     if (!storage?.set) return Promise.resolve(false);
     try {
+      if (storage.get) return persistMerged().catch(() => false);
       return Promise.resolve(storage.set({ [storageKey]: snapshot() })).then(() => true, () => false);
     } catch {
       return Promise.resolve(false);
@@ -88,9 +131,10 @@ export function createReplayWatermarks({
           const marks = cleanMarks(watermarks, maxSessions);
           const known = clean(epoch);
           if (!known || !marks.size) {
-            if (endpoints.delete(key)) schedulePersist();
+            if (endpoints.delete(key)) { removed.add(key); schedulePersist(); }
             return;
           }
+          removed.delete(key);
           touch(key, { epoch: known, marks });
           schedulePersist();
         },
@@ -120,7 +164,11 @@ export function createReplayWatermarks({
       return persistNow();
     },
     forget(endpoint) {
-      if (endpoints.delete(clean(endpoint))) schedulePersist();
+      const key = clean(endpoint);
+      // Even an endpoint this page never held may be in the shared record.
+      endpoints.delete(key);
+      removed.add(key);
+      schedulePersist();
     },
     get size() {
       return endpoints.size;

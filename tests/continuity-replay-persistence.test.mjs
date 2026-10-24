@@ -253,3 +253,64 @@ test('an attached view re-reads the run it follows instead', () => {
   assert.deepEqual(reloads, ['attach']);
   assert.equal(attach.historySeeded, false, 'the transcript is read again');
 });
+
+// ---------- review finding 10: panels share one storage.session record ----------
+
+function sharedArea() {
+  const area = {};
+  return {
+    area,
+    storage: {
+      get: async (key) => ({ [key]: area[key] === undefined ? undefined : JSON.parse(JSON.stringify(area[key])) }),
+      set: async (values) => { Object.assign(area, JSON.parse(JSON.stringify(values))); },
+    },
+  };
+}
+
+test('two panels writing the shared record do not drop each other\'s endpoints', async () => {
+  const { area, storage } = sharedArea();
+  const one = createReplayWatermarks({ storage });
+  const two = createReplayWatermarks({ storage });
+  one.forEndpoint('wss://one').save({ epoch: 'e1', watermarks: { a: 3 } });
+  two.forEndpoint('wss://two').save({ epoch: 'e2', watermarks: { b: 7 } });
+  await one.flush();
+  await two.flush();
+  assert.deepEqual(Object.keys(area.hermesReplayWatermarks).sort(), ['wss://one', 'wss://two']);
+});
+
+test('on the same endpoint and epoch the higher mark per session wins, whichever panel writes last', async () => {
+  const { area, storage } = sharedArea();
+  const one = createReplayWatermarks({ storage });
+  const two = createReplayWatermarks({ storage });
+  one.forEndpoint('wss://host').save({ epoch: 'e1', watermarks: { shared: 9, onlyOne: 2 } });
+  two.forEndpoint('wss://host').save({ epoch: 'e1', watermarks: { shared: 4, onlyTwo: 6 } });
+  await one.flush();
+  await two.flush();
+  assert.deepEqual(area.hermesReplayWatermarks['wss://host'], { epoch: 'e1', watermarks: { shared: 9, onlyOne: 2, onlyTwo: 6 } });
+});
+
+test('a newer epoch replaces the old marks, and a forgotten endpoint is removed from the shared record', async () => {
+  const { area, storage } = sharedArea();
+  const one = createReplayWatermarks({ storage });
+  one.forEndpoint('wss://host').save({ epoch: 'e1', watermarks: { s: 9 } });
+  one.forEndpoint('wss://gone').save({ epoch: 'e1', watermarks: { s: 1 } });
+  await one.flush();
+  const two = createReplayWatermarks({ storage });
+  two.forEndpoint('wss://host').save({ epoch: 'e2', watermarks: { s: 1 } });
+  two.forget('wss://gone');
+  await two.flush();
+  assert.deepEqual(area.hermesReplayWatermarks, { 'wss://host': { epoch: 'e2', watermarks: { s: 1 } } });
+});
+
+test('the merged record stays bounded', async () => {
+  const { area, storage } = sharedArea();
+  const one = createReplayWatermarks({ storage, maxEndpoints: 2, maxSessions: 3 });
+  for (const host of ['a', 'b']) one.forEndpoint(`wss://${host}`).save({ epoch: 'e', watermarks: { s1: 1, s2: 1, s3: 1 } });
+  await one.flush();
+  const two = createReplayWatermarks({ storage, maxEndpoints: 2, maxSessions: 3 });
+  two.forEndpoint('wss://c').save({ epoch: 'e', watermarks: { t1: 1, t2: 1, t3: 1 } });
+  two.forEndpoint('wss://a').save({ epoch: 'e', watermarks: { s4: 5 } });
+  await two.flush();
+  assert.ok(Object.keys(area.hermesReplayWatermarks).length <= 2);
+  for (const entry of Object.values(area.hermesReplayWatermarks)) assert.ok(Object.keys(entry.watermarks).length <= 3);
+});
