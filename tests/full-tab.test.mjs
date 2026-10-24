@@ -341,7 +341,7 @@ test('side-panel context chip stays compact while Settings owns accurate compact
   // button states the exact reason (REST-only, no authority, cached, ...).
   assert.match(render, /renderCompactControl\(\)/);
   const compactControl = js.match(/function renderCompactControl\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] || '';
-  assert.match(compactControl, /capabilityRuntime\.verdict\('sessionCompress'\)/);
+  assert.match(compactControl, /capabilityRuntime\.verdict\('sessionCompress', \{ sessionId: settings\.sessionId \}\)/);
   assert.match(compactControl, /contextCompactButton\.disabled\s*=\s*view\.disabled/);
   assert.doesNotMatch(compactControl, /contextCompactButton\.hidden\s*=\s*!/);
   assert.match(render, /Auto-compact trigger/);

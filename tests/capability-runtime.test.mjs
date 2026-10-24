@@ -186,3 +186,58 @@ test('a fresh success stands in for a stale REST advertisement', () => {
   assert.equal(runtime.verdict('sessionCompress').allowed, true);
   assert.equal(runtime.record('sessionCompress').source, 'operation-result');
 });
+
+test('a refusal for one session does not disable Compact for another session', () => {
+  const { runtime } = harness();
+  const caps = wsCaps();
+  runtime.sync({ caps, readyPayload: READY, identity: A, connectionToken: 's1', connected: true, dashboardWsActive: true });
+  runtime.noteOperation('sessionCompress', { ok: false, detail: 'compression_checkpoint_required' }, { sessionId: 'session-a' });
+  const a = runtime.verdict('sessionCompress', { sessionId: 'session-a' });
+  assert.equal(a.allowed, false);
+  assert.equal(a.state, 'blocked');
+  assert.match(a.reason, /compression_checkpoint_required/);
+  assert.equal(runtime.record('sessionCompress', { sessionId: 'session-a' }).state, 'blocked');
+  assert.equal(runtime.record('sessionCompress', { sessionId: 'session-a' }).params.route, 'canonical', 'the route still rides along');
+  assert.equal(runtime.verdict('sessionCompress', { sessionId: 'session-b' }).allowed, true, 'another session is not affected');
+  assert.equal(runtime.verdict('sessionCompress').allowed, true, 'the connection itself is not blocked');
+  assert.equal(runtime.record('sessionCompress').state, 'available');
+  assert.equal(runtime.rows(caps).find((row) => row.key === 'sessionCompress').state, 'available', 'the compatibility row describes the connection');
+});
+
+test('a session refusal outlives a re-sync but not a new socket, a new identity or that session succeeding', () => {
+  const { runtime } = harness();
+  const caps = wsCaps();
+  const sync = (token = 's1', identity = A) => runtime.sync({ caps, readyPayload: READY, identity, connectionToken: token, connected: true, dashboardWsActive: true });
+  sync();
+  runtime.noteOperation('sessionCompress', { ok: false, detail: 'permission_denied' }, { sessionId: 'session-a' });
+  sync();
+  assert.equal(runtime.verdict('sessionCompress', { sessionId: 'session-a' }).allowed, false);
+  runtime.noteOperation('sessionCompress', { ok: true }, { sessionId: 'session-a' });
+  assert.equal(runtime.verdict('sessionCompress', { sessionId: 'session-a' }).allowed, true, 'a success for that session lifts its refusal');
+  runtime.noteOperation('sessionCompress', { ok: false, detail: 'invalid_params' }, { sessionId: 'session-a' });
+  sync('s2');
+  assert.equal(runtime.verdict('sessionCompress', { sessionId: 'session-a' }).allowed, true, 'a new socket forgets it');
+  runtime.noteOperation('sessionCompress', { ok: false, detail: 'invalid_params' }, { sessionId: 'session-a' });
+  sync('s2', capabilityIdentity({ endpoint: 'http://127.0.0.1:9119', principal: 'me', profile: 'other' }));
+  assert.equal(runtime.verdict('sessionCompress', { sessionId: 'session-a' }).allowed, true, 'a new identity forgets it');
+});
+
+test('a session refusal never turns a stale or closed connection into permission', () => {
+  const { runtime } = harness();
+  const caps = wsCaps();
+  runtime.sync({ caps, readyPayload: READY, identity: A, connectionToken: 's1', connected: true, dashboardWsActive: true });
+  runtime.noteOperation('sessionCompress', { ok: false, detail: 'permission_denied' }, { sessionId: 'session-a' });
+  runtime.sync({ caps, readyPayload: READY, identity: A, connectionToken: 's1', connected: false, dashboardWsActive: true });
+  const closed = runtime.verdict('sessionCompress', { sessionId: 'session-b' });
+  assert.equal(closed.allowed, false);
+  assert.equal(closed.reasonCode, 'connection-closed', 'the connection fact wins over the session fact');
+  assert.equal(runtime.record('sessionCompress', { sessionId: 'session-a' }).state, 'cached');
+});
+
+test('session refusals are bounded', () => {
+  const { runtime } = harness();
+  runtime.sync({ caps: wsCaps(), readyPayload: READY, identity: A, connectionToken: 's1', connected: true, dashboardWsActive: true });
+  for (let i = 0; i < 200; i += 1) runtime.noteOperation('sessionCompress', { ok: false, detail: 'invalid_params' }, { sessionId: `s-${i}` });
+  assert.equal(runtime.verdict('sessionCompress', { sessionId: 's-199' }).allowed, false);
+  assert.equal(runtime.verdict('sessionCompress', { sessionId: 's-0' }).allowed, true, 'the oldest entries were dropped');
+});

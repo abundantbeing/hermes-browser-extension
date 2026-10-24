@@ -21684,14 +21684,15 @@ async function apiFetch(path, options = {}) {
 // not, the sentence under it is that record's exact reason.
 function renderCompactControl() {
   if (!els.contextCompactButton) return;
-  const verdict = capabilityRuntime.verdict('sessionCompress');
+  // A refusal belongs to the session that got it; the verdict is for the one on screen.
+  const verdict = capabilityRuntime.verdict('sessionCompress', { sessionId: settings.sessionId });
   const view = compactControlState({
     hasSession: Boolean(settings.sessionId),
     runActive: !canSwitchActiveSession({ sending, runControl: activeRunControl }),
     working: compactInFlight,
     recommended: compactRecommendedHint,
     verdict,
-    record: capabilityRuntime.record('sessionCompress'),
+    record: capabilityRuntime.record('sessionCompress', { sessionId: settings.sessionId }),
   }, { t, locale: getLocale() });
   if (els.contextControlRow) els.contextControlRow.hidden = false;
   if (els.contextControlStatus) els.contextControlStatus.textContent = view.status;
@@ -21765,7 +21766,9 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
 // session id is the key and survives compression (a rotating compaction moves
 // the physical target, never the id this panel holds), so nothing is renamed.
 async function compactCanonicalSessionContext({ automaticRecovery = false } = {}) {
-  const verdict = capabilityRuntime.verdict('sessionCompress');
+  // The session the press was for; the view may move on while the call runs.
+  const viewedId = settings.sessionId;
+  const verdict = capabilityRuntime.verdict('sessionCompress', { sessionId: viewedId });
   if (!verdict.allowed) {
     const message = compactResultMessage({ status: 'unavailable', reason: verdict.reasonCode, method: verdict.params?.method }, { t });
     if (!automaticRecovery) setStatus('warn', message.title, message.detail, { translateTitle: false, translateDetail: false });
@@ -21786,8 +21789,9 @@ async function compactCanonicalSessionContext({ automaticRecovery = false } = {}
       pending: compactPending && compactPending.sessionId === durableId ? compactPending : null,
     });
     compactPending = result.status === 'not_committed' ? result.pending : null;
-    if (result.status === 'compacted') capabilityRuntime.noteOperation('sessionCompress', { ok: true });
-    else if (result.status === 'blocked' || result.status === 'denied') capabilityRuntime.noteOperation('sessionCompress', { ok: false, detail: result.reason });
+    // A refusal is that session's, not the connection's: remember it per session.
+    if (result.status === 'compacted') capabilityRuntime.noteOperation('sessionCompress', { ok: true }, { sessionId: viewedId });
+    else if (result.status === 'blocked' || result.status === 'denied') capabilityRuntime.noteOperation('sessionCompress', { ok: false, detail: result.reason }, { sessionId: viewedId });
     refreshCapabilityViews();
     const message = compactResultMessage(result, { t });
     if (!automaticRecovery || result.status !== 'compacted') {
