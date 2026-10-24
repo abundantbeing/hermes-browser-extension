@@ -123,3 +123,17 @@ test('a chain of frames is readable only when every frame in it is', () => {
   assert.equal(frameChainReadable(null), false);
   assert.equal(frameChainReadable(['https://a.test/chat'], (url) => url.includes('chat')), false, 'the rule can be replaced');
 });
+
+// Frame.url from the browser leaves the fragment out (it comes separately as urlFragment), and
+// a single-page app keeps its whole route there. The restriction judges the address with both.
+test('a frame whose restriction is in the fragment is not read, and neither is anything it embeds', () => {
+  const withFragment = (id, url, urlFragment, childFrames) => ({ frame: { id, url, urlFragment }, ...(childFrames ? { childFrames } : {}) });
+  const frames = readableChildFrames(tree(
+    withFragment('PAY', 'https://pay.example/app', '#/checkout', [frame('INNER', 'https://widget.example/help')]),
+    withFragment('OK', 'https://pay.example/app', '#/help'),
+    withFragment('PLAIN', 'https://shop.example/product'),
+  ));
+  assert.deepEqual(ids(frames), ['OK', 'PLAIN']);
+  // The address kept for a listed frame is the one the browser reported, fragment not appended.
+  assert.deepEqual(frames[0], { id: 'OK', url: 'https://pay.example/app' });
+});

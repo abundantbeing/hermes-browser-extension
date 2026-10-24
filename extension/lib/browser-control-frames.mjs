@@ -42,9 +42,11 @@ export function frameChainReadable(urls, restricted = (value) => isRestrictedUrl
   return Array.isArray(urls) && urls.every((url) => frameUrlReadable(url, restricted));
 }
 
+// The browser reports a frame's address without its fragment (`urlFragment` carries it), and a single-page app
+// keeps its route there, so the restriction judges both, as it does when a command acts on a control in the frame.
 function frameAllowed(frame, restricted) {
   if (!frame?.id) return false;
-  return frameUrlReadable(frame.url, restricted);
+  return frameUrlReadable(`${frame.url || ''}${frame.urlFragment || ''}`, restricted);
 }
 
 /**
