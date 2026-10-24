@@ -211,12 +211,12 @@ test('Phase 2 redacts page text, element names, titles, and urls in every snapsh
   const adapter = pageAdapter({
     snapshot: () => ({
       title: `Keys ${secret}`,
-      url: `https://example.test/keys?access_token=${secret}`,
+      url: `https://example.test/keys/${secret}`,
       text: `Your api_key=${secret} is ready.\nSafe sentence.`,
       nodes: [{ role: 'button', name: `Copy ${secret}`, backendDOMNodeId: 5 }],
       headings: [{ level: 2, name: `Heading ${secret}` }],
     }),
-    settle: async () => ({ navigated: false, url: `https://example.test/keys?access_token=${secret}`, title: `Keys ${secret}`, timedOut: false }),
+    settle: async () => ({ navigated: false, url: `https://example.test/keys/${secret}`, title: `Keys ${secret}`, timedOut: false }),
   });
   const { executor } = makeExecutor(adapter);
   const snapshot = await executor.execute(frame('browser_snapshot'), { scope });
