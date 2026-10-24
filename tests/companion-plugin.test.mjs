@@ -83,7 +83,7 @@ test('__init__.py registers tools, hooks and bundled skill', () => {
   assert.ok(init.includes('browser_control_status'));
   assert.ok(init.includes('browser_text_utility'));
   assert.match(init, /ctx\.get_config\(/);
-  assert.match(init, /ctx\.state/);
+  assert.match(init, /getattr\(ctx, "state", None\)/);
   // Hooks
   assert.ok(init.includes('pre_llm_call'));
   assert.ok(init.includes('post_tool_call'));

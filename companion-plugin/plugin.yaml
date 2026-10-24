@@ -8,6 +8,17 @@ description: >-
   and exposes it to the agent via tools and lifecycle hooks. Fail-soft: when
   no browser context is available, all tools gracefully report unavailable.
 author: Iruzen (iruzen-dono)
+license: MIT
+homepage: https://github.com/abundantbeing/hermes-browser-extension
+tags: [browser, context]
+# Tested on the 0.22 runtime; a SemVer floor, never newer than a shipped release.
+requires_hermes: ">=0.22"
+
+# No privileged host surface is requested: the plugin registers its own
+# `browser_*` tools (it overrides no built-in tool), makes no host-owned LLM
+# call, acts on no chat platform and reads no credential. Declaring nothing
+# is the truthful `capabilities:` block, so the consent screen stays empty.
+capabilities: []
 
 provides_tools:
   - browser_context_status

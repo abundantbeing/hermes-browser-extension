@@ -26,16 +26,20 @@ def register(ctx) -> None:
     """Register companion plugin tools, hooks, and bundled skill."""
     durable_receipts = ctx.get_config("durable_receipts", default=True)
     receipt_limit = ctx.get_config("receipt_limit", default=8)
-    STORE.configure_durable_state(
-        ctx.state,
-        enabled=durable_receipts is True,
-        receipt_limit=receipt_limit,
-    )
+    # The live PluginContext always has `state`; the catalog validator's
+    # recording context does not, so a missing one means memory-only receipts.
+    state = getattr(ctx, "state", None)
+    if state is not None:
+        STORE.configure_durable_state(
+            state,
+            enabled=durable_receipts is True,
+            receipt_limit=receipt_limit,
+        )
     # Phase 8 Task 31: metadata-only rotation journal, persisted under the
     # plugin's profile-scoped data dir (mode 0600 where supported) when one
     # exists, memory-only otherwise.
     try:
-        data_dir = getattr(ctx.state, "data_dir", None)
+        data_dir = getattr(state, "data_dir", None)
     except Exception:
         data_dir = None
     STORE.configure_journal(data_dir)
