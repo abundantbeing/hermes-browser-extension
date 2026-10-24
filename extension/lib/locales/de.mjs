@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "In einem Tab öffnen",
   "pairing.frame_title": "Hermes-Verbindung genehmigen",
   "pairing.denied": "Die Kopplung wurde abgelehnt.",
+  "connect.title.local_api": "Lokaler Hermes-API-Server",
+  "connect.title.remote_api": "Remote-Hermes-API-Server",
+  "connect.title.remote_dashboard": "Remote-Hermes-Dashboard",
+  "connect.status.ready": "{title}. Klicken Sie auf „Mit Hermes verbinden“ oder verwenden Sie die manuelle Einrichtung.",
+  "connect.status.checking": "{title} unter {url} wird geprüft ...",
+  "connect.status.looking": "Suche nach {title} unter {url} ...",
+  "connect.status.failed": "{reason} Die manuelle Einrichtung steht weiterhin in den Einstellungen zur Verfügung.",
+  "connect.status.loopback_only": "Automatisches Pairing ist nur für ein lokales Gateway an der Loopback-Adresse verfügbar. Remote-API-Verbindungen erfordern eine ausdrücklich konfigurierte URL und ein Token; Dashboard-Verbindungen verwenden Trusted Dashboard Attach.",
+  "connect.status.degraded": "Mit Hermes verbunden, aber mit einer Laufzeitwarnung. {detail}",
 });

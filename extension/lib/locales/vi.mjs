@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Mở trong thẻ",
   "pairing.frame_title": "Phê duyệt kết nối Hermes",
   "pairing.denied": "Đã từ chối ghép nối.",
+  "connect.title.local_api": "Máy chủ API Hermes cục bộ",
+  "connect.title.remote_api": "Máy chủ API Hermes từ xa",
+  "connect.title.remote_dashboard": "Bảng điều khiển Hermes từ xa",
+  "connect.status.ready": "{title}. Nhấp vào Kết nối với Hermes hoặc dùng Thiết lập thủ công.",
+  "connect.status.checking": "Đang kiểm tra {title} tại {url}...",
+  "connect.status.looking": "Đang tìm {title} tại {url}...",
+  "connect.status.failed": "{reason} Vẫn có thể dùng thiết lập thủ công trong phần cài đặt.",
+  "connect.status.loopback_only": "Ghép nối tự động chỉ khả dụng cho cổng cục bộ ở địa chỉ loopback. Kết nối API từ xa cần URL và mã thông báo được cấu hình rõ ràng; kết nối bảng điều khiển dùng Trusted Dashboard Attach.",
+  "connect.status.degraded": "Đã kết nối với Hermes nhưng có cảnh báo thời gian chạy. {detail}",
 });

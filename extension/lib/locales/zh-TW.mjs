@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "在分頁中開啟",
   "pairing.frame_title": "核准 Hermes 連線",
   "pairing.denied": "配對已遭拒絕。",
+  "connect.title.local_api": "本機 Hermes API 伺服器",
+  "connect.title.remote_api": "遠端 Hermes API 伺服器",
+  "connect.title.remote_dashboard": "遠端 Hermes 儀表板",
+  "connect.status.ready": "{title}。請點選「連線到 Hermes」，或使用手動設定。",
+  "connect.status.checking": "正在檢查 {url} 的{title}...",
+  "connect.status.looking": "正在 {url} 尋找{title}...",
+  "connect.status.failed": "{reason} 仍可在設定中使用手動設定。",
+  "connect.status.loopback_only": "自動配對僅適用於迴路位址上的本機閘道。遠端 API 連線需要明確設定的 URL 和權杖；儀表板連線使用 Trusted Dashboard Attach。",
+  "connect.status.degraded": "已連線至 Hermes，但執行階段有警告。{detail}",
 });

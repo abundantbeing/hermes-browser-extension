@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "เปิดในแท็บ",
   "pairing.frame_title": "อนุมัติการเชื่อมต่อ Hermes",
   "pairing.denied": "การจับคู่ถูกปฏิเสธ",
+  "connect.title.local_api": "เซิร์ฟเวอร์ Hermes API ในเครื่อง",
+  "connect.title.remote_api": "เซิร์ฟเวอร์ Hermes API ระยะไกล",
+  "connect.title.remote_dashboard": "แดชบอร์ด Hermes ระยะไกล",
+  "connect.status.ready": "{title} คลิก “เชื่อมต่อกับ Hermes” หรือใช้การตั้งค่าด้วยตนเอง",
+  "connect.status.checking": "กำลังตรวจสอบ {title} ที่ {url}...",
+  "connect.status.looking": "กำลังค้นหา {title} ที่ {url}...",
+  "connect.status.failed": "{reason} ยังใช้การตั้งค่าด้วยตนเองได้ในหน้าการตั้งค่า",
+  "connect.status.loopback_only": "การจับคู่อัตโนมัติใช้ได้เฉพาะเกตเวย์ในเครื่องที่อยู่บนแอดเดรส loopback เท่านั้น การเชื่อมต่อ API ระยะไกลต้องใช้ URL และโทเค็นที่กำหนดค่าไว้อย่างชัดเจน ส่วนการเชื่อมต่อแดชบอร์ดใช้ Trusted Dashboard Attach",
+  "connect.status.degraded": "เชื่อมต่อกับ Hermes แล้ว แต่มีคำเตือนจากรันไทม์ {detail}",
 });

@@ -1919,4 +1919,13 @@ export default Object.freeze({
   "pairing.open_tab": "在标签页中打开",
   "pairing.frame_title": "批准 Hermes 连接",
   "pairing.denied": "配对已被拒绝。",
+  "connect.title.local_api": "本地 Hermes API 服务器",
+  "connect.title.remote_api": "远程 Hermes API 服务器",
+  "connect.title.remote_dashboard": "远程 Hermes 仪表板",
+  "connect.status.ready": "{title}。点击“连接到 Hermes”，或使用手动设置。",
+  "connect.status.checking": "正在检查 {url} 处的{title}...",
+  "connect.status.looking": "正在 {url} 查找{title}...",
+  "connect.status.failed": "{reason} 仍可在设置中使用手动设置。",
+  "connect.status.loopback_only": "自动配对仅适用于环回地址上的本地网关。远程 API 连接需要明确配置的 URL 和令牌；仪表板连接使用 Trusted Dashboard Attach。",
+  "connect.status.degraded": "已连接到 Hermes，但运行时有警告。{detail}",
 });

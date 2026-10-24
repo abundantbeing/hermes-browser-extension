@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Открыть во вкладке",
   "pairing.frame_title": "Подтвердить подключение к Hermes",
   "pairing.denied": "Сопряжение отклонено.",
+  "connect.title.local_api": "Локальный сервер Hermes API",
+  "connect.title.remote_api": "Удалённый сервер Hermes API",
+  "connect.title.remote_dashboard": "Удалённая панель Hermes",
+  "connect.status.ready": "{title}. Нажмите «Подключиться к Hermes» или используйте ручную настройку.",
+  "connect.status.checking": "Проверка {title} по адресу {url}...",
+  "connect.status.looking": "Поиск {title} по адресу {url}...",
+  "connect.status.failed": "{reason} Ручная настройка по-прежнему доступна в настройках.",
+  "connect.status.loopback_only": "Автоматическое сопряжение доступно только для локального шлюза на loopback-адресе. Для удалённых подключений API нужны явно заданные URL и токен; подключения к панели используют Trusted Dashboard Attach.",
+  "connect.status.degraded": "Подключено к Hermes, но есть предупреждение среды выполнения. {detail}",
 });

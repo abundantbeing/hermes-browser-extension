@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Openen in een tabblad",
   "pairing.frame_title": "Hermes-verbinding goedkeuren",
   "pairing.denied": "Koppelen is geweigerd.",
+  "connect.title.local_api": "Lokale Hermes API-server",
+  "connect.title.remote_api": "Externe Hermes API-server",
+  "connect.title.remote_dashboard": "Extern Hermes-dashboard",
+  "connect.status.ready": "{title}. Klik op Maak verbinding met Hermes of gebruik Handmatige installatie.",
+  "connect.status.checking": "{title} op {url} controleren...",
+  "connect.status.looking": "Zoeken naar {title} op {url}...",
+  "connect.status.failed": "{reason} Handmatige installatie is nog beschikbaar in de instellingen.",
+  "connect.status.loopback_only": "Automatisch koppelen is alleen beschikbaar voor een lokale gateway op het loopback-adres. Externe API-verbindingen vereisen een expliciet geconfigureerde URL en token; dashboardverbindingen gebruiken Trusted Dashboard Attach.",
+  "connect.status.degraded": "Verbonden met Hermes, met een runtimewaarschuwing. {detail}",
 });

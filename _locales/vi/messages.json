@@ -1663,6 +1663,42 @@
     "message": "để thiết lập thủ công.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "Đang kiểm tra {title} tại {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Đã kết nối với Hermes nhưng có cảnh báo thời gian chạy. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Vẫn có thể dùng thiết lập thủ công trong phần cài đặt.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Đang tìm {title} tại {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Ghép nối tự động chỉ khả dụng cho cổng cục bộ ở địa chỉ loopback. Kết nối API từ xa cần URL và mã thông báo được cấu hình rõ ràng; kết nối bảng điều khiển dùng Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Nhấp vào Kết nối với Hermes hoặc dùng Thiết lập thủ công.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Máy chủ API Hermes cục bộ",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Máy chủ API Hermes từ xa",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Bảng điều khiển Hermes từ xa",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "chưa được cấu hình",
     "description": "Runtime interface message connection.not_configured_short"

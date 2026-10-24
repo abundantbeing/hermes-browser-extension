@@ -1663,6 +1663,42 @@
     "message": "手動セットアップ用です。",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "{url} の {title} を確認しています...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Hermes に接続しましたが、ランタイムの警告があります。{detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} 手動セットアップは設定からいつでも利用できます。",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "{url} で {title} を探しています...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "自動ペアリングは、ループバックアドレス上のローカルゲートウェイでのみ利用できます。リモート API 接続には、明示的に設定した URL とトークンが必要です。ダッシュボード接続には Trusted Dashboard Attach を使用します。",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}。「Hermes に接続」をクリックするか、手動セットアップを使用してください。",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "ローカル Hermes API サーバー",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "リモート Hermes API サーバー",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "リモート Hermes ダッシュボード",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "未設定",
     "description": "Runtime interface message connection.not_configured_short"

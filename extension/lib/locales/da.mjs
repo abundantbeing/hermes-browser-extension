@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Åbn i en fane",
   "pairing.frame_title": "Godkend Hermes-forbindelsen",
   "pairing.denied": "Parringen blev afvist.",
+  "connect.title.local_api": "Lokal Hermes API-server",
+  "connect.title.remote_api": "Ekstern Hermes API-server",
+  "connect.title.remote_dashboard": "Eksternt Hermes-dashboard",
+  "connect.status.ready": "{title}. Klik på Opret forbindelse til Hermes, eller brug Manuel opsætning.",
+  "connect.status.checking": "Tjekker {title} på {url}...",
+  "connect.status.looking": "Leder efter {title} på {url}...",
+  "connect.status.failed": "{reason} Manuel opsætning er stadig tilgængelig i indstillingerne.",
+  "connect.status.loopback_only": "Automatisk parring er kun tilgængelig for en lokal gateway på loopback-adressen. Eksterne API-forbindelser kræver en eksplicit konfigureret URL og token, mens dashboard-forbindelser bruger Trusted Dashboard Attach.",
+  "connect.status.degraded": "Forbundet til Hermes med en advarsel fra kørselsmiljøet. {detail}",
 });

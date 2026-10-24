@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "टैब में खोलें",
   "pairing.frame_title": "Hermes कनेक्शन स्वीकृत करें",
   "pairing.denied": "पेयरिंग अस्वीकार कर दी गई।",
+  "connect.title.local_api": "स्थानीय Hermes API सर्वर",
+  "connect.title.remote_api": "रिमोट Hermes API सर्वर",
+  "connect.title.remote_dashboard": "रिमोट Hermes डैशबोर्ड",
+  "connect.status.ready": "{title}। “Hermes से कनेक्ट करें” पर क्लिक करें या मैन्युअल सेटअप का उपयोग करें।",
+  "connect.status.checking": "{url} पर {title} की जाँच हो रही है...",
+  "connect.status.looking": "{url} पर {title} खोजा जा रहा है...",
+  "connect.status.failed": "{reason} मैन्युअल सेटअप अब भी सेटिंग्स में उपलब्ध है।",
+  "connect.status.loopback_only": "स्वचालित पेयरिंग केवल loopback पते वाले स्थानीय गेटवे के लिए उपलब्ध है। रिमोट API कनेक्शन के लिए स्पष्ट रूप से कॉन्फ़िगर किया गया URL और टोकन ज़रूरी है; डैशबोर्ड कनेक्शन Trusted Dashboard Attach का उपयोग करते हैं।",
+  "connect.status.degraded": "Hermes से कनेक्ट है, लेकिन रनटाइम चेतावनी के साथ। {detail}",
 });

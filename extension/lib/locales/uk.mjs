@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Відкрити на вкладці",
   "pairing.frame_title": "Підтвердити підключення до Hermes",
   "pairing.denied": "Сполучення відхилено.",
+  "connect.title.local_api": "Локальний сервер Hermes API",
+  "connect.title.remote_api": "Віддалений сервер Hermes API",
+  "connect.title.remote_dashboard": "Віддалена панель Hermes",
+  "connect.status.ready": "{title}. Натисніть «Підключитися до Hermes» або скористайтеся налаштуванням вручну.",
+  "connect.status.checking": "Перевірка {title} за адресою {url}...",
+  "connect.status.looking": "Пошук {title} за адресою {url}...",
+  "connect.status.failed": "{reason} Налаштування вручну досі доступне в налаштуваннях.",
+  "connect.status.loopback_only": "Автоматичне сполучення доступне лише для локального шлюзу на loopback-адресі. Віддалені підключення API потребують явно налаштованих URL і токена; підключення до панелі використовують Trusted Dashboard Attach.",
+  "connect.status.degraded": "Підключено до Hermes, але є попередження середовища виконання. {detail}",
 });

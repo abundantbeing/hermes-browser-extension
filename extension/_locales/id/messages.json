@@ -1663,6 +1663,42 @@
     "message": "untuk pengaturan manual.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "Memeriksa {title} di {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Terhubung ke Hermes dengan peringatan runtime. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Pengaturan manual masih tersedia di pengaturan.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Mencari {title} di {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Pemasangan otomatis hanya tersedia untuk gateway lokal pada alamat loopback. Koneksi API jarak jauh memerlukan URL dan token yang dikonfigurasi secara eksplisit, sedangkan koneksi dasbor menggunakan Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Klik Hubungkan ke Hermes atau gunakan Pengaturan manual.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Server API Hermes lokal",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Server API Hermes jarak jauh",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Dasbor Hermes jarak jauh",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "belum dikonfigurasi",
     "description": "Runtime interface message connection.not_configured_short"

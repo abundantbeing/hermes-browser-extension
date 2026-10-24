@@ -1663,6 +1663,42 @@
     "message": "manuel kurulum için.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "{url} adresindeki {title} denetleniyor...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Hermes'e bağlanıldı, ancak çalışma zamanı uyarısı var. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Manuel kurulum ayarlarda hâlâ kullanılabilir.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "{url} adresinde {title} aranıyor...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Otomatik eşleştirme yalnızca loopback adresindeki yerel ağ geçidi için kullanılabilir. Uzak API bağlantıları açıkça yapılandırılmış bir URL ve belirteç gerektirir; kontrol paneli bağlantıları Trusted Dashboard Attach kullanır.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. “Hermes'e bağlanın” düğmesine tıklayın veya manuel kurulumu kullanın.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Yerel Hermes API sunucusu",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Uzak Hermes API sunucusu",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Uzak Hermes kontrol paneli",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "yapılandırılmadı",
     "description": "Runtime interface message connection.not_configured_short"

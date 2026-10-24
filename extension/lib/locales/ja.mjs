@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "タブで開く",
   "pairing.frame_title": "Hermes の接続を承認",
   "pairing.denied": "ペアリングが拒否されました。",
+  "connect.title.local_api": "ローカル Hermes API サーバー",
+  "connect.title.remote_api": "リモート Hermes API サーバー",
+  "connect.title.remote_dashboard": "リモート Hermes ダッシュボード",
+  "connect.status.ready": "{title}。「Hermes に接続」をクリックするか、手動セットアップを使用してください。",
+  "connect.status.checking": "{url} の {title} を確認しています...",
+  "connect.status.looking": "{url} で {title} を探しています...",
+  "connect.status.failed": "{reason} 手動セットアップは設定からいつでも利用できます。",
+  "connect.status.loopback_only": "自動ペアリングは、ループバックアドレス上のローカルゲートウェイでのみ利用できます。リモート API 接続には、明示的に設定した URL とトークンが必要です。ダッシュボード接続には Trusted Dashboard Attach を使用します。",
+  "connect.status.degraded": "Hermes に接続しましたが、ランタイムの警告があります。{detail}",
 });

@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Abrir em uma guia",
   "pairing.frame_title": "Aprovar a conexão com o Hermes",
   "pairing.denied": "O pareamento foi negado.",
+  "connect.title.local_api": "Servidor da API Hermes local",
+  "connect.title.remote_api": "Servidor da API Hermes remoto",
+  "connect.title.remote_dashboard": "Painel Hermes remoto",
+  "connect.status.ready": "{title}. Clique em Conectar ao Hermes ou use a configuração manual.",
+  "connect.status.checking": "Verificando {title} em {url}...",
+  "connect.status.looking": "Procurando {title} em {url}...",
+  "connect.status.failed": "{reason} A configuração manual continua disponível nas configurações.",
+  "connect.status.loopback_only": "O pareamento automático só está disponível para um gateway local no endereço de loopback. As conexões de API remota exigem uma URL e um token configurados explicitamente; as conexões do painel usam o Trusted Dashboard Attach.",
+  "connect.status.degraded": "Conectado ao Hermes com um aviso de execução. {detail}",
 });

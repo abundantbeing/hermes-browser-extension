@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "탭에서 열기",
   "pairing.frame_title": "Hermes 연결 승인",
   "pairing.denied": "페어링이 거부되었습니다.",
+  "connect.title.local_api": "로컬 Hermes API 서버",
+  "connect.title.remote_api": "원격 Hermes API 서버",
+  "connect.title.remote_dashboard": "원격 Hermes 대시보드",
+  "connect.status.ready": "{title}. 'Hermes에 연결'을 클릭하거나 수동 설정을 사용하세요.",
+  "connect.status.checking": "{url}에서 {title} 확인 중...",
+  "connect.status.looking": "{url}에서 {title} 찾는 중...",
+  "connect.status.failed": "{reason} 수동 설정은 설정에서 계속 사용할 수 있습니다.",
+  "connect.status.loopback_only": "자동 페어링은 루프백 주소의 로컬 게이트웨이에서만 사용할 수 있습니다. 원격 API 연결에는 명시적으로 구성한 URL과 토큰이 필요하며, 대시보드 연결은 Trusted Dashboard Attach를 사용합니다.",
+  "connect.status.degraded": "Hermes에 연결되었지만 런타임 경고가 있습니다. {detail}",
 });

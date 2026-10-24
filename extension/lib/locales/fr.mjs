@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Ouvrir dans un onglet",
   "pairing.frame_title": "Approuver la connexion à Hermes",
   "pairing.denied": "L'association a été refusée.",
+  "connect.title.local_api": "Serveur API Hermes local",
+  "connect.title.remote_api": "Serveur API Hermes distant",
+  "connect.title.remote_dashboard": "Tableau de bord Hermes distant",
+  "connect.status.ready": "{title}. Cliquez sur « Se connecter à Hermes » ou utilisez la configuration manuelle.",
+  "connect.status.checking": "Vérification de {title} à l'adresse {url}...",
+  "connect.status.looking": "Recherche de {title} à l'adresse {url}...",
+  "connect.status.failed": "{reason} La configuration manuelle reste disponible dans les paramètres.",
+  "connect.status.loopback_only": "L'appairage automatique n'est disponible que pour une passerelle locale sur l'adresse de bouclage (loopback). Les connexions API distantes exigent une URL et un jeton configurés explicitement ; les connexions au tableau de bord utilisent Trusted Dashboard Attach.",
+  "connect.status.degraded": "Connecté à Hermes avec un avertissement d'exécution. {detail}",
 });

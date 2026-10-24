@@ -1663,6 +1663,42 @@
     "message": "для ручного налаштування.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "Перевірка {title} за адресою {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Підключено до Hermes, але є попередження середовища виконання. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Налаштування вручну досі доступне в налаштуваннях.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Пошук {title} за адресою {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Автоматичне сполучення доступне лише для локального шлюзу на loopback-адресі. Віддалені підключення API потребують явно налаштованих URL і токена; підключення до панелі використовують Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Натисніть «Підключитися до Hermes» або скористайтеся налаштуванням вручну.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Локальний сервер Hermes API",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Віддалений сервер Hermes API",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Віддалена панель Hermes",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "не налаштовано",
     "description": "Runtime interface message connection.not_configured_short"

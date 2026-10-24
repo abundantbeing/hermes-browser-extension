@@ -1663,6 +1663,42 @@
     "message": "用於手動設定。",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "正在檢查 {url} 的{title}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "已連線至 Hermes，但執行階段有警告。{detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} 仍可在設定中使用手動設定。",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "正在 {url} 尋找{title}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "自動配對僅適用於迴路位址上的本機閘道。遠端 API 連線需要明確設定的 URL 和權杖；儀表板連線使用 Trusted Dashboard Attach。",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}。請點選「連線到 Hermes」，或使用手動設定。",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "本機 Hermes API 伺服器",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "遠端 Hermes API 伺服器",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "遠端 Hermes 儀表板",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "未設定",
     "description": "Runtime interface message connection.not_configured_short"

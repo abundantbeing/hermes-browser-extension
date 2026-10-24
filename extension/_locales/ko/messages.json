@@ -1663,6 +1663,42 @@
     "message": "수동 설정용입니다.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "{url}에서 {title} 확인 중...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Hermes에 연결되었지만 런타임 경고가 있습니다. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} 수동 설정은 설정에서 계속 사용할 수 있습니다.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "{url}에서 {title} 찾는 중...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "자동 페어링은 루프백 주소의 로컬 게이트웨이에서만 사용할 수 있습니다. 원격 API 연결에는 명시적으로 구성한 URL과 토큰이 필요하며, 대시보드 연결은 Trusted Dashboard Attach를 사용합니다.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. 'Hermes에 연결'을 클릭하거나 수동 설정을 사용하세요.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "로컬 Hermes API 서버",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "원격 Hermes API 서버",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "원격 Hermes 대시보드",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "구성되지 않음",
     "description": "Runtime interface message connection.not_configured_short"

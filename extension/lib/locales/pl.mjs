@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Otwórz w karcie",
   "pairing.frame_title": "Zatwierdź połączenie z Hermes",
   "pairing.denied": "Parowanie zostało odrzucone.",
+  "connect.title.local_api": "Lokalny serwer Hermes API",
+  "connect.title.remote_api": "Zdalny serwer Hermes API",
+  "connect.title.remote_dashboard": "Zdalny pulpit Hermes",
+  "connect.status.ready": "{title}. Kliknij Połącz się z Hermes lub użyj konfiguracji ręcznej.",
+  "connect.status.checking": "Sprawdzanie: {title} pod adresem {url}...",
+  "connect.status.looking": "Wyszukiwanie: {title} pod adresem {url}...",
+  "connect.status.failed": "{reason} Konfiguracja ręczna jest nadal dostępna w ustawieniach.",
+  "connect.status.loopback_only": "Automatyczne parowanie jest dostępne tylko dla lokalnej bramy pod adresem loopback. Zdalne połączenia API wymagają jawnie skonfigurowanego adresu URL i tokenu; połączenia z pulpitem używają Trusted Dashboard Attach.",
+  "connect.status.degraded": "Połączono z Hermes, ale z ostrzeżeniem środowiska uruchomieniowego. {detail}",
 });

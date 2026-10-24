@@ -5203,6 +5203,17 @@ function recheckBuildIdentityAfterUpdateTurn() {
   });
 }
 
+// The gateway's name as the connect card and setup's Connect step say it, in
+// the active language (the summary's own title is the English product name).
+function gatewayTitleText(summary = currentGatewaySummary()) {
+  const key = {
+    'local-api': 'connect.title.local_api',
+    'remote-api': 'connect.title.remote_api',
+    'remote-dashboard': 'connect.title.remote_dashboard',
+  }[summary?.mode?.value];
+  return key ? t(key) : String(summary?.title || '');
+}
+
 function updateConnectionPrompt() {
   const state = currentConnectionState();
   const connected = state.connected;
@@ -5214,8 +5225,8 @@ function updateConnectionPrompt() {
   if (!connected) {
     if (state.state === 'connecting') {
       els.sendButton.textContent = translateUiText('Checking...');
-      els.connectStatus.textContent = `Checking ${summary.title} at ${summary.normalizedUrl}...`;
-      setStatus('warn', 'Checking Hermes', `${summary.title}: ${summary.normalizedUrl}`);
+      els.connectStatus.textContent = t('connect.status.checking', { title: gatewayTitleText(summary), url: summary.normalizedUrl });
+      setStatus('warn', 'Checking Hermes', `${gatewayTitleText(summary)}: ${summary.normalizedUrl}`, { translateDetail: false });
     } else if (state.state === 'unreachable') {
       els.sendButton.textContent = translateUiText('Reconnect');
       els.connectStatus.textContent = currentConnectionTroubleshooting(state);
@@ -5231,19 +5242,20 @@ function updateConnectionPrompt() {
         els.connectStatus.textContent = translateUiText('Enter your dashboard https URL in Settings and sign in to it in a browser tab.');
         setStatus('warn', 'Set a remote dashboard', 'Enter your dashboard https URL in Settings and sign in to it in a browser tab.');
       } else {
-        els.connectStatus.textContent = `${summary.title}. Click Connect to Hermes or use Manual setup.`;
-        setStatus('warn', 'Connect Hermes', `${summary.title}. Click Connect to Hermes or use Manual setup.`);
+        const ready = t('connect.status.ready', { title: gatewayTitleText(summary) });
+        els.connectStatus.textContent = ready;
+        setStatus('warn', 'Connect Hermes', ready, { translateDetail: false });
       }
     }
   } else {
     els.sendButton.textContent = sending ? t('ui.composer.hermes_running') : t('ui.composer.ask_hermes');
     if (state.state === 'degraded') {
-      els.connectStatus.textContent = `Connected to Hermes with a runtime warning. ${currentConnectionTroubleshooting(state)}`;
+      els.connectStatus.textContent = t('connect.status.degraded', { detail: currentConnectionTroubleshooting(state) });
       // Surface a degraded runtime as a warning status so the recovery action
       // (Check connection) is offered after a server-runtime failure.
       setStatus('warn', 'Hermes connected with a runtime warning', currentConnectionTroubleshooting(state), { translateDetail: false });
     } else {
-      els.connectStatus.textContent = 'Connected to Hermes. You can start chatting with page context.';
+      els.connectStatus.textContent = translateUiText('Connected to Hermes. You can start chatting with page context.');
     }
   }
   updateComposerBusyState();
@@ -23305,9 +23317,9 @@ async function connectApiWithPairing() {
   settings.gatewayUrl = normalizeGatewayUrl(settings.gatewayUrl || els.gatewayUrlInput.value || DEFAULT_SETTINGS.gatewayUrl);
   settings.gatewayMode = normalizeGatewayMode(settings.gatewayMode || els.gatewayModeInput?.value || DEFAULT_SETTINGS.gatewayMode);
   if (!automaticApiPairingAllowed(settings)) {
-    const message = 'Automatic pairing is available only for a loopback Local gateway. Remote API connections require an explicitly configured URL and token; dashboard connections use Trusted Dashboard Attach.';
+    const message = t('connect.status.loopback_only');
     els.connectStatus.textContent = message;
-    setStatus('warn', 'Manual setup required', message);
+    setStatus('warn', 'Manual setup required', message, { translateDetail: false });
     openSettingsDialog({ pane: 'connections' });
     return;
   }
@@ -23319,7 +23331,7 @@ async function connectApiWithPairing() {
   markConnectionProbe('connecting', summary.normalizedUrl);
   els.connectButton.disabled = true;
   els.connectButton.textContent = translateUiText('Connecting...');
-  els.connectStatus.textContent = `Looking for ${summary.title} at ${summary.normalizedUrl}...`;
+  els.connectStatus.textContent = t('connect.status.looking', { title: gatewayTitleText(summary), url: summary.normalizedUrl });
   // A failing request can only be blamed on the origin/CORS layer when the
   // health probe already answered from this extension origin.
   let healthProbeAnswered = false;
@@ -23404,7 +23416,7 @@ async function connectApiWithPairing() {
     });
     if (!connectionController.transition(generation, CONNECTION_STATES.ERROR, { errorKind: diagnostic.kind })) return;
     markGatewayUnreachable(error, diagnostic);
-    els.connectStatus.textContent = `${currentConnectionTroubleshooting() || diagnostic.detail} Manual setup is still available in settings.`;
+    els.connectStatus.textContent = t('connect.status.failed', { reason: currentConnectionTroubleshooting() || diagnostic.detail });
     openSettingsDialog({ pane: 'connections' });
   } finally {
     if (connectionController.isCurrent(generation)) {
@@ -26757,6 +26769,9 @@ subscribeLocale(() => {
   renderContextScopeControls();
   renderTaskStack();
   renderStartupReadiness();
+  // The connect status is composed from the catalog: re-say it in the new
+  // language while a connection is still needed (it never changes whether it is).
+  if (els.connectPanel && !els.connectPanel.hidden) updateConnectionPrompt();
   renderContextWindow();
   renderCompatibilityPanel();
   updateComposerBusyState();

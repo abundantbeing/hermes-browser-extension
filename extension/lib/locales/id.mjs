@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Buka di tab",
   "pairing.frame_title": "Setujui koneksi Hermes",
   "pairing.denied": "Pemasangan ditolak.",
+  "connect.title.local_api": "Server API Hermes lokal",
+  "connect.title.remote_api": "Server API Hermes jarak jauh",
+  "connect.title.remote_dashboard": "Dasbor Hermes jarak jauh",
+  "connect.status.ready": "{title}. Klik Hubungkan ke Hermes atau gunakan Pengaturan manual.",
+  "connect.status.checking": "Memeriksa {title} di {url}...",
+  "connect.status.looking": "Mencari {title} di {url}...",
+  "connect.status.failed": "{reason} Pengaturan manual masih tersedia di pengaturan.",
+  "connect.status.loopback_only": "Pemasangan otomatis hanya tersedia untuk gateway lokal pada alamat loopback. Koneksi API jarak jauh memerlukan URL dan token yang dikonfigurasi secara eksplisit, sedangkan koneksi dasbor menggunakan Trusted Dashboard Attach.",
+  "connect.status.degraded": "Terhubung ke Hermes dengan peringatan runtime. {detail}",
 });

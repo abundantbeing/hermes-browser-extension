@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Abrir en una pestaña",
   "pairing.frame_title": "Aprobar la conexión con Hermes",
   "pairing.denied": "Se rechazó el emparejamiento.",
+  "connect.title.local_api": "Servidor local de la API de Hermes",
+  "connect.title.remote_api": "Servidor remoto de la API de Hermes",
+  "connect.title.remote_dashboard": "Panel remoto de Hermes",
+  "connect.status.ready": "{title}. Haz clic en «Conectar con Hermes» o usa la configuración manual.",
+  "connect.status.checking": "Comprobando {title} en {url}...",
+  "connect.status.looking": "Buscando {title} en {url}...",
+  "connect.status.failed": "{reason} La configuración manual sigue disponible en los ajustes.",
+  "connect.status.loopback_only": "El emparejamiento automático solo está disponible para una puerta de enlace local en la dirección loopback. Las conexiones a una API remota requieren una URL y un token configurados explícitamente; las conexiones al panel usan Trusted Dashboard Attach.",
+  "connect.status.degraded": "Conectado a Hermes con una advertencia de ejecución. {detail}",
 });

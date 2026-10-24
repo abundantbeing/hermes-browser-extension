@@ -1663,6 +1663,42 @@
     "message": "मैन्युअल सेटअप के लिए.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "{url} पर {title} की जाँच हो रही है...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Hermes से कनेक्ट है, लेकिन रनटाइम चेतावनी के साथ। {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} मैन्युअल सेटअप अब भी सेटिंग्स में उपलब्ध है।",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "{url} पर {title} खोजा जा रहा है...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "स्वचालित पेयरिंग केवल loopback पते वाले स्थानीय गेटवे के लिए उपलब्ध है। रिमोट API कनेक्शन के लिए स्पष्ट रूप से कॉन्फ़िगर किया गया URL और टोकन ज़रूरी है; डैशबोर्ड कनेक्शन Trusted Dashboard Attach का उपयोग करते हैं।",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}। “Hermes से कनेक्ट करें” पर क्लिक करें या मैन्युअल सेटअप का उपयोग करें।",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "स्थानीय Hermes API सर्वर",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "रिमोट Hermes API सर्वर",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "रिमोट Hermes डैशबोर्ड",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "कॉन्फ़िगर नहीं किया गया",
     "description": "Runtime interface message connection.not_configured_short"

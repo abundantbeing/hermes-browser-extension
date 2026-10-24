@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "فتح في علامة تبويب",
   "pairing.frame_title": "الموافقة على اتصال Hermes",
   "pairing.denied": "تم رفض الاقتران.",
+  "connect.title.local_api": "خادم Hermes API محلي",
+  "connect.title.remote_api": "خادم Hermes API عن بُعد",
+  "connect.title.remote_dashboard": "لوحة قيادة Hermes عن بُعد",
+  "connect.status.ready": "{title}. انقر على «تواصل مع Hermes» أو استخدم «الإعداد اليدوي».",
+  "connect.status.checking": "جارٍ فحص {title} على {url}...",
+  "connect.status.looking": "جارٍ البحث عن {title} على {url}...",
+  "connect.status.failed": "{reason} لا يزال الإعداد اليدوي متاحًا في الإعدادات.",
+  "connect.status.loopback_only": "الاقتران التلقائي متاح فقط لبوابة محلية على عنوان الحلقة الراجعة (loopback). تتطلب اتصالات API عن بُعد عنوان URL ورمزًا مُعدَّين صراحةً، بينما تستخدم اتصالات لوحة القيادة Trusted Dashboard Attach.",
+  "connect.status.degraded": "تم الاتصال بـ Hermes مع تحذير في وقت التشغيل. {detail}",
 });

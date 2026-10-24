@@ -1663,6 +1663,42 @@
     "message": "voor handmatige instelling.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "{title} op {url} controleren...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Verbonden met Hermes, met een runtimewaarschuwing. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Handmatige installatie is nog beschikbaar in de instellingen.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Zoeken naar {title} op {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Automatisch koppelen is alleen beschikbaar voor een lokale gateway op het loopback-adres. Externe API-verbindingen vereisen een expliciet geconfigureerde URL en token; dashboardverbindingen gebruiken Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Klik op Maak verbinding met Hermes of gebruik Handmatige installatie.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Lokale Hermes API-server",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Externe Hermes API-server",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Extern Hermes-dashboard",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "niet geconfigureerd",
     "description": "Runtime interface message connection.not_configured_short"

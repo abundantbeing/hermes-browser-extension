@@ -1920,4 +1920,13 @@ export default Object.freeze({
   "pairing.open_tab": "Sekmede aç",
   "pairing.frame_title": "Hermes bağlantısını onayla",
   "pairing.denied": "Eşleştirme reddedildi.",
+  "connect.title.local_api": "Yerel Hermes API sunucusu",
+  "connect.title.remote_api": "Uzak Hermes API sunucusu",
+  "connect.title.remote_dashboard": "Uzak Hermes kontrol paneli",
+  "connect.status.ready": "{title}. “Hermes'e bağlanın” düğmesine tıklayın veya manuel kurulumu kullanın.",
+  "connect.status.checking": "{url} adresindeki {title} denetleniyor...",
+  "connect.status.looking": "{url} adresinde {title} aranıyor...",
+  "connect.status.failed": "{reason} Manuel kurulum ayarlarda hâlâ kullanılabilir.",
+  "connect.status.loopback_only": "Otomatik eşleştirme yalnızca loopback adresindeki yerel ağ geçidi için kullanılabilir. Uzak API bağlantıları açıkça yapılandırılmış bir URL ve belirteç gerektirir; kontrol paneli bağlantıları Trusted Dashboard Attach kullanır.",
+  "connect.status.degraded": "Hermes'e bağlanıldı, ancak çalışma zamanı uyarısı var. {detail}",
 });

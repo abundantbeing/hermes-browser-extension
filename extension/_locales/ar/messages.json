@@ -1663,6 +1663,42 @@
     "message": "للإعداد اليدوي.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "جارٍ فحص {title} على {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "تم الاتصال بـ Hermes مع تحذير في وقت التشغيل. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} لا يزال الإعداد اليدوي متاحًا في الإعدادات.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "جارٍ البحث عن {title} على {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "الاقتران التلقائي متاح فقط لبوابة محلية على عنوان الحلقة الراجعة (loopback). تتطلب اتصالات API عن بُعد عنوان URL ورمزًا مُعدَّين صراحةً، بينما تستخدم اتصالات لوحة القيادة Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. انقر على «تواصل مع Hermes» أو استخدم «الإعداد اليدوي».",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "خادم Hermes API محلي",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "خادم Hermes API عن بُعد",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "لوحة قيادة Hermes عن بُعد",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "غير مكوَّن",
     "description": "Runtime interface message connection.not_configured_short"

@@ -1663,6 +1663,42 @@
     "message": "do ręcznej konfiguracji.",
     "description": "Runtime interface message connect.manual_setup_suffix"
   },
+  "runtime_connect_status_checking": {
+    "message": "Sprawdzanie: {title} pod adresem {url}...",
+    "description": "Runtime interface message connect.status.checking"
+  },
+  "runtime_connect_status_degraded": {
+    "message": "Połączono z Hermes, ale z ostrzeżeniem środowiska uruchomieniowego. {detail}",
+    "description": "Runtime interface message connect.status.degraded"
+  },
+  "runtime_connect_status_failed": {
+    "message": "{reason} Konfiguracja ręczna jest nadal dostępna w ustawieniach.",
+    "description": "Runtime interface message connect.status.failed"
+  },
+  "runtime_connect_status_looking": {
+    "message": "Wyszukiwanie: {title} pod adresem {url}...",
+    "description": "Runtime interface message connect.status.looking"
+  },
+  "runtime_connect_status_loopback_only": {
+    "message": "Automatyczne parowanie jest dostępne tylko dla lokalnej bramy pod adresem loopback. Zdalne połączenia API wymagają jawnie skonfigurowanego adresu URL i tokenu; połączenia z pulpitem używają Trusted Dashboard Attach.",
+    "description": "Runtime interface message connect.status.loopback_only"
+  },
+  "runtime_connect_status_ready": {
+    "message": "{title}. Kliknij Połącz się z Hermes lub użyj konfiguracji ręcznej.",
+    "description": "Runtime interface message connect.status.ready"
+  },
+  "runtime_connect_title_local_api": {
+    "message": "Lokalny serwer Hermes API",
+    "description": "Runtime interface message connect.title.local_api"
+  },
+  "runtime_connect_title_remote_api": {
+    "message": "Zdalny serwer Hermes API",
+    "description": "Runtime interface message connect.title.remote_api"
+  },
+  "runtime_connect_title_remote_dashboard": {
+    "message": "Zdalny pulpit Hermes",
+    "description": "Runtime interface message connect.title.remote_dashboard"
+  },
   "runtime_connection_not_configured_short": {
     "message": "nieskonfigurowany",
     "description": "Runtime interface message connection.not_configured_short"
