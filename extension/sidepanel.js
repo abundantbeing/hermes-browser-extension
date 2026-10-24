@@ -16766,7 +16766,9 @@ function syncSessionMenuChrome() {
 function renderProjectsTab() {
   const controller = getProjectsController();
   controller.resolve();
-  if (controller.state.list.status === 'idle' && !projectsActivating) void activateProjectsTab();
+  // The drawer repaints on every roster tick; only an open drawer may start the fetch (it also
+  // starts one itself when it opens or the tab is chosen).
+  if (!els.sessionMenu.hidden && controller.state.list.status === 'idle' && !projectsActivating) void activateProjectsTab();
   const { state } = controller;
   const listShown = state.list.status === 'ready' || state.list.status === 'refreshing';
   const searchable = (state.view === 'list' && listShown) || state.view === 'project';
