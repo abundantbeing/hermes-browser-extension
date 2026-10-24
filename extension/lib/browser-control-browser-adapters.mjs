@@ -1570,11 +1570,20 @@ function createChromiumCdpAdapter({
         if (!Number.isInteger(destinationNodeId) || destinationNodeId <= 0) throw new Error('The destination ref has no DOM node.');
         const destinationPoint = await nodeCenter(send, destinationNodeId);
         await checkedHit(send, enable, signal, destinationPoint, framing.destination);
-        // Scrolling to the destination can move the source: it is judged again right before the press.
-        await checkedHit(send, enable, signal, sourcePoint, framing.target);
-        const held = { at: sourcePoint };
+        // Scrolling to the destination can move the source, so its point is read again (without scrolling back,
+        // which could undo the destination's scroll) and judged right before the press. A source that is now
+        // covered by another element is not pressed: the approval was for the source ref, not for what sits there.
+        const pressPoint = quadCenter(await send('DOM.getBoxModel', { backendNodeId: sourceNodeId }));
+        const pressHit = await checkedHit(send, enable, signal, pressPoint, framing.target);
+        if (await pointIsObscured(send, signal, sourceNodeId, pressHit)) {
+          throw new Error('The drag source moved or was covered after scrolling to the destination, so nothing was pressed. Take a new snapshot and try again.');
+        }
+        if (Math.abs(pressPoint.x - sourcePoint.x) > 0.5 || Math.abs(pressPoint.y - sourcePoint.y) > 0.5) {
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...pressPoint, button: 'none', buttons: 0 });
+        }
+        const held = { at: pressPoint };
         await pressAndRelease(session, held, {}, async () => {
-          await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...sourcePoint, button: 'left', buttons: 1, clickCount: 1 });
+          await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...pressPoint, button: 'left', buttons: 1, clickCount: 1 });
           held.at = destinationPoint;
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
         }, async () => {

@@ -2752,3 +2752,36 @@ test('a stop between the press and the release still releases the mouse button',
   );
   assert.deepEqual(mouseEvents(idle.calls), []);
 });
+
+test('a drag presses where the source is after scrolling to the destination, and not on whatever now covers it', async () => {
+  const { createChromiumCdpAdapter } = await adaptersModule();
+  const dragWith = ({ coveredBy = 0 } = {}) => {
+    const chromium = chromiumApis();
+    let sourceReads = 0;
+    chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => {
+      if (backendNodeId === 45) return { model: { content: [110, 20, 130, 20, 130, 40, 110, 40] } };
+      // The source sits at 20,30 until the destination is scrolled to, then 20,330.
+      sourceReads += 1;
+      const dy = sourceReads >= 2 ? 300 : 0;
+      return { model: { content: [10, 20 + dy, 30, 20 + dy, 30, 40 + dy, 10, 40 + dy] } };
+    };
+    chromium.handlers['DOM.getNodeForLocation'] = (params) => ({ backendNodeId: params.y > 300 && coveredBy ? coveredBy : 44, frameId: 'MAIN' });
+    chromium.handlers['DOM.resolveNode'] = ({ backendNodeId }) => ({ object: { objectId: `object-${backendNodeId}` } });
+    chromium.handlers['Runtime.callFunctionOn'] = () => ({ result: { value: false } });
+    return createChromiumCdpAdapter({ browserApi: chromium.api })
+      .execute('browser_drag', { ref: '@e1', to_ref: '@e2' }, { scope, signal: openSignal(), target: clickTarget, destination: { backendDOMNodeId: 45 } })
+      .then((result) => ({ result, chromium }), (error) => ({ error, chromium }));
+  };
+
+  const moved = await dragWith();
+  assert.deepEqual(moved.result, { status: 'dragged' });
+  const events = mouseEvents(moved.chromium.calls);
+  const press = events.find((event) => event.type === 'mousePressed');
+  assert.deepEqual({ x: press.x, y: press.y }, { x: 20, y: 330 }, 'pressed at the source where it is now');
+  const beforePress = events.slice(0, events.indexOf(press));
+  assert.deepEqual({ x: beforePress.at(-1).x, y: beforePress.at(-1).y }, { x: 20, y: 330 }, 'the pointer was moved there first');
+
+  const covered = await dragWith({ coveredBy: 77 });
+  assert.match(covered.error?.message || '', /nothing was pressed/);
+  assert.equal(mouseEvents(covered.chromium.calls).some((event) => event.type === 'mousePressed'), false);
+});
