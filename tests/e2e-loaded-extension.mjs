@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -11,6 +11,8 @@ import { crc32 } from '../extension/lib/vsix-theme-extractor.mjs';
 import { assistClick, assistClickWhenVisible, assistEvaluate } from './e2e-assist-driver.mjs';
 import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable, launchChrome } from './e2e-chrome-env.mjs';
 import { AGENT_THEME_END, AGENT_THEME_START } from '../extension/lib/agent-theme-authoring.mjs';
+import { HERMES_CONTEXT_SOURCE_URL } from '../extension/lib/hermes-context-sync.mjs';
+import { HERMES_CANONICAL_MODEL_CATALOG_URL } from '../extension/lib/model-discovery.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -781,15 +783,37 @@ async function assertSequentialTabReach(client, selectors, label) {
   }
 }
 
+// The extension's own startup fetches to GitHub (model metadata, the model
+// catalog, the update check). They are handled (the panel falls back to its
+// bundled data, or shows "could not check"), and a run with the network blocked
+// logs each one as a failed resource load. Exactly these four addresses, taken
+// from the modules that fetch them so they cannot drift, and nothing else on
+// those hosts.
+function sidepanelUpdateUrl(name) {
+  const source = readFileSync(path.join(ROOT, 'extension', 'sidepanel.js'), 'utf8');
+  const match = source.match(new RegExp(`const ${name} = '([^']+)';`));
+  assert.ok(match, `extension/sidepanel.js no longer declares ${name}; update the expected-offline list.`);
+  return match[1];
+}
+
+const EXPECTED_HANDLED_GITHUB_FETCHES = new Set([
+  HERMES_CONTEXT_SOURCE_URL,
+  HERMES_CANONICAL_MODEL_CATALOG_URL,
+  sidepanelUpdateUrl('UPDATE_PACKAGE_URL'),
+  sidepanelUpdateUrl('UPDATE_MAIN_COMMIT_URL'),
+]);
+
 // Resource-load failures that are expected in this journey and not page errors:
 //  - the licensed "Rules" typefaces are not in the public source tree (see
 //    extension/lib/fonts.css), so their @font-face files 404 and the fallback stack is used;
 //  - connection discovery probes loopback gateway/dashboard candidates, and the
-//    stub gateway deliberately lacks optional routes (profiles, health detail).
+//    stub gateway deliberately lacks optional routes (profiles, health detail);
+//  - the four handled GitHub fetches above (the cache-busting ?t= is ignored).
 function expectedResourceFailure(entry = {}) {
   if (entry.source !== 'network') return false;
   const url = String(entry.url || '');
   if (/\/assets\/fonts\/Rules[^/]*\.woff2$/.test(url)) return true;
+  if (EXPECTED_HANDLED_GITHUB_FETCHES.has(url.split(/[?#]/)[0])) return true;
   return /^http:\/\/127\.0\.0\.1:\d+\//.test(url);
 }
 
@@ -1610,7 +1634,10 @@ async function main() {
       '#textZoomDecreaseButton',
       '#textZoomInput',
       '#textZoomIncreaseButton',
-      // The native select is mounted as a branded listbox; its button is the tab stop.
+      // The native selects are mounted as branded listboxes; each button is the
+      // tab stop. Language comes before Font in the Appearance pane
+      // (sidepanel.html), so Tab reaches it first.
+      '#languageSelectButton',
       '#fontProfileSelectButton',
     ], 'Side panel appearance controls');
     await saveScreenshot(panel, READABILITY_PANEL_SCREENSHOT, { captureBeyondViewport: false });

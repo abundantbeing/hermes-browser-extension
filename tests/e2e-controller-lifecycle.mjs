@@ -7,6 +7,8 @@ import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { launchChrome } from './e2e-chrome-env.mjs';
+import { CHROMIUM_ACTIONS } from '../extension/lib/browser-controller-adapter.mjs';
+import { CONTROLLER_NOOP_CAPABILITY, CONTROLLER_TRANSPORT_FAMILIES, controllerRegistrationFor } from '../extension/lib/controller-protocol.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -15,6 +17,28 @@ const TEST_ACCESS_VALUE = ['e2e', 'controller', 'fixture', 'value'].join('-');
 const TEST_SESSION_ID = 'hermes-browser-controller-e2e';
 const PUBLIC_PROTOCOL = 'hermes-browser-control-v1';
 const TICKET_PREFIX = 'hermes-browser-control-ticket.';
+
+// What a Chromium controller registers once browser control is on: the no-op
+// first, then every action the adapter implements that the protocol knows,
+// sorted. Derived from the same two modules the extension registers from, so a
+// new browser_* action changes this expectation with the product instead of
+// leaving a stale list behind.
+function expectedAdvertisedCapabilities() {
+  const { payload } = controllerRegistrationFor({
+    family: CONTROLLER_TRANSPORT_FAMILIES.LOCAL_API,
+    baseUrl: 'http://127.0.0.1:1',
+    identity: {
+      controllerId: 'expected',
+      browserProfileId: 'expected',
+      hermesSessionId: 'expected',
+      product: { id: 'chrome', engine: 'chromium', label: 'Chrome' },
+      capabilities: [CONTROLLER_NOOP_CAPABILITY, ...CHROMIUM_ACTIONS],
+    },
+  });
+  assert.equal(payload.capabilities[0], CONTROLLER_NOOP_CAPABILITY);
+  assert.deepEqual(payload.capabilities.slice(1), [...CHROMIUM_ACTIONS].sort((a, b) => a.localeCompare(b)), 'the protocol drops none of the adapter actions');
+  return payload.capabilities;
+}
 
 function chromeExecutable() {
   const candidates = [
@@ -128,7 +152,7 @@ async function startControllerFixture() {
       assert.equal(req.headers.authorization, ['Bearer', TEST_ACCESS_VALUE].join(' '));
       const body = await requestBody(req);
       assert.equal(body.session_id, TEST_SESSION_ID);
-      assert.deepEqual(body.capabilities, ['controller.noop']);
+      assert.deepEqual(body.capabilities, expectedAdvertisedCapabilities());
       assert.equal(body.protocol_version, 1);
       registrations.push(body);
       ticketSequence += 1;
@@ -366,7 +390,9 @@ async function main() {
         apiKey: ${JSON.stringify(TEST_ACCESS_VALUE)},
         tokenSource: 'e2e-controller',
         sessionId: ${JSON.stringify(TEST_SESSION_ID)},
-        sessionStartMode: 'resume'
+        sessionStartMode: 'resume',
+        // Off by default: a controller registers only while browser control is on.
+        browserControlEnabled: true
       },
       hermesBrowserIntroSeen: true
     })`);
@@ -470,7 +496,8 @@ async function main() {
       noopResults: [resultBefore.params.result, resultAfter.params.result],
       credentialFreeWebSocketTargets: fixture.connections.map((connection) => connection.requestTarget),
       persistedControllerStateContainsCredentials: false,
-      realBrowserActionsEnabled: false,
+      advertisedCapabilities: fixture.registrations.at(-1).capabilities,
+      realBrowserActionsSent: false,
     }, null, 2));
   } catch (error) {
     error.message = `${error.message}\nChrome stderr tail:\n${chromeStderr.slice(-3000)}`;
