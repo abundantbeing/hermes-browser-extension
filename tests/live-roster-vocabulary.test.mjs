@@ -112,6 +112,7 @@ function pollHarness(requests) {
     liveSessionRosterFailures: 0, liveSessionPollTimer: null,
     setTimeout: () => 0, clearTimeout: () => {},
     composerRefreshes: 0, updateComposerBusyState: () => {},
+    queuedTurn: null, flushQueuedTurnForSession: async () => false,
   });
   vm.runInContext("function viewedSessionIsRunning() { return liveSessionRows.get(settings.sessionId)?.live === true; }", context);
   vm.runInContext(refreshSource, context);
@@ -255,4 +256,43 @@ test('the composer follows the roster when the viewed session starts or stops ru
   assert.equal(h.context.composerRefreshes, 1, 'still running: no churn');
   await h.poll();
   assert.equal(h.context.composerRefreshes, 2, 'the session stopped: the composer is released');
+});
+
+// ---------------------------------------------------------------------------------------------
+// Review finding 4: a draft queued behind a run the roster reports (a CLI or Desktop run viewed from a
+// REST-transport panel, which never attaches) has no completion hook of its own; the poll sends it
+// when the roster says the run ended.
+// ---------------------------------------------------------------------------------------------
+function queuedFlushHarness({ queued, transport = 'rest' } = {}) {
+  const running = { sessions: [{ id: 'live-A', session_key: 'A', status: 'working' }] };
+  const h = pollHarness([running, { sessions: [{ id: 'live-A', session_key: 'A', status: 'idle' }] }]);
+  const flushed = [];
+  Object.assign(h.context, {
+    activeConversationTransport: transport,
+    queuedTurn: queued,
+    flushQueuedTurnForSession: async (sessionId, scopeRevisionId) => { flushed.push([sessionId, scopeRevisionId]); return true; },
+  });
+  return { ...h, flushed };
+}
+
+test('a REST-transport panel sends the draft queued behind a roster-live run when the run ends', async () => {
+  const h = queuedFlushHarness({ queued: { text: 'next', autoSend: true, sessionId: 'A', scopeRevisionId: 7 } });
+  await h.poll();
+  assert.equal(h.context.liveSessionRows.get('A')?.live, true);
+  assert.deepEqual(h.flushed, [], 'the run is still going');
+  await h.poll();
+  assert.deepEqual(h.flushed, [['A', 7]], 'the run ended: the queued draft is sent');
+});
+
+test('the draft is left alone when it belongs to another session or is not auto-send', async () => {
+  for (const queued of [
+    { text: 'x', autoSend: true, sessionId: 'B', scopeRevisionId: 1 },
+    { text: 'x', autoSend: false, sessionId: 'A', scopeRevisionId: 1 },
+    null,
+  ]) {
+    const h = queuedFlushHarness({ queued });
+    await h.poll();
+    await h.poll();
+    assert.deepEqual(h.flushed, []);
+  }
 });

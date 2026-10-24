@@ -17128,8 +17128,15 @@ async function refreshLiveSessionRoster() {
     liveSessionRosterFailures = 0;
     renderSessionMenu();
     if (liveAttach) await reconcileAttachedLiveSession();
-    else if (viewedRunSettled && !sending) await refreshActiveSessionHistoryQuietly();
-    else if (!sending && activeConversationTransport === 'dashboard-ws'
+    else if (viewedRunSettled && !sending) {
+      await refreshActiveSessionHistoryQuietly();
+      // A draft queued behind a run that only the roster reported (a CLI or Desktop run, viewed
+      // from a panel that never attached to it) has no completion hook of its own: send it now.
+      const queued = queuedTurn;
+      if (queued?.autoSend && queued.sessionId === String(settings.sessionId || '').trim()) {
+        void flushQueuedTurnForSession(queued.sessionId, queued.scopeRevisionId).catch(() => {});
+      }
+    } else if (!sending && activeConversationTransport === 'dashboard-ws'
       && turnLive(next.get(settings.sessionId)) && connection.wsStoredSessionId === settings.sessionId) {
       await attachLiveSessionIfRunning(connection.wsSessionId);
     }
