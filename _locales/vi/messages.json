@@ -2307,6 +2307,18 @@
     "message": "Chọn phông chữ",
     "description": "Runtime interface message onboarding.font.title"
   },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser sẽ dùng ngôn ngữ này ở mọi nơi. Bạn có thể đổi sau trong phần Cài đặt.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "Gợi ý từ trình duyệt của bạn: {language}. Chọn ngôn ngữ khác nếu bạn muốn; bạn có thể đổi sau trong phần Cài đặt.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "Chọn ngôn ngữ của bạn",
+    "description": "Runtime interface message onboarding.language.title"
+  },
   "runtime_onboarding_layout_body": {
     "message": "Vị trí tin nhắn của bạn và câu trả lời của Hermes.",
     "description": "Runtime interface message onboarding.layout.body"

@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Ручная настройка по-прежнему доступна в настройках.",
   "connect.status.loopback_only": "Автоматическое сопряжение доступно только для локального шлюза на loopback-адресе. Для удалённых подключений API нужны явно заданные URL и токен; подключения к панели используют Trusted Dashboard Attach.",
   "connect.status.degraded": "Подключено к Hermes, но есть предупреждение среды выполнения. {detail}",
+  "onboarding.language.title": "Выберите язык",
+  "onboarding.language.body": "Hermes Browser будет использовать его везде. Позже его можно изменить в настройках.",
+  "onboarding.language.body_suggested": "Предложено по настройкам браузера: {language}. Выберите другой язык, если хотите; позже его можно изменить в настройках.",
 });

@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} La configurazione manuale è ancora disponibile nelle impostazioni.",
   "connect.status.loopback_only": "L'associazione automatica è disponibile solo per un gateway locale sull'indirizzo di loopback. Le connessioni API remote richiedono un URL e un token configurati esplicitamente; le connessioni alla dashboard usano Trusted Dashboard Attach.",
   "connect.status.degraded": "Connesso a Hermes con un avviso di runtime. {detail}",
+  "onboarding.language.title": "Scegli la tua lingua",
+  "onboarding.language.body": "Hermes Browser la userà ovunque. Puoi cambiarla in seguito nelle impostazioni.",
+  "onboarding.language.body_suggested": "Suggerita dal tuo browser: {language}. Scegline un'altra se preferisci; puoi cambiarla in seguito nelle impostazioni.",
 });

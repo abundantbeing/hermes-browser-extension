@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} لا يزال الإعداد اليدوي متاحًا في الإعدادات.",
   "connect.status.loopback_only": "الاقتران التلقائي متاح فقط لبوابة محلية على عنوان الحلقة الراجعة (loopback). تتطلب اتصالات API عن بُعد عنوان URL ورمزًا مُعدَّين صراحةً، بينما تستخدم اتصالات لوحة القيادة Trusted Dashboard Attach.",
   "connect.status.degraded": "تم الاتصال بـ Hermes مع تحذير في وقت التشغيل. {detail}",
+  "onboarding.language.title": "اختر لغتك",
+  "onboarding.language.body": "سيستخدمها Hermes Browser في كل مكان. يمكنك تغييرها لاحقًا من الإعدادات.",
+  "onboarding.language.body_suggested": "مقترحة من متصفحك: {language}. اختر لغة أخرى إن شئت، ويمكنك تغييرها لاحقًا من الإعدادات.",
 });

@@ -2307,6 +2307,18 @@
     "message": "Виберіть шрифт",
     "description": "Runtime interface message onboarding.font.title"
   },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser використовуватиме її всюди. Пізніше її можна змінити в налаштуваннях.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "Запропоновано за налаштуваннями браузера: {language}. Виберіть іншу, якщо хочете; пізніше її можна змінити в налаштуваннях.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "Виберіть мову",
+    "description": "Runtime interface message onboarding.language.title"
+  },
   "runtime_onboarding_layout_body": {
     "message": "Де розташовуються ваші повідомлення та відповіді Hermes.",
     "description": "Runtime interface message onboarding.layout.body"

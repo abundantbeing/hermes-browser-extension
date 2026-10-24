@@ -2307,6 +2307,18 @@
     "message": "Pilih font",
     "description": "Runtime interface message onboarding.font.title"
   },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser akan memakainya di mana-mana. Anda dapat mengubahnya nanti di Pengaturan.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "Disarankan dari browser Anda: {language}. Pilih bahasa lain jika Anda mau; Anda dapat mengubahnya nanti di Pengaturan.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "Pilih bahasa Anda",
+    "description": "Runtime interface message onboarding.language.title"
+  },
   "runtime_onboarding_layout_body": {
     "message": "Letak pesan Anda dan balasan Hermes.",
     "description": "Runtime interface message onboarding.layout.body"

@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Manual setup is still available in settings.",
   "connect.status.loopback_only": "Automatic pairing is available only for a loopback Local gateway. Remote API connections require an explicitly configured URL and token; dashboard connections use Trusted Dashboard Attach.",
   "connect.status.degraded": "Connected to Hermes with a runtime warning. {detail}",
+  "onboarding.language.title": "Choose your language",
+  "onboarding.language.body": "Hermes Browser uses it everywhere. You can change it later in Settings.",
+  "onboarding.language.body_suggested": "Suggested from your browser: {language}. Pick another if you prefer; you can change it later in Settings.",
 });

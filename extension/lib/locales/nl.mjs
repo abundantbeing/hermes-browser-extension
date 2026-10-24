@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Handmatige installatie is nog beschikbaar in de instellingen.",
   "connect.status.loopback_only": "Automatisch koppelen is alleen beschikbaar voor een lokale gateway op het loopback-adres. Externe API-verbindingen vereisen een expliciet geconfigureerde URL en token; dashboardverbindingen gebruiken Trusted Dashboard Attach.",
   "connect.status.degraded": "Verbonden met Hermes, met een runtimewaarschuwing. {detail}",
+  "onboarding.language.title": "Kies je taal",
+  "onboarding.language.body": "Hermes Browser gebruikt deze overal. Je kunt de taal later wijzigen in Instellingen.",
+  "onboarding.language.body_suggested": "Voorgesteld op basis van je browser: {language}. Kies een andere taal als je dat liever hebt; je kunt dit later wijzigen in Instellingen.",
 });

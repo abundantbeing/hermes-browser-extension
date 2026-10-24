@@ -2307,6 +2307,18 @@
     "message": "Vælg en skrifttype",
     "description": "Runtime interface message onboarding.font.title"
   },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser bruger det overalt. Du kan ændre det senere i Indstillinger.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "Foreslået ud fra din browser: {language}. Vælg et andet, hvis du foretrækker det; du kan ændre det senere i Indstillinger.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "Vælg dit sprog",
+    "description": "Runtime interface message onboarding.language.title"
+  },
   "runtime_onboarding_layout_body": {
     "message": "Hvor dine beskeder og Hermes' svar placeres.",
     "description": "Runtime interface message onboarding.layout.body"

@@ -2307,6 +2307,18 @@
     "message": "글꼴 선택",
     "description": "Runtime interface message onboarding.font.title"
   },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser가 모든 화면에서 이 언어를 사용합니다. 나중에 설정에서 변경할 수 있습니다.",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "브라우저 설정에 따른 추천 언어: {language}. 원하면 다른 언어를 선택하세요. 나중에 설정에서 변경할 수 있습니다.",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "언어를 선택하세요",
+    "description": "Runtime interface message onboarding.language.title"
+  },
   "runtime_onboarding_layout_body": {
     "message": "내 메시지와 Hermes의 답변이 놓일 위치입니다.",
     "description": "Runtime interface message onboarding.layout.body"

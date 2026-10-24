@@ -1928,4 +1928,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} 仍可在设置中使用手动设置。",
   "connect.status.loopback_only": "自动配对仅适用于环回地址上的本地网关。远程 API 连接需要明确配置的 URL 和令牌；仪表板连接使用 Trusted Dashboard Attach。",
   "connect.status.degraded": "已连接到 Hermes，但运行时有警告。{detail}",
+  "onboarding.language.title": "选择您的语言",
+  "onboarding.language.body": "Hermes Browser 会在所有界面使用该语言。您可以稍后在设置中更改。",
+  "onboarding.language.body_suggested": "根据您的浏览器推荐：{language}。如需使用其他语言，请在下方选择；您可以稍后在设置中更改。",
 });

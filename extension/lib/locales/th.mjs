@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} ยังใช้การตั้งค่าด้วยตนเองได้ในหน้าการตั้งค่า",
   "connect.status.loopback_only": "การจับคู่อัตโนมัติใช้ได้เฉพาะเกตเวย์ในเครื่องที่อยู่บนแอดเดรส loopback เท่านั้น การเชื่อมต่อ API ระยะไกลต้องใช้ URL และโทเค็นที่กำหนดค่าไว้อย่างชัดเจน ส่วนการเชื่อมต่อแดชบอร์ดใช้ Trusted Dashboard Attach",
   "connect.status.degraded": "เชื่อมต่อกับ Hermes แล้ว แต่มีคำเตือนจากรันไทม์ {detail}",
+  "onboarding.language.title": "เลือกภาษาของคุณ",
+  "onboarding.language.body": "Hermes Browser จะใช้ภาษานี้ทุกที่ คุณเปลี่ยนภาษาได้ภายหลังในการตั้งค่า",
+  "onboarding.language.body_suggested": "แนะนำจากเบราว์เซอร์ของคุณ: {language} เลือกภาษาอื่นได้ตามต้องการ และเปลี่ยนภายหลังได้ในการตั้งค่า",
 });

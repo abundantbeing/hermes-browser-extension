@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} मैन्युअल सेटअप अब भी सेटिंग्स में उपलब्ध है।",
   "connect.status.loopback_only": "स्वचालित पेयरिंग केवल loopback पते वाले स्थानीय गेटवे के लिए उपलब्ध है। रिमोट API कनेक्शन के लिए स्पष्ट रूप से कॉन्फ़िगर किया गया URL और टोकन ज़रूरी है; डैशबोर्ड कनेक्शन Trusted Dashboard Attach का उपयोग करते हैं।",
   "connect.status.degraded": "Hermes से कनेक्ट है, लेकिन रनटाइम चेतावनी के साथ। {detail}",
+  "onboarding.language.title": "अपनी भाषा चुनें",
+  "onboarding.language.body": "Hermes Browser इसे हर जगह इस्तेमाल करेगा। आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
+  "onboarding.language.body_suggested": "आपके ब्राउज़र के आधार पर सुझाई गई: {language}। चाहें तो कोई और चुनें; आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
 });

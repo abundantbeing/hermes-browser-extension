@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Manuel kurulum ayarlarda hâlâ kullanılabilir.",
   "connect.status.loopback_only": "Otomatik eşleştirme yalnızca loopback adresindeki yerel ağ geçidi için kullanılabilir. Uzak API bağlantıları açıkça yapılandırılmış bir URL ve belirteç gerektirir; kontrol paneli bağlantıları Trusted Dashboard Attach kullanır.",
   "connect.status.degraded": "Hermes'e bağlanıldı, ancak çalışma zamanı uyarısı var. {detail}",
+  "onboarding.language.title": "Dilinizi seçin",
+  "onboarding.language.body": "Hermes Browser bu dili her yerde kullanır. Daha sonra Ayarlar'dan değiştirebilirsiniz.",
+  "onboarding.language.body_suggested": "Tarayıcınıza göre önerilen: {language}. İsterseniz başka bir dil seçin; daha sonra Ayarlar'dan değiştirebilirsiniz.",
 });

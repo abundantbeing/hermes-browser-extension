@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Konfiguracja ręczna jest nadal dostępna w ustawieniach.",
   "connect.status.loopback_only": "Automatyczne parowanie jest dostępne tylko dla lokalnej bramy pod adresem loopback. Zdalne połączenia API wymagają jawnie skonfigurowanego adresu URL i tokenu; połączenia z pulpitem używają Trusted Dashboard Attach.",
   "connect.status.degraded": "Połączono z Hermes, ale z ostrzeżeniem środowiska uruchomieniowego. {detail}",
+  "onboarding.language.title": "Wybierz swój język",
+  "onboarding.language.body": "Hermes Browser będzie go używać wszędzie. Możesz go później zmienić w Ustawieniach.",
+  "onboarding.language.body_suggested": "Sugestia na podstawie przeglądarki: {language}. Wybierz inny, jeśli wolisz; możesz go później zmienić w Ustawieniach.",
 });

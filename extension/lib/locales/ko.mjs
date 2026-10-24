@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} 수동 설정은 설정에서 계속 사용할 수 있습니다.",
   "connect.status.loopback_only": "자동 페어링은 루프백 주소의 로컬 게이트웨이에서만 사용할 수 있습니다. 원격 API 연결에는 명시적으로 구성한 URL과 토큰이 필요하며, 대시보드 연결은 Trusted Dashboard Attach를 사용합니다.",
   "connect.status.degraded": "Hermes에 연결되었지만 런타임 경고가 있습니다. {detail}",
+  "onboarding.language.title": "언어를 선택하세요",
+  "onboarding.language.body": "Hermes Browser가 모든 화면에서 이 언어를 사용합니다. 나중에 설정에서 변경할 수 있습니다.",
+  "onboarding.language.body_suggested": "브라우저 설정에 따른 추천 언어: {language}. 원하면 다른 언어를 선택하세요. 나중에 설정에서 변경할 수 있습니다.",
 });

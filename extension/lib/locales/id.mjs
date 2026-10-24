@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Pengaturan manual masih tersedia di pengaturan.",
   "connect.status.loopback_only": "Pemasangan otomatis hanya tersedia untuk gateway lokal pada alamat loopback. Koneksi API jarak jauh memerlukan URL dan token yang dikonfigurasi secara eksplisit, sedangkan koneksi dasbor menggunakan Trusted Dashboard Attach.",
   "connect.status.degraded": "Terhubung ke Hermes dengan peringatan runtime. {detail}",
+  "onboarding.language.title": "Pilih bahasa Anda",
+  "onboarding.language.body": "Hermes Browser akan memakainya di mana-mana. Anda dapat mengubahnya nanti di Pengaturan.",
+  "onboarding.language.body_suggested": "Disarankan dari browser Anda: {language}. Pilih bahasa lain jika Anda mau; Anda dapat mengubahnya nanti di Pengaturan.",
 });

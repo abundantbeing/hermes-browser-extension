@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Manuel opsætning er stadig tilgængelig i indstillingerne.",
   "connect.status.loopback_only": "Automatisk parring er kun tilgængelig for en lokal gateway på loopback-adressen. Eksterne API-forbindelser kræver en eksplicit konfigureret URL og token, mens dashboard-forbindelser bruger Trusted Dashboard Attach.",
   "connect.status.degraded": "Forbundet til Hermes med en advarsel fra kørselsmiljøet. {detail}",
+  "onboarding.language.title": "Vælg dit sprog",
+  "onboarding.language.body": "Hermes Browser bruger det overalt. Du kan ændre det senere i Indstillinger.",
+  "onboarding.language.body_suggested": "Foreslået ud fra din browser: {language}. Vælg et andet, hvis du foretrækker det; du kan ændre det senere i Indstillinger.",
 });

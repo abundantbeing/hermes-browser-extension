@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} 手動セットアップは設定からいつでも利用できます。",
   "connect.status.loopback_only": "自動ペアリングは、ループバックアドレス上のローカルゲートウェイでのみ利用できます。リモート API 接続には、明示的に設定した URL とトークンが必要です。ダッシュボード接続には Trusted Dashboard Attach を使用します。",
   "connect.status.degraded": "Hermes に接続しましたが、ランタイムの警告があります。{detail}",
+  "onboarding.language.title": "言語を選択してください",
+  "onboarding.language.body": "Hermes Browser のすべての画面でこの言語を使います。あとから設定で変更できます。",
+  "onboarding.language.body_suggested": "ブラウザーの設定からのおすすめ: {language}。ほかの言語を選ぶこともできます。あとから設定で変更できます。",
 });

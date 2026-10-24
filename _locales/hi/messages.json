@@ -2307,6 +2307,18 @@
     "message": "फ़ॉन्ट चुनें",
     "description": "Runtime interface message onboarding.font.title"
   },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser इसे हर जगह इस्तेमाल करेगा। आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "आपके ब्राउज़र के आधार पर सुझाई गई: {language}। चाहें तो कोई और चुनें; आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "अपनी भाषा चुनें",
+    "description": "Runtime interface message onboarding.language.title"
+  },
   "runtime_onboarding_layout_body": {
     "message": "आपके संदेश और Hermes के जवाब कहाँ दिखेंगे।",
     "description": "Runtime interface message onboarding.layout.body"

@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} 仍可在設定中使用手動設定。",
   "connect.status.loopback_only": "自動配對僅適用於迴路位址上的本機閘道。遠端 API 連線需要明確設定的 URL 和權杖；儀表板連線使用 Trusted Dashboard Attach。",
   "connect.status.degraded": "已連線至 Hermes，但執行階段有警告。{detail}",
+  "onboarding.language.title": "選擇您的語言",
+  "onboarding.language.body": "Hermes Browser 會在所有介面使用此語言。您可以稍後在設定中變更。",
+  "onboarding.language.body_suggested": "依據您的瀏覽器建議：{language}。如需使用其他語言，請在下方選擇；您可以稍後在設定中變更。",
 });

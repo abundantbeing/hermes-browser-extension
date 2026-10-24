@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} Vẫn có thể dùng thiết lập thủ công trong phần cài đặt.",
   "connect.status.loopback_only": "Ghép nối tự động chỉ khả dụng cho cổng cục bộ ở địa chỉ loopback. Kết nối API từ xa cần URL và mã thông báo được cấu hình rõ ràng; kết nối bảng điều khiển dùng Trusted Dashboard Attach.",
   "connect.status.degraded": "Đã kết nối với Hermes nhưng có cảnh báo thời gian chạy. {detail}",
+  "onboarding.language.title": "Chọn ngôn ngữ của bạn",
+  "onboarding.language.body": "Hermes Browser sẽ dùng ngôn ngữ này ở mọi nơi. Bạn có thể đổi sau trong phần Cài đặt.",
+  "onboarding.language.body_suggested": "Gợi ý từ trình duyệt của bạn: {language}. Chọn ngôn ngữ khác nếu bạn muốn; bạn có thể đổi sau trong phần Cài đặt.",
 });

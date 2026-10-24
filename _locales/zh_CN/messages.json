@@ -2307,6 +2307,18 @@
     "message": "选择字体",
     "description": "Runtime interface message onboarding.font.title"
   },
+  "runtime_onboarding_language_body": {
+    "message": "Hermes Browser 会在所有界面使用该语言。您可以稍后在设置中更改。",
+    "description": "Runtime interface message onboarding.language.body"
+  },
+  "runtime_onboarding_language_body_suggested": {
+    "message": "根据您的浏览器推荐：{language}。如需使用其他语言，请在下方选择；您可以稍后在设置中更改。",
+    "description": "Runtime interface message onboarding.language.body_suggested"
+  },
+  "runtime_onboarding_language_title": {
+    "message": "选择您的语言",
+    "description": "Runtime interface message onboarding.language.title"
+  },
   "runtime_onboarding_layout_body": {
     "message": "你的消息和 Hermes 的回复所在的位置。",
     "description": "Runtime interface message onboarding.layout.body"

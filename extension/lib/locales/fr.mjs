@@ -1929,4 +1929,7 @@ export default Object.freeze({
   "connect.status.failed": "{reason} La configuration manuelle reste disponible dans les paramètres.",
   "connect.status.loopback_only": "L'appairage automatique n'est disponible que pour une passerelle locale sur l'adresse de bouclage (loopback). Les connexions API distantes exigent une URL et un jeton configurés explicitement ; les connexions au tableau de bord utilisent Trusted Dashboard Attach.",
   "connect.status.degraded": "Connecté à Hermes avec un avertissement d'exécution. {detail}",
+  "onboarding.language.title": "Choisissez votre langue",
+  "onboarding.language.body": "Hermes Browser l'utilisera partout. Vous pourrez la modifier plus tard dans les paramètres.",
+  "onboarding.language.body_suggested": "Suggérée par votre navigateur : {language}. Choisissez-en une autre si vous préférez ; vous pourrez la modifier plus tard dans les paramètres.",
 });
