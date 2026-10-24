@@ -3,7 +3,7 @@ import {
 } from './browser-controller-adapter.mjs';
 import { isRestrictedUrl, privacySafeTabForPrompt } from './browser-context-protocol.mjs';
 import { resolveKeyPress } from './browser-control-keys.mjs';
-import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameChainReadable, readableChildFrames } from './browser-control-frames.mjs';
+import { FRAME_TEXT_SHARE, MAX_FRAME_NODES, frameChainReadable, frameUrlReadable, readableChildFrames } from './browser-control-frames.mjs';
 import { MAX_INLINE_SCREENSHOT_CHARS } from './screenshot-limits.mjs';
 
 const CDP_VERSION = '1.3';
@@ -1146,6 +1146,91 @@ function createChromiumCdpAdapter({
 
   const framePathUrls = (path) => path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`);
 
+  // The owner elements of every frame on the page that Hermes may not read (see frameUrlReadable), from the live
+  // DOM, which lists the owners of frames in other processes too. A frame in the same process is judged by its
+  // document's address (the fragment included); one in its own process has no document in the DOM, so it counts
+  // unless the frame tree proves it readable.
+  async function unreadableFrameOwners(send, signal) {
+    const document = await send('DOM.getDocument', { depth: -1, pierce: true });
+    let tree = null;
+    try {
+      tree = (await send('Page.getFrameTree'))?.frameTree || null;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+    }
+    const owners = [];
+    const stack = document?.root ? [document.root] : [];
+    while (stack.length) {
+      const node = stack.pop();
+      if (Number(node?.nodeType) !== 9 && embedsFrame(node)) {
+        let readable = false;
+        if (node.contentDocument) {
+          readable = frameUrlReadable(String(node.contentDocument.documentURL || ''));
+        } else {
+          const owned = String(node.frameId || '');
+          const path = owned && tree ? frameTreePath(tree, owned) : null;
+          readable = Boolean(path) && frameChainReadable(framePathUrls(path));
+        }
+        if (!readable) owners.push(Number(node.backendNodeId) || 0);
+      }
+      for (const list of [node?.children, node?.shadowRoots, node?.pseudoElements]) {
+        if (Array.isArray(list)) stack.push(...list);
+      }
+      if (node?.templateContent) stack.push(node.templateContent);
+      if (node?.contentDocument) stack.push(node.contentDocument);
+    }
+    return owners;
+  }
+
+  // The part of the viewport a screenshot covers: the clip, or the whole viewport. Null when it cannot be told.
+  async function screenshotRegion(send, signal, clip) {
+    if (clip) return { x: clip.x, y: clip.y, width: clip.width, height: clip.height };
+    try {
+      const viewport = (await send('Page.getLayoutMetrics'))?.cssVisualViewport;
+      const width = Number(viewport?.clientWidth);
+      const height = Number(viewport?.clientHeight);
+      return width > 0 && height > 0 ? { x: 0, y: 0, width, height } : null;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return null;
+    }
+  }
+
+  // Whether the element's box overlaps the region, so its pixels are in the screenshot. An element that is not
+  // rendered has no pixels; any other failure to measure it counts as overlapping.
+  async function ownerInRegion(send, signal, backendNodeId, region) {
+    if (!region || !backendNodeId) return true;
+    try {
+      const box = quadRect(await send('DOM.getBoxModel', { backendNodeId }));
+      return box.x < region.x + region.width && box.x + box.width > region.x
+        && box.y < region.y + region.height && box.y + box.height > region.y;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return !/could not compute box model/i.test(String(error?.message || ''));
+    }
+  }
+
+  // A screenshot is pixels of the whole page, frames included, so it follows the rule snapshots follow: a frame
+  // Hermes may not read (a payment or sign-in frame) that shows in the captured region withholds the screenshot.
+  // A page whose frames cannot be checked is treated the same way.
+  async function assertScreenshotFramesReadable(send, signal, clip) {
+    const withheld = () => restrictedFrameError(
+      'A screenshot was withheld because this page embeds a frame Hermes will not capture (for example a payment or sign-in frame). Use browser_snapshot to read the page instead.',
+    );
+    let owners;
+    try {
+      owners = await unreadableFrameOwners(send, signal);
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      throw withheld();
+    }
+    if (!owners.length) return;
+    const region = await screenshotRegion(send, signal, clip);
+    for (const backendNodeId of owners) {
+      if (await ownerInRegion(send, signal, backendNodeId, region)) throw withheld();
+    }
+  }
+
   // The node under a viewport point, which is where a pointer action actually lands. The frame it is in must be
   // on pages Hermes may act on (a restricted frame laid over the control is such a frame), and for a control
   // with a known frame it must be the control's own frame, since a click on a covered control lands in
@@ -1565,6 +1650,8 @@ function createChromiumCdpAdapter({
           await send('DOM.scrollIntoViewIfNeeded', { backendNodeId });
           clip = screenshotClip(await send('DOM.getBoxModel', { backendNodeId }), args.zoom);
         }
+        await enable('DOM');
+        await assertScreenshotFramesReadable(send, signal, clip);
         const hidden = await pageIsHidden(send, signal);
         const capture = send('Page.captureScreenshot', {
           format: 'png',
@@ -1575,6 +1662,8 @@ function createChromiumCdpAdapter({
         const captured = await (hidden
           ? withTimeout(capture, HIDDEN_CAPTURE_TIMEOUT_MS, () => hiddenScreenshotError(), setTimer, clearTimer)
           : capture);
+        // A frame can move to a restricted page while the capture runs; the pixels are dropped if so.
+        await assertScreenshotFramesReadable(send, signal, clip);
         return boundedScreenshot(`data:image/png;base64,${String(captured?.data || '')}`);
       }
       throw new Error(`Action ${action} is not implemented by the Chromium adapter.`);

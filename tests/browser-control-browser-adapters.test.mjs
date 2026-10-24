@@ -474,7 +474,8 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
     'Page.getLayoutMetrics', 'Runtime.evaluate', 'Input.dispatchMouseEvent', 'Runtime.evaluate',
     'Page.enable', 'Page.navigate',
     'Page.getNavigationHistory', 'Page.navigateToHistoryEntry',
-    'Runtime.evaluate', 'Page.captureScreenshot',
+    // The screenshot reads the page's frames before the capture and again after it.
+    'DOM.getDocument', 'Page.getFrameTree', 'Runtime.evaluate', 'Page.captureScreenshot', 'DOM.getDocument', 'Page.getFrameTree',
   ]);
   const mouse = calls.find((call) => call[0] === 'command' && call[2] === 'Input.dispatchMouseEvent' && call[3].type === 'mousePressed');
   assert.deepEqual({ x: mouse[3].x, y: mouse[3].y, button: mouse[3].button }, { x: 20, y: 30, button: 'left' });
@@ -2588,4 +2589,87 @@ test('browser_press: the classifier and the adapter agree on every key spelling'
     else if (sendsPaste) assert.equal(decision.reason, 'clipboard-paste', `${label} sends a paste shortcut`);
     else assert.equal(decision.risk, BROWSER_CONTROL_RISKS.SAFE, `${label} sends ${dispatched.key}`);
   }
+});
+
+// A page with the given frame owners in its body, as DOM.getDocument (pierce) describes it.
+function pageWithFrames(owners) {
+  return { root: { nodeType: 9, nodeName: '#document', backendNodeId: 1, frameId: 'MAIN', children: [{ nodeType: 1, nodeName: 'BODY', backendNodeId: 2, children: owners }] } };
+}
+const ownerWithDocument = (backendNodeId, documentURL, children = []) => ({
+  nodeType: 1, nodeName: 'IFRAME', backendNodeId, frameId: `F${backendNodeId}`,
+  contentDocument: { nodeType: 9, nodeName: '#document', backendNodeId: backendNodeId + 1000, documentURL, children },
+});
+// A frame in its own process: the owner is in the DOM, its document and frame are not.
+const outOfProcessOwner = (backendNodeId) => ({ nodeType: 1, nodeName: 'IFRAME', backendNodeId, frameId: `OOPIF${backendNodeId}` });
+
+function screenshotChromium(owners, { boxes = {}, secondOwners = null } = {}) {
+  const chromium = chromiumApis();
+  let reads = 0;
+  chromium.handlers['DOM.getDocument'] = () => {
+    reads += 1;
+    return pageWithFrames(reads > 1 && secondOwners ? secondOwners : owners);
+  };
+  chromium.handlers['DOM.getBoxModel'] = ({ backendNodeId }) => {
+    const box = boxes[backendNodeId] ?? (backendNodeId === 44 ? [10, 20, 20, 20] : undefined);
+    if (box === 'none') throw new Error('Could not compute box model.');
+    const [x, y, w, h] = box || [0, 0, 200, 100];
+    return { model: { content: [x, y, x + w, y, x + w, y + h, x, y + h], border: [x, y, x + w, y, x + w, y + h, x, y + h] } };
+  };
+  return chromium;
+}
+const shotRejected = (error) => error?.code === 'restricted_frame' && /screenshot was withheld/i.test(error.message) && /frame/i.test(error.message);
+const didCapture = (chromium) => chromium.calls.some((call) => call[2] === 'Page.captureScreenshot');
+const takeShot = (chromium, args = {}, target = null) => import('../extension/lib/browser-control-browser-adapters.mjs').then(({ createChromiumCdpAdapter }) => (
+  createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_screenshot', args, { scope, signal: openSignal(), target })
+));
+
+test('a viewport screenshot is withheld when the page embeds a restricted frame in view', async () => {
+  for (const [label, owner] of [
+    ['a same-process checkout frame', ownerWithDocument(31, 'https://bank.example/checkout')],
+    ['a frame whose restriction is in the fragment', ownerWithDocument(31, 'https://pay.example/app#/checkout')],
+    ['a browser page frame', ownerWithDocument(31, 'chrome-error://chromewebdata/')],
+    ['a data: frame', ownerWithDocument(31, 'data:text/html,hello')],
+    ['a frame in another process', outOfProcessOwner(31)],
+    ['a restricted frame inside a readable one', ownerWithDocument(31, 'https://ads.example/slot', [ownerWithDocument(32, 'https://bank.example/billing')])],
+  ]) {
+    const chromium = screenshotChromium([owner]);
+    await assert.rejects(takeShot(chromium), shotRejected, label);
+    assert.equal(didCapture(chromium), false, `${label}: the page was never captured`);
+  }
+});
+
+test('a screenshot is still taken when every frame in view is readable, or the restricted one cannot be seen', async () => {
+  const readable = screenshotChromium([ownerWithDocument(31, 'https://ads.example/slot'), ownerWithDocument(33, 'about:srcdoc')]);
+  assert.match((await takeShot(readable)).dataUrl, /^data:image\/png;base64,/);
+
+  // Not rendered at all, or entirely outside the viewport (the fake viewport is 1000 x 800).
+  for (const box of ['none', [0, 5000, 300, 200], [-500, 0, 100, 100]]) {
+    const chromium = screenshotChromium([outOfProcessOwner(31)], { boxes: { 31: box } });
+    assert.match((await takeShot(chromium)).dataUrl, /^data:image\/png;base64,/, JSON.stringify(box));
+  }
+  const plain = screenshotChromium([]);
+  assert.match((await takeShot(plain)).dataUrl, /^data:image\/png;base64,/);
+});
+
+test('a screenshot of one control is withheld only when a restricted frame lies over its clip', async () => {
+  const frames = [ownerWithDocument(31, 'https://bank.example/checkout')];
+  // The control's box (see the fake) is 20 x 20 at 10,20.
+  const over = screenshotChromium(frames, { boxes: { 31: [0, 0, 100, 100] } });
+  await assert.rejects(takeShot(over, {}, { backendDOMNodeId: 44 }), shotRejected);
+  assert.equal(didCapture(over), false);
+  const away = screenshotChromium(frames, { boxes: { 31: [400, 400, 100, 100] } });
+  assert.match((await takeShot(away, {}, { backendDOMNodeId: 44 })).dataUrl, /^data:image\/png;base64,/);
+});
+
+test('a screenshot is withheld when the frames cannot be checked, or one turned restricted while it was taken', async () => {
+  const unreadable = chromiumApis();
+  unreadable.handlers['DOM.getDocument'] = () => { throw new Error('Target closed'); };
+  await assert.rejects(takeShot(unreadable), shotRejected);
+  assert.equal(didCapture(unreadable), false);
+
+  const late = screenshotChromium([ownerWithDocument(31, 'https://ads.example/slot')], {
+    secondOwners: [ownerWithDocument(31, 'https://ads.example/checkout')],
+  });
+  await assert.rejects(takeShot(late), shotRejected);
+  assert.equal(didCapture(late), true, 'it was taken, then thrown away');
 });
