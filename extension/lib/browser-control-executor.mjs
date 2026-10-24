@@ -35,7 +35,7 @@ const POST_ACTION_ACTIONS = new Set([
 ]);
 // Probes that only need the tab URL, not the unsaved-content page script.
 const URL_ONLY_PROBE_ACTIONS = new Set(['browser_snapshot', 'browser_scroll', 'browser_screenshot', 'browser_back']);
-const APPROVALS_RECHECK_ACTIONS = new Set(['browser_click', 'browser_drag', 'browser_press', 'browser_type']);
+const APPROVALS_RECHECK_ACTIONS = new Set(['browser_click', 'browser_drag', 'browser_fill', 'browser_press', 'browser_select', 'browser_type']);
 // The broker cancels a command at 30 s; the approval wait must end first.
 const APPROVAL_WAIT_CAP_MS = 28_000;
 const APPROVAL_TIMEOUT_MESSAGE = 'Waiting for your approval in the Hermes panel timed out.';
@@ -844,6 +844,11 @@ export function createBrowserControlExecutor({
         const currentOrigin = pageOrigin(current.currentUrl);
         if (!beforeOrigin || !currentOrigin || beforeOrigin !== currentOrigin) {
           return errorOutcome('domain_changed', 'The page origin changed before the action could run.');
+        }
+        // The same origin can still have moved to a path the policy refuses (a pushState to /checkout), and the
+        // approval was for the page as it was, so the whole policy is applied to where the page is now.
+        if (restrictedPageUrl(current.currentUrl, Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments))) {
+          return errorOutcome('domain_changed', 'The page moved to one Hermes will not act on while waiting for your approval, so the action did not run.');
         }
       }
 

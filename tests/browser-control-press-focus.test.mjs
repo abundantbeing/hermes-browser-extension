@@ -141,3 +141,27 @@ test('typing while an embedded frame has focus waits for approval, and says why'
   const navigation = pressFixture({ role: 'frame', name: 'Payment', inputType: '', inFrame: true });
   assert.equal((await navigation.executor.execute(frame({ key: 'Tab' }), { scope: SCOPE })).ok, true);
 });
+
+// A person's approval covers the page it was asked about. After the wait the page is judged again against the
+// whole policy: a same-origin move to a checkout path keeps the origin and must still stop the action.
+test('an approved action does not run when the page moved to a restricted path of the same origin while waiting', async () => {
+  const approvals = createBrowserControlApprovalStore({ ttlMs: 1_000 });
+  let urls = ['https://example.test/editor'];
+  let presses = 0;
+  const adapter = {
+    contract: { enabled: true, actions: ['browser_press'] },
+    async inspect() { return { currentUrl: urls[0], hasUnsavedContent: false, focused: { role: 'textbox', name: 'Message', inputType: 'text' } }; },
+    async execute() { presses += 1; return { status: 'pressed' }; },
+  };
+  const executor = createBrowserControlExecutor({ adapter, approvals, refs: createBrowserControlRefStore() });
+  const running = executor.execute(frame({ key: 'Enter' }), { scope: SCOPE });
+  await settle();
+  const [shown] = approvals.pending();
+  urls = ['https://example.test/checkout/pay'];
+  assert.equal(approvals.grant({ ...shown, state: 'paused' }).ok, true);
+  const outcome = await running;
+  assert.equal(outcome.ok, false);
+  assert.equal(outcome.error.code, 'domain_changed');
+  assert.match(outcome.error.message, /will not act on/);
+  assert.equal(presses, 0);
+});
