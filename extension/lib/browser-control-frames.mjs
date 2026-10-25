@@ -19,6 +19,25 @@ export const FRAME_ELEMENT_SHARE = 0.25;
 // (`iframe.srcdoc`, or an empty iframe a script fills in), so it is read under that frame's rules.
 const INHERITING_FRAME_URLS = new Set(['about:blank', 'about:srcdoc']);
 
+// Frames that carry a card or a sign-in whatever their path says (a card field's address is an opaque id, with no
+// "checkout" in it). A frame on one of these hosts is never read, shown in a screenshot or acted in, so a page's
+// own address being ordinary does not let its payment or sign-in frame through.
+const SENSITIVE_FRAME_HOSTS = Object.freeze([
+  'stripe.com', 'stripe.network', 'paypal.com', 'paypalobjects.com', 'braintreegateway.com', 'adyen.com',
+  'squareup.com', 'squarecdn.com', 'checkout.com', 'klarna.com', 'afterpay.com', 'authorize.net', 'worldpay.com',
+  'cardinalcommerce.com', 'pay.google.com', 'payments.google.com', 'accounts.google.com',
+  'login.microsoftonline.com', 'login.live.com', 'appleid.apple.com',
+]);
+
+function sensitiveFrameHost(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/\.$/, '');
+    return SENSITIVE_FRAME_HOSTS.some((entry) => host === entry || host.endsWith(`.${entry}`));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Whether a frame whose document is at `url` may be read or acted on. Only ordinary web pages: a browser or
  * extension page, a data: or blob: document and a frame that has not committed an address yet are not part of
@@ -28,7 +47,7 @@ const INHERITING_FRAME_URLS = new Set(['about:blank', 'about:srcdoc']);
 export function frameUrlReadable(url, restricted = (value) => isRestrictedUrl(value)) {
   const text = String(url || '').trim();
   if (INHERITING_FRAME_URLS.has(text.toLowerCase())) return true;
-  return /^https?:/i.test(text) && !restricted(text);
+  return /^https?:/i.test(text) && !restricted(text) && !sensitiveFrameHost(text);
 }
 
 /**

@@ -16,6 +16,8 @@ const DOM_QUIET_MS = 150;
 const DOM_SETTLE_CAP_MS = 1_200;
 const HIDDEN_CAPTURE_TIMEOUT_MS = 5_000;
 const SCROLL_SETTLE_MS = 120;
+// A frame smaller than this in either direction shows nothing worth withholding a screenshot for.
+const MIN_VISIBLE_FRAME_PX = 4;
 const SCROLL_MIN_PX = 100;
 const SCROLL_MAX_PX = 5_000;
 const SCROLL_VIEWPORT_FRACTION = 0.85;
@@ -1193,6 +1195,62 @@ function createChromiumCdpAdapter({
       || Boolean(node?.frameId) || Boolean(node?.contentDocument);
   }
 
+  // A frame in its own process has no document in the DOM and no entry in the frame tree, but the browser lists it
+  // as a target of its own with the address it is on. The frame ids match (an iframe target's id is its frame's id).
+  // A list that cannot be had, or has no such frame, leaves the frame's address unknown.
+  async function crossProcessFrames(send, signal) {
+    try {
+      const infos = (await send('Target.getTargets'))?.targetInfos;
+      if (!Array.isArray(infos)) return null;
+      const byId = new Map();
+      for (const info of infos) {
+        if (info?.type === 'iframe' && info.targetId) {
+          byId.set(String(info.targetId), { url: String(info.url || ''), parent: String(info.parentFrameId || '') });
+        }
+      }
+      return byId;
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return null;
+    }
+  }
+
+  // Whether a frame in another process may be read: its own address, and that of every frame inside it that has a
+  // target of its own, must be an ordinary page by the policy the page itself is held to. An address that cannot
+  // be had is not readable. `url` is the first address that is not.
+  function judgeCrossProcessFrame(frameId, targets) {
+    const entry = frameId && targets ? targets.get(frameId) : null;
+    if (!entry) return { readable: false, known: false, url: '' };
+    const family = [entry];
+    const seen = new Set([frameId]);
+    for (let grown = true; grown;) {
+      grown = false;
+      for (const [id, candidate] of targets) {
+        if (!seen.has(id) && seen.has(candidate.parent)) {
+          seen.add(id);
+          family.push(candidate);
+          grown = true;
+        }
+      }
+    }
+    const bad = family.find((member) => !frameUrlReadable(member.url));
+    return bad ? { readable: false, known: true, url: bad.url } : { readable: true, known: true, url: entry.url };
+  }
+
+  // How a message names a frame: by its host (never a path, query or anything it shows), as a document that is not a
+  // web page, or as one that could not be checked.
+  function describeFrame(verdict = {}) {
+    const url = String(verdict.url || '').trim();
+    if (!verdict.known || !url) return { kind: 'unknown', host: '' };
+    try {
+      const parsed = new URL(url);
+      if (/^https?:$/.test(parsed.protocol) && parsed.host) return { kind: 'web', host: parsed.host };
+    } catch {
+      // Not an address at all.
+    }
+    return { kind: 'document', host: '' };
+  }
+
   const framePathUrls = (path) => path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`);
 
   // The owner elements of every frame on the page that Hermes may not read (see frameUrlReadable), from the live
@@ -1207,20 +1265,33 @@ function createChromiumCdpAdapter({
     } catch (error) {
       if (abortError(signal)) throw error;
     }
+    // The browser's own list of frames in other processes, read once and only if a frame needs it.
+    let targets;
+    const crossProcessTargets = async () => {
+      if (targets === undefined) targets = await crossProcessFrames(send, signal);
+      return targets;
+    };
     const owners = [];
     const stack = document?.root ? [document.root] : [];
     while (stack.length) {
       const node = stack.pop();
       if (Number(node?.nodeType) !== 9 && embedsFrame(node)) {
-        let readable = false;
+        let verdict = { readable: false, known: false, url: '' };
         if (node.contentDocument) {
-          readable = frameUrlReadable(String(node.contentDocument.documentURL || ''));
+          const url = String(node.contentDocument.documentURL || '');
+          verdict = { readable: frameUrlReadable(url), known: Boolean(url), url };
         } else {
           const owned = String(node.frameId || '');
           const path = owned && tree ? frameTreePath(tree, owned) : null;
-          readable = Boolean(path) && frameChainReadable(framePathUrls(path));
+          if (path) {
+            const urls = framePathUrls(path);
+            const bad = urls.find((url) => !frameUrlReadable(url));
+            verdict = { readable: bad === undefined, known: true, url: bad ?? urls.at(-1) ?? '' };
+          } else {
+            verdict = judgeCrossProcessFrame(owned, await crossProcessTargets());
+          }
         }
-        if (!readable) owners.push(Number(node.backendNodeId) || 0);
+        if (!verdict.readable) owners.push({ id: Number(node.backendNodeId) || 0, verdict });
       }
       for (const list of [node?.children, node?.shadowRoots, node?.pseudoElements]) {
         if (Array.isArray(list)) stack.push(...list);
@@ -1268,6 +1339,8 @@ function createChromiumCdpAdapter({
     try {
       const box = quadRect(await send('DOM.getBoxModel', { backendNodeId }));
       return [...new Set([1, view.scale])].some((scale) => {
+        // A frame under 4 x 4 CSS pixels (a tracker, a beacon) shows nothing.
+        if (box.width / scale < MIN_VISIBLE_FRAME_PX || box.height / scale < MIN_VISIBLE_FRAME_PX) return false;
         const left = view.pageX + box.x / scale;
         const top = view.pageY + box.y / scale;
         return left < region.x + region.width && left + box.width / scale > region.x
@@ -1277,6 +1350,48 @@ function createChromiumCdpAdapter({
       if (abortError(signal)) throw error;
       return !/could not compute box model/i.test(String(error?.message || ''));
     }
+  }
+
+  // Whether the browser's own style for the element makes it invisible: not displayed, hidden, or fully transparent.
+  // Read through the CSS domain, which the page's script cannot answer for; any failure to read it is "not hidden".
+  async function ownerHiddenByStyle(send, enable, signal, backendNodeId) {
+    try {
+      await enable('CSS');
+      const nodeId = (await send('DOM.pushNodesByBackendIdsToFrontend', { backendNodeIds: [backendNodeId] }))?.nodeIds?.[0];
+      if (!nodeId) return false;
+      const style = (await send('CSS.getComputedStyleForNode', { nodeId }))?.computedStyle;
+      if (!Array.isArray(style)) return false;
+      const valueOf = (name) => String(style.find((property) => property?.name === name)?.value ?? '').trim().toLowerCase();
+      return valueOf('display') === 'none'
+        || ['hidden', 'collapse'].includes(valueOf('visibility'))
+        || (valueOf('opacity') !== '' && Number(valueOf('opacity')) === 0);
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return false;
+    }
+  }
+
+  // The message for a screenshot that a frame withholds: the frame by its host, what Hermes can still do, and what
+  // the person can do. The host only, never a path, query or content.
+  function withheldScreenshotMessage(verdict) {
+    const frame = describeFrame(verdict);
+    const lead = frame.kind === 'web'
+      ? `A frame from ${frame.host} on this page is on a page Hermes cannot read, so the screenshot was withheld.`
+      : (frame.kind === 'document'
+        ? 'A frame on this page that is not an ordinary web page (a browser, data or blob document) is in view, so the screenshot was withheld.'
+        : 'A frame on this page could not be checked, so the screenshot was withheld.');
+    return `${lead} Hermes can still read the page text with browser_snapshot. Scroll the frame out of view, take a screenshot of one element away from it, or ask the person to look at it themselves.`;
+  }
+
+  // The same for a pointer action that would land inside a frame.
+  function pointerFrameMessage(verdict) {
+    const frame = describeFrame(verdict);
+    const where = frame.kind === 'web'
+      ? `a frame from ${frame.host} that is on a page Hermes cannot read`
+      : (frame.kind === 'document'
+        ? 'a frame on this page that is not an ordinary web page'
+        : 'a frame on this page that Hermes could not check');
+    return `Hermes cannot act there: the spot is inside ${where}. Click somewhere else on the page, or ask the person to do it.`;
   }
 
   // Whether the element's box overlaps the region, so its pixels are in the screenshot. An element that is not
@@ -1296,23 +1411,40 @@ function createChromiumCdpAdapter({
   // A screenshot is pixels of the whole page, frames included, so it follows the rule snapshots follow: a frame
   // Hermes may not read (a payment or sign-in frame) that shows in the captured region withholds the screenshot.
   // A page whose frames cannot be checked is treated the same way.
-  async function assertScreenshotFramesReadable(send, signal, clip) {
-    const withheld = () => restrictedFrameError(
-      'A screenshot was withheld because this page embeds a frame Hermes will not capture (for example a payment or sign-in frame). Use browser_snapshot to read the page instead.',
-    );
+  async function assertScreenshotFramesReadable(send, enable, signal, clip) {
+    const withheld = (verdict) => restrictedFrameError(withheldScreenshotMessage(verdict));
     let owners;
     try {
       owners = await unreadableFrameOwners(send, signal);
     } catch (error) {
       if (abortError(signal)) throw error;
-      throw withheld();
+      throw withheld({ known: false });
     }
     if (!owners.length) return;
     const view = await readViewport(send, signal);
     const region = screenshotRegion(clip, view);
-    for (const backendNodeId of owners) {
-      if (await ownerInDocumentRegion(send, signal, backendNodeId, region, view)) throw withheld();
+    for (const { id, verdict } of owners) {
+      if (!await ownerInDocumentRegion(send, signal, id, region, view)) continue;
+      // Only a frame that shows is withheld for.
+      if (await ownerHiddenByStyle(send, enable, signal, id)) continue;
+      throw withheld(verdict);
     }
+  }
+
+  // The frame a pointer action would land in, as its owner element (described) says: it must be a frame Hermes may
+  // read. A frame in the frame tree is judged by its address there; one in its own process, which the tree does not
+  // list, by the address the browser reports for it. One whose address cannot be had is refused.
+  async function assertOwnedFrameReadable(send, signal, tree, described) {
+    const owned = String(described.frameId || '');
+    const ownedPath = owned && tree ? frameTreePath(tree, owned) : null;
+    if (ownedPath) {
+      const urls = framePathUrls(ownedPath);
+      const bad = urls.find((url) => !frameUrlReadable(url));
+      if (bad === undefined) return;
+      throw restrictedFrameError(pointerFrameMessage({ known: true, url: bad }));
+    }
+    const verdict = judgeCrossProcessFrame(owned, await crossProcessFrames(send, signal));
+    if (!verdict.readable) throw restrictedFrameError(pointerFrameMessage(verdict));
   }
 
   // The node under a viewport point, which is where a pointer action actually lands. The frame it is in must be
@@ -1365,13 +1497,7 @@ function createChromiumCdpAdapter({
           if (abortError(signal)) throw error;
         }
         if (!described) throw restrictedFrameError('Hermes could not tell what is under that point.');
-        if (embedsFrame(described)) {
-          const owned = String(described.frameId || '');
-          const ownedPath = owned && tree ? frameTreePath(tree, owned) : null;
-          if (!ownedPath || !frameChainReadable(framePathUrls(ownedPath))) {
-            throw restrictedFrameError('The pointer would land in a frame Hermes cannot read.');
-          }
-        }
+        if (embedsFrame(described)) await assertOwnedFrameReadable(send, signal, tree, described);
         if (!frameChainReadable(placed.urls)) throw restrictedFrameError();
         if (expectedOwner !== undefined && placed.owner !== expectedOwner) {
           throw restrictedFrameError('The control is covered by content from another frame.');
@@ -1379,18 +1505,27 @@ function createChromiumCdpAdapter({
         return hitId;
       }
       let unreadableAtPoint = true;
+      let blocking = null;
       try {
         const owners = await unreadableFrameOwners(send, signal);
         const here = { x: point.x - 0.5, y: point.y - 0.5, width: 1, height: 1 };
         unreadableAtPoint = false;
         for (const owner of owners) {
-          if (await ownerInRegion(send, signal, owner, here)) { unreadableAtPoint = true; break; }
+          if (await ownerInRegion(send, signal, owner.id, here)) {
+            unreadableAtPoint = true;
+            blocking = owner.verdict;
+            break;
+          }
         }
       } catch (error) {
         if (abortError(signal)) throw error;
         unreadableAtPoint = true;
       }
-      if (unreadableAtPoint) throw restrictedFrameError('Hermes could not tell which frame is under that point.');
+      if (unreadableAtPoint) {
+        throw restrictedFrameError(blocking
+          ? pointerFrameMessage(blocking)
+          : 'Hermes could not tell which frame is under that point, so it did not act there. Try a control elsewhere on the page, or ask the person.');
+      }
       return hitId;
     }
     if (hitId) {
@@ -1401,13 +1536,7 @@ function createChromiumCdpAdapter({
         if (abortError(signal)) throw error;
       }
       if (!described) throw restrictedFrameError('Hermes could not tell what is under that point.');
-      if (embedsFrame(described)) {
-        const owned = String(described.frameId || '');
-        const ownedPath = owned && tree ? frameTreePath(tree, owned) : null;
-        if (!ownedPath || !frameChainReadable(framePathUrls(ownedPath))) {
-          throw restrictedFrameError('The pointer would land in a frame Hermes cannot read.');
-        }
-      }
+      if (embedsFrame(described)) await assertOwnedFrameReadable(send, signal, tree, described);
     }
     if (tree?.frame?.id === hitFrameId) {
       if (expectedOwner !== undefined && expectedOwner !== 0) throw restrictedFrameError('The control is covered by content from another frame.');
@@ -1864,7 +1993,7 @@ function createChromiumCdpAdapter({
           clip = screenshotClip(targetBox, args.zoom, view);
         }
         await enable('DOM');
-        await assertScreenshotFramesReadable(send, signal, clip);
+        await assertScreenshotFramesReadable(send, enable, signal, clip);
         const hidden = await pageIsHidden(send, signal);
         const capture = send('Page.captureScreenshot', {
           format: 'png',
@@ -1876,7 +2005,7 @@ function createChromiumCdpAdapter({
           ? withTimeout(capture, HIDDEN_CAPTURE_TIMEOUT_MS, () => hiddenScreenshotError(), setTimer, clearTimer)
           : capture);
         // A frame can move to a restricted page while the capture runs; the pixels are dropped if so.
-        await assertScreenshotFramesReadable(send, signal, clip);
+        await assertScreenshotFramesReadable(send, enable, signal, clip);
         // The page can have moved to a restricted address, or to another page, since: the pixels are dropped.
         const after = await screenshotPageAddress(session.tabId, signal, allowLocalDocuments);
         if (comparableUrl(after) !== comparableUrl(before)) {
