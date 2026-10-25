@@ -17,7 +17,7 @@ const vendored = new Map(readdirSync(new URL(`../${PIXEL_DIR}`, import.meta.url)
   .map((name) => [innerOf(read(`${PIXEL_DIR}/${name}`)), name.replace(/\.svg$/, '')]));
 
 // Wordmarks (role="img") are brand art, not UI icons.
-const PAGES = ['extension/sidepanel.html', 'extension/app.html', 'extension/voice-dictation.html'];
+const PAGES = ['extension/sidepanel.html', 'extension/voice-dictation.html'];
 const pageIcons = PAGES
   .flatMap((path) => svgsIn(read(path)).filter((svg) => !/^<svg[^>]*\brole="img"/.test(svg)).map((svg) => [path, svg]));
 const scriptIcons = [

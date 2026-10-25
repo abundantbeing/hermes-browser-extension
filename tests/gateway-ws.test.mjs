@@ -334,14 +334,9 @@ test('sidepanel reconnect wiring persists the durable id and resumes only on the
   assert.match(source, /connection\.wsStoredSessionId\s*=\s*storedId/);
 });
 
-test('both Browser surfaces normalize Cloud history before rendering it', () => {
-  const appSource = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+test('the side panel normalizes Cloud history before rendering it', () => {
   const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 
-  assert.match(
-    appSource,
-    /function dashboardHistoryMessages\(payload = \{\}\) \{\s*return normalizeGatewayHistoryMessages\(payload\);\s*\}/,
-  );
   assert.match(
     sidepanelSource,
     /const contextMessages = normalizeGatewayHistoryMessages\(result\)[\s\S]*?content: message\.content/,
@@ -458,8 +453,4 @@ test('session.list params match the upstream SessionListParams contract (no offs
   assert.deepEqual(buildSessionListParams({ profile: undefined }), { limit: 200, profile: '' });
   const allowed = new Set(['profile', 'title', 'limit', 'include_hidden']);
   for (const key of Object.keys(buildSessionListParams({ limit: 5, profile: 'p' }))) assert.ok(allowed.has(key), `${key} is not an upstream session.list field`);
-
-  const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  assert.match(app, /request\(WS_METHODS\.sessionList, buildSessionListParams\(/);
-  assert.doesNotMatch(app, /sessionList,\s*\{[^}]*offset/);
 });

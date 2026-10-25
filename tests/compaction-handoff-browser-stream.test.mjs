@@ -64,29 +64,20 @@ test('Browser consumes Agent projected content and display_kind without classify
   assert.equal(isBrowserDisplayMessageVisible(productionRows.at(-1)), true, 'marker text is ordinary user content');
 });
 
-test('both Browser history surfaces use the field-driven display policy and preserve hidden identity rows', () => {
-  const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
+test('the side panel history uses the field-driven display policy and preserves hidden identity rows', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   const policy = readFileSync(new URL('../extension/lib/web-run-state.mjs', import.meta.url), 'utf8');
 
-  assert.match(app, /browserDisplayMessages\((?:messages|renderedMessages)\)/);
   assert.match(sidepanel, /for \(const message of groupToolHistoryMessages\(sessionToolDisplayMessages\((?:visibleMessages|messages)\)\)\)/);
   assert.match(sidepanel, /messages:\s*contextMessages/);
   assert.match(sidepanel, /\.\.\.message,[\s\S]*?display_kind/);
   assert.doesNotMatch(policy, /CONTEXT COMPACTION|PRIOR CONTEXT|reference only/i);
-  assert.doesNotMatch(app, /CONTEXT COMPACTION|PRIOR CONTEXT/);
   assert.doesNotMatch(sidepanel, /CONTEXT COMPACTION|PRIOR CONTEXT/);
 
-  const fullTabStart = app.indexOf('async function commitFullTabSessionMessages');
-  const fullTabEnd = app.indexOf('async function openSession', fullTabStart);
   const sidePanelStart = sidepanel.indexOf('async function commitFetchedSessionMessages');
   const sidePanelEnd = sidepanel.indexOf('async function loadSessionMessages', sidePanelStart);
-  const fullTabCommit = app.slice(fullTabStart, fullTabEnd);
   const sidePanelCommit = sidepanel.slice(sidePanelStart, sidePanelEnd);
-  assert.ok(fullTabStart >= 0 && fullTabEnd > fullTabStart);
   assert.ok(sidePanelStart >= 0 && sidePanelEnd > sidePanelStart);
-  assert.match(fullTabCommit, /renderMessages/);
-  assert.doesNotMatch(fullTabCommit, /sendPrompt|readHermesSse|executeBrowserCommand|tool/);
   assert.match(sidePanelCommit, /renderMessagesFromStorage/);
   assert.doesNotMatch(sidePanelCommit, /streamSessionChat|sendMessage|executeBrowserCommand|tool/);
 });

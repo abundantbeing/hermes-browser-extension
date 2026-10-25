@@ -1,5 +1,5 @@
 // F2 (v0.3.4 signature font rider): the availability probe is pure and async
-// so it can be unit-tested without a DOM. sidepanel.js/app.js call it with
+// so it can be unit-tested without a DOM. sidepanel.js calls it with
 // document.fonts to decide whether the honest fallback note shows.
 //
 // document.fonts.check() is deliberately NOT used: it returns true for a

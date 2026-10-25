@@ -144,38 +144,6 @@ test('sidepanel auto-naming persists through the shared rename path and cannot c
   assert.match(persist, /console\.warn\('\[Hermes Browser\] Auto-name skipped:'/);
 });
 
-test('full-tab rename uses the same editor and prefers the session.title RPC', () => {
-  const app = read('app.js');
-  const css = read('app.css');
-
-  assert.doesNotMatch(app, /promptRenameHermesWebSession/);
-  for (const name of ['openWebSessionRenameEditor', 'renderWebSessionRenameEditor', 'submitWebSessionRename', 'renameHermesWebSessionTitle']) {
-    const body = functionBody(app, name);
-    assert.ok(body.length > 0, `${name} must exist`);
-    assert.doesNotMatch(body, /window\.prompt/, `${name} must not open a native prompt`);
-  }
-
-  assert.match(app, /form\.className = 'session-row-rename-form';/);
-  assert.match(app, /input\.className = 'session-row-rename-input';/);
-  assert.match(app, /save\.textContent = translateUiText\('Save'\);/);
-  assert.match(app, /cancel\.textContent = translateUiText\('Cancel'\);/);
-  assert.match(app, /event\.key === 'Escape'[\s\S]{0,160}closeWebSessionRenameEditor\(\)/);
-  assert.match(app, /openWebSessionRenameEditor\(session\)/);
-
-  const rename = functionBody(app, 'renameHermesWebSessionTitle');
-  assert.match(rename, /connection\.client\.request\(WS_METHODS\.sessionTitle, \{ session_id: liveId, title: cleanTitle \}\)/);
-  assert.match(rename, /method: 'PATCH'/, 'REST stays as the non-live fallback');
-
-  const submit = functionBody(app, 'submitWebSessionRename');
-  assert.match(submit, /applyWebSessionTitleLocally\(sessionId, nextTitle\)/);
-  assert.match(submit, /applyWebSessionTitleLocally\(sessionId, previousTitle\)/);
-  assert.match(submit, /Could not rename session/);
-
-  assert.match(css, /\.session-row-rename-form \{/);
-  assert.match(css, /\.session-row-rename-input \{/);
-  assert.match(css, /\.session-row-rename-status \{/);
-});
-
 test('dashboardSessionUrl builds the profile-scoped session PATCH URL', () => {
   assert.equal(dashboardSessionUrl('https://host.ts.net', 'abc/1', ''), 'https://host.ts.net/api/sessions/abc%2F1');
   assert.equal(

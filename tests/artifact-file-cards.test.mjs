@@ -43,9 +43,7 @@ const { document } = window;
 const { renderMarkdownSafe } = await import('../extension/lib/sanitizer.mjs');
 
 const sidepanelSource = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-const appSource = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 const sidepanelCss = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
-const parityCss = readFileSync(new URL('../extension/app-parity.css', import.meta.url), 'utf8');
 const commonSource = readFileSync(new URL('../extension/lib/common.mjs', import.meta.url), 'utf8');
 
 const BASE_URL = 'http://127.0.0.1:8765';
@@ -651,18 +649,6 @@ test('the side panel hydrates returned-file cards and keeps the honest chip fall
   assert.match(sidepanelSource, /node\.classList\.add\('unavailable'\)/);
 });
 
-test('the full tab renders the same chip and hydrates it with the same three actions', () => {
-  assert.match(appSource, /import \{ hydrateArtifactCards, setArtifactCardBusy, setArtifactCardNote \} from '\.\/lib\/artifact-card\.mjs';/);
-  assert.match(appSource, /function renderArtifactCard\(artifact\)/);
-  assert.match(appSource, /filename: artifact\.name/);
-  assert.match(appSource, /function hydrateArtifactFileCards\(root, \{ scanText = true \} = \{\}\)/);
-  assert.match(appSource, /await hydrateArtifactFileCards\(els\.messageList\);/);
-  assert.match(appSource, /await resolveArtifactFileSource\(plan\.source, \{ baseUrl, token \}\)/);
-  assert.match(appSource, /browserApi\.downloads\.download\(\{ url, filename: plan\.name, saveAs: true \}\)/);
-  // A local artifact is not rendered twice (chip + standalone card).
-  assert.match(appSource, /if \(artifact\.kind !== 'remote'\) continue;/);
-});
-
 test('the markdown renderer emits the chip for returned files and leaves media alone', () => {
   assert.match(commonSource, /import \{ artifactFileChipMarkup \} from '\.\/artifact-card\.mjs';/);
   assert.match(commonSource, /return artifactFileChipMarkup\(filePath\);/);
@@ -675,8 +661,8 @@ test('the markdown renderer emits the chip for returned files and leaves media a
   assert.match(video, /data-session-media="video"/);
 });
 
-test('both surfaces style the card, its disabled state, and its unreadable boundary', () => {
-  for (const css of [sidepanelCss, parityCss]) {
+test('the side panel styles the card, its disabled state, and its unreadable boundary', () => {
+  for (const css of [sidepanelCss]) {
     assert.match(css, /\.artifact-card\s*\{/);
     assert.match(css, /\.artifact-card-head\s*\{/);
     assert.match(css, /\.artifact-card-kind\s*\{/);

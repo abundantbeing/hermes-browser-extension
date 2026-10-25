@@ -77,8 +77,7 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.match(source, /Open session/);
   assert.match(source, /Automatic replacement/);
   const sidepanelHtml = await read('extension/sidepanel.html');
-  const appHtml = await read('extension/app.html');
-  // Assist controls live only in the side panel Settings; Hermes Web no longer hosts them.
+  // Assist controls live only in the side panel Settings.
   for (const html of [sidepanelHtml]) {
     assert.match(html, /inlineAssistEnabled/);
     assert.match(html, /inlineAssistDefaultRoute/);
@@ -92,11 +91,6 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
     assert.match(html, /Ask every time/);
     assert.match(html, /Run in background/);
   }
-  assert.doesNotMatch(appHtml, /inlineAssistEnabled/);
-  assert.doesNotMatch(appHtml, /inlineAssistDefaultRoute/);
-  assert.doesNotMatch(appHtml, /id="inlineAssistModelButton"/);
-  assert.doesNotMatch(appHtml, /assistModelCapabilityHint/);
-  assert.doesNotMatch(appHtml, /inlineAssistSessionRetention/);
   assert.match(source, /current\.text\s*!==\s*pending\.draftText/);
   assert.match(source, /host\.dataset\.inlineAssistDefaultRoute/);
   assert.match(source, /host\.dataset\.inlineAssistSessionRetention/);
@@ -104,12 +98,9 @@ test('inline helper uses approved Hermes branding, routes sessions, and supports
   assert.doesNotMatch(source, /\.innerHTML\s*=/);
 });
 
-test('settings surfaces preserve Assist model controls and explain exact-routing fallback', async () => {
-  const [sidepanel, app] = await Promise.all([
-    read('extension/sidepanel.js'),
-    read('extension/app.js'),
-  ]);
-  for (const source of [sidepanel, app]) {
+test('settings surface preserves Assist model controls and explains exact-routing fallback', async () => {
+  const sidepanel = await read('extension/sidepanel.js');
+  for (const source of [sidepanel]) {
     assert.match(source, /assistModelRoutingSupported/);
     assert.match(source, /gateway default/i);
     assert.match(source, /inlineAssistModelButton\.disabled\s*=\s*false/);

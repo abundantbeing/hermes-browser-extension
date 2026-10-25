@@ -37,7 +37,7 @@ test('preview and release still commit effort without generating a burst', () =>
 test('release emitter API, CSS and picker hookups are removed rather than disabled', () => {
   assert.equal(effort.playEffortRelease, undefined);
   assert.equal(effort.effortReleaseParticleCount, undefined);
-  for (const file of ['extension/lib/effort-control.mjs', 'extension/lib/effort-control.css', 'extension/sidepanel.js', 'extension/app.js']) {
+  for (const file of ['extension/lib/effort-control.mjs', 'extension/lib/effort-control.css', 'extension/sidepanel.js']) {
     const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
     assert.doesNotMatch(source, /playEffortRelease|effortReleaseParticleCount|effort-control-release|effort-release-particle/, file);
   }

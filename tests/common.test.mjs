@@ -295,12 +295,10 @@ test('messageDisplayText renders only typed BCP v2 human_input and rejects looka
   assert.equal(common.messageDisplayText('user', lookalike), lookalike);
 });
 
-test('sidepanel and Hermes Web share the display-only Browser request formatter', () => {
+test('sidepanel uses the display-only Browser request formatter', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
   assert.match(sidepanel, /messageDisplayText\(role, content \|\| ''\)/);
-  assert.match(web, /messageDisplayText\(role, rawText\)/);
 });
 
 test('requiresForeignSessionConfirmation protects only unapproved non-Browser sessions', () => {
@@ -407,52 +405,13 @@ test('startup exposes one-click connection testing and Cloud reconnect uses the 
   assert.doesNotMatch(source, /Open the signed-in Hermes Cloud agent in the active tab, then choose Connect to Hermes/);
 });
 
-test('Hey Hermes hands one exactly-once wake turn to both Browser surfaces through their existing prompt seams', () => {
+test('Hey Hermes hands one exactly-once wake turn to the side panel through its existing prompt seam', () => {
   const sidepanelHtml = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const webHtml = readFileSync(new URL('../extension/app.html', import.meta.url), 'utf8');
-  const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
   assert.match(sidepanelHtml, /id="wakeButton"/);
   assert.match(sidepanel, /consumeWakeTurn\(message\.turn\)/);
   assert.match(sidepanel, /WAKE_MESSAGES\.turnReply/);
-  assert.match(webHtml, /id="wakeButton"/);
-  assert.match(web, /WAKE_MESSAGES/);
-  assert.match(web, /WAKE_STORAGE_KEYS/);
-  assert.match(web, /async function consumeWakeTurn/);
-  assert.match(web, /await sendPrompt\(text\)/);
-  assert.match(web, /WAKE_MESSAGES\.turnReply/);
-  assert.match(web, /changes\[WAKE_STORAGE_KEYS\.turn\]/);
-  assert.match(web, /if \(!wakeTurnIsFresh\(turn\)\) \{\s*await browserApi\.storage\.local\.remove\(WAKE_STORAGE_KEYS\.turn\);/);
-});
-
-test('Hermes Web Cloud handoff uses the same signed-in dashboard ticket transport instead of a read-only dead end', () => {
-  const source = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(source, /Live dashboard handoff is next/);
-  assert.match(source, /mintWsTicket/);
-  assert.match(source, /isTrustedDashboardOrigin/);
-  assert.match(source, /isTrustedDashboardOrigin\(settings\.trustedDashboardOrigin, desiredOrigin\)/);
-  assert.match(source, /dashboardConnection\?\.origin === desiredOrigin/);
-  assert.match(source, /Number\(dashboardConnection\?\.tabId\) === tabId/);
-  assert.match(source, /createGatewayClient/);
-  assert.match(source, /establishGatewaySession/);
-  assert.match(source, /WS_METHODS\.sessionList/);
-  assert.match(source, /WS_METHODS\.promptSubmit/);
-  const establish = source.match(/async function establishDashboardSession[\s\S]*?\n\}/)?.[0] || '';
-  assert.ok(establish.indexOf('buildSessionModelSwitchRequest') < establish.indexOf('WS_METHODS.sessionStatus'), 'Hermes Web must apply the selected session model before acknowledging and persisting runtime truth');
-  const select = source.match(/async function selectModel[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(select, /usesDashboardTicketTransport\(\)/);
-  assert.ok(select.indexOf('buildSessionModelSwitchRequest') < select.indexOf('WS_METHODS.sessionStatus'));
-  assert.match(select, /cloudSwitchAccepted = true/);
-  assert.match(select, /if \(cloudSwitchAccepted\)[\s\S]*Cloud model rollback/);
-  assert.match(source, /const forThisSession = \(event\) => matchesDashboardSessionEvent\(event, sessionIds\);/);
-  assert.match(source, /WS_EVENTS\.error, \(event\) => \{\s*if \(!forThisSession\(event\)\) return;/);
-  assert.match(source, /let dashboardTurnSessionId = '';/);
-  assert.match(source, /sessionHistory, \{ session_id: dashboardTurnSessionId \}/);
-  assert.doesNotMatch(source, /sessionHistory, \{ session_id: dashboardLiveSessionId \}/);
-  assert.match(source, /dashboardLiveSessionId = '';/);
-  assert.match(source, /if \(!dashboardLiveSessionId\) await establishDashboardSession\(activeSessionId\);/);
-  assert.match(source, /settings = \{ \.\.\.settings, webSessionId: activeSessionId, webSessionTitle: title \};/);
 });
 
 test('saving unrelated settings preserves an explicit browser-local wake preference', () => {

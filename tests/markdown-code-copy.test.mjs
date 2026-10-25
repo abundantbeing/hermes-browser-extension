@@ -9,9 +9,7 @@ import {
 } from '../extension/lib/markdown-code-copy.mjs';
 
 const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 const sidepanelCss = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
-const appCss = readFileSync(new URL('../extension/app.css', import.meta.url), 'utf8');
 
 function mount(html) {
   const { window } = new JSDOM(`<!doctype html><html><body>${html}</body></html>`);
@@ -49,20 +47,16 @@ test('enhanceMarkdownCodeBlocks skips empty pre blocks', () => {
   assert.equal(window.document.querySelector('.md-code'), null);
 });
 
-test('sidepanel and full-tab render paths mount the copy control', () => {
+test('sidepanel render path mounts the copy control', () => {
   assert.match(sidepanel, /enhanceMarkdownCodeBlocks/);
-  assert.match(app, /enhanceMarkdownCodeBlocks/);
   assert.match(sidepanel, /from '\.\/lib\/markdown-code-copy\.mjs'/);
-  assert.match(app, /from '\.\/lib\/markdown-code-copy\.mjs'/);
 });
 
 test('copy control uses branded icon chrome without fat OS scrollbar overrides', () => {
   assert.match(CODE_COPY_ICON, /fill="currentColor"/);
   assert.doesNotMatch(CODE_COPY_ICON, /stroke=/);
-  for (const css of [sidepanelCss, appCss]) {
-    assert.match(css, /\.md-code-copy/);
-    assert.match(css, /\.md-code \{/);
-    assert.doesNotMatch(css, /\.md-code[^{]*\{[^}]*scrollbar-color/);
-    assert.doesNotMatch(css, /\.md-code-copy[^{]*\{[^}]*border-radius/);
-  }
+  assert.match(sidepanelCss, /\.md-code-copy/);
+  assert.match(sidepanelCss, /\.md-code \{/);
+  assert.doesNotMatch(sidepanelCss, /\.md-code[^{]*\{[^}]*scrollbar-color/);
+  assert.doesNotMatch(sidepanelCss, /\.md-code-copy[^{]*\{[^}]*border-radius/);
 });

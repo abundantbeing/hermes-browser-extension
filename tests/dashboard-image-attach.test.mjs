@@ -117,17 +117,3 @@ test('askHermes and the dashboard attempt both stage images before prompt.submit
     'the attempt must attach images for the attempt session before submitting',
   );
 });
-
-test('full-tab dashboard turns stage images before prompt.submit and stop inlining base64 text', () => {
-  const appSource = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  assert.match(appSource, /async function attachDashboardPromptImages\(client, sessionId, items = \[\]\)/);
-  assert.match(appSource, /WS_METHODS\.imageAttachBytes/);
-  assert.match(appSource, /content_base64: attachment\.dataUrl/);
-  assert.match(appSource, /function attachmentPrompt\(\{ inlineImageData = !usesDashboardTicketTransport\(\) \} = \{\}\)/);
-  assert.match(appSource, /signal: activeAbortController\.signal,\r?\n\s*attachments: turnAttachments,/);
-  const attempt = appSource.slice(appSource.indexOf('async function streamDashboardPromptAttempt'), appSource.indexOf('async function loadGatewayCapabilities'));
-  const imageAttach = attempt.indexOf('await attachDashboardPromptImages(connection.client, sessionId, turnAttachments)');
-  const submit = attempt.indexOf('connection.client.request(WS_METHODS.promptSubmit');
-  assert.ok(imageAttach >= 0 && submit > imageAttach, 'the attempt stages images before submitting, after any generic-file stage');
-  assert.match(attempt, /if \(submitPrompt\) \{[\s\S]*?await attachDashboardPromptImages/);
-});

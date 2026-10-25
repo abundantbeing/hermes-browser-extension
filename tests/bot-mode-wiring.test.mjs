@@ -5,19 +5,16 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-const [sidepanelHtml, sidepanelCss, sidepanelSource, appHtml, appCss, appSource, commonSource] = await Promise.all([
+const [sidepanelHtml, sidepanelCss, sidepanelSource, commonSource] = await Promise.all([
   read('extension/sidepanel.html'),
   read('extension/sidepanel.css'),
   read('extension/sidepanel.js'),
-  read('extension/app.html'),
-  read('extension/app.css'),
-  read('extension/app.js'),
   read('extension/lib/common.mjs'),
 ]);
 
 test('Bot Mode is off by default and has no visible Agent Deck product wording', () => {
   assert.match(commonSource, /botModeEnabled:\s*false/);
-  for (const source of [sidepanelHtml, sidepanelSource, appHtml, appSource]) {
+  for (const source of [sidepanelHtml, sidepanelSource]) {
     assert.doesNotMatch(source, /Agent Deck/i);
   }
 });
@@ -69,24 +66,10 @@ test('side panel exposes an opt-in Bot Mode settings control and roster overlay'
   assert.doesNotMatch(sidepanelSource, /apiFetch\(['"]\/v1\/profiles\/active/);
 });
 
-test('Hermes Web exposes an Agents rail backed by the shared Bot Mode domain', () => {
-  for (const id of ['agentsRailButton', 'botModeRail', 'webBotModeSearch', 'webBotModeRoster', 'settingsBotModeEnabled']) {
-    assert.match(appHtml, new RegExp(`id=["']${id}["']`));
-  }
-  assert.match(appCss, /\.bot-mode-rail/);
-  // The web rail keeps using the shared Bot Mode domain: rows are split into
-  // agent profiles and group chats by splitBotRosterRows.
-  assert.match(appSource, /splitBotRosterRows/);
-  assert.match(appSource, /WS_METHODS\.profilesList/);
-});
-
-test('both Browser surfaces pass explicit profiles on list, history, create, and resume', () => {
+test('the side panel passes explicit profiles on list, history, create, and resume', () => {
   assert.match(sidepanelSource, /WS_METHODS\.sessionList,\s*\{[^}]*profile:/s);
   assert.match(sidepanelSource, /WS_METHODS\.sessionHistory,\s*\{[^}]*profile:/s);
   assert.match(sidepanelSource, /establishGatewaySession\(\{[^}]*profile:/s);
-  assert.match(appSource, /WS_METHODS\.sessionList,\s*(?:buildSessionListParams\(\s*)?\{[^}]*profile:/s);
-  assert.match(appSource, /WS_METHODS\.sessionHistory,\s*\{[^}]*profile:/s);
-  assert.match(appSource, /establishGatewaySession\(\{[^}]*profile:/s);
 });
 
 test('Bot Mode deck footer carries Edit Profile and New Agent beside the primary open action', () => {
@@ -354,9 +337,9 @@ test('streaming renders with prefix-stable patches, sticky autoscroll, and agent
   assert.doesNotMatch(sidepanelCss, /\.bot-mode-engaged \.message\.(?:assistant|user)/);
 });
 
-test('group chats are separated from agent profiles on both Browser surfaces', () => {
+test('group chats are separated from agent profiles in the side panel', () => {
   // Rosters split into agents + group chats; synced launch-room never counts as a profile.
-  for (const source of [sidepanelSource, appSource]) {
+  for (const source of [sidepanelSource]) {
     assert.match(source, /splitBotRosterRows/);
     assert.match(source, /botModeGroupChats|webBotModeGroupChats/);
     assert.match(source, /CANONICAL_FALLBACK_PROFILES/);
@@ -364,7 +347,7 @@ test('group chats are separated from agent profiles on both Browser surfaces', (
   }
   // The synced group list stays separate from the agent roster. The selected
   // room uses the profile-scoped runtime bridge rather than a read-only guard.
-  for (const source of [sidepanelSource, appSource]) {
+  for (const source of [sidepanelSource]) {
     assert.doesNotMatch(source, /BOT_GROUP_CHATS_STORAGE_KEY/);
     assert.doesNotMatch(source, /createGroupChatDraft/);
     assert.doesNotMatch(source, /sourceId === 'device'/);
@@ -382,35 +365,6 @@ test('group chats are separated from agent profiles on both Browser surfaces', (
   assert.match(sidepanelSource, /Group chat opened/);
   assert.doesNotMatch(sidepanelSource, /Group chat is read only/);
   assert.doesNotMatch(sidepanelSource, /function openBotGroupChat[\s\S]{0,900}openHermesSession/);
-  // Web rail parity: toggle + synced group list + the same live runtime bridge.
-  for (const id of ['webBotModeViewAgents', 'webBotModeViewGroups', 'webBotModeGroupList']) {
-    assert.match(appHtml, new RegExp(`id=["']${id}["']`));
-  }
-  assert.doesNotMatch(appHtml, /webBotModeNewGroupButton|webBotModeGroupForm/);
-  assert.match(appSource, /function setWebBotModeView/);
-  assert.match(appSource, /function renderWebBotModeGroupChats/);
-  assert.match(appSource, /function sendActiveWebGroupMessage/);
-  assert.match(appSource, /createBotGroupRuntime/);
-  assert.match(appSource, /persistGroupProjectionAppend/);
-  assert.match(appSource, /Group chat opened/);
-  assert.doesNotMatch(appSource, /read-only synced projection/);
-});
-
-test('Hermes Web profile opening distinguishes successful history hydration from failure', () => {
-  assert.match(appSource, /async function openSession\(sessionId, \{ keepLoading = false \} = \{\}/);
-  assert.match(appSource, /if \(!keepLoading\) hideRuntimeLoadingState\(\);\s*return true;/);
-  assert.match(appSource, /const opened = await openSession\(row\.canonical\.durableId\)/);
-  assert.match(appSource, /if \(opened === true\) return opened;/);
-  assert.doesNotMatch(appSource, /if \(row\.canonical\.status === 'ready'\) return openSession\(row\.canonical\.durableId\);/);
-});
-
-test('Hermes Web uses the shared iMessage bubble contract and projection author labels', () => {
-  assert.match(appCss, /\.web-message\.user[\s\S]*?border-radius:\s*18px 18px 4px 18px/);
-  assert.match(appCss, /\.web-message\.assistant[\s\S]*?border-radius:\s*18px 18px 18px 4px/);
-  assert.match(appCss, /\.web-message\.user[\s\S]*?background:\s*var\(--hermes-blue/);
-  assert.match(appCss, /\.web-message\.user \.web-message-role\s*\{\s*display:\s*none/);
-  assert.match(appSource, /message\.roleLabel/);
-  assert.match(appSource, /message\.roleLabel \|\| 'Hermes'/);
 });
 
 test('the shared message renderer is the universal iMessage-style bubble layer', () => {

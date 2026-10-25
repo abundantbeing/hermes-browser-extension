@@ -5,7 +5,6 @@ import {readFile} from 'node:fs/promises';
 import {rosterStopTarget} from '../extension/lib/live-session-attach.mjs';
 import {liveIdForRunSettle} from '../extension/lib/run-control-lifecycle.mjs';
 const panel=await readFile(new URL('../extension/sidepanel.js',import.meta.url),'utf8');
-const web=await readFile(new URL('../extension/app.js',import.meta.url),'utf8');
 const fn=(source,name)=>source.match(new RegExp(`(?:async )?function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?\\n\\}`))[0];
 
 test('a local writer in A does not make the viewed session B running',()=>{
@@ -39,15 +38,6 @@ test('dashboard steering cancels before an RPC if navigation changes the target 
  release({client:{request:async(method,params)=>{requests.push({method,params});return {status:'queued'};}}});
  await pending;
  assert.equal(requests.length,0);
-});
-
-test('Web deltas for A cannot append an assistant to B',()=>{
- const begin=web.indexOf('onDelta: (content) => {',web.indexOf('async function sendPrompt('));
- const end=web.indexOf('\n        },',begin);
- const callback=web.slice(begin,end).replace('onDelta: ', '')+'\n}';
- const ctx=vm.createContext({assistant:{role:'assistant',content:''},activeMessages:[{role:'user',content:'B'}],isRenderableAssistantMessage:()=>true,runIsViewed:()=>false,clearLiveRun:()=>{},renderMessages:()=>{}});
- vm.runInContext(`(${callback})('A reply')`,ctx);
- assert.equal(ctx.activeMessages.length,1);
 });
 
 test('a run in session A never locks a new session B: releaseBackgroundLocalRun frees the composer',()=>{

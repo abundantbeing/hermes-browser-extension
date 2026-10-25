@@ -6,9 +6,7 @@ import test from 'node:test';
 const root = path.resolve(import.meta.dirname, '..');
 const sidepanelHtml = readFileSync(path.join(root, 'extension', 'sidepanel.html'), 'utf8');
 const sidepanelCss = readFileSync(path.join(root, 'extension', 'sidepanel.css'), 'utf8');
-const appCss = readFileSync(path.join(root, 'extension', 'app.css'), 'utf8');
 const designTokensCss = readFileSync(path.join(root, 'extension', 'lib', 'design-tokens.css'), 'utf8');
-const fulltabThemesCss = readFileSync(path.join(root, 'extension', 'fulltab-themes.css'), 'utf8');
 const themeCss = readFileSync(path.join(root, 'extension', 'sidepanel-themes.css'), 'utf8');
 const contextMenuEditorCss = readFileSync(path.join(root, 'extension', 'context-menu-editor.css'), 'utf8');
 const logoPath = path.join(root, 'extension', 'assets', 'img', 'hermes-wing-mark.svg');
@@ -97,11 +95,7 @@ test('custom themes derive complete surface tokens without changing fonts or acc
   ]) assert.ok(panelBlock.includes(pair), `expected ${pair}`);
   assert.doesNotMatch(panelBlock, /--hermes-font-(?:ui|mono|brand|display)\s*:/);
 
-  assert.match(appCss, /html\[data-hermes-theme\^="custom:"\][\s\S]*?:focus-visible[^{]*\{[^}]*outline-color:\s*var\(--hermes-line\)/s);
-  assert.match(fulltabThemesCss, /html\[data-hermes-theme\^="custom:"\][\s\S]*?--hermes-logo-filter:\s*none/);
-  assert.match(fulltabThemesCss, /html\[data-hermes-theme\^="custom:"\] \.rail-brand-video[\s\S]*?filter:\s*none/);
-  assert.match(fulltabThemesCss, /html\[data-hermes-theme\^="custom:"\] \.web-brand::before[\s\S]*?background:\s*var\(--hermes-shell-fg\)[\s\S]*?mask:\s*url/);
-  assert.doesNotMatch(`${designTokensCss}\n${sidepanelCss}\n${appCss}\n${fulltabThemesCss}`, /--hermes-custom-(?:css|style|font-url)/i);
+  assert.doesNotMatch(`${designTokensCss}\n${sidepanelCss}`, /--hermes-custom-(?:css|style|font-url)/i);
 });
 
 test('Everforest and Classic dark keep light text on a deep user bubble like the other dark themes', () => {

@@ -8,7 +8,6 @@ const html = await read('extension/sidepanel.html');
 const css = await read('extension/sidepanel.css');
 const common = await read('extension/lib/common.mjs');
 const thread = await read('extension/lib/message-thread-ui.mjs');
-const app = await read('extension/app.js');
 const pkg = JSON.parse(await read('package.json'));
 
 test('panel uses the shared rail, divider, and truthful timestamp helpers', () => {
@@ -61,12 +60,4 @@ test('all six new shared modules participate in syntax verification', () => {
   for (const name of ['message-meta', 'message-actions', 'message-rewind', 'bot-identity', 'group-presence', 'group-member-models']) {
     assert.ok(pkg.scripts['check:js'].includes(`node --check extension/lib/${name}.mjs`), name);
   }
-});
-
-test('full-tab history uses the same controller and truthful times without ordinal actions', () => {
-  assert.match(app, /import\s*\{[^}]*createMessageThreadUi[^}]*\}\s*from\s*['"]\.\/lib\/message-thread-ui\.mjs['"]/);
-  assert.match(app, /normalizeMessageTimestamp\(message\.timestamp\s*\?\?\s*message\.ts\)/);
-  assert.match(app, /webMessageThread\??\.reset\(\)/);
-  assert.match(app, /hide-message-times/);
-  assert.doesNotMatch(app, /truncate_at:\s*(?:index|ordinal)/);
 });

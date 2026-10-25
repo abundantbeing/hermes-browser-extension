@@ -130,12 +130,3 @@ test('sidepanel restores and persists composer drafts through sessionStorage', a
   assert.match(source, /ensureImageAttachmentsSaved\(\)/);
   assert.match(source, /els\.input\.addEventListener\('input', \(\) => \{[\s\S]*persistCurrentComposerDraft\(/);
 });
-
-test('web composer persists drafts the same way as the side panel', async () => {
-  const source = await readFile(new URL('../extension/app.js', import.meta.url), 'utf8');
-  assert.match(source, /from '\.\/lib\/composer-draft\.mjs'/);
-  assert.match(source, /function persistCurrentComposerDraft\(/);
-  assert.match(source, /function restoreComposerDraft\(/);
-  assert.match(source, /restoreComposerDraft\(/);
-  assert.match(source, /clearComposerDraft\(/);
-});

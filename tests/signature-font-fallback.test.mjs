@@ -37,7 +37,7 @@ test('side panel tokens fall back to bundled faces before system fonts', () => {
 });
 
 test('signature chat headlines use the chosen display font, not the Sigurd stand-in or a named face', () => {
-  for (const file of ['extension/sidepanel.css', 'extension/app.css', 'extension/lib/surface-text-zoom.css']) {
+  for (const file of ['extension/sidepanel.css', 'extension/lib/surface-text-zoom.css']) {
     assert.doesNotMatch(
       read(file),
       /data-hermes-font-profile="signature"[^}]*"HermesDisplay", "Sigurd"/,
@@ -53,7 +53,6 @@ test('code faces prefer Aeonik Fono and message code uses the mono token', () =>
   assert.match(tokenValue(sidepanelCss, 'hermes-font-mono'), /^"Aeonik Fono",\s*"Aeonik Fono Pro",\s*"Aeonik Fono Pro TRIAL",\s*"HermesMono"/);
   assert.match(tokenValue(designTokens, 'hermes-font-mono'), /^"Aeonik Fono",\s*"Aeonik Fono Pro",\s*"Aeonik Fono Pro TRIAL",\s*"HermesMono"/);
   assert.match(sidepanelCss, /\.message-content code \{[^}]*font-family:\s*var\(--hermes-font-mono\)/s);
-  assert.match(read('extension/app.css'), /\.web-message-content pre,\s*\.web-message-content code \{ font-family: var\(--hermes-font-mono\); \}/);
 });
 
 test('appearance preview stack names the bundled display fallback', () => {
@@ -62,12 +61,12 @@ test('appearance preview stack names the bundled display fallback', () => {
   assert.match(line, /"Space Grotesk"|sans-serif/);
 });
 
-test('fallback @font-face registrations exist on both surfaces', () => {
+test('fallback @font-face registrations exist in the side panel', () => {
   assert.match(designTokens, /@font-face\s*\{[^}]*font-family:\s*"HermesDisplay"/s);
   assert.match(sidepanelCss, /@font-face\s*\{[^}]*font-family:\s*"HermesDisplay"/s);
-  assert.match(fontsCss, /@font-face\s*\{[^}]*font-family:\s*"Space Grotesk"/s, 'Space Grotesk must be registered for both HTML surfaces');
-  // fonts.css is the shared registration for Space Grotesk, so both pages must link it.
-  for (const page of ['extension/sidepanel.html', 'extension/app.html']) {
+  assert.match(fontsCss, /@font-face\s*\{[^}]*font-family:\s*"Space Grotesk"/s, 'Space Grotesk must be registered for the side panel');
+  // fonts.css is the shared registration for Space Grotesk, so the page must link it.
+  for (const page of ['extension/sidepanel.html']) {
     assert.match(read(page), /href="lib\/fonts\.css"/, `${page} must link lib/fonts.css so the bundled fallback resolves`);
   }
 });
@@ -92,8 +91,8 @@ test('fonts.css documents the guaranteed-fallback contract, not a broken signatu
 
 // F2: the honest degradation note. It must exist (hidden by default) on both
 // settings surfaces, carry the new i18n key, and be driven by the probe.
-test('settings surfaces expose the honest signature-fallback note element', () => {
-  for (const page of ['extension/sidepanel.html', 'extension/app.html']) {
+test('settings surface exposes the honest signature-fallback note element', () => {
+  for (const page of ['extension/sidepanel.html']) {
     const html = read(page);
     assert.match(html, /data-i18n="appearance\.font_fallback_note"/, `${page} must own the fallback note via i18n`);
     assert.match(html, /<p[^>]*hidden[^>]*>\s*[^<]*Licensed signature font not installed/, `${page} must ship the note hidden by default`);
@@ -121,8 +120,8 @@ test('availability probe iterates registered faces, never document.fonts.check',
   assert.match(code, /\.load\b/, 'the probe must force an unloaded face to settle');
 });
 
-test('both settings surfaces wire the probe to the note element', () => {
-  for (const file of ['extension/sidepanel.js', 'extension/app.js']) {
+test('the settings surface wires the probe to the note element', () => {
+  for (const file of ['extension/sidepanel.js']) {
     const source = read(file);
     assert.match(source, /probeSignatureFonts/, `${file} must import the availability probe`);
     assert.match(source, /signatureFontFallbackNote/i, `${file} must toggle the fallback note element`);

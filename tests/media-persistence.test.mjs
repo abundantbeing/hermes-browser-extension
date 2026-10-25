@@ -140,12 +140,6 @@ test('sidepanel hydrates history media through the discovered dashboard /api/med
   assert.doesNotMatch(source, /dashboardFileStreamUrl\([^)]*token/);
 });
 
-test('Hermes Web hydrates session media with the same dashboard endpoints', () => {
-  const source = read('extension/app.js');
-  assert.match(source, /hydrateSessionMedia/);
-  assert.match(source, /fetchDashboardMediaDataUrl/);
-});
-
 test('package check:js syntax-checks the media persistence module', () => {
   const pkg = JSON.parse(read('package.json'));
   assert.match(String(pkg.scripts?.['check:js'] || ''), /media-persistence\.mjs/);

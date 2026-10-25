@@ -3,14 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 const caps = readFileSync(new URL('../extension/lib/capabilities.mjs', import.meta.url), 'utf8');
 const panelHtml = readFileSync(new URL('../extension/sidepanel.html', import.meta.url), 'utf8');
-const webHtml = readFileSync(new URL('../extension/app.html', import.meta.url), 'utf8');
 const lifecycle = readFileSync(new URL('../extension/lib/run-control-lifecycle.mjs', import.meta.url), 'utf8');
 
-test('both Browser surfaces bind Stop to the shared terminal lifecycle', () => {
-  for (const source of [panel, web]) {
+test('the Side Panel binds Stop to the shared terminal lifecycle', () => {
+  for (const source of [panel]) {
     assert.match(source, /run-control-lifecycle\.mjs/);
     assert.match(source, /beginRunControl\(/);
     assert.match(source, /acknowledgeStopRequest\(/);
@@ -21,8 +19,8 @@ test('both Browser surfaces bind Stop to the shared terminal lifecycle', () => {
 });
 
 test('Stop transport is split and local stream abort happens only after terminal confirmation', () => {
-  for (const source of [panel, web]) {
-    const stopStart = source.indexOf(source === panel ? 'async function stopCurrentTurn' : 'async function stopActiveRun');
+  for (const source of [panel]) {
+    const stopStart = source.indexOf('async function stopCurrentTurn');
     const stopEnd = source.indexOf('\nfunction ', stopStart + 1);
     const stop = source.slice(stopStart, stopEnd);
     assert.match(stop, /interruptGatewaySession\(/);
@@ -34,7 +32,7 @@ test('Stop transport is split and local stream abort happens only after terminal
 });
 
 test('control acknowledgement and terminal reconciliation use separate timeouts', () => {
-  for (const source of [panel, web]) {
+  for (const source of [panel]) {
     assert.match(source, /RUN_CONTROL_REQUEST_TIMEOUT_MS/);
     assert.match(source, /RUN_TERMINAL_CONFIRM_TIMEOUT_MS/);
     assert.match(source, /terminal confirmation timed out/i);
@@ -45,7 +43,7 @@ test('control acknowledgement and terminal reconciliation use separate timeouts'
 });
 
 test('stream-finally paths cannot clear run identity or flush queue while Stop is unconfirmed', () => {
-  for (const source of [panel, web]) {
+  for (const source of [panel]) {
     assert.match(source, /markRunStreamClosed\(activeRunControl\)/);
     assert.match(source, /activeRunControl\?\.phase === RUN_CONTROL_PHASES\.TERMINAL/);
     assert.match(source, /activeRunControl\.writerLease !== 'released'|activeRunControl\.writerLease === 'released'/);
@@ -59,13 +57,13 @@ test('run Stop capability remains fail-closed without explicit feature or endpoi
 });
 
 test('REST Stop requires explicitly advertised stop and status capabilities', () => {
-  for (const source of [panel, web]) {
+  for (const source of [panel]) {
     assert.match(source, /!gatewayCapabilities\.runStop \|\| !gatewayCapabilities\.runStatus/);
   }
 });
 
 test('post-stream tails re-check generation and preserve failed or cancelled terminal status', () => {
-  for (const source of [panel, web]) {
+  for (const source of [panel]) {
     assert.match(source, /runControlGenerationMatches\(turnRunControlGeneration, runControlGeneration\)/);
     assert.match(source, /streamTerminalStatus/);
     assert.match(source, /\['completed', 'failed', 'cancelled'\]/);
@@ -73,7 +71,7 @@ test('post-stream tails re-check generation and preserve failed or cancelled ter
 });
 
 test('stale Stop and status responses reconcile terminal state instead of stranding the writer', () => {
-  for (const source of [panel, web]) {
+  for (const source of [panel]) {
     assert.match(source, /runStopFailureTerminalStatus\(\{ httpStatus: response\.status, payload \}\)/);
     assert.match(source, /expectedGeneration/);
   }
@@ -81,7 +79,7 @@ test('stale Stop and status responses reconcile terminal state instead of strand
 });
 
 test('Stop response and failure settlement are generation-guarded before mutating lifecycle state', () => {
-  for (const [source, functionName] of [[panel, 'stopCurrentTurn'], [web, 'stopActiveRun']]) {
+  for (const [source, functionName] of [[panel, 'stopCurrentTurn']]) {
     const start = source.indexOf(`async function ${functionName}`);
     const end = source.indexOf('\nfunction ', start + 1);
     const stop = source.slice(start, end);
@@ -96,7 +94,7 @@ test('Stop response and failure settlement are generation-guarded before mutatin
 });
 
 test('all live stream callbacks reject stale generations before touching active run or message state', () => {
-  for (const source of [panel, web]) {
+  for (const source of [panel]) {
     const callbackGuards = source.match(/if \(!runControlGenerationMatches\(turnRunControlGeneration, runControlGeneration\)\) return;/g) || [];
     assert.ok(callbackGuards.length >= 4, `expected at least four callback guards, got ${callbackGuards.length}`);
   }
@@ -106,8 +104,6 @@ test('new-chat and session switches stay allowed while a run is live (gateway ow
   const functions = [
     [panel, 'beginHermesBrowserDraft'],
     [panel, 'openHermesSession'],
-    [web, 'beginHermesWebDraft'],
-    [web, 'openSession'],
   ];
   for (const [source, functionName] of functions) {
     const start = source.indexOf(`async function ${functionName}`);
@@ -121,29 +117,14 @@ test('new-chat and session switches stay allowed while a run is live (gateway ow
 test('a finishing run mirrors its reply only into the session it started in', () => {
   assert.match(panel, /const runSessionId = String\(settings\.sessionId \|\| ''\)\.trim\(\);/);
   assert.match(panel, /if \(String\(settings\.sessionId \|\| ''\)\.trim\(\) === runSessionId\) \{\s*messages\.push\(\{ role: 'assistant'/);
-  assert.match(web, /const runIsViewed = \(\) => String\(activeSessionId \|\| ''\)\.trim\(\) === runSessionId;/);
 });
 
 
 test('unconfirmed runs expose safe retry and queue-discard recovery without a writer-release button', () => {
   assert.match(panelHtml, /id="retryRunStatusButton"/);
   assert.match(panelHtml, /id="discardHeldQueueButton"/);
-  assert.match(webHtml, /id="webRetryRunStatusButton"/);
-  assert.match(webHtml, /id="webDiscardHeldQueueButton"/);
   assert.doesNotMatch(panelHtml, /release writer/i);
-  assert.doesNotMatch(webHtml, /release writer/i);
   assert.match(panel, /retryActiveRunTerminalStatus/);
-  assert.match(web, /retryWebRunTerminalStatus/);
-});
-
-test('Hermes Web acquires writer ownership before awaiting draft-session creation', () => {
-  const sender = web.match(/async function sendPrompt\([\s\S]*?\n\}/)?.[0] || '';
-  const createIndex = sender.indexOf('await createSession()');
-  const sendingIndex = sender.indexOf('setSending(true)');
-  assert.match(sender, /if \(sending \|\| !canSwitchActiveSession\(\{ sending, runControl: activeRunControl \}\)\)/);
-  assert.ok(sender.indexOf('++runControlGeneration') < createIndex);
-  assert.ok(sender.indexOf('activeRunControl = beginRunControl') < createIndex);
-  assert.ok(createIndex < sendingIndex);
 });
 
 test('manual Side Panel compaction cannot rotate the session while a run owns the writer', () => {
@@ -178,7 +159,7 @@ test('Side Panel terminal reconciliation never creates a successor session to in
 });
 
 test('Stop without a server run identity is held as unconfirmed instead of claiming success', () => {
-  for (const [source, functionName] of [[panel, 'stopCurrentTurn'], [web, 'stopActiveRun']]) {
+  for (const [source, functionName] of [[panel, 'stopCurrentTurn']]) {
     const start = source.indexOf(`async function ${functionName}`);
     const end = source.indexOf('\nfunction ', start + 1);
     const stop = source.slice(start, end);
@@ -208,37 +189,12 @@ test('Side Panel rejects alternate send reentry and exposes Stop only after pref
   assert.ok(sessionIndex < modelLockIndex && modelLockIndex < abortIndex && abortIndex < sendingIndex);
 });
 
-test('Hermes Web reconnect recovery resumes the durable Dashboard session and adopts its fresh live id', () => {
-  const recovery = web.match(/async function resumeDashboardRecoverySession\([\s\S]*?\n\}/)?.[0] || '';
-  const reconcile = web.match(/async function reconcileWebRunTerminal\([\s\S]*?\n\}/)?.[0] || '';
-  const stop = web.match(/async function stopActiveRun\([\s\S]*?\n\}/)?.[0] || '';
-  assert.match(recovery, /storedSessionId:\s*durableSessionId/);
-  assert.doesNotMatch(recovery, /sessionCreate|createParams/);
-  assert.match(recovery, /identity\.storedId !== durableSessionId/);
-  assert.match(recovery, /dashboardLiveSessionId = identity\.liveId/);
-  assert.match(reconcile, /resumeDashboardRecoverySession\(connection/);
-  assert.match(stop, /resumeDashboardRecoverySession\(connection/);
-});
-
-test('completed reconciliation suppresses false Send failed output after a premature REST stream close', () => {
-  const submitStart = web.indexOf("els.composer.addEventListener('submit'");
-  const submitEnd = web.indexOf("els.prompt.addEventListener('keydown'", submitStart);
-  const submit = web.slice(submitStart, submitEnd);
-  assert.match(submit, /activeRunControl\?\.phase === RUN_CONTROL_PHASES\.TERMINAL/);
-  assert.match(submit, /activeRunControl\?\.terminalStatus === 'completed'/);
-  assert.ok(submit.indexOf("terminalStatus === 'completed'") < submit.indexOf('Send failed:'));
-});
-
-test('Dashboard chat streams have bounded completion timers on both Browser surfaces', () => {
+test('Dashboard chat streams have bounded completion timers in the Side Panel', () => {
   const sideStream = [
     panel.match(/async function streamDashboardWsChat\([\s\S]*?\n\}/)?.[0] || '',
     panel.match(/async function streamDashboardWsChatAttempt\([\s\S]*?\n\}/)?.[0] || '',
   ].join('\n');
-  const webStream = [
-    web.match(/async function streamDashboardPrompt\([\s\S]*?\n\}/)?.[0] || '',
-    web.match(/async function streamDashboardPromptAttempt\([\s\S]*?\n\}/)?.[0] || '',
-  ].join('\n');
-  for (const stream of [sideStream, webStream]) {
+  for (const stream of [sideStream]) {
     assert.match(stream, /createDashboardStreamWatchdog/);
     assert.match(stream, /watchdog\.ping\(\)/);
     assert.match(stream, /watchdog\.stop\(\)/);

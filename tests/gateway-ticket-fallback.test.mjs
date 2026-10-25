@@ -6,7 +6,6 @@ import { connectGatewayWithTicket, createGatewayClient } from '../extension/lib/
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const sidepanel = read('extension/sidepanel.js');
-const app = read('extension/app.js');
 
 // A browser closes a socket from the outside asynchronously: close() returns
 // first, the 'close' event follows. A fake that emits it inline hides every
@@ -111,8 +110,7 @@ test('an older dashboard still gets the query ticket when the caller has no way 
 });
 
 test('every chat connection mints its own replacement ticket for the fallback', () => {
-  // The local dashboard tab's ticket, Hermes Web's socket ticket, and the remote dashboard's ticket.
+  // The local dashboard tab's ticket, the socket ticket, and the remote dashboard's ticket.
   assert.equal((sidepanel.match(/connectGatewayWithTicket\([^;]*?refreshTicket: async \(\) => \{/g) || []).length, 3);
-  assert.equal((app.match(/connectGatewayWithTicket\([^;]*?refreshTicket: async \(\) => \{/g) || []).length, 1);
-  for (const source of [sidepanel, app]) assert.match(source, /return fresh\?\.ok \? fresh\.ticket : '';/);
+  for (const source of [sidepanel]) assert.match(source, /return fresh\?\.ok \? fresh\.ticket : '';/);
 });

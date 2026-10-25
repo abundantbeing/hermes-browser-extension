@@ -2,7 +2,7 @@
 // Focused real unpacked-extension QA runner for the inline reasoning-effort slider.
 //
 // Loads a real unpacked Hermes Browser extension in headless Chrome-for-Testing,
-// drives sidepanel.html (and app.html) over CDP against a tiny deterministic
+// drives sidepanel.html over CDP against a tiny deterministic
 // local mock gateway, and captures screenshots + JSON evidence.
 //
 // Modes
@@ -536,7 +536,6 @@ async function runBaseline({ panel, worker, extensionId }) {
     `Baseline original effort values must match canonical order: ${JSON.stringify(dom)}`,
   );
 
-  // The legacy full-tab surface keeps its own static section (compat check).
   const settingsHasLegacyEffort = await panel.client.evaluate(
     `document.querySelectorAll('#settingsDialog [data-runtime-effort]').length`,
   );
@@ -611,7 +610,7 @@ async function resolveThemes() {
   return FALLBACK_THEMES;
 }
 
-async function runAfter({ panel, web, worker, extensionId }) {
+async function runAfter({ panel, worker, extensionId }) {
   const evidence = { mode: 'after', extensionDir: EXTENSION_DIR, extensionId, checks: {}, themes: {} };
   await waitPanelReady(panel.client);
   await openModelMenu(panel.client);
@@ -810,31 +809,6 @@ async function runAfter({ panel, web, worker, extensionId }) {
     }
   }
 
-  // Full-tab app.html compatibility (best-effort).
-  try {
-    await web.client.call('Emulation.setDeviceMetricsOverride', { width: 1024, height: 900, deviceScaleFactor: 1, mobile: false });
-    await waitFor(() => web.client.evaluate(`Boolean(document.querySelector('#modelOptionsList'))`), { label: 'app.html model options', timeoutMs: 20_000 });
-    const appDom = await web.client.evaluate(`(() => {
-      const list = document.querySelector('#modelOptionsList');
-      return {
-        hasSlider: Boolean(list?.querySelector('input[type="range"]') || document.querySelector('.effort-control input[type="range"]')),
-        hasEffortControl: Boolean(document.querySelector('.effort-control')),
-        runtimeEffortButtons: document.querySelectorAll('[data-runtime-effort]').length,
-      };
-    })()`);
-    await web.client.evaluate(`if (document.querySelector('#modelPicker').hidden) document.querySelector('#modelPickerButton').click()`);
-    const webSelection = await web.client.evaluate(`(() => { const s = document.querySelector('#modelOptionsList .effort-control-range'); const next = s.value === '3' ? '2' : '3'; s.value = next; s.dispatchEvent(new Event('input', { bubbles: true })); s.dispatchEvent(new Event('change', { bubbles: true })); return next === '3' ? 'high' : 'medium'; })()`);
-    const committed = await waitFor(() => web.client.evaluate(`(async () => { const c = document.querySelector('#modelOptionsList .effort-control'); const saved = (await chrome.storage.local.get('hermesBrowserSettings')).hermesBrowserSettings; return c?.dataset.effortValue === ${JSON.stringify(webSelection)} && saved?.reasoningEffort === ${JSON.stringify(webSelection)} ? { value: c.dataset.effortValue, stored: saved.reasoningEffort, releaseNodes: c.querySelectorAll('.effort-control-release, .effort-control-release-particle').length, open: !document.querySelector('#modelPicker').hidden } : null; })()`), { label: 'full-tab effort commit without release particles', timeoutMs: 3000 });
-    appDom.selection = committed;
-    checks.fullTabEffortCommitWithoutBurst = committed.value === webSelection && committed.releaseNodes === 0 && committed.open;
-    await saveScreenshot(web.client, path.join(QA_DIR, 'full-tab-no-release.png'));
-    evidence.fullTab = appDom;
-    checks.fullTabEffortControlPresent = appDom.hasSlider === true || appDom.hasEffortControl === true;
-  } catch (error) {
-    evidence.fullTab = { error: String(error?.message || error) };
-    checks.fullTabEffortControlPresent = false;
-  }
-
   evidence.screenshots = { panel: path.relative(ROOT, AFTER_PNG), themes: evidence.themes };
   evidence.capturedAt = new Date().toISOString();
 
@@ -862,7 +836,6 @@ async function main() {
   let chrome;
   let worker;
   let panel;
-  let web;
   try {
     const extensionId = unpackedExtensionId(EXTENSION_DIR);
     const launched = await launchExtension({ extensionId });
@@ -885,8 +858,7 @@ async function main() {
       log('BASELINE complete');
       log('evidence:', JSON.stringify({ model: evidence.model, screenshots: evidence.screenshots }, null, 2));
     } else {
-      web = await openPage(devtoolsBase, extensionId, 'app.html', { width: 1024, height: 900 });
-      const evidence = await runAfter({ panel, web, worker, extensionId });
+      const evidence = await runAfter({ panel, worker, extensionId });
       log('AFTER complete; failed checks:', evidence.failedChecks);
     }
   } catch (error) {
@@ -896,7 +868,6 @@ async function main() {
     throw error;
   } finally {
     try { panel?.client?.close(); } catch { /* ignore */ }
-    try { web?.client?.close(); } catch { /* ignore */ }
     try { worker?.close(); } catch { /* ignore */ }
     killChrome(chrome);
     await mock.close().catch(() => {});

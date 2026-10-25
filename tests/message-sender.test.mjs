@@ -13,7 +13,7 @@ test('extension pages are recognised, content scripts and web pages are not', ()
   assert.equal(isExtensionPageSender({ id: runtime.id, url: runtime.getURL('sidepanel.html') }, runtime), true);
   assert.equal(isExtensionPageSender({ id: runtime.id }, runtime), true, 'no url and no tab is the worker itself or a bare page');
   // Extension page opened in a tab (permission / full-tab page).
-  assert.equal(isExtensionPageSender({ id: runtime.id, tab: { id: 4 }, url: runtime.getURL('app.html') }, runtime), true);
+  assert.equal(isExtensionPageSender({ id: runtime.id, tab: { id: 4 }, url: runtime.getURL('sidepanel.html') }, runtime), true);
   // Firefox-style base URL.
   const firefox = { id: 'uuid', getURL: (path = '') => `moz-extension://11111111-2222/${path}` };
   assert.equal(isExtensionPageSender({ id: 'uuid', url: 'moz-extension://11111111-2222/sidepanel.html' }, firefox), true);

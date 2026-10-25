@@ -176,13 +176,6 @@ test('sidepanel mounts a hidden-until-live SUBAGENTS stack beside TASKS', () => 
   assert.match(css, /\.subagent-stack-controls[\s\S]*grid-template-columns:\s*minmax\(0,1fr\) 32px 32px/);
 });
 
-test('Hermes Web mounts the same SUBAGENTS stack', () => {
-  const html = read('extension/app.html');
-  const source = read('extension/app.js');
-  assert.match(html, /id="subagentStack"/);
-  assert.match(source, /applySubagentEvent/);
-});
-
 test('package check:js syntax-checks the subagent stack module', () => {
   const pkg = JSON.parse(read('package.json'));
   assert.match(String(pkg.scripts?.['check:js'] || ''), /subagent-stack\.mjs/);

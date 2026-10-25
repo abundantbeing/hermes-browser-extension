@@ -5,12 +5,9 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 
-test('sidepanel and full view expose the same real task-stack controls', async () => {
-  const [sidepanel, app] = await Promise.all([
-    read('extension/sidepanel.html'),
-    read('extension/app.html'),
-  ]);
-  for (const source of [sidepanel, app]) {
+test('sidepanel exposes the real task-stack controls', async () => {
+  const sidepanel = await read('extension/sidepanel.html');
+  for (const source of [sidepanel]) {
     assert.match(source, /id="taskStack"/);
     assert.match(source, /id="taskStackToggle"/);
     assert.match(source, /id="taskStackSummary"/);
@@ -19,12 +16,9 @@ test('sidepanel and full view expose the same real task-stack controls', async (
   }
 });
 
-test('both runtimes derive tasks from todo tool events and sync per-session storage', async () => {
-  const [sidepanel, app] = await Promise.all([
-    read('extension/sidepanel.js'),
-    read('extension/app.js'),
-  ]);
-  for (const source of [sidepanel, app]) {
+test('the side panel derives tasks from todo tool events and syncs per-session storage', async () => {
+  const sidepanel = await read('extension/sidepanel.js');
+  for (const source of [sidepanel]) {
     assert.match(source, /taskStackFromToolEvent/);
     assert.match(source, /updateTaskStackStore/);
     assert.match(source, /hermesBrowserTaskStacks/);
@@ -33,15 +27,11 @@ test('both runtimes derive tasks from todo tool events and sync per-session stor
     assert.match(source, /taskStackToggle/);
   }
   assert.match(sidepanel, /captureTaskToolEvent\(tool\)/);
-  assert.match(app, /captureTaskToolEvent\(event\)/);
 });
 
 test('task-stack styling uses existing Hermes tokens and supports collapsed and expanded states', async () => {
-  const [sidepanelCss, appCss] = await Promise.all([
-    read('extension/sidepanel.css'),
-    read('extension/app.css'),
-  ]);
-  for (const source of [sidepanelCss, appCss]) {
+  const sidepanelCss = await read('extension/sidepanel.css');
+  for (const source of [sidepanelCss]) {
     assert.match(source, /\.task-stack/);
     assert.match(source, /\.task-stack-progress/);
     assert.match(source, /\.task-stack-item/);
@@ -49,13 +39,10 @@ test('task-stack styling uses existing Hermes tokens and supports collapsed and 
   }
 });
 
-test('task-stack lists use the sharp transparent-track Hermes scrollbar on both surfaces', async () => {
-  const [sidepanelCss, appCss] = await Promise.all([
-    read('extension/sidepanel.css'),
-    read('extension/app.css'),
-  ]);
+test('task-stack lists use the sharp transparent-track Hermes scrollbar', async () => {
+  const sidepanelCss = await read('extension/sidepanel.css');
 
-  for (const source of [sidepanelCss, appCss]) {
+  for (const source of [sidepanelCss]) {
     assert.match(source, /\.task-stack-list\s*\{[^}]*scrollbar-gutter:\s*stable;/s);
     assert.match(source, /\.task-stack-list::-webkit-scrollbar\s*\{[^}]*width:\s*8px;/s);
     assert.match(source, /\.task-stack-list::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*rgba\(var\(--hermes-fg-rgb\),\s*0?\.45\);[^}]*border:\s*1px solid var\(--hermes-line-strong\);/s);

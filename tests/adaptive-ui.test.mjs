@@ -266,13 +266,10 @@ test('the typed dispatcher allows view, copy and ask only, and never sends', asy
   assert.equal(readAdaptiveAction(forged), null);
 });
 
-test('side panel and full tab share the renderer, actions and the style guide', () => {
+test('the side panel uses the shared renderer, actions and the style guide', () => {
   const panel = fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  const tab = fs.readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-  for (const js of [panel, tab]) {
-    assert.match(js, /renderResponseSafe\(/);
-    assert.match(js, /const action = readAdaptiveAction\(event\.target\);[\s\S]{0,80}dispatchAdaptiveAction\(action, \{/);
-  }
+  assert.match(panel, /renderResponseSafe\(/);
+  assert.match(panel, /const action = readAdaptiveAction\(event\.target\);[\s\S]{0,80}dispatchAdaptiveAction\(action, \{/);
   assert.match(panel, /responseStyleInstructions\(settings\.responseStyle\)/);
   assert.match(panel, /function patchRenderedMessageContent[\s\S]*?dataset\.hauiSig/);
 });

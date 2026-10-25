@@ -2,15 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 
-const [sidepanelSource, appSource, packageSource, loadedE2eSource] = await Promise.all([
+const [sidepanelSource, packageSource] = await Promise.all([
   fs.readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8'),
-  fs.readFile(new URL('../extension/app.js', import.meta.url), 'utf8'),
   fs.readFile(new URL('../package.json', import.meta.url), 'utf8'),
-  fs.readFile(new URL('./e2e-loaded-extension.mjs', import.meta.url), 'utf8'),
 ]);
 
-test('side panel and full-tab import the shared delegation watcher contract', () => {
-  for (const source of [sidepanelSource, appSource]) {
+test('side panel imports the shared delegation watcher contract', () => {
+  for (const source of [sidepanelSource]) {
     assert.match(source, /createDelegationWatchManager/);
     assert.match(source, /delegationDispatchFromToolEvent/);
     assert.match(source, /delegationDispatchesFromMessages/);
@@ -32,13 +30,12 @@ test('side panel separates quiet history fetch from guarded UI commit', () => {
   assert.match(sidepanelSource, /requestId !== sessionLoadRequestId/);
 });
 
-test('both REST run.completed paths extract structured dispatch results', () => {
+test('the REST run.completed path extracts structured dispatch results', () => {
   assert.match(sidepanelSource, /delegationDispatchesFromMessages\(payload\?\.messages/);
-  assert.match(appSource, /delegationDispatchesFromMessages\(runtime\?\.messages/);
 });
 
-test('both dashboard paths observe tool.complete result payloads', () => {
-  for (const source of [sidepanelSource, appSource]) {
+test('the dashboard path observes tool.complete result payloads', () => {
+  for (const source of [sidepanelSource]) {
     assert.match(source, /client\.on\('tool\.complete'/);
     assert.match(source, /result:\s*event\.payload\?\.result/);
   }
@@ -49,16 +46,12 @@ test('dashboard history reconciliation uses live ids while watches remain durabl
   assert.match(sidepanelSource, /fetchDashboardHistoryWithResume\(watch\.durableSessionId\)/);
   assert.doesNotMatch(sidepanelSource, /watch\.transport === 'dashboard-ws' \? watch\.liveSessionId/);
   assert.match(sidepanelSource, /session_id:\s*sessionId/);
-  assert.match(appSource, /liveSessionId:\s*dashboardLiveSessionId/);
-  assert.match(appSource, /session_id:\s*watch\.liveSessionId/);
 });
 
 test('completion replies reveal progressively instead of popping in', () => {
   assert.match(sidepanelSource, /commitFetchedSessionMessagesWithReveal/);
   assert.match(sidepanelSource, /revealCompletionReply/);
-  assert.match(appSource, /commitFullTabSessionMessagesWithReveal/);
-  assert.match(appSource, /revealWebCompletionReply/);
-  for (const source of [sidepanelSource, appSource]) {
+  for (const source of [sidepanelSource]) {
     assert.match(source, /from '\.\/lib\/completion-reveal\.mjs'/);
     assert.match(source, /trailingNewMessages/);
     assert.match(source, /revealSlice/);
@@ -78,14 +71,12 @@ test('background dashboard history resumes reaped runtimes before fetching', () 
   assert.match(sidepanelSource, /delegationCompletionState\(rows, completionId\)/);
 });
 
-test('session identity is guarded before stale dashboard requests can mutate either surface', () => {
+test('session identity is guarded before stale dashboard requests can mutate the side panel', () => {
   assert.match(sidepanelSource, /if \(requestId !== sessionLoadRequestId\) return;[\s\S]*?connection\.wsSessionId = liveId/);
-  assert.match(appSource, /if \(!isCurrent\(\)\) \{[\s\S]*?newer session selection/);
-  assert.match(appSource, /isCurrent: \(\) => requestId === webSessionLoadRequestId/);
 });
 
-test('both surfaces hydrate persisted watches and activate the current session', () => {
-  for (const source of [sidepanelSource, appSource]) {
+test('the side panel hydrates persisted watches and activate the current session', () => {
+  for (const source of [sidepanelSource]) {
     assert.match(source, /delegationWatchManager\.hydrate/);
     assert.match(source, /delegationWatchManager\.activate/);
   }
@@ -96,15 +87,6 @@ test('accepted-turn and degraded REST fallbacks rescan canonical history for dis
   assert.match(sidepanelSource, /async function recoverAcceptedTurn[\s\S]*?captureDelegationRuntimePayload\(\{ messages: rows \}\)/);
   assert.match(sidepanelSource, /async function streamChatCompletions[\s\S]*?captureDelegationDispatchesFromCurrentRestHistory\(\)/);
   assert.match(sidepanelSource, /async function fallbackSessionChat[\s\S]*?captureDelegationDispatchesFromCurrentRestHistory\(\)/);
-});
-
-test('loaded delegation E2E isolates side panel and Hermes Web session history', () => {
-  assert.match(loadedE2eSource, /const FULLTAB_SESSION_ID =/);
-  assert.match(loadedE2eSource, /delegationSessionId/);
-  assert.match(loadedE2eSource, /fullTabDelegationSessionId/);
-  assert.match(loadedE2eSource, /webSessionId:\$\{JSON\.stringify\(FULLTAB_SESSION_ID\)\}/);
-  assert.match(loadedE2eSource, /must not contain the side panel delegation result/i);
-  assert.match(loadedE2eSource, /must not contain the Hermes Web delegation result/i);
 });
 
 test('new delegation module participates in the canonical JavaScript check', () => {

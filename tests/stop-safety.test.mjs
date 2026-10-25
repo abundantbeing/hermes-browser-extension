@@ -18,7 +18,6 @@ import { dashboardWsGatewayCapabilities, dashboardWsSupportsCompress } from '../
 import { sessionContextFailureRecovery } from '../extension/lib/turn-recovery.mjs';
 
 const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-const web = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
 
 function rpcError(message, { code = 4001, data } = {}) {
   const error = new Error(message);
@@ -245,19 +244,16 @@ test('compression-ceiling recovery compacts on the dashboard transport instead o
   );
 });
 
-test('both surfaces compact over session.compress on the dashboard transport', () => {
+test('the side panel compacts over session.compress on the dashboard transport', () => {
   const panelCompact = panel.match(/async function compactCurrentSessionContext\([\s\S]*?\n\}/)?.[0] || '';
-  const webCompact = web.match(/async function compactActiveSessionContext\([\s\S]*?\n\}/)?.[0] || '';
   assert.match(panelCompact, /usesDashboardWsChatTransport\(\)\) return compactDashboardSessionContext/);
-  assert.match(webCompact, /usesDashboardTicketTransport\(\)\) return compactDashboardSessionContext/);
-  for (const source of [panel, web]) {
+  for (const source of [panel]) {
     const dashboardCompact = source.match(/async function compactDashboardSessionContext\([\s\S]*?\n\}/)?.[0] || '';
     assert.match(dashboardCompact, /WS_METHODS\.sessionCompress/);
     assert.match(dashboardCompact, /normalizeSessionCompressResult/);
     assert.match(dashboardCompact, /isUnknownMethodError/);
   }
   assert.match(panel, /readyPayload: connection\?\.client\?\.readyPayload/);
-  assert.match(web, /readyPayload: dashboardConnection\.client\.readyPayload/);
 });
 
 function stopHarness({ runId = '', sessionLookup = async () => ({ ok: false, status: 404 }), controllerResult = { ok: true, cancelled: 2 }, browserControlEnabled = true } = {}) {
@@ -366,13 +362,9 @@ test('without browser control there is nothing to cancel and nothing extra is sa
   assert.doesNotMatch(h.statuses.at(-1).detail, /run\.stop_/);
 });
 
-test('the attached-session Stop and Hermes Web route through the fenced interrupt', () => {
+test('the attached-session Stop routes through the fenced interrupt', () => {
   const attached = panel.match(/async function stopCurrentTurn\(\) \{[\s\S]*?\n[ ]{2}\}\n[ ]{2}if \(!sending/)?.[0] || '';
   assert.match(attached, /interruptGatewaySession\(/);
   assert.match(attached, /attach\.userStopped = true/);
   assert.match(panel, /if \(attach\?\.userStopped\) void cancelBrowserControlAfterConfirmedStop\(\)/);
-  const webStop = web.match(/async function stopActiveRun\([\s\S]*?\n\}/)?.[0] || '';
-  assert.match(webStop, /interruptGatewaySession\(/);
-  assert.match(webStop, /markRunUnconfirmed\(/);
-  assert.doesNotMatch(web, /HERMES_CONTROLLER_STOP/);
 });

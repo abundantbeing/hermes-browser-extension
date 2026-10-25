@@ -24,7 +24,7 @@ test('extension pages cannot embed plugins, rebase URLs or submit forms away, an
 });
 
 test('the extension pages really do not use frames or plugin elements', () => {
-  for (const page of ['sidepanel.html', 'app.html']) {
+  for (const page of ['sidepanel.html']) {
     const html = readFileSync(new URL(`../extension/${page}`, import.meta.url), 'utf8');
     assert.doesNotMatch(html, /<(?:iframe|object|embed)\b/i, page);
   }

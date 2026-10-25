@@ -4,16 +4,11 @@ import test from 'node:test';
 
 const read = (relative) => fs.readFileSync(new URL(`../${relative}`, import.meta.url), 'utf8');
 
-test('both surfaces publish the chat layout on the root element', () => {
+test('the side panel publishes the chat layout on the root element', () => {
   const panel = read('extension/sidepanel.js');
-  const tab = read('extension/app.js');
-  for (const js of [panel, tab]) {
-    assert.match(js, /document\.documentElement\.dataset\.messageLayout = messageLayout/);
-    assert.match(js, /document\.documentElement\.dataset\.responseStyle = responseStyle/);
-  }
+  assert.match(panel, /document\.documentElement\.dataset\.messageLayout = messageLayout/);
+  assert.match(panel, /document\.documentElement\.dataset\.responseStyle = responseStyle/);
   assert.match(panel, /function applyAppearanceSettings\(\)[\s\S]*?applyResponsePresentation\(\);\n\}/);
-  assert.match(tab, /function applyAppearance\(\)[\s\S]*?applyWebResponsePresentation\(\);\n\}/);
-  assert.match(tab, /changes\.hermesBrowserSettings\?\.newValue\) syncWebResponsePresentation/);
 });
 
 test('bubbles both sides keeps a tailed bubble for each role', () => {
@@ -30,7 +25,4 @@ test('user bubble only drops the Hermes bubble but keeps the user bubble and gro
     assert.ok(rule.includes(declaration), declaration);
   }
   assert.doesNotMatch(css, /data-message-layout="user-bubble"\][^{]*\.message\.user/);
-  const tabCss = read('extension/app.css');
-  const tabRule = tabCss.match(/html\[data-message-layout="user-bubble"\] body \.web-message\.assistant \{[^}]*\}/)?.[0] || '';
-  assert.ok(tabRule.includes('background: transparent') && tabRule.includes('width: 100%'));
 });

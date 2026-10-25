@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { shouldPreserveImageGenerationRun } from '../extension/lib/web-run-state.mjs';
@@ -26,10 +25,4 @@ test('an active image-generation run survives later unrelated tool events until 
     ),
     false,
   );
-});
-
-test('the Web transcript renderer suppresses follow-up tool rows while an image run remains active', () => {
-  const app = readFileSync(new URL('../extension/app.js', import.meta.url), 'utf8');
-
-  assert.match(app, /if \(shouldPreserveImageGenerationRun\(liveRun, activity\)\) return;/);
 });
