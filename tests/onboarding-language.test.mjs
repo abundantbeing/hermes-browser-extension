@@ -141,19 +141,94 @@ test('a pick is applied at once through the host call, and it moves the selectio
   assert.equal(host.querySelector('#onboardingStepTitle').textContent, 'title-ar');
 });
 
-test('arrow keys move the pick along the reading direction and Home/End jump', () => {
+test('arrow keys move focus along the reading direction and Home/End jump, and apply nothing', () => {
+  const focusLog = (host) => {
+    const log = [];
+    for (const card of host.querySelectorAll('[data-onboarding-language]')) {
+      const focus = card.focus?.bind(card);
+      card.focus = (...args) => { log.push(card.dataset.onboardingLanguage); return focus?.(...args); };
+    }
+    return log;
+  };
   const ltr = mount({ language: { current: 'en', selected: 'en' } });
   ltr.flow.open();
-  keydown(ltr.host.querySelector('[data-onboarding-language="en"]'), ltr.window, 'ArrowRight');
-  assert.equal(ltr.calls.at(-1)[1], 'es', 'Right is the next language in LTR');
+  const ltrFocus = focusLog(ltr.host);
+  const first = keydown(ltr.host.querySelector('[data-onboarding-language="en"]'), ltr.window, 'ArrowRight');
+  assert.equal(first.defaultPrevented, true);
+  assert.deepEqual(ltrFocus, ['es'], 'Right is the next language in LTR');
   keydown(ltr.host.querySelector('[data-onboarding-language="es"]'), ltr.window, 'End');
-  assert.equal(ltr.calls.at(-1)[1], 'da');
+  assert.deepEqual(ltrFocus, ['es', 'da']);
+  keydown(ltr.host.querySelector('[data-onboarding-language="da"]'), ltr.window, 'Home');
+  assert.equal(ltrFocus.at(-1), 'en');
+  assert.deepEqual(ltr.calls, [], 'walking the list applies and saves no language');
+  assert.equal(ltr.host.querySelector('[data-onboarding-language="en"]').getAttribute('aria-checked'), 'true', 'the selection has not moved');
   assert.equal(ltr.flow.step, 'language', 'arrows inside the group never turn the page');
   const rtl = mount({ direction: 'rtl', language: { current: 'ar', selected: 'ar' } });
   rtl.flow.open();
+  const rtlFocus = focusLog(rtl.host);
   const arabicIndex = SUPPORTED_LOCALES.findIndex((locale) => locale.id === 'ar');
   keydown(rtl.host.querySelector('[data-onboarding-language="ar"]'), rtl.window, 'ArrowLeft');
-  assert.equal(rtl.calls.at(-1)[1], SUPPORTED_LOCALES[(arabicIndex + 1) % SUPPORTED_LOCALES.length].id, 'Left is the next language in RTL');
+  assert.equal(rtlFocus.at(-1), SUPPORTED_LOCALES[(arabicIndex + 1) % SUPPORTED_LOCALES.length].id, 'Left is the next language in RTL');
+  assert.deepEqual(rtl.calls, []);
+});
+
+test('a card is chosen with a click (what Enter and Space do on a button), once, after the arrows passed others', () => {
+  const { host, flow, calls, window } = mount({ language: { current: 'en', selected: 'en' } });
+  flow.open();
+  keydown(host.querySelector('[data-onboarding-language="en"]'), window, 'ArrowRight');
+  keydown(host.querySelector('[data-onboarding-language="es"]'), window, 'ArrowRight');
+  keydown(host.querySelector('[data-onboarding-language="fr"]'), window, 'ArrowDown');
+  assert.deepEqual(calls, []);
+  click(host.querySelector('[data-onboarding-language="de"]'), window);
+  assert.deepEqual(calls, [['language', 'de']], 'only the activated card is applied');
+  assert.match(read('extension/lib/onboarding-flow.mjs'), /onboarding-language-grid" role="radiogroup" data-radio-activation="manual"/, 'the grid declares manual activation');
+});
+
+test('a pick patches the step in place: the stage, the grid and every card keep their nodes', () => {
+  const { host, flow, window, calls } = mount({ language: { current: 'en', selected: 'en' } });
+  flow.open();
+  const stage = host.querySelector('.onboarding-stage');
+  const grid = host.querySelector('.onboarding-language-grid');
+  const cards = [...grid.querySelectorAll('[data-onboarding-language]')];
+  const shell = [...host.children];
+  click(host.querySelector('[data-onboarding-language="pt-BR"]'), window);
+  assert.deepEqual(calls, [['language', 'pt-BR']]);
+  assert.equal(host.querySelector('.onboarding-stage'), stage, 'the scroll container survives');
+  assert.equal(host.querySelector('.onboarding-language-grid'), grid);
+  assert.deepEqual([...grid.querySelectorAll('[data-onboarding-language]')], cards, 'all 21 cards are the same nodes');
+  assert.deepEqual([...host.children], shell, 'the shell is not drawn again either');
+  assert.equal(grid.querySelector('[data-onboarding-language="pt-BR"]').getAttribute('aria-checked'), 'true');
+  assert.equal(grid.querySelector('[data-onboarding-language="pt-BR"]').getAttribute('tabindex'), '0');
+  assert.equal(grid.querySelector('[data-onboarding-language="en"]').getAttribute('aria-checked'), 'false');
+  assert.equal(grid.querySelector('[data-onboarding-language="en"]').getAttribute('tabindex'), '-1');
+  assert.equal(grid.querySelectorAll('[tabindex="0"]').length, 1, 'still one tab stop');
+  assert.equal(grid.getAttribute('aria-label'), 'title-pt-BR', 'the group is named by the new heading');
+  assert.equal(host.querySelector('#onboardingStepTitle').textContent, 'title-pt-BR');
+  assert.equal(host.querySelectorAll('#onboardingStepTitle').length, 1, 'no duplicate heading after the patch');
+  assert.equal(stage.firstElementChild.id, 'onboardingStepTitle', 'the heading stays above the list');
+});
+
+test('a pick in a scrolled list keeps its scroll offset (stage kept, and a redrawn step restores it)', () => {
+  // The stage's scroll offset is reset by the browser whenever its content is replaced; model that.
+  const { host, flow, window, state } = mount({ language: { current: 'en', selected: 'en' } });
+  flow.open();
+  const stage = host.querySelector('.onboarding-stage');
+  let offset = 0;
+  const innerHtml = (() => { let node = stage; while (node && !Object.getOwnPropertyDescriptor(node, 'innerHTML')) node = Object.getPrototypeOf(node); return Object.getOwnPropertyDescriptor(node, 'innerHTML'); })();
+  Object.defineProperty(stage, 'scrollTop', { get: () => offset, set: (value) => { offset = value; }, configurable: true });
+  Object.defineProperty(stage, 'innerHTML', { get: () => innerHtml.get.call(stage), set: (value) => { offset = 0; innerHtml.set.call(stage, value); }, configurable: true });
+  offset = 400;
+  click(host.querySelector('[data-onboarding-language="th"]'), window);
+  assert.equal(offset, 400, 'the language list stays where it was scrolled to');
+  assert.equal(state.language.selected, 'th');
+  // Theme, font, style and layout draw their step again on a pick; the offset survives that too.
+  flow.open({ step: 'font' });
+  offset = 250;
+  click(host.querySelector('[data-onboarding-font]:not(.selected)'), window);
+  flow.render();
+  assert.equal(offset, 250, 'a redrawn font list is restored to its offset');
+  flow.open({ step: 'theme' });
+  assert.equal(offset, 0, 'arriving on another step starts at the top');
 });
 
 test('leaving the step (Next, Back, finishing) tells the host, so a suggestion nobody picked can be kept', async () => {

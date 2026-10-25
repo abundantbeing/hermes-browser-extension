@@ -88,7 +88,10 @@ export function syncPresentationCards(container, group, { selected = '', attribu
 // Radio-group keys for any group of [role="radio"] cards: arrows move and
 // select, Home and End jump. The card is clicked so the caller's own click
 // handler applies the choice; focus then returns to the card with the same
-// key, even when the click re-rendered the group.
+// key, even when the click re-rendered the group. A group marked
+// data-radio-activation="manual" only moves focus: the card is chosen with
+// Enter, Space or a click, so nothing is applied (or saved) for a card the
+// keyboard merely passed over.
 export function handleRadioCardKeydown(event, root) {
   const card = event.target?.closest?.('[role="radio"][data-radio-key]');
   const group = card?.closest?.('[role="radiogroup"]');
@@ -106,6 +109,10 @@ export function handleRadioCardKeydown(event, root) {
   else if (event.key === 'End') next = cards[cards.length - 1];
   if (!next) return false;
   event.preventDefault();
+  if (group.dataset?.radioActivation === 'manual') {
+    next.focus();
+    return true;
+  }
   const key = next.dataset.radioKey;
   next.click();
   const target = [...(root || group).querySelectorAll('[data-radio-key]')].find((node) => node.dataset.radioKey === key);

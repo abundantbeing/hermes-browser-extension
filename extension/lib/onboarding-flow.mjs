@@ -230,6 +230,31 @@ export function createOnboardingFlow({
       </div>`;
   }
 
+  function languageHeadHtml(view) {
+    return `
+        <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.title)}</h2>
+        ${view.english ? `<p class="onboarding-title-english" lang="en" dir="ltr">${escapeHtml(view.english)}</p>` : ''}
+        <p class="onboarding-body" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.body)}</p>`;
+  }
+
+  // The heading and body follow the language in force; the cards keep their
+  // nodes (so focus and the list's scroll offset stay) and only change state.
+  // Returns false when there is no grid to patch.
+  function patchLanguageStage(view) {
+    const grid = parts.stage.querySelector('.onboarding-language-grid');
+    if (!grid) return false;
+    for (const node of [...parts.stage.children]) if (node !== grid) node.remove();
+    grid.insertAdjacentHTML('beforebegin', languageHeadHtml(view));
+    grid.setAttribute('aria-label', view.title);
+    for (const card of grid.querySelectorAll('[data-onboarding-language]')) {
+      const isSelected = card.dataset.onboardingLanguage === view.selected;
+      card.classList.toggle('selected', isSelected);
+      card.setAttribute('aria-checked', String(isSelected));
+      card.tabIndex = isSelected ? 0 : -1;
+    }
+    return true;
+  }
+
   function stepBody(step, state) {
     if (step === 'language') {
       const { selected } = languageView(state);
@@ -237,7 +262,7 @@ export function createOnboardingFlow({
         const isSelected = entry.id === selected;
         return `<button class="onboarding-language-card${isSelected ? ' selected' : ''}" type="button" role="radio" aria-checked="${isSelected}" tabindex="${isSelected ? 0 : -1}" lang="${escapeHtml(entry.id)}" dir="${entry.direction === 'rtl' ? 'rtl' : 'ltr'}" data-onboarding-language="${escapeHtml(entry.id)}" data-radio-key="language:${escapeHtml(entry.id)}"><span class="onboarding-language-name">${escapeHtml(entry.nativeName)}</span><span class="presentation-card-check" aria-hidden="true"></span></button>`;
       }).join('');
-      return `<div class="onboarding-language-grid" role="radiogroup" aria-label="${escapeHtml(languageView(state).title)}">${cards}</div>`;
+      return `<div class="onboarding-language-grid" role="radiogroup" data-radio-activation="manual" aria-label="${escapeHtml(languageView(state).title)}">${cards}</div>`;
     }
     if (step === 'theme') {
       const mode = state.resolvedMode === 'light' ? 'light' : 'dark';
@@ -383,21 +408,25 @@ export function createOnboardingFlow({
       patchConnectStage(state);
       return;
     }
+    const sameStep = parts.stage.dataset.step === step;
     parts.stage.dataset.step = step;
     if (step === 'language') {
       const view = languageView(state);
-      parts.stage.innerHTML = `
-        <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.title)}</h2>
-        ${view.english ? `<p class="onboarding-title-english" lang="en" dir="ltr">${escapeHtml(view.english)}</p>` : ''}
-        <p class="onboarding-body" lang="${escapeHtml(view.lang)}" dir="${view.dir}">${escapeHtml(view.body)}</p>
-        ${stepBody(step, state)}`;
+      // A pick changes the language, and with it the heading and the cards'
+      // state, but the list is 21 cards tall and may be scrolled: patch the
+      // step where it stands instead of drawing it again.
+      if (sameStep && patchLanguageStage(view)) return;
+      parts.stage.innerHTML = `${languageHeadHtml(view)}${stepBody(step, state)}`;
       return;
     }
+    // The same step drawn again (a pick) keeps its place in a long list.
+    const scrolled = sameStep ? parts.stage.scrollTop : 0;
     parts.stage.innerHTML = `
       <h2 class="onboarding-title" id="onboardingStepTitle" tabindex="-1">${escapeHtml(t(`onboarding.${step}.title`))}</h2>
       <p class="onboarding-body">${escapeHtml(t(`onboarding.${step}.body`))}</p>
       ${stepBody(step, state)}`;
     if (step === 'connect' && approvalNode) parts.stage.querySelector('.onboarding-approval-slot')?.append(approvalNode);
+    if (scrolled) parts.stage.scrollTop = scrolled;
   }
 
   function focusKey() {
@@ -501,16 +530,14 @@ export function createOnboardingFlow({
     host.hidden = false;
     const state = getState() || {};
     const keep = focusKey();
-    // A new language redraws the shell too: Skip and the nav's name were drawn
-    // once, in the old language.
+    // A new language rewords the shell in place: Skip, the nav's name and the
+    // logo's label were drawn once, in the old language. The stage keeps its
+    // node, so a scrolled language list stays where it is.
     const localeKey = String(state.language?.current || '');
     if (parts && localeKey !== shellLocale) {
-      host.innerHTML = '';
-      parts = null;
-      meanderParts = null;
-      meanderSize = '';
-      previewKey = '';
-      paletteKey = '';
+      parts.logo.setAttribute('aria-label', t('manifest.extension_name'));
+      parts.skip.textContent = t('onboarding.skip');
+      parts.nav.setAttribute('aria-label', t('onboarding.aria'));
     }
     shellLocale = localeKey;
     if (!parts) {
