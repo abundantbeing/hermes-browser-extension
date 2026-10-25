@@ -1,11 +1,14 @@
 // Hermes Web: the browser-hosted Hermes Webapp that the user's own gateway serves
-// (NousResearch/hermes-agent, `webapp.enabled: true`). This module only finds it and opens
-// it. It sends no credential to it and never mints a sign-in:
-//   * Nothing advertises the Webapp's address to an API client, and no route lets an
-//     extension token mint a launch link. The sign-in link only comes from `hermes webapp`
-//     on the host (a private same-user control socket), so a fresh tab shows the gateway's
-//     own instructions or its sign-in page. The extension therefore opens the address and
-//     tells the user what to run.
+// (NousResearch/hermes-agent, `webapp.enabled: true`). This module finds it and opens it.
+//   * Nothing advertises the Webapp's address to an API client, and no extension token can mint
+//     a sign-in. The sign-in comes from `hermes webapp` on the host (a one-use launch link that
+//     leaves the credential in that tab's sessionStorage).
+//   * So the first sign-in is the user's, once. After that the panel can keep this browser's
+//     sign-in until the browser closes (lib/webapp-credential.mjs, the "Keep Hermes Web signed in
+//     from the panel" setting): the button then opens a new tab that is already signed in, using
+//     a one-use window ticket in the launch URL's fragment. The credential itself never goes in
+//     a URL. With the setting off, or with nothing held, the button opens the address and tells
+//     the user what to run.
 //   * The address is the user's "Hermes Web address" setting. Empty means automatic: the
 //     gateway's default loopback address for a local connection, and nothing for a remote
 //     one (a remote Webapp is behind a reverse proxy or tunnel and cannot be guessed).
@@ -269,17 +272,46 @@ async function hostAccess(target, permissionsApi, permissionMode) {
   }
 }
 
+async function captureFromTab(credentials, target, tab) {
+  try {
+    return (await credentials.capture(target, tab ? { tab } : {})) || { ok: false };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// A new tab already signed in: a one-use window ticket, minted with the held credential, rides
+// in the launch URL's fragment. Resolves the open-tab result, or null when it cannot (nothing
+// held, the ticket was refused, nothing answered) so the caller can fall through.
+async function openSignedInTab({ credentials, target, tabsApi }) {
+  if (!(await credentials.held())) return null;
+  const minted = await credentials.mintWindowTicket(target);
+  if (!minted?.ok) return null;
+  const url = credentials.launchUrl(target, minted.ticket, { profile: target.profile });
+  if (!url) return null;
+  try {
+    const tab = await tabsApi.create({ url, active: true });
+    return { status: 'opened', tabId: tab?.id, address: target.baseUrl, hint: 'signed-in', signedIn: true };
+  } catch (error) {
+    return { status: 'open-failed', address: target.baseUrl, reason: error?.message || String(error) };
+  }
+}
+
 /**
  * The Hermes Web button.
  *   1. work out the address (setting, else the local default),
  *   2. check the browser will let the extension reach it (no new permanent permission:
  *      the origin is covered by the manifest's host permissions),
- *   3. focus a tab that already shows it (that tab is already signed in),
- *   4. otherwise check something answers, with no credentials,
- *   5. then open it in a new tab.
+ *   3. focus a tab that already shows it (and keep its sign-in, when the panel may),
+ *   4. otherwise, with a held sign-in, open a new tab that is already signed in,
+ *   5. otherwise keep the sign-in of any open signed-in tab and do the same,
+ *   6. otherwise check something answers, with no credentials, and open the address.
+ *
+ * `credentials` is the store from lib/webapp-credential.mjs; without it, or with the setting off,
+ * only steps 1-3 and 6 apply.
  *
  * Resolves with { status, ... } and never throws for an expected condition:
- *   'focused' | 'opened' (+ hint: 'local' | 'account' | '') | 'unreachable' |
+ *   'focused' | 'opened' (+ hint: 'signed-in' | 'local' | 'local-kept' | 'account' | '') | 'unreachable' |
  *   'needs-address' | 'invalid-address' | 'permission-denied' | 'open-failed'
  * permissionMode: 'request' (a click handler) or 'contains' (a background worker).
  */
@@ -291,26 +323,49 @@ export async function openHermesWebapp({
   fetchImpl,
   storageArea,
   permissionMode = 'request',
+  credentials = null,
 } = {}) {
   const target = resolveWebappTarget(settings);
   if (!target.ok) return { status: target.reason };
   if (!(await hostAccess(target, permissionsApi, permissionMode))) {
     return { status: 'permission-denied', address: target.baseUrl };
   }
+  // Only the private loopback Webapp keeps a sign-in the panel can use; a remote Webapp is behind the account sign-in.
+  const keepSignedIn = credentials && target.loopback ? (await credentials.enabled()) !== false : false;
+  let capturedFromTab = false;
   const existing = await findOpenWebappTab(tabsApi, target);
   if (existing) {
-    try {
-      await focusWebappTab(existing, { tabsApi, windowsApi });
-      return { status: 'focused', tabId: existing.id, address: target.baseUrl };
-    } catch {
-      /* the tab closed while focusing it: fall through to a fresh one */
+    let focusIt = true;
+    if (keepSignedIn) {
+      const captured = await captureFromTab(credentials, target, existing);
+      capturedFromTab = captured.ok === true;
+      // A tab that is not signed in cannot be fixed from here. When a sign-in is held,
+      // a new signed-in tab is better than raising that one.
+      if (!captured.ok && ['not-signed-in', 'rejected'].includes(captured.reason) && await credentials.held()) focusIt = false;
     }
+    if (focusIt) {
+      try {
+        await focusWebappTab(existing, { tabsApi, windowsApi });
+        return { status: 'focused', tabId: existing.id, address: target.baseUrl };
+      } catch {
+        /* the tab closed while focusing it: fall through to a fresh one */
+      }
+    }
+  }
+  if (keepSignedIn) {
+    let opened = await openSignedInTab({ credentials, target, tabsApi });
+    if (!opened && !capturedFromTab && (await captureFromTab(credentials, target, null)).ok) {
+      opened = await openSignedInTab({ credentials, target, tabsApi });
+    }
+    if (opened) return opened;
   }
   const probe = await probeWebapp(target, { fetchImpl });
   if (!probe.reachable) return { status: 'unreachable', address: target.baseUrl };
   try {
     const tab = await tabsApi.create({ url: target.url, active: true });
-    const hint = await takeWebappSignInHint(storageArea, target);
+    let hint = await takeWebappSignInHint(storageArea, target);
+    // On this computer the first sign-in is still `hermes webapp`; once it is done the panel keeps it.
+    if (hint === 'local' && keepSignedIn && target.loopback) hint = 'local-kept';
     return { status: 'opened', tabId: tab?.id, address: target.baseUrl, hint };
   } catch (error) {
     return { status: 'open-failed', address: target.baseUrl, reason: error?.message || String(error) };
