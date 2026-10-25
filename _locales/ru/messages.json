@@ -7747,12 +7747,76 @@
     "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
     "description": "Runtime interface message web.deprecation_banner"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
-  },
   "runtime_web_deprecation_title": {
     "message": "A new surface is being worked on",
     "description": "Runtime interface message web.deprecation_title"
+  },
+  "runtime_webapp_assist_detail": {
+    "message": "Откройте приложение Hermes Web в новой вкладке.",
+    "description": "Runtime interface message webapp.assist_detail"
+  },
+  "runtime_webapp_copy_command": {
+    "message": "Копировать команду",
+    "description": "Runtime interface message webapp.copy_command"
+  },
+  "runtime_webapp_dialog_body": {
+    "message": "Шлюз предоставляет Hermes Web, когда он включён. На компьютере, где работает Hermes, выполните эти команды.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web недоступен",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Прочитать руководство по Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web открыт. Войдите на этой странице с учётной записью панели управления.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web открыт. На этом компьютере один раз выполните hermes webapp, чтобы войти. Вкладка останется в системе.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Не удалось открыть Hermes Web",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Открыть Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web открыт",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "Адрес Hermes Web в настройках не является допустимым адресом http или https.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "Это удалённое подключение, поэтому проверять нечего. Укажите адрес Hermes Web в настройках.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Браузер не разрешил Hermes Browser обращаться к этому адресу:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "По этому адресу никто не ответил:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Для локального подключения оставьте пустым, и будет использован http://127.0.0.1:9120 автоматически. Для удалённого шлюза укажите адрес, по которому он предоставляет Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Адрес Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Проверить снова",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

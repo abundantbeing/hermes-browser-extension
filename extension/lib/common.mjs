@@ -64,6 +64,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   connectionTransport: CONNECTION_TRANSPORTS.LOCAL_API,
   gatewayMode: 'local-api',
   gatewayUrl: 'http://127.0.0.1:8642',
+  hermesWebAddress: '',
   apiKey: '',
   tokenSource: '',
   lastConnectionTestedAt: 0,

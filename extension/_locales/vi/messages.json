@@ -7747,12 +7747,76 @@
     "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
     "description": "Runtime interface message web.deprecation_banner"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
-  },
   "runtime_web_deprecation_title": {
     "message": "A new surface is being worked on",
     "description": "Runtime interface message web.deprecation_title"
+  },
+  "runtime_webapp_assist_detail": {
+    "message": "Mở ứng dụng Hermes Web trong một tab mới.",
+    "description": "Runtime interface message webapp.assist_detail"
+  },
+  "runtime_webapp_copy_command": {
+    "message": "Sao chép lệnh",
+    "description": "Runtime interface message webapp.copy_command"
+  },
+  "runtime_webapp_dialog_body": {
+    "message": "Cổng của bạn cung cấp Hermes Web khi được bật. Trên máy tính chạy Hermes, hãy chạy các lệnh này.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web không khả dụng",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Đọc hướng dẫn Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Đã mở Hermes Web. Hãy đăng nhập trên trang đó bằng tài khoản bảng điều khiển của bạn.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Đã mở Hermes Web. Trên máy tính này, hãy chạy hermes webapp một lần để đăng nhập. Tab vẫn giữ trạng thái đăng nhập.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Không thể mở Hermes Web",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Mở Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Đã mở Hermes Web",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "Địa chỉ Hermes Web trong Cài đặt không phải là địa chỉ http hoặc https hợp lệ.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "Kết nối này ở xa nên không có địa chỉ để thử. Hãy nhập địa chỉ Hermes Web trong Cài đặt.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Trình duyệt không cho phép Hermes Browser truy cập địa chỉ này:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "Không có phản hồi tại địa chỉ này:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Để trống với kết nối cục bộ để tự động dùng http://127.0.0.1:9120 làm địa chỉ. Với cổng ở xa, hãy nhập địa chỉ nơi nó cung cấp Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Địa chỉ Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Kiểm tra lại",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

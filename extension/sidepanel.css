@@ -4261,6 +4261,53 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   color: var(--hermes-ink);
   background: rgba(var(--hermes-fg-rgb),0.06);
 }
+.webapp-commands {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.webapp-command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid var(--hermes-line);
+  background: var(--hermes-input-bg);
+}
+.webapp-command code,
+.webapp-address {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: calc(11px * var(--hermes-text-zoom, 1))/1.45 var(--hermes-font-mono);
+  color: var(--hermes-ink);
+}
+.webapp-command code { flex: 1 1 auto; padding: 7px 0 7px 10px; }
+.webapp-address[hidden] { display: none; }
+.webapp-copy {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--hermes-muted);
+}
+.webapp-copy svg { display: block; }
+.webapp-copy:hover,
+.webapp-copy:focus-visible,
+.webapp-copy.copied { color: var(--hermes-ink); }
+.webapp-docs-link {
+  justify-self: start;
+  color: var(--hermes-ink);
+  font: calc(10px * var(--hermes-text-zoom, 1))/1.5 var(--hermes-font-mono);
+  text-decoration: underline;
+}
+.webapp-docs-link:hover,
+.webapp-docs-link:focus-visible { text-decoration-thickness: 2px; }
 .queue-notice {
   margin: 7px 0 0;
   border: 1px solid rgba(var(--hermes-accent-rgb),0.48);

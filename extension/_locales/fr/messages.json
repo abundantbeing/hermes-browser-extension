@@ -7747,12 +7747,76 @@
     "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
     "description": "Runtime interface message web.deprecation_banner"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
-  },
   "runtime_web_deprecation_title": {
     "message": "A new surface is being worked on",
     "description": "Runtime interface message web.deprecation_title"
+  },
+  "runtime_webapp_assist_detail": {
+    "message": "Ouvre l’application Hermes Web dans un nouvel onglet.",
+    "description": "Runtime interface message webapp.assist_detail"
+  },
+  "runtime_webapp_copy_command": {
+    "message": "Copier la commande",
+    "description": "Runtime interface message webapp.copy_command"
+  },
+  "runtime_webapp_dialog_body": {
+    "message": "Votre passerelle sert Hermes Web une fois activé. Sur l’ordinateur qui exécute Hermes, lancez ces commandes.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web n’est pas disponible",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Lire le guide de Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web ouvert. Connectez-vous sur cette page avec votre compte du tableau de bord.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web ouvert. Sur cet ordinateur, lancez hermes webapp une fois pour vous connecter. L’onglet reste connecté.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Impossible d’ouvrir Hermes Web",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Ouvrir Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web ouvert",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "L’adresse de Hermes Web dans les Paramètres n’est pas une adresse http ou https valide.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "Cette connexion est distante, il n’y a donc pas d’adresse à essayer. Saisissez l’adresse de Hermes Web dans les Paramètres.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Le navigateur n’a pas autorisé Hermes Browser à joindre cette adresse :",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "Rien n’a répondu à cette adresse :",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Laissez vide pour une connexion locale afin d’utiliser http://127.0.0.1:9120 automatiquement. Pour une passerelle distante, saisissez l’adresse où elle sert Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Adresse de Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Vérifier à nouveau",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

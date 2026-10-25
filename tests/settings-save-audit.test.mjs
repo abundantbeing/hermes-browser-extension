@@ -117,6 +117,7 @@ const PERSISTED = [
   ['wakeWordPhraseInput', 'value', '  Hey   Hermes ', 'wakeWordPhrase', 'hey hermes'],
   ['wakeWordBrowserFallbackInput', 'checked', false, 'wakeWordBrowserFallback', false],
   ['wakeWordSpeakRepliesInput', 'checked', false, 'wakeWordSpeakReplies', false],
+  ['hermesWebAddressInput', 'value', '  https://web.example.com/hermes  ', 'hermesWebAddress', 'https://web.example.com/hermes'],
   ['agentHostInput', 'value', 'macbook.tailnet.ts.net', 'agentDiscoveryHost', 'macbook.tailnet.ts.net'],
   ['agentSchemeInput', 'value', 'https', 'agentDiscoveryScheme', 'https'],
   ['agentPortsInput', 'value', '9001, 9002', 'agentPorts', [9001, 9002]],

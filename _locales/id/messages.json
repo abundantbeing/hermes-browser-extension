@@ -7747,12 +7747,76 @@
     "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
     "description": "Runtime interface message web.deprecation_banner"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
-  },
   "runtime_web_deprecation_title": {
     "message": "A new surface is being worked on",
     "description": "Runtime interface message web.deprecation_title"
+  },
+  "runtime_webapp_assist_detail": {
+    "message": "Buka aplikasi Hermes Web di tab browser baru.",
+    "description": "Runtime interface message webapp.assist_detail"
+  },
+  "runtime_webapp_copy_command": {
+    "message": "Salin perintah",
+    "description": "Runtime interface message webapp.copy_command"
+  },
+  "runtime_webapp_dialog_body": {
+    "message": "Gateway Anda menyajikan Hermes Web setelah diaktifkan. Di komputer yang menjalankan Hermes, jalankan perintah berikut.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web tidak tersedia",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Baca panduan Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web terbuka. Masuk di halaman itu dengan akun dasbor Anda.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web terbuka. Di komputer ini, jalankan hermes webapp sekali untuk masuk. Tab tetap masuk.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Hermes Web tidak dapat dibuka",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Buka Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web terbuka",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "Alamat Hermes Web di Pengaturan bukan alamat http atau https yang valid.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "Koneksi ini jarak jauh, jadi tidak ada alamat yang bisa dicoba. Masukkan alamat Hermes Web di Pengaturan.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Browser tidak mengizinkan Hermes Browser menjangkau alamat ini:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "Tidak ada yang menjawab di alamat ini:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Kosongkan untuk koneksi lokal agar http://127.0.0.1:9120 dipakai otomatis. Untuk gateway jarak jauh, masukkan alamat tempat gateway menyajikan Hermes Web.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Alamat Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Periksa lagi",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

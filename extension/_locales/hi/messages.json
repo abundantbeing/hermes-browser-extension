@@ -7747,12 +7747,76 @@
     "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
     "description": "Runtime interface message web.deprecation_banner"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
-  },
   "runtime_web_deprecation_title": {
     "message": "A new surface is being worked on",
     "description": "Runtime interface message web.deprecation_title"
+  },
+  "runtime_webapp_assist_detail": {
+    "message": "Hermes Web ऐप को नए ब्राउज़र टैब में खोलें।",
+    "description": "Runtime interface message webapp.assist_detail"
+  },
+  "runtime_webapp_copy_command": {
+    "message": "कमांड कॉपी करें",
+    "description": "Runtime interface message webapp.copy_command"
+  },
+  "runtime_webapp_dialog_body": {
+    "message": "आपका गेटवे चालू होने पर Hermes Web उपलब्ध कराता है। जिस कंप्यूटर पर Hermes चलता है, उस पर ये कमांड चलाएँ।",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web उपलब्ध नहीं है",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Hermes Web गाइड पढ़ें",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web खुल गया। उस पेज पर अपने डैशबोर्ड खाते से साइन इन करें।",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web खुल गया। इस कंप्यूटर पर साइन इन करने के लिए एक बार hermes webapp चलाएँ। टैब साइन इन रहता है।",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Hermes Web नहीं खुल सका",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Hermes Web खोलें",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web खुल गया",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "सेटिंग्स में Hermes Web का पता मान्य http या https पता नहीं है।",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "यह कनेक्शन रिमोट है, इसलिए आज़माने के लिए कोई पता नहीं है। सेटिंग्स में Hermes Web का पता दर्ज करें।",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "ब्राउज़र ने Hermes Browser को इस पते तक पहुँचने की अनुमति नहीं दी:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "इस पते पर कोई जवाब नहीं मिला:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "लोकल कनेक्शन में इसे खाली छोड़ें, तब http://127.0.0.1:9120 अपने-आप इस्तेमाल होगा। रिमोट गेटवे के लिए वह पता दर्ज करें जहाँ वह Hermes Web उपलब्ध कराता है।",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Hermes Web का पता",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_try_again": {
+    "message": "फिर से जाँचें",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

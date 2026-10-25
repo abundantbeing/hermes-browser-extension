@@ -7747,12 +7747,76 @@
     "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
     "description": "Runtime interface message web.deprecation_banner"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
-  },
   "runtime_web_deprecation_title": {
     "message": "A new surface is being worked on",
     "description": "Runtime interface message web.deprecation_title"
+  },
+  "runtime_webapp_assist_detail": {
+    "message": "Die Hermes-Web-App in einem neuen Tab öffnen.",
+    "description": "Runtime interface message webapp.assist_detail"
+  },
+  "runtime_webapp_copy_command": {
+    "message": "Befehl kopieren",
+    "description": "Runtime interface message webapp.copy_command"
+  },
+  "runtime_webapp_dialog_body": {
+    "message": "Das Gateway stellt Hermes Web bereit, sobald es eingeschaltet ist. Führen Sie diese Befehle auf dem Computer aus, auf dem Hermes läuft.",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "Hermes Web ist nicht verfügbar",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "Anleitung zu Hermes Web lesen",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "Hermes Web geöffnet. Melden Sie sich auf dieser Seite mit Ihrem Dashboard-Konto an.",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "Hermes Web geöffnet. Führen Sie auf diesem Computer einmal hermes webapp aus, um sich anzumelden. Der Tab bleibt angemeldet.",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "Hermes Web konnte nicht geöffnet werden",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "Hermes Web öffnen",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "Hermes Web geöffnet",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "Die Hermes-Web-Adresse in den Einstellungen ist keine gültige http- oder https-Adresse.",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "Diese Verbindung ist remote, daher gibt es keine Adresse zum Ausprobieren. Geben Sie die Hermes-Web-Adresse in den Einstellungen ein.",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "Der Browser hat Hermes Browser den Zugriff auf diese Adresse nicht erlaubt:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "Unter dieser Adresse hat niemand geantwortet:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "Bei einer lokalen Verbindung leer lassen, dann wird automatisch http://127.0.0.1:9120 verwendet. Bei einem Remote-Gateway die Adresse eintragen, unter der es Hermes Web bereitstellt.",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "Hermes-Web-Adresse",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_try_again": {
+    "message": "Erneut prüfen",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

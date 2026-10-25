@@ -7747,12 +7747,76 @@
     "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
     "description": "Runtime interface message web.deprecation_banner"
   },
-  "runtime_web_deprecation_body": {
-    "message": "This button no longer opens Hermes Web. A new surface is being worked on.",
-    "description": "Runtime interface message web.deprecation_body"
-  },
   "runtime_web_deprecation_title": {
     "message": "A new surface is being worked on",
     "description": "Runtime interface message web.deprecation_title"
+  },
+  "runtime_webapp_assist_detail": {
+    "message": "เปิดแอป Hermes Web ในแท็บใหม่",
+    "description": "Runtime interface message webapp.assist_detail"
+  },
+  "runtime_webapp_copy_command": {
+    "message": "คัดลอกคำสั่ง",
+    "description": "Runtime interface message webapp.copy_command"
+  },
+  "runtime_webapp_dialog_body": {
+    "message": "เกตเวย์ของคุณให้บริการ Hermes Web เมื่อเปิดใช้งานแล้ว บนคอมพิวเตอร์ที่รัน Hermes ให้รันคำสั่งเหล่านี้",
+    "description": "Runtime interface message webapp.dialog_body"
+  },
+  "runtime_webapp_dialog_title": {
+    "message": "ไม่มี Hermes Web ให้ใช้งาน",
+    "description": "Runtime interface message webapp.dialog_title"
+  },
+  "runtime_webapp_docs_link": {
+    "message": "อ่านคู่มือ Hermes Web",
+    "description": "Runtime interface message webapp.docs_link"
+  },
+  "runtime_webapp_hint_account": {
+    "message": "เปิด Hermes Web แล้ว ลงชื่อเข้าใช้ในหน้านั้นด้วยบัญชีแดชบอร์ดของคุณ",
+    "description": "Runtime interface message webapp.hint_account"
+  },
+  "runtime_webapp_hint_local": {
+    "message": "เปิด Hermes Web แล้ว บนคอมพิวเตอร์เครื่องนี้ ให้รัน hermes webapp หนึ่งครั้งเพื่อลงชื่อเข้าใช้ แท็บจะยังคงลงชื่อเข้าใช้อยู่",
+    "description": "Runtime interface message webapp.hint_local"
+  },
+  "runtime_webapp_open_failed": {
+    "message": "เปิด Hermes Web ไม่ได้",
+    "description": "Runtime interface message webapp.open_failed"
+  },
+  "runtime_webapp_open_title": {
+    "message": "เปิด Hermes Web",
+    "description": "Runtime interface message webapp.open_title"
+  },
+  "runtime_webapp_opened_title": {
+    "message": "เปิด Hermes Web แล้ว",
+    "description": "Runtime interface message webapp.opened_title"
+  },
+  "runtime_webapp_reason_invalid_address": {
+    "message": "ที่อยู่ Hermes Web ในการตั้งค่าไม่ใช่ที่อยู่ http หรือ https ที่ถูกต้อง",
+    "description": "Runtime interface message webapp.reason_invalid_address"
+  },
+  "runtime_webapp_reason_needs_address": {
+    "message": "การเชื่อมต่อนี้เป็นแบบระยะไกล จึงไม่มีที่อยู่ให้ลอง โปรดกรอกที่อยู่ Hermes Web ในการตั้งค่า",
+    "description": "Runtime interface message webapp.reason_needs_address"
+  },
+  "runtime_webapp_reason_permission": {
+    "message": "เบราว์เซอร์ไม่อนุญาตให้ Hermes Browser เข้าถึงที่อยู่นี้:",
+    "description": "Runtime interface message webapp.reason_permission"
+  },
+  "runtime_webapp_reason_unreachable": {
+    "message": "ไม่มีการตอบกลับที่ที่อยู่นี้:",
+    "description": "Runtime interface message webapp.reason_unreachable"
+  },
+  "runtime_webapp_setting_hint": {
+    "message": "หากเชื่อมต่อในเครื่อง ให้เว่างไว้เพื่อใช้ http://127.0.0.1:9120 โดยอัตโนมัติ สำหรับเกตเวย์ระยะไกล ให้กรอกที่อยู่ที่ให้บริการ Hermes Web",
+    "description": "Runtime interface message webapp.setting_hint"
+  },
+  "runtime_webapp_setting_label": {
+    "message": "ที่อยู่ Hermes Web",
+    "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_try_again": {
+    "message": "ตรวจสอบอีกครั้ง",
+    "description": "Runtime interface message webapp.try_again"
   }
 }

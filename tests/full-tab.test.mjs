@@ -162,19 +162,18 @@ test('side panel exposes an explicit full-view handoff', () => {
   assert.match(html, /id="openFullViewButton"[\s\S]*class="web-view-icon"/);
   assert.match(html, /id="newSessionButton"[\s\S]*id="openFullViewButton"[\s\S]*id="settingsButton"/);
   assert.doesNotMatch(html, /connectionPill|topbar-status/, 'the top bar carries no connection light; Settings owns connection state');
-  assert.match(html, /id="webDeprecationDialog"/);
-  assert.match(html, /web\.deprecation_title/);
-  assert.match(js, /showWebDeprecationNotice/);
-  assert.doesNotMatch(js, /openFullViewButton\?\.addEventListener\('click', \(\) => \{\s*openFullView\(/);
-  assert.match(js, /buildFullTabHandoffUrl/);
-  assert.match(js, /openHermesFullView/);
+  // The button opens the Webapp the user's gateway serves (see hermes-webapp-panel.test.mjs), not the
+  // extension's own full tab, and says so in a dialog when it is not running.
+  assert.match(html, /id="webappDialog"/);
+  assert.match(html, /webapp\.open_title/);
+  assert.match(js, /openFullViewButton\?\.addEventListener\('click', \(\) => \{\s*void openHermesWeb\(\);/);
+  assert.doesNotMatch(js, /buildFullTabHandoffUrl|openHermesFullView/);
   assert.match(read('extension/background.js'), /HERMES_OPEN_FULL_VIEW/);
   assert.match(read('extension/background.js'), /browserApi\.tabs\.create/);
   assert.match(css, /\.topbar\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/s, 'topbar must lay out as a single-row flex bar');
   assert.match(css, /\.topbar \.session-menu-button\s*\{\s*flex:\s*1 1 auto;\s*min-width:\s*0;\s*\}/, 'session name must take the remaining topbar space');
   assert.doesNotMatch(css, /topbar-status|connection-pill/, 'the connection light and its styles are gone from the top bar');
   assert.doesNotMatch(css, /\.session-menu-button\s*\{[^}]*max-width:/s);
-  assert.match(js, /newChat:\s*true/);
 });
 
 test('Extension Web icon opens a clean Hermes Web draft instead of restoring a Browser session', () => {

@@ -649,7 +649,8 @@ import {
 } from './lib/connection-controller.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
 import { createGatewayQuirkStore, GATEWAY_QUIRK, isSessionPatchRejection } from './lib/gateway-quirks.mjs';
-import { openHermesFullView } from './lib/fulltab-opener.mjs';
+import { openHermesWebapp } from './lib/hermes-webapp.mjs';
+import { createWebappDialog } from './lib/hermes-webapp-dialog.mjs';
 import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { normalizeMessageTimestamp } from './lib/message-meta.mjs';
 import { setRailCopyEnabled } from './lib/message-actions.mjs';
@@ -666,12 +667,7 @@ import {
   bindRowIdsFromHistory,
 } from './lib/message-rewind.mjs';
 import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
-import {
-  SURFACE_KINDS,
-  buildFullTabHandoffUrl,
-  createSurfaceId,
-  fullTabEntryPathForPage,
-} from './lib/surface-protocol.mjs';
+import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
 import { detectBrowserProduct, probeBrowserCapabilities, browserSpeechCloudFallbackAllowed } from './lib/browser-runtime.mjs';
 import { controllerAdapterContractFor } from './lib/browser-controller-adapter.mjs';
@@ -1094,6 +1090,7 @@ const els = {
   gatewayModeInput: $('#gatewayModeInput'),
   remoteTransportRow: $('#remoteTransportRow'),
   gatewayUrlInput: $('#gatewayUrlInput'),
+  hermesWebAddressInput: $('#hermesWebAddressInput'),
   gatewayUrlField: $('#gatewayUrlField'),
   cloudPreviewHelp: $('#cloudPreviewHelp'),
   gatewayHelp: $('#gatewayHelp'),
@@ -3752,43 +3749,53 @@ function restoreComposerDraft() {
   }
 }
 
-function fullViewHandoffUrl() {
-  const sourceSurfaceId = createSurfaceId({
-    kind: SURFACE_KINDS.SIDE_PANEL,
-    instanceId: ensureSidepanelInstanceId(),
-  });
-  const url = buildFullTabHandoffUrl({
-    runtimeUrl: (path) => browserApi.runtime.getURL(path),
-    entryPath: fullTabEntryPathForPage(globalThis.location?.href || ''),
-    newChat: true,
-    sourceTabId: sidePanelParams.tabId,
-    sourceSurfaceId,
-  });
-  return url;
+// The Hermes Web button. Hermes Web is the Webapp the user's own gateway serves, so this
+// finds it (a tab that already shows it, else a new one), and when nothing answers it shows
+// how to turn it on. See lib/hermes-webapp.mjs for what it checks and what it never sends.
+let webappDialog = null;
+let webappOpening = false;
+
+function webappDialogController() {
+  if (!webappDialog) {
+    webappDialog = createWebappDialog({
+      translate: (key, params) => t(key, params),
+      onRetry: () => { void openHermesWeb(); },
+      onClose: () => els.openFullViewButton?.focus(),
+    });
+  }
+  return webappDialog;
 }
 
-async function openFullView() {
-  const url = fullViewHandoffUrl();
-  return openHermesFullView({
-    url,
-    tabsApi: browserApi.tabs,
-    runtimeApi: browserApi.runtime,
-    windowOpen: globalThis.open?.bind(globalThis),
-  });
-}
-
-function showWebDeprecationNotice() {
-  const dialog = document.getElementById('webDeprecationDialog');
-  if (!dialog) return;
-  dialog.hidden = false;
-  document.getElementById('webDeprecationClose')?.focus();
-}
-
-function hideWebDeprecationNotice() {
-  const dialog = document.getElementById('webDeprecationDialog');
-  if (!dialog || dialog.hidden) return;
-  dialog.hidden = true;
-  els.openFullViewButton?.focus();
+async function openHermesWeb() {
+  if (webappOpening) return;
+  webappOpening = true;
+  try {
+    // The permission request inside has to start while the click's user gesture is live, so
+    // nothing awaits before it.
+    const result = await openHermesWebapp({
+      settings,
+      tabsApi: browserApi.tabs,
+      windowsApi: browserApi.windows,
+      permissionsApi: browserApi.permissions,
+      storageArea: browserApi.storage?.local,
+    });
+    if (result.status === 'opened' && result.hint) {
+      showOperationToast({
+        title: t('webapp.opened_title'),
+        detail: t(result.hint === 'local' ? 'webapp.hint_local' : 'webapp.hint_account'),
+        duration: 10000,
+      });
+    } else if (result.status === 'open-failed') {
+      showOperationToast({ kind: 'warn', title: t('webapp.open_failed'), detail: result.reason || '' });
+    } else if (!['opened', 'focused'].includes(result.status)) {
+      webappDialogController()?.show({ reason: result.status, address: result.address });
+    }
+  } catch (error) {
+    console.warn('[Hermes Browser] Could not open Hermes Web:', error);
+    showOperationToast({ kind: 'warn', title: t('webapp.open_failed'), detail: error?.message || String(error) });
+  } finally {
+    webappOpening = false;
+  }
 }
 
 function contextScopeSessionKey() {
@@ -20703,6 +20710,7 @@ function syncSettingsForm() {
   if (els.connectionModeInput) els.connectionModeInput.value = normalizeConnectionMode(settings.connectionMode);
   if (els.gatewayModeInput) els.gatewayModeInput.value = settings.gatewayMode || DEFAULT_SETTINGS.gatewayMode;
   els.gatewayUrlInput.value = settings.gatewayUrl;
+  if (els.hermesWebAddressInput) els.hermesWebAddressInput.value = settings.hermesWebAddress || '';
   renderConnectionModeCards();
   renderConnectionModePanel();
   els.apiKeyInput.value = settings.apiKey || '';
@@ -20800,6 +20808,7 @@ async function saveSettingsFromForm() {
     connectionTransport,
     gatewayMode,
     gatewayUrl,
+    hermesWebAddress: els.hermesWebAddressInput ? els.hermesWebAddressInput.value.trim() : String(settings.hermesWebAddress || ''),
     trustedDashboardOrigin: connectionMode === 'local'
       ? settings.trustedDashboardOrigin
       : (isTrustedDashboardOrigin(gatewayUrl, settings.trustedDashboardOrigin)
@@ -25516,14 +25525,7 @@ function bindEvents() {
     renderSubagentStack();
   });
   els.openFullViewButton?.addEventListener('click', () => {
-    showWebDeprecationNotice();
-  });
-  document.getElementById('webDeprecationClose')?.addEventListener('click', hideWebDeprecationNotice);
-  document.getElementById('webDeprecationDialog')?.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      hideWebDeprecationNotice();
-    }
+    void openHermesWeb();
   });
   els.manualSettingsButton.addEventListener('click', openSettingsDialog);
   [els.modelMenu, els.sessionMenu, els.botModePanel, els.contextPopover, els.attachMenu, els.skillMenu].filter(Boolean).forEach((panel) => {
