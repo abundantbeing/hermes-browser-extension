@@ -69,11 +69,21 @@ const BATCH_FATAL_CODES = new Set([
 // is reported as a generic command_error.
 const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden', 'restricted_frame', 'not_active_tab', 'restricted_page', 'page_changed']);
 
+// What the model is told when a request is refused outright, so it can explain it or ask the person to take over.
+// A reason with no entry here is reported as its own name.
+const BLOCKED_MESSAGES = Object.freeze({
+  'sensitive-credential-field': 'Hermes does not type into password or credential fields. Ask the person to enter it themselves.',
+  'sensitive-payment-field': 'Hermes does not type into payment or card fields. Ask the person to enter it themselves.',
+  'sensitive-mfa-field': 'Hermes does not type into one-time-code or verification fields. Ask the person to enter it themselves.',
+  'sensitive-field': 'Hermes does not type into sensitive fields. Ask the person to enter it themselves.',
+});
+
 const APPROVAL_MESSAGES = Object.freeze({
   'cross-origin-unsaved-content': 'Leave this page while unsaved content may be present?',
   'submission-key': 'Press Enter to submit the current form or message?',
   'activation-key': 'Press Space? It may activate whatever has focus on the page.',
   'framed-focus': 'Press this key inside an embedded frame on the page?',
+  'unknown-focus': 'Press this key? Hermes could not tell what has focus on the page.',
   'clipboard-paste': 'Paste your clipboard into this page?',
   'consequential-action': 'Run this consequential browser action?',
   'coordinate-click': 'Click these exact viewport coordinates?',
@@ -761,7 +771,10 @@ export function createBrowserControlExecutor({
         allowLocalDocuments: Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments),
       });
       if (policy.risk === BROWSER_CONTROL_RISKS.BLOCKED) {
-        return errorOutcome('sensitive_action_blocked', policy.reason || 'This action is blocked.');
+        return errorOutcome(
+          'sensitive_action_blocked',
+          policy.message || BLOCKED_MESSAGES[policy.reason] || policy.reason || 'This action is blocked.',
+        );
       }
       if (policy.risk === BROWSER_CONTROL_RISKS.APPROVAL) {
         const approval = {

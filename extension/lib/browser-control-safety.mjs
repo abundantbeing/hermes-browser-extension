@@ -1,5 +1,5 @@
 import { isRestrictedUrl } from './browser-context-protocol.mjs';
-import { isNavigationKey, isPasteShortcut, isSpaceActivation, isSubmissionKey, resolveKeyPress } from './browser-control-keys.mjs';
+import { isCopyShortcut, isEditingKey, isNavigationKey, isPasteShortcut, isSpaceActivation, isSubmissionKey, resolveKeyPress } from './browser-control-keys.mjs';
 
 export const BROWSER_CONTROL_RISKS = Object.freeze({
   SAFE: 'safe',
@@ -34,6 +34,19 @@ function spaceActivatesFocus(focused = {}) {
   const role = compact(focused?.role).toLowerCase();
   if (SPACE_ACTIVATING_INPUT_TYPES.has(compact(focused?.inputType).toLowerCase())) return true;
   return !SPACE_INERT_ROLES.has(role);
+}
+
+// Autocomplete tokens that name a card, a one-time code or a password; the field's label need not say so.
+const SENSITIVE_AUTOCOMPLETE_RE = /\b(?:cc-[a-z-]+|one-time-code|current-password|new-password)\b/i;
+
+// Why a key must not be typed into the focused field, or '' when it may: the same fields browser_type refuses.
+function focusedFieldRefusal(focused = {}) {
+  if (compact(focused?.inputType).toLowerCase() === 'password') return 'sensitive-credential-field';
+  const descriptor = targetDescriptor(focused);
+  if (PAYMENT_RE.test(descriptor) || /\bcc-[a-z-]+\b/i.test(descriptor)) return 'sensitive-payment-field';
+  if (MFA_RE.test(descriptor) || /\bone-time-code\b/i.test(descriptor)) return 'sensitive-mfa-field';
+  if (CREDENTIAL_RE.test(descriptor) || SENSITIVE_AUTOCOMPLETE_RE.test(descriptor)) return 'sensitive-credential-field';
+  return '';
 }
 
 const APPROVAL_LABEL_RE = /\b(?:submit|send|post|publish|delete|remove|revoke|reset|buy|pay|checkout|transfer|subscribe|invite|approve|merge|deploy|download|upload|overwrite)\b/i;
@@ -71,8 +84,8 @@ function targetDescriptor(target = {}) {
   ].map(compact).filter(Boolean).join(' ');
 }
 
-function decision(risk, reason = '') {
-  return Object.freeze({ risk, reason });
+function decision(risk, reason = '', message = '') {
+  return Object.freeze({ risk, reason, ...(message ? { message } : {}) });
 }
 
 export function validateBrowserControlUrl(value = '', { allowLocalFiles = false } = {}) {
@@ -205,8 +218,16 @@ export function classifyBrowserControlAction({
     let resolved;
     try {
       resolved = resolveKeyPress(args);
-    } catch {
-      return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'invalid-key');
+    } catch (error) {
+      // The message names the key that could not be understood, so the model can correct it.
+      return decision(BROWSER_CONTROL_RISKS.BLOCKED, 'invalid-key', compact(error?.message) || 'That key could not be understood.');
+    }
+    const focusKnown = Boolean(focused) && typeof focused === 'object';
+    // What types into or deletes from a sensitive field is refused like browser_type is: a password, card,
+    // one-time-code or credential field takes no key from Hermes, whether it was reached by a click, autofocus or Tab.
+    if (focusKnown && (isEditingKey(resolved) || isPasteShortcut(resolved))) {
+      const refusal = focusedFieldRefusal(focused);
+      if (refusal) return decision(BROWSER_CONTROL_RISKS.BLOCKED, refusal);
     }
     if (isSubmissionKey(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'submission-key');
     if (isPasteShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'clipboard-paste');
@@ -215,13 +236,18 @@ export function classifyBrowserControlAction({
     if (focused?.inFrame === true && !isNavigationKey(resolved)) {
       return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'framed-focus');
     }
+    // When the page could not say what has focus, a key that types or deletes (or Space, which may press it)
+    // goes out only with the person's approval: the sensitive-field rules above could not be applied.
+    if (!focusKnown && (isEditingKey(resolved) || isSpaceActivation(resolved))) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, isSpaceActivation(resolved) ? 'activation-key' : 'unknown-focus');
+    }
     // Space presses the focused button or toggles the focused control: judge it as that click.
-    if (isSpaceActivation(resolved)) {
-      if (!focused || typeof focused !== 'object') return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'activation-key');
+    if (isSpaceActivation(resolved) && focusKnown) {
       if (spaceActivatesFocus(focused) && APPROVAL_LABEL_RE.test(targetDescriptor(focused))) {
         return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
       }
     }
+    if (isCopyShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.SAFE, 'clipboard-copy');
     return decision(BROWSER_CONTROL_RISKS.SAFE);
   }
   if (normalizedAction === 'browser_click' && APPROVAL_LABEL_RE.test(descriptor)) {

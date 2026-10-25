@@ -58,9 +58,14 @@ test('Phase 6 classifies ordinary reads and writes without trusting caller-suppl
       `${JSON.stringify(args)} pastes the user's clipboard, so it needs approval`,
     );
   }
-  for (const key of ['Control+a', 'Shift+Tab', 'ArrowDown', 'Escape', 'v', 'Control+c']) {
+  for (const key of ['Control+a', 'Shift+Tab', 'ArrowDown', 'Escape', 'Control+c']) {
     assert.equal(classifyBrowserControlAction({ action: 'browser_press', arguments: { key } }).risk, BROWSER_CONTROL_RISKS.SAFE, key);
   }
+  // A character goes into whatever has focus; when that could not be read, the person is asked.
+  assert.deepEqual(classifyBrowserControlAction({ action: 'browser_press', arguments: { key: 'v' } }), { risk: BROWSER_CONTROL_RISKS.APPROVAL, reason: 'unknown-focus' });
+  assert.equal(classifyBrowserControlAction({
+    action: 'browser_press', arguments: { key: 'v' }, focused: { role: '', name: '', inputType: '' },
+  }).risk, BROWSER_CONTROL_RISKS.SAFE);
 });
 
 test('Phase 6 pauses destructive actions and hard-blocks payment, credential, MFA, and secret handling', async () => {
@@ -384,7 +389,7 @@ test('Space presses whatever has focus, so it is judged as the click it is', asy
 
 test('a key that types or acts, pressed while an embedded frame has focus, asks first', async () => {
   const { BROWSER_CONTROL_RISKS, classifyBrowserControlAction } = await phase6();
-  const inFrame = { role: 'frame', name: 'Payment', inputType: '', inFrame: true };
+  const inFrame = { role: 'frame', name: 'Chat widget', inputType: '', inFrame: true };
   const press = (args, focused = inFrame) => classifyBrowserControlAction({ action: 'browser_press', arguments: args, focused });
 
   for (const args of [{ key: 'a' }, { key: '4' }, { key: 'Backspace' }, { key: 'Delete' }, { key: ' ' }, { key: 'Control+a' }, { key: 'Alt+ArrowLeft' }]) {

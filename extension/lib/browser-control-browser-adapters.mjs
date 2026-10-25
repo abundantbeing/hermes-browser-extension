@@ -608,9 +608,18 @@ function pageProbe(mode, direction = '') {
         || (embeds ? 'frame' : ({ A: 'link', BUTTON: 'button', INPUT: inputRole, SELECT: 'combobox', TEXTAREA: 'textbox', SUMMARY: 'button' }[tag]
           || (active.isContentEditable ? 'textbox' : 'generic')));
       const labelled = [...(active.labels || [])].map((label) => label.innerText).join(' ');
-      const name = String(active.getAttribute('aria-label') || labelled || (tag === 'INPUT' ? active.value : '') || active.innerText || active.title || active.alt || active.placeholder || active.name || '')
+      // A button's label is its value; what is typed into any other field is never read, so it cannot reach a card.
+      const labelFromValue = tag === 'INPUT' && ['button', 'submit', 'reset'].includes(inputType) ? active.value : '';
+      const name = String(active.getAttribute('aria-label') || labelled || labelFromValue || (tag === 'INPUT' || tag === 'TEXTAREA' || active.isContentEditable ? '' : active.innerText) || active.title || active.alt || active.placeholder || active.name || '')
         .replace(/\s+/g, ' ').trim().slice(0, 200);
-      focused = { role, name, inputType: tag === 'INPUT' || tag === 'BUTTON' ? inputType : '', ...(embeds ? { inFrame: true } : {}) };
+      const autocomplete = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ? String(active.autocomplete || '').trim().slice(0, 80) : '';
+      focused = {
+        role,
+        name,
+        inputType: tag === 'INPUT' || tag === 'BUTTON' ? inputType : '',
+        ...(autocomplete ? { autocomplete } : {}),
+        ...(embeds ? { inFrame: true } : {}),
+      };
     }
     return { hasUnsavedContent: dirtyText || dirtyChecks, focused };
   }
@@ -676,6 +685,7 @@ async function inspectPage(browserApi, scope, signal, { light = false } = {}) {
           role: compact(read.role, 80),
           name: compact(read.name, 200),
           inputType: compact(read.inputType, 40),
+          ...(compact(read.autocomplete, 80) ? { autocomplete: compact(read.autocomplete, 80) } : {}),
           ...(read.inFrame === true ? { inFrame: true } : {}),
         };
       }

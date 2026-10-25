@@ -129,7 +129,7 @@ test('inspect reports what has focus: role, name, input type and whether it is a
 });
 
 test('typing while an embedded frame has focus waits for approval, and says why', async () => {
-  const { approvals, executor, presses } = pressFixture({ role: 'frame', name: 'Payment', inputType: '', inFrame: true });
+  const { approvals, executor, presses } = pressFixture({ role: 'frame', name: 'Chat widget', inputType: '', inFrame: true });
   const running = executor.execute(frame({ key: '4' }), { scope: SCOPE });
   await settle();
   const [shown] = approvals.pending();
@@ -138,7 +138,7 @@ test('typing while an embedded frame has focus waits for approval, and says why'
   approvals.cancelRequest(shown.approvalId);
   await running;
 
-  const navigation = pressFixture({ role: 'frame', name: 'Payment', inputType: '', inFrame: true });
+  const navigation = pressFixture({ role: 'frame', name: 'Chat widget', inputType: '', inFrame: true });
   assert.equal((await navigation.executor.execute(frame({ key: 'Tab' }), { scope: SCOPE })).ok, true);
 });
 
