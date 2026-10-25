@@ -714,6 +714,59 @@ async function inspectPage(browserApi, scope, signal, { light = false } = {}) {
   return { currentUrl, hasUnsavedContent, title, ...(focused ? { focused } : {}) };
 }
 
+// How a message names a frame: by its host (never a path, query or anything it shows), as a document that is not a
+// web page, or as one that could not be checked.
+function describeFrame(verdict = {}) {
+  const url = String(verdict.url || '').trim();
+  if (!verdict.known || !url) return { kind: 'unknown', host: '' };
+  try {
+    const parsed = new URL(url);
+    if (/^https?:$/.test(parsed.protocol) && parsed.host) return { kind: 'web', host: parsed.host };
+  } catch {
+    // Not an address at all.
+  }
+  return { kind: 'document', host: '' };
+}
+
+// The message for a screenshot that a frame withholds: the frame by its host, what Hermes can still do, and what
+// the person can do. The host only, never a path, query or content.
+function withheldScreenshotMessage(verdict) {
+  const frame = describeFrame(verdict);
+  const lead = frame.kind === 'web'
+    ? `A frame from ${frame.host} on this page is on a page Hermes cannot read, so the screenshot was withheld.`
+    : (frame.kind === 'document'
+      ? 'A frame on this page that is not an ordinary web page (a browser, data or blob document) is in view, so the screenshot was withheld.'
+      : 'A frame on this page could not be checked, so the screenshot was withheld.');
+  return `${lead} Hermes can still read the page text with browser_snapshot. Scroll the frame out of view, take a screenshot of one element away from it, or ask the person to look at it themselves.`;
+}
+
+// The same for a pointer action that would land inside a frame.
+function pointerFrameMessage(verdict) {
+  const frame = describeFrame(verdict);
+  const where = frame.kind === 'web'
+    ? `a frame from ${frame.host} that is on a page Hermes cannot read`
+    : (frame.kind === 'document'
+      ? 'a frame on this page that is not an ordinary web page'
+      : 'a frame on this page that Hermes could not check');
+  return `Hermes cannot act there: the spot is inside ${where}. Click somewhere else on the page, or ask the person to do it.`;
+}
+
+// Runs in every frame of a Firefox page (scripting.executeScript with allFrames): the frame's own current address,
+// which the page around it cannot read for a cross-origin frame, and, in the page itself, how many of its frames
+// show (a frame under 4 x 4 CSS pixels, one that is not displayed, hidden or transparent does not).
+export function frameProbe() {
+  const isTop = window === window.top;
+  let shown = 0;
+  if (isTop) {
+    for (const element of document.querySelectorAll('iframe,frame')) {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      if (rect.width >= 4 && rect.height >= 4 && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0) shown += 1;
+    }
+  }
+  return { url: location.href, top: isTop, frames: shown };
+}
+
 function createChromiumCdpAdapter({
   browserApi,
   onDebuggerDetach = () => {},
@@ -1237,20 +1290,6 @@ function createChromiumCdpAdapter({
     return bad ? { readable: false, known: true, url: bad.url } : { readable: true, known: true, url: entry.url };
   }
 
-  // How a message names a frame: by its host (never a path, query or anything it shows), as a document that is not a
-  // web page, or as one that could not be checked.
-  function describeFrame(verdict = {}) {
-    const url = String(verdict.url || '').trim();
-    if (!verdict.known || !url) return { kind: 'unknown', host: '' };
-    try {
-      const parsed = new URL(url);
-      if (/^https?:$/.test(parsed.protocol) && parsed.host) return { kind: 'web', host: parsed.host };
-    } catch {
-      // Not an address at all.
-    }
-    return { kind: 'document', host: '' };
-  }
-
   const framePathUrls = (path) => path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`);
 
   // The owner elements of every frame on the page that Hermes may not read (see frameUrlReadable), from the live
@@ -1369,29 +1408,6 @@ function createChromiumCdpAdapter({
       if (abortError(signal)) throw error;
       return false;
     }
-  }
-
-  // The message for a screenshot that a frame withholds: the frame by its host, what Hermes can still do, and what
-  // the person can do. The host only, never a path, query or content.
-  function withheldScreenshotMessage(verdict) {
-    const frame = describeFrame(verdict);
-    const lead = frame.kind === 'web'
-      ? `A frame from ${frame.host} on this page is on a page Hermes cannot read, so the screenshot was withheld.`
-      : (frame.kind === 'document'
-        ? 'A frame on this page that is not an ordinary web page (a browser, data or blob document) is in view, so the screenshot was withheld.'
-        : 'A frame on this page could not be checked, so the screenshot was withheld.');
-    return `${lead} Hermes can still read the page text with browser_snapshot. Scroll the frame out of view, take a screenshot of one element away from it, or ask the person to look at it themselves.`;
-  }
-
-  // The same for a pointer action that would land inside a frame.
-  function pointerFrameMessage(verdict) {
-    const frame = describeFrame(verdict);
-    const where = frame.kind === 'web'
-      ? `a frame from ${frame.host} that is on a page Hermes cannot read`
-      : (frame.kind === 'document'
-        ? 'a frame on this page that is not an ordinary web page'
-        : 'a frame on this page that Hermes could not check');
-    return `Hermes cannot act there: the spot is inside ${where}. Click somewhere else on the page, or ask the person to do it.`;
   }
 
   // Whether the element's box overlaps the region, so its pixels are in the screenshot. An element that is not
@@ -2239,6 +2255,31 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
     return response?.[0]?.result || {};
   }
 
+  // Firefox has no debugger to list frames with, but the scripting API runs a probe in every frame, which answers with
+  // that frame's own address. A frame on a page Hermes will not read withholds the screenshot. So does a page with
+  // more frames showing than answered (one the extension could not run in, so it could not be judged), and so does a
+  // probe that failed: what cannot be checked is not shown. The count is of frames, not of which ones.
+  async function assertFramesReadable(tabId, signal) {
+    const withheld = (verdict) => codedError('restricted_frame', withheldScreenshotMessage(verdict));
+    let results;
+    try {
+      results = await browserApi.scripting.executeScript({ target: { tabId, allFrames: true }, func: frameProbe });
+    } catch (error) {
+      assertNotAborted(signal);
+      throw withheld({ known: false });
+    }
+    assertNotAborted(signal);
+    const entries = (Array.isArray(results) ? results : []).map((entry) => entry?.result).filter((entry) => entry && typeof entry === 'object');
+    const top = entries.find((entry) => entry.top === true);
+    const children = entries.filter((entry) => entry.top !== true);
+    for (const child of children) {
+      const url = String(child.url || '');
+      if (!frameUrlReadable(url)) throw withheld({ known: true, url });
+    }
+    const shown = Number(top?.frames);
+    if (!top || !Number.isFinite(shown) || shown > children.length) throw withheld({ known: false });
+  }
+
   // The leased tab, only when the window is showing it and its page is one Hermes may read.
   async function visibleLeasedTab(tabId, allowLocalDocuments = false) {
     const tab = await browserApi.tabs.get(tabId);
@@ -2251,7 +2292,7 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
   }
 
   async function execute(action, args = {}, {
-    scope = {}, signal, leasedTabIds = [], ownedTabIds = [], currentWindowId = null, allowLocalDocuments = false,
+    scope = {}, signal, target = null, leasedTabIds = [], ownedTabIds = [], currentWindowId = null, allowLocalDocuments = false,
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Firefox adapter.`);
     assertNotAborted(signal);
@@ -2265,16 +2306,26 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
       return { status: 'navigated-back' };
     }
     if (action === 'browser_screenshot') {
+      // captureVisibleTab can only photograph the whole visible tab, so a screenshot of one element cannot be taken.
+      if (args.ref || target) {
+        throw codedError(
+          'unsupported_for_ref',
+          'Firefox can only capture the whole visible tab, so a screenshot of one element is not available. Call browser_screenshot without a ref, or read the element with browser_snapshot.',
+        );
+      }
       // captureVisibleTab photographs the WINDOW's active tab, whichever tab that is. The
       // leased tab must be that tab, on a page Hermes may read, before and after the capture.
       const before = await visibleLeasedTab(tabId, allowLocalDocuments);
       assertNotAborted(signal);
+      await assertFramesReadable(tabId, signal);
       const dataUrl = await browserApi.tabs.captureVisibleTab(before.windowId, { format: 'png' });
       assertNotAborted(signal);
       const after = await visibleLeasedTab(tabId, allowLocalDocuments).catch(() => null);
       if (!after || after.url !== before.url) {
         throw codedError('not_active_tab', 'The tab changed while the screenshot was taken, so it was discarded. Try again.');
       }
+      // A frame can have moved to a page Hermes will not read while the capture ran: the pixels are dropped.
+      await assertFramesReadable(tabId, signal);
       return { ...boundedScreenshot(dataUrl), url: after.url };
     }
     if (action === 'browser_tabs') {

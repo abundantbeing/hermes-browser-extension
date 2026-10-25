@@ -154,7 +154,7 @@ test('the Firefox screenshot reports its address too', async () => {
       query: async () => [{ ...tab }],
       captureVisibleTab: async (windowId, options) => { calls.push([windowId, options]); return 'data:image/png;base64,ZmFrZQ=='; },
     },
-    scripting: { executeScript: async () => [{ result: {} }] },
+    scripting: { executeScript: async () => [{ frameId: 0, result: { url: 'https://example.test/a', top: true, frames: 0 } }] },
   };
   const shot = await createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope: { tabId: 7, frameId: 0 }, signal: openSignal() });
   assert.equal(shot.url, 'https://example.test/a');

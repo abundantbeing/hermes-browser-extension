@@ -182,6 +182,8 @@ function firefoxApis() {
     scripting: {
       executeScript: async (details) => {
         calls.push(['executeScript', details.target]);
+        // The screenshot's frame probe: the page itself, no frames.
+        if (details.target?.allFrames) return [{ frameId: 0, result: { url: 'https://example.test/start', top: true, frames: 0 } }];
         if (Array.isArray(details.args) && details.args.includes('snapshot')) {
           return [{ result: {
             title: 'Example',
@@ -925,7 +927,8 @@ test('Firefox Phase 6 adapter runs only the truthful safe WebExtension subset', 
   assert.equal(screenshot.dataUrl, 'data:image/png;base64,ZmFrZQ==');
   assert.equal(tabs.tabs.length, 2);
   assert.deepEqual(calls.map((call) => call[0]), [
-    'executeScript', 'executeScript', 'tabs.update', 'tabs.goBack', 'captureVisibleTab', 'tabs.update',
+    // The screenshot looks at the page's frames before the capture and again after it.
+    'executeScript', 'executeScript', 'tabs.update', 'tabs.goBack', 'executeScript', 'captureVisibleTab', 'executeScript', 'tabs.update',
   ]);
   await assert.rejects(
     adapter.execute('browser_click', { ref: '@e1' }, { scope, signal: new AbortController().signal }),
