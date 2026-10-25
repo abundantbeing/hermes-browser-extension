@@ -1007,6 +1007,18 @@
     "message": "Chromium ให้สิทธิ์การเข้าถึงดีบักเกอร์แก่ส่วนขยายนี้เมื่อติดตั้งหรืออัปเดต Hermes ใช้ดีบักเกอร์เฉพาะกับแท็บที่คุณเชื่อมต่อเท่านั้น จะไม่นำหน้าต่างเบราว์เซอร์ขึ้นมาข้างหน้า และบล็อกข้อมูลรับรองตัวตน MFA ช่องชำระเงิน และข้อความลับ",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes ไม่ได้ดำเนินการตรงนั้น: จุดนั้นอยู่ในเฟรมบนหน้าที่ Hermes อ่านไม่ได้",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes ไม่ได้จับภาพหน้าจอ: เฟรมบนหน้านี้อยู่ในหน้าที่ Hermes อ่านไม่ได้",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes ไม่ได้จับภาพหน้าจอ: หน้านี้เปลี่ยนไปเป็นหน้าที่ Hermes จะไม่จับภาพ",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "หยุดชั่วคราว",
     "description": "Runtime interface message browser_control.pause"

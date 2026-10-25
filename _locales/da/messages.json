@@ -1007,6 +1007,18 @@
     "message": "Chromium giver denne udvidelse debugger-adgang, når den installeres eller opdateres. Hermes bruger kun debuggeren på faner, du tilknytter, bringer aldrig et browservindue frem og blokerer legitimationsoplysninger, MFA, betalingsfelter og hemmelig tekst.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes handlede ikke dér: stedet ligger i en frame på en side, som Hermes ikke kan læse.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes tog ikke skærmbilledet: en frame på denne side ligger på en side, som Hermes ikke kan læse.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes tog ikke skærmbilledet: siden skiftede til en side, som Hermes ikke fanger.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Pause",
     "description": "Runtime interface message browser_control.pause"

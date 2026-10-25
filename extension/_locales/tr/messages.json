@@ -1007,6 +1007,18 @@
     "message": "Chromium, bu eklentiye yüklendiğinde veya güncellendiğinde hata ayıklayıcı erişimi verir. Hermes hata ayıklayıcıyı yalnızca bağladığınız sekmelerde kullanır, bir tarayıcı penceresini asla öne getirmez ve kimlik bilgilerini, MFA kodlarını, ödeme alanlarını ve gizli metinleri engeller.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes orada işlem yapmadı: o nokta, Hermes'in okuyamadığı bir sayfadaki bir çerçevenin içinde.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes ekran görüntüsünü almadı: bu sayfadaki bir çerçeve, Hermes'in okuyamadığı bir sayfada.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes ekran görüntüsünü almadı: sayfa, Hermes'in yakalamadığı bir sayfaya geçti.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Duraklat",
     "description": "Runtime interface message browser_control.pause"

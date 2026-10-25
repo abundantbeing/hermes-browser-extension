@@ -1007,6 +1007,18 @@
     "message": "Chromium concede a questa estensione l’accesso al debugger quando viene installata o aggiornata. Hermes usa il debugger solo sulle schede che colleghi, non porta mai in primo piano una finestra del browser e blocca credenziali, MFA, campi di pagamento e testo segreto.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes non è intervenuto lì: il punto è dentro un frame di una pagina che non può leggere.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes non ha fatto lo screenshot: un frame di questa pagina si trova su una pagina che non può leggere.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes non ha fatto lo screenshot: la pagina è passata a una che non cattura.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Pausa",
     "description": "Runtime interface message browser_control.pause"

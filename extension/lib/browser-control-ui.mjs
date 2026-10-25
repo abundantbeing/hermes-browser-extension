@@ -98,6 +98,14 @@ export function currentTabLeaseReplacement({ status = {}, activeTab = null, allo
   };
 }
 
+// What the status line says after Hermes refused something for the person's safety, so a result the model alone
+// saw is not a silent failure. Plain sentences with no page details; each is a catalogue message and translates.
+export const CONTROL_NOTES = Object.freeze({
+  screenshot_frame: 'Hermes did not take the screenshot: a frame on this page is on a page it cannot read.',
+  action_frame: 'Hermes did not act there: the spot is inside a frame on a page it cannot read.',
+  screenshot_page: 'Hermes did not take the screenshot: the page moved to one it will not capture.',
+});
+
 function baseView(overrides = {}) {
   return {
     state: 'off',
@@ -264,11 +272,12 @@ export function browserControlView({ settings = {}, status = {}, activeTab = nul
       canDetach: true,
     });
   }
+  const note = Object.hasOwn(CONTROL_NOTES, status?.lastNote?.code) ? CONTROL_NOTES[status.lastNote.code] : '';
   return baseView({
     state: 'ready',
-    tone: 'ok',
+    tone: note ? 'warn' : 'ok',
     title: 'This tab is ready',
-    detail: 'This exact tab is attached. Hermes can operate it on the first controlled turn.',
+    detail: note || 'This exact tab is attached. Hermes can operate it on the first controlled turn.',
     canEnable: false,
     canPause: true,
     canStop: Number(status.pendingCommands) > 0,

@@ -1007,6 +1007,18 @@
     "message": "Chromium cấp cho tiện ích này quyền truy cập trình gỡ lỗi khi được cài đặt hoặc cập nhật. Hermes chỉ dùng trình gỡ lỗi trên các thẻ bạn kết nối, không bao giờ đưa cửa sổ trình duyệt lên trước và chặn thông tin đăng nhập, MFA, trường thanh toán và văn bản bí mật.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes không thao tác ở đó: vị trí đó nằm trong một khung trên trang mà Hermes không thể đọc.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes không chụp ảnh màn hình: một khung trên trang này nằm trên trang mà Hermes không thể đọc.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes không chụp ảnh màn hình: trang đã chuyển sang một trang mà Hermes không chụp.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Tạm dừng",
     "description": "Runtime interface message browser_control.pause"

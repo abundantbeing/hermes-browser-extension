@@ -1007,6 +1007,18 @@
     "message": "Chromium grants this extension debugger access when it is installed or updated. Hermes uses the debugger only on tabs you attach, never brings a browser window to the front, and blocks credentials, MFA, payment fields, and secret text.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes did not act there: the spot is inside a frame on a page it cannot read.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes did not take the screenshot: a frame on this page is on a page it cannot read.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes did not take the screenshot: the page moved to one it will not capture.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Pause",
     "description": "Runtime interface message browser_control.pause"

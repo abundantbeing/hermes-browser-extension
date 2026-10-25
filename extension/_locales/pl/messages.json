@@ -1007,6 +1007,18 @@
     "message": "Chromium przyznaje temu rozszerzeniu dostęp do debuggera podczas instalacji lub aktualizacji. Hermes używa debuggera tylko na kartach, które podłączysz, nigdy nie przenosi okna przeglądarki na pierwszy plan i blokuje dane logowania, kody MFA, pola płatności oraz tekst poufny.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes nie wykonał tam działania: to miejsce leży w ramce na stronie, której Hermes nie może odczytać.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes nie zrobił zrzutu ekranu: ramka na tej stronie znajduje się na stronie, której Hermes nie może odczytać.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes nie zrobił zrzutu ekranu: strona przeszła na stronę, której Hermes nie przechwytuje.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Wstrzymaj",
     "description": "Runtime interface message browser_control.pause"

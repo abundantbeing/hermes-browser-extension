@@ -1007,6 +1007,18 @@
     "message": "Chromium 會在安裝或更新此擴充功能時授予其偵錯工具存取權限。Hermes 只會在你連接的分頁上使用偵錯工具，從不把瀏覽器視窗移到前景，並會封鎖憑證、MFA、付款欄位和機密文字。",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes 沒有在那裡操作：該位置在 Hermes 無法讀取的頁面的框架內。",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes 沒有擷取螢幕畫面：此頁面中的一個框架位於 Hermes 無法讀取的頁面上。",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes 沒有擷取螢幕畫面：頁面已跳轉到 Hermes 不會擷取的頁面。",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "暫停",
     "description": "Runtime interface message browser_control.pause"

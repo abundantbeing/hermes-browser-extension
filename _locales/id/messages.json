@@ -1007,6 +1007,18 @@
     "message": "Chromium memberi ekstensi ini akses debugger saat dipasang atau diperbarui. Hermes hanya menggunakan debugger pada tab yang Anda hubungkan, tidak pernah memunculkan jendela browser, dan memblokir kredensial, MFA, kolom pembayaran, dan teks rahasia.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes tidak bertindak di sana: titik itu berada di dalam bingkai pada halaman yang tidak dapat dibaca Hermes.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes tidak mengambil tangkapan layar: sebuah bingkai di halaman ini berada di halaman yang tidak dapat dibaca Hermes.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes tidak mengambil tangkapan layar: halaman berpindah ke halaman yang tidak ditangkap Hermes.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Jeda",
     "description": "Runtime interface message browser_control.pause"

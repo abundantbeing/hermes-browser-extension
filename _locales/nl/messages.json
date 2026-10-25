@@ -1007,6 +1007,18 @@
     "message": "Chromium geeft deze extensie debuggertoegang wanneer deze wordt geïnstalleerd of bijgewerkt. Hermes gebruikt de debugger alleen op tabbladen die je koppelt, haalt nooit een browservenster naar voren en blokkeert inloggegevens, MFA, betaalvelden en geheime tekst.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes heeft daar niets gedaan: die plek ligt in een frame op een pagina die Hermes niet kan lezen.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes heeft geen schermafbeelding gemaakt: een frame op deze pagina staat op een pagina die Hermes niet kan lezen.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes heeft geen schermafbeelding gemaakt: de pagina is overgegaan naar een pagina die Hermes niet vastlegt.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Pauzeren",
     "description": "Runtime interface message browser_control.pause"

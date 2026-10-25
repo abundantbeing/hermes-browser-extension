@@ -1007,6 +1007,18 @@
     "message": "Chromium accorde à cette extension l’accès au débogueur lors de l’installation ou de la mise à jour. Hermes n’utilise le débogueur que sur les onglets que vous associez, ne fait jamais passer une fenêtre du navigateur au premier plan et bloque les identifiants, l’MFA, les champs de paiement et les textes secrets.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes n'a pas agi à cet endroit : le point se trouve dans un cadre d'une page qu'il ne peut pas lire.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes n'a pas pris la capture d'écran : un cadre de cette page se trouve sur une page qu'il ne peut pas lire.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes n'a pas pris la capture d'écran : la page est passée à une page qu'il ne capture pas.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Pause",
     "description": "Runtime interface message browser_control.pause"

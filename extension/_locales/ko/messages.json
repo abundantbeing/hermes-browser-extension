@@ -1007,6 +1007,18 @@
     "message": "Chromium은 이 확장 프로그램을 설치하거나 업데이트할 때 디버거 액세스 권한을 부여합니다. Hermes는 연결한 탭에서만 디버거를 사용하며, 브라우저 창을 앞으로 가져오지 않고, 자격 증명, MFA, 결제 필드, 비밀 텍스트를 차단합니다.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes가 그곳에서 동작하지 않았습니다: 그 위치는 Hermes가 읽을 수 없는 페이지의 프레임 안에 있습니다.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes가 스크린샷을 찍지 않았습니다: 이 페이지의 프레임이 Hermes가 읽을 수 없는 페이지에 있습니다.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes가 스크린샷을 찍지 않았습니다: 페이지가 Hermes가 캡처하지 않는 페이지로 이동했습니다.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "일시 중지",
     "description": "Runtime interface message browser_control.pause"

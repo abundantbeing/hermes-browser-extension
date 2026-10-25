@@ -1007,6 +1007,18 @@
     "message": "Chromium は、この拡張機能のインストールまたは更新時にデバッガーへのアクセスを許可します。Hermes は、接続したタブでのみデバッガーを使用し、ブラウザーウィンドウを前面に出すことはなく、認証情報、MFA、支払い欄、機密テキストをブロックします。",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes はそこで操作しませんでした: その位置は、Hermes が読み取れないページ上のフレーム内です。",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes はスクリーンショットを撮りませんでした: このページ内のフレームが、Hermes が読み取れないページ上にあります。",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes はスクリーンショットを撮りませんでした: ページが、Hermes が撮影しないページに移動しました。",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "一時停止",
     "description": "Runtime interface message browser_control.pause"

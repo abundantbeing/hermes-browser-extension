@@ -1007,6 +1007,18 @@
     "message": "Chromium concede a esta extensión acceso al depurador al instalarla o actualizarla. Hermes usa el depurador solo en las pestañas que vinculas, nunca trae una ventana del navegador al frente y bloquea credenciales, MFA, campos de pago y texto secreto.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes no actuó ahí: ese punto está dentro de un marco de una página que no puede leer.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes no tomó la captura: un marco de esta página está en una página que no puede leer.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes no tomó la captura: la página cambió a una que no captura.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Pausar",
     "description": "Runtime interface message browser_control.pause"

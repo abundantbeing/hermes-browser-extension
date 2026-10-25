@@ -1007,6 +1007,18 @@
     "message": "يمنح Chromium هذه الإضافة وصول المصحح عند تثبيتها أو تحديثها. يستخدم Hermes المصحح فقط على التبويبات التي ترفقها، ولا يُحضر نافذة المتصفح إلى الواجهة أبدًا، ويحظر بيانات الاعتماد ورموز MFA وحقول الدفع والنصوص السرية.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "لم ينفّذ Hermes إجراءً هناك: الموضع داخل إطار في صفحة لا يستطيع Hermes قراءتها.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "لم يلتقط Hermes لقطة الشاشة: إطار في هذه الصفحة موجود على صفحة لا يستطيع Hermes قراءتها.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "لم يلتقط Hermes لقطة الشاشة: انتقلت الصفحة إلى صفحة لا يلتقطها Hermes.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "إيقاف مؤقت",
     "description": "Runtime interface message browser_control.pause"

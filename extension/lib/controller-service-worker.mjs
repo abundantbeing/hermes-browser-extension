@@ -239,6 +239,9 @@ function terminalError(code, message) {
   return { ok: false, error: { code, message } };
 }
 
+// How long a refusal stays in the Hermes Control window's status line when nothing else happens.
+const NOTE_TTL_MS = 120_000;
+
 export function createControllerServiceWorker({
   storageArea,
   connector,
@@ -271,6 +274,10 @@ export function createControllerServiceWorker({
   // The tab of the most recent action Hermes ran. Show tab points at it between
   // actions, so the button does not flicker with each action.
   let lastActionTabId = 0;
+  // The last refusal worth telling the person about (a frame withheld a screenshot, a pointer action would land in
+  // a frame Hermes cannot read): a code, never page details. The model gets the full message with its result; this
+  // is for the Hermes Control window. It ends when the next command starts or after a couple of minutes.
+  let lastNote = null;
   let terminalOutbox = [];
   let recoveredPending = [];
   let registry = createControllerRegistry({ now });
@@ -285,6 +292,16 @@ export function createControllerServiceWorker({
   // tab) stops the read at once, rather than letting it attach again to finish.
   const turnReads = new Map();
   const browserExecutor = typeof executeBrowserCommand === 'function' ? executeBrowserCommand : null;
+
+  function personNoteCode(action, outcome) {
+    const code = outcome?.error?.code;
+    if (action === 'browser_screenshot') {
+      if (code === 'restricted_frame') return 'screenshot_frame';
+      if (code === 'restricted_page' || code === 'page_changed') return 'screenshot_page';
+      return '';
+    }
+    return code === 'restricted_frame' ? 'action_frame' : '';
+  }
 
   function executorContext(base = {}, { lease, tabId, frameId, authoritative }) {
     const ownedLeases = ownedControllerLeases();
@@ -373,9 +390,14 @@ export function createControllerServiceWorker({
       startedAt: Number(now()),
     };
     lastActionTabId = tabId;
+    lastNote = null;
     try {
       const result = await browserExecutor(frame, executorContext(context, { lease, tabId, frameId, authoritative }));
-      if (!result?.ok) return result;
+      if (!result?.ok) {
+        const noteCode = personNoteCode(action, result);
+        if (noteCode) lastNote = { code: noteCode, tabId, at: Number(now()) };
+        return result;
+      }
 
       if (action === 'browser_tab_create') {
         const createdTab = result?.result?.tab || {};
@@ -499,6 +521,7 @@ export function createControllerServiceWorker({
       pendingApproval: approvals.pending?.()[0] || null,
       activeAction: activeAction ? { ...activeAction } : null,
       lastActionTabId: lastActionTabId > 0 ? lastActionTabId : null,
+      ...(lastNote && Number(now()) - lastNote.at < NOTE_TTL_MS ? { lastNote: { code: lastNote.code, tabId: lastNote.tabId } } : {}),
       settingsRevision,
       lastConnectFailure: lastConnectFailure ? { ...lastConnectFailure } : null,
     };

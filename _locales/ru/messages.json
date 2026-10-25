@@ -1007,6 +1007,18 @@
     "message": "Chromium предоставляет этому расширению доступ к отладчику при установке или обновлении. Hermes использует отладчик только на вкладках, которые вы подключили, никогда не выводит окно браузера на передний план и блокирует учётные данные, MFA, поля оплаты и секретный текст.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes не выполнил действие там: эта точка находится внутри фрейма на странице, которую Hermes не может читать.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes не сделал снимок экрана: фрейм на этой странице находится на странице, которую Hermes не может читать.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes не сделал снимок экрана: страница перешла на страницу, которую Hermes не снимает.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Пауза",
     "description": "Runtime interface message browser_control.pause"

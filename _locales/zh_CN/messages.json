@@ -1007,6 +1007,18 @@
     "message": "Chromium 会在安装或更新此扩展时授予其调试器访问权限。Hermes 只会在你连接的标签页上使用调试器，从不把浏览器窗口置于前台，并会阻止凭据、MFA、支付字段和机密文本。",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes 没有在那里操作：该位置在 Hermes 无法读取的页面的框架内。",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes 没有截图：此页面中的一个框架位于 Hermes 无法读取的页面上。",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes 没有截图：页面已跳转到 Hermes 不会截取的页面。",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "暂停",
     "description": "Runtime interface message browser_control.pause"

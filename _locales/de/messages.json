@@ -1007,6 +1007,18 @@
     "message": "Chromium gewährt dieser Erweiterung beim Installieren oder Aktualisieren Debugger-Zugriff. Hermes nutzt den Debugger nur für Tabs, die du verbindest, holt nie ein Browserfenster in den Vordergrund und blockiert Anmeldedaten, MFA, Zahlungsfelder und geheime Texte.",
     "description": "Runtime interface message browser_control.note"
   },
+  "runtime_browser_control_note_action_frame": {
+    "message": "Hermes hat dort nichts ausgeführt: Die Stelle liegt in einem Frame auf einer Seite, die Hermes nicht lesen kann.",
+    "description": "Runtime interface message browser_control.note_action_frame"
+  },
+  "runtime_browser_control_note_screenshot_frame": {
+    "message": "Hermes hat den Screenshot nicht aufgenommen: Ein Frame auf dieser Seite liegt auf einer Seite, die Hermes nicht lesen kann.",
+    "description": "Runtime interface message browser_control.note_screenshot_frame"
+  },
+  "runtime_browser_control_note_screenshot_page": {
+    "message": "Hermes hat den Screenshot nicht aufgenommen: Die Seite ist zu einer gewechselt, die Hermes nicht erfasst.",
+    "description": "Runtime interface message browser_control.note_screenshot_page"
+  },
   "runtime_browser_control_pause": {
     "message": "Pausieren",
     "description": "Runtime interface message browser_control.pause"
