@@ -110,7 +110,7 @@ test('ready: the route answers, the version and tools match, and the toolset is 
   assert.equal(result.toolsetEnabled, true);
   assert.equal(result.via, 'route');
   assert.equal(result.checkedAt, NOW);
-  assert.match(result.reason, /Loaded: version 0\.3\.4, profile luxord, 7 tools\./);
+  assert.match(result.reason, /Loaded: version 0.4.0, profile luxord, 7 tools\./);
   // Read-only and credentialed exactly once per request, never with cookies.
   assert.deepEqual(calls.map((call) => call.url), [`${BASE}${COMPANION_STATUS_PATH}`, `${BASE}${COMPANION_TOOLSETS_PATH}`]);
   for (const { init } of calls) {
@@ -137,7 +137,7 @@ test('outdated: an older version, or tools the extension expects are missing', a
   const old = (await probe({ [COMPANION_STATUS_PATH]: { status: 200, body: statusBody({ version: '0.3.0' }) } })).result;
   assert.equal(old.state, 'outdated');
   assert.equal(old.reasonCode, 'companion-version-old');
-  assert.match(old.reason, /version 0\.3\.0 and this extension expects 0\.3\.4/);
+  assert.match(old.reason, /version 0\.3\.0 and this extension expects 0.4.0/);
   const missing = (await probe({ [COMPANION_STATUS_PATH]: { status: 200, body: statusBody({ tools: ALL_TOOLS.filter((name) => name !== 'browser_context_journal') }) } })).result;
   assert.equal(missing.state, 'outdated');
   assert.equal(missing.reasonCode, 'companion-tools-missing');
@@ -277,7 +277,7 @@ test('a probe replaces "not advertised" in the companion row with its state, sou
   assert.equal(withProbe.source, 'probe');
   assert.equal(withProbe.reasonCode, 'companion-ready');
   assert.equal(withProbe.identityKey, identity.key);
-  assert.match(withProbe.reason, /version 0\.3\.4/);
+  assert.match(withProbe.reason, /version 0.4.0/);
 
   const rows = capabilityStatusRows(caps, { identityKey: identity.key, checkedAt: NOW, now: NOW + 5_000, companionPlugin });
   const row = rows.find((item) => item.key === 'browserCompanionPlugin');
@@ -285,7 +285,7 @@ test('a probe replaces "not advertised" in the companion row with its state, sou
   assert.equal(row.state, 'available');
   assert.equal(row.source, 'probe');
   assert.equal(row.ageMs, 5_000);
-  assert.match(row.detail, /Loaded: version 0\.3\.4, profile luxord/);
+  assert.match(row.detail, /Loaded: version 0.4.0, profile luxord/);
   // Every other row is unchanged by the probe.
   const others = (list) => list.filter((item) => item.key !== 'browserCompanionPlugin');
   assert.deepEqual(others(rows), others(capabilityStatusRows(caps, { identityKey: identity.key, checkedAt: NOW, now: NOW + 5_000 })));

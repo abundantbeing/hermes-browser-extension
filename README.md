@@ -9,7 +9,7 @@ Browser-native side panel for [Hermes Agent](https://hermes-agent.nousresearch.c
 </p>
 
 <p align="center">
-  <strong>Public v0.3.4 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
+  <strong>Public v0.4.0 · Load unpacked · Local / Hermes Cloud / Remote · Full Hermes runtime tools</strong><br />
   </p>
 
 <p align="center">
@@ -199,14 +199,14 @@ Make sure you loaded `dist/`, not the repo root. The selected folder must contai
 
 ### Chrome still shows an older version after updating
 
-The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.3.4, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.3.4`.
+The browser is still using an old unpacked folder or an unpacked extension card that was not reloaded. For v0.4.0, the source manifest, built `dist/` manifest, and release archive should all contain `manifest.json` version `0.3.4`.
 
 Fix:
 
-1. Extract/download the v0.3.4 release or run `npm run build` locally.
+1. Extract/download the v0.4.0 release or run `npm run build` locally.
 2. Open `chrome://extensions` or `edge://extensions`.
 3. On the Hermes Browser Extension card, click **Reload**.
-4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.3.4 `dist/` folder.
+4. If it still shows an older version, click **Remove**, then **Load unpacked** again and select the fresh v0.4.0 `dist/` folder.
 5. Click **service worker** / **Inspect views** only for debugging; it is not the version source.
 
 ### Skills or profiles do not load

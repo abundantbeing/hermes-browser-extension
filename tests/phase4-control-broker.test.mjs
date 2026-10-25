@@ -362,7 +362,7 @@ test('a failed terminal send never permits the same command id to execute twice'
 
 test('Phase 4 controller modules remain in the v0.3.0 syntax gates', () => {
   const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(packageJson.version, '0.3.4');
+  assert.equal(packageJson.version, '0.4.0');
   for (const file of [
     'extension/lib/controller-protocol.mjs',
     'extension/lib/controller-client.mjs',

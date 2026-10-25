@@ -108,7 +108,7 @@ the API server (the listener the extension already pairs with, normally
 ```text
 GET /api/plugins/hermes-browser-companion/status
 { "object": "hermes.browser_companion.status", "plugin": "hermes-browser-companion",
-  "version": "0.3.4", "profile": "default", "tools": [...], "hooks": [...],
+  "version": "0.4.0", "profile": "default", "tools": [...], "hooks": [...],
   "routes": ["/api/plugins/hermes-browser-companion/status"], "live": false }
 ```
 

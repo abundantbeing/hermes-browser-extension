@@ -2,7 +2,7 @@
 
 ## Compatibility matrix
 
-| Surface | Supported in v0.3.4 | Fallback / note |
+| Surface | Supported in v0.4.0 | Fallback / note |
 | --- | --- | --- |
 | Chrome / Edge / Chromium 114+ side panel | Yes | Primary public support target. |
 | Brave / Comet / Chromium forks | Best-effort | Must expose the Chromium Side Panel API. |

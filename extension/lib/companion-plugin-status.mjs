@@ -34,7 +34,7 @@ export const COMPANION_STATUS_OBJECT = 'hermes.browser_companion.status';
 
 // The plugin version this extension build expects. companion-plugin/plugin.yaml
 // carries the same value and a test keeps the two equal: bump them together.
-export const COMPANION_EXPECTED_VERSION = '0.3.4';
+export const COMPANION_EXPECTED_VERSION = '0.4.0';
 export const COMPANION_EXPECTED_TOOLS = Object.freeze([
   'browser_clear_context',
   'browser_context_journal',
