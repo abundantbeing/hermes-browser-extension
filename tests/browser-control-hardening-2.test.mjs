@@ -286,3 +286,57 @@ test('a drag that is not stopped still drops on the destination', async () => {
   const released = mouseEvents(chromium.calls).filter((event) => event.type === 'mouseReleased');
   assert.deepEqual(released.map((event) => [event.x, event.y]), [[510, 510]]);
 });
+
+// --- 7. text is inserted only where focus really is ------------------------------------------------------------------
+
+// Runtime.callFunctionOn answers the focus check with `focus`, and anything else the way the other tests do.
+const typeFake = (focus) => fakeChromium({
+  handlers: {
+    'Runtime.callFunctionOn': (params) => (/activeElement/.test(params.functionDeclaration) ? focus(params) : { result: { value: true } }),
+  },
+});
+const typeInto = (chromium, args = { text: 'hello' }) => createChromiumCdpAdapter({ browserApi: chromium.api })
+  .execute('browser_type', args, { scope, signal: openSignal(), target: { backendDOMNodeId: 44 } });
+const inserted = (calls) => calls.filter((call) => call[0] === 'Input.insertText');
+
+test('text is inserted when the field Hermes focused still has focus, after the field was cleared', async () => {
+  const chromium = typeFake(() => ({ result: { value: { held: true, frame: false } } }));
+  await typeInto(chromium);
+  const methods = methodsOf(chromium.calls).filter((method) => ['DOM.focus', 'Runtime.callFunctionOn', 'Input.insertText'].includes(method));
+  // focus, clear, focus check, insert, then the input and change events.
+  assert.deepEqual(methods, ['DOM.focus', 'Runtime.callFunctionOn', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn']);
+  assert.equal(inserted(chromium.calls)[0][1].text, 'hello');
+  const noClear = typeFake(() => ({ result: { value: { held: true, frame: false } } }));
+  await typeInto(noClear, { text: 'more', clear: false });
+  assert.equal(inserted(noClear.calls).length, 1);
+});
+
+test('nothing is typed when focus moved into a frame after the field was focused', async () => {
+  const chromium = typeFake(() => ({ result: { value: { held: false, frame: true } } }));
+  await assert.rejects(typeInto(chromium), (error) => error?.code === 'restricted_frame' && /embedded frame/i.test(error.message) && /nothing was typed/i.test(error.message));
+  assert.equal(inserted(chromium.calls).length, 0);
+});
+
+test('nothing is typed when focus moved to another element, or cannot be read', async () => {
+  const elsewhere = typeFake(() => ({ result: { value: { held: false, frame: false } } }));
+  await assert.rejects(typeInto(elsewhere), (error) => error?.code === 'focus_changed' && /nothing was typed/i.test(error.message));
+  assert.equal(inserted(elsewhere.calls).length, 0);
+  for (const unreadable of [() => ({}), () => ({ result: { value: 'yes' } }), () => ({ result: { value: { frame: false } } })]) {
+    const chromium = typeFake(unreadable);
+    await assert.rejects(typeInto(chromium), (error) => error?.code === 'restricted_frame' && /could not tell/i.test(error.message));
+    assert.equal(inserted(chromium.calls).length, 0);
+  }
+});
+
+test('the executor reports a focus change to the model with its code', async () => {
+  const adapter = {
+    contract: { enabled: true, actions: ['browser_type'] },
+    inspect: async () => ({ currentUrl: 'https://example.com/', hasUnsavedContent: false }),
+    execute: async () => { const error = new Error('Focus moved to a different element than the one Hermes meant to type into, so nothing was typed.'); error.code = 'focus_changed'; throw error; },
+  };
+  const refs = createBrowserControlRefStore();
+  refs.replace({ ...executorScope, nodes: [{ role: 'textbox', name: 'Message', backendDOMNodeId: 44 }] });
+  const executor = createBrowserControlExecutor({ adapter, approvals: createBrowserControlApprovalStore(), refs });
+  const outcome = await executor.execute(frameOf('browser_type', { ref: '@e1', text: 'hi' }), { scope: executorScope });
+  assert.equal(outcome.error.code, 'focus_changed');
+});

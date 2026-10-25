@@ -67,7 +67,7 @@ const BATCH_FATAL_CODES = new Set([
 
 // Adapter errors that carry a model-actionable code keep it; everything else
 // is reported as a generic command_error.
-const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden', 'restricted_frame', 'not_active_tab', 'restricted_page', 'page_changed']);
+const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden', 'restricted_frame', 'not_active_tab', 'restricted_page', 'page_changed', 'focus_changed']);
 
 // What the model is told when a request is refused outright, so it can explain it or ask the person to take over.
 // A reason with no entry here is reported as its own name.

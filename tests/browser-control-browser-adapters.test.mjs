@@ -456,6 +456,12 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
   const target = { backendDOMNodeId: 44 };
 
   await adapter.execute('browser_click', { ref: '@e1' }, { scope, signal, target });
+  // Typing resolves the field and checks that focus is still on it.
+  api.debugger.sendCommand = ((original) => async (callTarget, method, params = {}) => {
+    if (method === 'DOM.resolveNode' && params.backendNodeId === 44) { calls.push(['command', callTarget, method, params]); return { object: { objectId: 'object-44' } }; }
+    if (method === 'Runtime.callFunctionOn') { calls.push(['command', callTarget, method, params]); return { result: { value: { held: true, frame: false } } }; }
+    return original(callTarget, method, params);
+  })(api.debugger.sendCommand);
   await adapter.execute('browser_type', { ref: '@e1', text: 'hello' }, { scope, signal, target });
   await adapter.execute('browser_press', { key: 'Enter' }, { scope, signal });
   await adapter.execute('browser_scroll', { direction: 'down' }, { scope, signal });
@@ -469,7 +475,8 @@ test('Chromium Phase 6 adapter emits trusted click, type, press, scroll, navigat
     // pointer moves, and before it presses.
     'Runtime.evaluate', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent',
     'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent', 'Input.dispatchMouseEvent',
-    'DOM.focus', 'DOM.resolveNode', 'Input.insertText',
+    // Clear the field, check that focus is still on it, insert, then the input and change events.
+    'DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn',
     'Input.dispatchKeyEvent', 'Input.dispatchKeyEvent',
     // The wheel's point is judged like a click's before the wheel goes out.
     'Page.getLayoutMetrics', 'Runtime.evaluate', 'DOM.getNodeForLocation', 'Page.getFrameTree', 'Input.dispatchMouseEvent', 'Runtime.evaluate',
@@ -626,6 +633,7 @@ test('Chromium parity primitives hover drag scroll-to modifiers clipped screensh
     if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'MAIN' } } };
     if (method === 'DOM.getNodeForLocation') return { frameId: 'MAIN' };
     if (method === 'Page.getLayoutMetrics') return { cssVisualViewport: { pageX: 0, pageY: 0, clientWidth: 1000, clientHeight: 800, scale: 1 } };
+    if (method === 'Runtime.callFunctionOn' && /activeElement/.test(params.functionDeclaration)) return { result: { value: { held: true, frame: false } } };
     if (method === 'Page.captureScreenshot') return { data: 'ZmFrZS1wbmc=' };
     return {};
   };
@@ -1170,22 +1178,25 @@ test('Chromium type clears the field by default and appends only when clear is f
   const { createChromiumCdpAdapter } = await adaptersModule();
   const chromium = chromiumApis();
   chromium.handlers['DOM.resolveNode'] = () => ({ object: { objectId: 'object-44' } });
+  chromium.handlers['Runtime.callFunctionOn'] = (params) => (/activeElement/.test(params.functionDeclaration) ? { result: { value: { held: true, frame: false } } } : {});
   const adapter = createChromiumCdpAdapter({ browserApi: chromium.api });
   const context = { scope, signal: openSignal(), target: clickTarget };
 
   assert.deepEqual(await adapter.execute('browser_type', { ref: '@e1', text: 'replacement' }, context), { status: 'typed' });
   assert.deepEqual(commandMethods(chromium.calls).filter((method) => method !== 'DOM.enable'), [
-    'DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn',
+    'DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn',
   ]);
-  const [clear, , events] = chromium.calls.filter((call) => call[2] === 'Runtime.callFunctionOn' || call[2] === 'Input.insertText');
+  // Clear the field, check that focus is still on it, insert, then the input and change events.
+  const [clear, check, , events] = chromium.calls.filter((call) => call[2] === 'Runtime.callFunctionOn' || call[2] === 'Input.insertText');
   assert.match(clear[3].functionDeclaration, /\.select\(\)/);
   assert.match(clear[3].functionDeclaration, /isContentEditable/);
   assert.match(clear[3].functionDeclaration, /selectNodeContents/);
+  assert.match(check[3].functionDeclaration, /activeElement/);
   assert.match(events[3].functionDeclaration, /"input"/);
 
   chromium.calls.length = 0;
   await adapter.execute('browser_type', { ref: '@e1', text: 'more', clear: false }, context);
-  assert.deepEqual(commandMethods(chromium.calls), ['DOM.focus', 'DOM.resolveNode', 'Input.insertText', 'Runtime.callFunctionOn']);
+  assert.deepEqual(commandMethods(chromium.calls), ['DOM.focus', 'DOM.resolveNode', 'Runtime.callFunctionOn', 'Input.insertText', 'Runtime.callFunctionOn']);
   const last = chromium.calls.at(-1);
   assert.match(last[3].functionDeclaration, /"input"/);
   assert.doesNotMatch(JSON.stringify(chromium.calls), /select\(\)/);

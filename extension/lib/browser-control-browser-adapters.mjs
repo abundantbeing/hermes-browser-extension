@@ -83,6 +83,19 @@ const SCROLL_NODE_FUNCTION = `function(deltaX, deltaY) {
   window.scrollBy({ left: deltaX, top: deltaY, behavior: 'auto' });
   return false;
 }`;
+// Runs on the field Hermes focused, right before text is inserted: where does focus really sit? The text goes to
+// whatever has focus, and a page's focus handler can send it into a frame or another field.
+const FOCUS_CHECK_FUNCTION = `function() {
+  let active = this.ownerDocument ? this.ownerDocument.activeElement : null;
+  while (active && active.shadowRoot && active.shadowRoot.activeElement) active = active.shadowRoot.activeElement;
+  if (!active) return { held: false, frame: false };
+  let held = false;
+  for (let node = active; node; node = node.parentNode || node.host || null) {
+    if (node === this) { held = true; break; }
+  }
+  const framed = ['IFRAME', 'FRAME', 'OBJECT', 'EMBED', 'FENCEDFRAME'].includes(String(active.tagName || '').toUpperCase());
+  return { held, frame: !held && framed };
+}`;
 const CONTAINS_NODE_FUNCTION = 'function(node) { return this === node || this.contains(node); }';
 // Input.dispatchMouseEvent modifier bits.
 const CDP_MODIFIER_CTRL = 2;
@@ -1403,6 +1416,24 @@ function createChromiumCdpAdapter({
     return hitId;
   }
 
+  async function assertFocusHeld(send, objectId) {
+    if (!objectId) throw restrictedFrameError('Hermes could not tell where focus is after selecting that field, so nothing was typed.');
+    // A failing read (the page navigated, the context is gone) fails the command: nothing is typed.
+    const focus = (await send('Runtime.callFunctionOn', {
+      objectId,
+      functionDeclaration: FOCUS_CHECK_FUNCTION,
+      returnByValue: true,
+    }))?.result?.value;
+    if (!focus || typeof focus !== 'object' || typeof focus.held !== 'boolean') {
+      throw restrictedFrameError('Hermes could not tell where focus is after selecting that field, so nothing was typed.');
+    }
+    if (focus.held) return;
+    if (focus.frame === true) {
+      throw restrictedFrameError('Focus moved into an embedded frame after Hermes selected that field, so nothing was typed. Click the field and try again, or ask the person.');
+    }
+    throw codedError('focus_changed', 'Focus moved to a different element than the one Hermes meant to type into, so nothing was typed. Click the field and try again.');
+  }
+
   // Whether a click on this node would open a new tab (see clickTargetOpensNewTab).
   // A failed check is "no": the click then goes out exactly as it always did.
   async function clickOpensNewTab(send, signal, backendNodeId) {
@@ -1718,6 +1749,9 @@ function createChromiumCdpAdapter({
             returnByValue: true,
           });
         }
+        // The clear above, or the page's own focus handler, may have moved focus. Text goes where focus is, so it
+        // is typed only when that is still the field, and never into a frame or another field.
+        await assertFocusHeld(send, objectId);
         await send('Input.insertText', { text: String(args.text ?? '') });
         if (objectId) {
           await send('Runtime.callFunctionOn', {
