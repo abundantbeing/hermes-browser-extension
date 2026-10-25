@@ -18,6 +18,8 @@ const HIDDEN_CAPTURE_TIMEOUT_MS = 5_000;
 const SCROLL_SETTLE_MS = 120;
 // A frame smaller than this in either direction shows nothing worth withholding a screenshot for.
 const MIN_VISIBLE_FRAME_PX = 4;
+// A pointer position outside any page, where a stopped drag is let go of (see pressAndRelease).
+const OFF_PAGE_PX = -50;
 const SCROLL_MIN_PX = 100;
 const SCROLL_MAX_PX = 5_000;
 const SCROLL_VIEWPORT_FRACTION = 0.85;
@@ -1817,7 +1819,13 @@ function createChromiumCdpAdapter({
   // down (a drag in progress, a hold-on-mousedown control firing), so the release is sent again, straight to the
   // browser and without the cancellation check, whenever the normal release did not complete. A release for a
   // button that is not down does nothing.
-  async function pressAndRelease(session, position, modifierFields, press, release) {
+  //
+  // `cancelAway` is for a drag. A release with the left button anywhere is a click on whatever is under it, and a
+  // drag that has started drops wherever it is whatever the release says (Chrome, measured: released at the source
+  // it dropped on the destination). What ends a press with neither is moving the pointer far off the page with the
+  // button held, releasing with no button named (no mouseup, so no click; a native drag is cancelled with a dragend),
+  // and then a move that says no button is down, so the page does not think it still is.
+  async function pressAndRelease(session, position, modifierFields, press, release, { cancelAway = false } = {}) {
     let down = false;
     try {
       down = true;
@@ -1826,10 +1834,17 @@ function createChromiumCdpAdapter({
       down = false;
     } finally {
       if (down) {
-        const at = position?.at || position;
-        await rawSend(session.tabId, 'Input.dispatchMouseEvent', {
-          type: 'mouseReleased', x: at.x, y: at.y, button: 'left', buttons: 0, clickCount: 1, ...modifierFields,
-        }).catch(() => {});
+        const mouse = (fields) => rawSend(session.tabId, 'Input.dispatchMouseEvent', { x: OFF_PAGE_PX, y: OFF_PAGE_PX, ...fields }).catch(() => {});
+        if (cancelAway) {
+          await mouse({ type: 'mouseMoved', button: 'left', buttons: 1 });
+          await mouse({ type: 'mouseReleased', button: 'none', buttons: 0, clickCount: 1 });
+          await mouse({ type: 'mouseMoved', button: 'none', buttons: 0 });
+        } else {
+          const at = position?.at || position;
+          await rawSend(session.tabId, 'Input.dispatchMouseEvent', {
+            type: 'mouseReleased', x: at.x, y: at.y, button: 'left', buttons: 0, clickCount: 1, ...modifierFields,
+          }).catch(() => {});
+        }
       }
     }
   }
@@ -1920,15 +1935,14 @@ function createChromiumCdpAdapter({
         if (Math.abs(pressPoint.x - sourcePoint.x) > 0.5 || Math.abs(pressPoint.y - sourcePoint.y) > 0.5) {
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...pressPoint, button: 'none', buttons: 0 });
         }
-        // A drag that is stopped must not drop where it was going: the cleanup release goes to the point the button was
-        // pressed at, so the destination never receives the drop.
+        // A drag that is stopped is let go of off the page: no click on the source, no drop on the destination.
         const held = { at: pressPoint };
         await pressAndRelease(session, held, {}, async () => {
           await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...pressPoint, button: 'left', buttons: 1, clickCount: 1 });
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
         }, async () => {
           await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
-        });
+        }, { cancelAway: true });
         return { status: 'dragged' };
       }
       if (action === 'browser_type') {

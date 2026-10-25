@@ -2765,8 +2765,13 @@ test('a stop between the press and the release still releases the mouse button',
       type,
     );
     events = mouseEvents(drag.chromium.calls);
-    assert.equal(events.at(-1).type, 'mouseReleased', `drag stopped after ${type}`);
-    assert.equal(events.at(-1).buttons, 0);
+    // The button does not stay down: the drag is let go of off the page (no click on the source, no drop), and the page
+    // is then told no button is down. A click stopped between press and release still releases where it was pressed.
+    const released = events.filter((event) => event.type === 'mouseReleased');
+    assert.equal(released.length, 1, `drag stopped after ${type}`);
+    assert.deepEqual({ button: released[0].button, buttons: released[0].buttons }, { button: 'none', buttons: 0 });
+    assert.equal(released[0].x < 0 && released[0].y < 0, true);
+    assert.deepEqual({ type: events.at(-1).type, buttons: events.at(-1).buttons }, { type: 'mouseMoved', buttons: 0 });
   }
 
   // A stop before anything was pressed sends no release.

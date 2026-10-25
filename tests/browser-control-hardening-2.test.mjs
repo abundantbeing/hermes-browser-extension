@@ -255,7 +255,7 @@ test('a scroll during the capture does not move the region that is checked after
 
 // --- 6. a drag that is stopped is not dropped on the destination ----------------------------------------------------
 
-test('a Stop during a drag releases the button where it was pressed, never on the destination', async () => {
+test('a Stop during a drag lets go off the page: no release on the source (a click), none on the destination (a drop)', async () => {
   for (const stopAfter of ['press', 'move']) {
     const controller = new AbortController();
     const chromium = fakeChromium({
@@ -273,11 +273,19 @@ test('a Stop during a drag releases the button where it was pressed, never on th
       ),
       /Stop/,
     );
-    const events = mouseEvents(chromium.calls).filter((event) => event.type !== 'mouseMoved' || event.buttons === 1);
+    const events = mouseEvents(chromium.calls);
+    // Measured in Chrome: a release with the left button at the source is a click on it, and a drag that is in progress
+    // drops wherever it is whatever the release says; moving off the page with the button held and releasing with no
+    // button names ends the press with no mouseup, no click and no drop (and cancels a native drag with a dragend).
+    assert.equal(events.some((event) => event.type === 'mouseReleased' && event.button === 'left'), false, `${stopAfter}: no left-button release anywhere`);
     const released = events.filter((event) => event.type === 'mouseReleased');
     assert.equal(released.length, 1, stopAfter);
-    assert.deepEqual({ x: released[0].x, y: released[0].y }, { x: 20, y: 30 }, `${stopAfter}: released at the source`);
-    assert.equal(events.some((event) => event.type === 'mouseReleased' && event.x === 510), false, 'nothing was released on the destination');
+    assert.equal(released[0].button, 'none', `${stopAfter}: released with no button`);
+    assert.equal(released[0].x < 0 && released[0].y < 0, true, `${stopAfter}: released off the page`);
+    const at = events.findIndex((event) => event.type === 'mouseReleased');
+    assert.deepEqual({ type: events[at - 1].type, buttons: events[at - 1].buttons, x: events[at - 1].x, y: events[at - 1].y }, { type: 'mouseMoved', buttons: 1, x: released[0].x, y: released[0].y }, `${stopAfter}: moved off the page with the button held first`);
+    assert.equal(events.slice(at).every((event) => event.x < 0 && event.y < 0), true, `${stopAfter}: nothing after the cancel touches the page`);
+    assert.equal(events.slice(at + 1).every((event) => event.type === 'mouseMoved' && event.buttons === 0), true, `${stopAfter}: afterwards only a move that says no button is down`);
   }
 });
 
