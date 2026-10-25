@@ -1186,6 +1186,8 @@ export function createControllerServiceWorker({
       const result = leases.release({ tabId, ownerId });
       if (result.ok) {
         released.push(result.lease);
+        // A command running on the tab ends with it, so it cannot attach again to finish.
+        lifecycle.cancelTab(tabId);
         releaseDebuggerSession(tabId);
         const nextPaused = { ...pausedLeases };
         delete nextPaused[String(tabId)];
@@ -1197,7 +1199,12 @@ export function createControllerServiceWorker({
   }
 
   async function setPaused(paused) {
-    if (paused === true) stopTurnReads();
+    if (paused === true) {
+      // Pause is Stop plus a hold: the command that is running, or waiting for an approval, ends now. Releasing
+      // the debugger alone left it to attach again and carry on.
+      stopTurnReads();
+      lifecycle.cancelAll();
+    }
     settings = { ...settings, browserControlPaused: paused === true };
     await storageArea.set({ hermesBrowserSettings: { ...settings } });
     await persist();
@@ -1249,6 +1256,10 @@ export function createControllerServiceWorker({
   function grantApproval(message = {}) {
     const tabId = Number(message.tabId);
     const documentGeneration = Number(message.documentGeneration);
+    // Nothing is approved while control is paused: the command it was for has ended, and a new one asks again.
+    if (settings?.browserControlPaused === true || pausedLeases[String(tabId)]) {
+      return { ok: false, error: 'controller_paused' };
+    }
     const lease = leases.leaseForTab(tabId);
     const authoritative = Number(documentGenerations[frameKey(tabId, message.frameId)] || 0);
     if (!lease || lease.generation !== generation) return { ok: false, error: 'lease_required' };

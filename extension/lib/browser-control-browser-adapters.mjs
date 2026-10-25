@@ -717,6 +717,11 @@ function createChromiumCdpAdapter({
   const activeOperations = new Map();
   const expectedDetaches = new Map();
   const eventWaiters = new Map();
+  // Counts the times a tab's debugger was let go on purpose (Pause, releasing the tab, Turn off) or taken away
+  // (the Chrome bar's Cancel, DevTools). An operation remembers the count it started under, and one that sees
+  // it move stops instead of attaching again to finish what the person ended.
+  const releaseEpochs = new Map();
+  const bumpReleaseEpoch = (tabId) => releaseEpochs.set(tabId, (releaseEpochs.get(tabId) || 0) + 1);
 
   function requireDebugger() {
     if (!debuggerApi?.attach || !debuggerApi?.sendCommand || !debuggerApi?.detach) {
@@ -784,6 +789,7 @@ function createChromiumCdpAdapter({
       return;
     }
     dropSession(tabId);
+    bumpReleaseEpoch(tabId);
     onDebuggerDetach({
       tabId,
       reason: compact(reason, 120) || 'unknown',
@@ -947,13 +953,23 @@ function createChromiumCdpAdapter({
     assertNotAborted(signal);
     requireDebugger();
     const tabId = tabIdFrom(scope);
+    const epoch = releaseEpochs.get(tabId) || 0;
+    const stillAttachedByChoice = () => {
+      if ((releaseEpochs.get(tabId) || 0) === epoch) return;
+      throw codedError('debugger_detached', 'The debugger was detached, so Hermes stopped this action.');
+    };
     activeOperations.set(tabId, (activeOperations.get(tabId) || 0) + 1);
     try {
       await ensureSession(tabId);
       assertNotAborted(signal);
-      const send = (method, params = {}) => sendWithRetry(tabId, method, params, signal);
+      stillAttachedByChoice();
+      const send = (method, params = {}) => {
+        stillAttachedByChoice();
+        return sendWithRetry(tabId, method, params, signal);
+      };
       const enable = async (...domains) => {
         for (const domain of domains) {
+          stillAttachedByChoice();
           const session = sessions.get(tabId) || await ensureSession(tabId);
           if (session.enabled.has(domain)) continue;
           // Concurrent first uses share one enable round trip.
@@ -1911,6 +1927,7 @@ function createChromiumCdpAdapter({
   async function releaseTab(tabId) {
     const normalized = Number(tabId);
     if (!Number.isInteger(normalized) || normalized <= 0) return false;
+    bumpReleaseEpoch(normalized);
     if (inflight.has(normalized)) await inflight.get(normalized).catch(() => {});
     if (sessions.has(normalized) || detaching.has(normalized)) return detachSession(normalized);
     // Nothing is recorded here, but a service worker that was restarted since
@@ -1941,6 +1958,7 @@ function createChromiumCdpAdapter({
   }
 
   async function releaseAll() {
+    for (const tabId of sessions.keys()) bumpReleaseEpoch(tabId);
     const released = await Promise.all([...sessions.keys()].map((tabId) => detachSession(tabId)));
     return released.filter(Boolean).length;
   }
