@@ -159,3 +159,91 @@ test('the Firefox screenshot reports its address too', async () => {
   const shot = await createFirefoxWebExtensionAdapter({ browserApi: api }).execute('browser_screenshot', {}, { scope: { tabId: 7, frameId: 0 }, signal: openSignal() });
   assert.equal(shot.url, 'https://example.test/a');
 });
+
+// --- 5. the region that is checked is the region that is captured ---------------------------------------------------
+
+// The visual viewport as Page.getLayoutMetrics reports it, in document coordinates (pageX/pageY).
+const viewportAt = ({ pageX = 0, pageY = 0, clientWidth = 1000, clientHeight = 800, scale = 1, offsetX = 0, offsetY = 0 } = {}) => ({
+  cssVisualViewport: { pageX, pageY, clientWidth, clientHeight, scale, offsetX, offsetY },
+});
+// DOM.getBoxModel answers in viewport coordinates: the control is at 10,20 and every other node at the given box.
+const boxesWith = (frames) => ({ backendNodeId }) => box(...(frames[backendNodeId] ?? [10, 20, 20, 20]));
+const clipOf = (calls) => calls.find((call) => call[0] === 'Page.captureScreenshot')?.[1]?.clip;
+const withheld = (error) => error?.code === 'restricted_frame' && /screenshot was withheld/i.test(error.message);
+
+test('an element screenshot clips in document coordinates, so a scrolled page captures the element and not what is under it', async () => {
+  const chromium = fakeChromium({ handlers: { 'Page.getLayoutMetrics': () => viewportAt({ pageY: 3000 }) } });
+  await shoot(chromium, { zoom: 2 }, { target: { backendDOMNodeId: 44 } });
+  // The control is at 10,20 in the viewport, which is 10,3020 in the document.
+  assert.deepEqual(clipOf(chromium.calls), { x: 10, y: 3020, width: 20, height: 20, scale: 2 });
+  const unscrolled = fakeChromium({ handlers: { 'Page.getLayoutMetrics': () => viewportAt() } });
+  await shoot(unscrolled, {}, { target: { backendDOMNodeId: 44 } });
+  assert.deepEqual(clipOf(unscrolled.calls), { x: 10, y: 20, width: 20, height: 20, scale: 1 });
+});
+
+test('on a scrolled page a restricted frame over the element is withheld, one elsewhere in the viewport is not', async () => {
+  const withFrame = (frameBox) => fakeChromium({
+    handlers: {
+      'Page.getLayoutMetrics': () => viewportAt({ pageY: 3000 }),
+      'DOM.getDocument': () => documentOf([sameProcessFrame(31, 'https://bank.example/checkout')]),
+      'DOM.getBoxModel': boxesWith({ 31: frameBox }),
+    },
+  });
+  const over = withFrame([0, 0, 100, 100]);
+  await assert.rejects(shoot(over, {}, { target: { backendDOMNodeId: 44 } }), withheld);
+  assert.equal(captured(over.calls), false);
+  const away = withFrame([400, 400, 100, 100]);
+  assert.match((await shoot(away, {}, { target: { backendDOMNodeId: 44 } })).dataUrl, /^data:image\/png;base64,/);
+  assert.equal(clipOf(away.calls).y, 3020);
+});
+
+test('a viewport screenshot of a scrolled page covers what is in view, not the top of the document', async () => {
+  const at = (frameBox) => fakeChromium({
+    handlers: {
+      'Page.getLayoutMetrics': () => viewportAt({ pageY: 3000 }),
+      'DOM.getDocument': () => documentOf([crossProcessFrame(31)]),
+      'DOM.getBoxModel': boxesWith({ 31: frameBox }),
+    },
+  });
+  await assert.rejects(shoot(at([744, 700, 256, 60])), withheld);
+  // Below the visible part (the viewport is 800 high), and scrolled out above it.
+  for (const outside of [[0, 900, 300, 100], [0, -500, 300, 100]]) {
+    assert.match((await shoot(at(outside))).dataUrl, /^data:image\/png;base64,/, JSON.stringify(outside));
+  }
+});
+
+test('a pinch-zoomed page is judged over the part of the document that is in view, whichever way its boxes are scaled', async () => {
+  const chromium = fakeChromium({
+    handlers: {
+      // Zoomed in 2x and moved right: the visible area is 500 x 400 CSS px starting at 500,0 in the document.
+      'Page.getLayoutMetrics': () => viewportAt({ pageX: 500, pageY: 0, clientWidth: 500, clientHeight: 400, scale: 2, offsetX: 500 }),
+      'DOM.getDocument': () => documentOf([sameProcessFrame(31, 'https://bank.example/checkout')]),
+      'DOM.getBoxModel': boxesWith({ 31: [700, 100, 200, 100] }),
+    },
+  });
+  await assert.rejects(shoot(chromium), withheld);
+  assert.equal(captured(chromium.calls), false);
+});
+
+test('a page position that cannot be read stops an element screenshot instead of guessing the clip', async () => {
+  const chromium = fakeChromium({ handlers: { 'Page.getLayoutMetrics': () => { throw new Error('Target closed'); } } });
+  await assert.rejects(shoot(chromium, {}, { target: { backendDOMNodeId: 44 } }), /where the page is scrolled to/i);
+  assert.equal(captured(chromium.calls), false);
+});
+
+test('a scroll during the capture does not move the region that is checked afterwards', async () => {
+  // A restricted frame sits at document y 3400, below the element at document y 3020. The page scrolls while the
+  // capture runs, so the frame is then at viewport y 20, over where the element was in the viewport: the frame
+  // was never in the captured area, and the check afterwards must keep judging the document area.
+  let scrolled = false;
+  const chromium = fakeChromium({
+    handlers: {
+      'Page.getLayoutMetrics': () => viewportAt({ pageY: scrolled ? 3380 : 3000 }),
+      'DOM.getDocument': () => documentOf([sameProcessFrame(31, 'https://bank.example/checkout')]),
+      'DOM.getBoxModel': ({ backendNodeId }) => (backendNodeId === 31 ? box(10, scrolled ? 20 : 400, 100, 100) : box(10, 20, 20, 20)),
+      'Page.captureScreenshot': () => { scrolled = true; return { data: 'AAAA' }; },
+    },
+  });
+  assert.match((await shoot(chromium, {}, { target: { backendDOMNodeId: 44 } })).dataUrl, /^data:image\/png;base64,/);
+  assert.deepEqual(clipOf(chromium.calls), { x: 10, y: 3020, width: 20, height: 20, scale: 1 });
+});

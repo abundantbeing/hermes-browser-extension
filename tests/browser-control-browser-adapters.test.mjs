@@ -625,6 +625,7 @@ test('Chromium parity primitives hover drag scroll-to modifiers clipped screensh
     if (method === 'DOM.resolveNode') return { object: { objectId: 'object-44' } };
     if (method === 'Page.getFrameTree') return { frameTree: { frame: { id: 'MAIN' } } };
     if (method === 'DOM.getNodeForLocation') return { frameId: 'MAIN' };
+    if (method === 'Page.getLayoutMetrics') return { cssVisualViewport: { pageX: 0, pageY: 0, clientWidth: 1000, clientHeight: 800, scale: 1 } };
     if (method === 'Page.captureScreenshot') return { data: 'ZmFrZS1wbmc=' };
     return {};
   };

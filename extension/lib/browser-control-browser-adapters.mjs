@@ -561,18 +561,21 @@ function pointForArgs(args = {}) {
   return { x, y };
 }
 
-function screenshotClip(box = {}, zoom = 1) {
+// The clip of Page.captureScreenshot is in document coordinates, while DOM.getBoxModel answers in the viewport's
+// (what is in view, scaled by a pinch zoom). The box is moved into the document by where the visual viewport is.
+function screenshotClip(box = {}, zoom = 1, view = {}) {
   const quad = Array.isArray(box?.model?.content) ? box.model.content.map(Number) : [];
   if (quad.length < 8 || quad.some((value) => !Number.isFinite(value))) throw new Error('The screenshot target has no visible box.');
   const xs = [quad[0], quad[2], quad[4], quad[6]];
   const ys = [quad[1], quad[3], quad[5], quad[7]];
+  const scale = Number(view.scale) > 0 ? Number(view.scale) : 1;
   const x = Math.min(...xs);
   const y = Math.min(...ys);
   return {
-    x,
-    y,
-    width: Math.max(1, Math.max(...xs) - x),
-    height: Math.max(1, Math.max(...ys) - y),
+    x: (Number(view.pageX) || 0) + x / scale,
+    y: (Number(view.pageY) || 0) + y / scale,
+    width: Math.max(1, (Math.max(...xs) - x) / scale),
+    height: Math.max(1, (Math.max(...ys) - y) / scale),
     scale: Math.max(0.25, Math.min(Number(zoom) || 1, 4)),
   };
 }
@@ -1204,17 +1207,51 @@ function createChromiumCdpAdapter({
     return owners;
   }
 
-  // The part of the viewport a screenshot covers: the clip, or the whole viewport. Null when it cannot be told.
-  async function screenshotRegion(send, signal, clip) {
-    if (clip) return { x: clip.x, y: clip.y, width: clip.width, height: clip.height };
+  // Where the visual viewport is in the document, and how big: the part of the page that is in view. Null when the
+  // browser cannot say.
+  async function readViewport(send, signal) {
     try {
       const viewport = (await send('Page.getLayoutMetrics'))?.cssVisualViewport;
       const width = Number(viewport?.clientWidth);
       const height = Number(viewport?.clientHeight);
-      return width > 0 && height > 0 ? { x: 0, y: 0, width, height } : null;
+      if (!(width > 0 && height > 0)) return null;
+      return {
+        pageX: Number(viewport?.pageX) || 0,
+        pageY: Number(viewport?.pageY) || 0,
+        scale: Number(viewport?.scale) > 0 ? Number(viewport.scale) : 1,
+        width,
+        height,
+      };
     } catch (error) {
       if (abortError(signal)) throw error;
       return null;
+    }
+  }
+
+  // The part of the document a screenshot covers, in document coordinates: the clip, or what is in view. Null when
+  // it cannot be told.
+  function screenshotRegion(clip, view) {
+    if (clip) return { x: clip.x, y: clip.y, width: clip.width, height: clip.height };
+    return view ? { x: view.pageX, y: view.pageY, width: view.width, height: view.height } : null;
+  }
+
+  // Whether the element's box overlaps a region of the document. The box is in viewport coordinates, which become
+  // document coordinates through where the viewport is; since it is not certain whether a pinch zoom scales those
+  // boxes, both readings are tried and either overlapping counts. An element that is not rendered has no pixels;
+  // any other failure to measure it counts as overlapping.
+  async function ownerInDocumentRegion(send, signal, backendNodeId, region, view) {
+    if (!region || !view || !backendNodeId) return true;
+    try {
+      const box = quadRect(await send('DOM.getBoxModel', { backendNodeId }));
+      return [...new Set([1, view.scale])].some((scale) => {
+        const left = view.pageX + box.x / scale;
+        const top = view.pageY + box.y / scale;
+        return left < region.x + region.width && left + box.width / scale > region.x
+          && top < region.y + region.height && top + box.height / scale > region.y;
+      });
+    } catch (error) {
+      if (abortError(signal)) throw error;
+      return !/could not compute box model/i.test(String(error?.message || ''));
     }
   }
 
@@ -1247,9 +1284,10 @@ function createChromiumCdpAdapter({
       throw withheld();
     }
     if (!owners.length) return;
-    const region = await screenshotRegion(send, signal, clip);
+    const view = await readViewport(send, signal);
+    const region = screenshotRegion(clip, view);
     for (const backendNodeId of owners) {
-      if (await ownerInRegion(send, signal, backendNodeId, region)) throw withheld();
+      if (await ownerInDocumentRegion(send, signal, backendNodeId, region, view)) throw withheld();
     }
   }
 
@@ -1774,7 +1812,10 @@ function createChromiumCdpAdapter({
         if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
           await enable('DOM');
           await send('DOM.scrollIntoViewIfNeeded', { backendNodeId });
-          clip = screenshotClip(await send('DOM.getBoxModel', { backendNodeId }), args.zoom);
+          const targetBox = await send('DOM.getBoxModel', { backendNodeId });
+          const view = await readViewport(send, signal);
+          if (!view) throw new Error('Hermes could not tell where the page is scrolled to, so no screenshot was taken. Try again.');
+          clip = screenshotClip(targetBox, args.zoom, view);
         }
         await enable('DOM');
         await assertScreenshotFramesReadable(send, signal, clip);
