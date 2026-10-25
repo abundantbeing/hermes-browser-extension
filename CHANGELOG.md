@@ -66,6 +66,7 @@
 
 ### Fixed
 
+- Firefox: the model's browser_screenshot needs a permission Firefox does not grant this build, so Hermes now says so (`screenshot_unavailable`) and does not offer the action to the model, instead of failing with "Missing activeTab permission". Page text (browser_snapshot) and your own Tab screenshot button work as before. Adding the all-sites permission to the Firefox build would turn the screenshot on; that is a separate decision.
 - New side-panel chats work again on current Hermes. Since about October 6, Hermes runs an API-server turn only on a session stored as `api_server` or `bot_room` and refuses to relabel one, so a chat the side panel created as `hermes_browser` answered every message with "permission denied". The side panel, Hermes Assist and Hermes Control now create API-server sessions as `api_server`, and the Browser still knows its own sessions by their id. Chats created before this fix keep being refused until Hermes accepts the Browser's label.
 - Hermes Control clicks and scrolls no longer hang on a background tab. Hover and drag of a hidden tab fail at once with `tab_hidden`, a screenshot of a hidden tab fails with `tab_hidden` after a short wait, and Hermes asks you to bring the tab forward with Show tab in Hermes Control.
 - Stop on a dashboard connection confirms from the gateway's own status instead of waiting 30 seconds. A Stop pressed before Hermes has a run id stays held, with a Release button, and the reads before an interrupt no longer delay it.
