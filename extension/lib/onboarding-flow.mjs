@@ -645,7 +645,10 @@ export function createOnboardingFlow({
   async function finish(reason) {
     if (!open || exiting) return;
     view().clearTimeout?.(connectedTimer);
-    onLeaveStep(steps[stepIndex]);
+    // The welcome is not a step: its language is only the browser's suggestion,
+    // and nobody has seen the language step to accept it. Skipping from there
+    // leaves the panel's language alone; Skip on a step keeps what it showed.
+    if (!welcoming) onLeaveStep(steps[stepIndex]);
     welcoming = false;
     open = false;
     exiting = true;

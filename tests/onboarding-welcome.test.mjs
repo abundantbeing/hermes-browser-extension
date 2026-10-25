@@ -121,14 +121,23 @@ test('Get started goes to the language step with nothing committed and no way ba
   assert.equal(host.querySelector('.onboarding-count').hidden, false);
 });
 
-test('Skip setup ends setup like Skip, keeping the suggested language', async () => {
+test('Skip setup ends setup like Skip but never keeps the suggested language: nobody saw the language step', async () => {
   const { host, flow, calls, window } = mount();
   flow.open({ welcome: true });
   click(host.querySelector('[data-onboarding-skip-setup]'), window);
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.deepEqual(calls.slice(0, 2), [['leave', 'language'], ['finish', 'skip']], 'the same finish reason as Skip, the suggestion is kept first');
+  assert.deepEqual(calls, [['finish', 'skip']], 'the same finish reason as Skip, and no step was left, so no language is applied or saved');
   assert.equal(flow.isOpen, false);
   assert.equal(flow.welcoming, false);
+});
+
+test('Skip on the language step itself still keeps the suggestion it showed', async () => {
+  const { host, flow, calls, window } = mount();
+  flow.open({ welcome: true });
+  click(host.querySelector('[data-onboarding-start]'), window);
+  click(host.querySelector('[data-onboarding-skip]'), window);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(calls, [['leave', 'language'], ['finish', 'skip']]);
 });
 
 test('Escape, the arrows and a swipe do nothing on the welcome', () => {
