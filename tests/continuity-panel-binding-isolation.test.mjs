@@ -32,6 +32,8 @@ function storageListener(initialSettings) {
     settings: initialSettings,
     CUSTOM_THEME_STORAGE_KEY: 'customThemes',
     CONTEXT_CONSENT_STORAGE_KEY: 'consent',
+    ONBOARDING_COMPLETED_STORAGE_KEY: 'onboardingDone',
+    adoptOnboardingCompletedChange() {},
     adoptStoredResponsePresentation() {},
     updateConnectionPrompt() {},
     renderBrowserControl() {},
