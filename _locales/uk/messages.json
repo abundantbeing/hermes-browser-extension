@@ -2895,6 +2895,10 @@
     "message": "Проєкти тут недоступні",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Для проєктів потрібен вхід у Hermes Web. Один раз відкрийте Hermes Web (виконайте hermes webapp) і повторіть спробу.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Бульбашки з обох боків",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web відкрито. На цьому комп’ютері один раз виконайте hermes webapp, щоб увійти. Вкладка залишиться в обліковому записі.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web відкрито. На цьому комп’ютері один раз виконайте hermes webapp, щоб увійти. Після цього Hermes Browser зберігає вхід цього браузера до його закриття.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web відкрито, вхід уже виконано.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "Панель зберігає вхід цього браузера в Hermes Web до закриття браузера, тому Hermes Web, проєкти та профілі ботів працюють без повторного запуску hermes webapp. Команда hermes webapp --sign-out завершує вхід.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Зберігати вхід у Hermes Web із панелі",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Не вдалося відкрити Hermes Web",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Адреса Hermes Web",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Для Hermes Web потрібен вхід. Один раз виконайте hermes webapp на цьому комп’ютері й повторіть спробу.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "Перевірити знову",

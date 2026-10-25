@@ -2895,6 +2895,10 @@
     "message": "Projecten zijn hier niet beschikbaar",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Projecten heeft de login van Hermes Web nodig. Open Hermes Web één keer (voer hermes webapp uit) en probeer het opnieuw.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Bubbels aan beide kanten",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web geopend. Voer op deze computer één keer hermes webapp uit om in te loggen. Het tabblad blijft ingelogd.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web geopend. Voer op deze computer één keer hermes webapp uit om in te loggen. Daarna houdt Hermes Browser deze browser ingelogd tot je hem sluit.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web geopend, al ingelogd.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "Het paneel bewaart de Hermes Web-login van deze browser tot je de browser sluit, zodat Hermes Web, Projecten en botprofielen werken zonder hermes webapp opnieuw uit te voeren. hermes webapp --sign-out beëindigt dit.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Hermes Web ingelogd houden vanuit het paneel",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Hermes Web kon niet worden geopend",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Hermes Web-adres",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web heeft zijn login nodig. Voer op deze computer één keer hermes webapp uit en probeer het opnieuw.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "Opnieuw controleren",

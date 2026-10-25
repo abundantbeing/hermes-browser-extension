@@ -2895,6 +2895,10 @@
     "message": "المشاريع غير متاحة هنا",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "تحتاج المشاريع إلى تسجيل الدخول في Hermes Web. افتح Hermes Web مرة واحدة (شغّل hermes webapp) ثم حاول مجددًا.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "فقاعات على الجانبين",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "تم فتح Hermes Web. على هذا الكمبيوتر، شغّل hermes webapp مرة واحدة لتسجيل الدخول. تبقى علامة التبويب مسجّلة الدخول.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "تم فتح Hermes Web. على هذا الكمبيوتر، شغّل hermes webapp مرة واحدة لتسجيل الدخول. بعد ذلك يُبقي Hermes Browser هذا المتصفح مسجّل الدخول حتى تغلقه.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "تم فتح Hermes Web وهو مسجّل الدخول بالفعل.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "تحتفظ اللوحة بتسجيل دخول هذا المتصفح إلى Hermes Web حتى تغلق المتصفح، فتعمل Hermes Web والمشاريع وملفات الروبوتات دون تشغيل hermes webapp مجددًا. الأمر hermes webapp --sign-out ينهي ذلك.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "إبقاء Hermes Web مسجّل الدخول من اللوحة",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "تعذّر فتح Hermes Web",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "عنوان Hermes Web",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "يحتاج Hermes Web إلى تسجيل الدخول. شغّل hermes webapp مرة واحدة على هذا الكمبيوتر ثم حاول مجددًا.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "تحقّق مرة أخرى",

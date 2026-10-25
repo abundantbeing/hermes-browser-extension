@@ -2895,6 +2895,10 @@
     "message": "Projekte sind hier nicht verfügbar",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Projekte brauchen die Anmeldung von Hermes Web. Öffnen Sie Hermes Web einmal (führen Sie hermes webapp aus) und versuchen Sie es erneut.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Blasen auf beiden Seiten",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web geöffnet. Führen Sie auf diesem Computer einmal hermes webapp aus, um sich anzumelden. Der Tab bleibt angemeldet.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web geöffnet. Führen Sie auf diesem Computer einmal hermes webapp aus, um sich anzumelden. Danach hält Hermes Browser diesen Browser angemeldet, bis Sie ihn schließen.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web geöffnet, bereits angemeldet.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "Das Panel behält die Hermes-Web-Anmeldung dieses Browsers, bis Sie den Browser schließen. So funktionieren Hermes Web, Projekte und Bot-Profile, ohne hermes webapp erneut auszuführen. hermes webapp --sign-out beendet sie.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Hermes Web vom Panel aus angemeldet halten",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Hermes Web konnte nicht geöffnet werden",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Hermes-Web-Adresse",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web braucht seine Anmeldung. Führen Sie auf diesem Computer einmal hermes webapp aus und versuchen Sie es erneut.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "Erneut prüfen",

@@ -2895,6 +2895,10 @@
     "message": "此處無法使用專案",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "專案需要 Hermes Web 的登入。請開啟一次 Hermes Web（執行 hermes webapp），然後重試。",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "兩側都使用泡泡",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "已開啟 Hermes Web。請在這台電腦上執行一次 hermes webapp 來登入，分頁會保持登入狀態。",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "已開啟 Hermes Web。請在這台電腦上執行一次 hermes webapp 來登入。之後 Hermes Browser 會在你關閉瀏覽器前保持這個瀏覽器的登入狀態。",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "已開啟 Hermes Web，且已登入。",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "面板會在你關閉瀏覽器之前保留這個瀏覽器的 Hermes Web 登入，因此無需再次執行 hermes webapp，Hermes Web、專案和機器人設定檔都能正常使用。執行 hermes webapp --sign-out 可結束登入。",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "從面板保持 Hermes Web 登入",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "無法開啟 Hermes Web",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Hermes Web 位址",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web 需要登入。請在這台電腦上執行一次 hermes webapp，然後重試。",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "重新檢查",

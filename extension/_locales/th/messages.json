@@ -2895,6 +2895,10 @@
     "message": "โปรเจกต์ใช้งานไม่ได้ที่นี่",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "โปรเจกต์ต้องใช้การลงชื่อเข้าใช้ของ Hermes Web เปิด Hermes Web หนึ่งครั้ง (รัน hermes webapp) แล้วลองอีกครั้ง",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "บับเบิลทั้งสองฝั่ง",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "เปิด Hermes Web แล้ว บนคอมพิวเตอร์เครื่องนี้ ให้รัน hermes webapp หนึ่งครั้งเพื่อลงชื่อเข้าใช้ แท็บจะยังคงลงชื่อเข้าใช้อยู่",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "เปิด Hermes Web แล้ว บนคอมพิวเตอร์เครื่องนี้ ให้รัน hermes webapp หนึ่งครั้งเพื่อลงชื่อเข้าใช้ หลังจากนั้น Hermes Browser จะคงการลงชื่อเข้าใช้ของเบราว์เซอร์นี้ไว้จนกว่าจะปิด",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "เปิด Hermes Web แล้ว และลงชื่อเข้าใช้อยู่แล้ว",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "แผงจะเก็บการลงชื่อเข้าใช้ Hermes Web ของเบราว์เซอร์นี้ไว้จนกว่าคุณจะปิดเบราว์เซอร์ ทำให้ Hermes Web โปรเจกต์ และโปรไฟล์บอตใช้งานได้โดยไม่ต้องรัน hermes webapp อีก คำสั่ง hermes webapp --sign-out จะสิ้นสุดการลงชื่อเข้าใช้นี้",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "คงการลงชื่อเข้าใช้ Hermes Web จากแผง",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "เปิด Hermes Web ไม่ได้",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "ที่อยู่ Hermes Web",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web ต้องลงชื่อเข้าใช้ ให้รัน hermes webapp หนึ่งครั้งบนคอมพิวเตอร์เครื่องนี้ แล้วลองอีกครั้ง",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "ตรวจสอบอีกครั้ง",

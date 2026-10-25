@@ -2895,6 +2895,10 @@
     "message": "प्रोजेक्ट यहाँ उपलब्ध नहीं हैं",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "प्रोजेक्ट को Hermes Web के साइन-इन की ज़रूरत है। Hermes Web को एक बार खोलें (hermes webapp चलाएँ), फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "दोनों तरफ़ बबल",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web खुल गया। इस कंप्यूटर पर साइन इन करने के लिए एक बार hermes webapp चलाएँ। टैब साइन इन रहता है।",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web खुल गया। इस कंप्यूटर पर साइन इन करने के लिए एक बार hermes webapp चलाएँ। इसके बाद Hermes Browser इस ब्राउज़र को बंद करने तक साइन इन रखता है।",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web खुल गया, पहले से साइन इन है।",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "पैनल इस ब्राउज़र का Hermes Web साइन-इन तब तक रखता है जब तक आप ब्राउज़र बंद नहीं करते, इसलिए hermes webapp दोबारा चलाए बिना Hermes Web, प्रोजेक्ट और बॉट प्रोफ़ाइल काम करते हैं। hermes webapp --sign-out इसे समाप्त कर देता है।",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "पैनल से Hermes Web को साइन इन रखें",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Hermes Web नहीं खुल सका",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Hermes Web का पता",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web को अपने साइन-इन की ज़रूरत है। इस कंप्यूटर पर एक बार hermes webapp चलाएँ, फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "फिर से जाँचें",

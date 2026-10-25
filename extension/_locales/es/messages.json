@@ -2895,6 +2895,10 @@
     "message": "Los proyectos no están disponibles aquí",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Proyectos necesita el inicio de sesión de Hermes Web. Abre Hermes Web una vez (ejecuta hermes webapp) y vuelve a intentarlo.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Burbujas en ambos lados",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web abierto. En este ordenador, ejecuta hermes webapp una vez para iniciar sesión. La pestaña sigue con la sesión iniciada.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web abierto. En este ordenador, ejecuta hermes webapp una vez para iniciar sesión. Después, Hermes Browser mantiene la sesión de este navegador hasta que lo cierres.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web abierto, con la sesión ya iniciada.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "El panel conserva el inicio de sesión de Hermes Web de este navegador hasta que lo cierres, así Hermes Web, Proyectos y los perfiles de bot funcionan sin volver a ejecutar hermes webapp. hermes webapp --sign-out lo termina.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Mantener Hermes Web con la sesión iniciada desde el panel",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "No se pudo abrir Hermes Web",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Dirección de Hermes Web",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web necesita iniciar sesión. Ejecuta hermes webapp una vez en este ordenador y vuelve a intentarlo.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "Comprobar de nuevo",

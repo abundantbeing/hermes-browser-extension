@@ -2895,6 +2895,10 @@
     "message": "Proyek tidak tersedia di sini",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Proyek memerlukan sesi masuk Hermes Web. Buka Hermes Web sekali (jalankan hermes webapp), lalu coba lagi.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Balon di kedua sisi",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web terbuka. Di komputer ini, jalankan hermes webapp sekali untuk masuk. Tab tetap masuk.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web terbuka. Di komputer ini, jalankan hermes webapp sekali untuk masuk. Setelah itu, Hermes Browser menjaga browser ini tetap masuk sampai ditutup.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web terbuka dan sudah masuk.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "Panel menyimpan sesi masuk Hermes Web browser ini sampai browser ditutup, sehingga Hermes Web, Proyek, dan profil bot berfungsi tanpa menjalankan hermes webapp lagi. hermes webapp --sign-out mengakhirinya.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Biarkan Hermes Web tetap masuk dari panel",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Hermes Web tidak dapat dibuka",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Alamat Hermes Web",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web memerlukan sesi masuknya. Jalankan hermes webapp sekali di komputer ini, lalu coba lagi.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "Periksa lagi",

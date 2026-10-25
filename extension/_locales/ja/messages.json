@@ -2895,6 +2895,10 @@
     "message": "ここではプロジェクトを利用できません",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "プロジェクトには Hermes Web のサインインが必要です。Hermes Web を一度開き（hermes webapp を実行）、もう一度お試しください。",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "両側に吹き出し",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web を開きました。このコンピューターで hermes webapp を一度実行してサインインしてください。タブはサインインしたままになります。",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web を開きました。このコンピューターで hermes webapp を一度実行してサインインしてください。その後は、ブラウザーを閉じるまで Hermes Browser がこのブラウザーのサインインを保ちます。",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web を開きました。すでにサインイン済みです。",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "パネルは、ブラウザーを閉じるまでこのブラウザーの Hermes Web サインインを保持します。そのため hermes webapp を再実行しなくても、Hermes Web、プロジェクト、ボットのプロファイルが使えます。hermes webapp --sign-out で終了します。",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "パネルから Hermes Web のサインインを維持する",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Hermes Web を開けませんでした",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Hermes Web のアドレス",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web のサインインが必要です。このコンピューターで hermes webapp を一度実行してから、もう一度お試しください。",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "もう一度確認",

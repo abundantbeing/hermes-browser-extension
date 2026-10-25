@@ -2895,6 +2895,10 @@
     "message": "여기서는 프로젝트를 사용할 수 없습니다",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "프로젝트에는 Hermes Web 로그인이 필요합니다. Hermes Web을 한 번 열고(hermes webapp 실행) 다시 시도하세요.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "양쪽 말풍선",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web을 열었습니다. 이 컴퓨터에서 hermes webapp을 한 번 실행해 로그인하세요. 탭은 로그인 상태로 유지됩니다.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web을 열었습니다. 이 컴퓨터에서 hermes webapp을 한 번 실행해 로그인하세요. 그 후에는 브라우저를 닫을 때까지 Hermes Browser가 이 브라우저의 로그인을 유지합니다.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web을 열었습니다. 이미 로그인되어 있습니다.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "패널은 브라우저를 닫을 때까지 이 브라우저의 Hermes Web 로그인을 유지하므로 hermes webapp을 다시 실행하지 않아도 Hermes Web, 프로젝트, 봇 프로필이 작동합니다. hermes webapp --sign-out으로 종료할 수 있습니다.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "패널에서 Hermes Web 로그인 유지",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Hermes Web을 열 수 없습니다",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Hermes Web 주소",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web 로그인이 필요합니다. 이 컴퓨터에서 hermes webapp을 한 번 실행한 뒤 다시 시도하세요.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "다시 확인",

@@ -1043,9 +1043,13 @@
     }));
     setBody(
       make('h2', 'route-title', 'Hermes Web opened'),
-      make('p', 'note', hint === 'local'
-        ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. The tab stays signed in.'
-        : 'Hermes Web opened. Sign in on that page with your dashboard account.'),
+      make('p', 'note', hint === 'signed-in'
+        ? 'Hermes Web opened, already signed in.'
+        : hint === 'local-kept'
+          ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. After that, Hermes Browser keeps this browser signed in until you close it.'
+          : hint === 'local'
+            ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. The tab stays signed in.'
+            : 'Hermes Web opened. Sign in on that page with your dashboard account.'),
       done,
     );
   }

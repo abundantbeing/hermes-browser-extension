@@ -2895,6 +2895,10 @@
     "message": "Les projets ne sont pas disponibles ici",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Les projets ont besoin de la connexion à Hermes Web. Ouvrez Hermes Web une fois (lancez hermes webapp), puis réessayez.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Bulles des deux côtés",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Hermes Web ouvert. Sur cet ordinateur, lancez hermes webapp une fois pour vous connecter. L’onglet reste connecté.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Hermes Web ouvert. Sur cet ordinateur, lancez hermes webapp une fois pour vous connecter. Ensuite, Hermes Browser garde ce navigateur connecté jusqu’à sa fermeture.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Hermes Web ouvert, déjà connecté.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "Le panneau conserve la connexion de ce navigateur à Hermes Web jusqu’à la fermeture du navigateur : Hermes Web, les projets et les profils de bot fonctionnent sans relancer hermes webapp. hermes webapp --sign-out y met fin.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Garder Hermes Web connecté depuis le panneau",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Impossible d’ouvrir Hermes Web",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Adresse de Hermes Web",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web a besoin de sa connexion. Lancez hermes webapp une fois sur cet ordinateur, puis réessayez.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "Vérifier à nouveau",

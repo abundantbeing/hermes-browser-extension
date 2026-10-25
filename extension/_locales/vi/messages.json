@@ -2895,6 +2895,10 @@
     "message": "Dự án không khả dụng ở đây",
     "description": "Runtime interface message projects.unavailable.title"
   },
+  "runtime_projects_unavailable_webapp_sign_in": {
+    "message": "Dự án cần phiên đăng nhập của Hermes Web. Hãy mở Hermes Web một lần (chạy hermes webapp), rồi thử lại.",
+    "description": "Runtime interface message projects.unavailable.webapp_sign_in"
+  },
   "runtime_responses_layout_bubbles": {
     "message": "Bong bóng hai bên",
     "description": "Runtime interface message responses.layout.bubbles"
@@ -7779,6 +7783,22 @@
     "message": "Đã mở Hermes Web. Trên máy tính này, hãy chạy hermes webapp một lần để đăng nhập. Tab vẫn giữ trạng thái đăng nhập.",
     "description": "Runtime interface message webapp.hint_local"
   },
+  "runtime_webapp_hint_local_kept": {
+    "message": "Đã mở Hermes Web. Trên máy tính này, hãy chạy hermes webapp một lần để đăng nhập. Sau đó, Hermes Browser giữ trình duyệt này ở trạng thái đăng nhập cho đến khi bạn đóng nó.",
+    "description": "Runtime interface message webapp.hint_local_kept"
+  },
+  "runtime_webapp_hint_signed_in": {
+    "message": "Đã mở Hermes Web, đã đăng nhập sẵn.",
+    "description": "Runtime interface message webapp.hint_signed_in"
+  },
+  "runtime_webapp_keep_signed_in_hint": {
+    "message": "Bảng điều khiển giữ phiên đăng nhập Hermes Web của trình duyệt này cho đến khi bạn đóng trình duyệt, nên Hermes Web, Dự án và hồ sơ bot hoạt động mà không cần chạy lại hermes webapp. hermes webapp --sign-out sẽ kết thúc phiên này.",
+    "description": "Runtime interface message webapp.keep_signed_in_hint"
+  },
+  "runtime_webapp_keep_signed_in_label": {
+    "message": "Giữ Hermes Web đăng nhập từ bảng điều khiển",
+    "description": "Runtime interface message webapp.keep_signed_in_label"
+  },
   "runtime_webapp_open_failed": {
     "message": "Không thể mở Hermes Web",
     "description": "Runtime interface message webapp.open_failed"
@@ -7814,6 +7834,10 @@
   "runtime_webapp_setting_label": {
     "message": "Địa chỉ Hermes Web",
     "description": "Runtime interface message webapp.setting_label"
+  },
+  "runtime_webapp_sign_in_needed": {
+    "message": "Hermes Web cần đăng nhập. Hãy chạy hermes webapp một lần trên máy tính này, rồi thử lại.",
+    "description": "Runtime interface message webapp.sign_in_needed"
   },
   "runtime_webapp_try_again": {
     "message": "Kiểm tra lại",
