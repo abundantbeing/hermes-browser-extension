@@ -772,7 +772,7 @@ function openHermesPanelFromGesture(tab) {
   // Chromium-family: one correctly scoped sidePanel attempt, opened
   // synchronously. A resolved native request owns the gesture even when the
   // visibility event is missed; opening a fallback tab in that state can show
-  // both the side panel and a duplicate full-tab Hermes surface.
+  // both the side panel and a duplicate Hermes tab.
   const openOptions = useTabAttached
     ? { tabId }
     : { windowId: Number(tab?.windowId) };
@@ -825,18 +825,6 @@ async function openHermesPanelFallback(tab, browserId, panelUrl) {
 
 // Backward-compatible entry name for the context-menu controller wiring.
 const openHermesPanelFromContextGesture = openHermesPanelFromGesture;
-
-async function openHermesFullView(requestedUrl = '') {
-  const packagedAppUrl = new URL(browserApi.runtime.getURL('app.html'));
-  const rootDevAppUrl = new URL(browserApi.runtime.getURL('extension/app.html'));
-  const targetUrl = new URL(String(requestedUrl || packagedAppUrl.href));
-  const allowedPaths = new Set([packagedAppUrl.pathname, rootDevAppUrl.pathname]);
-  if (targetUrl.origin !== packagedAppUrl.origin || !allowedPaths.has(targetUrl.pathname)) {
-    throw new Error('Refused to open a non-Hermes full-view URL.');
-  }
-  await browserApi.tabs.create({ url: targetUrl.href, active: true });
-  return { ok: true };
-}
 
 function timeoutSignal(ms = 5000) {
   const controller = new AbortController();
@@ -1023,7 +1011,6 @@ const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set([
   CONTEXT_MENU_CONFIG_GET,
   CONTEXT_MENU_CONFIG_MUTATE,
   CONTEXT_MENU_REQUEST_CLAIM,
-  'HERMES_OPEN_FULL_VIEW',
   'HERMES_GET_YOUTUBE_TRANSCRIPT',
   LOOPBACK_FETCH_MESSAGE,
 ]);
@@ -1059,13 +1046,11 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ? inlineSessionStatus()
       : message?.type === 'HERMES_INLINE_OPEN_SESSION'
         ? queueOpenSessionRequest(message, sender)
-        : message?.type === 'HERMES_OPEN_FULL_VIEW'
-          ? openHermesFullView(message.url)
-          : message?.type === 'HERMES_GET_YOUTUBE_TRANSCRIPT'
-            ? getYoutubeTranscript(message)
-            : message?.type === LOOPBACK_FETCH_MESSAGE
-              ? handleLoopbackFetchMessage(message)
-              : null;
+        : message?.type === 'HERMES_GET_YOUTUBE_TRANSCRIPT'
+          ? getYoutubeTranscript(message)
+          : message?.type === LOOPBACK_FETCH_MESSAGE
+            ? handleLoopbackFetchMessage(message)
+            : null;
   if (!action) return false;
   action
     .then(sendResponse)

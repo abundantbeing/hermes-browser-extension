@@ -39,7 +39,7 @@ test('background router refuses tab senders for every extension-page-only messag
   assert.match(routerSource, /sendResponse\(\{ \.\.\.FORBIDDEN_SENDER_RESPONSE \}\);\s*return false;/);
 
   const setSource = background.match(/const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set\(\[([\s\S]*?)\]\);/)?.[1] || '';
-  for (const entry of ['...WAKE_BACKGROUND_MESSAGE_TYPES', 'CONTEXT_MENU_CONFIG_GET', 'CONTEXT_MENU_CONFIG_MUTATE', 'CONTEXT_MENU_REQUEST_CLAIM', "'HERMES_OPEN_FULL_VIEW'", "'HERMES_GET_YOUTUBE_TRANSCRIPT'", 'LOOPBACK_FETCH_MESSAGE']) {
+  for (const entry of ['...WAKE_BACKGROUND_MESSAGE_TYPES', 'CONTEXT_MENU_CONFIG_GET', 'CONTEXT_MENU_CONFIG_MUTATE', 'CONTEXT_MENU_REQUEST_CLAIM', "'HERMES_GET_YOUTUBE_TRANSCRIPT'", 'LOOPBACK_FETCH_MESSAGE']) {
     assert.ok(setSource.includes(entry), `${entry} is extension-page-only`);
   }
   assert.match(background, /themeMarketplaceController\.handles\(type\)/);
@@ -59,7 +59,7 @@ test('content scripts only send message types that the router still accepts from
   const contentSources = ['content.js', 'content-inline-helper.js'].map((file) => readFileSync(new URL(`../extension/${file}`, import.meta.url), 'utf8')).join('\n');
   const setSource = background.match(/const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set\(\[([\s\S]*?)\]\);/)?.[1] || '';
   for (const sent of ['HERMES_CONTROLLER_DOCUMENT_READY', 'HERMES_PAGE_COMMENT_CARD_SUBMIT', 'HERMES_PAGE_COMMENT_CARD_CANCEL']) assert.match(contentSources, new RegExp(sent));
-  assert.doesNotMatch(contentSources, /HERMES_WAKE_|HERMES_LOOPBACK_FETCH|HERMES_OPEN_FULL_VIEW|HERMES_GET_YOUTUBE_TRANSCRIPT'/);
+  assert.doesNotMatch(contentSources, /HERMES_WAKE_|HERMES_LOOPBACK_FETCH|HERMES_GET_YOUTUBE_TRANSCRIPT'/);
   assert.doesNotMatch(setSource, /HERMES_CONTROLLER_DOCUMENT_READY/);
 });
 
@@ -93,7 +93,7 @@ test('the real background router refuses tab senders for every extension-page-on
     const refused = { ok: false, reason: 'forbidden_sender' };
     const types = [
       'HERMES_WAKE_SET_ENABLED', 'HERMES_WAKE_GET_STATE', 'HERMES_WAKE_CLAIM_TURN', 'HERMES_WAKE_LOCAL_DETECTED', 'HERMES_WAKE_LOCAL_STATE', 'HERMES_WAKE_TURN_REPLY',
-      'HERMES_LOOPBACK_FETCH', 'HERMES_OPEN_FULL_VIEW', 'HERMES_GET_YOUTUBE_TRANSCRIPT',
+      'HERMES_LOOPBACK_FETCH', 'HERMES_GET_YOUTUBE_TRANSCRIPT',
       'HERMES_CONTEXT_MENU_CONFIG_GET', 'HERMES_CONTEXT_MENU_CONFIG_MUTATE', 'HERMES_CONTEXT_MENU_REQUEST_CLAIM',
     ];
     for (const type of types) {

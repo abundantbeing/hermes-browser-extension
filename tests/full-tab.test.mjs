@@ -168,8 +168,8 @@ test('side panel exposes an explicit full-view handoff', () => {
   assert.match(html, /webapp\.open_title/);
   assert.match(js, /openFullViewButton\?\.addEventListener\('click', \(\) => \{\s*void openHermesWeb\(\);/);
   assert.doesNotMatch(js, /buildFullTabHandoffUrl|openHermesFullView/);
-  assert.match(read('extension/background.js'), /HERMES_OPEN_FULL_VIEW/);
-  assert.match(read('extension/background.js'), /browserApi\.tabs\.create/);
+  // The extension's own full tab has no opener left in the background worker.
+  assert.doesNotMatch(read('extension/background.js'), /HERMES_OPEN_FULL_VIEW|openHermesFullView|app\.html/);
   assert.match(css, /\.topbar\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/s, 'topbar must lay out as a single-row flex bar');
   assert.match(css, /\.topbar \.session-menu-button\s*\{\s*flex:\s*1 1 auto;\s*min-width:\s*0;\s*\}/, 'session name must take the remaining topbar space');
   assert.doesNotMatch(css, /topbar-status|connection-pill/, 'the connection light and its styles are gone from the top bar');
@@ -698,64 +698,6 @@ test('full-tab applies provider-specific logo accents and terminal cyberpunk typ
   assert.match(css, /html\[data-hermes-theme="cyberpunk"\]\s*\{[^}]*--hermes-logo-filter:\s*hue-rotate\(240deg\) saturate\(1\.7\)/s);
   assert.match(css, /data-hermes-theme="cyberpunk"[\s\S]*\.web-message-content/);
   assert.match(appCss, /\.web-brand-logo\s*\{[^}]*filter:\s*var\(--hermes-logo-filter/s);
-});
-
-test('background worker opens only the extension-owned Hermes Web URL', async () => {
-  const previousChrome = globalThis.chrome;
-  let messageListener = null;
-  let createdUrl = '';
-  const extensionPageSender = { id: 'hermes-test', url: 'chrome-extension://hermes-test/sidepanel.html' };
-  const event = (capture) => ({ addListener(listener) { capture?.(listener); } });
-  globalThis.chrome = {
-    runtime: {
-      id: 'hermes-test',
-      getURL: (assetPath) => `chrome-extension://hermes-test/${assetPath}`,
-      getManifest: () => ({ side_panel: { default_path: 'sidepanel.html' } }),
-      onInstalled: event(),
-      onStartup: event(),
-      onMessage: event((listener) => { messageListener = listener; }),
-    },
-    action: { onClicked: event(), setPopup: async () => {} },
-    tabs: {
-      create: async ({ url }) => { createdUrl = url; },
-      query: async () => [],
-      onActivated: event(),
-    },
-    storage: { local: { get: async () => ({}) }, onChanged: event() },
-    sidePanel: {},
-  };
-
-  try {
-    await import(`../extension/background.js?fulltab-open=${Date.now()}`);
-    assert.equal(typeof messageListener, 'function');
-    const response = await new Promise((resolve) => {
-      const asyncResponse = messageListener({
-        type: 'HERMES_OPEN_FULL_VIEW',
-        url: 'chrome-extension://hermes-test/app.html?sessionId=session-1',
-      }, extensionPageSender, resolve);
-      assert.equal(asyncResponse, true);
-    });
-    assert.deepEqual(response, { ok: true });
-    assert.equal(createdUrl, 'chrome-extension://hermes-test/app.html?sessionId=session-1');
-
-    const rejected = await new Promise((resolve) => {
-      messageListener({ type: 'HERMES_OPEN_FULL_VIEW', url: 'https://example.com/app.html' }, extensionPageSender, resolve);
-    });
-    assert.equal(rejected.ok, false);
-    assert.match(rejected.reason, /Refused to open/);
-
-    // A content script (tab sender on a web page) can never reach this path.
-    const fromPage = await new Promise((resolve) => {
-      assert.equal(messageListener({
-        type: 'HERMES_OPEN_FULL_VIEW',
-        url: 'chrome-extension://hermes-test/app.html?sessionId=session-2',
-      }, { id: 'hermes-test', tab: { id: 3 }, frameId: 0, url: 'https://page.example/' }, resolve), false);
-    });
-    assert.deepEqual(fromPage, { ok: false, reason: 'forbidden_sender' });
-    assert.equal(createdUrl, 'chrome-extension://hermes-test/app.html?sessionId=session-1');
-  } finally {
-    globalThis.chrome = previousChrome;
-  }
 });
 
 test('full-tab package declares only justified artifact and Phase 6 controller permissions', () => {
