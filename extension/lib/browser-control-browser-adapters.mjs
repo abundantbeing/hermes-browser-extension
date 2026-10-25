@@ -760,7 +760,7 @@ export function frameProbe() {
   if (isTop) {
     for (const element of document.querySelectorAll('iframe,frame')) {
       const rect = element.getBoundingClientRect();
-      const style = getComputedStyle(element);
+      const style = window.getComputedStyle(element);
       if (rect.width >= 4 && rect.height >= 4 && style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0) shown += 1;
     }
   }

@@ -115,6 +115,8 @@ test('the probe reports the frame address and counts only frames that show', () 
   const element = (width, height, style = {}) => ({ getBoundingClientRect: () => ({ width, height }), style });
   const top = {};
   top.top = top;
+  // The probe is serialized into the page, so it must reach the style reader through `window`.
+  top.getComputedStyle = (el) => ({ visibility: 'visible', display: 'block', opacity: '1', ...el.style });
   const env = {
     location: { href: 'https://example.test/page' },
     window: top,
@@ -123,7 +125,6 @@ test('the probe reports the frame address and counts only frames that show', () 
         element(300, 250), element(1, 1), element(3, 300), element(300, 250, { visibility: 'hidden' }), element(300, 250, { display: 'none' }), element(300, 250, { opacity: '0' }),
       ],
     },
-    getComputedStyle: (el) => ({ visibility: 'visible', display: 'block', opacity: '1', ...el.style }),
   };
   const result = runProbe(env);
   assert.deepEqual({ url: result.url, top: result.top, frames: result.frames }, { url: 'https://example.test/page', top: true, frames: 1 });

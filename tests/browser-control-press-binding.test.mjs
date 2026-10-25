@@ -85,7 +85,10 @@ test('a name from the page cannot reorder or hide the card text', async () => {
   const running = executor.execute(frame({ key: ' ' }), { scope: SCOPE });
   await settle();
   const [shown] = approvals.pending();
-  assert.doesNotMatch(shown.reason, /[\u202e\u0000\n]/);
+  // Checked character by character: a control character inside a regular expression is what the linter refuses.
+  for (const hidden of ['\u202e', '\u0000', '\n']) {
+    assert.equal(shown.reason.includes(hidden), false, `the card text keeps U+${hidden.codePointAt(0).toString(16)}`);
+  }
   assert.ok(shown.reason.length < 220, shown.reason.length);
   approvals.cancelRequest(shown.approvalId);
   await running;
