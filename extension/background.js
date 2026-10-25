@@ -199,6 +199,7 @@ const WAKE_BACKGROUND_MESSAGE_TYPES = new Set([
 const wakeController = createWakeBackgroundController({
   chromeApi: browserApi,
   openPanel: (tab, options) => openHermesPanel(tab, options),
+  webappCredentials,
 });
 const contextMenuController = createContextMenuController({
   chromeApi: browserApi,

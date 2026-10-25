@@ -47,7 +47,7 @@ export function voiceLiveTurnNote(context = '') {
 }
 
 /** Exchange the panel's SDP offer for the GPT-Live answer through the Hermes host. */
-export async function requestVoiceLiveSession({ baseUrl, profile = '', fetchFn, sdp = '', history = [] } = {}) {
+export async function requestVoiceLiveSession({ baseUrl, profile = '', fetchFn, sdp = '', history = [], dashboardToken = '' } = {}) {
   // The vendor needs the offer byte-exact, trailing CRLF included.
   if (!String(sdp || '').trim()) throw new Error('Missing WebRTC offer.');
   const payload = await dashboardAudioJson({
@@ -58,6 +58,7 @@ export async function requestVoiceLiveSession({ baseUrl, profile = '', fetchFn, 
     method: 'POST',
     body: { sdp, history },
     timeoutMs: 45_000,
+    dashboardToken,
   });
   const answer = payload?.transport?.sdp;
   if (!payload?.ok || !answer) throw new Error('GPT-Live session creation failed.');
