@@ -624,21 +624,25 @@ export async function fetchDashboardFileStreamObjectUrl({
   return objectUrl;
 }
 
+// `dashboardToken` stands in when the page injects none: the gateway's Webapp injects no token,
+// and the caller holds the credential it signed this browser in with (lib/webapp-credential.mjs).
 export async function fetchDashboardSessionToken({
   baseUrl = '',
   fetchFn = globalThis.fetch?.bind(globalThis),
   timeoutMs = 2500,
+  dashboardToken = '',
 } = {}) {
   const dashboardUrl = String(baseUrl || '').trim();
   if (!dashboardUrl || typeof fetchFn !== 'function') return '';
+  const fallback = String(dashboardToken || '').trim();
   const rootResponse = await fetchWithTimeout(fetchFn, dashboardUrl, {
     method: 'GET',
     headers: { Accept: 'text/html' },
     credentials: 'include',
     cache: 'no-store',
   }, timeoutMs);
-  if (!rootResponse.ok) return '';
-  return extractDashboardSessionToken(await rootResponse.text());
+  if (!rootResponse.ok) return fallback;
+  return extractDashboardSessionToken(await rootResponse.text()) || fallback;
 }
 
 export async function fetchDashboardMediaDataUrl({
@@ -725,10 +729,11 @@ export async function dashboardAudioJson({
   body = null,
   fetchFn = globalThis.fetch?.bind(globalThis),
   timeoutMs = 8000,
+  dashboardToken = '',
 } = {}) {
   const dashboardUrl = String(baseUrl || '').trim().replace(/\/+$/, '');
   if (!dashboardUrl) throw new Error('The Hermes dashboard is not reachable from this panel.');
-  const token = await fetchDashboardSessionToken({ baseUrl: dashboardUrl, fetchFn });
+  const token = await fetchDashboardSessionToken({ baseUrl: dashboardUrl, fetchFn, dashboardToken });
   if (!token) throw new Error('The Hermes dashboard did not provide a session token.');
   const response = await fetchWithTimeout(fetchFn, dashboardEndpointUrl(dashboardUrl, pathname, profile), {
     method,
@@ -752,9 +757,9 @@ export async function dashboardAudioJson({
 }
 
 /** Which voice chat mode the profile selected and whether GPT-Live can start. Null when unknown. */
-export async function fetchVoiceLiveStatus({ baseUrl = '', profile = '', fetchFn } = {}) {
+export async function fetchVoiceLiveStatus({ baseUrl = '', profile = '', fetchFn, dashboardToken = '' } = {}) {
   try {
-    return normalizeVoiceLiveStatus(await dashboardAudioJson({ baseUrl, path: VOICE_LIVE_STATUS_PATH, profile, fetchFn, timeoutMs: 4000 }));
+    return normalizeVoiceLiveStatus(await dashboardAudioJson({ baseUrl, path: VOICE_LIVE_STATUS_PATH, profile, fetchFn, timeoutMs: 4000, dashboardToken }));
   } catch {
     // An older Hermes without the route, or no dashboard: no live voice.
     return null;
@@ -785,6 +790,7 @@ export async function transcribeAudioViaDashboard({
   mimeType = 'audio/webm',
   rootTimeoutMs = 2500,
   transcriptionTimeoutMs = 120000,
+  dashboardToken = '',
 } = {}) {
   const dashboardUrl = String(baseUrl || '').trim();
   if (!dashboardUrl) return { ok: false, transcript: '', provider: '', error: 'no-dashboard-url', status: 0 };
@@ -807,7 +813,7 @@ export async function transcribeAudioViaDashboard({
         status: rootResponse.status,
       };
     }
-    const token = extractDashboardSessionToken(await rootResponse.text());
+    const token = extractDashboardSessionToken(await rootResponse.text()) || String(dashboardToken || '').trim();
     if (!token) {
       return { ok: false, transcript: '', provider: '', error: 'no-dashboard-session-token', status: 0 };
     }
@@ -865,6 +871,7 @@ export async function discoverModelsFromDashboard({
   profile = '',
   rootTimeoutMs = 2500,
   optionsTimeoutMs = refresh ? 18000 : 6000,
+  dashboardToken = '',
 } = {}) {
   const dashboardUrl = String(baseUrl || '').trim();
   if (!dashboardUrl) return { ok: false, error: 'no-dashboard-url', models: [] };
@@ -876,7 +883,7 @@ export async function discoverModelsFromDashboard({
     }, rootTimeoutMs);
     if (!rootResponse.ok) return { ok: false, error: `dashboard-root-${rootResponse.status}`, models: [] };
     const html = await rootResponse.text();
-    const token = extractDashboardSessionToken(html);
+    const token = extractDashboardSessionToken(html) || String(dashboardToken || '').trim();
     if (!token) return { ok: false, error: 'no-dashboard-session-token', models: [] };
     const optionsResponse = await fetchWithTimeout(fetchFn, dashboardModelOptionsUrl(dashboardUrl, refresh, profile), {
       method: 'GET',

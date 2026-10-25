@@ -127,6 +127,7 @@ export async function restartGatewayViaDashboard({
   pollMs = 1_000,
   sleep,
   onProgress = () => {},
+  dashboardToken = '',
 } = {}) {
   const base = String(baseUrl || '').trim().replace(/\/+$/, '');
   if (!base || typeof fetchFn !== 'function') return { ok: false, reason: 'no-dashboard' };
@@ -134,7 +135,7 @@ export async function restartGatewayViaDashboard({
   let token = '';
   try {
     const root = await withTimeout(fetchFn, base, { headers: { Accept: 'text/html' }, cache: 'no-store' }, 2_500);
-    token = extractDashboardSessionToken(await root.text());
+    token = extractDashboardSessionToken(await root.text()) || String(dashboardToken || '').trim();
   } catch {
     return { ok: false, reason: 'unreachable' };
   }

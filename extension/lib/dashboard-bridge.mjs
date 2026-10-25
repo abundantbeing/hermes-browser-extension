@@ -252,6 +252,8 @@ export function ticketFailureHelp(reason = '', origin = '') {
       return `Open ${origin || 'your Hermes dashboard'} in the active tab, wait for it to load, sign in, then try connecting again.`;
     case 'not_signed_in':
       return 'Your Hermes dashboard tab is not signed in. Sign in there, then try connecting again.';
+    case 'webapp_sign_in_required':
+      return 'Hermes Web needs its sign-in. Run hermes webapp once on this computer, then try again.';
     case 'bad_base_url':
       return 'The remote gateway URL is not a valid https URL.';
     case 'scripting_unavailable':

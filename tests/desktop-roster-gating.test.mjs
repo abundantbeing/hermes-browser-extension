@@ -76,6 +76,6 @@ test('voice transcription targets a loopback dashboard only from the local gatew
   assert.equal(discoveries, 1);
 });
 
-test('the fixed Desktop dashboard ports are kept for local discovery', () => {
-  assert.deepEqual([...COMMON_DASHBOARD_PORTS], [1297, 22784, 9119]);
+test('the fixed Desktop dashboard ports are kept for local discovery, with the Webapp listener last', () => {
+  assert.deepEqual([...COMMON_DASHBOARD_PORTS], [1297, 22784, 9119, 9120]);
 });
