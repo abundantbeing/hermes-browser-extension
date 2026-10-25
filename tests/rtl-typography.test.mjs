@@ -69,7 +69,9 @@ test('the banner carries both wordmarks and shows the right one for the directio
       assert.equal(mark.getAttribute('data-i18n-aria-label'), 'ui.hermes.browser');
     }
   }
-  assert.match(css, /\.hero-wordmark-rtl,\s*\.release-sidecar-wordmark-rtl \{ display: none; \}/);
+  // Scoped so it outranks the later `.release-sidecar-wordmark { display: block; }`,
+  // which otherwise showed both logos in Settings.
+  assert.match(css, /\.hero-card \.hero-wordmark-rtl,\s*\.release-sidecar \.release-sidecar-wordmark-rtl \{ display: none; \}/);
   assert.match(css, /html\[dir="rtl"\] \.hero-wordmark-ltr,\s*html\[dir="rtl"\] \.release-sidecar-wordmark-ltr \{ display: none; \}/);
   assert.match(css, /html\[dir="rtl"\] \.hero-wordmark-rtl,\s*html\[dir="rtl"\] \.release-sidecar-wordmark-rtl \{ display: block; \}/);
 });

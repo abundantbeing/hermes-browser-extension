@@ -1079,8 +1079,8 @@ html[data-hermes-theme="cyberpunk"] .empty-state strong {
    side), the copy is aligned to the right, the fade runs the other way, and the
    wordmark is the right-aligned variant of the same artwork (the shorter top
    line moved flush right). The brand name stays Latin and left-to-right inside. */
-.hero-wordmark-rtl,
-.release-sidecar-wordmark-rtl { display: none; }
+.hero-card .hero-wordmark-rtl,
+.release-sidecar .release-sidecar-wordmark-rtl { display: none; }
 html[dir="rtl"] .hero-wordmark-ltr,
 html[dir="rtl"] .release-sidecar-wordmark-ltr { display: none; }
 html[dir="rtl"] .hero-wordmark-rtl,
