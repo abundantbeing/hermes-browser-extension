@@ -18,6 +18,9 @@ import {
 const identity = capabilityIdentity({ endpoint: 'http://127.0.0.1:9119', principal: 'me', profile: 'default' });
 const NOW = 1_000_000;
 
+// Routes Hermes v0.22.5 neither advertises nor serves anywhere (audited against api_server.py).
+const NO_SUCH_ROUTE = ['browserContextUpload', 'browserContextStatus', 'pluginActions'];
+
 function restCaps(features = {}, endpoints = {}) {
   return normalizeGatewayCapabilities({
     object: 'hermes.api_server.capabilities',
@@ -56,14 +59,19 @@ test('every advertised flag derives the same answer the boolean carries, for eac
     const absent = restCaps({}, {});
     assert.equal(absent[spec.key], false, `${spec.id} absent`);
     const record = recordsOf(absent)[spec.id];
+    if (NO_SUCH_ROUTE.includes(spec.id)) {
+      assert.equal(record.state, 'unsupported', `${spec.id} absent on a Hermes gateway has no route anywhere`);
+      assert.equal(record.reasonCode, 'not-in-hermes');
+      continue;
+    }
     assert.equal(record.state, 'unknown', `${spec.id} absent is unknown, not unsupported`);
     assert.match(record.reasonCode, /^not-advertised/);
   }
 });
 
-test('the four flags no gateway advertises read "not advertised by this gateway", never "unavailable"', () => {
+test('the companion flag no gateway advertises reads "not advertised by this gateway", never "unavailable"', () => {
   const records = recordsOf(restCaps({ session_chat: true }, { sessions: { method: 'GET', path: '/api/sessions' } }));
-  for (const id of ['browserContextUpload', 'browserContextStatus', 'browserCompanionPlugin', 'pluginActions']) {
+  for (const id of ['browserCompanionPlugin']) {
     assert.equal(records[id].state, 'unknown', id);
     assert.match(records[id].reason, /^Not advertised by this gateway\./, id);
     assert.doesNotMatch(records[id].reason, /unavailable|not installed/i, id);
@@ -101,8 +109,36 @@ test('browserContextProvider is an extension-side fact unless the gateway says o
   assert.equal(off.browserContextProvider, false, 'a gateway that turns it off is believed');
   assert.equal(recordsOf(off).browserContextProvider.state, 'unsupported');
 
+  // The boolean is what the gateway said, not a made-up true: null when it said nothing.
+  assert.equal(rest.browserContextProvider.state, 'available');
+  assert.equal(restCaps({ session_chat: true }).browserContextProvider, null);
+  assert.equal(DEFAULT_GATEWAY_CAPABILITIES.browserContextProvider, null);
   const legacy = normalizeGatewayCapabilities(null, { healthOk: true, hasApiKey: true });
-  assert.equal(legacy.browserContextProvider, true);
+  assert.equal(legacy.browserContextProvider, null);
+  assert.equal(recordsOf(legacy).browserContextProvider.reasonCode, 'extension-side');
+});
+
+test('profile_roster, the flag Hermes 0.22.5 advertises, turns the roster on', () => {
+  assert.equal(restCaps({ profile_roster: true }).profiles, true);
+  assert.equal(restCaps({ profile_roster: false }, { profiles: { method: 'GET', path: '/v1/profiles' } }).profiles, false);
+});
+
+test('over the dashboard WebSocket, approval prompts and session.usage context are contract, not "not reported"', () => {
+  const caps = dashboardWsGatewayCapabilities({ health: true, readyPayload: { session_authority: true } });
+  const records = recordsOf(caps, { readyPayload: { session_authority: true } });
+  for (const id of ['approvalEvents', 'sessionContext']) {
+    assert.equal(records[id].state, 'available', id);
+    assert.equal(records[id].reasonCode, 'ws-contract', id);
+  }
+  // No handshake yet: nothing is claimed.
+  const early = recordsOf(caps);
+  assert.notEqual(early.approvalEvents.state, 'available');
+});
+
+test('a REST gateway that advertises approval_events keeps its own record', () => {
+  const records = recordsOf(restCaps({ approval_events: true, session_context: true }));
+  assert.equal(records.approvalEvents.reasonCode, 'advertised');
+  assert.equal(records.sessionContext.reasonCode, 'advertised');
 });
 
 test('approval_events stays exactly what the gateway sets', () => {

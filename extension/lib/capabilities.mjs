@@ -69,11 +69,13 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   // has its own session-scoped image.attach_bytes RPC; see imageSessionAttach.
   imageUpload: false,
   imageSessionAttach: false,
-  // True when the EXTENSION can build hermes.browser.context.v1 payloads, which
-  // it always can (they ride inline in the prompt). It is not a statement that
-  // the gateway has a side-channel for them; browserContextUpload says that. A
-  // gateway that advertises browser_context_provider: false turns it off.
-  browserContextProvider: true,
+  // What the gateway SAYS about hermes.browser.context.v1: true or false when it
+  // advertises browser_context_provider, null when it says nothing (Hermes 0.22.5
+  // does not). null is not "off": the extension builds those payloads itself and
+  // sends them inline in the prompt, which the capability record states as an
+  // extension-side fact. browserContextUpload says whether the gateway has a
+  // side-channel for them.
+  browserContextProvider: null,
   browserContextUpload: false,
   browserContextStatus: false,
   browserCompanionPlugin: false,
@@ -190,7 +192,7 @@ function legacyCapabilities({ healthOk = false, hasApiKey = false, warning = '' 
     mediaRead: false,
     browserPairing: false,
     imageUpload: false,
-    browserContextProvider: true,
+    browserContextProvider: null,
     browserContextUpload: false,
     browserContextStatus: false,
     browserCompanionPlugin: false,
@@ -228,7 +230,7 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
         chatCompletions: inferredFeature(features, endpoints, ['chat_completions'], ['chat_completions']),
         chatCompletionsStreaming: inferredFeature(features, endpoints, ['chat_completions_streaming'], ['chat_completions_stream']),
         skills: inferredFeature(features, endpoints, ['skills_api', 'skills'], ['skills']),
-        profiles: inferredFeature(features, endpoints, ['profiles_api', 'profile_api'], ['profiles', 'profile_active', 'profiles_active']),
+        profiles: inferredFeature(features, endpoints, ['profile_roster', 'profiles_api', 'profile_api'], ['profiles', 'profile_active', 'profiles_active']),
         runs: advertisedFeature(features, endpoints, ['run_submission', 'runs_api'], ['runs']),
         runStatus: advertisedFeature(features, endpoints, ['run_status'], ['run_status']),
         runEvents: advertisedFeature(features, endpoints, ['run_events_sse', 'run_events'], ['run_events']),
@@ -243,7 +245,7 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
     mediaRead: inferredFeature(features, endpoints, ['media_api', 'mediaRead'], ['media_read']),
     browserPairing: inferredFeature(features, endpoints, ['browser_extension_pairing', 'browserPairing'], ['browser_extension_pair_start', 'browser_pairing', 'pair_start']),
     imageUpload: inferredFeature(features, endpoints, ['browser_image_upload', 'image_upload', 'imageUpload'], ['browser_image_upload', 'image_upload', 'uploads_images']),
-    browserContextProvider: boolFeature(features, [BROWSER_CAPABILITY_FLAGS.browserContextProvider, 'browserContextProvider']) ?? true,
+    browserContextProvider: boolFeature(features, [BROWSER_CAPABILITY_FLAGS.browserContextProvider, 'browserContextProvider']) ?? null,
     browserContextUpload: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.browserContextUpload, 'browserContextUpload'], ['browser_context_update', 'browser_context']),
     browserContextStatus: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.browserContextStatus, 'browserContextStatus'], ['browser_context_status']),
     browserCompanionPlugin: inferredFeature(features, endpoints, [BROWSER_CAPABILITY_FLAGS.browserCompanionPlugin, 'browserCompanionPlugin'], ['browser_companion_status', 'browser_context_status']),
@@ -300,7 +302,7 @@ export const ADVERTISED_FLAG_SPECS = Object.freeze([
   { id: 'models', key: 'models', features: ['models_api', 'models'], endpoints: ['models'] },
   { id: 'sessions', key: 'sessions', features: ['session_resources', 'sessions_api'], endpoints: ['sessions', 'session', 'session_create'] },
   { id: 'skills', key: 'skills', features: ['skills_api', 'skills'], endpoints: ['skills'] },
-  { id: 'profiles', key: 'profiles', features: ['profiles_api', 'profile_api'], endpoints: ['profiles', 'profile_active', 'profiles_active'] },
+  { id: 'profiles', key: 'profiles', features: ['profile_roster', 'profiles_api', 'profile_api'], endpoints: ['profiles', 'profile_active', 'profiles_active'] },
   { id: 'runs', key: 'runs', features: ['run_submission', 'runs_api'], endpoints: ['runs'] },
   { id: 'runSteer', key: 'runSteer', features: ['run_steer'], endpoints: ['run_steer'] },
   { id: 'sessionContext', key: 'sessionContext', features: ['session_context', 'context_status', 'contextStatus'], endpoints: ['session_context', 'session_context_get', 'context_status'] },
@@ -413,10 +415,38 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   // The extension builds BCP v2 payloads itself and sends them inline. That is
   // true whatever the gateway says; only an explicit "off" from the gateway
   // changes it, and nothing here claims the gateway has a side-channel for it.
+  // caps.browserContextProvider is what the gateway said (true, false or null for
+  // nothing); null falls back to the extension-side fact, never to a made-up true.
   if (caps.browserContextProvider === false) make('browserContextProvider', S.unsupported, O.capabilities, 'advertised-off');
-  else if (boolFeature(features, [BROWSER_CAPABILITY_FLAGS.browserContextProvider, 'browserContextProvider']) === true) {
+  else if (caps.browserContextProvider === true || boolFeature(features, [BROWSER_CAPABILITY_FLAGS.browserContextProvider, 'browserContextProvider']) === true) {
     make('browserContextProvider', S.available, O.capabilities, 'advertised');
   } else make('browserContextProvider', S.available, O.extension, 'extension-side');
+
+  const replace = (id, state, source, reasonCode, params = {}) => {
+    const at = records.findIndex((record) => record.id === id);
+    const record = createCapabilityRecord({ id, state, source, checkedAt, identityKey, reasonCode, params });
+    if (at >= 0) records[at] = record; else records.push(record);
+  };
+  const current = (id) => records.find((record) => record.id === id);
+
+  // Part of the dashboard WebSocket contract, used by the panel whenever it talks
+  // over the socket: the gateway raises approval.request for a client that
+  // announced it answers prompts, and the panel reads context from session.usage
+  // events. Neither is listed in /v1/capabilities, so "not reported" understated them.
+  if (wsRoute && hasReady) {
+    if (current('approvalEvents')?.state !== S.available) replace('approvalEvents', S.available, O.derived, 'ws-contract');
+    if (current('sessionContext')?.state !== S.available) replace('sessionContext', S.available, O.derived, 'ws-contract');
+  }
+
+  // Routes no Hermes release serves. /v1/capabilities answered in full and does not
+  // list them, and the matching upstream surfaces (checked against v0.22.5) do not
+  // exist either, so say so instead of "not advertised". A gateway that starts to
+  // advertise one still wins: this only fills the gap an absent flag leaves.
+  if (transport === 'rest' && caps.platform === 'hermes-agent' && caps.raw && typeof caps.raw === 'object') {
+    for (const id of ['browserContextUpload', 'browserContextStatus', 'pluginActions']) {
+      if (current(id)?.reasonCode === 'not-advertised') replace(id, S.unsupported, O.derived, 'not-in-hermes');
+    }
+  }
 
   // Browser control is negotiated from features.browser_extension_control.
   if (transport === 'rest' && caps.browserControl === true) make('browserControl', S.available, O.capabilities, 'advertised');
@@ -496,10 +526,10 @@ function rowDefinitions({ browserSpeechAvailable = false } = {}) {
     { key: 'runs', label: 'Runs API', off: 'Runs API unavailable — chat/session routes will be used.' },
     { key: 'runSteer', label: 'Run steering', off: 'Run steering unavailable — queued drafts can still send after the current turn.', on: 'Active-run steering route available.' },
     { key: 'browserContextProvider', label: 'Browser Context Protocol', off: 'The gateway turned the browser context protocol off.', on: 'Extension can emit hermes.browser.context.v1 payloads.' },
-    { key: 'browserContextUpload', label: 'Browser context upload', off: 'Side-channel browser context route not advertised — prompt-embedded context stays active.', on: 'Side-channel browser context upload route available.' },
-    { key: 'browserContextStatus', label: 'Browser context status', off: 'No browser context status route is advertised.', on: 'Browser context status route available.' },
+    { key: 'browserContextUpload', label: 'Browser context upload', off: 'Hermes has no side-channel route for browser context. Context goes inline with each message, which is how it is read.', on: 'Side-channel browser context upload route available.' },
+    { key: 'browserContextStatus', label: 'Browser context status', off: 'Hermes has no browser context status route. The Browser context sent with each message shows what was sent.', on: 'Browser context status route available.' },
     { key: 'browserCompanionPlugin', label: 'Browser Companion Plugin', off: 'Optional companion plugin: the gateway does not advertise it, so the extension cannot tell whether it is loaded. Context still goes inline with each message.', on: 'Companion plugin capability advertised.' },
-    { key: 'pluginActions', label: 'Plugin actions', off: 'Plugin actions are not advertised. The extension does not run plugin actions.', on: 'Plugin actions advertised.' },
+    { key: 'pluginActions', label: 'Plugin actions', off: 'Hermes has no plugin-actions route. The extension does not run plugin actions.', on: 'Plugin actions advertised.' },
     { key: 'sessionContext', label: 'Context status', off: 'Native session context status unavailable — Browser uses local/runtime estimates.', on: 'Native session context inspection available.' },
     { key: 'sessionCompress', label: 'Context compaction', off: 'Manual compaction is not available on this connection — Hermes compacts on its own.', on: 'Manual compaction available.' },
     { key: 'sessionAuthority', label: 'Session authority', off: 'Projects and canonical session edits need session authority.', on: 'Canonical session edits (move, compact) are available.' },

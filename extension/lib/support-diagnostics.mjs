@@ -133,7 +133,7 @@ export function buildSupportDiagnostics({
         bullet('Skills', availability(capabilities.skills)),
         bullet('Profiles', availability(capabilities.profiles)),
         bullet('Run events', availability(capabilities.runEvents || capabilities.browserEvents)),
-        bullet('Browser Context Protocol', availability(capabilities.browserContextProvider, { missing: 'turned off by the gateway', available: 'available (built by this extension)' })),
+        bullet('Browser Context Protocol', availability(capabilities.browserContextProvider !== false, { missing: 'turned off by the gateway', available: 'available (built by this extension)' })),
         bullet('Browser context upload', availability(capabilities.browserContextUpload, { missing: NOT_ADVERTISED })),
         bullet('Companion plugin', availability(capabilities.browserCompanionPlugin, { missing: `${NOT_ADVERTISED} (the extension cannot tell whether it is loaded)` })),
         bullet('Plugin actions', availability(capabilities.pluginActions, { missing: NOT_ADVERTISED })),
