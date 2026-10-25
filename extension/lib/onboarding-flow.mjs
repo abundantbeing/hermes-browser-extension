@@ -297,7 +297,7 @@ export function createOnboardingFlow({
     const status = connected ? t('onboarding.connect.connected') : (connection.status || t('onboarding.connect.not_paired'));
     return `
       <div class="onboarding-connect${connected ? ' is-connected' : ''}${connection.busy ? ' is-busy' : ''}${connectFailed(connection) ? ' is-failed' : ''}${approvalNode ? ' is-approving' : ''}">
-        <p class="onboarding-connect-status" role="status">${connected ? ONBOARDING_ICONS.connected : ''}<span>${escapeHtml(status)}</span></p>
+        <p class="onboarding-connect-status" role="status" tabindex="-1">${connected ? ONBOARDING_ICONS.connected : ''}<span>${escapeHtml(status)}</span></p>
         ${approvalNode ? '<div class="onboarding-approval-slot"></div>' : ''}
         <div class="onboarding-connect-actions"${connected ? ' hidden' : ''}>
           <button type="button" class="onboarding-connect-button" data-onboarding-connect${connection.busy ? ' disabled' : ''}>${ONBOARDING_ICONS.connect}<span>${escapeHtml(connection.busy ? (connection.busyLabel || t('ui.connect.to.hermes')) : t('ui.connect.to.hermes'))}</span></button>
@@ -433,6 +433,8 @@ export function createOnboardingFlow({
     const active = doc?.activeElement;
     if (!active || !host.contains(active)) return null;
     if (active.dataset?.radioKey) return { radio: active.dataset.radioKey };
+    // The status line holds the keyboard while Connect works; keep it there when the step is drawn again.
+    if (active.classList?.contains('onboarding-connect-status')) return { selector: '.onboarding-connect-status' };
     for (const attribute of ['data-onboarding-next', 'data-onboarding-back', 'data-onboarding-skip', 'data-onboarding-connect', 'data-onboarding-manual', 'data-onboarding-start', 'data-onboarding-skip-setup']) {
       if (active.hasAttribute?.(attribute)) return { attribute };
     }
@@ -443,8 +445,17 @@ export function createOnboardingFlow({
     if (!key) return;
     const target = key.radio
       ? [...host.querySelectorAll('[data-radio-key]')].find((node) => node.dataset.radioKey === key.radio)
-      : host.querySelector(`[${key.attribute}]`);
-    target?.focus?.({ preventScroll: true });
+      : host.querySelector(key.selector || `[${key.attribute}]`);
+    if (target && !target.disabled && !target.closest?.('[hidden]')) {
+      target.focus?.({ preventScroll: true });
+      return;
+    }
+    // The control that had the keyboard went away or was disabled (Connect while
+    // it works, the buttons once connected). A disabled button can keep
+    // activeElement in one browser and lose it in another, and either way the
+    // keys stop reaching setup's own Tab trap, so the keyboard moves to the
+    // status line, still inside this dialog.
+    (host.querySelector('.onboarding-connect-status') || host.querySelector('.onboarding-title'))?.focus?.({ preventScroll: true });
   }
 
   function syncConnection(state) {

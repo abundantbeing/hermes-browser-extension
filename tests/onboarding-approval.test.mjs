@@ -97,3 +97,70 @@ test('a closed setup holds nothing and accepts no page', () => {
   assert.equal(host.hidden, true);
   assert.equal(host.querySelector('.pairing-approval'), null);
 });
+
+// Focus while Connect works: pressing it disables the very button that has the keyboard.
+// linkedom keeps no focus, so give this window a real-enough one: focus() moves
+// activeElement unless the element is disabled (which is what a browser does).
+function withFocus(window, document) {
+  let current = null;
+  Object.defineProperty(document, 'activeElement', { get: () => current ?? document.body, configurable: true });
+  window.HTMLElement.prototype.focus = function focus() { if (!this.disabled) current = this; };
+  return { get active() { return current; } };
+}
+
+test('pressing Connect keeps the keyboard inside setup: focus moves to the status line, not a disabled button', () => {
+  const { window, document, host, flow, state } = mount();
+  const focus = withFocus(window, document);
+  flow.open({ step: 'connect' });
+  const connect = host.querySelector('[data-onboarding-connect]');
+  connect.focus();
+  assert.equal(focus.active, connect, 'the press leaves focus on Connect');
+  state.connection = { connected: false, busy: true, busyLabel: 'Connecting...', status: 'Waiting for approval' };
+  flow.render();
+  const statusLine = host.querySelector('.onboarding-connect-status');
+  assert.equal(statusLine.getAttribute('tabindex'), '-1', 'focusable by script, not a tab stop');
+  assert.equal(host.querySelector('[data-onboarding-connect]').disabled, true);
+  assert.equal(focus.active, statusLine, 'the keys stay in the dialog');
+  // While the approval page holds the step, the update patches in place and the keyboard still stays in the dialog.
+  const approving = mount();
+  const approvingFocus = withFocus(approving.window, approving.document);
+  approving.flow.open({ step: 'connect' });
+  approving.flow.setApproval(approving.node);
+  const button = approving.host.querySelector('[data-onboarding-connect]');
+  button.focus();
+  approving.state.connection = { connected: false, busy: true, status: 'Waiting for Hermes Desktop approval...' };
+  approving.flow.render();
+  assert.equal(approvingFocus.active, approving.host.querySelector('.onboarding-connect-status'));
+});
+
+test('an enabled Connect keeps its focus across a redraw, and the actions hidden once connected hand it to the status line', () => {
+  const { window, document, host, flow, state } = mount();
+  const focus = withFocus(window, document);
+  flow.open({ step: 'connect' });
+  const connect = host.querySelector('[data-onboarding-connect]');
+  connect.focus();
+  state.connection = { connected: false, busy: false, failed: true, status: 'The gateway said no' };
+  flow.render();
+  assert.equal(focus.active, host.querySelector('[data-onboarding-connect]'), 'a failed attempt leaves Connect usable and focused');
+  state.connection = { connected: true, busy: false, status: '' };
+  flow.render();
+  assert.equal(focus.active, host.querySelector('.onboarding-connect-status'), 'the buttons are hidden now; the keyboard stays in setup');
+});
+
+test('the status line keeps the keyboard when the step is drawn again after Connect ends', () => {
+  const { window, document, host, flow, state } = mount();
+  const focus = withFocus(window, document);
+  flow.open({ step: 'connect' });
+  host.querySelector('[data-onboarding-connect]').focus();
+  state.connection = { connected: false, busy: true, status: 'Connecting' };
+  flow.render();
+  const busyLine = host.querySelector('.onboarding-connect-status');
+  assert.equal(focus.active, busyLine);
+  // The attempt fails: the step is rebuilt (the status node is a new one) and Connect is usable again.
+  state.connection = { connected: false, busy: false, failed: true, status: 'The gateway said no' };
+  flow.render();
+  const failedLine = host.querySelector('.onboarding-connect-status');
+  assert.notEqual(failedLine, busyLine, 'the status node was replaced by the rebuild');
+  assert.equal(focus.active, failedLine, 'focus did not fall to the page body');
+  assert.equal(host.querySelector('.onboarding-connect-status span').textContent, 'The gateway said no');
+});
