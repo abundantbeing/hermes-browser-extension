@@ -12,7 +12,7 @@ import { assistClick, assistClickWhenVisible, assistEvaluate } from './e2e-assis
 import { ensureExtensionStartupPage, killProcessTree, resolveChromeExecutable, launchChrome } from './e2e-chrome-env.mjs';
 import { AGENT_THEME_END, AGENT_THEME_START } from '../extension/lib/agent-theme-authoring.mjs';
 import { HERMES_CONTEXT_SOURCE_URL } from '../extension/lib/hermes-context-sync.mjs';
-import { HERMES_CANONICAL_MODEL_CATALOG_URL } from '../extension/lib/model-discovery.mjs';
+import { HERMES_CANONICAL_MODEL_CATALOG_URL, NOUS_LIVE_MODEL_CATALOG_URL } from '../extension/lib/model-discovery.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -784,11 +784,11 @@ async function assertSequentialTabReach(client, selectors, label) {
 }
 
 // The extension's own startup fetches to GitHub (model metadata, the model
-// catalog, the update check). They are handled (the panel falls back to its
-// bundled data, or shows "could not check"), and a run with the network blocked
-// logs each one as a failed resource load. Exactly these four addresses, taken
-// from the modules that fetch them so they cannot drift, and nothing else on
-// those hosts.
+// catalog, the update check) and to the Nous inference API (its live model
+// list). They are handled (the panel falls back to its bundled data, or shows
+// "could not check"), and a run with the network blocked logs each one as a
+// failed resource load. Exactly these five addresses, taken from the modules
+// that fetch them so they cannot drift, and nothing else on those hosts.
 function sidepanelUpdateUrl(name) {
   const source = readFileSync(path.join(ROOT, 'extension', 'sidepanel.js'), 'utf8');
   const match = source.match(new RegExp(`const ${name} = '([^']+)';`));
@@ -801,6 +801,7 @@ const EXPECTED_HANDLED_GITHUB_FETCHES = new Set([
   HERMES_CANONICAL_MODEL_CATALOG_URL,
   sidepanelUpdateUrl('UPDATE_PACKAGE_URL'),
   sidepanelUpdateUrl('UPDATE_MAIN_COMMIT_URL'),
+  NOUS_LIVE_MODEL_CATALOG_URL,
 ]);
 
 // Resource-load failures that are expected in this journey and not page errors:
@@ -808,7 +809,7 @@ const EXPECTED_HANDLED_GITHUB_FETCHES = new Set([
 //    extension/lib/fonts.css), so their @font-face files 404 and the fallback stack is used;
 //  - connection discovery probes loopback gateway/dashboard candidates, and the
 //    stub gateway deliberately lacks optional routes (profiles, health detail);
-//  - the four handled GitHub fetches above (the cache-busting ?t= is ignored).
+//  - the five handled startup fetches above (the cache-busting ?t= is ignored).
 function expectedResourceFailure(entry = {}) {
   if (entry.source !== 'network') return false;
   const url = String(entry.url || '');
