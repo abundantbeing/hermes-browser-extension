@@ -247,3 +247,42 @@ test('a scroll during the capture does not move the region that is checked after
   assert.match((await shoot(chromium, {}, { target: { backendDOMNodeId: 44 } })).dataUrl, /^data:image\/png;base64,/);
   assert.deepEqual(clipOf(chromium.calls), { x: 10, y: 3020, width: 20, height: 20, scale: 1 });
 });
+
+// --- 6. a drag that is stopped is not dropped on the destination ----------------------------------------------------
+
+test('a Stop during a drag releases the button where it was pressed, never on the destination', async () => {
+  for (const stopAfter of ['press', 'move']) {
+    const controller = new AbortController();
+    const chromium = fakeChromium({
+      handlers: { 'DOM.getBoxModel': ({ backendNodeId }) => (backendNodeId === 44 ? box(10, 20, 20, 20) : box(500, 500, 20, 20)) },
+      onSend: (method, params) => {
+        if (method !== 'Input.dispatchMouseEvent') return;
+        if ((stopAfter === 'press' && params.type === 'mousePressed') || (stopAfter === 'move' && params.type === 'mouseMoved' && params.buttons === 1)) {
+          controller.abort(new Error('Stop'));
+        }
+      },
+    });
+    await assert.rejects(
+      createChromiumCdpAdapter({ browserApi: chromium.api }).execute(
+        'browser_drag', {}, { scope, signal: controller.signal, target: { backendDOMNodeId: 44 }, destination: { backendDOMNodeId: 45 } },
+      ),
+      /Stop/,
+    );
+    const events = mouseEvents(chromium.calls).filter((event) => event.type !== 'mouseMoved' || event.buttons === 1);
+    const released = events.filter((event) => event.type === 'mouseReleased');
+    assert.equal(released.length, 1, stopAfter);
+    assert.deepEqual({ x: released[0].x, y: released[0].y }, { x: 20, y: 30 }, `${stopAfter}: released at the source`);
+    assert.equal(events.some((event) => event.type === 'mouseReleased' && event.x === 510), false, 'nothing was released on the destination');
+  }
+});
+
+test('a drag that is not stopped still drops on the destination', async () => {
+  const chromium = fakeChromium({
+    handlers: { 'DOM.getBoxModel': ({ backendNodeId }) => (backendNodeId === 44 ? box(10, 20, 20, 20) : box(500, 500, 20, 20)) },
+  });
+  await createChromiumCdpAdapter({ browserApi: chromium.api }).execute(
+    'browser_drag', {}, { scope, signal: openSignal(), target: { backendDOMNodeId: 44 }, destination: { backendDOMNodeId: 45 } },
+  );
+  const released = mouseEvents(chromium.calls).filter((event) => event.type === 'mouseReleased');
+  assert.deepEqual(released.map((event) => [event.x, event.y]), [[510, 510]]);
+});

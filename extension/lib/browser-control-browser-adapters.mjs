@@ -1692,10 +1692,11 @@ function createChromiumCdpAdapter({
         if (Math.abs(pressPoint.x - sourcePoint.x) > 0.5 || Math.abs(pressPoint.y - sourcePoint.y) > 0.5) {
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...pressPoint, button: 'none', buttons: 0 });
         }
+        // A drag that is stopped must not drop where it was going: the cleanup release goes to the point the button was
+        // pressed at, so the destination never receives the drop.
         const held = { at: pressPoint };
         await pressAndRelease(session, held, {}, async () => {
           await send('Input.dispatchMouseEvent', { type: 'mousePressed', ...pressPoint, button: 'left', buttons: 1, clickCount: 1 });
-          held.at = destinationPoint;
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...destinationPoint, button: 'left', buttons: 1 });
         }, async () => {
           await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...destinationPoint, button: 'left', buttons: 0, clickCount: 1 });
