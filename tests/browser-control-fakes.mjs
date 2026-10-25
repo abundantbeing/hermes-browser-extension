@@ -14,8 +14,16 @@ export const sameProcessFrame = (id, url, children = []) => ({
 });
 export const crossProcessFrame = (id) => ({ nodeType: 1, nodeName: 'IFRAME', backendNodeId: id, frameId: `OOPIF${id}` });
 
+// What chrome.debugger.getTargets() lists for the frames the browser runs in their own process: a target of type
+// "other" whose id is the frame id of the owner element in the DOM, with its real address and no parent.
+export const frameTarget = (id, url) => ({ type: 'other', id, url, attached: true, title: url });
+
+// `debuggerTargets` is what getTargets() answers: a list, a function returning one, an Error to throw, or null for an
+// API without the call. Chrome refuses the CDP method Target.getTargets to an extension ("Not allowed"), so the fake
+// does too: a test that needs the list must go through the extension API.
 export function fakeChromium({
   handlers = {}, tab = () => ({ url: 'https://example.com/', title: 'Example', status: 'complete', active: true, windowId: 1 }), onSend,
+  debuggerTargets = [],
 } = {}) {
   const calls = [];
   const counts = { attach: 0, detach: 0 };
@@ -30,6 +38,7 @@ export function fakeChromium({
     'Page.captureScreenshot': () => ({ data: 'AAAA' }),
     'DOM.resolveNode': () => ({ object: { objectId: 'o' } }),
     'Runtime.callFunctionOn': () => ({ result: { value: false } }),
+    'Target.getTargets': () => { throw new Error(JSON.stringify({ code: -32000, message: 'Not allowed' })); },
   };
   const table = { ...defaults, ...handlers };
   const api = {
@@ -48,7 +57,16 @@ export function fakeChromium({
       onEvent: { addListener() {}, removeListener() {} },
     },
   };
-  return { api, calls, counts };
+  const targetCalls = { count: 0 };
+  if (debuggerTargets !== null) {
+    api.debugger.getTargets = async () => {
+      targetCalls.count += 1;
+      const value = typeof debuggerTargets === 'function' ? debuggerTargets() : debuggerTargets;
+      if (value instanceof Error) throw value;
+      return value;
+    };
+  }
+  return { api, calls, counts, targetCalls };
 }
 
 

@@ -5,26 +5,31 @@ import test from 'node:test';
 
 import { createChromiumCdpAdapter } from '../extension/lib/browser-control-browser-adapters.mjs';
 import {
-  box, captured, crossProcessFrame, documentOf, fakeChromium, mouseEvents, openSignal, sameProcessFrame,
+  box, captured, crossProcessFrame, documentOf, fakeChromium, frameTarget, methodsOf, mouseEvents, openSignal, sameProcessFrame,
 } from './browser-control-fakes.mjs';
 
 const scope = Object.freeze({ tabId: 1, frameId: 0 });
 
-// The iframe targets the browser lists: { frame id: address }, or an entry with a parent to nest it.
-const targetInfos = (entries) => ({
-  targetInfos: [
-    { targetId: 'MAINTAB', type: 'page', url: 'https://example.com/' },
-    ...Object.entries(entries).map(([targetId, value]) => {
-      const entry = typeof value === 'string' ? { url: value } : value;
-      return { targetId, type: 'iframe', url: entry.url, parentFrameId: entry.parent || 'MAIN', attached: true };
-    }),
-  ],
-});
+// What chrome.debugger.getTargets() lists: the other things the browser runs, and the frames in their own process as
+// targets of type "other" whose id is the owner's frame id, with the real address and no parent.
+const listed = (entries) => [
+  { type: 'page', id: 'MAINTAB', url: 'https://example.com/', tabId: 1, attached: true },
+  { type: 'worker', id: 'SW', url: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/background.js', attached: true },
+  { type: 'other', id: 'TOOLBAR', url: 'chrome://webui-toolbar.top-chrome/', attached: false },
+  ...Object.entries(entries).map(([id, url]) => frameTarget(id, url)),
+];
 
 // A page with OOPIF owners 31.. at the given boxes (viewport coordinates), the targets they run in, and optional extras.
-function pageWith({ frames, targets, targetsError = null, computed = null, extra = {} }) {
+// `targets` null is an API without getTargets; `targetsError` makes it throw; `targetsReply` is what it answers.
+function pageWith(options) {
+  const { frames, targets, targetsError = null, targetsReply, computed = null, extra = {} } = options;
   const owners = Object.keys(frames).map((id) => crossProcessFrame(Number(id)));
+  let debuggerTargets = listed(targets || {});
+  if (targets === null) debuggerTargets = null;
+  else if (targetsError) debuggerTargets = targetsError;
+  else if ('targetsReply' in options) debuggerTargets = () => targetsReply;
   return fakeChromium({
+    debuggerTargets,
     handlers: {
       'DOM.getDocument': () => documentOf(owners),
       'DOM.getBoxModel': ({ backendNodeId }) => {
@@ -32,7 +37,6 @@ function pageWith({ frames, targets, targetsError = null, computed = null, extra
         if (found === 'none') throw new Error('Could not compute box model.');
         return found ? box(...found) : box(10, 20, 20, 20);
       },
-      'Target.getTargets': () => { if (targetsError) throw targetsError; return targets ? targetInfos(targets) : {}; },
       ...(computed ? {
         'DOM.pushNodesByBackendIdsToFrontend': ({ backendNodeIds }) => ({ nodeIds: backendNodeIds.map((id) => id + 5000) }),
         'CSS.getComputedStyleForNode': ({ nodeId }) => {
@@ -88,11 +92,14 @@ test('a frame on a browser page, a data or blob document, a checkout or sign-in 
 });
 
 test('a frame whose address cannot be had stays withheld', async () => {
-  // Not among the targets, no target list at all, the call refused, or a target list that is not one.
+  // Not among the targets, no such call, the call refused, or an answer that is not a list.
   for (const [label, options] of [
     ['not in the list', { frames: { 31: IN_VIEW }, targets: { OOPIF99: 'https://elsewhere.example/' } }],
-    ['no list', { frames: { 31: IN_VIEW }, targets: null }],
+    ['the id of another kind of target', { frames: { 31: IN_VIEW }, targets: {}, targetsReply: [{ type: 'worker', id: 'OOPIF31', url: 'https://ads.example/slot' }] }],
+    ['the API has no getTargets', { frames: { 31: IN_VIEW }, targets: null }],
     ['the call fails', { frames: { 31: IN_VIEW }, targets: {}, targetsError: new Error('Not allowed') }],
+    ['the answer is not a list', { frames: { 31: IN_VIEW }, targets: {}, targetsReply: { targetInfos: [] } }],
+    ['no answer', { frames: { 31: IN_VIEW }, targets: {}, targetsReply: undefined }],
   ]) {
     const chromium = pageWith(options);
     await assert.rejects(shoot(chromium), refused, label);
@@ -100,17 +107,53 @@ test('a frame whose address cannot be had stays withheld', async () => {
   }
 });
 
-test('a frame nested in an allowed frame is judged too', async () => {
-  const restrictedInside = pageWith({
-    frames: { 31: IN_VIEW },
-    targets: { OOPIF31: 'https://ads.example/slot', NESTED: { url: 'https://bank.example/billing', parent: 'OOPIF31' } },
+test('the frame list comes from the extension API: the CDP Target.getTargets, which Chrome refuses, is never needed', async () => {
+  const chromium = pageWith({ frames: { 31: IN_VIEW }, targets: { OOPIF31: 'https://www.youtube.com/embed/abc' } });
+  assert.match((await shoot(chromium)).dataUrl, /^data:image\/png;base64,/);
+  assert.equal(chromium.targetCalls.count > 0, true, 'chrome.debugger.getTargets was asked');
+  assert.equal(methodsOf(chromium.calls).includes('Target.getTargets'), false);
+  assert.equal(methodsOf(chromium.calls).includes('Target.setDiscoverTargets'), false);
+});
+
+test('a frame is matched by its owner frame id, so another frame with the same address cannot vouch for it', async () => {
+  // Two owners, 31 on an ordinary address and 32 on a checkout address.
+  const near = pageWith({
+    frames: { 31: IN_VIEW, 32: [0, 0, 100, 100] },
+    targets: { OOPIF31: 'https://ads.example/slot', OOPIF32: 'https://pay.example/checkout' },
   });
-  await assert.rejects(shoot(restrictedInside), refused);
-  const fineInside = pageWith({
-    frames: { 31: IN_VIEW },
-    targets: { OOPIF31: 'https://ads.example/slot', NESTED: { url: 'https://cdn.example/creative', parent: 'OOPIF31' } },
+  await assert.rejects(shoot(near), /frame from pay\.example/);
+  const elsewhere = pageWith({
+    frames: { 31: IN_VIEW, 32: [0, 2000, 100, 100] },
+    targets: { OOPIF31: 'https://ads.example/slot', OOPIF32: 'https://pay.example/checkout' },
   });
-  assert.match((await shoot(fineInside)).dataUrl, /^data:image\/png;base64,/);
+  assert.match((await shoot(elsewhere)).dataUrl, /^data:image\/png;base64,/);
+});
+
+test('a frame nested in a frame Hermes may not read is hidden with it; one nested in an ordinary frame is judged on its own address', async () => {
+  // The target list has no parents, so the nesting comes from the document each owner sits in.
+  const nestedIn = (parentUrl) => fakeChromium({
+    debuggerTargets: listed({ OOPIF32: 'https://ads.example/slot' }),
+    handlers: {
+      'DOM.getDocument': () => documentOf([sameProcessFrame(31, parentUrl, [crossProcessFrame(32)])]),
+      // The outer frame is not rendered; only the ordinary frame inside it is in view.
+      'DOM.getBoxModel': ({ backendNodeId }) => {
+        if (backendNodeId === 31) throw new Error('Could not compute box model.');
+        return backendNodeId === 32 ? box(...IN_VIEW) : box(10, 20, 20, 20);
+      },
+    },
+  });
+  const inRestricted = nestedIn('https://bank.example/billing');
+  const error = await shoot(inRestricted).then(() => null, (thrown) => thrown);
+  assert.equal(refused(error), true, error?.message);
+  assert.match(error.message, /frame from bank\.example/, 'the outer frame is named, not the ordinary one inside it');
+  assert.equal(captured(inRestricted.calls), false);
+  assert.match((await shoot(nestedIn('https://widgets.example/outer'))).dataUrl, /^data:image\/png;base64,/);
+  // An ordinary frame in an ordinary frame, but its own address is a checkout page.
+  const restrictedInOrdinary = fakeChromium({
+    debuggerTargets: listed({ OOPIF32: 'https://pay.example/checkout' }),
+    handlers: { 'DOM.getDocument': () => documentOf([sameProcessFrame(31, 'https://widgets.example/outer', [crossProcessFrame(32)])]) },
+  });
+  await assert.rejects(shoot(restrictedInOrdinary), /frame from pay\.example/);
 });
 
 test('a frame under 4 x 4 CSS pixels, one that is not rendered, and one out of the picture do not count', async () => {
@@ -182,12 +225,12 @@ test('the element screenshot message is the same, and an element away from the f
 // The point is over the frame's owner element, in the page's own frame: what Chrome reports for a cross-site frame.
 function overlayPage(targets, extra = {}) {
   return fakeChromium({
+    debuggerTargets: targets === null ? null : listed(targets || {}),
     handlers: {
       'DOM.getNodeForLocation': () => ({ backendNodeId: 61, frameId: 'MAIN' }),
       'DOM.describeNode': ({ backendNodeId }) => ({ node: backendNodeId === 61 ? { nodeName: 'IFRAME', frameId: 'OOPIF61' } : { nodeName: 'A' } }),
       'DOM.getDocument': () => documentOf([crossProcessFrame(61)]),
       'DOM.getBoxModel': ({ backendNodeId }) => (backendNodeId === 61 ? box(0, 0, 400, 400) : box(10, 20, 20, 20)),
-      'Target.getTargets': () => (targets ? targetInfos(targets) : {}),
       ...extra,
     },
   });

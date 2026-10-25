@@ -1249,17 +1249,24 @@ function createChromiumCdpAdapter({
   }
 
   // A frame in its own process has no document in the DOM and no entry in the frame tree, but the browser lists it
-  // as a target of its own with the address it is on. The frame ids match (an iframe target's id is its frame's id).
-  // A list that cannot be had, or has no such frame, leaves the frame's address unknown.
-  async function crossProcessFrames(send, signal) {
+  // as a target of its own with the address it is on. `Target.getTargets` is refused to an extension's debugger
+  // session ("Not allowed"), so the list comes from the extension API, chrome.debugger.getTargets(): the frame
+  // shows there as a target of type "other" whose `id` is the frame id its owner element has in the DOM, with its
+  // real address and no parent. A list that cannot be had (the call is missing, throws, or answers something that
+  // is not a list) leaves every such frame's address unknown, and a frame that is not in it stays unknown.
+  async function crossProcessFrames(signal) {
     try {
-      const infos = (await send('Target.getTargets'))?.targetInfos;
+      if (typeof debuggerApi?.getTargets !== 'function') return null;
+      const infos = await debuggerApi.getTargets();
+      assertNotAborted(signal);
       if (!Array.isArray(infos)) return null;
       const byId = new Map();
       for (const info of infos) {
-        if (info?.type === 'iframe' && info.targetId) {
-          byId.set(String(info.targetId), { url: String(info.url || ''), parent: String(info.parentFrameId || '') });
-        }
+        if (!info?.id || (info.type !== 'other' && info.type !== 'iframe')) continue;
+        const id = String(info.id);
+        const entry = byId.get(id) || { urls: [] };
+        entry.urls.push(String(info.url || ''));
+        byId.set(id, entry);
       }
       return byId;
     } catch (error) {
@@ -1268,26 +1275,15 @@ function createChromiumCdpAdapter({
     }
   }
 
-  // Whether a frame in another process may be read: its own address, and that of every frame inside it that has a
-  // target of its own, must be an ordinary page by the policy the page itself is held to. An address that cannot
-  // be had is not readable. `url` is the first address that is not.
+  // Whether a frame in another process may be read: its own address must be an ordinary page by the policy the page
+  // itself is held to. An address that cannot be had is not readable. (What the frame is nested in is judged from
+  // the document it sits in, which the DOM scan knows: the target list has no parents.) `url` is the first address
+  // that is not readable.
   function judgeCrossProcessFrame(frameId, targets) {
     const entry = frameId && targets ? targets.get(frameId) : null;
     if (!entry) return { readable: false, known: false, url: '' };
-    const family = [entry];
-    const seen = new Set([frameId]);
-    for (let grown = true; grown;) {
-      grown = false;
-      for (const [id, candidate] of targets) {
-        if (!seen.has(id) && seen.has(candidate.parent)) {
-          seen.add(id);
-          family.push(candidate);
-          grown = true;
-        }
-      }
-    }
-    const bad = family.find((member) => !frameUrlReadable(member.url));
-    return bad ? { readable: false, known: true, url: bad.url } : { readable: true, known: true, url: entry.url };
+    const bad = entry.urls.find((url) => !frameUrlReadable(url));
+    return bad === undefined ? { readable: true, known: true, url: entry.urls[0] } : { readable: false, known: true, url: bad };
   }
 
   const framePathUrls = (path) => path.map((frame) => `${frame.url || ''}${frame.urlFragment || ''}`);
@@ -1307,13 +1303,17 @@ function createChromiumCdpAdapter({
     // The browser's own list of frames in other processes, read once and only if a frame needs it.
     let targets;
     const crossProcessTargets = async () => {
-      if (targets === undefined) targets = await crossProcessFrames(send, signal);
+      if (targets === undefined) targets = await crossProcessFrames(signal);
       return targets;
     };
+    // `blocked` is the verdict of the nearest frame above that Hermes may not read, from the document the owner
+    // sits in: a frame inside such a frame is hidden with it, whatever its own address is, since the page that
+    // embeds it is not one Hermes may read.
     const owners = [];
-    const stack = document?.root ? [document.root] : [];
+    const stack = document?.root ? [{ node: document.root, blocked: null }] : [];
     while (stack.length) {
-      const node = stack.pop();
+      const { node, blocked } = stack.pop();
+      let below = blocked;
       if (Number(node?.nodeType) !== 9 && embedsFrame(node)) {
         let verdict = { readable: false, known: false, url: '' };
         if (node.contentDocument) {
@@ -1330,13 +1330,17 @@ function createChromiumCdpAdapter({
             verdict = judgeCrossProcessFrame(owned, await crossProcessTargets());
           }
         }
-        if (!verdict.readable) owners.push({ id: Number(node.backendNodeId) || 0, verdict });
+        const effective = blocked || verdict;
+        if (!effective.readable) {
+          owners.push({ id: Number(node.backendNodeId) || 0, verdict: effective });
+          below = effective;
+        }
       }
       for (const list of [node?.children, node?.shadowRoots, node?.pseudoElements]) {
-        if (Array.isArray(list)) stack.push(...list);
+        if (Array.isArray(list)) for (const child of list) stack.push({ node: child, blocked: below });
       }
-      if (node?.templateContent) stack.push(node.templateContent);
-      if (node?.contentDocument) stack.push(node.contentDocument);
+      if (node?.templateContent) stack.push({ node: node.templateContent, blocked: below });
+      if (node?.contentDocument) stack.push({ node: node.contentDocument, blocked: below });
     }
     return owners;
   }
@@ -1459,7 +1463,7 @@ function createChromiumCdpAdapter({
       if (bad === undefined) return;
       throw restrictedFrameError(pointerFrameMessage({ known: true, url: bad }));
     }
-    const verdict = judgeCrossProcessFrame(owned, await crossProcessFrames(send, signal));
+    const verdict = judgeCrossProcessFrame(owned, await crossProcessFrames(signal));
     if (!verdict.readable) throw restrictedFrameError(pointerFrameMessage(verdict));
   }
 
