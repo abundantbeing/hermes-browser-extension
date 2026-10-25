@@ -340,3 +340,79 @@ test('the executor reports a focus change to the model with its code', async () 
   const outcome = await executor.execute(frameOf('browser_type', { ref: '@e1', text: 'hi' }), { scope: executorScope });
   assert.equal(outcome.error.code, 'focus_changed');
 });
+
+// --- 8. child frames are judged again after they were read --------------------------------------------------------
+
+const axText = (id, role, name, backendDOMNodeId) => ({
+  nodeId: String(id), role: { value: role }, name: { value: name }, ignored: false, ...(backendDOMNodeId ? { backendDOMNodeId } : {}),
+});
+const frameTreeWith = (...children) => ({
+  frameTree: { frame: { id: 'MAIN', url: 'https://example.com/' }, childFrames: children.map(([id, url, nested = []]) => ({
+    frame: { id, url },
+    ...(nested.length ? { childFrames: nested.map(([nestedId, nestedUrl]) => ({ frame: { id: nestedId, url: nestedUrl } })) } : {}),
+  })) },
+});
+
+function snapshotWithFrames(trees, { onReads } = {}) {
+  let reads = 0;
+  return fakeChromium({
+    handlers: {
+      'Page.getFrameTree': () => { reads += 1; return trees(reads); },
+      'Accessibility.getFullAXTree': (params) => {
+        if (!params?.frameId) return { nodes: [axText(1, 'StaticText', 'Main page text'), axText(2, 'button', 'Search', 44)] };
+        return { nodes: [axText(1, 'StaticText', `Text of ${params.frameId}`), axText(2, 'button', `Button of ${params.frameId}`, 900 + params.frameId.length)] };
+      },
+    },
+    onSend: (method) => onReads?.(method),
+  });
+}
+const snapshotOf = (chromium) => createChromiumCdpAdapter({ browserApi: chromium.api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
+
+test('a child frame that moved to a restricted address while it was read is dropped from the snapshot', async () => {
+  const chromium = snapshotWithFrames((reads) => frameTreeWith(['chat', reads === 1 ? 'https://chat.example.test/live' : 'https://chat.example.test/checkout/pay']));
+  const snapshot = await snapshotOf(chromium);
+  assert.match(snapshot.text, /Main page text/);
+  assert.doesNotMatch(JSON.stringify(snapshot), /Text of chat|Button of chat/);
+  assert.equal(snapshot.nodes.some((node) => node.frameId === 'chat'), false);
+});
+
+test('a child frame that turned to a restricted fragment route, is gone, or has a restricted frame in it is dropped', async () => {
+  const first = () => frameTreeWith(['chat', 'https://chat.example.test/live', [['inner', 'https://chat.example.test/inner']]]);
+  const cases = {
+    'a restricted fragment route': {
+      frameTree: { frame: { id: 'MAIN', url: 'https://example.com/' }, childFrames: [{ frame: { id: 'chat', url: 'https://chat.example.test/app', urlFragment: '#/checkout' } }] },
+    },
+    'the frame is gone': { frameTree: { frame: { id: 'MAIN', url: 'https://example.com/' }, childFrames: [] } },
+    'its parent moved to a restricted page': frameTreeWith(['chat', 'https://chat.example.test/checkout', [['inner', 'https://chat.example.test/inner']]]),
+  };
+  for (const [label, second] of Object.entries(cases)) {
+    const chromium = snapshotWithFrames((reads) => (reads === 1 ? first() : second));
+    const snapshot = await snapshotOf(chromium);
+    assert.doesNotMatch(JSON.stringify(snapshot), /Text of chat|Text of inner|Button of chat|Button of inner/, label);
+    assert.match(snapshot.text, /Main page text/, label);
+  }
+  // Only the nested frame turned restricted: its parent stays.
+  const nested = snapshotWithFrames((reads) => (reads === 1 ? first() : frameTreeWith(['chat', 'https://chat.example.test/live', [['inner', 'https://bank.example/billing']]])));
+  const snapshot = await snapshotOf(nested);
+  assert.match(snapshot.frameText, /Text of chat/);
+  assert.doesNotMatch(snapshot.frameText, /Text of inner/);
+});
+
+test('a frame that stays on an ordinary page is still read, and the tree is read again afterwards', async () => {
+  const chromium = snapshotWithFrames(() => frameTreeWith(['chat', 'https://chat.example.test/live']));
+  const snapshot = await snapshotOf(chromium);
+  assert.match(snapshot.frameText, /Text of chat/);
+  const methods = methodsOf(chromium.calls);
+  assert.equal(methods.filter((method) => method === 'Page.getFrameTree').length, 2);
+  assert.ok(methods.lastIndexOf('Page.getFrameTree') > methods.lastIndexOf('Accessibility.getFullAXTree'), 'the second read is after the last frame was read');
+});
+
+test('when the tree cannot be read again, no child frame is kept', async () => {
+  const chromium = snapshotWithFrames((reads) => {
+    if (reads > 1) throw new Error('Target closed');
+    return frameTreeWith(['chat', 'https://chat.example.test/live']);
+  });
+  const snapshot = await snapshotOf(chromium);
+  assert.match(snapshot.text, /Main page text/);
+  assert.doesNotMatch(JSON.stringify(snapshot), /Text of chat/);
+});

@@ -288,7 +288,8 @@ test('Chromium snapshot describes the main frame before it asks for any child fr
   await createChromiumCdpAdapter({ browserApi: api }).execute('browser_snapshot', {}, { scope, signal: openSignal() });
 
   assert.deepEqual(commandMethods(calls).filter((method) => method.startsWith('Accessibility.getFull') || method === 'Page.getFrameTree'),
-    ['Page.getFrameTree', 'Accessibility.getFullAXTree', 'Accessibility.getFullAXTree']);
+    // The frame tree is read again after the frames, to drop any that moved to a restricted address meanwhile.
+    ['Page.getFrameTree', 'Accessibility.getFullAXTree', 'Accessibility.getFullAXTree', 'Page.getFrameTree']);
   assert.equal(axFrameIds(calls)[0], '');
 });
 

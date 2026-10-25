@@ -1058,7 +1058,18 @@ function createChromiumCdpAdapter({
         if (readEnded(error, signal, tabId)) throw error;
       }
     }
-    return trees;
+    if (trees.length < 2) return trees;
+    // The frames were judged from the tree read before their content, and a frame can have moved to a restricted
+    // address (a checkout path pushed into its history) while it was being read. The tree is read again, and the
+    // content of any frame that is no longer one Hermes may read is dropped. A tree that cannot be read again
+    // keeps no frame: it cannot be shown that they are still allowed.
+    let stillReadable = null;
+    try {
+      stillReadable = new Set(readableChildFrames((await send('Page.getFrameTree'))?.frameTree).map((frame) => frame.id));
+    } catch (error) {
+      if (readEnded(error, signal, tabId)) throw error;
+    }
+    return trees.filter((entry, index) => index === 0 || Boolean(stillReadable?.has(entry.frameId)));
   }
 
   async function nodeCenter(send, backendNodeId) {
