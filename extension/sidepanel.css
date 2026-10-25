@@ -1206,14 +1206,15 @@ body.onboarding-active .connect-panel { display: none; }
 .pairing-approval-frame {
   display: block;
   width: 100%;
-  height: min(380px, 56dvh);
+  height: min(340px, 56dvh);
   border: 1px solid var(--hermes-line-strong);
   color-scheme: normal;
   background: var(--hermes-paper);
 }
-.pairing-approval-tab { justify-self: end; min-height: 26px; padding: 4px 9px; font-size: calc(10px * var(--hermes-text-zoom, 1)); }
+.pairing-approval-tab { width: 100%; min-height: 36px; padding: 9px 10px 7px; font-size: calc(10px * var(--hermes-text-zoom, 1)); }
 .connect-panel-card.is-approving { width: min(100%, 420px); }
-.connect-panel-card.is-approving > ol { display: none; }
+.connect-panel-card.is-approving > ol,
+.connect-panel-card.is-approving #connectButton { display: none; }
 .connect-panel-card.is-approving .connect-panel-lead { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .connect-panel-card { animation: none; }
@@ -11079,7 +11080,7 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
 .onboarding.is-approving .onboarding-preview,
 .onboarding-connect.is-approving .onboarding-connect-actions { display: none; }
 .onboarding-approval-slot { display: grid; min-width: 0; }
-.onboarding-approval-slot .pairing-approval-frame { height: min(360px, 44dvh); }
+.onboarding-approval-slot .pairing-approval-frame { height: min(340px, 48dvh); }
 .onboarding-connect-button {
   display: inline-flex;
   align-items: center;

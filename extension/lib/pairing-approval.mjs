@@ -31,7 +31,9 @@ export function pairingStartBody(runtime, { name = 'Hermes Browser Extension' } 
 
 // The address to show in the panel, or '' when the approval has to open in a
 // tab: the gateway did not say it can be framed, or the link is not the
-// approval page of the local gateway this panel is talking to.
+// approval page of the local gateway this panel is talking to. The framed
+// page asks for the gateway's compact layout (embed=1); the tab gets the
+// full page from the link as the gateway sent it.
 export function approvalFrameUrl(payload, gatewayUrl) {
   if (payload?.embeddable !== true) return '';
   try {
@@ -41,6 +43,7 @@ export function approvalFrameUrl(payload, gatewayUrl) {
     if (approval.username || approval.password || approval.search || approval.hash) return '';
     if (!APPROVE_PATH.test(approval.pathname)) return '';
     if (approval.host !== gateway.host) return '';
+    approval.searchParams.set('embed', '1');
     return approval.href;
   } catch {
     return '';
@@ -74,6 +77,8 @@ export function createApprovalFrame({ doc = globalThis.document, translate = (te
   return {
     node,
     frame,
+    // Lets the Connect pop-up set the button among its own actions.
+    tab,
     get showing() { return !node.hidden; },
     show(url) {
       node.hidden = false;
@@ -82,6 +87,7 @@ export function createApprovalFrame({ doc = globalThis.document, translate = (te
     hide() {
       node.hidden = true;
       frame.removeAttribute('src');
+      node.append(tab);
       node.remove();
     },
   };

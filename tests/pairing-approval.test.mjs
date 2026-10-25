@@ -39,7 +39,8 @@ test('the pairing request carries the origin beside the id', () => {
 });
 
 test('the approval page is framed only when the gateway says it can be', () => {
-  assert.equal(approvalFrameUrl(approval(), GATEWAY), 'http://127.0.0.1:8642/api/browser-extension/pair/approve/Zm9v-YmFy_1');
+  // The panel asks for the gateway's compact layout; the link itself is untouched.
+  assert.equal(approvalFrameUrl(approval(), GATEWAY), 'http://127.0.0.1:8642/api/browser-extension/pair/approve/Zm9v-YmFy_1?embed=1');
   // An older gateway sends no flag, a newer one may say no: either way a tab.
   assert.equal(approvalFrameUrl(approval({ embeddable: undefined }), GATEWAY), '');
   assert.equal(approvalFrameUrl(approval({ embeddable: false }), GATEWAY), '');
@@ -102,6 +103,7 @@ test('the approval frame is a sandboxed iframe with a way out to a tab', () => {
   assert.equal(iframe.getAttribute('title'), 't:pairing.frame_title');
   assert.equal(iframe.hasAttribute('src'), false, 'no request until shown');
   const tab = frame.node.querySelector('button');
+  assert.equal(frame.tab, tab);
   assert.equal(tab.textContent, 't:pairing.open_tab');
   assert.equal(tab.type, 'button');
   slot.append(frame.node);
@@ -116,7 +118,11 @@ test('showing sets the address once and hiding drops the page', () => {
   assert.equal(frame.showing, true);
   assert.equal(frame.node.hidden, false);
   assert.equal(frame.frame.getAttribute('src'), 'http://127.0.0.1:8642/api/browser-extension/pair/approve/abc');
+  const actions = slot.ownerDocument.createElement('div');
+  slot.after(actions);
+  actions.append(frame.tab);
   frame.hide();
+  assert.equal(frame.node.contains(frame.tab), true, 'the tab button goes home when the page goes away');
   assert.equal(frame.showing, false);
   assert.equal(frame.frame.hasAttribute('src'), false, 'the approval page is not left loaded');
   assert.equal(slot.contains(frame.node), false);

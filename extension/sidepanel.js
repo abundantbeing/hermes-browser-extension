@@ -23338,6 +23338,8 @@ function showPairingApproval(payload) {
     }
   } else if (connectDialogShowing() && els.connectApprovalSlot) {
     els.connectApprovalSlot.append(pairingApproval.node);
+    // "Open in a tab" sits among the pop-up's own actions, not under the page.
+    els.manualSettingsButton?.before(pairingApproval.tab);
     card?.classList.add('is-approving');
   } else {
     return false;

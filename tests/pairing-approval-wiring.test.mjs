@@ -32,6 +32,7 @@ test('the frame is used only for an approval link the gateway offered to be fram
   assert.match(show, /onboardingFlow\?\.isOpen/, "setup's Connect step");
   assert.match(show, /connectDialogShowing\(\) && els\.connectApprovalSlot/, 'the Connect pop-up');
   assert.match(show, /\} else \{\s*return false;\s*\}/, 'neither on screen is a tab, as before');
+  assert.match(show, /els\.manualSettingsButton\?\.before\(pairingApproval\.tab\)/, 'in the pop-up the tab button joins its actions');
   assert.match(show, /pairingApproval\.show\(url\)/);
   assert.ok(show.indexOf('setApproval(pairingApproval.node)') < show.indexOf('pairingApproval.show(url)'), 'the iframe is in place before it loads');
   assert.match(js, /translate: \(key\) => t\(key\),\s*onOpenTab: \(\) => \{ void openApprovalUrl\(pairingApprovalTabUrl\); \}/, 'the way out opens the same page in a tab');
@@ -64,9 +65,10 @@ test('the Connect pop-up has a place for the page, and the HTML itself never car
 });
 
 test('the pop-up and setup make room for the page, and the page has a size', () => {
-  assert.match(css, /\.connect-panel-card\.is-approving > ol \{ display: none; \}/);
+  assert.match(css, /\.connect-panel-card\.is-approving > ol,\s*\.connect-panel-card\.is-approving #connectButton \{ display: none; \}/, 'the pop-up keeps Open in a tab and Manual setup, not a disabled Connecting button');
+  assert.match(css, /\.pairing-approval-tab \{ width: 100%; min-height: 36px;/, 'the same size as the buttons around it');
   assert.match(css, /\.onboarding\.is-approving \.onboarding-preview,\s*\.onboarding-connect\.is-approving \.onboarding-connect-actions \{ display: none; \}/);
-  assert.match(css, /\.pairing-approval-frame \{[^}]*width: 100%;[^}]*height: min\(380px, 56dvh\);/s);
+  assert.match(css, /\.pairing-approval-frame \{[^}]*width: 100%;[^}]*height: min\(340px, 56dvh\);/s);
   assert.match(css, /\.pairing-approval\[hidden\] \{ display: none; \}/);
 });
 
