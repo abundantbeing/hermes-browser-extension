@@ -16339,6 +16339,8 @@ function maybeOpenOnboarding() {
 function openOnboarding({ step = 'language', includeConnect = !isConnected(), rerun = false, welcome = false } = {}) {
   const flow = ensureOnboardingFlow();
   if (!flow) return;
+  // The reason an earlier Connect failed must not show on a run that has not tried anything.
+  onboardingConnectFailure = '';
   // Setup only ever shows its seven backgrounds, a rerun from Settings included;
   // the picture on screen is kept when it is one of them and when setup ends.
   void backgroundArtRotation.ensureOnboardingArt();
@@ -16359,6 +16361,8 @@ function openOnboarding({ step = 'language', includeConnect = !isConnected(), re
 // user asks for it or a send needs it.
 async function completeOnboarding(reason = 'done') {
   onboardingCompleted = true;
+  // A failed Connect belongs to this run of setup; a later rerun starts clean.
+  onboardingConnectFailure = '';
   if (!isConnected()) {
     connectDeferred = true;
     connectDialogDismissed = true;
@@ -16367,6 +16371,30 @@ async function completeOnboarding(reason = 'done') {
   await setResponsePresentation(responsePresentationFromSettings(settings));
   await browserApi.storage.local.set({ [ONBOARDING_COMPLETED_STORAGE_KEY]: true });
   hbeBootEmit(`panel:onboarding-${reason}`);
+}
+
+// Setup was finished (or skipped) in another window while this one still shows
+// it: the flag in storage is what a reload would read, so follow it and close
+// quietly. Nothing is reset or written; this window's picks so far stay as they
+// are (they were saved as they were made), and further picks here would only
+// write over what the other window kept. The writer's own change event finds
+// its flow already closed and only sets the flag.
+function adoptOnboardingCompletedChange(changes) {
+  const change = changes?.[ONBOARDING_COMPLETED_STORAGE_KEY];
+  // Only a change from not-completed: a rerun finishing elsewhere rewrites the same value.
+  if (!change || change.newValue !== true || change.oldValue === true) return;
+  onboardingCompleted = true;
+  if (!onboardingFlow?.isOpen || onboardingFlow.isExiting) return;
+  onboardingConnectFailure = '';
+  onboardingFlow.close();
+  setOnboardingOpen(false);
+  // As when setup ends here unpaired: the pop-up stays closed until asked for.
+  if (!isConnected()) {
+    connectDeferred = true;
+    connectDialogDismissed = true;
+    renderConnectDialog();
+  }
+  renderStartupReadiness();
 }
 
 // The way in: setup dithers away while the top bar and the dock slide in.
@@ -26459,6 +26487,7 @@ function bindEvents() {
         adoptStoredResponsePresentation(next);
       }
     }
+    if (Object.hasOwn(changes, ONBOARDING_COMPLETED_STORAGE_KEY)) adoptOnboardingCompletedChange(changes);
     if (Object.hasOwn(changes, CUSTOM_THEME_STORAGE_KEY)) void handleCustomThemeStoreChange();
     if (Object.hasOwn(changes, CONTEXT_CONSENT_STORAGE_KEY)) {
       settings = {
