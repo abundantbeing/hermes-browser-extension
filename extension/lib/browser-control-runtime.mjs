@@ -52,12 +52,17 @@ export function createBrowserControlRuntime({
     if (settings?.browserControlEnabled !== true) return disabledStatus('disabled');
     const adapter = adapterForEngine();
     if (!adapter?.contract?.enabled) return disabledStatus('adapter_unavailable');
+    // An adapter can know that an action in its contract cannot work right now (Firefox without the permission its screenshot
+    // needs): that action is not offered, and the gap says why.
+    const { actions, unavailable } = typeof adapter.currentCapabilities === 'function'
+      ? await adapter.currentCapabilities()
+      : { actions: adapter.contract.actions, unavailable: [] };
     return {
       ok: true,
       enabled: true,
       adapterId: adapter.contract.id,
-      capabilities: [CONTROLLER_NOOP_CAPABILITY, ...adapter.contract.actions],
-      gaps: adapter.contract.gaps || [],
+      capabilities: [CONTROLLER_NOOP_CAPABILITY, ...actions],
+      gaps: [...(adapter.contract.gaps || []), ...unavailable],
     };
   }
 

@@ -2288,6 +2288,36 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
 
   const { waitForLoad } = createLoadWaiter({ browserApi, now, sleep });
 
+  // tabs.captureVisibleTab needs the all-sites host permission, or an activeTab grant that only a user gesture gives, and
+  // a model command is not one. The shipped manifest has no literal <all_urls>, so there the capture is always refused
+  // with "Missing activeTab permission". Whether the permission is there is asked each time (it can be granted later).
+  // A permissions API that cannot answer leaves the capture to decide, and its refusal is mapped below.
+  async function screenshotPermitted() {
+    if (typeof browserApi.permissions?.contains !== 'function') return true;
+    try {
+      return (await browserApi.permissions.contains({ origins: ['<all_urls>'] })) === true;
+    } catch {
+      return true;
+    }
+  }
+
+  function screenshotUnavailableError() {
+    return codedError(
+      'screenshot_unavailable',
+      'Screenshots need extra browser permission in Firefox; use the page text instead (browser_snapshot), or press the Tab screenshot button yourself.',
+    );
+  }
+
+  // The actions the adapter can really do right now: its contract, without the screenshot while Firefox would refuse it,
+  // and what the contract lists but cannot be done, with the reason, for the capability report.
+  async function currentCapabilities() {
+    if (await screenshotPermitted()) return { actions: [...contract.actions], unavailable: [] };
+    return {
+      actions: contract.actions.filter((action) => action !== 'browser_screenshot'),
+      unavailable: [{ action: 'browser_screenshot', reason: 'permission-unavailable' }],
+    };
+  }
+
   // Firefox has no browser_click here (FIREFOX_GAPS: trusted input is unavailable), so
   // the Chromium click path and its new-tab modifier do not apply to this adapter.
   async function script(scope, signal, mode, direction = '') {
@@ -2352,6 +2382,9 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
       return { status: 'navigated-back' };
     }
     if (action === 'browser_screenshot') {
+      // No screenshot of any kind can be taken without the permission: say so before anything else is looked at.
+      if (!(await screenshotPermitted())) throw screenshotUnavailableError();
+      assertNotAborted(signal);
       // captureVisibleTab can only photograph the whole visible tab, so a screenshot of one element cannot be taken.
       if (args.ref || target) {
         throw codedError(
@@ -2364,7 +2397,14 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
       const before = await visibleLeasedTab(tabId, allowLocalDocuments);
       assertNotAborted(signal);
       await assertFramesReadable(tabId, signal);
-      const dataUrl = await browserApi.tabs.captureVisibleTab(before.windowId, { format: 'png' });
+      let dataUrl;
+      try {
+        dataUrl = await browserApi.tabs.captureVisibleTab(before.windowId, { format: 'png' });
+      } catch (error) {
+        // The exact refusal Firefox gives when the permission is missing, whether or not it could be asked about first.
+        if (/missing activetab permission|<all_urls>/i.test(String(error?.message || error || ''))) throw screenshotUnavailableError();
+        throw error;
+      }
       assertNotAborted(signal);
       const after = await visibleLeasedTab(tabId, allowLocalDocuments).catch(() => null);
       if (!after || after.url !== before.url) {
@@ -2427,6 +2467,7 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
 
   return {
     contract,
+    currentCapabilities,
     inspect: ({ tabId, frameId, signal, light } = {}) => inspectPage(browserApi, { tabId, frameId }, signal, { light: light === true }),
     execute,
     settle,

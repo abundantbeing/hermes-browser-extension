@@ -105,7 +105,8 @@ test('Phase 6 Firefox control needs no debugger permission and advertises only i
   assert.equal(status.adapterId, 'firefox-webextension');
   assert.equal(status.capabilities.includes('browser_click'), false);
   assert.equal(status.capabilities.includes('browser_snapshot'), true);
-  assert.deepEqual(browser.permissions.calls, []);
+  // It may ask whether the all-sites permission (which the screenshot needs) is there; it never requests or removes one.
+  assert.deepEqual(browser.permissions.calls, [['contains', { origins: ['<all_urls>'] }]]);
 });
 
 test('Phase 8 runtime wires capability-derived developer mode and one-shot artifacts into the executor', async () => {
