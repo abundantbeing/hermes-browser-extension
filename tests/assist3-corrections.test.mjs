@@ -85,7 +85,10 @@ test('session opening never silently falls back from Browser Extension to a full
   const source = await read('extension/background.js');
   assert.match(source, /message\?\.surface\s*===\s*['"]web['"]/);
   assert.match(source, /openHermesPanel\(tab, \{ allowFallback: false \}\)/);
-  assert.match(source, /appUrl\.searchParams\.set\(['"]sessionId['"],\s*sessionId\)/);
+  // The web surface is the Hermes Webapp the user's gateway serves, opened through the shared opener; it never
+  // builds the extension's own full-tab URL, and the side panel route above stays the only fallback-free path.
+  assert.match(source, /openHermesWebapp\(\{[\s\S]{0,400}permissionMode: 'contains'/);
+  assert.doesNotMatch(source.slice(source.indexOf('async function queueOpenSessionRequest'), source.indexOf('async function configureInstalledSurfaces')), /appUrl\.searchParams/);
 });
 
 test('Nous Light cards are solid white above the global texture layer on both surfaces', async () => {

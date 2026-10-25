@@ -27,6 +27,7 @@ import {
 import { CONTEXT_CONSENT_STORAGE_KEY } from './lib/context-consent.mjs';
 import { gateInlineDraftRequestContext } from './lib/inline-draft-consent.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
+import { openHermesWebapp } from './lib/hermes-webapp.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -426,15 +427,21 @@ async function queueOpenSessionRequest(message, sender) {
   if (!/^[A-Za-z0-9_.:-]{8,200}$/.test(sessionId)) return { ok: false, reason: 'Invalid session binding.' };
   const surface = message?.surface === 'web' ? 'web' : 'sidepanel';
   if (surface === 'web') {
-    const sourceSidePanelPath = String(browserApi.runtime.getManifest()?.side_panel?.default_path || 'sidepanel.html');
-    const appPath = sourceSidePanelPath.startsWith('extension/') ? 'extension/app.html' : 'app.html';
-    const appUrl = new URL(browserApi.runtime.getURL(appPath));
-    appUrl.searchParams.set('sessionId', sessionId);
-    const sourceTabId = Number(sender?.tab?.id);
-    if (Number.isFinite(sourceTabId) && sourceTabId > 0) appUrl.searchParams.set('sourceTabId', String(sourceTabId));
-    appUrl.searchParams.set('sourceSurfaceId', 'inline-assist');
-    await openHermesFullView(appUrl.href);
-    return { ok: true, sessionId, surface };
+    // Hermes Web is the Webapp the user's own gateway serves. It cannot be opened on one
+    // session, so this opens (or focuses) it and the session is found in its own list.
+    const stored = await browserApi.storage.local.get('hermesBrowserSettings');
+    const result = await openHermesWebapp({
+      settings: stored?.hermesBrowserSettings || {},
+      tabsApi: browserApi.tabs,
+      windowsApi: browserApi.windows,
+      permissionsApi: browserApi.permissions,
+      storageArea: browserApi.storage.local,
+      permissionMode: 'contains',
+    });
+    if (result.status === 'opened' || result.status === 'focused') {
+      return { ok: true, sessionId, surface, webapp: result.status, hint: result.hint || '' };
+    }
+    return { ok: false, webapp: result.status, address: result.address || '', reason: 'Hermes Web is not available.' };
   }
 
   const tab = sender?.tab || (await browserApi.tabs.query({ active: true, currentWindow: true }))[0];
@@ -448,7 +455,7 @@ async function queueOpenSessionRequest(message, sender) {
   const opened = await openHermesPanel(tab, { allowFallback: false });
   if (opened === false) {
     await browserApi.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
-    return { ok: false, reason: 'The Browser side panel could not open. Choose Hermes Web instead.' };
+    return { ok: false, reason: 'The Browser side panel could not open. If your gateway serves Hermes Web, you can open that instead.' };
   }
   return { ok: true, sessionId, surface };
 }

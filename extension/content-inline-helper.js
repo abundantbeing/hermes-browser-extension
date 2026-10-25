@@ -969,7 +969,7 @@
     const note = make('p', 'note', 'Open the retained Assist session in the Browser side panel or in Hermes Web.');
     const options = [
       { num: '01', surface: 'sidepanel', title: 'Browser Extension', detail: 'Open the exact session in the Hermes Browser side panel.', recommended: true },
-      { num: '02', surface: 'web', title: 'Hermes Web', detail: 'Open the exact session in the full Hermes Web workspace.' },
+      { num: '02', surface: 'web', title: 'Hermes Web', detail: 'Open the Hermes Web app in a new browser tab.' },
     ].map((option) => {
       const routeButton = button(`route${option.recommended ? ' recommended' : ''}`, '');
       routeButton.dataset.sessionSurface = option.surface;
@@ -977,14 +977,6 @@
       copy.append(make('strong', '', option.title), make('small', '', option.detail));
       routeButton.append(make('span', 'route-num', option.num), copy, make('span', 'arrow', '→'));
       routeButton.addEventListener('click', trustedOnly(() => {
-        if (option.surface === 'web') {
-          setBody(
-            make('h2', 'route-title', 'A new surface is being worked on'),
-            make('p', 'note', 'This choice no longer opens Hermes Web. A new surface is being worked on.'),
-            back,
-          );
-          return;
-        }
         openResultSession(option.surface);
       }));
       return routeButton;
@@ -1002,12 +994,60 @@
       surface: surface === 'web' ? 'web' : 'sidepanel',
     }).catch((error) => ({ ok: false, reason: error?.message || String(error) }));
     if (!response?.ok) {
-      renderFailure(response?.reason || 'Hermes could not open that retained session.');
+      if (response?.webapp) renderWebappUnavailable(response);
+      else renderFailure(response?.reason || 'Hermes could not open that retained session.');
+      return;
+    }
+    if (surface === 'web' && response.hint) {
+      renderWebappOpened(response.hint);
       return;
     }
     hidePanel();
     pending = null;
     resetResult();
+  }
+
+  // Hermes Web is the Webapp the user's own gateway serves. When it cannot be opened the
+  // background says why; the commands are the same three the side panel's dialog offers.
+  function renderWebappUnavailable(response) {
+    activeView = { name: 'webapp-unavailable', args: [response] };
+    contextState.textContent = translateUiText('BLOCKED');
+    const reasons = {
+      'needs-address': 'This connection is remote, so there is no address to try. Enter the Hermes Web address in Settings.',
+      'invalid-address': 'The Hermes Web address in Settings is not a valid http or https address.',
+      'permission-denied': 'The browser did not allow Hermes Browser to reach this address:',
+      unreachable: 'Nothing answered at this address:',
+    };
+    const nodes = [
+      make('h2', 'route-title', 'Hermes Web is not available'),
+      make('p', 'note', 'Your gateway serves Hermes Web once it is turned on. On the computer that runs Hermes, run these commands.'),
+      make('p', 'note', reasons[response?.webapp] || reasons.unreachable),
+    ];
+    if (response?.address && ['unreachable', 'permission-denied'].includes(response.webapp)) {
+      nodes.push(makeRaw('div', 'preview', String(response.address)));
+    }
+    nodes.push(makeRaw('div', 'preview', ['hermes config set webapp.enabled true', 'hermes gateway restart', 'hermes webapp'].join('\n')));
+    const back = button('action', 'Back to result');
+    back.addEventListener('click', trustedOnly(() => renderResult()));
+    setBody(...nodes, back);
+  }
+
+  function renderWebappOpened(hint) {
+    activeView = { name: 'webapp-opened', args: [hint] };
+    contextState.textContent = translateUiText('COMPLETE');
+    const done = button('action', 'Close');
+    done.addEventListener('click', trustedOnly(() => {
+      hidePanel();
+      pending = null;
+      resetResult();
+    }));
+    setBody(
+      make('h2', 'route-title', 'Hermes Web opened'),
+      make('p', 'note', hint === 'local'
+        ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. The tab stays signed in.'
+        : 'Hermes Web opened. Sign in on that page with your dashboard account.'),
+      done,
+    );
   }
 
   function onFocus(event) {
@@ -1083,6 +1123,8 @@
     else if (activeView.name === 'failure') renderFailure(...activeView.args);
     else if (activeView.name === 'result') renderResult(...activeView.args);
     else if (activeView.name === 'open-session') renderOpenSessionChoices();
+    else if (activeView.name === 'webapp-unavailable') renderWebappUnavailable(...activeView.args);
+    else if (activeView.name === 'webapp-opened') renderWebappOpened(...activeView.args);
     else renderAssist();
   }
 
