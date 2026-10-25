@@ -94,6 +94,15 @@ export function pickOnboardingBackgroundArt(random = Math.random, previous = '')
  * Is this a first run, going by what is stored? Only an absent completed flag
  * with no legacy intro-seen flag counts; anything else (a returning user, an
  * unreadable store) uses the normal pool.
+ *
+ * This is deliberately the flags of shouldShowOnboarding (response-presentation)
+ * without its message count: the panel picks its first picture before any
+ * conversation is loaded (the messages sit under a key that depends on the
+ * session and window scope), and the art layer stays hidden until it has
+ * picked. So a profile with stored messages but neither flag (older than both
+ * flags) never sees setup yet draws its first picture from the setup's seven.
+ * That pool is a subset of the full one, so nothing wrong can show; the other
+ * way round cannot happen: whenever setup does show, this is true.
  */
 export function isFirstRunStorage(stored = {}, { completedKey, introSeenKey } = {}) {
   return stored?.[completedKey] !== true && stored?.[introSeenKey] !== true;
