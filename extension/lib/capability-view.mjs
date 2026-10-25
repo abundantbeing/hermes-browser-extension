@@ -7,6 +7,8 @@
 // manual-compaction verdict or outcome into the control's label, explanation and
 // result message.
 
+import { COMPANION_EXPECTED_TOOLS } from './companion-plugin-status.mjs';
+
 const SOURCE_KEYS = Object.freeze({
   extension: 'capability.source.extension',
   derived: 'capability.source.derived',
@@ -67,6 +69,12 @@ function sourceLabel(source, t) {
 export function describeCapabilityRow(row, { t, locale = 'en' } = {}) {
   const params = { ...(row?.params || {}) };
   if (Number.isFinite(params.ageMs)) params.age = formatCapabilityAge(params.ageMs, { locale });
+  // Companion probe reasons carry lists and optional parts; hand the strings plain text.
+  if (Array.isArray(params.present)) params.presentCount = params.present.length;
+  params.expectedCount = COMPANION_EXPECTED_TOOLS.length;
+  for (const [name, value] of Object.entries(params)) if (Array.isArray(value)) params[name] = value.join(', ') || '-';
+  if ('profile' in params && !params.profile) params.profile = '-';
+  if ('detail' in params && row?.reasonCode === 'companion-network') params.detail = params.detail ? ` (${params.detail})` : '';
   const age = formatCapabilityAge(row?.ageMs, { locale });
   const source = sourceLabel(row?.source, t);
   const reason = t(capabilityReasonKey(row?.reasonCode), params);

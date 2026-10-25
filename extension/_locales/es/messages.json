@@ -1291,9 +1291,61 @@
     "message": "gateway.ready informa de autoridad de sesión.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "La pasarela rechazó el token emparejado (HTTP {status}), así que no se pudo comprobar el plugin.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Esta pasarela no ofrece ruta de estado ni una lista legible de conjuntos de herramientas, así que la extensión no puede saber si el plugin complementario está cargado. Eso no significa que falte.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "La pasarela respondió HTTP {status}, así que no se pudo comprobar el plugin.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "No se pudo contactar con la pasarela{detail}, así que no se pudo comprobar el plugin.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "El plugin complementario está cargado con {presentCount} de {expectedCount} herramientas, pero no sirve la ruta de estado, así que es una copia antigua. Reinstálelo para este perfil y reinicie la pasarela.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "No hay ningún token de pasarela disponible, así que el plugin no se comprobó.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "No cargado en esta pasarela: falta la ruta de estado y no aparece ningún conjunto de herramientas complementario. No está instalado, no está habilitado para este perfil o la pasarela no se ha reiniciado desde entonces. Ejecute `hermes plugins list` para el perfil.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Cargado: versión {version}, perfil {profile}, {toolCount} herramientas.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Cargado: versión {version}, perfil {profile}, {toolCount} herramientas. Esta pasarela no pudo confirmar si su conjunto de herramientas está activo para el servidor de la API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Cargado (versión {version}), pero faltan herramientas: {missing}. Reinstálelo para este perfil y reinicie la pasarela.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Cargado, pero su conjunto de herramientas está desactivado para el servidor de la API. Actívelo con `hermes tools` o quítelo de agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Cargado, pero es la versión {version} y esta extensión espera {expected}. Reinstálelo para este perfil y reinicie la pasarela.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "La conexión se cerró. Última confirmación {age}. Se muestra, pero no se usa para ejecutar nada.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Lo sirve el panel de Hermes en este equipo, que aceptó el inicio de sesión que mantiene este panel. La API de la pasarela no lo anuncia.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Lo construye y envía esta extensión dentro del prompt. No depende de ninguna ruta del gateway.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "El WebSocket del panel aún no ha entregado gateway.ready.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Esta versión de Hermes no tiene esa ruta, así que no hay nada que activar. El contexto de la página se envía dentro de cada mensaje.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Funcionó la última vez que se usó.",

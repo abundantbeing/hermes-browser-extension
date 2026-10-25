@@ -1291,9 +1291,61 @@
     "message": "gateway.ready báo cáo quyền phiên.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Cổng đã từ chối mã thông báo đã ghép cặp (HTTP {status}), nên không thể kiểm tra plugin.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Cổng này không cung cấp đường dẫn trạng thái hay danh sách bộ công cụ có thể đọc, nên tiện ích không thể biết plugin đồng hành có được tải hay không. Điều này không có nghĩa là plugin bị thiếu.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Cổng phản hồi HTTP {status}, nên không thể kiểm tra plugin.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Không thể kết nối tới cổng{detail}, nên không thể kiểm tra plugin.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Plugin đồng hành đã tải với {presentCount} trên {expectedCount} công cụ, nhưng không cung cấp đường dẫn trạng thái nên đây là bản cũ. Hãy cài lại cho hồ sơ này và khởi động lại cổng.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Không có mã thông báo cổng nào, nên plugin chưa được kiểm tra.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Chưa tải trên cổng này: không có đường dẫn trạng thái và không có bộ công cụ đồng hành nào trong danh sách. Plugin chưa được cài, chưa bật cho hồ sơ này, hoặc cổng chưa được khởi động lại kể từ đó. Hãy chạy `hermes plugins list` cho hồ sơ.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Đã tải: phiên bản {version}, hồ sơ {profile}, {toolCount} công cụ.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Đã tải: phiên bản {version}, hồ sơ {profile}, {toolCount} công cụ. Cổng này không thể xác nhận bộ công cụ của nó có đang bật cho máy chủ API hay không.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Đã tải (phiên bản {version}) nhưng thiếu công cụ: {missing}. Hãy cài lại cho hồ sơ này và khởi động lại cổng.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Đã tải, nhưng bộ công cụ của nó đang tắt đối với máy chủ API. Bật bằng `hermes tools` hoặc xóa khỏi agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Đã tải, nhưng đây là phiên bản {version} trong khi tiện ích này cần {expected}. Hãy cài lại cho hồ sơ này và khởi động lại cổng.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "Kết nối đã đóng. Xác nhận lần cuối {age}. Chỉ hiển thị, không dùng để chạy bất cứ thứ gì.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Được cung cấp bởi bảng điều khiển Hermes trên máy tính này, nơi đã chấp nhận phiên đăng nhập mà bảng này giữ. API của cổng không quảng bá đường dẫn này.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Do tiện ích này tạo và gửi trong prompt. Không phụ thuộc vào tuyến nào của cổng.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "WebSocket của bảng điều khiển chưa gửi gateway.ready.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Phiên bản Hermes này không có đường dẫn đó nên không có gì để bật. Ngữ cảnh trang được gửi kèm trong từng tin nhắn.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Đã hoạt động ở lần dùng gần nhất.",

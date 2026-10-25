@@ -390,6 +390,8 @@ import {
 } from './lib/capabilities.mjs';
 import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
+import { companionRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { DASHBOARD_ROUTE_CAPABILITIES, dashboardRouteRecordFields, probeDashboardRoutes, uploadImageViaDashboard } from './lib/dashboard-routes.mjs';
 import {
   capabilitySummaryText,
   compactControlState,
@@ -2747,6 +2749,11 @@ function showSettingsPane(pane, { field = '', focus = true } = {}) {
   if (settingsActivePane === 'models') renderSettingsModelSummary();
   // The pane shows the open session's context; ask for a fresh reading (no-op when recent).
   if (settingsActivePane === 'sessions') refreshSessionContextTelemetry();
+  // About & Diagnostics shows the companion plugin's state: ask again now, not from a 30 s old answer.
+  if (settingsActivePane === 'about') {
+    void refreshCompanionPluginStatus({ force: true }).catch(() => undefined);
+    void refreshDashboardRoutes({ force: true }).catch(() => undefined);
+  }
   renderSettingsEditedMarkers();
   requestAnimationFrame(updateSettingsBackToTop);
   if (!focus) return;
@@ -4849,6 +4856,51 @@ function refreshCapabilityViews() {
   renderCompactControl();
 }
 
+// Asks the gateway's API server whether the Hermes Browser companion plugin is
+// loaded (companion-plugin-status.mjs: its own status route, cross-checked with
+// GET /v1/toolsets) and records the answer as a `probe` record. Two bounded
+// read-only GETs, at most one run per 30 s unless forced. A remote dashboard
+// connection has no API server to ask, so it is left as "not advertised".
+let companionProbeAt = 0;
+async function refreshCompanionPluginStatus({ force = false } = {}) {
+  const token = hermesGatewayKey();
+  if (!token || !settings.gatewayUrl || normalizeGatewayMode(settings.gatewayMode) === 'remote-dashboard') return null;
+  if (!force && Date.now() - companionProbeAt < 30_000) return null;
+  companionProbeAt = Date.now();
+  syncCapabilityRuntime();
+  const identityKey = capabilityRuntime.ledger.identityKey;
+  const result = await probeCompanionPlugin({ baseUrl: settings.gatewayUrl, token, fetchImpl: (url, init) => fetch(url, init) });
+  const fields = companionRecordFields(result);
+  // The connection moved on while the probe ran: its answer is for another gateway.
+  if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return result;
+  capabilityRuntime.ledger.observeProbe('browserCompanionPlugin', fields);
+  refreshCapabilityViews();
+  return result;
+}
+
+// Speech to text, stored images and image upload are served by the dashboard listener
+// (the Desktop dashboard, or the Webapp with the held sign-in) even where the gateway
+// API does not advertise them. One bounded GET proves the dashboard accepts the token the
+// panel has; the three rows then say "served by the dashboard" instead of "unavailable".
+// An advertised gateway route keeps its own record. Never for a remote dashboard.
+let dashboardRoutesProbeAt = 0;
+async function refreshDashboardRoutes({ force = false } = {}) {
+  if (isRemoteWsMode() || !settings.gatewayUrl) return null;
+  if (!force && Date.now() - dashboardRoutesProbeAt < 30_000) return null;
+  dashboardRoutesProbeAt = Date.now();
+  syncCapabilityRuntime();
+  const identityKey = capabilityRuntime.ledger.identityKey;
+  const baseUrl = await resolveDashboardMediaBaseUrl().catch(() => '');
+  if (!baseUrl) return null;
+  const token = await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }).catch(() => '');
+  const probe = await probeDashboardRoutes({ baseUrl, token, fetchFn: (url, init) => fetch(url, init) });
+  const fields = dashboardRouteRecordFields(probe);
+  if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return probe;
+  for (const id of DASHBOARD_ROUTE_CAPABILITIES) capabilityRuntime.ledger.observeProbe(id, fields);
+  refreshCapabilityViews();
+  return probe;
+}
+
 async function loadGatewayCapabilities({ quiet = false, publicOnly = false, healthOk = false } = {}) {
   if (usesDashboardWsChatTransport()) {
     const connection = isRemoteWsMode() ? remoteWsConnection : activeDashboardWsConnection;
@@ -4857,6 +4909,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
       health: connection?.client?.readyState === 1,
       readyPayload: connection?.client?.readyPayload,
     }));
+    void refreshDashboardRoutes().catch(() => undefined);
     return gatewayCapabilities;
   }
   try {
@@ -4873,6 +4926,8 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
       throw capError;
     }
     setGatewayCapabilities(normalizeGatewayCapabilities(payload, { healthOk: true, hasApiKey: Boolean(hermesGatewayKey()) }));
+    void refreshCompanionPluginStatus().catch(() => undefined);
+    void refreshDashboardRoutes().catch(() => undefined);
   } catch (error) {
     const status = Number(error?.httpStatus ?? error?.status);
     if (status === 401 && !isRemoteWsMode()) {
@@ -7302,7 +7357,7 @@ async function startLiveVoice() {
     const baseUrl = await voiceLiveDashboardBaseUrl();
     const profile = safeActiveProfile();
     state.session = new module.VoiceLiveSession(liveVoiceHandlers(state, module), {
-      createSession: ({ sdp, history }) => module.requestVoiceLiveSession({ baseUrl, profile, sdp, history }),
+      createSession: ({ sdp, history }) => (async () => module.requestVoiceLiveSession({ baseUrl, profile, sdp, history, dashboardToken: await dashboardTokenFor(baseUrl, '') }))(),
     });
     await state.session.start(liveVoiceSeedHistory(module));
     if (liveVoice !== state) {
@@ -8806,6 +8861,26 @@ async function uploadImageAttachment(attachment) {
     return attachment;
   }
   if (!gatewayCapabilities.imageUpload) {
+    // Hermes' API server has no image-upload route; the dashboard does (POST /api/chat/image-upload).
+    try {
+      const baseUrl = isRemoteWsMode() ? '' : await resolveDashboardMediaBaseUrl();
+      const token = baseUrl ? await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }) : '';
+      const uploaded = token ? await uploadImageViaDashboard({ baseUrl, token, profile: safeActiveProfile(), dataUrl: attachment.dataUrl, filename: attachment.label }) : null;
+      if (uploaded?.ok) {
+        capabilityRuntime.noteOperation('imageUpload', { ok: true });
+        return {
+          ...attachment,
+          localPath: uploaded.path,
+          savedFilename: uploaded.filename,
+          mimeType: uploaded.mimeType,
+          savedSize: uploaded.size,
+          detail: `${attachment.detail || uploaded.mimeType || 'image'} · local path ready`,
+          uploadError: '',
+        };
+      }
+    } catch {
+      /* fall through to the inline-only result */
+    }
     return {
       ...attachment,
       uploadSkipped: true,
@@ -22646,7 +22721,10 @@ function createChatGatewayClient({ replayEndpoint = '', ...options } = {}) {
   gatewayClient.on('close', () => promptController.dropClient(gatewayClient));
   // The capability ledger follows the socket: a handshake turns every positive
   // record current, a close turns it into a cached one.
-  gatewayClient.on('gateway.ready', () => refreshCapabilityViews());
+  gatewayClient.on('gateway.ready', () => {
+    refreshCapabilityViews();
+    void refreshCompanionPluginStatus({ force: true }).catch(() => undefined);
+  });
   gatewayClient.on('close', () => refreshCapabilityViews());
   return gatewayClient;
 }

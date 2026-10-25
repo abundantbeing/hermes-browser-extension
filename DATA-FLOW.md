@@ -63,6 +63,10 @@ These screens use the connection you already configured and add no new destinati
 - **Compact context**: on a gateway with session authority the extension reads the session, sends one `session.mutate` request with `operation: compress` and, optionally, a focus topic, then reads the session again. The summary is written by Hermes, not by the extension.
 - **Replay**: after a reconnect the extension sends the last event sequence number it saw for a session (`session.events.since`) and receives the events it missed.
 
+## Held Hermes Web sign-in
+
+The panel can hold the Hermes Web sign-in in `chrome.storage.session` (browser memory, cleared when the browser closes). It is used only for loopback requests to the Hermes Web address it was captured from (the dashboard-only routes: roster, Projects, speech to text, stored images, image upload, the dashboard WebSocket through one-use tickets), as a header and never in a URL. A Settings toggle turns it off and clears it; `hermes webapp --sign-out` ends it.
+
 ## Hermes Web full view
 
 Hermes Web uses the same configured Local or Remote API connection and canonical Hermes session history as the side panel. It loads sessions, models, skills, runtime options, generated media, and persisted context telemetry from the configured Hermes gateway. Opening full view does not grant browser-control permissions. Hermes Cloud/dashboard-ticket full-view history remains read-only until a shared ticketed WebSocket coordinator owns that connection.
@@ -112,7 +116,7 @@ Browser page content is wrapped as untrusted context in the prompt. Hermes is in
 The extension reads `/v1/capabilities` when available, and on a dashboard connection it also uses what `gateway.ready` reports. Settings > About & Diagnostics shows each feature's state (available, cached, degraded, blocked, unsupported or unknown), the exact reason, its source and its age. A feature the gateway never advertises is shown as "not advertised", not as unsupported, and the optional companion plugin is the exception to "the extension cannot tell": it answers a metadata-only status route of its own, which the extension reads to show ready, outdated, disabled, not installed or unreachable with the exact reason. Without that probe the extension cannot tell whether the plugin is loaded, because no gateway capability advertises it. If an older Hermes runtime does not expose that endpoint, the extension enters legacy compatibility mode:
 
 - core chat/session features are attempted when the Gateway is connected and authenticated
-- browser-specific routes such as audio transcription, browser pairing, profile list, and image upload stay in fallback/manual mode unless advertised
+- browser-specific routes such as audio transcription, browser pairing, profile list, and image upload stay in fallback/manual mode unless advertised (speech, stored images and image upload can still be served by the local Hermes dashboard, and the rows then say so)
 
 The extension also separates gateway reachability from upstream Hermes runtime/tool tracebacks. If the API server is reachable but an upstream Hermes tool/runtime raises a Python traceback, the side panel can show a connected-with-warning diagnostic instead of treating the whole Browser connection as broken. Settings also include Copy Diagnostics, which creates a redacted support block without API keys, bearer tokens, cookies, page text, selected text, tab titles, or full tab URLs.
 

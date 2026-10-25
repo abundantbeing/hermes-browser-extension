@@ -1291,9 +1291,61 @@
     "message": "gateway.ready meldet Sitzungsautorität.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Das Gateway hat das gekoppelte Token abgelehnt (HTTP {status}), daher konnte das Plugin nicht geprüft werden.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Dieses Gateway stellt weder eine Statusroute noch eine lesbare Liste von Werkzeugsätzen bereit, daher kann die Erweiterung nicht feststellen, ob das Begleit-Plugin geladen ist. Das bedeutet nicht, dass es fehlt.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Das Gateway hat mit HTTP {status} geantwortet, daher konnte das Plugin nicht geprüft werden.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Das Gateway war nicht erreichbar{detail}, daher konnte das Plugin nicht geprüft werden.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Ein Begleit-Plugin ist mit {presentCount} von {expectedCount} Werkzeugen geladen, bietet aber keine Statusroute an und ist daher eine ältere Kopie. Installieren Sie es für dieses Profil neu und starten Sie das Gateway neu.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Kein Gateway-Token verfügbar, daher wurde das Plugin nicht geprüft.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Auf diesem Gateway nicht geladen: Die Statusroute fehlt und kein Begleit-Werkzeugsatz ist aufgeführt. Es ist nicht installiert, für dieses Profil nicht aktiviert oder das Gateway wurde seitdem nicht neu gestartet. Führen Sie `hermes plugins list` für das Profil aus.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Geladen: Version {version}, Profil {profile}, {toolCount} Werkzeuge.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Geladen: Version {version}, Profil {profile}, {toolCount} Werkzeuge. Dieses Gateway konnte nicht bestätigen, ob sein Werkzeugsatz für den API-Server aktiviert ist.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Geladen (Version {version}), aber Werkzeuge fehlen: {missing}. Installieren Sie es für dieses Profil neu und starten Sie das Gateway neu.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Geladen, aber sein Werkzeugsatz ist für den API-Server deaktiviert. Aktivieren Sie ihn mit `hermes tools` oder entfernen Sie ihn aus agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Geladen, aber es ist Version {version}, und diese Erweiterung erwartet {expected}. Installieren Sie es für dieses Profil neu und starten Sie das Gateway neu.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "Die Verbindung wurde geschlossen. Zuletzt bestätigt {age}. Wird angezeigt, aber für nichts verwendet.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Wird vom Hermes-Dashboard auf diesem Computer bereitgestellt, das die Anmeldung akzeptiert hat, die dieses Panel hält. Die Gateway-API kündigt sie nicht an.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Wird von dieser Erweiterung erstellt und im Prompt gesendet. Es hängt von keiner Gateway-Route ab.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "Der Dashboard-WebSocket hat gateway.ready noch nicht geliefert.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Diese Hermes-Version hat keine solche Route, daher gibt es nichts zu aktivieren. Der Seitenkontext wird stattdessen mit jeder Nachricht mitgesendet.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Hat beim letzten Mal funktioniert.",

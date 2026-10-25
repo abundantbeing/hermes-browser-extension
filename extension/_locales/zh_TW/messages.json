@@ -1291,9 +1291,61 @@
     "message": "gateway.ready 回報了工作階段權限。",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "閘道拒絕了已配對的權杖（HTTP {status}），因此無法檢查該外掛。",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "此閘道既沒有狀態路由，也沒有可讀取的工具組清單，因此擴充功能無法判斷配套外掛是否已載入。這並不代表它遺失。",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "閘道回應 HTTP {status}，因此無法檢查該外掛。",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "無法連線到閘道{detail}，因此無法檢查該外掛。",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "配套外掛已載入，共有 {presentCount}／{expectedCount} 個工具，但它不提供狀態路由，因此是舊版本。請為此設定檔重新安裝，並重新啟動閘道。",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "沒有可用的閘道權杖，因此未檢查該外掛。",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "此閘道未載入：沒有狀態路由，也未列出配套工具組。可能是未安裝、未在此設定檔啟用，或閘道之後尚未重新啟動。請為該設定檔執行 `hermes plugins list`。",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "已載入：版本 {version}，設定檔 {profile}，{toolCount} 個工具。",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "已載入：版本 {version}，設定檔 {profile}，{toolCount} 個工具。此閘道無法確認其工具組是否已為 API 伺服器啟用。",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "已載入（版本 {version}），但缺少工具：{missing}。請為此設定檔重新安裝，並重新啟動閘道。",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "已載入，但其工具組在 API 伺服器上已關閉。請使用 `hermes tools` 開啟，或從 agent.disabled_toolsets 移除。",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "已載入，但版本為 {version}，而此擴充功能需要 {expected}。請為此設定檔重新安裝，並重新啟動閘道。",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "連線已關閉。上次確認於 {age}。僅顯示，不用於執行任何操作。",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "由這台電腦上的 Hermes 儀表板提供，該儀表板接受了此面板持有的登入資訊。閘道 API 不會公布此路由。",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "由此擴充功能在提示詞內建立並傳送。不依賴任何閘道路由。",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "儀表板 WebSocket 尚未送達 gateway.ready。",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "此 Hermes 版本沒有該路由，因此無需開啟。頁面脈絡會隨每則訊息一併傳送。",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "上次使用時可正常運作。",

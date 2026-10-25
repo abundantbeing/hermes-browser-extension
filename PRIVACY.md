@@ -81,6 +81,10 @@ The extension supports two voice modes:
 
 No audio is intentionally saved by the voice dictation page.
 
+## Hermes Web sign-in
+
+When you sign in to Hermes Web (the gateway's own web app, `hermes webapp`), the panel can keep that sign-in so Projects, the bot roster, speech and image upload keep working after the Hermes Web tab is closed. It is held in `chrome.storage.session` only (memory, cleared when the browser closes, never synced, never written to disk), sent only as a request header to the loopback Hermes Web address it came from, and never put in a URL. Settings has a **Keep Hermes Web signed in from the panel** toggle; turning it off clears what is held. `hermes webapp --sign-out` ends the sign-in itself.
+
 ## Runtime activity visibility
 
 The panel displays live tool activity reported by Hermes during streaming turns. Tool labels/previews are sanitized locally before display and are not analytics, telemetry, or extra data collection. They reflect runtime events from the configured Hermes session.
@@ -89,7 +93,7 @@ The panel displays live tool activity reported by Hermes during streaming turns.
 
 Text files can be included as text. Images can be included inline; when the connected Hermes runtime advertises image upload support, the extension can save image attachments through Hermes so the agent receives a local path-backed image reference.
 
-If image upload is unavailable, the extension keeps images inline and shows a fallback warning. Generated images can be opened in a local lightbox and downloaded only after an explicit user action.
+When the gateway API has no upload route (Hermes 0.22.5 has none), the extension uses the local Hermes dashboard's image route on this computer. If neither is available, the extension keeps images inline and shows a fallback warning. Generated images can be opened in a local lightbox and downloaded only after an explicit user action.
 
 ## Remove extension data
 

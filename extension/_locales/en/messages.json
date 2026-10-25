@@ -1291,9 +1291,61 @@
     "message": "gateway.ready reports session authority.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "The gateway refused the paired token (HTTP {status}), so the plugin could not be checked.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "This gateway serves no status route and no readable toolset list, so the extension cannot tell whether the companion plugin is loaded. This does not mean it is missing.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "The gateway answered HTTP {status}, so the plugin could not be checked.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "The gateway could not be reached{detail}, so the plugin could not be checked.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "A companion plugin is loaded with {presentCount} of {expectedCount} tools, but it does not serve the status route, so it is an older copy. Reinstall it for this profile and restart the gateway.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "No gateway token is available, so the plugin was not checked.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Not loaded on this gateway: the status route is absent and no companion toolset is listed. It is not installed, not enabled for this profile, or the gateway has not been restarted since. Run `hermes plugins list` for the profile.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Loaded: version {version}, profile {profile}, {toolCount} tools.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Loaded: version {version}, profile {profile}, {toolCount} tools. This gateway could not confirm whether its toolset is on for the API server.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Loaded (version {version}) but missing tools: {missing}. Reinstall it for this profile and restart the gateway.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Loaded, but its toolset is switched off for the API server. Turn it on with `hermes tools`, or remove it from agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Loaded, but it is version {version} and this extension expects {expected}. Reinstall it for this profile and restart the gateway.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "The connection closed. Last confirmed {age}. Shown, not used to run anything.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Served by the Hermes dashboard on this computer, which accepted the sign-in this panel holds. The gateway API does not advertise it.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Built and sent by this extension inside the prompt. It does not depend on a gateway route.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "The dashboard WebSocket has not delivered gateway.ready yet.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "This Hermes version has no such route, so there is nothing to turn on. Page context goes inline with each message instead.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Worked the last time it was used.",

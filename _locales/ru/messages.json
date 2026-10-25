@@ -1291,9 +1291,61 @@
     "message": "gateway.ready сообщает о полномочиях сеанса.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Шлюз отклонил сопряжённый токен (HTTP {status}), поэтому плагин не удалось проверить.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Этот шлюз не предоставляет ни маршрут статуса, ни читаемый список наборов инструментов, поэтому расширение не может определить, загружен ли вспомогательный плагин. Это не значит, что он отсутствует.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Шлюз ответил HTTP {status}, поэтому плагин не удалось проверить.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Не удалось связаться со шлюзом{detail}, поэтому плагин не удалось проверить.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Вспомогательный плагин загружен с {presentCount} из {expectedCount} инструментов, но не обслуживает маршрут статуса, поэтому это устаревшая копия. Переустановите плагин для этого профиля и перезапустите шлюз.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Токен шлюза недоступен, поэтому плагин не проверялся.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Не загружено на этом шлюзе: маршрут статуса отсутствует, и вспомогательный набор инструментов не указан. Плагин не установлен, не включён для этого профиля или шлюз с тех пор не перезапускался. Выполните `hermes plugins list` для профиля.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Загружено: версия {version}, профиль {profile}, инструментов: {toolCount}.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Загружено: версия {version}, профиль {profile}, инструментов: {toolCount}. Этот шлюз не смог подтвердить, включён ли его набор инструментов для сервера API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Загружено (версия {version}), но не хватает инструментов: {missing}. Переустановите плагин для этого профиля и перезапустите шлюз.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Загружено, но его набор инструментов отключён для сервера API. Включите его командой `hermes tools` или удалите из agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Загружено, но это версия {version}, а это расширение ожидает {expected}. Переустановите плагин для этого профиля и перезапустите шлюз.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "Соединение закрыто. Последнее подтверждение {age}. Показано, но не используется для выполнения чего-либо.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Предоставляется панелью Hermes на этом компьютере, которая приняла вход, сохранённый в этой панели. API шлюза этот маршрут не объявляет.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Создаётся и отправляется этим расширением внутри запроса. Не зависит от маршрута шлюза.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "WebSocket панели ещё не передал gateway.ready.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "В этой версии Hermes такого маршрута нет, так что включать нечего. Контекст страницы вместо этого передаётся вместе с каждым сообщением.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Сработало при последнем использовании.",

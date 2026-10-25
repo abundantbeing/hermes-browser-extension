@@ -1291,9 +1291,61 @@
     "message": "gateway.ready 报告了会话权限。",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "网关拒绝了已配对的令牌（HTTP {status}），因此无法检查该插件。",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "此网关既没有状态路由，也没有可读的工具集列表，因此扩展无法判断配套插件是否已加载。这并不表示它缺失。",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "网关返回 HTTP {status}，因此无法检查该插件。",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "无法连接到网关{detail}，因此无法检查该插件。",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "配套插件已加载，有 {presentCount} 个（共 {expectedCount} 个）工具，但它不提供状态路由，因此是旧版本。请为此配置文件重新安装，并重启网关。",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "没有可用的网关令牌，因此未检查该插件。",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "此网关上未加载：没有状态路由，也未列出配套工具集。可能是未安装、未为此配置文件启用，或此后未重启网关。请为该配置文件运行 `hermes plugins list`。",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "已加载：版本 {version}，配置文件 {profile}，{toolCount} 个工具。",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "已加载：版本 {version}，配置文件 {profile}，{toolCount} 个工具。此网关无法确认其工具集是否已为 API 服务器启用。",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "已加载（版本 {version}），但缺少工具：{missing}。请为此配置文件重新安装，并重启网关。",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "已加载，但其工具集在 API 服务器上已关闭。请使用 `hermes tools` 开启，或从 agent.disabled_toolsets 中移除。",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "已加载，但版本为 {version}，而此扩展需要 {expected}。请为此配置文件重新安装，并重启网关。",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "连接已关闭。上次确认于 {age}。仅显示，不用于运行任何操作。",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "由本机的 Hermes 仪表板提供，该仪表板接受了此面板持有的登录信息。网关 API 不会公布此路由。",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "由此扩展在提示词内构建并发送。不依赖任何网关路由。",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "控制台 WebSocket 尚未送达 gateway.ready。",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "此 Hermes 版本没有该路由，因此无需开启。页面上下文会随每条消息一并发送。",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "上次使用时可正常工作。",

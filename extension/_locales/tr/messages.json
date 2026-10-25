@@ -1291,9 +1291,61 @@
     "message": "gateway.ready oturum yetkisini bildiriyor.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Ağ geçidi eşleştirilmiş belirteci reddetti (HTTP {status}), bu yüzden eklenti kontrol edilemedi.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Bu ağ geçidi ne durum rotası ne de okunabilir bir araç seti listesi sunuyor; bu yüzden uzantı yardımcı eklentinin yüklü olup olmadığını anlayamaz. Bu, eklentinin eksik olduğu anlamına gelmez.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Ağ geçidi HTTP {status} yanıtı verdi, bu yüzden eklenti kontrol edilemedi.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Ağ geçidine ulaşılamadı{detail}, bu yüzden eklenti kontrol edilemedi.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Yardımcı eklenti {expectedCount} aracın {presentCount} tanesiyle yüklü, ancak durum rotasını sunmuyor; bu yüzden eski bir kopya. Bu profil için yeniden yükleyin ve ağ geçidini yeniden başlatın.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Kullanılabilir bir ağ geçidi belirteci yok, bu yüzden eklenti kontrol edilmedi.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Bu ağ geçidinde yüklü değil: durum rotası yok ve listede yardımcı araç seti yok. Yüklü değil, bu profil için etkin değil ya da ağ geçidi o zamandan beri yeniden başlatılmadı. Profil için `hermes plugins list` komutunu çalıştırın.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Yüklendi: sürüm {version}, profil {profile}, {toolCount} araç.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Yüklendi: sürüm {version}, profil {profile}, {toolCount} araç. Bu ağ geçidi, araç setinin API sunucusu için açık olup olmadığını doğrulayamadı.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Yüklendi (sürüm {version}), ancak şu araçlar eksik: {missing}. Bu profil için yeniden yükleyin ve ağ geçidini yeniden başlatın.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Yüklendi, ancak araç seti API sunucusu için kapalı. `hermes tools` ile açın veya agent.disabled_toolsets listesinden çıkarın.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Yüklendi, ancak sürüm {version} ve bu uzantı {expected} sürümünü bekliyor. Bu profil için yeniden yükleyin ve ağ geçidini yeniden başlatın.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "Bağlantı kapandı. En son doğrulama {age}. Gösteriliyor, hiçbir şeyi çalıştırmak için kullanılmıyor.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Bu bilgisayardaki Hermes kontrol panelinden sunuluyor; kontrol paneli bu panelin tuttuğu oturum açmayı kabul etti. Ağ geçidi API'si bunu duyurmaz.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Bu uzantı tarafından istemin içinde oluşturulup gönderilir. Bir ağ geçidi yoluna bağlı değildir.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "Pano WebSocket'i henüz gateway.ready göndermedi.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Bu Hermes sürümünde böyle bir rota yok, bu yüzden açılacak bir şey yok. Sayfa bağlamı bunun yerine her iletiyle birlikte gönderilir.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "En son kullanıldığında çalıştı.",

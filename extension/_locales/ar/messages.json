@@ -1291,9 +1291,61 @@
     "message": "يُبلغ gateway.ready عن سلطة الجلسة.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "رفضت البوابة الرمز المقترن (HTTP {status})، لذلك تعذر فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "لا تقدم هذه البوابة مسار حالة ولا قائمة مجموعات أدوات قابلة للقراءة، لذلك لا تستطيع الإضافة معرفة ما إذا كانت الإضافة المساعدة محمّلة. هذا لا يعني أنها مفقودة.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "ردت البوابة برمز HTTP {status}، لذلك تعذر فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "تعذر الوصول إلى البوابة{detail}، لذلك تعذر فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "الإضافة المساعدة محمّلة مع {presentCount} من أصل {expectedCount} أدوات، لكنها لا تقدم مسار الحالة، لذلك فهي نسخة قديمة. أعد تثبيتها لهذا الملف الشخصي وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "لا يتوفر رمز للبوابة، لذلك لم يتم فحص الإضافة.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "غير محمّلة على هذه البوابة: مسار الحالة غير موجود ولا توجد مجموعة أدوات مساعدة مدرجة. إما أنها غير مثبتة، أو غير مفعّلة لهذا الملف الشخصي، أو لم تُعد البوابة تشغيلها منذ ذلك الحين. شغّل `hermes plugins list` لهذا الملف الشخصي.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "تم التحميل: الإصدار {version}، الملف الشخصي {profile}، عدد الأدوات {toolCount}.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "تم التحميل: الإصدار {version}، الملف الشخصي {profile}، عدد الأدوات {toolCount}. لم تتمكن هذه البوابة من التأكد مما إذا كانت مجموعة أدواتها مفعّلة لخادم API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "تم التحميل (الإصدار {version})، لكن الأدوات التالية مفقودة: {missing}. أعد تثبيته لهذا الملف الشخصي وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "تم التحميل، لكن مجموعة أدواتها موقوفة لخادم API. فعّلها بالأمر `hermes tools` أو أزلها من agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "تم التحميل، لكن إصداره {version} وهذه الإضافة تتوقع {expected}. أعد تثبيته لهذا الملف الشخصي وأعد تشغيل البوابة.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "أُغلق الاتصال. آخر تأكيد {age}. يُعرض ولا يُستخدم لتشغيل أي شيء.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "يقدمه لوحة تحكم Hermes على هذا الكمبيوتر، والتي قبلت تسجيل الدخول الذي تحتفظ به هذه اللوحة. لا تعلن واجهة API الخاصة بالبوابة عنه.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "تبنيه وترسله هذه الإضافة داخل الموجّه. لا يعتمد على أي مسار في البوابة.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "لم يسلّم WebSocket اللوحة gateway.ready بعد.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "لا تحتوي نسخة Hermes هذه على هذا المسار، لذلك لا يوجد شيء لتفعيله. يُرسل سياق الصفحة ضمن كل رسالة بدلاً من ذلك.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "نجح في آخر مرة استُخدم فيها.",

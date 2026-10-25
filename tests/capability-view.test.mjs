@@ -23,6 +23,7 @@ import {
   dashboardWsGatewayCapabilities,
   normalizeGatewayCapabilities,
 } from '../extension/lib/capabilities.mjs';
+import { COMPANION_REASONS } from '../extension/lib/companion-plugin-status.mjs';
 import { describeCompactOutcome } from '../extension/lib/session-compact.mjs';
 
 const t = (key, params = {}) => {
@@ -34,6 +35,8 @@ test('every string the capability view and rows ask for exists in English, and n
   const needed = new Set();
   for (const state of Object.values(CAPABILITY_STATES)) needed.add(capabilityStateKey(state));
   for (const code of Object.keys(CAPABILITY_REASONS)) needed.add(capabilityReasonKey(code));
+  // The companion plugin's probe words its own reasons; each one has a localized string.
+  for (const code of Object.keys(COMPANION_REASONS)) needed.add(capabilityReasonKey(code));
   const rows = capabilityStatusRows(normalizeGatewayCapabilities(null, {}), {});
   for (const row of rows) needed.add(capabilityFeatureKey(row.key));
   const source = fs.readFileSync(new URL('../extension/lib/capability-view.mjs', import.meta.url), 'utf8');

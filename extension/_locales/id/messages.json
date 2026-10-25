@@ -1291,9 +1291,61 @@
     "message": "gateway.ready melaporkan otoritas sesi.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Gateway menolak token yang dipasangkan (HTTP {status}), sehingga plugin tidak dapat diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Gateway ini tidak menyediakan rute status maupun daftar toolset yang dapat dibaca, jadi ekstensi tidak dapat memastikan apakah plugin pendamping dimuat. Ini tidak berarti plugin tersebut hilang.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Gateway merespons dengan HTTP {status}, sehingga plugin tidak dapat diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Gateway tidak dapat dihubungi{detail}, sehingga plugin tidak dapat diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Plugin pendamping dimuat dengan {presentCount} dari {expectedCount} alat, tetapi tidak menyediakan rute status, jadi ini salinan lama. Instal ulang untuk profil ini lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Tidak ada token gateway yang tersedia, sehingga plugin tidak diperiksa.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Tidak dimuat di gateway ini: rute status tidak ada dan tidak ada toolset pendamping yang terdaftar. Plugin belum terinstal, belum diaktifkan untuk profil ini, atau gateway belum dimulai ulang sejak itu. Jalankan `hermes plugins list` untuk profil ini.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Dimuat: versi {version}, profil {profile}, {toolCount} alat.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Dimuat: versi {version}, profil {profile}, {toolCount} alat. Gateway ini tidak dapat memastikan apakah toolset-nya aktif untuk server API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Dimuat (versi {version}), tetapi alat berikut tidak ada: {missing}. Instal ulang untuk profil ini lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Dimuat, tetapi toolset-nya dinonaktifkan untuk server API. Aktifkan dengan `hermes tools` atau hapus dari agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Dimuat, tetapi versinya {version} dan ekstensi ini membutuhkan {expected}. Instal ulang untuk profil ini lalu mulai ulang gateway.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "Koneksi ditutup. Terakhir dikonfirmasi {age}. Ditampilkan, tidak dipakai untuk menjalankan apa pun.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Disajikan oleh dasbor Hermes di komputer ini, yang menerima sign-in yang disimpan panel ini. API gateway tidak mengiklankannya.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Dibuat dan dikirim oleh ekstensi ini di dalam prompt. Tidak bergantung pada rute gateway.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "WebSocket dasbor belum mengirim gateway.ready.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Versi Hermes ini tidak memiliki rute tersebut, jadi tidak ada yang perlu diaktifkan. Konteks halaman dikirim bersama setiap pesan.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Berhasil saat terakhir digunakan.",

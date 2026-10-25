@@ -1291,9 +1291,61 @@
     "message": "gateway.ready zgłasza autorytet sesji.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Brama odrzuciła sparowany token (HTTP {status}), więc wtyczki nie można było sprawdzić.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Ta brama nie udostępnia trasy statusu ani czytelnej listy zestawów narzędzi, więc rozszerzenie nie może stwierdzić, czy wtyczka towarzysząca jest załadowana. Nie oznacza to, że jej brakuje.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Brama odpowiedziała HTTP {status}, więc wtyczki nie można było sprawdzić.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Nie udało się połączyć z bramą{detail}, więc wtyczki nie można było sprawdzić.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Wtyczka towarzysząca jest załadowana z {presentCount} z {expectedCount} narzędzi, ale nie obsługuje trasy statusu, więc to starsza kopia. Zainstaluj ją ponownie dla tego profilu i uruchom ponownie bramę.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Brak dostępnego tokenu bramy, więc wtyczka nie została sprawdzona.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Nie załadowano na tej bramie: brak trasy statusu i nie ma na liście zestawu narzędzi towarzyszącego. Wtyczka nie jest zainstalowana, nie jest włączona dla tego profilu albo brama nie została od tego czasu uruchomiona ponownie. Uruchom `hermes plugins list` dla profilu.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Załadowano: wersja {version}, profil {profile}, narzędzia: {toolCount}.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Załadowano: wersja {version}, profil {profile}, narzędzia: {toolCount}. Ta brama nie mogła potwierdzić, czy jej zestaw narzędzi jest włączony dla serwera API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Załadowano (wersja {version}), ale brakuje narzędzi: {missing}. Zainstaluj ją ponownie dla tego profilu i uruchom ponownie bramę.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Załadowano, ale jej zestaw narzędzi jest wyłączony dla serwera API. Włącz go poleceniem `hermes tools` lub usuń z agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Załadowano, ale to wersja {version}, a to rozszerzenie oczekuje wersji {expected}. Zainstaluj ją ponownie dla tego profilu i uruchom ponownie bramę.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "Połączenie zostało zamknięte. Ostatnio potwierdzono {age}. Pokazane, ale nieużywane do wykonywania czegokolwiek.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Obsługiwane przez panel Hermes na tym komputerze, który zaakceptował logowanie przechowywane przez ten panel. API bramy tego nie ogłasza.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Tworzone i wysyłane przez to rozszerzenie w prompcie. Nie zależy od trasy bramy.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "WebSocket panelu nie dostarczył jeszcze gateway.ready.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Ta wersja Hermes nie ma takiej trasy, więc nie ma czego włączać. Kontekst strony jest zamiast tego dołączany do każdej wiadomości.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Zadziałało przy ostatnim użyciu.",

@@ -1291,9 +1291,61 @@
     "message": "gateway.ready rapporterer sessionsautoritet.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "Gatewayen afviste det parrede token (HTTP {status}), så pluginet kunne ikke tjekkes.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Denne gateway leverer hverken en statusrute eller en læsbar liste over værktøjssæt, så udvidelsen kan ikke se, om companion-pluginet er indlæst. Det betyder ikke, at det mangler.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "Gatewayen svarede HTTP {status}, så pluginet kunne ikke tjekkes.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "Gatewayen kunne ikke nås{detail}, så pluginet kunne ikke tjekkes.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Et companion-plugin er indlæst med {presentCount} af {expectedCount} værktøjer, men det leverer ikke statusruten, så det er en ældre kopi. Geninstallér det for denne profil, og genstart gatewayen.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Der er intet gateway-token tilgængeligt, så pluginet blev ikke tjekket.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Ikke indlæst på denne gateway: statusruten mangler, og der står ikke noget companion-værktøjssæt på listen. Det er enten ikke installeret, ikke slået til for denne profil, eller gatewayen er ikke genstartet siden. Kør `hermes plugins list` for profilen.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Indlæst: version {version}, profil {profile}, {toolCount} værktøjer.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Indlæst: version {version}, profil {profile}, {toolCount} værktøjer. Denne gateway kunne ikke bekræfte, om dens værktøjssæt er slået til for API-serveren.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Indlæst (version {version}), men mangler værktøjer: {missing}. Geninstallér det for denne profil, og genstart gatewayen.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Indlæst, men dets værktøjssæt er slået fra for API-serveren. Slå det til med `hermes tools`, eller fjern det fra agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Indlæst, men det er version {version}, og denne udvidelse forventer {expected}. Geninstallér det for denne profil, og genstart gatewayen.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "Forbindelsen blev lukket. Sidst bekræftet {age}. Vises, men bruges ikke til at udføre noget.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Leveres af Hermes-dashboardet på denne computer, som accepterede det login, dette panel har. Gateway-API'et annoncerer den ikke.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Bygget og sendt af denne udvidelse i prompten. Det afhænger ikke af en gateway-rute.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "Dashboard-WebSocket har endnu ikke leveret gateway.ready.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Denne Hermes-version har ingen sådan rute, så der er intet at slå til. Sidekonteksten sendes i stedet med hver besked.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "Virkede sidste gang, den blev brugt.",

@@ -1291,9 +1291,61 @@
     "message": "gateway.ready सत्र अधिकार की रिपोर्ट करता है।",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "गेटवे ने जोड़े गए टोकन को अस्वीकार कर दिया (HTTP {status}), इसलिए प्लगिन की जाँच नहीं हो सकी।",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "इस गेटवे पर न स्टेटस रूट है और न पढ़ने योग्य टूलसेट सूची, इसलिए एक्सटेंशन यह नहीं बता सकता कि सहायक प्लगिन लोड है या नहीं। इसका मतलब यह नहीं कि यह गायब है।",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "गेटवे ने HTTP {status} से जवाब दिया, इसलिए प्लगिन की जाँच नहीं हो सकी।",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "गेटवे तक पहुँचा नहीं जा सका{detail}, इसलिए प्लगिन की जाँच नहीं हो सकी।",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "सहायक प्लगिन {expectedCount} में से {presentCount} टूल के साथ लोड है, लेकिन यह स्टेटस रूट नहीं देता, इसलिए यह पुरानी प्रति है। इस प्रोफ़ाइल के लिए इसे फिर से इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "कोई गेटवे टोकन उपलब्ध नहीं है, इसलिए प्लगिन की जाँच नहीं की गई।",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "इस गेटवे पर लोड नहीं है: स्टेटस रूट नहीं है और कोई सहायक टूलसेट सूचीबद्ध नहीं है। यह इंस्टॉल नहीं है, इस प्रोफ़ाइल के लिए चालू नहीं है, या तब से गेटवे को पुनः आरंभ नहीं किया गया है। प्रोफ़ाइल के लिए `hermes plugins list` चलाएँ।",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "लोड हुआ: संस्करण {version}, प्रोफ़ाइल {profile}, {toolCount} टूल।",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "लोड हुआ: संस्करण {version}, प्रोफ़ाइल {profile}, {toolCount} टूल। यह गेटवे पुष्टि नहीं कर सका कि API सर्वर के लिए इसका टूलसेट चालू है या नहीं।",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "लोड हुआ (संस्करण {version}), पर इन टूल की कमी है: {missing}। इस प्रोफ़ाइल के लिए इसे फिर से इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "लोड हुआ, पर API सर्वर के लिए इसका टूलसेट बंद है। इसे `hermes tools` से चालू करें, या agent.disabled_toolsets से हटा दें।",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "लोड हुआ, लेकिन यह संस्करण {version} है और यह एक्सटेंशन {expected} की उम्मीद करता है। इस प्रोफ़ाइल के लिए इसे फिर से इंस्टॉल करें और गेटवे को पुनः आरंभ करें।",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "कनेक्शन बंद हो गया। अंतिम पुष्टि {age}। दिखाया गया है, कुछ चलाने के लिए उपयोग नहीं होता।",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "इस कंप्यूटर के Hermes डैशबोर्ड से दिया जा रहा है, जिसने इस पैनल के पास मौजूद साइन-इन को स्वीकार किया है। गेटवे API इसका विज्ञापन नहीं करता।",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "इस एक्सटेंशन द्वारा प्रॉम्प्ट के भीतर बनाया और भेजा गया। यह किसी गेटवे रूट पर निर्भर नहीं है।",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "डैशबोर्ड WebSocket ने अभी तक gateway.ready नहीं भेजा।",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "इस Hermes संस्करण में ऐसा कोई रूट नहीं है, इसलिए चालू करने के लिए कुछ नहीं है। पेज का संदर्भ हर संदेश के साथ भेजा जाता है।",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "पिछली बार उपयोग करने पर काम किया।",

@@ -1291,9 +1291,61 @@
     "message": "gateway.ready signale l'autorité de session.",
     "description": "Runtime interface message capability.reason.authority_ready"
   },
+  "runtime_capability_reason_companion_auth_refused": {
+    "message": "La passerelle a refusé le jeton associé (HTTP {status}), le plugin n'a donc pas pu être vérifié.",
+    "description": "Runtime interface message capability.reason.companion_auth_refused"
+  },
+  "runtime_capability_reason_companion_cannot_tell": {
+    "message": "Cette passerelle ne fournit ni route de statut ni liste lisible de jeux d'outils. L'extension ne peut donc pas savoir si le plugin compagnon est chargé. Cela ne signifie pas qu'il manque.",
+    "description": "Runtime interface message capability.reason.companion_cannot_tell"
+  },
+  "runtime_capability_reason_companion_gateway_error": {
+    "message": "La passerelle a répondu HTTP {status}, le plugin n'a donc pas pu être vérifié.",
+    "description": "Runtime interface message capability.reason.companion_gateway_error"
+  },
+  "runtime_capability_reason_companion_network": {
+    "message": "La passerelle n'a pas pu être jointe{detail}, le plugin n'a donc pas pu être vérifié.",
+    "description": "Runtime interface message capability.reason.companion_network"
+  },
+  "runtime_capability_reason_companion_no_route": {
+    "message": "Un plugin compagnon est chargé avec {presentCount} outils sur {expectedCount}, mais il ne fournit pas la route de statut : c'est une ancienne copie. Réinstallez-le pour ce profil et redémarrez la passerelle.",
+    "description": "Runtime interface message capability.reason.companion_no_route"
+  },
+  "runtime_capability_reason_companion_no_token": {
+    "message": "Aucun jeton de passerelle n'est disponible, le plugin n'a donc pas été vérifié.",
+    "description": "Runtime interface message capability.reason.companion_no_token"
+  },
+  "runtime_capability_reason_companion_not_loaded": {
+    "message": "Non chargé sur cette passerelle : la route de statut est absente et aucun jeu d'outils compagnon n'est listé. Il n'est pas installé, pas activé pour ce profil, ou la passerelle n'a pas été redémarrée depuis. Exécutez `hermes plugins list` pour le profil.",
+    "description": "Runtime interface message capability.reason.companion_not_loaded"
+  },
+  "runtime_capability_reason_companion_ready": {
+    "message": "Chargé : version {version}, profil {profile}, {toolCount} outils.",
+    "description": "Runtime interface message capability.reason.companion_ready"
+  },
+  "runtime_capability_reason_companion_ready_route_only": {
+    "message": "Chargé : version {version}, profil {profile}, {toolCount} outils. Cette passerelle n'a pas pu confirmer si son jeu d'outils est activé pour le serveur API.",
+    "description": "Runtime interface message capability.reason.companion_ready_route_only"
+  },
+  "runtime_capability_reason_companion_tools_missing": {
+    "message": "Chargé (version {version}), mais des outils manquent : {missing}. Réinstallez-le pour ce profil et redémarrez la passerelle.",
+    "description": "Runtime interface message capability.reason.companion_tools_missing"
+  },
+  "runtime_capability_reason_companion_toolset_off": {
+    "message": "Chargé, mais son jeu d'outils est désactivé pour le serveur API. Activez-le avec `hermes tools` ou retirez-le de agent.disabled_toolsets.",
+    "description": "Runtime interface message capability.reason.companion_toolset_off"
+  },
+  "runtime_capability_reason_companion_version_old": {
+    "message": "Chargé, mais il s'agit de la version {version} alors que cette extension attend la version {expected}. Réinstallez-le pour ce profil et redémarrez la passerelle.",
+    "description": "Runtime interface message capability.reason.companion_version_old"
+  },
   "runtime_capability_reason_connection_closed": {
     "message": "La connexion s'est fermée. Dernière confirmation {age}. Affiché, jamais utilisé pour exécuter quoi que ce soit.",
     "description": "Runtime interface message capability.reason.connection_closed"
+  },
+  "runtime_capability_reason_dashboard_route": {
+    "message": "Servi par le tableau de bord Hermes de cet ordinateur, qui a accepté la connexion détenue par ce panneau. L'API de la passerelle ne l'annonce pas.",
+    "description": "Runtime interface message capability.reason.dashboard_route"
   },
   "runtime_capability_reason_extension_side": {
     "message": "Construit et envoyé par cette extension dans le prompt. Cela ne dépend d'aucune route de la passerelle.",
@@ -1338,6 +1390,10 @@
   "runtime_capability_reason_not_connected": {
     "message": "Le WebSocket du tableau de bord n'a pas encore envoyé gateway.ready.",
     "description": "Runtime interface message capability.reason.not_connected"
+  },
+  "runtime_capability_reason_not_in_hermes": {
+    "message": "Cette version de Hermes ne possède pas cette route, il n'y a donc rien à activer. Le contexte de la page est ajouté à chaque message.",
+    "description": "Runtime interface message capability.reason.not_in_hermes"
   },
   "runtime_capability_reason_operation_ok": {
     "message": "A fonctionné la dernière fois.",
