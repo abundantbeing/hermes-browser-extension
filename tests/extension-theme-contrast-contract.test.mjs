@@ -103,3 +103,13 @@ test('custom themes derive complete surface tokens without changing fonts or acc
   assert.match(fulltabThemesCss, /html\[data-hermes-theme\^="custom:"\] \.web-brand::before[\s\S]*?background:\s*var\(--hermes-shell-fg\)[\s\S]*?mask:\s*url/);
   assert.doesNotMatch(`${designTokensCss}\n${sidepanelCss}\n${appCss}\n${fulltabThemesCss}`, /--hermes-custom-(?:css|style|font-url)/i);
 });
+
+test('Everforest and Classic dark keep light text on a deep user bubble like the other dark themes', () => {
+  const themes = readFileSync(new URL('../extension/sidepanel-themes.css', import.meta.url), 'utf8');
+  for (const [theme, bg, fg] of [['everforest', '#4b5f36', '#fdf6e3'], ['classic', '#6b4f00', '#fff8dc']]) {
+    const start = themes.indexOf(`html[data-hermes-theme="${theme}"][data-hermes-mode="dark"] {`);
+    const block = start < 0 ? '' : themes.slice(start, themes.indexOf('}', start));
+    assert.match(block, new RegExp(`--hermes-user-bg: ${bg};`), `${theme} dark user bubble is deep`);
+    assert.match(block, new RegExp(`--hermes-user-fg: ${fg};`), `${theme} dark user text is light`);
+  }
+});

@@ -337,8 +337,8 @@ html[data-hermes-theme="everforest"][data-hermes-mode="dark"] {
   --hermes-primary-bg: #a7c080;
   --hermes-primary-fg: #20291b;
   --hermes-primary-border: #a7c080;
-  --hermes-user-bg: #a7c080;
-  --hermes-user-fg: #20291b;
+  --hermes-user-bg: #4b5f36;
+  --hermes-user-fg: #fdf6e3;
   --hermes-user-border: #a7c080;
   --hermes-system-bg: #2d353b;
   --hermes-system-fg: #d3c6aa;
@@ -457,8 +457,8 @@ html[data-hermes-theme="classic"][data-hermes-mode="dark"] {
   --hermes-primary-bg: #ffbf00;
   --hermes-primary-fg: #161616;
   --hermes-primary-border: #ffbf00;
-  --hermes-user-bg: #ffbf00;
-  --hermes-user-fg: #161616;
+  --hermes-user-bg: #6b4f00;
+  --hermes-user-fg: #fff8dc;
   --hermes-user-border: #ffbf00;
   --hermes-system-bg: #232335;
   --hermes-system-fg: #fff8dc;
