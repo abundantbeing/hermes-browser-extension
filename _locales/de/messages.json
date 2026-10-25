@@ -559,10 +559,6 @@
     "message": "Standardmäßig deaktiviert. Verwendet die aktuell verbundene Hermes-Instanz.",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
   },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "Standardmäßig deaktiviert. Auf die aktuell verbundene Hermes-Instanz beschränkt.",
-    "description": "Runtime interface message bot_mode.off_hint_web"
-  },
   "runtime_bot_mode_open_chat": {
     "message": "Bot-Chat öffnen",
     "description": "Runtime interface message bot_mode.open_chat"
@@ -639,10 +635,6 @@
     "message": "Hermes-Agenten",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Hermes Web-Agenten",
-    "description": "Runtime interface message bot_mode.roster_label_web"
-  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"
@@ -666,10 +658,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "Aktiviert die optionale Profilliste und die kanonische Bot-Chat-Navigation für diesen Browser.",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "Aktiviert die optionale Agenten-Leiste und die kanonische Bot-Chat-Navigation in diesem Browser.",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "Agenten & Bot-Modus",
@@ -1691,10 +1679,6 @@
     "message": "Verdichte…",
     "description": "Runtime interface message compact.working"
   },
-  "runtime_composer_attach": {
-    "message": "＋ Anhängen",
-    "description": "Runtime interface message composer.attach"
-  },
   "runtime_composer_chat_label": {
     "message": "CHAT",
     "description": "Runtime interface message composer.chat_label"
@@ -1771,10 +1755,6 @@
     "message": "nicht konfiguriert",
     "description": "Runtime interface message connection.not_configured_short"
   },
-  "runtime_connection_unknown_transport": {
-    "message": "unbekannter Transport",
-    "description": "Runtime interface message connection.unknown_transport"
-  },
   "runtime_context_consent_share_detail": {
     "message": "Nur Chat, bis du genau diese Verbindung genehmigst. Die Einwilligung ist nach Endpunkt, Konto, Profil und Browser-Controller getrennt.",
     "description": "Runtime interface message context_consent.share_detail"
@@ -1786,10 +1766,6 @@
   "runtime_context_attached_tab": {
     "message": "Angehängte Registerkarte",
     "description": "Runtime interface message context.attached_tab"
-  },
-  "runtime_context_browser_tab_handoff": {
-    "message": "Übergabe der Browser-Registerkarte {tabId}",
-    "description": "Runtime interface message context.browser_tab_handoff"
   },
   "runtime_context_follow_active_tab": {
     "message": "Folgen Sie der aktiven Registerkarte",
@@ -2138,14 +2114,6 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
-  },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "Geöffnet von {source}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
-  },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "Geöffnet von {source} auf der Browser-Registerkarte {tabId}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
   "runtime_gateway_queue_discard": {
     "message": "Verwerfen",
@@ -3071,34 +3039,6 @@
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "Schnellmodus {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. Modell- und Laufzeitoptionen ändern.",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "Laufzeitoptionen",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "Laufzeitoptionen: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "{effort} Argumentation",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "Denken aus",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "Denken {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "Sitzungs-ID für {title} kopieren",
     "description": "Runtime interface message session.copy_id_for"
@@ -3111,10 +3051,6 @@
     "message": "＋ Neue Hermes Browser Extension-Sitzung",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "Öffne {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -3122,10 +3058,6 @@
   "runtime_session_origin_refused_title": {
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
-  },
-  "runtime_session_rail_save_failed": {
-    "message": "Sitzungsschiene konnte nicht gespeichert werden: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
   },
   "runtime_session_rename_named": {
     "message": "Sitzung {title} umbenennen",
@@ -7822,14 +7754,6 @@
   "runtime_wake_turn_on": {
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
-  },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
-  },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
   },
   "runtime_webapp_assist_detail": {
     "message": "Die Hermes-Web-App in einem neuen Tab öffnen.",

@@ -559,10 +559,6 @@
     "message": "Tắt theo mặc định. Dùng thực thể Hermes đang kết nối hiện tại.",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
   },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "Tắt theo mặc định. Giới hạn trong thực thể Hermes đang kết nối hiện tại.",
-    "description": "Runtime interface message bot_mode.off_hint_web"
-  },
   "runtime_bot_mode_open_chat": {
     "message": "Mở Bot Chat",
     "description": "Runtime interface message bot_mode.open_chat"
@@ -639,10 +635,6 @@
     "message": "Tác nhân Hermes",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Tác nhân Hermes Web",
-    "description": "Runtime interface message bot_mode.roster_label_web"
-  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"
@@ -666,10 +658,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "Bật danh sách hồ sơ tùy chọn và điều hướng Bot Chat chính tắc cho trình duyệt này.",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "Bật thanh tác nhân tùy chọn và điều hướng Bot Chat chính tắc trên trình duyệt này.",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "Tác nhân và chế độ Bot",
@@ -1691,10 +1679,6 @@
     "message": "Đang nén…",
     "description": "Runtime interface message compact.working"
   },
-  "runtime_composer_attach": {
-    "message": "＋ Đính kèm",
-    "description": "Runtime interface message composer.attach"
-  },
   "runtime_composer_chat_label": {
     "message": "TRÒ CHUYỆN",
     "description": "Runtime interface message composer.chat_label"
@@ -1771,10 +1755,6 @@
     "message": "chưa được cấu hình",
     "description": "Runtime interface message connection.not_configured_short"
   },
-  "runtime_connection_unknown_transport": {
-    "message": "giao thức truyền tải không xác định",
-    "description": "Runtime interface message connection.unknown_transport"
-  },
   "runtime_context_consent_share_detail": {
     "message": "Chỉ trò chuyện cho đến khi bạn phê duyệt đúng kết nối này. Sự đồng ý được tách biệt theo điểm cuối, tài khoản, hồ sơ và bộ điều khiển Trình duyệt.",
     "description": "Runtime interface message context_consent.share_detail"
@@ -1786,10 +1766,6 @@
   "runtime_context_attached_tab": {
     "message": "Tab đính kèm",
     "description": "Runtime interface message context.attached_tab"
-  },
-  "runtime_context_browser_tab_handoff": {
-    "message": "Chuyển giao tab trình duyệt {tabId}",
-    "description": "Runtime interface message context.browser_tab_handoff"
   },
   "runtime_context_follow_active_tab": {
     "message": "Theo dõi tab đang hoạt động",
@@ -2138,14 +2114,6 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
-  },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "Được mở từ {source}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
-  },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "Được mở từ {source} trên tab trình duyệt {tabId}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
   "runtime_gateway_queue_discard": {
     "message": "Bỏ",
@@ -3071,34 +3039,6 @@
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "Chế độ nhanh {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. Thay đổi mô hình và tùy chọn thời gian chạy.",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "Tùy chọn thời gian chạy",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "Tùy chọn thời gian chạy: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "Lý luận {effort}",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "Tắt suy nghĩ",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "Suy nghĩ {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "Sao chép ID phiên cho {title}",
     "description": "Runtime interface message session.copy_id_for"
@@ -3111,10 +3051,6 @@
     "message": "＋ Phiên Hermes Browser Extension mới",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "Đang mở {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -3122,10 +3058,6 @@
   "runtime_session_origin_refused_title": {
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
-  },
-  "runtime_session_rail_save_failed": {
-    "message": "Không thể lưu đường ray phiên: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
   },
   "runtime_session_rename_named": {
     "message": "Đổi tên phiên {title}",
@@ -7822,14 +7754,6 @@
   "runtime_wake_turn_on": {
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
-  },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
-  },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
   },
   "runtime_webapp_assist_detail": {
     "message": "Mở ứng dụng Hermes Web trong một tab mới.",

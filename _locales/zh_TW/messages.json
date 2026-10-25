@@ -559,10 +559,6 @@
     "message": "預設關閉。使用目前連線的 Hermes 實例。",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
   },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "預設關閉。僅作用於目前連線的 Hermes 實例。",
-    "description": "Runtime interface message bot_mode.off_hint_web"
-  },
   "runtime_bot_mode_open_chat": {
     "message": "開啟 Bot Chat",
     "description": "Runtime interface message bot_mode.open_chat"
@@ -639,10 +635,6 @@
     "message": "Hermes 代理程式",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Hermes Web 代理程式",
-    "description": "Runtime interface message bot_mode.roster_label_web"
-  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"
@@ -666,10 +658,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "開啟選用的設定檔清單和此瀏覽器的標準 Bot Chat 導覽。",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "在此瀏覽器上啟用選用的代理程式側欄和標準 Bot Chat 導覽。",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "代理程式與 Bot 模式",
@@ -1691,10 +1679,6 @@
     "message": "壓縮中…",
     "description": "Runtime interface message compact.working"
   },
-  "runtime_composer_attach": {
-    "message": "＋ 附加",
-    "description": "Runtime interface message composer.attach"
-  },
   "runtime_composer_chat_label": {
     "message": "交談",
     "description": "Runtime interface message composer.chat_label"
@@ -1771,10 +1755,6 @@
     "message": "未設定",
     "description": "Runtime interface message connection.not_configured_short"
   },
-  "runtime_connection_unknown_transport": {
-    "message": "未知的傳輸",
-    "description": "Runtime interface message connection.unknown_transport"
-  },
   "runtime_context_consent_share_detail": {
     "message": "在您核准此確切連線前僅限聊天。授權會依端點、帳戶、設定檔與瀏覽器控制器隔離。",
     "description": "Runtime interface message context_consent.share_detail"
@@ -1786,10 +1766,6 @@
   "runtime_context_attached_tab": {
     "message": "已附加的分頁",
     "description": "Runtime interface message context.attached_tab"
-  },
-  "runtime_context_browser_tab_handoff": {
-    "message": "瀏覽器分頁 {tabId} 交接",
-    "description": "Runtime interface message context.browser_tab_handoff"
   },
   "runtime_context_follow_active_tab": {
     "message": "跟隨活動分頁",
@@ -2138,14 +2114,6 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
-  },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "從 {source} 開啟。",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
-  },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "從瀏覽器分頁 {tabId} 的 {source} 開啟。",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
   "runtime_gateway_queue_discard": {
     "message": "捨棄",
@@ -3071,34 +3039,6 @@
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "快速模式 {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}。變更模型與執行階段選項。",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "執行階段選項",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "執行階段選項：{summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "{effort} 推理",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "思考關閉",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "思考 {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "複製 {title} 的工作階段 ID",
     "description": "Runtime interface message session.copy_id_for"
@@ -3111,10 +3051,6 @@
     "message": "＋ 新增 Hermes Browser 擴充功能工作階段",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "正在開啟 {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -3122,10 +3058,6 @@
   "runtime_session_origin_refused_title": {
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
-  },
-  "runtime_session_rail_save_failed": {
-    "message": "工作階段欄儲存失敗：{error}",
-    "description": "Runtime interface message session.rail_save_failed"
   },
   "runtime_session_rename_named": {
     "message": "重新命名工作階段 {title}",
@@ -7822,14 +7754,6 @@
   "runtime_wake_turn_on": {
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
-  },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
-  },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
   },
   "runtime_webapp_assist_detail": {
     "message": "在新的瀏覽器分頁中開啟 Hermes Web 應用程式。",

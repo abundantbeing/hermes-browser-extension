@@ -559,10 +559,6 @@
     "message": "Off by default. Uses the currently connected Hermes instance.",
     "description": "Runtime interface message bot_mode.off_hint_sidepanel"
   },
-  "runtime_bot_mode_off_hint_web": {
-    "message": "Off by default. Scoped to the current connected Hermes instance.",
-    "description": "Runtime interface message bot_mode.off_hint_web"
-  },
   "runtime_bot_mode_open_chat": {
     "message": "Open Bot Chat",
     "description": "Runtime interface message bot_mode.open_chat"
@@ -639,10 +635,6 @@
     "message": "Hermes bots",
     "description": "Runtime interface message bot_mode.roster_label"
   },
-  "runtime_bot_mode_roster_label_web": {
-    "message": "Hermes Web bots",
-    "description": "Runtime interface message bot_mode.roster_label_web"
-  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"
@@ -666,10 +658,6 @@
   "runtime_bot_mode_settings_copy_sidepanel": {
     "message": "Turn on the optional profile roster and canonical Bot Chat navigator for this browser.",
     "description": "Runtime interface message bot_mode.settings_copy_sidepanel"
-  },
-  "runtime_bot_mode_settings_copy_web": {
-    "message": "Enable the optional Agents rail and canonical Bot Chat navigation on this browser.",
-    "description": "Runtime interface message bot_mode.settings_copy_web"
   },
   "runtime_bot_mode_settings_title": {
     "message": "Bots & Bot Mode",
@@ -1691,10 +1679,6 @@
     "message": "Compacting…",
     "description": "Runtime interface message compact.working"
   },
-  "runtime_composer_attach": {
-    "message": "＋ Attach",
-    "description": "Runtime interface message composer.attach"
-  },
   "runtime_composer_chat_label": {
     "message": "CHAT",
     "description": "Runtime interface message composer.chat_label"
@@ -1771,10 +1755,6 @@
     "message": "not configured",
     "description": "Runtime interface message connection.not_configured_short"
   },
-  "runtime_connection_unknown_transport": {
-    "message": "unknown transport",
-    "description": "Runtime interface message connection.unknown_transport"
-  },
   "runtime_context_consent_share_detail": {
     "message": "Chat only until you approve this exact connection. Consent is isolated by endpoint, account, profile, and Browser controller.",
     "description": "Runtime interface message context_consent.share_detail"
@@ -1786,10 +1766,6 @@
   "runtime_context_attached_tab": {
     "message": "Attached tab",
     "description": "Runtime interface message context.attached_tab"
-  },
-  "runtime_context_browser_tab_handoff": {
-    "message": "Browser tab {tabId} handoff",
-    "description": "Runtime interface message context.browser_tab_handoff"
   },
   "runtime_context_follow_active_tab": {
     "message": "Follow active tab",
@@ -2138,14 +2114,6 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
-  },
-  "runtime_fulltab_handoff_opened_from": {
-    "message": "Opened from {source}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from"
-  },
-  "runtime_fulltab_handoff_opened_from_tab": {
-    "message": "Opened from {source} on browser tab {tabId}.",
-    "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
   "runtime_gateway_queue_discard": {
     "message": "Discard",
@@ -3071,34 +3039,6 @@
     "message": "Stop not confirmed",
     "description": "Runtime interface message run.stop_unconfirmed_title"
   },
-  "runtime_runtime_fast_mode_toggle": {
-    "message": "Fast mode {state}",
-    "description": "Runtime interface message runtime.fast_mode_toggle"
-  },
-  "runtime_runtime_model_control_title": {
-    "message": "{model} · {options}. Change model and runtime options.",
-    "description": "Runtime interface message runtime.model_control_title"
-  },
-  "runtime_runtime_options_heading": {
-    "message": "Runtime options",
-    "description": "Runtime interface message runtime.options_heading"
-  },
-  "runtime_runtime_options_saved": {
-    "message": "Runtime options: {summary}",
-    "description": "Runtime interface message runtime.options_saved"
-  },
-  "runtime_runtime_reasoning": {
-    "message": "{effort} reasoning",
-    "description": "Runtime interface message runtime.reasoning"
-  },
-  "runtime_runtime_thinking_off": {
-    "message": "Thinking off",
-    "description": "Runtime interface message runtime.thinking_off"
-  },
-  "runtime_runtime_thinking_toggle": {
-    "message": "Thinking {state}",
-    "description": "Runtime interface message runtime.thinking_toggle"
-  },
   "runtime_session_copy_id_for": {
     "message": "Copy session ID for {title}",
     "description": "Runtime interface message session.copy_id_for"
@@ -3111,10 +3051,6 @@
     "message": "＋ New Hermes Browser Extension Session",
     "description": "Runtime interface message session.new_extension_session"
   },
-  "runtime_session_opening": {
-    "message": "Opening {title}",
-    "description": "Runtime interface message session.opening"
-  },
   "runtime_session_origin_refused": {
     "message": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
     "description": "Runtime interface message session.origin_refused"
@@ -3122,10 +3058,6 @@
   "runtime_session_origin_refused_title": {
     "message": "Hermes refused this browser origin",
     "description": "Runtime interface message session.origin_refused_title"
-  },
-  "runtime_session_rail_save_failed": {
-    "message": "Session rail save failed: {error}",
-    "description": "Runtime interface message session.rail_save_failed"
   },
   "runtime_session_rename_named": {
     "message": "Rename session {title}",
@@ -7822,14 +7754,6 @@
   "runtime_wake_turn_on": {
     "message": "Turn on wake word",
     "description": "Runtime interface message wake.turn_on"
-  },
-  "runtime_web_deprecation_banner": {
-    "message": "Hermes Web stays available if you already have this tab open. New buttons no longer open it.",
-    "description": "Runtime interface message web.deprecation_banner"
-  },
-  "runtime_web_deprecation_title": {
-    "message": "A new surface is being worked on",
-    "description": "Runtime interface message web.deprecation_title"
   },
   "runtime_webapp_assist_detail": {
     "message": "Open the Hermes Web app in a new browser tab.",
