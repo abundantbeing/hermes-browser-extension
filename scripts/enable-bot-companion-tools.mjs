@@ -1,28 +1,31 @@
 #!/usr/bin/env node
 /**
- * Enable the Hermes Browser companion plugin for ONE given profile.
+ * Install and enable the Hermes Browser companion plugin for ONE profile, with
+ * Hermes' own `hermes plugins install`. This script is a thin, careful wrapper:
+ * the clone, the security scan, the atomic install and the `plugins.enabled`
+ * entry are all done by the official CLI; the script adds only what the CLI does
+ * not know about this plugin.
  *
- * This script is intentionally conservative:
  *   - `--list` is a read-only discovery: every profile, whether the companion
- *     plugin is staged there (and which version), and whether the profile's
- *     config already enables it. Nothing is written or executed.
- *   - it is a DRY RUN by default; nothing is written or executed
+ *     plugin is installed there (and which version, in which layout), and whether
+ *     the profile's config enables it. Nothing is written or executed.
+ *   - it is a DRY RUN by default: it prints the exact command and writes nothing
  *   - it only acts with an explicit `--apply` AND exactly one `--profile <name>`;
  *     lists, wildcards and `all` are refused
- *   - it only touches the given profile directory, and refuses unless the
- *     companion plugin manifest is already staged there (flat or nested, the
- *     same places Hermes discovers plugins)
- *   - it refuses to apply a staged copy whose version differs from this
- *     repository's companion plugin unless `--allow-stale` is given
- *   - it never hand-edits config.yaml or rewrites skills; it shells out to the
- *     documented `hermes plugins enable <name> --profile <name>` convention,
- *     which writes `plugins.enabled` (the opt-in allow-list)
- *   - it hardcodes no personal profile name
+ *   - it refuses while an older copy sits in the nested layout
+ *     (`plugins/<dir>/companion-plugin`, how this plugin used to be copied in):
+ *     that copy and the new one would both match the enabled name and register
+ *     every tool twice. It never moves or deletes files; it says what to move
+ *   - an installed flat copy of a different version is replaced only with
+ *     `--replace` (the CLI's `--force`); the same version is left alone
+ *   - it never edits config.yaml itself and hardcodes no personal profile name
  *
  * Usage:
  *   node scripts/enable-bot-companion-tools.mjs --list
- *   node scripts/enable-bot-companion-tools.mjs --profile <name>
+ *   node scripts/enable-bot-companion-tools.mjs --profile <name>                  (dry run)
  *   node scripts/enable-bot-companion-tools.mjs --apply --profile <name>
+ *   node scripts/enable-bot-companion-tools.mjs --apply --profile <name> --replace
+ *   node scripts/enable-bot-companion-tools.mjs --profile <name> --source <git-url#companion-plugin> [--ref <40-hex sha>]
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -32,20 +35,29 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const COMPANION_PLUGIN_NAME = 'hermes-browser-companion';
 export const COMPANION_PLUGIN_MANIFEST = 'plugin.yaml';
+// The plugin lives in a subdirectory of this repository; `hermes plugins install`
+// reads `<git url>#<subdir>` and sparse-checks-out only that directory.
+export const COMPANION_INSTALL_SOURCE = 'https://github.com/abundantbeing/hermes-browser-extension.git#companion-plugin';
 
 const HELP = [
-  'Enable the Hermes Browser companion plugin for one profile.',
+  'Install and enable the Hermes Browser companion plugin for one profile,',
+  'through the official `hermes plugins install`.',
   '',
   '  node scripts/enable-bot-companion-tools.mjs --list                       (discovery, read-only)',
   '  node scripts/enable-bot-companion-tools.mjs --profile <name>            (dry run)',
   '  node scripts/enable-bot-companion-tools.mjs --apply --profile <name>    (apply)',
   '',
+  'Options:',
+  '  --replace          reinstall over an installed copy of a different version (hermes plugins install --force)',
+  '  --source <id>      git URL or owner/repo[/subdir] instead of the default (e.g. a file:// clone while testing)',
+  '  --ref <sha>        install exactly this 40-character commit',
+  '',
   'Notes:',
   '  - Exactly one profile per run; lists, wildcards and "all" are refused.',
-  '  - Enables the PLUGIN (plugins.enabled), never a skill. `hermes plugins enable`',
-  '    also turns the plugin toolset on in that profile\'s saved toolset list.',
-  '  - A staged copy that differs from this repository\'s plugin version is refused',
-  '    unless --allow-stale is passed; redeploy the plugin first.',
+  '  - Enables the PLUGIN (plugins.enabled), never a skill.',
+  "  - Restart that profile's gateway afterwards: tools, hooks and the status route load at start.",
+  '  - A nested older copy (plugins/<dir>/companion-plugin) must be moved aside first; this',
+  '    script never moves or deletes files.',
 ].join('\n');
 
 // Mirrors Hermes' own profile id rule (lower-case; Hermes casefolds the flag).
@@ -53,8 +65,13 @@ const PROFILE_NAME = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 const RESERVED_PROFILE_TOKENS = new Set(['all', '*']);
 
 export function parseArgs(argv = []) {
-  const options = { apply: false, profile: '', help: false, list: false, allowStale: false };
+  const options = { apply: false, profile: '', help: false, list: false, replace: false, source: '', ref: '' };
   let profileFlags = 0;
+  const valueOf = (flag, value) => {
+    const text = String(value ?? '').trim();
+    if (!text || text.startsWith('--')) throw new Error(`${flag} needs a value.`);
+    return text;
+  };
   const setProfile = (value) => {
     profileFlags += 1;
     if (profileFlags > 1) throw new Error('Only one --profile is allowed per run.');
@@ -65,12 +82,17 @@ export function parseArgs(argv = []) {
     if (arg === '--apply') options.apply = true;
     else if (arg === '--dry-run') options.apply = false;
     else if (arg === '--list' || arg === '--discover') options.list = true;
-    else if (arg === '--allow-stale') options.allowStale = true;
+    else if (arg === '--replace') options.replace = true;
+    else if (arg === '--source') options.source = valueOf('--source', argv[++index]);
+    else if (arg.startsWith('--source=')) options.source = valueOf('--source', arg.slice('--source='.length));
+    else if (arg === '--ref') options.ref = valueOf('--ref', argv[++index]);
+    else if (arg.startsWith('--ref=')) options.ref = valueOf('--ref', arg.slice('--ref='.length));
     else if (arg === '--help' || arg === '-h') options.help = true;
     else if (arg === '--profile' || arg === '-p') setProfile(argv[++index]);
     else if (arg.startsWith('--profile=')) setProfile(arg.slice('--profile='.length));
     else throw new Error(`Unknown argument: ${arg}`);
   }
+  if (options.ref && !/^[0-9a-f]{40}$/i.test(options.ref)) throw new Error('--ref must be a full 40-character commit SHA.');
   return options;
 }
 
@@ -109,6 +131,19 @@ export function buildPluginEnableCommand(profile = '') {
   return {
     command: 'hermes',
     args: ['plugins', 'enable', COMPANION_PLUGIN_NAME, '--profile', String(profile || '').trim()],
+  };
+}
+
+/** `hermes plugins install <source> --enable [--ref <sha>] [--force] --profile <name>`. */
+export function buildPluginInstallCommand({ profile = '', source = '', ref = '', force = false } = {}) {
+  return {
+    command: 'hermes',
+    args: [
+      'plugins', 'install', String(source || COMPANION_INSTALL_SOURCE), '--enable',
+      ...(ref ? ['--ref', String(ref)] : []),
+      ...(force ? ['--force'] : []),
+      '--profile', String(profile || '').trim(),
+    ],
   };
 }
 
@@ -239,9 +274,10 @@ export function discoverProfiles({
 }
 
 /**
- * Resolve an activation plan without touching the filesystem or shelling out.
- * `ok: false` carries a machine-readable `reason`; the caller must report it
- * rather than change any real configuration.
+ * Resolve what to run without touching the filesystem or shelling out.
+ * `ok: false` carries a machine-readable `reason`; the caller reports it and
+ * changes nothing. `ok: true` carries the one official command (or none, with
+ * `noop: true`, when the profile already has the current copy enabled).
  */
 export function buildActivationPlan({
   profile = '',
@@ -250,7 +286,9 @@ export function buildActivationPlan({
   readDir = () => [],
   readText = () => '',
   repoVersion = '',
-  allowStale = false,
+  replace = false,
+  source = '',
+  ref = '',
 } = {}) {
   const raw = String(profile || '').trim();
   if (!raw) return { ok: false, reason: 'profile-required', profile: '' };
@@ -260,25 +298,37 @@ export function buildActivationPlan({
   const profileHome = resolveProfileHome({ root, profile: name, exists });
   if (!profileHome) return { ok: false, reason: 'profile-missing', profile: name };
   const staged = findStagedCompanion({ profileHome, exists, readDir, readText });
+  const base = { profile: name, profileHome, repoVersion, touches: [path.join(profileHome, 'config.yaml')] };
+
   if (!staged) {
-    const pluginDir = companionPluginDir(profileHome);
-    return { ok: false, reason: 'plugin-not-staged', profile: name, profileHome, pluginDir, manifestPath: path.join(pluginDir, COMPANION_PLUGIN_MANIFEST) };
+    return { ok: true, ...base, action: 'install', command: buildPluginInstallCommand({ profile: name, source, ref }) };
   }
-  const { pluginDir, manifestPath } = staged;
-  const stale = Boolean(repoVersion && staged.version && staged.version !== repoVersion);
-  if (stale && !allowStale) {
-    return {
-      ok: false, reason: 'plugin-stale', profile: name, profileHome, pluginDir, manifestPath,
-      stagedVersion: staged.version, repoVersion,
-    };
+  const { pluginDir, manifestPath, layout, version } = staged;
+  const where = { pluginDir, manifestPath, layout, stagedVersion: version };
+  if (layout === 'nested') {
+    // Hermes discovers this copy and the one `plugins install` would add under the
+    // same enabled name, so both would load and register every tool twice.
+    return { ok: false, reason: 'nested-copy-present', ...base, ...where };
   }
-  return {
-    ok: true, profile: name, profileHome, pluginDir, manifestPath, layout: staged.layout,
-    stagedVersion: staged.version, repoVersion, stale,
-    command: buildPluginEnableCommand(name),
-    touches: [path.join(profileHome, 'config.yaml')],
-  };
+  const current = Boolean(version) && (!repoVersion || version === repoVersion);
+  if (current) {
+    const enabled = companionEnabledInConfig(readConfig(profileHome, exists, readText));
+    if (enabled === 'yes') return { ok: true, ...base, ...where, action: 'none', noop: true, command: null };
+    return { ok: true, ...base, ...where, action: 'enable', command: buildPluginEnableCommand(name) };
+  }
+  if (!replace) return { ok: false, reason: 'plugin-stale', ...base, ...where };
+  return { ok: true, ...base, ...where, action: 'replace', command: buildPluginInstallCommand({ profile: name, source, ref, force: true }) };
 }
+
+function readConfig(profileHome, exists, readText) {
+  const configPath = path.join(profileHome, 'config.yaml');
+  try { return exists(configPath) ? readText(configPath) : null; } catch { return null; }
+}
+
+const REFUSAL_HINTS = Object.freeze({
+  'nested-copy-present': 'An older copy is nested under plugins/<dir>/companion-plugin. Move that directory out of the profile (for example to plugins-backup/), then run this again. See companion-plugin/install.md.',
+  'plugin-stale': 'A copy of a different version is installed. Re-run with --replace to reinstall it, or use hermes plugins update hermes-browser-companion.',
+});
 
 export function runActivation({ argv = [], deps = {} } = {}) {
   const {
@@ -309,8 +359,8 @@ export function runActivation({ argv = [], deps = {} } = {}) {
   const root = String(rootOverride || options.hermesHome || defaultHermesRoot(env));
 
   if (options.list) {
-    if (options.apply || options.profile) {
-      errorLog('--list is read-only discovery; run it without --apply or --profile.');
+    if (options.apply || options.profile || options.replace || options.source || options.ref) {
+      errorLog('--list is read-only discovery; run it without --apply, --profile, --replace, --source or --ref.');
       return { ok: false, reason: 'bad-args', exitCode: 2 };
     }
     const profiles = discoverProfiles({ root, exists, readDir, readText, isDirectory, repoVersion });
@@ -319,15 +369,21 @@ export function runActivation({ argv = [], deps = {} } = {}) {
     for (const row of profiles) {
       const where = row.staged ? `${row.staged.layout} copy v${row.staged.version || '?'} at ${row.staged.pluginDir}` : 'not staged';
       log(`  ${row.profile.padEnd(16)} ${row.state.padEnd(11)} enabled=${row.enabled}  ${where}`);
+      if (row.staged?.layout === 'nested') {
+        log(`  ${' '.repeat(16)} nested copy: hermes plugins install/update does not manage it; see companion-plugin/install.md to replace it`);
+      }
     }
     log(JSON.stringify({ mode: 'list', root, repoVersion, profiles }, null, 2));
     return { ok: true, mode: 'list', root, repoVersion, profiles, exitCode: 0 };
   }
 
-  const plan = buildActivationPlan({ profile: options.profile, root, exists, readDir, readText, repoVersion, allowStale: options.allowStale });
+  const plan = buildActivationPlan({
+    profile: options.profile, root, exists, readDir, readText, repoVersion,
+    replace: options.replace, source: options.source, ref: options.ref,
+  });
   const mode = options.apply ? 'apply' : 'dry-run';
   if (!plan.ok) {
-    errorLog(JSON.stringify({ mode, ...plan }, null, 2));
+    errorLog(JSON.stringify({ mode, ...plan, hint: REFUSAL_HINTS[plan.reason] || undefined }, null, 2));
     return { ...plan, mode, exitCode: 1 };
   }
 
@@ -335,27 +391,33 @@ export function runActivation({ argv = [], deps = {} } = {}) {
     mode,
     profile: plan.profile,
     profileHome: plan.profileHome,
+    action: plan.action,
     pluginDir: plan.pluginDir,
     manifestPath: plan.manifestPath,
     layout: plan.layout,
     stagedVersion: plan.stagedVersion,
     repoVersion: plan.repoVersion,
-    stale: plan.stale,
     command: plan.command,
     touches: plan.touches,
-    status: 'ready',
+    status: plan.noop ? 'already-current' : 'ready',
   };
+  if (plan.noop) {
+    log(`Profile ${plan.profile} already has ${COMPANION_PLUGIN_NAME} ${plan.stagedVersion} installed and enabled. Nothing to do.`);
+    log(JSON.stringify(report, null, 2));
+    return { ok: true, noop: true, ...report, exitCode: 0 };
+  }
   if (!options.apply) {
     log(`Would run: ${plan.command.command} ${plan.command.args.join(' ')}`);
-    log(`Only this profile's config is changed: ${plan.touches.join(', ')}`);
+    log(`Only this profile is changed: ${plan.touches.join(', ')}`);
     log(JSON.stringify(report, null, 2));
     return { ok: true, dryRun: true, ...report, exitCode: 0 };
   }
 
-  log(`Enabling ${COMPANION_PLUGIN_NAME} for profile ${plan.profile}...`);
+  log(`Running for profile ${plan.profile}: ${plan.command.command} ${plan.command.args.join(' ')}`);
   const result = run(plan.command);
   const runStatus = !result?.error && Number.isInteger(result?.status) ? result.status : 1;
-  return { ok: runStatus === 0, ...report, status: runStatus === 0 ? 'enabled' : 'failed', runStatus, exitCode: runStatus };
+  if (runStatus === 0) log(`Restart the ${plan.profile} profile's gateway so the plugin's tools, hooks and status route load.`);
+  return { ok: runStatus === 0, ...report, status: runStatus === 0 ? 'applied' : 'failed', runStatus, exitCode: runStatus };
 }
 
 const invokedDirectly = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
