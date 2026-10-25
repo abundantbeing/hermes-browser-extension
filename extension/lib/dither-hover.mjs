@@ -93,16 +93,25 @@ function canvasOf(width, height) {
   return canvas;
 }
 
+// Every text line of the button: the label and, under a translated label, the
+// English words. (A spec built by hand with only `text` still has one line.)
+function labelsOf(spec) {
+  if (spec.labels) return spec.labels;
+  return spec.text ? [{ text: spec.text, font: spec.font, letterSpacing: spec.letterSpacing, tx: spec.tx, baseline: spec.baseline, alpha: 1 }] : [];
+}
+
 function drawLabel(ctx, spec, color, dx = 0) {
-  if (!spec.text) return;
-  ctx.save();
-  ctx.font = spec.font;
-  ctx.letterSpacing = spec.letterSpacing;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = color;
-  ctx.fillText(spec.text, spec.tx + dx, spec.baseline);
-  ctx.restore();
+  for (const label of labelsOf(spec)) {
+    ctx.save();
+    ctx.font = label.font;
+    ctx.letterSpacing = label.letterSpacing;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.globalAlpha = (ctx.globalAlpha ?? 1) * (label.alpha ?? 1);
+    ctx.fillStyle = color;
+    ctx.fillText(label.text, label.tx + dx, label.baseline);
+    ctx.restore();
+  }
 }
 
 function drawFace(ctx, spec, hovered) {
@@ -208,6 +217,66 @@ const REDUCED = '(prefers-reduced-motion: reduce)';
 const FORCED = '(forced-colors: active)';
 const CAN_HOVER = '(hover: hover)';
 
+// Each non-blank text node of the button is one line to draw, measured where
+// the browser put it. A label that wraps to several lines returns null: the
+// effect would draw one line where there are two, so the static hover stays.
+function measureLabels(button, rect) {
+  const nodes = [...button.childNodes]
+    .flatMap((child) => (child.nodeType === 3 ? [child] : [...child.childNodes].filter((n) => n.nodeType === 3)))
+    .filter((n) => n.nodeValue.trim());
+  if (!nodes.length) return [];
+  const probe = document.createElement('canvas').getContext('2d');
+  const labels = [];
+  for (const node of nodes) {
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    const lines = range.getClientRects();
+    if (lines.length !== 1) return null;
+    const line = lines[0];
+    const owner = node.parentElement;
+    const ownerStyle = window.getComputedStyle(owner);
+    const text = ownerStyle.textTransform === 'uppercase' ? node.nodeValue.trim().toUpperCase() : node.nodeValue.trim();
+    const font = `${ownerStyle.fontStyle} ${ownerStyle.fontWeight} ${ownerStyle.fontSize} ${ownerStyle.fontFamily}`;
+    probe.font = font;
+    const letterSpacing = ownerStyle.letterSpacing === 'normal' || !ownerStyle.letterSpacing ? '0px' : ownerStyle.letterSpacing;
+    probe.letterSpacing = letterSpacing;
+    const alpha = owner === button ? 1 : (Number.parseFloat(ownerStyle.opacity) || 1);
+    labels.push({
+      text,
+      font,
+      letterSpacing,
+      alpha: Math.min(1, Math.max(0, alpha)),
+      tx: line.left - rect.left + line.width / 2,
+      baseline: line.top - rect.top + probe.measureText(text).fontBoundingBoxAscent,
+    });
+  }
+  return labels;
+}
+
+// The button as it is now, with the colours of an earlier measurement: on leave
+// the pointer is off the button, so the colours cannot be read again, but a
+// resize or zoom since enter may have moved the label or changed the size.
+function remeasure(spec, button) {
+  const rect = button.getBoundingClientRect();
+  const labels = measureLabels(button, rect);
+  if (!labels || (!labels.length && !button.querySelector('svg'))) return null;
+  const first = labels[0] || { text: '', font: '', letterSpacing: '0px', tx: 0, baseline: 0 };
+  return {
+    ...spec,
+    w: Math.round(rect.width),
+    h: Math.round(rect.height),
+    dpr: Math.min(2, window.devicePixelRatio || 1),
+    labels,
+    text: first.text,
+    font: first.font,
+    letterSpacing: first.letterSpacing,
+    tx: first.tx,
+    baseline: first.baseline,
+  };
+}
+
+const faceKeyOf = (spec) => [spec.w, spec.h, spec.dpr, spec.hoverBg, spec.hoverFg, JSON.stringify(spec.labels || [])].join('|');
+
 export function specFor(button, origin, quiet, seed) {
   // At enter the button is already in its hover state, so its computed colours
   // are the hover face. But getComputedStyle reports a running CSS transition's
@@ -225,31 +294,9 @@ export function specFor(button, origin, quiet, seed) {
   const hoverBg = style.backgroundColor;
   const hoverFg = style.color;
   const hoverBorder = style.borderTopColor;
-  const node = [...button.childNodes].flatMap((child) => (child.nodeType === 3 ? [child] : [...child.childNodes].filter((n) => n.nodeType === 3))).find((n) => n.nodeValue.trim());
-  let text = '';
-  let tx = 0;
-  let baseline = 0;
-  let font = '';
-  let letterSpacing = '0px';
-  if (node) {
-    const range = document.createRange();
-    range.selectNodeContents(node);
-    const lines = range.getClientRects();
-    if (lines.length !== 1) return null; // a wrapped label stays on the static hover
-    const line = lines[0];
-    const owner = node.parentElement;
-    const ownerStyle = window.getComputedStyle(owner);
-    text = ownerStyle.textTransform === 'uppercase' ? node.nodeValue.trim().toUpperCase() : node.nodeValue.trim();
-    const probe = document.createElement('canvas').getContext('2d');
-    font = `${ownerStyle.fontStyle} ${ownerStyle.fontWeight} ${ownerStyle.fontSize} ${ownerStyle.fontFamily}`;
-    probe.font = font;
-    letterSpacing = ownerStyle.letterSpacing === 'normal' ? '0px' : ownerStyle.letterSpacing;
-    probe.letterSpacing = letterSpacing;
-    tx = line.left - rect.left + line.width / 2;
-    baseline = line.top - rect.top + probe.measureText(text).fontBoundingBoxAscent;
-  } else if (!button.querySelector('svg')) {
-    return null;
-  }
+  const labels = measureLabels(button, rect);
+  if (!labels || (!labels.length && !button.querySelector('svg'))) return null; // a wrapped label stays on the static hover
+  const first = labels[0] || { text: '', font: '', letterSpacing: '0px', tx: 0, baseline: 0 };
   return {
     bw: parseFloat(style.borderLeftWidth) || 1,
     w: Math.round(rect.width),
@@ -261,11 +308,12 @@ export function specFor(button, origin, quiet, seed) {
     restBg: quiet ? 'rgba(0, 0, 0, 0)' : hoverFg,
     restFg: hoverBg,
     restBorder: quiet ? `color-mix(in srgb, ${hoverBg} 60%, transparent)` : hoverBg,
-    text,
-    font,
-    letterSpacing,
-    tx,
-    baseline,
+    labels,
+    text: first.text,
+    font: first.font,
+    letterSpacing: first.letterSpacing,
+    tx: first.tx,
+    baseline: first.baseline,
     origin,
     quiet,
     seed,
@@ -362,7 +410,7 @@ function createController(button, { quiet }) {
         if (!next) return;
         // The faces are drawn again only when the button looks different; a new
         // pointer entry point or seed only refills the threshold table.
-        const key = [next.w, next.h, next.dpr, next.hoverBg, next.hoverFg, next.text, next.font, next.tx, next.baseline].join('|');
+        const key = faceKeyOf(next);
         if (key !== specKey || !renderer) {
           spec = next;
           specKey = key;
@@ -379,6 +427,16 @@ function createController(button, { quiet }) {
       hovered = false;
       if (!canvas) {
         if (!renderer || skipped() || !button.isConnected) return;
+        // The panel may have been resized or zoomed while the pointer rested here:
+        // lay the dissolve over the button as it is now, not as it was on enter.
+        const fresh = remeasure(spec, button);
+        if (!fresh) return;
+        const key = faceKeyOf(fresh);
+        if (key !== specKey) {
+          spec = fresh;
+          specKey = key;
+          renderer = createRenderer(spec);
+        }
         mount(1);
       }
       run(-1);

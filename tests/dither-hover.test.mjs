@@ -237,3 +237,23 @@ test('the module is syntax-checked with the rest of the extension', () => {
   const pkg = JSON.parse(read('package.json'));
   assert.ok(pkg.scripts['check:js'].includes('node --check extension/lib/dither-hover.mjs'));
 });
+
+test('every line of the label is drawn on both faces, and the glitch split draws them all', () => {
+  const created = fakeCanvasEnvironment();
+  const labels = [
+    { text: 'GET STARTED', font: '500 18px sans-serif', letterSpacing: '0.36px', tx: 140, baseline: 22, alpha: 1 },
+    { text: 'Skip setup', font: '400 9.5px sans-serif', letterSpacing: '0px', tx: 140, baseline: 36, alpha: 0.72 },
+  ];
+  const renderer = createRenderer({ ...SPEC, labels });
+  const [rest, hover] = created;
+  const texts = (canvas) => canvas.ctx.calls.filter((call) => call[0] === 'fillText').map((call) => call[1]);
+  assert.deepEqual(texts(rest), ['GET STARTED', 'Skip setup'], 'the resting face has both lines');
+  assert.deepEqual(texts(hover), ['GET STARTED', 'Skip setup'], 'so does the hover face');
+  const target = globalThis.document.createElement('canvas');
+  target.width = 560;
+  target.height = 88;
+  const split = glitchPlan(7).findIndex((window) => window.split);
+  renderer.frame(target, glitchPlan(7)[split].at);
+  assert.deepEqual(texts(target), ['GET STARTED', 'Skip setup', 'GET STARTED', 'Skip setup'], 'both colours, both lines');
+  delete globalThis.document;
+});

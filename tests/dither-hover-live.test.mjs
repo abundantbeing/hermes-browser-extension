@@ -223,3 +223,82 @@ test('keyboard focus starts it at the inline-start edge and is not a hover', () 
   assert.equal(env.live().length, 1);
   teardownGlobals();
 });
+
+// A translated welcome button: the label and, in a <small>, the English words beneath it.
+function twoLineButton(env) {
+  const english = { id: 'english', nodeType: 1, childNodes: [] };
+  const englishNode = { nodeType: 3, nodeValue: 'Skip setup', parentElement: english };
+  english.childNodes = [englishNode];
+  const rects = new Map([[env.button.childNodes[0].childNodes[0], { left: 60, top: 8, width: 120, height: 20 }], [englishNode, { left: 90, top: 30, width: 60, height: 12 }]]);
+  env.button.childNodes.push(english);
+  globalThis.document.createRange = () => {
+    let target = null;
+    return { selectNodeContents(node) { target = node; }, getClientRects: () => [rects.get(target)] };
+  };
+  const base = globalThis.window.getComputedStyle;
+  globalThis.window.getComputedStyle = (element) => (element === english
+    ? { textTransform: 'none', fontStyle: 'normal', fontWeight: '400', fontSize: '9.5px', fontFamily: 'sans-serif', letterSpacing: '0px', opacity: '0.72' }
+    : base(element));
+  return { english, englishNode, rects };
+}
+
+test('every text line of the label is drawn, the English second line included', () => {
+  const env = setup();
+  twoLineButton(env);
+  const spec = specFor(env.button, { x: 5, y: 5 }, false, 1);
+  assert.deepEqual(spec.labels.map((label) => label.text), ['GET STARTED', 'Skip setup'], 'both text nodes, each as its own element styles it');
+  assert.equal(spec.labels[1].font, 'normal 400 9.5px sans-serif');
+  assert.equal(spec.labels[1].alpha, 0.72, 'the second line keeps its own opacity');
+  assert.equal(spec.labels[0].alpha, 1);
+  assert.ok(spec.labels[1].baseline > spec.labels[0].baseline, 'it sits under the first line');
+  assert.equal(spec.labels[1].tx, 90 - 20 + 30);
+  assert.equal(spec.text, 'GET STARTED', 'the first line stays on the spec for older callers');
+  teardownGlobals();
+});
+
+test('a button whose second line wraps keeps the static hover instead of dropping a line', () => {
+  const env = setup();
+  const { rects, englishNode } = twoLineButton(env);
+  const range = globalThis.document.createRange;
+  globalThis.document.createRange = () => {
+    const inner = range();
+    let current = null;
+    return { selectNodeContents: (node) => { inner.selectNodeContents(node); current = node; }, getClientRects: () => (current === englishNode ? [rects.get(englishNode), rects.get(englishNode)] : inner.getClientRects()) };
+  };
+  assert.equal(specFor(env.button, { x: 5, y: 5 }, false, 1), null);
+  teardownGlobals();
+});
+
+test('a leave after the panel was resized dissolves at the new size and with the current label', () => {
+  const env = setup();
+  env.over();
+  let t = 8000;
+  env.frame(t);
+  while (t < 8000 + IN_MS + 60) { t += 16; env.frame(t); }
+  assert.equal(env.live().length, 0, 'settled');
+  const entered = env.canvases.filter((canvas) => canvas.className === 'dither-hover-canvas')[0];
+  assert.equal(entered.width, 240);
+  // The side panel is made narrower and the text re-wraps to a new place while the pointer rests.
+  env.button.getBoundingClientRect = () => ({ left: 20, top: 100, width: 180, height: 52 });
+  globalThis.document.createRange = () => ({ selectNodeContents() {}, getClientRects: () => [{ left: 50, top: 20, width: 80, height: 20 }] });
+  env.out();
+  const dissolve = env.live()[0];
+  assert.ok(dissolve, 'the dissolve is laid over the button');
+  assert.equal(dissolve.width, 180, 'drawn at the width the button has now');
+  assert.equal(dissolve.height, 52);
+  assert.match(dissolve.style.cssText, /width:180px;height:52px/);
+  teardownGlobals();
+});
+
+test('a leave after the label wrapped keeps the static face instead of drawing a stale one', () => {
+  const env = setup();
+  env.over();
+  let t = 9000;
+  env.frame(t);
+  while (t < 9000 + IN_MS + 60) { t += 16; env.frame(t); }
+  globalThis.document.createRange = () => ({ selectNodeContents() {}, getClientRects: () => [{ left: 0, top: 0, width: 50, height: 10 }, { left: 0, top: 10, width: 50, height: 10 }] });
+  env.out();
+  assert.equal(env.live().length, 0);
+  assert.equal(env.queue.length, 0);
+  teardownGlobals();
+});
