@@ -26,14 +26,23 @@ const SAFE_ACTIONS = new Set([
 ]);
 
 // What a focused control does with Space: roles and input types that act on it. Text
-// fields take the space as a character; the bare page scrolls.
-const SPACE_INERT_ROLES = new Set(['', 'textbox', 'searchbox', 'document', 'body', 'generic', 'none', 'presentation', 'text']);
+// fields take the space as a character; the bare page scrolls. A focusable element with no role of its own
+// (a div with a tabindex, the host of a shadow root) is not inert: a page can make it act on a key, or hold a
+// field that Hermes cannot see into.
+const SPACE_INERT_ROLES = new Set(['', 'textbox', 'searchbox', 'document', 'body', 'text']);
+const OPAQUE_FOCUS_ROLES = new Set(['generic', 'none', 'presentation']);
 const SPACE_ACTIVATING_INPUT_TYPES = new Set(['button', 'submit', 'reset', 'image', 'checkbox', 'radio', 'file', 'color']);
+
+// A focused element that gives no role but does have a name is something the page made (a labelled div), not the bare page.
+function opaqueFocus(focused = {}) {
+  const role = compact(focused?.role).toLowerCase();
+  return OPAQUE_FOCUS_ROLES.has(role) || (role === '' && Boolean(compact(focused?.name)));
+}
 
 function spaceActivatesFocus(focused = {}) {
   const role = compact(focused?.role).toLowerCase();
   if (SPACE_ACTIVATING_INPUT_TYPES.has(compact(focused?.inputType).toLowerCase())) return true;
-  return !SPACE_INERT_ROLES.has(role);
+  return opaqueFocus(focused) || !SPACE_INERT_ROLES.has(role);
 }
 
 // Autocomplete tokens that name a card, a one-time code or a password; the field's label need not say so.
@@ -241,11 +250,17 @@ export function classifyBrowserControlAction({
     if (!focusKnown && (isEditingKey(resolved) || isSpaceActivation(resolved))) {
       return decision(BROWSER_CONTROL_RISKS.APPROVAL, isSpaceActivation(resolved) ? 'activation-key' : 'unknown-focus');
     }
+    const opaque = focusKnown && opaqueFocus(focused);
     // Space presses the focused button or toggles the focused control: judge it as that click.
     if (isSpaceActivation(resolved) && focusKnown) {
       if (spaceActivatesFocus(focused) && APPROVAL_LABEL_RE.test(targetDescriptor(focused))) {
         return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'consequential-action');
       }
+    }
+    // An element with no role of its own gives no way to tell what a key does there, so a key that types or
+    // acts asks first.
+    if (opaque && (isEditingKey(resolved) || isSpaceActivation(resolved))) {
+      return decision(BROWSER_CONTROL_RISKS.APPROVAL, 'opaque-focus');
     }
     if (isCopyShortcut(resolved)) return decision(BROWSER_CONTROL_RISKS.SAFE, 'clipboard-copy');
     return decision(BROWSER_CONTROL_RISKS.SAFE);

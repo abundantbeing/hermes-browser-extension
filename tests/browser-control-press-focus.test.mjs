@@ -52,7 +52,9 @@ test('Space on a focused Delete button waits for the approval a click on it woul
   await settle();
   assert.equal(presses(), 0, 'nothing is pressed before the person answers');
   const [shown] = approvals.pending();
-  assert.equal(shown.reason, 'Run this consequential browser action?');
+  assert.equal(shown.reason, 'Press Space while "Delete account" (button) has focus? It acts like clicking it.');
+  assert.equal(shown.targetName, 'Delete account', 'the approval is bound to the element that has focus');
+  assert.equal(shown.targetRole, 'button');
   approvals.cancelRequest(shown.approvalId);
   await running;
   assert.equal(presses(), 0);
@@ -133,7 +135,7 @@ test('typing while an embedded frame has focus waits for approval, and says why'
   const running = executor.execute(frame({ key: '4' }), { scope: SCOPE });
   await settle();
   const [shown] = approvals.pending();
-  assert.equal(shown.reason, 'Press this key inside an embedded frame on the page?');
+  assert.equal(shown.reason, 'Press 4 inside the embedded frame "Chat widget" (frame) on the page?');
   assert.equal(presses(), 0);
   approvals.cancelRequest(shown.approvalId);
   await running;

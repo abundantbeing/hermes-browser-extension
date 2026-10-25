@@ -62,7 +62,7 @@ const BATCH_STEP_RESERVE_MS = 2_000;
 const BATCH_FATAL_CODES = new Set([
   'approval_denied', 'approval_cancelled', 'approval_timeout', 'approval_required', 'approval_replayed',
   'approval_mismatch', 'domain_changed', 'stale_document', 'scope_mismatch', 'cancelled',
-  'deadline_exceeded', 'deadline_expired', 'controller_paused',
+  'deadline_exceeded', 'deadline_expired', 'controller_paused', 'focus_changed',
 ]);
 
 // Adapter errors that carry a model-actionable code keep it; everything else
@@ -84,6 +84,7 @@ const APPROVAL_MESSAGES = Object.freeze({
   'activation-key': 'Press Space? It may activate whatever has focus on the page.',
   'framed-focus': 'Press this key inside an embedded frame on the page?',
   'unknown-focus': 'Press this key? Hermes could not tell what has focus on the page.',
+  'opaque-focus': 'Press this key? Hermes cannot tell what the focused element does with it.',
   'clipboard-paste': 'Paste your clipboard into this page?',
   'consequential-action': 'Run this consequential browser action?',
   'coordinate-click': 'Click these exact viewport coordinates?',
@@ -137,6 +138,46 @@ function tabSwitchLabel(title, url) {
   if (shown !== '' && bareUrlText(shown) !== bareUrlText(url)) return truncatedTabTitle(shown);
   const host = tabUrlHost(url);
   return host ? truncatedTabTitle(host) : '';
+}
+
+// The key a press names, as the person reads it: Space for the space character, modifiers first.
+function pressKeyLabel(args = {}) {
+  const raw = String(args?.key ?? '');
+  const key = raw === ' ' ? 'Space' : tabTitleText(raw).slice(0, 30);
+  const listed = Array.isArray(args?.modifiers) ? args.modifiers.map((value) => tabTitleText(value).slice(0, 12)).filter(Boolean) : [];
+  const label = [...listed, key].filter(Boolean).join('+');
+  return label || 'this key';
+}
+
+// The focused element as the card names it: its label, then its role. '' when focus could not be read.
+function focusedLabel(focused) {
+  if (!focused || typeof focused !== 'object') return '';
+  const name = truncatedTabTitle(focused.name).slice(0, 80);
+  const role = tabTitleText(focused.role).slice(0, 30);
+  if (name && role) return `"${name}" (${role})`;
+  if (name) return `"${name}"`;
+  return role ? `a ${role}` : '';
+}
+
+// A key press asks about the element it would reach, not about "this action": the person sees the key and what has
+// focus. A reason with no wording here keeps the generic card text.
+function pressApprovalReason(reason, args, focused) {
+  const key = pressKeyLabel(args);
+  const label = focusedLabel(focused);
+  if (reason === 'consequential-action' && label) return `Press ${key} while ${label} has focus? It acts like clicking it.`;
+  if (reason === 'framed-focus') return label ? `Press ${key} inside the embedded frame ${label} on the page?` : `Press ${key} inside an embedded frame on the page?`;
+  if (reason === 'opaque-focus' && label) return `Press ${key} while ${label} has focus? Hermes cannot tell what that element does with it.`;
+  if (reason === 'unknown-focus') return `Press ${key}? Hermes could not tell what has focus on the page.`;
+  return '';
+}
+
+// Whether the element that has focus is still the one the person was asked about.
+function sameFocus(before, after) {
+  const known = (value) => Boolean(value) && typeof value === 'object';
+  if (!known(before) && !known(after)) return true;
+  if (!known(before) || !known(after)) return false;
+  return ['role', 'name', 'inputType', 'autocomplete'].every((field) => compact(before[field], 200) === compact(after[field], 200))
+    && (before.inFrame === true) === (after.inFrame === true);
 }
 
 const TIMED_OUT = Symbol('timed-out');
@@ -274,6 +315,11 @@ export function approvalBindingFields(action, args, target, destination) {
   const material = approvalValueMaterial(action, args);
   if (material !== null) fields.valueHash = fingerprint(material);
   return fields;
+}
+
+function focusAsTarget(focused) {
+  if (!focused || typeof focused !== 'object') return null;
+  return { role: focused.role, name: focused.name };
 }
 
 function batchStepAction(value) {
@@ -790,9 +836,12 @@ export function createBrowserControlExecutor({
           documentGeneration: scope.documentGeneration,
           action,
           state: 'paused',
-          ...approvalBindingFields(action, args, target, destination),
+          // A key press has no ref; what it is bound to is the element that has focus when it is asked about.
+          ...approvalBindingFields(action, args, action === 'browser_press' ? focusAsTarget(pageState.focused) : target, destination),
         };
-        let approvalReason = APPROVAL_MESSAGES[policy.reason] || 'This browser action requires approval.';
+        let approvalReason = (action === 'browser_press' && pressApprovalReason(policy.reason, args, pageState.focused))
+          || APPROVAL_MESSAGES[policy.reason]
+          || 'This browser action requires approval.';
         if (step) approvalReason = `Step ${step.number} of ${step.total}: ${approvalReason}`;
         let approvalDetail = '';
         if (action === 'browser_evaluate') {
@@ -852,6 +901,10 @@ export function createBrowserControlExecutor({
         }) || {};
         if (controller.signal.aborted) {
           return errorOutcome(terminalCode || 'cancelled', terminalMessage || 'The command was cancelled.');
+        }
+        // A key goes to whatever has focus when it is sent, and the card named what had it when it was asked.
+        if (action === 'browser_press' && !sameFocus(pageState.focused, current.focused)) {
+          return errorOutcome('focus_changed', 'Focus moved to a different element while waiting for your approval, so the key was not pressed. Ask again if it is still wanted.');
         }
         const beforeOrigin = pageOrigin(pageState.currentUrl);
         const currentOrigin = pageOrigin(current.currentUrl);
