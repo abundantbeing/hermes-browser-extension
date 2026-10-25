@@ -5303,6 +5303,16 @@ function connectDialogEditableFocus(element) {
   return /^(INPUT|TEXTAREA|SELECT)$/.test(String(element.tagName || '').toUpperCase()) || Boolean(element.isContentEditable);
 }
 
+// Settings, the bot-mode and group sheets, the update and confirmation dialogs
+// are all aria-modal and all painted above the pop-up (it sits in the shell at
+// z-index 66). While one is open it owns the keyboard, and moving focus into the
+// pop-up behind it would strand the keys on a control nobody can see.
+function connectDialogCoveredByModal() {
+  const open = [...(document.querySelectorAll?.('[role="dialog"][aria-modal="true"], dialog[open]') || [])];
+  return open.some((dialog) => dialog !== els.connectPanel && dialog !== els.onboardingFlow
+    && !dialog.hidden && dialog.getAttribute?.('aria-hidden') !== 'true');
+}
+
 // The pop-up came back on its own (a connection dropped or a token stopped
 // working), so nobody asked for it. Its aria-modal promise is kept when focus
 // is free (nothing focused, or on a button or link): the keyboard goes in and
@@ -5310,6 +5320,7 @@ function connectDialogEditableFocus(element) {
 // field keeps their keys; the pop-up just shows, as it did.
 function focusConnectDialogWhenIdle() {
   if (!connectDialogShowing()) return;
+  if (connectDialogCoveredByModal()) return;
   const active = document.activeElement;
   if (connectDialogEditableFocus(active)) return;
   if (active && active !== document.body && !els.connectPanel.contains(active)) connectDialogReturnFocus = active;

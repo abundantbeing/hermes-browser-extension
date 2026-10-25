@@ -64,20 +64,21 @@ function dialogFunctions() {
     assert.ok(start >= 0, `${name} exists`);
     return js.slice(start, js.indexOf('\n}\n', start) + 3);
   };
-  return ['connectDialogShowing', 'renderConnectDialog', 'connectDialogEditableFocus', 'focusConnectDialogWhenIdle'].map(grab).join('\n');
+  return ['connectDialogShowing', 'renderConnectDialog', 'connectDialogEditableFocus', 'connectDialogCoveredByModal', 'focusConnectDialogWhenIdle'].map(grab).join('\n');
 }
 
-function dialogHarness({ active, dismissed = false, hidden = false, bodyClasses = [] }) {
+function dialogHarness({ active, dismissed = false, hidden = false, bodyClasses = [], modals = [] }) {
   const focused = [];
   const connectButton = { focus: (options) => focused.push(['connect', options?.preventScroll]) };
   const els = {
     connectPanel: { hidden, classList: { toggle() {} }, contains: (node) => node === connectButton },
     connectButton,
+    onboardingFlow: { hidden: true },
   };
   const body = { classList: { contains: (name) => bodyClasses.includes(name) } };
   const context = {
     els,
-    document: { body, activeElement: active === 'body' ? body : active },
+    document: { body, activeElement: active === 'body' ? body : active, querySelectorAll: () => modals },
     connectDialogDismissed: dismissed,
     connectDialogReturnFocus: null,
   };
@@ -116,4 +117,19 @@ test('the observer that brings the pop-up back calls the idle-focus helper; expl
   assert.match(bind, /if \(nowNeeded && !needed\) \{\s*connectDialogDismissed = false;\s*renderConnectDialog\(\);\s*focusConnectDialogWhenIdle\(\);\s*\}/);
   const open = js.match(/function openConnectDialog\(\) \{[\s\S]*?\n\}/)?.[0] || '';
   assert.match(open, /els\.connectButton\?\.focus\(\{ preventScroll: true \}\);/, 'a press on Connect first, a send or New session still moves focus in');
+});
+
+test('an open Settings dialog or other modal keeps the focus: the returning pop-up is painted under it', () => {
+  const modal = (extra = {}) => ({ hidden: false, getAttribute: () => null, ...extra });
+  const settingsButton = { tagName: 'BUTTON', isContentEditable: false };
+  const covered = dialogHarness({ active: settingsButton, modals: [modal()] });
+  assert.deepEqual(covered.focused, [], 'focus stays on the Settings button');
+  assert.equal(covered.returnFocus, null, 'and nothing is remembered to go back to');
+  assert.deepEqual(dialogHarness({ active: 'body', modals: [modal()] }).focused, [], 'even when nothing is focused, the modal still owns the keyboard');
+  // Hidden ones, the pop-up itself and a closed update dialog (hidden plus aria-hidden) do not count.
+  const after = (modals) => dialogHarness({ active: settingsButton, modals }).focused;
+  assert.deepEqual(after([modal({ hidden: true })]), [['connect', true]], 'a closed dialog does not block it');
+  assert.deepEqual(after([modal({ hidden: false, getAttribute: (name) => (name === 'aria-hidden' ? 'true' : null) })]), [['connect', true]]);
+  assert.deepEqual(after([]), [['connect', true]], 'no modal: it takes focus as before');
+  assert.match(js, /querySelectorAll\?\.\('\[role="dialog"\]\[aria-modal="true"\], dialog\[open\]'\)/, 'every aria-modal dialog and an open native dialog');
 });
