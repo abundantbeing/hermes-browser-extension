@@ -252,7 +252,7 @@ export function canExecute(record, { now = Date.now(), maxAgeMs, identityKey = '
  *                         observed on the old one (a -32601, an operation result)
  *                         is forgotten, because a restarted gateway may differ;
  *   setConnected(flag)    false demotes positive records to `cached`;
- *   observeMethodNotFound / observeOperation / revoke   evidence that overrides
+ *   observeMethodNotFound / observeOperation / observeProbe / revoke   evidence that overrides
  *                         the advertisement. A revocation outlives reconnects
  *                         until the identity changes or clearRevocation().
  */
@@ -359,6 +359,26 @@ export function createCapabilityLedger({ now = Date.now } = {}) {
         identityKey: ledger.identityKey,
         reasonCode: ok ? 'operation-ok' : 'operation-refused',
         params: { ...(options.params && typeof options.params === 'object' ? options.params : {}), ...(ok ? {} : { detail: clean(outcome.detail) }) },
+      });
+      observed.set(record.id, record);
+      return record;
+    },
+
+    // A bounded, read-only probe of the gateway (source `probe`, 60 s of use).
+    // `fields` is { state, reasonCode, params, reason, checkedAt }, as built by
+    // companionRecordFields() for the companion plugin. Like any observation it
+    // outranks a "not advertised" record when it is negative, and stands in for
+    // one when it is positive; a new connection forgets it.
+    observeProbe(id, fields = {}, options = {}) {
+      const record = createCapabilityRecord({
+        id,
+        state: fields.state,
+        source: CAPABILITY_SOURCES.probe,
+        checkedAt: Number.isFinite(fields.checkedAt) ? fields.checkedAt : stamp(options),
+        identityKey: ledger.identityKey,
+        reasonCode: fields.reasonCode,
+        params: fields.params,
+        reason: fields.reason,
       });
       observed.set(record.id, record);
       return record;

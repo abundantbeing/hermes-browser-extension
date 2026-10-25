@@ -30,7 +30,7 @@ The button is disabled with its reason when the connection is REST-only, the gat
 
 ### A capability row reads Cached, Unknown or "Not advertised by this gateway"
 
-Cached means the answer is old or its connection has closed; it is shown for information and never used to start anything. Reconnect and open Settings again to renew it. "Not advertised" means the gateway did not say, which is different from unsupported. The Browser Companion Plugin row always reads this way today, because no gateway route reports whether the plugin is loaded; run `node scripts/enable-bot-companion-tools.mjs --list` on the Hermes machine to see where it is staged.
+Cached means the answer is old or its connection has closed; it is shown for information and never used to start anything. Reconnect and open Settings again to renew it. "Not advertised" means the gateway did not say, which is different from unsupported. The Browser Companion Plugin row reads this way only until the extension has asked the plugin itself (a read-only status route on the API server, with `/v1/toolsets` as a cross-check); after that it says ready, outdated, disabled, not installed or unreachable with the exact reason. "Not installed" means not loaded on that gateway: not installed, not enabled for the profile, or the gateway was not restarted since. `node scripts/enable-bot-companion-tools.mjs --list` on the Hermes machine shows where the plugin is installed for each profile.
 
 ### My message says it was not delivered, refused, busy, or the session is gone
 
@@ -42,7 +42,7 @@ A frame on the attached page is on a restricted address, has moved to one since 
 
 ### Companion plugin tools say "unavailable"
 
-A copy of the plugin staged before the hook-worker fix cannot hand its authorization to its tools under Hermes' hook worker, so every owner-gated tool reports unavailable. Compare the `version` in the staged `plugin.yaml` with this repository's (`node scripts/enable-bot-companion-tools.mjs --list` does it for every profile), replace the staged directory and restart that profile's gateway. See [companion-plugin/install.md](../companion-plugin/install.md).
+A copy of the plugin staged before the hook-worker fix cannot hand its authorization to its tools under Hermes' hook worker, so every owner-gated tool reports unavailable. Compare the `version` in the installed `plugin.yaml` with this repository's (`node scripts/enable-bot-companion-tools.mjs --list` does it for every profile), reinstall with `hermes plugins install ... --force` (or move an old nested copy out first) and restart that profile's gateway. See [companion-plugin/install.md](../companion-plugin/install.md).
 
 ### Native Hermes computer use is not working
 

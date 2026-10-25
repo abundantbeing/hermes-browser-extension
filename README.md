@@ -256,7 +256,7 @@ npm run package
 
 ```text
 extension/          MV3 source: sidepanel, background worker, content scripts, lib/
-companion-plugin/   optional read-only Browser context cache tools and hooks
+companion-plugin/   optional Browser context cache tools and hooks (hermes plugins install; see its install.md)
 scripts/            build, Firefox packaging, manifest checks
 tests/              node:test suite
 dist/               generated unpacked build (load this one)

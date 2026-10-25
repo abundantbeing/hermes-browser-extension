@@ -7,6 +7,7 @@ import {
   createCapabilityRecord,
   effectiveCapability,
 } from './capability-status.mjs';
+import { companionRecordFields, isCompanionReasonCode } from './companion-plugin-status.mjs';
 import { gatewayAuthorityAvailability } from './projects-client.mjs';
 
 const WARNING_CAPABILITY_COPY = Object.freeze({
@@ -275,16 +276,22 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
 // Companion plugin: no gateway source advertises browser_companion_plugin,
 // browser_context_status, browser_context_upload or plugin_actions (checked
 // against the installed api_server `_STATIC_FEATURE_FLAGS` and
-// `_CAPABILITY_ENDPOINTS`), and the plugin registers no HTTP route. So the
-// honest answer for all four is "not advertised by this gateway", never
-// "unavailable": the plugin may well be loaded.
+// `_CAPABILITY_ENDPOINTS`). So without a probe the honest answer for all four is
+// "not advertised by this gateway", never "unavailable": the plugin may well be
+// loaded.
 //
-// Narrow upstream ask (not implemented here, and no route is invented for it):
-// when the plugin registry loads hermes-browser-companion for the profile that
-// serves this connection, publish `features.browser_companion_plugin: true` (and
-// its version) in /v1/capabilities, or answer it from `runtime.describe`
-// `capabilities`. Until Hermes does, the only signals are `hermes plugins list
-// --profile <p>` on the host and a successful companion tool call in a live turn.
+// The companion plugin can be asked directly, though: it wires one read-only
+// metadata route into the API server, and companion-plugin-status.mjs probes it
+// (with GET /v1/toolsets as the cross-check). Pass that probe's result as
+// `companionPlugin` and the browserCompanionPlugin record says ready, outdated,
+// disabled, not installed or unreachable, with its exact reason, from source
+// `probe`. A ledger keeps it through ledger.observeProbe(). Without a probe the
+// record is unchanged from what /v1/capabilities allows.
+//
+// Fallback upstream ask, only if that route is ever unreachable: publish
+// `features.browser_companion_plugin: true` (and the version) in
+// /v1/capabilities when the plugin registry loads hermes-browser-companion for
+// the profile that serves the connection.
 
 // One entry per flag whose value comes from /v1/capabilities. `features` and
 // `endpoints` are the same names normalizeGatewayCapabilities reads above; a
@@ -337,6 +344,7 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   checkedAt = Date.now(),
   unsupportedMethods = [],
   dashboardWsActive = false,
+  companionPlugin = null,
 } = {}) {
   const transport = transportOf(caps);
   const features = caps.raw?.features && typeof caps.raw.features === 'object' ? caps.raw.features : {};
@@ -380,6 +388,26 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   for (const spec of ADVERTISED_FLAG_SPECS) {
     const explicit = boolFeature(features, spec.features);
     flag(spec.id, caps[spec.key] === true, { explicit, absentCode: spec.absentCode });
+  }
+
+  // A probe of the companion plugin's own status route replaces the "not
+  // advertised" answer. An unreachable probe says nothing about the plugin, so it
+  // never overwrites something the gateway did advertise.
+  const companion = companionRecordFields(companionPlugin);
+  if (companion && transport !== 'none') {
+    const at = records.findIndex((record) => record.id === 'browserCompanionPlugin');
+    if (at >= 0 && !(companion.state === S.unknown && records[at].state !== S.unknown)) {
+      records[at] = createCapabilityRecord({
+        id: 'browserCompanionPlugin',
+        state: companion.state,
+        source: O.probe,
+        checkedAt: companion.checkedAt ?? checkedAt,
+        identityKey,
+        reasonCode: companion.reasonCode,
+        params: companion.params,
+        reason: companion.reason,
+      });
+    }
   }
 
   // The extension builds BCP v2 payloads itself and sends them inline. That is
@@ -496,9 +524,10 @@ export function capabilityStatusRows(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   identityKey = '',
   readyPayload = null,
   unsupportedMethods = [],
+  companionPlugin = null,
 } = {}) {
   const supplied = Array.isArray(records) ? records : null;
-  const derived = supplied || deriveCapabilityRecords(caps, { identityKey, readyPayload, checkedAt, unsupportedMethods });
+  const derived = supplied || deriveCapabilityRecords(caps, { identityKey, readyPayload, checkedAt, unsupportedMethods, companionPlugin });
   const byId = new Map(derived.map((record) => [record.id, supplied ? record : effectiveCapability(record, { now })]));
   return rowDefinitions({ browserSpeechAvailable }).map((definition) => {
     const record = byId.get(definition.key) || null;
@@ -507,9 +536,13 @@ export function capabilityStatusRows(caps = DEFAULT_GATEWAY_CAPABILITIES, {
       key: definition.key,
       label: definition.label,
       status,
-      detail: status === 'ok'
-        ? (definition.on || 'Available on the connected Hermes runtime.')
-        : definition.off,
+      // The companion plugin's own probe has an exact English reason; show it
+      // instead of the generic "cannot tell" sentence.
+      detail: isCompanionReasonCode(record?.reasonCode) && record.reason
+        ? record.reason
+        : (status === 'ok'
+          ? (definition.on || 'Available on the connected Hermes runtime.')
+          : definition.off),
       state: record?.state || 'unknown',
       reason: record?.reason || '',
       reasonCode: record?.reasonCode || '',
