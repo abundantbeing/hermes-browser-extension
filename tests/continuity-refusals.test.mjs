@@ -10,6 +10,7 @@ import {
   sessionGoneError,
   turnNotDeliveredError,
 } from '../extension/lib/gateway-refusal.mjs';
+import { preGatewayChatError } from '../extension/lib/pre-gateway-chat.mjs';
 import { shouldReattachDashboardStream } from '../extension/lib/dashboard-stream-watchdog.mjs';
 import { turnRequestFailureState } from '../extension/lib/turn-recovery.mjs';
 
@@ -47,7 +48,7 @@ function chatHarness(attempt, { resume } = {}) {
       return attempt(log.attempts.length);
     },
     shouldReattachDashboardStream,
-    classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError,
+    classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, preGatewayChatError,
   });
   vm.runInContext(chatSource, context);
   return {

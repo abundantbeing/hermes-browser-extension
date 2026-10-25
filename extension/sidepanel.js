@@ -431,6 +431,7 @@ import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashb
 import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './lib/session-lineage.mjs';
 import { createReplayWatermarks } from './lib/replay-watermarks.mjs';
 import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
+import { preGatewayChatError, preGatewayChatFailureState } from './lib/pre-gateway-chat.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
@@ -23181,7 +23182,9 @@ async function streamDashboardWsChat(prompt, onDelta, onTool, options = {}) {
         try {
           sessionId = await ensureRemoteWsSession(connection);
         } catch (resumeError) {
-          if (isStaleLiveSessionRefusal(resumeError)) throw sessionGoneError(resumeError);
+          // A chat from before the gateway owned sessions is refused the same way a vanished one is;
+          // its stored id tells them apart, and the draft is kept either way.
+          if (isStaleLiveSessionRefusal(resumeError)) throw preGatewayChatError(resumeError, connection.wsStoredSessionId || settings.sessionId) || sessionGoneError(resumeError);
           throw resumeError;
         }
         submitPrompt = true;
@@ -24081,6 +24084,15 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
     activeRunControl = markRunTerminal(activeRunControl, 'failed');
     sending = false;
     updateComposerBusyState();
+    const preGatewayChat = dashboardTransport ? preGatewayChatError(error, settings.remoteDashboardSession?.storedSessionId || settings.sessionId) : null;
+    if (preGatewayChat) {
+      // Refused before the turn was sent: the composer still holds the draft. Show the gateway's
+      // reason and the one thing that fixes it; nothing is resent.
+      const notice = preGatewayChatFailureState(preGatewayChat);
+      setStatus('warn', notice.title, notice.detail, { translateTitle: false, translateDetail: false });
+      addMessage('system', `${notice.title}. ${notice.detail}`, { persist: false });
+      return false;
+    }
     if (error?.originRefused) {
       // Refused before the turn was sent: the composer still holds the draft
       // (it is cleared only after this step) and the connection stays as it was.
@@ -24651,7 +24663,7 @@ ${streamError.message}`);
         addMessage('system', `Hermes Browser Extension setup issue: ${error.remoteDiagnostic.detail} Open Settings → Support diagnostics → Copy Diagnostics and paste the redacted report if you need help.`);
         return didSend;
       }
-      const requestFailure = turnRequestFailureState(error);
+      const requestFailure = preGatewayChatFailureState(error) || turnRequestFailureState(error);
       if (requestFailure?.gatewayStatus === 'connected') {
         if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
           els.input.value = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
