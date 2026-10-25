@@ -2147,6 +2147,26 @@
     "message": "เปิดจาก {source} บนแท็บเบราว์เซอร์ {tabId}",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "ทิ้ง",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "ทิ้งรอบสนทนาที่สูญหายไม่ได้: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "รอบสนทนาสูญหายระหว่างรีสตาร์ต",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes รีสตาร์ตขณะรอบสนทนานี้กำลังทำงาน จึงไม่สามารถทำให้เสร็จหรือทำซ้ำได้อย่างปลอดภัย และรอบที่รออยู่ด้านหลังจะรอจนกว่าคุณจะทิ้งรอบนี้ ข้อความของคุณยังอยู่ในบันทึกการสนทนาเพื่อให้ส่งใหม่ได้",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "อยู่ในคิวของ Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "ใส่คำถามนี้ในช่องข้อความ",
     "description": "Runtime interface message haui.ask_hint"

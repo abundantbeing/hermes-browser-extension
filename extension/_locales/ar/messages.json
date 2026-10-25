@@ -2147,6 +2147,26 @@
     "message": "تم الفتح من {source} على علامة تبويب المتصفح {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "تجاهل",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "تعذّر تجاهل الدور المفقود: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "فُقد الدور أثناء إعادة التشغيل",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "أُعيد تشغيل Hermes أثناء تنفيذ هذا الدور. لا يمكن إكماله ولا تكراره بأمان، وتنتظر الأدوار الموجودة خلفه حتى تتجاهله. تبقى رسالتك في السجل لتتمكن من إعادة إرسالها.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "في قائمة الانتظار على Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "يضع هذا السؤال في مربع الرسالة",
     "description": "Runtime interface message haui.ask_hint"

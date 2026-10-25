@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Hoş geldiniz",
   "onboarding.welcome.start": "Başlayın",
   "onboarding.welcome.skip": "Kurulumu atla",
+  "gateway_queue.lost": "Tur yeniden başlatma sırasında kayboldu",
+  "gateway_queue.lost_detail": "Bu tur çalışırken Hermes yeniden başlatıldı. Tamamlanamaz veya güvenle tekrarlanamaz ve arkasındaki sıradaki turlar siz bunu atana kadar bekler. Mesajınız yeniden gönderebilmeniz için dökümde kalır.",
+  "gateway_queue.discard": "At",
+  "gateway_queue.discard_failed": "Kayıp tur atılamadı: {error}",
+  "gateway_queue.queued": "Hermes'te sırada: {count}",
 });

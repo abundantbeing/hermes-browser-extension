@@ -2147,6 +2147,26 @@
     "message": "從瀏覽器分頁 {tabId} 的 {source} 開啟。",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "捨棄",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "無法捨棄遺失的回合：{error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "重新啟動期間遺失了一個回合",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "此回合執行期間 Hermes 重新啟動了。它無法完成，也無法安全重試，排在它後面的回合會等到你捨棄它為止。你的訊息仍保留在對話紀錄中，可以重新傳送。",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Hermes 佇列中：{count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "將此問題放入訊息框",
     "description": "Runtime interface message haui.ask_hint"

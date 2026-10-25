@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Witaj",
   "onboarding.welcome.start": "Zaczynajmy",
   "onboarding.welcome.skip": "Pomiń konfigurację",
+  "gateway_queue.lost": "Tura utracona podczas restartu",
+  "gateway_queue.lost_detail": "Hermes uruchomił się ponownie w trakcie tej tury. Nie można jej dokończyć ani bezpiecznie powtórzyć, a tury czekające za nią czekają, aż ją odrzucisz. Twoja wiadomość pozostaje w transkrypcji, więc możesz wysłać ją ponownie.",
+  "gateway_queue.discard": "Odrzuć",
+  "gateway_queue.discard_failed": "Nie udało się odrzucić utraconej tury: {error}",
+  "gateway_queue.queued": "W kolejce w Hermes: {count}",
 });

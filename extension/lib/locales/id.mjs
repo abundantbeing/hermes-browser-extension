@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Selamat datang",
   "onboarding.welcome.start": "Mulai",
   "onboarding.welcome.skip": "Lewati pengaturan",
+  "gateway_queue.lost": "Giliran hilang saat memulai ulang",
+  "gateway_queue.lost_detail": "Hermes dimulai ulang saat giliran ini berjalan. Giliran ini tidak dapat diselesaikan atau diulang dengan aman, dan giliran yang antre di belakangnya menunggu sampai Anda membuangnya. Pesan Anda tetap ada di transkrip agar bisa dikirim ulang.",
+  "gateway_queue.discard": "Buang",
+  "gateway_queue.discard_failed": "Tidak dapat membuang giliran yang hilang: {error}",
+  "gateway_queue.queued": "Antre di Hermes: {count}",
 });

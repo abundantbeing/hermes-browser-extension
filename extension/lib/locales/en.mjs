@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Welcome",
   "onboarding.welcome.start": "Get started",
   "onboarding.welcome.skip": "Skip setup",
+  "gateway_queue.lost": "Turn lost during restart",
+  "gateway_queue.lost_detail": "Hermes restarted while this turn was running. It cannot be finished or safely repeated, and the turns queued behind it wait until you discard it. Your message stays in the transcript so you can resend it.",
+  "gateway_queue.discard": "Discard",
+  "gateway_queue.discard_failed": "Could not discard the lost turn: {error}",
+  "gateway_queue.queued": "Queued on Hermes: {count}",
 });

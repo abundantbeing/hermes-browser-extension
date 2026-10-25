@@ -4353,6 +4353,19 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   border-color: rgba(255, 80, 80, 0.5);
 }
 .queue-notice[hidden] { display: none; }
+.gateway-queue-notice { text-transform: none; letter-spacing: 0; }
+.gateway-queue-notice strong { display: block; text-transform: uppercase; letter-spacing: 0.1em; }
+.gateway-queue-lost,
+.gateway-queue-queued { display: grid; gap: 4px; }
+.gateway-queue-lost + .gateway-queue-queued { margin-top: 6px; }
+.gateway-queue-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--hermes-font-mono);
+  opacity: 0.8;
+}
 .composer-input-wrap {
   position: relative;
   min-width: 0;

@@ -2147,6 +2147,26 @@
     "message": "Geopend vanuit {source} op browsertabblad {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Verwerpen",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Kon de verloren beurt niet verwerpen: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Beurt verloren tijdens herstart",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes is opnieuw gestart terwijl deze beurt liep. Hij kan niet worden afgemaakt of veilig herhaald, en de beurten erachter wachten tot je hem verwerpt. Je bericht blijft in het transcript staan zodat je het opnieuw kunt versturen.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "In de wachtrij bij Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Zet deze vraag in het berichtenveld",
     "description": "Runtime interface message haui.ask_hint"

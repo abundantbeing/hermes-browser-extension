@@ -2147,6 +2147,26 @@
     "message": "Otworzono z {source} na karcie przeglądarki {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Odrzuć",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Nie udało się odrzucić utraconej tury: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Tura utracona podczas restartu",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes uruchomił się ponownie w trakcie tej tury. Nie można jej dokończyć ani bezpiecznie powtórzyć, a tury czekające za nią czekają, aż ją odrzucisz. Twoja wiadomość pozostaje w transkrypcji, więc możesz wysłać ją ponownie.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "W kolejce w Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Wstawia to pytanie do pola wiadomości",
     "description": "Runtime interface message haui.ask_hint"

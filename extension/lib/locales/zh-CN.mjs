@@ -1975,4 +1975,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "欢迎",
   "onboarding.welcome.start": "开始使用",
   "onboarding.welcome.skip": "跳过设置",
+  "gateway_queue.lost": "重启期间丢失了一个回合",
+  "gateway_queue.lost_detail": "此回合运行期间 Hermes 重启了。它无法完成，也无法安全重试，排在它后面的回合会等到你丢弃它为止。你的消息仍保留在对话记录中，可以重新发送。",
+  "gateway_queue.discard": "丢弃",
+  "gateway_queue.discard_failed": "无法丢弃丢失的回合：{error}",
+  "gateway_queue.queued": "Hermes 队列中：{count}",
 });

@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Welkom",
   "onboarding.welcome.start": "Aan de slag",
   "onboarding.welcome.skip": "Instellen overslaan",
+  "gateway_queue.lost": "Beurt verloren tijdens herstart",
+  "gateway_queue.lost_detail": "Hermes is opnieuw gestart terwijl deze beurt liep. Hij kan niet worden afgemaakt of veilig herhaald, en de beurten erachter wachten tot je hem verwerpt. Je bericht blijft in het transcript staan zodat je het opnieuw kunt versturen.",
+  "gateway_queue.discard": "Verwerpen",
+  "gateway_queue.discard_failed": "Kon de verloren beurt niet verwerpen: {error}",
+  "gateway_queue.queued": "In de wachtrij bij Hermes: {count}",
 });

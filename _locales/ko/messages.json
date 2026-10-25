@@ -2147,6 +2147,26 @@
     "message": "브라우저 탭 {tabId}의 {source}에서 열었습니다.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "버리기",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "유실된 턴을 버리지 못했습니다: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "재시작 중 턴이 유실되었습니다",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "이 턴이 실행되는 동안 Hermes가 재시작되었습니다. 완료하거나 안전하게 반복할 수 없으며, 뒤에 대기 중인 턴은 이 턴을 버릴 때까지 기다립니다. 메시지는 대화 기록에 남아 있으므로 다시 보낼 수 있습니다.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Hermes 대기열: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "이 질문을 메시지 입력창에 넣습니다",
     "description": "Runtime interface message haui.ask_hint"

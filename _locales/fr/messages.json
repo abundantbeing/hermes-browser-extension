@@ -2147,6 +2147,26 @@
     "message": "Ouvert depuis {source} sur l'onglet navigateur {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Abandonner",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Impossible d'abandonner le tour perdu : {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Tour perdu pendant le redémarrage",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes a redémarré pendant l'exécution de ce tour. Il ne peut ni être terminé ni répété en toute sécurité, et les tours en file derrière lui attendent que vous l'abandonniez. Votre message reste dans la transcription pour que vous puissiez le renvoyer.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "En file chez Hermes : {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Place cette question dans la zone de message",
     "description": "Runtime interface message haui.ask_hint"

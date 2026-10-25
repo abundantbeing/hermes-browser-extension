@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "ようこそ",
   "onboarding.welcome.start": "はじめる",
   "onboarding.welcome.skip": "設定をスキップ",
+  "gateway_queue.lost": "再起動中にターンが失われました",
+  "gateway_queue.lost_detail": "このターンの実行中に Hermes が再起動しました。完了することも安全に再実行することもできず、後ろに待機中のターンは破棄するまで待ち続けます。メッセージは履歴に残っているので、再送できます。",
+  "gateway_queue.discard": "破棄",
+  "gateway_queue.discard_failed": "失われたターンを破棄できませんでした: {error}",
+  "gateway_queue.queued": "Hermes で待機中: {count}",
 });

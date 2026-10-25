@@ -2147,6 +2147,26 @@
     "message": "Åbnet fra {source} på browserfane {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Kassér",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Kunne ikke kassere den tabte tur: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Tur tabt under genstart",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes blev genstartet, mens denne tur kørte. Den kan ikke afsluttes eller gentages sikkert, og turene bag den venter, til du kasserer den. Din besked bliver i transskriptionen, så du kan sende den igen.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "I kø hos Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Sætter dette spørgsmål i beskedfeltet",
     "description": "Runtime interface message haui.ask_hint"

@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Добро пожаловать",
   "onboarding.welcome.start": "Начать",
   "onboarding.welcome.skip": "Пропустить настройку",
+  "gateway_queue.lost": "Ход потерян при перезапуске",
+  "gateway_queue.lost_detail": "Hermes перезапустился во время выполнения этого хода. Его нельзя ни завершить, ни безопасно повторить, а ходы в очереди за ним ждут, пока вы его не отбросите. Ваше сообщение остаётся в истории, и вы можете отправить его снова.",
+  "gateway_queue.discard": "Отбросить",
+  "gateway_queue.discard_failed": "Не удалось отбросить потерянный ход: {error}",
+  "gateway_queue.queued": "В очереди Hermes: {count}",
 });

@@ -2147,6 +2147,26 @@
     "message": "Được mở từ {source} trên tab trình duyệt {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Bỏ",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Không thể bỏ lượt bị mất: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Lượt bị mất trong khi khởi động lại",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes đã khởi động lại khi lượt này đang chạy. Lượt này không thể hoàn tất hoặc lặp lại an toàn, và các lượt xếp hàng phía sau sẽ chờ cho đến khi bạn bỏ nó. Tin nhắn của bạn vẫn nằm trong bản ghi để bạn gửi lại.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Đang xếp hàng trên Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Đưa câu hỏi này vào ô tin nhắn",
     "description": "Runtime interface message haui.ask_hint"

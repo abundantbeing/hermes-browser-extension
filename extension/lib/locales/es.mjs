@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Bienvenido",
   "onboarding.welcome.start": "Empezar",
   "onboarding.welcome.skip": "Omitir configuración",
+  "gateway_queue.lost": "Turno perdido durante el reinicio",
+  "gateway_queue.lost_detail": "Hermes se reinició mientras este turno se ejecutaba. No se puede terminar ni repetir con seguridad, y los turnos en cola detrás esperan hasta que lo descartes. Tu mensaje sigue en la transcripción para que puedas reenviarlo.",
+  "gateway_queue.discard": "Descartar",
+  "gateway_queue.discard_failed": "No se pudo descartar el turno perdido: {error}",
+  "gateway_queue.queued": "En cola en Hermes: {count}",
 });

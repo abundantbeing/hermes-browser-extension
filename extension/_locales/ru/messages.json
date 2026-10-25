@@ -2147,6 +2147,26 @@
     "message": "Открыто из {source} на вкладке браузера {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Отбросить",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Не удалось отбросить потерянный ход: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Ход потерян при перезапуске",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes перезапустился во время выполнения этого хода. Его нельзя ни завершить, ни безопасно повторить, а ходы в очереди за ним ждут, пока вы его не отбросите. Ваше сообщение остаётся в истории, и вы можете отправить его снова.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "В очереди Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Помещает этот вопрос в поле сообщения",
     "description": "Runtime interface message haui.ask_hint"

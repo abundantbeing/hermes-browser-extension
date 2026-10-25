@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Willkommen",
   "onboarding.welcome.start": "Los geht’s",
   "onboarding.welcome.skip": "Einrichtung überspringen",
+  "gateway_queue.lost": "Zug beim Neustart verloren",
+  "gateway_queue.lost_detail": "Hermes wurde neu gestartet, während dieser Zug lief. Er kann weder beendet noch sicher wiederholt werden, und die dahinter wartenden Züge warten, bis du ihn verwirfst. Deine Nachricht bleibt im Verlauf, damit du sie erneut senden kannst.",
+  "gateway_queue.discard": "Verwerfen",
+  "gateway_queue.discard_failed": "Der verlorene Zug konnte nicht verworfen werden: {error}",
+  "gateway_queue.queued": "Bei Hermes in der Warteschlange: {count}",
 });

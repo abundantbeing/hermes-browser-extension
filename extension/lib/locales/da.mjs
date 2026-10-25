@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Velkommen",
   "onboarding.welcome.start": "Kom i gang",
   "onboarding.welcome.skip": "Spring opsætning over",
+  "gateway_queue.lost": "Tur tabt under genstart",
+  "gateway_queue.lost_detail": "Hermes blev genstartet, mens denne tur kørte. Den kan ikke afsluttes eller gentages sikkert, og turene bag den venter, til du kasserer den. Din besked bliver i transskriptionen, så du kan sende den igen.",
+  "gateway_queue.discard": "Kassér",
+  "gateway_queue.discard_failed": "Kunne ikke kassere den tabte tur: {error}",
+  "gateway_queue.queued": "I kø hos Hermes: {count}",
 });

@@ -2147,6 +2147,26 @@
     "message": "Dibuka dari {source} pada tab browser {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Buang",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Tidak dapat membuang giliran yang hilang: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Giliran hilang saat memulai ulang",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes dimulai ulang saat giliran ini berjalan. Giliran ini tidak dapat diselesaikan atau diulang dengan aman, dan giliran yang antre di belakangnya menunggu sampai Anda membuangnya. Pesan Anda tetap ada di transkrip agar bisa dikirim ulang.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Antre di Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Memasukkan pertanyaan ini ke kotak pesan",
     "description": "Runtime interface message haui.ask_hint"

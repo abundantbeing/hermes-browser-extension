@@ -2147,6 +2147,26 @@
     "message": "Abierto desde {source} en la pestaña {tabId} del navegador.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Descartar",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "No se pudo descartar el turno perdido: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Turno perdido durante el reinicio",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes se reinició mientras este turno se ejecutaba. No se puede terminar ni repetir con seguridad, y los turnos en cola detrás esperan hasta que lo descartes. Tu mensaje sigue en la transcripción para que puedas reenviarlo.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "En cola en Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Coloca esta pregunta en el cuadro de mensaje",
     "description": "Runtime interface message haui.ask_hint"

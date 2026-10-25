@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "स्वागत है",
   "onboarding.welcome.start": "शुरू करें",
   "onboarding.welcome.skip": "सेटअप छोड़ें",
+  "gateway_queue.lost": "रीस्टार्ट के दौरान टर्न खो गया",
+  "gateway_queue.lost_detail": "यह टर्न चलते समय Hermes रीस्टार्ट हो गया। इसे पूरा नहीं किया जा सकता और न ही सुरक्षित रूप से दोहराया जा सकता है, और इसके पीछे कतार में लगे टर्न तब तक प्रतीक्षा करते हैं जब तक आप इसे हटा नहीं देते। आपका संदेश ट्रांसक्रिप्ट में रहता है ताकि आप उसे दोबारा भेज सकें।",
+  "gateway_queue.discard": "हटाएँ",
+  "gateway_queue.discard_failed": "खोया हुआ टर्न हटाया नहीं जा सका: {error}",
+  "gateway_queue.queued": "Hermes पर कतार में: {count}",
 });

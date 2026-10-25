@@ -432,6 +432,13 @@ import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './l
 import { createReplayWatermarks } from './lib/replay-watermarks.mjs';
 import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
 import { preGatewayChatError, preGatewayChatFailureState } from './lib/pre-gateway-chat.mjs';
+import {
+  createGatewayQueueStore,
+  discardLostTurnRequest,
+  gatewayQueueView,
+  isLostTurnAlreadyResolved,
+  observeSessionResume,
+} from './lib/gateway-queue.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
 import { buildSupportDiagnostics } from './lib/support-diagnostics.mjs';
@@ -860,6 +867,7 @@ const els = {
   dropOverlay: $('#dropOverlay'),
   skillMenu: $('#skillMenu'),
   queueNotice: $('#queueNotice'),
+  gatewayQueueNotice: $('#gatewayQueueNotice'),
   runControlRecovery: $('#runControlRecovery'),
   runControlRecoveryDetail: $('#runControlRecoveryDetail'),
   retryRunStatusButton: $('#retryRunStatusButton'),
@@ -16803,6 +16811,7 @@ function sessionDisplayName(session = {}) {
 
 function updateSessionLabel() {
   promptController.refresh();
+  renderGatewayQueue();
   if (activeGroupProjection) {
     const label = `${activeGroupProjection.displayName} · Group Chat`;
     els.currentSessionName.textContent = label;
@@ -22719,6 +22728,7 @@ function createChatGatewayClient({ replayEndpoint = '', ...options } = {}) {
     replayStore: replayWatermarks.forEndpoint(replayEndpoint),
   });
   gatewayClient.on('session.replay.truncated', onReplayTruncated);
+  mirrorGatewayQueue(gatewayClient);
   gatewayClient.on('close', () => promptController.dropClient(gatewayClient));
   // The capability ledger follows the socket: a handshake turns every positive
   // record current, a close turns it into a cached one.
@@ -22728,6 +22738,100 @@ function createChatGatewayClient({ replayEndpoint = '', ...options } = {}) {
   });
   gatewayClient.on('close', () => refreshCapabilityViews());
   return gatewayClient;
+}
+
+// The turn queue a session-authority gateway owns is mirrored read-only: one store per
+// connection, fed by resume snapshots and session.info events. A turn lost in a gateway
+// restart offers Discard (prompt.resolve_unknown); nothing is ever resent from here.
+const gatewayQueueStores = new WeakMap();
+
+function mirrorGatewayQueue(client) {
+  const store = createGatewayQueueStore({ onChange: () => renderGatewayQueue() });
+  gatewayQueueStores.set(client, store);
+  observeSessionResume(client, (result) => store.ingestResume(result));
+  client.on('session.info', (event) => { store.ingestEvent(event); });
+  // What a closed connection reported can no longer be trusted; the next resume restates it.
+  client.on('close', () => store.clear());
+  return store;
+}
+
+function renderGatewayQueue() {
+  const node = els.gatewayQueueNotice;
+  if (!node) return;
+  const client = activeDashboardWsConnection?.client;
+  const sessionId = String(activeDashboardWsConnection?.wsStoredSessionId || settings.sessionId || '').trim();
+  const view = gatewayQueueView(client && sessionId ? gatewayQueueStores.get(client)?.forSession(sessionId) : []);
+  if (!view.lost.length && !view.queued.length) {
+    node.hidden = true;
+    node.replaceChildren();
+    return;
+  }
+  if (!node.dataset.bound) {
+    node.dataset.bound = '1';
+    node.addEventListener('click', (event) => {
+      const button = event.target?.closest?.('[data-gateway-discard]');
+      if (button) void discardLostGatewayTurn(button.dataset.gatewayDiscard, button);
+    });
+  }
+  const parts = [];
+  for (const row of view.lost) {
+    const lost = document.createElement('div');
+    lost.className = 'gateway-queue-lost';
+    const title = document.createElement('strong');
+    title.textContent = t('gateway_queue.lost');
+    const detail = document.createElement('span');
+    detail.className = 'queue-notice-main';
+    detail.textContent = t('gateway_queue.lost_detail');
+    const text = document.createElement('code');
+    text.className = 'gateway-queue-text';
+    text.textContent = row.text.slice(0, 200);
+    const actions = document.createElement('div');
+    actions.className = 'queue-notice-actions';
+    const discard = document.createElement('button');
+    discard.type = 'button';
+    discard.dataset.gatewayDiscard = row.admissionId;
+    discard.textContent = t('gateway_queue.discard');
+    actions.append(discard);
+    lost.append(title, detail, text, actions);
+    parts.push(lost);
+  }
+  if (view.queued.length) {
+    const queued = document.createElement('div');
+    queued.className = 'gateway-queue-queued';
+    const title = document.createElement('strong');
+    title.textContent = t('gateway_queue.queued', { count: view.queued.length });
+    queued.append(title);
+    for (const row of view.queued.slice(0, 3)) {
+      const text = document.createElement('code');
+      text.className = 'gateway-queue-text';
+      text.textContent = row.text.slice(0, 120);
+      queued.append(text);
+    }
+    parts.push(queued);
+  }
+  node.replaceChildren(...parts);
+  node.hidden = false;
+}
+
+async function discardLostGatewayTurn(admissionId, button = null) {
+  const connection = activeDashboardWsConnection;
+  const store = connection?.client ? gatewayQueueStores.get(connection.client) : null;
+  const sessionId = String(connection?.wsStoredSessionId || settings.sessionId || '').trim();
+  const row = store?.forSession(sessionId).find((item) => item.admissionId === admissionId);
+  const request = discardLostTurnRequest(row, sessionId);
+  if (!request) return;
+  if (button) button.disabled = true;
+  try {
+    await connection.client.request(request.method, request.params);
+    store.drop(sessionId, admissionId);
+  } catch (error) {
+    if (isLostTurnAlreadyResolved(error)) {
+      store.drop(sessionId, admissionId);
+      return;
+    }
+    if (button) button.disabled = false;
+    setStatus('warn', t('gateway_queue.lost'), t('gateway_queue.discard_failed', { error: error?.message || String(error) }), { translateTitle: false, translateDetail: false });
+  }
 }
 
 // Reads GET /v1/runs/{id} while a REST run is quiet, for prompts the stream did

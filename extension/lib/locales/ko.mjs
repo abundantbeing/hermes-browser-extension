@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "환영합니다",
   "onboarding.welcome.start": "시작하기",
   "onboarding.welcome.skip": "설정 건너뛰기",
+  "gateway_queue.lost": "재시작 중 턴이 유실되었습니다",
+  "gateway_queue.lost_detail": "이 턴이 실행되는 동안 Hermes가 재시작되었습니다. 완료하거나 안전하게 반복할 수 없으며, 뒤에 대기 중인 턴은 이 턴을 버릴 때까지 기다립니다. 메시지는 대화 기록에 남아 있으므로 다시 보낼 수 있습니다.",
+  "gateway_queue.discard": "버리기",
+  "gateway_queue.discard_failed": "유실된 턴을 버리지 못했습니다: {error}",
+  "gateway_queue.queued": "Hermes 대기열: {count}",
 });

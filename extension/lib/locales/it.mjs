@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Benvenuto",
   "onboarding.welcome.start": "Inizia",
   "onboarding.welcome.skip": "Salta la configurazione",
+  "gateway_queue.lost": "Turno perso durante il riavvio",
+  "gateway_queue.lost_detail": "Hermes si è riavviato mentre questo turno era in esecuzione. Non può essere completato né ripetuto in sicurezza, e i turni in coda dietro di esso attendono finché non lo scarti. Il tuo messaggio resta nella trascrizione, così puoi rinviarlo.",
+  "gateway_queue.discard": "Scarta",
+  "gateway_queue.discard_failed": "Impossibile scartare il turno perso: {error}",
+  "gateway_queue.queued": "In coda su Hermes: {count}",
 });

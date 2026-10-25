@@ -2147,6 +2147,26 @@
     "message": "ブラウザタブ {tabId} の {source} から開きました。",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "破棄",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "失われたターンを破棄できませんでした: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "再起動中にターンが失われました",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "このターンの実行中に Hermes が再起動しました。完了することも安全に再実行することもできず、後ろに待機中のターンは破棄するまで待ち続けます。メッセージは履歴に残っているので、再送できます。",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Hermes で待機中: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "この質問をメッセージ欄に入れます",
     "description": "Runtime interface message haui.ask_hint"

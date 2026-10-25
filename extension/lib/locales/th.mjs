@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "ยินดีต้อนรับ",
   "onboarding.welcome.start": "เริ่มต้นใช้งาน",
   "onboarding.welcome.skip": "ข้ามการตั้งค่า",
+  "gateway_queue.lost": "รอบสนทนาสูญหายระหว่างรีสตาร์ต",
+  "gateway_queue.lost_detail": "Hermes รีสตาร์ตขณะรอบสนทนานี้กำลังทำงาน จึงไม่สามารถทำให้เสร็จหรือทำซ้ำได้อย่างปลอดภัย และรอบที่รออยู่ด้านหลังจะรอจนกว่าคุณจะทิ้งรอบนี้ ข้อความของคุณยังอยู่ในบันทึกการสนทนาเพื่อให้ส่งใหม่ได้",
+  "gateway_queue.discard": "ทิ้ง",
+  "gateway_queue.discard_failed": "ทิ้งรอบสนทนาที่สูญหายไม่ได้: {error}",
+  "gateway_queue.queued": "อยู่ในคิวของ Hermes: {count}",
 });

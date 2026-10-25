@@ -2147,6 +2147,26 @@
     "message": "Geöffnet von {source} auf der Browser-Registerkarte {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Verwerfen",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Der verlorene Zug konnte nicht verworfen werden: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Zug beim Neustart verloren",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes wurde neu gestartet, während dieser Zug lief. Er kann weder beendet noch sicher wiederholt werden, und die dahinter wartenden Züge warten, bis du ihn verwirfst. Deine Nachricht bleibt im Verlauf, damit du sie erneut senden kannst.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Bei Hermes in der Warteschlange: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Fügt diese Frage in das Nachrichtenfeld ein",
     "description": "Runtime interface message haui.ask_hint"

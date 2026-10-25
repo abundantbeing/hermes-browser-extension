@@ -2147,6 +2147,26 @@
     "message": "{source} konumundan {tabId} sekmesinde açıldı.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "At",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Kayıp tur atılamadı: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Tur yeniden başlatma sırasında kayboldu",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Bu tur çalışırken Hermes yeniden başlatıldı. Tamamlanamaz veya güvenle tekrarlanamaz ve arkasındaki sıradaki turlar siz bunu atana kadar bekler. Mesajınız yeniden gönderebilmeniz için dökümde kalır.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Hermes'te sırada: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Bu soruyu mesaj kutusuna koyar",
     "description": "Runtime interface message haui.ask_hint"

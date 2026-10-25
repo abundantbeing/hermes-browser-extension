@@ -2147,6 +2147,26 @@
     "message": "Aperto da {source} sulla scheda del browser {tabId}.",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "Scarta",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "Impossibile scartare il turno perso: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "Turno perso durante il riavvio",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "Hermes si è riavviato mentre questo turno era in esecuzione. Non può essere completato né ripetuto in sicurezza, e i turni in coda dietro di esso attendono finché non lo scarti. Il tuo messaggio resta nella trascrizione, così puoi rinviarlo.",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "In coda su Hermes: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "Inserisce questa domanda nella casella del messaggio",
     "description": "Runtime interface message haui.ask_hint"

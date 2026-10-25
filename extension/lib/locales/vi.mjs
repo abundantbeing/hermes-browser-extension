@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Chào mừng",
   "onboarding.welcome.start": "Bắt đầu",
   "onboarding.welcome.skip": "Bỏ qua thiết lập",
+  "gateway_queue.lost": "Lượt bị mất trong khi khởi động lại",
+  "gateway_queue.lost_detail": "Hermes đã khởi động lại khi lượt này đang chạy. Lượt này không thể hoàn tất hoặc lặp lại an toàn, và các lượt xếp hàng phía sau sẽ chờ cho đến khi bạn bỏ nó. Tin nhắn của bạn vẫn nằm trong bản ghi để bạn gửi lại.",
+  "gateway_queue.discard": "Bỏ",
+  "gateway_queue.discard_failed": "Không thể bỏ lượt bị mất: {error}",
+  "gateway_queue.queued": "Đang xếp hàng trên Hermes: {count}",
 });

@@ -2147,6 +2147,26 @@
     "message": "ब्राउज़र टैब {tabId} पर {source} से खोला गया।",
     "description": "Runtime interface message fulltab.handoff.opened_from_tab"
   },
+  "runtime_gateway_queue_discard": {
+    "message": "हटाएँ",
+    "description": "Runtime interface message gateway_queue.discard"
+  },
+  "runtime_gateway_queue_discard_failed": {
+    "message": "खोया हुआ टर्न हटाया नहीं जा सका: {error}",
+    "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_lost": {
+    "message": "रीस्टार्ट के दौरान टर्न खो गया",
+    "description": "Runtime interface message gateway_queue.lost"
+  },
+  "runtime_gateway_queue_lost_detail": {
+    "message": "यह टर्न चलते समय Hermes रीस्टार्ट हो गया। इसे पूरा नहीं किया जा सकता और न ही सुरक्षित रूप से दोहराया जा सकता है, और इसके पीछे कतार में लगे टर्न तब तक प्रतीक्षा करते हैं जब तक आप इसे हटा नहीं देते। आपका संदेश ट्रांसक्रिप्ट में रहता है ताकि आप उसे दोबारा भेज सकें।",
+    "description": "Runtime interface message gateway_queue.lost_detail"
+  },
+  "runtime_gateway_queue_queued": {
+    "message": "Hermes पर कतार में: {count}",
+    "description": "Runtime interface message gateway_queue.queued"
+  },
   "runtime_haui_ask_hint": {
     "message": "यह सवाल संदेश बॉक्स में डालता है",
     "description": "Runtime interface message haui.ask_hint"

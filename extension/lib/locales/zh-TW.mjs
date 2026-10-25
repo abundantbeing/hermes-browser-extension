@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "歡迎",
   "onboarding.welcome.start": "開始使用",
   "onboarding.welcome.skip": "略過設定",
+  "gateway_queue.lost": "重新啟動期間遺失了一個回合",
+  "gateway_queue.lost_detail": "此回合執行期間 Hermes 重新啟動了。它無法完成，也無法安全重試，排在它後面的回合會等到你捨棄它為止。你的訊息仍保留在對話紀錄中，可以重新傳送。",
+  "gateway_queue.discard": "捨棄",
+  "gateway_queue.discard_failed": "無法捨棄遺失的回合：{error}",
+  "gateway_queue.queued": "Hermes 佇列中：{count}",
 });

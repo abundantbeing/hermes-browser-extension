@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "Bienvenue",
   "onboarding.welcome.start": "Commencer",
   "onboarding.welcome.skip": "Passer la configuration",
+  "gateway_queue.lost": "Tour perdu pendant le redémarrage",
+  "gateway_queue.lost_detail": "Hermes a redémarré pendant l'exécution de ce tour. Il ne peut ni être terminé ni répété en toute sécurité, et les tours en file derrière lui attendent que vous l'abandonniez. Votre message reste dans la transcription pour que vous puissiez le renvoyer.",
+  "gateway_queue.discard": "Abandonner",
+  "gateway_queue.discard_failed": "Impossible d'abandonner le tour perdu : {error}",
+  "gateway_queue.queued": "En file chez Hermes : {count}",
 });

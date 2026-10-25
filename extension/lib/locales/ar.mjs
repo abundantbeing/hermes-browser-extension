@@ -1976,4 +1976,9 @@ export default Object.freeze({
   "onboarding.welcome.greeting": "مرحبًا",
   "onboarding.welcome.start": "ابدأ",
   "onboarding.welcome.skip": "تخطي الإعداد",
+  "gateway_queue.lost": "فُقد الدور أثناء إعادة التشغيل",
+  "gateway_queue.lost_detail": "أُعيد تشغيل Hermes أثناء تنفيذ هذا الدور. لا يمكن إكماله ولا تكراره بأمان، وتنتظر الأدوار الموجودة خلفه حتى تتجاهله. تبقى رسالتك في السجل لتتمكن من إعادة إرسالها.",
+  "gateway_queue.discard": "تجاهل",
+  "gateway_queue.discard_failed": "تعذّر تجاهل الدور المفقود: {error}",
+  "gateway_queue.queued": "في قائمة الانتظار على Hermes: {count}",
 });
