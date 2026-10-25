@@ -576,23 +576,62 @@ function pointForArgs(args = {}) {
   return { x, y };
 }
 
-// The clip of Page.captureScreenshot is in document coordinates, while DOM.getBoxModel answers in the viewport's
-// (what is in view, scaled by a pinch zoom). The box is moved into the document by where the visual viewport is.
-function screenshotClip(box = {}, zoom = 1, view = {}) {
+// What the clip of Page.captureScreenshot means, as measured in Chrome (not as documented):
+// - DOM.getBoxModel answers in CSS px relative to the top left of the visual viewport, and a pinch zoom does not scale
+//   it. The element's place in the document is therefore where the visual viewport is (cssVisualViewport.pageX/pageY)
+//   plus the box, with no division by the pinch scale, whatever the viewport has been panned to.
+// - The clip is read in the page's zoomed px: with a browser zoom of z (cssVisualViewport.zoom) a document rect in CSS px
+//   is multiplied by z. The image is then the clip times `scale` times the device pixel ratio.
+// Returns the element's rect in CSS px of the document (which the frame-overlap check uses) and the clip to send.
+function screenshotClip(box = {}, scale = 1, view = {}) {
   const quad = Array.isArray(box?.model?.content) ? box.model.content.map(Number) : [];
   if (quad.length < 8 || quad.some((value) => !Number.isFinite(value))) throw new Error('The screenshot target has no visible box.');
   const xs = [quad[0], quad[2], quad[4], quad[6]];
   const ys = [quad[1], quad[3], quad[5], quad[7]];
-  const scale = Number(view.scale) > 0 ? Number(view.scale) : 1;
+  const zoom = Number(view.zoom) > 0 && Number.isFinite(Number(view.zoom)) ? Number(view.zoom) : 1;
   const x = Math.min(...xs);
   const y = Math.min(...ys);
-  return {
-    x: (Number(view.pageX) || 0) + x / scale,
-    y: (Number(view.pageY) || 0) + y / scale,
-    width: Math.max(1, (Math.max(...xs) - x) / scale),
-    height: Math.max(1, (Math.max(...ys) - y) / scale),
-    scale: Math.max(0.25, Math.min(Number(zoom) || 1, 4)),
+  const css = {
+    x: (Number(view.pageX) || 0) + x,
+    y: (Number(view.pageY) || 0) + y,
+    width: Math.max(1 / zoom, Math.max(...xs) - x),
+    height: Math.max(1 / zoom, Math.max(...ys) - y),
   };
+  return {
+    css,
+    clip: {
+      x: css.x * zoom,
+      y: css.y * zoom,
+      width: css.width * zoom,
+      height: css.height * zoom,
+      scale: Math.max(0.25, Math.min(Number(scale) || 1, 4)),
+    },
+  };
+}
+
+// The size a PNG says it is (its IHDR chunk), or null for anything that is not one.
+function pngSize(base64 = '') {
+  try {
+    const head = globalThis.atob(String(base64).slice(0, 32));
+    if (head.length < 24 || head.slice(1, 4) !== 'PNG' || head.slice(12, 16) !== 'IHDR') return null;
+    const word = (at) => ((head.charCodeAt(at) << 24) | (head.charCodeAt(at + 1) << 16) | (head.charCodeAt(at + 2) << 8) | head.charCodeAt(at + 3)) >>> 0;
+    return { width: word(16), height: word(20) };
+  } catch {
+    return null;
+  }
+}
+
+// Whether a captured image is the size of the clip that was asked for: clip x scale, times a device pixel ratio that
+// is the same on both axes (and not below 1). A picture of another size is not the region that was checked.
+function captureMatchesClip(size, clip) {
+  if (!size) return true;
+  const expectedWidth = clip.width * clip.scale;
+  const expectedHeight = clip.height * clip.scale;
+  if (!(size.width > 0 && size.height > 0)) return false;
+  const ratio = size.width / expectedWidth;
+  if (!(ratio >= 0.99 && ratio <= 8)) return false;
+  const slack = 2 + ratio;
+  return Math.abs(size.width - expectedWidth * ratio) <= slack && Math.abs(size.height - expectedHeight * ratio) <= slack;
 }
 
 function scrollDirection(direction = '') {
@@ -1357,6 +1396,7 @@ function createChromiumCdpAdapter({
         pageX: Number(viewport?.pageX) || 0,
         pageY: Number(viewport?.pageY) || 0,
         scale: Number(viewport?.scale) > 0 ? Number(viewport.scale) : 1,
+        zoom: Number(viewport?.zoom) > 0 ? Number(viewport.zoom) : 1,
         width,
         height,
       };
@@ -1366,29 +1406,26 @@ function createChromiumCdpAdapter({
     }
   }
 
-  // The part of the document a screenshot covers, in document coordinates: the clip, or what is in view. Null when
-  // it cannot be told.
-  function screenshotRegion(clip, view) {
-    if (clip) return { x: clip.x, y: clip.y, width: clip.width, height: clip.height };
+  // The part of the document a screenshot covers, in CSS px of the document: the element's rect, or what is in view.
+  // Null when it cannot be told.
+  function screenshotRegion(cssRect, view) {
+    if (cssRect) return { x: cssRect.x, y: cssRect.y, width: cssRect.width, height: cssRect.height };
     return view ? { x: view.pageX, y: view.pageY, width: view.width, height: view.height } : null;
   }
 
-  // Whether the element's box overlaps a region of the document. The box is in viewport coordinates, which become
-  // document coordinates through where the viewport is; since it is not certain whether a pinch zoom scales those
-  // boxes, both readings are tried and either overlapping counts. An element that is not rendered has no pixels;
-  // any other failure to measure it counts as overlapping.
+  // Whether the element's box overlaps a region of the document. The box is in CSS px relative to the visual viewport,
+  // unscaled by a pinch zoom, which makes it document coordinates through where the viewport is, the same way the
+  // clip is made. An element that is not rendered has no pixels; any other failure to measure it counts as overlapping.
   async function ownerInDocumentRegion(send, signal, backendNodeId, region, view) {
     if (!region || !view || !backendNodeId) return true;
     try {
       const box = quadRect(await send('DOM.getBoxModel', { backendNodeId }));
-      return [...new Set([1, view.scale])].some((scale) => {
-        // A frame under 4 x 4 CSS pixels (a tracker, a beacon) shows nothing.
-        if (box.width / scale < MIN_VISIBLE_FRAME_PX || box.height / scale < MIN_VISIBLE_FRAME_PX) return false;
-        const left = view.pageX + box.x / scale;
-        const top = view.pageY + box.y / scale;
-        return left < region.x + region.width && left + box.width / scale > region.x
-          && top < region.y + region.height && top + box.height / scale > region.y;
-      });
+      // A frame under 4 x 4 CSS pixels (a tracker, a beacon) shows nothing.
+      if (box.width < MIN_VISIBLE_FRAME_PX || box.height < MIN_VISIBLE_FRAME_PX) return false;
+      const left = view.pageX + box.x;
+      const top = view.pageY + box.y;
+      return left < region.x + region.width && left + box.width > region.x
+        && top < region.y + region.height && top + box.height > region.y;
     } catch (error) {
       if (abortError(signal)) throw error;
       return !/could not compute box model/i.test(String(error?.message || ''));
@@ -1431,7 +1468,7 @@ function createChromiumCdpAdapter({
   // A screenshot is pixels of the whole page, frames included, so it follows the rule snapshots follow: a frame
   // Hermes may not read (a payment or sign-in frame) that shows in the captured region withholds the screenshot.
   // A page whose frames cannot be checked is treated the same way.
-  async function assertScreenshotFramesReadable(send, enable, signal, clip) {
+  async function assertScreenshotFramesReadable(send, enable, signal, cssRect) {
     const withheld = (verdict) => restrictedFrameError(withheldScreenshotMessage(verdict));
     let owners;
     try {
@@ -1442,7 +1479,7 @@ function createChromiumCdpAdapter({
     }
     if (!owners.length) return;
     const view = await readViewport(send, signal);
-    const region = screenshotRegion(clip, view);
+    const region = screenshotRegion(cssRect, view);
     for (const { id, verdict } of owners) {
       if (!await ownerInDocumentRegion(send, signal, id, region, view)) continue;
       // Only a frame that shows is withheld for.
@@ -2003,6 +2040,7 @@ function createChromiumCdpAdapter({
         // several round trips, so the tab's own address is read again around the capture.
         const before = await screenshotPageAddress(session.tabId, signal, allowLocalDocuments);
         let clip;
+        let cssRect;
         const backendNodeId = Number(target?.backendDOMNodeId);
         if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
           await enable('DOM');
@@ -2010,10 +2048,10 @@ function createChromiumCdpAdapter({
           const targetBox = await send('DOM.getBoxModel', { backendNodeId });
           const view = await readViewport(send, signal);
           if (!view) throw new Error('Hermes could not tell where the page is scrolled to, so no screenshot was taken. Try again.');
-          clip = screenshotClip(targetBox, args.zoom, view);
+          ({ clip, css: cssRect } = screenshotClip(targetBox, args.zoom, view));
         }
         await enable('DOM');
-        await assertScreenshotFramesReadable(send, enable, signal, clip);
+        await assertScreenshotFramesReadable(send, enable, signal, cssRect);
         const hidden = await pageIsHidden(send, signal);
         const capture = send('Page.captureScreenshot', {
           format: 'png',
@@ -2025,11 +2063,15 @@ function createChromiumCdpAdapter({
           ? withTimeout(capture, HIDDEN_CAPTURE_TIMEOUT_MS, () => hiddenScreenshotError(), setTimer, clearTimer)
           : capture);
         // A frame can move to a restricted page while the capture runs; the pixels are dropped if so.
-        await assertScreenshotFramesReadable(send, enable, signal, clip);
+        await assertScreenshotFramesReadable(send, enable, signal, cssRect);
         // The page can have moved to a restricted address, or to another page, since: the pixels are dropped.
         const after = await screenshotPageAddress(session.tabId, signal, allowLocalDocuments);
         if (comparableUrl(after) !== comparableUrl(before)) {
           throw codedError('page_changed', 'The page changed while the screenshot was taken, so it was discarded. Try again.');
+        }
+        // The picture of one element is the size that was asked for, or it is not the region that was checked.
+        if (clip && !captureMatchesClip(pngSize(captured?.data), clip)) {
+          throw codedError('capture_region_mismatch', 'The screenshot came back at a different size than the element, so it did not match the region Hermes checked and was discarded. Try again, or take a screenshot without a ref.');
         }
         return { ...boundedScreenshot(`data:image/png;base64,${String(captured?.data || '')}`), url: after };
       }

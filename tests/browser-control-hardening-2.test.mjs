@@ -212,17 +212,22 @@ test('a viewport screenshot of a scrolled page covers what is in view, not the t
   }
 });
 
-test('a pinch-zoomed page is judged over the part of the document that is in view, whichever way its boxes are scaled', async () => {
-  const chromium = fakeChromium({
+test('a pinch-zoomed page is judged over the part of the document that is in view; boxes are unscaled, relative to the visual viewport', async () => {
+  const at = (frameBox) => fakeChromium({
     handlers: {
       // Zoomed in 2x and moved right: the visible area is 500 x 400 CSS px starting at 500,0 in the document.
       'Page.getLayoutMetrics': () => viewportAt({ pageX: 500, pageY: 0, clientWidth: 500, clientHeight: 400, scale: 2, offsetX: 500 }),
       'DOM.getDocument': () => documentOf([sameProcessFrame(31, 'https://bank.example/checkout')]),
-      'DOM.getBoxModel': boxesWith({ 31: [700, 100, 200, 100] }),
+      'DOM.getBoxModel': boxesWith({ 31: frameBox }),
     },
   });
-  await assert.rejects(shoot(chromium), withheld);
-  assert.equal(captured(chromium.calls), false);
+  // At 200,100 of the viewport is document 700,100: in view.
+  const inView = at([200, 100, 200, 100]);
+  await assert.rejects(shoot(inView), withheld);
+  assert.equal(captured(inView.calls), false);
+  // At 700,100 of the viewport is document 1200,100, to the right of what is in view (the scaled reading would put it in view).
+  const outside = at([700, 100, 200, 100]);
+  assert.match((await shoot(outside)).dataUrl, /^data:image\/png;base64,/);
 });
 
 test('a page position that cannot be read stops an element screenshot instead of guessing the clip', async () => {
