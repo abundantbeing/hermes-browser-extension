@@ -42,6 +42,9 @@ export const PROJECTS_UNAVAILABLE = Object.freeze({
   restOnly: 'rest-only',
   noSessionAuthority: 'no-session-authority',
   methodNotFound: 'method-not-found',
+  // The gateway's Webapp is serving this connection's dashboard routes and the panel does not hold
+  // its sign-in: Projects cannot open a session-authority socket until it does.
+  webappSignIn: 'webapp-sign-in',
 });
 
 const UNAVAILABLE_COPY = Object.freeze({
@@ -51,6 +54,8 @@ const UNAVAILABLE_COPY = Object.freeze({
     'Projects need the Hermes dashboard WebSocket. This connection only reaches the REST API, so Recents stays available and Projects does not.',
   [PROJECTS_UNAVAILABLE.noSessionAuthority]:
     'This Hermes gateway did not advertise session authority, so projects and moving sessions are unavailable. Update Hermes to a build with canonical session mutations.',
+  [PROJECTS_UNAVAILABLE.webappSignIn]:
+    "Projects needs Hermes Web's sign-in. Open Hermes Web once (run hermes webapp), then try again.",
 });
 
 function clean(value = '') {
@@ -64,14 +69,23 @@ function clean(value = '') {
  *   rest-only            the connection has no dashboard WebSocket at all;
  *   not-connected        the WebSocket has not delivered gateway.ready yet;
  *   no-session-authority gateway.ready lacks `session_authority: true`;
- *   method-not-found     this connection already answered -32601 for `method`.
+ *   method-not-found     this connection already answered -32601 for `method`;
+ *   webapp-sign-in       the caller says (`blockedReason`) that Hermes Web's sign-in is missing.
  */
 export function gatewayAuthorityAvailability({
   dashboardWs = false,
   readyPayload = null,
   unsupportedMethods = [],
   method = '',
+  blockedReason = '',
 } = {}) {
+  if (clean(blockedReason) === PROJECTS_UNAVAILABLE.webappSignIn) {
+    return {
+      available: false,
+      reason: PROJECTS_UNAVAILABLE.webappSignIn,
+      message: UNAVAILABLE_COPY[PROJECTS_UNAVAILABLE.webappSignIn],
+    };
+  }
   if (dashboardWs !== true) {
     return { available: false, reason: PROJECTS_UNAVAILABLE.restOnly, message: UNAVAILABLE_COPY[PROJECTS_UNAVAILABLE.restOnly] };
   }

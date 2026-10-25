@@ -13,6 +13,7 @@
 
 import {
   PROJECTS_METHODS,
+  PROJECTS_UNAVAILABLE,
   createProjectsClient,
   gatewayAuthorityAvailability,
   projectsIdentity,
@@ -52,7 +53,7 @@ function freshState() {
 
 /**
  * @param {object} options
- * @param {() => object|null} options.getConnection  { token, identityInput, dashboardWs, request, getReadyPayload, connectError }
+ * @param {() => object|null} options.getConnection  { token, identityInput, dashboardWs, request, getReadyPayload, connectError, blockedReason }
  * @param {() => Promise<void>} [options.prepareConnection]  tries to open the dashboard socket when one is expected
  * @param {(session: object) => any} options.openSession  open a session in the chat
  * @param {(args: {cwd: string, projectName: string}) => Promise<any>} options.createSessionInFolder
@@ -136,6 +137,7 @@ export function createProjectsController({
       readyPayload: current.connection?.getReadyPayload?.() || null,
       unsupportedMethods: current.unsupported,
       method,
+      blockedReason: current.connection?.blockedReason,
     });
   }
 
@@ -155,7 +157,8 @@ export function createProjectsController({
         status: 'unavailable',
         rows: [],
         failure: describeProjectsFailure({ ...gate, unavailable: true }),
-        connectError: clean(current.connection?.connectError),
+        // The sign-in reason is its own message; the raw connect error would only repeat it.
+        connectError: gate.reason === PROJECTS_UNAVAILABLE.webappSignIn ? '' : clean(current.connection?.connectError),
       });
       emit();
       return;

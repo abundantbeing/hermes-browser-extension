@@ -227,6 +227,7 @@ const FAILURE_KEYS = Object.freeze({
   [PROJECTS_UNAVAILABLE.restOnly]: 'projects.unavailable.rest_only',
   [PROJECTS_UNAVAILABLE.noSessionAuthority]: 'projects.unavailable.no_authority',
   [PROJECTS_UNAVAILABLE.methodNotFound]: 'projects.unavailable.method_not_found',
+  [PROJECTS_UNAVAILABLE.webappSignIn]: 'projects.unavailable.webapp_sign_in',
   'profile-unavailable': 'projects.error.profile_unavailable',
   'not-found': 'projects.error.not_found',
   'invalid-argument': 'projects.error.invalid_argument',
