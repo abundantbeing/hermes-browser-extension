@@ -448,7 +448,7 @@ import {
   dashboardModelDiscoveryBaseUrl,
   fetchDashboardFileStreamObjectUrl,
   fetchDashboardMediaDataUrl,
-  fetchDashboardSessionToken,
+  fetchDashboardSessionToken as fetchDashboardSessionTokenFromPage,
   releaseDashboardStreamBlob,
   discoverCanonicalProviderCatalog,
   discoverGatewayVirtualModels,
@@ -649,7 +649,9 @@ import {
 } from './lib/connection-controller.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
 import { createGatewayQuirkStore, GATEWAY_QUIRK, isSessionPatchRejection } from './lib/gateway-quirks.mjs';
-import { openHermesWebapp } from './lib/hermes-webapp.mjs';
+import { openHermesWebapp, resolveWebappTarget } from './lib/hermes-webapp.mjs';
+import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
+import { PROJECTS_UNAVAILABLE } from './lib/projects-client.mjs';
 import { createWebappDialog } from './lib/hermes-webapp-dialog.mjs';
 import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { normalizeMessageTimestamp } from './lib/message-meta.mjs';
@@ -1091,6 +1093,7 @@ const els = {
   remoteTransportRow: $('#remoteTransportRow'),
   gatewayUrlInput: $('#gatewayUrlInput'),
   hermesWebAddressInput: $('#hermesWebAddressInput'),
+  webappKeepSignedInInput: $('#webappKeepSignedInInput'),
   gatewayUrlField: $('#gatewayUrlField'),
   cloudPreviewHelp: $('#cloudPreviewHelp'),
   gatewayHelp: $('#gatewayHelp'),
@@ -1321,6 +1324,9 @@ let sessionMenuTab = SESSION_MENU_TABS.recents;
 let projectsController = null;
 let projectsActivating = false;
 let projectsConnectError = '';
+// Set to a PROJECTS_UNAVAILABLE reason when the connection could work but is blocked by one thing the
+// person can fix (today: Hermes Web's sign-in), so the drawer says that instead of a generic reason.
+let projectsBlockedReason = '';
 const approvedForeignSessionIds = new Set();
 let pendingForeignTurn = null;
 let pendingContextMenuRequest = null;
@@ -3749,9 +3755,138 @@ function restoreComposerDraft() {
   }
 }
 
+// The Hermes Web sign-in the panel keeps for this browser (lib/webapp-credential.mjs). The Webapp's
+// own page injects no dashboard token, so this credential is what the roster, Projects, models and
+// media use in its place, and what the Hermes Web button signs a new tab in with. It is read from a
+// signed-in Webapp tab, held in storage.session only (gone when the browser closes), never shown,
+// never logged and never put in a URL. The "Keep Hermes Web signed in" setting turns all of it off.
+let webappCredentials = null;
+// Loopback Webapp listeners discovery found: origin -> 'accepted' | 'rejected' | 'none' (no credential).
+const webappListeners = new Map();
+let lastWebappCaptureAt = 0;
+const WEBAPP_CAPTURE_THROTTLE_MS = 4000;
+
+function webappCredentialStore() {
+  if (!webappCredentials) {
+    webappCredentials = createWebappCredentialStore({
+      storageSession: browserApi.storage?.session,
+      scriptingApi: browserApi.scripting,
+      tabsApi: browserApi.tabs,
+      fetchImpl: (...args) => globalThis.fetch(...args),
+      isEnabled: () => keepSignedInEnabled(settings),
+      onDrop: (info) => handleWebappCredentialDropped(info),
+    });
+  }
+  return webappCredentials;
+}
+
+// The token to send to the dashboard at baseUrl: the one its page injects (legacy dashboards), else
+// the held Webapp credential when it belongs to the same origin. '' when there is neither.
+async function dashboardTokenFor(baseUrl = '', html = '') {
+  try {
+    return await webappCredentialStore().tokenFor(baseUrl, html);
+  } catch {
+    return extractDashboardSessionToken(html);
+  }
+}
+
+// fetchDashboardSessionToken with the Webapp credential standing in for a page that injects none.
+async function fetchDashboardSessionToken(options = {}) {
+  return fetchDashboardSessionTokenFromPage({ ...options, dashboardToken: await dashboardTokenFor(options.baseUrl, '') });
+}
+
+function webappTargetForSettings() {
+  const target = resolveWebappTarget(settings);
+  return target.ok ? target : null;
+}
+
+// A Webapp listener discovery found that the panel cannot use yet (no credential, or a stale one).
+function webappListenerNeedingSignIn() {
+  for (const [origin, state] of webappListeners) if (state !== 'accepted') return origin;
+  return '';
+}
+
+async function webappListenerNeedsSignIn(url = '') {
+  const origin = originOf(url);
+  if (!origin || !webappListeners.has(origin)) return false;
+  return !(await dashboardTokenFor(origin, ''));
+}
+
+function noteWebappListener({ origin = '', credential = 'none' } = {}) {
+  if (!origin) return;
+  webappListeners.set(origin, credential);
+  // The Webapp answered 401 to the held credential: a sign-out replaced it.
+  if (credential === 'rejected') void webappCredentialStore().clear().catch(() => undefined);
+}
+
+// A rejected credential means the listener is not usable until Hermes Web signs this browser in again.
+function forgetWebappDashboard(origin = '') {
+  const url = localDashboardUrl();
+  const urlOrigin = url ? originOf(url) : '';
+  if (!urlOrigin || (origin ? urlOrigin !== origin : !webappListeners.has(urlOrigin))) return;
+  setLocalDashboardUrl('');
+  void clearCachedRosterUrl(browserApi.storage?.local).catch(() => undefined);
+  const connection = profileWsConnection;
+  if (connection && originOf(connection.baseUrl || '') === urlOrigin) {
+    try { connection.client?.close?.(); } catch { /* already closed */ }
+    profileWsConnection = null;
+  }
+}
+
+function handleWebappCredentialDropped({ origin = '' } = {}) {
+  if (origin) webappListeners.set(origin, 'rejected');
+  forgetWebappDashboard(origin);
+}
+
+// Read the sign-in from an open, signed-in Webapp tab. `origin` names a listener discovery found;
+// the configured Hermes Web address is tried too. Resolves whether a credential is now held.
+async function captureWebappCredential({ origin = '', force = false } = {}) {
+  if (!keepSignedInEnabled(settings)) return false;
+  if (!force && Date.now() - lastWebappCaptureAt < WEBAPP_CAPTURE_THROTTLE_MS) return false;
+  lastWebappCaptureAt = Date.now();
+  const targets = [];
+  if (origin) targets.push({ origin, basePath: '', baseUrl: origin });
+  const configured = webappTargetForSettings();
+  if (configured && configured.origin !== origin) targets.push(configured);
+  for (const target of targets) {
+    const result = await webappCredentialStore().capture(target).catch(() => null);
+    if (result?.ok) return true;
+  }
+  return false;
+}
+
+// After the sign-in is first held, the roster and skills that waited for it load.
+async function refreshAfterWebappSignIn() {
+  try {
+    if (!webappListenerNeedingSignIn()) return;
+    if (!(await webappCredentialStore().held())) return;
+    void loadProfiles({ quiet: true, allowDashboardTrust: true });
+    void loadSkills({ quiet: true });
+  } catch {
+    /* a refresh that could not start leaves the roster as it was */
+  }
+}
+
+// Run after Save: off means never keep it and forget what is held; on tries to keep it right away.
+async function applyWebappCredentialPreference() {
+  if (!keepSignedInEnabled(settings)) {
+    await webappCredentialStore().clear().catch(() => undefined);
+    forgetWebappDashboard();
+    return;
+  }
+  if (await captureWebappCredential({ force: true })) void refreshAfterWebappSignIn();
+}
+
+function webappSignInRequiredError() {
+  const error = new Error(t('webapp.sign_in_needed'));
+  error.ticketReason = 'webapp_sign_in_required';
+  return error;
+}
+
 // The Hermes Web button. Hermes Web is the Webapp the user's own gateway serves, so this
-// finds it (a tab that already shows it, else a new one), and when nothing answers it shows
-// how to turn it on. See lib/hermes-webapp.mjs for what it checks and what it never sends.
+// finds it (a tab that already shows it, else a new one signed in with the kept sign-in, else
+// the sign-in page), and when nothing answers it shows how to turn it on. See lib/hermes-webapp.mjs
+// for what it checks and what it never sends.
 let webappDialog = null;
 let webappOpening = false;
 
@@ -3766,6 +3901,15 @@ function webappDialogController() {
   return webappDialog;
 }
 
+// The toast detail for a new tab that still needs the person to sign in. A tab opened already
+// signed in ('signed-in') needs no toast.
+function webappHintKey(hint = '') {
+  if (hint === 'local') return 'webapp.hint_local';
+  if (hint === 'local-kept') return 'webapp.hint_local_kept';
+  if (hint === 'account') return 'webapp.hint_account';
+  return '';
+}
+
 async function openHermesWeb() {
   if (webappOpening) return;
   webappOpening = true;
@@ -3778,11 +3922,12 @@ async function openHermesWeb() {
       windowsApi: browserApi.windows,
       permissionsApi: browserApi.permissions,
       storageArea: browserApi.storage?.local,
+      credentials: webappCredentialStore(),
     });
-    if (result.status === 'opened' && result.hint) {
+    if (result.status === 'opened' && webappHintKey(result.hint)) {
       showOperationToast({
         title: t('webapp.opened_title'),
-        detail: t(result.hint === 'local' ? 'webapp.hint_local' : 'webapp.hint_account'),
+        detail: t(webappHintKey(result.hint)),
         duration: 10000,
       });
     } else if (result.status === 'open-failed') {
@@ -3790,6 +3935,8 @@ async function openHermesWeb() {
     } else if (!['opened', 'focused'].includes(result.status)) {
       webappDialogController()?.show({ reason: result.status, address: result.address });
     }
+    // A sign-in kept from an open tab (or already held) lets a roster that was waiting for it load.
+    if (['opened', 'focused'].includes(result.status)) void refreshAfterWebappSignIn();
   } catch (error) {
     console.warn('[Hermes Browser] Could not open Hermes Web:', error);
     showOperationToast({ kind: 'warn', title: t('webapp.open_failed'), detail: error?.message || String(error) });
@@ -4746,7 +4893,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
           cache: 'no-store',
           signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(1_000) : undefined,
         });
-        const token = extractDashboardSessionToken(await rootResponse.text());
+        const token = await dashboardTokenFor(base, await rootResponse.text());
         if (token) {
           const dashResponse = await fetch(`${base}/v1/capabilities`, {
             headers: { Accept: 'application/json', 'X-Hermes-Session-Token': token },
@@ -6947,7 +7094,8 @@ function refreshVoiceLiveStatus({ force = false } = {}) {
     const scopeKey = voiceLiveScopeKey();
     let status = null;
     try {
-      status = await fetchVoiceLiveStatus({ baseUrl: await voiceLiveDashboardBaseUrl(), profile: safeActiveProfile() });
+      const liveBaseUrl = await voiceLiveDashboardBaseUrl();
+      status = await fetchVoiceLiveStatus({ baseUrl: liveBaseUrl, profile: safeActiveProfile(), dashboardToken: await dashboardTokenFor(liveBaseUrl, '') });
     } catch {
       status = null;
     } finally {
@@ -7275,6 +7423,7 @@ async function transcribeVoiceRecording(blob) {
       profile: settings.activeProfile,
       dataUrl,
       mimeType: blob.type || 'audio/webm',
+      dashboardToken: await dashboardTokenFor(baseUrl, ''),
     });
     if (!result.ok) {
       const error = new Error(dashboardVoiceFailureMessage(result));
@@ -10421,6 +10570,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
             baseUrl: localDashboardUrl(),
             refresh,
             profile: settings.activeProfile,
+            dashboardToken: await dashboardTokenFor(localDashboardUrl(), ''),
           }),
           new Promise((resolve) => setTimeout(() => resolve({ ok: false, error: 'timeout' }), 2_500)),
         ]);
@@ -10430,13 +10580,15 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
         }
       }
       if (!registryModels.length) {
+        const modelDashboardUrl = dashboardModelDiscoveryBaseUrl({
+          gatewayMode: settings.gatewayMode,
+          gatewayUrl: settings.gatewayUrl,
+        });
         const dashboardResult = await discoverModelsFromDashboard({
-          baseUrl: dashboardModelDiscoveryBaseUrl({
-            gatewayMode: settings.gatewayMode,
-            gatewayUrl: settings.gatewayUrl,
-          }),
+          baseUrl: modelDashboardUrl,
           refresh,
           profile: settings.activeProfile,
+          dashboardToken: await dashboardTokenFor(modelDashboardUrl, ''),
         });
         if (dashboardResult.ok && dashboardResult.models.length) {
           registryModels = normalizeHermesModels(dashboardResult.models, settings.model);
@@ -11097,23 +11249,34 @@ async function ensureDesktopDashboardUrl({ timeoutMs = 8_000 } = {}) {
       signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(300) : undefined,
       cache: 'no-store',
     }).catch(() => null);
-    if (alive?.ok) return desktopDashboardUrl;
+    // A Hermes Web listener answers like a dashboard but is only usable with its sign-in.
+    if (alive?.ok && !(await webappListenerNeedsSignIn(desktopDashboardUrl))) return desktopDashboardUrl;
     desktopDashboardUrl = '';
   }
   if (!desktopDashboardDiscoveryPromise) {
     desktopDashboardDiscoveryPromise = (async () => {
       const cached = await readCachedRosterUrl();
       const candidateUrls = await localhostDashboardCandidateUrls();
-      const discovered = await discoverLocalDashboardBaseUrl({
+      const discover = () => discoverLocalDashboardBaseUrl({
         gatewayMode: normalizeGatewayMode(settings.gatewayMode),
         cachedUrl: cached.url,
         cachedAt: cached.cachedAt,
         candidateUrls,
+        webappUrl: webappTargetForSettings()?.origin || '',
+        webappCredentialFor: (origin) => dashboardTokenFor(origin, ''),
+        onWebapp: noteWebappListener,
         gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
         apiKey: hermesGatewayKey(),
         fetchFn: dashboardFetch,
         timeoutMs: Math.max(8_000, Number(timeoutMs) || 8_000),
       });
+      // Only what this pass sees counts: a Webapp that has since gone is not something to sign in to.
+      webappListeners.clear();
+      let discovered = await discover();
+      // The gateway's Webapp answered but this panel holds no sign-in for it: keep the one an open
+      // signed-in tab has, and look again. Without one the roster comes from the gateway's own routes.
+      const gated = discovered ? '' : webappListenerNeedingSignIn();
+      if (gated && await captureWebappCredential({ origin: gated })) discovered = await discover();
       if (discovered && isLocalApiMode()) {
         desktopDashboardUrl = discovered;
         await writeCachedRosterUrl(discovered);
@@ -11164,6 +11327,11 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
     if (rootResponse.ok) dashboardToken = extractDashboardSessionToken(await rootResponse.text());
   } catch {
     // Authenticated dashboards use the explicit signed-in tab below.
+  }
+  // The gateway's Webapp injects no token. With its sign-in held, a one-use socket ticket opens /api/ws.
+  if (!dashboardToken) {
+    const viaWebapp = await connectProfileViaWebapp(baseUrl, key, readyTimeoutMs);
+    if (viaWebapp) return viaWebapp;
   }
   // Auth-gated local dashboards use the same explicitly trusted, signed-in
   // Dashboard tab and one-use ticket as Remote Dashboard Attach.
@@ -11255,6 +11423,10 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
           const freshBase = normalizeGatewayUrl(freshUrl);
           const rootRes = await dashboardFetch(freshBase, { headers: { Accept: 'text/html' }, cache: 'no-store', redirect: 'error' });
           const freshToken = extractDashboardSessionToken(await rootRes.text());
+          if (!freshToken) {
+            const viaWebapp = await connectProfileViaWebapp(freshBase, profileConnectionKey(freshBase), readyTimeoutMs);
+            if (viaWebapp) return viaWebapp;
+          }
           const freshWs = freshToken ? buildDashboardWsUrlWithCredential(freshBase, 'token', freshToken) : buildDashboardWsUrl(freshBase);
           await gatewayClient.connect(freshWs);
           profileWsConnection = { client: gatewayClient, baseUrl: freshBase, key: profileConnectionKey(freshBase) };
@@ -11266,6 +11438,53 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
     }
     throw connectError;
   }
+}
+
+// The gateway's Webapp: its page injects no token, so the dial uses a one-use socket ticket minted
+// with the held sign-in (POST /api/webapp/socket-ticket). /api/ws accepts that ticket as the
+// hermes-gateway-ticket subprotocol (offered with hermes-gateway-v1) or as ?ticket=; it speaks the
+// same JSON-RPC as the Desktop dashboard. Upstream would also take ?token=<credential>, which this
+// never uses. Resolves null when baseUrl is not a Webapp listener this panel knows about, so the
+// existing dashboard flow decides; throws webappSignInRequiredError() when it is one and the
+// sign-in is missing or was replaced.
+async function connectProfileViaWebapp(baseUrl, key, readyTimeoutMs) {
+  const origin = originOf(baseUrl);
+  if (!origin) return null;
+  const store = webappCredentialStore();
+  let token = await dashboardTokenFor(baseUrl, '');
+  if (!token && !webappListeners.has(origin)) return null;
+  const target = { origin, basePath: '', baseUrl: String(baseUrl).replace(/\/+$/, '') };
+  if (!token && await captureWebappCredential({ origin, force: true })) token = await dashboardTokenFor(baseUrl, '');
+  const mint = () => store.mintSocketTicket(target, { socket: 'gateway' });
+  const minted = token ? await mint() : { ok: false, reason: 'none' };
+  if (!minted.ok) {
+    if (['none', 'rejected', 'disabled'].includes(minted.reason)) {
+      webappListeners.set(origin, minted.reason === 'rejected' ? 'rejected' : 'none');
+      forgetWebappDashboard(origin);
+      throw webappSignInRequiredError();
+    }
+    throw new Error(`Hermes Web did not issue a socket ticket (${minted.reason || 'unknown'}).`);
+  }
+  profileWsConnection?.client?.close?.();
+  const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs, replayEndpoint: baseUrl });
+  gatewayClient.on('close', () => {
+    if (profileWsConnection?.client === gatewayClient) profileWsConnection = null;
+  });
+  gatewayClient.on('sessions.changed', () => {
+    if (activeGroupProjection) void syncActiveGroupRoomFromGateway();
+  });
+  gatewayClient.on('profiles.changed', () => {
+    void loadProfiles({ quiet: true });
+  });
+  await connectGatewayWithTicket(gatewayClient, baseUrl, minted.ticket, {
+    refreshTicket: async () => {
+      const fresh = await mint();
+      return fresh?.ok ? fresh.ticket : '';
+    },
+  });
+  webappListeners.set(origin, 'accepted');
+  profileWsConnection = { client: gatewayClient, baseUrl, key };
+  return profileWsConnection;
 }
 
 function usesDashboardWsChatTransport() {
@@ -11510,7 +11729,7 @@ async function fetchBotModeRemoteAvatar(row) {
           cache: 'no-store',
           signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(2500) : undefined,
         });
-        const token = extractDashboardSessionToken(await rootResponse.text());
+        const token = await dashboardTokenFor(base, await rootResponse.text());
         if (rootResponse.ok && token) {
           const response = await fetch(`${base}/api/profiles/${encodeURIComponent(row.profileName)}/avatar`, {
             headers: { Accept: 'image/*', 'X-Hermes-Session-Token': token },
@@ -13669,9 +13888,17 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     const count = botModeRoster.length;
     if (!quiet) setStatus('ok', 'Hermes profiles synced', `${count} profile${count === 1 ? '' : 's'} available`);
     return { status: 'ready', detail: count === 1 ? '1 PROFILE LOADED.' : `${count} PROFILES LOADED.` };
-  } catch {
+  } catch (error) {
     if (generation !== botModeRosterGeneration || gatewayUrl !== normalizeGatewayUrl(settings.gatewayUrl)) {
       return { status: 'skipped', detail: 'Profile sync was superseded.' };
+    }
+    // Hermes Web's listener is the dashboard but its socket could not be opened (no sign-in, or a
+    // replaced one): the gateway's own /v1/profiles still lists the profiles, so the roster does not
+    // wait for it.
+    const dashboardUrl = localDashboardUrl();
+    if (error?.ticketReason === 'webapp_sign_in_required' || (dashboardUrl && webappListeners.has(originOf(dashboardUrl)))) {
+      const served = await loadProfilesFromGatewayRoutes({ quiet, generation, gatewayUrl });
+      if (served) return served;
     }
     // Preserve live rich rows and groups. Do not restore legacy caches: earlier
     // versions persisted status-only rows without authority or connection scope.
@@ -15370,7 +15597,7 @@ async function dashboardApiRequest(path, { method = 'GET', body = null, timeoutM
     cache: 'no-store',
     signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(Math.min(timeoutMs, 2500)) : undefined,
   });
-  const token = extractDashboardSessionToken(await rootResponse.text());
+  const token = await dashboardTokenFor(base, await rootResponse.text());
   if (!token) {
     const error = new Error('no-dashboard-session-token');
     error.status = rootResponse.status || 0;
@@ -16860,6 +17087,7 @@ function projectsConnectionSnapshot() {
     request: client ? (method, params) => client.request(method, params) : null,
     getReadyPayload: () => (client?.readyState === 1 ? client.readyPayload || null : null),
     connectError: projectsConnectError,
+    blockedReason: projectsBlockedReason,
   };
 }
 
@@ -16871,10 +17099,20 @@ async function prepareProjectsConnection() {
   const connection = remote ? remoteWsConnection : activeDashboardWsConnection;
   if (connection?.client?.readyState === 1) {
     projectsConnectError = '';
+    projectsBlockedReason = '';
     return;
+  }
+  projectsBlockedReason = '';
+  if (!remote && isLocalApiMode()) {
+    // Opening or refreshing Projects tries again to keep Hermes Web's sign-in from an open tab,
+    // then to find the listener it unlocks.
+    await captureWebappCredential({ force: true }).catch(() => false);
+    if (!localDashboardUrl()) await ensureDesktopDashboardUrl({ timeoutMs: 2_500 }).catch(() => '');
   }
   if (!remote && !localDashboardUrl()) {
     projectsConnectError = '';
+    // Hermes Web is serving the dashboard routes and this panel has no sign-in for it.
+    if (keepSignedInEnabled(settings) && webappListenerNeedingSignIn()) projectsBlockedReason = PROJECTS_UNAVAILABLE.webappSignIn;
     return;
   }
   try {
@@ -16882,6 +17120,10 @@ async function prepareProjectsConnection() {
     projectsConnectError = '';
   } catch (error) {
     projectsConnectError = error?.message || String(error);
+    if (error?.ticketReason === 'webapp_sign_in_required') {
+      projectsConnectError = '';
+      projectsBlockedReason = PROJECTS_UNAVAILABLE.webappSignIn;
+    }
   }
 }
 
@@ -17471,7 +17713,7 @@ async function loadDashboardSessionsForProfile(profile = '') {
     cache: 'no-store',
     signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(1_500) : undefined,
   });
-  const token = extractDashboardSessionToken(await rootResponse.text());
+  const token = await dashboardTokenFor(base, await rootResponse.text());
   if (!token) throw Object.assign(new Error('no-dashboard-session-token'), { status: rootResponse.status || 0 });
   // Paging follows the server's has_more/total answer. A short page is not the
   // end of the list; collectSessionPages stops at the page cap or on a page that
@@ -20366,7 +20608,7 @@ function attachGatewayRestartAction(node) {
     restart: async ({ onProgress } = {}) => {
       const baseUrl = localDashboardUrl() || await ensureDesktopDashboardUrl({ timeoutMs: 4_000 });
       // Plain fetch: dashboardFetch is a GET-only loopback proxy and rejects POST.
-      return restartGatewayViaDashboard({ baseUrl, onProgress });
+      return restartGatewayViaDashboard({ baseUrl, onProgress, dashboardToken: await dashboardTokenFor(baseUrl, '') });
     },
     // A slow restart must not fall back to the restart button: re-poll for the
     // new process instead of issuing a second restart.
@@ -20711,6 +20953,7 @@ function syncSettingsForm() {
   if (els.gatewayModeInput) els.gatewayModeInput.value = settings.gatewayMode || DEFAULT_SETTINGS.gatewayMode;
   els.gatewayUrlInput.value = settings.gatewayUrl;
   if (els.hermesWebAddressInput) els.hermesWebAddressInput.value = settings.hermesWebAddress || '';
+  if (els.webappKeepSignedInInput) els.webappKeepSignedInInput.checked = keepSignedInEnabled(settings);
   renderConnectionModeCards();
   renderConnectionModePanel();
   els.apiKeyInput.value = settings.apiKey || '';
@@ -20809,6 +21052,7 @@ async function saveSettingsFromForm() {
     gatewayMode,
     gatewayUrl,
     hermesWebAddress: els.hermesWebAddressInput ? els.hermesWebAddressInput.value.trim() : String(settings.hermesWebAddress || ''),
+    webappKeepSignedIn: els.webappKeepSignedInInput ? els.webappKeepSignedInInput.checked : keepSignedInEnabled(settings),
     trustedDashboardOrigin: connectionMode === 'local'
       ? settings.trustedDashboardOrigin
       : (isTrustedDashboardOrigin(gatewayUrl, settings.trustedDashboardOrigin)
@@ -20909,6 +21153,7 @@ async function saveSettingsFromForm() {
   );
   applyAppearanceSettings();
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await applyWebappCredentialPreference();
   const wakeChanged = previousSettings.wakeWordEnabled !== settings.wakeWordEnabled
     || previousSettings.wakeWordPhrase !== settings.wakeWordPhrase
     || previousSettings.wakeWordBrowserFallback !== settings.wakeWordBrowserFallback

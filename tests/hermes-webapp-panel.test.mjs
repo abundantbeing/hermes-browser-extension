@@ -85,12 +85,23 @@ test('with the Webapp on and answering, the button opens it and shows the sign-i
     await p.open();
     assert.deepEqual(p.calls.create, [{ url: 'http://127.0.0.1:9120/?profile=work', active: true }]);
     assert.equal(p.dialog.hidden, true);
-    assert.deepEqual(p.calls.toasts.map(({ title, detail }) => ({ title, detail })), [{ title: 'webapp.opened_title', detail: 'webapp.hint_local' }]);
+    // The panel keeps the sign-in by default, so the hint says it will after the one `hermes webapp`.
+    assert.deepEqual(p.calls.toasts.map(({ title, detail }) => ({ title, detail })), [{ title: 'webapp.opened_title', detail: 'webapp.hint_local_kept' }]);
     assert.equal(p.calls.fetch[0][1].credentials, 'omit');
 
     await p.open();
     assert.equal(p.calls.create.length, 2);
     assert.equal(p.calls.toasts.length, 1, 'the hint is shown once, not on every open');
+  } finally {
+    p.close();
+  }
+});
+
+test('with Keep Hermes Web signed in turned off, the hint is the one that promises nothing is kept', async () => {
+  const p = await panel({ settings: { ...local, webappKeepSignedIn: false } });
+  try {
+    await p.open();
+    assert.deepEqual(p.calls.toasts.map(({ detail }) => detail), ['webapp.hint_local']);
   } finally {
     p.close();
   }

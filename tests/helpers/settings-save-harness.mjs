@@ -98,6 +98,12 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     setWakeWordEnabled: record('setWakeWordEnabled', async () => undefined),
     maybeRenameCurrentSessionTitle: record('maybeRenameCurrentSessionTitle', async () => undefined),
     syncSettingsForm: record('syncSettingsForm'),
+    // The Hermes Web sign-in the panel keeps: Save only tells it what the setting now says.
+    webappCredentials: null,
+    webappListeners: new Map(),
+    lastWebappCaptureAt: 0,
+    WEBAPP_CAPTURE_THROTTLE_MS: 4000,
+    applyWebappCredentialPreference: record('applyWebappCredentialPreference', async () => undefined),
     updateConnectionPrompt: record('updateConnectionPrompt'),
     getAgentPorts: () => target.settings.agentPorts || imported.get('DEFAULT_SETTINGS')?.agentPorts || [8642],
   };

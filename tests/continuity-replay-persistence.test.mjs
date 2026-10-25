@@ -206,9 +206,9 @@ test('every chat connection the panel opens is seeded from, and saves into, the 
   const factory = functionSource('createChatGatewayClient');
   assert.match(factory, /replayStore: replayWatermarks\.forEndpoint\(replayEndpoint\)/);
   assert.match(factory, /'session\.replay\.truncated'/);
-  // the three chat connections name their endpoint
+  // the four chat connections name their endpoint (the fourth is Hermes Web's ticketed socket)
   const calls = [...source.matchAll(/(?<!function )createChatGatewayClient\(([^)]*)\)/g)].map((match) => match[1]);
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 4);
   for (const args of calls) assert.match(args, /replayEndpoint:/);
   assert.match(source, /void replayWatermarks\.hydrate\(\)/);
 });

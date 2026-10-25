@@ -28,6 +28,8 @@ import { CONTEXT_CONSENT_STORAGE_KEY } from './lib/context-consent.mjs';
 import { gateInlineDraftRequestContext } from './lib/inline-draft-consent.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
 import { openHermesWebapp } from './lib/hermes-webapp.mjs';
+import { resolveWebappTarget } from './lib/hermes-webapp.mjs';
+import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -87,6 +89,22 @@ const browserControlRuntime = createBrowserControlRuntime({
       }),
     });
   },
+});
+// The Hermes Web sign-in kept for this browser (lib/webapp-credential.mjs), shared with the panel
+// through storage.session. The setting is read from storage each time, so the panel's Save applies here.
+async function readStoredSettings() {
+  try {
+    return (await browserApi.storage.local.get('hermesBrowserSettings'))?.hermesBrowserSettings || {};
+  } catch {
+    return {};
+  }
+}
+const webappCredentials = createWebappCredentialStore({
+  storageSession: browserApi.storage?.session,
+  scriptingApi: browserApi.scripting,
+  tabsApi: browserApi.tabs,
+  fetchImpl: (...args) => globalThis.fetch(...args),
+  isEnabled: async () => keepSignedInEnabled(await readStoredSettings()),
 });
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let panelResidencyHydrated = false;
@@ -437,6 +455,7 @@ async function queueOpenSessionRequest(message, sender) {
       permissionsApi: browserApi.permissions,
       storageArea: browserApi.storage.local,
       permissionMode: 'contains',
+      credentials: webappCredentials,
     });
     if (result.status === 'opened' || result.status === 'focused') {
       return { ok: true, sessionId, surface, webapp: result.status, hint: result.hint || '' };
@@ -956,6 +975,19 @@ browserApi.tabs?.onActivated?.addListener?.(({ tabId }) => reapplyPanelResidency
 browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
   controllerWorker?.handleTabUpdated(tabId, changeInfo)
     .catch((error) => console.warn('[Hermes Browser] Could not invalidate controller document authority:', error));
+});
+// A signed-in Hermes Web tab is the only place its sign-in lives. Read it while the tab is open, so
+// closing the tab does not mean running `hermes webapp` again. Only a finished load of a loopback page
+// is looked at, and only the configured Webapp address is read from (and only when the setting is on).
+browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo, tab) => {
+  if (changeInfo?.status !== 'complete' || !/^http:\/\/(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?\//i.test(String(tab?.url || ''))) return;
+  void (async () => {
+    const settings = await readStoredSettings();
+    if (!keepSignedInEnabled(settings)) return;
+    const target = resolveWebappTarget(settings);
+    if (!target.ok) return;
+    await webappCredentials.capture(target, { tab });
+  })().catch(() => undefined);
 });
 browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
   controllerWorker?.handleTabRemoved(tabId)

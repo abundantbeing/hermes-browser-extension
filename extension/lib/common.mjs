@@ -65,6 +65,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   gatewayMode: 'local-api',
   gatewayUrl: 'http://127.0.0.1:8642',
   hermesWebAddress: '',
+  // Keep this browser's Hermes Web sign-in for the panel until the browser closes (lib/webapp-credential.mjs).
+  webappKeepSignedIn: true,
   apiKey: '',
   tokenSource: '',
   lastConnectionTestedAt: 0,

@@ -994,6 +994,15 @@
           <input id="hermesWebAddressInput" name="hermesWebAddress" type="url" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:9120" data-i18n-invariant />
         </label>
         <p id="hermesWebAddressHint" class="hint" data-i18n="webapp.setting_hint">Leave this empty on a local connection to use http://127.0.0.1:9120 automatically. For a remote gateway, enter the address where it serves Hermes Web.</p>
+
+        <label class="settings-toggle-card" id="webappKeepSignedInField">
+          <span class="settings-toggle-copy">
+            <strong data-i18n="webapp.keep_signed_in_label">Keep Hermes Web signed in from the panel</strong>
+            <small data-i18n="webapp.keep_signed_in_hint">The panel keeps this browser's Hermes Web sign-in until you close the browser, so Hermes Web, Projects and bot profiles work without running hermes webapp again. hermes webapp --sign-out ends it.</small>
+          </span>
+          <input id="webappKeepSignedInInput" class="settings-switch-input" type="checkbox" />
+          <span class="settings-switch" aria-hidden="true"></span>
+        </label>
         </section>
 
         <section class="settings-section remote-diagnostics-panel" id="remoteDiagnosticsPanel" hidden>

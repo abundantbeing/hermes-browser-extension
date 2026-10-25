@@ -118,6 +118,8 @@ const PERSISTED = [
   ['wakeWordBrowserFallbackInput', 'checked', false, 'wakeWordBrowserFallback', false],
   ['wakeWordSpeakRepliesInput', 'checked', false, 'wakeWordSpeakReplies', false],
   ['hermesWebAddressInput', 'value', '  https://web.example.com/hermes  ', 'hermesWebAddress', 'https://web.example.com/hermes'],
+  ['webappKeepSignedInInput', 'checked', false, 'webappKeepSignedIn', false],
+  ['webappKeepSignedInInput', 'checked', true, 'webappKeepSignedIn', true],
   ['agentHostInput', 'value', 'macbook.tailnet.ts.net', 'agentDiscoveryHost', 'macbook.tailnet.ts.net'],
   ['agentSchemeInput', 'value', 'https', 'agentDiscoveryScheme', 'https'],
   ['agentPortsInput', 'value', '9001, 9002', 'agentPorts', [9001, 9002]],
@@ -215,4 +217,45 @@ test('settings that Save writes have a consumer that reads them live', () => {
   assert.match(inlineHelper, /changes\.hermesBrowserSettings\.newValue/);
   assert.match(readFileSync(new URL('../extension/lib/context-menu-controller.mjs', import.meta.url), 'utf8'), /hermesBrowserSettings\?\.contextMenuDefaultRoute/);
   assert.match(readFileSync(new URL('../extension/background.js', import.meta.url), 'utf8'), /changes\.hermesBrowserSettings\?\.newValue\?\.panelResidencyMode/);
+});
+
+test('Keep Hermes Web signed in is on by default, sits beside the Hermes Web address, and is saved by Save rather than live', async () => {
+  const h = await createSettingsSaveHarness({ settings: { gatewayUrl: 'http://127.0.0.1:8642', connectionMode: 'local' } });
+  try {
+    assert.equal(h.scope.settings.webappKeepSignedIn, true, 'on unless turned off');
+    const toggle = h.document.getElementById('webappKeepSignedInInput');
+    assert.equal(toggle?.type, 'checkbox');
+    assert.equal(toggle.closest('[data-settings-live]'), null, 'it needs Save');
+    assert.equal(toggle.closest('[data-settings-pane]').dataset.settingsPane, h.document.getElementById('hermesWebAddressInput').closest('[data-settings-pane]').dataset.settingsPane,
+      'in the same pane as the Hermes Web address field');
+    const position = (id) => [...h.document.querySelectorAll('#settingsForm *')].indexOf(h.document.getElementById(id));
+    assert.ok(position('webappKeepSignedInField') > position('hermesWebAddressHint'), 'right after the address field and its hint');
+    assert.equal(h.document.getElementById('webappKeepSignedInField').querySelector('[data-i18n="webapp.keep_signed_in_label"]')?.tagName, 'STRONG');
+    assert.ok(h.document.getElementById('webappKeepSignedInField').querySelector('[data-i18n="webapp.keep_signed_in_hint"]'));
+    // Its hint says what it keeps, until when, and what ends it.
+    const english = (await import('../extension/lib/locales/en.mjs')).default;
+    assert.match(english['webapp.keep_signed_in_hint'], /until you close the browser/);
+    assert.match(english['webapp.keep_signed_in_hint'], /hermes webapp --sign-out/);
+  } finally {
+    h.close();
+  }
+});
+
+test('Save tells the credential store what the setting now says, after the setting is written', async () => {
+  const h = await createSettingsSaveHarness({ settings: { gatewayUrl: 'http://127.0.0.1:8642', connectionMode: 'local' } });
+  try {
+    h.els.webappKeepSignedInInput.checked = false;
+    await h.save();
+    assert.equal(h.store.hermesBrowserSettings.webappKeepSignedIn, false);
+    assert.equal(h.callsTo('applyWebappCredentialPreference').length, 1, 'off clears what is held and forgets the Webapp dashboard');
+  } finally {
+    h.close();
+  }
+});
+
+test('the preference hook clears the held sign-in when off, and tries to keep one right away when on', () => {
+  const body = functionSource('applyWebappCredentialPreference');
+  assert.match(body, /if \(!keepSignedInEnabled\(settings\)\) \{\s*await webappCredentialStore\(\)\.clear\(\)/);
+  assert.match(body, /forgetWebappDashboard\(\)/);
+  assert.match(body, /captureWebappCredential\(\{ force: true \}\)/);
 });
