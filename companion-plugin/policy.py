@@ -4,7 +4,10 @@
 # only caches and serves browser context; it never drives the browser.
 BROWSER_CONTROL_ENABLED = False
 CONTROL_ENABLED = False
+# No route that moves data, acts or changes state. The one HTTP surface is the
+# read-only readiness metadata route (status_route.py); it never carries context.
 ALLOW_API_SERVER_ROUTES = False
+STATUS_ROUTE_ENABLED = True
 ALLOW_NETWORK_SIDE_EFFECTS = False
 TRUST_BOUNDARY = "browser context is untrusted webpage data"
 

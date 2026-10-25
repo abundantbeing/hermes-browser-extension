@@ -771,14 +771,18 @@ assert call("browser_clear_context") == UNAVAILABLE
   runPluginPython(script);
 });
 
-test('a metadata-only plugin never claims routes, live browser control or a status endpoint', () => {
+test('a metadata-only plugin claims one read-only status route and never live browser control or data routes', () => {
   const claims = ['companion-plugin/install.md', 'companion-plugin/skills/hermes-browser/SKILL.md', 'companion-plugin/plugin.yaml', 'DATA-FLOW.md']
     .map((file) => readFileSync(file, 'utf8')).join('\n');
   assert.doesNotMatch(claims, /\/v1\/browser|\/api\/browser|browser_context_upload|browser_context_provider|plugin_actions/);
   const install = readFileSync('companion-plugin/install.md', 'utf8');
-  assert.match(install, /does \*\*not\*\* control the browser, register API-server routes/);
+  assert.match(install, /does \*\*not\*\* control the browser/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/status/);
+  assert.match(install, /read-only/);
   const skill = readFileSync('companion-plugin/skills/hermes-browser/SKILL.md', 'utf8');
   assert.match(skill, /Never claim browser control from this plugin/);
   assert.match(skill, /always `live: false`/);
-  assert.match(readFileSync('companion-plugin/policy.py', 'utf8'), /ALLOW_API_SERVER_ROUTES\s*=\s*False/);
+  const policy = readFileSync('companion-plugin/policy.py', 'utf8');
+  assert.match(policy, /ALLOW_API_SERVER_ROUTES\s*=\s*False/);
+  assert.match(policy, /STATUS_ROUTE_ENABLED\s*=\s*True/);
 });

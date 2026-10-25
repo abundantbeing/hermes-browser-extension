@@ -544,7 +544,15 @@ function listFilesRecursive(dir) {
 test('no network, route, or browser-control capability in companion plugin files', () => {
   const pluginFiles = listFilesRecursive('companion-plugin')
     .filter((file) => /\.(py|yaml|md)$/.test(file));
-  const combined = pluginFiles.map((file) => readFileSync(file, 'utf8')).join('\n');
+  // status_route.py is the one file that touches aiohttp: it imports `web` to
+  // answer a request the API server already accepted, and adds one GET route.
+  // It opens no connection and registers nothing that writes.
+  const server = pluginFiles.filter((file) => file.endsWith('/status_route.py'));
+  assert.equal(server.length, 1);
+  const serverSource = readFileSync(server[0], 'utf8');
+  assert.match(serverSource, /from aiohttp import web/);
+  assert.doesNotMatch(serverSource, /ClientSession|\brequests\b|urllib|\bhttpx\b|\bsocket\b|\bwebsocket\b|\bsubprocess\b|add_(post|put|patch|delete|route|static)\b/);
+  const combined = pluginFiles.filter((file) => !server.includes(file)).map((file) => readFileSync(file, 'utf8')).join('\n');
   assert.doesNotMatch(combined, /\brequests\b|urllib\.request|\bhttpx\b|\baiohttp\b|\bsocket\b|\bwebsocket\b|\bsubprocess\b/);
   assert.doesNotMatch(combined, /register_api_route|api_server_route\s*[:=]\s*true|ALLOW_API_SERVER_ROUTES\s*=\s*True|browser_control\s*[:=]\s*true|BROWSER_CONTROL_ENABLED\s*=\s*True|CONTROL_ENABLED\s*=\s*True|nativeMessaging\s*[:=]\s*true|chrome\.debugger/i);
 });
