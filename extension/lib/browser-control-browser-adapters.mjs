@@ -1542,7 +1542,18 @@ function createChromiumCdpAdapter({
     }
   }
 
-  async function runWithSession(action, args, scope, signal, target, destination) {
+  // The address the tab has now, refused when it is a page Hermes will not capture.
+  async function screenshotPageAddress(tabId, signal, allowLocalDocuments) {
+    const tab = await browserApi.tabs.get(tabId);
+    assertNotAborted(signal);
+    const url = compact(tab?.url || tab?.pendingUrl, 2_000);
+    if (isRestrictedUrl(url, { allowLocalDocuments })) {
+      throw codedError('restricted_page', 'This page is one Hermes will not capture, so no screenshot was taken or kept.');
+    }
+    return url;
+  }
+
+  async function runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments = false } = {}) {
     return withSession(scope, signal, async (session) => {
       const { send, enable } = session;
       const framing = action === 'browser_snapshot' ? {} : await assertFramedTargetsReadable(send, enable, signal, { target, destination });
@@ -1729,6 +1740,9 @@ function createChromiumCdpAdapter({
       }
       if (action === 'browser_scroll') return performScroll(session, args, target, signal, framing);
       if (action === 'browser_screenshot') {
+        // The executor judged the page before the debugger attached; the frame checks and the capture itself take
+        // several round trips, so the tab's own address is read again around the capture.
+        const before = await screenshotPageAddress(session.tabId, signal, allowLocalDocuments);
         let clip;
         const backendNodeId = Number(target?.backendDOMNodeId);
         if (Number.isInteger(backendNodeId) && backendNodeId > 0) {
@@ -1750,7 +1764,12 @@ function createChromiumCdpAdapter({
           : capture);
         // A frame can move to a restricted page while the capture runs; the pixels are dropped if so.
         await assertScreenshotFramesReadable(send, signal, clip);
-        return boundedScreenshot(`data:image/png;base64,${String(captured?.data || '')}`);
+        // The page can have moved to a restricted address, or to another page, since: the pixels are dropped.
+        const after = await screenshotPageAddress(session.tabId, signal, allowLocalDocuments);
+        if (comparableUrl(after) !== comparableUrl(before)) {
+          throw codedError('page_changed', 'The page changed while the screenshot was taken, so it was discarded. Try again.');
+        }
+        return { ...boundedScreenshot(`data:image/png;base64,${String(captured?.data || '')}`), url: after };
       }
       throw new Error(`Action ${action} is not implemented by the Chromium adapter.`);
     });
@@ -1758,6 +1777,7 @@ function createChromiumCdpAdapter({
 
   async function execute(action, args = {}, {
     scope = {}, signal, target = null, destination = null, leasedTabIds = [], ownedTabIds = [], currentWindowId = null,
+    allowLocalDocuments = false,
   } = {}) {
     if (!contract.actions.includes(action)) throw new Error(`Action ${action} is not supported by the Chromium adapter.`);
     assertNotAborted(signal);
@@ -1802,7 +1822,7 @@ function createChromiumCdpAdapter({
     }
     if (action === 'browser_navigate') return navigate(args, scope, signal);
     if (action === 'browser_back') return goBack(scope, signal);
-    return runWithSession(action, args, scope, signal, target, destination);
+    return runWithSession(action, args, scope, signal, target, destination, { allowLocalDocuments });
   }
 
   // Waits for the page to react to an action. Never throws: any failure is
@@ -2011,7 +2031,7 @@ function createFirefoxWebExtensionAdapter({ browserApi, now = Date.now, sleep = 
       if (!after || after.url !== before.url) {
         throw codedError('not_active_tab', 'The tab changed while the screenshot was taken, so it was discarded. Try again.');
       }
-      return boundedScreenshot(dataUrl);
+      return { ...boundedScreenshot(dataUrl), url: after.url };
     }
     if (action === 'browser_tabs') {
       const tabs = await browserApi.tabs.query({});

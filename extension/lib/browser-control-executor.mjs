@@ -67,7 +67,7 @@ const BATCH_FATAL_CODES = new Set([
 
 // Adapter errors that carry a model-actionable code keep it; everything else
 // is reported as a generic command_error.
-const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden', 'restricted_frame', 'not_active_tab', 'restricted_page']);
+const ADAPTER_ERROR_CODES = new Set(['stale_ref', 'navigation_failed', 'tab_hidden', 'restricted_frame', 'not_active_tab', 'restricted_page', 'page_changed']);
 
 const APPROVAL_MESSAGES = Object.freeze({
   'cross-origin-unsaved-content': 'Leave this page while unsaved content may be present?',
@@ -1014,6 +1014,10 @@ export function createBrowserControlExecutor({
         };
       }
       if (action === 'browser_screenshot') {
+        // Judged like a snapshot: the address the pixels were taken under decides, and a restricted one drops them.
+        if (restrictedPageUrl(value?.url, Boolean(context?.allowLocalDocuments ?? context?.settings?.allowLocalDocuments))) {
+          return errorOutcome('restricted_page', 'The page moved to one Hermes will not capture, so the screenshot was discarded.');
+        }
         const dataUrl = String(value?.dataUrl || '');
         if (!dataUrl.startsWith('data:image/png;base64,') || dataUrl.length > MAX_INLINE_SCREENSHOT_CHARS) {
           return errorOutcome('screenshot_too_large', 'The screenshot exceeds the inline Phase 6 transport cap.');
