@@ -92,7 +92,7 @@ test('the window says why nothing was captured or done, without page details', (
     assert.equal(view.detail, CONTROL_NOTES[code]);
     assert.equal(view.canPause, true, 'the ready controls stay');
   }
-  assert.deepEqual(Object.keys(CONTROL_NOTES).sort(), ['action_frame', 'screenshot_frame', 'screenshot_page']);
+  assert.deepEqual(Object.keys(CONTROL_NOTES).sort(), ['action_frame', 'screenshot_frame', 'screenshot_page', 'screenshot_permission']);
   // An unknown code, or a note while something else needs the person, changes nothing.
   assert.equal(readyView({ lastNote: { code: 'made_up', tabId: 61 } }).detail, plain.detail);
   assert.equal(readyView({ lastNote: { code: 'screenshot_frame', tabId: 61 }, activeAction: { action: 'browser_click', tabId: 61 } }).state, 'active');

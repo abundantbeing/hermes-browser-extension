@@ -1007,6 +1007,10 @@
     "message": "Hermes hat den Screenshot nicht aufgenommen: Die Seite ist zu einer gewechselt, die Hermes nicht erfasst.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes hat den Screenshot nicht gemacht: Firefox braucht eine zusätzliche Berechtigung. Nutze „Screenshots in Firefox erlauben“.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Pausieren",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Screenshots in Firefox erlauben",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox hat die Berechtigung nicht erteilt.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes darf Screenshots des angehängten Tabs machen, innerhalb derselben Sicherheitsgrenzen wie der Rest von Hermes Control. Du kannst die Berechtigung jederzeit zurücknehmen.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox verlangt eine zusätzliche Berechtigung, bevor Hermes einen Screenshot des Tabs machen kann. Hermes fragt nur danach, wenn du auf Erlauben klickst; bis dahin liest es stattdessen den Seitentext.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Die Screenshot-Berechtigung konnte nicht geändert werden: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Screenshots sind in Firefox erlaubt.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Screenshots nicht mehr erlauben",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "Die Screenshot-Berechtigung wurde entfernt.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Modell-Screenshots in Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "Verwerfen",

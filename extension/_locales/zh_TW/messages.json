@@ -1007,6 +1007,10 @@
     "message": "Hermes 沒有擷取螢幕畫面：頁面已跳轉到 Hermes 不會擷取的頁面。",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes 沒有截圖：Firefox 需要額外權限。請使用「允許在 Firefox 中截圖」。",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "暫停",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "允許在 Firefox 中截圖",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox 未授予該權限。",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes 可以擷取已連接的分頁畫面，安全限制與 Hermes Control 的其他功能相同。你可以隨時撤銷此權限。",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Hermes 要擷取分頁畫面，Firefox 需要額外的權限。只有在你按下「允許」時 Hermes 才會請求；在此之前它會改為讀取頁面文字。",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "無法變更截圖權限：{error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "已允許在 Firefox 中截圖。",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "停止允許截圖",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "已移除截圖權限。",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Firefox 中的模型截圖",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "捨棄",

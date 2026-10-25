@@ -1007,6 +1007,10 @@
     "message": "Hermes no tomó la captura: la página cambió a una que no captura.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes no hizo la captura: Firefox necesita un permiso adicional. Usa Permitir capturas en Firefox.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Pausar",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Permitir capturas en Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox no concedió el permiso.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes puede hacer capturas de la pestaña adjunta, dentro de los mismos límites de seguridad que el resto de Hermes Control. Puedes retirar el permiso en cualquier momento.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox necesita un permiso adicional para que Hermes pueda hacer una captura de la pestaña. Hermes lo pide solo cuando haces clic en Permitir; hasta entonces lee el texto de la página.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "No se pudo cambiar el permiso de capturas: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Las capturas están permitidas en Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Dejar de permitir capturas",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "Se retiró el permiso de capturas.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Capturas de pantalla del modelo en Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "Descartar",

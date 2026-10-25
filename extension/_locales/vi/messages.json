@@ -1007,6 +1007,10 @@
     "message": "Hermes không chụp ảnh màn hình: trang đã chuyển sang một trang mà Hermes không chụp.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes đã không chụp ảnh màn hình: Firefox cần thêm quyền. Hãy dùng Cho phép chụp ảnh màn hình trên Firefox.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Tạm dừng",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Cho phép chụp ảnh màn hình trên Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox đã không cấp quyền.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes có thể chụp ảnh màn hình tab đã gắn, trong cùng giới hạn an toàn như phần còn lại của Hermes Control. Bạn có thể thu hồi quyền bất cứ lúc nào.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox cần thêm một quyền trước khi Hermes có thể chụp ảnh màn hình tab. Hermes chỉ xin quyền này khi bạn nhấp Cho phép; cho đến lúc đó, nó đọc văn bản trên trang.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Không thể thay đổi quyền chụp ảnh màn hình: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Đã cho phép chụp ảnh màn hình trên Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Ngừng cho phép chụp ảnh màn hình",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "Đã gỡ quyền chụp ảnh màn hình.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Ảnh chụp màn hình của mô hình trên Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "Bỏ",

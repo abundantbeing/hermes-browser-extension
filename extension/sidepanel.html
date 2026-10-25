@@ -1386,6 +1386,13 @@
                 <small id="browserControlScopeLock" data-i18n-runtime data-i18n="browser_control.scope_help_locked" hidden>Turn off Hermes Control to change the tabs it can use.</small>
               </label>
             </div>
+            <div id="firefoxScreenshotSetting" class="browser-control-config firefox-screenshot-setting" hidden>
+              <div class="browser-control-field">
+                <span id="firefoxScreenshotTitle" data-i18n="firefox_screenshots.title">Model screenshots on Firefox</span>
+                <small id="firefoxScreenshotDetail" data-i18n-runtime data-i18n="firefox_screenshots.detail_missing">Firefox needs an extra permission before Hermes can take a screenshot of the tab. Hermes asks for it only when you click Allow; until then it reads the page text instead.</small>
+                <button id="firefoxScreenshotButton" class="browser-control-action secondary" type="button" data-i18n-runtime data-i18n="firefox_screenshots.allow">Allow screenshots on Firefox</button>
+              </div>
+            </div>
             <div class="browser-control-card-actions">
               <button id="browserControlEnableButton" class="browser-control-action" type="button" data-i18n="browser_control.enable">Enable control</button>
               <button id="browserControlDetachButton" class="browser-control-action secondary" type="button" hidden data-i18n="browser_control.turn_off">Turn off</button>
@@ -1608,6 +1615,7 @@
           </div>
           <div class="browser-control-strip-actions">
             <button id="browserControlDialogShowTabButton" class="browser-control-action secondary" type="button" hidden data-control-help="show-tab" aria-label="Show the tab Hermes is using" data-i18n-aria-label="browser_control.show_tab_aria" data-i18n="browser_control.show_tab">Show tab</button>
+            <button id="browserControlScreenshotPermissionButton" class="browser-control-action" type="button" hidden data-i18n="firefox_screenshots.allow">Allow screenshots on Firefox</button>
             <button id="browserControlAuthorizeButton" class="browser-control-action" type="button" hidden data-control-help="authorize" data-i18n="browser_control.authorize">Authorize control</button>
             <button id="browserControlAttachButton" data-control-help="attach" class="browser-control-action" type="button" hidden data-i18n-runtime data-i18n="ui.attach">Attach</button>
             <button id="browserControlOffButton" data-control-help="off" class="browser-control-action secondary" type="button" data-i18n="browser_control.turn_off">Turn off</button>

@@ -1007,6 +1007,10 @@
     "message": "O Hermes não tirou a captura de tela: a página mudou para uma que ele não captura.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "O Hermes não tirou a captura de tela: o Firefox precisa de uma permissão extra. Use Permitir capturas de tela no Firefox.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Pausar",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Permitir capturas de tela no Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "O Firefox não concedeu a permissão.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "O Hermes pode tirar capturas de tela da aba conectada, dentro dos mesmos limites de segurança do restante do Hermes Control. Você pode retirar a permissão a qualquer momento.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "O Firefox precisa de uma permissão extra para o Hermes tirar uma captura de tela da aba. O Hermes só a pede quando você clica em Permitir; até lá, ele lê o texto da página.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Não foi possível alterar a permissão de captura de tela: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "As capturas de tela estão permitidas no Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Parar de permitir capturas de tela",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "A permissão de captura de tela foi removida.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Capturas de tela do modelo no Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "Descartar",

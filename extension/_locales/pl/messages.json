@@ -1007,6 +1007,10 @@
     "message": "Hermes nie zrobił zrzutu ekranu: strona przeszła na stronę, której Hermes nie przechwytuje.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes nie zrobił zrzutu ekranu: Firefox wymaga dodatkowego uprawnienia. Użyj opcji Zezwól na zrzuty ekranu w przeglądarce Firefox.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Wstrzymaj",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Zezwól na zrzuty ekranu w przeglądarce Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox nie przyznał uprawnienia.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes może robić zrzuty ekranu podłączonej karty w tych samych granicach bezpieczeństwa co reszta Hermes Control. Uprawnienie możesz cofnąć w dowolnym momencie.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox wymaga dodatkowego uprawnienia, aby Hermes mógł zrobić zrzut ekranu karty. Hermes prosi o nie tylko po kliknięciu Zezwól; do tego czasu czyta tekst strony.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Nie udało się zmienić uprawnienia do zrzutów ekranu: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Zrzuty ekranu są dozwolone w przeglądarce Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Przestań zezwalać na zrzuty ekranu",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "Uprawnienie do zrzutów ekranu zostało cofnięte.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Zrzuty ekranu modelu w przeglądarce Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "Odrzuć",

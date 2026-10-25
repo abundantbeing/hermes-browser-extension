@@ -1007,6 +1007,10 @@
     "message": "Hermes heeft geen schermafbeelding gemaakt: de pagina is overgegaan naar een pagina die Hermes niet vastlegt.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes heeft de schermafbeelding niet gemaakt: Firefox heeft extra toestemming nodig. Gebruik Schermafbeeldingen in Firefox toestaan.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "Pauzeren",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Schermafbeeldingen in Firefox toestaan",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox heeft de toestemming niet verleend.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes mag schermafbeeldingen van het gekoppelde tabblad maken, binnen dezelfde veiligheidsgrenzen als de rest van Hermes Control. Je kunt de toestemming op elk moment intrekken.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox heeft een extra toestemming nodig voordat Hermes een schermafbeelding van het tabblad kan maken. Hermes vraagt er alleen om wanneer je op Toestaan klikt; tot die tijd leest het de paginatekst.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "Kon de toestemming voor schermafbeeldingen niet wijzigen: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Schermafbeeldingen zijn toegestaan in Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "Schermafbeeldingen niet meer toestaan",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "De toestemming voor schermafbeeldingen is ingetrokken.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Schermafbeeldingen van het model in Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "Verwerpen",

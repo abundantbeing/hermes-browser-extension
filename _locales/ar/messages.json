@@ -1007,6 +1007,10 @@
     "message": "لم يلتقط Hermes لقطة الشاشة: انتقلت الصفحة إلى صفحة لا يلتقطها Hermes.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "لم يلتقط Hermes الصورة: يحتاج Firefox إلى إذن إضافي. استخدم «السماح بلقطات الشاشة في Firefox».",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "إيقاف مؤقت",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "السماح بلقطات الشاشة في Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "لم يمنح Firefox الإذن.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "يمكن لـ Hermes التقاط صور للتبويب المرفق ضمن حدود الأمان نفسها لبقية Hermes Control. يمكنك سحب الإذن في أي وقت.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "يحتاج Firefox إلى إذن إضافي قبل أن يتمكن Hermes من التقاط صورة للتبويب. لا يطلبه Hermes إلا عند النقر على السماح؛ وحتى ذلك الحين يقرأ نص الصفحة بدلًا من ذلك.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "تعذّر تغيير إذن لقطات الشاشة: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "لقطات الشاشة مسموح بها في Firefox.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "إيقاف السماح بلقطات الشاشة",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "تمت إزالة إذن لقطات الشاشة.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "لقطات الشاشة للنموذج في Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "تجاهل",

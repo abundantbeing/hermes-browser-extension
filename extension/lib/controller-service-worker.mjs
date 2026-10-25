@@ -297,6 +297,7 @@ export function createControllerServiceWorker({
     const code = outcome?.error?.code;
     if (action === 'browser_screenshot') {
       if (code === 'restricted_frame') return 'screenshot_frame';
+      if (code === 'screenshot_unavailable') return 'screenshot_permission';
       if (code === 'restricted_page' || code === 'page_changed') return 'screenshot_page';
       return '';
     }

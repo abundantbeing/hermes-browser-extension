@@ -104,6 +104,7 @@ export const CONTROL_NOTES = Object.freeze({
   screenshot_frame: 'Hermes did not take the screenshot: a frame on this page is on a page it cannot read.',
   action_frame: 'Hermes did not act there: the spot is inside a frame on a page it cannot read.',
   screenshot_page: 'Hermes did not take the screenshot: the page moved to one it will not capture.',
+  screenshot_permission: 'Hermes did not take the screenshot: Firefox needs extra permission. Use Allow screenshots on Firefox.',
 });
 
 function baseView(overrides = {}) {

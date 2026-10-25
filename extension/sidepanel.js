@@ -433,6 +433,15 @@ import { createReplayWatermarks } from './lib/replay-watermarks.mjs';
 import { classifyPromptRefusal, isStaleLiveSessionRefusal, sessionGoneError, turnNotDeliveredError } from './lib/gateway-refusal.mjs';
 import { preGatewayChatError, preGatewayChatFailureState } from './lib/pre-gateway-chat.mjs';
 import {
+  SCREENSHOT_PERMISSION_STATES,
+  isFirefoxProduct,
+  permissionChangeTouchesScreenshots,
+  removeScreenshotPermission,
+  requestScreenshotPermission,
+  screenshotControlView,
+  screenshotPermissionState,
+} from './lib/firefox-screenshot-permission.mjs';
+import {
   createGatewayQueueStore,
   discardLostTurnRequest,
   gatewayQueueView,
@@ -868,6 +877,10 @@ const els = {
   skillMenu: $('#skillMenu'),
   queueNotice: $('#queueNotice'),
   gatewayQueueNotice: $('#gatewayQueueNotice'),
+  firefoxScreenshotSetting: $('#firefoxScreenshotSetting'),
+  firefoxScreenshotDetail: $('#firefoxScreenshotDetail'),
+  firefoxScreenshotButton: $('#firefoxScreenshotButton'),
+  browserControlScreenshotPermissionButton: $('#browserControlScreenshotPermissionButton'),
   runControlRecovery: $('#runControlRecovery'),
   runControlRecoveryDetail: $('#runControlRecoveryDetail'),
   retryRunStatusButton: $('#retryRunStatusButton'),
@@ -22834,6 +22847,64 @@ async function discardLostGatewayTurn(admissionId, button = null) {
   }
 }
 
+// Firefox needs all-sites access for the model's tab screenshot. The Firefox build declares it as an optional
+// host permission only; it is requested here, from a click, and taken back from the same control.
+let firefoxScreenshotState = SCREENSHOT_PERMISSION_STATES.NOT_APPLICABLE;
+let firefoxScreenshotBound = false;
+
+function renderFirefoxScreenshotControl() {
+  const refused = browserControlStatus?.lastNote?.code === 'screenshot_permission';
+  const view = screenshotControlView({ state: firefoxScreenshotState, refused });
+  if (els.firefoxScreenshotSetting) els.firefoxScreenshotSetting.hidden = !view.settingsVisible;
+  if (els.browserControlScreenshotPermissionButton) els.browserControlScreenshotPermissionButton.hidden = !view.stripVisible;
+  if (els.firefoxScreenshotDetail) {
+    els.firefoxScreenshotDetail.textContent = t(view.granted ? 'firefox_screenshots.detail_granted' : 'firefox_screenshots.detail_missing');
+  }
+  if (els.firefoxScreenshotButton) {
+    els.firefoxScreenshotButton.textContent = t(view.granted ? 'firefox_screenshots.remove' : 'firefox_screenshots.allow');
+  }
+}
+
+async function refreshFirefoxScreenshotState() {
+  firefoxScreenshotState = await screenshotPermissionState({ browserApi, product: browserProduct });
+  renderFirefoxScreenshotControl();
+}
+
+// Both controls call permissions.request first thing in the click: Firefox refuses it without user input.
+function changeFirefoxScreenshotPermission() {
+  const granted = firefoxScreenshotState === SCREENSHOT_PERMISSION_STATES.GRANTED;
+  const change = granted ? removeScreenshotPermission(browserApi) : requestScreenshotPermission(browserApi);
+  change
+    .then(async (done) => {
+      await refreshFirefoxScreenshotState();
+      if (!granted && !done) {
+        showOperationToast({ kind: 'warn', title: t('firefox_screenshots.title'), detail: t('firefox_screenshots.denied') });
+        return;
+      }
+      showOperationToast({ kind: 'ok', title: t('firefox_screenshots.title'), detail: t(granted ? 'firefox_screenshots.removed' : 'firefox_screenshots.granted') });
+      // The gateway learns the new tool list on the controller's next registration.
+      void browserControlMessage('HERMES_CONTROLLER_SETTINGS_REFRESH').catch(() => undefined);
+    })
+    .catch((error) => {
+      showOperationToast({ kind: 'warn', title: t('firefox_screenshots.title'), detail: t('firefox_screenshots.failed', { error: error?.message || String(error) }) });
+    });
+}
+
+function bindFirefoxScreenshotControl() {
+  if (firefoxScreenshotBound || !isFirefoxProduct(browserProduct)) return;
+  firefoxScreenshotBound = true;
+  els.firefoxScreenshotButton?.addEventListener('click', changeFirefoxScreenshotPermission);
+  els.browserControlScreenshotPermissionButton?.addEventListener('click', changeFirefoxScreenshotPermission);
+  const onChange = (change) => {
+    if (permissionChangeTouchesScreenshots(change)) void refreshFirefoxScreenshotState();
+  };
+  browserApi.permissions?.onAdded?.addListener?.(onChange);
+  browserApi.permissions?.onRemoved?.addListener?.(onChange);
+  void refreshFirefoxScreenshotState();
+  // The refusal note arrives with the controller status, which the panel already polls.
+  setInterval(renderFirefoxScreenshotControl, 2000);
+}
+
 // Reads GET /v1/runs/{id} while a REST run is quiet, for prompts the stream did
 // not carry. Built outside the turn so the turn body stays free of extra awaits
 // between consent resolution and submission.
@@ -25630,6 +25701,7 @@ function eventPathContains(event, node) {
 
 function bindEvents() {
   bindPromptCard();
+  bindFirefoxScreenshotControl();
   portalDockFloatingPanels();
   observeDockFloatingAnchor();
   els.messages?.addEventListener('copy', (event) => {

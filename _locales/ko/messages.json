@@ -1007,6 +1007,10 @@
     "message": "Hermes가 스크린샷을 찍지 않았습니다: 페이지가 Hermes가 캡처하지 않는 페이지로 이동했습니다.",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes가 스크린샷을 찍지 않았습니다. Firefox의 추가 권한이 필요합니다. 'Firefox에서 스크린샷 허용'을 사용하세요.",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "일시 중지",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Firefox에서 스크린샷 허용",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox가 권한을 부여하지 않았습니다.",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes는 Hermes Control의 나머지 기능과 같은 안전 한도 안에서 연결된 탭의 스크린샷을 찍을 수 있습니다. 권한은 언제든지 철회할 수 있습니다.",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Hermes가 탭의 스크린샷을 찍으려면 Firefox의 추가 권한이 필요합니다. Hermes는 허용을 클릭할 때만 권한을 요청하며, 그전까지는 페이지 텍스트를 읽습니다.",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "스크린샷 권한을 변경하지 못했습니다: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Firefox에서 스크린샷이 허용되었습니다.",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "스크린샷 허용 중단",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "스크린샷 권한이 제거되었습니다.",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Firefox에서 모델 스크린샷",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "버리기",

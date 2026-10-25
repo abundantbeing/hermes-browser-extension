@@ -1007,6 +1007,10 @@
     "message": "Hermes はスクリーンショットを撮りませんでした: ページが、Hermes が撮影しないページに移動しました。",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes はスクリーンショットを撮りませんでした。Firefox で追加の権限が必要です。「Firefox でスクリーンショットを許可」を使ってください。",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "一時停止",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "Firefox でスクリーンショットを許可",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox は権限を付与しませんでした。",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes は、Hermes Control の他の機能と同じ安全上の制限の範囲内で、接続したタブのスクリーンショットを撮れます。権限はいつでも取り消せます。",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Hermes がタブのスクリーンショットを撮るには、Firefox で追加の権限が必要です。Hermes は「許可」をクリックしたときにだけ権限を求め、それまではページのテキストを読み取ります。",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "スクリーンショットの権限を変更できませんでした: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "Firefox でスクリーンショットが許可されました。",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "スクリーンショットの許可を取り消す",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "スクリーンショットの権限を削除しました。",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "Firefox でのモデルのスクリーンショット",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "破棄",

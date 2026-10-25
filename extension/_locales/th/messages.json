@@ -1007,6 +1007,10 @@
     "message": "Hermes ไม่ได้จับภาพหน้าจอ: หน้านี้เปลี่ยนไปเป็นหน้าที่ Hermes จะไม่จับภาพ",
     "description": "Runtime interface message browser_control.note_screenshot_page"
   },
+  "runtime_browser_control_note_screenshot_permission": {
+    "message": "Hermes ไม่ได้ถ่ายภาพหน้าจอ: Firefox ต้องมีสิทธิ์เพิ่มเติม ใช้ อนุญาตภาพหน้าจอใน Firefox",
+    "description": "Runtime interface message browser_control.note_screenshot_permission"
+  },
   "runtime_browser_control_pause": {
     "message": "หยุดชั่วคราว",
     "description": "Runtime interface message browser_control.pause"
@@ -2114,6 +2118,42 @@
   "runtime_exec_approval_waiting_detail": {
     "message": "Hermes paused this turn until you answer the approval card. If it expires unanswered, the command will not run.",
     "description": "Runtime interface message exec_approval.waiting_detail"
+  },
+  "runtime_firefox_screenshots_allow": {
+    "message": "อนุญาตภาพหน้าจอใน Firefox",
+    "description": "Runtime interface message firefox_screenshots.allow"
+  },
+  "runtime_firefox_screenshots_denied": {
+    "message": "Firefox ไม่ได้ให้สิทธิ์",
+    "description": "Runtime interface message firefox_screenshots.denied"
+  },
+  "runtime_firefox_screenshots_detail_granted": {
+    "message": "Hermes ถ่ายภาพหน้าจอของแท็บที่เชื่อมต่อได้ ภายใต้ข้อจำกัดด้านความปลอดภัยเดียวกับส่วนอื่นของ Hermes Control คุณสามารถเพิกถอนสิทธิ์ได้ทุกเมื่อ",
+    "description": "Runtime interface message firefox_screenshots.detail_granted"
+  },
+  "runtime_firefox_screenshots_detail_missing": {
+    "message": "Firefox ต้องมีสิทธิ์เพิ่มเติมก่อนที่ Hermes จะถ่ายภาพหน้าจอของแท็บได้ Hermes จะขอสิทธิ์นี้เฉพาะเมื่อคุณคลิกอนุญาต และก่อนหน้านั้นจะอ่านข้อความของหน้าแทน",
+    "description": "Runtime interface message firefox_screenshots.detail_missing"
+  },
+  "runtime_firefox_screenshots_failed": {
+    "message": "เปลี่ยนสิทธิ์ภาพหน้าจอไม่ได้: {error}",
+    "description": "Runtime interface message firefox_screenshots.failed"
+  },
+  "runtime_firefox_screenshots_granted": {
+    "message": "อนุญาตภาพหน้าจอใน Firefox แล้ว",
+    "description": "Runtime interface message firefox_screenshots.granted"
+  },
+  "runtime_firefox_screenshots_remove": {
+    "message": "เลิกอนุญาตภาพหน้าจอ",
+    "description": "Runtime interface message firefox_screenshots.remove"
+  },
+  "runtime_firefox_screenshots_removed": {
+    "message": "ลบสิทธิ์ภาพหน้าจอแล้ว",
+    "description": "Runtime interface message firefox_screenshots.removed"
+  },
+  "runtime_firefox_screenshots_title": {
+    "message": "ภาพหน้าจอของโมเดลใน Firefox",
+    "description": "Runtime interface message firefox_screenshots.title"
   },
   "runtime_gateway_queue_discard": {
     "message": "ทิ้ง",

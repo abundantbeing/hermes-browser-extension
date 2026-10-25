@@ -2,7 +2,7 @@
 
 Hermes Browser Extension is a Chrome/Edge/Chromium MV3 side panel (and a Firefox sidebar) for connecting the active browser page to your configured Hermes Agent runtime.
 
-This document describes the permission model of the current release. Chromium builds request every permission below. Firefox builds omit `debugger`, `offscreen`, and `sidePanel`.
+This document describes the permission model of the current release. Chromium builds request every permission below. Firefox builds omit `debugger`, `offscreen`, and `sidePanel`, and add the optional `<all_urls>` host permission described under Optional permissions.
 
 ## Required extension permissions
 
@@ -25,7 +25,15 @@ The Projects tab, Move, Compact context, capability states and first-time setup 
 
 ## Optional permissions
 
-The extension declares no optional permissions. Voice dictation uses the browser's normal microphone prompt, not an extension permission.
+The Chromium build declares no optional permissions. Voice dictation uses the browser's normal microphone prompt, not an extension permission.
+
+The **Firefox build** declares one optional host permission, `<all_urls>`, and nothing at install time:
+
+| Permission | Why it is optional, and when it is asked |
+| --- | --- |
+| `<all_urls>` (`optional_host_permissions`, Firefox only) | Firefox allows `tabs.captureVisibleTab` only with all-sites access (an `activeTab` grant needs a toolbar-button gesture, and a model command is not one), so without it Hermes cannot take a screenshot of the attached tab for the model. It is never requested at install or automatically. Hermes asks for it only when you click **Allow screenshots on Firefox**, which appears in Settings (Hermes Control) and, after a screenshot was refused, on the Hermes Control strip. You can take it back with **Stop allowing screenshots** there or from Firefox's own add-on permissions page. Until it is granted Hermes reads the page text instead, and the capability list Hermes Control reports leaves out `browser_screenshot`. It does not widen what Hermes may read: the same restricted-page, frame, sensitive-field and approval rules apply to every screenshot. |
+
+Chromium takes screenshots through the `debugger` permission above and never needs this one.
 
 ## Host permissions
 
