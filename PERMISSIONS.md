@@ -21,13 +21,19 @@ This document describes the permission model of the current release. Chromium bu
 | `tabs` | Reads tab titles/URLs for the active-tab state, context refreshes, tab summaries, and remote dashboard WebSocket ticket flow. |
 | `unlimitedStorage` | Lifts the browser's default quota for local extension storage so original file attachments (up to 25 MB each, kept in IndexedDB) and page-comment data stay on your device. The permission uploads nothing; attachments leave the browser only when you send a message that includes them. |
 
-The Projects tab, Move, Compact context, capability states and first-time setup need no extra permission: they use the connection to the Hermes gateway you configured. Reading controls inside frames of an attached page uses the same `debugger` permission and the same attached tabs as the rest of Hermes Control.
+The Projects tab, Move, Compact context, capability states and first-time setup need no extra permission: they use the connection to the Hermes gateway you configured. Only Hermes account sign-in asks for the optional `webRequest` permission below. Reading controls inside frames of an attached page uses the same `debugger` permission and the same attached tabs as the rest of Hermes Control.
 
 ## Optional permissions
 
-The Chromium build declares no optional permissions. Voice dictation uses the browser's normal microphone prompt, not an extension permission.
+Both builds declare one optional permission, `webRequest`, and nothing optional is granted at install time:
 
-The **Firefox build** declares one optional host permission, `<all_urls>`, and nothing at install time:
+| Permission | Why it is optional, and when it is asked |
+| --- | --- |
+| `webRequest` | Hermes account sign-in (Settings > Connections > **Hermes account**) opens the gateway's sign-in in a popup window, and the gateway ends it by redirecting to `http://127.0.0.1:<port>/hermes-browser-callback`, where nothing listens. The extension only observes (it never blocks or changes a request) that one address, limited to `http://127.0.0.1/hermes-browser-callback*`, to read the one-time `code` and `state` from it, then closes the window. It is asked for once, from the **Sign in with your Hermes account** click, and never at install or automatically. You can take it back from the browser's extension page; signing in then asks again. Nothing else uses it, and it adds no host access: the extension's host permissions already cover that address. |
+
+Voice dictation uses the browser's normal microphone prompt, not an extension permission.
+
+The **Firefox build** also declares one optional host permission, `<all_urls>`:
 
 | Permission | Why it is optional, and when it is asked |
 | --- | --- |

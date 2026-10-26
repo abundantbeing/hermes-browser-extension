@@ -71,6 +71,17 @@ With a gateway that carries the extension-pairing routes, the panel needs to hol
 
 The panel can also hold the Hermes Web sign-in in `chrome.storage.session` (browser memory, cleared when the browser closes). It is used only for loopback requests to the Hermes Web address it was captured from (the dashboard-only routes: roster, Projects, speech to text, stored images, image upload, the dashboard WebSocket through one-use tickets), as a header and never in a URL. A Settings toggle turns it off and clears it; `hermes webapp --sign-out` ends it.
 
+## Hermes account sign-in
+
+Where a gateway is gated (its public `/api/status` says `auth_required` and lists `native_pkce`), the panel runs the same native sign-in as the Hermes phone app (RFC 8252, PKCE with S256), against that gateway's own address only:
+
+1. `GET /api/auth/providers` names the provider; the sign-in opens `/auth/native/authorize?...redirect_uri=http://127.0.0.1:<random port>/hermes-browser-callback` in a popup window. Nothing listens on that port and the panel never requests it: it only observes the browser being sent there (`webRequest`, with the tab's address as a second witness), reads `code` and `state` from the address, checks the state against the one it generated, and closes the window. A password provider's `/login` form ends on the same redirect.
+2. `POST /auth/native/token` redeems the code with the PKCE verifier for `{access_token, refresh_token, expires_at, provider, user_id}`; `GET /api/auth/me` (bearer) reads the display name.
+3. The tokens are kept per gateway address in `chrome.storage.local` and refreshed with `POST /auth/native/refresh` (one refresh at a time, a 401 retries once after refreshing, a refresh 401 `session_expired` clears them).
+4. `POST /api/auth/ws-ticket` (bearer) mints a 30 second one-use ticket for `/api/ws`, offered as the `hermes-gateway-ticket.<ticket>` WebSocket subprotocol beside `hermes-gateway-v1`; a retry mints a new ticket the same way and a ticket is never put in a URL.
+
+Projects, Session authority, Context compaction, the full bot roster and skills use that socket. The panel prefers the paired gateway's socket ticket on a local gateway, then this sign-in, then the held Hermes Web sign-in, and otherwise says why and offers the button. An ungated loopback gateway offers no account sign-in: its `/api/auth/ws-ticket` needs a session only the sign-in gate creates, so the panel does not offer one there. A remote connection resolves only its own gateway's address, never this computer's. **Sign out** forgets the tokens locally and asks the gateway to revoke nothing.
+
 ## Hermes Web full view
 
 Hermes Web uses the same configured Local or Remote API connection and canonical Hermes session history as the side panel. It loads sessions, models, skills, runtime options, generated media, and persisted context telemetry from the configured Hermes gateway. Opening full view does not grant browser-control permissions. Hermes Cloud/dashboard-ticket full-view history remains read-only until a shared ticketed WebSocket coordinator owns that connection.
