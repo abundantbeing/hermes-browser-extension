@@ -68,6 +68,17 @@ test('a usage snapshot is read from the RPC result and from the event payload al
   assert.deepEqual(parseContextUsage({ usage: { calls: 0, input: 0, output: 0, total: 0 } }), { ok: false, reason: 'no-context-usage' });
 });
 
+test('canonical session.stats preserves occupancy, compactions and cache share without using lifetime throughput', () => {
+  const parsed = parseContextUsage({ last_prompt_tokens: 147_133, context_tokens: 147_133, context_length: 1_048_576, context_source: 'provider_usage', compression_count: 1, prompt_tokens: 17_192_760, cache_read_tokens: 16_544_008, total_tokens: 17_207_726 });
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.value.usedTokens, 147_133);
+  assert.equal(parsed.value.limitTokens, 1_048_576);
+  assert.equal(parsed.value.compressions, 1);
+  assert.equal(parsed.value.cacheHitPercent, 96);
+  assert.equal(parseContextUsage({ prompt_tokens: 1_000_000, input_tokens: 1_000_000, total_tokens: 1_010_000 }).ok, false);
+  assert.equal(parseContextUsage({ context_tokens: 0, context_length: 128_000, compression_count: 0 }).value.usedTokens, 0);
+});
+
 test('usage ticks never erase the category breakdown', () => {
   let { store } = recordContextBreakdown(emptySessionContextStore(), 'stored-A', breakdownA, 1_000);
   ({ store } = recordContextUsage(store, 'stored-A', usageTick, 2_000));

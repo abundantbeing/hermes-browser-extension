@@ -543,6 +543,16 @@ test('a dial that fails leaves no connection, and the background refresh waits b
   assert.equal(ticketPosts(net).length, 2, 'About & Diagnostics asks again');
 });
 
+test('background refresh can reuse an already held Web sign-in on gateways without automatic tickets', async () => {
+  const net = machine({ routes: 'absent' });
+  const p = panel({ held: heldRecord, net });
+  p.context.desktopDashboardUrl = WEBAPP;
+  const connection = await vm.runInContext('refreshGatewaySocket()', p.context);
+  assert.ok(connection);
+  assert.equal(connection.baseUrl, WEBAPP);
+  assert.equal(p.connects.length, 1);
+});
+
 test('a remote connection never asks the local gateway', async () => {
   const net = machine({ routes: 'ok' });
   const p = panel({ net, gatewayMode: 'remote-api' });

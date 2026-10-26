@@ -6122,14 +6122,21 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 .context-window-settings dd { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
 .context-control-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   margin-top: 10px;
   padding-top: 9px;
   border-top: 1px solid rgba(var(--hermes-fg-rgb),0.18);
 }
-.context-control-row span {
+.context-control-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+.context-control-row > span {
   min-width: 0;
   color: rgba(var(--hermes-fg-rgb),0.7);
   font-family: var(--hermes-font-mono);
@@ -6140,7 +6147,8 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
   min-height: 28px;
   padding: 6px 9px;
   font-size: calc(10px * var(--hermes-text-zoom, 1));
-  white-space: nowrap;
+  /* Stays on one line in a normal panel; wraps instead of overflowing a narrow one. */
+  white-space: normal;
 }
 
 /* Context window card: the popover and Settings > Sessions & Context render the
@@ -6290,10 +6298,13 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 .context-refresh-button:hover { border-color: var(--context-usage-line, rgba(var(--hermes-fg-rgb), 0.44)); color: rgba(var(--hermes-fg-rgb), 0.95); }
 .context-refresh-button:disabled { opacity: 0.45; cursor: progress; }
 .context-refresh-button[hidden] { display: none; }
-.context-page-refresh-button { display: inline-flex; align-items: center; gap: 6px; }
+.context-page-refresh-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .context-page-refresh-button[aria-busy="true"] { cursor: progress; opacity: 0.7; }
+@keyframes context-refresh-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: no-preference) {
   .context-usage-segment { transition: width 160ms ease; }
+  .context-page-refresh-button[aria-busy="true"] .refresh-glyph,
+  .context-refresh-button[aria-busy="true"] .refresh-glyph { animation: context-refresh-spin 600ms linear infinite; }
 }
 
 .settings-dialog {

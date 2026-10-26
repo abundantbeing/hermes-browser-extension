@@ -99,7 +99,9 @@ function panel({ answers = {} } = {}) {
     activeConversationTransport: 'dashboard-ws',
     activeDashboardWsConnection: { client, wsSessionId: '', wsStoredSessionId: '' },
     remoteWsConnection: null,
-    WS_METHODS: { sessionUsage: 'session.usage', contextBreakdown: 'session.context_breakdown', subagentList: 'subagent.list', subagentSteer: 'subagent.steer', subagentInterrupt: 'subagent.interrupt' },
+    profileWsConnection: null,
+    sessionAuthoritySideSocket: () => context.profileWsConnection?.client || null,
+    WS_METHODS: { sessionStats: 'session.stats', sessionUsage: 'session.usage', contextBreakdown: 'session.context_breakdown', subagentList: 'subagent.list', subagentSteer: 'subagent.steer', subagentInterrupt: 'subagent.interrupt' },
     WS_EVENTS: { messageComplete: 'message.complete' },
     renderContextWindow: () => { renders.push(vm.runInContext('settings.sessionId', context)); },
     renderSubagentStack: () => {},
@@ -156,6 +158,45 @@ function panel({ answers = {} } = {}) {
 // Values built inside the VM carry its realm's prototypes.
 const same = (actual, expected, message) => assert.equal(JSON.stringify(actual), JSON.stringify(expected), message);
 const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+test('a REST chat reads canonical context through the companion without adopting a dashboard chat', async () => {
+  const p = panel({ answers: { 'session.context_breakdown': breakdownFor(194_000), 'session.stats': { context_tokens: 196_000, context_length: 500_000, compression_count: 2 } } });
+  p.open('stored-A', 'unrelated-live');
+  p.context.activeConversationTransport = 'rest';
+  p.context.client = p.client;
+  p.client.readyPayload = { session_authority: true };
+  p.context.profileWsConnection = { client: p.client };
+  p.context.activeDashboardWsConnection = null;
+  assert.equal(p.run('refreshSessionContextTelemetry()'), true);
+  await settle();
+  same(p.client.calls.map((call) => [call.method, call.params.session_id]), [['session.stats', 'stored-A'], ['session.context_breakdown', 'stored-A']]);
+  assert.equal(p.entry('stored-A').breakdown.categories.length, 3);
+  assert.equal(p.entry('stored-A').usage.compressions, 2);
+  assert.equal(p.context.activeConversationTransport, 'rest');
+  p.client.emit('session.usage', 'stored-A', { usage: { context_used: 201_000, context_max: 500_000 } });
+  assert.equal(p.entry('stored-A').usage.usedTokens, 201_000);
+});
+
+test('canonical dashboard context addresses the durable id, not an unrelated live binding', async () => {
+  const p = panel({ answers: { 'session.context_breakdown': breakdownFor(194_000), 'session.stats': { context_tokens: 194_000, context_length: 500_000 } } });
+  p.open('stored-A', 'legacy-live');
+  p.client.readyPayload = { session_authority: true };
+  p.run('refreshSessionContextTelemetry()');
+  await settle();
+  assert.ok(p.client.calls.every((call) => call.params.session_id === 'stored-A'));
+  assert.equal(p.client.calls[0].method, 'session.stats');
+});
+
+test('a REST chat cannot read another process through a legacy or closed companion', () => {
+  const p = panel();
+  p.open('stored-A', 'legacy-live');
+  p.context.activeConversationTransport = 'rest';
+  p.context.profileWsConnection = { client: p.client };
+  assert.equal(p.run('dashboardContextTarget()'), null);
+  p.client.readyPayload = { session_authority: true };
+  p.client.readyState = 3;
+  assert.equal(p.run('dashboardContextTarget()'), null);
+});
 
 test('a reading addressed by the live id lands on the durable session the view shows', async () => {
   const p = panel({ answers: { 'session.context_breakdown': breakdownFor(194_000), 'session.usage': { context_used: 194_000, context_max: 500_000, compressions: 0 } } });

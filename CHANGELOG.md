@@ -52,6 +52,7 @@
 
 ### Changed
 
+- The context window card's **Refresh** and **Compact context** buttons sit side by side under the status line, and the Refresh icon spins while it works (it holds still when reduced motion is on). On a chat that runs over REST, the card now reads its category breakdown and compaction state from the gateway's session connection, and **Refresh** tries to open that connection when it is missing.
 - Bot Mode and the profile list load from the gateway's own `/v1/profiles` when the Webapp's listener needs a sign-in the panel does not hold, instead of showing "No verified Hermes profiles are available". Projects names the missing Hermes Web sign-in instead of a dashboard tab.
 - About & Diagnostics reads Hermes 0.22 honestly: the companion plugin row is ready, outdated, disabled, not installed or unreachable with the reason; approvals and context status are available over the WebSocket; voice, stored images and image upload are shown as served by the dashboard; and features Hermes does not have say so instead of "not advertised".
 - Pasted images upload through the dashboard's image route when the API server advertises none (the old upload route was one no Hermes serves).

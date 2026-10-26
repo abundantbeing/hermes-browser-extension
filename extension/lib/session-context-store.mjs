@@ -171,9 +171,16 @@ export function parseContextBreakdown(payload) {
 export function parseContextUsage(payload) {
   if (!isPlainObject(payload)) return { ok: false, reason: 'invalid-input' };
   const usage = isPlainObject(payload.usage) ? payload.usage : payload;
-  const occupancy = occupancyFields(usage);
-  const compressions = Object.hasOwn(usage, 'compressions') ? toTokens(usage.compressions) : null;
-  const cacheHitPercent = Object.hasOwn(usage, 'cache_hit_pct') ? toPercent(usage.cache_hit_pct) : null;
+  const occupancy = occupancyFields({
+    ...usage,
+    context_used: usage.context_used ?? usage.context_tokens ?? usage.last_prompt_tokens,
+    context_max: usage.context_max ?? usage.context_length,
+  });
+  const compressions = toTokens(usage.compressions ?? usage.compression_count);
+  const promptTokens = toPositiveTokens(usage.prompt_tokens);
+  const cacheReadTokens = toTokens(usage.cache_read_tokens);
+  const cacheHitPercent = Object.hasOwn(usage, 'cache_hit_pct') ? toPercent(usage.cache_hit_pct)
+    : promptTokens && cacheReadTokens !== null ? toPercent(Math.round(cacheReadTokens / promptTokens * 100)) : null;
   if (occupancy.limitTokens === null && occupancy.usedTokens === null && compressions === null && cacheHitPercent === null) {
     return { ok: false, reason: 'no-context-usage' };
   }

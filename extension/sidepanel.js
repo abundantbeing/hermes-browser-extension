@@ -1525,11 +1525,17 @@ function viewedSessionContextEntry() {
 }
 
 function dashboardContextTarget() {
-  const connection = activeDashboardWsConnection;
   const durableId = String(settings.sessionId || '').trim();
-  if (activeConversationTransport !== 'dashboard-ws' || connection?.client?.readyState !== 1 || !durableId) return null;
-  if (String(connection.wsStoredSessionId || '').trim() !== durableId || !connection.wsSessionId) return null;
-  return { client: connection.client, liveId: connection.wsSessionId, durableId };
+  if (!durableId) return null;
+  const connection = activeDashboardWsConnection;
+  const chatSocket = activeConversationTransport === 'dashboard-ws';
+  const client = chatSocket ? connection?.client : sessionAuthoritySideSocket();
+  if (client?.readyState !== 1) return null;
+  // Authority reads use the durable id, including beside REST chat. Never resume
+  // a second runtime merely to measure a session owned by the gateway.
+  if (client.readyPayload?.session_authority === true) return { client, liveId: durableId, durableId };
+  if (!chatSocket || String(connection.wsStoredSessionId || '').trim() !== durableId || !connection.wsSessionId) return null;
+  return { client, liveId: connection.wsSessionId, durableId };
 }
 
 // Ask the gateway for the viewed session's breakdown and usage. A failed or
@@ -1539,6 +1545,7 @@ function refreshSessionContextTelemetry({ force = false } = {}) {
   const target = dashboardContextTarget();
   if (!target) return false;
   const { client, liveId, durableId } = target;
+  bindContextTelemetryClient(client);
   const previous = sessionContextRefreshes.get(durableId);
   if (previous?.inFlight && previous.liveId === liveId) return true;
   if (previous?.timer) clearTimeout(previous.timer);
@@ -1549,13 +1556,14 @@ function refreshSessionContextTelemetry({ force = false } = {}) {
   sessionContextRefreshes.set(durableId, state);
   renderContextWindow();
   const stillTarget = () => sessionContextRefreshes.get(durableId) === state;
-  void client.request(WS_METHODS.sessionUsage, { session_id: liveId })
+  const usageMethod = client.readyPayload?.session_authority === true ? WS_METHODS.sessionStats : WS_METHODS.sessionUsage;
+  const usageRequest = client.request(usageMethod, { session_id: liveId })
     .then((result) => recordSessionContextReading('usage', durableId, result))
-    .catch(() => {});
-  void client.request(WS_METHODS.contextBreakdown, { session_id: liveId })
+    .catch(() => false);
+  const breakdownRequest = client.request(WS_METHODS.contextBreakdown, { session_id: liveId })
     .then((result) => recordSessionContextReading('breakdown', durableId, result))
-    .catch(() => false)
-    .then((recorded) => {
+    .catch(() => false);
+  state.promise = Promise.all([usageRequest, breakdownRequest]).then(([, recorded]) => {
       if (!stillTarget()) return;
       state.inFlight = false;
       if (recorded) {
@@ -10443,7 +10451,7 @@ function renderContextWindow(userText = els.input?.value || '') {
     autoCompact: compaction.thresholdTokens
       ? { percent: compaction.thresholdPercent, tokens: compaction.thresholdTokens }
       : null,
-    breakdownSupported: activeConversationTransport === 'dashboard-ws',
+    breakdownSupported: Boolean(dashboardContextTarget()),
     loading: Boolean(sessionContextRefreshes.get(durableSessionId)?.inFlight),
     translate: translateUiText,
   });
@@ -10469,7 +10477,9 @@ function renderContextWindow(userText = els.input?.value || '') {
   if (els.contextRefreshButton) {
     const refreshLabel = translateUiText('Refresh context');
     els.contextRefreshButton.hidden = !dashboardContextTarget();
-    els.contextRefreshButton.disabled = Boolean(sessionContextRefreshes.get(durableSessionId)?.inFlight);
+    const refreshing = Boolean(sessionContextRefreshes.get(durableSessionId)?.inFlight);
+    els.contextRefreshButton.disabled = refreshing;
+    els.contextRefreshButton.setAttribute('aria-busy', String(refreshing));
     els.contextRefreshButton.title = refreshLabel;
     els.contextRefreshButton.setAttribute('aria-label', refreshLabel);
   }
@@ -12124,7 +12134,15 @@ async function refreshGatewaySocket({ force = false } = {}) {
     const viaGatewayTicket = await connectProfileViaGatewayTicket({ readyTimeoutMs: 5_000 });
     if (viaGatewayTicket) return viaGatewayTicket;
   }
-  return connectProfileViaAccount({ readyTimeoutMs: 5_000 });
+  const viaAccount = await connectProfileViaAccount({ readyTimeoutMs: 5_000 });
+  if (viaAccount) return viaAccount;
+  // Older local gateways lack automatic tickets. Reuse an already held Web
+  // sign-in at the known listener, without discovery, sign-in prompts or chat adoption.
+  const baseUrl = isLocalApiMode() ? localDashboardUrl() : '';
+  if (!baseUrl || !(await dashboardTokenFor(baseUrl, ''))) return null;
+  const viaWebapp = await connectProfileViaWebapp(baseUrl, profileConnectionKey(baseUrl), 5_000).catch(() => null);
+  if (viaWebapp) refreshCapabilityViews();
+  return viaWebapp;
 }
 
 function usesDashboardWsChatTransport() {
@@ -22842,12 +22860,23 @@ function setContextPageRefreshBusy(busy) {
 async function refreshContextFromUser() {
   if (contextRefreshingFromUser) return currentContext;
   contextRefreshingFromUser = true;
+  const startedAt = Date.now();
+  const sessionId = settings.sessionId;
   setContextPageRefreshBusy(true);
   try {
     const refreshed = await refreshContext();
     forceFullContextNextTurn = true;
+    await refreshGatewaySocket().catch(() => null);
+    if (settings.sessionId === sessionId) {
+      refreshCapabilityViews();
+      refreshSessionContextTelemetry({ force: true });
+      await sessionContextRefreshes.get(sessionId)?.promise;
+    }
     return refreshed;
   } finally {
+    // Even a cached capture gets one visible turn of the icon. Errors release it too.
+    const remaining = 600 - (Date.now() - startedAt);
+    if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
     contextRefreshingFromUser = false;
     setContextPageRefreshBusy(false);
   }

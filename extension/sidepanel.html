@@ -647,14 +647,16 @@
           <header>
             <span data-i18n="ui.context.window">CONTEXT WINDOW</span>
             <button id="contextRefreshButton" class="context-refresh-button" type="button" aria-label="Refresh context" title="Refresh context" data-i18n-runtime>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="refresh"><path d="M13 20H9V18H13V20ZM19 16H21V18H19V20H17V18H15V16H17V8H19V16ZM9 18H7V16H9V18ZM7 6H9V8H7V16H5V8H3V6H5V4H7V6ZM15 16H13V14H15V16ZM23 16H21V14H23V16ZM3 10H1V8H3V10ZM11 10H9V8H11V10ZM17 8H15V6H17V8ZM15 6H11V4H15V6Z"/></svg>
+              <svg class="refresh-glyph" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="refresh"><path d="M13 20H9V18H13V20ZM19 16H21V18H19V20H17V18H15V16H17V8H19V16ZM9 18H7V16H9V18ZM7 6H9V8H7V16H5V8H3V6H5V4H7V6ZM15 16H13V14H15V16ZM23 16H21V14H23V16ZM3 10H1V8H3V10ZM11 10H9V8H11V10ZM17 8H15V6H17V8ZM15 6H11V4H15V6Z"/></svg>
             </button>
           </header>
           <div id="contextUsageCard" class="context-usage-card" data-compact="true" data-i18n-runtime></div>
           <div id="contextControlRow" class="context-control-row">
-            <span id="contextControlStatus">Native context controls unavailable.</span>
-            <button id="contextPageRefreshButton" class="secondary context-compact-button context-page-refresh-button" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-runtime><svg class="refresh-glyph" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="refresh"><path d="M13 20H9V18H13V20ZM19 16H21V18H19V20H17V18H15V16H17V8H19V16ZM9 18H7V16H9V18ZM7 6H9V8H7V16H5V8H3V6H5V4H7V6ZM15 16H13V14H15V16ZM23 16H21V14H23V16ZM3 10H1V8H3V10ZM11 10H9V8H11V10ZM17 8H15V6H17V8ZM15 6H11V4H15V6Z"/></svg>Refresh</button>
-            <button id="contextCompactButton" class="secondary context-compact-button" type="button" disabled>Compact context</button>
+            <span id="contextControlStatus" role="status">Native context controls unavailable.</span>
+            <div class="context-control-actions">
+              <button id="contextPageRefreshButton" class="secondary context-compact-button context-page-refresh-button" type="button" title="Refresh page context" aria-label="Refresh page context" data-i18n-runtime><svg class="refresh-glyph" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="refresh"><path d="M13 20H9V18H13V20ZM19 16H21V18H19V20H17V18H15V16H17V8H19V16ZM9 18H7V16H9V18ZM7 6H9V8H7V16H5V8H3V6H5V4H7V6ZM15 16H13V14H15V16ZM23 16H21V14H23V16ZM3 10H1V8H3V10ZM11 10H9V8H11V10ZM17 8H15V6H17V8ZM15 6H11V4H15V6Z"/></svg>Refresh</button>
+              <button id="contextCompactButton" class="secondary context-compact-button" type="button" aria-describedby="contextControlStatus" disabled>Compact context</button>
+            </div>
           </div>
         </section>
       </footer>

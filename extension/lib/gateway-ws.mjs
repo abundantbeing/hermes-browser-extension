@@ -45,6 +45,7 @@ export const WS_METHODS = Object.freeze({
   // Live usage snapshot: context occupancy, compressions, cache hits. The same
   // payload the gateway pushes as the `session.usage` event while a turn runs.
   sessionUsage: 'session.usage',
+  sessionStats: 'session.stats',
   imageAttachBytes: 'image.attach_bytes',
   subagentList: 'subagent.list',
   subagentSteer: 'subagent.steer',
