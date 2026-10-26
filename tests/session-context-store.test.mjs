@@ -134,3 +134,15 @@ test('a compaction that rotates the session id carries its entry over', () => {
   assert.equal(sessionContextEntry(renamed, 'old'), null);
   assert.equal(sessionContextEntry(renamed, 'new').usage.usedTokens, 196_500);
 });
+
+test('a breakdown measured from a stored session (no resident agent, no window) is data, not the zeroed answer', () => {
+  const agentless = {
+    categories: [{ id: 'system_prompt', label: 'System prompt', tokens: 4_100, color: 'x' }, { id: 'conversation', label: 'Conversation', tokens: 900, color: 'y' }],
+    context_max: 0, context_percent: 0, context_used: 0, estimated_total: 5_000, context_estimated: false, context_source: 'provider_usage', model: '',
+  };
+  const parsed = parseContextBreakdown(agentless);
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.value.limitTokens, null);
+  assert.deepEqual(parsed.value.categories.map((row) => row.tokens), [4_100, 900]);
+  assert.equal(parsed.value.estimatedTotal, 5_000);
+});

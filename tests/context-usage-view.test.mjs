@@ -102,7 +102,7 @@ test('with no gateway reading the panel estimate fills in and is labelled as suc
   assert.equal(view.summaryLabel, '~3.4k / 128k Tokens');
   assert.equal(view.compressionsLabel, '', 'an unreported count is not shown as zero');
   assert.equal(view.breakdownState, 'unsupported');
-  assert.ok(view.insights.some((row) => row.text === 'This connection does not report a category breakdown.'));
+  assert.ok(view.insights.some((row) => row.text === 'This connection has no Hermes session socket, so the category breakdown cannot be read.'));
 });
 
 test('levels and insights: 80% and 95% marks, the auto-compact point, the dominant category, estimate drift', () => {
@@ -172,4 +172,19 @@ test('a REST turn\'s own runtime count is labelled as that, not as a panel estim
   assert.equal(saved.sourceLabel, 'Saved with the session');
   assert.equal(saved.summaryLabel, '42k / 200k Tokens', 'a saved last_prompt_tokens is a provider count too');
   assert.equal(buildContextUsageView({ local: { usedTokens: 1, source: 'bogus' } }).sourceLabel, 'Panel estimate');
+});
+
+test('the "not reported" notes say what is true of the channel: no socket, sign-in would open one, socket open but session not held', () => {
+  const note = (options) => buildContextUsageView({ local: { usedTokens: 10, limitTokens: 100 }, ...options }).insights.find((row) => row.id === 'no-breakdown')?.text;
+  assert.match(note({ channel: 'none' }), /no Hermes session socket/);
+  assert.match(note({ channel: 'sign-in' }), /Sign in with your Hermes account/);
+  assert.equal(buildContextUsageView({ local: {}, channel: 'sign-in' }).breakdownState, 'unsupported');
+  // A socket exists: the breakdown is only missing, never "unsupported".
+  assert.equal(buildContextUsageView({ local: {}, channel: 'open' }).breakdownState, 'missing');
+  assert.equal(note({ channel: 'open' }), 'Hermes has not reported a category breakdown for this session yet.');
+  assert.match(note({ channel: 'open', failure: 'not-held' }), /does not hold this session/);
+  // A request in flight is loading whatever the channel says.
+  assert.equal(buildContextUsageView({ local: {}, channel: 'open', loading: true }).breakdownState, 'loading');
+  // Callers that only pass breakdownSupported keep working.
+  assert.equal(buildContextUsageView({ local: {}, breakdownSupported: true }).breakdownState, 'missing');
 });

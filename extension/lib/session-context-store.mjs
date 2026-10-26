@@ -22,9 +22,11 @@
 //              context_percent, context_source, context_estimated,
 //              compressions, cache_hit_pct, calls, input, output, model
 //
-// Only fields the gateway really sends are read. A breakdown with no
-// context_max is the gateway's "no agent to measure" answer and is refused,
-// the same rule the desktop app applies. Nothing here estimates a number.
+// Only fields the gateway really sends are read. A breakdown with neither a
+// context_max nor any category is the gateway's "no agent to measure, nothing
+// stored" answer and is refused, the same rule the desktop app applies. A
+// breakdown with categories and no window (no resident agent, the session's
+// frozen prompt measured) is kept. Nothing here estimates a number.
 //
 // The store is a plain JSON object so the panel can persist it to
 // storage.local and show a session's last known context the moment it opens.
@@ -149,13 +151,16 @@ function occupancyFields(source) {
 export function parseContextBreakdown(payload) {
   if (!isPlainObject(payload)) return { ok: false, reason: 'invalid-input' };
   const occupancy = occupancyFields(payload);
-  // context_max 0 is the gateway's agent-is-None branch: empty metadata, not data.
-  if (!occupancy.limitTokens) return { ok: false, reason: 'zeroed' };
+  const categories = normalizeCategories(payload.categories);
+  // The agent-is-None branch with nothing frozen to measure is empty metadata, not data. With no resident agent
+  // the gateway still measures the session's stored prompt, tools and transcript but knows no window
+  // (context_max 0): categories without a capacity are data (the desktop app's isZeroedBreakdown says the same).
+  if (!occupancy.limitTokens && !categories.length) return { ok: false, reason: 'zeroed' };
   return {
     ok: true,
     value: {
       ...occupancy,
-      categories: normalizeCategories(payload.categories),
+      categories,
       estimatedTotal: toTokens(payload.estimated_total),
       contextFiles: normalizeContextFiles(payload.context_files),
       model: toText(payload.model),

@@ -201,6 +201,9 @@ function contextLevel(percent, overLimit, autoCompactPercent) {
  *   the panel's own reading: its estimate, or a REST turn's runtime / saved-session count
  * @param {{percent?: number, tokens?: number}|null} options.autoCompact  reported auto-compact point
  * @param {boolean} options.breakdownSupported  the connection can answer session.context_breakdown
+ * @param {'open'|'sign-in'|'none'} [options.channel]  whether a session socket exists to ask: open, none but a Hermes
+ *   account sign-in would open one, or none at all. Defaults from breakdownSupported.
+ * @param {'not-held'|''} [options.failure]  why the last request for this session's breakdown came back empty
  * @param {boolean} options.loading       a context request is in flight
  * @param {number}  options.now
  * @param {(template: string) => string} [options.translate]
@@ -210,6 +213,8 @@ export function buildContextUsageView({
   local = {},
   autoCompact = null,
   breakdownSupported = false,
+  channel = breakdownSupported ? 'open' : 'none',
+  failure = '',
   loading = false,
   now = Date.now(),
   translate = (template) => template,
@@ -231,7 +236,7 @@ export function buildContextUsageView({
   let breakdownState = 'missing';
   if (categories.length) breakdownState = entry?.breakdownStale ? 'stale' : 'reported';
   else if (loading) breakdownState = 'loading';
-  else if (!breakdownSupported) breakdownState = 'unsupported';
+  else if (channel !== 'open') breakdownState = 'unsupported';
 
   const bar = contextBarSegments({ categories, usedTokens, limitTokens });
   const legend = categories.map((row) => ({
@@ -304,9 +309,14 @@ export function buildContextUsageView({
     });
   }
   if (breakdownState === 'missing') {
-    note('no-breakdown', 'info', 'Hermes has not reported a category breakdown for this session yet.');
+    note('no-breakdown', 'info', failure === 'not-held'
+      ? 'Hermes does not hold this session on its session socket, so it could not measure the categories.'
+      : 'Hermes has not reported a category breakdown for this session yet.');
   } else if (breakdownState === 'unsupported') {
-    note('no-breakdown', 'info', 'This connection does not report a category breakdown.');
+    // Only with no socket to ask is this the end of the road; a Hermes account sign-in would open one.
+    note('no-breakdown', 'info', channel === 'sign-in'
+      ? 'Sign in with your Hermes account in Settings > Connections to read the category breakdown of this session.'
+      : 'This connection has no Hermes session socket, so the category breakdown cannot be read.');
   }
 
   let sourceKey = occupancy.source || 'local';

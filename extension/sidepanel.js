@@ -1447,6 +1447,12 @@ void replayWatermarks.hydrate();
 const sessionContextRefreshes = new Map();
 // Sessions whose breakdown this panel has fetched since it opened.
 const sessionContextFetched = new Set();
+// Why a session's breakdown request came back empty ('not-held': the gateway has no such session to measure).
+const sessionContextFailures = new Map();
+// The session socket is opened on demand for the viewed session's context (see openContextChannel).
+let contextChannelOpening = false;
+let contextChannelAttemptedAt = 0;
+const CONTEXT_CHANNEL_RETRY_MS = 15_000;
 const CONTEXT_BREAKDOWN_RETRY_MS = [1_000, 4_000, 12_000];
 const CONTEXT_BREAKDOWN_FRESH_MS = 30_000;
 const contextTelemetryBoundClients = new WeakSet();
@@ -1644,7 +1650,7 @@ function dashboardContextTarget() {
 // reading stays on screen meanwhile.
 function refreshSessionContextTelemetry({ force = false } = {}) {
   const target = dashboardContextTarget();
-  if (!target) return false;
+  if (!target) return openContextChannel({ force });
   const { client, liveId, durableId } = target;
   bindContextTelemetryClient(client);
   const previous = sessionContextRefreshes.get(durableId);
@@ -1662,13 +1668,22 @@ function refreshSessionContextTelemetry({ force = false } = {}) {
     .then((result) => recordSessionContextReading('usage', durableId, result))
     .catch(() => false);
   const breakdownRequest = client.request(WS_METHODS.contextBreakdown, { session_id: liveId })
-    .then((result) => recordSessionContextReading('breakdown', durableId, result))
-    .catch(() => false);
+    .then((result) => {
+      sessionContextFailures.delete(durableId);
+      return recordSessionContextReading('breakdown', durableId, result);
+    })
+    .catch((error) => {
+      // A session authority answers not_found for a session it holds no record of: retrying will not change that.
+      if (String(error?.data?.reason || error?.message || '').toLowerCase() === 'not_found') sessionContextFailures.set(durableId, 'not-held');
+      return false;
+    });
   state.promise = Promise.all([usageRequest, breakdownRequest]).then(([, recorded]) => {
       if (!stillTarget()) return;
       state.inFlight = false;
       if (recorded) {
         sessionContextFetched.add(durableId);
+        sessionContextRefreshes.delete(durableId);
+      } else if (sessionContextFailures.get(durableId) === 'not-held') {
         sessionContextRefreshes.delete(durableId);
       } else if (state.attempt < CONTEXT_BREAKDOWN_RETRY_MS.length) {
         state.timer = setTimeout(() => {
@@ -1683,6 +1698,39 @@ function refreshSessionContextTelemetry({ force = false } = {}) {
       renderContextWindow();
     });
   return true;
+}
+
+// The session socket can serve the viewed session's context whether chat runs over it or over REST: a session
+// authority answers session.stats and session.context_breakdown by the session's stored id. When no such socket
+// is open, open one the way the roster and Projects do (the paired gateway's ticket, a Hermes account sign-in,
+// the held Webapp credential), then ask. Bounded: one attempt in flight, and a failed one waits a little.
+function openContextChannel({ force = false } = {}) {
+  const durableId = String(settings.sessionId || '').trim();
+  if (!durableId || contextChannelOpening || isRemoteWsMode()) return false;
+  if (!force && Date.now() - contextChannelAttemptedAt < CONTEXT_CHANNEL_RETRY_MS) return false;
+  contextChannelAttemptedAt = Date.now();
+  contextChannelOpening = true;
+  renderContextWindow();
+  void refreshGatewaySocket().catch(() => null).then((connection) => {
+    contextChannelOpening = false;
+    if (connection?.client) bindContextTelemetryClient(connection.client);
+    if (dashboardContextTarget()) refreshSessionContextTelemetry({ force: true });
+    else renderContextWindow();
+    refreshCapabilityViews();
+  });
+  return true;
+}
+
+// Whether the context card can ask Hermes for a breakdown: 'open' (a socket is there or being opened),
+// 'sign-in' (none, but a Hermes account sign-in would open one) or 'none'.
+function contextChannelState() {
+  if (contextChannelOpening || dashboardContextTarget()) return 'open';
+  // renderContextWindow runs during start-up, before the account state below is initialised.
+  try {
+    return accountSignInOffered() ? 'sign-in' : 'none';
+  } catch {
+    return 'none';
+  }
 }
 
 // Usage ticks and turn completions for any session this socket serves. Events
@@ -4196,7 +4244,9 @@ async function signOutHermesAccount() {
 // After a sign-in: what waited for the socket loads, and an open Projects tab reads again.
 async function refreshAfterAccountSignIn() {
   try {
-    void refreshGatewaySocket({ force: true });
+    void refreshGatewaySocket({ force: true })
+      .then((connection) => { if (connection) refreshSessionContextTelemetry({ force: true }); })
+      .catch(() => undefined);
     void loadProfiles({ quiet: true, allowDashboardTrust: true });
     void loadSkills({ quiet: true });
     if (!els.sessionMenu.hidden && projectsTabActive()) void getProjectsController().refresh();
@@ -10558,8 +10608,9 @@ function renderContextWindow(userText = els.input?.value || '') {
     autoCompact: compaction.thresholdTokens
       ? { percent: compaction.thresholdPercent, tokens: compaction.thresholdTokens }
       : null,
-    breakdownSupported: Boolean(dashboardContextTarget()),
-    loading: Boolean(sessionContextRefreshes.get(durableSessionId)?.inFlight),
+    channel: contextChannelState(),
+    failure: sessionContextFailures.get(durableSessionId) || '',
+    loading: contextChannelOpening || Boolean(sessionContextRefreshes.get(durableSessionId)?.inFlight),
     translate: translateUiText,
   });
   const meterPercent = contextView.percent ?? 0;
