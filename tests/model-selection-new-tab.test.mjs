@@ -160,9 +160,11 @@ test('dashboard session.create never sends the gateway default alias as a model'
   assert.deepEqual(pick({ model: 'claude-opus-5-5' }), { model: 'claude-opus-5-5' });
   // Every session.create on the dashboard socket goes through the guard.
   const createBlocks = [];
-  for (let at = source.indexOf('createParams: {'); at >= 0; at = source.indexOf('createParams: {', at + 1)) {
+  // A canonical socket's create goes through sessionCreateParamsFor(client, { ... }), which maps the same object.
+  for (const found of source.matchAll(/createParams: (?:sessionCreateParamsFor\(connection\.client, )?\{/g)) {
+    const at = found.index;
     let depth = 0;
-    let end = at + 'createParams: '.length;
+    let end = at + found[0].length - 1;
     do {
       const char = source.charAt(end);
       if (char === '{') depth++; else if (char === '}') depth--;
