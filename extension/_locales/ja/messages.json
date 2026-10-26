@@ -8067,6 +8067,22 @@
     "message": "Hermes Web を開きました",
     "description": "Runtime interface message webapp.opened_title"
   },
+  "runtime_webapp_opening_detail": {
+    "message": "Hermes Webapp にサインインしています。数秒かかります。",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "そのまま表示する",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web の読み込みに通常より時間がかかっています。まだ起動中かもしれません。",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Hermes Web を開いています",
+    "description": "Runtime interface message webapp.opening_title"
+  },
   "runtime_webapp_reason_invalid_address": {
     "message": "設定の Hermes Web のアドレスが、有効な http または https のアドレスではありません。",
     "description": "Runtime interface message webapp.reason_invalid_address"

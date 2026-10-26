@@ -8067,6 +8067,22 @@
     "message": "Hermes Web geöffnet",
     "description": "Runtime interface message webapp.opened_title"
   },
+  "runtime_webapp_opening_detail": {
+    "message": "Du wirst bei deiner Hermes Webapp angemeldet. Das dauert einige Sekunden.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "Trotzdem anzeigen",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web lädt länger als gewöhnlich. Möglicherweise startet es noch.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Hermes Web wird geöffnet",
+    "description": "Runtime interface message webapp.opening_title"
+  },
   "runtime_webapp_reason_invalid_address": {
     "message": "Die Hermes-Web-Adresse in den Einstellungen ist keine gültige http- oder https-Adresse.",
     "description": "Runtime interface message webapp.reason_invalid_address"

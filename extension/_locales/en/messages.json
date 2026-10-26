@@ -8067,6 +8067,22 @@
     "message": "Hermes Web opened",
     "description": "Runtime interface message webapp.opened_title"
   },
+  "runtime_webapp_opening_detail": {
+    "message": "Signing you in to your Hermes Webapp. This takes a few seconds.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "Show it anyway",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web is taking longer than usual to load. It may still be starting.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Opening Hermes Web",
+    "description": "Runtime interface message webapp.opening_title"
+  },
   "runtime_webapp_reason_invalid_address": {
     "message": "The Hermes Web address in Settings is not a valid http or https address.",
     "description": "Runtime interface message webapp.reason_invalid_address"

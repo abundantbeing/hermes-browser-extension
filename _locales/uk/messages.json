@@ -8067,6 +8067,22 @@
     "message": "Hermes Web відкрито",
     "description": "Runtime interface message webapp.opened_title"
   },
+  "runtime_webapp_opening_detail": {
+    "message": "Виконується вхід у ваш Hermes Webapp. Це займе кілька секунд.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "Усе одно показати",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web завантажується довше, ніж зазвичай. Можливо, він ще запускається.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Відкриваємо Hermes Web",
+    "description": "Runtime interface message webapp.opening_title"
+  },
   "runtime_webapp_reason_invalid_address": {
     "message": "Адреса Hermes Web у налаштуваннях не є дійсною адресою http або https.",
     "description": "Runtime interface message webapp.reason_invalid_address"

@@ -8067,6 +8067,22 @@
     "message": "Hermes Web açıldı",
     "description": "Runtime interface message webapp.opened_title"
   },
+  "runtime_webapp_opening_detail": {
+    "message": "Hermes Webapp’inizde oturum açılıyor. Bu birkaç saniye sürer.",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "Yine de göster",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web’in yüklenmesi her zamankinden uzun sürüyor. Henüz başlıyor olabilir.",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "Hermes Web açılıyor",
+    "description": "Runtime interface message webapp.opening_title"
+  },
   "runtime_webapp_reason_invalid_address": {
     "message": "Ayarlar’daki Hermes Web adresi geçerli bir http veya https adresi değil.",
     "description": "Runtime interface message webapp.reason_invalid_address"

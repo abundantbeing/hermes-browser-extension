@@ -8067,6 +8067,22 @@
     "message": "เปิด Hermes Web แล้ว",
     "description": "Runtime interface message webapp.opened_title"
   },
+  "runtime_webapp_opening_detail": {
+    "message": "กำลังลงชื่อเข้าใช้ Hermes Webapp ของคุณ ใช้เวลาไม่กี่วินาที",
+    "description": "Runtime interface message webapp.opening_detail"
+  },
+  "runtime_webapp_opening_show": {
+    "message": "แสดงเลย",
+    "description": "Runtime interface message webapp.opening_show"
+  },
+  "runtime_webapp_opening_slow": {
+    "message": "Hermes Web ใช้เวลาโหลดนานกว่าปกติ อาจกำลังเริ่มทำงานอยู่",
+    "description": "Runtime interface message webapp.opening_slow"
+  },
+  "runtime_webapp_opening_title": {
+    "message": "กำลังเปิด Hermes Web",
+    "description": "Runtime interface message webapp.opening_title"
+  },
   "runtime_webapp_reason_invalid_address": {
     "message": "ที่อยู่ Hermes Web ในการตั้งค่าไม่ใช่ที่อยู่ http หรือ https ที่ถูกต้อง",
     "description": "Runtime interface message webapp.reason_invalid_address"
