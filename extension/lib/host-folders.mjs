@@ -243,3 +243,10 @@ export function createHostFolderBrowser({ request, getSessionId = () => '', prof
     },
   };
 }
+
+/** The folders whose name holds `filter` (case-insensitive), in the order given. */
+export function filterFolders(folders = [], filter = '') {
+  const needle = clean(filter).toLowerCase();
+  const list = Array.isArray(folders) ? folders : [];
+  return needle ? list.filter((folder) => String(folder?.name || '').toLowerCase().includes(needle)) : list;
+}

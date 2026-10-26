@@ -26,6 +26,22 @@ export const PROJECTS_METHODS = Object.freeze({
   forCwd: 'projects.for_cwd',
 });
 
+// Desktop's "Generate idea" (apps/desktop/src/store/projects.ts generateProjectIdea): the stateless llm.oneshot call,
+// the same instructions, so an idea reads the same from either surface. It runs on the gateway's model, never here.
+export const IDEA_ONESHOT_METHOD = 'llm.oneshot';
+export const IDEA_INSTRUCTIONS = 'You generate a single, concrete project idea as a short IDEA.md body: a one-line summary, '
+  + 'then 3-5 bullet goals. No preamble, no code fences, under 120 words.';
+
+/** llm.oneshot params for one idea. A name steers it; without one the model is asked for a fun project. */
+export function buildIdeaParams({ profile = '', name = '' } = {}) {
+  const title = clean(name);
+  return withProfile({
+    instructions: IDEA_INSTRUCTIONS,
+    input: title ? `Project name: ${title}` : 'Surprise me with a fun project.',
+    temperature: 1.0,
+  }, profile);
+}
+
 // methods_projects.py: generic failure / id resolved to nothing / invalid
 // argument (a duplicate primary path, an unusable name). 4064 is the legacy
 // fallback's "profile unavailable" for a ticket or profile that no longer
@@ -584,6 +600,21 @@ export function createProjectsClient({
       if (result.ok) invalidate();
       if (!result.ok && result.reason === 'malformed-response') {
         return { ...result, reason: 'not-created', message: 'Hermes did not return the project it was asked to create.' };
+      }
+      return result;
+    },
+
+    // Never cached. An empty answer is a failure: the caller keeps what the person already typed.
+    async generateIdea({ name = '' } = {}) {
+      const result = await call(IDEA_ONESHOT_METHOD, buildIdeaParams({ profile, name }), {
+        normalize: (raw) => {
+          const text = typeof asObject(raw).text === 'string' ? raw.text.trim() : '';
+          return text ? { text } : null;
+        },
+        useCache: false,
+      });
+      if (!result.ok && result.reason === 'malformed-response') {
+        return { ...result, reason: 'empty-idea', message: 'Hermes did not return an idea.' };
       }
       return result;
     },

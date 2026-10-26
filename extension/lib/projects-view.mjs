@@ -352,22 +352,27 @@ export function suggestUniqueName(name = '', existingNames = []) {
 /**
  * Check a create-project draft against what is already listed. Blocking
  * errors: no name, no folder, a folder that is not a gateway-host path, and a
- * folder that already is a project's primary folder (the gateway refuses it
+ * first (primary) folder that already is a project's primary folder (the gateway refuses it
  * with 5063). A repeated name is a warning, not an error: the gateway allows
  * it and tells the two apart by slug, so the drawer keeps them apart by folder.
  */
-export function validateProjectDraft({ name = '', path = '' } = {}, rows = []) {
+export function validateProjectDraft({ name = '', path = '', folders = [] } = {}, rows = []) {
   const title = clean(name);
-  const folder = clean(path);
+  // The folders already added, then the path still being typed. The first is the project's primary folder.
+  const paths = [];
+  for (const entry of [...(Array.isArray(folders) ? folders : []), path]) {
+    const value = clean(entry);
+    if (value && !paths.some((existing) => samePath(existing, value))) paths.push(value);
+  }
   const errors = {};
   const warnings = {};
   const projects = rows.filter((row) => row.kind === 'project');
   if (!title) errors.name = 'projects.create.error.name_required';
-  if (!folder) errors.path = 'projects.create.error.path_required';
-  else if (folder.length > 4096 || folder.includes('\0') || !isGatewayHostPath(folder)) {
+  if (!paths.length) errors.path = 'projects.create.error.path_required';
+  else if (paths.some((folder) => folder.length > 4096 || folder.includes('\0') || !isGatewayHostPath(folder))) {
     errors.path = 'projects.create.error.path_invalid';
   } else {
-    const owner = projects.find((row) => samePath(row.path, folder));
+    const owner = projects.find((row) => samePath(row.path, paths[0]));
     if (owner) errors.path = 'projects.create.error.path_in_use';
     if (owner) warnings.owner = owner.name;
   }
