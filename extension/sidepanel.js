@@ -670,7 +670,7 @@ import { createHermesClient } from './lib/hermes-client.mjs';
 import { createGatewayQuirkStore, GATEWAY_QUIRK, isSessionPatchRejection } from './lib/gateway-quirks.mjs';
 import { openHermesWebapp, resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
-import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
+import { createWebappGatewayTickets, WEBAPP_TICKET_REASONS } from './lib/webapp-gateway-tickets.mjs';
 import { PROJECTS_UNAVAILABLE } from './lib/projects-client.mjs';
 import { createWebappDialog } from './lib/hermes-webapp-dialog.mjs';
 import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
@@ -2776,6 +2776,7 @@ function showSettingsPane(pane, { field = '', focus = true } = {}) {
   if (settingsActivePane === 'about') {
     void refreshCompanionPluginStatus({ force: true }).catch(() => undefined);
     void refreshDashboardRoutes({ force: true }).catch(() => undefined);
+    void refreshGatewaySocket({ force: true }).catch(() => undefined);
   }
   renderSettingsEditedMarkers();
   requestAnimationFrame(updateSettingsBackToTop);
@@ -4876,13 +4877,17 @@ function syncCapabilityRuntime() {
     if (!capabilityClientTokens.has(client)) capabilityClientTokens.set(client, `ws-${++capabilityClientCounter}`);
     token = capabilityClientTokens.get(client);
   }
+  // A session-authority socket opened beside a REST chat (the Hermes Web socket) speaks for authority, Projects
+  // and compaction only; chat and the rest of the rows stay on the connection chat uses.
+  const side = wsActive ? null : sessionAuthoritySideSocket();
   // Authority, projects, compaction and image attach are read from the socket's
   // own gateway.ready (see deriveCapabilityRecords), so a capability object that
   // was built before the handshake arrived does not hide them.
   return capabilityRuntime.sync({
     caps: gatewayCapabilities,
     dashboardWsActive: wsActive,
-    readyPayload: client ? client.readyPayload || null : null,
+    sideSocket: Boolean(side),
+    readyPayload: client ? client.readyPayload || null : (side?.readyPayload || null),
     identity: capabilityIdentity({
       endpoint: wsActive ? (connection?.baseUrl || settings.gatewayUrl) : settings.gatewayUrl,
       principal: contextConsentBindingMatches() ? contextConsentPrincipalBinding.principal : '',
@@ -4892,6 +4897,13 @@ function syncCapabilityRuntime() {
     connectionToken: token,
     connected: client ? client.readyState === 1 : isConnected(),
   });
+}
+
+// The open dashboard socket that is not the chat transport: the roster's or Projects' one, from the paired
+// gateway's ticket or the held credential. Null while there is none, or its handshake has not arrived.
+function sessionAuthoritySideSocket() {
+  const client = (activeDashboardWsConnection?.client?.readyState === 1 ? activeDashboardWsConnection : profileWsConnection)?.client;
+  return client?.readyState === 1 && client.readyPayload && typeof client.readyPayload === 'object' ? client : null;
 }
 
 function refreshCapabilityViews() {
@@ -4972,6 +4984,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
     setGatewayCapabilities(normalizeGatewayCapabilities(payload, { healthOk: true, hasApiKey: Boolean(hermesGatewayKey()) }));
     void refreshCompanionPluginStatus().catch(() => undefined);
     void refreshDashboardRoutes().catch(() => undefined);
+    void refreshGatewaySocket().catch(() => undefined);
   } catch (error) {
     const status = Number(error?.httpStatus ?? error?.status);
     if (status === 401 && !isRemoteWsMode()) {
@@ -11425,6 +11438,10 @@ async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboar
   // Remote API mode has no dashboard companion yet. Do not go looking for a
   // dashboard on this machine; report the missing companion instead.
   if (!isLocalApiMode()) throw dashboardCompanionNotConfiguredError();
+  // First choice: the paired gateway signs a socket in itself, so no dashboard has to be discovered and no
+  // credential held. A gateway without the routes (or with its Webapp off) answers null and the rest runs as before.
+  const viaGatewayTicket = await connectProfileViaGatewayTicket({ readyTimeoutMs });
+  if (viaGatewayTicket) return viaGatewayTicket;
   // The dashboard WS (/api/ws) lives on the DESKTOP dashboard's random port —
   // the 8642 sidecar has no such route and a connect attempt there hangs
   // waiting gateway.ready. When no dashboard URL is known yet, discover it
@@ -11604,6 +11621,72 @@ async function connectProfileViaWebapp(baseUrl, key, readyTimeoutMs) {
   webappListeners.set(origin, 'accepted');
   profileWsConnection = { client: gatewayClient, baseUrl, key };
   return profileWsConnection;
+}
+
+// The paired gateway signs the Webapp's /api/ws socket in: POST /api/browser-extension/webapp-socket-ticket
+// answers a one-use ticket and the Webapp's own socket address, and the dial offers the ticket as the
+// hermes-gateway-ticket subprotocol beside hermes-gateway-v1 (as connectProfileViaWebapp does with the held
+// credential's ticket). Nothing is held and no dashboard is discovered; every retry mints a new ticket.
+// Resolves the open profile connection, or null when this gateway cannot (no routes, the Webapp off or behind
+// sign-in, not a local gateway, the dial failed) so the caller falls back to discovery and the held credential.
+let gatewaySocketPending = null;
+let gatewaySocketFailedAt = 0;
+const GATEWAY_SOCKET_RETRY_MS = 15_000;
+function connectProfileViaGatewayTicket(options = {}) {
+  if (!isLocalApiMode()) return Promise.resolve(null);
+  const open = profileWsConnection;
+  if (open?.client?.readyState === 1 && open.key === profileConnectionKey(open.baseUrl)) return Promise.resolve(open);
+  // One dial at a time: the roster, Projects and the capability refresh may all ask at once.
+  if (!gatewaySocketPending) {
+    gatewaySocketPending = dialProfileViaGatewayTicket(options).finally(() => { gatewaySocketPending = null; });
+  }
+  return gatewaySocketPending;
+}
+
+async function dialProfileViaGatewayTicket({ readyTimeoutMs = 8_000 } = {}) {
+  const tickets = webappGatewayTickets();
+  const minted = await tickets.socketTicket();
+  if (!minted.ok) return null;
+  const baseUrl = minted.baseUrl;
+  const key = profileConnectionKey(baseUrl);
+  let connection = null;
+  try {
+    profileWsConnection?.client?.close?.();
+    const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs, replayEndpoint: baseUrl });
+    gatewayClient.on('close', () => {
+      if (profileWsConnection?.client === gatewayClient) profileWsConnection = null;
+      refreshCapabilityViews();
+    });
+    gatewayClient.on('sessions.changed', () => {
+      if (activeGroupProjection) void syncActiveGroupRoomFromGateway();
+    });
+    gatewayClient.on('profiles.changed', () => {
+      void loadProfiles({ quiet: true });
+    });
+    await connectGatewayWithTicket(gatewayClient, baseUrl, minted.ticket, {
+      refreshTicket: async () => {
+        const fresh = await tickets.socketTicket({ force: true });
+        return fresh.ok ? fresh.ticket : '';
+      },
+    });
+    connection = { client: gatewayClient, baseUrl, key };
+    profileWsConnection = connection;
+  } catch {
+    gatewaySocketFailedAt = Date.now();
+    return null;
+  }
+  refreshCapabilityViews();
+  return connection;
+}
+
+// Opens that socket in the background when the panel connects to a local gateway, so Session authority,
+// Projects and compaction in Settings reflect what the gateway can do instead of waiting for Projects or the
+// roster to ask. A gateway without the routes is asked once and then left alone for a while.
+async function refreshGatewaySocket({ force = false } = {}) {
+  if (!isLocalApiMode() || !hermesGatewayKey()) return null;
+  if (profileWsConnection?.client?.readyState === 1) return profileWsConnection;
+  if (!force && Date.now() - gatewaySocketFailedAt < GATEWAY_SOCKET_RETRY_MS) return null;
+  return connectProfileViaGatewayTicket({ readyTimeoutMs: 5_000 });
 }
 
 function usesDashboardWsChatTransport() {
@@ -13974,10 +14057,13 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     // The unified gateway no longer spawns a Desktop dashboard on a random
     // port. Look for one briefly; when none answers, list the profiles the
     // gateway itself serves instead of waiting out the dashboard handshake.
-    if (!localDashboardUrl()) {
+    // The paired gateway signs a socket in itself, so the rich roster needs no discovered dashboard.
+    const viaGateway = !localDashboardUrl() && isLocalApiMode()
+      ? await connectProfileViaGatewayTicket({ readyTimeoutMs: 8_000 }).catch(() => null) : null;
+    if (!viaGateway && !localDashboardUrl()) {
       await ensureDesktopDashboardUrl({ timeoutMs: 2_500 }).catch(() => '');
     }
-    if (!localDashboardUrl()) {
+    if (!viaGateway && !localDashboardUrl()) {
       const served = await loadProfilesFromGatewayRoutes({ quiet, generation, gatewayUrl });
       if (served) return served;
     }
@@ -14015,7 +14101,8 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     // replaced one): the gateway's own /v1/profiles still lists the profiles, so the roster does not
     // wait for it.
     const dashboardUrl = localDashboardUrl();
-    if (error?.ticketReason === 'webapp_sign_in_required' || (dashboardUrl && webappListeners.has(originOf(dashboardUrl)))) {
+    // No dashboard at all (the paired gateway's socket was the only try) falls back the same way.
+    if (error?.ticketReason === 'webapp_sign_in_required' || (dashboardUrl && webappListeners.has(originOf(dashboardUrl))) || (!dashboardUrl && isLocalApiMode())) {
       const served = await loadProfilesFromGatewayRoutes({ quiet, generation, gatewayUrl });
       if (served) return served;
     }
@@ -17223,16 +17310,20 @@ async function prepareProjectsConnection() {
     return;
   }
   projectsBlockedReason = '';
-  if (!remote && isLocalApiMode()) {
+  // The paired gateway signs a socket in itself; only without it does Projects look for a sign-in.
+  const viaGateway = !remote && isLocalApiMode() ? await connectProfileViaGatewayTicket().catch(() => null) : null;
+  if (!remote && isLocalApiMode() && !viaGateway) {
     // Opening or refreshing Projects tries again to keep Hermes Web's sign-in from an open tab,
     // then to find the listener it unlocks.
     await captureWebappCredential({ force: true }).catch(() => false);
     if (!localDashboardUrl()) await ensureDesktopDashboardUrl({ timeoutMs: 2_500 }).catch(() => '');
   }
-  if (!remote && !localDashboardUrl()) {
+  if (!remote && !viaGateway && !localDashboardUrl()) {
     projectsConnectError = '';
+    // A gateway that carries the pairing routes said its Webapp is off: that, not a sign-in, is what is missing.
+    if (webappGatewayTickets().status().webapp === WEBAPP_TICKET_REASONS.OFF) projectsBlockedReason = PROJECTS_UNAVAILABLE.webappOff;
     // Hermes Web is serving the dashboard routes and this panel has no sign-in for it.
-    if (keepSignedInEnabled(settings) && webappListenerNeedingSignIn()) projectsBlockedReason = PROJECTS_UNAVAILABLE.webappSignIn;
+    else if (keepSignedInEnabled(settings) && webappListenerNeedingSignIn()) projectsBlockedReason = PROJECTS_UNAVAILABLE.webappSignIn;
     return;
   }
   try {
@@ -22319,8 +22410,9 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
   // A session-authority dashboard has no session.compress; it compacts through
   // session.mutate operation=compress, read back before it says done.
   syncCapabilityRuntime();
-  if (usesDashboardWsChatTransport() && capabilityRuntime.record('sessionCompress')?.params?.route === 'canonical') {
-    return compactCanonicalSessionContext({ automaticRecovery });
+  const compressRecord = capabilityRuntime.record('sessionCompress');
+  if (compressRecord?.params?.route === 'canonical' && (usesDashboardWsChatTransport() || compressRecord.params.sideSocket === true)) {
+    return compactCanonicalSessionContext({ automaticRecovery, sideSocket: !usesDashboardWsChatTransport() });
   }
   if (!gatewayCapabilities.sessionCompress) {
     if (!automaticRecovery) setStatus('warn', 'Context compaction unavailable', 'The connected Hermes runtime does not advertise native session compaction.');
@@ -22370,7 +22462,7 @@ async function compactCurrentSessionContext({ automaticRecovery = false } = {}) 
 // Session-authority dashboard: session.mutate operation=compress. The durable
 // session id is the key and survives compression (a rotating compaction moves
 // the physical target, never the id this panel holds), so nothing is renamed.
-async function compactCanonicalSessionContext({ automaticRecovery = false } = {}) {
+async function compactCanonicalSessionContext({ automaticRecovery = false, sideSocket = false } = {}) {
   // The session the press was for; the view may move on while the call runs.
   const viewedId = settings.sessionId;
   const verdict = capabilityRuntime.verdict('sessionCompress', { sessionId: viewedId });
@@ -22382,9 +22474,11 @@ async function compactCanonicalSessionContext({ automaticRecovery = false } = {}
   compactInFlight = true;
   renderCompactControl();
   try {
-    const connection = await ensureActiveDashboardWsConnection();
-    await ensureRemoteWsSession(connection);
-    const durableId = connection.wsStoredSessionId || settings.sessionId;
+    // Beside a REST chat the socket only speaks for the session by its durable id: it never adopts or
+    // creates a live session, so the panel's own session is left as it is.
+    const connection = sideSocket ? await ensureProfileWsConnection() : await ensureActiveDashboardWsConnection();
+    if (!sideSocket) await ensureRemoteWsSession(connection);
+    const durableId = (!sideSocket && connection.wsStoredSessionId) || settings.sessionId;
     const result = await compactSessionCanonical({
       request: (method, params, options) => connection.client.request(method, params, options),
       dashboardWs: true,

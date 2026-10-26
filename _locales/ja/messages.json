@@ -1395,6 +1395,10 @@
     "message": "Hermes は直近の試行を拒否しました: {detail}。",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "この接続のチャットは REST API 経由で動作します。貼り付けた画像は、ボットモードや名前付きプロファイルのセッションのように、チャットがダッシュボードの WebSocket 経由で動作しているときにライブセッションへ添付されます。",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "この接続は REST API にしか届かず、圧縮用のルートは通知されません。圧縮にはセッション権限のあるダッシュボード WebSocket が必要です。",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "ここではプロジェクトを利用できません",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "このゲートウェイでは Hermes Web がオフのため、プロジェクトにはセッションソケットがありません。config.yaml で webapp.enabled を true にし、hermes gateway restart を実行してから、もう一度お試しください。",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "プロジェクトには Hermes Web のサインインが必要です。Hermes Web を一度開き（hermes webapp を実行）、もう一度お試しください。",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "パネルは、ブラウザーを閉じるまでこのブラウザーの Hermes Web サインインを保持します。そのため hermes webapp を再実行しなくても、Hermes Web、プロジェクト、ボットのプロファイルが使えます。hermes webapp --sign-out で終了します。",
+    "message": "Hermes Browser のペアリングにより、Hermes Web、プロジェクト、ボットのプロファイルには自動でサインインされ、実行するコマンドはありません。古いゲートウェイでは、hermes webapp を一度実行すると、パネルがブラウザーを閉じるまでこのブラウザーの Hermes Web サインインを保持します。hermes webapp --sign-out で終了します。",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

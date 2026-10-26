@@ -45,6 +45,8 @@ export const PROJECTS_UNAVAILABLE = Object.freeze({
   // The gateway's Webapp is serving this connection's dashboard routes and the panel does not hold
   // its sign-in: Projects cannot open a session-authority socket until it does.
   webappSignIn: 'webapp-sign-in',
+  // The paired gateway answered that its Webapp is off, so there is no socket to sign in to.
+  webappOff: 'webapp-off',
 });
 
 const UNAVAILABLE_COPY = Object.freeze({
@@ -56,7 +58,16 @@ const UNAVAILABLE_COPY = Object.freeze({
     'This Hermes gateway did not advertise session authority, so projects and moving sessions are unavailable. Update Hermes to a build with canonical session mutations.',
   [PROJECTS_UNAVAILABLE.webappSignIn]:
     "Projects needs Hermes Web's sign-in. Open Hermes Web once (run hermes webapp), then try again.",
+  [PROJECTS_UNAVAILABLE.webappOff]:
+    'Hermes Web is turned off on this gateway, so Projects has no session socket. Set webapp.enabled to true in config.yaml, run hermes gateway restart, then try again.',
 });
+
+// A reason the caller supplies (`blockedReason`) because it knows something the socket cannot say.
+const CALLER_REASONS = new Set([PROJECTS_UNAVAILABLE.webappSignIn, PROJECTS_UNAVAILABLE.webappOff]);
+
+export function isCallerBlockedReason(reason = '') {
+  return CALLER_REASONS.has(clean(reason));
+}
 
 function clean(value = '') {
   return String(value ?? '').trim();
@@ -70,7 +81,8 @@ function clean(value = '') {
  *   not-connected        the WebSocket has not delivered gateway.ready yet;
  *   no-session-authority gateway.ready lacks `session_authority: true`;
  *   method-not-found     this connection already answered -32601 for `method`;
- *   webapp-sign-in       the caller says (`blockedReason`) that Hermes Web's sign-in is missing.
+ *   webapp-sign-in       the caller says (`blockedReason`) that Hermes Web's sign-in is missing;
+ *   webapp-off           the caller says the paired gateway reported its Webapp is off.
  */
 export function gatewayAuthorityAvailability({
   dashboardWs = false,
@@ -79,11 +91,11 @@ export function gatewayAuthorityAvailability({
   method = '',
   blockedReason = '',
 } = {}) {
-  if (clean(blockedReason) === PROJECTS_UNAVAILABLE.webappSignIn) {
+  if (CALLER_REASONS.has(clean(blockedReason))) {
     return {
       available: false,
-      reason: PROJECTS_UNAVAILABLE.webappSignIn,
-      message: UNAVAILABLE_COPY[PROJECTS_UNAVAILABLE.webappSignIn],
+      reason: clean(blockedReason),
+      message: UNAVAILABLE_COPY[clean(blockedReason)],
     };
   }
   if (dashboardWs !== true) {

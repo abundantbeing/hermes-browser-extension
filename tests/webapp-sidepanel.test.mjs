@@ -14,6 +14,7 @@ import { resolveWebappTarget } from '../extension/lib/hermes-webapp.mjs';
 import english from '../extension/lib/locales/en.mjs';
 import { PROJECTS_UNAVAILABLE } from '../extension/lib/projects-client.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled, webappSessionStorageKey } from '../extension/lib/webapp-credential.mjs';
+import { WEBAPP_TICKET_REASONS, createWebappGatewayTickets } from '../extension/lib/webapp-gateway-tickets.mjs';
 import { installGroupLifecycleHarness } from './helpers/group-lifecycle-harness.mjs';
 
 const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
@@ -30,6 +31,7 @@ const WEBAPP = 'http://127.0.0.1:9120';
 const GATEWAY = 'http://127.0.0.1:8642';
 const CREDENTIAL = `cred-${'0123456789'.repeat(4)}`.slice(0, 43);
 const TICKET = `tick-${'abcdefghij'.repeat(4)}`.slice(0, 43);
+const GATEWAY_SOCKET_TICKET = `gwsock-${'klmnopqrst'.repeat(4)}`.slice(0, 43);
 const STATUS = { version: '0.22.5', gateway_mode: 'multiplex', profiles: ['default', 'work'], auth_required: false };
 
 const reply = (status, json = {}, body = '') => ({
@@ -42,9 +44,9 @@ const reply = (status, json = {}, body = '') => ({
 
 // The machine the user has: the gateway on 8642 with /v1/profiles, and the Webapp on 9120 that
 // answers like a dashboard but wants its own credential. `webapp.signedOut` models --sign-out.
-function machine({ signedOut = false, socketTicketStatus = 200 } = {}) {
+function machine({ signedOut = false, socketTicketStatus = 200, routes = 'absent' } = {}) {
   const requests = [];
-  const state = { signedOut };
+  const state = { signedOut, routes };
   const handler = async (url, init = {}) => {
     const target = String(url);
     const headers = init.headers || {};
@@ -65,6 +67,16 @@ function machine({ signedOut = false, socketTicketStatus = 200 } = {}) {
     if (target.startsWith(GATEWAY)) {
       const path = target.slice(GATEWAY.length).split('?')[0];
       if (path === '/api/desktop/dashboard-candidates') return reply(404, {}, 'not found');
+      // The pairing routes: absent on an older gateway (a plain 404), signing a socket in, or answering
+      // that the Webapp is off.
+      if (path === '/api/browser-extension/webapp-socket-ticket' || path === '/api/browser-extension/webapp-ticket') {
+        if (state.routes === 'absent') return reply(404, {}, 'not found');
+        if (headers.Authorization !== 'Bearer gateway-key') return reply(401, { error: { code: 'gateway_auth_failed' } });
+        if (state.routes === 'off') return reply(404, { error: { code: 'webapp_off', message: 'The Webapp is off.' } });
+        return path.endsWith('webapp-ticket')
+          ? reply(200, { ticket: TICKET, webapp_url: WEBAPP, expires_in_seconds: 30 })
+          : reply(200, { ticket: GATEWAY_SOCKET_TICKET, ws_url: 'ws://127.0.0.1:9120/api/ws', ttl_seconds: 30 });
+      }
       if (path === '/v1/profiles') {
         return headers.Authorization === 'Bearer gateway-key'
           ? reply(200, { profiles: [{ name: 'default', title: 'Hermes' }, { name: 'work', title: 'Work' }] })
@@ -116,6 +128,7 @@ function panel({
       },
     },
     // modules sidepanel.js imports
+    createWebappGatewayTickets, WEBAPP_TICKET_REASONS, refreshCapabilityViews() {},
     createWebappCredentialStore, keepSignedInEnabled, resolveWebappTarget, originOf, extractDashboardSessionToken,
     discoverLocalDashboardBaseUrl, connectGatewayWithTicket, ticketFailureHelp, PROJECTS_UNAVAILABLE,
     fetchRosterFromGatewayApi: (options) => fetchRosterFromGatewayApi({ ...options, fetchFn: net }),
@@ -401,4 +414,135 @@ test('the background keeps the sign-in of a Hermes Web tab while it is open, onl
   assert.match(listener, /resolveWebappTarget\(settings\)/);
   assert.match(listener, /webappCredentials\.capture\(target, \{ tab \}\)/);
   assert.match(background, /credentials: webappCredentials,/, 'the Assist chooser opens Hermes Web the same way');
+});
+
+
+// --- the paired gateway signs the socket in (no terminal, no held credential) ---------------------
+
+const ticketPosts = (net) => net.requests.filter((request) => request.url.includes('/api/browser-extension/webapp-socket-ticket'));
+
+test('a gateway with the pairing routes: the socket opens with its ticket, nothing held, nothing discovered', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  const connection = await vm.runInContext('ensureProfileWsConnection()', p.context);
+  assert.equal(connection.baseUrl, WEBAPP);
+  assert.equal(p.connects.length, 1);
+  const [url, protocols] = p.connects[0];
+  assert.equal(url, 'ws://127.0.0.1:9120/api/ws');
+  assert.deepEqual(protocols, ['hermes-gateway-v1', `hermes-gateway-ticket.${GATEWAY_SOCKET_TICKET}`]);
+  assert.equal(p.held(), null, 'no credential was captured or held');
+  assert.deepEqual(credentialedRequests(net), [], 'nothing was authenticated against the Webapp');
+  assert.deepEqual(requestsTo(net, WEBAPP), [], 'the Webapp was never probed: the gateway named it');
+  const [post] = ticketPosts(net);
+  assert.equal(post.method, 'POST');
+  assert.equal(post.headers.Authorization, 'Bearer gateway-key');
+  assert.ok(!JSON.stringify(p.connects).includes('gateway-key'), 'the paired token never reaches the socket');
+});
+
+test('a second ask reuses the open socket and mints nothing', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  const first = await vm.runInContext('ensureProfileWsConnection()', p.context);
+  const second = await vm.runInContext('ensureProfileWsConnection()', p.context);
+  assert.equal(second, first);
+  assert.equal(ticketPosts(net).length, 1);
+});
+
+test('concurrent asks (roster, Projects, capability refresh) share one dial', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  const [a, b, c] = await Promise.all([
+    vm.runInContext('connectProfileViaGatewayTicket()', p.context),
+    vm.runInContext('connectProfileViaGatewayTicket()', p.context),
+    vm.runInContext('refreshGatewaySocket()', p.context),
+  ]);
+  assert.equal(a, b);
+  assert.equal(a, c);
+  assert.equal(p.connects.length, 1);
+  assert.equal(ticketPosts(net).length, 1);
+});
+
+test('the rich roster comes over that socket, not from the gateway /v1/profiles', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  p.context.createChatGatewayClient = () => ({
+    readyState: 1, on() {}, close() {},
+    connect: async () => {},
+    request: async (method) => (method === 'profiles.list' ? { profiles: [{ name: 'default' }, { name: 'work' }, { name: 'rich-only' }] } : {}),
+  });
+  const result = await p.context.loadProfiles({ quiet: true });
+  assert.equal(result.status, 'ready');
+  assert.deepEqual(p.context.availableProfiles.map((row) => row.name), ['default', 'work', 'rich-only']);
+  assert.deepEqual(requestsTo(net, GATEWAY).filter((request) => request.url.includes('/v1/')), []);
+});
+
+test('Projects connects through the gateway ticket with no sign-in reason and no connect error', async () => {
+  const p = panel({ net: machine({ routes: 'ok' }) });
+  await vm.runInContext('prepareProjectsConnection()', p.context);
+  assert.equal(p.context.projectsBlockedReason, '');
+  assert.equal(p.context.projectsConnectError, '');
+  assert.equal(p.connects.length, 1);
+});
+
+test('a gateway that says its Webapp is off: Projects says so, and the roster still loads from the gateway routes', async () => {
+  const p = panel({ net: machine({ routes: 'off' }) });
+  await vm.runInContext('prepareProjectsConnection()', p.context);
+  assert.equal(p.context.projectsBlockedReason, 'webapp-off');
+  assert.equal(p.connects.length, 0);
+  const result = await p.context.loadProfiles({ quiet: true });
+  assert.equal(result.status, 'ready');
+  assert.deepEqual(p.context.availableProfiles.map((row) => row.name), ['default', 'work']);
+});
+
+test('an old gateway (plain 404) is asked once, then discovery and the held credential decide as before', async () => {
+  const net = machine({ routes: 'absent' });
+  const p = panel({ held: heldRecord, net });
+  const connection = await vm.runInContext('ensureProfileWsConnection()', p.context);
+  assert.equal(connection.baseUrl, WEBAPP);
+  assert.equal(p.connects.length, 1);
+  assert.equal(p.connects[0][1][1], `hermes-gateway-ticket.${TICKET}`, 'the held credential ticket');
+  assert.equal(ticketPosts(net).length, 1, 'probed once');
+  await p.context.loadProfiles({ quiet: true });
+  assert.equal(ticketPosts(net).length, 1, 'and not again for a while');
+});
+
+test('after hermes webapp --sign-out the gateway signs in under the new credential: nothing held is needed', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ held: heldRecord, net });
+  net.state.signedOut = true; // the held credential is dead; the gateway route does not use it
+  const connection = await vm.runInContext('ensureProfileWsConnection()', p.context);
+  assert.equal(connection.baseUrl, WEBAPP);
+  assert.equal(p.connects[0][1][1], `hermes-gateway-ticket.${GATEWAY_SOCKET_TICKET}`);
+  assert.deepEqual(credentialedRequests(net), []);
+});
+
+test('a ticket the socket refuses is minted again for the retry, never reused', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  let refresh = null;
+  p.context.connectGatewayWithTicket = async (client, baseUrl, ticket, options) => { refresh = options.refreshTicket; return ticket; };
+  await vm.runInContext('connectProfileViaGatewayTicket()', p.context);
+  assert.equal(ticketPosts(net).length, 1);
+  assert.equal(await refresh(), GATEWAY_SOCKET_TICKET);
+  assert.equal(ticketPosts(net).length, 2, 'the retry mints a new one');
+});
+
+test('a dial that fails leaves no connection, and the background refresh waits before trying again', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net });
+  p.context.createChatGatewayClient = () => ({ readyState: 0, on() {}, close() {}, connect: async () => { throw new Error('closed before gateway.ready'); } });
+  assert.equal(await vm.runInContext('connectProfileViaGatewayTicket()', p.context), null);
+  assert.equal(p.read('profileWsConnection'), null);
+  assert.equal(await vm.runInContext('refreshGatewaySocket()', p.context), null);
+  assert.equal(ticketPosts(net).length, 1, 'cooling down');
+  await vm.runInContext('refreshGatewaySocket({ force: true })', p.context);
+  assert.equal(ticketPosts(net).length, 2, 'About & Diagnostics asks again');
+});
+
+test('a remote connection never asks the local gateway', async () => {
+  const net = machine({ routes: 'ok' });
+  const p = panel({ net, gatewayMode: 'remote-api' });
+  assert.equal(await vm.runInContext('connectProfileViaGatewayTicket()', p.context), null);
+  assert.equal(await vm.runInContext('refreshGatewaySocket()', p.context), null);
+  assert.equal(ticketPosts(net).length, 0);
 });

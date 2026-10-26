@@ -13,7 +13,7 @@
 
 import {
   PROJECTS_METHODS,
-  PROJECTS_UNAVAILABLE,
+  isCallerBlockedReason,
   createProjectsClient,
   gatewayAuthorityAvailability,
   projectsIdentity,
@@ -158,7 +158,7 @@ export function createProjectsController({
         rows: [],
         failure: describeProjectsFailure({ ...gate, unavailable: true }),
         // The sign-in reason is its own message; the raw connect error would only repeat it.
-        connectError: gate.reason === PROJECTS_UNAVAILABLE.webappSignIn ? '' : clean(current.connection?.connectError),
+        connectError: isCallerBlockedReason(gate.reason) ? '' : clean(current.connection?.connectError),
       });
       emit();
       return;

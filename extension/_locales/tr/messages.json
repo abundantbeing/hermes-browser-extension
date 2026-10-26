@@ -1395,6 +1395,10 @@
     "message": "Hermes son denemeyi reddetti: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Bu bağlantıdaki sohbet REST API üzerinden çalışır. Yapıştırılan görseller, sohbet panonun WebSocket'i üzerinden çalıştığında, Bot Modu veya adlandırılmış profil oturumunda olduğu gibi canlı oturuma eklenir.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Bu bağlantı yalnızca sıkıştırma yolu duyurmayan REST API'ye ulaşır. Sıkıştırma için oturum yetkili pano WebSocket'i gerekir.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "Projeler burada kullanılamıyor",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web bu ağ geçidinde kapalı, bu yüzden Projeler'in oturum soketi yok. config.yaml içinde webapp.enabled değerini true yapın, hermes gateway restart çalıştırın ve yeniden deneyin.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Projeler için Hermes Web oturumu gerekiyor. Hermes Web’i bir kez açın (hermes webapp çalıştırın), sonra tekrar deneyin.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Panel, tarayıcıyı kapatana kadar bu tarayıcının Hermes Web oturumunu korur; böylece hermes webapp komutunu yeniden çalıştırmadan Hermes Web, Projeler ve bot profilleri çalışır. hermes webapp --sign-out bu oturumu sonlandırır.",
+    "message": "Hermes Web, Projeler ve bot profilleri, Hermes Browser eşleştirmesi sayesinde sizin için oturum açar; çalıştırmanız gereken bir şey yoktur. Daha eski bir ağ geçidinde panel, hermes webapp'i bir kez çalıştırdıktan sonra bu tarayıcının Hermes Web oturumunu tarayıcıyı kapatana kadar tutar. hermes webapp --sign-out onu sonlandırır.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

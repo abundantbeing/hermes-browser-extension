@@ -1395,6 +1395,10 @@
     "message": "Hermes weigerde de laatste poging: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Chat op deze verbinding loopt via de REST-API. Geplakte afbeeldingen worden aan een live sessie gekoppeld wanneer de chat via de dashboard-WebSocket loopt, zoals bij een Botmodus- of benoemde-profielsessie.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Deze verbinding bereikt alleen de REST-API, die geen compressieroute aankondigt. Comprimeren heeft de dashboard-WebSocket met sessie-autoriteit nodig.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "Projecten zijn hier niet beschikbaar",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web staat uit op deze gateway, dus Projecten heeft geen sessiesocket. Zet webapp.enabled op true in config.yaml, voer hermes gateway restart uit en probeer het opnieuw.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Projecten heeft de login van Hermes Web nodig. Open Hermes Web één keer (voer hermes webapp uit) en probeer het opnieuw.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Het paneel bewaart de Hermes Web-login van deze browser tot je de browser sluit, zodat Hermes Web, Projecten en botprofielen werken zonder hermes webapp opnieuw uit te voeren. hermes webapp --sign-out beëindigt dit.",
+    "message": "Hermes Web, Projecten en botprofielen worden voor u aangemeld via de Hermes Browser-koppeling, zonder iets uit te voeren. Bij een oudere gateway houdt het paneel de Hermes Web-aanmelding van deze browser vast tot u de browser sluit, na eenmaal hermes webapp. hermes webapp --sign-out beëindigt die.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

@@ -1395,6 +1395,10 @@
     "message": "Hermes ปฏิเสธความพยายามครั้งล่าสุด: {detail}",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "แชตบนการเชื่อมต่อนี้ทำงานผ่าน REST API รูปภาพที่วางจะแนบกับเซสชันที่กำลังทำงานเมื่อแชตทำงานผ่าน WebSocket ของแดชบอร์ด เหมือนเซสชันโหมดบอตหรือโปรไฟล์ที่ตั้งชื่อ",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "การเชื่อมต่อนี้เข้าถึงได้เฉพาะ REST API ซึ่งไม่ได้ประกาศเส้นทางการบีบอัด การบีบอัดต้องใช้ WebSocket ของแดชบอร์ดที่มีสิทธิ์ของเซสชัน",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "โปรเจกต์ใช้งานไม่ได้ที่นี่",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web ถูกปิดอยู่บนเกตเวย์นี้ โปรเจกต์จึงไม่มีซ็อกเก็ตเซสชัน ตั้งค่า webapp.enabled เป็น true ใน config.yaml รัน hermes gateway restart แล้วลองอีกครั้ง",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "โปรเจกต์ต้องใช้การลงชื่อเข้าใช้ของ Hermes Web เปิด Hermes Web หนึ่งครั้ง (รัน hermes webapp) แล้วลองอีกครั้ง",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "แผงจะเก็บการลงชื่อเข้าใช้ Hermes Web ของเบราว์เซอร์นี้ไว้จนกว่าคุณจะปิดเบราว์เซอร์ ทำให้ Hermes Web โปรเจกต์ และโปรไฟล์บอตใช้งานได้โดยไม่ต้องรัน hermes webapp อีก คำสั่ง hermes webapp --sign-out จะสิ้นสุดการลงชื่อเข้าใช้นี้",
+    "message": "Hermes Web โปรเจกต์ และโปรไฟล์บอตจะลงชื่อเข้าใช้ให้คุณผ่านการจับคู่ Hermes Browser โดยไม่ต้องรันคำสั่งใด ๆ สำหรับเกตเวย์รุ่นเก่า แผงจะเก็บการลงชื่อเข้าใช้ Hermes Web ของเบราว์เซอร์นี้ไว้จนกว่าคุณจะปิดเบราว์เซอร์ หลังรัน hermes webapp หนึ่งครั้ง hermes webapp --sign-out จะสิ้นสุดการลงชื่อเข้าใช้นั้น",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

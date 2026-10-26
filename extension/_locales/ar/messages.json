@@ -1395,6 +1395,10 @@
     "message": "رفض Hermes المحاولة الأخيرة: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "تعمل المحادثة على هذا الاتصال عبر REST API. تُرفق الصور الملصقة بجلسة حيّة عندما تعمل المحادثة عبر WebSocket للوحة التحكم، كما تفعل جلسة وضع الروبوت أو الملف المسمّى.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "يصل هذا الاتصال إلى REST API فقط، وهو لا يعلن عن مسار للضغط. يحتاج الضغط إلى WebSocket اللوحة مع سلطة الجلسة.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "المشاريع غير متاحة هنا",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web متوقف على هذه البوابة، لذا لا يملك قسم المشاريع مقبس جلسة. اضبط webapp.enabled على true في config.yaml، ثم شغّل hermes gateway restart وحاول مرة أخرى.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "تحتاج المشاريع إلى تسجيل الدخول في Hermes Web. افتح Hermes Web مرة واحدة (شغّل hermes webapp) ثم حاول مجددًا.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "تحتفظ اللوحة بتسجيل دخول هذا المتصفح إلى Hermes Web حتى تغلق المتصفح، فتعمل Hermes Web والمشاريع وملفات الروبوتات دون تشغيل hermes webapp مجددًا. الأمر hermes webapp --sign-out ينهي ذلك.",
+    "message": "يتم تسجيل دخولك إلى Hermes Web والمشاريع وملفات الروبوتات عبر اقتران Hermes Browser دون أي أمر تشغّله. أما مع بوابة أقدم فيحتفظ اللوح بتسجيل دخول Hermes Web لهذا المتصفح حتى تغلقه، بعد تشغيل hermes webapp مرة واحدة. الأمر hermes webapp --sign-out ينهيه.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

@@ -43,6 +43,7 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
   let lastReady = null;
   let lastToken = '';
   let lastWsActive = false;
+  let lastSideSocket = false;
   let lastUnsupportedSize = -1;
   let lastCheckedAt = 0;
 
@@ -55,17 +56,19 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
     return session ? sessionRefusals.get(refusalKey(id, session)) || null : null;
   }
 
-  function derive(caps, readyPayload, dashboardWsActive) {
+  function derive(caps, readyPayload, dashboardWsActive, sideSocket) {
     ledger.ingest(deriveCapabilityRecords(caps, {
       identityKey: ledger.identityKey,
       readyPayload,
       dashboardWsActive,
+      sideSocket,
       checkedAt: lastCheckedAt,
       unsupportedMethods,
     }));
     lastCaps = caps;
     lastReady = readyPayload;
     lastWsActive = dashboardWsActive;
+    lastSideSocket = sideSocket;
     lastUnsupportedSize = unsupportedMethods.size;
   }
 
@@ -75,7 +78,7 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
     unsupportedMethods,
 
     /** @returns {boolean} whether the ledger changed in a way a view should redraw for */
-    sync({ caps = null, readyPayload = null, identity = null, connectionToken = '', connected = true, dashboardWsActive = false } = {}) {
+    sync({ caps = null, readyPayload = null, identity = null, connectionToken = '', connected = true, dashboardWsActive = false, sideSocket = false } = {}) {
       let changed = false;
       const nextIdentity = identity && typeof identity === 'object' && 'key' in identity ? identity : capabilityIdentity(identity || {});
       if (ledger.rebind(nextIdentity)) {
@@ -99,9 +102,10 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
         ledger.setConnected(connected);
         changed = true;
       }
-      if (caps && (caps !== lastCaps || ready !== lastReady || dashboardWsActive !== lastWsActive || unsupportedMethods.size !== lastUnsupportedSize)) {
+      const side = sideSocket === true;
+      if (caps && (caps !== lastCaps || ready !== lastReady || dashboardWsActive !== lastWsActive || side !== lastSideSocket || unsupportedMethods.size !== lastUnsupportedSize)) {
         if (caps !== lastCaps) lastCheckedAt = now();
-        derive(caps, ready, dashboardWsActive);
+        derive(caps, ready, dashboardWsActive, side);
         changed = true;
       }
       return changed;

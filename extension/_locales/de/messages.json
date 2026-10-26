@@ -1395,6 +1395,10 @@
     "message": "Hermes hat den letzten Versuch abgelehnt: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Der Chat läuft auf dieser Verbindung über die REST-API. Eingefügte Bilder werden an eine Live-Sitzung angehängt, wenn der Chat über den Dashboard-WebSocket läuft, wie bei einer Bot-Modus- oder Profilsitzung.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Diese Verbindung erreicht nur die REST-API, die keine Verdichtungsroute ankündigt. Die Verdichtung braucht den Dashboard-WebSocket mit Sitzungsautorität.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "Projekte sind hier nicht verfügbar",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web ist auf diesem Gateway ausgeschaltet, daher hat Projekte keinen Sitzungs-Socket. Setzen Sie webapp.enabled in config.yaml auf true, führen Sie hermes gateway restart aus und versuchen Sie es erneut.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Projekte brauchen die Anmeldung von Hermes Web. Öffnen Sie Hermes Web einmal (führen Sie hermes webapp aus) und versuchen Sie es erneut.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Das Panel behält die Hermes-Web-Anmeldung dieses Browsers, bis Sie den Browser schließen. So funktionieren Hermes Web, Projekte und Bot-Profile, ohne hermes webapp erneut auszuführen. hermes webapp --sign-out beendet sie.",
+    "message": "Hermes Web, Projekte und Bot-Profile werden über die Hermes-Browser-Kopplung für Sie angemeldet, ohne dass etwas ausgeführt werden muss. Bei einem älteren Gateway behält das Panel die Hermes-Web-Anmeldung dieses Browsers, bis Sie den Browser schließen, nach einmaligem hermes webapp. hermes webapp --sign-out beendet sie.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

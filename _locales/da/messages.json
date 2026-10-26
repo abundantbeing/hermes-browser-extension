@@ -1395,6 +1395,10 @@
     "message": "Hermes afviste det seneste forsøg: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Chat på denne forbindelse kører over REST-API'et. Indsatte billeder knyttes til en live-session, når chatten kører over dashboardets WebSocket, som en Bot Mode- eller navngiven profilsession gør.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Denne forbindelse når kun REST-API'et, som ikke annoncerer nogen komprimeringsrute. Komprimering kræver dashboard-WebSocket med sessionsautoritet.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "Projekter er ikke tilgængelige her",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web er slået fra på denne gateway, så Projekter har ingen sessionssocket. Sæt webapp.enabled til true i config.yaml, kør hermes gateway restart, og prøv igen.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Projekter har brug for Hermes Webs login. Åbn Hermes Web én gang (kør hermes webapp), og prøv igen.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Panelet beholder denne browsers Hermes Web-login, indtil du lukker browseren, så Hermes Web, Projekter og bot-profiler virker uden at køre hermes webapp igen. hermes webapp --sign-out afslutter det.",
+    "message": "Hermes Web, Projekter og bot-profiler logges ind for dig via Hermes Browser-parringen, uden noget at køre. Med en ældre gateway beholder panelet denne browsers Hermes Web-login, indtil du lukker browseren, efter én kørsel af hermes webapp. hermes webapp --sign-out afslutter det.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

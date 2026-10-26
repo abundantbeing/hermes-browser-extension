@@ -237,7 +237,7 @@ test('without a handler open requests are ignored', async () => {
 test('only chat surfaces advertise: the Browser wires handlers on its chat connections and nowhere else', () => {
   const sidepanel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.equal((sidepanel.match(/createGatewayClient\(/g) || []).length, 1, 'sidepanel creates raw clients only through createChatGatewayClient');
-  assert.equal((sidepanel.match(/createChatGatewayClient\(/g) || []).length, 5, 'definition plus the four chat connections');
+  assert.equal((sidepanel.match(/createChatGatewayClient\(/g) || []).length, 6, 'definition plus the five chat connections');
   assert.match(sidepanel, /serverRequests: gatewayServerRequests/);
   for (const file of ['controller-connector.mjs', 'wake-background.mjs']) {
     assert.doesNotMatch(readFileSync(new URL(`../extension/lib/${file}`, import.meta.url), 'utf8'), /serverRequests/, file);

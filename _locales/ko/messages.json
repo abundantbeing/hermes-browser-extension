@@ -1395,6 +1395,10 @@
     "message": "Hermes가 마지막 시도를 거부했습니다: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "이 연결의 채팅은 REST API로 실행됩니다. 붙여넣은 이미지는 봇 모드나 이름 있는 프로필 세션처럼 채팅이 대시보드 WebSocket으로 실행될 때 라이브 세션에 첨부됩니다.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "이 연결은 REST API에만 닿으며, REST API는 압축 경로를 알리지 않습니다. 압축에는 세션 권한이 있는 대시보드 WebSocket이 필요합니다.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "여기서는 프로젝트를 사용할 수 없습니다",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "이 게이트웨이에서는 Hermes Web이 꺼져 있어 프로젝트에 세션 소켓이 없습니다. config.yaml에서 webapp.enabled를 true로 설정하고 hermes gateway restart를 실행한 뒤 다시 시도하세요.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "프로젝트에는 Hermes Web 로그인이 필요합니다. Hermes Web을 한 번 열고(hermes webapp 실행) 다시 시도하세요.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "패널은 브라우저를 닫을 때까지 이 브라우저의 Hermes Web 로그인을 유지하므로 hermes webapp을 다시 실행하지 않아도 Hermes Web, 프로젝트, 봇 프로필이 작동합니다. hermes webapp --sign-out으로 종료할 수 있습니다.",
+    "message": "Hermes Browser 페어링을 통해 Hermes Web, 프로젝트, 봇 프로필에 자동으로 로그인되며 실행할 명령은 없습니다. 이전 게이트웨이에서는 hermes webapp을 한 번 실행하면 패널이 브라우저를 닫을 때까지 이 브라우저의 Hermes Web 로그인을 유지합니다. hermes webapp --sign-out으로 종료할 수 있습니다.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

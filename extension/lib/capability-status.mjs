@@ -93,6 +93,7 @@ export const CAPABILITY_REASONS = Object.freeze({
   'authority-ready': () => 'gateway.ready reports session authority.',
   'no-session-authority': () => 'gateway.ready did not report session authority.',
   'rest-only': () => 'This connection only reaches the REST API. The dashboard WebSocket is needed.',
+  'rest-chat': () => 'Chat on this connection runs over the REST API. Pasted images attach to a live session when chat runs over the dashboard WebSocket, as a Bot Mode or named-profile session does.',
   'not-connected': () => 'The dashboard WebSocket has not delivered gateway.ready yet.',
   'method-not-found': ({ method } = {}) => `The gateway answered "method not found" (-32601) for ${clean(method) || 'this method'}.`,
   'legacy-ws-compress': () => 'This dashboard gateway has no session authority, so the legacy session.compress serves compaction.',

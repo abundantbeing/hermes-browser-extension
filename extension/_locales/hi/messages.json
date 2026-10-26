@@ -1395,6 +1395,10 @@
     "message": "Hermes ने पिछला प्रयास अस्वीकार किया: {detail}।",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "इस कनेक्शन पर चैट REST API से चलती है। चिपकाई गई छवियाँ तब लाइव सत्र से जुड़ती हैं जब चैट डैशबोर्ड WebSocket से चलती है, जैसा बॉट मोड या नामित-प्रोफ़ाइल सत्र में होता है।",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "यह कनेक्शन केवल REST API तक पहुँचता है, जो संपीड़न रूट घोषित नहीं करता। संपीड़न के लिए सत्र अधिकार वाला डैशबोर्ड WebSocket चाहिए।",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "प्रोजेक्ट यहाँ उपलब्ध नहीं हैं",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "इस गेटवे पर Hermes Web बंद है, इसलिए प्रोजेक्ट के पास सत्र सॉकेट नहीं है। config.yaml में webapp.enabled को true करें, hermes gateway restart चलाएँ, फिर दोबारा कोशिश करें।",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "प्रोजेक्ट को Hermes Web के साइन-इन की ज़रूरत है। Hermes Web को एक बार खोलें (hermes webapp चलाएँ), फिर दोबारा कोशिश करें।",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "पैनल इस ब्राउज़र का Hermes Web साइन-इन तब तक रखता है जब तक आप ब्राउज़र बंद नहीं करते, इसलिए hermes webapp दोबारा चलाए बिना Hermes Web, प्रोजेक्ट और बॉट प्रोफ़ाइल काम करते हैं। hermes webapp --sign-out इसे समाप्त कर देता है।",
+    "message": "Hermes Browser पेयरिंग के ज़रिए Hermes Web, प्रोजेक्ट और बॉट प्रोफ़ाइल में आपके लिए साइन-इन हो जाता है, कुछ चलाने की ज़रूरत नहीं। पुराने गेटवे के लिए पैनल इस ब्राउज़र का Hermes Web साइन-इन ब्राउज़र बंद होने तक रखता है, एक बार hermes webapp चलाने के बाद। hermes webapp --sign-out इसे खत्म करता है।",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

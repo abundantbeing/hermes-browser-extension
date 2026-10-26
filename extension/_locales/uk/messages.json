@@ -1395,6 +1395,10 @@
     "message": "Hermes відхилив останню спробу: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Чат на цьому з'єднанні працює через REST API. Вставлені зображення прикріплюються до живої сесії, коли чат працює через WebSocket панелі, як у сесії режиму бота або іменованого профілю.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Це з'єднання сягає лише REST API, який не оголошує маршрут стиснення. Для стиснення потрібен WebSocket панелі з повноваженнями сеансу.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "Проєкти тут недоступні",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web вимкнено на цьому шлюзі, тому «Проєкти» не мають сокета сесії. Установіть webapp.enabled у true в config.yaml, виконайте hermes gateway restart і спробуйте ще раз.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Для проєктів потрібен вхід у Hermes Web. Один раз відкрийте Hermes Web (виконайте hermes webapp) і повторіть спробу.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Панель зберігає вхід цього браузера в Hermes Web до закриття браузера, тому Hermes Web, проєкти та профілі ботів працюють без повторного запуску hermes webapp. Команда hermes webapp --sign-out завершує вхід.",
+    "message": "Hermes Web, «Проєкти» та профілі ботів входять за вас через сполучення Hermes Browser, запускати нічого не потрібно. Зі старішим шлюзом панель зберігає вхід у Hermes Web цього браузера, доки ви його не закриєте, після одного запуску hermes webapp. hermes webapp --sign-out завершує його.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

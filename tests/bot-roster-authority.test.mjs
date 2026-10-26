@@ -51,6 +51,7 @@ function harness({ fail = false, profiles = [{ name: 'default' }], previous = []
     setBotModeView(view) { uiRenders.botModeView = view; },
     WS_METHODS: { profilesList: 'profiles.list' },
     normalizeGatewayUrl: (url) => url,
+    connectProfileViaGatewayTicket: async () => null,
     ensureProfileWsConnection: async () => {
       connectionRequests.push('ensureProfileWsConnection');
       if (fail) throw new Error('dashboard-unavailable');
@@ -439,6 +440,8 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
     extractDashboardSessionToken: () => 'fixture-bootstrap',
     requestDashboardOriginTrust: async () => { throw new Error('no-dashboard-tab'); },
     settings: {}, createChatGatewayClient: () => client, WebSocket: {},
+    webappGatewayTickets: () => ({ socketTicket: async () => ({ ok: false, reason: 'absent' }) }),
+    refreshCapabilityViews() {},
     buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
     buildDashboardWsUrl: () => 'ws://localhost/fixture',
   };

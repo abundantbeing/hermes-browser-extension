@@ -346,6 +346,7 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   checkedAt = Date.now(),
   unsupportedMethods = [],
   dashboardWsActive = false,
+  sideSocket = false,
   companionPlugin = null,
 } = {}) {
   const transport = transportOf(caps);
@@ -364,6 +365,11 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   // (a named profile chats over the WebSocket while /v1/capabilities answers on
   // the API port).
   const wsRoute = transport === 'ws' || (dashboardWsActive === true && hasReady);
+  // A session-authority socket the panel opened beside a REST chat (the Hermes Web socket the paired
+  // gateway signs in, or one the held sign-in opens). Chat stays on REST, so only what that socket serves
+  // by itself reads from it: session authority, projects and canonical compaction. Image attach belongs to a
+  // live session and a turn over the socket, which a REST chat does not have.
+  const sideReady = !wsRoute && sideSocket === true && hasReady;
 
   function flag(id, value, { explicit, absentCode = 'not-advertised' } = {}) {
     if (transport === 'none') return make(id, S.unknown, O.none, 'no-record');
@@ -454,11 +460,11 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   else make('browserControl', S.unknown, transport === 'none' ? O.none : O.derived, transport === 'legacy' ? 'legacy-gateway' : (transport === 'ws' ? 'ws-not-reported' : 'not-advertised'));
 
   // Session authority and what hangs off it.
-  const authority = gatewayAuthorityAvailability({ dashboardWs: wsRoute, readyPayload, unsupportedMethods: unsupported, method: 'session.mutate' });
-  if (transport === 'none' && !wsRoute) {
+  const authority = gatewayAuthorityAvailability({ dashboardWs: wsRoute || sideReady, readyPayload, unsupportedMethods: unsupported, method: 'session.mutate' });
+  if (transport === 'none' && !wsRoute && !sideReady) {
     make('sessionAuthority', S.unknown, O.none, 'no-record');
     make('projects', S.unknown, O.none, 'no-record');
-  } else if (!wsRoute) {
+  } else if (!wsRoute && !sideReady) {
     make('sessionAuthority', S.unsupported, O.derived, 'rest-only');
     make('projects', S.unsupported, O.derived, 'rest-only');
   } else if (authority.reason === 'not-connected') {
@@ -484,6 +490,10 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   } else if (wsRoute) {
     if (unsupported.has('session.compress')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.compress', route: 'legacy-ws' });
     else make('sessionCompress', S.available, O.ready, 'legacy-ws-compress', { route: 'legacy-ws' });
+  } else if (sideReady && readyPayload.session_authority === true && !(transport === 'rest' && caps.sessionCompress === true)) {
+    // No REST compact route, but the side socket serves session.mutate operation compress by durable id.
+    if (unsupported.has('session.mutate')) make('sessionCompress', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.mutate', route: 'canonical' });
+    else make('sessionCompress', S.available, O.ready, 'authority-compress', { route: 'canonical', sideSocket: true });
   } else if (transport === 'rest') {
     if (caps.sessionCompress === true) make('sessionCompress', S.available, O.capabilities, 'advertised');
     else if (boolFeature(features, ['session_compress']) === false) make('sessionCompress', S.unsupported, O.capabilities, 'advertised-off');
@@ -498,7 +508,8 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   // dashboard WebSocket's own session attach RPC, and the stored-image read
   // (mediaRead, handled in the loop above). None implies another.
   if (wsRoute && (caps.imageSessionAttach === true || transport !== 'ws')) make('imageSessionAttach', S.available, O.derived, 'ws-contract');
-  else if (transport === 'none') make('imageSessionAttach', S.unknown, O.none, 'no-record');
+  else if (transport === 'none' && !sideReady) make('imageSessionAttach', S.unknown, O.none, 'no-record');
+  else if (sideReady) make('imageSessionAttach', S.unsupported, O.derived, 'rest-chat');
   else make('imageSessionAttach', S.unsupported, O.derived, 'rest-only');
 
   return records;

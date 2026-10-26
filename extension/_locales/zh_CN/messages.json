@@ -1395,6 +1395,10 @@
     "message": "Hermes 拒绝了上一次尝试：{detail}。",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "此连接上的聊天通过 REST API 运行。当聊天通过仪表板 WebSocket 运行时（如机器人模式或命名档案会话），粘贴的图片才会附加到实时会话。",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "此连接只能访问 REST API，而它不声明压缩路由。压缩需要具备会话权限的控制台 WebSocket。",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "此处无法使用项目",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "此网关上的 Hermes Web 已关闭，因此项目没有会话套接字。请在 config.yaml 中将 webapp.enabled 设为 true，运行 hermes gateway restart，然后重试。",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "项目需要 Hermes Web 的登录。请打开一次 Hermes Web（运行 hermes webapp），然后重试。",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "面板会在你关闭浏览器之前保留这个浏览器的 Hermes Web 登录，因此无需再次运行 hermes webapp，Hermes Web、项目和机器人配置文件都能正常使用。运行 hermes webapp --sign-out 可结束登录。",
+    "message": "Hermes Web、项目和机器人档案会通过 Hermes Browser 配对自动为你登录，无需运行任何命令。对于较旧的网关，面板会保留此浏览器的 Hermes Web 登录直到关闭浏览器，前提是运行过一次 hermes webapp。hermes webapp --sign-out 可将其结束。",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

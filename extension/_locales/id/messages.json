@@ -1395,6 +1395,10 @@
     "message": "Hermes menolak percobaan terakhir: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Chat pada koneksi ini berjalan lewat REST API. Gambar yang ditempel dilampirkan ke sesi aktif saat chat berjalan lewat WebSocket dasbor, seperti sesi Mode Bot atau profil bernama.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Koneksi ini hanya menjangkau REST API, yang tidak mengumumkan rute pemadatan. Pemadatan membutuhkan WebSocket dasbor dengan otoritas sesi.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "Proyek tidak tersedia di sini",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web dimatikan di gateway ini, jadi Proyek tidak punya soket sesi. Setel webapp.enabled ke true di config.yaml, jalankan hermes gateway restart, lalu coba lagi.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Proyek memerlukan sesi masuk Hermes Web. Buka Hermes Web sekali (jalankan hermes webapp), lalu coba lagi.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Panel menyimpan sesi masuk Hermes Web browser ini sampai browser ditutup, sehingga Hermes Web, Proyek, dan profil bot berfungsi tanpa menjalankan hermes webapp lagi. hermes webapp --sign-out mengakhirinya.",
+    "message": "Hermes Web, Proyek, dan profil bot masuk untuk Anda lewat pemasangan Hermes Browser, tanpa perintah yang perlu dijalankan. Untuk gateway yang lebih lama, panel menyimpan login Hermes Web browser ini sampai Anda menutup browser, setelah menjalankan hermes webapp sekali. hermes webapp --sign-out mengakhirinya.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

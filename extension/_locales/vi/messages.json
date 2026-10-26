@@ -1395,6 +1395,10 @@
     "message": "Hermes đã từ chối lần thử gần nhất: {detail}.",
     "description": "Runtime interface message capability.reason.operation_refused"
   },
+  "runtime_capability_reason_rest_chat": {
+    "message": "Trò chuyện trên kết nối này chạy qua REST API. Ảnh dán vào được đính kèm vào phiên đang chạy khi trò chuyện chạy qua WebSocket của bảng điều khiển, như phiên Chế độ Bot hoặc hồ sơ có tên.",
+    "description": "Runtime interface message capability.reason.rest_chat"
+  },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Kết nối này chỉ tới được REST API, vốn không công bố tuyến nén. Việc nén cần WebSocket của bảng điều khiển có quyền phiên.",
     "description": "Runtime interface message capability.reason.rest_no_compress"
@@ -2978,6 +2982,10 @@
   "runtime_projects_unavailable_title": {
     "message": "Dự án không khả dụng ở đây",
     "description": "Runtime interface message projects.unavailable.title"
+  },
+  "runtime_projects_unavailable_webapp_off": {
+    "message": "Hermes Web đang tắt trên gateway này nên Dự án không có socket phiên. Đặt webapp.enabled thành true trong config.yaml, chạy hermes gateway restart rồi thử lại.",
+    "description": "Runtime interface message projects.unavailable.webapp_off"
   },
   "runtime_projects_unavailable_webapp_sign_in": {
     "message": "Dự án cần phiên đăng nhập của Hermes Web. Hãy mở Hermes Web một lần (chạy hermes webapp), rồi thử lại.",
@@ -7832,7 +7840,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Bảng điều khiển giữ phiên đăng nhập Hermes Web của trình duyệt này cho đến khi bạn đóng trình duyệt, nên Hermes Web, Dự án và hồ sơ bot hoạt động mà không cần chạy lại hermes webapp. hermes webapp --sign-out sẽ kết thúc phiên này.",
+    "message": "Hermes Web, Dự án và hồ sơ bot được đăng nhập giúp bạn qua việc ghép đôi Hermes Browser, không cần chạy lệnh nào. Với gateway cũ hơn, bảng điều khiển giữ đăng nhập Hermes Web của trình duyệt này cho đến khi bạn đóng trình duyệt, sau khi chạy hermes webapp một lần. hermes webapp --sign-out sẽ kết thúc phiên đó.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

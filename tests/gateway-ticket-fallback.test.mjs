@@ -110,7 +110,7 @@ test('an older dashboard still gets the query ticket when the caller has no way 
 });
 
 test('every chat connection mints its own replacement ticket for the fallback', () => {
-  // The local dashboard tab's ticket, the socket ticket, and the remote dashboard's ticket.
-  assert.equal((sidepanel.match(/connectGatewayWithTicket\([^;]*?refreshTicket: async \(\) => \{/g) || []).length, 3);
+  // The local dashboard tab's ticket, the socket ticket, the paired gateway's socket ticket, and the remote dashboard's ticket.
+  assert.equal((sidepanel.match(/connectGatewayWithTicket\([^;]*?refreshTicket: async \(\) => \{/g) || []).length, 4);
   for (const source of [sidepanel]) assert.match(source, /return fresh\?\.ok \? fresh\.ticket : '';/);
 });
