@@ -11555,6 +11555,7 @@ html[data-hermes-mode="light"] .session-menu {
 
 .projects-panel {
   display: grid;
+  grid-auto-rows: max-content;
   align-content: start;
   gap: 0;
   padding: 0 0 6px;
@@ -11563,10 +11564,9 @@ html[data-hermes-mode="light"] .session-menu {
   overscroll-behavior: contain;
 }
 .projects-panel > * { min-width: 0; }
-/* The panel is a grid inside a fixed-height drawer row. Its overflow:hidden children (the scope line, the
-   heading) have a zero automatic minimum height, so with the default auto rows a long list squeezed them to
-   nothing and the next row painted over them. Rows are sized to their content instead, and the panel scrolls. */
-.projects-panel { grid-auto-rows: max-content; }
+/* .projects-panel (above) is a grid inside a fixed-height drawer row. Its overflow:hidden children have a zero
+   automatic minimum height, so default auto rows let a long list squeeze them to nothing and the next row paint
+   over them; grid-auto-rows: max-content keeps every row its content height and the panel scrolls. */
 .projects-scope {
   display: block;
   margin: 0;
