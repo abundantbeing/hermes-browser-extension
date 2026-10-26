@@ -154,6 +154,10 @@ import { enhanceMarkdownCodeBlocks } from './lib/markdown-code-copy.mjs';
 import {
   ONBOARDING_COMPLETED_STORAGE_KEY,
   RESPONSE_STYLE_SETUP_DEFAULT,
+  explicitResponseStyle,
+  lockAssistantResponseStyles,
+  preserveAssistantResponseStyles,
+  resolveMessageResponseStyle,
   responsePresentationFromSettings,
   responseStyleInstructions,
   responseStyleTurnContract,
@@ -4551,8 +4555,25 @@ async function loadMessagesForActiveScope({ scopeRevisionId = scopeRevision.curr
   return true;
 }
 
+const sessionAssistantStylesBySession = new Map();
+
+function rememberSessionAssistantStyles(sessionId = settings.sessionId, list = messages) {
+  const id = String(sessionId || '').trim();
+  if (!id || !Array.isArray(list)) return;
+  const assistantRecords = list
+    .filter((message) => message && String(message.role || '').toLowerCase() === 'assistant' && explicitResponseStyle(message.responseStyle))
+    .map((message) => ({
+      role: 'assistant',
+      rowId: message.rowId,
+      content: message.content,
+      responseStyle: message.responseStyle,
+    }));
+  if (assistantRecords.length) sessionAssistantStylesBySession.set(id, assistantRecords);
+}
+
 async function saveMessagesForActiveScope({ scopeRevisionId = scopeRevision.current() } = {}) {
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  rememberSessionAssistantStyles(settings.sessionId, messages);
   const key = activeMessagesStorageKey(previousConversationScope);
   const cachedMessages = messagesForLocalCache(messages, settings.maxLocalMessages);
   await browserApi.storage.local.set({ [key]: cachedMessages });
@@ -17329,6 +17350,27 @@ function applyResponsePresentation() {
   document.documentElement.dataset.messageLayout = messageLayout;
 }
 
+// Lock the style each existing reply was created with before changing the
+// setting, so earlier messages keep their tables, charts and formatting and the
+// newly picked style starts on the next reply.
+function lockExistingMessageResponseStyles(previousStyle) {
+  const fallback = responsePresentationFromSettings({ responseStyle: previousStyle }).responseStyle;
+  if (messages.length) {
+    lockAssistantResponseStyles(messages, fallback);
+    rememberSessionAssistantStyles(settings.sessionId, messages);
+    void saveMessagesForActiveScope();
+  }
+  for (const node of els.messages?.querySelectorAll?.('.message.assistant') || []) {
+    const record = node.hermesStreamRecord;
+    const style = resolveMessageResponseStyle(
+      { content: record?.content, responseStyle: node.dataset.responseStyle || record?.responseStyle },
+      fallback,
+    );
+    node.dataset.responseStyle = style;
+    if (record && typeof record === 'object') record.responseStyle = style;
+  }
+}
+
 // Instant-apply like the rest of Appearance: the choice shows at once and is
 // written through the same queue, so it never races a theme or zoom write.
 // A panel in another window (or its setup) chose a style: follow it, so this
@@ -17339,21 +17381,24 @@ function adoptStoredResponsePresentation(stored = {}) {
   const before = responsePresentationFromSettings(settings);
   const after = responsePresentationFromSettings({ ...settings, ...stored });
   if (before.responseStyle === after.responseStyle && before.messageLayout === after.messageLayout) return;
+  if (before.responseStyle !== after.responseStyle) lockExistingMessageResponseStyles(before.responseStyle);
   settings = withResponsePresentationUpdate(settings, after);
   applyResponsePresentation();
   renderResponsePresentationControls();
   onboardingFlow?.render();
-  if (before.responseStyle !== after.responseStyle && messages.length && !sending) renderMessagesFromStorage();
 }
 
 async function setResponsePresentation(patch = {}) {
   const before = responsePresentationFromSettings(settings);
+  if (Object.hasOwn(patch, 'responseStyle')) {
+    const requested = responsePresentationFromSettings({ ...settings, ...patch });
+    if (requested.responseStyle !== before.responseStyle) lockExistingMessageResponseStyles(before.responseStyle);
+  }
   settings = withResponsePresentationUpdate(settings, patch);
   const after = responsePresentationFromSettings(settings);
   applyResponsePresentation();
   renderResponsePresentationControls();
   onboardingFlow?.render();
-  if (before.responseStyle !== after.responseStyle && messages.length && !sending) renderMessagesFromStorage();
   const write = async () => {
     const stored = await browserApi.storage.local.get('hermesBrowserSettings');
     const next = withResponsePresentationUpdate(stored.hermesBrowserSettings || {}, after);
@@ -19774,11 +19819,18 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
   });
   const contextMessages = Array.isArray(result?.contextMessages) ? result.contextMessages : [];
   const incoming = Array.isArray(result?.messages) ? result.messages : [];
-  messages = preserveUserImageAttachments(incoming, messages).map((message) => {
-    const extracted = extractHistoryMediaAttachments(message);
-    if (!extracted.length || normalizeUserImageAttachments(message.attachments).length) return message;
-    return { ...message, attachments: extracted };
-  });
+  const localStyleSource = messages.length
+    ? messages
+    : (sessionAssistantStylesBySession.get(String(sessionId || '').trim()) || []);
+  messages = preserveAssistantResponseStyles(
+    preserveUserImageAttachments(incoming, messages).map((message) => {
+      const extracted = extractHistoryMediaAttachments(message);
+      if (!extracted.length || normalizeUserImageAttachments(message.attachments).length) return message;
+      return { ...message, attachments: extracted };
+    }),
+    localStyleSource,
+    { fallbackStyle: responsePresentationFromSettings(settings).responseStyle },
+  );
   // Bind durable row ids to local user records by display text so Edit and
   // Restore can address them without an extra round trip. Fail-closed on
   // duplicates; already-bound records are left alone.
@@ -20202,9 +20254,17 @@ function renderMessageContentElement(element, content = '') {
     return;
   }
   // Response style shapes Hermes' own replies only; user, system and side
-  // cards keep the Markdown renderer, matching the full tab.
+  // cards keep the Markdown renderer, matching the full tab. Each assistant
+  // reply uses the style it was created with, so switching styles later only
+  // affects subsequent replies.
   const assistant = element?.closest?.('.message.assistant');
-  const style = assistant ? responsePresentationFromSettings(settings).responseStyle : 'rich';
+  const style = assistant
+    ? resolveMessageResponseStyle(
+      { content, responseStyle: assistant.dataset?.responseStyle || assistant.hermesStreamRecord?.responseStyle },
+      responsePresentationFromSettings(settings).responseStyle,
+    )
+    : 'rich';
+  if (assistant) assistant.dataset.responseStyle = style;
   // Only a reply the stream updater is still writing may hold an unfinished block.
   const streaming = assistant?.hermesStreaming === true;
   patchRenderedMessageContent(element, renderResponseSafe(content || '', { style, labels: adaptiveUiLabels(), streaming }));
@@ -21028,7 +21088,7 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
 function addMessage(role, content, {
   persist = true, roleLabel = '', contextReceipt = null, attachments = null, scroll = true,
   ts = null, rowId, speaker = null, thread = '', sourceRecord = null, streaming = false,
-  entering = persist || streaming,
+  entering = persist || streaming, responseStyle = '',
 } = {}) {
   if (!messages.length) {
     panelMessageThread?.reset();
@@ -21048,6 +21108,20 @@ function addMessage(role, content, {
   const node = shell.classList.contains('message-row') ? shell.querySelector('.message') : shell;
   if (shell !== row) row.append(node);
   node.classList.add(role);
+  // The "What Hermes saw" receipt and the reply's responseStyle ride on the
+  // stored row so history replays and later style switches keep them intact.
+  const knownTs = normalizeMessageTimestamp(ts);
+  const record = sourceRecord || { role, content: content || '', ts: knownTs ?? (persist ? Date.now() : null) };
+  if (role === 'assistant') {
+    const messageStyle = resolveMessageResponseStyle(
+      responseStyle ? { ...record, responseStyle } : record,
+      responsePresentationFromSettings(settings).responseStyle,
+    );
+    node.dataset.responseStyle = messageStyle;
+    if (persist || streaming || responseStyle || explicitResponseStyle(record.responseStyle) || containsAdaptiveBlocks(record.content)) {
+      record.responseStyle = messageStyle;
+    }
+  }
   // A mid-turn steer shows the user's own words under a "Steered" tag, never
   // the model-facing marker wrapper.
   const steered = isSteerMessage({ role, content, display_kind: sourceRecord?.display_kind });
@@ -21067,10 +21141,6 @@ function addMessage(role, content, {
       onDownload: (item) => { void downloadUserFileAttachment(item).catch(() => setStatus('warn', t('ui.file'), t('attachments.file_unavailable'))); },
     });
   }
-  // The "What Hermes saw" receipt rides on the stored row so history replays
-  // (post-turn reconcile, session reload) keep it attached — never lose it.
-  const knownTs = normalizeMessageTimestamp(ts);
-  const record = sourceRecord || { role, content: content || '', ts: knownTs ?? (persist ? Date.now() : null) };
   if (roleLabel) record.roleLabel = roleLabel;
   if (Number.isInteger(rowId) && rowId > 0) record.rowId = rowId;
   if (speaker) record.speaker = speaker;
@@ -21122,6 +21192,14 @@ function setMessageContent(node, content) {
 function createStreamingMessageUpdater(node, record = {role:'assistant',content:''}) {
   node.hermesStreamRecord = record;
   node.hermesStreaming = true;
+  if (record?.role === 'assistant' || node?.classList?.contains?.('assistant')) {
+    const streamStyle = resolveMessageResponseStyle(
+      { content: record?.content, responseStyle: record?.responseStyle || node?.dataset?.responseStyle },
+      responsePresentationFromSettings(settings).responseStyle,
+    );
+    if (record && typeof record === 'object') record.responseStyle = streamStyle;
+    if (node?.dataset) node.dataset.responseStyle = streamStyle;
+  }
   let pending = '';
   let activity = null;
   let calls = [];
@@ -21234,6 +21312,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     }
     node = nextNode;
     node.hermesStreamRecord = record;
+    if (record?.responseStyle && node?.dataset) node.dataset.responseStyle = record.responseStyle;
     paintStream();
     renderCalls();
     setToolActivity(node, /image_generate/i.test(activity?.rawName || '') ? activity : null);
@@ -21557,7 +21636,8 @@ function renderMessagesFromStorage() {
       messageThreadUi().attach({row:retainedLiveRow,node:viewedStream.view.node,record:viewedStream.view.node.hermesStreamRecord,streaming:true,entering:false});
       viewedStream.view.rebind(viewedStream.view.node);
     } else {
-      const { node } = addMessage('assistant', THINKING_PLACEHOLDER, { persist: false, scroll: false, streaming: true, roleLabel: assistantMessageRoleLabel() });
+      const streamStyle = viewedStream.view.node?.hermesStreamRecord?.responseStyle || viewedStream.view.node?.dataset?.responseStyle || '';
+      const { node } = addMessage('assistant', THINKING_PLACEHOLDER, { persist: false, scroll: false, streaming: true, roleLabel: assistantMessageRoleLabel(), responseStyle: streamStyle });
       node.closest('.message-row')?.classList.remove('is-entering');
       viewedStream.view.rebind(node);
     }
@@ -23944,8 +24024,11 @@ function currentHermesBrowserSystemPrompt() {
 // The response style contract each Browser turn carries (response_style):
 // every transport delivers the turn, while only REST has a system message.
 function currentResponseStyleTurnContract() {
-  const conversationHasVivid = messages.some((message) => message?.role === 'assistant' && containsAdaptiveBlocks(message.content));
-  return responseStyleTurnContract(settings.responseStyle, { conversationHasVivid });
+  const assistantMessages = messages.filter((message) => message?.role === 'assistant');
+  const conversationHasVivid = assistantMessages.some((message) => message.responseStyle === 'vivid' || containsAdaptiveBlocks(message.content));
+  const conversationHasRich = assistantMessages.some((message) => message.responseStyle === 'rich');
+  const conversationHasPlain = assistantMessages.some((message) => message.responseStyle === 'plain');
+  return responseStyleTurnContract(settings.responseStyle, { conversationHasVivid, conversationHasRich, conversationHasPlain });
 }
 
 // REST turns carry per-turn notes in the system message. A GPT-Live delegation
@@ -25640,7 +25723,11 @@ ${streamError.message}`);
     // the user is still on the session this run started in; otherwise it
     // would land in whatever session is open now.
     if (String(settings.sessionId || '').trim() === runSessionId) {
-      messages.push({ role: 'assistant', content: finalAnswerForStorage, ts: Date.now() });
+      const assistantStyle = resolveMessageResponseStyle(
+        { content: finalAnswerForStorage, responseStyle: record?.responseStyle || node?.dataset?.responseStyle },
+        responsePresentationFromSettings(settings).responseStyle,
+      );
+      messages.push({ role: 'assistant', content: finalAnswerForStorage, ts: Date.now(), responseStyle: assistantStyle });
       await trimAndSaveMessages();
     }
     if (profileContextHandoff

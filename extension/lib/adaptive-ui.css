@@ -346,17 +346,21 @@ ol.haui-list-items > li::before {
 .haui-salvage li { margin: 0.15em 0; overflow-wrap: anywhere; }
 
 /* Vivid UI prose. Every Vivid reply gets it, with or without blocks, so the
-   chosen style shows even on a reply that is mostly words or code. Only
-   Hermes' own replies; text and code stay exactly as written. */
-:root[data-response-style="vivid"] .message.assistant .message-content {
+   chosen style shows even on a reply that is mostly words or code. Each reply
+   carries its own data-response-style so switching styles later leaves earlier
+   replies as they were. Only Hermes' own replies; text and code stay as written. */
+.message.assistant[data-response-style="vivid"] .message-content,
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content {
   --haui-line: rgba(var(--hermes-ink-rgb, 255, 255, 255), 0.16);
   --haui-fill: rgba(var(--hermes-ink-rgb, 255, 255, 255), 0.045);
 }
-:root[data-response-style="vivid"] .message.assistant .message-content > p:first-child {
+.message.assistant[data-response-style="vivid"] .message-content > p:first-child,
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > p:first-child {
   font-size: 1.05em;
   line-height: 1.5;
 }
-:root[data-response-style="vivid"] .message.assistant .message-content > :is(h1, h2, h3) {
+.message.assistant[data-response-style="vivid"] .message-content > :is(h1, h2, h3),
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > :is(h1, h2, h3) {
   margin: 1.1em 0 0.5em;
   padding-bottom: 0.3em;
   border-bottom: 1px solid var(--haui-line);
@@ -365,15 +369,18 @@ ol.haui-list-items > li::before {
   line-height: 1.15;
   letter-spacing: 0.01em;
 }
-:root[data-response-style="vivid"] .message.assistant .message-content > :is(h1, h2, h3):first-child { margin-top: 0; }
-:root[data-response-style="vivid"] .message.assistant .message-content > :is(h4, h5, h6) {
+.message.assistant[data-response-style="vivid"] .message-content > :is(h1, h2, h3):first-child,
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > :is(h1, h2, h3):first-child { margin-top: 0; }
+.message.assistant[data-response-style="vivid"] .message-content > :is(h4, h5, h6),
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > :is(h4, h5, h6) {
   margin: 1em 0 0.4em;
   color: var(--hermes-muted);
   font: 600 0.8em/1.2 var(--hermes-font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-:root[data-response-style="vivid"] .message.assistant .message-content blockquote {
+.message.assistant[data-response-style="vivid"] .message-content blockquote,
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content blockquote {
   padding: 0.6em 0.85em;
   border: 1px solid var(--haui-line);
   border-left: 3px solid currentColor;
@@ -381,8 +388,10 @@ ol.haui-list-items > li::before {
   background: var(--haui-fill);
   opacity: 1;
 }
-:root[data-response-style="vivid"] .message.assistant .message-content > ul > li::marker { color: var(--hermes-muted); }
-:root[data-response-style="vivid"] .message.assistant .message-content > ol > li::marker {
+.message.assistant[data-response-style="vivid"] .message-content > ul > li::marker,
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > ul > li::marker { color: var(--hermes-muted); }
+.message.assistant[data-response-style="vivid"] .message-content > ol > li::marker,
+:root[data-response-style="vivid"] .message.assistant:not([data-response-style]) .message-content > ol > li::marker {
   color: var(--hermes-muted);
   font-family: var(--hermes-font-mono);
   font-variant-numeric: tabular-nums;

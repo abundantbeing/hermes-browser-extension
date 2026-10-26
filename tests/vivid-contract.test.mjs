@@ -11,6 +11,9 @@ globalThis.window = window;
 
 const {
   VIVID_CONTRACT,
+  lockAssistantResponseStyles,
+  preserveAssistantResponseStyles,
+  resolveMessageResponseStyle,
   responsePresentationFromSettings,
   responseStyleInstructions,
   responseStyleTurnContract,
@@ -82,7 +85,10 @@ test('turn contract: Vivid always, Rich only to switch off after Vivid replies, 
   assert.equal(on.contract, VIVID_CONTRACT);
   assert.equal(responseStyleTurnContract('rich'), null, 'Rich text requests stay exactly as before');
   assert.match(responseStyleTurnContract('rich', { conversationHasVivid: true }).contract, /turned Vivid UI off[\s\S]*add no hermes-ui blocks/);
+  assert.match(responseStyleTurnContract('rich', { conversationHasPlain: true }).contract, /switched from Plain text to Rich text[\s\S]*normal Markdown/);
   assert.equal(responseStyleTurnContract('plain'), null);
+  assert.match(responseStyleTurnContract('plain', { conversationHasVivid: true }).contract, /switched to Plain text[\s\S]*no hermes-ui blocks/);
+  assert.match(responseStyleTurnContract('plain', { conversationHasRich: true }).contract, /switched to Plain text[\s\S]*no Markdown/);
   assert.match(responseStyleInstructions('plain'), /plain text only/);
   assert.equal(responseStyleInstructions('vivid'), '');
   assert.equal(responseStyleTurnContract(undefined), null, 'no saved style is Rich text');
@@ -118,7 +124,7 @@ test('the turn is unchanged when no contract applies, and people still see only 
 
 test('side panel: composer and right-click turns carry the contract; inline drafts never do', () => {
   const panel = read('../extension/sidepanel.js');
-  assert.match(panel, /function currentResponseStyleTurnContract\(\) \{[\s\S]{0,300}responseStyleTurnContract\(settings\.responseStyle, \{ conversationHasVivid \}\)/);
+  assert.match(panel, /function currentResponseStyleTurnContract\(\) \{[\s\S]{0,600}responseStyleTurnContract\(settings\.responseStyle, \{ conversationHasVivid, conversationHasRich, conversationHasPlain \}\)/);
   assert.equal(panel.match(/responseStyle: currentResponseStyleTurnContract\(\),/g)?.length, 2, 'askHermes and the context-menu turn');
   // The system prompt (session create, inline drafts, background tasks) has no Vivid text.
   assert.match(panel, /const styleNote = responseStyleInstructions\(settings\.responseStyle\);/);
@@ -201,7 +207,7 @@ test('an omitted block still gets the Vivid presentation of what the model wrote
   assert.match(html, /<dt>License<\/dt><dd>MIT<\/dd>/);
   assert.match(html, /<p>That is all\.<\/p>/);
   const css = read('../extension/lib/adaptive-ui.css');
-  assert.match(css, /:root\[data-response-style="vivid"\] \.message\.assistant \.message-content/, 'every Vivid reply gets the Vivid prose surface');
+  assert.match(css, /\.message\.assistant\[data-response-style="vivid"\] \.message-content/, 'every Vivid reply gets the Vivid prose surface');
 });
 
 test('malformed blocks: no raw JSON, the card words kept as text, the rest of the reply intact', () => {
@@ -264,4 +270,80 @@ test('streaming reaches the renderer from the side panel stream updater', () => 
   assert.match(panel, /node\.hermesStreamRecord = record;\s*node\.hermesStreaming = true;/);
   assert.match(panel, /node\.hermesStreaming = false;\s*setMessageContent\(node, pending\);/);
   assert.match(panel, /const streaming = assistant\?\.hermesStreaming === true;/);
+});
+
+test('switching styles mid-session keeps earlier replies in their own style and applies the new style to the next reply', () => {
+  const vividCardReply = `Here is where things stand.\n\n${fence(envelope([
+    {
+      id: 'candidacy-current-picture',
+      type: 'key_value',
+      title: 'Where things stand',
+      items: [
+        { key: 'Product role', value: 'Not moving forward, confirmed by Max.' },
+        { key: 'Another possibility', value: 'The team wants to explore a different role.' },
+      ],
+    },
+  ]))}`;
+  const vividTableReply = 'Here are the numbers:\n\n| Quarter | Revenue |\n| --- | --- |\n| Q1 | 10 |\n| Q2 | 15 |\n| Q3 | 22 |\n\nGrowth held steady.';
+  const richTableReply = '**Summary**\n\n| Item | Status |\n| --- | --- |\n| API | Ready |\n| UI | Done |';
+  const plainReply = 'First step complete.\n\nSecond step complete.';
+
+  const messages = [
+    { role: 'user', content: 'Update me' },
+    { role: 'assistant', content: vividCardReply },
+    { role: 'user', content: 'Show revenue' },
+    { role: 'assistant', content: vividTableReply },
+  ];
+
+  // User had Vivid UI selected when the first two replies arrived, then switched to Rich text.
+  lockAssistantResponseStyles(messages, 'vivid');
+  assert.equal(messages[1].responseStyle, 'vivid');
+  assert.equal(messages[3].responseStyle, 'vivid');
+
+  // Next message arrives under Rich text, then the user switches to Plain text.
+  messages.push({ role: 'user', content: 'Rich table please' });
+  messages.push({ role: 'assistant', content: richTableReply, responseStyle: 'rich' });
+  lockAssistantResponseStyles(messages, 'rich');
+
+  // Next message arrives under Plain text, then the user switches back to Vivid UI.
+  messages.push({ role: 'user', content: 'Plain summary please' });
+  messages.push({ role: 'assistant', content: plainReply, responseStyle: 'plain' });
+  lockAssistantResponseStyles(messages, 'plain');
+
+  const styles = messages.filter((m) => m.role === 'assistant').map((m) => resolveMessageResponseStyle(m, 'vivid'));
+  assert.deepEqual(styles, ['vivid', 'vivid', 'rich', 'plain']);
+
+  // Each message renders in the style it was stored with, regardless of the current setting.
+  const renderedVividCard = renderResponseSafe(messages[1].content, { style: resolveMessageResponseStyle(messages[1], 'rich'), streaming: false });
+  assert.equal(showsJson(renderedVividCard), false, 'switching to Rich text never turns an existing Vivid card into raw JSON');
+  assert.deepEqual(types(renderedVividCard), ['key_value']);
+
+  const renderedVividTable = renderResponseSafe(messages[3].content, { style: resolveMessageResponseStyle(messages[3], 'plain'), streaming: false });
+  assert.match(renderedVividTable, /haui-derived/, 'switching to Plain text never strips the chart from an existing Vivid table reply');
+
+  const renderedRichTable = renderResponseSafe(messages[5].content, { style: resolveMessageResponseStyle(messages[5], 'plain'), streaming: false });
+  assert.match(renderedRichTable, /<table/, 'switching to Plain text keeps the Markdown table on an earlier Rich text reply');
+  assert.doesNotMatch(renderedRichTable, /haui-derived/, 'switching back to Vivid UI later does not retroactively add a Vivid chart to a Rich reply');
+
+  const renderedPlain = renderResponseSafe(messages[7].content, { style: resolveMessageResponseStyle(messages[7], 'vivid'), streaming: false });
+  assert.match(renderedPlain, /class="plain-response"/, 'switching to Vivid UI keeps an earlier Plain text reply in plain style');
+
+  // Even an older untagged reply with adaptive blocks keeps its Vivid rendering after a switch to Rich or Plain.
+  assert.equal(resolveMessageResponseStyle({ role: 'assistant', content: vividCardReply }, 'rich'), 'vivid');
+  assert.equal(resolveMessageResponseStyle({ role: 'assistant', content: vividCardReply }, 'plain'), 'vivid');
+
+  // Gateway history reconciliation preserves local styles and recovers styles from Browser turn envelopes.
+  const gatewayHistory = [
+    { role: 'user', content: serializeBrowserTurnEnvelope({ humanInput: 'Update me', responseStyle: responseStyleTurnContract('vivid') }) },
+    { role: 'assistant', content: vividTableReply },
+    { role: 'user', content: serializeBrowserTurnEnvelope({ humanInput: 'Rich table please', responseStyle: responseStyleTurnContract('rich', { conversationHasVivid: true }) }) },
+    { role: 'assistant', content: richTableReply },
+    { role: 'user', content: serializeBrowserTurnEnvelope({ humanInput: 'Plain summary please', responseStyle: responseStyleTurnContract('plain', { conversationHasVivid: true }) }) },
+    { role: 'assistant', content: plainReply },
+  ];
+  const reconciled = preserveAssistantResponseStyles(gatewayHistory, [], { fallbackStyle: 'vivid' });
+  assert.deepEqual(
+    reconciled.filter((m) => m.role === 'assistant').map((m) => m.responseStyle),
+    ['vivid', 'rich', 'plain'],
+  );
 });

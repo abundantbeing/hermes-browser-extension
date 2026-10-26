@@ -2,6 +2,8 @@
 // how replies are drawn (response style), where messages sit (chat layout), and
 // whether the first-run setup still has to show. Pure: no storage, no DOM.
 
+import { containsAdaptiveBlocks } from './adaptive-ui.mjs';
+
 export const RESPONSE_STYLES = Object.freeze(['vivid', 'rich', 'plain']);
 // Rich text is today's Markdown rendering, so anyone who never picked a style
 // keeps exactly what they had. Setup preselects Vivid UI for new users.
@@ -13,9 +15,13 @@ export const MESSAGE_LAYOUT_DEFAULT = 'bubbles';
 
 export const ONBOARDING_COMPLETED_STORAGE_KEY = 'hermesOnboardingCompleted';
 
-export function normalizeResponseStyle(value, fallback = RESPONSE_STYLE_DEFAULT) {
+export function explicitResponseStyle(value) {
   const style = String(value || '').trim().toLowerCase();
-  return RESPONSE_STYLES.includes(style) ? style : fallback;
+  return RESPONSE_STYLES.includes(style) ? style : '';
+}
+
+export function normalizeResponseStyle(value, fallback = RESPONSE_STYLE_DEFAULT) {
+  return explicitResponseStyle(value) || fallback;
 }
 
 export function normalizeMessageLayout(value, fallback = MESSAGE_LAYOUT_DEFAULT) {
@@ -81,7 +87,11 @@ export const VIVID_CONTRACT = [
 // replies, so the model stops imitating their blocks.
 const VIVID_OFF_NOTE = 'Response style: Rich text. The user turned Vivid UI off. Reply in normal Markdown only and add no hermes-ui blocks, even though earlier replies in this conversation used them.';
 
+const PLAIN_OFF_NOTE = 'Response style: Rich text. The user switched from Plain text to Rich text. Reply in normal Markdown (headings, bold, lists, tables and code fences when helpful) and add no hermes-ui blocks, even though earlier replies in this conversation used plain text.';
+
 const PLAIN_GUIDE = 'Response style: Plain text. Reply in plain text only, with no Markdown: no headings, bold, italics, tables, bullet symbols or code fences. Use short paragraphs and numbered lines when order matters.';
+
+const PLAIN_SWITCH_NOTE = 'Response style: Plain text. The user switched to Plain text. Reply in plain text only, with no Markdown (no headings, bold, italics, tables, bullet symbols or code fences) and no hermes-ui blocks, even though earlier replies in this conversation used them. Use short paragraphs and numbered lines when order matters.';
 
 // The note appended to the Hermes Browser system prompt. Rich text sends
 // nothing, so the agent behaves exactly as before; Vivid UI travels in each
@@ -91,11 +101,123 @@ export function responseStyleInstructions(style) {
 }
 
 // The response_style section of a Browser turn: the user's own setting, sent
-// with every turn while Vivid UI is on. Rich text sends none unless the
-// conversation already holds Vivid replies; Plain text keeps its system note.
-export function responseStyleTurnContract(style, { conversationHasVivid = false } = {}) {
+// with every turn while Vivid UI is on, and whenever a conversation switches
+// between Vivid UI, Rich text and Plain text so the next reply picks up the
+// newly chosen style while earlier replies stay stored as they were.
+export function responseStyleTurnContract(style, {
+  conversationHasVivid = false,
+  conversationHasRich = false,
+  conversationHasPlain = false,
+} = {}) {
   const normalized = normalizeResponseStyle(style);
   if (normalized === 'vivid') return { id: 'vivid', name: 'Vivid UI', source: 'user_setting', required: true, contract: VIVID_CONTRACT };
   if (normalized === 'rich' && conversationHasVivid) return { id: 'rich', name: 'Rich text', source: 'user_setting', required: true, contract: VIVID_OFF_NOTE };
+  if (normalized === 'rich' && conversationHasPlain) return { id: 'rich', name: 'Rich text', source: 'user_setting', required: true, contract: PLAIN_OFF_NOTE };
+  if (normalized === 'plain' && (conversationHasVivid || conversationHasRich)) return { id: 'plain', name: 'Plain text', source: 'user_setting', required: true, contract: PLAIN_SWITCH_NOTE };
   return null;
+}
+
+// Each assistant reply keeps the response style it was created with, so a
+// later switch to Rich text, Plain text or Vivid UI only applies from the next
+// message onward and never strips tables, charts or formatting from existing
+// messages in the session.
+export function resolveMessageResponseStyle(record, fallback = RESPONSE_STYLE_DEFAULT) {
+  if (record && typeof record === 'object') {
+    if (record.role && String(record.role).trim().toLowerCase() !== 'assistant') return 'rich';
+    if (containsAdaptiveBlocks(record.content)) return 'vivid';
+    const stored = explicitResponseStyle(record.responseStyle);
+    if (stored) return stored;
+  }
+  return normalizeResponseStyle(fallback);
+}
+
+// Locks the current response style onto any assistant message in `messages`
+// that does not yet carry its own stored style before a style change takes
+// effect for future turns.
+export function lockAssistantResponseStyles(messages = [], currentStyle = RESPONSE_STYLE_DEFAULT) {
+  if (!Array.isArray(messages)) return [];
+  const fallback = normalizeResponseStyle(currentStyle);
+  for (const message of messages) {
+    if (!message || typeof message !== 'object' || String(message.role || '').toLowerCase() !== 'assistant') continue;
+    message.responseStyle = resolveMessageResponseStyle(message, fallback);
+  }
+  return messages;
+}
+
+export function extractTurnResponseStyle(content = '') {
+  const text = String(content || '').trim();
+  if (!text.includes('hermes.browser.turn') || !text.includes('response_style')) return '';
+  try {
+    const parsed = JSON.parse(text);
+    return explicitResponseStyle(parsed?.response_style?.id);
+  } catch {
+    const match = /"response_style"\s*:\s*\{\s*"id"\s*:\s*"(vivid|rich|plain)"/i.exec(text);
+    return match ? match[1].toLowerCase() : '';
+  }
+}
+
+function assistantMessageMatchKey(message) {
+  return String(message?.content || '').replace(/\r\n/g, '\n').trim();
+}
+
+function matchingAssistantContent(remoteKey = '', localKey = '') {
+  if (!remoteKey || !localKey) return false;
+  if (remoteKey === localKey) return true;
+  return remoteKey.startsWith(localKey) || localKey.startsWith(remoteKey);
+}
+
+// Reconciled gateway history rows carry only role and content. Preserve each
+// assistant reply's stored responseStyle from the local transcript (or infer it
+// from adaptive blocks and the preceding Browser turn envelope) so history
+// refreshes and session reloads keep every reply in the style it was made with.
+export function preserveAssistantResponseStyles(
+  refreshedMessages = [],
+  localMessages = [],
+  { fallbackStyle = RESPONSE_STYLE_DEFAULT } = {},
+) {
+  if (!Array.isArray(refreshedMessages)) return [];
+  const localCandidates = (Array.isArray(localMessages) ? localMessages : [])
+    .map((message, index) => ({
+      index,
+      rowId: Number.isInteger(message?.rowId) && message.rowId > 0 ? message.rowId : null,
+      key: assistantMessageMatchKey(message),
+      style: containsAdaptiveBlocks(message?.content) ? 'vivid' : explicitResponseStyle(message?.responseStyle),
+    }))
+    .filter((entry) => entry.style && (entry.rowId || entry.key));
+  const claimed = new Set();
+  const matchedStyles = new Map();
+
+  for (let index = refreshedMessages.length - 1; index >= 0; index -= 1) {
+    const message = refreshedMessages.at(index);
+    if (String(message?.role || '').toLowerCase() !== 'assistant') continue;
+    const rowId = Number.isInteger(message?.rowId) && message.rowId > 0 ? message.rowId : null;
+    const key = assistantMessageMatchKey(message);
+    const candidate = localCandidates.findLast((entry) => !claimed.has(entry.index)
+      && ((rowId && entry.rowId === rowId) || (key && matchingAssistantContent(key, entry.key))));
+    if (!candidate) continue;
+    claimed.add(candidate.index);
+    matchedStyles.set(index, candidate.style);
+  }
+
+  let turnStyle = '';
+  return refreshedMessages.map((message, index) => {
+    if (!message || typeof message !== 'object') return message;
+    const role = String(message.role || '').toLowerCase();
+    if (role === 'user') {
+      const fromTurn = extractTurnResponseStyle(message.content) || explicitResponseStyle(message.responseStyle);
+      if (fromTurn) turnStyle = fromTurn;
+      else if (/hermes\.browser\.turn\.v2/.test(String(message.content || ''))) {
+        turnStyle = turnStyle === 'plain' ? 'plain' : 'rich';
+      }
+      return message;
+    }
+    if (role !== 'assistant') return message;
+    const style = containsAdaptiveBlocks(message.content)
+      ? 'vivid'
+      : (explicitResponseStyle(message.responseStyle)
+        || matchedStyles.get(index)
+        || turnStyle
+        || normalizeResponseStyle(fallbackStyle));
+    return message.responseStyle === style ? message : { ...message, responseStyle: style };
+  });
 }

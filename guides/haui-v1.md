@@ -114,7 +114,7 @@ without a second model call:
   closed "View as chart" disclosure under it. The table stays as written.
 
 Every Vivid reply, with or without blocks, also gets the Vivid prose surface
-(`adaptive-ui.css`, under `:root[data-response-style="vivid"]`): a lead
+(`adaptive-ui.css`, under `.message.assistant[data-response-style="vivid"]`): a lead
 paragraph, display-face section headings, callout quotes and quiet list
 markers. Code blocks keep their normal rendering.
 
@@ -132,8 +132,12 @@ including `Tool` and `Form`, is left to the reply's prose.
 
 The choice is saved as `responseStyle` in `hermesBrowserSettings` (setup or
 Appearance in Settings) and read on every turn, so it holds for new turns,
-restored sessions and a reopened panel. A panel in another window adopts the
-change from storage.
+restored sessions and a reopened panel. Each assistant reply also stores the
+`responseStyle` it was created with: switching between Vivid UI, Rich text and
+Plain text mid-session leaves earlier replies (and their cards, tables and
+charts) stored and rendered as they were, and applies the newly selected style
+from the next reply onward. A panel in another window adopts the change from
+storage.
 
 With Vivid UI on, every side panel turn (composer and right-click) carries
 the contract (`VIVID_CONTRACT` in `extension/lib/response-presentation.mjs`) as
@@ -150,10 +154,10 @@ allows brief replies to stay prose, forbids decorative padding, and forbids
 invented data or claimed actions.
 
 The session's stored system prompt never carries Vivid text, and inline drafts
-(text written into page fields) never get it. When Vivid UI is turned off in a
-conversation that already has Vivid replies, Rich text turns carry a short note
-asking for no more blocks; otherwise Rich text sends nothing, as before. Plain
-text keeps its system prompt note.
+(text written into page fields) never get it. When the user switches styles in a
+conversation that already has replies in another style, the next Rich text or
+Plain text turn carries a short note so the model follows the switch; otherwise
+Rich text sends nothing, as before, and Plain text keeps its system prompt note.
 
 ## Future work
 

@@ -302,7 +302,8 @@ test('vivid fences with repeated or looping child ids stay bounded', () => {
   assert.deepEqual(result.blocks.map((block) => block.type), ['comparison']);
 });
 
-test('only Hermes replies take the response style in the side panel', () => {
+test('only Hermes replies take the response style in the side panel, and each keeps its own stored style', () => {
   const panel = fs.readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-  assert.match(panel, /const assistant = element\?\.closest\?\.\('\.message\.assistant'\);\s*const style = assistant \? responsePresentationFromSettings\(settings\)\.responseStyle : 'rich';/);
+  assert.match(panel, /const assistant = element\?\.closest\?\.\('\.message\.assistant'\);\s*const style = assistant\s*\? resolveMessageResponseStyle\(/);
+  assert.doesNotMatch(panel, /before\.responseStyle !== after\.responseStyle && messages\.length && !sending\) renderMessagesFromStorage\(\)/);
 });
