@@ -28,7 +28,7 @@ test('a live panel reply gets its time when the stream finishes and keeps it whe
   const updater = panel.slice(panel.indexOf('function createStreamingMessageUpdater('), panel.indexOf('const paintStream = '));
   assert.match(updater, /panelMessageThread\?\.setStreaming\(row,\s*false\)/);
   assert.match(panel, /addMessage\('assistant', THINKING_PLACEHOLDER, \{ persist: false, roleLabel: assistantMessageRoleLabel\(\), streaming: true \}\)/);
-  assert.match(panel, /messages\.push\(\{ role: 'assistant', content: finalAnswerForStorage, ts: Date\.now\(\) \}\)/);
+  assert.match(panel, /messages\.push\(\{ role: 'assistant', content: finalAnswerForStorage, ts: Date\.now\(\)(?:, responseStyle: assistantStyle)? \}\)/);
 });
 
 test('history replay passes stored time and row identity rather than inventing them', () => {

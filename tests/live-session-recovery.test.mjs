@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { parseHTML } from 'linkedom';
 import { createToolCallGroup, updateToolCallGroup, mergeToolCallActivity } from '../extension/lib/tool-call-group.mjs';
 import { sessionIsLiveFromStatus } from '../extension/lib/live-session-attach.mjs';
+import { resolveMessageResponseStyle, responsePresentationFromSettings } from '../extension/lib/response-presentation.mjs';
 
 const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
 const updaterSource = source.slice(source.indexOf('function createStreamingMessageUpdater('), source.indexOf('// A gateway still running pre-update code'));
@@ -19,7 +20,7 @@ test('a live updater restores accumulated text and tool activity after its DOM n
   const { document } = parseHTML('<html><body><div class=message-row><article id=old></article></div><div class=message-row><article id=new></article></div></body></html>');
   const painted = new Map();
   const tools = new Map();
-  const context = vm.createContext({
+  const context = vm.createContext({resolveMessageResponseStyle,responsePresentationFromSettings,settings:{},
     document, createToolCallGroup, updateToolCallGroup, mergeToolCallActivity, translateUiText: value => value, t: (_key, {count}) => `${count} tools`,
     renderThinkingIndicator: element => { element.textContent = 'Thinking'; },
     THINKING_PLACEHOLDER: 'Thinking',
@@ -56,7 +57,7 @@ test('disposing a live updater paints text that was still waiting for its frame'
   const painted = [];
   const frames = new Map();
   let nextFrame = 0;
-  const context = vm.createContext({
+  const context = vm.createContext({resolveMessageResponseStyle,responsePresentationFromSettings,settings:{},
     document, createToolCallGroup, updateToolCallGroup, mergeToolCallActivity, translateUiText: value => value, t: (_key, {count}) => `${count} tools`,
     renderThinkingIndicator: () => {},
     THINKING_PLACEHOLDER: 'Hermes is thinking...',

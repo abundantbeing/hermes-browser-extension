@@ -116,7 +116,7 @@ test('new-chat and session switches stay allowed while a run is live (gateway ow
 
 test('a finishing run mirrors its reply only into the session it started in', () => {
   assert.match(panel, /const runSessionId = String\(settings\.sessionId \|\| ''\)\.trim\(\);/);
-  assert.match(panel, /if \(String\(settings\.sessionId \|\| ''\)\.trim\(\) === runSessionId\) \{\s*messages\.push\(\{ role: 'assistant'/);
+  assert.match(panel, /if \(String\(settings\.sessionId \|\| ''\)\.trim\(\) === runSessionId\) \{[\s\S]{0,400}?messages\.push\(\{ role: 'assistant'/);
 });
 
 
