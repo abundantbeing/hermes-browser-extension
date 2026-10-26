@@ -5879,6 +5879,27 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
   color: var(--hermes-fg);
   background: rgba(var(--hermes-accent-rgb),0.12);
 }
+/* Drawer rows: the title takes the room and ellipsizes; ID / Rename / Move keep their labels on one line at any width
+   or text zoom. When the title would be squeezed below about 9em (a narrow panel, or a larger text size) the buttons
+   drop to a line of their own under the title instead of crowding it. */
+.session-actions { flex: none; flex-wrap: nowrap; }
+.session-action-button { flex: none; white-space: nowrap; }
+.session-menu-list .session-option-row:not(.renaming) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 4px;
+  row-gap: 2px;
+}
+.session-menu-list .session-option-row:not(.renaming) > .session-option {
+  flex: 1 1 9em;
+  width: auto;
+  min-width: 0;
+}
+.session-menu-list .session-option-row:not(.renaming) > .session-actions {
+  margin-inline-start: auto;
+  padding-bottom: 0;
+}
 /* In-panel session rename editor — replaces the native window.prompt. Scoped
    to the rename classes only; the row keeps its list geometry (input is a
    fixed 24px, actions reuse .session-action-button). */
