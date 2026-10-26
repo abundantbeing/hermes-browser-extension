@@ -39,8 +39,12 @@ test('Remote API-only connections do not probe or retry for a Dashboard roster',
 
   assert.ok(retrySource.indexOf(remoteApiGuard) >= 0);
   assert.ok(retrySource.indexOf(remoteApiGuard) < retrySource.indexOf('setTimeout('));
-  assert.ok(loaderSource.indexOf(remoteApiGuard) >= 0);
-  assert.ok(loaderSource.indexOf(remoteApiGuard) < loaderSource.indexOf('ensureProfileWsConnection('));
+  // The loader's guard also stands aside for a held Hermes account sign-in on the remote gateway's own origin
+  // (viaAccountRemote); with none held it is the guard it always was, and it still runs before any dashboard code.
+  const loaderGuard = 'if (isRemoteMode() && !isRemoteWsMode() && !viaAccountRemote)';
+  assert.ok(loaderSource.indexOf(loaderGuard) >= 0);
+  assert.ok(loaderSource.indexOf('connectProfileViaAccount(') < loaderSource.indexOf(loaderGuard));
+  assert.ok(loaderSource.indexOf(loaderGuard) < loaderSource.indexOf('ensureProfileWsConnection('));
   assert.match(loaderSource, /return \{ status: 'degraded', detail: botModeRosterNote \};/);
   assert.match(loaderSource, /return \{ status: 'ready', detail: count === 1/);
   assert.match(sidepanelSource, /loadProfiles: async \(\) => loadProfiles\(\{ quiet: true \}\)/);

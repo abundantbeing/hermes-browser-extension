@@ -297,10 +297,12 @@ import {
 } from './lib/subagent-stack.mjs';
 import { extractYouTubeVideoId, transcriptModeFromProvider, transcriptProviderFromMode } from './lib/transcript.mjs';
 import {
+  buildDashboardWsEndpoint,
   buildDashboardWsUrl,
   buildDashboardWsUrlWithCredential,
   buildSessionCompressParams,
   connectGatewayWithTicket,
+  gatewayWebSocketProtocols,
   buildSessionModelSwitchRequest,
   createGatewayClient,
   establishGatewaySession,
@@ -679,6 +681,17 @@ import { createGatewayQuirkStore, GATEWAY_QUIRK, isSessionPatchRejection } from 
 import { openHermesWebapp, resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { createWebappGatewayTickets, WEBAPP_TICKET_REASONS } from './lib/webapp-gateway-tickets.mjs';
+import {
+  accountConnectionKey,
+  accountOriginOf,
+  accountOriginsFor,
+  createAccountStore,
+  createHermesAccount,
+  dialWithAccountTicket,
+  openSignInWindow,
+  probeAccountSupport,
+  requestWebRequestPermission,
+} from './lib/hermes-account.mjs';
 import { PROJECTS_UNAVAILABLE } from './lib/projects-client.mjs';
 import { createWebappDialog } from './lib/hermes-webapp-dialog.mjs';
 import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
@@ -1128,6 +1141,10 @@ const els = {
   gatewayUrlInput: $('#gatewayUrlInput'),
   hermesWebAddressInput: $('#hermesWebAddressInput'),
   webappKeepSignedInInput: $('#webappKeepSignedInInput'),
+  hermesAccountRow: $('#hermesAccountRow'),
+  hermesAccountStatus: $('#hermesAccountStatus'),
+  hermesAccountSignIn: $('#hermesAccountSignIn'),
+  hermesAccountSignOut: $('#hermesAccountSignOut'),
   gatewayUrlField: $('#gatewayUrlField'),
   cloudPreviewHelp: $('#cloudPreviewHelp'),
   gatewayHelp: $('#gatewayHelp'),
@@ -2328,6 +2345,9 @@ function resetLocalDashboardState() {
     profileConnection: profileWsConnection,
     activeConnection: activeDashboardWsConnection,
     conversationTransport: activeConversationTransport,
+    // A socket opened with a Hermes account sign-in on the REMOTE gateway's own origin is not this machine's.
+    profileConnectionIsAccount: Boolean(profileWsConnection?.account) && !isLocalApiMode()
+      && accountOriginsNow().includes(profileWsConnection.account),
   });
   if (!plan.reset) return false;
   if (plan.clearUrl) desktopDashboardUrl = '';
@@ -2784,6 +2804,8 @@ function showSettingsPane(pane, { field = '', focus = true } = {}) {
   if (settingsActivePane === 'models') renderSettingsModelSummary();
   // The pane shows the open session's context; ask for a fresh reading (no-op when recent).
   if (settingsActivePane === 'sessions') refreshSessionContextTelemetry();
+  // Connection shows the Hermes account row: read whether this gateway takes a sign-in, and whether one is held.
+  if (settingsActivePane === 'connections') void refreshAccountOffer().catch(() => undefined);
   // About & Diagnostics shows the companion plugin's state: ask again now, not from a 30 s old answer.
   if (settingsActivePane === 'about') {
     void refreshCompanionPluginStatus({ force: true }).catch(() => undefined);
@@ -3865,6 +3887,336 @@ function webappGatewayTickets() {
   return webappGatewayTicketSource;
 }
 
+// The Hermes account sign-in (lib/hermes-account.mjs): the RFC 8252 native sign-in the Hermes phone app uses,
+// run against the gateway's gated dashboard / Webapp listener. It gives the panel the session-authority socket
+// (Projects, Session authority, compaction, the rich roster and skills) on a gateway that asks for sign-in,
+// remote or local, with no terminal and no Webapp tab. Order of preference where the panel needs that socket:
+//   1. the paired gateway's socket ticket (connectProfileViaGatewayTicket), local gateways only;
+//   2. a Hermes account sign-in (connectProfileViaAccount / the remote dashboard dial);
+//   3. the held Hermes Web credential, then Dashboard Attach from a signed-in tab;
+//   4. an honest reason with a Sign in with your Hermes account button, where the gateway offers it.
+// An ungated loopback listener never offers it: /api/auth/ws-ticket needs a session only the gate attaches.
+// Tokens live in storage.local per gateway origin, are never shown, logged or put in a URL, and are cleared by
+// Sign out, a refresh 401 session_expired and a change of the connection.
+let hermesAccountStoreInstance = null;
+let hermesAccountClient = null;
+// What the panel last learned about signing in for this connection. `available`: the gateway is gated and
+// advertises the native flow; `signedIn`: a sign-in is held for `origin`. Read synchronously by the capability rows.
+let accountOffer = { origin: '', available: false, signedIn: false, session: null, reason: '', checkedAt: 0 };
+let accountSigningIn = false;
+let accountNotice = ''; // 'session-expired' after a refresh 401, else a sign-in failure reason; '' when none
+const accountProbeCache = new Map(); // origin -> { at, result }
+const ACCOUNT_PROBE_TTL_MS = 60_000;
+const ACCOUNT_SOCKET_RETRY_MS = 15_000;
+let accountSocketPending = null;
+let accountSocketFailedAt = 0;
+
+function hermesAccountStore() {
+  if (!hermesAccountStoreInstance) hermesAccountStoreInstance = createAccountStore({ storageArea: browserApi.storage?.local });
+  return hermesAccountStoreInstance;
+}
+
+function hermesAccount() {
+  if (!hermesAccountClient) {
+    hermesAccountClient = createHermesAccount({
+      store: hermesAccountStore(),
+      fetchImpl: (...args) => globalThis.fetch(...args),
+      openWindow: (url) => openSignInWindow(url, { windowsApi: browserApi.windows, tabsApi: browserApi.tabs }),
+      webRequestApi: browserApi.webRequest,
+      tabsApi: browserApi.tabs,
+      onChange: (event) => handleAccountChange(event),
+    });
+  }
+  return hermesAccountClient;
+}
+
+function accountConnectionKeyNow() {
+  return accountConnectionKey({ gatewayMode: normalizeGatewayMode(settings.gatewayMode), gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl) });
+}
+
+// Where a sign-in may be run for this connection. A remote connection gets its own gateway origin and never a
+// loopback one (accountOriginsFor); a local one gets the loopback listeners discovery or Settings named.
+function accountOriginsNow() {
+  return accountOriginsFor({
+    gatewayMode: normalizeGatewayMode(settings.gatewayMode),
+    gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+    loopbackOrigins: [localDashboardUrl(), webappTargetForSettings()?.origin || '', ...webappListeners.keys()],
+  });
+}
+
+function accountSignInOffered() {
+  return accountOffer.available === true && accountOffer.signedIn !== true;
+}
+
+async function accountSupportFor(origin, { force = false } = {}) {
+  const cached = accountProbeCache.get(origin);
+  if (!force && cached && Date.now() - cached.at < ACCOUNT_PROBE_TTL_MS) return cached.result;
+  const result = await probeAccountSupport(origin, { fetchImpl: (...args) => globalThis.fetch(...args) });
+  accountProbeCache.set(origin, { at: Date.now(), result });
+  return result;
+}
+
+// Read what signing in can do for this connection: a held sign-in first (no request), else the gateway's own
+// /api/status. Updates the snapshot the capability rows and Settings read, and redraws them when it changed.
+async function refreshAccountOffer({ force = false } = {}) {
+  const origins = accountOriginsNow();
+  const previous = JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice]);
+  let next = { origin: origins[0] || '', available: false, signedIn: false, session: null, reason: origins.length ? 'unreachable' : 'no-origin', checkedAt: Date.now() };
+  try {
+    for (const origin of origins) {
+      const held = await hermesAccountStore().get(origin);
+      if (held && (!held.connectionKey || held.connectionKey === accountConnectionKeyNow())) {
+        next = { origin, available: true, signedIn: true, session: held.summary(), reason: '', checkedAt: Date.now() };
+        break;
+      }
+    }
+    if (!next.signedIn) {
+      for (const origin of origins) {
+        const support = await accountSupportFor(origin, { force });
+        if (support.available) {
+          next = { origin, available: true, signedIn: false, session: null, reason: '', checkedAt: Date.now() };
+          break;
+        }
+        next.origin = next.origin || origin;
+        next.reason = support.reason || next.reason;
+      }
+    }
+  } catch {
+    /* the snapshot stays as the failed read left it */
+  }
+  accountOffer = next;
+  if (previous !== JSON.stringify([accountOffer.origin, accountOffer.available, accountOffer.signedIn, accountOffer.reason, accountNotice])) {
+    renderHermesAccountRow();
+    refreshCapabilityViews();
+  }
+  return accountOffer;
+}
+
+// A sign-in was saved, refreshed, ended or cleared. Nothing here sees a token.
+function handleAccountChange(event = {}) {
+  const origin = String(event.origin || '');
+  if (event.type === 'expired' || event.type === 'signed-out') {
+    accountNotice = event.type === 'expired' ? 'session-expired' : '';
+    const open = profileWsConnection;
+    if (open?.account && open.account === origin) {
+      profileWsConnection = null;
+      try { open.client?.close?.(); } catch { /* already closed */ }
+    }
+    const remote = remoteWsConnection;
+    if (remote?.account && remote.account === origin) {
+      remoteWsConnection = null;
+      try { remote.client?.close?.(); } catch { /* already closed */ }
+    }
+    accountSocketFailedAt = 0;
+  } else if (event.type === 'signed-in') {
+    accountNotice = '';
+  }
+  accountProbeCache.delete(origin);
+  void refreshAccountOffer({ force: true });
+}
+
+// The connection's identity changed: a sign-in is bound to the connection it was made for.
+async function clearAccountForConnection() {
+  try {
+    const dropped = await hermesAccountStore().clearUnlessConnection(accountConnectionKeyNow());
+    if (dropped.length) {
+      accountNotice = '';
+      for (const origin of dropped) accountProbeCache.delete(origin);
+      if (profileWsConnection?.account && dropped.includes(profileWsConnection.account)) {
+        const open = profileWsConnection;
+        profileWsConnection = null;
+        try { open.client?.close?.(); } catch { /* already closed */ }
+      }
+    }
+  } catch {
+    /* nothing stored that could not be read */
+  }
+  void refreshAccountOffer({ force: true });
+}
+
+// The Sign in click. The optional webRequest permission is asked for FIRST, before any await: a browser refuses a
+// request that does not come from user input. A permission already held answers true without a prompt.
+async function signInWithHermesAccount() {
+  if (accountSigningIn) return { ok: false, reason: 'busy' };
+  const permission = requestWebRequestPermission(browserApi.permissions);
+  accountSigningIn = true;
+  accountNotice = '';
+  renderHermesAccountRow();
+  try {
+    const granted = await permission;
+    if (!granted) {
+      accountNotice = 'no-permission';
+      return { ok: false, reason: 'no-permission' };
+    }
+    const offer = await refreshAccountOffer({ force: true });
+    if (!offer.origin || !offer.available) return { ok: false, reason: offer.reason || 'unreachable' };
+    const result = await hermesAccount().signIn({ origin: offer.origin, connectionKey: accountConnectionKeyNow() });
+    if (!result.ok) {
+      accountNotice = result.reason === 'cancelled' ? '' : result.reason;
+      return result;
+    }
+    showOperationToast({ title: t('account.signed_in_title'), detail: accountSignedInLabel(result.session) });
+    accountSocketFailedAt = 0;
+    gatewaySocketFailedAt = 0;
+    void refreshAfterAccountSignIn();
+    return result;
+  } catch (error) {
+    accountNotice = 'unavailable';
+    console.warn('[Hermes Browser] Hermes account sign-in failed:', error?.message || error);
+    return { ok: false, reason: 'unavailable' };
+  } finally {
+    accountSigningIn = false;
+    renderHermesAccountRow();
+  }
+}
+
+async function signOutHermesAccount() {
+  const origin = accountOffer.origin;
+  if (!origin) return false;
+  const cleared = await hermesAccount().signOut(origin).catch(() => false);
+  accountNotice = '';
+  void refreshAccountOffer({ force: true });
+  return cleared;
+}
+
+// After a sign-in: what waited for the socket loads, and an open Projects tab reads again.
+async function refreshAfterAccountSignIn() {
+  try {
+    void refreshGatewaySocket({ force: true });
+    void loadProfiles({ quiet: true, allowDashboardTrust: true });
+    void loadSkills({ quiet: true });
+    if (!els.sessionMenu.hidden && projectsTabActive()) void getProjectsController().refresh();
+    refreshCapabilityViews();
+  } catch {
+    /* a refresh that could not start leaves the panel as it was */
+  }
+}
+
+const ACCOUNT_NOTICE_REASONS = new Set(['session-expired', 'no-permission', 'state-mismatch', 'provider-denied', 'exchange-rejected', 'unavailable', 'timeout', 'no-window']);
+const ACCOUNT_UNAVAILABLE_REASONS = new Set(['not-gated', 'no-native-flow', 'unreachable', 'no-origin']);
+
+function accountNoticeText(code = '') {
+  return ACCOUNT_NOTICE_REASONS.has(code) ? t(`account.notice.${code.replaceAll('-', '_')}`) : t('account.notice.failed');
+}
+
+function accountSignedInLabel(session = null) {
+  const who = String(session?.displayName || session?.email || session?.userId || '').trim();
+  const provider = String(session?.provider || '').trim();
+  if (who && provider) return t('account.signed_in_as', { name: who, provider });
+  return who || provider || t('account.signed_in_generic');
+}
+
+// The Settings > Connection row: Sign in / Signed in as <user> (provider) / Sign out, with the honest reason when
+// this gateway does not take a sign-in.
+function renderHermesAccountRow() {
+  const row = els.hermesAccountRow;
+  if (!row) return;
+  const status = els.hermesAccountStatus;
+  const signIn = els.hermesAccountSignIn;
+  const signOut = els.hermesAccountSignOut;
+  let text;
+  let canSignIn = false;
+  let canSignOut = false;
+  if (accountSigningIn) {
+    text = t('account.status_waiting');
+  } else if (!accountOffer.checkedAt) {
+    text = t('account.status_checking');
+  } else if (accountOffer.signedIn) {
+    text = accountSignedInLabel(accountOffer.session);
+    canSignOut = true;
+  } else if (accountOffer.available) {
+    text = accountNotice ? accountNoticeText(accountNotice) : t('account.status_signed_out');
+    canSignIn = true;
+  } else if (accountNotice) {
+    text = accountNoticeText(accountNotice);
+  } else {
+    const reason = ACCOUNT_UNAVAILABLE_REASONS.has(accountOffer.reason) ? accountOffer.reason : 'unreachable';
+    text = t(`account.unavailable.${reason.replaceAll('-', '_')}`);
+  }
+  row.hidden = false;
+  if (status) status.textContent = text;
+  if (signIn) {
+    signIn.hidden = !canSignIn && !accountSigningIn;
+    signIn.disabled = accountSigningIn;
+  }
+  if (signOut) signOut.hidden = !canSignOut;
+}
+
+// One dial to /api/ws with the account's ticket as the Sec-WebSocket-Protocol only, shared by everything that
+// asks at once (the roster, Projects, the capability refresh). Null when no sign-in is held for this connection
+// (no request is made then), or it could not open: the caller falls back, and a retry waits a little.
+function connectProfileViaAccount(options = {}) {
+  if (isRemoteWsMode()) return Promise.resolve(null);
+  const open = profileWsConnection;
+  if (open?.client?.readyState === 1 && open.key === profileConnectionKey(open.baseUrl)) return Promise.resolve(open);
+  if (!accountSocketPending) {
+    accountSocketPending = dialProfileViaAccount(options).finally(() => { accountSocketPending = null; });
+  }
+  return accountSocketPending;
+}
+
+async function dialProfileViaAccount({ readyTimeoutMs = 8_000 } = {}) {
+  if (Date.now() - accountSocketFailedAt < ACCOUNT_SOCKET_RETRY_MS) return null;
+  const connectionKey = accountConnectionKeyNow();
+  for (const origin of accountOriginsNow()) {
+    const held = await hermesAccountStore().get(origin).catch(() => null);
+    if (!held) continue;
+    if (held.connectionKey && held.connectionKey !== connectionKey) {
+      void clearAccountForConnection();
+      continue;
+    }
+    const key = profileConnectionKey(origin);
+    try {
+      profileWsConnection?.client?.close?.();
+      const gatewayClient = createChatGatewayClient({ WebSocketImpl: WebSocket, requestTimeoutMs: 60_000, readyTimeoutMs, replayEndpoint: origin });
+      gatewayClient.on('close', () => {
+        if (profileWsConnection?.client === gatewayClient) profileWsConnection = null;
+        refreshCapabilityViews();
+      });
+      gatewayClient.on('sessions.changed', () => {
+        if (activeGroupProjection) void syncActiveGroupRoomFromGateway();
+      });
+      gatewayClient.on('profiles.changed', () => {
+        void loadProfiles({ quiet: true });
+      });
+      const dialed = await dialWithAccountTicket({
+        connect: (endpoint, protocols) => gatewayClient.connect(endpoint, protocols),
+        mint: () => hermesAccount().mintWsTicket(origin),
+        endpoint: buildDashboardWsEndpoint(origin),
+        protocolsFor: gatewayWebSocketProtocols,
+      });
+      if (!dialed.ok) {
+        // signed-out / session-expired already cleared the tokens (handleAccountChange); unavailable keeps them.
+        if (dialed.reason === 'unavailable') accountSocketFailedAt = Date.now();
+        return null;
+      }
+      const connection = { client: gatewayClient, baseUrl: origin, key, account: origin };
+      profileWsConnection = connection;
+      refreshCapabilityViews();
+      return connection;
+    } catch {
+      accountSocketFailedAt = Date.now();
+      return null;
+    }
+  }
+  return null;
+}
+
+// The remote dashboard: a held sign-in for this gateway's own origin, else ''. A remote connection never
+// resolves a loopback origin (accountOriginsFor), so this can never reach this machine.
+async function signedInAccountOriginFor(baseUrl = '') {
+  const origin = accountOriginOf(baseUrl);
+  if (!origin || !accountOriginsNow().includes(origin)) return '';
+  const held = await hermesAccountStore().get(origin).catch(() => null);
+  return held && (!held.connectionKey || held.connectionKey === accountConnectionKeyNow()) ? origin : '';
+}
+
+function accountSignInRequiredError() {
+  const error = new Error(t('account.sign_in_needed'));
+  error.ticketReason = 'account_sign_in_required';
+  return error;
+}
+
 // The token to send to the dashboard at baseUrl: the one its page injects (legacy dashboards), else
 // the held Webapp credential when it belongs to the same origin. '' when there is neither.
 async function dashboardTokenFor(baseUrl = '', html = '') {
@@ -4921,6 +5273,8 @@ function syncCapabilityRuntime() {
     caps: gatewayCapabilities,
     dashboardWsActive: wsActive,
     sideSocket: Boolean(side),
+    // This gateway asks for a Hermes account sign-in and none is held: the rows that need the socket say so.
+    accountSignIn: accountSignInOffered(),
     readyPayload: client ? client.readyPayload || null : (side?.readyPayload || null),
     identity: capabilityIdentity({
       endpoint: wsActive ? (connection?.baseUrl || settings.gatewayUrl) : settings.gatewayUrl,
@@ -5032,6 +5386,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
     void refreshCompanionPluginStatus().catch(() => undefined);
     void refreshDashboardRoutes().catch(() => undefined);
     void refreshGatewaySocket().catch(() => undefined);
+    void refreshAccountOffer().catch(() => undefined);
     refreshPendingUserInputsQuietly();
   } catch (error) {
     const status = Number(error?.httpStatus ?? error?.status);
@@ -11483,13 +11838,21 @@ async function ensureDesktopDashboardUrl({ timeoutMs = 8_000 } = {}) {
 
 async function ensureProfileWsConnection({ readyTimeoutMs = 8_000, allowDashboardTrust = false } = {}) {
   if (isRemoteWsMode()) return ensureRemoteWsClient();
-  // Remote API mode has no dashboard companion yet. Do not go looking for a
-  // dashboard on this machine; report the missing companion instead.
-  if (!isLocalApiMode()) throw dashboardCompanionNotConfiguredError();
+  // Remote API mode has no dashboard companion of its own. Do not go looking for a dashboard on this machine;
+  // a Hermes account sign-in on the remote gateway's own origin is the one socket it can have, else report the
+  // missing companion.
+  if (!isLocalApiMode()) {
+    const viaAccountRemote = await connectProfileViaAccount({ readyTimeoutMs });
+    if (viaAccountRemote) return viaAccountRemote;
+    throw dashboardCompanionNotConfiguredError();
+  }
   // First choice: the paired gateway signs a socket in itself, so no dashboard has to be discovered and no
   // credential held. A gateway without the routes (or with its Webapp off) answers null and the rest runs as before.
   const viaGatewayTicket = await connectProfileViaGatewayTicket({ readyTimeoutMs });
   if (viaGatewayTicket) return viaGatewayTicket;
+  // Second: a Hermes account sign-in on a gateway that asks for one. Makes no request unless one is held.
+  const viaAccount = await connectProfileViaAccount({ readyTimeoutMs });
+  if (viaAccount) return viaAccount;
   // The dashboard WS (/api/ws) lives on the DESKTOP dashboard's random port —
   // the 8642 sidecar has no such route and a connect attempt there hangs
   // waiting gateway.ready. When no dashboard URL is known yet, discover it
@@ -11731,10 +12094,15 @@ async function dialProfileViaGatewayTicket({ readyTimeoutMs = 8_000 } = {}) {
 // Projects and compaction in Settings reflect what the gateway can do instead of waiting for Projects or the
 // roster to ask. A gateway without the routes is asked once and then left alone for a while.
 async function refreshGatewaySocket({ force = false } = {}) {
-  if (!isLocalApiMode() || !hermesGatewayKey()) return null;
+  if (isRemoteWsMode()) return null;
   if (profileWsConnection?.client?.readyState === 1) return profileWsConnection;
-  if (!force && Date.now() - gatewaySocketFailedAt < GATEWAY_SOCKET_RETRY_MS) return null;
-  return connectProfileViaGatewayTicket({ readyTimeoutMs: 5_000 });
+  // The paired gateway's socket (a local gateway with the routes), then a held Hermes account sign-in (a gateway
+  // that asks for one, remote or local). A remote API connection has no paired routes and tries only the account.
+  if (isLocalApiMode() && hermesGatewayKey() && (force || Date.now() - gatewaySocketFailedAt >= GATEWAY_SOCKET_RETRY_MS)) {
+    const viaGatewayTicket = await connectProfileViaGatewayTicket({ readyTimeoutMs: 5_000 });
+    if (viaGatewayTicket) return viaGatewayTicket;
+  }
+  return connectProfileViaAccount({ readyTimeoutMs: 5_000 });
 }
 
 function usesDashboardWsChatTransport() {
@@ -14073,7 +14441,11 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
   // Public status and REST profile summaries are discovery, never roster data.
   const generation = ++botModeRosterGeneration;
   const gatewayUrl = normalizeGatewayUrl(settings.gatewayUrl);
-  if (isRemoteMode() && !isRemoteWsMode()) {
+  // Remote API mode: a Hermes account sign-in on the gateway's own origin opens the rich roster's socket. Makes
+  // no request unless one is held; without it the branch below runs exactly as before.
+  const viaAccountRemote = isRemoteMode() && !isRemoteWsMode()
+    ? await connectProfileViaAccount({ readyTimeoutMs: 8_000 }).catch(() => null) : null;
+  if (isRemoteMode() && !isRemoteWsMode() && !viaAccountRemote) {
     availableProfiles = [];
     botModeRoster = [];
     botModeRosterSource = '';
@@ -14126,8 +14498,11 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     // port. Look for one briefly; when none answers, list the profiles the
     // gateway itself serves instead of waiting out the dashboard handshake.
     // The paired gateway signs a socket in itself, so the rich roster needs no discovered dashboard.
-    const viaGateway = !localDashboardUrl() && isLocalApiMode()
+    const viaGatewayTicket = !localDashboardUrl() && isLocalApiMode()
       ? await connectProfileViaGatewayTicket({ readyTimeoutMs: 8_000 }).catch(() => null) : null;
+    // A held Hermes account sign-in is the next socket that needs no discovered dashboard.
+    const viaGateway = viaGatewayTicket || viaAccountRemote
+      || (!localDashboardUrl() && isLocalApiMode() ? await connectProfileViaAccount({ readyTimeoutMs: 8_000 }).catch(() => null) : null);
     if (!viaGateway && !localDashboardUrl()) {
       await ensureDesktopDashboardUrl({ timeoutMs: 2_500 }).catch(() => '');
     }
@@ -14171,7 +14546,8 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     // wait for it.
     const dashboardUrl = localDashboardUrl();
     // No dashboard at all (the paired gateway's socket was the only try) falls back the same way.
-    if (error?.ticketReason === 'webapp_sign_in_required' || (dashboardUrl && webappListeners.has(originOf(dashboardUrl))) || (!dashboardUrl && isLocalApiMode())) {
+    if (error?.ticketReason === 'webapp_sign_in_required' || (dashboardUrl && webappListeners.has(originOf(dashboardUrl))) || (!dashboardUrl && isLocalApiMode())
+      || (viaAccountRemote && hermesGatewayKey())) {
       const served = await loadProfilesFromGatewayRoutes({ quiet, generation, gatewayUrl });
       if (served) return served;
     }
@@ -17381,7 +17757,9 @@ async function prepareProjectsConnection() {
   }
   projectsBlockedReason = '';
   // The paired gateway signs a socket in itself; only without it does Projects look for a sign-in.
-  const viaGateway = !remote && isLocalApiMode() ? await connectProfileViaGatewayTicket().catch(() => null) : null;
+  const viaGatewayTicket = !remote && isLocalApiMode() ? await connectProfileViaGatewayTicket().catch(() => null) : null;
+  // Next, a held Hermes account sign-in (a gateway that asks for one: remote API, or a local one behind sign-in).
+  const viaGateway = viaGatewayTicket || (!remote ? await connectProfileViaAccount().catch(() => null) : null);
   if (!remote && isLocalApiMode() && !viaGateway) {
     // Opening or refreshing Projects tries again to keep Hermes Web's sign-in from an open tab,
     // then to find the listener it unlocks.
@@ -17394,6 +17772,8 @@ async function prepareProjectsConnection() {
     if (webappGatewayTickets().status().webapp === WEBAPP_TICKET_REASONS.OFF) projectsBlockedReason = PROJECTS_UNAVAILABLE.webappOff;
     // Hermes Web is serving the dashboard routes and this panel has no sign-in for it.
     else if (keepSignedInEnabled(settings) && webappListenerNeedingSignIn()) projectsBlockedReason = PROJECTS_UNAVAILABLE.webappSignIn;
+    // The gateway asks for a Hermes account sign-in and none is held: say so, with the button.
+    else if ((await refreshAccountOffer().catch(() => accountOffer)).available && !accountOffer.signedIn) projectsBlockedReason = PROJECTS_UNAVAILABLE.accountSignIn;
     return;
   }
   try {
@@ -17404,6 +17784,12 @@ async function prepareProjectsConnection() {
     if (error?.ticketReason === 'webapp_sign_in_required') {
       projectsConnectError = '';
       projectsBlockedReason = PROJECTS_UNAVAILABLE.webappSignIn;
+    } else if (error?.ticketReason === 'account_sign_in_required'
+      || (['dashboard_origin_untrusted', 'dashboard_tab_unselected', 'no_dashboard_tab', 'not_signed_in'].includes(error?.ticketReason)
+        && (await refreshAccountOffer().catch(() => accountOffer)).available && !accountOffer.signedIn)) {
+      // A gated gateway with no trusted tab, or an account session that ended: signing in is the way forward.
+      projectsConnectError = '';
+      projectsBlockedReason = PROJECTS_UNAVAILABLE.accountSignIn;
     }
   }
 }
@@ -17417,6 +17803,7 @@ function getProjectsController() {
       createSessionInFolder: createSessionInProjectFolder,
       onSessionMoved: () => { void loadSessions({ quiet: true }); },
       onReturnToRecents: () => setSessionMenuTab(SESSION_MENU_TABS.recents),
+      signInWithAccount: () => signInWithHermesAccount(),
       onChange: () => {
         if (!els.sessionMenu.hidden && projectsTabActive()) renderProjectsTab();
       },
@@ -21236,6 +21623,7 @@ function syncSettingsForm() {
   els.gatewayUrlInput.value = settings.gatewayUrl;
   if (els.hermesWebAddressInput) els.hermesWebAddressInput.value = settings.hermesWebAddress || '';
   if (els.webappKeepSignedInInput) els.webappKeepSignedInInput.checked = keepSignedInEnabled(settings);
+  renderHermesAccountRow();
   renderConnectionModeCards();
   renderConnectionModePanel();
   els.apiKeyInput.value = settings.apiKey || '';
@@ -21402,6 +21790,8 @@ async function saveSettingsFromForm() {
     || previousSettings.connectionTransport !== settings.connectionTransport
     || normalizeGatewayUrl(previousSettings.gatewayUrl) !== normalizeGatewayUrl(settings.gatewayUrl);
   const identityChanged = connectionIdentityChanged(previousSettings, settings, normalizeGatewayUrl);
+  // A Hermes account sign-in belongs to the connection it was made for.
+  if (identityChanged) void clearAccountForConnection();
   if (connectionChanged) {
     connectionController.cancel('connection settings changed');
     try {
@@ -23662,12 +24052,15 @@ async function ensureRemoteWsClient() {
   if (!isUsableRemoteGatewayUrl(baseUrl)) {
     throw new Error('Set a remote https gateway URL in Settings before connecting.');
   }
-  if (!isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
+  // A Hermes account sign-in for this gateway's own origin takes the place of the trusted signed-in tab: signing
+  // in was the person's consent for this origin, and its ticket is minted with the account's tokens.
+  const accountOrigin = await signedInAccountOriginFor(baseUrl);
+  if (!accountOrigin && !isTrustedDashboardOrigin(baseUrl, settings.trustedDashboardOrigin)) {
     const error = new Error('This dashboard origin is not trusted yet. Open Settings → Test connection to review and approve Dashboard Attach.');
     error.ticketReason = 'dashboard_origin_untrusted';
     throw error;
   }
-  if (!Number.isFinite(trustedDashboardTabId)) {
+  if (!accountOrigin && !Number.isFinite(trustedDashboardTabId)) {
     const error = new Error('Select the signed-in dashboard tab, then use Settings → Test connection before attaching.');
     error.ticketReason = 'dashboard_tab_unselected';
     throw error;
@@ -23682,13 +24075,23 @@ async function ensureRemoteWsClient() {
   }
   remoteWsConnection = null;
 
-  const ticket = await mintWsTicket({
-    tabsApi: browserApi.tabs,
-    scriptingApi: browserApi.scripting,
-    baseUrl,
-    tabId: trustedDashboardTabId,
-  });
+  const mintTicket = () => (accountOrigin
+    ? hermesAccount().mintWsTicket(accountOrigin)
+    : mintWsTicket({
+      tabsApi: browserApi.tabs,
+      scriptingApi: browserApi.scripting,
+      baseUrl,
+      tabId: trustedDashboardTabId,
+    }));
+  const ticket = await mintTicket();
   if (!ticket.ok) {
+    if (accountOrigin) {
+      const error = ['signed-out', 'session-expired'].includes(ticket.reason)
+        ? accountSignInRequiredError()
+        : new Error(t('account.notice.unavailable'));
+      error.ticketReason = ['signed-out', 'session-expired'].includes(ticket.reason) ? 'account_sign_in_required' : `account_${ticket.reason}`;
+      throw error;
+    }
     const error = new Error(ticketFailureHelp(ticket.reason, ticket.origin));
     error.ticketReason = ticket.reason;
     throw error;
@@ -23696,22 +24099,41 @@ async function ensureRemoteWsClient() {
   await refreshContextConsentPrincipal({ dashboardPrincipal: ticket.principal });
   const client = createChatGatewayClient({ replayEndpoint: baseUrl });
   try {
-    await connectGatewayWithTicket(client, baseUrl, ticket.ticket, {
-      refreshTicket: async () => {
-        const fresh = await mintWsTicket({
-          tabsApi: browserApi.tabs,
-          scriptingApi: browserApi.scripting,
-          baseUrl,
-          tabId: trustedDashboardTabId,
-        });
-        return fresh?.ok ? fresh.ticket : '';
-      },
-    });
+    if (accountOrigin) {
+      // The account's ticket goes in the subprotocol only, and a retry mints a new one the same way.
+      let first = ticket;
+      const dialed = await dialWithAccountTicket({
+        connect: (endpoint, protocols) => client.connect(endpoint, protocols),
+        mint: async () => {
+          if (first) {
+            const ready = first;
+            first = null;
+            return ready;
+          }
+          return mintTicket();
+        },
+        endpoint: buildDashboardWsEndpoint(baseUrl),
+        protocolsFor: gatewayWebSocketProtocols,
+      });
+      if (!dialed.ok) throw accountSignInRequiredError();
+    } else {
+      await connectGatewayWithTicket(client, baseUrl, ticket.ticket, {
+        refreshTicket: async () => {
+          const fresh = await mintWsTicket({
+            tabsApi: browserApi.tabs,
+            scriptingApi: browserApi.scripting,
+            baseUrl,
+            tabId: trustedDashboardTabId,
+          });
+          return fresh?.ok ? fresh.ticket : '';
+        },
+      });
+    }
   } catch (error) {
     console.warn('[Hermes] remote: WebSocket connect failed:', error?.message || error);
     throw error;
   }
-  const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '', profile: '' };
+  const connection = { client, baseUrl, wsSessionId: '', wsStoredSessionId: '', profile: '', ...(accountOrigin ? { account: accountOrigin } : {}) };
   client.on('close', () => {
     if (remoteWsConnection === connection) {
       remoteWsConnection = null;
@@ -24423,7 +24845,9 @@ async function connectTicketTransport({ cloud = false } = {}) {
         tokenSource: '',
       };
     } else {
-      const origin = await requestDashboardOriginTrust(normalizeGatewayUrl(settings.gatewayUrl));
+      // A held Hermes account sign-in for this gateway's origin stands in for the trusted signed-in tab.
+      const accountOrigin = await signedInAccountOriginFor(normalizeGatewayUrl(settings.gatewayUrl));
+      const origin = accountOrigin || await requestDashboardOriginTrust(normalizeGatewayUrl(settings.gatewayUrl));
       if (!connectionController.isCurrent(generation)) return;
       settings = {
         ...migrateConnectionSettings(settings),
@@ -24486,7 +24910,8 @@ function adoptUnsavedGatewayUrlForConnect() {
       ? settings.trustedDashboardOrigin
       : '',
   };
-  // A live socket and any in-flight attempt belong to the previous URL.
+  // A live socket and any in-flight attempt belong to the previous URL, and so does a Hermes account sign-in.
+  void clearAccountForConnection();
   connectionController.cancel('connection settings changed');
   try {
     remoteWsConnection?.client?.close();
@@ -26601,6 +27026,13 @@ function bindEvents() {
   });
   els.openFullViewButton?.addEventListener('click', () => {
     void openHermesWeb();
+  });
+  // The permission request inside signInWithHermesAccount starts before anything awaits, inside this click.
+  els.hermesAccountSignIn?.addEventListener('click', () => {
+    void signInWithHermesAccount();
+  });
+  els.hermesAccountSignOut?.addEventListener('click', () => {
+    void signOutHermesAccount();
   });
   els.manualSettingsButton.addEventListener('click', openSettingsDialog);
   [els.modelMenu, els.sessionMenu, els.botModePanel, els.contextPopover, els.attachMenu, els.skillMenu].filter(Boolean).forEach((panel) => {

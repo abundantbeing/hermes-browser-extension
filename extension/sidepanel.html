@@ -1005,6 +1005,18 @@
           <input id="webappKeepSignedInInput" class="settings-switch-input" type="checkbox" />
           <span class="settings-switch" aria-hidden="true"></span>
         </label>
+
+        <div class="settings-toggle-card hermes-account-row" id="hermesAccountRow" hidden>
+          <span class="settings-toggle-copy">
+            <strong data-i18n="account.label">Hermes account</strong>
+            <small id="hermesAccountStatus" role="status" aria-live="polite" data-i18n-runtime>Checking whether this gateway takes a Hermes account sign-in.</small>
+            <small data-i18n="account.hint">The same sign-in the Hermes phone app uses. It opens Projects, Session authority, Context compaction and the full bot roster on a gateway that asks for sign-in, with nothing to run. Sign out forgets it on this browser.</small>
+          </span>
+          <span class="hermes-account-actions">
+            <button id="hermesAccountSignIn" class="secondary" type="button" hidden data-i18n="account.sign_in">Sign in with your Hermes account</button>
+            <button id="hermesAccountSignOut" class="secondary" type="button" hidden data-i18n="account.sign_out">Sign out</button>
+          </span>
+        </div>
         </section>
 
         <section class="settings-section remote-diagnostics-panel" id="remoteDiagnosticsPanel" hidden>

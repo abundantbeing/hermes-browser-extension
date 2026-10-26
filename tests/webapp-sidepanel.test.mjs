@@ -9,7 +9,8 @@ import {
   fetchRosterFromGatewayApi,
 } from '../extension/lib/desktop-roster.mjs';
 import { originOf, ticketFailureHelp } from '../extension/lib/dashboard-bridge.mjs';
-import { connectGatewayWithTicket } from '../extension/lib/gateway-ws.mjs';
+import { buildDashboardWsEndpoint, connectGatewayWithTicket, gatewayWebSocketProtocols } from '../extension/lib/gateway-ws.mjs';
+import * as hermesAccountLib from '../extension/lib/hermes-account.mjs';
 import { resolveWebappTarget } from '../extension/lib/hermes-webapp.mjs';
 import english from '../extension/lib/locales/en.mjs';
 import { PROJECTS_UNAVAILABLE } from '../extension/lib/projects-client.mjs';
@@ -131,6 +132,9 @@ function panel({
     createWebappGatewayTickets, WEBAPP_TICKET_REASONS, refreshCapabilityViews() {},
     createWebappCredentialStore, keepSignedInEnabled, resolveWebappTarget, originOf, extractDashboardSessionToken,
     discoverLocalDashboardBaseUrl, connectGatewayWithTicket, ticketFailureHelp, PROJECTS_UNAVAILABLE,
+    // the Hermes account sign-in the helpers slice also holds (nothing is signed in here, so it makes no request)
+    ...hermesAccountLib, buildDashboardWsEndpoint, gatewayWebSocketProtocols, showOperationToast() {},
+    refreshGatewaySocket: async () => null, projectsTabActive: () => false, getProjectsController: () => ({ refresh() {} }),
     fetchRosterFromGatewayApi: (options) => fetchRosterFromGatewayApi({ ...options, fetchFn: net }),
     // connection state
     desktopDashboardUrl: '', desktopDashboardDiscoveryPromise: null, profileWsConnection: null, activeDashboardWsConnection: null,

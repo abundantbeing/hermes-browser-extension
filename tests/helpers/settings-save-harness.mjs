@@ -105,6 +105,8 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     lastWebappCaptureAt: 0,
     WEBAPP_CAPTURE_THROTTLE_MS: 4000,
     applyWebappCredentialPreference: record('applyWebappCredentialPreference', async () => undefined),
+    // A Hermes account sign-in belongs to the connection it was made for: a changed identity clears it.
+    clearAccountForConnection: record('clearAccountForConnection', async () => undefined),
     updateConnectionPrompt: record('updateConnectionPrompt'),
     getAgentPorts: () => target.settings.agentPorts || imported.get('DEFAULT_SETTINGS')?.agentPorts || [8642],
   };

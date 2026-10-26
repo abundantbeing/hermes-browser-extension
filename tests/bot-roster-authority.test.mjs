@@ -52,6 +52,7 @@ function harness({ fail = false, profiles = [{ name: 'default' }], previous = []
     WS_METHODS: { profilesList: 'profiles.list' },
     normalizeGatewayUrl: (url) => url,
     connectProfileViaGatewayTicket: async () => null,
+    connectProfileViaAccount: async () => null,
     ensureProfileWsConnection: async () => {
       connectionRequests.push('ensureProfileWsConnection');
       if (fail) throw new Error('dashboard-unavailable');
@@ -441,6 +442,7 @@ test('legacy local bootstrap connects without requiring an unrelated signed-in t
     requestDashboardOriginTrust: async () => { throw new Error('no-dashboard-tab'); },
     settings: {}, createChatGatewayClient: () => client, WebSocket: {},
     webappGatewayTickets: () => ({ socketTicket: async () => ({ ok: false, reason: 'absent' }) }),
+    connectProfileViaAccount: async () => null,
     refreshCapabilityViews() {},
     buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
     buildDashboardWsUrl: () => 'ws://localhost/fixture',
@@ -464,6 +466,7 @@ test('remote API mode reports the missing companion and never looks for a dashbo
     dashboardFetch: async (url) => { probes.push(String(url)); return { ok: true, text: async () => '' }; },
     requestDashboardOriginTrust: async () => { probes.push('trust'); },
     settings: {}, createChatGatewayClient: () => ({}), WebSocket: {},
+    connectProfileViaAccount: async () => null, // a held Hermes account sign-in on the remote origin; none here
     buildDashboardWsUrlWithCredential: () => 'ws://localhost/fixture',
     buildDashboardWsUrl: () => 'ws://localhost/fixture',
   };

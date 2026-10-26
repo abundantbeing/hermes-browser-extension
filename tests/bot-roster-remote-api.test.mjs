@@ -15,7 +15,7 @@ const loadSource = source.slice(source.indexOf('async function loadProfilesFromG
 const REMOTE = 'https://gateway.example.test:8642';
 
 function rosterHarness({ mode = 'remote-api', key = 'remote-key', roster = null, rosterError = null, localDashboard = '' } = {}) {
-  const seen = { rosterCalls: [], loopback: [], connectionRequests: [], statuses: [], writes: [], healthProbes: 0 };
+  const seen = { rosterCalls: [], loopback: [], connectionRequests: [], statuses: [], writes: [], healthProbes: 0, account: [] };
   const context = {
     settings: { activeProfile: 'default', gatewayUrl: REMOTE, gatewayMode: mode, apiKey: key },
     botModeRosterGeneration: 0,
@@ -42,6 +42,8 @@ function rosterHarness({ mode = 'remote-api', key = 'remote-key', roster = null,
     localDashboardUrl: () => localDashboard,
     hermesGatewayKey: () => key,
     connectProfileViaGatewayTicket: async () => { seen.connectionRequests.push('ticket'); return null; },
+    // A Hermes account sign-in on the remote gateway's own origin; none is held here, so it answers null.
+    connectProfileViaAccount: async () => { seen.account.push('account'); return null; },
     ensureProfileWsConnection: async () => { seen.connectionRequests.push('profile-ws'); throw new Error('no dashboard'); },
     ensureDesktopDashboardUrl: async () => { seen.loopback.push('discover'); return ''; },
     fetchRosterFromGatewayApi: async (options) => {
@@ -223,7 +225,7 @@ test('the source is recorded where each roster is loaded and cleared where it is
   assert.match(loader, /botModeRosterSource = '';/);
   assert.match(source, /botModeRoster = \[\];\s*botModeRosterSource = '';\s*renderBotModeRoster\(\);/);
   // The Remote API branch runs before any dashboard code and never discovers one.
-  const remoteBranch = loader.slice(loader.indexOf('if (isRemoteMode() && !isRemoteWsMode()) {'), loader.indexOf('try {\n    // The unified gateway'));
+  const remoteBranch = loader.slice(loader.indexOf('if (isRemoteMode() && !isRemoteWsMode() && !viaAccountRemote) {'), loader.indexOf('try {\n    // The unified gateway'));
   assert.match(remoteBranch, /if \(hermesGatewayKey\(\)\) \{\s*const served = await loadProfilesFromGatewayRoutes\(/);
   assert.doesNotMatch(remoteBranch, /ensureDesktopDashboardUrl|ensureProfileWsConnection|connectProfileViaGatewayTicket|localDashboardUrl/);
 });

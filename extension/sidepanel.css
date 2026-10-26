@@ -6484,6 +6484,14 @@ html[data-hermes-mode="light"] .model-menu .model-effort-option:focus-visible st
 }
 .settings-toggle-card:active,
 .settings-choice-card:active { transform: translateY(1px); }
+.hermes-account-row:active { transform: none; }
+.hermes-account-row .hermes-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.hermes-account-row .hermes-account-actions button[hidden] { display: none; }
 .settings-choice-group {
   display: grid;
   gap: 7px;
