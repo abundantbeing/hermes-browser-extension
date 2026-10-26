@@ -31,7 +31,9 @@ test('the Firefox profile alone declares <all_urls> as an optional host permissi
 test('the source (Chromium) manifest never lists <all_urls>, and nothing makes it an install-time permission', () => {
   const manifest = JSON.parse(read('extension/manifest.json'));
   assert.equal(manifest.optional_host_permissions, undefined);
-  assert.equal(manifest.optional_permissions, undefined);
+  // The only optional permission is webRequest, which Hermes account sign-in asks for from its own click.
+  assert.deepEqual(manifest.optional_permissions, ['webRequest']);
+  assert.ok(!manifest.optional_permissions.includes('<all_urls>'));
   assert.ok(!manifest.host_permissions.includes('<all_urls>'));
   assert.ok(!manifest.permissions.includes('<all_urls>'));
   const build = read('scripts/build-firefox.mjs');
