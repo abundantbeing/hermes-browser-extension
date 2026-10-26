@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.0] - 2026-10-26
 
 ### Added
 
@@ -8,17 +8,7 @@
 - **Browser context upload, Browser context status and Plugin actions** read "available via the companion plugin" when the plugin's status route lists its own routes (`GET .../context/status`, `POST .../context`, `GET .../actions`, all behind the API server's own authentication). Context status reports counts, ages and a hash for the session, never page text. An upload parks the full-context envelope for its session until a reference turn that names the same hash adopts it under the usual owner and lease rules, and the panel uploads before such a turn so the model can read the context it would otherwise only be told about by hash. Plugin actions are declarative descriptors; nothing runs. A gateway without the plugin keeps the "no such route" reason and sees no new request.
 - Hermes's native asynchronous questions (hermes-agent #103136) show as a card above the composer and are answered from the panel, replayed after a reconnect, in all 21 languages. They activate only where the gateway advertises `session_user_input` or a socket actually delivers a request. Lands #98.
 - Turns waiting in a session-authority gateway's queue offer **Cancel turn** and, where the gateway offers it for that turn, **Edit**.
-
 - **Hermes account sign-in**, the sign-in the Hermes phone app uses, so Projects, Session authority, Context compaction, the full bot roster and skills work on a gateway that asks for sign-in with no Hermes Web sign-in, terminal step or upstream change, remote or local. Settings > Connections has a **Hermes account** row (Sign in with your Hermes account, Signed in as <name> (provider), Sign out), and the Projects card offers the button where it applies; the Session authority, Projects and Context compaction rows say when a sign-in is what is missing. The browser asks once, from the Sign in click, for the optional `webRequest` permission it needs to see where the sign-in window ends. Tokens are kept per gateway in `chrome.storage.local` (so you stay signed in across restarts), never put in a URL, and cleared by Sign out, by a refresh that the gateway refuses and by changing the connection; the socket's ticket travels in the WebSocket subprotocol only. The paired gateway's socket still comes first on a local gateway. A gateway with no sign-in gate, which is how a loopback Hermes Web runs by default, offers no account sign-in and says why: its socket ticket needs a session only the gate creates. In all 21 languages.
-
-### Fixed
-
-- Bot Mode in Remote API mode loads its roster and avatars from the gateway's `/v1/profiles` routes instead of reporting no companion, and never looks for a dashboard on this computer. Avatars are read from the same place the roster came from (#103).
-
-## [0.4.0] - 2026-10-26
-
-### Added
-
 - The **Hermes Web** button opens the Hermes Webapp that the gateway now serves (`hermes webapp`, `http://127.0.0.1:9120` by default) in a new tab, switching to an open one when there is one, on your current profile. When the Webapp is off it shows the three commands that turn it on, each with a copy button. A remote connection uses the **Hermes Web address** in Settings.
 - **Keep Hermes Web signed in from the panel** (Settings, on by default). After you run `hermes webapp` once, the panel keeps that browser sign-in until the browser closes, so the Hermes Web button opens an already signed-in tab and Projects, the full bot roster, voice and stored images work through the Webapp. The sign-in lives only in the browser's session storage, is used only for this computer's loopback address, and never appears in a URL. `hermes webapp --sign-out` ends it.
 - A chat written before the gateway owned sessions says so when Hermes refuses to continue it, and how to adopt it: `hermes sessions adopt` on the host (or `hermes -p <profile> sessions adopt`), or open it once in the Desktop app. Nothing is resent.
@@ -97,6 +87,7 @@
 
 ### Fixed
 
+- Bot Mode in Remote API mode loads its roster and avatars from the gateway's `/v1/profiles` routes instead of reporting no companion, and never looks for a dashboard on this computer. Avatars are read from the same place the roster came from (#103).
 - Settings > About shows one Hermes Browser wordmark instead of the left- and right-aligned ones stacked.
 - In Everforest and Classic Hermes dark, your messages are light text on a deep bubble, readable like the other dark themes.
 - Session-rebinding revision boundaries are covered by tests. Thanks to @cepeter (#123).
