@@ -87,6 +87,7 @@
 
 ### Fixed
 
+- An older message no longer reappears beneath a new question when Hermes returns merged conversation history. The panel keeps the current question and genuine repeated messages, including after reopening a locally cached chat.
 - Bot Mode in Remote API mode loads its roster and avatars from the gateway's `/v1/profiles` routes instead of reporting no companion, and never looks for a dashboard on this computer. Avatars are read from the same place the roster came from (#103).
 - Settings > About shows one Hermes Browser wordmark instead of the left- and right-aligned ones stacked.
 - In Everforest and Classic Hermes dark, your messages are light text on a deep bubble, readable like the other dark themes.

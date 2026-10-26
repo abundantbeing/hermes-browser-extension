@@ -30,7 +30,7 @@ Hermes Browser Extension is not a browser chatbot. It is a Chromium side panel o
 - **Context**: each session's own context window, read from the gateway, with a ring in the composer. On gateways with session authority, Compact context replaces older messages with a summary and reads the session back before it says it worked.
 - **Capability states**: Settings > About & Diagnostics shows what this connection can do (available, cached, unsupported and so on), with the reason, source and age, and the support report prints the same rows.
 - **Tool activity**: a compact expandable list keeps calls out of the reply. Inspect individual calls, close the list without hiding thinking, and keep your place while activity updates.
-- **Message tools**: Copy, Edit, and Restore checkpoint on supported turns, with day dividers, message times, and theme-aware bubbles.
+- **Message tools**: Copy, Edit, and Restore checkpoint on supported turns, with day dividers, message times, and theme-aware bubbles. History refreshes keep the current question in place when Hermes merges older and newer turns, without hiding genuine repeated messages.
 - **Reasoning effort**: a slider with tick marks, or buttons if you prefer. The choice is remembered. In a group chat each bot keeps its own effort.
 - **Hermes Assist** drafts beside supported text composers and never sends, posts, or submits for you.
 - **Page comments**: pick an element, write a note, and queue pins beside Ask Hermes.

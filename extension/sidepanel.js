@@ -1,3 +1,4 @@
+import { reconcileBrowserUserHistory } from './lib/session-history-normalization.mjs';
 import {
   AUDIO_TRANSCRIBE_ENDPOINT,
   DEFAULT_SETTINGS,
@@ -19818,7 +19819,7 @@ async function commitFetchedSessionMessages(result, { sessionId, requestId = nul
     source: 'Hermes session',
   });
   const contextMessages = Array.isArray(result?.contextMessages) ? result.contextMessages : [];
-  const incoming = Array.isArray(result?.messages) ? result.messages : [];
+  const incoming = reconcileBrowserUserHistory(Array.isArray(result?.messages) ? result.messages : []);
   const localStyleSource = messages.length
     ? messages
     : (sessionAssistantStylesBySession.get(String(sessionId || '').trim()) || []);
@@ -21562,6 +21563,9 @@ async function loadSettings({ restoreMessages = false } = {}) {
 }
 
 function renderMessagesFromStorage() {
+  // Older local caches may already contain a merged gateway replay. Repair
+  // before taking async attachment snapshots or binding message action records.
+  if (!activeGroupProjection) messages = reconcileBrowserUserHistory(messages);
   const fileGeneration = ++fileHistoryRestoreGeneration;
   const fileMessages = messages;
   const fileMessageCount = messages.length;

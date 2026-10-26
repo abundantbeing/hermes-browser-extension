@@ -335,6 +335,69 @@ function dedupeAttachments(items = []) {
   return output;
 }
 
+// Role-alternation repair can persist several complete Browser turns in one
+// user row. Scan only consecutive TOP-LEVEL objects: JSON in page text or in a
+// human's quoted example must never become another turn. Partial/mixed input
+// stays on the existing fail-visible recovery path.
+function completeBrowserTurns(rawText = '') {
+  const text = String(rawText).trim();
+  const turns = [];
+  let start = 0;
+  while (start < text.length && turns.length < MAX_FRAGMENT_CANDIDATES) {
+    if (text.at(start) !== '{') return [];
+    const end = matchingBracketIndex(text, start);
+    if (end < 0) return [];
+    const raw = text.slice(start, end + 1);
+    const parsed = parseJsonObject(raw);
+    if (parsed?.protocol !== ENVELOPE_PROTOCOL_ID
+      || parsed.human_input?.source !== 'composer'
+      || typeof parsed.human_input?.text !== 'string') return [];
+    turns.push({ raw, parsed });
+    start = end + 1;
+    while (start < text.length && /\s/.test(text.at(start))) start += 1;
+  }
+  return start === text.length ? turns : [];
+}
+
+/**
+ * Display-only repair of re-appended merged Browser rows. Never deduplicate
+ * ordinary messages by typed text. Only remove an exact envelope prefix that
+ * is already represented earlier in this history; always retain the final ask.
+ * A remaining ask already in the current unanswered user slot is the same
+ * physical turn, not a second send. Raw gateway/context history stays intact.
+ */
+export function reconcileBrowserUserHistory(messages = []) {
+  if (!Array.isArray(messages)) return [];
+  const represented = new Set();
+  const output = [];
+  let previousUser = '';
+  let changed = false;
+  for (const message of messages) {
+    const { role, text } = readHistoryMessage(message);
+    if (role !== 'user' || message?.display_kind === 'hidden') {
+      if (role === 'assistant') previousUser = '';
+      output.push(message);
+      continue;
+    }
+    const turns = completeBrowserTurns(text);
+    let first = 0;
+    while (first < turns.length - 1 && represented.has(turns.at(first).raw)) first += 1;
+    const remaining = turns.slice(first).map(turn => turn.raw).join('\n\n');
+    const duplicate = first > 0 && first === turns.length - 1 && previousUser === remaining;
+    for (const turn of turns) represented.add(turn.raw);
+    if (duplicate) {
+      changed = true;
+      continue;
+    }
+    if (first > 0) {
+      output.push({ ...message, content: remaining });
+      changed = true;
+    } else output.push(message);
+    previousUser = remaining || text;
+  }
+  return changed ? output : messages;
+}
+
 /**
  * Read the turn envelope out of a raw message. Complete serializations parse
  * and are typed; a truncation that still carries the signature is recovered
@@ -343,6 +406,13 @@ function dedupeAttachments(items = []) {
 function readTurnEnvelope(rawText = '') {
   const trimmed = String(rawText).trim();
   if (!trimmed.startsWith('{')) return null;
+  const turns = completeBrowserTurns(trimmed);
+  if (turns.length > 1) {
+    return {
+      humanText: turns.map(turn => turn.parsed.human_input.text).join('\n\n'),
+      items: turns.flatMap(turn => envelopeAttachmentItems(turn.parsed)),
+    };
+  }
   const parsed = parseJsonObject(trimmed);
   if (parsed) {
     if (!isEnvelopeObject(parsed)) return null;
@@ -394,6 +464,10 @@ export function stripProtocolNoise(text = '') {
   if (!hasProtocolSignal(raw)) return raw;
 
   const trimmed = raw.trim();
+  const turns = completeBrowserTurns(trimmed);
+  if (turns.length > 1) {
+    return turns.map(turn => cleanEnvelopeHumanText(turn.parsed.human_input.text)).join('\n\n');
+  }
   if (trimmed.startsWith('{')) {
     const parsed = parseJsonObject(trimmed);
     if (parsed && isEnvelopeObject(parsed)) {
