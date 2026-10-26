@@ -99,7 +99,13 @@ def pre_llm_call(**kwargs: Any) -> dict[str, str] | None:
         owner = _owner_from_trusted_hook(**kwargs)
         if owner is None:
             return None
-        status = _ensure_store().put_bcp_v2(_last_user_message(**kwargs), owner)
+        store = _ensure_store()
+        message = _last_user_message(**kwargs)
+        status = store.put_bcp_v2(message, owner)
+        if not status.get("available"):
+            # A reference turn carries no payload. If the extension uploaded the
+            # envelope it names for this very session, bind that to this owner.
+            status = store.adopt_upload_for_owner(message, owner)
         if not status.get("available"):
             return None
         return {"context": _context_notice(status)}

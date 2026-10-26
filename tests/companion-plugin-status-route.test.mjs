@@ -60,7 +60,7 @@ test('register queues exactly one api_server factory and the payload names what 
 ctx = Ctx()
 module.register(ctx)
 assert [platform for platform, _ in ctx.factories] == ["api_server"], ctx.factories
-payload = route.build_status(version=route.plugin_version(), profile="luxord", tools=module.TOOL_NAMES, hooks=module.HOOK_NAMES)
+payload = route.build_status(version=route.plugin_version(), profile="luxord", tools=module.TOOL_NAMES, hooks=module.HOOK_NAMES, routes=route.ROUTE_PATHS)
 print(json.dumps({"tools": ctx.tools, "hooks": ctx.hooks, "skills": ctx.skills, "payload": payload,
                   "constants": [list(module.TOOL_NAMES), list(module.HOOK_NAMES)]}))
 `);
@@ -74,7 +74,12 @@ print(json.dumps({"tools": ctx.tools, "hooks": ctx.hooks, "skills": ctx.skills, 
   assert.equal(data.payload.plugin, 'hermes-browser-companion');
   assert.equal(data.payload.live, false);
   assert.equal(data.payload.version, manifest.match(/^version:\s*(\S+)/m)[1]);
-  assert.deepEqual(data.payload.routes, ['/api/plugins/hermes-browser-companion/status']);
+  assert.deepEqual(data.payload.routes, [
+    '/api/plugins/hermes-browser-companion/actions',
+    '/api/plugins/hermes-browser-companion/context',
+    '/api/plugins/hermes-browser-companion/context/status',
+    '/api/plugins/hermes-browser-companion/status',
+  ]);
   assert.deepEqual(data.payload.tools, [...manifestTools].sort());
 });
 
@@ -122,7 +127,7 @@ async def exercise(adapter):
         for method in ("post", "put", "patch", "delete"):
             response = await getattr(client, method)(path, headers={"Authorization": "Bearer paired-token"})
             seen[method] = response.status
-        other = await client.get("/api/plugins/hermes-browser-companion/context", headers={"Authorization": "Bearer paired-token"})
+        other = await client.get("/api/plugins/hermes-browser-companion/unknown", headers={"Authorization": "Bearer paired-token"})
         seen["other"] = other.status
         routes = sorted((r.method, r.resource.canonical) for r in app.router.routes())
         seen["routes"] = routes
@@ -141,9 +146,14 @@ print(json.dumps({"good": good, "raising": [raising["ok"], raising["anonymous"]]
   assert.equal(data.good.cache, 'no-store');
   for (const method of ['post', 'put', 'patch', 'delete']) assert.equal(data.good[method], 405, method);
   assert.equal(data.good.other, 404);
-  assert.deepEqual(data.good.routes.filter(([, resource]) => resource.includes('hermes-browser-companion')), [
+  assert.deepEqual(data.good.routes.filter(([, resource]) => resource.includes('hermes-browser-companion')).sort(), [
+    ['GET', '/api/plugins/hermes-browser-companion/actions'],
+    ['GET', '/api/plugins/hermes-browser-companion/context/status'],
     ['GET', '/api/plugins/hermes-browser-companion/status'],
+    ['HEAD', '/api/plugins/hermes-browser-companion/actions'],
+    ['HEAD', '/api/plugins/hermes-browser-companion/context/status'],
     ['HEAD', '/api/plugins/hermes-browser-companion/status'],
+    ['POST', '/api/plugins/hermes-browser-companion/context'],
   ]); // aiohttp's add_get also answers HEAD, through the same authenticated handler
   assert.equal(data.good.body.profile, 'luxord');
   assert.equal(data.good.body.live, false);

@@ -11,7 +11,7 @@ few tools. The plugin version is the `version` in `plugin.yaml`.
   fail-soft: when no context was delivered, every tool reports "unavailable".
 - It registers **seven tools**, three lifecycle hooks (`pre_llm_call`,
   `pre_tool_call`, `post_tool_call`), one bundled skill (`hermes-browser`) and
-  one read-only status route (below).
+  four routes on the API server (below).
 - It does **not** control the browser, open network connections, read
   credentials or use `nativeMessaging`. It asks for no privileged host
   capability (`capabilities: []`), so installing it shows no consent screen.
@@ -41,7 +41,7 @@ else; leave it off to install disabled and run
 `hermes plugins enable hermes-browser-companion --profile <profile>` later.
 Installing or enabling in one profile never changes another profile's config.
 The plugin loads when the gateway starts, so restart the profile's gateway: its
-tools, hooks and status route are all wired at start, and a plugin loaded into
+tools, hooks and routes are all wired at start, and a plugin loaded into
 a running gateway is not wired into the API server's router.
 
 To pin an exact commit, add `--ref <40-character sha>`. To see what would run
@@ -109,8 +109,14 @@ the API server (the listener the extension already pairs with, normally
 GET /api/plugins/hermes-browser-companion/status
 { "object": "hermes.browser_companion.status", "plugin": "hermes-browser-companion",
   "version": "0.4.0", "profile": "default", "tools": [...], "hooks": [...],
-  "routes": ["/api/plugins/hermes-browser-companion/status"], "live": false }
+  "routes": ["/api/plugins/hermes-browser-companion/actions",
+             "/api/plugins/hermes-browser-companion/context",
+             "/api/plugins/hermes-browser-companion/context/status",
+             "/api/plugins/hermes-browser-companion/status"], "live": false }
 ```
+
+`routes` lists every path this copy serves, so a client can tell an older copy
+(only the status route) from one with the browser-context routes below.
 
 - **Read-only, metadata only.** Names, a version and the profile. It never
   reads the context cache, a session, a turn, a task id or a secret.
@@ -125,7 +131,49 @@ GET /api/plugins/hermes-browser-companion/status
 - Dashboard plugin routes (`/api/plugins/<name>/...` on the dashboard port) need
   the Webapp credential and a dashboard manifest, so the plugin does not use them.
 
-The extension's About & Diagnostics row reads it as one of: ready, outdated,
+## The browser-context routes
+
+Three more routes, wired by the same factory and authenticated the same way
+(the paired loopback token or the API key; 401 otherwise). They give the
+extension a side channel that Hermes itself does not have. Context status and
+upload name the caller's session with the `X-Hermes-Session-Id` header (or
+`?session_id=`), the id the API server uses for a chat.
+
+```text
+GET  /api/plugins/hermes-browser-companion/context/status
+     -> { "object": "hermes.browser_companion.context_status", "held": 1,
+          "consumed": 0, "payload_hash": "...", "scope": "...",
+          "newest_age_ms": 4000, "oldest_age_ms": 4000, "expires_in_ms": 296000,
+          "pending_upload": { "present": false }, "live": false }
+POST /api/plugins/hermes-browser-companion/context        (the envelope as the body)
+     -> { "object": "hermes.browser_companion.context_upload", "stored": true,
+          "payload_hash": "...", "scope": "...", "adopts": "reference-turn", ... }
+GET  /api/plugins/hermes-browser-companion/actions
+     -> { "object": "hermes.browser_companion.actions", "execution": "none",
+          "actions": [ { "name": "browser_text_utility", "kind": "agent-tool", ... } ] }
+```
+
+- **Status is metadata only**: counts, ages, the newest context hash and scope,
+  whether an upload is waiting, and `live: false`. Never page text, URLs, titles
+  or a session, turn or task id.
+- **Upload takes the same envelope the `pre_llm_call` hook accepts**: a full
+  `hermes.browser.turn.v2` turn, checked by the same parser and the same size
+  bound (anything else is refused with 422, an oversized body with 413). It does
+  not become readable on arrival. An upload names a session, not an owner, so it
+  waits (one slot per session, 300 seconds) until a trusted hook sees a
+  *reference* turn for that session that names the same context hash; only then
+  is it bound to that turn's session, turn and task and given an opaque context
+  id. After that the usual rules apply: owner-scoped, consume-on-read, unreadable
+  by another turn, session or profile, and reachable only through
+  `browser_get_context` and its one-shot lease. A chat-only turn, a different
+  hash or another session adopts nothing.
+- **Actions are descriptors, never execution.** The list names the plugin's safe
+  actions (today `browser_text_utility`: bounded, local, no model, no network)
+  with their parameter schema. No route runs one; the agent calls the tool inside
+  a turn, under Hermes' own tool approval. The owner-gated context tools are not
+  actions and are not listed.
+
+The extension's About & Diagnostics row reads the status route as one of: ready, outdated,
 disabled (its toolset is switched off for the API server), not installed (not
 loaded on this gateway: not installed, not enabled for the profile, or the
 gateway was not restarted), or unreachable, each with its exact reason.

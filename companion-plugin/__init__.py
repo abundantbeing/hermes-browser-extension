@@ -8,16 +8,17 @@ has been captured, all tools gracefully report unavailable.
 This plugin does NOT control the browser or assume any side channel exists.
 It passively caches browser context from conversation messages (embedded by
 the extension as Browser Context Protocol prompt blocks) and from explicit
-tool calls. Its one HTTP surface is a read-only metadata route (name, version,
-profile, tool names) on the API server, so the extension can tell it is loaded;
-see status_route.py.
+tool calls. Its HTTP surface is four routes on the API server: a read-only
+readiness route (name, version, profile, tool names; status_route.py) and the
+browser-context side channel (context status, context upload, declarative action
+descriptors; context_routes.py).
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from . import hooks, status_route, tools
+from . import context_routes, hooks, status_route, tools
 from .context_store import BrowserContextStore
 
 # Global store — shared between tools and hooks.
@@ -131,10 +132,20 @@ def register(ctx) -> None:
     ctx.register_hook("pre_tool_call", hooks.pre_tool_call)
     ctx.register_hook("post_tool_call", hooks.post_tool_call)
 
-    # ── Readiness route ────────────────────────────────────────────────
-    # Metadata only, on the API server; skipped (never fatal) where Hermes
-    # refuses the seam. See status_route.py.
-    status_route.register_status_route(ctx, tools=TOOL_NAMES, hooks=HOOK_NAMES)
+    # ── Routes ─────────────────────────────────────────────────────────
+    # The readiness route plus the browser-context side channel (context status,
+    # context upload, declarative actions), all authenticated by the API server's
+    # own check and wired by one factory; skipped (never fatal) where Hermes
+    # refuses the seam. See status_route.py and context_routes.py.
+    version = status_route.plugin_version()
+    status_route.register_status_route(
+        ctx,
+        tools=TOOL_NAMES,
+        hooks=HOOK_NAMES,
+        version=version,
+        wire_extra=context_routes.make_wire_extra(STORE, version=version),
+        routes=status_route.ROUTE_PATHS,
+    )
 
     # ── Bundled skill ──────────────────────────────────────────────────
     skills_dir = Path(__file__).resolve().parent / "skills"

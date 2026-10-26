@@ -22,15 +22,19 @@ Per-profile commands, upgrading and the full tool table are in
   `browser_control_status`, `browser_context_journal`, `browser_text_utility`.
 - Three hooks: `pre_llm_call`, `pre_tool_call`, `post_tool_call`.
 - One bundled skill, `hermes-browser`.
-- One read-only status route on the API server,
-  `GET /api/plugins/hermes-browser-companion/status`, authenticated by the API
-  server's own check. It returns the plugin's name, version, profile and tool
-  names, and nothing else.
+- Four routes on the API server, all authenticated by the API server's own check:
+  the read-only `GET /api/plugins/hermes-browser-companion/status` (name,
+  version, profile, tool names and the route list), and the browser-context side
+  channel: `GET .../context/status` (counts, ages and a hash for the caller's
+  session, never page text), `POST .../context` (parks one validated
+  full-context envelope for its session until a reference turn adopts it) and
+  `GET .../actions` (declarative descriptors of the safe actions; nothing runs).
 
 ## Disclosure
 
 - **No network calls.** It opens no connection to any host. The status route
-  only answers a request the Hermes API server already accepted.
+  only answers a request the Hermes API server already accepted; the one upload
+  route stores a validated envelope in memory and returns metadata.
 - **No credentials.** It reads no secret, `.env` file, token store or OAuth
   state, and declares no `requires_env`. It asks for no privileged capability
   (`capabilities: []`).

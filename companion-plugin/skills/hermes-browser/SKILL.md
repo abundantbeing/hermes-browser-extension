@@ -35,9 +35,11 @@ registered:
    re-read what is already in front of you.
 2. **Reference turns carry no payload.** A turn whose browser context has
    `delivery: "reference"` repeats only the context hash: the same context was
-   already delivered in full earlier in this session. Use that earlier turn; the
-   companion tools hold nothing for a reference turn and will answer
-   "unavailable". If the earlier full payload is no longer in your context
+   already delivered in full earlier in this session. Use that earlier turn. If
+   the extension also uploaded that context to the plugin, a companion notice
+   names a `context_id` for the turn and `browser_get_context()` returns it
+   once; with no notice the companion tools hold nothing for the turn and will
+   answer "unavailable". If the earlier full payload is no longer in your context
    (for example after compaction), say so and ask the user to refresh the page
    context instead of guessing.
 3. **Use the side channel only when it adds something.** If a companion
