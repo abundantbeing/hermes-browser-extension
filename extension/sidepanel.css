@@ -10241,7 +10241,6 @@ html[dir="rtl"] .conn-mode-check { margin: 1px 0 0; }
   text-transform: none;
   overflow-wrap: anywhere;
 }
-.agent-status-line::before { content: ""; flex: none; inline-size: 7px; block-size: 7px; border: 1px solid var(--hermes-accent); }
 .agent-list { margin: 0; gap: 10px; }
 .agent-list:empty { display: none; }
 .agent-card {
