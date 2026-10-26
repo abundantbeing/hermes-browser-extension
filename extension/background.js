@@ -31,6 +31,7 @@ import { isLocalGatewayConnection, openHermesWebapp } from './lib/hermes-webapp.
 import { resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
+import { HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -116,6 +117,15 @@ const webappGatewayTickets = createWebappGatewayTickets({
   },
   fetchImpl: (...args) => globalThis.fetch(...args),
 });
+// The branded "Opening Hermes Web" hand-off (lib/hermes-web-opening.mjs). It lives here, not in the panel, so it keeps
+// watching the launch tab if the panel closes. The panel asks for it with a runtime message, never with the ticket in a URL.
+const hermesWebOpening = createHermesWebOpening({
+  tabsApi: browserApi.tabs,
+  windowsApi: browserApi.windows,
+  runtimeApi: browserApi.runtime,
+  storageSession: browserApi.storage?.session,
+});
+const hermesWebOpener = { open: (request) => hermesWebOpening.start(request) };
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let panelResidencyHydrated = false;
 
@@ -468,6 +478,7 @@ async function queueOpenSessionRequest(message, sender) {
       permissionMode: 'contains',
       credentials: webappCredentials,
       tickets: webappGatewayTickets,
+      opener: hermesWebOpener,
     });
     if (result.status === 'opened' || result.status === 'focused') {
       return { ok: true, sessionId, surface, webapp: result.status, hint: result.hint || '' };
@@ -976,6 +987,11 @@ browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo) => {
   controllerWorker?.handleTabUpdated(tabId, changeInfo)
     .catch((error) => console.warn('[Hermes Browser] Could not invalidate controller document authority:', error));
 });
+// The Hermes Web launch tab finished loading the Webapp itself: show it and close the "Opening Hermes Web" page.
+browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo, tab) => {
+  hermesWebOpening.handleTabUpdated(tabId, changeInfo, tab)
+    .catch((error) => console.warn('[Hermes Browser] Could not finish opening Hermes Web:', error));
+});
 // A signed-in Hermes Web tab is the only place its sign-in lives. Read it while the tab is open, so
 // closing the tab does not mean running `hermes webapp` again. Only a finished load of a loopback page
 // is looked at, and only the configured Webapp address is read from (and only when the setting is on).
@@ -990,6 +1006,8 @@ browserApi.tabs?.onUpdated?.addListener?.((tabId, changeInfo, tab) => {
   })().catch(() => undefined);
 });
 browserApi.tabs?.onRemoved?.addListener?.((tabId) => {
+  hermesWebOpening.handleTabRemoved(tabId)
+    .catch((error) => console.warn('[Hermes Browser] Could not clean up the Hermes Web opening page:', error));
   controllerWorker?.handleTabRemoved(tabId)
     .catch((error) => console.warn('[Hermes Browser] Could not release removed controller tab state:', error));
 });
@@ -1024,6 +1042,7 @@ const EXTENSION_PAGE_ONLY_MESSAGE_TYPES = new Set([
   CONTEXT_MENU_REQUEST_CLAIM,
   'HERMES_GET_YOUTUBE_TRANSCRIPT',
   LOOPBACK_FETCH_MESSAGE,
+  ...Object.values(HERMES_WEB_OPENING_MESSAGES),
 ]);
 function isExtensionPageOnlyMessageType(type) {
   return EXTENSION_PAGE_ONLY_MESSAGE_TYPES.has(type) || themeMarketplaceController.handles(type);
@@ -1051,6 +1070,8 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ? contextMenuController.handleMessage(message)
       : themeMarketplaceController.handles(message?.type)
         ? themeMarketplaceController.handleMessage(message)
+    : hermesWebOpening.handles(message?.type)
+      ? hermesWebOpening.handleMessage(message, sender)
     : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
       ? queueInlineDraftRequest(message, sender)
       : message?.type === 'HERMES_INLINE_SESSION_STATUS'

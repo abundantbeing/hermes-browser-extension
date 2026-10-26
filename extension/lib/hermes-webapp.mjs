@@ -285,17 +285,32 @@ async function captureFromTab(credentials, target, tab) {
   }
 }
 
+// Opens a ticketed launch URL as the visible tab. With an `opener` (lib/hermes-web-opening.mjs) the person sees the
+// branded "Opening Hermes Web" page while the launch page loads in a background tab; without one, or if the opener
+// cannot, the launch URL opens directly, as before. Resolves the tab that carries the launch URL.
+async function openLaunchTab({ url, origin, basePath = '', tabsApi, opener }) {
+  if (opener && typeof opener.open === 'function') {
+    try {
+      const opened = await opener.open({ url, origin, basePath });
+      if (opened?.ok) return { id: opened.tabId };
+    } catch {
+      /* fall through to the direct open */
+    }
+  }
+  return tabsApi.create({ url, active: true });
+}
+
 // A new tab already signed in: a one-use window ticket, minted with the held credential, rides
 // in the launch URL's fragment. Resolves the open-tab result, or null when it cannot (nothing
 // held, the ticket was refused, nothing answered) so the caller can fall through.
-async function openSignedInTab({ credentials, target, tabsApi }) {
+async function openSignedInTab({ credentials, target, tabsApi, opener }) {
   if (!(await credentials.held())) return null;
   const minted = await credentials.mintWindowTicket(target);
   if (!minted?.ok) return null;
   const url = credentials.launchUrl(target, minted.ticket, { profile: target.profile });
   if (!url) return null;
   try {
-    const tab = await tabsApi.create({ url, active: true });
+    const tab = await openLaunchTab({ url, origin: target.origin, basePath: target.basePath, tabsApi, opener });
     return { status: 'opened', tabId: tab?.id, address: target.baseUrl, hint: 'signed-in', signedIn: true };
   } catch (error) {
     return { status: 'open-failed', address: target.baseUrl, reason: error?.message || String(error) };
@@ -305,7 +320,7 @@ async function openSignedInTab({ credentials, target, tabsApi }) {
 // A new tab already signed in by the paired gateway: it mints a one-use window ticket (no credential is
 // held here) and names the Webapp's own address. Resolves { opened } (the open-tab result, or null when the
 // gateway cannot sign a tab in) and the `reason` it gave. A click asks again whatever was remembered.
-async function openTabViaGateway({ tickets, target, tabsApi }) {
+async function openTabViaGateway({ tickets, target, tabsApi, opener }) {
   let minted;
   try {
     minted = await tickets.windowTicket({ profile: target.profile, force: true });
@@ -318,7 +333,7 @@ async function openTabViaGateway({ tickets, target, tabsApi }) {
   const url = tickets.launchUrl(minted.webappUrl, minted.ticket, { profile: target.profile });
   if (!url) return { opened: null, reason: WEBAPP_TICKET_REASONS.INVALID };
   try {
-    const tab = await tabsApi.create({ url, active: true });
+    const tab = await openLaunchTab({ url, origin: minted.origin, tabsApi, opener });
     return { opened: { status: 'opened', tabId: tab?.id, address: minted.origin, hint: 'signed-in', signedIn: true, via: 'gateway' } };
   } catch (error) {
     return { opened: { status: 'open-failed', address: minted.origin, reason: error?.message || String(error) } };
@@ -347,6 +362,10 @@ const GATEWAY_ANSWERED = new Set([
  *   6. otherwise keep the sign-in of any open signed-in tab and do the same,
  *   7. otherwise check something answers, with no credentials, and open the address.
  *
+ * `opener` (optional, lib/hermes-web-opening.mjs) shows the branded "Opening Hermes Web" page while a ticketed launch
+ * tab loads in the background. It is used only where a ticketed launch URL opens (steps 4 to 6); focusing an open tab and
+ * the plain address open as they were.
+ *
  * `credentials` is the store from lib/webapp-credential.mjs; without it, or with the setting off,
  * steps 5 and 6 do not apply. Without `tickets`, or for a Webapp that is not on this computer, neither
  * does step 4.
@@ -368,6 +387,7 @@ export async function openHermesWebapp({
   permissionMode = 'request',
   credentials = null,
   tickets = null,
+  opener = null,
 } = {}) {
   const target = resolveWebappTarget(settings);
   if (!target.ok) return { status: target.reason };
@@ -399,14 +419,14 @@ export async function openHermesWebapp({
   }
   let gatewayReason = '';
   if (viaGateway) {
-    const attempt = await openTabViaGateway({ tickets, target, tabsApi });
+    const attempt = await openTabViaGateway({ tickets, target, tabsApi, opener });
     if (attempt.opened) return attempt.opened;
     gatewayReason = attempt.reason;
   }
   if (keepSignedIn) {
-    let opened = await openSignedInTab({ credentials, target, tabsApi });
+    let opened = await openSignedInTab({ credentials, target, tabsApi, opener });
     if (!opened && !capturedFromTab && (await captureFromTab(credentials, target, null)).ok) {
-      opened = await openSignedInTab({ credentials, target, tabsApi });
+      opened = await openSignedInTab({ credentials, target, tabsApi, opener });
     }
     if (opened) return opened;
   }

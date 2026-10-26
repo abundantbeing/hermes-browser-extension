@@ -684,6 +684,7 @@ import {
 import { createHermesClient } from './lib/hermes-client.mjs';
 import { createGatewayQuirkStore, GATEWAY_QUIRK, isSessionPatchRejection } from './lib/gateway-quirks.mjs';
 import { openHermesWebapp, resolveWebappTarget } from './lib/hermes-webapp.mjs';
+import { createHermesWebOpener } from './lib/hermes-web-opening.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { createWebappGatewayTickets, WEBAPP_TICKET_REASONS } from './lib/webapp-gateway-tickets.mjs';
 import {
@@ -4339,6 +4340,8 @@ function webappSignInRequiredError() {
 // for what it checks and what it never sends.
 let webappDialog = null;
 let webappOpening = false;
+// A ticketed Hermes Web tab shows the branded "Opening Hermes Web" page while it loads; the background worker runs it.
+const hermesWebOpener = createHermesWebOpener({ sendMessage: (message) => browserApi.runtime.sendMessage(message) });
 
 function webappDialogController() {
   if (!webappDialog) {
@@ -4374,6 +4377,7 @@ async function openHermesWeb() {
       storageArea: browserApi.storage?.local,
       credentials: webappCredentialStore(),
       tickets: webappGatewayTickets(),
+      opener: hermesWebOpener,
     });
     if (result.status === 'opened' && webappHintKey(result.hint)) {
       showOperationToast({
