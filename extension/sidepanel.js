@@ -311,6 +311,7 @@ import {
   buildSessionModelSwitchRequest,
   createGatewayClient,
   establishGatewaySession,
+  sessionCreateParamsFor,
   executionGenerationFrom,
   interruptGatewaySession,
   readSessionExecutionGeneration,
@@ -18947,7 +18948,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
       const { liveId, storedId } = await establishGatewaySession({
         client: connection.client,
         profile: safeActiveProfile(),
-        createParams: {
+        createParams: sessionCreateParamsFor(connection.client, {
           title,
           hidden,
           ...(source === 'hermes_bot_mode' ? { follow_profile_config: true } : {}),
@@ -18962,7 +18963,7 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
           reasoning_effort: preferredOptions.thinkingEnabled ? preferredOptions.reasoningEffort : 'none',
           fast: preferredOptions.fastMode,
           profile: safeActiveProfile(),
-        },
+        }),
       });
       if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
       connection.wsSessionId = liveId;

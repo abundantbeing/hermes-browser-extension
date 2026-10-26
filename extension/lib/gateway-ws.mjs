@@ -184,6 +184,54 @@ export function remoteStoredSessionIdForGateway(binding, gatewayUrl = '') {
   return storedSessionId;
 }
 
+// A session-authority gateway (Hermes Web, Cloud, an account-signed gateway) takes session.create on its
+// canonical contract (tui_gateway/contracts/canonical_sessions.py CanonicalCreateParams: a closed key set,
+// the same mapping Desktop's prepareCreate applies). The source is a surface name, effort travels as
+// `reasoning`, the fast toggle as `service_tier`, and a request id makes a retried create return the same
+// session. Any other key or source is refused as invalid_params. A legacy dashboard socket keeps the wider
+// legacy keys.
+const CANONICAL_CREATE_KEYS = Object.freeze([
+  'request_id', 'source', 'cwd', 'model', 'provider', 'toolsets', 'reasoning', 'profile', 'title', 'hidden',
+  'follow_profile_config', 'service_tier', 'cwd_explicit',
+]);
+
+function newCreateRequestId() {
+  try {
+    if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  } catch {
+    // Fall through to the time-based id.
+  }
+  return `hbe-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+export function buildCanonicalSessionCreateParams(input = {}) {
+  const { reasoning_effort: effort, fast, service_tier: pickedTier, ...rest } = input && typeof input === 'object' ? input : {};
+  const params = { ...rest };
+  let tier = '';
+  if (typeof pickedTier === 'string' && pickedTier) tier = pickedTier;
+  else if (fast === true) tier = 'priority';
+  else if (fast === false) tier = 'normal';
+  if (typeof effort === 'string' && effort) params.reasoning = effort;
+  if (tier) params.service_tier = tier;
+  if (typeof params.cwd_explicit !== 'boolean') delete params.cwd_explicit;
+  if (params.follow_profile_config !== true) delete params.follow_profile_config;
+  if (params.hidden !== true) delete params.hidden;
+  const out = {};
+  for (const key of CANONICAL_CREATE_KEYS) {
+    const value = params[key];
+    if (value === undefined || value === null || value === '') continue;
+    out[key] = value;
+  }
+  out.request_id = typeof params.request_id === 'string' && params.request_id ? params.request_id : newCreateRequestId();
+  out.source = 'gui';
+  return out;
+}
+
+/** The session.create params this socket accepts: canonical on a session authority, unchanged otherwise. */
+export function sessionCreateParamsFor(client, params = {}) {
+  return client?.readyPayload?.session_authority === true ? buildCanonicalSessionCreateParams(params) : params;
+}
+
 export async function establishGatewaySession({ client, storedSessionId = '', createParams = {}, profile = '' } = {}) {
   if (!client?.request) throw new Error('Hermes gateway client is required.');
   const requestedId = String(storedSessionId || '').trim();
