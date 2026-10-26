@@ -14,6 +14,7 @@ import { CONNECTION_SCHEMA_VERSION, CONNECTION_TRANSPORTS } from './connection-m
 import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
 import { hermesContextForModel, HERMES_DEFAULT_FALLBACK_CONTEXT } from './hermes-context-windows.mjs';
 import { contextFromHermesRegistry } from './hermes-context-sync.mjs';
+import { gatewayContextForModel } from './gateway-model-context.mjs';
 import { shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams } from './bot-browser-bridge.mjs';
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
 import { REST_TURN_SOURCES } from './session-materialization.mjs';
@@ -2573,6 +2574,10 @@ export function renderMarkdown(value = '') {
 function modelContextTokens(model = {}) {
   const authoritative = Number(model.hermesContextTokens || model.effective_context_length || 0);
   if (Number.isFinite(authoritative) && authoritative > 0) return authoritative;
+  // What the paired gateway reported for this model (its live resolution: provider catalogs, models.dev,
+  // config pins) outranks every bundled table, including a window an earlier pass copied from one.
+  const reported = gatewayContextForModel(model);
+  if (reported > 0) return reported;
   if (model.contextSource === 'hermes-fallback' || (model.source === 'cache' && model.contextSource !== 'provider')) return fallbackModelContextTokens(model);
   const value =
     model.context_length ??
