@@ -1443,6 +1443,10 @@
     "message": "Kết nối đã đóng. Xác nhận lần cuối {age}. Chỉ hiển thị, không dùng để chạy bất cứ thứ gì.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Đọc qua socket phiên Hermes: mức dùng của phiên và phân tích theo danh mục, theo ID đã lưu của phiên.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Được cung cấp bởi bảng điều khiển Hermes trên máy tính này, nơi đã chấp nhận phiên đăng nhập mà bảng này giữ. API của cổng không quảng bá đường dẫn này.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "Kết nối, tài khoản hoặc hồ sơ đã thay đổi. Chưa kiểm tra lại.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Ảnh dán vào được chuẩn bị qua socket phiên Hermes (image.attach_bytes), và cuộc trò chuyện đọc chúng theo đường dẫn.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Giả định vì /health đã trả lời kèm token. /v1/capabilities không khả dụng nên chưa được xác nhận.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "Cổng đã trả lời \"method not found\" (-32601) cho {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Chưa có socket phiên Hermes nào mở cho kết nối này. Trạng thái ngữ cảnh sẽ được đọc tại đây khi một socket mở.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Hermes này không có đầu vào người dùng bất đồng bộ gốc (hermes-agent #103136 chưa được hợp nhất), nên câu hỏi chỉ có thể được trả lời khi nó đến trong luồng trực tiếp.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Chưa kiểm tra.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Trò chuyện trên kết nối này chạy qua REST API. Ảnh dán vào được đính kèm vào phiên đang chạy khi trò chuyện chạy qua WebSocket của bảng điều khiển, như phiên Chế độ Bot hoặc hồ sơ có tên.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Trò chuyện trên kết nối này chạy qua REST API và không có socket phiên Hermes nào đang mở, nên ảnh dán vào dùng tính năng tải lên của bảng điều khiển hoặc giữ nguyên trong dòng.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Kết nối này chỉ tới được REST API, vốn không công bố tuyến nén. Việc nén cần WebSocket của bảng điều khiển có quyền phiên.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Tab đính kèm",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "Kết nối này không có socket phiên Hermes, nên không thể đọc phân tích theo danh mục.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes không giữ phiên này trên socket phiên của nó, nên không đo được các danh mục.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes chưa báo cáo phân tích theo danh mục cho phiên này.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Đăng nhập bằng tài khoản Hermes của bạn tại Cài đặt > Kết nối để đọc phân tích theo danh mục của phiên này.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Theo dõi tab đang hoạt động",

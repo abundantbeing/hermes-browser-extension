@@ -14,6 +14,7 @@ import { extractHistoryMediaAttachments } from './image-render.mjs';
 export const WS_METHODS = Object.freeze({
   sessionCreate: 'session.create',
   sessionResume: 'session.resume',
+  sessionDetach: 'session.detach',
   sessionList: 'session.list',
   sessionHistory: 'session.history',
   sessionInfo: 'session.info',

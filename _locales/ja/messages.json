@@ -1443,6 +1443,10 @@
     "message": "接続が閉じました。最後の確認は {age}。表示のみで、何かの実行には使いません。",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Hermes のセッションソケット経由で読み取り: セッションの使用量とカテゴリ別の内訳を、セッションの保存済み ID で取得します。",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "このパネルが保持しているサインインを受け入れた、このコンピューター上の Hermes ダッシュボードが提供しています。ゲートウェイ API はこれを公開していません。",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "接続、アカウント、またはプロファイルが変わりました。まだ再確認していません。",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "貼り付けた画像は Hermes のセッションソケット (image.attach_bytes) を通して用意され、チャットはそのパスから読み取ります。",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "/health がトークン付きで応答したため仮定しています。/v1/capabilities が利用できなかったので未確認です。",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "ゲートウェイは {method} に対して「method not found」(-32601) と応答しました。",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "この接続ではまだ Hermes のセッションソケットが開いていません。開くとここにコンテキストの状態が表示されます。",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "この Hermes にはネイティブの非同期ユーザー入力がありません (hermes-agent #103136 は未マージ)。そのため、質問に答えられるのはライブストリームで届いたときだけです。",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "まだ確認していません。",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "この接続のチャットは REST API 経由で動作します。貼り付けた画像は、ボットモードや名前付きプロファイルのセッションのように、チャットがダッシュボードの WebSocket 経由で動作しているときにライブセッションへ添付されます。",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "この接続のチャットは REST API 経由で動作し、Hermes のセッションソケットも開いていないため、貼り付けた画像はダッシュボードのアップロードを使うか、インラインのままになります。",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "この接続は REST API にしか届かず、圧縮用のルートは通知されません。圧縮にはセッション権限のあるダッシュボード WebSocket が必要です。",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "付属タブ",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "この接続には Hermes のセッションソケットがないため、カテゴリ別の内訳を読み取れません。",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes はこのセッションをセッションソケット上で保持していないため、カテゴリを測定できませんでした。",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes はこのセッションのカテゴリ別の内訳をまだ報告していません。",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "このセッションのカテゴリ別の内訳を読み取るには、設定 > 接続 で Hermes アカウントにサインインしてください。",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "アクティブなタブをフォローする",

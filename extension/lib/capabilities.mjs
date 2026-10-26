@@ -473,6 +473,17 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
     }
   }
 
+  // Native asynchronous user input (hermes-agent #103136) is not in any Hermes release yet: the installed
+  // api_server advertises no `session_user_input` feature and no pending/answer route. When /v1/capabilities
+  // answered in full and does not list it, say plainly that this Hermes lacks it instead of "not advertised".
+  // A gateway that starts to advertise it (or a socket that answers user_input.pending) still wins.
+  if (transport === 'rest' && caps.platform === 'hermes-agent' && caps.raw && typeof caps.raw === 'object'
+    && current('sessionUserInput')?.reasonCode === 'not-advertised') {
+    replace('sessionUserInput', S.unsupported, O.derived, 'no-native-user-input');
+  } else if (wsRoute && hasReady && unsupported.has('user_input.pending') && current('sessionUserInput')?.state !== S.available) {
+    replace('sessionUserInput', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'user_input.pending' });
+  }
+
   // The companion plugin serves three of those rows itself. When its own status
   // route lists the route (and the plugin is ready), the row reads "available via
   // the companion plugin"; otherwise it keeps the honest reason above. A gateway
@@ -551,16 +562,42 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   // (mediaRead, handled in the loop above). None implies another.
   if (wsRoute && (caps.imageSessionAttach === true || transport !== 'ws')) make('imageSessionAttach', S.available, O.derived, 'ws-contract');
   else if (transport === 'none' && !sideReady) make('imageSessionAttach', S.unknown, O.none, 'no-record');
-  else if (sideReady) make('imageSessionAttach', S.unsupported, O.derived, 'rest-chat');
+  else if (sideReady && readyPayload.session_authority === true) {
+    // A REST chat's session is a stored session on the gateway, and the authority socket addresses it by that
+    // stored id: image.attach_bytes stages the pixels in the profile's image cache and answers their path,
+    // which the chat then reads like the dashboard upload's. It needs the session to exist (a first message
+    // creates it) and the socket to hold it (session.resume), which the panel does when an image is pasted.
+    if (unsupported.has('image.attach_bytes')) make('imageSessionAttach', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'image.attach_bytes' });
+    else make('imageSessionAttach', S.available, O.ready, 'image-via-socket');
+  } else if (sideReady) make('imageSessionAttach', S.unsupported, O.derived, 'rest-chat');
+  else if (transport === 'rest') make('imageSessionAttach', S.unsupported, O.derived, 'rest-chat-no-socket');
   else make('imageSessionAttach', S.unsupported, O.derived, 'rest-only');
+
+  // Context status: the session socket answers session.usage / session.stats and session.context_breakdown for a
+  // session by its stored id, REST chat included. A dashboard WebSocket chat reads the same over its own socket
+  // (ws-contract above).
+  if (current('sessionContext')?.state !== S.available) {
+    if (sideReady && readyPayload.session_authority === true) {
+      if (unsupported.has('session.context_breakdown') && (unsupported.has('session.stats') || unsupported.has('session.usage'))) {
+        replace('sessionContext', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'session.context_breakdown' });
+      } else {
+        replace('sessionContext', S.available, O.ready, 'context-socket');
+      }
+    } else if (transport === 'rest' && !sideReady && current('sessionContext')?.reasonCode === 'not-advertised') {
+      replace('sessionContext', S.unsupported, O.derived, 'no-context-socket');
+    }
+  }
 
   // The gateway asks for a Hermes account sign-in (gated, native flow advertised) and none is held: the rows
   // that need the session-authority socket say that, instead of "REST only". A route the gateway advertised
-  // itself (REST compaction) still reads as it said. Image attach stays tied to a chat over the socket, which
-  // signing in does not change, so it keeps its own reason.
+  // itself (REST compaction) still reads as it said.
   if (accountSignIn === true && !wsRoute && !sideReady) {
     for (const id of ['sessionAuthority', 'projects']) replace(id, S.blocked, O.derived, 'account-sign-in');
     if (current('sessionCompress')?.state !== S.available) replace('sessionCompress', S.blocked, O.derived, 'account-sign-in');
+    // Context status and image attach over a REST chat travel on that same socket: signing in opens both.
+    for (const id of ['sessionContext', 'imageSessionAttach']) {
+      if (current(id)?.state !== S.available && transport === 'rest') replace(id, S.blocked, O.derived, 'account-sign-in');
+    }
   }
 
   return records;

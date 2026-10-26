@@ -1443,6 +1443,10 @@
     "message": "Połączenie zostało zamknięte. Ostatnio potwierdzono {age}. Pokazane, ale nieużywane do wykonywania czegokolwiek.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Odczytano przez gniazdo sesji Hermes: użycie sesji i podział na kategorie, według zapisanego identyfikatora sesji.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Obsługiwane przez panel Hermes na tym komputerze, który zaakceptował logowanie przechowywane przez ten panel. API bramy tego nie ogłasza.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "Połączenie, konto lub profil się zmieniło. Jeszcze nie sprawdzono ponownie.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Wklejone obrazy są przygotowywane przez gniazdo sesji Hermes (image.attach_bytes), a czat odczytuje je po ścieżce.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Założono, bo /health odpowiedziało z tokenem. /v1/capabilities było niedostępne, więc nie jest to potwierdzone.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "Brama odpowiedziała „method not found” (-32601) dla {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Dla tego połączenia nie jest jeszcze otwarte gniazdo sesji Hermes. Stan kontekstu zostanie tu odczytany, gdy jedno się otworzy.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Ten Hermes nie ma natywnego asynchronicznego wejścia użytkownika (hermes-agent #103136 nie jest scalony), więc na pytanie można odpowiedzieć tylko wtedy, gdy dotrze w strumieniu na żywo.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Jeszcze nie sprawdzono.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Czat na tym połączeniu działa przez REST API. Wklejone obrazy dołączają się do aktywnej sesji, gdy czat działa przez WebSocket pulpitu, tak jak sesja trybu Bot lub profilu o nazwie.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Czat na tym połączeniu działa przez REST API i nie jest otwarte żadne gniazdo sesji Hermes, więc wklejone obrazy używają przesyłania przez pulpit albo zostają w treści.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "To połączenie sięga tylko do REST API, które nie ogłasza trasy kompaktowania. Kompaktowanie wymaga WebSocket panelu z autorytetem sesji.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Dołączona zakładka",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "To połączenie nie ma gniazda sesji Hermes, więc podziału na kategorie nie można odczytać.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes nie przechowuje tej sesji na swoim gnieździe sesji, więc nie mógł zmierzyć kategorii.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes nie zgłosił jeszcze podziału na kategorie dla tej sesji.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Zaloguj się kontem Hermes w Ustawienia > Połączenia, aby odczytać podział na kategorie tej sesji.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Śledź aktywną kartę",

@@ -1443,6 +1443,10 @@
     "message": "連線已關閉。上次確認於 {age}。僅顯示，不用於執行任何操作。",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "透過 Hermes 工作階段通訊端讀取：依工作階段已儲存的 ID 取得工作階段用量與分類明細。",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "由這台電腦上的 Hermes 儀表板提供，該儀表板接受了此面板持有的登入資訊。閘道 API 不會公布此路由。",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "連線、帳號或設定檔已變更。尚未重新檢查。",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "貼上的圖片透過 Hermes 工作階段通訊端 (image.attach_bytes) 暫存，聊天依路徑讀取它們。",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "因 /health 帶權杖回應而假定。/v1/capabilities 無法使用，所以未獲確認。",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "閘道對 {method} 回覆了「method not found」(-32601)。",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "此連線尚未開啟 Hermes 工作階段通訊端。通訊端開啟後，內容狀態會在此讀取。",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "此 Hermes 沒有原生非同步使用者輸入（hermes-agent #103136 尚未合併），因此只有問題出現在即時串流中時才能回答。",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "尚未檢查。",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "此連線上的聊天透過 REST API 執行。當聊天透過儀表板 WebSocket 執行時（如機器人模式或具名設定檔工作階段），貼上的圖片才會附加到即時工作階段。",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "此連線上的聊天透過 REST API 執行，且沒有開啟的 Hermes 工作階段通訊端，因此貼上的圖片會使用儀表板上傳，或保持內嵌。",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "此連線只能連到 REST API，而它不宣告壓縮路由。壓縮需要具備工作階段權限的儀表板 WebSocket。",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "已附加的分頁",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "此連線沒有 Hermes 工作階段通訊端，因此無法讀取分類明細。",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes 沒有在其工作階段通訊端上持有此工作階段，因此無法測量各分類。",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes 尚未回報此工作階段的分類明細。",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "請在「設定」>「連線」中使用 Hermes 帳號登入，以讀取此工作階段的分類明細。",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "跟隨活動分頁",

@@ -404,6 +404,7 @@ import { botAvatarRoute } from './lib/bot-roster-source.mjs';
 import { createUserInputFetchGuard, userInputWriteIsOwned } from './lib/user-input-race.mjs';
 import { classifyUserInputResult, createUserInputController, pendingUserInputRecords, userInputAnswerPayload, userInputText } from './lib/user-input.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
+import { stageImageViaSessionSocket } from './lib/session-socket-image.mjs';
 import { DASHBOARD_ROUTE_CAPABILITIES, dashboardRouteRecordFields, probeDashboardRoutes, readDashboardModelInfo, uploadImageViaDashboard } from './lib/dashboard-routes.mjs';
 import {
   capabilitySummaryText,
@@ -2973,6 +2974,9 @@ function showSettingsPane(pane, { field = '', focus = true } = {}) {
     void refreshCompanionPluginStatus({ force: true }).catch(() => undefined);
     void refreshDashboardRoutes({ force: true }).catch(() => undefined);
     void refreshGatewaySocket({ force: true }).catch(() => undefined);
+    // Every row is read again as the pane opens: what /v1/capabilities says ages out after five minutes and would
+    // read "cached" until something else asked. The rows go back to current as these answers land.
+    void loadGatewayCapabilities({ quiet: true, healthOk: isConnected() }).catch(() => undefined);
   }
   renderSettingsEditedMarkers();
   requestAnimationFrame(updateSettingsBackToTop);
@@ -9526,8 +9530,10 @@ async function uploadImageAttachment(attachment) {
         };
       }
     } catch {
-      /* fall through to the inline-only result */
+      /* fall through to the session socket, then the inline-only result */
     }
+    const staged = await stageImageViaGatewaySocket(attachment);
+    if (staged) return staged;
     return {
       ...attachment,
       uploadSkipped: true,
@@ -9592,6 +9598,44 @@ async function saveImageAttachmentsForTurn(items = []) {
   if (skipped) setStatus('warn', 'Image stayed inline only', `${skipped} image${skipped === 1 ? '' : 's'} kept as inline context because this Hermes runtime has no image upload route.`);
   if (failed) setStatus('warn', 'Image stayed inline only', `${failed} image${failed === 1 ? '' : 's'} could not be saved locally`);
   return next;
+}
+
+// A REST chat's pasted image through the session-authority socket (the paired gateway's, a Hermes account's, or
+// the held Webapp one): image.attach_bytes stages it under the profile's image cache by the chat's stored
+// session id and answers its path, which the turn names like a dashboard upload's. Null when there is no such
+// socket or the gateway would not stage it (a first message creates the session), so the image stays inline.
+async function stageImageViaGatewaySocket(attachment) {
+  const sessionId = String(settings.sessionId || '').trim();
+  if (!sessionId || isRemoteWsMode() || usesDashboardWsChatTransport()) return null;
+  try {
+    let client = sessionAuthoritySideSocket();
+    if (!client) {
+      await refreshGatewaySocket().catch(() => null);
+      client = sessionAuthoritySideSocket();
+    }
+    const staged = await stageImageViaSessionSocket({ client, sessionId, dataUrl: attachment.dataUrl, filename: attachment.label });
+    if (!staged.ok) {
+      // Only an answer from the gateway teaches the ledger anything; no socket says nothing about it.
+      if (staged.reason !== 'no-authority-socket') {
+        capabilityRuntime.noteOperation('imageSessionAttach', { ok: false, detail: staged.reason === 'session-not-held' ? 'session not stored on the gateway yet' : (staged.detail || staged.reason) }, { sessionId });
+        renderCompatibilityPanel();
+      }
+      return null;
+    }
+    capabilityRuntime.noteOperation('imageSessionAttach', { ok: true }, { sessionId });
+    renderCompatibilityPanel();
+    return {
+      ...attachment,
+      localPath: staged.path,
+      savedFilename: staged.name,
+      mimeType: staged.mime,
+      savedSize: staged.bytes,
+      detail: `${attachment.detail || staged.mime || 'image'} · local path ready`,
+      uploadError: '',
+    };
+  } catch {
+    return null;
+  }
 }
 
 // Local dashboard turns carry no pixels through `prompt.submit`, so pasted

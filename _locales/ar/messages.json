@@ -1443,6 +1443,10 @@
     "message": "أُغلق الاتصال. آخر تأكيد {age}. يُعرض ولا يُستخدم لتشغيل أي شيء.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "قُرئ عبر مقبس جلسة Hermes: استخدام الجلسة وتفصيل الفئات، بالمعرّف المحفوظ للجلسة.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "يقدمه لوحة تحكم Hermes على هذا الكمبيوتر، والتي قبلت تسجيل الدخول الذي تحتفظ به هذه اللوحة. لا تعلن واجهة API الخاصة بالبوابة عنه.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "تغيّر الاتصال أو الحساب أو الملف الشخصي. لم يُفحص مجددًا بعد.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "تُجهَّز الصور الملصقة عبر مقبس جلسة Hermes (image.attach_bytes)، وتقرؤها المحادثة من مسارها.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "افتراض لأن /health ردّ برمز. لم يكن /v1/capabilities متاحًا، لذا لم يتأكد ذلك.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "ردّت البوابة بـ \"method not found\" (-32601) على {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "لا يوجد مقبس جلسة Hermes مفتوح لهذا الاتصال بعد. ستُقرأ حالة السياق هنا بمجرد فتح أحدها.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "لا يملك هذا Hermes إدخال مستخدم غير متزامن أصليًا (hermes-agent #103136 لم يُدمج)، لذا لا يمكن الإجابة عن سؤال إلا إذا وصل في البث المباشر.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "لم يُفحص بعد.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "تعمل المحادثة على هذا الاتصال عبر REST API. تُرفق الصور الملصقة بجلسة حيّة عندما تعمل المحادثة عبر WebSocket للوحة التحكم، كما تفعل جلسة وضع الروبوت أو الملف المسمّى.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "تعمل المحادثة على هذا الاتصال عبر REST API ولا يوجد مقبس جلسة Hermes مفتوح، لذا تستخدم الصور الملصقة رفع لوحة التحكم أو تبقى مضمّنة.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "يصل هذا الاتصال إلى REST API فقط، وهو لا يعلن عن مسار للضغط. يحتاج الضغط إلى WebSocket اللوحة مع سلطة الجلسة.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "علامة التبويب المرفقة",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "ليس لهذا الاتصال مقبس جلسة Hermes، لذا لا يمكن قراءة تفصيل الفئات.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "لا يحتفظ Hermes بهذه الجلسة على مقبس الجلسة الخاص به، لذا تعذّر قياس الفئات.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "لم يبلّغ Hermes بعد عن تفصيل الفئات لهذه الجلسة.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "سجّل الدخول بحساب Hermes من الإعدادات > الاتصالات لقراءة تفصيل الفئات لهذه الجلسة.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "اتبع علامة التبويب النشطة",

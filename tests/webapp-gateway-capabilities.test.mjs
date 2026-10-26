@@ -21,12 +21,14 @@ const derive = (extra) => byId(deriveCapabilityRecords(restCaps(), { identityKey
 
 // --- the derivation -------------------------------------------------------------------------------
 
-test('a REST chat with no socket still reads rest-only for authority, Projects, compaction and image attach', () => {
+test('a REST chat with no socket still reads rest-only for authority, Projects and compaction, and says no socket is open for context and images', () => {
   const records = derive({});
-  for (const id of ['sessionAuthority', 'projects', 'imageSessionAttach']) {
+  for (const id of ['sessionAuthority', 'projects']) {
     assert.equal(records[id].state, 'unsupported', id);
     assert.equal(records[id].reasonCode, 'rest-only', id);
   }
+  assert.deepEqual([records.imageSessionAttach.state, records.imageSessionAttach.reasonCode], ['unsupported', 'rest-chat-no-socket']);
+  assert.deepEqual([records.sessionContext.state, records.sessionContext.reasonCode], ['unsupported', 'no-context-socket']);
   assert.equal(records.sessionCompress.reasonCode, 'rest-no-compress');
 });
 
@@ -41,11 +43,35 @@ test('beside a REST chat, an open session-authority socket makes authority, Proj
   assert.deepEqual({ route: records.sessionCompress.params.route, sideSocket: records.sessionCompress.params.sideSocket }, { route: 'canonical', sideSocket: true });
 });
 
-test('image attach belongs to a live session, so a REST chat says why instead of rest-only', () => {
+test('beside a REST chat, an authority socket serves image attach and context status by the stored session id', () => {
   const records = derive({ sideSocket: true, readyPayload: AUTHORITY });
-  assert.equal(records.imageSessionAttach.state, 'unsupported');
+  assert.deepEqual([records.imageSessionAttach.state, records.imageSessionAttach.reasonCode, records.imageSessionAttach.source], ['available', 'image-via-socket', 'gateway.ready']);
+  assert.deepEqual([records.sessionContext.state, records.sessionContext.reasonCode, records.sessionContext.source], ['available', 'context-socket', 'gateway.ready']);
+  for (const key of ['image_via_socket', 'context_socket', 'no_context_socket', 'rest_chat_no_socket', 'no_native_user_input']) assert.ok(english[`capability.reason.${key}`], `${key} localized`);
+});
+
+test('a socket that answered -32601 for image.attach_bytes or the context reads says so instead of claiming them', () => {
+  const methods = new Set(['image.attach_bytes', 'session.context_breakdown', 'session.stats']);
+  const records = derive({ sideSocket: true, readyPayload: AUTHORITY, unsupportedMethods: methods });
+  assert.deepEqual([records.imageSessionAttach.state, records.imageSessionAttach.reasonCode], ['unsupported', 'method-not-found']);
+  assert.deepEqual([records.sessionContext.state, records.sessionContext.reasonCode], ['unsupported', 'method-not-found']);
+});
+
+test('a side socket that is not session authority keeps the old REST-chat image reason', () => {
+  const records = derive({ sideSocket: true, readyPayload: { session_authority: false } });
   assert.equal(records.imageSessionAttach.reasonCode, 'rest-chat');
   assert.ok(english['capability.reason.rest_chat'], 'localized');
+});
+
+test('native async user input reads as missing from this Hermes when the gateway listed everything and omitted it', () => {
+  const records = derive({});
+  assert.deepEqual([records.sessionUserInput.state, records.sessionUserInput.reasonCode, records.sessionUserInput.source], ['unsupported', 'no-native-user-input', 'derived']);
+  assert.match(records.sessionUserInput.reason, /does not have native asynchronous user input/);
+  // A gateway that does advertise it still wins.
+  const advertised = normalizeGatewayCapabilities({
+    object: 'hermes.api_server.capabilities', platform: 'hermes-agent', features: { session_user_input: true }, endpoints: {},
+  }, { healthOk: true, hasApiKey: true });
+  assert.equal(byId(deriveCapabilityRecords(advertised, { identityKey: identity.key, checkedAt: 1 })).sessionUserInput.state, 'available');
 });
 
 test('a side socket whose gateway.ready reports no session authority says so, and does not claim compaction', () => {
@@ -145,7 +171,8 @@ test('the panel feeds the Hermes Web socket to the ledger while chat stays on RE
   assert.equal(p.runtime.record('sessionAuthority').state, 'available');
   assert.equal(p.runtime.record('projects').state, 'available');
   assert.equal(p.runtime.record('sessionCompress').params.sideSocket, true);
-  assert.equal(p.runtime.record('imageSessionAttach').reasonCode, 'rest-chat');
+  assert.equal(p.runtime.record('imageSessionAttach').reasonCode, 'image-via-socket');
+  assert.equal(p.runtime.record('sessionContext').reasonCode, 'context-socket');
   assert.equal(p.runtime.record('health').state, 'available', 'the REST rows are not demoted by a socket');
 });
 
@@ -179,7 +206,7 @@ test('compaction beside a REST chat runs on the socket without adopting or creat
 
 // --- the Hermes account sign-in --------------------------------------------------------------------
 
-test('a gateway that asks for a Hermes account sign-in says so on the rows that need its socket, and image attach keeps its own reason', () => {
+test('a gateway that asks for a Hermes account sign-in says so on every row that needs its socket', () => {
   const records = derive({ accountSignIn: true });
   for (const id of ['sessionAuthority', 'projects']) {
     assert.equal(records[id].state, 'blocked', id);
@@ -187,7 +214,7 @@ test('a gateway that asks for a Hermes account sign-in says so on the rows that 
   }
   assert.equal(records.sessionCompress.state, 'blocked');
   assert.equal(records.sessionCompress.reasonCode, 'account-sign-in');
-  assert.equal(records.imageSessionAttach.reasonCode, 'rest-only');
+  for (const id of ['sessionContext', 'imageSessionAttach']) assert.deepEqual([records[id].state, records[id].reasonCode], ['blocked', 'account-sign-in'], id);
   assert.ok(english['capability.reason.account_sign_in'], 'localized');
   assert.ok(english['projects.unavailable.account_sign_in'], 'localized');
 });

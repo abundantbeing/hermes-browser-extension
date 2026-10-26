@@ -1443,6 +1443,10 @@
     "message": "The connection closed. Last confirmed {age}. Shown, not used to run anything.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Read over the Hermes session socket: session usage and the category breakdown, by the stored id of the session.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Served by the Hermes dashboard on this computer, which accepted the sign-in this panel holds. The gateway API does not advertise it.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "The connection, account or profile changed. Not checked again yet.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Pasted images are staged through the Hermes session socket (image.attach_bytes), and the chat reads them by path.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Assumed because /health answered with a token. /v1/capabilities was unavailable, so this is not confirmed.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "The gateway answered \"method not found\" (-32601) for {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "No Hermes session socket is open for this connection yet. Context status reads here once one opens.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "This Hermes does not have native asynchronous user input (hermes-agent #103136 is not merged), so a question can only be answered when it arrives in the live stream.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Not checked yet.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Chat on this connection runs over the REST API. Pasted images attach to a live session when chat runs over the dashboard WebSocket, as a Bot Mode or named-profile session does.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Chat on this connection runs over the REST API and no Hermes session socket is open, so pasted images use the dashboard upload or stay inline.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "This connection only reaches the REST API, which does not advertise a compact route. Compaction needs the dashboard WebSocket with session authority.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Attached tab",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "This connection has no Hermes session socket, so the category breakdown cannot be read.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes does not hold this session on its session socket, so it could not measure the categories.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes has not reported a category breakdown for this session yet.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Sign in with your Hermes account in Settings > Connections to read the category breakdown of this session.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Follow active tab",

@@ -1443,6 +1443,10 @@
     "message": "कनेक्शन बंद हो गया। अंतिम पुष्टि {age}। दिखाया गया है, कुछ चलाने के लिए उपयोग नहीं होता।",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Hermes सेशन सॉकेट से पढ़ा गया: सेशन का उपयोग और श्रेणी-वार विवरण, सेशन की सहेजी गई आईडी से।",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "इस कंप्यूटर के Hermes डैशबोर्ड से दिया जा रहा है, जिसने इस पैनल के पास मौजूद साइन-इन को स्वीकार किया है। गेटवे API इसका विज्ञापन नहीं करता।",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "कनेक्शन, खाता या प्रोफ़ाइल बदल गया। अभी दोबारा नहीं जाँचा गया।",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "चिपकाई गई छवियाँ Hermes सेशन सॉकेट (image.attach_bytes) से तैयार की जाती हैं, और चैट उन्हें पाथ से पढ़ता है।",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "माना गया क्योंकि /health ने टोकन के साथ उत्तर दिया। /v1/capabilities उपलब्ध नहीं था, इसलिए इसकी पुष्टि नहीं हुई।",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "गेटवे ने {method} के लिए \"method not found\" (-32601) उत्तर दिया।",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "इस कनेक्शन के लिए अभी कोई Hermes सेशन सॉकेट खुला नहीं है। सॉकेट खुलते ही संदर्भ की स्थिति यहाँ पढ़ी जाएगी।",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "इस Hermes में नेटिव असिंक्रोनस यूज़र इनपुट नहीं है (hermes-agent #103136 मर्ज नहीं हुआ है), इसलिए किसी प्रश्न का उत्तर तभी दिया जा सकता है जब वह लाइव स्ट्रीम में आए।",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "अभी जाँचा नहीं गया।",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "इस कनेक्शन पर चैट REST API से चलती है। चिपकाई गई छवियाँ तब लाइव सत्र से जुड़ती हैं जब चैट डैशबोर्ड WebSocket से चलती है, जैसा बॉट मोड या नामित-प्रोफ़ाइल सत्र में होता है।",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "इस कनेक्शन पर चैट REST API से चलती है और कोई Hermes सेशन सॉकेट खुला नहीं है, इसलिए चिपकाई गई छवियाँ डैशबोर्ड अपलोड का उपयोग करती हैं या इनलाइन रहती हैं।",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "यह कनेक्शन केवल REST API तक पहुँचता है, जो संपीड़न रूट घोषित नहीं करता। संपीड़न के लिए सत्र अधिकार वाला डैशबोर्ड WebSocket चाहिए।",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "संलग्न टैब",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "इस कनेक्शन में कोई Hermes सेशन सॉकेट नहीं है, इसलिए श्रेणी-वार विवरण नहीं पढ़ा जा सकता।",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes अपने सेशन सॉकेट पर यह सेशन नहीं रखता, इसलिए वह श्रेणियाँ नहीं माप सका।",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes ने इस सेशन के लिए अभी तक श्रेणी-वार विवरण नहीं बताया है।",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "इस सेशन का श्रेणी-वार विवरण पढ़ने के लिए सेटिंग > कनेक्शन में अपने Hermes खाते से साइन इन करें।",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "सक्रिय टैब का पालन करें",

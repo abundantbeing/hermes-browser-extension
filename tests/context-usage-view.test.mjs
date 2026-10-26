@@ -188,3 +188,19 @@ test('the "not reported" notes say what is true of the channel: no socket, sign-
   // Callers that only pass breakdownSupported keep working.
   assert.equal(buildContextUsageView({ local: {}, breakdownSupported: true }).breakdownState, 'missing');
 });
+
+test('the four breakdown notes exist in every locale, word for word, so the card translates them', async () => {
+  const { default: english } = await import('../extension/lib/locales/en.mjs');
+  const { loadLocaleMessages, SUPPORTED_LOCALES } = await import('../extension/lib/i18n-registry.mjs');
+  const emit = (options) => buildContextUsageView({ local: { usedTokens: 10, limitTokens: 100 }, ...options }).insights.find((row) => row.id === 'no-breakdown').text;
+  const texts = {
+    'context.card.sign_in': emit({ channel: 'sign-in' }),
+    'context.card.no_socket': emit({ channel: 'none' }),
+    'context.card.not_held': emit({ channel: 'open', failure: 'not-held' }),
+    'context.card.not_reported': emit({ channel: 'open' }),
+  };
+  for (const [key, text] of Object.entries(texts)) {
+    assert.equal(english[key], text, `${key} is the exact English template`);
+    for (const locale of SUPPORTED_LOCALES) assert.ok((await loadLocaleMessages(locale.id))[key], `${key} in ${locale.id}`);
+  }
+});

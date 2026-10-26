@@ -1443,6 +1443,10 @@
     "message": "Die Verbindung wurde geschlossen. Zuletzt bestätigt {age}. Wird angezeigt, aber für nichts verwendet.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Über den Hermes-Sitzungs-Socket gelesen: Sitzungsnutzung und Kategorieaufschlüsselung, über die gespeicherte ID der Sitzung.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Wird vom Hermes-Dashboard auf diesem Computer bereitgestellt, das die Anmeldung akzeptiert hat, die dieses Panel hält. Die Gateway-API kündigt sie nicht an.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "Verbindung, Konto oder Profil haben sich geändert. Noch nicht erneut geprüft.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Eingefügte Bilder werden über den Hermes-Sitzungs-Socket (image.attach_bytes) bereitgestellt, und der Chat liest sie über den Pfad.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Angenommen, weil /health mit einem Token geantwortet hat. /v1/capabilities war nicht verfügbar, daher ist das nicht bestätigt.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "Das Gateway hat für {method} mit „method not found“ (-32601) geantwortet.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Für diese Verbindung ist noch kein Hermes-Sitzungs-Socket geöffnet. Der Kontextstatus wird hier gelesen, sobald einer geöffnet ist.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Dieses Hermes hat keine native asynchrone Nutzereingabe (hermes-agent #103136 ist nicht gemergt). Eine Frage kann daher nur beantwortet werden, wenn sie im Live-Stream eintrifft.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Noch nicht geprüft.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Der Chat läuft auf dieser Verbindung über die REST-API. Eingefügte Bilder werden an eine Live-Sitzung angehängt, wenn der Chat über den Dashboard-WebSocket läuft, wie bei einer Bot-Modus- oder Profilsitzung.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Der Chat läuft auf dieser Verbindung über die REST-API und es ist kein Hermes-Sitzungs-Socket geöffnet. Eingefügte Bilder nutzen daher den Dashboard-Upload oder bleiben inline.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Diese Verbindung erreicht nur die REST-API, die keine Verdichtungsroute ankündigt. Die Verdichtung braucht den Dashboard-WebSocket mit Sitzungsautorität.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Angehängte Registerkarte",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "Diese Verbindung hat keinen Hermes-Sitzungs-Socket, daher lässt sich die Kategorieaufschlüsselung nicht lesen.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes hält diese Sitzung auf seinem Sitzungs-Socket nicht und konnte die Kategorien daher nicht messen.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes hat für diese Sitzung noch keine Kategorieaufschlüsselung gemeldet.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Melden Sie sich unter Einstellungen > Verbindungen mit Ihrem Hermes-Konto an, um die Kategorieaufschlüsselung dieser Sitzung zu lesen.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Folgen Sie der aktiven Registerkarte",

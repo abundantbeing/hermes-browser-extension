@@ -1443,6 +1443,10 @@
     "message": "Koneksi ditutup. Terakhir dikonfirmasi {age}. Ditampilkan, tidak dipakai untuk menjalankan apa pun.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Dibaca lewat soket sesi Hermes: penggunaan sesi dan rincian kategori, dengan id sesi yang tersimpan.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Disajikan oleh dasbor Hermes di komputer ini, yang menerima sign-in yang disimpan panel ini. API gateway tidak mengiklankannya.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "Koneksi, akun, atau profil berubah. Belum diperiksa lagi.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Gambar yang ditempel disiapkan lewat soket sesi Hermes (image.attach_bytes), dan chat membacanya lewat path.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Diasumsikan karena /health menjawab dengan token. /v1/capabilities tidak tersedia, jadi ini belum dikonfirmasi.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "Gateway menjawab \"method not found\" (-32601) untuk {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Belum ada soket sesi Hermes yang terbuka untuk koneksi ini. Status konteks akan dibaca di sini setelah satu terbuka.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Hermes ini tidak memiliki input pengguna asinkron bawaan (hermes-agent #103136 belum digabungkan), jadi pertanyaan hanya bisa dijawab saat tiba di aliran langsung.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Belum diperiksa.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Chat pada koneksi ini berjalan lewat REST API. Gambar yang ditempel dilampirkan ke sesi aktif saat chat berjalan lewat WebSocket dasbor, seperti sesi Mode Bot atau profil bernama.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Chat pada koneksi ini berjalan lewat REST API dan tidak ada soket sesi Hermes yang terbuka, jadi gambar yang ditempel memakai unggahan dasbor atau tetap inline.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Koneksi ini hanya menjangkau REST API, yang tidak mengumumkan rute pemadatan. Pemadatan membutuhkan WebSocket dasbor dengan otoritas sesi.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Tab terlampir",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "Koneksi ini tidak memiliki soket sesi Hermes, jadi rincian kategori tidak bisa dibaca.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes tidak menyimpan sesi ini di soket sesinya, jadi tidak bisa mengukur kategorinya.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes belum melaporkan rincian kategori untuk sesi ini.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Masuk dengan akun Hermes Anda di Pengaturan > Koneksi untuk membaca rincian kategori sesi ini.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Ikuti tab aktif",

@@ -1443,6 +1443,10 @@
     "message": "连接已关闭。上次确认于 {age}。仅显示，不用于运行任何操作。",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "通过 Hermes 会话套接字读取：按会话已保存的 ID 获取会话用量和分类明细。",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "由本机的 Hermes 仪表板提供，该仪表板接受了此面板持有的登录信息。网关 API 不会公布此路由。",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "连接、账户或配置文件已更改。尚未重新检查。",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "粘贴的图片通过 Hermes 会话套接字 (image.attach_bytes) 暂存，聊天按路径读取它们。",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "因 /health 带令牌应答而假定。/v1/capabilities 不可用，所以未得到确认。",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "网关对 {method} 回复了“method not found”(-32601)。",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "此连接尚未打开 Hermes 会话套接字。套接字打开后，上下文状态会在此读取。",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "此 Hermes 没有原生异步用户输入（hermes-agent #103136 尚未合并），因此只有问题出现在实时流中时才能回答。",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "尚未检查。",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "此连接上的聊天通过 REST API 运行。当聊天通过仪表板 WebSocket 运行时（如机器人模式或命名档案会话），粘贴的图片才会附加到实时会话。",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "此连接上的聊天通过 REST API 运行，且没有打开的 Hermes 会话套接字，因此粘贴的图片会使用仪表板上传，或保持内联。",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "此连接只能访问 REST API，而它不声明压缩路由。压缩需要具备会话权限的控制台 WebSocket。",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "已附加标签页",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "此连接没有 Hermes 会话套接字，因此无法读取分类明细。",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes 没有在其会话套接字上持有此会话，因此无法测量各分类。",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes 尚未报告此会话的分类明细。",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "请在“设置”>“连接”中使用 Hermes 账号登录，以读取此会话的分类明细。",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "跟随活动标签页",

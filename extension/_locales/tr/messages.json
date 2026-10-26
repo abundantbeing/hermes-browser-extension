@@ -1443,6 +1443,10 @@
     "message": "Bağlantı kapandı. En son doğrulama {age}. Gösteriliyor, hiçbir şeyi çalıştırmak için kullanılmıyor.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Hermes oturum soketi üzerinden okundu: oturum kullanımı ve kategori dökümü, oturumun kayıtlı kimliğiyle.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Bu bilgisayardaki Hermes kontrol panelinden sunuluyor; kontrol paneli bu panelin tuttuğu oturum açmayı kabul etti. Ağ geçidi API'si bunu duyurmaz.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "Bağlantı, hesap veya profil değişti. Henüz yeniden kontrol edilmedi.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Yapıştırılan görseller Hermes oturum soketi (image.attach_bytes) üzerinden hazırlanır ve sohbet onları yoldan okur.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "/health bir belirteçle yanıt verdiği için varsayıldı. /v1/capabilities kullanılamadı, bu yüzden doğrulanmadı.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "Ağ geçidi {method} için \"method not found\" (-32601) yanıtı verdi.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Bu bağlantı için henüz açık bir Hermes oturum soketi yok. Bağlam durumu, bir soket açılınca burada okunur.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Bu Hermes'te yerel eşzamansız kullanıcı girdisi yok (hermes-agent #103136 birleştirilmedi); bu yüzden bir soru yalnızca canlı akışta geldiğinde yanıtlanabilir.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Henüz kontrol edilmedi.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Bu bağlantıdaki sohbet REST API üzerinden çalışır. Yapıştırılan görseller, sohbet panonun WebSocket'i üzerinden çalıştığında, Bot Modu veya adlandırılmış profil oturumunda olduğu gibi canlı oturuma eklenir.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Bu bağlantıdaki sohbet REST API üzerinden çalışır ve açık bir Hermes oturum soketi yoktur; bu yüzden yapıştırılan görseller pano yüklemesini kullanır ya da satır içi kalır.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Bu bağlantı yalnızca sıkıştırma yolu duyurmayan REST API'ye ulaşır. Sıkıştırma için oturum yetkili pano WebSocket'i gerekir.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Ekli sekme",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "Bu bağlantının Hermes oturum soketi yok, bu yüzden kategori dökümü okunamıyor.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes bu oturumu oturum soketinde tutmuyor, bu yüzden kategorileri ölçemedi.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes bu oturum için henüz bir kategori dökümü bildirmedi.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Bu oturumun kategori dökümünü okumak için Ayarlar > Bağlantılar'dan Hermes hesabınızla oturum açın.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Etkin sekmeyi takip et",

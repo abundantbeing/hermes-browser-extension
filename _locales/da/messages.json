@@ -1443,6 +1443,10 @@
     "message": "Forbindelsen blev lukket. Sidst bekræftet {age}. Vises, men bruges ikke til at udføre noget.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Læst via Hermes-sessionssocket: sessionsforbrug og fordeling på kategorier, via sessionens gemte id.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Leveres af Hermes-dashboardet på denne computer, som accepterede det login, dette panel har. Gateway-API'et annoncerer den ikke.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "Forbindelsen, kontoen eller profilen er ændret. Endnu ikke kontrolleret igen.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Indsatte billeder klargøres gennem Hermes-sessionssocket (image.attach_bytes), og chatten læser dem via stien.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Antaget, fordi /health svarede med et token. /v1/capabilities var ikke tilgængelig, så det er ikke bekræftet.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "Gatewayen svarede \"method not found\" (-32601) for {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Der er endnu ingen Hermes-sessionssocket åben for denne forbindelse. Kontekststatus læses her, når en åbner.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Denne Hermes har ikke indbygget asynkron brugerinput (hermes-agent #103136 er ikke flettet), så et spørgsmål kan kun besvares, når det kommer i live-strømmen.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Endnu ikke kontrolleret.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Chat på denne forbindelse kører over REST-API'et. Indsatte billeder knyttes til en live-session, når chatten kører over dashboardets WebSocket, som en Bot Mode- eller navngiven profilsession gør.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Chat på denne forbindelse kører over REST-API'et, og der er ingen Hermes-sessionssocket åben, så indsatte billeder bruger dashboardets upload eller forbliver inline.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Denne forbindelse når kun REST-API'et, som ikke annoncerer nogen komprimeringsrute. Komprimering kræver dashboard-WebSocket med sessionsautoritet.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Vedhæftet fane",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "Denne forbindelse har ingen Hermes-sessionssocket, så kategorifordelingen kan ikke læses.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes har ikke denne session på sin sessionssocket og kunne derfor ikke måle kategorierne.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes har endnu ikke rapporteret en kategorifordeling for denne session.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Log ind med din Hermes-konto under Indstillinger > Forbindelser for at læse kategorifordelingen for denne session.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Følg den aktive fane",

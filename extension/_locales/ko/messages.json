@@ -1443,6 +1443,10 @@
     "message": "연결이 닫혔습니다. 마지막 확인 {age}. 표시만 하며 무엇을 실행하는 데도 쓰지 않습니다.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Hermes 세션 소켓으로 읽음: 세션 사용량과 카테고리별 내역을 세션의 저장된 ID로 가져옵니다.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "이 패널이 보유한 로그인을 허용한, 이 컴퓨터의 Hermes 대시보드가 제공합니다. 게이트웨이 API는 이 경로를 알리지 않습니다.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "연결, 계정 또는 프로필이 바뀌었습니다. 아직 다시 확인하지 않았습니다.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "붙여넣은 이미지는 Hermes 세션 소켓(image.attach_bytes)을 통해 준비되고, 채팅은 경로로 이를 읽습니다.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "/health가 토큰과 함께 응답해서 가정한 것입니다. /v1/capabilities를 쓸 수 없어 확인되지 않았습니다.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "게이트웨이가 {method}에 대해 \"method not found\"(-32601)로 응답했습니다.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "이 연결에는 아직 열린 Hermes 세션 소켓이 없습니다. 소켓이 열리면 여기에서 컨텍스트 상태를 읽습니다.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "이 Hermes에는 네이티브 비동기 사용자 입력이 없습니다(hermes-agent #103136이 병합되지 않음). 그래서 질문은 라이브 스트림으로 도착했을 때만 답할 수 있습니다.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "아직 확인하지 않았습니다.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "이 연결의 채팅은 REST API로 실행됩니다. 붙여넣은 이미지는 봇 모드나 이름 있는 프로필 세션처럼 채팅이 대시보드 WebSocket으로 실행될 때 라이브 세션에 첨부됩니다.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "이 연결의 채팅은 REST API로 실행되며 열린 Hermes 세션 소켓이 없어서, 붙여넣은 이미지는 대시보드 업로드를 쓰거나 인라인으로 남습니다.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "이 연결은 REST API에만 닿으며, REST API는 압축 경로를 알리지 않습니다. 압축에는 세션 권한이 있는 대시보드 WebSocket이 필요합니다.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "첨부 탭",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "이 연결에는 Hermes 세션 소켓이 없어 카테고리별 내역을 읽을 수 없습니다.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes가 세션 소켓에서 이 세션을 보유하고 있지 않아 카테고리를 측정하지 못했습니다.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes가 이 세션의 카테고리별 내역을 아직 보고하지 않았습니다.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "이 세션의 카테고리별 내역을 읽으려면 설정 > 연결에서 Hermes 계정으로 로그인하세요.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "활성 탭 팔로우",

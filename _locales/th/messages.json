@@ -1443,6 +1443,10 @@
     "message": "การเชื่อมต่อปิดลง ยืนยันล่าสุด {age} แสดงไว้เฉยๆ ไม่ใช้เพื่อรันสิ่งใด",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "อ่านผ่านซ็อกเก็ตเซสชัน Hermes: การใช้งานของเซสชันและรายละเอียดตามหมวดหมู่ ด้วยรหัสที่บันทึกไว้ของเซสชัน",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "ให้บริการโดยแดชบอร์ด Hermes บนคอมพิวเตอร์เครื่องนี้ ซึ่งยอมรับการลงชื่อเข้าใช้ที่แผงนี้เก็บไว้ API ของเกตเวย์ไม่ได้ประกาศเส้นทางนี้",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "การเชื่อมต่อ บัญชี หรือโปรไฟล์เปลี่ยนไป ยังไม่ได้ตรวจสอบอีกครั้ง",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "รูปภาพที่วางจะถูกเตรียมผ่านซ็อกเก็ตเซสชัน Hermes (image.attach_bytes) และแชตจะอ่านรูปภาพจากพาธ",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "สันนิษฐานเพราะ /health ตอบกลับพร้อมโทเค็น /v1/capabilities ใช้ไม่ได้ จึงยังไม่ยืนยัน",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "เกตเวย์ตอบ \"method not found\" (-32601) สำหรับ {method}",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "ยังไม่มีซ็อกเก็ตเซสชัน Hermes ที่เปิดอยู่สำหรับการเชื่อมต่อนี้ สถานะบริบทจะแสดงที่นี่เมื่อเปิดแล้ว",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Hermes ตัวนี้ไม่มีการป้อนข้อมูลผู้ใช้แบบอะซิงโครนัสในตัว (hermes-agent #103136 ยังไม่ได้รวม) จึงตอบคำถามได้เฉพาะเมื่อคำถามมาถึงในสตรีมสด",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "ยังไม่ได้ตรวจสอบ",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "แชตบนการเชื่อมต่อนี้ทำงานผ่าน REST API รูปภาพที่วางจะแนบกับเซสชันที่กำลังทำงานเมื่อแชตทำงานผ่าน WebSocket ของแดชบอร์ด เหมือนเซสชันโหมดบอตหรือโปรไฟล์ที่ตั้งชื่อ",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "แชตบนการเชื่อมต่อนี้ทำงานผ่าน REST API และไม่มีซ็อกเก็ตเซสชัน Hermes ที่เปิดอยู่ รูปภาพที่วางจึงใช้การอัปโหลดของแดชบอร์ดหรืออยู่ในบรรทัดต่อไป",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "การเชื่อมต่อนี้เข้าถึงได้เฉพาะ REST API ซึ่งไม่ได้ประกาศเส้นทางการบีบอัด การบีบอัดต้องใช้ WebSocket ของแดชบอร์ดที่มีสิทธิ์ของเซสชัน",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "แท็บที่แนบมา",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "การเชื่อมต่อนี้ไม่มีซ็อกเก็ตเซสชัน Hermes จึงอ่านรายละเอียดตามหมวดหมู่ไม่ได้",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes ไม่ได้เก็บเซสชันนี้ไว้บนซ็อกเก็ตเซสชันของตน จึงวัดหมวดหมู่ไม่ได้",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes ยังไม่ได้รายงานรายละเอียดตามหมวดหมู่ของเซสชันนี้",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "ลงชื่อเข้าใช้ด้วยบัญชี Hermes ของคุณที่การตั้งค่า > การเชื่อมต่อ เพื่ออ่านรายละเอียดตามหมวดหมู่ของเซสชันนี้",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "ติดตามแทปที่ใช้งานอยู่",

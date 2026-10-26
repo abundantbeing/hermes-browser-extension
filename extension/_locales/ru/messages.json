@@ -1443,6 +1443,10 @@
     "message": "Соединение закрыто. Последнее подтверждение {age}. Показано, но не используется для выполнения чего-либо.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Прочитано через сокет сессии Hermes: использование сессии и разбивка по категориям по сохранённому идентификатору сессии.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Предоставляется панелью Hermes на этом компьютере, которая приняла вход, сохранённый в этой панели. API шлюза этот маршрут не объявляет.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "Соединение, аккаунт или профиль изменились. Ещё не проверено заново.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Вставленные изображения подготавливаются через сокет сессии Hermes (image.attach_bytes), а чат читает их по пути.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Предположено, потому что /health ответил с токеном. /v1/capabilities был недоступен, поэтому это не подтверждено.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "Шлюз ответил «method not found» (-32601) на {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Для этого соединения ещё не открыт сокет сессии Hermes. Состояние контекста появится здесь, когда он откроется.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "В этом Hermes нет встроенного асинхронного пользовательского ввода (hermes-agent #103136 не влит), поэтому на вопрос можно ответить, только если он придёт в живом потоке.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Ещё не проверено.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Чат на этом соединении работает через REST API. Вставленные изображения прикрепляются к живой сессии, когда чат работает через WebSocket панели, как в сессии режима бота или именованного профиля.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Чат на этом соединении работает через REST API, и сокет сессии Hermes не открыт, поэтому вставленные изображения идут через загрузку панели или остаются встроенными.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Это соединение достаёт только до REST API, который не объявляет маршрут сжатия. Для сжатия нужен WebSocket панели с полномочиями сеанса.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Прикрепленная вкладка",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "У этого соединения нет сокета сессии Hermes, поэтому разбивку по категориям прочитать нельзя.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes не держит эту сессию на своём сокете сессии, поэтому не смог измерить категории.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes пока не сообщил разбивку по категориям для этой сессии.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Войдите с учётной записью Hermes в «Настройки» > «Подключения», чтобы увидеть разбивку этой сессии по категориям.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Следовать за активной вкладкой",

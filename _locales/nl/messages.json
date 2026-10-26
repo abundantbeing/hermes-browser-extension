@@ -1443,6 +1443,10 @@
     "message": "De verbinding is gesloten. Laatst bevestigd {age}. Getoond, niet gebruikt om iets uit te voeren.",
     "description": "Runtime interface message capability.reason.connection_closed"
   },
+  "runtime_capability_reason_context_socket": {
+    "message": "Gelezen via de Hermes-sessieverbinding: sessiegebruik en de verdeling per categorie, via de opgeslagen id van de sessie.",
+    "description": "Runtime interface message capability.reason.context_socket"
+  },
   "runtime_capability_reason_dashboard_route": {
     "message": "Wordt aangeboden door het Hermes-dashboard op deze computer, dat de aanmelding heeft geaccepteerd die dit paneel bewaart. De gateway-API adverteert deze route niet.",
     "description": "Runtime interface message capability.reason.dashboard_route"
@@ -1454,6 +1458,10 @@
   "runtime_capability_reason_identity_changed": {
     "message": "De verbinding, het account of het profiel is gewijzigd. Nog niet opnieuw gecontroleerd.",
     "description": "Runtime interface message capability.reason.identity_changed"
+  },
+  "runtime_capability_reason_image_via_socket": {
+    "message": "Geplakte afbeeldingen worden klaargezet via de Hermes-sessieverbinding (image.attach_bytes) en de chat leest ze via het pad.",
+    "description": "Runtime interface message capability.reason.image_via_socket"
   },
   "runtime_capability_reason_legacy_assumed": {
     "message": "Aangenomen omdat /health met een token antwoordde. /v1/capabilities was niet beschikbaar, dus dit is niet bevestigd.",
@@ -1470,6 +1478,14 @@
   "runtime_capability_reason_method_not_found": {
     "message": "De gateway antwoordde «method not found» (-32601) voor {method}.",
     "description": "Runtime interface message capability.reason.method_not_found"
+  },
+  "runtime_capability_reason_no_context_socket": {
+    "message": "Voor deze verbinding is nog geen Hermes-sessieverbinding geopend. De contextstatus wordt hier gelezen zodra er een open is.",
+    "description": "Runtime interface message capability.reason.no_context_socket"
+  },
+  "runtime_capability_reason_no_native_user_input": {
+    "message": "Deze Hermes heeft geen native asynchrone gebruikersinvoer (hermes-agent #103136 is niet samengevoegd), dus een vraag kan alleen worden beantwoord als die in de livestream binnenkomt.",
+    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Nog niet gecontroleerd.",
@@ -1506,6 +1522,10 @@
   "runtime_capability_reason_rest_chat": {
     "message": "Chat op deze verbinding loopt via de REST-API. Geplakte afbeeldingen worden aan een live sessie gekoppeld wanneer de chat via de dashboard-WebSocket loopt, zoals bij een Botmodus- of benoemde-profielsessie.",
     "description": "Runtime interface message capability.reason.rest_chat"
+  },
+  "runtime_capability_reason_rest_chat_no_socket": {
+    "message": "Chat op deze verbinding loopt via de REST-API en er is geen Hermes-sessieverbinding geopend, dus geplakte afbeeldingen gebruiken de dashboard-upload of blijven inline.",
+    "description": "Runtime interface message capability.reason.rest_chat_no_socket"
   },
   "runtime_capability_reason_rest_no_compress": {
     "message": "Deze verbinding bereikt alleen de REST-API, die geen compressieroute aankondigt. Comprimeren heeft de dashboard-WebSocket met sessie-autoriteit nodig.",
@@ -1882,6 +1902,22 @@
   "runtime_context_attached_tab": {
     "message": "Bijgevoegd tabblad",
     "description": "Runtime interface message context.attached_tab"
+  },
+  "runtime_context_card_no_socket": {
+    "message": "Deze verbinding heeft geen Hermes-sessieverbinding, dus de verdeling per categorie kan niet worden gelezen.",
+    "description": "Runtime interface message context.card.no_socket"
+  },
+  "runtime_context_card_not_held": {
+    "message": "Hermes heeft deze sessie niet op zijn sessieverbinding en kon de categorieën daarom niet meten.",
+    "description": "Runtime interface message context.card.not_held"
+  },
+  "runtime_context_card_not_reported": {
+    "message": "Hermes heeft nog geen verdeling per categorie voor deze sessie gemeld.",
+    "description": "Runtime interface message context.card.not_reported"
+  },
+  "runtime_context_card_sign_in": {
+    "message": "Meld je aan met je Hermes-account via Instellingen > Verbindingen om de verdeling per categorie van deze sessie te lezen.",
+    "description": "Runtime interface message context.card.sign_in"
   },
   "runtime_context_follow_active_tab": {
     "message": "Volg het actieve tabblad",
