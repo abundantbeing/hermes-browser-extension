@@ -1,0 +1,264 @@
+/* "Opening Hermes Web": the moment between the button and the Webapp. It follows the pairing approval page: the
+   Hermes figure stands in the middle, HERMES is set huge behind him in the display face, and the headline is
+   compressed caps. Colour comes from the panel theme tokens (loaded from sidepanel.css and sidepanel-themes.css),
+   so every theme and both modes work; the figure is a mask in the theme foreground ink. */
+
+html,
+body.opening-page {
+  min-height: 100%;
+  margin: 0;
+}
+
+body.opening-page {
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--hermes-app-bg);
+  color: var(--hermes-fg);
+}
+
+.opening {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px 16px 40px;
+  overflow: hidden;
+}
+
+/* A soft light behind the figure, so the page is not a flat field. */
+.opening::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 62% 46% at 50% 38%, rgba(var(--hermes-accent-rgb), 0.2), transparent 72%),
+    linear-gradient(180deg, transparent 55%, rgba(var(--hermes-fg-rgb), 0.05));
+  pointer-events: none;
+}
+
+.opening-wordmark {
+  display: block;
+  width: min(168px, 46vw);
+  height: auto;
+  overflow: visible;
+  color: var(--hermes-fg);
+  fill: currentColor;
+}
+
+.opening-art {
+  position: relative;
+  z-index: -1;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 0;
+  margin: 8px 0 0;
+  pointer-events: none;
+}
+
+/* HERMES, huge and quiet, behind the figure. It is the brand name, so it is not translated. */
+.opening-word {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  white-space: nowrap;
+  font-family: var(--hermes-font-display);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: min(520px, 54vw);
+  line-height: 0.78;
+  color: rgba(var(--hermes-fg-rgb), 0.1);
+  user-select: none;
+}
+
+.opening-word::before {
+  content: attr(data-word);
+}
+
+.opening-figure {
+  display: block;
+  position: relative;
+  height: clamp(170px, 36vh, 380px);
+  aspect-ratio: 685 / 941;
+  max-width: 78vw;
+  background-color: var(--hermes-fg);
+  -webkit-mask: url("assets/img/hermes-browser-web-horizon-ink.png") center / contain no-repeat;
+  mask: url("assets/img/hermes-browser-web-horizon-ink.png") center / contain no-repeat;
+  opacity: 0.94;
+  animation: opening-float 6s ease-in-out infinite;
+}
+
+.opening-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(560px, 100%);
+  text-align: center;
+}
+
+.opening-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 0 0 12px;
+  font-family: var(--hermes-font-mono);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  letter-spacing: 0.26em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.opening-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--control-on, #3ddc84);
+  animation: opening-pulse 1.6s ease-in-out infinite;
+}
+
+.opening-title {
+  margin: 0 0 14px;
+  font-family: var(--hermes-font-display);
+  font-weight: 500;
+  font-size: calc(clamp(44px, 10vw, 88px) * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
+  line-height: 0.92;
+  text-transform: uppercase;
+  color: var(--hermes-fg);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.opening-detail,
+.opening-slow p {
+  max-width: 44ch;
+  margin: 0 0 20px;
+  font-family: var(--hermes-font-ui);
+  font-size: calc(15px * var(--hermes-text-zoom, 1));
+  line-height: 1.55;
+  color: var(--hermes-fg);
+  opacity: 0.86;
+  text-wrap: pretty;
+}
+
+.opening-bar {
+  position: relative;
+  width: min(280px, 72vw);
+  height: 3px;
+  overflow: hidden;
+  background: rgba(var(--hermes-fg-rgb), 0.2);
+}
+
+.opening-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  background: var(--hermes-fg);
+  animation: opening-slide 1.5s ease-in-out infinite;
+}
+
+.opening-slow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.opening-slow[hidden] {
+  display: none;
+}
+
+/* Once the wait has run long the bar has nothing more to say. */
+.opening.is-slow .opening-bar {
+  display: none;
+}
+
+.opening-show {
+  max-width: 100%;
+  padding: 12px 30px 11px;
+  border: 2px solid var(--hermes-primary-border);
+  border-radius: 0;
+  background: var(--hermes-primary-bg);
+  color: var(--hermes-primary-fg);
+  font-family: var(--hermes-font-display);
+  font-size: calc(21px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.opening-show:hover {
+  filter: brightness(1.1);
+}
+
+.opening-show:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.opening-show:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+@keyframes opening-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes opening-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes opening-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(263%);
+  }
+}
+
+@media (max-height: 520px) {
+  .opening-figure {
+    height: clamp(110px, 30vh, 200px);
+  }
+  .opening-title {
+    margin-bottom: 8px;
+  }
+}
+
+/* Reduced motion: nothing moves. The bar shows as a steady line, so the page still reads as working. */
+@media (prefers-reduced-motion: reduce) {
+  .opening-figure,
+  .opening-dot,
+  .opening-bar > span {
+    animation: none;
+  }
+  .opening-bar > span {
+    width: 100%;
+    opacity: 0.55;
+  }
+}

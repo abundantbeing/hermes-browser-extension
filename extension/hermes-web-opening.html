@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="webapp.opening_title">Opening Hermes Web</title>
+    <link rel="icon" href="assets/icons/icon-32.png" />
+    <link rel="stylesheet" href="sidepanel.css" />
+    <link rel="stylesheet" href="sidepanel-themes.css" />
+    <link rel="stylesheet" href="lib/fonts.css" />
+    <link rel="stylesheet" href="hermes-web-opening.css" />
+  </head>
+  <body class="opening-page" data-hermes-theme="nous" data-hermes-mode="dark" data-hermes-color-mode="dark">
+    <main id="openingMain" class="opening" aria-labelledby="openingTitle" aria-busy="true">
+      <svg class="opening-wordmark" viewBox="0 0 2918.77 1206.98" role="img" aria-label="Hermes Browser" data-i18n-aria-label="ui.hermes.browser">
+        <use href="assets/img/hermes-browser-logo-left.svg#Layer_1"></use>
+      </svg>
+      <div class="opening-art" aria-hidden="true">
+        <span class="opening-word" data-word="Hermes"></span>
+        <span class="opening-figure"></span>
+      </div>
+      <section class="opening-copy">
+        <p class="opening-status"><span class="opening-dot" aria-hidden="true"></span><span data-i18n="ui.hermes.browser.extension">HERMES BROWSER EXTENSION</span></p>
+        <h1 id="openingTitle" class="opening-title" data-i18n="webapp.opening_title">Opening Hermes Web</h1>
+        <p id="openingDetail" class="opening-detail" role="status" data-i18n="webapp.opening_detail">Signing you in to your Hermes Webapp. This takes a few seconds.</p>
+        <div class="opening-bar" aria-hidden="true"><span></span></div>
+        <div id="openingSlow" class="opening-slow" role="status" hidden>
+          <p data-i18n="webapp.opening_slow">Hermes Web is taking longer than usual to load. It may still be starting.</p>
+          <button id="openingShowButton" class="opening-show" type="button" data-i18n="webapp.opening_show">Show it anyway</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="hermes-web-opening.js"></script>
+  </body>
+</html>
