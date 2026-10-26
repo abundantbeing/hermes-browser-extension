@@ -17821,6 +17821,9 @@ function projectsConnectionSnapshot() {
     dashboardWs: Boolean(client) || remote,
     request: client ? (method, params) => client.request(method, params) : null,
     getReadyPayload: () => (client?.readyState === 1 ? client.readyPayload || null : null),
+    // A session authority lists host folders for a live session only (complete.path), so the folder picker hands it
+    // the one this panel is viewing; a legacy dashboard socket ignores it.
+    getSessionId: () => connection?.wsSessionId || settings.sessionId || '',
     connectError: projectsConnectError,
     blockedReason: projectsBlockedReason,
   };
@@ -17906,7 +17909,7 @@ function openProjectSessionFromDrawer(row) {
   });
 }
 
-async function createSessionInProjectFolder({ cwd, projectName }) {
+async function createSessionInProjectFolder({ cwd, projectName, idea = '' }) {
   await persistBrowserIntroSeen();
   // Creating forces the dashboard transport and drops the live attach before the gateway has
   // agreed. If it refuses, the panel is still viewing the same session, so put back the transport
@@ -17935,7 +17938,17 @@ async function createSessionInProjectFolder({ cwd, projectName }) {
   }
   els.sessionMenu.hidden = true;
   els.sessionMenuButton.setAttribute('aria-expanded', 'false');
-  showOperationToast({ title: t('projects.new_session.started', { name: projectName }), detail: cwd });
+  const ideaText = String(idea || '').trim();
+  if (ideaText) {
+    // The idea written in Create project: the gateway has no file-write call this panel can reach, so the message that
+    // saves it as IDEA.md waits in the composer for the person to send.
+    els.input.value = t('projects.idea.prompt', { idea: ideaText });
+    els.input.dispatchEvent(new Event('input', { bubbles: true }));
+    els.input.focus();
+    showOperationToast({ title: t('projects.idea.started', { name: projectName }), detail: cwd });
+  } else {
+    showOperationToast({ title: t('projects.new_session.started', { name: projectName }), detail: cwd });
+  }
   void loadSessions({ quiet: true });
 }
 
