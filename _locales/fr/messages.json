@@ -2735,6 +2735,14 @@
     "message": "Annuler",
     "description": "Runtime interface message projects.cancel"
   },
+  "runtime_projects_create_add_folder": {
+    "message": "Ajouter un dossier",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "Ajouter",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
   "runtime_projects_create_creating": {
     "message": "Création…",
     "description": "Runtime interface message projects.create.creating"
@@ -2742,6 +2750,10 @@
   "runtime_projects_create_done": {
     "message": "Projet {name} créé.",
     "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "Projet {name} créé. Votre idée est prête à être enregistrée dans IDEA.md.",
+    "description": "Runtime interface message projects.create.done_idea"
   },
   "runtime_projects_create_error_name_required": {
     "message": "Saisissez un nom de projet.",
@@ -2759,21 +2771,61 @@
     "message": "Saisissez le dossier du projet sur l'hôte de la passerelle.",
     "description": "Runtime interface message projects.create.error.path_required"
   },
+  "runtime_projects_create_folders": {
+    "message": "Dossiers",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "Idée (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "Impossible de générer une idée. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "Générer une idée",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "Génération…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "Facultatif. Une fois le projet créé, une session s’ouvre dans son premier dossier avec ce texte prêt, pour que Hermes l’enregistre dans IDEA.md.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "De quoi parle ce projet ? Un résumé en une ligne et quelques objectifs.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
   "runtime_projects_create_name": {
     "message": "Nom du projet",
     "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "Aucun dossier pour l’instant. Ajoutez le dossier dans lequel ce projet travaille.",
+    "description": "Runtime interface message projects.create.no_folders"
   },
   "runtime_projects_create_path": {
     "message": "Dossier sur l'hôte de la passerelle",
     "description": "Runtime interface message projects.create.path"
   },
   "runtime_projects_create_path_hint": {
-    "message": "Ce chemin se trouve sur la machine qui fait tourner Hermes ({host}), pas sur cet ordinateur. Un navigateur ne peut pas ouvrir le sélecteur de dossier de cette machine : saisissez le chemin.",
+    "message": "Ce chemin se trouve sur la machine qui exécute Hermes ({host}), pas sur cet ordinateur. Parcourez-le ou saisissez le chemin.",
     "description": "Runtime interface message projects.create.path_hint"
   },
   "runtime_projects_create_path_placeholder": {
     "message": "/home/you/code/my-project",
     "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "principal",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "Retirer {folder}",
+    "description": "Runtime interface message projects.create.remove_folder"
   },
   "runtime_projects_create_submit": {
     "message": "Créer le projet",
@@ -2858,6 +2910,30 @@
   "runtime_projects_group_projects": {
     "message": "Projets",
     "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "Ne pas enregistrer",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "Ouvrez une session dans {folder} avec votre idée prête. Envoyez-la et Hermes écrira IDEA.md à cet endroit.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "Votre idée n’est pas encore enregistrée",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "Crée un fichier nommé IDEA.md dans le dossier actuel avec exactement le texte ci-dessous, sans rien modifier d’autre.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "Enregistrer dans IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "Session ouverte dans {name}. Envoyez le message pour enregistrer IDEA.md.",
+    "description": "Runtime interface message projects.idea.started"
   },
   "runtime_projects_loading": {
     "message": "Chargement des projets…",
@@ -3042,6 +3118,78 @@
   "runtime_projects_no_match": {
     "message": "Aucun projet ne correspond à votre recherche.",
     "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "Parcourir les dossiers…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "Choisir ce dossier",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "Dossier :",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "Dossier par défaut",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "Aucun dossier ici.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "Impossible de lire ce dossier. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "Filtrer les dossiers",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "Aller",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "Dossiers de la machine qui exécute Hermes ({host}), pas de cet ordinateur.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "Accueil",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "Lecture des dossiers…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "Chemin du dossier",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "Partir de",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "Choisir un dossier",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "Affichage des {count} premiers dossiers. Saisissez dans le filtre pour trouver les autres.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "Ou saisissez un chemin",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "Cette passerelle ne peut pas lister ses dossiers pour le moment. Saisissez plutôt le chemin du dossier ci-dessous.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "Remonter d’un niveau",
+    "description": "Runtime interface message projects.picker.up"
   },
   "runtime_projects_reason_code": {
     "message": "Raison : {reason}",

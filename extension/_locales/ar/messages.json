@@ -2735,6 +2735,14 @@
     "message": "إلغاء",
     "description": "Runtime interface message projects.cancel"
   },
+  "runtime_projects_create_add_folder": {
+    "message": "إضافة مجلد",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "إضافة",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
   "runtime_projects_create_creating": {
     "message": "جارٍ الإنشاء…",
     "description": "Runtime interface message projects.create.creating"
@@ -2742,6 +2750,10 @@
   "runtime_projects_create_done": {
     "message": "تم إنشاء المشروع {name}.",
     "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "تم إنشاء المشروع {name}. فكرتك جاهزة للحفظ في IDEA.md.",
+    "description": "Runtime interface message projects.create.done_idea"
   },
   "runtime_projects_create_error_name_required": {
     "message": "أدخل اسم المشروع.",
@@ -2759,21 +2771,61 @@
     "message": "أدخل مجلد المشروع على مضيف البوابة.",
     "description": "Runtime interface message projects.create.error.path_required"
   },
+  "runtime_projects_create_folders": {
+    "message": "المجلدات",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "الفكرة (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "تعذّر توليد فكرة. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "توليد فكرة",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "جارٍ التوليد…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "اختياري. بعد إنشاء المشروع تُفتح جلسة في أول مجلد له والنص جاهز ليحفظه Hermes في IDEA.md.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "ما موضوع هذا المشروع؟ ملخص من سطر واحد وبضعة أهداف.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
   "runtime_projects_create_name": {
     "message": "اسم المشروع",
     "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "لا توجد مجلدات بعد. أضف المجلد الذي يعمل فيه هذا المشروع.",
+    "description": "Runtime interface message projects.create.no_folders"
   },
   "runtime_projects_create_path": {
     "message": "المجلد على مضيف البوابة",
     "description": "Runtime interface message projects.create.path"
   },
   "runtime_projects_create_path_hint": {
-    "message": "هذا المسار موجود على الجهاز الذي يشغّل Hermes ({host}) وليس على هذا الحاسوب. لا يستطيع المتصفح فتح منتقي المجلدات على ذلك الجهاز، لذا اكتب المسار.",
+    "message": "هذا المسار على الجهاز الذي يشغّل Hermes ({host}) وليس على هذا الكمبيوتر. تصفّح للوصول إليه أو اكتب المسار.",
     "description": "Runtime interface message projects.create.path_hint"
   },
   "runtime_projects_create_path_placeholder": {
     "message": "/home/you/code/my-project",
     "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "أساسي",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "إزالة {folder}",
+    "description": "Runtime interface message projects.create.remove_folder"
   },
   "runtime_projects_create_submit": {
     "message": "إنشاء المشروع",
@@ -2858,6 +2910,30 @@
   "runtime_projects_group_projects": {
     "message": "المشاريع",
     "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "عدم الحفظ",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "افتح جلسة في {folder} وفكرتك جاهزة. أرسلها ليكتب Hermes الملف IDEA.md هناك.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "فكرتك لم تُحفظ بعد",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "أنشئ ملفًا باسم IDEA.md في المجلد الحالي بالنص التالي تمامًا، ولا تغيّر أي شيء آخر.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "حفظ في IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "فُتحت جلسة في {name}. أرسل الرسالة لحفظ IDEA.md.",
+    "description": "Runtime interface message projects.idea.started"
   },
   "runtime_projects_loading": {
     "message": "جارٍ تحميل المشاريع…",
@@ -3042,6 +3118,78 @@
   "runtime_projects_no_match": {
     "message": "لا توجد مشاريع تطابق بحثك.",
     "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "تصفح المجلدات…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "اختيار هذا المجلد",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "المجلد:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "المجلد الافتراضي",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "لا توجد مجلدات هنا.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "تعذّرت قراءة هذا المجلد. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "تصفية المجلدات",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "انتقال",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "المجلدات على الجهاز الذي يشغّل Hermes ({host}) وليس على هذا الكمبيوتر.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "الرئيسي",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "جارٍ قراءة المجلدات…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "مسار المجلد",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "ابدأ من",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "اختيار مجلد",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "عرض أول {count} مجلدًا. اكتب في المرشح للعثور على الباقي.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "أو اكتب مسارًا",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "لا يستطيع هذا البوابة سرد مجلداتها الآن. اكتب مسار المجلد في الأسفل بدلًا من ذلك.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "مستوى واحد للأعلى",
+    "description": "Runtime interface message projects.picker.up"
   },
   "runtime_projects_reason_code": {
     "message": "السبب: {reason}",

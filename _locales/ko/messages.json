@@ -2735,6 +2735,14 @@
     "message": "취소",
     "description": "Runtime interface message projects.cancel"
   },
+  "runtime_projects_create_add_folder": {
+    "message": "폴더 추가",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "추가",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
   "runtime_projects_create_creating": {
     "message": "만드는 중…",
     "description": "Runtime interface message projects.create.creating"
@@ -2742,6 +2750,10 @@
   "runtime_projects_create_done": {
     "message": "프로젝트 {name}을(를) 만들었습니다.",
     "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "프로젝트 {name}을(를) 만들었습니다. 아이디어를 IDEA.md로 저장할 준비가 되었습니다.",
+    "description": "Runtime interface message projects.create.done_idea"
   },
   "runtime_projects_create_error_name_required": {
     "message": "프로젝트 이름을 입력하세요.",
@@ -2759,21 +2771,61 @@
     "message": "게이트웨이 호스트에 있는 프로젝트 폴더를 입력하세요.",
     "description": "Runtime interface message projects.create.error.path_required"
   },
+  "runtime_projects_create_folders": {
+    "message": "폴더",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "아이디어(IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "아이디어를 생성하지 못했습니다. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "아이디어 생성",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "생성 중…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "선택 사항입니다. 프로젝트가 만들어지면 첫 번째 폴더에서 세션이 열리고 이 텍스트가 준비되어, Hermes가 IDEA.md로 저장할 수 있습니다.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "이 프로젝트는 무엇에 관한 것인가요? 한 줄 요약과 몇 가지 목표를 적어 보세요.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
   "runtime_projects_create_name": {
     "message": "프로젝트 이름",
     "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "아직 폴더가 없습니다. 이 프로젝트가 작업하는 폴더를 추가하세요.",
+    "description": "Runtime interface message projects.create.no_folders"
   },
   "runtime_projects_create_path": {
     "message": "게이트웨이 호스트의 폴더",
     "description": "Runtime interface message projects.create.path"
   },
   "runtime_projects_create_path_hint": {
-    "message": "이 경로는 이 컴퓨터가 아니라 Hermes가 실행 중인 컴퓨터({host})에 있습니다. 브라우저는 그 컴퓨터의 폴더 선택기를 열 수 없으므로 경로를 직접 입력하세요.",
+    "message": "이 경로는 Hermes가 실행 중인 컴퓨터({host})에 있으며 이 컴퓨터에 있지 않습니다. 찾아보거나 경로를 입력하세요.",
     "description": "Runtime interface message projects.create.path_hint"
   },
   "runtime_projects_create_path_placeholder": {
     "message": "/home/you/code/my-project",
     "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "기본",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "{folder} 제거",
+    "description": "Runtime interface message projects.create.remove_folder"
   },
   "runtime_projects_create_submit": {
     "message": "프로젝트 만들기",
@@ -2858,6 +2910,30 @@
   "runtime_projects_group_projects": {
     "message": "프로젝트",
     "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "저장 안 함",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "아이디어가 준비된 상태로 {folder}에서 세션을 엽니다. 보내면 Hermes가 그곳에 IDEA.md를 작성합니다.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "아이디어가 아직 저장되지 않았습니다",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "현재 폴더에 IDEA.md라는 파일을 만들고, 내용은 아래 텍스트 그대로 하세요. 그 외에는 아무것도 바꾸지 마세요.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "IDEA.md로 저장",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "{name}에서 세션을 열었습니다. 메시지를 보내면 IDEA.md가 저장됩니다.",
+    "description": "Runtime interface message projects.idea.started"
   },
   "runtime_projects_loading": {
     "message": "프로젝트를 불러오는 중…",
@@ -3042,6 +3118,78 @@
   "runtime_projects_no_match": {
     "message": "검색과 일치하는 프로젝트가 없습니다.",
     "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "폴더 찾아보기…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "이 폴더 선택",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "폴더:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "기본 폴더",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "여기에는 폴더가 없습니다.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "이 폴더를 읽지 못했습니다. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "폴더 필터",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "이동",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "Hermes가 실행 중인 컴퓨터({host})의 폴더이며, 이 컴퓨터의 폴더가 아닙니다.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "홈",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "폴더를 읽는 중…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "폴더 경로",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "시작 위치",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "폴더 선택",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "처음 {count}개의 폴더를 표시합니다. 나머지는 필터에 입력해 찾으세요.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "또는 경로 입력",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "이 게이트웨이는 지금 폴더 목록을 보여줄 수 없습니다. 대신 아래에 폴더 경로를 입력하세요.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "한 단계 위로",
+    "description": "Runtime interface message projects.picker.up"
   },
   "runtime_projects_reason_code": {
     "message": "이유: {reason}",

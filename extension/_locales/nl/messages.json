@@ -2735,6 +2735,14 @@
     "message": "Annuleren",
     "description": "Runtime interface message projects.cancel"
   },
+  "runtime_projects_create_add_folder": {
+    "message": "Map toevoegen",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "Toevoegen",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
   "runtime_projects_create_creating": {
     "message": "Maken…",
     "description": "Runtime interface message projects.create.creating"
@@ -2742,6 +2750,10 @@
   "runtime_projects_create_done": {
     "message": "Project {name} gemaakt.",
     "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "Project {name} gemaakt. Je idee is klaar om als IDEA.md te worden opgeslagen.",
+    "description": "Runtime interface message projects.create.done_idea"
   },
   "runtime_projects_create_error_name_required": {
     "message": "Voer een projectnaam in.",
@@ -2759,21 +2771,61 @@
     "message": "Voer de map van het project op de gateway-host in.",
     "description": "Runtime interface message projects.create.error.path_required"
   },
+  "runtime_projects_create_folders": {
+    "message": "Mappen",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "Idee (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "Kon geen idee genereren. {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "Idee genereren",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "Genereren…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "Optioneel. Nadat het project is gemaakt, opent een sessie in de eerste map met deze tekst klaar, zodat Hermes hem als IDEA.md opslaat.",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "Waar gaat dit project over? Een samenvatting van één regel en een paar doelen.",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
   "runtime_projects_create_name": {
     "message": "Projectnaam",
     "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "Nog geen mappen. Voeg de map toe waarin dit project werkt.",
+    "description": "Runtime interface message projects.create.no_folders"
   },
   "runtime_projects_create_path": {
     "message": "Map op de gateway-host",
     "description": "Runtime interface message projects.create.path"
   },
   "runtime_projects_create_path_hint": {
-    "message": "Dit pad staat op de machine waarop Hermes draait ({host}), niet op deze computer. Een browser kan de mapkiezer van die machine niet openen, dus typ het pad.",
+    "message": "Dit pad staat op de machine waarop Hermes draait ({host}), niet op deze computer. Blader ernaartoe of typ het pad.",
     "description": "Runtime interface message projects.create.path_hint"
   },
   "runtime_projects_create_path_placeholder": {
     "message": "/home/you/code/my-project",
     "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "primair",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "{folder} verwijderen",
+    "description": "Runtime interface message projects.create.remove_folder"
   },
   "runtime_projects_create_submit": {
     "message": "Project maken",
@@ -2858,6 +2910,30 @@
   "runtime_projects_group_projects": {
     "message": "Projecten",
     "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "Niet opslaan",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "Open een sessie in {folder} met je idee klaar. Verstuur het en Hermes schrijft daar IDEA.md.",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "Je idee is nog niet opgeslagen",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "Maak in de huidige map een bestand met de naam IDEA.md met precies de onderstaande tekst en wijzig verder niets.\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "Opslaan als IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "Sessie geopend in {name}. Verstuur het bericht om IDEA.md op te slaan.",
+    "description": "Runtime interface message projects.idea.started"
   },
   "runtime_projects_loading": {
     "message": "Projecten laden…",
@@ -3042,6 +3118,78 @@
   "runtime_projects_no_match": {
     "message": "Geen projecten gevonden voor je zoekopdracht.",
     "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "Mappen doorbladeren…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "Deze map kiezen",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "Map:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "Standaardmap",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "Geen mappen hier.",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "Kon deze map niet lezen. {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "Mappen filteren",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "Ga",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "Mappen op de machine waarop Hermes draait ({host}), niet op deze computer.",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "Start",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "Mappen lezen…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "Mappad",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "Beginnen bij",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "Kies een map",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "De eerste {count} mappen worden getoond. Typ in het filter om de rest te vinden.",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "Of typ een pad",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "Deze gateway kan zijn mappen nu niet tonen. Typ hieronder in plaats daarvan het pad van de map.",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "Eén niveau omhoog",
+    "description": "Runtime interface message projects.picker.up"
   },
   "runtime_projects_reason_code": {
     "message": "Reden: {reason}",

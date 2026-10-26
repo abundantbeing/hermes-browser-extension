@@ -2735,6 +2735,14 @@
     "message": "रद्द करें",
     "description": "Runtime interface message projects.cancel"
   },
+  "runtime_projects_create_add_folder": {
+    "message": "फ़ोल्डर जोड़ें",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "जोड़ें",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
   "runtime_projects_create_creating": {
     "message": "बनाया जा रहा है…",
     "description": "Runtime interface message projects.create.creating"
@@ -2742,6 +2750,10 @@
   "runtime_projects_create_done": {
     "message": "प्रोजेक्ट {name} बन गया।",
     "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "प्रोजेक्ट {name} बन गया। आपका आइडिया IDEA.md के रूप में सहेजने के लिए तैयार है।",
+    "description": "Runtime interface message projects.create.done_idea"
   },
   "runtime_projects_create_error_name_required": {
     "message": "प्रोजेक्ट का नाम दर्ज करें।",
@@ -2759,21 +2771,61 @@
     "message": "गेटवे होस्ट पर प्रोजेक्ट का फ़ोल्डर दर्ज करें।",
     "description": "Runtime interface message projects.create.error.path_required"
   },
+  "runtime_projects_create_folders": {
+    "message": "फ़ोल्डर",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "आइडिया (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "आइडिया नहीं बन सका। {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "आइडिया बनाएँ",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "बनाया जा रहा है…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "वैकल्पिक। प्रोजेक्ट बनने के बाद उसके पहले फ़ोल्डर में एक सत्र खुलता है, जिसमें यह टेक्स्ट तैयार रहता है ताकि Hermes इसे IDEA.md में सहेज सके।",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "यह प्रोजेक्ट किस बारे में है? एक पंक्ति का सार और कुछ लक्ष्य।",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
   "runtime_projects_create_name": {
     "message": "प्रोजेक्ट का नाम",
     "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "अभी कोई फ़ोल्डर नहीं है। वह फ़ोल्डर जोड़ें जिसमें यह प्रोजेक्ट काम करता है।",
+    "description": "Runtime interface message projects.create.no_folders"
   },
   "runtime_projects_create_path": {
     "message": "गेटवे होस्ट पर फ़ोल्डर",
     "description": "Runtime interface message projects.create.path"
   },
   "runtime_projects_create_path_hint": {
-    "message": "यह पाथ उस मशीन पर है जिस पर Hermes चल रहा है ({host}), इस कंप्यूटर पर नहीं। ब्राउज़र उस मशीन का फ़ोल्डर चयनकर्ता नहीं खोल सकता, इसलिए पाथ टाइप करें।",
+    "message": "यह पथ उस मशीन पर है जिस पर Hermes चल रहा है ({host}), इस कंप्यूटर पर नहीं। इसे ब्राउज़ करें या पथ लिखें।",
     "description": "Runtime interface message projects.create.path_hint"
   },
   "runtime_projects_create_path_placeholder": {
     "message": "/home/you/code/my-project",
     "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "मुख्य",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "{folder} हटाएँ",
+    "description": "Runtime interface message projects.create.remove_folder"
   },
   "runtime_projects_create_submit": {
     "message": "प्रोजेक्ट बनाएँ",
@@ -2858,6 +2910,30 @@
   "runtime_projects_group_projects": {
     "message": "प्रोजेक्ट",
     "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "न सहेजें",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "अपने आइडिया के साथ {folder} में एक सत्र खोलें। उसे भेजें और Hermes वहाँ IDEA.md लिख देगा।",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "आपका आइडिया अभी सहेजा नहीं गया है",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "वर्तमान फ़ोल्डर में IDEA.md नाम की फ़ाइल बनाएँ जिसमें ठीक नीचे दिया टेक्स्ट हो, और कुछ और न बदलें।\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "IDEA.md के रूप में सहेजें",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "{name} में सत्र खुल गया। IDEA.md सहेजने के लिए संदेश भेजें।",
+    "description": "Runtime interface message projects.idea.started"
   },
   "runtime_projects_loading": {
     "message": "प्रोजेक्ट लोड हो रहे हैं…",
@@ -3042,6 +3118,78 @@
   "runtime_projects_no_match": {
     "message": "आपकी खोज से कोई प्रोजेक्ट मेल नहीं खाता।",
     "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "फ़ोल्डर ब्राउज़ करें…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "यह फ़ोल्डर चुनें",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "फ़ोल्डर:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "डिफ़ॉल्ट फ़ोल्डर",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "यहाँ कोई फ़ोल्डर नहीं है।",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "यह फ़ोल्डर पढ़ा नहीं जा सका। {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "फ़ोल्डर फ़िल्टर करें",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "जाएँ",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "उस मशीन के फ़ोल्डर जिस पर Hermes चल रहा है ({host}), इस कंप्यूटर के नहीं।",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "होम",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "फ़ोल्डर पढ़े जा रहे हैं…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "फ़ोल्डर पथ",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "यहाँ से शुरू करें",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "फ़ोल्डर चुनें",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "पहले {count} फ़ोल्डर दिखाए जा रहे हैं। बाकी खोजने के लिए फ़िल्टर में लिखें।",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "या पथ लिखें",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "यह गेटवे अभी अपने फ़ोल्डर सूचीबद्ध नहीं कर सकता। इसके बजाय नीचे फ़ोल्डर का पथ लिखें।",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "एक स्तर ऊपर",
+    "description": "Runtime interface message projects.picker.up"
   },
   "runtime_projects_reason_code": {
     "message": "कारण: {reason}",

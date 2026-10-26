@@ -11787,6 +11787,88 @@ html[dir="rtl"] .projects-back-arrow { transform: scaleX(-1); }
 .projects-choice-badge { justify-self: start; padding: 0 6px; border: 1px solid rgba(var(--hermes-fg-rgb), 0.28); font-size: calc(9px * var(--hermes-text-zoom, 1)); letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--hermes-fg-rgb), 0.74); }
 .projects-choice.is-current { opacity: 0.85; }
 
+/* Create form: folders, typed path, idea. */
+.projects-folders { gap: 6px; }
+.projects-folder-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.projects-folder-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 4px 4px 8px;
+  border: 1px solid rgba(var(--hermes-fg-rgb), 0.16);
+  background: rgba(var(--hermes-fg-rgb), 0.03);
+}
+.projects-folder-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: calc(10.5px * var(--hermes-text-zoom, 1)) var(--hermes-font-mono);
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
+.projects-folder-item .projects-choice-badge { flex: 0 0 auto; }
+.session-menu .projects-folder-remove { flex: 0 0 auto; min-width: 24px; padding: 0 6px; }
+.projects-typed-path { display: grid; gap: 3px; min-width: 0; }
+.projects-typed-path-row { display: flex; gap: 6px; align-items: stretch; min-width: 0; }
+.projects-typed-path-row .projects-input { flex: 1 1 auto; min-width: 0; }
+.projects-typed-path-row .session-action-button { flex: 0 0 auto; }
+.session-menu .projects-idea { min-height: 84px; padding: 6px 8px; line-height: 1.4; resize: vertical; }
+
+/* Folder picker over the create form and the move view. */
+.projects-picker-roots,
+.projects-crumbs { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 10px 0; min-width: 0; }
+.projects-picker-hint { margin: 4px 10px 0; }
+.projects-picker-root.is-current { border-color: var(--hermes-accent); }
+.projects-crumb {
+  max-width: 100%;
+  min-height: 22px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(var(--hermes-fg-rgb), 0.78);
+  font: calc(10.5px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  direction: ltr;
+}
+.projects-crumb + .projects-crumb::before { content: "/"; margin-inline-end: 6px; opacity: 0.5; }
+.projects-crumb:hover,
+.projects-crumb:focus-visible { border-color: rgba(var(--hermes-fg-rgb), 0.3); color: var(--hermes-fg); }
+.projects-crumb:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: 1px; }
+.projects-crumb[aria-current="location"] { color: var(--hermes-fg); font-weight: 650; }
+.projects-picker-filter { margin: 6px 10px 0; }
+.projects-picker-list { display: grid; gap: 0; margin: 6px 10px 0; padding: 0; list-style: none; border: 1px solid rgba(var(--hermes-fg-rgb), 0.16); min-width: 0; }
+.projects-picker-list li + li { border-top: 1px solid rgba(var(--hermes-fg-rgb), 0.08); }
+.projects-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: rgba(var(--hermes-fg-rgb), 0.92);
+  font: calc(12px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-ui);
+  text-align: start;
+  cursor: pointer;
+  min-width: 0;
+}
+.projects-picker-row:hover { background: rgba(var(--hermes-fg-rgb), 0.08); }
+.projects-picker-row:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: -2px; }
+.projects-picker-glyph { flex: 0 0 auto; opacity: 0.6; }
+html[dir="rtl"] .projects-picker-glyph { transform: scaleX(-1); }
+.projects-picker-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.projects-picker-up { color: rgba(var(--hermes-fg-rgb), 0.7); }
+.projects-picker-list ~ .projects-hint { margin: 4px 10px 0; }
+.projects-picker-actions { margin-top: 8px; }
+.projects-panel > .projects-typed-path { margin: 8px 10px 0; }
+
 @media (prefers-reduced-motion: reduce) {
   .projects-panel *,
   .session-menu-tab { transition: none !important; animation: none !important; }

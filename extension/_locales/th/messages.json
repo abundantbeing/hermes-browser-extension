@@ -2735,6 +2735,14 @@
     "message": "ยกเลิก",
     "description": "Runtime interface message projects.cancel"
   },
+  "runtime_projects_create_add_folder": {
+    "message": "เพิ่มโฟลเดอร์",
+    "description": "Runtime interface message projects.create.add_folder"
+  },
+  "runtime_projects_create_add_typed": {
+    "message": "เพิ่ม",
+    "description": "Runtime interface message projects.create.add_typed"
+  },
   "runtime_projects_create_creating": {
     "message": "กำลังสร้าง…",
     "description": "Runtime interface message projects.create.creating"
@@ -2742,6 +2750,10 @@
   "runtime_projects_create_done": {
     "message": "สร้างโปรเจกต์ {name} แล้ว",
     "description": "Runtime interface message projects.create.done"
+  },
+  "runtime_projects_create_done_idea": {
+    "message": "สร้างโปรเจกต์ {name} แล้ว ไอเดียของคุณพร้อมบันทึกเป็น IDEA.md",
+    "description": "Runtime interface message projects.create.done_idea"
   },
   "runtime_projects_create_error_name_required": {
     "message": "กรอกชื่อโปรเจกต์",
@@ -2759,21 +2771,61 @@
     "message": "กรอกโฟลเดอร์ของโปรเจกต์บนโฮสต์เกตเวย์",
     "description": "Runtime interface message projects.create.error.path_required"
   },
+  "runtime_projects_create_folders": {
+    "message": "โฟลเดอร์",
+    "description": "Runtime interface message projects.create.folders"
+  },
+  "runtime_projects_create_idea": {
+    "message": "ไอเดีย (IDEA.md)",
+    "description": "Runtime interface message projects.create.idea"
+  },
+  "runtime_projects_create_idea_failed": {
+    "message": "สร้างไอเดียไม่ได้ {detail}",
+    "description": "Runtime interface message projects.create.idea_failed"
+  },
+  "runtime_projects_create_idea_generate": {
+    "message": "สร้างไอเดีย",
+    "description": "Runtime interface message projects.create.idea_generate"
+  },
+  "runtime_projects_create_idea_generating": {
+    "message": "กำลังสร้าง…",
+    "description": "Runtime interface message projects.create.idea_generating"
+  },
+  "runtime_projects_create_idea_hint": {
+    "message": "ไม่บังคับ เมื่อสร้างโปรเจกต์แล้ว เซสชันจะเปิดในโฟลเดอร์แรกพร้อมข้อความนี้ เพื่อให้ Hermes บันทึกเป็น IDEA.md",
+    "description": "Runtime interface message projects.create.idea_hint"
+  },
+  "runtime_projects_create_idea_placeholder": {
+    "message": "โปรเจกต์นี้เกี่ยวกับอะไร สรุปหนึ่งบรรทัดและเป้าหมายสองสามข้อ",
+    "description": "Runtime interface message projects.create.idea_placeholder"
+  },
   "runtime_projects_create_name": {
     "message": "ชื่อโปรเจกต์",
     "description": "Runtime interface message projects.create.name"
+  },
+  "runtime_projects_create_no_folders": {
+    "message": "ยังไม่มีโฟลเดอร์ เพิ่มโฟลเดอร์ที่โปรเจกต์นี้ทำงานอยู่",
+    "description": "Runtime interface message projects.create.no_folders"
   },
   "runtime_projects_create_path": {
     "message": "โฟลเดอร์บนโฮสต์เกตเวย์",
     "description": "Runtime interface message projects.create.path"
   },
   "runtime_projects_create_path_hint": {
-    "message": "พาธนี้อยู่บนเครื่องที่รัน Hermes ({host}) ไม่ใช่คอมพิวเตอร์เครื่องนี้ เบราว์เซอร์ไม่สามารถเปิดตัวเลือกโฟลเดอร์ของเครื่องนั้นได้ จึงต้องพิมพ์พาธเอง",
+    "message": "พาธนี้อยู่บนเครื่องที่รัน Hermes ({host}) ไม่ใช่บนคอมพิวเตอร์เครื่องนี้ เรียกดูเพื่อหา หรือพิมพ์พาธ",
     "description": "Runtime interface message projects.create.path_hint"
   },
   "runtime_projects_create_path_placeholder": {
     "message": "/home/you/code/my-project",
     "description": "Runtime interface message projects.create.path_placeholder"
+  },
+  "runtime_projects_create_primary": {
+    "message": "หลัก",
+    "description": "Runtime interface message projects.create.primary"
+  },
+  "runtime_projects_create_remove_folder": {
+    "message": "นำ {folder} ออก",
+    "description": "Runtime interface message projects.create.remove_folder"
   },
   "runtime_projects_create_submit": {
     "message": "สร้างโปรเจกต์",
@@ -2858,6 +2910,30 @@
   "runtime_projects_group_projects": {
     "message": "โปรเจกต์",
     "description": "Runtime interface message projects.group.projects"
+  },
+  "runtime_projects_idea_discard": {
+    "message": "ไม่บันทึก",
+    "description": "Runtime interface message projects.idea.discard"
+  },
+  "runtime_projects_idea_pending_text": {
+    "message": "เปิดเซสชันใน {folder} พร้อมไอเดียของคุณ ส่งข้อความแล้ว Hermes จะเขียน IDEA.md ไว้ที่นั่น",
+    "description": "Runtime interface message projects.idea.pending_text"
+  },
+  "runtime_projects_idea_pending_title": {
+    "message": "ยังไม่ได้บันทึกไอเดียของคุณ",
+    "description": "Runtime interface message projects.idea.pending_title"
+  },
+  "runtime_projects_idea_prompt": {
+    "message": "สร้างไฟล์ชื่อ IDEA.md ในโฟลเดอร์ปัจจุบันด้วยข้อความด้านล่างนี้ทุกประการ และอย่าเปลี่ยนอย่างอื่น\n\n{idea}",
+    "description": "Runtime interface message projects.idea.prompt"
+  },
+  "runtime_projects_idea_save": {
+    "message": "บันทึกเป็น IDEA.md",
+    "description": "Runtime interface message projects.idea.save"
+  },
+  "runtime_projects_idea_started": {
+    "message": "เปิดเซสชันใน {name} แล้ว ส่งข้อความเพื่อบันทึก IDEA.md",
+    "description": "Runtime interface message projects.idea.started"
   },
   "runtime_projects_loading": {
     "message": "กำลังโหลดโปรเจกต์…",
@@ -3042,6 +3118,78 @@
   "runtime_projects_no_match": {
     "message": "ไม่มีโปรเจกต์ที่ตรงกับคำค้นหาของคุณ",
     "description": "Runtime interface message projects.no_match"
+  },
+  "runtime_projects_picker_browse": {
+    "message": "เรียกดูโฟลเดอร์…",
+    "description": "Runtime interface message projects.picker.browse"
+  },
+  "runtime_projects_picker_choose": {
+    "message": "เลือกโฟลเดอร์นี้",
+    "description": "Runtime interface message projects.picker.choose"
+  },
+  "runtime_projects_picker_current": {
+    "message": "โฟลเดอร์:",
+    "description": "Runtime interface message projects.picker.current"
+  },
+  "runtime_projects_picker_default": {
+    "message": "โฟลเดอร์เริ่มต้น",
+    "description": "Runtime interface message projects.picker.default"
+  },
+  "runtime_projects_picker_empty": {
+    "message": "ไม่มีโฟลเดอร์ที่นี่",
+    "description": "Runtime interface message projects.picker.empty"
+  },
+  "runtime_projects_picker_failed": {
+    "message": "อ่านโฟลเดอร์นี้ไม่ได้ {detail}",
+    "description": "Runtime interface message projects.picker.failed"
+  },
+  "runtime_projects_picker_filter": {
+    "message": "กรองโฟลเดอร์",
+    "description": "Runtime interface message projects.picker.filter"
+  },
+  "runtime_projects_picker_go": {
+    "message": "ไป",
+    "description": "Runtime interface message projects.picker.go"
+  },
+  "runtime_projects_picker_hint": {
+    "message": "โฟลเดอร์บนเครื่องที่รัน Hermes ({host}) ไม่ใช่บนคอมพิวเตอร์เครื่องนี้",
+    "description": "Runtime interface message projects.picker.hint"
+  },
+  "runtime_projects_picker_home": {
+    "message": "โฮม",
+    "description": "Runtime interface message projects.picker.home"
+  },
+  "runtime_projects_picker_loading": {
+    "message": "กำลังอ่านโฟลเดอร์…",
+    "description": "Runtime interface message projects.picker.loading"
+  },
+  "runtime_projects_picker_path": {
+    "message": "พาธโฟลเดอร์",
+    "description": "Runtime interface message projects.picker.path"
+  },
+  "runtime_projects_picker_roots": {
+    "message": "เริ่มจาก",
+    "description": "Runtime interface message projects.picker.roots"
+  },
+  "runtime_projects_picker_title": {
+    "message": "เลือกโฟลเดอร์",
+    "description": "Runtime interface message projects.picker.title"
+  },
+  "runtime_projects_picker_truncated": {
+    "message": "แสดง {count} โฟลเดอร์แรก พิมพ์ในตัวกรองเพื่อหาโฟลเดอร์ที่เหลือ",
+    "description": "Runtime interface message projects.picker.truncated"
+  },
+  "runtime_projects_picker_type_path": {
+    "message": "หรือพิมพ์พาธ",
+    "description": "Runtime interface message projects.picker.type_path"
+  },
+  "runtime_projects_picker_unsupported": {
+    "message": "เกตเวย์นี้ยังแสดงรายการโฟลเดอร์ไม่ได้ในตอนนี้ ให้พิมพ์พาธของโฟลเดอร์ด้านล่างแทน",
+    "description": "Runtime interface message projects.picker.unsupported"
+  },
+  "runtime_projects_picker_up": {
+    "message": "ขึ้นหนึ่งระดับ",
+    "description": "Runtime interface message projects.picker.up"
   },
   "runtime_projects_reason_code": {
     "message": "เหตุผล: {reason}",

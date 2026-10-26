@@ -149,7 +149,10 @@ test('create form labels the gateway host, names every field, and shows the dupl
   const labels = [...container.querySelectorAll('label')].map((label) => label.getAttribute('for'));
   for (const id of labels) assert.ok(container.querySelector(`#${id}`), `label for ${id} has a control`);
   assert.match(text(container), /machine running Hermes \(hermes\.example\.com\)/);
-  assert.match(text(container), /browser cannot open that machine's folder picker/);
+  assert.match(text(container), /Browse for it, or type the path/, 'the host path hint points at the picker and the typed fallback');
+  assert.ok(container.querySelector('[data-testid="projects-add-folder"]'), 'Add folder opens the picker');
+  assert.ok(container.querySelector('#projectsCreateIdea'), 'the idea can be written');
+  assert.ok(container.querySelector('[data-testid="projects-generate-idea"]'), 'Generate idea is offered');
   const path = container.querySelector('#projectsCreatePath');
   assert.equal(path.getAttribute('aria-describedby'), 'projectsCreatePathHint');
   controller.updateCreate('name', 'Atlas');

@@ -15,6 +15,7 @@ import {
   shortenPath,
 } from './projects-view.mjs';
 import { PROJECTS_UNAVAILABLE } from './projects-client.mjs';
+import { HOST_FOLDER_PAGE, breadcrumbs, filterFolders, parentPath, samePathLoose } from './host-folders.mjs';
 
 function h(doc, tag, attrs = {}, ...children) {
   const node = doc.createElement(tag);
@@ -74,11 +75,13 @@ export function renderProjectsPanel({ container, controller, t, locale = 'en', n
 
   // A view whose data is gone (a finished create, a closed move) falls back to the list.
   const view = (state.view === 'create' && !state.create) || (state.view === 'move' && !state.move) || (state.view === 'project' && !state.project)
+    || (state.view === 'picker' && !state.picker)
     ? 'list' : state.view;
   if (view === 'list') body.push(...renderList({ doc, state, controller, t, locale, now }));
   else if (view === 'project') body.push(...renderProject({ doc, state, controller, t, locale, now }));
   else if (view === 'create') body.push(...renderCreate({ doc, state, controller, t }));
   else if (view === 'move') body.push(...renderMove({ doc, state, controller, t }));
+  else if (view === 'picker') body.push(...renderPicker({ doc, state, controller, t }));
 
   container.replaceChildren(...body.flat().filter(Boolean));
 
@@ -305,6 +308,7 @@ function renderProject({ doc, state, controller, t, locale, now }) {
       h(doc, 'p', { class: 'projects-hint', text: t('projects.new_session_hint') })));
   }
   out.push(noticeBar({ doc, state, controller, t }));
+  if (state.pendingIdea && state.pendingIdea.projectId === project.id) out.push(pendingIdeaBlock({ doc, state, controller, t }));
   if (project.status === 'unavailable' || project.status === 'error') {
     out.push(failureBlock({ doc, failure: project.failure, t, controller }));
     return out;
@@ -331,6 +335,17 @@ function renderProject({ doc, state, controller, t, locale, now }) {
       h(doc, 'strong', { text: String(sessions.length) })),
     sessions.map((session) => sessionRow({ doc, session, controller, t, locale, now }))));
   return out;
+}
+
+// The idea written while creating this project is not in its folder yet: saving it opens a session there with the
+// text ready for Hermes to write as IDEA.md.
+function pendingIdeaBlock({ doc, state, controller, t }) {
+  return h(doc, 'div', { class: 'projects-state projects-state-info', role: 'status', 'data-testid': 'projects-pending-idea' },
+    h(doc, 'strong', { class: 'projects-state-title', text: t('projects.idea.pending_title') }),
+    h(doc, 'p', { class: 'projects-state-text', text: t('projects.idea.pending_text', { folder: shortenPath(state.pendingIdea.cwd).text || state.pendingIdea.cwd }) }),
+    h(doc, 'div', { class: 'projects-state-actions' },
+      h(doc, 'button', { type: 'button', class: 'projects-primary-action', 'data-fk': 'save-idea', onClick: () => controller.saveIdea(), text: t('projects.idea.save') }),
+      h(doc, 'button', { type: 'button', class: 'session-action-button', 'data-fk': 'drop-idea', onClick: () => controller.dropPendingIdea(), text: t('projects.idea.discard') })));
 }
 
 function sessionRow({ doc, session, controller, t, locale, now }) {
@@ -361,6 +376,8 @@ function sessionRow({ doc, session, controller, t, locale, now }) {
 
 // ---- Create ----------------------------------------------------------------
 
+// Desktop's New project dialog: a name, the folders (Add folder), and an idea that becomes IDEA.md, with
+// Generate idea beside it. The typed-path field stays as the fallback to the picker.
 function renderCreate({ doc, state, controller, t }) {
   const draft = state.create;
   const host = state.scope ? hostOf(state.scope.endpoint) : '';
@@ -370,6 +387,7 @@ function renderCreate({ doc, state, controller, t }) {
   const pathError = show && check.errors.path
     ? t(check.errors.path, { project: check.warnings.owner || '' }) : '';
   const submitting = draft.status === 'submitting';
+  const generating = draft.ideaStatus === 'generating';
   const out = [
     backButton({ doc, t, controller, label: t('projects.back') }),
     heading({ doc, text: t('projects.create.title'), fk: 'create-title', autofocus: false }),
@@ -393,14 +411,8 @@ function renderCreate({ doc, state, controller, t }) {
       onClick: () => controller.updateCreate('name', check.warnings.suggestion),
       text: t('projects.create.use_suggestion', { name: check.warnings.suggestion }),
     })),
-  field({
-    doc, id: 'projectsCreatePath', fk: 'create-path', label: t('projects.create.path'), value: draft.path,
-    error: pathError, disabled: submitting, mono: true, autocomplete: 'off', spellcheck: false,
-    placeholder: t('projects.create.path_placeholder'),
-    hintId: 'projectsCreatePathHint',
-    hint: t('projects.create.path_hint', { host: host || t('projects.create.the_gateway') }),
-    onInput: (value) => controller.updateCreate('path', value),
-  }));
+  foldersSection({ doc, draft, controller, t, host, submitting, pathError }),
+  ideaSection({ doc, draft, controller, t, submitting, generating }));
   if (draft.error) {
     form.append(failureBlock({ doc, failure: draft.error, t, controller, retry: false }));
   }
@@ -422,6 +434,131 @@ function renderCreate({ doc, state, controller, t }) {
     })));
   out.push(form);
   return out;
+}
+
+function foldersSection({ doc, draft, controller, t, host, submitting, pathError }) {
+  const hostName = host || t('projects.create.the_gateway');
+  const list = draft.folders.length
+    ? h(doc, 'ul', { class: 'projects-folder-list', 'data-testid': 'projects-create-folders' },
+      draft.folders.map((folderPath, index) => h(doc, 'li', { class: 'projects-folder-item', 'data-folder': folderPath },
+        h(doc, 'code', { class: 'projects-folder-path', title: folderPath, text: folderPath }),
+        index === 0 && h(doc, 'span', { class: 'projects-choice-badge', text: t('projects.create.primary') }),
+        h(doc, 'button', {
+          type: 'button',
+          class: 'session-action-button projects-folder-remove',
+          disabled: submitting,
+          'aria-label': t('projects.create.remove_folder', { folder: folderPath }),
+          title: t('projects.create.remove_folder', { folder: folderPath }),
+          'data-fk': `remove-folder:${folderPath}`,
+          onClick: () => controller.removeCreateFolder(folderPath),
+          text: '×',
+        }))))
+    : h(doc, 'p', { class: 'projects-hint', 'data-testid': 'projects-create-no-folders', text: t('projects.create.no_folders') });
+  return h(doc, 'div', { class: 'projects-field projects-folders', role: 'group', 'aria-labelledby': 'projectsCreateFoldersLabel' },
+    h(doc, 'span', { id: 'projectsCreateFoldersLabel', class: 'projects-label', text: t('projects.create.folders') }),
+    list,
+    h(doc, 'div', { class: 'projects-form-actions' },
+      h(doc, 'button', {
+        type: 'button',
+        class: 'session-action-button',
+        'data-fk': 'add-folder',
+        'data-testid': 'projects-add-folder',
+        disabled: submitting,
+        onClick: () => controller.openFolderPicker('create'),
+        text: t('projects.create.add_folder'),
+      })),
+    typedPathRow({
+      doc, id: 'projectsCreatePath', fk: 'create-path', label: t('projects.create.path'), value: draft.path,
+      error: pathError, disabled: submitting,
+      hintId: 'projectsCreatePathHint', hint: t('projects.create.path_hint', { host: hostName }),
+      addLabel: t('projects.create.add_typed'),
+      placeholder: t('projects.create.path_placeholder'),
+      onInput: (value) => controller.updateCreate('path', value),
+      onAdd: () => controller.addTypedFolder(),
+    }));
+}
+
+function ideaSection({ doc, draft, controller, t, submitting, generating }) {
+  const failure = draft.ideaError;
+  const failureText = failure ? t('projects.create.idea_failed', { detail: failure.detail || t(failure.key, failure.params) }) : '';
+  const area = h(doc, 'textarea', {
+    id: 'projectsCreateIdea',
+    class: 'projects-input projects-idea',
+    rows: '5',
+    placeholder: t('projects.create.idea_placeholder'),
+    disabled: submitting,
+    'data-fk': 'create-idea',
+    'aria-describedby': 'projectsCreateIdeaHint',
+    onInput: (event) => controller.updateCreate('idea', event.target.value),
+    onCompositionstart: (event) => { event.target.closest('[data-view]')?.setAttribute('data-composing', '1'); },
+    onCompositionend: (event) => {
+      event.target.closest('[data-view]')?.removeAttribute('data-composing');
+      controller.updateCreate('idea', event.target.value);
+    },
+  });
+  area.value = draft.idea;
+  return h(doc, 'div', { class: 'projects-field projects-idea-field' },
+    h(doc, 'label', { for: 'projectsCreateIdea', class: 'projects-label', text: t('projects.create.idea') }),
+    area,
+    h(doc, 'div', { class: 'projects-form-actions' },
+      h(doc, 'button', {
+        type: 'button',
+        class: 'session-action-button',
+        'data-fk': 'generate-idea',
+        'data-testid': 'projects-generate-idea',
+        disabled: submitting || generating,
+        'aria-busy': generating ? 'true' : undefined,
+        onClick: () => controller.generateIdea(),
+        text: generating ? t('projects.create.idea_generating') : t('projects.create.idea_generate'),
+      })),
+    h(doc, 'p', { id: 'projectsCreateIdeaHint', class: 'projects-hint', text: t('projects.create.idea_hint') }),
+    failureText && h(doc, 'p', { class: 'projects-field-error', role: 'alert', 'data-testid': 'projects-idea-error', text: failureText }));
+}
+
+// The typed-path field with its Add button: Enter adds the folder instead of submitting the form.
+function typedPathRow({ doc, id, fk, label, value, error, disabled, hint, hintId, addLabel, onInput, onAdd, placeholder }) {
+  const errorId = `${id}Error`;
+  const describedBy = [hint ? hintId : '', error ? errorId : ''].filter(Boolean).join(' ');
+  const input = h(doc, 'input', {
+    id,
+    type: 'text',
+    class: 'projects-input projects-input-mono',
+    value,
+    placeholder,
+    disabled,
+    autocomplete: 'off',
+    spellcheck: 'false',
+    'data-fk': fk,
+    'aria-invalid': error ? 'true' : undefined,
+    'aria-describedby': describedBy || undefined,
+    onInput: (event) => onInput(event.target.value),
+    onKeydown: (event) => {
+      if (event.key === 'Enter' && !event.isComposing) {
+        event.preventDefault();
+        onAdd();
+      }
+    },
+    onCompositionstart: (event) => { event.target.closest('[data-view]')?.setAttribute('data-composing', '1'); },
+    onCompositionend: (event) => {
+      event.target.closest('[data-view]')?.removeAttribute('data-composing');
+      onInput(event.target.value);
+    },
+  });
+  input.value = value;
+  return h(doc, 'div', { class: 'projects-typed-path' },
+    h(doc, 'label', { for: id, class: 'projects-label', text: label }),
+    h(doc, 'div', { class: 'projects-typed-path-row' },
+      input,
+      h(doc, 'button', {
+        type: 'button',
+        class: 'session-action-button',
+        'data-fk': `${fk}-add`,
+        disabled: disabled || !String(value || '').trim(),
+        onClick: onAdd,
+        text: addLabel,
+      })),
+    hint && h(doc, 'p', { id: hintId, class: 'projects-hint', text: hint }),
+    error && h(doc, 'p', { id: errorId, class: 'projects-field-error', role: 'alert', text: error }));
 }
 
 function field({ doc, id, fk, label, value, error, disabled, autofocus, mono, hint, hintId, onInput, placeholder, maxlength, autocomplete, spellcheck }) {
@@ -454,6 +591,145 @@ function field({ doc, id, fk, label, value, error, disabled, autofocus, mono, hi
     input,
     hint && h(doc, 'p', { id: hintId, class: 'projects-hint', text: hint }),
     error && h(doc, 'p', { id: errorId, class: 'projects-field-error', role: 'alert', text: error }));
+}
+
+// ---- Folder picker -----------------------------------------------------------
+
+// Folders on the gateway host: roots (home, default folder, known repos), breadcrumbs, folders only, a name
+// filter, Choose, and a typed path as the fallback when the host cannot be browsed.
+function renderPicker({ doc, state, controller, t }) {
+  const picker = state.picker;
+  const host = state.scope ? hostOf(state.scope.endpoint) : '';
+  const loading = picker.status === 'loading';
+  const crumbs = breadcrumbs(picker.path);
+  const shown = filterFolders(picker.folders, picker.filter);
+  const out = [
+    backButton({ doc, t, controller, label: t('projects.back') }),
+    heading({ doc, text: t('projects.picker.title'), fk: 'picker-title', autofocus: true }),
+    scopeLine({ doc, state, t }),
+    h(doc, 'p', { class: 'projects-hint projects-picker-hint', text: t('projects.picker.hint', { host: host || t('projects.create.the_gateway') }) }),
+  ];
+
+  if (picker.roots.length) {
+    out.push(h(doc, 'div', { class: 'projects-picker-roots', role: 'group', 'aria-label': t('projects.picker.roots') },
+      picker.roots.map((root) => h(doc, 'button', {
+        type: 'button',
+        class: `session-action-button projects-picker-root${samePathLoose(root.path, picker.path) ? ' is-current' : ''}`,
+        title: root.path,
+        'data-fk': `root:${root.id}`,
+        onClick: () => controller.pickerNavigate(root.path),
+        text: root.kind === 'home' ? t('projects.picker.home') : root.kind === 'default' ? t('projects.picker.default') : root.label,
+      }))));
+  }
+
+  if (crumbs.length) {
+    out.push(h(doc, 'nav', { class: 'projects-crumbs', 'aria-label': t('projects.picker.path') },
+      crumbs.map((crumb, index) => h(doc, 'button', {
+        type: 'button',
+        class: 'projects-crumb',
+        title: crumb.path,
+        'aria-current': index === crumbs.length - 1 ? 'location' : undefined,
+        'data-fk': `crumb:${crumb.path}`,
+        onClick: () => controller.pickerNavigate(crumb.path),
+        text: crumb.label,
+      }))));
+  }
+
+  out.push(h(doc, 'div', { class: 'projects-field projects-picker-filter' },
+    h(doc, 'label', { for: 'projectsPickerFilter', class: 'projects-label', text: t('projects.picker.filter') }),
+    h(doc, 'input', {
+      id: 'projectsPickerFilter',
+      type: 'search',
+      class: 'projects-input',
+      value: picker.filter,
+      autocomplete: 'off',
+      'data-fk': 'picker-filter',
+      disabled: !picker.path,
+      onInput: (event) => controller.pickerFilter(event.target.value),
+      onCompositionstart: (event) => { event.target.closest('[data-view]')?.setAttribute('data-composing', '1'); },
+      onCompositionend: (event) => {
+        event.target.closest('[data-view]')?.removeAttribute('data-composing');
+        controller.pickerFilter(event.target.value);
+      },
+    })));
+  const filterBox = out[out.length - 1].querySelector('input');
+  if (filterBox) filterBox.value = picker.filter;
+
+  if (loading) {
+    out.push(loadingBlock({ doc, t, text: t('projects.picker.loading') }));
+  } else if (picker.status === 'error' && picker.failure) {
+    out.push(messageBlock({
+      doc,
+      t,
+      tone: picker.failure.reason === 'unsupported' || picker.failure.reason === 'no-session' ? 'info' : 'error',
+      text: t(picker.failure.key, picker.failure.params),
+      testid: 'projects-picker-failure',
+    }));
+  }
+
+  if (picker.status === 'ready' || (loading && picker.folders.length)) {
+    const rows = [];
+    if (picker.path && parentPath(picker.path) !== picker.path) {
+      rows.push(h(doc, 'li', {},
+        h(doc, 'button', {
+          type: 'button',
+          class: 'projects-picker-row projects-picker-up',
+          'data-fk': 'picker-up',
+          onClick: () => controller.pickerNavigate(parentPath(picker.path)),
+        }, h(doc, 'span', { 'aria-hidden': 'true', class: 'projects-picker-glyph', text: '↑' }), h(doc, 'span', { text: t('projects.picker.up') }))));
+    }
+    for (const folder of shown) {
+      rows.push(h(doc, 'li', {},
+        h(doc, 'button', {
+          type: 'button',
+          class: 'projects-picker-row',
+          title: folder.path,
+          'data-fk': `folder:${folder.path}`,
+          onClick: () => controller.pickerNavigate(folder.path),
+        }, h(doc, 'span', { 'aria-hidden': 'true', class: 'projects-picker-glyph', text: '▸' }), h(doc, 'span', { class: 'projects-picker-name', text: folder.name }))));
+    }
+    out.push(h(doc, 'ul', { class: 'projects-picker-list', 'data-testid': 'projects-picker-list', 'aria-busy': loading ? 'true' : undefined }, rows));
+    if (!loading && !shown.length) {
+      out.push(h(doc, 'p', { class: 'projects-hint', 'data-testid': 'projects-picker-empty', text: t('projects.picker.empty') }));
+    }
+    if (!loading && picker.truncated) {
+      out.push(h(doc, 'p', { class: 'projects-hint', 'data-testid': 'projects-picker-truncated', text: t('projects.picker.truncated', { count: HOST_FOLDER_PAGE }) }));
+    }
+  }
+
+  const typedError = picker.pathError ? t(picker.pathError) : '';
+  out.push(typedPathRow({
+    doc, id: 'projectsPickerPath', fk: 'picker-path', label: t('projects.picker.type_path'), value: picker.typed,
+    error: typedError, disabled: loading,
+    addLabel: t('projects.picker.go'),
+    placeholder: t('projects.create.path_placeholder'),
+    onInput: (value) => controller.pickerSetTyped(value),
+    onAdd: () => controller.pickerGo(),
+  }));
+
+  const choosable = !loading && (picker.status === 'ready' ? Boolean(picker.path) : Boolean(String(picker.typed || '').trim()));
+  const target = picker.status === 'ready' ? picker.path : String(picker.typed || '').trim();
+  out.push(h(doc, 'div', { class: 'projects-form-actions projects-picker-actions' },
+    h(doc, 'button', {
+      type: 'button',
+      class: 'projects-primary-action',
+      'data-fk': 'picker-choose',
+      'data-testid': 'projects-picker-choose',
+      disabled: !choosable,
+      title: target || undefined,
+      onClick: () => controller.pickerChoose(),
+      text: t('projects.picker.choose'),
+    }),
+    h(doc, 'button', {
+      type: 'button',
+      class: 'session-action-button projects-cancel',
+      onClick: () => controller.closePicker(),
+      text: t('projects.cancel'),
+    })));
+  if (choosable && target) {
+    out.push(h(doc, 'div', { class: 'projects-folder' }, t('projects.picker.current'), ' ', h(doc, 'code', { title: target, text: target })));
+  }
+  return out;
 }
 
 // ---- Move to project ---------------------------------------------------------
@@ -516,7 +792,12 @@ function renderMove({ doc, state, controller, t }) {
     h(doc, 'input', {
       type: 'radio', id: 'projectsMove-custom', name: 'projectsMoveTarget', value: 'custom',
       checked: move.targetId === 'custom', 'data-fk': 'target:custom',
-      onChange: () => controller.chooseMoveTarget('custom'),
+      onChange: () => {
+        const wasCustom = move.targetId === 'custom';
+        controller.chooseMoveTarget('custom');
+        // Choosing Another folder opens the picker; typing the path stays below it.
+        if (!wasCustom) void controller.openFolderPicker('move');
+      },
     }),
     h(doc, 'span', { class: 'projects-choice-copy' },
       h(doc, 'span', { class: 'projects-choice-name', text: t('projects.move.other_folder') }),
@@ -533,6 +814,10 @@ function renderMove({ doc, state, controller, t }) {
       onInput: (value) => controller.setMoveCustomPath(value),
     }));
     out.push(h(doc, 'div', { class: 'projects-form-actions' },
+      h(doc, 'button', {
+        type: 'button', class: 'session-action-button', disabled: busy, 'data-fk': 'move-browse', 'data-testid': 'projects-move-browse',
+        onClick: () => controller.openFolderPicker('move'), text: t('projects.picker.browse'),
+      }),
       h(doc, 'button', {
         type: 'button', class: 'session-action-button', disabled: busy || !move.customPath.trim(),
         onClick: () => controller.checkCustomFolder(), text: t('projects.move.check_folder'),
