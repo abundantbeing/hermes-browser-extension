@@ -4340,8 +4340,11 @@ function webappSignInRequiredError() {
 // for what it checks and what it never sends.
 let webappDialog = null;
 let webappOpening = false;
+
 // A ticketed Hermes Web tab shows the branded "Opening Hermes Web" page while it loads; the background worker runs it.
-const hermesWebOpener = createHermesWebOpener({ sendMessage: (message) => browserApi.runtime.sendMessage(message) });
+function hermesWebOpener() {
+  return createHermesWebOpener({ sendMessage: (message) => browserApi.runtime.sendMessage(message) });
+}
 
 function webappDialogController() {
   if (!webappDialog) {
@@ -4377,7 +4380,7 @@ async function openHermesWeb() {
       storageArea: browserApi.storage?.local,
       credentials: webappCredentialStore(),
       tickets: webappGatewayTickets(),
-      opener: hermesWebOpener,
+      opener: hermesWebOpener(),
     });
     if (result.status === 'opened' && webappHintKey(result.hint)) {
       showOperationToast({
