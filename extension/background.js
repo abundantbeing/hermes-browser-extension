@@ -27,9 +27,10 @@ import {
 import { CONTEXT_CONSENT_STORAGE_KEY } from './lib/context-consent.mjs';
 import { gateInlineDraftRequestContext } from './lib/inline-draft-consent.mjs';
 import { createHermesClient } from './lib/hermes-client.mjs';
-import { openHermesWebapp } from './lib/hermes-webapp.mjs';
+import { isLocalGatewayConnection, openHermesWebapp } from './lib/hermes-webapp.mjs';
 import { resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
+import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -105,6 +106,15 @@ const webappCredentials = createWebappCredentialStore({
   tabsApi: browserApi.tabs,
   fetchImpl: (...args) => globalThis.fetch(...args),
   isEnabled: async () => keepSignedInEnabled(await readStoredSettings()),
+});
+// The paired gateway's Hermes Web tickets (lib/webapp-gateway-tickets.mjs): a gateway with the pairing routes
+// signs a new Hermes Web tab in for the paired token, so opening it from an Assist card needs no terminal.
+const webappGatewayTickets = createWebappGatewayTickets({
+  getConnection: async () => {
+    const stored = await readStoredSettings();
+    return { gatewayUrl: stored.gatewayUrl || 'http://127.0.0.1:8642', token: stored.apiKey, local: isLocalGatewayConnection(stored) };
+  },
+  fetchImpl: (...args) => globalThis.fetch(...args),
 });
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;
 let panelResidencyHydrated = false;
@@ -457,6 +467,7 @@ async function queueOpenSessionRequest(message, sender) {
       storageArea: browserApi.storage.local,
       permissionMode: 'contains',
       credentials: webappCredentials,
+      tickets: webappGatewayTickets,
     });
     if (result.status === 'opened' || result.status === 'focused') {
       return { ok: true, sessionId, surface, webapp: result.status, hint: result.hint || '' };

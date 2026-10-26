@@ -38,8 +38,11 @@ export function createWebappDialog({
 
   const focusables = () => [...dialog.querySelectorAll('button, a[href]')].filter((node) => !node.disabled && !node.hidden);
 
-  function show({ reason = 'unreachable', address = '' } = {}) {
+  // `routes: 'present'` means the gateway answered about its Webapp and signs a tab in itself, so
+  // `hermes webapp` is not a step: turning the Webapp on and restarting the gateway is.
+  function show({ reason = 'unreachable', address = '', routes = '' } = {}) {
     const shown = webappDialogReason(reason);
+    for (const step of dialog.querySelectorAll('[data-webapp-sign-in]')) step.hidden = routes === 'present';
     for (const paragraph of dialog.querySelectorAll('[data-webapp-reason]')) {
       paragraph.hidden = paragraph.dataset.webappReason !== shown;
     }

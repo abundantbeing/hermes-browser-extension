@@ -670,6 +670,7 @@ import { createHermesClient } from './lib/hermes-client.mjs';
 import { createGatewayQuirkStore, GATEWAY_QUIRK, isSessionPatchRejection } from './lib/gateway-quirks.mjs';
 import { openHermesWebapp, resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
+import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
 import { PROJECTS_UNAVAILABLE } from './lib/projects-client.mjs';
 import { createWebappDialog } from './lib/hermes-webapp-dialog.mjs';
 import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
@@ -3809,6 +3810,26 @@ function webappCredentialStore() {
   return webappCredentials;
 }
 
+// The paired gateway's Hermes Web tickets (lib/webapp-gateway-tickets.mjs): a gateway that carries the
+// extension-pairing routes signs a Hermes Web tab and a /api/ws socket in for the paired token, so neither
+// needs a terminal or a held credential. A gateway without them answers a plain 404, remembered for a
+// while, and every caller falls back to the held credential and the capture below.
+let webappGatewayTicketSource = null;
+
+function webappGatewayTickets() {
+  if (!webappGatewayTicketSource) {
+    webappGatewayTicketSource = createWebappGatewayTickets({
+      getConnection: () => ({
+        gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
+        token: hermesGatewayKey(),
+        local: isLocalApiMode(),
+      }),
+      fetchImpl: (...args) => globalThis.fetch(...args),
+    });
+  }
+  return webappGatewayTicketSource;
+}
+
 // The token to send to the dashboard at baseUrl: the one its page injects (legacy dashboards), else
 // the held Webapp credential when it belongs to the same origin. '' when there is neither.
 async function dashboardTokenFor(baseUrl = '', html = '') {
@@ -3952,6 +3973,7 @@ async function openHermesWeb() {
       permissionsApi: browserApi.permissions,
       storageArea: browserApi.storage?.local,
       credentials: webappCredentialStore(),
+      tickets: webappGatewayTickets(),
     });
     if (result.status === 'opened' && webappHintKey(result.hint)) {
       showOperationToast({
@@ -3962,7 +3984,7 @@ async function openHermesWeb() {
     } else if (result.status === 'open-failed') {
       showOperationToast({ kind: 'warn', title: t('webapp.open_failed'), detail: result.reason || '' });
     } else if (!['opened', 'focused'].includes(result.status)) {
-      webappDialogController()?.show({ reason: result.status, address: result.address });
+      webappDialogController()?.show({ reason: result.status, address: result.address, routes: result.routes });
     }
     // A sign-in kept from an open tab (or already held) lets a roster that was waiting for it load.
     if (['opened', 'focused'].includes(result.status)) void refreshAfterWebappSignIn();

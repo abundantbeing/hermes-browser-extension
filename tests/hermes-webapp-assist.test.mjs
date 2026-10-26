@@ -23,7 +23,8 @@ test('the Assist chooser opens Hermes Web through the background and handles eve
   assert.match(helper, /surface === 'web' && response\.hint/);
   assert.match(helper, /activeView\.name === 'webapp-unavailable'/, 'it re-renders when the language changes');
   assert.match(helper, /hermes config set webapp\.enabled true/);
-  assert.match(background, /import \{ openHermesWebapp \} from '\.\/lib\/hermes-webapp\.mjs'/);
+  assert.match(background, /import \{ isLocalGatewayConnection, openHermesWebapp \} from '\.\/lib\/hermes-webapp\.mjs'/);
+  assert.match(background, /tickets: webappGatewayTickets,/, 'the paired gateway signs the tab in here too');
   assert.match(background, /permissionMode: 'contains'/);
   const handler = background.slice(background.indexOf('async function queueOpenSessionRequest'), background.indexOf('async function configureInstalledSurfaces'));
   assert.doesNotMatch(handler, /app\.html/);

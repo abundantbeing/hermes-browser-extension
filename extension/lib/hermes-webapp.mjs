@@ -1,19 +1,24 @@
 // Hermes Web: the browser-hosted Hermes Webapp that the user's own gateway serves
 // (NousResearch/hermes-agent, `webapp.enabled: true`). This module finds it and opens it.
-//   * Nothing advertises the Webapp's address to an API client, and no extension token can mint
-//     a sign-in. The sign-in comes from `hermes webapp` on the host (a one-use launch link that
-//     leaves the credential in that tab's sessionStorage).
-//   * So the first sign-in is the user's, once. After that the panel can keep this browser's
-//     sign-in until the browser closes (lib/webapp-credential.mjs, the "Keep Hermes Web signed in
-//     from the panel" setting): the button then opens a new tab that is already signed in, using
-//     a one-use window ticket in the launch URL's fragment. The credential itself never goes in
-//     a URL. With the setting off, or with nothing held, the button opens the address and tells
-//     the user what to run.
+//   * A gateway that carries the extension-pairing routes mints the sign-in itself: the paired
+//     token asks it for a one-use window ticket (lib/webapp-gateway-tickets.mjs), and the button
+//     opens `<webapp>/webapp/launch#ticket=...` in a tab that is already signed in. No terminal, and
+//     the panel holds no credential for it. The gateway also names the Webapp's own address, so a
+//     Webapp on another port is found.
+//   * Against a gateway without those routes nothing advertises the Webapp's address to an API client
+//     and no extension token can mint a sign-in; the sign-in comes from `hermes webapp` on the host
+//     (a one-use launch link that leaves the credential in that tab's sessionStorage). After that
+//     the panel can keep this browser's sign-in until the browser closes (lib/webapp-credential.mjs,
+//     the "Keep Hermes Web signed in from the panel" setting): the button then opens a new tab that
+//     is already signed in, using a one-use window ticket minted with it. The credential itself never
+//     goes in a URL. With the setting off, or with nothing held, the button opens the address and
+//     tells the user what to run.
 //   * The address is the user's "Hermes Web address" setting. Empty means automatic: the
 //     gateway's default loopback address for a local connection, and nothing for a remote
 //     one (a remote Webapp is behind a reverse proxy or tunnel and cannot be guessed).
 
 import { CONNECTION_SCHEMA_VERSION, isLoopbackGatewayUrl, migrateConnectionSettings } from './connection-modes.mjs';
+import { WEBAPP_TICKET_REASONS } from './webapp-gateway-tickets.mjs';
 
 export const WEBAPP_DEFAULT_ADDRESS = 'http://127.0.0.1:9120';
 export const WEBAPP_DOCS_URL = 'https://hermes-agent.nousresearch.com/docs/user-guide/desktop#use-the-desktop-workspace-from-a-browser';
@@ -237,8 +242,8 @@ export async function probeWebapp(target, { fetchImpl = globalThis.fetch?.bind(g
  * 'local' on a loopback address (run `hermes webapp` once on this computer), 'account'
  * anywhere else (the Webapp is behind the dashboard sign-in). '' when already shown.
  */
-export async function takeWebappSignInHint(storageArea, target) {
-  const kind = target?.loopback ? 'local' : 'account';
+export async function takeWebappSignInHint(storageArea, target, { account = false } = {}) {
+  const kind = target?.loopback && !account ? 'local' : 'account';
   if (typeof storageArea?.get !== 'function' || typeof storageArea?.set !== 'function') return kind;
   try {
     const stored = await storageArea.get(WEBAPP_SIGN_IN_HINT_STORAGE_KEY);
@@ -297,22 +302,60 @@ async function openSignedInTab({ credentials, target, tabsApi }) {
   }
 }
 
+// A new tab already signed in by the paired gateway: it mints a one-use window ticket (no credential is
+// held here) and names the Webapp's own address. Resolves { opened } (the open-tab result, or null when the
+// gateway cannot sign a tab in) and the `reason` it gave. A click asks again whatever was remembered.
+async function openTabViaGateway({ tickets, target, tabsApi }) {
+  let minted;
+  try {
+    minted = await tickets.windowTicket({ profile: target.profile, force: true });
+  } catch {
+    minted = { ok: false, reason: WEBAPP_TICKET_REASONS.UNREACHABLE };
+  }
+  if (!minted?.ok) return { opened: null, reason: minted?.reason || WEBAPP_TICKET_REASONS.UNREACHABLE };
+  // The address the user typed names a Webapp of their own choosing; only the local default follows the gateway.
+  if (target.source === 'setting' && minted.origin !== target.origin) return { opened: null, reason: 'other-webapp' };
+  const url = tickets.launchUrl(minted.webappUrl, minted.ticket, { profile: target.profile });
+  if (!url) return { opened: null, reason: WEBAPP_TICKET_REASONS.INVALID };
+  try {
+    const tab = await tabsApi.create({ url, active: true });
+    return { opened: { status: 'opened', tabId: tab?.id, address: minted.origin, hint: 'signed-in', signedIn: true, via: 'gateway' } };
+  } catch (error) {
+    return { opened: { status: 'open-failed', address: minted.origin, reason: error?.message || String(error) } };
+  }
+}
+
+// Whether the gateway answered about its Webapp at all (a gateway with the routes), from the reason it gave.
+const GATEWAY_ANSWERED = new Set([
+  WEBAPP_TICKET_REASONS.OFF,
+  WEBAPP_TICKET_REASONS.NOT_PRIVATE,
+  WEBAPP_TICKET_REASONS.UNAVAILABLE,
+  WEBAPP_TICKET_REASONS.STARTING,
+  WEBAPP_TICKET_REASONS.BUSY,
+  WEBAPP_TICKET_REASONS.PROFILE,
+]);
+
 /**
  * The Hermes Web button.
  *   1. work out the address (setting, else the local default),
  *   2. check the browser will let the extension reach it (no new permanent permission:
  *      the origin is covered by the manifest's host permissions),
- *   3. focus a tab that already shows it (and keep its sign-in, when the panel may),
- *   4. otherwise, with a held sign-in, open a new tab that is already signed in,
- *   5. otherwise keep the sign-in of any open signed-in tab and do the same,
- *   6. otherwise check something answers, with no credentials, and open the address.
+ *   3. focus a tab that already shows it and is signed in (and keep its sign-in, when the panel may),
+ *   4. otherwise ask the paired gateway for a one-use window ticket and open a new tab that is already
+ *      signed in (`tickets`, lib/webapp-gateway-tickets.mjs; no credential is held for it),
+ *   5. otherwise, with a held sign-in, open a new tab that is already signed in,
+ *   6. otherwise keep the sign-in of any open signed-in tab and do the same,
+ *   7. otherwise check something answers, with no credentials, and open the address.
  *
  * `credentials` is the store from lib/webapp-credential.mjs; without it, or with the setting off,
- * only steps 1-3 and 6 apply.
+ * steps 5 and 6 do not apply. Without `tickets`, or for a Webapp that is not on this computer, neither
+ * does step 4.
  *
  * Resolves with { status, ... } and never throws for an expected condition:
  *   'focused' | 'opened' (+ hint: 'signed-in' | 'local' | 'local-kept' | 'account' | '') | 'unreachable' |
  *   'needs-address' | 'invalid-address' | 'permission-denied' | 'open-failed'
+ * 'unreachable' carries `routes: 'present'` when the gateway answered about its Webapp (so no terminal step
+ * is left to suggest) and `webapp`, the reason it gave (webapp-off, webapp-unavailable, ...).
  * permissionMode: 'request' (a click handler) or 'contains' (a background worker).
  */
 export async function openHermesWebapp({
@@ -324,6 +367,7 @@ export async function openHermesWebapp({
   storageArea,
   permissionMode = 'request',
   credentials = null,
+  tickets = null,
 } = {}) {
   const target = resolveWebappTarget(settings);
   if (!target.ok) return { status: target.reason };
@@ -332,6 +376,7 @@ export async function openHermesWebapp({
   }
   // Only the private loopback Webapp keeps a sign-in the panel can use; a remote Webapp is behind the account sign-in.
   const keepSignedIn = credentials && target.loopback ? (await credentials.enabled()) !== false : false;
+  const viaGateway = Boolean(tickets) && target.loopback;
   let capturedFromTab = false;
   const existing = await findOpenWebappTab(tabsApi, target);
   if (existing) {
@@ -339,9 +384,9 @@ export async function openHermesWebapp({
     if (keepSignedIn) {
       const captured = await captureFromTab(credentials, target, existing);
       capturedFromTab = captured.ok === true;
-      // A tab that is not signed in cannot be fixed from here. When a sign-in is held,
-      // a new signed-in tab is better than raising that one.
-      if (!captured.ok && ['not-signed-in', 'rejected'].includes(captured.reason) && await credentials.held()) focusIt = false;
+      // A tab that is not signed in cannot be fixed from here. When the gateway can sign a new tab in, or a
+      // sign-in is held, a new signed-in tab is better than raising that one.
+      if (!captured.ok && ['not-signed-in', 'rejected'].includes(captured.reason) && (viaGateway || await credentials.held())) focusIt = false;
     }
     if (focusIt) {
       try {
@@ -352,6 +397,12 @@ export async function openHermesWebapp({
       }
     }
   }
+  let gatewayReason = '';
+  if (viaGateway) {
+    const attempt = await openTabViaGateway({ tickets, target, tabsApi });
+    if (attempt.opened) return attempt.opened;
+    gatewayReason = attempt.reason;
+  }
   if (keepSignedIn) {
     let opened = await openSignedInTab({ credentials, target, tabsApi });
     if (!opened && !capturedFromTab && (await captureFromTab(credentials, target, null)).ok) {
@@ -360,10 +411,14 @@ export async function openHermesWebapp({
     if (opened) return opened;
   }
   const probe = await probeWebapp(target, { fetchImpl });
-  if (!probe.reachable) return { status: 'unreachable', address: target.baseUrl };
+  const answered = GATEWAY_ANSWERED.has(gatewayReason);
+  if (!probe.reachable) {
+    return { status: 'unreachable', address: target.baseUrl, ...(answered ? { routes: 'present' } : {}), ...(gatewayReason ? { webapp: gatewayReason } : {}) };
+  }
   try {
     const tab = await tabsApi.create({ url: target.url, active: true });
-    let hint = await takeWebappSignInHint(storageArea, target);
+    // A Webapp behind sign-in has an account sign-in, not `hermes webapp`.
+    let hint = await takeWebappSignInHint(storageArea, target, { account: gatewayReason === WEBAPP_TICKET_REASONS.NOT_PRIVATE });
     // On this computer the first sign-in is still `hermes webapp`; once it is done the panel keeps it.
     if (hint === 'local' && keepSignedIn && target.loopback) hint = 'local-kept';
     return { status: 'opened', tabId: tab?.id, address: target.baseUrl, hint };

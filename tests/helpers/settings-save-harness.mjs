@@ -100,6 +100,7 @@ export async function createSettingsSaveHarness({ settings: initial = {}, storag
     syncSettingsForm: record('syncSettingsForm'),
     // The Hermes Web sign-in the panel keeps: Save only tells it what the setting now says.
     webappCredentials: null,
+    webappGatewayTicketSource: null,
     webappListeners: new Map(),
     lastWebappCaptureAt: 0,
     WEBAPP_CAPTURE_THROTTLE_MS: 4000,
