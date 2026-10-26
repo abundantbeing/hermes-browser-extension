@@ -226,6 +226,7 @@ import { mountBrandedSelect } from './lib/branded-select.mjs';
 import { createEffortControl } from './lib/effort-control.mjs';
 import { probeSignatureFonts } from './lib/font-availability.mjs';
 import { refreshHermesContextRegistry } from './lib/hermes-context-sync.mjs';
+import { GATEWAY_MODEL_CONTEXT_STORAGE_KEY, gatewayModelContext } from './lib/gateway-model-context.mjs';
 import {
   CUSTOM_THEME_MAX_INPUT_BYTES,
   CUSTOM_THEME_STORAGE_KEY,
@@ -403,7 +404,7 @@ import { botAvatarRoute } from './lib/bot-roster-source.mjs';
 import { createUserInputFetchGuard, userInputWriteIsOwned } from './lib/user-input-race.mjs';
 import { classifyUserInputResult, createUserInputController, pendingUserInputRecords, userInputAnswerPayload, userInputText } from './lib/user-input.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
-import { DASHBOARD_ROUTE_CAPABILITIES, dashboardRouteRecordFields, probeDashboardRoutes, uploadImageViaDashboard } from './lib/dashboard-routes.mjs';
+import { DASHBOARD_ROUTE_CAPABILITIES, dashboardRouteRecordFields, probeDashboardRoutes, readDashboardModelInfo, uploadImageViaDashboard } from './lib/dashboard-routes.mjs';
 import {
   capabilitySummaryText,
   compactControlState,
@@ -1427,6 +1428,12 @@ let sideQuestionSequence = 0;
 // and persisted, so a session shows its last known context the moment it opens.
 let sessionContextStore = emptySessionContextStore();
 let sessionContextPersistTimer = null;
+// What the gateway reported as each model's context window (lib/gateway-model-context.mjs): model rows
+// prefer it over the bundled tables.
+let gatewayModelContextPersistTimer = null;
+let gatewayModelContextRefresh = null;
+let gatewayModelContextRefreshedAt = 0;
+const GATEWAY_MODEL_CONTEXT_REFRESH_MS = 10 * 60_000;
 // The gateway addresses a session by a live runtime id that changes on every
 // resume; its events carry that id. Map each one back to the durable id.
 const liveSessionAliases = new Map();
@@ -1518,8 +1525,100 @@ function recordSessionContextReading(kind, sessionId = '', payload = null) {
   if (!result.recorded) return false;
   sessionContextStore = result.store;
   scheduleSessionContextPersist();
+  learnGatewayModelContext(kind, durableId, payload);
   if (String(settings.sessionId || '').trim() === durableId) renderContextWindow();
   return true;
+}
+
+// The window a session reports is what Hermes resolved for the model that session runs. Keep it per model so
+// the model list shows it too, instead of a table that may be a release behind. Never throws.
+function learnGatewayModelContext(kind, durableId, payload) {
+  try {
+    const entry = sessionContextEntry(sessionContextStore, durableId);
+    const reading = kind === 'breakdown' ? entry?.breakdown : entry?.usage;
+    const model = String(reading?.model || '').trim();
+    const tokens = Number(reading?.limitTokens || 0);
+    if (!model || !(tokens > 0)) return false;
+    const usage = payload?.usage && typeof payload.usage === 'object' ? payload.usage : payload;
+    let provider = String(usage?.provider || payload?.provider || '').trim();
+    if (!provider) {
+      const selected = availableModels.find((item) => item.id === settings.model);
+      if (selected && String(settings.sessionId || '').trim() === durableId
+        && String(selected.rawModelId || '').trim().toLowerCase() === model.toLowerCase()) provider = String(selected.provider || '').trim();
+    }
+    return noteGatewayModelContext({ model, provider, tokens, source: kind === 'breakdown' ? 'session-breakdown' : 'session-usage' });
+  } catch {
+    return false;
+  }
+}
+
+function noteGatewayModelContext(reading) {
+  if (!gatewayModelContext.record(reading)) return false;
+  scheduleGatewayModelContextPersist();
+  reapplyGatewayModelContext();
+  return true;
+}
+
+// Model rows resolve their window when they are normalized; a window learned later must reach the rows
+// already on screen (and the stored selection's meta line).
+function reapplyGatewayModelContext() {
+  if (!availableModels.length) return;
+  availableModels = normalizeHermesModels(availableModels, settings.model);
+  renderModelOptions(availableModels);
+}
+
+async function loadGatewayModelContext() {
+  try {
+    const stored = await browserApi.storage.local.get([GATEWAY_MODEL_CONTEXT_STORAGE_KEY]);
+    if (gatewayModelContext.restore(stored?.[GATEWAY_MODEL_CONTEXT_STORAGE_KEY])) reapplyGatewayModelContext();
+  } catch {
+    // Storage is a convenience: live readings still arrive.
+  }
+}
+
+function scheduleGatewayModelContextPersist() {
+  if (gatewayModelContextPersistTimer) return;
+  gatewayModelContextPersistTimer = setTimeout(() => {
+    gatewayModelContextPersistTimer = null;
+    void browserApi.storage.local.set({ [GATEWAY_MODEL_CONTEXT_STORAGE_KEY]: gatewayModelContext.snapshot() }).catch(() => {});
+  }, 750);
+}
+
+// Ask the gateway again what its models' windows are: the open session's own reading (usage and breakdown
+// over the session socket) and the dashboard's answer for the configured model. A changed catalog, a
+// manual refresh and a first catalog read call it; otherwise it runs at most every ten minutes.
+function refreshGatewayModelContexts({ force = false } = {}) {
+  if (gatewayModelContextRefresh) return gatewayModelContextRefresh;
+  if (!force && Date.now() - gatewayModelContextRefreshedAt < GATEWAY_MODEL_CONTEXT_REFRESH_MS) return Promise.resolve(false);
+  gatewayModelContextRefreshedAt = Date.now();
+  gatewayModelContextRefresh = (async () => {
+    try {
+      refreshSessionContextTelemetry({ force: true });
+      if (isRemoteWsMode() || !settings.gatewayUrl) return true;
+      const baseUrl = await resolveDashboardMediaBaseUrl().catch(() => '');
+      if (!baseUrl) return true;
+      const token = await fetchDashboardSessionToken({ baseUrl, timeoutMs: 1_500 }).catch(() => '');
+      const info = await readDashboardModelInfo({ baseUrl, token, profile: safeActiveProfile(), fetchFn: (url, init) => fetch(url, init) });
+      if (info.ok) noteGatewayModelContext({ model: info.model, provider: info.provider, tokens: info.tokens, source: 'model-info' });
+      return true;
+    } catch {
+      return false;
+    } finally {
+      gatewayModelContextRefresh = null;
+    }
+  })();
+  return gatewayModelContextRefresh;
+}
+
+// A changed set of models (Hermes updated, a provider added or dropped one) says its windows may have moved.
+function noteModelCatalogForGatewayContext(models, { refresh = false } = {}) {
+  try {
+    const changed = gatewayModelContext.noteCatalog(models);
+    scheduleGatewayModelContextPersist();
+    void refreshGatewayModelContexts({ force: changed || refresh });
+  } catch {
+    // Refreshing windows never blocks the catalog.
+  }
 }
 
 function viewedSessionContextEntry() {
@@ -11282,6 +11381,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
     }
 
     availableModels = registryModels;
+    noteModelCatalogForGatewayContext(registryModels, { refresh });
     await reconcileInlineAssistModelBinding(availableModels);
     renderModelOptions(availableModels);
     applySelectedModel(settings.model, { persist: false });
@@ -28509,6 +28609,7 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
           await loadElementPickState();
           await loadPageAnnotationState();
           await loadSessionContextStore();
+          await loadGatewayModelContext();
         }
         settings = migrateConnectionSettings(settings);
         return {
