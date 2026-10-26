@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "De gateway antwoordde met HTTP {status}, dus de plugin kon niet worden gecontroleerd.",
   "capability.reason.companion_network": "De gateway kon niet worden bereikt{detail}, dus de plugin kon niet worden gecontroleerd.",
   "capability.reason.companion_no_token": "Er is geen gatewaytoken beschikbaar, dus de plugin is niet gecontroleerd.",
+  "capability.reason.companion_route": "Beschikbaar via de companion-plugin (versie {version}), die deze route op deze gateway aanbiedt. Hermes zelf heeft zo'n route niet.",
   "capability.reason.dashboard_route": "Wordt aangeboden door het Hermes-dashboard op deze computer, dat de aanmelding heeft geaccepteerd die dit paneel bewaart. De gateway-API adverteert deze route niet.",
   "capability.reason.not_in_hermes": "Deze Hermes-versie heeft geen zo'n route, dus er valt niets in te schakelen. Paginacontext wordt in plaats daarvan bij elk bericht meegestuurd.",
   "capability.reason.ws_connected": "De WebSocket van het Hermes-dashboard is verbonden.",

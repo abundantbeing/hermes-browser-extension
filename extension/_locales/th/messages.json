@@ -1319,6 +1319,10 @@
     "message": "โหลดแล้ว: เวอร์ชัน {version} โปรไฟล์ {profile} เครื่องมือ {toolCount} รายการ เกตเวย์นี้ไม่สามารถยืนยันได้ว่าชุดเครื่องมือเปิดใช้งานสำหรับเซิร์ฟเวอร์ API อยู่หรือไม่",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "ใช้ได้ผ่านปลั๊กอินคู่หู (เวอร์ชัน {version}) ซึ่งให้บริการเส้นทางนี้บนเกตเวย์นี้ ตัว Hermes เองไม่มีเส้นทางดังกล่าว",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "โหลดแล้ว (เวอร์ชัน {version}) แต่ขาดเครื่องมือ: {missing} โปรดติดตั้งใหม่สำหรับโปรไฟล์นี้และรีสตาร์ทเกตเวย์",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

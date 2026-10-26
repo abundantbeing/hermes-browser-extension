@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "गेटवे ने HTTP {status} से जवाब दिया, इसलिए प्लगिन की जाँच नहीं हो सकी।",
   "capability.reason.companion_network": "गेटवे तक पहुँचा नहीं जा सका{detail}, इसलिए प्लगिन की जाँच नहीं हो सकी।",
   "capability.reason.companion_no_token": "कोई गेटवे टोकन उपलब्ध नहीं है, इसलिए प्लगिन की जाँच नहीं की गई।",
+  "capability.reason.companion_route": "सहयोगी प्लगिन (संस्करण {version}) के माध्यम से उपलब्ध, जो इस गेटवे पर यह रूट देता है। Hermes के पास स्वयं ऐसा कोई रूट नहीं है।",
   "capability.reason.dashboard_route": "इस कंप्यूटर के Hermes डैशबोर्ड से दिया जा रहा है, जिसने इस पैनल के पास मौजूद साइन-इन को स्वीकार किया है। गेटवे API इसका विज्ञापन नहीं करता।",
   "capability.reason.not_in_hermes": "इस Hermes संस्करण में ऐसा कोई रूट नहीं है, इसलिए चालू करने के लिए कुछ नहीं है। पेज का संदर्भ हर संदेश के साथ भेजा जाता है।",
   "capability.reason.ws_connected": "Hermes डैशबोर्ड का WebSocket जुड़ा हुआ है।",

@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "Gatewayen svarede HTTP {status}, så pluginet kunne ikke tjekkes.",
   "capability.reason.companion_network": "Gatewayen kunne ikke nås{detail}, så pluginet kunne ikke tjekkes.",
   "capability.reason.companion_no_token": "Der er intet gateway-token tilgængeligt, så pluginet blev ikke tjekket.",
+  "capability.reason.companion_route": "Tilgængelig via ledsagerpluginet (version {version}), som leverer denne rute på denne gateway. Hermes har selv ikke en sådan rute.",
   "capability.reason.dashboard_route": "Leveres af Hermes-dashboardet på denne computer, som accepterede det login, dette panel har. Gateway-API'et annoncerer den ikke.",
   "capability.reason.not_in_hermes": "Denne Hermes-version har ingen sådan rute, så der er intet at slå til. Sidekonteksten sendes i stedet med hver besked.",
   "capability.reason.ws_connected": "WebSocket til Hermes-dashboardet er forbundet.",

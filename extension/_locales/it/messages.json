@@ -1319,6 +1319,10 @@
     "message": "Caricato: versione {version}, profilo {profile}, {toolCount} strumenti. Questo gateway non ha potuto confermare se il suo set di strumenti è attivo per il server API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Disponibile tramite il plugin companion (versione {version}), che offre questa rotta su questo gateway. Hermes in sé non ha una rotta di questo tipo.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Caricato (versione {version}), ma mancano questi strumenti: {missing}. Reinstallalo per questo profilo e riavvia il gateway.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

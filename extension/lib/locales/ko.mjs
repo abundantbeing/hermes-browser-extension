@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "게이트웨이가 HTTP {status}(으)로 응답해 플러그인을 확인할 수 없었습니다.",
   "capability.reason.companion_network": "게이트웨이에 연결할 수 없어{detail} 플러그인을 확인할 수 없었습니다.",
   "capability.reason.companion_no_token": "사용 가능한 게이트웨이 토큰이 없어 플러그인을 확인하지 않았습니다.",
+  "capability.reason.companion_route": "컴패니언 플러그인(버전 {version})을 통해 사용할 수 있습니다. 이 게이트웨이에서 해당 플러그인이 이 경로를 제공합니다. Hermes 자체에는 이런 경로가 없습니다.",
   "capability.reason.dashboard_route": "이 패널이 보유한 로그인을 허용한, 이 컴퓨터의 Hermes 대시보드가 제공합니다. 게이트웨이 API는 이 경로를 알리지 않습니다.",
   "capability.reason.not_in_hermes": "이 Hermes 버전에는 해당 경로가 없으므로 켤 항목이 없습니다. 페이지 컨텍스트는 대신 각 메시지에 포함되어 전송됩니다.",
   "capability.reason.ws_connected": "Hermes 대시보드 WebSocket이 연결되어 있습니다.",

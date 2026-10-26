@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "Il gateway ha risposto HTTP {status}, quindi il plugin non ha potuto essere verificato.",
   "capability.reason.companion_network": "Impossibile raggiungere il gateway{detail}, quindi il plugin non ha potuto essere verificato.",
   "capability.reason.companion_no_token": "Nessun token del gateway disponibile, quindi il plugin non è stato verificato.",
+  "capability.reason.companion_route": "Disponibile tramite il plugin companion (versione {version}), che offre questa rotta su questo gateway. Hermes in sé non ha una rotta di questo tipo.",
   "capability.reason.dashboard_route": "Fornito dalla dashboard di Hermes su questo computer, che ha accettato l'accesso mantenuto da questo pannello. L'API del gateway non lo annuncia.",
   "capability.reason.not_in_hermes": "Questa versione di Hermes non ha tale route, quindi non c'è nulla da attivare. Il contesto della pagina viene inviato insieme a ogni messaggio.",
   "capability.reason.ws_connected": "Il WebSocket della dashboard di Hermes è connesso.",

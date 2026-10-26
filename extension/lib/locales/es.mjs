@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "La pasarela respondió HTTP {status}, así que no se pudo comprobar el plugin.",
   "capability.reason.companion_network": "No se pudo contactar con la pasarela{detail}, así que no se pudo comprobar el plugin.",
   "capability.reason.companion_no_token": "No hay ningún token de pasarela disponible, así que el plugin no se comprobó.",
+  "capability.reason.companion_route": "Disponible a través del plugin complementario (versión {version}), que ofrece esta ruta en esta pasarela. Hermes por sí mismo no tiene esa ruta.",
   "capability.reason.dashboard_route": "Lo sirve el panel de Hermes en este equipo, que aceptó el inicio de sesión que mantiene este panel. La API de la pasarela no lo anuncia.",
   "capability.reason.not_in_hermes": "Esta versión de Hermes no tiene esa ruta, así que no hay nada que activar. El contexto de la página se envía dentro de cada mensaje.",
   "capability.reason.ws_connected": "El WebSocket del panel de Hermes está conectado.",

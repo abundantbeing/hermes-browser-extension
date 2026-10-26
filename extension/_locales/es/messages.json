@@ -1319,6 +1319,10 @@
     "message": "Cargado: versión {version}, perfil {profile}, {toolCount} herramientas. Esta pasarela no pudo confirmar si su conjunto de herramientas está activo para el servidor de la API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Disponible a través del plugin complementario (versión {version}), que ofrece esta ruta en esta pasarela. Hermes por sí mismo no tiene esa ruta.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Cargado (versión {version}), pero faltan herramientas: {missing}. Reinstálelo para este perfil y reinicie la pasarela.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

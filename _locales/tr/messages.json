@@ -1319,6 +1319,10 @@
     "message": "Yüklendi: sürüm {version}, profil {profile}, {toolCount} araç. Bu ağ geçidi, araç setinin API sunucusu için açık olup olmadığını doğrulayamadı.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Bu ağ geçidinde bu yolu sunan eşlikçi eklenti (sürüm {version}) üzerinden kullanılabilir. Hermes'in kendisinde böyle bir yol yoktur.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Yüklendi (sürüm {version}), ancak şu araçlar eksik: {missing}. Bu profil için yeniden yükleyin ve ağ geçidini yeniden başlatın.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

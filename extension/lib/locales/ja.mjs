@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "ゲートウェイが HTTP {status} で応答したため、プラグインを確認できませんでした。",
   "capability.reason.companion_network": "ゲートウェイに接続できなかった{detail}ため、プラグインを確認できませんでした。",
   "capability.reason.companion_no_token": "利用可能なゲートウェイトークンがないため、プラグインは確認されませんでした。",
+  "capability.reason.companion_route": "コンパニオンプラグイン（バージョン {version}）経由で利用できます。このゲートウェイでそのプラグインがこのルートを提供しています。Hermes 自体にはこのようなルートはありません。",
   "capability.reason.dashboard_route": "このパネルが保持しているサインインを受け入れた、このコンピューター上の Hermes ダッシュボードが提供しています。ゲートウェイ API はこれを公開していません。",
   "capability.reason.not_in_hermes": "この Hermes のバージョンにはそのルートがないため、有効にするものはありません。ページのコンテキストは、各メッセージに含めて送信されます。",
   "capability.reason.ws_connected": "Hermes ダッシュボードの WebSocket は接続済みです。",

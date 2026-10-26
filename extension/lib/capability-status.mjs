@@ -387,6 +387,15 @@ export function createCapabilityLedger({ now = Date.now } = {}) {
       return record;
     },
 
+    // Drop what a probe observed for one feature (a re-probe that no longer proves it).
+    // A revocation or a refusal learned another way is kept.
+    forgetProbe(id) {
+      const key = clean(id);
+      const seen = observed.get(key);
+      if (seen?.source !== CAPABILITY_SOURCES.probe) return false;
+      return observed.delete(key);
+    },
+
     revoke(id, detail = '', options = {}) {
       const record = createCapabilityRecord({
         id,

@@ -1319,6 +1319,10 @@
     "message": "Dimuat: versi {version}, profil {profile}, {toolCount} alat. Gateway ini tidak dapat memastikan apakah toolset-nya aktif untuk server API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Tersedia melalui plugin pendamping (versi {version}), yang menyediakan rute ini di gateway ini. Hermes sendiri tidak memiliki rute seperti itu.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Dimuat (versi {version}), tetapi alat berikut tidak ada: {missing}. Instal ulang untuk profil ini lalu mulai ulang gateway.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

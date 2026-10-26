@@ -1319,6 +1319,10 @@
     "message": "Załadowano: wersja {version}, profil {profile}, narzędzia: {toolCount}. Ta brama nie mogła potwierdzić, czy jej zestaw narzędzi jest włączony dla serwera API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Dostępne przez wtyczkę towarzyszącą (wersja {version}), która udostępnia tę trasę na tej bramie. Sam Hermes nie ma takiej trasy.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Załadowano (wersja {version}), ale brakuje narzędzi: {missing}. Zainstaluj ją ponownie dla tego profilu i uruchom ponownie bramę.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

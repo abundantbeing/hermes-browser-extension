@@ -1319,6 +1319,10 @@
     "message": "Завантажено: версія {version}, профіль {profile}, інструментів: {toolCount}. Цей шлюз не зміг підтвердити, чи ввімкнено його набір інструментів для сервера API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Доступно через плагін-компаньйон (версія {version}), який надає цей маршрут на цьому шлюзі. У самому Hermes такого маршруту немає.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Завантажено (версія {version}), але бракує інструментів: {missing}. Перевстановіть плагін для цього профілю та перезапустіть шлюз.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

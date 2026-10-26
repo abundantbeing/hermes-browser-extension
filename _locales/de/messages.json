@@ -1319,6 +1319,10 @@
     "message": "Geladen: Version {version}, Profil {profile}, {toolCount} Werkzeuge. Dieses Gateway konnte nicht bestätigen, ob sein Werkzeugsatz für den API-Server aktiviert ist.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Verfügbar über das Companion-Plugin (Version {version}), das diese Route auf diesem Gateway bereitstellt. Hermes selbst hat keine solche Route.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Geladen (Version {version}), aber Werkzeuge fehlen: {missing}. Installieren Sie es für dieses Profil neu und starten Sie das Gateway neu.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

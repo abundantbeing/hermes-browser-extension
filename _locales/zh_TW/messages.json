@@ -1319,6 +1319,10 @@
     "message": "已載入：版本 {version}，設定檔 {profile}，{toolCount} 個工具。此閘道無法確認其工具組是否已為 API 伺服器啟用。",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "透過配套外掛（版本 {version}）提供，該外掛在此閘道上提供此路由。Hermes 本身沒有這樣的路由。",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "已載入（版本 {version}），但缺少工具：{missing}。請為此設定檔重新安裝，並重新啟動閘道。",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

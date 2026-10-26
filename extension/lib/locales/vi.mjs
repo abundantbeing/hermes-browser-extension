@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "Cổng phản hồi HTTP {status}, nên không thể kiểm tra plugin.",
   "capability.reason.companion_network": "Không thể kết nối tới cổng{detail}, nên không thể kiểm tra plugin.",
   "capability.reason.companion_no_token": "Không có mã thông báo cổng nào, nên plugin chưa được kiểm tra.",
+  "capability.reason.companion_route": "Có sẵn qua plugin đồng hành (phiên bản {version}), plugin này cung cấp tuyến này trên cổng này. Bản thân Hermes không có tuyến như vậy.",
   "capability.reason.dashboard_route": "Được cung cấp bởi bảng điều khiển Hermes trên máy tính này, nơi đã chấp nhận phiên đăng nhập mà bảng này giữ. API của cổng không quảng bá đường dẫn này.",
   "capability.reason.not_in_hermes": "Phiên bản Hermes này không có đường dẫn đó nên không có gì để bật. Ngữ cảnh trang được gửi kèm trong từng tin nhắn.",
   "capability.reason.ws_connected": "WebSocket của bảng điều khiển Hermes đã kết nối.",

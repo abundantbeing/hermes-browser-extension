@@ -1861,6 +1861,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "网关返回 HTTP {status}，因此无法检查该插件。",
   "capability.reason.companion_network": "无法连接到网关{detail}，因此无法检查该插件。",
   "capability.reason.companion_no_token": "没有可用的网关令牌，因此未检查该插件。",
+  "capability.reason.companion_route": "通过配套插件（版本 {version}）提供，该插件在此网关上提供此路由。Hermes 本身没有这样的路由。",
   "capability.reason.dashboard_route": "由本机的 Hermes 仪表板提供，该仪表板接受了此面板持有的登录信息。网关 API 不会公布此路由。",
   "capability.reason.not_in_hermes": "此 Hermes 版本没有该路由，因此无需开启。页面上下文会随每条消息一并发送。",
   "capability.reason.ws_connected": "Hermes 控制台的 WebSocket 已连接。",

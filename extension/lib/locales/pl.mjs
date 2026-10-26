@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "Brama odpowiedziała HTTP {status}, więc wtyczki nie można było sprawdzić.",
   "capability.reason.companion_network": "Nie udało się połączyć z bramą{detail}, więc wtyczki nie można było sprawdzić.",
   "capability.reason.companion_no_token": "Brak dostępnego tokenu bramy, więc wtyczka nie została sprawdzona.",
+  "capability.reason.companion_route": "Dostępne przez wtyczkę towarzyszącą (wersja {version}), która udostępnia tę trasę na tej bramie. Sam Hermes nie ma takiej trasy.",
   "capability.reason.dashboard_route": "Obsługiwane przez panel Hermes na tym komputerze, który zaakceptował logowanie przechowywane przez ten panel. API bramy tego nie ogłasza.",
   "capability.reason.not_in_hermes": "Ta wersja Hermes nie ma takiej trasy, więc nie ma czego włączać. Kontekst strony jest zamiast tego dołączany do każdej wiadomości.",
   "capability.reason.ws_connected": "WebSocket panelu Hermes jest połączony.",

@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "Gateway merespons dengan HTTP {status}, sehingga plugin tidak dapat diperiksa.",
   "capability.reason.companion_network": "Gateway tidak dapat dihubungi{detail}, sehingga plugin tidak dapat diperiksa.",
   "capability.reason.companion_no_token": "Tidak ada token gateway yang tersedia, sehingga plugin tidak diperiksa.",
+  "capability.reason.companion_route": "Tersedia melalui plugin pendamping (versi {version}), yang menyediakan rute ini di gateway ini. Hermes sendiri tidak memiliki rute seperti itu.",
   "capability.reason.dashboard_route": "Disajikan oleh dasbor Hermes di komputer ini, yang menerima sign-in yang disimpan panel ini. API gateway tidak mengiklankannya.",
   "capability.reason.not_in_hermes": "Versi Hermes ini tidak memiliki rute tersebut, jadi tidak ada yang perlu diaktifkan. Konteks halaman dikirim bersama setiap pesan.",
   "capability.reason.ws_connected": "WebSocket dasbor Hermes terhubung.",

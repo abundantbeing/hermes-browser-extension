@@ -1319,6 +1319,10 @@
     "message": "تم التحميل: الإصدار {version}، الملف الشخصي {profile}، عدد الأدوات {toolCount}. لم تتمكن هذه البوابة من التأكد مما إذا كانت مجموعة أدواتها مفعّلة لخادم API.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "متاح عبر إضافة المرافق (الإصدار {version})، التي تقدّم هذا المسار على هذه البوابة. لا يوفّر Hermes نفسه هذا المسار.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "تم التحميل (الإصدار {version})، لكن الأدوات التالية مفقودة: {missing}. أعد تثبيته لهذا الملف الشخصي وأعد تشغيل البوابة.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

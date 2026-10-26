@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "La passerelle a répondu HTTP {status}, le plugin n'a donc pas pu être vérifié.",
   "capability.reason.companion_network": "La passerelle n'a pas pu être jointe{detail}, le plugin n'a donc pas pu être vérifié.",
   "capability.reason.companion_no_token": "Aucun jeton de passerelle n'est disponible, le plugin n'a donc pas été vérifié.",
+  "capability.reason.companion_route": "Disponible via le plugin compagnon (version {version}), qui sert cette route sur cette passerelle. Hermes lui-même n'a pas de telle route.",
   "capability.reason.dashboard_route": "Servi par le tableau de bord Hermes de cet ordinateur, qui a accepté la connexion détenue par ce panneau. L'API de la passerelle ne l'annonce pas.",
   "capability.reason.not_in_hermes": "Cette version de Hermes ne possède pas cette route, il n'y a donc rien à activer. Le contexte de la page est ajouté à chaque message.",
   "capability.reason.ws_connected": "Le WebSocket du tableau de bord Hermes est connecté.",

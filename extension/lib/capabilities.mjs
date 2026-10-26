@@ -7,7 +7,7 @@ import {
   createCapabilityRecord,
   effectiveCapability,
 } from './capability-status.mjs';
-import { companionRecordFields, isCompanionReasonCode } from './companion-plugin-status.mjs';
+import { COMPANION_ROUTE_CAPABILITIES, companionRecordFields, companionRouteRecordFields, isCompanionReasonCode } from './companion-plugin-status.mjs';
 import { gatewayAuthorityAvailability } from './projects-client.mjs';
 
 const WARNING_CAPABILITY_COPY = Object.freeze({
@@ -451,6 +451,29 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   if (transport === 'rest' && caps.platform === 'hermes-agent' && caps.raw && typeof caps.raw === 'object') {
     for (const id of ['browserContextUpload', 'browserContextStatus', 'pluginActions']) {
       if (current(id)?.reasonCode === 'not-advertised') replace(id, S.unsupported, O.derived, 'not-in-hermes');
+    }
+  }
+
+  // The companion plugin serves three of those rows itself. When its own status
+  // route lists the route (and the plugin is ready), the row reads "available via
+  // the companion plugin"; otherwise it keeps the honest reason above. A gateway
+  // that advertised the row itself is left as it said.
+  if (transport !== 'none') {
+    for (const id of Object.keys(COMPANION_ROUTE_CAPABILITIES)) {
+      const via = companionRouteRecordFields(companionPlugin, id);
+      if (!via || current(id)?.state === S.available) continue;
+      const at = records.findIndex((record) => record.id === id);
+      const record = createCapabilityRecord({
+        id,
+        state: via.state,
+        source: O.probe,
+        checkedAt: via.checkedAt ?? checkedAt,
+        identityKey,
+        reasonCode: via.reasonCode,
+        params: via.params,
+        reason: via.reason,
+      });
+      if (at >= 0) records[at] = record; else records.push(record);
     }
   }
 

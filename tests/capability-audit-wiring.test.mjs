@@ -22,7 +22,7 @@ function body(name) {
 }
 
 test('the panel probes the companion plugin through the ledger, bounded and not for a remote dashboard', () => {
-  assert.match(panel, /import \{ companionRecordFields, probeCompanionPlugin \} from '\.\/lib\/companion-plugin-status\.mjs'/);
+  assert.match(panel, /import \{[^}]*companionRecordFields[^}]*probeCompanionPlugin[^}]*\} from '\.\/lib\/companion-plugin-status\.mjs'/);
   const fn = body('refreshCompanionPluginStatus').replace(/^async /, '');
   assert.match(panel, /async function refreshCompanionPluginStatus\(\{ force = false \} = \{\}\)/);
   assert.match(fn, /normalizeGatewayMode\(settings\.gatewayMode\) === 'remote-dashboard'/);
@@ -60,7 +60,7 @@ test('a pasted image without an API upload route goes through the dashboard befo
 
 test('the Settings reason line is localized, with the companion reasons and params in every catalog the panel reads', () => {
   const codes = Object.keys(COMPANION_REASONS);
-  assert.equal(codes.length, 12);
+  assert.equal(codes.length, 13);
   const t = (key, params = {}) => String(english[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
   for (const code of codes) {
     assert.ok(english[`capability.reason.${code.replaceAll('-', '_')}`], `${code} has an English string`);
@@ -76,6 +76,7 @@ test('the Settings reason line is localized, with the companion reasons and para
     ['companion-network', { detail: '' }],
     ['companion-auth-refused', { status: 401 }],
     ['companion-gateway-error', { status: 502 }],
+    ['companion-route', { version: '0.4.0', route: '/api/plugins/hermes-browser-companion/context' }],
   ];
   for (const [code, params] of cases) {
     const view = describeCapabilityRow(row(code, params), { t });

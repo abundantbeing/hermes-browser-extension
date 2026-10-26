@@ -390,7 +390,8 @@ import {
 } from './lib/capabilities.mjs';
 import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
-import { companionRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
 import { DASHBOARD_ROUTE_CAPABILITIES, dashboardRouteRecordFields, probeDashboardRoutes, uploadImageViaDashboard } from './lib/dashboard-routes.mjs';
 import {
   capabilitySummaryText,
@@ -3625,6 +3626,25 @@ function renderConnectionSecurity() {
   if (els.clearTokenButton) els.clearTokenButton.disabled = !summary.hasToken;
 }
 
+// What the companion plugin says it holds for this session and which actions it lists, for the
+// support report: two bounded GETs, only when the plugin's status route listed those routes.
+async function readCompanionDiagnostics() {
+  const details = { context: '', actions: '' };
+  syncCapabilityRuntime();
+  const proven = (id) => capabilityRuntime.ledger.get(id)?.reasonCode === 'companion-route'
+    || (companionProbe && companionProbe.identityKey === capabilityRuntime.ledger.identityKey && companionRouteRecordFields(companionProbe.result, id));
+  const fetchFn = (path, init) => apiFetch(path, init);
+  const sessionId = String(settings.sessionId || '').trim();
+  if (proven('browserContextStatus') && sessionId) {
+    details.context = companionContextSummary(await readCompanionContextStatus({ fetchFn, sessionId }));
+  }
+  if (proven('pluginActions')) {
+    const listed = await readCompanionActions({ fetchFn });
+    if (listed.ok) details.actions = listed.actions.length ? `${listed.actions.map((row) => row.name).join(', ')} (descriptors only, run by the agent)` : 'none';
+  }
+  return details;
+}
+
 async function copySupportDiagnostics() {
   if (!els.copyDiagnosticsButton) return;
   const originalText = els.copyDiagnosticsButton.textContent || 'Copy Diagnostics';
@@ -3635,8 +3655,11 @@ async function copySupportDiagnostics() {
     const buildInfo = await loadExtensionBuildInfo().catch(() => ({}));
     const state = currentConnectionState();
     const browserPlatform = currentBrowserPlatformSnapshot();
+    const companionDetails = await readCompanionDiagnostics().catch(() => ({}));
     const diagnostics = buildSupportDiagnostics({
       extensionVersion: CURRENT_EXTENSION_VERSION,
+      companionContext: companionDetails.context || '',
+      companionActions: companionDetails.actions || '',
       extensionOrigin: currentExtensionOrigin(),
       buildInfo,
       userAgent: navigator.userAgent,
@@ -4918,6 +4941,10 @@ function refreshCapabilityViews() {
 // read-only GETs, at most one run per 30 s unless forced. A remote dashboard
 // connection has no API server to ask, so it is left as "not advertised".
 let companionProbeAt = 0;
+// The latest probe result and the connection identity it was read under. The three
+// browser-context rows the plugin serves, and the upload before a reference turn,
+// follow it; a connection change or a refused upload drops it.
+let companionProbe = null;
 async function refreshCompanionPluginStatus({ force = false } = {}) {
   const token = hermesGatewayKey();
   if (!token || !settings.gatewayUrl || normalizeGatewayMode(settings.gatewayMode) === 'remote-dashboard') return null;
@@ -4930,6 +4957,15 @@ async function refreshCompanionPluginStatus({ force = false } = {}) {
   // The connection moved on while the probe ran: its answer is for another gateway.
   if (!fields || capabilityRuntime.ledger.identityKey !== identityKey) return result;
   capabilityRuntime.ledger.observeProbe('browserCompanionPlugin', fields);
+  // The plugin's own route list also serves the browser-context upload, browser-context
+  // status and plugin-actions rows, which no Hermes version has a route for. An
+  // unreachable probe says nothing about them; any other answer is believed.
+  for (const id of Object.keys(COMPANION_ROUTE_CAPABILITIES)) {
+    const via = companionRouteRecordFields(result, id);
+    if (via) capabilityRuntime.ledger.observeProbe(id, via);
+    else if (result.state !== COMPANION_STATES.unreachable) capabilityRuntime.ledger.forgetProbe(id);
+  }
+  if (result.state !== COMPANION_STATES.unreachable) companionProbe = { result, identityKey };
   refreshCapabilityViews();
   return result;
 }
@@ -23677,7 +23713,7 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null } = {}) {
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null } = {}) {
   if (usesDashboardWsChatTransport()) return streamDashboardWsChat(prompt, onDelta, onTool, {
     signal,
     attachments: turnAttachments,
@@ -23704,6 +23740,8 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
     }
     throw setupError;
   }
+  // A REST turn waits for the companion context upload started with it (never rejects, bounded).
+  if (beforeSend) await beforeSend.catch(() => undefined);
   if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onPrompt, knownAssistantTexts, voiceLive });
   try {
     return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts, voiceLive });
@@ -24587,6 +24625,18 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
       browserControl,
       responseStyle: currentResponseStyleTurnContract(),
     });
+    // Started here, joined by the REST transport right before the turn is sent. Nothing is
+    // waited on between the final consent read and the send, and the promise never rejects.
+    const companionContextUpload = contextDelivery === CONTEXT_DELIVERY_MODES.REFERENCE && !dashboardTransport
+      ? uploadReferenceContextToCompanion({
+        context,
+        promptTabs,
+        selectedPromptTabs,
+        scope: turnContextScope,
+        protocolSettings: turnProtocolSettings,
+        contextHash,
+      })
+      : null;
 
     const receipt = buildContextReceipt({
       context: {
@@ -24698,6 +24748,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           signal: activeAbortController.signal,
           attachments: preparedAttachments,
           voiceLive: turnOptions.voiceLive || null,
+          beforeSend: companionContextUpload,
           onRun: (runId) => {
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             // Dashboard prompt streams report the live session id here, not a
@@ -25404,6 +25455,49 @@ function serializePreparedContextMenuTurn(turn, browserControl) {
     browserControl,
     responseStyle: currentResponseStyleTurnContract(),
   });
+}
+
+// A reference turn carries only the hash of context the extension sent earlier, so the
+// companion plugin has nothing to hold for it. When the plugin's status route listed its
+// upload route, park the same full envelope the earlier turn carried for this session,
+// right before the turn goes out; the plugin binds it to that turn only if the turn names
+// the same hash. Fail-soft: any problem leaves the turn exactly as it would have been, and
+// a gateway without the plugin (or without the route) never sees a request.
+async function uploadReferenceContextToCompanion({ context, promptTabs, selectedPromptTabs, scope, protocolSettings, contextHash, dashboardTransport = false } = {}) {
+  try {
+    const sessionId = String(settings.sessionId || '').trim();
+    const planFor = () => {
+      syncCapabilityRuntime();
+      const current = companionProbe && companionProbe.identityKey === capabilityRuntime.ledger.identityKey ? companionProbe.result : null;
+      return companionUploadPlan(current, { deliveryMode: CONTEXT_DELIVERY_MODES.REFERENCE, dashboardTransport, sessionId });
+    };
+    let plan = planFor();
+    if (plan === 'reprobe') {
+      await refreshCompanionPluginStatus({ force: true });
+      plan = planFor();
+    }
+    if (plan !== 'upload') return false;
+    const envelope = serializeBrowserTurnEnvelope({
+      humanInput: '',
+      activeTab: context.activeTab,
+      tabs: promptTabs,
+      pageContext: context.pageContext,
+      selectedTabs: selectedPromptTabs,
+      contextScope: scope,
+      attachments: [],
+      settings: protocolSettings,
+      contextHash,
+      contextDelivery: CONTEXT_DELIVERY_MODES.FULL,
+      browserControl: {},
+      responseStyle: null,
+    });
+    const result = await uploadCompanionContext({ fetchFn: (path, init) => apiFetch(path, init), sessionId, envelope });
+    // The route is gone (a restart without the plugin, an older copy): stop trying until the next probe.
+    if (!result.ok && [401, 403, 404, 405].includes(result.status)) companionProbe = null;
+    return result.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function executeContextMenuRequest(request, requestedRoute) {

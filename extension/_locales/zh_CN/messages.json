@@ -1319,6 +1319,10 @@
     "message": "已加载：版本 {version}，配置文件 {profile}，{toolCount} 个工具。此网关无法确认其工具集是否已为 API 服务器启用。",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "通过配套插件（版本 {version}）提供，该插件在此网关上提供此路由。Hermes 本身没有这样的路由。",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "已加载（版本 {version}），但缺少工具：{missing}。请为此配置文件重新安装，并重启网关。",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

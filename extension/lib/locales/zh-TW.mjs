@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "閘道回應 HTTP {status}，因此無法檢查該外掛。",
   "capability.reason.companion_network": "無法連線到閘道{detail}，因此無法檢查該外掛。",
   "capability.reason.companion_no_token": "沒有可用的閘道權杖，因此未檢查該外掛。",
+  "capability.reason.companion_route": "透過配套外掛（版本 {version}）提供，該外掛在此閘道上提供此路由。Hermes 本身沒有這樣的路由。",
   "capability.reason.dashboard_route": "由這台電腦上的 Hermes 儀表板提供，該儀表板接受了此面板持有的登入資訊。閘道 API 不會公布此路由。",
   "capability.reason.not_in_hermes": "此 Hermes 版本沒有該路由，因此無需開啟。頁面脈絡會隨每則訊息一併傳送。",
   "capability.reason.ws_connected": "Hermes 儀表板的 WebSocket 已連線。",

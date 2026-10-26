@@ -1319,6 +1319,10 @@
     "message": "Geladen: versie {version}, profiel {profile}, {toolCount} tools. Deze gateway kon niet bevestigen of de toolset voor de API-server aan staat.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Beschikbaar via de companion-plugin (versie {version}), die deze route op deze gateway aanbiedt. Hermes zelf heeft zo'n route niet.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Geladen (versie {version}), maar er ontbreken tools: {missing}. Installeer het opnieuw voor dit profiel en start de gateway opnieuw.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

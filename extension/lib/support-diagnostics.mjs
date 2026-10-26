@@ -82,6 +82,8 @@ export function buildSupportDiagnostics({
   lastError = null,
   gatewayDiagnostic = null,
   extractorMode = '',
+  companionContext = '',
+  companionActions = '',
 } = {}) {
   const product = browserProduct || detectBrowserProduct({ userAgent, extensionUrl: extensionOrigin });
   const browserFamily = product.label || browserFamilyFromUserAgent(userAgent);
@@ -139,6 +141,9 @@ export function buildSupportDiagnostics({
         bullet('Plugin actions', availability(capabilities.pluginActions, { missing: NOT_ADVERTISED })),
       ]),
     bullet('Browser control', capabilities.browserControl ? 'blocked by read-only policy' : 'disabled'),
+    // Only when the companion plugin's own routes answered: counts and ages, never page data.
+    ...(companionContext ? [bullet('Companion plugin context (this session)', companionContext)] : []),
+    ...(companionActions ? [bullet('Companion plugin actions listed', companionActions)] : []),
     '',
     '## Request context',
     bullet('Selected model', selectedModel.label || selectedModel.id || settings.model || NOT_AVAILABLE),

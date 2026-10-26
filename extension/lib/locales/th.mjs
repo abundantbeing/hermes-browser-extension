@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "เกตเวย์ตอบกลับด้วย HTTP {status} จึงไม่สามารถตรวจสอบปลั๊กอินได้",
   "capability.reason.companion_network": "ไม่สามารถเชื่อมต่อกับเกตเวย์{detail} จึงไม่สามารถตรวจสอบปลั๊กอินได้",
   "capability.reason.companion_no_token": "ไม่มีโทเค็นของเกตเวย์ จึงไม่ได้ตรวจสอบปลั๊กอิน",
+  "capability.reason.companion_route": "ใช้ได้ผ่านปลั๊กอินคู่หู (เวอร์ชัน {version}) ซึ่งให้บริการเส้นทางนี้บนเกตเวย์นี้ ตัว Hermes เองไม่มีเส้นทางดังกล่าว",
   "capability.reason.dashboard_route": "ให้บริการโดยแดชบอร์ด Hermes บนคอมพิวเตอร์เครื่องนี้ ซึ่งยอมรับการลงชื่อเข้าใช้ที่แผงนี้เก็บไว้ API ของเกตเวย์ไม่ได้ประกาศเส้นทางนี้",
   "capability.reason.not_in_hermes": "เวอร์ชัน Hermes นี้ไม่มีเส้นทางดังกล่าว จึงไม่มีอะไรให้เปิด บริบทของหน้าจะถูกส่งไปพร้อมกับทุกข้อความแทน",
   "capability.reason.ws_connected": "WebSocket ของแดชบอร์ด Hermes เชื่อมต่ออยู่",

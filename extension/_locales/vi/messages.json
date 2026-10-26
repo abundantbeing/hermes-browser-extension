@@ -1319,6 +1319,10 @@
     "message": "Đã tải: phiên bản {version}, hồ sơ {profile}, {toolCount} công cụ. Cổng này không thể xác nhận bộ công cụ của nó có đang bật cho máy chủ API hay không.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Có sẵn qua plugin đồng hành (phiên bản {version}), plugin này cung cấp tuyến này trên cổng này. Bản thân Hermes không có tuyến như vậy.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Đã tải (phiên bản {version}) nhưng thiếu công cụ: {missing}. Hãy cài lại cho hồ sơ này và khởi động lại cổng.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

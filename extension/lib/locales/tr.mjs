@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "Ağ geçidi HTTP {status} yanıtı verdi, bu yüzden eklenti kontrol edilemedi.",
   "capability.reason.companion_network": "Ağ geçidine ulaşılamadı{detail}, bu yüzden eklenti kontrol edilemedi.",
   "capability.reason.companion_no_token": "Kullanılabilir bir ağ geçidi belirteci yok, bu yüzden eklenti kontrol edilmedi.",
+  "capability.reason.companion_route": "Bu ağ geçidinde bu yolu sunan eşlikçi eklenti (sürüm {version}) üzerinden kullanılabilir. Hermes'in kendisinde böyle bir yol yoktur.",
   "capability.reason.dashboard_route": "Bu bilgisayardaki Hermes kontrol panelinden sunuluyor; kontrol paneli bu panelin tuttuğu oturum açmayı kabul etti. Ağ geçidi API'si bunu duyurmaz.",
   "capability.reason.not_in_hermes": "Bu Hermes sürümünde böyle bir rota yok, bu yüzden açılacak bir şey yok. Sayfa bağlamı bunun yerine her iletiyle birlikte gönderilir.",
   "capability.reason.ws_connected": "Hermes panosunun WebSocket bağlantısı kurulu.",

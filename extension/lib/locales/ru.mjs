@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "Шлюз ответил HTTP {status}, поэтому плагин не удалось проверить.",
   "capability.reason.companion_network": "Не удалось связаться со шлюзом{detail}, поэтому плагин не удалось проверить.",
   "capability.reason.companion_no_token": "Токен шлюза недоступен, поэтому плагин не проверялся.",
+  "capability.reason.companion_route": "Доступно через плагин-компаньон (версия {version}), который предоставляет этот маршрут на этом шлюзе. В самом Hermes такого маршрута нет.",
   "capability.reason.dashboard_route": "Предоставляется панелью Hermes на этом компьютере, которая приняла вход, сохранённый в этой панели. API шлюза этот маршрут не объявляет.",
   "capability.reason.not_in_hermes": "В этой версии Hermes такого маршрута нет, так что включать нечего. Контекст страницы вместо этого передаётся вместе с каждым сообщением.",
   "capability.reason.ws_connected": "WebSocket панели Hermes подключён.",

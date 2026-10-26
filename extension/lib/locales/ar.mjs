@@ -1862,6 +1862,7 @@ export default Object.freeze({
   "capability.reason.companion_gateway_error": "ردت البوابة برمز HTTP {status}، لذلك تعذر فحص الإضافة.",
   "capability.reason.companion_network": "تعذر الوصول إلى البوابة{detail}، لذلك تعذر فحص الإضافة.",
   "capability.reason.companion_no_token": "لا يتوفر رمز للبوابة، لذلك لم يتم فحص الإضافة.",
+  "capability.reason.companion_route": "متاح عبر إضافة المرافق (الإصدار {version})، التي تقدّم هذا المسار على هذه البوابة. لا يوفّر Hermes نفسه هذا المسار.",
   "capability.reason.dashboard_route": "يقدمه لوحة تحكم Hermes على هذا الكمبيوتر، والتي قبلت تسجيل الدخول الذي تحتفظ به هذه اللوحة. لا تعلن واجهة API الخاصة بالبوابة عنه.",
   "capability.reason.not_in_hermes": "لا تحتوي نسخة Hermes هذه على هذا المسار، لذلك لا يوجد شيء لتفعيله. يُرسل سياق الصفحة ضمن كل رسالة بدلاً من ذلك.",
   "capability.reason.ws_connected": "اتصال WebSocket للوحة تحكم Hermes قائم.",

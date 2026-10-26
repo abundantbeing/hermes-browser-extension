@@ -1319,6 +1319,10 @@
     "message": "Indlæst: version {version}, profil {profile}, {toolCount} værktøjer. Denne gateway kunne ikke bekræfte, om dens værktøjssæt er slået til for API-serveren.",
     "description": "Runtime interface message capability.reason.companion_ready_route_only"
   },
+  "runtime_capability_reason_companion_route": {
+    "message": "Tilgængelig via ledsagerpluginet (version {version}), som leverer denne rute på denne gateway. Hermes har selv ikke en sådan rute.",
+    "description": "Runtime interface message capability.reason.companion_route"
+  },
   "runtime_capability_reason_companion_tools_missing": {
     "message": "Indlæst (version {version}), men mangler værktøjer: {missing}. Geninstallér det for denne profil, og genstart gatewayen.",
     "description": "Runtime interface message capability.reason.companion_tools_missing"

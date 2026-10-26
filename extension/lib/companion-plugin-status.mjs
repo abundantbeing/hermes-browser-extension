@@ -31,6 +31,11 @@ export const COMPANION_PLUGIN_NAME = 'hermes-browser-companion';
 export const COMPANION_STATUS_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/status`;
 export const COMPANION_TOOLSETS_PATH = '/v1/toolsets';
 export const COMPANION_STATUS_OBJECT = 'hermes.browser_companion.status';
+// The browser-context side channel the plugin lists in its status `routes`
+// (companion-plugin/context_routes.py); companion-context-client.mjs calls them.
+export const COMPANION_CONTEXT_STATUS_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/context/status`;
+export const COMPANION_CONTEXT_UPLOAD_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/context`;
+export const COMPANION_ACTIONS_PATH = `/api/plugins/${COMPANION_PLUGIN_NAME}/actions`;
 
 // The plugin version this extension build expects. companion-plugin/plugin.yaml
 // carries the same value and a test keeps the two equal: bump them together.
@@ -79,6 +84,7 @@ export const COMPANION_REASONS = Object.freeze({
   'companion-gateway-error': ({ status } = {}) => `The gateway answered HTTP ${status ?? 500}, so the plugin could not be checked.`,
   'companion-network': ({ detail } = {}) => `The gateway could not be reached${clean(detail) ? ` (${clean(detail)})` : ''}, so the plugin could not be checked.`,
   'companion-no-token': () => 'No gateway token is available, so the plugin was not checked.',
+  'companion-route': ({ version } = {}) => `Available through the companion plugin (version ${clean(version) || 'unknown'}), which serves this route on this gateway. Hermes itself has no such route.`,
 });
 
 export function companionReasonText(code, params = {}) {
@@ -111,6 +117,7 @@ function result(state, reasonCode, params = {}, extra = {}) {
     version: extra.version ?? '',
     profile: extra.profile ?? '',
     tools: Object.freeze([...(extra.tools || [])]),
+    routes: Object.freeze([...(extra.routes || [])]),
     toolsetEnabled: extra.toolsetEnabled ?? null,
     via: extra.via || 'none',
     checkedAt: extra.checkedAt ?? null,
@@ -137,6 +144,7 @@ export function parseCompanionStatusPayload(payload, { expectedTools = COMPANION
     version: clean(payload.version),
     profile: clean(payload.profile),
     tools,
+    routes: stringList(payload.routes),
     missing: expectedTools.filter((name) => !have.has(name)),
   };
 }
@@ -169,7 +177,7 @@ export function classifyCompanionPlugin({ route, toolsets = null, expectedVersio
   const stamp = { checkedAt };
   if (route?.kind === 'ok') {
     const parsed = route.parsed;
-    const info = { version: parsed.version, profile: parsed.profile, tools: parsed.tools, via: 'route', ...stamp };
+    const info = { version: parsed.version, profile: parsed.profile, tools: parsed.tools, routes: parsed.routes || [], via: 'route', ...stamp };
     if (parsed.missing.length) {
       return result(COMPANION_STATES.outdated, 'companion-tools-missing', { version: parsed.version, missing: parsed.missing }, info);
     }
@@ -314,6 +322,35 @@ export function companionRecordFields(probe) {
     reasonCode: probe.reasonCode,
     params: { ...(probe.params || {}), companionState: probe.state },
     reason: probe.reason || companionReasonText(probe.reasonCode, probe.params),
+    checkedAt: Number.isFinite(probe.checkedAt) ? probe.checkedAt : null,
+  };
+}
+
+// The three capability rows the plugin can serve when Hermes cannot, and the path
+// of the route each one means. A row reads "available via the companion plugin"
+// only when the plugin's own status route lists that path and the plugin is
+// ready; otherwise it keeps its honest "no such route" reason.
+export const COMPANION_ROUTE_CAPABILITIES = Object.freeze({
+  browserContextUpload: COMPANION_CONTEXT_UPLOAD_PATH,
+  browserContextStatus: COMPANION_CONTEXT_STATUS_PATH,
+  pluginActions: COMPANION_ACTIONS_PATH,
+});
+
+/**
+ * The record fields for one of those rows from a probe result, or null when the
+ * probe does not prove the route (not ready, an older copy without the route, or
+ * not a probe result). Same shape as companionRecordFields().
+ */
+export function companionRouteRecordFields(probe, id) {
+  const path = COMPANION_ROUTE_CAPABILITIES[clean(id)];
+  if (!path || !probe || probe.state !== COMPANION_STATES.ready || probe.via !== 'route') return null;
+  if (!Array.isArray(probe.routes) || !probe.routes.includes(path)) return null;
+  const params = { version: probe.version || '', route: path, companionState: probe.state };
+  return {
+    state: 'available',
+    reasonCode: 'companion-route',
+    params,
+    reason: companionReasonText('companion-route', params),
     checkedAt: Number.isFinite(probe.checkedAt) ? probe.checkedAt : null,
   };
 }
