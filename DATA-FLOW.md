@@ -22,6 +22,8 @@ Cloud Preview requires the exact active, fully loaded, signed-in HTTPS Hermes ag
 
 When you configure a remote Gateway URL and API key/browser token, context is sent to that remote Hermes API server. Same-LAN or private VPN hosts can use `http://host:8642`; public/proxied hosts should use `https://`. Set `API_SERVER_ENABLED=true`, `API_SERVER_HOST=0.0.0.0`, `API_SERVER_KEY`, and a narrow `API_SERVER_CORS_ORIGINS=chrome-extension://<extension-id>` on the Hermes host. Do not expose a Hermes API server naked to the public internet.
 
+In this mode Bot Mode reads its roster from the gateway's `GET /v1/profiles` and each bot's picture from `GET /v1/profiles/{name}/avatar`, with the same API key, on that gateway only. It never looks for a dashboard on this computer; a gateway without `/v1/profiles` leaves Bot Mode without a roster and says a dashboard companion is needed.
+
 ### Remote dashboard WebSocket
 
 When remote mode has a dashboard URL and no API key, the extension uses the signed-in dashboard tab to mint a single-use WebSocket ticket and connects to the dashboard socket. In this mode, REST-only features such as profile list and image upload can be unavailable.

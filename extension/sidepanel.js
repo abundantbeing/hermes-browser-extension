@@ -391,6 +391,7 @@ import {
 import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
 import { COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
+import { botAvatarRoute } from './lib/bot-roster-source.mjs';
 import { createUserInputFetchGuard, userInputWriteIsOwned } from './lib/user-input-race.mjs';
 import { classifyUserInputResult, createUserInputController, pendingUserInputRecords, userInputAnswerPayload, userInputText } from './lib/user-input.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
@@ -1290,6 +1291,9 @@ let availableSessions = [];
 let availableSkills = [];
 let availableProfiles = [];
 let botModeRoster = [];
+// Where that roster came from (ROSTER_SOURCES): the gateway's /v1/profiles or a dashboard socket.
+// Its avatars are read from the same place.
+let botModeRosterSource = '';
 let botModeRosterGeneration = 0;
 let rosterRetryCount = 0;
 // Group chats are kept in their own roster, separated from agent profiles.
@@ -11946,17 +11950,27 @@ async function fetchBotModeRemoteAvatar(row) {
   const pending = (async () => {
     let dataUrl = '';
     try {
-      // With no Desktop dashboard, the gateway serves the image itself.
-      if (!localDashboardUrl() && !isRemoteWsMode() && settings.apiKey) {
+      // The picture comes from where the roster came from. A roster the gateway served
+      // (GET /v1/profiles) has its pictures on the gateway (GET /v1/profiles/{name}/avatar,
+      // the same API key) and nowhere else, so no dashboard is asked for them, even when one
+      // is known. Otherwise, with no Desktop dashboard, the gateway serves the image itself
+      // before a dashboard is tried.
+      const route = botAvatarRoute({
+        rosterSource: botModeRosterSource,
+        hasLocalDashboard: Boolean(localDashboardUrl()),
+        remoteWs: isRemoteWsMode(),
+        hasApiKey: Boolean(settings.apiKey),
+      });
+      if (route.gatewayFirst) {
         dataUrl = await fetchGatewayProfileAvatar({
           gatewayUrl: normalizeGatewayUrl(settings.gatewayUrl),
           apiKey: settings.apiKey,
           profileName: row.profileName,
         });
       }
-      const connection = dataUrl ? null : await ensureProfileWsConnection({ readyTimeoutMs: 5_000 }).catch(() => null);
-      if (dataUrl) {
-        // Already resolved from the gateway.
+      const connection = dataUrl || !route.dashboardFallback ? null : await ensureProfileWsConnection({ readyTimeoutMs: 5_000 }).catch(() => null);
+      if (dataUrl || !route.dashboardFallback) {
+        // Resolved from the gateway, or the gateway is the only source this roster has.
       } else if (connection?.client?.readyState === 1) {
         const asset = await connection.client.request(WS_METHODS.profilesGetAsset, { name: row.profileName, asset: 'avatar' });
         dataUrl = botModeAvatarDataUrlFromAsset(asset);
@@ -13964,6 +13978,7 @@ async function loadProfilesFromGatewayRoutes({ quiet = false, generation = 0, ga
       if (split.agents.length) {
         availableProfiles = botProfileRowsToHermesProfiles(split.agents, settings.activeProfile);
         botModeRoster = split.agents;
+        botModeRosterSource = 'gateway';
         botModeRosterNote = '';
         rosterRetryCount = 0;
         // Rooms ride on the default profile's ui_meta; the Group Chats tab reads this list.
@@ -13996,6 +14011,7 @@ async function loadProfilesFromGatewayRoutes({ quiet = false, generation = 0, ga
     const richByName = new Map([...botModeRoster, ...(previous.agents || [])].map((row) => [String(row?.profileName || ''), row]));
     const rows = names.map((name) => richByName.get(name) || { profileName: name });
     availableProfiles = botProfileRowsToHermesProfiles(rows, settings.activeProfile);
+    botModeRosterSource = 'gateway';
     botModeRosterNote = '';
     rosterRetryCount = 0;
     renderProfiles();
@@ -14056,6 +14072,7 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
   if (isRemoteMode() && !isRemoteWsMode()) {
     availableProfiles = [];
     botModeRoster = [];
+    botModeRosterSource = '';
     botModeRosterNote = t('profile.companion_not_configured');
     rosterRetryCount = 0;
     activeConversationTransport = 'rest';
@@ -14087,6 +14104,13 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     // The prior Dashboard roster is connection-scoped. Drop its synced rows,
     // but preserve any local draft rooms owned by this browser session.
     adoptSyncedGroupChats([], { authoritative: true, allowCanonicalFallback: false });
+    // Remote API mode has no dashboard to ask, and never looks for one on this machine. The
+    // gateway's own /v1/profiles lists the roster (and serves the avatars) with the API key,
+    // on a remote gateway too; only a gateway without that route leaves Bot Mode without one.
+    if (hermesGatewayKey()) {
+      const served = await loadProfilesFromGatewayRoutes({ quiet, generation, gatewayUrl });
+      if (served) return served;
+    }
     renderProfiles();
     renderBotModeRoster(els.botModeSearch?.value);
     renderActiveProfileIndicator();
@@ -14117,6 +14141,7 @@ async function loadProfiles({ quiet = false, allowDashboardTrust = !quiet } = {}
     const split = splitBotRosterRows(payload, { sourceId });
     availableProfiles = botProfileRowsToHermesProfiles(split.agents, settings.activeProfile);
     botModeRoster = split.agents;
+    botModeRosterSource = 'dashboard';
     adoptSyncedGroupChats(split.groupChats, { allowCanonicalFallback: false });
     botModeRosterNote = '';
     rosterRetryCount = 0;
@@ -21388,6 +21413,7 @@ async function saveSettingsFromForm() {
   if (previousSettings.botModeEnabled === true && settings.botModeEnabled !== true) {
     botModeRosterGeneration += 1;
     botModeRoster = [];
+    botModeRosterSource = '';
     renderBotModeRoster();
   }
   if (!settings.trustedDashboardOrigin) {
