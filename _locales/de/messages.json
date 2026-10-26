@@ -3259,6 +3259,10 @@
     "message": "Der Verlauf wurde gekürzt, wird neu geladen",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Modell: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Nach oben",
     "description": "Runtime interface message settings.back_to_top"

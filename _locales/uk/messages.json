@@ -3259,6 +3259,10 @@
     "message": "Історію було обрізано, завантажую знову",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Модель: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Нагору",
     "description": "Runtime interface message settings.back_to_top"

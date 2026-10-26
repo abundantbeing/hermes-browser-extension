@@ -3259,6 +3259,10 @@
     "message": "ประวัติถูกตัดทอน กำลังโหลดใหม่",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "โมเดล: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "กลับด้านบน",
     "description": "Runtime interface message settings.back_to_top"

@@ -3259,6 +3259,10 @@
     "message": "L'historique a été tronqué, rechargement en cours",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Modèle : {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Haut de page",
     "description": "Runtime interface message settings.back_to_top"

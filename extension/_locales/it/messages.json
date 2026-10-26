@@ -3259,6 +3259,10 @@
     "message": "La cronologia è stata troncata, ricaricamento in corso",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Modello: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Torna su",
     "description": "Runtime interface message settings.back_to_top"

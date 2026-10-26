@@ -3259,6 +3259,10 @@
     "message": "O histórico foi truncado; recarregando",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Modelo: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Voltar ao topo",
     "description": "Runtime interface message settings.back_to_top"

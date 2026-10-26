@@ -18144,12 +18144,17 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
 
       const meta = document.createElement('span');
       meta.className = 'session-option-meta';
-      // The session name leads. The model is a short friendly label, and the
-      // provider stays out of the row (it is on hover via the chip title).
+      // The session name leads and gets the room. The model is not a column of the row: a truncated
+      // "Hai…" says nothing, so it is in the row's tooltip, with the message count. The meta cell
+      // holds only what changes the row's state: the selected check and the live badge.
       const modelLabel = session.rawModelId || session.model
         ? friendlyModelName(session.rawModelId || session.model)
         : '';
-      meta.textContent = session.selected ? '✓' : (modelLabel || (session.messageCount ? `${session.messageCount}` : ''));
+      const tooltipLines = [sessionDisplayName(session)];
+      if (modelLabel) tooltipLines.push(t('session.row_model', { model: modelLabel }));
+      if (session.messageCount) tooltipLines.push(`${t('ui.messages')}: ${session.messageCount}`);
+      button.title = tooltipLines.join('\n');
+      meta.textContent = session.selected ? '✓' : '';
 
       const isAttachedSession = String(session.id || '') === String(settings.sessionId || '');
       const ownsLocalRun = localSessionStream?.sessionId === String(session.id || '');
@@ -18174,7 +18179,8 @@ function renderSessionMenu(query = els.sessionSearchInput?.value || '') {
       }
 
       button.setAttribute('aria-label', `${sessionDisplayName(session)}${row.dataset.liveState === 'running' ? ' · ' + translateUiText('Running') : ''}`);
-      button.append(name, meta);
+      // An empty meta cell would still cost its grid gap, so it is added only when it has something to say.
+      button.append(...(meta.textContent ? [name, meta] : [name]));
       button.addEventListener('click', () => openHermesSession(session));
 
       const actions = document.createElement('span');

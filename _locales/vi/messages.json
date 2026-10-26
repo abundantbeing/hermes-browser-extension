@@ -3259,6 +3259,10 @@
     "message": "Lịch sử đã bị cắt bớt, đang tải lại",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Mô hình: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Lên đầu trang",
     "description": "Runtime interface message settings.back_to_top"

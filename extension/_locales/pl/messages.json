@@ -3259,6 +3259,10 @@
     "message": "Historia została obcięta, ponowne wczytywanie",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Model: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Do góry",
     "description": "Runtime interface message settings.back_to_top"

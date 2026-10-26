@@ -3259,6 +3259,10 @@
     "message": "Geçmiş kısaltıldı, yeniden yükleniyor",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "Model: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "Başa dön",
     "description": "Runtime interface message settings.back_to_top"

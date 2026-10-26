@@ -3259,6 +3259,10 @@
     "message": "इतिहास छोटा हो गया था, फिर से लोड हो रहा है",
     "description": "Runtime interface message session.replay.truncated"
   },
+  "runtime_session_row_model": {
+    "message": "मॉडल: {model}",
+    "description": "Runtime interface message session.row_model"
+  },
   "runtime_settings_back_to_top": {
     "message": "ऊपर जाएँ",
     "description": "Runtime interface message settings.back_to_top"

@@ -536,6 +536,7 @@ export default Object.freeze({
   "session.origin_refused": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
   "session.long_shared_notice": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
   "session.rename_named": "세션 {title} 이름 바꾸기",
+  "session.row_model": "모델: {model}",
   "settings.language.description": "인터페이스 언어를 선택하세요.",
   "settings.language.label": "언어",
   "settings.local_api_setup_hint": "로컬 API 서버(기본값 http://127.0.0.1:8642). 아래에 해당 키를 붙여넣으세요.",

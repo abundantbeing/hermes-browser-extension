@@ -536,6 +536,7 @@ export default Object.freeze({
   "session.origin_refused": "Hermes refused this browser origin, {origin}, on a session request (HTTP 403 with no JSON error body). Add this line to the Hermes .env file, then restart the gateway: {envLine}. Your draft is still in the composer.",
   "session.long_shared_notice": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
   "session.rename_named": "Ganti nama sesi {title}",
+  "session.row_model": "Model: {model}",
   "settings.language.description": "Pilih bahasa antarmuka.",
   "settings.language.label": "Bahasa",
   "settings.local_api_setup_hint": "Server lokal API (default http://127.0.0.1:8642). Rekatkan kuncinya di bawah.",
