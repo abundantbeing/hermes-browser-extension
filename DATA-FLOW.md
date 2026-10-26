@@ -65,7 +65,9 @@ These screens use the connection you already configured and add no new destinati
 
 ## Held Hermes Web sign-in
 
-The panel can hold the Hermes Web sign-in in `chrome.storage.session` (browser memory, cleared when the browser closes). It is used only for loopback requests to the Hermes Web address it was captured from (the dashboard-only routes: roster, Projects, speech to text, stored images, image upload, the dashboard WebSocket through one-use tickets), as a header and never in a URL. A Settings toggle turns it off and clears it; `hermes webapp --sign-out` ends it.
+With a gateway that carries the extension-pairing routes, the panel needs to hold nothing: it asks the paired gateway's loopback-only pairing routes (`webapp-ticket` and `webapp-socket-ticket`, with the paired token as `Authorization`) for a one-use ticket, opens a signed-in Hermes Web tab with the ticket in the launch URL's fragment, and dials the Webapp's `/api/ws` with a socket ticket as a WebSocket subprotocol. The tickets expire in seconds and `hermes webapp --sign-out` voids them. A gateway without those routes answers a plain 404, and the panel falls back to the sign-in below.
+
+The panel can also hold the Hermes Web sign-in in `chrome.storage.session` (browser memory, cleared when the browser closes). It is used only for loopback requests to the Hermes Web address it was captured from (the dashboard-only routes: roster, Projects, speech to text, stored images, image upload, the dashboard WebSocket through one-use tickets), as a header and never in a URL. A Settings toggle turns it off and clears it; `hermes webapp --sign-out` ends it.
 
 ## Hermes Web full view
 

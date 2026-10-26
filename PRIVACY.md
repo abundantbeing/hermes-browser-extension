@@ -83,7 +83,9 @@ No audio is intentionally saved by the voice dictation page.
 
 ## Hermes Web sign-in
 
-When you sign in to Hermes Web (the gateway's own web app, `hermes webapp`), the panel can keep that sign-in so Projects, the bot roster, speech and image upload keep working after the Hermes Web tab is closed. It is held in `chrome.storage.session` only (memory, cleared when the browser closes, never synced, never written to disk), sent only as a request header to the loopback Hermes Web address it came from, and never put in a URL. Settings has a **Keep Hermes Web signed in from the panel** toggle; turning it off clears what is held. `hermes webapp --sign-out` ends the sign-in itself.
+With a gateway that carries the extension-pairing routes, **Open Hermes Web** needs no sign-in step and nothing is kept: the panel asks the paired gateway on this computer for a one-use ticket (the paired token is sent to that gateway only, as it already is for chat) and the new tab is signed in with it. Hermes Web grants access to host files and a shell, so approve a pairing only for an extension you trust.
+
+Otherwise, when you sign in to Hermes Web (the gateway's own web app, `hermes webapp`), the panel can keep that sign-in so Projects, the bot roster, speech and image upload keep working after the Hermes Web tab is closed. It is held in `chrome.storage.session` only (memory, cleared when the browser closes, never synced, never written to disk), sent only as a request header to the loopback Hermes Web address it came from, and never put in a URL. Settings has a **Keep Hermes Web signed in from the panel** toggle; turning it off clears what is held. `hermes webapp --sign-out` ends the sign-in itself.
 
 ## Runtime activity visibility
 

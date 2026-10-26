@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Open Hermes Web** and the Hermes Web socket need no terminal step on a gateway that carries the extension-pairing routes. The paired token asks the gateway for a one-use ticket: the button opens an already signed-in Hermes Web tab (following the Webapp's own address, so another port works), and Projects, the full bot roster, skills and compaction use a session-authority socket the gateway signs in, with no sign-in held in the browser. Settings > About & Diagnostics now reads Session authority and Projects (and Context compaction where the gateway has no REST compact route) from that socket. A gateway without the routes, or with its Webapp off, behaves as before; Projects says when the Webapp is off, and the Hermes Web dialog drops the `hermes webapp` step. Image attach (session) still needs a chat that runs over the dashboard WebSocket, and its row now says so. Needs the gateway part of the pairing patch (`hermes gateway restart` after the update).
+
 ## [0.4.0] - 2026-10-26
 
 ### Added
