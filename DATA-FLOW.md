@@ -77,6 +77,10 @@ Hermes Web uses the same configured Local or Remote API connection and canonical
 
 The extension emits typed `hermes.browser.turn.v2` envelopes with owner/conversation/session/turn identity while retaining the prompt-embedded v1 compatibility path.
 
+## Questions Hermes asks while it keeps working
+
+A Hermes turn can ask you up to five structured questions without stopping (native asynchronous user input, hermes-agent #103136). The panel shows them as a card above the composer. Your answers go back to the gateway you are connected to, over the same connection chat uses: `POST /api/sessions/{id}/user-input/{request}/answer` on the API, or `user_input.respond` on a dashboard socket. They are not added to the chat as a message, and they are sent only when you press **Submit answers**. The panel asks the gateway which requests are still pending (`GET /api/sessions/{id}/user-input/pending`, `user_input.pending`) after a reconnect, when a session opens and when the panel comes back to the front. This is used only where the gateway advertises it (`session_user_input` in `/v1/capabilities`) or where a dashboard socket has actually delivered a request; a gateway without it is never asked, and nothing changes for it.
+
 ## Controller and artifact flow
 
 When Hermes Control is enabled, the extension registers one authenticated controller and attaches the selected tabs. Commands are bound to the controller, browser profile, attachment owner, tab, frame, and document generation. Browser-bound turns do not fall back to another browser backend. Sensitive targets and restricted URLs fail closed; consequential and privileged actions pause for explicit approval.

@@ -1251,6 +1251,10 @@
     "message": "सत्र",
     "description": "Runtime interface message capability.feature.sessions"
   },
+  "runtime_capability_feature_sessionUserInput": {
+    "message": "नेटिव एसिंक्रोनस उपयोगकर्ता इनपुट",
+    "description": "Runtime interface message capability.feature.sessionUserInput"
+  },
   "runtime_capability_feature_skills": {
     "message": "स्किल",
     "description": "Runtime interface message capability.feature.skills"
@@ -7750,6 +7754,70 @@
   "runtime_update_no_local_checkout": {
     "message": "इस मशीन पर रिपॉज़िटरी का स्थानीय चेकआउट नहीं है?",
     "description": "Runtime interface message update.no_local_checkout"
+  },
+  "runtime_user_input_answer_required": {
+    "message": "उत्तर आवश्यक है: {question}",
+    "description": "Runtime interface message user_input.answer_required"
+  },
+  "runtime_user_input_failed": {
+    "message": "आपका उत्तर Hermes को नहीं भेजा जा सका।",
+    "description": "Runtime interface message user_input.failed"
+  },
+  "runtime_user_input_http_failed": {
+    "message": "Hermes को उत्तर भेजना विफल रहा ({status})।",
+    "description": "Runtime interface message user_input.http_failed"
+  },
+  "runtime_user_input_invalid": {
+    "message": "Hermes ने इन उत्तरों को अस्वीकार कर दिया। फ़ील्ड जाँचें और फिर कोशिश करें।",
+    "description": "Runtime interface message user_input.invalid"
+  },
+  "runtime_user_input_other_answer": {
+    "message": "या कोई और उत्तर लिखें",
+    "description": "Runtime interface message user_input.other_answer"
+  },
+  "runtime_user_input_pending_count": {
+    "message": "{count} लंबित",
+    "description": "Runtime interface message user_input.pending_count"
+  },
+  "runtime_user_input_recorded": {
+    "message": "Hermes ने दर्ज किया।",
+    "description": "Runtime interface message user_input.recorded"
+  },
+  "runtime_user_input_recorded_deferred": {
+    "message": "दर्ज हो गया। Hermes इसे अगले योग्य टर्न में उपयोग करेगा; स्वचालित रूप से फिर शुरू होना पुष्ट नहीं हुआ।",
+    "description": "Runtime interface message user_input.recorded_deferred"
+  },
+  "runtime_user_input_recorded_title": {
+    "message": "उत्तर दर्ज हो गया",
+    "description": "Runtime interface message user_input.recorded_title"
+  },
+  "runtime_user_input_sending": {
+    "message": "भेजा जा रहा है…",
+    "description": "Runtime interface message user_input.sending"
+  },
+  "runtime_user_input_session_changed": {
+    "message": "यह उत्तर तैयार करते समय Hermes सत्र बदल गया। सक्रिय सत्र से फिर कोशिश करें।",
+    "description": "Runtime interface message user_input.session_changed"
+  },
+  "runtime_user_input_submit": {
+    "message": "उत्तर भेजें",
+    "description": "Runtime interface message user_input.submit"
+  },
+  "runtime_user_input_title": {
+    "message": "Hermes को आपके उत्तर की ज़रूरत है",
+    "description": "Runtime interface message user_input.title"
+  },
+  "runtime_user_input_transport": {
+    "message": "Hermes तक नहीं पहुँचा जा सका।",
+    "description": "Runtime interface message user_input.transport"
+  },
+  "runtime_user_input_unrecognized": {
+    "message": "Hermes ने उपयोगकर्ता इनपुट की अज्ञात पुष्टि लौटाई।",
+    "description": "Runtime interface message user_input.unrecognized"
+  },
+  "runtime_user_input_your_answer": {
+    "message": "आपका उत्तर",
+    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "वॉयस मोड: ब्राउज़र स्पीच फ़ॉलबैक\n\n{preview}",

@@ -183,6 +183,35 @@ test('capability aliases normalize future session model routing advertisements',
   assert.equal(normalized.sessionModelLock, true);
 });
 
+test('native user-input capability requires the feature or both answer/replay endpoints', () => {
+  const featureCaps = normalizeGatewayCapabilities({ features: { session_user_input: true } });
+  assert.equal(featureCaps.sessionUserInput, true);
+
+  const endpointCaps = normalizeGatewayCapabilities({ endpoints: {
+    session_user_input_pending: { method: 'GET', path: '/api/sessions/{session_id}/user-input/pending' },
+    session_user_input_answer: { method: 'POST', path: '/api/sessions/{session_id}/user-input/{request_id}/answer' },
+  } });
+  assert.equal(endpointCaps.sessionUserInput, true);
+
+  const incompleteCaps = normalizeGatewayCapabilities({ endpoints: {
+    session_user_input_pending: { method: 'GET', path: '/api/sessions/{session_id}/user-input/pending' },
+  } });
+  assert.equal(incompleteCaps.sessionUserInput, false);
+
+  // An explicit feature flag wins over the endpoints either way, and a gateway that says nothing is "off".
+  const disabled = normalizeGatewayCapabilities({
+    features: { session_user_input: false },
+    endpoints: {
+      session_user_input_pending: { method: 'GET', path: '/p' },
+      session_user_input_answer: { method: 'POST', path: '/a' },
+    },
+  });
+  assert.equal(disabled.sessionUserInput, false);
+  assert.equal(normalizeGatewayCapabilities({ features: {}, endpoints: {} }).sessionUserInput, false);
+  assert.equal(normalizeGatewayCapabilities(null).sessionUserInput, false, 'a legacy gateway never has it');
+  assert.equal(dashboardWsGatewayCapabilities({ health: true }).sessionUserInput, false, 'a dashboard socket advertises nothing');
+});
+
 test('manual context compaction stays disabled when a gateway advertises only a feature flag with no endpoint', () => {
   const caps = normalizeGatewayCapabilities({
     object: 'hermes.api_server.capabilities',

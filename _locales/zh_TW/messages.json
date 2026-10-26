@@ -1251,6 +1251,10 @@
     "message": "工作階段",
     "description": "Runtime interface message capability.feature.sessions"
   },
+  "runtime_capability_feature_sessionUserInput": {
+    "message": "原生非同步使用者輸入",
+    "description": "Runtime interface message capability.feature.sessionUserInput"
+  },
   "runtime_capability_feature_skills": {
     "message": "技能",
     "description": "Runtime interface message capability.feature.skills"
@@ -7750,6 +7754,70 @@
   "runtime_update_no_local_checkout": {
     "message": "此機器上沒有倉庫的本機簽出?",
     "description": "Runtime interface message update.no_local_checkout"
+  },
+  "runtime_user_input_answer_required": {
+    "message": "需要回答：{question}",
+    "description": "Runtime interface message user_input.answer_required"
+  },
+  "runtime_user_input_failed": {
+    "message": "無法將你的回答傳送給 Hermes。",
+    "description": "Runtime interface message user_input.failed"
+  },
+  "runtime_user_input_http_failed": {
+    "message": "向 Hermes 傳送回答失敗（{status}）。",
+    "description": "Runtime interface message user_input.http_failed"
+  },
+  "runtime_user_input_invalid": {
+    "message": "Hermes 拒絕了這些回答。請檢查各欄位後重試。",
+    "description": "Runtime interface message user_input.invalid"
+  },
+  "runtime_user_input_other_answer": {
+    "message": "或輸入其他回答",
+    "description": "Runtime interface message user_input.other_answer"
+  },
+  "runtime_user_input_pending_count": {
+    "message": "{count} 個待處理",
+    "description": "Runtime interface message user_input.pending_count"
+  },
+  "runtime_user_input_recorded": {
+    "message": "已由 Hermes 記錄。",
+    "description": "Runtime interface message user_input.recorded"
+  },
+  "runtime_user_input_recorded_deferred": {
+    "message": "已記錄。Hermes 會在下一個符合條件的回合使用它；尚未確認會自動繼續。",
+    "description": "Runtime interface message user_input.recorded_deferred"
+  },
+  "runtime_user_input_recorded_title": {
+    "message": "回答已記錄",
+    "description": "Runtime interface message user_input.recorded_title"
+  },
+  "runtime_user_input_sending": {
+    "message": "正在傳送…",
+    "description": "Runtime interface message user_input.sending"
+  },
+  "runtime_user_input_session_changed": {
+    "message": "準備此回答時 Hermes 工作階段已變更。請在目前的工作階段中重試。",
+    "description": "Runtime interface message user_input.session_changed"
+  },
+  "runtime_user_input_submit": {
+    "message": "提交回答",
+    "description": "Runtime interface message user_input.submit"
+  },
+  "runtime_user_input_title": {
+    "message": "Hermes 需要你的回答",
+    "description": "Runtime interface message user_input.title"
+  },
+  "runtime_user_input_transport": {
+    "message": "無法連線到 Hermes。",
+    "description": "Runtime interface message user_input.transport"
+  },
+  "runtime_user_input_unrecognized": {
+    "message": "Hermes 回傳了無法辨識的使用者輸入確認。",
+    "description": "Runtime interface message user_input.unrecognized"
+  },
+  "runtime_user_input_your_answer": {
+    "message": "你的回答",
+    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "語音模式：瀏覽器語音後備方案\n\n{preview}",

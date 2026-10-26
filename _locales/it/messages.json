@@ -1251,6 +1251,10 @@
     "message": "Sessioni",
     "description": "Runtime interface message capability.feature.sessions"
   },
+  "runtime_capability_feature_sessionUserInput": {
+    "message": "Input utente asincrono nativo",
+    "description": "Runtime interface message capability.feature.sessionUserInput"
+  },
   "runtime_capability_feature_skills": {
     "message": "Skill",
     "description": "Runtime interface message capability.feature.skills"
@@ -7750,6 +7754,70 @@
   "runtime_update_no_local_checkout": {
     "message": "Nessun checkout locale del repository su questa macchina?",
     "description": "Runtime interface message update.no_local_checkout"
+  },
+  "runtime_user_input_answer_required": {
+    "message": "Risposta obbligatoria: {question}",
+    "description": "Runtime interface message user_input.answer_required"
+  },
+  "runtime_user_input_failed": {
+    "message": "Impossibile inviare la tua risposta a Hermes.",
+    "description": "Runtime interface message user_input.failed"
+  },
+  "runtime_user_input_http_failed": {
+    "message": "Invio della risposta a Hermes non riuscito ({status}).",
+    "description": "Runtime interface message user_input.http_failed"
+  },
+  "runtime_user_input_invalid": {
+    "message": "Hermes ha rifiutato queste risposte. Controlla i campi e riprova.",
+    "description": "Runtime interface message user_input.invalid"
+  },
+  "runtime_user_input_other_answer": {
+    "message": "Oppure scrivi un'altra risposta",
+    "description": "Runtime interface message user_input.other_answer"
+  },
+  "runtime_user_input_pending_count": {
+    "message": "{count} in attesa",
+    "description": "Runtime interface message user_input.pending_count"
+  },
+  "runtime_user_input_recorded": {
+    "message": "Registrata da Hermes.",
+    "description": "Runtime interface message user_input.recorded"
+  },
+  "runtime_user_input_recorded_deferred": {
+    "message": "Registrata. Hermes la userà nel prossimo turno idoneo; la ripresa automatica non è stata confermata.",
+    "description": "Runtime interface message user_input.recorded_deferred"
+  },
+  "runtime_user_input_recorded_title": {
+    "message": "Risposta registrata",
+    "description": "Runtime interface message user_input.recorded_title"
+  },
+  "runtime_user_input_sending": {
+    "message": "Invio in corso…",
+    "description": "Runtime interface message user_input.sending"
+  },
+  "runtime_user_input_session_changed": {
+    "message": "La sessione Hermes è cambiata durante la preparazione della risposta. Riprova dalla sessione attiva.",
+    "description": "Runtime interface message user_input.session_changed"
+  },
+  "runtime_user_input_submit": {
+    "message": "Invia le risposte",
+    "description": "Runtime interface message user_input.submit"
+  },
+  "runtime_user_input_title": {
+    "message": "Hermes ha bisogno della tua risposta",
+    "description": "Runtime interface message user_input.title"
+  },
+  "runtime_user_input_transport": {
+    "message": "Impossibile raggiungere Hermes.",
+    "description": "Runtime interface message user_input.transport"
+  },
+  "runtime_user_input_unrecognized": {
+    "message": "Hermes ha restituito una conferma dell'input utente non riconosciuta.",
+    "description": "Runtime interface message user_input.unrecognized"
+  },
+  "runtime_user_input_your_answer": {
+    "message": "La tua risposta",
+    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "Modalità vocale: fallback vocale del browser\n\n{preview}",

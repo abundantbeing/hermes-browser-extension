@@ -1251,6 +1251,10 @@
     "message": "Oturumlar",
     "description": "Runtime interface message capability.feature.sessions"
   },
+  "runtime_capability_feature_sessionUserInput": {
+    "message": "Yerel eşzamansız kullanıcı girdisi",
+    "description": "Runtime interface message capability.feature.sessionUserInput"
+  },
   "runtime_capability_feature_skills": {
     "message": "Beceriler",
     "description": "Runtime interface message capability.feature.skills"
@@ -7750,6 +7754,70 @@
   "runtime_update_no_local_checkout": {
     "message": "Bu makinede deponun yerel kopyası yok mu?",
     "description": "Runtime interface message update.no_local_checkout"
+  },
+  "runtime_user_input_answer_required": {
+    "message": "Yanıt gerekli: {question}",
+    "description": "Runtime interface message user_input.answer_required"
+  },
+  "runtime_user_input_failed": {
+    "message": "Yanıtınız Hermes'e gönderilemedi.",
+    "description": "Runtime interface message user_input.failed"
+  },
+  "runtime_user_input_http_failed": {
+    "message": "Yanıt Hermes'e gönderilemedi ({status}).",
+    "description": "Runtime interface message user_input.http_failed"
+  },
+  "runtime_user_input_invalid": {
+    "message": "Hermes bu yanıtları reddetti. Alanları kontrol edip yeniden deneyin.",
+    "description": "Runtime interface message user_input.invalid"
+  },
+  "runtime_user_input_other_answer": {
+    "message": "Ya da başka bir yanıt yazın",
+    "description": "Runtime interface message user_input.other_answer"
+  },
+  "runtime_user_input_pending_count": {
+    "message": "{count} bekliyor",
+    "description": "Runtime interface message user_input.pending_count"
+  },
+  "runtime_user_input_recorded": {
+    "message": "Hermes tarafından kaydedildi.",
+    "description": "Runtime interface message user_input.recorded"
+  },
+  "runtime_user_input_recorded_deferred": {
+    "message": "Kaydedildi. Hermes bunu uygun sonraki turda kullanacak; otomatik devam onaylanmadı.",
+    "description": "Runtime interface message user_input.recorded_deferred"
+  },
+  "runtime_user_input_recorded_title": {
+    "message": "Yanıt kaydedildi",
+    "description": "Runtime interface message user_input.recorded_title"
+  },
+  "runtime_user_input_sending": {
+    "message": "Gönderiliyor…",
+    "description": "Runtime interface message user_input.sending"
+  },
+  "runtime_user_input_session_changed": {
+    "message": "Bu yanıt hazırlanırken Hermes oturumu değişti. Etkin oturumdan yeniden deneyin.",
+    "description": "Runtime interface message user_input.session_changed"
+  },
+  "runtime_user_input_submit": {
+    "message": "Yanıtları gönder",
+    "description": "Runtime interface message user_input.submit"
+  },
+  "runtime_user_input_title": {
+    "message": "Hermes'in yanıtınıza ihtiyacı var",
+    "description": "Runtime interface message user_input.title"
+  },
+  "runtime_user_input_transport": {
+    "message": "Hermes'e ulaşılamadı.",
+    "description": "Runtime interface message user_input.transport"
+  },
+  "runtime_user_input_unrecognized": {
+    "message": "Hermes tanınmayan bir kullanıcı girdisi onayı döndürdü.",
+    "description": "Runtime interface message user_input.unrecognized"
+  },
+  "runtime_user_input_your_answer": {
+    "message": "Yanıtınız",
+    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "Ses modu: Browser konuşma geri dönüşü\n\n{preview}",

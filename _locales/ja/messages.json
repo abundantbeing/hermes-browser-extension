@@ -1251,6 +1251,10 @@
     "message": "セッション",
     "description": "Runtime interface message capability.feature.sessions"
   },
+  "runtime_capability_feature_sessionUserInput": {
+    "message": "ネイティブ非同期ユーザー入力",
+    "description": "Runtime interface message capability.feature.sessionUserInput"
+  },
   "runtime_capability_feature_skills": {
     "message": "スキル",
     "description": "Runtime interface message capability.feature.skills"
@@ -7750,6 +7754,70 @@
   "runtime_update_no_local_checkout": {
     "message": "このマシンにリポジトリのローカルチェックアウトがありませんか?",
     "description": "Runtime interface message update.no_local_checkout"
+  },
+  "runtime_user_input_answer_required": {
+    "message": "回答が必要です: {question}",
+    "description": "Runtime interface message user_input.answer_required"
+  },
+  "runtime_user_input_failed": {
+    "message": "回答を Hermes に送信できませんでした。",
+    "description": "Runtime interface message user_input.failed"
+  },
+  "runtime_user_input_http_failed": {
+    "message": "Hermes への回答の送信に失敗しました ({status})。",
+    "description": "Runtime interface message user_input.http_failed"
+  },
+  "runtime_user_input_invalid": {
+    "message": "Hermes がこの回答を受け付けませんでした。入力内容を確認してもう一度お試しください。",
+    "description": "Runtime interface message user_input.invalid"
+  },
+  "runtime_user_input_other_answer": {
+    "message": "または別の回答を入力",
+    "description": "Runtime interface message user_input.other_answer"
+  },
+  "runtime_user_input_pending_count": {
+    "message": "{count} 件が保留中",
+    "description": "Runtime interface message user_input.pending_count"
+  },
+  "runtime_user_input_recorded": {
+    "message": "Hermes が記録しました。",
+    "description": "Runtime interface message user_input.recorded"
+  },
+  "runtime_user_input_recorded_deferred": {
+    "message": "記録しました。Hermes は次の対象ターンで使用します。自動再開は確認できていません。",
+    "description": "Runtime interface message user_input.recorded_deferred"
+  },
+  "runtime_user_input_recorded_title": {
+    "message": "回答を記録しました",
+    "description": "Runtime interface message user_input.recorded_title"
+  },
+  "runtime_user_input_sending": {
+    "message": "送信中…",
+    "description": "Runtime interface message user_input.sending"
+  },
+  "runtime_user_input_session_changed": {
+    "message": "この回答の準備中に Hermes のセッションが変わりました。現在のセッションからもう一度お試しください。",
+    "description": "Runtime interface message user_input.session_changed"
+  },
+  "runtime_user_input_submit": {
+    "message": "回答を送信",
+    "description": "Runtime interface message user_input.submit"
+  },
+  "runtime_user_input_title": {
+    "message": "Hermes があなたの回答を待っています",
+    "description": "Runtime interface message user_input.title"
+  },
+  "runtime_user_input_transport": {
+    "message": "Hermes に接続できませんでした。",
+    "description": "Runtime interface message user_input.transport"
+  },
+  "runtime_user_input_unrecognized": {
+    "message": "Hermes が認識できないユーザー入力の応答を返しました。",
+    "description": "Runtime interface message user_input.unrecognized"
+  },
+  "runtime_user_input_your_answer": {
+    "message": "あなたの回答",
+    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "音声モード: ブラウザ音声フォールバック\n\n{preview}",
