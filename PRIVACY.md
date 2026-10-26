@@ -52,7 +52,7 @@ Local HTML, browser-rendered PDF, and localhost pages use the same model. A loca
 
 ## Projects and session management
 
-The Projects tab of the sessions drawer, Move, Compact context and the capability rows talk to the Hermes gateway you configured, over the dashboard connection, and nowhere else. Project names, folder paths on the Hermes host, session titles and counts are read from the gateway and kept in memory only. A project name and folder path you type, and the folder you choose for a move, are sent to that gateway. Nothing about projects or moves is stored in the browser, and none of it is sent to any third party. Capability states are derived in memory from the connection and are included in the support report as state, source, age and reason only.
+The Projects tab of the sessions drawer, Move, Compact context and the capability rows talk to the Hermes gateway you configured, over the dashboard connection, and nowhere else. Project names, folder paths on the Hermes host, session titles and counts are read from the gateway and kept in memory only. A project name, the folders you add or type, the idea you write, and the folder you choose for a move are sent to that gateway; the folder picker lists folders on the Hermes host through it. Nothing about projects or moves is stored in the browser, and none of it is sent to any third party. Capability states are derived in memory from the connection and are included in the support report as state, source, age and reason only.
 
 ## Local vs remote privacy boundary
 
