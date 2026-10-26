@@ -107,3 +107,33 @@ export async function uploadImageViaDashboard({
     return { ok: false, error: error?.name === 'AbortError' ? 'Image upload timed out.' : (error?.message || 'Image upload failed.') };
   }
 }
+
+export const DASHBOARD_MODEL_INFO_PATH = '/api/model/info';
+
+/**
+ * The context window the gateway itself resolves for the profile's configured model
+ * (agent.model_metadata.get_model_context_length: config pin, provider catalogs, models.dev, then its
+ * built-in table). GET /api/model/info answers { model, provider, auto_context_length,
+ * config_context_length, effective_context_length }; `effective` is the window the agent really uses.
+ * One bounded read-only GET. Never throws.
+ * @returns {{ok: true, model: string, provider: string, tokens: number} | {ok: false, reason: string}}
+ */
+export async function readDashboardModelInfo({ baseUrl = '', token = '', profile = '', fetchFn = globalThis.fetch, timeoutMs = TIMEOUT_MS } = {}) {
+  if (!base(baseUrl) || !String(token || '').trim() || typeof fetchFn !== 'function') return { ok: false, reason: 'no-token' };
+  try {
+    const response = await send(fetchFn, withProfile(`${base(baseUrl)}${DASHBOARD_MODEL_INFO_PATH}`, profile), {
+      method: 'GET',
+      headers: { Accept: 'application/json', [DASHBOARD_SESSION_HEADER]: String(token).trim() },
+      credentials: 'omit',
+    }, timeoutMs);
+    if (!response?.ok) return { ok: false, reason: Number(response?.status) === 401 || Number(response?.status) === 403 ? 'rejected' : 'unsupported' };
+    const payload = await response.json();
+    const model = typeof payload?.model === 'string' ? payload.model.trim() : '';
+    const tokens = Number(payload?.effective_context_length) > 0 ? Number(payload.effective_context_length) : Number(payload?.auto_context_length);
+    // 0 is the gateway's "could not resolve it in time", not a window.
+    if (!model || !(tokens > 0)) return { ok: false, reason: 'unresolved' };
+    return { ok: true, model, provider: typeof payload.provider === 'string' ? payload.provider.trim() : '', tokens: Math.round(tokens) };
+  } catch {
+    return { ok: false, reason: 'unreachable' };
+  }
+}
