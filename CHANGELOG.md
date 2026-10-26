@@ -5,6 +5,13 @@
 ### Added
 
 - **Open Hermes Web** and the Hermes Web socket need no terminal step on a gateway that carries the extension-pairing routes. The paired token asks the gateway for a one-use ticket: the button opens an already signed-in Hermes Web tab (following the Webapp's own address, so another port works), and Projects, the full bot roster, skills and compaction use a session-authority socket the gateway signs in, with no sign-in held in the browser. Settings > About & Diagnostics now reads Session authority and Projects (and Context compaction where the gateway has no REST compact route) from that socket. A gateway without the routes, or with its Webapp off, behaves as before; Projects says when the Webapp is off, and the Hermes Web dialog drops the `hermes webapp` step. Image attach (session) still needs a chat that runs over the dashboard WebSocket, and its row now says so. Needs the gateway part of the pairing patch (`hermes gateway restart` after the update).
+- **Browser context upload, Browser context status and Plugin actions** read "available via the companion plugin" when the plugin's status route lists its own routes (`GET .../context/status`, `POST .../context`, `GET .../actions`, all behind the API server's own authentication). Context status reports counts, ages and a hash for the session, never page text. An upload parks the full-context envelope for its session until a reference turn that names the same hash adopts it under the usual owner and lease rules, and the panel uploads before such a turn so the model can read the context it would otherwise only be told about by hash. Plugin actions are declarative descriptors; nothing runs. A gateway without the plugin keeps the "no such route" reason and sees no new request.
+- Hermes's native asynchronous questions (hermes-agent #103136) show as a card above the composer and are answered from the panel, replayed after a reconnect, in all 21 languages. They activate only where the gateway advertises `session_user_input` or a socket actually delivers a request. Lands #98.
+- Turns waiting in a session-authority gateway's queue offer **Cancel turn** and, where the gateway offers it for that turn, **Edit**.
+
+### Fixed
+
+- Bot Mode in Remote API mode loads its roster and avatars from the gateway's `/v1/profiles` routes instead of reporting no companion, and never looks for a dashboard on this computer. Avatars are read from the same place the roster came from (#103).
 
 ## [0.4.0] - 2026-10-26
 
