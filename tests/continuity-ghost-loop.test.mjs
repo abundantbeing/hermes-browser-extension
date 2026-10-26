@@ -24,7 +24,7 @@ const viewedRunning = between('function viewedSessionIsRunning()', 'function cur
 // The composer's submit handler: the arrow function's body, as the panel runs it.
 const submitBody = between("els.composer.addEventListener('submit', async (event) => {", "  els.input.addEventListener('keydown'")
   .replace("els.composer.addEventListener('submit', async (event) => {", '')
-  .replace(/\n  \}\);\n$/, '\n');
+  .replace(/\n {2}\}\);\n$/, '\n');
 
 async function composer({ rosterStatus = 'working', sending = false, canSteer = true, draft = 'bro stop', children = null, attach = null } = {}) {
   const roster = sessionLiveRoster({ sessions: [{ id: 'live-A', session_key: 'A', status: rosterStatus }] }, ['A'],
