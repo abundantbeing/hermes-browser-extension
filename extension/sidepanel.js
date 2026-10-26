@@ -446,11 +446,15 @@ import {
   screenshotPermissionState,
 } from './lib/firefox-screenshot-permission.mjs';
 import {
+  cancelQueuedTurnRequest,
+  classifyQueuedRefusal,
   createGatewayQueueStore,
   discardLostTurnRequest,
   gatewayQueueView,
   isLostTurnAlreadyResolved,
   observeSessionResume,
+  queuedTurnEditable,
+  replaceQueuedTurnRequest,
 } from './lib/gateway-queue.mjs';
 import { createGatewayRestartAction, restartGatewayViaDashboard, waitForGatewayReturn, watchGatewayRestart } from './lib/gateway-restart.mjs';
 import { createDiffusionCanvas, diffusionVariantForSeed } from './lib/diffusion-canvas.mjs';
@@ -23101,10 +23105,14 @@ function createChatGatewayClient({ replayEndpoint = '', ...options } = {}) {
   return gatewayClient;
 }
 
-// The turn queue a session-authority gateway owns is mirrored read-only: one store per
-// connection, fed by resume snapshots and session.info events. A turn lost in a gateway
-// restart offers Discard (prompt.resolve_unknown); nothing is ever resent from here.
+// The turn queue a session-authority gateway owns is mirrored: one store per connection, fed
+// by resume snapshots and session.info events. A turn lost in a gateway restart offers Discard
+// (prompt.resolve_unknown); a turn still waiting offers Cancel (prompt.cancel) and, where the
+// gateway offers it for that row, Edit (prompt.replace_queued). Nothing is ever resent from
+// here, and a row leaves the panel only when the gateway settles it.
 const gatewayQueueStores = new WeakMap();
+// The waiting turn being edited, so a queue update while someone types keeps their text.
+let gatewayQueueEdit = null;
 
 function mirrorGatewayQueue(client) {
   const store = createGatewayQueueStore({ onChange: () => renderGatewayQueue() });
@@ -23123,6 +23131,7 @@ function renderGatewayQueue() {
   const sessionId = String(activeDashboardWsConnection?.wsStoredSessionId || settings.sessionId || '').trim();
   const view = gatewayQueueView(client && sessionId ? gatewayQueueStores.get(client)?.forSession(sessionId) : []);
   if (!view.lost.length && !view.queued.length) {
+    gatewayQueueEdit = null;
     node.hidden = true;
     node.replaceChildren();
     return;
@@ -23130,10 +23139,27 @@ function renderGatewayQueue() {
   if (!node.dataset.bound) {
     node.dataset.bound = '1';
     node.addEventListener('click', (event) => {
-      const button = event.target?.closest?.('[data-gateway-discard]');
-      if (button) void discardLostGatewayTurn(button.dataset.gatewayDiscard, button);
+      const target = event.target?.closest?.('button');
+      if (!target) return;
+      if (target.dataset.gatewayDiscard) void discardLostGatewayTurn(target.dataset.gatewayDiscard, target);
+      else if (target.dataset.gatewayCancel) void cancelQueuedGatewayTurn(target.dataset.gatewayCancel, target);
+      else if (target.dataset.gatewayEdit) startQueuedTurnEdit(target.dataset.gatewayEdit);
+      else if (target.dataset.gatewaySave) void saveQueuedTurnEdit(target.dataset.gatewaySave, target);
+      else if (target.dataset.gatewayEditDiscard) endQueuedTurnEdit();
+    });
+    node.addEventListener('input', (event) => {
+      if (gatewayQueueEdit && event.target?.matches?.('textarea[data-gateway-edit-text]')) gatewayQueueEdit.draft = event.target.value;
     });
   }
+  // An edit belongs to one waiting turn of this session; when that turn is gone, so is the edit.
+  if (gatewayQueueEdit && !(gatewayQueueEdit.sessionId === sessionId
+    && view.queued.some((row) => row.admissionId === gatewayQueueEdit.admissionId && queuedTurnEditable(row)))) {
+    gatewayQueueEdit = null;
+  }
+  const editField = node.querySelector('textarea[data-gateway-edit-text]');
+  const refocus = gatewayQueueEdit && editField && editField === document.activeElement
+    ? { start: editField.selectionStart, end: editField.selectionEnd }
+    : null;
   const parts = [];
   for (const row of view.lost) {
     const lost = document.createElement('div');
@@ -23167,11 +23193,138 @@ function renderGatewayQueue() {
       text.className = 'gateway-queue-text';
       text.textContent = row.text.slice(0, 120);
       queued.append(text);
+      appendQueuedRowControls(queued, row, sessionId);
     }
     parts.push(queued);
   }
   node.replaceChildren(...parts);
   node.hidden = false;
+  if (refocus) {
+    const field = node.querySelector('textarea[data-gateway-edit-text]');
+    field?.focus();
+    field?.setSelectionRange?.(refocus.start, refocus.end);
+  }
+}
+
+// Cancel for every plain waiting turn, Edit where the gateway offers it for that row. A turn in
+// transfer to the running one has neither: acting on it could stop the turn that is running.
+function appendQueuedRowControls(container, row, sessionId) {
+  if (!cancelQueuedTurnRequest(row, sessionId)) return;
+  const editing = gatewayQueueEdit && gatewayQueueEdit.admissionId === row.admissionId && gatewayQueueEdit.sessionId === sessionId;
+  const actions = document.createElement('div');
+  actions.className = 'queue-notice-actions';
+  if (editing) {
+    const field = document.createElement('textarea');
+    field.className = 'gateway-queue-edit';
+    field.dataset.gatewayEditText = row.admissionId;
+    field.rows = 3;
+    field.value = gatewayQueueEdit.draft;
+    field.maxLength = 20_000;
+    field.setAttribute('aria-label', t('gateway_queue.edit_label'));
+    const save = document.createElement('button');
+    save.type = 'button';
+    save.dataset.gatewaySave = row.admissionId;
+    save.textContent = t('gateway_queue.save');
+    const keep = document.createElement('button');
+    keep.type = 'button';
+    keep.dataset.gatewayEditDiscard = row.admissionId;
+    keep.textContent = t('gateway_queue.edit_discard');
+    container.append(field);
+    actions.append(save, keep);
+  } else {
+    if (queuedTurnEditable(row)) {
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.dataset.gatewayEdit = row.admissionId;
+      edit.textContent = t('gateway_queue.edit');
+      actions.append(edit);
+    }
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.dataset.gatewayCancel = row.admissionId;
+    cancel.dataset.queuedAction = 'delete';
+    cancel.textContent = t('gateway_queue.cancel');
+    actions.append(cancel);
+  }
+  container.append(actions);
+}
+
+// The viewed session's waiting row and the connection that holds it, read the way Discard reads
+// them; null when the row or the connection is gone.
+function viewedGatewayQueueRow(admissionId) {
+  const connection = activeDashboardWsConnection;
+  const store = connection?.client ? gatewayQueueStores.get(connection.client) : null;
+  const sessionId = String(connection?.wsStoredSessionId || settings.sessionId || '').trim();
+  const row = store?.forSession(sessionId).find((item) => item.admissionId === admissionId);
+  return row ? { connection, store, sessionId, row } : null;
+}
+
+// What a refused Cancel or Edit does: a settled row leaves quietly, anything else says why and stays.
+function handleQueuedTurnRefusal(held, error, failedKey) {
+  const kind = classifyQueuedRefusal(error);
+  if (kind === 'settled') {
+    held.store.drop(held.sessionId, held.row.admissionId);
+    return;
+  }
+  const reason = kind === 'unsupported' ? t('gateway_queue.unsupported') : String(error?.message ?? error);
+  setStatus('warn', t('gateway_queue.queued', { count: held.store.forSession(held.sessionId).length }), t(failedKey, { error: reason }), { translateTitle: false, translateDetail: false });
+}
+
+async function cancelQueuedGatewayTurn(admissionId, button = null) {
+  const held = viewedGatewayQueueRow(admissionId);
+  const request = held ? cancelQueuedTurnRequest(held.row, held.sessionId) : null;
+  if (!request) return;
+  if (button) button.disabled = true;
+  try {
+    await held.connection.client.request(request.method, request.params);
+    held.store.drop(held.sessionId, admissionId);
+  } catch (error) {
+    if (button) button.disabled = false;
+    handleQueuedTurnRefusal(held, error, 'gateway_queue.cancel_failed');
+  }
+}
+
+function startQueuedTurnEdit(admissionId) {
+  const held = viewedGatewayQueueRow(admissionId);
+  if (!held || !queuedTurnEditable(held.row)) return;
+  gatewayQueueEdit = { sessionId: held.sessionId, admissionId, draft: held.row.fullText, submissionId: '', busy: false };
+  renderGatewayQueue();
+  focusQueueEdit();
+}
+
+function focusQueueEdit() {
+  els.gatewayQueueNotice?.querySelector('textarea[data-gateway-edit-text]')?.focus();
+}
+
+function endQueuedTurnEdit() {
+  gatewayQueueEdit = null;
+  renderGatewayQueue();
+}
+
+async function saveQueuedTurnEdit(admissionId, button = null) {
+  const edit = gatewayQueueEdit;
+  const held = viewedGatewayQueueRow(admissionId);
+  if (!edit || edit.busy || !held || edit.admissionId !== admissionId || edit.sessionId !== held.sessionId) return;
+  // One submission id per edit attempt: a retry of the same edit answers the same new turn.
+  if (!edit.submissionId) edit.submissionId = globalThis.crypto.randomUUID().replaceAll('-', '');
+  const request = replaceQueuedTurnRequest(held.row, edit.draft, { sessionId: held.sessionId, submissionId: edit.submissionId });
+  if (!request) {
+    // Empty or unchanged: nothing to send.
+    if (!String(edit.draft || '').trim() || edit.draft === held.row.fullText) endQueuedTurnEdit();
+    return;
+  }
+  edit.busy = true;
+  if (button) button.disabled = true;
+  try {
+    await held.connection.client.request(request.method, request.params);
+    // The old row is retired in the same write; the new one arrives with the gateway's next queue update.
+    if (gatewayQueueEdit === edit) gatewayQueueEdit = null;
+    held.store.drop(held.sessionId, admissionId);
+  } catch (error) {
+    edit.busy = false;
+    if (button) button.disabled = false;
+    handleQueuedTurnRefusal(held, error, 'gateway_queue.edit_failed');
+  }
 }
 
 async function discardLostGatewayTurn(admissionId, button = null) {

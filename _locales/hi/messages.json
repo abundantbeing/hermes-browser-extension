@@ -2167,6 +2167,14 @@
     "message": "Firefox में मॉडल स्क्रीनशॉट",
     "description": "Runtime interface message firefox_screenshots.title"
   },
+  "runtime_gateway_queue_cancel": {
+    "message": "टर्न रद्द करें",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "कतार में लगा टर्न रद्द नहीं किया जा सका: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
   "runtime_gateway_queue_discard": {
     "message": "हटाएँ",
     "description": "Runtime interface message gateway_queue.discard"
@@ -2174,6 +2182,22 @@
   "runtime_gateway_queue_discard_failed": {
     "message": "खोया हुआ टर्न हटाया नहीं जा सका: {error}",
     "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "संपादित करें",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "मूल रखें",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "संपादन सहेजा नहीं जा सका: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "कतार में लगे संदेश को संपादित करें",
+    "description": "Runtime interface message gateway_queue.edit_label"
   },
   "runtime_gateway_queue_lost": {
     "message": "रीस्टार्ट के दौरान टर्न खो गया",
@@ -2186,6 +2210,14 @@
   "runtime_gateway_queue_queued": {
     "message": "Hermes पर कतार में: {count}",
     "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "सहेजें",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "यह Hermes इस टर्न के लिए यह सुविधा नहीं देता।",
+    "description": "Runtime interface message gateway_queue.unsupported"
   },
   "runtime_haui_ask_hint": {
     "message": "यह सवाल संदेश बॉक्स में डालता है",

@@ -2167,6 +2167,14 @@
     "message": "Firefox 中的模型截圖",
     "description": "Runtime interface message firefox_screenshots.title"
   },
+  "runtime_gateway_queue_cancel": {
+    "message": "取消該回合",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "無法取消排隊中的回合：{error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
   "runtime_gateway_queue_discard": {
     "message": "捨棄",
     "description": "Runtime interface message gateway_queue.discard"
@@ -2174,6 +2182,22 @@
   "runtime_gateway_queue_discard_failed": {
     "message": "無法捨棄遺失的回合：{error}",
     "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "編輯",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "保留原文",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "無法儲存編輯：{error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "編輯排隊中的訊息",
+    "description": "Runtime interface message gateway_queue.edit_label"
   },
   "runtime_gateway_queue_lost": {
     "message": "重新啟動期間遺失了一個回合",
@@ -2186,6 +2210,14 @@
   "runtime_gateway_queue_queued": {
     "message": "Hermes 佇列中：{count}",
     "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "儲存",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "此 Hermes 不為該回合提供該操作。",
+    "description": "Runtime interface message gateway_queue.unsupported"
   },
   "runtime_haui_ask_hint": {
     "message": "將此問題放入訊息框",

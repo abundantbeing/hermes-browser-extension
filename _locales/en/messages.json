@@ -2167,6 +2167,14 @@
     "message": "Model screenshots on Firefox",
     "description": "Runtime interface message firefox_screenshots.title"
   },
+  "runtime_gateway_queue_cancel": {
+    "message": "Cancel turn",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "Could not cancel the queued turn: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
   "runtime_gateway_queue_discard": {
     "message": "Discard",
     "description": "Runtime interface message gateway_queue.discard"
@@ -2174,6 +2182,22 @@
   "runtime_gateway_queue_discard_failed": {
     "message": "Could not discard the lost turn: {error}",
     "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "Edit",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "Keep original",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "Could not save the edit: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "Edit the queued message",
+    "description": "Runtime interface message gateway_queue.edit_label"
   },
   "runtime_gateway_queue_lost": {
     "message": "Turn lost during restart",
@@ -2186,6 +2210,14 @@
   "runtime_gateway_queue_queued": {
     "message": "Queued on Hermes: {count}",
     "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "Save",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "This Hermes does not offer that for this turn.",
+    "description": "Runtime interface message gateway_queue.unsupported"
   },
   "runtime_haui_ask_hint": {
     "message": "Puts this question in the message box",

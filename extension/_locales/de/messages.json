@@ -2167,6 +2167,14 @@
     "message": "Modell-Screenshots in Firefox",
     "description": "Runtime interface message firefox_screenshots.title"
   },
+  "runtime_gateway_queue_cancel": {
+    "message": "Zug abbrechen",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "Der wartende Zug konnte nicht abgebrochen werden: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
   "runtime_gateway_queue_discard": {
     "message": "Verwerfen",
     "description": "Runtime interface message gateway_queue.discard"
@@ -2174,6 +2182,22 @@
   "runtime_gateway_queue_discard_failed": {
     "message": "Der verlorene Zug konnte nicht verworfen werden: {error}",
     "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "Bearbeiten",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "Original behalten",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "Die Änderung konnte nicht gespeichert werden: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "Wartende Nachricht bearbeiten",
+    "description": "Runtime interface message gateway_queue.edit_label"
   },
   "runtime_gateway_queue_lost": {
     "message": "Zug beim Neustart verloren",
@@ -2186,6 +2210,14 @@
   "runtime_gateway_queue_queued": {
     "message": "Bei Hermes in der Warteschlange: {count}",
     "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "Speichern",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "Dieses Hermes bietet das für diesen Zug nicht an.",
+    "description": "Runtime interface message gateway_queue.unsupported"
   },
   "runtime_haui_ask_hint": {
     "message": "Fügt diese Frage in das Nachrichtenfeld ein",

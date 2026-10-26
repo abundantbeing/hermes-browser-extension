@@ -2167,6 +2167,14 @@
     "message": "Capturas de tela do modelo no Firefox",
     "description": "Runtime interface message firefox_screenshots.title"
   },
+  "runtime_gateway_queue_cancel": {
+    "message": "Cancelar turno",
+    "description": "Runtime interface message gateway_queue.cancel"
+  },
+  "runtime_gateway_queue_cancel_failed": {
+    "message": "Não foi possível cancelar o turno na fila: {error}",
+    "description": "Runtime interface message gateway_queue.cancel_failed"
+  },
   "runtime_gateway_queue_discard": {
     "message": "Descartar",
     "description": "Runtime interface message gateway_queue.discard"
@@ -2174,6 +2182,22 @@
   "runtime_gateway_queue_discard_failed": {
     "message": "Não foi possível descartar o turno perdido: {error}",
     "description": "Runtime interface message gateway_queue.discard_failed"
+  },
+  "runtime_gateway_queue_edit": {
+    "message": "Editar",
+    "description": "Runtime interface message gateway_queue.edit"
+  },
+  "runtime_gateway_queue_edit_discard": {
+    "message": "Manter o original",
+    "description": "Runtime interface message gateway_queue.edit_discard"
+  },
+  "runtime_gateway_queue_edit_failed": {
+    "message": "Não foi possível salvar a edição: {error}",
+    "description": "Runtime interface message gateway_queue.edit_failed"
+  },
+  "runtime_gateway_queue_edit_label": {
+    "message": "Editar a mensagem na fila",
+    "description": "Runtime interface message gateway_queue.edit_label"
   },
   "runtime_gateway_queue_lost": {
     "message": "Turno perdido durante a reinicialização",
@@ -2186,6 +2210,14 @@
   "runtime_gateway_queue_queued": {
     "message": "Na fila do Hermes: {count}",
     "description": "Runtime interface message gateway_queue.queued"
+  },
+  "runtime_gateway_queue_save": {
+    "message": "Salvar",
+    "description": "Runtime interface message gateway_queue.save"
+  },
+  "runtime_gateway_queue_unsupported": {
+    "message": "Este Hermes não oferece isso para este turno.",
+    "description": "Runtime interface message gateway_queue.unsupported"
   },
   "runtime_haui_ask_hint": {
     "message": "Coloca esta pergunta na caixa de mensagem",

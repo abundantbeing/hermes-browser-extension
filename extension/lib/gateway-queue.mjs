@@ -1,7 +1,9 @@
 // The turn queue a session-authority gateway owns (#106742, #141864). It lives on
 // the gateway, survives a restart and is shared by every window attached to the
 // session, so the panel only mirrors it: it reads the rows, shows them, and offers
-// Discard for a turn lost in a restart. It never resends and never invents rows.
+// Discard for a turn lost in a restart, and Cancel and Edit for a turn still waiting. It
+// never resends and never invents rows: Cancel and Edit are the gateway's own verbs on the
+// row it listed, and the row leaves the panel only when the gateway says so.
 //
 // Wire shapes (tui_gateway/contracts/canonical.py, canonical_sessions.py):
 //   pending row   {admission_id, ref: {profile_id, session_id}, sequence,
@@ -16,14 +18,25 @@
 //                 the unknown row, a stale one is refused with stale_generation.
 //   `unknown`     a turn that was `started` when its owner died. It is never
 //                 replayed and it holds back every queued turn behind it.
+//   Cancel        prompt.cancel {session_id, admission_id}. A row the drain claimed
+//                 between the list and the cancel is Stopped by the gateway instead.
+//   Edit          prompt.replace_queued {session_id, admission_id, submission_id, text}:
+//                 the edit is admitted at the back of the FIFO and the old row retired in
+//                 one write. Offered only for a row whose `controls` list `replace`
+//                 (an older owner lists none) and whose whole text the panel holds.
 
 export const GATEWAY_QUEUE_METHODS = Object.freeze({
   resume: 'session.resume',
   resolveUnknown: 'prompt.resolve_unknown',
+  cancel: 'prompt.cancel',
+  replaceQueued: 'prompt.replace_queued',
 });
 
 const MAX_ROWS = 50;
 const MAX_TEXT = 600;
+// The whole text of a row is kept only up to this size, so an edit can never silently
+// shorten a long message; a longer row is shown but not offered for Edit.
+export const MAX_EDITABLE_TEXT = 20_000;
 
 function cleanText(value, limit) {
   return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, limit) : '';
@@ -45,11 +58,18 @@ export function normalizePendingRows(rows) {
     if (status !== 'unknown' && !queued) continue;
     seen.add(admissionId);
     const generation = typeof row.execution_generation === 'number' ? row.execution_generation : Number.NaN;
+    const whole = typeof row.text === 'string' && row.text.trim() && row.text.length <= MAX_EDITABLE_TEXT ? row.text : '';
     normalized.push(Object.freeze({
       admissionId,
       sequence: Number.isFinite(Number(row.sequence)) ? Number(row.sequence) : 0,
       status: status === 'unknown' ? 'unknown' : 'queued',
       text: cleanText(row.text, MAX_TEXT),
+      // The exact text, for Edit, or '' when it is empty or too long to edit safely.
+      fullText: whole,
+      // The queued-row verbs the owner serves for this row; an owner that lists none shows none.
+      controls: Object.freeze(Array.isArray(row.controls) ? row.controls.filter((item) => typeof item === 'string').map((item) => item.trim().toLowerCase()).slice(0, 8) : []),
+      // A queued turn in transfer to the running one reads started; it can no longer be acted on.
+      inTransfer: status === 'started' && row.steering === true,
       executionGeneration: Number.isInteger(generation) ? generation : null,
       sessionId: cleanText(row.ref?.session_id, 200),
     }));
@@ -79,6 +99,51 @@ export function discardLostTurnRequest(row, sessionId = '') {
       execution_generation: row.executionGeneration,
     },
   };
+}
+
+/** The RPC that cancels one waiting turn, or null when the row is not a plain waiting turn. */
+export function cancelQueuedTurnRequest(row, sessionId = '') {
+  if (!row || row.status !== 'queued' || row.inTransfer === true) return null;
+  const target = String(row.sessionId || sessionId || '').trim();
+  if (!target) return null;
+  return { method: GATEWAY_QUEUE_METHODS.cancel, params: { session_id: target, admission_id: row.admissionId } };
+}
+
+/** May this waiting turn be edited? Only where the owner offers `replace` and the whole text is held. */
+export function queuedTurnEditable(row) {
+  return Boolean(row && row.status === 'queued' && row.inTransfer !== true
+    && Array.isArray(row.controls) && row.controls.includes('replace')
+    && typeof row.fullText === 'string' && row.fullText);
+}
+
+/**
+ * The RPC that replaces one waiting turn with an edited text, or null when it must not be
+ * sent: the row cannot be edited, the text is empty, too long or unchanged, or there is no
+ * submission id (an exact retry of the same edit reuses its id and answers the same admission).
+ */
+export function replaceQueuedTurnRequest(row, text, { sessionId = '', submissionId = '' } = {}) {
+  if (!queuedTurnEditable(row)) return null;
+  const edited = typeof text === 'string' ? text : '';
+  if (!edited.trim() || edited.length > MAX_EDITABLE_TEXT || edited === row.fullText) return null;
+  const target = String(row.sessionId || sessionId || '').trim();
+  const submission = String(submissionId || '').trim();
+  if (!target || !submission) return null;
+  return {
+    method: GATEWAY_QUEUE_METHODS.replaceQueued,
+    params: { session_id: target, admission_id: row.admissionId, submission_id: submission, text: edited },
+  };
+}
+
+/**
+ * How a refusal of Cancel or Edit reads: `settled` (the turn already ran, was cancelled or
+ * is gone: drop the row quietly), `unsupported` (the gateway has no such verb or does not
+ * offer it for this row) or `failed` (show the reason, keep the row).
+ */
+export function classifyQueuedRefusal(error) {
+  const reason = String(error?.data?.reason ?? error?.reason ?? '').trim().toLowerCase();
+  if (['stale_generation', 'not_found', 'admission_conflict', 'admission_started'].includes(reason)) return 'settled';
+  if (reason === 'unsupported_control' || Number(error?.code) === -32601) return 'unsupported';
+  return 'failed';
 }
 
 /** Refusals that mean the row is already settled elsewhere: drop it quietly. */
@@ -123,14 +188,13 @@ export function createGatewayQueueStore({ onChange = null } = {}) {
       const id = String(sessionId || '').trim();
       const rows = rowsBySession.get(id);
       if (!rows) return false;
-      return set(id, rows.filter((row) => row.admissionId !== admissionId).map((row) => ({
-        admission_id: row.admissionId,
-        sequence: row.sequence,
-        status: row.status === 'unknown' ? 'unknown' : 'queued',
-        text: row.text,
-        execution_generation: row.executionGeneration,
-        ref: { session_id: row.sessionId },
-      })));
+      const kept = rows.filter((row) => row.admissionId !== admissionId);
+      if (kept.length === rows.length) return false;
+      // Already normalised: kept as held, so an edit's exact text and a row's controls survive.
+      if (kept.length) rowsBySession.set(id, kept);
+      else rowsBySession.delete(id);
+      onChange?.(id);
+      return true;
     },
     forSession(sessionId) {
       return rowsBySession.get(String(sessionId || '').trim()) || [];

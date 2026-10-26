@@ -4358,6 +4358,20 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
 .gateway-queue-lost,
 .gateway-queue-queued { display: grid; gap: 4px; }
 .gateway-queue-lost + .gateway-queue-queued { margin-top: 6px; }
+.gateway-queue-edit {
+  width: 100%;
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--hermes-line);
+  border-radius: 0;
+  background: var(--hermes-input-bg, var(--hermes-paper));
+  color: var(--hermes-ink);
+  font: calc(11px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-mono);
+  letter-spacing: 0;
+  text-transform: none;
+  resize: vertical;
+}
 .gateway-queue-text {
   display: block;
   overflow: hidden;
