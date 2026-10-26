@@ -35,6 +35,102 @@
     "message": "Состояние субагентов Hermes",
     "description": "Runtime interface message a11y.subagent_status"
   },
+  "runtime_account_hint": {
+    "message": "Тот же вход, что и в мобильном приложении Hermes. Он открывает «Проекты», авторитет сессий, сжатие контекста и полный список ботов на шлюзе, который требует вход, без запуска чего-либо. «Выйти» удаляет его в этом браузере.",
+    "description": "Runtime interface message account.hint"
+  },
+  "runtime_account_label": {
+    "message": "Учётная запись Hermes",
+    "description": "Runtime interface message account.label"
+  },
+  "runtime_account_notice_exchange_rejected": {
+    "message": "Шлюз отклонил код входа. Повторите попытку.",
+    "description": "Runtime interface message account.notice.exchange_rejected"
+  },
+  "runtime_account_notice_failed": {
+    "message": "Вход не завершён. Повторите попытку.",
+    "description": "Runtime interface message account.notice.failed"
+  },
+  "runtime_account_notice_no_permission": {
+    "message": "Для входа нужно ваше разрешение, чтобы Hermes Browser видел, где заканчивается окно входа. Выберите «Войти» ещё раз и разрешите.",
+    "description": "Runtime interface message account.notice.no_permission"
+  },
+  "runtime_account_notice_no_window": {
+    "message": "Этот браузер не смог открыть окно входа.",
+    "description": "Runtime interface message account.notice.no_window"
+  },
+  "runtime_account_notice_provider_denied": {
+    "message": "Вход не был подтверждён. Повторите попытку.",
+    "description": "Runtime interface message account.notice.provider_denied"
+  },
+  "runtime_account_notice_session_expired": {
+    "message": "Сессия вашей учётной записи Hermes завершена. Войдите снова.",
+    "description": "Runtime interface message account.notice.session_expired"
+  },
+  "runtime_account_notice_state_mismatch": {
+    "message": "Этот вход не соответствовал запросу и был отброшен. Повторите попытку.",
+    "description": "Runtime interface message account.notice.state_mismatch"
+  },
+  "runtime_account_notice_timeout": {
+    "message": "Вход не завершился вовремя. Повторите попытку.",
+    "description": "Runtime interface message account.notice.timeout"
+  },
+  "runtime_account_notice_unavailable": {
+    "message": "Сейчас не удаётся связаться со шлюзом. Ваш вход сохранён; повторите чуть позже.",
+    "description": "Runtime interface message account.notice.unavailable"
+  },
+  "runtime_account_sign_in": {
+    "message": "Войти с учётной записью Hermes",
+    "description": "Runtime interface message account.sign_in"
+  },
+  "runtime_account_sign_in_needed": {
+    "message": "Этому шлюзу нужен вход с вашей учётной записью Hermes. Откройте «Настройки» > «Подключения» и выберите «Войти с учётной записью Hermes».",
+    "description": "Runtime interface message account.sign_in_needed"
+  },
+  "runtime_account_sign_out": {
+    "message": "Выйти",
+    "description": "Runtime interface message account.sign_out"
+  },
+  "runtime_account_signed_in_as": {
+    "message": "Вы вошли как {name} ({provider})",
+    "description": "Runtime interface message account.signed_in_as"
+  },
+  "runtime_account_signed_in_generic": {
+    "message": "Вход с учётной записью Hermes выполнен",
+    "description": "Runtime interface message account.signed_in_generic"
+  },
+  "runtime_account_signed_in_title": {
+    "message": "Вход в Hermes выполнен",
+    "description": "Runtime interface message account.signed_in_title"
+  },
+  "runtime_account_status_checking": {
+    "message": "Проверяем, принимает ли этот шлюз вход с учётной записью Hermes.",
+    "description": "Runtime interface message account.status_checking"
+  },
+  "runtime_account_status_signed_out": {
+    "message": "Вход не выполнен. Этот шлюз требует вход с учётной записью Hermes.",
+    "description": "Runtime interface message account.status_signed_out"
+  },
+  "runtime_account_status_waiting": {
+    "message": "Ждём, пока вы завершите вход в открывшемся окне.",
+    "description": "Runtime interface message account.status_waiting"
+  },
+  "runtime_account_unavailable_no_native_flow": {
+    "message": "Этот шлюз требует вход, но не поддерживает вход для приложений. Обновите Hermes до версии, которая его поддерживает.",
+    "description": "Runtime interface message account.unavailable.no_native_flow"
+  },
+  "runtime_account_unavailable_no_origin": {
+    "message": "Для входа с учётной записью Hermes нужен шлюз по https или локальный шлюз, защищённый входом.",
+    "description": "Runtime interface message account.unavailable.no_origin"
+  },
+  "runtime_account_unavailable_not_gated": {
+    "message": "Этот шлюз открыт на этом компьютере и не требует входа, поэтому учётной записи Hermes здесь использовать не нужно. «Проекты» обеспечивает сопряжение Hermes Browser или собственный вход Hermes Web.",
+    "description": "Runtime interface message account.unavailable.not_gated"
+  },
+  "runtime_account_unavailable_unreachable": {
+    "message": "Не удалось связаться с этим шлюзом, чтобы проверить вход.",
+    "description": "Runtime interface message account.unavailable.unreachable"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -1270,6 +1366,10 @@
   "runtime_capability_meta_source": {
     "message": "Источник: {source}",
     "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_account_sign_in": {
+    "message": "Этот шлюз требует вход с учётной записью Hermes. Войдите в «Настройки» > «Подключения», чтобы открыть его сокет сессии.",
+    "description": "Runtime interface message capability.reason.account_sign_in"
   },
   "runtime_capability_reason_advertised": {
     "message": "Объявлено этим шлюзом.",
@@ -2998,6 +3098,10 @@
   "runtime_projects_tab_recents": {
     "message": "Недавние",
     "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_account_sign_in": {
+    "message": "Для «Проектов» на этом шлюзе нужен вход с учётной записью Hermes. Нажмите «Войти с учётной записью Hermes» и повторите попытку.",
+    "description": "Runtime interface message projects.unavailable.account_sign_in"
   },
   "runtime_projects_unavailable_method_not_found": {
     "message": "Подключённый шлюз Hermes ответил «method not found» (-32601) на {method}.",

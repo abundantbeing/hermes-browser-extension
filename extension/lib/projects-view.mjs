@@ -229,6 +229,7 @@ const FAILURE_KEYS = Object.freeze({
   [PROJECTS_UNAVAILABLE.methodNotFound]: 'projects.unavailable.method_not_found',
   [PROJECTS_UNAVAILABLE.webappSignIn]: 'projects.unavailable.webapp_sign_in',
   [PROJECTS_UNAVAILABLE.webappOff]: 'projects.unavailable.webapp_off',
+  [PROJECTS_UNAVAILABLE.accountSignIn]: 'projects.unavailable.account_sign_in',
   'profile-unavailable': 'projects.error.profile_unavailable',
   'not-found': 'projects.error.not_found',
   'invalid-argument': 'projects.error.invalid_argument',

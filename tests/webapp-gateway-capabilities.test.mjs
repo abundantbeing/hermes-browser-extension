@@ -109,9 +109,11 @@ function sliceBetween(from, to) {
   return source.slice(start, end);
 }
 
-function panel({ chatTransport = false, profileClient = null, activeClient = null } = {}) {
+function panel({ chatTransport = false, profileClient = null, activeClient = null, accountOffered = false } = {}) {
   const runtime = createCapabilityRuntime();
   const context = {
+    // The panel's snapshot of whether this gateway asks for a Hermes account sign-in that none is held for.
+    accountSignInOffered: () => accountOffered,
     isRemoteWsMode: () => false,
     usesDashboardWsChatTransport: () => chatTransport,
     remoteWsConnection: null,
@@ -173,4 +175,42 @@ test('compaction beside a REST chat runs on the socket without adopting or creat
   assert.match(body, /\(!sideSocket && connection\.wsStoredSessionId\) \|\| settings\.sessionId/);
   const caller = sliceBetween('async function compactCurrentSessionContext(', '\n// Session-authority dashboard: session.mutate');
   assert.match(caller, /compressRecord\.params\.sideSocket === true/);
+});
+
+// --- the Hermes account sign-in --------------------------------------------------------------------
+
+test('a gateway that asks for a Hermes account sign-in says so on the rows that need its socket, and image attach keeps its own reason', () => {
+  const records = derive({ accountSignIn: true });
+  for (const id of ['sessionAuthority', 'projects']) {
+    assert.equal(records[id].state, 'blocked', id);
+    assert.equal(records[id].reasonCode, 'account-sign-in', id);
+  }
+  assert.equal(records.sessionCompress.state, 'blocked');
+  assert.equal(records.sessionCompress.reasonCode, 'account-sign-in');
+  assert.equal(records.imageSessionAttach.reasonCode, 'rest-only');
+  assert.ok(english['capability.reason.account_sign_in'], 'localized');
+  assert.ok(english['projects.unavailable.account_sign_in'], 'localized');
+});
+
+test('a REST compaction route the gateway advertised itself still reads as it said', () => {
+  const caps = normalizeGatewayCapabilities({
+    object: 'hermes.api_server.capabilities', platform: 'hermes-agent', features: {}, endpoints: { session_compress: { path: '/v1/sessions/{id}/compress', method: 'POST' } },
+  }, { healthOk: true, hasApiKey: true });
+  const records = byId(deriveCapabilityRecords(caps, { identityKey: identity.key, checkedAt: 1, accountSignIn: true }));
+  assert.equal(records.sessionCompress.state, 'available');
+  assert.equal(records.projects.reasonCode, 'account-sign-in');
+});
+
+test('with a socket open, or a chat over the socket, the sign-in reason never overrides what the socket said', () => {
+  assert.equal(derive({ accountSignIn: true, sideSocket: true, readyPayload: AUTHORITY }).projects.state, 'available');
+  assert.equal(derive({ accountSignIn: true, dashboardWsActive: true, readyPayload: AUTHORITY }).sessionAuthority.state, 'available');
+});
+
+test('the panel passes the sign-in offer to the ledger, and an offer that is withdrawn restores the REST-only reading', () => {
+  const offered = panel({ accountOffered: true });
+  offered.sync();
+  assert.equal(offered.runtime.record('projects').reasonCode, 'account-sign-in');
+  const none = panel({ accountOffered: false });
+  none.sync();
+  assert.equal(none.runtime.record('projects').reasonCode, 'rest-only');
 });

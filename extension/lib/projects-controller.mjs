@@ -59,6 +59,7 @@ function freshState() {
  * @param {(args: {cwd: string, projectName: string}) => Promise<any>} options.createSessionInFolder
  * @param {(move: object) => void} [options.onSessionMoved]  a move was read back and committed
  * @param {() => void} [options.onReturnToRecents]  Back from a move that was started in Recents
+ * @param {() => Promise<any>} [options.signInWithAccount]  runs the Hermes account sign-in; offered on the unavailable card
  * @param {() => void} options.onChange
  */
 export function createProjectsController({
@@ -68,6 +69,7 @@ export function createProjectsController({
   createSessionInFolder,
   onSessionMoved = () => {},
   onReturnToRecents = () => {},
+  signInWithAccount = null,
   onChange = () => {},
 } = {}) {
   let state = freshState();
@@ -204,6 +206,16 @@ export function createProjectsController({
 
   function refresh() {
     return activate({ force: true });
+  }
+
+  // The Sign in with your Hermes account button on the unavailable card: sign in, then read Projects again.
+  async function accountSignIn() {
+    if (typeof signInWithAccount !== 'function') return;
+    try {
+      await signInWithAccount();
+    } finally {
+      await refresh();
+    }
   }
 
   function setQuery(query) {
@@ -541,6 +553,8 @@ export function createProjectsController({
     resolve,
     activate,
     refresh,
+    accountSignIn,
+    canAccountSignIn: () => typeof signInWithAccount === 'function',
     setQuery,
     openProject,
     back,

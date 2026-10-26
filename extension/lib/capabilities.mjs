@@ -365,6 +365,7 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   unsupportedMethods = [],
   dashboardWsActive = false,
   sideSocket = false,
+  accountSignIn = false,
   companionPlugin = null,
 } = {}) {
   const transport = transportOf(caps);
@@ -552,6 +553,15 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   else if (transport === 'none' && !sideReady) make('imageSessionAttach', S.unknown, O.none, 'no-record');
   else if (sideReady) make('imageSessionAttach', S.unsupported, O.derived, 'rest-chat');
   else make('imageSessionAttach', S.unsupported, O.derived, 'rest-only');
+
+  // The gateway asks for a Hermes account sign-in (gated, native flow advertised) and none is held: the rows
+  // that need the session-authority socket say that, instead of "REST only". A route the gateway advertised
+  // itself (REST compaction) still reads as it said. Image attach stays tied to a chat over the socket, which
+  // signing in does not change, so it keeps its own reason.
+  if (accountSignIn === true && !wsRoute && !sideReady) {
+    for (const id of ['sessionAuthority', 'projects']) replace(id, S.blocked, O.derived, 'account-sign-in');
+    if (current('sessionCompress')?.state !== S.available) replace('sessionCompress', S.blocked, O.derived, 'account-sign-in');
+  }
 
   return records;
 }

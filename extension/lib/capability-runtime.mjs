@@ -44,6 +44,7 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
   let lastToken = '';
   let lastWsActive = false;
   let lastSideSocket = false;
+  let lastAccountSignIn = false;
   let lastUnsupportedSize = -1;
   let lastCheckedAt = 0;
 
@@ -56,12 +57,13 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
     return session ? sessionRefusals.get(refusalKey(id, session)) || null : null;
   }
 
-  function derive(caps, readyPayload, dashboardWsActive, sideSocket) {
+  function derive(caps, readyPayload, dashboardWsActive, sideSocket, accountSignIn) {
     ledger.ingest(deriveCapabilityRecords(caps, {
       identityKey: ledger.identityKey,
       readyPayload,
       dashboardWsActive,
       sideSocket,
+      accountSignIn,
       checkedAt: lastCheckedAt,
       unsupportedMethods,
     }));
@@ -69,6 +71,7 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
     lastReady = readyPayload;
     lastWsActive = dashboardWsActive;
     lastSideSocket = sideSocket;
+    lastAccountSignIn = accountSignIn;
     lastUnsupportedSize = unsupportedMethods.size;
   }
 
@@ -78,7 +81,7 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
     unsupportedMethods,
 
     /** @returns {boolean} whether the ledger changed in a way a view should redraw for */
-    sync({ caps = null, readyPayload = null, identity = null, connectionToken = '', connected = true, dashboardWsActive = false, sideSocket = false } = {}) {
+    sync({ caps = null, readyPayload = null, identity = null, connectionToken = '', connected = true, dashboardWsActive = false, sideSocket = false, accountSignIn = false } = {}) {
       let changed = false;
       const nextIdentity = identity && typeof identity === 'object' && 'key' in identity ? identity : capabilityIdentity(identity || {});
       if (ledger.rebind(nextIdentity)) {
@@ -103,9 +106,10 @@ export function createCapabilityRuntime({ now = Date.now } = {}) {
         changed = true;
       }
       const side = sideSocket === true;
-      if (caps && (caps !== lastCaps || ready !== lastReady || dashboardWsActive !== lastWsActive || side !== lastSideSocket || unsupportedMethods.size !== lastUnsupportedSize)) {
+      const account = accountSignIn === true;
+      if (caps && (caps !== lastCaps || ready !== lastReady || dashboardWsActive !== lastWsActive || side !== lastSideSocket || account !== lastAccountSignIn || unsupportedMethods.size !== lastUnsupportedSize)) {
         if (caps !== lastCaps) lastCheckedAt = now();
-        derive(caps, ready, dashboardWsActive, side);
+        derive(caps, ready, dashboardWsActive, side, account);
         changed = true;
       }
       return changed;

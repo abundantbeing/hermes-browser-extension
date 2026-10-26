@@ -16,12 +16,16 @@ export function localDashboardUrlFor(gatewayMode, discoveredUrl) {
 // What to drop when the connection is (or has become) remote. `profileConnection`
 // is the panel's own socket to the local dashboard; `activeConnection` is whatever
 // the viewed session currently uses. Nothing is dropped on a local connection.
+// `profileConnectionIsAccount` marks a socket opened with a Hermes account sign-in on the REMOTE gateway's own
+// origin (lib/hermes-account.mjs, which resolves no loopback origin for a remote connection): it does not belong
+// to this machine, so a remote connection keeps it. A socket to a loopback origin never passes this flag.
 export function localDashboardResetPlan({
   gatewayMode,
   discoveredUrl = '',
   profileConnection = null,
   activeConnection = null,
   conversationTransport = 'rest',
+  profileConnectionIsAccount = false,
 } = {}) {
   if (isLocalGatewayMode(gatewayMode)) {
     return {
@@ -33,8 +37,8 @@ export function localDashboardResetPlan({
       clearRoster: false,
     };
   }
-  const hasProfile = Boolean(profileConnection);
-  const activeIsLocal = Boolean(activeConnection) && activeConnection === profileConnection;
+  const hasProfile = Boolean(profileConnection) && profileConnectionIsAccount !== true;
+  const activeIsLocal = Boolean(activeConnection) && activeConnection === profileConnection && profileConnectionIsAccount !== true;
   const remoteWs = String(gatewayMode || '').trim().toLowerCase() === 'remote-dashboard';
   return {
     reset: Boolean(discoveredUrl) || hasProfile || activeIsLocal,

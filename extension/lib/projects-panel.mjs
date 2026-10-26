@@ -14,6 +14,7 @@ import {
   groupProjectRows,
   shortenPath,
 } from './projects-view.mjs';
+import { PROJECTS_UNAVAILABLE } from './projects-client.mjs';
 
 function h(doc, tag, attrs = {}, ...children) {
   const node = doc.createElement(tag);
@@ -153,6 +154,13 @@ function failureBlock({ doc, failure, t, controller, retry = true }) {
     testid: failure.unavailable ? 'projects-unavailable' : 'projects-error',
     actions: [
       failure.unavailable && h(doc, 'p', { class: 'projects-state-text projects-recents-note', text: t('projects.unavailable.recents_ok') }),
+      failure.unavailable && failure.reason === PROJECTS_UNAVAILABLE.accountSignIn && controller.canAccountSignIn?.() && h(doc, 'button', {
+        type: 'button',
+        class: 'session-action-button',
+        'data-testid': 'projects-account-sign-in',
+        onClick: () => { void controller.accountSignIn(); },
+        text: t('account.sign_in'),
+      }),
       retry && h(doc, 'button', {
         type: 'button',
         class: 'session-action-button',

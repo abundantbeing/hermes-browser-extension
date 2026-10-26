@@ -47,6 +47,9 @@ export const PROJECTS_UNAVAILABLE = Object.freeze({
   webappSignIn: 'webapp-sign-in',
   // The paired gateway answered that its Webapp is off, so there is no socket to sign in to.
   webappOff: 'webapp-off',
+  // This gateway asks for a Hermes account sign-in (it is gated and offers the native flow) and the panel has
+  // none: Projects cannot open a session-authority socket until the person signs in from Settings.
+  accountSignIn: 'account-sign-in',
 });
 
 const UNAVAILABLE_COPY = Object.freeze({
@@ -60,10 +63,12 @@ const UNAVAILABLE_COPY = Object.freeze({
     "Projects needs Hermes Web's sign-in. Open Hermes Web once (run hermes webapp), then try again.",
   [PROJECTS_UNAVAILABLE.webappOff]:
     'Hermes Web is turned off on this gateway, so Projects has no session socket. Set webapp.enabled to true in config.yaml, run hermes gateway restart, then try again.',
+  [PROJECTS_UNAVAILABLE.accountSignIn]:
+    'Projects needs a Hermes account sign-in on this gateway. Use Sign in with your Hermes account, then try again.',
 });
 
 // A reason the caller supplies (`blockedReason`) because it knows something the socket cannot say.
-const CALLER_REASONS = new Set([PROJECTS_UNAVAILABLE.webappSignIn, PROJECTS_UNAVAILABLE.webappOff]);
+const CALLER_REASONS = new Set([PROJECTS_UNAVAILABLE.webappSignIn, PROJECTS_UNAVAILABLE.webappOff, PROJECTS_UNAVAILABLE.accountSignIn]);
 
 export function isCallerBlockedReason(reason = '') {
   return CALLER_REASONS.has(clean(reason));
@@ -82,7 +87,8 @@ function clean(value = '') {
  *   no-session-authority gateway.ready lacks `session_authority: true`;
  *   method-not-found     this connection already answered -32601 for `method`;
  *   webapp-sign-in       the caller says (`blockedReason`) that Hermes Web's sign-in is missing;
- *   webapp-off           the caller says the paired gateway reported its Webapp is off.
+ *   webapp-off           the caller says the paired gateway reported its Webapp is off;
+ *   account-sign-in      the caller says this gateway asks for a Hermes account sign-in the panel does not hold.
  */
 export function gatewayAuthorityAvailability({
   dashboardWs = false,

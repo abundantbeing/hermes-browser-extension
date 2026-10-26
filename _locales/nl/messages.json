@@ -35,6 +35,102 @@
     "message": "Hermes-subagentstatus",
     "description": "Runtime interface message a11y.subagent_status"
   },
+  "runtime_account_hint": {
+    "message": "Dezelfde aanmelding als in de Hermes-app voor je telefoon. Ze opent Projecten, sessie-autoriteit, contextcompactie en de volledige botlijst op een gateway die om aanmelding vraagt, zonder dat je iets hoeft uit te voeren. Afmelden vergeet haar in deze browser.",
+    "description": "Runtime interface message account.hint"
+  },
+  "runtime_account_label": {
+    "message": "Hermes-account",
+    "description": "Runtime interface message account.label"
+  },
+  "runtime_account_notice_exchange_rejected": {
+    "message": "De gateway heeft de aanmeldcode geweigerd. Probeer het opnieuw.",
+    "description": "Runtime interface message account.notice.exchange_rejected"
+  },
+  "runtime_account_notice_failed": {
+    "message": "De aanmelding is niet afgerond. Probeer het opnieuw.",
+    "description": "Runtime interface message account.notice.failed"
+  },
+  "runtime_account_notice_no_permission": {
+    "message": "Aanmelden heeft jouw toestemming nodig, zodat Hermes Browser kan zien waar het aanmeldvenster eindigt. Kies opnieuw ‘Aanmelden’ en sta het toe.",
+    "description": "Runtime interface message account.notice.no_permission"
+  },
+  "runtime_account_notice_no_window": {
+    "message": "Deze browser kon het aanmeldvenster niet openen.",
+    "description": "Runtime interface message account.notice.no_window"
+  },
+  "runtime_account_notice_provider_denied": {
+    "message": "De aanmelding is niet goedgekeurd. Probeer het opnieuw.",
+    "description": "Runtime interface message account.notice.provider_denied"
+  },
+  "runtime_account_notice_session_expired": {
+    "message": "Je sessie met het Hermes-account is beëindigd. Meld je opnieuw aan.",
+    "description": "Runtime interface message account.notice.session_expired"
+  },
+  "runtime_account_notice_state_mismatch": {
+    "message": "Die aanmelding kwam niet overeen met dit verzoek en is genegeerd. Probeer het opnieuw.",
+    "description": "Runtime interface message account.notice.state_mismatch"
+  },
+  "runtime_account_notice_timeout": {
+    "message": "De aanmelding is niet op tijd afgerond. Probeer het opnieuw.",
+    "description": "Runtime interface message account.notice.timeout"
+  },
+  "runtime_account_notice_unavailable": {
+    "message": "De gateway is nu niet bereikbaar. Je aanmelding blijft bewaard; probeer het zo opnieuw.",
+    "description": "Runtime interface message account.notice.unavailable"
+  },
+  "runtime_account_sign_in": {
+    "message": "Meld je aan met je Hermes-account",
+    "description": "Runtime interface message account.sign_in"
+  },
+  "runtime_account_sign_in_needed": {
+    "message": "Deze gateway heeft je aanmelding met een Hermes-account nodig. Open Instellingen > Verbindingen en kies ‘Meld je aan met je Hermes-account’.",
+    "description": "Runtime interface message account.sign_in_needed"
+  },
+  "runtime_account_sign_out": {
+    "message": "Afmelden",
+    "description": "Runtime interface message account.sign_out"
+  },
+  "runtime_account_signed_in_as": {
+    "message": "Aangemeld als {name} ({provider})",
+    "description": "Runtime interface message account.signed_in_as"
+  },
+  "runtime_account_signed_in_generic": {
+    "message": "Aangemeld met je Hermes-account",
+    "description": "Runtime interface message account.signed_in_generic"
+  },
+  "runtime_account_signed_in_title": {
+    "message": "Aangemeld bij Hermes",
+    "description": "Runtime interface message account.signed_in_title"
+  },
+  "runtime_account_status_checking": {
+    "message": "Controleren of deze gateway aanmelden met een Hermes-account accepteert.",
+    "description": "Runtime interface message account.status_checking"
+  },
+  "runtime_account_status_signed_out": {
+    "message": "Niet aangemeld. Deze gateway vraagt om aanmelding met een Hermes-account.",
+    "description": "Runtime interface message account.status_signed_out"
+  },
+  "runtime_account_status_waiting": {
+    "message": "Wachten tot je de aanmelding hebt afgerond in het geopende venster.",
+    "description": "Runtime interface message account.status_waiting"
+  },
+  "runtime_account_unavailable_no_native_flow": {
+    "message": "Deze gateway vraagt om aanmelding maar biedt geen app-aanmelding aan. Werk Hermes bij naar een versie die dat wel doet.",
+    "description": "Runtime interface message account.unavailable.no_native_flow"
+  },
+  "runtime_account_unavailable_no_origin": {
+    "message": "Aanmelden met een Hermes-account heeft een https-gateway nodig, of een lokale achter aanmelding.",
+    "description": "Runtime interface message account.unavailable.no_origin"
+  },
+  "runtime_account_unavailable_not_gated": {
+    "message": "Deze gateway is open op deze computer en vraagt niet om aanmelding, dus er is hier geen Hermes-account te gebruiken. Koppeling met Hermes Browser, of de eigen aanmelding van Hermes Web, dekt Projecten in plaats daarvan.",
+    "description": "Runtime interface message account.unavailable.not_gated"
+  },
+  "runtime_account_unavailable_unreachable": {
+    "message": "Kon deze gateway niet bereiken om te controleren op aanmelding.",
+    "description": "Runtime interface message account.unavailable.unreachable"
+  },
   "runtime_agent_theme_applied": {
     "message": "Theme created, validated, and applied",
     "description": "Runtime interface message agent_theme.applied"
@@ -1270,6 +1366,10 @@
   "runtime_capability_meta_source": {
     "message": "Bron: {source}",
     "description": "Runtime interface message capability.meta.source"
+  },
+  "runtime_capability_reason_account_sign_in": {
+    "message": "Deze gateway vraagt om aanmelding met een Hermes-account. Meld je aan via Instellingen > Verbindingen om de sessieverbinding te openen.",
+    "description": "Runtime interface message capability.reason.account_sign_in"
   },
   "runtime_capability_reason_advertised": {
     "message": "Aangekondigd door deze gateway.",
@@ -2998,6 +3098,10 @@
   "runtime_projects_tab_recents": {
     "message": "Recent",
     "description": "Runtime interface message projects.tab.recents"
+  },
+  "runtime_projects_unavailable_account_sign_in": {
+    "message": "Projecten heeft een aanmelding met een Hermes-account op deze gateway nodig. Gebruik ‘Meld je aan met je Hermes-account’ en probeer het opnieuw.",
+    "description": "Runtime interface message projects.unavailable.account_sign_in"
   },
   "runtime_projects_unavailable_method_not_found": {
     "message": "De verbonden Hermes-gateway antwoordde \"method not found\" (-32601) voor {method}.",
