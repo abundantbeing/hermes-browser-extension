@@ -318,6 +318,7 @@ const WEBAPP_KEYS = [
   'webapp.reason_unreachable', 'webapp.reason_permission', 'webapp.reason_needs_address', 'webapp.reason_invalid_address',
   'webapp.copy_command', 'webapp.docs_link', 'webapp.try_again', 'webapp.hint_local', 'webapp.hint_account',
   'webapp.setting_label', 'webapp.setting_hint', 'webapp.assist_detail',
+  'webapp.opening_title', 'webapp.opening_detail', 'webapp.opening_slow', 'webapp.opening_show',
 ];
 
 test('every Hermes Web string exists in all 21 locales, translated, with its protected words intact', async () => {

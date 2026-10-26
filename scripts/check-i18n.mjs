@@ -145,6 +145,7 @@ for (const relativePath of [
   'extension/sidepanel.html',
   'extension/request-permissions.html',
   'extension/voice-dictation.html',
+  'extension/hermes-web-opening.html',
 ]) {
   const source = fs.readFileSync(path.join(root, relativePath), 'utf8');
   for (const match of source.matchAll(markerPattern)) {
