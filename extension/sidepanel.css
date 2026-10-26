@@ -11563,13 +11563,21 @@ html[data-hermes-mode="light"] .session-menu {
   overscroll-behavior: contain;
 }
 .projects-panel > * { min-width: 0; }
+/* The panel is a grid inside a fixed-height drawer row. Its overflow:hidden children (the scope line, the
+   heading) have a zero automatic minimum height, so with the default auto rows a long list squeezed them to
+   nothing and the next row painted over them. Rows are sized to their content instead, and the panel scrolls. */
+.projects-panel { grid-auto-rows: max-content; }
 .projects-scope {
+  display: block;
+  margin: 0;
   padding: 6px 10px;
   color: rgba(var(--hermes-fg-rgb), 0.62);
-  font: calc(10px * var(--hermes-text-zoom, 1))/1.35 var(--hermes-font-mono);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font: calc(10px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-mono);
+  min-height: calc(1.4em + 12px);
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  unicode-bidi: plaintext;
 }
 .projects-group-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-transform: uppercase; letter-spacing: 0.12em; font-size: calc(10px * var(--hermes-text-zoom, 1)); }
 .projects-group-title span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
