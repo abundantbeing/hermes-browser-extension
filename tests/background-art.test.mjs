@@ -61,16 +61,16 @@ if (existsSync(moduleUrl)) {
     createBackgroundArtRotation,
   } = await import(moduleUrl);
 
-  test('the fifteen-entry pool preserves the current image and all approved full-bleed artwork', () => {
+  test('the ten-entry pool preserves the current image and all approved full-bleed artwork', () => {
     assert.equal(ORIGINAL_BACKGROUND_ART, 'assets/img/hermes-browser-enter-gate-ink.png');
-    assert.equal(BACKGROUND_ART.length, 15);
-    assert.equal(new Set(BACKGROUND_ART).size, 15);
-    assert.deepEqual(BACKGROUND_ART.slice(-4), [
-      'assets/img/background-art/stack-graf10-ink.webp',
-      'assets/img/background-art/stack-graf13-ink.webp',
-      'assets/img/background-art/stack-graf14-ink.webp',
-      'assets/img/background-art/stack-graf12-ink.webp',
-    ]);
+    assert.equal(BACKGROUND_ART.length, 10);
+    assert.equal(new Set(BACKGROUND_ART).size, 10);
+    assert.deepEqual(BACKGROUND_ART.slice(-1), ['assets/img/background-art/stack-graf13-ink.webp']);
+    for (const removed of ['06-winged-passage', '07-clockwork-dispatch', 'stack-graf10', 'stack-graf12', 'stack-graf14']) {
+      const entry = `assets/img/background-art/${removed}-ink.webp`;
+      assert.ok(!BACKGROUND_ART.includes(entry), `${removed} was removed from the pool`);
+      assert.ok(!existsSync(new URL(entry, extension)), `${removed} is no longer shipped`);
+    }
     assert.ok(Object.isFrozen(BACKGROUND_ART));
     assert.equal(BACKGROUND_ART[0], ORIGINAL_BACKGROUND_ART);
     for (const entry of BACKGROUND_ART) assert.ok(statSync(new URL(entry, extension)).size > 0);
@@ -151,7 +151,9 @@ if (existsSync(moduleUrl)) {
     const random = seeded(2024);
     const full = Array.from({ length: 20000 }, () => pickBackgroundArt(random));
     assert.ok(share(full, MAIN_BACKGROUND_ART) >= 0.5, `full pool main share ${share(full, MAIN_BACKGROUND_ART).toFixed(3)}`);
-    assert.ok(share(full, MAIN_BACKGROUND_ART) < 0.6, 'the others still appear, just rarer');
+    const weightTotal = BACKGROUND_ART.reduce((sum, entry) => sum + BACKGROUND_ART_WEIGHTS[entry], 0);
+    const expectedMainShare = MAIN_BACKGROUND_ART.length * MAIN_BACKGROUND_WEIGHT / weightTotal;
+    assert.ok(Math.abs(share(full, MAIN_BACKGROUND_ART) - expectedMainShare) < 0.03, `the others still appear, just rarer (expected ${expectedMainShare.toFixed(3)})`);
     for (const entry of BACKGROUND_ART.filter((item) => !MAIN_BACKGROUND_ART.includes(item))) assert.ok(full.includes(entry), `${entry} still appears`);
     const setup = Array.from({ length: 20000 }, () => pickOnboardingBackgroundArt(random));
     assert.ok(share(setup, MAIN_BACKGROUND_ART) >= 0.75, `setup main share ${share(setup, MAIN_BACKGROUND_ART).toFixed(3)}`);
@@ -172,7 +174,7 @@ if (existsSync(moduleUrl)) {
       return picks;
     };
     const full = run((rand, recent) => pickBackgroundArt(rand, recent), BACKGROUND_ART);
-    assert.ok(share(full, MAIN_BACKGROUND_ART) >= 0.4 && share(full, MAIN_BACKGROUND_ART) > 4 / 15, `full pool, avoiding recents: ${share(full, MAIN_BACKGROUND_ART).toFixed(3)}`);
+    assert.ok(share(full, MAIN_BACKGROUND_ART) >= 0.4 && share(full, MAIN_BACKGROUND_ART) > 4 / 10, `full pool, avoiding recents: ${share(full, MAIN_BACKGROUND_ART).toFixed(3)}`);
     const setup = run((rand, recent) => pickOnboardingBackgroundArt(rand, recent), ONBOARDING_BACKGROUND_ART);
     assert.ok(share(setup, MAIN_BACKGROUND_ART) >= 0.6, `setup, avoiding recents: ${share(setup, MAIN_BACKGROUND_ART).toFixed(3)}`);
   });

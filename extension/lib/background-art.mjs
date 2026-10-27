@@ -11,15 +11,10 @@ export const BACKGROUND_ART = Object.freeze([
   'assets/img/background-art/03-first-contact-ink.webp',
   'assets/img/background-art/04-network-crossing-ink.webp',
   'assets/img/background-art/05-messenger-axis-ink.webp',
-  'assets/img/background-art/06-winged-passage-ink.webp',
-  'assets/img/background-art/07-clockwork-dispatch-ink.webp',
   'assets/img/background-art/08-contained-cosmos-ink.webp',
   'assets/img/background-art/09-winged-dispatch-ink.webp',
   'assets/img/background-art/10-recursive-presence-ink.webp',
-  'assets/img/background-art/stack-graf10-ink.webp',
   'assets/img/background-art/stack-graf13-ink.webp',
-  'assets/img/background-art/stack-graf14-ink.webp',
-  'assets/img/background-art/stack-graf12-ink.webp',
 ]);
 
 // The four backgrounds the user picked as the extension's main ones, in their

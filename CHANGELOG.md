@@ -86,6 +86,7 @@
 ### Removed
 
 - The extension's own full tab (the old Hermes Web page) is gone. The gateway's Webapp replaces it; the Hermes Web button and the Assist chooser open the Webapp.
+- Five panel backgrounds are retired (Winged Passage, Clockwork Dispatch, and the stack graffiti pieces 10, 12 and 14), leaving ten in the rotation. The four main backgrounds keep their extra weight, so they now come up about two times in three.
 
 ### Fixed
 
