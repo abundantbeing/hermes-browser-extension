@@ -1015,6 +1015,10 @@
     "message": "Hermes 컨트롤을 켜기 전에 Hermes 세션을 시작하거나 선택하세요.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "이 Hermes에서는 Hermes 제어를 사용할 수 없습니다. 브라우저 확장 프로그램 제어를 지원하는 Hermes가 필요합니다.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "선택한 범위를 Hermes가 제어할 수 있는 탭에 적용합니다.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1250,6 +1254,14 @@
   "runtime_browser_control_turn_off": {
     "message": "끄기",
     "description": "Runtime interface message browser_control.turn_off"
+  },
+  "runtime_browser_control_unsupported": {
+    "message": "이 Hermes에서는 Hermes 제어를 사용할 수 없습니다",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "브라우저 확장 프로그램 제어를 지원하는 Hermes가 필요합니다.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
   },
   "runtime_browser_control_waiting": {
     "message": "Hermes를 기다리는 중입니다.",

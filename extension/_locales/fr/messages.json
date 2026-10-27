@@ -1015,6 +1015,10 @@
     "message": "Démarrez ou sélectionnez une session Hermes avant d’activer Hermes Control.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "Le contrôle Hermes n'est pas disponible sur ce Hermes. Il nécessite un Hermes avec contrôle par l'extension de navigateur.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "Applique la portée choisie aux onglets que Hermes peut contrôler.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1250,6 +1254,14 @@
   "runtime_browser_control_turn_off": {
     "message": "Désactiver",
     "description": "Runtime interface message browser_control.turn_off"
+  },
+  "runtime_browser_control_unsupported": {
+    "message": "Le contrôle Hermes n'est pas disponible sur ce Hermes",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "Il nécessite un Hermes avec contrôle par l'extension de navigateur.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
   },
   "runtime_browser_control_waiting": {
     "message": "En attente de Hermes.",

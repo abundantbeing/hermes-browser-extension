@@ -1015,6 +1015,10 @@
     "message": "开启 Hermes 控制前，请先开始或选择一个 Hermes 会话。",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "此 Hermes 不支持 Hermes 控制。需要支持浏览器扩展控制的 Hermes。",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "将所选范围应用到 Hermes 可以控制的标签页。",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1250,6 +1254,14 @@
   "runtime_browser_control_turn_off": {
     "message": "关闭控制",
     "description": "Runtime interface message browser_control.turn_off"
+  },
+  "runtime_browser_control_unsupported": {
+    "message": "此 Hermes 不支持 Hermes 控制",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "需要支持浏览器扩展控制的 Hermes。",
+    "description": "Runtime interface message browser_control.unsupported_detail"
   },
   "runtime_browser_control_waiting": {
     "message": "正在等待 Hermes。",

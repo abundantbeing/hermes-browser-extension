@@ -393,6 +393,7 @@ import {
 } from './lib/connection-readiness-orchestrator.mjs';
 import {
   DEFAULT_GATEWAY_CAPABILITIES,
+  browserControlSupport,
   buildContextReceipt,
   capabilityStatusRows,
   connectionSecuritySummary,
@@ -3149,7 +3150,40 @@ function browserControlCandidate({ context = {}, scope = {} } = {}) {
   return { tabId, frameId: 0, expectedUrl: url };
 }
 
+// 'unsupported' once this Hermes is known to have no extension control: its
+// capabilities answered without the feature (REST), or its controller register
+// was refused as unknown (socket). Otherwise 'supported' or 'unknown'.
+// A refusal is remembered for this panel and this exact connection, so turning
+// control off again (which clears the worker's own record) does not forget it.
+let browserControlUnsupportedKey = '';
+
+function browserControlConnectionKey() {
+  return [settings.connectionTransport, settings.gatewayUrl, settings.activeProfile]
+    .map((value) => String(value || '')).join('|');
+}
+
+function browserControlSupportState() {
+  const advertised = browserControlSupport(gatewayCapabilities);
+  if (advertised !== 'unknown') return advertised;
+  if (browserControlStatus?.lastConnectFailure?.reason === 'unsupported_gateway') {
+    browserControlUnsupportedKey = browserControlConnectionKey();
+  }
+  return browserControlUnsupportedKey && browserControlUnsupportedKey === browserControlConnectionKey()
+    ? 'unsupported'
+    : 'unknown';
+}
+
 async function resolveBrowserControlForTurn({ context = {}, scope = {} } = {}) {
+  // A Hermes without extension control is not "off" or "unreachable": say so, so
+  // the turn does not send the agent to controller tools that do not exist.
+  if (browserControlSupportState() === 'unsupported') {
+    return {
+      route: 'extension-controller',
+      availability: 'unsupported',
+      reason: 'gateway_unsupported',
+      message: 'Hermes Control is not available on this Hermes.',
+    };
+  }
   // Chat-only and control-off turns never asked for browser control, so they
   // are "not requested" rather than a missing tab.
   if (scope?.mode === CONTEXT_SCOPE_MODES.CHAT_ONLY) {
@@ -3214,6 +3248,7 @@ function renderBrowserControl() {
     status: browserControlStatus || {},
     activeTab: browserControlActiveTab,
     currentTarget: browserControlCurrentTarget,
+    support: browserControlSupportState(),
   });
   const enabled = settings.browserControlEnabled === true;
   const paused = browserControlStatus?.paused === true;
@@ -3225,6 +3260,7 @@ function renderBrowserControl() {
     off: 'browser_control.state_off',
     reconnecting: 'ui.reconnecting',
     unavailable: 'ui.unavailable',
+    unsupported: 'ui.unavailable',
     unattached: 'ui.attach',
     preparing: 'ui.reconnecting',
     ready: 'browser_control.state_ready',
@@ -3241,7 +3277,7 @@ function renderBrowserControl() {
   // Visible helper text explains the chosen scope; while control is on, it says why the scope is locked.
   els.browserControlScopeHelp.textContent = t(browserControlScopeHelpKey(els.browserControlScopeInput.value));
   els.browserControlScopeLock.hidden = !enabled;
-  els.browserControlEnableButton.hidden = enabled && !view.canAttach;
+  els.browserControlEnableButton.hidden = view.state === 'unsupported' || (enabled && !view.canAttach);
   els.browserControlEnableButton.textContent = t(view.canAttach
     ? 'ui.attach.to.current.tab'
     : 'browser_control.enable');
@@ -3333,6 +3369,9 @@ function scheduleBrowserControlPoll() {
   if (browserControlPollTimer) clearTimeout(browserControlPollTimer);
   browserControlPollTimer = null;
   if (settings.browserControlEnabled !== true || document.visibilityState === 'hidden') return;
+  // A Hermes without extension control never connects: polling it is a dead loop.
+  // A gateway or settings change re-arms the poll (setGatewayCapabilities, enable).
+  if (browserControlSupportState() === 'unsupported') return;
   browserControlPollTimer = setTimeout(async () => {
     await refreshBrowserControlStatus();
     scheduleBrowserControlPoll();
@@ -3341,6 +3380,7 @@ function scheduleBrowserControlPoll() {
 
 async function attachBrowserControlToCurrentTab() {
   await refreshBrowserControlStatus();
+  if (browserControlSupportState() === 'unsupported') throw new Error(t('browser_control.error_unsupported'));
   const tab = browserControlActiveTab || await activeTab();
   if (browserControlStatus?.lastConnectFailure?.reason === 'missing_session') {
     throw new Error(t('browser_control.error_session_attach'));
@@ -3405,6 +3445,7 @@ async function attachBrowserControlToCurrentTab() {
 }
 
 async function enableBrowserControl() {
+  if (browserControlSupportState() === 'unsupported') throw new Error(t('browser_control.error_unsupported'));
   if (settings.browserControlEnabled === true) {
     return attachBrowserControlToCurrentTab();
   }
@@ -3435,6 +3476,12 @@ async function enableBrowserControl() {
     if (!rebound?.ok) throw new Error(rebound?.error || t('browser_control.error_refresh_failed'));
     if (!rebound.connected && await ensureControllerCredentialForControl()) {
       rebound = await browserControlMessage('HERMES_CONTROLLER_STATUS').catch(() => null) || rebound;
+    }
+    // The gateway answered registration with "no extension control": there is
+    // nothing to attach and nothing honest to announce.
+    if (rebound?.reason === 'unsupported_gateway' || rebound?.lastConnectFailure?.reason === 'unsupported_gateway') {
+      browserControlStatus = rebound;
+      throw new Error(t('browser_control.error_unsupported'));
     }
     const acquired = await browserControlMessage('HERMES_CONTROLLER_LEASE_ACQUIRE', {
       ...leaseRequest,
@@ -5449,6 +5496,9 @@ function setGatewayCapabilities(caps) {
   renderCompactControl();
   renderInlineAssistModelOptions();
   updateVoiceButtonState();
+  // The capability read decides whether Hermes Control can exist at all; redraw it
+  // and re-arm the status poll a terminal result may have stopped.
+  void refreshBrowserControlStatus().then(scheduleBrowserControlPoll).catch(() => undefined);
 }
 
 // Tells the capability ledger what the connection looks like right now: which

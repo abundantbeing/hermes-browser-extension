@@ -1015,6 +1015,10 @@
     "message": "Przed włączeniem Sterowania Hermes uruchom lub wybierz sesję Hermes.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "Sterowanie Hermes nie jest dostępne w tym Hermes. Wymaga Hermes ze sterowaniem przez rozszerzenie przeglądarki.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "Stosuje wybrany zakres do kart, którymi Hermes może sterować.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1250,6 +1254,14 @@
   "runtime_browser_control_turn_off": {
     "message": "Wyłącz",
     "description": "Runtime interface message browser_control.turn_off"
+  },
+  "runtime_browser_control_unsupported": {
+    "message": "Sterowanie Hermes nie jest dostępne w tym Hermes",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "Wymaga Hermes ze sterowaniem przez rozszerzenie przeglądarki.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
   },
   "runtime_browser_control_waiting": {
     "message": "Oczekiwanie na Hermesa.",

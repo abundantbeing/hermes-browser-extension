@@ -135,6 +135,21 @@ export function dashboardWsGatewayCapabilities({ health = false, source = 'dashb
   };
 }
 
+/**
+ * Whether the connected Hermes offers extension control.
+ *
+ * A REST gateway reports it in GET /v1/capabilities (`features.browser_extension_control`);
+ * stock Hermes no longer has the key, so a capabilities answer without
+ * `enabled: true` is a definite "no". A socket transport (dashboard, Cloud) reports no
+ * capability at all, and an unreachable capabilities route proves nothing, so both
+ * are 'unknown' until the controller's own registration says otherwise.
+ */
+export function browserControlSupport(caps = null) {
+  const answered = caps?.source === 'api-server' && caps?.raw && typeof caps.raw === 'object';
+  if (!answered) return 'unknown';
+  return caps.browserControl === true ? 'supported' : 'unsupported';
+}
+
 function hasEndpoint(endpoints = {}, names = []) {
   return names.some((name) => Boolean(endpoints?.[name]?.path || endpoints?.[name] === true));
 }

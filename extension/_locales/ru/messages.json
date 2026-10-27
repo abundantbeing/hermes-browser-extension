@@ -1015,6 +1015,10 @@
     "message": "Запустите или выберите сеанс Hermes, прежде чем включать Управление Hermes.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "Управление Hermes недоступно в этом Hermes. Нужен Hermes с управлением через расширение браузера.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "Применяет выбранную область к вкладкам, которыми может управлять Hermes.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1250,6 +1254,14 @@
   "runtime_browser_control_turn_off": {
     "message": "Выключить",
     "description": "Runtime interface message browser_control.turn_off"
+  },
+  "runtime_browser_control_unsupported": {
+    "message": "Управление Hermes недоступно в этом Hermes",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "Нужен Hermes с управлением через расширение браузера.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
   },
   "runtime_browser_control_waiting": {
     "message": "Ожидание Hermes.",

@@ -1,4 +1,5 @@
 import { validateBrowserControlUrl } from './browser-control-safety.mjs';
+import { CONTROLLER_UNSUPPORTED_GATEWAY } from './controller-protocol.mjs';
 import { isGatewayAuthRejection, isGatewayControlKeyUnconfigured, isMissingGatewayCredential } from './connection-modes.mjs';
 
 const CONTROL_SCOPES = new Set(['this-tab', 'selected-tabs', 'task-set']);
@@ -144,10 +145,30 @@ export function browserControlStatusLine({ title = '', detail = '' } = {}) {
   return /[.!?。！？…]$/.test(head) ? `${head} ${body}` : `${head}. ${body}`;
 }
 
-export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null } = {}) {
-  if (settings?.browserControlEnabled !== true) return baseView();
+// This Hermes has no extension control. Reached from the advertised capability
+// (REST) or from the gateway's terminal answer to registration (sockets). There
+// is nothing to enable and nothing to reconnect to; the person can only turn a
+// stale "on" back off.
+function unsupportedView({ enabled = false } = {}) {
+  return baseView({
+    state: 'unsupported',
+    tone: 'neutral',
+    title: "Hermes Control isn't available on this Hermes",
+    detail: 'It needs a Hermes with browser extension control.',
+    canEnable: false,
+    canDetach: enabled,
+  });
+}
+
+// `support` is the capability read: 'unsupported' when the gateway answered its
+// capabilities without extension control, otherwise 'supported' or 'unknown'.
+export function browserControlView({ settings = {}, status = {}, activeTab = null, currentTarget = null, support = 'unknown' } = {}) {
+  const enabled = settings?.browserControlEnabled === true;
+  if (support === 'unsupported') return unsupportedView({ enabled });
+  if (!enabled) return baseView();
   if (status?.connected !== true) {
     const failure = status?.lastConnectFailure;
+    if (failure?.reason === CONTROLLER_UNSUPPORTED_GATEWAY) return unsupportedView({ enabled });
     let detail = 'Hermes Control is reconnecting. No tab actions can run yet.';
     let canAuthorize = false;
     if (failure?.reason === 'missing_session') {

@@ -1948,6 +1948,7 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
 }
 .browser-control-state[data-state="reconnecting"],
 .browser-control-state[data-state="unavailable"],
+.browser-control-state[data-state="unsupported"],
 .browser-control-state[data-state="unattached"],
 .browser-control-state[data-state="preparing"],
 .browser-control-state[data-state="paused"],

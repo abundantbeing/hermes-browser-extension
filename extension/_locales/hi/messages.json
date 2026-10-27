@@ -1015,6 +1015,10 @@
     "message": "Hermes Control चालू करने से पहले एक Hermes सत्र शुरू करें या चुनें।",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "इस Hermes पर Hermes नियंत्रण उपलब्ध नहीं है। इसके लिए ब्राउज़र एक्सटेंशन नियंत्रण वाला Hermes चाहिए।",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "चुना गया दायरा उन टैब पर लागू करें जिन्हें Hermes नियंत्रित कर सकता है।",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1250,6 +1254,14 @@
   "runtime_browser_control_turn_off": {
     "message": "बंद करें",
     "description": "Runtime interface message browser_control.turn_off"
+  },
+  "runtime_browser_control_unsupported": {
+    "message": "इस Hermes पर Hermes नियंत्रण उपलब्ध नहीं है",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "इसके लिए ब्राउज़र एक्सटेंशन नियंत्रण वाला Hermes चाहिए।",
+    "description": "Runtime interface message browser_control.unsupported_detail"
   },
   "runtime_browser_control_waiting": {
     "message": "Hermes की प्रतीक्षा में",

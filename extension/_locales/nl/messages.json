@@ -1015,6 +1015,10 @@
     "message": "Start of selecteer een Hermes-sessie voordat je Hermes-bediening inschakelt.",
     "description": "Runtime interface message browser_control.error_session_enable"
   },
+  "runtime_browser_control_error_unsupported": {
+    "message": "Hermes-besturing is niet beschikbaar op deze Hermes. Hiervoor is een Hermes met besturing via de browserextensie nodig.",
+    "description": "Runtime interface message browser_control.error_unsupported"
+  },
   "runtime_browser_control_help_apply": {
     "message": "Past het gekozen bereik toe op de tabs die Hermes kan bedienen.",
     "description": "Runtime interface message browser_control.help_apply"
@@ -1250,6 +1254,14 @@
   "runtime_browser_control_turn_off": {
     "message": "Uitschakelen",
     "description": "Runtime interface message browser_control.turn_off"
+  },
+  "runtime_browser_control_unsupported": {
+    "message": "Hermes-besturing is niet beschikbaar op deze Hermes",
+    "description": "Runtime interface message browser_control.unsupported"
+  },
+  "runtime_browser_control_unsupported_detail": {
+    "message": "Hiervoor is een Hermes met besturing via de browserextensie nodig.",
+    "description": "Runtime interface message browser_control.unsupported_detail"
   },
   "runtime_browser_control_waiting": {
     "message": "Wachten op Hermes.",
