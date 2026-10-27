@@ -72,7 +72,7 @@ test('it opens the socket when none is open, and stays inline (null) when none c
 
 test('a gateway that does not hold the session refuses for that session only, and the image stays inline', async () => {
   const client = authoritySocket({ attach: Object.assign(new Error('not_found'), { data: { reason: 'not_found' } }) });
-  client.request = async (method) => { throw Object.assign(new Error('not_found'), { data: { reason: 'not_found' } }); };
+  client.request = async () => { throw Object.assign(new Error('not_found'), { data: { reason: 'not_found' } }); };
   const p = panel({ client });
   assert.equal(await p.run(`stageImageViaGatewaySocket(${JSON.stringify(attachment())})`), null);
   assert.equal(p.notes.length, 1);
