@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { SIDECAR_ART, pickSidecarArt, sidecarArtCssValue } from '../extension/lib/sidecar-art.mjs';
 
 const css = readFileSync(new URL('../extension/sidepanel.css', import.meta.url), 'utf8');
@@ -8,12 +8,17 @@ const js = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), '
 const dir = new URL('../extension/', import.meta.url);
 
 test('every sidecar art entry ships and stays lean enough for the panel', () => {
-  assert.equal(SIDECAR_ART.length, 17);
+  assert.equal(SIDECAR_ART.length, 15);
   assert.deepEqual(SIDECAR_ART.slice(-3), [
     'assets/img/sidecar-art/dither-edits-23.webp',
     'assets/img/sidecar-art/dither-edits-93.webp',
     'assets/img/sidecar-art/one-account-everywhere.webp',
   ]);
+  for (const removed of ['automation', 'slate']) {
+    const entry = `assets/img/sidecar-art/${removed}.webp`;
+    assert.ok(!SIDECAR_ART.includes(entry), `${removed} was removed from the rotation`);
+    assert.ok(!existsSync(new URL(entry, dir)), `${removed} is no longer shipped`);
+  }
   let total = 0;
   for (const entry of SIDECAR_ART) {
     const size = statSync(new URL(entry, dir)).size;

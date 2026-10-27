@@ -108,7 +108,7 @@ export async function verifyLightThemeTakeover({ client, evidence, qaDir, saveSc
   }
   await client.call('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 });
   await client.evaluate(`document.activeElement?.blur(); document.querySelector('[data-effort-view="slider"]').click(); document.querySelector('#modelMenuCloseButton').click()`);
-  await client.evaluate(`(async () => { const art = 'assets/img/sidecar-art/automation.webp'; await new Promise((resolve, reject) => { const i = new Image(); i.onload = resolve; i.onerror = reject; i.src = art; }); document.documentElement.style.setProperty('--sidecar-art', 'url("' + art + '")'); await document.fonts.ready; })()`);
+  await client.evaluate(`(async () => { const art = 'assets/img/sidecar-art/connect.webp'; await new Promise((resolve, reject) => { const i = new Image(); i.onload = resolve; i.onerror = reject; i.src = art; }); document.documentElement.style.setProperty('--sidecar-art', 'url("' + art + '")'); await document.fonts.ready; })()`);
   for (const theme of ['nous', 'anti-nous']) {
     for (const mode of ['light', 'dark']) {
       await setPalette(client, theme, mode);

@@ -3,13 +3,11 @@
 // panel opens. Pure list + picker so the choice is unit-testable and the
 // panel only ever does one pick per load.
 export const SIDECAR_ART = Object.freeze([
-  'assets/img/sidecar-art/automation.webp',
   'assets/img/sidecar-art/connect.webp',
   'assets/img/sidecar-art/delegate.webp',
   'assets/img/sidecar-art/memory.webp',
   'assets/img/sidecar-art/sandbox.webp',
   'assets/img/sidecar-art/footer.webp',
-  'assets/img/sidecar-art/slate.webp',
   'assets/img/sidecar-art/cloud-always-on.webp',
   'assets/img/sidecar-art/cloud-connect.webp',
   'assets/img/sidecar-art/cloud-deploy.webp',
