@@ -164,6 +164,7 @@ export const CHECK_JS_COMMANDS = Object.freeze([
   'node --check extension/lib/companion-context-client.mjs',
   'node --check extension/lib/bot-roster-source.mjs',
   'node --check extension/lib/bot-roster-names.mjs',
+  'node --check extension/lib/legacy-session-fork.mjs',
   'node --check extension/lib/dashboard-routes.mjs',
   'node --check extension/lib/session-compact.mjs',
   'node --check extension/lib/session-rewind.mjs',

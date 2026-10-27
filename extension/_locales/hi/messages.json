@@ -3451,6 +3451,30 @@
     "message": "{title} के लिए सत्र आईडी कॉपी करें",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "प्रति में जारी रखें",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes इस चैट की प्रति नहीं बना सका, इसलिए आपका संदेश नहीं भेजा गया। आगे बढ़ने के लिए नई चैट शुरू करें। आपका संदेश अभी बॉक्स में है।",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "चैट की प्रति बन रही है…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "नई चैट शुरू करें",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "यह चैट Hermes Browser के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। आपका संदेश नहीं भेजा गया। आप चैट की प्रति में आगे बढ़ सकते हैं।",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "यह चैट Hermes Browser के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। इसकी प्रति यहाँ नहीं बन सकती, इसलिए आगे बढ़ने के लिए नई चैट शुरू करें। आपका संदेश अभी बॉक्स में है।",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

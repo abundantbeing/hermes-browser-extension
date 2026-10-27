@@ -3451,6 +3451,30 @@
     "message": "Salin ID sesi untuk {title}",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "Lanjutkan di salinan",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes tidak dapat menyalin obrolan ini, jadi pesan Anda tidak terkirim. Mulai obrolan baru untuk melanjutkan. Pesan Anda masih ada di kotak.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Menyalin obrolan…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Mulai obrolan baru",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Obrolan ini dimulai oleh Hermes Browser versi lama, dan gateway ini tidak lagi menerima pesan baru di dalamnya. Pesan Anda tidak terkirim. Anda dapat melanjutkan di salinan obrolan.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Obrolan ini dimulai oleh Hermes Browser versi lama, dan gateway ini tidak lagi menerima pesan baru di dalamnya. Obrolan ini tidak dapat disalin di sini, jadi mulai obrolan baru untuk melanjutkan. Pesan Anda masih ada di kotak.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

@@ -38,6 +38,9 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   sessions: false,
   sessionChat: false,
   sessionChatStreaming: false,
+  // POST /api/sessions/{id}/fork: a copy of a session stored under a source the
+  // gateway still admits turns for.
+  sessionFork: false,
   chatCompletions: false,
   chatCompletionsStreaming: false,
   skills: false,
@@ -242,6 +245,7 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
     sessions: inferredFeature(features, endpoints, ['session_resources', 'sessions_api'], ['sessions', 'session', 'session_create']),
     sessionChat: inferredFeature(features, endpoints, ['session_chat'], ['session_chat']),
         sessionChatStreaming: inferredFeature(features, endpoints, ['session_chat_streaming'], ['session_chat_stream']),
+        sessionFork: inferredFeature(features, endpoints, ['session_fork'], ['session_fork']),
         chatCompletions: inferredFeature(features, endpoints, ['chat_completions'], ['chat_completions']),
         chatCompletionsStreaming: inferredFeature(features, endpoints, ['chat_completions_streaming'], ['chat_completions_stream']),
         skills: inferredFeature(features, endpoints, ['skills_api', 'skills'], ['skills']),

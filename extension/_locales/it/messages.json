@@ -3451,6 +3451,30 @@
     "message": "Copia ID sessione per {title}",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "Continua in una copia",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes non è riuscito a copiare questa chat, quindi il tuo messaggio non è stato inviato. Avvia una nuova chat per continuare. Il tuo messaggio è ancora nella casella.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Copia della chat in corso…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Avvia una nuova chat",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Questa chat è stata avviata da una versione precedente di Hermes Browser e questo gateway non accetta più nuovi messaggi al suo interno. Il tuo messaggio non è stato inviato. Puoi continuare in una copia della chat.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Questa chat è stata avviata da una versione precedente di Hermes Browser e questo gateway non accetta più nuovi messaggi al suo interno. Non può essere copiata qui, quindi avvia una nuova chat per continuare. Il tuo messaggio è ancora nella casella.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

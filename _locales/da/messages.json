@@ -3451,6 +3451,30 @@
     "message": "Kopiér sessions-id for {title}",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "Fortsæt i en kopi",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes kunne ikke kopiere denne chat, så din besked blev ikke sendt. Start en ny chat for at fortsætte. Din besked står stadig i feltet.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Kopierer chat…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Start en ny chat",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Denne chat blev startet af en ældre version af Hermes Browser, og denne gateway accepterer ikke længere nye beskeder i den. Din besked blev ikke sendt. Du kan fortsætte i en kopi af chatten.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Denne chat blev startet af en ældre version af Hermes Browser, og denne gateway accepterer ikke længere nye beskeder i den. Den kan ikke kopieres her, så start en ny chat for at fortsætte. Din besked står stadig i feltet.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

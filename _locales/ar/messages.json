@@ -3451,6 +3451,30 @@
     "message": "نسخ معرّف الجلسة لـ {title}",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "المتابعة في نسخة",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "تعذر على Hermes نسخ هذه المحادثة، لذلك لم يتم إرسال رسالتك. ابدأ محادثة جديدة للمتابعة. رسالتك ما زالت في المربع.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "جارٍ نسخ المحادثة…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "بدء محادثة جديدة",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "بدأت هذه المحادثة نسخة أقدم من Hermes Browser، ولم تعد هذه البوابة تقبل رسائل جديدة فيها. لم يتم إرسال رسالتك. يمكنك المتابعة في نسخة من المحادثة.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "بدأت هذه المحادثة نسخة أقدم من Hermes Browser، ولم تعد هذه البوابة تقبل رسائل جديدة فيها. لا يمكن نسخها هنا، لذا ابدأ محادثة جديدة للمتابعة. رسالتك ما زالت في المربع.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

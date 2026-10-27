@@ -3451,6 +3451,30 @@
     "message": "Sessie-ID kopiëren voor {title}",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "Doorgaan in een kopie",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes kon deze chat niet kopiëren, dus je bericht is niet verzonden. Start een nieuwe chat om door te gaan. Je bericht staat nog in het invoervak.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Chat kopiëren…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Nieuwe chat starten",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Deze chat is gestart door een oudere versie van Hermes Browser en deze gateway accepteert er geen nieuwe berichten meer in. Je bericht is niet verzonden. Je kunt doorgaan in een kopie van de chat.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Deze chat is gestart door een oudere versie van Hermes Browser en deze gateway accepteert er geen nieuwe berichten meer in. Hij kan hier niet worden gekopieerd, dus start een nieuwe chat om door te gaan. Je bericht staat nog in het invoervak.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

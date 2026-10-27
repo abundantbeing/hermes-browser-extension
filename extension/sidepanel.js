@@ -707,6 +707,15 @@ import {
 import { PROJECTS_UNAVAILABLE } from './lib/projects-client.mjs';
 import { createWebappDialog } from './lib/hermes-webapp-dialog.mjs';
 import { buildNamesOnlyRoster, rosterHasNamesOnlyRows } from './lib/bot-roster-names.mjs';
+import {
+  continueInSessionCopy,
+  createSessionRecoveryActions,
+  isSessionSourceRefusal,
+  planSourceRefusalRecovery,
+  readLegacyForks,
+  rememberLegacyFork,
+  resolveLegacyFork,
+} from './lib/legacy-session-fork.mjs';
 import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { normalizeMessageTimestamp } from './lib/message-meta.mjs';
 import { setRailCopyEnabled } from './lib/message-actions.mjs';
@@ -19459,6 +19468,9 @@ async function openHermesSession(selectedSession) {
   // A session compressed on a legacy gateway lives on under its successor's id.
   const followedId = sessionLineage.resolve(selectedSession.id);
   let session = followedId && followedId !== selectedSession.id ? { ...selectedSession, id: followedId } : selectedSession;
+  // A chat this browser already continued in a copy opens the copy.
+  const forkedCopy = resolveLegacyFork(await readLegacyForks(browserApi.storage.local), session.id);
+  if (forkedCopy) session = { ...session, id: forkedCopy.id, title: forkedCopy.title || session.title, source: 'api_server', transport: 'rest' };
   renderSessionHistoryLoading(session);
   const requestedSessionId = session.id;
   let liveSessionId = session.id;
@@ -21946,6 +21958,87 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     flush,
     dispose,
   };
+}
+
+// A turn refused as permission_denied on a chat an older build saved under a
+// source current Hermes no longer admits (lib/legacy-session-fork.mjs). The
+// refusal is only treated as that case after the session row confirms such a
+// source; any other permission error falls through to the usual failure text.
+// Returns true when the failure was explained here.
+async function offerLegacySessionRecovery({ sessionId, resendText, resendAttachments, streamView } = {}) {
+  const id = String(sessionId || '').trim();
+  if (!id || !streamView?.node) return false;
+  let row = null;
+  try {
+    const response = await apiFetch(`/api/sessions/${encodeSessionId(id)}`, { method: 'GET' });
+    if (response.ok) row = await readJsonResponse(response);
+  } catch {
+    // An unreadable session cannot be shown to be the old-source case.
+  }
+  const plan = planSourceRefusalRecovery({ session: row, forkAdvertised: gatewayCapabilities.sessionFork === true });
+  if (plan.kind === 'unrelated') return false;
+  const startNewChat = async () => {
+    try {
+      await beginHermesBrowserDraft();
+      await loadSessions({ quiet: true });
+      els.input?.focus?.({ preventScroll: true });
+      setStatus('ok', 'New Hermes Browser Extension draft', 'Saved when you send the first message.');
+      return true;
+    } catch (error) {
+      setStatus('error', 'Could not create session', error?.message || String(error), { translateDetail: false });
+      return false;
+    }
+  };
+  const actions = [];
+  if (plan.kind === 'fork') {
+    actions.push({
+      id: 'continue-copy',
+      label: t('session.legacy_continue_copy'),
+      busyLabel: t('session.legacy_copying'),
+      run: async () => {
+        const result = await continueInSessionCopy({
+          sessionId: id,
+          encodeId: encodeSessionId,
+          makeCopyId: makeBrowserSessionId,
+          fetchJson: async (path, init) => {
+            const response = await apiFetch(path, init);
+            return { ok: response.ok, status: response.status, payload: await readJsonResponse(response).catch(() => null) };
+          },
+          remember: (from, copy) => rememberLegacyFork(browserApi.storage.local, from, copy),
+          openCopy: (copy) => {
+            const [opened] = normalizeHermesSessions({ data: [{ ...copy, profile: copy.profile || safeActiveProfile() }] });
+            return opened ? openHermesSession({ ...opened, transport: 'rest' }) : false;
+          },
+          resend: async () => {
+            const sent = await askHermes(resendText, [...resendAttachments], { preserveComposer: true });
+            // The draft restored after the refusal is now the message in the copy.
+            if (sent !== false && String(els.input?.value || '').trim() === String(resendText || '').trim()) {
+              els.input.value = '';
+              attachments = [];
+              renderAttachments();
+              persistCurrentComposerDraft({ immediate: true });
+            }
+            return sent;
+          },
+        });
+        if (!result.ok) {
+          addMessage('system', t('session.legacy_copy_failed'));
+          setStatus('error', 'Could not copy chat', t('session.legacy_copy_failed'), { translateTitle: false, translateDetail: false });
+          return false;
+        }
+        return true;
+      },
+    });
+  }
+  actions.push({ id: 'new-chat', label: t('session.legacy_new_chat'), run: startNewChat });
+  streamView.update(t(plan.kind === 'fork' ? 'session.legacy_source_fork' : 'session.legacy_source_no_fork'));
+  streamView.node.appendChild(createSessionRecoveryActions({ document, actions }));
+  scrollMessageStreamToBottom();
+  setStatus('warn', 'Chat made by an older version', t(plan.kind === 'fork' ? 'session.legacy_source_fork' : 'session.legacy_source_no_fork'), {
+    translateTitle: false,
+    translateDetail: false,
+  });
+  return true;
 }
 
 // A gateway still running pre-update code cannot be fixed from the panel's own
@@ -26328,6 +26421,22 @@ ${streamError.message}`);
           : 'This runtime could not recover the session automatically. Start a new session, then resend the preserved draft.';
         addMessage('system', `Session context reached its compression ceiling. ${recoveryDetail} ${replayDetail}`);
         return didSend;
+      }
+      if (isSessionSourceRefusal(error)) {
+        const resendText = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
+        const resendAttachments = commentPack.consumed
+          ? [...turnAttachments].filter((item) => item?.source !== 'page-annotations')
+          : [...turnAttachments];
+        if (await offerLegacySessionRecovery({ sessionId: runSessionId, resendText, resendAttachments, streamView })) {
+          if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
+            els.input.value = resendText;
+            attachments = [...resendAttachments];
+            renderAttachments();
+            renderSkillSuggestions();
+            persistCurrentComposerDraft({ immediate: true });
+          }
+          return didSend;
+        }
       }
       if (error?.originRefused) {
         // The session route was refused before the chat request, so the turn

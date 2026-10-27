@@ -3451,6 +3451,30 @@
     "message": "Sitzungs-ID für {title} kopieren",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "In einer Kopie fortsetzen",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes konnte diesen Chat nicht kopieren, deshalb wurde deine Nachricht nicht gesendet. Starte einen neuen Chat, um weiterzumachen. Deine Nachricht steht noch im Eingabefeld.",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "Chat wird kopiert…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "Neuen Chat starten",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "Dieser Chat wurde von einer älteren Version von Hermes Browser gestartet, und dieses Gateway nimmt darin keine neuen Nachrichten mehr an. Deine Nachricht wurde nicht gesendet. Du kannst in einer Kopie des Chats weitermachen.",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "Dieser Chat wurde von einer älteren Version von Hermes Browser gestartet, und dieses Gateway nimmt darin keine neuen Nachrichten mehr an. Er lässt sich hier nicht kopieren, starte also einen neuen Chat, um weiterzumachen. Deine Nachricht steht noch im Eingabefeld.",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

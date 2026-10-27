@@ -3451,6 +3451,30 @@
     "message": "{title} のセッション ID をコピー",
     "description": "Runtime interface message session.copy_id_for"
   },
+  "runtime_session_legacy_continue_copy": {
+    "message": "コピーで続ける",
+    "description": "Runtime interface message session.legacy_continue_copy"
+  },
+  "runtime_session_legacy_copy_failed": {
+    "message": "Hermes がこのチャットをコピーできなかったため、メッセージは送信されていません。新しいチャットを始めてください。メッセージは入力欄に残っています。",
+    "description": "Runtime interface message session.legacy_copy_failed"
+  },
+  "runtime_session_legacy_copying": {
+    "message": "チャットをコピー中…",
+    "description": "Runtime interface message session.legacy_copying"
+  },
+  "runtime_session_legacy_new_chat": {
+    "message": "新しいチャットを始める",
+    "description": "Runtime interface message session.legacy_new_chat"
+  },
+  "runtime_session_legacy_source_fork": {
+    "message": "このチャットは古いバージョンの Hermes Browser で開始されたため、このゲートウェイは新しいメッセージを受け付けなくなりました。メッセージは送信されていません。チャットのコピーで続けられます。",
+    "description": "Runtime interface message session.legacy_source_fork"
+  },
+  "runtime_session_legacy_source_no_fork": {
+    "message": "このチャットは古いバージョンの Hermes Browser で開始されたため、このゲートウェイは新しいメッセージを受け付けなくなりました。ここではコピーできないので、新しいチャットを始めてください。メッセージは入力欄に残っています。",
+    "description": "Runtime interface message session.legacy_source_no_fork"
+  },
   "runtime_session_long_shared_notice": {
     "message": "This session has {count} messages. Long shared sessions can fall out of sync with other Hermes clients, such as the desktop app, the CLI, or Hermes Web, that write to the same session, so replies can arrive late or out of order. Start a new chat when you can.",
     "description": "Runtime interface message session.long_shared_notice"

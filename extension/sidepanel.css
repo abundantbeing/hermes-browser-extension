@@ -1775,6 +1775,22 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   border-color: rgba(var(--hermes-ink-rgb), 0.55);
 }
 .gateway-restart-action .tiny:disabled { opacity: 0.55; cursor: default; }
+/* Recovery actions under a refused turn on a chat an older build saved. */
+.session-recovery-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.session-recovery-actions .tiny {
+  min-height: 28px;
+  padding: 6px 12px;
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.session-recovery-actions .tiny:disabled { opacity: 0.55; cursor: default; }
 .bot-mode-roster-note-action {
   margin: 4px 0 0 12px;
 }
@@ -12143,6 +12159,7 @@ html[dir="rtl"] .session-menu-tab,
 html[dir="rtl"] .session-option-row[data-live-state="running"] .session-option-meta,
 html[dir="rtl"] .session-ownership-actions button,
 html[dir="rtl"] .session-ownership-kicker,
+html[dir="rtl"] .session-recovery-actions .tiny,
 html[dir="rtl"] .settings-back-to-top,
 html[dir="rtl"] .settings-category-edited,
 html[dir="rtl"] .settings-choice-copy small,
