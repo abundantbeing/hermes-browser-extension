@@ -15,6 +15,7 @@ import { canFlushQueuedTurn } from './run-control-lifecycle.mjs';
 import { hermesContextForModel, HERMES_DEFAULT_FALLBACK_CONTEXT } from './hermes-context-windows.mjs';
 import { contextFromHermesRegistry } from './hermes-context-sync.mjs';
 import { gatewayContextForModel } from './gateway-model-context.mjs';
+import { BOT_CHAT_TITLE } from './bot-canonical-session.mjs';
 import { shouldAttachBrowserContextToBotTurn, resolveBotBrowserContext, prepareTabScreenshotAttachment, screenshotAttachParams } from './bot-browser-bridge.mjs';
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
 import { REST_TURN_SOURCES } from './session-materialization.mjs';
@@ -260,6 +261,10 @@ export function restTurnSourceRepair(session = {}) {
   const row = session?.session && typeof session.session === 'object' ? session.session : session;
   const source = String(row?.source || '').trim().toLowerCase();
   if (!source || REST_TURN_SOURCES.includes(source)) return null;
+  // A bot's Bot Chat keeps the source it was made under (Desktop's, usually): the gateway hands a
+  // REST turn on it to the chat's own lane, and relabelling it would take it away from Desktop.
+  const title = String(row?.root_title || row?.title || '').trim();
+  if (title === BOT_CHAT_TITLE) return null;
   return { source: 'api_server' };
 }
 

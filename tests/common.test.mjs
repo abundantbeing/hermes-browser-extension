@@ -4482,3 +4482,10 @@ test('a turn never leaves without a provider the catalog can name, and Stop open
   const stop = source.slice(source.indexOf('async function stopCurrentTurn()'), source.indexOf('const watched = attach ||', source.indexOf('async function stopCurrentTurn()')));
   assert.match(stop, /liveSessionRows\.get\(viewedSessionId\)\?\.live === true[\s\S]*?await ensureActiveDashboardWsConnection\(\)/);
 });
+
+test('a Bot Chat keeps its source on a REST turn; other foreign sessions are still relabelled', async () => {
+  const { restTurnSourceRepair } = await import('../extension/lib/common.mjs');
+  assert.equal(restTurnSourceRepair({ session: { source: 'desktop', title: 'Bot Chat' } }), null);
+  assert.equal(restTurnSourceRepair({ source: 'desktop', title: 'Bot Chat #2', root_title: 'Bot Chat' }), null);
+  assert.deepEqual(restTurnSourceRepair({ source: 'desktop', title: 'Notes' }), { source: 'api_server' });
+});
