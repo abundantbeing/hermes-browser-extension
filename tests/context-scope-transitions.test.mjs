@@ -7,6 +7,7 @@ import {
   contextScopeFromTab,
   normalizeContextScope,
 } from '../extension/lib/context-scope.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 import {
   createRevisionGate,
   resetContextScope,
@@ -241,8 +242,7 @@ test('pinning a stale menu row fails closed instead of reusing a closed tab snap
 
 test('check:js syntax-checks the transition helper', async () => {
   const { readFile } = await import('node:fs/promises');
-  const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.match(packageJson.scripts['check:js'], /node --check extension\/lib\/context-scope-transition\.mjs/);
+  assert.match(CHECK_JS, /node --check extension\/lib\/context-scope-transition\.mjs/);
 });
 
 test('conversation snapshots restore non-pinned identity without copying connection secrets', () => {
@@ -299,5 +299,5 @@ test('the picker opens a session through the transport choice and falls back to 
   const body = source.slice(start, source.indexOf('\nasync function attachLiveSessionIfRunning', start));
   assert.match(body, /chooseOpenSessionTransport\(\{[\s\S]*?restMadeChat: isSidePanelSessionId\(session\.id\),/);
   assert.match(body, /if \(openTransport\.restFallback\) \{[\s\S]*?dashboardTransport = false;/);
-  assert.match(body, /\n  if \(!dashboardTransport\) \{\n/, 'the REST open runs after a fallback too');
+  assert.match(body, /\n {2}if \(!dashboardTransport\) \{\n/, 'the REST open runs after a fallback too');
 });

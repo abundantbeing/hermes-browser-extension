@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
+import { setImmediate } from 'node:timers';
 import vm from 'node:vm';
 
 import {
@@ -751,7 +752,7 @@ test('the page is web-accessible to loopback pages only (to cover the hand-off p
   const manifest = JSON.parse(read('extension/manifest.json'));
   // Framed, the page only shows: the messages to the worker are sent from the top-level page alone.
   const pageScript = read('extension/hermes-web-opening.js');
-  assert.match(pageScript, /if \(window\.top !== window\.self\) \{\n  nameWebapp\(new URLSearchParams\(location\.search\)\.get\('origin'\)\);\n\} else \{/);
+  assert.match(pageScript, /if \(window\.top !== window\.self\) \{\n {2}nameWebapp\(new URLSearchParams\(location\.search\)\.get\('origin'\)\);\n\} else \{/);
   assert.ok(pageScript.indexOf('startOpeningPage({') > pageScript.indexOf('} else {'), 'the worker is asked only outside a frame');
   // tabs.create/update/remove/onUpdated and windows.update need the existing "tabs" permission on both builds.
   assert.ok(manifest.permissions.includes('tabs'));

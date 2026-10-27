@@ -166,7 +166,9 @@ print(json.dumps({"good": good, "raising": [raising["ok"], raising["anonymous"]]
 test('the route never reads the context store, a session, a turn or a secret', () => {
   const source = readFileSync('companion-plugin/status_route.py', 'utf8');
   const code = source.replace(/"""[\s\S]*?"""/g, '').replace(/#.*$/gm, '');
-  assert.doesNotMatch(code, /context_store|STORE|journal|session_id|turn_id|task_id|environ|getenv|secret/i);
+  assert.doesNotMatch(code, /context_store|journal|session_id|turn_id|task_id|environ|getenv|secret/i);
+  // The context store's STORE constant, by case: the "no-store" cache header is fine.
+  assert.doesNotMatch(code, /\bSTORE\b/);
   // The only file it reads is its own manifest.
   assert.equal([...code.matchAll(/read_text\(/g)].length, 1);
   assert.match(code, /plugin\.yaml/);
