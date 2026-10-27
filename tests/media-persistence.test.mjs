@@ -15,6 +15,7 @@ import {
   resolveMediaFetchPlan,
   splitInboundVisionMessage,
 } from '../extension/lib/media-persistence.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -141,6 +142,5 @@ test('sidepanel hydrates history media through the discovered dashboard /api/med
 });
 
 test('package check:js syntax-checks the media persistence module', () => {
-  const pkg = JSON.parse(read('package.json'));
-  assert.match(String(pkg.scripts?.['check:js'] || ''), /media-persistence\.mjs/);
+  assert.match(CHECK_JS, /media-persistence\.mjs/);
 });

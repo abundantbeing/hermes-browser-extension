@@ -4,6 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 
 import { SUPPORTED_LOCALES } from '../extension/lib/i18n-registry.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -85,9 +86,9 @@ test('Sidepanel populates language options from the shared registry', () => {
 test('i18n modules and validator are included in JavaScript and manifest verification', () => {
   const packageJson = JSON.parse(read('package.json'));
   const validator = read('scripts/check-i18n.mjs');
-  assert.match(packageJson.scripts['check:js'], /extension\/lib\/i18n\.mjs/);
-  assert.match(packageJson.scripts['check:js'], /extension\/lib\/i18n-registry\.mjs/);
-  assert.match(packageJson.scripts['check:js'], /scripts\/check-i18n\.mjs/);
+  assert.match(CHECK_JS, /extension\/lib\/i18n\.mjs/);
+  assert.match(CHECK_JS, /extension\/lib\/i18n-registry\.mjs/);
+  assert.match(CHECK_JS, /scripts\/check-i18n\.mjs/);
   assert.match(packageJson.scripts['check:manifest'], /check:i18n|check-i18n|generate-browser-locales/);
   assert.match(validator, /loadLocaleMessages, SUPPORTED_LOCALES/);
   assert.match(validator, /for \(const locale of SUPPORTED_LOCALES\)/);

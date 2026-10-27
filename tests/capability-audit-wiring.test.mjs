@@ -5,9 +5,9 @@ import { readFileSync } from 'node:fs';
 import { describeCapabilityRow } from '../extension/lib/capability-view.mjs';
 import { COMPANION_REASONS, companionReasonText } from '../extension/lib/companion-plugin-status.mjs';
 import english from '../extension/lib/locales/en.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const panel = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
-const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 function body(name) {
   const start = panel.indexOf(`function ${name}(`);
@@ -97,6 +97,6 @@ test('the two new reason codes have strings', () => {
 
 test('check:js covers the new modules', () => {
   for (const file of ['companion-plugin-status', 'dashboard-routes']) {
-    assert.ok(pkg.scripts['check:js'].includes(`node --check extension/lib/${file}.mjs`), file);
+    assert.ok(CHECK_JS.includes(`node --check extension/lib/${file}.mjs`), file);
   }
 });

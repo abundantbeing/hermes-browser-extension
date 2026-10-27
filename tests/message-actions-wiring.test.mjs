@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const panel = await read('extension/sidepanel.js');
@@ -8,7 +9,6 @@ const html = await read('extension/sidepanel.html');
 const css = await read('extension/sidepanel.css');
 const common = await read('extension/lib/common.mjs');
 const thread = await read('extension/lib/message-thread-ui.mjs');
-const pkg = JSON.parse(await read('package.json'));
 
 test('panel uses the shared rail, divider, and truthful timestamp helpers', () => {
   assert.match(panel, /import\s*\{[^}]*createMessageThreadUi[^}]*\}\s*from\s*['"]\.\/lib\/message-thread-ui\.mjs['"]/);
@@ -58,6 +58,6 @@ test('streaming replies explicitly disable and later enable rail copy', () => {
 
 test('all six new shared modules participate in syntax verification', () => {
   for (const name of ['message-meta', 'message-actions', 'message-rewind', 'bot-identity', 'group-presence', 'group-member-models']) {
-    assert.ok(pkg.scripts['check:js'].includes(`node --check extension/lib/${name}.mjs`), name);
+    assert.ok(CHECK_JS.includes(`node --check extension/lib/${name}.mjs`), name);
   }
 });

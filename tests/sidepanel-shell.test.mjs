@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 test('check:js syntax-checks the custom theme and VS Code converter modules', () => {
-  const packageJson = JSON.parse(read('package.json'));
-  const checkJs = packageJson.scripts?.['check:js'] || '';
+  const checkJs = CHECK_JS;
   for (const modulePath of [
     'extension/lib/custom-themes.mjs',
     'extension/lib/custom-theme-store.mjs',
@@ -177,10 +177,9 @@ test('the package declares only justified artifact and controller permissions', 
 });
 
 test('check:js covers the shared surface, client, and appearance modules', () => {
-  const packageJson = JSON.parse(read('package.json'));
-  assert.match(packageJson.scripts['check:js'], /surface-protocol\.mjs/);
-  assert.match(packageJson.scripts['check:js'], /hermes-client\.mjs/);
-  assert.match(packageJson.scripts['check:js'], /appearance-preferences\.mjs/);
+  assert.match(CHECK_JS, /surface-protocol\.mjs/);
+  assert.match(CHECK_JS, /hermes-client\.mjs/);
+  assert.match(CHECK_JS, /appearance-preferences\.mjs/);
 });
 
 test('sidepanel primary Connect and Test use one explicit connection-mode dispatch contract', () => {

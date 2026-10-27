@@ -9,6 +9,7 @@ import test from 'node:test';
 import {
   BAYER4, CELL, IN_MS, OUT_MS, bayer, cellOn, createRenderer, ease, glitchAt, glitchPlan, thresholdFor,
 } from '../extension/lib/dither-hover.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file) => readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
@@ -234,8 +235,7 @@ test('the setup wires the effect once, by delegation, to the primary and the qui
 });
 
 test('the module is syntax-checked with the rest of the extension', () => {
-  const pkg = JSON.parse(read('package.json'));
-  assert.ok(pkg.scripts['check:js'].includes('node --check extension/lib/dither-hover.mjs'));
+  assert.ok(CHECK_JS.includes('node --check extension/lib/dither-hover.mjs'));
 });
 
 test('every line of the label is drawn on both faces, and the glitch split draws them all', () => {

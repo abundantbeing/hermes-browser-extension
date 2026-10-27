@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 async function required(path, label) {
   try {
@@ -367,6 +368,6 @@ test('Phase 4 controller modules remain in the v0.3.0 syntax gates', () => {
     'extension/lib/controller-protocol.mjs',
     'extension/lib/controller-client.mjs',
   ]) {
-    assert.match(packageJson.scripts['check:js'], new RegExp(file.replaceAll('.', '\\.')));
+    assert.match(CHECK_JS, new RegExp(file.replaceAll('.', '\\.')));
   }
 });

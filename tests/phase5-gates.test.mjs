@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const PHASE5_MODULES = [
   'extension/lib/session-delivery-state.mjs',
@@ -26,17 +27,16 @@ test('Phase 5 controller foundations remain present in the v0.3.0 package and ma
 });
 
 test('Phase 5 modules are part of the v0.3.0 check:js syntax gate', () => {
-  const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   for (const file of PHASE5_MODULES) {
     assert.match(
-      packageJson.scripts['check:js'],
+      CHECK_JS,
       new RegExp(`node --check ${file.replaceAll('.', '\\.')}`),
       `check:js must gate ${file}`,
     );
   }
   // Existing Phase 4 gates stay intact.
-  assert.match(packageJson.scripts['check:js'], /node --check extension\/lib\/controller-protocol\.mjs/);
-  assert.match(packageJson.scripts['check:js'], /node --check extension\/lib\/controller-client\.mjs/);
+  assert.match(CHECK_JS, /node --check extension\/lib\/controller-protocol\.mjs/);
+  assert.match(CHECK_JS, /node --check extension\/lib\/controller-client\.mjs/);
 });
 
 test('Phase 5 heartbeat protocol constant exists without mutating the Phase 4 method table', async () => {

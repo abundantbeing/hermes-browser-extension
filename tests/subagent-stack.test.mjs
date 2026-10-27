@@ -16,6 +16,7 @@ import {
   visibleSubagentView,
   subagentsFromListResult,
 } from '../extension/lib/subagent-stack.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -177,6 +178,5 @@ test('sidepanel mounts a hidden-until-live SUBAGENTS stack beside TASKS', () => 
 });
 
 test('package check:js syntax-checks the subagent stack module', () => {
-  const pkg = JSON.parse(read('package.json'));
-  assert.match(String(pkg.scripts?.['check:js'] || ''), /subagent-stack\.mjs/);
+  assert.match(CHECK_JS, /subagent-stack\.mjs/);
 });

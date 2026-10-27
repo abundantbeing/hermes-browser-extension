@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { manifestAssumptionsFor } from '../scripts/manifest-profiles.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 
 const PHASE6_MODULES = [
   'extension/lib/browser-control-browser-adapters.mjs',
@@ -18,7 +19,7 @@ test('Phase 6 control modules and debugger permission ship in VERSION 0.3.0', ()
   assert.equal(packageJson.version, '0.4.0');
   for (const file of PHASE6_MODULES) {
     assert.match(
-      packageJson.scripts['check:js'],
+      CHECK_JS,
       new RegExp(`node --check ${file.replaceAll('.', '\\.')}`),
       `check:js must gate ${file}`,
     );

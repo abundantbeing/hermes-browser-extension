@@ -19,6 +19,7 @@ import {
   formatVoiceElapsed,
   voiceLevelBarHeights,
 } from '../extension/lib/voice-capture.mjs';
+import { CHECK_JS } from '../scripts/check-js.mjs';
 import { dashboardModelDiscoveryBaseUrl, resolveDashboardTranscriptionBaseUrl } from '../extension/lib/model-discovery.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -198,6 +199,5 @@ test('sidepanel and the voice page transcribe through the resolved dashboard por
 });
 
 test('package check:js syntax-checks the voice capture module', () => {
-  const pkg = JSON.parse(read('package.json'));
-  assert.match(pkg.scripts['check:js'], /node --check extension\/lib\/voice-capture\.mjs/);
+  assert.match(CHECK_JS, /node --check extension\/lib\/voice-capture\.mjs/);
 });
