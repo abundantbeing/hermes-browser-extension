@@ -579,6 +579,7 @@ import {
   resetContextScope,
   resolveContextScopeAction,
   restoreConversationSessionState,
+  chooseOpenSessionTransport,
   shouldPreserveDashboardTransport,
   snapshotConversationSessionState,
 } from './lib/context-scope-transition.mjs';
@@ -596,6 +597,7 @@ import {
 } from './lib/context-consent.mjs';
 import {
   SESSION_SURFACE_SOURCES,
+  isSidePanelSessionId,
   requiresSessionOwnershipConfirmation,
   sessionOwnershipNotice,
 } from './lib/session-ownership.mjs';
@@ -19347,13 +19349,19 @@ async function openHermesSession(selectedSession) {
   const sessionTransport = session.transport || (isNamedHermesProfile(session.profile) ? 'dashboard-ws' : '');
   // A caller that found no dashboard asks for the gateway's REST routes explicitly.
   const forceRestTransport = session.transport === 'rest' && !isRemoteWsMode();
-  const dashboardTransport = !forceRestTransport && (activeConversationTransport === 'dashboard-ws'
-    || (liveSessionRosterScope === liveSessionScopeKey() && liveSessionRows.get(session.id)?.live === true)
-    || shouldUseBotDashboardTransport({
+  const openTransport = chooseOpenSessionTransport({
+    activeTransport: activeConversationTransport,
+    remoteWsMode: isRemoteWsMode(),
+    forceRest: forceRestTransport,
+    liveOnRoster: liveSessionRosterScope === liveSessionScopeKey() && liveSessionRows.get(session.id)?.live === true,
+    botTransport: shouldUseBotDashboardTransport({
       gatewayMode: settings.gatewayMode,
       source: session.source,
       transport: sessionTransport,
-    }));
+    }),
+    restMadeChat: isSidePanelSessionId(session.id),
+  });
+  let dashboardTransport = openTransport.dashboard;
   activeConversationTransport = dashboardTransport ? 'dashboard-ws' : 'rest';
   if (!dashboardTransport) activeDashboardWsConnection = null;
   if (dashboardTransport) {
@@ -19396,19 +19404,29 @@ async function openHermesSession(selectedSession) {
       };
     } catch (error) {
       if (!isCurrentRequest()) return false;
-      if (!shouldPreserveDashboardTransport({
-        requestedTransport: 'dashboard-ws',
-        connectionReadyState: activeDashboardWsConnection?.client?.readyState,
-        error,
-      }) && !isRemoteWsMode()) {
+      if (openTransport.restFallback) {
+        // Only the live roster chose the socket, and the socket could not open the session: open it
+        // over REST rather than leave a running session unopenable.
+        console.warn('[Hermes Browser] Opening the running session over REST; the Hermes Web socket could not:', error?.message || error);
         activeConversationTransport = 'rest';
         activeDashboardWsConnection = null;
+        dashboardTransport = false;
+      } else {
+        if (!shouldPreserveDashboardTransport({
+          requestedTransport: 'dashboard-ws',
+          connectionReadyState: activeDashboardWsConnection?.client?.readyState,
+          error,
+        }) && !isRemoteWsMode()) {
+          activeConversationTransport = 'rest';
+          activeDashboardWsConnection = null;
+        }
+        renderMessagesFromStorage();
+        setStatus('error', 'Could not open session', error?.message || String(error), { translateDetail: false });
+        return false;
       }
-      renderMessagesFromStorage();
-      setStatus('error', 'Could not open session', error?.message || String(error), { translateDetail: false });
-      return false;
     }
-  } else {
+  }
+  if (!dashboardTransport) {
     // A gateway session opened over REST is not in the picker list yet. List it,
     // or the unsaved-draft guard in loadSessionMessages mistakes an id shaped
     // like hermes-browser-extension-<ts>-<hex> for a local draft and shows an

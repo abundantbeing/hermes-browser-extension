@@ -186,3 +186,26 @@ export function shouldPreserveDashboardTransport({
   if (error?.transportFailure === true || error?.kind === 'transport') return false;
   return !['socket-closed', 'gateway-disconnected', 'auth-failed', 'unauthorized'].includes(String(error?.code || ''));
 }
+
+/**
+ * Which transport opens a session from the picker. The Hermes Web socket when this panel already
+ * chats over it, when Bot Mode needs it, or when the live roster says the session is running (so
+ * the panel can attach to the run). A chat this panel made over REST (`restMadeChat`) is still a
+ * REST chat while it runs: the roster only observes it, and it opens, follows and queues over REST.
+ * `restFallback` is true when only the roster chose the socket, so a socket that cannot open the
+ * session falls back to REST instead of leaving it unopenable.
+ */
+export function chooseOpenSessionTransport({
+  activeTransport = '',
+  remoteWsMode = false,
+  forceRest = false,
+  liveOnRoster = false,
+  botTransport = false,
+  restMadeChat = false,
+} = {}) {
+  if (forceRest) return { dashboard: false, restFallback: false };
+  const alreadySocket = activeTransport === 'dashboard-ws';
+  const liveChoice = liveOnRoster && !(restMadeChat && !alreadySocket && !remoteWsMode);
+  const dashboard = alreadySocket || botTransport || liveChoice;
+  return { dashboard, restFallback: dashboard && !alreadySocket && !botTransport && !remoteWsMode };
+}
