@@ -64,9 +64,9 @@ test('every advertised flag derives the same answer the boolean carries, for eac
       assert.equal(record.reasonCode, 'not-in-hermes');
       continue;
     }
-    // Two rows have an exact answer on a Hermes gateway that listed everything it serves: native async user
-    // input is in no release (hermes-agent #103136), and context status needs the session socket.
-    const exact = { sessionUserInput: 'no-native-user-input', sessionContext: 'no-context-socket' }[spec.id];
+    // One row has an exact answer on a Hermes gateway that listed everything it serves: context status needs
+    // the session socket.
+    const exact = { sessionContext: 'no-context-socket' }[spec.id];
     if (exact) {
       assert.equal(record.state, 'unsupported', `${spec.id} absent has an exact reason`);
       assert.equal(record.reasonCode, exact);
