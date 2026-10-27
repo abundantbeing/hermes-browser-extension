@@ -1347,10 +1347,6 @@
     "message": "会话",
     "description": "Runtime interface message capability.feature.sessions"
   },
-  "runtime_capability_feature_sessionUserInput": {
-    "message": "原生异步用户输入",
-    "description": "Runtime interface message capability.feature.sessionUserInput"
-  },
   "runtime_capability_feature_skills": {
     "message": "技能",
     "description": "Runtime interface message capability.feature.skills"
@@ -1482,10 +1478,6 @@
   "runtime_capability_reason_no_context_socket": {
     "message": "此连接尚未打开 Hermes 会话套接字。套接字打开后，上下文状态会在此读取。",
     "description": "Runtime interface message capability.reason.no_context_socket"
-  },
-  "runtime_capability_reason_no_native_user_input": {
-    "message": "此 Hermes 没有原生异步用户输入（hermes-agent #103136 尚未合并），因此只有问题出现在实时流中时才能回答。",
-    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "尚未检查。",
@@ -8078,70 +8070,6 @@
   "runtime_update_no_local_checkout": {
     "message": "此机器上没有仓库的本地检出?",
     "description": "Runtime interface message update.no_local_checkout"
-  },
-  "runtime_user_input_answer_required": {
-    "message": "需要回答：{question}",
-    "description": "Runtime interface message user_input.answer_required"
-  },
-  "runtime_user_input_failed": {
-    "message": "无法将你的回答发送给 Hermes。",
-    "description": "Runtime interface message user_input.failed"
-  },
-  "runtime_user_input_http_failed": {
-    "message": "向 Hermes 发送回答失败（{status}）。",
-    "description": "Runtime interface message user_input.http_failed"
-  },
-  "runtime_user_input_invalid": {
-    "message": "Hermes 拒绝了这些回答。请检查各字段后重试。",
-    "description": "Runtime interface message user_input.invalid"
-  },
-  "runtime_user_input_other_answer": {
-    "message": "或输入其他回答",
-    "description": "Runtime interface message user_input.other_answer"
-  },
-  "runtime_user_input_pending_count": {
-    "message": "{count} 个待处理",
-    "description": "Runtime interface message user_input.pending_count"
-  },
-  "runtime_user_input_recorded": {
-    "message": "已由 Hermes 记录。",
-    "description": "Runtime interface message user_input.recorded"
-  },
-  "runtime_user_input_recorded_deferred": {
-    "message": "已记录。Hermes 将在下一个符合条件的轮次使用它；尚未确认会自动继续。",
-    "description": "Runtime interface message user_input.recorded_deferred"
-  },
-  "runtime_user_input_recorded_title": {
-    "message": "回答已记录",
-    "description": "Runtime interface message user_input.recorded_title"
-  },
-  "runtime_user_input_sending": {
-    "message": "正在发送…",
-    "description": "Runtime interface message user_input.sending"
-  },
-  "runtime_user_input_session_changed": {
-    "message": "准备此回答时 Hermes 会话已更改。请在当前会话中重试。",
-    "description": "Runtime interface message user_input.session_changed"
-  },
-  "runtime_user_input_submit": {
-    "message": "提交回答",
-    "description": "Runtime interface message user_input.submit"
-  },
-  "runtime_user_input_title": {
-    "message": "Hermes 需要你的回答",
-    "description": "Runtime interface message user_input.title"
-  },
-  "runtime_user_input_transport": {
-    "message": "无法连接到 Hermes。",
-    "description": "Runtime interface message user_input.transport"
-  },
-  "runtime_user_input_unrecognized": {
-    "message": "Hermes 返回了无法识别的用户输入确认。",
-    "description": "Runtime interface message user_input.unrecognized"
-  },
-  "runtime_user_input_your_answer": {
-    "message": "你的回答",
-    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "语音模式：浏览器语音识别后备方案\n\n{preview}",

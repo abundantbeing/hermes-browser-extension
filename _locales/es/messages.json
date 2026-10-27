@@ -1347,10 +1347,6 @@
     "message": "Sesiones",
     "description": "Runtime interface message capability.feature.sessions"
   },
-  "runtime_capability_feature_sessionUserInput": {
-    "message": "Entrada de usuario asíncrona nativa",
-    "description": "Runtime interface message capability.feature.sessionUserInput"
-  },
   "runtime_capability_feature_skills": {
     "message": "Skills",
     "description": "Runtime interface message capability.feature.skills"
@@ -1482,10 +1478,6 @@
   "runtime_capability_reason_no_context_socket": {
     "message": "Todavía no hay un socket de sesión de Hermes abierto para esta conexión. El estado del contexto se leerá aquí cuando se abra uno.",
     "description": "Runtime interface message capability.reason.no_context_socket"
-  },
-  "runtime_capability_reason_no_native_user_input": {
-    "message": "Este Hermes no tiene entrada de usuario asíncrona nativa (hermes-agent #103136 no está fusionado), así que una pregunta solo se puede responder cuando llega por el flujo en vivo.",
-    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Aún no comprobado.",
@@ -8078,70 +8070,6 @@
   "runtime_update_no_local_checkout": {
     "message": "¿No hay un clon local del repositorio en esta máquina?",
     "description": "Runtime interface message update.no_local_checkout"
-  },
-  "runtime_user_input_answer_required": {
-    "message": "Respuesta obligatoria: {question}",
-    "description": "Runtime interface message user_input.answer_required"
-  },
-  "runtime_user_input_failed": {
-    "message": "No se pudo enviar tu respuesta a Hermes.",
-    "description": "Runtime interface message user_input.failed"
-  },
-  "runtime_user_input_http_failed": {
-    "message": "Falló el envío de la respuesta a Hermes ({status}).",
-    "description": "Runtime interface message user_input.http_failed"
-  },
-  "runtime_user_input_invalid": {
-    "message": "Hermes rechazó estas respuestas. Revisa los campos e inténtalo de nuevo.",
-    "description": "Runtime interface message user_input.invalid"
-  },
-  "runtime_user_input_other_answer": {
-    "message": "O escribe otra respuesta",
-    "description": "Runtime interface message user_input.other_answer"
-  },
-  "runtime_user_input_pending_count": {
-    "message": "{count} pendientes",
-    "description": "Runtime interface message user_input.pending_count"
-  },
-  "runtime_user_input_recorded": {
-    "message": "Registrada por Hermes.",
-    "description": "Runtime interface message user_input.recorded"
-  },
-  "runtime_user_input_recorded_deferred": {
-    "message": "Registrada. Hermes la usará en el próximo turno elegible; no se confirmó la reanudación automática.",
-    "description": "Runtime interface message user_input.recorded_deferred"
-  },
-  "runtime_user_input_recorded_title": {
-    "message": "Respuesta registrada",
-    "description": "Runtime interface message user_input.recorded_title"
-  },
-  "runtime_user_input_sending": {
-    "message": "Enviando…",
-    "description": "Runtime interface message user_input.sending"
-  },
-  "runtime_user_input_session_changed": {
-    "message": "La sesión de Hermes cambió mientras se preparaba esta respuesta. Vuelve a intentarlo desde la sesión activa.",
-    "description": "Runtime interface message user_input.session_changed"
-  },
-  "runtime_user_input_submit": {
-    "message": "Enviar respuestas",
-    "description": "Runtime interface message user_input.submit"
-  },
-  "runtime_user_input_title": {
-    "message": "Hermes necesita tu respuesta",
-    "description": "Runtime interface message user_input.title"
-  },
-  "runtime_user_input_transport": {
-    "message": "No se pudo contactar con Hermes.",
-    "description": "Runtime interface message user_input.transport"
-  },
-  "runtime_user_input_unrecognized": {
-    "message": "Hermes devolvió una confirmación de entrada de usuario desconocida.",
-    "description": "Runtime interface message user_input.unrecognized"
-  },
-  "runtime_user_input_your_answer": {
-    "message": "Tu respuesta",
-    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "Modo de voz: alternativa de reconocimiento de voz del navegador\n\n{preview}",

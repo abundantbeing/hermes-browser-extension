@@ -52,11 +52,6 @@ export const DEFAULT_GATEWAY_CAPABILITIES = Object.freeze({
   runApproval: false,
   runClarify: false,
   sessionModelLock: false,
-  // Native asynchronous user input (hermes-agent #103136): the gateway advertises
-  // features.session_user_input, or both its pending-replay and answer endpoints.
-  // A dashboard socket has no advertisement, so this stays false there; the panel
-  // then acts only on a request event it actually receives.
-  sessionUserInput: false,
   sessionContext: false,
   sessionCompress: false,
   // Manual compaction as session.mutate operation=compress: a dashboard
@@ -144,16 +139,6 @@ function hasEndpoint(endpoints = {}, names = []) {
   return names.some((name) => Boolean(endpoints?.[name]?.path || endpoints?.[name] === true));
 }
 
-// Both halves are needed unless the gateway states the whole feature: an answer route without
-// pending replay would lose a request across a reconnect, and replay without an answer route
-// shows a card that cannot be sent.
-function completeUserInputCapability(features = {}, endpoints = {}) {
-  const explicit = boolFeature(features, ['session_user_input', 'sessionUserInput']);
-  if (typeof explicit === 'boolean') return explicit;
-  return ['session_user_input_pending', 'session_user_input_answer']
-    .every((name) => Boolean(endpoints?.[name]?.path || endpoints?.[name] === true));
-}
-
 function boolFeature(features = {}, names = []) {
   for (const name of names) {
     if (typeof features?.[name] === 'boolean') return features[name];
@@ -200,7 +185,6 @@ function legacyCapabilities({ healthOk = false, hasApiKey = false, warning = '' 
         runStop: false,
         runSteer: false,
         sessionModelLock: false,
-        sessionUserInput: false,
         sessionContext: false,
         sessionCompress: false,
     profiles: false,
@@ -255,7 +239,6 @@ export function normalizeGatewayCapabilities(payload = null, { healthOk = false,
         runApproval: advertisedFeature(features, endpoints, ['run_approval_response'], ['run_approval']),
         runClarify: advertisedFeature(features, endpoints, ['run_clarify_response'], ['run_clarify']),
         sessionModelLock: inferredFeature(features, endpoints, ['session_model_lock', 'sessionModelLock'], ['session_model_lock', 'session_model']),
-        sessionUserInput: completeUserInputCapability(features, endpoints),
         sessionContext: inferredFeature(features, endpoints, ['session_context', 'context_status', 'contextStatus'], ['session_context', 'session_context_get', 'context_status']),
         sessionCompress: hasEndpoint(endpoints, ['session_compress', 'session_compress_post', 'context_compress']),
     audioTranscription: inferredFeature(features, endpoints, ['audio_api', 'audio_transcription', 'audioTranscription'], ['audio_transcribe', 'audio_transcription']),
@@ -322,7 +305,6 @@ export const ADVERTISED_FLAG_SPECS = Object.freeze([
   { id: 'profiles', key: 'profiles', features: ['profile_roster', 'profiles_api', 'profile_api'], endpoints: ['profiles', 'profile_active', 'profiles_active'] },
   { id: 'runs', key: 'runs', features: ['run_submission', 'runs_api'], endpoints: ['runs'] },
   { id: 'runSteer', key: 'runSteer', features: ['run_steer'], endpoints: ['run_steer'] },
-  { id: 'sessionUserInput', key: 'sessionUserInput', features: ['session_user_input', 'sessionUserInput'], endpoints: [] },
   { id: 'sessionContext', key: 'sessionContext', features: ['session_context', 'context_status', 'contextStatus'], endpoints: ['session_context', 'session_context_get', 'context_status'] },
   { id: 'sessionModelLock', key: 'sessionModelLock', features: ['session_model_lock', 'sessionModelLock'], endpoints: ['session_model_lock', 'session_model'] },
   { id: 'audioTranscription', key: 'audioTranscription', features: ['audio_api', 'audio_transcription', 'audioTranscription'], endpoints: ['audio_transcribe', 'audio_transcription'] },
@@ -473,17 +455,6 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
     }
   }
 
-  // Native asynchronous user input (hermes-agent #103136) is not in any Hermes release yet: the installed
-  // api_server advertises no `session_user_input` feature and no pending/answer route. When /v1/capabilities
-  // answered in full and does not list it, say plainly that this Hermes lacks it instead of "not advertised".
-  // A gateway that starts to advertise it (or a socket that answers user_input.pending) still wins.
-  if (transport === 'rest' && caps.platform === 'hermes-agent' && caps.raw && typeof caps.raw === 'object'
-    && current('sessionUserInput')?.reasonCode === 'not-advertised') {
-    replace('sessionUserInput', S.unsupported, O.derived, 'no-native-user-input');
-  } else if (wsRoute && hasReady && unsupported.has('user_input.pending') && current('sessionUserInput')?.state !== S.available) {
-    replace('sessionUserInput', S.unsupported, O.methodNotFound, 'method-not-found', { method: 'user_input.pending' });
-  }
-
   // The companion plugin serves three of those rows itself. When its own status
   // route lists the route (and the plugin is ready), the row reads "available via
   // the companion plugin"; otherwise it keeps the honest reason above. A gateway
@@ -629,7 +600,6 @@ function rowDefinitions({ browserSpeechAvailable = false } = {}) {
     { key: 'browserContextStatus', label: 'Browser context status', off: 'Hermes has no browser context status route. The Browser context sent with each message shows what was sent.', on: 'Browser context status route available.' },
     { key: 'browserCompanionPlugin', label: 'Browser Companion Plugin', off: 'Optional companion plugin: the gateway does not advertise it, so the extension cannot tell whether it is loaded. Context still goes inline with each message.', on: 'Companion plugin capability advertised.' },
     { key: 'pluginActions', label: 'Plugin actions', off: 'Hermes has no plugin-actions route. The extension does not run plugin actions.', on: 'Plugin actions advertised.' },
-    { key: 'sessionUserInput', label: 'Native async user input', off: 'Hermes did not advertise native asynchronous user input, so the panel only answers a request it actually receives.', on: 'Hermes questions can be answered from the panel and replayed after a reconnect.' },
     { key: 'sessionContext', label: 'Context status', off: 'Native session context status unavailable — Browser uses local/runtime estimates.', on: 'Native session context inspection available.' },
     { key: 'sessionCompress', label: 'Context compaction', off: 'Manual compaction is not available on this connection — Hermes compacts on its own.', on: 'Manual compaction available.' },
     { key: 'sessionAuthority', label: 'Session authority', off: 'Projects and canonical session edits need session authority.', on: 'Canonical session edits (move, compact) are available.' },

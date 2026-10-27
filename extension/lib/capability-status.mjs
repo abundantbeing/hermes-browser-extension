@@ -99,7 +99,6 @@ export const CAPABILITY_REASONS = Object.freeze({
   'image-via-socket': () => 'Pasted images are staged through the Hermes session socket (image.attach_bytes), and the chat reads them by path.',
   'context-socket': () => 'Read over the Hermes session socket: session usage and the category breakdown, by the stored id of the session.',
   'no-context-socket': () => 'No Hermes session socket is open for this connection yet. Context status reads here once one opens.',
-  'no-native-user-input': () => 'This Hermes does not have native asynchronous user input (hermes-agent #103136 is not merged), so a question can only be answered when it arrives in the live stream.',
   'not-connected': () => 'The dashboard WebSocket has not delivered gateway.ready yet.',
   'method-not-found': ({ method } = {}) => `The gateway answered "method not found" (-32601) for ${clean(method) || 'this method'}.`,
   'legacy-ws-compress': () => 'This dashboard gateway has no session authority, so the legacy session.compress serves compaction.',

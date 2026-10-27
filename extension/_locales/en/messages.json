@@ -1347,10 +1347,6 @@
     "message": "Sessions",
     "description": "Runtime interface message capability.feature.sessions"
   },
-  "runtime_capability_feature_sessionUserInput": {
-    "message": "Native async user input",
-    "description": "Runtime interface message capability.feature.sessionUserInput"
-  },
   "runtime_capability_feature_skills": {
     "message": "Skills",
     "description": "Runtime interface message capability.feature.skills"
@@ -1482,10 +1478,6 @@
   "runtime_capability_reason_no_context_socket": {
     "message": "No Hermes session socket is open for this connection yet. Context status reads here once one opens.",
     "description": "Runtime interface message capability.reason.no_context_socket"
-  },
-  "runtime_capability_reason_no_native_user_input": {
-    "message": "This Hermes does not have native asynchronous user input (hermes-agent #103136 is not merged), so a question can only be answered when it arrives in the live stream.",
-    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Not checked yet.",
@@ -8078,70 +8070,6 @@
   "runtime_update_no_local_checkout": {
     "message": "No local checkout of the repository on this machine?",
     "description": "Runtime interface message update.no_local_checkout"
-  },
-  "runtime_user_input_answer_required": {
-    "message": "Answer required: {question}",
-    "description": "Runtime interface message user_input.answer_required"
-  },
-  "runtime_user_input_failed": {
-    "message": "Could not send Hermes input.",
-    "description": "Runtime interface message user_input.failed"
-  },
-  "runtime_user_input_http_failed": {
-    "message": "Hermes input answer failed ({status}).",
-    "description": "Runtime interface message user_input.http_failed"
-  },
-  "runtime_user_input_invalid": {
-    "message": "Hermes rejected these answers. Check the fields and try again.",
-    "description": "Runtime interface message user_input.invalid"
-  },
-  "runtime_user_input_other_answer": {
-    "message": "Or enter another answer",
-    "description": "Runtime interface message user_input.other_answer"
-  },
-  "runtime_user_input_pending_count": {
-    "message": "{count} pending",
-    "description": "Runtime interface message user_input.pending_count"
-  },
-  "runtime_user_input_recorded": {
-    "message": "Recorded by Hermes.",
-    "description": "Runtime interface message user_input.recorded"
-  },
-  "runtime_user_input_recorded_deferred": {
-    "message": "Recorded. Hermes will use it on the next eligible turn; automatic resume was not confirmed.",
-    "description": "Runtime interface message user_input.recorded_deferred"
-  },
-  "runtime_user_input_recorded_title": {
-    "message": "Answer recorded",
-    "description": "Runtime interface message user_input.recorded_title"
-  },
-  "runtime_user_input_sending": {
-    "message": "Sending…",
-    "description": "Runtime interface message user_input.sending"
-  },
-  "runtime_user_input_session_changed": {
-    "message": "The Hermes session changed while preparing this answer. Retry it from the active session.",
-    "description": "Runtime interface message user_input.session_changed"
-  },
-  "runtime_user_input_submit": {
-    "message": "Submit answers",
-    "description": "Runtime interface message user_input.submit"
-  },
-  "runtime_user_input_title": {
-    "message": "Hermes needs your input",
-    "description": "Runtime interface message user_input.title"
-  },
-  "runtime_user_input_transport": {
-    "message": "Could not reach Hermes.",
-    "description": "Runtime interface message user_input.transport"
-  },
-  "runtime_user_input_unrecognized": {
-    "message": "Hermes returned an unrecognized user-input acknowledgement.",
-    "description": "Runtime interface message user_input.unrecognized"
-  },
-  "runtime_user_input_your_answer": {
-    "message": "Your answer",
-    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "Voice mode: Browser speech fallback\n\n{preview}",

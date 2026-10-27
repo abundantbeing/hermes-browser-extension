@@ -401,8 +401,6 @@ import { capabilityIdentity } from './lib/capability-status.mjs';
 import { createCapabilityRuntime } from './lib/capability-runtime.mjs';
 import { COMPANION_ROUTE_CAPABILITIES, COMPANION_STATES, companionRecordFields, companionRouteRecordFields, probeCompanionPlugin } from './lib/companion-plugin-status.mjs';
 import { botAvatarRoute } from './lib/bot-roster-source.mjs';
-import { createUserInputFetchGuard, userInputWriteIsOwned } from './lib/user-input-race.mjs';
-import { classifyUserInputResult, createUserInputController, pendingUserInputRecords, userInputAnswerPayload, userInputText } from './lib/user-input.mjs';
 import { companionContextSummary, companionUploadPlan, readCompanionActions, readCompanionContextStatus, uploadCompanionContext } from './lib/companion-context-client.mjs';
 import { stageImageViaSessionSocket } from './lib/session-socket-image.mjs';
 import { DASHBOARD_ROUTE_CAPABILITIES, dashboardRouteRecordFields, probeDashboardRoutes, readDashboardModelInfo, uploadImageViaDashboard } from './lib/dashboard-routes.mjs';
@@ -850,7 +848,6 @@ const els = {
   sessionRefreshIcon: $('#sessionRefreshIcon'),
   refreshSessionsLabel: $('#refreshSessionsLabel'),
   messages: $('#messages'),
-  userInputRequests: $('#userInputRequests'),
   taskStack: $('#taskStack'),
   taskStackToggle: $('#taskStackToggle'),
   taskStackSummary: $('#taskStackSummary'),
@@ -5578,7 +5575,6 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
     void refreshDashboardRoutes().catch(() => undefined);
     void refreshGatewaySocket().catch(() => undefined);
     void refreshAccountOffer().catch(() => undefined);
-    refreshPendingUserInputsQuietly();
   } catch (error) {
     const status = Number(error?.httpStatus ?? error?.status);
     if (status === 401 && !isRemoteWsMode()) {
@@ -17655,7 +17651,6 @@ function sessionDisplayName(session = {}) {
 
 function updateSessionLabel() {
   promptController.refresh();
-  syncUserInputSession();
   renderGatewayQueue();
   if (activeGroupProjection) {
     const label = `${activeGroupProjection.displayName} · Group Chat`;
@@ -19467,7 +19462,6 @@ async function openHermesSession(selectedSession) {
   if (!isCurrentRequest()) return false;
   // Re-attach to a run the gateway is still executing for this session.
   void attachLiveSessionIfRunning(liveSessionId, { scopeRevisionId });
-  refreshPendingUserInputsQuietly();
   setStatus(loaded ? 'ok' : 'warn', loaded ? 'Session opened' : 'Session opened without history', `${session.sourceLabel || session.source || 'Hermes'} · ${session.id}`, { translateDetail: false });
   void hydrateRestSubagentSnapshot(session.id);
   return true;
@@ -23655,168 +23649,6 @@ const gatewayServerRequests = {
   closed: (client) => promptController.dropClient(client),
 };
 
-// ---- Native asynchronous user input (hermes-agent #103136) ----
-// A Hermes turn can ask the person up to five structured questions without stopping. The request
-// is shown as a card above the composer (user-input.mjs), answered over the transport the chat
-// uses (REST: POST /api/sessions/{id}/user-input/{request}/answer; dashboard socket:
-// user_input.respond) and replayed after a reconnect (GET .../user-input/pending;
-// user_input.pending).
-//
-// Feature detection, so a gateway without it behaves exactly as before: the REST routes are used
-// only when /v1/capabilities advertises session_user_input (or both of its endpoints). A dashboard
-// socket advertises nothing, so there the card appears only for a request event the socket really
-// delivered, and replay is asked only of a socket that has delivered one. No request is sent to a
-// gateway just to find out.
-const userInputFetchGuard = createUserInputFetchGuard();
-const userInputSeenClients = new WeakSet();
-const userInputReplayUnsupported = new WeakSet();
-let userInputSeenRestKey = '';
-
-function activeUserInputConnection() {
-  return isRemoteWsMode() ? (remoteWsConnection || activeDashboardWsConnection) : activeDashboardWsConnection;
-}
-
-// The id requests are keyed by for the session on screen: the live id on a dashboard socket, the
-// durable id over REST.
-function activeUserInputSessionId() {
-  if (usesDashboardWsChatTransport()) return String(activeUserInputConnection()?.wsSessionId || '').trim();
-  return String(settings.sessionId || '').trim();
-}
-
-function restUserInputKey() {
-  return `${normalizeGatewayMode(settings.gatewayMode)}|${String(settings.gatewayUrl || '')}|${String(settings.activeProfile || '')}`;
-}
-
-function userInputTransportOwner() {
-  return usesDashboardWsChatTransport() ? activeUserInputConnection() : restUserInputKey();
-}
-
-// Is native user input proven for this transport? `client` is the socket, or null for REST.
-function userInputProven(client = null) {
-  if (client) return userInputSeenClients.has(client);
-  return gatewayCapabilities.sessionUserInput === true || userInputSeenRestKey === restUserInputKey();
-}
-
-function userInputFetchIsCurrent(token, sessionId, owner) {
-  return userInputFetchGuard.isCurrent(token)
-    && activeUserInputSessionId() === sessionId
-    && userInputTransportOwner() === owner;
-}
-
-function invalidateUserInputFetch(sessionId = activeUserInputSessionId(), owner = userInputTransportOwner()) {
-  const key = String(sessionId || '').trim();
-  if (key) userInputFetchGuard.invalidate(key, owner);
-}
-
-function syncUserInputSession() {
-  try {
-    userInputController.setActiveSession(activeUserInputSessionId());
-  } catch (error) {
-    console.warn('[Hermes Browser] User-input session sync failed:', error?.message || error);
-  }
-}
-
-// A request or answer event, from the REST stream (`client` null) or a dashboard socket.
-function handleUserInputEvent(type, payload, { sessionId = '', client = null } = {}) {
-  if (client) userInputSeenClients.add(client);
-  else userInputSeenRestKey = restUserInputKey();
-  const key = String(sessionId || '').trim();
-  if (!key) return;
-  invalidateUserInputFetch(key, client ? activeUserInputConnection() : restUserInputKey());
-  syncUserInputSession();
-  if (type === WS_EVENTS.userInputRequest) userInputController.upsert(payload, key);
-  else if (type === WS_EVENTS.userInputAnswer) userInputController.clear(payload?.request_id, key);
-}
-
-async function sendUserInputAnswer(request, answers) {
-  const requestedSessionId = String(request?.sessionId || '').trim();
-  invalidateUserInputFetch(requestedSessionId);
-  const changed = () => new Error(userInputText('user_input.session_changed', {}, t));
-  if (usesDashboardWsChatTransport()) {
-    const connection = await ensureActiveDashboardWsConnection();
-    const owned = () => userInputWriteIsOwned({
-      requestedSessionId,
-      activeSessionId: activeUserInputSessionId(),
-      requestedOwner: connection,
-      activeOwner: userInputTransportOwner(),
-    });
-    if (!owned()) throw changed();
-    const liveSessionId = await ensureRemoteWsSession(connection);
-    if (liveSessionId !== requestedSessionId || !owned()) throw changed();
-    const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
-    return classifyUserInputResult(await connection.client.request(WS_METHODS.userInputRespond, payload));
-  }
-  const payload = userInputAnswerPayload({ ...request, sessionId: requestedSessionId }, answers);
-  const response = await apiFetch(
-    `/api/sessions/${encodeSessionId(payload.session_id)}/user-input/${encodeURIComponent(payload.request_id)}/answer`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ answers: payload.answers, ...(payload.turn_id ? { turn_id: payload.turn_id } : {}) }),
-    },
-  );
-  const result = await readJsonResponse(response);
-  return classifyUserInputResult(result, { httpStatus: response.status });
-}
-
-// Ask for the requests still pending for the session on screen. Only where native user input is
-// proven (see above); a stale answer, a session switch or a newer event wins over a slow reply.
-async function refreshPendingUserInputs() {
-  const requestedSessionId = activeUserInputSessionId();
-  if (!requestedSessionId) return;
-  if (usesDashboardWsChatTransport()) {
-    const connection = activeUserInputConnection();
-    const client = connection?.client;
-    if (!client || client.readyState !== 1 || !userInputProven(client) || userInputReplayUnsupported.has(client)) return;
-    const reservation = userInputFetchGuard.begin(requestedSessionId, connection);
-    let result;
-    try {
-      result = await client.request(WS_METHODS.userInputPending, { session_id: requestedSessionId });
-    } catch (error) {
-      if (Number(error?.code) === -32601) userInputReplayUnsupported.add(client);
-      throw error;
-    }
-    if (!userInputFetchIsCurrent(reservation, requestedSessionId, connection)) return;
-    userInputController.setActiveSession(requestedSessionId);
-    userInputController.replace(requestedSessionId, pendingUserInputRecords(result, requestedSessionId));
-    return;
-  }
-  if (!userInputProven(null) || sessionRoutesAvailable === false || !hermesGatewayKey()) return;
-  const owner = restUserInputKey();
-  const reservation = userInputFetchGuard.begin(requestedSessionId, owner);
-  const response = await apiFetch(
-    `/api/sessions/${encodeSessionId(requestedSessionId)}/user-input/pending`,
-    { method: 'GET' },
-  );
-  if (!response.ok) return;
-  const result = await readJsonResponse(response);
-  if (!userInputFetchIsCurrent(reservation, requestedSessionId, owner)) return;
-  userInputController.setActiveSession(requestedSessionId);
-  userInputController.replace(requestedSessionId, pendingUserInputRecords(result, requestedSessionId));
-}
-
-function refreshPendingUserInputsQuietly() {
-  void refreshPendingUserInputs().catch((error) => {
-    console.warn('[Hermes Browser] Pending user-input replay failed:', error?.message || error);
-  });
-}
-
-const userInputController = createUserInputController({
-  container: els.userInputRequests,
-  getActiveSessionId: activeUserInputSessionId,
-  t: (key, params) => t(key, params),
-  sendAnswer: sendUserInputAnswer,
-  onError: (error) => setStatus('warn', t('user_input.failed'), error?.message || String(error), { translateTitle: false, translateDetail: false }),
-  onResult: (result) => {
-    if (!result.accepted) return;
-    setStatus(
-      'ok',
-      t('user_input.recorded_title'),
-      t(result.delivery === 'deferred' ? 'user_input.recorded_deferred' : 'user_input.recorded'),
-      { translateTitle: false, translateDetail: false },
-    );
-  },
-});
-
 // Only chat connections answer server requests: they are the ones that can
 // show the card. The gateway is told so once the connection is ready.
 function createChatGatewayClient({ replayEndpoint = '', ...options } = {}) {
@@ -23827,8 +23659,6 @@ function createChatGatewayClient({ replayEndpoint = '', ...options } = {}) {
   });
   gatewayClient.on('session.replay.truncated', onReplayTruncated);
   mirrorGatewayQueue(gatewayClient);
-  gatewayClient.on(WS_EVENTS.userInputRequest, (event) => handleUserInputEvent(WS_EVENTS.userInputRequest, event.payload, { sessionId: event.sessionId, client: gatewayClient }));
-  gatewayClient.on(WS_EVENTS.userInputAnswer, (event) => handleUserInputEvent(WS_EVENTS.userInputAnswer, event.payload, { sessionId: event.sessionId, client: gatewayClient }));
   gatewayClient.on('close', () => promptController.dropClient(gatewayClient));
   // The capability ledger follows the socket: a handshake turns every positive
   // record current, a close turns it into a cached one.
@@ -24182,7 +24012,7 @@ function bindPromptCard() {
   createPromptCard({ container: els.agentPromptCard, t, controller: promptController });
 }
 
-async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onUserInput, knownAssistantTexts = [] } = {}) {
+async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts = [] } = {}) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -24217,8 +24047,6 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
       onSteerQueued?.(data.text);
     } else if (isPromptEventName(event.type)) {
       onPrompt?.(event.type, data);
-    } else if (event.type === WS_EVENTS.userInputRequest || event.type === WS_EVENTS.userInputAnswer) {
-      onUserInput?.(event.type, data);
     } else if (event.type === 'chat.completion.chunk' || event.type === 'message') {
       const nextText = appendOpenAiChunkText(event, finalText);
       if (nextText !== finalText) {
@@ -24834,7 +24662,7 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null, onUserInput = null } = {}) {
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null } = {}) {
   if (usesDashboardWsChatTransport()) return streamDashboardWsChat(prompt, onDelta, onTool, {
     signal,
     attachments: turnAttachments,
@@ -24865,7 +24693,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   if (beforeSend) await beforeSend.catch(() => undefined);
   if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onPrompt, knownAssistantTexts, voiceLive });
   try {
-    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, onUserInput, knownAssistantTexts, voiceLive });
+    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts, voiceLive });
   } catch (error) {
     // Profile-scoped 401: the gateway multiplexer requires each named
     // profile's own API key. Named-profile sessions still stream over the
@@ -24888,7 +24716,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   }
 }
 
-async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, onUserInput, knownAssistantTexts, voiceLive = null }) {
+async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts, voiceLive = null }) {
 
   let response;
   try {
@@ -24924,7 +24752,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
     });
   }
   try {
-    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onUserInput, knownAssistantTexts });
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts });
   } catch (error) {
     if (!error.requestRejected && !error.streamError) {
       error.requestAccepted = true;
@@ -25885,7 +25713,6 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             promptPoller?.start();
           },
           onSteerQueued: (payload) => { if (runIsViewed()) restoreBackendQueuedSteerDraft(payload); },
-          onUserInput: (type, data) => handleUserInputEvent(type, data, { sessionId: runSessionId }),
           onPrompt: (type, data) => {
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             promptPoller?.activity();
@@ -28196,10 +28023,8 @@ function bindEvents() {
       browserControlPollTimer = null;
       return;
     }
-    refreshPendingUserInputsQuietly();
     void refreshBrowserControlStatus().then(scheduleBrowserControlPoll);
   });
-  globalThis.addEventListener('focus', refreshPendingUserInputsQuietly);
   els.gatewayModeInput?.addEventListener('change', () => {
     const summary = currentGatewaySummary({ gatewayMode: els.gatewayModeInput.value, gatewayUrl: els.gatewayUrlInput.value });
     if (!els.gatewayUrlInput.value.trim() || els.gatewayUrlInput.value.trim() === DEFAULT_SETTINGS.gatewayUrl) {
@@ -28780,7 +28605,6 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
       },
       bindSession: async () => {
         await initializeSessionForPanelOpen({ focus: false });
-        refreshPendingUserInputsQuietly();
         const sessionId = String(settings.sessionId || '').trim();
         if (!sessionId) {
           if (transportUsesDashboardTicket(settings.connectionTransport) || sessionRoutesAvailable !== false) {

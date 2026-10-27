@@ -1347,10 +1347,6 @@
     "message": "Sessioner",
     "description": "Runtime interface message capability.feature.sessions"
   },
-  "runtime_capability_feature_sessionUserInput": {
-    "message": "Indbygget asynkront brugerinput",
-    "description": "Runtime interface message capability.feature.sessionUserInput"
-  },
   "runtime_capability_feature_skills": {
     "message": "Skills",
     "description": "Runtime interface message capability.feature.skills"
@@ -1482,10 +1478,6 @@
   "runtime_capability_reason_no_context_socket": {
     "message": "Der er endnu ingen Hermes-sessionssocket åben for denne forbindelse. Kontekststatus læses her, når en åbner.",
     "description": "Runtime interface message capability.reason.no_context_socket"
-  },
-  "runtime_capability_reason_no_native_user_input": {
-    "message": "Denne Hermes har ikke indbygget asynkron brugerinput (hermes-agent #103136 er ikke flettet), så et spørgsmål kan kun besvares, når det kommer i live-strømmen.",
-    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Endnu ikke kontrolleret.",
@@ -8078,70 +8070,6 @@
   "runtime_update_no_local_checkout": {
     "message": "Ingen lokal klon af repositoryet på denne maskine?",
     "description": "Runtime interface message update.no_local_checkout"
-  },
-  "runtime_user_input_answer_required": {
-    "message": "Svar påkrævet: {question}",
-    "description": "Runtime interface message user_input.answer_required"
-  },
-  "runtime_user_input_failed": {
-    "message": "Kunne ikke sende dit svar til Hermes.",
-    "description": "Runtime interface message user_input.failed"
-  },
-  "runtime_user_input_http_failed": {
-    "message": "Svaret til Hermes mislykkedes ({status}).",
-    "description": "Runtime interface message user_input.http_failed"
-  },
-  "runtime_user_input_invalid": {
-    "message": "Hermes afviste disse svar. Tjek felterne, og prøv igen.",
-    "description": "Runtime interface message user_input.invalid"
-  },
-  "runtime_user_input_other_answer": {
-    "message": "Eller skriv et andet svar",
-    "description": "Runtime interface message user_input.other_answer"
-  },
-  "runtime_user_input_pending_count": {
-    "message": "{count} afventer",
-    "description": "Runtime interface message user_input.pending_count"
-  },
-  "runtime_user_input_recorded": {
-    "message": "Registreret af Hermes.",
-    "description": "Runtime interface message user_input.recorded"
-  },
-  "runtime_user_input_recorded_deferred": {
-    "message": "Registreret. Hermes bruger det i næste egnede tur; automatisk genoptagelse blev ikke bekræftet.",
-    "description": "Runtime interface message user_input.recorded_deferred"
-  },
-  "runtime_user_input_recorded_title": {
-    "message": "Svar registreret",
-    "description": "Runtime interface message user_input.recorded_title"
-  },
-  "runtime_user_input_sending": {
-    "message": "Sender…",
-    "description": "Runtime interface message user_input.sending"
-  },
-  "runtime_user_input_session_changed": {
-    "message": "Hermes-sessionen skiftede, mens svaret blev gjort klar. Prøv igen fra den aktive session.",
-    "description": "Runtime interface message user_input.session_changed"
-  },
-  "runtime_user_input_submit": {
-    "message": "Send svar",
-    "description": "Runtime interface message user_input.submit"
-  },
-  "runtime_user_input_title": {
-    "message": "Hermes har brug for dit svar",
-    "description": "Runtime interface message user_input.title"
-  },
-  "runtime_user_input_transport": {
-    "message": "Kunne ikke nå Hermes.",
-    "description": "Runtime interface message user_input.transport"
-  },
-  "runtime_user_input_unrecognized": {
-    "message": "Hermes returnerede en ukendt kvittering for brugerinput.",
-    "description": "Runtime interface message user_input.unrecognized"
-  },
-  "runtime_user_input_your_answer": {
-    "message": "Dit svar",
-    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "Stemmetilstand: Browser tale fallback\n\n{preview}",

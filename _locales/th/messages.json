@@ -1347,10 +1347,6 @@
     "message": "เซสชัน",
     "description": "Runtime interface message capability.feature.sessions"
   },
-  "runtime_capability_feature_sessionUserInput": {
-    "message": "อินพุตผู้ใช้แบบอะซิงโครนัสในตัว",
-    "description": "Runtime interface message capability.feature.sessionUserInput"
-  },
   "runtime_capability_feature_skills": {
     "message": "สกิล",
     "description": "Runtime interface message capability.feature.skills"
@@ -1482,10 +1478,6 @@
   "runtime_capability_reason_no_context_socket": {
     "message": "ยังไม่มีซ็อกเก็ตเซสชัน Hermes ที่เปิดอยู่สำหรับการเชื่อมต่อนี้ สถานะบริบทจะแสดงที่นี่เมื่อเปิดแล้ว",
     "description": "Runtime interface message capability.reason.no_context_socket"
-  },
-  "runtime_capability_reason_no_native_user_input": {
-    "message": "Hermes ตัวนี้ไม่มีการป้อนข้อมูลผู้ใช้แบบอะซิงโครนัสในตัว (hermes-agent #103136 ยังไม่ได้รวม) จึงตอบคำถามได้เฉพาะเมื่อคำถามมาถึงในสตรีมสด",
-    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "ยังไม่ได้ตรวจสอบ",
@@ -8078,70 +8070,6 @@
   "runtime_update_no_local_checkout": {
     "message": "ไม่มีสำเนาในเครื่องของที่เก็บโค้ดบนเครื่องนี้?",
     "description": "Runtime interface message update.no_local_checkout"
-  },
-  "runtime_user_input_answer_required": {
-    "message": "ต้องมีคำตอบ: {question}",
-    "description": "Runtime interface message user_input.answer_required"
-  },
-  "runtime_user_input_failed": {
-    "message": "ไม่สามารถส่งคำตอบของคุณไปยัง Hermes ได้",
-    "description": "Runtime interface message user_input.failed"
-  },
-  "runtime_user_input_http_failed": {
-    "message": "การส่งคำตอบไปยัง Hermes ล้มเหลว ({status})",
-    "description": "Runtime interface message user_input.http_failed"
-  },
-  "runtime_user_input_invalid": {
-    "message": "Hermes ปฏิเสธคำตอบเหล่านี้ ตรวจสอบช่องกรอกแล้วลองอีกครั้ง",
-    "description": "Runtime interface message user_input.invalid"
-  },
-  "runtime_user_input_other_answer": {
-    "message": "หรือพิมพ์คำตอบอื่น",
-    "description": "Runtime interface message user_input.other_answer"
-  },
-  "runtime_user_input_pending_count": {
-    "message": "รอดำเนินการ {count} รายการ",
-    "description": "Runtime interface message user_input.pending_count"
-  },
-  "runtime_user_input_recorded": {
-    "message": "Hermes บันทึกแล้ว",
-    "description": "Runtime interface message user_input.recorded"
-  },
-  "runtime_user_input_recorded_deferred": {
-    "message": "บันทึกแล้ว Hermes จะใช้ในเทิร์นถัดไปที่เหมาะสม ยังไม่ยืนยันว่าจะดำเนินการต่ออัตโนมัติ",
-    "description": "Runtime interface message user_input.recorded_deferred"
-  },
-  "runtime_user_input_recorded_title": {
-    "message": "บันทึกคำตอบแล้ว",
-    "description": "Runtime interface message user_input.recorded_title"
-  },
-  "runtime_user_input_sending": {
-    "message": "กำลังส่ง…",
-    "description": "Runtime interface message user_input.sending"
-  },
-  "runtime_user_input_session_changed": {
-    "message": "เซสชัน Hermes เปลี่ยนไประหว่างเตรียมคำตอบนี้ ลองอีกครั้งจากเซสชันที่ใช้งานอยู่",
-    "description": "Runtime interface message user_input.session_changed"
-  },
-  "runtime_user_input_submit": {
-    "message": "ส่งคำตอบ",
-    "description": "Runtime interface message user_input.submit"
-  },
-  "runtime_user_input_title": {
-    "message": "Hermes ต้องการคำตอบจากคุณ",
-    "description": "Runtime interface message user_input.title"
-  },
-  "runtime_user_input_transport": {
-    "message": "ไม่สามารถเชื่อมต่อกับ Hermes ได้",
-    "description": "Runtime interface message user_input.transport"
-  },
-  "runtime_user_input_unrecognized": {
-    "message": "Hermes ส่งการยืนยันอินพุตของผู้ใช้ที่ไม่รู้จักกลับมา",
-    "description": "Runtime interface message user_input.unrecognized"
-  },
-  "runtime_user_input_your_answer": {
-    "message": "คำตอบของคุณ",
-    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "โหมดเสียง: ทางเลือกคำพูดของเบราว์เซอร์\n\n{preview}",

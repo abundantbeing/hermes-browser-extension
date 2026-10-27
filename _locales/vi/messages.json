@@ -1347,10 +1347,6 @@
     "message": "Phiên",
     "description": "Runtime interface message capability.feature.sessions"
   },
-  "runtime_capability_feature_sessionUserInput": {
-    "message": "Nhập liệu người dùng bất đồng bộ gốc",
-    "description": "Runtime interface message capability.feature.sessionUserInput"
-  },
   "runtime_capability_feature_skills": {
     "message": "Skill",
     "description": "Runtime interface message capability.feature.skills"
@@ -1482,10 +1478,6 @@
   "runtime_capability_reason_no_context_socket": {
     "message": "Chưa có socket phiên Hermes nào mở cho kết nối này. Trạng thái ngữ cảnh sẽ được đọc tại đây khi một socket mở.",
     "description": "Runtime interface message capability.reason.no_context_socket"
-  },
-  "runtime_capability_reason_no_native_user_input": {
-    "message": "Hermes này không có đầu vào người dùng bất đồng bộ gốc (hermes-agent #103136 chưa được hợp nhất), nên câu hỏi chỉ có thể được trả lời khi nó đến trong luồng trực tiếp.",
-    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Chưa kiểm tra.",
@@ -8078,70 +8070,6 @@
   "runtime_update_no_local_checkout": {
     "message": "Không có bản sao cục bộ của kho trên máy này?",
     "description": "Runtime interface message update.no_local_checkout"
-  },
-  "runtime_user_input_answer_required": {
-    "message": "Cần có câu trả lời: {question}",
-    "description": "Runtime interface message user_input.answer_required"
-  },
-  "runtime_user_input_failed": {
-    "message": "Không thể gửi câu trả lời của bạn tới Hermes.",
-    "description": "Runtime interface message user_input.failed"
-  },
-  "runtime_user_input_http_failed": {
-    "message": "Gửi câu trả lời tới Hermes không thành công ({status}).",
-    "description": "Runtime interface message user_input.http_failed"
-  },
-  "runtime_user_input_invalid": {
-    "message": "Hermes đã từ chối các câu trả lời này. Hãy kiểm tra các trường và thử lại.",
-    "description": "Runtime interface message user_input.invalid"
-  },
-  "runtime_user_input_other_answer": {
-    "message": "Hoặc nhập câu trả lời khác",
-    "description": "Runtime interface message user_input.other_answer"
-  },
-  "runtime_user_input_pending_count": {
-    "message": "{count} đang chờ",
-    "description": "Runtime interface message user_input.pending_count"
-  },
-  "runtime_user_input_recorded": {
-    "message": "Đã được Hermes ghi nhận.",
-    "description": "Runtime interface message user_input.recorded"
-  },
-  "runtime_user_input_recorded_deferred": {
-    "message": "Đã ghi nhận. Hermes sẽ dùng nó ở lượt đủ điều kiện tiếp theo; chưa xác nhận được việc tự động tiếp tục.",
-    "description": "Runtime interface message user_input.recorded_deferred"
-  },
-  "runtime_user_input_recorded_title": {
-    "message": "Đã ghi nhận câu trả lời",
-    "description": "Runtime interface message user_input.recorded_title"
-  },
-  "runtime_user_input_sending": {
-    "message": "Đang gửi…",
-    "description": "Runtime interface message user_input.sending"
-  },
-  "runtime_user_input_session_changed": {
-    "message": "Phiên Hermes đã thay đổi trong lúc chuẩn bị câu trả lời này. Hãy thử lại từ phiên đang hoạt động.",
-    "description": "Runtime interface message user_input.session_changed"
-  },
-  "runtime_user_input_submit": {
-    "message": "Gửi câu trả lời",
-    "description": "Runtime interface message user_input.submit"
-  },
-  "runtime_user_input_title": {
-    "message": "Hermes cần câu trả lời của bạn",
-    "description": "Runtime interface message user_input.title"
-  },
-  "runtime_user_input_transport": {
-    "message": "Không thể kết nối với Hermes.",
-    "description": "Runtime interface message user_input.transport"
-  },
-  "runtime_user_input_unrecognized": {
-    "message": "Hermes trả về xác nhận đầu vào người dùng không nhận dạng được.",
-    "description": "Runtime interface message user_input.unrecognized"
-  },
-  "runtime_user_input_your_answer": {
-    "message": "Câu trả lời của bạn",
-    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "Chế độ giọng nói: Dự phòng giọng nói của trình duyệt\n\n{preview}",

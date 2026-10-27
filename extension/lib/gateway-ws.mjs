@@ -33,8 +33,6 @@ export const WS_METHODS = Object.freeze({
   profilesConfigure: 'profiles.configure',
   profilesSetAsset: 'profiles.set_asset',
   promptSubmit: 'prompt.submit',
-  userInputPending: 'user_input.pending',
-  userInputRespond: 'user_input.respond',
   sessionInterrupt: 'session.interrupt',
   sessionCompress: 'session.compress',
   // Live sessions in this process with their run state; the one session read a
@@ -81,8 +79,6 @@ export const WS_EVENTS = Object.freeze({
   messageStart: 'message.start',
   messageDelta: 'message.delta',
   messageComplete: 'message.complete',
-  userInputRequest: 'user_input.request',
-  userInputAnswer: 'user_input.answer',
   wakeDetected: 'wake.detected',
   voiceTranscript: 'voice.transcript',
   voiceStatus: 'voice.status',

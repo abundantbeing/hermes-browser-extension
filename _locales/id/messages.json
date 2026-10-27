@@ -1347,10 +1347,6 @@
     "message": "Sesi",
     "description": "Runtime interface message capability.feature.sessions"
   },
-  "runtime_capability_feature_sessionUserInput": {
-    "message": "Input pengguna asinkron bawaan",
-    "description": "Runtime interface message capability.feature.sessionUserInput"
-  },
   "runtime_capability_feature_skills": {
     "message": "Skill",
     "description": "Runtime interface message capability.feature.skills"
@@ -1482,10 +1478,6 @@
   "runtime_capability_reason_no_context_socket": {
     "message": "Belum ada soket sesi Hermes yang terbuka untuk koneksi ini. Status konteks akan dibaca di sini setelah satu terbuka.",
     "description": "Runtime interface message capability.reason.no_context_socket"
-  },
-  "runtime_capability_reason_no_native_user_input": {
-    "message": "Hermes ini tidak memiliki input pengguna asinkron bawaan (hermes-agent #103136 belum digabungkan), jadi pertanyaan hanya bisa dijawab saat tiba di aliran langsung.",
-    "description": "Runtime interface message capability.reason.no_native_user_input"
   },
   "runtime_capability_reason_no_record": {
     "message": "Belum diperiksa.",
@@ -8078,70 +8070,6 @@
   "runtime_update_no_local_checkout": {
     "message": "Tidak ada checkout lokal repositori di mesin ini?",
     "description": "Runtime interface message update.no_local_checkout"
-  },
-  "runtime_user_input_answer_required": {
-    "message": "Jawaban wajib diisi: {question}",
-    "description": "Runtime interface message user_input.answer_required"
-  },
-  "runtime_user_input_failed": {
-    "message": "Tidak dapat mengirim jawaban Anda ke Hermes.",
-    "description": "Runtime interface message user_input.failed"
-  },
-  "runtime_user_input_http_failed": {
-    "message": "Pengiriman jawaban ke Hermes gagal ({status}).",
-    "description": "Runtime interface message user_input.http_failed"
-  },
-  "runtime_user_input_invalid": {
-    "message": "Hermes menolak jawaban ini. Periksa kolomnya dan coba lagi.",
-    "description": "Runtime interface message user_input.invalid"
-  },
-  "runtime_user_input_other_answer": {
-    "message": "Atau ketik jawaban lain",
-    "description": "Runtime interface message user_input.other_answer"
-  },
-  "runtime_user_input_pending_count": {
-    "message": "{count} menunggu",
-    "description": "Runtime interface message user_input.pending_count"
-  },
-  "runtime_user_input_recorded": {
-    "message": "Dicatat oleh Hermes.",
-    "description": "Runtime interface message user_input.recorded"
-  },
-  "runtime_user_input_recorded_deferred": {
-    "message": "Tercatat. Hermes akan memakainya pada giliran berikutnya yang memenuhi syarat; kelanjutan otomatis belum dikonfirmasi.",
-    "description": "Runtime interface message user_input.recorded_deferred"
-  },
-  "runtime_user_input_recorded_title": {
-    "message": "Jawaban tercatat",
-    "description": "Runtime interface message user_input.recorded_title"
-  },
-  "runtime_user_input_sending": {
-    "message": "Mengirim…",
-    "description": "Runtime interface message user_input.sending"
-  },
-  "runtime_user_input_session_changed": {
-    "message": "Sesi Hermes berubah saat jawaban ini disiapkan. Coba lagi dari sesi yang aktif.",
-    "description": "Runtime interface message user_input.session_changed"
-  },
-  "runtime_user_input_submit": {
-    "message": "Kirim jawaban",
-    "description": "Runtime interface message user_input.submit"
-  },
-  "runtime_user_input_title": {
-    "message": "Hermes membutuhkan jawaban Anda",
-    "description": "Runtime interface message user_input.title"
-  },
-  "runtime_user_input_transport": {
-    "message": "Tidak dapat menghubungi Hermes.",
-    "description": "Runtime interface message user_input.transport"
-  },
-  "runtime_user_input_unrecognized": {
-    "message": "Hermes mengembalikan konfirmasi input pengguna yang tidak dikenali.",
-    "description": "Runtime interface message user_input.unrecognized"
-  },
-  "runtime_user_input_your_answer": {
-    "message": "Jawaban Anda",
-    "description": "Runtime interface message user_input.your_answer"
   },
   "runtime_voice_browser_preview": {
     "message": "Mode suara: Penggantian ucapan browser\n\n{preview}",
