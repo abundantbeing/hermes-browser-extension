@@ -237,8 +237,12 @@ export function latestAssistantAfterUser(rows = [], userContent = '') {
 }
 
 // Strict-contract cores answer 4000 "invalid params for prompt.submit: display_text: Extra inputs
-// are not permitted". display_text is optional cosmetics, so the turn is retried without it.
+// are not permitted". A session authority's canonical prompt.submit has a closed key set too and
+// answers 4001 `invalid_params` with the refused keys in `data.fields`. display_text is optional
+// cosmetics, so either way the turn is retried without it.
 export function isDisplayTextRejection(error) {
+  const fields = error?.data?.fields;
+  if (Array.isArray(fields) && fields.some((field) => /^display_text(?:\.|$)/.test(String(field)))) return true;
   const text = String(error?.message || error || '');
   return /invalid params for prompt\.submit/i.test(text) && /display_text/i.test(text);
 }

@@ -317,6 +317,12 @@ test('display_text rejection from a strict-contract core is recognised and retri
   assert.equal(turnRecovery.isDisplayTextRejection(new Error('invalid params for prompt.submit: truncate_before_row_id: Extra inputs')), false);
   assert.equal(turnRecovery.isDisplayTextRejection(new Error('Dashboard connection closed mid-turn.')), false);
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  // A session authority's canonical dispatcher: 4001 invalid_params with the refused keys in data.fields.
+  const canonical = Object.assign(new Error('invalid_params'), { code: 4001, rpcCode: 4001, data: { reason: 'invalid_params', fields: ['display_text'] } });
+  assert.equal(turnRecovery.isDisplayTextRejection(canonical), true);
+  const truncateOnly = Object.assign(new Error('invalid_params'), { code: 4001, data: { reason: 'invalid_params', fields: ['truncate_before_row_id', 'confirm_truncate'] } });
+  assert.equal(turnRecovery.isDisplayTextRejection(truncateOnly), false, 'a refusal for other keys is not retried without display_text');
+  assert.equal(turnRecovery.isDisplayTextRejection(Object.assign(new Error('invalid_params'), { code: 4001, data: { reason: 'invalid_params' } })), false);
   // The refusal is remembered per gateway (not as a page-wide flag), and only a
   // submit that carried display_text is retried without it.
   assert.match(source, /Object\.hasOwn\(firstSubmit, 'display_text'\)[\s\S]{0,120}isDisplayTextRejection\(error\)/);
