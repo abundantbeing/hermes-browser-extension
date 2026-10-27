@@ -3150,9 +3150,6 @@ function browserControlCandidate({ context = {}, scope = {} } = {}) {
   return { tabId, frameId: 0, expectedUrl: url };
 }
 
-// 'unsupported' once this Hermes is known to have no extension control: its
-// capabilities answered without the feature (REST), or its controller register
-// was refused as unknown (socket). Otherwise 'supported' or 'unknown'.
 // A refusal is remembered for this panel and this exact connection, so turning
 // control off again (which clears the worker's own record) does not forget it.
 let browserControlUnsupportedKey = '';
@@ -3162,6 +3159,9 @@ function browserControlConnectionKey() {
     .map((value) => String(value || '')).join('|');
 }
 
+// 'unsupported' once this Hermes is known to have no extension control: its
+// capabilities answered without the feature (REST), or its controller register
+// was refused as unknown (socket). Otherwise 'supported' or 'unknown'.
 function browserControlSupportState() {
   const advertised = browserControlSupport(gatewayCapabilities);
   if (advertised !== 'unknown') return advertised;

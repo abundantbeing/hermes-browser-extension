@@ -6,6 +6,7 @@ import {
   DEFAULT_GATEWAY_CAPABILITIES,
   browserControlSupport,
   dashboardWsGatewayCapabilities,
+  deriveCapabilityRecords,
   normalizeGatewayCapabilities,
 } from '../extension/lib/capabilities.mjs';
 import { browserControlView } from '../extension/lib/browser-control-ui.mjs';
@@ -51,6 +52,18 @@ test('an unproven capability read is unknown, never a guess either way', () => {
   // Socket transports report no control capability at all.
   assert.equal(browserControlSupport(dashboardWsGatewayCapabilities({ health: true })), 'unknown');
   assert.equal(browserControlSupport(dashboardWsGatewayCapabilities({ health: true, source: 'remote-dashboard' })), 'unknown');
+});
+
+test('the capability record says unsupported for stock Hermes and stays unknown where nothing was read', () => {
+  const record = (caps) => deriveCapabilityRecords(caps, { identityKey: 'k', checkedAt: 1 }).find((item) => item.id === 'browserControl');
+  assert.equal(record(normalizeGatewayCapabilities(patched(), { healthOk: true })).state, 'available');
+  assert.equal(record(normalizeGatewayCapabilities(STOCK, { healthOk: true })).state, 'unsupported');
+  assert.equal(
+    record(normalizeGatewayCapabilities({ ...STOCK, features: { browser_extension_control: { enabled: false } } }, { healthOk: true })).state,
+    'unsupported',
+  );
+  assert.equal(record(normalizeGatewayCapabilities(null, { healthOk: true })).state, 'unknown');
+  assert.equal(record(dashboardWsGatewayCapabilities({ health: true })).state, 'unknown');
 });
 
 test('the capability flags the patched gateway relies on are unchanged', () => {

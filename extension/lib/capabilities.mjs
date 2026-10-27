@@ -496,6 +496,8 @@ export function deriveCapabilityRecords(caps = DEFAULT_GATEWAY_CAPABILITIES, {
   // Browser control is negotiated from features.browser_extension_control.
   if (transport === 'rest' && caps.browserControl === true) make('browserControl', S.available, O.capabilities, 'advertised');
   else if (transport === 'rest' && features?.browser_extension_control?.enabled === false) make('browserControl', S.unsupported, O.capabilities, 'advertised-off');
+  // /v1/capabilities answered in full without the key: stock Hermes, which no longer has extension control.
+  else if (transport === 'rest' && caps.raw && typeof caps.raw === 'object') make('browserControl', S.unsupported, O.capabilities, 'not-advertised');
   else make('browserControl', S.unknown, transport === 'none' ? O.none : O.derived, transport === 'legacy' ? 'legacy-gateway' : (transport === 'ws' ? 'ws-not-reported' : 'not-advertised'));
 
   // Session authority and what hangs off it.
