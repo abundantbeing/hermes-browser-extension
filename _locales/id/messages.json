@@ -8267,6 +8267,14 @@
     "message": "Hermes Web memuat lebih lama dari biasanya. Mungkin masih dimulai.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Sedang masuk",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Masih memuat",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Membuka Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

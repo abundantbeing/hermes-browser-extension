@@ -8267,6 +8267,14 @@
     "message": "Hermes Web ใช้เวลาโหลดนานกว่าปกติ อาจกำลังเริ่มทำงานอยู่",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "กำลังลงชื่อเข้าใช้",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "ยังโหลดอยู่",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "กำลังเปิด Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

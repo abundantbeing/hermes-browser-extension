@@ -8267,6 +8267,14 @@
     "message": "Hermes Web को लोड होने में सामान्य से अधिक समय लग रहा है। हो सकता है वह अभी शुरू हो रहा हो।",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "साइन इन हो रहा है",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "अभी भी लोड हो रहा है",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Hermes Web खुल रहा है",
     "description": "Runtime interface message webapp.opening_title"

@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Hermes Webapp にサインインしています。数秒かかります。",
   "webapp.opening_slow": "Hermes Web の読み込みに通常より時間がかかっています。まだ起動中かもしれません。",
   "webapp.opening_show": "そのまま表示する",
+  "webapp.opening_state": "サインイン中",
+  "webapp.opening_state_slow": "まだ読み込み中",
   "account.label": "Hermes アカウント",
   "account.hint": "Hermes のスマートフォンアプリと同じサインインです。サインインを求めるゲートウェイで、何も実行せずに、プロジェクト、セッション権限、コンテキスト圧縮、すべてのボットの一覧が使えるようになります。サインアウトすると、このブラウザーから消去されます。",
   "account.sign_in": "Hermes アカウントでサインイン",

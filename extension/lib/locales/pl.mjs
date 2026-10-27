@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Logowanie do Twojej aplikacji Hermes Webapp. To potrwa kilka sekund.",
   "webapp.opening_slow": "Wczytywanie Hermes Web trwa dłużej niż zwykle. Być może jeszcze się uruchamia.",
   "webapp.opening_show": "Pokaż mimo to",
+  "webapp.opening_state": "Logowanie",
+  "webapp.opening_state_slow": "Nadal się wczytuje",
   "account.label": "Konto Hermes",
   "account.hint": "To samo logowanie, którego używa aplikacja Hermes na telefon. Otwiera Projekty, autorytet sesji, kompaktowanie kontekstu i pełną listę botów na bramie, która wymaga logowania, bez uruchamiania czegokolwiek. Wylogowanie usuwa je z tej przeglądarki.",
   "account.sign_in": "Zaloguj się kontem Hermes",

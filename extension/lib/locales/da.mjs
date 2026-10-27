@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Logger dig ind i din Hermes Webapp. Det tager et par sekunder.",
   "webapp.opening_slow": "Hermes Web bruger længere tid på at indlæse end normalt. Den starter muligvis stadig.",
   "webapp.opening_show": "Vis den alligevel",
+  "webapp.opening_state": "Logger ind",
+  "webapp.opening_state_slow": "Indlæser stadig",
   "account.label": "Hermes-konto",
   "account.hint": "Den samme login som Hermes-appen til telefonen bruger. Den åbner Projekter, sessionsautoritet, kontekstkomprimering og den fulde botliste på en gateway, der kræver login, uden at du behøver køre noget. Log ud glemmer den i denne browser.",
   "account.sign_in": "Log ind med din Hermes-konto",

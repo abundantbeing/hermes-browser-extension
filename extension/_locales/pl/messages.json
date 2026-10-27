@@ -8267,6 +8267,14 @@
     "message": "Wczytywanie Hermes Web trwa dłużej niż zwykle. Być może jeszcze się uruchamia.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Logowanie",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Nadal się wczytuje",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Otwieranie Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

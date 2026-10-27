@@ -8267,6 +8267,14 @@
     "message": "Hermes Web is taking longer than usual to load. It may still be starting.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Signing in",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Still loading",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Opening Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

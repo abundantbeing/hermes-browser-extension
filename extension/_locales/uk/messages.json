@@ -8267,6 +8267,14 @@
     "message": "Hermes Web завантажується довше, ніж зазвичай. Можливо, він ще запускається.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Виконується вхід",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Ще завантажується",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Відкриваємо Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

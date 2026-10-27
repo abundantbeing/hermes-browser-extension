@@ -8267,6 +8267,14 @@
     "message": "Hermes Web met plus de temps que d’habitude à se charger. Il est peut-être encore en train de démarrer.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Connexion en cours",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Toujours en chargement",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Ouverture de Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

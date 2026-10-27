@@ -8267,6 +8267,14 @@
     "message": "Hermes Web 加载时间比平时更长，可能仍在启动。",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "正在登录",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "仍在加载",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "正在打开 Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "กำลังลงชื่อเข้าใช้ Hermes Webapp ของคุณ ใช้เวลาไม่กี่วินาที",
   "webapp.opening_slow": "Hermes Web ใช้เวลาโหลดนานกว่าปกติ อาจกำลังเริ่มทำงานอยู่",
   "webapp.opening_show": "แสดงเลย",
+  "webapp.opening_state": "กำลังลงชื่อเข้าใช้",
+  "webapp.opening_state_slow": "ยังโหลดอยู่",
   "account.label": "บัญชี Hermes",
   "account.hint": "การลงชื่อเข้าใช้แบบเดียวกับที่แอป Hermes บนมือถือใช้ ช่วยเปิดโปรเจกต์ สิทธิ์เซสชัน การบีบอัดบริบท และรายชื่อบอตทั้งหมดบนเกตเวย์ที่ต้องลงชื่อเข้าใช้ โดยไม่ต้องรันอะไร การออกจากระบบจะลบข้อมูลนี้ออกจากเบราว์เซอร์นี้",
   "account.sign_in": "ลงชื่อเข้าใช้ด้วยบัญชี Hermes ของคุณ",

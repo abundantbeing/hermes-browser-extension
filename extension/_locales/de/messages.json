@@ -8267,6 +8267,14 @@
     "message": "Hermes Web lädt länger als gewöhnlich. Möglicherweise startet es noch.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Anmeldung läuft",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Lädt noch",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Hermes Web wird geöffnet",
     "description": "Runtime interface message webapp.opening_title"

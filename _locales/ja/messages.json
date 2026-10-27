@@ -8267,6 +8267,14 @@
     "message": "Hermes Web の読み込みに通常より時間がかかっています。まだ起動中かもしれません。",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "サインイン中",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "まだ読み込み中",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Hermes Web を開いています",
     "description": "Runtime interface message webapp.opening_title"

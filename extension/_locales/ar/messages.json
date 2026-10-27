@@ -8267,6 +8267,14 @@
     "message": "يستغرق تحميل Hermes Web وقتًا أطول من المعتاد. ربما لا يزال قيد التشغيل.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "جارٍ تسجيل الدخول",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "لا يزال قيد التحميل",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "جارٍ فتح Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

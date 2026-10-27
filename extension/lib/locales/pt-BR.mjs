@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Conectando você ao seu Hermes Webapp. Isso leva alguns segundos.",
   "webapp.opening_slow": "O Hermes Web está demorando mais que o normal para carregar. Ele pode ainda estar iniciando.",
   "webapp.opening_show": "Mostrar mesmo assim",
+  "webapp.opening_state": "Entrando",
+  "webapp.opening_state_slow": "Ainda carregando",
   "account.label": "Conta Hermes",
   "account.hint": "O mesmo login usado pelo app Hermes para celular. Ele abre Projetos, autoridade de sessão, compactação de contexto e a lista completa de bots em um gateway que pede login, sem executar nada. Sair o esquece neste navegador.",
   "account.sign_in": "Entre com a sua conta Hermes",

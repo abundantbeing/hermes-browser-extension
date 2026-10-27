@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "正在登录你的 Hermes Webapp，需要几秒钟。",
   "webapp.opening_slow": "Hermes Web 加载时间比平时更长，可能仍在启动。",
   "webapp.opening_show": "仍然显示",
+  "webapp.opening_state": "正在登录",
+  "webapp.opening_state_slow": "仍在加载",
   "account.label": "Hermes 账号",
   "account.hint": "与 Hermes 手机应用相同的登录方式。在要求登录的网关上，无需运行任何命令，即可使用项目、会话授权、上下文压缩和完整的机器人列表。退出登录会将其从此浏览器中清除。",
   "account.sign_in": "使用你的 Hermes 账号登录",

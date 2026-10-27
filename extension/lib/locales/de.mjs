@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Du wirst bei deiner Hermes Webapp angemeldet. Das dauert einige Sekunden.",
   "webapp.opening_slow": "Hermes Web lädt länger als gewöhnlich. Möglicherweise startet es noch.",
   "webapp.opening_show": "Trotzdem anzeigen",
+  "webapp.opening_state": "Anmeldung läuft",
+  "webapp.opening_state_slow": "Lädt noch",
   "account.label": "Hermes-Konto",
   "account.hint": "Dieselbe Anmeldung wie in der Hermes-Handy-App. Sie öffnet Projekte, Sitzungsautorität, Kontextverdichtung und die vollständige Bot-Liste bei einem Gateway, das eine Anmeldung verlangt, ohne dass etwas ausgeführt werden muss. Abmelden entfernt sie aus diesem Browser.",
   "account.sign_in": "Mit Ihrem Hermes-Konto anmelden",

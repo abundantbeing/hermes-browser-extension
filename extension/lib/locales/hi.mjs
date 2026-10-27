@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "आपको आपके Hermes Webapp में साइन इन किया जा रहा है। इसमें कुछ सेकंड लगते हैं।",
   "webapp.opening_slow": "Hermes Web को लोड होने में सामान्य से अधिक समय लग रहा है। हो सकता है वह अभी शुरू हो रहा हो।",
   "webapp.opening_show": "फिर भी दिखाएँ",
+  "webapp.opening_state": "साइन इन हो रहा है",
+  "webapp.opening_state_slow": "अभी भी लोड हो रहा है",
   "account.label": "Hermes खाता",
   "account.hint": "वही साइन-इन जो Hermes फ़ोन ऐप इस्तेमाल करता है। यह साइन-इन माँगने वाले गेटवे पर, कुछ भी चलाए बिना, प्रोजेक्ट, सेशन अथॉरिटी, कॉन्टेक्स्ट कॉम्पैक्शन और पूरी बॉट सूची खोल देता है। साइन आउट करने पर यह इस ब्राउज़र से हट जाता है।",
   "account.sign_in": "अपने Hermes खाते से साइन इन करें",

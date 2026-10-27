@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Hermes Webapp’inizde oturum açılıyor. Bu birkaç saniye sürer.",
   "webapp.opening_slow": "Hermes Web’in yüklenmesi her zamankinden uzun sürüyor. Henüz başlıyor olabilir.",
   "webapp.opening_show": "Yine de göster",
+  "webapp.opening_state": "Oturum açılıyor",
+  "webapp.opening_state_slow": "Hâlâ yükleniyor",
   "account.label": "Hermes hesabı",
   "account.hint": "Hermes telefon uygulamasının kullandığı aynı oturum açma. Oturum açmayı isteyen bir ağ geçidinde, hiçbir şey çalıştırmadan Projeler'i, oturum yetkisini, bağlam sıkıştırmayı ve tam bot listesini açar. Oturumu kapat, bunu bu tarayıcıdan siler.",
   "account.sign_in": "Hermes hesabınızla oturum açın",

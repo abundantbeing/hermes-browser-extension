@@ -8267,6 +8267,14 @@
     "message": "Hermes Web tải lâu hơn bình thường. Có thể nó vẫn đang khởi động.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Đang đăng nhập",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Vẫn đang tải",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Đang mở Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

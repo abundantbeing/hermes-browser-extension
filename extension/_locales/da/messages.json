@@ -8267,6 +8267,14 @@
     "message": "Hermes Web bruger længere tid på at indlæse end normalt. Den starter muligvis stadig.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Logger ind",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Indlæser stadig",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Åbner Hermes Web",
     "description": "Runtime interface message webapp.opening_title"

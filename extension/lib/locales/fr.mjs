@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Connexion à votre Hermes Webapp en cours. Cela prend quelques secondes.",
   "webapp.opening_slow": "Hermes Web met plus de temps que d’habitude à se charger. Il est peut-être encore en train de démarrer.",
   "webapp.opening_show": "Afficher quand même",
+  "webapp.opening_state": "Connexion en cours",
+  "webapp.opening_state_slow": "Toujours en chargement",
   "account.label": "Compte Hermes",
   "account.hint": "La même connexion que celle de l'application mobile Hermes. Elle ouvre les projets, l'autorité de session, le compactage du contexte et la liste complète des bots sur une passerelle qui demande une connexion, sans rien exécuter. Se déconnecter l'oublie sur ce navigateur.",
   "account.sign_in": "Se connecter avec votre compte Hermes",

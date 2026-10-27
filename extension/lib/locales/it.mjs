@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Accesso alla tua Hermes Webapp in corso. Servono pochi secondi.",
   "webapp.opening_slow": "Hermes Web sta impiegando più del solito a caricarsi. Potrebbe essere ancora in avvio.",
   "webapp.opening_show": "Mostralo comunque",
+  "webapp.opening_state": "Accesso in corso",
+  "webapp.opening_state_slow": "Ancora in caricamento",
   "account.label": "Account Hermes",
   "account.hint": "Lo stesso accesso usato dall'app mobile di Hermes. Apre Progetti, autorità di sessione, compattazione del contesto e l'elenco completo dei bot su un gateway che richiede l'accesso, senza eseguire nulla. Esci lo dimentica su questo browser.",
   "account.sign_in": "Accedi con il tuo account Hermes",

@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Signing you in to your Hermes Webapp. This takes a few seconds.",
   "webapp.opening_slow": "Hermes Web is taking longer than usual to load. It may still be starting.",
   "webapp.opening_show": "Show it anyway",
+  "webapp.opening_state": "Signing in",
+  "webapp.opening_state_slow": "Still loading",
   "account.label": "Hermes account",
   "account.hint": "The same sign-in the Hermes phone app uses. It opens Projects, Session authority, Context compaction and the full bot roster on a gateway that asks for sign-in, with nothing to run. Sign out forgets it on this browser.",
   "account.sign_in": "Sign in with your Hermes account",

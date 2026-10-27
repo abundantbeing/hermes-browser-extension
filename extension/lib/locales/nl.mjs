@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Je wordt aangemeld bij je Hermes Webapp. Dit duurt een paar seconden.",
   "webapp.opening_slow": "Hermes Web doet er langer over om te laden dan normaal. Mogelijk wordt het nog gestart.",
   "webapp.opening_show": "Toch tonen",
+  "webapp.opening_state": "Bezig met aanmelden",
+  "webapp.opening_state_slow": "Nog bezig met laden",
   "account.label": "Hermes-account",
   "account.hint": "Dezelfde aanmelding als in de Hermes-app voor je telefoon. Ze opent Projecten, sessie-autoriteit, contextcompactie en de volledige botlijst op een gateway die om aanmelding vraagt, zonder dat je iets hoeft uit te voeren. Afmelden vergeet haar in deze browser.",
   "account.sign_in": "Meld je aan met je Hermes-account",

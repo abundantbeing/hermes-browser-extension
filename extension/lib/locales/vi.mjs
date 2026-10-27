@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Đang đăng nhập bạn vào Hermes Webapp. Việc này mất vài giây.",
   "webapp.opening_slow": "Hermes Web tải lâu hơn bình thường. Có thể nó vẫn đang khởi động.",
   "webapp.opening_show": "Vẫn hiển thị",
+  "webapp.opening_state": "Đang đăng nhập",
+  "webapp.opening_state_slow": "Vẫn đang tải",
   "account.label": "Tài khoản Hermes",
   "account.hint": "Cùng cách đăng nhập mà ứng dụng Hermes trên điện thoại dùng. Nó mở Dự án, thẩm quyền phiên, nén ngữ cảnh và danh sách bot đầy đủ trên cổng yêu cầu đăng nhập mà không cần chạy gì. Đăng xuất sẽ xóa nó khỏi trình duyệt này.",
   "account.sign_in": "Đăng nhập bằng tài khoản Hermes của bạn",

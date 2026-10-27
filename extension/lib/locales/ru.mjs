@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Выполняется вход в ваш Hermes Webapp. Это займёт несколько секунд.",
   "webapp.opening_slow": "Hermes Web загружается дольше обычного. Возможно, он ещё запускается.",
   "webapp.opening_show": "Всё равно показать",
+  "webapp.opening_state": "Выполняется вход",
+  "webapp.opening_state_slow": "Всё ещё загружается",
   "account.label": "Учётная запись Hermes",
   "account.hint": "Тот же вход, что и в мобильном приложении Hermes. Он открывает «Проекты», авторитет сессий, сжатие контекста и полный список ботов на шлюзе, который требует вход, без запуска чего-либо. «Выйти» удаляет его в этом браузере.",
   "account.sign_in": "Войти с учётной записью Hermes",

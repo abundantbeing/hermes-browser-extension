@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "نسجّل دخولك إلى تطبيق Hermes Webapp. يستغرق ذلك بضع ثوانٍ.",
   "webapp.opening_slow": "يستغرق تحميل Hermes Web وقتًا أطول من المعتاد. ربما لا يزال قيد التشغيل.",
   "webapp.opening_show": "اعرضه على أي حال",
+  "webapp.opening_state": "جارٍ تسجيل الدخول",
+  "webapp.opening_state_slow": "لا يزال قيد التحميل",
   "account.label": "حساب Hermes",
   "account.hint": "تسجيل الدخول نفسه الذي يستخدمه تطبيق Hermes للهاتف. يفتح المشاريع وسلطة الجلسة وضغط السياق وقائمة الروبوتات الكاملة على بوابة تطلب تسجيل الدخول، دون تشغيل أي شيء. تسجيل الخروج يزيله من هذا المتصفح.",
   "account.sign_in": "سجّل الدخول بحساب Hermes الخاص بك",

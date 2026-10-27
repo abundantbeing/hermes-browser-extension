@@ -8267,6 +8267,14 @@
     "message": "Hermes Web’in yüklenmesi her zamankinden uzun sürüyor. Henüz başlıyor olabilir.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Oturum açılıyor",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Hâlâ yükleniyor",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Hermes Web açılıyor",
     "description": "Runtime interface message webapp.opening_title"

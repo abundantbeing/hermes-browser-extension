@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Hermes Webapp에 로그인하는 중입니다. 몇 초 정도 걸립니다.",
   "webapp.opening_slow": "Hermes Web를 불러오는 데 평소보다 오래 걸리고 있습니다. 아직 시작하는 중일 수 있습니다.",
   "webapp.opening_show": "그래도 표시",
+  "webapp.opening_state": "로그인하는 중",
+  "webapp.opening_state_slow": "아직 불러오는 중",
   "account.label": "Hermes 계정",
   "account.hint": "Hermes 모바일 앱과 같은 로그인입니다. 로그인을 요구하는 게이트웨이에서 아무것도 실행하지 않고도 프로젝트, 세션 권한, 컨텍스트 압축, 전체 봇 목록을 열 수 있습니다. 로그아웃하면 이 브라우저에서 삭제됩니다.",
   "account.sign_in": "Hermes 계정으로 로그인",

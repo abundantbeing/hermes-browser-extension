@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "正在登入你的 Hermes Webapp，需要幾秒鐘。",
   "webapp.opening_slow": "Hermes Web 載入時間比平常更久，可能仍在啟動中。",
   "webapp.opening_show": "仍然顯示",
+  "webapp.opening_state": "正在登入",
+  "webapp.opening_state_slow": "仍在載入",
   "account.label": "Hermes 帳號",
   "account.hint": "與 Hermes 手機應用程式相同的登入方式。在要求登入的閘道上，不必執行任何指令，就能使用專案、工作階段授權、上下文壓縮和完整的機器人清單。登出會將其從此瀏覽器中清除。",
   "account.sign_in": "使用你的 Hermes 帳號登入",

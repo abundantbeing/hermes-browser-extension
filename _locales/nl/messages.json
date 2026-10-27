@@ -8267,6 +8267,14 @@
     "message": "Hermes Web doet er langer over om te laden dan normaal. Mogelijk wordt het nog gestart.",
     "description": "Runtime interface message webapp.opening_slow"
   },
+  "runtime_webapp_opening_state": {
+    "message": "Bezig met aanmelden",
+    "description": "Runtime interface message webapp.opening_state"
+  },
+  "runtime_webapp_opening_state_slow": {
+    "message": "Nog bezig met laden",
+    "description": "Runtime interface message webapp.opening_state_slow"
+  },
   "runtime_webapp_opening_title": {
     "message": "Hermes Web wordt geopend",
     "description": "Runtime interface message webapp.opening_title"

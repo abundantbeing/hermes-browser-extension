@@ -55,6 +55,8 @@ export default Object.freeze({
   "webapp.opening_detail": "Sedang memasukkan Anda ke Hermes Webapp. Ini memakan waktu beberapa detik.",
   "webapp.opening_slow": "Hermes Web memuat lebih lama dari biasanya. Mungkin masih dimulai.",
   "webapp.opening_show": "Tampilkan saja",
+  "webapp.opening_state": "Sedang masuk",
+  "webapp.opening_state_slow": "Masih memuat",
   "account.label": "Akun Hermes",
   "account.hint": "Masuk yang sama dengan yang dipakai aplikasi ponsel Hermes. Ini membuka Proyek, otoritas sesi, pemadatan konteks, dan daftar bot lengkap pada gateway yang meminta masuk, tanpa menjalankan apa pun. Keluar menghapusnya dari browser ini.",
   "account.sign_in": "Masuk dengan akun Hermes Anda",
