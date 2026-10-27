@@ -46,3 +46,17 @@ export function selectRoomAvatarSource({ rosterAvatar = null, cachedImage = '' }
 export function shouldHydrateRemoteAvatar({ hasAvatar = false, rosterHasInline = false } = {}) {
   return hasAvatar === true && rosterHasInline !== true;
 }
+
+// A hydrated server avatar is only as good as the moment it was read: the picture on the
+// gateway can change afterwards (Desktop Edit Profile, a file replaced on disk), and the
+// panel keeps its cache for as long as it stays open. Entries older than this are shown
+// while they are refreshed, and refetched instead of trusted. The gateway itself answers
+// with `Cache-Control: private, max-age=60`, so a minute is the freshest it can offer.
+export const AVATAR_CACHE_TTL_MS = 60_000;
+
+export function isAvatarCacheFresh(fetchedAt, now = Date.now(), ttlMs = AVATAR_CACHE_TTL_MS) {
+  const at = Number(fetchedAt);
+  if (!Number.isFinite(at) || at <= 0) return false;
+  const age = now - at;
+  return age >= 0 && age < ttlMs;
+}

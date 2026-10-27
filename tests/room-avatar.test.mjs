@@ -6,6 +6,8 @@ import {
   isInlineImage,
   selectRoomAvatarSource,
   shouldHydrateRemoteAvatar,
+  isAvatarCacheFresh,
+  AVATAR_CACHE_TTL_MS,
 } from '../extension/lib/room-avatar.mjs';
 
 const PNG = 'data:image/png;base64,AAAA';
@@ -70,4 +72,14 @@ test('a server-side-only avatar hydrates once then renders from cache (the old r
   function booleanInline(selection) {
     return Boolean(remoteAvatarImageOf(selection.avatar));
   }
+});
+
+test('isAvatarCacheFresh trusts a cached avatar only for the gateway cache window', () => {
+  const now = 1_000_000;
+  assert.equal(isAvatarCacheFresh(now - 1_000, now), true);
+  assert.equal(isAvatarCacheFresh(now - AVATAR_CACHE_TTL_MS + 1, now), true);
+  assert.equal(isAvatarCacheFresh(now - AVATAR_CACHE_TTL_MS, now), false);
+  assert.equal(isAvatarCacheFresh(undefined, now), false);
+  assert.equal(isAvatarCacheFresh(0, now), false);
+  assert.equal(isAvatarCacheFresh(now + 5_000, now), false);
 });
