@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "เอเจนต์ Hermes",
   "bot_mode.refresh_agents": "รีเฟรชเอเจนต์",
   "bot_mode.connected_instance": "อินสแตนซ์ Hermes ที่เชื่อมต่ออยู่",
+  "bot_mode.roster_names_only": "รูปโปรไฟล์และรายละเอียดบอตแบบเต็มต้องใช้แดชบอร์ด Hermes หรือการลงชื่อเข้าใช้บนเกตเวย์นี้",
+  "bot_mode.roster_names_only_action": "เปิดการตั้งค่าการเชื่อมต่อ",
   "bot_mode.settings_title": "เอเจนต์และโหมดบอต",
   "bot_mode.settings_copy_sidepanel": "เปิดรายการโปรไฟล์เสริมและตัวนำทาง Bot Chat มาตรฐานสำหรับเบราว์เซอร์นี้",
   "bot_mode.enable_label": "เปิดใช้โหมดบอตของ Hermes Browser",

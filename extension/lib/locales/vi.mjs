@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Tác nhân Hermes",
   "bot_mode.refresh_agents": "Làm mới tác nhân",
   "bot_mode.connected_instance": "Thực thể Hermes hiện đang kết nối",
+  "bot_mode.roster_names_only": "Ảnh hồ sơ và thông tin đầy đủ của bot cần bảng điều khiển Hermes hoặc đăng nhập vào cổng này.",
+  "bot_mode.roster_names_only_action": "Mở cài đặt kết nối",
   "bot_mode.settings_title": "Tác nhân và chế độ Bot",
   "bot_mode.settings_copy_sidepanel": "Bật danh sách hồ sơ tùy chọn và điều hướng Bot Chat chính tắc cho trình duyệt này.",
   "bot_mode.enable_label": "Bật chế độ Bot của Hermes Browser",

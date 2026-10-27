@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Hermes 代理程式",
   "bot_mode.refresh_agents": "重新整理代理程式",
   "bot_mode.connected_instance": "目前連線的 Hermes 實例",
+  "bot_mode.roster_names_only": "個人資料頭像與完整的機器人詳細資料需要 Hermes 控制台，或在此閘道上登入。",
+  "bot_mode.roster_names_only_action": "開啟連線設定",
   "bot_mode.settings_title": "代理程式與 Bot 模式",
   "bot_mode.settings_copy_sidepanel": "開啟選用的設定檔清單和此瀏覽器的標準 Bot Chat 導覽。",
   "bot_mode.enable_label": "啟用 Hermes Browser Bot 模式",

@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Hermes aracıları",
   "bot_mode.refresh_agents": "Aracıları yenile",
   "bot_mode.connected_instance": "Şu anda bağlı Hermes örneği",
+  "bot_mode.roster_names_only": "Profil resimleri ve botların tüm ayrıntıları için Hermes panosu veya bu ağ geçidinde oturum açmak gerekir.",
+  "bot_mode.roster_names_only_action": "Bağlantı ayarlarını aç",
   "bot_mode.settings_title": "Aracılar ve bot modu",
   "bot_mode.settings_copy_sidepanel": "Bu tarayıcı için isteğe bağlı profil listesini ve kanonik Bot Chat gezinmesini açar.",
   "bot_mode.enable_label": "Hermes Browser bot modunu etkinleştir",

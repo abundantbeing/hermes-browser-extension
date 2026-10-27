@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Agen Hermes",
   "bot_mode.refresh_agents": "Menyegarkan agen",
   "bot_mode.connected_instance": "Instans Hermes yang saat ini terhubung",
+  "bot_mode.roster_names_only": "Foto profil dan detail lengkap bot memerlukan dasbor Hermes atau login di gateway ini.",
+  "bot_mode.roster_names_only_action": "Buka pengaturan koneksi",
   "bot_mode.settings_title": "Agen & Mode Bot",
   "bot_mode.settings_copy_sidepanel": "Mengaktifkan daftar profil opsional dan navigator Bot Chat kanonis untuk browser ini.",
   "bot_mode.enable_label": "Aktifkan Mode Bot Hermes Browser",

@@ -731,6 +731,14 @@
     "message": "Agen Hermes",
     "description": "Runtime interface message bot_mode.roster_label"
   },
+  "runtime_bot_mode_roster_names_only": {
+    "message": "Foto profil dan detail lengkap bot memerlukan dasbor Hermes atau login di gateway ini.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "Buka pengaturan koneksi",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
+  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"

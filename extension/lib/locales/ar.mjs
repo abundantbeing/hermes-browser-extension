@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "وكلاء Hermes",
   "bot_mode.refresh_agents": "تحديث الوكلاء",
   "bot_mode.connected_instance": "مثيل Hermes المتصل حاليًا",
+  "bot_mode.roster_names_only": "صور الملفات الشخصية وتفاصيل الروبوت الكاملة تتطلب لوحة تحكم Hermes أو تسجيل الدخول إلى هذه البوابة.",
+  "bot_mode.roster_names_only_action": "فتح إعدادات الاتصال",
   "bot_mode.settings_title": "الوكلاء ووضع البوت",
   "bot_mode.settings_copy_sidepanel": "يشغّل قائمة الملفات التعريفية الاختيارية ومستكشف Bot Chat القياسي لهذا المتصفح.",
   "bot_mode.enable_label": "تفعيل وضع البوت في Hermes Browser",

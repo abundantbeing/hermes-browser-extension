@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Hermes-agenter",
   "bot_mode.refresh_agents": "Opdatér agenter",
   "bot_mode.connected_instance": "Aktuelt forbundet Hermes-instans",
+  "bot_mode.roster_names_only": "Profilbilleder og fulde bot-oplysninger kræver Hermes-dashboardet eller et login på denne gateway.",
+  "bot_mode.roster_names_only_action": "Åbn forbindelsesindstillinger",
   "bot_mode.settings_title": "Agenter & bot-tilstand",
   "bot_mode.settings_copy_sidepanel": "Aktiverer den valgfrie profiliste og den kanoniske Bot Chat-navigator i denne browser.",
   "bot_mode.enable_label": "Aktivér Hermes Browser bot-tilstand",

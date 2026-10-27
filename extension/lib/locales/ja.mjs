@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Hermes のエージェント",
   "bot_mode.refresh_agents": "エージェントをリフレッシュ",
   "bot_mode.connected_instance": "現在接続中の Hermes インスタンス",
+  "bot_mode.roster_names_only": "プロフィール画像とボットの詳細を表示するには、Hermes ダッシュボードか、このゲートウェイへのサインインが必要です。",
+  "bot_mode.roster_names_only_action": "接続設定を開く",
   "bot_mode.settings_title": "エージェントとボットモード",
   "bot_mode.settings_copy_sidepanel": "このブラウザーで、オプションのプロファイルリストと正規の Bot Chat ナビゲーションを有効にします。",
   "bot_mode.enable_label": "Hermes Browser ボットモードを有効化",

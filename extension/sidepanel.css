@@ -1775,6 +1775,9 @@ body.startup-active .startup-actions #startupConnectButton:not([hidden]):focus-v
   border-color: rgba(var(--hermes-ink-rgb), 0.55);
 }
 .gateway-restart-action .tiny:disabled { opacity: 0.55; cursor: default; }
+.bot-mode-roster-note-action {
+  margin: 4px 0 0 12px;
+}
 .gateway-restart-progress {
   display: flex;
   align-items: center;

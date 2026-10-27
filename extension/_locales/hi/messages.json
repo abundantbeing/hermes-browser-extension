@@ -731,6 +731,14 @@
     "message": "Hermes एजेंट",
     "description": "Runtime interface message bot_mode.roster_label"
   },
+  "runtime_bot_mode_roster_names_only": {
+    "message": "प्रोफ़ाइल चित्र और बॉट की पूरी जानकारी के लिए Hermes डैशबोर्ड या इस गेटवे पर साइन-इन ज़रूरी है।",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "कनेक्शन सेटिंग खोलें",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
+  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"

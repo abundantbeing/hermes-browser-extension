@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Hermes bots",
   "bot_mode.refresh_agents": "Refresh bots",
   "bot_mode.connected_instance": "Current connected Hermes instance",
+  "bot_mode.roster_names_only": "Profile pictures and full bot details need the Hermes dashboard or a sign-in on this gateway.",
+  "bot_mode.roster_names_only_action": "Open connection settings",
   "bot_mode.settings_title": "Bots & Bot Mode",
   "bot_mode.settings_copy_sidepanel": "Turn on the optional profile roster and canonical Bot Chat navigator for this browser.",
   "bot_mode.enable_label": "Enable Hermes Browser Bot Mode",

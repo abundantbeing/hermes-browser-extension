@@ -706,6 +706,7 @@ import {
 } from './lib/hermes-account.mjs';
 import { PROJECTS_UNAVAILABLE } from './lib/projects-client.mjs';
 import { createWebappDialog } from './lib/hermes-webapp-dialog.mjs';
+import { buildNamesOnlyRoster, rosterHasNamesOnlyRows } from './lib/bot-roster-names.mjs';
 import { buildCleanClipboardPayload, writeAssistantClipboardEvent } from './lib/assistant-clipboard.mjs';
 import { normalizeMessageTimestamp } from './lib/message-meta.mjs';
 import { setRailCopyEnabled } from './lib/message-actions.mjs';
@@ -12841,11 +12842,22 @@ function renderBotModeRoster(query = '') {
     empty.className = 'bot-mode-empty';
     empty.textContent = botModeRoster.length ? 'No agents match this search.' : 'No verified Hermes profiles are available.';
     els.botModeRoster.append(empty);
-    if (!botModeRoster.length && botModeRosterNote) {
-      const note = document.createElement('p');
-      note.className = 'bot-mode-empty bot-mode-empty-note';
-      note.textContent = botModeRosterNote;
-      els.botModeRoster.append(note);
+  }
+  // A names-only roster lists real bots but says what it cannot show, with a way
+  // to fix it; an empty roster keeps explaining why it is empty.
+  const namesOnlyRoster = rosterHasNamesOnlyRows(botModeRoster);
+  if (botModeRosterNote && (!botModeRoster.length || namesOnlyRoster)) {
+    const note = document.createElement('p');
+    note.className = 'bot-mode-empty bot-mode-empty-note';
+    note.textContent = botModeRosterNote;
+    els.botModeRoster.append(note);
+    if (namesOnlyRoster) {
+      const action = document.createElement('button');
+      action.type = 'button';
+      action.className = 'secondary tiny bot-mode-roster-note-action';
+      action.textContent = t('bot_mode.roster_names_only_action');
+      action.addEventListener('click', () => { openSettingsDialog({ pane: 'connections' }); });
+      els.botModeRoster.append(action);
     }
   }
   if (els.botModeStatus) els.botModeStatus.textContent = `${botModeRoster.length} agent${botModeRoster.length === 1 ? '' : 's'} · current connected Hermes instance`;
@@ -14707,16 +14719,31 @@ async function loadProfilesFromGatewayRoutes({ quiet = false, generation = 0, ga
     if (generation !== botModeRosterGeneration || gatewayUrl !== normalizeGatewayUrl(settings.gatewayUrl)) {
       return { status: 'skipped', detail: 'Profile sync was superseded.' };
     }
-    const richByName = new Map([...botModeRoster, ...(previous.agents || [])].map((row) => [String(row?.profileName || ''), row]));
-    const rows = names.map((name) => richByName.get(name) || { profileName: name });
-    availableProfiles = botProfileRowsToHermesProfiles(rows, settings.activeProfile);
+    // Names alone are enough to list each bot and open its Bot Chat over REST
+    // (the exact-title lookup works on every gateway), so list them instead of
+    // an empty roster, and say what is missing. Each bot's Bot Chat is looked up
+    // here too so its row carries the last message and recency.
+    const lookups = names.map((name) => ({ name }));
+    await attachBotChatSessionsToRoster(lookups);
+    if (generation !== botModeRosterGeneration || gatewayUrl !== normalizeGatewayUrl(settings.gatewayUrl)) {
+      return { status: 'skipped', detail: 'Profile sync was superseded.' };
+    }
+    const namesOnly = buildNamesOnlyRoster({
+      names,
+      bots: lookups,
+      richRows: [...botModeRoster, ...(previous.agents || [])],
+      sourceId: gatewayUrl,
+    });
+    availableProfiles = botProfileRowsToHermesProfiles(namesOnly.rows, settings.activeProfile);
+    botModeRoster = namesOnly.rows;
     botModeRosterSource = 'gateway';
-    botModeRosterNote = '';
+    botModeRosterNote = t(namesOnly.noteKey);
     rosterRetryCount = 0;
     renderProfiles();
+    renderBotModeRoster(els.botModeSearch?.value);
     renderActiveProfileIndicator();
-    if (!quiet) setStatus('ok', 'Hermes profiles synced', `${names.length} profile${names.length === 1 ? '' : 's'} available`);
-    return { status: 'ready', detail: names.length === 1 ? '1 PROFILE LOADED.' : `${names.length} PROFILES LOADED.` };
+    if (!quiet) setStatus('warn', 'Hermes profiles listed by name', botModeRosterNote, { translateDetail: false });
+    return { status: namesOnly.state, detail: namesOnly.detail };
   } catch {
     return null;
   }

@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Hermes एजेंट",
   "bot_mode.refresh_agents": "एजेंट ताज़ा करें",
   "bot_mode.connected_instance": "वर्तमान में कनेक्टेड Hermes इंस्टेंस",
+  "bot_mode.roster_names_only": "प्रोफ़ाइल चित्र और बॉट की पूरी जानकारी के लिए Hermes डैशबोर्ड या इस गेटवे पर साइन-इन ज़रूरी है।",
+  "bot_mode.roster_names_only_action": "कनेक्शन सेटिंग खोलें",
   "bot_mode.settings_title": "एजेंट और बॉट मोड",
   "bot_mode.settings_copy_sidepanel": "इस ब्राउज़र के लिए वैकल्पिक प्रोफ़ाइल सूची और कैनोनिकल Bot Chat नेविगेटर चालू करता है।",
   "bot_mode.enable_label": "Hermes Browser बॉट मोड सक्षम करें",

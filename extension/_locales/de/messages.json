@@ -731,6 +731,14 @@
     "message": "Hermes-Agenten",
     "description": "Runtime interface message bot_mode.roster_label"
   },
+  "runtime_bot_mode_roster_names_only": {
+    "message": "Profilbilder und vollständige Bot-Details erfordern das Hermes-Dashboard oder eine Anmeldung an diesem Gateway.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "Verbindungseinstellungen öffnen",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
+  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"

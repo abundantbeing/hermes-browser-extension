@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Hermes 에이전트",
   "bot_mode.refresh_agents": "에이전트 새로 고침",
   "bot_mode.connected_instance": "현재 연결된 Hermes 인스턴스",
+  "bot_mode.roster_names_only": "프로필 사진과 봇의 전체 정보를 보려면 Hermes 대시보드 또는 이 게이트웨이에 로그인해야 합니다.",
+  "bot_mode.roster_names_only_action": "연결 설정 열기",
   "bot_mode.settings_title": "에이전트와 봇 모드",
   "bot_mode.settings_copy_sidepanel": "이 브라우저에서 선택적 프로필 목록과 표준 Bot Chat 탐색을 사용합니다.",
   "bot_mode.enable_label": "Hermes Browser 봇 모드 사용",

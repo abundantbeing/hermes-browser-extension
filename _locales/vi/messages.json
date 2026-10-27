@@ -731,6 +731,14 @@
     "message": "Tác nhân Hermes",
     "description": "Runtime interface message bot_mode.roster_label"
   },
+  "runtime_bot_mode_roster_names_only": {
+    "message": "Ảnh hồ sơ và thông tin đầy đủ của bot cần bảng điều khiển Hermes hoặc đăng nhập vào cổng này.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "Mở cài đặt kết nối",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
+  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"

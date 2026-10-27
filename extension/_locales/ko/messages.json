@@ -731,6 +731,14 @@
     "message": "Hermes 에이전트",
     "description": "Runtime interface message bot_mode.roster_label"
   },
+  "runtime_bot_mode_roster_names_only": {
+    "message": "프로필 사진과 봇의 전체 정보를 보려면 Hermes 대시보드 또는 이 게이트웨이에 로그인해야 합니다.",
+    "description": "Runtime interface message bot_mode.roster_names_only"
+  },
+  "runtime_bot_mode_roster_names_only_action": {
+    "message": "연결 설정 열기",
+    "description": "Runtime interface message bot_mode.roster_names_only_action"
+  },
   "runtime_bot_mode_save_profile": {
     "message": "Save changes",
     "description": "Runtime interface message bot_mode.save_profile"

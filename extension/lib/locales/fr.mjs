@@ -96,6 +96,8 @@ export default Object.freeze({
   "bot_mode.roster_label": "Agents Hermes",
   "bot_mode.refresh_agents": "Rafraîchir les agents",
   "bot_mode.connected_instance": "Instance Hermes actuellement connectée",
+  "bot_mode.roster_names_only": "Les photos de profil et les détails complets des bots nécessitent le tableau de bord Hermes ou une connexion à cette passerelle.",
+  "bot_mode.roster_names_only_action": "Ouvrir les réglages de connexion",
   "bot_mode.settings_title": "Agents et mode bot",
   "bot_mode.settings_copy_sidepanel": "Active la liste optionnelle de profils et la navigation canonique Bot Chat pour ce navigateur.",
   "bot_mode.enable_label": "Activer le mode bot de Hermes Browser",
