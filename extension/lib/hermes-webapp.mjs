@@ -19,7 +19,6 @@
 
 import { CONNECTION_SCHEMA_VERSION, isLoopbackGatewayUrl, migrateConnectionSettings } from './connection-modes.mjs';
 import { WEBAPP_TICKET_REASONS } from './webapp-gateway-tickets.mjs';
-import { openLaunchTabOutOfSight } from './hermes-web-opening.mjs';
 
 export const WEBAPP_DEFAULT_ADDRESS = 'http://127.0.0.1:9120';
 export const WEBAPP_DOCS_URL = 'https://hermes-agent.nousresearch.com/docs/user-guide/desktop#use-the-desktop-workspace-from-a-browser';
@@ -286,22 +285,20 @@ async function captureFromTab(credentials, target, tab) {
   }
 }
 
-// Opens a ticketed launch URL. With an `opener` (lib/hermes-web-opening.mjs) the background worker runs the hand-off:
-// the branded "Opening Hermes Web" page the first time in a run of the gateway, nothing in between after that
-// (`quiet`). Without one, or if the opener cannot, the launch URL loads out of sight and its tab comes forward once
-// the Webapp is there, where this context can watch tabs; only where it cannot does it open directly, as before.
+// Opens a ticketed launch URL as the visible tab. With an `opener` (lib/hermes-web-opening.mjs) the background worker
+// runs the hand-off: the branded "Opening Hermes Web" page the first time in a run of the gateway, the launch tab in
+// front straight away after that (`quiet`). Without one, or if the opener cannot, the launch URL opens directly, as
+// before; the content script on the gateway's hand-off page (hermes-web-launch.js) covers it either way.
 // Resolves the tab that carries the launch URL.
 async function openLaunchTab({ url, origin, basePath = '', tabsApi, opener }) {
   if (opener && typeof opener.open === 'function') {
     try {
       const opened = await opener.open({ url, origin, basePath });
-      if (opened?.ok) return { id: opened.tabId, quiet: opened.mode === 'quiet' };
+      if (opened?.ok) return { id: opened.tabId, ...(opened.mode === 'quiet' ? { quiet: true } : {}) };
     } catch {
       /* fall through to the direct open */
     }
   }
-  const hidden = await openLaunchTabOutOfSight({ url, origin, basePath, tabsApi });
-  if (hidden) return { ...hidden, quiet: true };
   return tabsApi.create({ url, active: true });
 }
 
@@ -377,7 +374,7 @@ const GATEWAY_ANSWERED = new Set([
  *
  * Resolves with { status, ... } and never throws for an expected condition:
  *   'focused' | 'opened' (+ hint: 'signed-in' | 'local' | 'local-kept' | 'account' | '', and `quiet: true` when the
- *   new tab comes forward by itself once the Webapp is there) | 'unreachable' |
+ *   run was signed in already, so no opening page showed) | 'unreachable' |
  *   'needs-address' | 'invalid-address' | 'permission-denied' | 'open-failed'
  * 'unreachable' carries `routes: 'present'` when the gateway answered about its Webapp (so no terminal step
  * is left to suggest) and `webapp`, the reason it gave (webapp-off, webapp-unavailable, ...).

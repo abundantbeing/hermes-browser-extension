@@ -1,27 +1,31 @@
 // The "Opening Hermes Web" hand-off.
 //
 // A Hermes Web tab signed in by a one-use ticket opens at `<webapp>/webapp/launch#ticket=...`. That is the
-// gateway's own redeem page: an unstyled page that spends a moment before the Webapp loads. This module makes
-// sure nobody looks at it:
+// gateway's own redeem page: an unstyled page that spends a moment before the Webapp loads. Nobody should see
+// it as it is:
 //
-//   1. the launch URL always opens in a background tab (`active: false`);
-//   2. the first time in a run of the gateway, an extension page (hermes-web-opening.html) is the visible tab
-//      while it loads ("page" mode). Later Hermes Web tabs in the same run open with nothing in between: the
-//      tab the person is on stays in front until the Webapp is there ("quiet" mode). A run is the gateway
-//      process (its pid from /health/detailed); without one, the browser session stands in for it;
-//   3. when the background tab reaches the Webapp itself (a finished load on the Webapp's origin, no longer
-//      on /webapp/launch or /webapp/window) that tab is activated, its window focused, the opening tab
-//      closed, and the run remembered as signed in;
-//   4. if that does not happen within HERMES_WEB_OPENING_TIMEOUT_MS the opening page offers "Show it anyway",
-//      which activates the background tab as it is; a quiet launch is shown as it is;
-//   5. closing the opening page activates the Webapp tab, and closing the Webapp tab closes the opening page.
+//   1. the first time in a run of the gateway ("page" mode), an extension page (hermes-web-opening.html) is the
+//      visible tab while the launch URL loads in a background tab beside it (`active: false`). When that tab
+//      reaches the Webapp itself (a finished load on the Webapp's origin, no longer on /webapp/launch or
+//      /webapp/window) it is activated, its window focused, the opening tab closed, and the run remembered as
+//      signed in. If that does not happen within HERMES_WEB_OPENING_TIMEOUT_MS the opening page offers "Show it
+//      anyway". Closing the opening page activates the Webapp tab; closing the Webapp tab closes the page;
+//   2. later in the same run ("quiet" mode) the launch URL opens as the visible tab straight away, with nothing in
+//      between. A run is the gateway process (its pid from /health/detailed); without one, the browser session
+//      stands in for it;
+//   3. on the gateway's hand-off pages themselves, a content script (hermes-web-launch.js) covers the plain page
+//      before it paints and asks `handleLaunchLook` how: the opening page's design for a first launch (also on the
+//      background tab of page mode, should someone switch to it), or Hermes Web's own background for a quiet one.
+//      A launch the extension did not start (`hermes webapp` in a terminal) is covered the same way, and its run
+//      remembered once it reaches the Webapp.
 //
 // The ticket lives only in the launch tab's URL fragment. The opening page's own URL never carries it: the
 // launch target travels in a runtime message to the background worker, which holds it in memory and in
 // storage.session (so a restarted worker keeps watching the same tab).
 //
 // Chrome and Firefox share this code. Both have tabs.create/update/remove/query/onUpdated/onRemoved,
-// windows.update and runtime.getURL, and the page is opened by the extension itself, so it is not web-accessible.
+// windows.update and runtime.getURL. The opening page is web-accessible to loopback pages only, so the content
+// script can frame it on the hand-off page; framed, it sends no messages, and the worker ignores a framed "show".
 
 export const HERMES_WEB_OPENING_PAGE = 'hermes-web-opening.html';
 export const HERMES_WEB_OPENING_TIMEOUT_MS = 20_000;
@@ -29,19 +33,23 @@ export const HERMES_WEB_OPENING_STORAGE_KEY = 'hermesWebOpeningPending';
 // storage.local: the gateway run a Hermes Web tab last reached the Webapp in (see `runtimeIdentity`).
 export const HERMES_WEB_SIGNED_IN_KEY = 'hermesWebSignedInRuntime';
 
+// Sent by the extension's own pages (the panel, the opening page).
 export const HERMES_WEB_OPENING_MESSAGES = Object.freeze({
   start: 'HERMES_WEB_OPENING_START',
   state: 'HERMES_WEB_OPENING_STATE',
   show: 'HERMES_WEB_OPENING_SHOW',
 });
+// Sent by the content script on the gateway's hand-off page, so page-reachable: it only ever learns a look.
+export const HERMES_WEB_LAUNCH_LOOK_MESSAGE = 'HERMES_WEB_LAUNCH_LOOK';
 
 export const HERMES_WEB_OPENING_MODES = Object.freeze({ page: 'page', quiet: 'quiet' });
 
 const MESSAGE_TYPES = new Set(Object.values(HERMES_WEB_OPENING_MESSAGES));
 const STALE_AFTER_MS = 10 * 60_000;
 const RUNTIME_IDENTITY_TIMEOUT_MS = 1_500;
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]']);
 
-/** True for the runtime message types this module's controller handles. */
+/** True for the runtime message types this module's controller handles from the extension's own pages. */
 export function handlesHermesWebOpeningMessage(type) {
   return MESSAGE_TYPES.has(type);
 }
@@ -83,6 +91,13 @@ export function isWebappReachedUrl(url, { origin = '', basePath = '' } = {}) {
   return !isHandoffPath(parsed.pathname, base);
 }
 
+/** Whether `url` is a gateway hand-off page (`.../webapp/launch` or `.../webapp/window`) on this computer. */
+export function isLoopbackHandoffUrl(url) {
+  const parsed = parseUrl(url);
+  if (!parsed || !['http:', 'https:'].includes(parsed.protocol) || !LOOPBACK_HOSTS.has(parsed.hostname)) return false;
+  return /\/webapp\/(?:launch|window)$/.test(parsed.pathname);
+}
+
 /**
  * Check a start request from the panel: `url` must be the launch page of `origin` (http or https, no credentials),
  * which is what a ticket launch is. Returns the clean request or null.
@@ -102,11 +117,6 @@ function isTabId(value) {
   return Number.isInteger(value) && value >= 0;
 }
 
-// Pending launches are keyed by the tab the person watches: the opening page, or (quiet) the launch tab itself.
-function entryKey(entry) {
-  return entry.mode === HERMES_WEB_OPENING_MODES.quiet ? `quiet:${entry.launchTabId}` : `page:${entry.openingTabId}`;
-}
-
 function withTimeout(promise, ms) {
   let timer = null;
   const timeout = new Promise((resolve) => { timer = setTimeout(() => resolve(''), ms); });
@@ -118,7 +128,7 @@ function withTimeout(promise, ms) {
  * `storageLocal` are optional (without storage.session a restarted worker forgets what it was watching, and the
  * opening page's button still works; without storage.local every launch shows the opening page).
  * `runtimeIdentity(request)` names the current run of the gateway ('' when it cannot tell): the opening page shows
- * once per run, and later launches in that run are quiet.
+ * once per run, and later launches in that run open straight away.
  */
 export function createHermesWebOpening({
   tabsApi,
@@ -129,33 +139,12 @@ export function createHermesWebOpening({
   runtimeIdentity = async () => '',
   now = () => Date.now(),
   timeoutMs = HERMES_WEB_OPENING_TIMEOUT_MS,
-  setTimer = (fn, ms) => setTimeout(fn, ms),
-  clearTimer = (id) => clearTimeout(id),
 } = {}) {
-  /** key -> { mode, openingTabId, launchTabId, windowId, origin, basePath, startedAt, runtime } */
+  /** openingTabId -> { openingTabId, launchTabId, windowId, origin, basePath, startedAt, runtime } */
   const pending = new Map();
-  const timers = new Map();
+  /** launch tab id -> the run it was covered as a first launch in; remembered once it reaches the Webapp */
+  const watching = new Map();
   let loaded = null;
-
-  // A quiet launch has no page to offer "Show it anyway", so the worker shows it when the wait runs out.
-  function arm(entry) {
-    if (entry.mode !== HERMES_WEB_OPENING_MODES.quiet) return;
-    const key = entryKey(entry);
-    if (timers.has(key)) return;
-    const remaining = Math.max(0, timeoutMs - Math.max(0, now() - Number(entry.startedAt || 0)));
-    timers.set(key, setTimer(() => {
-      timers.delete(key);
-      const current = pending.get(key);
-      if (current) void reveal(current, { reached: false });
-    }, remaining));
-  }
-
-  function disarm(entry) {
-    const key = entryKey(entry);
-    if (!timers.has(key)) return;
-    clearTimer(timers.get(key));
-    timers.delete(key);
-  }
 
   function load() {
     if (!loaded) {
@@ -164,15 +153,10 @@ export function createHermesWebOpening({
         try {
           const stored = await storageSession.get(HERMES_WEB_OPENING_STORAGE_KEY);
           const list = stored?.[HERMES_WEB_OPENING_STORAGE_KEY];
-          for (const raw of Array.isArray(list) ? list : []) {
-            const entry = { ...raw, mode: raw?.mode === HERMES_WEB_OPENING_MODES.quiet ? HERMES_WEB_OPENING_MODES.quiet : HERMES_WEB_OPENING_MODES.page };
-            if (!isTabId(entry.launchTabId)) continue;
-            if (entry.mode === HERMES_WEB_OPENING_MODES.page && !isTabId(entry.openingTabId)) continue;
+          for (const entry of Array.isArray(list) ? list : []) {
+            if (!isTabId(entry?.openingTabId) || !isTabId(entry?.launchTabId)) continue;
             if (now() - Number(entry.startedAt || 0) > STALE_AFTER_MS) continue;
-            const key = entryKey(entry);
-            if (pending.has(key)) continue;
-            pending.set(key, entry);
-            arm(entry);
+            if (!pending.has(entry.openingTabId)) pending.set(entry.openingTabId, entry);
           }
         } catch {
           /* an unreadable store only means this worker starts with nothing pending */
@@ -210,13 +194,18 @@ export function createHermesWebOpening({
     }
   }
 
-  async function currentRuntime(clean) {
+  async function currentRuntime(request) {
     try {
-      const value = await withTimeout(Promise.resolve(runtimeIdentity(clean)), RUNTIME_IDENTITY_TIMEOUT_MS);
+      const value = await withTimeout(Promise.resolve(runtimeIdentity(request)), RUNTIME_IDENTITY_TIMEOUT_MS);
       return typeof value === 'string' ? value : '';
     } catch {
       return '';
     }
+  }
+
+  // Signed in already this run: no opening page, nothing in between.
+  async function isSignedInRun(runtime) {
+    return Boolean(runtime) && (await signedInRuntime()) === runtime;
   }
 
   async function removeTab(tabId) {
@@ -241,13 +230,12 @@ export function createHermesWebOpening({
   }
 
   async function forget(entry) {
-    disarm(entry);
-    pending.delete(entryKey(entry));
+    pending.delete(entry.openingTabId);
     await save();
   }
 
-  // The Webapp tab is ready (or the person asked for it, or a quiet wait ran out): show it, then close the opening
-  // page. Only a tab that reached the Webapp itself marks the run as signed in.
+  // The Webapp tab is ready (or the person asked for it): show it, then close the opening page. Only a tab that
+  // reached the Webapp itself marks the run as signed in.
   async function reveal(entry, { reached = false } = {}) {
     await forget(entry);
     if (reached) await rememberSignedIn(entry.runtime);
@@ -256,22 +244,12 @@ export function createHermesWebOpening({
     } catch {
       // The Webapp tab is gone. Nothing is left to show, so the opening page goes too.
     }
-    if (entry.mode === HERMES_WEB_OPENING_MODES.page) await removeTab(entry.openingTabId);
+    await removeTab(entry.openingTabId);
   }
 
-  // A launch tab that already reached the Webapp by the time its entry exists is shown at once.
-  async function revealIfReached(entry) {
-    try {
-      const current = await tabsApi.get(entry.launchTabId);
-      if (current?.status === 'complete' && isWebappReachedUrl(current.url, entry)) await reveal(entry, { reached: true });
-    } catch {
-      /* the tab listener still sees the next update */
-    }
-  }
-
-  // Later launches in a signed-in run: the launch tab opens out of sight next to the tab the person is on.
-  async function startQuiet(clean, runtime) {
-    const options = { url: clean.url, active: false };
+  // Later launches in a signed-in run: the launch tab opens in front, next to the tab the person is on.
+  async function startQuiet(clean) {
+    const options = { url: clean.url, active: true };
     try {
       const [current] = typeof tabsApi.query === 'function' ? await tabsApi.query({ active: true, lastFocusedWindow: true }) : [];
       if (Number.isInteger(current?.windowId)) options.windowId = current.windowId;
@@ -286,21 +264,7 @@ export function createHermesWebOpening({
       return { ok: false, reason: error?.message || String(error) };
     }
     if (!isTabId(launchTab?.id)) return { ok: false, reason: 'no-tab' };
-    const entry = {
-      mode: HERMES_WEB_OPENING_MODES.quiet,
-      openingTabId: null,
-      launchTabId: launchTab.id,
-      windowId: Number.isInteger(launchTab.windowId) ? launchTab.windowId : options.windowId,
-      origin: clean.origin,
-      basePath: clean.basePath,
-      startedAt: now(),
-      runtime,
-    };
-    pending.set(entryKey(entry), entry);
-    await save();
-    arm(entry);
-    await revealIfReached(entry);
-    return { ok: true, tabId: entry.launchTabId, mode: entry.mode };
+    return { ok: true, tabId: launchTab.id, mode: HERMES_WEB_OPENING_MODES.quiet };
   }
 
   // The first launch in a run: the opening page is the visible tab and the launch tab loads beside it.
@@ -314,7 +278,6 @@ export function createHermesWebOpening({
     if (!isTabId(openingTab?.id)) return { ok: false, reason: 'no-tab' };
     // Registered before the launch tab exists: the opening page asks for its state as soon as it loads.
     const entry = {
-      mode: HERMES_WEB_OPENING_MODES.page,
       openingTabId: openingTab.id,
       launchTabId: null,
       windowId: openingTab.windowId,
@@ -323,8 +286,7 @@ export function createHermesWebOpening({
       startedAt: now(),
       runtime,
     };
-    const key = entryKey(entry);
-    pending.set(key, entry);
+    pending.set(entry.openingTabId, entry);
     let launchTab;
     try {
       const options = { url: clean.url, active: false };
@@ -332,29 +294,36 @@ export function createHermesWebOpening({
       if (Number.isInteger(openingTab.index)) options.index = openingTab.index + 1;
       launchTab = await tabsApi.create(options);
     } catch (error) {
-      pending.delete(key);
+      pending.delete(entry.openingTabId);
       await removeTab(openingTab.id);
       return { ok: false, reason: error?.message || String(error) };
     }
     if (!isTabId(launchTab?.id)) {
-      pending.delete(key);
+      pending.delete(entry.openingTabId);
       await removeTab(openingTab.id);
       return { ok: false, reason: 'no-tab' };
     }
     entry.launchTabId = launchTab.id;
     if (Number.isInteger(launchTab.windowId)) entry.windowId = launchTab.windowId;
-    if (!pending.has(key)) {
+    const result = { ok: true, tabId: entry.launchTabId, openingTabId: entry.openingTabId, mode: HERMES_WEB_OPENING_MODES.page };
+    if (!pending.has(entry.openingTabId)) {
       // The opening page was closed while the launch tab was being created: show the launch tab instead.
       try {
         await activate(entry);
       } catch {
         /* closed already */
       }
-      return { ok: true, tabId: entry.launchTabId, openingTabId: entry.openingTabId, mode: entry.mode };
+      return result;
     }
     await save();
-    await revealIfReached(entry);
-    return { ok: true, tabId: entry.launchTabId, openingTabId: entry.openingTabId, mode: entry.mode };
+    // A fast Webapp could have finished loading before the entry existed.
+    try {
+      const current = await tabsApi.get(entry.launchTabId);
+      if (current?.status === 'complete' && isWebappReachedUrl(current.url, entry)) await reveal(entry, { reached: true });
+    } catch {
+      /* the listener below still sees the next update */
+    }
+    return result;
   }
 
   async function start(request) {
@@ -362,8 +331,29 @@ export function createHermesWebOpening({
     if (!clean) return { ok: false, reason: 'invalid-request' };
     await load();
     const runtime = await currentRuntime(clean);
-    const quiet = Boolean(runtime) && (await signedInRuntime()) === runtime;
-    return quiet ? startQuiet(clean, runtime) : startPage(clean, runtime);
+    return (await isSignedInRun(runtime)) ? startQuiet(clean) : startPage(clean, runtime);
+  }
+
+  /**
+   * The content script on a gateway hand-off page asks how to cover it. `sender` is the browser's: only the top
+   * frame of a loopback hand-off page is answered. Resolves { look: 'page' | 'quiet' } or { look: '' }.
+   */
+  async function handleLaunchLook(sender) {
+    const tabId = sender?.tab?.id;
+    if (!isTabId(tabId) || (sender?.frameId !== undefined && sender.frameId !== 0) || !isLoopbackHandoffUrl(sender?.url)) {
+      return { look: '' };
+    }
+    await load();
+    // Page mode's background tab: someone who switches to it sees the opening page's design too.
+    for (const entry of pending.values()) {
+      if (entry.launchTabId === tabId) return { look: HERMES_WEB_OPENING_MODES.page };
+    }
+    const runtime = await currentRuntime();
+    if (await isSignedInRun(runtime)) return { look: HERMES_WEB_OPENING_MODES.quiet };
+    // A first launch the extension did not run as page mode (a terminal launch, or a direct open): its run counts
+    // as signed in once it reaches the Webapp.
+    if (runtime) watching.set(tabId, runtime);
+    return { look: HERMES_WEB_OPENING_MODES.page };
   }
 
   async function handleTabUpdated(tabId, changeInfo, tab) {
@@ -373,12 +363,21 @@ export function createHermesWebOpening({
       if (entry.launchTabId !== tabId) continue;
       if (isWebappReachedUrl(tab?.url, entry)) await reveal(entry, { reached: true });
     }
+    if (watching.has(tabId)) {
+      const parsed = parseUrl(tab?.url);
+      if (parsed && LOOPBACK_HOSTS.has(parsed.hostname) && !isLoopbackHandoffUrl(tab.url)) {
+        const runtime = watching.get(tabId);
+        watching.delete(tabId);
+        await rememberSignedIn(runtime);
+      }
+    }
   }
 
   async function handleTabRemoved(tabId) {
     await load();
+    watching.delete(tabId);
     for (const entry of [...pending.values()]) {
-      if (entry.mode === HERMES_WEB_OPENING_MODES.page && entry.openingTabId === tabId) {
+      if (entry.openingTabId === tabId) {
         // The person closed the opening page: show what is loading rather than leave it hidden.
         await forget(entry);
         try {
@@ -389,7 +388,7 @@ export function createHermesWebOpening({
       } else if (entry.launchTabId === tabId) {
         // The Webapp tab was closed before it arrived: the opening page has nothing left to wait for.
         await forget(entry);
-        if (entry.mode === HERMES_WEB_OPENING_MODES.page) await removeTab(entry.openingTabId);
+        await removeTab(entry.openingTabId);
       }
     }
   }
@@ -398,13 +397,16 @@ export function createHermesWebOpening({
     const senderTabId = sender?.tab?.id;
     if (message?.type === HERMES_WEB_OPENING_MESSAGES.start) return start(message);
     await load();
-    const entry = isTabId(senderTabId) ? pending.get(`page:${senderTabId}`) : null;
     if (message?.type === HERMES_WEB_OPENING_MESSAGES.state) {
+      const entry = pending.get(senderTabId);
       if (!entry) return { ok: true, status: 'none' };
       // The origin is only the Webapp's address, for the page to name; the launch URL and its ticket stay here.
       return { ok: true, status: 'waiting', startedAt: entry.startedAt, now: now(), timeoutMs, origin: entry.origin };
     }
     if (message?.type === HERMES_WEB_OPENING_MESSAGES.show) {
+      // Only the opening page as its own tab acts; the same page framed on the hand-off page never does.
+      if (sender?.frameId !== undefined && sender.frameId !== 0) return { ok: true };
+      const entry = pending.get(senderTabId);
       if (entry && !isTabId(entry.launchTabId)) {
         // Still opening the Webapp tab: there is nothing to show yet.
       } else if (entry) {
@@ -423,6 +425,7 @@ export function createHermesWebOpening({
     handleTabUpdated,
     handleTabRemoved,
     handleMessage,
+    handleLaunchLook,
     handles: handlesHermesWebOpeningMessage,
     /** Test and diagnostics only. */
     pendingCount: () => pending.size,
@@ -447,36 +450,4 @@ export function createHermesWebOpener({ sendMessage } = {}) {
       }
     },
   };
-}
-
-/**
- * Where no hand-off worker is available: open the launch URL out of sight and bring its tab forward once it reaches
- * the Webapp itself (or the wait runs out), so the gateway's hand-off page is never what the person sees. Needs
- * tabs.onUpdated and tabs.update; without them it resolves null and the caller opens the tab as before.
- */
-export async function openLaunchTabOutOfSight({ url, origin, basePath = '', tabsApi, timeoutMs = HERMES_WEB_OPENING_TIMEOUT_MS } = {}) {
-  if (typeof tabsApi?.onUpdated?.addListener !== 'function' || typeof tabsApi?.update !== 'function') return null;
-  const tab = await tabsApi.create({ url, active: false });
-  if (!isTabId(tab?.id)) return tab || null;
-  let timer = null;
-  const done = () => {
-    tabsApi.onUpdated.removeListener?.(onUpdated);
-    tabsApi.onRemoved?.removeListener?.(onRemoved);
-    if (timer !== null) clearTimeout(timer);
-    timer = null;
-  };
-  const show = () => {
-    done();
-    Promise.resolve(tabsApi.update(tab.id, { active: true })).catch(() => undefined);
-  };
-  function onUpdated(tabId, changeInfo, current) {
-    if (tabId === tab.id && changeInfo?.status === 'complete' && isWebappReachedUrl(current?.url, { origin, basePath })) show();
-  }
-  function onRemoved(tabId) {
-    if (tabId === tab.id) done();
-  }
-  tabsApi.onUpdated.addListener(onUpdated);
-  tabsApi.onRemoved?.addListener?.(onRemoved);
-  timer = setTimeout(show, timeoutMs);
-  return tab;
 }

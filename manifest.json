@@ -89,6 +89,24 @@
         "extension/content-inline-helper.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ],
+      "include_globs": [
+        "*/webapp/launch*",
+        "*/webapp/window*"
+      ],
+      "css": [
+        "extension/hermes-web-launch.css"
+      ],
+      "js": [
+        "extension/lib/browser-api-global.js",
+        "extension/hermes-web-launch.js"
+      ],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
@@ -101,6 +119,15 @@
         "http://*/*",
         "https://*/*",
         "file:///*"
+      ]
+    },
+    {
+      "resources": [
+        "extension/hermes-web-opening.html"
+      ],
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*"
       ]
     }
   ],

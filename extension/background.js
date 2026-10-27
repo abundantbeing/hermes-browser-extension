@@ -31,7 +31,7 @@ import { isLocalGatewayConnection, openHermesWebapp } from './lib/hermes-webapp.
 import { resolveWebappTarget } from './lib/hermes-webapp.mjs';
 import { createWebappCredentialStore, keepSignedInEnabled } from './lib/webapp-credential.mjs';
 import { createWebappGatewayTickets } from './lib/webapp-gateway-tickets.mjs';
-import { HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
+import { HERMES_WEB_LAUNCH_LOOK_MESSAGE, HERMES_WEB_OPENING_MESSAGES, createHermesWebOpening } from './lib/hermes-web-opening.mjs';
 import { restSessionCreateSource } from './lib/session-materialization.mjs';
 import { normalizeGatewayCapabilities } from './lib/capabilities.mjs';
 import {
@@ -1105,6 +1105,9 @@ browserApi.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ? themeMarketplaceController.handleMessage(message)
     : hermesWebOpening.handles(message?.type)
       ? hermesWebOpening.handleMessage(message, sender)
+    // From the content script on the gateway's hand-off page: it only learns how to cover the page.
+    : message?.type === HERMES_WEB_LAUNCH_LOOK_MESSAGE
+      ? hermesWebOpening.handleLaunchLook(sender)
     : message?.type === 'HERMES_INLINE_DRAFT_REQUEST'
       ? queueInlineDraftRequest(message, sender)
       : message?.type === 'HERMES_INLINE_SESSION_STATUS'

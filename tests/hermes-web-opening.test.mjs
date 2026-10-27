@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
+import vm from 'node:vm';
 
 import {
   HERMES_WEB_OPENING_MESSAGES,
@@ -10,6 +11,7 @@ import {
   HERMES_WEB_SIGNED_IN_KEY,
   createHermesWebOpener,
   createHermesWebOpening,
+  isLoopbackHandoffUrl,
   isWebappReachedUrl,
   normalizeOpeningRequest,
 } from '../extension/lib/hermes-web-opening.mjs';
@@ -375,7 +377,7 @@ test('a held sign-in launch goes through the opener with the Webapp origin and b
   assert.deepEqual(calls, [{ url: LAUNCH, origin: ORIGIN, basePath: '' }]);
 });
 
-// --- once per run of the gateway, then nothing in between -------------------------------------
+// --- once per run of the gateway, then Hermes Web opens straight ------------------------------
 
 function localStore(initial = {}) {
   const store = { ...initial };
@@ -388,13 +390,9 @@ function localStore(initial = {}) {
 
 const RUN = 'http://127.0.0.1:8642#pid:4242';
 
-function runOf(browser, { runtime = RUN, storageLocal = localStore(), clock } = {}) {
+function runOf(browser, { runtime = RUN, storageLocal = localStore() } = {}) {
   let current = runtime;
-  const controller = opening(browser, {
-    storageLocal,
-    runtimeIdentity: async () => current,
-    ...(clock ? { setTimer: clock.setTimer, clearTimer: clock.clearTimer } : {}),
-  });
+  const controller = opening(browser, { storageLocal, runtimeIdentity: async () => current });
   return { controller, storageLocal, restart: (next) => { current = next; } };
 }
 
@@ -408,26 +406,19 @@ test('the first launch in a run shows the opening page and, once the Webapp is t
   const { controller, storageLocal } = runOf(browser);
   const first = await controller.start({ url: LAUNCH, origin: ORIGIN });
   assert.equal(first.mode, 'page');
-  assert.ok(browser.log.some(([kind, options]) => kind === 'create' && options.url === `${EXTENSION_URL}${HERMES_WEB_OPENING_PAGE}`));
+  assert.ok(browser.log.some(([kind, options]) => kind === 'create' && options.url === `${EXTENSION_URL}${HERMES_WEB_OPENING_PAGE}` && options.active === true));
   assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], undefined, 'not signed in until the Webapp is reached');
   await controller.handleTabUpdated(first.tabId, { status: 'complete' }, { url: `${ORIGIN}/` });
   assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], RUN);
 });
 
-test('a later launch in the same run opens with nothing in between, and the Webapp comes forward when it is there', async () => {
+test('a later launch in the same run opens Hermes Web in front straight away: no opening page, no waiting', async () => {
   const browser = withActiveTab(fakeBrowser());
-  const clock = timers();
-  const { controller } = runOf(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }), clock });
+  const { controller } = runOf(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }) });
   const result = await controller.start({ url: LAUNCH, origin: ORIGIN });
   assert.equal(result.mode, 'quiet');
-  assert.deepEqual(browser.log, [['create', { url: LAUNCH, active: false, windowId: 3, index: 5 }]], 'only the launch tab, out of sight, beside the current tab');
-  browser.log.length = 0;
-  await controller.handleTabUpdated(result.tabId, { status: 'complete' }, { url: `${ORIGIN}/webapp/launch` });
-  assert.deepEqual(browser.log, [], 'the hand-off page is never brought forward');
-  await controller.handleTabUpdated(result.tabId, { status: 'complete' }, { url: `${ORIGIN}/` });
-  assert.deepEqual(browser.log, [['update', result.tabId, { active: true }], ['window', 3, { focused: true }]]);
-  assert.equal(controller.pendingCount(), 0);
-  assert.equal(clock.scheduled[0].cleared, true, 'the wait is called off');
+  assert.deepEqual(browser.log, [['create', { url: LAUNCH, active: true, windowId: 3, index: 5 }]], 'one tab, in front, beside the current tab');
+  assert.equal(controller.pendingCount(), 0, 'nothing is held back for later');
 });
 
 test('a restarted gateway is a new run: its first launch shows the opening page again', async () => {
@@ -459,94 +450,176 @@ test('a run identity that never answers does not hold the launch up', async () =
   assert.ok(Date.now() - started < 3_000);
 });
 
-test('Show it anyway, and a quiet wait that runs out, show the tab but do not mark the run signed in', async () => {
+test('Show it anyway shows the tab but does not mark the run signed in', async () => {
   const browser = withActiveTab(fakeBrowser());
   const { controller, storageLocal } = runOf(browser);
   const { openingTabId } = await controller.start({ url: LAUNCH, origin: ORIGIN });
-  await controller.handleMessage({ type: HERMES_WEB_OPENING_MESSAGES.show }, { tab: { id: openingTabId } });
+  await controller.handleMessage({ type: HERMES_WEB_OPENING_MESSAGES.show }, { tab: { id: openingTabId }, frameId: 0 });
   assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], undefined);
-
-  const quietBrowser = withActiveTab(fakeBrowser());
-  const clock = timers();
-  const signedIn = localStore({ [HERMES_WEB_SIGNED_IN_KEY]: 'http://127.0.0.1:8642#pid:1' });
-  const quiet = runOf(quietBrowser, { runtime: 'http://127.0.0.1:8642#pid:1', storageLocal: signedIn, clock });
-  const result = await quiet.controller.start({ url: LAUNCH, origin: ORIGIN });
-  assert.equal(result.mode, 'quiet');
-  // The wait is what is left of the limit on the worker clock (a millisecond may already have passed).
-  assert.ok(clock.scheduled[0].ms <= HERMES_WEB_OPENING_TIMEOUT_MS && clock.scheduled[0].ms > HERMES_WEB_OPENING_TIMEOUT_MS - 1_000);
-  quietBrowser.log.length = 0;
-  signedIn.store[HERMES_WEB_SIGNED_IN_KEY] = 'marker';
-  clock.scheduled[0].fn();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.deepEqual(quietBrowser.log[0], ['update', result.tabId, { active: true }], 'shown as it is');
-  assert.equal(signedIn.store[HERMES_WEB_SIGNED_IN_KEY], 'marker', 'not written for a tab that never reached the Webapp');
-  assert.equal(quiet.controller.pendingCount(), 0);
-});
-
-test('a quiet launch tab closed before the Webapp arrives is forgotten', async () => {
-  const browser = withActiveTab(fakeBrowser());
-  const clock = timers();
-  const { controller } = runOf(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }), clock });
-  const { tabId } = await controller.start({ url: LAUNCH, origin: ORIGIN });
-  browser.log.length = 0;
-  await controller.handleTabRemoved(tabId);
   assert.equal(controller.pendingCount(), 0);
-  assert.equal(clock.scheduled[0].cleared, true);
-  assert.deepEqual(browser.log, [], 'nothing else is opened or closed');
 });
 
-test('a restarted worker keeps watching a quiet launch from storage.session and still shows it', async () => {
+test('the opening page framed on a hand-off page cannot close or show anything', async () => {
   const browser = withActiveTab(fakeBrowser());
-  const signedIn = localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN });
-  const first = runOf(browser, { storageLocal: signedIn, clock: timers() });
-  const { tabId } = await first.controller.start({ url: LAUNCH, origin: ORIGIN });
-  const restarted = runOf(browser, { storageLocal: signedIn, clock: timers() });
+  const { controller } = runOf(browser);
+  const { openingTabId } = await controller.start({ url: LAUNCH, origin: ORIGIN });
   browser.log.length = 0;
-  await restarted.controller.handleTabUpdated(tabId, { status: 'complete' }, { url: `${ORIGIN}/` });
-  assert.deepEqual(browser.log[0], ['update', tabId, { active: true }]);
+  for (const tabId of [openingTabId, 555]) {
+    assert.deepEqual(await controller.handleMessage({ type: HERMES_WEB_OPENING_MESSAGES.show }, { tab: { id: tabId }, frameId: 7 }), { ok: true });
+  }
+  assert.deepEqual(browser.log, []);
+  assert.equal(controller.pendingCount(), 1);
 });
 
-test('a quiet launch from the hand-off tells the button, which reports it', async () => {
+// --- how the content script covers the gateway's hand-off page ------------------------------------
+
+const handoffSender = (tabId, extra = {}) => ({ tab: { id: tabId }, frameId: 0, url: `${ORIGIN}/webapp/launch#ticket=${TICKET}`, ...extra });
+
+test('page mode: the background launch tab is covered with the opening page design, should anyone switch to it', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const { controller } = runOf(browser);
+  const { tabId } = await controller.start({ url: LAUNCH, origin: ORIGIN });
+  assert.deepEqual(await controller.handleLaunchLook(handoffSender(tabId)), { look: 'page' });
+});
+
+test('a signed-in run is covered with Hermes Web\'s own background', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const { controller } = runOf(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }) });
+  const { tabId } = await controller.start({ url: LAUNCH, origin: ORIGIN });
+  assert.deepEqual(await controller.handleLaunchLook(handoffSender(tabId)), { look: 'quiet' });
+});
+
+test('a first launch the extension did not run gets the opening page design, and its run is remembered once it arrives', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const { controller, storageLocal } = runOf(browser);
+  assert.deepEqual(await controller.handleLaunchLook(handoffSender(321)), { look: 'page' });
+  await controller.handleTabUpdated(321, { status: 'complete' }, { url: `${ORIGIN}/webapp/launch` });
+  assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], undefined, 'still on the hand-off page');
+  await controller.handleTabUpdated(321, { status: 'complete' }, { url: `${ORIGIN}/` });
+  assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], RUN);
+  assert.deepEqual(await controller.handleLaunchLook(handoffSender(322)), { look: 'quiet' }, 'the next one opens straight');
+});
+
+test('only the top frame of a loopback hand-off page is answered', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const { controller } = runOf(browser);
+  for (const sender of [
+    handoffSender(5, { frameId: 2 }),
+    handoffSender(5, { url: 'https://example.com/webapp/launch' }),
+    handoffSender(5, { url: `${ORIGIN}/sessions` }),
+    { frameId: 0, url: `${ORIGIN}/webapp/launch` },
+    null,
+  ]) {
+    assert.deepEqual(await controller.handleLaunchLook(sender), { look: '' });
+  }
+  assert.equal(isLoopbackHandoffUrl(`${ORIGIN}/webapp/window`), true);
+  assert.equal(isLoopbackHandoffUrl('http://localhost:9120/prefix/webapp/launch'), true);
+  assert.equal(isLoopbackHandoffUrl('http://192.168.1.4:9120/webapp/launch'), false);
+});
+
+function coverHarness({ href = `${ORIGIN}/webapp/launch#ticket=${TICKET}`, look = 'page', statusText = 'Opening Hermes Webapp…', readyState = 'loading' } = {}) {
+  const url = new URL(href);
+  const appended = [];
+  const listeners = {};
+  const observers = [];
+  const status = { textContent: statusText };
+  const sent = [];
+  const root = {
+    dataset: {},
+    append(node) { appended.push(node); node.parent = root; },
+  };
+  const document = {
+    documentElement: root,
+    readyState,
+    getElementById: (id) => (id === 'status' ? status : null),
+    addEventListener: (type, fn) => { listeners[type] = fn; },
+    createElement: (tag) => ({ tag, remove() { appended.splice(appended.indexOf(this), 1); } }),
+  };
+  class MutationObserver {
+    constructor(fn) { this.fn = fn; observers.push(this); }
+    observe() {}
+  }
+  const api = {
+    runtime: {
+      getURL: (path) => `${EXTENSION_URL}${path}`,
+      sendMessage: async (message) => { sent.push(message); return { look }; },
+    },
+  };
+  const context = vm.createContext({ document, location: url, MutationObserver, globalThis: null, Promise, URL, encodeURIComponent });
+  context.globalThis = context;
+  context.hermesBrowserApi = api;
+  return { context, root, appended, listeners, observers, status, sent };
+}
+
+async function runCover(harness) {
+  vm.runInContext(read('extension/hermes-web-launch.js'), harness.context);
+  await new Promise((resolve) => setImmediate(resolve));
+  return harness;
+}
+
+test('the content script covers the hand-off page before it paints and frames the opening page for a first launch', async () => {
+  const harness = coverHarness();
+  vm.runInContext(read('extension/hermes-web-launch.js'), harness.context);
+  assert.equal(harness.root.dataset.hermesBrowserCover, 'quiet', 'covered synchronously, before any answer');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(JSON.parse(JSON.stringify(harness.sent)), [{ type: 'HERMES_WEB_LAUNCH_LOOK' }], 'it sends only the question');
+  assert.equal(harness.root.dataset.hermesBrowserCover, 'page');
+  assert.equal(harness.appended.length, 1);
+  assert.equal(harness.appended[0].tag, 'iframe');
+  assert.equal(harness.appended[0].src, `${EXTENSION_URL}hermes-web-opening.html?origin=${encodeURIComponent(ORIGIN)}`);
+  assert.ok(!harness.appended[0].src.includes(TICKET), 'the ticket never leaves the page address');
+});
+
+test('a quiet launch keeps Hermes Web\'s own background and frames nothing', async () => {
+  const harness = await runCover(coverHarness({ look: 'quiet' }));
+  assert.equal(harness.root.dataset.hermesBrowserCover, 'quiet');
+  assert.equal(harness.appended.length, 0);
+});
+
+test('a message from the gateway on the hand-off page steps the cover aside so it can be read', async () => {
+  const harness = await runCover(coverHarness());
+  harness.listeners.DOMContentLoaded();
+  assert.equal(harness.observers.length, 1);
+  harness.status.textContent = 'This launch link was already used or has expired. Run hermes webapp again for a new one.';
+  harness.observers[0].fn();
+  assert.equal(harness.root.dataset.hermesBrowserCover, 'notice');
+  assert.equal(harness.appended.length, 0, 'the framed page is removed');
+  // A page whose line is already a message when it is first seen is shown as it is.
+  const late = await runCover(coverHarness({ statusText: 'This browser does not let the Webapp keep its sign-in in this tab.', readyState: 'complete', look: 'quiet' }));
+  assert.equal(late.root.dataset.hermesBrowserCover, 'notice');
+});
+
+test('the content script does nothing off a loopback hand-off page, and asks nothing on the window hand-off', async () => {
+  for (const href of ['http://192.168.1.4:9120/webapp/launch', `${ORIGIN}/sessions`, 'http://localhost:9120/webapp/launcher']) {
+    const harness = await runCover(coverHarness({ href }));
+    assert.equal(harness.root.dataset.hermesBrowserCover, undefined, href);
+    assert.deepEqual(harness.sent, []);
+  }
+  const windowPage = await runCover(coverHarness({ href: `${ORIGIN}/webapp/window#channel=x`, statusText: 'Authorizing this Hermes window…' }));
+  assert.equal(windowPage.root.dataset.hermesBrowserCover, 'quiet');
+  assert.deepEqual(windowPage.sent, []);
+});
+
+test('the background worker names the gateway run by its pid and answers the cover from content scripts', () => {
+  const source = read('extension/background.js');
+  assert.match(source, /async function hermesWebRuntimeIdentity\(\)/);
+  assert.match(source, /\/health\/detailed/);
+  assert.match(source, /#pid:\$\{pid\}/);
+  assert.match(source, /storageLocal: browserApi\.storage\?\.local,\s*runtimeIdentity: hermesWebRuntimeIdentity,/);
+  assert.match(source, /message\?\.type === HERMES_WEB_LAUNCH_LOOK_MESSAGE\s*\?\s*hermesWebOpening\.handleLaunchLook\(sender\)/);
+  assert.doesNotMatch(read('extension/sidepanel.js'), /result\.quiet/, 'no toast: the tab itself comes forward');
+});
+
+test('a launch in a signed-in run tells the button it was quiet; a direct fallback still opens in front', async () => {
   const opener = { async open() { return { ok: true, tabId: 42, mode: 'quiet' }; } };
   const result = await openHermesWebapp({ settings: local, ...directTabs(), tickets, opener });
   assert.equal(result.status, 'opened');
   assert.equal(result.quiet, true);
   const page = await openHermesWebapp({ settings: local, ...directTabs(), tickets, opener: { async open() { return { ok: true, tabId: 43, mode: 'page' }; } } });
   assert.equal(page.quiet, undefined);
-});
-
-test('without the hand-off, where tabs can be watched, the launch page loads out of sight and comes forward once the Webapp is there', async () => {
-  let updated = [];
-  let removed = [];
-  const created = [];
-  const updates = [];
-  const tabsApi = {
-    async query() { return []; },
-    async create(options) { created.push(options); return { id: 77 }; },
-    async update(id, options) { updates.push([id, options]); },
-    onUpdated: { addListener: (fn) => updated.push(fn), removeListener: (fn) => { updated = updated.filter((other) => other !== fn); } },
-    onRemoved: { addListener: (fn) => removed.push(fn), removeListener: (fn) => { removed = removed.filter((other) => other !== fn); } },
-  };
-  const result = await openHermesWebapp({ settings: local, tabsApi, windowsApi: { async update() {} }, tickets, opener: { async open() { return { ok: false }; } } });
-  assert.equal(result.status, 'opened');
-  assert.equal(result.quiet, true);
-  assert.deepEqual(created, [{ url: LAUNCH, active: false }], 'never opened in front');
-  for (const fn of [...updated]) fn(77, { status: 'complete' }, { url: `${ORIGIN}/webapp/launch` });
-  assert.deepEqual(updates, []);
-  for (const fn of [...updated]) fn(77, { status: 'complete' }, { url: `${ORIGIN}/` });
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.deepEqual(updates, [[77, { active: true }]]);
-  assert.equal(updated.length, 0, 'it stops watching');
-  assert.equal(removed.length, 0);
-});
-
-test('the background worker names the gateway run by its pid and passes storage.local to the hand-off', () => {
-  const source = read('extension/background.js');
-  assert.match(source, /async function hermesWebRuntimeIdentity\(\)/);
-  assert.match(source, /\/health\/detailed/);
-  assert.match(source, /#pid:\$\{pid\}/);
-  assert.match(source, /storageLocal: browserApi\.storage\?\.local,\s*runtimeIdentity: hermesWebRuntimeIdentity,/);
-  assert.match(read('extension/sidepanel.js'), /result\.status === 'opened' && result\.quiet/);
+  const browser = directTabs();
+  await openHermesWebapp({ settings: local, ...browser, tickets, opener: { async open() { return { ok: false }; } } });
+  assert.deepEqual(browser.created, [{ url: LAUNCH, active: true }], 'in front at once; the cover on the hand-off page does the rest');
 });
 
 // --- the opening page --------------------------------------------------------------------------
@@ -661,10 +734,25 @@ test('the opening page is the pairing approval page design, in the portal colour
   assert.match(read('extension/hermes-web-opening.js'), /t\('webapp\.opening_state_slow'\)/);
 });
 
-test('the page is an extension page opened by the extension, so it is not web-accessible, and both builds ship it', () => {
+test('the page is web-accessible to loopback pages only (to cover the hand-off page), the cover runs there at document_start, and both builds ship it', () => {
+  for (const [path, prefix] of [['extension/manifest.json', ''], ['manifest.json', 'extension/']]) {
+    const manifest = JSON.parse(read(path));
+    const exposing = (manifest.web_accessible_resources || []).filter((entry) => entry.resources.some((resource) => resource.includes('hermes-web-opening')));
+    assert.deepEqual(exposing, [{ resources: [`${prefix}hermes-web-opening.html`], matches: ['http://127.0.0.1/*', 'http://localhost/*'] }], path);
+    const cover = manifest.content_scripts.find((entry) => (entry.js || []).some((file) => file.endsWith('hermes-web-launch.js')));
+    assert.deepEqual(cover, {
+      matches: ['http://127.0.0.1/*', 'http://localhost/*'],
+      include_globs: ['*/webapp/launch*', '*/webapp/window*'],
+      css: [`${prefix}hermes-web-launch.css`],
+      js: [`${prefix}lib/browser-api-global.js`, `${prefix}hermes-web-launch.js`],
+      run_at: 'document_start',
+    }, path);
+  }
   const manifest = JSON.parse(read('extension/manifest.json'));
-  const exposed = (manifest.web_accessible_resources || []).flatMap((entry) => entry.resources);
-  assert.ok(!exposed.some((resource) => resource.includes('hermes-web-opening')));
+  // Framed, the page only shows: the messages to the worker are sent from the top-level page alone.
+  const pageScript = read('extension/hermes-web-opening.js');
+  assert.match(pageScript, /if \(window\.top !== window\.self\) \{\n  nameWebapp\(new URLSearchParams\(location\.search\)\.get\('origin'\)\);\n\} else \{/);
+  assert.ok(pageScript.indexOf('startOpeningPage({') > pageScript.indexOf('} else {'), 'the worker is asked only outside a frame');
   // tabs.create/update/remove/onUpdated and windows.update need the existing "tabs" permission on both builds.
   assert.ok(manifest.permissions.includes('tabs'));
   const firefoxBuild = read('scripts/build-firefox.mjs');

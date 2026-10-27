@@ -19,32 +19,41 @@ const addressRow = document.getElementById('openingAddressRow');
 const address = document.getElementById('openingAddress');
 const host = document.getElementById('openingHost');
 
-const page = await startOpeningPage({
-  sendMessage: (message) => browserApi.runtime.sendMessage(message),
-  onSlow: () => {
-    main?.setAttribute('aria-busy', 'false');
-    frame?.classList.add('is-slow');
-    if (stateText) stateText.textContent = t('webapp.opening_state_slow');
-    if (slowBlock) slowBlock.hidden = false;
-    if (detail) detail.hidden = true;
-    showButton?.focus({ preventScroll: true });
-  },
-});
-
 // The rail names the Webapp being opened (an address only, never the launch URL).
-try {
-  const origin = page.origin ? new URL(page.origin) : null;
-  if (origin && address && addressRow) {
-    address.textContent = origin.host;
-    addressRow.hidden = false;
+function nameWebapp(value) {
+  try {
+    const origin = value ? new URL(value) : null;
+    if (!origin || !['http:', 'https:'].includes(origin.protocol)) return;
+    if (address && addressRow) {
+      address.textContent = origin.host;
+      addressRow.hidden = false;
+    }
+    if (host) host.textContent = origin.hostname;
+  } catch {
+    /* the rail keeps its defaults */
   }
-  if (origin && host) host.textContent = origin.hostname;
-} catch {
-  /* the rail keeps its defaults */
 }
 
-showButton?.addEventListener('click', () => {
-  showButton.disabled = true;
-  page.show().finally(() => { showButton.disabled = false; });
-});
-window.addEventListener('pagehide', () => page.stop());
+// Framed over the gateway's hand-off page (hermes-web-launch.js), the page only shows: that tab signs itself in and
+// moves on to the Webapp, and the gateway's own page reports a problem. It sends the background worker nothing.
+if (window.top !== window.self) {
+  nameWebapp(new URLSearchParams(location.search).get('origin'));
+} else {
+  const page = await startOpeningPage({
+    sendMessage: (message) => browserApi.runtime.sendMessage(message),
+    onSlow: () => {
+      main?.setAttribute('aria-busy', 'false');
+      frame?.classList.add('is-slow');
+      if (stateText) stateText.textContent = t('webapp.opening_state_slow');
+      if (slowBlock) slowBlock.hidden = false;
+      if (detail) detail.hidden = true;
+      showButton?.focus({ preventScroll: true });
+    },
+  });
+  nameWebapp(page.origin);
+  showButton?.addEventListener('click', () => {
+    showButton.disabled = true;
+    page.show().finally(() => { showButton.disabled = false; });
+  });
+  window.addEventListener('pagehide', () => page.stop());
+}
