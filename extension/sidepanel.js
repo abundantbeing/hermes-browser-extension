@@ -7025,6 +7025,16 @@ async function stopCurrentTurn() {
   // A run this panel only watches (attached), or one the roster lists as live in the viewed session
   // before the next poll has attached to it, is stopped through the gateway by its live id.
   const attach = liveAttach?.sessionId === viewedSessionId ? liveAttach : null;
+  // A running session opened over REST has no socket until the next roster poll opens one. Stop
+  // should not wait for that poll: open it now, so the stop reaches the gateway the first time.
+  if (!attach && !(sending && localRunIsViewed()) && liveSessionRows.get(viewedSessionId)?.live === true
+    && activeDashboardWsConnection?.client?.readyState !== 1) {
+    try {
+      await ensureActiveDashboardWsConnection();
+    } catch {
+      /* no socket to stop it through; the checks below say so */
+    }
+  }
   const watched = attach || (sending && localRunIsViewed() ? null : rosterStopTarget({
     rows: liveSessionRows,
     sessionId: viewedSessionId,

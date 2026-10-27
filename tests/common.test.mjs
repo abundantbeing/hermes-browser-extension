@@ -4446,3 +4446,39 @@ test('a provider-less REST session row keeps the provider of the same model alre
   const other = { modelId: 'claude-haiku-5-5', rawModelId: 'claude-haiku-5-5', provider: '' };
   assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: other, currentBinding: chosen }).provider, '');
 });
+
+test('a stored session binding that lost its provider borrows it from the panel choice of the same model', async () => {
+  const { resolveAcknowledgedSessionModelBinding } = await import('../extension/lib/common.mjs');
+  const providerless = { modelId: 'gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: '' };
+  const chosen = { modelId: 'custom:gemini-local::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'custom:gemini-local' };
+  // The reported session: its stored binding was already provider-less, so a stored binding winning was not enough.
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: providerless, storedBinding: providerless, currentBinding: chosen }).provider, 'custom:gemini-local');
+  // A stored binding with its own provider is never overridden.
+  const stored = { modelId: 'nous::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'nous' };
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: providerless, storedBinding: stored, currentBinding: chosen }).provider, 'nous');
+});
+
+test('the sole catalog provider of a model is found only when it is unambiguous', async () => {
+  const { soleCatalogProviderForModel } = await import('../extension/lib/common.mjs');
+  const catalog = [
+    { id: 'custom:gemini-local::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'custom:gemini-local' },
+    { id: 'gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: '', gatewayAlias: true },
+    { id: 'a::shared', rawModelId: 'shared', provider: 'a' },
+    { id: 'b::shared', rawModelId: 'shared', provider: 'b' },
+  ];
+  assert.equal(soleCatalogProviderForModel(catalog, 'gemini-3.8-flash-high'), 'custom:gemini-local', 'an alias row does not count');
+  assert.equal(soleCatalogProviderForModel(catalog, 'shared'), '', 'two providers: no guess');
+  assert.equal(soleCatalogProviderForModel(catalog, 'missing'), '');
+  assert.equal(soleCatalogProviderForModel(catalog, ''), '');
+});
+
+test('a turn never leaves without a provider the catalog can name, and Stop opens its socket first', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
+  const slug = source.slice(source.indexOf('function currentModelProviderSlug()'), source.indexOf('\n}\n', source.indexOf('function currentModelProviderSlug()')));
+  assert.match(slug, /soleCatalogProviderForModel\(availableModels, currentModelRequestId\(\)\)/);
+  assert.match(slug, /gatewayAlias === true[\s\S]*?return '';/, 'a gateway alias is left to the gateway');
+  assert.match(source, /currentBinding: currentEffectiveModelBinding\(''\),/);
+  const stop = source.slice(source.indexOf('async function stopCurrentTurn()'), source.indexOf('const watched = attach ||', source.indexOf('async function stopCurrentTurn()')));
+  assert.match(stop, /liveSessionRows\.get\(viewedSessionId\)\?\.live === true[\s\S]*?await ensureActiveDashboardWsConnection\(\)/);
+});
