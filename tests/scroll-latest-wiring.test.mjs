@@ -72,6 +72,38 @@ test('streaming growth counts the live reply once', () => {
   assert.match(body, /newBelowTracker\.note\(live\)/);
 });
 
+test('rendering a different transcript opens at the newest message', () => {
+  const render = functionBody('renderMessagesFromStorage');
+  assert.match(render, /isTranscriptOpen\(renderedTranscriptKey, transcriptKey\)/);
+  assert.match(render, /const stickToBottom = !scroller \|\| opening \|\| openPin\.isActive\(performance\.now\(\)\) \|\| isMessageStreamNearBottom\(\)/);
+  assert.match(render, /if \(opening\) pinMessageStreamToLatest\(\)/);
+  // A refresh of the transcript on screen still restores a reader who scrolled up.
+  assert.match(render, /else if \(scroller\) requestAnimationFrame\(\(\) => \{ scroller\.scrollTop = previousTop; \}\)/);
+});
+
+test('the transcript identity covers storage scope, room, thread and session', () => {
+  const body = functionBody('currentTranscriptKey');
+  for (const part of ['activeMessagesStorageKey()', 'activeGroupProjection', 'activeGroupThreadId', 'settings.sessionId']) {
+    assert.ok(body.includes(part), part);
+  }
+});
+
+test('late layout re-pins an opened transcript until the person takes over', () => {
+  assert.match(functionBody('repinOpenedTranscript'), /openPin\.isActive\(now\)/);
+  assert.match(sidepanel, /new globalThis\.ResizeObserver\(handleMessageListResize\)/);
+  assert.match(sidepanel, /for \(const type of \['wheel', 'touchstart', 'pointerdown'\]\)/);
+  assert.match(sidepanel, /scroller\.addEventListener\(type, releaseOpenPin/);
+});
+
+test('every transcript path renders through the one function that opens at the bottom', () => {
+  // Session open, startup restore, scope change, bot chat and room openers all
+  // call renderMessagesFromStorage; none paints message rows by another route.
+  assert.equal((sidepanel.match(/function renderMessagesFromStorage\(/g) || []).length, 1);
+  assert.match(sidepanel, /renderMessagesFromStorage\(\);\s*updateSessionLabel\(\);\s*let groupRuntime = null;/);
+  assert.match(sidepanel, /async function loadMessagesForActiveScope[\s\S]{0,900}renderMessagesFromStorage\(\);/);
+  assert.match(sidepanel, /async function commitFetchedSessionMessages[\s\S]{0,4000}renderMessagesFromStorage\(\);/);
+});
+
 test('the new module is syntax-checked with the rest', () => {
   assert.match(pkg, /node --check extension\/lib\/scroll-latest\.mjs/);
 });

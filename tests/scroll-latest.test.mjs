@@ -3,10 +3,13 @@ import assert from 'node:assert/strict';
 import {
   NEAR_BOTTOM_THRESHOLD_PX,
   createNewBelowTracker,
+  createOpenPin,
   distanceFromBottom,
   isNearBottom,
+  isTranscriptOpen,
   jumpToLatestPresentation,
   shouldShowJumpToLatest,
+  transcriptViewKey,
 } from '../extension/lib/scroll-latest.mjs';
 
 const view = (scrollTop, extra = {}) => ({ scrollHeight: 2000, clientHeight: 600, scrollTop, ...extra });
@@ -81,4 +84,42 @@ test('the pill is a plain label with nothing new and a count otherwise', () => {
     count: 4,
   });
   assert.equal(jumpToLatestPresentation(-2, translate).count, 0);
+});
+
+test('the open pin holds until the person takes over or layout is quiet', () => {
+  const pin = createOpenPin({ settleMs: 1000 });
+  assert.equal(pin.isActive(0), false);
+  pin.arm(0, true);
+  assert.equal(pin.isActive(900), true);
+  pin.noteLayout(900, true);
+  assert.equal(pin.isActive(1800), true);
+  assert.equal(pin.isActive(2000), false);
+  pin.noteLayout(2100, true);
+  assert.equal(pin.isActive(2100), false, 'an expired pin does not come back');
+
+  pin.arm(5000, true);
+  pin.release();
+  assert.equal(pin.isActive(5001), false);
+});
+
+test('the open pin holds while the list is not laid out yet', () => {
+  const pin = createOpenPin({ settleMs: 1000 });
+  pin.arm(0, false);
+  assert.equal(pin.isActive(60_000), true, 'the quiet clock has not started');
+  pin.noteLayout(60_000, false);
+  assert.equal(pin.isActive(90_000), true);
+  pin.noteLayout(90_000, true);
+  assert.equal(pin.isActive(90_500), true);
+  assert.equal(pin.isActive(92_000), false);
+});
+
+test('only a different session, room, thread or scope is an open', () => {
+  const session = transcriptViewKey({ storageKey: 'hermesBrowserMessages', sessionId: 'a' });
+  assert.equal(isTranscriptOpen(null, session), true);
+  assert.equal(isTranscriptOpen(session, transcriptViewKey({ storageKey: 'hermesBrowserMessages', sessionId: 'a' })), false);
+  assert.equal(isTranscriptOpen(session, transcriptViewKey({ storageKey: 'hermesBrowserMessages', sessionId: 'b' })), true);
+  const room = transcriptViewKey({ storageKey: 'k', roomId: 'r1', sessionId: 'a' });
+  assert.equal(isTranscriptOpen(session, room), true);
+  assert.equal(isTranscriptOpen(room, transcriptViewKey({ storageKey: 'k', roomId: 'r1', threadId: 't', sessionId: 'a' })), true);
+  assert.equal(isTranscriptOpen(room, transcriptViewKey({ storageKey: 'k', roomId: 'r1', sessionId: 'changed-while-in-room' })), false);
 });

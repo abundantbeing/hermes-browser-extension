@@ -82,3 +82,45 @@ export function jumpToLatestPresentation(count, translate) {
     count: total,
   };
 }
+
+// A transcript that was just opened stays pinned to its newest message while
+// images, code highlighting and fonts settle, until the person scrolls or the
+// layout has been quiet for `settleMs`. While the list is not laid out (the
+// panel is still starting), the quiet clock has not started, so the pin holds.
+export function createOpenPin({ settleMs = 1200 } = {}) {
+  let armed = false;
+  let lastLayoutAt = null;
+  return {
+    arm(now = 0, laidOut = true) {
+      armed = true;
+      lastLayoutAt = laidOut ? now : null;
+    },
+    // Layout changed. Only a laid-out list restarts the quiet clock.
+    noteLayout(now = 0, laidOut = true) {
+      if (armed && laidOut) lastLayoutAt = now;
+    },
+    // The person scrolled, clicked or pressed a navigation key.
+    release() {
+      armed = false;
+      lastLayoutAt = null;
+    },
+    isActive(now = 0) {
+      if (!armed) return false;
+      if (lastLayoutAt === null) return true;
+      if (now - lastLayoutAt <= settleMs) return true;
+      armed = false;
+      return false;
+    },
+  };
+}
+
+// Whether rendering a transcript is "opening" it (a different session, room,
+// thread or storage scope than the one on screen) rather than refreshing the
+// one being read. Only an open forces the view to the newest message.
+export function isTranscriptOpen(previousKey, nextKey) {
+  return String(previousKey ?? '') !== String(nextKey ?? '');
+}
+
+export function transcriptViewKey({ storageKey = '', roomId = '', threadId = '', sessionId = '' } = {}) {
+  return [storageKey, roomId ? `room:${roomId}` : `session:${sessionId}`, threadId].map((part) => String(part ?? '')).join('|');
+}

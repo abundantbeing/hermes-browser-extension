@@ -713,8 +713,11 @@ import { bindWheelScrollX } from './lib/wheel-scroll-x.mjs';
 import {
   NEAR_BOTTOM_THRESHOLD_PX,
   createNewBelowTracker,
+  createOpenPin,
+  isTranscriptOpen,
   jumpToLatestPresentation,
   shouldShowJumpToLatest,
+  transcriptViewKey,
 } from './lib/scroll-latest.mjs';
 import { highlightMentions, insertMention } from './lib/room-mentions.mjs';
 import {
@@ -21046,6 +21049,46 @@ function scrollMessageStreamToBottom({ force = false } = {}) {
   });
 }
 
+// ── Open at the latest message ───────────────────────────────────────────────
+// Rendering a different transcript (another session, room, thread or storage
+// scope) must land on its newest message, whatever the previous transcript's
+// scroll position was. The pin then holds through late layout (images, code
+// highlighting, fonts) until the person scrolls, clicks or presses a
+// navigation key, or the list has been quiet for a moment. A refresh of the
+// transcript already on screen keeps the reader where they are.
+const openPin = createOpenPin();
+let renderedTranscriptKey = null;
+
+function currentTranscriptKey() {
+  return transcriptViewKey({
+    storageKey: activeMessagesStorageKey(),
+    roomId: activeGroupProjection ? String(activeGroupProjection.roomId || activeGroupProjection.id || '') : '',
+    threadId: activeGroupProjection ? String(activeGroupThreadId || '') : '',
+    sessionId: String(settings.sessionId || ''),
+  });
+}
+
+function messageListIsLaidOut() {
+  return Boolean(els.messages?.offsetHeight);
+}
+
+function pinMessageStreamToLatest() {
+  const scroller = els.appScroll;
+  if (scroller) scroller.scrollTop = scroller.scrollHeight;
+}
+
+// Late layout after an open: pin again while the person has not scrolled away.
+function repinOpenedTranscript() {
+  const now = performance.now();
+  if (!openPin.isActive(now)) return;
+  openPin.noteLayout(now, messageListIsLaidOut());
+  pinMessageStreamToLatest();
+}
+
+function releaseOpenPin() {
+  openPin.release();
+}
+
 // ── Jump to latest pill ──────────────────────────────────────────────────────
 // Shown while the conversation is scrolled away from its tail. Counts messages
 // that arrived below the visible area; a streaming reply is one item however
@@ -21104,7 +21147,8 @@ function handleMessageListResize() {
   const height = els.messages.offsetHeight;
   const grew = height > messageListHeight;
   messageListHeight = height;
-  if (grew && !isMessageStreamNearBottom()) {
+  repinOpenedTranscript();
+  if (grew && !isMessageStreamNearBottom() && !openPin.isActive(performance.now())) {
     const live = liveStreamingMessageNode();
     if (live) newBelowTracker.note(live);
   }
@@ -21114,6 +21158,7 @@ function handleMessageListResize() {
 function jumpToLatest() {
   const scroller = els.appScroll;
   if (!scroller) return;
+  releaseOpenPin();
   const reduceMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   scroller.scrollTo({ top: scroller.scrollHeight, left: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
   // The button is about to hide; keep keyboard focus in the conversation flow.
@@ -21125,6 +21170,14 @@ function bindJumpToLatest() {
   if (!scroller || !els.jumpToLatestButton) return;
   scroller.addEventListener('scroll', scheduleJumpToLatestUpdate, { passive: true });
   els.jumpToLatestButton.addEventListener('click', jumpToLatest);
+  // The person taking over the scroll ends the open pin. Programmatic pins fire
+  // scroll events too, so only direct input counts.
+  for (const type of ['wheel', 'touchstart', 'pointerdown']) {
+    scroller.addEventListener(type, releaseOpenPin, { passive: true });
+  }
+  scroller.addEventListener('keydown', (event) => {
+    if (['PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown', ' '].includes(event.key)) releaseOpenPin();
+  });
   globalThis.addEventListener?.('resize', scheduleJumpToLatestUpdate);
   if (typeof globalThis.ResizeObserver === 'function') {
     const observer = new globalThis.ResizeObserver(handleMessageListResize);
@@ -21978,7 +22031,17 @@ function renderMessagesFromStorage() {
   }
   document.body.classList.toggle('bot-mode-compact', settings.botModeDisplayDensity === 'compact');
   const scroller = els.appScroll;
-  const stickToBottom = !scroller || isMessageStreamNearBottom();
+  // A different transcript than the one on screen is an open, not a refresh:
+  // it starts at its newest message whatever the last one's scroll position
+  // was, and holds there through late layout until the person scrolls.
+  const transcriptKey = currentTranscriptKey();
+  const opening = isTranscriptOpen(renderedTranscriptKey, transcriptKey);
+  renderedTranscriptKey = transcriptKey;
+  if (opening) {
+    openPin.arm(performance.now(), messageListIsLaidOut());
+    newBelowTracker.reset();
+  }
+  const stickToBottom = !scroller || opening || openPin.isActive(performance.now()) || isMessageStreamNearBottom();
   const previousTop = scroller?.scrollTop || 0;
   const previousRowCount = messageRowsForCount();
   const priorLiveNode = liveStreamingMessageNode();
@@ -22066,8 +22129,13 @@ function renderMessagesFromStorage() {
   renderSteerNotice();
   renderCompletionPendingRow();
   renderSideQuestionCard();
-    if (stickToBottom) scrollMessageStreamToBottom({ force: true });
-    else if (scroller) requestAnimationFrame(() => { scroller.scrollTop = previousTop; });
+    if (stickToBottom) {
+      // Pin once now, synchronously, so a second render in the same frame
+      // measures a tail that is already at the bottom; the frame after layout
+      // pins again for anything that settled in between.
+      if (opening) pinMessageStreamToLatest();
+      scrollMessageStreamToBottom({ force: true });
+    } else if (scroller) requestAnimationFrame(() => { scroller.scrollTop = previousTop; });
     scheduleJumpToLatestUpdate();
     const alreadyHydrated = messages.some((message) => (message.attachments || []).some((item) => item.dataUrl && item.pathRef));
   void (async () => {
