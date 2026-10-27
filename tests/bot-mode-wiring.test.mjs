@@ -71,7 +71,7 @@ test('side panel exposes an opt-in Bot Mode settings control and roster overlay'
 });
 
 test('the side panel passes explicit profiles on list, history, create, and resume', () => {
-  assert.match(sidepanelSource, /WS_METHODS\.sessionList,\s*\{[^}]*profile:/s);
+  assert.match(sidepanelSource, /WS_METHODS\.sessionList,\s*(?:sessionListParamsFor\([^,]+,\s*)?\{[^}]*profile:/s);
   assert.match(sidepanelSource, /WS_METHODS\.sessionHistory,\s*\{[^}]*profile:/s);
   assert.match(sidepanelSource, /establishGatewaySession\(\{[^}]*profile:/s);
 });
@@ -419,7 +419,9 @@ test('Bot Mode renders agent welcome intro with Collapse font and avatar', () =>
 
 test('opening a bot resumes the confirmed canonical Bot Chat and never forks on lookup failure', () => {
   const openBody = sidepanelSource.match(/async function openBotProfile\([\s\S]*?(?=\nasync function )/)?.[0] || '';
-  assert.match(openBody, /resolveCanonicalBotSession\(row,/);
+  assert.match(openBody, /resolveBotChatAcrossRoutes\(row, \{/);
+  assert.match(openBody, /restList: \(params\) => listBotChatRowsViaGateway\(params\.profile\)/);
+  assert.match(openBody, /opened !== true && transport === 'dashboard-ws'[\s\S]*?openBotChat\('rest'\)/, 'a Bot Chat the socket cannot resume opens on the gateway routes');
   assert.match(openBody, /session\.list/);
   assert.match(openBody, /limit: 200/);
   assert.match(openBody, /id: canonical\.durableId/);

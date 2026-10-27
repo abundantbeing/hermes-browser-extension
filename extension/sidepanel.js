@@ -126,7 +126,7 @@ import {
   updateCheckCacheEntry,
   updateInstallNoteText,
 } from './lib/update-flow.mjs';
-import { resolveCanonicalBotSession } from './lib/bot-canonical-session.mjs';
+import { resolveBotChatAcrossRoutes } from './lib/bot-canonical-session.mjs';
 import {
   discoverLocalDashboardBaseUrl,
   extractDashboardSessionToken,
@@ -15372,22 +15372,34 @@ async function openBotProfile(row) {
         dashboardUp = false;
       }
     }
-    const transport = dashboardUp ? 'dashboard-ws' : 'rest';
+    let transport = dashboardUp ? 'dashboard-ws' : 'rest';
     if (!dashboardUp) {
       activeConversationTransport = 'rest';
       activeDashboardWsConnection = null;
     }
-    const canonical = await resolveCanonicalBotSession(row, (params) => (dashboardUp
-      ? connection.client.request('session.list', { ...params, limit: 200 })
-      : listBotChatRowsViaGateway(params.profile)));
+    // A session-authority socket only confirms chats its own sign-in may read, so a Bot Chat made in
+    // Desktop reads as missing there; the bot's own gateway routes see it (resolveBotChatAcrossRoutes).
+    const found = await resolveBotChatAcrossRoutes(row, {
+      socketList: dashboardUp ? (params) => connection.client.request('session.list', { ...params, limit: 200 }) : null,
+      restList: (params) => listBotChatRowsViaGateway(params.profile),
+    });
+    const canonical = found.canonical;
+    transport = found.transport;
+    if (found.socketError) console.warn('[Hermes Browser] Bot Chat lookup on the socket failed; used the gateway routes:', found.socketError?.message || found.socketError);
     if (canonical) {
-      const opened = await openHermesSession({
+      const openBotChat = (via) => openHermesSession({
         id: canonical.durableId,
         title: BOT_CHAT_TITLE,
         source: 'hermes_bot_mode',
         profile: row.profileName,
-        transport,
+        transport: via,
       });
+      let opened = await openBotChat(transport);
+      if (opened !== true && transport === 'dashboard-ws') {
+        // The socket found it but could not resume it: open it on the bot's own gateway routes.
+        transport = 'rest';
+        opened = await openBotChat('rest');
+      }
       if (opened !== true) throw new Error('Could not resume the existing Bot Chat. No replacement was created.');
     } else {
       const created = await createHermesBrowserSession({ title: BOT_CHAT_TITLE, hidden: true, focus: true, transport, source: 'hermes_bot_mode' });

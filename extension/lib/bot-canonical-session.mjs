@@ -154,3 +154,31 @@ export async function resolveCanonicalBotSession(rowOrProfile, canonicalOrList, 
 }
 
 export const resolveCanonicalBotChat = resolveCanonicalBotSession;
+
+/**
+ * Find a bot's Bot Chat over the routes the panel has: the Hermes Web socket first (when there is one),
+ * then the bot's own gateway routes. A session-authority socket only confirms chats its own sign-in may
+ * read, so a Bot Chat made in Desktop reads as missing there (or contradicts the roster, which throws);
+ * the REST routes see every saved chat of the profile. Resolves
+ * `{ canonical, transport: 'dashboard-ws' | 'rest', socketError }`; `canonical` is null only when every
+ * route asked positively found none. A REST failure after a socket failure throws the socket's error.
+ */
+export async function resolveBotChatAcrossRoutes(row, { socketList = null, restList } = {}) {
+  let socketError = null;
+  if (typeof socketList === 'function') {
+    try {
+      const found = await resolveCanonicalBotSession(row, socketList);
+      if (found) return { canonical: found, transport: 'dashboard-ws', socketError: null };
+    } catch (error) {
+      socketError = error;
+    }
+  }
+  let found;
+  try {
+    found = await resolveCanonicalBotSession(row, restList);
+  } catch (restError) {
+    throw socketError || restError;
+  }
+  if (found) return { canonical: found, transport: 'rest', socketError };
+  return { canonical: null, transport: typeof socketList === 'function' ? 'dashboard-ws' : 'rest', socketError };
+}
