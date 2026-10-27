@@ -472,7 +472,8 @@ test('Show it anyway, and a quiet wait that runs out, show the tab but do not ma
   const quiet = runOf(quietBrowser, { runtime: 'http://127.0.0.1:8642#pid:1', storageLocal: signedIn, clock });
   const result = await quiet.controller.start({ url: LAUNCH, origin: ORIGIN });
   assert.equal(result.mode, 'quiet');
-  assert.equal(clock.scheduled[0].ms, HERMES_WEB_OPENING_TIMEOUT_MS);
+  // The wait is what is left of the limit on the worker clock (a millisecond may already have passed).
+  assert.ok(clock.scheduled[0].ms <= HERMES_WEB_OPENING_TIMEOUT_MS && clock.scheduled[0].ms > HERMES_WEB_OPENING_TIMEOUT_MS - 1_000);
   quietBrowser.log.length = 0;
   signedIn.store[HERMES_WEB_SIGNED_IN_KEY] = 'marker';
   clock.scheduled[0].fn();
