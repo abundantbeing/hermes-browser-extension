@@ -10002,6 +10002,7 @@ function applyModelBindingForSession(session = {}) {
     sessionProvider: session?.provider,
     sessionBinding,
     storedBinding,
+    currentBinding: currentEffectiveModelBinding(sessionId),
   });
   if (!binding) return settings;
   const selected = modelForBinding(binding);

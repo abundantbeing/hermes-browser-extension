@@ -4430,3 +4430,19 @@ test('restTurnSourceRepair relabels sessions the gateway would refuse to run a R
   assert.equal(restTurnSourceRepair({}), null);
   assert.equal(restTurnSourceRepair(null), null);
 });
+
+test('a provider-less REST session row keeps the provider of the same model already chosen', async () => {
+  const { resolveAcknowledgedSessionModelBinding } = await import('../extension/lib/common.mjs');
+  const row = { modelId: 'gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: '' };
+  const chosen = { modelId: 'gemini-local::gemini-3.8-flash-high', rawModelId: 'gemini-3.8-flash-high', provider: 'gemini-local' };
+  // The reported case: no stored binding for a new chat yet; the row lost the provider, so the next
+  // turn went out with none and the gateway paired the Gemini model with its default Claude provider.
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: row, currentBinding: chosen }).provider, 'gemini-local');
+  // A stored binding still wins, and a row that names its provider is still acknowledged as is.
+  const stored = { modelId: 'x::y', rawModelId: 'y', provider: 'x' };
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: row, storedBinding: stored, currentBinding: chosen }).provider, 'x');
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionProvider: 'openai', sessionBinding: { ...row, provider: 'openai' }, currentBinding: chosen }).provider, 'openai');
+  // A different model on the row is never given the chosen model's provider.
+  const other = { modelId: 'claude-haiku-5-5', rawModelId: 'claude-haiku-5-5', provider: '' };
+  assert.equal(resolveAcknowledgedSessionModelBinding({ sessionBinding: other, currentBinding: chosen }).provider, '');
+});

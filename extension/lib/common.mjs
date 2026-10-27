@@ -1510,11 +1510,18 @@ export function resolveAcknowledgedSessionModelBinding({
   sessionProvider = '',
   sessionBinding = null,
   storedBinding = null,
+  currentBinding = null,
 } = {}) {
   const acknowledged = normalizeBrowserModelBinding(sessionBinding);
   const stored = normalizeBrowserModelBinding(storedBinding);
   if (String(sessionProvider || '').trim() && acknowledged) return acknowledged;
-  return stored || acknowledged;
+  if (stored) return stored;
+  // A REST session row names the model but never its provider. When the choice this panel is
+  // already making is that same model, it keeps its provider: a binding without one sends the next
+  // turn with no provider, and the gateway pairs the model with its own default provider.
+  const current = normalizeBrowserModelBinding(currentBinding);
+  if (acknowledged && !acknowledged.provider && current?.provider && current.rawModelId === acknowledged.rawModelId) return current;
+  return acknowledged;
 }
 
 export function resolveCatalogModelIdForBinding({ binding = null, models = [] } = {}) {
