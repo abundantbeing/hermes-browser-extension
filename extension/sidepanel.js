@@ -314,6 +314,7 @@ import {
   createGatewayClient,
   establishGatewaySession,
   sessionCreateParamsFor,
+  sessionListParamsFor,
   executionGenerationFrom,
   interruptGatewaySession,
   readSessionExecutionGeneration,
@@ -18757,7 +18758,7 @@ async function loadSessions({ quiet = false } = {}) {
       return { ok: false, count: 0, error: 'Remote Hermes is not connected.' };
     }
     try {
-      const result = await dashboardConnection.client.request(WS_METHODS.sessionList, { limit: 200, profile: safeActiveProfile() });
+      const result = await dashboardConnection.client.request(WS_METHODS.sessionList, sessionListParamsFor(dashboardConnection.client, { limit: 200, profile: safeActiveProfile() }));
       const desiredProfile = safeActiveProfile();
       availableSessions = applySessionModelBindings(
         normalizeHermesSessions(result),

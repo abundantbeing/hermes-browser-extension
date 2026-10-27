@@ -95,3 +95,14 @@ test('the chat path creates its session in the canonical shape on a session auth
     }
   }
 });
+
+test('a picker session.list asks a session authority for stored sessions; a title lookup and other sockets are unchanged', async () => {
+  const { sessionListParamsFor } = await import('../extension/lib/gateway-ws.mjs');
+  const authority = { readyPayload: { session_authority: true } };
+  const legacy = { readyPayload: {} };
+  assert.deepEqual(sessionListParamsFor(authority, { limit: 200, profile: 'default' }), { limit: 200, profile: 'default', scope: 'stored' });
+  // The authority refuses title together with scope; a title lookup already reads stored rows.
+  assert.deepEqual(sessionListParamsFor(authority, { title: 'Bot Chat', include_hidden: true }), { title: 'Bot Chat', include_hidden: true });
+  // A legacy sidecar refuses an unknown key.
+  assert.deepEqual(sessionListParamsFor(legacy, { limit: 200 }), { limit: 200 });
+});

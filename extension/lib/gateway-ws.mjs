@@ -224,6 +224,16 @@ export function buildCanonicalSessionCreateParams(input = {}) {
   return out;
 }
 
+/**
+ * The session.list params for a picker on this socket. A session authority's session.list lists only
+ * live sessions unless asked for the stored ones; a title lookup takes no scope there (it already
+ * reads stored rows). Unchanged on any other socket, whose session.list refuses an unknown key.
+ */
+export function sessionListParamsFor(client, params = {}) {
+  if (client?.readyPayload?.session_authority !== true || 'title' in params || 'scope' in params) return params;
+  return { ...params, scope: 'stored' };
+}
+
 /** The session.create params this socket accepts: canonical on a session authority, unchanged otherwise. */
 export function sessionCreateParamsFor(client, params = {}) {
   return client?.readyPayload?.session_authority === true ? buildCanonicalSessionCreateParams(params) : params;
