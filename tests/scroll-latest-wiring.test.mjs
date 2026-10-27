@@ -8,7 +8,7 @@ const [sidepanel, html, css, en, pkg] = await Promise.all([
   read('../extension/sidepanel.html'),
   read('../extension/sidepanel.css'),
   read('../extension/lib/locales/en.mjs'),
-  read('../package.json'),
+  read('../scripts/check-js.mjs'),
 ]);
 
 function functionBody(name) {

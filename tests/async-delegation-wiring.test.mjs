@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 
 const [sidepanelSource, packageSource] = await Promise.all([
   fs.readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8'),
-  fs.readFile(new URL('../package.json', import.meta.url), 'utf8'),
+  fs.readFile(new URL('../scripts/check-js.mjs', import.meta.url), 'utf8'),
 ]);
 
 test('side panel imports the shared delegation watcher contract', () => {
