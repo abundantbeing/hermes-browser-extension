@@ -420,6 +420,14 @@ assert off_status == {
     "document_generation": 0,
 }
 assert FORBIDDEN not in json.dumps(off_status)
+# A gateway without extension control is recorded as "unsupported" (it sends no isolated_fallback).
+store.put_bcp_v2(envelope({"availability": "unsupported", "route": "extension-controller", "reason": "gateway_unsupported", "controller_id": FORBIDDEN}), owner(turn="turn-unsupported"))
+unsupported_status = store.control_status_for_owner(owner(turn="turn-unsupported"))["control"]
+assert unsupported_status["availability"] == "unsupported"
+assert unsupported_status["controller_id"] == "" and unsupported_status["tab_id"] == 0
+assert FORBIDDEN not in json.dumps(unsupported_status)
+store.put_bcp_v2(envelope({"availability": "unsupported", "route": "other"}), owner(turn="turn-unsupported-badroute"))
+assert store.control_status_for_owner(owner(turn="turn-unsupported-badroute"))["control"]["availability"] == "unknown"
 # The same availability without the controller route stays fail-closed unknown.
 store.put_bcp_v2(envelope({"availability": "not_requested", "route": "other", "isolated_fallback": "forbidden"}), owner(turn="turn-off-badroute"))
 assert store.control_status_for_owner(owner(turn="turn-off-badroute"))["control"]["availability"] == "unknown"

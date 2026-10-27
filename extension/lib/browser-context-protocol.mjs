@@ -903,6 +903,21 @@ function controlSnapshotForTurn(value, state) {
 
 function browserControlForTurn(value = {}, state) {
   const availability = String(value?.availability || '');
+  if (availability === 'unsupported') {
+    // This gateway has no extension control. There is no controller to be exclusive
+    // about, so unlike every other state this one does not forbid other browser routes.
+    return {
+      route: 'extension-controller',
+      availability: 'unsupported',
+      reason: boundedText(value?.reason || 'gateway_unsupported', 80, state, 'browser_control.reason'),
+      message: boundedText(
+        value?.message || 'Hermes Control is not available on this Hermes.',
+        240,
+        state,
+        'browser_control.message',
+      ),
+    };
+  }
   const available = availability === 'available';
   const common = {
     route: 'extension-controller',

@@ -71,6 +71,11 @@ plugin. Read `browser_control` in the turn envelope:
   tell them to press Attach in Hermes Control.
 - `availability: "unavailable"` — relay `message` and stop. Never switch to
   another browser or profile.
+- `availability: "unsupported"` — this Hermes has no Hermes Control: there
+  are no controller tools and nothing to Attach. Answer from the supplied
+  context and say Hermes Control is not available on this Hermes. Use your
+  own browser tools only if the user explicitly asks, and say that is a
+  separate browser, not their tab.
 
 ## Guardrails
 

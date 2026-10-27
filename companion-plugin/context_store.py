@@ -132,9 +132,12 @@ def _normalize_browser_control(value: Any) -> dict[str, Any]:
     """Retain only validated historical control metadata from an untrusted turn."""
     if not isinstance(value, dict):
         return _unknown_control()
+    availability = value.get("availability")
+    if value.get("route") == "extension-controller" and availability == "unsupported":
+        # The gateway has no extension control; no exclusivity rule rides on this state.
+        return {**_unknown_control(), "availability": "unsupported"}
     if value.get("route") != "extension-controller" or value.get("isolated_fallback") != "forbidden":
         return _unknown_control()
-    availability = value.get("availability")
     if availability == "unavailable":
         return {**_unknown_control(), "availability": "unavailable"}
     if availability == "not_requested":
