@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Parowanie łączy ten panel z Twoim agentem Hermes. Zatwierdź raz, a Hermes zobaczy stronę, na której jesteś, i odpowie tutaj.",
+    "message": "Połącz ten panel ze swoim agentem Hermes. Zatwierdź parowanie, jeśli Twój Hermes je oferuje, albo użyj konfiguracji ręcznej z jego adresem i kluczem API. Wtedy Hermes zobaczy stronę, na której jesteś, i odpowie tutaj.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Jeszcze nie sparowano",
+    "message": "Jeszcze nie połączono",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes na innym komputerze, serwerze lub w Hermes Cloud? Wybierz konfigurację ręczną, aby skonfigurować to połączenie.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Połącz z Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, Projekty i profile botów są logowane za Ciebie przez parowanie Hermes Browser, bez niczego do uruchamiania. W starszej bramie panel zachowuje logowanie do Hermes Web tej przeglądarki do jej zamknięcia, po jednym uruchomieniu hermes webapp. hermes webapp --sign-out je kończy.",
+    "message": "W Hermesie, który oferuje parowanie Hermes Browser, Hermes Web, Projekty i profile botów logują się za Ciebie, bez uruchamiania czegokolwiek. W przeciwnym razie panel zachowuje logowanie Hermes Web tej przeglądarki do jej zamknięcia, po jednym hermes webapp. hermes webapp --sign-out je kończy.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

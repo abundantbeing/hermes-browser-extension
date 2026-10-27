@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Eşleştirme bu paneli Hermes ajanınıza bağlar. Bir kez onaylayın; Hermes bulunduğunuz sayfayı görüp burada yanıt verebilir.",
+    "message": "Bu paneli Hermes ajanınıza bağlayın. Hermes'iniz eşleştirme sunuyorsa onaylayın, sunmuyorsa adresi ve API anahtarıyla elle kurulumu kullanın. Ardından Hermes bulunduğunuz sayfayı görebilir ve burada yanıt verebilir.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Henüz eşleştirilmedi",
+    "message": "Henüz bağlı değil",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes başka bir bilgisayarda, bir sunucuda veya Hermes Cloud'da mı? O bağlantıyı kurmak için Elle kurulum'u seçin.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Hermes'e bağlan",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, Projeler ve bot profilleri, Hermes Browser eşleştirmesi sayesinde sizin için oturum açar; çalıştırmanız gereken bir şey yoktur. Daha eski bir ağ geçidinde panel, hermes webapp'i bir kez çalıştırdıktan sonra bu tarayıcının Hermes Web oturumunu tarayıcıyı kapatana kadar tutar. hermes webapp --sign-out onu sonlandırır.",
+    "message": "Hermes Browser eşleştirmesi sunan bir Hermes'te Hermes Web, Projeler ve bot profilleri, hiçbir şey çalıştırmanıza gerek kalmadan sizin için oturum açar. Aksi halde panel, bir kez hermes webapp çalıştırdıktan sonra tarayıcıyı kapatana kadar bu tarayıcının Hermes Web oturumunu korur. hermes webapp --sign-out bunu sonlandırır.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

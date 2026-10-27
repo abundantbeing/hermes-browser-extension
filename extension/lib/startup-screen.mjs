@@ -112,7 +112,7 @@ export function startupScreenModel(view, translate = (text) => text) {
     detail = translate(STARTUP_STEP_LINES[step.key] || view?.detail || '');
   }
 
-  const state = { loading: 'Connecting', setup: 'Not paired', error: 'Needs attention', ready: 'Ready' }[tone];
+  const state = { loading: 'Connecting', setup: 'Not connected', error: 'Needs attention', ready: 'Ready' }[tone];
   return {
     tone,
     count: tone === 'ready' ? `${pad(total)} / ${pad(total)}` : `${GREEK[focus] || ''} · ${pad(focus + 1)} / ${pad(total)}`,

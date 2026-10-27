@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "配对会把此面板连接到你的 Hermes 智能体。批准一次后，Hermes 就能看到你所在的页面并在这里回答。",
+    "message": "把此面板连接到你的 Hermes 智能体。如果你的 Hermes 提供配对，批准一次即可；否则用它的地址和 API 密钥进行手动设置。之后 Hermes 就能看到你所在的页面并在这里回答。",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "尚未配对",
+    "message": "尚未连接",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes 在另一台电脑、服务器或 Hermes Cloud 上？选择“手动设置”来设置该连接。",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "连接 Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web、项目和机器人档案会通过 Hermes Browser 配对自动为你登录，无需运行任何命令。对于较旧的网关，面板会保留此浏览器的 Hermes Web 登录直到关闭浏览器，前提是运行过一次 hermes webapp。hermes webapp --sign-out 可将其结束。",
+    "message": "在提供 Hermes Browser 配对的 Hermes 上，Hermes Web、项目和机器人档案会自动为你登录，无需运行任何命令。否则，运行过一次 hermes webapp 后，面板会保留此浏览器的 Hermes Web 登录直到关闭浏览器。hermes webapp --sign-out 可将其结束。",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

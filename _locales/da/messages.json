@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Parring forbinder dette panel med din Hermes-agent. Godkend det én gang, så kan Hermes se den side, du er på, og svare her.",
+    "message": "Forbind dette panel med din Hermes-agent. Godkend parring, hvis din Hermes tilbyder det, eller brug manuel opsætning med dens adresse og API-nøgle. Så kan Hermes se den side, du er på, og svare her.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Ikke parret endnu",
+    "message": "Ikke forbundet endnu",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Kører Hermes på en anden computer, en server eller Hermes Cloud? Vælg manuel opsætning for at sætte den forbindelse op.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Forbind til Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, Projekter og bot-profiler logges ind for dig via Hermes Browser-parringen, uden noget at køre. Med en ældre gateway beholder panelet denne browsers Hermes Web-login, indtil du lukker browseren, efter én kørsel af hermes webapp. hermes webapp --sign-out afslutter det.",
+    "message": "På en Hermes, der tilbyder Hermes Browser-parring, bliver Hermes Web, projekter og botprofiler logget ind for dig uden noget at køre. Ellers beholder panelet denne browsers Hermes Web-login, indtil du lukker browseren, efter én hermes webapp. hermes webapp --sign-out afslutter det.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

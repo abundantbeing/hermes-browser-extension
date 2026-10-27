@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Die Kopplung verbindet dieses Panel mit deinem Hermes-Agenten. Einmal bestätigen, dann sieht Hermes die Seite, auf der du bist, und antwortet hier.",
+    "message": "Verbinde dieses Panel mit deinem Hermes-Agenten. Bestätige die Kopplung, wenn dein Hermes sie anbietet, oder nutze die manuelle Einrichtung mit seiner Adresse und seinem API-Schlüssel. Dann sieht Hermes die Seite, auf der du bist, und antwortet hier.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Noch nicht gekoppelt",
+    "message": "Noch nicht verbunden",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes auf einem anderen Computer, einem Server oder Hermes Cloud? Wähle die manuelle Einrichtung, um diese Verbindung einzurichten.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Mit Hermes verbinden",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, Projekte und Bot-Profile werden über die Hermes-Browser-Kopplung für Sie angemeldet, ohne dass etwas ausgeführt werden muss. Bei einem älteren Gateway behält das Panel die Hermes-Web-Anmeldung dieses Browsers, bis Sie den Browser schließen, nach einmaligem hermes webapp. hermes webapp --sign-out beendet sie.",
+    "message": "Bei einem Hermes mit Hermes-Browser-Kopplung werden Hermes Web, Projekte und Bot-Profile für Sie angemeldet, ohne dass etwas ausgeführt werden muss. Andernfalls behält das Panel die Hermes-Web-Anmeldung dieses Browsers, bis Sie den Browser schließen, nach einmaligem hermes webapp. hermes webapp --sign-out beendet sie.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

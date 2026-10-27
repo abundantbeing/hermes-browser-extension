@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Сопряжение связывает эту панель с вашим агентом Hermes. Подтвердите один раз, и Hermes сможет видеть открытую страницу и отвечать здесь.",
+    "message": "Подключите эту панель к своему агенту Hermes. Подтвердите сопряжение, если ваш Hermes его поддерживает, или используйте ручную настройку с его адресом и ключом API. Тогда Hermes увидит страницу, на которой вы находитесь, и ответит здесь.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Ещё не сопряжено",
+    "message": "Ещё не подключено",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes на другом компьютере, сервере или в Hermes Cloud? Выберите ручную настройку, чтобы настроить это подключение.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Подключиться к Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, «Проекты» и профили ботов входят за вас через сопряжение Hermes Browser, запускать ничего не нужно. Со старым шлюзом панель хранит вход в Hermes Web этого браузера, пока вы его не закроете, после одного запуска hermes webapp. hermes webapp --sign-out завершает его.",
+    "message": "На Hermes с сопряжением Hermes Browser вход в Hermes Web, проекты и профили ботов выполняется за вас, ничего запускать не нужно. Иначе панель сохраняет вход в Hermes Web в этом браузере до его закрытия после однократного hermes webapp. hermes webapp --sign-out завершает его.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

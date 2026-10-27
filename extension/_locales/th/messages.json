@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "การจับคู่จะเชื่อมแผงนี้กับเอเจนต์ Hermes ของคุณ อนุมัติเพียงครั้งเดียว แล้ว Hermes จะเห็นหน้าที่คุณเปิดอยู่และตอบที่นี่",
+    "message": "เชื่อมต่อแผงนี้กับเอเจนต์ Hermes ของคุณ อนุมัติการจับคู่หาก Hermes ของคุณรองรับ หรือใช้การตั้งค่าด้วยตนเองพร้อมที่อยู่และคีย์ API จากนั้น Hermes จะเห็นหน้าที่คุณเปิดอยู่และตอบที่นี่",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "ยังไม่ได้จับคู่",
+    "message": "ยังไม่ได้เชื่อมต่อ",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes อยู่บนคอมพิวเตอร์เครื่องอื่น เซิร์ฟเวอร์ หรือ Hermes Cloud ใช่ไหม เลือกการตั้งค่าด้วยตนเองเพื่อตั้งค่าการเชื่อมต่อนั้น",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "เชื่อมต่อกับ Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web โปรเจกต์ และโปรไฟล์บอตจะลงชื่อเข้าใช้ให้คุณผ่านการจับคู่ Hermes Browser โดยไม่ต้องรันคำสั่งใด ๆ สำหรับเกตเวย์รุ่นเก่า แผงจะเก็บการลงชื่อเข้าใช้ Hermes Web ของเบราว์เซอร์นี้ไว้จนกว่าคุณจะปิดเบราว์เซอร์ หลังรัน hermes webapp หนึ่งครั้ง hermes webapp --sign-out จะสิ้นสุดการลงชื่อเข้าใช้นั้น",
+    "message": "บน Hermes ที่รองรับการจับคู่ Hermes Browser ระบบจะลงชื่อเข้าใช้ Hermes Web โปรเจกต์ และโปรไฟล์บอตให้คุณโดยไม่ต้องรันอะไร มิฉะนั้นแผงจะเก็บการลงชื่อเข้าใช้ Hermes Web ของเบราว์เซอร์นี้ไว้จนกว่าคุณจะปิดเบราว์เซอร์ หลังจากรัน hermes webapp หนึ่งครั้ง hermes webapp --sign-out จะสิ้นสุดการลงชื่อเข้าใช้",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

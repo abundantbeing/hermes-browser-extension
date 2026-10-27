@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Koppelen verbindt dit paneel met je Hermes-agent. Keur het één keer goed en Hermes kan de pagina zien waar je bent en hier antwoorden.",
+    "message": "Verbind dit paneel met je Hermes-agent. Keur koppelen goed als je Hermes dat aanbiedt, of gebruik handmatige instelling met het adres en de API-sleutel. Daarna kan Hermes de pagina zien waarop je bent en hier antwoorden.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Nog niet gekoppeld",
+    "message": "Nog niet verbonden",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes op een andere computer, een server of Hermes Cloud? Kies Handmatige instelling om die verbinding in te stellen.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Verbinden met Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, Projecten en botprofielen worden voor u aangemeld via de Hermes Browser-koppeling, zonder iets uit te voeren. Bij een oudere gateway houdt het paneel de Hermes Web-aanmelding van deze browser vast tot u de browser sluit, na eenmaal hermes webapp. hermes webapp --sign-out beëindigt die.",
+    "message": "Bij een Hermes die Hermes Browser-koppeling aanbiedt, worden Hermes Web, Projecten en botprofielen voor je aangemeld, zonder iets uit te voeren. Anders houdt het paneel de Hermes Web-aanmelding van deze browser vast tot je de browser sluit, na één keer hermes webapp. hermes webapp --sign-out beëindigt die.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

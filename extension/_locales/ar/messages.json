@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "يربط الإقران هذه اللوحة بوكيل Hermes الخاص بك. وافق مرة واحدة، وسيتمكن Hermes من رؤية الصفحة التي تتصفحها والرد هنا.",
+    "message": "اربط هذه اللوحة بوكيل Hermes الخاص بك. وافق على الإقران إذا كان Hermes لديك يتيحه، أو استخدم الإعداد اليدوي مع عنوانه ومفتاح API. بعد ذلك يرى Hermes الصفحة التي تتصفحها ويرد هنا.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "لم يتم الإقران بعد",
+    "message": "لم يتم الاتصال بعد",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "هل يعمل Hermes على جهاز آخر أو خادم أو Hermes Cloud؟ اختر الإعداد اليدوي لإعداد هذا الاتصال.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "الاتصال بـ Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "يتم تسجيل دخولك إلى Hermes Web والمشاريع وملفات الروبوتات عبر اقتران Hermes Browser دون أي أمر تشغّله. أما مع بوابة أقدم فيحتفظ اللوح بتسجيل دخول Hermes Web لهذا المتصفح حتى تغلقه، بعد تشغيل hermes webapp مرة واحدة. الأمر hermes webapp --sign-out ينهيه.",
+    "message": "مع Hermes يتيح اقتران Hermes Browser، يتم تسجيل دخولك إلى Hermes Web والمشاريع وملفات الروبوتات دون أي أمر تشغّله. وإلا فيحتفظ اللوح بتسجيل دخول Hermes Web لهذا المتصفح حتى تغلقه، بعد تشغيل hermes webapp مرة واحدة. الأمر hermes webapp --sign-out ينهيه.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

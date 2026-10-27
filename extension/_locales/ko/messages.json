@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "페어링하면 이 패널이 내 Hermes 에이전트와 연결됩니다. 한 번 승인하면 Hermes가 보고 있는 페이지를 보고 여기서 답합니다.",
+    "message": "이 패널을 Hermes 에이전트에 연결하세요. Hermes가 페어링을 지원하면 한 번 승인하고, 아니면 주소와 API 키로 수동 설정을 사용하세요. 그러면 Hermes가 보고 있는 페이지를 보고 여기서 답합니다.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "아직 페어링되지 않음",
+    "message": "아직 연결되지 않음",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "다른 컴퓨터, 서버 또는 Hermes Cloud의 Hermes인가요? 수동 설정을 선택해 그 연결을 설정하세요.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Hermes에 연결",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Browser 페어링을 통해 Hermes Web, 프로젝트, 봇 프로필에 자동으로 로그인되며 실행할 명령은 없습니다. 이전 게이트웨이에서는 hermes webapp을 한 번 실행하면 패널이 브라우저를 닫을 때까지 이 브라우저의 Hermes Web 로그인을 유지합니다. hermes webapp --sign-out으로 종료할 수 있습니다.",
+    "message": "Hermes Browser 페어링을 지원하는 Hermes에서는 Hermes Web, 프로젝트, 봇 프로필에 자동으로 로그인되며 실행할 것이 없습니다. 그렇지 않으면 hermes webapp를 한 번 실행한 뒤 브라우저를 닫을 때까지 패널이 이 브라우저의 Hermes Web 로그인을 유지합니다. hermes webapp --sign-out으로 종료합니다.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

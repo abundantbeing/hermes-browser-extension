@@ -302,6 +302,7 @@ export function createOnboardingFlow({
         <div class="onboarding-connect-actions"${connected ? ' hidden' : ''}>
           <button type="button" class="onboarding-connect-button" data-onboarding-connect${connection.busy ? ' disabled' : ''}>${ONBOARDING_ICONS.connect}<span>${escapeHtml(connection.busy ? (connection.busyLabel || t('ui.connect.to.hermes')) : t('ui.connect.to.hermes'))}</span></button>
           <button type="button" class="secondary" data-onboarding-manual>${escapeHtml(t('ui.manual.setup'))}</button>
+          <p class="onboarding-connect-other">${escapeHtml(t('onboarding.connect.other_hint'))}</p>
         </div>
       </div>`;
   }

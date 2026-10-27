@@ -45,7 +45,7 @@ test('a check with real detail shows that detail instead of its line', () => {
 
 test('setup, error and ready read as their own states', () => {
   const setup = startupScreenModel({ visible: true, phase: 'setup-needed', title: 'Connect to Hermes', detail: 'Pair this panel.', progress: 11, steps: steps(['ready', 'unconfigured']) });
-  assert.deepEqual([setup.tone, setup.state, setup.label, setup.detail], ['setup', 'Not paired', 'Connect to Hermes', 'Pair this panel.']);
+  assert.deepEqual([setup.tone, setup.state, setup.label, setup.detail], ['setup', 'Not connected', 'Connect to Hermes', 'Pair this panel.']);
   assert.equal(setup.count, 'Β · 02 / 09', 'setup stops on the gateway check');
 
   const failing = steps(['ready', 'unreachable']);

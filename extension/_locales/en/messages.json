@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Pairing links this panel to your Hermes agent. Approve it once, and Hermes can see the page you are on and answer here.",
+    "message": "Connect this panel to your Hermes agent. Approve pairing if your Hermes offers it, or use Manual setup with its address and API key. Then Hermes can see the page you are on and answer here.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Not paired yet",
+    "message": "Not connected yet",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes on another computer, a server or Hermes Cloud? Choose Manual setup to set up that connection.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Connect to Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, Projects and bot profiles are signed in for you through Hermes Browser pairing, with nothing to run. For an older gateway the panel keeps this browser's Hermes Web sign-in until you close the browser, after one hermes webapp. hermes webapp --sign-out ends it.",
+    "message": "On a Hermes that offers Hermes Browser pairing, Hermes Web, Projects and bot profiles are signed in for you, with nothing to run. Otherwise the panel keeps this browser's Hermes Web sign-in until you close the browser, after one hermes webapp. hermes webapp --sign-out ends it.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

@@ -366,7 +366,7 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="close"><path d="M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z"/></svg>
             </button>
             <h2 id="connectPanelTitle" data-i18n="ui.connect.to.hermes">Connect to Hermes</h2>
-            <p id="connectPanelLead" class="connect-panel-lead" data-i18n="onboarding.connect.body">Pairing links this panel to your Hermes agent. Approve it once, and Hermes can see the page you are on and answer here.</p>
+            <p id="connectPanelLead" class="connect-panel-lead" data-i18n="onboarding.connect.body">Connect this panel to your Hermes agent. Approve pairing if your Hermes offers it, or use Manual setup with its address and API key. Then Hermes can see the page you are on and answer here.</p>
             <ol>
               <li data-i18n="ui.start.the.hermes.api.server.locally.or.on.a.reachable.remote.machine">Start the Hermes API server locally or on a reachable remote machine.</li>
               <li data-i18n="ui.click.connect.to.hermes.or.use.manual.setup.with.a.local.remote.5b53a482">Click Connect to Hermes, or use Manual setup with a local/remote Gateway URL and token.</li>
@@ -1711,7 +1711,7 @@
         <p id="webappDialogDetail" data-i18n="webapp.dialog_body">Your gateway serves Hermes Web once it is turned on. On the computer that runs Hermes, run these commands.</p>
         <p data-webapp-reason="unreachable" data-i18n="webapp.reason_unreachable" hidden>Nothing answered at this address:</p>
         <p data-webapp-reason="permission-denied" data-i18n="webapp.reason_permission" hidden>The browser did not allow Hermes Browser to reach this address:</p>
-        <p data-webapp-reason="needs-address" data-i18n="webapp.reason_needs_address" hidden>This connection is remote, so there is no address to try. Enter the Hermes Web address in Settings.</p>
+        <p id="webappDialogNeedsAddress" data-webapp-reason="needs-address" data-i18n="webapp.reason_needs_address" hidden>This connection is remote, so there is no address to try. Enter the Hermes Web address in Settings.</p>
         <p data-webapp-reason="invalid-address" data-i18n="webapp.reason_invalid_address" hidden>The Hermes Web address in Settings is not a valid http or https address.</p>
         <code id="webappDialogAddress" class="webapp-address" data-i18n-invariant hidden></code>
         <ol class="webapp-commands">

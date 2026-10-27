@@ -4307,6 +4307,7 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   padding: 0;
   list-style: none;
 }
+.webapp-commands[hidden] { display: none; }
 .webapp-command {
   display: flex;
   align-items: center;
@@ -11181,6 +11182,14 @@ html[data-hermes-mode="light"] .onboarding[data-step="welcome"]::before { opacit
 /* Stacked and equal width: a long translated label gets the whole line instead of a narrow column. */
 .onboarding-connect-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .onboarding-connect-actions[hidden] { display: none; }
+/* Pairing is for a Hermes on this computer; remote and Cloud connections are set up by hand. */
+.onboarding-connect-other {
+  margin: 0;
+  color: rgba(var(--startup-fg-rgb), 0.7);
+  font-size: calc(11px * var(--hermes-text-zoom, 1));
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
 .onboarding.is-approving .onboarding-preview,
 .onboarding-connect.is-approving .onboarding-connect-actions { display: none; }
 .onboarding-approval-slot { display: grid; min-width: 0; }

@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "El emparejamiento vincula este panel con tu agente Hermes. Apruébalo una vez y Hermes podrá ver la página en la que estás y responder aquí.",
+    "message": "Conecta este panel con tu agente Hermes. Aprueba el emparejamiento si tu Hermes lo ofrece, o usa la configuración manual con su dirección y su clave de API. Después Hermes podrá ver la página en la que estás y responder aquí.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Aún no emparejado",
+    "message": "Aún no conectado",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "¿Hermes en otro equipo, un servidor o Hermes Cloud? Elige Configuración manual para configurar esa conexión.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Conectar con Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, Proyectos y los perfiles de bots inician sesión por ti mediante el emparejamiento de Hermes Browser, sin nada que ejecutar. Con un gateway más antiguo, el panel conserva el inicio de sesión de Hermes Web de este navegador hasta que lo cierres, tras ejecutar hermes webapp una vez. hermes webapp --sign-out lo termina.",
+    "message": "Con un Hermes que ofrece el emparejamiento de Hermes Browser, Hermes Web, Proyectos y los perfiles de bots inician sesión por ti, sin nada que ejecutar. Si no, el panel conserva el inicio de sesión de Hermes Web de este navegador hasta que lo cierres, tras ejecutar hermes webapp una vez. hermes webapp --sign-out lo termina.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "ペアリングすると、このパネルがあなたのHermesエージェントにつながります。一度承認すれば、Hermesは開いているページを見てここで答えます。",
+    "message": "このパネルをあなたのHermesエージェントに接続します。Hermesがペアリングに対応していれば一度承認し、対応していなければアドレスとAPIキーで手動セットアップを使います。接続すると、Hermesは開いているページを見てここで答えます。",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "まだペアリングされていません",
+    "message": "まだ接続されていません",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "別のコンピューター、サーバー、またはHermes CloudのHermesですか？手動セットアップを選んでその接続を設定してください。",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Hermesに接続",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Browser のペアリングにより、Hermes Web、プロジェクト、ボットのプロファイルには自動でサインインされ、実行するコマンドはありません。古いゲートウェイでは、hermes webapp を一度実行すると、パネルがブラウザーを閉じるまでこのブラウザーの Hermes Web サインインを保持します。hermes webapp --sign-out で終了します。",
+    "message": "Hermes Browser のペアリングに対応した Hermes では、Hermes Web、プロジェクト、ボットのプロファイルに自動でサインインされ、実行するコマンドはありません。対応していない場合は、hermes webapp を一度実行すると、パネルがブラウザーを閉じるまでこのブラウザーの Hermes Web サインインを保持します。hermes webapp --sign-out で終了します。",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {

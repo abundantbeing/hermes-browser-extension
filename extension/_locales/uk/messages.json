@@ -2556,7 +2556,7 @@
     "description": "Runtime interface message onboarding.back"
   },
   "runtime_onboarding_connect_body": {
-    "message": "Сполучення пов'язує цю панель із вашим агентом Hermes. Підтвердьте один раз, і Hermes бачитиме відкриту сторінку та відповідатиме тут.",
+    "message": "Підключіть цю панель до свого агента Hermes. Підтвердьте спарювання, якщо ваш Hermes його підтримує, або скористайтеся ручним налаштуванням з його адресою та ключем API. Тоді Hermes бачитиме сторінку, на якій ви перебуваєте, і відповідатиме тут.",
     "description": "Runtime interface message onboarding.connect.body"
   },
   "runtime_onboarding_connect_connected": {
@@ -2568,8 +2568,12 @@
     "description": "Runtime interface message onboarding.connect.later"
   },
   "runtime_onboarding_connect_not_paired": {
-    "message": "Ще не сполучено",
+    "message": "Ще не підключено",
     "description": "Runtime interface message onboarding.connect.not_paired"
+  },
+  "runtime_onboarding_connect_other_hint": {
+    "message": "Hermes на іншому комп’ютері, сервері або в Hermes Cloud? Виберіть ручне налаштування, щоб налаштувати це підключення.",
+    "description": "Runtime interface message onboarding.connect.other_hint"
   },
   "runtime_onboarding_connect_title": {
     "message": "Підключитися до Hermes",
@@ -8176,7 +8180,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes Web, «Проєкти» та профілі ботів входять за вас через сполучення Hermes Browser, запускати нічого не потрібно. Зі старішим шлюзом панель зберігає вхід у Hermes Web цього браузера, доки ви його не закриєте, після одного запуску hermes webapp. hermes webapp --sign-out завершує його.",
+    "message": "На Hermes зі спарюванням Hermes Browser вхід до Hermes Web, проєктів і профілів ботів виконується за вас, нічого запускати не треба. Інакше панель зберігає вхід до Hermes Web у цьому браузері до його закриття після одного hermes webapp. hermes webapp --sign-out завершує його.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
