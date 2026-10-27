@@ -1,4 +1,4 @@
-import { remoteSessionIdentity, runtimeModelFromSessionStatus, buildSessionModelSwitchRequest } from './gateway-ws.mjs';
+import { remoteSessionIdentity, runtimeModelFromSessionStatus, buildSessionModelSwitchRequest, sessionCreateParamsFor } from './gateway-ws.mjs';
 import { profileDefaultModelFromOptions } from './model-discovery.mjs';
 import { screenshotAttachParams } from './bot-browser-bridge.mjs';
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
@@ -574,6 +574,21 @@ async function findMemberSession(client, title, profile) {
   return sessionRows(listed).find((row) => clean(row?.title) === title) || sessionRows(listed)[0] || null;
 }
 
+// A legacy dashboard socket marks the member session as room plumbing with `room_plumbing`. A session
+// authority's canonical session.create has a closed key set that does not include it (it answers 4001
+// invalid_params), and it derives room plumbing from the row instead: a hidden session whose title starts
+// with "Group:" (tui_gateway/agent_factory.py). groupMemberSessionTitle always yields that title, so the
+// canonical params keep hidden, follow_profile_config, profile and title and drop the legacy key.
+export function groupMemberCreateParams(client, { title, profile }) {
+  return sessionCreateParamsFor(client, {
+    title,
+    hidden: true,
+    profile,
+    room_plumbing: true,
+    follow_profile_config: true,
+  });
+}
+
 async function resolveMemberSession(client, roomId, member, { createIfMissing = true } = {}) {
   const title = groupMemberSessionTitle(roomId);
   if (!title) throw new Error('A group room id is required.');
@@ -587,13 +602,7 @@ async function resolveMemberSession(client, roomId, member, { createIfMissing = 
   }
 
   try {
-    const created = await client.request('session.create', {
-      title,
-      hidden: true,
-      profile,
-      room_plumbing: true,
-      follow_profile_config: true,
-    });
+    const created = await client.request('session.create', groupMemberCreateParams(client, { title, profile }));
     const identity = sessionIdentity(created, '', profile);
     if (!identity) throw new Error(`Hermes did not create a live group session for ${profile}.`);
     return { ...identity, title };
