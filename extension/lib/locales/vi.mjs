@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "Không thể khớp tin nhắn này với cuộc trò chuyện đã lưu, nên nó đã được gửi như một tin nhắn mới.",
   "ui.edit.failed": "Chỉnh sửa thất bại. Cuộc trò chuyện của bạn không thay đổi.",
   "chat.rewind_unsent": "Hermes có thể đã xóa lượt này và tin nhắn mới của bạn chưa được gửi. Cuộc trò chuyện hiện hiển thị những gì Hermes có, và văn bản của bạn đã trở lại ô soạn.",
+  "chat.bot_reply_queued": "Tin nhắn của bạn đang chờ trong hàng đợi của cuộc trò chuyện này. Câu trả lời sẽ hiện ở đây khi sẵn sàng, nên không cần gửi lại.",
   "ui.group.presence.typing": "{name} đang nhập",
   "ui.group.presence.using": "{name} đang dùng {tool}",
   "ui.group.presence.replying": "{name} đang trả lời",

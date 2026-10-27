@@ -1631,6 +1631,10 @@
     "message": "इस कनेक्शन पर उपयोग में नहीं सुविधाएँ: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "आपका संदेश इस चैट की कतार में इंतज़ार कर रहा है। जवाब तैयार होते ही यहाँ दिखेगा, इसलिए इसे दोबारा भेजने की ज़रूरत नहीं है।",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "नवीनतम पर जाएँ",
     "description": "Runtime interface message chat.jump_to_latest"

@@ -1631,6 +1631,10 @@
     "message": "Features not in use on this connection: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Your message is waiting in this chat's queue. The reply will appear here when it is ready, so there is no need to send it again.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Jump to latest",
     "description": "Runtime interface message chat.jump_to_latest"

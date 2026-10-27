@@ -1631,6 +1631,10 @@
     "message": "Funktioner, der ikke bruges på denne forbindelse: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Din besked venter i denne chats kø. Svaret vises her, når det er klar, så du behøver ikke sende den igen.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Hop til seneste",
     "description": "Runtime interface message chat.jump_to_latest"

@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "Bu mesaj kayıtlı sohbetle eşleştirilemedi, bu yüzden yeni bir mesaj olarak gönderildi.",
   "ui.edit.failed": "Düzenleme başarısız oldu. Sohbetiniz değiştirilmedi.",
   "chat.rewind_unsent": "Hermes bu turu kaldırmış olabilir ve yeni mesajınız gönderilmedi. Konuşma artık Hermes'te olanı gösteriyor ve metniniz yazma alanına geri döndü.",
+  "chat.bot_reply_queued": "Mesajınız bu sohbetin kuyruğunda bekliyor. Yanıt hazır olduğunda burada görünecek, yeniden göndermenize gerek yok.",
   "ui.group.presence.typing": "{name} yazıyor",
   "ui.group.presence.using": "{name} {tool} kullanıyor",
   "ui.group.presence.replying": "{name} yanıtlıyor",

@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "Diese Nachricht konnte nicht der gespeicherten Unterhaltung zugeordnet werden und wurde daher als neue Nachricht gesendet.",
   "ui.edit.failed": "Bearbeiten fehlgeschlagen. Deine Unterhaltung wurde nicht geändert.",
   "chat.rewind_unsent": "Hermes hat diesen Beitrag möglicherweise entfernt, und deine neue Nachricht wurde nicht gesendet. Der Verlauf zeigt jetzt, was Hermes hat, und dein Text steht wieder im Eingabefeld.",
+  "chat.bot_reply_queued": "Deine Nachricht wartet in der Warteschlange dieses Chats. Die Antwort erscheint hier, sobald sie fertig ist, du musst sie also nicht noch einmal senden.",
   "ui.group.presence.typing": "{name} schreibt",
   "ui.group.presence.using": "{name} verwendet {tool}",
   "ui.group.presence.replying": "{name} antwortet",

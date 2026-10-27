@@ -1631,6 +1631,10 @@
     "message": "ميزات غير مستخدمة في هذا الاتصال: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "رسالتك تنتظر في قائمة انتظار هذه المحادثة. سيظهر الرد هنا عندما يكون جاهزًا، فلا حاجة إلى إرسالها مرة أخرى.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "الانتقال إلى الأحدث",
     "description": "Runtime interface message chat.jump_to_latest"

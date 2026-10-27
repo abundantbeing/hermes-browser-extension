@@ -1631,6 +1631,10 @@
     "message": "Fonctions inutilisées sur cette connexion : {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Votre message attend dans la file de cette conversation. La réponse apparaîtra ici dès qu’elle sera prête : inutile de le renvoyer.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Aller au dernier",
     "description": "Runtime interface message chat.jump_to_latest"

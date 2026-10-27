@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "Esta mensagem não pôde ser associada à conversa salva, então foi enviada como uma nova mensagem.",
   "ui.edit.failed": "Falha ao editar. Sua conversa não foi alterada.",
   "chat.rewind_unsent": "O Hermes pode ter removido este turno, e sua nova mensagem não foi enviada. A conversa agora mostra o que o Hermes tem, e seu texto voltou para o campo de escrita.",
+  "chat.bot_reply_queued": "Sua mensagem está aguardando na fila desta conversa. A resposta aparecerá aqui quando estiver pronta, então não é preciso enviá-la de novo.",
   "ui.group.presence.typing": "{name} está digitando",
   "ui.group.presence.using": "{name} está usando {tool}",
   "ui.group.presence.replying": "{name} está respondendo",

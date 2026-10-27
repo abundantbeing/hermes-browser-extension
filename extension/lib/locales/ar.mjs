@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "تعذّر مطابقة هذه الرسالة بالمحادثة المحفوظة، لذا أُرسلت كرسالة جديدة.",
   "ui.edit.failed": "فشل التحرير. لم تتغيّر محادثتك.",
   "chat.rewind_unsent": "ربما أزال Hermes هذا الدور ولم يتم إرسال رسالتك الجديدة. يعرض السجل الآن ما لدى Hermes، وقد عاد نصك إلى مربع الكتابة.",
+  "chat.bot_reply_queued": "رسالتك تنتظر في قائمة انتظار هذه المحادثة. سيظهر الرد هنا عندما يكون جاهزًا، فلا حاجة إلى إرسالها مرة أخرى.",
   "ui.group.presence.typing": "{name} يكتب",
   "ui.group.presence.using": "{name} يستخدم {tool}",
   "ui.group.presence.replying": "{name} يردّ",

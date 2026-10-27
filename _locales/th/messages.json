@@ -1631,6 +1631,10 @@
     "message": "ฟีเจอร์ที่ไม่ได้ใช้ในการเชื่อมต่อนี้: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "ข้อความของคุณกำลังรออยู่ในคิวของแชตนี้ คำตอบจะแสดงที่นี่เมื่อพร้อม จึงไม่ต้องส่งซ้ำ",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "ไปที่ล่าสุด",
     "description": "Runtime interface message chat.jump_to_latest"

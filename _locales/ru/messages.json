@@ -1631,6 +1631,10 @@
     "message": "Функции, не используемые в этом соединении: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Ваше сообщение ждёт в очереди этого чата. Ответ появится здесь, когда будет готов, поэтому отправлять его снова не нужно.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "К последнему",
     "description": "Runtime interface message chat.jump_to_latest"

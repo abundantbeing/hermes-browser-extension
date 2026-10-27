@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "Ce message n'a pas pu être associé à la conversation enregistrée ; il a donc été envoyé comme nouveau message.",
   "ui.edit.failed": "La modification a échoué. Votre conversation n'a pas changé.",
   "chat.rewind_unsent": "Hermes a peut-être supprimé ce tour, et votre nouveau message n'a pas été envoyé. La conversation affiche maintenant ce que Hermes conserve, et votre texte est revenu dans la zone de saisie.",
+  "chat.bot_reply_queued": "Votre message attend dans la file de cette conversation. La réponse apparaîtra ici dès qu’elle sera prête : inutile de le renvoyer.",
   "ui.group.presence.typing": "{name} est en train d'écrire",
   "ui.group.presence.using": "{name} utilise {tool}",
   "ui.group.presence.replying": "{name} répond",

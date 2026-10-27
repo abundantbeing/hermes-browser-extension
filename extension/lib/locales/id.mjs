@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "Pesan ini tidak dapat dicocokkan dengan percakapan tersimpan, jadi dikirim sebagai pesan baru.",
   "ui.edit.failed": "Edit gagal. Percakapan Anda tidak diubah.",
   "chat.rewind_unsent": "Hermes mungkin telah menghapus giliran ini, dan pesan baru Anda tidak terkirim. Percakapan kini menampilkan apa yang dimiliki Hermes, dan teks Anda kembali ke kotak penulisan.",
+  "chat.bot_reply_queued": "Pesan Anda sedang menunggu di antrean obrolan ini. Balasan akan muncul di sini saat sudah siap, jadi tidak perlu mengirimnya lagi.",
   "ui.group.presence.typing": "{name} sedang mengetik",
   "ui.group.presence.using": "{name} sedang menggunakan {tool}",
   "ui.group.presence.replying": "{name} sedang membalas",

@@ -1631,6 +1631,10 @@
     "message": "Recursos sem uso nesta conexão: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Sua mensagem está aguardando na fila desta conversa. A resposta aparecerá aqui quando estiver pronta, então não é preciso enviá-la de novo.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Ir para a mais recente",
     "description": "Runtime interface message chat.jump_to_latest"

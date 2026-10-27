@@ -1631,6 +1631,10 @@
     "message": "Số tính năng không dùng trên kết nối này: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Tin nhắn của bạn đang chờ trong hàng đợi của cuộc trò chuyện này. Câu trả lời sẽ hiện ở đây khi sẵn sàng, nên không cần gửi lại.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Đến mới nhất",
     "description": "Runtime interface message chat.jump_to_latest"

@@ -1628,6 +1628,7 @@ export default Object.freeze({
   "ui.message.unmatched": "Dit bericht kon niet aan het opgeslagen gesprek worden gekoppeld en is daarom als nieuw bericht verzonden.",
   "ui.edit.failed": "Bewerken mislukt. Je gesprek is niet gewijzigd.",
   "chat.rewind_unsent": "Hermes heeft deze beurt mogelijk verwijderd en je nieuwe bericht is niet verzonden. Het gesprek toont nu wat Hermes heeft en je tekst staat weer in het invoerveld.",
+  "chat.bot_reply_queued": "Je bericht wacht in de wachtrij van deze chat. Het antwoord verschijnt hier zodra het klaar is, dus je hoeft het niet opnieuw te sturen.",
   "ui.group.presence.typing": "{name} typt",
   "ui.group.presence.using": "{name} gebruikt {tool}",
   "ui.group.presence.replying": "{name} antwoordt",

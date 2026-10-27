@@ -1627,6 +1627,7 @@ export default Object.freeze({
   "ui.message.unmatched": "此消息无法与已保存的会话匹配，因此作为新消息发送。",
   "ui.edit.failed": "编辑失败。你的会话未更改。",
   "chat.rewind_unsent": "Hermes 可能已移除这一轮对话，且你的新消息未发送。对话现在显示 Hermes 中保存的内容，你的文字已回到输入框。",
+  "chat.bot_reply_queued": "你的消息正在此聊天的队列中等待。回复准备好后会显示在这里，无需再次发送。",
   "ui.group.presence.typing": "{name} 正在输入",
   "ui.group.presence.using": "{name} 正在使用 {tool}",
   "ui.group.presence.replying": "{name} 正在回复",

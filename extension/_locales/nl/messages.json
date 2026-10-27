@@ -1631,6 +1631,10 @@
     "message": "Functies die op deze verbinding niet worden gebruikt: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Je bericht wacht in de wachtrij van deze chat. Het antwoord verschijnt hier zodra het klaar is, dus je hoeft het niet opnieuw te sturen.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Naar nieuwste",
     "description": "Runtime interface message chat.jump_to_latest"

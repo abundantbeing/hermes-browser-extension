@@ -1631,6 +1631,10 @@
     "message": "Fitur yang tidak digunakan pada koneksi ini: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Pesan Anda sedang menunggu di antrean obrolan ini. Balasan akan muncul di sini saat sudah siap, jadi tidak perlu mengirimnya lagi.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Lompat ke terbaru",
     "description": "Runtime interface message chat.jump_to_latest"

@@ -1631,6 +1631,10 @@
     "message": "Bu bağlantıda kullanılmayan özellikler: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Mesajınız bu sohbetin kuyruğunda bekliyor. Yanıt hazır olduğunda burada görünecek, yeniden göndermenize gerek yok.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "En yeniye git",
     "description": "Runtime interface message chat.jump_to_latest"

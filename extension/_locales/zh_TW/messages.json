@@ -1631,6 +1631,10 @@
     "message": "此連線上未使用的功能：{count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "你的訊息正在此聊天的佇列中等候。回覆準備好後會顯示在這裡，無需再次傳送。",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "跳至最新",
     "description": "Runtime interface message chat.jump_to_latest"

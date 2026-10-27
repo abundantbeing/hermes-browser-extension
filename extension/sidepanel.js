@@ -742,6 +742,7 @@ import {
   isTruncateRejection,
 } from './lib/message-rewind.mjs';
 import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
+import { botChatDeliveryFrame, isPendingBotChatDelivery, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
 import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
@@ -1518,6 +1519,32 @@ async function adoptSessionSuccessor(parentId = '', childId = '', connection = n
   if (activeSessionRuntime?.sessionId === parent) activeSessionRuntime = { ...activeSessionRuntime, sessionId: child };
   await browserApi.storage.local.set({ hermesBrowserSettings: settings });
   await saveSessionBindingForActiveScope({ id: child, title: settings.sessionTitle || child }).catch(() => false);
+  updateSessionLabel();
+  return true;
+}
+
+// The gateway moved the viewed Bot Chat aside (a chat no queue can own) and a turn entered the new
+// local Bot Chat it minted (bot-chat-delivery.mjs). The view follows the new chat. Unlike a successor,
+// the old id stays its own conversation: it is history now, so no lineage maps it to the new one.
+async function adoptMovedBotChat(previousId = '', nextId = '') {
+  const previous = String(previousId || '').trim();
+  const next = String(nextId || '').trim();
+  if (!previous || !next || previous === next) return false;
+  if (String(settings.sessionId || '').trim() !== previous) return false;
+  sessionContextStore = renameSessionContextEntry(sessionContextStore, previous, next);
+  scheduleSessionContextPersist();
+  const binding = settings.remoteDashboardSession;
+  settings = {
+    ...settings,
+    sessionId: next,
+    sessionTitle: BOT_CHAT_TITLE,
+    ...(binding?.storedSessionId === previous ? { remoteDashboardSession: { ...binding, storedSessionId: next } } : {}),
+  };
+  if (queuedTurn?.sessionId === previous) queuedTurn = { ...queuedTurn, sessionId: next };
+  if (activeSessionRuntime?.sessionId === previous) activeSessionRuntime = { ...activeSessionRuntime, sessionId: next };
+  if (activeRunControl?.sessionId === previous) activeRunControl = { ...activeRunControl, sessionId: next };
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  await saveSessionBindingForActiveScope({ id: next, title: BOT_CHAT_TITLE }).catch(() => false);
   updateSessionLabel();
   return true;
 }
@@ -24486,7 +24513,7 @@ function bindPromptCard() {
   createPromptCard({ container: els.agentPromptCard, t, controller: promptController });
 }
 
-async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts = [] } = {}) {
+async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts = [] } = {}) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -24498,6 +24525,14 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
   async function processBlock(block) {
     const event = parseSseBlock(block);
     const data = event.json || {};
+    const delivery = botChatDeliveryFrame(event.type, data);
+    if (delivery) onDelivery?.(delivery);
+    if (event.type === 'run.queued' && delivery) {
+      // The Bot Chat's queue still holds the turn at the gateway's wait budget: the reply lands in
+      // that chat later, and this stream ends with nothing more to say.
+      sawTerminal = true;
+      return true;
+    }
     if (event.type === 'run.started' && data.run_id) {
       sawRunStarted = true;
       onRun?.(data.run_id);
@@ -24539,6 +24574,7 @@ async function readSseResponse(response, onDelta, onTool, { signal, onRun, onSte
       const streamErr = new Error(data.message || event.data || 'Hermes stream error');
       streamErr.requestRejected = true;
       streamErr.streamError = true;
+      if (delivery) streamErr.botChatDelivery = delivery;
       throw streamErr;
     }
     return false;
@@ -25143,7 +25179,7 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null } = {}) {
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null } = {}) {
   if (usesDashboardWsChatTransport()) return streamDashboardWsChat(prompt, onDelta, onTool, {
     signal,
     attachments: turnAttachments,
@@ -25174,7 +25210,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   if (beforeSend) await beforeSend.catch(() => undefined);
   if (!hasSessionRoutes) return streamChatCompletions(prompt, onDelta, onTool, { signal, attachments: turnAttachments, onRun, onPrompt, knownAssistantTexts, voiceLive });
   try {
-    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts, voiceLive });
+    return await streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts, voiceLive });
   } catch (error) {
     // Profile-scoped 401: the gateway multiplexer requires each named
     // profile's own API key. Named-profile sessions still stream over the
@@ -25197,7 +25233,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   }
 }
 
-async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts, voiceLive = null }) {
+async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAttachments, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts, voiceLive = null }) {
 
   let response;
   try {
@@ -25233,7 +25269,7 @@ async function streamSessionChatRest(prompt, onDelta, onTool, { signal, turnAtta
     });
   }
   try {
-    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, knownAssistantTexts });
+    return await readSseResponse(response, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, onPrompt, onDelivery, knownAssistantTexts });
   } catch (error) {
     if (!error.requestRejected && !error.streamError) {
       error.requestAccepted = true;
@@ -25921,6 +25957,12 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   // stream did not carry (clarify) or that were raised before it attached.
   let promptRunId = '';
   let promptPoller = null;
+  // Set when the gateway handed this REST turn to a Bot Chat's own queue (bot-chat-delivery.mjs).
+  let botChatDelivery = null;
+  // The transcript shows something stored history does not have yet: a failure this turn reports, or
+  // a Bot Chat reply still queued. The post-turn history refresh would rebuild the view from stored
+  // rows and wipe it, along with the user's own bubble.
+  let holdPostTurnRefresh = false;
   let sawReplyActivity = false;
   let slowNoticeShown = false;
   const noteReplyActivity = () => {
@@ -26193,6 +26235,15 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
             promptRunId = String(runId || '');
             promptPoller?.start();
           },
+          onDelivery: (delivery) => {
+            if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
+            botChatDelivery = delivery;
+            // The Bot Chat's queue owns this turn: the run id the stream stamped was never registered,
+            // so nothing polls or reconciles it (GET /v1/runs/{id} answers 404).
+            promptPoller?.stop();
+            if (promptRunId && activeRunId === promptRunId) activeRunId = '';
+            promptRunId = '';
+          },
           onSteerQueued: (payload) => { if (runIsViewed()) restoreBackendQueuedSteerDraft(payload); },
           onPrompt: (type, data) => {
             if (!runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
@@ -26276,7 +26327,17 @@ ${streamError.message}`);
         }
       }
     }
-    const finalAnswer = answer || liveText || (recoveredImageSources.length ? '' : '(empty response)');
+    // A Bot Chat reply still in that chat's queue: say so instead of an empty reply, and leave the
+    // view as it is until the reply is stored.
+    const pendingBotChatReply = !answer && !liveText && isPendingBotChatDelivery(botChatDelivery);
+    if (pendingBotChatReply) holdPostTurnRefresh = true;
+    // The gateway moved an older Bot Chat aside and the turn entered the new one: follow it, so the
+    // post-turn refresh reads the chat that holds this reply.
+    const movedBotChatId = movedBotChatSessionId(runSessionId, botChatDelivery);
+    if (movedBotChatId && runIsViewed()) await adoptMovedBotChat(runSessionId, movedBotChatId);
+    const finalAnswer = answer || liveText || (pendingBotChatReply
+      ? t('chat.bot_reply_queued')
+      : (recoveredImageSources.length ? '' : '(empty response)'));
     const recoveredImageMarkdown = recoveredImageSources
       .filter((source) => !finalAnswer.includes(source))
       .map((source) => `![Generated image](${source})`)
@@ -26295,7 +26356,7 @@ ${streamError.message}`);
     // The gateway owns the reply. Only mirror it into the local transcript if
     // the user is still on the session this run started in; otherwise it
     // would land in whatever session is open now.
-    if (String(settings.sessionId || '').trim() === runSessionId) {
+    if (String(settings.sessionId || '').trim() === runSessionId && !pendingBotChatReply) {
       const assistantStyle = resolveMessageResponseStyle(
         { content: finalAnswerForStorage, responseStyle: record?.responseStyle || node?.dataset?.responseStyle },
         responsePresentationFromSettings(settings).responseStyle,
@@ -26355,6 +26416,9 @@ ${streamError.message}`);
       if (!queuedTurn) queuedTurn = { text: userText, attachments: [...turnAttachments], kind: 'recovery', autoSend: false, sessionId: runSessionId, scopeRevisionId: runScopeRevisionId };
       return false;
     }
+    // Every branch below reports the failure in the transcript or the composer. An accepted turn
+    // may still store a late reply, so that one alone keeps the refresh.
+    if (error?.requestAccepted !== true) holdPostTurnRefresh = true;
     if (error?.attachmentFailure) {
       if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
         els.input.value = userText;
@@ -26545,7 +26609,7 @@ ${streamError.message}`);
         // The stream closed before a terminal runtime state; the server may have
         // published a late image/tool result after the last event. Re-fetch the
         // open session history so it is not missing from the transcript.
-        void refreshActiveSessionHistoryQuietly(runControlGeneration).catch(() => {});
+        if (!holdPostTurnRefresh) void refreshActiveSessionHistoryQuietly(runControlGeneration).catch(() => {});
       } else {
         updateComposerBusyState();
         renderContextWindow();

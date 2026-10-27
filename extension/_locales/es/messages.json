@@ -1631,6 +1631,10 @@
     "message": "Funciones sin usar en esta conexión: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_bot_reply_queued": {
+    "message": "Tu mensaje está esperando en la cola de este chat. La respuesta aparecerá aquí cuando esté lista, así que no hace falta enviarlo de nuevo.",
+    "description": "Runtime interface message chat.bot_reply_queued"
+  },
   "runtime_chat_jump_to_latest": {
     "message": "Ir al último",
     "description": "Runtime interface message chat.jump_to_latest"
