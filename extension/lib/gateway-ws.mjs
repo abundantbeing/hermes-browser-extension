@@ -239,10 +239,12 @@ export async function establishGatewaySession({ client, storedSessionId = '', cr
         session_id: requestedId,
         ...(requestedProfile ? { profile: requestedProfile } : {}),
       })
-    : await client.request(WS_METHODS.sessionCreate, {
+    // A session authority's canonical session.create has a closed key set (reasoning, not
+    // reasoning_effort; service_tier, not fast) and refuses anything else with invalid_params.
+    : await client.request(WS_METHODS.sessionCreate, sessionCreateParamsFor(client, {
         ...createParams,
         ...(requestedProfile ? { profile: requestedProfile } : {}),
-      });
+      }));
   const { liveId, storedId, profile: acknowledgedProfile } = remoteSessionIdentity(result, requestedId);
   // Requests still waiting on this session when it was resumed (the frame went
   // to a connection that was gone) are handed over as if they had just arrived.

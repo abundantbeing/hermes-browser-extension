@@ -68,3 +68,30 @@ test('createHermesBrowserSession routes its dashboard create through the socket-
   const source = await readFile(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(source, /createParams: sessionCreateParamsFor\(connection\.client, \{/);
 });
+
+test('the chat path creates its session in the canonical shape on a session authority, and as before elsewhere', async () => {
+  const { establishGatewaySession } = await import('../extension/lib/gateway-ws.mjs');
+  const chatCreate = { title: 'Browser chat', model: 'gpt-6.1', provider: 'openai', reasoning_effort: 'high', fast: true, profile: 'default' };
+  for (const authority of [true, false]) {
+    const sent = [];
+    const client = {
+      readyPayload: { session_authority: authority },
+      async request(method, params) {
+        sent.push([method, params]);
+        return { session_id: 'live-1', stored_session_id: 'stored-1', profile: 'default' };
+      },
+    };
+    await establishGatewaySession({ client, createParams: chatCreate });
+    const [method, params] = sent[0];
+    assert.equal(method, 'session.create');
+    if (authority) {
+      for (const key of Object.keys(params)) assert.ok(CANONICAL_KEYS.has(key), `${key} is a canonical create key`);
+      assert.equal(params.reasoning, 'high');
+      assert.equal(params.service_tier, 'priority');
+      assert.equal(params.source, 'gui');
+      assert.equal(params.profile, 'default');
+    } else {
+      assert.deepEqual(params, chatCreate, 'a gateway without a session authority gets the same request as before');
+    }
+  }
+});
