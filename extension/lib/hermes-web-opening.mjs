@@ -270,7 +270,8 @@ export function createHermesWebOpening({
     if (message?.type === HERMES_WEB_OPENING_MESSAGES.state) {
       const entry = pending.get(senderTabId);
       if (!entry) return { ok: true, status: 'none' };
-      return { ok: true, status: 'waiting', startedAt: entry.startedAt, now: now(), timeoutMs };
+      // The origin is only the Webapp's address, for the page to name; the launch URL and its ticket stay here.
+      return { ok: true, status: 'waiting', startedAt: entry.startedAt, now: now(), timeoutMs, origin: entry.origin };
     }
     if (message?.type === HERMES_WEB_OPENING_MESSAGES.show) {
       const entry = pending.get(senderTabId);

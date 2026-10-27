@@ -5,31 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title data-i18n="webapp.opening_title">Opening Hermes Web</title>
     <link rel="icon" href="assets/icons/icon-32.png" />
-    <link rel="stylesheet" href="sidepanel.css" />
-    <link rel="stylesheet" href="sidepanel-themes.css" />
-    <link rel="stylesheet" href="lib/fonts.css" />
     <link rel="stylesheet" href="hermes-web-opening.css" />
   </head>
-  <body class="opening-page" data-hermes-theme="nous" data-hermes-mode="dark" data-hermes-color-mode="dark">
-    <main id="openingMain" class="opening" aria-labelledby="openingTitle" aria-busy="true">
-      <svg class="opening-wordmark" viewBox="0 0 2918.77 1206.98" role="img" aria-label="Hermes Browser" data-i18n-aria-label="ui.hermes.browser">
-        <use href="assets/img/hermes-browser-logo-left.svg#Layer_1"></use>
-      </svg>
-      <div class="opening-art" aria-hidden="true">
-        <span class="opening-word" data-word="Hermes"></span>
-        <span class="opening-figure"></span>
-      </div>
-      <section class="opening-copy">
-        <p class="opening-status"><span class="opening-dot" aria-hidden="true"></span><span data-i18n="ui.hermes.browser.extension">HERMES BROWSER EXTENSION</span></p>
-        <h1 id="openingTitle" class="opening-title" data-i18n="webapp.opening_title">Opening Hermes Web</h1>
-        <p id="openingDetail" class="opening-detail" role="status" data-i18n="webapp.opening_detail">Signing you in to your Hermes Webapp. This takes a few seconds.</p>
-        <div class="opening-bar" aria-hidden="true"><span></span></div>
-        <div id="openingSlow" class="opening-slow" role="status" hidden>
-          <p data-i18n="webapp.opening_slow">Hermes Web is taking longer than usual to load. It may still be starting.</p>
-          <button id="openingShowButton" class="opening-show" type="button" data-i18n="webapp.opening_show">Show it anyway</button>
+  <body class="opening-page">
+    <div class="opening-frame">
+      <aside class="opening-rail">
+        <img class="opening-rail-statue" src="assets/img/opening/railstatue.webp" alt="" aria-hidden="true" />
+        <div class="opening-rail-inner">
+          <div class="opening-rail-top">
+            <div class="opening-brand">
+              <span class="opening-brand-chip"><img src="assets/img/opening/badge.webp" alt="" /></span>
+              <span class="opening-brand-text" aria-hidden="true"></span>
+            </div>
+            <p class="opening-rail-sub" data-i18n="ui.hermes.agent">Hermes Agent</p>
+          </div>
+          <div class="opening-rail-mid">
+            <div class="opening-rail-row opening-rail-row-status">
+              <p class="opening-rail-label" data-i18n="ui.status">Status</p>
+              <p class="opening-rail-value"><span class="opening-dot" aria-hidden="true"></span><span id="openingState" data-i18n="webapp.opening_state">Signing in</span></p>
+            </div>
+            <div id="openingAddressRow" class="opening-rail-row" hidden>
+              <p class="opening-rail-label opening-rail-label-webapp"></p>
+              <p id="openingAddress" class="opening-rail-value"></p>
+            </div>
+          </div>
+          <div class="opening-rail-bottom">
+            <picture class="opening-globe-frame" aria-hidden="true">
+              <source srcset="assets/img/opening/globe-still.webp" media="(prefers-reduced-motion: reduce)" />
+              <img class="opening-globe" src="assets/img/opening/globe.webp" alt="" />
+            </picture>
+            <svg class="opening-logo" viewBox="0 0 2918.77 1206.98" role="img" aria-label="Hermes Browser" data-i18n-aria-label="ui.hermes.browser">
+              <use href="assets/img/hermes-browser-logo-left.svg#Layer_1"></use>
+            </svg>
+            <p class="opening-rail-foot"><span data-i18n="ui.local.gateway">Local gateway</span> · <span id="openingHost">127.0.0.1</span></p>
+          </div>
         </div>
-      </section>
-    </main>
+      </aside>
+      <main id="openingMain" class="opening-pane" aria-labelledby="openingTitle" aria-busy="true">
+        <div class="opening-art" aria-hidden="true">
+          <p class="opening-mark"></p>
+          <img class="opening-statue-fill" src="assets/img/opening/statue-fill.webp" alt="" />
+          <img class="opening-statue" src="assets/img/opening/statue.webp" alt="" />
+        </div>
+        <div class="opening-inner">
+          <h1 id="openingTitle" class="opening-title" data-i18n="webapp.opening_title">Opening Hermes Web</h1>
+          <p id="openingDetail" class="opening-lede" role="status" data-i18n="webapp.opening_detail">Signing you in to your Hermes Webapp. This takes a few seconds.</p>
+          <div class="opening-bar" aria-hidden="true"><span></span></div>
+          <div id="openingSlow" class="opening-slow" role="status" hidden>
+            <p class="opening-lede" data-i18n="webapp.opening_slow">Hermes Web is taking longer than usual to load. It may still be starting.</p>
+            <button id="openingShowButton" class="opening-show" type="button" data-i18n="webapp.opening_show">Show it anyway</button>
+          </div>
+        </div>
+        <p class="opening-foot" data-i18n="ui.hermes.browser.extension">Hermes Browser Extension</p>
+      </main>
+    </div>
     <script type="module" src="hermes-web-opening.js"></script>
   </body>
 </html>

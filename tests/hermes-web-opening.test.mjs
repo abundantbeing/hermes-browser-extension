@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -204,7 +204,7 @@ test('the opening page asks for its state, and Show it anyway activates the laun
   clock = 6_000;
   const sender = { tab: { id: openingTabId } };
   assert.deepEqual(await controller.handleMessage({ type: HERMES_WEB_OPENING_MESSAGES.state }, sender), {
-    ok: true, status: 'waiting', startedAt: 1_000, now: 6_000, timeoutMs: HERMES_WEB_OPENING_TIMEOUT_MS,
+    ok: true, status: 'waiting', startedAt: 1_000, now: 6_000, timeoutMs: HERMES_WEB_OPENING_TIMEOUT_MS, origin: ORIGIN,
   });
   browser.log.length = 0;
   assert.deepEqual(await controller.handleMessage({ type: HERMES_WEB_OPENING_MESSAGES.show }, sender), { ok: true });
@@ -388,11 +388,12 @@ test('the page offers Show it anyway after the remaining time on the worker cloc
   let slow = 0;
   const sent = [];
   const page = await startOpeningPage({
-    sendMessage: async (message) => { sent.push(message); return { ok: true, status: 'waiting', startedAt: 1000, now: 6000, timeoutMs: 20_000 }; },
+    sendMessage: async (message) => { sent.push(message); return { ok: true, status: 'waiting', startedAt: 1000, now: 6000, timeoutMs: 20_000, origin: 'http://127.0.0.1:9120' }; },
     onSlow: () => { slow += 1; },
     ...clock,
   });
   assert.equal(page.status, 'waiting');
+  assert.equal(page.origin, 'http://127.0.0.1:9120', 'the page learns only the Webapp address it is opening');
   assert.equal(clock.scheduled.length, 1);
   assert.equal(clock.scheduled[0].ms, 15_000);
   assert.equal(slow, 0);
@@ -427,6 +428,7 @@ test('a page with nothing pending closes itself, and one the worker cannot answe
     ...clock,
   });
   assert.equal(none.status, 'none');
+  assert.equal(none.origin, '');
   assert.deepEqual(sent, [HERMES_WEB_OPENING_MESSAGES.state, HERMES_WEB_OPENING_MESSAGES.show]);
   assert.equal(slow, 0);
   const down = await startOpeningPage({ sendMessage: async () => { throw new Error('no receiver'); }, onSlow: () => { slow += 1; }, ...clock });
@@ -457,8 +459,29 @@ test('the opening page loads only packaged files, carries no ticket and respects
   assert.match(html, /<script type="module" src="hermes-web-opening\.js">/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(html, /assets\/img\/hermes-browser-logo-left\.svg#Layer_1/);
-  assert.match(css, /assets\/img\/hermes-browser-web-horizon-ink\.png/);
-  for (const token of ['--hermes-app-bg', '--hermes-fg', '--hermes-primary-bg', '--hermes-font-display']) assert.ok(css.includes(token), token);
+});
+
+test('the opening page is the pairing approval page design, in the portal colours, with its art packaged', () => {
+  const html = read('extension/hermes-web-opening.html');
+  const css = read('extension/hermes-web-opening.css');
+  // The rail, the pane and the dithered Hermes on both, with the globe over the wordmark.
+  for (const part of ['opening-rail', 'opening-rail-statue', 'opening-globe', 'opening-pane', 'opening-statue', 'opening-statue-fill', 'opening-mark']) {
+    assert.match(html, new RegExp(`class="${part}[ "]`), part);
+  }
+  for (const asset of ['statue', 'railstatue', 'statue-fill', 'badge', 'globe']) {
+    assert.match(html, new RegExp(`assets/img/opening/${asset}\\.webp`), asset);
+    assert.ok(existsSync(new URL(`../extension/assets/img/opening/${asset}.webp`, import.meta.url)), `${asset}.webp is packaged`);
+  }
+  assert.match(css, /--cobalt: #0505e8/);
+  assert.match(css, /--paper: #f6f7fb/);
+  assert.match(css, /assets\/fonts\/RulesCompressed-Medium\.woff2/);
+  assert.match(css, /@media \(max-width: 860px\)/, 'the rail becomes a header band on narrow screens');
+  // It is a brand page: no panel theme stylesheet or token decides its colours.
+  assert.ok(!/sidepanel(?:-themes)?\.css/.test(html), 'no panel theme stylesheet');
+  assert.ok(!/var\(--hermes-/.test(css), 'no panel theme tokens');
+  // The rail's status and the Webapp address are filled in by the page; the strings are in every locale.
+  assert.match(html, /id="openingState" data-i18n="webapp\.opening_state"/);
+  assert.match(read('extension/hermes-web-opening.js'), /t\('webapp\.opening_state_slow'\)/);
 });
 
 test('the page is an extension page opened by the extension, so it is not web-accessible, and both builds ship it', () => {
@@ -473,7 +496,7 @@ test('the page is an extension page opened by the extension, so it is not web-ac
 });
 
 test('every opening string exists in all 21 locales, translated, with Hermes intact', async () => {
-  const keys = ['webapp.opening_title', 'webapp.opening_detail', 'webapp.opening_slow', 'webapp.opening_show'];
+  const keys = ['webapp.opening_title', 'webapp.opening_detail', 'webapp.opening_slow', 'webapp.opening_show', 'webapp.opening_state', 'webapp.opening_state_slow'];
   const english = await loadLocaleMessages('en');
   for (const locale of SUPPORTED_LOCALES) {
     const catalog = await loadLocaleMessages(locale.id);

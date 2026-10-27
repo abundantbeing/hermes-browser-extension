@@ -1,196 +1,308 @@
-/* "Opening Hermes Web": the moment between the button and the Webapp. It follows the pairing approval page: the
-   Hermes figure stands in the middle, HERMES is set huge behind him in the display face, and the headline is
-   compressed caps. Colour comes from the panel theme tokens (loaded from sidepanel.css and sidepanel-themes.css),
-   so every theme and both modes work; the figure is a mask in the theme foreground ink. */
+/* "Opening Hermes Web": the moment between the button and the Webapp. It is the pairing approval page's design
+   (gateway/platforms/api_server.py, _pairing_page), so the two pages Hermes Browser shows on the way into Hermes read
+   as one: a cobalt rail with the dithered Hermes bust, the portal brand and the status, the animated globe over the
+   Hermes Browser wordmark, and an off-white pane where the dithered Hermes stands behind a cobalt Rules headline.
+   Below 860px the rail becomes a header band and Hermes stands under the copy in front of a huge HERMES.
+   It is a brand page, so it keeps the portal's own colours in every panel theme. */
+
+@font-face {
+  font-family: "Rules Compressed";
+  font-weight: 500;
+  src: url("assets/fonts/RulesCompressed-Medium.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rules Variable";
+  src: url("assets/fonts/RulesVariable.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JBM";
+  font-weight: 400;
+  src: url("assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  --cobalt: #0505e8;
+  --cobalt-rgb: 5, 5, 232;
+  --paper: #f6f7fb;
+  --ink: #3c4254;
+  --display: "Rules Compressed", "Rules Gothic Compressed", "Bahnschrift Condensed", "Arial Narrow", sans-serif;
+  --ui: "Rules Variable", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --mono: "JBM", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 html,
+body {
+  height: 100%;
+}
+
 body.opening-page {
-  min-height: 100%;
   margin: 0;
+  background: var(--cobalt);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
 }
 
-body.opening-page {
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: var(--hermes-app-bg);
-  color: var(--hermes-fg);
+[hidden] {
+  display: none !important;
 }
 
-.opening {
-  position: relative;
-  isolation: isolate;
+.opening-frame {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  justify-items: center;
+  grid-template-columns: 320px 1fr;
   min-height: 100vh;
-  min-height: 100dvh;
-  padding: 24px 16px 40px;
+}
+
+/* ---- The rail ---- */
+
+.opening-rail {
+  position: relative;
+  overflow: hidden;
+  background: var(--cobalt);
+  color: #fff;
+}
+
+.opening-rail-statue {
+  position: absolute;
+  right: -70px;
+  bottom: -14%;
+  height: 118%;
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.opening-rail-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  padding: 30px 28px;
+}
+
+.opening-brand {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.opening-brand-chip {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 66px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
-/* A soft light behind the figure, so the page is not a flat field. */
-.opening::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(ellipse 62% 46% at 50% 38%, rgba(var(--hermes-accent-rgb), 0.2), transparent 72%),
-    linear-gradient(180deg, transparent 55%, rgba(var(--hermes-fg-rgb), 0.05));
-  pointer-events: none;
-}
-
-.opening-wordmark {
+.opening-brand-chip img {
   display: block;
-  width: min(168px, 46vw);
-  height: auto;
-  overflow: visible;
-  color: var(--hermes-fg);
-  fill: currentColor;
-}
-
-.opening-art {
-  position: relative;
-  z-index: -1;
-  align-self: center;
-  display: grid;
-  place-items: center;
   width: 100%;
-  min-height: 0;
-  margin: 8px 0 0;
-  pointer-events: none;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* HERMES, huge and quiet, behind the figure. It is the brand name, so it is not translated. */
-.opening-word {
-  position: absolute;
-  left: 50%;
-  top: 56%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  white-space: nowrap;
-  font-family: var(--hermes-font-display);
+.opening-brand-text {
+  font-family: var(--display);
   font-weight: 500;
+  font-size: 37px;
+  line-height: 0.88;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
-  font-size: min(520px, 54vw);
-  line-height: 0.78;
-  color: rgba(var(--hermes-fg-rgb), 0.1);
-  user-select: none;
 }
 
-.opening-word::before {
-  content: attr(data-word);
+/* Brand names are not translated, so they are set here rather than in the page's copy. */
+.opening-brand-text::before {
+  content: "Nous\A Portal";
+  white-space: pre;
 }
 
-.opening-figure {
-  display: block;
-  position: relative;
-  height: clamp(170px, 36vh, 380px);
-  aspect-ratio: 685 / 941;
-  max-width: 78vw;
-  background-color: var(--hermes-fg);
-  -webkit-mask: url("assets/img/hermes-browser-web-horizon-ink.png") center / contain no-repeat;
-  mask: url("assets/img/hermes-browser-web-horizon-ink.png") center / contain no-repeat;
-  opacity: 0.94;
-  animation: opening-float 6s ease-in-out infinite;
+.opening-rail-label-webapp::before {
+  content: "Hermes Web";
 }
 
-.opening-copy {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: min(560px, 100%);
-  text-align: center;
+.opening-mark::before {
+  content: "Hermes";
 }
 
-.opening-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  margin: 0 0 12px;
-  font-family: var(--hermes-font-mono);
-  font-size: calc(10px * var(--hermes-text-zoom, 1));
-  letter-spacing: 0.26em;
-  line-height: 1.4;
+.opening-rail-sub {
+  margin: 14px 0 0;
+  font-size: 10px;
+  letter-spacing: 0.34em;
   text-transform: uppercase;
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+.opening-rail-mid {
+  margin: 34px 0;
+}
+
+.opening-rail-label {
+  margin: 0 0 5px;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.opening-rail-value {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  word-break: break-all;
 }
 
 .opening-dot {
-  flex: 0 0 auto;
+  display: inline-block;
   width: 7px;
   height: 7px;
+  margin-right: 9px;
+  vertical-align: 1px;
   border-radius: 50%;
-  background: var(--control-on, #3ddc84);
+  background: #7cffb0;
   animation: opening-pulse 1.6s ease-in-out infinite;
 }
 
-.opening-title {
-  margin: 0 0 14px;
-  font-family: var(--hermes-font-display);
-  font-weight: 500;
-  font-size: calc(clamp(44px, 10vw, 88px) * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
-  line-height: 0.92;
-  text-transform: uppercase;
-  color: var(--hermes-fg);
-  overflow-wrap: anywhere;
-  text-wrap: balance;
+/* The wait ran long: the light goes amber, still pulsing, because Hermes Web may yet arrive. */
+.opening-frame.is-slow .opening-dot {
+  background: #ffd36b;
 }
 
-.opening-detail,
-.opening-slow p {
+.opening-globe {
+  display: block;
+  width: 64px;
+  height: auto;
+  margin: 0 0 12px;
+  padding: 7px;
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+.opening-logo {
+  display: block;
+  width: 170px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 18px;
+  overflow: visible;
+  color: #fff;
+  fill: currentColor;
+}
+
+.opening-rail-foot {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* ---- The pane ---- */
+
+.opening-pane {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.opening-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.opening-statue {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right center;
+  opacity: 0.8;
+}
+
+.opening-statue-fill,
+.opening-mark {
+  display: none;
+}
+
+.opening-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 780px;
+  padding: 56px 72px;
+}
+
+.opening-title {
+  margin: 0 0 22px;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(52px, 7.4vw, 104px);
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: var(--cobalt);
+  overflow-wrap: anywhere;
+}
+
+.opening-lede {
   max-width: 44ch;
-  margin: 0 0 20px;
-  font-family: var(--hermes-font-ui);
-  font-size: calc(15px * var(--hermes-text-zoom, 1));
-  line-height: 1.55;
-  color: var(--hermes-fg);
-  opacity: 0.86;
+  margin: 0 0 26px;
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
   text-wrap: pretty;
 }
 
+/* An indeterminate line in the portal's cobalt, square like the buttons. */
 .opening-bar {
   position: relative;
-  width: min(280px, 72vw);
+  width: min(320px, 100%);
   height: 3px;
   overflow: hidden;
-  background: rgba(var(--hermes-fg-rgb), 0.2);
+  background: rgba(var(--cobalt-rgb), 0.16);
 }
 
 .opening-bar > span {
   position: absolute;
   inset: 0 auto 0 0;
   width: 38%;
-  background: var(--hermes-fg);
+  background: var(--cobalt);
   animation: opening-slide 1.5s ease-in-out infinite;
 }
 
-.opening-slow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.opening-slow[hidden] {
-  display: none;
-}
-
 /* Once the wait has run long the bar has nothing more to say. */
-.opening.is-slow .opening-bar {
+.opening-frame.is-slow .opening-bar {
   display: none;
 }
 
+/* The portal's approve button. */
 .opening-show {
   max-width: 100%;
   padding: 12px 30px 11px;
-  border: 2px solid var(--hermes-primary-border);
+  border: 2px solid var(--cobalt);
   border-radius: 0;
-  background: var(--hermes-primary-bg);
-  color: var(--hermes-primary-fg);
-  font-family: var(--hermes-font-display);
-  font-size: calc(21px * var(--hermes-text-zoom, 1) * var(--hermes-display-scale, 1));
+  background: var(--cobalt);
+  color: #fff;
+  font-family: var(--display);
   font-weight: 500;
+  font-size: 21px;
   line-height: 1;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -199,11 +311,15 @@ body.opening-page {
 }
 
 .opening-show:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
+}
+
+.opening-show:active {
+  transform: translateY(1px);
 }
 
 .opening-show:focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--cobalt);
   outline-offset: 3px;
 }
 
@@ -212,14 +328,15 @@ body.opening-page {
   cursor: progress;
 }
 
-@keyframes opening-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+.opening-foot {
+  position: absolute;
+  left: 72px;
+  bottom: 26px;
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: #666;
 }
 
 @keyframes opening-pulse {
@@ -241,18 +358,167 @@ body.opening-page {
   }
 }
 
-@media (max-height: 520px) {
-  .opening-figure {
-    height: clamp(110px, 30vh, 200px);
+@media (min-width: 861px) and (max-width: 1199px) {
+  .opening-statue {
+    opacity: 0.45;
+  }
+}
+
+/* Phones, tablets and narrow windows: the rail becomes a header band (portal brand and status, the bust behind it
+   looking right). At the bottom HERMES is set huge in the display face, and the full Hermes stands in front of it on
+   his silhouette so the word reads as behind him, not through him. */
+@media (max-width: 860px) {
+  .opening-frame {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .opening-rail-statue {
+    top: -28px;
+    right: auto;
+    bottom: auto;
+    left: -56px;
+    height: 150%;
+    opacity: 0.3;
+  }
+  .opening-rail-inner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px 16px;
+    min-height: 0;
+    padding: 22px 20px;
+  }
+  .opening-rail-mid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+    margin: 0;
+    text-align: right;
+  }
+  .opening-rail-row .opening-rail-value {
+    margin: 0;
+  }
+  .opening-rail-row:not(.opening-rail-row-status),
+  .opening-rail-bottom {
+    display: none;
+  }
+  .opening-brand-chip {
+    width: 42px;
+    height: 52px;
+  }
+  .opening-brand-text {
+    font-size: 30px;
+  }
+  .opening-rail-sub {
+    margin-top: 10px;
+    font-size: 9px;
+  }
+  .opening-pane {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .opening-inner {
+    order: 1;
+    max-width: none;
+    padding: 36px 20px 0;
+    text-align: center;
+  }
+  .opening-lede {
+    margin-right: auto;
+    margin-left: auto;
+  }
+  .opening-bar {
+    margin: 0 auto;
   }
   .opening-title {
-    margin-bottom: 8px;
+    font-size: clamp(52px, 16vw, 88px);
+  }
+  .opening-foot {
+    position: static;
+    order: 2;
+    padding: 30px 20px 0;
+    text-align: center;
+  }
+  .opening-art {
+    position: relative;
+    inset: auto;
+    order: 3;
+    align-self: center;
+    width: min(600px, 100%);
+    margin: auto 0 0;
+    padding-top: 48px;
+  }
+  /* HERMES is the brand name, so it is not translated. It is ~1.82em wide in Rules Compressed: edge to edge. */
+  .opening-mark {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 56%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    white-space: nowrap;
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: min(560px, 58vw);
+    line-height: 0.78;
+    text-transform: uppercase;
+    color: rgba(var(--cobalt-rgb), 0.13);
+    user-select: none;
+  }
+  .opening-statue {
+    position: relative;
+    inset: auto;
+    display: block;
+    height: auto;
+    opacity: 0.85;
+  }
+  .opening-statue-fill {
+    display: block;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Tablets have room to centre the figure itself (he sits left of the image's centre, the staff on the right) and to
+   keep HERMES inside the frame, low across his waist. */
+@media (min-width: 601px) and (max-width: 860px) {
+  .opening-art {
+    transform: translateX(12%);
+  }
+  .opening-mark {
+    top: 72%;
+    left: 38%;
+    font-size: min(56vw, 420px);
+  }
+}
+
+@media (max-width: 600px) {
+  .opening-rail-value {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 860px) and (max-height: 500px) {
+  .opening-title {
+    margin-bottom: 14px;
+    font-size: 52px;
+  }
+  .opening-rail-inner {
+    gap: 12px 16px;
+    padding: 16px 20px;
+  }
+  .opening-inner {
+    padding-top: 20px;
   }
 }
 
 /* Reduced motion: nothing moves. The bar shows as a steady line, so the page still reads as working. */
 @media (prefers-reduced-motion: reduce) {
-  .opening-figure,
   .opening-dot,
   .opening-bar > span {
     animation: none;
@@ -260,5 +526,27 @@ body.opening-page {
   .opening-bar > span {
     width: 100%;
     opacity: 0.55;
+  }
+}
+
+/* A scrollbar in the portal's colours, square like the extension's own; Firefox gets the thin standard one. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 1px solid var(--cobalt);
+  background: rgba(var(--cobalt-rgb), 0.55);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--cobalt-rgb), 0.55) transparent;
   }
 }

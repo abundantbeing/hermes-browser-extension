@@ -10,7 +10,7 @@ import { HERMES_WEB_OPENING_MESSAGES, HERMES_WEB_OPENING_TIMEOUT_MS } from './he
  * @param {() => void} options.onSlow the wait has run past the limit: offer "Show it anyway"
  * @param {Function} [options.setTimer]
  * @param {Function} [options.clearTimer]
- * @returns {Promise<{ show: () => Promise<void>, stop: () => void, status: string }>}
+ * @returns {Promise<{ show: () => Promise<void>, stop: () => void, status: string, origin: string }>}
  */
 export async function startOpeningPage({
   sendMessage,
@@ -32,6 +32,7 @@ export async function startOpeningPage({
     state = null;
   }
   let status = state?.ok && state.status === 'waiting' ? 'waiting' : state?.ok ? 'none' : 'unreachable';
+  const origin = status === 'waiting' && typeof state.origin === 'string' ? state.origin : '';
   if (status === 'waiting') {
     const limit = Number.isFinite(state.timeoutMs) && state.timeoutMs > 0 ? state.timeoutMs : HERMES_WEB_OPENING_TIMEOUT_MS;
     // Both times come from the worker's clock, so a skewed page clock cannot shorten or stretch the wait.
@@ -52,6 +53,7 @@ export async function startOpeningPage({
   }
   return {
     status,
+    origin,
     async show() {
       try {
         await sendMessage({ type: HERMES_WEB_OPENING_MESSAGES.show });
