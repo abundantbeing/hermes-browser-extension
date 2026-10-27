@@ -203,6 +203,19 @@ function startControllerAlarms() {
   return true;
 }
 
+// A gateway without extension control answers registration with a terminal
+// result; the alarms would only wake the worker to say the same thing again.
+function stopControllerAlarms() {
+  if (typeof browserApi?.alarms?.clear !== 'function') return false;
+  browserApi.alarms.clear(CONTROLLER_HEARTBEAT_ALARM);
+  browserApi.alarms.clear(CONTROLLER_RECONCILE_ALARM);
+  return true;
+}
+
+function syncControllerAlarms(result) {
+  return result?.terminal === true ? stopControllerAlarms() : startControllerAlarms();
+}
+
 // A restarted or suspended service worker loses the idle-detach timers of the
 // debugger sessions it opened; this removes any attachment it no longer tracks.
 function sweepDebuggerOrphans() {
@@ -222,14 +235,14 @@ browserApi.alarms?.onAlarm?.addListener?.((alarm) => {
 async function bootControllerWorker() {
   if (!controllerWorker) return { ok: false, connected: false, dormant: true };
   const result = await controllerWorker.boot();
-  startControllerAlarms();
+  syncControllerAlarms(result);
   return result;
 }
 
 async function reconcileControllerWorker(reason) {
   if (!controllerWorker) return { ok: false, connected: false, dormant: true };
   const result = await controllerWorker.reconcile({ reason });
-  startControllerAlarms();
+  syncControllerAlarms(result);
   return result;
 }
 
@@ -1050,6 +1063,7 @@ browserApi.storage?.onChanged?.addListener?.((changes, areaName) => {
     .catch((error) => console.warn('[Hermes Browser] Context menu refresh failed:', error));
   if (changes.hermesBrowserSettings?.newValue && controllerWorker) {
     controllerWorker.syncSettings(changes.hermesBrowserSettings.newValue)
+      .then((result) => syncControllerAlarms(result))
       .catch((error) => console.warn('[Hermes Browser] Controller settings rebind failed:', error));
   }
   let changed = false;

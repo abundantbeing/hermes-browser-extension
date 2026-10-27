@@ -26,7 +26,7 @@ import {
   TAB_LEASE_STORAGE_KEY,
   createTabLeaseStore,
 } from './tab-leases.mjs';
-import { CONTROLLER_METHODS } from './controller-protocol.mjs';
+import { CONTROLLER_METHODS, CONTROLLER_UNSUPPORTED_GATEWAY } from './controller-protocol.mjs';
 import {
   BROWSER_CONTROL_RISKS,
   classifyBrowserControlAction,
@@ -462,6 +462,11 @@ export function createControllerServiceWorker({
   let lastConnectFailure = null;
   let transportLost = false;
   let terminalRouteOverride = '';
+  // Route this gateway answered "no extension control" for. While it matches the
+  // current route nothing reconnects; a route or credential change clears it.
+  let unsupportedRouteKey = '';
+  // No transient reconnect before this time (retryAfterMs backoff).
+  let nextConnectAt = 0;
   let settingsRevision = 0;
   let persistChain = Promise.resolve();
   let transitionChain = Promise.resolve();
@@ -485,6 +490,7 @@ export function createControllerServiceWorker({
       pausedLeases: cleanPausedLeases(pausedLeases),
       lastTurnTabId,
       lastActionTabId,
+      unsupportedRouteKey,
       terminalOutbox: normalizeTerminalOutbox(terminalOutbox, { at: Number(now()) }),
       updatedAt: Number(now()),
     };
@@ -825,12 +831,35 @@ export function createControllerServiceWorker({
       // A controller registered while control is off would still bind the lane
       // at the gateway (noop only) and keep the legacy browser from answering.
       lastConnectFailure = null;
+      // Turning control off is the person's reset: the next enable gets a fresh attempt.
+      unsupportedRouteKey = '';
+      nextConnectAt = 0;
       return { ...status(), connected: false, dormant: true, reason: 'control_off' };
+    }
+    const currentRouteKey = controllerRouteKey(settings);
+    if (unsupportedRouteKey && unsupportedRouteKey === currentRouteKey) {
+      // Terminal: this gateway has no extension control. Do not dial again.
+      if (lastConnectFailure?.reason !== CONTROLLER_UNSUPPORTED_GATEWAY) {
+        lastConnectFailure = {
+          reason: CONTROLLER_UNSUPPORTED_GATEWAY,
+          detail: 'This Hermes does not support Hermes Control.',
+        };
+      }
+      return { ...status(), connected: false, dormant: true, terminal: true, reason: CONTROLLER_UNSUPPORTED_GATEWAY };
     }
     const sessionId = durableSessionId(settings);
     if (!sessionId) {
       lastConnectFailure = { reason: 'missing_session', detail: 'No Hermes session is active.' };
       return { ...status(), connected: false, dormant: true, reason: 'missing_session' };
+    }
+    if (Number(now()) < nextConnectAt) {
+      // A transient failure set a backoff; callers (alarms, status polls) wait it out.
+      return {
+        ...status(),
+        connected: false,
+        reason: 'backoff',
+        retryAfterMs: Math.max(0, nextConnectAt - Number(now())),
+      };
     }
 
     const epoch = generation;
@@ -869,6 +898,8 @@ export function createControllerServiceWorker({
         activeConnection = candidate;
         connected = true;
         lastConnectFailure = null;
+        nextConnectAt = 0;
+        lifecycle.resetBackoff();
         transportLost = false;
         lifecycle.transition(ControllerTransitionReason.TRANSPORT_REFRESHED);
         registry.touch(controllerId);
@@ -878,10 +909,28 @@ export function createControllerServiceWorker({
       } catch (error) {
         if (candidate === activeConnection) activeConnection = null;
         connected = false;
+        if (error?.code === CONTROLLER_UNSUPPORTED_GATEWAY) {
+          unsupportedRouteKey = controllerRouteKey(settings);
+          nextConnectAt = 0;
+          lastConnectFailure = {
+            reason: CONTROLLER_UNSUPPORTED_GATEWAY,
+            detail: String(error?.message || 'This Hermes does not support Hermes Control.').slice(0, 180),
+          };
+          await persist();
+          return {
+            ...status(),
+            connected: false,
+            terminal: true,
+            reason: CONTROLLER_UNSUPPORTED_GATEWAY,
+            detail: lastConnectFailure.detail,
+          };
+        }
+        const retryAfterMs = lifecycle.nextBackoffDelay();
+        nextConnectAt = Number(now()) + retryAfterMs;
         lastConnectFailure = {
           reason: 'connect_failed',
           detail: String(error?.message || error || 'Controller connection failed.').slice(0, 180),
-          retryAfterMs: lifecycle.nextBackoffDelay(),
+          retryAfterMs,
         };
         if (isGatewayAuthRejection(lastConnectFailure.detail) && String(settings.tokenSource || '') === 'pairing') {
           // The gateway refused the credential itself: drop it so the next
@@ -904,7 +953,7 @@ export function createControllerServiceWorker({
           connected: false,
           reason: 'connect_failed',
           detail: error?.message || String(error),
-          retryAfterMs: lifecycle.nextBackoffDelay(),
+          retryAfterMs,
         };
       } finally {
         connecting = null;
@@ -949,6 +998,9 @@ export function createControllerServiceWorker({
         lastActionTabId = sameDurableRoute && Number.isInteger(previousActionTab) && previousActionTab > 0
           ? previousActionTab
           : 0;
+        unsupportedRouteKey = sameDurableRoute && String(previousWorker?.unsupportedRouteKey || '') === routeKey
+          ? routeKey
+          : '';
         terminalOutbox = Number(previousWorker?.version) === CONTROLLER_WORKER_VERSION
           ? normalizeTerminalOutbox(previousWorker.terminalOutbox, { at: Number(now()) })
             .filter((entry) => entry.routeKey === routeKey)
@@ -1032,6 +1084,9 @@ export function createControllerServiceWorker({
     pausedLeases = {};
     lastTurnTabId = 0;
     lastActionTabId = 0;
+    unsupportedRouteKey = '';
+    nextConnectAt = 0;
+    lastConnectFailure = null;
     closeConnection();
     terminalRouteOverride = previousRouteKey;
     lifecycle.restart();
@@ -1572,7 +1627,8 @@ export function createControllerServiceWorker({
     if (type === CONTROLLER_WORKER_MESSAGES.status) {
       const current = status();
       const enabled = settings?.browserControlEnabled === true;
-      if (enabled && !current.connected && !connecting && Boolean(durableSessionId(settings))
+      const unsupported = Boolean(unsupportedRouteKey) && unsupportedRouteKey === controllerRouteKey(settings);
+      if (enabled && !unsupported && !current.connected && !connecting && Boolean(durableSessionId(settings))
         && Number(now()) - lastReconnectKickAt >= STATUS_RECONNECT_COOLDOWN_MS) {
         lastReconnectKickAt = Number(now());
         void reconcile({ reason: 'status-reconnect' }).catch(() => undefined);

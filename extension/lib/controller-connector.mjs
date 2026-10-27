@@ -13,6 +13,7 @@
 import {
   CONTROLLER_HEARTBEAT_METHOD,
   CONTROLLER_METHODS,
+  CONTROLLER_UNSUPPORTED_GATEWAY,
   CONTROLLER_TRANSPORT_FAMILIES,
   controllerRegistrationFor,
   controllerWebSocketProtocols,
@@ -23,6 +24,7 @@ import {
   createGatewayClient,
   establishGatewaySession,
   gatewayWebSocketProtocols,
+  isUnknownMethodError,
 } from './gateway-ws.mjs';
 import {
   isTrustedDashboardOrigin,
@@ -43,6 +45,19 @@ const DEFAULT_CONNECT_TIMEOUT_MS = 15_000;
 
 function asError(error, fallback) {
   return error instanceof Error ? error : new Error(String(error || fallback));
+}
+
+// A gateway without extension control answers the register route with 404 (or
+// 405 when the path matches a different verb) and the register RPC with
+// method-not-found. Neither changes on retry, so both are terminal.
+function unsupportedGatewayError(detail) {
+  const error = new Error(detail);
+  error.code = CONTROLLER_UNSUPPORTED_GATEWAY;
+  return error;
+}
+
+function isUnsupportedRegisterStatus(status) {
+  return Number(status) === 404 || Number(status) === 405;
 }
 
 function normalizedTransport(settings = {}) {
@@ -208,6 +223,9 @@ export function createControllerConnector({
       if (timeoutId !== null) clearTimeout(timeoutId);
     }
     if (!response.ok) {
+      if (isUnsupportedRegisterStatus(response.status)) {
+        throw unsupportedGatewayError(`This Hermes does not support Hermes Control (HTTP ${response.status}).`);
+      }
       const message = String(payload?.error?.message || payload?.detail || '').trim();
       // The gateway refuses to mint a controller ticket for a session it does
       // not know (browser_control_session_forbidden). Local drafts mint their
@@ -240,6 +258,9 @@ export function createControllerConnector({
             response = retryResponse;
             payload = retryPayload;
           } else {
+            if (isUnsupportedRegisterStatus(retryResponse.status)) {
+              throw unsupportedGatewayError(`This Hermes does not support Hermes Control (HTTP ${retryResponse.status}).`);
+            }
             const retryMessage = String(retryPayload?.error?.message || retryPayload?.detail || '').trim();
             throw new Error(retryMessage || `Controller registration failed (HTTP ${retryResponse.status}).`);
           }
@@ -380,7 +401,14 @@ export function createControllerConnector({
         baseUrl,
         identity: liveIdentity,
       });
-      await client.request(registration.method, registration.params);
+      try {
+        await client.request(registration.method, registration.params);
+      } catch (error) {
+        if (isUnknownMethodError(error)) {
+          throw unsupportedGatewayError('This Hermes does not support Hermes Control (register method not found).');
+        }
+        throw error;
+      }
     } catch (error) {
       unsubscribeCommand?.();
       unsubscribeCancel?.();

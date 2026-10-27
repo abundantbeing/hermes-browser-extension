@@ -31,6 +31,13 @@ export const CONTROLLER_HEARTBEAT_INTERVAL_MS = 60_000;
 
 export const CONTROLLER_NOOP_CAPABILITY = 'controller.noop';
 
+/**
+ * Terminal registration result: the gateway has no browser-extension control
+ * (the register route is gone, or the register RPC is an unknown method).
+ * Retrying cannot change that, so the worker stops until settings change.
+ */
+export const CONTROLLER_UNSUPPORTED_GATEWAY = 'unsupported_gateway';
+
 // Every entry must be an action the Chromium adapter implements
 // (CHROMIUM_ACTIONS in browser-controller-adapter.mjs); a drift test pins it.
 // browser_batch is run by the executor itself: every step goes through the same
