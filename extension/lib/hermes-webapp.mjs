@@ -19,6 +19,7 @@
 
 import { CONNECTION_SCHEMA_VERSION, isLoopbackGatewayUrl, migrateConnectionSettings } from './connection-modes.mjs';
 import { WEBAPP_TICKET_REASONS } from './webapp-gateway-tickets.mjs';
+import { openLaunchTabOutOfSight } from './hermes-web-opening.mjs';
 
 export const WEBAPP_DEFAULT_ADDRESS = 'http://127.0.0.1:9120';
 export const WEBAPP_DOCS_URL = 'https://hermes-agent.nousresearch.com/docs/user-guide/desktop#use-the-desktop-workspace-from-a-browser';
@@ -285,18 +286,22 @@ async function captureFromTab(credentials, target, tab) {
   }
 }
 
-// Opens a ticketed launch URL as the visible tab. With an `opener` (lib/hermes-web-opening.mjs) the person sees the
-// branded "Opening Hermes Web" page while the launch page loads in a background tab; without one, or if the opener
-// cannot, the launch URL opens directly, as before. Resolves the tab that carries the launch URL.
+// Opens a ticketed launch URL. With an `opener` (lib/hermes-web-opening.mjs) the background worker runs the hand-off:
+// the branded "Opening Hermes Web" page the first time in a run of the gateway, nothing in between after that
+// (`quiet`). Without one, or if the opener cannot, the launch URL loads out of sight and its tab comes forward once
+// the Webapp is there, where this context can watch tabs; only where it cannot does it open directly, as before.
+// Resolves the tab that carries the launch URL.
 async function openLaunchTab({ url, origin, basePath = '', tabsApi, opener }) {
   if (opener && typeof opener.open === 'function') {
     try {
       const opened = await opener.open({ url, origin, basePath });
-      if (opened?.ok) return { id: opened.tabId };
+      if (opened?.ok) return { id: opened.tabId, quiet: opened.mode === 'quiet' };
     } catch {
       /* fall through to the direct open */
     }
   }
+  const hidden = await openLaunchTabOutOfSight({ url, origin, basePath, tabsApi });
+  if (hidden) return { ...hidden, quiet: true };
   return tabsApi.create({ url, active: true });
 }
 
@@ -311,7 +316,7 @@ async function openSignedInTab({ credentials, target, tabsApi, opener }) {
   if (!url) return null;
   try {
     const tab = await openLaunchTab({ url, origin: target.origin, basePath: target.basePath, tabsApi, opener });
-    return { status: 'opened', tabId: tab?.id, address: target.baseUrl, hint: 'signed-in', signedIn: true };
+    return { status: 'opened', tabId: tab?.id, address: target.baseUrl, hint: 'signed-in', signedIn: true, ...(tab?.quiet ? { quiet: true } : {}) };
   } catch (error) {
     return { status: 'open-failed', address: target.baseUrl, reason: error?.message || String(error) };
   }
@@ -334,7 +339,7 @@ async function openTabViaGateway({ tickets, target, tabsApi, opener }) {
   if (!url) return { opened: null, reason: WEBAPP_TICKET_REASONS.INVALID };
   try {
     const tab = await openLaunchTab({ url, origin: minted.origin, tabsApi, opener });
-    return { opened: { status: 'opened', tabId: tab?.id, address: minted.origin, hint: 'signed-in', signedIn: true, via: 'gateway' } };
+    return { opened: { status: 'opened', tabId: tab?.id, address: minted.origin, hint: 'signed-in', signedIn: true, via: 'gateway', ...(tab?.quiet ? { quiet: true } : {}) } };
   } catch (error) {
     return { opened: { status: 'open-failed', address: minted.origin, reason: error?.message || String(error) } };
   }
@@ -371,7 +376,8 @@ const GATEWAY_ANSWERED = new Set([
  * does step 4.
  *
  * Resolves with { status, ... } and never throws for an expected condition:
- *   'focused' | 'opened' (+ hint: 'signed-in' | 'local' | 'local-kept' | 'account' | '') | 'unreachable' |
+ *   'focused' | 'opened' (+ hint: 'signed-in' | 'local' | 'local-kept' | 'account' | '', and `quiet: true` when the
+ *   new tab comes forward by itself once the Webapp is there) | 'unreachable' |
  *   'needs-address' | 'invalid-address' | 'permission-denied' | 'open-failed'
  * 'unreachable' carries `routes: 'present'` when the gateway answered about its Webapp (so no terminal step
  * is left to suggest) and `webapp`, the reason it gave (webapp-off, webapp-unavailable, ...).

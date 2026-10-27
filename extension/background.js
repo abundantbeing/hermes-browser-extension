@@ -119,11 +119,44 @@ const webappGatewayTickets = createWebappGatewayTickets({
 });
 // The branded "Opening Hermes Web" hand-off (lib/hermes-web-opening.mjs). It lives here, not in the panel, so it keeps
 // watching the launch tab if the panel closes. The panel asks for it with a runtime message, never with the ticket in a URL.
+// A run of the gateway is its process: a restart (or another gateway) shows the opening page once more, and later
+// Hermes Web tabs in the same run open with nothing in between. /health/detailed names the pid for the paired token;
+// a gateway that does not answer it is treated as one run per browser session.
+async function hermesWebRuntimeIdentity() {
+  const stored = await readStoredSettings();
+  const base = String(stored.gatewayUrl || 'http://127.0.0.1:8642').trim().replace(/\/+$/, '');
+  const token = typeof stored.apiKey === 'string' ? stored.apiKey.trim() : '';
+  try {
+    const response = await globalThis.fetch(`${base}/health/detailed`, {
+      headers: token ? { Accept: 'application/json', Authorization: `Bearer ${token}` } : { Accept: 'application/json' },
+      credentials: 'omit',
+      cache: 'no-store',
+      redirect: 'error',
+    });
+    const pid = response.ok ? Number((await response.json())?.pid) : NaN;
+    if (Number.isInteger(pid) && pid > 0) return `${base}#pid:${pid}`;
+  } catch {
+    /* no process id from this gateway */
+  }
+  try {
+    const key = 'hermesWebBrowserSession';
+    let nonce = (await browserApi.storage.session.get(key))?.[key];
+    if (typeof nonce !== 'string' || !nonce) {
+      nonce = globalThis.crypto.randomUUID();
+      await browserApi.storage.session.set({ [key]: nonce });
+    }
+    return `${base}#session:${nonce}`;
+  } catch {
+    return '';
+  }
+}
 const hermesWebOpening = createHermesWebOpening({
   tabsApi: browserApi.tabs,
   windowsApi: browserApi.windows,
   runtimeApi: browserApi.runtime,
   storageSession: browserApi.storage?.session,
+  storageLocal: browserApi.storage?.local,
+  runtimeIdentity: hermesWebRuntimeIdentity,
 });
 const hermesWebOpener = { open: (request) => hermesWebOpening.start(request) };
 let cachedPanelResidencyMode = DEFAULT_PANEL_RESIDENCY_MODE;

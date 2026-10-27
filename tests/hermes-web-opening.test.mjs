@@ -7,6 +7,7 @@ import {
   HERMES_WEB_OPENING_PAGE,
   HERMES_WEB_OPENING_STORAGE_KEY,
   HERMES_WEB_OPENING_TIMEOUT_MS,
+  HERMES_WEB_SIGNED_IN_KEY,
   createHermesWebOpener,
   createHermesWebOpening,
   isWebappReachedUrl,
@@ -285,7 +286,9 @@ test('the opening hand-off works without storage.session and without the windows
 test('the opener sends the launch target in a message and never throws', async () => {
   const sent = [];
   const opener = createHermesWebOpener({ sendMessage: async (message) => { sent.push(message); return { ok: true, tabId: 7 }; } });
-  assert.deepEqual(await opener.open({ url: LAUNCH, origin: ORIGIN }), { ok: true, tabId: 7 });
+  assert.deepEqual(await opener.open({ url: LAUNCH, origin: ORIGIN }), { ok: true, tabId: 7, mode: 'page' });
+  const quiet = createHermesWebOpener({ sendMessage: async () => ({ ok: true, tabId: 9, mode: 'quiet' }) });
+  assert.deepEqual(await quiet.open({ url: LAUNCH, origin: ORIGIN }), { ok: true, tabId: 9, mode: 'quiet' });
   assert.deepEqual(sent, [{ type: HERMES_WEB_OPENING_MESSAGES.start, url: LAUNCH, origin: ORIGIN, basePath: '' }]);
   const refused = createHermesWebOpener({ sendMessage: async () => ({ ok: false, reason: 'nope' }) });
   assert.deepEqual(await refused.open({ url: LAUNCH, origin: ORIGIN }), { ok: false, reason: 'nope' });
@@ -370,6 +373,179 @@ test('a held sign-in launch goes through the opener with the Webapp origin and b
   const result = await openHermesWebapp({ settings, ...browser, credentials, opener });
   assert.equal(result.status, 'opened');
   assert.deepEqual(calls, [{ url: LAUNCH, origin: ORIGIN, basePath: '' }]);
+});
+
+// --- once per run of the gateway, then nothing in between -------------------------------------
+
+function localStore(initial = {}) {
+  const store = { ...initial };
+  return {
+    store,
+    async get(key) { return { [key]: store[key] }; },
+    async set(values) { Object.assign(store, values); },
+  };
+}
+
+const RUN = 'http://127.0.0.1:8642#pid:4242';
+
+function runOf(browser, { runtime = RUN, storageLocal = localStore(), clock } = {}) {
+  let current = runtime;
+  const controller = opening(browser, {
+    storageLocal,
+    runtimeIdentity: async () => current,
+    ...(clock ? { setTimer: clock.setTimer, clearTimer: clock.clearTimer } : {}),
+  });
+  return { controller, storageLocal, restart: (next) => { current = next; } };
+}
+
+function withActiveTab(browser, active = { id: 99, windowId: 3, index: 4, active: true }) {
+  browser.tabsApi.query = async () => [active];
+  return browser;
+}
+
+test('the first launch in a run shows the opening page and, once the Webapp is there, remembers the run', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const { controller, storageLocal } = runOf(browser);
+  const first = await controller.start({ url: LAUNCH, origin: ORIGIN });
+  assert.equal(first.mode, 'page');
+  assert.ok(browser.log.some(([kind, options]) => kind === 'create' && options.url === `${EXTENSION_URL}${HERMES_WEB_OPENING_PAGE}`));
+  assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], undefined, 'not signed in until the Webapp is reached');
+  await controller.handleTabUpdated(first.tabId, { status: 'complete' }, { url: `${ORIGIN}/` });
+  assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], RUN);
+});
+
+test('a later launch in the same run opens with nothing in between, and the Webapp comes forward when it is there', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const clock = timers();
+  const { controller } = runOf(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }), clock });
+  const result = await controller.start({ url: LAUNCH, origin: ORIGIN });
+  assert.equal(result.mode, 'quiet');
+  assert.deepEqual(browser.log, [['create', { url: LAUNCH, active: false, windowId: 3, index: 5 }]], 'only the launch tab, out of sight, beside the current tab');
+  browser.log.length = 0;
+  await controller.handleTabUpdated(result.tabId, { status: 'complete' }, { url: `${ORIGIN}/webapp/launch` });
+  assert.deepEqual(browser.log, [], 'the hand-off page is never brought forward');
+  await controller.handleTabUpdated(result.tabId, { status: 'complete' }, { url: `${ORIGIN}/` });
+  assert.deepEqual(browser.log, [['update', result.tabId, { active: true }], ['window', 3, { focused: true }]]);
+  assert.equal(controller.pendingCount(), 0);
+  assert.equal(clock.scheduled[0].cleared, true, 'the wait is called off');
+});
+
+test('a restarted gateway is a new run: its first launch shows the opening page again', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const run = runOf(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }) });
+  run.restart('http://127.0.0.1:8642#pid:5151');
+  assert.equal((await run.controller.start({ url: LAUNCH, origin: ORIGIN })).mode, 'page');
+});
+
+test('without a run identity, or without storage.local, every launch shows the opening page', async () => {
+  for (const variant of ['no-identity', 'no-storage']) {
+    const browser = withActiveTab(fakeBrowser());
+    const controller = opening(browser, {
+      storageLocal: variant === 'no-storage' ? undefined : localStore(),
+      runtimeIdentity: async () => (variant === 'no-identity' ? '' : RUN),
+    });
+    const first = await controller.start({ url: LAUNCH, origin: ORIGIN });
+    await controller.handleTabUpdated(first.tabId, { status: 'complete' }, { url: `${ORIGIN}/` });
+    assert.equal((await controller.start({ url: LAUNCH, origin: ORIGIN })).mode, 'page', variant);
+  }
+});
+
+test('a run identity that never answers does not hold the launch up', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const controller = opening(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }), runtimeIdentity: () => new Promise(() => {}) });
+  const started = Date.now();
+  const result = await controller.start({ url: LAUNCH, origin: ORIGIN });
+  assert.equal(result.mode, 'page');
+  assert.ok(Date.now() - started < 3_000);
+});
+
+test('Show it anyway, and a quiet wait that runs out, show the tab but do not mark the run signed in', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const { controller, storageLocal } = runOf(browser);
+  const { openingTabId } = await controller.start({ url: LAUNCH, origin: ORIGIN });
+  await controller.handleMessage({ type: HERMES_WEB_OPENING_MESSAGES.show }, { tab: { id: openingTabId } });
+  assert.equal(storageLocal.store[HERMES_WEB_SIGNED_IN_KEY], undefined);
+
+  const quietBrowser = withActiveTab(fakeBrowser());
+  const clock = timers();
+  const signedIn = localStore({ [HERMES_WEB_SIGNED_IN_KEY]: 'http://127.0.0.1:8642#pid:1' });
+  const quiet = runOf(quietBrowser, { runtime: 'http://127.0.0.1:8642#pid:1', storageLocal: signedIn, clock });
+  const result = await quiet.controller.start({ url: LAUNCH, origin: ORIGIN });
+  assert.equal(result.mode, 'quiet');
+  assert.equal(clock.scheduled[0].ms, HERMES_WEB_OPENING_TIMEOUT_MS);
+  quietBrowser.log.length = 0;
+  signedIn.store[HERMES_WEB_SIGNED_IN_KEY] = 'marker';
+  clock.scheduled[0].fn();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(quietBrowser.log[0], ['update', result.tabId, { active: true }], 'shown as it is');
+  assert.equal(signedIn.store[HERMES_WEB_SIGNED_IN_KEY], 'marker', 'not written for a tab that never reached the Webapp');
+  assert.equal(quiet.controller.pendingCount(), 0);
+});
+
+test('a quiet launch tab closed before the Webapp arrives is forgotten', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const clock = timers();
+  const { controller } = runOf(browser, { storageLocal: localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN }), clock });
+  const { tabId } = await controller.start({ url: LAUNCH, origin: ORIGIN });
+  browser.log.length = 0;
+  await controller.handleTabRemoved(tabId);
+  assert.equal(controller.pendingCount(), 0);
+  assert.equal(clock.scheduled[0].cleared, true);
+  assert.deepEqual(browser.log, [], 'nothing else is opened or closed');
+});
+
+test('a restarted worker keeps watching a quiet launch from storage.session and still shows it', async () => {
+  const browser = withActiveTab(fakeBrowser());
+  const signedIn = localStore({ [HERMES_WEB_SIGNED_IN_KEY]: RUN });
+  const first = runOf(browser, { storageLocal: signedIn, clock: timers() });
+  const { tabId } = await first.controller.start({ url: LAUNCH, origin: ORIGIN });
+  const restarted = runOf(browser, { storageLocal: signedIn, clock: timers() });
+  browser.log.length = 0;
+  await restarted.controller.handleTabUpdated(tabId, { status: 'complete' }, { url: `${ORIGIN}/` });
+  assert.deepEqual(browser.log[0], ['update', tabId, { active: true }]);
+});
+
+test('a quiet launch from the hand-off tells the button, which reports it', async () => {
+  const opener = { async open() { return { ok: true, tabId: 42, mode: 'quiet' }; } };
+  const result = await openHermesWebapp({ settings: local, ...directTabs(), tickets, opener });
+  assert.equal(result.status, 'opened');
+  assert.equal(result.quiet, true);
+  const page = await openHermesWebapp({ settings: local, ...directTabs(), tickets, opener: { async open() { return { ok: true, tabId: 43, mode: 'page' }; } } });
+  assert.equal(page.quiet, undefined);
+});
+
+test('without the hand-off, where tabs can be watched, the launch page loads out of sight and comes forward once the Webapp is there', async () => {
+  let updated = [];
+  let removed = [];
+  const created = [];
+  const updates = [];
+  const tabsApi = {
+    async query() { return []; },
+    async create(options) { created.push(options); return { id: 77 }; },
+    async update(id, options) { updates.push([id, options]); },
+    onUpdated: { addListener: (fn) => updated.push(fn), removeListener: (fn) => { updated = updated.filter((other) => other !== fn); } },
+    onRemoved: { addListener: (fn) => removed.push(fn), removeListener: (fn) => { removed = removed.filter((other) => other !== fn); } },
+  };
+  const result = await openHermesWebapp({ settings: local, tabsApi, windowsApi: { async update() {} }, tickets, opener: { async open() { return { ok: false }; } } });
+  assert.equal(result.status, 'opened');
+  assert.equal(result.quiet, true);
+  assert.deepEqual(created, [{ url: LAUNCH, active: false }], 'never opened in front');
+  for (const fn of [...updated]) fn(77, { status: 'complete' }, { url: `${ORIGIN}/webapp/launch` });
+  assert.deepEqual(updates, []);
+  for (const fn of [...updated]) fn(77, { status: 'complete' }, { url: `${ORIGIN}/` });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(updates, [[77, { active: true }]]);
+  assert.equal(updated.length, 0, 'it stops watching');
+  assert.equal(removed.length, 0);
+});
+
+test('the background worker names the gateway run by its pid and passes storage.local to the hand-off', () => {
+  const source = read('extension/background.js');
+  assert.match(source, /async function hermesWebRuntimeIdentity\(\)/);
+  assert.match(source, /\/health\/detailed/);
+  assert.match(source, /#pid:\$\{pid\}/);
+  assert.match(source, /storageLocal: browserApi\.storage\?\.local,\s*runtimeIdentity: hermesWebRuntimeIdentity,/);
+  assert.match(read('extension/sidepanel.js'), /result\.status === 'opened' && result\.quiet/);
 });
 
 // --- the opening page --------------------------------------------------------------------------

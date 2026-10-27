@@ -4533,7 +4533,10 @@ async function openHermesWeb() {
       tickets: webappGatewayTickets(),
       opener: hermesWebOpener(),
     });
-    if (result.status === 'opened' && webappHintKey(result.hint)) {
+    if (result.status === 'opened' && result.quiet) {
+      // Already signed in this run: the Webapp tab loads out of sight and comes forward by itself.
+      showOperationToast({ title: t('webapp.opening_title'), duration: 2500 });
+    } else if (result.status === 'opened' && webappHintKey(result.hint)) {
       showOperationToast({
         title: t('webapp.opened_title'),
         detail: t(webappHintKey(result.hint)),
