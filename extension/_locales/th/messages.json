@@ -1611,6 +1611,18 @@
     "message": "ฟีเจอร์ที่ไม่ได้ใช้ในการเชื่อมต่อนี้: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_jump_to_latest": {
+    "message": "ไปที่ล่าสุด",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "ข้อความใหม่ {count} รายการ",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "ไปที่ล่าสุด ข้อความใหม่ {count} รายการ",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

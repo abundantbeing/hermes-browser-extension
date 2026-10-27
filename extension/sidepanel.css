@@ -3802,6 +3802,44 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   background: rgba(var(--hermes-panel-rgb),0.97);
   backdrop-filter: blur(8px);
 }
+/* Jump to latest: rides the top edge of the dock, so it floats over the foot of
+   the message list and never over the composer. Centred with auto margins rather
+   than a transform, which the global button:active nudge would otherwise fight. */
+.jump-to-latest {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: calc(100% + 10px);
+  z-index: 6;
+  margin-inline: auto;
+  inline-size: max-content;
+  max-inline-size: calc(100% - 24px);
+  min-block-size: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px 12px 5px;
+  border: 1px solid var(--hermes-accent);
+  border-radius: 0;
+  background: var(--hermes-paper);
+  color: var(--hermes-ink);
+  box-shadow: 0 4px 14px rgba(var(--hermes-shadow-rgb), 0.28);
+  font-family: var(--hermes-font-mono);
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  animation: jumpToLatestIn 160ms ease-out both;
+}
+.jump-to-latest[hidden] { display: none; }
+.jump-to-latest svg { flex: none; inline-size: 16px; block-size: 16px; fill: currentColor; }
+.jump-to-latest-label { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; }
+.jump-to-latest:active { transform: translateY(1px); }
+@keyframes jumpToLatestIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) { .jump-to-latest { animation: none; } }
+
 .composer {
   min-width: 0;
   max-width: 100%;
@@ -12024,6 +12062,7 @@ html[dir="rtl"] .image-gen-chrome strong,
 html[dir="rtl"] .image-gen-phase-track span,
 html[dir="rtl"] .image-gen-status,
 html[dir="rtl"] .intro,
+html[dir="rtl"] .jump-to-latest,
 html[dir="rtl"] .marketplace-theme-head > span,
 html[dir="rtl"] .marketplace-theme-head div > strong,
 html[dir="rtl"] .message-content h1,

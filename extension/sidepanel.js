@@ -710,6 +710,12 @@ import { normalizeMessageTimestamp } from './lib/message-meta.mjs';
 import { setRailCopyEnabled } from './lib/message-actions.mjs';
 import { createMessageThreadUi } from './lib/message-thread-ui.mjs';
 import { bindWheelScrollX } from './lib/wheel-scroll-x.mjs';
+import {
+  NEAR_BOTTOM_THRESHOLD_PX,
+  createNewBelowTracker,
+  jumpToLatestPresentation,
+  shouldShowJumpToLatest,
+} from './lib/scroll-latest.mjs';
 import { highlightMentions, insertMention } from './lib/room-mentions.mjs';
 import {
   truncateSubmitParams,
@@ -810,6 +816,8 @@ const els = {
   shell: $('.shell'),
   bottomDock: $('.bottom-dock'),
   appScroll: $('#appScroll'),
+  jumpToLatestButton: $('#jumpToLatestButton'),
+  jumpToLatestLabel: $('#jumpToLatestLabel'),
   startupScreen: $('#startupScreen'),
   startupTitle: $('#startupTitle'),
   startupDetail: $('#startupDetail'),
@@ -21021,7 +21029,7 @@ function setToolActivity(node, activity = null) {
 // During generation the bubble grows every frame. Forcing scrollTop on each
 // update fights the user's own scrolling and causes visible jumps; instead the
 // stream only follows the tail while the reader is already near the bottom.
-const MESSAGE_STICKY_SCROLL_THRESHOLD_PX = 96;
+const MESSAGE_STICKY_SCROLL_THRESHOLD_PX = NEAR_BOTTOM_THRESHOLD_PX;
 
 function isMessageStreamNearBottom() {
   const scroller = els.appScroll;
@@ -21036,6 +21044,94 @@ function scrollMessageStreamToBottom({ force = false } = {}) {
     if (!force && !isMessageStreamNearBottom()) return;
     scroller.scrollTop = scroller.scrollHeight;
   });
+}
+
+// ── Jump to latest pill ──────────────────────────────────────────────────────
+// Shown while the conversation is scrolled away from its tail. Counts messages
+// that arrived below the visible area; a streaming reply is one item however
+// many deltas it grows by.
+const newBelowTracker = createNewBelowTracker();
+let jumpToLatestFrame = 0;
+let messageListHeight = 0;
+
+function messageRowsForCount() {
+  return els.messages.querySelectorAll('.message-row:not(.steer-pending-row):not(.completion-pending-row)').length;
+}
+
+function liveStreamingMessageNode() {
+  const nodes = els.messages.querySelectorAll('.message.assistant');
+  for (let index = nodes.length - 1; index >= 0; index -= 1) {
+    if (nodes[index].hermesStreaming === true) return nodes[index];
+  }
+  return null;
+}
+
+function noteMessageBelow(node) {
+  if (newBelowTracker.note(node)) scheduleJumpToLatestUpdate();
+}
+
+function updateJumpToLatest() {
+  jumpToLatestFrame = 0;
+  const scroller = els.appScroll;
+  const button = els.jumpToLatestButton;
+  if (!scroller || !button) return;
+  const show = shouldShowJumpToLatest({
+    scrollHeight: scroller.scrollHeight,
+    scrollTop: scroller.scrollTop,
+    clientHeight: scroller.clientHeight,
+    hasMessages: Boolean(els.messages.querySelector('.message-row')),
+    threshold: MESSAGE_STICKY_SCROLL_THRESHOLD_PX,
+  });
+  // Back near the bottom: everything below has been seen.
+  if (!show) newBelowTracker.reset();
+  const view = jumpToLatestPresentation(newBelowTracker.count, t);
+  if (els.jumpToLatestLabel.textContent !== view.text) els.jumpToLatestLabel.textContent = view.text;
+  if (button.getAttribute('aria-label') !== view.ariaLabel) els.jumpToLatestButton.setAttribute('aria-label', view.ariaLabel);
+  if (button.title !== view.title) els.jumpToLatestButton.title = view.title;
+  // `hidden` also takes the button out of the tab order.
+  if (button.hidden === show) button.hidden = !show;
+}
+
+function scheduleJumpToLatestUpdate() {
+  if (jumpToLatestFrame) return;
+  jumpToLatestFrame = requestAnimationFrame(updateJumpToLatest);
+}
+
+// The message list changed size. Late layout re-pins a freshly opened
+// transcript; growth below a reader who scrolled up is a new item only when it
+// is a streaming reply that has not been counted yet.
+function handleMessageListResize() {
+  const height = els.messages.offsetHeight;
+  const grew = height > messageListHeight;
+  messageListHeight = height;
+  if (grew && !isMessageStreamNearBottom()) {
+    const live = liveStreamingMessageNode();
+    if (live) newBelowTracker.note(live);
+  }
+  scheduleJumpToLatestUpdate();
+}
+
+function jumpToLatest() {
+  const scroller = els.appScroll;
+  if (!scroller) return;
+  const reduceMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  scroller.scrollTo({ top: scroller.scrollHeight, left: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+  // The button is about to hide; keep keyboard focus in the conversation flow.
+  if (document.activeElement === els.jumpToLatestButton) els.input?.focus?.({ preventScroll: true });
+}
+
+function bindJumpToLatest() {
+  const scroller = els.appScroll;
+  if (!scroller || !els.jumpToLatestButton) return;
+  scroller.addEventListener('scroll', scheduleJumpToLatestUpdate, { passive: true });
+  els.jumpToLatestButton.addEventListener('click', jumpToLatest);
+  globalThis.addEventListener?.('resize', scheduleJumpToLatestUpdate);
+  if (typeof globalThis.ResizeObserver === 'function') {
+    const observer = new globalThis.ResizeObserver(handleMessageListResize);
+    observer.observe(els.messages);
+    observer.observe(scroller);
+  }
+  scheduleJumpToLatestUpdate();
 }
 
 // Assistant bubble header: inside an engaged Bot Mode chat the label is the
@@ -21442,9 +21538,18 @@ function addMessage(role, content, {
     row, node, record, room: Boolean(activeGroupProjection), streaming,
     entering,
   });
+  // Measured before the row lands: a tall new message must not count as the
+  // reader having scrolled away.
+  const followedTail = !scroll || isMessageStreamNearBottom();
   els.messages.appendChild(row);
   if (streaming) setRailCopyEnabled(row.querySelector('.message-rail'), false);
-  if (scroll) scrollMessageStreamToBottom({ force: true });
+  if (scroll) {
+    // Hermes' own reply must not yank a reader who scrolled up to older
+    // messages; it is counted on the Jump to latest pill instead. Everything
+    // else (the person's own message, command output, notices) follows.
+    if (role === 'assistant' && !followedTail) noteMessageBelow(node);
+    else scrollMessageStreamToBottom({ force: true });
+  }
   if (persist) {
     messages.push(record);
     trimAndSaveMessages();
@@ -21875,6 +21980,9 @@ function renderMessagesFromStorage() {
   const scroller = els.appScroll;
   const stickToBottom = !scroller || isMessageStreamNearBottom();
   const previousTop = scroller?.scrollTop || 0;
+  const previousRowCount = messageRowsForCount();
+  const priorLiveNode = liveStreamingMessageNode();
+  const liveWasCounted = newBelowTracker.has(priorLiveNode);
   const viewedStream = localSessionStream?.sessionId === String(settings.sessionId || '').trim()
     ? localSessionStream : liveAttach?.sessionId === String(settings.sessionId || '').trim() ? liveAttach : null;
   const retainedLiveRow = viewedStream?.view.node?.closest?.('.message-row');
@@ -21949,6 +22057,10 @@ function renderMessagesFromStorage() {
     content.style.whiteSpace = 'pre-wrap';
     content.textContent = previous.record.content || '···';
   }
+  // The rebuilt live bubble is the same reply the reader was already told about.
+  if (liveWasCounted) newBelowTracker.adopt(liveStreamingMessageNode());
+  // Messages that a refresh brought in below a reader who scrolled up.
+  if (!stickToBottom) newBelowTracker.bump(messageRowsForCount() - previousRowCount);
   renderEmptyState();
   renderActiveProfileIndicator();
   renderSteerNotice();
@@ -21956,6 +22068,7 @@ function renderMessagesFromStorage() {
   renderSideQuestionCard();
     if (stickToBottom) scrollMessageStreamToBottom({ force: true });
     else if (scroller) requestAnimationFrame(() => { scroller.scrollTop = previousTop; });
+    scheduleJumpToLatestUpdate();
     const alreadyHydrated = messages.some((message) => (message.attachments || []).some((item) => item.dataUrl && item.pathRef));
   void (async () => {
     await hydrateSessionMedia(messages);
@@ -26919,6 +27032,7 @@ function bindEvents() {
   bindFirefoxScreenshotControl();
   portalDockFloatingPanels();
   observeDockFloatingAnchor();
+  bindJumpToLatest();
   els.messages?.addEventListener('copy', (event) => {
     writeAssistantClipboardEvent(event, {
       selection: globalThis.getSelection?.(),

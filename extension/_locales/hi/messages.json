@@ -1611,6 +1611,18 @@
     "message": "इस कनेक्शन पर उपयोग में नहीं सुविधाएँ: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_jump_to_latest": {
+    "message": "नवीनतम पर जाएँ",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "{count} नए संदेश",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "नवीनतम पर जाएँ, {count} नए संदेश",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

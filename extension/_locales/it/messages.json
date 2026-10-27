@@ -1611,6 +1611,18 @@
     "message": "Funzioni non in uso su questa connessione: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_jump_to_latest": {
+    "message": "Vai all'ultimo",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "{count} nuovi messaggi",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "Vai all'ultimo, {count} nuovi messaggi",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

@@ -1611,6 +1611,18 @@
     "message": "この接続で使われていない機能: {count}",
     "description": "Runtime interface message capability.summary.some"
   },
+  "runtime_chat_jump_to_latest": {
+    "message": "最新へ移動",
+    "description": "Runtime interface message chat.jump_to_latest"
+  },
+  "runtime_chat_jump_to_latest_count": {
+    "message": "新着メッセージ {count} 件",
+    "description": "Runtime interface message chat.jump_to_latest_count"
+  },
+  "runtime_chat_jump_to_latest_count_aria": {
+    "message": "最新へ移動、新着メッセージ {count} 件",
+    "description": "Runtime interface message chat.jump_to_latest_count_aria"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

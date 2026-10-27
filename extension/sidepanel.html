@@ -414,6 +414,8 @@
       </section>
 
       <footer class="bottom-dock" aria-label="Hermes Browser Extension controls" data-i18n-aria-label="a11y.extension_controls">
+        <!-- Floats just above the composer while the conversation is scrolled up. Hidden (and out of the tab order) at the bottom. -->
+        <button id="jumpToLatestButton" class="jump-to-latest" type="button" hidden aria-label="Jump to latest" title="Jump to latest" data-i18n-aria-label="chat.jump_to_latest" data-i18n-title="chat.jump_to_latest"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="chevron-down"><path d="M13 16h-2v-2h2v2Zm-2-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-6-2H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 10H5V8h2v2Zm12 0h-2V8h2v2Z"/></svg><span id="jumpToLatestLabel" class="jump-to-latest-label" data-i18n="chat.jump_to_latest">Jump to latest</span></button>
         <section id="taskStack" class="task-stack" data-expanded="true" aria-label="Hermes task status" hidden data-i18n-aria-label="ui.hermes.task.status">
           <button id="taskStackToggle" class="task-stack-toggle" type="button" aria-expanded="true">
             <span class="task-stack-title" data-i18n="ui.tasks">☑ TASKS</span>
