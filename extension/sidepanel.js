@@ -350,7 +350,7 @@ import {
 } from './lib/profile-switch.mjs';
 import { browserDisplayMessages } from './lib/web-run-state.mjs';
 import { assignRoomIdentities, resolveRoomSpeaker } from './lib/bot-identity.mjs';
-import { remoteAvatarImageOf, selectRoomAvatarSource, shouldHydrateRemoteAvatar } from './lib/room-avatar.mjs';
+import { isAvatarCacheFresh, remoteAvatarImageOf, selectRoomAvatarSource, shouldHydrateRemoteAvatar } from './lib/room-avatar.mjs';
 import { createPresenceState, reducePresence, presenceSummary, failureReason } from './lib/group-presence.mjs';
 import {
   readRoomModelBinding,
@@ -12338,6 +12338,9 @@ function appendBotModeAvatar(container, displayName, profileName = '', remoteAva
 // (same session-token bootstrap as the roster fetch). Results cache per
 // connection+profile; a miss keeps the deterministic blobatar fallback.
 const botModeRemoteAvatarCache = new Map();
+// When each cached picture was read. The picture on the gateway can change while the panel stays open,
+// so a cached entry is trusted only for isAvatarCacheFresh's window, then refetched.
+const botModeRemoteAvatarFetchedAt = new Map();
 const botModeRemoteAvatarInflight = new Map();
 let profileSwitchMode = 'bot';
 
@@ -12364,7 +12367,7 @@ function botModeAvatarDataUrlFromAsset(asset) {
 async function fetchBotModeRemoteAvatar(row) {
   const cacheKey = botModeAvatarCacheKey(row.profileName);
   const cached = botModeRemoteAvatarCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached && isAvatarCacheFresh(botModeRemoteAvatarFetchedAt.get(cacheKey))) return cached;
   if (botModeRemoteAvatarInflight.has(cacheKey)) return botModeRemoteAvatarInflight.get(cacheKey);
   const pending = (async () => {
     let dataUrl = '';
@@ -12427,7 +12430,10 @@ async function fetchBotModeRemoteAvatar(row) {
     } catch {
       dataUrl = '';
     }
-    if (dataUrl) botModeRemoteAvatarCache.set(cacheKey, dataUrl);
+    if (dataUrl) {
+      botModeRemoteAvatarCache.set(cacheKey, dataUrl);
+      botModeRemoteAvatarFetchedAt.set(cacheKey, Date.now());
+    }
     return dataUrl || botModeRemoteAvatarCache.get(cacheKey) || '';
   })().finally(() => {
     botModeRemoteAvatarInflight.delete(cacheKey);
@@ -12468,8 +12474,11 @@ function renderRoomMemberAvatar(container, { name = '', title = '' } = {}) {
   const cached = profileName ? botModeRemoteAvatarCache.get(botModeAvatarCacheKey(profileName)) : '';
   const selection = selectRoomAvatarSource({ rosterAvatar: rosterRow?.avatar || null, cachedImage: cached });
   appendBotModeAvatar(container, displayName, profileName, selection.avatar);
-  // Already showing the real picture: nothing left to do.
-  if (!profileName || selection.source) return;
+  // Already showing the real picture: nothing left to do, unless it came from a cache entry that has
+  // aged out. That one is painted now and refreshed below (a failed refresh keeps it on screen).
+  const staleCache = selection.source === 'cache'
+    && !isAvatarCacheFresh(botModeRemoteAvatarFetchedAt.get(botModeAvatarCacheKey(profileName)));
+  if (!profileName || (selection.source && !staleCache)) return;
   const targetRow = rosterRow || { profileName, hasAvatar: true };
   const rosterHasInline = Boolean(remoteAvatarImageOf(targetRow.avatar));
   if (shouldHydrateRemoteAvatar({ hasAvatar: rosterRow ? rosterRow.hasAvatar === true : true, rosterHasInline })) {
@@ -16583,6 +16592,7 @@ async function saveBotProfileSheet() {
           void writePetAvatar(profileName, null);
         }
     botModeRemoteAvatarCache.delete(botModeAvatarCacheKey(profileName));
+    botModeRemoteAvatarFetchedAt.delete(botModeAvatarCacheKey(profileName));
   } catch {
     showBotModeSheetWarning(translateUiText('Hermes could not save this profile. Reload the profile and try again.'));
     botSheetSaving = false;

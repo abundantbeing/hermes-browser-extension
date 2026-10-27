@@ -163,6 +163,8 @@ async function avatarHarness({ rosterSource, localDashboard = '', remoteWs = fal
     const { settings, botAvatarRoute, WS_METHODS } = deps;
     const botModeRemoteAvatarCache = new Map();
     const botModeRemoteAvatarInflight = new Map();
+    const botModeRemoteAvatarFetchedAt = new Map();
+    const isAvatarCacheFresh = () => false;
     const botModeAvatarCacheKey = (name) => 'k:' + name;
     const botModeAvatarDataUrlFromAsset = (asset) => asset?.data || '';
     const normalizeGatewayUrl = (url) => url;
