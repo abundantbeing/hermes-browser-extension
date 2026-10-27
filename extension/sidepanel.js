@@ -89,6 +89,7 @@ import {
   sourceBlobMapsMatch,
   sessionModelBindingFromRuntime,
   resolveAcknowledgedSessionModelBinding,
+  soleCatalogProviderForModel,
   resolveAcknowledgedSessionModelOptions,
   resolveBrowserEffectiveModel,
   resolveBrowserEffectiveModelOptions,
@@ -10002,7 +10003,8 @@ function applyModelBindingForSession(session = {}) {
     sessionProvider: session?.provider,
     sessionBinding,
     storedBinding,
-    currentBinding: currentEffectiveModelBinding(sessionId),
+    // The panel's own choice outside this session: an explicit pick, else the global default.
+    currentBinding: currentEffectiveModelBinding(''),
   });
   if (!binding) return settings;
   const selected = modelForBinding(binding);
@@ -24165,7 +24167,12 @@ function currentModelRequestId() {
 function currentModelProviderSlug() {
   const binding = currentEffectiveModelBinding();
   const selected = currentSelectedModel();
-  return selected?.provider || binding?.provider || '';
+  if (selected?.provider || binding?.provider) return selected?.provider || binding?.provider;
+  // A choice that lost its provider (a REST session row names only the model) would send the turn
+  // with none, and the gateway would pair the model with its own default provider. When exactly one
+  // provider offers the model, that is the one. A gateway alias is routed by the gateway itself.
+  if (selected?.gatewayAlias === true || binding?.gatewayAlias === true) return '';
+  return soleCatalogProviderForModel(availableModels, currentModelRequestId());
 }
 
 // The dashboard socket's session.create takes a literal model; the Gateway

@@ -1515,13 +1515,14 @@ export function resolveAcknowledgedSessionModelBinding({
   const acknowledged = normalizeBrowserModelBinding(sessionBinding);
   const stored = normalizeBrowserModelBinding(storedBinding);
   if (String(sessionProvider || '').trim() && acknowledged) return acknowledged;
-  if (stored) return stored;
-  // A REST session row names the model but never its provider. When the choice this panel is
-  // already making is that same model, it keeps its provider: a binding without one sends the next
-  // turn with no provider, and the gateway pairs the model with its own default provider.
+  const picked = stored || acknowledged;
+  // A REST session row names the model but never its provider, and a binding stored from such a row
+  // has none either. When the panel's own choice (outside this session) is that same model, it lends
+  // its provider: a binding without one sends the next turn with no provider, and the gateway pairs
+  // the model with its own default provider.
   const current = normalizeBrowserModelBinding(currentBinding);
-  if (acknowledged && !acknowledged.provider && current?.provider && current.rawModelId === acknowledged.rawModelId) return current;
-  return acknowledged;
+  if (picked && !picked.provider && current?.provider && current.rawModelId === picked.rawModelId) return current;
+  return picked;
 }
 
 export function resolveCatalogModelIdForBinding({ binding = null, models = [] } = {}) {
@@ -3385,4 +3386,21 @@ export function isSessionBindingValid(binding = null, currentIdentity = {}) {
 // Attach the identity to a binding before persisting it.
 export function withSessionBindingIdentity(binding = {}, currentIdentity = {}) {
   return { ...(binding || {}), identity: { ...currentIdentity } };
+}
+
+/**
+ * The one provider the model catalog lists `rawModelId` under, or '' when none or several do.
+ * Gateway alias rows are left out: the gateway routes those itself.
+ */
+export function soleCatalogProviderForModel(models = [], rawModelId = '') {
+  const raw = String(rawModelId || '').trim();
+  if (!raw) return '';
+  const providers = new Set();
+  for (const model of Array.isArray(models) ? models : []) {
+    if (!model || typeof model !== 'object' || model.gatewayAlias === true) continue;
+    if (String(model.rawModelId || '').trim() !== raw) continue;
+    const provider = String(model.provider || '').trim();
+    if (provider) providers.add(provider);
+  }
+  return providers.size === 1 ? [...providers][0] : '';
 }
