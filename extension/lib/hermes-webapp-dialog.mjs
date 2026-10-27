@@ -46,6 +46,14 @@ export function createWebappDialog({
     for (const paragraph of dialog.querySelectorAll('[data-webapp-reason]')) {
       paragraph.hidden = paragraph.dataset.webappReason !== shown;
     }
+    // A connection with no address to try (a remote gateway without one, or Hermes Cloud) has
+    // no computer here to run the commands on, so only the reason and the guide show.
+    const hostSteps = shown !== 'needs-address';
+    const detail = root.getElementById('webappDialogDetail');
+    if (detail) detail.hidden = !hostSteps;
+    const commands = dialog.querySelector('.webapp-commands');
+    if (commands) commands.hidden = !hostSteps;
+    dialog.setAttribute('aria-describedby', hostSteps ? 'webappDialogDetail' : 'webappDialogNeedsAddress');
     if (addressEl) {
       const showAddress = REASONS_WITH_ADDRESS.has(shown) && Boolean(address);
       addressEl.textContent = showAddress ? address : '';

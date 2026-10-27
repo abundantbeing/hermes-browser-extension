@@ -133,6 +133,8 @@ test('with the Webapp off, a dialog shows the address that did not answer and th
     assert.equal(address.hidden, false);
     assert.equal(address.textContent, 'http://127.0.0.1:9120');
     assert.deepEqual([...p.dialog.querySelectorAll('.webapp-command code')].map((node) => node.textContent), [...WEBAPP_SETUP_COMMANDS]);
+    assert.equal(p.dialog.querySelector('.webapp-commands').hidden, false, 'a local gateway gets the commands');
+    assert.equal(p.dialog.getAttribute('aria-describedby'), 'webappDialogDetail');
     assert.deepEqual(p.calls.toasts, []);
   } finally {
     p.close();
@@ -146,6 +148,11 @@ test('a remote connection with no address, a bad address and a declined permissi
     assert.deepEqual(none.visibleReasons(), ['needs-address']);
     assert.equal(none.dialog.querySelector('#webappDialogAddress').hidden, true);
     assert.deepEqual(none.calls.fetch, []);
+    // No computer here to run them on: the host commands and their lead-in step aside.
+    assert.equal(none.dialog.querySelector('.webapp-commands').hidden, true);
+    assert.equal(none.dialog.querySelector('#webappDialogDetail').hidden, true);
+    assert.equal(none.dialog.getAttribute('aria-describedby'), 'webappDialogNeedsAddress');
+    assert.equal(none.dialog.querySelector('#webappDocsLink').hidden, false, 'the guide stays');
   } finally {
     none.close();
   }
