@@ -1623,6 +1623,10 @@
     "message": "К последнему, {count} нового сообщения",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes мог удалить этот ход, а ваше новое сообщение не отправлено. Теперь переписка показывает то, что есть у Hermes, а ваш текст вернулся в поле ввода.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

@@ -1623,6 +1623,10 @@
     "message": "Naar nieuwste, {count} nieuwe berichten",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes heeft deze beurt mogelijk verwijderd en je nieuwe bericht is niet verzonden. Het gesprek toont nu wat Hermes heeft en je tekst staat weer in het invoerveld.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

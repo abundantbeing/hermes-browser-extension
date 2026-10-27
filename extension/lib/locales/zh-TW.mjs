@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "昨天",
   "ui.message.unmatched": "此訊息無法與已儲存的會話相符，因此已作為新訊息傳送。",
   "ui.edit.failed": "編輯失敗。你的會話未變更。",
+  "chat.rewind_unsent": "Hermes 可能已移除這一輪對話，且你的新訊息尚未送出。對話現在顯示 Hermes 中保存的內容，你的文字已回到輸入框。",
   "ui.group.presence.typing": "{name} 正在輸入",
   "ui.group.presence.using": "{name} 正在使用 {tool}",
   "ui.group.presence.replying": "{name} 正在回覆",

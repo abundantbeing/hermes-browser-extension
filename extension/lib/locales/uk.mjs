@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "Учора",
   "ui.message.unmatched": "Це повідомлення не вдалося зіставити зі збереженою розмовою, тож його надіслано як нове.",
   "ui.edit.failed": "Не вдалося редагувати. Вашу розмову не змінено.",
+  "chat.rewind_unsent": "Hermes міг видалити цей хід, а ваше нове повідомлення не надіслано. Тепер розмова показує те, що є в Hermes, а ваш текст повернувся в поле введення.",
   "ui.group.presence.typing": "{name} пише",
   "ui.group.presence.using": "{name} використовує {tool}",
   "ui.group.presence.replying": "{name} відповідає",

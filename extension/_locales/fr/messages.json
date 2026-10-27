@@ -1623,6 +1623,10 @@
     "message": "Aller au dernier, {count} nouveaux messages",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes a peut-être supprimé ce tour, et votre nouveau message n'a pas été envoyé. La conversation affiche maintenant ce que Hermes conserve, et votre texte est revenu dans la zone de saisie.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

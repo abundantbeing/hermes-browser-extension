@@ -1623,6 +1623,10 @@
     "message": "الانتقال إلى الأحدث، {count} رسالة جديدة",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "ربما أزال Hermes هذا الدور ولم يتم إرسال رسالتك الجديدة. يعرض السجل الآن ما لدى Hermes، وقد عاد نصك إلى مربع الكتابة.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

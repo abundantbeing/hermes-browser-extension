@@ -1623,6 +1623,10 @@
     "message": "नवीनतम पर जाएँ, {count} नए संदेश",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "हो सकता है Hermes ने यह टर्न हटा दिया हो, और आपका नया संदेश नहीं भेजा गया। बातचीत अब वही दिखा रही है जो Hermes के पास है, और आपका टेक्स्ट कंपोज़र में वापस आ गया है।",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

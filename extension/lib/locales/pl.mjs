@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "Wczoraj",
   "ui.message.unmatched": "Nie udało się dopasować tej wiadomości do zapisanej rozmowy, więc wysłano ją jako nową wiadomość.",
   "ui.edit.failed": "Edycja nie powiodła się. Twoja rozmowa nie została zmieniona.",
+  "chat.rewind_unsent": "Hermes mógł usunąć tę turę, a Twoja nowa wiadomość nie została wysłana. Rozmowa pokazuje teraz to, co ma Hermes, a Twój tekst wrócił do pola wpisywania.",
   "ui.group.presence.typing": "{name} pisze",
   "ui.group.presence.using": "{name} używa {tool}",
   "ui.group.presence.replying": "{name} odpowiada",

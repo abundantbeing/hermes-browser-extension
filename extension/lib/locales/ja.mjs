@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "昨日",
   "ui.message.unmatched": "このメッセージは保存された会話に一致しなかったため、新しいメッセージとして送信されました。",
   "ui.edit.failed": "編集に失敗しました。会話は変更されていません。",
+  "chat.rewind_unsent": "Hermes がこのターンを削除した可能性があり、新しいメッセージは送信されませんでした。会話は Hermes が保持している内容に更新され、入力した文章は入力欄に戻りました。",
   "ui.group.presence.typing": "{name} が入力中",
   "ui.group.presence.using": "{name} が {tool} を使用中",
   "ui.group.presence.replying": "{name} が返信中",

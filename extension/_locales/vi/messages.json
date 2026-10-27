@@ -1623,6 +1623,10 @@
     "message": "Đến mới nhất, {count} tin nhắn mới",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes có thể đã xóa lượt này và tin nhắn mới của bạn chưa được gửi. Cuộc trò chuyện hiện hiển thị những gì Hermes có, và văn bản của bạn đã trở lại ô soạn.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "어제",
   "ui.message.unmatched": "이 메시지를 저장된 대화와 일치시킬 수 없어 새 메시지로 전송했습니다.",
   "ui.edit.failed": "편집에 실패했습니다. 대화는 변경되지 않았습니다.",
+  "chat.rewind_unsent": "Hermes가 이 턴을 삭제했을 수 있으며 새 메시지는 전송되지 않았습니다. 대화에는 이제 Hermes에 있는 내용이 표시되고, 입력한 텍스트는 입력창으로 돌아왔습니다.",
   "ui.group.presence.typing": "{name} 님이 입력 중",
   "ui.group.presence.using": "{name} 님이 {tool} 사용 중",
   "ui.group.presence.replying": "{name} 님이 답변 중",

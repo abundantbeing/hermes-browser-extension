@@ -1623,6 +1623,10 @@
     "message": "最新へ移動、新着メッセージ {count} 件",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes がこのターンを削除した可能性があり、新しいメッセージは送信されませんでした。会話は Hermes が保持している内容に更新され、入力した文章は入力欄に戻りました。",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

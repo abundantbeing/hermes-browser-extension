@@ -1623,6 +1623,10 @@
     "message": "跳到最新，{count} 条新消息",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes 可能已移除这一轮对话，且你的新消息未发送。对话现在显示 Hermes 中保存的内容，你的文字已回到输入框。",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

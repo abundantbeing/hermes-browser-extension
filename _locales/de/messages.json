@@ -1623,6 +1623,10 @@
     "message": "Zum Neuesten springen, {count} neue Nachrichten",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes hat diesen Beitrag möglicherweise entfernt, und deine neue Nachricht wurde nicht gesendet. Der Verlauf zeigt jetzt, was Hermes hat, und dein Text steht wieder im Eingabefeld.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

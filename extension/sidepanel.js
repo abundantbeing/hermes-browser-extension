@@ -728,7 +728,9 @@ import {
   applyRewindLocally,
   rebindSurvivorRowIds,
   bindRowIdsFromHistory,
+  isTruncateRejection,
 } from './lib/message-rewind.mjs';
+import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
 import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
@@ -21487,6 +21489,21 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
     addMessage('system', translateUiText('This message could not be matched to the saved conversation, so it was sent as a new message.'));
     return askHermes(plan.text, [], { disableAutoTitle: true, preserveComposer: true });
   }
+  // A session authority refuses truncate keys on prompt.submit: it takes the
+  // turns back with a fenced session.mutate rewind first, then a plain submit.
+  // Nothing local changes until the gateway has said it rewound.
+  const rewind = await rewindOnSessionAuthority(rowId);
+  const authorityRewound = rewind?.status === 'rewound';
+  if (rewind && !authorityRewound) {
+    if (rewind.status === 'indeterminate') {
+      // The rewind may have been applied although its answer was lost: the turns are
+      // settled from the gateway's history, never guessed.
+      await resyncAfterAuthorityRewind(messages.slice(), index, plan.text);
+    } else {
+      addMessage('system', translateUiText('Edit failed. Your conversation was not changed.'));
+    }
+    return false;
+  }
   const snapshot = messages.slice();
   messages = applyRewindLocally(messages, index, mode === 'edit' ? plan.text : undefined, { now: Date.now() });
   renderMessagesFromStorage();
@@ -21497,11 +21514,17 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
       reuseUserRecord: true,
       disableAutoTitle: true,
       preserveComposer: true,
-      truncate: { rowId },
+      ...(rewind ? {} : { truncate: { rowId } }),
       onSubmitResponse: (response) => { submitResponse = response || null; accepted = true; },
     });
   } catch {
     accepted = false;
+  }
+  if (!accepted && authorityRewound) {
+    // The gateway already took the turns back, so the snapshot would show turns
+    // that no longer exist there. Show what it has and give the text back.
+    await resyncAfterAuthorityRewind(snapshot, index, plan.text);
+    return false;
   }
   if (!accepted) {
     // Any failure before the turn is accepted (4004 / 4018 / 4030 / transport)
@@ -21520,7 +21543,63 @@ async function submitRewind({ record, text, mode = 'edit' } = {}) {
     }
     await trimAndSaveMessages();
   }
+  if (authorityRewound) {
+    // The authority's receipt names no survivors (rows before the target keep their ids);
+    // the new turn's row id is read back from history.
+    try {
+      const history = await fetchDashboardHistoryWithResume(settings.sessionId);
+      messages = bindRowIdsFromHistory(messages, Array.isArray(history?.messages) ? history.messages : [], { displayText: messageDisplayText });
+      await trimAndSaveMessages();
+    } catch {
+      // Unbound rows fail closed: Edit and Restore address nothing they cannot match.
+    }
+  }
   return true;
+}
+
+// Edit or Restore on a session authority: session.mutate operation=rewind. Returns null when this
+// connection is not a session authority (the legacy truncate keys apply), else the typed outcome.
+async function rewindOnSessionAuthority(rowId) {
+  if (!usesDashboardWsChatTransport()) return null;
+  let connection;
+  try {
+    connection = await ensureActiveDashboardWsConnection();
+  } catch {
+    return null;
+  }
+  if (!usesAuthorityRewind(connection?.client)) return null;
+  try {
+    const liveId = await ensureRemoteWsSession(connection);
+    return await rewindSessionToMessage({
+      request: (method, params, options) => connection.client.request(method, params, options),
+      dashboardWs: true,
+      getReadyPayload: () => (connection.client.readyState === 1 ? connection.client.readyPayload || null : null),
+      unsupportedMethods: capabilityRuntime.unsupportedMethods,
+      sessionId: connection.wsStoredSessionId || liveId,
+      rowId,
+    });
+  } catch (error) {
+    return { status: 'not_sent', reason: 'disconnected', message: String(error?.message || error) };
+  }
+}
+
+async function resyncAfterAuthorityRewind(snapshot, index, text) {
+  let synced = false;
+  try {
+    const result = await fetchDashboardHistoryWithResume(settings.sessionId);
+    synced = await commitFetchedSessionMessages(result, { sessionId: settings.sessionId });
+  } catch {
+    synced = false;
+  }
+  if (!synced) {
+    messages = snapshot.slice(0, Math.max(0, index));
+    renderMessagesFromStorage();
+  }
+  if (!els.input.value.trim()) {
+    els.input.value = String(text || '');
+    persistCurrentComposerDraft({ immediate: true });
+  }
+  addMessage('system', t('chat.rewind_unsent'));
 }
 
 function addMessage(role, content, {
@@ -24871,7 +24950,9 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
           // Only a submit that carried display_text can be refused for it. When
           // a concurrent turn already recorded the refusal, this turn still
           // retries, and the retry leaves the field out.
-          if (!Object.hasOwn(firstSubmit, 'display_text') || !isDisplayTextRejection(error)) throw error;
+          // A refusal that also names the truncate keys is about those keys: retrying
+          // without display_text cannot fix it and must not blame that quirk.
+          if (!Object.hasOwn(firstSubmit, 'display_text') || !isDisplayTextRejection(error) || isTruncateRejection(error)) throw error;
           await gatewayQuirks.markUnsupported(quirkGatewayUrl, GATEWAY_QUIRK.PROMPT_DISPLAY_TEXT);
           return client.request(WS_METHODS.promptSubmit, submitParams());
         }).then((response) => {

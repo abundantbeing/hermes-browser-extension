@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "Yesterday",
   "ui.message.unmatched": "This message could not be matched to the saved conversation, so it was sent as a new message.",
   "ui.edit.failed": "Edit failed. Your conversation was not changed.",
+  "chat.rewind_unsent": "Hermes may have removed this turn, and your new message was not sent. The transcript now shows what Hermes has, and your text is back in the composer.",
   "ui.group.presence.typing": "{name} is typing",
   "ui.group.presence.using": "{name} is using {tool}",
   "ui.group.presence.replying": "{name} is replying",

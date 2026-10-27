@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "Hôm qua",
   "ui.message.unmatched": "Không thể khớp tin nhắn này với cuộc trò chuyện đã lưu, nên nó đã được gửi như một tin nhắn mới.",
   "ui.edit.failed": "Chỉnh sửa thất bại. Cuộc trò chuyện của bạn không thay đổi.",
+  "chat.rewind_unsent": "Hermes có thể đã xóa lượt này và tin nhắn mới của bạn chưa được gửi. Cuộc trò chuyện hiện hiển thị những gì Hermes có, và văn bản của bạn đã trở lại ô soạn.",
   "ui.group.presence.typing": "{name} đang nhập",
   "ui.group.presence.using": "{name} đang dùng {tool}",
   "ui.group.presence.replying": "{name} đang trả lời",

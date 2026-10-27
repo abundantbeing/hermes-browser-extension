@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "कल",
   "ui.message.unmatched": "यह संदेश सहेजी गई बातचीत से मेल नहीं खा सका, इसलिए इसे नए संदेश के रूप में भेजा गया।",
   "ui.edit.failed": "संपादन विफल। आपकी बातचीत नहीं बदली गई।",
+  "chat.rewind_unsent": "हो सकता है Hermes ने यह टर्न हटा दिया हो, और आपका नया संदेश नहीं भेजा गया। बातचीत अब वही दिखा रही है जो Hermes के पास है, और आपका टेक्स्ट कंपोज़र में वापस आ गया है।",
   "ui.group.presence.typing": "{name} टाइप कर रहा है",
   "ui.group.presence.using": "{name} {tool} का उपयोग कर रहा है",
   "ui.group.presence.replying": "{name} जवाब दे रहा है",

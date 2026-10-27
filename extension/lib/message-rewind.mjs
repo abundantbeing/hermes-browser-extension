@@ -23,6 +23,21 @@ export function truncateSubmitParams({ rowId } = {}) {
   };
 }
 
+const TRUNCATE_KEYS = Object.freeze(['confirm_truncate', 'truncate_before_row_id', 'confirm_empty_truncate']);
+
+// A gateway that refuses prompt.submit because of the truncate keys (a session
+// authority's canonical submit has a closed key set). That refusal says nothing
+// about display_text, so it must never mark that quirk: the keys that were
+// refused are not removable by retrying without cosmetics.
+export function isTruncateRejection(error) {
+  const fields = error?.data?.fields;
+  if (Array.isArray(fields) && fields.some((field) => TRUNCATE_KEYS.some((key) => String(field) === key || String(field).startsWith(`${key}.`)))) {
+    return true;
+  }
+  const text = String(error?.message || error || '');
+  return /invalid params for prompt\.submit/i.test(text) && TRUNCATE_KEYS.some((key) => text.includes(key));
+}
+
 export function resolveRowIdByDisplayText(history, text, { displayText, isNewest = false } = {}) {
   const wanted = String(text ?? '').trim();
   if (!wanted) return undefined;

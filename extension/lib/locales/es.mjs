@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "Ayer",
   "ui.message.unmatched": "Este mensaje no se pudo emparejar con la conversación guardada, así que se envió como un mensaje nuevo.",
   "ui.edit.failed": "La edición falló. Tu conversación no cambió.",
+  "chat.rewind_unsent": "Es posible que Hermes haya eliminado este turno y que tu mensaje nuevo no se haya enviado. La conversación muestra ahora lo que tiene Hermes y tu texto ha vuelto al cuadro de escritura.",
   "ui.group.presence.typing": "{name} está escribiendo",
   "ui.group.presence.using": "{name} está usando {tool}",
   "ui.group.presence.replying": "{name} está respondiendo",

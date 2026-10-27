@@ -1623,6 +1623,10 @@
     "message": "최신으로 이동, 새 메시지 {count}개",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes가 이 턴을 삭제했을 수 있으며 새 메시지는 전송되지 않았습니다. 대화에는 이제 Hermes에 있는 내용이 표시되고, 입력한 텍스트는 입력창으로 돌아왔습니다.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"

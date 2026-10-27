@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "Gestern",
   "ui.message.unmatched": "Diese Nachricht konnte nicht der gespeicherten Unterhaltung zugeordnet werden und wurde daher als neue Nachricht gesendet.",
   "ui.edit.failed": "Bearbeiten fehlgeschlagen. Deine Unterhaltung wurde nicht geändert.",
+  "chat.rewind_unsent": "Hermes hat diesen Beitrag möglicherweise entfernt, und deine neue Nachricht wurde nicht gesendet. Der Verlauf zeigt jetzt, was Hermes hat, und dein Text steht wieder im Eingabefeld.",
   "ui.group.presence.typing": "{name} schreibt",
   "ui.group.presence.using": "{name} verwendet {tool}",
   "ui.group.presence.replying": "{name} antwortet",

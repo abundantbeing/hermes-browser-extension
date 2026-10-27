@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "เมื่อวาน",
   "ui.message.unmatched": "ไม่สามารถจับคู่ข้อความนี้กับบทสนทนาที่บันทึกไว้ได้ จึงส่งเป็นข้อความใหม่",
   "ui.edit.failed": "แก้ไขไม่สำเร็จ บทสนทนาของคุณไม่เปลี่ยนแปลง",
+  "chat.rewind_unsent": "Hermes อาจลบรอบนี้ไปแล้ว และข้อความใหม่ของคุณยังไม่ถูกส่ง ตอนนี้บทสนทนาแสดงสิ่งที่ Hermes มีอยู่ และข้อความของคุณกลับมาอยู่ในช่องพิมพ์แล้ว",
   "ui.group.presence.typing": "{name} กำลังพิมพ์",
   "ui.group.presence.using": "{name} กำลังใช้ {tool}",
   "ui.group.presence.replying": "{name} กำลังตอบ",

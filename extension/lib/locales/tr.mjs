@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "Dün",
   "ui.message.unmatched": "Bu mesaj kayıtlı sohbetle eşleştirilemedi, bu yüzden yeni bir mesaj olarak gönderildi.",
   "ui.edit.failed": "Düzenleme başarısız oldu. Sohbetiniz değiştirilmedi.",
+  "chat.rewind_unsent": "Hermes bu turu kaldırmış olabilir ve yeni mesajınız gönderilmedi. Konuşma artık Hermes'te olanı gösteriyor ve metniniz yazma alanına geri döndü.",
   "ui.group.presence.typing": "{name} yazıyor",
   "ui.group.presence.using": "{name} {tool} kullanıyor",
   "ui.group.presence.replying": "{name} yanıtlıyor",

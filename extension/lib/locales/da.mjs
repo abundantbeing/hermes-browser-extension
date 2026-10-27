@@ -1616,6 +1616,7 @@ export default Object.freeze({
   "ui.yesterday": "I går",
   "ui.message.unmatched": "Denne besked kunne ikke matches med den gemte samtale, så den blev sendt som en ny besked.",
   "ui.edit.failed": "Redigering mislykkedes. Din samtale blev ikke ændret.",
+  "chat.rewind_unsent": "Hermes kan have fjernet denne tur, og din nye besked blev ikke sendt. Samtalen viser nu det, Hermes har, og din tekst er tilbage i skrivefeltet.",
   "ui.group.presence.typing": "{name} skriver",
   "ui.group.presence.using": "{name} bruger {tool}",
   "ui.group.presence.replying": "{name} svarer",

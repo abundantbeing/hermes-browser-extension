@@ -1623,6 +1623,10 @@
     "message": "Jump to latest, {count} new messages",
     "description": "Runtime interface message chat.jump_to_latest_count_aria"
   },
+  "runtime_chat_rewind_unsent": {
+    "message": "Hermes may have removed this turn, and your new message was not sent. The transcript now shows what Hermes has, and your text is back in the composer.",
+    "description": "Runtime interface message chat.rewind_unsent"
+  },
   "runtime_clarify_expired": {
     "message": "This question was already answered or expired.",
     "description": "Runtime interface message clarify.expired"
