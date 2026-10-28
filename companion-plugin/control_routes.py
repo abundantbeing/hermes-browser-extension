@@ -13,6 +13,8 @@ speaks one protocol to either.
 * ``register`` is authenticated by the API server's own check (the paired loopback
   token or the API key). It validates the registration, keeps only allowlisted
   capabilities and mints a 30 second, single-use ticket bound to that exact scope.
+  It refuses (503) when the session store cannot say the session exists, and (409)
+  a session another credential has a live controller attached to.
   Identity is not taken from the body: the principal is a digest of the
   authenticated credential and the profile, and the transport family comes from
   the peer address.
@@ -41,6 +43,7 @@ from .control_broker import (
     CONTROL_PROTOCOL_VERSION,
     ControlBroker,
     ControllerScope,
+    PrincipalConflict,
     TicketInvalid,
     filter_capabilities,
     protocol_supported,
@@ -97,26 +100,25 @@ def transport_family(request: Any) -> str:
     return "local-api" if host in ("127.0.0.1", "::1", "localhost") else "remote-api"
 
 
-async def _session_known(adapter: Any, session_id: str) -> Optional[bool]:
+async def _session_known(adapter: Any, session_id: str) -> bool:
     """Whether the API server's session store holds ``session_id``.
 
-    ``None`` when this API server offers no session store to ask (the check is
-    skipped, not failed). A store that is offered but cannot be opened raises
-    ``LookupError`` so the caller refuses.
+    Fails closed: a store that is not offered, cannot be opened or raises when
+    asked raises ``LookupError`` and the registration is refused, never allowed.
     """
     opener = getattr(adapter, "_ensure_session_db_async", None)
     if not callable(opener):
-        return None
+        raise LookupError("no session store")
     try:
         db = await opener()
+        get_session = getattr(db, "get_session", None)
+        if not callable(get_session):
+            raise LookupError("session store has no lookup")
+        return bool(await asyncio.to_thread(get_session, session_id))
+    except LookupError:
+        raise
     except Exception as exc:
-        raise LookupError("session database unavailable") from exc
-    if db is None:
-        raise LookupError("session database unavailable")
-    get_session = getattr(db, "get_session", None)
-    if not callable(get_session):
-        return None
-    return bool(await asyncio.to_thread(get_session, session_id))
+        raise LookupError("session store unavailable") from exc
 
 
 def make_register_handler(adapter: Any, broker: ControlBroker, *, profile: str) -> Callable[..., Any]:
@@ -150,7 +152,7 @@ def make_register_handler(adapter: Any, broker: ControlBroker, *, profile: str) 
             known = await _session_known(adapter, session_id)
         except LookupError:
             return _error(503, "session_db_unavailable", "Session database unavailable.")
-        if known is False:
+        if not known:
             return _error(
                 403,
                 "browser_control_session_forbidden",
@@ -168,6 +170,12 @@ def make_register_handler(adapter: Any, broker: ControlBroker, *, profile: str) 
             transport_family=transport_family(request),
             capabilities=capabilities,
         )
+        if broker.principal_conflict(scope):
+            return _error(
+                409,
+                "browser_control_session_owned",
+                "Another credential already has a browser attached to this session.",
+            )
         ticket = broker.mint_ticket(scope)
         ttl = broker.ticket_ttl_seconds
         return web.json_response(
@@ -272,6 +280,8 @@ def make_ws_handler(broker: ControlBroker) -> Callable[..., Any]:
         except Exception:
             logger.exception("browser-control socket ticket consumption failed")
             raise web.HTTPUnauthorized() from None
+        if broker.principal_conflict(scope):
+            raise web.HTTPConflict()
         ws = web.WebSocketResponse(heartbeat=30.0, protocols=(WS_PROTOCOL,))
         await ws.prepare(request)
         send = _ws_sender(ws, asyncio.get_running_loop())
@@ -279,7 +289,11 @@ def make_ws_handler(broker: ControlBroker) -> Callable[..., Any]:
         # attach and disconnect take the controller's send lock, which a worker
         # thread's dispatch may hold while it waits on THIS loop: run them off the
         # loop, so a race parks a worker thread, not the loop.
-        await asyncio.to_thread(broker.attach, scope, send, owner=ws)
+        try:
+            await asyncio.to_thread(broker.attach, scope, send, owner=ws)
+        except PrincipalConflict:
+            await ws.close(code=4409, message=b"session held by another principal")
+            return ws
         try:
             async for message in ws:
                 if message.type == web.WSMsgType.TEXT:

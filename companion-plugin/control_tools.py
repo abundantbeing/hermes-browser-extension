@@ -26,6 +26,7 @@ import re
 import secrets
 import tempfile
 import time
+import unicodedata
 import urllib.parse
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -91,23 +92,80 @@ def _failure(code: str, message: str) -> str:
 # ── Argument and URL checks ───────────────────────────────────────────
 
 
+_SPECIAL_SCHEMES = frozenset({"http", "https", "ws", "wss", "ftp"})
+_NUMERIC_LABEL = re.compile(r"0[xX][0-9a-fA-F]*|[0-9]+")
+_NAT64 = ipaddress.ip_network("64:ff9b::/96")
+
+
+def _ipv4_number(part: str) -> int:
+    """One label of a WHATWG IPv4 host: decimal, 0x hex or leading-0 octal."""
+    if part[:2] in ("0x", "0X"):
+        digits, base = part[2:], 16
+    elif len(part) > 1 and part.startswith("0"):
+        digits, base = part[1:], 8
+    else:
+        digits, base = part, 10
+    return int(digits, base) if digits else 0
+
+
+def _numeric_ipv4(host: str) -> Optional[ipaddress.IPv4Address]:
+    """The address a browser reads from a host whose last label is a number (``2852039166``,
+    ``0xa9fea9fe``, ``0251.0376.0251.0376``, ``169.254.43518``), as the WHATWG URL parser does.
+    ``None`` for a host that is a name; ``ValueError`` for a numeric host a browser would refuse."""
+    labels = host.split(".")
+    if len(labels) > 1 and labels[-1] == "":
+        labels.pop()
+    if not _NUMERIC_LABEL.fullmatch(labels[-1]):
+        return None
+    if len(labels) > 4:
+        raise ValueError("too many IPv4 parts")
+    numbers = [_ipv4_number(label) for label in labels]
+    if any(number > 255 for number in numbers[:-1]) or numbers[-1] >= 256 ** (5 - len(numbers)):
+        raise ValueError("IPv4 part out of range")
+    return ipaddress.IPv4Address(numbers[-1] + sum(number * 256 ** (3 - index) for index, number in enumerate(numbers[:-1])))
+
+
+def _host_of(url: str) -> str:
+    """The host a browser would take from ``url``: whitespace the URL parser drops removed, backslashes read as
+    slashes, a special scheme's missing slashes supplied, the host percent-decoded and compatibility-folded
+    (full-width digits) and lower-cased. ``""`` when there is none; ``ValueError`` when it cannot be read."""
+    text = re.sub(r"[\t\r\n]", "", unicodedata.normalize("NFKC", url.strip())).replace("\\", "/")
+    scheme = re.match(r"([A-Za-z][A-Za-z0-9+.\-]*):/*", text)
+    if scheme and scheme.group(1).lower() in _SPECIAL_SCHEMES:
+        text = f"{scheme.group(1)}://{text[scheme.end():]}"
+    host = urllib.parse.urlsplit(text).hostname or ""
+    return unicodedata.normalize("NFKC", urllib.parse.unquote(host)).lower().rstrip(".")
+
+
+def _metadata_address(host: str) -> bool:
+    """Whether a normalized host is, in any spelling, a cloud metadata address."""
+    if host in _CLOUD_METADATA_HOSTS:
+        return True
+    if ":" in host:
+        address: Any = ipaddress.IPv6Address(host.split("%", 1)[0])
+        embedded = address.ipv4_mapped
+        if embedded is None and int(address) < 2**32:  # IPv4-compatible (::a.b.c.d)
+            embedded = ipaddress.IPv4Address(int(address))
+        if embedded is None and address in _NAT64:
+            embedded = ipaddress.IPv4Address(int(address) & 0xFFFFFFFF)
+        candidates = [address] + ([embedded] if embedded is not None else [])
+    else:
+        numeric = _numeric_ipv4(host)
+        candidates = [numeric] if numeric is not None else []
+    return any(candidate in network for candidate in candidates for network in _CLOUD_METADATA_NETWORKS if candidate.version == network.version)
+
+
 def _blocked_url(url: str) -> Optional[str]:
     """Why a URL must not be opened, or ``None``. The person's own browser may reach local and private
-    addresses on purpose; only cloud metadata endpoints and URLs that embed a secret are refused."""
+    addresses on purpose; only cloud metadata endpoints and URLs that embed a secret are refused. The host
+    is read the way a browser reads it, so a decimal, hex, octal or IPv4-mapped spelling does not get past."""
     if _SECRET_IN_URL.search(url) or _SECRET_IN_URL.search(urllib.parse.unquote(url)):
         return "Blocked: the URL contains what appears to be an API key or token. Secrets must not be sent in URLs."
     try:
-        host = (urllib.parse.urlsplit(url).hostname or "").lower().rstrip(".")
+        if _metadata_address(_host_of(url)):
+            return "Blocked: the URL targets a cloud metadata endpoint."
     except ValueError:
-        return None
-    if host in _CLOUD_METADATA_HOSTS:
-        return "Blocked: the URL targets a cloud metadata endpoint."
-    try:
-        address = ipaddress.ip_address(host)
-    except ValueError:
-        return None
-    if any(address in network for network in _CLOUD_METADATA_NETWORKS):
-        return "Blocked: the URL targets a cloud metadata endpoint."
+        return "Blocked: the URL's host could not be read safely."
     return None
 
 

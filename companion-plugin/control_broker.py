@@ -10,6 +10,10 @@ Rules it keeps:
 * A ticket is short-lived, single-use and bound to one exact controller scope.
 * ``scope_for_session`` answers only when exactly one controller is attached for
   the profile and session; none or several fail closed, never a guess.
+* A session has one principal at a time: while a controller from one principal is
+  live, another principal can neither register nor attach for that session
+  (``principal_conflict``, enforced again inside ``attach``). A same-principal
+  controller may replace it, and a different principal's offline one is replaced.
 * ``select`` matches every stable identity field and the controller's *current*
   capability set, so a caller never reaches a capability the extension dropped.
 * ``dispatch`` blocks for the controller's answer; ``complete`` resolves a command
@@ -96,6 +100,10 @@ class ControlError(Exception):
 
 class TicketInvalid(ControlError):
     """A registration ticket is unknown, already consumed, or expired."""
+
+
+class PrincipalConflict(ControlError):
+    """A session already has a live controller from a different principal."""
 
 
 class ControllerUnavailable(ControlError):
@@ -236,6 +244,16 @@ class ControlBroker:
             controller = self._controller_for_identity_locked(scope)
         return controller if controller is not None and controller.connected else None
 
+    def principal_conflict(self, scope: ControllerScope) -> bool:
+        """Whether a *live* controller from a different principal holds this scope's profile and session."""
+        with self._lock:
+            return any(
+                controller.connected
+                and (controller.scope.profile_id, controller.scope.session_id) == (scope.profile_id, scope.session_id)
+                and controller.scope.principal_id != scope.principal_id
+                for controller in self._controllers.values()
+            )
+
     def attach(self, scope: ControllerScope, send: Callable[[dict], None], *, owner: Any = None) -> None:
         """Attach or refresh the controller for one stable identity.
 
@@ -245,8 +263,17 @@ class ControlBroker:
         """
         while True:
             with self._lock:
+                if self.principal_conflict(scope):
+                    raise PrincipalConflict("the session is held by another principal")
                 existing = self._controller_for_identity_locked(scope)
-                lane_scopes = [
+                # An offline controller of another principal no longer holds the session.
+                foreign = [
+                    other
+                    for other in self._controllers
+                    if (other.profile_id, other.session_id) == (scope.profile_id, scope.session_id)
+                    and other.principal_id != scope.principal_id
+                ]
+                lane_scopes = foreign + [
                     other
                     for other in self._controllers
                     if not _same_scope_identity(other, scope)
