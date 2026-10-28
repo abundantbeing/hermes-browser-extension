@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import {
   botChatDeliveryFrame,
+  botChatRefusalState,
   isPendingBotChatDelivery,
   movedBotChatSessionId,
 } from '../extension/lib/bot-chat-delivery.mjs';
@@ -204,4 +205,25 @@ test('a reported failure is not wiped by the post-turn history refresh', () => {
   assert.match(askHermes, /if \(error\?\.requestAccepted !== true\) holdPostTurnRefresh = true;/);
   assert.match(askHermes, /if \(!holdPostTurnRefresh\) void refreshActiveSessionHistoryQuietly\(/);
   assert.equal((askHermes.match(/refreshActiveSessionHistoryQuietly\(/g) || []).length, 1);
+});
+
+test('a Bot Chat from before the gateway kept chats names the one step that hands it over', () => {
+  const refused = botChatDeliveryFrame('error', { delivery_id: 'd1', code: 'bot_chat_unbound', message: 'Bot Chat admission refused: bot_chat_unbound' });
+  const state = botChatRefusalState(refused, { profile: 'namine', name: 'Naminé' });
+  assert.equal(state.kind, 'bot-chat-unbound');
+  assert.equal(state.gatewayStatus, 'connected', 'the gateway answered: it stays connected');
+  assert.equal(state.preserveDraft, true);
+  assert.match(state.detail, /Naminé's Bot Chat/);
+  assert.match(state.detail, /Hermes Desktop/);
+  assert.match(state.detail, /`hermes -p namine sessions adopt`/);
+  assert.match(botChatRefusalState(refused, { profile: 'default', name: 'Roxas' }).detail, /`hermes sessions adopt`/, 'the default profile needs no -p');
+  assert.equal(botChatRefusalState(botChatDeliveryFrame('error', { delivery_id: 'd1', code: 'bot_chat_not_local' })), null, 'other refusals keep the gateway text');
+  assert.equal(botChatRefusalState(botChatDeliveryFrame('run.queued', { delivery_id: 'd1' })), null);
+  assert.equal(botChatRefusalState(null), null);
+});
+
+test('the panel shows the hand-over step for a refused Bot Chat turn before the generic rejection', () => {
+  const ask = functionSource('askHermes');
+  assert.match(ask, /preGatewayChatFailureState\(error\)\s*\|\| botChatRefusalState\(error\?\.botChatDelivery, botChatRefusalNames\(\)\)\s*\|\| turnRequestFailureState\(error\)/);
+  assert.match(functionSource('botChatRefusalNames'), /safeActiveProfile\(\) \|\| 'default'/);
 });

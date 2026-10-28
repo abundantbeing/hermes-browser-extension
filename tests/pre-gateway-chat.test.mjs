@@ -79,7 +79,7 @@ test('the failure state names the gateway reason, gives the hint, keeps the draf
 test('the panel routes both the prepare step and the turn through it and never resends', () => {
   const source = readFileSync(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(source, /throw preGatewayChatError\(resumeError, [^)]*\) \|\| sessionGoneError\(resumeError\)/);
-  assert.match(source, /const requestFailure = preGatewayChatFailureState\(error\) \|\| turnRequestFailureState\(error\)/);
+  assert.match(source, /const requestFailure = preGatewayChatFailureState\(error\)\s*(?:\|\| botChatRefusalState\(error\?\.botChatDelivery, botChatRefusalNames\(\)\)\s*)?\|\| turnRequestFailureState\(error\)/);
   const prepare = source.slice(source.indexOf('const preGatewayChat = dashboardTransport'));
   const block = prepare.slice(0, prepare.indexOf('return false;') + 14);
   assert.match(block, /preGatewayChatFailureState\(preGatewayChat\)/);

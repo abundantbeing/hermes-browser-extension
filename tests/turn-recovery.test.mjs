@@ -273,7 +273,7 @@ test('side panel wires compression exhaustion into bounded compact-or-new-sessio
 
 test('the side panel preserves provider-rejected drafts without marking Hermes unreachable', () => {
   assert.match(sidepanelSource, /hermesRequestError\(\{[\s\S]{0,180}status:\s*response\.status[\s\S]{0,180}body:\s*text/);
-  const sidepanelRejectionStart = sidepanelSource.lastIndexOf('const requestFailure = preGatewayChatFailureState(error) || turnRequestFailureState(error)');
+  const sidepanelRejectionStart = sidepanelSource.lastIndexOf('const requestFailure = preGatewayChatFailureState(error)');
   const sidepanelRejectionBranch = sidepanelSource.slice(sidepanelRejectionStart, sidepanelSource.indexOf('const diagnostic = classifyGatewayError(error,', sidepanelRejectionStart));
   assert.match(sidepanelRejectionBranch, /Gateway remains connected/);
   assert.match(sidepanelRejectionBranch, /streamView\.update/);

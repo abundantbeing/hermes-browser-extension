@@ -36,3 +36,23 @@ export function movedBotChatSessionId(requestedId, delivery) {
   if (!requested || !entered || entered === requested || delivery?.status === 'refused') return '';
   return entered;
 }
+
+// A profile's Bot Chat from before the gateway kept chats itself (a Desktop, CLI or TUI chat with
+// no gateway receipt) is handed over only by a native client on the host: a Desktop or TUI open, or
+// `hermes sessions adopt`. Browser reaches the gateway over the API and is never that client, so a
+// turn into it is refused `bot_chat_unbound` until the owner adopts it once. The state names the
+// one step that unblocks it instead of the gateway's bare refusal.
+export function botChatRefusalState(delivery, { profile = '', name = '' } = {}) {
+  if (delivery?.status !== 'refused' || delivery.code !== 'bot_chat_unbound') return null;
+  const who = text(name) || 'This bot';
+  const scoped = text(profile);
+  const command = scoped && scoped !== 'default' ? `hermes -p ${scoped} sessions adopt` : 'hermes sessions adopt';
+  return {
+    kind: 'bot-chat-unbound',
+    title: 'Open this Bot Chat once in Hermes Desktop',
+    detail: `${who}'s Bot Chat was started before Hermes kept chats itself, and only the computer running Hermes can hand it over. Open ${who}'s Bot Chat once in Hermes Desktop, or run \`${command}\` on that computer, then send again. Nothing was sent, and your message was kept as a draft.`,
+    preserveDraft: true,
+    gatewayStatus: 'connected',
+  };
+}
+

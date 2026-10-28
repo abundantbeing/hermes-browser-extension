@@ -362,7 +362,7 @@ test('the send path routes only the exact refusal into the offer, before the gen
   const catchStart = source.indexOf('if (isSessionSourceRefusal(error)) {');
   assert.ok(catchStart > 0);
   assert.ok(catchStart < source.indexOf('if (error?.originRefused) {', catchStart));
-  assert.ok(catchStart < source.indexOf('const requestFailure = preGatewayChatFailureState(error) || turnRequestFailureState(error);', catchStart));
+  assert.ok(catchStart < source.indexOf('const requestFailure = preGatewayChatFailureState(error)', catchStart));
   const block = source.slice(catchStart, source.indexOf('if (error?.originRefused) {', catchStart));
   assert.match(block, /offerLegacySessionRecovery\(\{ sessionId: runSessionId/);
   assert.match(block, /return didSend;/);

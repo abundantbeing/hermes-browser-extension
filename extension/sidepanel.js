@@ -745,7 +745,7 @@ import {
   isTruncateRejection,
 } from './lib/message-rewind.mjs';
 import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
-import { botChatDeliveryFrame, isPendingBotChatDelivery, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
+import { botChatDeliveryFrame, botChatRefusalState, isPendingBotChatDelivery, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
 import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
@@ -16096,6 +16096,12 @@ function botSheetRosterRow(profileName = botSheetProfileName) {
   return botModeRoster.find((entry) => entry.profileName === profileName) || null;
 }
 
+// The profile and name a refused Bot Chat turn names (the bot whose chat is open).
+function botChatRefusalNames() {
+  const profile = safeActiveProfile() || 'default';
+  return { profile, name: botProfileDisplayName(botSheetRosterRow(profile) || { profileName: profile }) };
+}
+
 function showBotModeSheetWarning(message, { conflict = false } = {}) {
   if (!els.botModeSheetWarning) return;
   els.botModeSheetWarning.textContent = message;
@@ -26608,7 +26614,9 @@ ${streamError.message}`);
         addMessage('system', `Hermes Browser Extension setup issue: ${error.remoteDiagnostic.detail} Open Settings → Support diagnostics → Copy Diagnostics and paste the redacted report if you need help.`);
         return didSend;
       }
-      const requestFailure = preGatewayChatFailureState(error) || turnRequestFailureState(error);
+      const requestFailure = preGatewayChatFailureState(error)
+        || botChatRefusalState(error?.botChatDelivery, botChatRefusalNames())
+        || turnRequestFailureState(error);
       if (requestFailure?.gatewayStatus === 'connected') {
         if (!turnOptions.preserveComposer && !els.input.value.trim() && !attachments.length) {
           els.input.value = commentPack.consumed ? (commentPack.displayUserText || '') : userText;
