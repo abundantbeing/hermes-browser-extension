@@ -745,7 +745,7 @@ import {
   isTruncateRejection,
 } from './lib/message-rewind.mjs';
 import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
-import { botChatDeliveryFrame, botChatRefusalState, isPendingBotChatDelivery, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
+import { botChatDeliveryFrame, botChatRefusalState, isPendingBotChatDelivery, movedAsideBotChat, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
 import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-pick.mjs';
 import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
@@ -1026,6 +1026,10 @@ const els = {
   botChatIntroAvatar: $('#botChatIntroAvatar'),
   botChatIntroTitle: $('#botChatIntroTitle'),
   botChatIntroSubtitle: $('#botChatIntroSubtitle'),
+  botChatEarlier: $('#botChatEarlier'),
+  botChatEarlierSummary: $('#botChatEarlierSummary'),
+  botChatEarlierNote: $('#botChatEarlierNote'),
+  botChatEarlierList: $('#botChatEarlierList'),
   botModeReturnButton: $('#botModeReturnButton'),
   botModeGroupReturnButton: $('#botModeGroupReturnButton'),
   botModeSheet: $('#botModeSheet'),
@@ -1399,6 +1403,8 @@ let activeRoomIdentities = [];
 // out of the DOM until requested).
 const BOT_HISTORY_PAGE_SIZE = 40;
 let botHistoryVisibleCount = BOT_HISTORY_PAGE_SIZE;
+// The bot's earlier messages from a Bot Chat Hermes moved aside (refreshBotChatEarlier).
+let botChatEarlier = { profile: '', session: null, loaded: false };
 let attachments = [];
 let selectedModelProvider = '';
 let modelSelectionTarget = 'chat';
@@ -14981,6 +14987,84 @@ async function loadProfilesFromGatewayRoutes({ quiet = false, generation = 0, ga
 // A profile's Bot Chat rows straight from the gateway's /p/<name>/ session list.
 // Exact-title lookup with hidden rows included, the same query Bot Mode has
 // always used to find a bot's single canonical chat.
+// The bot's earlier messages when Hermes moved its old Bot Chat aside (movedAsideBotChat): Desktop lists
+// that chat as an ordinary session, so a bot's chat would otherwise look like it lost its history. They
+// show read-only above the chat, and load only when opened.
+async function refreshBotChatEarlier(row) {
+  const profile = String(row?.profileName || '').trim();
+  botChatEarlier = { profile, session: null, loaded: false };
+  renderBotChatEarlier();
+  if (!profile) return;
+  try {
+    const response = await hermesClient.fetch(`/p/${encodeURIComponent(profile)}/api/sessions?limit=100`, {
+      method: 'GET',
+      signal: typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(8_000) : undefined,
+    });
+    const payload = await hermesClient.readJson(response);
+    if (!response.ok || botChatEarlier.profile !== profile) return;
+    const rows = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload?.sessions) ? payload.sessions : []);
+    botChatEarlier = { profile, session: movedAsideBotChat(rows), loaded: false };
+  } catch {
+    // No earlier chat to point at when the list cannot be read.
+  }
+  renderBotChatEarlier();
+}
+
+function renderBotChatEarlier() {
+  const box = els.botChatEarlier;
+  if (!box) return;
+  const { profile, session } = botChatEarlier;
+  const viewedProfile = settings.botModeSelectedProfile || settings.activeProfile || '';
+  const show = Boolean(session) && settings.botModeEnabled === true && !activeGroupProjection
+    && document.body.classList.contains('bot-mode-engaged') && profile === viewedProfile;
+  if (!show) {
+    box.hidden = true;
+    box.open = false;
+    return;
+  }
+  const name = botProfileDisplayName(botSheetRosterRow(profile) || { profileName: profile });
+  els.botChatEarlierSummary.textContent = t('bot_mode.earlier_messages', { name, count: Number(session.message_count) || 0 });
+  els.botChatEarlierNote.textContent = t('bot_mode.earlier_messages_note', { name, title: String(session.title || '') });
+  box.hidden = false;
+}
+
+async function loadBotChatEarlierMessages() {
+  const { profile, session } = botChatEarlier;
+  if (!session || botChatEarlier.loaded || !els.botChatEarlierList) return;
+  botChatEarlier.loaded = true;
+  const note = (key) => {
+    const line = document.createElement('p');
+    line.className = 'bot-chat-earlier-note';
+    line.textContent = t(key, { title: String(session.title || '') });
+    return line;
+  };
+  els.botChatEarlierList.replaceChildren(note('bot_mode.earlier_messages_loading'));
+  try {
+    const response = await hermesClient.fetch(`/p/${encodeURIComponent(profile)}/api/sessions/${encodeSessionId(session.id)}/messages`, { method: 'GET' });
+    const payload = await hermesClient.readJson(response);
+    if (!response.ok) throw new Error(`Messages failed (${response.status})`);
+    if (botChatEarlier.session !== session) return;
+    const name = botProfileDisplayName(botSheetRosterRow(profile) || { profileName: profile });
+    const rows = (Array.isArray(payload?.data) ? payload.data : [])
+      .map((message) => ({ role: String(message?.role || '').toLowerCase(), content: String(message?.content || '') }))
+      .filter((message) => (message.role === 'user' || message.role === 'assistant') && message.content.trim());
+    els.botChatEarlierList.replaceChildren(...rows.map((message) => {
+      const item = document.createElement('div');
+      item.className = 'bot-chat-earlier-row';
+      const who = document.createElement('strong');
+      who.textContent = message.role === 'user' ? t('ui.you') : name;
+      const body = document.createElement('div');
+      body.className = 'bot-chat-earlier-text';
+      body.innerHTML = renderMarkdownSafe(message.role === 'user' ? messageDisplayText('user', message.content) : message.content);
+      item.append(who, body);
+      return item;
+    }));
+  } catch {
+    botChatEarlier.loaded = false;
+    if (botChatEarlier.session === session) els.botChatEarlierList.replaceChildren(note('bot_mode.earlier_messages_failed'));
+  }
+}
+
 async function listBotChatRowsViaGateway(profileName, { timeoutMs = 8_000 } = {}) {
   const name = String(profileName || '').trim();
   if (!name) return [];
@@ -15739,6 +15823,7 @@ async function openBotProfile(row) {
     renderGroupThreadStrip();
     renderMessagesFromStorage();
     renderBotChatIntro(row);
+    void refreshBotChatEarlier(row);
     if (els.composerInput) {
       els.composerInput.placeholder = `Ask ${botProfileDisplayName(row)} anything...`;
     }
@@ -16030,6 +16115,7 @@ function renderActiveProfileIndicator() {
 
   function renderBotChatIntro(row = null) {
   renderActiveProfileIndicator();
+  renderBotChatEarlier();
   if (!els.botChatIntro) return;
   // A group room owns the transcript: the individual bot hero must never
   // render over it (or after switching back from a room).
@@ -27741,6 +27827,9 @@ function bindEvents() {
     void leaveBotModeForRegularSession().catch((error) => {
       setStatus('error', 'Could not return to Regular Sessions', error?.message || String(error), { translateDetail: false });
     });
+  });
+  els.botChatEarlier?.addEventListener('toggle', () => {
+    if (els.botChatEarlier.open) void loadBotChatEarlierMessages();
   });
   els.newGroupCloseButton?.addEventListener('click', closeNewGroupModal);
   els.newGroupCancelButton?.addEventListener('click', closeNewGroupModal);

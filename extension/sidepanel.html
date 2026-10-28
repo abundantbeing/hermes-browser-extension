@@ -410,6 +410,12 @@
 
         <section id="onboardingFlow" class="onboarding" role="dialog" aria-modal="true" aria-label="Set up Hermes" data-i18n-aria-label="onboarding.aria" hidden></section>
 
+        <!-- A Bot Chat Hermes moved aside keeps the bot's earlier messages (lib/bot-chat-delivery.mjs movedAsideBotChat). -->
+        <details id="botChatEarlier" class="bot-chat-earlier" hidden>
+          <summary id="botChatEarlierSummary"></summary>
+          <p id="botChatEarlierNote" class="bot-chat-earlier-note"></p>
+          <div id="botChatEarlierList" class="bot-chat-earlier-list"></div>
+        </details>
         <section id="messages" class="messages" aria-live="polite"></section>
       </section>
 

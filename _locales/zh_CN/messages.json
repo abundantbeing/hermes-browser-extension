@@ -479,6 +479,22 @@
     "message": "Hermes 浏览器 Bot 模式",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "与 {name} 的早前消息（{count}）",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "无法加载早前消息。你仍可以从 Regular Sessions 打开“{title}”。",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "正在加载早前消息…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes 已将你与 {name} 的早前聊天另存为“{title}”并开始了这个聊天，所以 {name} 在这里看不到这些消息。",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"

@@ -479,6 +479,22 @@
     "message": "Hermes Browser Bot 模式",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "與 {name} 的先前訊息（{count}）",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "無法載入先前訊息。你仍可從 Regular Sessions 開啟「{title}」。",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "正在載入先前訊息…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes 已將你與 {name} 的先前聊天另存為「{title}」並開始了這個聊天，所以 {name} 在這裡看不到這些訊息。",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"

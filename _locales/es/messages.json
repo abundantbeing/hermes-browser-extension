@@ -479,6 +479,22 @@
     "message": "Modo bot de Hermes Browser",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "Mensajes anteriores con {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "No se pudieron cargar los mensajes anteriores. Aún puedes abrir “{title}” desde Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "Cargando mensajes anteriores…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes apartó tu chat anterior con {name} como “{title}” y empezó este, así que {name} no ve estos mensajes aquí.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"

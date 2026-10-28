@@ -4412,6 +4412,35 @@ html[data-hermes-theme^="custom:"] .message.user .message-content pre code.hljs 
   border-color: rgba(255, 80, 80, 0.5);
 }
 .queue-notice[hidden] { display: none; }
+.bot-chat-earlier {
+  margin: 0 0 10px;
+  border: 1px solid rgba(var(--hermes-accent-rgb),0.48);
+  background: rgba(var(--hermes-accent-rgb),0.08);
+  color: var(--hermes-ink);
+  font-size: calc(11px * var(--hermes-text-zoom, 1));
+}
+.bot-chat-earlier[hidden] { display: none; }
+.bot-chat-earlier > summary {
+  cursor: pointer;
+  padding: 7px 9px;
+  font-size: calc(10px * var(--hermes-text-zoom, 1));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.bot-chat-earlier-note { margin: 0; padding: 0 9px 8px; line-height: 1.45; opacity: 0.8; }
+.bot-chat-earlier-list { display: grid; gap: 8px; padding: 0 9px 9px; }
+.bot-chat-earlier-row { border-top: 1px solid rgba(var(--hermes-fg-rgb),0.14); padding-top: 7px; }
+.bot-chat-earlier-row > strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: calc(9px * var(--hermes-text-zoom, 1));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.bot-chat-earlier-text { line-height: 1.45; overflow-wrap: anywhere; }
+.bot-chat-earlier-text > :first-child { margin-top: 0; }
+.bot-chat-earlier-text > :last-child { margin-bottom: 0; }
 .gateway-queue-notice { text-transform: none; letter-spacing: 0; }
 .gateway-queue-notice strong { display: block; text-transform: uppercase; letter-spacing: 0.1em; }
 .gateway-queue-lost,
@@ -11974,6 +12003,8 @@ html[dir="rtl"] .artifact-card-actions button,
 html[dir="rtl"] .artifact-card-kind,
 html[dir="rtl"] .artifact-card-name-ext,
 html[dir="rtl"] .attach-menu-heading,
+html[dir="rtl"] .bot-chat-earlier > summary,
+html[dir="rtl"] .bot-chat-earlier-row > strong,
 html[dir="rtl"] .bot-chat-intro-subtitle,
 html[dir="rtl"] .bot-chat-intro-title,
 html[dir="rtl"] .bot-mode-action,

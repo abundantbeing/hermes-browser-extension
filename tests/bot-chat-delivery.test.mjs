@@ -6,6 +6,7 @@ import {
   botChatDeliveryFrame,
   botChatRefusalState,
   isPendingBotChatDelivery,
+  movedAsideBotChat,
   movedBotChatSessionId,
 } from '../extension/lib/bot-chat-delivery.mjs';
 import { appendOpenAiChunkText } from '../extension/lib/common.mjs';
@@ -226,4 +227,34 @@ test('the panel shows the hand-over step for a refused Bot Chat turn before the 
   const ask = functionSource('askHermes');
   assert.match(ask, /preGatewayChatFailureState\(error\)\s*\|\| botChatRefusalState\(error\?\.botChatDelivery, botChatRefusalNames\(\)\)\s*\|\| turnRequestFailureState\(error\)/);
   assert.match(functionSource('botChatRefusalNames'), /safeActiveProfile\(\) \|\| 'default'/);
+});
+
+test('the earlier messages are the newest Bot Chat Hermes moved aside that holds any', () => {
+  const rows = [
+    { id: 'local-1', title: 'Bot Chat', message_count: 2, last_active: 50 },
+    { id: 'old-a', title: 'Bot Chat (API old-a)', message_count: 12, last_active: 10 },
+    { id: 'old-b', title: 'Bot Chat (hermes_browser old-b)', message_count: 46, last_active: 30 },
+    { id: 'empty', title: 'Bot Chat (API empty)', message_count: 0, last_active: 40 },
+    { id: 'draft', title: 'Bot Chat · 20260831_194941_f5d063', message_count: 0, last_active: 60 },
+    { id: 'other', title: 'Planning notes', message_count: 9, last_active: 70 },
+  ];
+  assert.equal(movedAsideBotChat(rows)?.id, 'old-b');
+  assert.equal(movedAsideBotChat(rows.filter((row) => !row.id.startsWith('old-'))), null);
+  assert.equal(movedAsideBotChat(null), null);
+});
+
+test('the bot chat shows the earlier messages read-only and loads them only when opened', () => {
+  const refresh = functionSource('refreshBotChatEarlier');
+  assert.match(refresh, /movedAsideBotChat\(rows\)/);
+  assert.match(refresh, /botChatEarlier\.profile !== profile/, 'a reply for a bot no longer open is dropped');
+  const render = functionSource('renderBotChatEarlier');
+  assert.match(render, /!activeGroupProjection/);
+  assert.match(render, /bot-mode-engaged/);
+  const load = functionSource('loadBotChatEarlierMessages');
+  assert.match(load, /renderMarkdownSafe\(/);
+  assert.doesNotMatch(load, /askHermes\(|openHermesSession\(|settings\.sessionId =/, 'reading them never switches or writes the open chat');
+  assert.match(source, /void refreshBotChatEarlier\(row\);/);
+  assert.match(source, /function renderBotChatIntro\(row = null\) \{\s*renderActiveProfileIndicator\(\);\s*renderBotChatEarlier\(\);/);
+  assert.match(source, /els\.botChatEarlier\?\.addEventListener\('toggle'/);
+  assert.match(english['bot_mode.earlier_messages'], /\{name\}/);
 });

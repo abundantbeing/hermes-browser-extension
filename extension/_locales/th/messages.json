@@ -479,6 +479,22 @@
     "message": "โหมดบอตของ Hermes Browser",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "ข้อความก่อนหน้ากับ {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "โหลดข้อความก่อนหน้าไม่ได้ คุณยังเปิด “{title}” ได้จาก Regular Sessions",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "กำลังโหลดข้อความก่อนหน้า…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes ย้ายแชตก่อนหน้าของคุณกับ {name} ไปไว้เป็น “{title}” และเริ่มแชตนี้ใหม่ ดังนั้น {name} จึงไม่เห็นข้อความเหล่านี้ที่นี่",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"

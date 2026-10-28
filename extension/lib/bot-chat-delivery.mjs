@@ -56,3 +56,13 @@ export function botChatRefusalState(delivery, { profile = '', name = '' } = {}) 
   };
 }
 
+// A Bot Chat the gateway moved aside keeps its id and its messages under a visible title,
+// `Bot Chat (<source> <id>)` (gateway/session_bot.py _displace_bot_chat): the bot's earlier messages
+// before Hermes started its chat over. The newest such chat that holds any, else null.
+export function movedAsideBotChat(rows = []) {
+  const moved = (Array.isArray(rows) ? rows : []).filter((row) => /^Bot Chat \(.+\)$/.test(text(row?.title))
+    && text(row?.id) && Number(row?.message_count || 0) > 0);
+  const recency = (row) => Number(row?.last_active || row?.started_at || 0);
+  moved.sort((a, b) => recency(b) - recency(a));
+  return moved[0] || null;
+}

@@ -479,6 +479,22 @@
     "message": "Chế độ Bot của Hermes Browser",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "Tin nhắn trước đây với {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "Không thể tải tin nhắn trước đây. Bạn vẫn có thể mở “{title}” từ Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "Đang tải tin nhắn trước đây…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes đã chuyển cuộc trò chuyện trước đây của bạn với {name} sang “{title}” và bắt đầu cuộc trò chuyện này, nên {name} không thấy các tin nhắn này ở đây.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"

@@ -479,6 +479,22 @@
     "message": "وضع البوت في Hermes Browser",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "رسائل سابقة مع {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "تعذّر تحميل الرسائل السابقة. لا يزال بإمكانك فتح “{title}” من Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "جارٍ تحميل الرسائل السابقة…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "نقل Hermes محادثتك السابقة مع {name} جانبًا باسم “{title}” وبدأ هذه المحادثة، لذلك لا يرى {name} هذه الرسائل هنا.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"

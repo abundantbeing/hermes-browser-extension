@@ -479,6 +479,22 @@
     "message": "Mode Bot Hermes Browser",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "Pesan sebelumnya dengan {name} ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "Pesan sebelumnya tidak dapat dimuat. Anda masih dapat membuka “{title}” dari Regular Sessions.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "Memuat pesan sebelumnya…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes memindahkan obrolan Anda sebelumnya dengan {name} ke samping sebagai “{title}” dan memulai obrolan ini, jadi {name} tidak melihat pesan-pesan ini di sini.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"

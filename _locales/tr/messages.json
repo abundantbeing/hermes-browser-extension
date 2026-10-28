@@ -479,6 +479,22 @@
     "message": "Hermes Browser bot modu",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
+  "runtime_bot_mode_earlier_messages": {
+    "message": "{name} ile önceki mesajlar ({count})",
+    "description": "Runtime interface message bot_mode.earlier_messages"
+  },
+  "runtime_bot_mode_earlier_messages_failed": {
+    "message": "Önceki mesajlar yüklenemedi. “{title}” sohbetini yine de Regular Sessions bölümünden açabilirsin.",
+    "description": "Runtime interface message bot_mode.earlier_messages_failed"
+  },
+  "runtime_bot_mode_earlier_messages_loading": {
+    "message": "Önceki mesajlar yükleniyor…",
+    "description": "Runtime interface message bot_mode.earlier_messages_loading"
+  },
+  "runtime_bot_mode_earlier_messages_note": {
+    "message": "Hermes, {name} ile önceki sohbetini “{title}” adıyla bir kenara koydu ve bunu başlattı; bu yüzden {name} bu mesajları burada görmez.",
+    "description": "Runtime interface message bot_mode.earlier_messages_note"
+  },
   "runtime_bot_mode_edit_profile": {
     "message": "Edit Profile",
     "description": "Runtime interface message bot_mode.edit_profile"
