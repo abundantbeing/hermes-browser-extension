@@ -417,6 +417,12 @@
           <div id="botChatEarlierList" class="bot-chat-earlier-list"></div>
         </details>
         <section id="messages" class="messages" aria-live="polite"></section>
+        <!-- One line under the thread while a group turn runs, cycling between the bots answering (lib/group-presence.mjs presenceLine). -->
+        <div id="groupWorkingLine" class="group-working-line" data-i18n-runtime hidden>
+          <span id="groupWorkingAvatars" class="group-working-avatars" aria-hidden="true"></span>
+          <span id="groupWorkingText" class="group-working-text" aria-hidden="true"></span>
+          <span id="groupWorkingStatus" class="sr-only" role="status" aria-live="polite"></span>
+        </div>
       </section>
 
       <footer class="bottom-dock" aria-label="Hermes Browser Extension controls" data-i18n-aria-label="a11y.extension_controls">
@@ -449,10 +455,8 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="arrow-left"><path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z"/><path d="M10 15V7H8v8zm2 2V5h-2v12z"/></svg>
           </button>
         </div>
-        <div id="groupPresence" class="group-presence" data-i18n-runtime hidden>
-          <div class="group-presence-chips" id="groupPresenceChips" role="list"></div>
-          <div class="group-presence-status" id="groupPresenceStatus" aria-live="polite"></div>
-        </div>
+        <!-- A bot that could not reply in a group turn, with Retry. Who is answering shows under the thread (#groupWorkingLine). -->
+        <div id="groupPresence" class="group-presence" data-i18n-runtime role="list" hidden></div>
         <div id="firstPromptChips" class="first-prompt-chips" role="group" aria-label="Try a first prompt" data-i18n-aria-label="onboarding.first_prompt" hidden>
           <button id="firstPromptChip" class="first-prompt-chip" type="button" data-i18n="onboarding.preview.user">Summarise this page</button>
         </div>

@@ -1,5 +1,5 @@
 // Pure reducer turning Bot Mode runtime activity into per-member presence.
-// The strip and the in-thread live bubble both read this single state.
+// The typing line, the failure notices and the in-thread live bubble all read this single state.
 
 const TERMINAL = new Set(['replied', 'passed', 'failed']);
 const ACTIVE = new Set(['working', 'typing', 'tool']);
@@ -88,7 +88,10 @@ export function reducePresence(state, activity = {}, { now = Date.now() } = {}) 
 
   switch (kind) {
     case 'working':
-      if (!TERMINAL.has(entry.state)) setState(entry, 'working', now, { tool: '' });
+      // Only the start of a member's turn says `working`, so a member that already answered is
+      // working again: Hermes gave it another round because a bot mentioned it. Late typing and
+      // tool frames still cannot reopen it.
+      setState(entry, 'working', now, { tool: '', text: '', error: '' });
       break;
     case 'retry':
       // A per-member retry reopens ONLY that member: reset it to queued (a
@@ -144,35 +147,38 @@ export function failureReason(error, { translate = (s) => s } = {}) {
   return t('Something went wrong');
 }
 
-export function presenceSummary(state, { translate = (s) => s } = {}) {
+const DUE = new Set(['queued', ...ACTIVE]);
+
+// What the one-line typing indicator under the thread shows while a turn runs, or null when it
+// shows nothing. The line cycles through `frames`: everyone the turn is still waiting on as one
+// group line (when that is more than one member), then each member answering right now. A running
+// turn with nobody due, while Hermes decides whether a bot's mention earns another round, is a
+// single `wrapping` frame.
+export function presenceLine(state) {
   const members = asList(state?.members);
-  if (members.length === 0) return '';
+  if (!members.length || state?.phase !== 'running') return null;
+  const due = members.filter((entry) => DUE.has(entry.state));
+  if (!due.length) return { frames: [{ kind: 'wrapping' }] };
+  const frames = due.length > 1 ? [{ kind: 'group', members: due }] : [];
+  const active = due.filter((entry) => ACTIVE.has(entry.state));
+  for (const entry of active) frames.push({ kind: 'member', member: entry });
+  if (!frames.length) frames.push({ kind: 'member', member: due[0] });
+  return { frames };
+}
+
+// The words of one frame: the group line names up to three members, a member frame says what that
+// member is doing. Names are display names; the caller colours and lays them out.
+export function presenceFrameText(frame, { translate = (s) => s } = {}) {
   const t = typeof translate === 'function' ? translate : (s) => s;
-
-  const active = members.find((entry) => ACTIVE.has(entry.state));
-  const waiting = members.filter((entry) => entry.state === 'queued').length;
-
-  if (active) {
-    let phrase;
-    if (active.state === 'typing') phrase = fill(t('{name} is typing'), { name: active.member });
-    else if (active.state === 'tool') phrase = fill(t('{name} is using {tool}'), { name: active.member, tool: active.tool });
-    else phrase = fill(t('{name} is replying'), { name: active.member });
-    return waiting > 0 ? `${phrase} · ${fill(t('{count} waiting'), { count: waiting })}` : phrase;
+  if (frame?.kind === 'wrapping') return t('Wrapping up…');
+  if (frame?.kind === 'group') {
+    const names = asList(frame.members).map((entry) => entry.roleLabel || entry.member);
+    if (names.length === 2) return fill(t('{first} and {second} are working…'), { first: names[0], second: names[1] });
+    if (names.length === 3) return fill(t('{first}, {second}, and {third} are working…'), { first: names[0], second: names[1], third: names[2] });
+    return fill(t('{first}, {second}, and {count} more are working…'), { first: names[0], second: names[1], count: names.length - 2 });
   }
-
-  // A queued member has not replied, on any phase. The runtime still emits
-  // `idle` after an abort breaks the member loop, so gating this on the running
-  // phase would announce completion over a member that never ran.
-  if (waiting > 0) return fill(t('{count} waiting'), { count: waiting });
-
-  const failed = members.filter((entry) => entry.state === 'failed').length;
-  const passed = members.filter((entry) => entry.state === 'passed').length;
-  if (failed > 0) {
-    // Never claim "Done" over a member that failed. State the real split so the
-    // summary cannot contradict the failure notice above it.
-    const replied = members.filter((entry) => entry.state === 'replied').length;
-    return fill(t('{replied} replied, {failed} couldn\'t'), { replied, failed });
-  }
-  if (passed > 0) return fill(t('All done · {count} passed'), { count: passed });
-  return t('All replied');
+  const entry = frame?.member || {};
+  if (entry.state === 'typing') return t('Typing…');
+  if (entry.state === 'tool' && entry.tool) return fill(t('Using {tool}…'), { tool: entry.tool });
+  return t('Working…');
 }

@@ -358,7 +358,7 @@ import {
 import { browserDisplayMessages } from './lib/web-run-state.mjs';
 import { assignRoomIdentities, resolveRoomSpeaker } from './lib/bot-identity.mjs';
 import { isAvatarCacheFresh, remoteAvatarImageOf, selectRoomAvatarSource, shouldHydrateRemoteAvatar } from './lib/room-avatar.mjs';
-import { createPresenceState, reducePresence, presenceSummary, failureReason } from './lib/group-presence.mjs';
+import { createPresenceState, reducePresence, presenceLine, presenceFrameText, failureReason } from './lib/group-presence.mjs';
 import {
   readRoomModelBinding,
   writeRoomModelBinding,
@@ -992,8 +992,10 @@ const els = {
   groupThreadHint: $('#groupThreadHint'),
   groupThreadExitButton: $('#groupThreadExitButton'),
   groupPresence: $('#groupPresence'),
-  groupPresenceChips: $('#groupPresenceChips'),
-  groupPresenceStatus: $('#groupPresenceStatus'),
+  groupWorkingLine: $('#groupWorkingLine'),
+  groupWorkingAvatars: $('#groupWorkingAvatars'),
+  groupWorkingText: $('#groupWorkingText'),
+  groupWorkingStatus: $('#groupWorkingStatus'),
   roomMemberPopover: $('#roomMemberPopover'),
   roomMemberPopoverList: $('#roomMemberPopoverList'),
   roomMemberPopoverTitle: $('#roomMemberPopoverTitle'),
@@ -13704,104 +13706,150 @@ async function applyRoomMemberModelBeforeTurn(roomId, member, session) {
   void session;
 }
 
+// A group turn shows in two places: one line under the thread naming who is answering, cycling
+// between them, and a notice with Retry above the composer for a bot that could not reply.
+const GROUP_WORKING_CYCLE_MS = 2600;
+let groupWorkingFrames = [];
+let groupWorkingFrameIndex = 0;
+let groupWorkingCycleTimer = 0;
+let groupWorkingShown = '';
+
 function renderGroupTypingIndicator() {
-  if (!els.groupPresence || !els.groupPresenceChips || !els.groupPresenceStatus) return;
+  renderGroupFailureNotices();
+  renderGroupWorkingLine();
+}
+
+function renderGroupFailureNotices() {
+  if (!els.groupPresence) return;
   const entries = activeGroupPresence.members;
   const visible = Boolean(activeGroupProjection && entries.length && activeGroupPresence.phase !== 'idle');
-  els.groupPresence.hidden = !visible;
-  els.groupPresenceChips.replaceChildren();
-  els.groupPresence.querySelectorAll(':scope > .presence-notice').forEach((node) => node.remove());
-  els.groupPresenceStatus.textContent = '';
-  if (!visible) return;
-  const next = entries.find((entry) => entry.state === 'queued')?.member;
-  const narrow = document.documentElement.clientWidth < 380;
-  // Failure notices render as their own slim full-width row in the strip, so the
-  // name and reason never get squeezed into a chip-sized pill.
   const notices = [];
-  for (const entry of entries.slice(0, narrow ? 6 : entries.length)) {
+  for (const entry of visible ? entries : []) {
+    if (entry.state !== 'failed') continue;
     const chipTitle = entry.roleLabel || entry.member;
     const identity = roomIdentityForMember(entry.member);
-    if (entry.state === 'failed') {
-      // Failure is an inline notice, not a chip: warning icon, the member's own
-      // avatar and colour, a clear human line, and the mapped short reason. The
-      // whole notice opens the full diagnostic on click.
-      const notice = document.createElement('span');
-      notice.className = 'presence-notice';
-      notice.setAttribute('role', 'listitem');
-      notice.dataset.state = 'failed';
-      if (identity) notice.style.setProperty('--bot-ink', identity.ink);
-      const detail = sanitizeGatewayDiagnosticText(entry.error || t('ui.room.failed'));
-      notice.title = `${chipTitle}: ${detail}`;
-      const icon = document.createElement('span');
-      icon.className = 'presence-notice-icon';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="warning-diamond"><path d="M2 10h2v2H2zm0 4h2v-2H2zm20-4h-2v2h2zm0 4h-2v-2h2zM4 8h2v2H4zm0 8h2v-2H4zm16-8h-2v2h2zm0 8h-2v-2h2zM6 6h2v2H6zm0 12h2v-2H6zM18 6h-2v2h2zm0 12h-2v-2h2zM8 4h2v2H8zm0 16h2v-2H8zm8-16h-2v2h2zm0 16h-2v-2h2zM10 2h2v2h-2zm0 20h2v-2h-2zm4-20h-2v2h2zm0 20h-2v-2h2zm-3-5h2v-2h-2zm0-4h2V7h-2z"/></svg>';
-      const avatar = document.createElement('span');
-      avatar.className = 'presence-avatar';
-      avatar.setAttribute('aria-hidden', 'true');
-      renderRoomMemberAvatar(avatar, { name: entry.member, title: chipTitle });
-      const copy = document.createElement('span');
-      copy.className = 'presence-notice-copy';
-      const line = document.createElement('span');
-      line.className = 'presence-notice-line';
-      line.textContent = t('ui.room.member.failed.short', { name: chipTitle });
-      const reason = document.createElement('span');
-      reason.className = 'presence-notice-reason';
-      reason.textContent = failureReason(entry.error, { translate: translateUiText });
-      copy.append(line, reason);
-      // Retry is offered for THIS member only, and disabled while any turn
-      // (a send or another retry) is running so it cannot overlap or double-fire.
-      const retry = document.createElement('button');
-      retry.type = 'button';
-      retry.className = 'presence-notice-retry';
-      retry.textContent = t('ui.room.member.retry');
-      retry.disabled = Boolean(sending);
-      retry.setAttribute('aria-label', t('ui.room.member.retry.aria', { name: chipTitle }));
-      retry.addEventListener('click', (event) => {
-        event.stopPropagation();
-        retryFailedGroupMember(entry.member);
-      });
-      notice.append(icon, avatar, copy, retry);
-      notice.addEventListener('click', () => showOperationToast({ kind: 'error', title: chipTitle, detail }));
-      notices.push(notice);
-      continue;
-    }
-    const chip = document.createElement('span');
-    chip.className = 'presence-chip';
-    chip.setAttribute('role', 'listitem');
-    chip.dataset.state = entry.state;
-    if (identity) chip.style.setProperty('--bot-bar', identity.bar);
-    chip.title = chipTitle;
+    // Failure is an inline notice, not a chip: warning icon, the member's own
+    // avatar and colour, a clear human line, and the mapped short reason. The
+    // whole notice opens the full diagnostic on click.
+    const notice = document.createElement('span');
+    notice.className = 'presence-notice';
+    notice.setAttribute('role', 'listitem');
+    notice.dataset.state = 'failed';
+    if (identity) notice.style.setProperty('--bot-ink', identity.ink);
+    const detail = sanitizeGatewayDiagnosticText(entry.error || t('ui.room.failed'));
+    notice.title = `${chipTitle}: ${detail}`;
+    const icon = document.createElement('span');
+    icon.className = 'presence-notice-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="warning-diamond"><path d="M2 10h2v2H2zm0 4h2v-2H2zm20-4h-2v2h2zm0 4h-2v-2h2zM4 8h2v2H4zm0 8h2v-2H4zm16-8h-2v2h2zm0 8h-2v-2h2zM6 6h2v2H6zm0 12h2v-2H6zM18 6h-2v2h2zm0 12h-2v-2h2zM8 4h2v2H8zm0 16h2v-2H8zm8-16h-2v2h2zm0 16h-2v-2h2zM10 2h2v2h-2zm0 20h2v-2h-2zm4-20h-2v2h2zm0 20h-2v-2h2zm-3-5h2v-2h-2zm0-4h2V7h-2z"/></svg>';
     const avatar = document.createElement('span');
     avatar.className = 'presence-avatar';
     avatar.setAttribute('aria-hidden', 'true');
     renderRoomMemberAvatar(avatar, { name: entry.member, title: chipTitle });
+    const copy = document.createElement('span');
+    copy.className = 'presence-notice-copy';
+    const line = document.createElement('span');
+    line.className = 'presence-notice-line';
+    line.textContent = t('ui.room.member.failed.short', { name: chipTitle });
+    const reason = document.createElement('span');
+    reason.className = 'presence-notice-reason';
+    reason.textContent = failureReason(entry.error, { translate: translateUiText });
+    copy.append(line, reason);
+    // Retry is offered for THIS member only, and disabled while any turn
+    // (a send or another retry) is running so it cannot overlap or double-fire.
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'presence-notice-retry';
+    retry.textContent = t('ui.room.member.retry');
+    retry.disabled = Boolean(sending);
+    retry.setAttribute('aria-label', t('ui.room.member.retry.aria', { name: chipTitle }));
+    retry.addEventListener('click', (event) => {
+      event.stopPropagation();
+      retryFailedGroupMember(entry.member);
+    });
+    notice.append(icon, avatar, copy, retry);
+    notice.addEventListener('click', () => showOperationToast({ kind: 'error', title: chipTitle, detail }));
+    notices.push(notice);
+  }
+  els.groupPresence.replaceChildren(...notices);
+  els.groupPresence.hidden = !notices.length;
+}
+
+function groupWorkingFrameLabel(frame) {
+  const text = presenceFrameText(frame, { translate: translateUiText });
+  return frame.kind === 'member' ? `${frame.member.roleLabel || frame.member.member} · ${text}` : text;
+}
+
+function renderGroupWorkingLine() {
+  if (!els.groupWorkingLine) return;
+  const line = activeGroupProjection ? presenceLine(activeGroupPresence) : null;
+  groupWorkingFrames = line?.frames || [];
+  if (!groupWorkingFrames.length) {
+    clearInterval(groupWorkingCycleTimer);
+    groupWorkingCycleTimer = 0;
+    groupWorkingFrameIndex = 0;
+    groupWorkingShown = '';
+    els.groupWorkingLine.hidden = true;
+    els.groupWorkingAvatars.replaceChildren();
+    els.groupWorkingText.replaceChildren();
+    els.groupWorkingStatus.textContent = '';
+    return;
+  }
+  const appearing = els.groupWorkingLine.hidden;
+  els.groupWorkingLine.hidden = false;
+  groupWorkingFrameIndex %= groupWorkingFrames.length;
+  // Screen readers hear the turn once per change, never the cycling.
+  const summary = groupWorkingFrameLabel(groupWorkingFrames[0]);
+  if (els.groupWorkingStatus.textContent !== summary) els.groupWorkingStatus.textContent = summary;
+  showGroupWorkingFrame(groupWorkingFrames[groupWorkingFrameIndex]);
+  if (groupWorkingFrames.length > 1 && !groupWorkingCycleTimer) {
+    groupWorkingCycleTimer = setInterval(() => {
+      if (!activeGroupProjection) {
+        renderGroupWorkingLine();
+        return;
+      }
+      if (groupWorkingFrames.length < 2) return;
+      groupWorkingFrameIndex = (groupWorkingFrameIndex + 1) % groupWorkingFrames.length;
+      showGroupWorkingFrame(groupWorkingFrames[groupWorkingFrameIndex]);
+    }, GROUP_WORKING_CYCLE_MS);
+  } else if (groupWorkingFrames.length < 2 && groupWorkingCycleTimer) {
+    clearInterval(groupWorkingCycleTimer);
+    groupWorkingCycleTimer = 0;
+  }
+  if (appearing) scrollMessageStreamToBottom();
+}
+
+// Redraws only when the frame says something new, so a stream of typing frames does not restart
+// the fade on every chunk.
+function showGroupWorkingFrame(frame) {
+  const text = presenceFrameText(frame, { translate: translateUiText });
+  const members = frame.kind === 'group' ? frame.members.slice(0, 3) : frame.kind === 'member' ? [frame.member] : [];
+  const key = `${frame.kind}|${members.map((entry) => entry.member).join(',')}|${text}`;
+  if (key === groupWorkingShown) return;
+  groupWorkingShown = key;
+  els.groupWorkingAvatars.replaceChildren(...members.map((entry) => {
+    const avatar = document.createElement('span');
+    avatar.className = 'group-working-avatar';
+    const identity = roomIdentityForMember(entry.member);
+    if (identity) avatar.style.setProperty('--bot-bar', identity.bar);
+    renderRoomMemberAvatar(avatar, { name: entry.member, title: entry.roleLabel || entry.member });
+    return avatar;
+  }));
+  const parts = [];
+  if (frame.kind === 'member') {
     const name = document.createElement('span');
-    name.className = 'presence-name';
-    name.textContent = chipTitle;
-    const micro = document.createElement('span');
-    micro.className = 'presence-micro';
-    micro.textContent = entry.state === 'replied' ? '✓'
-      : entry.state === 'typing' ? '···'
-        : entry.state === 'tool' ? entry.tool
-          : entry.state === 'passed' ? t('ui.room.passed')
-            : entry.member === next ? t('ui.room.next') : '';
-    chip.append(avatar, name, micro);
-    els.groupPresenceChips.append(chip);
+    name.className = 'group-working-name';
+    const identity = roomIdentityForMember(frame.member.member);
+    if (identity) name.style.setProperty('--bot-ink', identity.ink);
+    name.textContent = frame.member.roleLabel || frame.member.member;
+    parts.push(name, document.createTextNode(' · '));
   }
-  if (narrow && entries.length > 6) {
-    const extra = document.createElement('span');
-    extra.className = 'presence-chip';
-    extra.setAttribute('role', 'listitem');
-    extra.textContent = `+${entries.length - 6}`;
-    els.groupPresenceChips.append(extra);
-  }
-  els.groupPresenceStatus.textContent = presenceSummary({
-    ...activeGroupPresence,
-    members: entries.map((entry) => ({ ...entry, member: entry.roleLabel || entry.member })),
-  }, { translate: translateUiText });
-  // Notices sit between the chip row and the status line.
-  for (const notice of notices) els.groupPresence.insertBefore(notice, els.groupPresenceStatus);
+  const status = document.createElement('span');
+  status.className = 'group-working-status';
+  status.textContent = text;
+  parts.push(status);
+  els.groupWorkingText.replaceChildren(...parts);
+  els.groupWorkingLine.dataset.frame = frame.kind;
 }
 
 function updateActiveGroupActivity(activity = {}) {
@@ -13812,6 +13860,9 @@ function updateActiveGroupActivity(activity = {}) {
     activeGroupPresenceThread = activity.thread || 'main';
   }
   if (activity.kind === 'working') {
+    // The line under the thread says who is working; a bubble opens only once a reply streams in.
+    clearActiveGroupLiveMessage();
+  } else if (activity.kind === 'typing' && String(activity.text || '') && activeGroupLiveMessage?.member !== activity.member) {
     clearActiveGroupLiveMessage();
     activeGroupLiveMessage = {
       ...addMessage('assistant', '', {
@@ -13821,12 +13872,8 @@ function updateActiveGroupActivity(activity = {}) {
     };
     activeGroupLiveMessage.row.classList.add('is-live');
     activeGroupLiveMessage.node.querySelector('.message-content').style.whiteSpace = 'pre-wrap';
-    const dots = document.createElement('span');
-    dots.className = 'room-live-dots';
-    dots.textContent = '···';
-    dots.setAttribute('aria-label', translateUiText('Working'));
-    activeGroupLiveMessage.node.querySelector('.message-content').append(dots);
-  } else if (activity.kind === 'typing' && activeGroupLiveMessage?.member === activity.member) {
+  }
+  if (activity.kind === 'typing' && activeGroupLiveMessage?.member === activity.member) {
     const live = activeGroupLiveMessage;
     live.record.content = String(activity.text || '');
     if (!activeGroupLiveFrame) activeGroupLiveFrame = requestAnimationFrame(() => {

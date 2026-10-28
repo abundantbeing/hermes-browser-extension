@@ -235,6 +235,34 @@ test('a first send creates a fresh hosted room and follows the discussion to its
   assert.deepEqual(stored.members, ['default', 'namine', 'riku']);
 });
 
+test('a bot mentioned into a later round is announced working again', async () => {
+  const client = fakeGateway({
+    script: [
+      () => [],
+      (user) => [reply(user, 'riku', 'On it. @Namine, your call.'), settled(user, 'riku')],
+      () => [],
+      (user) => [reply(user, 'namine', 'Agreed, @Riku.'), settled(user, 'namine')],
+      () => [],
+      (user) => [reply(user, 'riku', 'Done.', { round_index: 1 }), settled(user, 'riku', false, { round_index: 1 }),
+        { kind: 'room.activity', payload: { discussion_event_id: user.event_id, status: 'settled', reason_code: 'silent_round' } }],
+    ],
+  });
+  // What groups.state says is running at each poll: Riku, nobody, Naminé, nobody, Riku again, nobody.
+  const running = [['riku'], [], ['namine'], [], ['riku'], []];
+  const request = client.request.bind(client);
+  client.request = async (method, params) => {
+    if (method === 'groups.state') client.setActivity((running.shift() || []).map((member_id) => ({ member_id, status: 'running' })));
+    return request(method, params);
+  };
+  const { runtime, seen } = runtimeFor(client);
+  const result = await runtime.send({ roomId: 'browser-room-1', members: MEMBERS, text: '@Riku start', thread: 'main' });
+
+  assert.equal(result.ok, true);
+  const kinds = seen.activity.map((activity) => `${activity.kind}${activity.member ? `:${activity.member}` : ''}`);
+  assert.deepEqual(kinds, ['turn_start', 'working:riku', 'working:namine', 'working:riku', 'idle']);
+  assert.deepEqual(seen.messages.filter(({ meta }) => meta.kind === 'reply').map(({ meta }) => meta.member), ['riku', 'namine', 'riku']);
+});
+
 test('a stop or a newer message in the thread also ends the discussion', async () => {
   for (const end of [
     () => [{ kind: 'room.stop_requested', payload: { cancel_id: 'x' } }],

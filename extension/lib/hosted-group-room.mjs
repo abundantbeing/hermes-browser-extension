@@ -389,6 +389,9 @@ export function createHostedGroupRuntime({
   async function follow(binding, { userEventId = '', userSeq = 0, thread = '', taskId = '', roster, signal, working }) {
     const failures = [];
     const announced = new Map();
+    // The status each member was last announced working with. A member leaves it when Hermes stops
+    // running it, so a later round (a bot mentioned it) announces it working again.
+    const answering = new Map();
     const deadline = (Number(now()) || Date.now()) + timeoutMs;
     let cursor = Math.max(0, Number(userSeq) || 0);
     let done = false;
@@ -405,13 +408,17 @@ export function createHostedGroupRuntime({
       }
       const state = asObject(await request('groups.state', { room_id: binding.roomId }, binding));
       const driver = asObject(state.driver_status);
+      const running = new Set();
       for (const activity of asList(driver.member_activity)) {
         const memberId = clean(activity?.member_id);
         const status = clean(activity?.status);
-        if (!memberId || status === 'queued' || announced.get(memberId) === status) continue;
-        announced.set(memberId, status);
+        if (!memberId || status === 'queued') continue;
+        running.add(memberId);
+        if (answering.get(memberId) === status) continue;
+        answering.set(memberId, status);
         await onActivity({ kind: 'working', member: memberId, roleLabel: label(memberId) });
       }
+      for (const memberId of [...answering.keys()]) if (!running.has(memberId)) answering.delete(memberId);
       for (const action of asList(driver.pending_actions)) {
         if (clean(action?.kind) !== 'approval') continue;
         const memberId = clean(action.member_id);

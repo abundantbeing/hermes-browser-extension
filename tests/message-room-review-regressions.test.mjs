@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseHTML } from 'linkedom';
 import { bindRowIdsFromHistory, rebindSurvivorRowIds } from '../extension/lib/message-rewind.mjs';
-import { createPresenceState, reducePresence, presenceSummary } from '../extension/lib/group-presence.mjs';
+import { createPresenceState, reducePresence, presenceLine, presenceFrameText } from '../extension/lib/group-presence.mjs';
 import { buildMessageRail } from '../extension/lib/message-actions.mjs';
 import { needsReapply } from '../extension/lib/group-member-models.mjs';
 
@@ -37,31 +37,35 @@ test('malformed array survivor addresses clear old ids rather than retaining sta
   }
 });
 
+const lineWords = (state) => presenceLine(state)?.frames.map((frame) => presenceFrameText(frame)) ?? null;
+const memberState = (state, name) => state.members.find((entry) => entry.member === name)?.state;
+
 test('presence never announces completion before the routed members start', () => {
   let state = reducePresence(createPresenceState(), { kind: 'turn_start', members: [{ member: 'A' }, { member: 'B' }] });
-  assert.equal(presenceSummary(state), '2 waiting');
+  assert.deepEqual(lineWords(state), ['A and B are working…']);
   state = reducePresence(state, { kind: 'reply', member: 'A' });
-  assert.equal(presenceSummary(state), '1 waiting');
-  assert.equal(presenceSummary(state, { translate: (text) => `[${text}]` }), '[1 waiting]');
+  assert.deepEqual(lineWords(state), ['Working…'], 'B is still due');
+  assert.equal(presenceLine(state).frames[0].member.member, 'B');
 });
 
 test('presence never announces completion when a turn ends with members still queued', () => {
   let state = reducePresence(createPresenceState(), { kind: 'turn_start', members: [{ member: 'A' }, { member: 'B' }] });
   state = reducePresence(state, { kind: 'working', member: 'A' });
   state = reducePresence(state, { kind: 'reply', member: 'A' });
-  assert.equal(presenceSummary(state), '1 waiting');
-  // The runtime still emits `idle` after an abort breaks the member loop, so a
-  // queued member must not be reported as replied on the done phase.
+  // The runtime still emits `idle` after an abort breaks the member loop: the line goes away and
+  // the queued member is never reported as replied.
   state = reducePresence(state, { kind: 'idle' });
   assert.equal(state.phase, 'done');
-  assert.equal(presenceSummary(state), '1 waiting');
+  assert.equal(presenceLine(state), null);
+  assert.equal(memberState(state, 'B'), 'queued');
 });
 
 test('presence never claims a terminal outcome for a member that never ran', () => {
   const state = reducePresence(reducePresence(createPresenceState(), {
     kind: 'turn_start', members: [{ member: 'A' }, { member: 'B' }],
   }), { kind: 'idle' });
-  assert.equal(presenceSummary(state), '2 waiting');
+  assert.deepEqual(state.members.map((entry) => entry.state), ['queued', 'queued']);
+  assert.equal(presenceLine(state), null);
 });
 
 test('an unknown activity kind never invents a member or reopens a finished turn', () => {
@@ -72,7 +76,7 @@ test('an unknown activity kind never invents a member or reopens a finished turn
   const afterUnknown = reducePresence(done, { kind: 'sync_failed', member: 'ghost', error: 'boom' });
   assert.deepEqual(afterUnknown.members, done.members, 'an unknown member is not added');
   assert.equal(afterUnknown.phase, 'done', 'an unknown kind does not reopen a finished turn');
-  assert.equal(presenceSummary(afterUnknown), 'All replied');
+  assert.equal(presenceLine(afterUnknown), null);
 });
 
 test('rails reject invalid date values without throwing or fabricating an epoch time', () => {

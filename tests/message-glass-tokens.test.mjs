@@ -125,11 +125,13 @@ test('message editor and restore popover selectors exist', () => {
   assert.match(css, /\.message-row\.is-editing[\s\S]*?\.message-rail|\.message-row\.is-editing\s*>\s*\.message-rail/, 'editing hides the rail');
 });
 
-test('room identity, presence strip, live line, and member popover selectors exist', () => {
-  for (const selector of ['.room-message', '.room-avatar', '.room-name', '.group-presence', '.group-presence-chips', '.presence-chip', '.presence-avatar', '.presence-name', '.group-presence-status', '.room-event-line', '.room-member-popover', '.room-member-row', '.room-member-change']) {
+test('room identity, working line, failure notices, and member popover selectors exist', () => {
+  for (const selector of ['.room-message', '.room-avatar', '.room-name', '.group-presence', '.presence-notice', '.presence-avatar', '.group-working-line', '.group-working-avatar', '.group-working-name', '.group-working-status', '.room-event-line', '.room-member-popover', '.room-member-row', '.room-member-change']) {
     assert.match(css, new RegExp(selector.replace(/\./g, '\\.') + '\\b'), `${selector} is styled`);
   }
-  assert.match(css, /@keyframes presencePulse/, 'the presence pulse animation exists');
+  assert.match(css, /@keyframes groupWorkingScan/, 'the working line shimmer exists');
+  assert.match(css, /prefers-reduced-motion: reduce\)\s*\{\s*\.group-working-avatar,[^}]*animation: none/, 'reduced motion stills the working line');
+  assert.doesNotMatch(css, /\.presence-chip\b/, 'the chip strip is gone');
   assert.match(css, /\.room-member-change\s*\{[^}]*background:\s*var\(--hermes-primary-bg/, 'the Change button uses the theme primary pair');
   // A room bubble must degrade to the plain glass bubble when the identity tint
   // has not been applied, never to a dropped background declaration.
@@ -149,9 +151,10 @@ test('theme layer: the nous-light room tint workaround also carries a tint fallb
 test('sidepanel markup exposes the new template, setting, presence strip, and popover', () => {
   assert.match(html, /<template id="messageTemplate">\s*<div class="message-row">\s*<article class="message" tabindex="0">/, 'the template wraps the article in .message-row');
   assert.match(html, /id="showMessageTimesInput"/, 'the Show message times toggle exists');
-  assert.match(html, /id="groupPresence"[^>]*class="group-presence"/, '#groupPresence replaces the old typing bar');
-  assert.match(html, /id="groupPresenceChips"[^>]*role="list"/, 'presence chips are a list');
-  assert.match(html, /id="groupPresenceStatus"[^>]*aria-live="polite"/, 'presence status is a polite live region');
+  assert.match(html, /id="groupPresence"[^>]*class="group-presence"[^>]*role="list"/, '#groupPresence lists the failure notices');
+  assert.match(html, /id="messages"[^>]*><\/section>\s*<!--[^>]*-->\s*<div id="groupWorkingLine" class="group-working-line"/, 'the working line follows the thread');
+  assert.match(html, /id="groupWorkingStatus"[^>]*role="status"[^>]*aria-live="polite"/, 'the working line has a polite status for screen readers');
+  assert.doesNotMatch(html, /id="groupPresenceChips"|id="groupPresenceStatus"/, 'the chip strip markup is gone');
   assert.match(html, /id="roomMemberPopover"/, 'the room member popover container exists');
   assert.doesNotMatch(html, /id="groupTypingIndicator"/, 'the old typing indicator markup is gone');
 });

@@ -8462,7 +8462,7 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   background: rgba(var(--hermes-fg-rgb), 0.15);
 }
 
-.group-typing-bar {
+.group-working-bar {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -8474,14 +8474,14 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   color: var(--hermes-fg);
   box-sizing: border-box;
 }
-.group-typing-bar[hidden] { display: none; }
-.group-typing-avatars {
+.group-working-bar[hidden] { display: none; }
+.group-working-avatars {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   flex: 0 0 auto;
 }
-.group-typing-avatar-slot {
+.group-working-avatar-slot {
   width: 15px;
   height: 15px;
   border-radius: 4px;
@@ -8491,20 +8491,20 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   box-shadow: 0 0 0 1px rgba(var(--hermes-fg-rgb), 0.3);
   background: var(--hermes-paper, #ffffff);
 }
-.group-typing-avatar-slot .bot-mode-avatar {
+.group-working-avatar-slot .bot-mode-avatar {
   width: 15px !important;
   height: 15px !important;
   border: 0 !important;
   box-shadow: none !important;
 }
-.group-typing-dots {
+.group-working-dots {
   display: inline-flex;
   align-items: center;
   gap: 2.5px;
   padding: 0 1px;
   flex: 0 0 auto;
 }
-.group-typing-dots i {
+.group-working-dots i {
   width: 3.5px;
   height: 3.5px;
   border-radius: 50%;
@@ -8512,13 +8512,13 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   display: inline-block;
   animation: groupTypingBounce 1.2s infinite ease-in-out;
 }
-.group-typing-dots i:nth-child(2) { animation-delay: 0.2s; }
-.group-typing-dots i:nth-child(3) { animation-delay: 0.4s; }
+.group-working-dots i:nth-child(2) { animation-delay: 0.2s; }
+.group-working-dots i:nth-child(3) { animation-delay: 0.4s; }
 @keyframes groupTypingBounce {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
   40% { transform: scale(1.15); opacity: 1; }
 }
-.group-typing-text {
+.group-working-text {
   flex: 1 1 auto;
   min-width: 0;
   white-space: nowrap;
@@ -8553,11 +8553,11 @@ details.bot-mode-cron-card summary::-webkit-details-marker { display: none; }
   background: var(--hermes-app-bg);
   white-space: nowrap;
 }
-.group-typing-bubble {
+.group-working-bubble {
   opacity: 0.92;
   border-style: dashed !important;
 }
-.group-typing-bubble .message-content {
+.group-working-bubble .message-content {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -9898,33 +9898,59 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
     var(--hermes-card-bg, var(--hermes-paper));
 }
 
+/* Failure notices with Retry, above the composer. */
 .group-presence { display: grid; gap: 4px; padding: 6px 10px 4px; }
 .group-presence[hidden] { display: none; }
-.group-presence-chips { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden; }
-.presence-chip {
-  display: inline-flex;
+
+/* One line under the thread while a group turn runs: the bots' avatars and who is doing what,
+   cycling between them (renderGroupWorkingLine). */
+.group-working-line {
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   min-width: 0;
-  padding: 2px 8px 2px 2px;
-  border-radius: 999px;
-  font: 500 calc(11px * var(--hermes-text-zoom, 1))/1 var(--hermes-font-ui);
-  color: var(--hermes-ink);
-  background: color-mix(in srgb, var(--hermes-ink) 6%, transparent);
-  transition: opacity 200ms ease-out;
+  min-height: 24px;
+  padding: 2px 4px 10px;
+  font: 500 calc(11.5px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-ui);
+  color: color-mix(in srgb, var(--hermes-ink) 62%, transparent);
 }
-.presence-chip[data-state="queued"] { opacity: .45; }
-.presence-chip[data-state="replied"] { opacity: .7; }
-.presence-chip[data-state="passed"] { opacity: .45; }
-.presence-chip[data-state="failed"] { color: var(--hermes-danger, #ff6b6b); }
-.presence-chip .presence-avatar { width: 22px; height: 22px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px transparent; flex: 0 0 auto; display: inline-grid; place-items: center; }
-.presence-chip .presence-avatar > * { width: 100%; height: 100%; }
-.presence-chip .presence-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.presence-chip .presence-micro { font-size: calc(9px * var(--hermes-text-zoom, 1)); opacity: .7; }
-.presence-chip[data-state="working"] .presence-avatar,
-.presence-chip[data-state="typing"] .presence-avatar,
-.presence-chip[data-state="tool"] .presence-avatar { box-shadow: 0 0 0 2px var(--bot-bar); animation: presencePulse 1.4s ease-in-out infinite; }
-.group-presence-status { font: 500 calc(10.5px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-ui); color: color-mix(in srgb, var(--hermes-ink) 62%, transparent); }
+.group-working-line[hidden] { display: none; }
+.group-working-avatars { display: inline-flex; flex: 0 0 auto; }
+.group-working-avatars:empty { display: none; }
+.group-working-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: inline-grid;
+  place-items: center;
+  box-shadow: 0 0 0 2px var(--hermes-paper), 0 0 0 3px color-mix(in srgb, var(--bot-bar, var(--hermes-accent)) 70%, transparent);
+  background: var(--hermes-paper);
+  animation: groupWorkingIn 240ms ease-out;
+}
+.group-working-avatar + .group-working-avatar { margin-inline-start: -6px; }
+.group-working-avatar > * { width: 100%; height: 100%; }
+.group-working-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.group-working-text > * { animation: groupWorkingIn 240ms ease-out; }
+.group-working-name { font-weight: 700; color: var(--bot-ink, var(--hermes-ink)); }
+.group-working-status {
+  background: linear-gradient(100deg, currentColor 0 40%, color-mix(in srgb, var(--hermes-ink) 92%, transparent) 50%, currentColor 60% 100%) 100% 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: groupWorkingIn 240ms ease-out, groupWorkingScan 2.4s linear infinite;
+}
+@keyframes groupWorkingIn {
+  from { opacity: 0; transform: translateY(3px); }
+}
+@keyframes groupWorkingScan {
+  to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .group-working-avatar,
+  .group-working-text > *,
+  .group-working-status { animation: none !important; }
+}
 
 /* Failure notice: a slim rounded inline alert that replaces the old cramped
    bordered "NAME FAILED" chip. Amber-tinted, warning icon, the member's avatar
@@ -9968,16 +9994,6 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
 .presence-notice-retry:hover:not(:disabled),
 .presence-notice-retry:focus-visible { background: color-mix(in srgb, var(--hermes-warning, #a96800) 30%, transparent); outline: none; }
 .presence-notice-retry:disabled { opacity: .5; cursor: default; }
-@keyframes presencePulse {
-  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--bot-bar) 35%, transparent); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .presence-chip .presence-avatar { animation: none !important; }
-}
-@media (max-width: 380px) {
-  .presence-chip .presence-name { display: none; }
-  .presence-chip { padding: 2px; }
-}
 
 .room-event-line {
   align-self: center;
@@ -9988,17 +10004,6 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
   color: color-mix(in srgb, var(--hermes-ink) 55%, transparent);
 }
 .message-row.is-live > .message { opacity: .96; }
-.room-live-dots { display: inline-flex; align-items: center; gap: 3px; }
-.room-live-dots i {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--bot-bar, var(--hermes-accent));
-  display: inline-block;
-  animation: groupTypingBounce 1.2s infinite ease-in-out;
-}
-.room-live-dots i:nth-child(2) { animation-delay: 0.2s; }
-.room-live-dots i:nth-child(3) { animation-delay: 0.4s; }
 
 .room-member-popover {
   position: absolute;
@@ -10061,10 +10066,10 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
 .room-member-change:disabled { opacity: .45; cursor: default; }
 .room-member-popover-note { margin: 0; padding: 8px 12px 10px; border-top: 1px solid rgba(var(--hermes-fg-rgb), 0.12); font: 400 calc(10px * var(--hermes-text-zoom, 1))/1.4 var(--hermes-font-ui); color: color-mix(in srgb, var(--hermes-ink) 62%, transparent); }
 
-/* Compact density (body.bot-mode-compact) shrinks room headers, chips, and rows. */
+/* Compact density (body.bot-mode-compact) shrinks room headers, the typing line, and rows. */
 body.bot-mode-compact .message-row.room-message .message-role { font-size: calc(11px * var(--hermes-text-zoom, 1)); }
 body.bot-mode-compact .message-row.room-message .room-avatar { width: 16px; height: 16px; flex-basis: 16px; }
-body.bot-mode-compact .presence-chip { font-size: calc(10px * var(--hermes-text-zoom, 1)); }
+body.bot-mode-compact .group-working-line { font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
 body.bot-mode-compact .room-member-row { min-height: 32px; }
 
 /* Room @mentions: bot ink when known, theme accent otherwise; tinted chip so a
@@ -12105,7 +12110,7 @@ html[dir="rtl"] .group-thread-label,
 html[dir="rtl"] .group-thread-meta,
 html[dir="rtl"] .group-thread-separator .thread-separator-badge,
 html[dir="rtl"] .group-tool-tag,
-html[dir="rtl"] .group-typing-text,
+html[dir="rtl"] .group-working-text,
 html[dir="rtl"] .haui-data-table th,
 html[dir="rtl"] .haui-disclosure.haui-derived > summary,
 html[dir="rtl"] .haui-salvage-note,
