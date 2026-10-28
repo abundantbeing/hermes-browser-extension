@@ -200,3 +200,9 @@ test('opening a chat over REST applies the runtime the authority socket reports'
   const open = functionSource('openHermesSession');
   assert.match(open, /if \(!dashboardTransport\) \{[\s\S]*?const runtime = await readSessionRuntimeViaSocket\(sessionAuthoritySideSocket\(\), session\.id\);\s*if \(!isCurrentRequest\(\)\) return false;\s*if \(runtime\) session = \{ \.\.\.session, \.\.\.sessionFieldsFromRuntime\(runtime\) \};/);
 });
+
+test('a new chat shows and sends the panel default model and effort, not the chat opened before it', () => {
+  const draft = functionSource('beginHermesBrowserDraft');
+  assert.match(draft, /thinkingEnabled: preferredOptions\.thinkingEnabled,\s*reasoningEffort: preferredOptions\.reasoningEffort \|\| settings\.reasoningEffort,\s*fastMode: preferredOptions\.fastMode,/);
+  assert.match(draft, /renderModelOptions\(availableModels\);\s*renderMessagesFromStorage\(\);/);
+});

@@ -19543,6 +19543,10 @@ async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focu
     extensionPreferredModel: preferredBinding,
     sessionModelBindings: { ...(settings.sessionModelBindings || {}), [sessionId]: preferredBinding },
     sessionModelOptionBindings: { ...(settings.sessionModelOptionBindings || {}), [sessionId]: preferredOptions },
+    // A new chat starts on the panel's default effort, never the one left by the chat opened before it.
+    thinkingEnabled: preferredOptions.thinkingEnabled,
+    reasoningEffort: preferredOptions.reasoningEffort || settings.reasoningEffort,
+    fastMode: preferredOptions.fastMode,
     modelScopeVersion: DEFAULT_SETTINGS.modelScopeVersion,
   };
   activeSessionRuntime = { ...activeSessionRuntime, sessionId, usedTokens: 0, inputTokens: 0, outputTokens: 0, model: '', provider: '', source: '' };
@@ -19552,6 +19556,8 @@ async function beginHermesBrowserDraft({ title = makeBrowserSessionTitle(), focu
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
   await saveSessionBindingForActiveScope({ id: sessionId, title, source: DEFAULT_SETTINGS.sessionSource }, { scopeRevisionId });
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
+  // The model picker still names the chat opened before this one until it is redrawn.
+  renderModelOptions(availableModels);
   renderMessagesFromStorage();
   updateSessionLabel();
   renderSessionMenu();
