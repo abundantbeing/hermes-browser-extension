@@ -169,6 +169,7 @@ export const CHECK_JS_COMMANDS = Object.freeze([
   'node --check extension/lib/session-compact.mjs',
   'node --check extension/lib/session-rewind.mjs',
   'node --check extension/lib/bot-chat-delivery.mjs',
+  'node --check extension/lib/hosted-group-room.mjs',
   'node --check extension/lib/capability-view.mjs',
   'node --check extension/lib/capability-runtime.mjs',
   'node --check extension/lib/gateway-refusal.mjs',

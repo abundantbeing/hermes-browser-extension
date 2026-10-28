@@ -372,6 +372,7 @@ import {
   persistGroupProjectionRename,
   persistGroupProjectionUpdate,
 } from './lib/bot-group-runtime.mjs';
+import { createHostedGroupRuntime, createHostedRoomBindings, probeHostedGroups } from './lib/hosted-group-room.mjs';
 import {
   dashboardTrustPrompt,
   findDashboardTab,
@@ -13872,6 +13873,10 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     setStatus('warn', 'Group attachments unavailable', 'Only explicitly captured tab screenshots are supported here. Remove other attachments or open an agent chat.', { translateDetail: false });
     return false;
   }
+  if (activeGroupRuntime.hosted && Array.isArray(turnAttachments) && turnAttachments.length) {
+    setStatus('warn', 'Group attachments unavailable', 'Tab screenshots are not sent to a group room Hermes runs itself yet. Remove the screenshot to send the message.', { translateDetail: false });
+    return false;
+  }
   if (sending) {
     setStatus('warn', 'Group chat is working', 'Wait for the current group turn to finish before sending another message.', { translateDetail: false });
     return false;
@@ -13895,7 +13900,8 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
   let contextNote = '';
   let draftSettled = false;
   try {
-    if (groupProjection.syncState === 'local-only' || groupProjection.syncState === 'sync-failed') {
+    // A room Hermes runs itself is its own record; only a client-driven room syncs its projection.
+    if (!groupRuntime.hosted && (groupProjection.syncState === 'local-only' || groupProjection.syncState === 'sync-failed')) {
       await syncLocalGroupRoom(groupProjection);
       renderBotModeGroupChats(els.botModeSearch?.value);
     }
@@ -13911,7 +13917,8 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
     const browserScope = { ...effectiveContextGate(contextScope).scope };
     const browserScopeKey = JSON.stringify(browserScope);
     const turnGatewayUrl = settings.gatewayUrl;
-    const browserTurn = await prepareBotBrowserTurn({
+    // A hosted room shows everything sent to it to every bot and in its log, so no page rides along.
+    const browserTurn = groupRuntime.hosted ? { browserContext: null, screenshotAttachments: [] } : await prepareBotBrowserTurn({
       group: true,
       scope: browserScope,
       settings,
@@ -13924,7 +13931,11 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
         && settings.gatewayUrl === turnGatewayUrl
         && JSON.stringify(effectiveContextGate(contextScope).scope) === browserScopeKey,
     });
-    contextNote = describeGroupContextOutcome({ scope: browserScope, gatewayUrl: turnGatewayUrl, browserContext: browserTurn.browserContext }).note;
+    contextNote = groupRuntime.hosted
+      ? (groupBrowserContextAllowed({ scope: browserScope, gatewayUrl: turnGatewayUrl })
+        ? 'This page was not shared: a group room Hermes runs itself shows everything sent to it to every bot and in the room log.'
+        : '')
+      : describeGroupContextOutcome({ scope: browserScope, gatewayUrl: turnGatewayUrl, browserContext: browserTurn.browserContext }).note;
     // From here the turn is dispatched: the draft, its attachments and a pending new-thread intent are spent.
     activeGroupPendingNewThread = false;
     settleGroupComposerUi(value, turnAttachments);
@@ -13987,7 +13998,16 @@ async function sendActiveGroupMessage(text = '', turnAttachments = []) {
       && activeGroupProjection === groupProjection
       && activeGroupRuntime === groupRuntime
     ) {
-      setStatus('error', 'Group message failed', `${String(error?.message || error)}${draftSettled ? '' : ' Your message and attachments are still in the composer.'}`, { translateDetail: false });
+      // A hosted room refused the message before it was posted: the draft is the user's again.
+      const draftRestored = draftSettled && error?.notSent === true && !els.input.value.trim();
+      if (draftRestored) {
+        els.input.value = value;
+        persistCurrentComposerDraft({ immediate: true });
+      }
+      const draftNote = !draftSettled
+        ? ' Your message and attachments are still in the composer.'
+        : (draftRestored ? ' Your message is back in the composer.' : '');
+      setStatus('error', 'Group message failed', `${String(error?.message || error)}${draftNote}`, { translateDetail: false });
     }
     return false;
   } finally {
@@ -14497,7 +14517,8 @@ async function syncActiveGroupRoomFromGateway() {
       adoptSyncedGroupChats(split.groupChats);
       const targetId = groupProjection.roomId || groupProjection.id;
       const updated = split.groupChats.find((g) => (g.roomId || g.id) === targetId || g.displayName === groupProjection.displayName);
-      if (updated && Array.isArray(updated.messages)) {
+      // A room Hermes runs itself keeps its own log; the synced projection never has its messages.
+      if (updated && Array.isArray(updated.messages) && !activeGroupRuntime?.hosted) {
         activeGroupProjection = updated;
         activeGroupMessages = groupProjectionMessagesForDisplay(updated);
         messages = activeGroupMessages;
@@ -14572,8 +14593,15 @@ async function openBotGroupChat(row) {
   try {
     const connection = await ensureActiveDashboardWsConnection();
     if (!isCurrentOpen()) return false;
-    groupRuntime = createBotGroupRuntime({
-      client: connection.client,
+    // A current Hermes runs group rooms itself and refuses a client driving member sessions there.
+    const groupMode = await probeHostedGroups(connection.client, settings.activeProfile || 'default');
+    if (!isCurrentOpen()) return false;
+    if (groupMode.mode === 'unavailable' && connection.client?.readyPayload?.session_authority === true) {
+      setStatus('warn', 'Group chat unavailable', `This Hermes runs group rooms itself, and its room service is not answering right now${groupMode.error?.message ? ` (${groupMode.error.message})` : ''}. Reopen the room in a moment.`, { translateDetail: false });
+      els.input.focus();
+      return false;
+    }
+    const runtimeHooks = {
       onMessage: (message, meta = {}) => {
         const background = backgroundTurnFor(groupRuntime);
         if (!isCurrentRuntime()) {
@@ -14617,6 +14645,8 @@ async function openBotGroupChat(row) {
         const projection = liveProjection();
         if (activity.kind === 'working') {
           setStatus('ok', 'Group member responding', `${activity.roleLabel || activity.member} is working on the room message.`, { translateDetail: false });
+        } else if (activity.kind === 'approval') {
+          setStatus('warn', 'Group member needs approval', `${activity.roleLabel || activity.member} is waiting for approval to run${activity.command ? `: ${activity.command}` : ' a command'}. Approve it in Hermes Desktop, or press Stop.`, { translateDetail: false });
         } else if (activity.kind === 'tool_start') {
           captureTaskToolEvent({
             tool: activity.tool,
@@ -14646,13 +14676,24 @@ async function openBotGroupChat(row) {
       beforeMemberTurn: async (member, session) => {
         await applyRoomMemberModelBeforeTurn(row.roomId || row.id, member, session);
       },
-    });
+    };
+    groupRuntime = groupMode.mode === 'hosted'
+      ? createHostedGroupRuntime({
+        client: connection.client,
+        profile: groupMode.profile,
+        bindings: createHostedRoomBindings({ storage: browserApi.storage.local, gatewayKey: normalizeGatewayUrl(settings.gatewayUrl) }),
+        onMessage: runtimeHooks.onMessage,
+        onActivity: runtimeHooks.onActivity,
+      })
+      : createBotGroupRuntime({ client: connection.client, ...runtimeHooks });
     activeGroupRuntime = groupRuntime;
     const prepared = await groupRuntime.prepare({
       roomId: row.roomId || row.id,
+      groupName: row.displayName,
       members: groupRuntimeMembers(row),
     });
     if (!isCurrentRuntime()) return false;
+    if (groupRuntime.hosted) return finishHostedGroupOpen(row, groupRuntime, prepared, isCurrentRuntime);
     if (!prepared.ok) {
       setStatus('warn', 'Group chat opened with missing member sessions', `${prepared.failures.length} member session${prepared.failures.length === 1 ? '' : 's'} will initialize when you send.`, { translateDetail: false });
     } else {
@@ -14670,6 +14711,46 @@ async function openBotGroupChat(row) {
 }
 
 
+
+// A room Hermes runs itself (hosted-group-room.mjs) keeps its own log from the moment it took over:
+// that log's messages follow the panel's older rows for the room, and nothing is mirrored back into
+// the synced projection.
+async function finishHostedGroupOpen(row, runtime, prepared, isCurrentRuntime) {
+  if (!prepared.ok) {
+    const detail = prepared.reason === 'member-count'
+      ? 'A group room on this Hermes seats two to six bots.'
+      : (prepared.failures?.[0]?.error || 'Hermes did not create the group room.');
+    setStatus('warn', 'Group chat could not start on Hermes', `${detail} Send a message to try again.`, { translateDetail: false });
+    els.input.focus();
+    return true;
+  }
+  let history = null;
+  let historyFailed = false;
+  try {
+    history = await runtime.readHistory({ roomId: row.roomId || row.id, members: groupRuntimeMembers(row) });
+  } catch (error) {
+    if (!isCurrentRuntime()) return false;
+    historyFailed = true;
+    setStatus('warn', 'Group history unavailable', String(error?.message || error), { translateDetail: false });
+  }
+  if (!isCurrentRuntime()) return false;
+  if (history?.messages?.length) {
+    const takeover = Number(history.createdAt) || 0;
+    const earlier = groupProjectionMessagesForDisplay(row)
+      .filter((message) => !takeover || (Number(message.ts) || 0) < takeover);
+    activeGroupMessages = [...earlier, ...history.messages, ...activeGroupDisplayEvents]
+      .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    messages = activeGroupMessages;
+    renderGroupThreadStrip();
+    renderMessagesFromStorage();
+    updateSessionLabel();
+  }
+  if (!historyFailed) {
+    setStatus('ok', 'Group chat opened', `${row.displayName} · Hermes runs this room, and the bots answer one at a time.`, { translateDetail: false });
+  }
+  els.input.focus();
+  return true;
+}
 
 // Group projections are read from the connected verified roster and never
 // substituted with Browser-owned fallback data.

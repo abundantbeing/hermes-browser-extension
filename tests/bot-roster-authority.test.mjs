@@ -227,6 +227,7 @@ test('late callbacks from a retired Dashboard group runtime cannot repopulate cl
     callbacks = options;
     return { prepare: async () => ({ ok: true, failures: [] }), send: async () => ({ ok: true }) };
   };
+  context.probeHostedGroups = async () => ({ mode: 'legacy', profile: '' });
   context.updateActiveGroupActivity = () => { activityCalls += 1; };
   context.persistActiveGroupProjection = async () => { persistenceCalls += 1; };
   vm.runInContext(`${openGroupSource}\nthis.openGroup = openBotGroupChat;`, context);
@@ -545,6 +546,9 @@ test('an in-place roster sync keeps the open room runtime callbacks live', async
       captured.push(handlers);
       return { prepare: async () => ({ ok: true, failures: [] }) };
     },
+    // A gateway whose rooms the client drives itself (hosted rooms are covered in hosted-group-room.test.mjs).
+    probeHostedGroups: async () => ({ mode: 'legacy', profile: '' }),
+    settings: {},
   };
   vm.createContext(context);
   installGroupLifecycleHarness(context, source);
