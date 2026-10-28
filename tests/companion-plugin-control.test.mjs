@@ -520,9 +520,11 @@ async def main():
         seen["not_negotiated"] = code(tools.run_control_action("browser_click", {"ref": "@e1"}, {"session_id": "sess-C"}))
         await ws2.close()
         await ws.close()
-        for _ in range(400):
+        # Under a loaded test run the broker can take seconds to see both sockets close.
+        for _ in range(1500):
             if not broker.any_connected(): break
             await asyncio.sleep(0.02)
+        seen["disconnected"] = not broker.any_connected()
         seen["offline"] = code(tools.run_control_action("browser_snapshot", {}, {"session_id": "sess-A"}))
         seen["available_after"] = tools.control_available()
     return seen
@@ -543,6 +545,7 @@ print(json.dumps(asyncio.run(main())))
   assert.equal(data.other_profile, 'no_browser');
   assert.equal(data.nothing_sent, true, 'the controller of another session saw no command');
   assert.equal(data.not_negotiated, 'browser_unavailable');
+  assert.equal(data.disconnected, true, 'the broker saw both controllers close');
   assert.equal(data.offline, 'browser_unavailable');
   assert.equal(data.available_after, false);
 });
