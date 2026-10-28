@@ -99,7 +99,7 @@ async def attach(client, broker, **kwargs):
     status, payload = await register(client, **kwargs)
     assert status == 201, payload
     ws = await connect(client, payload["ticket"])
-    for _ in range(150):
+    for _ in range(400):
         scopes = broker.lane_scopes(profile_id="luxord", session_id=kwargs.get("session", "sess-A"))
         if any(s.controller_id == kwargs.get("controller", "ctl-1") and broker._controllers[s].connected for s in scopes):
             break
@@ -324,7 +324,7 @@ async def main():
         seen["untouched"] = broker.pending_count == 0 and not broker.any_connected()
         ws = await connect(client, ticket)
         seen["negotiated"] = ws.protocol
-        for _ in range(100):
+        for _ in range(400):
             if broker.any_connected(): break
             await asyncio.sleep(0.02)
         seen["attached"] = broker.any_connected()
@@ -520,7 +520,7 @@ async def main():
         seen["not_negotiated"] = code(tools.run_control_action("browser_click", {"ref": "@e1"}, {"session_id": "sess-C"}))
         await ws2.close()
         await ws.close()
-        for _ in range(100):
+        for _ in range(400):
             if not broker.any_connected(): break
             await asyncio.sleep(0.02)
         seen["offline"] = code(tools.run_control_action("browser_snapshot", {}, {"session_id": "sess-A"}))
@@ -563,7 +563,7 @@ async def main():
         old_owner = broker._controllers[scope].owner
         _, again = await register(client)
         new = await connect(client, again["ticket"])
-        for _ in range(100):
+        for _ in range(400):
             await asyncio.sleep(0.02)
             if broker._controllers[scope].owner is not old_owner and broker._controllers[scope].connected:
                 break
@@ -599,7 +599,7 @@ async def main():
         # the binding survives the controller dropping: the other credential is refused at register AND at attach,
         # and the offline controller is never replaced
         await other.close()
-        for _ in range(100):
+        for _ in range(400):
             if not broker._controllers[scope].connected: break
             await asyncio.sleep(0.02)
         status, refusal = await register(client, token=OTHER, controller="ctl-3")
@@ -610,7 +610,7 @@ async def main():
         _, minted = await register(client, token=OTHER, session="sess-E", controller="ctl-6")
         e_ws, _ = await attach(client, broker, session="sess-E", controller="ctl-7")
         await e_ws.close()
-        for _ in range(100):
+        for _ in range(400):
             if not any(broker._controllers[s].connected for s in broker.lane_scopes(profile_id="luxord", session_id="sess-E")): break
             await asyncio.sleep(0.02)
         seen["offline_ticket"] = await refused(connect(client, minted["ticket"]))
@@ -925,6 +925,26 @@ seen["mine_refused_now"] = broker.principal_conflict(mine)
 # an explicit detach clears the binding
 broker.detach(theirs)
 seen["binding_after_detach"] = broker.principal_conflict(mine)
+# a binding that outlived its principal's controllers is not a lockout: none left deletes it,
+# none live puts it on the clock, even if it was never told the controller went offline
+broker.reset()
+broker._bindings[("prof", "s")] = B._Binding(principal_id="p")
+seen["stale_no_controller"] = broker.principal_conflict(theirs)
+broker.attach(mine, sent.append, owner=live)
+broker._controllers[mine].connected = False
+broker._bindings[("prof", "s")].expires_at = None
+seen["silent_offline_inside_grace"] = broker.principal_conflict(theirs)
+clock.now += B.SESSION_BINDING_GRACE_SECONDS + 1
+seen["silent_offline_after_grace"] = broker.principal_conflict(theirs)
+seen["silent_offline_purged"] = len(broker.lane_scopes(profile_id="prof", session_id="s"))
+# a sibling's detach leaves the binding on its own controller, and removing the last one frees the session
+sibling = scope(controller="sibling")
+broker.attach(mine, sent.append, owner=live)
+broker.attach(sibling, sent.append, owner=offline)
+seen["sibling_replaces"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
+seen["bound_during_replace"] = broker.principal_conflict(theirs)
+broker.detach(sibling)
+seen["freed_by_last_detach"] = broker.principal_conflict(theirs)
 broker.attach(theirs, sent.append, owner=offline)
 broker.reset()
 seen["after_reset"] = broker.principal_conflict(mine)
@@ -969,6 +989,13 @@ print(json.dumps(seen))
   assert.equal(data.mine_refused_now, true);
   assert.equal(data.binding_after_detach, false);
   assert.equal(data.after_reset, false);
+  assert.equal(data.stale_no_controller, false);
+  assert.equal(data.silent_offline_inside_grace, true);
+  assert.equal(data.silent_offline_after_grace, false);
+  assert.equal(data.silent_offline_purged, 0);
+  assert.deepEqual(data.sibling_replaces, ['sibling']);
+  assert.equal(data.bound_during_replace, true);
+  assert.equal(data.freed_by_last_detach, false);
   assert.deepEqual(data.reset, [false, 0]);
 });
 

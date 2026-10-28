@@ -259,11 +259,28 @@ class ControlBroker:
             controller = self._controller_for_identity_locked(scope)
         return controller if controller is not None and controller.connected else None
 
+    def _reconcile_binding_locked(self, key: tuple) -> None:
+        """Make a binding say what its controllers say: no controller of the principal left deletes it, none live
+        starts the grace, one live clears it. Run whenever a controller is removed or goes offline."""
+        binding = self._bindings.get(key)
+        if binding is None:
+            return
+        mine = [c for scope, c in self._controllers.items() if (scope.profile_id, scope.session_id) == key and scope.principal_id == binding.principal_id]
+        if not mine:
+            del self._bindings[key]
+        elif any(controller.connected for controller in mine):
+            binding.expires_at = None
+        elif binding.expires_at is None:
+            binding.expires_at = self._clock() + SESSION_BINDING_GRACE_SECONDS
+
     def _purge_bindings_locked(self) -> None:
-        """Drop the bindings whose grace ended, with the offline controllers they kept."""
+        """Drop the bindings whose grace ended, with the offline controllers they kept. A binding no live
+        controller backs is always on the clock, so none can outlive its principal's controllers."""
         now = self._clock()
-        for key, binding in list(self._bindings.items()):
-            if binding.expires_at is None or binding.expires_at > now:
+        for key in list(self._bindings):
+            self._reconcile_binding_locked(key)
+            binding = self._bindings.get(key)
+            if binding is None or binding.expires_at is None or binding.expires_at > now:
                 continue
             del self._bindings[key]
             for scope, controller in list(self._controllers.items()):
@@ -310,7 +327,7 @@ class ControlBroker:
             # lane siblings before inserting, so a session lookup stays unique.
             if lane_scopes:
                 for lane_scope in lane_scopes:
-                    self.detach(lane_scope, notify_controller=False)
+                    self.detach(lane_scope, notify_controller=False, keep_binding=True)
                 continue
 
             with existing.send_lock:
@@ -365,17 +382,20 @@ class ControlBroker:
                 if self._controllers.get(controller.scope) is not controller or not owned:
                     return False
                 controller.connected, controller.owner = False, None
-                binding = self._bindings.get((controller.scope.profile_id, controller.scope.session_id))
-                if binding is not None and binding.principal_id == controller.scope.principal_id and not any(
-                    other.connected and other.scope.principal_id == binding.principal_id
-                    and (other.scope.profile_id, other.scope.session_id) == (controller.scope.profile_id, controller.scope.session_id)
-                    for other in self._controllers.values()
-                ):
-                    binding.expires_at = self._clock() + SESSION_BINDING_GRACE_SECONDS
+                self._reconcile_binding_locked((controller.scope.profile_id, controller.scope.session_id))
         return True
 
-    def detach(self, scope: ControllerScope, *, owner: Any = _OWNER_UNSET, notify_controller: bool = True) -> None:
-        """Remove the controller for ``scope`` and fail its pending work closed (``ControllerCancelled``)."""
+    def detach(
+        self,
+        scope: ControllerScope,
+        *,
+        owner: Any = _OWNER_UNSET,
+        notify_controller: bool = True,
+        keep_binding: bool = False,
+    ) -> None:
+        """Remove the controller for ``scope`` and fail its pending work closed (``ControllerCancelled``).
+
+        ``keep_binding`` is for a replacement by the same principal, which re-binds as it inserts."""
         with self._lock:
             controller = self._controllers.get(scope)
         if controller is None or (owner is not _OWNER_UNSET and controller.owner != owner):
@@ -388,14 +408,9 @@ class ControlBroker:
                 pendings = self._pending_for_scope_locked(scope)
                 for pending in pendings:
                     self._resolve_pending(pending, cancelled=True)
-                # An explicit detach ends the binding once the principal has no controller left.
-                key = (scope.profile_id, scope.session_id)
-                binding = self._bindings.get(key)
-                if binding is not None and binding.principal_id == scope.principal_id and not any(
-                    (other.profile_id, other.session_id) == key and other.principal_id == scope.principal_id
-                    for other in self._controllers
-                ):
-                    del self._bindings[key]
+                # A removed controller may have been the binding's last: delete it, or start its grace.
+                if not keep_binding:
+                    self._reconcile_binding_locked((scope.profile_id, scope.session_id))
             # Hold the old generation's send lock through cancellation, so a
             # command frame can never overtake its terminal cancel frame.
             if notify_controller:
