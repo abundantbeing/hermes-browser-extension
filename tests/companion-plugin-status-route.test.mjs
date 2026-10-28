@@ -149,11 +149,14 @@ print(json.dumps({"good": good, "raising": [raising["ok"], raising["anonymous"]]
   assert.deepEqual(data.good.routes.filter(([, resource]) => resource.includes('hermes-browser-companion')).sort(), [
     ['GET', '/api/plugins/hermes-browser-companion/actions'],
     ['GET', '/api/plugins/hermes-browser-companion/context/status'],
+    ['GET', '/api/plugins/hermes-browser-companion/control/ws'],
     ['GET', '/api/plugins/hermes-browser-companion/status'],
     ['HEAD', '/api/plugins/hermes-browser-companion/actions'],
     ['HEAD', '/api/plugins/hermes-browser-companion/context/status'],
+    ['HEAD', '/api/plugins/hermes-browser-companion/control/ws'],
     ['HEAD', '/api/plugins/hermes-browser-companion/status'],
     ['POST', '/api/plugins/hermes-browser-companion/context'],
+    ['POST', '/api/plugins/hermes-browser-companion/control/register'],
   ]); // aiohttp's add_get also answers HEAD, through the same authenticated handler
   assert.equal(data.good.body.profile, 'luxord');
   assert.equal(data.good.body.live, false);
@@ -181,7 +184,7 @@ module.register(ctx)
 print(json.dumps({"tools": len(ctx.tools), "hooks": ctx.hooks, "skills": ctx.skills, "factories": len(ctx.factories)}))
 `);
   const data = JSON.parse(out);
-  assert.equal(data.tools, 7);
+  assert.equal(data.tools, 27);
   assert.deepEqual(data.hooks, ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
   assert.deepEqual(data.skills, ['hermes-browser']);
   assert.equal(data.factories, 0);
@@ -200,7 +203,7 @@ wire(None, object())            # no native app (another platform's shape)
 wire(object(), object())        # a native without a router
 print(json.dumps({"tools": len(ctx.tools)}))
 `);
-  assert.equal(JSON.parse(out).tools, 7);
+  assert.equal(JSON.parse(out).tools, 27);
 });
 
 test('profile and version labels are bounded to a safe alphabet', () => {

@@ -150,6 +150,8 @@ print(json.dumps(asyncio.run(main())))
     '/api/plugins/hermes-browser-companion/actions',
     '/api/plugins/hermes-browser-companion/context',
     '/api/plugins/hermes-browser-companion/context/status',
+    '/api/plugins/hermes-browser-companion/control/register',
+    '/api/plugins/hermes-browser-companion/control/ws',
     '/api/plugins/hermes-browser-companion/status',
   ]);
 });

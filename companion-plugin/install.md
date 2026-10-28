@@ -9,12 +9,17 @@ few tools. The plugin version is the `version` in `plugin.yaml`.
 
 - Metadata-only diagnostics plus a short-lived, owner-scoped context cache. It is
   fail-soft: when no context was delivered, every tool reports "unavailable".
-- It registers **seven tools**, three lifecycle hooks (`pre_llm_call`,
+- It registers **seven context tools**, three lifecycle hooks (`pre_llm_call`,
   `pre_tool_call`, `post_tool_call`), one bundled skill (`hermes-browser`) and
-  four routes on the API server (below).
-- It does **not** control the browser, open network connections, read
-  credentials or use `nativeMessaging`. It asks for no privileged host
-  capability (`capabilities: []`), so installing it shows no consent screen.
+  four routes on the API server (below). For a Hermes whose core has no extension
+  control it also carries Hermes Control: **twenty Hermes Control tools** and two
+  more routes (see Hermes Control below).
+- The context tools do **not** control the browser, and the plugin opens no
+  outbound network connection, reads no credential and does not use
+  `nativeMessaging`. It asks for no privileged host capability
+  (`capabilities: []`), so installing it shows no consent screen.
+- Hermes Control drives the person's own browser, but only while the extension is
+  attached to a session; see below for what that means.
 - The extension keeps its inline prompt path. The plugin is supplemental, never
   required, and removing or disabling it changes nothing for the extension.
 
@@ -112,6 +117,8 @@ GET /api/plugins/hermes-browser-companion/status
   "routes": ["/api/plugins/hermes-browser-companion/actions",
              "/api/plugins/hermes-browser-companion/context",
              "/api/plugins/hermes-browser-companion/context/status",
+             "/api/plugins/hermes-browser-companion/control/register",
+             "/api/plugins/hermes-browser-companion/control/ws",
              "/api/plugins/hermes-browser-companion/status"], "live": false }
 ```
 
@@ -199,6 +206,44 @@ metadata only. Browser-supplied scope, context hash, controller and
 browser-profile ids are kept only when they look like opaque ids (a UUID, a hex
 hash or a short slug without a credential-style prefix); anything else is
 dropped.
+
+## Hermes Control
+
+On a Hermes whose core has no extension control, the plugin lets the agent drive
+the person's own browser through the extension. Two more routes, wired by the
+same factory and answered only after the API server's own check (register) or a
+one-shot ticket (the live channel):
+
+```text
+POST /api/plugins/hermes-browser-companion/control/register
+     -> 201 { "protocol_version": 1, "ticket": "...", "ticket_expires_in_seconds": 30,
+              "ws_path": "/api/plugins/hermes-browser-companion/control/ws", "scope": {...} }
+GET  /api/plugins/hermes-browser-companion/control/ws   (WebSocket; the ticket rides in Sec-WebSocket-Protocol)
+```
+
+| Tool | Acts in the person's browser to |
+|---|---|
+| `browser_navigate`, `browser_back`, `browser_snapshot`, `browser_screenshot` | load a URL, go back, read the page, capture it |
+| `browser_click`, `browser_type`, `browser_fill`, `browser_select`, `browser_press`, `browser_hover`, `browser_drag` | act on an element by its ref |
+| `browser_scroll`, `browser_scroll_to`, `browser_batch` | scroll, bring an element into view, run up to 20 steps in one call |
+| `browser_tabs`, `browser_tab_create`, `browser_tab_activate`, `browser_tab_close`, `browser_tab_group`, `browser_tab_ungroup` | list and manage the tabs the person attached |
+
+- **Offered only while attached.** The tools appear only while some controller is
+  attached, and a call reaches only the controller registered for its own Hermes
+  session and profile; another session's, none, or more than one answer a plain
+  error. The agent is told to say so, never to look for another browser.
+- **The extension decides.** Which tabs, which actions and which approvals
+  (submit-like clicks, Enter, drags, tab changes) are the extension's, and a
+  refusal comes back as the answer. The plugin adds only a block on cloud-metadata
+  addresses and on URLs that embed an API key or token.
+- **Screenshots go to a file**, not into the model's context: a private file under
+  the plugin's data directory (the temp directory without one), the eight newest kept
+  for an hour at most.
+- Raw CDP, page evaluation and artifact upload or download are not part of this.
+- A Hermes that still carries extension control in core registers the same tool
+  names first; Hermes then skips the plugin's copies and the core ones serve.
+- The routes exist only after the gateway restarts with the plugin enabled, and not
+  under `plugins.isolation: host`. The Cloud and dashboard transport is not covered.
 
 ## Requirements
 

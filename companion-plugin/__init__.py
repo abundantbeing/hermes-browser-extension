@@ -5,21 +5,27 @@ current browser context captured from the Hermes Browser Extension. The
 plugin is fail-soft: when the extension is not connected or no context
 has been captured, all tools gracefully report unavailable.
 
-This plugin does NOT control the browser or assume any side channel exists.
 It passively caches browser context from conversation messages (embedded by
 the extension as Browser Context Protocol prompt blocks) and from explicit
-tool calls. Its HTTP surface is four routes on the API server: a read-only
-readiness route (name, version, profile, tool names; status_route.py) and the
+tool calls. Its HTTP surface is six routes on the API server: a read-only
+readiness route (name, version, profile, tool names; status_route.py), the
 browser-context side channel (context status, context upload, declarative action
-descriptors; context_routes.py).
+descriptors; context_routes.py) and the two Hermes Control routes the extension
+attaches through (control_routes.py).
+
+It also carries Hermes Control for a Hermes whose core has no extension control:
+one tool per browser action (control_tools.py), served by a broker
+(control_broker.py) the extension registers with. The tools act only in the
+browser of the session that attached it, and only while it is attached.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from . import context_routes, hooks, status_route, tools
+from . import context_routes, control_routes, control_tools, hooks, status_route, tools
 from .context_store import BrowserContextStore
+from .control_broker import get_control_broker
 
 # Global store — shared between tools and hooks.
 STORE = BrowserContextStore()
@@ -34,8 +40,19 @@ TOOL_NAMES = (
     "browser_control_status",
     "browser_context_journal",
     "browser_text_utility",
+    *control_tools.TOOL_NAMES,
 )
 HOOK_NAMES = ("pre_llm_call", "pre_tool_call", "post_tool_call")
+
+
+def _chain(*wires):
+    """One ``wire_extra`` that runs each given one; the status route's factory takes a single hook."""
+
+    def wire(router, adapter) -> None:
+        for wire_one in wires:
+            wire_one(router, adapter)
+
+    return wire
 
 
 def register(ctx) -> None:
@@ -127,24 +144,37 @@ def register(ctx) -> None:
         emoji="⚙️",
     )
 
+    # ── Hermes Control tools ───────────────────────────────────────────
+    # Offered only while a controller is attached; a name another toolset owns
+    # (a Hermes that still has control in core) is skipped by Hermes.
+    try:
+        profile = getattr(ctx, "profile_name", "default")
+    except Exception:
+        profile = "default"
+    control_tools.register_control_tools(ctx, broker=get_control_broker(), profile=profile, data_dir=data_dir)
+
     # ── Hooks ──────────────────────────────────────────────────────────
     ctx.register_hook("pre_llm_call", hooks.pre_llm_call)
     ctx.register_hook("pre_tool_call", hooks.pre_tool_call)
     ctx.register_hook("post_tool_call", hooks.post_tool_call)
 
     # ── Routes ─────────────────────────────────────────────────────────
-    # The readiness route plus the browser-context side channel (context status,
-    # context upload, declarative actions), all authenticated by the API server's
-    # own check and wired by one factory; skipped (never fatal) where Hermes
-    # refuses the seam. See status_route.py and context_routes.py.
+    # The readiness route, the browser-context side channel (context status,
+    # context upload, declarative actions) and the Hermes Control routes, all
+    # authenticated by the API server's own check and wired by one factory;
+    # skipped (never fatal) where Hermes refuses the seam. See status_route.py,
+    # context_routes.py and control_routes.py.
     version = status_route.plugin_version()
     status_route.register_status_route(
         ctx,
         tools=TOOL_NAMES,
         hooks=HOOK_NAMES,
         version=version,
-        wire_extra=context_routes.make_wire_extra(STORE, version=version),
-        routes=status_route.ROUTE_PATHS,
+        wire_extra=_chain(
+            context_routes.make_wire_extra(STORE, version=version),
+            control_routes.make_wire_extra(get_control_broker(), profile=profile),
+        ),
+        routes=(*status_route.ROUTE_PATHS, *control_routes.ROUTE_PATHS),
     )
 
     # ── Bundled skill ──────────────────────────────────────────────────

@@ -72,8 +72,12 @@ const probe = (routes, extra = {}) => {
 
 test('the extension expects exactly what companion-plugin/plugin.yaml ships', () => {
   assert.equal(manifest.match(/^version:\s*(\S+)/m)[1], COMPANION_EXPECTED_VERSION);
-  const tools = [...manifest.matchAll(/^ {2}- (browser_\w+)$/gm)].map((match) => match[1]).sort();
-  assert.deepEqual(tools, [...COMPANION_EXPECTED_TOOLS]);
+  const tools = [...manifest.matchAll(/^ {2}- (browser_\w+)$/gm)].map((match) => match[1]);
+  // The Hermes Control tools are not expected: a Hermes whose core still carries
+  // extension control skips them, and the extension's readiness does not need them.
+  const control = tools.filter((name) => !COMPANION_EXPECTED_TOOLS.includes(name));
+  assert.equal(control.length, 20);
+  assert.deepEqual(tools.filter((name) => COMPANION_EXPECTED_TOOLS.includes(name)).sort(), [...COMPANION_EXPECTED_TOOLS]);
   assert.equal(COMPANION_STATUS_PATH, '/api/plugins/hermes-browser-companion/status');
 });
 

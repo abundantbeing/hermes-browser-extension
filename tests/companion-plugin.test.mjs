@@ -36,6 +36,10 @@ const files = [
   'companion-plugin/tools.py',
   'companion-plugin/text_utilities.py',
   'companion-plugin/hooks.py',
+  'companion-plugin/control_broker.py',
+  'companion-plugin/control_routes.py',
+  'companion-plugin/control_schemas.py',
+  'companion-plugin/control_tools.py',
   'companion-plugin/install.md',
   'companion-plugin/skills/hermes-browser/SKILL.md',
 ];
@@ -141,6 +145,10 @@ assert [tool["name"] for tool in ctx.tools] == [
     "browser_control_status",
     "browser_context_journal",
     "browser_text_utility",
+    "browser_back", "browser_batch", "browser_click", "browser_drag", "browser_fill",
+    "browser_hover", "browser_navigate", "browser_press", "browser_screenshot", "browser_scroll",
+    "browser_scroll_to", "browser_select", "browser_snapshot", "browser_tab_activate", "browser_tab_close",
+    "browser_tab_create", "browser_tab_group", "browser_tab_ungroup", "browser_tabs", "browser_type",
 ]
 for tool in ctx.tools:
     schema = tool["schema"]
@@ -518,12 +526,14 @@ assert normalize_event_name("hermes.browser.control.future") == "runtime.unknown
   runPluginPython(script);
 });
 
-test('policy prohibits browser control', () => {
+test('policy allows browser control only through Hermes Control, with an attached controller', () => {
   const policy = readFileSync('companion-plugin/policy.py', 'utf8');
-  assert.match(policy, /BROWSER_CONTROL_ENABLED\s*=\s*False/);
-  assert.match(policy, /CONTROL_ENABLED\s*=\s*False/);
+  assert.match(policy, /BROWSER_CONTROL_ENABLED\s*=\s*True/);
+  assert.match(policy, /CONTROL_NEEDS_ATTACHED_CONTROLLER\s*=\s*True/);
   assert.match(policy, /context_caching.*True/);
-  assert.doesNotMatch(policy, /browser_control.*True/);
+  assert.match(policy, /"browser_control": True/);
+  assert.match(policy, /"approval_required": True/);
+  assert.match(policy, /ACTION_ROUTES_EXECUTE\s*=\s*False/);
 });
 
 test('companion skill preserves browser context trust boundaries', () => {
@@ -552,21 +562,24 @@ function listFilesRecursive(dir) {
 test('no network, route, or browser-control capability in companion plugin files', () => {
   const pluginFiles = listFilesRecursive('companion-plugin')
     .filter((file) => /\.(py|yaml|md)$/.test(file));
-  // status_route.py and context_routes.py are the only files that touch aiohttp:
-  // they import `web` to answer a request the API server already accepted. They
-  // open no connection; status_route.py adds one GET route, and context_routes.py
-  // adds two GETs and one POST (the browser-context envelope upload), no other verb.
-  const server = pluginFiles.filter((file) => /\/(status_route|context_routes)\.py$/.test(file));
-  assert.equal(server.length, 2);
+  // status_route.py, context_routes.py and control_routes.py are the only files
+  // that touch aiohttp: they import `web` to answer a request the API server already
+  // accepted. They open no connection; status_route.py adds one GET route,
+  // context_routes.py two GETs and one POST (the browser-context envelope upload)
+  // and control_routes.py one POST and one GET (the Hermes Control register and the
+  // controller socket the extension opens inbound), no other verb.
+  const server = pluginFiles.filter((file) => /\/(status_route|context_routes|control_routes)\.py$/.test(file));
+  assert.equal(server.length, 3);
   for (const file of server) {
     const serverSource = readFileSync(file, 'utf8');
     assert.match(serverSource, /from aiohttp import web/);
-    assert.doesNotMatch(serverSource, /ClientSession|\brequests\b|urllib|\bhttpx\b|\bsocket\b|\bwebsocket\b|\bsubprocess\b|add_(put|patch|delete|route|static|head)\b/);
+    const sockets = file.endsWith('/control_routes.py') ? '' : '|\\bsocket\\b|\\bwebsocket\\b';
+    assert.doesNotMatch(serverSource, new RegExp(`ClientSession|\\brequests\\b|urllib|\\bhttpx\\b|\\bsubprocess\\b|add_(put|patch|delete|route|static|head)\\b${sockets}`));
     if (file.endsWith('/status_route.py')) assert.doesNotMatch(serverSource, /add_post\b/);
   }
   const combined = pluginFiles.filter((file) => !server.includes(file)).map((file) => readFileSync(file, 'utf8')).join('\n');
   assert.doesNotMatch(combined, /\brequests\b|urllib\.request|\bhttpx\b|\baiohttp\b|\bsocket\b|\bwebsocket\b|\bsubprocess\b/);
-  assert.doesNotMatch(combined, /register_api_route|api_server_route\s*[:=]\s*true|ALLOW_API_SERVER_ROUTES\s*=\s*True|browser_control\s*[:=]\s*true|BROWSER_CONTROL_ENABLED\s*=\s*True|CONTROL_ENABLED\s*=\s*True|nativeMessaging\s*[:=]\s*true|chrome\.debugger/i);
+  assert.doesNotMatch(combined, /register_api_route|api_server_route\s*[:=]\s*true|ALLOW_API_SERVER_ROUTES\s*=\s*True|nativeMessaging\s*[:=]\s*true|chrome\.debugger/i);
 });
 
 test('install.md documents the plugin correctly', () => {

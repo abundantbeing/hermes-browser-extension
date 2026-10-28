@@ -675,7 +675,7 @@ with tempfile.TemporaryDirectory() as home:
 
 // ── Docs, manifest and code agree ─────────────────────────────────────────
 
-const COMPANION_TOOLS = [
+const CONTEXT_TOOLS = [
   'browser_context_status',
   'browser_get_context',
   'browser_clear_context',
@@ -684,6 +684,13 @@ const COMPANION_TOOLS = [
   'browser_context_journal',
   'browser_text_utility',
 ];
+const CONTROL_TOOLS = [
+  'browser_back', 'browser_batch', 'browser_click', 'browser_drag', 'browser_fill',
+  'browser_hover', 'browser_navigate', 'browser_press', 'browser_screenshot', 'browser_scroll',
+  'browser_scroll_to', 'browser_select', 'browser_snapshot', 'browser_tab_activate', 'browser_tab_close',
+  'browser_tab_create', 'browser_tab_group', 'browser_tab_ungroup', 'browser_tabs', 'browser_type',
+];
+const COMPANION_TOOLS = [...CONTEXT_TOOLS, ...CONTROL_TOOLS];
 
 function manifestList(manifest, key) {
   const block = manifest.split(/\r?\n/);
@@ -698,7 +705,7 @@ function manifestList(manifest, key) {
   return items;
 }
 
-test('plugin.yaml, register(), the bundled skill and install.md all list the same seven tools', () => {
+test('plugin.yaml, register(), the bundled skill and install.md all list the same tools', () => {
   const manifest = readFileSync('companion-plugin/plugin.yaml', 'utf8');
   assert.deepEqual(manifestList(manifest, 'provides_tools'), COMPANION_TOOLS);
   assert.deepEqual(manifestList(manifest, 'provides_hooks'), ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
@@ -729,8 +736,10 @@ print(json.dumps({"tools": ctx.tools, "hooks": ctx.hooks}))
     assert.ok(skill.includes(`\`${name}\``), `SKILL.md lists ${name}`);
     assert.ok(install.includes(`\`${name}\``), `install.md lists ${name}`);
   }
-  assert.match(skill, /\bseven tools\b/);
-  assert.match(install, /\bseven tools\b/);
+  assert.match(skill, /\bseven context tools\b/);
+  assert.match(install, /\bseven context tools\b/);
+  assert.match(skill, /\btwenty Hermes Control tools\b/);
+  assert.match(install, /\btwenty Hermes Control tools\b/);
   assert.doesNotMatch(`${skill}\n${install}`, /\b(six|four|five|6|4|5) (companion )?tools\b/i);
 });
 
@@ -771,20 +780,22 @@ assert call("browser_clear_context") == UNAVAILABLE
   runPluginPython(script);
 });
 
-test('a metadata-only plugin claims a closed set of routes and never live browser control or action execution', () => {
+test('the plugin claims a closed set of routes, and control only through Hermes Control, never action execution by a route', () => {
   const claims = ['companion-plugin/install.md', 'companion-plugin/skills/hermes-browser/SKILL.md', 'companion-plugin/plugin.yaml', 'DATA-FLOW.md']
     .map((file) => readFileSync(file, 'utf8')).join('\n');
   assert.doesNotMatch(claims, /\/v1\/browser|\/api\/browser|browser_context_upload|browser_context_provider|plugin_actions/);
-  assert.doesNotMatch(claims, /\/api\/plugins\/hermes-browser-companion\/(?!status|context|actions)/);
+  assert.doesNotMatch(claims, /\/api\/plugins\/hermes-browser-companion\/(?!status|context|actions|control\/(?:register|ws)\b)/);
   const install = readFileSync('companion-plugin/install.md', 'utf8');
-  assert.match(install, /does \*\*not\*\* control the browser/);
+  assert.match(install, /context tools do \*\*not\*\* control the browser/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/control\/register/);
+  assert.match(install, /\/api\/plugins\/hermes-browser-companion\/control\/ws/);
   assert.match(install, /\/api\/plugins\/hermes-browser-companion\/status/);
   assert.match(install, /read-only/);
   assert.match(install, /\/api\/plugins\/hermes-browser-companion\/context\/status/);
   assert.match(install, /\/api\/plugins\/hermes-browser-companion\/actions/);
   assert.match(install, /never execution|descriptors, never execution/i);
   const skill = readFileSync('companion-plugin/skills/hermes-browser/SKILL.md', 'utf8');
-  assert.match(skill, /Never claim browser control from this plugin/);
+  assert.match(skill, /Never claim browser control unless a Hermes Control tool actually ran/);
   assert.match(skill, /always `live: false`/);
   const policy = readFileSync('companion-plugin/policy.py', 'utf8');
   assert.match(policy, /ALLOW_API_SERVER_ROUTES\s*=\s*False/);

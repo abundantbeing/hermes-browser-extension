@@ -53,7 +53,7 @@ module.register(ProbeCtx())
 print(json.dumps(recorded))
 `);
   const recorded = JSON.parse(out.trim().split('\n').pop());
-  assert.equal(recorded.tools.length, 7);
+  assert.equal(recorded.tools.length, 27);
   assert.deepEqual(recorded.hooks, ['pre_llm_call', 'pre_tool_call', 'post_tool_call']);
   assert.deepEqual(recorded.skills, ['hermes-browser']);
 });
@@ -62,7 +62,11 @@ test('the manifest declares exactly the tools and hooks register() registers', (
   const declaredTools = [...manifest.matchAll(/^ {2}- (browser_\w+)$/gm)].map((match) => match[1]);
   const init = readFileSync('companion-plugin/__init__.py', 'utf8');
   const registeredTools = [...init.matchAll(/name="(browser_\w+)"/g)].map((match) => match[1]);
-  assert.equal(declaredTools.length, 7);
+  // The Hermes Control tools are registered in a loop over the broker's actions.
+  const controlTools = [...readFileSync('companion-plugin/control_broker.py', 'utf8').matchAll(/^ {4}"(browser_\w+)",$/gm)].map((match) => match[1]);
+  assert.equal(controlTools.length, 20);
+  registeredTools.push(...controlTools);
+  assert.equal(declaredTools.length, 27);
   assert.deepEqual([...declaredTools].sort(), [...registeredTools].sort());
   for (const hook of ['pre_llm_call', 'pre_tool_call', 'post_tool_call']) {
     assert.match(manifest, new RegExp(`^ {2}- ${hook}$`, 'm'), hook);

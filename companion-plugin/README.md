@@ -3,7 +3,8 @@
 A Hermes Agent plugin for the [Hermes Browser extension](https://github.com/abundantbeing/hermes-browser-extension).
 It keeps the browser context the extension sends with a turn (page text, a
 selection, tab URLs) in memory for a few minutes, bound to that turn, and gives
-the agent seven tools to look at it. It is optional: the extension works
+the agent seven tools to look at it. On a Hermes without extension control in
+core it also carries Hermes Control, the agent driving the person's own browser. It is optional: the extension works
 without it, and removing or disabling it changes nothing for the extension.
 
 ```bash
@@ -20,8 +21,15 @@ Per-profile commands, upgrading and the full tool table are in
 - Seven tools in the `hermes-browser-companion` toolset: `browser_context_status`,
   `browser_get_context`, `browser_clear_context`, `browser_event_log`,
   `browser_control_status`, `browser_context_journal`, `browser_text_utility`.
+- Twenty Hermes Control tools in the same toolset, one per browser action
+  (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_tabs`, ...),
+  offered only while the extension is attached to the session. They act in the
+  person's own browser through the extension; see install.md.
 - Three hooks: `pre_llm_call`, `pre_tool_call`, `post_tool_call`.
 - One bundled skill, `hermes-browser`.
+- Two more routes for Hermes Control: `POST .../control/register` (API server
+  authentication, mints a 30 second one-shot ticket) and `GET .../control/ws` (the
+  extension's controller channel, opened with that ticket).
 - Four routes on the API server, all authenticated by the API server's own check:
   the read-only `GET /api/plugins/hermes-browser-companion/status` (name,
   version, profile, tool names and the route list), and the browser-context side
@@ -32,9 +40,10 @@ Per-profile commands, upgrading and the full tool table are in
 
 ## Disclosure
 
-- **No network calls.** It opens no connection to any host. The status route
-  only answers a request the Hermes API server already accepted; the one upload
-  route stores a validated envelope in memory and returns metadata.
+- **No outbound network calls.** It opens no connection to any host. The status
+  route only answers a request the Hermes API server already accepted; the one
+  upload route stores a validated envelope in memory and returns metadata. The
+  extension opens the Hermes Control channel to the plugin, never the other way.
 - **No credentials.** It reads no secret, `.env` file, token store or OAuth
   state, and declares no `requires_env`. It asks for no privileged capability
   (`capabilities: []`).
@@ -45,7 +54,11 @@ Per-profile commands, upgrading and the full tool table are in
   writes to disk or returns as diagnostics (event log, journal, tool receipts) is
   metadata only: opaque ids, hashes, tool names and timestamps. The journal and
   receipts live under the plugin's own profile data directory.
-- **It cannot control the browser.** `browser_control_status` reports historical
-  metadata and is always `live: false`.
+- **Control is Hermes Control only.** The context tools and routes cannot control
+  the browser (`browser_control_status` reports historical metadata and is always
+  `live: false`). The Hermes Control tools act only in the browser the session
+  attached through the extension, only while attached, and what the person
+  approves is decided in the extension. Raw CDP, page evaluation and file
+  transfer are not part of them.
 - **Reads outside its own data: none.** The one file it reads is its own
   `plugin.yaml`, for the version in the status route.
