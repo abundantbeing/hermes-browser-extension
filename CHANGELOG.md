@@ -7,6 +7,8 @@
 - **Hermes Control** (attached-tab control, its screenshots, frames and batched actions) needs a Hermes that offers browser-extension control. Upstream Hermes removed it on 2026-10-23 (NousResearch/hermes-agent#143146). On such a gateway the panel says Hermes Control is not available on this Hermes, keeps it off, stops trying to register, and Hermes is no longer told to use controller tools it does not have.
 - **Pairing**, the compact approval page inside the panel, and the signed-in Hermes Web tab with its branded opening page need the extension-pairing routes (hermes-agent#88203). Without them, Connect falls back to Manual setup with the gateway's address and API key.
 - **Bot Mode's pictures and full bot details over a plain API connection** need `GET /v1/profiles` (hermes-agent#142089), the Hermes dashboard or a sign-in.
+- **The `/skill` menu over a plain API connection**: upstream's `GET /v1/skills` fails on every request (it passes the skill loader an argument it no longer takes), so the menu fills only from the Hermes dashboard or a sign-in.
+- **Group chats** need the Hermes Web socket (the dashboard, a Hermes Web sign-in or pairing), because Hermes runs group rooms there.
 
 Everything else works on upstream Hermes.
 
@@ -103,7 +105,17 @@ Everything else works on upstream Hermes.
 
 - Hermes Control is honest on a gateway that has no extension control. A REST gateway that does not advertise it, a registration answered 404 or 405, or a socket that does not know the register method, marks Hermes Control unavailable: the card says so and what it needs, Enable is hidden, there is no endless "Reconnecting control", and the panel stops dialling every few seconds until the connection or the gateway changes. Transient failures back off as the gateway asks. Each turn tells Hermes that this gateway has no Hermes Control, so it answers from the page context, never claims it acted on your tab, and uses its own browser only when you ask, named as a separate browser. A gateway that does offer control works as before.
 - **Edit** and **Restore checkpoint** work on gateways with session authority. They sent truncation fields that gateway refuses, so every edit failed with `invalid_params`, and the refusal also switched off clean message text for a week. The panel now takes the turn back with the gateway's own rewind, checked against the session's revision, then sends the new text. A refused rewind changes nothing; if the rewind landed but the send did not, the chat is reloaded from Hermes and your text goes back in the box.
-- Group chat members start on gateways with session authority. Their sessions were created with a field that gateway refuses.
+- Group chats work on current Hermes, which runs group rooms itself and refuses a client that drives each bot's session (every bot answered "Something went wrong").
+  - When the gateway says it runs rooms, each group gets its own room there, created with your bots. Your message is posted to it, and the bots' replies, passes and failures are read back from the room as they happen.
+  - Stop stops the room, Retry reruns a bot Hermes held back, and a bot waiting for command approval is reported.
+  - Opening the group shows the room's messages after the panel's older ones.
+  - Such a room shows everything sent to it to every bot and in its log, so the page and tab screenshots are not sent there, and the panel says so.
+  - Bots answer on their own profile settings: a per-room model pick says so instead of pretending.
+  - A gateway that does not run rooms itself keeps the previous group chats.
+- A message in a bot's Bot Chat shows its reply on current Hermes. Hermes hands a Bot Chat turn to that chat's own queue.
+  - When it moved an older Bot Chat aside first, the reply went to the new chat while the panel reloaded the old one. That chat's last line could be an old "Your request was not processed".
+  - The panel now follows the chat Hermes used, and says so when a reply is still queued.
+  - A refused message, and any other failed send, now stays on screen with your text back in the box, instead of flashing and disappearing when the panel reloaded the chat.
 - **Continue in a copy** for a chat an older version of the extension made. Current Hermes refuses to continue it (it was stored under the Browser's old label, which Hermes will not change), and the panel said only "Hermes request rejected". It now explains and offers a copy: Hermes forks the chat under a label it accepts, the panel opens the copy, sends your message there once, and opens the copy from then on when you pick the old chat. A gateway that cannot fork offers a new chat instead. Bot Chats and chats from other Hermes apps are never copied.
 - Bot Mode is no longer empty on a gateway without a roster route, such as upstream Hermes with only an API key. It lists your bots by name, opens their Bot Chats, and says that pictures and full bot details need the Hermes dashboard or a sign-in, with a button to the connection settings, instead of "No verified Hermes profiles are available" under "N profiles loaded".
 - Opening a session, a bot's Bot Chat or a group room starts at the most recent message, and stays there while images and code finish laying out, instead of opening at the top.
