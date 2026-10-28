@@ -5,7 +5,9 @@ import { createControllerConnector } from '../extension/lib/controller-connector
 import {
   CONTROLLER_BROWSER_CAPABILITIES,
   CONTROLLER_ROUTES,
+  CONTROLLER_SESSION_PENDING,
   CONTROLLER_TRANSPORT_FAMILIES,
+  controllerProfilePath,
   controllerRegistrationFor,
   controllerSocketPath,
   controllerWebSocketUrl,
@@ -32,7 +34,6 @@ const LOCAL_SETTINGS = Object.freeze({
   connectionTransport: 'local-api',
   gatewayUrl: 'http://127.0.0.1:8642',
   apiKey: 'fixture-key',
-  activeProfile: 'luxord',
 });
 
 class FakeSocket {
@@ -119,7 +120,6 @@ test('Hermes core answering 404 or 405 falls back to the plugin register route a
     assert.deepEqual(core.init.headers, plugin.init.headers);
     assert.equal(plugin.init.method, 'POST');
     assert.equal(plugin.init.headers.Authorization, 'Bearer fixture-key');
-    assert.equal(plugin.init.headers['X-Hermes-Profile'], 'luxord');
     assert.equal(plugin.init.redirect, 'error');
     const body = JSON.parse(plugin.init.body);
     assert.equal(body.protocol_version, 1);
@@ -163,22 +163,35 @@ test('the plugin route refusing for another reason than 404 or 405 is an ordinar
   }
 });
 
-test('a plugin registration for a session the server does not know is materialized and retried on the plugin route', async () => {
+test('a plugin registration for a session the server does not know is "not ready", never created', async () => {
   const fake = gateway({
     [CORE_REGISTER]: jsonResponse(404, {}),
-    [PLUGIN_REGISTER]: (count) => (count === 1
-      ? jsonResponse(403, { error: { code: 'browser_control_session_forbidden', message: 'unknown session' } })
-      : jsonResponse(201, { ticket: 'plugin-ticket-fixture', ws_path: PLUGIN_WS_PATH })),
+    [PLUGIN_REGISTER]: jsonResponse(403, { error: { code: 'browser_control_session_forbidden', message: 'unknown session' } }),
   });
-  const connection = await connect(fake);
-  assert.deepEqual(fake.requests.map((request) => request.url), [
-    CORE_REGISTER,
-    PLUGIN_REGISTER,
-    'http://127.0.0.1:8642/api/sessions',
-    PLUGIN_REGISTER,
-  ]);
-  assert.equal(FakeSocket.instances[0].url, PLUGIN_SOCKET);
+  await assert.rejects(connect(fake), (error) => error.code === CONTROLLER_SESSION_PENDING);
+  assert.deepEqual(fake.requests.map((request) => request.url), [CORE_REGISTER, PLUGIN_REGISTER]);
+  assert.equal(FakeSocket.instances.length, 0);
+});
+
+test('a named profile is addressed with /p/<profile> on both routes and on the socket; the profile header stays', async () => {
+  const core = 'http://127.0.0.1:8642/p/luxord/v1/browser-control/register';
+  const plugin = 'http://127.0.0.1:8642/p/luxord/api/plugins/hermes-browser-companion/control/register';
+  const fake = gateway({
+    [core]: jsonResponse(404, {}),
+    [plugin]: jsonResponse(201, { ticket: 'plugin-ticket-fixture', ws_path: PLUGIN_WS_PATH }),
+  });
+  const connection = await connect(fake, { ...LOCAL_SETTINGS, activeProfile: 'luxord' });
+  assert.deepEqual(fake.requests.map((request) => request.url), [core, plugin], 'nothing goes to the default profile');
+  assert.equal(fake.requests[1].init.headers['X-Hermes-Profile'], 'luxord');
+  assert.equal(FakeSocket.instances[0].url, `ws://127.0.0.1:8642/p/luxord${PLUGIN_WS_PATH}`);
   connection.close();
+  // The default (no profile) keeps the plain addresses.
+  const plain = gateway({
+    [CORE_REGISTER]: jsonResponse(404, {}),
+    [PLUGIN_REGISTER]: jsonResponse(201, { ticket: 'plugin-ticket-fixture', ws_path: PLUGIN_WS_PATH }),
+  });
+  (await connect(plain)).close();
+  assert.deepEqual(plain.requests.map((request) => request.url), [CORE_REGISTER, PLUGIN_REGISTER]);
 });
 
 test('only the two known socket paths are followed; any other ws_path is ignored for the route\'s own', async () => {
@@ -230,6 +243,10 @@ test('the protocol exports stay stable and gain the plugin route', () => {
   assert.equal(controllerWebSocketUrl(baseUrl), CORE_SOCKET);
   assert.equal(controllerWebSocketUrl(baseUrl, PLUGIN_WS_PATH), PLUGIN_SOCKET);
   assert.equal(controllerWebSocketUrl(baseUrl, '/nope'), CORE_SOCKET);
+  assert.equal(controllerWebSocketUrl(baseUrl, PLUGIN_WS_PATH, 'luxord'), `ws://127.0.0.1:8642/p/luxord${PLUGIN_WS_PATH}`);
+  assert.equal(controllerProfilePath('/v1/x', 'luxord'), '/p/luxord/v1/x');
+  assert.equal(controllerProfilePath('/p/other/v1/x', 'luxord'), '/p/other/v1/x');
+  assert.equal(controllerProfilePath('/v1/x', ''), '/v1/x');
   assert.equal(controllerSocketPath('plugin', undefined), PLUGIN_WS_PATH);
   assert.equal(controllerSocketPath('core', undefined), '/v1/browser-control/ws');
   assert.equal(controllerSocketPath('core', ` ${PLUGIN_WS_PATH} `), PLUGIN_WS_PATH);

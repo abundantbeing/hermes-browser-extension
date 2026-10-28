@@ -43,6 +43,14 @@ export const CONTROLLER_NOOP_CAPABILITY = 'controller.noop';
  */
 export const CONTROLLER_UNSUPPORTED_GATEWAY = 'unsupported_gateway';
 
+/**
+ * Registration refused because the session does not exist on the gateway yet
+ * (a draft the panel's first turn has not created). Not terminal and not worth a
+ * retry loop of its own: the controller never creates a session, it waits for
+ * the panel to, and tries again on the normal backoff or the next settings change.
+ */
+export const CONTROLLER_SESSION_PENDING = 'session_pending';
+
 // Every entry must be an action the Chromium adapter implements
 // (CHROMIUM_ACTIONS in browser-controller-adapter.mjs); a drift test pins it.
 // browser_batch is run by the executor itself: every step goes through the same
@@ -112,6 +120,21 @@ const ROUTE_PATHS = Object.freeze({
 });
 // The only socket paths a registration may name (its `ws_path`); anything else is ignored.
 const KNOWN_SOCKET_PATHS = new Set(Object.values(ROUTE_PATHS).map((paths) => paths.socket));
+
+/**
+ * Address a path at a named Hermes profile: `/p/<profile>` in front of it, as the
+ * rest of the extension does (hermes-client's profileScopedPath). The gateway
+ * ignores the X-Hermes-Profile header for routing, so without the prefix a
+ * request lands on the default profile. Core mirrors its routes under the prefix;
+ * the companion plugin's routes are wired on each profile's own adapter, and the
+ * gateway's `/p/{profile}/{tail}` ingress forwards the prefixed request to it.
+ */
+export function controllerProfilePath(path = '', profile = '') {
+  const normalized = String(path || '').startsWith('/') ? String(path || '') : `/${path}`;
+  const selected = String(profile || '').trim();
+  if (!selected || /^\/p\/[^/]+(?:\/|$)/.test(normalized)) return normalized;
+  return `/p/${encodeURIComponent(selected)}${normalized}`;
+}
 
 function routePaths(route) {
   const paths = ROUTE_PATHS[route];
@@ -209,14 +232,15 @@ function joinUrlPath(baseUrl, path, options) {
  * @param {string} options.family - 'local-api' | 'remote-api' | 'cloud-ticket-ws'
  * @param {string} options.baseUrl - Hermes runtime base URL (http/https)
  * @param {string} [options.route] - 'core' (default) or 'plugin': which gateway route to register on (API transports only)
+ * @param {string} [options.profile] - active Hermes profile; a non-empty one prefixes the register path with /p/<profile>
  * @param {object} options.identity - controller identity ({ controllerId, browserProfileId, hermesSessionId, product })
  * @returns {{ transport: string, registrationUrl?: string, payload?: object, method?: string, params?: object }}
  */
-export function controllerRegistrationFor({ family, baseUrl, identity, route = CONTROLLER_ROUTES.core } = {}) {
+export function controllerRegistrationFor({ family, baseUrl, identity, route = CONTROLLER_ROUTES.core, profile = '' } = {}) {
   if (family === CONTROLLER_TRANSPORT_FAMILIES.LOCAL_API || family === CONTROLLER_TRANSPORT_FAMILIES.REMOTE_API) {
     return {
       transport: TRANSPORT_API_TICKET_WS,
-      registrationUrl: joinUrlPath(baseUrl, routePaths(route).register, { family }),
+      registrationUrl: joinUrlPath(baseUrl, controllerProfilePath(routePaths(route).register, profile), { family }),
       payload: registrationPayload(identity),
     };
   }
@@ -238,13 +262,14 @@ export function controllerRegistrationFor({ family, baseUrl, identity, route = C
  * Build the credential-free WebSocket URL for the api-ticket-ws transport.
  * The one-shot ticket is carried separately by controllerWebSocketProtocols()
  * so request-target/access logs cannot capture it. `socketPath` is one of the
- * known socket paths (see controllerSocketPath); anything else gives core's.
+ * known socket paths (see controllerSocketPath); anything else gives core's. A
+ * non-empty `profile` addresses the socket at that profile, like the register.
  */
-export function controllerWebSocketUrl(baseUrl, socketPath = ROUTE_PATHS[CONTROLLER_ROUTES.core].socket) {
+export function controllerWebSocketUrl(baseUrl, socketPath = ROUTE_PATHS[CONTROLLER_ROUTES.core].socket, profile = '') {
   const url = parsedApiBaseUrl(baseUrl);
   const socket = new URL(url.href);
   socket.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  socket.pathname = `${url.pathname.replace(/\/+$/, '')}${controllerSocketPath(CONTROLLER_ROUTES.core, socketPath)}`;
+  socket.pathname = `${url.pathname.replace(/\/+$/, '')}${controllerProfilePath(controllerSocketPath(CONTROLLER_ROUTES.core, socketPath), profile)}`;
   socket.search = '';
   socket.hash = '';
   return socket.href;

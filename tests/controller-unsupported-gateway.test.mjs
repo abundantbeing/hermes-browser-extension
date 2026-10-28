@@ -144,27 +144,6 @@ test('other registration refusals stay ordinary retryable failures', async () =>
   }
 });
 
-test('a 404 on the retry after ghost-session materialization is still terminal', async () => {
-  let registerCalls = 0;
-  const connector = createControllerConnector({
-    fetchImpl: async (url) => {
-      if (url.endsWith('/v1/browser-control/register')) {
-        registerCalls += 1;
-        return registerCalls === 1
-          ? jsonResponse(403, { error: { code: 'browser_control_session_forbidden', message: 'unknown session' } })
-          : jsonResponse(404, {});
-      }
-      if (url.endsWith('/control/register')) return jsonResponse(404, {});
-      return jsonResponse(201, { session: { id: 'stored-session-fixture' } });
-    },
-    WebSocketImpl: FakeSocket,
-  });
-  await assert.rejects(
-    connector.connect({ settings: { ...LOCAL_SETTINGS }, identity: IDENTITY }),
-    (error) => error.code === CONTROLLER_UNSUPPORTED_GATEWAY,
-  );
-});
-
 test('Cloud register answered method-not-found is the terminal unsupported_gateway result', async () => {
   FakeSocket.instances = [];
   const connecting = cloudConnector().connect({ settings: { ...CLOUD_SETTINGS }, identity: IDENTITY });

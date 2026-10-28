@@ -15,6 +15,7 @@ import {
   CONTROLLER_HEARTBEAT_METHOD,
   CONTROLLER_METHODS,
   CONTROLLER_ROUTES,
+  CONTROLLER_SESSION_PENDING,
   CONTROLLER_UNSUPPORTED_GATEWAY,
   CONTROLLER_TRANSPORT_FAMILIES,
   controllerRegistrationFor,
@@ -34,7 +35,6 @@ import {
   mintWsTicket,
 } from './dashboard-bridge.mjs';
 import { CONNECTION_TRANSPORTS } from './connection-modes.mjs';
-import { restSessionCreateSource } from './session-materialization.mjs';
 
 const API_TRANSPORTS = new Set([
   CONNECTION_TRANSPORTS.LOCAL_API,
@@ -74,10 +74,16 @@ function normalizedTransport(settings = {}) {
   return String(settings?.connectionTransport || '').trim();
 }
 
+// The profile the connection is for: it addresses the register and the socket (/p/<profile>)
+// and is sent as a header too.
+function activeProfileOf(settings = {}) {
+  return String(settings?.activeProfile || '').trim();
+}
+
 function apiHeaders(settings = {}) {
   const apiKey = String(settings?.apiKey || '').trim();
   if (!apiKey) throw new Error('Controller API registration requires an API credential.');
-  const profile = String(settings?.activeProfile || '').trim();
+  const profile = activeProfileOf(settings);
   const authorization = ['Bearer', apiKey].join(' ');
   return {
     'Content-Type': 'application/json',
@@ -202,50 +208,30 @@ export function createControllerConnector({
   // that route's own terminal unsupported_gateway result, so the caller can try the
   // other route before giving up.
   async function registerOnRoute({ route, family, baseUrl, identity, settings, signal }) {
-    const descriptor = controllerRegistrationFor({ family, baseUrl, identity, route });
-    const post = async () => {
-      const response = await fetchImpl(descriptor.registrationUrl, {
-        method: 'POST',
-        headers: apiHeaders(settings),
-        body: JSON.stringify(descriptor.payload),
-        redirect: 'error',
-        cache: 'no-store',
-        signal,
-      });
-      return { response, payload: await response.json().catch(() => ({})) };
-    };
-    let { response, payload } = await post();
+    const descriptor = controllerRegistrationFor({ family, baseUrl, identity, route, profile: activeProfileOf(settings) });
+    const response = await fetchImpl(descriptor.registrationUrl, {
+      method: 'POST',
+      headers: apiHeaders(settings),
+      body: JSON.stringify(descriptor.payload),
+      redirect: 'error',
+      cache: 'no-store',
+      signal,
+    });
+    const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       if (isUnsupportedRegisterStatus(response.status)) throw unsupportedRegisterError(response.status);
-      const message = String(payload?.error?.message || payload?.detail || '').trim();
-      // The gateway refuses to mint a controller ticket for a session it does
-      // not know (browser_control_session_forbidden). Local drafts mint their
-      // session id client-side before the first turn materializes it
-      // server-side, so recover by creating the session and retrying once.
-      // Without this the reconnect loop would spin forever on a ghost id.
-      if (payload?.error?.code === 'browser_control_session_forbidden'
-        && API_TRANSPORTS.has(family)
-        && String(identity?.hermesSessionId || '').trim()) {
-        const materialized = await materializeDraftSession({
-          fetchImpl,
-          baseUrl,
-          sessionId: String(identity.hermesSessionId).trim(),
-          title: String(settings?.sessionTitle || 'Hermes Browser Extension'),
-          source: restSessionCreateSource(settings?.sessionSource),
-          headers: apiHeaders(settings),
-          signal,
-        });
-        if (!materialized) throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
-        const retry = await post();
-        if (!retry.response.ok) {
-          if (isUnsupportedRegisterStatus(retry.response.status)) throw unsupportedRegisterError(retry.response.status);
-          const retryMessage = String(retry.payload?.error?.message || retry.payload?.detail || '').trim();
-          throw new Error(retryMessage || `Controller registration failed (HTTP ${retry.response.status}).`);
-        }
-        ({ response, payload } = retry);
-      } else {
-        throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
+      // The gateway refuses a ticket for a session it does not know
+      // (browser_control_session_forbidden). A local draft's id is minted
+      // client-side and the panel's first turn creates it; the controller never
+      // creates a session (that left an empty one in the person's list on every
+      // panel open). It reports "not ready" and tries again on the normal backoff.
+      if (payload?.error?.code === 'browser_control_session_forbidden') {
+        const pending = new Error('This chat does not exist on the gateway yet; Hermes Control connects once its first message has been sent.');
+        pending.code = CONTROLLER_SESSION_PENDING;
+        throw pending;
       }
+      const message = String(payload?.error?.message || payload?.detail || '').trim();
+      throw new Error(message || `Controller registration failed (HTTP ${response.status}).`);
     }
     const ticket = String(payload?.ticket || '').trim();
     if (!ticket) throw new Error('Controller registration did not return a ticket.');
@@ -274,7 +260,7 @@ export function createControllerConnector({
     const family = normalizedTransport(settings);
     const baseUrl = String(settings?.gatewayUrl || '').trim();
     // Throws on a malformed identity or base URL before any request is made.
-    controllerRegistrationFor({ family, baseUrl, identity });
+    controllerRegistrationFor({ family, baseUrl, identity, profile: activeProfileOf(settings) });
     const controller = new AbortController();
     let timeoutId = null;
     const timeout = new Promise((_, reject) => {
@@ -296,62 +282,12 @@ export function createControllerConnector({
 
     return openControllerSocket({
       WebSocketImpl,
-      url: controllerWebSocketUrl(baseUrl, registered.socketPath),
+      url: controllerWebSocketUrl(baseUrl, registered.socketPath, activeProfileOf(settings)),
       protocols: controllerWebSocketProtocols(registered.ticket),
       onFrame,
       onClose,
       timeoutMs: connectTimeoutMs,
     });
-  }
-
-  /**
-   * Create the draft session server-side so the controller can register
-   * against it. Mirrors the panel's ensureHermesSession() materialization.
-   * Returns true when the session now exists (created or already present).
-   *
-   * The gateway enforces unique session titles, and the plain default title is
-   * already owned by the extension's own long-lived session — a create with it
-   * is refused with invalid_title, which used to leave the controller unable to
-   * register forever. The session id is unique, so embed it in the title and
-   * retry once with a timestamped title if the gateway still refuses.
-   */
-  async function materializeDraftSession({
-    fetchImpl,
-    baseUrl,
-    sessionId,
-    title,
-    source,
-    headers,
-    signal,
-  }) {
-    const createUrl = `${String(baseUrl).replace(/\/+$/, '')}/api/sessions`;
-    const baseTitle = String(title || '').trim() || 'Hermes Browser Extension';
-    const uniqueTitle = baseTitle.includes(sessionId)
-      ? baseTitle.slice(0, 120)
-      : `${baseTitle} · ${sessionId}`.slice(0, 120);
-    const create = async (candidateTitle) => {
-      const response = await fetchImpl(createUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ id: sessionId, title: candidateTitle, source }),
-        redirect: 'error',
-        cache: 'no-store',
-        signal,
-      });
-      const payload = await response.json().catch(() => ({}));
-      return { response, payload };
-    };
-    try {
-      const { response, payload } = await create(uniqueTitle);
-      if (response.ok || response.status === 409) return true;
-      if (payload?.error?.code === 'invalid_title') {
-        const { response: retryResponse } = await create(`${baseTitle} · ${sessionId} · ${Date.now()}`.slice(0, 120));
-        return retryResponse.ok || retryResponse.status === 409;
-      }
-      return false;
-    } catch {
-      return false;
-    }
   }
 
   async function connectCloud({ settings, identity, onFrame, onClose }) {
