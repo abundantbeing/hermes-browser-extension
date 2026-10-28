@@ -313,6 +313,8 @@ import {
   buildSessionModelSwitchRequest,
   createGatewayClient,
   establishGatewaySession,
+  newPromptSubmissionId,
+  promptSubmitParamsFor,
   sessionCreateParamsFor,
   sessionListParamsFor,
   executionGenerationFrom,
@@ -25040,11 +25042,14 @@ async function streamDashboardWsChat(prompt, onDelta, onTool, options = {}) {
   // after that is gone: the turn ends here instead of starting a different session
   // under the transcript on screen.
   let staleIdResumes = 0;
+  // One turn, one submission id: a resend after a re-resume is the same admission to the gateway.
+  const submissionId = newPromptSubmissionId();
   while (true) {
     try {
       return await streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, {
         ...options,
         submitPrompt,
+        submissionId,
       });
     } catch (error) {
       if (classifyPromptRefusal(error) === 'stale-session') {
@@ -25074,7 +25079,7 @@ async function streamDashboardWsChat(prompt, onDelta, onTool, options = {}) {
   }
 }
 
-async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [], submitPrompt = true, attachments: turnAttachments = [], voiceLive = null, truncate = null, onSubmitResponse = null } = {}) {
+async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDelta, onTool, { signal, onRun, onSteerQueued, onRuntime, knownAssistantTexts = [], submitPrompt = true, submissionId = '', attachments: turnAttachments = [], voiceLive = null, truncate = null, onSubmitResponse = null } = {}) {
   onRun?.(sessionId);
   const { client } = connection;
   const sessionIds = [sessionId, connection.wsSessionId, connection.wsStoredSessionId];
@@ -25225,13 +25230,13 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
         const quirkGatewayUrl = connection.baseUrl || settings.gatewayUrl;
         await gatewayQuirks.load();
         if (settled) return;
-        const submitParams = () => ({
+        const submitParams = () => promptSubmitParamsFor(client, {
           session_id: sessionId,
           text: prompt,
           ...browserTurnDisplayParam(prompt, quirkGatewayUrl),
           ...truncateSubmitParams({ rowId: truncate?.rowId }),
           ...voiceParams,
-        });
+        }, submissionId);
         const firstSubmit = submitParams();
         client.request(WS_METHODS.promptSubmit, firstSubmit).catch(async (error) => {
           // Only a submit that carried display_text can be refused for it. When
@@ -26795,7 +26800,8 @@ async function runRemoteInlineBackground(session, prompt) {
       if (!forSession(event)) return;
       finish(reject, new Error(event.payload?.message || 'Background assist failed.'));
     }));
-    session.client.request(WS_METHODS.promptSubmit, { session_id: session.liveId, text: prompt }).catch((error) => finish(reject, error));
+    session.client.request(WS_METHODS.promptSubmit, promptSubmitParamsFor(session.client, { session_id: session.liveId, text: prompt }))
+      .catch((error) => finish(reject, error));
   });
 }
 

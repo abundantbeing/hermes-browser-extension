@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { setImmediate } from 'node:timers';
-import { WS_EVENTS, WS_METHODS, normalizeGatewayHistoryMessages, readGatewaySessionStatus } from '../extension/lib/gateway-ws.mjs';
+import { WS_EVENTS, WS_METHODS, normalizeGatewayHistoryMessages, promptSubmitParamsFor, readGatewaySessionStatus } from '../extension/lib/gateway-ws.mjs';
 import { turnDeliveryFromHistory, latestAssistantAfterUser, sessionStatusKnownIdle, turnRequestFailureState } from '../extension/lib/turn-recovery.mjs';
 import { dashboardWatchdogTimeoutAction, matchesDashboardSessionEvent } from '../extension/lib/dashboard-stream-watchdog.mjs';
 import { messageDisplayText } from '../extension/lib/common.mjs';
@@ -22,7 +22,7 @@ const flush = async () => { for (let i = 0; i < 6; i += 1) await new Promise((re
 
 // streamDashboardWsChatAttempt with a fake gateway client. `history` is what
 // session.history answers; `status` is what the status read answers.
-function attemptHarness({ history, status, authority = false, submitPrompt = false, prompt = 'NEW question' }) {
+function attemptHarness({ history, status, authority = false, submitPrompt = false, prompt = 'NEW question', displayText = '', submissionId = '' }) {
   const listeners = new Map();
   const painted = [];
   const calls = [];
@@ -44,7 +44,7 @@ function attemptHarness({ history, status, authority = false, submitPrompt = fal
     },
   };
   const context = vm.createContext({
-    WS_METHODS, WS_EVENTS,
+    WS_METHODS, WS_EVENTS, promptSubmitParamsFor,
     matchesDashboardSessionEvent, normalizeGatewayHistoryMessages, readGatewaySessionStatus,
     latestAssistantAfterUser, turnDeliveryFromHistory, sessionStatusKnownIdle, messageDisplayText, turnNotDeliveredError,
     dashboardWatchdogTimeoutAction, hermesGatewayTurnError,
@@ -54,7 +54,7 @@ function attemptHarness({ history, status, authority = false, submitPrompt = fal
     refreshSessionContextTelemetry: () => {}, hydrateSubagentSnapshot: async () => {},
     attachDashboardTurnImages: async () => {}, noteDashboardImageAttach: () => {},
     gatewayQuirks: { load: async () => {}, isUnsupported: () => false },
-    browserTurnDisplayParam: () => ({}), truncateSubmitParams: () => ({}),
+    browserTurnDisplayParam: () => (displayText ? { display_text: displayText } : {}), truncateSubmitParams: () => ({}),
     rememberUserFileAttachments: async () => {}, attachmentSourceKey: () => 'k', setStatus: () => {}, t: (key) => key,
     isDisplayTextRejection: () => false, GATEWAY_QUIRK: { PROMPT_DISPLAY_TEXT: 'x' },
     settings: { gatewayUrl: 'http://gw', sessionId: 'stored-1' },
@@ -66,7 +66,7 @@ function attemptHarness({ history, status, authority = false, submitPrompt = fal
   context.history = history;
   const outcome = {};
   const promise = vm.runInContext(
-    `streamDashboardWsChatAttempt(connection, 'live-1', ${JSON.stringify(prompt)}, onDelta, null, { submitPrompt: ${submitPrompt} })`,
+    `streamDashboardWsChatAttempt(connection, 'live-1', ${JSON.stringify(prompt)}, onDelta, null, { submitPrompt: ${submitPrompt}, submissionId: ${JSON.stringify(submissionId)} })`,
     context,
   ).then((value) => { outcome.resolved = value; }, (error) => { outcome.error = error; });
   return {
@@ -171,4 +171,23 @@ test('a stored envelope turn still matches by its readable form', () => {
   assert.notEqual(readable, envelope);
   assert.deepEqual(turnDeliveryFromHistory(rows, [readable], { displayText: messageDisplayText }), { delivered: true, answer: 'ANSWER' });
   assert.deepEqual(turnDeliveryFromHistory(rows, ['another prompt'], { displayText: messageDisplayText }), { delivered: false, answer: '' });
+});
+
+test('a session authority admits the turn under its submission id, without display_text', async () => {
+  const h = attemptHarness({ history: [], authority: true, submitPrompt: true, displayText: 'NEW', submissionId: 'turn-7' });
+  await flush();
+  const submit = h.calls.find((call) => call.method === 'prompt.submit');
+  assert.ok(submit, 'the turn was submitted');
+  assert.equal(submit.params.submission_id, 'turn-7');
+  assert.equal(submit.params.text, 'NEW question');
+  assert.equal('display_text' in submit.params, false, 'the canonical prompt.submit has no display_text key');
+});
+
+test('a legacy dashboard socket keeps its own prompt.submit keys and gets no submission id', async () => {
+  const h = attemptHarness({ history: [], authority: false, submitPrompt: true, displayText: 'NEW', submissionId: 'turn-7' });
+  await flush();
+  const submit = h.calls.find((call) => call.method === 'prompt.submit');
+  assert.ok(submit, 'the turn was submitted');
+  assert.equal('submission_id' in submit.params, false);
+  assert.equal(submit.params.display_text, 'NEW');
 });

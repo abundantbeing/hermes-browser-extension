@@ -239,6 +239,23 @@ export function sessionCreateParamsFor(client, params = {}) {
   return client?.readyPayload?.session_authority === true ? buildCanonicalSessionCreateParams(params) : params;
 }
 
+/** A fresh id for one turn's prompt.submit; keep it for every resend of that turn. */
+export function newPromptSubmissionId() {
+  return newCreateRequestId();
+}
+
+/**
+ * The prompt.submit params this socket accepts. A session authority admits a turn only under a
+ * `submission_id` (its retry key: without one it answers a bare invalid_params), and `display_text`
+ * is no key of its closed set. A legacy dashboard socket refuses `submission_id`, so its params are
+ * unchanged.
+ */
+export function promptSubmitParamsFor(client, params = {}, submissionId = '') {
+  if (client?.readyPayload?.session_authority !== true) return params;
+  const { display_text: _displayText, ...rest } = params;
+  return { ...rest, submission_id: rest.submission_id || submissionId || newPromptSubmissionId() };
+}
+
 export async function establishGatewaySession({ client, storedSessionId = '', createParams = {}, profile = '' } = {}) {
   if (!client?.request) throw new Error('Hermes gateway client is required.');
   const requestedId = String(storedSessionId || '').trim();

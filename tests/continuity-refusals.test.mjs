@@ -42,8 +42,9 @@ function chatHarness(attempt, { resume } = {}) {
       connection.wsSessionId = `live-A-${log.resumes}`;
       return connection.wsSessionId;
     },
+    newPromptSubmissionId: () => `turn-${log.turns = (log.turns || 0) + 1}`,
     streamDashboardWsChatAttempt: async (_connection, sessionId, _prompt, _d, _t, options) => {
-      log.attempts.push({ sessionId, submitPrompt: options.submitPrompt });
+      log.attempts.push({ sessionId, submitPrompt: options.submitPrompt, submissionId: options.submissionId });
       if (log.attempts.length > 40) throw Object.assign(new Error('TEST CUTOFF: unbounded loop'), { rpcCode: 0, cutoff: true });
       return attempt(log.attempts.length);
     },
@@ -96,6 +97,8 @@ test('a stale live id is re-resumed once and the prompt resubmitted once', async
   assert.equal(h.log.attempts.length, 2);
   assert.equal(h.log.resumes, 2);
   assert.equal(h.log.attempts[1].submitPrompt, true);
+  assert.equal(h.log.attempts[0].submissionId, 'turn-1');
+  assert.equal(h.log.attempts[1].submissionId, 'turn-1', 'the resend is the same admission to the gateway');
 });
 
 test('a second stale refusal ends the turn as session-gone: no third submit, no new session, binding untouched', async () => {

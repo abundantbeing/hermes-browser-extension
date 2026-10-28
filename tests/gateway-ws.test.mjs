@@ -14,6 +14,7 @@ import {
   establishGatewaySession,
   gatewayWebSocketProtocols,
   normalizeGatewayHistoryMessages,
+  promptSubmitParamsFor,
   remoteSessionIdentity,
   remoteStoredSessionIdForGateway,
   runtimeModelFromSessionStatus,
@@ -453,4 +454,20 @@ test('session.list params match the upstream SessionListParams contract (no offs
   assert.deepEqual(buildSessionListParams({ profile: undefined }), { limit: 200, profile: '' });
   const allowed = new Set(['profile', 'title', 'limit', 'include_hidden']);
   for (const key of Object.keys(buildSessionListParams({ limit: 5, profile: 'p' }))) assert.ok(allowed.has(key), `${key} is not an upstream session.list field`);
+});
+
+test('prompt.submit on a session authority carries a submission id and no display_text', () => {
+  const authority = { readyPayload: { session_authority: true } };
+  const params = promptSubmitParamsFor(authority, { session_id: 's1', text: 'full prompt', display_text: 'typed', surface: 'voice-live' }, 'turn-1');
+  assert.deepEqual(params, { session_id: 's1', text: 'full prompt', surface: 'voice-live', submission_id: 'turn-1' });
+  const minted = promptSubmitParamsFor(authority, { session_id: 's1', text: 'hi' });
+  assert.equal(typeof minted.submission_id, 'string');
+  assert.ok(minted.submission_id.length > 0, 'a submit with no id given still gets one');
+  assert.equal(promptSubmitParamsFor(authority, { session_id: 's1', text: 'hi', submission_id: 'kept' }, 'other').submission_id, 'kept');
+});
+
+test('prompt.submit on a legacy dashboard socket is sent unchanged', () => {
+  const params = { session_id: 's1', text: 'full prompt', display_text: 'typed' };
+  assert.equal(promptSubmitParamsFor({ readyPayload: {} }, params, 'turn-1'), params);
+  assert.equal(promptSubmitParamsFor(null, params, 'turn-1'), params);
 });

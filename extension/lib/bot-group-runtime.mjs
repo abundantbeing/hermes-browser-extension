@@ -1,4 +1,4 @@
-import { remoteSessionIdentity, runtimeModelFromSessionStatus, buildSessionModelSwitchRequest, sessionCreateParamsFor } from './gateway-ws.mjs';
+import { remoteSessionIdentity, runtimeModelFromSessionStatus, buildSessionModelSwitchRequest, promptSubmitParamsFor, sessionCreateParamsFor } from './gateway-ws.mjs';
 import { profileDefaultModelFromOptions } from './model-discovery.mjs';
 import { screenshotAttachParams } from './bot-browser-bridge.mjs';
 import { formatGroupTurnWithBrowserContext } from './group-turn-context.mjs';
@@ -733,10 +733,10 @@ function waitForMemberCompletion(client, liveId, { signal, timeoutMs = GROUP_TUR
         finish(reject, new DOMException('Group turn stopped by user', 'AbortError'));
         return;
       }
-      const accepted = await client.request('prompt.submit', {
+      const accepted = await client.request('prompt.submit', promptSubmitParamsFor(client, {
         session_id: liveId,
         text,
-      });
+      }));
       promptSubmitted = true;
       return accepted;
     };
