@@ -19672,10 +19672,15 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
     }
   }
   if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
-  const sessionId = makeBrowserSessionId();
+  // A bot's Bot Chat is created with what `hermes peer dm` sends: its title and source only. A
+  // session authority then mints the bot's own Bot Chat, the one Desktop and the Webapp show. An
+  // id or any other field makes a plain API row instead, which the first delivery moves aside as
+  // an empty "Bot Chat (API <id>)". Every turn carries its model, options and system message.
+  const botChat = source === 'hermes_bot_mode';
+  const sessionId = botChat ? '' : makeBrowserSessionId();
   const response = await apiFetch('/api/sessions', {
     method: 'POST',
-    body: JSON.stringify({
+    body: JSON.stringify(botChat ? { title, source: restSessionCreateSource(settings.sessionSource) } : {
       id: sessionId,
       title,
       hidden,
@@ -19694,7 +19699,8 @@ async function createHermesBrowserSession({ title = makeBrowserSessionTitle(), f
     profile: (payload.session || payload)?.profile || safeActiveProfile(),
     transport: (payload.session || payload)?.transport || 'rest',
     hidden: (payload.session || payload)?.hidden === true || hidden,
-  }] })[0] || { id: sessionId, title, source: settings.sessionSource, profile: safeActiveProfile(), transport: 'rest', hidden };
+  }] })[0] || (sessionId ? { id: sessionId, title, source: settings.sessionSource, profile: safeActiveProfile(), transport: 'rest', hidden } : null);
+  if (!session) throw new Error('Hermes did not return the new Bot Chat.');
   availableSessions = normalizeHermesSessions({ data: [session, ...availableSessions.filter((item) => item.id !== session.id)] });
   settings = {
     ...settings,

@@ -470,3 +470,14 @@ test('the profile switch menu pins its mode header above the scrolling list', ()
   assert.match(sidepanelCss, /\.profile-switch-options \{[\s\S]*?overflow-y: auto/);
   assert.match(sidepanelCss, /\.profile-switch-menu \{[\s\S]*?overflow: hidden/);
 });
+
+test('a Bot Chat created over REST sends only its title and source', () => {
+  // A session authority mints the bot's own Bot Chat only for the body `hermes peer dm` sends. An id
+  // or any other field leaves a plain API row that the first delivery moves aside, empty.
+  const start = sidepanelSource.indexOf('async function createHermesBrowserSession(');
+  const restCreate = sidepanelSource.slice(sidepanelSource.indexOf("apiFetch('/api/sessions', {", start), start + 12000);
+  assert.match(sidepanelSource.slice(start, start + 12000), /const botChat = source === 'hermes_bot_mode';\s*const sessionId = botChat \? '' : makeBrowserSessionId\(\);/);
+  assert.match(restCreate, /JSON\.stringify\(botChat \? \{ title, source: restSessionCreateSource\(settings\.sessionSource\) \} : \{\s*id: sessionId,/);
+  // Without an id of its own the panel binds the id Hermes returns, or stops.
+  assert.match(restCreate, /\(sessionId \? \{ id: sessionId,[^}]*\} : null\);\s*if \(!session\) throw new Error\('Hermes did not return the new Bot Chat\.'\);/);
+});
