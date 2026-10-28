@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createControllerConnector } from '../extension/lib/controller-connector.mjs';
-import { CONTROLLER_UNSUPPORTED_GATEWAY } from '../extension/lib/controller-protocol.mjs';
+import { CONTROLLER_SESSION_PENDING, CONTROLLER_UNSUPPORTED_GATEWAY } from '../extension/lib/controller-protocol.mjs';
 import {
   CONTROLLER_WORKER_MESSAGES,
   CONTROLLER_WORKER_STORAGE_KEY,
@@ -210,6 +210,9 @@ function scriptedConnector(outcomes) {
         throw Object.assign(new Error('This Hermes does not support Hermes Control (HTTP 404).'), { code: CONTROLLER_UNSUPPORTED_GATEWAY });
       }
       if (outcome === 'fail') throw new Error('socket refused');
+      if (outcome === 'pending') {
+        throw Object.assign(new Error('Hermes has no session for this chat yet.'), { code: CONTROLLER_SESSION_PENDING });
+      }
       return {
         options,
         async send() {},
@@ -342,4 +345,34 @@ test('transient failures honour retryAfterMs as a backoff and never churn the ge
   assert.equal(connector.attempts, 3);
   assert.equal(recovered.connected, true);
   assert.equal(recovered.generation, generation);
+});
+
+test('a chat without a Hermes session yet waits without growing backoff, and its first turn connects at once', async () => {
+  const storage = memoryStorage({ hermesBrowserSettings: workerSettings() });
+  const connector = scriptedConnector(['pending', 'pending', 'ok']);
+  const clock = { t: 1_000 };
+  const worker = makeWorker({ storage, connector, clock });
+
+  const booted = await worker.boot();
+  assert.equal(booted.connected, false);
+  assert.equal(booted.reason, CONTROLLER_SESSION_PENDING);
+  assert.equal(booted.retryAfterMs, 15_000);
+  assert.equal(connector.attempts, 1);
+
+  // Inside the slow retry window nothing dials; after it, the retry is the same length, not doubled.
+  clock.t += 1_000;
+  assert.equal((await worker.reconcile({ reason: 'reconcile-alarm' })).reason, 'backoff');
+  assert.equal(connector.attempts, 1);
+  clock.t += 15_000;
+  const second = await worker.reconcile({ reason: 'reconcile-alarm' });
+  assert.equal(second.reason, CONTROLLER_SESSION_PENDING);
+  assert.equal(second.retryAfterMs, 15_000);
+  assert.equal(connector.attempts, 2);
+
+  // The panel created the session and asks to prepare the chat's first turn: the worker connects
+  // right away, inside the retry window, before it answers.
+  clock.t += 1_000;
+  await worker.handleMessage({ type: CONTROLLER_WORKER_MESSAGES.prepareTurn, tabId: 7, frameId: 0, expectedUrl: 'https://example.com/' }, trustedSender);
+  assert.equal(connector.attempts, 3);
+  assert.equal(worker.status().connected, true);
 });

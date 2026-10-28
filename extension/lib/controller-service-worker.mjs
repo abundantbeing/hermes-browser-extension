@@ -26,7 +26,7 @@ import {
   TAB_LEASE_STORAGE_KEY,
   createTabLeaseStore,
 } from './tab-leases.mjs';
-import { CONTROLLER_METHODS, CONTROLLER_UNSUPPORTED_GATEWAY } from './controller-protocol.mjs';
+import { CONTROLLER_METHODS, CONTROLLER_SESSION_PENDING, CONTROLLER_UNSUPPORTED_GATEWAY } from './controller-protocol.mjs';
 import {
   BROWSER_CONTROL_RISKS,
   classifyBrowserControlAction,
@@ -66,6 +66,10 @@ const STATUS_RECONNECT_COOLDOWN_MS = 5_000;
 // The page view prepared for a turn must never hold the turn up for long.
 const PREPARE_TURN_SNAPSHOT_MS = 1_500;
 const PREPARE_TURN_BACKSTOP_MS = 1_750;
+// A new chat has no Hermes session until its first turn creates one. That turn reconnects at once
+// (prepareTurn), bounded by this; until then the worker only retries slowly, without growing backoff.
+const PREPARE_TURN_CONNECT_MS = 2_500;
+const SESSION_PENDING_RETRY_MS = 15_000;
 // Commands that carry their own arguments.tab_id meaning (act on / group that
 // tab) never use it to pick the command's target tab.
 const TAB_ARGUMENT_OWNED_ACTIONS = new Set([
@@ -925,6 +929,17 @@ export function createControllerServiceWorker({
             detail: lastConnectFailure.detail,
           };
         }
+        if (error?.code === CONTROLLER_SESSION_PENDING) {
+          // Not a failure: the chat's first turn creates its session and reconnects then.
+          nextConnectAt = Number(now()) + SESSION_PENDING_RETRY_MS;
+          lastConnectFailure = {
+            reason: CONTROLLER_SESSION_PENDING,
+            detail: 'Hermes Control connects once this chat has a Hermes session.',
+            retryAfterMs: SESSION_PENDING_RETRY_MS,
+          };
+          await persist();
+          return { ...status(), connected: false, reason: CONTROLLER_SESSION_PENDING, retryAfterMs: SESSION_PENDING_RETRY_MS };
+        }
         const retryAfterMs = lifecycle.nextBackoffDelay();
         nextConnectAt = Number(now()) + retryAfterMs;
         lastConnectFailure = {
@@ -1518,6 +1533,15 @@ export function createControllerServiceWorker({
   // the page view the model can act on straight away. Also records the tab as
   // the default target for commands that name none.
   async function prepareTurn(message = {}) {
+    if (!connected && lastConnectFailure?.reason === CONTROLLER_SESSION_PENDING) {
+      // The panel created this chat's Hermes session just before this turn: connect now, so the
+      // chat's first turn can already use control.
+      nextConnectAt = 0;
+      await Promise.race([
+        reconcile({ reason: 'turn-session-ready' }).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, PREPARE_TURN_CONNECT_MS)),
+      ]);
+    }
     const resolved = await resolveControlTarget(message);
     if (!resolved.ok) {
       const hint = PREPARE_TURN_MESSAGES[resolved.reason];
