@@ -292,7 +292,7 @@ test('gateway session reconnect resumes the durable id and routes follow-up RPCs
     id: createFrame.id,
     result: { session_id: 'live-A', stored_session_id: 'stored-A' },
   });
-  assert.deepEqual(await creating, { action: 'created', liveId: 'live-A', storedId: 'stored-A', profile: '' });
+  assert.deepEqual(await creating, { action: 'created', liveId: 'live-A', storedId: 'stored-A', profile: '', runtime: null });
 
   first.close();
 
@@ -318,7 +318,7 @@ test('gateway session reconnect resumes the durable id and routes follow-up RPCs
     id: resumeFrame.id,
     result: { session_id: 'live-B', resumed: 'stored-A', session_key: 'stored-A' },
   });
-  assert.deepEqual(await resuming, { action: 'resumed', liveId: 'live-B', storedId: 'stored-A', profile: '' });
+  assert.deepEqual(await resuming, { action: 'resumed', liveId: 'live-B', storedId: 'stored-A', profile: '', runtime: null });
 
   const followUp = second.request(WS_METHODS.sessionHistory, { session_id: 'live-B' });
   const historyFrame = JSON.parse(FakeWebSocket.last.sent.at(-1));

@@ -239,6 +239,33 @@ export function sessionCreateParamsFor(client, params = {}) {
   return client?.readyPayload?.session_authority === true ? buildCanonicalSessionCreateParams(params) : params;
 }
 
+const SNAPSHOT_EFFORTS = new Set(['minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
+
+/**
+ * What a session.resume snapshot (or a session.info event) says the session runs with: its model and
+ * provider, and its reasoning level and Fast mode as model options. `reasoning_effort` is the level,
+ * 'none' with thinking off, or '' when the session sets none of its own (it runs at its profile's
+ * level, which the snapshot does not name). Options are reported only for a level the panel can
+ * show; null when the snapshot names neither a model nor such a level.
+ */
+export function sessionRuntimeFromSnapshot(snapshot) {
+  const info = snapshot?.info && typeof snapshot.info === 'object' ? snapshot.info : null;
+  if (!info) return null;
+  const model = String(info.model || '').trim();
+  const provider = String(info.provider || '').trim();
+  const effort = String(info.reasoning_effort || '').trim().toLowerCase();
+  let modelOptions = null;
+  if (effort === 'none' || SNAPSHOT_EFFORTS.has(effort)) {
+    const tier = typeof info.service_tier === 'string' ? info.service_tier.trim().toLowerCase() : '';
+    modelOptions = {
+      reasoning: { enabled: effort !== 'none', effort: effort === 'none' ? '' : effort },
+      fast: typeof info.fast === 'boolean' ? info.fast : tier === 'priority' || tier === 'fast',
+    };
+  }
+  if (!model && !modelOptions) return null;
+  return { model, provider, modelOptions };
+}
+
 /** A fresh id for one turn's prompt.submit; keep it for every resend of that turn. */
 export function newPromptSubmissionId() {
   return newCreateRequestId();
@@ -285,7 +312,7 @@ export async function establishGatewaySession({ client, storedSessionId = '', cr
   // A session authority lists the approvals and questions still waiting on the
   // session in its snapshot; they are the same prompts its events announce.
   if (Array.isArray(result?.prompts) && result.prompts.length) client.deliverPrompts?.(result.prompts, liveId);
-  return { action, liveId, storedId, profile: acknowledgedProfile };
+  return { action, liveId, storedId, profile: acknowledgedProfile, runtime: sessionRuntimeFromSnapshot(result) };
 }
 
 export function buildDashboardWsUrl(baseUrl, ticket) {

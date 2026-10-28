@@ -746,6 +746,7 @@ import {
 } from './lib/message-rewind.mjs';
 import { rewindSessionToMessage, usesAuthorityRewind } from './lib/session-rewind.mjs';
 import { botChatDeliveryFrame, botChatRefusalState, isPendingBotChatDelivery, movedBotChatSessionId } from './lib/bot-chat-delivery.mjs';
+import { applyModelOptionPick, switchSessionModel } from './lib/session-runtime-pick.mjs';
 import { explicitSiteCaptureAction, isGmailThreadUrl } from './lib/site-adapters.mjs';
 import { SURFACE_KINDS } from './lib/surface-protocol.mjs';
 import { resolveBrowserApi } from './lib/browser-api.mjs';
@@ -10109,6 +10110,17 @@ function modelBindingFromSession(session = {}) {
   });
 }
 
+// The session fields a gateway snapshot reports (gateway-ws sessionRuntimeFromSnapshot): its model and
+// provider, and its reasoning and Fast as model options. They win over the panel's stored guess.
+function sessionFieldsFromRuntime(runtime) {
+  if (!runtime) return {};
+  return {
+    ...(runtime.model ? { model: runtime.model, rawModelId: runtime.model } : {}),
+    ...(runtime.model && runtime.provider ? { provider: runtime.provider } : {}),
+    ...(runtime.modelOptions ? { modelOptions: runtime.modelOptions } : {}),
+  };
+}
+
 function applyModelBindingForSession(session = {}) {
   const sessionId = session?.id || settings.sessionId;
   const storedBinding = normalizeBrowserModelBinding(settings.sessionModelBindings?.[sessionId]);
@@ -10143,7 +10155,18 @@ function applyModelOptionsForSession(session = {}) {
     sessionOptions: session?.modelOptions,
     storedOptions: settings.sessionModelOptionBindings?.[sessionId],
   });
-  if (!options) return settings;
+  if (!options) {
+    // Nothing says what this session runs with: show the panel's default, which is also what a REST
+    // turn sends, never the effort left over from the session opened before it.
+    const fallback = resolveBrowserEffectiveModelOptions({ extensionPreferredModelOptions: settings.extensionPreferredModelOptions });
+    settings = {
+      ...settings,
+      thinkingEnabled: fallback.thinkingEnabled,
+      reasoningEffort: fallback.reasoningEffort || settings.reasoningEffort,
+      fastMode: fallback.fastMode,
+    };
+    return settings;
+  }
   settings = {
     ...settings,
     thinkingEnabled: options.thinkingEnabled,
@@ -10639,6 +10662,28 @@ async function syncSessionModelOptions({
 } = {}) {
   if (!sessionId) return { state: 'pending' };
   if (sessionId !== settings.sessionId) return { state: 'stale' };
+  const authority = authoritySessionConnection(sessionId);
+  if (authority) {
+    // A session authority runs the session at its own level: a turn carries none, so the pick is
+    // sent to the session itself (config.set reasoning / fast), never only remembered here.
+    setStatus('warn', 'Hermes model options pending', 'Asking Hermes to run this session with the new Thinking, effort, and Fast mode.');
+    try {
+      const sent = await applyModelOptionPick((method, params) => authority.client.request(method, params), {
+        sessionId: authority.wsSessionId,
+        requested: requestedOptions,
+        previous: previousOptions,
+      });
+      if (optionVersion !== modelOptionSelectionVersion || sessionId !== settings.sessionId) return { state: 'stale' };
+      setStatus('ok', 'Hermes model options confirmed', sent.length
+        ? 'Hermes runs this session with the new Thinking, effort, and Fast mode from its next turn.'
+        : 'This session already runs with these options.');
+      return { state: 'confirmed' };
+    } catch (error) {
+      if (optionVersion !== modelOptionSelectionVersion) return { state: 'stale' };
+      if (sessionId !== settings.sessionId) return { state: 'stale' };
+      return rollBackModelOptionPick(error, { previousOptions, previousPreferredModelOptions, previousSessionModelOptionBindings });
+    }
+  }
   if (isRemoteWsMode()) {
     setStatus('warn', 'Hermes model options pending', 'Dashboard WebSocket does not expose an existing-session model-options update yet. These options will apply to the next new session.');
     return { state: 'pending' };
@@ -10679,20 +10724,35 @@ async function syncSessionModelOptions({
   } catch (error) {
     if (optionVersion !== modelOptionSelectionVersion) return { state: 'stale' };
     if (sessionId !== settings.sessionId) return { state: 'stale' };
-    const rollback = previousOptions || DEFAULT_SETTINGS.extensionPreferredModelOptions;
-    settings = {
-      ...settings,
-      thinkingEnabled: rollback.thinkingEnabled,
-      reasoningEffort: rollback.reasoningEffort,
-      fastMode: rollback.fastMode,
-      extensionPreferredModelOptions: previousPreferredModelOptions,
-      sessionModelOptionBindings: previousSessionModelOptionBindings,
-    };
-    await browserApi.storage.local.set({ hermesBrowserSettings: settings });
-    renderModelOptions(availableModels);
-    setStatus('error', 'Hermes model options failed', error?.message || String(error), { translateDetail: false });
-    return { state: 'failed', error };
+    return rollBackModelOptionPick(error, { previousOptions, previousPreferredModelOptions, previousSessionModelOptionBindings });
   }
+}
+
+// A pick Hermes did not take: the panel shows what the session still runs with again.
+async function rollBackModelOptionPick(error, { previousOptions, previousPreferredModelOptions, previousSessionModelOptionBindings } = {}) {
+  const rollback = previousOptions || DEFAULT_SETTINGS.extensionPreferredModelOptions;
+  settings = {
+    ...settings,
+    thinkingEnabled: rollback.thinkingEnabled,
+    reasoningEffort: rollback.reasoningEffort,
+    fastMode: rollback.fastMode,
+    extensionPreferredModelOptions: previousPreferredModelOptions,
+    sessionModelOptionBindings: previousSessionModelOptionBindings,
+  };
+  await browserApi.storage.local.set({ hermesBrowserSettings: settings });
+  renderModelOptions(availableModels);
+  setStatus('error', 'Hermes model options failed', error?.message || String(error), { translateDetail: false });
+  return { state: 'failed', error };
+}
+
+// The dashboard socket a session authority runs `sessionId` on, else null: this panel's turns for it
+// go over that socket, and the authority (not the turn) holds its model and reasoning level.
+function authoritySessionConnection(sessionId = settings.sessionId) {
+  if (!usesDashboardWsChatTransport()) return null;
+  const connection = activeDashboardWsConnection;
+  if (connection?.client?.readyPayload?.session_authority !== true || !connection.wsSessionId) return null;
+  const target = String(sessionId || '').trim();
+  return target && (connection.wsStoredSessionId === target || connection.wsSessionId === target) ? connection : null;
 }
 
 // The LOCAL SIDECAR card art (and the same hero art in settings) shows a
@@ -11050,12 +11110,62 @@ async function requestSessionModelLock(selected = currentSelectedModel(), { sess
   return payload;
 }
 
+// A model pick on a session authority: `session.mutate operation=model` (its `config.set model` is
+// refused). A guarded model asks first; the switch is sent again only once the person agrees.
+// Null when the gateway has no session.mutate, so the legacy switch is tried. Throws when Hermes
+// refuses, so the caller puts the previous model back.
+async function switchAuthoritySessionModel(connection, liveSessionId, selected) {
+  const request = (method, params) => connection.client.request(method, params);
+  const pick = {
+    sessionId: liveSessionId,
+    model: selected?.rawModelId || selected?.model || selected?.id || '',
+    provider: selected?.provider || currentModelProviderSlug() || '',
+  };
+  let result = await switchSessionModel(request, pick);
+  if (result.status === 'unavailable') return null;
+  if (result.status === 'confirm') {
+    const question = result.message || 'Hermes asks you to confirm this model before it switches.';
+    const agreed = typeof globalThis.confirm === 'function' && globalThis.confirm(question);
+    if (!agreed) throw new Error(`${question} The model was not switched.`);
+    result = await switchSessionModel(request, { ...pick, confirm: result.confirm });
+    if (result.status !== 'switched') throw new Error(result.message || 'Hermes did not switch the model.');
+  }
+  const runtime = result.runtime?.model
+    ? { model: result.runtime.model, provider: result.runtime.provider || '' }
+    : null;
+  const ack = runtime
+    ? modelRuntimeAckState({
+      requested: {
+        provider: selected?.provider || '',
+        model: pick.model,
+        gatewayAlias: selected?.gatewayAlias === true,
+        gatewayDefault: selected?.gatewayDefault === true,
+      },
+      runtime,
+    })
+    : { state: 'pending' };
+  if (ack.state !== 'confirmed') {
+    // Committed, but the session still reports the old model: a running turn finishes on it first.
+    setStatus('warn', 'Hermes model requested', `${modelProviderLabel(selected)} · ${modelDisplayName(selected)} — Hermes switches this session to it after the turn that is running.`);
+    return { state: 'pending', payload: result.receipt || null };
+  }
+  runtime.context_length = selected?.contextTokens || settings.modelContextTokens || 0;
+  applySessionRuntimeSnapshot({ sessionId: settings.sessionId || liveSessionId, runtime, source: 'Session model switch' });
+  applyPendingModelRuntimeAck(runtime);
+  setStatus('ok', 'Cloud model switched', `${modelProviderLabel(selected)} · ${modelDisplayName(selected)} is active for this session.`);
+  return { state: 'confirmed', payload: result.receipt || null };
+}
+
 async function syncSessionModelLock(selected, { previousId = '', previousBinding = null, requestedDetail = '', statusDetail = '' } = {}) {
   if (usesDashboardWsChatTransport()) {
     setStatus('warn', 'Cloud model switch pending', `${requestedDetail || modelDisplayName(selected) || settings.model} — waiting for the live Cloud session to confirm.`);
     try {
       const connection = await ensureActiveDashboardWsConnection();
       const liveSessionId = await ensureRemoteWsSession(connection);
+      if (connection.client.readyPayload?.session_authority === true) {
+        const switched = await switchAuthoritySessionModel(connection, liveSessionId, selected);
+        if (switched) return switched;
+      }
       const request = buildSessionModelSwitchRequest({
         sessionId: liveSessionId,
         model: selected?.rawModelId || selected?.model || selected?.id || '',
@@ -19611,7 +19721,7 @@ async function openHermesSession(selectedSession) {
   if (dashboardTransport) {
     try {
       const connection = await ensureActiveDashboardWsConnection();
-      const { liveId, storedId, profile: reportedProfile } = await establishGatewaySession({
+      const { liveId, storedId, profile: reportedProfile, runtime } = await establishGatewaySession({
         client: connection.client,
         storedSessionId: session.id,
         profile: safeActiveProfile(),
@@ -19634,7 +19744,7 @@ async function openHermesSession(selectedSession) {
       connection.wsStoredSessionId = storedId;
       connection.profile = safeActiveProfile();
       liveSessionId = liveId;
-      session = { ...session, id: storedId };
+      session = { ...session, id: storedId, ...sessionFieldsFromRuntime(runtime) };
       rememberLiveSessionAlias(liveId, storedId);
       availableSessions = normalizeHermesSessions({
         sessions: [session, ...availableSessions.filter((item) => item.id !== requestedSessionId && item.id !== storedId)],
