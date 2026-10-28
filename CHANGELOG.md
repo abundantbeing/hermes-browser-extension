@@ -63,6 +63,7 @@ Everything else works on upstream Hermes.
 
 ### Changed
 
+- A group chat shows who is answering in one line under the thread, with the bots' avatars: "Roxas, Riku, and 3 more are working…", then the bot answering now ("Riku · Using web_search…"), cycling between them, and "Wrapping up…" while Hermes decides whether a mentioned bot gets another round. It replaces the strip of name chips above the composer and the empty "···" bubble. A bot that could not reply still gets its notice with **Retry** above the composer. In all 21 languages.
 - Connect to Hermes no longer reads as if every Hermes offers pairing. Setup and the Connect pop-up offer pairing where Hermes has it and Manual setup with the gateway's address and API key otherwise, the status reads "Not connected yet" (the startup screen "Not connected"), and a line under the buttons sends remote, server and Hermes Cloud users to Manual setup. The Hermes Web dialog no longer lists commands to run on this computer for a connection with no address to try. In all 21 languages.
 - `npm run check:js` runs on Windows again: its list outgrew the Windows command line and now lives in `scripts/check-js.mjs`.
 - The context window card's **Refresh** and **Compact context** buttons sit side by side under the status line, and the Refresh icon spins while it works (it holds still when reduced motion is on). On a chat that runs over REST, the card now reads its category breakdown and compaction state from the gateway's session connection, and **Refresh** tries to open that connection when it is missing.
@@ -112,6 +113,7 @@ Everything else works on upstream Hermes.
   - Such a room shows everything sent to it to every bot and in its log, so the page and tab screenshots are not sent there, and the panel says so.
   - Bots answer on their own profile settings: a per-room model pick says so instead of pretending.
   - A gateway that does not run rooms itself keeps the previous group chats.
+  - When a bot @mentions another, Hermes gives the mentioned bot another round. The panel now shows that bot working again; it used to say "All done" while the bots were still answering.
 - A message in a bot's Bot Chat shows its reply on current Hermes. Hermes hands a Bot Chat turn to that chat's own queue.
   - When it moved an older Bot Chat aside first, the reply went to the new chat while the panel reloaded the old one. That chat's last line could be an old "Your request was not processed".
   - The panel now follows the chat Hermes used, and says so when a reply is still queued.

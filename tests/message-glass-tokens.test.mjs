@@ -132,6 +132,9 @@ test('room identity, working line, failure notices, and member popover selectors
   assert.match(css, /@keyframes groupWorkingScan/, 'the working line shimmer exists');
   assert.match(css, /prefers-reduced-motion: reduce\)\s*\{\s*\.group-working-avatar,[^}]*animation: none/, 'reduced motion stills the working line');
   assert.doesNotMatch(css, /\.presence-chip\b/, 'the chip strip is gone');
+  // A flex column squeezes #messages to the scroller and lets its rows overflow, which would put
+  // the working line mid-thread instead of under the last message.
+  assert.match(css, /\n\.messages \{[^}]*flex-shrink: 0;/, 'the thread is sized by its messages');
   assert.match(css, /\.room-member-change\s*\{[^}]*background:\s*var\(--hermes-primary-bg/, 'the Change button uses the theme primary pair');
   // A room bubble must degrade to the plain glass bubble when the identity tint
   // has not been applied, never to a dropped background declaration.

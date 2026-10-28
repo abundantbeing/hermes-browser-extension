@@ -2619,6 +2619,9 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
 .messages {
   min-height: 160px;
   min-width: 0;
+  /* Sized by its messages, not squeezed to the scroller, so what follows the thread
+     (#groupWorkingLine) sits under the last message. */
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -9911,15 +9914,15 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
   min-width: 0;
   min-height: 24px;
   padding: 2px 4px 10px;
-  font: 500 calc(11.5px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-ui);
+  font: 500 calc(12.5px * var(--hermes-text-zoom, 1))/1.3 var(--hermes-font-ui);
   color: color-mix(in srgb, var(--hermes-ink) 62%, transparent);
 }
 .group-working-line[hidden] { display: none; }
 .group-working-avatars { display: inline-flex; flex: 0 0 auto; }
 .group-working-avatars:empty { display: none; }
 .group-working-avatar {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   overflow: hidden;
   display: inline-grid;
@@ -9928,7 +9931,7 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
   background: var(--hermes-paper);
   animation: groupWorkingIn 240ms ease-out;
 }
-.group-working-avatar + .group-working-avatar { margin-inline-start: -6px; }
+.group-working-avatar + .group-working-avatar { margin-inline-start: -7px; }
 .group-working-avatar > * { width: 100%; height: 100%; }
 .group-working-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .group-working-text > * { animation: groupWorkingIn 240ms ease-out; }
@@ -10069,7 +10072,7 @@ html[data-hermes-mode="light"] .message-row.room-message > .message.assistant {
 /* Compact density (body.bot-mode-compact) shrinks room headers, the typing line, and rows. */
 body.bot-mode-compact .message-row.room-message .message-role { font-size: calc(11px * var(--hermes-text-zoom, 1)); }
 body.bot-mode-compact .message-row.room-message .room-avatar { width: 16px; height: 16px; flex-basis: 16px; }
-body.bot-mode-compact .group-working-line { font-size: calc(10.5px * var(--hermes-text-zoom, 1)); }
+body.bot-mode-compact .group-working-line { font-size: calc(11px * var(--hermes-text-zoom, 1)); }
 body.bot-mode-compact .room-member-row { min-height: 32px; }
 
 /* Room @mentions: bot ink when known, theme accent otherwise; tinted chip so a
