@@ -132,10 +132,16 @@ function memberHandles(roster) {
   });
 }
 
-// The roster groups.create seats: one entry per profile, the profile as its id.
-export function hostedRoomMembers(members = []) {
+// The roster groups.create seats: one entry per profile, the profile as its id. `seatedHandles`
+// ({profile: handle}) are the handles a room was created with: they win, so a title that changed
+// (or loaded) since then never respells a mention the room cannot resolve.
+export function hostedRoomMembers(members = [], seatedHandles = null) {
   const roster = normalizeRoster(members);
-  const handles = memberHandles(roster);
+  const seated = asObject(seatedHandles);
+  const handles = memberHandles(roster).map((handle, index) => {
+    const kept = clean(seated[roster[index].name]);
+    return validIdentifier(kept) ? kept : handle;
+  });
   return roster.map((member, index) => {
     const displayName = member.title.slice(0, NAME_MAX);
     return {
@@ -154,10 +160,10 @@ function escapeRegExp(value) {
 
 // The user's text with every @title / @profile mention spelled as that member's room handle, so
 // the gateway routes "@Naminé" to Naminé. Other text is left exactly as typed.
-export function hostedMentionText(text = '', members = []) {
+export function hostedMentionText(text = '', members = [], seatedHandles = null) {
   let value = String(text ?? '');
   if (!value.includes('@')) return value;
-  const seated = hostedRoomMembers(members);
+  const seated = hostedRoomMembers(members, seatedHandles);
   const spellings = [];
   for (const member of seated) {
     for (const spelling of [member.display_name, member.profile]) {
@@ -174,10 +180,10 @@ export function hostedMentionText(text = '', members = []) {
 
 // The members a message addresses, as the gateway routes it: mentioned handles (in roster order),
 // or every member when none resolves or @all / @everyone is used.
-export function hostedRespondents(text = '', members = []) {
+export function hostedRespondents(text = '', members = [], seatedHandles = null) {
   const roster = normalizeRoster(members);
-  const seated = hostedRoomMembers(members);
-  const routed = hostedMentionText(text, members);
+  const seated = hostedRoomMembers(members, seatedHandles);
+  const routed = hostedMentionText(text, members, seatedHandles);
   const mentioned = new Set();
   for (const match of routed.matchAll(/@([A-Za-z0-9][A-Za-z0-9._:-]*)/g)) mentioned.add(match[1].toLowerCase());
   if (mentioned.has('all') || mentioned.has('everyone')) return roster;
@@ -309,11 +315,13 @@ export function createHostedGroupRuntime({
   async function createRoom(roomId, groupName, roster) {
     const hostedRoomId = randomId();
     const name = clean(groupName).slice(0, NAME_MAX) || 'Group chat';
-    await request('groups.create', { room_id: hostedRoomId, name, members: hostedRoomMembers(roster) });
+    const seated = hostedRoomMembers(roster);
+    await request('groups.create', { room_id: hostedRoomId, name, members: seated });
     const binding = {
       roomId: hostedRoomId,
       profile: hostProfile,
       members: roster.map((member) => member.name),
+      handles: Object.fromEntries(seated.map((member) => [member.profile, member.handle])),
       createdAt: Number(now()) || Date.now(),
     };
     await bindings.write(roomId, binding);
@@ -467,10 +475,6 @@ export function createHostedGroupRuntime({
     if (roster.length < MEMBER_MIN || roster.length > MEMBER_MAX) return { ok: false, reason: 'member-count', messages: baseMessages, failures: [] };
     if (!trimmed) return { ok: false, reason: 'empty', messages: baseMessages, failures: [] };
     if (signal?.aborted) return { ok: false, reason: 'aborted', messages: baseMessages, failures: [] };
-    const outgoing = hostedMentionText(trimmed, roster);
-    if (new TextEncoder().encode(outgoing).length > TEXT_MAX_BYTES) {
-      throw new Error('This message is too long for a Hermes group room.');
-    }
     if (turnRunning) throw new Error('The group is still answering. Wait for the current turn to finish.');
     const turnThread = validIdentifier(thread) ? clean(thread) : 'main';
     const working = [...baseMessages, { role: 'user', roleLabel: 'You', content: trimmed, ts: Number(now()) || Date.now(), thread: turnThread }];
@@ -480,6 +484,10 @@ export function createHostedGroupRuntime({
       let ack;
       try {
         binding = await ensureRoom({ roomId, groupName, members: roster });
+        const outgoing = hostedMentionText(trimmed, roster, binding.handles);
+        if (new TextEncoder().encode(outgoing).length > TEXT_MAX_BYTES) {
+          throw new Error('This message is too long for a Hermes group room.');
+        }
         const params = { room_id: binding.roomId, event_id: randomId(), payload: { text: outgoing, thread_id: turnThread } };
         try {
           ack = asObject(await request('groups.send', params, binding));
@@ -498,7 +506,7 @@ export function createHostedGroupRuntime({
       await onActivity({
         kind: 'turn_start',
         thread: turnThread,
-        members: hostedRespondents(trimmed, roster).map((member) => ({ member: member.name, roleLabel: member.title || member.name })),
+        members: hostedRespondents(trimmed, roster, binding.handles).map((member) => ({ member: member.name, roleLabel: member.title || member.name })),
       });
       const event = asObject(ack.event);
       const failures = await follow(binding, {

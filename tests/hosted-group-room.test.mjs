@@ -297,6 +297,20 @@ test('the stored room is reused while it answers, and replaced when it does not 
   assert.equal(orphaned.calls.at(-1).method, 'groups.create', 'a room this sign-in no longer owns is replaced');
 });
 
+test('mentions keep the handles a room was created with, even after titles load', async () => {
+  const client = fakeGateway({ script: [(user) => [{ kind: 'room.activity', payload: { discussion_event_id: user.event_id } }]] });
+  const { runtime, storage } = runtimeFor(client, { ids: ['room-1', 'evt-1'] });
+  const untitled = MEMBERS.map(({ name }) => ({ name }));
+  assert.equal((await runtime.prepare({ roomId: 'r', members: untitled })).ok, true);
+  const create = client.calls.find((call) => call.method === 'groups.create');
+  assert.deepEqual(create.params.members.map((member) => member.handle), ['default', 'namine', 'riku']);
+  assert.deepEqual(storage.data[HOSTED_ROOMS_STORAGE_KEY]['http://127.0.0.1:1'].r.handles, { default: 'default', namine: 'namine', riku: 'riku' });
+  await runtime.send({ roomId: 'r', members: MEMBERS, text: '@Roxas and @Naminé?' });
+  const send = client.calls.find((call) => call.method === 'groups.send');
+  assert.equal(send.params.payload.text, '@default and @namine?');
+  assert.equal(hostedMentionText('@Roxas', MEMBERS, { default: 'default' }), '@default');
+});
+
 test('prepare reports a roster Hermes cannot seat', async () => {
   const client = fakeGateway();
   const { runtime } = runtimeFor(client);
