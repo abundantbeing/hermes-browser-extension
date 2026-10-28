@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { establishGatewaySession, sessionRuntimeFromSnapshot } from '../extension/lib/gateway-ws.mjs';
+import { establishGatewaySession, readSessionRuntimeViaSocket, sessionRuntimeFromSnapshot } from '../extension/lib/gateway-ws.mjs';
 import {
   applyModelOptionPick,
   buildModelMutateParams,
@@ -158,4 +158,45 @@ test('the panel sends a pick to the session authority and keeps the legacy path 
   const lock = functionSource('syncSessionModelLock');
   assert.ok(lock.indexOf('switchAuthoritySessionModel(connection, liveSessionId, selected)') < lock.indexOf('buildSessionModelSwitchRequest('));
   assert.match(functionSource('switchAuthoritySessionModel'), /if \(result\.status === 'unavailable'\) return null;/);
+});
+
+test('a chat opened over REST reads what it runs with through a session-authority socket, then leaves it', async () => {
+  const calls = [];
+  const client = {
+    readyState: 1,
+    readyPayload: { session_authority: true },
+    async request(method, params) {
+      calls.push([method, params]);
+      if (method === 'session.resume') return snapshot({ model: 'claude-haiku-5-5', provider: 'anthropic', reasoning_effort: 'max' }, { session_id: 'live-1', subscription_id: 'sub-1' });
+      return {};
+    },
+  };
+  const runtime = await readSessionRuntimeViaSocket(client, 's1');
+  assert.equal(runtime.model, 'claude-haiku-5-5');
+  assert.deepEqual(runtime.modelOptions.reasoning, { enabled: true, effort: 'max' });
+  assert.deepEqual(calls, [
+    ['session.resume', { session_id: 's1', omit_messages: true }],
+    ['session.detach', { session_id: 'live-1', subscription_id: 'sub-1' }],
+  ]);
+});
+
+test('without an authority socket, or when the gateway refuses the read, the REST chat keeps what it had', async () => {
+  const legacy = { readyState: 1, readyPayload: {}, request: async () => { throw new Error('must not be asked'); } };
+  assert.equal(await readSessionRuntimeViaSocket(legacy, 's1'), null);
+  assert.equal(await readSessionRuntimeViaSocket(null, 's1'), null);
+  const closed = { readyState: 3, readyPayload: { session_authority: true }, request: async () => { throw new Error('closed'); } };
+  assert.equal(await readSessionRuntimeViaSocket(closed, 's1'), null);
+  const calls = [];
+  const refusing = {
+    readyState: 1,
+    readyPayload: { session_authority: true },
+    async request(method) { calls.push(method); throw Object.assign(new Error('not_found'), { data: { reason: 'not_found' } }); },
+  };
+  assert.equal(await readSessionRuntimeViaSocket(refusing, 's1'), null);
+  assert.deepEqual(calls, ['session.resume'], 'nothing to leave when the resume was refused');
+});
+
+test('opening a chat over REST applies the runtime the authority socket reports', () => {
+  const open = functionSource('openHermesSession');
+  assert.match(open, /if \(!dashboardTransport\) \{[\s\S]*?const runtime = await readSessionRuntimeViaSocket\(sessionAuthoritySideSocket\(\), session\.id\);\s*if \(!isCurrentRequest\(\)\) return false;\s*if \(runtime\) session = \{ \.\.\.session, \.\.\.sessionFieldsFromRuntime\(runtime\) \};/);
 });

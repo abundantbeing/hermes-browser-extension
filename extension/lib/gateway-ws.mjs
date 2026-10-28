@@ -266,6 +266,32 @@ export function sessionRuntimeFromSnapshot(snapshot) {
   return { model, provider, modelOptions };
 }
 
+/**
+ * What a chat opened over REST runs with. The gateway's REST routes never report a session's reasoning
+ * level or route, but a session-authority socket held beside them does: the viewer attaches read-only
+ * with session.resume (no history, no runtime started), reads the snapshot and leaves with
+ * session.detach. Null without such a socket, or when the gateway refuses the read. Never throws.
+ */
+export async function readSessionRuntimeViaSocket(client, sessionId, { timeoutMs = 8_000 } = {}) {
+  if (!client?.request || client.readyState !== 1 || client.readyPayload?.session_authority !== true) return null;
+  const stored = String(sessionId || '').trim();
+  if (!stored) return null;
+  let live = stored;
+  let subscriptionId = '';
+  try {
+    const snapshot = await client.request(WS_METHODS.sessionResume, { session_id: stored, omit_messages: true }, { timeoutMs });
+    live = String(snapshot?.session_id || '').trim() || stored;
+    subscriptionId = String(snapshot?.subscription_id || '').trim();
+    return sessionRuntimeFromSnapshot(snapshot);
+  } catch {
+    return null;
+  } finally {
+    if (subscriptionId) {
+      try { await client.request(WS_METHODS.sessionDetach, { session_id: live, subscription_id: subscriptionId }, { timeoutMs }); } catch { /* the viewer leaves with the socket anyway */ }
+    }
+  }
+}
+
 /** A fresh id for one turn's prompt.submit; keep it for every resend of that turn. */
 export function newPromptSubmissionId() {
   return newCreateRequestId();

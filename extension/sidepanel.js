@@ -314,6 +314,7 @@ import {
   createGatewayClient,
   establishGatewaySession,
   newPromptSubmissionId,
+  readSessionRuntimeViaSocket,
   promptSubmitParamsFor,
   sessionCreateParamsFor,
   sessionListParamsFor,
@@ -19880,6 +19881,10 @@ async function openHermesSession(selectedSession) {
     availableSessions = normalizeHermesSessions({
       sessions: [session, ...availableSessions.filter((item) => item.id !== session.id)],
     });
+    // REST never says what the chat runs with; a session-authority socket held beside it does.
+    const runtime = await readSessionRuntimeViaSocket(sessionAuthoritySideSocket(), session.id);
+    if (!isCurrentRequest()) return false;
+    if (runtime) session = { ...session, ...sessionFieldsFromRuntime(runtime) };
   }
   if (!isCurrentRequest()) return false;
   const inheritedModelBinding = settings.sessionModelBindings?.[requestedSessionId];
