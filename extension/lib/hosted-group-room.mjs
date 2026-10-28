@@ -175,6 +175,13 @@ export function hostedMentionText(text = '', members = [], seatedHandles = null)
   for (const { word, handle } of spellings) {
     value = value.replace(new RegExp(`(^|[^A-Za-z0-9_])@${escapeRegExp(word)}(?![\\p{L}\\p{N}_])`, 'giu'), `$1@${handle}`);
   }
+  // Hermes reads ".", ":" and "-" as part of a handle, so "@Riku: go" or "thanks @Riku." named
+  // nobody and went to every bot. An invisible word joiner ends the handle before the punctuation.
+  const handles = new Set(seated.map((member) => member.handle.toLowerCase()));
+  for (const { handle } of seated) {
+    value = value.replace(new RegExp(`(^|[^A-Za-z0-9_])(@${escapeRegExp(handle)})([.:-]+)(?=\\s|$)`, 'gi'), (match, lead, mention, punctuation) => (
+      handles.has(`${handle}${punctuation}`.toLowerCase()) ? match : `${lead}${mention}⁠${punctuation}`));
+  }
   return value;
 }
 

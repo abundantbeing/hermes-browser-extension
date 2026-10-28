@@ -113,6 +113,7 @@ Everything else works on upstream Hermes.
   - Such a room shows everything sent to it to every bot and in its log, so the page and tab screenshots are not sent there, and the panel says so.
   - Bots answer on their own profile settings: a per-room model pick says so instead of pretending.
   - A gateway that does not run rooms itself keeps the previous group chats.
+  - A mention followed by a colon, full stop or dash ("@Riku: look at this", "thanks @Riku.") goes to that bot. Hermes read the punctuation as part of the name, so the message went to every bot.
   - When a bot @mentions another, Hermes gives the mentioned bot another round. The panel now shows that bot working again; it used to say "All done" while the bots were still answering.
 - A message in a bot's Bot Chat shows its reply on current Hermes. Hermes hands a Bot Chat turn to that chat's own queue.
   - When it moved an older Bot Chat aside first, the reply went to the new chat while the panel reloaded the old one. That chat's last line could be an old "Your request was not processed".

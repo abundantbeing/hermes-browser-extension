@@ -176,6 +176,12 @@ test('mentions by title or profile are spelled as room handles, and nothing else
   assert.equal(hostedMentionText('mail me@namine.com or ask @everyone', MEMBERS), 'mail me@namine.com or ask @everyone');
   assert.equal(hostedMentionText('no mentions here', MEMBERS), 'no mentions here');
   assert.equal(hostedMentionText('@Naminéx stays', MEMBERS), '@Naminéx stays');
+  // Hermes reads ".", ":" and "-" as part of a handle; a word joiner ends the mention before them.
+  assert.equal(hostedMentionText('Panel check, @riku: one word', MEMBERS), 'Panel check, @riku⁠: one word');
+  assert.equal(hostedMentionText('thanks @Naminé.', MEMBERS), 'thanks @Namine⁠.');
+  assert.equal(hostedMentionText('see @riku.dev and @riku-bot', MEMBERS), 'see @riku.dev and @riku-bot', 'a longer word is not a mention');
+  assert.deepEqual(hostedRespondents('@riku: go', MEMBERS).map((member) => member.name), ['riku']);
+  assert.deepEqual(hostedRespondents('nice one @Roxas.', MEMBERS).map((member) => member.name), ['default']);
 });
 
 test('the members a message addresses follow the gateway routing', () => {
