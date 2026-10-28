@@ -554,7 +554,8 @@ def code(text):
 
 async def main():
     seen = {}
-    client, broker, _ = await make()
+    clock = Clock()
+    client, broker, _ = await make(clock=clock)
     async with client:
         # the same controller reconnects: the new socket replaces the old, and the old closing detaches nothing
         old, _ = await attach(client, broker)
@@ -595,14 +596,43 @@ async def main():
         seen["ambiguous"] = code(tools.run_control_action("browser_snapshot", {}, {"session_id": "sess-A"}))
         seen["scope_for_session"] = broker.scope_for_session(profile_id="luxord", session_id="sess-A") is None
         del broker._controllers[forged]
-        # once the first controller is offline, the other credential may take the session over
+        # the binding survives the controller dropping: the other credential is refused at register AND at attach,
+        # and the offline controller is never replaced
         await other.close()
         for _ in range(100):
             if not broker._controllers[scope].connected: break
             await asyncio.sleep(0.02)
+        status, refusal = await register(client, token=OTHER, controller="ctl-3")
+        seen["offline_register"] = [status, refusal["error"]["code"]]
+        seen["offline_kept"] = [[s.controller_id, broker._controllers[s].connected] for s in broker.lane_scopes(profile_id="luxord", session_id="sess-A")]
+        # a ticket for the other credential minted while the session was free cannot attach into the grace either
+        # (sess-E: minted, then the first credential attaches and drops)
+        _, minted = await register(client, token=OTHER, session="sess-E", controller="ctl-6")
+        e_ws, _ = await attach(client, broker, session="sess-E", controller="ctl-7")
+        await e_ws.close()
+        for _ in range(100):
+            if not any(broker._controllers[s].connected for s in broker.lane_scopes(profile_id="luxord", session_id="sess-E")): break
+            await asyncio.sleep(0.02)
+        seen["offline_ticket"] = await refused(connect(client, minted["ticket"]))
+        seen["e_kept"] = [s.controller_id for s in broker.lane_scopes(profile_id="luxord", session_id="sess-E")]
+        # the same credential reconnects inside the grace and keeps its pending lane
+        clock.now += broker_module.SESSION_BINDING_GRACE_SECONDS - 1
+        again, _ = await attach(client, broker, session="sess-E", controller="ctl-7")
+        seen["same_principal_back"] = [s.controller_id for s in broker.lane_scopes(profile_id="luxord", session_id="sess-E")]
+        # an explicit detach ends the binding at once
+        await again.send_json({"method": "browser.controller.detach", "params": {}})
+        await again.receive_json(timeout=3)
+        status, _ = await register(client, token=OTHER, session="sess-E", controller="ctl-6")
+        seen["after_detach"] = status
+        # and so does the grace running out
+        clock.now += broker_module.SESSION_BINDING_GRACE_SECONDS + 1
+        status, _ = await register(client, token=OTHER, controller="ctl-3")
+        seen["after_grace"] = status
+        lane = broker.lane_scopes(profile_id="luxord", session_id="sess-A")
+        seen["offline_purged"] = [s.controller_id for s in lane]
         third, _ = await attach(client, broker, token=OTHER, controller="ctl-3")
         lane = broker.lane_scopes(profile_id="luxord", session_id="sess-A")
-        seen["takeover"] = [[s.controller_id for s in lane], lane[0].principal_id != scope.principal_id]
+        seen["takeover_after_grace"] = [[s.controller_id for s in lane], lane[0].principal_id != scope.principal_id]
         for socket in (new, third, d_ws):
             await socket.close()
     return seen
@@ -620,7 +650,15 @@ print(json.dumps(asyncio.run(main())))
   assert.deepEqual(data.d_owner_kept, ['ctl-8']);
   assert.equal(data.ambiguous, 'ambiguous_browser');
   assert.equal(data.scope_for_session, true);
-  assert.deepEqual(data.takeover, [['ctl-3'], true]);
+  assert.deepEqual(data.offline_register, [409, 'browser_control_session_owned']);
+  assert.deepEqual(data.offline_kept, [['ctl-2', false]], 'the offline controller is neither replaced nor detached');
+  assert.equal(data.offline_ticket, 409);
+  assert.deepEqual(data.e_kept, ['ctl-7']);
+  assert.deepEqual(data.same_principal_back, ['ctl-7']);
+  assert.equal(data.after_detach, 201);
+  assert.equal(data.after_grace, 201);
+  assert.deepEqual(data.offline_purged, [], 'an expired binding takes its offline controller with it');
+  assert.deepEqual(data.takeover_after_grace, [['ctl-3'], true]);
 });
 
 test('registration for a session the server does not know is refused, and a session store that cannot answer fails closed', () => {
@@ -861,11 +899,35 @@ try:
 except B.PrincipalConflict:
     seen["conflict_attach"] = "refused"
 seen["holder_kept"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
+# the binding survives a dropped transport: refused connected or not, never replaced
 broker.disconnect(mine, owner=live)
 seen["offline_conflict"] = broker.principal_conflict(theirs)
+try:
+    broker.attach(theirs, sent.append, owner=offline)
+    seen["offline_attach"] = "attached"
+except B.PrincipalConflict:
+    seen["offline_attach"] = "refused"
+seen["offline_holder_kept"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
+# the owner reconnecting inside the grace keeps it
+clock.now += B.SESSION_BINDING_GRACE_SECONDS - 1
+seen["inside_grace"] = broker.principal_conflict(theirs)
+broker.attach(mine, sent.append, owner=live)
+clock.now += B.SESSION_BINDING_GRACE_SECONDS - 1
+seen["live_never_expires"] = broker.principal_conflict(theirs)
+# after the grace the binding and its offline controller are gone
+broker.disconnect(mine, owner=live)
+clock.now += B.SESSION_BINDING_GRACE_SECONDS + 1
+seen["after_grace"] = broker.principal_conflict(theirs)
+seen["purged"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
 broker.attach(theirs, sent.append, owner=offline)
-seen["offline_replaced"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
+seen["now_theirs"] = [s.controller_id for s in broker.lane_scopes(profile_id="prof", session_id="s")]
+seen["mine_refused_now"] = broker.principal_conflict(mine)
+# an explicit detach clears the binding
+broker.detach(theirs)
+seen["binding_after_detach"] = broker.principal_conflict(mine)
+broker.attach(theirs, sent.append, owner=offline)
 broker.reset()
+seen["after_reset"] = broker.principal_conflict(mine)
 seen["reset"] = [broker.any_connected(), len(broker.lane_scopes(profile_id="prof", session_id="s"))]
 print(json.dumps(seen))
 `);
@@ -896,8 +958,17 @@ print(json.dumps(seen))
   assert.equal(data.conflict_check, true);
   assert.equal(data.conflict_attach, 'refused');
   assert.deepEqual(data.holder_kept, ['mine']);
-  assert.equal(data.offline_conflict, false);
-  assert.deepEqual(data.offline_replaced, ['c2']);
+  assert.equal(data.offline_conflict, true);
+  assert.equal(data.offline_attach, 'refused');
+  assert.deepEqual(data.offline_holder_kept, ['mine']);
+  assert.equal(data.inside_grace, true);
+  assert.equal(data.live_never_expires, true);
+  assert.equal(data.after_grace, false);
+  assert.deepEqual(data.purged, []);
+  assert.deepEqual(data.now_theirs, ['c2']);
+  assert.equal(data.mine_refused_now, true);
+  assert.equal(data.binding_after_detach, false);
+  assert.equal(data.after_reset, false);
   assert.deepEqual(data.reset, [false, 0]);
 });
 

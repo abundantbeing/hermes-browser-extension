@@ -10,10 +10,13 @@ Rules it keeps:
 * A ticket is short-lived, single-use and bound to one exact controller scope.
 * ``scope_for_session`` answers only when exactly one controller is attached for
   the profile and session; none or several fail closed, never a guess.
-* A session has one principal at a time: while a controller from one principal is
-  live, another principal can neither register nor attach for that session
-  (``principal_conflict``, enforced again inside ``attach``). A same-principal
-  controller may replace it, and a different principal's offline one is replaced.
+* A session is bound to one principal from its first attach. The binding survives a
+  dropped transport, so another principal cannot slip in while the first is mid
+  reconnect: it ends only on an explicit ``detach``, ``reset()``, or after
+  ``SESSION_BINDING_GRACE_SECONDS`` without a live controller. While it holds,
+  another principal is refused at register and again at attach
+  (``principal_conflict``); its controller is never replaced. A same-principal
+  controller may replace the bound one.
 * ``select`` matches every stable identity field and the controller's *current*
   capability set, so a caller never reaches a capability the extension dropped.
 * ``dispatch`` blocks for the controller's answer; ``complete`` resolves a command
@@ -43,6 +46,10 @@ DEFAULT_TICKET_TTL = 30.0
 #: Wall time a dispatch waits for the controller. The extension gives every command
 #: 30 s (approval wait included), so its own deadline answer arrives first.
 DEFAULT_COMMAND_TIMEOUT = 35.0
+#: How long a session stays bound to its principal after its last live controller dropped
+#: (a few of the extension's 60 s heartbeats and its reconnect backoff). An explicit
+#: detach clears the binding at once.
+SESSION_BINDING_GRACE_SECONDS = 180.0
 #: Cancel frames kept while a same-identity controller is offline.
 MAX_DEFERRED_CANCELS = 512
 #: The wire protocol version; registration must carry exactly this int (bools are refused).
@@ -163,6 +170,13 @@ class _TicketRecord:
 
 
 @dataclass
+class _Binding:
+    principal_id: Optional[str]
+    # ``None`` while a controller of that principal is live; else the clock time the grace ends.
+    expires_at: Optional[float] = None
+
+
+@dataclass
 class _Controller:
     scope: ControllerScope
     send: Callable[[dict], None]
@@ -207,6 +221,7 @@ class ControlBroker:
         self._tickets: dict[str, _TicketRecord] = {}
         self._controllers: dict[ControllerScope, _Controller] = {}
         self._pending: dict[str, _PendingCommand] = {}
+        self._bindings: dict[tuple, _Binding] = {}
 
     # -- tickets ------------------------------------------------------------
 
@@ -244,15 +259,28 @@ class ControlBroker:
             controller = self._controller_for_identity_locked(scope)
         return controller if controller is not None and controller.connected else None
 
+    def _purge_bindings_locked(self) -> None:
+        """Drop the bindings whose grace ended, with the offline controllers they kept."""
+        now = self._clock()
+        for key, binding in list(self._bindings.items()):
+            if binding.expires_at is None or binding.expires_at > now:
+                continue
+            del self._bindings[key]
+            for scope, controller in list(self._controllers.items()):
+                if (scope.profile_id, scope.session_id) == key and not controller.connected:
+                    del self._controllers[scope]
+                    for pending in self._pending_for_scope_locked(scope):
+                        self._resolve_pending(pending, cancelled=True)
+
     def principal_conflict(self, scope: ControllerScope) -> bool:
-        """Whether a *live* controller from a different principal holds this scope's profile and session."""
+        """Whether the scope's profile and session are bound to a different principal, live or not."""
         with self._lock:
-            return any(
-                controller.connected
-                and (controller.scope.profile_id, controller.scope.session_id) == (scope.profile_id, scope.session_id)
-                and controller.scope.principal_id != scope.principal_id
-                for controller in self._controllers.values()
-            )
+            self._purge_bindings_locked()
+            binding = self._bindings.get((scope.profile_id, scope.session_id))
+            return binding is not None and binding.principal_id != scope.principal_id
+
+    def _bind_locked(self, scope: ControllerScope) -> None:
+        self._bindings[(scope.profile_id, scope.session_id)] = _Binding(principal_id=scope.principal_id)
 
     def attach(self, scope: ControllerScope, send: Callable[[dict], None], *, owner: Any = None) -> None:
         """Attach or refresh the controller for one stable identity.
@@ -266,14 +294,7 @@ class ControlBroker:
                 if self.principal_conflict(scope):
                     raise PrincipalConflict("the session is held by another principal")
                 existing = self._controller_for_identity_locked(scope)
-                # An offline controller of another principal no longer holds the session.
-                foreign = [
-                    other
-                    for other in self._controllers
-                    if (other.profile_id, other.session_id) == (scope.profile_id, scope.session_id)
-                    and other.principal_id != scope.principal_id
-                ]
-                lane_scopes = foreign + [
+                lane_scopes = [
                     other
                     for other in self._controllers
                     if not _same_scope_identity(other, scope)
@@ -282,6 +303,7 @@ class ControlBroker:
                 ]
                 if existing is None and not lane_scopes:
                     self._controllers[scope] = _Controller(scope=scope, send=send, owner=owner)
+                    self._bind_locked(scope)
                     return
 
             # A hard replacement, not a recoverable reconnect: terminalize the
@@ -315,6 +337,7 @@ class ControlBroker:
                 with self._lock:
                     if self._controllers.get(scope) is existing:
                         existing.connected = True
+                        self._bind_locked(scope)
                 return
 
     def select(self, scope: ControllerScope, capability: str) -> Optional[_Controller]:
@@ -342,6 +365,13 @@ class ControlBroker:
                 if self._controllers.get(controller.scope) is not controller or not owned:
                     return False
                 controller.connected, controller.owner = False, None
+                binding = self._bindings.get((controller.scope.profile_id, controller.scope.session_id))
+                if binding is not None and binding.principal_id == controller.scope.principal_id and not any(
+                    other.connected and other.scope.principal_id == binding.principal_id
+                    and (other.scope.profile_id, other.scope.session_id) == (controller.scope.profile_id, controller.scope.session_id)
+                    for other in self._controllers.values()
+                ):
+                    binding.expires_at = self._clock() + SESSION_BINDING_GRACE_SECONDS
         return True
 
     def detach(self, scope: ControllerScope, *, owner: Any = _OWNER_UNSET, notify_controller: bool = True) -> None:
@@ -358,6 +388,14 @@ class ControlBroker:
                 pendings = self._pending_for_scope_locked(scope)
                 for pending in pendings:
                     self._resolve_pending(pending, cancelled=True)
+                # An explicit detach ends the binding once the principal has no controller left.
+                key = (scope.profile_id, scope.session_id)
+                binding = self._bindings.get(key)
+                if binding is not None and binding.principal_id == scope.principal_id and not any(
+                    (other.profile_id, other.session_id) == key and other.principal_id == scope.principal_id
+                    for other in self._controllers
+                ):
+                    del self._bindings[key]
             # Hold the old generation's send lock through cancellation, so a
             # command frame can never overtake its terminal cancel frame.
             if notify_controller:
@@ -520,6 +558,7 @@ class ControlBroker:
             self.detach(scope)
         with self._lock:
             self._tickets.clear()
+            self._bindings.clear()
             # Pending entries whose controller a concurrent teardown removed.
             for pending in list(self._pending.values()):
                 self._resolve_pending(pending, cancelled=True)

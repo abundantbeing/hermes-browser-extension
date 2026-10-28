@@ -232,6 +232,11 @@ GET  /api/plugins/hermes-browser-companion/control/ws   (WebSocket; the ticket r
   attached, and a call reaches only the controller registered for its own Hermes
   session and profile; another session's, none, or more than one answer a plain
   error. The agent is told to say so, never to look for another browser.
+- **One credential per session.** A session is bound to the credential that first
+  attached its controller, through a dropped connection and for a short grace
+  after (until an explicit detach). Another credential is refused (409) at
+  register and at attach, never swapped in, and registration is refused (503)
+  whenever the gateway's session store cannot confirm the session exists.
 - **The extension decides.** Which tabs, which actions and which approvals
   (submit-like clicks, Enter, drags, tab changes) are the extension's, and a
   refusal comes back as the answer. The plugin adds only a block on cloud-metadata
