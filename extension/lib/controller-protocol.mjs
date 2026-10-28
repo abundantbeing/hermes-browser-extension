@@ -6,6 +6,11 @@
  *  - remote-api   → api-ticket-ws  (same transport and payload as local-api)
  *  - cloud-ticket-ws → gateway-rpc (authenticated gateway RPC method call)
  *
+ * Two gateway routes carry that protocol: Hermes core's (CONTROLLER_ROUTES.core,
+ * on a Hermes that still has extension control) and the Hermes Browser companion
+ * plugin's (CONTROLLER_ROUTES.plugin, which gives a stock Hermes the same control).
+ * The payload, ticket and frames are identical on both.
+ *
  * Protocol version 1. A controller registers `controller.noop` plus the
  * browser actions its adapter reports (filtered to
  * CONTROLLER_BROWSER_CAPABILITIES below). The gateway keeps only the actions
@@ -92,8 +97,37 @@ export const CONTROLLER_TRANSPORT_FAMILIES = Object.freeze({
 const TRANSPORT_API_TICKET_WS = 'api-ticket-ws';
 const TRANSPORT_GATEWAY_RPC = 'gateway-rpc';
 
-const REGISTER_PATH = '/v1/browser-control/register';
-const WEBSOCKET_PATH = '/v1/browser-control/ws';
+export const CONTROLLER_ROUTES = Object.freeze({ core: 'core', plugin: 'plugin' });
+
+const PLUGIN_BASE_PATH = '/api/plugins/hermes-browser-companion';
+const ROUTE_PATHS = Object.freeze({
+  [CONTROLLER_ROUTES.core]: Object.freeze({
+    register: '/v1/browser-control/register',
+    socket: '/v1/browser-control/ws',
+  }),
+  [CONTROLLER_ROUTES.plugin]: Object.freeze({
+    register: `${PLUGIN_BASE_PATH}/control/register`,
+    socket: `${PLUGIN_BASE_PATH}/control/ws`,
+  }),
+});
+// The only socket paths a registration may name (its `ws_path`); anything else is ignored.
+const KNOWN_SOCKET_PATHS = new Set(Object.values(ROUTE_PATHS).map((paths) => paths.socket));
+
+function routePaths(route) {
+  const paths = ROUTE_PATHS[route];
+  if (!paths) throw new Error(`Unsupported controller route: ${String(route || '')}`);
+  return paths;
+}
+
+/**
+ * The socket path to open after a registration on `route`: the `ws_path` the
+ * gateway answered when it is one of the two known socket paths, else the route's
+ * own. A gateway cannot send the extension to a path of its choosing.
+ */
+export function controllerSocketPath(route, wsPath) {
+  const answered = String(wsPath ?? '').trim();
+  return KNOWN_SOCKET_PATHS.has(answered) ? answered : routePaths(route).socket;
+}
 
 /**
  * Registration payload shared verbatim by every transport.
@@ -174,14 +208,15 @@ function joinUrlPath(baseUrl, path, options) {
  * @param {object} options
  * @param {string} options.family - 'local-api' | 'remote-api' | 'cloud-ticket-ws'
  * @param {string} options.baseUrl - Hermes runtime base URL (http/https)
+ * @param {string} [options.route] - 'core' (default) or 'plugin': which gateway route to register on (API transports only)
  * @param {object} options.identity - controller identity ({ controllerId, browserProfileId, hermesSessionId, product })
  * @returns {{ transport: string, registrationUrl?: string, payload?: object, method?: string, params?: object }}
  */
-export function controllerRegistrationFor({ family, baseUrl, identity } = {}) {
+export function controllerRegistrationFor({ family, baseUrl, identity, route = CONTROLLER_ROUTES.core } = {}) {
   if (family === CONTROLLER_TRANSPORT_FAMILIES.LOCAL_API || family === CONTROLLER_TRANSPORT_FAMILIES.REMOTE_API) {
     return {
       transport: TRANSPORT_API_TICKET_WS,
-      registrationUrl: joinUrlPath(baseUrl, REGISTER_PATH, { family }),
+      registrationUrl: joinUrlPath(baseUrl, routePaths(route).register, { family }),
       payload: registrationPayload(identity),
     };
   }
@@ -202,13 +237,14 @@ export function controllerRegistrationFor({ family, baseUrl, identity } = {}) {
 /**
  * Build the credential-free WebSocket URL for the api-ticket-ws transport.
  * The one-shot ticket is carried separately by controllerWebSocketProtocols()
- * so request-target/access logs cannot capture it.
+ * so request-target/access logs cannot capture it. `socketPath` is one of the
+ * known socket paths (see controllerSocketPath); anything else gives core's.
  */
-export function controllerWebSocketUrl(baseUrl) {
+export function controllerWebSocketUrl(baseUrl, socketPath = ROUTE_PATHS[CONTROLLER_ROUTES.core].socket) {
   const url = parsedApiBaseUrl(baseUrl);
   const socket = new URL(url.href);
   socket.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  socket.pathname = `${url.pathname.replace(/\/+$/, '')}${WEBSOCKET_PATH}`;
+  socket.pathname = `${url.pathname.replace(/\/+$/, '')}${controllerSocketPath(CONTROLLER_ROUTES.core, socketPath)}`;
   socket.search = '';
   socket.hash = '';
   return socket.href;

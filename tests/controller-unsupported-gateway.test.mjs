@@ -106,7 +106,7 @@ async function answerCloudRegister(connecting, reply) {
   return socket;
 }
 
-test('REST registration answered 404 or 405 is the terminal unsupported_gateway result', async () => {
+test('REST registration answered 404 or 405 by Hermes core and by the companion plugin is the terminal unsupported_gateway result', async () => {
   for (const status of [404, 405]) {
     FakeSocket.instances = [];
     const requests = [];
@@ -119,9 +119,14 @@ test('REST registration answered 404 or 405 is the terminal unsupported_gateway 
     });
     await assert.rejects(
       connector.connect({ settings: { ...LOCAL_SETTINGS }, identity: IDENTITY }),
-      (error) => error.code === CONTROLLER_UNSUPPORTED_GATEWAY && /does not support Hermes Control/.test(error.message),
+      (error) => error.code === CONTROLLER_UNSUPPORTED_GATEWAY
+        && /does not support Hermes Control \(HTTP \d+\)/.test(error.message)
+        && /companion plugin's control route is not available/.test(error.message),
     );
-    assert.equal(requests.length, 1, 'an unsupported gateway is neither materialized, retried nor dialled');
+    assert.deepEqual(requests, [
+      'http://127.0.0.1:8642/v1/browser-control/register',
+      'http://127.0.0.1:8642/api/plugins/hermes-browser-companion/control/register',
+    ], 'both routes are asked once; an unsupported gateway is neither materialized, retried nor dialled');
     assert.equal(FakeSocket.instances.length, 0);
   }
 });
@@ -149,6 +154,7 @@ test('a 404 on the retry after ghost-session materialization is still terminal',
           ? jsonResponse(403, { error: { code: 'browser_control_session_forbidden', message: 'unknown session' } })
           : jsonResponse(404, {});
       }
+      if (url.endsWith('/control/register')) return jsonResponse(404, {});
       return jsonResponse(201, { session: { id: 'stored-session-fixture' } });
     },
     WebSocketImpl: FakeSocket,
