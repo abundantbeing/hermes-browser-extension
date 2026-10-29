@@ -108,6 +108,7 @@ Everything else works on upstream Hermes.
 
 ### Fixed
 
+- Petdex avatars animate in the side panel and Firefox sidebar when Animate avatars is on. The extension's content security policy was blocking the pet's spritesheet, and the frame stepping did not line up with the sheet. The idle row now plays the way Hermes Desktop plays it, pauses when scrolled out of view, and stays still with Animate avatars off or reduced motion on.
 - Hermes Control across several tabs:
   - Listing the tabs, switching to one, closing one and grouping no longer fail with `ambiguous_target` when two or more tabs are attached and the tab of the current turn is not one of them; they need no default tab. A page action that names no tab says which tab ids it can use.
   - Closing the tab a command was queued on, the only attached tab included, reports the close instead of "cancelled".

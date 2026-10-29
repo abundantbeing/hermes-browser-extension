@@ -9066,13 +9066,24 @@ html[dir="rtl"] .bot-mode-row { text-align: right; }
   height: 100%;
   display: block;
   background-repeat: no-repeat;
-  background-size: 800% 900%;
-  image-rendering: pixelated;
-  animation: petdex-walk 1.1s steps(8) infinite;
+  background-position: center;
+  background-size: contain;
 }
-@keyframes petdex-walk {
+/* The strip is the pet's idle row baked to 6 square cells (lib/pet-animation.mjs).
+   --pet-steps/--pet-end are set per pet so a short row never lands on a blank cell;
+   jump-none puts the first and last step exactly on frame 0 and the last real frame. */
+.bot-mode-pet-live.is-animated {
+  background-position: 0 0;
+  background-size: 600% 100%;
+  animation: petdex-idle 1.1s steps(var(--pet-steps, 6), jump-none) infinite;
+}
+.bot-mode-pet-live.is-paused { animation-play-state: paused; }
+@keyframes petdex-idle {
   from { background-position: 0 0; }
-  to { background-position: 100% 0; }
+  to { background-position: var(--pet-end, 100%) 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bot-mode-pet-live.is-animated { animation: none; }
 }
 .bot-mode-sheet { position: fixed; inset: var(--topbar-height, 49px) 0 0; z-index: 140; display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; overflow: hidden; background: var(--hermes-app-bg); color: var(--hermes-fg); border-top: 1px solid var(--hermes-panel-border); }
 .bot-mode-sheet[hidden] { display: none; }

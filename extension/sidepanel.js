@@ -149,6 +149,12 @@ import {
   readPetAvatar,
   writePetAvatar,
 } from './lib/pet-avatar.mjs';
+import {
+  createPetStripCache,
+  loadPetIdleStrip,
+  petAnimationAllowed,
+  petStripCssVars,
+} from './lib/pet-animation.mjs';
 import { blobatar as blobatarSvg } from './lib/vendor/blobatar-2.0.0.js';
 import { renderMarkdownSafe, renderResponseSafe, sanitizeHtml } from './lib/sanitizer.mjs';
 import { containsAdaptiveBlocks, dispatchAdaptiveAction, readAdaptiveAction } from './lib/adaptive-ui.mjs';
@@ -12703,8 +12709,17 @@ async function refreshPetAvatarCache() {
   }
 }
 
+// Same gate as the desktop avatars: the setting must be on and the OS must not
+// have asked for reduced motion. Otherwise the static frame-0 icon renders.
+function petAvatarMotionAllowed() {
+  return petAnimationAllowed({
+    animateAvatars: settings.botModeAnimateAvatars === true,
+    reducedMotion: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true,
+  });
+}
+
 function animatedPetFor(profileName) {
-  if (settings.botModeAnimateAvatars !== true || !profileName) return null;
+  if (!profileName || !petAvatarMotionAllowed()) return null;
   const pet = petAvatarsByProfile.get(profileName);
   if (!pet) return null;
   const sheet = pet.spritesheetUrl
@@ -12713,14 +12728,46 @@ function animatedPetFor(profileName) {
   return sheet ? { ...pet, spritesheetUrl: sheet } : null;
 }
 
+// The remote sheet cannot be a CSS background here (the extension CSP only
+// allows self/data/blob images), so each pet's idle row is baked once into a
+// small strip data URL and stepped by CSS. Until it is ready the span shows the
+// static frame 0.
+const petIdleStrip = createPetStripCache(loadPetIdleStrip);
+let petAvatarVisibility = null;
+
+// Park the CSS loop for avatars scrolled out of view, like the desktop pauses
+// its offscreen faces.
+function watchPetAvatarVisibility(node) {
+  if (typeof IntersectionObserver !== 'function') return;
+  petAvatarVisibility ||= new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      entry.target.classList.toggle('is-paused', !entry.isIntersecting);
+      if (!entry.target.isConnected) petAvatarVisibility.unobserve(entry.target);
+    }
+  });
+  petAvatarVisibility.observe(node);
+}
+
+function appendAnimatedPetAvatar(container, pet) {
+  const live = document.createElement('span');
+  live.className = 'bot-mode-pet-live';
+  if (typeof pet.icon === 'string' && pet.icon.startsWith('data:image/')) live.style.backgroundImage = `url("${pet.icon}")`;
+  live.title = pet.displayName || pet.slug || '';
+  container.replaceChildren(live);
+  void petIdleStrip(pet.spritesheetUrl).then((strip) => {
+    const vars = strip && petStripCssVars(strip.frames);
+    if (!vars) return;
+    live.style.backgroundImage = `url("${strip.url}")`;
+    for (const [name, value] of Object.entries(vars)) live.style.setProperty(name, value);
+    live.classList.add('is-animated');
+    watchPetAvatarVisibility(live);
+  });
+}
+
 function appendBotModeAvatar(container, displayName, profileName = '', remoteAvatar = null) {
   const livePet = animatedPetFor(profileName);
   if (livePet) {
-    const live = document.createElement('span');
-    live.className = 'bot-mode-pet-live';
-    live.style.backgroundImage = `url("${livePet.spritesheetUrl}")`;
-    live.title = livePet.displayName || livePet.slug || '';
-    container.replaceChildren(live);
+    appendAnimatedPetAvatar(container, livePet);
     return;
   }
   const override = botProfileOverrideFor(profileName);
@@ -12745,14 +12792,6 @@ function appendBotModeAvatar(container, displayName, profileName = '', remoteAva
     return;
   }
   const pet = profileName ? petAvatarsByProfile.get(profileName) : null;
-    if (pet?.spritesheetUrl && settings.botModeAnimateAvatars === true) {
-      const live = document.createElement('span');
-      live.className = 'bot-mode-pet-live';
-      live.style.backgroundImage = `url("${pet.spritesheetUrl}")`;
-      live.title = pet.displayName || pet.slug || '';
-      container.replaceChildren(live);
-      return;
-    }
     if (pet) {
     const img = document.createElement('img');
     img.src = pet.icon;
