@@ -69,6 +69,7 @@ export function discoverLiveSessions(payload, { knownIds = [], scoped = false } 
 
 const SUBAGENT_READ_LIMIT = 6;
 const SUBAGENT_READ_MAX_AGE_MS = 8_000;
+const SUBAGENT_REFUSED_MAX_AGE_MS = 60_000;
 
 /**
  * For every roster row that reads idle, ask the gateway for the children still running under its
@@ -87,18 +88,23 @@ export async function readIdleRowSubagents(client, rows, {
   if (!client?.request || !(rows instanceof Map)) return found;
   const idle = [...rows].filter(([, row]) => row && row.live !== true && row.liveId);
   const stamp = now();
+  // A refusal (a session this connection does not own) will not change on the
+  // next poll, so it is asked again after a minute instead of every few seconds.
+  const fresh = (entry) => (entry?.at ?? -Infinity) > stamp - (entry?.refused ? SUBAGENT_REFUSED_MAX_AGE_MS : maxAgeMs);
   const stale = idle
-    .filter(([, row]) => !((cache.get(row.liveId)?.at ?? -Infinity) > stamp - maxAgeMs))
+    .filter(([, row]) => !fresh(cache.get(row.liveId)))
     .sort((a, b) => (cache.get(a[1].liveId)?.at ?? 0) - (cache.get(b[1].liveId)?.at ?? 0))
     .slice(0, Math.max(0, limit));
   await Promise.all(stale.map(async ([, row]) => {
     let items = [];
+    let refused = false;
     try {
       items = subagentsFromListResult(await client.request(WS_METHODS.subagentList, { session_id: row.liveId }));
     } catch {
       items = [];
+      refused = true;
     }
-    cache.set(row.liveId, { at: stamp, items });
+    cache.set(row.liveId, { at: stamp, items, refused });
   }));
   const known = new Set([...rows.values()].map((row) => row?.liveId).filter(Boolean));
   for (const liveId of cache.keys()) if (!known.has(liveId)) cache.delete(liveId);

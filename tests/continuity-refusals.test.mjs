@@ -159,3 +159,11 @@ test('the send path raises the toast for a failure that asks for one', async () 
   const panel = await read(new URL('../extension/sidepanel.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(requestFailure\.toast === true\) showOperationToast\(\{ kind: 'warn', title: requestFailure\.title, detail: requestFailure\.detail/);
 });
+
+test('a chat another app owns is explained, not reported as a bare refusal', () => {
+  const state = refusalFailureState(refusal(4001, 'permission_denied'));
+  assert.equal(state.kind, 'prompt-not-owner');
+  assert.equal(state.title, 'This chat belongs to another app');
+  assert.match(state.detail, /follow this chat here/);
+  assert.equal(refusalFailureState(refusal(4001, 'invalid_params')).kind, 'prompt-refused');
+});

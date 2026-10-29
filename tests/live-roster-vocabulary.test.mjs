@@ -296,3 +296,15 @@ test('the draft is left alone when it belongs to another session or is not auto-
     assert.deepEqual(h.flushed, []);
   }
 });
+
+test('a refused subagent read waits a minute before it is asked again', async () => {
+  let asked = 0;
+  const client = { request: async () => { asked += 1; throw Object.assign(new Error('stale_generation'), { rpcCode: 4001 }); } };
+  const rows = new Map([['A', { live: false, liveId: 'live-A' }]]);
+  const cache = new Map();
+  await readIdleRowSubagents(client, rows, { cache, now: () => 1_000 });
+  await readIdleRowSubagents(client, rows, { cache, now: () => 20_000 });
+  assert.equal(asked, 1, 'not asked again on the next polls');
+  await readIdleRowSubagents(client, rows, { cache, now: () => 62_000 });
+  assert.equal(asked, 2, 'asked again after a minute');
+});

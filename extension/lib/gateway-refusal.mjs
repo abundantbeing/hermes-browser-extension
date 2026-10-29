@@ -137,6 +137,18 @@ export function refusalFailureState(error) {
       toast: true,
     };
   }
+  if (kind === 'refused' && refusalReason(error) === 'permission_denied') {
+    // A chat Hermes Desktop, the CLI or a messaging app owns: Hermes lets that app
+    // write to it. It can still be followed live here; a new chat is the way on.
+    return {
+      kind: 'prompt-not-owner',
+      title: 'This chat belongs to another app',
+      detail: 'Hermes only lets the app that owns this chat write to it, so the message was not sent. It was kept as a draft. You can still follow this chat here; start a new chat to send it from the extension.',
+      preserveDraft: true,
+      gatewayStatus: 'connected',
+      toast: true,
+    };
+  }
   if (kind === 'refused') {
     return {
       kind: 'prompt-refused',

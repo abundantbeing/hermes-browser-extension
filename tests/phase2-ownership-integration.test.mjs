@@ -22,7 +22,7 @@ test('Side Panel uses the shared ownership policy before sending', () => {
 test('the ownership warning exposes its notice and detail', () => {
   assert.match(panelHtml, /id="sessionOwnershipNotice"/);
   assert.match(panelHtml, /id="sessionOwnershipDetail"/);
-  assert.match(ownershipPolicy, /overwrite or reorder transcript updates/);
+  assert.match(ownershipPolicy, /can overwrite or reorder each other’s updates/);
 });
 
 test('ownership copy reports message blast radius without a 100-message gate', () => {
