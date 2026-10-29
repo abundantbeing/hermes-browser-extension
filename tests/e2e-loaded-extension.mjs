@@ -1100,11 +1100,8 @@ async function main() {
     assert.equal(storedBeforeSend.hermesBrowserSettings.inlineAssistRawModel, 'e2e/test-model');
     assert.equal(storedBeforeSend.hermesBrowserSettings.inlineAssistProvider, 'e2e');
 
-    const introBeforeFirstTurn = await panel.evaluate(`(() => {
-      const hero = document.querySelector('#browserIntroHero');
-      return { exists: Boolean(hero), hidden: Boolean(hero?.hidden) };
-    })()`);
-    assert.deepEqual(introBeforeFirstTurn, { exists: true, hidden: false });
+    // The empty chat no longer opens on the intro card (the wordmark lives in Settings).
+    assert.equal(await panel.evaluate(`Boolean(document.querySelector('#browserIntroHero'))`), false);
 
     await panel.evaluate(`(() => {
       const input = document.querySelector('#promptInput');
@@ -1115,7 +1112,6 @@ async function main() {
     })()`);
 
     await waitFor(() => panel.evaluate(`Array.from(document.querySelectorAll('.message-content')).some((node) => node.textContent.includes(${JSON.stringify(TEST_REPLY)}))`));
-    await waitFor(() => panel.evaluate(`document.querySelector('#browserIntroHero')?.hidden === true`));
     if (ASSIST_THEME === 'nous' && ASSIST_MODE === 'light') {
       const panelCardState = await panel.evaluate(`(() => {
         const assistant = document.querySelector('.message.assistant');
@@ -2579,7 +2575,7 @@ async function main() {
 
     await assistClick(fixture, '.close');
     await panel.evaluate(`document.querySelector('#newSessionButton').click()`);
-    await waitFor(() => panel.evaluate(`document.querySelector('#browserIntroHero')?.hidden === true && document.querySelector('#messages')?.textContent === ''`));
+    await waitFor(() => panel.evaluate(`document.querySelector('#messages')?.textContent === ''`));
 
     const rightClickMarker = 'RIGHT_CLICK_E2E_SELECTION_73f9';
     const rightClickQueue = await setup.evaluate(`(async () => {

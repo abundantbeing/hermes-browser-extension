@@ -58,7 +58,7 @@ test('the right-aligned wordmark is the same artwork with only the shorter line 
 
 test('the banner carries both wordmarks and shows the right one for the direction', () => {
   const { document } = parseHTML(html);
-  for (const [scope, cls] of [['#browserIntroHero', 'hero-wordmark'], ['.release-sidecar', 'release-sidecar-wordmark']]) {
+  for (const [scope, cls] of [['.release-sidecar', 'release-sidecar-wordmark']]) {
     const marks = [...document.querySelector(scope).querySelectorAll(`svg.${cls}`)];
     assert.equal(marks.length, 2);
     assert.equal(marks[0].querySelector('use').getAttribute('href'), 'assets/img/hermes-browser-logo-left.svg#Layer_1');

@@ -108,14 +108,15 @@ test('settings surface preserves Assist model controls and explains exact-routin
   }
 });
 
-test('Sidecar intro is panel-open-only and new session cannot reveal it again', async () => {
+test('the empty chat has no intro card, and New chat still marks the intro seen', async () => {
   const [html, source] = await Promise.all([
     read('extension/sidepanel.html'),
     read('extension/sidepanel.js'),
   ]);
-  assert.match(html, /id="browserIntroHero"[^>]*aria-label="Hermes Browser intro"/);
+  assert.doesNotMatch(html, /id="browserIntroHero"/, 'the panel no longer opens on the intro card');
+  assert.match(html, /class="release-sidecar"/, 'the wordmark stays in Settings');
   assert.match(source, /function renderBrowserIntroVisibility\(/);
-  assert.match(source, /browserIntroHero/);
+  assert.doesNotMatch(source, /browserIntroHero/);
   assert.match(source, /newSessionButton\.addEventListener[\s\S]{0,1200}await persistBrowserIntroSeen\(\);[\s\S]{0,900}await beginHermesBrowserDraft\(\);/);
   assert.match(source, /createSessionButton\.addEventListener[\s\S]{0,400}await persistBrowserIntroSeen\(\);[\s\S]{0,300}await beginHermesBrowserDraft\(\);/);
 });

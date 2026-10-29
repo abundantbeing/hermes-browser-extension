@@ -869,8 +869,6 @@ const els = {
   manualSettingsButton: $('#manualSettingsButton'),
   connectStatus: $('#connectStatus'),
   connectApprovalSlot: $('#connectApprovalSlot'),
-  browserIntroHero: $('#browserIntroHero'),
-  browserIntroDismissButton: $('#browserIntroDismissButton'),
   onboardingFlow: $('#onboardingFlow'),
   firstPromptChips: $('#firstPromptChips'),
   firstPromptChip: $('#firstPromptChip'),
@@ -1862,7 +1860,6 @@ const LONG_SESSION_NOTICE_STORAGE_KEY = 'hermesBrowserLongSessionNoticeSeen';
 // frequent saves do not re-read storage once the answer is known.
 let longSessionNoticeHandledId = '';
 let browserIntroSeen = false;
-let browserIntroDismissedForPanel = false;
 // First-run setup: loaded with the settings so an existing user never sees it
 // flash before storage answers.
 let onboardingCompleted = false;
@@ -16332,7 +16329,6 @@ function renderActiveProfileIndicator() {
     els.botChatIntro.hidden = true;
     return;
   }
-  if (els.browserIntroHero) els.browserIntroHero.hidden = true;
   if (els.botChatIntroAvatar) {
     appendBotModeAvatar(els.botChatIntroAvatar, botProfileDisplayName(activeRow), activeRow.profileName, activeRow.avatar);
     if (activeRow?.hasAvatar && !remoteAvatarImageOf(activeRow.avatar)) {
@@ -17902,11 +17898,10 @@ async function switchAgentGateway(agent) {
   }
 }
 
+// The empty chat no longer opens on the Hermes Browser intro card: setup has
+// its own welcome, and the wordmark lives in Settings.
 function renderBrowserIntroVisibility() {
   renderBotChatIntro();
-  if (!els.browserIntroHero) return;
-  const botIntroVisible = Boolean(els.botChatIntro && !els.botChatIntro.hidden);
-  els.browserIntroHero.hidden = browserIntroDismissedForPanel || messages.length > 0 || botIntroVisible || Boolean(onboardingFlow?.isOpen);
 }
 
 function renderEmptyState() {
@@ -18273,8 +18268,6 @@ async function setResponsePresentation(patch = {}) {
 }
 
 async function persistBrowserIntroSeen() {
-  browserIntroDismissedForPanel = true;
-  renderBrowserIntroVisibility();
   if (browserIntroSeen) return;
   browserIntroSeen = true;
   await browserApi.storage.local.set({ [HERMES_BROWSER_INTRO_SEEN_STORAGE_KEY]: true });
@@ -29347,9 +29340,6 @@ function bindEvents() {
       }
     });
   }
-  els.browserIntroDismissButton?.addEventListener('click', () => {
-    persistBrowserIntroSeen();
-  });
   els.responseStyleChoices?.addEventListener('click', (event) => {
     const choice = event.target.closest('[data-response-style]');
     if (choice) void setResponsePresentation({ responseStyle: choice.dataset.responseStyle });

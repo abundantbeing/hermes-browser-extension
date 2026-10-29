@@ -112,7 +112,8 @@ export async function verifyLightThemeTakeover({ client, evidence, qaDir, saveSc
   for (const theme of ['nous', 'anti-nous']) {
     for (const mode of ['light', 'dark']) {
       await setPalette(client, theme, mode);
-      const hero = await captureElement(client, '#browserIntroHero', path.join(outDir, `${theme}-${mode}-hero.png`), saveScreenshot);
+      // The empty chat no longer has the intro card; the Settings banner below carries the wordmark.
+      const hero = null;
       await saveScreenshot(client, path.join(outDir, `${theme}-${mode}-panel.png`));
       await client.evaluate(`document.querySelector('#settingsButton').click(); document.querySelector('#settingsBackButton')?.click()`);
       await pause(150);

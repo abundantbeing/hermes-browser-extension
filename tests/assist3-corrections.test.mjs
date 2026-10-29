@@ -5,13 +5,12 @@ import test from 'node:test';
 const root = new URL('../', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
 
-test('Sidecar is panel-lifecycle scoped and new session keeps it dismissed', async () => {
+test('the intro card is gone from the chat; its seen flag still feeds onboarding', async () => {
   const source = await read('extension/sidepanel.js');
-  assert.match(source, /let browserIntroDismissedForPanel\s*=\s*false/);
+  assert.doesNotMatch(source, /browserIntroDismissedForPanel/);
   const visibility = source.match(/function renderBrowserIntroVisibility\(\)[\s\S]*?\n\}/)?.[0] || '';
-  assert.match(visibility, /browserIntroDismissedForPanel\s*\|\|\s*messages\.length\s*>\s*0/);
-  assert.doesNotMatch(visibility, /browserIntroSeen/);
-  assert.match(source, /async function persistBrowserIntroSeen\(\)\s*\{[\s\S]{0,180}browserIntroDismissedForPanel\s*=\s*true/);
+  assert.match(visibility, /renderBotChatIntro\(\);/);
+  assert.match(source, /legacyIntroSeen: browserIntroSeen/);
 });
 
 test('sidepanel model selectors reset the active provider and Assist picker is compact and closeable', async () => {

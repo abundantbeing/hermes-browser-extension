@@ -168,16 +168,14 @@ test('sidepanel startup and conversation chrome use the compact branded shell', 
   assert.match(css, /\.hero-wordmark\s*\{[^}]*width:\s*min\(205px,/s);
   assert.match(css, /\.app-scroll:has\(\.message\.user\)\s+\.hero-card\s*\{[^}]*display:\s*none;/s);
 
-  const heroIndex = html.indexOf('class="hero-card"');
-  const messagesIndex = html.indexOf('id="messages"');
+  // The chat no longer opens on the intro card; the wordmark lives in Settings.
+  assert.equal(html.indexOf('class="hero-card"'), -1, 'the empty chat has no intro card');
   const statusCardIndex = html.indexOf('id="statusCard"');
   const browserBehaviorIndex = html.indexOf('id="browserBehaviorTitle"');
   const contextScopeButtonIndex = html.indexOf('id="contextScopeButton"');
   const composerStartIndex = html.indexOf('<form id="composer"');
   const composerEndIndex = html.indexOf('</form>', composerStartIndex);
-  assert.ok(heroIndex >= 0 && messagesIndex > heroIndex, 'hero should remain an intro before messages');
   assert.ok(statusCardIndex > browserBehaviorIndex, 'active-tab status belongs in Browser Behavior settings');
   assert.ok(contextScopeButtonIndex > composerStartIndex && contextScopeButtonIndex < composerEndIndex, 'tab-scope control belongs in the composer header');
   assert.ok(contextScopeButtonIndex > html.indexOf('id="contextChip"'), 'tab-scope control sits right of the context chip');
-  assert.doesNotMatch(html.slice(heroIndex, messagesIndex), /<span>ACTIVE TAB<\/span>/);
 });
