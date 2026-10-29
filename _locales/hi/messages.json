@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "Hermes एक्सटेंशन",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन खोलें",
+    "message": "Hermes Browser Extension खोलें",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन साइडबार खोलें",
+    "message": "Hermes Browser Extension साइडबार खोलें",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -52,7 +52,7 @@
     "description": "Runtime interface message account.notice.failed"
   },
   "runtime_account_notice_no_permission": {
-    "message": "साइन-इन के लिए आपकी अनुमति चाहिए ताकि Hermes ब्राउज़र एक्सटेंशन देख सके कि साइन-इन विंडो कहाँ समाप्त होती है। “साइन इन” फिर से चुनें और अनुमति दें।",
+    "message": "साइन-इन के लिए आपकी अनुमति चाहिए ताकि Hermes Browser Extension देख सके कि साइन-इन विंडो कहाँ समाप्त होती है। “साइन इन” फिर से चुनें और अनुमति दें।",
     "description": "Runtime interface message account.notice.no_permission"
   },
   "runtime_account_notice_no_window": {
@@ -124,7 +124,7 @@
     "description": "Runtime interface message account.unavailable.no_origin"
   },
   "runtime_account_unavailable_not_gated": {
-    "message": "यह गेटवे इस कंप्यूटर पर खुला है और साइन-इन नहीं माँगता, इसलिए यहाँ इस्तेमाल करने के लिए कोई Hermes खाता नहीं है। प्रोजेक्ट के लिए इसके बजाय Hermes ब्राउज़र एक्सटेंशन के साथ पेयरिंग या Hermes Web का अपना साइन-इन काम आता है।",
+    "message": "यह गेटवे इस कंप्यूटर पर खुला है और साइन-इन नहीं माँगता, इसलिए यहाँ इस्तेमाल करने के लिए कोई Hermes खाता नहीं है। प्रोजेक्ट के लिए इसके बजाय Hermes Browser Extension के साथ पेयरिंग या Hermes Web का अपना साइन-इन काम आता है।",
     "description": "Runtime interface message account.unavailable.not_gated"
   },
   "runtime_account_unavailable_unreachable": {
@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "इस गेटवे ने घोषित नहीं किया। Hermes Browser यह नहीं बता सकता कि सहायक प्लगइन लोड है या नहीं, इसलिए इसका मतलब यह नहीं कि वह गायब है।",
+    "message": "इस गेटवे ने घोषित नहीं किया। Hermes Browser Extension यह नहीं बता सकता कि सहायक प्लगइन लोड है या नहीं, इसलिए इसका मतलब यह नहीं कि वह गायब है।",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2216,7 +2216,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "ब्राउज़र एक्सटेंशन इस रिमोट गेटवे प्रतिक्रिया को वर्गीकृत नहीं कर सका।",
+    "message": "Hermes Browser Extension इस रिमोट गेटवे प्रतिक्रिया को वर्गीकृत नहीं कर सका।",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -2504,19 +2504,19 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "Hermes एक्सटेंशन",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन खोलें",
+    "message": "Hermes Browser Extension खोलें",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन साइडबार खोलें",
+    "message": "Hermes Browser Extension साइडबार खोलें",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -2640,7 +2640,7 @@
     "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_language_body": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन इसे हर जगह इस्तेमाल करेगा। आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
+    "message": "Hermes Browser Extension इसे हर जगह इस्तेमाल करेगा। आप इसे बाद में सेटिंग्स में बदल सकते हैं।",
     "description": "Runtime interface message onboarding.language.body"
   },
   "runtime_onboarding_language_body_suggested": {
@@ -3492,11 +3492,11 @@
     "description": "Runtime interface message session.legacy_new_chat"
   },
   "runtime_session_legacy_source_fork": {
-    "message": "यह चैट Hermes ब्राउज़र एक्सटेंशन के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। आपका संदेश नहीं भेजा गया। आप चैट की प्रति में आगे बढ़ सकते हैं।",
+    "message": "यह चैट Hermes Browser Extension के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। आपका संदेश नहीं भेजा गया। आप चैट की प्रति में आगे बढ़ सकते हैं।",
     "description": "Runtime interface message session.legacy_source_fork"
   },
   "runtime_session_legacy_source_no_fork": {
-    "message": "यह चैट Hermes ब्राउज़र एक्सटेंशन के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। इसकी प्रति यहाँ नहीं बन सकती, इसलिए आगे बढ़ने के लिए नई चैट शुरू करें। आपका संदेश अभी बॉक्स में है।",
+    "message": "यह चैट Hermes Browser Extension के पुराने संस्करण ने शुरू की थी, और यह गेटवे अब इसमें नए संदेश स्वीकार नहीं करता। इसकी प्रति यहाँ नहीं बन सकती, इसलिए आगे बढ़ने के लिए नई चैट शुरू करें। आपका संदेश अभी बॉक्स में है।",
     "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
@@ -3588,7 +3588,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन जो कुछ कर सकता है, उपयोग के अनुसार समूहित।",
+    "message": "Hermes Browser Extension जो कुछ कर सकता है, उपयोग के अनुसार समूहित।",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "कुछ ब्राउज़र एक्सटेंशन साइडबार के अंदर माइक्रोफ़ोन कैप्चर को ब्लॉक कर देते हैं। यह दृश्यमान एक्सटेंशन टैब उसी Hermes एक्सटेंशन मूल से रिकॉर्ड करता है जब Hermes STT उपलब्ध होता है, या जब कनेक्टेड रनटाइम ऑडियो ट्रांसक्रिप्शन को उजागर नहीं करता है तो ब्राउज़र स्पीच फ़ॉलबैक का उपयोग करता है।",
+    "message": "कुछ ब्राउज़र एक्सटेंशन साइडबार के अंदर माइक्रोफ़ोन कैप्चर को ब्लॉक कर देते हैं। यह दृश्यमान एक्सटेंशन टैब उसी Hermes Browser Extension मूल से रिकॉर्ड करता है जब Hermes STT उपलब्ध होता है, या जब कनेक्टेड रनटाइम ऑडियो ट्रांसक्रिप्शन को उजागर नहीं करता है तो ब्राउज़र स्पीच फ़ॉलबैक का उपयोग करता है।",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -5592,11 +5592,11 @@
     "description": "Runtime interface message ui.hermes.browser"
   },
   "runtime_ui_hermes_browser_bb83b5a0": {
-    "message": "हेमीज़ ब्राउज़र",
+    "message": "HERMES BROWSER",
     "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
   },
   "runtime_ui_hermes_browser_extension": {
-    "message": "हेमीज़ ब्राउज़र एक्सटेंशन",
+    "message": "HERMES BROWSER EXTENSION",
     "description": "Runtime interface message ui.hermes.browser.extension"
   },
   "runtime_ui_hermes_browser_extension_connected": {
@@ -5616,7 +5616,7 @@
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
-    "message": "हेमीज़ ब्राउज़र/अद्यतन चैनल",
+    "message": "HERMES BROWSER / अद्यतन चैनल",
     "description": "Runtime interface message ui.hermes.browser.update.channel"
   },
   "runtime_ui_hermes_chat_actions": {
@@ -6140,7 +6140,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन के लिए माइक्रोफ़ोन पहुंच अवरुद्ध है।",
+    "message": "Hermes Browser Extension के लिए माइक्रोफ़ोन पहुंच अवरुद्ध है।",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -6296,7 +6296,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "यहां कोई ऑडियो सेव नहीं है। अनुमति केवल Hermes ब्राउज़र एक्सटेंशन को आपकी आवाज़ रिकॉर्ड करने देती है जब आप माइक बटन पर क्लिक करते हैं।",
+    "message": "यहां कोई ऑडियो सेव नहीं है। अनुमति केवल Hermes Browser Extension को आपकी आवाज़ रिकॉर्ड करने देती है जब आप माइक बटन पर क्लिक करते हैं।",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -6496,11 +6496,11 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन साइड पैनल में सटीक सत्र खोलें।",
+    "message": "Hermes Browser Extension साइड पैनल में सटीक सत्र खोलें।",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "अपने ब्राउज़र टूलबार से Hermes एक्सटेंशन साइड पैनल खोलें।",
+    "message": "अपने ब्राउज़र टूलबार से Hermes Browser Extension साइड पैनल खोलें।",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Hermes ब्राउज़र एक्सटेंशन के समान पैलेट और क्रोम भाषा का उपयोग करें।",
+    "message": "Hermes Browser Extension के समान पैलेट और क्रोम भाषा का उपयोग करें।",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -8232,7 +8232,7 @@
     "description": "Runtime interface message webapp.hint_local"
   },
   "runtime_webapp_hint_local_kept": {
-    "message": "Hermes Web खुल गया। इस कंप्यूटर पर साइन इन करने के लिए एक बार hermes webapp चलाएँ। इसके बाद Hermes ब्राउज़र एक्सटेंशन इस ब्राउज़र को बंद करने तक साइन इन रखता है।",
+    "message": "Hermes Web खुल गया। इस कंप्यूटर पर साइन इन करने के लिए एक बार hermes webapp चलाएँ। इसके बाद Hermes Browser Extension इस ब्राउज़र को बंद करने तक साइन इन रखता है।",
     "description": "Runtime interface message webapp.hint_local_kept"
   },
   "runtime_webapp_hint_signed_in": {
@@ -8240,7 +8240,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "जो Hermes, Hermes ब्राउज़र एक्सटेंशन के साथ पेयरिंग करता है, उस पर Hermes Web, प्रोजेक्ट और बॉट प्रोफ़ाइल आपके लिए साइन इन हो जाते हैं, कुछ चलाने की ज़रूरत नहीं। वरना एक बार hermes webapp चलाने के बाद पैनल इस ब्राउज़र का Hermes Web साइन-इन ब्राउज़र बंद करने तक रखता है। hermes webapp --sign-out इसे खत्म करता है।",
+    "message": "जो Hermes, Hermes Browser Extension के साथ पेयरिंग करता है, उस पर Hermes Web, प्रोजेक्ट और बॉट प्रोफ़ाइल आपके लिए साइन इन हो जाते हैं, कुछ चलाने की ज़रूरत नहीं। वरना एक बार hermes webapp चलाने के बाद पैनल इस ब्राउज़र का Hermes Web साइन-इन ब्राउज़र बंद करने तक रखता है। hermes webapp --sign-out इसे खत्म करता है।",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
@@ -8292,7 +8292,7 @@
     "description": "Runtime interface message webapp.reason_needs_address"
   },
   "runtime_webapp_reason_permission": {
-    "message": "ब्राउज़र ने Hermes ब्राउज़र एक्सटेंशन को इस पते तक पहुँचने की अनुमति नहीं दी:",
+    "message": "ब्राउज़र ने Hermes Browser Extension को इस पते तक पहुँचने की अनुमति नहीं दी:",
     "description": "Runtime interface message webapp.reason_permission"
   },
   "runtime_webapp_reason_unreachable": {

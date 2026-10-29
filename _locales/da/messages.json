@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Ikke annonceret af denne gateway. Hermes Browser kan ikke se, om companion-pluginet er indlæst, så det betyder ikke, at det mangler.",
+    "message": "Ikke annonceret af denne gateway. Hermes Browser Extension kan ikke se, om companion-pluginet er indlæst, så det betyder ikke, at det mangler.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2756,7 +2756,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Mikrofontilladelsestilstand: {state}. Hvis din browser viser dette som blokeret, skal du åbne mikrofonindstillinger og indstille Mikrofon til Tillad Hermes Browser Extension .",
+    "message": "Mikrofontilladelsestilstand: {state}. Hvis din browser viser dette som blokeret, skal du åbne mikrofonindstillinger og indstille Mikrofon til Tillad Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Nogle browsere blokerer mikrofonoptagelse i udvidelsessidebjælker. Denne synlige udvidelsesfane optager fra den samme Hermes-udvidelsesoprindelse, når Hermes STT er tilgængelig, eller bruger browserens taletilbagegang, når den tilsluttede runtime ikke afslører lydtransskription.",
+    "message": "Nogle browsere blokerer mikrofonoptagelse i udvidelsessidebjælker. Denne synlige udvidelsesfane optager fra den samme oprindelse som Hermes Browser Extension, når Hermes STT er tilgængelig, eller bruger browserens taletilbagegang, når den tilsluttede runtime ikke afslører lydtransskription.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -6500,7 +6500,7 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Åbn Hermes-udvidelsens sidepanel fra din browserværktøjslinje.",
+    "message": "Åbn Hermes Browser Extension-sidepanelet fra din browserværktøjslinje.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {

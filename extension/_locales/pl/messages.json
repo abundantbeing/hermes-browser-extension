@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Nieogłoszone przez tę bramę. Hermes Browser nie może stwierdzić, czy wtyczka towarzysząca jest załadowana, więc nie oznacza to, że jej brakuje.",
+    "message": "Nieogłoszone przez tę bramę. Hermes Browser Extension nie może stwierdzić, czy wtyczka towarzysząca jest załadowana, więc nie oznacza to, że jej brakuje.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2756,7 +2756,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Stan uprawnień do mikrofonu: {state}. Jeśli Twoja przeglądarka wyświetla to jako zablokowane, otwórz ustawienia mikrofonu i ustaw Mikrofon na Zezwalaj na Hermes Browser Extension .",
+    "message": "Stan uprawnień do mikrofonu: {state}. Jeśli Twoja przeglądarka wyświetla to jako zablokowane, otwórz ustawienia mikrofonu i ustaw Mikrofon na Zezwalaj na Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Niektóre przeglądarki blokują przechwytywanie mikrofonu na bocznych paskach rozszerzeń. Ta widoczna karta rozszerzenia nagrywa z tego samego źródła rozszerzenia Hermes, gdy dostępne jest Hermes STT, lub wykorzystuje zastępczą mowę przeglądarki, gdy podłączone środowisko wykonawcze nie udostępnia transkrypcji audio.",
+    "message": "Niektóre przeglądarki blokują przechwytywanie mikrofonu na bocznych paskach rozszerzeń. Ta widoczna karta rozszerzenia nagrywa z tego samego źródła co Hermes Browser Extension, gdy dostępne jest Hermes STT, lub wykorzystuje zastępczą mowę przeglądarki, gdy podłączone środowisko wykonawcze nie udostępnia transkrypcji audio.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -6500,7 +6500,7 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Otwórz boczny panel rozszerzenia Hermes z paska narzędzi przeglądarki.",
+    "message": "Otwórz boczny panel Hermes Browser Extension z paska narzędzi przeglądarki.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
@@ -6688,7 +6688,7 @@
     "description": "Runtime interface message ui.preview.copy.only"
   },
   "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
-    "message": "Tryb podglądu: wczytaj tę stronę z zainstalowanego rozszerzenia Hermes Browser, aby używać połączonych ustawień Hermes i dyktowania głosowego.",
+    "message": "Tryb podglądu: wczytaj tę stronę z zainstalowanego Hermes Browser Extension, aby używać połączonych ustawień Hermes i dyktowania głosowego.",
     "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
   },
   "runtime_ui_previous": {

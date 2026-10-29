@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Hermes 浏览器扩展",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "Hermes 扩展",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "打开 Hermes 浏览器扩展",
+    "message": "打开 Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "打开 Hermes 浏览器扩展侧边栏",
+    "message": "打开 Hermes Browser Extension 侧边栏",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -52,7 +52,7 @@
     "description": "Runtime interface message account.notice.failed"
   },
   "runtime_account_notice_no_permission": {
-    "message": "登录需要你允许 Hermes 浏览器扩展查看登录窗口在哪里结束。请再次选择“登录”并允许。",
+    "message": "登录需要你允许 Hermes Browser Extension 查看登录窗口在哪里结束。请再次选择“登录”并允许。",
     "description": "Runtime interface message account.notice.no_permission"
   },
   "runtime_account_notice_no_window": {
@@ -124,7 +124,7 @@
     "description": "Runtime interface message account.unavailable.no_origin"
   },
   "runtime_account_unavailable_not_gated": {
-    "message": "此网关在这台电脑上是开放的，不要求登录，因此这里没有可用的 Hermes 账号。项目改由与 Hermes 浏览器扩展的配对或 Hermes Web 自身的登录来支持。",
+    "message": "此网关在这台电脑上是开放的，不要求登录，因此这里没有可用的 Hermes 账号。项目改由与 Hermes Browser Extension 的配对或 Hermes Web 自身的登录来支持。",
     "description": "Runtime interface message account.unavailable.not_gated"
   },
   "runtime_account_unavailable_unreachable": {
@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "此网关未声明。Hermes Browser 无法得知配套插件是否已加载，所以这并不表示它缺失。",
+    "message": "此网关未声明。Hermes Browser Extension 无法得知配套插件是否已加载，所以这并不表示它缺失。",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2216,7 +2216,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "Browser Extension 无法分类此远程 gateway 响应。",
+    "message": "Hermes Browser Extension 无法分类此远程 gateway 响应。",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -2504,19 +2504,19 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Hermes 浏览器扩展",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "Hermes 扩展",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "打开 Hermes 浏览器扩展",
+    "message": "打开 Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "打开 Hermes 浏览器扩展侧边栏",
+    "message": "打开 Hermes Browser Extension 侧边栏",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -2640,7 +2640,7 @@
     "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_language_body": {
-    "message": "Hermes 浏览器扩展会在所有界面使用该语言。您可以稍后在设置中更改。",
+    "message": "Hermes Browser Extension 会在所有界面使用该语言。您可以稍后在设置中更改。",
     "description": "Runtime interface message onboarding.language.body"
   },
   "runtime_onboarding_language_body_suggested": {
@@ -3492,11 +3492,11 @@
     "description": "Runtime interface message session.legacy_new_chat"
   },
   "runtime_session_legacy_source_fork": {
-    "message": "此聊天由旧版本的 Hermes 浏览器扩展创建，此网关不再接受其中的新消息。你的消息未发送。你可以在聊天副本中继续。",
+    "message": "此聊天由旧版本的 Hermes Browser Extension 创建，此网关不再接受其中的新消息。你的消息未发送。你可以在聊天副本中继续。",
     "description": "Runtime interface message session.legacy_source_fork"
   },
   "runtime_session_legacy_source_no_fork": {
-    "message": "此聊天由旧版本的 Hermes 浏览器扩展创建，此网关不再接受其中的新消息。此处无法复制，请开始新聊天以继续。你的消息仍在输入框中。",
+    "message": "此聊天由旧版本的 Hermes Browser Extension 创建，此网关不再接受其中的新消息。此处无法复制，请开始新聊天以继续。你的消息仍在输入框中。",
     "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
@@ -3504,7 +3504,7 @@
     "description": "Runtime interface message session.long_shared_notice"
   },
   "runtime_session_new_extension_session": {
-    "message": "＋ 新建 Hermes 浏览器扩展会话",
+    "message": "＋ 新建 Hermes Browser Extension 会话",
     "description": "Runtime interface message session.new_extension_session"
   },
   "runtime_session_origin_refused": {
@@ -3588,7 +3588,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Hermes 浏览器扩展的全部功能，按用途分组。",
+    "message": "Hermes Browser Extension 的全部功能，按用途分组。",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -4064,7 +4064,7 @@
     "description": "Runtime interface message ui.apply.to.field"
   },
   "runtime_ui_approval_opened_approve_hermes_browser_extension_then_return_here": {
-    "message": "已打开批准窗口。请批准 Hermes 浏览器扩展，然后返回此处。",
+    "message": "已打开批准窗口。请批准 Hermes Browser Extension，然后返回此处。",
     "description": "Runtime interface message ui.approval.opened.approve.hermes.browser.extension.then.return.here"
   },
   "runtime_ui_approve": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "某些浏览器会阻止扩展侧边栏中的麦克风捕获。当 Hermes STT 可用时，此可见扩展选项卡记录来自同一 Hermes 扩展源，或者当连接的运行时不公开音频转录时使用浏览器语音回退。",
+    "message": "某些浏览器会阻止扩展侧边栏中的麦克风捕获。当 Hermes STT 可用时，此可见扩展选项卡记录来自同一 Hermes Browser Extension 源，或者当连接的运行时不公开音频转录时使用浏览器语音回退。",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -5592,19 +5592,19 @@
     "description": "Runtime interface message ui.hermes.browser"
   },
   "runtime_ui_hermes_browser_bb83b5a0": {
-    "message": "HERMES 浏览器",
+    "message": "HERMES BROWSER",
     "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
   },
   "runtime_ui_hermes_browser_extension": {
-    "message": "HERMES 浏览器扩展",
+    "message": "HERMES BROWSER EXTENSION",
     "description": "Runtime interface message ui.hermes.browser.extension"
   },
   "runtime_ui_hermes_browser_extension_connected": {
-    "message": "Hermes 浏览器扩展已连接",
+    "message": "Hermes Browser Extension 已连接",
     "description": "Runtime interface message ui.hermes.browser.extension.connected"
   },
   "runtime_ui_hermes_browser_extension_conversation": {
-    "message": "Hermes 浏览器扩展对话",
+    "message": "Hermes Browser Extension 对话",
     "description": "Runtime interface message ui.hermes.browser.extension.conversation"
   },
   "runtime_ui_hermes_browser_intro": {
@@ -5616,7 +5616,7 @@
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
-    "message": "HERMES 浏览器 / 更新渠道",
+    "message": "HERMES BROWSER / 更新渠道",
     "description": "Runtime interface message ui.hermes.browser.update.channel"
   },
   "runtime_ui_hermes_chat_actions": {
@@ -6136,11 +6136,11 @@
     "description": "Runtime interface message ui.microphone"
   },
   "runtime_ui_microphone_access_is_already_enabled_for_hermes_browser_extension": {
-    "message": "已为 Hermes 浏览器扩展启用麦克风访问。",
+    "message": "已为 Hermes Browser Extension 启用麦克风访问。",
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Hermes 浏览器扩展的麦克风访问已被阻止。",
+    "message": "Hermes Browser Extension 的麦克风访问已被阻止。",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -6240,11 +6240,11 @@
     "description": "Runtime interface message ui.new.chat"
   },
   "runtime_ui_new_hermes_browser_extension_draft": {
-    "message": "新建 Hermes 浏览器扩展草稿",
+    "message": "新建 Hermes Browser Extension 草稿",
     "description": "Runtime interface message ui.new.hermes.browser.extension.draft"
   },
   "runtime_ui_new_hermes_browser_extension_session": {
-    "message": "新建 Hermes 浏览器扩展会话",
+    "message": "新建 Hermes Browser Extension 会话",
     "description": "Runtime interface message ui.new.hermes.browser.extension.session"
   },
   "runtime_ui_new_session": {
@@ -6296,7 +6296,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "此处不保存音频。该权限仅允许 Hermes 浏览器扩展在您点击麦克风按钮时录制您的声音。",
+    "message": "此处不保存音频。该权限仅允许 Hermes Browser Extension 在您点击麦克风按钮时录制您的声音。",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -6468,7 +6468,7 @@
     "description": "Runtime interface message ui.open.navigation"
   },
   "runtime_ui_open_or_create_a_hermes_browser_extension_session_before_compac_4c0fdd2e": {
-    "message": "压缩上下文前，请先打开或创建 Hermes 浏览器扩展会话。",
+    "message": "压缩上下文前，请先打开或创建 Hermes Browser Extension 会话。",
     "description": "Runtime interface message ui.open.or.create.a.hermes.browser.extension.session.before.compac.4c0fdd2e"
   },
   "runtime_ui_open_quick_commands": {
@@ -6496,11 +6496,11 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "在 Hermes 浏览器扩展侧面板中打开该确切会话。",
+    "message": "在 Hermes Browser Extension 侧面板中打开该确切会话。",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "从浏览器工具栏打开 Hermes 扩展侧面板。",
+    "message": "从浏览器工具栏打开 Hermes Browser Extension 侧面板。",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
@@ -6688,7 +6688,7 @@
     "description": "Runtime interface message ui.preview.copy.only"
   },
   "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
-    "message": "预览模式：请从已安装的 Hermes 浏览器扩展打开此页面，以使用已连接的 Hermes 设置和语音输入。",
+    "message": "预览模式：请从已安装的 Hermes Browser Extension 打开此页面，以使用已连接的 Hermes 设置和语音输入。",
     "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
   },
   "runtime_ui_previous": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "使用与 Hermes 浏览器扩展相同的调色板和界面语言。",
+    "message": "使用与 Hermes Browser Extension 相同的调色板和界面语言。",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -8232,7 +8232,7 @@
     "description": "Runtime interface message webapp.hint_local"
   },
   "runtime_webapp_hint_local_kept": {
-    "message": "已打开 Hermes Web。请在这台电脑上运行一次 hermes webapp 来登录。之后 Hermes 浏览器扩展会在你关闭浏览器前保持这个浏览器的登录状态。",
+    "message": "已打开 Hermes Web。请在这台电脑上运行一次 hermes webapp 来登录。之后 Hermes Browser Extension 会在你关闭浏览器前保持这个浏览器的登录状态。",
     "description": "Runtime interface message webapp.hint_local_kept"
   },
   "runtime_webapp_hint_signed_in": {
@@ -8240,7 +8240,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "在可与 Hermes 浏览器扩展配对的 Hermes 上，Hermes Web、项目和机器人档案会自动为你登录，无需运行任何命令。否则，运行过一次 hermes webapp 后，面板会保留此浏览器的 Hermes Web 登录直到关闭浏览器。hermes webapp --sign-out 可将其结束。",
+    "message": "在可与 Hermes Browser Extension 配对的 Hermes 上，Hermes Web、项目和机器人档案会自动为你登录，无需运行任何命令。否则，运行过一次 hermes webapp 后，面板会保留此浏览器的 Hermes Web 登录直到关闭浏览器。hermes webapp --sign-out 可将其结束。",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
@@ -8292,7 +8292,7 @@
     "description": "Runtime interface message webapp.reason_needs_address"
   },
   "runtime_webapp_reason_permission": {
-    "message": "浏览器未允许 Hermes 浏览器扩展访问此地址：",
+    "message": "浏览器未允许 Hermes Browser Extension 访问此地址：",
     "description": "Runtime interface message webapp.reason_permission"
   },
   "runtime_webapp_reason_unreachable": {

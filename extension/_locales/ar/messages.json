@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "إضافة Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "إضافة Hermes",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,7 +12,7 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "افتح إضافة Hermes Browser",
+    "message": "افتح Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "لم تعلن عنه هذه البوابة. لا يستطيع Hermes Browser معرفة ما إذا كانت الإضافة المرافقة محمّلة، لذا لا يعني هذا أنها مفقودة.",
+    "message": "لم تعلن عنه هذه البوابة. لا يستطيع Hermes Browser Extension معرفة ما إذا كانت الإضافة المرافقة محمّلة، لذا لا يعني هذا أنها مفقودة.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2216,7 +2216,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "تعذر على امتداد المتصفح تصنيف استجابة البوابة البعيدة هذه.",
+    "message": "تعذر على Hermes Browser Extension تصنيف استجابة البوابة البعيدة هذه.",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -2504,15 +2504,15 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "إضافة Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "إضافة Hermes",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "افتح إضافة Hermes Browser",
+    "message": "افتح Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
@@ -2756,7 +2756,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "حالة إذن الميكروفون: {state}. إذا أظهر متصفحك أن هذا محظور، فافتح إعدادات الميكروفون واضبط الميكروفون على السماح بـ Hermes Browser Extension .",
+    "message": "حالة إذن الميكروفون: {state}. إذا أظهر متصفحك أن هذا محظور، فافتح إعدادات الميكروفون واضبط الميكروفون على السماح بـ Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "تمنع بعض المتصفحات التقاط الميكروفون داخل الأشرطة الجانبية الملحقة. تسجل علامة تبويب الامتداد المرئية هذه من نفس أصل امتداد Hermes عندما يكون Hermes STT متاحًا، أو تستخدم احتياطي كلام المتصفح عندما لا يكشف وقت التشغيل المتصل عن النسخ الصوتي.",
+    "message": "تمنع بعض المتصفحات التقاط الميكروفون داخل الأشرطة الجانبية الملحقة. تسجل علامة تبويب الامتداد المرئية هذه من نفس أصل Hermes Browser Extension عندما يكون Hermes STT متاحًا، أو تستخدم احتياطي كلام المتصفح عندما لا يكشف وقت التشغيل المتصل عن النسخ الصوتي.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -6500,7 +6500,7 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "افتح اللوحة الجانبية لامتداد Hermes من شريط أدوات المتصفح الخاص بك.",
+    "message": "افتح اللوحة الجانبية لـ Hermes Browser Extension من شريط أدوات المتصفح الخاص بك.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {

@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Extension de navigateur Hermes",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "Extension Hermes",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Ouvrir l’extension de navigateur Hermes",
+    "message": "Ouvrir Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Ouvrir la barre latérale de l’extension de navigateur Hermes",
+    "message": "Ouvrir la barre latérale de Hermes Browser Extension",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -52,7 +52,7 @@
     "description": "Runtime interface message account.notice.failed"
   },
   "runtime_account_notice_no_permission": {
-    "message": "La connexion exige que vous autorisiez l’extension de navigateur Hermes à voir où se termine la fenêtre de connexion. Choisissez de nouveau « Se connecter » et autorisez-le.",
+    "message": "La connexion exige que vous autorisiez Hermes Browser Extension à voir où se termine la fenêtre de connexion. Choisissez de nouveau « Se connecter » et autorisez-le.",
     "description": "Runtime interface message account.notice.no_permission"
   },
   "runtime_account_notice_no_window": {
@@ -124,7 +124,7 @@
     "description": "Runtime interface message account.unavailable.no_origin"
   },
   "runtime_account_unavailable_not_gated": {
-    "message": "Cette passerelle est ouverte sur cet ordinateur et ne demande aucune connexion : il n'y a donc pas de compte Hermes à utiliser ici. Le jumelage avec l'extension de navigateur Hermes, ou la connexion propre à Hermes Web, couvre les projets à la place.",
+    "message": "Cette passerelle est ouverte sur cet ordinateur et ne demande aucune connexion : il n'y a donc pas de compte Hermes à utiliser ici. Le jumelage avec Hermes Browser Extension, ou la connexion propre à Hermes Web, couvre les projets à la place.",
     "description": "Runtime interface message account.unavailable.not_gated"
   },
   "runtime_account_unavailable_unreachable": {
@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Non annoncé par cette passerelle. Hermes Browser ne peut pas savoir si le plugin compagnon est chargé, donc cela ne signifie pas qu'il manque.",
+    "message": "Non annoncé par cette passerelle. Hermes Browser Extension ne peut pas savoir si le plugin compagnon est chargé, donc cela ne signifie pas qu'il manque.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2216,7 +2216,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "L’extension Browser n’a pas pu classifier cette réponse de passerelle distante.",
+    "message": "Hermes Browser Extension n’a pas pu classifier cette réponse de passerelle distante.",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -2504,19 +2504,19 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Extension de navigateur Hermes",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "Extension Hermes",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Ouvrir l’extension de navigateur Hermes",
+    "message": "Ouvrir Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Ouvrir la barre latérale de l’extension de navigateur Hermes",
+    "message": "Ouvrir la barre latérale de Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -2640,7 +2640,7 @@
     "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_language_body": {
-    "message": "L'extension de navigateur Hermes l'utilisera partout. Vous pourrez la modifier plus tard dans les paramètres.",
+    "message": "Hermes Browser Extension l'utilisera partout. Vous pourrez la modifier plus tard dans les paramètres.",
     "description": "Runtime interface message onboarding.language.body"
   },
   "runtime_onboarding_language_body_suggested": {
@@ -2756,7 +2756,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "État d'autorisation du microphone : {state}. Si votre navigateur indique que cela est bloqué, ouvrez les paramètres du microphone et définissez Microphone sur Autoriser pour Hermes Browser Extension .",
+    "message": "État d'autorisation du microphone : {state}. Si votre navigateur indique que cela est bloqué, ouvrez les paramètres du microphone et définissez Microphone sur Autoriser pour Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -3492,11 +3492,11 @@
     "description": "Runtime interface message session.legacy_new_chat"
   },
   "runtime_session_legacy_source_fork": {
-    "message": "Cette discussion a été commencée par une ancienne version de l'extension de navigateur Hermes, et cette passerelle n'y accepte plus de nouveaux messages. Votre message n'a pas été envoyé. Vous pouvez continuer dans une copie de la discussion.",
+    "message": "Cette discussion a été commencée par une ancienne version de Hermes Browser Extension, et cette passerelle n'y accepte plus de nouveaux messages. Votre message n'a pas été envoyé. Vous pouvez continuer dans une copie de la discussion.",
     "description": "Runtime interface message session.legacy_source_fork"
   },
   "runtime_session_legacy_source_no_fork": {
-    "message": "Cette discussion a été commencée par une ancienne version de l'extension de navigateur Hermes, et cette passerelle n'y accepte plus de nouveaux messages. Elle ne peut pas être copiée ici : commencez une nouvelle discussion pour continuer. Votre message est toujours dans la zone de saisie.",
+    "message": "Cette discussion a été commencée par une ancienne version de Hermes Browser Extension, et cette passerelle n'y accepte plus de nouveaux messages. Elle ne peut pas être copiée ici : commencez une nouvelle discussion pour continuer. Votre message est toujours dans la zone de saisie.",
     "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
@@ -3588,7 +3588,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Tout ce que l'extension de navigateur Hermes sait faire, regroupé par usage.",
+    "message": "Tout ce que Hermes Browser Extension sait faire, regroupé par usage.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Certains navigateurs bloquent la capture du microphone dans les barres latérales des extensions. Cet onglet d'extension visible enregistre à partir de la même origine d'extension Hermes lorsque Hermes STT est disponible, ou utilise le repli vocal du navigateur lorsque le runtime connecté n'expose pas la transcription audio.",
+    "message": "Certains navigateurs bloquent la capture du microphone dans les barres latérales des extensions. Cet onglet d'extension visible enregistre à partir de la même origine que Hermes Browser Extension lorsque Hermes STT est disponible, ou utilise le repli vocal du navigateur lorsque le runtime connecté n'expose pas la transcription audio.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -5596,7 +5596,7 @@
     "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
   },
   "runtime_ui_hermes_browser_extension": {
-    "message": "EXTENSION HERMES BROWSER",
+    "message": "HERMES BROWSER EXTENSION",
     "description": "Runtime interface message ui.hermes.browser.extension"
   },
   "runtime_ui_hermes_browser_extension_connected": {
@@ -5616,7 +5616,7 @@
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
-    "message": "NAVIGATEUR HERMES / CHAÎNE DE MISE À JOUR",
+    "message": "HERMES BROWSER / CHAÎNE DE MISE À JOUR",
     "description": "Runtime interface message ui.hermes.browser.update.channel"
   },
   "runtime_ui_hermes_chat_actions": {
@@ -6140,7 +6140,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "L'accès au microphone est bloqué pour l'extension de navigateur Hermes.",
+    "message": "L'accès au microphone est bloqué pour Hermes Browser Extension.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -6296,7 +6296,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "Aucun audio n'est enregistré ici. L'autorisation permet uniquement à l'extension de navigateur Hermes d'enregistrer votre voix lorsque vous cliquez sur le bouton du micro.",
+    "message": "Aucun audio n'est enregistré ici. L'autorisation permet uniquement à Hermes Browser Extension d'enregistrer votre voix lorsque vous cliquez sur le bouton du micro.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -6496,11 +6496,11 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Ouvrez la session exacte dans le panneau latéral de l'extension de navigateur Hermes.",
+    "message": "Ouvrez la session exacte dans le panneau latéral de Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Ouvrez le panneau latéral de l'extension Hermes à partir de la barre d'outils de votre navigateur.",
+    "message": "Ouvrez le panneau latéral de Hermes Browser Extension à partir de la barre d'outils de votre navigateur.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
@@ -6688,7 +6688,7 @@
     "description": "Runtime interface message ui.preview.copy.only"
   },
   "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
-    "message": "Mode aperçu : chargez cette page à partir du Hermes Browser Extension installé pour utiliser les paramètres du Hermes connecté et la dictée vocale.",
+    "message": "Mode aperçu : chargez cette page depuis l'installation de Hermes Browser Extension pour utiliser les paramètres du Hermes connecté et la dictée vocale.",
     "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
   },
   "runtime_ui_previous": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Utilisez la même palette et le même langage Chrome que l'extension de navigateur Hermes.",
+    "message": "Utilisez la même palette et le même langage Chrome que Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -8232,7 +8232,7 @@
     "description": "Runtime interface message webapp.hint_local"
   },
   "runtime_webapp_hint_local_kept": {
-    "message": "Hermes Web ouvert. Sur cet ordinateur, lancez hermes webapp une fois pour vous connecter. Ensuite, l’extension de navigateur Hermes garde ce navigateur connecté jusqu’à sa fermeture.",
+    "message": "Hermes Web ouvert. Sur cet ordinateur, lancez hermes webapp une fois pour vous connecter. Ensuite, Hermes Browser Extension garde ce navigateur connecté jusqu’à sa fermeture.",
     "description": "Runtime interface message webapp.hint_local_kept"
   },
   "runtime_webapp_hint_signed_in": {
@@ -8240,7 +8240,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Avec un Hermes qui s'appaire avec l'extension de navigateur Hermes, Hermes Web, Projets et les profils de bots sont connectés pour vous, sans rien à exécuter. Sinon, le panneau conserve la connexion à Hermes Web de ce navigateur jusqu'à sa fermeture, après un seul hermes webapp. hermes webapp --sign-out y met fin.",
+    "message": "Avec un Hermes qui s'appaire avec Hermes Browser Extension, Hermes Web, Projets et les profils de bots sont connectés pour vous, sans rien à exécuter. Sinon, le panneau conserve la connexion à Hermes Web de ce navigateur jusqu'à sa fermeture, après un seul hermes webapp. hermes webapp --sign-out y met fin.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
@@ -8292,7 +8292,7 @@
     "description": "Runtime interface message webapp.reason_needs_address"
   },
   "runtime_webapp_reason_permission": {
-    "message": "Le navigateur n’a pas autorisé l’extension de navigateur Hermes à joindre cette adresse :",
+    "message": "Le navigateur n’a pas autorisé Hermes Browser Extension à joindre cette adresse :",
     "description": "Runtime interface message webapp.reason_permission"
   },
   "runtime_webapp_reason_unreachable": {

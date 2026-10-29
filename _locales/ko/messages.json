@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Hermes 브라우저 확장 프로그램",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "Hermes 확장",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Hermes 브라우저 확장 프로그램 열기",
+    "message": "Hermes Browser Extension 열기",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Hermes 브라우저 확장 프로그램 사이드바 열기",
+    "message": "Hermes Browser Extension 사이드바 열기",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -52,7 +52,7 @@
     "description": "Runtime interface message account.notice.failed"
   },
   "runtime_account_notice_no_permission": {
-    "message": "로그인하려면 Hermes 브라우저 확장 프로그램이 로그인 창이 끝나는 위치를 볼 수 있도록 허용해야 합니다. “로그인”을 다시 선택하고 허용하세요.",
+    "message": "로그인하려면 Hermes Browser Extension이 로그인 창이 끝나는 위치를 볼 수 있도록 허용해야 합니다. “로그인”을 다시 선택하고 허용하세요.",
     "description": "Runtime interface message account.notice.no_permission"
   },
   "runtime_account_notice_no_window": {
@@ -124,7 +124,7 @@
     "description": "Runtime interface message account.unavailable.no_origin"
   },
   "runtime_account_unavailable_not_gated": {
-    "message": "이 게이트웨이는 이 컴퓨터에서 열려 있고 로그인을 요구하지 않으므로 여기서 사용할 Hermes 계정이 없습니다. 프로젝트는 대신 Hermes 브라우저 확장 프로그램과의 페어링 또는 Hermes Web 자체 로그인이 처리합니다.",
+    "message": "이 게이트웨이는 이 컴퓨터에서 열려 있고 로그인을 요구하지 않으므로 여기서 사용할 Hermes 계정이 없습니다. 프로젝트는 대신 Hermes Browser Extension과의 페어링 또는 Hermes Web 자체 로그인이 처리합니다.",
     "description": "Runtime interface message account.unavailable.not_gated"
   },
   "runtime_account_unavailable_unreachable": {
@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "이 게이트웨이가 알리지 않았습니다. Hermes Browser는 컴패니언 플러그인이 로드되었는지 알 수 없으므로 없다는 뜻은 아닙니다.",
+    "message": "이 게이트웨이가 알리지 않았습니다. Hermes Browser Extension은 컴패니언 플러그인이 로드되었는지 알 수 없으므로 없다는 뜻은 아닙니다.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2216,7 +2216,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "Browser Extension이 이 원격 게이트웨이 응답을 분류할 수 없습니다.",
+    "message": "Hermes Browser Extension이 이 원격 게이트웨이 응답을 분류할 수 없습니다.",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -2504,19 +2504,19 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Hermes 브라우저 확장 프로그램",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "Hermes 확장",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Hermes 브라우저 확장 프로그램 열기",
+    "message": "Hermes Browser Extension 열기",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Hermes 브라우저 확장 프로그램 사이드바 열기",
+    "message": "Hermes Browser Extension 사이드바 열기",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -2640,7 +2640,7 @@
     "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_language_body": {
-    "message": "Hermes 브라우저 확장 프로그램이 모든 화면에서 이 언어를 사용합니다. 나중에 설정에서 변경할 수 있습니다.",
+    "message": "Hermes Browser Extension이 모든 화면에서 이 언어를 사용합니다. 나중에 설정에서 변경할 수 있습니다.",
     "description": "Runtime interface message onboarding.language.body"
   },
   "runtime_onboarding_language_body_suggested": {
@@ -3492,11 +3492,11 @@
     "description": "Runtime interface message session.legacy_new_chat"
   },
   "runtime_session_legacy_source_fork": {
-    "message": "이 채팅은 이전 버전의 Hermes 브라우저 확장 프로그램에서 시작되었으며, 이 게이트웨이는 더 이상 이 채팅에서 새 메시지를 받지 않습니다. 메시지는 전송되지 않았습니다. 채팅 사본에서 계속할 수 있습니다.",
+    "message": "이 채팅은 이전 버전의 Hermes Browser Extension에서 시작되었으며, 이 게이트웨이는 더 이상 이 채팅에서 새 메시지를 받지 않습니다. 메시지는 전송되지 않았습니다. 채팅 사본에서 계속할 수 있습니다.",
     "description": "Runtime interface message session.legacy_source_fork"
   },
   "runtime_session_legacy_source_no_fork": {
-    "message": "이 채팅은 이전 버전의 Hermes 브라우저 확장 프로그램에서 시작되었으며, 이 게이트웨이는 더 이상 이 채팅에서 새 메시지를 받지 않습니다. 여기서는 복사할 수 없으니 새 채팅을 시작해 계속하세요. 메시지는 입력창에 남아 있습니다.",
+    "message": "이 채팅은 이전 버전의 Hermes Browser Extension에서 시작되었으며, 이 게이트웨이는 더 이상 이 채팅에서 새 메시지를 받지 않습니다. 여기서는 복사할 수 없으니 새 채팅을 시작해 계속하세요. 메시지는 입력창에 남아 있습니다.",
     "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
@@ -3588,7 +3588,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Hermes 브라우저 확장 프로그램이 할 수 있는 모든 기능을 용도별로 묶었습니다.",
+    "message": "Hermes Browser Extension이 할 수 있는 모든 기능을 용도별로 묶었습니다.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "일부 브라우저는 확장 사이드바 내부의 마이크 캡처를 차단합니다. 이 표시되는 확장 탭은 Hermes STT를 사용할 수 있을 때 동일한 Hermes 확장 원본에서 기록하거나, 연결된 런타임이 오디오 전사를 노출하지 않을 때 브라우저 음성 대체를 사용합니다.",
+    "message": "일부 브라우저는 확장 사이드바 내부의 마이크 캡처를 차단합니다. 이 표시되는 확장 탭은 Hermes STT를 사용할 수 있을 때 동일한 Hermes Browser Extension 원본에서 기록하거나, 연결된 런타임이 오디오 전사를 노출하지 않을 때 브라우저 음성 대체를 사용합니다.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -6140,7 +6140,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Hermes 브라우저 확장 프로그램에 대한 마이크 액세스가 차단되었습니다.",
+    "message": "Hermes Browser Extension에 대한 마이크 액세스가 차단되었습니다.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -6296,7 +6296,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "여기에는 오디오가 저장되지 않습니다. 이 권한을 사용하면 마이크 버튼을 클릭할 때만 Hermes 브라우저 확장 프로그램이 음성을 녹음할 수 있습니다.",
+    "message": "여기에는 오디오가 저장되지 않습니다. 이 권한을 사용하면 마이크 버튼을 클릭할 때만 Hermes Browser Extension이 음성을 녹음할 수 있습니다.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -6496,11 +6496,11 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Hermes 브라우저 확장 프로그램 측면 패널에서 정확한 세션을 엽니다.",
+    "message": "Hermes Browser Extension 측면 패널에서 정확한 세션을 엽니다.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "브라우저 도구 모음에서 Hermes 확장 측면 패널을 엽니다.",
+    "message": "브라우저 도구 모음에서 Hermes Browser Extension 측면 패널을 엽니다.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Hermes 브라우저 확장 프로그램과 동일한 팔레트 및 크롬 언어를 사용합니다.",
+    "message": "Hermes Browser Extension과 동일한 팔레트 및 크롬 언어를 사용합니다.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -8232,7 +8232,7 @@
     "description": "Runtime interface message webapp.hint_local"
   },
   "runtime_webapp_hint_local_kept": {
-    "message": "Hermes Web을 열었습니다. 이 컴퓨터에서 hermes webapp을 한 번 실행해 로그인하세요. 그 후에는 브라우저를 닫을 때까지 Hermes 브라우저 확장 프로그램이 이 브라우저의 로그인을 유지합니다.",
+    "message": "Hermes Web을 열었습니다. 이 컴퓨터에서 hermes webapp을 한 번 실행해 로그인하세요. 그 후에는 브라우저를 닫을 때까지 Hermes Browser Extension이 이 브라우저의 로그인을 유지합니다.",
     "description": "Runtime interface message webapp.hint_local_kept"
   },
   "runtime_webapp_hint_signed_in": {
@@ -8240,7 +8240,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Hermes 브라우저 확장 프로그램과 페어링되는 Hermes에서는 Hermes Web, 프로젝트, 봇 프로필에 자동으로 로그인되며 실행할 것이 없습니다. 그렇지 않으면 hermes webapp를 한 번 실행한 뒤 브라우저를 닫을 때까지 패널이 이 브라우저의 Hermes Web 로그인을 유지합니다. hermes webapp --sign-out으로 종료합니다.",
+    "message": "Hermes Browser Extension과 페어링되는 Hermes에서는 Hermes Web, 프로젝트, 봇 프로필에 자동으로 로그인되며 실행할 것이 없습니다. 그렇지 않으면 hermes webapp를 한 번 실행한 뒤 브라우저를 닫을 때까지 패널이 이 브라우저의 Hermes Web 로그인을 유지합니다. hermes webapp --sign-out으로 종료합니다.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
@@ -8292,7 +8292,7 @@
     "description": "Runtime interface message webapp.reason_needs_address"
   },
   "runtime_webapp_reason_permission": {
-    "message": "브라우저가 Hermes 브라우저 확장 프로그램의 이 주소 접근을 허용하지 않았습니다:",
+    "message": "브라우저가 Hermes Browser Extension의 이 주소 접근을 허용하지 않았습니다:",
     "description": "Runtime interface message webapp.reason_permission"
   },
   "runtime_webapp_reason_unreachable": {

@@ -1,6 +1,6 @@
 {
   "extensionName": {
-    "message": "Tiện ích mở rộng Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Mở tiện ích mở rộng Hermes Browser",
+    "message": "Mở Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Mở thanh bên tiện ích mở rộng Hermes Browser",
+    "message": "Mở thanh bên của Hermes Browser Extension",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -52,7 +52,7 @@
     "description": "Runtime interface message account.notice.failed"
   },
   "runtime_account_notice_no_permission": {
-    "message": "Đăng nhập cần bạn cho phép để tiện ích mở rộng Hermes Browser thấy cửa sổ đăng nhập kết thúc ở đâu. Hãy chọn “Đăng nhập” lần nữa và cho phép.",
+    "message": "Đăng nhập cần bạn cho phép để Hermes Browser Extension thấy cửa sổ đăng nhập kết thúc ở đâu. Hãy chọn “Đăng nhập” lần nữa và cho phép.",
     "description": "Runtime interface message account.notice.no_permission"
   },
   "runtime_account_notice_no_window": {
@@ -124,7 +124,7 @@
     "description": "Runtime interface message account.unavailable.no_origin"
   },
   "runtime_account_unavailable_not_gated": {
-    "message": "Cổng này mở trên máy này và không yêu cầu đăng nhập, nên không có tài khoản Hermes để dùng ở đây. Thay vào đó, việc ghép nối với tiện ích mở rộng Hermes Browser hoặc đăng nhập riêng của Hermes Web đảm nhiệm Dự án.",
+    "message": "Cổng này mở trên máy này và không yêu cầu đăng nhập, nên không có tài khoản Hermes để dùng ở đây. Thay vào đó, việc ghép nối với Hermes Browser Extension hoặc đăng nhập riêng của Hermes Web đảm nhiệm Dự án.",
     "description": "Runtime interface message account.unavailable.not_gated"
   },
   "runtime_account_unavailable_unreachable": {
@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Không được cổng này công bố. Hermes Browser không thể biết plugin đồng hành đã được tải hay chưa, nên điều này không có nghĩa là nó bị thiếu.",
+    "message": "Không được cổng này công bố. Hermes Browser Extension không thể biết plugin đồng hành đã được tải hay chưa, nên điều này không có nghĩa là nó bị thiếu.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2216,7 +2216,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "Browser Extension không thể phân loại phản hồi cổng từ xa này.",
+    "message": "Hermes Browser Extension không thể phân loại phản hồi cổng từ xa này.",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -2504,7 +2504,7 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Tiện ích mở rộng Hermes Browser",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
@@ -2512,11 +2512,11 @@
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Mở tiện ích mở rộng Hermes Browser",
+    "message": "Mở Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Mở thanh bên tiện ích mở rộng Hermes Browser",
+    "message": "Mở thanh bên của Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -2640,7 +2640,7 @@
     "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_language_body": {
-    "message": "Tiện ích mở rộng Hermes Browser sẽ dùng ngôn ngữ này ở mọi nơi. Bạn có thể đổi sau trong phần Cài đặt.",
+    "message": "Hermes Browser Extension sẽ dùng ngôn ngữ này ở mọi nơi. Bạn có thể đổi sau trong phần Cài đặt.",
     "description": "Runtime interface message onboarding.language.body"
   },
   "runtime_onboarding_language_body_suggested": {
@@ -2756,7 +2756,7 @@
     "description": "Runtime interface message permissions.not_granted"
   },
   "runtime_permissions_state": {
-    "message": "Trạng thái cho phép micrô: {state}. Nếu trình duyệt của bạn hiển thị điều này là bị chặn, hãy mở cài đặt micrô và đặt Micrô thành Cho phép Hermes Browser Extension .",
+    "message": "Trạng thái cho phép micrô: {state}. Nếu trình duyệt của bạn hiển thị điều này là bị chặn, hãy mở cài đặt micrô và đặt Micrô thành Cho phép Hermes Browser Extension.",
     "description": "Runtime interface message permissions.state"
   },
   "runtime_picker_pick_different": {
@@ -3492,11 +3492,11 @@
     "description": "Runtime interface message session.legacy_new_chat"
   },
   "runtime_session_legacy_source_fork": {
-    "message": "Cuộc trò chuyện này do một phiên bản cũ của tiện ích mở rộng Hermes Browser bắt đầu, và cổng này không còn nhận tin nhắn mới trong đó. Tin nhắn của bạn chưa được gửi. Bạn có thể tiếp tục trong một bản sao của cuộc trò chuyện.",
+    "message": "Cuộc trò chuyện này do một phiên bản cũ của Hermes Browser Extension bắt đầu, và cổng này không còn nhận tin nhắn mới trong đó. Tin nhắn của bạn chưa được gửi. Bạn có thể tiếp tục trong một bản sao của cuộc trò chuyện.",
     "description": "Runtime interface message session.legacy_source_fork"
   },
   "runtime_session_legacy_source_no_fork": {
-    "message": "Cuộc trò chuyện này do một phiên bản cũ của tiện ích mở rộng Hermes Browser bắt đầu, và cổng này không còn nhận tin nhắn mới trong đó. Không thể sao chép tại đây, vì vậy hãy bắt đầu cuộc trò chuyện mới để tiếp tục. Tin nhắn của bạn vẫn còn trong ô nhập.",
+    "message": "Cuộc trò chuyện này do một phiên bản cũ của Hermes Browser Extension bắt đầu, và cổng này không còn nhận tin nhắn mới trong đó. Không thể sao chép tại đây, vì vậy hãy bắt đầu cuộc trò chuyện mới để tiếp tục. Tin nhắn của bạn vẫn còn trong ô nhập.",
     "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
@@ -3588,7 +3588,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Mọi thứ tiện ích mở rộng Hermes Browser làm được, được nhóm theo mục đích.",
+    "message": "Mọi thứ Hermes Browser Extension làm được, được nhóm theo mục đích.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Một số trình duyệt chặn tính năng thu micrô bên trong thanh bên của tiện ích mở rộng. Tab tiện ích mở rộng hiển thị này ghi lại từ cùng một nguồn gốc tiện ích mở rộng Hermes khi Hermes STT khả dụng hoặc sử dụng tính năng dự phòng giọng nói của trình duyệt khi thời gian chạy được kết nối không hiển thị bản ghi âm thanh.",
+    "message": "Một số trình duyệt chặn tính năng thu micrô bên trong thanh bên của tiện ích mở rộng. Tab tiện ích mở rộng hiển thị này ghi lại từ cùng một nguồn gốc với Hermes Browser Extension khi Hermes STT khả dụng hoặc sử dụng tính năng dự phòng giọng nói của trình duyệt khi thời gian chạy được kết nối không hiển thị bản ghi âm thanh.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -5592,11 +5592,11 @@
     "description": "Runtime interface message ui.hermes.browser"
   },
   "runtime_ui_hermes_browser_bb83b5a0": {
-    "message": "TRÌNH DUYỆT HERMES",
+    "message": "HERMES BROWSER",
     "description": "Runtime interface message ui.hermes.browser.bb83b5a0"
   },
   "runtime_ui_hermes_browser_extension": {
-    "message": "MỞ RỘNG TRÌNH DUYỆT HERMES",
+    "message": "HERMES BROWSER EXTENSION",
     "description": "Runtime interface message ui.hermes.browser.extension"
   },
   "runtime_ui_hermes_browser_extension_connected": {
@@ -5616,7 +5616,7 @@
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
-    "message": "KÊNH TRÌNH DUYỆT/CẬP NHẬT HERMES",
+    "message": "HERMES BROWSER / KÊNH CẬP NHẬT",
     "description": "Runtime interface message ui.hermes.browser.update.channel"
   },
   "runtime_ui_hermes_chat_actions": {
@@ -6140,7 +6140,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Quyền truy cập micrô bị chặn đối với tiện ích mở rộng Hermes Browser.",
+    "message": "Quyền truy cập micrô bị chặn đối với Hermes Browser Extension.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -6296,7 +6296,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "Không có âm thanh được lưu ở đây. Quyền chỉ cho phép tiện ích mở rộng Hermes Browser ghi lại giọng nói của bạn khi bạn nhấp vào nút mic.",
+    "message": "Không có âm thanh được lưu ở đây. Quyền chỉ cho phép Hermes Browser Extension ghi lại giọng nói của bạn khi bạn nhấp vào nút mic.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -6496,11 +6496,11 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Mở phiên chính xác trong bảng điều khiển bên của tiện ích mở rộng Hermes Browser.",
+    "message": "Mở phiên chính xác trong bảng điều khiển bên của Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Mở bảng điều khiển bên của tiện ích mở rộng Hermes từ thanh công cụ trình duyệt của bạn.",
+    "message": "Mở bảng điều khiển bên của Hermes Browser Extension từ thanh công cụ trình duyệt của bạn.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Sử dụng cùng bảng màu và ngôn ngữ chrome như tiện ích mở rộng Hermes Browser.",
+    "message": "Sử dụng cùng bảng màu và ngôn ngữ chrome như Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -8232,7 +8232,7 @@
     "description": "Runtime interface message webapp.hint_local"
   },
   "runtime_webapp_hint_local_kept": {
-    "message": "Đã mở Hermes Web. Trên máy tính này, hãy chạy hermes webapp một lần để đăng nhập. Sau đó, tiện ích mở rộng Hermes Browser giữ trình duyệt này ở trạng thái đăng nhập cho đến khi bạn đóng nó.",
+    "message": "Đã mở Hermes Web. Trên máy tính này, hãy chạy hermes webapp một lần để đăng nhập. Sau đó, Hermes Browser Extension giữ trình duyệt này ở trạng thái đăng nhập cho đến khi bạn đóng nó.",
     "description": "Runtime interface message webapp.hint_local_kept"
   },
   "runtime_webapp_hint_signed_in": {
@@ -8240,7 +8240,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Với Hermes hỗ trợ ghép nối với tiện ích mở rộng Hermes Browser, Hermes Web, Dự án và hồ sơ bot được đăng nhập sẵn cho bạn, không cần chạy gì. Nếu không, bảng sẽ giữ đăng nhập Hermes Web của trình duyệt này cho đến khi bạn đóng trình duyệt, sau một lần hermes webapp. hermes webapp --sign-out sẽ kết thúc đăng nhập.",
+    "message": "Với Hermes hỗ trợ ghép nối với Hermes Browser Extension, Hermes Web, Dự án và hồ sơ bot được đăng nhập sẵn cho bạn, không cần chạy gì. Nếu không, bảng sẽ giữ đăng nhập Hermes Web của trình duyệt này cho đến khi bạn đóng trình duyệt, sau một lần hermes webapp. hermes webapp --sign-out sẽ kết thúc đăng nhập.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
@@ -8292,7 +8292,7 @@
     "description": "Runtime interface message webapp.reason_needs_address"
   },
   "runtime_webapp_reason_permission": {
-    "message": "Trình duyệt không cho phép tiện ích mở rộng Hermes Browser truy cập địa chỉ này:",
+    "message": "Trình duyệt không cho phép Hermes Browser Extension truy cập địa chỉ này:",
     "description": "Runtime interface message webapp.reason_permission"
   },
   "runtime_webapp_reason_unreachable": {

@@ -1,10 +1,10 @@
 {
   "extensionName": {
-    "message": "Hermes-Browsererweiterung",
+    "message": "Hermes Browser Extension",
     "description": "Hermes Browser extensionName"
   },
   "extensionShortName": {
-    "message": "Hermes-Erweiterung",
+    "message": "Hermes Ext",
     "description": "Hermes Browser extensionShortName"
   },
   "extensionDescription": {
@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Hermes-Browsererweiterung öffnen",
+    "message": "Hermes Browser Extension öffnen",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Seitenleiste der Hermes-Browsererweiterung öffnen",
+    "message": "Seitenleiste der Hermes Browser Extension öffnen",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -52,7 +52,7 @@
     "description": "Runtime interface message account.notice.failed"
   },
   "runtime_account_notice_no_permission": {
-    "message": "Für die Anmeldung muss die Hermes-Browsererweiterung sehen dürfen, wo das Anmeldefenster endet. Wählen Sie erneut „Anmelden“ und erlauben Sie es.",
+    "message": "Für die Anmeldung muss die Hermes Browser Extension sehen dürfen, wo das Anmeldefenster endet. Wählen Sie erneut „Anmelden“ und erlauben Sie es.",
     "description": "Runtime interface message account.notice.no_permission"
   },
   "runtime_account_notice_no_window": {
@@ -124,7 +124,7 @@
     "description": "Runtime interface message account.unavailable.no_origin"
   },
   "runtime_account_unavailable_not_gated": {
-    "message": "Dieses Gateway ist auf diesem Computer offen und verlangt keine Anmeldung, daher gibt es hier kein Hermes-Konto zu verwenden. Die Kopplung mit der Hermes-Browsererweiterung oder die eigene Anmeldung von Hermes Web deckt Projekte stattdessen ab.",
+    "message": "Dieses Gateway ist auf diesem Computer offen und verlangt keine Anmeldung, daher gibt es hier kein Hermes-Konto zu verwenden. Die Kopplung mit der Hermes Browser Extension oder die eigene Anmeldung von Hermes Web deckt Projekte stattdessen ab.",
     "description": "Runtime interface message account.unavailable.not_gated"
   },
   "runtime_account_unavailable_unreachable": {
@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Vom Gateway nicht angekündigt. Hermes Browser kann nicht erkennen, ob das Companion-Plugin geladen ist; das heißt also nicht, dass es fehlt.",
+    "message": "Vom Gateway nicht angekündigt. Die Hermes Browser Extension kann nicht erkennen, ob das Companion-Plugin geladen ist; das heißt also nicht, dass es fehlt.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -2216,7 +2216,7 @@
     "description": "Runtime interface message diagnostic.remote_setup_title"
   },
   "runtime_diagnostic_remote_unclassified_detail": {
-    "message": "Die Browser-Erweiterung konnte diese Remote-Gateway-Antwort nicht klassifizieren.",
+    "message": "Die Hermes Browser Extension konnte diese Remote-Gateway-Antwort nicht klassifizieren.",
     "description": "Runtime interface message diagnostic.remote_unclassified_detail"
   },
   "runtime_diagnostic_route_detail": {
@@ -2504,19 +2504,19 @@
     "description": "Runtime interface message manifest.extension_description"
   },
   "runtime_manifest_extension_name": {
-    "message": "Hermes-Browsererweiterung",
+    "message": "Hermes Browser Extension",
     "description": "Runtime interface message manifest.extension_name"
   },
   "runtime_manifest_extension_short_name": {
-    "message": "Hermes-Erweiterung",
+    "message": "Hermes Ext",
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Hermes-Browsererweiterung öffnen",
+    "message": "Hermes Browser Extension öffnen",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Seitenleiste der Hermes-Browsererweiterung öffnen",
+    "message": "Seitenleiste der Hermes Browser Extension öffnen",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -2640,7 +2640,7 @@
     "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_language_body": {
-    "message": "Die Hermes-Browsererweiterung verwendet sie überall. Sie können sie später in den Einstellungen ändern.",
+    "message": "Die Hermes Browser Extension verwendet sie überall. Sie können sie später in den Einstellungen ändern.",
     "description": "Runtime interface message onboarding.language.body"
   },
   "runtime_onboarding_language_body_suggested": {
@@ -3492,11 +3492,11 @@
     "description": "Runtime interface message session.legacy_new_chat"
   },
   "runtime_session_legacy_source_fork": {
-    "message": "Dieser Chat wurde von einer älteren Version der Hermes-Browsererweiterung gestartet, und dieses Gateway nimmt darin keine neuen Nachrichten mehr an. Deine Nachricht wurde nicht gesendet. Du kannst in einer Kopie des Chats weitermachen.",
+    "message": "Dieser Chat wurde von einer älteren Version der Hermes Browser Extension gestartet, und dieses Gateway nimmt darin keine neuen Nachrichten mehr an. Deine Nachricht wurde nicht gesendet. Du kannst in einer Kopie des Chats weitermachen.",
     "description": "Runtime interface message session.legacy_source_fork"
   },
   "runtime_session_legacy_source_no_fork": {
-    "message": "Dieser Chat wurde von einer älteren Version der Hermes-Browsererweiterung gestartet, und dieses Gateway nimmt darin keine neuen Nachrichten mehr an. Er lässt sich hier nicht kopieren, starte also einen neuen Chat, um weiterzumachen. Deine Nachricht steht noch im Eingabefeld.",
+    "message": "Dieser Chat wurde von einer älteren Version der Hermes Browser Extension gestartet, und dieses Gateway nimmt darin keine neuen Nachrichten mehr an. Er lässt sich hier nicht kopieren, starte also einen neuen Chat, um weiterzumachen. Deine Nachricht steht noch im Eingabefeld.",
     "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
@@ -3588,7 +3588,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Alles, was die Hermes-Browsererweiterung kann, nach Zweck gruppiert.",
+    "message": "Alles, was die Hermes Browser Extension kann, nach Zweck gruppiert.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Einige Browser blockieren die Mikrofonaufnahme in den Seitenleisten der Erweiterung. Diese sichtbare Erweiterungsregisterkarte zeichnet den gleichen Hermes-Erweiterungsursprung auf, wenn Hermes STT verfügbar ist, oder verwendet Browser-Sprach-Fallback, wenn die verbundene Laufzeit keine Audiotranskription verfügbar macht.",
+    "message": "Einige Browser blockieren die Mikrofonaufnahme in den Seitenleisten der Erweiterung. Diese sichtbare Erweiterungsregisterkarte zeichnet vom selben Ursprung der Hermes Browser Extension aus auf, wenn Hermes STT verfügbar ist, oder verwendet Browser-Sprach-Fallback, wenn die verbundene Laufzeit keine Audiotranskription verfügbar macht.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -6140,7 +6140,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Der Mikrofonzugriff ist für die Hermes-Browsererweiterung blockiert.",
+    "message": "Der Mikrofonzugriff ist für die Hermes Browser Extension blockiert.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -6296,7 +6296,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "Hier wird kein Audio gespeichert. Mit der Berechtigung kann die Hermes-Browsererweiterung Ihre Stimme nur dann aufzeichnen, wenn Sie auf die Mikrofontaste klicken.",
+    "message": "Hier wird kein Audio gespeichert. Mit der Berechtigung kann die Hermes Browser Extension Ihre Stimme nur dann aufzeichnen, wenn Sie auf die Mikrofontaste klicken.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -6496,11 +6496,11 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Öffnen Sie die genaue Sitzung im Seitenbereich der Hermes-Browsererweiterung.",
+    "message": "Öffnen Sie die genaue Sitzung im Seitenbereich der Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Öffnen Sie den Seitenbereich der Hermes-Erweiterung in der Symbolleiste Ihres Browsers.",
+    "message": "Öffnen Sie den Seitenbereich der Hermes Browser Extension in der Symbolleiste Ihres Browsers.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
@@ -6688,7 +6688,7 @@
     "description": "Runtime interface message ui.preview.copy.only"
   },
   "runtime_ui_preview_mode_load_this_page_from_the_installed_hermes_browser_e_37e5a6d5": {
-    "message": "Vorschaumodus: Laden Sie diese Seite vom installierten Hermes Browser Extension, um die verbundenen Hermes-Einstellungen und das Sprachdiktieren zu verwenden.",
+    "message": "Vorschaumodus: Laden Sie diese Seite von der installierten Hermes Browser Extension, um die verbundenen Hermes-Einstellungen und das Sprachdiktieren zu verwenden.",
     "description": "Runtime interface message ui.preview.mode.load.this.page.from.the.installed.hermes.browser.e.37e5a6d5"
   },
   "runtime_ui_previous": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Verwenden Sie dieselbe Palette und Oberflächensprache wie die Hermes-Browsererweiterung.",
+    "message": "Verwenden Sie dieselbe Palette und Oberflächensprache wie die Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -8232,7 +8232,7 @@
     "description": "Runtime interface message webapp.hint_local"
   },
   "runtime_webapp_hint_local_kept": {
-    "message": "Hermes Web geöffnet. Führen Sie auf diesem Computer einmal hermes webapp aus, um sich anzumelden. Danach hält die Hermes-Browsererweiterung diesen Browser angemeldet, bis Sie ihn schließen.",
+    "message": "Hermes Web geöffnet. Führen Sie auf diesem Computer einmal hermes webapp aus, um sich anzumelden. Danach hält die Hermes Browser Extension diesen Browser angemeldet, bis Sie ihn schließen.",
     "description": "Runtime interface message webapp.hint_local_kept"
   },
   "runtime_webapp_hint_signed_in": {
@@ -8240,7 +8240,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "Bei einem Hermes, das sich mit der Hermes-Browsererweiterung koppelt, werden Hermes Web, Projekte und Bot-Profile für Sie angemeldet, ohne dass etwas ausgeführt werden muss. Andernfalls behält das Panel die Hermes-Web-Anmeldung dieses Browsers, bis Sie den Browser schließen, nach einmaligem hermes webapp. hermes webapp --sign-out beendet sie.",
+    "message": "Bei einem Hermes, das sich mit der Hermes Browser Extension koppelt, werden Hermes Web, Projekte und Bot-Profile für Sie angemeldet, ohne dass etwas ausgeführt werden muss. Andernfalls behält das Panel die Hermes-Web-Anmeldung dieses Browsers, bis Sie den Browser schließen, nach einmaligem hermes webapp. hermes webapp --sign-out beendet sie.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
@@ -8292,7 +8292,7 @@
     "description": "Runtime interface message webapp.reason_needs_address"
   },
   "runtime_webapp_reason_permission": {
-    "message": "Der Browser hat der Hermes-Browsererweiterung den Zugriff auf diese Adresse nicht erlaubt:",
+    "message": "Der Browser hat der Hermes Browser Extension den Zugriff auf diese Adresse nicht erlaubt:",
     "description": "Runtime interface message webapp.reason_permission"
   },
   "runtime_webapp_reason_unreachable": {

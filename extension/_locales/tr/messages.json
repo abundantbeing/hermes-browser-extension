@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Bu ağ geçidi tarafından duyurulmadı. Hermes Browser, yardımcı eklentinin yüklü olup olmadığını anlayamaz; bu yüzden eksik olduğu anlamına gelmez.",
+    "message": "Bu ağ geçidi tarafından duyurulmadı. Hermes Browser Extension, yardımcı eklentinin yüklü olup olmadığını anlayamaz; bu yüzden eksik olduğu anlamına gelmez.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Bazı tarayıcılar, uzantı kenar çubuklarının içindeki mikrofon yakalamayı engeller. Bu görünür uzantı sekmesi, Hermes STT mevcut olduğunda aynı Hermes uzantı kaynağından kayıt yapar veya bağlı çalışma zamanı ses transkripsiyonunu açığa çıkarmadığında tarayıcı konuşma geri dönüşünü kullanır.",
+    "message": "Bazı tarayıcılar, uzantı kenar çubuklarının içindeki mikrofon yakalamayı engeller. Bu görünür uzantı sekmesi, Hermes STT mevcut olduğunda Hermes Browser Extension ile aynı kaynaktan kayıt yapar veya bağlı çalışma zamanı ses transkripsiyonunu açığa çıkarmadığında tarayıcı konuşma geri dönüşünü kullanır.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -5616,7 +5616,7 @@
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
-    "message": "HERMES TARAYICISI / GÜNCELLEME KANALI",
+    "message": "HERMES BROWSER / GÜNCELLEME KANALI",
     "description": "Runtime interface message ui.hermes.browser.update.channel"
   },
   "runtime_ui_hermes_chat_actions": {

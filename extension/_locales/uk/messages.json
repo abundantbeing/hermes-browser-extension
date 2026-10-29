@@ -1532,7 +1532,7 @@
     "description": "Runtime interface message capability.reason.not_advertised"
   },
   "runtime_capability_reason_not_advertised_plugin": {
-    "message": "Не оголошено цим шлюзом. Hermes Browser не може визначити, чи завантажено супутній плагін, тож це не означає, що його немає.",
+    "message": "Не оголошено цим шлюзом. Hermes Browser Extension не може визначити, чи завантажено супутній плагін, тож це не означає, що його немає.",
     "description": "Runtime interface message capability.reason.not_advertised_plugin"
   },
   "runtime_capability_reason_not_connected": {
@@ -4436,7 +4436,7 @@
     "description": "Runtime interface message ui.chrome.can.suppress.microphone.prompts.inside.extension.side.pa.79f6cc35"
   },
   "runtime_ui_chromium_can_block_microphone_capture_inside_extension_side_pan_88bae971": {
-    "message": "Деякі браузери блокують захоплення мікрофона всередині бічних панелей розширень. Ця видима вкладка розширення записує з того самого джерела розширення Hermes, коли Hermes STT доступний, або використовує резервне мовлення браузера, коли підключене середовище виконання не надає аудіотранскрипцію.",
+    "message": "Деякі браузери блокують захоплення мікрофона всередині бічних панелей розширень. Ця видима вкладка розширення записує з того самого джерела, що й Hermes Browser Extension, коли Hermes STT доступний, або використовує резервне мовлення браузера, коли підключене середовище виконання не надає аудіотранскрипцію.",
     "description": "Runtime interface message ui.chromium.can.block.microphone.capture.inside.extension.side.pan.88bae971"
   },
   "runtime_ui_class": {
@@ -6500,7 +6500,7 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
-    "message": "Відкрийте бічну панель розширення Hermes на панелі інструментів веб-переглядача.",
+    "message": "Відкрийте бічну панель Hermes Browser Extension на панелі інструментів веб-переглядача.",
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
