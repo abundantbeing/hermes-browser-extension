@@ -193,6 +193,24 @@ test('a tab a Hermes click opens is adopted, named in the result, and can be act
   assert.deepEqual(f.worker.status().leasedTabIds, [911, 950]);
 });
 
+test('a link Hermes clicks in a background tab is adopted though Chrome names the tab in front as its opener', async () => {
+  const f = await multiTab({
+    execute: async (frame, context, worker) => {
+      // Hermes clicks in tab 911 while the person looks at attached tab 912: Chrome records 912, the
+      // tab in front of the window, as the new tab's opener.
+      await worker.handleTabCreated({ id: 960, openerTabId: 912, windowId: 2, pendingUrl: 'https://example.test/next' });
+      return { ok: true, result: { status: 'clicked' } };
+    },
+  });
+  await f.attach([911, 912]);
+  await f.ready(911);
+  await f.ready(912);
+  const clicked = await f.command('click-background', 'browser_click', { ref: '@e1', tab_id: 911 });
+  assert.equal(clicked.ok, true, JSON.stringify(clicked));
+  assert.deepEqual(clicked.result.opened_tabs, [{ id: 960, url: 'https://example.test/next' }]);
+  assert.deepEqual([...f.worker.status().leasedTabIds].sort((a, b) => a - b), [911, 912, 960]);
+});
+
 test('changing the attached tabs keeps the tabs Hermes opened and lets go of the dropped tab\'s debugger', async () => {
   const released = [];
   const f = await multiTab({
@@ -214,6 +232,20 @@ test('changing the attached tabs keeps the tabs Hermes opened and lets go of the
   assert.deepEqual([...f.worker.status().leasedTabIds].sort((a, b) => a - b), [912, 920]);
   await settle();
   assert.deepEqual(released, [911]);
+});
+
+test('a page that reports itself after the worker gave it a generation keeps it, so its refs stay valid', async () => {
+  const f = await multiTab({ execute: async () => ({ ok: true, result: { title: 'Page', text: 'page', refs: [] } }) });
+  await f.attach([970], TAB_LEASE_KINDS.THIS_TAB);
+  // The tab is acted in before its page reported itself: the worker gives it generation 1.
+  const read = await f.command('read-early', 'browser_snapshot', {});
+  assert.equal(read.ok, true, JSON.stringify(read));
+  assert.equal(f.frames.at(-1).document_generation, 1);
+  // The page's own first report is that same document: still generation 1.
+  assert.equal((await f.ready(970)).documentGeneration, 1);
+  // A navigation is a new document, and its report starts a new generation as before.
+  await f.worker.handleTabUpdated(970, { status: 'loading' });
+  assert.equal((await f.ready(970)).documentGeneration, 3);
 });
 
 test('the tool names the model is told about follow the route control connected through', async () => {

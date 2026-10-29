@@ -282,6 +282,10 @@ export function createControllerServiceWorker({
   let browserProfileId = '';
   let generation = 1;
   let documentGenerations = {};
+  // Frames whose generation the worker gave itself because the page had not reported one yet. The page's
+  // own first report then confirms that generation instead of starting a new one, so refs minted under it
+  // stay valid; a navigation clears the mark.
+  const seededGenerations = new Set();
   let pausedLeases = {};
   // The tab the latest turn was prepared for; the default target when several
   // tabs are attached and a command names none.
@@ -289,8 +293,8 @@ export function createControllerServiceWorker({
   // The tab of the most recent action Hermes ran. Show tab points at it between
   // actions, so the button does not flicker with each action.
   let lastActionTabId = 0;
-  // When and on which tab the latest Hermes action ended, so a tab its page opens a moment later is still adopted.
-  let lastActionEnded = { tabId: 0, at: 0 };
+  // When the latest Hermes action ended, so a tab its page opens a moment later is still adopted.
+  let lastActionEndedAt = 0;
   // The last refusal worth telling the person about (a frame withheld a screenshot, a pointer action would land in
   // a frame Hermes cannot read): a code, never page details. The model gets the full message with its result; this
   // is for the Hermes Control window. It ends when the next command starts or after a couple of minutes.
@@ -480,7 +484,7 @@ export function createControllerServiceWorker({
       }
       return result;
     } finally {
-      lastActionEnded = { tabId, at: Number(now()) };
+      lastActionEndedAt = Number(now());
       activeAction = null;
     }
   }
@@ -501,7 +505,12 @@ export function createControllerServiceWorker({
     if (Number(documentGenerations[key] || 0) > 0) return false;
     documentGenerations = Object.fromEntries(Object.entries({ ...documentGenerations, [key]: 1 })
       .slice(-CONTROLLER_MAX_DOCUMENT_GENERATIONS));
+    seededGenerations.add(key);
     return true;
+  }
+
+  function forgetSeededGenerations(tabId) {
+    for (const key of [...seededGenerations]) if (key.startsWith(`${Number(tabId)}:`)) seededGenerations.delete(key);
   }
 
   function createWorkerLifecycle() {
@@ -1428,7 +1437,12 @@ export function createControllerServiceWorker({
     const frameId = Math.max(0, Number(sender?.frameId ?? message.frameId) || 0);
     if (!Number.isInteger(tabId) || tabId <= 0) return { ok: false, error: 'invalid_tab' };
     const key = frameKey(tabId, frameId);
-    const next = Number(documentGenerations[key] || 0) + 1;
+    const current = Number(documentGenerations[key] || 0);
+    if (seededGenerations.delete(key) && current > 0) {
+      // The page reporting the document the worker already gave a generation to: no new document.
+      return { ok: true, tabId, frameId, documentGeneration: current };
+    }
+    const next = current + 1;
     documentGenerations = { ...documentGenerations, [key]: next };
     const entries = Object.entries(documentGenerations).slice(-CONTROLLER_MAX_DOCUMENT_GENERATIONS);
     documentGenerations = Object.fromEntries(entries);
@@ -1523,8 +1537,8 @@ export function createControllerServiceWorker({
     }
     let documentGeneration = Number(documentGenerations[frameKey(tabId, frameId)] || 0);
     if (!documentGeneration) {
+      seedDocumentGeneration(tabId, frameId);
       documentGeneration = 1;
-      documentGenerations = { ...documentGenerations, [frameKey(tabId, frameId)]: 1 };
       await persist();
     }
     return {
@@ -1659,6 +1673,8 @@ export function createControllerServiceWorker({
     const normalizedTabId = Number(tabId);
     if (!Number.isInteger(normalizedTabId) || normalizedTabId <= 0) return { ok: false, error: 'invalid_tab' };
     if (changeInfo?.status !== 'loading' && !Object.hasOwn(changeInfo || {}, 'url')) return { ok: true, changed: false };
+    // A navigation: the page's next report is a new document, never the seeded one confirmed.
+    forgetSeededGenerations(normalizedTabId);
     let changed = false;
     documentGenerations = Object.fromEntries(Object.entries(documentGenerations).map(([key, value]) => {
       if (!key.startsWith(`${normalizedTabId}:`)) return [key, value];
@@ -1671,8 +1687,9 @@ export function createControllerServiceWorker({
 
   // A tab one of Hermes's own actions opened (a link to a new tab, a page's window.open) belongs to that
   // action: it is adopted like a tab Hermes created, so the agent can act on it, and the action's result
-  // names it. Only while that action runs on the tab that opened it, or a moment after it ended; a tab the
-  // person opens from an attached tab is not taken.
+  // names it. Only while a Hermes action runs, or a moment after one ended, and only from a tab Hermes
+  // owns: when Hermes clicks in a background tab, Chrome names the tab in front of the window as the
+  // opener, so any owned tab counts. A tab opened from a tab Hermes does not own is never taken.
   async function handleTabCreated(tab = {}) {
     await boot();
     const tabId = Number(tab?.id);
@@ -1683,8 +1700,8 @@ export function createControllerServiceWorker({
     if (settings?.browserControlEnabled !== true || settings?.browserControlPaused === true) {
       return { ok: true, adopted: false };
     }
-    const running = activeAction?.tabId === openerTabId ? activeAction : null;
-    const justEnded = lastActionEnded.tabId === openerTabId && Number(now()) - lastActionEnded.at <= OPENED_TAB_GRACE_MS;
+    const running = activeAction;
+    const justEnded = lastActionEndedAt > 0 && Number(now()) - lastActionEndedAt <= OPENED_TAB_GRACE_MS;
     if (!running && !justEnded) return { ok: true, adopted: false };
     const opener = leases.leaseForTab(openerTabId);
     if (!opener || opener.generation !== generation || opener.ownership !== TAB_LEASE_OWNERSHIPS.OWNED
@@ -1711,6 +1728,7 @@ export function createControllerServiceWorker({
     await boot();
     const normalizedTabId = Number(tabId);
     if (!Number.isInteger(normalizedTabId) || normalizedTabId <= 0) return { ok: false, error: 'invalid_tab' };
+    forgetSeededGenerations(normalizedTabId);
     const next = Object.fromEntries(
       Object.entries(documentGenerations).filter(([key]) => !key.startsWith(`${normalizedTabId}:`)),
     );

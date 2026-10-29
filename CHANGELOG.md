@@ -113,6 +113,7 @@ Everything else works on upstream Hermes.
   - Tabs Hermes opens can be grouped: they share one task set (each was its own set, so grouping always failed), and join the person's task set when the tabs they attached are one.
   - A tab that a link Hermes clicked, or a page script, opens while Hermes acts becomes a tab Hermes can use, and the action's result names it under `opened_tabs`. Before, it could not be reached. A tab the person opens themselves is never taken.
   - A tab Hermes opens waits for its page before the result comes back, and a tab whose page never reported itself to the extension (a PDF, an error page, a tab open since before the extension loaded) can be acted in instead of failing with `stale_document`.
+  - A page Hermes read before the page reported itself to the extension keeps its refs: the page's own report confirms the document Hermes already read instead of counting as a new one, which made the next action fail with `stale_document` or "That element is gone".
   - The close approval names the tab it closes and covers that tab only.
   - A switch brings the tab's window to the front, a new tab opens in the window the working tab is in now (it used the window it was attached in), and the tab list says which window each tab is in.
   - Changing the attached tabs keeps the tabs Hermes opened, and lets go of the debugger on tabs that are no longer attached.
