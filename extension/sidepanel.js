@@ -5755,7 +5755,7 @@ async function loadGatewayCapabilities({ quiet = false, publicOnly = false, heal
       hasApiKey: Boolean(hermesGatewayKey()),
       warning: error?.message || String(error),
     }));
-    if (!quiet) setStatus('warn', 'Hermes compatibility fallback', 'This gateway does not expose /v1/capabilities yet. Browser-specific routes will stay in fallback mode.');
+    if (!quiet) setStatus('warn', 'Hermes compatibility fallback', 'This gateway does not expose /v1/capabilities yet. Extension-specific routes will stay in fallback mode.');
   }
   return gatewayCapabilities;
 }
@@ -5918,7 +5918,7 @@ function renderUpdateDialog(review = { loading: true }) {
   if (!els.updateDialog) return;
   els.updateDialog.hidden = false;
   els.updateDialog.setAttribute('aria-hidden', 'false');
-  els.updateDialogTitle.textContent = review.loading ? translateUiText('Checking Browser main…') : (review.title || translateUiText('Browser update review'));
+  els.updateDialogTitle.textContent = review.loading ? translateUiText('Checking the extension\'s main branch…') : (review.title || translateUiText('Extension update review'));
   els.updateDialogSummary.textContent = review.loading
     ? translateUiText('Comparing this loaded build with the public GitHub repository.')
     : (review.summary || translateUiText('Update details are unavailable.'));
@@ -6043,7 +6043,7 @@ async function checkForUpdates({ openReview = false, silent = false } = {}) {
     }
     const detail = `${error?.message || String(error)} Open ${REPO_URL} for manual update instructions.`;
     renderVersionInfo(detail);
-    if (openReview) renderUpdateDialog({ title: 'Update check unavailable', summary: 'Hermes Browser could not read public update metadata.', error: detail });
+    if (openReview) renderUpdateDialog({ title: 'Update check unavailable', summary: 'The extension could not read public update metadata.', error: detail });
     return null;
   } finally {
     if (!silent) {
@@ -7076,7 +7076,7 @@ async function retryActiveRunTerminalStatus() {
     });
     if (!runControlGenerationMatches(expectedGeneration, runControlGeneration)) return false;
     if (activeRunControl?.phase === RUN_CONTROL_PHASES.TERMINAL) {
-      setStatus('ok', 'Runtime state confirmed', 'Hermes reached a terminal state and Browser released the held writer.');
+      setStatus('ok', 'Runtime state confirmed', 'Hermes reached a terminal state and the extension released the held writer.');
       await settleActiveRunTerminal();
       return true;
     }
@@ -7229,7 +7229,7 @@ async function stopCurrentTurn() {
   const releaseAlreadyTerminal = async (terminalStatus) => {
     activeRunControl = markRunTerminal(activeRunControl, terminalStatus);
     const cancelledDetail = await cancelBrowserControlAfterConfirmedStop();
-    setStatus('ok', 'Hermes stopped', `The runtime no longer reports this run as active, so Browser released the held writer.${cancelledDetail ? ` ${cancelledDetail}` : ''}`, { translateDetail: false });
+    setStatus('ok', 'Hermes stopped', `The runtime no longer reports this run as active, so the extension released the held writer.${cancelledDetail ? ` ${cancelledDetail}` : ''}`, { translateDetail: false });
     await settleActiveRunTerminal();
     return true;
   };
@@ -7461,7 +7461,7 @@ async function executeNativeBrowserCommand(parsedCommand) {
     return true;
   }
   if (action === 'command-help') {
-    addMessage('system', `Hermes Browser commands\n\n${nativeCommandCatalogText('sidepanel')}`);
+    addMessage('system', `Hermes Browser Extension commands\n\n${nativeCommandCatalogText('sidepanel')}`);
     return true;
   }
   if (action === 'session-list') {
@@ -7511,7 +7511,7 @@ async function executeNativeBrowserCommand(parsedCommand) {
     return true;
   }
   if (action === 'unsupported') {
-    setStatus('warn', `/${command.name} is unavailable here`, command.unsupportedReason || 'This command is unavailable in Hermes Browser.', { translateDetail: false });
+    setStatus('warn', `/${command.name} is unavailable here`, command.unsupportedReason || 'This command is unavailable in the extension.', { translateDetail: false });
     return true;
   }
   return false;
@@ -11778,7 +11778,7 @@ async function loadModels({ quiet = false, payload = null, refresh = false, star
 async function refreshModelsFromMenu() {
   const outcome = await loadModels({ refresh: true });
   showOperationToast(outcome?.ok
-    ? { title: 'Models refreshed', detail: `${outcome.count} model${outcome.count === 1 ? '' : 's'} ready in Hermes Browser.` }
+    ? { title: 'Models refreshed', detail: `${outcome.count} model${outcome.count === 1 ? '' : 's'} ready in the extension.` }
     : { kind: 'warn', title: 'Model refresh incomplete', detail: outcome?.error || 'Hermes kept the current model catalog.' });
 }
 
@@ -12197,7 +12197,7 @@ function renderProfiles() {
   } else if (isRemoteWsMode()) {
     els.profileStatus.textContent = 'Profile API unavailable from the extension origin. Open the Hermes dashboard and sign in to select a profile.';
   } else {
-    els.profileStatus.textContent = translateUiText('Profile API unavailable. Browser will use the currently running Hermes gateway profile.');
+    els.profileStatus.textContent = translateUiText('Profile API unavailable. The extension will use the currently running Hermes gateway profile.');
   }
 }
 
@@ -14546,7 +14546,7 @@ async function createNewGroupChat() {
     type: 'group',
     displayName: roomName,
     title: `${members.length} members · new room`,
-    description: 'Created from Hermes Browser Bot Mode.',
+    description: 'Created from Bot Mode in the Hermes Browser Extension.',
     members,
     image: newGroupPendingImage || null,
     canonical: { durableId: '', resolvedRuntimeId: '', status: 'missing', preview: '' },
@@ -15419,7 +15419,7 @@ async function completeRegularProfileSwitch(nextProfile = '', { carryContext = f
     'Profile switched',
     carryContext
       ? `Started ${profileSwitchDisplayName(nextProfile)} with the prior session context ready for the next message.`
-      : `Started a clean Hermes Browser session for ${profileSwitchDisplayName(nextProfile)}.`,
+      : `Started a clean session for ${profileSwitchDisplayName(nextProfile)}.`,
     { translateDetail: false },
   );
   return true;
@@ -16012,7 +16012,7 @@ async function leaveBotModeForRegularSession() {
     updateConnectionPrompt();
     setStatus('ok', 'Regular Sessions restored', detachedRoomName
       ? `${detachedRoomName} keeps running in the background. Open it again from Bot Mode whenever you want.`
-      : `Started a fresh Hermes Browser session for ${profileSwitchDisplayName(nextProfile)}.`, { translateDetail: false });
+      : `Started a fresh session for ${profileSwitchDisplayName(nextProfile)}.`, { translateDetail: false });
     return true;
   } finally {
     if (els.botModeLoadingOverlay) els.botModeLoadingOverlay.hidden = true;
@@ -26887,7 +26887,7 @@ ${streamError.message}`);
         renderAttachments();
         renderSkillSuggestions();
       }
-      await streamView?.flush('Hermes accepted the turn, but Browser could not recover the response in time. The turn was not retried.');
+      await streamView?.flush('Hermes accepted the turn, but the extension could not recover the response in time. The turn was not retried.');
       addMessage('system', 'The accepted turn could not be recovered. Refresh this session later to check for a late image or response; no duplicate request was sent.');
       setStatus('warn', 'Response recovery timed out', 'The accepted turn was not retried, and the draft was preserved.', { translateDetail: false });
       return didSend;
@@ -27094,7 +27094,7 @@ async function createInlineBackgroundSession(request) {
   const id = makeBrowserSessionId();
   const adapterLabel = String(request.adapterId || 'Browser').replace(/(^|[-_\s])([a-z])/g, (_, lead, letter) => `${lead}${letter.toUpperCase()}`);
   const titleStamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
-  const title = `Hermes Browser context · ${adapterLabel} · ${titleStamp} · ${id.slice(-4)}`;
+  const title = `Hermes Browser Extension context · ${adapterLabel} · ${titleStamp} · ${id.slice(-4)}`;
   if (isRemoteWsMode()) {
     const connection = await ensureRemoteWsClient();
     const { liveId, storedId } = await establishGatewaySession({
@@ -27736,7 +27736,7 @@ async function testConnection() {
         if (!isConnected()) {
           setTestConnectionBusy(false);
           flashTestConnectionResult(false);
-          throw new Error('Pairing was not completed. Approve the Hermes Browser request in the opened tab, then test again.');
+          throw new Error('Pairing was not completed. Approve the Hermes Browser Extension\'s request in the opened tab, then test again.');
         }
         setTestConnectionBusy(false);
         flashTestConnectionResult(true);
@@ -29577,7 +29577,7 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
               gateway: { connected: true, state: 'connected', url: dashboard.baseUrl, transport: 'dashboard-ws' },
             };
           }
-          const error = new Error('Add a Hermes API token or complete pairing to use full Hermes Browser mode.');
+          const error = new Error('Add a Hermes API token or complete pairing to use the Hermes Browser Extension fully.');
           error.readinessStatus = 'unconfigured';
           throw error;
         }
@@ -29599,7 +29599,7 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
       loadCapabilities: async () => {
         await loadGatewayCapabilities({ quiet: true, healthOk: true });
         return gatewayCapabilities.source === 'legacy'
-          ? { status: 'legacy', detail: 'Legacy runtime detected; Browser-specific controls are capability-gated.' }
+          ? { status: 'legacy', detail: 'Legacy runtime detected; Extension-specific controls are capability-gated.' }
           : { status: 'ready', detail: 'Capabilities loaded.' };
       },
       loadModels: async () => {

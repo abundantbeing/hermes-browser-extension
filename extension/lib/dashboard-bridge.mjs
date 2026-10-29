@@ -29,7 +29,7 @@ export function isTrustedDashboardOrigin(baseUrl, trustedOrigin) {
 }
 
 export function dashboardTrustPrompt(origin) {
-  return `Trust ${origin} for Dashboard Attach?\n\nHermes Browser will use the signed-in session in your active dashboard tab to request a short-lived, single-use WebSocket ticket. Dashboard Attach remains Chat-only and will not send browser page context.`;
+  return `Trust ${origin} for Dashboard Attach?\n\nThe Hermes Browser Extension will use the signed-in session in your active dashboard tab to request a short-lived, single-use WebSocket ticket. Dashboard Attach remains Chat-only and will not send browser page context.`;
 }
 
 export function wsTicketUrl(baseUrl) {

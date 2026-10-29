@@ -58,8 +58,8 @@ test('blocked cascade events never clobber the setup-needed phase after an uncon
     phase: 'gateway',
     step: 'gateway',
     status: 'unconfigured',
-    detail: 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.',
-    blockingError: 'gateway: Add a Hermes API token or complete pairing to use full Hermes Browser mode.',
+    detail: 'Add a Hermes API token or complete pairing to use the Hermes Browser Extension fully.',
+    blockingError: 'gateway: Add a Hermes API token or complete pairing to use the Hermes Browser Extension fully.',
   });
   assert.equal(state.phase, 'setup-needed');
   for (const stage of ['capabilities', 'models', 'selectedModel', 'skills', 'profiles', 'sessions', 'sessionBinding']) {
@@ -74,7 +74,7 @@ test('blocked cascade events never clobber the setup-needed phase after an uncon
   assert.equal(state.phase, 'setup-needed');
   const view = deriveStartupView(state);
   assert.equal(view.title, 'Connect to Hermes');
-  assert.equal(view.detail, 'Add a Hermes API token or complete pairing to use full Hermes Browser mode.');
+  assert.equal(view.detail, 'Add a Hermes API token or complete pairing to use the Hermes Browser Extension fully.');
 });
 
 test('missing capabilities and sparse model data degrade without blocking ready state', () => {

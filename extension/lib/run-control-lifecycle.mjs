@@ -21,7 +21,7 @@ export const RUN_UNCONFIRMED_REASONS = Object.freeze({
 });
 
 const RUN_UNCONFIRMED_DETAIL = Object.freeze({
-  [RUN_UNCONFIRMED_REASONS.RUN_ID_UNKNOWN]: 'Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.',
+  [RUN_UNCONFIRMED_REASONS.RUN_ID_UNKNOWN]: 'Hermes has not reported a run id for this turn, so the extension cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.',
 });
 
 const TERMINAL = new Set(Object.values(RUN_TERMINAL_STATUSES));

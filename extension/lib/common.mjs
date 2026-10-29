@@ -493,7 +493,7 @@ export function classifyRemoteGatewaySetup({
     return {
       kind: 'dashboard-sso-url',
       title: 'Dashboard URL detected',
-      detail: 'This looks like the Hermes Dashboard SSO endpoint. Browser API mode needs the Hermes API server URL on :8642 plus an Authorization: Bearer token.',
+      detail: 'This looks like the Hermes Dashboard SSO endpoint. The extension\'s API mode needs the Hermes API server URL on :8642 plus an Authorization: Bearer token.',
       suggestedUrl: suggestedUrl && suggestedUrl !== urlText ? suggestedUrl : '',
     };
   }
@@ -514,7 +514,7 @@ export function classifyRemoteGatewaySetup({
     return {
       kind: 'cors',
       title: 'CORS origin not allowed',
-      detail: `Browser could not reach the Hermes API from this extension origin. Add ${String(origin || '').trim() || 'chrome-extension://<extension-id>'} to API_SERVER_CORS_ORIGINS on the remote host.`,
+      detail: `The extension could not reach the Hermes API from its own origin. Add ${String(origin || '').trim() || 'chrome-extension://<extension-id>'} to API_SERVER_CORS_ORIGINS on the remote host.`,
       suggestedUrl: urlText,
     };
   }
@@ -720,8 +720,8 @@ export function classifyGatewayError(value = '', {
       kind: 'auth',
       probeStatus: 'unreachable',
       title: 'Hermes authentication failed',
-      detail: 'Hermes API rejected the request. Check the Browser API token in Settings and make sure it matches the running Hermes gateway.',
-      userMessage: 'Hermes API token was rejected. Update the Browser Settings token, then reconnect.',
+      detail: 'Hermes API rejected the request. Check the API token in the extension\'s Settings and make sure it matches the running Hermes gateway.',
+      userMessage: 'Hermes API token was rejected. Update the token in the extension\'s Settings, then reconnect.',
       status: httpStatus,
       evidence,
       serverReachable: true,
@@ -738,7 +738,7 @@ export function classifyGatewayError(value = '', {
       probeStatus: 'unreachable',
       title: 'Hermes route unavailable',
       detail: `The Hermes gateway on this runtime does not expose the requested route${httpStatus ? ` (HTTP ${httpStatus})` : ''}. Update or restart Hermes Agent so the route exists, then retry.`,
-      userMessage: 'This Hermes runtime does not expose the requested Browser route yet.',
+      userMessage: 'This Hermes runtime does not expose the requested extension route yet.',
       status: httpStatus,
       evidence,
       serverReachable: true,
@@ -792,7 +792,7 @@ export function classifyGatewayError(value = '', {
       probeStatus: 'unreachable',
       title: 'Hermes gateway status unconfirmed',
       detail: `A server or proxy answered this request (HTTP ${httpStatus}), but Browser cannot prove that Hermes Gateway itself is running. Check the gateway process and its logs, then run Check connection before retrying.`,
-      userMessage: 'A server or proxy answered, but Browser could not confirm the Hermes gateway is running. The draft is preserved; check the gateway and session before sending again.',
+      userMessage: 'A server or proxy answered, but the extension could not confirm the Hermes gateway is running. The draft is preserved; check the gateway and session before sending again.',
       status: httpStatus,
       evidence,
       serverReachable: null,
@@ -838,7 +838,7 @@ export function classifyGatewayError(value = '', {
       probeStatus: 'unreachable',
       title: 'Hermes API connection refused',
       detail: `Nothing accepted a connection at ${target}. The browser reached the host and the connection was refused there, so the Hermes gateway is probably not running on that port, or a firewall, proxy, or VPN refused the request. Start Hermes Gateway, confirm the API server URL and port, then run a connection check again.`,
-      userMessage: 'Browser could not open a connection to the Hermes API. Nothing was delivered, so your message stays in the composer.',
+      userMessage: 'The extension could not open a connection to the Hermes API. Nothing was delivered, so your message stays in the composer.',
       status: httpStatus,
       evidence,
       serverReachable: false,
@@ -855,7 +855,7 @@ export function classifyGatewayError(value = '', {
       probeStatus: 'unreachable',
       title: 'Hermes API connection interrupted',
       detail: `The connection to ${target} was reset or closed before Hermes finished answering. The browser cannot tell whether Hermes received the request, so delivery is unconfirmed. Run Check connection to probe /health and see whether the gateway is still reachable.`,
-      userMessage: 'The connection to Hermes was interrupted, so Browser cannot confirm whether the turn was delivered. The draft is preserved, but sending it again could duplicate the turn.',
+      userMessage: 'The connection to Hermes was interrupted, so the extension cannot confirm whether the turn was delivered. The draft is preserved, but sending it again could duplicate the turn.',
       status: httpStatus,
       evidence,
       serverReachable: null,
@@ -872,7 +872,7 @@ export function classifyGatewayError(value = '', {
       probeStatus: 'unreachable',
       title: 'Hermes API connection timed out',
       detail: `The connection attempt to ${target} timed out before Hermes answered. Check that the gateway is running, that the host is reachable over LAN, VPN, or tailnet, and that a firewall or proxy is not dropping the request.`,
-      userMessage: 'Browser could not reach the Hermes API before the request timed out. The request may already have reached Hermes, so resending the draft could duplicate the turn. It was kept in the composer and never resent automatically.',
+      userMessage: 'The extension could not reach the Hermes API before the request timed out. The request may already have reached Hermes, so resending the draft could duplicate the turn. It was kept in the composer and never resent automatically.',
       status: httpStatus,
       evidence,
       serverReachable: false,
@@ -890,7 +890,7 @@ export function classifyGatewayError(value = '', {
         probeStatus: 'unreachable',
         title: 'Hermes request outcome unknown',
         detail: 'The gateway answered the health probe, but this request failed before Hermes answered. The browser cannot confirm whether Hermes received it or why it failed. Run Check connection and inspect the gateway log before resending.',
-        userMessage: 'The gateway answered a health probe, but Browser cannot confirm whether this turn was delivered. The draft is preserved; resending could duplicate the turn.',
+        userMessage: 'The gateway answered a health probe, but the extension cannot confirm whether this turn was delivered. The draft is preserved; resending could duplicate the turn.',
         status: httpStatus,
         evidence,
         serverReachable: true,
@@ -905,7 +905,7 @@ export function classifyGatewayError(value = '', {
       probeStatus: 'unreachable',
       title: 'Hermes gateway did not answer',
       detail: `The request to ${target} failed before Hermes answered. The browser does not report whether the connection was refused or the cross-origin request was blocked, so Browser cannot tell those apart on its own. Run Check connection to probe /health and see which layer fails.`,
-      userMessage: 'Browser could not reach the Hermes API, and the browser did not say whether the connection was refused or blocked by CORS. It also cannot confirm whether the turn was delivered, so resending the draft could duplicate the turn. The draft is preserved and was not sent again automatically.',
+      userMessage: 'The extension could not reach the Hermes API, and the browser did not say whether the connection was refused or blocked by CORS. It also cannot confirm whether the turn was delivered, so resending the draft could duplicate the turn. The draft is preserved and was not sent again automatically.',
       status: httpStatus,
       evidence,
       serverReachable: null,
@@ -1415,7 +1415,7 @@ function updateChangeTitle(message = '') {
     .split('\n')[0]
     .replace(/^[a-z]+(?:\([^)]*\))?!?:\s*/i, '')
     .trim();
-  if (!clean) return 'Internal Browser update';
+  if (!clean) return 'Internal extension update';
   return `${clean.charAt(0).toUpperCase()}${clean.slice(1)}`;
 }
 
@@ -1452,14 +1452,14 @@ export function updateReviewState({
   const title = alignmentState === 'custom-current'
     ? 'Current main with local changes'
     : alignmentState === 'diverged'
-      ? 'Browser build diverged from main'
+      ? 'Extension build diverged from main'
     : available
-      ? 'New Browser update available'
+      ? 'New extension update available'
     : !verified
-      ? 'Browser source alignment unverified'
+      ? 'Extension source alignment unverified'
       : versionComparison < 0 || alignmentState === 'build-ahead'
-        ? 'This Browser build is ahead'
-        : 'Hermes Browser is current';
+        ? 'This extension build is ahead'
+        : 'Hermes Browser Extension is current';
   const summary = alignmentState === 'custom-current'
     ? '0 main commits are missing. The loaded build also contains local changes.'
     : alignmentState === 'diverged'

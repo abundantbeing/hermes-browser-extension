@@ -168,7 +168,7 @@ export function updateButtonEmphasis(review = null) {
 export function updateInstallNoteText({ available = false } = {}) {
   return available
     ? 'Update now starts a guarded Hermes agent turn. The in-place route needs a local checkout of this repository on this machine, so it stops on local changes and never clones one: build dist/, then press Reload now to run the new build.'
-    : 'This check compares the loaded build metadata with the public Hermes Browser repository.';
+    : 'This check compares the loaded build metadata with the public Hermes Browser Extension repository.';
 }
 
 /**
@@ -184,7 +184,7 @@ export function buildUpdateAgentPrompt({ review = null } = {}) {
   const plural = counted === 1 ? '' : 's';
   return [
     `Update my Hermes Browser Extension from the official repository: ${HBE_REPO_URL}`,
-    `The Browser update review reports ${countLabel} public commit${plural} available.`,
+    `The extension update review reports ${countLabel} public commit${plural} available.`,
     'First locate the existing Hermes Browser Extension checkout that this user intends to update. This in-place update needs a local checkout of the repository on this machine.',
     `If no local checkout of this repository exists on this machine, stop and report that clearly with the download link ${HBE_RELEASES_URL}. Do not clone the repository, and do not install or update the extension any other way.`,
     'If the checkout has uncommitted changes, stop and report them. Do not discard, overwrite, commit, or push any local work.',

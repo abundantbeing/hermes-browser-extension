@@ -324,7 +324,7 @@ test('without an advertised fork the person is told the chat is old and offered 
   const h = panelHarness({ sessionRow: { session: { id: 'x', source: 'hermes_browser' } }, forkAdvertised: false });
   assert.equal(await h.context.offer(args(h.streamView)), true);
   assert.equal(h.streamView.updated, english['session.legacy_source_no_fork']);
-  assert.match(h.streamView.updated, /older version of Hermes Browser/);
+  assert.match(h.streamView.updated, /older version of the Hermes Browser Extension/);
   const buttons = [...h.bubble.querySelectorAll('button')];
   assert.deepEqual(buttons.map((button) => button.textContent), ['Start a new chat']);
   buttons[0].dispatchEvent(new h.context.document.defaultView.Event('click'));

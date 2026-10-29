@@ -119,7 +119,7 @@ async function startRecognition() {
       enabled = false;
       sendState('unavailable', code === 'audio-capture'
         ? 'The microphone is unavailable to the wake listener.'
-        : 'Microphone access is blocked for Hermes Browser.');
+        : 'Microphone access is blocked for the Hermes Browser Extension.');
       return;
     }
     sendState('degraded', `Local wake listener stopped (${code}); retrying.`);

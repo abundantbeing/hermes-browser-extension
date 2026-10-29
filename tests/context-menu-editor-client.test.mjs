@@ -118,6 +118,6 @@ test('editor client tells the user to reload when an updated page reaches a stal
 
   const status = document.querySelector('.context-menu-editor-status.error');
   assert.equal(status.hidden, false);
-  assert.match(status.textContent, /Reload Hermes Browser.*chrome:\/\/extensions/i);
+  assert.match(status.textContent, /Reload the Hermes Browser Extension from chrome:\/\/extensions/i);
   editor.destroy();
 });

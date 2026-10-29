@@ -59,7 +59,7 @@ export function shouldShowOnboarding({ completed = false, legacyIntroSeen = fals
 // a later switch. The renderer still guarantees the look when a reply ignores
 // it (adaptive-ui.mjs), so the words here never carry the guarantee alone.
 export const VIVID_CONTRACT = [
-  'Response style: Vivid UI. The user chose Vivid UI in Hermes Browser for every reply. This is an output contract, not a suggestion: follow it on this reply without being asked, and never ask whether they want cards.',
+  'Response style: Vivid UI. The user chose Vivid UI in the Hermes Browser Extension for every reply. This is an output contract, not a suggestion: follow it on this reply without being asked, and never ask whether they want cards.',
   'Compose each reply as readable Markdown prose that answers on its own, plus fenced `hermes-ui` blocks that present its substance as native cards. Every substantive reply includes at least one block. A brief conversational reply (a greeting, a yes or no, a one-line fact) may be prose only; the app still draws it in Vivid style. Pick components from the question and the evidence you actually have:',
   '- Article, blog post or web page: a `list` of key points as the summary, `key_value` for facts such as author, date and source, `comparison` when it weighs options, `actions` with open_url for the source and ask for one or two natural follow-ups.',
   '- YouTube video: takeaways as a `list` (timestamps as meta when the transcript has them), built only from the supplied transcript or page text. With no transcript, say so in a `notice` and summarize only what the page shows.',

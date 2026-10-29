@@ -65,7 +65,7 @@
         </footer>
       </section>
 
-      <section id="botModePanel" class="bot-mode-panel" role="dialog" data-i18n-aria-label="bot_mode.dialog_label" aria-label="Hermes Browser Bot Mode" hidden>
+      <section id="botModePanel" class="bot-mode-panel" role="dialog" data-i18n-aria-label="bot_mode.dialog_label" aria-label="Bot Mode" hidden>
         <header class="bot-mode-head">
           <div class="bot-mode-head-copy">
             <h2 data-i18n="bot_mode.title">Bot Mode</h2>
@@ -719,7 +719,7 @@
           <div class="release-control">
             <div class="release-row">
               <div>
-                <h3 id="releaseTitle" data-i18n="ui.browser.updates">Browser updates</h3>
+                <h3 id="releaseTitle" data-i18n="ui.browser.updates">Extension updates</h3>
                 <p><span id="versionLabel" data-i18n-runtime data-i18n="ui.version.loading">version loading…</span> <span data-i18n="settings.public_alpha_load_unpacked">· public alpha / load unpacked</span></p>
               </div>
               <div class="release-actions">
@@ -735,7 +735,7 @@
           </div>
         </section>
         <nav id="settingsCategoryHome" class="settings-category-home" aria-labelledby="settingsCategoryHomeTitle">
-          <div class="settings-section-head compact"><div><h4 id="settingsCategoryHomeTitle" data-i18n="settings.categories.home_title">Choose a category</h4><p data-i18n="settings.categories.home_copy">Everything Hermes Browser can do, grouped by what it is for.</p></div></div>
+          <div class="settings-section-head compact"><div><h4 id="settingsCategoryHomeTitle" data-i18n="settings.categories.home_title">Choose a category</h4><p data-i18n="settings.categories.home_copy">Everything the Hermes Browser Extension can do, grouped by what it is for.</p></div></div>
           <div class="settings-category-grid">
             <button type="button" class="settings-category-card" data-settings-category="appearance" aria-describedby="settingsCategorySummary-appearance">
               <span class="settings-category-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" data-icon="brush"><path d="M7 2h10v2H7zM5 4h2v10H5zm12-2h2v12h-2z"/><path d="M13 2h2v6h-2zM9 2h2v4H9zm-4 8h14v2H5zm2 4h10v2H7zm2 2h2v4H9zm4 0h2v4h-2zm-4 4h6v2H9z"/></svg></span>
@@ -803,7 +803,7 @@
           <div class="appearance-control-stack text-zoom-setting">
             <div>
               <strong data-i18n="appearance.text_zoom">Text zoom</strong>
-              <span data-i18n="ui.adjust.extension.text.without.changing.browser.zoom">Adjust text across Hermes Browser surfaces without changing browser zoom.</span>
+              <span data-i18n="ui.adjust.extension.text.without.changing.browser.zoom">Adjust text across the extension without changing browser zoom.</span>
             </div>
             <div id="textZoomPresetGrid" class="text-zoom-preset-grid" role="radiogroup" aria-label="Text zoom" data-i18n-aria-label="appearance.text_zoom">
               <button type="button" data-text-zoom-percent="90" role="radio" aria-checked="false">90%</button>
@@ -961,7 +961,7 @@
           <div class="settings-section-head">
             <div>
               <h3 id="connectionTitle" data-i18n="ui.gateway.connection">Gateway Connection</h3>
-              <p data-i18n="ui.choose.where.this.browser.session.reaches.hermes">Choose where this Browser session reaches Hermes.</p>
+              <p data-i18n="ui.choose.where.this.browser.session.reaches.hermes">Choose where the extension reaches Hermes.</p>
             </div>
           </div>
 
@@ -1013,7 +1013,7 @@
         <label class="settings-toggle-card" id="webappKeepSignedInField">
           <span class="settings-toggle-copy">
             <strong data-i18n="webapp.keep_signed_in_label">Keep Hermes Web signed in from the panel</strong>
-            <small data-i18n="webapp.keep_signed_in_hint">Hermes Web, Projects and bot profiles are signed in for you through Hermes Browser pairing, with nothing to run. For an older gateway the panel keeps this browser's Hermes Web sign-in until you close the browser, after one hermes webapp. hermes webapp --sign-out ends it.</small>
+            <small data-i18n="webapp.keep_signed_in_hint">On a Hermes that pairs with the Hermes Browser Extension, Hermes Web, Projects and bot profiles are signed in for you, with nothing to run. Otherwise the panel keeps this browser's Hermes Web sign-in until you close the browser, after one hermes webapp. hermes webapp --sign-out ends it.</small>
           </span>
           <input id="webappKeepSignedInInput" class="settings-switch-input" type="checkbox" />
           <span class="settings-switch" aria-hidden="true"></span>
@@ -1048,7 +1048,7 @@
           <div class="settings-section-head">
             <div>
               <h3 id="profileTitle" data-i18n="ui.agent.profile">Agent Profile</h3>
-              <p data-i18n="ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401">Choose which Hermes agent profile the Browser should use when the local gateway exposes profiles.</p>
+              <p data-i18n="ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401">Choose which Hermes agent profile the extension should use when the local gateway exposes profiles.</p>
             </div>
           </div>
           <section class="settings-section agent-profile-card">
@@ -1131,7 +1131,7 @@
           <label class="settings-toggle-card bot-mode-toggle-card" for="botModeEnabledInput">
             <input id="botModeEnabledInput" class="settings-switch-input" type="checkbox" role="switch" />
             <span class="bot-mode-toggle-copy settings-toggle-copy">
-              <strong data-i18n="bot_mode.enable_label">Enable Hermes Browser Bot Mode</strong>
+              <strong data-i18n="bot_mode.enable_label">Enable Bot Mode</strong>
               <small data-i18n="bot_mode.off_hint_sidepanel">Off by default. Uses the currently connected Hermes instance.</small>
             </span>
             <span class="settings-switch" aria-hidden="true"></span>
@@ -1209,7 +1209,7 @@
             <p class="hint settings-prose" data-i18n="settings.models.desktop_hint">Add or remove models in Hermes Desktop or with the Hermes model command, then refresh here.</p>
           </section>
           <section class="settings-section model-sources-settings" aria-labelledby="modelSourcesTitle">
-            <div class="settings-section-head"><div><h3 id="modelSourcesTitle" data-i18n="ui.custom.model.source.urls">Custom model source URLs</h3><p class="settings-prose" data-i18n="ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6">Optional discovery only: Browser probes each OpenAI-compatible `/v1/models` endpoint and shows matches in the model picker. Runtime routing still comes from the connected Hermes gateway.</p></div></div>
+            <div class="settings-section-head"><div><h3 id="modelSourcesTitle" data-i18n="ui.custom.model.source.urls">Custom model source URLs</h3><p class="settings-prose" data-i18n="ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6">Optional discovery only: the extension probes each OpenAI-compatible `/v1/models` endpoint and shows matches in the model picker. Runtime routing still comes from the connected Hermes gateway.</p></div></div>
             <textarea id="customModelSourcesInput" class="model-sources-input" rows="4" spellcheck="false" placeholder="http://wimpy:8080/v1&#10;http://192.168.1.50:11434/v1" autocomplete="off" aria-label="Custom model source URLs" data-i18n-aria-label="ui.custom.model.source.urls" data-i18n-invariant></textarea>
           </section>
         </section>
@@ -1591,7 +1591,7 @@
         <button id="closeUpdateDialogButton" class="update-dialog-close" type="button" aria-label="Close update review" data-i18n-aria-label="ui.close.update.review">×</button>
         <span class="update-dialog-mark" aria-hidden="true"></span>
         <p class="eyebrow" data-i18n="ui.hermes.browser.update.channel">HERMES BROWSER / UPDATE CHANNEL</p>
-        <h2 id="updateDialogTitle">Checking Browser main…</h2>
+        <h2 id="updateDialogTitle">Checking the extension's main branch…</h2>
         <p id="updateDialogSummary" class="update-dialog-summary">Comparing this loaded build with the public GitHub repository.</p>
         <div id="updateChangeGroups" class="update-change-groups" aria-live="polite"></div>
         <div class="update-dialog-actions">
@@ -1694,7 +1694,7 @@
       <div class="profile-switch-card">
         <span class="session-ownership-kicker" data-i18n="bot_mode.leave_kicker">REGULAR SESSIONS</span>
         <h2 id="botModeLeaveTitle" data-i18n="bot_mode.leave_title">Exit Bot Mode?</h2>
-        <p id="botModeLeaveDetail" data-i18n="bot_mode.leave_detail">Starting a new extension session will return you to your regular Hermes Browser workspace.</p>
+        <p id="botModeLeaveDetail" data-i18n="bot_mode.leave_detail">Starting a new extension session will return you to your regular workspace.</p>
         <div class="profile-switch-actions">
           <button id="botModeLeaveConfirmButton" class="primary" type="button" data-i18n="bot_mode.leave_confirm">Return to Regular Sessions</button>
           <button id="botModeLeaveCancelButton" class="ghost" type="button" data-i18n="ui.cancel">Cancel</button>
@@ -1720,7 +1720,7 @@
         <h2 id="webappDialogTitle" data-i18n="webapp.dialog_title">Hermes Web is not available</h2>
         <p id="webappDialogDetail" data-i18n="webapp.dialog_body">Your gateway serves Hermes Web once it is turned on. On the computer that runs Hermes, run these commands.</p>
         <p data-webapp-reason="unreachable" data-i18n="webapp.reason_unreachable" hidden>Nothing answered at this address:</p>
-        <p data-webapp-reason="permission-denied" data-i18n="webapp.reason_permission" hidden>The browser did not allow Hermes Browser to reach this address:</p>
+        <p data-webapp-reason="permission-denied" data-i18n="webapp.reason_permission" hidden>The browser did not allow the Hermes Browser Extension to reach this address:</p>
         <p id="webappDialogNeedsAddress" data-webapp-reason="needs-address" data-i18n="webapp.reason_needs_address" hidden>This connection is remote, so there is no address to try. Enter the Hermes Web address in Settings.</p>
         <p data-webapp-reason="invalid-address" data-i18n="webapp.reason_invalid_address" hidden>The Hermes Web address in Settings is not a valid http or https address.</p>
         <code id="webappDialogAddress" class="webapp-address" data-i18n-invariant hidden></code>

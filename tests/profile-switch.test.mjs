@@ -31,7 +31,7 @@ test('profile context handoff is bounded, labeled as reference, and keeps the so
     ],
   });
 
-  assert.match(handoff, /Previous Hermes Browser session: hermes-browser-extension-123/);
+  assert.match(handoff, /Previous Hermes Browser Extension session: hermes-browser-extension-123/);
   assert.match(handoff, /Previous profile: Default profile/);
   assert.match(handoff, /reference context only/i);
   assert.match(handoff, /USER: First question/);

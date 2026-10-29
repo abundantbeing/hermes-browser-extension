@@ -185,7 +185,7 @@ test('the install note names the local-checkout requirement instead of hiding it
   assert.match(available, /needs a local checkout of this repository/);
   assert.match(available, /Reload now/);
   assert.doesNotMatch(available, /computer-use/);
-  assert.match(updateInstallNoteText({ available: false }), /public Hermes Browser repository/);
+  assert.match(updateInstallNoteText({ available: false }), /public Hermes Browser Extension repository/);
 });
 
 // ---------------------------------------------------------------------------

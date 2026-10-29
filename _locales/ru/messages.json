@@ -12,11 +12,11 @@
     "description": "Hermes Browser extensionDescription"
   },
   "openExtension": {
-    "message": "Открыть расширение Hermes Browser",
+    "message": "Открыть Hermes Browser Extension",
     "description": "Hermes Browser openExtension"
   },
   "openSidebar": {
-    "message": "Открыть боковую панель Hermes Browser",
+    "message": "Открыть боковую панель Hermes Browser Extension",
     "description": "Hermes Browser openSidebar"
   },
   "runtime_a11y_extension_controls": {
@@ -52,7 +52,7 @@
     "description": "Runtime interface message account.notice.failed"
   },
   "runtime_account_notice_no_permission": {
-    "message": "Для входа нужно ваше разрешение, чтобы Hermes Browser видел, где заканчивается окно входа. Выберите «Войти» ещё раз и разрешите.",
+    "message": "Для входа нужно ваше разрешение, чтобы Hermes Browser Extension видело, где заканчивается окно входа. Выберите «Войти» ещё раз и разрешите.",
     "description": "Runtime interface message account.notice.no_permission"
   },
   "runtime_account_notice_no_window": {
@@ -124,7 +124,7 @@
     "description": "Runtime interface message account.unavailable.no_origin"
   },
   "runtime_account_unavailable_not_gated": {
-    "message": "Этот шлюз открыт на этом компьютере и не требует входа, поэтому учётной записи Hermes здесь использовать не нужно. «Проекты» обеспечивает сопряжение Hermes Browser или собственный вход Hermes Web.",
+    "message": "Этот шлюз открыт на этом компьютере и не требует входа, поэтому учётной записи Hermes здесь использовать не нужно. «Проекты» обеспечивает сопряжение с Hermes Browser Extension или собственный вход Hermes Web.",
     "description": "Runtime interface message account.unavailable.not_gated"
   },
   "runtime_account_unavailable_unreachable": {
@@ -476,7 +476,7 @@
     "description": "Runtime interface message bot_mode.density_compact"
   },
   "runtime_bot_mode_dialog_label": {
-    "message": "Режим бота Hermes Browser",
+    "message": "Режим бота",
     "description": "Runtime interface message bot_mode.dialog_label"
   },
   "runtime_bot_mode_earlier_messages": {
@@ -500,7 +500,7 @@
     "description": "Runtime interface message bot_mode.edit_profile"
   },
   "runtime_bot_mode_enable_label": {
-    "message": "Включить режим бота Hermes Browser",
+    "message": "Включить режим бота",
     "description": "Runtime interface message bot_mode.enable_label"
   },
   "runtime_bot_mode_face_blobatar": {
@@ -616,7 +616,7 @@
     "description": "Runtime interface message bot_mode.leave_confirm"
   },
   "runtime_bot_mode_leave_detail": {
-    "message": "Создание новой сессии вернет вас в обычное рабочее пространство Hermes Browser.",
+    "message": "Создание новой сессии вернет вас в обычное рабочее пространство.",
     "description": "Runtime interface message bot_mode.leave_detail"
   },
   "runtime_bot_mode_leave_kicker": {
@@ -740,7 +740,7 @@
     "description": "Runtime interface message bot_mode.return_to_sessions"
   },
   "runtime_bot_mode_return_to_sessions_title": {
-    "message": "Return to regular Hermes Browser sessions",
+    "message": "Вернуться к вашим обычным сессиям",
     "description": "Runtime interface message bot_mode.return_to_sessions_title"
   },
   "runtime_bot_mode_roster_label": {
@@ -2152,7 +2152,7 @@
     "description": "Runtime interface message custom_theme.validation_errors"
   },
   "runtime_diagnostic_api_authorization_health_detail": {
-    "message": "Проверка работоспособности ответила, но защищённые маршруты Browser/моделей требуют Authorization: Bearer *** Вставьте ключ API или браузерный токен с ограниченной областью действия в Настройки.",
+    "message": "Проверка работоспособности ответила, но защищённые маршруты расширения и моделей требуют Authorization: Bearer *** Вставьте ключ API или браузерный токен с ограниченной областью действия в Настройки.",
     "description": "Runtime interface message diagnostic.api_authorization_health_detail"
   },
   "runtime_diagnostic_api_authorization_title": {
@@ -2164,7 +2164,7 @@
     "description": "Runtime interface message diagnostic.api_rejected_detail"
   },
   "runtime_diagnostic_auth_detail": {
-    "message": "Hermes API отклонил запрос. Проверьте токен Browser API в Настройках и убедитесь, что он соответствует работающему шлюзу Hermes.",
+    "message": "Hermes API отклонил запрос. Проверьте токен API в Настройках расширения и убедитесь, что он соответствует работающему шлюзу Hermes.",
     "description": "Runtime interface message diagnostic.auth_detail"
   },
   "runtime_diagnostic_auth_title": {
@@ -2172,11 +2172,11 @@
     "description": "Runtime interface message diagnostic.auth_title"
   },
   "runtime_diagnostic_auth_user": {
-    "message": "Токен Hermes API был отклонён. Обновите токен в Настройках Browser, затем подключитесь снова.",
+    "message": "Токен Hermes API был отклонён. Обновите токен в Настройках расширения, затем подключитесь снова.",
     "description": "Runtime interface message diagnostic.auth_user"
   },
   "runtime_diagnostic_cors_extension_detail": {
-    "message": "Browser не смог подключиться к Hermes API с этого источника расширения. Добавьте chrome-extension://<extension-id> в API_SERVER_CORS_ORIGINS на удалённом хосте.",
+    "message": "Расширение не смогло подключиться к Hermes API со своего источника. Добавьте chrome-extension://<extension-id> в API_SERVER_CORS_ORIGINS на удалённом хосте.",
     "description": "Runtime interface message diagnostic.cors_extension_detail"
   },
   "runtime_diagnostic_cors_title": {
@@ -2184,7 +2184,7 @@
     "description": "Runtime interface message diagnostic.cors_title"
   },
   "runtime_diagnostic_dashboard_url_detail": {
-    "message": "Это похоже на конечную точку Hermes Dashboard SSO. Для режима Browser API нужен URL сервера Hermes API на :8642 и Authorization: Bearer ***",
+    "message": "Это похоже на конечную точку Hermes Dashboard SSO. Для режима API расширения нужен URL сервера Hermes API на :8642 и Authorization: Bearer ***",
     "description": "Runtime interface message diagnostic.dashboard_url_detail"
   },
   "runtime_diagnostic_dashboard_url_title": {
@@ -2200,7 +2200,7 @@
     "description": "Runtime interface message diagnostic.gateway_unreachable_detail"
   },
   "runtime_diagnostic_network_detail": {
-    "message": "Browser не смог подключиться к Hermes API. Проверьте URL шлюза, маршрутизацию брандмауэра/VPN и настройки CORS/источника для этого расширения.",
+    "message": "Расширение не смогло подключиться к Hermes API. Проверьте URL шлюза, маршрутизацию брандмауэра/VPN и настройки CORS/источника для этого расширения.",
     "description": "Runtime interface message diagnostic.network_detail"
   },
   "runtime_diagnostic_network_title": {
@@ -2208,7 +2208,7 @@
     "description": "Runtime interface message diagnostic.network_title"
   },
   "runtime_diagnostic_network_user": {
-    "message": "Browser не смог подключиться к Hermes, потому что запрос завершился сбоем на уровне сети/CORS.",
+    "message": "Расширение не смогло подключиться к Hermes, потому что запрос завершился сбоем на уровне сети/CORS.",
     "description": "Runtime interface message diagnostic.network_user"
   },
   "runtime_diagnostic_remote_setup_title": {
@@ -2228,7 +2228,7 @@
     "description": "Runtime interface message diagnostic.route_title"
   },
   "runtime_diagnostic_route_user": {
-    "message": "Эта среда выполнения Hermes ещё не предоставляет запрошенный маршрут Browser.",
+    "message": "Эта среда выполнения Hermes ещё не предоставляет запрошенный маршрут расширения.",
     "description": "Runtime interface message diagnostic.route_user"
   },
   "runtime_diagnostic_runtime_exception_detail": {
@@ -2240,7 +2240,7 @@
     "description": "Runtime interface message diagnostic.runtime_exception_title"
   },
   "runtime_diagnostic_runtime_exception_user": {
-    "message": "В вышестоящем Hermes Agent обнаружен стек вызовов шлюза Hermes. Browser может оставаться подключённым; проверьте логи Hermes и выполните `hermes computer-use doctor`, если computer_use/cua-driver появляется в стеке вызовов.",
+    "message": "В вышестоящем Hermes Agent обнаружен стек вызовов шлюза Hermes. Расширение может оставаться подключённым; проверьте логи Hermes и выполните `hermes computer-use doctor`, если computer_use/cua-driver появляется в стеке вызовов.",
     "description": "Runtime interface message diagnostic.runtime_exception_user"
   },
   "runtime_diagnostics_surface": {
@@ -2512,11 +2512,11 @@
     "description": "Runtime interface message manifest.extension_short_name"
   },
   "runtime_manifest_open_extension": {
-    "message": "Открыть расширение Hermes Browser",
+    "message": "Открыть Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_extension"
   },
   "runtime_manifest_open_sidebar": {
-    "message": "Открыть боковую панель Hermes Browser",
+    "message": "Открыть боковую панель Hermes Browser Extension",
     "description": "Runtime interface message manifest.open_sidebar"
   },
   "runtime_marketplace_adjusted": {
@@ -2640,7 +2640,7 @@
     "description": "Runtime interface message onboarding.font.title"
   },
   "runtime_onboarding_language_body": {
-    "message": "Hermes Browser будет использовать его везде. Позже его можно изменить в настройках.",
+    "message": "Hermes Browser Extension будет использовать его везде. Позже его можно изменить в настройках.",
     "description": "Runtime interface message onboarding.language.body"
   },
   "runtime_onboarding_language_body_suggested": {
@@ -3444,7 +3444,7 @@
     "description": "Runtime interface message run.release"
   },
   "runtime_run_release_detail": {
-    "message": "Browser released the composer without Hermes confirming the stop. Check the session before sending another message.",
+    "message": "Расширение освободило поле ввода без подтверждения остановки от Hermes. Проверьте сеанс, прежде чем отправлять ещё одно сообщение.",
     "description": "Runtime interface message run.release_detail"
   },
   "runtime_run_stop": {
@@ -3460,11 +3460,11 @@
     "description": "Runtime interface message run.stop_controller_toast"
   },
   "runtime_run_stop_controller_unreachable": {
-    "message": "Browser could not reach Hermes Control to cancel pending browser actions.",
+    "message": "Расширению не удалось связаться с Управлением Hermes, чтобы отменить ожидающие действия браузера.",
     "description": "Runtime interface message run.stop_controller_unreachable"
   },
   "runtime_run_stop_unconfirmed_no_run_id": {
-    "message": "Hermes has not reported a run id for this turn, so Browser cannot confirm the run stopped. The session writer and queued messages stay held until Hermes confirms a terminal state.",
+    "message": "Hermes не сообщил идентификатор запуска для этого хода, поэтому расширение не может подтвердить, что запуск остановлен. Модуль записи сеанса и сообщения в очереди остаются удержанными, пока Hermes не подтвердит конечное состояние.",
     "description": "Runtime interface message run.stop_unconfirmed_no_run_id"
   },
   "runtime_run_stop_unconfirmed_title": {
@@ -3492,11 +3492,11 @@
     "description": "Runtime interface message session.legacy_new_chat"
   },
   "runtime_session_legacy_source_fork": {
-    "message": "Этот чат начала более старая версия Hermes Browser, и этот шлюз больше не принимает в нём новые сообщения. Ваше сообщение не отправлено. Можно продолжить в копии чата.",
+    "message": "Этот чат начала более старая версия Hermes Browser Extension, и этот шлюз больше не принимает в нём новые сообщения. Ваше сообщение не отправлено. Можно продолжить в копии чата.",
     "description": "Runtime interface message session.legacy_source_fork"
   },
   "runtime_session_legacy_source_no_fork": {
-    "message": "Этот чат начала более старая версия Hermes Browser, и этот шлюз больше не принимает в нём новые сообщения. Здесь его нельзя скопировать, поэтому начните новый чат. Ваше сообщение осталось в поле ввода.",
+    "message": "Этот чат начала более старая версия Hermes Browser Extension, и этот шлюз больше не принимает в нём новые сообщения. Здесь его нельзя скопировать, поэтому начните новый чат. Ваше сообщение осталось в поле ввода.",
     "description": "Runtime interface message session.legacy_source_no_fork"
   },
   "runtime_session_long_shared_notice": {
@@ -3588,7 +3588,7 @@
     "description": "Runtime interface message settings.categories.edited_hint"
   },
   "runtime_settings_categories_home_copy": {
-    "message": "Всё, что умеет Hermes Browser, сгруппировано по назначению.",
+    "message": "Всё, что умеет Hermes Browser Extension, сгруппировано по назначению.",
     "description": "Runtime interface message settings.categories.home_copy"
   },
   "runtime_settings_categories_home_title": {
@@ -3856,7 +3856,7 @@
     "description": "Runtime interface message status.profile_selected_restart"
   },
   "runtime_status_profile_switch_unavailable": {
-    "message": "{error}. Browser будет использовать текущий запущенный профиль Hermes.",
+    "message": "{error}. Расширение будет использовать текущий запущенный профиль Hermes.",
     "description": "Runtime interface message status.profile_switch_unavailable"
   },
   "runtime_tasks_summary": {
@@ -3932,7 +3932,7 @@
     "description": "Runtime interface message ui.adjust"
   },
   "runtime_ui_adjust_extension_text_without_changing_browser_zoom": {
-    "message": "Adjust text across Hermes Browser surfaces without changing browser zoom.",
+    "message": "Настройте текст во всём расширении, не меняя масштаб браузера.",
     "description": "Runtime interface message ui.adjust.extension.text.without.changing.browser.zoom"
   },
   "runtime_ui_adjust_the_side_panel_for_readability_without_changing_browser_zoom": {
@@ -4264,11 +4264,11 @@
     "description": "Runtime interface message ui.browser.local.fallback"
   },
   "runtime_ui_browser_update_review": {
-    "message": "Browser обзор обновления",
+    "message": "Обзор обновления расширения",
     "description": "Runtime interface message ui.browser.update.review"
   },
   "runtime_ui_browser_updates": {
-    "message": "Обновления браузера",
+    "message": "Обновления расширения",
     "description": "Runtime interface message ui.browser.updates"
   },
   "runtime_ui_build": {
@@ -4360,7 +4360,7 @@
     "description": "Runtime interface message ui.checking"
   },
   "runtime_ui_checking_browser_main": {
-    "message": "Проверка главной страницы браузера…",
+    "message": "Проверка основной ветки расширения…",
     "description": "Runtime interface message ui.checking.browser.main"
   },
   "runtime_ui_checking_hermes": {
@@ -4416,7 +4416,7 @@
     "description": "Runtime interface message ui.choose.where.ask.explain.improve.and.summarize.selection.tasks.run"
   },
   "runtime_ui_choose_where_this_browser_session_reaches_hermes": {
-    "message": "Выберите, где этот сеанс Browser достигнет Hermes.",
+    "message": "Выберите, где расширение подключается к Hermes.",
     "description": "Runtime interface message ui.choose.where.this.browser.session.reaches.hermes"
   },
   "runtime_ui_choose_where_to_send": {
@@ -4424,7 +4424,7 @@
     "description": "Runtime interface message ui.choose.where.to.send"
   },
   "runtime_ui_choose_which_hermes_agent_profile_the_browser_should_use_when_t_3d3ae401": {
-    "message": "Выберите, какой профиль агента Hermes должен использовать Browser, когда локальный шлюз предоставляет профили.",
+    "message": "Выберите, какой профиль агента Hermes должно использовать расширение, когда локальный шлюз предоставляет профили.",
     "description": "Runtime interface message ui.choose.which.hermes.agent.profile.the.browser.should.use.when.t.3d3ae401"
   },
   "runtime_ui_choose_which_tab_hermes_reads_and_which_open_tabs_appear_in_the_prompt": {
@@ -6140,7 +6140,7 @@
     "description": "Runtime interface message ui.microphone.access.is.already.enabled.for.hermes.browser.extension"
   },
   "runtime_ui_microphone_access_is_blocked_for_hermes_browser": {
-    "message": "Доступ к микрофону заблокирован для Hermes Browser.",
+    "message": "Доступ к микрофону заблокирован для Hermes Browser Extension.",
     "description": "Runtime interface message ui.microphone.access.is.blocked.for.hermes.browser"
   },
   "runtime_ui_microphone_access_is_enabled_return_to_the_hermes_side_panel_an_2839c056": {
@@ -6296,7 +6296,7 @@
     "description": "Runtime interface message ui.no.audio.is.saved.by.this.page.in.hermes.stt.mode.audio.is.sent.df9cdcdc"
   },
   "runtime_ui_no_audio_is_saved_here_the_permission_only_lets_hermes_browser_e6a9c0e1": {
-    "message": "Звук здесь не сохраняется. Это разрешение позволяет Hermes Browser записывать ваш голос только при нажатии кнопки микрофона.",
+    "message": "Звук здесь не сохраняется. Это разрешение позволяет Hermes Browser Extension записывать ваш голос только при нажатии кнопки микрофона.",
     "description": "Runtime interface message ui.no.audio.is.saved.here.the.permission.only.lets.hermes.browser.e6a9c0e1"
   },
   "runtime_ui_no_browser_context_attached": {
@@ -6496,7 +6496,7 @@
     "description": "Runtime interface message ui.open.the.exact.session.in.the.full.hermes.web.workspace"
   },
   "runtime_ui_open_the_exact_session_in_the_hermes_browser_side_panel": {
-    "message": "Откройте конкретный сеанс на боковой панели Hermes Browser.",
+    "message": "Откройте конкретный сеанс на боковой панели Hermes Browser Extension.",
     "description": "Runtime interface message ui.open.the.exact.session.in.the.hermes.browser.side.panel"
   },
   "runtime_ui_open_the_hermes_extension_side_panel_from_your_browser_toolbar": {
@@ -6504,7 +6504,7 @@
     "description": "Runtime interface message ui.open.the.hermes.extension.side.panel.from.your.browser.toolbar"
   },
   "runtime_ui_open_the_retained_assist_session_in_the_browser_side_panel_or_i_cac0449c": {
-    "message": "Откройте сохраненный сеанс Assist на боковой панели Browser или в Hermes Web.",
+    "message": "Откройте сохраненный сеанс Assist на боковой панели расширения или в Hermes Web.",
     "description": "Runtime interface message ui.open.the.retained.assist.session.in.the.browser.side.panel.or.i.cac0449c"
   },
   "runtime_ui_open_the_side_panel_configure_a_hermes_connection_then_open_ful_47648857": {
@@ -6540,7 +6540,7 @@
     "description": "Runtime interface message ui.optional"
   },
   "runtime_ui_optional_discovery_only_browser_probes_each_openai_compatible_v_ae9c41a6": {
-    "message": "Только необязательное обнаружение: Browser проверяет каждую конечную точку OpenAI-compatible `/v1/models` и показывает совпадения в средстве выбора модели. Маршрутизация во время выполнения по-прежнему исходит от подключенного шлюза Hermes.",
+    "message": "Только необязательное обнаружение: расширение проверяет каждую конечную точку OpenAI-compatible `/v1/models` и показывает совпадения в средстве выбора модели. Маршрутизация во время выполнения по-прежнему исходит от подключенного шлюза Hermes.",
     "description": "Runtime interface message ui.optional.discovery.only.browser.probes.each.openai.compatible.v.ae9c41a6"
   },
   "runtime_ui_options": {
@@ -6716,7 +6716,7 @@
     "description": "Runtime interface message ui.profile.api.unavailable"
   },
   "runtime_ui_profile_api_unavailable_browser_will_use_the_currently_running_f2b04f08": {
-    "message": "Профиль API недоступен. Браузер будет использовать текущий профиль шлюза Hermes.",
+    "message": "Профиль API недоступен. Расширение будет использовать текущий профиль шлюза Hermes.",
     "description": "Runtime interface message ui.profile.api.unavailable.browser.will.use.the.currently.running.f2b04f08"
   },
   "runtime_ui_profile_ff4fc027": {
@@ -7720,7 +7720,7 @@
     "description": "Runtime interface message ui.this.chromium.browser.does.not.expose.mediarecorder.getusermedi.936d7f71"
   },
   "runtime_ui_this_gateway_does_not_expose_v1_capabilities_yet_browser_specif_117361a1": {
-    "message": "Этот шлюз еще не предоставляет доступ к /v1/capabilities. Маршруты, специфичные для браузера, останутся в резервном режиме.",
+    "message": "Этот шлюз еще не предоставляет доступ к /v1/capabilities. Маршруты, специфичные для расширения, останутся в резервном режиме.",
     "description": "Runtime interface message ui.this.gateway.does.not.expose.v1.capabilities.yet.browser.specif.117361a1"
   },
   "runtime_ui_this_hermes_gateway_does_not_expose_v1_profiles_yet_using_the_c_0222afa8": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {
-    "message": "Используйте ту же палитру и язык Chrome, что и Hermes Browser.",
+    "message": "Используйте ту же палитру и язык Chrome, что и Hermes Browser Extension.",
     "description": "Runtime interface message ui.use.the.same.palette.and.chrome.language.as.hermes.browser"
   },
   "runtime_ui_use_this_when_a_remote_dashboard_url_bearer_token_or_cors_origi_9956db87": {
@@ -8172,7 +8172,7 @@
     "description": "Runtime interface message voice.permission_blocked"
   },
   "runtime_voice_settings_load_failed": {
-    "message": "Не удалось загрузить настройки Hermes Browser.\n\n{error}",
+    "message": "Не удалось загрузить настройки расширения.\n\n{error}",
     "description": "Runtime interface message voice.settings_load_failed"
   },
   "runtime_voice_speech_recognition_error": {
@@ -8232,7 +8232,7 @@
     "description": "Runtime interface message webapp.hint_local"
   },
   "runtime_webapp_hint_local_kept": {
-    "message": "Hermes Web открыт. На этом компьютере один раз выполните hermes webapp, чтобы войти. После этого Hermes Browser сохраняет вход этого браузера до его закрытия.",
+    "message": "Hermes Web открыт. На этом компьютере один раз выполните hermes webapp, чтобы войти. После этого Hermes Browser Extension сохраняет вход этого браузера до его закрытия.",
     "description": "Runtime interface message webapp.hint_local_kept"
   },
   "runtime_webapp_hint_signed_in": {
@@ -8240,7 +8240,7 @@
     "description": "Runtime interface message webapp.hint_signed_in"
   },
   "runtime_webapp_keep_signed_in_hint": {
-    "message": "На Hermes с сопряжением Hermes Browser вход в Hermes Web, проекты и профили ботов выполняется за вас, ничего запускать не нужно. Иначе панель сохраняет вход в Hermes Web в этом браузере до его закрытия после однократного hermes webapp. hermes webapp --sign-out завершает его.",
+    "message": "На Hermes, который сопрягается с Hermes Browser Extension, вход в Hermes Web, проекты и профили ботов выполняется за вас, ничего запускать не нужно. Иначе панель сохраняет вход в Hermes Web в этом браузере до его закрытия после однократного hermes webapp. hermes webapp --sign-out завершает его.",
     "description": "Runtime interface message webapp.keep_signed_in_hint"
   },
   "runtime_webapp_keep_signed_in_label": {
@@ -8292,7 +8292,7 @@
     "description": "Runtime interface message webapp.reason_needs_address"
   },
   "runtime_webapp_reason_permission": {
-    "message": "Браузер не разрешил Hermes Browser обращаться к этому адресу:",
+    "message": "Браузер не разрешил Hermes Browser Extension обращаться к этому адресу:",
     "description": "Runtime interface message webapp.reason_permission"
   },
   "runtime_webapp_reason_unreachable": {

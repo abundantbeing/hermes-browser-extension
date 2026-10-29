@@ -298,7 +298,7 @@ test('gateway failure copy never carries em dash or en dash characters', () => {
 test('gatewayFailureRecoveryPlan keeps a provably undelivered draft safe to resend', () => {
   const undelivered = gatewayFailureRecoveryPlan({
     error: new Error('net::ERR_CONNECTION_REFUSED'),
-    diagnostic: { kind: 'network-refused', recovery: 'check-network', deliveryUnknown: false, userMessage: 'Browser could not open a connection to the Hermes API.' },
+    diagnostic: { kind: 'network-refused', recovery: 'check-network', deliveryUnknown: false, userMessage: 'The extension could not open a connection to the Hermes API.' },
   });
   assert.deepEqual(undelivered, {
     kind: 'network-refused',
@@ -308,7 +308,7 @@ test('gatewayFailureRecoveryPlan keeps a provably undelivered draft safe to rese
     autoRetry: false,
     recoveryAction: 'check-network',
     detail: '',
-    userMessage: 'Browser could not open a connection to the Hermes API.',
+    userMessage: 'The extension could not open a connection to the Hermes API.',
   });
 
   // Uncertain delivery (reset, hangup, timeout, ambiguous fetch): the draft is

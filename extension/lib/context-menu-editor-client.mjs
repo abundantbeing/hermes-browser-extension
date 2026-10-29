@@ -31,7 +31,7 @@ export async function mountContextMenuEditor({ chromeApi, root, translate } = {}
         mutation,
       });
       if (!response) {
-        throw new Error('Reload Hermes Browser from chrome://extensions, then try again. The extension background process is still running an older version.');
+        throw new Error('Reload the Hermes Browser Extension from chrome://extensions, then try again. Its background process is still running an older version.');
       }
       if (!response?.ok || !response.config) {
         throw new Error(response?.reason || response?.error || 'Context-menu settings could not be saved.');

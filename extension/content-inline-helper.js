@@ -966,9 +966,9 @@
     contextState.textContent = translateUiText('CHOOSE');
     contextState.className = '';
     const title = make('h2', 'route-title', 'Where should this session open?');
-    const note = make('p', 'note', 'Open the retained Assist session in the Browser side panel or in Hermes Web.');
+    const note = make('p', 'note', 'Open the retained Assist session in the extension side panel or in Hermes Web.');
     const options = [
-      { num: '01', surface: 'sidepanel', title: 'Browser Extension', detail: 'Open the exact session in the Hermes Browser side panel.', recommended: true },
+      { num: '01', surface: 'sidepanel', title: 'Browser Extension', detail: 'Open the exact session in the Hermes Browser Extension side panel.', recommended: true },
       { num: '02', surface: 'web', title: 'Hermes Web', detail: 'Open the Hermes Web app in a new browser tab.' },
     ].map((option) => {
       const routeButton = button(`route${option.recommended ? ' recommended' : ''}`, '');
@@ -1015,7 +1015,7 @@
     const reasons = {
       'needs-address': 'This connection is remote, so there is no address to try. Enter the Hermes Web address in Settings.',
       'invalid-address': 'The Hermes Web address in Settings is not a valid http or https address.',
-      'permission-denied': 'The browser did not allow Hermes Browser to reach this address:',
+      'permission-denied': 'The browser did not allow the Hermes Browser Extension to reach this address:',
       unreachable: 'Nothing answered at this address:',
     };
     const nodes = [
@@ -1046,7 +1046,7 @@
       make('p', 'note', hint === 'signed-in'
         ? 'Hermes Web opened, already signed in.'
         : hint === 'local-kept'
-          ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. After that, Hermes Browser keeps this browser signed in until you close it.'
+          ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. After that, the Hermes Browser Extension keeps this browser signed in until you close it.'
           : hint === 'local'
             ? 'Hermes Web opened. On this computer, run hermes webapp once to sign in. The tab stays signed in.'
             : 'Hermes Web opened. Sign in on that page with your dashboard account.'),

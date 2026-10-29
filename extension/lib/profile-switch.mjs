@@ -44,7 +44,7 @@ export function buildProfileContextHandoff({
   const header = [
     '[Hermes profile handoff · reference context only]',
     `Previous profile: ${profileLabel(fromProfile)}`,
-    `Previous Hermes Browser session: ${clean(sessionId) || 'unknown'}`,
+    `Previous Hermes Browser Extension session: ${clean(sessionId) || 'unknown'}`,
     'Note for the agent: Continue conversation using this background. Answer directly without saying "handoff received":',
   ].join('\n');
   const footer = '[End prior-session context]';

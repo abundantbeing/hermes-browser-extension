@@ -23,7 +23,7 @@ export function buildAgentThemePrompt(description) {
   }
   const paletteShape = SEMANTIC_KEYS.map((key) => `    "${key}": "#000000"`).join(',\n');
   return [
-    'Create one Hermes Browser semantic color theme for this visual direction:',
+    'Create one Hermes Browser Extension semantic color theme for this visual direction:',
     request,
     '',
     'Return exactly one JSON document between the markers below.',

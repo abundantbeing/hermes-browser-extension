@@ -160,10 +160,10 @@ export async function restartGatewayViaDashboard({
 }
 
 const RESTART_FAILURE_COPY = {
-  'no-dashboard': 'Browser could not find the local Hermes dashboard. Run `hermes gateway restart` in a terminal.',
+  'no-dashboard': 'The extension could not find the local Hermes dashboard. Run `hermes gateway restart` in a terminal.',
   'no-token': 'The Hermes dashboard did not accept Browser. Run `hermes gateway restart` in a terminal.',
   rejected: 'Hermes refused the restart request. Run `hermes gateway restart` in a terminal.',
-  unreachable: 'Browser could not reach the Hermes dashboard. Run `hermes gateway restart` in a terminal.',
+  unreachable: 'The extension could not reach the Hermes dashboard. Run `hermes gateway restart` in a terminal.',
   timeout: 'Hermes is taking longer than usual to come back. Check again, or run `hermes gateway restart` in a terminal.',
 };
 

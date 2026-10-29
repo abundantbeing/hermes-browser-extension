@@ -543,7 +543,7 @@ async function queueOpenSessionRequest(message, sender) {
   const opened = await openHermesPanel(tab, { allowFallback: false });
   if (opened === false) {
     await browserApi.storage.session.remove(OPEN_SESSION_STORAGE_KEY);
-    return { ok: false, reason: 'The Browser side panel could not open. If your gateway serves Hermes Web, you can open that instead.' };
+    return { ok: false, reason: 'The extension\'s side panel could not open. If your gateway serves Hermes Web, you can open that instead.' };
   }
   return { ok: true, sessionId, surface };
 }

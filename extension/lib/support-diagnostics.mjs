@@ -96,7 +96,7 @@ export function buildSupportDiagnostics({
   const gatewayOrigin = redactDiagnosticUrl(settings.gatewayUrl || '');
   const warnings = Array.isArray(capabilities.warnings) ? capabilities.warnings : [];
   const lines = [
-    '# Hermes Browser Diagnostics',
+    '# Hermes Browser Extension Diagnostics',
     '',
     '## Extension',
     bullet('Extension version', extensionVersion || buildInfo.version || NOT_AVAILABLE),

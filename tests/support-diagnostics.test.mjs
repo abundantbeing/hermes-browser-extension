@@ -91,7 +91,7 @@ test('buildSupportDiagnostics creates a public-safe copy block without secrets o
     extractorMode: 'dom-fallback',
   });
 
-  assert.match(diagnostics.markdown, /Hermes Browser Diagnostics/);
+  assert.match(diagnostics.markdown, /Hermes Browser Extension Diagnostics/);
   assert.match(diagnostics.markdown, /Extension version: 0\.1\.9/);
   assert.match(diagnostics.markdown, /Extension origin: chrome-extension:\/\/abc123/);
   assert.match(diagnostics.markdown, /Browser product: Chromium browser/);
