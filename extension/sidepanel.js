@@ -28503,9 +28503,11 @@ function bindEvents() {
     els.sessionMenuButton.setAttribute('aria-expanded', String(!nextHidden));
     if (!nextHidden) {
       applySessionMenuTabOnOpen();
-      await loadSessions({ quiet: true });
+      // Focus first: the list on screen is already searchable, and the refresh
+      // repaints it in place without touching the search box.
       els.sessionSearchInput.focus();
       els.sessionSearchInput.select();
+      await loadSessions({ quiet: true });
     }
   });
   els.newSessionButton.addEventListener('click', async () => {
