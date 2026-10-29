@@ -450,14 +450,21 @@ export async function discoverCanonicalProviderCatalog({
   let liveNousLoaded = false;
   let staticCatalogLoaded = false;
 
-  if (nousProviders.length) {
+  // The two reads are independent: both go out now (live Nous first) and their
+  // answers are applied in the same order as before.
+  const requestCatalog = (url) => fetchWithTimeout(fetchFn, url, {
+    method: 'GET',
+    headers: { Accept: 'application/json' },
+    cache: 'no-store',
+    credentials: 'omit',
+  }, timeoutMs).then((response) => ({ response }), (error) => ({ error }));
+  const liveRequest = nousProviders.length ? requestCatalog(NOUS_LIVE_MODEL_CATALOG_URL) : null;
+  const staticRequest = requestCatalog(catalogUrl);
+
+  if (liveRequest) {
     try {
-      const response = await fetchWithTimeout(fetchFn, NOUS_LIVE_MODEL_CATALOG_URL, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
-        credentials: 'omit',
-      }, timeoutMs);
+      const { response, error: requestError } = await liveRequest;
+      if (requestError) throw requestError;
       if (!response.ok) throw new Error(`status-${response.status}`);
       const payload = await response.json();
       if (!Array.isArray(payload?.data)) throw new Error('invalid-live-nous-catalog');
@@ -470,12 +477,8 @@ export async function discoverCanonicalProviderCatalog({
   }
 
   try {
-    const response = await fetchWithTimeout(fetchFn, catalogUrl, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-      credentials: 'omit',
-    }, timeoutMs);
+    const { response, error: requestError } = await staticRequest;
+    if (requestError) throw requestError;
     if (!response.ok) throw new Error(`status-${response.status}`);
     const payload = catalogWithNousAliases(await response.json(), nousProviders);
     models = canonicalProviderModels(payload, models, enrichProviders);
