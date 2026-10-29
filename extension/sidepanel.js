@@ -11099,7 +11099,7 @@ function applySelectedModel(selectedId, { persist = true, keepOpen = false } = {
   if (listed?.source === 'external') {
     selectedModelProvider = modelProviderLabel(listed);
     renderModelMenu();
-    setStatus('warn', 'Custom model source is discovery-only', 'This model was discovered from a custom endpoint, but Hermes must expose it through the connected runtime before Browser can route requests to it.');
+    setStatus('warn', 'Custom model source is discovery-only', 'This model was discovered from a custom endpoint, but Hermes must expose it through the connected runtime before the extension can route requests to it.');
     return;
   }
   // A 'selected' placeholder only stands in for a choice the catalog does not
@@ -12778,7 +12778,37 @@ function animatedPetFor(profileName) {
   const sheet = pet.spritesheetUrl
     || petGalleryCache.find((entry) => entry.slug === pet.slug || entry.displayName === pet.displayName)?.spritesheetUrl
     || '';
+  if (!sheet) void ensurePetSheets();
   return sheet ? { ...pet, spritesheetUrl: sheet } : null;
+}
+
+// A pet saved before its sheet address was stored carries only its slug and
+// frame icon, so it could not animate until the pet picker happened to load the
+// gallery. With Animate avatars on, the missing sheets are looked up once (the
+// gateway's pet gallery, then the public Petdex manifest), kept on the saved
+// pets, and the roster repaints.
+let petSheetLookup = null;
+function ensurePetSheets() {
+  if (petSheetLookup || !petAvatarMotionAllowed()) return petSheetLookup;
+  const missing = [...petAvatarsByProfile].filter(([, pet]) => !pet?.spritesheetUrl);
+  if (!missing.length) return null;
+  petSheetLookup = (async () => {
+    const sheetIn = (list, pet) => list.find((entry) => entry.slug === pet.slug || entry.displayName === pet.displayName)?.spritesheetUrl || '';
+    let gallery = petGalleryCache;
+    if (!gallery.length) gallery = await loadPetGalleryFromGateway().catch(() => []);
+    const manifest = missing.some(([, pet]) => !sheetIn(gallery, pet)) ? await fetchPetGallery().catch(() => []) : [];
+    let found = 0;
+    for (const [profileName, pet] of missing) {
+      const spritesheetUrl = sheetIn(gallery, pet) || sheetIn(manifest, pet);
+      if (!spritesheetUrl || petAvatarsByProfile.get(profileName) !== pet) continue;
+      const entry = { ...pet, spritesheetUrl };
+      petAvatarsByProfile.set(profileName, entry);
+      found += 1;
+      await writePetAvatar(profileName, entry).catch(() => undefined);
+    }
+    if (found) renderBotModeRoster(els.botModeSearch?.value || '');
+  })().catch(() => undefined);
+  return petSheetLookup;
 }
 
 // The remote sheet cannot be a CSS background here (the extension CSP only
@@ -19100,9 +19130,11 @@ async function refreshLiveSessionRoster() {
   void followRestSessionTick();
   const scopeKey = liveSessionScopeKey();
   if (scopeKey !== liveSessionRosterScope) { liveSessionRows = new Map(); liveDiscoveredSessions = []; }
-  // A local REST connection can observe the authenticated local Dashboard
-  // without changing its chat transport. Never mint sessions just to list them.
-  if (!activeDashboardWsConnection && !localDashboardUrl() && !isRemoteWsMode()) {
+  // A local REST connection can observe the authenticated local Dashboard, or the
+  // socket the paired gateway signed in for it, without changing its chat
+  // transport: that is how a run started in Desktop, the CLI or another window
+  // shows as running here. Never mint sessions just to list them.
+  if (!activeDashboardWsConnection && !localDashboardUrl() && !isRemoteWsMode() && !sessionAuthoritySideSocket()) {
     scheduleLiveSessionPoll();
     return;
   }
@@ -21050,7 +21082,7 @@ async function ensureDefaultBrowserSession({ focus = false, scopeRevisionId = sc
       }
     } catch (error) {
       if (!scopeRevision.isCurrent(scopeRevisionId)) return false;
-      setStatus('warn', 'Could not migrate Browser session', error?.message || String(error), { translateDetail: false });
+      setStatus('warn', 'Could not migrate the session', error?.message || String(error), { translateDetail: false });
     } finally {
       gatewayQuirks.endProbe(patchGatewayUrl, GATEWAY_QUIRK.SESSION_SOURCE_PATCH);
     }
@@ -22605,6 +22637,27 @@ function renderMessageReasoning(node, text = '', { live = false } = {}) {
   return box;
 }
 
+// The REST stream carries the notes a model writes beside its tool calls, but
+// never its reasoning, which Hermes stores with the turn's rows. Once the reply
+// is in, the newest history page is read once and the turn's stored reasoning
+// is shown on the reply and kept with it. Best effort: nothing else changes.
+async function showStoredTurnReasoning({ sessionId, reply, node }) {
+  try {
+    const { messages: rows } = await fetchSessionMessagesQuietly(sessionId, { transport: 'rest' });
+    if (String(settings.sessionId || '').trim() !== sessionId || !node?.isConnected || !reply) return;
+    const turnStart = rows.findLastIndex((row) => row?.role === 'user');
+    const summaries = storedTurnSummaries(turnStart >= 0 ? rows.slice(turnStart) : rows);
+    const [[lastReply, summary] = []] = [...summaries];
+    const sameReply = String(lastReply?.content || '').trim() === String(reply.content || '').trim();
+    if (!sameReply || !summary?.reasoning || reply.reasoning) return;
+    reply.reasoning = summary.reasoning;
+    renderMessageReasoning(node, summary.reasoning);
+    await trimAndSaveMessages();
+  } catch {
+    // The reply stands without its reasoning.
+  }
+}
+
 // A turn refused as permission_denied on a chat an older build saved under a
 // source current Hermes no longer admits (lib/legacy-session-fork.mjs). The
 // refusal is only treated as that case after the session row confirms such a
@@ -22725,7 +22778,7 @@ function attachGatewayRestartAction(node) {
 }
 
 async function persistInlineSessionState() {
-  const title = String(settings.sessionTitle || settings.sessionId || 'Current Browser chat').slice(0, 160);
+  const title = String(settings.sessionTitle || settings.sessionId || 'Current chat').slice(0, 160);
   await browserApi.storage.local.set({
     [INLINE_SESSION_STATE_KEY]: {
       sessionId: String(settings.sessionId || ''),
@@ -27104,6 +27157,9 @@ ${streamError.message}`);
       const turnReasoning = streamView.reasoningText;
       messages.push({ role: 'assistant', content: finalAnswerForStorage, ts: Date.now(), responseStyle: assistantStyle, ...(turnReasoning ? { reasoning: turnReasoning } : {}) });
       await trimAndSaveMessages();
+      if (!dashboardTransport && !turnReasoning) {
+        void showStoredTurnReasoning({ sessionId: runSessionId, reply: messages.at(-1), node: streamView.node });
+      }
     }
     if (profileContextHandoff
       && String(settings.pendingProfileContextHandoff || '').trim() === profileContextHandoff
@@ -27220,7 +27276,7 @@ ${streamError.message}`);
           : { ok: false, reason: 'new-session-required' };
         const replayDetail = contextRecovery.retryTurn
           ? 'Hermes may retry the accepted turn.'
-          : 'Browser did not replay the accepted turn, preventing a duplicate message.';
+          : 'The extension did not replay the accepted turn, preventing a duplicate message.';
         const recoveryDetail = compactResult.ok
           ? 'Hermes compacted the session and Browser adopted the acknowledged successor when provided.'
           : 'This runtime could not recover the session automatically. Start a new session, then resend the preserved draft.';
@@ -27339,12 +27395,12 @@ ${streamError.message}`);
           } catch (error) {
             if (runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) {
               activeRunControl = markTerminalTimeout(activeRunControl, error?.message || 'Runtime terminal confirmation timed out.');
-              setStatus('warn', 'Runtime state unconfirmed', `The Browser stream closed before a terminal runtime state. Retry status from the recovery controls; the run identity and queued turns remain held: ${error?.message || String(error)}`, { translateDetail: false });
+              setStatus('warn', 'Runtime state unconfirmed', `The reply stream closed before a terminal runtime state. Retry status from the recovery controls; the run identity and queued turns remain held: ${error?.message || String(error)}`, { translateDetail: false });
             }
           }
         } else {
           activeRunControl = markTerminalTimeout(activeRunControl, 'Connected Hermes runtime does not advertise terminal run status.');
-          setStatus('warn', 'Runtime state unconfirmed', 'The Browser stream closed before a terminal event, and this runtime does not advertise run status. Update Hermes Agent or reconnect to a compatible runtime before starting another turn.', { translateDetail: false });
+          setStatus('warn', 'Runtime state unconfirmed', 'The reply stream closed before a terminal event, and this runtime does not advertise run status. Update Hermes Agent or reconnect to a compatible runtime before starting another turn.', { translateDetail: false });
         }
       }
       if (activeRunControl?.phase === RUN_CONTROL_PHASES.TERMINAL && activeRunControl.writerLease === 'released') {
