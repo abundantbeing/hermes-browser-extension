@@ -1527,7 +1527,24 @@ body.startup-active .startup-actions #startupTestConnectionButton:not([hidden]) 
   background: rgba(var(--startup-fg-rgb), 0.07);
   color: var(--startup-fg);
 }
+/* New chat, moved in only when a selected-model failure stops the startup cascade. */
+body.startup-active .startup-actions #newSessionButton {
+  display: grid;
+  place-items: center;
+  visibility: visible;
+  pointer-events: auto;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  background: rgba(var(--startup-fg-rgb), 0.07);
+  color: var(--startup-fg);
+  border: 1px solid rgba(var(--startup-fg-rgb), 0.32);
+}
 body.startup-active .startup-actions #settingsButton:hover,
+body.startup-active .startup-actions #newSessionButton:hover,
+body.startup-active .startup-actions #newSessionButton:focus-visible,
 body.startup-active .startup-actions #settingsButton:focus-visible,
 body.startup-active .startup-actions #startupTestConnectionButton:not([hidden]):hover,
 body.startup-active .startup-actions #startupTestConnectionButton:not([hidden]):focus-visible {

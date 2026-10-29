@@ -37,6 +37,8 @@ import {
   groupSessionsForMenu,
   isDefaultBrowserSessionTitle,
   isUnsavedBrowserDraftSession,
+  isDraftSessionForModelPick,
+  isModelLockDraftMiss,
   restTurnSourceRepair,
   dashboardVoiceFailureMessage,
   isMicrophonePermissionError,
@@ -2650,6 +2652,13 @@ async function ensureControllerCredentialForControl() {
   return true;
 }
 
+// A selected-model failure stops the startup cascade before a session is bound,
+// so the startup card offers New chat (the topbar button, moved in) to get past it.
+function startupOffersNewChat() {
+  return startupReadiness?.steps?.selectedModel?.status === 'error';
+}
+
+let newSessionButtonHome = null;
 function positionStartupSettings(active = document.body?.classList.contains('startup-active')) {
   const topbar = els.settingsButton?.closest('.topbar') || document.querySelector('.topbar');
   const actions = els.startupActions || document.getElementById('startupActions');
@@ -2657,9 +2666,18 @@ function positionStartupSettings(active = document.body?.classList.contains('sta
   const buttons = [els.settingsButton, els.startupTestConnectionButton, els.startupConnectButton].filter(Boolean);
   topbar?.style.removeProperty('--startup-settings-top');
   if (!topbar || !actions) return;
+  const newChat = els.newSessionButton;
+  if (newChat && !newSessionButtonHome && newChat.parentNode !== actions) {
+    newSessionButtonHome = { parent: newChat.parentNode, next: newChat.nextSibling };
+  }
+  if (newChat && newSessionButtonHome && !(active && startupOffersNewChat()) && newChat.parentNode === actions) {
+    const { parent, next } = newSessionButtonHome;
+    parent.insertBefore(newChat, next && next.parentNode === parent ? next : null);
+  }
   if (active) {
     actions.hidden = false;
     for (const button of buttons) actions.append(button);
+    if (newChat && newSessionButtonHome && startupOffersNewChat()) actions.append(newChat);
     return;
   }
   actions.hidden = true;
@@ -2738,7 +2756,7 @@ function renderStartupReadiness() {
   if (els.sendButton) els.sendButton.disabled = view.visible || els.sendButton.disabled;
   if (els.inlineSendButton) els.inlineSendButton.disabled = view.visible || els.inlineSendButton.disabled;
   if (els.modelMenuButton) els.modelMenuButton.disabled = view.visible;
-  if (els.newSessionButton) els.newSessionButton.disabled = view.visible;
+  if (els.newSessionButton) els.newSessionButton.disabled = view.visible && !startupOffersNewChat();
   if (!view.visible) {
     updateComposerBusyState();
     hbeBootEmit('panel:interactive', { startMark: 'panel:body-start' });
@@ -10759,6 +10777,7 @@ async function syncSessionModelOptions({
   } catch (error) {
     if (optionVersion !== modelOptionSelectionVersion) return { state: 'stale' };
     if (sessionId !== settings.sessionId) return { state: 'stale' };
+    if (keepDraftModelPickPending(error, sessionId, { detail: 'Thinking, effort, and Fast mode' })) return { state: 'pending' };
     return rollBackModelOptionPick(error, { previousOptions, previousPreferredModelOptions, previousSessionModelOptionBindings });
   }
 }
@@ -11140,9 +11159,25 @@ async function requestSessionModelLock(selected = currentSelectedModel(), { sess
   });
   const payload = await readJsonResponse(response);
   if (!response.ok) {
-    throw new Error(payload?.error?.message || payload?.error || `Hermes model lock failed (${response.status})`);
+    const error = new Error(payload?.error?.message || payload?.error || `Hermes model lock failed (${response.status})`);
+    error.httpStatus = response.status;
+    error.code = String(payload?.error?.code || payload?.code || '');
+    throw error;
   }
   return payload;
+}
+
+// The gateway has no session for a draft until the first message creates it,
+// so a lock for one answers 404 session_not_found. The pick stays chosen and
+// pending; the first send creates the session and then confirms the lock.
+function keepDraftModelPickPending(error, sessionId, { detail = '' } = {}) {
+  if (!isModelLockDraftMiss({ error, sessionId, sessions: availableSessions })) return false;
+  setStatus(
+    'warn',
+    'Hermes model requested',
+    `${detail} — selected for this draft; Hermes will confirm it when the first message saves the session.`,
+  );
+  return true;
 }
 
 // A model pick on a session authority: `session.mutate operation=model` (its `config.set model` is
@@ -11314,6 +11349,9 @@ async function syncSessionModelLock(selected, { previousId = '', previousBinding
     setStatus('warn', 'Model lock pending', ack.detail || 'Gateway accepted the lock request without full runtime confirmation.');
     return { state: 'pending', payload };
   } catch (error) {
+    if (keepDraftModelPickPending(error, settings.sessionId, { detail: requestedDetail || modelDisplayName(selected) || settings.model })) {
+      return { state: 'pending', payload: null };
+    }
     if (previousId) {
       const rollbackScope = updateBrowserModelScope({
         selectedModel: previousBinding || { modelId: previousId, rawModelId: previousId, contextTokens: 0 },
@@ -11355,7 +11393,10 @@ async function ensureActiveSessionModelLockOrThrow() {
   if (!settings.sessionId) return true;
   try {
     setStatus('warn', 'Model lock pending', 'Hermes has not acknowledged this session/model pair yet. Retrying lock before sending.');
-    await requestSessionModelLock(selected);
+    const payload = await requestSessionModelLock(selected);
+    // The session was just created by ensureHermesSession, so this is where a
+    // pick made before the first message gets its acknowledgement.
+    if (payload?.runtime && typeof payload.runtime === 'object') applyPendingModelRuntimeAck(payload.runtime);
     return true;
   } catch (error) {
     setStatus('error', 'Model lock failed', t('status.model_lock_failed_detail', { error: error?.message || error }), { translateDetail: false });
@@ -29648,7 +29689,12 @@ async function runPanelConnectionReadiness({ restoreSettings = false } = {}) {
           ? { status: 'ready', detail: `${initial.count} models loaded.` }
           : { status: 'fallback', detail: 'Model catalog unavailable; using fallback runtime metadata.' };
       },
-      selectModel: async () => selectedModelReadiness({ settings, availableModels, activeSessionRuntime }),
+      selectModel: async () => selectedModelReadiness({
+        settings,
+        availableModels,
+        activeSessionRuntime,
+        draftSession: isDraftSessionForModelPick({ sessionId: settings.sessionId, sessions: availableSessions }),
+      }),
       loadSkills: async () => {
         const outcome = await loadSkills({ quiet: true });
         if (outcome?.ok === false) return { status: 'fallback', detail: outcome.error || 'Skill catalog unavailable.' };

@@ -413,6 +413,26 @@ export function isUnsavedBrowserDraftSession({ sessionId = '', sessions = [] } =
   return !Array.isArray(sessions) || !sessions.some((session) => String(session?.id || '').trim() === id);
 }
 
+// A session id the gateway has not been asked to create yet: the extension's
+// own timestamped draft ids, or the default placeholder id a fresh install
+// carries. A real saved session (one the loaded list knows) is never a draft.
+export function isDraftSessionForModelPick({ sessionId = '', sessions = [] } = {}) {
+  const id = String(sessionId || '').trim();
+  if (!id) return false;
+  if (id !== DEFAULT_SETTINGS.sessionId && !/^hermes-browser-extension-\d{14}-[0-9a-f]{6}$/i.test(id)) return false;
+  return !Array.isArray(sessions) || !sessions.some((session) => String(session?.id || '').trim() === id);
+}
+
+// The gateway answers a model lock for a session it does not have with a 404
+// carrying session_not_found. For a draft that only means "not created yet":
+// the pick stays pending and the first message creates the session. For any
+// other session it is a real failure and must still be reported.
+export function isModelLockDraftMiss({ error = null, sessionId = '', sessions = [] } = {}) {
+  if (Number(error?.httpStatus) !== 404) return false;
+  if (String(error?.code || '').trim().toLowerCase() !== 'session_not_found') return false;
+  return isDraftSessionForModelPick({ sessionId, sessions });
+}
+
 export function gatewayModeDetails(value = DEFAULT_SETTINGS.gatewayMode) {
   const normalized = normalizeGatewayMode(value);
   return GATEWAY_MODES.find((mode) => mode.value === normalized) || GATEWAY_MODES[0];
