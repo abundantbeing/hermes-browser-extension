@@ -4521,3 +4521,11 @@ test('a gateway address typed without a scheme gets one instead of failing every
   assert.match(panel, /const rawGatewayUrl = withGatewayScheme\(els\.gatewayUrlInput\.value/);
   assert.match(panel, /typedUrl: withGatewayScheme\(els\.gatewayUrlInput\?\.value/);
 });
+
+test('renderMarkdown makes one character bold, struck or underscored, and keeps neighbours apart', () => {
+  assert.match(renderMarkdown('There are **3** letter r in it.'), /There are <strong>3<\/strong> letter r/);
+  assert.match(renderMarkdown('Price ~~5~~ 4'), /<del>5<\/del> 4/);
+  assert.match(renderMarkdown('**a** and **b**'), /<strong>a<\/strong> and <strong>b<\/strong>/);
+  assert.match(renderMarkdown('A **bold** word.'), /<strong>bold<\/strong>/);
+  assert.doesNotMatch(renderMarkdown('2 ** 3 is 8'), /<strong>/);
+});

@@ -2502,9 +2502,11 @@ function renderInlineMarkdown(value = '') {
           return safe ? `<a href="${safe}" target="_blank" rel="noopener noreferrer">${text}</a>` : text;
         });
         html = autolinkBareUrls(html);
-    html = html.replace(/\*\*([^*\n][\s\S]*?[^*\n])\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/__([^_\n][\s\S]*?[^_\n])__/g, '<strong>$1</strong>');
-    html = html.replace(/~~([^~\n][\s\S]*?[^~\n])~~/g, '<del>$1</del>');
+    // One character between the markers counts too (**3**, ~~5~~); requiring two
+    // left **3** as literal asterisks and ran "**a** and **b**" into one span.
+    html = html.replace(/\*\*([^*\n](?:[\s\S]*?[^*\n])??)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__([^_\n](?:[\s\S]*?[^_\n])??)__/g, '<strong>$1</strong>');
+    html = html.replace(/~~([^~\n](?:[\s\S]*?[^~\n])??)~~/g, '<del>$1</del>');
     html = html.replace(/(^|\s)\*([^*\n]+)\*(?=\s|$|[.,;:!?])/g, '$1<em>$2</em>');
     html = html.replace(/(^|\s)_([^_\n]+)_(?=\s|$|[.,;:!?])/g, '$1<em>$2</em>');
     return html;

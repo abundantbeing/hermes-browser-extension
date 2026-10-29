@@ -2787,15 +2787,17 @@ html[data-hermes-font-profile] .browser-control-dialog .browser-control-action {
 .live-thinking-slot { margin-bottom: 8px; }
 .tool-call-group-time { flex: 0 0 auto; color: rgba(var(--hermes-ink-rgb),0.65); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tool-call-group-time::before { content: '·'; margin-right: 7px; }
-/* The agent's reasoning and between-tool notes, in the reply's own card: open
-   while the turn runs, folded once the answer lands. */
-.message-reasoning { margin: 0 0 8px; min-width: 0; color: rgba(var(--hermes-ink-rgb),0.72); font-size: calc(12px * var(--hermes-text-zoom,1)); }
-.message-reasoning > summary { display: flex; align-items: center; gap: 7px; cursor: pointer; list-style: none; padding: 2px 0; color: rgba(var(--hermes-ink-rgb),0.65); font-size: 11px; }
+/* The agent's reasoning and between-tool notes: a row of its own between the
+   tools row and the reply, built like the tools row. Open while the turn runs,
+   folded once the answer lands. */
+.message-reasoning { min-width: 0; width: 100%; color: var(--hermes-ink); font-size: calc(12px * var(--hermes-text-zoom,1)); }
+.message-reasoning > summary { display: flex; align-items: center; gap: 7px; cursor: pointer; list-style: none; min-width: 0; padding: 5px 0; }
 .message-reasoning > summary::-webkit-details-marker { display: none; }
-.message-reasoning > summary::before { content: '›'; flex: 0 0 10px; font-size: 16px; line-height: 1; }
+.message-reasoning > summary::before { content: '›'; flex: 0 0 10px; color: rgba(var(--hermes-ink-rgb),0.6); font-size: 16px; line-height: 1; }
 .message-reasoning[open] > summary::before { transform: rotate(90deg); }
+.message-reasoning-title { flex: 0 0 auto; font-weight: 400; }
 .message-reasoning > summary:focus-visible { outline: 2px solid var(--hermes-accent); outline-offset: 2px; }
-.message-reasoning-body { margin: 2px 0 0 17px; padding-left: 9px; border-left: 2px solid rgba(var(--hermes-ink-rgb),0.12); max-height: 7.6em; overflow: auto; overscroll-behavior: contain; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.52; }
+.message-reasoning-body { margin: 0 0 6px 4px; padding: 2px 12px; border-left: 2px solid rgba(var(--hermes-ink-rgb),0.14); color: rgba(var(--hermes-ink-rgb),0.78); max-height: 7.6em; overflow: auto; overscroll-behavior: contain; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
 .message-reasoning:not(.is-live) .message-reasoning-body { max-height: min(42vh,360px); }
 
 .thinking-words {

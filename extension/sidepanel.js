@@ -22485,7 +22485,9 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
       toolHost = createToolCallGroup({ document, calls, running, translate: translateUiText, formatCountLabel: t });
       toolHost.classList.add('live-tool-work');
     }
-    const reattaching = toolHost.nextElementSibling !== row;
+    // The tools row sits above the reasoning row when there is one, else above the reply.
+    const anchor = messageReasoningBox(node) || row;
+    const reattaching = toolHost.nextElementSibling !== anchor;
     if (reattaching) {
       // Reuse the SAME native disclosure after a history rebuild: its open
       // state, individual entries and scroll position survive unchanged.
@@ -22507,7 +22509,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
         }
         previous = previous.previousElementSibling;
       }
-      row.before(toolHost);
+      anchor.before(toolHost);
     }
     updateToolCallGroup(toolHost, { calls, running, translate: translateUiText, formatCountLabel: t });
     setToolCallGroupTime(toolHost, turnDurationLabel(running ? elapsed() : turnDurationByRecord.get(record) ?? elapsed()));
@@ -22548,6 +22550,7 @@ function createStreamingMessageUpdater(node, record = {role:'assistant',content:
     if (node !== nextNode) {
       setToolActivity(node, null);
       node.querySelector('.live-thinking-slot')?.remove();
+      messageReasoningBox(node)?.remove();
     }
     node = nextNode;
     node.hermesStreamRecord = record;
@@ -22597,32 +22600,43 @@ function turnDurationLabel(ms) {
   return formatTurnDuration(ms, { locale: getLocale() });
 }
 
-// The agent's reasoning in a reply's card, above its text (lib/turn-activity.mjs).
-// Live, it stays open and follows the newest line; once the answer lands it
-// folds to "Thoughts". Empty text removes it.
+// The row just above a reply that holds the agent's reasoning, if it has one.
+function messageReasoningBox(node) {
+  const previous = node?.closest?.('.message-row')?.previousElementSibling;
+  return previous?.classList?.contains('message-reasoning') ? previous : null;
+}
+
+// The agent's reasoning, in its own row just above the reply and below its
+// tools, styled like the tools row (lib/turn-activity.mjs). Live, it stays open
+// and follows the newest line; once the answer lands it folds to "Thoughts".
+// The thinking faces stay in the reply card. Empty text removes it.
 function renderMessageReasoning(node, text = '', { live = false } = {}) {
-  let box = node?.querySelector?.(':scope > .message-reasoning') || null;
+  let box = messageReasoningBox(node);
   const body = String(text || '').trim();
   if (!body) {
     box?.remove();
     return null;
   }
+  const row = node?.closest?.('.message-row');
+  if (!row) return null;
   if (!box) {
     box = document.createElement('details');
     box.className = 'message-reasoning';
     const summary = document.createElement('summary');
+    const title = document.createElement('span');
+    title.className = 'message-reasoning-title';
+    summary.append(title);
     const content = document.createElement('div');
     content.className = 'message-reasoning-body';
     box.append(summary, content);
     box.open = live;
-    const anchor = node.querySelector(':scope > .live-thinking-slot') || node.querySelector('.message-content');
-    if (anchor) anchor.before(box); else node.append(box);
+    row.before(box);
   }
   if (box.classList.contains('is-live') && !live) box.open = false;
   box.classList.toggle('is-live', live);
-  const summary = box.querySelector(':scope > summary');
+  const title = box.querySelector('.message-reasoning-title');
   const label = translateUiText(live ? 'Thinking' : 'Thoughts');
-  if (summary.textContent !== label) summary.textContent = label;
+  if (title.textContent !== label) title.textContent = label;
   const content = box.querySelector('.message-reasoning-body');
   const following = content.scrollHeight - content.scrollTop - content.clientHeight < 24;
   if (content.textContent !== body) content.textContent = body;
