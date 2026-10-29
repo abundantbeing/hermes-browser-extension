@@ -324,14 +324,33 @@ const SENSITIVE_URL_PATTERNS = [
   /\/tax|irs\.gov|ssa\.gov/i,
 ];
 
+// A host the API key may travel to in the clear: this computer, a private or link-local address, a
+// tailnet (100.64.0.0/10, *.ts.net), a .local/.lan/.internal/.home.arpa name or a bare machine name.
+function privateNetworkHost(host = '') {
+  const name = String(host || '').toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  if (!name) return false;
+  if (name === 'localhost' || name.endsWith('.localhost') || name === '::1') return true;
+  if (/^(fc|fd)[0-9a-f]{2}:|^fe80:/.test(name)) return true;
+  const ipv4 = name.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+    return a === 127 || a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)
+      || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254);
+  }
+  if (/\.(local|lan|internal|home\.arpa|ts\.net)$/.test(name)) return true;
+  return !name.includes('.') && !name.includes(':');
+}
+
 // A gateway address typed without a scheme ("box.tailnet.ts.net:8642", "localhost:8642") parses
-// as a URL whose scheme is the host, so every request to it fails. Give it http:// (https:// for
-// :443, or for a hosted address that is https only); anything that already names a scheme is kept.
+// as a URL whose scheme is the host, so every request to it fails. Give it http:// only where the
+// key may travel in the clear (privateNetworkHost); any other host, :443 and a hosted address that
+// is https only get https://. Anything that already names a scheme is kept.
 export function withGatewayScheme(value = '', { secure = false } = {}) {
   const raw = String(value || '').trim();
   if (!raw || /^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) return raw;
-  const authority = raw.split(/[/?#]/, 1)[0];
-  return `${secure || /:443$/.test(authority) ? 'https' : 'http'}://${raw}`;
+  const authority = raw.split(/[/?#]/, 1)[0].replace(/^[^@]*@/, '');
+  const host = authority.startsWith('[') ? authority.slice(0, authority.indexOf(']') + 1) : authority.replace(/:\d*$/, '');
+  return `${!secure && !/:443$/.test(authority) && privateNetworkHost(host) ? 'http' : 'https'}://${raw}`;
 }
 
 export function normalizeGatewayUrl(value = DEFAULT_SETTINGS.gatewayUrl) {

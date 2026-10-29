@@ -4505,6 +4505,14 @@ test('a gateway address typed without a scheme gets one instead of failing every
   assert.equal(withGatewayScheme('192.168.1.20:8642/v1'), 'http://192.168.1.20:8642/v1');
   assert.equal(withGatewayScheme('agent.example.com:443'), 'https://agent.example.com:443');
   assert.equal(withGatewayScheme('hermes.example.com', { secure: true }), 'https://hermes.example.com');
+  // The key travels in the clear only on a private network: a public host gets https://.
+  assert.equal(withGatewayScheme('agent.example.com:8642'), 'https://agent.example.com:8642');
+  assert.equal(withGatewayScheme('203.0.113.9:8642'), 'https://203.0.113.9:8642');
+  assert.equal(withGatewayScheme('172.32.0.1:8642'), 'https://172.32.0.1:8642');
+  for (const host of ['10.0.0.5:8642', '172.16.4.2:8642', '100.101.2.3:8642', '169.254.9.9:8642', '[::1]:8642',
+    '[fd12::5]:8642', 'nas:8642', 'nas.local:8642', 'pi.lan:8642', 'box.home.arpa', '127.0.0.1:8642']) {
+    assert.equal(withGatewayScheme(host), `http://${host}`, host);
+  }
   // Anything that already names a scheme, and an empty field, are left as typed.
   for (const kept of ['http://127.0.0.1:8642', 'https://agent.example.com', 'HTTPS://Agent.example.com', '']) {
     assert.equal(withGatewayScheme(kept), kept);
