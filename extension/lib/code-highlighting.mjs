@@ -71,8 +71,7 @@ function defaultTokenize(source, language) {
   return hljs.highlight(source, { language, ignoreIllegals: true }).value;
 }
 
-function appendTrustedTokens(target, highlightedHtml, source) {
-  const document = target.ownerDocument;
+function buildTrustedTokenFragment(document, highlightedHtml, source) {
   const template = document.createElement('template');
   template.innerHTML = highlightedHtml;
 
@@ -109,7 +108,51 @@ function appendTrustedTokens(target, highlightedHtml, source) {
   if (fragment.textContent !== source) {
     throw new Error('Syntax-highlighter changed source text');
   }
-  target.replaceChildren(fragment);
+  return fragment;
+}
+
+// A streaming reply re-renders the whole message every frame, so every finished
+// code block would be tokenized and re-validated again for each delta. The result
+// depends only on the language and the source, so the validated fragment is kept
+// and cloned. Only fragments this module built through the allowlist are stored;
+// custom tokenizers (tests) bypass the cache.
+const FRAGMENT_CACHE_MAX_SOURCE_CHARS = 250_000;
+const fragmentCaches = new WeakMap();
+
+function fragmentCacheFor(document) {
+  let cache = fragmentCaches.get(document);
+  if (!cache) {
+    cache = { entries: new Map(), chars: 0 };
+    fragmentCaches.set(document, cache);
+  }
+  return cache;
+}
+
+function highlightedFragment(code, source, language, tokenize) {
+  const document = code.ownerDocument;
+  if (tokenize !== defaultTokenize) return buildTrustedTokenFragment(document, tokenize(source, language), source);
+  const cache = fragmentCacheFor(document);
+  const key = `${language}\n${source}`;
+  const cached = cache.entries.get(key);
+  if (cached) {
+    // Re-insert so a block that keeps being used outlives the one still growing.
+    cache.entries.delete(key);
+    cache.entries.set(key, cached);
+    return cached.cloneNode(true);
+  }
+  const fragment = buildTrustedTokenFragment(document, tokenize(source, language), source);
+  const cost = source.length;
+  if (cost <= FRAGMENT_CACHE_MAX_SOURCE_CHARS / 2) {
+    // Least recently used go first; Map iterates in insertion order.
+    for (const [oldKey, oldFragment] of cache.entries) {
+      if (cache.chars + cost <= FRAGMENT_CACHE_MAX_SOURCE_CHARS) break;
+      cache.entries.delete(oldKey);
+      cache.chars -= oldFragment.textContent.length;
+    }
+    cache.entries.set(key, fragment.cloneNode(true));
+    cache.chars += cost;
+  }
+  return fragment;
 }
 
 /**
@@ -128,7 +171,7 @@ export function highlightCodeBlocks(root, { tokenize = defaultTokenize } = {}) {
     if (!language) continue;
     if (source.length > MAX_HIGHLIGHT_SOURCE_LENGTH) continue;
     try {
-      appendTrustedTokens(code, tokenize(source, language), source);
+      code.replaceChildren(highlightedFragment(code, source, language, tokenize));
       code.classList.add('hljs');
       code.dataset.highlighted = language;
     } catch {
