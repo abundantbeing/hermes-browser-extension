@@ -445,7 +445,7 @@ import {
   turnRequestFailureState,
   isDisplayTextRejection,
 } from './lib/turn-recovery.mjs';
-import { connectionIdentityChanged, sessionIdForSave } from './lib/settings-save-effects.mjs';
+import { connectionIdentityChanged, gatewayMoveResets, sessionIdForSave } from './lib/settings-save-effects.mjs';
 import { localDashboardResetPlan, localDashboardUrlFor } from './lib/local-dashboard-scope.mjs';
 import { compressionSuccessor, createSessionLineage, rosterSuccessor } from './lib/session-lineage.mjs';
 import { createReplayWatermarks } from './lib/replay-watermarks.mjs';
@@ -22971,6 +22971,14 @@ async function saveSettingsFromForm() {
     appearanceTheme: normalizedPanelThemeId(settings.appearanceTheme),
     appearanceSchemaVersion: 2,
   };
+  // Another gateway starts on its own default profile and never gets the old one's pairing token;
+  // without that token a remote connection is the dashboard one, as with an empty key field.
+  const moved = gatewayMoveResets(previousSettings, settings);
+  if ('apiKey' in moved && connectionMode === 'remote') {
+    moved.connectionTransport = CONNECTION_TRANSPORTS.REMOTE_DASHBOARD;
+    moved.gatewayMode = legacyGatewayModeForConnection({ connectionMode, connectionTransport: moved.connectionTransport });
+  }
+  settings = { ...settings, ...moved };
   await refreshContextConsentPrincipal({ settingsOverride: settings });
   const consentIdentity = currentContextConsentIdentity(settings);
   if (consentIdentity && els.browserContextConsentInput && !els.browserContextConsentInput.disabled) {
@@ -25965,6 +25973,7 @@ function adoptUnsavedGatewayUrlForConnect() {
     formGatewayMode: els.gatewayModeInput?.value || settings.gatewayMode,
   });
   if (!nextUrl) return;
+  const previous = settings;
   settings = {
     ...settings,
     gatewayUrl: nextUrl,
@@ -25972,6 +25981,8 @@ function adoptUnsavedGatewayUrlForConnect() {
       ? settings.trustedDashboardOrigin
       : '',
   };
+  // Another gateway: its own default profile, and never the old one's pairing token.
+  settings = { ...settings, ...gatewayMoveResets(previous, settings) };
   // A live socket and any in-flight attempt belong to the previous URL, and so does a Hermes account sign-in.
   void clearAccountForConnection();
   connectionController.cancel('connection settings changed');

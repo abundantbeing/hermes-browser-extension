@@ -28,3 +28,36 @@ export function sessionIdForSave({ typed = '', synced, viewed = '', fallback = '
   if (untouched) return String(viewed ?? '').trim() || fallback;
   return value || fallback;
 }
+
+// The gateway a URL names, for "is this the same gateway": scheme, host and port, with every
+// loopback spelling (localhost, 127.0.0.1, [::1]) as one host. '' for a value that is no URL.
+function gatewayKey(value) {
+  try {
+    const url = new URL(String(value ?? '').trim());
+    const loopback = ['localhost', '127.0.0.1', '[::1]', '::1'].includes(url.hostname.toLowerCase());
+    const port = url.port || (url.protocol === 'https:' ? '443' : '80');
+    return `${url.protocol}//${loopback ? 'loopback' : url.hostname.toLowerCase()}:${port}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * What a move to another gateway must not carry over, as a settings patch ({} for the same one).
+ * A bot profile names a profile on the old gateway: the new one may not have it, and every request
+ * would go to /p/<that bot>/ there. A pairing token was minted by the old gateway for this browser:
+ * it is no credential for another, so it is not sent there. A key the person typed stays, since it
+ * is in the field they saved.
+ */
+export function gatewayMoveResets(previous = {}, next = {}) {
+  const before = gatewayKey(previous?.gatewayUrl);
+  const after = gatewayKey(next?.gatewayUrl);
+  if (!before || !after || before === after) return {};
+  const pairedToken = next?.tokenSource === 'pairing' && String(next?.apiKey ?? '') === String(previous?.apiKey ?? '');
+  return {
+    activeProfile: '',
+    botModeSelectedProfile: '',
+    botModeReturnProfile: '',
+    ...(pairedToken ? { apiKey: '', tokenSource: '' } : {}),
+  };
+}
