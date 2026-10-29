@@ -13795,7 +13795,8 @@ function renderGroupWorkingLine() {
     els.groupWorkingStatus.textContent = '';
     return;
   }
-  const appearing = els.groupWorkingLine.hidden;
+  // Measured before the line takes room, so a reader at the bottom keeps all of it in view.
+  const follow = els.groupWorkingLine.hidden && isMessageStreamNearBottom();
   els.groupWorkingLine.hidden = false;
   groupWorkingFrameIndex %= groupWorkingFrames.length;
   // Screen readers hear the turn once per change, never the cycling.
@@ -13816,7 +13817,7 @@ function renderGroupWorkingLine() {
     clearInterval(groupWorkingCycleTimer);
     groupWorkingCycleTimer = 0;
   }
-  if (appearing) scrollMessageStreamToBottom();
+  if (follow) scrollMessageStreamToBottom({ force: true });
 }
 
 // Redraws only when the frame says something new, so a stream of typing frames does not restart

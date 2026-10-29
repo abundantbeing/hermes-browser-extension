@@ -135,6 +135,12 @@ test('room identity, working line, failure notices, and member popover selectors
   // A flex column squeezes #messages to the scroller and lets its rows overflow, which would put
   // the working line mid-thread instead of under the last message.
   assert.match(css, /\n\.messages \{[^}]*flex-shrink: 0;/, 'the thread is sized by its messages');
+  // Squeezed the same way, the line kept 24px and its avatars spilled onto the composer's edge.
+  assert.match(css, /\n\.group-working-line \{[^}]*flex: 0 0 auto;/, 'the working line is sized by its content');
+  assert.doesNotMatch(css, /\n\.group-working-line \{[^}]*min-height/, 'the working line has no height to shrink to');
+  // The old typing bar's rules shared these class names and shrank the line's text to 8.5px.
+  assert.doesNotMatch(css, /\.group-working-(bar|dots|bubble|avatar-slot)\b/, 'no leftover typing bar rules');
+  assert.equal(css.match(/\n\.group-working-text \{/g)?.length, 1, 'one rule styles the working text');
   assert.match(css, /\.room-member-change\s*\{[^}]*background:\s*var\(--hermes-primary-bg/, 'the Change button uses the theme primary pair');
   // A room bubble must degrade to the plain glass bubble when the identity tint
   // has not been applied, never to a dropped background declaration.

@@ -12,6 +12,13 @@ test('the production status uses the working line and failure notices, not remov
   assert.doesNotMatch(source, /\$\('#groupTyping(?:Indicator|Avatars|Text)'\)/);
   assert.doesNotMatch(source, /groupPresenceChips|groupPresenceStatus/);
 });
+test('a reader at the bottom sees all of the working line when it appears', () => {
+  const body = source.slice(source.indexOf('function renderGroupWorkingLine()'), source.indexOf('function showGroupWorkingFrame('));
+  // Measured after the line takes room, the reader would already be off the bottom.
+  const measured = body.indexOf('isMessageStreamNearBottom()');
+  assert.ok(measured > 0 && measured < body.indexOf('els.groupWorkingLine.hidden = false'), 'near-bottom is measured before the line shows');
+  assert.match(body, /if \(follow\) scrollMessageStreamToBottom\(\{ force: true \}\)/);
+});
 test('production activity uses the shared reducer for ordered queue and terminal states', () => {
   assert.match(source, /import\s*\{[^}]*reducePresence[^}]*presenceLine[^}]*presenceFrameText[^}]*\}\s*from\s*['"]\.\/lib\/group-presence\.mjs/);
   assert.match(source, /activeGroupPresence\s*=\s*reducePresence\(activeGroupPresence, activity\)/);
