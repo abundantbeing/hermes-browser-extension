@@ -1993,7 +1993,8 @@ function currentSubagentItems() {
 
 function ensureSubagentTimer(liveCount) {
   if (liveCount && !subagentTimer) {
-    subagentTimer = setInterval(() => renderSubagentStack(), 1000);
+    // The tick only repaints elapsed times; a hidden panel repaints on its next tick once visible.
+    subagentTimer = setInterval(() => { if (!document.hidden) renderSubagentStack(); }, 1000);
   } else if (!liveCount && subagentTimer) {
     clearInterval(subagentTimer);
     subagentTimer = null;
@@ -25122,7 +25123,7 @@ function bindFirefoxScreenshotControl() {
   browserApi.permissions?.onRemoved?.addListener?.(onChange);
   void refreshFirefoxScreenshotState();
   // The refusal note arrives with the controller status, which the panel already polls.
-  setInterval(renderFirefoxScreenshotControl, 2000);
+  setInterval(() => { if (!document.hidden) renderFirefoxScreenshotControl(); }, 2000);
 }
 
 // Reads GET /v1/runs/{id} while a REST run is quiet, for prompts the stream did
