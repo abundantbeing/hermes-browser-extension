@@ -96,8 +96,8 @@ test('ownership copy states source, exact blast radius, and overwrite/reorder ri
   assert.equal(notice.sourceLabel, 'Hermes Web');
   assert.match(notice.title, /Hermes Web session selected/);
   assert.match(notice.detail, /already contains 2 messages/);
-  assert.match(notice.detail, /overwrite or reorder transcript updates/);
-  assert.equal(notice.newChatLabel, 'New Browser chat');
+  assert.match(notice.detail, /Two apps writing to the same session can overwrite or reorder each other’s updates/);
+  assert.equal(notice.newChatLabel, 'New chat');
   assert.equal(notice.continueLabel, 'Continue in Hermes Web');
 
   const unknown = sessionOwnershipNotice({

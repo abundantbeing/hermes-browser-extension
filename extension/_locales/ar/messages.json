@@ -5012,7 +5012,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "تعذر ترحيل جلسة المتصفح",
+    "message": "تعذر ترحيل الجلسة",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -6232,7 +6232,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "دردشة متصفح جديدة",
+    "message": "دردشة جديدة",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -7468,7 +7468,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "ابدأ جلسة متصفح جديدة",
+    "message": "بدء محادثة جديدة",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -7736,11 +7736,11 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "تم اكتشاف هذا النموذج من نقطة نهاية مخصصة، ولكن يجب على Hermes الكشف عنه خلال وقت التشغيل المتصل قبل أن يتمكن المتصفح من توجيه الطلبات إليه.",
+    "message": "تم اكتشاف هذا النموذج من نقطة نهاية مخصصة، ولكن يجب على Hermes الكشف عنه خلال وقت التشغيل المتصل قبل أن تتمكن الإضافة من توجيه الطلبات إليه.",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "يرتبط هذا الطلب بجلسة المتصفح المحددة.",
+    "message": "يرتبط هذا الطلب بالجلسة المحددة.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
   "runtime_ui_thoughts": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "استخدم الجلسة الحالية لعلامة التبويب النشطة، أو أنشئ جلسة متصفح جديدة، أو قم بتشغيلها بشكل منفصل.",
+    "message": "استخدم الجلسة الحالية لعلامة التبويب النشطة، أو ابدأ محادثة جديدة، أو قم بتشغيلها بشكل منفصل.",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {

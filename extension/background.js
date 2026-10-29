@@ -502,7 +502,7 @@ async function inlineSessionStatus() {
     ok: true,
     hasActiveSession: Boolean(sessionId),
     sessionId,
-    title: String(state.title || settings.sessionTitle || 'Current Browser chat').slice(0, 160),
+    title: String(state.title || settings.sessionTitle || 'Current chat').slice(0, 160),
     messageCount: Math.max(0, Number(state.messageCount || 0)),
   };
 }

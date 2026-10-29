@@ -5012,7 +5012,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "无法迁移浏览器会话",
+    "message": "无法迁移会话",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -6232,7 +6232,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "新建浏览器聊天",
+    "message": "新建聊天",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -7468,7 +7468,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "开始新的浏览器会话",
+    "message": "开始新聊天",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -7736,11 +7736,11 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "此模型是从自定义端点发现的，但 Hermes 必须通过已连接的运行时将其公开，浏览器才能向其路由请求。",
+    "message": "此模型是从自定义端点发现的，但 Hermes 必须通过已连接的运行时将其公开，扩展才能向其路由请求。",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "此请求已绑定到所选的 Browser 会话。",
+    "message": "此请求已绑定到所选会话。",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
   "runtime_ui_thoughts": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "使用活动标签页的当前会话、创建新的浏览器会话，或单独运行。",
+    "message": "使用活动标签页的当前会话、开始新聊天，或单独运行。",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {

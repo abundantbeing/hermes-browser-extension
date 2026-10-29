@@ -88,12 +88,12 @@ export function sessionOwnershipNotice({ session = {}, expectedSource = '' } = {
       : `It already contains ${count} messages.`;
   const newChatLabel = normalized(expectedSource) === SESSION_SURFACE_SOURCES.FULL_TAB
     ? 'New Hermes Web chat'
-    : 'New Browser chat';
+    : 'New chat';
   return Object.freeze({
     sourceLabel,
     messageCount: count,
     title: `${sourceLabel} session selected`,
-    detail: `${countDetail} Two Browser surfaces writing the same session can overwrite or reorder transcript updates. Start a new chat, or continue here intentionally.`,
+    detail: `${countDetail} Two apps writing to the same session can overwrite or reorder each other’s updates. Start a new chat, or continue here intentionally.`,
     newChatLabel,
     continueLabel: `Continue in ${sourceLabel}`,
   });

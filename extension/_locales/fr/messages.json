@@ -5012,7 +5012,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "Impossible de migrer la session du navigateur",
+    "message": "Impossible de migrer la session",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -6232,7 +6232,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "Nouveau chat du navigateur",
+    "message": "Nouvelle discussion",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -7468,7 +7468,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "Démarrer une nouvelle session de navigateur",
+    "message": "Commencer une nouvelle discussion",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -7736,11 +7736,11 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "Ce modèle a été découvert à partir d'un point de terminaison personnalisé, mais Hermes doit l'exposer via le runtime connecté avant que le navigateur puisse y acheminer les requêtes.",
+    "message": "Ce modèle a été découvert à partir d'un point de terminaison personnalisé, mais Hermes doit l'exposer via le runtime connecté avant que l'extension puisse y acheminer les requêtes.",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "Cette requête est liée à la session du navigateur sélectionnée.",
+    "message": "Cette requête est liée à la session sélectionnée.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
   "runtime_ui_thoughts": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "Utilisez la session actuelle de l'onglet actif, créez une nouvelle session de navigateur ou exécutez-la séparément.",
+    "message": "Utilisez la session actuelle de l'onglet actif, démarrez une nouvelle discussion ou exécutez-la séparément.",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {

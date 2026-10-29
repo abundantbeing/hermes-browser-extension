@@ -5012,7 +5012,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "브라우저 세션을 마이그레이션할 수 없습니다",
+    "message": "세션을 마이그레이션할 수 없습니다",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -6232,7 +6232,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "새로운 Browser 채팅",
+    "message": "새 채팅",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -7468,7 +7468,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "새로운 Browser 세션 시작",
+    "message": "새 채팅 시작",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -7736,11 +7736,11 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "이 모델은 사용자 지정 엔드포인트에서 검색되었지만 Browser가 요청을 라우팅하려면 Hermes가 연결된 런타임을 통해 해당 모델을 제공해야 합니다.",
+    "message": "이 모델은 사용자 지정 엔드포인트에서 검색되었지만 확장 프로그램이 요청을 라우팅하려면 Hermes가 연결된 런타임을 통해 해당 모델을 제공해야 합니다.",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "이 요청은 선택한 브라우저 세션에 바인딩됩니다.",
+    "message": "이 요청은 선택한 세션에 바인딩됩니다.",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
   "runtime_ui_thoughts": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "활성 탭의 현재 세션을 사용하거나, 새 Browser 세션을 생성하거나, 별도로 실행하세요.",
+    "message": "활성 탭의 현재 세션을 사용하거나, 새 채팅을 시작하거나, 별도로 실행하세요.",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {

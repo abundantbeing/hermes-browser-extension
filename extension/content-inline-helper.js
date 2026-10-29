@@ -722,13 +722,13 @@
     activeView = { name: 'routing', args: [session] };
     contextDetail.textContent = translateUiText(session.hasActiveSession
       ? `Active chat · ${Number(session.messageCount || 0) || 'existing'} messages`
-      : 'No active Browser chat');
+      : 'No active chat');
     contextState.textContent = translateUiText('CHOOSE');
     contextState.className = '';
     const title = make('h2', 'route-title', 'Where should Hermes work?');
     const note = make('p', 'note', 'Hermes will never replace or switch an existing conversation without this choice.');
     const routes = [
-      { num: '01', route: policy.routes.CURRENT, title: 'Continue current chat', detail: session.hasActiveSession ? `Add this request to “${session.title || 'current Browser chat'}”.` : 'No active Browser chat is available.', disabled: !session.hasActiveSession },
+      { num: '01', route: policy.routes.CURRENT, title: 'Continue current chat', detail: session.hasActiveSession ? `Add this request to “${session.title || 'current chat'}”.` : 'No active chat is available.', disabled: !session.hasActiveSession },
       { num: '02', route: policy.routes.NEW, title: 'Start new Assist session', detail: 'Create and open a new Hermes Assist session.' },
       { num: '03', route: policy.routes.BACKGROUND, title: 'Run in background', detail: 'Keep the current chat visible. Return the result to this field.', tag: 'New session · Inline assist', recommended: true },
     ];
@@ -794,7 +794,7 @@
     const wrap = make('div', 'working');
     const mark = make('i', 'working-mark');
     const title = make('h2', 'route-title', 'Hermes is drafting');
-    const copy = make('p', 'status', pending?.route === policy.routes.BACKGROUND ? 'Your current conversation stays visible.' : 'This request is bound to the selected Browser session.');
+    const copy = make('p', 'status', pending?.route === policy.routes.BACKGROUND ? 'Your current conversation stays visible.' : 'This request is bound to the selected session.');
     wrap.append(mark, title, copy);
     setBody(wrap);
   }

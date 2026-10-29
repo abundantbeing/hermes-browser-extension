@@ -5012,7 +5012,7 @@
     "description": "Runtime interface message ui.could.not.load.this.session"
   },
   "runtime_ui_could_not_migrate_browser_session": {
-    "message": "ไม่สามารถย้ายเซสชันของเบราว์เซอร์ได้",
+    "message": "ไม่สามารถย้ายเซสชันได้",
     "description": "Runtime interface message ui.could.not.migrate.browser.session"
   },
   "runtime_ui_could_not_open_full_view": {
@@ -6232,7 +6232,7 @@
     "description": "Runtime interface message ui.new"
   },
   "runtime_ui_new_browser_chat": {
-    "message": "แชทเบราว์เซอร์ใหม่",
+    "message": "แชทใหม่",
     "description": "Runtime interface message ui.new.browser.chat"
   },
   "runtime_ui_new_chat": {
@@ -7468,7 +7468,7 @@
     "description": "Runtime interface message ui.start.new.assist.session"
   },
   "runtime_ui_start_new_browser_session": {
-    "message": "เริ่มเซสชันเบราว์เซอร์ใหม่",
+    "message": "เริ่มแชทใหม่",
     "description": "Runtime interface message ui.start.new.browser.session"
   },
   "runtime_ui_start_the_hermes_api_server_locally_or_on_a_reachable_remote_machine": {
@@ -7736,11 +7736,11 @@
     "description": "Runtime interface message ui.this.managed.editor.is.not.mutated.until.insertion.is.verified"
   },
   "runtime_ui_this_model_was_discovered_from_a_custom_endpoint_but_hermes_mus_a557ebc1": {
-    "message": "โมเดลนี้ถูกค้นพบจากปลายทางที่กำหนดเอง แต่ Hermes ต้องเปิดเผยผ่านรันไทม์ที่เชื่อมต่อก่อนที่เบราว์เซอร์จะกำหนดเส้นทางคำขอไปยังโมเดลนี้ได้",
+    "message": "โมเดลนี้ถูกค้นพบจากปลายทางที่กำหนดเอง แต่ Hermes ต้องเปิดเผยผ่านรันไทม์ที่เชื่อมต่อก่อนที่ส่วนขยายจะกำหนดเส้นทางคำขอไปยังโมเดลนี้ได้",
     "description": "Runtime interface message ui.this.model.was.discovered.from.a.custom.endpoint.but.hermes.mus.a557ebc1"
   },
   "runtime_ui_this_request_is_bound_to_the_selected_browser_session": {
-    "message": "คำขอนี้เชื่อมโยงกับเซสชันเบราว์เซอร์ที่เลือก",
+    "message": "คำขอนี้เชื่อมโยงกับเซสชันที่เลือก",
     "description": "Runtime interface message ui.this.request.is.bound.to.the.selected.browser.session"
   },
   "runtime_ui_thoughts": {
@@ -7892,7 +7892,7 @@
     "description": "Runtime interface message ui.use.hermes.desktop.model.settings.or.the.hermes.model.command.t.f5a4940b"
   },
   "runtime_ui_use_the_active_tab_s_current_session_create_a_new_browser_sessi_83e1cfd3": {
-    "message": "ใช้เซสชันปัจจุบันของแท็บที่ใช้งานอยู่ สร้างเซสชันเบราว์เซอร์ใหม่ หรือทำงานแยกกัน",
+    "message": "ใช้เซสชันปัจจุบันของแท็บที่ใช้งานอยู่ เริ่มแชทใหม่ หรือทำงานแยกกัน",
     "description": "Runtime interface message ui.use.the.active.tab.s.current.session.create.a.new.browser.sessi.83e1cfd3"
   },
   "runtime_ui_use_the_same_palette_and_chrome_language_as_hermes_browser": {

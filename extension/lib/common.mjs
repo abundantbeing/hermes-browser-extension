@@ -2074,7 +2074,7 @@ export function buildHermesRuntimeSelectionNote({ model = '', provider = '', mod
   const reasoningLevel = thinkingEnabled ? reasoningEffortLabel(runtimeEffort) : 'Off';
   return [
     '<hermes_browser_runtime_selection>',
-    'These Browser runtime values are authoritative for this turn. If the user asks about model, provider, reasoning, or fast mode, report these exact values instead of inferring them.',
+    'These Hermes Browser Extension runtime values are authoritative for this turn. If the user asks about model, provider, reasoning, or fast mode, report these exact values instead of inferring them.',
     `Model: ${runtimeSelectionValue(model, 'Gateway default')}`,
     `Provider: ${runtimeSelectionValue(provider, 'Hermes runtime')}`,
     `Thinking: ${thinkingEnabled ? 'On' : 'Off'}`,
