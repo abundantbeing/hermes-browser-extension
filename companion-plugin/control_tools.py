@@ -85,6 +85,20 @@ def control_available() -> bool:
         return False
 
 
+def _refresh_tool_listing(_connected: bool) -> None:
+    """Hermes memoizes its tool list per toolset and config, not per ``check_fn`` result
+    (``model_tools.get_tool_definitions``), so a list built before a controller attached would keep
+    the control tools hidden after one does. Drop that memo when control comes or goes; a Hermes
+    without the memo has nothing to drop."""
+    try:
+        import model_tools
+    except ImportError:
+        return
+    clear = getattr(model_tools, "_clear_tool_defs_cache", None)
+    if callable(clear):
+        clear()
+
+
 def _failure(code: str, message: str) -> str:
     return json.dumps({"success": False, "error": message, "code": code}, ensure_ascii=False)
 
@@ -330,12 +344,16 @@ def register_control_tools(ctx: Any, *, broker: Optional[ControlBroker] = None, 
     """Register every Hermes Control tool. A name another toolset already owns (a Hermes that still has
     extension control in core) is skipped by Hermes with a warning, and that core tool keeps serving it."""
     configure(broker=broker, profile=profile, screenshot_dir=Path(data_dir) / "control-screenshots" if data_dir else None)
+    _broker().add_presence_listener(_refresh_tool_listing)
     check_fn: Callable[[], bool] = control_available
     try:
-        from tools.registry import no_cache_check_fn
+        import tools.registry as hermes_registry
 
-        # The attach state changes with the person's switch, not on a human timescale.
-        check_fn = no_cache_check_fn(control_available)
+        # The attach state changes with the person's switch, not on a human timescale. A Hermes
+        # with runtime_check_fn keys its tool-list memo on the answer; an older one only stops
+        # caching the check, and the presence listener above drops its memo instead.
+        mark = getattr(hermes_registry, "runtime_check_fn", None) or hermes_registry.no_cache_check_fn
+        check_fn = mark(control_available)
     except Exception:
         pass
     for action in CONTROL_ACTIONS:

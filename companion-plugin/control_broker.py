@@ -222,6 +222,27 @@ class ControlBroker:
         self._controllers: dict[ControllerScope, _Controller] = {}
         self._pending: dict[str, _PendingCommand] = {}
         self._bindings: dict[tuple, _Binding] = {}
+        self._presence_listeners: list[Callable[[bool], None]] = []
+
+    # -- presence -----------------------------------------------------------
+
+    def add_presence_listener(self, listener: Callable[[bool], None]) -> None:
+        """Call ``listener(connected)`` whenever ``any_connected()`` flips (once per listener)."""
+        with self._lock:
+            if listener not in self._presence_listeners:
+                self._presence_listeners.append(listener)
+
+    def _announce_presence(self, before: bool) -> None:
+        after = self.any_connected()
+        if after == before:
+            return
+        with self._lock:
+            listeners = list(self._presence_listeners)
+        for listener in listeners:
+            try:
+                listener(after)
+            except Exception:
+                logger.exception("browser-controller presence listener failed")
 
     # -- tickets ------------------------------------------------------------
 
@@ -306,6 +327,13 @@ class ControlBroker:
         without cancelling pending work. A different controller or browser
         profile in the same authenticated session lane replaces it outright.
         """
+        before = self.any_connected()
+        try:
+            self._attach(scope, send, owner=owner)
+        finally:
+            self._announce_presence(before)
+
+    def _attach(self, scope: ControllerScope, send: Callable[[dict], None], *, owner: Any = None) -> None:
         while True:
             with self._lock:
                 if self.principal_conflict(scope):
@@ -372,6 +400,13 @@ class ControlBroker:
 
     def disconnect(self, scope: ControllerScope, *, owner: Any = _OWNER_UNSET) -> bool:
         """Mark one exact controller transport offline without cancelling its work."""
+        before = self.any_connected()
+        try:
+            return self._disconnect(scope, owner=owner)
+        finally:
+            self._announce_presence(before)
+
+    def _disconnect(self, scope: ControllerScope, *, owner: Any = _OWNER_UNSET) -> bool:
         with self._lock:
             controller = self._controller_for_identity_locked(scope)
         if controller is None:
@@ -396,6 +431,20 @@ class ControlBroker:
         """Remove the controller for ``scope`` and fail its pending work closed (``ControllerCancelled``).
 
         ``keep_binding`` is for a replacement by the same principal, which re-binds as it inserts."""
+        before = self.any_connected()
+        try:
+            self._detach(scope, owner=owner, notify_controller=notify_controller, keep_binding=keep_binding)
+        finally:
+            self._announce_presence(before)
+
+    def _detach(
+        self,
+        scope: ControllerScope,
+        *,
+        owner: Any = _OWNER_UNSET,
+        notify_controller: bool = True,
+        keep_binding: bool = False,
+    ) -> None:
         with self._lock:
             controller = self._controllers.get(scope)
         if controller is None or (owner is not _OWNER_UNSET and controller.owner != owner):

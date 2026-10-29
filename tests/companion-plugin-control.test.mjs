@@ -196,6 +196,42 @@ print(json.dumps({"count": len(control), "skipped_owned": "browser_click" not in
   assert.equal(data.schemas_ok, true);
 });
 
+test("Hermes' memoized tool list is dropped when control comes or goes, so the tools show up after an attach", () => {
+  // Hermes memoizes get_tool_definitions() per toolset and config, not per check_fn result, so a
+  // list built before any controller attached would keep the tools hidden after one does.
+  const out = runPython(`${PRELUDE}
+import types
+clears = []
+sys.modules["model_tools"] = types.SimpleNamespace(_clear_tool_defs_cache=lambda: clears.append(tools.control_available()))
+class Ctx:
+    profile_name = "default"
+    def get_config(self, key, default=None): return default
+    def register_tool(self, *args, **kwargs): pass
+    def register_hook(self, name, callback): pass
+    def register_skill(self, name, path): pass
+    def register_platform_handler(self, *args, **kwargs): pass
+module.register(Ctx())
+module.register(Ctx())  # a second registration adds no second listener
+broker = broker_module.get_control_broker()
+scope = broker_module.ControllerScope(principal_id="p", profile_id="default", session_id="sess-A", controller_id="c",
+                                      browser_profile_id="b", transport_family="local-api", capabilities=frozenset(CAPS))
+owner = object()
+broker.attach(scope, lambda frame: None, owner=owner)
+attached = list(clears)
+broker.attach(scope, lambda frame: None, owner=owner)  # a same-identity refresh changes nothing
+refreshed = list(clears)
+broker.disconnect(scope, owner=owner)
+gone = list(clears)
+broker.reset()
+del sys.modules["model_tools"]
+print(json.dumps({"attached": attached, "refreshed": refreshed, "gone": gone}))
+`);
+  const data = JSON.parse(out);
+  assert.deepEqual(data.attached, [true], 'dropped once, after the controller is live');
+  assert.deepEqual(data.refreshed, [true], 'a refresh that keeps control live drops nothing');
+  assert.deepEqual(data.gone, [true, false], 'and once more when the last controller goes');
+});
+
 test('both routes refuse without the API server auth, a registration is validated, and capabilities are filtered', () => {
   const out = runPython(`${PRELUDE}${SKIP_GUARD}
 class Raising:
