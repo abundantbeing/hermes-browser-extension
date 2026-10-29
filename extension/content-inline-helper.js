@@ -490,6 +490,9 @@
   }
 
   function position() {
+    // No field is targeted and nothing is showing: this runs for every scroll
+    // event of every scroller on the page, so do not touch the DOM for it.
+    if (!target && launcher.hidden && panel.hidden) return;
     if (!target || assistSettings.inlineAssistEnabled === false) {
       suspendPanelForScroll();
       return;
