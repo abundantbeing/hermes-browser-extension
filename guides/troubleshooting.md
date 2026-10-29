@@ -40,7 +40,15 @@ Your draft is kept and the reason appears in a toast. A busy session is another 
 
 A frame on the attached page is on a restricted address, has moved to one since the page was read, or is laid over the control, or the click would land in a frame from another site that Chrome runs in its own process. Those frames are not read or acted on. Ask Hermes for a fresh view of the page, or act on the control yourself.
 
-### Companion plugin tools say "unavailable"
+### Hermes Control says it is not available on this Hermes
+
+Hermes builds from October 24, 2026 on (canary, and every release after 0.22.5) no longer carry extension control themselves; the extension's Hermes plugin brings it back. Install it for the profile you chat with, `hermes plugins install hermes-browser-extension --enable` (add `--profile <name>` for a named bot), restart that profile's gateway, then press **Test connection** and turn Hermes Control on again. Settings > About & Diagnostics shows whether the plugin is loaded. On a gateway that serves several bots at one address, a named bot's copy of the plugin is reachable only on a Hermes that routes plugin calls per profile; until then Hermes Control through the plugin works for the default bot. See [companion-plugin/README.md](../companion-plugin/README.md).
+
+### The plugin is reported as an older copy under its old name
+
+Before 0.4.0 the plugin was called `hermes-browser-companion`, and its control tools were named `browser_*`, which Hermes' own Camofox plugin also uses. Remove the old copy and install the new one: `hermes plugins remove hermes-browser-companion`, then `hermes plugins install hermes-browser-extension --enable` (each with `--profile <name>` for a named bot), and restart the gateway.
+
+### Plugin tools say "unavailable"
 
 A copy of the plugin staged before the hook-worker fix cannot hand its authorization to its tools under Hermes' hook worker, so every owner-gated tool reports unavailable. Compare the `version` in the installed `plugin.yaml` with this repository's (`node scripts/enable-bot-companion-tools.mjs --list` does it for every profile), reinstall with `hermes plugins install ... --force` (or move an old nested copy out first) and restart that profile's gateway. See [companion-plugin/install.md](../companion-plugin/install.md).
 

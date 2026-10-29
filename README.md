@@ -67,6 +67,8 @@ If you need Hermes to click, type, scroll, or operate tabs on your behalf, load 
 
 Hermes Control lets Hermes operate a tab you attach. It is opt-in, off until you turn it on, and Chromium-only.
 
+- **Current Hermes needs the extension's Hermes plugin for it.** Hermes 0.22.5 and earlier carry Hermes Control themselves. Hermes builds from October 24, 2026 on (canary, and every release after 0.22.5) get it from the `hermes-browser-extension` plugin: run `hermes plugins install hermes-browser-extension --enable` (add `--profile <name>` per bot) and restart the gateway. [companion-plugin/README.md](./companion-plugin/README.md) lists everything it needs.
+- **Several tabs at once.** Hermes can list the tabs it may use, open pages in new background tabs, act in any of them by tab id without changing what you are looking at, close tabs (after asking you), and group the ones it opened. A link Hermes clicks that opens a new tab becomes a tab it can use, and every result says which tab it ran in.
 - **The attached tab is announced to the model.** Each turn tells Hermes the tab is ready and lists its interactive elements with refs, so the first click works without a separate snapshot or navigate step.
 - **Every action returns the updated page.** Click, type, scroll, and navigate give back a compact, redacted view of the page with fresh refs, so Hermes can chain steps.
 - **One debugger session per attached tab.** Chrome shows its debugging banner while a tab is attached. The session detaches when you detach the tab, pause or turn off control, or after 60 seconds without a command.
@@ -256,7 +258,7 @@ npm run package
 
 ```text
 extension/          MV3 source: sidepanel, background worker, content scripts, lib/
-companion-plugin/   optional Browser context cache tools and hooks (hermes plugins install; see its install.md)
+companion-plugin/   the Hermes plugin (hermes-browser-extension): Hermes Control on current Hermes, browser-context tools and hooks (see its README.md and install.md)
 scripts/            build, Firefox packaging, manifest checks
 tests/              node:test suite
 dist/               generated unpacked build (load this one)
