@@ -102,6 +102,7 @@ Everything else works on upstream Hermes.
 - Interface icons are pixel glyphs from pixelarticons 2.4.2 (MIT licence, kept in `extension/assets/icons/pixel/`). The startup screen is redrawn as a border that fills as the readiness checks finish, with a new extension icon and the Hermes wing mark in the top bar.
 - Setup and the Connect pop-up use the panel's own scrollbar, and setup's Back and Next are icon tiles in the border band.
 - Firefox is unchanged in scope: the sidebar comes from `sidebar_action`, and Firefox builds omit `debugger`, `offscreen` and `sidePanel`. The new setup, Projects, capability and compaction screens use no Chromium-only API, but they were not exercised in the Firefox sidebar for this release.
+- Loading and opening feel faster. Startup no longer waits on the Settings context-menu editor, so the gateway check begins sooner; a session's history paints without waiting for image downloads or the cache write (late images fill in); the session picker focuses its search box immediately instead of after the list refresh; the model catalog's two public lookups run together; and two repaint timers rest while the panel is hidden.
 
 ### Removed
 
