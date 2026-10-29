@@ -21128,7 +21128,10 @@ function patchRenderedMessageContent(element, html = '') {
       break;
     }
     if (live.nodeType === Node.ELEMENT_NODE && next.nodeType === Node.ELEMENT_NODE) {
-      if (live.outerHTML === next.outerHTML) { stable += 1; continue; }
+      // Compare against the HTML a block was painted from, not what hydration
+      // made of it: a code block wrapped with its copy button never matched
+      // again, so every block after it was rebuilt on every streamed frame.
+      if (renderedBlockSource(live) === next.outerHTML) { stable += 1; continue; }
       // A Vivid UI block is unchanged when its content signature is: the user
       // may have switched its view or opened it, and that must survive.
       if (live.dataset?.hauiSig && live.dataset.hauiSig === next.dataset?.hauiSig
@@ -21139,6 +21142,7 @@ function patchRenderedMessageContent(element, html = '') {
         && stable === existing.length - 1
       ) {
         if (live.innerHTML !== next.innerHTML) live.innerHTML = next.innerHTML;
+        live.hermesSourceHtml = next.outerHTML;
         stable += 1;
         continue;
       }
@@ -21148,8 +21152,19 @@ function patchRenderedMessageContent(element, html = '') {
   }
   for (const node of existing.slice(stable)) node.remove();
   const fragment = document.createDocumentFragment();
-  for (const node of incoming.slice(stable)) fragment.append(node);
+  for (const node of incoming.slice(stable)) {
+    if (node.nodeType === Node.ELEMENT_NODE) node.hermesSourceHtml = node.outerHTML;
+    fragment.append(node);
+  }
   if (fragment.childNodes.length) element.append(fragment);
+}
+
+// The HTML a top-level block was painted from. A code block's copy-button
+// wrapper keeps it on the <pre> it wraps.
+function renderedBlockSource(node) {
+  if (node.hermesSourceHtml !== undefined) return node.hermesSourceHtml;
+  const wrapped = node.classList?.contains('md-code') ? node.querySelector(':scope > pre') : null;
+  return wrapped?.hermesSourceHtml ?? node.outerHTML;
 }
 
 function adaptiveUiLabels() {
@@ -24167,13 +24182,16 @@ async function refreshContext(options = {}) {
     }
   }
   const pinnedMissing = captureScope.mode === CONTEXT_SCOPE_MODES.PINNED_TAB && !tab;
-  const pageContext = tab
-    ? await getPageContext(tab, options)
-    : pinnedMissing
-      ? { ok: false, restricted: true, reason: 'Pinned tab is closed or no longer available.', text: '', selectedText: '', meta: {} }
-      : null;
-  if (!isCurrentScope()) return currentContext;
-  const youtubeTranscript = tab ? await getYoutubeTranscriptForTab(tab) : null;
+  // The page text and a YouTube transcript are read together: the transcript
+  // only needs the tab, and on a video page it no longer waits for the page.
+  const [pageContext, youtubeTranscript] = await Promise.all([
+    tab
+      ? getPageContext(tab, options)
+      : pinnedMissing
+        ? { ok: false, restricted: true, reason: 'Pinned tab is closed or no longer available.', text: '', selectedText: '', meta: {} }
+        : null,
+    tab ? getYoutubeTranscriptForTab(tab) : null,
+  ]);
   if (!isCurrentScope()) return currentContext;
   if (pageContext && youtubeTranscript) pageContext.youtubeTranscript = youtubeTranscript;
   if (pageContext && tab) mergeStoredPickIntoPageContext(tab, pageContext);
@@ -25877,7 +25895,7 @@ async function streamDashboardWsChatAttempt(connection, sessionId, prompt, onDel
   });
 }
 
-async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onReasoning, onPrompt, onDelivery, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null } = {}) {
+async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments: turnAttachments = attachments, onRun, onSteerQueued, onRuntime, onReasoning, onPrompt, onDelivery, knownAssistantTexts = [], voiceLive = null, truncate = null, onSubmitResponse = null, beforeSend = null, sessionRoutesEnsured } = {}) {
   if (usesDashboardWsChatTransport()) return streamDashboardWsChat(prompt, onDelta, onTool, {
     signal,
     attachments: turnAttachments,
@@ -25891,7 +25909,7 @@ async function streamSessionChat(prompt, onDelta, onTool, { signal, attachments:
   });
   let hasSessionRoutes = false;
   try {
-    hasSessionRoutes = await ensureHermesSession();
+    hasSessionRoutes = typeof sessionRoutesEnsured === 'boolean' ? sessionRoutesEnsured : await ensureHermesSession();
   } catch (setupError) {
     // Profile-scoped 401 during session setup: fall back to the dashboard WS
     // transport (session-token auth) so named profiles can chat in regular
@@ -26574,12 +26592,15 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
   const prepareRequestId = sessionLoadRequestId;
   const prepareScopeRevisionId = scopeRevision.current();
   const preparationIsCurrent = () => prepareRequestId === sessionLoadRequestId && scopeRevision.isCurrent(prepareScopeRevisionId) && turnRunControlGeneration === runControlGeneration;
+  // The REST send reuses this answer instead of asking the gateway again: one
+  // round trip less per turn. It only holds for the session it was asked for.
+  let ensuredSessionRoutes = null;
   try {
     if (dashboardTransport) {
       const dashboardConnection = await ensureActiveDashboardWsConnection();
       await ensureRemoteWsSession(dashboardConnection);
     } else {
-      await ensureHermesSession();
+      ensuredSessionRoutes = { sessionId: String(settings.sessionId || '').trim(), value: await ensureHermesSession() };
     }
   } catch (error) {
     activeRunControl = markRunTerminal(activeRunControl, 'failed');
@@ -26927,6 +26948,7 @@ async function askHermes(userText, turnAttachments = [...attachments], turnOptio
           attachments: preparedAttachments,
           voiceLive: turnOptions.voiceLive || null,
           beforeSend: companionContextUpload,
+          sessionRoutesEnsured: ensuredSessionRoutes?.sessionId === String(settings.sessionId || '').trim() ? ensuredSessionRoutes.value : undefined,
           onReasoning: (update) => {
             if (!update || !runControlGenerationMatches(turnRunControlGeneration, runControlGeneration)) return;
             if (update.kind === 'wait') {

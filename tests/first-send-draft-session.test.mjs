@@ -101,7 +101,7 @@ test('a gateway without session routes returns false and the chat falls back ins
 
 test('the send path handles a refused materialization before the generic setup error and before it clears the composer', () => {
   const askStart = source.indexOf('async function askHermes(');
-  const prepare = source.slice(source.indexOf('await ensureHermesSession();', askStart), source.indexOf("setStatus('error', 'Could not start Hermes session'", askStart));
+  const prepare = source.slice(source.indexOf('value: await ensureHermesSession() };', askStart), source.indexOf("setStatus('error', 'Could not start Hermes session'", askStart));
   assert.match(prepare, /error\?\.originRefused[\s\S]*reportSessionOriginRefusal\(error\);[\s\S]*return false;/);
   assert.doesNotMatch(prepare, /unreachable|markGateway|markConnection/);
 });

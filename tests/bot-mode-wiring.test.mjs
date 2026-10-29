@@ -315,7 +315,7 @@ test('canonical Bot and group chats bind history, sends, and model switching to 
   assert.ok(askHermesBody, 'askHermes body is present');
   assert.match(askHermesBody, /const dashboardTransport = usesDashboardWsChatTransport\(\);/);
   assert.match(askHermesBody, /activeRunControl = beginRunControl\(\{ transport: dashboardTransport \? 'dashboard-ws' : 'rest' \}\)/);
-  assert.match(askHermesBody, /if \(dashboardTransport\) \{[\s\S]*?const dashboardConnection = await ensureActiveDashboardWsConnection\(\);[\s\S]*?await ensureRemoteWsSession\(dashboardConnection\);[\s\S]*?\} else \{\s*await ensureHermesSession\(\);/);
+  assert.match(askHermesBody, /if \(dashboardTransport\) \{[\s\S]*?const dashboardConnection = await ensureActiveDashboardWsConnection\(\);[\s\S]*?await ensureRemoteWsSession\(dashboardConnection\);[\s\S]*?\} else \{\s*ensuredSessionRoutes = \{ sessionId: String\(settings\.sessionId \|\| ''\)\.trim\(\), value: await ensureHermesSession\(\) \};/);
   assert.match(sidepanelSource, /async function sendSteerText[\s\S]*?if \(usesDashboardWsChatTransport\(\)\) \{/);
   assert.match(sidepanelSource, /async function reconcileActiveRunTerminal[\s\S]*?const dashboardTransport = usesDashboardWsChatTransport\(\)/);
   assert.match(sidepanelSource, /async function stopCurrentTurn[\s\S]*?const dashboardTransport = usesDashboardWsChatTransport\(\)[\s\S]*?if \(dashboardTransport\) \{/);
