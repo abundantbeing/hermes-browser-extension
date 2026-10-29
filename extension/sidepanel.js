@@ -1900,18 +1900,27 @@ function contextMenuEditorTranslate(key, fallback) {
   return translated === key ? fallback : translated;
 }
 
+let contextMenuEditorMounting = null;
+
 async function ensureContextMenuEditor() {
   if (!els.contextMenuEditor) return null;
   if (contextMenuEditor) {
     contextMenuEditor.setTranslator(contextMenuEditorTranslate);
     return contextMenuEditor;
   }
-  contextMenuEditor = await mountContextMenuEditor({
+  // One mount at a time: the editor is mounted beside startup, so a second call
+  // must join the first instead of building another editor.
+  contextMenuEditorMounting ||= mountContextMenuEditor({
     chromeApi: browserApi,
     root: els.contextMenuEditor,
     translate: contextMenuEditorTranslate,
+  }).then((editor) => {
+    contextMenuEditor = editor;
+    return editor;
+  }).finally(() => {
+    contextMenuEditorMounting = null;
   });
-  return contextMenuEditor;
+  return contextMenuEditorMounting;
 }
 
 function currentTaskStack() {
@@ -22869,7 +22878,11 @@ async function loadSettings({ restoreMessages = false } = {}) {
   }
   messages = restoreMessages && Array.isArray(stored[messageKey]) ? stored[messageKey] : [];
   syncSettingsForm();
-  await ensureContextMenuEditor();
+  // The editor lives in a Settings pane and fetches its config from the
+  // background worker, which may have to wake first. Startup does not wait for it.
+  void ensureContextMenuEditor().catch((error) => {
+    console.warn('[Hermes Browser] Context-menu editor could not mount:', error);
+  });
   await hydrateContextDeliveryState();
   renderMessagesFromStorage();
   hbeBootEmit('panel:messages-painted', { startMark: 'panel:body-start' });
