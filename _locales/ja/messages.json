@@ -6440,11 +6440,11 @@
     "description": "Runtime interface message ui.open.hermes.browser"
   },
   "runtime_ui_open_hermes_browser_always_opens_the_side_panel_only_selection_0b8dac3c": {
-    "message": "Hermes を開く Browser は常にサイドパネルのみを開きます。選択アクションはルーティングの直後に開始されます。",
+    "message": "「Hermes Browserを開く」は常にサイドパネルのみを開きます。選択アクションはルーティングの直後に開始されます。",
     "description": "Runtime interface message ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c"
   },
   "runtime_ui_open_hermes_browser_uses_the_side_panel_only_selection_tasks_st_4f56df05": {
-    "message": "Hermes を開く Browser はサイドパネルのみを使用します。選択タスクはルーティング後に自動的に開始されます。",
+    "message": "「Hermes Browserを開く」はサイドパネルのみを使用します。選択タスクはルーティング後に自動的に開始されます。",
     "description": "Runtime interface message ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05"
   },
   "runtime_ui_open_hermes_session": {

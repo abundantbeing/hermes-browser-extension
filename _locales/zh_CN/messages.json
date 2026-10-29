@@ -5588,7 +5588,7 @@
     "description": "Runtime interface message ui.hermes.assist.model"
   },
   "runtime_ui_hermes_browser": {
-    "message": "Hermes 浏览器",
+    "message": "Hermes Browser",
     "description": "Runtime interface message ui.hermes.browser"
   },
   "runtime_ui_hermes_browser_bb83b5a0": {
@@ -5608,11 +5608,11 @@
     "description": "Runtime interface message ui.hermes.browser.extension.conversation"
   },
   "runtime_ui_hermes_browser_intro": {
-    "message": "Hermes 浏览器介绍",
+    "message": "Hermes Browser 介绍",
     "description": "Runtime interface message ui.hermes.browser.intro"
   },
   "runtime_ui_hermes_browser_local_sidecar": {
-    "message": "Hermes 浏览器本地边车",
+    "message": "Hermes Browser 本地边车",
     "description": "Runtime interface message ui.hermes.browser.local.sidecar"
   },
   "runtime_ui_hermes_browser_update_channel": {
@@ -6440,11 +6440,11 @@
     "description": "Runtime interface message ui.open.hermes.browser"
   },
   "runtime_ui_open_hermes_browser_always_opens_the_side_panel_only_selection_0b8dac3c": {
-    "message": "打开 Hermes 浏览器始终只打开侧面板。选中操作在路由后立即开始。",
+    "message": "“打开 Hermes Browser”始终只打开侧面板。选中操作在路由后立即开始。",
     "description": "Runtime interface message ui.open.hermes.browser.always.opens.the.side.panel.only.selection.0b8dac3c"
   },
   "runtime_ui_open_hermes_browser_uses_the_side_panel_only_selection_tasks_st_4f56df05": {
-    "message": "打开 Hermes 浏览器仅使用侧面板。选中任务在路由后自动开始。",
+    "message": "“打开 Hermes Browser”仅使用侧面板。选中任务在路由后自动开始。",
     "description": "Runtime interface message ui.open.hermes.browser.uses.the.side.panel.only.selection.tasks.st.4f56df05"
   },
   "runtime_ui_open_hermes_session": {
